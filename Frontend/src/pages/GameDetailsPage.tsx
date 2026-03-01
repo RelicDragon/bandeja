@@ -5,8 +5,14 @@ import { SplitViewLeftPanel, SplitViewRightPanel } from '@/components/SplitViewP
 import { useDesktop } from '@/hooks/useDesktop';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useNavigationStore } from '@/store/navigationStore';
+import { gamesApi } from '@/api';
 import { GameDetailsContent } from './GameDetails';
 import { GameChat } from './GameChat';
+
+const canShowTableViewFromGame = (g: { entityType?: string; fixedNumberOfSets?: number; resultsStatus?: string }) =>
+  g?.entityType === 'TOURNAMENT' &&
+  g?.fixedNumberOfSets === 1 &&
+  (g?.resultsStatus === 'FINAL' || g?.resultsStatus === 'IN_PROGRESS');
 
 export const GameDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,28 +20,44 @@ export const GameDetailsPage = () => {
   const isLandscape = useIsLandscape();
   const gameDetailsTableViewOverride = useNavigationStore((s) => s.gameDetailsTableViewOverride);
   const setGameDetailsTableViewOverride = useNavigationStore((s) => s.setGameDetailsTableViewOverride);
+  const setGameDetailsCanShowTableView = useNavigationStore((s) => s.setGameDetailsCanShowTableView);
+  const gameDetailsCanShowTableView = useNavigationStore((s) => s.gameDetailsCanShowTableView);
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
+  const [layoutTableAvailable, setLayoutTableAvailable] = useState<boolean | null>(null);
+  const useTableViewLayout = effectiveTableView && (layoutTableAvailable === null || layoutTableAvailable || gameDetailsCanShowTableView);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedGameChatId, setSelectedGameChatId] = useState<string | null>(null);
   const prevIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (prevIdRef.current !== undefined && prevIdRef.current !== id) {
-      setGameDetailsTableViewOverride(null);
-    }
+    setGameDetailsTableViewOverride(null);
+    setGameDetailsCanShowTableView(false);
+    setLayoutTableAvailable(null);
     prevIdRef.current = id ?? undefined;
     setSelectedGameChatId(null);
-  }, [id, setGameDetailsTableViewOverride]);
+  }, [id, setGameDetailsTableViewOverride, setGameDetailsCanShowTableView]);
+
+  useEffect(() => {
+    if (!id || !effectiveTableView) return;
+    let cancelled = false;
+    gamesApi.getById(id).then((res) => {
+      if (!cancelled) setLayoutTableAvailable(canShowTableViewFromGame(res.data));
+    }).catch(() => {
+      if (!cancelled) setLayoutTableAvailable(false);
+    });
+    return () => { cancelled = true; };
+  }, [id, effectiveTableView]);
 
   if (!id) return null;
 
   const effectiveChatId = selectedGameChatId ?? id;
+  const canShowSplitLayout = isDesktop || isLandscape;
 
   const handleChatGameSelect = (gameId: string) => {
     setSelectedGameChatId((prev) => (prev === gameId ? null : gameId));
   };
 
-  if (isDesktop) {
+  if (canShowSplitLayout) {
     const leftPanel = (
       <SplitViewLeftPanel bottomTabsVisible={false}>
         <div ref={scrollContainerRef} className="h-full overflow-y-auto overflow-x-hidden p-3">
@@ -48,7 +70,7 @@ export const GameDetailsPage = () => {
       </SplitViewLeftPanel>
     );
 
-    if (effectiveTableView) {
+    if (useTableViewLayout) {
       return (
         <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
           <div ref={scrollContainerRef} className="h-full overflow-y-auto overflow-x-hidden">

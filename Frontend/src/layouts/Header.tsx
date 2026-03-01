@@ -7,6 +7,7 @@ import { useNavigationStore } from '../store/navigationStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { useDesktop } from '@/hooks/useDesktop';
+import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useAuthStore } from '@/store/authStore';
 import { handleBack } from '@/utils/backNavigation';
 import { parseLocation, placeToPageType } from '@/utils/urlSchema';
@@ -44,7 +45,8 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const currentPage = placeToPageType(parsed.place);
 
   const isGameDetailsPath = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
-  const isGameDetailsSplitView = currentPage === 'gameDetails' && isDesktop && isGameDetailsPath;
+  const isLandscape = useIsLandscape();
+  const isGameDetailsSplitView = currentPage === 'gameDetails' && (isDesktop || isLandscape) && isGameDetailsPath;
   
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
   const shouldHideHeader = !user && isGameDetailsPage;

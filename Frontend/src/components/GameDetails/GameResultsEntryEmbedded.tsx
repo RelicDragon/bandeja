@@ -698,7 +698,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
   useEffect(() => {
     setGameDetailsCanShowTableView(!!canShowTableView);
-    return () => setGameDetailsCanShowTableView(false);
   }, [canShowTableView, setGameDetailsCanShowTableView]);
 
   if (canInitialize === null) {

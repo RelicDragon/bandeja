@@ -4,6 +4,7 @@ import { Header } from './Header';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useAuthStore } from '@/store/authStore';
 import { useDesktop } from '@/hooks/useDesktop';
+import { useIsLandscape } from '@/hooks/useIsLandscape';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -27,15 +28,15 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   }, [isHomeInit, setInitShellAnimationPlayed]);
 
   const isDesktopChats = isDesktop && currentPage === 'chats';
-  const isDesktopGameDetails = isDesktop && currentPage === 'gameDetails';
   const isGameDetailsPath = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
+  const isLandscape = useIsLandscape();
+  const isDesktopGameDetailsSplitView = (isDesktop || isLandscape) && currentPage === 'gameDetails' && isGameDetailsPath;
   const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') ||
                                  location.pathname.includes('/group-chat/') ||
                                  location.pathname.includes('/channel-chat/') ||
                                  location.pathname.match(/^\/bugs\/[^/]+$/);
   const isOnBugsListPage = chatsFilter === 'bugs' && !isOnSpecificChatRoute;
   const isDesktopChatsSplitView = isDesktopChats && !isOnBugsListPage;
-  const isDesktopGameDetailsSplitView = isDesktopGameDetails && isGameDetailsPath;
   const shouldAddBottomPadding = bottomTabsVisible && !isDesktopChats && !isDesktopGameDetailsSplitView;
   
   return (

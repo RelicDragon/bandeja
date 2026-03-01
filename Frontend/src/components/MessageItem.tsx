@@ -615,11 +615,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
                     {/* Text content after images - Hide if poll is present as poll has its own question display */}
                     {currentMessage.content && !currentMessage.poll && (
-                      <div className={`${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'px-4' : ''} overflow-visible`}>
+                      <div className={`w-full ${currentMessage.mediaUrls && currentMessage.mediaUrls.length > 0 ? 'px-4' : ''} overflow-visible`}>
                         {hasTranslation ? (
                           <div className="space-y-2">
                             <div className="pb-2 border-b border-gray-300 dark:border-gray-600">
-                              <p className="text-sm whitespace-pre-wrap break-words break-all pr-12 overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                              <p className="text-sm whitespace-pre-wrap break-words break-all overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                                 {parsedContent ? (
                                   parsedContent.map((part, index) => {
                                     if (part.type === 'mention') {
@@ -687,7 +687,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                               </p>
                             </div>
                             <div className={`${isChannel ? 'text-gray-600 dark:text-gray-400' : (isOwnMessage ? 'text-blue-50' : 'text-gray-600 dark:text-gray-400')}`}>
-                              <p className="text-sm whitespace-pre-wrap break-words break-all pr-12 overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                              <p className="text-sm whitespace-pre-wrap break-words break-all overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                                 {translationContent ? (
                                   translationContent.map((part, index) => {
                                     if (part.type === 'mention') {
@@ -750,7 +750,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                             </div>
                           </div>
                         ) : (
-                          <p className="text-sm whitespace-pre-wrap break-words break-all pr-12 pb-3 overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                          <p className="text-sm whitespace-pre-wrap break-words break-all overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                             {parsedContent ? (
                               parsedContent.map((part, index) => {
                                 if (part.type === 'mention') {
@@ -821,59 +821,59 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     )}
 
                     {/* Time and read status inside bubble */}
-                    <div className={`absolute bottom-1 right-2 flex flex-nowrap items-center gap-1 ${isChannel ? 'text-gray-400 dark:text-gray-500' : (isOwnMessage ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500')}`}>
-                      <span className="text-[10px] whitespace-nowrap shrink-0">
+                    <div className={`flex justify-end mt-0.5 ${isChannel ? 'text-gray-400 dark:text-gray-500' : (isOwnMessage ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500')}`}>
+                      <span className="text-[10px] whitespace-nowrap inline-flex items-center gap-1">
                         {currentMessage.editedAt && (
                           <span title={t('chat.edited', { defaultValue: 'edited' })}>
-                            <Pencil size={10} className="inline opacity-80 mr-1" />
+                            <Pencil size={10} className="inline opacity-80" />
                           </span>
                         )}
                         {formatMessageTime(currentMessage.createdAt)}
+                        {isOwnMessage && (
+                          <>
+                            {isSending ? (
+                              <span className="inline-flex items-center gap-0.5" title="Sending...">
+                                <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-1" />
+                                <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-2" />
+                                <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-3" />
+                              </span>
+                            ) : isFailed ? (
+                              <span className="relative inline-flex items-center">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setShowFailedMenu((v) => !v); }}
+                                  className="p-0.5 rounded hover:bg-white/20"
+                                  title={t('chat.failedToSend', { defaultValue: 'Failed to send' })}
+                                >
+                                  <AlertCircle size={14} className="text-red-200" />
+                                </button>
+                                {showFailedMenu && optimisticId && (onResendQueued || onRemoveFromQueue) && (
+                                  <div className="absolute right-0 bottom-full mb-1 flex flex-col gap-0.5 rounded-lg bg-gray-800 dark:bg-gray-700 py-1 shadow-lg z-50 min-w-[100px]">
+                                    {onResendQueued && (
+                                      <button type="button" onClick={(e) => { e.stopPropagation(); setShowFailedMenu(false); onResendQueued(optimisticId); }} className="px-3 py-1.5 text-left text-sm text-white hover:bg-gray-700 dark:hover:bg-gray-600">
+                                        {t('chat.resend', { defaultValue: 'Resend' })}
+                                      </button>
+                                    )}
+                                    {onRemoveFromQueue && (
+                                      <button type="button" onClick={(e) => { e.stopPropagation(); setShowFailedMenu(false); onRemoveFromQueue(optimisticId); }} className="px-3 py-1.5 text-left text-sm text-red-300 hover:bg-gray-700 dark:hover:bg-gray-600">
+                                        {t('chat.delete', { defaultValue: 'Delete' })}
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </span>
+                            ) : currentMessage.readReceipts && currentMessage.readReceipts.length > 0 ? (
+                              <span className="text-purple-200 inline-flex" title={`Read by ${currentMessage.readReceipts.length} ${currentMessage.readReceipts.length === 1 ? 'person' : 'people'}`}>
+                                <DoubleTickIcon size={14} variant="double" />
+                              </span>
+                            ) : (
+                              <span className="text-blue-100 inline-flex" title="Sent">
+                                <DoubleTickIcon size={14} variant="secondary" />
+                              </span>
+                            )}
+                          </>
+                        )}
                       </span>
-                      {isOwnMessage && (
-                        <div className="flex items-center relative">
-                          {isSending ? (
-                            <div className="flex items-center gap-0.5" title="Sending...">
-                              <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-1" />
-                              <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-2" />
-                              <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-3" />
-                            </div>
-                          ) : isFailed ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); setShowFailedMenu((v) => !v); }}
-                                className="p-0.5 rounded hover:bg-white/20"
-                                title={t('chat.failedToSend', { defaultValue: 'Failed to send' })}
-                              >
-                                <AlertCircle size={14} className="text-red-200" />
-                              </button>
-                              {showFailedMenu && optimisticId && (onResendQueued || onRemoveFromQueue) && (
-                                <div className="absolute right-0 bottom-full mb-1 flex flex-col gap-0.5 rounded-lg bg-gray-800 dark:bg-gray-700 py-1 shadow-lg z-50 min-w-[100px]">
-                                  {onResendQueued && (
-                                    <button type="button" onClick={(e) => { e.stopPropagation(); setShowFailedMenu(false); onResendQueued(optimisticId); }} className="px-3 py-1.5 text-left text-sm text-white hover:bg-gray-700 dark:hover:bg-gray-600">
-                                      {t('chat.resend', { defaultValue: 'Resend' })}
-                                    </button>
-                                  )}
-                                  {onRemoveFromQueue && (
-                                    <button type="button" onClick={(e) => { e.stopPropagation(); setShowFailedMenu(false); onRemoveFromQueue(optimisticId); }} className="px-3 py-1.5 text-left text-sm text-red-300 hover:bg-gray-700 dark:hover:bg-gray-600">
-                                      {t('chat.delete', { defaultValue: 'Delete' })}
-                                    </button>
-                                  )}
-                                </div>
-                              )}
-                            </>
-                          ) : currentMessage.readReceipts && currentMessage.readReceipts.length > 0 ? (
-                            <div className="text-purple-200" title={`Read by ${currentMessage.readReceipts.length} ${currentMessage.readReceipts.length === 1 ? 'person' : 'people'}`}>
-                              <DoubleTickIcon size={14} variant="double" />
-                            </div>
-                          ) : (
-                            <div className="text-blue-100" title="Sent">
-                              <DoubleTickIcon size={14} variant="secondary" />
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </div>
 
