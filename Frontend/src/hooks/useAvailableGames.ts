@@ -51,7 +51,7 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, i
       console.error('Failed to fetch available games:', error);
     } finally {
       isLoadingRef.current = false;
-      if (!hasDataRef.current) setLoading(false);
+      setLoading(false);
     }
   }, [user?.id, startDate, endDate, includeLeagues]);
 
