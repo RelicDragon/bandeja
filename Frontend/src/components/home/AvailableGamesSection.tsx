@@ -29,6 +29,7 @@ interface AvailableGamesSectionProps {
 export const AvailableGamesSection = ({
   availableGames,
   user,
+  loading,
   onJoin,
   onMonthChange,
   onDateRangeChange,
@@ -382,7 +383,14 @@ export const AvailableGamesSection = ({
 
       <TrainersList show={trainingFilterVal} availableGames={availableGames} />
 
-      {findViewMode === 'calendar' ? (
+      {loading && availableGames.length === 0 ? (
+        <Card className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600 dark:border-primary-400" />
+            <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{t('common.loading', { defaultValue: 'Loading...' })}</p>
+          </div>
+        </Card>
+      ) : findViewMode === 'calendar' ? (
         <>
           <MonthCalendar
             selectedDate={selectedDate}

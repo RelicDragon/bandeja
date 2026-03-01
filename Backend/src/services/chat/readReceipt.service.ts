@@ -201,7 +201,22 @@ export class ReadReceiptService {
       where: { id: { in: gameIds } },
       include: { participants: { where: { userId } } },
     });
-    return this.getGamesUnreadCountsFromGames(games, userId);
+    const unreadCounts: Record<string, number> = {};
+    for (const game of games) {
+      const participant = game.participants[0];
+      const chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(participant, game.status);
+      const gameUnreadCount = await prisma.chatMessage.count({
+        where: {
+          chatContextType: 'GAME',
+          contextId: game.id,
+          chatType: { in: chatTypeFilter },
+          senderId: { not: userId },
+          readReceipts: { none: { userId } },
+        },
+      });
+      unreadCounts[game.id] = gameUnreadCount;
+    }
+    return unreadCounts;
   }
 
   static async getGamesUnreadCountsFromGames(
@@ -213,10 +228,10 @@ export class ReadReceiptService {
     const rows = await UnreadCountBatchService.getGameUnreadCountsByContextAndType(gameIds, userId);
     const countByContextAndType: Record<string, Record<string, number>> = {};
     for (const row of rows) {
-      const contextId = (row as any).contextid ?? (row as any).contextId;
-      const chatType = (row as any).chattype ?? (row as any).chatType;
-      const cnt = Number((row as any).cnt);
-      if (contextId == null) continue;
+      const contextId = row.context_id;
+      const chatType = row.chat_type;
+      const cnt = Number(row.cnt);
+      if (!contextId) continue;
       if (!countByContextAndType[contextId]) countByContextAndType[contextId] = {};
       countByContextAndType[contextId][chatType] = cnt;
     }

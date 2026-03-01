@@ -23,23 +23,20 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
   const fetchGamesWithUnread = async (myGames: Game[], userId: string): Promise<Record<string, number>> => {
     const accessibleGameIds = myGames
       .filter(game => {
-        const isParticipant = game.participants.some(p => p.userId === userId);
-        const hasPendingInvite = game.participants?.some(p => p.userId === userId && p.status === 'INVITED');
+        const participants = game.participants ?? [];
+        const isParticipant = participants.some((p: { userId?: string }) => p.userId === userId);
+        const hasPendingInvite = participants.some((p: { userId?: string; status?: string }) => p.userId === userId && p.status === 'INVITED');
         return isParticipant || hasPendingInvite;
       })
       .map(game => game.id);
 
-    if (accessibleGameIds.length > 0) {
-      try {
-        const unreadResponse = await chatApi.getGamesUnreadCounts(accessibleGameIds);
-        return unreadResponse.data;
-      } catch (error) {
-        console.error('Failed to fetch unread counts:', error);
-        return {};
-      }
+    if (accessibleGameIds.length === 0) return {};
+    try {
+      return await chatApi.getGamesUnreadCounts(accessibleGameIds);
+    } catch (error) {
+      console.error('Failed to fetch unread counts:', error);
+      return {};
     }
-
-    return {};
   };
 
   const loadPastGames = useCallback(async () => {

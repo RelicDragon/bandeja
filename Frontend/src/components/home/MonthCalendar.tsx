@@ -19,6 +19,14 @@ const ENTITY_ICONS: Record<DisplayEntityType, typeof Users> = {
 
 const PILL_ENTITY_ORDER: DisplayEntityType[] = ['GAME', 'TOURNAMENT', 'TRAINING', 'LEAGUE', 'BAR'];
 
+const ENTITY_ICON_CLASS: Record<DisplayEntityType, string> = {
+  GAME: 'text-gray-900 dark:text-gray-200',
+  TOURNAMENT: 'text-red-500 dark:text-red-400',
+  TRAINING: 'text-green-500 dark:text-green-400',
+  LEAGUE: 'text-blue-500 dark:text-blue-400',
+  BAR: 'text-yellow-500 dark:text-yellow-400',
+};
+
 function toDisplayEntityType(entityType: Game['entityType']): DisplayEntityType {
   return entityType === 'LEAGUE_SEASON' ? 'LEAGUE' : entityType;
 }
@@ -61,8 +69,6 @@ export const MonthCalendar = ({
   const { i18n } = useTranslation();
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(selectedDate));
   const isNavigatingRef = useRef(false);
-  const [visibleDays, setVisibleDays] = useState<Set<number>>(new Set());
-  const animationTriggerRef = useRef(0);
   const calendarRef = useRef<HTMLDivElement>(null);
 
   const displaySettings = useMemo(() => user ? resolveDisplaySettings(user) : resolveDisplaySettings(null), [user]);
@@ -89,7 +95,7 @@ export const MonthCalendar = ({
   const noEntityFilter = !gameFilter && !trainingFilter && !tournamentFilter && !leaguesFilter;
 
   const dateCellData = useMemo(() => {
-    const dataMap = new Map<string, { gameCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean; hasTraining: boolean; participantEntityTypes: Set<DisplayEntityType> }>();
+    const dataMap = new Map<string, { gameCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean; hasTraining: boolean; participantEntityTypes: Set<DisplayEntityType>; entityTypes: Set<DisplayEntityType> }>();
     
     availableGames.forEach(game => {
       if (game.timeIsSet === false) return;
@@ -109,7 +115,7 @@ export const MonthCalendar = ({
       }
 
       if (isUserParticipantInGame) {
-        const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>() };
+        const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
         existing.participantEntityTypes.add(toDisplayEntityType(game.entityType));
         dataMap.set(gameDate, existing);
       }
@@ -152,9 +158,10 @@ export const MonthCalendar = ({
         return;
       }
 
-      const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>() };
+      const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
       
       existing.gameCount++;
+      existing.entityTypes.add(toDisplayEntityType(game.entityType));
       
       if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') {
         existing.hasLeagueTournament = true;
@@ -230,32 +237,6 @@ export const MonthCalendar = ({
     }
   }, [startDate, endDate, onDateRangeChange]);
 
-  useEffect(() => {
-    setVisibleDays(new Set());
-    animationTriggerRef.current++;
-    const currentTrigger = animationTriggerRef.current;
-    
-    const calendarDays = [];
-    let day = startDate;
-    while (day <= endDate) {
-      calendarDays.push(day);
-      day = addDays(day, 1);
-    }
-
-    calendarDays.forEach((_, index) => {
-      setTimeout(() => {
-        if (currentTrigger === animationTriggerRef.current) {
-          setVisibleDays(prev => new Set([...prev, index]));
-        }
-      }, index * 20);
-    });
-
-    return () => {
-      const triggerValue = animationTriggerRef.current;
-      animationTriggerRef.current = triggerValue + 1;
-    };
-  }, [startDate, endDate, dateCellData]);
-
   const calendarDays = [];
   let day = startDate;
   while (day <= endDate) {
@@ -273,7 +254,7 @@ export const MonthCalendar = ({
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={handlePreviousMonth}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <ChevronLeft size={20} className="text-gray-700 dark:text-gray-300" />
         </button>
@@ -282,7 +263,7 @@ export const MonthCalendar = ({
         </h3>
         <button
           onClick={handleNextMonth}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <ChevronRight size={20} className="text-gray-700 dark:text-gray-300" />
         </button>
@@ -305,31 +286,33 @@ export const MonthCalendar = ({
           const isSelected = isSameDay(day, selectedDate);
           const isTodayDate = isToday(day);
           const dateStr = format(startOfDay(day), 'yyyy-MM-dd');
-          const dayData = dateCellData.get(dateStr) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>() };
+          const dayData = dateCellData.get(dateStr) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
           const gameCount = dayData.gameCount;
           const hasGames = gameCount > 0;
           const isParticipant = dayData.isUserParticipant;
           const participantTypes = PILL_ENTITY_ORDER.filter(t => dayData.participantEntityTypes.has(t));
-          const showPill = noEntityFilter && isParticipant && participantTypes.length > 0;
+          const showParticipantPill = noEntityFilter && isParticipant && participantTypes.length > 0;
+          const typePillTypes = PILL_ENTITY_ORDER.filter(t => dayData.entityTypes.has(t));
+          const showTypePill = hasGames && typePillTypes.length > 0;
 
           return (
             <button
               key={index}
               onClick={() => handleDateClick(day)}
               className={`
-                relative w-full p-2 rounded-lg text-sm transition-all flex flex-col items-center justify-center gap-0.5
+                relative w-full p-2 rounded-lg text-sm flex flex-col items-center justify-center gap-0.5
                 ${!isCurrentMonth 
-                  ? `text-gray-300 dark:text-gray-600 cursor-not-allowed ${hasGames ? 'border-2 border-gray-300/50 dark:border-gray-600/50' : ''}` 
+                  ? `text-gray-300 dark:text-gray-600 cursor-not-allowed ${hasGames ? 'border border-gray-300/50 dark:border-gray-600/50' : ''}` 
                   : isSelected
                   ? 'bg-primary-500 text-white font-semibold scale-[1.1] z-10'
                   : isTodayDate
-                  ? `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold border-2 ${
+                  ? `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold border ${
                       hasGames 
                         ? 'border-green-500 dark:border-green-400' 
                         : 'border-primary-300 dark:border-primary-700'
                     }`
                   : hasGames
-                  ? 'bg-green-200 dark:bg-green-800/40 text-gray-700 dark:text-gray-300 border-2 border-green-400 dark:border-green-500 hover:bg-green-300 dark:hover:bg-green-800/60'
+                  ? 'bg-green-200 dark:bg-green-800/40 text-gray-700 dark:text-gray-300 border border-green-400 dark:border-green-500 hover:bg-green-300 dark:hover:bg-green-800/60'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }
               `}
@@ -343,25 +326,37 @@ export const MonthCalendar = ({
                 <span className={`
                   absolute -top-1 -right-1 flex items-center justify-center
                   min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold
-                  transition-all duration-300
-                  ${visibleDays.has(index) ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
                   ${!isCurrentMonth
                     ? 'bg-gray-400 dark:bg-gray-600 text-gray-300 dark:text-gray-400'
                     : isSelected
-                    ? 'bg-white text-primary-500 border-2 border-primary-500'
+                    ? 'bg-white text-primary-500 border border-primary-500'
                     : 'bg-green-500 dark:bg-green-600 text-white'
                   }
                 `}>
                   {gameCount}
                 </span>
               )}
-              {showPill && (
+              {showTypePill && (
+                <span className={`
+                  absolute -bottom-1.5 left-1/2 -translate-x-1/2
+                  inline-flex items-center justify-center
+                  gap-0.5 px-1 py-0.5 rounded-full w-fit
+                  border shadow-md
+                  bg-amber-50 dark:bg-gray-800 border-amber-200/60 dark:border-gray-600
+                `}>
+                  {typePillTypes.map((t) => {
+                    const Icon = ENTITY_ICONS[t];
+                    const iconClass = ENTITY_ICON_CLASS[t];
+                    return Icon ? <Icon key={t} size={10} className={`shrink-0 ${iconClass}`} /> : null;
+                  })}
+                </span>
+              )}
+              {showParticipantPill && !showTypePill && (
                 <span className={`
                   absolute -bottom-1.5 left-1/2 -translate-x-1/2 
                   inline-flex items-center justify-center 
                   gap-0.5 px-0.5 py-0.5 rounded-full w-fit
-                  transition-all duration-300 border shadow-sm
-                  ${visibleDays.has(index) ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
+                  border shadow-sm
                   ${!isCurrentMonth
                     ? 'bg-gray-400/80 dark:bg-gray-600/80 border-gray-500/50 dark:border-gray-500/50'
                     : isSelected

@@ -408,9 +408,10 @@ export const chatApi = {
     return response.data;
   },
 
-  getGamesUnreadCounts: async (gameIds: string[]) => {
+  getGamesUnreadCounts: async (gameIds: string[]): Promise<Record<string, number>> => {
     const response = await api.post<ApiResponse<Record<string, number>>>(`/chat/games/unread-counts`, { gameIds });
-    return response.data;
+    const body = response.data as ApiResponse<Record<string, number>> & Record<string, number>;
+    return (body?.data != null ? body.data : body) ?? {};
   },
 
   markAllMessagesAsRead: async (gameId: string, chatTypes?: ChatType[]) => {

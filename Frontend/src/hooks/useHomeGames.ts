@@ -34,18 +34,13 @@ export const useHomeGames = (
       })
       .map(game => game.id);
 
-    // Use batch API to get unread counts for all accessible games at once
-    if (accessibleGameIds.length > 0) {
-      try {
-        const unreadResponse = await chatApi.getGamesUnreadCounts(accessibleGameIds);
-        return unreadResponse.data;
-      } catch (error) {
-        console.error('Failed to fetch unread counts:', error);
-        return {};
-      }
+    if (accessibleGameIds.length === 0) return {};
+    try {
+      return await chatApi.getGamesUnreadCounts(accessibleGameIds);
+    } catch (error) {
+      console.error('Failed to fetch unread counts:', error);
+      return {};
     }
-
-    return {};
   };
 
   const fetchData = useCallback(async (showLoader = true, force = false) => {

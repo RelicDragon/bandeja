@@ -30,6 +30,7 @@ function getRgbForLevel(level: number, isDark: boolean): [number, number, number
   } else if (levelValue >= COLOR_STOPS[COLOR_STOPS.length - 1].level) {
     rgb = COLOR_STOPS[COLOR_STOPS.length - 1].rgb;
   } else {
+    rgb = COLOR_STOPS[0].rgb;
     for (let i = 0; i < COLOR_STOPS.length - 1; i++) {
       const current = COLOR_STOPS[i];
       const next = COLOR_STOPS[i + 1];
@@ -39,7 +40,6 @@ function getRgbForLevel(level: number, isDark: boolean): [number, number, number
         break;
       }
     }
-    rgb = COLOR_STOPS[0].rgb;
   }
   return [
     Math.round(rgb[0] * darkMultiplier),

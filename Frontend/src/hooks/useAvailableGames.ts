@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, includeLeagues?: boolean) => {
   const [availableGames, setAvailableGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
+  const hasDataRef = useRef(false);
 
   const isLoadingRef = useRef(false);
   const lastFetchParamsRef = useRef<string | null>(null);
@@ -30,8 +31,7 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, i
 
     isLoadingRef.current = true;
     lastFetchParamsRef.current = fetchParams;
-
-    setLoading(true);
+    if (!hasDataRef.current) setLoading(true);
     try {
       const params: any = {
         showArchived: true,
@@ -45,12 +45,13 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, i
       const allGames = response.data || [];
 
       const sortedGames = sortGames(allGames);
+      hasDataRef.current = true;
       setAvailableGames(sortedGames);
     } catch (error) {
       console.error('Failed to fetch available games:', error);
     } finally {
       isLoadingRef.current = false;
-      setLoading(false);
+      if (!hasDataRef.current) setLoading(false);
     }
   }, [user?.id, startDate, endDate, includeLeagues]);
 
