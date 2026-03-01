@@ -117,6 +117,7 @@ export const MyTab = () => {
     games,
     invites,
     gamesUnreadCounts,
+    totalGamesUnreadFromUnreadObjects,
     setInvites,
     fetchData,
   } = useMyGames(user, (loadingState) => setLoading(loadingState), {
@@ -148,21 +149,7 @@ export const MyTab = () => {
     return Object.values(pastGamesUnreadCounts).reduce((sum: number, count: number) => sum + count, 0);
   }, [pastGamesUnreadCounts]);
 
-  const [totalGamesUnreadCount, setTotalGamesUnreadCount] = useState<number>(0);
-
-  useEffect(() => {
-    const fetchTotalGamesUnread = async () => {
-      if (!user?.id) return;
-      try {
-        const response = await chatApi.getUnreadObjects();
-        const totalGamesUnread = response.data.games.reduce((sum: number, item: { game: unknown; unreadCount: number }) => sum + item.unreadCount, 0);
-        setTotalGamesUnreadCount(totalGamesUnread);
-      } catch (error) {
-        console.error('Failed to fetch total games unread count:', error);
-      }
-    };
-    fetchTotalGamesUnread();
-  }, [user?.id, gamesUnreadCounts, pastGamesUnreadCounts]);
+  const totalGamesUnreadCount = totalGamesUnreadFromUnreadObjects;
 
   useEffect(() => {
     setMyGamesUnreadCount(myGamesTotalUnread);
@@ -173,7 +160,6 @@ export const MyTab = () => {
       setPastGamesUnreadCount(0);
       return;
     }
-    
     const calculatedPastGamesUnread = Math.max(0, totalGamesUnreadCount - myGamesTotalUnread);
     const actualPastGamesUnread = pastGamesTotalUnread;
     const pastGamesUnread = actualPastGamesUnread > 0 ? actualPastGamesUnread : calculatedPastGamesUnread;

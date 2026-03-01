@@ -98,17 +98,14 @@ function AppContent() {
 
     const cleanup = initNetworkListener();
 
-    const timer = setTimeout(() => {
-      finishInitializing();
-      if (isCapacitor() && useAuthStore.getState().isAuthenticated) {
-        void pushNotificationService.ensureTokenSentToBackend();
-      }
-    }, 500);
+    finishInitializing();
+    if (isCapacitor() && useAuthStore.getState().isAuthenticated) {
+      void pushNotificationService.ensureTokenSentToBackend();
+    }
 
     return () => {
       cleanup();
       cleanupAuthPersistence();
-      clearTimeout(timer);
       appLifecycleService.cleanup();
       if (isCapacitor()) {
         backButtonService.cleanup();

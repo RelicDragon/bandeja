@@ -61,7 +61,6 @@ export const useHomeGames = (
     lastFetchParamsRef.current = fetchParams;
 
     try {
-      const startTime = Date.now();
       if (showLoader) {
         skeletonAnimation?.showSkeletonsAnimated();
         onLoading(true);
@@ -115,15 +114,8 @@ export const useHomeGames = (
       });
       
       const unreadCounts = await fetchGamesWithUnread(myGames, user?.id);
-      
       const sortedMyGames = sortGames(myGames);
-      
-      const elapsedTime = Date.now() - startTime;
-      const remainingTime = Math.max(0, 1000 - elapsedTime);
-      if (remainingTime > 0 && showLoader) {
-        await new Promise(resolve => setTimeout(resolve, remainingTime));
-      }
-      
+
       setGames(sortedMyGames);
       setAvailableGames(availableGamesFiltered);
       setInvites(invitesResponse.data);

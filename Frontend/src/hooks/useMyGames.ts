@@ -13,6 +13,7 @@ export const useMyGames = (
   const [games, setGames] = useState<Game[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [gamesUnreadCounts, setGamesUnreadCounts] = useState<Record<string, number>>({});
+  const [totalGamesUnreadFromUnreadObjects, setTotalGamesUnreadFromUnreadObjects] = useState<number>(0);
 
   const isLoadingRef = useRef(false);
   const lastFetchParamsRef = useRef<string | null>(null);
@@ -58,27 +59,26 @@ export const useMyGames = (
     lastFetchParamsRef.current = fetchParams;
 
     try {
-      const startTime = Date.now();
       if (showLoader) {
         skeletonAnimation?.showSkeletonsAnimated();
         onLoading(true);
       }
 
-      const [gamesResponse, invitesResponse] = await Promise.all([
+      const [gamesResponse, invitesResponse, unreadObjectsResponse] = await Promise.all([
         gamesApi.getMyGames(),
-        invitesApi.getMyInvites('PENDING')
+        invitesApi.getMyInvites('PENDING'),
+        chatApi.getUnreadObjects().catch(() => ({ data: { games: [] as { unreadCount: number }[] } })),
       ]);
 
       const myGames = gamesResponse.data || [];
       const unreadCounts = await fetchGamesWithUnread(myGames, user.id);
-
       const sortedMyGames = sortGames(myGames);
 
-      const elapsedTime = Date.now() - startTime;
-      const remainingTime = Math.max(0, 1000 - elapsedTime);
-      if (remainingTime > 0 && showLoader) {
-        await new Promise(resolve => setTimeout(resolve, remainingTime));
-      }
+      const totalGamesUnread = (unreadObjectsResponse.data?.games ?? []).reduce(
+        (sum: number, item: { unreadCount: number }) => sum + item.unreadCount,
+        0
+      );
+      setTotalGamesUnreadFromUnreadObjects(totalGamesUnread);
 
       setGames(sortedMyGames);
       setInvites(invitesResponse.data);
@@ -174,6 +174,7 @@ export const useMyGames = (
     games,
     invites,
     gamesUnreadCounts,
+    totalGamesUnreadFromUnreadObjects,
     fetchData,
     setInvites,
   };
