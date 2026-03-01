@@ -57,6 +57,20 @@ export const getMyGames = asyncHandler(async (req: AuthRequest, res: Response) =
   });
 });
 
+export const getMyGamesWithUnread = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const result = await GameService.getMyGamesWithUnread(req.userId, req.user?.currentCityId);
+
+  res.json({
+    success: true,
+    data: result,
+    serverTime: new Date().toISOString(),
+  });
+});
+
 export const getPastGames = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.userId) {
     throw new ApiError(401, 'Unauthorized');

@@ -25,6 +25,13 @@ export const gamesApi = {
     return response.data;
   },
 
+  getMyGamesWithUnread: async () => {
+    const response = await api.get<
+      ApiResponse<{ games: Game[]; invites: any[]; gamesUnreadCounts: Record<string, number> }>
+    >('/games/my-games-with-unread');
+    return response.data;
+  },
+
   getPastGames: async (params?: { limit?: number; offset?: number }) => {
     const response = await api.get<ApiResponse<Game[]>>('/games/past-games', { params });
     return response.data;

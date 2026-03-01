@@ -91,6 +91,10 @@ export const HomeContent = () => {
   const { activeTab, setActiveTab } = useNavigationStore();
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activeTab]);
+
+  useEffect(() => {
     if (!loading && games.length === 0 && activeTab === 'my-games') {
       setActiveTab('search');
     }
@@ -309,12 +313,12 @@ export const HomeContent = () => {
       </div>
 
 
-      <div className="relative min-h-[100px]">
+      <div className="relative min-h-[100px] overflow-hidden">
         <div
           className={`transition-all duration-300 ease-in-out ${
             activeTab === 'my-games'
               ? 'opacity-100 translate-x-0'
-              : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none'
+              : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
           }`}
         >
           <MyGamesSection
@@ -333,7 +337,7 @@ export const HomeContent = () => {
               className={`transition-all duration-300 ease-in-out ${
                 activeTab === 'past-games'
                   ? 'opacity-100 translate-x-0'
-                  : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none'
+                  : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
               }`}
             >
               <PastGamesSection
@@ -351,7 +355,7 @@ export const HomeContent = () => {
           className={`transition-all duration-300 ease-in-out ${
             activeTab === 'search'
               ? 'opacity-100 translate-x-0'
-              : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none'
+              : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
           }`}
         >
           <AvailableGamesSection

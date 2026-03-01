@@ -37,6 +37,36 @@ export class UnreadCountBatchService {
     return map;
   }
 
+  static async getGameUnreadCountsByContextAndType(
+    gameIds: string[],
+    userId: string
+  ): Promise<Array<{ contextId: string; chatType: string; cnt: bigint }>> {
+    if (gameIds.length === 0) return [];
+    const batches: string[][] = [];
+    for (let i = 0; i < gameIds.length; i += IN_CLAUSE_BATCH_SIZE) {
+      batches.push(gameIds.slice(i, i + IN_CLAUSE_BATCH_SIZE));
+    }
+    const results: Array<{ contextId: string; chatType: string; cnt: bigint }> = [];
+    for (const batch of batches) {
+      const rows = await prisma.$queryRaw<Array<{ contextId: string; chatType: string; cnt: bigint }>>(
+        Prisma.sql`
+        SELECT m."contextId", m."chatType", COUNT(*)::bigint as cnt
+        FROM "ChatMessage" m
+        WHERE m."chatContextType" = 'GAME'
+          AND m."senderId" IS NOT NULL AND m."senderId" != ${userId}
+          AND m."contextId" IN (${Prisma.join(batch)})
+          AND NOT EXISTS (
+            SELECT 1 FROM "MessageReadReceipt" r
+            WHERE r."messageId" = m.id AND r."userId" = ${userId}
+          )
+        GROUP BY m."contextId", m."chatType"
+        `
+      );
+      results.push(...rows);
+    }
+    return results;
+  }
+
   static async getGameUnreadCount(
     gameId: string,
     userId: string,

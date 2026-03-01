@@ -2,6 +2,8 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { getUserGameNote, getUserNotesForGames } from '../userGameNote.service';
+import { InviteService } from '../invite.service';
+import { ReadReceiptService } from '../chat/readReceipt.service';
 
 const getLeagueSeasonInclude = () => ({
   league: {
@@ -463,6 +465,21 @@ export class GameReadService {
     }
 
     return games;
+  }
+
+  static async getMyGamesWithUnread(userId: string, userCityId?: string) {
+    const [games, invites] = await Promise.all([
+      GameReadService.getMyGames(userId, userCityId),
+      InviteService.getMyPendingInvites(userId),
+    ]);
+    const gamesUnreadCounts =
+      games.length > 0
+        ? await ReadReceiptService.getGamesUnreadCountsFromGames(
+            games.map((g) => ({ id: g.id, status: g.status, participants: (g as any).participants ?? [] })),
+            userId
+          )
+        : {};
+    return { games, invites, gamesUnreadCounts };
   }
 
   static async getPastGames(userId: string, userCityId?: string, limit: number = 30, offset: number = 0) {

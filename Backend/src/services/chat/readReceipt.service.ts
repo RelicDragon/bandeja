@@ -196,49 +196,40 @@ export class ReadReceiptService {
   }
 
   static async getGamesUnreadCounts(gameIds: string[], userId: string) {
-    if (gameIds.length === 0) {
-      return {};
-    }
-
-    // Get all games with participants in one query
+    if (gameIds.length === 0) return {};
     const games = await prisma.game.findMany({
-      where: {
-        id: { in: gameIds },
-      },
-      include: {
-        participants: {
-          where: { userId },
-        },
-      },
+      where: { id: { in: gameIds } },
+      include: { participants: { where: { userId } } },
     });
+    return this.getGamesUnreadCountsFromGames(games, userId);
+  }
 
+  static async getGamesUnreadCountsFromGames(
+    games: Array<{ id: string; status: string; participants: Array<{ status: string; role: string }> }>,
+    userId: string
+  ): Promise<Record<string, number>> {
+    if (games.length === 0) return {};
+    const gameIds = games.map((g) => g.id);
+    const rows = await UnreadCountBatchService.getGameUnreadCountsByContextAndType(gameIds, userId);
+    const countByContextAndType: Record<string, Record<string, number>> = {};
+    for (const row of rows) {
+      const contextId = (row as any).contextid ?? (row as any).contextId;
+      const chatType = (row as any).chattype ?? (row as any).chatType;
+      const cnt = Number((row as any).cnt);
+      if (contextId == null) continue;
+      if (!countByContextAndType[contextId]) countByContextAndType[contextId] = {};
+      countByContextAndType[contextId][chatType] = cnt;
+    }
     const unreadCounts: Record<string, number> = {};
-
     for (const game of games) {
       const participant = game.participants[0];
       const chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(participant, game.status);
-
-      const gameUnreadCount = await prisma.chatMessage.count({
-        where: {
-          chatContextType: 'GAME',
-          contextId: game.id,
-          chatType: {
-            in: chatTypeFilter
-          },
-          senderId: {
-            not: userId
-          },
-          readReceipts: {
-            none: {
-              userId
-            }
-          }
-        }
-      });
-
-      unreadCounts[game.id] = gameUnreadCount;
+      let total = 0;
+      for (const chatType of chatTypeFilter) {
+        total += countByContextAndType[game.id]?.[chatType] ?? 0;
+      }
+      unreadCounts[game.id] = total;
     }
-
     return unreadCounts;
   }
 

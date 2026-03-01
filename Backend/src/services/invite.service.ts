@@ -1,6 +1,7 @@
 import prisma from '../config/database';
 import { ParticipantRole } from '@prisma/client';
 import { createSystemMessage } from '../controllers/chat.controller';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { validatePlayerCanJoinGame, validateGameCanAcceptParticipants } from '../utils/participantValidation';
@@ -8,7 +9,6 @@ import { fetchGameWithPlayingParticipants } from '../utils/gameQueries';
 import { addOrUpdateParticipant } from '../utils/participantOperations';
 import { performPostJoinOperations } from '../utils/postJoinOperations';
 import { ParticipantService } from './game/participant.service';
-import { USER_SELECT_FIELDS } from '../utils/constants';
 import { ApiError } from '../utils/ApiError';
 
 export interface InviteActionResult {
@@ -18,6 +18,80 @@ export interface InviteActionResult {
 }
 
 export class InviteService {
+  static async getMyPendingInvites(userId: string) {
+    const participants = await prisma.gameParticipant.findMany({
+      where: { userId, status: 'INVITED' },
+      include: {
+        invitedByUser: { select: USER_SELECT_FIELDS },
+        game: {
+          select: {
+            id: true,
+            name: true,
+            gameType: true,
+            startTime: true,
+            endTime: true,
+            maxParticipants: true,
+            minParticipants: true,
+            minLevel: true,
+            maxLevel: true,
+            isPublic: true,
+            affectsRating: true,
+            hasBookedCourt: true,
+            afterGameGoToBar: true,
+            hasFixedTeams: true,
+            teamsReady: true,
+            participantsReady: true,
+            status: true,
+            resultsStatus: true,
+            entityType: true,
+            court: { select: { id: true, name: true, club: { select: { id: true, name: true } } } },
+            club: { select: { id: true, name: true } },
+            participants: {
+              include: {
+                user: { select: USER_SELECT_FIELDS },
+                invitedByUser: { select: USER_SELECT_FIELDS },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { joinedAt: 'desc' },
+    });
+    const now = new Date();
+    const toProcess = participants.filter((p) => p.game && new Date(p.game.startTime) <= now && new Date(p.game.endTime) > now);
+    const toDelete: string[] = [];
+    const ownerIds: string[] = [];
+    toProcess.forEach((p) => {
+      if (p.role === ParticipantRole.OWNER) ownerIds.push(p.id);
+      else toDelete.push(p.id);
+    });
+    if (ownerIds.length > 0) {
+      await prisma.gameParticipant.updateMany({ where: { id: { in: ownerIds } }, data: { status: 'NON_PLAYING' } });
+    }
+    if (toDelete.length > 0) {
+      await prisma.gameParticipant.deleteMany({ where: { id: { in: toDelete } } });
+    }
+    if ((global as any).socketService && toProcess.length > 0) {
+      toProcess.forEach((p) => {
+        (global as any).socketService.emitInviteDeleted(p.userId, p.id, p.gameId || undefined);
+      });
+    }
+    const filtered = participants.filter((p) => !toProcess.some((t) => t.id === p.id));
+    return filtered.map((p) => ({
+      id: p.id,
+      receiverId: p.userId,
+      gameId: p.gameId,
+      status: 'PENDING',
+      message: p.inviteMessage,
+      expiresAt: p.inviteExpiresAt,
+      createdAt: p.joinedAt,
+      updatedAt: p.joinedAt,
+      receiver: null,
+      sender: p.invitedByUser,
+      game: p.game,
+    }));
+  }
+
   static async deleteInvitesForUserInGame(gameId: string, userId: string): Promise<void> {
     const participants = await prisma.gameParticipant.findMany({
       where: { gameId, userId, status: 'INVITED' },

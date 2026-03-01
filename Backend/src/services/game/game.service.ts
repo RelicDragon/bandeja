@@ -38,6 +38,10 @@ export class GameService {
     return GameReadService.getMyGames(userId, userCityId);
   }
 
+  static async getMyGamesWithUnread(userId: string, userCityId?: string) {
+    return GameReadService.getMyGamesWithUnread(userId, userCityId);
+  }
+
   static async getPastGames(userId: string, userCityId?: string, limit: number = 10, offset: number = 0) {
     return GameReadService.getPastGames(userId, userCityId, limit, offset);
   }

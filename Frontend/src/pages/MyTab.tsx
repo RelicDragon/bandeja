@@ -109,6 +109,10 @@ export const MyTab = () => {
   );
   const activeTab = useNavigationStore((s) => s.activeTab);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activeTab]);
+
   const [loading, setLoading] = useState(true);
 
   const skeletonAnimation = useSkeletonAnimation();
@@ -316,12 +320,12 @@ export const MyTab = () => {
           </>
         )}
 
-        <div className="relative min-h-[100px]">
+        <div className="relative min-h-[100px] overflow-hidden">
           <div
             className={`transition-all duration-300 ease-in-out ${
               activeTab === 'my-games'
                 ? 'opacity-100 translate-x-0'
-                : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none'
+                : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
             }`}
           >
             <MyGamesSection
@@ -339,7 +343,7 @@ export const MyTab = () => {
             className={`transition-all duration-300 ease-in-out ${
               activeTab === 'past-games'
                 ? 'opacity-100 translate-x-0'
-                : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none'
+                : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
             }`}
           >
             <PastGamesSection

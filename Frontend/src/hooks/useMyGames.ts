@@ -1,6 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { invitesApi } from '@/api';
-import { chatApi } from '@/api/chat';
 import { gamesApi } from '@/api';
 import { Game, Invite } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
@@ -24,28 +22,6 @@ export const useMyGames = (
     });
   };
 
-  const fetchGamesWithUnread = async (myGames: Game[], userId: string): Promise<Record<string, number>> => {
-    const accessibleGameIds = myGames
-      .filter(game => {
-        const isParticipant = game.participants.some(p => p.userId === userId);
-        const hasPendingInvite = game.participants?.some(p => p.userId === userId && p.status === 'INVITED');
-        return isParticipant || hasPendingInvite;
-      })
-      .map(game => game.id);
-
-    if (accessibleGameIds.length > 0) {
-      try {
-        const unreadResponse = await chatApi.getGamesUnreadCounts(accessibleGameIds);
-        return unreadResponse.data;
-      } catch (error) {
-        console.error('Failed to fetch unread counts:', error);
-        return {};
-      }
-    }
-
-    return {};
-  };
-
   const fetchData = useCallback(async (showLoader = true, force = false) => {
     if (!user?.id) return;
 
@@ -64,25 +40,15 @@ export const useMyGames = (
         onLoading(true);
       }
 
-      const [gamesResponse, invitesResponse, unreadObjectsResponse] = await Promise.all([
-        gamesApi.getMyGames(),
-        invitesApi.getMyInvites('PENDING'),
-        chatApi.getUnreadObjects().catch(() => ({ data: { games: [] as { unreadCount: number }[] } })),
-      ]);
-
-      const myGames = gamesResponse.data || [];
-      const unreadCounts = await fetchGamesWithUnread(myGames, user.id);
-      const sortedMyGames = sortGames(myGames);
-
-      const totalGamesUnread = (unreadObjectsResponse.data?.games ?? []).reduce(
-        (sum: number, item: { unreadCount: number }) => sum + item.unreadCount,
-        0
-      );
+      const response = await gamesApi.getMyGamesWithUnread();
+      const { games: myGames, invites: invitesData, gamesUnreadCounts: unreadCounts } = response.data;
+      const sortedMyGames = sortGames([...(myGames || [])]);
+      const totalGamesUnread = Object.values(unreadCounts || {}).reduce((sum, n) => sum + n, 0);
       setTotalGamesUnreadFromUnreadObjects(totalGamesUnread);
 
       setGames(sortedMyGames);
-      setInvites(invitesResponse.data);
-      setGamesUnreadCounts(unreadCounts);
+      setInvites(invitesData ?? []);
+      setGamesUnreadCounts(unreadCounts ?? {});
     } catch (error) {
       console.error('Failed to fetch my games:', error);
     } finally {

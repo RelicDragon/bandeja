@@ -11,6 +11,8 @@ router.get('/', optionalAuth, gameController.getGames);
 
 router.get('/my-games', authenticate, gameController.getMyGames);
 
+router.get('/my-games-with-unread', authenticate, gameController.getMyGamesWithUnread);
+
 router.get('/past-games', authenticate, gameController.getPastGames);
 
 router.get('/available', authenticate, gameController.getAvailableGames);
