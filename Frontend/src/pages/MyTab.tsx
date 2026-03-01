@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { format, startOfDay } from 'date-fns';
 import { InvitesSection, MyGamesSection, PastGamesSection } from '@/components/home';
-import { Button, Divider, MainTabFooter } from '@/components';
+import { Button, Divider, MainTabFooter, MonthCalendar } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { chatApi } from '@/api/chat';
 import { useShallow } from 'zustand/react/shallow';
@@ -143,6 +144,15 @@ export const MyTab = () => {
   }, [gamesUnreadCounts, pastGamesUnreadCounts]);
 
   const filteredMyGames = useMemo(() => sortMyGamesByStatusAndDateTime(games, mergedUnreadCounts), [games, mergedUnreadCounts]);
+  const [myGamesSelectedDate, setMyGamesSelectedDate] = useState<Date>(() => new Date());
+  const myGamesForSelectedDate = useMemo(() => {
+    const selectedStr = format(startOfDay(myGamesSelectedDate), 'yyyy-MM-dd');
+    return filteredMyGames.filter((g) => {
+      if (g.timeIsSet === false) return false;
+      const gameStr = format(startOfDay(new Date(g.startTime)), 'yyyy-MM-dd');
+      return gameStr === selectedStr;
+    });
+  }, [filteredMyGames, myGamesSelectedDate]);
   const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(pastGames, pastGamesUnreadCounts), [pastGames, pastGamesUnreadCounts]);
 
   const myGamesTotalUnread = useMemo(() => {
@@ -311,7 +321,7 @@ export const MyTab = () => {
           />
         </div>
 
-        {invites.length > 0 && activeTab === 'my-games' && (
+        {invites.length > 0 && (activeTab === 'calendar' || activeTab === 'list') && (
           <>
             <Divider />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
@@ -323,7 +333,30 @@ export const MyTab = () => {
         <div className="relative min-h-[100px] overflow-hidden">
           <div
             className={`transition-all duration-300 ease-in-out ${
-              activeTab === 'my-games'
+              activeTab === 'calendar'
+                ? 'opacity-100 translate-x-0'
+                : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
+            }`}
+          >
+            <MonthCalendar
+              selectedDate={myGamesSelectedDate}
+              onDateSelect={setMyGamesSelectedDate}
+              availableGames={filteredMyGames}
+            />
+            <MyGamesSection
+              games={myGamesForSelectedDate}
+              user={user}
+              loading={loading}
+              showSkeleton={skeletonAnimation.showSkeleton}
+              skeletonStates={skeletonAnimation.skeletonStates}
+              gamesUnreadCounts={mergedUnreadCounts}
+              onNoteSaved={() => fetchData(false, true)}
+            />
+          </div>
+
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              activeTab === 'list'
                 ? 'opacity-100 translate-x-0'
                 : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
             }`}

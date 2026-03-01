@@ -11,6 +11,7 @@ import { PlayerAvatarView } from './PlayerAvatarView';
 import { LevelHistoryView } from './LevelHistoryView';
 import { GenderIndicator } from './GenderIndicator';
 import { TrainerRatingBadge } from './TrainerRatingBadge';
+import { ReviewsList } from './ReviewsList';
 import { MarketItem } from '@/types';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { ConfirmationModal } from './ConfirmationModal';
@@ -42,6 +43,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAvatarView, setShowAvatarView] = useState(false);
+  const [showReviewsView, setShowReviewsView] = useState(false);
   const [showSendMoneyModal, setShowSendMoneyModal] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
   const [showBlockConfirmation, setShowBlockConfirmation] = useState(false);
@@ -53,6 +55,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   useEffect(() => {
     if (!playerId) return;
     setShowAvatarView(false);
+    setShowReviewsView(false);
     setShowSendMoneyModal(false);
 
     const fetchStats = async () => {
@@ -186,7 +189,21 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
       {!showSendMoneyModal && (
       <Drawer open={!!playerId} onOpenChange={(open) => !open && handleClose()}>
           <DrawerContent>
-            {showAvatarView && stats ? (
+            {showReviewsView && playerId ? (
+              <div className="flex items-center justify-between w-full p-2 pl-6">
+                <div className="flex items-center gap-4">
+                  <button onClick={() => setShowReviewsView(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
+                  </button>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">{t('profile.review') || 'Reviews'}</h2>
+                </div>
+                <DrawerClose asChild>
+                  <button className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    <X size={20} className="text-gray-600 dark:text-gray-300" />
+                  </button>
+                </DrawerClose>
+              </div>
+            ) : showAvatarView && stats ? (
               <div className="flex items-center justify-between w-full p-2 pl-6">
                 <div className="flex items-center gap-4">
                   <button onClick={() => setShowAvatarView(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -253,6 +270,24 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                   <motion.div key="loading" className="flex items-center justify-center h-64" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                     <Loading />
                   </motion.div>
+                ) : showReviewsView && playerId ? (
+                  <motion.div
+                    key="reviews"
+                    className="flex-1 min-h-0 flex flex-col px-4 pb-4 overflow-y-auto"
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -40 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                  >
+                    <ReviewsList
+                      trainerId={playerId}
+                      initialSummary={stats ? { rating: stats.user.trainerRating ?? null, reviewCount: stats.user.trainerReviewCount ?? 0 } : undefined}
+                      onReviewClick={(gameId) => { markReopenOnBack(); handleClose(); navigate(`/games/${gameId}`); }}
+                      showSummary
+                      showTitle={false}
+                      compact
+                    />
+                  </motion.div>
                 ) : stats ? (
                   <>
                     {showAvatarView && stats.user.originalAvatar ? (
@@ -266,6 +301,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                           t={t}
                           isBlocked={isBlocked}
                           onAvatarClick={() => { if (stats.user.originalAvatar) setShowAvatarView(true); }}
+                          onRatingClick={stats.user.isTrainer && (stats.user.trainerReviewCount ?? 0) > 0 ? () => setShowReviewsView(true) : undefined}
                           onTelegramClick={() => {
                             const getTelegramUrl = () => {
                               if (stats.user.telegramUsername) return `https://t.me/${stats.user.telegramUsername.replace('@', '')}`;
@@ -313,12 +349,13 @@ interface PlayerCardContentProps {
   t: (key: string) => string;
   isBlocked: boolean;
   onAvatarClick: () => void;
+  onRatingClick?: () => void;
   onTelegramClick: () => void;
   onOpenGame: () => void;
   onMarketItemClick?: (item: MarketItem) => void;
 }
 
-const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onTelegramClick, onOpenGame, onMarketItemClick }: PlayerCardContentProps) => {
+const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onRatingClick, onTelegramClick, onOpenGame, onMarketItemClick }: PlayerCardContentProps) => {
   const { user } = stats;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const isOnline = usePresenceStore((state) => state.isOnline(user.id));
@@ -380,7 +417,7 @@ const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onTelegramClick
             )}
             {user.isTrainer && (
               <div className="flex items-center gap-1 mt-1 text-amber-300">
-                <TrainerRatingBadge trainer={user} size="sm" showReviewCount={true} />
+                <TrainerRatingBadge trainer={user} size="sm" showReviewCount={true} onClick={onRatingClick} />
               </div>
             )}
           </div>

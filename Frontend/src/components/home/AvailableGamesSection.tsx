@@ -8,7 +8,7 @@ import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trop
 import { useNavigationStore } from '@/store/navigationStore';
 import { format, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { MonthCalendar } from './MonthCalendar';
+import { MonthCalendar } from '@/components/MonthCalendar';
 import { TrainersList } from './TrainersList';
 import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';

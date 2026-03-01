@@ -19,6 +19,7 @@ export const ConfirmedLevelSection = ({ user }: ConfirmedLevelSectionProps) => {
           <span className="bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-md flex items-center gap-1 inline-flex">
             {user.approvedLevel && <Check size={14} className="text-white" strokeWidth={3} />}
             <span>{user.level.toFixed(2)}</span>
+            <span className="text-[10px] font-normal opacity-90">{(user.reliability ?? 0).toFixed(0)}%</span>
             <span>•</span>
             <div className="relative flex items-center">
               <Beer size={14} className="text-amber-600 dark:text-amber-500 absolute" fill="currentColor" />

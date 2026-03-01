@@ -31,7 +31,7 @@ function toDisplayEntityType(entityType: Game['entityType']): DisplayEntityType 
   return entityType === 'LEAGUE_SEASON' ? 'LEAGUE' : entityType;
 }
 
-interface MonthCalendarProps {
+export interface MonthCalendarProps {
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
   availableGames: Game[];
@@ -96,7 +96,7 @@ export const MonthCalendar = ({
 
   const dateCellData = useMemo(() => {
     const dataMap = new Map<string, { gameCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean; hasTraining: boolean; participantEntityTypes: Set<DisplayEntityType>; entityTypes: Set<DisplayEntityType> }>();
-    
+
     availableGames.forEach(game => {
       if (game.timeIsSet === false) return;
 
@@ -130,7 +130,7 @@ export const MonthCalendar = ({
           const userLevel = user.level;
           const minLevel = game.minLevel || 0;
           const maxLevel = game.maxLevel || 10;
-          
+
           if (userLevel < minLevel || userLevel > maxLevel) {
             return;
           }
@@ -159,22 +159,22 @@ export const MonthCalendar = ({
       }
 
       const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
-      
+
       existing.gameCount++;
       existing.entityTypes.add(toDisplayEntityType(game.entityType));
-      
+
       if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') {
         existing.hasLeagueTournament = true;
       }
-      
+
       if (game.entityType === 'TRAINING') {
         existing.hasTraining = true;
       }
-      
+
       if (isUserParticipantInGame) {
         existing.isUserParticipant = true;
       }
-      
+
       dataMap.set(gameDate, existing);
     });
 
@@ -201,7 +201,7 @@ export const MonthCalendar = ({
 
   const handleDateClick = (day: Date) => {
     onDateSelect(day);
-    
+
     if (!isSameMonth(day, currentMonth)) {
       isNavigatingRef.current = true;
       const newMonth = startOfMonth(day);
@@ -217,7 +217,7 @@ export const MonthCalendar = ({
       const headerHeight = header ? header.getBoundingClientRect().height : 0;
       const currentScrollY = window.scrollY || window.pageYOffset;
       const targetScrollY = currentScrollY + rect.top - headerHeight;
-      
+
       window.scrollTo({
         top: Math.max(0, targetScrollY),
         behavior: 'smooth'
@@ -301,14 +301,14 @@ export const MonthCalendar = ({
               onClick={() => handleDateClick(day)}
               className={`
                 relative w-full p-2 rounded-lg text-sm flex flex-col items-center justify-center gap-0.5
-                ${!isCurrentMonth 
-                  ? `text-gray-300 dark:text-gray-600 cursor-not-allowed ${hasGames ? 'border border-gray-300/50 dark:border-gray-600/50' : ''}` 
+                ${!isCurrentMonth
+                  ? `text-gray-300 dark:text-gray-600 cursor-not-allowed ${hasGames ? 'border border-gray-300/50 dark:border-gray-600/50' : ''}`
                   : isSelected
                   ? 'bg-primary-500 text-white font-semibold scale-[1.1] z-10'
                   : isTodayDate
                   ? `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold border ${
-                      hasGames 
-                        ? 'border-green-500 dark:border-green-400' 
+                      hasGames
+                        ? 'border-green-500 dark:border-green-400'
                         : 'border-primary-300 dark:border-primary-700'
                     }`
                   : hasGames
@@ -353,8 +353,8 @@ export const MonthCalendar = ({
               )}
               {showParticipantPill && !showTypePill && (
                 <span className={`
-                  absolute -bottom-1.5 left-1/2 -translate-x-1/2 
-                  inline-flex items-center justify-center 
+                  absolute -bottom-1.5 left-1/2 -translate-x-1/2
+                  inline-flex items-center justify-center
                   gap-0.5 px-0.5 py-0.5 rounded-full w-fit
                   border shadow-sm
                   ${!isCurrentMonth

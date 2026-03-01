@@ -20,13 +20,17 @@ export function useUrlStoreSync() {
 
     switch (parsed.place) {
       case 'home': {
-        const tab = (parsed.params.tab as string) || 'my-games';
-        state.setActiveTab(tab as 'my-games' | 'past-games');
+        const raw = (parsed.params.tab as string) || 'calendar';
+        const tab = ['calendar', 'list', 'past-games'].includes(raw) ? raw : 'calendar';
+        state.setActiveTab(tab as 'calendar' | 'list' | 'past-games');
         break;
       }
       case 'find': {
         const view = (parsed.params.view as string) || 'calendar';
         state.setFindViewMode(view as 'calendar' | 'list');
+        const rawTab = (parsed.params.tab as string) || 'my-games';
+        const findTab = ['my-games', 'past-games', 'search'].includes(rawTab) ? rawTab : 'my-games';
+        state.setActiveTab(findTab as 'my-games' | 'past-games' | 'search');
         break;
       }
       case 'chats': {

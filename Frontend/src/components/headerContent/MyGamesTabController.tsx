@@ -1,3 +1,4 @@
+import { Calendar, List, History } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useHeaderStore } from '@/store/headerStore';
@@ -13,7 +14,7 @@ export const MyGamesTabController = () => {
 
   const handleTabChange = (id: string) => {
     const newParams = new URLSearchParams(searchParams);
-    if (id === 'my-games') {
+    if (id === 'calendar') {
       newParams.delete('tab');
     } else {
       newParams.set('tab', id);
@@ -23,8 +24,9 @@ export const MyGamesTabController = () => {
   };
 
   const tabs: SegmentedSwitchTab[] = [
-    { id: 'my-games', label: t('home.myGames'), badge: myGamesUnreadCount },
-    { id: 'past-games', label: t('home.past'), badge: pastGamesUnreadCount },
+    { id: 'calendar', label: t('games.calendar'), icon: Calendar, badge: myGamesUnreadCount },
+    { id: 'list', label: t('games.list'), icon: List, badge: myGamesUnreadCount },
+    { id: 'past-games', label: t('home.past'), icon: History, badge: pastGamesUnreadCount },
   ];
 
   return (
@@ -32,7 +34,7 @@ export const MyGamesTabController = () => {
       tabs={tabs}
       activeId={tab}
       onChange={handleTabChange}
-      titleInActiveOnly={false}
+      titleInActiveOnly={true}
       layoutId="myGamesSubtab"
     />
   );

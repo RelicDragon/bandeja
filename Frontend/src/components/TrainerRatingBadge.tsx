@@ -6,12 +6,14 @@ interface TrainerRatingBadgeProps {
   trainer: BasicUser;
   size?: 'sm' | 'md';
   showReviewCount?: boolean;
+  onClick?: () => void;
 }
 
 export const TrainerRatingBadge = ({
   trainer,
   size = 'sm',
   showReviewCount = true,
+  onClick,
 }: TrainerRatingBadgeProps) => {
   const { t } = useTranslation();
   const count = trainer.trainerReviewCount ?? 0;
@@ -21,9 +23,8 @@ export const TrainerRatingBadge = ({
 
   const isSm = size === 'sm';
   const starSize = isSm ? 12 : 14;
-
-  return (
-    <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+  const content = (
+    <>
       <Star size={starSize} className="fill-current flex-shrink-0" />
       <span className={`font-semibold ${isSm ? 'text-xs' : 'text-sm'}`}>
         {rating.toFixed(1)}
@@ -33,6 +34,24 @@ export const TrainerRatingBadge = ({
           ({t('training.reviewCount', { count, defaultValue: '{{count}} reviews' })})
         </span>
       )}
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        className="flex items-center gap-1 text-amber-600 dark:text-amber-400 cursor-pointer hover:opacity-90 active:opacity-80 transition-opacity"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+      {content}
     </div>
   );
 };
