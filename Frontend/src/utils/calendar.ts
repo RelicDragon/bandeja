@@ -76,7 +76,7 @@ export const buildIcsContent = (event: CalendarEventInput) => {
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//PadelPulse//EN',
+    'PRODID:-//Bandeja//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',

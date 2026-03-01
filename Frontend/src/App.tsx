@@ -702,7 +702,7 @@ function AppContent() {
 function App() {
   return (
     <NavigationErrorBoundary fallbackPath="/">
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AppContent />
       </BrowserRouter>
     </NavigationErrorBoundary>

@@ -100,7 +100,7 @@ export const sendTestNotification = asyncHandler(async (req: Request, res: Respo
 
   const payload = {
     title: 'Test Notification',
-    body: 'This is a test push notification from PadelPulse',
+    body: 'This is a test push notification from Bandeja',
     type: NotificationType.GAME_SYSTEM_MESSAGE,
     sound: 'default'
   };

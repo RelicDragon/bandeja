@@ -220,10 +220,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       skipUrlSyncRef.current = false;
       return;
     }
-    if (urlQuery !== searchInput) {
-      setSearchInput(urlQuery);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only sync from URL when urlQuery changes
+    setSearchInput(urlQuery);
   }, [urlQuery]);
 
   useEffect(() => {

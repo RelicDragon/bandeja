@@ -904,7 +904,7 @@ export const ProfileContent = () => {
               </div>
               {!user?.telegramUsername && (
                 <Button
-                  onClick={() => window.open('https://t.me/PadelPulseBot', '_blank')}
+                  onClick={() => window.open('https://t.me/BandejaBot', '_blank')}
                   className="w-full h-10 text-sm font-medium"
                 >
                   {t('profile.linkTelegram')}

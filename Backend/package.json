@@ -1,7 +1,7 @@
 {
   "name": "padelpulse-backend",
   "version": "1.0.0",
-  "description": "Backend for PadelPulse - Padel game scheduling app",
+  "description": "Backend for Bandeja - Padel game scheduling app",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon src/server.ts",

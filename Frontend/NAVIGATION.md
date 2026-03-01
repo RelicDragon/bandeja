@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 
-PadelPulse uses a multi-layered navigation system built on React Router v6 with Capacitor integration for native mobile behavior. The system handles web browser navigation, Android hardware back button, iOS swipe-back gestures, deep linking, modal interception, and desktop split-view routing — all through a unified architecture.
+Bandeja uses a multi-layered navigation system built on React Router v6 with Capacitor integration for native mobile behavior. The system handles web browser navigation, Android hardware back button, iOS swipe-back gestures, deep linking, modal interception, and desktop split-view routing — all through a unified architecture.
 
 ### Core Files
 

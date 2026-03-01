@@ -4,7 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-PadelPulse is a comprehensive padel game scheduling and community platform with real-time chat, tournament management, leagues, marketplace, and betting features. The project is a monorepo with three main components: Backend (Node.js/Express/TypeScript), Frontend (React/Vite/Capacitor), and Admin (vanilla JS).
+Bandeja is a comprehensive padel game scheduling and community platform with real-time chat, tournament management, leagues, marketplace, and betting features. The project is a monorepo with three main components: Backend (Node.js/Express/TypeScript), Frontend (React/Vite/Capacitor), and Admin (vanilla JS).
+
+## Where to Implement Things
+
+| Task | Backend | Frontend |
+|------|---------|----------|
+| New REST endpoint | `routes/<domain>.routes.ts` → `controllers/` → `services/` | `api/<domain>.ts` (or new file in `api/`), then use in page/hook |
+| New page/screen | — | Add route in `App.tsx`, add `Place` + pattern in `utils/urlSchema.ts`, use `navigationService` or `buildUrl()` to navigate |
+| New socket event | Emit in `services/socket.service.ts`; subscribe in controller/service | Subscribe in `socketEventsStore` or component; room names: `game:${id}`, `group:${id}`, etc. |
+| New global client state | — | `store/<name>Store.ts` (Zustand, optionally persist) |
+| Game-related logic | `services/game/*.service.ts` | `pages/GameDetails.tsx`, `components/GameDetails/` |
+| Chat-related logic | `services/chat/*.service.ts` | `pages/GameChat.tsx`, `pages/GameChat/*.ts(x)`, `components/chat/` |
+| Header per route | — | `headerStore` + `layouts/Header.tsx` + `components/headerContent/` |
+| Programmatic navigation | — | `navigationService` (e.g. `navigateToGame`, `navigateToGroupChat`) or `buildUrl(place, params)` + `navigate()` |
+| Back navigation | — | `utils/backNavigation.ts` (`handleBack`); history in `navigationStore` |
 
 ## Common Commands
 
@@ -85,10 +99,12 @@ Backend/
 ```
 
 **Key patterns:**
-- All API routes mounted under `/api` namespace
-- AsyncHandler wrapper for controller error handling
-- Service layer contains all business logic, controllers stay thin
-- Prisma ORM for database access with TypeScript-first approach
+- All API routes mounted under `/api` (e.g. `/api/games`, `/api/chat`). App entry: `app.ts` → router from `routes/index.ts`.
+- AsyncHandler wrapper for controller error handling. Controllers call services; services throw `ApiError(statusCode, message)` for client errors.
+- Service layer contains all business logic; controllers stay thin.
+- Prisma ORM for DB; use `select`/`include` explicitly.
+
+**Backend route mount points** (`Backend/src/routes/index.ts`): `/api/app`, `/api/auth`, `/api/telegram`, `/api/users`, `/api/cities`, `/api/clubs`, `/api/courts`, `/api/games`, `/api/game-teams`, `/api/leagues`, `/api/results`, `/api/invites`, `/api/rankings`, `/api/admin`, `/api/logs`, `/api/chat`, `/api/media`, `/api/favorites`, `/api/bugs`, `/api/game-courts`, `/api/transactions`, `/api/goods`, `/api/level-changes`, `/api/push`, `/api/blocked-users`, `/api/faqs`, `/api/game-subscriptions`, `/api/training`, `/api/trainers`, `/api/group-channels`, `/api/bets`, `/api/market-items`, `/api/user-game-notes`, `/api/currency`.
 
 ### Frontend Structure
 
@@ -118,15 +134,26 @@ Frontend/
 └── android/              # Capacitor Android project
 ```
 
-**State management (Zustand stores):**
-- `authStore` - Authentication state (persisted to localStorage)
-- `socketEventsStore` - Socket event subscriptions and unread count updates
-- `navigationStore` - Route history and deep link handling
-- `playersStore` - Player/user cache for UI performance
-- `headerStore`, `favoritesStore`, `appModeStore`
+**State management (Zustand stores)** (`Frontend/src/store/`):
+- `authStore` - Auth state (persisted), JWT, user profile
+- `socketEventsStore` - Socket subscriptions, unread count updates
+- `navigationStore` - Route history, back stack
+- `playersStore` - User/player cache for lists and cards
+- `chatSyncStore` - Chat sync state
+- `presenceStore` / `presenceWantedStore` - Online presence
+- `headerStore`, `favoritesStore`, `appModeStore`, `themeStore`
 
 **Custom hooks:**
-- `useGroupChannelUnreadCounts` - Tracks unread message counts for multiple group channels, syncs with socket events
+- `useGroupChannelUnreadCounts` - Unread counts for group channels, socket sync
+- `useUrlStoreSync` - Syncs URL with navigationStore (used in App)
+- `useDeepLink` - Handles incoming deep links
+- `useBackButtonHandler` - Android back button
+- `useNavigateWithTracking` - Navigate and track for back stack
+
+**Key pages and structure:**
+- `GameDetailsPage.tsx` wraps `GameDetails.tsx` (main game UI). Game chat: `GameChatRoute.tsx` → `GameChat.tsx`; logic split into `pages/GameChat/*.ts(x)` (hooks: useGameChatContext, useGameChatMessages, useGameChatSocket, useGameChatPanels, useGameChatReactions, etc.; components: GameChatHeader, GameChatFooter, GameChatTabs, GameChatAccessDenied, GameChatLoadingSkeleton).
+- Main tabs: MainPage (Home, Find, Chats, Profile, Leaderboard), lazy-loaded in App.
+- API client modules in `api/`: auth, games, chat, media, favorites, bugs, leagues, courts, cities, clubs, marketplace, bets, training, trainers, push, currency, etc.; entry via `api/index.ts`.
 
 ### Database Schema (Prisma)
 
@@ -253,15 +280,19 @@ enum ChatType {
 
 ## Frontend Routing & Navigation
 
-**Route structure** (`Frontend/src/config/navigationRoutes.ts`):
-- Deep link support via Capacitor App plugin
-- URL format: `padelpulse://path` for mobile, `/path` for web
-- Navigation history tracked in `navigationStore` for back button behavior
+**Routes** (defined in `App.tsx`): `/`, `/login`, `/register`, `/select-city`, `/complete-profile`, `/welcome`, `/find`, `/chats`, `/chats/marketplace`, `/profile`, `/leaderboard`, `/games/:id`, `/games/:id/chat`, `/create-game`, `/create-league`, `/rating`, `/bugs`, `/bugs/:id`, `/marketplace`, `/marketplace/my`, `/marketplace/create`, `/marketplace/:id`, `/marketplace/:id/edit`, `/game-subscriptions`, `/user-chat/:id`, `/group-chat/:id`, `/channel-chat/:id`.
+
+**URL ↔ place mapping** (`Frontend/src/utils/urlSchema.ts`):
+- `parseLocation(pathname, search)` → `{ place: Place, params, overlay? }`
+- `buildUrl(place, params)` → path string
+- `Place` enum: home, find, chats, chatsMarketplace, profile, leaderboard, game, gameChat, userChat, groupChat, channelChat, createGame, createLeague, marketplace, marketplaceMy, marketplaceItem, createMarketItem, editMarketItem, gameSubscriptions, bugs, login, etc.
+- **Deprecated:** `config/navigationRoutes.ts` is a stub; URL parsing lives in urlSchema, back behavior in `utils/backNavigation.ts`.
 
 **Important navigation patterns:**
-- Use `navigationService.ts` for programmatic navigation
-- Mobile back button handled via Android back button listener
-- Header content changes per route via `headerStore` and `headerContent/` components
+- Use `navigationService` for programmatic navigation (initialized in App with `navigate`); do not rely on `useNavigate()` alone for deep links.
+- Back: `handleBack()` from `utils/backNavigation.ts`; history in `navigationStore`.
+- Header content per route: `headerStore` + `layouts/Header.tsx` + `components/headerContent/`.
+- Deep links: Capacitor App plugin; URL format `padelpulse://path` (mobile), `/path` (web).
 
 ## Authentication & Authorization
 
@@ -434,15 +465,17 @@ VITE_MEDIA_BASE_URL=https://cdn.example.com
 
 ## Code Style & Conventions
 
-- TypeScript strict mode enabled
-- ESLint for linting (run `npm run lint`)
-- Use async/await, avoid callbacks
-- Service methods throw `ApiError` for business logic errors
-- Controllers catch errors via `AsyncHandler` wrapper
-- Frontend components use functional components with hooks
-- Zustand stores use immer for immutable updates
-- File naming: camelCase for variables/functions, PascalCase for components
-- Import order: External libraries → Internal modules → Types → Styles
+- TypeScript strict mode enabled. ESLint: `npm run lint` in Backend/Frontend.
+- Backend: async/await; services throw `ApiError(statusCode, message)`; controllers use AsyncHandler.
+- Frontend: functional components + hooks; Zustand with immer for updates.
+- Naming: camelCase for vars/functions, PascalCase for components. Imports: external → internal → types → styles.
+
+## File Lookup Quick Reference
+
+- **Backend:** Routes `routes/*.routes.ts`, controllers `controllers/*.controller.ts`, services `services/<domain>/*.service.ts`, middleware `middleware/`, Prisma schema `prisma/schema.prisma`, env `config/env`.
+- **Frontend:** Routes in `App.tsx`, URL schema `utils/urlSchema.ts`, nav `navigationService.ts`, back `utils/backNavigation.ts`, API `api/*.ts` + `api/index.ts`, stores `store/*.ts`, i18n `i18n/`.
+- **Game UI:** Page `GameDetails.tsx` + `GameDetailsPage.tsx`, subcomponents `components/GameDetails/`.
+- **Chat UI:** `GameChat.tsx` + `pages/GameChat/*`; list/channel UI in `components/chat/`.
 
 ## Common Pitfalls
 
@@ -460,3 +493,5 @@ VITE_MEDIA_BASE_URL=https://cdn.example.com
 12. **FREE trade type**: Cannot be combined with other trade types and must have no price
 13. **Currency handling**: Always store prices in original currency with `priceCents` (integer), convert for display only
 14. **GroupChannel types**: `isChannel: false` for marketplace/bug chats (private), `true` for community channels (public)
+15. **Navigation**: Use `urlSchema.ts` (parseLocation, buildUrl, Place) and `navigationService`; `navigationRoutes.ts` is deprecated
+16. **New page**: Add route in App.tsx, add Place and pattern in urlSchema.ts PLACE_DEFS (order matters), then implement page and optional headerContent

@@ -153,6 +153,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const lastSavedContentRef = useRef<string>('');
   const lastSavedMentionIdsRef = useRef<string[]>([]);
   const queueSendRef = useRef(false);
+  const lastAppliedEditIdRef = useRef<string | null>(null);
 
   const mentionIdsEqual = (a: string[], b: string[]) =>
     a.length === b.length && a.every((id, i) => id === b[i]);
@@ -658,14 +659,17 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   useEffect(() => {
-    if (editingMessage) {
+    const currentId = editingMessage?.id ?? null;
+    if (editingMessage && lastAppliedEditIdRef.current !== currentId) {
+      lastAppliedEditIdRef.current = currentId;
       setMessage(editingMessage.content ?? '');
       setMentionIds(editingMessage.mentionIds ?? []);
       updateMultilineState();
     }
-    // Intentionally only react to id: prefill once when entering edit mode; avoid resetting while user types
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingMessage?.id]);
+    if (!editingMessage) {
+      lastAppliedEditIdRef.current = null;
+    }
+  }, [editingMessage, updateMultilineState]);
 
   const handleMessageChange = (newValue: string, newMentionIds: string[]) => {
     setMessage(newValue);

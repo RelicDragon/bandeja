@@ -42,7 +42,7 @@ let lastReportAt = 0;
 function runReport(err: unknown, context?: string): Promise<void> {
   const bodyRaw = redactSecrets(`${formatError(err)}${context ? `\n\nContext: ${context}` : ''}`);
   const body = escapeMarkdown(truncate(bodyRaw, MAX_BODY_LENGTH));
-  const text = `🚨 *PadelPulse*\n\n${body}`;
+  const text = `🚨 *Bandeja*\n\n${body}`;
 
   return (async () => {
     const users = await prisma.user.findMany({

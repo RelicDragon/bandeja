@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines a complete refactoring of the navigation and back-button logic in PadelPulse. The current implementation relies on scattered `location.state` (fromPage, returnItemId, etc.), per-route fallback tables, and duplicated URL/state parsing. The new design uses **URL as the single source of truth** for all restorable UI state, with one unified back rule and DRY principles throughout.
+This document outlines a complete refactoring of the navigation and back-button logic in Bandeja. The current implementation relies on scattered `location.state` (fromPage, returnItemId, etc.), per-route fallback tables, and duplicated URL/state parsing. The new design uses **URL as the single source of truth** for all restorable UI state, with one unified back rule and DRY principles throughout.
 
 ---
 

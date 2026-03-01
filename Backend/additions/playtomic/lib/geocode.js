@@ -26,7 +26,7 @@ export async function geocode(query) {
   await rateLimit();
   const params = new URLSearchParams({ q: query, format: "json", limit: "1" });
   const res = await fetch(`${NOMINATIM_URL}?${params}`, {
-    headers: { "User-Agent": "PadelPulse-VerifyClubs/1.0" },
+    headers: { "User-Agent": "Bandeja-VerifyClubs/1.0" },
   });
   if (!res.ok) return null;
   const data = await res.json();

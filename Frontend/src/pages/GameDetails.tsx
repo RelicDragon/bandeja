@@ -67,9 +67,10 @@ interface GameDetailsContentProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
   selectedGameChatId?: string | null;
   onChatGameSelect?: (gameId: string) => void;
+  initialGame?: Game | null;
 }
 
-export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onChatGameSelect }: GameDetailsContentProps) => {
+export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onChatGameSelect, initialGame }: GameDetailsContentProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -77,10 +78,10 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const user = useAuthStore((state) => state.user);
   const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, setGameDetailsTableAddRound } = useNavigationStore();
 
-  const [game, setGame] = useState<Game | null>(null);
+  const [game, setGame] = useState<Game | null>((initialGame?.id === id ? initialGame : null) ?? null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
   const [gameInvites, setGameInvites] = useState<Invite[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!(initialGame?.id === id));
   const [showPlayerList, setShowPlayerList] = useState(false);
   const [playerListMode, setPlayerListMode] = useState<'players' | 'trainer'>('players');
   const [playerListGender, setPlayerListGender] = useState<'MALE' | 'FEMALE' | undefined>(undefined);
@@ -150,39 +151,64 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   });
 
   useEffect(() => {
-    const fetchGame = async () => {
-      if (!id) return;
+    if (!id) return;
+    let cancelled = false;
 
-      setGame(null);
+    if (initialGame?.id === id) {
+      setGame(initialGame);
       setMyInvites([]);
       setGameInvites([]);
       setLoading(true);
+      (async () => {
+        try {
+          if (user) {
+            const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
+            if (cancelled) return;
+            const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
+            setMyInvites(gameMyInvites);
+            const isParticipant = initialGame.participants?.some((p) => p.userId === user?.id);
+            if (isParticipant) {
+              const gameInvitesResponse = await invitesApi.getGameInvites(id);
+              if (cancelled) return;
+              setGameInvites(gameInvitesResponse.data);
+            }
+          }
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })();
+      return () => { cancelled = true; };
+    }
 
+    setGame(null);
+    setMyInvites([]);
+    setGameInvites([]);
+    setLoading(true);
+    (async () => {
       try {
         const response = await gamesApi.getById(id);
+        if (cancelled) return;
         setGame(response.data);
-
         if (user) {
           const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
+          if (cancelled) return;
           const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
           setMyInvites(gameMyInvites);
-
           const isParticipant = response.data.participants.some((p) => p.userId === user?.id);
           if (isParticipant) {
             const gameInvitesResponse = await invitesApi.getGameInvites(id);
+            if (cancelled) return;
             setGameInvites(gameInvitesResponse.data);
           }
         }
-
       } catch (error) {
-        console.error('Failed to fetch game:', error);
+        if (!cancelled) console.error('Failed to fetch game:', error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    };
-
-    fetchGame();
-  }, [id, user]);
+    })();
+    return () => { cancelled = true; };
+  }, [id, user, initialGame]);
 
   const searchParams = new URLSearchParams(location.search);
   const tabFromUrl = searchParams.get('tab') as 'general' | 'schedule' | 'standings' | 'faq' | null;

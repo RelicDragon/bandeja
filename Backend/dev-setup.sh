@@ -2,7 +2,7 @@
 
 set -e
 
-echo "🏓 PadelPulse Backend - Dev Setup & Start"
+echo "🏓 Bandeja Backend - Dev Setup & Start"
 echo "=========================================="
 
 cd "$(dirname "$0")"

@@ -2,7 +2,7 @@
 
 ## Summary
 
-Successfully implemented support for the top 30 currencies across the entire PadelPulse platform (backend and frontend).
+Successfully implemented support for the top 30 currencies across the entire Bandeja platform (backend and frontend).
 
 ## Changes Made
 

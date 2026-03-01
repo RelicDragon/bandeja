@@ -10,29 +10,30 @@ export const useGroupChannelUnreadCounts = (channelIds: string[]): Record<string
   const channelIdsKey = channelIds.length ? channelIds.slice().sort().join(',') : '';
   const channelIdsRef = useRef(channelIds);
   channelIdsRef.current = channelIds;
+  const fetchRunRef = useRef(0);
 
-  const fetchCounts = useCallback(async () => {
-    const ids = channelIdsRef.current;
+  const fetchCounts = useCallback(async (ids: string[]) => {
     if (ids.length === 0) {
       setUnreadCounts({});
       return;
     }
+    const runId = ++fetchRunRef.current;
     try {
       const res = await chatApi.getGroupChannelsUnreadCounts(ids);
+      if (runId !== fetchRunRef.current) return;
       const data = res.data || {};
       const viewing = useNavigationStore.getState().viewingGroupChannelId;
       const merged = { ...data };
       if (viewing && ids.includes(viewing)) merged[viewing] = 0;
       setUnreadCounts(merged);
     } catch {
-      // keep previous state
+      if (runId !== fetchRunRef.current) return;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- channelIdsKey triggers refetch when channel list changes
-  }, [channelIdsKey]);
+  }, []);
 
   useEffect(() => {
-    fetchCounts();
-  }, [fetchCounts]);
+    fetchCounts(channelIdsRef.current);
+  }, [fetchCounts, channelIdsKey]);
 
   useEffect(() => {
     if (!lastChatUnreadCount || lastChatUnreadCount.contextType !== 'GROUP') return;

@@ -4,7 +4,7 @@ This document describes the currency conversion service implementation using the
 
 ## Overview
 
-The currency service provides real-time exchange rates for the three supported currencies in PadelPulse:
+The currency service provides real-time exchange rates for the three supported currencies in Bandeja:
 - **EUR** (Euro)
 - **RSD** (Serbian Dinar)
 - **RUB** (Russian Ruble)

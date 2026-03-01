@@ -24,6 +24,7 @@ export const GameDetailsPage = () => {
   const gameDetailsCanShowTableView = useNavigationStore((s) => s.gameDetailsCanShowTableView);
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
   const [layoutTableAvailable, setLayoutTableAvailable] = useState<boolean | null>(null);
+  const [layoutGame, setLayoutGame] = useState<Awaited<ReturnType<typeof gamesApi.getById>>['data'] | null>(null);
   const useTableViewLayout = effectiveTableView && (layoutTableAvailable === null || layoutTableAvailable || gameDetailsCanShowTableView);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedGameChatId, setSelectedGameChatId] = useState<string | null>(null);
@@ -33,20 +34,27 @@ export const GameDetailsPage = () => {
     setGameDetailsTableViewOverride(null);
     setGameDetailsCanShowTableView(false);
     setLayoutTableAvailable(null);
+    setLayoutGame(null);
     prevIdRef.current = id ?? undefined;
     setSelectedGameChatId(null);
   }, [id, setGameDetailsTableViewOverride, setGameDetailsCanShowTableView]);
 
   useEffect(() => {
-    if (!id || !effectiveTableView) return;
+    if (!id || !effectiveTableView || layoutTableAvailable !== null) return;
     let cancelled = false;
     gamesApi.getById(id).then((res) => {
-      if (!cancelled) setLayoutTableAvailable(canShowTableViewFromGame(res.data));
-    }).catch(() => {
-      if (!cancelled) setLayoutTableAvailable(false);
+      if (!cancelled) {
+        setLayoutTableAvailable(canShowTableViewFromGame(res.data));
+        setLayoutGame(res.data);
+      }
+    }).catch((err) => {
+      if (!cancelled) {
+        console.error('GameDetails layout fetch failed:', err);
+        setLayoutTableAvailable(false);
+      }
     });
     return () => { cancelled = true; };
-  }, [id, effectiveTableView]);
+  }, [id, effectiveTableView, layoutTableAvailable]);
 
   if (!id) return null;
 
@@ -58,6 +66,7 @@ export const GameDetailsPage = () => {
   };
 
   if (canShowSplitLayout) {
+    const initialGame = layoutGame?.id === id ? layoutGame : undefined;
     const leftPanel = (
       <SplitViewLeftPanel bottomTabsVisible={false}>
         <div ref={scrollContainerRef} className="h-full overflow-y-auto overflow-x-hidden p-3">
@@ -65,6 +74,7 @@ export const GameDetailsPage = () => {
             scrollContainerRef={scrollContainerRef}
             selectedGameChatId={selectedGameChatId}
             onChatGameSelect={handleChatGameSelect}
+            initialGame={initialGame}
           />
         </div>
       </SplitViewLeftPanel>
@@ -78,6 +88,7 @@ export const GameDetailsPage = () => {
               scrollContainerRef={scrollContainerRef}
               selectedGameChatId={selectedGameChatId}
               onChatGameSelect={handleChatGameSelect}
+              initialGame={initialGame}
             />
           </div>
         </div>

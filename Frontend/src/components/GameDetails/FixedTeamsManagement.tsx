@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
@@ -26,62 +26,71 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
   const [selectedTeamIndex, setSelectedTeamIndex] = useState<number | null>(null);
   const [showPlayerSelector, setShowPlayerSelector] = useState(false);
 
+  const gameRef = useRef(game);
+  const onGameUpdateRef = useRef(onGameUpdate);
+  gameRef.current = game;
+  onGameUpdateRef.current = onGameUpdate;
+
   const areTeamsReady = useCallback((teamsToCheck = teams) => {
     if (!teamsToCheck || teamsToCheck.length === 0) return false;
-    // For fixed teams to be ready, all teams must have exactly 2 players each
     return teamsToCheck.every(team => team.players.length === 2);
   }, [teams]);
 
+  const isTeamsReady = useCallback((teamsToCheck: GameTeam[]) => {
+    if (!teamsToCheck || teamsToCheck.length === 0) return false;
+    return teamsToCheck.every(team => team.players.length === 2);
+  }, []);
+
   const fetchTeams = useCallback(async () => {
-    if (!game?.id) {
+    const g = gameRef.current;
+    if (!g?.id) {
       setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
-      // Always create all teams locally first
-      const maxTeams = Math.floor(game.maxParticipants / 2);
+      const maxTeams = Math.floor(g.maxParticipants / 2);
       const localTeams: GameTeam[] = [];
 
       for (let i = 1; i <= maxTeams; i++) {
         localTeams.push({
           id: `temp-${i}`,
-          gameId: game.id,
+          gameId: g.id,
           teamNumber: i,
           name: undefined,
           players: []
         });
       }
 
-      // Try to fetch existing teams from backend and merge
       try {
-        const response = await gamesApi.getFixedTeams(game.id);
+        const response = await gamesApi.getFixedTeams(g.id);
+        if (gameRef.current?.id !== g.id) return;
+
         const existingTeams = response.data;
 
-        // Merge backend teams with local placeholders
         const mergedTeams = localTeams.map(localTeam => {
           const existingTeam = existingTeams.find(team => team.teamNumber === localTeam.teamNumber);
           return existingTeam || localTeam;
         });
 
         setTeams(mergedTeams);
-        
-        // Update the parent component with the initial teamsReady state only if changed
-        const ready = areTeamsReady(mergedTeams);
-        if (game.teamsReady !== ready) {
-          onGameUpdate({
-            ...game,
+
+        const ready = isTeamsReady(mergedTeams);
+        if (g.teamsReady !== ready) {
+          onGameUpdateRef.current({
+            ...g,
             teamsReady: ready
           });
         }
-      } catch (backendError) {
-        // If backend fails, just use local teams
+      } catch {
+        if (gameRef.current?.id !== g.id) return;
+
         setTeams(localTeams);
-        const ready = areTeamsReady(localTeams);
-        if (game.teamsReady !== ready) {
-          onGameUpdate({
-            ...game,
+        const ready = isTeamsReady(localTeams);
+        if (g.teamsReady !== ready) {
+          onGameUpdateRef.current({
+            ...g,
             teamsReady: ready
           });
         }
@@ -89,16 +98,15 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
     } catch (error) {
       console.error('Failed to initialize teams:', error);
     } finally {
-      setLoading(false);
+      if (gameRef.current?.id === g.id) setLoading(false);
     }
-  }, [game, onGameUpdate, areTeamsReady]);
+  }, [isTeamsReady]);
 
   useEffect(() => {
     if (game?.id) {
       fetchTeams();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [game?.id]);
+  }, [game?.id, fetchTeams]);
 
   const handlePlayerSelect = async (playerId: string) => {
     if (selectedTeamIndex === null || !game?.id) return;
