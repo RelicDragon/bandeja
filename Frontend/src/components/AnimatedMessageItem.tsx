@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChatMessage } from '@/api/chat';
-import { MessageItem } from './MessageItem';
-
-interface ContextMenuState {
-  isOpen: boolean;
-  messageId: string | null;
-  position: { x: number; y: number };
-}
+import { MessageItem, ContextMenuState } from './MessageItem';
 
 interface AnimatedMessageItemProps {
   message: ChatMessage;
