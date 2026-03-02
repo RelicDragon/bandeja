@@ -42,8 +42,15 @@ export class GameService {
     return GameReadService.getMyGamesWithUnread(userId, userCityId);
   }
 
-  static async getPastGames(userId: string, userCityId?: string, limit: number = 10, offset: number = 0) {
-    return GameReadService.getPastGames(userId, userCityId, limit, offset);
+  static async getPastGames(
+    userId: string,
+    userCityId?: string,
+    limit: number = 10,
+    offset: number = 0,
+    startDate?: string,
+    endDate?: string
+  ) {
+    return GameReadService.getPastGames(userId, userCityId, limit, offset, startDate, endDate);
   }
 
   static async getAvailableGames(userId: string, userCityId?: string, startDate?: string, endDate?: string, showArchived?: boolean, includeLeagues?: boolean) {

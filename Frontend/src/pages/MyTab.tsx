@@ -5,6 +5,7 @@ import { format, startOfDay } from 'date-fns';
 import { InvitesSection, MyGamesSection, PastGamesSection } from '@/components/home';
 import { Button, Divider, MainTabFooter, MonthCalendar } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
+import { gamesApi } from '@/api';
 import { chatApi } from '@/api/chat';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@/store/authStore';
@@ -145,14 +146,65 @@ export const MyTab = () => {
 
   const filteredMyGames = useMemo(() => sortMyGamesByStatusAndDateTime(games, mergedUnreadCounts), [games, mergedUnreadCounts]);
   const [myGamesSelectedDate, setMyGamesSelectedDate] = useState<Date>(() => new Date());
+  const [pastGamesInRange, setPastGamesInRange] = useState<any[]>([]);
+  const [pastGamesInRangeUnread, setPastGamesInRangeUnread] = useState<Record<string, number>>({});
+  const [loadingPastInRange, setLoadingPastInRange] = useState(false);
+  const calendarMergedGames = useMemo(() => {
+    const ids = new Set(filteredMyGames.map((g) => g.id));
+    const fromPast = pastGamesInRange.filter((g) => !ids.has(g.id));
+    return [...filteredMyGames, ...fromPast];
+  }, [filteredMyGames, pastGamesInRange]);
+  const calendarMergedUnreadCounts = useMemo(
+    () => ({ ...gamesUnreadCounts, ...pastGamesInRangeUnread }),
+    [gamesUnreadCounts, pastGamesInRangeUnread]
+  );
   const myGamesForSelectedDate = useMemo(() => {
     const selectedStr = format(startOfDay(myGamesSelectedDate), 'yyyy-MM-dd');
-    return filteredMyGames.filter((g) => {
-      if (g.timeIsSet === false) return false;
-      const gameStr = format(startOfDay(new Date(g.startTime)), 'yyyy-MM-dd');
-      return gameStr === selectedStr;
-    });
-  }, [filteredMyGames, myGamesSelectedDate]);
+    const source = activeTab === 'calendar' ? calendarMergedGames : filteredMyGames;
+    const counts = activeTab === 'calendar' ? calendarMergedUnreadCounts : mergedUnreadCounts;
+    return sortMyGamesByStatusAndDateTime(
+      source.filter((g) => {
+        if (g.timeIsSet === false) return false;
+        const gameStr = format(startOfDay(new Date(g.startTime)), 'yyyy-MM-dd');
+        return gameStr === selectedStr;
+      }),
+      counts
+    );
+  }, [activeTab, myGamesSelectedDate, calendarMergedGames, filteredMyGames, calendarMergedUnreadCounts, mergedUnreadCounts]);
+  const handleCalendarDateRangeChange = useCallback(
+    async (start: Date, end: Date) => {
+      const today = startOfDay(new Date());
+      const rangeStart = startOfDay(start);
+      if (rangeStart >= today) {
+        setPastGamesInRange([]);
+        setPastGamesInRangeUnread({});
+        return;
+      }
+      setLoadingPastInRange(true);
+      try {
+        const response = await gamesApi.getPastGames({
+          startDate: format(rangeStart, 'yyyy-MM-dd'),
+          endDate: format(end, 'yyyy-MM-dd'),
+          limit: 100,
+          offset: 0,
+        });
+        const list = response.data ?? [];
+        setPastGamesInRange(list);
+        if (list.length > 0 && user?.id) {
+          const unread = await chatApi.getGamesUnreadCounts(list.map((g: any) => g.id));
+          setPastGamesInRangeUnread(unread ?? {});
+        } else {
+          setPastGamesInRangeUnread({});
+        }
+      } catch {
+        setPastGamesInRange([]);
+        setPastGamesInRangeUnread({});
+      } finally {
+        setLoadingPastInRange(false);
+      }
+    },
+    [user?.id]
+  );
   const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(pastGames, pastGamesUnreadCounts), [pastGames, pastGamesUnreadCounts]);
 
   const myGamesTotalUnread = useMemo(() => {
@@ -341,15 +393,16 @@ export const MyTab = () => {
             <MonthCalendar
               selectedDate={myGamesSelectedDate}
               onDateSelect={setMyGamesSelectedDate}
-              availableGames={filteredMyGames}
+              availableGames={calendarMergedGames}
+              onDateRangeChange={handleCalendarDateRangeChange}
             />
             <MyGamesSection
               games={myGamesForSelectedDate}
               user={user}
-              loading={loading}
+              loading={loading || loadingPastInRange}
               showSkeleton={skeletonAnimation.showSkeleton}
               skeletonStates={skeletonAnimation.skeletonStates}
-              gamesUnreadCounts={mergedUnreadCounts}
+              gamesUnreadCounts={activeTab === 'calendar' ? calendarMergedUnreadCounts : mergedUnreadCounts}
               onNoteSaved={() => fetchData(false, true)}
             />
           </div>

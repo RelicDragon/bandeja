@@ -482,13 +482,32 @@ export class GameReadService {
     return { games, invites, gamesUnreadCounts };
   }
 
-  static async getPastGames(userId: string, userCityId?: string, limit: number = 30, offset: number = 0) {
+  static async getPastGames(
+    userId: string,
+    userCityId?: string,
+    limit: number = 30,
+    offset: number = 0,
+    startDate?: string,
+    endDate?: string
+  ) {
     if (!userId) {
       throw new ApiError(401, 'Unauthorized');
     }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    let startTimeFilter: { lt: Date } | { gte: Date; lte: Date };
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      const rangeEnd = end.getTime() < today.getTime() ? end : today;
+      startTimeFilter = { gte: start, lte: rangeEnd };
+    } else {
+      startTimeFilter = { lt: today };
+    }
 
     const where: any = {
       participants: {
@@ -497,7 +516,7 @@ export class GameReadService {
         }
       },
       status: 'ARCHIVED',
-      startTime: { lt: today }
+      startTime: startTimeFilter
     };
 
     const games = await prisma.game.findMany({

@@ -32,7 +32,7 @@ export const gamesApi = {
     return response.data;
   },
 
-  getPastGames: async (params?: { limit?: number; offset?: number }) => {
+  getPastGames: async (params?: { limit?: number; offset?: number; startDate?: string; endDate?: string }) => {
     const response = await api.get<ApiResponse<Game[]>>('/games/past-games', { params });
     return response.data;
   },

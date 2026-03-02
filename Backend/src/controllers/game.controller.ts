@@ -78,8 +78,17 @@ export const getPastGames = asyncHandler(async (req: AuthRequest, res: Response)
 
   const limit = req.query.limit ? parseInt(req.query.limit as string) : 30;
   const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+  const startDate = req.query.startDate as string | undefined;
+  const endDate = req.query.endDate as string | undefined;
 
-  const games = await GameService.getPastGames(req.userId, req.user?.currentCityId, limit, offset);
+  const games = await GameService.getPastGames(
+    req.userId,
+    req.user?.currentCityId,
+    limit,
+    offset,
+    startDate,
+    endDate
+  );
 
   res.json({
     success: true,
