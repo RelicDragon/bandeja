@@ -10,6 +10,8 @@ interface CountryTranslation {
   iso2: string;
 }
 
+type CityLocaleKey = 'en' | 'es' | 'ru' | 'sr';
+
 interface CityTranslation {
   en: string;
   es: string;
@@ -55,11 +57,13 @@ function toGeoLocale(locale: string): GeoLocale {
   return 'en';
 }
 
+const LOCALE_KEYS: GeoLocale[] = ['en', 'es', 'ru', 'sr', 'cs'];
+
 export function getCountryDisplayName(countryKey: string, locale: string): string {
   if (!countryKey) return '';
   const geo = toGeoLocale(locale);
   const c = countriesData?.[countryKey];
-  const name = c && (c as Record<string, string>)[geo];
+  const name = c && LOCALE_KEYS.includes(geo) ? (c as Record<GeoLocale, string | undefined>)[geo] : undefined;
   if (name) return name;
   return countryKey;
 }
@@ -79,7 +83,8 @@ export function getCityDisplayName(
   const rec = citiesData?.[cityId];
   if (!rec) return cityName;
   const geo = toGeoLocale(locale);
-  const name = rec[geo];
+  const key: CityLocaleKey = geo === 'cs' ? 'en' : geo;
+  const name = rec[key];
   return (name && name.trim()) ? name : rec.en;
 }
 
