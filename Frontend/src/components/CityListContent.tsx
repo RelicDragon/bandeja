@@ -341,7 +341,7 @@ export const CityListContent = ({
         </div>
       ) : (
         <div className="flex-1 min-h-0 min-w-0 overflow-hidden w-full flex flex-col">
-          <div className="flex-1 min-h-0 w-full overflow-hidden">
+          <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col">
             <div
               className={`flex flex-1 min-h-0 ${allowTransition ? 'transition-transform duration-300 ease-out' : ''}`}
               style={{ width: '200%', transform: showMap ? 'translateX(-50%)' : 'translateX(0)' }}

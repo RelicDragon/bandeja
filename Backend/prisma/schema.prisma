@@ -960,6 +960,7 @@ model Bug {
   status               BugStatus        @default(CREATED)
   bugType              BugType          @default(BUG)
   lastMessagePreview   String?          @db.VarChar(500)
+  finishedAt           DateTime?
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
   sender               User             @relation(fields: [senderId], references: [id], onDelete: Cascade)

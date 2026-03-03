@@ -3,6 +3,17 @@ import { readFileSync, writeFileSync, readdirSync, renameSync, mkdirSync } from 
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { createChatCompletion } from "../lib/openaiRateLimit.js";
+
+const useDeepSeek = (process.env.LLM_PROVIDER || "").toLowerCase() === "deepseek";
+if (useDeepSeek) {
+  if (!process.env.DEEPSEEK_API_KEY && !process.env.OPENAI_API_KEY) {
+    console.error("DEEPSEEK_API_KEY or OPENAI_API_KEY required when LLM_PROVIDER=deepseek");
+    process.exit(1);
+  }
+} else if (!process.env.OPENAI_API_KEY) {
+  console.error("OPENAI_API_KEY is required in .env");
+  process.exit(1);
+}
 import { geocode } from "../lib/geocode.js";
 import { webSearch } from "../tools/search.js";
 

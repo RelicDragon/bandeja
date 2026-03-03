@@ -20,6 +20,7 @@
     "backfill:content-searchable": "ts-node scripts/backfillContentSearchable.ts",
     "backfill:training-trainer-id": "ts-node scripts/backfillTrainingTrainerId.ts",
     "backfill:welcome-screen-passed": "ts-node scripts/backfillWelcomeScreenPassed.ts",
+    "backfill:bug-finished-at": "ts-node scripts/backfillBugFinishedAt.ts",
     "migrateBugsToGroups": "ts-node scripts/migrateBugsToGroups.ts",
     "test:currency": "ts-node scripts/test-currency-service.ts",
     "example:currency": "ts-node examples/currency-integration-example.ts"

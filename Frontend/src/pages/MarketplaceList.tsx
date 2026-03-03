@@ -85,6 +85,12 @@ export const MarketplaceList = () => {
   }, [cityId, filters.categoryId, isMyTab, user?.id]);
 
   useEffect(() => {
+    if (!isMyTab && categories.length > 0 && filters.categoryId === '') {
+      setFilters((f) => ({ ...f, categoryId: categories[0].id }));
+    }
+  }, [isMyTab, categories, filters.categoryId]);
+
+  useEffect(() => {
     pageRef.current = 1;
     fetchData();
 

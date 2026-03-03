@@ -182,7 +182,7 @@ export class InviteService {
         });
         await performPostJoinOperations(gameId, receiverId);
       } catch (error: any) {
-        if (error.message === 'errors.invites.gameFull' && gameId) {
+        if (gameId && error instanceof ApiError && error.statusCode === 400) {
           await ParticipantService.addToQueueAsParticipant(gameId, receiverId);
           await prisma.gameParticipant.deleteMany({ where: { id: participantId } });
           return { success: true, message: 'games.addedToJoinQueue' };

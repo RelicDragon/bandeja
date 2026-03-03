@@ -29,6 +29,10 @@ function fmtNum(n) {
   return String(n);
 }
 
+function llmLabel() {
+  return (process.env.LLM_PROVIDER || "openai").toLowerCase() === "deepseek" ? "DeepSeek" : "OpenAI";
+}
+
 export function startLive() {
   spinnerIx = 0;
   lastLines = 0;
@@ -60,7 +64,7 @@ export function render(state, stats) {
   const prog = t > 0 ? `${n}/${t} clubs` : "—";
   const line2 = `   ${GREEN}[${bar}]${RESET} ${DIM}${prog}${RESET}`;
   const tv = `Tavily: ${stats.tavilySearches} search, ${stats.tavilyExtracts} extract, ${YELLOW}${stats.tavilyCredits} cr${RESET}`;
-  const oa = `OpenAI: ${stats.openaiCalls} calls, ${fmtNum(stats.promptTokens)} in, ${fmtNum(stats.completionTokens)} out`;
+  const oa = `${llmLabel()}: ${stats.openaiCalls} calls, ${fmtNum(stats.promptTokens)} in, ${fmtNum(stats.completionTokens)} out`;
   const line3 = `   ${DIM}${tv}  |  ${oa}${RESET}`;
   const lines = [line1, line2, line3];
   if (error) lines.push(`   ${BOLD}\u2716${RESET} ${error}`);
@@ -82,6 +86,6 @@ export function renderFinal(filePath, count, stats) {
   process.stdout.write(
     `${GREEN}\u2713${RESET} ${BOLD}Done${RESET}  ${count} clubs → ${filePath}\n` +
       `   Tavily: ${s.tavilySearches} searches, ${s.tavilyExtracts} extracts, ${s.tavilyCredits} credits\n` +
-      `   OpenAI: ${s.openaiCalls} calls, ${fmtNum(s.promptTokens)} prompt + ${fmtNum(s.completionTokens)} completion tokens\n`
+      `   ${llmLabel()}: ${s.openaiCalls} calls, ${fmtNum(s.promptTokens)} prompt + ${fmtNum(s.completionTokens)} completion tokens\n`
   );
 }

@@ -505,8 +505,9 @@ export const GameParticipants = ({
           <div className="mt-4">
             <InvitesList
               invites={gameInvites}
-              onCancelInvite={isOwner ? onCancelInvite : undefined}
+              onCancelInvite={onCancelInvite}
               canCancel={isOwner}
+              userId={userId}
             />
           </div>
         )}

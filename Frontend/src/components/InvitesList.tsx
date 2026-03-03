@@ -8,9 +8,10 @@ interface InvitesListProps {
   invites: Invite[];
   onCancelInvite?: (inviteId: string) => void;
   canCancel?: boolean;
+  userId?: string;
 }
 
-export const InvitesList = ({ invites, onCancelInvite, canCancel }: InvitesListProps) => {
+export const InvitesList = ({ invites, onCancelInvite, canCancel, userId }: InvitesListProps) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -63,7 +64,7 @@ export const InvitesList = ({ invites, onCancelInvite, canCancel }: InvitesListP
                   </p>
                 </div>
 
-                {canCancel && onCancelInvite && (
+                {(canCancel || (userId && invite.sender?.id === userId)) && onCancelInvite && (
                   <button
                     onClick={() => onCancelInvite(invite.id)}
                     className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"

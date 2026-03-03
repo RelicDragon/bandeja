@@ -9,9 +9,24 @@ const RETRY_AFTER_429_MS = 20_000;
 const events = [];
 let client = null;
 
+const PROVIDER = (process.env.LLM_PROVIDER || "openai").toLowerCase();
+const IS_DEEPSEEK = PROVIDER === "deepseek";
+
 function getClient() {
-  if (!client) client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  if (!client) {
+    if (IS_DEEPSEEK) {
+      const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
+      client = new OpenAI({ apiKey, baseURL: "https://api.deepseek.com" });
+    } else {
+      client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    }
+  }
   return client;
+}
+
+function getDefaultModel() {
+  if (IS_DEEPSEEK) return process.env.DEEPSEEK_MODEL || "deepseek-chat";
+  return process.env.OPENAI_MODEL || "gpt-5.2";
 }
 
 function prune(now = Date.now()) {
@@ -50,11 +65,13 @@ function recordUsage(usage) {
   events.push({ time: Date.now(), tokens });
 }
 
-const DEFAULT_MODEL = process.env.OPENAI_MODEL || "gpt-5.2";
+const OPENAI_MODEL_ALIASES = new Set(["gpt-5.2", "gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
 
 export async function createChatCompletion(body, stats = null) {
   const openai = getClient();
-  const req = { ...body, model: body.model || DEFAULT_MODEL };
+  let model = body.model || getDefaultModel();
+  if (IS_DEEPSEEK && OPENAI_MODEL_ALIASES.has(model)) model = getDefaultModel();
+  const req = { ...body, model };
   for (;;) {
     await waitUntilUnderLimit();
     try {

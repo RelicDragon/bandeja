@@ -174,9 +174,17 @@ export class BugService {
   }
 
   static async updateBug(id: string, data: { status?: BugStatus; bugType?: BugType }) {
+    const update: { status?: BugStatus; bugType?: BugType; finishedAt?: Date | null } = { ...data };
+    if (data.status !== undefined) {
+      if (data.status === 'FINISHED') {
+        update.finishedAt = new Date();
+      } else if (data.status !== 'ARCHIVED') {
+        update.finishedAt = null;
+      }
+    }
     return await prisma.bug.update({
       where: { id },
-      data,
+      data: update,
       include: {
         sender: {
           select: {

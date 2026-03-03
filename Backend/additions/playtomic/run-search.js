@@ -13,7 +13,13 @@ if (!city) {
   process.exit(1);
 }
 
-if (!process.env.OPENAI_API_KEY) {
+const useDeepSeek = (process.env.LLM_PROVIDER || "").toLowerCase() === "deepseek";
+if (useDeepSeek) {
+  if (!process.env.DEEPSEEK_API_KEY && !process.env.OPENAI_API_KEY) {
+    console.error("DEEPSEEK_API_KEY or OPENAI_API_KEY is required when LLM_PROVIDER=deepseek");
+    process.exit(1);
+  }
+} else if (!process.env.OPENAI_API_KEY) {
   console.error("OPENAI_API_KEY is required in .env");
   process.exit(1);
 }
