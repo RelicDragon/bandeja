@@ -1,8 +1,10 @@
-import { MapPin } from 'lucide-react';
+import { MapPin, ExternalLink, Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ToggleSwitch } from '../ToggleSwitch';
 import { ClubModal, CourtModal } from '@/components';
 import { Club, Court, EntityType } from '@/types';
+import { openExternalUrl } from '@/utils/openExternalUrl';
+import { getTelUrl } from '@/utils/telUrl';
 
 interface LocationSectionProps {
   clubs: Club[];
@@ -109,6 +111,30 @@ export const LocationSection = ({
                   </div>
                 </div>
               )}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                {selectedClub && clubs.find(c => c.id === selectedClub)?.website && (
+                  <button
+                    type="button"
+                    onClick={() => openExternalUrl(clubs.find(c => c.id === selectedClub)!.website!)}
+                    className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                  >
+                    <ExternalLink size={14} />
+                    {t('common.openWebsite')}
+                  </button>
+                )}
+                {selectedClub && (() => {
+                  const club = clubs.find(c => c.id === selectedClub);
+                  return club?.phone && getTelUrl(club.phone) ? (
+                    <a
+                      href={getTelUrl(club.phone)}
+                      className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                    >
+                      <Phone size={14} />
+                      {t('common.call')}
+                    </a>
+                  ) : null;
+                })()}
+              </div>
             </>
           )}
         </div>
