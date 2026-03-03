@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
-import { enUS, ru, es, sr, Locale } from 'date-fns/locale';
+import { enUS, ru, es, sr, cs, Locale } from 'date-fns/locale';
 import { Calendar, X, Star } from 'lucide-react';
 import { Button, Card, Select, CalendarComponent, PlayerLevelSection } from '@/components';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
@@ -51,6 +51,7 @@ const localeMap: Record<string, Locale> = {
   ru: ru,
   es: es,
   sr: sr,
+  cs: cs,
 };
 
 export const GameSubscriptionForm = ({

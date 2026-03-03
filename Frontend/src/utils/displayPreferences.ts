@@ -110,13 +110,14 @@ export function normalizeLanguageForProfile(locale: string | null | undefined): 
     'ru': 'ru-RU',
     'sr': 'sr-RS',
     'es': 'es-ES',
+    'cs': 'cs-CZ',
   };
   
   if (languageMap[langCode]) {
     return languageMap[langCode];
   }
   
-  const validLocales = ['en-US', 'en-GB', 'ru-RU', 'sr-RS', 'es-ES', 'auto'];
+  const validLocales = ['en-US', 'en-GB', 'ru-RU', 'sr-RS', 'es-ES', 'cs-CZ', 'auto'];
   if (validLocales.includes(locale)) {
     return locale;
   }

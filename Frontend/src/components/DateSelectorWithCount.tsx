@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { format, addDays, isToday, isTomorrow } from 'date-fns';
-import { enUS, ru, es, sr } from 'date-fns/locale';
+import { enUS, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
 import { CalendarComponent } from '@/components/Calendar';
@@ -25,6 +25,7 @@ const localeMap = {
   ru: ru,
   es: es,
   sr: sr,
+  cs: cs,
 };
 
 const dateFormatMap: Record<string, string> = {
@@ -32,6 +33,7 @@ const dateFormatMap: Record<string, string> = {
   ru: 'dd.MM.yyyy',
   es: 'dd/MM/yyyy',
   sr: 'dd.MM.yyyy',
+  cs: 'dd.MM.yyyy',
 };
 
 export const DateSelectorWithCount = ({

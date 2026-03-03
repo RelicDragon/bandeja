@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
-import { enUS, ru, es, sr, Locale } from 'date-fns/locale';
+import { enUS, ru, es, sr, cs, Locale } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import { Plus, Edit2, Trash2, MapPin } from 'lucide-react';
 import { Button, Card, ConfirmationModal } from '@/components';
@@ -20,6 +20,7 @@ const localeMap: Record<string, Locale> = {
   ru: ru,
   es: es,
   sr: sr,
+  cs: cs,
 };
 
 export const GameSubscriptionsContent = () => {

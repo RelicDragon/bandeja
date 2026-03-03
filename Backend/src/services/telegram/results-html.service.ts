@@ -128,8 +128,16 @@ function getTranslations(language: string): Record<string, string> {
       points: 'Puntos',
       scores: 'Puntuación',
     },
+    cs: {
+      title: 'Výsledky zápasu',
+      doesNotAffectRating: 'Tento zápas neovlivňuje rating',
+      reliability: 'Spolehlivost',
+      games: 'Zápasy',
+      points: 'Body',
+      scores: 'Skóre',
+    },
   };
-  
+
   return translations[langCode] || translations.en;
 }
 

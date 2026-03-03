@@ -15,6 +15,7 @@ export const LanguageSelector = () => {
     { value: 'ru', label: 'RU', fullLabel: 'Русский', flag: '🇷🇺' },
     { value: 'sr', label: 'SR', fullLabel: 'Српски', flag: '🇷🇸' },
     { value: 'es', label: 'ES', fullLabel: 'Español', flag: '🇪🇸' },
+    { value: 'cs', label: 'CS', fullLabel: 'Čeština', flag: '🇨🇿' },
   ];
 
   const currentLanguage = languages.find(lang => lang.value === i18n.language) || languages[0];

@@ -11,7 +11,7 @@ import { useDesktop } from '@/hooks/useDesktop';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
-import { enUS, ru, es, sr } from 'date-fns/locale';
+import { enUS, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation as useI18nTranslation } from 'react-i18next';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -51,7 +51,7 @@ export const FindTab = () => {
   const findViewMode = useNavigationStore((s) => s.findViewMode);
 
   const { i18n } = useI18nTranslation();
-  const localeMap = { en: enUS, ru: ru, es: es, sr: sr };
+  const localeMap = { en: enUS, ru: ru, es: es, sr: sr, cs: cs };
   const locale = localeMap[i18n.language as keyof typeof localeMap] || enUS;
 
   const [dateRange, setDateRange] = useState<{ startDate?: Date; endDate?: Date }>(() => {

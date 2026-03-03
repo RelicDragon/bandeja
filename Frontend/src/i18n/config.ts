@@ -4,11 +4,12 @@ import en from './locales/en.json';
 import ru from './locales/ru.json';
 import sr from './locales/sr.json';
 import es from './locales/es.json';
+import cs from './locales/cs.json';
 import { extractLanguageCode } from '@/utils/displayPreferences';
 
 const getSystemLanguage = () => {
   const systemLang = navigator.language.split('-')[0];
-  const supportedLanguages = ['en', 'ru', 'sr', 'es'];
+  const supportedLanguages = ['en', 'ru', 'sr', 'es', 'cs'];
   return supportedLanguages.includes(systemLang) ? systemLang : 'en';
 };
 
@@ -45,6 +46,7 @@ i18n.use(initReactI18next).init({
     ru: { translation: ru },
     sr: { translation: sr },
     es: { translation: es },
+    cs: { translation: cs },
   },
   lng: getUserLanguage(),
   fallbackLng: 'en',

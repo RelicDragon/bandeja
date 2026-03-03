@@ -4,6 +4,7 @@ import { enUS } from 'date-fns/locale/en-US';
 import { ru } from 'date-fns/locale/ru';
 import { sr } from 'date-fns/locale/sr';
 import { es } from 'date-fns/locale/es';
+import { cs } from 'date-fns/locale/cs';
 import prisma from '../config/database';
 import { DEFAULT_TIMEZONE } from '../utils/constants';
 import { getDateLabel as baseGetDateLabel } from '../utils/translations';
@@ -19,6 +20,7 @@ const localeMap: Record<string, Locale> = {
   ru: ru,
   sr: sr,
   es: es,
+  cs: cs,
 };
 
 export async function getUserTimezone(userId: string): Promise<string> {

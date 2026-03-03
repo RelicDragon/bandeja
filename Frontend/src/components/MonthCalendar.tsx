@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Users, Swords, Dumbbell, Trophy, Beer } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
-import { enUS, ru, es, sr } from 'date-fns/locale';
+import { enUS, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
@@ -50,6 +50,7 @@ const localeMap = {
   ru: ru,
   es: es,
   sr: sr,
+  cs: cs,
 };
 
 export const MonthCalendar = ({

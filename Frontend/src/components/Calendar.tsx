@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import './Calendar.css';
-import { enUS, ru, es, sr } from 'date-fns/locale';
+import { enUS, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 
 interface CalendarProps {
@@ -16,6 +16,7 @@ const localeMap = {
   ru: ru,
   es: es,
   sr: sr,
+  cs: cs,
 };
 
 export const CalendarComponent = ({ selectedDate, onDateSelect, minDate }: CalendarProps) => {

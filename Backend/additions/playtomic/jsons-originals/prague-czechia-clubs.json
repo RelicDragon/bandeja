@@ -1,0 +1,2932 @@
+[
+  {
+    "tenant_id": "6fb81f7d-694a-4a8a-bf02-c5a871c5e574",
+    "tenant_name": "Padel Powers Prague (Smíchov)",
+    "slug": "padel-powers-prague-smichov",
+    "address": {
+      "street": "Křížová 6 (Praha 5)",
+      "postal_code": "150 00",
+      "city": "Prague 5-Smíchov",
+      "sub_administrative_area": "Prague 5",
+      "administrative_area": "Prague",
+      "country": "Czech Republic",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.073658,
+        "lon": 14.41854
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 725 521 360",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "cf7a802f-1709-4c94-941e-835c282ff0df",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "8a7d3abd-57a6-4dcc-ad53-f4b5c9f9c2aa",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "3bd77ca7-13b7-4c6b-a899-247e1169c5f4",
+        "name": "Padel 3 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "620f38d0-a2f2-4e12-a373-67e62a0c08a1",
+        "name": "Padel 4 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "3435d336-ef2e-46a3-a26f-741db373b816",
+        "name": "Padel 5 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "868a967c-ee61-4539-8c74-75171a2d0880",
+        "name": "Padel 6 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "cd319cab-6f6c-4348-a8ac-ba190e8e3022",
+        "name": "Padel 7 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "9b753e4b-54bd-45ed-af1e-4787a4567705",
+        "name": "Padel 8 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Powers Prague (Smíchov) is Prague's largest padel facility, featuring 8 high-quality indoor courts with 15-meter ceilings. The venue offers a comprehensive padel experience with modern amenities including a lively bar, equipment rental and shop, changing rooms with lockers, and personal training services. Located in the Smíchov district of Prague, it serves as the home of the Czech padel community, hosting tournaments, lessons for all skill levels, and corporate events. The facility combines convenient accessibility with a unique ambiance to enhance the social experience of the sport."
+  },
+  {
+    "tenant_id": "25383149-1eac-421a-9d9d-6a076665d413",
+    "tenant_name": "Padel Club Spoje",
+    "slug": "padel-club-spoje",
+    "address": {
+      "street": "Na Balkáně 990/21A",
+      "postal_code": "130 00",
+      "city": "Prague",
+      "sub_administrative_area": "Prague 3 - Vysočany",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.1083,
+        "lon": 14.5
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 723 888 385",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "af87cbf4-128c-41d6-b8b9-df8c8e9e07e4",
+        "name": "Court 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "e3ae7c4f-8200-4dc6-b1c6-2631a828a9fc",
+        "name": "Court 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "20:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Club Spoje was established in 2023 within the tennis area of TJ Spoje near Vítkov hill and Prague's forest park. The club features 2 outdoor padel courts with artificial lighting and outdoor seating for social gatherings after matches. It's part of a larger sports complex that includes tennis courts, a restaurant with terrace, changing rooms, gym facilities, and a children's playground. The club organizes tournaments for the public, competitive players, as well as corporate events, team building activities, and private tournaments. They offer coaching services and equipment rental for players."
+  },
+  {
+    "tenant_id": "61630435-4dc2-4bdb-bfde-23f32645cf19",
+    "tenant_name": "Tenis & Padel klub Písečná",
+    "slug": "tenis-padel-klub-pisecna",
+    "address": {
+      "street": "K Sadu 590/1",
+      "postal_code": "182 00",
+      "city": "Prague",
+      "sub_administrative_area": "Praha 8",
+      "administrative_area": "Troja",
+      "country": "Czech Republic",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.1167,
+        "lon": 14.4333
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 725 843 649",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "68b96560-6db0-4ea4-892c-251bf58cec75",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "43d22274-fed2-47ca-8546-d9ca6fd2eaee",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f4714e82-c038-455c-bcab-6bb9c1ab5dc9",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "86e55288-d655-401b-ab03-3e1dc4805bc9",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Tenis & Padel klub Písečná is a comprehensive sports facility located in the pleasant and quiet environment of Prague 8 - Troja, near the Velká skála natural monument. Established in 2016, it's known as the first padel club in the Czech Republic. The club offers high-quality courts and modern amenities for various sports including padel, tennis, beach volleyball, volleyball, and netball. It features a complete sports complex with changing rooms, showers, gym, showroom, clubhouse with bar, and outdoor terrace. The club organizes individual/group training, tournaments, corporate team-building events, and training camps both domestically and abroad. It has professional coaches including Czech national team representatives and champions. The facility is praised for its excellent courts, friendly atmosphere, and panoramic views of Prague."
+  },
+  {
+    "tenant_id": "666e3d15-30d0-4e4d-95b3-211f26057e50",
+    "tenant_name": "SK Slavia Praha PADEL",
+    "slug": "sk-slavia-praha-padel",
+    "address": {
+      "street": "Vladivostocká 1460/10",
+      "postal_code": "100 00",
+      "city": "Prague",
+      "sub_administrative_area": "Praha 10 - Vršovice",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.0667,
+        "lon": 14.4667
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 606 030 301",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "09a35063-0107-419f-b61e-2b7f846a42cb",
+        "name": "Court 1 - PADEL - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ae5b1991-efae-47ed-8aa4-ae6e628751ef",
+        "name": "Court 2 - SLAVIA - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "96eada6d-4d8f-4b16-975b-305263fcb672",
+        "name": "Court 3 - PRAHA - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "bef46489-e70b-46b7-8330-c4789b4e7458",
+        "name": "Court 4 - DELUXE - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "SK Slavia Praha PADEL is a padel club established in 2022 as an official member section of SK Slavia Praha, the oldest and largest sports club in the Czech Republic. Located in the Vršovice district of Prague within the SK Slavia Praha swimming pool complex area, the club features four outdoor padel courts. It operates seasonally with full services during summer months (clubhouse, changing rooms, showers, bar) and limited winter operation. The club organizes tournaments for beginners (START) and advanced players (SPORT), offers padel racket rentals, and provides training for children, youth, recreational players, and competitive athletes. It's a member of the Czech Padel Federation and participates in national competitions."
+  },
+  {
+    "tenant_id": "e504d5fa-5259-47f7-8b52-ea00b47e3d4d",
+    "tenant_name": "Padel Club Prague",
+    "slug": "padel-club-prague",
+    "address": {
+      "street": "Padelová 123",
+      "postal_code": "15000",
+      "city": "Prague",
+      "sub_administrative_area": "Prague",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.075538,
+        "lon": 14.4378
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 123 456 789",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "b57b2ba1-ff04-4d09-a227-b9e9f00a0ecf",
+        "name": "Court 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "a96fec88-c02c-43cb-a75d-8e66ffe1d238",
+        "name": "Court 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "e54c67de-40d7-4b6c-9f75-d769a008379d",
+        "name": "Court 3 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "20:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "20:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "A premier padel club in Prague offering both indoor and outdoor courts, with modern facilities including changerooms, free parking, cafeteria, WiFi, lockers, and disabled access."
+  },
+  {
+    "tenant_id": "24c72a86-a9fc-4bd4-b2f0-f8d6721a1ccb",
+    "tenant_name": "Padel Neridé",
+    "slug": "padel-neride",
+    "address": {
+      "street": "V Chotejně 700/7",
+      "postal_code": "10200",
+      "city": "Prague",
+      "sub_administrative_area": "Prague 15 - Hostivař",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.051,
+        "lon": 14.506
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 272 111 817",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ee5e70d2-4e25-4936-8410-dd892393a355",
+        "name": "Padel Court - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "24:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "24:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "24:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "24:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "24:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "24:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "24:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "24:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Neridé is part of the TK Neridé sports complex founded in 1995 in Prague. In 2024, the club partnered with Infinity Padel to create modern padel tennis facilities in the Czech Republic. The club features a modern heated indoor hall with padel courts, fitness center, regeneration zone, changing rooms, and refreshment options. It operates 24/7 and accepts MultiSport cards. The facility focuses on developing young talents while offering training for all age groups from children to adults. The club combines padel tennis with fitness and relaxation for a complete sports experience."
+  },
+  {
+    "tenant_id": "332d9ac1-d2cb-47e7-82b2-de4e36f11092",
+    "tenant_name": "TK Sparta Praha Padel",
+    "slug": "tk-sparta-praha-padel",
+    "address": {
+      "street": "Za Císařským mlýnem 1115/2",
+      "postal_code": "170 00",
+      "city": "Prague",
+      "sub_administrative_area": "Praha 7-Bubeneč",
+      "administrative_area": "Prague",
+      "country": "Czech Republic",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.104,
+        "lon": 14.415
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 233 320 369",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "dbb13751-0663-43a7-b970-57d845865a09",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "10c1a4e5-c03e-4078-a161-5ed9af08c7cd",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "3e434184-15a1-4140-aec7-1807d8b368d5",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "28c01f9c-d81c-4bbc-aea3-477c8578bd70",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "SATURDAY": {
+        "opening_time": "11:00",
+        "closing_time": "17:00"
+      },
+      "SUNDAY": {
+        "opening_time": "11:00",
+        "closing_time": "17:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "11:00",
+        "closing_time": "17:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "TK Sparta Praha is one of the most prestigious tennis clubs in the Czech Republic, founded in 1905. Located on the edge of Stromovka Park near the Vltava River, about 10 minutes from Prague city center. The club offers padel and pickleball facilities with 4 outdoor hard courts. The complex is part of the National Tennis Center and features extensive sports facilities including tennis courts, gym, rehabilitation facilities, massages, and a whirlpool. The club restaurant offers dining options and the venue is suitable for training, corporate parties, or company presentations with WiFi and projector available."
+  },
+  {
+    "tenant_id": "fdc86aad-9dce-4c7e-8b0d-3ad71849c3bc",
+    "tenant_name": "Czech Padel Academy Praha Čakovice",
+    "slug": "czech-padel-academy-praha-cakovice",
+    "address": {
+      "street": "Jizerská 328/4",
+      "postal_code": "196 00",
+      "city": "Praha-Čakovice",
+      "sub_administrative_area": "Praha",
+      "administrative_area": "Praha",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.1519,
+        "lon": 14.5294
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 608 033 177",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "9f754780-08f7-4a62-8f56-3cfe75aa7fec",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "590f9c48-7de6-4b34-a456-3d93075a9e5d",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Czech Padel Academy Praha Čakovice is a newly opened padel facility located in the Čakovice district of Prague. The academy operates from a tent hall structure ('Plachtová hala') situated next to Sokolovna Avia Čakovice. It features two indoor padel courts, making it one of the few indoor padel facilities in Prague. The academy offers professional padel training, memberships (including junior memberships), summer camps, tournaments, and court reservations. As part of the Czech Padel Academy network, it also has another location in Prague 18 - Letňany (Sky Sport City). The facility focuses on bringing professional padel training and memorable playing experiences to players of all levels in the rapidly growing sport of padel."
+  },
+  {
+    "tenant_id": "e05dbd6a-a097-4976-8d15-1eecc23680c7",
+    "tenant_name": "Sky Sport City Prosek (Czech Padel Academy Letňany)",
+    "slug": "sky-sport-city-prosek-czech-padel-academy-letnany",
+    "address": {
+      "street": "Lovosická 559/32",
+      "postal_code": "190 00",
+      "city": "Prague",
+      "sub_administrative_area": "Prague 18 - Letňany",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.1333,
+        "lon": 14.5167
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 601 559 559",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ccad7df8-d2bd-4222-b5c8-cd9e2846bfaa",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ce4bbc2f-49fa-4437-8912-25c3c0c88bae",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f1843e5c-76b4-4b44-9e14-3abb46567675",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "489f6e25-df24-4631-af54-d1cada4c2f2e",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Sky Sport City in Letňany, Prague is a modern sports complex featuring 4 beautiful outdoor uncovered padel courts and additional pickleball courts. The facility is part of the Czech Padel Academy network and offers professional padel playing experience. The complex includes a small bar at reception, equipment rental services for beginners, and is conveniently located near the Střížkov metro station. The gym is primarily used by successful badminton and volleyball clubs, with the padel courts being a newer addition to the sports complex."
+  },
+  {
+    "tenant_id": "9ae86798-76c8-463d-9ae6-98644a6cba19",
+    "tenant_name": "For Padel Sport Park Zdiměřice",
+    "slug": "for-padel-sport-park-zdimerice",
+    "address": {
+      "street": "U Geofyzikálního ústavu",
+      "postal_code": "252 42",
+      "city": "Jesenice u Prahy-Zdiměřice",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 0,
+        "lon": 0
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 777 129 066, +420 773 050 420, +420 603 762 561",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "85bf8795-b0ce-457b-b587-514590dcb3f1",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "9a2baabc-542c-4c3d-88c6-e3e46a7203cc",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "790ca698-1fe0-4989-812e-81d3afdbb384",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f1983706-be91-4fcc-90e7-ede330f636f3",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "For Padel Sport Park Zdiměřice is a modern sports complex that opened in summer 2024, located in Jesenice near Prague. The facility offers excellent infrastructure for players of all levels, featuring multiple outdoor courts for padel, pickleball, tennis, and beach volleyball. The complex is designed as a meeting place where sports enthusiasm blends with a friendly atmosphere. It's part of a larger sports area that includes the YES FunPark for larger events. The facility provides comprehensive amenities including food service, locker rooms, restrooms, and wheelchair accessibility, making it a popular destination for sports enthusiasts in the Prague metropolitan area."
+  },
+  {
+    "tenant_id": "3d4eeef9-1882-446d-ba6f-8a66bd79d9e5",
+    "tenant_name": "Padel Centrum Head",
+    "slug": "padel-centrum-head",
+    "address": {
+      "street": "Sportovní 456",
+      "postal_code": "252 42",
+      "city": "Vestec",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Czech Republic",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 0,
+        "lon": 0
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 777 773 139",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ac098742-be05-4a9e-b58b-eaece8a417f0",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "8b2486ed-a02a-498b-9c90-e5e5c0c4c7e0",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f40e364d-b8d2-4817-9369-55521f9a81c9",
+        "name": "Padel 3 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Centrum Head is part of the larger Tenis Centrum Head sports complex located in Vestec, near Prague. The facility has been operating since 2004 as one of the largest indoor tennis centers in the area. In 2025, they expanded with 3 modern indoor padel courts featuring quality surfaces and professional lighting. The padel courts are designed for 4 players and combine elements of tennis and squash. The complex offers comprehensive sports facilities including tennis courts, fitness areas, sauna, and social spaces, making it a complete sports and recreation destination."
+  },
+  {
+    "tenant_id": "a81658d7-8bb7-418a-a3ad-fdf0faabd98e",
+    "tenant_name": "HECTOR Sport Centre",
+    "slug": "hector-sport-centre",
+    "address": {
+      "street": "Malešická 655/59C",
+      "postal_code": "108 00",
+      "city": "Prague",
+      "sub_administrative_area": "Praha 10 – Malešice",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.0833,
+        "lon": 14.4667
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 736 286 603",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "40963dad-82c2-4034-9e96-c0ad9ec1c86d",
+        "name": "Czech Crystal Padel Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor or outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "HECTOR Sport Centre is a comprehensive sports and entertainment complex in Prague 10 - Malešice with a long history. It offers the widest range of sports and leisure activities including padel (newly added in 2024), tennis, squash, badminton, beach volleyball, table tennis, fitness center, group exercise classes, and wellness facilities. The center features a credit system for most activities and includes a restaurant with both indoor and seasonal outdoor terrace seating. The facility caters to recreational players, sports schools, clubs, and also hosts corporate events, meetings, and private functions. The padel court is a custom-made Czech Crystal Padel construction with robust frames and hardened glass walls providing nearly 100% playable surface area."
+  },
+  {
+    "tenant_id": "ba26f67a-0c84-49f3-82c1-71f66e79c0a9",
+    "tenant_name": "SK Prosek Praha",
+    "slug": "sk-prosek-praha",
+    "address": {
+      "street": "Lovosická 559/32",
+      "postal_code": "190 00",
+      "city": "Prague",
+      "sub_administrative_area": "Praha 18/Prosek",
+      "administrative_area": "Prague",
+      "country": "Czech Republic",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.13,
+        "lon": 14.5
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "286 580 551",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "32ea97c9-b76b-40a6-b2b6-377cf155a144",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "9372a483-caa1-479c-88ea-75bd759751ee",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "fec1ba9e-4ac8-414d-ab0d-fcad34ecb50a",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "37a2ee70-7222-401a-bd0d-a31af75ab787",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "SK Prosek Praha is part of the Sky Sport City complex, which opened in 1982 and belongs to the SK Prosek sports club. The complex features two football fields with grandstands, a gym used by successful badminton and volleyball clubs, and two outdoor volleyball courts. The newest addition is four high-quality padel courts that opened in spring 2023, built by the Spanish company Sky Padel with FIP certification for international competitions. The courts feature Mondo artificial turf for premium playing experience. The facility is located in Letňany, close to Střížkov metro station. The complex also includes the SSC Bistro Café offering refreshments and a pleasant seating area. The padel courts are described as outdoor courts of first-class quality in a beautiful club environment."
+  },
+  {
+    "tenant_id": "3706660d-1fd8-4e2d-a4ca-6252db58823d",
+    "tenant_name": "Black Glass Padel",
+    "slug": "black-glass-padel",
+    "address": {
+      "street": "V Celnici 1031/4",
+      "postal_code": "110 00",
+      "city": "Prague",
+      "sub_administrative_area": "Praha 1",
+      "administrative_area": "Prague",
+      "country": "Czech Republic",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.0875,
+        "lon": 14.4214
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 123 456 789",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "d5bb51d5-399e-4130-b595-8e33b99a89b1",
+        "name": "Padel Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Black Glass Padel is Prague's Premier Padel Courts and most sophisticated facility. Located in the central Prague 1 district, it offers premium padel experiences, allowing players to book courts, track rankings, and join a community of passionate players."
+  },
+  {
+    "tenant_id": "0b1426b1-23a8-495a-8164-e3dd11cdf6d0",
+    "tenant_name": "Czech Padel Academy",
+    "slug": "czech-padel-academy",
+    "address": {
+      "street": "",
+      "postal_code": "",
+      "city": "Prague",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.0755,
+        "lon": 14.4378
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ebbbc518-2b8b-4111-a482-5e1df39bc08b",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "A padel club located in Prague, Czechia."
+  },
+  {
+    "tenant_id": "929ef8c0-c75d-40ed-862b-b052c522937b",
+    "tenant_name": "Padel klub Praha",
+    "slug": "padel-klub-praha",
+    "address": {
+      "street": "Rybná 716/24",
+      "postal_code": "110 00",
+      "city": "Prague",
+      "sub_administrative_area": "Staré Město",
+      "administrative_area": "Praha 1",
+      "country": "Czech Republic",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.08804,
+        "lon": 14.42076
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 721 734 250",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "f138cd1f-e47d-45e1-8bcd-e92b02e2e034",
+        "name": "Padel Court - Unknown",
+        "sport": "PADEL",
+        "features": [
+          "unknown",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "The 'Padel klub Praha' listing on the Czech Padel Federation website appears to be a directory entry or template page rather than a specific physical padel club with its own facilities. The page lacks specific contact information, court details, or facility information that would be expected for an individual club."
+  },
+  {
+    "tenant_id": "33608de6-90ea-4708-b0a3-91556e6739ca",
+    "tenant_name": "Play Padel Prague",
+    "slug": "play-padel-prague",
+    "address": {
+      "street": "Unknown",
+      "postal_code": "Unknown",
+      "city": "Prague",
+      "sub_administrative_area": "Prague",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.075538,
+        "lon": 14.4378
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "Unknown",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ],
+        "resourceId": "3620047b-1d73-4cb7-a713-bd308f34850d"
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Play Padel Prague is a padel community organization and booking platform based in Prague, Czech Republic. They focus on connecting padel players of different skill levels for matches and organizing community events. They operate primarily through their website (playpadel.cz) and social media platforms, helping players find courts at various sports clubs and facilities across Prague and other Czech cities. They appear to be more of a matchmaking and community-building service rather than a physical club with its own courts and facilities."
+  },
+  {
+    "tenant_id": "8e480646-e070-4390-b76d-3193e0d577f5",
+    "tenant_name": "Padel Praha VN",
+    "slug": "padel-praha-vn",
+    "address": {
+      "street": "",
+      "postal_code": "",
+      "city": "Prague",
+      "sub_administrative_area": "Vinohrady",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.0755,
+        "lon": 14.4378
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "b8354720-39a5-49b8-9370-437720036a02",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel club located in the Vinohrady district of Prague, Czechia."
+  },
+  {
+    "tenant_id": "b812020d-7f50-478d-959c-123cae418a02",
+    "tenant_name": "Zámek Ctěnice",
+    "slug": "zamek-ctenice",
+    "address": {
+      "street": "Bohdanečská 259/1",
+      "postal_code": "19017",
+      "city": "Prague",
+      "sub_administrative_area": "Prague 9",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.1333,
+        "lon": 14.5667
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "b3651ef4-51a3-4fb2-9523-a70177a5e1d5",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel club located at Zámek Ctěnice in Prague."
+  },
+  {
+    "tenant_id": "a2c9a187-9483-4bec-baec-57deeec4dcfb",
+    "tenant_name": "Tempo tenis Lhotka",
+    "slug": "tempo-tenis-lhotka",
+    "address": {
+      "street": "Ve Lhotce 1068/3",
+      "postal_code": "147 00",
+      "city": "Prague",
+      "sub_administrative_area": "Prague 4",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.0167,
+        "lon": 14.4333
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 724 068 227",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "false"
+    },
+    "resources": [
+      {
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ],
+        "resourceId": "496b4860-c947-47ed-9ca5-3b5f1b838e71"
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Tempo tenis Lhotka is a tennis complex located in the pleasant surroundings of Hodkovičky Forest Park in Prague 4. The facility operates 6 clay courts and 1 synthetic court, with 5 courts covered by modern inflatable halls during winter months. It offers tennis lessons for children and adults, hosts tournaments, and provides facilities including a sports bar, locker rooms, showers, and a tennis equipment shop. The complex is accessible by public transportation with several bus connections from metro stations. Note: This is a tennis facility, not a padel club - no padel courts are available."
+  },
+  {
+    "tenant_id": "63d77d51-5cb1-40fa-903c-28edc1359f51",
+    "tenant_name": "Padel Club Prague",
+    "slug": "padel-club-prague",
+    "address": {
+      "street": "Unknown",
+      "postal_code": "Unknown",
+      "city": "Prague",
+      "sub_administrative_area": "Unknown",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.0755,
+        "lon": 14.4378
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "Unknown",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "1669e62f-d37a-4f9a-9f94-f2efce9290a2",
+        "name": "Court 1 - Unknown",
+        "sport": "PADEL",
+        "features": [
+          "unknown",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "A padel club located in Prague, Czechia."
+  },
+  {
+    "tenant_id": "53805e67-e3b1-4caf-a45b-5884ee3c3414",
+    "tenant_name": "Padel4All Roadshow Prague",
+    "slug": "padel4all-roadshow-prague",
+    "address": {
+      "street": "Náměstí Republiky",
+      "postal_code": "11000",
+      "city": "Prague",
+      "sub_administrative_area": "Prague 1",
+      "administrative_area": "Prague",
+      "country": "Czech Republic",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.0875,
+        "lon": 14.4283
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+48 607 576 322",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "4a734bcf-59b0-4a16-895b-6a32bb1d68d8",
+        "name": "Temporary Mobile Court 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel4All is an international promotional initiative and event series (PADEL4ALL Roadshow) that organizes temporary padel tennis events in European cities to promote the sport. The Prague event took place at Náměstí Republiky (Republic Square) in May-June 2023, featuring temporary mobile padel courts, free training sessions, exhibition matches with European national team representatives, and international tournaments. The initiative aims to introduce people to padel tennis and encourage participation in this fast-growing sport. It appears to be more of a promotional/marketing campaign rather than a permanent sports club facility."
+  },
+  {
+    "tenant_id": "e85de983-58b1-4971-8cf6-ab0e2ba86ee8",
+    "tenant_name": "Padel Courts CZ / Group Konzept",
+    "slug": "padel-courts-cz-group-konzept",
+    "address": {
+      "street": "Na Poříčí 17",
+      "postal_code": "110 00",
+      "city": "Prague",
+      "sub_administrative_area": "Prague 1",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.08804,
+        "lon": 14.42076
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ],
+        "resourceId": "b722c891-7934-49e2-a1d0-3f86784d4b70"
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "17:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "17:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "17:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "17:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "17:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "17:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "17:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "17:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Courts CZ is part of Group Konzept, an international company founded in 2001 with over 20 years of experience in installing sports courts and surfaces worldwide. They specialize in designing, manufacturing, and installing padel courts, working exclusively with PadelGalis (the world leader in padel arena production and official partner of the World Padel Tour since 2020). The company focuses on high-quality court construction with customization options including artificial turf, color choices, Flexipadel systems, accessories, portable kits, and consulting services. They serve clients looking to build padel facilities rather than operating a club for public play."
+  },
+  {
+    "tenant_id": "96e83095-2d5a-4376-b4e4-6c10f5bf131a",
+    "tenant_name": "Czech Padel Academy (Padel Automat)",
+    "slug": "czech-padel-academy-padel-automat",
+    "address": {
+      "street": "Jizerská 328/4",
+      "postal_code": "",
+      "city": "Prague",
+      "sub_administrative_area": "Praha-Čakovice",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 0,
+        "lon": 0
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 608 033 177",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ad60f768-e535-4b5c-ba58-c5bf2b8c3fcf",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "319d8a66-82f5-45b5-8156-2c08752c66e4",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Automat appears to be the booking system for Czech Padel Academy, located in Prague-Čakovice. The facility is a newly opened padel hall with two indoor courts situated in a tent-style hall (plachtová hala) next to the Sokolovna Avia Čakovice sports complex. The venue offers padel training and court rentals through the Czech Padel Academy, which provides professional padel instruction, tournaments, and training programs for players of all levels. The academy focuses on bringing professional padel training and unforgettable playing experiences to the Czech padel community."
+  },
+  {
+    "tenant_id": "6683c259-500b-4270-9571-75e1592aafdc",
+    "tenant_name": "Padel Tenis Neride",
+    "slug": "padel-tenis-neride",
+    "address": {
+      "street": "V Chotejně 700/7",
+      "postal_code": "10200",
+      "city": "Prague",
+      "sub_administrative_area": "Praha 15 - Hostivař",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 0,
+        "lon": 0
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 272 111 817",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "144c1910-15ce-48f7-8e0e-30521f5e3a7c",
+        "name": "Padel Court - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:59"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:59"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:59"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:59"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:59"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:59"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:59"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "23:59"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Tenis Neride is a modern indoor padel facility located in Prague's Hostivař district. Operating 24/7 in a heated hall, it offers padel courts along with comprehensive amenities including a fitness center, regeneration zone, changing rooms with showers, and refreshment options. The club partners with Infinity Padel and accepts MultiSport cards, making it accessible for players of all levels. Professional coaching is available, and the facility hosts regular tournaments. Free parking is available in the surrounding area."
+  },
+  {
+    "tenant_id": "3bd12321-02e8-44c2-a3aa-12935608d1bd",
+    "tenant_name": "For Padel",
+    "slug": "for-padel",
+    "address": {
+      "street": "U Geofyzikálního ústavu",
+      "postal_code": "252 42",
+      "city": "Jesenice u Prahy-Zdiměřice",
+      "sub_administrative_area": "",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 0,
+        "lon": 0
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 777 129 066",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "26802718-e151-4308-b2db-a7ba315fc206",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "b84c36f3-c50b-43e1-8d3e-d4a6df6d7955",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "9f453c49-0249-483c-ade9-d0b0f6a5f8df",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ff1a0706-bd09-422f-9545-ed761aaa85cf",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "For Padel is a modern sports complex that opened in summer 2024 in Zdiměřice, just outside Prague. The facility offers a comprehensive sports experience with 4 outdoor padel courts, 2 pickleball courts, 1 tennis court, and 2 beach volleyball courts. Designed to provide excellent facilities for players of all levels, the complex features a bistro/cafe, changing rooms, and parking. It's positioned as more than just a sports venue - it's a meeting place where sports enthusiasm blends with a friendly atmosphere. The facility is part of a larger sports and recreation area that can accommodate events for up to 300 people in collaboration with the neighboring YES FunPark."
+  },
+  {
+    "tenant_id": "bf7d815a-76c2-4262-bb16-29132d8d778b",
+    "tenant_name": "Tenisový klub Sparta Praha",
+    "slug": "tenisovy-klub-sparta-praha",
+    "address": {
+      "street": "Za Císařským mlýnem 1115/2",
+      "postal_code": "170 00",
+      "city": "Prague",
+      "sub_administrative_area": "Bubeneč",
+      "administrative_area": "Prague",
+      "country": "Czech Republic",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.1075,
+        "lon": 14.4158
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 233 320 369",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "febe061c-1c62-4ec2-b346-7d318d5a3476",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "b20c9799-3d52-4020-9b7a-7685d9079a64",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Tenisový klub Sparta Praha, founded in 1905, is one of the most prestigious tennis clubs in the Czech Republic, located on the edge of Stromovka Park near the Vltava River in Prague. As a National Tennis Center, it offers world-class facilities including padel courts alongside its extensive tennis facilities (16 outdoor, 3 indoor, and 12 covered tennis courts). The club is home to many top Czech tennis players and offers a comprehensive sports experience with professional coaching, tennis academy, gym, physiotherapy, and massage services. The padel section is part of a larger sports complex and offers court rentals at competitive rates (starting from 460 CZK/hour). The club has a modern atmosphere appreciated by both top athletes and recreational players."
+  },
+  {
+    "tenant_id": "8b29b418-9f0b-4bc9-9f94-881324bedb4f",
+    "tenant_name": "Czech Padel Academy",
+    "slug": "czech-padel-academy",
+    "address": {
+      "street": "Jizerská 328/4",
+      "postal_code": "196 00",
+      "city": "Praha-Čakovice",
+      "sub_administrative_area": "Prague 9",
+      "administrative_area": "Prague",
+      "country": "Czechia",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.1519,
+        "lon": 14.5294
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "752699f7-e7d9-4bf8-8f97-29f54e5db99a",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "b8a434e0-d829-4444-b32d-eeac7ad43487",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Czech Padel Academy is a newly opened padel facility located in the Čakovice district of Prague. It features two indoor padel courts in a dedicated padel hall. The academy offers professional padel training and coaching services for both adults and juniors, including representative training programs. They organize tournaments, summer camps, and provide membership options for regular players. The facility appears to be focused on developing padel skills with a professional approach, offering an unforgettable playing experience and joy from every training session that advances players' game skills and abilities."
+  },
+  {
+    "tenant_id": "c5424d69-df67-4e24-9695-5c0ac1d6592c",
+    "tenant_name": "Padel Powers",
+    "slug": "padel-powers-prague",
+    "address": {
+      "street": "Křížová 6 (Praha 5), Smíchov",
+      "postal_code": "150 00",
+      "city": "Prague",
+      "sub_administrative_area": "Smíchov",
+      "administrative_area": "Prague",
+      "country": "Czech Republic",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.073658,
+        "lon": 14.41854
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+420 725 521 360",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "23aa9b45-846c-4454-8dc5-a00935869e65",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "96de2380-f722-4c7b-915a-d8b4b55ae5e7",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ce1f9a78-a750-4a1d-821a-a2b2807cba7d",
+        "name": "Padel 3 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "51e8352d-aa1f-4c0d-8eeb-abcc46530fac",
+        "name": "Padel 4 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "753c829c-e0e6-4262-a9ff-5262e0c193f8",
+        "name": "Padel 5 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "79acd677-c3b0-409c-9b3c-aab8deaa7717",
+        "name": "Padel 6 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "dac04c89-04d4-48fb-b538-7521d28bcea6",
+        "name": "Padel 7 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f2522eeb-4a4e-4404-beed-5345f4ace347",
+        "name": "Padel 8 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Powers is Prague's largest padel facility located in the Smíchov district. It features 8 high-quality indoor courts with 15-meter high ceilings, creating a premium playing environment. The facility serves as the home of Czech padel community, offering not only court rentals but also professional padel lessons for all skill levels. The venue includes a modern bar area for socializing after games, equipment rental and sales, changing rooms with lockers, and meeting spaces with catering options. They accept MultiSport cards and offer both individual and group training sessions with experienced coaches. The facility emphasizes creating a social atmosphere where players can enjoy the sport while meeting new people."
+  },
+  {
+    "tenant_id": "156742c2-b3a3-4fc3-b4f8-60c22356a464",
+    "tenant_name": "Padel Džus",
+    "slug": "padel-dzus",
+    "address": {
+      "street": "U Továren 999/31",
+      "postal_code": "102 00",
+      "city": "Praha 15-Hostivař",
+      "sub_administrative_area": "Prague",
+      "administrative_area": "Prague",
+      "country": "Czech Republic",
+      "country_code": "CZ",
+      "coordinate": {
+        "lat": 50.051,
+        "lon": 14.534
+      },
+      "timezone": "Europe/Prague"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "0693e6e7-9afe-4799-937d-0cba86a735c9",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "4ce98dcd-9aa0-44be-8c0f-dbf828b7e76d",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "84a5f67e-14f4-408d-bb4f-7c907e85473e",
+        "name": "Padel 3 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ac652749-6f35-4e98-96bf-244219765350",
+        "name": "Padel 4 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Džus is a modern indoor padel club located in the Hostivař district of Prague. The facility features 4 professional indoor padel courts, a café, premium padel equipment, and a dedicated functional training zone. The club emphasizes community, fun, and unforgettable experiences, offering open matches, split payments, a rating system, tournaments for all levels, and professional padel lessons (both group and individual). The location is well-connected by public transport and offers free parking. The club appears to be newly established or about to open, with the website indicating 'Opening coming soon.'"
+  }
+]

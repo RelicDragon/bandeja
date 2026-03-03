@@ -14,12 +14,14 @@ import { enUS } from 'date-fns/locale/en-US';
 import { ru } from 'date-fns/locale/ru';
 import { sr } from 'date-fns/locale/sr';
 import { es } from 'date-fns/locale/es';
+import { cs } from 'date-fns/locale/cs';
 
 const localeMap: Record<string, any> = {
   en: enUS,
   ru: ru,
   sr: sr,
   es: es,
+  cs: cs,
 };
 
 function getRelativeDateLabel(date: Date | string, timezone: string, lang: string): string {
@@ -155,6 +157,7 @@ export class ResultsTelegramService {
       'ru': 'Russian',
       'sr': 'Serbian',
       'es': 'Spanish',
+      'cs': 'Czech',
     };
     const targetLanguageName = languageNames[languageCode] || 'English';
 

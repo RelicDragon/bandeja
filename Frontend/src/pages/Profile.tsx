@@ -22,6 +22,7 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { extractLanguageCode, normalizeLanguageForProfile } from '@/utils/displayPreferences';
+import { getCountryFlag, getLanguageFlag } from '@/utils/countryFlag';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { isCapacitor, getAppInfo, isIOS } from '@/utils/capacitor';
 import { openEula } from '@/utils/openEula';
@@ -1023,11 +1024,12 @@ export const ProfileContent = () => {
               <Select
                 options={[
                   { value: 'auto', label: t('profile.auto') || 'Auto', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
-                  { value: 'en-US', label: 'English (US)', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
-                  { value: 'en-GB', label: 'English (UK)', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
-                  { value: 'ru-RU', label: 'Русский', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
-                  { value: 'sr-RS', label: 'Српски', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
-                  { value: 'es-ES', label: 'Español', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'en-US', label: 'English (US)', icon: <span className="text-lg leading-none">{getCountryFlag('United States')}</span> },
+                  { value: 'en-GB', label: 'English (UK)', icon: <span className="text-lg leading-none">{getCountryFlag('United Kingdom')}</span> },
+                  { value: 'ru-RU', label: 'Русский', icon: <span className="text-lg leading-none">{getLanguageFlag('ru')}</span> },
+                  { value: 'sr-RS', label: 'Српски', icon: <span className="text-lg leading-none">{getLanguageFlag('sr')}</span> },
+                  { value: 'es-ES', label: 'Español', icon: <span className="text-lg leading-none">{getLanguageFlag('es')}</span> },
+                  { value: 'cs-CZ', label: 'Čeština', icon: <span className="text-lg leading-none">{getLanguageFlag('cs')}</span> },
                 ]}
                 value={language}
                 onChange={handleChangeLanguage}
