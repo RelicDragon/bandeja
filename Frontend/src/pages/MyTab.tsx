@@ -174,6 +174,19 @@ export const MyTab = () => {
       counts
     );
   }, [activeTab, myGamesSelectedDate, calendarMergedGames, filteredMyGames, calendarMergedUnreadCounts, mergedUnreadCounts]);
+
+  const upcomingGamesForCalendar = useMemo(() => {
+    if (activeTab !== 'calendar') return [];
+    const selectedStr = format(startOfDay(myGamesSelectedDate), 'yyyy-MM-dd');
+    return filteredMyGames
+      .filter((g) => {
+        if (g.timeIsSet === false) return false;
+        if (g.status !== 'ANNOUNCED' && g.status !== 'STARTED') return false;
+        const gameStr = format(startOfDay(new Date(g.startTime)), 'yyyy-MM-dd');
+        return gameStr !== selectedStr;
+      })
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  }, [activeTab, myGamesSelectedDate, filteredMyGames]);
   const handleCalendarDateRangeChange = useCallback(
     async (start: Date, end: Date) => {
       const today = startOfDay(new Date());
@@ -393,6 +406,7 @@ export const MyTab = () => {
                   skeletonStates={skeletonAnimation.skeletonStates}
                   gamesUnreadCounts={calendarMergedUnreadCounts}
                   onNoteSaved={() => fetchData(false, true)}
+                  upcomingGames={upcomingGamesForCalendar}
                 />
                 <div className={`transition-all duration-500 ease-in-out overflow-hidden ${unreadMessages > 0 ? 'max-h-[100px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
                   <div className="flex items-center justify-center pt-4">
@@ -475,6 +489,7 @@ export const MyTab = () => {
               skeletonStates={skeletonAnimation.skeletonStates}
               gamesUnreadCounts={activeTab === 'calendar' ? calendarMergedUnreadCounts : mergedUnreadCounts}
               onNoteSaved={() => fetchData(false, true)}
+              upcomingGames={upcomingGamesForCalendar}
             />
           </div>
 

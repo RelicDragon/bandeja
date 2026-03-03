@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Check, Search } from 'lucide-react';
 import { Button, Card, GameCard, Divider } from '@/components';
+import { UpcomingGamesList } from '@/components/home/UpcomingGamesList';
 import { Game } from '@/types';
 
 interface MyGamesSectionProps {
@@ -12,6 +13,7 @@ interface MyGamesSectionProps {
   gamesUnreadCounts: Record<string, number>;
   onSwitchToSearch?: () => void;
   onNoteSaved?: (gameId: string) => void;
+  upcomingGames?: Game[];
 }
 
 export const MyGamesSection = ({
@@ -23,6 +25,7 @@ export const MyGamesSection = ({
   gamesUnreadCounts,
   onSwitchToSearch,
   onNoteSaved,
+  upcomingGames,
 }: MyGamesSectionProps) => {
   const { t } = useTranslation();
 
@@ -56,6 +59,13 @@ export const MyGamesSection = ({
   }
 
   if (games.length === 0) {
+    if (upcomingGames && upcomingGames.length > 0) {
+      return (
+        <div>
+          <UpcomingGamesList games={upcomingGames} />
+        </div>
+      );
+    }
     return (
       <div>
         <Card className="text-center py-12">
