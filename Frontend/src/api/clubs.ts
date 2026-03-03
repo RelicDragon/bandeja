@@ -10,6 +10,8 @@ export interface ClubMapItem {
   cityName: string;
   country: string;
   courtsCount: number;
+  website?: string | null;
+  phone?: string | null;
 }
 
 export interface MapBbox {

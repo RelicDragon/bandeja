@@ -1568,11 +1568,14 @@
     "courtsCount_other": "{{count}} courts"
   },
   "city": {
+    "cities": "Cities",
+    "clubs": "Clubs",
     "clubsCount_zero": "No clubs",
     "clubsCount_one": "1 club",
     "clubsCount_other": "{{count}} clubs",
     "searchCountries": "Search countries",
     "searchCities": "Search city, region...",
+    "searchClubs": "Search clubs...",
     "map": "Map",
     "list": "List",
     "selectCity": "Select",

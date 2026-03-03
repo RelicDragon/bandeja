@@ -41,6 +41,8 @@ export const getClubsForMap = asyncHandler(async (req: Request, res: Response) =
       latitude: true,
       longitude: true,
       courtsNumber: true,
+      website: true,
+      phone: true,
       city: { select: { id: true, name: true, country: true } },
     },
   });
@@ -53,6 +55,8 @@ export const getClubsForMap = asyncHandler(async (req: Request, res: Response) =
     cityName: c.city.name,
     country: c.city.country,
     courtsCount: c.courtsNumber,
+    website: c.website ?? undefined,
+    phone: c.phone ?? undefined,
   }));
   res.json({ success: true, data });
 });
