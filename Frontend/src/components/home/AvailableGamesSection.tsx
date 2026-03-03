@@ -12,6 +12,7 @@ import { MonthCalendar } from '@/components/MonthCalendar';
 import { TrainersList } from './TrainersList';
 import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
+import { ResizableSplitter } from '@/components/ResizableSplitter';
 
 interface AvailableGamesSectionProps {
   availableGames: Game[];
@@ -24,6 +25,7 @@ interface AvailableGamesSectionProps {
   onFilterChange?: (key: keyof GameFilters, value: any) => void;
   onFiltersChange?: (updates: Partial<GameFilters>) => void;
   onNoteSaved?: (gameId: string) => void;
+  splitView?: boolean;
 }
 
 export const AvailableGamesSection = ({
@@ -37,6 +39,7 @@ export const AvailableGamesSection = ({
   onFilterChange,
   onFiltersChange,
   onNoteSaved,
+  splitView = false,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const { translateCity } = useTranslatedGeo();
@@ -293,94 +296,182 @@ export const AvailableGamesSection = ({
     setTimeout(() => setIsAnimating(false), 300);
   };
 
-  return (
-    <div className="mt-2">
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-3 max-w-md mx-auto">
-          <button
-            onClick={handleCityClick}
-            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
-          >
-            <MapPin size={16} className="text-primary-600 dark:text-primary-400" />
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
-              {user?.currentCity ? translateCity(user.currentCity.id, user.currentCity.name, user.currentCity.country) : t('auth.selectCity')}
-            </span>
-          </button>
-          <button
-            onClick={() => setUserFilterVal(!userFilterVal)}
-            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors ${
-              userFilterVal
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
-          >
-            <Filter size={16} className={userFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={userFilterVal ? 'currentColor' : 'none'} />
-            <span className="text-xs font-medium">{t('games.availableForMe', { defaultValue: 'Available for me' })}</span>
-          </button>
-        </div>
-        <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
-          <button
-            onClick={() => handleEntityFilterClick('game')}
-            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
-              gameFilterVal
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
-          >
-            <Users size={18} className={gameFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={gameFilterVal ? 'currentColor' : 'none'} />
-            <span className="text-sm font-medium">{t('games.entityTypes.GAME', { defaultValue: 'Games' })}</span>
-          </button>
-          <button
-            onClick={() => handleEntityFilterClick('tournament')}
-            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
-              tournamentFilterVal
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
-          >
-            <Swords size={18} className={tournamentFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={tournamentFilterVal ? 'currentColor' : 'none'} />
-            <span className="text-sm font-medium">{t('games.entityTypes.TOURNAMENT', { defaultValue: 'Tournament' })}</span>
-          </button>
-        </div>
-        <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
-          <button
-            onClick={() => handleEntityFilterClick('training')}
-            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
-              trainingFilterVal
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
-          >
-            <Dumbbell size={18} className={trainingFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={trainingFilterVal ? 'currentColor' : 'none'} />
-            <span className="text-sm font-medium">{t('games.training', { defaultValue: 'Training' })}</span>
-          </button>
-          <button
-            onClick={() => handleEntityFilterClick('leagues')}
-            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
-              leaguesFilterVal
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
-          >
-            <Trophy size={18} className={leaguesFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={leaguesFilterVal ? 'currentColor' : 'none'} />
-            <span className="text-sm font-medium">{t('games.entityTypes.LEAGUE', { defaultValue: 'Leagues' })}</span>
-          </button>
-        </div>
-        <div 
-          className={`max-w-md mx-auto mb-3 overflow-hidden transition-all duration-300 ease-in-out ${
-            userFilterVal 
-              ? 'max-h-20 opacity-100' 
-              : 'max-h-0 opacity-0'
+  const filterBlock = (
+    <div className="mb-4">
+      <div className="flex items-center justify-between mb-3 max-w-md mx-auto">
+        <button
+          onClick={handleCityClick}
+          className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+        >
+          <MapPin size={16} className="text-primary-600 dark:text-primary-400" />
+          <span className="text-sm font-medium text-gray-900 dark:text-white">
+            {user?.currentCity ? translateCity(user.currentCity.id, user.currentCity.name, user.currentCity.country) : t('auth.selectCity')}
+          </span>
+        </button>
+        <button
+          onClick={() => setUserFilterVal(!userFilterVal)}
+          className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors ${
+            userFilterVal
+              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
           }`}
         >
-          <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
-            <p className="text-xs text-primary-700 dark:text-primary-300 text-center">
-              {t('games.availableForMeHint', { defaultValue: 'Showing games with available slots and suitable level limits' })}
-            </p>
-          </div>
+          <Filter size={16} className={userFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={userFilterVal ? 'currentColor' : 'none'} />
+          <span className="text-xs font-medium">{t('games.availableForMe', { defaultValue: 'Available for me' })}</span>
+        </button>
+      </div>
+      <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
+        <button
+          onClick={() => handleEntityFilterClick('game')}
+          className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
+            gameFilterVal
+              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+          }`}
+        >
+          <Users size={18} className={gameFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={gameFilterVal ? 'currentColor' : 'none'} />
+          <span className="text-sm font-medium">{t('games.entityTypes.GAME', { defaultValue: 'Games' })}</span>
+        </button>
+        <button
+          onClick={() => handleEntityFilterClick('tournament')}
+          className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
+            tournamentFilterVal
+              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+          }`}
+        >
+          <Swords size={18} className={tournamentFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={tournamentFilterVal ? 'currentColor' : 'none'} />
+          <span className="text-sm font-medium">{t('games.entityTypes.TOURNAMENT', { defaultValue: 'Tournament' })}</span>
+        </button>
+      </div>
+      <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
+        <button
+          onClick={() => handleEntityFilterClick('training')}
+          className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
+            trainingFilterVal
+              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+          }`}
+        >
+          <Dumbbell size={18} className={trainingFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={trainingFilterVal ? 'currentColor' : 'none'} />
+          <span className="text-sm font-medium">{t('games.training', { defaultValue: 'Training' })}</span>
+        </button>
+        <button
+          onClick={() => handleEntityFilterClick('leagues')}
+          className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
+            leaguesFilterVal
+              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+          }`}
+        >
+          <Trophy size={18} className={leaguesFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={leaguesFilterVal ? 'currentColor' : 'none'} />
+          <span className="text-sm font-medium">{t('games.entityTypes.LEAGUE', { defaultValue: 'Leagues' })}</span>
+        </button>
+      </div>
+      <div
+        className={`max-w-md mx-auto mb-3 overflow-hidden transition-all duration-300 ease-in-out ${
+          userFilterVal
+            ? 'max-h-20 opacity-100'
+            : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
+          <p className="text-xs text-primary-700 dark:text-primary-300 text-center">
+            {t('games.availableForMeHint', { defaultValue: 'Showing games with available slots and suitable level limits' })}
+          </p>
         </div>
       </div>
+    </div>
+  );
 
+  const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
+  if (splitView && findViewMode === 'calendar') {
+    return (
+      <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
+        <ResizableSplitter
+          defaultLeftWidth={35}
+          minLeftWidth={300}
+          maxLeftWidth={500}
+          leftPanel={
+            <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
+              <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
+                {filterBlock}
+                <TrainersList show={trainingFilterVal} availableGames={availableGames} />
+                <MonthCalendar
+                  selectedDate={selectedDate}
+                  onDateSelect={handleDateSelect}
+                  availableGames={availableGames}
+                  userFilter={userFilterVal}
+                  gameFilter={gameFilterVal}
+                  trainingFilter={trainingFilterVal}
+                  tournamentFilter={tournamentFilterVal}
+                  leaguesFilter={leaguesFilterVal}
+                  favoriteTrainerId={user?.favoriteTrainerId}
+                  onMonthChange={onMonthChange}
+                  onDateRangeChange={onDateRangeChange}
+                />
+              </div>
+            </div>
+          }
+          rightPanel={
+            <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+              <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
+                {loading && availableGames.length === 0 ? (
+                  <Card className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600 dark:border-primary-400" />
+                      <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{t('common.loading', { defaultValue: 'Loading...' })}</p>
+                    </div>
+                  </Card>
+                ) : filteredGames.length === 0 ? (
+                  <Card className="text-center py-12">
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {gameFilterVal ? t('games.noGamesFound', { defaultValue: 'No games found' }) : trainingFilterVal ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : tournamentFilterVal ? t('games.noTournamentFound', { defaultValue: 'No tournament found' }) : leaguesFilterVal ? t('games.noLeaguesFound', { defaultValue: 'No leagues found' }) : t('games.noGamesFound')}
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredGames.map((game) => (
+                      <GameCard
+                        key={game.id}
+                        game={game}
+                        user={user}
+                        showChatIndicator={false}
+                        showJoinButton={true}
+                        onJoin={onJoin}
+                        onNoteSaved={onNoteSaved}
+                      />
+                    ))}
+                  </div>
+                )}
+                <div className="mt-6 flex justify-center">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleSubscriptionsClick}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="relative inline-flex items-center justify-center w-4 h-4">
+                      <Bell className="w-4 h-4 animate-bell-pulse relative z-10" />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="absolute w-8 h-8 rounded-full border-2 border-current opacity-0 animate-ring-1"></div>
+                        <div className="absolute w-8 h-8 rounded-full border-2 border-current opacity-0 animate-ring-2"></div>
+                      </div>
+                    </div>
+                    {t('gameSubscriptions.wantToBeNotified', { defaultValue: 'Want to be notified when new games are created?' })}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          }
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2">
+      {filterBlock}
       <TrainersList show={trainingFilterVal} availableGames={availableGames} />
 
       {loading && availableGames.length === 0 ? (

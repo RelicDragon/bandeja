@@ -15,7 +15,7 @@ const INIT_SHELL_DURATION_MS = 400;
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const { bottomTabsVisible, currentPage, chatsFilter, initShellAnimationPlayed, setInitShellAnimationPlayed } = useNavigationStore();
+  const { bottomTabsVisible, currentPage, chatsFilter, activeTab, findViewMode, initShellAnimationPlayed, setInitShellAnimationPlayed } = useNavigationStore();
   const isDesktop = useDesktop();
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
   const shouldHideHeader = !user && isGameDetailsPage;
@@ -31,14 +31,19 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const isGameDetailsPath = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
   const isLandscape = useIsLandscape();
   const isDesktopGameDetailsSplitView = (isDesktop || isLandscape) && currentPage === 'gameDetails' && isGameDetailsPath;
+  const isDesktopCalendarSplitView = isDesktop && (
+    (currentPage === 'my' && activeTab === 'calendar') ||
+    (currentPage === 'find' && findViewMode === 'calendar')
+  );
   const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') ||
                                  location.pathname.includes('/group-chat/') ||
                                  location.pathname.includes('/channel-chat/') ||
                                  location.pathname.match(/^\/bugs\/[^/]+$/);
   const isOnBugsListPage = chatsFilter === 'bugs' && !isOnSpecificChatRoute;
   const isDesktopChatsSplitView = isDesktopChats && !isOnBugsListPage;
-  const shouldAddBottomPadding = bottomTabsVisible && !isDesktopChats && !isDesktopGameDetailsSplitView;
-  
+  const anySplitView = isDesktopChatsSplitView || isDesktopGameDetailsSplitView || isDesktopCalendarSplitView;
+  const shouldAddBottomPadding = bottomTabsVisible && !isDesktopChats && !isDesktopGameDetailsSplitView && !isDesktopCalendarSplitView;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {!shouldHideHeader && (
@@ -48,13 +53,13 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       )}
       <main 
         style={{ 
-          paddingTop: shouldHideHeader ? '0' : ((isDesktopChatsSplitView || isDesktopGameDetailsSplitView) ? '0' : `calc(4rem + env(safe-area-inset-top))`), 
+          paddingTop: shouldHideHeader ? '0' : (anySplitView ? '0' : `calc(4rem + env(safe-area-inset-top))`),
           paddingBottom: shouldAddBottomPadding ? 'calc(5rem + env(safe-area-inset-bottom))' : '1.5rem',
-          paddingLeft: (isDesktopChatsSplitView || isDesktopGameDetailsSplitView) ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
-          paddingRight: (isDesktopChatsSplitView || isDesktopGameDetailsSplitView) ? '0' : `max(0.5rem, env(safe-area-inset-right))`
+          paddingLeft: anySplitView ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
+          paddingRight: anySplitView ? '0' : `max(0.5rem, env(safe-area-inset-right))`
         }}
       >
-        {(isDesktopChatsSplitView || isDesktopGameDetailsSplitView) ? children : <div className="container mx-auto px-2 py-4">{children}</div>}
+        {anySplitView ? children : <div className="container mx-auto px-2 py-4">{children}</div>}
       </main>
     </div>
   );

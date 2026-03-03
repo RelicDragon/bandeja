@@ -60,10 +60,10 @@ export const ResizableSplitter = ({
   };
 
   return (
-    <div ref={containerRef} className="flex h-full w-full relative">
+    <div ref={containerRef} className="flex h-full w-full relative min-h-0">
       <div
-        className="flex-shrink-0 overflow-hidden"
-        style={{ 
+        className="flex-shrink-0 overflow-hidden min-h-0 flex flex-col"
+        style={{
           width: `${leftWidth}%`,
           minWidth: `${minLeftWidth}px`,
           maxWidth: `${maxLeftWidth}px`
@@ -83,7 +83,7 @@ export const ResizableSplitter = ({
         <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-1 group-hover:w-2 transition-all" />
       </div>
       
-      <div className="flex-1 overflow-hidden min-w-0">
+      <div className="flex-1 overflow-hidden min-w-0 min-h-0 flex flex-col">
         {rightPanel}
       </div>
     </div>

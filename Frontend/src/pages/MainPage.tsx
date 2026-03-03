@@ -28,7 +28,7 @@ function MarketplaceContent() {
 
 export const MainPage = () => {
   const location = useLocation();
-  const { bottomTabsVisible, initShellAnimationPlayed } = useNavigationStore();
+  const { bottomTabsVisible, initShellAnimationPlayed, activeTab, findViewMode } = useNavigationStore();
   const isDesktop = useDesktop();
   const animateShellEntry = location.pathname === '/' && !initShellAnimationPlayed;
 
@@ -38,6 +38,10 @@ export const MainPage = () => {
   );
 
   const currentPage = placeToPageType(parsed.place);
+  const isCalendarSplitView = isDesktop && (
+    (currentPage === 'my' && activeTab === 'calendar') ||
+    (currentPage === 'find' && findViewMode === 'calendar')
+  );
 
   const renderContent = useMemo(() => {
     switch (currentPage) {
@@ -91,6 +95,15 @@ export const MainPage = () => {
 
   if (isChatPage && !isDesktop && isOnSpecificChatRoute) {
     return <ChatsTab />;
+  }
+
+  if (isCalendarSplitView) {
+    return (
+      <MainLayout>
+        {renderContent}
+        {bottomTabsVisible && <BottomTabBar animateEntry={animateShellEntry} />}
+      </MainLayout>
+    );
   }
 
   return (

@@ -16,7 +16,9 @@ import { useMyGames } from '@/hooks/useMyGames';
 import { usePastGames } from '@/hooks/usePastGames';
 import { getAvailableGameChatTypes } from '@/utils/chatType';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
+import { ResizableSplitter } from '@/components/ResizableSplitter';
 
 const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string; parentId?: string; id: string }>(
   list: T[] = [],
@@ -106,6 +108,7 @@ const sortMyGamesByStatusAndDateTime = <T extends { status?: string; startTime: 
 export const MyTab = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const isDesktop = useDesktop();
   const { unreadMessages, setMyGamesUnreadCount, setPastGamesUnreadCount } = useHeaderStore(
     useShallow((s) => ({ unreadMessages: s.unreadMessages, setMyGamesUnreadCount: s.setMyGamesUnreadCount, setPastGamesUnreadCount: s.setPastGamesUnreadCount }))
   );
@@ -344,6 +347,74 @@ export const MyTab = () => {
     onRefresh: handleRefresh,
     disabled: loading || loadingPastGames,
   });
+
+  const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
+  if (isDesktop && activeTab === 'calendar') {
+    return (
+      <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
+        <ResizableSplitter
+          defaultLeftWidth={35}
+          minLeftWidth={280}
+          maxLeftWidth={450}
+          leftPanel={
+            <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
+              <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
+                <MonthCalendar
+                  selectedDate={myGamesSelectedDate}
+                  onDateSelect={setMyGamesSelectedDate}
+                  availableGames={calendarMergedGames}
+                  onDateRangeChange={handleCalendarDateRangeChange}
+                />
+              </div>
+            </div>
+          }
+          rightPanel={
+            <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+              <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
+                <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!loading ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <InvitesSection
+                    invites={invites}
+                    onAccept={handleAcceptInvite}
+                    onDecline={handleDeclineInvite}
+                    onNoteSaved={() => fetchData(false, true)}
+                  />
+                </div>
+                {invites.length > 0 && (
+                  <>
+                    <Divider />
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{t('home.myGames')}</h2>
+                  </>
+                )}
+                <MyGamesSection
+                  games={myGamesForSelectedDate}
+                  user={user}
+                  loading={loading || loadingPastInRange}
+                  showSkeleton={skeletonAnimation.showSkeleton}
+                  skeletonStates={skeletonAnimation.skeletonStates}
+                  gamesUnreadCounts={calendarMergedUnreadCounts}
+                  onNoteSaved={() => fetchData(false, true)}
+                />
+                <div className={`transition-all duration-500 ease-in-out overflow-hidden ${unreadMessages > 0 ? 'max-h-[100px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
+                  <div className="flex items-center justify-center pt-4">
+                    <Button
+                      onClick={handleMarkAllAsRead}
+                      variant="primary"
+                      size="sm"
+                      disabled={isMarkingAllAsRead || unreadMessages === 0}
+                      className="animate-in slide-in-from-top-4 fade-in"
+                    >
+                      {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}
+                    </Button>
+                  </div>
+                </div>
+                <MainTabFooter isLoading={loading || loadingPastGames || isRefreshing} />
+              </div>
+            </div>
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <>

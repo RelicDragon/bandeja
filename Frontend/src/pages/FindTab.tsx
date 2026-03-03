@@ -6,6 +6,8 @@ import { AvailableGamesSection } from '@/components/home';
 import { MainTabFooter } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { useAuthStore } from '@/store/authStore';
+import { useNavigationStore } from '@/store/navigationStore';
+import { useDesktop } from '@/hooks/useDesktop';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
@@ -45,7 +47,9 @@ export const FindTab = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  
+  const isDesktop = useDesktop();
+  const findViewMode = useNavigationStore((s) => s.findViewMode);
+
   const { i18n } = useI18nTranslation();
   const localeMap = { en: enUS, ru: ru, es: es, sr: sr };
   const locale = localeMap[i18n.language as keyof typeof localeMap] || enUS;
@@ -101,6 +105,26 @@ export const FindTab = () => {
     onRefresh: handleRefresh,
     disabled: loadingAvailableGames,
   });
+
+  const splitView = isDesktop && findViewMode === 'calendar';
+
+  if (splitView) {
+    return (
+      <AvailableGamesSection
+        availableGames={filteredAvailableGames}
+        user={user}
+        loading={loadingAvailableGames}
+        onJoin={handleJoinGame}
+        onMonthChange={undefined}
+        onDateRangeChange={handleDateRangeChange}
+        filters={filters}
+        onFilterChange={(key, value) => updateFilter(key, value)}
+        onFiltersChange={(updates) => updateFilters(updates)}
+        onNoteSaved={() => fetchAvailableGames(true)}
+        splitView={true}
+      />
+    );
+  }
 
   return (
     <>
