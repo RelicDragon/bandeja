@@ -11,7 +11,7 @@ import { VirtualizedList } from '@/components/CityList/VirtualizedList';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { findNearestCity } from '@/utils/nearestCity';
 import { useGeoReady } from '@/hooks/useGeoReady';
-import { getCountryDisplayName, getCountrySearchNames, getCitySearchNames } from '@/utils/geoTranslations';
+import { getCountryDisplayName, getCountryNativeName, getCountrySearchNames, getCitySearchNames } from '@/utils/geoTranslations';
 import { appApi } from '@/api/app';
 import { clubsApi, type ClubMapItem } from '@/api/clubs';
 
@@ -148,6 +148,8 @@ export const CityListContent = ({
   const displaySelectedCountry = selectedCountry
     ? getCountryDisplayName(selectedCountry, i18n.language)
     : '';
+  const selectedCountryNative = selectedCountry ? getCountryNativeName(selectedCountry) : null;
+  const showSelectedCountryNative = selectedCountryNative && selectedCountryNative !== displaySelectedCountry;
 
   const handleWhereAmI = async () => {
     setLocating(true);
@@ -283,15 +285,6 @@ export const CityListContent = ({
       )}
       {!isLoading && (
         <div className="shrink-0 flex items-center gap-2 min-w-0">
-          {view === 'city' && !showMap && selectedCountry && (
-            <button
-              type="button"
-              onClick={backToCountries}
-              className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:underline min-w-0 overflow-hidden truncate"
-            >
-              <span className="truncate">← {displaySelectedCountry}</span>
-            </button>
-          )}
           <div className="flex-1 min-w-0" />
           <button
             type="button"
@@ -335,6 +328,31 @@ export const CityListContent = ({
           className="w-full min-w-0 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-shadow disabled:opacity-60 shrink-0"
         />
       )}
+      <AnimatePresence initial={false}>
+        {!showMap && view === 'city' && selectedCountry && (
+          <motion.div
+            key="back-row"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            className="shrink-0 overflow-hidden"
+          >
+            <button
+              type="button"
+              onClick={backToCountries}
+              className="w-full flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:underline py-2 min-w-0 overflow-hidden truncate"
+            >
+              <span className="truncate min-w-0">
+                ← {displaySelectedCountry}
+                {showSelectedCountryNative && (
+                  <span className="text-gray-500 dark:text-gray-400 font-normal ml-1 text-xs">{selectedCountryNative}</span>
+                )}
+              </span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {isLoading ? (
         <div className="flex items-center justify-center py-10 flex-1 min-h-[8rem] shrink-0">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-200 dark:border-primary-800 border-t-primary-500" />
