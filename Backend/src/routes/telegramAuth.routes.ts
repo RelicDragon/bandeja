@@ -13,5 +13,13 @@ router.post(
   telegramAuthController.verifyTelegramOtp
 );
 
+router.post(
+  '/verify-link-key',
+  validate([
+    body('key').isString().isLength({ min: 20 }).withMessage('Invalid key'),
+  ]),
+  telegramAuthController.verifyTelegramLinkKey
+);
+
 export default router;
 

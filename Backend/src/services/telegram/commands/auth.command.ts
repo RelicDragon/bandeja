@@ -1,5 +1,6 @@
+import { InlineKeyboard } from 'grammy';
 import { BotContext } from '../types';
-import { generateOTP } from '../otp.service';
+import { generateOTP, generateLinkKey } from '../otp.service';
 import prisma from '../../../config/database';
 import { t } from '../../../utils/translations';
 
@@ -49,6 +50,9 @@ export async function generateAuthCode(ctx: BotContext) {
           if (otp.codeMessageId) {
             await ctx.api.deleteMessage(otpChatId, parseInt(otp.codeMessageId));
           }
+          if (otp.linkMessageId) {
+            await ctx.api.deleteMessage(otpChatId, parseInt(otp.linkMessageId));
+          }
         } catch (error) {
           console.log('Could not delete OTP messages:', error);
         }
@@ -64,8 +68,14 @@ export async function generateAuthCode(ctx: BotContext) {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     const code = generateOTP();
+    const linkKey = generateLinkKey();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
     const codeMessage = await ctx.reply(code);
+
+    const loginUrl = `https://bandeja.me/login/${linkKey}`;
+    const linkMessage = await ctx.reply(t('telegram.orClickToLogin', lang), {
+      reply_markup: new InlineKeyboard().url(t('telegram.openBandeja', lang), loginUrl),
+    });
 
     await prisma.telegramOtp.create({
       data: {
@@ -78,6 +88,8 @@ export async function generateAuthCode(ctx: BotContext) {
         chatId: chatId.toString(),
         textMessageId: textMessage.message_id.toString(),
         codeMessageId: codeMessage.message_id.toString(),
+        linkKey,
+        linkMessageId: linkMessage.message_id.toString(),
         expiresAt,
       },
     });

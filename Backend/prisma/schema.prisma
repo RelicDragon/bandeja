@@ -935,22 +935,25 @@ enum AuctionType {
 }
 
 model TelegramOtp {
-  id            String   @id @default(cuid())
-  code          String   @db.VarChar(6)
-  telegramId    String   @db.VarChar(255)
-  username      String?  @db.VarChar(255)
-  firstName     String?  @db.VarChar(255)
-  lastName      String?  @db.VarChar(255)
-  languageCode  String?  @db.VarChar(10)
-  chatId        String?  @db.VarChar(255)
-  textMessageId String?  @db.VarChar(255)
-  codeMessageId String?  @db.VarChar(255)
-  expiresAt     DateTime
-  createdAt     DateTime @default(now())
+  id             String   @id @default(cuid())
+  code           String   @db.VarChar(6)
+  telegramId     String   @db.VarChar(255)
+  username       String?  @db.VarChar(255)
+  firstName      String?  @db.VarChar(255)
+  lastName       String?  @db.VarChar(255)
+  languageCode   String?  @db.VarChar(10)
+  chatId         String?  @db.VarChar(255)
+  textMessageId  String?  @db.VarChar(255)
+  codeMessageId  String?  @db.VarChar(255)
+  linkKey        String?  @db.VarChar(64)
+  linkMessageId  String?  @db.VarChar(255)
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
 
   @@index([code])
   @@index([telegramId])
   @@index([expiresAt])
+  @@index([linkKey])
 }
 
 model Bug {

@@ -8,36 +8,22 @@ import telegramBotService from '../services/telegram/bot.service';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 import { NotificationPreferenceService } from '../services/notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
+import type { TelegramOtp } from '@prisma/client';
 
-export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response) => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  const { code, language } = req.body;
-
-  if (!code) {
-    throw new ApiError(400, 'auth.codeRequired');
-  }
-
-  const otp = await telegramBotService.verifyCode(code);
-
-  if (!otp) {
-    throw new ApiError(401, 'auth.invalidCode');
-  }
-
+async function completeTelegramAuth(
+  otp: TelegramOtp,
+  language: string | undefined
+): Promise<{ user: any; token: string }> {
   const actualTelegramId = otp.telegramId;
-
   let user = await prisma.user.findUnique({
     where: { telegramId: actualTelegramId },
     select: PROFILE_SELECT_FIELDS,
   });
 
-  let token: string;
-
   if (user) {
     if (!user.isActive) {
       throw new ApiError(403, 'auth.accountInactive');
     }
-
     const updateData: any = {};
     if (otp.username && user.telegramUsername !== otp.username) {
       updateData.telegramUsername = otp.username;
@@ -51,7 +37,6 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
     if (language) {
       updateData.language = language;
     }
-
     if (Object.keys(updateData).length > 0) {
       user = await prisma.user.update({
         where: { id: user.id },
@@ -59,32 +44,52 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
         select: PROFILE_SELECT_FIELDS,
       });
     }
-
-    token = generateToken({ userId: user.id, telegramId: actualTelegramId });
+    const token = generateToken({ userId: user.id, telegramId: actualTelegramId });
     await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
-  } else {
-    user = await prisma.user.create({
-      data: {
-        telegramId: actualTelegramId,
-        telegramUsername: otp.username,
-        firstName: otp.firstName,
-        lastName: otp.lastName,
-        language,
-        authProvider: AuthProvider.TELEGRAM,
-      },
-      select: PROFILE_SELECT_FIELDS,
-    });
-
-    token = generateToken({ userId: user.id, telegramId: actualTelegramId });
-    await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
+    return { user, token };
   }
 
-  res.json({
-    success: true,
+  user = await prisma.user.create({
     data: {
-      user,
-      token,
+      telegramId: actualTelegramId,
+      telegramUsername: otp.username,
+      firstName: otp.firstName,
+      lastName: otp.lastName,
+      language,
+      authProvider: AuthProvider.TELEGRAM,
     },
+    select: PROFILE_SELECT_FIELDS,
   });
+  const token = generateToken({ userId: user.id, telegramId: actualTelegramId });
+  await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
+  return { user, token };
+}
+
+export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response) => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  const { code, language } = req.body;
+  if (!code) {
+    throw new ApiError(400, 'auth.codeRequired');
+  }
+  const otp = await telegramBotService.verifyCode(code);
+  if (!otp) {
+    throw new ApiError(401, 'auth.invalidCode');
+  }
+  const { user, token } = await completeTelegramAuth(otp, language);
+  res.json({ success: true, data: { user, token } });
+});
+
+export const verifyTelegramLinkKey = asyncHandler(async (req: Request, res: Response) => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  const { key, language } = req.body;
+  if (!key || typeof key !== 'string' || key.length < 20) {
+    throw new ApiError(400, 'auth.codeRequired');
+  }
+  const otp = await telegramBotService.verifyLinkKey(key);
+  if (!otp) {
+    throw new ApiError(401, 'auth.invalidCode');
+  }
+  const { user, token } = await completeTelegramAuth(otp, language);
+  res.json({ success: true, data: { user, token } });
 });
 

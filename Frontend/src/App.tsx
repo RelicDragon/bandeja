@@ -4,6 +4,7 @@ import { ProtectedRoute, AppLoadingScreen, NoInternetScreen, AppVersionModal } f
 import { NavigationErrorBoundary } from './components/NavigationErrorBoundary';
 
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
+const TelegramAutoLogin = lazy(() => import('./pages/TelegramAutoLogin').then(module => ({ default: module.TelegramAutoLogin })));
 const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.Register })));
 const SelectCity = lazy(() => import('./pages/SelectCity').then(module => ({ default: module.SelectCity })));
 const CompleteProfile = lazy(() => import('./pages/CompleteProfile').then(module => ({ default: module.CompleteProfile })));
@@ -271,6 +272,18 @@ function AppContent() {
           <PermissionModalProvider />
           <PlayerCardModalManager>
             <Routes>
+        <Route
+          path="/login/:telegramKey"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                <TelegramAutoLogin />
+              </Suspense>
+            )
+          }
+        />
         <Route
           path="/login"
           element={

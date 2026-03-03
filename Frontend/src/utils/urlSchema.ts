@@ -24,6 +24,7 @@ export type Place =
   | 'login'
   | 'loginPhone'
   | 'loginTelegram'
+  | 'telegramAutoLogin'
   | 'register';
 
 export interface PlaceParams {
@@ -81,6 +82,7 @@ const PLACE_DEFS: PlaceDefinition[] = [
   { pattern: /^\/create-league\/?$/, place: 'createLeague' },
   { pattern: /^\/select-city\/?$/, place: 'selectCity' },
   { pattern: /^\/complete-profile\/?$/, place: 'completeProfile' },
+  { pattern: /^\/login\/([a-zA-Z0-9_-]{20,})$/, place: 'telegramAutoLogin', extractParams: (m) => ({ telegramKey: m[1] }) },
   { pattern: /^\/login\/phone$/, place: 'loginPhone' },
   { pattern: /^\/login\/telegram$/, place: 'loginTelegram' },
   { pattern: /^\/login\/?$/, place: 'login' },
@@ -139,6 +141,7 @@ export function buildUrl(place: Place, params?: PlaceParams, overlay?: Overlay):
     case 'login': path = '/login'; break;
     case 'loginPhone': path = '/login'; break;
     case 'loginTelegram': path = '/login'; break;
+    case 'telegramAutoLogin': path = `/login/${params?.telegramKey ?? ''}`; break;
     case 'register': path = '/register'; break;
     default: path = '/'; break;
   }

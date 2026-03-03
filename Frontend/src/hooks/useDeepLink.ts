@@ -71,6 +71,11 @@ export const useDeepLink = () => {
           return;
         }
 
+        if (pathname.startsWith('/login/') && pathname !== '/login/phone' && pathname !== '/login/telegram') {
+          navigateWithTracking(navigate, pathname, { replace: true });
+          return;
+        }
+
         // Simple routes (no parameters)
         const simpleRoutes: Record<string, string> = {
           '/find': '/find',

@@ -310,19 +310,22 @@ export class AdminGamesService {
     }
 
     await prisma.$transaction(async (tx) => {
-      if (game.affectsRating && game.outcomes.length > 0) {
-        await LeagueGameResultsService.unsyncGameResults(gameId, tx);
-
+      if (game.outcomes.length > 0) {
+        if (game.affectsRating) {
+          await LeagueGameResultsService.unsyncGameResults(gameId, tx);
+        }
         for (const outcome of game.outcomes) {
           await tx.user.update({
             where: { id: outcome.userId },
-            data: {
-              level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
-              reliability: outcome.reliabilityBefore,
-              totalPoints: { decrement: outcome.pointsEarned },
-              gamesPlayed: { decrement: 1 },
-              gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
-            },
+            data: game.affectsRating
+              ? {
+                  level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
+                  reliability: outcome.reliabilityBefore,
+                  totalPoints: { decrement: outcome.pointsEarned },
+                  gamesPlayed: { decrement: 1 },
+                  gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
+                }
+              : { reliability: outcome.reliabilityBefore },
           });
         }
       }

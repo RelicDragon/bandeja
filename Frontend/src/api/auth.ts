@@ -53,6 +53,11 @@ export const authApi = {
     return response.data;
   },
 
+  verifyTelegramLinkKey: async (data: { key: string; language?: string }) => {
+    const response = await api.post<ApiResponse<LoginResponse>>('/telegram/verify-link-key', data);
+    return response.data;
+  },
+
   registerApple: async (data: {
     identityToken: string;
     nonce: string;

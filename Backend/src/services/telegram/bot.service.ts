@@ -9,7 +9,7 @@ import { handleGamesCommand } from './commands/games.command';
 import { createMessageHandler } from './handlers/message.handler';
 import { createCallbackHandler } from './handlers/callback.handler';
 import { startCleanupInterval } from './cleanup.service';
-import { verifyCode } from './otp.service';
+import { verifyCode, verifyLinkKey } from './otp.service';
 import telegramNotificationService from './notification.service';
 import telegramResultsSenderService from './resultsSender.service';
 import { t } from '../../utils/translations';
@@ -77,6 +77,10 @@ class TelegramBotService {
 
   async verifyCode(code: string) {
     return verifyCode(code, this.bot);
+  }
+
+  async verifyLinkKey(key: string) {
+    return verifyLinkKey(key, this.bot);
   }
 
   stop() {

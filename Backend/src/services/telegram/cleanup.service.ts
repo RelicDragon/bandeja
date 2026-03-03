@@ -2,7 +2,12 @@ import { Bot } from 'grammy';
 import prisma from '../../config/database';
 
 export async function deleteOtpMessages(
-  otp: { chatId: string | null; textMessageId: string | null; codeMessageId: string | null },
+  otp: {
+    chatId: string | null;
+    textMessageId: string | null;
+    codeMessageId: string | null;
+    linkMessageId: string | null;
+  },
   bot: Bot | null
 ) {
   if (!otp.chatId || !bot) return;
@@ -15,6 +20,9 @@ export async function deleteOtpMessages(
     }
     if (otp.codeMessageId) {
       await bot.api.deleteMessage(chatId, parseInt(otp.codeMessageId));
+    }
+    if (otp.linkMessageId) {
+      await bot.api.deleteMessage(chatId, parseInt(otp.linkMessageId));
     }
   } catch (error) {
     console.log('Could not delete OTP messages:', error);
@@ -38,6 +46,7 @@ export function startCleanupInterval(bot: Bot | null): ReturnType<typeof setInte
           chatId: true,
           textMessageId: true,
           codeMessageId: true,
+          linkMessageId: true,
         },
       });
 

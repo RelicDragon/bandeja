@@ -144,23 +144,27 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
     },
   });
 
-  if (!game || !game.affectsRating || game.outcomes.length === 0) {
+  if (!game || game.outcomes.length === 0) {
     return;
   }
 
-  await LeagueGameResultsService.unsyncGameResults(gameId, tx);
+  if (game.affectsRating) {
+    await LeagueGameResultsService.unsyncGameResults(gameId, tx);
+  }
   await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
 
   for (const outcome of game.outcomes) {
     await tx.user.update({
       where: { id: outcome.userId },
-      data: {
-        level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
-        reliability: outcome.reliabilityBefore,
-        totalPoints: { decrement: outcome.pointsEarned },
-        gamesPlayed: { decrement: 1 },
-        gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
-      },
+      data: game.affectsRating
+        ? {
+            level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
+            reliability: outcome.reliabilityBefore,
+            totalPoints: { decrement: outcome.pointsEarned },
+            gamesPlayed: { decrement: 1 },
+            gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
+          }
+        : { reliability: outcome.reliabilityBefore },
     });
   }
 
@@ -268,18 +272,18 @@ export async function applyGameOutcomes(
       },
     });
 
-    if (game.affectsRating) {
-      await tx.user.update({
-        where: { id: outcome.userId },
-        data: {
-          level: levelAfter,
-          reliability: reliabilityAfter,
-          totalPoints: { increment: outcome.pointsEarned },
-          gamesPlayed: { increment: 1 },
-          gamesWon: outcome.isWinner ? { increment: 1 } : undefined,
-        },
-      });
-    }
+    await tx.user.update({
+      where: { id: outcome.userId },
+      data: game.affectsRating
+        ? {
+            level: levelAfter,
+            reliability: reliabilityAfter,
+            totalPoints: { increment: outcome.pointsEarned },
+            gamesPlayed: { increment: 1 },
+            gamesWon: outcome.isWinner ? { increment: 1 } : undefined,
+          }
+        : { reliability: reliabilityAfter },
+    });
   }
 
   const updatedGame = await tx.game.findUnique({
