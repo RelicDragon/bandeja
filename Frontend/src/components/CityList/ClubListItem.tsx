@@ -12,7 +12,7 @@ export interface ClubListItemProps {
   isSelected: boolean;
   isNearest: boolean;
   onSelect: (cityId: string) => void;
-  scrollTargetRef?: React.RefObject<HTMLElement | null>;
+  scrollTargetRef?: React.RefObject<HTMLDivElement | null>;
   className?: string;
 }
 
