@@ -276,7 +276,8 @@
       
       const ua = navigator.userAgent || "";
       const isAndroid = /Android/i.test(ua);
-      const isIOS = /iPhone|iPad|iPod/i.test(ua);
+      const isIPadOS = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+      const isIOS = /iPhone|iPad|iPod/i.test(ua) || isIPadOS;
       
       const iosUrl = document.getElementById("ios").href;
       const androidUrl = document.getElementById("android").href;
