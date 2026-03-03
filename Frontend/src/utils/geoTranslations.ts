@@ -1,10 +1,11 @@
-export type GeoLocale = 'en' | 'es' | 'ru' | 'sr';
+export type GeoLocale = 'en' | 'es' | 'ru' | 'sr' | 'cs';
 
 interface CountryTranslation {
   en: string;
   es: string;
   ru: string;
   sr: string;
+  cs?: string;
   native: string;
   iso2: string;
 }
@@ -50,7 +51,7 @@ export function ensureGeoDataLoaded(): Promise<void> {
 
 function toGeoLocale(locale: string): GeoLocale {
   const code = locale.split('-')[0].toLowerCase();
-  if (code === 'en' || code === 'es' || code === 'ru' || code === 'sr') return code;
+  if (code === 'en' || code === 'es' || code === 'ru' || code === 'sr' || code === 'cs') return code;
   return 'en';
 }
 
@@ -58,7 +59,8 @@ export function getCountryDisplayName(countryKey: string, locale: string): strin
   if (!countryKey) return '';
   const geo = toGeoLocale(locale);
   const c = countriesData?.[countryKey];
-  if (c && c[geo]) return c[geo];
+  const name = c && (c as Record<string, string>)[geo];
+  if (name) return name;
   return countryKey;
 }
 
@@ -115,6 +117,7 @@ export function getCountrySearchNames(countryKey: string): {
   es: string;
   ru: string;
   sr: string;
+  cs: string;
   native: string;
 } {
   const c = countriesData?.[countryKey];
@@ -124,6 +127,7 @@ export function getCountrySearchNames(countryKey: string): {
       es: c.es,
       ru: c.ru,
       sr: c.sr,
+      cs: c.cs ?? c.en,
       native: c.native,
     };
   return {
@@ -131,6 +135,7 @@ export function getCountrySearchNames(countryKey: string): {
     es: countryKey,
     ru: countryKey,
     sr: countryKey,
+    cs: countryKey,
     native: countryKey,
   };
 }

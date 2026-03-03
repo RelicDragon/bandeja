@@ -242,24 +242,18 @@ async function main() {
     };
   }
 
-  if (!fs.existsSync(SHARED_GEO_DIR)) {
-    fs.mkdirSync(SHARED_GEO_DIR, { recursive: true });
-  }
   const countriesJson = JSON.stringify(countriesData, null, 0);
   const citiesJson = JSON.stringify(citiesData, null, 0);
-  fs.writeFileSync(path.join(SHARED_GEO_DIR, 'countries.json'), countriesJson, 'utf-8');
-  fs.writeFileSync(path.join(SHARED_GEO_DIR, 'cities.json'), citiesJson, 'utf-8');
 
   if (fs.existsSync(path.dirname(FRONTEND_PUBLIC_GEO))) {
     if (!fs.existsSync(FRONTEND_PUBLIC_GEO)) fs.mkdirSync(FRONTEND_PUBLIC_GEO, { recursive: true });
     fs.writeFileSync(path.join(FRONTEND_PUBLIC_GEO, 'countries.json'), countriesJson, 'utf-8');
     fs.writeFileSync(path.join(FRONTEND_PUBLIC_GEO, 'cities.json'), citiesJson, 'utf-8');
-    console.log('Copied to Frontend/public/geo');
+    console.log('Written to', FRONTEND_PUBLIC_GEO);
   }
 
   console.log('Exported countries:', Object.keys(countriesData).length);
   console.log('Exported cities:', Object.keys(citiesData).length);
-  console.log('Written to', SHARED_GEO_DIR);
 }
 
 main()
