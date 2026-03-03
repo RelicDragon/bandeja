@@ -183,6 +183,7 @@
       const translations = {
         en: {
           title: 'Opening…',
+          titleIOS: 'Get Bandeja on the App Store',
           subtitle: 'If nothing happens, choose your platform:',
           webButton: 'Open Web App',
           tip: 'Tip: If you scanned a QR code inside an in-app browser, tap the button above.',
@@ -190,6 +191,7 @@
         },
         ru: {
           title: 'Открытие…',
+          titleIOS: 'Bandeja в App Store',
           subtitle: 'Если ничего не происходит, выберите вашу платформу:',
           webButton: 'Открыть веб-приложение',
           tip: 'Совет: Если вы отсканировали QR-код во встроенном браузере, нажмите кнопку выше.',
@@ -197,6 +199,7 @@
         },
         sr: {
           title: 'Otvaranje…',
+          titleIOS: 'Bandeja na App Store-u',
           subtitle: 'Ako se ništa ne dešava, izaberite vašu platformu:',
           webButton: 'Otvori web aplikaciju',
           tip: 'Savet: Ako ste skenirali QR kod u ugrađenom pregledaču, pritisnite dugme iznad.',
@@ -204,6 +207,7 @@
         },
         es: {
           title: 'Abriendo…',
+          titleIOS: 'Bandeja en App Store',
           subtitle: 'Si no pasa nada, elige tu plataforma:',
           webButton: 'Abrir aplicación web',
           tip: 'Consejo: Si escaneaste un código QR dentro de un navegador integrado, toca el botón de arriba.',
@@ -298,7 +302,12 @@
         }, 300);
       }
       
-      setTimeout(redirect, 500);
+      if (isIOS) {
+        document.getElementById('title').textContent = translations[lang].titleIOS;
+        document.getElementById('subtitle').style.display = 'block';
+      } else {
+        setTimeout(redirect, 500);
+      }
     })();
   </script>
 </body>
