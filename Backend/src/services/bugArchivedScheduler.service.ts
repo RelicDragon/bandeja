@@ -3,6 +3,7 @@ import { subDays } from 'date-fns';
 import prisma from '../config/database';
 import { BugStatus } from '@prisma/client';
 
+const TEST_TO_FINISHED_DAYS = 15;
 const FINISHED_TO_ARCHIVED_DAYS = 3;
 
 export class BugArchivedScheduler {
@@ -22,11 +23,23 @@ export class BugArchivedScheduler {
     try {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-          const cutoff = subDays(new Date(), FINISHED_TO_ARCHIVED_DAYS);
+          const now = new Date();
+          const testCutoff = subDays(now, TEST_TO_FINISHED_DAYS);
+          const testResult = await prisma.bug.updateMany({
+            where: {
+              status: BugStatus.TEST,
+              testingStartedAt: { not: null, lt: testCutoff },
+            },
+            data: { status: BugStatus.FINISHED, finishedAt: now, testingStartedAt: null },
+          });
+          if (testResult.count > 0) {
+            console.log(`🐛 Bug archived scheduler: ${testResult.count} bug(s) TEST→FINISHED (15d)`);
+          }
+          const finishedCutoff = subDays(now, FINISHED_TO_ARCHIVED_DAYS);
           const result = await prisma.bug.updateMany({
             where: {
               status: BugStatus.FINISHED,
-              finishedAt: { not: null, lt: cutoff },
+              finishedAt: { not: null, lt: finishedCutoff },
             },
             data: { status: BugStatus.ARCHIVED },
           });

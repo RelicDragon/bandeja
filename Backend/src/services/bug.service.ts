@@ -174,12 +174,22 @@ export class BugService {
   }
 
   static async updateBug(id: string, data: { status?: BugStatus; bugType?: BugType }) {
-    const update: { status?: BugStatus; bugType?: BugType; finishedAt?: Date | null } = { ...data };
+    const update: {
+      status?: BugStatus;
+      bugType?: BugType;
+      finishedAt?: Date | null;
+      testingStartedAt?: Date | null;
+    } = { ...data };
     if (data.status !== undefined) {
       if (data.status === 'FINISHED') {
         update.finishedAt = new Date();
       } else if (data.status !== 'ARCHIVED') {
         update.finishedAt = null;
+      }
+      if (data.status === 'TEST') {
+        update.testingStartedAt = new Date();
+      } else {
+        update.testingStartedAt = null;
       }
     }
     return await prisma.bug.update({
