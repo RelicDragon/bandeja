@@ -111,9 +111,8 @@ class PushNotificationService {
       appInfo?.buildNumber != null
         ? parseInt(String(appInfo.buildNumber), 10)
         : undefined;
-    const useRenew =
-      this.lastTokenSentToBackend != null &&
-      this.lastTokenSentToBackend !== token;
+    const oldToken = this.lastTokenSentToBackend;
+    const useRenew = oldToken != null && oldToken !== token;
     const validBuild = Number.isInteger(appBuild) && (appBuild as number) > 0 ? (appBuild as number) : undefined;
     const delays = [0, 1000, 2000];
     for (let attempt = 0; attempt < delays.length; attempt++) {
@@ -123,7 +122,7 @@ class PushNotificationService {
       try {
         if (useRenew) {
           await pushApi.renewToken(
-            this.lastTokenSentToBackend,
+            oldToken,
             token,
             appVersion,
             validBuild
