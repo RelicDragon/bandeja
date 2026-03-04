@@ -30,7 +30,9 @@ router.post(
   validate([
     body('token').isString().notEmpty().withMessage('Token is required'),
     body('platform').isIn(['IOS', 'ANDROID', 'WEB']).withMessage('Invalid platform'),
-    body('deviceId').optional().isString()
+    body('deviceId').optional().isString(),
+    body('appVersion').optional().isString().isLength({ max: 32 }),
+    body('appBuild').optional().isInt({ min: 1 })
   ]),
   registerToken
 );
@@ -49,7 +51,9 @@ router.post(
   '/tokens/renew',
   validate([
     body('oldToken').isString().notEmpty().withMessage('Old token is required'),
-    body('newToken').isString().notEmpty().withMessage('New token is required')
+    body('newToken').isString().notEmpty().withMessage('New token is required'),
+    body('appVersion').optional().isString().isLength({ max: 32 }),
+    body('appBuild').optional().isInt({ min: 1 })
   ]),
   renewToken
 );

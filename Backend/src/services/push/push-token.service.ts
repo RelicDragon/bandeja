@@ -8,51 +8,45 @@ export class PushTokenService {
     userId: string,
     token: string,
     platform: PushPlatform,
-    deviceId?: string
+    deviceId?: string,
+    appVersion?: string | null,
+    appBuild?: number | null
   ) {
+    const versionPayload = { appVersion: appVersion ?? undefined, appBuild: appBuild ?? undefined };
     console.log(`[PushTokenService] Registering token for user ${userId}:`, {
       platform,
       deviceId,
+      ...versionPayload,
       tokenPreview: token.substring(0, 20) + '...'
     });
 
+    const versionData = {
+      ...(appVersion !== undefined && appVersion !== null && { appVersion }),
+      ...(appBuild !== undefined && appBuild !== null && appBuild > 0 && { appBuild })
+    };
+
     try {
-      const existingToken = await prisma.pushToken.findUnique({
+      const result = await prisma.pushToken.upsert({
         where: {
-          userId_token: {
-            userId,
-            token
-          }
-        }
-      });
-
-      if (existingToken) {
-        console.log(`[PushTokenService] Token already exists, updating platform and deviceId`);
-        const updated = await prisma.pushToken.update({
-          where: { id: existingToken.id },
-          data: {
-            platform,
-            deviceId,
-            updatedAt: new Date()
-          }
-        });
-        await NotificationPreferenceService.ensurePreferenceForChannel(userId, NotificationChannelType.PUSH);
-        console.log(`[PushTokenService] ✅ Token updated successfully`);
-        return updated;
-      }
-
-      console.log(`[PushTokenService] Creating new token record`);
-      const created = await prisma.pushToken.create({
-        data: {
+          userId_token: { userId, token }
+        },
+        create: {
           userId,
           token,
           platform,
-          deviceId
+          deviceId,
+          ...versionData
+        },
+        update: {
+          platform,
+          deviceId,
+          ...versionData,
+          updatedAt: new Date()
         }
       });
       await NotificationPreferenceService.ensurePreferenceForChannel(userId, NotificationChannelType.PUSH);
-      console.log(`[PushTokenService] ✅ Token created successfully`);
-      return created;
+      console.log(`[PushTokenService] ✅ Token upserted successfully`);
+      return result;
     } catch (error) {
       console.error(`[PushTokenService] ❌ Error registering token:`, error);
       throw error;
@@ -107,6 +101,8 @@ export class PushTokenService {
         tokens.map(t => ({ 
           platform: t.platform, 
           deviceId: t.deviceId,
+          appVersion: t.appVersion,
+          appBuild: t.appBuild,
           tokenPreview: t.token.substring(0, 20) + '...',
           updatedAt: t.updatedAt
         }))
@@ -119,7 +115,13 @@ export class PushTokenService {
     }
   }
 
-  static async renewToken(oldToken: string, newToken: string, userId: string) {
+  static async renewToken(
+    oldToken: string,
+    newToken: string,
+    userId: string,
+    appVersion?: string | null,
+    appBuild?: number | null
+  ) {
     const existingToken = await prisma.pushToken.findUnique({
       where: {
         userId_token: {
@@ -133,10 +135,15 @@ export class PushTokenService {
       return null;
     }
 
+    const versionData: { appVersion?: string; appBuild?: number } = {};
+    if (appVersion !== undefined && appVersion !== null) versionData.appVersion = appVersion;
+    if (appBuild !== undefined && appBuild !== null && appBuild > 0) versionData.appBuild = appBuild;
+
     return await prisma.pushToken.update({
       where: { id: existingToken.id },
       data: {
         token: newToken,
+        ...versionData,
         updatedAt: new Date()
       }
     });

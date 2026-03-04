@@ -3,6 +3,8 @@ import { Capacitor } from '@capacitor/core';
 import api from '@/api/axios';
 import { invitesApi } from '@/api/invites';
 import { navigationService } from './navigationService';
+import { getAppInfo } from '@/utils/capacitor';
+import { pushApi } from '@/api/push';
 
 interface NotificationData {
   type: string;
@@ -22,6 +24,7 @@ interface NotificationData {
 class PushNotificationService {
   private isInitialized = false;
   private lastReceivedToken: string | null = null;
+  private lastTokenSentToBackend: string | null = null;
 
   async initialize() {
     if (!Capacitor.isNativePlatform() || this.isInitialized) {
@@ -102,23 +105,52 @@ class PushNotificationService {
   private async registerTokenWithBackend(token: string) {
     const platform = Capacitor.getPlatform() === 'ios' ? 'IOS' : 'ANDROID';
     const deviceId = await this.getDeviceId();
+    const appInfo = await getAppInfo();
+    const appVersion = appInfo?.version;
+    const appBuild =
+      appInfo?.buildNumber != null
+        ? parseInt(String(appInfo.buildNumber), 10)
+        : undefined;
+    const useRenew =
+      this.lastTokenSentToBackend != null &&
+      this.lastTokenSentToBackend !== token;
+    const validBuild = Number.isInteger(appBuild) && (appBuild as number) > 0 ? (appBuild as number) : undefined;
     const delays = [0, 1000, 2000];
     for (let attempt = 0; attempt < delays.length; attempt++) {
       if (attempt > 0) {
         await new Promise((r) => setTimeout(r, delays[attempt]));
       }
       try {
-        await api.post('/push/tokens', { token, platform, deviceId });
-        console.log('✅ Token registered with backend');
+        if (useRenew) {
+          await pushApi.renewToken(
+            this.lastTokenSentToBackend,
+            token,
+            appVersion,
+            validBuild
+          );
+          console.log('✅ Token renewed with backend');
+        } else {
+          const body: Record<string, unknown> = { token, platform, deviceId };
+          if (appVersion) body.appVersion = appVersion;
+          if (validBuild != null) body.appBuild = validBuild;
+          await api.post('/push/tokens', body);
+          console.log('✅ Token registered with backend');
+        }
+        this.lastTokenSentToBackend = token;
         return;
       } catch (error: any) {
         const status = error?.response?.status;
         if (status >= 400 && status < 500) {
-          console.error('❌ Failed to register token with backend (client error):', error);
+          console.error('❌ Failed to send token to backend (client error):', error);
+          return;
+        }
+        if (status === 404 && useRenew) {
+          this.lastTokenSentToBackend = null;
+          await this.registerTokenWithBackend(token);
           return;
         }
         if (attempt === delays.length - 1) {
-          console.error('❌ Failed to register token with backend after retries:', error);
+          console.error('❌ Failed to send token to backend after retries:', error);
         }
       }
     }

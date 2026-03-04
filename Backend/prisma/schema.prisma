@@ -1471,14 +1471,16 @@ enum PriceCurrency {
 }
 
 model PushToken {
-  id        String       @id @default(cuid())
-  userId    String
-  token     String
-  platform  PushPlatform
-  deviceId  String?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String       @id @default(cuid())
+  userId     String
+  token      String
+  platform   PushPlatform
+  deviceId   String?
+  appVersion String?
+  appBuild   Int?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, token])
   @@index([userId])

@@ -5,9 +5,16 @@ import { asyncHandler } from '../utils/asyncHandler';
 import pushNotificationService from '../services/push/push-notification.service';
 import { NotificationType } from '../types/notifications.types';
 
+function parseAppBuild(value: unknown): number | null {
+  if (value === undefined || value === null) return null;
+  const n = typeof value === 'string' ? parseInt(value, 10) : Number(value);
+  if (!Number.isInteger(n) || n <= 0) return null;
+  return n;
+}
+
 export const registerToken = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
-  const { token, platform, deviceId } = req.body;
+  const { token, platform, deviceId, appVersion, appBuild: appBuildRaw } = req.body;
 
   if (!token || !platform) {
     return res.status(400).json({
@@ -23,7 +30,16 @@ export const registerToken = asyncHandler(async (req: Request, res: Response) =>
     });
   }
 
-  const pushToken = await PushTokenService.registerToken(userId, token, platform, deviceId);
+  const appBuild = parseAppBuild(appBuildRaw);
+
+  const pushToken = await PushTokenService.registerToken(
+    userId,
+    token,
+    platform,
+    deviceId,
+    typeof appVersion === 'string' ? appVersion : undefined,
+    appBuild ?? undefined
+  );
 
   res.json({
     success: true,
@@ -57,7 +73,7 @@ export const removeAllTokens = asyncHandler(async (req: Request, res: Response) 
 
 export const renewToken = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
-  const { oldToken, newToken } = req.body;
+  const { oldToken, newToken, appVersion, appBuild: appBuildRaw } = req.body;
 
   if (!oldToken || !newToken) {
     return res.status(400).json({
@@ -66,7 +82,15 @@ export const renewToken = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  const pushToken = await PushTokenService.renewToken(oldToken, newToken, userId);
+  const appBuild = parseAppBuild(appBuildRaw);
+
+  const pushToken = await PushTokenService.renewToken(
+    oldToken,
+    newToken,
+    userId,
+    typeof appVersion === 'string' ? appVersion : undefined,
+    appBuild ?? undefined
+  );
 
   if (!pushToken) {
     return res.status(404).json({
