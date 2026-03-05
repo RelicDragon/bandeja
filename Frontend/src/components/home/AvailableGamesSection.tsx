@@ -6,6 +6,7 @@ import { Card, GameCard, Button } from '@/components';
 import { Game } from '@/types';
 import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy, Users } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
+import { useHeaderStore } from '@/store/headerStore';
 import { format, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MonthCalendar } from '@/components/MonthCalendar';
@@ -45,6 +46,7 @@ export const AvailableGamesSection = ({
   const { translateCity } = useTranslatedGeo();
   const navigate = useNavigate();
   const { setCurrentPage, setIsAnimating, findViewMode, setFindViewMode, requestFindGoToCurrent, setRequestFindGoToCurrent } = useNavigationStore();
+  const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [listViewStartDate, setListViewStartDate] = useState<Date>(new Date());
   const [userFilter, setUserFilter] = useState(false);
@@ -140,6 +142,14 @@ export const AvailableGamesSection = ({
   const handleCityClick = () => {
     toast(t('games.switchCityInProfile'));
   };
+
+  useEffect(() => {
+    if (findViewMode === 'calendar') {
+      setCreateGameInitialDate(selectedDate);
+    } else {
+      setCreateGameInitialDate(null);
+    }
+  }, [findViewMode, selectedDate, setCreateGameInitialDate]);
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);

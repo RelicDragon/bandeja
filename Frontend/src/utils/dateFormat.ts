@@ -88,7 +88,7 @@ export const formatChatTime = (
     const dayName = new Intl.DateTimeFormat(locale, {
       weekday: 'short',
     }).format(dateObj);
-    return dayName.slice(0, 2).toUpperCase();
+    return dayName.slice(0, 3).toUpperCase();
   }
   
   return new Intl.DateTimeFormat(locale, {

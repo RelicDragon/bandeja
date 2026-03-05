@@ -1,11 +1,11 @@
 import { InlineKeyboard } from 'grammy';
 import { BotContext } from '../types';
-import { generateOTP, generateLinkKey } from '../otp.service';
+import { generateLinkKey } from '../otp.service';
 import prisma from '../../../config/database';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 
-export async function generateAuthCode(ctx: BotContext) {
+export async function generateLoginLink(ctx: BotContext) {
   if (!ctx.from || !ctx.chat || !ctx.lang || !ctx.telegramId) return;
 
   const chatId = ctx.chat.id;
@@ -18,9 +18,7 @@ export async function generateAuthCode(ctx: BotContext) {
     const recentOtp = await prisma.telegramOtp.findFirst({
       where: {
         telegramId,
-        createdAt: {
-          gte: oneMinuteAgo,
-        },
+        createdAt: { gte: oneMinuteAgo },
       },
     });
 
@@ -28,13 +26,12 @@ export async function generateAuthCode(ctx: BotContext) {
       await ctx.reply(t('telegram.rateLimitError', lang));
       return;
     }
+
     try {
       const msgId = ctx.message?.message_id;
-      if (msgId) {
-        await ctx.api.deleteMessage(chatId, msgId);
-      }
-    } catch (deleteError) {
-      console.log('Could not delete command message:', deleteError);
+      if (msgId) await ctx.api.deleteMessage(chatId, msgId);
+    } catch {
+      // ignore
     }
 
     const existingOtps = await prisma.telegramOtp.findMany({
@@ -45,17 +42,11 @@ export async function generateAuthCode(ctx: BotContext) {
       if (otp.chatId) {
         const otpChatId = parseInt(otp.chatId);
         try {
-          if (otp.textMessageId) {
-            await ctx.api.deleteMessage(otpChatId, parseInt(otp.textMessageId));
-          }
-          if (otp.codeMessageId) {
-            await ctx.api.deleteMessage(otpChatId, parseInt(otp.codeMessageId));
-          }
-          if (otp.linkMessageId) {
-            await ctx.api.deleteMessage(otpChatId, parseInt(otp.linkMessageId));
-          }
-        } catch (error) {
-          console.log('Could not delete OTP messages:', error);
+          if (otp.textMessageId) await ctx.api.deleteMessage(otpChatId, parseInt(otp.textMessageId));
+          if (otp.codeMessageId) await ctx.api.deleteMessage(otpChatId, parseInt(otp.codeMessageId));
+          if (otp.linkMessageId) await ctx.api.deleteMessage(otpChatId, parseInt(otp.linkMessageId));
+        } catch {
+          // ignore
         }
       }
     }
@@ -64,39 +55,31 @@ export async function generateAuthCode(ctx: BotContext) {
       where: { telegramId },
     });
 
-    const textMessage = await ctx.reply(t('telegram.authCodeText', lang));
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const code = generateOTP();
     const linkKey = generateLinkKey();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    const codeMessage = await ctx.reply(code);
-
     const loginUrl = new URL(`/login/${linkKey}`, config.frontendUrl).href;
-    const linkMessage = await ctx.reply(t('telegram.orClickToLogin', lang), {
+    const linkMessage = await ctx.reply(t('telegram.loginHint', lang), {
       reply_markup: new InlineKeyboard().url(t('telegram.openBandeja', lang), loginUrl),
     });
 
     await prisma.telegramOtp.create({
       data: {
-        code,
+        code: '000000',
         telegramId,
         username: from.username || null,
         firstName: from.first_name || null,
         lastName: from.last_name || null,
         languageCode: from.language_code || null,
         chatId: chatId.toString(),
-        textMessageId: textMessage.message_id.toString(),
-        codeMessageId: codeMessage.message_id.toString(),
+        textMessageId: linkMessage.message_id.toString(),
+        codeMessageId: null,
         linkKey,
         linkMessageId: linkMessage.message_id.toString(),
         expiresAt,
       },
     });
   } catch (error) {
-    console.error('Error generating OTP:', error);
+    console.error('Error generating login link:', error);
     await ctx.reply(t('telegram.authError', lang));
   }
 }
-

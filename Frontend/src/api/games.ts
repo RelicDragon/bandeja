@@ -13,6 +13,8 @@ export const gamesApi = {
     isPublic?: boolean;
     status?: string;
     participantUserId?: string;
+    parentId?: string;
+    entityType?: string;
     limit?: number;
     offset?: number;
   }) => {

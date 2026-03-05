@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Trash2, LogOut, Copy, HelpCircle } from 'lucide-react';
+import { Trash2, LogOut, Copy, HelpCircle, ChevronRight } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -56,6 +56,7 @@ import { BasicUser } from '@/types';
 import { createPortal } from 'react-dom';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { socketService } from '@/services/socketService';
+import { navigationService } from '@/services/navigationService';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 
@@ -76,7 +77,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, setGameDetailsTableAddRound } = useNavigationStore();
+  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, setGameDetailsTableAddRound, setMyGamesSubtabBeforeCreate } = useNavigationStore();
 
   const [game, setGame] = useState<Game | null>((initialGame?.id === id ? initialGame : null) ?? null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
@@ -108,6 +109,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const [tableSetModal, setTableSetModal] = useState<{ roundId: string; matchId: string } | null>(null);
   const [roundAddedForModal, setRoundAddedForModal] = useState<Round | null>(null);
   const [roundAddedModalRoundNumber, setRoundAddedModalRoundNumber] = useState<number | undefined>(undefined);
+  const [firstLeagueSeasonId, setFirstLeagueSeasonId] = useState<string | null>(null);
 
   const engineRounds = useGameResultsStore((s) => s.rounds);
   const engineCanEdit = useGameResultsStore((s) => s.canEdit);
@@ -350,6 +352,21 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
     fetchClubs();
   }, [user?.currentCity, game?.entityType]);
+
+  useEffect(() => {
+    if (game?.entityType !== 'LEAGUE' || !game.id) {
+      setFirstLeagueSeasonId(null);
+      return;
+    }
+    let cancelled = false;
+    gamesApi.getAll({ parentId: game.id, entityType: 'LEAGUE_SEASON', limit: 1 })
+      .then((data) => {
+        if (!cancelled && data.data?.length) setFirstLeagueSeasonId(data.data[0].id);
+        else if (!cancelled) setFirstLeagueSeasonId(null);
+      })
+      .catch(() => { if (!cancelled) setFirstLeagueSeasonId(null); });
+    return () => { cancelled = true; };
+  }, [game?.id, game?.entityType]);
 
   useEffect(() => {
     const checkFaqs = async () => {
@@ -1250,6 +1267,19 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
             <LeagueFixedTeamsSection game={game} />
           )}
 
+          {user && isLeague && firstLeagueSeasonId && (
+            <button
+              type="button"
+              onClick={() => navigationService.navigateToGame(firstLeagueSeasonId)}
+              className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-[0.99] transition-colors"
+            >
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                {t('gameDetails.openLeagueSeason', { defaultValue: 'Open League Season' })}
+              </span>
+              <ChevronRight size={20} className="text-gray-500 dark:text-gray-400 shrink-0" />
+            </button>
+          )}
+
           <div className="overflow-visible">
             <GameInfo
               game={game}
@@ -1542,6 +1572,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
                       }
                     }
                     
+                    setMyGamesSubtabBeforeCreate(null);
                     navigate('/create-game', {
                       state: {
                         entityType: game.entityType,

@@ -10,7 +10,7 @@ import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
 import { gameCourtsApi } from '@/api/gameCourts';
 import { mediaApi } from '@/api/media';
 import { Club, Court, EntityType, GameType, PriceType, PriceCurrency, Game, BasicUser } from '@/types';
-import { addHours } from 'date-fns';
+import { addHours, format, startOfDay } from 'date-fns';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import { resolveUserCurrency } from '@/utils/currency';
 import { useGameTimeDuration, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
@@ -25,7 +25,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const { setCurrentPage, setIsAnimating } = useNavigationStore();
+  const { setCurrentPage, setIsAnimating, setActiveTab, setMyGamesSubtabBeforeCreate, setMyGamesCalendarDateAfterCreate } = useNavigationStore();
 
   useBackButtonHandler(() => {
     navigate('/', { replace: true });
@@ -400,7 +400,16 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
 
       setIsAnimating(true);
       setCurrentPage('my');
-      navigate('/', { replace: true });
+      const fromList = useNavigationStore.getState().myGamesSubtabBeforeCreate;
+      setMyGamesSubtabBeforeCreate(null);
+      if (fromList === 'list') {
+        navigate('/?tab=list', { replace: true });
+      } else {
+        const startDate = format(startOfDay(new Date(gameResponse.data.startTime)), 'yyyy-MM-dd');
+        setMyGamesCalendarDateAfterCreate(startDate);
+        setActiveTab('calendar');
+        navigate('/', { replace: true });
+      }
       setTimeout(() => setIsAnimating(false), 300);
     } catch (error) {
       console.error('Failed to create game:', error);

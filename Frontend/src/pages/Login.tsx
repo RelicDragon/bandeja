@@ -3,12 +3,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '@/layouts/AuthLayout';
-import { Input, OTPInput, Button } from '@/components';
+import { Input, Button } from '@/components';
 import { AuthBackHeader } from '@/components/auth';
 import { authApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { config } from '@/config/media';
-import { Send, Phone, AlertCircle } from 'lucide-react';
+import { Phone, AlertCircle } from 'lucide-react';
 import { TelegramIcon } from '@/components';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
@@ -18,7 +18,7 @@ import { openEula } from '@/utils/openEula';
 import { AppleIcon } from '@/components/AppleIcon';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
 
-type LoginTab = 'main' | 'telegram' | 'phone';
+type LoginTab = 'main' | 'phone';
 
 const btnBase =
   'w-full h-12 rounded-xl font-semibold transition-all duration-200 active:scale-[0.98] disabled:active:scale-100 flex items-center justify-center gap-3';
@@ -31,9 +31,9 @@ export const Login = () => {
   const [tab, setTab] = useState<LoginTab>('main');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [telegramHint, setTelegramHint] = useState(false);
   const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
 
   useEffect(() => {
@@ -53,10 +53,7 @@ export const Login = () => {
 
   const goToTab = (next: LoginTab) => setTab(next);
 
-  const handleBack = () => {
-    if (tab === 'telegram') setOtp('');
-    setTab('main');
-  };
+  const handleBack = () => setTab('main');
 
   const handlePhoneLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,34 +73,12 @@ export const Login = () => {
     }
   };
 
-  const handleTelegramAuth = async () => {
-    setLoading(true);
-    setError('');
-    if (otp.length !== 6) {
-      setError(t('auth.enterCodeRequired'));
-      setLoading(false);
-      return;
-    }
-    try {
-      const telegramId = localStorage.getItem('telegramId') || '';
-      const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
-      const response = await authApi.verifyTelegramOtp({ code: otp, telegramId, language: normalizedLanguage });
-      await setAuth(response.data.user, response.data.token);
-      await pushNotificationService.ensureTokenSentToBackend();
-      localStorage.removeItem('telegramId');
-      if (!response.data.user.currentCity) navigate('/select-city');
-      else navigate('/');
-    } catch (err: any) {
-      setError(extractError(err, t));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleTelegramClick = () => {
-    const telegramId = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
-    localStorage.setItem('telegramId', telegramId);
-    window.open(config.telegramBotUrl, '_blank');
+    const url = config.telegramBotUrl.includes('?')
+      ? `${config.telegramBotUrl}&start=login`
+      : `${config.telegramBotUrl}?start=login`;
+    window.open(url, '_blank');
+    setTelegramHint(true);
   };
 
   const handleAppleSignIn = async () => {
@@ -262,6 +237,12 @@ export const Login = () => {
                 className="space-y-3"
               >
                 {error && <ErrorBanner error={error} />}
+                {telegramHint && !error && (
+                  <div className="flex items-center gap-3 mb-6 p-4 bg-slate-100 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl">
+                    <AlertCircle size={18} className="shrink-0" />
+                    <span className="text-sm font-medium">{t('auth.followInstructionsInTelegram')}</span>
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={handleGoogleSignIn}
@@ -282,7 +263,7 @@ export const Login = () => {
                 )}
                 <button
                   type="button"
-                  onClick={() => goToTab('telegram')}
+                  onClick={handleTelegramClick}
                   className={`${btnBase} bg-gradient-to-r from-[#0088cc] to-[#0099dd] hover:from-[#007ab8] hover:to-[#0088cc] text-white`}
                 >
                   <TelegramIcon size={20} className="text-white" />
@@ -296,55 +277,6 @@ export const Login = () => {
                   <Phone size={16} />
                   <span>{t('auth.legacyPhoneSignIn')}</span>
                 </button>
-              </motion.div>
-            )}
-
-            {tab === 'telegram' && (
-              <motion.div
-                key="telegram"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <AuthBackHeader title={t('auth.telegramLogin')} onBack={handleBack} backLabel={t('common.back')} />
-                {error && <ErrorBanner error={error} />}
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (otp.length === 6) handleTelegramAuth();
-                  }}
-                  className="space-y-6"
-                >
-                  <div>
-                    <div className="flex items-center gap-3 mb-3.5">
-                      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-[#0088cc] to-[#0099dd] text-white text-sm font-bold shrink-0">1</span>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('auth.telegramInstructions')}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleTelegramClick}
-                      className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 bg-gradient-to-r from-[#0088cc] to-[#0099dd] hover:from-[#007ab8] hover:to-[#0088cc] text-white rounded-xl font-semibold transition-all active:scale-[0.98]"
-                    >
-                      <Send size={18} />
-                      {t('auth.openTelegramBot')}
-                    </button>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-3 mb-3.5">
-                      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-[#0088cc] to-[#0099dd] text-white text-sm font-bold shrink-0">2</span>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('auth.enterCode')}</p>
-                    </div>
-                    <OTPInput value={otp} onChange={setOtp} disabled={loading} />
-                  </div>
-                  <Button
-                    type="submit"
-                    disabled={loading || otp.length !== 6}
-                    className="w-full h-12"
-                  >
-                    {loading ? loadingSpinner : t('auth.login')}
-                  </Button>
-                </form>
               </motion.div>
             )}
 

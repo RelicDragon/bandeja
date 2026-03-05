@@ -51,6 +51,10 @@ interface NavigationState {
   setOpenBugModal: (open: boolean) => void;
   setBugsFilter: (filter: BugsFilterState | ((prev: BugsFilterState) => BugsFilterState)) => void;
   setFindViewMode: (mode: 'calendar' | 'list') => void;
+  myGamesSubtabBeforeCreate: 'list' | null;
+  myGamesCalendarDateAfterCreate: string | null;
+  setMyGamesSubtabBeforeCreate: (tab: 'list' | null) => void;
+  setMyGamesCalendarDateAfterCreate: (date: string | null) => void;
 }
 
 export const useNavigationStore = create<NavigationState>((set) => ({
@@ -77,6 +81,8 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   requestFindGoToCurrent: null,
   viewingGroupChannelId: null,
   pendingPlayerCardReopen: null,
+  myGamesSubtabBeforeCreate: null,
+  myGamesCalendarDateAfterCreate: null,
   setCurrentPage: (page) => set({ currentPage: page }),
   setViewingGroupChannelId: (id) => set({ viewingGroupChannelId: id }),
   setPendingPlayerCardReopen: (data) => set({ pendingPlayerCardReopen: data }),
@@ -97,4 +103,6 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setMarketplaceTab: (tab) => set({ marketplaceTab: tab }),
   setFindViewMode: (mode) => set({ findViewMode: mode }),
   setRequestFindGoToCurrent: (mode) => set({ requestFindGoToCurrent: mode }),
+  setMyGamesSubtabBeforeCreate: (tab) => set({ myGamesSubtabBeforeCreate: tab }),
+  setMyGamesCalendarDateAfterCreate: (date) => set({ myGamesCalendarDateAfterCreate: date }),
 }));

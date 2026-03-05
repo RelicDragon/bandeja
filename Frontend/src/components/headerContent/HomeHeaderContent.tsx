@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, User } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import { useHeaderStore } from '@/store/headerStore';
 import { CreateMenuModal } from '@/components/CreateMenuModal';
 import { useNavigationStore } from '@/store/navigationStore';
 import { EntityType } from '@/types';
@@ -14,12 +15,14 @@ export const HomeHeaderContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const { setCurrentPage, setIsAnimating, setChatsFilter } = useNavigationStore();
+  const { setCurrentPage, setIsAnimating, setChatsFilter, setMyGamesSubtabBeforeCreate } = useNavigationStore();
   const parsed = useMemo(
     () => parseLocation(location.pathname, location.search),
     [location.pathname, location.search]
   );
   const currentPage = placeToPageType(parsed.place);
+  const createGameInitialDate = useHeaderStore((s) => s.createGameInitialDate);
+  const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
   const buttonContainerRef = useRef<HTMLDivElement>(null);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [pendingChatType, setPendingChatType] = useState<'group' | 'channel' | null>(null);
@@ -42,6 +45,12 @@ export const HomeHeaderContent = () => {
   }, [currentPage, pendingChatType, setChatsFilter]);
 
   const handleSelectGameType = (entityType: EntityType) => {
+    const fromMyGamesList = parsed.place === 'home' && parsed.params?.tab === 'list';
+    setMyGamesSubtabBeforeCreate(fromMyGamesList ? 'list' : null);
+    const initialGameData = createGameInitialDate
+      ? { startTime: createGameInitialDate }
+      : undefined;
+    setCreateGameInitialDate(null);
     if (currentPage !== 'my') {
       setIsAnimating(true);
       setCurrentPage('my');
@@ -51,14 +60,14 @@ export const HomeHeaderContent = () => {
         if (entityType === 'LEAGUE') {
           navigate('/create-league', { replace: true });
         } else {
-          navigate('/create-game', { state: { entityType }, replace: true });
+          navigate('/create-game', { state: { entityType, initialGameData }, replace: true });
         }
       }, 300);
     } else {
       if (entityType === 'LEAGUE') {
         navigate('/create-league', { replace: true });
       } else {
-        navigate('/create-game', { state: { entityType }, replace: true });
+        navigate('/create-game', { state: { entityType, initialGameData }, replace: true });
       }
     }
   };

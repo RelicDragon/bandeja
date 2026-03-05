@@ -2,12 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { Keyboard } from '@capacitor/keyboard';
 import { ChatMessage, chatApi } from '@/api/chat';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
 import { REACTION_EMOJIS, formatFullDateTime, getUserDisplayName, getUserInitials } from '@/utils/messageMenuUtils';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
+import { isCapacitor } from '@/utils/capacitor';
 import { Flag, Languages, Pencil, Pin, PinOff } from 'lucide-react';
 
 interface UnifiedMessageMenuProps {
@@ -64,6 +66,9 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const openTimeRef = useRef(0);
 
   useEffect(() => {
+    if (isCapacitor()) {
+      void Keyboard.hide();
+    }
     document.body.style.overflow = 'hidden';
     document.body.style.pointerEvents = 'none';
     openTimeRef.current = Date.now();

@@ -4,6 +4,7 @@ import { PendingReply } from './types';
 import { requireUser, requireChat, requirePrivateChat, syncTelegramProfile } from './middleware';
 import { handleStartCommand } from './commands/start.command';
 import { generateAuthCode } from './commands/auth.command';
+import { generateLoginLink } from './commands/login.command';
 import { handleMyGamesCommand } from './commands/myGames.command';
 import { handleGamesCommand } from './commands/games.command';
 import { createMessageHandler } from './handlers/message.handler';
@@ -40,6 +41,7 @@ class TelegramBotService {
 
     this.bot.command('start', requireUser, syncTelegramProfile, requirePrivateChat, handleStartCommand);
     this.bot.command('auth', requireUser, syncTelegramProfile, requirePrivateChat, generateAuthCode);
+    this.bot.command('login', requireUser, syncTelegramProfile, requirePrivateChat, generateLoginLink);
     this.bot.command('my', requireUser, syncTelegramProfile, requirePrivateChat, handleMyGamesCommand);
     this.bot.command('games', requireUser, syncTelegramProfile, requireChat, handleGamesCommand);
 
