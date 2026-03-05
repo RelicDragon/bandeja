@@ -382,10 +382,6 @@ export class GameReadService {
       };
     }
 
-    if (filters.parentId) {
-      where.parentId = filters.parentId;
-    }
-
     const cityIdToFilter = filters.cityId || userCityId;
     if (cityIdToFilter) {
       where.cityId = cityIdToFilter;

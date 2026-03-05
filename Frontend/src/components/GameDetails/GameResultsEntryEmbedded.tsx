@@ -28,6 +28,7 @@ import { GameResultsTabs } from './GameResultsTabs';
 import { OfflineBanner } from './OfflineBanner';
 import { GameResultsModals } from './GameResultsModals';
 import { TelegramSummaryModal } from './TelegramSummaryModal';
+import { ConfirmationModal } from '@/components';
 import { Send, Edit } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
@@ -55,6 +56,8 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const [isSendingToTelegram, setIsSendingToTelegram] = useState(false);
   const [isTelegramSummaryModalOpen, setIsTelegramSummaryModalOpen] = useState(false);
   const [telegramSummary, setTelegramSummary] = useState('');
+  const [showResendTelegramConfirm, setShowResendTelegramConfirm] = useState(false);
+  const [isResettingTelegram, setIsResettingTelegram] = useState(false);
   const resultsContainerRef = useRef<HTMLDivElement>(null);
 
   const currentGame = useMemo(() => {
@@ -132,30 +135,11 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
   const handleSendToTelegram = async () => {
     if (!currentGame || isSendingToTelegram) return;
-
     if (currentGame.resultsStatus !== 'FINAL') {
       toast.error(t('gameResults.sendToTelegramFailed') || 'Game must be finalized before sending results to Telegram');
       return;
     }
-
-    setIsSendingToTelegram(true);
-    
-    try {
-      const response = await gamesApi.prepareTelegramSummary(currentGame.id);
-      if (response.data?.summary) {
-        setTelegramSummary(response.data.summary);
-        setIsTelegramSummaryModalOpen(true);
-      } else {
-        throw new Error('No summary received');
-      }
-    } catch (error: any) {
-      console.error('Failed to prepare Telegram summary:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 
-        t('gameResults.prepareTextFailed') || 'Failed to prepare text';
-      toast.error(errorMessage);
-    } finally {
-      setIsSendingToTelegram(false);
-    }
+    await openTelegramSummaryModal();
   };
 
   const handleSendSummaryToTelegram = async (summaryText: string) => {
@@ -168,6 +152,43 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       ...currentGame,
       resultsSentToTelegram: true,
     });
+  };
+
+  const openTelegramSummaryModal = async () => {
+    if (!currentGame || isSendingToTelegram) return;
+    setIsSendingToTelegram(true);
+    try {
+      const response = await gamesApi.prepareTelegramSummary(currentGame.id);
+      if (response.data?.summary) {
+        setTelegramSummary(response.data.summary);
+        setIsTelegramSummaryModalOpen(true);
+      } else {
+        throw new Error('No summary received');
+      }
+    } catch (error: any) {
+      console.error('Failed to prepare Telegram summary:', error);
+      const errorMessage = error?.response?.data?.message || error?.message ||
+        t('gameResults.prepareTextFailed') || 'Failed to prepare text';
+      toast.error(errorMessage);
+    } finally {
+      setIsSendingToTelegram(false);
+    }
+  };
+
+  const handleResendToTelegramConfirm = async () => {
+    if (!currentGame) return;
+    setIsResettingTelegram(true);
+    try {
+      await gamesApi.resetTelegramResultsSent(currentGame.id);
+      onGameUpdate({ ...currentGame, resultsSentToTelegram: false });
+      setShowResendTelegramConfirm(false);
+      await openTelegramSummaryModal();
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || t('errors.generic');
+      toast.error(errorMessage);
+    } finally {
+      setIsResettingTelegram(false);
+    }
   };
 
   useEffect(() => {
@@ -803,12 +824,33 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       )}
 
       {showSentToTelegramHint && (
-        <div className="mb-6 flex justify-center px-4">
+        <div className="mb-6 flex flex-col items-center gap-3 px-4">
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
             {t('gameResults.resultsAlreadySentToTelegram') || 'Results already sent to Telegram'}
           </p>
+          <button
+            type="button"
+            onClick={() => setShowResendTelegramConfirm(true)}
+            disabled={isResettingTelegram}
+            className="px-4 sm:px-6 py-3 rounded-xl text-white font-semibold text-sm sm:text-base bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[200px]"
+          >
+            {isResettingTelegram ? t('common.loading') : (t('gameResults.resendResultsToTelegram') || 'Resend to Telegram')}
+          </button>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={showResendTelegramConfirm}
+        title={t('gameResults.resendResultsToTelegram') || 'Resend to Telegram'}
+        message={t('gameResults.resendResultsToTelegramConfirm') || 'Reset the sent state and open the summary to send again to the Telegram chat?'}
+        confirmText={t('common.confirm')}
+        cancelText={t('common.cancel')}
+        confirmVariant="danger"
+        isLoading={isResettingTelegram}
+        loadingText={t('common.loading')}
+        onConfirm={handleResendToTelegramConfirm}
+        onClose={() => setShowResendTelegramConfirm(false)}
+      />
 
       {isResultsEntryMode && (
         <GameResultsTabs

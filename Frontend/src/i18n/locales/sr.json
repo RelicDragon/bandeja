@@ -638,6 +638,8 @@
     "send": "Пошаљи",
     "resultsSentToTelegram": "Резултати су успешно послати у Telegram",
     "resultsAlreadySentToTelegram": "Резултати су већ послати у Telegram",
+    "resendResultsToTelegram": "Пошаљи поново у Telegram",
+    "resendResultsToTelegramConfirm": "Ресетуј статус слања и отвори резиме да поново пошаљеш у Telegram чат?",
     "sendToTelegramFailed": "Неуспешно слање резултата у Telegram",
     "editTelegramText": "Уреди Текст за Telegram",
     "editTelegramTextDescription": "Прегледајте и уредите текст пре слања у Telegram",

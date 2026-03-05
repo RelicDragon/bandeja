@@ -633,6 +633,8 @@
     "send": "Odeslat",
     "resultsSentToTelegram": "Výsledky byly úspěšně odeslány do Telegramu",
     "resultsAlreadySentToTelegram": "Výsledky již byly odeslány do Telegramu",
+    "resendResultsToTelegram": "Znovu odeslat do Telegramu",
+    "resendResultsToTelegramConfirm": "Resetovat stav odeslání a otevřít shrnutí pro opětovné odeslání do Telegram chatu?",
     "sendToTelegramFailed": "Nepodařilo se odeslat výsledky do Telegramu",
     "editTelegramText": "Upravit text pro Telegram",
     "editTelegramTextDescription": "Zkontrolujte a upravte text před odesláním do Telegramu",

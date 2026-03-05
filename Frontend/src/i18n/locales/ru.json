@@ -640,6 +640,8 @@
     "send": "Отправить",
     "resultsSentToTelegram": "Результаты успешно отправлены в Telegram",
     "resultsAlreadySentToTelegram": "Результаты уже отправлены в Telegram",
+    "resendResultsToTelegram": "Отправить снова в Telegram",
+    "resendResultsToTelegramConfirm": "Сбросить состояние отправки и открыть сводку для повторной отправки в чат Telegram?",
     "sendToTelegramFailed": "Не удалось отправить результаты в Telegram",
     "editTelegramText": "Редактировать Текст для Telegram",
     "editTelegramTextDescription": "Просмотрите и отредактируйте текст перед отправкой в Telegram",

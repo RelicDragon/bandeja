@@ -182,6 +182,11 @@ export const gamesApi = {
       { summaryText }
     );
     return response.data;
-  }
+  },
+
+  resetTelegramResultsSent: async (id: string) => {
+    const response = await api.patch<ApiResponse<void>>(`/games/${id}/reset-telegram-results-sent`);
+    return response.data;
+  },
 };
 

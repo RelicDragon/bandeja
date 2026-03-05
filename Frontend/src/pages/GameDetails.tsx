@@ -56,7 +56,6 @@ import { BasicUser } from '@/types';
 import { createPortal } from 'react-dom';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { socketService } from '@/services/socketService';
-import { navigationService } from '@/services/navigationService';
 import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 
@@ -68,21 +67,20 @@ interface GameDetailsContentProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
   selectedGameChatId?: string | null;
   onChatGameSelect?: (gameId: string) => void;
-  initialGame?: Game | null;
 }
 
-export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onChatGameSelect, initialGame }: GameDetailsContentProps) => {
+export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onChatGameSelect }: GameDetailsContentProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, setGameDetailsTableAddRound, setMyGamesSubtabBeforeCreate } = useNavigationStore();
+  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, setGameDetailsTableAddRound } = useNavigationStore();
 
-  const [game, setGame] = useState<Game | null>((initialGame?.id === id ? initialGame : null) ?? null);
+  const [game, setGame] = useState<Game | null>(null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
   const [gameInvites, setGameInvites] = useState<Invite[]>([]);
-  const [loading, setLoading] = useState(!(initialGame?.id === id));
+  const [loading, setLoading] = useState(true);
   const [showPlayerList, setShowPlayerList] = useState(false);
   const [playerListMode, setPlayerListMode] = useState<'players' | 'trainer'>('players');
   const [playerListGender, setPlayerListGender] = useState<'MALE' | 'FEMALE' | undefined>(undefined);
@@ -109,7 +107,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const [tableSetModal, setTableSetModal] = useState<{ roundId: string; matchId: string } | null>(null);
   const [roundAddedForModal, setRoundAddedForModal] = useState<Round | null>(null);
   const [roundAddedModalRoundNumber, setRoundAddedModalRoundNumber] = useState<number | undefined>(undefined);
-  const [firstLeagueSeasonId, setFirstLeagueSeasonId] = useState<string | null>(null);
 
   const engineRounds = useGameResultsStore((s) => s.rounds);
   const engineCanEdit = useGameResultsStore((s) => s.canEdit);
@@ -153,64 +150,39 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   });
 
   useEffect(() => {
-    if (!id) return;
-    let cancelled = false;
+    const fetchGame = async () => {
+      if (!id) return;
 
-    if (initialGame?.id === id) {
-      setGame(initialGame);
+      setGame(null);
       setMyInvites([]);
       setGameInvites([]);
       setLoading(true);
-      (async () => {
-        try {
-          if (user) {
-            const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
-            if (cancelled) return;
-            const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
-            setMyInvites(gameMyInvites);
-            const isParticipant = initialGame.participants?.some((p) => p.userId === user?.id);
-            if (isParticipant) {
-              const gameInvitesResponse = await invitesApi.getGameInvites(id);
-              if (cancelled) return;
-              setGameInvites(gameInvitesResponse.data);
-            }
-          }
-        } finally {
-          if (!cancelled) setLoading(false);
-        }
-      })();
-      return () => { cancelled = true; };
-    }
 
-    setGame(null);
-    setMyInvites([]);
-    setGameInvites([]);
-    setLoading(true);
-    (async () => {
       try {
         const response = await gamesApi.getById(id);
-        if (cancelled) return;
         setGame(response.data);
+
         if (user) {
           const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
-          if (cancelled) return;
           const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
           setMyInvites(gameMyInvites);
+
           const isParticipant = response.data.participants.some((p) => p.userId === user?.id);
           if (isParticipant) {
             const gameInvitesResponse = await invitesApi.getGameInvites(id);
-            if (cancelled) return;
             setGameInvites(gameInvitesResponse.data);
           }
         }
+
       } catch (error) {
-        if (!cancelled) console.error('Failed to fetch game:', error);
+        console.error('Failed to fetch game:', error);
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
-    })();
-    return () => { cancelled = true; };
-  }, [id, user, initialGame]);
+    };
+
+    fetchGame();
+  }, [id, user]);
 
   const searchParams = new URLSearchParams(location.search);
   const tabFromUrl = searchParams.get('tab') as 'general' | 'schedule' | 'standings' | 'faq' | null;
@@ -352,21 +324,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
     fetchClubs();
   }, [user?.currentCity, game?.entityType]);
-
-  useEffect(() => {
-    if (game?.entityType !== 'LEAGUE' || !game.id) {
-      setFirstLeagueSeasonId(null);
-      return;
-    }
-    let cancelled = false;
-    gamesApi.getAll({ parentId: game.id, entityType: 'LEAGUE_SEASON', limit: 1 })
-      .then((data) => {
-        if (!cancelled && data.data?.length) setFirstLeagueSeasonId(data.data[0].id);
-        else if (!cancelled) setFirstLeagueSeasonId(null);
-      })
-      .catch(() => { if (!cancelled) setFirstLeagueSeasonId(null); });
-    return () => { cancelled = true; };
-  }, [game?.id, game?.entityType]);
 
   useEffect(() => {
     const checkFaqs = async () => {
@@ -1267,16 +1224,14 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
             <LeagueFixedTeamsSection game={game} />
           )}
 
-          {user && isLeague && firstLeagueSeasonId && (
+          {game.entityType === 'LEAGUE' && game.parentId && (
             <button
               type="button"
-              onClick={() => navigationService.navigateToGame(firstLeagueSeasonId)}
-              className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-[0.99] transition-colors"
+              onClick={() => navigate(`/games/${game.parentId}`)}
+              className="mb-3 flex w-full items-center justify-between gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-left text-[var(--color-text)] transition hover:bg-[var(--color-surface-hover)] active:opacity-90"
             >
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                {t('gameDetails.openLeagueSeason', { defaultValue: 'Open League Season' })}
-              </span>
-              <ChevronRight size={20} className="text-gray-500 dark:text-gray-400 shrink-0" />
+              <span className="font-medium">{t('gameDetails.openLeagueSeason')}</span>
+              <ChevronRight className="h-5 w-5 shrink-0 opacity-60" />
             </button>
           )}
 
@@ -1572,7 +1527,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
                       }
                     }
                     
-                    setMyGamesSubtabBeforeCreate(null);
                     navigate('/create-game', {
                       state: {
                         entityType: game.entityType,

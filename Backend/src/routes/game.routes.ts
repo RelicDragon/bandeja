@@ -156,5 +156,12 @@ router.post(
   gameController.sendResultsToTelegram
 );
 
+router.patch(
+  '/:id/reset-telegram-results-sent',
+  authenticate,
+  canEditGame,
+  gameController.resetTelegramResultsSent
+);
+
 export default router;
 

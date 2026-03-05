@@ -416,3 +416,25 @@ export const sendResultsToTelegram = asyncHandler(async (req: AuthRequest, res: 
     message: 'Results sent to Telegram successfully',
   });
 });
+
+export const resetTelegramResultsSent = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+  const game = await prisma.game.findUnique({
+    where: { id },
+    select: { id: true, resultsSentToTelegram: true },
+  });
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+  if (!game.resultsSentToTelegram) {
+    throw new ApiError(400, 'Results were not sent to Telegram');
+  }
+  await prisma.game.update({
+    where: { id },
+    data: { resultsSentToTelegram: false },
+  });
+  res.json({ success: true });
+});
