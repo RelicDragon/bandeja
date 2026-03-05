@@ -11,6 +11,7 @@ export type ResultsStatus = 'NONE' | 'IN_PROGRESS' | 'FINAL';
 export type ChatType = 'PUBLIC' | 'PRIVATE' | 'ADMINS' | 'PHOTOS';
 export type BugStatus = 'CREATED' | 'CONFIRMED' | 'IN_PROGRESS' | 'TEST' | 'FINISHED' | 'ARCHIVED';
 export type BugType = 'BUG' | 'CRITICAL' | 'SUGGESTION' | 'QUESTION' | 'TASK';
+export type BugPriority = -2 | -1 | 0 | 1 | 2;
 export type WinnerOfGame = 'BY_MATCHES_WON' | 'BY_POINTS' | 'BY_SCORES_DELTA' | 'PLAYOFF_FINALS';
 export type WinnerOfMatch = 'BY_SETS' | 'BY_SCORES';
 export type MatchGenerationType = 'HANDMADE' | 'FIXED' | 'RANDOM' | 'ROUND_ROBIN' | 'ESCALERA' | 'RATING' | 'WINNERS_COURT';
@@ -390,6 +391,7 @@ export interface Bug {
   senderId: string;
   status: BugStatus;
   bugType: BugType;
+  priority: number;
   lastMessagePreview?: string | null;
   createdAt: string;
   updatedAt: string;

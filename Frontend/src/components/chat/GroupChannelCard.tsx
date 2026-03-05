@@ -2,6 +2,7 @@ import { formatChatTime } from '@/utils/dateFormat';
 import { GroupChannel, ChatDraft, getLastMessageTime, getLastMessageText, isLastMessagePreview } from '@/api/chat';
 import { Users, Hash, Package, Pin, Loader2 } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { BugPriorityBadge } from '@/components/chat/BugPriorityBadge';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useMemo } from 'react';
@@ -92,6 +93,9 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
               </div>
               {groupChannel.bug && (
                 <>
+                  {(groupChannel.bug.priority ?? 0) !== 0 && (
+                    <BugPriorityBadge priority={groupChannel.bug.priority ?? 0} />
+                  )}
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wide bg-amber-100/80 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
                     {t(`bug.types.${groupChannel.bug.bugType}`)}
                   </span>

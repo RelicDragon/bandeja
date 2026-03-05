@@ -39,7 +39,7 @@ export const GroupChannelSettings = ({
   const [showInvitesModal, setShowInvitesModal] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
 
-  const canEditBug = user?.isAdmin || false;
+  const canEditBug = !!(user && (user.isAdmin || groupChannel?.bug?.senderId === user.id));
   const onParticipantsCountChangeRef = useRef(onParticipantsCountChange);
   onParticipantsCountChangeRef.current = onParticipantsCountChange;
 

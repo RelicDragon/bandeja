@@ -353,9 +353,25 @@
     "openChat": "Open chat",
     "actions": "Bug Actions",
     "status": "Status",
+    "priority": "Priority",
+    "priorityUpdated": "Bug priority updated",
     "changeStatus": "Change Status",
     "changeType": "Change Type",
     "myBugsOnly": "Created by me",
+    "priorities": {
+      "-2": "−2",
+      "-1": "−1",
+      "0": "0",
+      "1": "+1",
+      "2": "+2"
+    },
+    "priorityLabels": {
+      "-2": "Very low",
+      "-1": "Low",
+      "0": "Normal",
+      "1": "High",
+      "2": "Very high"
+    },
     "types": {
       "BUG": "Bug",
       "CRITICAL": "Critical",
@@ -1782,6 +1798,7 @@
       "USER_CANCELED_JOIN_QUEUE": "{{userName}} canceled their join request",
       "BUG_STATUS_CHANGED": "Bug status changed to {{status}}",
       "BUG_TYPE_CHANGED": "Bug type changed to {{type}}",
+      "BUG_PRIORITY_CHANGED": "Bug priority changed to {{priority}}",
       "GAME_CLUB_CHANGED": "Game location changed to {{clubName}}",
       "GAME_DATE_TIME_CHANGED": "Game date/time changed to {{dateTime}}",
       "USER_CHAT_REQUEST": "{{requesterName}} requests to chat with you",

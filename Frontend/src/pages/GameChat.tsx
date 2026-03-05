@@ -499,7 +499,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               bug={bug}
               marketItem={groupChannel?.marketItem}
               groupChannel={groupChannel}
-              canEditBug={derived.isBugAdmin}
+              canEditBug={derived.canEditBug}
               onUpdate={() => id && loadContext().then(() => loadMessages())}
               onJoinChannel={handleJoinChannel}
             />

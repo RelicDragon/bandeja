@@ -1,9 +1,10 @@
 import api from './axios';
-import { ApiResponse, Bug, BugsResponse, BugType, BugStatus } from '@/types';
+import { ApiResponse, Bug, BugsResponse, BugType, BugStatus, BugPriority } from '@/types';
 
 export interface CreateBugData {
   text: string;
   bugType: BugType;
+  priority?: BugPriority;
 }
 
 export interface CreateBugResponse {
@@ -18,6 +19,7 @@ export interface BugWithGroupChannel extends Bug {
 export interface UpdateBugData {
   status?: BugStatus;
   bugType?: BugType;
+  priority?: BugPriority;
 }
 
 export const bugsApi = {

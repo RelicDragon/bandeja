@@ -13,8 +13,14 @@ import prisma from '../config/database';
 
 const getSocketService = () => (global as any).socketService;
 
+const clampPriority = (v: unknown): number => {
+  const n = typeof v === 'number' ? v : parseInt(String(v), 10);
+  if (Number.isNaN(n)) return 0;
+  return Math.min(2, Math.max(-2, n));
+};
+
 export const createBug = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { text, bugType } = req.body;
+  const { text, bugType, priority: rawPriority } = req.body;
 
   if (!text || typeof text !== 'string' || text.trim().length === 0) {
     throw new ApiError(400, 'errors.bugs.textRequired');
@@ -24,7 +30,8 @@ export const createBug = asyncHandler(async (req: AuthRequest, res: Response) =>
     throw new ApiError(400, 'errors.bugs.typeRequired');
   }
 
-  const { groupChannel, ...bug } = await BugService.createBug(text, bugType, req.userId!);
+  const priority = rawPriority !== undefined ? clampPriority(rawPriority) : 0;
+  const { groupChannel, ...bug } = await BugService.createBug(text, bugType, req.userId!, priority);
 
   notificationService.sendNewBugNotification(bug, groupChannel.id, bug.sender).catch((err: unknown) =>
     console.error('Failed to send new bug notification:', err)
@@ -88,12 +95,21 @@ export const getBugs = asyncHandler(async (req: AuthRequest, res: Response) => {
   });
 });
 
+const formatPriorityForMessage = (p: number): string => (p > 0 ? `+${p}` : String(p));
+
 export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { status, bugType } = req.body;
+  const { status, bugType, priority: rawPriority } = req.body;
 
-  if ((!status || !Object.values(BugStatus).includes(status as BugStatus)) &&
-      (!bugType || !Object.values(BugType).includes(bugType as BugType))) {
+  const priority =
+    rawPriority !== undefined && rawPriority !== null
+      ? clampPriority(rawPriority)
+      : undefined;
+  const hasValidStatus = status && Object.values(BugStatus).includes(status as BugStatus);
+  const hasValidType = bugType && Object.values(BugType).includes(bugType as BugType);
+  const hasValidPriority = priority !== undefined;
+
+  if (!hasValidStatus && !hasValidType && !hasValidPriority) {
     throw new ApiError(400, 'errors.bugs.statusOrTypeRequired');
   }
 
@@ -107,7 +123,11 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
     throw new ApiError(403, 'errors.bugs.updateForbidden');
   }
 
-  const bug = await BugService.updateBug(id, { status, bugType });
+  const updateData: { status?: BugStatus; bugType?: BugType; priority?: number } = {};
+  if (hasValidStatus) updateData.status = status;
+  if (hasValidType) updateData.bugType = bugType;
+  if (hasValidPriority) updateData.priority = priority;
+  const bug = await BugService.updateBug(id, updateData);
   const groupChannel = await prisma.groupChannel.findUnique({
     where: { bugId: id },
     select: { id: true }
@@ -133,6 +153,18 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
       {
         type: SystemMessageType.BUG_TYPE_CHANGED,
         variables: { type: bugType.toLowerCase() }
+      },
+      ChatType.PUBLIC,
+      chatContextType
+    );
+  }
+
+  if (hasValidPriority && priority !== existingBug.priority) {
+    await createSystemMessage(
+      contextId,
+      {
+        type: SystemMessageType.BUG_PRIORITY_CHANGED,
+        variables: { priority: formatPriorityForMessage(priority) }
       },
       ChatType.PUBLIC,
       chatContextType

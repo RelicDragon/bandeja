@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Select } from '@/components';
-import { BugType } from '@/types';
+import { BugType, BugPriority } from '@/types';
+import { BugPrioritySelector } from '@/components/chat/BugPrioritySelector';
+import { bugsApi } from '@/api';
 
 const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK'];
-import { bugsApi } from '@/api';
 import { toast } from 'react-hot-toast';
 import { isCapacitor, isIOS, isAndroid, getAppInfo, getCapacitorPlatform } from '@/utils/capacitor';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
@@ -19,6 +20,7 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
   const { t } = useTranslation();
   const [text, setText] = useState('');
   const [bugType, setBugType] = useState<BugType>('BUG');
+  const [priority, setPriority] = useState<BugPriority>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getPlatformInfo = async (): Promise<string> => {
@@ -53,10 +55,11 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
     try {
       const platformInfo = await getPlatformInfo();
       const bugText = `${text.trim()}\n${platformInfo}`;
-      const res = await bugsApi.createBug({ text: bugText, bugType });
+      const res = await bugsApi.createBug({ text: bugText, bugType, priority });
       toast.success(t('bug.created'));
       setText('');
       setBugType('BUG');
+      setPriority(0);
       const groupChannelId = res.data?.groupChannel?.id;
       onSuccess(groupChannelId);
     } catch (error: any) {
@@ -70,6 +73,7 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
   const handleClose = () => {
     setText('');
     setBugType('BUG');
+    setPriority(0);
     onClose();
   };
 
@@ -92,6 +96,14 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
               }))}
               value={bugType}
               onChange={(value) => setBugType(value as BugType)}
+            />
+          </div>
+
+          <div className="mb-4">
+            <BugPrioritySelector
+              currentPriority={priority}
+              onPriorityChange={setPriority}
+              disabled={isSubmitting}
             />
           </div>
 

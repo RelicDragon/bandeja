@@ -962,6 +962,7 @@ model Bug {
   senderId             String
   status               BugStatus        @default(CREATED)
   bugType              BugType          @default(BUG)
+  priority             Int              @default(0)
   lastMessagePreview   String?          @db.VarChar(500)
   finishedAt           DateTime?
   testingStartedAt     DateTime?

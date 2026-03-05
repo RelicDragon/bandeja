@@ -12,6 +12,7 @@ router.post(
   validate([
     body('text').notEmpty().withMessage('Bug text is required'),
     body('bugType').isIn(['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK']).withMessage('Valid bug type is required'),
+    body('priority').optional().isInt({ min: -2, max: 2 }).withMessage('Priority must be between -2 and 2'),
   ]),
   bugController.createBug
 );
@@ -33,6 +34,7 @@ router.put(
     param('id').notEmpty().withMessage('Bug ID is required'),
     body('status').optional().isIn(['CREATED', 'CONFIRMED', 'IN_PROGRESS', 'TEST', 'FINISHED', 'ARCHIVED']).withMessage('Valid status is required'),
     body('bugType').optional().isIn(['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK']).withMessage('Valid bug type is required'),
+    body('priority').optional().isInt({ min: -2, max: 2 }).withMessage('Priority must be between -2 and 2'),
   ]),
   bugController.updateBug
 );

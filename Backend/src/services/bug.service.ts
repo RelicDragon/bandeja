@@ -6,7 +6,7 @@ const BUG_TYPE_ORDER = Prisma.sql`CASE "bugType" WHEN 'CRITICAL' THEN 0 WHEN 'BU
 const BUG_STATUS_ORDER = Prisma.sql`CASE status WHEN 'CREATED' THEN 0 WHEN 'CONFIRMED' THEN 1 WHEN 'IN_PROGRESS' THEN 2 WHEN 'TEST' THEN 3 WHEN 'FINISHED' THEN 4 WHEN 'ARCHIVED' THEN 5 END`;
 
 export class BugService {
-  static async createBug(text: string, bugType: BugType, senderId: string) {
+  static async createBug(text: string, bugType: BugType, senderId: string, priority = 0) {
     const trimmed = text.trim();
     const groupName = trimmed.length > 100 ? trimmed.substring(0, 97) + '...' : trimmed;
 
@@ -22,7 +22,7 @@ export class BugService {
 
     return await prisma.$transaction(async (tx) => {
       const bug = await tx.bug.create({
-        data: { text: trimmed, bugType, senderId },
+        data: { text: trimmed, bugType, senderId, priority },
         include: {
           sender: { select: { ...USER_SELECT_FIELDS, isAdmin: true } }
         }
@@ -173,10 +173,11 @@ export class BugService {
     });
   }
 
-  static async updateBug(id: string, data: { status?: BugStatus; bugType?: BugType }) {
+  static async updateBug(id: string, data: { status?: BugStatus; bugType?: BugType; priority?: number }) {
     const update: {
       status?: BugStatus;
       bugType?: BugType;
+      priority?: number;
       finishedAt?: Date | null;
       testingStartedAt?: Date | null;
     } = { ...data };

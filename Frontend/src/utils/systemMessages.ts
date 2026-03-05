@@ -17,6 +17,7 @@ export enum SystemMessageType {
   OWNERSHIP_TRANSFERRED = 'OWNERSHIP_TRANSFERRED',
   BUG_STATUS_CHANGED = 'BUG_STATUS_CHANGED',
   BUG_TYPE_CHANGED = 'BUG_TYPE_CHANGED',
+  BUG_PRIORITY_CHANGED = 'BUG_PRIORITY_CHANGED',
   GAME_CLUB_CHANGED = 'GAME_CLUB_CHANGED',
   GAME_DATE_TIME_CHANGED = 'GAME_DATE_TIME_CHANGED',
   USER_CHAT_REQUEST = 'USER_CHAT_REQUEST',
@@ -46,6 +47,7 @@ const FALLBACK_TEMPLATES: Record<SystemMessageType, string> = {
   [SystemMessageType.OWNERSHIP_TRANSFERRED]: '{{newOwnerName}} is now the owner of the game',
   [SystemMessageType.BUG_STATUS_CHANGED]: 'Bug status changed to {{status}}',
   [SystemMessageType.BUG_TYPE_CHANGED]: 'Bug type changed to {{type}}',
+  [SystemMessageType.BUG_PRIORITY_CHANGED]: 'Bug priority changed to {{priority}}',
   [SystemMessageType.GAME_CLUB_CHANGED]: 'Game location changed to {{clubName}}',
   [SystemMessageType.GAME_DATE_TIME_CHANGED]: 'Game date/time changed to {{dateTime}}',
   [SystemMessageType.USER_CHAT_REQUEST]: '{{requesterName}} requests to chat with you',
@@ -74,6 +76,11 @@ const interpolateTemplate = (template: string, variables: Record<string, string>
 const toStatusKey = (v: string) => v.toUpperCase().replace(/-/g, '_');
 const toTypeKey = (v: string) => v.toUpperCase();
 
+const parsePriorityVariable = (v: string): number => {
+  const n = parseInt(v.replace(/^\+/, ''), 10);
+  return Number.isNaN(n) ? 0 : Math.min(2, Math.max(-2, n));
+};
+
 const translateSystemMessageData = (
   messageData: SystemMessageData,
   translateFn: (key: string, options?: { defaultValue?: string }) => string
@@ -91,6 +98,10 @@ const translateSystemMessageData = (
   }
   if (type === SystemMessageType.BUG_TYPE_CHANGED && safeVariables.type) {
     safeVariables = { ...safeVariables, type: translateFn(`bug.types.${toTypeKey(safeVariables.type)}`, { defaultValue: safeVariables.type }) };
+  }
+  if (type === SystemMessageType.BUG_PRIORITY_CHANGED && safeVariables.priority !== undefined) {
+    const p = parsePriorityVariable(safeVariables.priority);
+    safeVariables = { ...safeVariables, priority: translateFn(`bug.priorityLabels.${p}`, { defaultValue: safeVariables.priority }) };
   }
 
   const template = translateFn(`chat.systemMessages.${type}`, { defaultValue: '' });

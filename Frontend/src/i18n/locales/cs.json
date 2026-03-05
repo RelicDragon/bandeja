@@ -352,9 +352,13 @@
     "openChat": "Otevřít chat",
     "actions": "Akce u chyby",
     "status": "Stav",
+    "priority": "Priorita",
+    "priorityUpdated": "Priorita chyby aktualizována",
     "changeStatus": "Změnit stav",
     "changeType": "Změnit typ",
     "myBugsOnly": "Vytvořil jsem",
+    "priorities": { "-2": "−2", "-1": "−1", "0": "0", "1": "+1", "2": "+2" },
+    "priorityLabels": { "-2": "Velmi nízká", "-1": "Nízká", "0": "Normální", "1": "Vysoká", "2": "Velmi vysoká" },
     "types": {
       "BUG": "Chyba",
       "CRITICAL": "Kritická",
@@ -1572,6 +1576,8 @@
   "club": {
     "courtsCount_zero": "Žádné kurty",
     "courtsCount_one": "1 kurt",
+    "courtsCount_few": "{{count}} kurty",
+    "courtsCount_many": "{{count}} kurtů",
     "courtsCount_other": "{{count}} kurtů"
   },
   "city": {
@@ -1779,6 +1785,7 @@
       "USER_CANCELED_JOIN_QUEUE": "{{userName}} zrušil žádost o připojení",
       "BUG_STATUS_CHANGED": "Stav chyby změněn na {{status}}",
       "BUG_TYPE_CHANGED": "Typ chyby změněn na {{type}}",
+      "BUG_PRIORITY_CHANGED": "Priorita chyby změněna na {{priority}}",
       "GAME_CLUB_CHANGED": "Místo zápasu změněno na {{clubName}}",
       "GAME_DATE_TIME_CHANGED": "Datum/čas zápasu změněn na {{dateTime}}",
       "USER_CHAT_REQUEST": "{{requesterName}} žádá o chat s vámi",

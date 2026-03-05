@@ -2,10 +2,11 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Bug as BugIcon } from 'lucide-react';
-import type { Bug, BugStatus, BugType } from '@/types';
+import type { Bug, BugStatus, BugType, BugPriority } from '@/types';
 import { bugsApi } from '@/api/bugs';
 import { BugTypeSelector } from '@/components/chat/BugTypeSelector';
 import { BugStatusSelector } from '@/components/chat/BugStatusSelector';
+import { BugPrioritySelector } from '@/components/chat/BugPrioritySelector';
 
 interface BugInfoPanelProps {
   bug: Bug;
@@ -52,6 +53,23 @@ export const BugInfoPanel = ({ bug, canEdit, onUpdate }: BugInfoPanelProps) => {
     }
   }, [bugData.id, canEdit, isUpdating, t, onUpdate]);
 
+  const handlePriorityChange = useCallback(async (newPriority: BugPriority) => {
+    if (!canEdit || isUpdating) return;
+
+    setIsUpdating(true);
+    try {
+      const response = await bugsApi.updateBug(bugData.id, { priority: newPriority });
+      setBugData(response.data);
+      toast.success(t('bug.priorityUpdated', { defaultValue: 'Bug priority updated' }));
+      onUpdate?.();
+    } catch (error) {
+      console.error('Failed to update bug priority:', error);
+      toast.error(t('bug.updateFailed', { defaultValue: 'Failed to update bug' }));
+    } finally {
+      setIsUpdating(false);
+    }
+  }, [bugData.id, canEdit, isUpdating, t, onUpdate]);
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 space-y-4">
       <BugIcon size={16} className="text-red-500" />
@@ -74,12 +92,19 @@ export const BugInfoPanel = ({ bug, canEdit, onUpdate }: BugInfoPanelProps) => {
             onStatusChange={handleStatusChange}
             disabled={isUpdating}
           />
+          <div className="sm:col-span-2">
+            <BugPrioritySelector
+              currentPriority={bugData.priority ?? 0}
+              onPriorityChange={handlePriorityChange}
+              disabled={isUpdating}
+            />
+          </div>
         </div>
       )}
 
       {/* Read-only view for non-admins */}
       {!canEdit && (
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-4 text-sm flex-wrap">
           <BugTypeSelector
             currentType={bugData.bugType}
             onTypeChange={() => {}}
@@ -88,6 +113,11 @@ export const BugInfoPanel = ({ bug, canEdit, onUpdate }: BugInfoPanelProps) => {
           <BugStatusSelector
             currentStatus={bugData.status}
             onStatusChange={() => {}}
+            readonly
+          />
+          <BugPrioritySelector
+            currentPriority={bugData.priority ?? 0}
+            onPriorityChange={() => {}}
             readonly
           />
         </div>

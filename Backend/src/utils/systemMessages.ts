@@ -16,6 +16,7 @@ export enum SystemMessageType {
   OWNERSHIP_TRANSFERRED = 'OWNERSHIP_TRANSFERRED',
   BUG_STATUS_CHANGED = 'BUG_STATUS_CHANGED',
   BUG_TYPE_CHANGED = 'BUG_TYPE_CHANGED',
+  BUG_PRIORITY_CHANGED = 'BUG_PRIORITY_CHANGED',
   GAME_CLUB_CHANGED = 'GAME_CLUB_CHANGED',
   GAME_DATE_TIME_CHANGED = 'GAME_DATE_TIME_CHANGED',
   USER_CHAT_REQUEST = 'USER_CHAT_REQUEST',
@@ -114,6 +115,11 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<SystemMessageType, SystemMessageTe
     type: SystemMessageType.BUG_TYPE_CHANGED,
     template: 'Bug type changed to {{type}}',
     variables: ['type']
+  },
+  [SystemMessageType.BUG_PRIORITY_CHANGED]: {
+    type: SystemMessageType.BUG_PRIORITY_CHANGED,
+    template: 'Bug priority changed to {{priority}}',
+    variables: ['priority']
   },
   [SystemMessageType.GAME_CLUB_CHANGED]: {
     type: SystemMessageType.GAME_CLUB_CHANGED,

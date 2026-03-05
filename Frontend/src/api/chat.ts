@@ -196,6 +196,7 @@ export interface GroupChannel {
     text: string;
     status: string;
     bugType: string;
+    priority?: number;
     senderId: string;
     createdAt?: string;
     updatedAt?: string;

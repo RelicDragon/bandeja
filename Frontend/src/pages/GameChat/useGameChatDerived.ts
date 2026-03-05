@@ -33,6 +33,7 @@ export function useGameChatDerived({
   const isBugChat = contextType === 'GROUP' && !!groupChannel?.bug;
   const isBugCreator = groupChannel?.bug?.senderId === user?.id;
   const isBugAdmin = user ? (user as { isAdmin?: boolean }).isAdmin : false;
+  const canEditBug = isBugAdmin || isBugCreator;
   const isBugParticipant = groupChannel?.participants?.some((p) => p.userId === user?.id) ?? false;
   const isBugChatParticipant = isBugChat && !!groupChannel?.bug && (isBugParticipant || isBugCreator || isBugAdmin);
 
@@ -137,6 +138,7 @@ export function useGameChatDerived({
     isBugChat,
     isBugCreator,
     isBugAdmin,
+    canEditBug,
     isBugChatParticipant,
     isChannelOwner,
     isChannelAdminOrOwner,

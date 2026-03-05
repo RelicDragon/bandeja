@@ -291,7 +291,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                   <ReplyPreview
                     replyTo={currentMessage.replyTo}
                     onScrollToMessage={onScrollToMessage}
-                    className="mb-1"
+                    className="-mb-1"
                   />
                 )}
 
