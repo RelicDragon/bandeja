@@ -57,5 +57,15 @@ i18n.use(initReactI18next).init({
   contextSeparator: '_',
 });
 
+function applyHtmlLang(lng: string) {
+  const code = lng ? extractLanguageCode(lng) : 'en';
+  if (typeof document !== 'undefined' && document.documentElement) {
+    document.documentElement.lang = code;
+  }
+}
+
+i18n.on('languageChanged', (lng) => applyHtmlLang(lng));
+applyHtmlLang(i18n.language);
+
 export default i18n;
 

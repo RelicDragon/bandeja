@@ -408,6 +408,7 @@ function toggleLangMenu(event) {
 
 function switchLang(lang, item) {
     currentLang = lang;
+    document.documentElement.lang = lang;
     const langData = languages[lang];
     
     const container = document.getElementById('eula-content-container');
