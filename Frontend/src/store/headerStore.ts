@@ -13,6 +13,7 @@ interface HeaderState {
   areFiltersSticky: boolean;
   myGamesUnreadCount: number;
   pastGamesUnreadCount: number;
+  hasUpcomingGames: boolean;
   setPendingInvites: (count: number) => void;
   setUnreadMessages: (count: number) => void;
   triggerNewInviteAnimation: () => void;
@@ -23,6 +24,7 @@ interface HeaderState {
   setAreFiltersSticky: (sticky: boolean) => void;
   setMyGamesUnreadCount: (count: number) => void;
   setPastGamesUnreadCount: (count: number) => void;
+  setHasUpcomingGames: (v: boolean) => void;
 }
 
 export const useHeaderStore = create<HeaderState>((set) => ({
@@ -36,6 +38,7 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   areFiltersSticky: false,
   myGamesUnreadCount: 0,
   pastGamesUnreadCount: 0,
+  hasUpcomingGames: true,
   setPendingInvites: (count) => set({ pendingInvites: count }),
   setUnreadMessages: (count) => set({ unreadMessages: count }),
   triggerNewInviteAnimation: () => {
@@ -50,4 +53,5 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   setAreFiltersSticky: (sticky) => set({ areFiltersSticky: sticky }),
   setMyGamesUnreadCount: (count) => set({ myGamesUnreadCount: count }),
   setPastGamesUnreadCount: (count) => set({ pastGamesUnreadCount: count }),
+  setHasUpcomingGames: (v) => set({ hasUpcomingGames: v }),
 }));

@@ -19,6 +19,7 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
+import { navigationService } from '@/services/navigationService';
 
 const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string; parentId?: string; id: string }>(
   list: T[] = [],
@@ -109,8 +110,8 @@ export const MyTab = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const isDesktop = useDesktop();
-  const { unreadMessages, setMyGamesUnreadCount, setPastGamesUnreadCount } = useHeaderStore(
-    useShallow((s) => ({ unreadMessages: s.unreadMessages, setMyGamesUnreadCount: s.setMyGamesUnreadCount, setPastGamesUnreadCount: s.setPastGamesUnreadCount }))
+  const { unreadMessages, setMyGamesUnreadCount, setPastGamesUnreadCount, setHasUpcomingGames } = useHeaderStore(
+    useShallow((s) => ({ unreadMessages: s.unreadMessages, setMyGamesUnreadCount: s.setMyGamesUnreadCount, setPastGamesUnreadCount: s.setPastGamesUnreadCount, setHasUpcomingGames: s.setHasUpcomingGames }))
   );
   const activeTab = useNavigationStore((s) => s.activeTab);
 
@@ -148,6 +149,13 @@ export const MyTab = () => {
   }, [gamesUnreadCounts, pastGamesUnreadCounts]);
 
   const filteredMyGames = useMemo(() => sortMyGamesByStatusAndDateTime(games, mergedUnreadCounts), [games, mergedUnreadCounts]);
+  const hasUpcomingGames = useMemo(
+    () => filteredMyGames.some((g) => g.status === 'ANNOUNCED' || g.status === 'STARTED'),
+    [filteredMyGames]
+  );
+  useEffect(() => {
+    setHasUpcomingGames(hasUpcomingGames);
+  }, [hasUpcomingGames, setHasUpcomingGames]);
   const [myGamesSelectedDate, setMyGamesSelectedDate] = useState<Date>(() => new Date());
   const [pastGamesInRange, setPastGamesInRange] = useState<any[]>([]);
   const [pastGamesInRangeUnread, setPastGamesInRangeUnread] = useState<Record<string, number>>({});
@@ -407,6 +415,7 @@ export const MyTab = () => {
                   gamesUnreadCounts={calendarMergedUnreadCounts}
                   onNoteSaved={() => fetchData(false, true)}
                   upcomingGames={upcomingGamesForCalendar}
+                  onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
                 />
                 <div className={`transition-all duration-500 ease-in-out overflow-hidden ${unreadMessages > 0 ? 'max-h-[100px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
                   <div className="flex items-center justify-center pt-4">
@@ -490,6 +499,7 @@ export const MyTab = () => {
               gamesUnreadCounts={activeTab === 'calendar' ? calendarMergedUnreadCounts : mergedUnreadCounts}
               onNoteSaved={() => fetchData(false, true)}
               upcomingGames={upcomingGamesForCalendar}
+              onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
             />
           </div>
 
@@ -508,6 +518,7 @@ export const MyTab = () => {
               skeletonStates={skeletonAnimation.skeletonStates}
               gamesUnreadCounts={mergedUnreadCounts}
               onNoteSaved={() => fetchData(false, true)}
+              onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
             />
           </div>
 

@@ -72,6 +72,17 @@ export const MyGamesSection = ({
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {t('home.noGames')}
           </p>
+          {onSwitchToSearch && (
+            <Button
+              variant="primary"
+              size="md"
+              onClick={onSwitchToSearch}
+              className="inline-flex items-center gap-2 animate-pulse"
+            >
+              <Search className="w-5 h-5" />
+              {t('home.findGames', { defaultValue: 'Find games' })}
+            </Button>
+          )}
         </Card>
       </div>
     );
@@ -133,19 +144,6 @@ export const MyGamesSection = ({
           )}
         </div>
       </div>
-      {onSwitchToSearch && (
-        <div className="mt-6 flex justify-center">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onSwitchToSearch}
-            className="flex items-center gap-2"
-          >
-            <Search className="w-4 h-4" />
-            {t('home.findGameHint', { defaultValue: 'Want to find a game? Press Search tab' })}
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
