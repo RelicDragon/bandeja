@@ -14,8 +14,7 @@ import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { AddToCalendarModal } from '@/components';
 import { getShareUrl } from '@/utils/shareUrl';
 import { resolveUserCurrency } from '@/utils/currency';
-import { EditGameTextModal } from './EditGameTextModal';
-import { EditGamePriceModal } from './EditGamePriceModal';
+import type { EditGameInfoTabId } from './EditGameInfoModal';
 import { isCapacitor } from '@/utils/capacitor';
 import { addToNativeCalendar } from '@/utils/calendar';
 import { openExternalUrl } from '@/utils/openExternalUrl';
@@ -60,10 +59,8 @@ interface GameInfoProps {
   isEditMode: boolean;
   onToggleFavorite: () => void;
   onEditCourt: () => void;
-  onOpenLocationModal: () => void;
-  onOpenTimeDurationModal: () => void;
+  onOpenEditGameInfo?: (initialTab?: EditGameInfoTabId) => void;
   onScrollToSettings: () => void;
-  onGameUpdate?: (game: Game) => void;
   collapsedByDefault?: boolean;
   onInviteTrainer?: () => void;
   canInviteTrainer?: boolean;
@@ -80,10 +77,8 @@ export const GameInfo = ({
   isEditMode,
   onToggleFavorite,
   onEditCourt,
-  onOpenLocationModal,
-  onOpenTimeDurationModal,
+  onOpenEditGameInfo,
   onScrollToSettings,
-  onGameUpdate,
   collapsedByDefault = false,
   onInviteTrainer,
   canInviteTrainer = false,
@@ -133,8 +128,6 @@ export const GameInfo = ({
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState({ url: '' });
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
-  const [showEditGameTextModal, setShowEditGameTextModal] = useState(false);
-  const [showEditGamePriceModal, setShowEditGamePriceModal] = useState(false);
   const [showAddToCalendarModal, setShowAddToCalendarModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(collapsedByDefault);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -345,7 +338,7 @@ export const GameInfo = ({
 
     return (
       <TitleTag
-        onClick={() => !isCollapsed && canEdit && canShowEdit && setShowEditGameTextModal(true)}
+        onClick={() => !isCollapsed && canEdit && canShowEdit && onOpenEditGameInfo?.('general')}
         className={`${titleClass} ${
           !isCollapsed && canEdit && canShowEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
         }`}
@@ -452,7 +445,7 @@ export const GameInfo = ({
         )}
         {game.gameType !== 'CLASSIC' && (
           <button
-            onClick={() => !isCollapsed && canEdit && canShowEdit && setShowEditGameTextModal(true)}
+            onClick={() => !isCollapsed && canEdit && canShowEdit && onOpenEditGameInfo?.('general')}
             className={`${tagPadding} ${tagText} font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 ${
               !isCollapsed && canEdit && canShowEdit ? 'hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors' : ''
             } ${isCollapsed ? 'hidden' : ''}`}
@@ -692,6 +685,15 @@ export const GameInfo = ({
               ? 'translate-x-8 opacity-0 pointer-events-none max-h-0 overflow-hidden' 
               : 'translate-x-0 opacity-100 pointer-events-auto max-h-32'
           }`}>
+            {canEdit && canShowEdit && onOpenEditGameInfo && (
+              <button
+                onClick={() => onOpenEditGameInfo()}
+                className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
+                title={t('common.edit')}
+              >
+                <Edit3 size={24} className="text-white" />
+              </button>
+            )}
             <button
               onClick={handleShare}
               className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
@@ -803,7 +805,7 @@ export const GameInfo = ({
                     if (isEditMode) {
                       onScrollToSettings();
                     } else {
-                      onOpenTimeDurationModal();
+                      onOpenEditGameInfo?.('when');
                     }
                   }}
                   className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 italic"
@@ -821,7 +823,7 @@ export const GameInfo = ({
                       if (isEditMode) {
                         onScrollToSettings();
                       } else {
-                        onOpenTimeDurationModal();
+                        onOpenEditGameInfo?.('when');
                       }
                     }}
                     className="flex flex-col text-left font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
@@ -849,7 +851,7 @@ export const GameInfo = ({
                         if (isEditMode) {
                           onScrollToSettings();
                         } else {
-                          onOpenTimeDurationModal();
+                          onOpenEditGameInfo?.('when');
                         }
                       }}
                       className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
@@ -884,7 +886,7 @@ export const GameInfo = ({
                         if (isEditMode) {
                           onScrollToSettings();
                         } else {
-                          onOpenLocationModal();
+                          onOpenEditGameInfo?.('where');
                         }
                       }}
                       className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
@@ -1063,7 +1065,7 @@ export const GameInfo = ({
               <div className="flex-1">
                 {canEdit && canShowEdit ? (
                   <button
-                    onClick={() => setShowEditGamePriceModal(true)}
+                    onClick={() => onOpenEditGameInfo?.('price')}
                     className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                   >
                     {game.priceType === 'FREE'
@@ -1090,7 +1092,7 @@ export const GameInfo = ({
             <div className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
               <MessageCircle size={20} className="text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
               <button
-                onClick={() => canEdit && canShowEdit && setShowEditGameTextModal(true)}
+                onClick={() => canEdit && canShowEdit && onOpenEditGameInfo?.('general')}
                 className={`text-sm text-gray-600 dark:text-gray-400 text-left whitespace-pre-line ${
                   canEdit && canShowEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
                 }`}
@@ -1121,18 +1123,6 @@ export const GameInfo = ({
           isOpen={showFullscreenAvatar}
         />
       )}
-      <EditGameTextModal
-        isOpen={showEditGameTextModal}
-        onClose={() => setShowEditGameTextModal(false)}
-        game={game}
-        onGameUpdate={onGameUpdate}
-      />
-      <EditGamePriceModal
-        isOpen={showEditGamePriceModal}
-        onClose={() => setShowEditGamePriceModal(false)}
-        game={game}
-        onGameUpdate={onGameUpdate}
-      />
     </Card>
   );
 };

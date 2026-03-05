@@ -1315,6 +1315,12 @@
     "datetimeNotSet": "Time is not set yet",
     "yourTime": "Your time: {{time}}",
     "settingsUpdated": "Settings updated successfully",
+    "editTab": {
+      "general": "General",
+      "when": "When",
+      "where": "Where",
+      "price": "Price"
+    },
     "gameAvatar": "Game Avatar",
     "avatarUpdated": "Game avatar updated successfully",
     "avatarRemoved": "Game avatar removed successfully",

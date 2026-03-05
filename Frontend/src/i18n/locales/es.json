@@ -1280,6 +1280,12 @@
     "datetimeNotSet": "La hora aún no está establecida",
     "yourTime": "Tu hora: {{time}}",
     "settingsUpdated": "Configuración actualizada exitosamente",
+    "editTab": {
+      "general": "General",
+      "when": "Cuándo",
+      "where": "Dónde",
+      "price": "Precio"
+    },
     "navigateToClub": "Navegar al club",
     "openLeagueSeason": "Abrir temporada de liga",
     "shareGame": "Compartir juego",

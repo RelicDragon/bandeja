@@ -1329,6 +1329,12 @@
     "datetimeNotSet": "Время еще не установлено",
     "yourTime": "Ваше время: {{time}}",
     "settingsUpdated": "Настройки успешно обновлены",
+    "editTab": {
+      "general": "Основное",
+      "when": "Когда",
+      "where": "Где",
+      "price": "Цена"
+    },
     "navigateToClub": "Проложить маршрут к клубу",
     "openLeagueSeason": "Открыть сезон лиги",
     "shareGame": "Поделиться игрой",

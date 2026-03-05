@@ -1294,6 +1294,12 @@
     "datetimeNotSet": "Време још није постављено",
     "yourTime": "Твоје време: {{time}}",
     "settingsUpdated": "Подешавања успешно ажурирана",
+    "editTab": {
+      "general": "Опште",
+      "when": "Када",
+      "where": "Где",
+      "price": "Цена"
+    },
     "navigateToClub": "Навигација до клуба",
     "openLeagueSeason": "Отвори сезону лиге",
     "shareGame": "Подели игру",

@@ -1312,6 +1312,12 @@
     "datetimeNotSet": "Čas zatím není nastaven",
     "yourTime": "Váš čas: {{time}}",
     "settingsUpdated": "Nastavení bylo aktualizováno",
+    "editTab": {
+      "general": "Obecné",
+      "when": "Kdy",
+      "where": "Kde",
+      "price": "Cena"
+    },
     "gameAvatar": "Avatar zápasu",
     "avatarUpdated": "Avatar zápasu byl aktualizován",
     "avatarRemoved": "Avatar zápasu byl odstraněn",

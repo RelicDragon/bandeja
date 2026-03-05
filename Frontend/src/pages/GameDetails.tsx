@@ -30,7 +30,7 @@ import { GameSetup } from '@/components/GameDetails/GameSetup';
 import { FaqTab } from '@/components/GameDetails/FaqTab';
 import { FaqEdit } from '@/components/GameDetails/FaqEdit';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
-import { LocationModal, TimeDurationModal } from '@/components/GameDetails';
+import { EditGameInfoModal } from '@/components/GameDetails/EditGameInfoModal';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
 import { ResultsTableView } from '@/components/gameResults/ResultsTableView';
 import { HorizontalScoreEntryModal, RoundAddedModal } from '@/components/gameResults';
@@ -97,8 +97,8 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const [isLeaving, setIsLeaving] = useState(false);
   const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
   const [isEditMaxParticipantsModalOpen, setIsEditMaxParticipantsModalOpen] = useState(false);
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [isTimeDurationModalOpen, setIsTimeDurationModalOpen] = useState(false);
+  const [isEditGameInfoModalOpen, setIsEditGameInfoModalOpen] = useState(false);
+  const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<'general' | 'when' | 'where' | 'price'>('general');
   const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'standings' | 'faq'>('general');
   const [hasFaqs, setHasFaqs] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -738,57 +738,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     }
   };
 
-  const handleLocationSave = async (data: { clubId: string; courtId: string; hasBookedCourt: boolean }) => {
-    if (!id) return;
-
-    try {
-      const updateData: Partial<Game> = {
-        clubId: data.clubId || undefined,
-        courtId: data.courtId || '',
-        hasBookedCourt: data.hasBookedCourt,
-      };
-
-      await gamesApi.update(id, updateData);
-      
-      if (data.clubId && data.clubId !== game?.clubId) {
-        const response = await courtsApi.getByClubId(data.clubId);
-        setCourts(response.data);
-      }
-      
-      const response = await gamesApi.getById(id);
-      setGame(response.data);
-      
-      toast.success(game?.entityType === 'BAR' ? t('gameDetails.hallUpdated') : t('gameDetails.courtUpdated'));
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-      throw error;
-    }
-  };
-
-  const handleTimeDurationSave = async (data: { startTime: Date; endTime: Date }) => {
-    if (!id) return;
-
-    try {
-      const updateData: Partial<Game> = {
-        startTime: data.startTime.toISOString(),
-        endTime: data.endTime.toISOString(),
-        timeIsSet: true,
-      };
-
-      await gamesApi.update(id, updateData);
-      
-      const response = await gamesApi.getById(id);
-      setGame(response.data);
-      
-      toast.success(t('gameDetails.timeUpdated'));
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-      throw error;
-    }
-  };
-
   const handleCourtsChange = useCallback((newCourts: Court[]) => {
     setCourts(newCourts);
   }, []);
@@ -1248,10 +1197,11 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
               isEditMode={isEditMode}
               onToggleFavorite={handleToggleFavorite}
               onEditCourt={() => setIsCourtModalOpen(true)}
-              onOpenLocationModal={() => setIsLocationModalOpen(true)}
-              onOpenTimeDurationModal={() => setIsTimeDurationModalOpen(true)}
+              onOpenEditGameInfo={(tab) => {
+                setEditGameInfoInitialTab(tab ?? 'general');
+                setIsEditGameInfoModalOpen(true);
+              }}
               onScrollToSettings={handleScrollToSettings}
-              onGameUpdate={setGame}
               collapsedByDefault={game.resultsStatus !== 'NONE'}
               onInviteTrainer={() => {
                 setPlayerListMode('trainer');
@@ -1744,25 +1694,16 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
         />
       )}
 
-      {isLocationModalOpen && game && (
-        <LocationModal
-          isOpen={isLocationModalOpen}
-          onClose={() => setIsLocationModalOpen(false)}
+      {isEditGameInfoModalOpen && game && (
+        <EditGameInfoModal
+          isOpen={isEditGameInfoModalOpen}
+          onClose={() => setIsEditGameInfoModalOpen(false)}
           game={game}
           clubs={clubs}
           courts={courts}
-          onSave={handleLocationSave}
+          initialTab={editGameInfoInitialTab}
+          onGameUpdate={setGame}
           onCourtsChange={handleCourtsChange}
-        />
-      )}
-
-      {isTimeDurationModalOpen && game && (
-        <TimeDurationModal
-          isOpen={isTimeDurationModalOpen}
-          onClose={() => setIsTimeDurationModalOpen(false)}
-          game={game}
-          clubs={clubs}
-          onSave={handleTimeDurationSave}
         />
       )}
 
