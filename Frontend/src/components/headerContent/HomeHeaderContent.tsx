@@ -51,24 +51,10 @@ export const HomeHeaderContent = () => {
       ? { startTime: createGameInitialDate }
       : undefined;
     setCreateGameInitialDate(null);
-    if (currentPage !== 'my') {
-      setIsAnimating(true);
-      setCurrentPage('my');
-      navigate('/', { replace: true });
-      setTimeout(() => {
-        setIsAnimating(false);
-        if (entityType === 'LEAGUE') {
-          navigate('/create-league', { replace: true });
-        } else {
-          navigate('/create-game', { state: { entityType, initialGameData }, replace: true });
-        }
-      }, 300);
+    if (entityType === 'LEAGUE') {
+      navigate('/create-league');
     } else {
-      if (entityType === 'LEAGUE') {
-        navigate('/create-league', { replace: true });
-      } else {
-        navigate('/create-game', { state: { entityType, initialGameData }, replace: true });
-      }
+      navigate('/create-game', { state: { entityType, initialGameData } });
     }
   };
 

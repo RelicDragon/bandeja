@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { format, addDays, isToday, isTomorrow } from 'date-fns';
 import { enUS, ru, es, sr, cs } from 'date-fns/locale';
@@ -37,6 +37,14 @@ export const DateSelector = ({ selectedDate, onDateSelect, onCalendarClick, show
   const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enUS, [i18n.language]);
   const dateFormat = useMemo(() => dateFormatMap[i18n.language] || 'MM/dd/yyyy', [i18n.language]);
   
+  useEffect(() => {
+    if (!scrollContainerRef.current) return;
+    const selected = scrollContainerRef.current.querySelector('[data-selected="true"]') as HTMLElement;
+    if (selected) {
+      selected.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
+    }
+  }, [selectedDate]);
+
   // Generate fixed dates: today (if available), tomorrow, and 6 next days
   const startDate = hideTodayIfNoSlots && !hasTimeSlotsForToday ? addDays(new Date(), 1) : new Date();
   const fixedDates = Array.from({ length: 8 }, (_, i) => addDays(startDate, i));
@@ -94,6 +102,7 @@ export const DateSelector = ({ selectedDate, onDateSelect, onCalendarClick, show
           return (
             <button
               key={index}
+              data-selected={isSelected || undefined}
               onClick={() => onDateSelect(date)}
               className={`flex-shrink-0 px-4 py-3 rounded-lg min-w-[80px] text-center transition-all ${
                 isSelected
@@ -115,6 +124,7 @@ export const DateSelector = ({ selectedDate, onDateSelect, onCalendarClick, show
         })}
         
         <button
+          data-selected={showCalendarAsSelected || undefined}
           onClick={onCalendarClick}
           className={`flex-shrink-0 px-4 py-3 rounded-lg min-w-[80px] flex flex-col items-center justify-center transition-all ${
             showCalendarAsSelected

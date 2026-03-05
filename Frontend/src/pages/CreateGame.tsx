@@ -15,6 +15,7 @@ import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import { resolveUserCurrency } from '@/utils/currency';
 import { useGameTimeDuration, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
+import { handleBack } from '@/utils/backNavigation';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -28,7 +29,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const { setCurrentPage, setIsAnimating, setActiveTab, setMyGamesSubtabBeforeCreate, setMyGamesCalendarDateAfterCreate } = useNavigationStore();
 
   useBackButtonHandler(() => {
-    navigate('/', { replace: true });
+    handleBack(navigate);
     return true;
   });
 
@@ -473,7 +474,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
 
   return (
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      <CreateGameHeader onBack={() => navigate('/', { replace: true })} entityType={entityType} />
+      <CreateGameHeader onBack={() => handleBack(navigate)} entityType={entityType} />
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-6">

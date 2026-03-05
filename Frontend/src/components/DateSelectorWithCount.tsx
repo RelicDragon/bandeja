@@ -58,6 +58,14 @@ export const DateSelectorWithCount = ({
   const fixedDates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
 
   useEffect(() => {
+    if (!scrollContainerRef.current) return;
+    const selected = scrollContainerRef.current.querySelector('[data-selected="true"]') as HTMLElement;
+    if (selected) {
+      selected.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
+    }
+  }, [selectedDate]);
+
+  useEffect(() => {
     const handleScroll = () => {
       if (scrollContainerRef.current) {
         const isAtStart = scrollContainerRef.current.scrollLeft <= 10;
@@ -151,6 +159,7 @@ export const DateSelectorWithCount = ({
             return (
               <button
                 key={index}
+                data-selected={isSelected || undefined}
                 onClick={() => onDateSelect(date)}
                 className={`flex-shrink-0 px-4 py-3 rounded-lg min-w-[80px] text-center transition-all relative overflow-hidden ${
                   isSelected
@@ -178,6 +187,7 @@ export const DateSelectorWithCount = ({
           })}
 
           <button
+            data-selected={showCalendarAsSelected || undefined}
             onClick={onCalendarClick}
             className={`flex-shrink-0 px-4 py-3 rounded-lg min-w-[80px] flex flex-col items-center justify-center transition-all ${
               showCalendarAsSelected
