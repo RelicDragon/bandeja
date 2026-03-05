@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Trash2, LogOut, Copy, HelpCircle, ChevronRight } from 'lucide-react';
+import { Trash2, LogOut, Copy, HelpCircle, ChevronRight, Trophy } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -1228,10 +1228,13 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
             <button
               type="button"
               onClick={() => navigate(`/games/${game.parentId}`)}
-              className="mb-3 flex w-full items-center justify-between gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-left text-[var(--color-text)] transition hover:bg-[var(--color-surface-hover)] active:opacity-90"
+              className="mb-3 flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-left text-gray-900 dark:text-white transition hover:bg-gray-50 dark:hover:bg-gray-700 active:opacity-90"
             >
-              <span className="font-medium">{t('gameDetails.openLeagueSeason')}</span>
-              <ChevronRight className="h-5 w-5 shrink-0 opacity-60" />
+              <span className="flex items-center gap-2 font-normal">
+                <Trophy className="h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
+                {t('gameDetails.openLeagueSeason')}
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
             </button>
           )}
 
