@@ -13,6 +13,7 @@ import { sendBetResolvedNotification, sendBetNeedsReviewNotification, sendBetCan
 import { sendTransactionNotification as sendTransactionNotificationFunc } from './notifications/transaction.notification';
 import { sendNewMarketItemNotification } from './notifications/new-market-item.notification';
 import { sendNewBugNotification } from './notifications/new-bug.notification';
+import { sendLeagueGameAssignedNotification as sendLeagueGameAssignedTelegram } from './notifications/league-game-assigned.notification';
 
 class TelegramNotificationService {
   private bot: Bot | null = null;
@@ -44,6 +45,11 @@ class TelegramNotificationService {
   async sendInviteNotification(invite: any) {
     if (!this.bot) return;
     await sendInviteNotification(this.bot.api, invite);
+  }
+
+  async sendLeagueGameAssignedNotification(game: any, userId: string) {
+    if (!this.bot) return;
+    await sendLeagueGameAssignedTelegram(this.bot.api, game, userId);
   }
 
   async sendGameCard(gameId: string, telegramId: string, botApi?: any) {

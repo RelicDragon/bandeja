@@ -1644,6 +1644,14 @@
       "cannotJoinArchivedOrFinished": "Nelze se připojit k archivovanému nebo ukončenému zápasu",
       "directJoinNotAllowed": "Přímé připojení u tohoto zápasu není povoleno"
     },
+    "league": {
+      "gameNotFound": "Zápas nenalezen",
+      "playerIdsRequired": "Je vyžadován alespoň jeden hráč",
+      "onlyLeagueRound": "Účastníky lze přímo přiřadit pouze u zápasů kola ligy",
+      "onlySeasonOwnerAdmin": "Přiřazovat účastníky mohou pouze vlastník nebo admin sezóny ligy",
+      "mustBeSeasonParticipants": "Všichni hráči musí být účastníky této sezóny ligy",
+      "tooManyPlayers": "Příliš mnoho hráčů pro tento zápas"
+    },
     "bugs": {
       "notFound": "Chyba nenalezena",
       "updateForbidden": "Tuto chybu může upravit jen její autor nebo admin",

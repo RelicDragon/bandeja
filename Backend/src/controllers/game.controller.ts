@@ -7,6 +7,7 @@ import { ParticipantService } from '../services/game/participant.service';
 import { AdminService } from '../services/game/admin.service';
 import { OwnershipService } from '../services/game/ownership.service';
 import { BookedCourtsService } from '../services/game/bookedCourts.service';
+import { LeagueAssignService } from '../services/league/assign.service';
 import { ResultsTelegramService } from '../services/telegram/results-telegram.service';
 import { generateResultsImage } from '../services/telegram/results-image.service';
 import telegramBotService from '../services/telegram/bot.service';
@@ -264,6 +265,21 @@ export const declineJoinQueue = asyncHandler(async (req: AuthRequest, res: Respo
     success: true,
     message,
   });
+});
+
+export const assignLeagueParticipants = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { playerIds } = req.body;
+  if (!Array.isArray(playerIds)) {
+    throw new ApiError(400, 'playerIds must be an array');
+  }
+  await LeagueAssignService.assignLeagueParticipants(
+    id,
+    req.userId!,
+    playerIds,
+    req.user?.isAdmin ?? false
+  );
+  res.json({ success: true });
 });
 
 export const cancelJoinQueue = asyncHandler(async (req: AuthRequest, res: Response) => {

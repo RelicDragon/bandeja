@@ -1593,6 +1593,14 @@
       "cannotJoinArchivedOrFinished": "No se puede unir a un juego archivado o finalizado",
       "directJoinNotAllowed": "No se permite unirse directamente a este juego"
     },
+    "league": {
+      "gameNotFound": "Partido no encontrado",
+      "playerIdsRequired": "Se requiere al menos un jugador",
+      "onlyLeagueRound": "Solo se pueden asignar participantes en partidos de jornada de liga",
+      "onlySeasonOwnerAdmin": "Solo el propietario o administrador de la temporada puede asignar participantes",
+      "mustBeSeasonParticipants": "Todos los jugadores deben ser participantes de esta temporada de liga",
+      "tooManyPlayers": "Demasiados jugadores para este partido"
+    },
     "bugs": {
       "notFound": "Error no encontrado",
       "updateForbidden": "Solo el creador del error o un administrador pueden actualizar este error",

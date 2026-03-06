@@ -386,13 +386,21 @@ export const EditLeagueGameTeamsModal = ({
         await gamesApi.kickUser(game.id, userId);
       }
 
-      if (toAdd.length > 0) {
+      let assignedByInvite = toAdd;
+      if (toAdd.length > 0 && game.entityType === 'LEAGUE') {
+        try {
+          await gamesApi.assignLeagueParticipants(game.id, toAdd);
+          assignedByInvite = [];
+        } catch (err: any) {
+          if (err.response?.status !== 403) throw err;
+        }
+      }
+      if (assignedByInvite.length > 0) {
         await invitesApi.sendMultiple({
-          receiverIds: toAdd,
+          receiverIds: assignedByInvite,
           gameId: game.id,
         });
-        
-        for (const userId of toAdd) {
+        for (const userId of assignedByInvite) {
           try {
             const invites = await invitesApi.getGameInvites(game.id);
             const invite = invites.data.find(inv => inv.receiverId === userId && inv.status === 'PENDING');

@@ -16,6 +16,7 @@ import { createGameSystemMessagePushNotification } from './push/notifications/ga
 import { createGameReminderPushNotification } from './push/notifications/game-reminder-push.notification';
 import { createGameResultsPushNotification } from './push/notifications/game-results-push.notification';
 import { createLeagueRoundStartPushNotification } from './push/notifications/league-round-start-push.notification';
+import { createLeagueGameAssignedPushNotification } from './push/notifications/league-game-assigned-push.notification';
 import { createNewGamePushNotification } from './push/notifications/new-game-push.notification';
 import { createBetResolvedPushNotification, createBetNeedsReviewPushNotification, createBetCancelledPushNotification } from './push/notifications/bet-resolved-push.notification';
 import { createTransactionPushNotification } from './push/notifications/transaction-push.notification';
@@ -73,6 +74,18 @@ class NotificationService {
     }
 
     await telegramNotificationService.sendInviteNotification(invite);
+  }
+
+  async sendLeagueGameAssignedNotification(game: any, userId: string) {
+    const payload = await createLeagueGameAssignedPushNotification(game, userId);
+    if (payload) {
+      await this.sendNotification({
+        userId,
+        type: NotificationType.INVITE,
+        payload
+      });
+    }
+    await telegramNotificationService.sendLeagueGameAssignedNotification(game, userId);
   }
 
   async sendGameChatNotification(message: any, game: any, sender: any, _recipients: any[]) {

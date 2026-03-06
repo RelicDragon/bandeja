@@ -160,6 +160,11 @@ export const gamesApi = {
     return response.data;
   },
 
+  assignLeagueParticipants: async (id: string, playerIds: string[]) => {
+    const response = await api.post<ApiResponse<void>>(`/games/${id}/assign-league-participants`, { playerIds });
+    return response.data;
+  },
+
   getBookedCourts: async (params: {
     clubId: string;
     startDate?: string;

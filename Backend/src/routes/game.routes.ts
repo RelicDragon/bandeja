@@ -137,6 +137,17 @@ router.post(
 );
 
 router.post(
+  '/:id/assign-league-participants',
+  authenticate,
+  canEditGame,
+  validate([
+    body('playerIds').isArray().withMessage('playerIds must be an array'),
+    body('playerIds.*').isString().withMessage('Each player ID must be a string'),
+  ]),
+  gameController.assignLeagueParticipants
+);
+
+router.post(
   '/:id/cancel-join-queue',
   authenticate,
   gameController.cancelJoinQueue

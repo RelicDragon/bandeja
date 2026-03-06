@@ -1657,6 +1657,14 @@
       "cannotJoinArchivedOrFinished": "Cannot join archived or finished game",
       "directJoinNotAllowed": "Direct join is not allowed for this game"
     },
+    "league": {
+      "gameNotFound": "Game not found",
+      "playerIdsRequired": "At least one player is required",
+      "onlyLeagueRound": "Only league round games can have participants assigned directly",
+      "onlySeasonOwnerAdmin": "Only league season owner or admin can assign participants",
+      "mustBeSeasonParticipants": "All players must be participants of this league season",
+      "tooManyPlayers": "Too many players for this game"
+    },
     "bugs": {
       "notFound": "Bug not found",
       "updateForbidden": "Only the bug creator or an admin can update this bug",
