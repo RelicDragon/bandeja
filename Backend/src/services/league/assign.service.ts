@@ -96,7 +96,7 @@ export class LeagueAssignService {
       if (gameForNotif?.startTime && gameForNotif?.endTime) {
         try {
           await notificationService.sendLeagueGameAssignedNotification(
-            { id: gameId, ...gameForNotif } as any,
+            gameForNotif as any,
             userId
           );
         } catch (err) {
