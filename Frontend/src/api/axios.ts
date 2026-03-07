@@ -49,7 +49,11 @@ api.interceptors.response.use(
   },
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
+      const path = window.location.pathname;
+      const isAuthPage =
+        path === '/login' ||
+        path === '/register' ||
+        (path.startsWith('/login/') && path !== '/login/phone' && path !== '/login/telegram');
       const isPublicGamePage = window.location.pathname.startsWith('/games/');
       if (!isAuthPage && !isPublicGamePage) {
         useAuthStore.getState().logout();

@@ -31,6 +31,7 @@ import { cleanupCapacitorNetwork } from './utils/capacitorNetwork';
 import { initNetworkListener, useNetworkStore } from './utils/networkStatus';
 import { restoreAuthIfNeeded, monitorAuthPersistence } from './utils/authPersistence';
 import { useDeepLink } from './hooks/useDeepLink';
+import { useDeepLinkStore } from './store/deepLinkStore';
 import { extractLanguageCode } from './utils/displayPreferences';
 import { GeoProvider } from './contexts/GeoProvider';
 import { useAppVersionCheck } from './hooks/useAppVersionCheck';
@@ -60,6 +61,22 @@ function AppContent() {
   
   useDeepLink();
   useUrlStoreSync();
+
+  const pendingAuthPath = useDeepLinkStore((s) => s.pendingAuthPath);
+  const setPendingAuthPath = useDeepLinkStore((s) => s.setPendingAuthPath);
+  useEffect(() => {
+    if (
+      !isAuthenticated &&
+      location.pathname === '/login' &&
+      pendingAuthPath &&
+      pendingAuthPath.startsWith('/login/') &&
+      pendingAuthPath !== '/login/phone' &&
+      pendingAuthPath !== '/login/telegram'
+    ) {
+      setPendingAuthPath(null);
+      navigate(pendingAuthPath, { replace: true });
+    }
+  }, [isAuthenticated, location.pathname, pendingAuthPath, setPendingAuthPath, navigate]);
 
   useEffect(() => {
     navigationService.initialize(navigate);

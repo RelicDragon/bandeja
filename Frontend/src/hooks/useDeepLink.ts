@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { App } from '@capacitor/app';
 import { isCapacitor } from '@/utils/capacitor';
 import { navigateWithTracking } from '@/utils/navigation';
+import { useDeepLinkStore } from '@/store/deepLinkStore';
+
+const isTelegramAutoLoginPath = (pathname: string) =>
+  pathname.startsWith('/login/') && pathname !== '/login/phone' && pathname !== '/login/telegram';
 
 export const useDeepLink = () => {
   const navigate = useNavigate();
@@ -11,13 +15,16 @@ export const useDeepLink = () => {
   useEffect(() => {
     if (!isCapacitor()) return;
 
-    const handleDeepLink = async (urlString: string) => {
+    const handleDeepLink = (urlString: string) => {
       try {
         const url = new URL(urlString);
         if (url.hostname !== 'bandeja.me') return;
 
         const pathname = url.pathname;
-        
+        if (isTelegramAutoLoginPath(pathname)) {
+          useDeepLinkStore.getState().setPendingAuthPath(pathname);
+        }
+
         // Games routes
         if (pathname.startsWith('/games/')) {
           const parts = pathname.split('/').filter(Boolean);
@@ -104,26 +111,20 @@ export const useDeepLink = () => {
 
     let listenerHandle: any = null;
 
+    if (!hasHandledLaunchUrl.current) {
+      hasHandledLaunchUrl.current = true;
+      App.getLaunchUrl()
+        .then((result) => {
+          if (result?.url) handleDeepLink(result.url);
+        })
+        .catch(() => {});
+    }
+
     App.addListener('appUrlOpen', (event) => {
       handleDeepLink(event.url);
     }).then((handle) => {
       listenerHandle = handle;
     });
-
-    if (!hasHandledLaunchUrl.current) {
-      hasHandledLaunchUrl.current = true;
-      App.getLaunchUrl()
-        .then((result) => {
-          if (result?.url) {
-            setTimeout(() => {
-              handleDeepLink(result.url);
-            }, 100);
-          }
-        })
-        .catch(() => {
-          // No launch URL, app was opened normally
-        });
-    }
 
     return () => {
       if (listenerHandle) {
