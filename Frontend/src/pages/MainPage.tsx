@@ -4,6 +4,7 @@ import { MainLayout } from '@/layouts/MainLayout';
 import { useNavigationStore } from '@/store/navigationStore';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { useDesktop } from '@/hooks/useDesktop';
+import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { parseLocation, placeToPageType } from '@/utils/urlSchema';
 import { MyTab } from './MyTab';
 import { FindTab } from './FindTab';
@@ -30,6 +31,7 @@ export const MainPage = () => {
   const location = useLocation();
   const { bottomTabsVisible, initShellAnimationPlayed, activeTab, findViewMode } = useNavigationStore();
   const isDesktop = useDesktop();
+  const isLandscape = useIsLandscape();
   const animateShellEntry = location.pathname === '/' && !initShellAnimationPlayed;
 
   const parsed = useMemo(
@@ -84,7 +86,8 @@ export const MainPage = () => {
   }
 
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
-  if (currentPage === 'gameDetails' && isDesktop && isGameDetailsPage) {
+  const isGameDetailsSplitView = currentPage === 'gameDetails' && isGameDetailsPage && (isDesktop || isLandscape);
+  if (isGameDetailsSplitView) {
     return (
       <MainLayout>
         <GameDetailsPage />

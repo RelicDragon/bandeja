@@ -154,6 +154,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const lastSavedMentionIdsRef = useRef<string[]>([]);
   const queueSendRef = useRef(false);
   const lastAppliedEditIdRef = useRef<string | null>(null);
+  const editInFlightRef = useRef<string | null>(null);
 
   const mentionIdsEqual = (a: string[], b: string[]) =>
     a.length === b.length && a.every((id, i) => id === b[i]);
@@ -667,6 +668,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       updateMultilineState();
     }
     if (!editingMessage) {
+      if (lastAppliedEditIdRef.current !== null) {
+        setMessage('');
+        setMentionIds([]);
+      }
       lastAppliedEditIdRef.current = null;
     }
   }, [editingMessage, updateMultilineState]);
@@ -737,6 +742,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     if (editingMessage && onEditMessage) {
       const trimmedContent = message.trim();
       if (!trimmedContent) return;
+      editInFlightRef.current = editingMessage.id;
       setIsLoading(true);
       try {
         const updated = await chatApi.editMessage(editingMessage.id, {
@@ -762,10 +768,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           toast.error(t('chat.sendFailed') || 'Failed to update message');
         }
       } finally {
+        editInFlightRef.current = null;
         setIsLoading(false);
       }
       return;
     }
+
+    if (editInFlightRef.current !== null) return;
 
     if (!finalContextId) {
       console.error('[MessageInput] Missing contextId:', { gameId, bugId, userChatId, groupChannelId });

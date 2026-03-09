@@ -239,7 +239,12 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
                 {standing.points}
               </td>
               <td className="py-2 pl-4 pr-2 text-center text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                {standing.wins}-{standing.ties}-{standing.losses}
+                <span>
+                  {standing.wins}-{standing.ties}-{standing.losses}
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-0.5">
+                    ({standing.wins + standing.ties + standing.losses})
+                  </span>
+                </span>
               </td>
               <td className="py-2 px-2 text-center text-sm text-gray-700 dark:text-gray-300">
                 {standing.scoreDelta > 0 ? '+' : ''}{standing.scoreDelta}

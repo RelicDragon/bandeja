@@ -13,7 +13,13 @@ export function parseContentWithMentionsAndUrls(text: string): ParsedContentPart
       result.push(part);
     } else {
       const urlParts = parseUrls(part.content);
-      result.push(...urlParts);
+      for (const p of urlParts) {
+        if (p.type === 'url') {
+          result.push({ type: 'url', content: p.content, url: p.url, displayText: p.displayText, urlType: p.urlType });
+        } else {
+          result.push({ type: 'text', content: p.content });
+        }
+      }
     }
   });
 

@@ -14,6 +14,13 @@ function getMentionClassName(variant: ContentVariant, isMentioned: boolean): str
   return base + (isMentioned ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded' : 'text-blue-600 dark:text-blue-400');
 }
 
+function getAppLinkClassName(variant: ContentVariant): string {
+  const base = 'font-semibold cursor-pointer hover:underline inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded ';
+  if (variant === 'channel') return base + 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30';
+  if (variant === 'own') return base + 'text-yellow-200 bg-yellow-500/30';
+  return base + 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30';
+}
+
 function getUrlClassName(variant: ContentVariant): string {
   if (variant === 'own') return 'underline text-blue-100';
   return 'underline text-blue-600 dark:text-blue-400';
@@ -63,6 +70,7 @@ export const MessageContentBody: React.FC<MessageContentBodyProps> = ({
             );
           }
           if (part.type === 'url') {
+            const isAppLink = part.urlType && part.urlType !== 'other';
             return (
               <a
                 key={index}
@@ -73,8 +81,9 @@ export const MessageContentBody: React.FC<MessageContentBodyProps> = ({
                   e.stopPropagation();
                   if (part.url) onUrlClick(part.url, e);
                 }}
-                className={getUrlClassName(variant)}
+                className={isAppLink ? getAppLinkClassName(variant) : getUrlClassName(variant)}
               >
+                {isAppLink && <span aria-hidden className="opacity-90">↗</span>}
                 {part.displayText || part.content}
               </a>
             );

@@ -32,5 +32,5 @@ export interface MessageItemProps {
 
 export type ParsedContentPart =
   | { type: 'mention'; content: string; userId?: string; display?: string }
-  | { type: 'url'; content: string; url?: string; displayText?: string }
+  | { type: 'url'; content: string; url?: string; displayText?: string; urlType?: 'channel' | 'group' | 'game' | 'user-chat' | 'profile' | 'other' }
   | { type: 'text'; content: string };

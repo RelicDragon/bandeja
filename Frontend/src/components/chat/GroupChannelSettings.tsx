@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus, ChevronDown, ChevronUp } from 'lucide-react';
+import { Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus, ChevronDown, ChevronUp, Share2, Link } from 'lucide-react';
 import { Button, PlayerAvatar } from '@/components';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
 import { GroupChannel, GroupChannelParticipant } from '@/api/chat';
@@ -11,6 +11,9 @@ import { useAuthStore } from '@/store/authStore';
 import { matchesSearch } from '@/utils/transliteration';
 import { GroupChannelInvitesModal } from '@/components/chat/GroupChannelInvitesModal';
 import { ChannelContextPanel } from '@/components/chat/panels';
+import { getGroupChannelShareUrl } from '@/utils/shareUrl';
+import { isCapacitor } from '@/utils/capacitor';
+import { Share } from '@capacitor/share';
 
 interface GroupChannelSettingsProps {
   groupChannel: GroupChannel;
@@ -266,6 +269,42 @@ export const GroupChannelSettings = ({
     );
   }, [participants, searchQuery]);
 
+  const shareUrl = getGroupChannelShareUrl(groupChannelData);
+
+  const handleShare = async () => {
+    if (isCapacitor()) {
+      try {
+        await Share.share({ url: shareUrl });
+        return;
+      } catch (e) {
+        if ((e as Error).name === 'AbortError') return;
+      }
+    }
+    if (navigator.share && (window.isSecureContext || location.protocol === 'https:')) {
+      try {
+        await navigator.share({ url: shareUrl });
+        return;
+      } catch (e) {
+        if ((e as Error).name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success(t('chat.linkCopied'));
+    } catch {
+      toast.error(t('chat.copyLinkError'));
+    }
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success(t('chat.linkCopied'));
+    } catch {
+      toast.error(t('chat.copyLinkError'));
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto bg-[#eefbfc] dark:bg-gray-900" ref={scrollContainerRef}>
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
@@ -303,6 +342,25 @@ export const GroupChannelSettings = ({
               isLoading={isJoining}
             />
           )}
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600/60 text-gray-700 dark:text-gray-200 text-sm font-medium shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:border-gray-300 dark:hover:border-gray-500 active:scale-[0.98] transition-all duration-150"
+            >
+              <Share2 size={18} className="text-gray-500 dark:text-gray-400 shrink-0" />
+              {t('chat.shareGroup')}
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600/60 text-gray-700 dark:text-gray-200 text-sm font-medium shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:border-gray-300 dark:hover:border-gray-500 active:scale-[0.98] transition-all duration-150"
+            >
+              <Link size={18} className="text-gray-500 dark:text-gray-400 shrink-0" />
+              {t('chat.copyLink')}
+            </button>
+          </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
