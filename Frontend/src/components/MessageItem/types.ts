@@ -21,7 +21,6 @@ export interface MessageItemProps {
   onCloseContextMenu: () => void;
   allMessages?: ChatMessage[];
   onScrollToMessage?: (messageId: string) => void;
-  disableReadTracking?: boolean;
   isChannel?: boolean;
   userChatUser1Id?: string;
   userChatUser2Id?: string;

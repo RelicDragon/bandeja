@@ -22,6 +22,7 @@
     "backfill:welcome-screen-passed": "ts-node scripts/backfillWelcomeScreenPassed.ts",
     "backfill:bug-finished-at": "ts-node scripts/backfillBugFinishedAt.ts",
     "backfill:bug-testing-started-at": "ts-node scripts/backfillBugTestingStartedAt.ts",
+    "backfill:league-delta-scores": "ts-node scripts/backfillLeagueDeltaScores.ts",
     "migrateBugsToGroups": "ts-node scripts/migrateBugsToGroups.ts",
     "test:currency": "ts-node scripts/test-currency-service.ts",
     "example:currency": "ts-node examples/currency-integration-example.ts"

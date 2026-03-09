@@ -18,7 +18,6 @@ interface AnimatedMessageItemProps {
   onCloseContextMenu: () => void;
   allMessages: ChatMessage[];
   onScrollToMessage?: (messageId: string) => void;
-  disableReadTracking?: boolean;
   isChannel?: boolean;
   userChatUser1Id?: string;
   userChatUser2Id?: string;
@@ -44,7 +43,6 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   onCloseContextMenu,
   allMessages,
   onScrollToMessage,
-  disableReadTracking = false,
   isChannel = false,
   userChatUser1Id,
   userChatUser2Id,
@@ -91,7 +89,6 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
         onCloseContextMenu={onCloseContextMenu}
         allMessages={allMessages}
         onScrollToMessage={onScrollToMessage}
-        disableReadTracking={disableReadTracking}
         isChannel={isChannel}
         userChatUser1Id={userChatUser1Id}
         userChatUser2Id={userChatUser2Id}

@@ -82,12 +82,14 @@ function calculateHighLevelDampening(playerLevel: number, isGaining: boolean): n
   return Math.exp(-3.5 * ratio);
 }
 
-function calculateDifferentialMultiplier(setScores: Array<{ teamAScore: number; teamBScore: number }>): { multiplier: number; totalPointDifferential: number } {
+function calculateDifferentialMultiplier(setScores: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }>): { multiplier: number; totalPointDifferential: number } {
   let totalPointDifferential = 0;
-  
+
   const validSets = setScores.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
   for (const set of validSets) {
-    const diff = set.teamAScore - set.teamBScore;
+    const diff = set.isTieBreak
+      ? (set.teamAScore > set.teamBScore ? 1 : set.teamBScore > set.teamAScore ? -1 : 0)
+      : set.teamAScore - set.teamBScore;
     totalPointDifferential += diff;
   }
 

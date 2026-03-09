@@ -264,11 +264,11 @@ export const LeagueGameCard = ({
                   return (
                     <div
                       key={`r${roundIndex}-m${matchIndex}-s${setIndex}`}
-                      className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                      className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 flex flex-col items-center gap-0"
                     >
-                      {set.teamAScore}:{set.teamBScore}
+                      <span>{set.teamAScore}:{set.teamBScore}</span>
                       {set.isTieBreak && (
-                        <span className="ml-1 text-[10px] font-bold text-primary-600 dark:text-primary-400">TB</span>
+                        <span className="text-[9px] font-medium text-primary-600 dark:text-primary-400 leading-none">TB</span>
                       )}
                     </div>
                   );

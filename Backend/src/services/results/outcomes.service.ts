@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { WinnerOfGame, Prisma, EntityType } from '@prisma/client';
+import { getMatchScoresForDelta } from './setScoreDelta';
 import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes } from './calculator.service';
 import { updateGameOutcomes } from './gameWinner.service';
 import { updateMatchWinners } from './matchWinner.service';
@@ -68,12 +69,9 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
         const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
         if (validSets.length === 0) return null;
         
+        const { teamAScore: scoreA, teamBScore: scoreB } = getMatchScoresForDelta(validSets);
         const teams = match.teams.map(team => {
-          const totalScore = validSets.reduce((sum, set) => {
-            if (team.teamNumber === 1) return sum + set.teamAScore;
-            if (team.teamNumber === 2) return sum + set.teamBScore;
-            return sum;
-          }, 0);
+          const totalScore = team.teamNumber === 1 ? scoreA : team.teamNumber === 2 ? scoreB : 0;
 
           return {
             teamId: team.id,

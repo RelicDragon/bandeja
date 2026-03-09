@@ -314,11 +314,6 @@ export const chatApi = {
     return response.data;
   },
 
-  markMessageAsRead: async (messageId: string) => {
-    const response = await api.post<ApiResponse<{ success: boolean }>>(`/chat/messages/${messageId}/read`);
-    return response.data;
-  },
-
   addReaction: async (messageId: string, data: AddReactionRequest) => {
     const response = await api.post<ApiResponse<MessageReaction>>(`/chat/messages/${messageId}/reactions`, data);
     return response.data.data;

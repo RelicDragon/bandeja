@@ -17,7 +17,7 @@ export interface GameChatLoadingSkeletonProps {
 
 export const GameChatLoadingSkeleton: React.FC<GameChatLoadingSkeletonProps> = ({
   onBack,
-  contextType,
+  contextType: _contextType,
   onAddReaction,
   onRemoveReaction,
   onDeleteMessage,
@@ -56,7 +56,6 @@ export const GameChatLoadingSkeleton: React.FC<GameChatLoadingSkeletonProps> = (
         onLoadMore={onLoadMore}
         isInitialLoad={true}
         isLoadingMore={false}
-        disableReadTracking={contextType === 'USER'}
       />
     </main>
   </div>

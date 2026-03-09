@@ -1,5 +1,23 @@
 import { Game, BasicUser, WinnerOfGame, WinnerOfMatch } from '@/types';
-import { Round, Match } from '@/types/gameResults';
+import { Round, Match, SetResult } from '@/types/gameResults';
+
+function getSetScoreForDelta(set: SetResult, side: 'A' | 'B'): number {
+  if (set.isTieBreak) {
+    const aWon = set.teamA > set.teamB;
+    return side === 'A' ? (aWon ? 1 : 0) : (aWon ? 0 : 1);
+  }
+  return side === 'A' ? set.teamA : set.teamB;
+}
+
+function getMatchScoresForDelta(sets: SetResult[]): { scoreA: number; scoreB: number } {
+  return sets.reduce(
+    (acc, set) => ({
+      scoreA: acc.scoreA + getSetScoreForDelta(set, 'A'),
+      scoreB: acc.scoreB + getSetScoreForDelta(set, 'B'),
+    }),
+    { scoreA: 0, scoreB: 0 }
+  );
+}
 
 export interface PlayerStanding {
   user: BasicUser;
@@ -67,14 +85,12 @@ function calculateMatchWinner(
     return null;
   }
 
-  // BY_SCORES (default)
-  const totalScoreA = validSets.reduce((sum: number, set) => sum + set.teamA, 0);
-  const totalScoreB = validSets.reduce((sum: number, set) => sum + set.teamB, 0);
+  const { scoreA: totalScoreA, scoreB: totalScoreB } = getMatchScoresForDelta(validSets);
 
   if (totalScoreA > totalScoreB) return 'teamA';
   if (totalScoreB > totalScoreA) return 'teamB';
   if (totalScoreA === totalScoreB && totalScoreA > 0) return 'tie';
-  
+
   return null;
 }
 
@@ -112,13 +128,12 @@ function calculatePlayerStats(
       }
 
       const matchWinner = calculateMatchWinner(match, winnerOfMatch);
-      const totalScoreA = validSets.reduce((sum: number, set) => sum + set.teamA, 0);
-      const totalScoreB = validSets.reduce((sum: number, set) => sum + set.teamB, 0);
+      const { scoreA: totalScoreA, scoreB: totalScoreB } = getMatchScoresForDelta(validSets);
 
       if (isInTeamA) {
         stats.scoresMade += totalScoreA;
         stats.scoresLost += totalScoreB;
-        stats.scoresDelta += (totalScoreA - totalScoreB);
+        stats.scoresDelta += totalScoreA - totalScoreB;
 
         if (matchWinner === 'teamA') {
           stats.wins++;
@@ -131,7 +146,7 @@ function calculatePlayerStats(
       } else if (isInTeamB) {
         stats.scoresMade += totalScoreB;
         stats.scoresLost += totalScoreA;
-        stats.scoresDelta += (totalScoreB - totalScoreA);
+        stats.scoresDelta += totalScoreB - totalScoreA;
 
         if (matchWinner === 'teamB') {
           stats.wins++;

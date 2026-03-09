@@ -1,6 +1,7 @@
 import { Api } from 'grammy';
 import { NotificationChannelType } from '@prisma/client';
 import prisma from '../../../config/database';
+import { getMatchScoresForDelta } from '../../results/setScoreDelta';
 import { NotificationPreferenceService, PreferenceKey } from '../../notificationPreference.service';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
@@ -27,13 +28,14 @@ function calculateMatchWinner(match: any): 'teamA' | 'teamB' | 'tie' | null {
   }
 
   const validSets = match.sets.filter((set: any) => set.teamAScore > 0 || set.teamBScore > 0);
-  const totalScoreA = validSets.reduce((sum: number, set: any) => sum + set.teamAScore, 0);
-  const totalScoreB = validSets.reduce((sum: number, set: any) => sum + set.teamBScore, 0);
+  const { teamAScore: totalScoreA, teamBScore: totalScoreB } = getMatchScoresForDelta(
+    validSets.map((s: any) => ({ teamAScore: s.teamAScore, teamBScore: s.teamBScore, isTieBreak: s.isTieBreak }))
+  );
 
   if (totalScoreA > totalScoreB) return 'teamA';
   if (totalScoreB > totalScoreA) return 'teamB';
   if (totalScoreA === totalScoreB && totalScoreA > 0) return 'tie';
-  
+
   return null;
 }
 
@@ -66,8 +68,9 @@ function calculatePlayerStats(
       if (!isInTeamA && !isInTeamB) continue;
 
       const matchWinner = calculateMatchWinner(match);
-      const totalScoreA = validSets.reduce((sum: number, set: any) => sum + set.teamAScore, 0);
-      const totalScoreB = validSets.reduce((sum: number, set: any) => sum + set.teamBScore, 0);
+      const { teamAScore: totalScoreA, teamBScore: totalScoreB } = getMatchScoresForDelta(
+        validSets.map((set: any) => ({ teamAScore: set.teamAScore, teamBScore: set.teamBScore, isTieBreak: set.isTieBreak }))
+      );
 
       if (isInTeamA) {
         stats.scoresDelta += (totalScoreA - totalScoreB);

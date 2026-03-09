@@ -1,4 +1,5 @@
 import { WinnerOfMatch, Prisma } from '@prisma/client';
+import { getMatchScoresForDelta } from './setScoreDelta';
 
 interface MatchWithTeamsAndSets {
   id: string;
@@ -9,6 +10,7 @@ interface MatchWithTeamsAndSets {
   sets: Array<{
     teamAScore: number;
     teamBScore: number;
+    isTieBreak?: boolean;
   }>;
 }
 
@@ -32,11 +34,10 @@ function calculateMatchWinnerByScores(match: MatchWithTeamsAndSets): string | nu
 
   console.log(`[MATCH WINNER BY SCORES] Team A: ${teamA.id}, Team B: ${teamB.id}`);
 
-  const teamAScore = validSets.reduce((sum, set) => sum + set.teamAScore, 0);
-  const teamBScore = validSets.reduce((sum, set) => sum + set.teamBScore, 0);
+  const { teamAScore, teamBScore } = getMatchScoresForDelta(validSets);
 
   console.log(`[MATCH WINNER BY SCORES] Set scores:`, match.sets.map((s, i) => `Set ${i + 1}: A=${s.teamAScore}, B=${s.teamBScore}`).join(', '));
-  console.log(`[MATCH WINNER BY SCORES] Total scores - Team A: ${teamAScore}, Team B: ${teamBScore}`);
+  console.log(`[MATCH WINNER BY SCORES] Total scores (delta) - Team A: ${teamAScore}, Team B: ${teamBScore}`);
 
   if (teamAScore > teamBScore) {
     console.log(`[MATCH WINNER BY SCORES] Winner: Team A (${teamA.id}) - ${teamAScore} > ${teamBScore}`);

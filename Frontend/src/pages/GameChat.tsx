@@ -564,7 +564,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               onLoadMore={loadMoreMessages}
               isInitialLoad={isInitialLoad && !isEmbedded}
               isLoadingMore={isLoadingMore}
-              disableReadTracking={contextType === 'USER'}
               isChannel={derived.isChannel}
               userChatUser1Id={contextType === 'USER' && userChat ? userChat.user1Id : undefined}
               userChatUser2Id={contextType === 'USER' && userChat ? userChat.user2Id : undefined}

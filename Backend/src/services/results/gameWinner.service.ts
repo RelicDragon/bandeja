@@ -1,4 +1,5 @@
 import { WinnerOfGame, WinnerOfMatch, Prisma } from '@prisma/client';
+import { getMatchScoresForDelta } from './setScoreDelta';
 
 interface PlayerGameScore {
   userId: string;
@@ -269,9 +270,8 @@ async function getPlayerGameScores(
         console.log(`[GAME PLAYER SCORES] Skipping match ${match.id} - no valid sets (all sets are 0:0)`);
         continue;
       }
-      
-      const teamAScore = validSets.reduce((sum, set) => sum + set.teamAScore, 0);
-      const teamBScore = validSets.reduce((sum, set) => sum + set.teamBScore, 0);
+
+      const { teamAScore, teamBScore } = getMatchScoresForDelta(validSets.map(s => ({ teamAScore: s.teamAScore, teamBScore: s.teamBScore, isTieBreak: s.isTieBreak })));
 
       console.log(`[GAME PLAYER SCORES] Match ${match.id}: Team A scored ${teamAScore}, Team B scored ${teamBScore}, winnerId: ${match.winnerId || 'null'}`);
 
@@ -314,7 +314,7 @@ function calculateHeadToHeadMap(
           teamNumber: number;
           players: Array<{ userId: string }>;
         }>;
-        sets: Array<{ teamAScore: number; teamBScore: number }>;
+        sets: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }>;
         winnerId: string | null;
       }>;
     }>;
@@ -384,8 +384,7 @@ function calculateHeadToHeadMap(
               else if (teamBSetsWon > teamASetsWon) matchWinner = 'teamB';
               else if (teamASetsWon === teamBSetsWon && teamASetsWon > 0) matchWinner = 'tie';
             } else {
-              const teamAScore = validSets.reduce((sum, set) => sum + set.teamAScore, 0);
-              const teamBScore = validSets.reduce((sum, set) => sum + set.teamBScore, 0);
+              const { teamAScore, teamBScore } = getMatchScoresForDelta(validSets.map(s => ({ teamAScore: s.teamAScore, teamBScore: s.teamBScore, isTieBreak: s.isTieBreak })));
               if (teamAScore > teamBScore) matchWinner = 'teamA';
               else if (teamBScore > teamAScore) matchWinner = 'teamB';
               else if (teamAScore === teamBScore && teamAScore > 0) matchWinner = 'tie';

@@ -5,7 +5,6 @@ import { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { UnifiedMessageMenu } from '../UnifiedMessageMenu';
 import { ReplyPreview } from '../ReplyPreview';
-import { useMessageReadTracking } from '@/hooks/useMessageReadTracking';
 import { PlayerCardBottomSheet } from '../PlayerCardBottomSheet';
 import { formatSystemMessageForDisplay, SystemMessageType } from '@/utils/systemMessages';
 import { FullscreenImageViewer } from '../FullscreenImageViewer';
@@ -34,7 +33,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onCloseContextMenu,
   allMessages = [],
   onScrollToMessage,
-  disableReadTracking = false,
   isChannel = false,
   userChatUser1Id,
   userChatUser2Id,
@@ -62,7 +60,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const isFailed = (currentMessage as ChatMessageWithStatus)._status === 'FAILED';
   const isOffline = isSending || isFailed;
   const optimisticId = (currentMessage as ChatMessageWithStatus)._optimisticId;
-  const { observeMessage, unobserveMessage } = useMessageReadTracking(disableReadTracking);
   const isMenuOpen = contextMenuState.isOpen && contextMenuState.messageId === currentMessage.id;
 
   const displaySettings = user ? resolveDisplaySettings(user) : null;
@@ -114,17 +111,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     }
     return () => document.removeEventListener('contextmenu', preventContextMenu, { capture: true });
   }, [isMenuOpen]);
-
-  useEffect(() => {
-    const element = messageRef.current;
-    const senderId = currentMessage.senderId;
-    if (element && !isOwnMessage && senderId) {
-      observeMessage(element, currentMessage.id, senderId);
-    }
-    return () => {
-      if (element) unobserveMessage(element);
-    };
-  }, [currentMessage.id, currentMessage.senderId, isOwnMessage, observeMessage, unobserveMessage]);
 
   const displayContent = isSystemMessage
     ? formatSystemMessageForDisplay(currentMessage.content, t)

@@ -1,3 +1,4 @@
+import { getMatchScoresForDelta } from './setScoreDelta';
 import { calculateRatingUpdate, calculateReliabilityChange } from './rating.service';
 
 interface PlayerData {
@@ -167,8 +168,9 @@ export function calculateByMatchesWonOutcomes(
       const teamAWins = match.winnerId === teamA.teamId;
       const teamBWins = match.winnerId === teamB.teamId;
       const isTie = !teamAWins && !teamBWins;
-      const teamAScore = validSets.reduce((sum, set) => sum + set.teamAScore, 0) || teamA.score || 0;
-      const teamBScore = validSets.reduce((sum, set) => sum + set.teamBScore, 0) || teamB.score || 0;
+      const { teamAScore: scoreA, teamBScore: scoreB } = getMatchScoresForDelta(validSets);
+      const teamAScore = scoreA || teamA.score || 0;
+      const teamBScore = scoreB || teamB.score || 0;
 
       const teamAPlayers = players.filter(p => teamA.playerIds.includes(p.userId));
       const teamBPlayers = players.filter(p => teamB.playerIds.includes(p.userId));
@@ -217,7 +219,7 @@ export function calculateByMatchesWonOutcomes(
             isWinner: teamBWins,
             isDraw: isTie,
             opponentsLevel: teamAAvgLevel,
-            setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore })),
+            setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore, isTieBreak: s.isTieBreak })),
           },
           ballsInGames
         );
@@ -354,7 +356,7 @@ export function calculateByPointsOutcomes(
             isWinner: teamBWins,
             isDraw: isTie,
             opponentsLevel: teamAAvgLevel,
-            setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore })),
+            setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore, isTieBreak: s.isTieBreak })),
           },
           ballsInGames
         );
@@ -492,7 +494,7 @@ export function calculateByScoresDeltaOutcomes(
             isWinner: teamBWins,
             isDraw: isTie,
             opponentsLevel: teamAAvgLevel,
-            setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore })),
+            setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore, isTieBreak: s.isTieBreak })),
           },
           ballsInGames
         );
