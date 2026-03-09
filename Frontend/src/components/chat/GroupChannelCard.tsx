@@ -78,34 +78,61 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
       )}
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between mb-1 gap-2">
-          <div className="flex flex-col gap-1 min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="min-w-0 flex flex-col gap-0.5">
-                <h3 className="text-sm text-gray-900 dark:text-white break-words min-w-0">
-                  {displayName}
-                </h3>
-                {displaySubtitle && (
-                  <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate leading-tight">
-                    {displaySubtitle}
+        {groupChannel.bug ? (
+          <>
+            <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                {(groupChannel.bug.priority ?? 0) !== 0 && (
+                  <BugPriorityBadge priority={groupChannel.bug.priority ?? 0} />
+                )}
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wide bg-amber-100/80 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+                  {t(`bug.types.${groupChannel.bug.bugType}`)}
+                </span>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300">
+                  {t(`bug.statuses.${groupChannel.bug.status}`)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                {unreadCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
+                    {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
+                {(lastMessage || draft) && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatChatTime(
+                      draftTime > lastMessageTime && draft ? draft.updatedAt : lastMessage
+                        ? isLastMessagePreview(lastMessage)
+                          ? lastMessage.updatedAt
+                          : (lastMessage as { createdAt: string }).createdAt
+                        : new Date().toISOString(),
+                      displaySettings.locale,
+                      displaySettings.hour12
+                    )}
+                  </span>
+                )}
+                {onPinToggle != null && (
+                  <button
+                    type="button"
+                    onClick={onPinToggle}
+                    disabled={isPinned ? isPinning : !canPin || isPinning}
+                    className={`p-1 rounded disabled:opacity-50 disabled:pointer-events-none ${isPinned ? 'text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                    aria-label={isPinned ? t('chat.unpinChat') : t('chat.pinChat')}
+                    aria-busy={isPinning}
+                  >
+                    {isPinning ? (
+                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                    ) : (
+                      <Pin className={`w-4 h-4 ${isPinned ? 'rotate-[-90deg] fill-current' : ''}`} aria-hidden />
+                    )}
+                  </button>
+                )}
               </div>
-              {groupChannel.bug && (
-                <>
-                  {(groupChannel.bug.priority ?? 0) !== 0 && (
-                    <BugPriorityBadge priority={groupChannel.bug.priority ?? 0} />
-                  )}
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wide bg-amber-100/80 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
-                    {t(`bug.types.${groupChannel.bug.bugType}`)}
-                  </span>
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300">
-                    {t(`bug.statuses.${groupChannel.bug.status}`)}
-                  </span>
-                </>
-              )}
             </div>
-            {groupChannel.bug?.sender && (
+            <h3 className="text-sm text-gray-900 dark:text-white break-words min-w-0 mb-1">
+              {displayName}
+            </h3>
+            {groupChannel.bug.sender && (
               <div className="flex items-center gap-1.5 mt-0.5">
                 <PlayerAvatar player={groupChannel.bug.sender} extrasmall fullHideName showName={false} asDiv />
                 <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -113,49 +140,66 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
                 </span>
               </div>
             )}
+          </>
+        ) : (
+          <div className="flex items-start justify-between mb-1 gap-2">
+            <div className="flex flex-col gap-1 min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="min-w-0 flex flex-col gap-0.5">
+                  <h3 className="text-sm text-gray-900 dark:text-white break-words min-w-0">
+                    {displayName}
+                  </h3>
+                  {displaySubtitle && (
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate leading-tight">
+                      {displaySubtitle}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+              {unreadCount > 0 && (
+                <span className="bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+              {(lastMessage || draft) && (
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {formatChatTime(
+                    (() => {
+                      const msg = lastMessage;
+                      return draftTime > lastMessageTime && draft
+                        ? draft.updatedAt
+                        : msg
+                          ? isLastMessagePreview(msg)
+                            ? msg.updatedAt
+                            : (msg as { createdAt: string }).createdAt
+                          : new Date().toISOString();
+                    })(),
+                    displaySettings.locale,
+                    displaySettings.hour12
+                  )}
+                </span>
+              )}
+              {onPinToggle != null && (
+                <button
+                  type="button"
+                  onClick={onPinToggle}
+                  disabled={isPinned ? isPinning : !canPin || isPinning}
+                  className={`p-1 rounded disabled:opacity-50 disabled:pointer-events-none ${isPinned ? 'text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                  aria-label={isPinned ? t('chat.unpinChat') : t('chat.pinChat')}
+                  aria-busy={isPinning}
+                >
+                  {isPinning ? (
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Pin className={`w-4 h-4 ${isPinned ? 'rotate-[-90deg] fill-current' : ''}`} aria-hidden />
+                  )}
+                </button>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-            {unreadCount > 0 && (
-              <span className="bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
-            {(lastMessage || draft) && (
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {formatChatTime(
-                  (() => {
-                    const msg = lastMessage;
-                    return draftTime > lastMessageTime && draft
-                      ? draft.updatedAt
-                      : msg
-                        ? isLastMessagePreview(msg)
-                          ? msg.updatedAt
-                          : (msg as { createdAt: string }).createdAt
-                        : new Date().toISOString();
-                  })(),
-                  displaySettings.locale,
-                  displaySettings.hour12
-                )}
-              </span>
-            )}
-            {onPinToggle != null && (
-              <button
-                type="button"
-                onClick={onPinToggle}
-                disabled={isPinned ? isPinning : !canPin || isPinning}
-                className={`p-1 rounded disabled:opacity-50 disabled:pointer-events-none ${isPinned ? 'text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
-                aria-label={isPinned ? t('chat.unpinChat') : t('chat.pinChat')}
-                aria-busy={isPinning}
-              >
-                {isPinning ? (
-                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-                ) : (
-                  <Pin className={`w-4 h-4 ${isPinned ? 'rotate-[-90deg] fill-current' : ''}`} aria-hidden />
-                )}
-              </button>
-            )}
-          </div>
-        </div>
+        )}
         {(() => {
           if (showDraft) {
             const draftContent = draft?.content || '';
