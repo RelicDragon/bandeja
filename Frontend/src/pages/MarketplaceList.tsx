@@ -50,6 +50,17 @@ export const MarketplaceList = () => {
     [unreadCounts]
   );
 
+  useEffect(() => {
+    if (isMyTab || categories.length > 0) return;
+    setLoading(true);
+    marketplaceApi.getCategories().then((r) => {
+      const list = r.data || [];
+      setCategories(list);
+      if (list.length > 0) setFilters((f) => ({ ...f, categoryId: list[0].id }));
+    }).catch(() => {}).finally(() => setLoading(false));
+    citiesApi.getAll().then((r) => setCities(r.data || [])).catch(() => {});
+  }, [isMyTab, categories.length]);
+
   const fetchData = useCallback(async (refresh = false) => {
     const page = refresh ? 1 : pageRef.current;
     setLoading(page === 1);
@@ -70,7 +81,8 @@ export const MarketplaceList = () => {
       pageRef.current = page;
       if (page === 1) {
         setItems(itemsRes.data || []);
-        setCategories((categoriesRes as { data?: MarketItemCategory[] }).data || []);
+        const catData = (categoriesRes as { data?: MarketItemCategory[] }).data || [];
+        if (catData.length > 0) setCategories(catData);
         const citiesRes = await citiesApi.getAll();
         setCities(citiesRes.data || []);
       } else {
@@ -85,12 +97,7 @@ export const MarketplaceList = () => {
   }, [cityId, filters.categoryId, isMyTab, user?.id]);
 
   useEffect(() => {
-    if (!isMyTab && categories.length > 0 && filters.categoryId === '') {
-      setFilters((f) => ({ ...f, categoryId: categories[0].id }));
-    }
-  }, [isMyTab, categories, filters.categoryId]);
-
-  useEffect(() => {
+    if (!isMyTab && filters.categoryId === '' && categories.length === 0) return;
     pageRef.current = 1;
     fetchData();
 
@@ -98,7 +105,7 @@ export const MarketplaceList = () => {
     currencyCacheService.prefetch(userCurrency).catch((err) => {
       console.warn('[MarketplaceList] Failed to prefetch currency rates:', err);
     });
-  }, [fetchData, user?.defaultCurrency]);
+  }, [fetchData, user?.defaultCurrency, isMyTab, filters.categoryId, categories.length]);
 
   useEffect(() => {
     if (!itemIdFromUrl) {

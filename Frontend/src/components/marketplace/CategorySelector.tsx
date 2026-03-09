@@ -10,7 +10,7 @@ interface CategorySelectorProps {
 
 export function CategorySelector({ value, onChange, categories, allLabel }: CategorySelectorProps) {
   const items = allLabel
-    ? [{ id: '', name: allLabel }, ...categories]
+    ? [...categories, { id: '', name: allLabel }]
     : categories;
 
   return (
