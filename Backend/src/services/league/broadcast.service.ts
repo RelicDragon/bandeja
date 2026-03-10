@@ -76,6 +76,7 @@ export class LeagueBroadcastService {
               select: {
                 id: true,
                 orderIndex: true,
+                roundType: true,
               },
             },
           },
@@ -112,6 +113,7 @@ export class LeagueBroadcastService {
         leagueRound: {
           id: round.id,
           orderIndex: round.orderIndex,
+          roundType: round.roundType,
         },
       };
 

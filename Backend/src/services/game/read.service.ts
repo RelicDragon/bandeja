@@ -78,6 +78,7 @@ export const getBaseGameInclude = () => ({
     select: {
       id: true,
       orderIndex: true,
+      roundType: true,
     },
   },
 });
@@ -168,6 +169,7 @@ const getAvailableGamesInclude = () => ({
     select: {
       id: true,
       orderIndex: true,
+      roundType: true,
     },
   },
   parent: {

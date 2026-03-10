@@ -36,7 +36,7 @@ const GAME_INCLUDE = {
     },
   },
   leagueGroup: { select: { id: true, name: true, color: true } },
-  leagueRound: { select: { id: true, orderIndex: true } },
+  leagueRound: { select: { id: true, orderIndex: true, roundType: true } },
   parent: {
     include: {
       leagueSeason: {

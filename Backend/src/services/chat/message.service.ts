@@ -1127,6 +1127,7 @@ export class MessageService {
           select: {
             id: true,
             orderIndex: true,
+            roundType: true,
           },
         },
         parent: {

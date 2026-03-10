@@ -53,7 +53,7 @@ export const CompleteProfile = () => {
     e.preventDefault();
 
     if (!isValid()) {
-      setError(t('profile.invalidName'));
+      setError(!isValidName() ? (t('profile.nameValidationError') ?? '') : (t('profile.preferNotToSayAcknowledgment') ?? ''));
       return;
     }
 

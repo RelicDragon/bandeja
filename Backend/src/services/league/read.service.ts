@@ -80,6 +80,7 @@ export class LeagueReadService {
               select: {
                 id: true,
                 orderIndex: true,
+                roundType: true,
               },
             },
             outcomes: {

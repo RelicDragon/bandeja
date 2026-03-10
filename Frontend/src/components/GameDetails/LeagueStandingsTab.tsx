@@ -6,7 +6,9 @@ import { leaguesApi, LeagueStanding, LeagueGroup } from '@/api/leagues';
 import { Loader2, Trophy, Medal } from 'lucide-react';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
+import { RoundTypeFilterSwitch } from './RoundTypeFilterSwitch';
 import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
+import { setRoundTypeFilter, type RoundTypeFilterValue } from '@/utils/roundTypeFilterStorage';
 
 const ALL_GROUP_ID = 'ALL';
 
@@ -22,17 +24,21 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
   const [loading, setLoading] = useState(true);
   const [showAwardIcons, setShowAwardIcons] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string>(ALL_GROUP_ID);
+  const [selectedRoundType, setSelectedRoundType] = useState<RoundTypeFilterValue>('REGULAR');
   const NO_GROUP_KEY = 'no-group';
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [standingsResponse, groupsResponse] = await Promise.all([
+        const [standingsResponse, groupsResponse, roundsResponse] = await Promise.all([
           leaguesApi.getStandings(leagueSeasonId),
           leaguesApi.getGroups(leagueSeasonId).catch(() => ({ data: { groups: [] } })),
+          leaguesApi.getRounds(leagueSeasonId).catch(() => ({ data: [] })),
         ]);
         setStandings(standingsResponse.data);
         setGroups(groupsResponse.data.groups);
+        const rounds = roundsResponse.data ?? [];
+        setSelectedRoundType(rounds.some((r) => (r.roundType ?? 'REGULAR') === 'PLAYOFF') ? 'PLAYOFF' : 'REGULAR');
       } catch (error) {
         console.error('Failed to fetch league data:', error);
       } finally {
@@ -51,9 +57,7 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
   useEffect(() => {
     const loadSavedFilter = async () => {
       const savedGroupId = await getGroupFilter(leagueSeasonId);
-      if (savedGroupId) {
-        setSelectedGroupId(savedGroupId);
-      }
+      if (savedGroupId) setSelectedGroupId(savedGroupId);
     };
     loadSavedFilter();
   }, [leagueSeasonId]);
@@ -61,6 +65,10 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
   useEffect(() => {
     setGroupFilter(leagueSeasonId, selectedGroupId);
   }, [selectedGroupId, leagueSeasonId]);
+
+  useEffect(() => {
+    setRoundTypeFilter(leagueSeasonId, selectedRoundType);
+  }, [selectedRoundType, leagueSeasonId]);
 
   const compareStandings = (a: LeagueStanding, b: LeagueStanding) => {
     if (b.points !== a.points) return b.points - a.points;
@@ -258,6 +266,12 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
 
   return (
     <div className="space-y-3">
+      <RoundTypeFilterSwitch
+        value={selectedRoundType}
+        regularLabel={t('gameDetails.roundTypeRegular') || 'Regular season'}
+        playoffLabel={t('gameDetails.roundTypePlayoff') || 'Play-off'}
+        onSelect={setSelectedRoundType}
+      />
       {orderedGroups.length > 0 && (
         <GroupFilterDropdown
           selectedGroupId={selectedGroupId}

@@ -7,11 +7,13 @@ import { EditLeagueGameTeamsModal } from './EditLeagueGameTeamsModal';
 import { GroupCreationModal } from './GroupCreationModal';
 import { LeagueGroupEditorModal } from './LeagueGroupEditorModal';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
+import { RoundTypeFilterSwitch } from './RoundTypeFilterSwitch';
 import { leaguesApi, LeagueRound, LeagueGroup } from '@/api/leagues';
 import { Loader2, Calendar, Users } from 'lucide-react';
 import { Game } from '@/types';
 import { LeagueRoundAccordion } from './LeagueRoundAccordion';
 import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
+import { setRoundTypeFilter, type RoundTypeFilterValue } from '@/utils/roundTypeFilterStorage';
 
 interface LeagueScheduleTabProps {
   leagueSeasonId: string;
@@ -45,6 +47,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const [isClient, setIsClient] = useState(false);
   const [expandedRoundId, setExpandedRoundId] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string>(ALL_GROUP_ID);
+  const [selectedRoundType, setSelectedRoundType] = useState<RoundTypeFilterValue>('REGULAR');
   const [groupsInitialized, setGroupsInitialized] = useState(false);
   const [loadedRoundIds, setLoadedRoundIds] = useState<Set<string>>(new Set());
   const canManageGroups = canEdit && hasGroups;
@@ -54,6 +57,9 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     try {
       const response = await leaguesApi.getRounds(leagueSeasonId);
       setRounds(response.data);
+      setSelectedRoundType(
+        response.data.some((r) => (r.roundType ?? 'REGULAR') === 'PLAYOFF') ? 'PLAYOFF' : 'REGULAR'
+      );
       const lastRoundId = response.data[response.data.length - 1]?.id;
       
       setExpandedRoundId((prev) => {
@@ -107,9 +113,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   useEffect(() => {
     const loadSavedFilter = async () => {
       const savedGroupId = await getGroupFilter(leagueSeasonId);
-      if (savedGroupId) {
-        setSelectedGroupId(savedGroupId);
-      }
+      if (savedGroupId) setSelectedGroupId(savedGroupId);
     };
     loadSavedFilter();
   }, [leagueSeasonId]);
@@ -117,6 +121,10 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   useEffect(() => {
     setGroupFilter(leagueSeasonId, selectedGroupId);
   }, [selectedGroupId, leagueSeasonId]);
+
+  useEffect(() => {
+    setRoundTypeFilter(leagueSeasonId, selectedRoundType);
+  }, [selectedRoundType, leagueSeasonId]);
 
   useEffect(() => {
     if (!groupsInitialized) return;
@@ -264,6 +272,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   }
 
   const displayedGroups = selectedGroupId === ALL_GROUP_ID ? groups : groups.filter((group) => group.id === selectedGroupId);
+  const filteredRounds = rounds.filter((r) => (r.roundType ?? 'REGULAR') === selectedRoundType);
 
   return (
     <div className="space-y-6">
@@ -325,6 +334,12 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           </div>
         </Card>
       )}
+      <RoundTypeFilterSwitch
+        value={selectedRoundType}
+        regularLabel={t('gameDetails.roundTypeRegular') || 'Regular season'}
+        playoffLabel={t('gameDetails.roundTypePlayoff') || 'Play-off'}
+        onSelect={setSelectedRoundType}
+      />
       {groups.length > 0 && (
         <GroupFilterDropdown
           selectedGroupId={selectedGroupId}
@@ -334,7 +349,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           allGroupId={ALL_GROUP_ID}
         />
       )}
-      {rounds.length === 0 ? (
+      {filteredRounds.length === 0 ? (
         <Card>
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             {t('gameDetails.noRounds')}
@@ -342,7 +357,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
         </Card>
       ) : (
         <div className="space-y-0">
-          {rounds.map((round, roundIndex) => {
+          {filteredRounds.map((round, roundIndex) => {
             const isLastRound = roundIndex === rounds.length - 1;
             const showAddGameButton = canEdit && isLastRound;
             const canDeleteRound =

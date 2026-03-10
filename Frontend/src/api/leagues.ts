@@ -45,10 +45,13 @@ export interface League {
   }>;
 }
 
+export type LeagueRoundType = 'REGULAR' | 'PLAYOFF';
+
 export interface LeagueRound {
   id: string;
   leagueSeasonId: string;
   orderIndex: number;
+  roundType?: LeagueRoundType;
   sentStartMessage: boolean;
   createdAt: string;
   updatedAt: string;

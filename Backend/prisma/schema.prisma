@@ -1411,10 +1411,16 @@ model LeagueParticipant {
   @@index([participantType])
 }
 
+enum RoundType {
+  REGULAR
+  PLAYOFF
+}
+
 model LeagueRound {
   id               String       @id @default(cuid())
   leagueSeasonId   String
   orderIndex       Int
+  roundType        RoundType    @default(REGULAR)
   sentStartMessage Boolean      @default(false)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
