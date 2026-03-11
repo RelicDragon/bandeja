@@ -1,6 +1,6 @@
 import { formatChatTime } from '@/utils/dateFormat';
 import { GroupChannel, ChatDraft, getLastMessageTime, getLastMessageText, isLastMessagePreview } from '@/api/chat';
-import { Users, Hash, Package, Pin, Loader2 } from 'lucide-react';
+import { Users, Hash, Package, Pin, Loader2, BellOff, Home } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { BugPriorityBadge } from '@/components/chat/BugPriorityBadge';
 import { useAuthStore } from '@/store/authStore';
@@ -8,6 +8,7 @@ import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseMessagePreview } from '@/utils/messagePreview';
+import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 
 interface GroupChannelCardProps {
   groupChannel: GroupChannel;
@@ -22,13 +23,22 @@ interface GroupChannelCardProps {
   onPinToggle?: () => void;
   canPin?: boolean;
   isPinning?: boolean;
+  isMuted?: boolean;
+  onMuteToggle?: () => void;
+  isTogglingMute?: boolean;
 }
 
-export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSelected, draft, displayTitle, displaySubtitle, sellerGroupedByItem, isPinned = false, onPinToggle, canPin = true, isPinning = false }: GroupChannelCardProps) => {
+export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSelected, draft, displayTitle, displaySubtitle, sellerGroupedByItem, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: GroupChannelCardProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const { translateCity } = useTranslatedGeo();
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
-  const displayName = displayTitle ?? groupChannel.name;
+  const displayName = useMemo(() => {
+    if (groupChannel.isCityGroup) {
+      return translateCity(groupChannel.id, groupChannel.name, '');
+    }
+    return displayTitle ?? groupChannel.name;
+  }, [groupChannel.isCityGroup, groupChannel.id, groupChannel.name, displayTitle, translateCity]);
   const lastMessage = groupChannel.lastMessage;
 
   const lastMessageTime = getLastMessageTime(lastMessage);
@@ -111,6 +121,22 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
                     )}
                   </span>
                 )}
+                {onMuteToggle != null && (isMuted || isTogglingMute) && (
+                  <button
+                    type="button"
+                    onClick={onMuteToggle}
+                    disabled={isTogglingMute}
+                    className={`p-1 rounded disabled:opacity-50 disabled:pointer-events-none transition-colors ${isMuted ? 'text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                    aria-label={isMuted ? t('chat.unmute', { defaultValue: 'Unmute chat' }) : t('chat.mute', { defaultValue: 'Mute chat' })}
+                    aria-busy={isTogglingMute}
+                  >
+                    {isTogglingMute ? (
+                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                    ) : (
+                      <BellOff className="w-4 h-4" aria-hidden />
+                    )}
+                  </button>
+                )}
                 {onPinToggle != null && (
                   <button
                     type="button"
@@ -147,7 +173,14 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
               <div className="flex items-center gap-2 flex-wrap">
                 <div className="min-w-0 flex flex-col gap-0.5">
                   <h3 className="text-sm text-gray-900 dark:text-white break-words min-w-0">
-                    {displayName}
+                    {groupChannel.isCityGroup ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-200 px-2.5 py-0.5 text-xs font-medium shadow-sm ring-1 ring-primary-200/60 dark:ring-primary-700/50 w-fit">
+                        <Home className="w-3.5 h-3.5 flex-shrink-0" aria-hidden />
+                        {displayName}
+                      </span>
+                    ) : (
+                      displayName
+                    )}
                   </h3>
                   {displaySubtitle && (
                     <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate leading-tight">
@@ -180,6 +213,22 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
                     displaySettings.hour12
                   )}
                 </span>
+              )}
+              {onMuteToggle != null && (isMuted || isTogglingMute) && (
+                <button
+                  type="button"
+                  onClick={onMuteToggle}
+                  disabled={isTogglingMute}
+                  className={`p-1 rounded disabled:opacity-50 disabled:pointer-events-none transition-colors ${isMuted ? 'text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                  aria-label={isMuted ? t('chat.unmute', { defaultValue: 'Unmute chat' }) : t('chat.mute', { defaultValue: 'Mute chat' })}
+                  aria-busy={isTogglingMute}
+                >
+                  {isTogglingMute ? (
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                  ) : (
+                    <BellOff className="w-4 h-4" aria-hidden />
+                  )}
+                </button>
               )}
               {onPinToggle != null && (
                 <button

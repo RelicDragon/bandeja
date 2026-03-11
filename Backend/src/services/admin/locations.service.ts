@@ -4,6 +4,7 @@ import { COUNTRIES, TIMEZONES, DEFAULT_TIMEZONE } from '../../utils/constants';
 import { normalizeClubName } from '../../utils/normalizeClubName';
 import { refreshCityFromClubs, refreshAllCitiesFromClubs } from '../../utils/updateCityCenter';
 import { refreshClubCourtsCount } from '../../utils/refreshClubCourtsCount';
+import { CityGroupService } from '../chat/cityGroup.service';
 
 export class AdminLocationsService {
   static async getAllCities() {
@@ -63,6 +64,7 @@ export class AdminLocationsService {
       },
     });
     await refreshCityFromClubs(city.id);
+    await CityGroupService.ensureCityGroupExists(city.id);
     return city;
   }
 

@@ -1069,6 +1069,7 @@ model GroupChannel {
   buyerId              String?
   isChannel            Boolean                 @default(false)
   isPublic             Boolean                 @default(true)
+  isCityGroup          Boolean                 @default(false)
   participantsCount    Int                     @default(0)
   lastMessagePreview   String?                 @db.VarChar(500)
   createdAt            DateTime                @default(now())
@@ -1083,6 +1084,7 @@ model GroupChannel {
 
   @@index([isPublic])
   @@index([isChannel])
+  @@index([isCityGroup])
   @@index([cityId])
   @@index([bugId])
   @@index([marketItemId])

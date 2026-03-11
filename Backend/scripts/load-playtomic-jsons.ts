@@ -10,6 +10,7 @@ import { normalizeCountry } from '../src/utils/normalizePlaytomicCountry';
 import { refreshClubCourtsCount } from '../src/utils/refreshClubCourtsCount';
 import { resolveCityName } from './lib/dr5hnCityResolver';
 import { refreshAllCitiesFromClubs } from '../src/utils/updateCityCenter';
+import { CityGroupService } from '../src/services/chat/cityGroup.service';
 
 const JSON_DIR = path.join(__dirname, '..', 'additions', 'playtomic', 'jsons');
 const PADEL = 'PADEL';
@@ -91,6 +92,7 @@ async function getOrCreateCity(
     },
     select: { id: true },
   });
+  await CityGroupService.ensureCityGroupExists(city.id);
   return { id: city.id, created: true };
 }
 

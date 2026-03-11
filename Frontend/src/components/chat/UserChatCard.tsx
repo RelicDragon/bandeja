@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { parseMessagePreview } from '@/utils/messagePreview';
-import { Pin, Loader2 } from 'lucide-react';
+import { Pin, Loader2, BellOff } from 'lucide-react';
 
 interface UserChatCardProps {
   chat: UserChat;
@@ -21,9 +21,12 @@ interface UserChatCardProps {
   onPinToggle?: () => void;
   canPin?: boolean;
   isPinning?: boolean;
+  isMuted?: boolean;
+  onMuteToggle?: () => void;
+  isTogglingMute?: boolean;
 }
 
-export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = false, draft, isPinned = false, onPinToggle, canPin = true, isPinning = false }: UserChatCardProps) => {
+export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = false, draft, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: UserChatCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -88,6 +91,22 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
                   displaySettings.hour12
                 )}
               </span>
+            )}
+            {onMuteToggle != null && (isMuted || isTogglingMute) && (
+              <button
+                type="button"
+                onClick={onMuteToggle}
+                disabled={isTogglingMute}
+                className={`p-1 rounded disabled:opacity-50 disabled:pointer-events-none transition-colors ${isMuted ? 'text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                aria-label={isMuted ? t('chat.unmute', { defaultValue: 'Unmute chat' }) : t('chat.mute', { defaultValue: 'Mute chat' })}
+                aria-busy={isTogglingMute}
+              >
+                {isTogglingMute ? (
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                ) : (
+                  <BellOff className="w-4 h-4" aria-hidden />
+                )}
+              </button>
             )}
             {onPinToggle != null && (
               <button

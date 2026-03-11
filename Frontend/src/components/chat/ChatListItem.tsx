@@ -21,6 +21,10 @@ interface ChatListItemProps {
   pinningId?: string | null;
   onPinUserChat?: (chatId: string, isPinned: boolean) => void;
   onPinGroupChannel?: (channelId: string, isPinned: boolean) => void;
+  mutedChats?: Record<string, boolean>;
+  togglingMuteId?: string | null;
+  onMuteUserChat?: (chatId: string, isMuted: boolean) => void;
+  onMuteGroupChannel?: (channelId: string, isMuted: boolean) => void;
 }
 
 export const ChatListItem = ({
@@ -38,6 +42,10 @@ export const ChatListItem = ({
   pinningId = null,
   onPinUserChat,
   onPinGroupChannel,
+  mutedChats = {},
+  togglingMuteId = null,
+  onMuteUserChat,
+  onMuteGroupChannel,
 }: ChatListItemProps) => {
   const { user } = useAuthStore();
   const liveChats = usePlayersStore((state) => state.chats);
@@ -52,6 +60,8 @@ export const ChatListItem = ({
     const isSelected = selectedChatType === 'user' && selectedChatId === chat.data.id;
     const isPinned = !!liveChat.isPinned;
     const isPinning = pinningId === chat.data.id;
+    const isMuted = mutedChats[chat.data.id] === true;
+    const isTogglingMute = togglingMuteId === chat.data.id;
     return (
       <UserChatCard
         key={`user-${chat.data.id}`}
@@ -64,6 +74,9 @@ export const ChatListItem = ({
         onPinToggle={onPinUserChat ? () => onPinUserChat(chat.data.id, isPinned) : undefined}
         canPin={pinnedCount < MAX_PINNED_CHATS || isPinned}
         isPinning={isPinning}
+        isMuted={isMuted}
+        onMuteToggle={onMuteUserChat ? () => onMuteUserChat(chat.data.id, isMuted) : undefined}
+        isTogglingMute={isTogglingMute}
       />
     );
   }
@@ -96,6 +109,8 @@ export const ChatListItem = ({
     const isSelected = (selectedChatType === 'group' || selectedChatType === 'channel') && selectedChatId === chat.data.id;
     const isPinned = !!chat.data.isPinned;
     const isPinning = pinningId === chat.data.id;
+    const isMuted = mutedChats[chat.data.id] === true;
+    const isTogglingMute = togglingMuteId === chat.data.id;
     return (
       <div
         key={`${chat.type}-${chat.data.id}`}
@@ -111,9 +126,12 @@ export const ChatListItem = ({
           displaySubtitle={displaySubtitle}
           sellerGroupedByItem={sellerGroupedByItem}
           isPinned={isPinned}
-          onPinToggle={onPinGroupChannel ? () => onPinGroupChannel(chat.data.id, isPinned) : undefined}
-          canPin={pinnedCount < MAX_PINNED_CHATS || isPinned}
+          onPinToggle={chat.data.isCityGroup ? undefined : (onPinGroupChannel ? () => onPinGroupChannel(chat.data.id, isPinned) : undefined)}
+          canPin={chat.data.isCityGroup ? true : (pinnedCount < MAX_PINNED_CHATS || isPinned)}
           isPinning={isPinning}
+          isMuted={isMuted}
+          onMuteToggle={onMuteGroupChannel ? () => onMuteGroupChannel(chat.data.id, isMuted) : undefined}
+          isTogglingMute={isTogglingMute}
         />
       </div>
     );

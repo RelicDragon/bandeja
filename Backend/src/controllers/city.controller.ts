@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 import { COUNTRIES, TIMEZONES, DEFAULT_TIMEZONE } from '../utils/constants';
+import { CityGroupService } from '../services/chat/cityGroup.service';
 
 export const getAllCities = asyncHandler(async (req: Request, res: Response) => {
   const cities = await prisma.city.findMany({
@@ -102,6 +103,7 @@ export const createCity = asyncHandler(async (req: Request, res: Response) => {
       administrativeArea: administrativeArea ?? null,
     },
   });
+  await CityGroupService.ensureCityGroupExists(city.id);
 
   res.status(201).json({
     success: true,

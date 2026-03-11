@@ -66,12 +66,10 @@ const getPinnedAt = (item: ChatItem): string | null => {
   return null;
 };
 
-export const sortChatItems = (
-  items: ChatItem[],
-  filter: 'users' | 'bugs' | 'channels' | 'market',
-  userId?: string
-): ChatItem[] => {
-  if (!items.length) return items;
+const isCityGroupItem = (item: ChatItem): boolean =>
+  (item.type === 'group' || item.type === 'channel') && !!(item.data as GroupChannel).isCityGroup;
+
+function sortPinnedThenUnpinned(items: ChatItem[], userId?: string): ChatItem[] {
   const pinned = items.filter(isPinned);
   const unpinned = items.filter((c) => !isPinned(c));
   pinned.sort((a, b) => {
@@ -82,9 +80,32 @@ export const sortChatItems = (
     if (!bAt) return -1;
     return new Date(aAt).getTime() - new Date(bAt).getTime();
   });
-  if (filter === 'users' && userId) {
-    unpinned.sort((a, b) => sortByActivity(a, b, (c) => getChatTitle(c, userId)));
-  } else if (filter === 'bugs' || filter === 'channels' || filter === 'market') {
+  if (userId) unpinned.sort((a, b) => sortByActivity(a, b, (c) => getChatTitle(c, userId)));
+  return [...pinned, ...unpinned];
+}
+
+export const sortChatItems = (
+  items: ChatItem[],
+  filter: 'users' | 'bugs' | 'channels' | 'market',
+  userId?: string
+): ChatItem[] => {
+  if (!items.length) return items;
+  if (filter === 'users') {
+    const cityGroups = items.filter(isCityGroupItem);
+    const rest = items.filter((c) => !isCityGroupItem(c));
+    return [...sortPinnedThenUnpinned(cityGroups, userId), ...sortPinnedThenUnpinned(rest, userId)];
+  }
+  const pinned = items.filter(isPinned);
+  const unpinned = items.filter((c) => !isPinned(c));
+  pinned.sort((a, b) => {
+    const aAt = getPinnedAt(a);
+    const bAt = getPinnedAt(b);
+    if (!aAt && !bAt) return 0;
+    if (!aAt) return 1;
+    if (!bAt) return -1;
+    return new Date(aAt).getTime() - new Date(bAt).getTime();
+  });
+  if (filter === 'bugs' || filter === 'channels' || filter === 'market') {
     unpinned.sort(sortForBugsChannels);
   }
   return [...pinned, ...unpinned];

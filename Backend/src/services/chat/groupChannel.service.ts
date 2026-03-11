@@ -451,7 +451,7 @@ export class GroupChannelService {
       if (!existing) {
         const [pinnedUserCount, pinnedGroupCount] = await Promise.all([
           tx.pinnedUserChat.count({ where: { userId } }),
-          tx.pinnedGroupChannel.count({ where: { userId } })
+          tx.pinnedGroupChannel.count({ where: { userId, groupChannel: { isCityGroup: false } } })
         ]);
         if (pinnedUserCount + pinnedGroupCount >= UserChatService.MAX_PINNED_CHATS) {
           throw new ApiError(400, 'MAX_PINNED_CHATS');

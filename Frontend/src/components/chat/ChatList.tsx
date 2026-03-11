@@ -1072,6 +1072,48 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   }, [onChatSelect]);
 
   const [pinningId, setPinningId] = useState<string | null>(null);
+  const [mutedChats, setMutedChats] = useState<Record<string, boolean>>({});
+  const [togglingMuteId, setTogglingMuteId] = useState<string | null>(null);
+
+  const handleMuteUserChat = useCallback(
+    async (chatId: string, isMuted: boolean) => {
+      setTogglingMuteId(chatId);
+      try {
+        if (isMuted) {
+          await chatApi.unmuteChat('USER', chatId);
+          setMutedChats((prev) => ({ ...prev, [chatId]: false }));
+        } else {
+          await chatApi.muteChat('USER', chatId);
+          setMutedChats((prev) => ({ ...prev, [chatId]: true }));
+        }
+      } catch (e) {
+        toast.error(t('chat.muteFailed', { defaultValue: 'Failed to update mute' }));
+      } finally {
+        setTogglingMuteId(null);
+      }
+    },
+    [t]
+  );
+
+  const handleMuteGroupChannel = useCallback(
+    async (channelId: string, isMuted: boolean) => {
+      setTogglingMuteId(channelId);
+      try {
+        if (isMuted) {
+          await chatApi.unmuteChat('GROUP', channelId);
+          setMutedChats((prev) => ({ ...prev, [channelId]: false }));
+        } else {
+          await chatApi.muteChat('GROUP', channelId);
+          setMutedChats((prev) => ({ ...prev, [channelId]: true }));
+        }
+      } catch (e) {
+        toast.error(t('chat.muteFailed', { defaultValue: 'Failed to update mute' }));
+      } finally {
+        setTogglingMuteId(null);
+      }
+    },
+    [t]
+  );
 
   const handlePinUserChat = useCallback(
     async (chatId: string, isPinned: boolean) => {
@@ -1132,6 +1174,33 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const activeChats = useMemo(() => {
     return chats.filter((c) => c.type === 'user' || c.type === 'group') as ChatItem[];
   }, [chats]);
+
+  useEffect(() => {
+    if (chatsFilter !== 'users' || activeChats.length === 0) return;
+    const controller = new AbortController();
+    Promise.all(
+      activeChats.slice(0, 100).map(async (chat) => {
+        const id = (chat as { type: string; data: { id: string } }).data.id;
+        const contextType = (chat as { type: string }).type === 'user' ? 'USER' : 'GROUP';
+        try {
+          const { isMuted } = await chatApi.isChatMuted(contextType, id);
+          return { id, isMuted };
+        } catch {
+          return { id, isMuted: false };
+        }
+      })
+    ).then((results) => {
+      if (controller.signal.aborted) return;
+      setMutedChats((prev) => {
+        const next = { ...prev };
+        results.forEach(({ id, isMuted }) => {
+          next[id] = isMuted;
+        });
+        return next;
+      });
+    });
+    return () => controller.abort();
+  }, [chatsFilter, activeChats]);
 
   const matchesSearch = useCallback((title: string) => {
     if (!debouncedSearchQuery.trim()) return true;
@@ -1455,6 +1524,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             pinningId={chatsFilter === 'users' ? pinningId : undefined}
             onPinUserChat={chatsFilter === 'users' ? handlePinUserChat : undefined}
             onPinGroupChannel={chatsFilter === 'users' ? handlePinGroupChannel : undefined}
+            mutedChats={chatsFilter === 'users' ? mutedChats : undefined}
+            togglingMuteId={chatsFilter === 'users' ? togglingMuteId : undefined}
+            onMuteUserChat={chatsFilter === 'users' ? handleMuteUserChat : undefined}
+            onMuteGroupChannel={chatsFilter === 'users' ? handleMuteGroupChannel : undefined}
           />
         ))}
       </CollapsibleSection>
@@ -1824,6 +1897,10 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
                     pinningId={chatsFilter === 'users' ? pinningId : undefined}
                     onPinUserChat={chatsFilter === 'users' ? handlePinUserChat : undefined}
                     onPinGroupChannel={chatsFilter === 'users' ? handlePinGroupChannel : undefined}
+                    mutedChats={chatsFilter === 'users' ? mutedChats : undefined}
+                    togglingMuteId={chatsFilter === 'users' ? togglingMuteId : undefined}
+                    onMuteUserChat={chatsFilter === 'users' ? handleMuteUserChat : undefined}
+                    onMuteGroupChannel={chatsFilter === 'users' ? handleMuteGroupChannel : undefined}
                   />
                 ))
               )}

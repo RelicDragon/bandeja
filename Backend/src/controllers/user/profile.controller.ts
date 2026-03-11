@@ -12,6 +12,7 @@ import { DEFAULT_PREFERENCES } from '../../services/notificationPreference.servi
 import telegramBotService from '../../services/telegram/bot.service';
 import { syncTelegramProfileFromUpdate } from '../../services/telegram/syncTelegramProfile.service';
 import { TRANSLATE_TO_LANGUAGE_CODES } from '../../services/chat/translation.service';
+import { CityGroupService } from '../../services/chat/cityGroup.service';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
@@ -282,6 +283,10 @@ export const deleteUser = asyncHandler(async (req: AuthRequest, res: Response) =
 
   if (!user) {
     throw new ApiError(404, 'User not found');
+  }
+
+  if (user.currentCityId) {
+    await CityGroupService.removeUserFromCityGroup(userId, user.currentCityId);
   }
 
   await prisma.deletedUser.create({

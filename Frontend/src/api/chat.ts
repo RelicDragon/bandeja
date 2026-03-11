@@ -208,6 +208,7 @@ export interface GroupChannel {
   buyer?: BasicUser;
   isPinned?: boolean;
   pinnedAt?: string | null;
+  isCityGroup?: boolean;
 }
 
 export interface GroupChannelParticipant {

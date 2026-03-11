@@ -5,23 +5,30 @@ import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
 import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
 import { completeWelcomeScreen, resetWelcomeScreen, skipWelcomeScreen } from '../../services/welcomeScreen.service';
+import { CityGroupService } from '../../services/chat/cityGroup.service';
 
 export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { cityId } = req.body;
+  const { cityId } = req.body as { cityId: string };
+  const userId = req.userId!;
 
-  const city = await prisma.city.findUnique({
-    where: { id: cityId },
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { currentCityId: true },
   });
+  const previousCityId = currentUser?.currentCityId ?? null;
 
-  if (!city) {
-    throw new ApiError(404, 'City not found');
-  }
+  await CityGroupService.ensureCityGroupExists(cityId);
+  await CityGroupService.addUserToCityGroup(userId, cityId, { mute: true, pin: true });
 
   const user = await prisma.user.update({
-    where: { id: req.userId },
+    where: { id: userId },
     data: { currentCityId: cityId },
     select: PROFILE_SELECT_FIELDS,
   });
+
+  if (previousCityId && previousCityId !== cityId) {
+    await CityGroupService.removeUserFromCityGroup(userId, previousCityId);
+  }
 
   res.json({
     success: true,
