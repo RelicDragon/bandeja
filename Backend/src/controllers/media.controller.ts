@@ -204,8 +204,17 @@ export const uploadGroupChannelAvatar = asyncHandler(async (req: AuthRequest, re
     throw new ApiError(400, 'Group channel ID is required');
   }
 
-  const isAdminOrOwner = await GroupChannelService.isGroupChannelAdminOrOwner(groupChannelId, userId);
-  if (!isAdminOrOwner) {
+  const groupChannel = await prisma.groupChannel.findUnique({
+    where: { id: groupChannelId },
+    select: { isCityGroup: true }
+  });
+  if (!groupChannel) {
+    throw new ApiError(404, 'Group/Channel not found');
+  }
+  const canUpload = groupChannel.isCityGroup && req.user?.isAdmin
+    ? true
+    : await GroupChannelService.isGroupChannelAdminOrOwner(groupChannelId, userId);
+  if (!canUpload) {
     throw new ApiError(403, 'Only owner or admin can upload group/channel avatar');
   }
 

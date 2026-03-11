@@ -485,7 +485,8 @@ export class GroupChannelService {
       originalAvatar?: string;
       isChannel?: boolean;
       isPublic?: boolean;
-    }
+    },
+    isGlobalAdmin?: boolean
   ) {
     const groupChannel = await prisma.groupChannel.findUnique({
       where: { id: groupChannelId }
@@ -495,8 +496,10 @@ export class GroupChannelService {
       throw new ApiError(404, 'Group/Channel not found');
     }
 
-    const isAdminOrOwner = await this.isGroupChannelAdminOrOwner(groupChannelId, userId);
-    if (!isAdminOrOwner) {
+    const canUpdate = groupChannel.isCityGroup && isGlobalAdmin
+      ? true
+      : await this.isGroupChannelAdminOrOwner(groupChannelId, userId);
+    if (!canUpdate) {
       throw new ApiError(403, 'Only owner or admin can update group/channel');
     }
 

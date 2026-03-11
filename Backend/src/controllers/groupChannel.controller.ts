@@ -122,7 +122,7 @@ export const updateGroupChannel = asyncHandler(async (req: AuthRequest, res: Res
     originalAvatar,
     isChannel,
     isPublic
-  });
+  }, req.user?.isAdmin);
 
   res.json({
     success: true,

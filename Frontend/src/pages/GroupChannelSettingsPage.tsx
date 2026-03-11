@@ -43,7 +43,7 @@ export const GroupChannelSettings = ({
   );
   const isOwner = useMemo(() => currentUserParticipant?.role === 'OWNER', [currentUserParticipant]);
   const isAdmin = useMemo(() => currentUserParticipant?.role === 'ADMIN', [currentUserParticipant]);
-  const canEdit = isOwner || isAdmin;
+  const canEdit = isOwner || isAdmin || (!!user?.isAdmin && !!groupChannel.isCityGroup);
   const isParticipant = useMemo(() => !!currentUserParticipant || groupChannelData.isParticipant, [currentUserParticipant, groupChannelData.isParticipant]);
 
   const onParticipantsCountChangeRef = useRef(onParticipantsCountChange);
