@@ -38,6 +38,20 @@ interface CreateLeagueGameParams {
   affectsRating?: boolean;
 }
 
+export interface PlayoffGameSetupOverrides {
+  fixedNumberOfSets?: number;
+  maxTotalPointsPerSet?: number;
+  maxPointsPerTeam?: number;
+  winnerOfGame?: WinnerOfGame;
+  winnerOfMatch?: WinnerOfMatch;
+  matchGenerationType?: MatchGenerationType;
+  prohibitMatchesEditing?: boolean;
+  pointsPerWin?: number;
+  pointsPerLoose?: number;
+  pointsPerTie?: number;
+  ballsInGames?: boolean;
+}
+
 export interface CreateLeaguePlayoffGameParams {
   leagueRoundId: string;
   leagueSeasonId: string;
@@ -47,6 +61,7 @@ export interface CreateLeaguePlayoffGameParams {
   leagueGroupId?: string;
   /** When set, one GameTeam per entry (team = array of player user IDs). Game has hasFixedTeams: true. */
   teams?: string[][];
+  gameSetup?: PlayoffGameSetupOverrides;
 }
 
 export async function createLeagueGame(params: CreateLeagueGameParams) {
@@ -158,7 +173,7 @@ export async function createLeaguePlayoffGame(
   params: CreateLeaguePlayoffGameParams,
   tx?: Prisma.TransactionClient
 ) {
-  const { leagueRoundId, leagueSeasonId, seasonGame, gameType, participantUserIds, leagueGroupId, teams } = params;
+  const { leagueRoundId, leagueSeasonId, seasonGame, gameType, participantUserIds, leagueGroupId, teams, gameSetup } = params;
   const db = tx ?? prisma;
 
   const round = await db.leagueRound.findUnique({
@@ -199,17 +214,17 @@ export async function createLeaguePlayoffGame(
       afterGameGoToBar: false,
       hasFixedTeams,
       genderTeams: seasonGame.genderTeams || 'ANY',
-      fixedNumberOfSets: template.fixedNumberOfSets,
-      maxTotalPointsPerSet: seasonGame.maxTotalPointsPerSet ?? 0,
-      maxPointsPerTeam: seasonGame.maxPointsPerTeam ?? 0,
-      winnerOfGame: template.winnerOfGame,
-      winnerOfMatch: template.winnerOfMatch,
-      matchGenerationType: template.matchGenerationType,
-      prohibitMatchesEditing: seasonGame.prohibitMatchesEditing ?? false,
-      pointsPerWin: seasonGame.pointsPerWin ?? 0,
-      pointsPerLoose: seasonGame.pointsPerLoose ?? 0,
-      pointsPerTie: seasonGame.pointsPerTie ?? 0,
-      ballsInGames: template.ballsInGames,
+      fixedNumberOfSets: gameSetup?.fixedNumberOfSets ?? template.fixedNumberOfSets,
+      maxTotalPointsPerSet: gameSetup?.maxTotalPointsPerSet ?? seasonGame.maxTotalPointsPerSet ?? 0,
+      maxPointsPerTeam: gameSetup?.maxPointsPerTeam ?? seasonGame.maxPointsPerTeam ?? 0,
+      winnerOfGame: gameSetup?.winnerOfGame ?? template.winnerOfGame,
+      winnerOfMatch: gameSetup?.winnerOfMatch ?? template.winnerOfMatch,
+      matchGenerationType: gameSetup?.matchGenerationType ?? template.matchGenerationType,
+      prohibitMatchesEditing: gameSetup?.prohibitMatchesEditing ?? seasonGame.prohibitMatchesEditing ?? false,
+      pointsPerWin: gameSetup?.pointsPerWin ?? seasonGame.pointsPerWin ?? 0,
+      pointsPerLoose: gameSetup?.pointsPerLoose ?? seasonGame.pointsPerLoose ?? 0,
+      pointsPerTie: gameSetup?.pointsPerTie ?? seasonGame.pointsPerTie ?? 0,
+      ballsInGames: gameSetup?.ballsInGames ?? template.ballsInGames,
       parentId: leagueSeasonId,
       leagueRoundId,
       leagueGroupId,

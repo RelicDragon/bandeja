@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Button } from '@/components';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
-import { BasicUser } from '@/types';
+import { BasicUser, GameSetupParams } from '@/types';
 import { leaguesApi, LeagueStanding, LeagueGroup } from '@/api/leagues';
 import { Loader2, Check } from 'lucide-react';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
+import { PlayoffGameSetupStep } from './PlayoffGameSetupStep';
 
 const ALL_GROUP_ID = 'ALL';
 const MIN_PARTICIPANTS = 4;
@@ -53,7 +54,7 @@ export const PlayoffConfigurationModal = ({
   onCreated,
 }: PlayoffConfigurationModalProps) => {
   const { t } = useTranslation();
-  const [step, setStep] = useState<'config' | 'summary'>('config');
+  const [step, setStep] = useState<'config' | 'summary' | 'gameSetup'>('config');
   const [gameType, setGameType] = useState<PlayoffGameType>('WINNER_COURT');
   const [selectedGroupId, setSelectedGroupId] = useState(ALL_GROUP_ID);
   const [selectedIdsByGroup, setSelectedIdsByGroup] = useState<Record<string, Set<string>>>({});
@@ -134,12 +135,49 @@ export const PlayoffConfigurationModal = ({
     });
   };
 
+  const minPlayersInGroups =
+    groups.length > 0
+      ? Math.min(...groups.map((g) => getStandingsForGroup(g.id).length))
+      : 0;
+  const quickSelectOptions =
+    minPlayersInGroups >= MIN_PARTICIPANTS
+      ? Array.from(
+          { length: minPlayersInGroups - MIN_PARTICIPANTS + 1 },
+          (_, i) => MIN_PARTICIPANTS + i
+        )
+      : [];
+
+  const isQuickSelectActive = (n: number) =>
+    groups.every((g) => {
+      const ids = selectedIdsByGroup[g.id];
+      const topN = getStandingsForGroup(g.id)
+        .slice(0, n)
+        .map((s) => s.id);
+      return (
+        ids &&
+        ids.size === n &&
+        topN.length === n &&
+        topN.every((id) => ids.has(id))
+      );
+    });
+
+  const handleQuickSelectCount = (n: number) => {
+    setSelectedIdsByGroup(() => {
+      const next: Record<string, Set<string>> = {};
+      for (const g of groups) {
+        const sorted = getStandingsForGroup(g.id);
+        next[g.id] = new Set(sorted.slice(0, n).map((s) => s.id));
+      }
+      return next;
+    });
+  };
+
   const handleCreateClick = () => {
     if (!canCreate) return;
     setStep('summary');
   };
 
-  const handleConfirm = async () => {
+  const handleGameSetupConfirm = async (gameSetup: GameSetupParams) => {
     if (!canCreate) return;
     setSubmitting(true);
     try {
@@ -153,6 +191,7 @@ export const PlayoffConfigurationModal = ({
       const result = await leaguesApi.createPlayoff(leagueSeasonId, {
         gameType,
         groups: groupsPayload,
+        gameSetup,
       });
       const createdCount =
         (result.data as { games?: unknown[] })?.games?.length ??
@@ -181,26 +220,19 @@ export const PlayoffConfigurationModal = ({
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="playoff-configuration-modal">
       <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
-        <DialogHeader className="flex-col items-start gap-1">
-          <DialogTitle className="text-left">
-            {step === 'config'
-              ? t('gameDetails.playoffConfiguration', { defaultValue: 'Playoff configuration' })
-              : t('gameDetails.confirmPlayoff', { defaultValue: 'Confirm playoff' })}
+        <DialogHeader className="flex-col items-center gap-1">
+          <DialogTitle className="text-center">
+            {step === 'config' && t('gameDetails.playoffConfiguration', { defaultValue: 'Playoff configuration' })}
+            {step === 'summary' && t('gameDetails.confirmPlayoff', { defaultValue: 'Confirm playoff' })}
+            {step === 'gameSetup' && t('gameResults.setupGame')}
           </DialogTitle>
-          <DialogDescription className="text-left">
-            {step === 'config'
-              ? t('gameDetails.playoffConfigurationHint', {
-                  defaultValue: 'Choose format, group and at least 4 participants.',
-                })
-              : t('gameDetails.confirmPlayoffHint', { defaultValue: 'Review and confirm your selection.' })}
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-1 -mx-1">
+        <div className="flex-1 overflow-y-auto scrollbar-auto px-4 py-2">
           {step === 'config' && (
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block text-center">
                   {t('gameDetails.playoffFormat', { defaultValue: 'Format' })}
                 </label>
                 <SegmentedSwitch
@@ -223,7 +255,7 @@ export const PlayoffConfigurationModal = ({
 
               {groups.length > 0 && (
                 <div>
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block text-center">
                     {t('gameDetails.group', { defaultValue: 'Group' })}
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -265,6 +297,30 @@ export const PlayoffConfigurationModal = ({
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+              )}
+
+              {quickSelectOptions.length > 0 && (
+                <div>
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block text-center">
+                    {t('gameDetails.participants', { defaultValue: 'Participants' })}
+                  </label>
+                  <div className="grid grid-cols-6 sm:grid-cols-8 gap-1 sm:gap-1.5 w-full max-w-xs sm:max-w-sm mx-auto">
+                    {quickSelectOptions.map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => handleQuickSelectCount(n)}
+                        className={`aspect-square rounded-md sm:rounded-lg font-bold text-xs sm:text-sm transition-all duration-200 ${
+                          isQuickSelectActive(n)
+                            ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/40 scale-105 ring-2 ring-primary-400 ring-offset-1 dark:ring-offset-gray-900'
+                            : 'bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900 text-gray-700 dark:text-gray-300 hover:from-gray-200 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-800 hover:scale-105 active:scale-95 shadow border border-gray-200 dark:border-gray-700'
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
@@ -453,14 +509,9 @@ export const PlayoffConfigurationModal = ({
                             {g.name} ({count})
                           </p>
                           <ul className="list-disc list-inside space-y-0.5 mt-0.5 text-gray-600 dark:text-gray-400 ml-1">
-                            {groupStandings.slice(0, 4).map((s) => (
-                              <li key={s.id}>{getStandingDisplayName(s)}</li>
+                            {groupStandings.map((s, idx) => (
+                              <li key={s.id}>{getStandingDisplayName(s)} ({idx + 1})</li>
                             ))}
-                            {count > 4 && (
-                              <li className="text-gray-500 dark:text-gray-500">
-                                {t('gameDetails.andMore', { count: count - 4, defaultValue: `and ${count - 4} more` })}
-                              </li>
-                            )}
                           </ul>
                         </div>
                       );
@@ -470,26 +521,29 @@ export const PlayoffConfigurationModal = ({
               </dl>
             </div>
           )}
+
+          {step === 'gameSetup' && (
+            <PlayoffGameSetupStep
+              gameType={gameType}
+              onBack={() => setStep('summary')}
+              onConfirm={handleGameSetupConfirm}
+              submitting={submitting}
+            />
+          )}
         </div>
 
-        <DialogFooter className="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700 mt-4">
-          {step === 'summary' ? (
-            <>
-              <Button variant="outline" onClick={() => setStep('config')} className="flex-1">
-                {t('common.back', { defaultValue: 'Back' })}
-              </Button>
-              <Button onClick={handleConfirm} disabled={submitting} className="flex-1">
-                {submitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    {t('common.loading')}
-                  </>
-                ) : (
-                  t('common.confirm')
-                )}
-              </Button>
-            </>
-          ) : (
+        {step !== 'gameSetup' && (
+          <DialogFooter className="flex gap-1 border-t border-gray-200 dark:border-gray-700">
+            {step === 'summary' ? (
+              <>
+                <Button variant="outline" onClick={() => setStep('config')} className="flex-1">
+                  {t('common.back', { defaultValue: 'Back' })}
+                </Button>
+                <Button onClick={() => setStep('gameSetup')} className="flex-1">
+                  {t('common.confirm')}
+                </Button>
+              </>
+            ) : (
             <>
               <Button variant="outline" onClick={onClose} className="flex-1">
                 {t('common.cancel')}
@@ -498,8 +552,9 @@ export const PlayoffConfigurationModal = ({
                 {t('gameDetails.createPlayoff', { defaultValue: 'Create playoff' })}
               </Button>
             </>
-          )}
-        </DialogFooter>
+            )}
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

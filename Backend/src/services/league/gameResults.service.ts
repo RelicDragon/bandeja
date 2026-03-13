@@ -27,6 +27,9 @@ export class LeagueGameResultsService {
             players: true,
           },
         },
+        leagueRound: {
+          select: { roundType: true },
+        },
       },
     });
 
@@ -44,6 +47,11 @@ export class LeagueGameResultsService {
       !game.leagueGroupId
     ) {
       console.log(`[LEAGUE SYNC] Game ${gameId} does not meet league criteria, skipping sync`);
+      return;
+    }
+
+    if (game.leagueRound?.roundType === 'PLAYOFF') {
+      console.log(`[LEAGUE SYNC] Game ${gameId} is a playoff game, standings are season-only, skipping sync`);
       return;
     }
 
@@ -119,6 +127,9 @@ export class LeagueGameResultsService {
             players: true,
           },
         },
+        leagueRound: {
+          select: { roundType: true },
+        },
       },
     });
 
@@ -132,6 +143,10 @@ export class LeagueGameResultsService {
       !game.leagueRoundId ||
       !game.leagueGroupId
     ) {
+      return;
+    }
+
+    if (game.leagueRound?.roundType === 'PLAYOFF') {
       return;
     }
 

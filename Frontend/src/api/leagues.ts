@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse, Game } from '@/types';
+import { ApiResponse, Game, GameSetupParams } from '@/types';
 
 export interface CreateLeagueRequest {
   name: string;
@@ -179,8 +179,8 @@ export const leaguesApi = {
   createPlayoff: async (
     leagueSeasonId: string,
     payload:
-      | { gameType: 'WINNER_COURT' | 'AMERICANO'; participantIds: string[]; leagueGroupId?: string }
-      | { gameType: 'WINNER_COURT' | 'AMERICANO'; groups: { leagueGroupId: string; participantIds: string[] }[] }
+      | { gameType: 'WINNER_COURT' | 'AMERICANO'; participantIds: string[]; leagueGroupId?: string; gameSetup?: GameSetupParams }
+      | { gameType: 'WINNER_COURT' | 'AMERICANO'; groups: { leagueGroupId: string; participantIds: string[] }[]; gameSetup?: GameSetupParams }
   ) => {
     const response = await api.post<
       ApiResponse<{ round: LeagueRound; game?: unknown; games?: unknown[] }>

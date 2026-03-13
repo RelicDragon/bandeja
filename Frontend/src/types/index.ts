@@ -15,6 +15,19 @@ export type BugPriority = -2 | -1 | 0 | 1 | 2;
 export type WinnerOfGame = 'BY_MATCHES_WON' | 'BY_POINTS' | 'BY_SCORES_DELTA' | 'PLAYOFF_FINALS';
 export type WinnerOfMatch = 'BY_SETS' | 'BY_SCORES';
 export type MatchGenerationType = 'HANDMADE' | 'FIXED' | 'RANDOM' | 'ROUND_ROBIN' | 'ESCALERA' | 'RATING' | 'WINNERS_COURT';
+export interface GameSetupParams {
+  fixedNumberOfSets: number;
+  maxTotalPointsPerSet: number;
+  maxPointsPerTeam: number;
+  winnerOfGame: WinnerOfGame;
+  winnerOfMatch: WinnerOfMatch;
+  matchGenerationType: MatchGenerationType;
+  prohibitMatchesEditing?: boolean;
+  pointsPerWin: number;
+  pointsPerLoose: number;
+  pointsPerTie: number;
+  ballsInGames: boolean;
+}
 export type PriceType = 'PER_PERSON' | 'PER_TEAM' | 'TOTAL' | 'NOT_KNOWN' | 'FREE';
 export type PriceCurrency =
   | 'EUR' | 'USD' | 'GBP' | 'JPY' | 'CNY' | 'CHF' | 'CAD' | 'AUD' | 'NZD'

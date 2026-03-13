@@ -3,7 +3,7 @@ import { ApiError } from '../../utils/ApiError';
 import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType, RoundType } from '@prisma/client';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { getDistinctLeagueGroupColor } from './groupColors';
-import { createLeagueGame, createLeaguePlayoffGame } from './gameCreation.util';
+import { createLeagueGame, createLeaguePlayoffGame, PlayoffGameSetupOverrides } from './gameCreation.util';
 import { TeamForRoundGeneration } from './generation/TeamForRoundGeneration';
 
 export class LeagueCreateService {
@@ -612,15 +612,16 @@ export class LeagueCreateService {
       participantIds?: string[];
       leagueGroupId?: string;
       groups?: { leagueGroupId: string; participantIds: string[] }[];
+      gameSetup?: PlayoffGameSetupOverrides;
     }
   ): Promise<{ round: any; game?: any; games?: any[] }> {
-    const { gameType, groups } = payload;
+    const { gameType, groups, gameSetup } = payload;
 
     if (groups !== undefined) {
       if (groups.length === 0) {
         throw new ApiError(400, 'groups must not be empty when provided');
       }
-      return this.createPlayoffBatch(leagueSeasonId, userId, gameType, groups);
+      return this.createPlayoffBatch(leagueSeasonId, userId, gameType, groups, gameSetup);
     }
 
     const { participantIds, leagueGroupId } = payload;
@@ -749,6 +750,7 @@ export class LeagueCreateService {
           participantUserIds,
           leagueGroupId,
           teams,
+          gameSetup,
         },
         tx
       );
@@ -764,7 +766,8 @@ export class LeagueCreateService {
     leagueSeasonId: string,
     userId: string,
     gameType: 'WINNER_COURT' | 'AMERICANO',
-    groups: { leagueGroupId: string; participantIds: string[] }[]
+    groups: { leagueGroupId: string; participantIds: string[] }[],
+    gameSetup?: import('./gameCreation.util').PlayoffGameSetupOverrides
   ): Promise<{ round: any; games: any[] }> {
     const MIN = 4;
     for (const g of groups) {
@@ -915,6 +918,7 @@ export class LeagueCreateService {
             participantUserIds: gd.participantUserIds,
             leagueGroupId: gd.leagueGroupId,
             teams: gd.teams,
+            gameSetup,
           },
           tx
         );
