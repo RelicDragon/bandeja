@@ -56,5 +56,7 @@ export const config = {
   puppeteer: {
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
   },
+  /** User ID that sends city group welcome messages (env: CITY_GROUP_WELCOME_SENDER_ID). Required for backfill script. */
+  cityGroupWelcomeSenderId: process.env.CITY_GROUP_WELCOME_SENDER_ID || null,
 };
 

@@ -1,8 +1,10 @@
 import prisma from '../../config/database';
+import { config } from '../../config/env';
 import { ApiError } from '../../utils/ApiError';
 import { ChatContextType, ParticipantRole } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { ChatMuteService } from './chatMute.service';
+import { createCityGroupWelcomeMessage, isWelcomeSenderValid } from './cityGroupWelcome.service';
 
 function isPrismaUniqueViolation(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
@@ -33,22 +35,33 @@ export class CityGroupService {
       return existing;
     }
     try {
-      return await prisma.groupChannel.create({
+      const channel = await prisma.groupChannel.create({
         data: {
-        id: city.id,
-        name: city.name,
-        isChannel: false,
-        isPublic: true,
-        isCityGroup: true,
-          participantsCount: 0
-        }
+          id: city.id,
+          name: city.name,
+          isChannel: false,
+          isPublic: true,
+          isCityGroup: true,
+          participantsCount: 0,
+        },
       });
+      const senderId = config.cityGroupWelcomeSenderId;
+      if (senderId && (await isWelcomeSenderValid(senderId))) {
+        await createCityGroupWelcomeMessage(channel.id, senderId);
+      }
+      return channel;
     } catch (err: unknown) {
       if (isPrismaUniqueViolation(err)) {
         const created = await prisma.groupChannel.findUnique({
           where: { id: cityId }
         });
-        if (created?.isCityGroup) return created;
+        if (created?.isCityGroup) {
+          const senderId = config.cityGroupWelcomeSenderId;
+          if (senderId && (await isWelcomeSenderValid(senderId))) {
+            await createCityGroupWelcomeMessage(created.id, senderId);
+          }
+          return created;
+        }
       }
       throw err;
     }

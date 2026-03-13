@@ -53,12 +53,22 @@ export const createLeagueRound = asyncHandler(async (req: AuthRequest, res: Resp
 export const createGameForRound = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { leagueRoundId } = req.params;
   const { leagueGroupId } = req.body;
-  
+
   const game = await LeagueCreateService.createGameForRound(leagueRoundId, req.userId!, leagueGroupId);
 
   res.status(201).json({
     success: true,
     data: game,
+  });
+});
+
+export const createPlayoff = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId } = req.params;
+  const result = await LeagueCreateService.createPlayoff(leagueSeasonId, req.userId!, req.body);
+
+  res.status(201).json({
+    success: true,
+    data: result,
   });
 });
 

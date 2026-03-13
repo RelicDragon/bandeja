@@ -1,6 +1,7 @@
 import { Match, Round } from '@/types/gameResults';
 import { Game } from '@/types';
 import { createId } from '@paralleldrive/cuid2';
+import { leaguesApi } from '@/api/leagues';
 import {
   getEligibleParticipants,
   getNumMatches,
@@ -16,11 +17,11 @@ interface CourtResult {
   losers: string[];
 }
 
-export function generateWinnersCourtRound(
+export async function generateWinnersCourtRound(
   game: Game,
   previousRounds: Round[],
   initialSets: InitialSets
-): Match[] {
+): Promise<Match[]> {
   const participants = getEligibleParticipants(game);
   if (participants.length < 4) return [];
 
@@ -181,35 +182,6 @@ function selectPlayersWithRotation(
   return selected.map(s => s.id);
 }
 
-function buildFirstRound(
-  playerIds: string[],
-  sortedCourts: Array<{ courtId?: string; order: number }>,
-  initialSets: InitialSets,
-  numMatches: number
-): Match[] {
-  const matches: Match[] = [];
-
-  for (let i = 0; i < numMatches; i++) {
-    const base = i * 4;
-    const p1 = playerIds[base];
-    const p2 = playerIds[base + 1];
-    const p3 = playerIds[base + 2];
-    const p4 = playerIds[base + 3];
-
-    if (p1 && p2 && p3 && p4) {
-      matches.push({
-        id: createId(),
-        teamA: [p1, p3],
-        teamB: [p2, p4],
-        sets: cloneSets(initialSets),
-        courtId: sortedCourts[i]?.courtId,
-      });
-    }
-  }
-
-  return matches;
-}
-
 function removeDepartedPlayers(
   courts: string[][],
   eligibleIds: Set<string>
@@ -236,17 +208,81 @@ function cleanEmptySlots(courts: string[][]): void {
 
 // ── Standard (no fixed teams, no MIX_PAIRS) ──────────────────────────
 
-function generateStandardRound(
-  _game: Game,
+async function getLeagueStandingsOrder(
+  game: Game,
+  participants: { userId: string; user?: { level: number } }[]
+): Promise<string[] | null> {
+  if (game.entityType !== 'LEAGUE' || !game.parentId) return null;
+  try {
+    const apiResponse = await leaguesApi.getStandings(game.parentId);
+    let standings = apiResponse.data ?? [];
+    if (game.leagueGroupId) {
+      standings = standings.filter(
+        (s) => (s.currentGroupId ?? s.currentGroup?.id) === game.leagueGroupId
+      );
+    }
+    standings.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      if (b.scoreDelta !== a.scoreDelta) return b.scoreDelta - a.scoreDelta;
+      return 0;
+    });
+    const participantIds = new Set(participants.map((p) => p.userId));
+    const positionMap = new Map<string, number>();
+    standings.forEach((s, idx) => {
+      if (s.userId && participantIds.has(s.userId)) positionMap.set(s.userId, idx);
+      if (s.leagueTeam?.players) {
+        for (const player of s.leagueTeam.players) {
+          if (participantIds.has(player.userId)) positionMap.set(player.userId, idx);
+        }
+      }
+    });
+    return [...participants]
+      .sort((a, b) => {
+        const posA = positionMap.get(a.userId) ?? Infinity;
+        const posB = positionMap.get(b.userId) ?? Infinity;
+        return posA - posB;
+      })
+      .map((p) => p.userId);
+  } catch {
+    return null;
+  }
+}
+
+async function generateStandardRound(
+  game: Game,
   previousRounds: Round[],
   initialSets: InitialSets,
   sortedCourts: Array<{ courtId?: string; order: number }>,
   numMatches: number,
   participants: any[]
-): Match[] {
+): Promise<Match[]> {
   const neededPlayers = numMatches * 4;
 
   if (previousRounds.length === 0) {
+    const leagueOrder = await getLeagueStandingsOrder(game, participants);
+    if (leagueOrder && leagueOrder.length >= 4) {
+      const playerIds = leagueOrder.slice(0, neededPlayers);
+      const courts: string[][] = [];
+      for (let i = 0; i < numMatches; i++) {
+        const base = i * 4;
+        if (
+          playerIds[base] &&
+          playerIds[base + 1] &&
+          playerIds[base + 2] &&
+          playerIds[base + 3]
+        ) {
+          courts.push([
+            playerIds[base],
+            playerIds[base + 1],
+            playerIds[base + 2],
+            playerIds[base + 3],
+          ]);
+        }
+      }
+      return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches);
+    }
+
     const sorted = [...participants].sort((a, b) => b.user.level - a.user.level);
     let playerIds = sorted.map((p: any) => p.userId);
 
@@ -254,7 +290,14 @@ function generateStandardRound(
       playerIds = selectPlayersWithRotation(playerIds, neededPlayers, previousRounds);
     }
 
-    return buildFirstRound(playerIds, sortedCourts, initialSets, numMatches);
+    const courts: string[][] = [];
+    for (let i = 0; i < numMatches; i++) {
+      const base = i * 4;
+      if (playerIds[base] && playerIds[base + 1] && playerIds[base + 2] && playerIds[base + 3]) {
+        courts.push([playerIds[base], playerIds[base + 1], playerIds[base + 2], playerIds[base + 3]]);
+      }
+    }
+    return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches);
   }
 
   const previousRound = previousRounds[previousRounds.length - 1];

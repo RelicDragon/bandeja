@@ -330,17 +330,17 @@ export const LeagueGroupEditorModal = ({
           </div>
         </div>
 
-        <div className="p-4 overflow-y-auto space-y-6">
+        <div className="p-4 overflow-y-auto overflow-x-hidden min-w-0 space-y-6">
           {activeTab === 'general' ? (
             <>
-          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-100 dark:border-gray-800 min-w-0">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center min-w-0">
               <input
                 type="text"
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
                 placeholder={t('gameDetails.newGroupName')}
-                className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="flex-1 min-w-0 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               <button
                 onClick={handleCreateGroup}
@@ -358,7 +358,7 @@ export const LeagueGroupEditorModal = ({
               <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
             </div>
           ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-2 min-w-0">
               {data?.groups.map((group) => {
                 const color = getLeagueGroupColor(group.color);
                 const borderColor = getLeagueGroupSoftColor(group.color, '40');
@@ -366,10 +366,10 @@ export const LeagueGroupEditorModal = ({
                 return (
                   <div
                     key={group.id}
-                    className="rounded-xl border bg-white dark:bg-gray-900 p-4 shadow-sm"
+                    className="rounded-xl border bg-white dark:bg-gray-900 p-4 shadow-sm min-w-0"
                     style={{ borderColor }}
                   >
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-3 mb-4 min-w-0">
                       <div
                         className="w-10 h-10 rounded-lg border flex items-center justify-center text-xs font-semibold uppercase"
                         style={{
@@ -391,7 +391,7 @@ export const LeagueGroupEditorModal = ({
                             flushRename(group.id, nameDrafts[group.id] || '');
                           }
                         }}
-                        className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="flex-1 min-w-0 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                       />
                       {renameLoading === group.id && (
                         <Loader2 size={14} className="animate-spin text-primary-600 dark:text-primary-400" />
@@ -414,21 +414,18 @@ export const LeagueGroupEditorModal = ({
                       group.participants.map((participant) => (
                         <div
                           key={participant.id}
-                          className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2"
+                          className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 min-w-0"
                         >
-                          {renderParticipant(participant)}
+                          <div className="min-w-0 flex-1">{renderParticipant(participant)}</div>
                           <button
                             onClick={() => handleRemoveParticipant(group.id, participant.id)}
                             disabled={removeLoading === participant.id}
-                            className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50 flex items-center gap-1"
+                            className="flex-shrink-0 p-1.5 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
                           >
                             {removeLoading === participant.id ? (
                               <Loader2 size={14} className="animate-spin" />
                             ) : (
-                              <>
-                                <Trash2 size={14} />
-                                {t('common.remove')}
-                              </>
+                              <Trash2 size={14} />
                             )}
                           </button>
                         </div>
@@ -436,8 +433,8 @@ export const LeagueGroupEditorModal = ({
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <div className="relative flex-1" ref={(el) => { dropdownRefs.current[group.id] = el; }}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center min-w-0">
+                    <div className="relative flex-1 min-w-0" ref={(el) => { dropdownRefs.current[group.id] = el; }}>
                       <div
                         role="button"
                         tabIndex={0}
@@ -571,7 +568,7 @@ export const LeagueGroupEditorModal = ({
                       {data?.groups.map((group, index) => (
                         <div
                           key={group.id}
-                          className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm"
+                          className="relative flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm"
                         >
                         <div className="flex flex-col gap-1">
                           <button
@@ -590,13 +587,13 @@ export const LeagueGroupEditorModal = ({
                           </button>
                         </div>
 
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-semibold text-sm">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-semibold text-sm flex-shrink-0">
                               {index + 1}
                             </div>
-                            <div>
-                              <p className="font-semibold text-gray-900 dark:text-white">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900 dark:text-white truncate">
                                 {group.name}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -606,9 +603,11 @@ export const LeagueGroupEditorModal = ({
                           </div>
                         </div>
 
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {index === 0 ? t('gameDetails.bestGroup') : index === data.groups.length - 1 ? t('gameDetails.worstGroup') : ''}
-                        </div>
+                        {(index === 0 || index === data.groups.length - 1) && (
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400 pointer-events-none text-right max-w-20 leading-tight break-words">
+                            {index === 0 ? t('gameDetails.bestGroup') : t('gameDetails.worstGroup')}
+                          </div>
+                        )}
                         </div>
                       ))}
                   </div>

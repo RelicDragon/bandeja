@@ -40,6 +40,37 @@ router.post(
 );
 
 router.post(
+  '/:leagueSeasonId/playoff',
+  authenticate,
+  canEditGame,
+  validate([
+    body('gameType').isIn(['WINNER_COURT', 'AMERICANO']).withMessage('gameType must be WINNER_COURT or AMERICANO'),
+    body('groups')
+      .optional()
+      .isArray({ min: 1 })
+      .withMessage('groups must be a non-empty array when provided'),
+    body('groups.*.leagueGroupId').optional().isString(),
+    body('groups.*.participantIds').optional().isArray({ min: 4 }).withMessage('Each group must have at least 4 participantIds'),
+    body('groups.*.participantIds.*').optional().isString(),
+    body('participantIds').optional().isArray({ min: 4 }).withMessage('participantIds must be an array of at least 4 ids when not using groups'),
+    body('participantIds.*').optional().isString(),
+    body('leagueGroupId').optional().isString(),
+    body().custom((value) => {
+      const hasGroups = Array.isArray(value.groups) && value.groups.length > 0;
+      const hasSingle = Array.isArray(value.participantIds) && value.participantIds.length >= 4;
+      if (!hasGroups && !hasSingle) {
+        throw new Error('Either groups (with at least one group of 4+ participantIds) or participantIds (min 4) is required');
+      }
+      if (hasGroups && hasSingle) {
+        throw new Error('Provide either groups or participantIds, not both');
+      }
+      return true;
+    }),
+  ]),
+  leagueController.createPlayoff
+);
+
+router.post(
   '/rounds/:leagueRoundId/games',
   authenticate,
   leagueController.createGameForRound

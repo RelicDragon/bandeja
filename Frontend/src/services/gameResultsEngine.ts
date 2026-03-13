@@ -271,12 +271,12 @@ class GameResultsEngineClass {
     await ResultsStorage.saveResults(localData);
   }
 
-  private generateRoundData(): { matches: Match[] } | null {
+  private async generateRoundData(): Promise<{ matches: Match[] } | null> {
     const state = this.getState();
     if (!state.game) return null;
 
     const roundNumber = state.rounds.length + 1;
-    
+
     const roundGenerator = new RoundGenerator({
       rounds: state.rounds,
       game: state.game,
@@ -284,7 +284,7 @@ class GameResultsEngineClass {
       fixedNumberOfSets: state.game.fixedNumberOfSets,
     });
 
-    const matches = roundGenerator.generateRound();
+    const matches = await roundGenerator.generateRound();
     return { matches };
   }
 
@@ -295,7 +295,7 @@ class GameResultsEngineClass {
 
     if (state.rounds.length > 0 && state.rounds[0].matches.length > 0) return;
 
-    const roundData = this.generateRoundData();
+    const roundData = await this.generateRoundData();
     if (roundData) {
       await this.addRound();
     }
@@ -316,7 +316,7 @@ class GameResultsEngineClass {
 
     if (hasPlayers) return;
 
-    const roundData = this.generateRoundData();
+    const roundData = await this.generateRoundData();
     if (roundData) {
       await this.addRound();
     }
@@ -350,7 +350,7 @@ class GameResultsEngineClass {
 
     const roundId = createId();
 
-    const roundData = this.generateRoundData();
+    const roundData = await this.generateRoundData();
     if (!roundData) {
       return;
     }

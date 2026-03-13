@@ -1,9 +1,9 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@prisma/client';
+import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType, RoundType } from '@prisma/client';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { getDistinctLeagueGroupColor } from './groupColors';
-import { createLeagueGame } from './gameCreation.util';
+import { createLeagueGame, createLeaguePlayoffGame } from './gameCreation.util';
 import { TeamForRoundGeneration } from './generation/TeamForRoundGeneration';
 
 export class LeagueCreateService {
@@ -602,6 +602,332 @@ export class LeagueCreateService {
     }
 
     return game;
+  }
+
+  static async createPlayoff(
+    leagueSeasonId: string,
+    userId: string,
+    payload: {
+      gameType: 'WINNER_COURT' | 'AMERICANO';
+      participantIds?: string[];
+      leagueGroupId?: string;
+      groups?: { leagueGroupId: string; participantIds: string[] }[];
+    }
+  ): Promise<{ round: any; game?: any; games?: any[] }> {
+    const { gameType, groups } = payload;
+
+    if (groups !== undefined) {
+      if (groups.length === 0) {
+        throw new ApiError(400, 'groups must not be empty when provided');
+      }
+      return this.createPlayoffBatch(leagueSeasonId, userId, gameType, groups);
+    }
+
+    const { participantIds, leagueGroupId } = payload;
+    if (!participantIds || participantIds.length < 4) {
+      throw new ApiError(400, 'At least 4 participants are required for playoff');
+    }
+    if (new Set(participantIds).size !== participantIds.length) {
+      throw new ApiError(400, 'participantIds must be distinct');
+    }
+
+    const leagueSeason = await prisma.leagueSeason.findUnique({
+      where: { id: leagueSeasonId },
+      include: {
+        game: {
+          include: {
+            participants: {
+              where: {
+                userId: userId,
+                role: { in: ['OWNER', 'ADMIN'] },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!leagueSeason) {
+      throw new ApiError(404, 'League season not found');
+    }
+
+    if (!leagueSeason.game) {
+      throw new ApiError(404, 'League season game not found');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    if (leagueSeason.game.participants.length === 0 && !user.isAdmin) {
+      throw new ApiError(403, 'Only owners and admins can create playoff');
+    }
+
+    const participants = await prisma.leagueParticipant.findMany({
+      where: {
+        id: { in: participantIds },
+        leagueSeasonId,
+        ...(leagueGroupId ? { currentGroupId: leagueGroupId } : {}),
+      },
+      include: {
+        user: { select: USER_SELECT_FIELDS },
+        leagueTeam: {
+          include: {
+            players: {
+              include: { user: { select: USER_SELECT_FIELDS } },
+            },
+          },
+        },
+      },
+    });
+
+    if (participants.length !== participantIds.length) {
+      throw new ApiError(400, 'Invalid or duplicate participant selection');
+    }
+
+    const hasFixedTeams = leagueSeason.game.hasFixedTeams ?? false;
+    let participantUserIds: string[] = [];
+    let teams: string[][] | undefined;
+
+    if (hasFixedTeams) {
+      teams = participants
+        .filter((p) => p.leagueTeam?.players?.length)
+        .map((p) => p.leagueTeam!.players.map((pl) => pl.userId));
+      participantUserIds = teams.flatMap((t) => t);
+    } else {
+      participantUserIds = participants.map((p) => p.userId!).filter(Boolean);
+    }
+
+    if (participantUserIds.length < 4) {
+      throw new ApiError(400, 'At least 4 participants are required for playoff');
+    }
+
+    const seasonGame = await prisma.game.findUnique({
+      where: { id: leagueSeason.game.id },
+      include: {
+        participants: { include: { user: { select: USER_SELECT_FIELDS } } },
+        fixedTeams: {
+          include: {
+            players: { include: { user: { select: USER_SELECT_FIELDS } } },
+          },
+          orderBy: { teamNumber: 'asc' },
+        },
+      },
+    });
+
+    if (!seasonGame) {
+      throw new ApiError(404, 'League season game not found');
+    }
+
+    let round: any;
+    let game: any;
+    await prisma.$transaction(async (tx) => {
+      const existingRounds = await tx.leagueRound.findMany({
+        where: { leagueSeasonId },
+        orderBy: { orderIndex: 'desc' },
+        take: 1,
+      });
+      const nextOrderIndex = existingRounds.length > 0 ? existingRounds[0].orderIndex + 1 : 0;
+      round = await tx.leagueRound.create({
+        data: {
+          leagueSeasonId,
+          orderIndex: nextOrderIndex,
+          roundType: RoundType.PLAYOFF,
+        },
+      });
+      game = await createLeaguePlayoffGame(
+        {
+          leagueRoundId: round.id,
+          leagueSeasonId,
+          seasonGame,
+          gameType,
+          participantUserIds,
+          leagueGroupId,
+          teams,
+        },
+        tx
+      );
+    });
+
+    const { GameService } = await import('../game/game.service');
+    await GameService.updateGameReadiness(game.id);
+
+    return { round, game };
+  }
+
+  private static async createPlayoffBatch(
+    leagueSeasonId: string,
+    userId: string,
+    gameType: 'WINNER_COURT' | 'AMERICANO',
+    groups: { leagueGroupId: string; participantIds: string[] }[]
+  ): Promise<{ round: any; games: any[] }> {
+    const MIN = 4;
+    for (const g of groups) {
+      if (!g.participantIds?.length || g.participantIds.length < MIN) {
+        throw new ApiError(400, `Each group must have at least ${MIN} participants`);
+      }
+      if (new Set(g.participantIds).size !== g.participantIds.length) {
+        throw new ApiError(400, 'participantIds must be distinct per group');
+      }
+    }
+    const groupIds = groups.map((g) => g.leagueGroupId);
+    if (new Set(groupIds).size !== groupIds.length) {
+      throw new ApiError(400, 'Duplicate leagueGroupId in groups');
+    }
+
+    const leagueSeason = await prisma.leagueSeason.findUnique({
+      where: { id: leagueSeasonId },
+      include: {
+        game: {
+          include: {
+            participants: {
+              where: {
+                userId: userId,
+                role: { in: ['OWNER', 'ADMIN'] },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!leagueSeason) {
+      throw new ApiError(404, 'League season not found');
+    }
+
+    if (!leagueSeason.game) {
+      throw new ApiError(404, 'League season game not found');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    if (leagueSeason.game.participants.length === 0 && !user.isAdmin) {
+      throw new ApiError(403, 'Only owners and admins can create playoff');
+    }
+
+    const seasonGroupIds = new Set(
+      (await prisma.leagueGroup.findMany({ where: { leagueSeasonId }, select: { id: true } })).map((x) => x.id)
+    );
+    for (const g of groups) {
+      if (!seasonGroupIds.has(g.leagueGroupId)) {
+        throw new ApiError(400, 'One or more groups do not belong to this league season');
+      }
+    }
+
+    const seasonGame = await prisma.game.findUnique({
+      where: { id: leagueSeason.game.id },
+      include: {
+        participants: { include: { user: { select: USER_SELECT_FIELDS } } },
+        fixedTeams: {
+          include: {
+            players: { include: { user: { select: USER_SELECT_FIELDS } } },
+          },
+          orderBy: { teamNumber: 'asc' },
+        },
+      },
+    });
+
+    if (!seasonGame) {
+      throw new ApiError(404, 'League season game not found');
+    }
+
+    const hasFixedTeams = leagueSeason.game.hasFixedTeams ?? false;
+    const groupsData: { leagueGroupId: string; participantUserIds: string[]; teams?: string[][] }[] = [];
+
+    for (const g of groups) {
+      const participants = await prisma.leagueParticipant.findMany({
+        where: {
+          id: { in: g.participantIds },
+          leagueSeasonId,
+          currentGroupId: g.leagueGroupId,
+        },
+        include: {
+          user: { select: USER_SELECT_FIELDS },
+          leagueTeam: {
+            include: {
+              players: {
+                include: { user: { select: USER_SELECT_FIELDS } },
+              },
+            },
+          },
+        },
+      });
+
+      if (participants.length !== g.participantIds.length) {
+        throw new ApiError(400, 'Invalid or duplicate participant selection for a group');
+      }
+
+      let participantUserIds: string[];
+      let teams: string[][] | undefined;
+      if (hasFixedTeams) {
+        teams = participants
+          .filter((p) => p.leagueTeam?.players?.length)
+          .map((p) => p.leagueTeam!.players.map((pl) => pl.userId));
+        participantUserIds = teams.flatMap((t) => t);
+      } else {
+        participantUserIds = participants.map((p) => p.userId!).filter(Boolean);
+      }
+
+      if (participantUserIds.length < MIN) {
+        throw new ApiError(400, `At least ${MIN} participants are required per group`);
+      }
+
+      groupsData.push({ leagueGroupId: g.leagueGroupId, participantUserIds, teams });
+    }
+
+    let round: any;
+    const games: any[] = [];
+
+    await prisma.$transaction(async (tx) => {
+      const existingRounds = await tx.leagueRound.findMany({
+        where: { leagueSeasonId },
+        orderBy: { orderIndex: 'desc' },
+        take: 1,
+      });
+      const nextOrderIndex = existingRounds.length > 0 ? existingRounds[0].orderIndex + 1 : 0;
+      round = await tx.leagueRound.create({
+        data: {
+          leagueSeasonId,
+          orderIndex: nextOrderIndex,
+          roundType: RoundType.PLAYOFF,
+        },
+      });
+
+      for (const gd of groupsData) {
+        const game = await createLeaguePlayoffGame(
+          {
+            leagueRoundId: round.id,
+            leagueSeasonId,
+            seasonGame,
+            gameType,
+            participantUserIds: gd.participantUserIds,
+            leagueGroupId: gd.leagueGroupId,
+            teams: gd.teams,
+          },
+          tx
+        );
+        games.push(game);
+      }
+    });
+
+    const { GameService } = await import('../game/game.service');
+    for (const game of games) {
+      await GameService.updateGameReadiness(game.id);
+    }
+
+    return { round, games };
   }
 
   static async createLeagueGroups(leagueSeasonId: string, numberOfGroups: number, userId: string) {

@@ -24,6 +24,7 @@
     "backfill:bug-testing-started-at": "ts-node scripts/backfillBugTestingStartedAt.ts",
     "backfill:league-delta-scores": "ts-node scripts/backfillLeagueDeltaScores.ts",
     "backfill:city-groups": "ts-node scripts/backfillCityGroups.ts",
+    "backfill:city-group-welcome-messages": "ts-node scripts/backfillCityGroupWelcomeMessages.ts",
     "migrateBugsToGroups": "ts-node scripts/migrateBugsToGroups.ts",
     "test:currency": "ts-node scripts/test-currency-service.ts",
     "example:currency": "ts-node examples/currency-integration-example.ts"

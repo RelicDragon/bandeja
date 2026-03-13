@@ -26,13 +26,13 @@ export class RoundGenerator {
     this.options = options;
   }
 
-  generateRound(): Match[] {
+  async generateRound(): Promise<Match[]> {
     const { matchGenerationType } = this.options.game;
     const fixedNumberOfSets = this.options.fixedNumberOfSets || 0;
     const initialSets = fixedNumberOfSets > 0
       ? Array.from({ length: fixedNumberOfSets }, () => ({ teamA: 0, teamB: 0, isTieBreak: false }))
       : [{ teamA: 0, teamB: 0, isTieBreak: false }];
-    
+
     if (!matchGenerationType || matchGenerationType === 'HANDMADE') {
       return this.generateHandmadeRound(initialSets);
     }

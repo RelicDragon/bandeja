@@ -15,6 +15,7 @@ interface GroupFilterDropdownProps {
   allGroupsLabel: string;
   onSelect: (groupId: string) => void;
   allGroupId?: string;
+  showAllOption?: boolean;
 }
 
 export const GroupFilterDropdown = ({
@@ -23,6 +24,7 @@ export const GroupFilterDropdown = ({
   allGroupsLabel,
   onSelect,
   allGroupId = 'ALL',
+  showAllOption = true,
 }: GroupFilterDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -30,7 +32,8 @@ export const GroupFilterDropdown = ({
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number; width: number } | null>(null);
 
   const selectedGroup = groups.find((g) => g.id === selectedGroupId);
-  const selectedLabel = selectedGroupId === allGroupId ? allGroupsLabel : selectedGroup?.name || allGroupsLabel;
+  const selectedLabel =
+    showAllOption && selectedGroupId === allGroupId ? allGroupsLabel : selectedGroup?.name || allGroupsLabel;
 
   const updateMenuPosition = useCallback(() => {
     if (!dropdownRef.current) return;
@@ -102,29 +105,32 @@ export const GroupFilterDropdown = ({
         }}
       >
         <div className="max-h-80 overflow-y-auto">
-          <button
-            onClick={() => handleSelect(allGroupId)}
-            className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 ${
-              selectedGroupId === allGroupId
-                ? 'bg-primary-50 dark:bg-primary-900/20'
-                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-            }`}
-          >
-            <span
-              className={`text-sm font-medium ${
-                selectedGroupId === allGroupId
-                  ? 'text-primary-700 dark:text-primary-400'
-                  : 'text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              {allGroupsLabel}
-            </span>
-            {selectedGroupId === allGroupId && (
-              <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-            )}
-          </button>
-
-          <div className="border-t border-gray-200 dark:border-gray-700" />
+          {showAllOption && (
+            <>
+              <button
+                onClick={() => handleSelect(allGroupId)}
+                className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 ${
+                  selectedGroupId === allGroupId
+                    ? 'bg-primary-50 dark:bg-primary-900/20'
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                }`}
+              >
+                <span
+                  className={`text-sm font-medium ${
+                    selectedGroupId === allGroupId
+                      ? 'text-primary-700 dark:text-primary-400'
+                      : 'text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  {allGroupsLabel}
+                </span>
+                {selectedGroupId === allGroupId && (
+                  <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                )}
+              </button>
+              <div className="border-t border-gray-200 dark:border-gray-700" />
+            </>
+          )}
 
           {groups.map((group) => {
             const isSelected = selectedGroupId === group.id;

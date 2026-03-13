@@ -6,10 +6,11 @@ import { Card, ConfirmationModal } from '@/components';
 import { EditLeagueGameTeamsModal } from './EditLeagueGameTeamsModal';
 import { GroupCreationModal } from './GroupCreationModal';
 import { LeagueGroupEditorModal } from './LeagueGroupEditorModal';
+import { PlayoffConfigurationModal } from './PlayoffConfigurationModal';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { RoundTypeFilterSwitch } from './RoundTypeFilterSwitch';
 import { leaguesApi, LeagueRound, LeagueGroup } from '@/api/leagues';
-import { Loader2, Calendar, Users } from 'lucide-react';
+import { Loader2, Calendar, Users, Trophy } from 'lucide-react';
 import { Game } from '@/types';
 import { LeagueRoundAccordion } from './LeagueRoundAccordion';
 import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
@@ -39,6 +40,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const [participantCount, setParticipantCount] = useState(0);
   const [hasGroups, setHasGroups] = useState(false);
   const [showGroupEditor, setShowGroupEditor] = useState(false);
+  const [showPlayoffModal, setShowPlayoffModal] = useState(false);
   const [groups, setGroups] = useState<LeagueGroup[]>([]);
   const [roundPendingDeletion, setRoundPendingDeletion] = useState<LeagueRound | null>(null);
   const [roundIdBeingDeleted, setRoundIdBeingDeleted] = useState<string | null>(null);
@@ -352,13 +354,23 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
       {filteredRounds.length === 0 ? (
         <Card>
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            {t('gameDetails.noRounds')}
+            {selectedRoundType === 'PLAYOFF' ? t('gameDetails.noPlayoffRounds', { defaultValue: 'No playoff rounds yet.' }) : t('gameDetails.noRounds')}
+            {canEdit && selectedRoundType === 'PLAYOFF' && (
+              <button
+                type="button"
+                onClick={() => setShowPlayoffModal(true)}
+                className="mt-4 w-full max-w-xs mx-auto group relative overflow-hidden rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-3 px-4 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              >
+                <Trophy size={18} className="relative z-10" />
+                <span className="relative z-10">{t('gameDetails.createPlayoff', { defaultValue: 'Create Playoff' })}</span>
+              </button>
+            )}
           </div>
         </Card>
       ) : (
         <div className="space-y-0">
           {filteredRounds.map((round, roundIndex) => {
-            const isLastRound = roundIndex === rounds.length - 1;
+            const isLastRound = roundIndex === filteredRounds.length - 1;
             const showAddGameButton = canEdit && isLastRound;
             const canDeleteRound =
               canEdit &&
@@ -433,6 +445,15 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           leagueSeasonId={leagueSeasonId}
           onClose={() => setShowGroupEditor(false)}
           onUpdated={fetchRounds}
+        />
+      )}
+      {showPlayoffModal && (
+        <PlayoffConfigurationModal
+          isOpen={showPlayoffModal}
+          onClose={() => setShowPlayoffModal(false)}
+          leagueSeasonId={leagueSeasonId}
+          hasFixedTeams={hasFixedTeams ?? false}
+          onCreated={fetchRounds}
         />
       )}
       {isClient && roundPendingDeletion && (

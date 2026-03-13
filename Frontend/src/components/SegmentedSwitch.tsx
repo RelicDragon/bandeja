@@ -26,7 +26,7 @@ export const SegmentedSwitch = ({
   layoutId,
   className = '',
 }: SegmentedSwitchProps) => (
-  <div className={`relative flex items-stretch gap-1 overflow-visible bg-gray-100 dark:bg-gray-700 rounded-lg p-1 ${className}`.trim()}>
+  <div className={`relative flex w-fit mx-auto items-stretch gap-1 overflow-visible bg-gray-100 dark:bg-gray-700 rounded-lg p-1 ${className}`.trim()}>
     {tabs.map((tab) => {
       const isActive = activeId === tab.id;
       const Icon = tab.icon;

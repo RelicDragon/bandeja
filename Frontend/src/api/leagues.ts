@@ -176,5 +176,16 @@ export const leaguesApi = {
     const response = await api.post<ApiResponse<{ success: boolean; notifiedUsers: number }>>(`/leagues/rounds/${leagueRoundId}/send-start-message`);
     return response.data;
   },
+  createPlayoff: async (
+    leagueSeasonId: string,
+    payload:
+      | { gameType: 'WINNER_COURT' | 'AMERICANO'; participantIds: string[]; leagueGroupId?: string }
+      | { gameType: 'WINNER_COURT' | 'AMERICANO'; groups: { leagueGroupId: string; participantIds: string[] }[] }
+  ) => {
+    const response = await api.post<
+      ApiResponse<{ round: LeagueRound; game?: unknown; games?: unknown[] }>
+    >(`/leagues/${leagueSeasonId}/playoff`, payload);
+    return response.data;
+  },
 };
 
