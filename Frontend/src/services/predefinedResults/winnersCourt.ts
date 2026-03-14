@@ -7,6 +7,9 @@ import {
   getNumMatches,
   getFilteredFixedTeams,
   buildMatchesPlayed,
+  buildPartnerCounts,
+  buildOpponentCounts,
+  pairKey,
   hasPlayers,
   cloneSets,
   InitialSets,
@@ -135,22 +138,58 @@ function distributePlayersAcrossCourts(courtResults: CourtResult[]): string[][] 
   return courts;
 }
 
+function pickCrossPairing(
+  players: string[],
+  partnerCounts: Map<string, number>,
+  opponentCounts: Map<string, number>
+): { teamA: [string, string]; teamB: [string, string] } {
+  const [A, B, C, D] = players;
+
+  const costX =
+    (partnerCounts.get(pairKey(A, B)) || 0) +
+    (partnerCounts.get(pairKey(C, D)) || 0);
+  const costY =
+    (partnerCounts.get(pairKey(A, D)) || 0) +
+    (partnerCounts.get(pairKey(B, C)) || 0);
+
+  if (costX < costY) return { teamA: [A, B], teamB: [C, D] };
+  if (costY < costX) return { teamA: [A, D], teamB: [B, C] };
+
+  const opCostX =
+    (opponentCounts.get(pairKey(A, C)) || 0) +
+    (opponentCounts.get(pairKey(A, D)) || 0) +
+    (opponentCounts.get(pairKey(B, C)) || 0) +
+    (opponentCounts.get(pairKey(B, D)) || 0);
+  const opCostY =
+    (opponentCounts.get(pairKey(A, B)) || 0) +
+    (opponentCounts.get(pairKey(A, C)) || 0) +
+    (opponentCounts.get(pairKey(D, B)) || 0) +
+    (opponentCounts.get(pairKey(D, C)) || 0);
+
+  if (opCostX <= opCostY) return { teamA: [A, B], teamB: [C, D] };
+  return { teamA: [A, D], teamB: [B, C] };
+}
+
 function buildMatchesFromCourts(
   courts: string[][],
   sortedCourts: Array<{ courtId?: string; order: number }>,
   initialSets: InitialSets,
-  numMatches: number
+  numMatches: number,
+  previousRounds: Round[]
 ): Match[] {
+  const partnerCounts = buildPartnerCounts(previousRounds);
+  const opponentCounts = buildOpponentCounts(previousRounds);
   const matches: Match[] = [];
 
   for (let i = 0; i < Math.min(courts.length, numMatches); i++) {
     const players = courts[i];
     if (players.length < 4) continue;
 
+    const { teamA, teamB } = pickCrossPairing(players, partnerCounts, opponentCounts);
     matches.push({
       id: createId(),
-      teamA: [players[0], players[3]],
-      teamB: [players[1], players[2]],
+      teamA,
+      teamB,
       sets: cloneSets(initialSets),
       courtId: sortedCourts[i]?.courtId,
     });
@@ -280,7 +319,7 @@ async function generateStandardRound(
           ]);
         }
       }
-      return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches);
+      return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, previousRounds);
     }
 
     const sorted = [...participants].sort((a, b) => b.user.level - a.user.level);
@@ -297,7 +336,7 @@ async function generateStandardRound(
         courts.push([playerIds[base], playerIds[base + 1], playerIds[base + 2], playerIds[base + 3]]);
       }
     }
-    return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches);
+    return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, previousRounds);
   }
 
   const previousRound = previousRounds[previousRounds.length - 1];
@@ -323,7 +362,7 @@ async function generateStandardRound(
     );
   }
 
-  return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches);
+  return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, previousRounds);
 }
 
 function handleBenchRotation(
@@ -385,7 +424,7 @@ function handleBenchRotation(
   }
 
   cleanEmptySlots(courts);
-  return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches);
+  return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, previousRounds);
 }
 
 // ── MIX_PAIRS ─────────────────────────────────────────────────────────
@@ -471,7 +510,7 @@ function generateMixPairsRound(
   }
 
   cleanEmptySlots(courts);
-  return buildMixPairsMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, genderMap);
+  return buildMixPairsMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, genderMap, previousRounds);
 }
 
 function rebalanceGendersAcrossCourts(
@@ -619,8 +658,11 @@ function buildMixPairsMatchesFromCourts(
   sortedCourts: Array<{ courtId?: string; order: number }>,
   initialSets: InitialSets,
   numMatches: number,
-  genderMap: Map<string, string>
+  genderMap: Map<string, string>,
+  previousRounds: Round[]
 ): Match[] {
+  const partnerCounts = buildPartnerCounts(previousRounds);
+  const opponentCounts = buildOpponentCounts(previousRounds);
   const matches: Match[] = [];
 
   for (let i = 0; i < Math.min(courts.length, numMatches); i++) {
@@ -631,18 +673,68 @@ function buildMixPairsMatchesFromCourts(
     const femalesOnCourt = players.filter(id => genderMap.get(id) === 'FEMALE');
 
     if (malesOnCourt.length >= 2 && femalesOnCourt.length >= 2) {
-      matches.push({
-        id: createId(),
-        teamA: [malesOnCourt[0], femalesOnCourt[1]],
-        teamB: [malesOnCourt[1], femalesOnCourt[0]],
-        sets: cloneSets(initialSets),
-        courtId: sortedCourts[i]?.courtId,
-      });
+      const [M1, M2] = malesOnCourt;
+      const [F1, F2] = femalesOnCourt;
+
+      const costA =
+        (partnerCounts.get(pairKey(M1, F1)) || 0) +
+        (partnerCounts.get(pairKey(M2, F2)) || 0);
+      const costB =
+        (partnerCounts.get(pairKey(M1, F2)) || 0) +
+        (partnerCounts.get(pairKey(M2, F1)) || 0);
+
+      if (costA < costB) {
+        matches.push({
+          id: createId(),
+          teamA: [M1, F1],
+          teamB: [M2, F2],
+          sets: cloneSets(initialSets),
+          courtId: sortedCourts[i]?.courtId,
+        });
+      } else if (costB < costA) {
+        matches.push({
+          id: createId(),
+          teamA: [M1, F2],
+          teamB: [M2, F1],
+          sets: cloneSets(initialSets),
+          courtId: sortedCourts[i]?.courtId,
+        });
+      } else {
+        const opCostA =
+          (opponentCounts.get(pairKey(M1, M2)) || 0) +
+          (opponentCounts.get(pairKey(M1, F2)) || 0) +
+          (opponentCounts.get(pairKey(F1, M2)) || 0) +
+          (opponentCounts.get(pairKey(F1, F2)) || 0);
+        const opCostB =
+          (opponentCounts.get(pairKey(M1, M2)) || 0) +
+          (opponentCounts.get(pairKey(M1, F1)) || 0) +
+          (opponentCounts.get(pairKey(F2, M2)) || 0) +
+          (opponentCounts.get(pairKey(F2, F1)) || 0);
+
+        if (opCostA <= opCostB) {
+          matches.push({
+            id: createId(),
+            teamA: [M1, F1],
+            teamB: [M2, F2],
+            sets: cloneSets(initialSets),
+            courtId: sortedCourts[i]?.courtId,
+          });
+        } else {
+          matches.push({
+            id: createId(),
+            teamA: [M1, F2],
+            teamB: [M2, F1],
+            sets: cloneSets(initialSets),
+            courtId: sortedCourts[i]?.courtId,
+          });
+        }
+      }
     } else {
+      const { teamA, teamB } = pickCrossPairing(players, partnerCounts, opponentCounts);
       matches.push({
         id: createId(),
-        teamA: [players[0], players[3]],
-        teamB: [players[1], players[2]],
+        teamA,
+        teamB,
         sets: cloneSets(initialSets),
         courtId: sortedCourts[i]?.courtId,
       });
