@@ -129,7 +129,7 @@ export const updateGame = asyncHandler(async (req: AuthRequest, res: Response) =
 
 export const deleteGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  await GameService.deleteGame(id);
+  await GameService.deleteGame(id, req.userId!);
 
   res.json({
     success: true,

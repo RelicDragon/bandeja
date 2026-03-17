@@ -22,6 +22,7 @@ import { createBetResolvedPushNotification, createBetNeedsReviewPushNotification
 import { createTransactionPushNotification } from './push/notifications/transaction-push.notification';
 import { createNewMarketItemPushNotification } from './push/notifications/new-market-item-push.notification';
 import { createNewBugPushNotification } from './push/notifications/new-bug-push.notification';
+import { createGameCancelledPushNotification, GameCancelledMeta } from './push/notifications/game-cancelled-push.notification';
 import { GameSubscriptionService } from './gameSubscription.service';
 
 class NotificationService {
@@ -767,6 +768,24 @@ class NotificationService {
     }
   }
 
+  async sendGameCancelledNotification(meta: GameCancelledMeta, recipientUserIds: string[]) {
+    if (recipientUserIds.length === 0) return;
+    const users = await prisma.user.findMany({
+      where: { id: { in: recipientUserIds } },
+      select: { id: true, language: true },
+    });
+    for (const user of users) {
+      const payload = await createGameCancelledPushNotification(meta, user);
+      if (payload) {
+        await this.sendNotification({
+          userId: user.id,
+          type: NotificationType.GAME_CANCELLED,
+          payload,
+        });
+      }
+    }
+    await telegramNotificationService.sendGameCancelledNotification(meta, recipientUserIds);
+  }
 }
 
 export default new NotificationService();

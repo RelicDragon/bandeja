@@ -1,4 +1,5 @@
 export * from './GameDetailsHeader';
+export * from './GameCancelled';
 export * from './GameInfo';
 export * from './GameResults';
 export * from './GameParticipants';

@@ -64,7 +64,11 @@ export function useGameChatContext({
         return response.data;
       }
       return null;
-    } catch (error) {
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number; data?: { cancelled?: boolean } } };
+      if (contextType === 'GAME' && err.response?.status === 410 && err.response?.data?.cancelled) {
+        setGame(null);
+      }
       console.error('Failed to load context:', error);
       if (currentIdRef.current === requestId && !isEmbedded) {
         if (contextType === 'GROUP') {

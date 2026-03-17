@@ -1313,6 +1313,11 @@
     "deleteLeague": "Eliminar liga",
     "deleteGameConfirmation": "¿Estás seguro de que quieres eliminar este juego? Esta acción no se puede deshacer.",
     "gameDeleted": "Juego eliminado exitosamente",
+    "gameCancelledTitle": "Cancelado",
+    "gameCancelled": "Cancelado por el organizador.",
+    "gameCancelledWithName": "«{{name}}» fue cancelado por el organizador.",
+    "gameCancelledGoHome": "Ir al inicio",
+    "cancelledBy": "Cancelado por",
     "leaveGame": "Dejar juego",
     "leaveGameConfirmation": "¿Estás seguro de que quieres salir?",
     "leaveGameConfirmationGame": "¿Estás seguro de que quieres dejar este juego?",
@@ -1611,7 +1616,8 @@
       "cannotAddPlayer": "No se puede agregar jugador al juego",
       "alreadyParticipant": "El usuario ya es un participante",
       "cannotJoinArchivedOrFinished": "No se puede unir a un juego archivado o finalizado",
-      "directJoinNotAllowed": "No se permite unirse directamente a este juego"
+      "directJoinNotAllowed": "No se permite unirse directamente a este juego",
+      "cannotDeleteHasChildren": "No se puede eliminar un juego que tiene juegos hijos (p. ej. torneo con rondas). Elimina o quita primero los juegos hijos."
     },
     "league": {
       "gameNotFound": "Partido no encontrado",

@@ -1308,7 +1308,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const [bugsExpanded, setBugsExpanded] = useState(true);
   const [marketListingsExpanded, setMarketListingsExpanded] = useState(true);
   const [showBugModal, setShowBugModal] = useState(false);
-  const [bugsFilterPanelOpen, setBugsFilterPanelOpen] = useState(false);
+  const [bugsFilterPanelOpen, setBugsFilterPanelOpen] = useState(true);
   const [unreadFilterActive, setUnreadFilterActive] = useState(false);
 
   const marketBuyerSellerUnread = useMemo(() => {

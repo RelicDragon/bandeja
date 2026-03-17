@@ -1354,6 +1354,11 @@
     "deleteLeague": "Smazat ligu",
     "deleteGameConfirmation": "Opravdu chcete smazat tento zápas? Tuto akci nelze vrátit.",
     "gameDeleted": "Zápas byl smazán",
+    "gameCancelledTitle": "Zrušeno",
+    "gameCancelled": "Pořadatel zrušil událost.",
+    "gameCancelledWithName": "«{{name}}» byl zrušen pořadatelem.",
+    "gameCancelledGoHome": "Na úvod",
+    "cancelledBy": "Zrušil(a)",
     "leaveGame": "Opustit zápas",
     "leaveGameGame": "Opustit zápas",
     "leaveGameTournament": "Opustit turnaj",
@@ -1662,7 +1667,8 @@
       "cannotAddPlayer": "Nelze přidat hráče do zápasu",
       "alreadyParticipant": "Uživatel je již účastníkem",
       "cannotJoinArchivedOrFinished": "Nelze se připojit k archivovanému nebo ukončenému zápasu",
-      "directJoinNotAllowed": "Přímé připojení u tohoto zápasu není povoleno"
+      "directJoinNotAllowed": "Přímé připojení u tohoto zápasu není povoleno",
+      "cannotDeleteHasChildren": "Zápas s dceřinými zápasy (např. turnaj s koly) nelze smazat. Nejprve smažte nebo odeberte dceřiné zápasy."
     },
     "league": {
       "gameNotFound": "Zápas nenalezen",

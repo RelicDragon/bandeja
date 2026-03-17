@@ -24,6 +24,12 @@ export const GameDetailsPage = () => {
   const gameDetailsCanShowTableView = useNavigationStore((s) => s.gameDetailsCanShowTableView);
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
   const [layoutTableAvailable, setLayoutTableAvailable] = useState<boolean | null>(null);
+  const [layoutCancelledInfo, setLayoutCancelledInfo] = useState<{
+    entityType: string;
+    name: string | null;
+    cancelledAt: string;
+    cancelledByUser?: import('@/types').BasicUser | null;
+  } | null>(null);
   const useTableViewLayout = effectiveTableView && (layoutTableAvailable === null || layoutTableAvailable || gameDetailsCanShowTableView);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedGameChatId, setSelectedGameChatId] = useState<string | null>(null);
@@ -32,24 +38,35 @@ export const GameDetailsPage = () => {
     setGameDetailsTableViewOverride(null);
     setGameDetailsCanShowTableView(false);
     setLayoutTableAvailable(null);
+    setLayoutCancelledInfo(null);
     setSelectedGameChatId(null);
   }, [id, setGameDetailsTableViewOverride, setGameDetailsCanShowTableView]);
 
   useEffect(() => {
-    if (!id || !effectiveTableView || layoutTableAvailable !== null) return;
+    if (!id || (!effectiveTableView && !isDesktop) || layoutTableAvailable !== null) return;
     let cancelled = false;
     gamesApi.getById(id).then((res) => {
       if (!cancelled) {
         setLayoutTableAvailable(canShowTableViewFromGame(res.data));
       }
-    }).catch((err) => {
+    }).catch((err: { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } }) => {
       if (!cancelled) {
-        console.error('GameDetails layout fetch failed:', err);
+        if (err.response?.status === 410 && err.response?.data?.cancelled) {
+          const d = err.response.data;
+          setLayoutCancelledInfo({
+            entityType: d?.entityType ?? 'GAME',
+            name: d?.name ?? null,
+            cancelledAt: d?.cancelledAt ?? new Date().toISOString(),
+            cancelledByUser: d?.cancelledByUser ?? null,
+          });
+        } else {
+          console.error('GameDetails layout fetch failed:', err);
+        }
         setLayoutTableAvailable(false);
       }
     });
     return () => { cancelled = true; };
-  }, [id, effectiveTableView, layoutTableAvailable]);
+  }, [id, effectiveTableView, isDesktop, layoutTableAvailable]);
 
   if (!id) return null;
 
@@ -68,19 +85,24 @@ export const GameDetailsPage = () => {
             scrollContainerRef={scrollContainerRef}
             selectedGameChatId={selectedGameChatId}
             onChatGameSelect={handleChatGameSelect}
+            layoutCancelledInfo={layoutCancelledInfo}
           />
         </div>
       </SplitViewLeftPanel>
     );
 
-    if (useTableViewLayout) {
+    if (useTableViewLayout || layoutCancelledInfo) {
       return (
         <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
-          <div ref={scrollContainerRef} className="h-full overflow-y-auto overflow-x-hidden">
+          <div
+            ref={scrollContainerRef}
+            className={`h-full overflow-x-hidden ${layoutCancelledInfo ? 'overflow-hidden' : 'overflow-y-auto'}`}
+          >
             <GameDetailsContent
               scrollContainerRef={scrollContainerRef}
               selectedGameChatId={selectedGameChatId}
               onChatGameSelect={handleChatGameSelect}
+              layoutCancelledInfo={layoutCancelledInfo}
             />
           </div>
         </div>
@@ -114,6 +136,7 @@ export const GameDetailsPage = () => {
     <GameDetailsContent
       selectedGameChatId={selectedGameChatId}
       onChatGameSelect={handleChatGameSelect}
+      layoutCancelledInfo={layoutCancelledInfo}
     />
   );
 };

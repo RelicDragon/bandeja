@@ -33,6 +33,7 @@ export interface SocketEvents {
   'auction:bid': (data: { marketItemId: string; newHighCents: number; bidCount: number; previousHighBidderId: string | null; isHollandWin?: boolean }) => void;
   'auction:bin-accepted': (data: { marketItemId: string; winnerId: string }) => void;
   'game-updated': (data: { gameId: string; senderId: string; game: any }) => void;
+  'game-cancelled': (data: { gameId: string; entityType: string; name?: string; cancelledAt: string; cancelledByUser?: import('@/types').BasicUser }) => void;
   'game-results-updated': (data: { gameId: string }) => void;
   'wallet-update': (data: { wallet: number }) => void;
   'error': (error: { message: string }) => void;

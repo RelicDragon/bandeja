@@ -10,12 +10,16 @@ final class MainViewController: CAPBridgeViewController {
     private var didStartAnyLoad = false
     private var hasDismissedSplash = false
     private var timeoutWorkItem: DispatchWorkItem?
+    private var swipeBackInstalled = false
+    private var swipeBackRetryCount = 0
+    private let swipeBackMaxRetries = 50
 
     override func viewDidLoad() {
         super.viewDidLoad()
         installSplashOverlayIfNeeded()
         startObservingWebViewLoadState()
         scheduleFallbackDismiss()
+        installSwipeBackGestureIfNeeded()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -137,6 +141,33 @@ final class MainViewController: CAPBridgeViewController {
             self?.splashOverlay = nil
             self?.logoImageView = nil
         })
+    }
+
+    private func installSwipeBackGestureIfNeeded() {
+        guard !swipeBackInstalled else { return }
+        guard let webView = self.webView else {
+            guard swipeBackRetryCount < swipeBackMaxRetries else { return }
+            swipeBackRetryCount += 1
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                self?.installSwipeBackGestureIfNeeded()
+            }
+            return
+        }
+        swipeBackInstalled = true
+        webView.allowsBackForwardNavigationGestures = false
+        let recognizer = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeBack(_:)))
+        recognizer.direction = .right
+        webView.addGestureRecognizer(recognizer)
+    }
+
+    @objc private func handleSwipeBack(_ recognizer: UISwipeGestureRecognizer) {
+        guard recognizer.state == .ended, let webView = self.webView else { return }
+        let script = "window.dispatchEvent(new CustomEvent('capacitorBackButton'))"
+        webView.evaluateJavaScript(script) { _, error in
+            if let error = error {
+                NSLog("iOS swipe-back JS dispatch failed: %@", error.localizedDescription)
+            }
+        }
     }
 }
 

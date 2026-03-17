@@ -292,6 +292,23 @@ export class GameReadService {
     });
 
     if (!game) {
+      const cancelled = await prisma.cancelledGame.findUnique({
+        where: { id },
+        select: { entityType: true, name: true, cancelledAt: true, cancelledByUserId: true },
+      });
+      if (cancelled) {
+        const cancelledByUser = await prisma.user.findUnique({
+          where: { id: cancelled.cancelledByUserId },
+          select: USER_SELECT_FIELDS,
+        });
+        throw new ApiError(410, 'Game cancelled by owner', true, {
+          cancelled: true,
+          entityType: cancelled.entityType,
+          name: cancelled.name,
+          cancelledAt: cancelled.cancelledAt.toISOString(),
+          cancelledByUser: cancelledByUser ?? undefined,
+        });
+      }
       throw new ApiError(404, 'Game not found');
     }
 

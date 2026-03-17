@@ -24,6 +24,7 @@ export enum NotificationType {
   AUCTION_NEW_BID = 'AUCTION_NEW_BID',
   AUCTION_WON = 'AUCTION_WON',
   AUCTION_BIN_ACCEPTED = 'AUCTION_BIN_ACCEPTED',
+  GAME_CANCELLED = 'GAME_CANCELLED',
 }
 
 export interface NotificationAction {

@@ -1,11 +1,13 @@
 import { App } from '@capacitor/app';
 import type { BackButtonListenerEvent } from '@capacitor/app';
 import { NavigateFunction } from 'react-router-dom';
-import { isAndroid } from '@/utils/capacitor';
+import { isAndroid, isIOS } from '@/utils/capacitor';
 import { handleBack } from '@/utils/backNavigation';
 import { homeUrl } from '@/utils/urlSchema';
 import toast from 'react-hot-toast';
 import i18n from '@/i18n/config';
+
+const IOS_SWIPE_BACK_EVENT = 'capacitorBackButton';
 
 type ModalCloseHandler = () => void;
 type PageBackHandler = () => boolean | void;
@@ -13,7 +15,8 @@ type PageBackHandler = () => boolean | void;
 class BackButtonService {
   private modalStack: Array<{ id: string; handler: ModalCloseHandler }> = [];
   private pageHandler: PageBackHandler | null = null;
-  private listenerHandle: any = null;
+  private listenerHandle: { remove: () => Promise<void> } | null = null;
+  private iosSwipeBackBound: (() => void) | null = null;
   private isInitialized = false;
   private isHandling = false;
   private navigate: NavigateFunction | null = null;
@@ -24,19 +27,34 @@ class BackButtonService {
     this.navigate = navigateFn;
   }
 
+  triggerBack(): void {
+    this.handleBackButton();
+  }
+
   initialize() {
-    if (this.isInitialized || !isAndroid()) return;
-    
+    if (this.isInitialized) return;
+    if (!isAndroid() && !isIOS()) return;
+
     this.isInitialized = true;
-    App.addListener('backButton', (event: BackButtonListenerEvent) => {
-      this.handleBackButton(event);
-    }).then((handle) => {
-      this.listenerHandle = handle;
-    }).catch((error) => {
-      console.error('Failed to initialize back button listener:', error);
-      this.isInitialized = false;
-      App.toggleBackButtonHandler({ enabled: true }).catch(() => {});
-    });
+
+    if (isAndroid()) {
+      App.addListener('backButton', (event: BackButtonListenerEvent) => {
+        this.handleBackButton(event);
+      }).then((handle) => {
+        this.listenerHandle = handle;
+      }).catch((error) => {
+        console.error('Failed to initialize back button listener:', error);
+        this.isInitialized = false;
+        App.toggleBackButtonHandler({ enabled: true }).catch(() => {});
+      });
+      return;
+    }
+
+    if (isIOS()) {
+      const bound = () => this.handleBackButton();
+      this.iosSwipeBackBound = bound;
+      window.addEventListener(IOS_SWIPE_BACK_EVENT, bound);
+    }
   }
 
   private handleBackButton(_backEvent?: BackButtonListenerEvent) {
@@ -153,12 +171,14 @@ class BackButtonService {
 
   cleanup() {
     if (this.listenerHandle) {
-      try {
-        this.listenerHandle.remove();
-      } catch (error) {
+      this.listenerHandle.remove().catch((error: unknown) => {
         console.error('Error removing back button listener:', error);
-      }
+      });
       this.listenerHandle = null;
+    }
+    if (this.iosSwipeBackBound) {
+      window.removeEventListener(IOS_SWIPE_BACK_EVENT, this.iosSwipeBackBound);
+      this.iosSwipeBackBound = null;
     }
     this.modalStack = [];
     this.pageHandler = null;

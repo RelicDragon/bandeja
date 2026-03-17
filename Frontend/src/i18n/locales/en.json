@@ -1369,6 +1369,11 @@
     "deleteLeague": "Delete League",
     "deleteGameConfirmation": "Are you sure you want to delete this game? This action cannot be undone.",
     "gameDeleted": "Game deleted successfully",
+    "gameCancelledTitle": "Cancelled",
+    "gameCancelled": "Cancelled by the organizer.",
+    "gameCancelledWithName": "«{{name}}» was cancelled by the organizer.",
+    "gameCancelledGoHome": "Go to Home",
+    "cancelledBy": "Cancelled by",
     "leaveGame": "Leave Game",
     "leaveGameGame": "Leave Game",
     "leaveGameTournament": "Leave Tournament",
@@ -1675,7 +1680,8 @@
       "cannotAddPlayer": "Cannot add player to game",
       "alreadyParticipant": "User is already a participant",
       "cannotJoinArchivedOrFinished": "Cannot join archived or finished game",
-      "directJoinNotAllowed": "Direct join is not allowed for this game"
+      "directJoinNotAllowed": "Direct join is not allowed for this game",
+      "cannotDeleteHasChildren": "Cannot delete a game that has child games (e.g. tournament with rounds). Delete or remove child games first."
     },
     "league": {
       "gameNotFound": "Game not found",

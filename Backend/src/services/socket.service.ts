@@ -2,6 +2,7 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/database';
+import { USER_SELECT_FIELDS } from '../utils/constants';
 import { GameReadService } from './game/read.service';
 import { ChatContextType, ChatType } from '@prisma/client';
 import { presenceService } from './presence.service';
@@ -127,6 +128,24 @@ class SocketService {
         });
 
         if (!game) {
+          const cancelled = await prisma.cancelledGame.findUnique({
+            where: { id: gameId },
+            select: { entityType: true, name: true, cancelledAt: true, cancelledByUserId: true },
+          });
+          if (cancelled) {
+            const cancelledByUser = await prisma.user.findUnique({
+              where: { id: cancelled.cancelledByUserId },
+              select: USER_SELECT_FIELDS,
+            });
+            socket.emit('game-cancelled', {
+              gameId,
+              entityType: cancelled.entityType,
+              name: cancelled.name ?? undefined,
+              cancelledAt: cancelled.cancelledAt.toISOString(),
+              cancelledByUser: cancelledByUser ?? undefined,
+            });
+            return;
+          }
           console.log(`[SocketService] User ${socket.userId} tried to join non-existent game room ${gameId}`);
           socket.emit('error', { message: 'Game not found' });
           return;
@@ -839,6 +858,11 @@ class SocketService {
     if (recipientUserIds.length > 0) {
       console.log(`[SocketService] Recipients: ${recipientUserIds.join(', ')}`);
     }
+  }
+
+  public emitGameCancelled(gameId: string, meta: { entityType: string; name?: string; cancelledAt: string; cancelledByUser?: unknown }) {
+    const roomName = `game-${gameId}`;
+    this.io.to(roomName).emit('game-cancelled', { gameId, ...meta });
   }
 
   public async emitWalletUpdate(userId: string, wallet: number, bandejaBankId?: string | null) {

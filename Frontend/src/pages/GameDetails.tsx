@@ -21,6 +21,7 @@ import {
   LeagueStandingsTab,
   ConfirmationModal
 } from '@/components';
+import { GameCancelled } from '@/components/GameDetails/GameCancelled';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsList';
 import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
@@ -67,9 +68,10 @@ interface GameDetailsContentProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
   selectedGameChatId?: string | null;
   onChatGameSelect?: (gameId: string) => void;
+  layoutCancelledInfo?: { entityType: string; name: string | null; cancelledAt: string; cancelledByUser?: import('@/types').BasicUser | null } | null;
 }
 
-export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onChatGameSelect }: GameDetailsContentProps) => {
+export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onChatGameSelect, layoutCancelledInfo }: GameDetailsContentProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -93,6 +95,12 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const [clubs, setClubs] = useState<Club[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [cancelledGameInfo, setCancelledGameInfo] = useState<{
+    entityType: string;
+    name: string | null;
+    cancelledAt: string;
+    cancelledByUser?: import('@/types').BasicUser | null;
+  } | null>(null);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
@@ -156,6 +164,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
       setGame(null);
       setMyInvites([]);
       setGameInvites([]);
+      setCancelledGameInfo(null);
       setLoading(true);
 
       try {
@@ -174,8 +183,19 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
           }
         }
 
-      } catch (error) {
-        console.error('Failed to fetch game:', error);
+      } catch (error: unknown) {
+        const err = error as { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } };
+        if (err.response?.status === 410 && err.response?.data?.cancelled) {
+          const d = err.response.data;
+          setCancelledGameInfo({
+            entityType: d.entityType ?? 'GAME',
+            name: d.name ?? null,
+            cancelledAt: d.cancelledAt ?? new Date().toISOString(),
+            cancelledByUser: d.cancelledByUser ?? null,
+          });
+        } else {
+          console.error('Failed to fetch game:', error);
+        }
       } finally {
         setLoading(false);
       }
@@ -194,6 +214,8 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
   const lastInviteDeleted = useSocketEventsStore((state) => state.lastInviteDeleted);
   const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);
+  const lastGameCancelled = useSocketEventsStore((state) => state.lastGameCancelled);
+  const clearLastGameCancelled = useSocketEventsStore((state) => state.clearLastGameCancelled);
 
   useEffect(() => {
     if (!id) return;
@@ -202,6 +224,14 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
       socketService.leaveGameRoom(id);
     };
   }, [id]);
+
+  useEffect(() => {
+    if (layoutCancelledInfo && id) {
+      setCancelledGameInfo(layoutCancelledInfo);
+      setGame(null);
+      setLoading(false);
+    }
+  }, [layoutCancelledInfo, id]);
 
   useEffect(() => {
     if (!lastInviteDeleted) return;
@@ -243,6 +273,18 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
       return updatedGame;
     });
   }, [lastGameUpdate, id, user?.id]);
+
+  useEffect(() => {
+    if (!lastGameCancelled || lastGameCancelled.gameId !== id) return;
+    setCancelledGameInfo({
+      entityType: lastGameCancelled.entityType,
+      name: lastGameCancelled.name ?? null,
+      cancelledAt: lastGameCancelled.cancelledAt,
+      cancelledByUser: lastGameCancelled.cancelledByUser ?? null,
+    });
+    setGame(null);
+    clearLastGameCancelled();
+  }, [lastGameCancelled, id, clearLastGameCancelled]);
 
   // Update GameResultsEngine when game state changes (e.g., after finishing)
   useEffect(() => {
@@ -767,8 +809,20 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
           setGameInvites(gameInvitesResponse.data);
         }
       }
-    } catch (error) {
-      console.error('Failed to refresh game:', error);
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } };
+      if (err.response?.status === 410 && err.response?.data?.cancelled) {
+        const d = err.response.data;
+        setCancelledGameInfo({
+          entityType: d.entityType ?? 'GAME',
+          name: d.name ?? null,
+          cancelledAt: d.cancelledAt ?? new Date().toISOString(),
+          cancelledByUser: d.cancelledByUser ?? null,
+        });
+        setGame(null);
+      } else {
+        console.error('Failed to refresh game:', error);
+      }
     }
   }, [id, user]);
 
@@ -1079,6 +1133,16 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   }
 
   if (!game) {
+    if (cancelledGameInfo) {
+      return (
+        <GameCancelled
+          entityType={cancelledGameInfo.entityType as import('@/types').EntityType}
+          name={cancelledGameInfo.name}
+          cancelledAt={cancelledGameInfo.cancelledAt}
+          cancelledByUser={cancelledGameInfo.cancelledByUser ?? undefined}
+        />
+      );
+    }
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-60px)] p-4">
         <Card className="text-center py-12">

@@ -1368,6 +1368,11 @@
     "deleteLeague": "Удалить лигу",
     "deleteGameConfirmation": "Вы уверены, что хотите удалить эту игру? Это действие нельзя отменить.",
     "gameDeleted": "Игра успешно удалена",
+    "gameCancelledTitle": "Отменено",
+    "gameCancelled": "Организатор отменил событие.",
+    "gameCancelledWithName": "«{{name}}» отменён организатором.",
+    "gameCancelledGoHome": "На главную",
+    "cancelledBy": "Отменил(а)",
     "leaveGame": "Покинуть игру",
     "leaveGameGame": "Покинуть игру",
     "leaveGameTournament": "Покинуть турнир",
@@ -1682,7 +1687,8 @@
       "cannotAddPlayer": "Нельзя добавить игрока в игру",
       "alreadyParticipant": "Пользователь уже является участником",
       "cannotJoinArchivedOrFinished": "Нельзя присоединиться к архивированной или завершенной игре",
-      "directJoinNotAllowed": "Прямое присоединение не разрешено для этой игры"
+      "directJoinNotAllowed": "Прямое присоединение не разрешено для этой игры",
+      "cannotDeleteHasChildren": "Нельзя удалить игру, у которой есть дочерние игры (например, турнир с раундами). Сначала удалите дочерние игры."
     },
     "league": {
       "gameNotFound": "Игра не найдена",

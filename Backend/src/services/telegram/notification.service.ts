@@ -14,6 +14,7 @@ import { sendTransactionNotification as sendTransactionNotificationFunc } from '
 import { sendNewMarketItemNotification } from './notifications/new-market-item.notification';
 import { sendNewBugNotification } from './notifications/new-bug.notification';
 import { sendLeagueGameAssignedNotification as sendLeagueGameAssignedTelegram } from './notifications/league-game-assigned.notification';
+import { sendGameCancelledNotification as sendGameCancelledTelegram } from './notifications/game-cancelled.notification';
 
 class TelegramNotificationService {
   private bot: Bot | null = null;
@@ -73,6 +74,11 @@ class TelegramNotificationService {
   async sendGameReminderNotification(gameId: string, hoursBeforeStart: number) {
     if (!this.bot) return;
     await sendGameReminderNotification(this.bot.api, gameId, hoursBeforeStart);
+  }
+
+  async sendGameCancelledNotification(meta: import('./notifications/game-cancelled.notification').GameCancelledMeta, recipientUserIds: string[]) {
+    if (!this.bot) return;
+    await sendGameCancelledTelegram(this.bot.api, meta, recipientUserIds);
   }
 
   async sendNewGameNotification(game: any, recipient: any) {

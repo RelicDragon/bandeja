@@ -61,8 +61,8 @@ export class GameService {
     return GameUpdateService.updateGame(id, data, userId, isAdmin);
   }
 
-  static async deleteGame(id: string) {
-    return GameDeleteService.deleteGame(id);
+  static async deleteGame(id: string, cancelledByUserId: string) {
+    return GameDeleteService.deleteGame(id, cancelledByUserId);
   }
 }
 

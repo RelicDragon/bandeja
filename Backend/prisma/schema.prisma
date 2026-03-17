@@ -189,6 +189,7 @@ model City {
   gameSubscriptions      GameSubscription[]
   groupChannels          GroupChannel[] @relation("GroupChannelCity")
   marketItems            MarketItem[]
+  cancelledGames         CancelledGame[]
 
   @@index([isActive])
   @@index([clubsCount])
@@ -347,6 +348,19 @@ model Game {
   @@index([timeIsSet, clubId, startTime])
   @@index([endTime])
   @@index([timeIsSet, courtId])
+}
+
+model CancelledGame {
+  id                 String     @id
+  entityType         EntityType
+  name               String?
+  cancelledByUserId  String
+  cancelledAt        DateTime   @default(now())
+  cityId             String
+  startTime          DateTime
+  city               City       @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@index([cityId])
 }
 
 model GameFaq {
