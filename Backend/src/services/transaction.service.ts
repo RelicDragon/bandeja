@@ -21,7 +21,6 @@ async function getOrCreateBandejaBank() {
         email: 'bandejabank@system',
         firstName: 'BandejaBank',
         lastName: 'System',
-        authProvider: 'PHONE',
         isActive: true,
         wallet: 0,
       },

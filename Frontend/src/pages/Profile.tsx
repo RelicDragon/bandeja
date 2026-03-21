@@ -17,7 +17,6 @@ import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
 import { Gender, User } from '@/types';
 import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X, Bell } from 'lucide-react';
-import { hasValidUsername } from '@/utils/userValidation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -98,28 +97,6 @@ export const ProfileContent = () => {
     }
     
     if (!skipValidation && (updates.firstName !== undefined || updates.lastName !== undefined)) {
-      const newFirstName = updates.firstName !== undefined ? updates.firstName : firstName;
-      const newLastName = updates.lastName !== undefined ? updates.lastName : lastName;
-      
-      // For Apple-authenticated users, allow empty names since Apple may not provide them
-      // This complies with Apple's guidelines: never require information Apple already provides
-      const isAppleAuth = user?.authProvider === 'APPLE' || user?.appleSub;
-      const isEmpty = (!newFirstName || newFirstName.trim() === '') && (!newLastName || newLastName.trim() === '');
-      
-      if (!isAppleAuth || !isEmpty) {
-        const testUser: User = {
-          ...user!,
-          firstName: newFirstName,
-          lastName: newLastName,
-        };
-        
-        if (!hasValidUsername(testUser)) {
-          setNameError(t('profile.nameValidationError') || 'At least one name must have at least 1 character');
-          setNameValidationStatus('error');
-          return;
-        }
-      }
-      
       setNameError('');
       setNameValidationStatus('saving');
     }
@@ -137,7 +114,7 @@ export const ProfileContent = () => {
         }
       }
     }, 500);
-  }, [updateProfile, firstName, lastName, user, t]);
+  }, [updateProfile]);
 
   useEffect(() => {
     const fetchUserProfile = async () => {

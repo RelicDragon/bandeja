@@ -298,7 +298,6 @@ enum ChatType {
 
 **Multi-provider auth:**
 - Phone (OTP), Telegram (bot OTP), Apple Sign-In, Google OAuth
-- `AuthProvider` enum tracks original auth method
 - JWT tokens stored in `authStore` (localStorage persistence)
 
 **Authorization middleware:**

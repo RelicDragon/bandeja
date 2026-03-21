@@ -909,6 +909,40 @@
         </div>
     </div>
 
+    <div id="mergeUsersModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Merge users</h2>
+                <button class="modal-close" onclick="closeModal('mergeUsersModal')">&times;</button>
+            </div>
+            <form id="mergeUsersForm">
+                <p class="merge-users-hint">The <strong>survivor</strong> account stays. The <strong>source</strong> account is merged into it and then removed. Admin accounts cannot be merged.</p>
+                <div class="form-group">
+                    <label for="mergeSurvivorSearch">Account to keep (survivor)</label>
+                    <input type="text" id="mergeSurvivorSearch" autocomplete="off" placeholder="Search name, phone, email, or paste user UUID">
+                    <div id="mergeSurvivorResults" class="merge-user-results"></div>
+                    <div class="merge-user-picked-row">
+                        <span>Selected:</span> <span id="mergeSurvivorPicked" class="form-readonly merge-user-picked">—</span>
+                        <button type="button" class="btn-small btn-secondary" onclick="mergeClearSurvivor()">Clear</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="mergeSourceSearch">Source account (merged in, then deleted)</label>
+                    <input type="text" id="mergeSourceSearch" autocomplete="off" placeholder="Search name, phone, email, or paste user UUID">
+                    <div id="mergeSourceResults" class="merge-user-results"></div>
+                    <div class="merge-user-picked-row">
+                        <span>Selected:</span> <span id="mergeSourcePicked" class="form-readonly merge-user-picked">—</span>
+                        <button type="button" class="btn-small btn-secondary" onclick="mergeClearSource()">Clear</button>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('mergeUsersModal')">Cancel</button>
+                    <button type="submit" class="btn-primary" id="mergeUsersSubmitBtn">Merge</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="toastContainer" class="toast-container"></div>
 
     <script src="data-table.js"></script>
@@ -917,6 +951,7 @@
     <script src="app-versions.js"></script>
     <script src="market-categories.js"></script>
     <script src="mass-notifications.js"></script>
+    <script src="merge-users.js"></script>
 </body>
 </html>
 

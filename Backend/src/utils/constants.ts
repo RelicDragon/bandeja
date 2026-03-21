@@ -204,7 +204,6 @@ export const PROFILE_SELECT_FIELDS = {
   preferredCourtSideRight: true,
   createdAt: true,
   isActive: true,
-  authProvider: true,
   language: true,
   translateToLanguage: true,
   timeFormat: true,

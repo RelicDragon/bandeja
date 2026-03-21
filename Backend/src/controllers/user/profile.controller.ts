@@ -13,6 +13,7 @@ import telegramBotService from '../../services/telegram/bot.service';
 import { syncTelegramProfileFromUpdate } from '../../services/telegram/syncTelegramProfile.service';
 import { TRANSLATE_TO_LANGUAGE_CODES } from '../../services/chat/translation.service';
 import { CityGroupService } from '../../services/chat/cityGroup.service';
+import { resolveDisplayNameData } from '../../services/user/userDisplayName.service';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
@@ -110,26 +111,16 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
-    select: { avatar: true, originalAvatar: true, firstName: true, lastName: true, authProvider: true }
+    select: { avatar: true, originalAvatar: true, firstName: true, lastName: true }
   });
 
-  if (firstName !== undefined || lastName !== undefined) {
-    const isApple = currentUser?.authProvider === 'APPLE';
-    if (!isApple) {
-      const newFirstName = firstName !== undefined ? firstName : currentUser?.firstName || '';
-      const newLastName = lastName !== undefined ? lastName : currentUser?.lastName || '';
-      const trimmedFirst = (newFirstName || '').trim();
-      const trimmedLast = (newLastName || '').trim();
-      if (trimmedFirst.length < 1 && trimmedLast.length < 1) {
-        throw new ApiError(400, 'At least one name must have at least 1 character');
-      }
-    }
-  }
-
-  const shouldSetNameIsSetFromNames =
-    (firstName !== undefined || lastName !== undefined) &&
-    (((firstName !== undefined ? firstName : currentUser?.firstName || '') || '').trim().length >= 1 ||
-      ((lastName !== undefined ? lastName : currentUser?.lastName || '') || '').trim().length >= 1);
+  const resolvedNames =
+    firstName !== undefined || lastName !== undefined
+      ? resolveDisplayNameData(
+          firstName !== undefined ? firstName : currentUser?.firstName,
+          lastName !== undefined ? lastName : currentUser?.lastName
+        )
+      : null;
 
   if (avatar === null && currentUser?.avatar) {
     await ImageProcessor.deleteFile(currentUser.avatar);
@@ -164,8 +155,11 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     const updated = await tx.user.update({
       where: { id: req.userId },
       data: {
-        ...(firstName !== undefined && { firstName }),
-        ...(lastName !== undefined && { lastName }),
+        ...(resolvedNames && {
+          firstName: resolvedNames.firstName ?? null,
+          lastName: resolvedNames.lastName ?? null,
+          nameIsSet: resolvedNames.nameIsSet,
+        }),
         ...(email !== undefined && { email }),
         ...(avatar !== undefined && { avatar }),
         ...(originalAvatar !== undefined && { originalAvatar }),
@@ -176,8 +170,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(defaultCurrency !== undefined && { defaultCurrency }),
         ...(gender !== undefined && { gender }),
         ...(finalGenderIsSet !== undefined && { genderIsSet: finalGenderIsSet }),
-        ...(nameIsSet !== undefined && { nameIsSet }),
-        ...(shouldSetNameIsSetFromNames && { nameIsSet: true }),
+        ...(!resolvedNames && nameIsSet !== undefined && { nameIsSet }),
         ...(preferredHandLeft !== undefined && { preferredHandLeft }),
         ...(preferredHandRight !== undefined && { preferredHandRight }),
         ...(preferredCourtSideLeft !== undefined && { preferredCourtSideLeft }),

@@ -3,13 +3,17 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 import { generateToken } from '../utils/jwt';
-import { AuthProvider } from '@prisma/client';
 import telegramBotService from '../services/telegram/bot.service';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 import { NotificationPreferenceService } from '../services/notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import type { TelegramOtp } from '@prisma/client';
 import { ensureUserCityAssigned } from '../services/user-city-bootstrap.service';
+import {
+  mergeOAuthLoginNames,
+  needsDisplayNamePersist,
+  resolveDisplayNameData,
+} from '../services/user/userDisplayName.service';
 
 async function completeTelegramAuth(
   otp: TelegramOtp,
@@ -26,18 +30,24 @@ async function completeTelegramAuth(
     if (!user.isActive) {
       throw new ApiError(403, 'auth.accountInactive');
     }
+    const nameResolved = mergeOAuthLoginNames(
+      user.firstName,
+      user.lastName,
+      otp.firstName ?? undefined,
+      otp.lastName ?? undefined,
+      user.nameIsSet
+    );
     const updateData: any = {};
     if (otp.username && user.telegramUsername !== otp.username) {
       updateData.telegramUsername = otp.username;
     }
-    if (otp.firstName && (user.firstName == null || user.firstName.trim() === '')) {
-      updateData.firstName = otp.firstName;
-    }
-    if (otp.lastName && (user.lastName == null || user.lastName.trim() === '')) {
-      updateData.lastName = otp.lastName;
-    }
     if (language) {
       updateData.language = language;
+    }
+    if (needsDisplayNamePersist(user, nameResolved)) {
+      updateData.firstName = nameResolved.firstName ?? null;
+      updateData.lastName = nameResolved.lastName ?? null;
+      updateData.nameIsSet = nameResolved.nameIsSet;
     }
     if (Object.keys(updateData).length > 0) {
       user = await prisma.user.update({
@@ -52,14 +62,15 @@ async function completeTelegramAuth(
     return { user, token };
   }
 
+  const newName = resolveDisplayNameData(otp.firstName, otp.lastName);
   user = await prisma.user.create({
     data: {
       telegramId: actualTelegramId,
       telegramUsername: otp.username,
-      firstName: otp.firstName,
-      lastName: otp.lastName,
+      firstName: newName.firstName,
+      lastName: newName.lastName ?? null,
+      nameIsSet: newName.nameIsSet,
       language,
-      authProvider: AuthProvider.TELEGRAM,
     },
     select: PROFILE_SELECT_FIELDS,
   });

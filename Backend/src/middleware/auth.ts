@@ -45,7 +45,6 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
         isAdmin: true,
         isTrainer: true,
         currentCityId: true,
-        authProvider: true,
         lastUserIP: true,
       },
     });

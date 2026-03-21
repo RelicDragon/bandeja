@@ -6,7 +6,7 @@ import { usersApi } from '@/api';
 import { WelcomeQuestionnaireContent } from './WelcomeQuestionnaireContent';
 import { Button, ConfirmationModal } from '@/components';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 
 export function WelcomeQuestionnairePrompt() {
   const { t } = useTranslation();
@@ -57,6 +57,14 @@ export function WelcomeQuestionnairePrompt() {
         <div
           className="relative overflow-hidden rounded-[1.35rem] border border-sky-200/90 bg-white/95 shadow-[0_1px_0_rgba(255,255,255,0.85)_inset,0_8px_28px_-8px_rgba(14,165,233,0.35),0_4px_16px_-4px_rgba(15,23,42,0.08)] transition duration-300 hover:border-sky-300 hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_12px_40px_-10px_rgba(14,165,233,0.45),0_8px_24px_-6px_rgba(15,23,42,0.1)] dark:border-slate-600/90 dark:bg-slate-900/95 dark:shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_12px_40px_-12px_rgba(0,0,0,0.65),0_0_0_1px_rgba(56,189,248,0.12)] dark:hover:border-sky-500/40 dark:hover:shadow-[0_1px_0_rgba(255,255,255,0.08)_inset,0_16px_48px_-12px_rgba(0,0,0,0.75),0_0_32px_-8px_rgba(56,189,248,0.18)]"
         >
+          <button
+            type="button"
+            onClick={() => setDismissConfirmOpen(true)}
+            className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white/90 text-slate-500 shadow-sm backdrop-blur-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 dark:border-slate-600 dark:bg-slate-800/95 dark:text-slate-400 dark:hover:border-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+            aria-label={t('home.questionnaireDismissLink')}
+          >
+            <X className="h-4 w-4" strokeWidth={2} aria-hidden />
+          </button>
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.55] dark:opacity-[0.35]"
             style={{
@@ -80,7 +88,7 @@ export function WelcomeQuestionnairePrompt() {
             />
           </div>
 
-          <div className="relative flex flex-col gap-4 p-5 pb-2 sm:flex-row sm:items-center sm:gap-5 sm:p-6">
+          <div className="relative flex flex-col gap-4 p-5 pb-2 pt-10 sm:flex-row sm:items-center sm:gap-5 sm:p-6 sm:pb-2 sm:pt-10">
             <div className="min-w-0 flex-1 text-center sm:text-left">
               <p className="text-[1.05rem] font-semibold leading-snug tracking-tight text-slate-900 dark:text-white sm:text-lg">
                 {t('home.questionnaireCtaTitle')}

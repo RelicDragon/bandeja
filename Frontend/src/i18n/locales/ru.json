@@ -74,7 +74,6 @@
     "appleAccountNotLinked": "Apple аккаунт не привязан к этому профилю",
     "googleAccountNotLinked": "Google аккаунт не привязан к этому профилю",
     "cannotUnlinkLastAuthMethod": "Невозможно отвязать последний метод аутентификации. Пожалуйста, сначала привяжите другой аккаунт.",
-    "invalidAuthProvider": "Неверный метод аутентификации для этого аккаунта",
     "emailAlreadyExistsUseLogin": "Аккаунт с этим email уже существует. Войдите другим способом и привяжите этот аккаунт в Профиле.",
     "invalidIdentityToken": "Неверный токен идентификации: токен должен быть непустой строкой",
     "appleTokenExpired": "Токен Apple истек",

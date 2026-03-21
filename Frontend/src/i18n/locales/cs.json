@@ -74,7 +74,6 @@
     "appleAccountNotLinked": "Apple účet není propojen s tímto profilem",
     "googleAccountNotLinked": "Google účet není propojen s tímto profilem",
     "cannotUnlinkLastAuthMethod": "Nemůžete odpojit poslední způsob přihlášení. Nejprve propojte jiný účet.",
-    "invalidAuthProvider": "Neplatná metoda přihlášení pro tento účet",
     "emailAlreadyExistsUseLogin": "Účet s tímto e-mailem již existuje. Přihlaste se jinou metodou a propojte tento účet v Profilu.",
     "invalidIdentityToken": "Neplatný identifikační token: token musí být neprázdný řetězec",
     "appleTokenExpired": "Apple token vypršel",

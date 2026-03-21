@@ -1,6 +1,5 @@
 import prisma from './src/config/database';
 import { hashPassword } from './src/utils/hash';
-import { AuthProvider } from '@prisma/client';
 import { ImageProcessor } from './src/utils/imageProcessor';
 
 const numberOfUsersToInsert = 40;
@@ -122,7 +121,6 @@ async function createUsers() {
             passwordHash,
             firstName,
             lastName,
-            authProvider: AuthProvider.PHONE,
             currentCityId: randomCity.id,
             avatar: avatarResult.avatarPath,
             originalAvatar: avatarResult.originalPath,

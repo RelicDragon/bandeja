@@ -4,7 +4,7 @@ import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 import { generateToken } from '../utils/jwt';
 import { hashPassword, comparePassword } from '../utils/hash';
-import { AuthProvider, NotificationChannelType } from '@prisma/client';
+import { NotificationChannelType } from '@prisma/client';
 import { NotificationPreferenceService } from '../services/notificationPreference.service';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 import { verifyAppleIdentityToken } from '../services/apple/appleAuth.service';
@@ -12,38 +12,15 @@ import { verifyGoogleIdToken } from '../services/google/googleAuth.service';
 import { AuthRequest } from '../middleware/auth';
 import { TransactionService } from '../services/transaction.service';
 import { ensureUserCityAssigned } from '../services/user-city-bootstrap.service';
-import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
-
-const sanitizeName = (value?: string): string => (value || '').trim().slice(0, 100);
-
-const resolveRegistrationNameData = (firstName?: string, lastName?: string) => {
-  const sanitizedFirstName = sanitizeName(firstName);
-  const sanitizedLastName = sanitizeName(lastName);
-  const hasProvidedName = sanitizedFirstName.length >= 1 || sanitizedLastName.length >= 1;
-
-  if (hasProvidedName) {
-    return {
-      firstName: sanitizedFirstName || undefined,
-      lastName: sanitizedLastName || undefined,
-      nameIsSet: true,
-    };
-  }
-
-  return {
-    firstName: uniqueNamesGenerator({
-      dictionaries: [adjectives, animals],
-      separator: ' ',
-      style: 'capital',
-      length: 2,
-    }),
-    lastName: undefined,
-    nameIsSet: false,
-  };
-};
+import {
+  mergeOAuthLoginNames,
+  needsDisplayNamePersist,
+  resolveDisplayNameData,
+} from '../services/user/userDisplayName.service';
 
 export const registerWithPhone = asyncHandler(async (req: Request, res: Response) => {
   const { phone, password, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
-  const nameData = resolveRegistrationNameData(firstName, lastName);
+  const nameData = resolveDisplayNameData(firstName, lastName);
 
   const existingUser = await prisma.user.findUnique({
     where: { phone },
@@ -79,7 +56,6 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
       preferredHandRight: preferredHandRight || false,
       preferredCourtSideLeft: preferredCourtSideLeft || false,
       preferredCourtSideRight: preferredCourtSideRight || false,
-      authProvider: AuthProvider.PHONE,
     },
     select: PROFILE_SELECT_FIELDS,
   });
@@ -147,7 +123,7 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
 
 export const registerWithTelegram = asyncHandler(async (req: Request, res: Response) => {
   const { telegramId, telegramUsername, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
-  const nameData = resolveRegistrationNameData(firstName, lastName);
+  const nameData = resolveDisplayNameData(firstName, lastName);
 
   const existingUser = await prisma.user.findUnique({
     where: { telegramId },
@@ -181,7 +157,6 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
       preferredHandRight: preferredHandRight || false,
       preferredCourtSideLeft: preferredCourtSideLeft || false,
       preferredCourtSideRight: preferredCourtSideRight || false,
-      authProvider: AuthProvider.TELEGRAM,
     },
     select: PROFILE_SELECT_FIELDS,
   });
@@ -305,8 +280,6 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
     }
   }
 
-  // Only use name/email provided by Apple - never require user input
-  // Apple provides name only on first sign-in, email is in identity token
   console.log('[APPLE_REGISTER] Extracting firstName/lastName from request body:', {
     rawFirstName: firstName || null,
     rawLastName: lastName || null,
@@ -315,7 +288,7 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
     firstNameLength: firstName?.length || 0,
     lastNameLength: lastName?.length || 0,
   });
-  const nameData = resolveRegistrationNameData(firstName, lastName);
+  const nameData = resolveDisplayNameData(firstName, lastName);
   console.log('[APPLE_REGISTER] Sanitized firstName/lastName:', {
     sanitizedFirstName: nameData.firstName || null,
     sanitizedLastName: nameData.lastName || null,
@@ -325,10 +298,6 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
     willUseLastName: !!nameData.lastName,
   });
   console.log('[APPLE_REGISTER] User data:', { hasFirstName: !!nameData.firstName, hasLastName: !!nameData.lastName, language, nameIsSet: nameData.nameIsSet });
-  
-  // For Apple Sign In, we accept whatever Apple provides without validation
-  // This complies with Apple's guidelines: never require users to provide
-  // information that Apple already provides
 
   let validatedLanguage = language;
   if (language) {
@@ -358,7 +327,6 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
       preferredHandRight: preferredHandRight || false,
       preferredCourtSideLeft: preferredCourtSideLeft || false,
       preferredCourtSideRight: preferredCourtSideRight || false,
-      authProvider: AuthProvider.APPLE,
     },
     select: PROFILE_SELECT_FIELDS,
     });
@@ -470,46 +438,17 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
     currentUserLastName: user.lastName || null,
   });
 
-  if (firstName && !user.firstName) {
-    const sanitizedFirstName = firstName.trim().slice(0, 100);
-    console.log('[APPLE_LOGIN] Processing firstName update:', {
-      sanitizedFirstName: sanitizedFirstName || null,
-      sanitizedFirstNameLength: sanitizedFirstName.length,
-      willUpdate: sanitizedFirstName.length >= 1 || (user.lastName && user.lastName.trim().length >= 1),
-    });
-    if (sanitizedFirstName.length >= 1 || (user.lastName && user.lastName.trim().length >= 1)) {
-      updateData.firstName = sanitizedFirstName;
-      console.log('[APPLE_LOGIN] Updating firstName to:', sanitizedFirstName);
-    }
-  }
-
-  if (lastName && !user.lastName) {
-    const sanitizedLastName = lastName.trim().slice(0, 100);
-    const currentFirstName = updateData.firstName || user.firstName || '';
-    console.log('[APPLE_LOGIN] Processing lastName update:', {
-      sanitizedLastName: sanitizedLastName || null,
-      sanitizedLastNameLength: sanitizedLastName.length,
-      currentFirstName: currentFirstName || null,
-      willUpdate: sanitizedLastName.length >= 1 || (currentFirstName && currentFirstName.trim().length >= 1),
-    });
-    if (sanitizedLastName.length >= 1 || (currentFirstName && currentFirstName.trim().length >= 1)) {
-      updateData.lastName = sanitizedLastName;
-      console.log('[APPLE_LOGIN] Updating lastName to:', sanitizedLastName);
-    }
-  }
-
-  if (updateData.firstName !== undefined || updateData.lastName !== undefined) {
-    const finalFirstName = updateData.firstName !== undefined ? updateData.firstName : (user.firstName || '');
-    const finalLastName = updateData.lastName !== undefined ? updateData.lastName : (user.lastName || '');
-    const trimmedFirst = finalFirstName.trim();
-    const trimmedLast = finalLastName.trim();
-    
-    if (trimmedFirst.length < 1 && trimmedLast.length < 1) {
-      delete updateData.firstName;
-      delete updateData.lastName;
-    } else {
-      updateData.nameIsSet = true;
-    }
+  const nameResolved = mergeOAuthLoginNames(
+    user.firstName,
+    user.lastName,
+    firstName,
+    lastName,
+    user.nameIsSet
+  );
+  if (needsDisplayNamePersist(user, nameResolved)) {
+    updateData.firstName = nameResolved.firstName ?? null;
+    updateData.lastName = nameResolved.lastName ?? null;
+    updateData.nameIsSet = nameResolved.nameIsSet;
   }
 
   if (appleToken.email) {
@@ -599,7 +538,7 @@ export const registerWithGoogle = asyncHandler(async (req: Request, res: Respons
     }
   }
 
-  const nameData = resolveRegistrationNameData(
+  const nameData = resolveDisplayNameData(
     firstName || googleToken.given_name || undefined,
     lastName || googleToken.family_name || undefined
   );
@@ -631,7 +570,6 @@ export const registerWithGoogle = asyncHandler(async (req: Request, res: Respons
         preferredHandRight: preferredHandRight || false,
         preferredCourtSideLeft: preferredCourtSideLeft || false,
         preferredCourtSideRight: preferredCourtSideRight || false,
-        authProvider: AuthProvider.GOOGLE,
       },
       select: PROFILE_SELECT_FIELDS,
     });
@@ -698,33 +636,17 @@ export const loginWithGoogle = asyncHandler(async (req: Request, res: Response) 
     }
   }
 
-  if (firstName && !user.firstName) {
-    const sanitizedFirstName = firstName.trim().slice(0, 100);
-    if (sanitizedFirstName.length >= 1 || (user.lastName && user.lastName.trim().length >= 1)) {
-      updateData.firstName = sanitizedFirstName;
-    }
-  }
-
-  if (lastName && !user.lastName) {
-    const sanitizedLastName = lastName.trim().slice(0, 100);
-    const currentFirstName = updateData.firstName || user.firstName || '';
-    if (sanitizedLastName.length >= 1 || (currentFirstName && currentFirstName.trim().length >= 1)) {
-      updateData.lastName = sanitizedLastName;
-    }
-  }
-
-  if (updateData.firstName !== undefined || updateData.lastName !== undefined) {
-    const finalFirstName = updateData.firstName !== undefined ? updateData.firstName : (user.firstName || '');
-    const finalLastName = updateData.lastName !== undefined ? updateData.lastName : (user.lastName || '');
-    const trimmedFirst = finalFirstName.trim();
-    const trimmedLast = finalLastName.trim();
-    
-    if (trimmedFirst.length < 1 && trimmedLast.length < 1) {
-      delete updateData.firstName;
-      delete updateData.lastName;
-    } else {
-      updateData.nameIsSet = true;
-    }
+  const nameResolved = mergeOAuthLoginNames(
+    user.firstName,
+    user.lastName,
+    firstName,
+    lastName,
+    user.nameIsSet
+  );
+  if (needsDisplayNamePersist(user, nameResolved)) {
+    updateData.firstName = nameResolved.firstName ?? null;
+    updateData.lastName = nameResolved.lastName ?? null;
+    updateData.nameIsSet = nameResolved.nameIsSet;
   }
 
   if (googleToken.email) {
@@ -870,11 +792,24 @@ export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) =>
   }
 
   console.log('[APPLE_LINK] Updating user with Apple account');
-  const user = await prisma.user.update({
+  let user = await prisma.user.update({
     where: { id: req.userId },
     data: updateData,
     select: PROFILE_SELECT_FIELDS,
   });
+
+  const nameAfterLink = resolveDisplayNameData(user.firstName, user.lastName);
+  if (needsDisplayNamePersist(user, nameAfterLink)) {
+    user = await prisma.user.update({
+      where: { id: req.userId },
+      data: {
+        firstName: nameAfterLink.firstName ?? null,
+        lastName: nameAfterLink.lastName ?? null,
+        nameIsSet: nameAfterLink.nameIsSet,
+      },
+      select: PROFILE_SELECT_FIELDS,
+    });
+  }
 
   console.log('[APPLE_LINK] Apple account linked successfully');
   res.json({
@@ -893,7 +828,7 @@ export const unlinkApple = asyncHandler(async (req: AuthRequest, res: Response) 
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
-    select: { id: true, appleSub: true, authProvider: true, phone: true, telegramId: true, googleId: true },
+    select: { id: true, appleSub: true, phone: true, telegramId: true, googleId: true },
   });
 
   if (!currentUser) {
@@ -919,20 +854,6 @@ export const unlinkApple = asyncHandler(async (req: AuthRequest, res: Response) 
     appleEmail: null,
     appleEmailVerified: false,
   };
-
-  if (currentUser.authProvider === AuthProvider.APPLE) {
-    console.log('[APPLE_UNLINK] Current auth provider is APPLE, switching provider');
-    if (currentUser.phone) {
-      updateData.authProvider = AuthProvider.PHONE;
-      console.log('[APPLE_UNLINK] Switching to PHONE provider');
-    } else if (currentUser.telegramId) {
-      updateData.authProvider = AuthProvider.TELEGRAM;
-      console.log('[APPLE_UNLINK] Switching to TELEGRAM provider');
-    } else if (currentUser.googleId) {
-      updateData.authProvider = AuthProvider.GOOGLE;
-      console.log('[APPLE_UNLINK] Switching to GOOGLE provider');
-    }
-  }
 
   console.log('[APPLE_UNLINK] Updating user to unlink Apple account');
   const user = await prisma.user.update({
@@ -1002,11 +923,24 @@ export const linkGoogle = asyncHandler(async (req: AuthRequest, res: Response) =
     }
   }
 
-  const user = await prisma.user.update({
+  let user = await prisma.user.update({
     where: { id: req.userId },
     data: updateData,
     select: PROFILE_SELECT_FIELDS,
   });
+
+  const nameAfterGoogleLink = resolveDisplayNameData(user.firstName, user.lastName);
+  if (needsDisplayNamePersist(user, nameAfterGoogleLink)) {
+    user = await prisma.user.update({
+      where: { id: req.userId },
+      data: {
+        firstName: nameAfterGoogleLink.firstName ?? null,
+        lastName: nameAfterGoogleLink.lastName ?? null,
+        nameIsSet: nameAfterGoogleLink.nameIsSet,
+      },
+      select: PROFILE_SELECT_FIELDS,
+    });
+  }
 
   res.json({
     success: true,
@@ -1021,7 +955,7 @@ export const unlinkGoogle = asyncHandler(async (req: AuthRequest, res: Response)
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
-    select: { id: true, googleId: true, authProvider: true, phone: true, telegramId: true, appleSub: true },
+    select: { id: true, googleId: true, phone: true, telegramId: true, appleSub: true },
   });
 
   if (!currentUser) {
@@ -1043,16 +977,6 @@ export const unlinkGoogle = asyncHandler(async (req: AuthRequest, res: Response)
     googleEmail: null,
     googleEmailVerified: false,
   };
-
-  if (currentUser.authProvider === AuthProvider.GOOGLE) {
-    if (currentUser.phone) {
-      updateData.authProvider = AuthProvider.PHONE;
-    } else if (currentUser.telegramId) {
-      updateData.authProvider = AuthProvider.TELEGRAM;
-    } else if (currentUser.appleSub) {
-      updateData.authProvider = AuthProvider.APPLE;
-    }
-  }
 
   const user = await prisma.user.update({
     where: { id: req.userId },

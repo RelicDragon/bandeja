@@ -1,7 +1,5 @@
 import prisma from './src/config/database';
 import { hashPassword } from './src/utils/hash';
-import { AuthProvider } from '@prisma/client';
-
 async function createAdmin() {
   const phone = process.argv[2];
   const password = process.argv[3];
@@ -32,7 +30,6 @@ async function createAdmin() {
           passwordHash,
           firstName,
           lastName,
-          authProvider: AuthProvider.PHONE,
           isAdmin: true,
         },
       });

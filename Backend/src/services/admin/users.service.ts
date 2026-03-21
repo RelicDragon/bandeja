@@ -5,6 +5,7 @@ import { hashPassword } from '../../utils/hash';
 import { Gender } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { PROFILE_SELECT_FIELDS, USER_SELECT_FIELDS } from '../../utils/constants';
+import { resolveDisplayNameData } from '../user/userDisplayName.service';
 
 const USERS_PAGE_SIZE = 50;
 
@@ -109,11 +110,13 @@ export class AdminUsersService {
       throw new ApiError(400, 'Gender is required');
     }
 
-    const trimmedFirst = (firstName || '').trim();
-    const trimmedLast = (lastName || '').trim();
-    
-    if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
-      throw new ApiError(400, 'At least one name must have at least 3 characters');
+    const nameResolved = resolveDisplayNameData(firstName, lastName);
+    if (nameResolved.nameIsSet) {
+      const tf = (nameResolved.firstName || '').trim();
+      const tl = (nameResolved.lastName || '').trim();
+      if (tf.length < 3 && tl.length < 3) {
+        throw new ApiError(400, 'At least one name must have at least 3 characters');
+      }
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -146,10 +149,10 @@ export class AdminUsersService {
         phone,
         passwordHash,
         email,
-        firstName,
-        lastName,
+        firstName: nameResolved.firstName,
+        lastName: nameResolved.lastName ?? null,
+        nameIsSet: nameResolved.nameIsSet,
         gender,
-        authProvider: 'PHONE',
         level: level !== undefined ? level : 3.5,
         currentCityId,
         isActive: isActive !== undefined ? isActive : true,
@@ -201,13 +204,18 @@ export class AdminUsersService {
       throw new ApiError(404, 'User not found');
     }
 
-    if (firstName !== undefined || lastName !== undefined) {
-      const newFirstName = firstName !== undefined ? firstName : existingUser.firstName || '';
-      const newLastName = lastName !== undefined ? lastName : existingUser.lastName || '';
-      const trimmedFirst = (newFirstName || '').trim();
-      const trimmedLast = (newLastName || '').trim();
-      
-      if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
+    const nameResolvedForUpdate =
+      firstName !== undefined || lastName !== undefined
+        ? resolveDisplayNameData(
+            firstName !== undefined ? firstName : existingUser.firstName,
+            lastName !== undefined ? lastName : existingUser.lastName
+          )
+        : null;
+
+    if (nameResolvedForUpdate?.nameIsSet) {
+      const tf = (nameResolvedForUpdate.firstName || '').trim();
+      const tl = (nameResolvedForUpdate.lastName || '').trim();
+      if (tf.length < 3 && tl.length < 3) {
         throw new ApiError(400, 'At least one name must have at least 3 characters');
       }
     }
@@ -235,8 +243,11 @@ export class AdminUsersService {
       data: {
         ...(phone !== undefined && { phone }),
         ...(email !== undefined && { email }),
-        ...(firstName !== undefined && { firstName }),
-        ...(lastName !== undefined && { lastName }),
+        ...(nameResolvedForUpdate && {
+          firstName: nameResolvedForUpdate.firstName ?? null,
+          lastName: nameResolvedForUpdate.lastName ?? null,
+          nameIsSet: nameResolvedForUpdate.nameIsSet,
+        }),
         ...(gender !== undefined && { gender }),
         ...(level !== undefined && { level: Math.max(1.0, Math.min(7.0, level)) }),
         ...(currentCityId !== undefined && { currentCityId }),

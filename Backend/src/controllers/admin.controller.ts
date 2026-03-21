@@ -7,6 +7,7 @@ import { AdminLocationsService } from '../services/admin/locations.service';
 import { AdminMediaService } from '../services/admin/media.service';
 import { AdminStatsService } from '../services/admin/stats.service';
 import { AdminUsersService } from '../services/admin/users.service';
+import { UserMergeService } from '../services/user/userMerge.service';
 import { TransactionService } from '../services/transaction.service';
 import { TransactionType, MessageReportStatus } from '@prisma/client';
 import { AdminMessageReportsService } from '../services/admin/messageReports.service';
@@ -542,6 +543,15 @@ export const deleteUser = asyncHandler(async (req: AuthRequest, res: Response) =
     success: true,
     message: result.message,
   });
+});
+
+export const mergeUsers = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { survivorId, sourceId } = req.body as { survivorId?: string; sourceId?: string };
+  if (!survivorId || !sourceId) {
+    return res.status(400).json({ success: false, message: 'survivorId and sourceId are required' });
+  }
+  const result = await UserMergeService.mergeUsers(survivorId, sourceId);
+  res.json({ success: true, data: result });
 });
 
 export const emitCoins = asyncHandler(async (req: AuthRequest, res: Response) => {

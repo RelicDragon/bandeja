@@ -181,6 +181,18 @@ async function loadStats() {
 
 const ONLINE_USERS_POLL_MS = 3000;
 
+function getAuthMethodBadges(u, short = true) {
+    const L = short
+        ? { p: 'PH', t: 'TG', a: 'AP', g: 'GG' }
+        : { p: 'Phone', t: 'Telegram', a: 'Apple', g: 'Google' };
+    const parts = [];
+    if (u.phone) parts.push(L.p);
+    if (u.telegramId) parts.push(L.t);
+    if (u.appleSub) parts.push(L.a);
+    if (u.googleId) parts.push(L.g);
+    return parts.length ? parts.join(' ') : '-';
+}
+
 function startOnlineUsersPoll() {
     if (onlineUsersPollInterval) return;
     onlineUsersPollInterval = setInterval(loadOnlineUsers, ONLINE_USERS_POLL_MS);
@@ -203,7 +215,7 @@ async function loadOnlineUsers() {
                 <td>${escapeHtmlAttr(u.phone || '-')}</td>
                 <td>${escapeHtmlAttr(u.currentCity?.name || '-')}</td>
                 <td>${u.level ?? '-'}</td>
-                <td>${authLabels[u.authProvider] || u.authProvider || '-'}</td>
+                <td>${escapeHtmlAttr(getAuthMethodBadges(u))}</td>
             </tr>
         `).join('');
     } catch (error) {
@@ -269,7 +281,6 @@ function escapeHtmlAttr(s) {
     return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-const authLabels = { PHONE: 'PH', TELEGRAM: 'TG', APPLE: 'AP', GOOGLE: 'GG' };
 const getUserName = (u) => ((u.firstName || '') + ' ' + (u.lastName || '')).trim() || u.phone || '-';
 
 function initUsersDataTable() {
@@ -279,7 +290,7 @@ function initUsersDataTable() {
             { key: 'avatar', label: '', sortable: false },
             { key: 'name', label: 'Name', accessor: (u) => getUserName(u) },
             { key: 'phone', label: 'Phone' },
-            { key: 'auth', label: 'Auth', accessor: (u) => authLabels[u.authProvider] || u.authProvider },
+            { key: 'auth', label: 'Auth', accessor: (u) => getAuthMethodBadges(u) },
             { key: 'city', label: 'City', accessor: (u) => u.currentCity?.name },
             { key: 'level', label: 'Level', accessor: (u) => u.level ?? 0 },
             { key: 'games', label: 'Games', accessor: (u) => u.gamesPlayed ?? 0 },
@@ -294,6 +305,7 @@ function initUsersDataTable() {
         getExtraParams: () => (selectedCityId ? { cityId: selectedCityId } : {}),
         extraButtons: [
             { action: 'dropCoins', label: '💰 Drop Coins', className: 'btn-success', onClick: () => dropCoinsModal() },
+            { action: 'mergeUsers', label: '⇄ Merge users', className: 'btn-secondary', onClick: () => mergeUsersModal() },
             { action: 'addUser', label: '+ Add User', className: 'btn-primary', onClick: () => createUserModal() },
         ],
         fetchFn: async (params) => {
@@ -306,7 +318,7 @@ function initUsersDataTable() {
         },
         renderRow: (user) => {
             const name = getUserName(user);
-            const authBadge = authLabels[user.authProvider] || user.authProvider || '-';
+            const authBadge = getAuthMethodBadges(user);
             const cityName = user.currentCity?.name || '-';
             const roles = [];
             if (user.isAdmin) roles.push('Admin');
@@ -316,7 +328,7 @@ function initUsersDataTable() {
             const rolesStr = roles.length ? roles.join(', ') : '-';
             const avatarSrc = user.avatar || '';
             const initials = (user.firstName?.[0] || '') + (user.lastName?.[0] || '') || '?';
-            const canResetPassword = user.authProvider === 'PHONE';
+            const canResetPassword = !!user.phone;
             return `<tr>
                 <td><div class="user-avatar" title="${escapeHtmlAttr(name)}">${avatarSrc ? `<img src="${escapeHtmlAttr(avatarSrc)}" alt="" onerror="this.parentElement.innerHTML='<span>${escapeHtmlAttr(initials)}</span>'">` : `<span>${escapeHtmlAttr(initials)}</span>`}</div></td>
                 <td>${escapeHtml(name || '')}</td>
@@ -335,6 +347,7 @@ function initUsersDataTable() {
                         <button class="btn-small btn-toggle" onclick="toggleUserStatus('${user.id}')">${user.isActive ? 'Deactivate' : 'Activate'}</button>
                         ${canResetPassword ? `<button class="btn-small btn-warning" onclick="resetPasswordModal('${user.id}', '${escapeHtmlAttr(name)}')">Reset Pwd</button>` : ''}
                         <button class="btn-small btn-success" onclick="emitCoinsModal('${user.id}', '${escapeHtmlAttr(name)}')">Coins</button>
+                        ${!user.isAdmin ? `<button class="btn-small btn-secondary" onclick="mergeUsersModal('${user.id}')">Merge</button>` : ''}
                         ${!user.isAdmin ? `<button class="btn-small btn-delete" onclick="deleteUser('${user.id}', '${escapeHtmlAttr(name)}')">Delete</button>` : ''}
                     </div>
                 </td>
@@ -342,6 +355,7 @@ function initUsersDataTable() {
         },
         emptyMessage: 'No users found.',
     });
+    window.usersDataTable = usersDataTable;
 }
 
 function loadUsers(page = 1) {
@@ -358,10 +372,9 @@ function viewUserDetail(userId) {
     const user = window.__pageUsers?.find(u => u.id === userId);
     if (!user) return;
     document.getElementById('userDetailModalTitle').textContent = `User: ${(user.firstName || '') + ' ' + (user.lastName || '')}`.trim() || user.phone;
-    const authLabels = { PHONE: 'Phone', TELEGRAM: 'Telegram', APPLE: 'Apple', GOOGLE: 'Google' };
     document.getElementById('userDetailContent').innerHTML = `
         <div class="user-detail-grid">
-            <div class="form-group"><label>Auth</label><div class="form-readonly">${authLabels[user.authProvider] || user.authProvider}</div></div>
+            <div class="form-group"><label>Auth</label><div class="form-readonly">${escapeHtml(getAuthMethodBadges(user, false))}</div></div>
             <div class="form-group"><label>Phone</label><div class="form-readonly">${user.phone || '-'}</div></div>
             <div class="form-group"><label>Email</label><div class="form-readonly">${user.email || '-'}</div></div>
             <div class="form-group"><label>City</label><div class="form-readonly">${user.currentCity?.name || '-'}</div></div>
@@ -1108,6 +1121,7 @@ window.acceptInvite = acceptInvite;
 window.declineInvite = declineInvite;
 window.refreshInvites = refreshInvites;
 window.acceptAllInvites = acceptAllInvites;
+window.loadUsers = loadUsers;
 
 let reportStatusFilter = '';
 

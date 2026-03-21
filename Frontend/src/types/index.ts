@@ -1,4 +1,3 @@
-export type AuthProvider = 'PHONE' | 'TELEGRAM' | 'APPLE' | 'GOOGLE';
 export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'WINNER_COURT' | 'CUSTOM';
 export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON' | 'BAR' | 'TRAINING';
@@ -84,7 +83,6 @@ export interface User extends BasicUser {
   googleEmail?: string;
   googleEmailVerified?: boolean;
   originalAvatar?: string | null;
-  authProvider: AuthProvider;
   currentCityId?: string;
   currentCity?: City;
   reliability: number;

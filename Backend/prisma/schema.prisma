@@ -23,7 +23,6 @@ model User {
   lastName                   String?
   avatar                     String?
   originalAvatar             String?
-  authProvider               AuthProvider
   passwordHash               String?
   isActive                   Boolean              @default(true)
   level                      Float                @default(1.0)
@@ -844,13 +843,6 @@ model BlockedUser {
   @@unique([userId, blockedUserId])
   @@index([userId])
   @@index([blockedUserId])
-}
-
-enum AuthProvider {
-  PHONE
-  TELEGRAM
-  APPLE
-  GOOGLE
 }
 
 enum Gender {

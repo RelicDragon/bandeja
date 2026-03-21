@@ -538,6 +538,37 @@ tbody tr:hover {
     padding: 1.5rem;
 }
 
+.merge-users-hint {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+}
+
+.merge-user-results {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+    min-height: 1.5rem;
+    max-height: 10rem;
+    overflow-y: auto;
+}
+
+.merge-user-picked-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.merge-user-picked {
+    flex: 1;
+    min-width: 0;
+    word-break: break-all;
+}
+
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
