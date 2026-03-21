@@ -643,6 +643,58 @@ async function recomputeGameStats(tx: Tx, userId: string) {
   });
 }
 
+async function remapUserInteractionsForMerge(tx: Tx, survivorId: string, sourceId: string) {
+  const fromRows = await tx.userInteraction.findMany({
+    where: { fromUserId: sourceId },
+  });
+  for (const row of fromRows) {
+    const twin = await tx.userInteraction.findFirst({
+      where: { fromUserId: survivorId, toUserId: row.toUserId },
+    });
+    if (twin) {
+      const last =
+        row.lastInteractionAt > twin.lastInteractionAt
+          ? row.lastInteractionAt
+          : twin.lastInteractionAt;
+      await tx.userInteraction.update({
+        where: { id: twin.id },
+        data: { count: twin.count + row.count, lastInteractionAt: last },
+      });
+      await tx.userInteraction.delete({ where: { id: row.id } });
+    } else {
+      await tx.userInteraction.update({
+        where: { id: row.id },
+        data: { fromUserId: survivorId },
+      });
+    }
+  }
+
+  const toRows = await tx.userInteraction.findMany({
+    where: { toUserId: sourceId },
+  });
+  for (const row of toRows) {
+    const twin = await tx.userInteraction.findFirst({
+      where: { fromUserId: row.fromUserId, toUserId: survivorId },
+    });
+    if (twin) {
+      const last =
+        row.lastInteractionAt > twin.lastInteractionAt
+          ? row.lastInteractionAt
+          : twin.lastInteractionAt;
+      await tx.userInteraction.update({
+        where: { id: twin.id },
+        data: { count: twin.count + row.count, lastInteractionAt: last },
+      });
+      await tx.userInteraction.delete({ where: { id: row.id } });
+    } else {
+      await tx.userInteraction.update({
+        where: { id: row.id },
+        data: { toUserId: survivorId },
+      });
+    }
+  }
+}
+
 async function mergeDuplicateUserInteractions(tx: Tx) {
   const dups = await tx.$queryRaw<Array<{ fromUserId: string; toUserId: string }>>`
     SELECT "fromUserId", "toUserId"
@@ -945,14 +997,7 @@ export class UserMergeService {
           data: { userId: survivorId },
         });
 
-        await tx.userInteraction.updateMany({
-          where: { fromUserId: sourceId },
-          data: { fromUserId: survivorId },
-        });
-        await tx.userInteraction.updateMany({
-          where: { toUserId: sourceId },
-          data: { toUserId: survivorId },
-        });
+        await remapUserInteractionsForMerge(tx, survivorId, sourceId);
 
         await tx.chatMessage.updateMany({
           where: { senderId: sourceId },
