@@ -66,7 +66,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, showOnlineStatus, favoriteTrainerId, appIcon, verbalStatus, bio } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, showOnlineStatus, favoriteTrainerId, appIcon, verbalStatus, bio } = req.body;
   
   // Explicitly ignore level and socialLevel - only backend can modify these
 
@@ -120,11 +120,16 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
       const newLastName = lastName !== undefined ? lastName : currentUser?.lastName || '';
       const trimmedFirst = (newFirstName || '').trim();
       const trimmedLast = (newLastName || '').trim();
-      if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
-        throw new ApiError(400, 'At least one name must have at least 3 characters');
+      if (trimmedFirst.length < 1 && trimmedLast.length < 1) {
+        throw new ApiError(400, 'At least one name must have at least 1 character');
       }
     }
   }
+
+  const shouldSetNameIsSetFromNames =
+    (firstName !== undefined || lastName !== undefined) &&
+    (((firstName !== undefined ? firstName : currentUser?.firstName || '') || '').trim().length >= 1 ||
+      ((lastName !== undefined ? lastName : currentUser?.lastName || '') || '').trim().length >= 1);
 
   if (avatar === null && currentUser?.avatar) {
     await ImageProcessor.deleteFile(currentUser.avatar);
@@ -171,6 +176,8 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(defaultCurrency !== undefined && { defaultCurrency }),
         ...(gender !== undefined && { gender }),
         ...(finalGenderIsSet !== undefined && { genderIsSet: finalGenderIsSet }),
+        ...(nameIsSet !== undefined && { nameIsSet }),
+        ...(shouldSetNameIsSetFromNames && { nameIsSet: true }),
         ...(preferredHandLeft !== undefined && { preferredHandLeft }),
         ...(preferredHandRight !== undefined && { preferredHandRight }),
         ...(preferredCourtSideLeft !== undefined && { preferredCourtSideLeft }),

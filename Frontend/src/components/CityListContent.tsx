@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
-import { Map, List, MapPin, Home } from 'lucide-react';
+import { Map as MapIcon, List, MapPin, Home } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { City } from '@/types';
 import type { CountryWithClubs } from '@/hooks/useCityList';
@@ -13,9 +13,26 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 import { findNearestCity } from '@/utils/nearestCity';
 import { findNearestClub } from '@/utils/nearestClub';
 import { useGeoReady } from '@/hooks/useGeoReady';
-import { getCountryDisplayName, getCountryNativeName, getCountrySearchNames, getCitySearchNames } from '@/utils/geoTranslations';
+import {
+  getCountryDisplayName,
+  getCountryNativeName,
+  getCountrySearchNames,
+  getCitySearchNames,
+  getGeoDataLoaded,
+} from '@/utils/geoTranslations';
+import {
+  citySearchRelevancyScore,
+  matchCountryForListSearch,
+  cityMatchesListSearch,
+  clubMatchesListSearch,
+} from '@/utils/citySearchHelpers';
 import { appApi } from '@/api/app';
 import { clubsApi, type ClubMapItem } from '@/api/clubs';
+
+type UnifiedSearchRow =
+  | { kind: 'country'; group: CountryWithClubs }
+  | { kind: 'city'; city: City }
+  | { kind: 'club'; club: ClubMapItem };
 
 export interface CityListContentProps {
   view: 'country' | 'city';
@@ -76,7 +93,7 @@ export const CityListContent = ({
   onLocationError,
 }: CityListContentProps) => {
   const { t, i18n } = useTranslation();
-  useGeoReady();
+  const geoReady = useGeoReady();
   const isLoading = showingLoading ?? loading;
   const selectedCityRef = useRef<HTMLButtonElement>(null);
   const scrollTargetRef = useRef<HTMLButtonElement>(null);
@@ -139,6 +156,57 @@ export const CityListContent = ({
   );
 
   const searchLower = search.trim().length >= 2 ? search.trim().toLowerCase() : '';
+  const unifiedSearchMode = !showMap && !!searchLower;
+
+  const allCitiesSource = useMemo(() => {
+    if (allCities && allCities.length > 0) return allCities;
+    return filteredCountries.flatMap((f) => f.cities);
+  }, [allCities, filteredCountries]);
+
+  const allCountryGroups = useMemo((): CountryWithClubs[] => {
+    const m = new Map<string, City[]>();
+    for (const c of allCitiesSource) {
+      const list = m.get(c.country) ?? [];
+      list.push(c);
+      m.set(c.country, list);
+    }
+    for (const list of m.values()) list.sort((a, b) => a.name.localeCompare(b.name));
+    return Array.from(m.entries())
+      .map(([country, cities]) => ({
+        country,
+        cities,
+        clubsCount: cities.reduce((s, c) => s + (c.clubsCount ?? 0), 0),
+      }))
+      .sort((a, b) => a.country.localeCompare(b.country));
+  }, [allCitiesSource]);
+
+  const unifiedSearchRows = useMemo((): UnifiedSearchRow[] => {
+    if (!unifiedSearchMode || !searchLower) return [];
+    const useGeo = geoReady && getGeoDataLoaded();
+    const countriesMatching = allCountryGroups.filter((g) =>
+      matchCountryForListSearch(g.country, searchLower, useGeo)
+    );
+    const countryRows: UnifiedSearchRow[] = countriesMatching.map((group) => ({ kind: 'country', group }));
+
+    if (listMode === 'cities') {
+      const citiesMatching = allCitiesSource
+        .filter((c) => cityMatchesListSearch(c, searchLower, useGeo))
+        .sort((a, b) => {
+          const namesA = getCitySearchNames(a.id, a.name, a.country);
+          const namesB = getCitySearchNames(b.id, b.name, b.country);
+          const diff =
+            citySearchRelevancyScore(a, searchLower, namesA) - citySearchRelevancyScore(b, searchLower, namesB);
+          return diff !== 0 ? diff : a.name.localeCompare(b.name);
+        });
+      return [...countryRows, ...citiesMatching.map((city) => ({ kind: 'city' as const, city }))];
+    }
+
+    const clubsMatching = listClubs
+      .filter((club) => clubMatchesListSearch(club, searchLower, useGeo))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return [...countryRows, ...clubsMatching.map((club) => ({ kind: 'club' as const, club }))];
+  }, [unifiedSearchMode, searchLower, listMode, listClubs, allCountryGroups, allCitiesSource, geoReady]);
+
   const filteredMapCities = useMemo(() => {
     if (!searchLower) return mapCities;
     return mapCities.filter((c) => {
@@ -207,7 +275,7 @@ export const CityListContent = ({
             skipListTransitionRef.current = true;
             setNearestClubCityIdInList(nearest.cityId);
             setScrollToClubId(nearest.id);
-            selectCountry(nearest.country);
+            selectCountryAndClearSearch(nearest.country);
           }
         } else {
           onLocationError?.(t('auth.noCityNearby'));
@@ -220,7 +288,7 @@ export const CityListContent = ({
           } else {
             skipListTransitionRef.current = true;
             setNearestCityIdInList(nearest.id);
-            selectCountry(nearest.country);
+            selectCountryAndClearSearch(nearest.country);
             setScrollToCityId(nearest.id);
           }
         } else {
@@ -303,8 +371,11 @@ export const CityListContent = ({
     );
   }, [listClubs, selectedCountry, searchLowerClubs]);
 
-  const searchPlaceholder =
-    view === 'country'
+  const searchPlaceholder = unifiedSearchMode
+    ? listMode === 'cities'
+      ? t('city.searchCountriesAndCities')
+      : t('city.searchCountriesAndClubs')
+    : view === 'country'
       ? t('city.searchCountries')
       : listMode === 'clubs'
         ? t('city.searchClubs')
@@ -341,6 +412,21 @@ export const CityListContent = ({
   const handleScrolledToCityIndex = useCallback(() => setScrollToCityId(null), []);
   const handleClubClick = useCallback((id: string) => setPendingCityId(id), []);
   const handleMapClick = useCallback(() => setPendingCityId(null), []);
+
+  const selectCountryAndClearSearch = useCallback(
+    (country: string) => {
+      setSearch('');
+      selectCountry(country);
+    },
+    [selectCountry, setSearch]
+  );
+  const onCityClickAndClearSearch = useCallback(
+    (cityId: string) => {
+      onCityClick(cityId);
+      setSearch('');
+    },
+    [onCityClick, setSearch]
+  );
 
   return (
     <div className={`space-y-2 p-1 pt-2 min-h-0 flex flex-col flex-1 overflow-hidden min-w-0 ${className}`}>
@@ -394,7 +480,7 @@ export const CityListContent = ({
               </>
             ) : (
               <>
-                <Map className="w-4 h-4 shrink-0" strokeWidth={2.25} />
+                <MapIcon className="w-4 h-4 shrink-0" strokeWidth={2.25} />
                 <span className="text-sm font-medium">{t('city.map')}</span>
               </>
             )}
@@ -412,7 +498,7 @@ export const CityListContent = ({
         />
       )}
       <AnimatePresence initial={false}>
-        {!showMap && view === 'city' && selectedCountry && (
+        {!showMap && view === 'city' && selectedCountry && !unifiedSearchMode && (
           <motion.div
             key="back-row"
             initial={{ height: 0, opacity: 0 }}
@@ -448,128 +534,188 @@ export const CityListContent = ({
               style={{ width: '200%', transform: showMap ? 'translateX(-50%)' : 'translateX(0)' }}
             >
               <div className="w-1/2 flex-shrink-0 min-w-0 min-h-0 overflow-hidden flex flex-col">
-              <div
-                className={`flex flex-1 min-h-0 w-full ${allowTransition && !skipListTransitionRef.current ? 'transition-transform duration-300 ease-out' : ''}`}
-                style={{ width: '200%', transform: view === 'city' ? 'translateX(-50%)' : 'translateX(0)' }}
-              >
-                <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">
-              {filteredCountries.length === 0 ? (
-                <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">
-                  {citiesCount === 0 ? t('createLeague.noCitiesAvailable') : t('common.noResults')}
-                </p>
+              {unifiedSearchMode ? (
+                citiesCount === 0 && allCitiesSource.length === 0 ? (
+                  <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">
+                    {t('createLeague.noCitiesAvailable')}
+                  </p>
+                ) : unifiedSearchRows.length === 0 ? (
+                  <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">{t('common.noResults')}</p>
+                ) : (
+                  <VirtualizedList
+                    items={unifiedSearchRows}
+                    getItemKey={(row) =>
+                      row.kind === 'country' ? `co:${row.group.country}` : row.kind === 'city' ? `ci:${row.city.id}` : `cl:${row.club.id}`
+                    }
+                    estimateSize={80}
+                    className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
+                    contentClassName={`space-y-1.5 p-1 ${contentClassName}`}
+                    renderItem={(row) => {
+                      if (row.kind === 'country') {
+                        return (
+                          <CountryListItem
+                            item={row.group}
+                            isSelected={
+                              listMode === 'cities'
+                                ? countryOfSelected?.country === row.group.country
+                                : selectedCountry === row.group.country
+                            }
+                            onSelect={selectCountryAndClearSearch}
+                          />
+                        );
+                      }
+                      if (row.kind === 'city') {
+                        return (
+                          <CityListItem
+                            city={row.city}
+                            isSelected={row.city.id === selectedCityId}
+                            isNearest={row.city.id === nearestCityIdInList}
+                            isScrollTarget={false}
+                            submitting={submitting}
+                            isSelectorMode={isSelectorMode}
+                            selectedCityRef={selectedCityRef}
+                            scrollTargetRef={scrollTargetRef}
+                            onSelect={onCityClickAndClearSearch}
+                          />
+                        );
+                      }
+                      return (
+                        <ClubListItem
+                          club={row.club}
+                          isSelected={row.club.cityId === selectedCityId}
+                          isNearest={row.club.cityId === nearestClubCityIdInList}
+                          onSelect={onCityClickAndClearSearch}
+                          scrollTargetRef={row.club.id === scrollToClubId ? scrollTargetClubRef : undefined}
+                        />
+                      );
+                    }}
+                  />
+                )
               ) : (
-                <VirtualizedList
-                  items={filteredCountries}
-                  getItemKey={(item) => item.country}
-                  className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
-                  contentClassName={`space-y-1.5 ${contentClassName}`}
-                  renderItem={(item) => (
-                    <CountryListItem
-                      item={item}
-                      isSelected={listMode === 'cities' ? countryOfSelected?.country === item.country : selectedCountry === item.country}
-                      onSelect={selectCountry}
-                    />
-                  )}
-                />
-              )}
-                </div>
-                <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">
-                  {listMode === 'cities' && (
-                    <>
-                      {showNoCityOption && isSelectorMode && (
-                        <button
-                          onClick={() => onCityClick('')}
-                          className={`w-full text-left px-4 py-3 rounded-xl transition-all mb-1.5 ${
-                            !selectedId
-                              ? 'bg-primary-500 text-white'
-                              : 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
-                          }`}
-                        >
-                          <span className="font-medium text-sm">{t('createLeague.noCity')}</span>
-                        </button>
-                      )}
-                      {filteredCitiesForCountry.length === 0 ? (
+                <div
+                  className={`flex flex-1 min-h-0 w-full ${allowTransition && !skipListTransitionRef.current ? 'transition-transform duration-300 ease-out' : ''}`}
+                  style={{ width: '200%', transform: view === 'city' ? 'translateX(-50%)' : 'translateX(0)' }}
+                >
+                  <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">
+                    {filteredCountries.length === 0 ? (
+                      <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">
+                        {citiesCount === 0 ? t('createLeague.noCitiesAvailable') : t('common.noResults')}
+                      </p>
+                    ) : (
+                      <VirtualizedList
+                        items={filteredCountries}
+                        getItemKey={(item) => item.country}
+                        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
+                        contentClassName={`space-y-1.5 ${contentClassName}`}
+                        renderItem={(item) => (
+                          <CountryListItem
+                            item={item}
+                            isSelected={
+                              listMode === 'cities' ? countryOfSelected?.country === item.country : selectedCountry === item.country
+                            }
+                            onSelect={selectCountryAndClearSearch}
+                          />
+                        )}
+                      />
+                    )}
+                  </div>
+                  <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">
+                    {listMode === 'cities' && (
+                      <>
+                        {showNoCityOption && isSelectorMode && (
+                          <button
+                            onClick={() => onCityClickAndClearSearch('')}
+                            className={`w-full text-left px-4 py-3 rounded-xl transition-all mb-1.5 ${
+                              !selectedId
+                                ? 'bg-primary-500 text-white'
+                                : 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                            }`}
+                          >
+                            <span className="font-medium text-sm">{t('createLeague.noCity')}</span>
+                          </button>
+                        )}
+                        {filteredCitiesForCountry.length === 0 ? (
+                          <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">{t('common.noResults')}</p>
+                        ) : useVirtualizedCityList ? (
+                          <VirtualizedList
+                            items={filteredCitiesForCountry}
+                            getItemKey={(item) => item.id}
+                            estimateSize={72}
+                            scrollToIndex={cityScrollToIndex >= 0 ? cityScrollToIndex : null}
+                            onScrolledToIndex={handleScrolledToCityIndex}
+                            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
+                            contentClassName={`space-y-1.5 p-1 ${contentClassName}`}
+                            renderItem={(city) => (
+                              <CityListItem
+                                city={city}
+                                isSelected={city.id === selectedCityId}
+                                isNearest={city.id === nearestCityIdInList}
+                                isScrollTarget={false}
+                                submitting={submitting}
+                                isSelectorMode={isSelectorMode}
+                                selectedCityRef={selectedCityRef}
+                                scrollTargetRef={scrollTargetRef}
+                                onSelect={onCityClickAndClearSearch}
+                              />
+                            )}
+                          />
+                        ) : (
+                          <div className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 space-y-1.5 p-1 ${contentClassName}`}>
+                            {filteredCitiesForCountry.map((city) => (
+                              <CityListItem
+                                key={city.id}
+                                city={city}
+                                isSelected={city.id === selectedCityId}
+                                isNearest={city.id === nearestCityIdInList}
+                                isScrollTarget={city.id === scrollToCityId}
+                                submitting={submitting}
+                                isSelectorMode={isSelectorMode}
+                                selectedCityRef={selectedCityRef}
+                                scrollTargetRef={scrollTargetRef}
+                                onSelect={onCityClickAndClearSearch}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {listMode === 'clubs' &&
+                      (filteredListClubsForCountry.length === 0 ? (
                         <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">{t('common.noResults')}</p>
-                      ) : useVirtualizedCityList ? (
+                      ) : filteredListClubsForCountry.length >= 40 ? (
                         <VirtualizedList
-                          items={filteredCitiesForCountry}
+                          items={filteredListClubsForCountry}
                           getItemKey={(item) => item.id}
-                          estimateSize={72}
-                          scrollToIndex={cityScrollToIndex >= 0 ? cityScrollToIndex : null}
-                          onScrolledToIndex={handleScrolledToCityIndex}
+                          estimateSize={88}
                           className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
                           contentClassName={`space-y-1.5 p-1 ${contentClassName}`}
-                          renderItem={(city) => (
-                            <CityListItem
-                              city={city}
-                              isSelected={city.id === selectedCityId}
-                              isNearest={city.id === nearestCityIdInList}
-                              isScrollTarget={false}
-                              submitting={submitting}
-                              isSelectorMode={isSelectorMode}
-                              selectedCityRef={selectedCityRef}
-                              scrollTargetRef={scrollTargetRef}
-                              onSelect={onCityClick}
+                          renderItem={(club) => (
+                            <ClubListItem
+                              club={club}
+                              isSelected={club.cityId === selectedCityId}
+                              isNearest={club.cityId === nearestClubCityIdInList}
+                              onSelect={onCityClickAndClearSearch}
+                              scrollTargetRef={club.id === scrollToClubId ? scrollTargetClubRef : undefined}
                             />
                           )}
                         />
                       ) : (
                         <div className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 space-y-1.5 p-1 ${contentClassName}`}>
-                          {filteredCitiesForCountry.map((city) => (
-                            <CityListItem
-                              key={city.id}
-                              city={city}
-                              isSelected={city.id === selectedCityId}
-                              isNearest={city.id === nearestCityIdInList}
-                              isScrollTarget={city.id === scrollToCityId}
-                              submitting={submitting}
-                              isSelectorMode={isSelectorMode}
-                              selectedCityRef={selectedCityRef}
-                              scrollTargetRef={scrollTargetRef}
-                              onSelect={onCityClick}
+                          {filteredListClubsForCountry.map((club) => (
+                            <ClubListItem
+                              key={club.id}
+                              club={club}
+                              isSelected={club.cityId === selectedCityId}
+                              isNearest={club.cityId === nearestClubCityIdInList}
+                              onSelect={onCityClickAndClearSearch}
+                              scrollTargetRef={club.id === scrollToClubId ? scrollTargetClubRef : undefined}
                             />
                           ))}
                         </div>
-                      )}
-                    </>
-                  )}
-                  {listMode === 'clubs' && (
-                    filteredListClubsForCountry.length === 0 ? (
-                      <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">{t('common.noResults')}</p>
-                    ) : filteredListClubsForCountry.length >= 40 ? (
-                      <VirtualizedList
-                        items={filteredListClubsForCountry}
-                        getItemKey={(item) => item.id}
-                        estimateSize={88}
-                        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
-                        contentClassName={`space-y-1.5 p-1 ${contentClassName}`}
-                        renderItem={(club) => (
-                          <ClubListItem
-                            club={club}
-                            isSelected={club.cityId === selectedCityId}
-                            isNearest={club.cityId === nearestClubCityIdInList}
-                            onSelect={onCityClick}
-                            scrollTargetRef={club.id === scrollToClubId ? scrollTargetClubRef : undefined}
-                          />
-                        )}
-                      />
-                    ) : (
-                      <div className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 space-y-1.5 p-1 ${contentClassName}`}>
-                        {filteredListClubsForCountry.map((club) => (
-                          <ClubListItem
-                            key={club.id}
-                            club={club}
-                            isSelected={club.cityId === selectedCityId}
-                            isNearest={club.cityId === nearestClubCityIdInList}
-                            onSelect={onCityClick}
-                            scrollTargetRef={club.id === scrollToClubId ? scrollTargetClubRef : undefined}
-                          />
-                        ))}
-                      </div>
-                    )
-                  )}
+                      ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             <div className="w-1/2 flex-shrink-0 min-w-0 min-h-0 flex flex-col">
               {showMap ? (
@@ -599,7 +745,7 @@ export const CityListContent = ({
                         <button
                           type="button"
                           onClick={() => {
-                            onCityClick(pendingCityId);
+                            onCityClickAndClearSearch(pendingCityId);
                             setPendingCityId(null);
                           }}
                           className="w-full py-2.5 px-8 rounded-xl text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 focus:ring-2 focus:ring-primary-500/30 focus:outline-none transition-colors"

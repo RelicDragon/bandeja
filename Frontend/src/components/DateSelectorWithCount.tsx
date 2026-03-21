@@ -102,7 +102,7 @@ export const DateSelectorWithCount = ({
   const getDateLabel = (date: Date) => {
     if (isToday(date)) return t('createGame.today');
     if (isTomorrow(date)) return t('createGame.tomorrow');
-    return format(date, 'EEE', { locale });
+    return format(date, 'EEEE', { locale }).slice(0, 3);
   };
 
   const getGameCountForDate = (date: Date) => {

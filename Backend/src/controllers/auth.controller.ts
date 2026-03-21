@@ -11,9 +11,39 @@ import { verifyAppleIdentityToken } from '../services/apple/appleAuth.service';
 import { verifyGoogleIdToken } from '../services/google/googleAuth.service';
 import { AuthRequest } from '../middleware/auth';
 import { TransactionService } from '../services/transaction.service';
+import { ensureUserCityAssigned } from '../services/user-city-bootstrap.service';
+import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
+
+const sanitizeName = (value?: string): string => (value || '').trim().slice(0, 100);
+
+const resolveRegistrationNameData = (firstName?: string, lastName?: string) => {
+  const sanitizedFirstName = sanitizeName(firstName);
+  const sanitizedLastName = sanitizeName(lastName);
+  const hasProvidedName = sanitizedFirstName.length >= 1 || sanitizedLastName.length >= 1;
+
+  if (hasProvidedName) {
+    return {
+      firstName: sanitizedFirstName || undefined,
+      lastName: sanitizedLastName || undefined,
+      nameIsSet: true,
+    };
+  }
+
+  return {
+    firstName: uniqueNamesGenerator({
+      dictionaries: [adjectives, animals],
+      separator: ' ',
+      style: 'capital',
+      length: 2,
+    }),
+    lastName: undefined,
+    nameIsSet: false,
+  };
+};
 
 export const registerWithPhone = asyncHandler(async (req: Request, res: Response) => {
   const { phone, password, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
+  const nameData = resolveRegistrationNameData(firstName, lastName);
 
   const existingUser = await prisma.user.findUnique({
     where: { phone },
@@ -34,12 +64,13 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
 
   const passwordHash = await hashPassword(password);
 
-  const user = await prisma.user.create({
+  let user = await prisma.user.create({
     data: {
       phone,
       passwordHash,
-      firstName,
-      lastName,
+      firstName: nameData.firstName,
+      lastName: nameData.lastName,
+      nameIsSet: nameData.nameIsSet,
       email,
       language,
       gender: gender || undefined,
@@ -59,6 +90,7 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
     console.error('[registerWithPhone] Registration bonus failed:', e);
   }
 
+  user = await ensureUserCityAssigned(user.id, req);
   const token = generateToken({ userId: user.id, phone: user.phone! });
 
   res.status(201).json({
@@ -72,7 +104,7 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
   
   const { phone, password, language } = req.body;
 
-  let user = await prisma.user.findUnique({
+  const userWithPassword = await prisma.user.findUnique({
     where: { phone },
     select: {
       ...PROFILE_SELECT_FIELDS,
@@ -80,37 +112,34 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
     },
   });
 
-  if (!user || !user.passwordHash) {
+  if (!userWithPassword || !userWithPassword.passwordHash) {
     throw new ApiError(401, 'Invalid credentials');
   }
 
-  const isPasswordValid = await comparePassword(password, user.passwordHash);
+  const isPasswordValid = await comparePassword(password, userWithPassword.passwordHash);
 
   if (!isPasswordValid) {
     throw new ApiError(401, 'Invalid credentials');
   }
 
-  if (!user.isActive) {
+  if (!userWithPassword.isActive) {
     throw new ApiError(403, 'Account is inactive');
   }
 
   if (language) {
     await prisma.user.update({
-      where: { id: user.id },
+      where: { id: userWithPassword.id },
       data: { language },
     });
-    user.language = language;
   }
 
+  const user = await ensureUserCityAssigned(userWithPassword.id, req);
   const token = generateToken({ userId: user.id, phone: user.phone! });
-
-  const { passwordHash, ...userWithoutPassword } = user;
-  void passwordHash;
 
   res.json({
     success: true,
     data: {
-      user: userWithoutPassword,
+      user,
       token,
     },
   });
@@ -118,6 +147,7 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
 
 export const registerWithTelegram = asyncHandler(async (req: Request, res: Response) => {
   const { telegramId, telegramUsername, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
+  const nameData = resolveRegistrationNameData(firstName, lastName);
 
   const existingUser = await prisma.user.findUnique({
     where: { telegramId },
@@ -136,12 +166,13 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
     }
   }
 
-  const user = await prisma.user.create({
+  let user = await prisma.user.create({
     data: {
       telegramId,
       telegramUsername,
-      firstName,
-      lastName,
+      firstName: nameData.firstName,
+      lastName: nameData.lastName,
+      nameIsSet: nameData.nameIsSet,
       email,
       language,
       gender: gender || undefined,
@@ -163,6 +194,7 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
 
   await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
 
+  user = await ensureUserCityAssigned(user.id, req);
   const token = generateToken({ userId: user.id, telegramId: user.telegramId! });
 
   res.status(201).json({
@@ -199,6 +231,7 @@ export const loginWithTelegram = asyncHandler(async (req: Request, res: Response
 
   await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
 
+  user = await ensureUserCityAssigned(user.id, req);
   const token = generateToken({ userId: user.id, telegramId: user.telegramId! });
 
   res.json({
@@ -282,17 +315,16 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
     firstNameLength: firstName?.length || 0,
     lastNameLength: lastName?.length || 0,
   });
-  const sanitizedFirstName = firstName ? firstName.trim().slice(0, 100) : undefined;
-  const sanitizedLastName = lastName ? lastName.trim().slice(0, 100) : undefined;
+  const nameData = resolveRegistrationNameData(firstName, lastName);
   console.log('[APPLE_REGISTER] Sanitized firstName/lastName:', {
-    sanitizedFirstName: sanitizedFirstName || null,
-    sanitizedLastName: sanitizedLastName || null,
-    sanitizedFirstNameLength: sanitizedFirstName?.length || 0,
-    sanitizedLastNameLength: sanitizedLastName?.length || 0,
-    willUseFirstName: !!sanitizedFirstName,
-    willUseLastName: !!sanitizedLastName,
+    sanitizedFirstName: nameData.firstName || null,
+    sanitizedLastName: nameData.lastName || null,
+    sanitizedFirstNameLength: nameData.firstName?.length || 0,
+    sanitizedLastNameLength: nameData.lastName?.length || 0,
+    willUseFirstName: !!nameData.firstName,
+    willUseLastName: !!nameData.lastName,
   });
-  console.log('[APPLE_REGISTER] User data:', { hasFirstName: !!sanitizedFirstName, hasLastName: !!sanitizedLastName, language });
+  console.log('[APPLE_REGISTER] User data:', { hasFirstName: !!nameData.firstName, hasLastName: !!nameData.lastName, language, nameIsSet: nameData.nameIsSet });
   
   // For Apple Sign In, we accept whatever Apple provides without validation
   // This complies with Apple's guidelines: never require users to provide
@@ -315,8 +347,9 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
       appleSub,
       appleEmail: emailToUse,
       appleEmailVerified: emailToUse ? (appleToken.email_verified || false) : false,
-      firstName: sanitizedFirstName || undefined,
-      lastName: sanitizedLastName || undefined,
+      firstName: nameData.firstName,
+      lastName: nameData.lastName,
+      nameIsSet: nameData.nameIsSet,
       email: emailToUse,
       language: validatedLanguage,
       gender: gender || undefined,
@@ -347,6 +380,7 @@ export const registerWithApple = asyncHandler(async (req: Request, res: Response
   }
 
   console.log('[APPLE_REGISTER] Generating token');
+  user = await ensureUserCityAssigned(user.id, req);
   const token = generateToken({ userId: user.id, appleId: appleSub });
 
   console.log('[APPLE_REGISTER] Registration successful');
@@ -441,9 +475,9 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
     console.log('[APPLE_LOGIN] Processing firstName update:', {
       sanitizedFirstName: sanitizedFirstName || null,
       sanitizedFirstNameLength: sanitizedFirstName.length,
-      willUpdate: sanitizedFirstName.length >= 3 || (user.lastName && user.lastName.trim().length >= 3),
+      willUpdate: sanitizedFirstName.length >= 1 || (user.lastName && user.lastName.trim().length >= 1),
     });
-    if (sanitizedFirstName.length >= 3 || (user.lastName && user.lastName.trim().length >= 3)) {
+    if (sanitizedFirstName.length >= 1 || (user.lastName && user.lastName.trim().length >= 1)) {
       updateData.firstName = sanitizedFirstName;
       console.log('[APPLE_LOGIN] Updating firstName to:', sanitizedFirstName);
     }
@@ -456,9 +490,9 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
       sanitizedLastName: sanitizedLastName || null,
       sanitizedLastNameLength: sanitizedLastName.length,
       currentFirstName: currentFirstName || null,
-      willUpdate: sanitizedLastName.length >= 3 || (currentFirstName && currentFirstName.trim().length >= 3),
+      willUpdate: sanitizedLastName.length >= 1 || (currentFirstName && currentFirstName.trim().length >= 1),
     });
-    if (sanitizedLastName.length >= 3 || (currentFirstName && currentFirstName.trim().length >= 3)) {
+    if (sanitizedLastName.length >= 1 || (currentFirstName && currentFirstName.trim().length >= 1)) {
       updateData.lastName = sanitizedLastName;
       console.log('[APPLE_LOGIN] Updating lastName to:', sanitizedLastName);
     }
@@ -470,9 +504,11 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
     const trimmedFirst = finalFirstName.trim();
     const trimmedLast = finalLastName.trim();
     
-    if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
+    if (trimmedFirst.length < 1 && trimmedLast.length < 1) {
       delete updateData.firstName;
       delete updateData.lastName;
+    } else {
+      updateData.nameIsSet = true;
     }
   }
 
@@ -517,6 +553,7 @@ export const loginWithApple = asyncHandler(async (req: Request, res: Response) =
   }
 
   console.log('[APPLE_LOGIN] Generating token');
+  user = await ensureUserCityAssigned(user.id, req);
   const token = generateToken({ userId: user.id, appleId: appleSub });
 
   console.log('[APPLE_LOGIN] Login successful');
@@ -562,15 +599,10 @@ export const registerWithGoogle = asyncHandler(async (req: Request, res: Respons
     }
   }
 
-  const sanitizedFirstName = firstName ? firstName.trim().slice(0, 100) : (googleToken.given_name ? googleToken.given_name.trim().slice(0, 100) : undefined);
-  const sanitizedLastName = lastName ? lastName.trim().slice(0, 100) : (googleToken.family_name ? googleToken.family_name.trim().slice(0, 100) : undefined);
-
-  const trimmedFirst = sanitizedFirstName || '';
-  const trimmedLast = sanitizedLastName || '';
-  
-  if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
-    throw new ApiError(400, 'auth.nameMinLength');
-  }
+  const nameData = resolveRegistrationNameData(
+    firstName || googleToken.given_name || undefined,
+    lastName || googleToken.family_name || undefined
+  );
 
   let validatedLanguage = language;
   if (language) {
@@ -588,8 +620,9 @@ export const registerWithGoogle = asyncHandler(async (req: Request, res: Respons
         googleId,
         googleEmail: emailToUse,
         googleEmailVerified: emailToUse ? (googleToken.email_verified || false) : false,
-        firstName: sanitizedFirstName || undefined,
-        lastName: sanitizedLastName || undefined,
+        firstName: nameData.firstName,
+        lastName: nameData.lastName,
+        nameIsSet: nameData.nameIsSet,
         email: emailToUse,
         language: validatedLanguage,
         gender: gender || undefined,
@@ -617,6 +650,7 @@ export const registerWithGoogle = asyncHandler(async (req: Request, res: Respons
     throw createError;
   }
 
+  user = await ensureUserCityAssigned(user.id, req);
   const token = generateToken({ userId: user.id, googleId });
 
   res.status(201).json({
@@ -666,7 +700,7 @@ export const loginWithGoogle = asyncHandler(async (req: Request, res: Response) 
 
   if (firstName && !user.firstName) {
     const sanitizedFirstName = firstName.trim().slice(0, 100);
-    if (sanitizedFirstName.length >= 3 || (user.lastName && user.lastName.trim().length >= 3)) {
+    if (sanitizedFirstName.length >= 1 || (user.lastName && user.lastName.trim().length >= 1)) {
       updateData.firstName = sanitizedFirstName;
     }
   }
@@ -674,7 +708,7 @@ export const loginWithGoogle = asyncHandler(async (req: Request, res: Response) 
   if (lastName && !user.lastName) {
     const sanitizedLastName = lastName.trim().slice(0, 100);
     const currentFirstName = updateData.firstName || user.firstName || '';
-    if (sanitizedLastName.length >= 3 || (currentFirstName && currentFirstName.trim().length >= 3)) {
+    if (sanitizedLastName.length >= 1 || (currentFirstName && currentFirstName.trim().length >= 1)) {
       updateData.lastName = sanitizedLastName;
     }
   }
@@ -685,9 +719,11 @@ export const loginWithGoogle = asyncHandler(async (req: Request, res: Response) 
     const trimmedFirst = finalFirstName.trim();
     const trimmedLast = finalLastName.trim();
     
-    if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
+    if (trimmedFirst.length < 1 && trimmedLast.length < 1) {
       delete updateData.firstName;
       delete updateData.lastName;
+    } else {
+      updateData.nameIsSet = true;
     }
   }
 
@@ -741,6 +777,7 @@ export const loginWithGoogle = asyncHandler(async (req: Request, res: Response) 
     });
   }
 
+  user = await ensureUserCityAssigned(user.id, req);
   const token = generateToken({ userId: user.id, googleId });
 
   res.json({

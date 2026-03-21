@@ -14,7 +14,8 @@ const generateGameMetaTags = (game: any): string => {
     const startDate = new Date(game.startTime);
     
     if (game.timeIsSet) {
-      const startStr = formatInTimeZone(startDate, 'Europe/Belgrade', 'EEE, dd MMM yyyy HH:mm');
+      const weekday = formatInTimeZone(startDate, 'Europe/Belgrade', 'EEEE').slice(0, 3);
+      const startStr = `${weekday}, ${formatInTimeZone(startDate, 'Europe/Belgrade', 'dd MMM yyyy HH:mm')}`;
       if (game.endTime) {
         const endDate = new Date(game.endTime);
         const endStr = formatInTimeZone(endDate, 'Europe/Belgrade', 'HH:mm');
@@ -23,8 +24,8 @@ const generateGameMetaTags = (game: any): string => {
         datetime = startStr;
       }
     } else {
-      const dateStr = formatInTimeZone(startDate, 'Europe/Belgrade', 'EEE, dd MMM yyyy');
-      datetime = dateStr;
+      const weekday = formatInTimeZone(startDate, 'Europe/Belgrade', 'EEEE').slice(0, 3);
+      datetime = `${weekday}, ${formatInTimeZone(startDate, 'Europe/Belgrade', 'dd MMM yyyy')}`;
     }
   }
   

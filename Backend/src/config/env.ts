@@ -58,5 +58,7 @@ export const config = {
   },
   /** User ID that sends city group welcome messages (env: CITY_GROUP_WELCOME_SENDER_ID). Required for backfill script. */
   cityGroupWelcomeSenderId: process.env.CITY_GROUP_WELCOME_SENDER_ID || null,
+  /** Fallback city id used when IP-based city detection fails (env: FALLBACK_CITY_ID). */
+  fallbackCityId: process.env.FALLBACK_CITY_ID || null,
 };
 

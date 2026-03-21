@@ -4,6 +4,7 @@ import { SystemMessageType } from '../../utils/systemMessages';
 import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
 import { validatePlayerCanJoinGame, validateGameCanAcceptParticipants, canUserManageQueue } from '../../utils/participantValidation';
+import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { fetchGameWithPlayingParticipants } from '../../utils/gameQueries';
 import { addOrUpdateParticipant } from '../../utils/participantOperations';
 import { performPostJoinOperations } from '../../utils/postJoinOperations';
@@ -306,7 +307,8 @@ export class ParticipantService {
         }
       }
 
-      const joinResult = await validatePlayerCanJoinGame(game, userId);
+      const skipLevelCheck = participant.status === INVITED_STATUS;
+      const joinResult = await validatePlayerCanJoinGame(game, userId, skipLevelCheck ? { skipLevelCheck: true } : undefined);
       if (!joinResult.canJoin) {
         return await this.moveExistingParticipantToQueue(gameId, userId);
       }
@@ -452,11 +454,13 @@ export class ParticipantService {
         where: { gameId, userId: currentUserId },
       });
 
-      if (!canUserManageQueue(currentParticipant, currentGame)) {
+      const canManage = canUserManageQueue(currentParticipant, currentGame) ||
+        await hasParentGamePermissionWithUserCheck(gameId, currentUserId);
+      if (!canManage) {
         throw new ApiError(403, 'games.notAuthorizedToAcceptJoinQueue');
       }
 
-      const joinResult = await validatePlayerCanJoinGame(currentGame, queueUserId);
+      const joinResult = await validatePlayerCanJoinGame(currentGame, queueUserId, { skipLevelCheck: true });
       if (!joinResult.canJoin) {
         throw new ApiError(400, joinResult.reason || 'errors.games.cannotAddPlayer');
       }

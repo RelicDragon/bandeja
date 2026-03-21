@@ -89,34 +89,17 @@ export async function resetWelcomeScreen(userId: string) {
 export async function skipWelcomeScreen(userId: string) {
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, level: true, welcomeScreenPassed: true },
+    select: { id: true, welcomeScreenPassed: true },
   });
   if (!currentUser) throw new ApiError(404, 'User not found');
   if (currentUser.welcomeScreenPassed) {
     throw new ApiError(400, 'Welcome screen already completed');
   }
 
-  const levelBefore = currentUser.level;
-  const user = await prisma.$transaction(async (tx) => {
-    await tx.user.update({
-      where: { id: userId },
-      data: { level: 1.0, welcomeScreenPassed: true },
-    });
-    await tx.levelChangeEvent.create({
-      data: {
-        userId,
-        levelBefore,
-        levelAfter: 1.0,
-        eventType: LevelChangeEventType.QUESTIONNAIRE,
-        gameId: null,
-        linkEntityType: null,
-      },
-    });
-    return tx.user.findUnique({
-      where: { id: userId },
-      select: PROFILE_SELECT_FIELDS,
-    });
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { welcomeScreenPassed: true },
+    select: PROFILE_SELECT_FIELDS,
   });
-  if (!user) throw new ApiError(500, 'Failed to update user');
   return user;
 }

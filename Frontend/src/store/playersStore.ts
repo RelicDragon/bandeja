@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { chatApi, UserChat } from '@/api/chat';
-import { usersApi } from '@/api/users';
+import { usersApi, type InvitablePlayer } from '@/api/users';
 import { useAuthStore } from './authStore';
 import { useSocketEventsStore } from './socketEventsStore';
 import { BasicUser } from '@/types';
@@ -9,6 +9,7 @@ import type { NewUserChatMessage, UserChatReadReceipt } from '@/services/socketS
 export interface UserMetadata {
   chatId?: string;
   interactionCount: number;
+  gamesTogetherCount: number;
   lastInteractionAt?: number;
   isFavorite?: boolean;
   isBlocked?: boolean;
@@ -63,9 +64,10 @@ let unifiedMessageHandler: (() => void) | null = null;
 let unifiedReadReceiptHandler: (() => void) | null = null;
 let cleanupPromise: Promise<void> | null = null;
 
-const createDefaultMetadata = (existing?: UserMetadata): UserMetadata => ({
-  interactionCount: existing?.interactionCount || 0,
-  lastFetchedAt: existing?.lastFetchedAt || Date.now(),
+const createDefaultMetadata = (existing?: Partial<UserMetadata>): UserMetadata => ({
+  interactionCount: 0,
+  gamesTogetherCount: 0,
+  lastFetchedAt: Date.now(),
   ...existing,
 });
 
@@ -405,11 +407,12 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         const newUsers: Record<string, BasicUser> = {};
         const newMetadata: Record<string, UserMetadata> = {};
 
-        players.forEach((player) => {
+        players.forEach((player: InvitablePlayer) => {
           newUsers[player.id] = player;
           newMetadata[player.id] = createDefaultMetadata({
             ...currentState.metadata[player.id],
-            ...(player.interactionCount > 0 && { interactionCount: player.interactionCount }),
+            interactionCount: player.interactionCount,
+            gamesTogetherCount: player.gamesTogetherCount,
             lastFetchedAt: now,
           });
         });

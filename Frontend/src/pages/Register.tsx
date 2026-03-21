@@ -45,8 +45,8 @@ export const Register = () => {
     const trimmedLast = lastName.trim();
     if (trimmedFirst.length === 0 && trimmedLast.length === 0) {
       errors.firstName = t('auth.firstNameRequired') || 'First name or last name is required';
-    } else if (trimmedFirst.length < 3 && trimmedLast.length < 3) {
-      errors.firstName = t('auth.nameMinLength') || 'At least one name must have at least 3 characters';
+    } else if (trimmedFirst.length < 1 && trimmedLast.length < 1) {
+      errors.firstName = t('auth.nameMinLength') || 'At least one name must have at least 1 character';
     }
     
     const phoneDigits = phone.replace(/\D/g, '');
@@ -144,7 +144,7 @@ export const Register = () => {
       });
       await setAuth(response.data.user, response.data.token);
       await pushNotificationService.ensureTokenSentToBackend();
-      navigate('/select-city');
+      navigate('/');
     } catch (err: any) {
       const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';
       const method = err?.config?.method?.toUpperCase() || 'unknown';

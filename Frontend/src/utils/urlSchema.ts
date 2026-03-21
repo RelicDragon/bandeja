@@ -20,7 +20,6 @@ export type Place =
   | 'editMarketItem'
   | 'marketplaceItem'
   | 'selectCity'
-  | 'completeProfile'
   | 'login'
   | 'loginPhone'
   | 'loginTelegram'
@@ -81,7 +80,6 @@ const PLACE_DEFS: PlaceDefinition[] = [
   { pattern: /^\/create-game\/?$/, place: 'createGame' },
   { pattern: /^\/create-league\/?$/, place: 'createLeague' },
   { pattern: /^\/select-city\/?$/, place: 'selectCity' },
-  { pattern: /^\/complete-profile\/?$/, place: 'completeProfile' },
   { pattern: /^\/login\/([a-zA-Z0-9_-]{20,})$/, place: 'telegramAutoLogin', extractParams: (m) => ({ telegramKey: m[1] }) },
   { pattern: /^\/login\/phone$/, place: 'loginPhone' },
   { pattern: /^\/login\/telegram$/, place: 'loginTelegram' },
@@ -137,7 +135,6 @@ export function buildUrl(place: Place, params?: PlaceParams, overlay?: Overlay):
     case 'editMarketItem': path = `/marketplace/${params?.id ?? ''}/edit`; break;
     case 'marketplaceItem': path = `/marketplace/${params?.id ?? ''}`; break;
     case 'selectCity': path = '/select-city'; break;
-    case 'completeProfile': path = '/complete-profile'; break;
     case 'login': path = '/login'; break;
     case 'loginPhone': path = '/login'; break;
     case 'loginTelegram': path = '/login'; break;
@@ -217,7 +214,7 @@ export function placeToPageType(place: Place): PageType {
 }
 
 const APP_PATH_RE =
-  /^\/(find|chats|profile|leaderboard|games|create-game|create-league|rating|bugs|game-subscriptions|marketplace|user-chat|group-chat|channel-chat|select-city|complete-profile|login|register)(\/.*)?$/;
+  /^\/(find|chats|profile|leaderboard|games|create-game|create-league|rating|bugs|game-subscriptions|marketplace|user-chat|group-chat|channel-chat|select-city|login|register)(\/.*)?$/;
 
 export function isAppPath(pathname: string): boolean {
   return pathname === '/' || APP_PATH_RE.test(pathname);

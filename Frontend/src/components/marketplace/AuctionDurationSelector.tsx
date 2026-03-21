@@ -9,15 +9,19 @@ const BTN_BASE =
   'inline-flex items-center justify-center px-3 py-1.5 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/20';
 
 function formatEndHint(endDate: Date, locale: string, hour12: boolean): string {
-  return new Intl.DateTimeFormat(locale, {
-    weekday: 'short',
+  const parts = new Intl.DateTimeFormat(locale, {
+    weekday: 'long',
     day: 'numeric',
     month: 'short',
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
     hour12,
-  }).format(endDate);
+  }).formatToParts(endDate);
+  return parts
+    .map((p) => (p.type === 'weekday' ? { ...p, value: p.value.slice(0, 3) } : p))
+    .map((p) => p.value)
+    .join('');
 }
 
 export function AuctionDurationSelector({

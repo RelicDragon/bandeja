@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
@@ -63,6 +64,24 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
 
   const interactionMap = new Map(interactions.map((i: { toUserId: string; count: number }) => [i.toUserId, i.count]));
 
+  const coplayRows = await prisma.$queryRaw<Array<{ userId: string; count: number }>>(
+    Prisma.sql`
+      SELECT gp2."userId" AS "userId", COUNT(DISTINCT g.id)::int AS count
+      FROM "GameParticipant" gp1
+      INNER JOIN "GameParticipant" gp2 ON gp1."gameId" = gp2."gameId"
+      INNER JOIN "Game" g ON g.id = gp1."gameId"
+      WHERE gp1."userId" = ${req.userId}
+        AND gp1.status = 'PLAYING'::"ParticipantStatus"
+        AND gp2.status = 'PLAYING'::"ParticipantStatus"
+        AND gp2."userId" <> gp1."userId"
+        AND g."resultsStatus" = 'FINAL'::"ResultsStatus"
+        AND g."entityType" NOT IN ('BAR'::"EntityType", 'LEAGUE_SEASON'::"EntityType")
+      GROUP BY gp2."userId"
+    `
+  );
+
+  const gamesTogetherMap = new Map(coplayRows.map((r) => [r.userId, r.count]));
+
   const users = await prisma.user.findMany({
     where: {
       id: {
@@ -78,6 +97,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
   const usersWithInteractions = users.map((user: BasicUser) => ({
     ...user,
     interactionCount: interactionMap.get(user.id) || 0,
+    gamesTogetherCount: gamesTogetherMap.get(user.id) || 0,
   }));
 
   usersWithInteractions.sort((a, b) => b.interactionCount - a.interactionCount);

@@ -25,6 +25,7 @@
     "backfill:league-delta-scores": "ts-node scripts/backfillLeagueDeltaScores.ts",
     "backfill:city-groups": "ts-node scripts/backfillCityGroups.ts",
     "backfill:city-group-welcome-messages": "ts-node scripts/backfillCityGroupWelcomeMessages.ts",
+    "backfill:user-name-is-set": "ts-node scripts/backfillUserNameIsSet.ts",
     "migrateBugsToGroups": "ts-node scripts/migrateBugsToGroups.ts",
     "test:currency": "ts-node scripts/test-currency-service.ts",
     "example:currency": "ts-node examples/currency-integration-example.ts"
@@ -64,7 +65,8 @@
     "openai": "^6.16.0",
     "puppeteer": "^24.35.0",
     "sharp": "^0.34.4",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "unique-names-generator": "^4.7.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.38.0",

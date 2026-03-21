@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { Card, GameCard, Button } from '@/components';
+import { Card, GameCard, Button, CityModal } from '@/components';
 import { Game } from '@/types';
 import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy, Users } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -11,6 +10,7 @@ import { format, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MonthCalendar } from '@/components/MonthCalendar';
 import { TrainersList } from './TrainersList';
+import { GenderPromptBanner } from './GenderPromptBanner';
 import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
@@ -55,6 +55,7 @@ export const AvailableGamesSection = ({
   const [tournamentFilter, setTournamentFilter] = useState(false);
   const [leaguesFilter, setLeaguesFilter] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [showCityModal, setShowCityModal] = useState(false);
 
   const userFilterVal = externalFilters?.userFilter ?? userFilter;
   const gameFilterVal = externalFilters?.gameFilter ?? gameFilter;
@@ -140,7 +141,7 @@ export const AvailableGamesSection = ({
   }, [isInitialized, userFilterVal, gameFilterVal, trainingFilterVal, tournamentFilterVal, leaguesFilterVal, findViewMode, listViewStartDate, selectedDate]);
 
   const handleCityClick = () => {
-    toast(t('games.switchCityInProfile'));
+    setShowCityModal(true);
   };
 
   useEffect(() => {
@@ -256,6 +257,11 @@ export const AvailableGamesSection = ({
       return false;
     }
 
+    const genderTeams = game.genderTeams ?? 'ANY';
+    if (genderTeams !== 'ANY' && user?.gender === 'PREFER_NOT_TO_SAY') {
+      return false;
+    }
+
     if (userFilterVal) {
       const slotCount = game.participants.filter((p: any) => p.status === 'PLAYING').length;
       if (slotCount >= game.maxParticipants) {
@@ -269,6 +275,21 @@ export const AvailableGamesSection = ({
         
         if (userLevel < minLevel || userLevel > maxLevel) {
           return false;
+        }
+      }
+
+      if (genderTeams !== 'ANY' && user?.gender) {
+        if (user.gender === 'PREFER_NOT_TO_SAY') {
+          return false;
+        }
+        if (genderTeams === 'MEN' && user.gender !== 'MALE') return false;
+        if (genderTeams === 'WOMEN' && user.gender !== 'FEMALE') return false;
+        if (genderTeams === 'MIX_PAIRS') {
+          if (user.gender !== 'MALE' && user.gender !== 'FEMALE') return false;
+          const playing = game.participants?.filter((p: any) => p.status === 'PLAYING') ?? [];
+          const maxPerGender = Math.floor((game.maxParticipants || 0) / 2);
+          const sameGenderCount = playing.filter((p: any) => p.user?.gender === user.gender).length;
+          if (sameGenderCount >= maxPerGender) return false;
         }
       }
     }
@@ -308,13 +329,14 @@ export const AvailableGamesSection = ({
 
   const filterBlock = (
     <div className="mb-4">
+      <GenderPromptBanner />
       <div className="flex items-center justify-between mb-3 max-w-md mx-auto">
         <button
           onClick={handleCityClick}
-          className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         >
           <MapPin size={16} className="text-primary-600 dark:text-primary-400" />
-          <span className="text-sm font-medium text-gray-900 dark:text-white">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {user?.currentCity ? translateCity(user.currentCity.id, user.currentCity.name, user.currentCity.country) : t('auth.selectCity')}
           </span>
         </button>
@@ -475,6 +497,11 @@ export const AvailableGamesSection = ({
             </div>
           }
         />
+        <CityModal
+          isOpen={showCityModal}
+          onClose={() => setShowCityModal(false)}
+          selectedId={user?.currentCity?.id}
+        />
       </div>
     );
   }
@@ -590,6 +617,11 @@ export const AvailableGamesSection = ({
           {t('gameSubscriptions.wantToBeNotified', { defaultValue: 'Want to be notified when new games are created?' })}
         </Button>
       </div>
+      <CityModal
+        isOpen={showCityModal}
+        onClose={() => setShowCityModal(false)}
+        selectedId={user?.currentCity?.id}
+      />
     </div>
   );
 };

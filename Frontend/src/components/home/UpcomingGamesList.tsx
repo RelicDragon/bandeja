@@ -43,7 +43,7 @@ export const UpcomingGamesList = ({ games }: UpcomingGamesListProps) => {
       const clubTz = getClubTimezone(sample);
       const label = clubTz
         ? getDateLabelInClubTz(sample.startTime, clubTz, displaySettings, t)
-        : formatDate(sample.startTime, 'EEE, d MMM');
+        : `${formatDate(sample.startTime, 'EEEE').slice(0, 3)}, ${formatDate(sample.startTime, 'd MMM')}`;
       result.push({ dateStr, label, games: dateGames });
     }
     return result;

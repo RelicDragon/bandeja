@@ -120,7 +120,7 @@ export async function getShortDayOfWeek(
   const cacheKey = getShortDayCacheKey(date, timezone, lang);
   const cached = shortDayCache.get(cacheKey);
   if (cached !== undefined) return cached;
-  const formatted = await formatDateInTimezone(date, 'EEE', timezone, lang);
+  const formatted = await formatDateInTimezone(date, 'EEEE', timezone, lang);
   const value = formatted.slice(0, 3);
   shortDayCache.set(cacheKey, value);
   return value;

@@ -112,6 +112,7 @@ export interface PlayerComparison {
 
 export interface InvitablePlayer extends BasicUser {
   interactionCount: number;
+  gamesTogetherCount: number;
 }
 
 export type NotificationChannelType = 'PUSH' | 'TELEGRAM' | 'WHATSAPP' | 'VIBER';

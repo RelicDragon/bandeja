@@ -470,7 +470,7 @@ export const GameCard = ({
             <button
               type="button"
               onClick={handleChatClick}
-              className="pl-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+              className="pl-2 pt-2 pr-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
             >
               <MessageCircle size={20} className="text-gray-600 dark:text-gray-400" />
               {unreadCount > 0 && (

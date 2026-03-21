@@ -96,7 +96,6 @@ export const useDeepLink = () => {
           '/login': '/login',
           '/register': '/register',
           '/select-city': '/select-city',
-          '/complete-profile': '/complete-profile',
           '/': '/'
         };
         

@@ -101,6 +101,7 @@ export interface User extends BasicUser {
   weekStart?: 'auto' | 'monday' | 'sunday';
   defaultCurrency?: string;
   genderIsSet?: boolean;
+  nameIsSet?: boolean;
   welcomeScreenPassed?: boolean;
   isAdmin?: boolean;
   canCreateTournament?: boolean;

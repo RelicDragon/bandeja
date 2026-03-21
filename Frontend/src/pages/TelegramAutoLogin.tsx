@@ -47,11 +47,7 @@ export const TelegramAutoLogin = () => {
         await setAuth(response.data.user, response.data.token);
         await pushNotificationService.ensureTokenSentToBackend();
         setDone(true);
-        if (!response.data.user.currentCity) {
-          navigate('/select-city', { replace: true });
-        } else {
-          navigate('/', { replace: true });
-        }
+        navigate('/', { replace: true });
       } catch (err: any) {
         if (cancelled) return;
         toast.error(extractError(err, t));

@@ -64,8 +64,7 @@ export const Login = () => {
       const response = await authApi.loginPhone({ phone, password, language: normalizedLanguage });
       await setAuth(response.data.user, response.data.token);
       await pushNotificationService.ensureTokenSentToBackend();
-      if (!response.data.user.currentCity) navigate('/select-city');
-      else navigate('/');
+      navigate('/');
     } catch (err: any) {
       setError(extractError(err, t));
     } finally {
@@ -141,8 +140,7 @@ export const Login = () => {
       }
       await setAuth(response.data.user, response.data.token);
       await pushNotificationService.ensureTokenSentToBackend();
-      if (!response.data.user.currentCity) navigate('/select-city');
-      else navigate('/');
+      navigate('/');
     } catch (err: any) {
       if (!isCancelError(err)) setError(extractError(err, t));
     } finally {
@@ -203,8 +201,7 @@ export const Login = () => {
       }
       await setAuth(response.data.user, response.data.token);
       await pushNotificationService.ensureTokenSentToBackend();
-      if (!response.data.user.currentCity) navigate('/select-city');
-      else navigate('/');
+      navigate('/');
     } catch (err: any) {
       if (!isCancelError(err)) setError(extractError(err, t));
     } finally {

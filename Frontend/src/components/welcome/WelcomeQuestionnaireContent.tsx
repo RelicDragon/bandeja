@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AuthLayout } from '@/layouts/AuthLayout';
 import { Button } from '@/components';
-import { WelcomeQuestion } from '@/components/welcome';
+import { WelcomeQuestion } from './WelcomeQuestion';
 import { AuthStepBar } from '@/components/auth';
 import { usersApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
@@ -18,9 +16,12 @@ const SLIDE_COUNT = QUESTIONS.length + 1;
 const STEP_TRANSITION = { duration: 0.28, ease: [0.32, 0.72, 0, 1] as const };
 const SLIDE_OFFSET = 20;
 
-export const WelcomeScreen = () => {
+export interface WelcomeQuestionnaireContentProps {
+  onRequestClose: () => void;
+}
+
+export function WelcomeQuestionnaireContent({ onRequestClose }: WelcomeQuestionnaireContentProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const updateUser = useAuthStore((s) => s.updateUser);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -102,22 +103,11 @@ export const WelcomeScreen = () => {
 
   const handleGoToApp = () => {
     if (completedUser) updateUser(completedUser);
-    navigate('/', { replace: true });
+    onRequestClose();
   };
 
-  const handleSkip = async () => {
-    setSubmitting(true);
-    try {
-      const response = await usersApi.skipWelcomeScreen();
-      const user = response.data;
-      setAssignedLevel(1);
-      setCompletedUser(user);
-      setShowFinalSlide(true);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || t('errors.generic'));
-    } finally {
-      setSubmitting(false);
-    }
+  const handleFillItLater = () => {
+    onRequestClose();
   };
 
   const handleStartOver = async () => {
@@ -142,7 +132,7 @@ export const WelcomeScreen = () => {
   };
 
   return (
-    <AuthLayout>
+    <div className="flex flex-col min-w-0">
       <AnimatePresence mode="wait" initial={false}>
         {showFinalSlide ? (
           <motion.div
@@ -162,7 +152,7 @@ export const WelcomeScreen = () => {
                 animation: ringPulse 2s ease-in-out infinite;
               }
             `}</style>
-            <div className="flex flex-col items-center text-center py-6">
+            <div className="flex flex-col items-center text-center py-4">
               <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
                 {t('welcome.congratulationsTitle')}
               </h2>
@@ -270,28 +260,20 @@ export const WelcomeScreen = () => {
               ) : (
                 <button
                   type="button"
-                  onClick={handleSkip}
+                  onClick={handleFillItLater}
                   disabled={submitting}
-                  className="flex flex-col items-start text-left text-primary-600 dark:text-primary-400 hover:underline focus:outline-none disabled:opacity-50 shrink-0"
+                  className="text-sm text-left text-primary-600 dark:text-primary-400 hover:underline focus:outline-none disabled:opacity-50 shrink-0"
                 >
-                  <span className="text-sm leading-tight">{t('welcome.skip')}</span>
-                  <span className="text-xs leading-tight">{t('welcome.skipSubline')}</span>
+                  {t('welcome.fillItLater')}
                 </button>
               )}
               <div className="flex-1" />
               {!isLast ? (
-                <Button
-                  type="button"
-                  onClick={goNext}
-                  disabled={!isIntro && !hasCurrentAnswer}
-                >
+                <Button type="button" onClick={goNext} disabled={!isIntro && !hasCurrentAnswer}>
                   {t('welcome.next')}
                 </Button>
               ) : (
-                <Button
-                  type="submit"
-                  disabled={!canSubmit || submitting}
-                >
+                <Button type="submit" disabled={!canSubmit || submitting}>
                   {submitting ? t('app.loading') : t('welcome.submit')}
                 </Button>
               )}
@@ -299,6 +281,6 @@ export const WelcomeScreen = () => {
           </motion.form>
         )}
       </AnimatePresence>
-    </AuthLayout>
+    </div>
   );
-};
+}

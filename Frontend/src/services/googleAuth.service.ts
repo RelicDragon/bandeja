@@ -53,6 +53,7 @@ declare global {
           prompt: (callback: (notification: unknown) => void) => void;
           renderButton: (element: HTMLElement, config: GoogleButtonConfig) => void;
           disableAutoSelect: () => void;
+          cancel?: () => void;
         };
       };
     };
@@ -114,6 +115,12 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
 
     const initializeGoogle = () => {
       try {
+        try {
+          window.google!.accounts.id.cancel?.();
+        } catch {
+          /* ignore */
+        }
+
         window.google!.accounts.id.initialize({
           client_id: config.googleWebClientId,
           callback: (response: GoogleCredentialResponse) => {
@@ -143,9 +150,18 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
 
         buttonContainer = document.createElement('div');
         buttonContainer.id = 'google-signin-button-temp';
-        buttonContainer.style.position = 'fixed';
-        buttonContainer.style.top = '-9999px';
-        buttonContainer.style.left = '-9999px';
+        buttonContainer.setAttribute('aria-hidden', 'true');
+        Object.assign(buttonContainer.style, {
+          position: 'fixed',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '300px',
+          height: '44px',
+          opacity: '0.02',
+          pointerEvents: 'auto',
+          zIndex: '2147483646',
+        });
         document.body.appendChild(buttonContainer);
 
         window.google!.accounts.id.renderButton(buttonContainer, {
@@ -156,7 +172,7 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
           width: 300,
         });
 
-        setTimeout(() => {
+        const clickRendered = () => {
           const button = buttonContainer?.querySelector('div[role="button"]') as HTMLElement;
           if (button) {
             button.click();
@@ -164,7 +180,10 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
             cleanup();
             reject(new Error('Failed to initialize Google sign in button'));
           }
-        }, 100);
+        };
+        requestAnimationFrame(() => {
+          requestAnimationFrame(clickRendered);
+        });
       } catch (error: unknown) {
         cleanup();
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';

@@ -247,7 +247,7 @@ export const MonthCalendar = ({
 
   const weekDays = [];
   for (let i = 0; i < 7; i++) {
-    weekDays.push(format(addDays(startDate, i), 'EEE', { locale }));
+    weekDays.push(format(addDays(startDate, i), 'EEEE', { locale }).slice(0, 3));
   }
 
   return (

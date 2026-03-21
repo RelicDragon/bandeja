@@ -2,7 +2,8 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { format, parse, startOfDay } from 'date-fns';
-import { InvitesSection, MyGamesSection, PastGamesSection } from '@/components/home';
+import { InvitesSection, MyGamesSection, PastGamesSection, NoNamePromptBanner } from '@/components/home';
+import { WelcomeQuestionnairePrompt } from '@/components/welcome';
 import { Button, Divider, MainTabFooter, MonthCalendar } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { gamesApi } from '@/api';
@@ -387,6 +388,8 @@ export const MyTab = () => {
   const calendarContentPanel = (
     <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
       <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
+        <WelcomeQuestionnairePrompt />
+        <NoNamePromptBanner />
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!loading ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
           <InvitesSection
             invites={invites}
@@ -471,6 +474,8 @@ export const MyTab = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
+        <WelcomeQuestionnairePrompt />
+        <NoNamePromptBanner />
         <div
           className={`transition-all duration-500 ease-in-out overflow-hidden ${
             !loading

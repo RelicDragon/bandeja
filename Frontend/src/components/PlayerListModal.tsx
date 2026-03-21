@@ -1,17 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Check, Search, UserPlus } from 'lucide-react';
+import { Search, UserPlus } from 'lucide-react';
 import { BasicUser } from '@/types';
 import { invitesApi } from '@/api';
 import { gamesApi } from '@/api/games';
 import { usersApi } from '@/api/users';
 import { Button } from './Button';
-import { PlayerAvatar } from './PlayerAvatar';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { matchesSearch } from '@/utils/transliteration';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { PlayerListFilterBar } from '@/components/PlayerListFilterBar';
+import { defaultPlayerInviteFilters, type PlayerInviteFilters } from '@/components/playerInvite/playerInviteFilters';
+import { PlayerListItem } from '@/components/PlayerListItem';
 
 interface PlayerListModalProps {
   gameId?: string;
@@ -49,6 +51,7 @@ export const PlayerListModal = ({
   const [isOpen, setIsOpen] = useState(true);
   const [canInviteAsTrainer, setCanInviteAsTrainer] = useState(inviteAsTrainerOnly);
   const [inviteAsTrainer, setInviteAsTrainer] = useState(inviteAsTrainerOnly);
+  const [filters, setFilters] = useState<PlayerInviteFilters>(() => defaultPlayerInviteFilters());
 
   const handleClose = () => {
     setIsOpen(false);
@@ -65,6 +68,12 @@ export const PlayerListModal = ({
   }, [inviteAsTrainerOnly]);
 
   useEffect(() => {
+    if (filterGender) {
+      setFilters((f) => ({ ...f, gender: filterGender }));
+    }
+  }, [filterGender]);
+
+  useEffect(() => {
     const loadPlayers = async () => {
       if (!inviteAsTrainerOnly) setCanInviteAsTrainer(false);
       try {
@@ -73,7 +82,7 @@ export const PlayerListModal = ({
 
         const [gameResponse, invitesResponse] = await Promise.allSettled([
           gameId ? gamesApi.getById(gameId) : Promise.resolve(null),
-          gameId ? invitesApi.getGameInvites(gameId).catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
+          gameId ? invitesApi.getGameInvites(gameId).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
         ]);
 
         const participantIds = new Set<string>();
@@ -116,18 +125,18 @@ export const PlayerListModal = ({
     loadPlayers();
   }, [gameId, fetchPlayers, t, inviteAsTrainerOnly]);
 
-  const filteredPlayers = useMemo(() => {
+  const baseFilteredPlayers = useMemo(() => {
     let filtered = players;
 
     if (inviteAsTrainerOnly) {
       filtered = filtered.filter((p) => p.isTrainer === true);
     }
 
-    if (filterGender) {
-      filtered = filtered.filter((player) => player.gender === filterGender);
+    const genderApply = filterGender ?? filters.gender;
+    if (genderApply !== 'ALL') {
+      filtered = filtered.filter((player) => player.gender === genderApply);
     }
 
-    // Filter out players that are in the filterPlayerIds array
     if (filterPlayerIds.length > 0) {
       filtered = filtered.filter((player) => !filterPlayerIds.includes(player.id));
     }
@@ -139,7 +148,21 @@ export const PlayerListModal = ({
       });
     }
 
-    // Sort: favorites first, then by interaction count (immutable)
+    const [lMin, lMax] = filters.levelRange;
+    const [sMin, sMax] = filters.socialRange;
+    filtered = filtered.filter((p) => {
+      const lv = typeof p.level === 'number' ? p.level : 0;
+      const sv = typeof p.socialLevel === 'number' ? p.socialLevel : 0;
+      return lv >= lMin && lv <= lMax && sv >= sMin && sv <= sMax;
+    });
+
+    if (filters.minGamesTogether > 0) {
+      filtered = filtered.filter((p) => {
+        const c = getUserMetadata(p.id)?.gamesTogetherCount ?? 0;
+        return c >= filters.minGamesTogether;
+      });
+    }
+
     return [...filtered].sort((a, b) => {
       const aIsFavorite = isFavorite(a.id);
       const bIsFavorite = isFavorite(b.id);
@@ -147,9 +170,21 @@ export const PlayerListModal = ({
       if (!aIsFavorite && bIsFavorite) return 1;
       const aInteractionCount = getUserMetadata(a.id)?.interactionCount || 0;
       const bInteractionCount = getUserMetadata(b.id)?.interactionCount || 0;
-      return bInteractionCount - aInteractionCount;
+      if (bInteractionCount !== aInteractionCount) return bInteractionCount - aInteractionCount;
+      const aG = getUserMetadata(a.id)?.gamesTogetherCount ?? 0;
+      const bG = getUserMetadata(b.id)?.gamesTogetherCount ?? 0;
+      return bG - aG;
     });
-  }, [players, searchQuery, filterPlayerIds, filterGender, inviteAsTrainerOnly, isFavorite, getUserMetadata]);
+  }, [
+    players,
+    searchQuery,
+    filterPlayerIds,
+    filters,
+    filterGender,
+    inviteAsTrainerOnly,
+    isFavorite,
+    getUserMetadata,
+  ]);
 
   const handlePlayerClick = (playerId: string) => {
     if (multiSelect && !inviteAsTrainerOnly) {
@@ -160,24 +195,18 @@ export const PlayerListModal = ({
   };
 
   const togglePlayer = (playerId: string) => {
-    setSelectedIds(prev =>
-      prev.includes(playerId)
-        ? prev.filter(id => id !== playerId)
-        : [...prev, playerId]
-    );
+    setSelectedIds((prev) => (prev.includes(playerId) ? prev.filter((id) => id !== playerId) : [...prev, playerId]));
   };
 
   const handleConfirm = async () => {
     if (selectedIds.length === 0) return;
 
-    // If no gameId, just return selected IDs without sending
     if (!gameId) {
       onConfirm?.(selectedIds);
       handleClose();
       return;
     }
 
-    // Otherwise, send invites
     setInviting('confirming');
     try {
       const asTrainer = (canInviteAsTrainer && inviteAsTrainer && selectedIds.length === 1) || inviteAsTrainerOnly;
@@ -189,12 +218,13 @@ export const PlayerListModal = ({
         });
         await usersApi.trackInteraction(playerId);
       }
-      
+
       onInviteSent?.();
       onConfirm?.(selectedIds);
       handleClose();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || t('errors.generic'));
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || t('errors.generic'));
     } finally {
       setInviting(null);
     }
@@ -203,156 +233,135 @@ export const PlayerListModal = ({
   const selectedCount = selectedIds.length;
   const showCountHint = multiSelect && selectedCount > 0;
 
+  const preFilterCount = useMemo(() => {
+    let list = players;
+    if (inviteAsTrainerOnly) list = list.filter((p) => p.isTrainer === true);
+    if (filterPlayerIds.length > 0) list = list.filter((p) => !filterPlayerIds.includes(p.id));
+    return list.length;
+  }, [players, inviteAsTrainerOnly, filterPlayerIds]);
+
   return (
     <Dialog open={isOpen} onClose={handleClose} modalId="player-list-modal">
-      <DialogContent>
-      <DialogHeader className="flex flex-row items-center gap-3">
-        <DialogTitle>
-          {title || (inviteAsTrainerOnly ? t('games.inviteTrainer', { defaultValue: 'Invite trainer' }) : (multiSelect ? t('games.invitePlayers') : t('games.invitePlayer')))}
-        </DialogTitle>
-      </DialogHeader>
+      <DialogContent className="max-h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0">
+        <DialogHeader className="flex-shrink-0 border-b border-gray-100/80 px-4 py-3 dark:border-gray-800/80">
+          <DialogTitle className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
+            {title ||
+              (inviteAsTrainerOnly
+                ? t('games.inviteTrainer', { defaultValue: 'Invite trainer' })
+                : multiSelect
+                  ? t('games.invitePlayers')
+                  : t('games.invitePlayer'))}
+          </DialogTitle>
+        </DialogHeader>
 
-      {loading ? (
-        <div className="flex flex-1 items-center justify-center py-16 flex-shrink-0">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600 dark:border-primary-800 dark:border-t-primary-400" />
-        </div>
-      ) : (
-        <>
-          <div className="px-4 py-3 flex-shrink-0">
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('common.search') || 'Search...'}
-                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/80 py-2.5 pl-10 pr-4 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 shadow-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:focus:border-primary-400 dark:focus:ring-primary-400/20"
-              />
-            </div>
+        {loading ? (
+          <div className="flex flex-1 items-center justify-center py-20 flex-shrink-0">
+            <div className="h-11 w-11 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600 dark:border-primary-800 dark:border-t-primary-400" />
           </div>
+        ) : (
+          <>
+            <div className="flex-shrink-0 px-4 pt-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('common.search') || 'Search...'}
+                  className="w-full rounded-2xl border border-gray-200/90 bg-gray-50/80 py-3 pl-11 pr-4 text-sm text-gray-900 shadow-inner shadow-gray-900/[0.03] placeholder:text-gray-400 transition focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary-500 dark:focus:bg-gray-900 dark:focus:ring-primary-400/20"
+                />
+              </div>
+            </div>
 
-          <div className="flex-1 overflow-y-auto min-h-0 px-3 pb-2">
-            {players.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="mb-3 h-14 w-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <UserPlus className="h-7 w-7 text-gray-400 dark:text-gray-500" />
-                </div>
-                <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
-              </div>
-            ) : filteredPlayers.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <p className="text-gray-600 dark:text-gray-400">{t('common.noResults') || 'No results found'}</p>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {filteredPlayers.map((player) => {
-                  const isSelected = selectedIds.includes(player.id);
-                  return (
-                    <div
-                      key={player.id}
-                      role="button"
-                      tabIndex={0}
-                      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 cursor-pointer transition-colors ${
-                        isSelected
-                          ? 'bg-primary-50 dark:bg-primary-900/30 ring-1 ring-primary-200/50 dark:ring-primary-700/50'
-                          : 'hover:bg-gray-100 dark:hover:bg-gray-800/80 active:bg-gray-200 dark:active:bg-gray-700/80'
-                      }`}
-                      onClick={() => handlePlayerClick(player.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handlePlayerClick(player.id);
-                        }
-                      }}
-                    >
-                      <div className="flex-shrink-0 ring-2 ring-white dark:ring-gray-900 rounded-full">
-                        <PlayerAvatar
-                          player={player}
-                          showName={false}
-                          fullHideName={true}
-                          smallLayout={false}
-                          extrasmall={true}
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {player.firstName} {player.lastName}
-                          </p>
-                          {player.gender && player.gender !== 'PREFER_NOT_TO_SAY' && (
-                            <span className={`inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[10px] ${
-                              player.gender === 'MALE' ? 'bg-blue-500 text-white' : 'bg-pink-500 text-white'
-                            }`}>
-                              <i className={`bi ${player.gender === 'MALE' ? 'bi-gender-male' : 'bi-gender-female'}`} />
-                            </span>
-                          )}
-                        </div>
-                        {player.verbalStatus && (
-                          <p className="verbal-status">
-                            {player.verbalStatus}
-                          </p>
-                        )}
-                      </div>
-                      <div className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                        isSelected ? 'border-primary-600 bg-primary-600 dark:border-primary-500 dark:bg-primary-500' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}>
-                        {isSelected && <Check size={14} className="text-white" strokeWidth={2.5} />}
-                      </div>
-                    </div>
-                  );
-                })}
+            {players.length > 0 && (
+              <div className="flex-shrink-0 pt-3 max-h-[42vh] overflow-y-auto min-h-0">
+                <PlayerListFilterBar
+                  filters={filters}
+                  onChange={setFilters}
+                  genderLocked={filterGender ?? null}
+                  resultCount={baseFilteredPlayers.length}
+                  totalCount={preFilterCount}
+                />
               </div>
             )}
-          </div>
 
-          {showCountHint && (
-            <div className="flex-shrink-0 mx-4 mb-2 rounded-xl bg-primary-100 dark:bg-primary-900/40 px-4 py-2.5 text-center text-sm font-medium text-primary-700 dark:text-primary-300 transition-opacity duration-200">
-              {t('games.playersSelected', { count: selectedCount })}
+            <div className="flex-1 overflow-y-auto min-h-0 px-3 pb-2 pt-1">
+              {players.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-inner dark:from-gray-800 dark:to-gray-900">
+                    <UserPlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
+                </div>
+              ) : baseFilteredPlayers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <p className="text-gray-600 dark:text-gray-400">{t('common.noResults') || 'No results found'}</p>
+                </div>
+              ) : (
+                <div className="space-y-1.5 pb-2">
+                  {baseFilteredPlayers.map((player) => (
+                    <PlayerListItem
+                      key={player.id}
+                      player={player}
+                      isSelected={selectedIds.includes(player.id)}
+                      gamesTogetherCount={getUserMetadata(player.id)?.gamesTogetherCount ?? 0}
+                      onSelect={() => handlePlayerClick(player.id)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          )}
 
-          {canInviteAsTrainer && gameId && !multiSelect && !inviteAsTrainerOnly && filteredPlayers.length > 0 && (
-            <label className="flex-shrink-0 mx-4 mb-2 flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={inviteAsTrainer}
-                onChange={(e) => setInviteAsTrainer(e.target.checked)}
-                className="rounded border-gray-300"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">{t('playerCard.inviteAsTrainer', { defaultValue: 'Invite as trainer' })}</span>
-            </label>
-          )}
-
-          {filteredPlayers.length > 0 && (
-            <div className="flex-shrink-0 p-4 pt-2 border-t border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60">
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleClose}
-                  variant="outline"
-                  className="flex-1 rounded-xl font-medium"
-                  disabled={inviting === 'confirming'}
-                >
-                  {t('common.cancel')}
-                </Button>
-                <Button
-                  onClick={handleConfirm}
-                  className="flex-1 rounded-xl font-medium shadow-lg shadow-primary-500/25 dark:shadow-primary-900/30"
-                  disabled={selectedIds.length === 0 || inviting === 'confirming'}
-                >
-                  {inviting === 'confirming' ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                      {t('common.sending') || 'Sending...'}
-                    </span>
-                  ) : (
-                    t('common.confirm')
-                  )}
-                </Button>
+            {showCountHint && (
+              <div className="flex-shrink-0 mx-4 mb-2 rounded-xl bg-primary-100 dark:bg-primary-900/40 px-4 py-2.5 text-center text-sm font-medium text-primary-700 dark:text-primary-300">
+                {t('games.playersSelected', { count: selectedCount })}
               </div>
-            </div>
-          )}
-        </>
-      )}
+            )}
+
+            {canInviteAsTrainer && gameId && !multiSelect && !inviteAsTrainerOnly && baseFilteredPlayers.length > 0 && (
+              <label className="flex-shrink-0 mx-4 mb-2 flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={inviteAsTrainer}
+                  onChange={(e) => setInviteAsTrainer(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  {t('playerCard.inviteAsTrainer', { defaultValue: 'Invite as trainer' })}
+                </span>
+              </label>
+            )}
+
+            {baseFilteredPlayers.length > 0 && (
+              <div className="flex-shrink-0 p-4 pt-2 border-t border-gray-100 dark:border-gray-800 bg-gradient-to-t from-gray-50/90 to-transparent dark:from-gray-950/90">
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleClose}
+                    variant="outline"
+                    className="flex-1 rounded-xl font-medium"
+                    disabled={inviting === 'confirming'}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button
+                    onClick={handleConfirm}
+                    className="flex-1 rounded-xl font-medium shadow-lg shadow-primary-500/25 dark:shadow-primary-900/30"
+                    disabled={selectedIds.length === 0 || inviting === 'confirming'}
+                  >
+                    {inviting === 'confirming' ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        {t('common.sending') || 'Sending...'}
+                      </span>
+                    ) : (
+                      t('common.confirm')
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

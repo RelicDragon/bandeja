@@ -9,9 +9,11 @@ import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 import { NotificationPreferenceService } from '../services/notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import type { TelegramOtp } from '@prisma/client';
+import { ensureUserCityAssigned } from '../services/user-city-bootstrap.service';
 
 async function completeTelegramAuth(
   otp: TelegramOtp,
+  req: Request,
   language: string | undefined
 ): Promise<{ user: any; token: string }> {
   const actualTelegramId = otp.telegramId;
@@ -44,6 +46,7 @@ async function completeTelegramAuth(
         select: PROFILE_SELECT_FIELDS,
       });
     }
+    user = await ensureUserCityAssigned(user.id, req);
     const token = generateToken({ userId: user.id, telegramId: actualTelegramId });
     await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
     return { user, token };
@@ -60,6 +63,7 @@ async function completeTelegramAuth(
     },
     select: PROFILE_SELECT_FIELDS,
   });
+  user = await ensureUserCityAssigned(user.id, req);
   const token = generateToken({ userId: user.id, telegramId: actualTelegramId });
   await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
   return { user, token };
@@ -75,7 +79,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
   if (!otp) {
     throw new ApiError(401, 'auth.invalidCode');
   }
-  const { user, token } = await completeTelegramAuth(otp, language);
+  const { user, token } = await completeTelegramAuth(otp, req, language);
   res.json({ success: true, data: { user, token } });
 });
 
@@ -89,7 +93,7 @@ export const verifyTelegramLinkKey = asyncHandler(async (req: Request, res: Resp
   if (!otp) {
     throw new ApiError(401, 'auth.invalidCode');
   }
-  const { user, token } = await completeTelegramAuth(otp, language);
+  const { user, token } = await completeTelegramAuth(otp, req, language);
   res.json({ success: true, data: { user, token } });
 });
 

@@ -114,7 +114,7 @@ export const ProfileContent = () => {
         };
         
         if (!hasValidUsername(testUser)) {
-          setNameError(t('profile.nameValidationError') || 'At least one name must have at least 3 characters');
+          setNameError(t('profile.nameValidationError') || 'At least one name must have at least 1 character');
           setNameValidationStatus('error');
           return;
         }
