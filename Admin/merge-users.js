@@ -12,6 +12,16 @@
     return n || u.phone || u.email || u.id || '?';
   }
 
+  function mergeLevelParen(u) {
+    const lv = u.level != null ? Number(u.level).toFixed(1) : '—';
+    return `(${lv})`;
+  }
+
+  function mergeResultLine(u) {
+    const phone = u.phone || '—';
+    return `${mergeUserLabel(u)} ${mergeLevelParen(u)} · ${phone}`;
+  }
+
   function mergeClear(which) {
     if (which === 'survivor') {
       mergeState.survivorId = null;
@@ -26,6 +36,11 @@
     if (which === 'survivor') {
       mergeState.survivorId = id;
       document.getElementById('mergeSurvivorPicked').textContent = displayText;
+      document.getElementById('mergeSourceResults').innerHTML = '';
+      if (mergeState.sourceId === id) {
+        mergeState.sourceId = null;
+        document.getElementById('mergeSourcePicked').textContent = '—';
+      }
     } else {
       mergeState.sourceId = id;
       document.getElementById('mergeSourcePicked').textContent = displayText;
@@ -43,6 +58,10 @@
       return;
     }
     if (UUID_RE.test(q)) {
+      if (which === 'source' && mergeState.survivorId && q === mergeState.survivorId) {
+        out.textContent = 'This UUID is the survivor; pick a different source.';
+        return;
+      }
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'btn-small btn-secondary';
@@ -66,10 +85,20 @@
         out.textContent = 'No users found.';
         return;
       }
+      let list = response.data;
+      if (which === 'source' && mergeState.survivorId) {
+        list = list.filter((u) => u.id !== mergeState.survivorId);
+      }
+      if (!list.length) {
+        out.textContent =
+          which === 'source' && mergeState.survivorId
+            ? 'No other users match (survivor excluded).'
+            : 'No users found.';
+        return;
+      }
       out.innerHTML = '';
-      for (const u of response.data) {
-        const phone = u.phone || '—';
-        const label = `${mergeUserLabel(u)} · ${phone}`;
+      for (const u of list) {
+        const label = mergeResultLine(u);
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'btn-small btn-secondary merge-user-pick-btn';
@@ -98,7 +127,7 @@
     if (prefillSurvivorId) {
       const u = window.__pageUsers?.find((x) => x.id === prefillSurvivorId);
       if (u) {
-        const label = `${mergeUserLabel(u)} · ${u.phone || '—'} · ${u.id}`;
+        const label = `${mergeResultLine(u)} · ${u.id}`;
         mergeSetPick('survivor', u.id, label);
       } else {
         mergeSetPick('survivor', prefillSurvivorId, `${prefillSurvivorId} (from row)`);
