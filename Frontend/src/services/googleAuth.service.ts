@@ -34,6 +34,7 @@ interface GoogleAccountsConfig {
   client_id: string;
   callback: (response: GoogleCredentialResponse) => void;
   auto_select?: boolean;
+  context?: 'signin' | 'signup' | 'use';
 }
 
 interface GoogleButtonConfig {
@@ -121,8 +122,15 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
           /* ignore */
         }
 
+        try {
+          window.google!.accounts.id.disableAutoSelect();
+        } catch {
+          /* ignore */
+        }
+
         window.google!.accounts.id.initialize({
           client_id: config.googleWebClientId,
+          context: 'signin',
           callback: (response: GoogleCredentialResponse) => {
             cleanup();
             
@@ -208,13 +216,18 @@ function isReauthError(error: unknown): boolean {
 
 async function signInWithGoogleNative(): Promise<GoogleAuthResult | null> {
   const LOGIN_TIMEOUT_MS = 60_000;
+  const platform = Capacitor.getPlatform();
 
   const loginPromise = SocialLogin.login({
     provider: 'google',
     options: {
       scopes: ['email', 'profile'],
       forceRefreshToken: false,
-      forcePrompt: false,
+      forcePrompt: true,
+      prompt: 'select_account',
+      ...(platform === 'android'
+        ? { style: 'bottom' as const, filterByAuthorizedAccounts: false, autoSelectEnabled: false }
+        : {}),
     },
   });
 

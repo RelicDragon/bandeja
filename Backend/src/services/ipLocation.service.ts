@@ -13,6 +13,16 @@ const IPAPI_INTERVAL_MS = 2000;
 const ipapiTimestamps: number[] = [];
 let ipapiRateLimitPromise = Promise.resolve();
 
+function maskIpForLog(ip: string): string {
+  const t = ip.trim();
+  if (t.includes('.')) {
+    const p = t.split('.');
+    if (p.length === 4) return `${p[0]}.${p[1]}.*.*`;
+  }
+  if (t.includes(':')) return `[ipv6:${t.length}chars]`;
+  return '[ip]';
+}
+
 async function waitIpapiRateLimit(): Promise<void> {
   let now = Date.now();
   const prune = () => {
@@ -70,12 +80,22 @@ export async function getClientIp(req: Request): Promise<string | null> {
     ip = req.headers['x-real-ip'];
   if (!ip) ip = req.ip ?? null;
   if (ip && !isLocalIp(ip)) return ip;
-  return fetchExternalIp();
+  const hint = ip ? maskIpForLog(ip) : null;
+  const external = await fetchExternalIp();
+  if (!external) {
+    console.warn('[ipLocation] getClientIp: no usable IP', {
+      hadDirectIp: Boolean(ip),
+      directWasLocal: Boolean(ip && isLocalIp(ip)),
+      directMasked: hint,
+    });
+  }
+  return external;
 }
 
 export type LocationByIp = { latitude: number; longitude: number; currency: string };
 
 export async function getLocationByIp(ip: string): Promise<LocationByIp | null> {
+  const ipTag = maskIpForLog(ip);
   const cached = await prisma.ipLocationCache.findUnique({
     where: { ip },
   });
@@ -89,6 +109,7 @@ export async function getLocationByIp(ip: string): Promise<LocationByIp | null> 
       const currency = SUPPORTED_CURRENCIES.includes(rawCurrency as any) ? rawCurrency : DEFAULT_CURRENCY;
       return { latitude: cached.latitude, longitude: cached.longitude, currency };
     }
+    console.warn('[ipLocation] cache stale, refetching', { ip: ipTag });
   }
 
   ipapiRateLimitPromise = ipapiRateLimitPromise.then(() => waitIpapiRateLimit());
@@ -103,18 +124,33 @@ export async function getLocationByIp(ip: string): Promise<LocationByIp | null> 
   let res: Response;
   try {
     res = await fetchWithTimeout(timeoutMs);
-  } catch {
+  } catch (firstErr) {
     try {
       res = await fetchWithTimeout(timeoutMs);
-    } catch {
+    } catch (secondErr) {
+      console.warn('[ipLocation] ipapi fetch failed after retry', {
+        ip: ipTag,
+        firstErr: String(firstErr),
+        secondErr: String(secondErr),
+      });
       return null;
     }
   }
-  if (!res.ok) return null;
-  const body = (await res.json()) as IpapiResponse;
+  if (!res.ok) {
+    console.warn('[ipLocation] ipapi non-OK response', { ip: ipTag, status: res.status });
+    return null;
+  }
+  const body = (await res.json()) as IpapiResponse & { error?: boolean; reason?: string };
+  if (body?.error === true) {
+    console.warn('[ipLocation] ipapi error body', { ip: ipTag, reason: body.reason ?? 'unknown' });
+    return null;
+  }
   const lat = body?.latitude;
   const lon = body?.longitude;
-  if (lat == null || lon == null || typeof lat !== 'number' || typeof lon !== 'number') return null;
+  if (lat == null || lon == null || typeof lat !== 'number' || typeof lon !== 'number') {
+    console.warn('[ipLocation] ipapi missing coordinates', { ip: ipTag, latType: typeof lat, lonType: typeof lon });
+    return null;
+  }
   const rawCurrency = (body.currency && typeof body.currency === 'string' ? body.currency : DEFAULT_CURRENCY).toUpperCase();
   const currency = SUPPORTED_CURRENCIES.includes(rawCurrency as any) ? rawCurrency : DEFAULT_CURRENCY;
   await prisma.ipLocationCache.upsert({
