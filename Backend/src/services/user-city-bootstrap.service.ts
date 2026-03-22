@@ -3,7 +3,7 @@ import prisma from '../config/database';
 import { config } from '../config/env';
 import { ApiError } from '../utils/ApiError';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
-import { getClientIp, getLocationByIp } from './ipLocation.service';
+import { AllIpGeoProvidersFailedError, getClientIp, getLocationByIp, type LocationByIp } from './ipLocation.service';
 import { CityGroupService } from './chat/cityGroup.service';
 
 const LOG = '[cityBootstrap]';
@@ -96,10 +96,17 @@ export async function ensureUserCityAssigned(userId: string, req?: Request) {
     if (!ip) {
       console.warn(LOG, 'no client IP resolved', { userId, hasReq: true });
     } else {
-      const loc = await getLocationByIp(ip);
-      if (!loc) {
-        console.warn(LOG, 'IP geolocation returned no coordinates', { userId });
-      } else {
+      let loc: LocationByIp | null = null;
+      try {
+        loc = await getLocationByIp(ip);
+      } catch (e) {
+        if (e instanceof AllIpGeoProvidersFailedError) {
+          console.warn(LOG, 'all IP geo providers failed', { userId });
+        } else {
+          throw e;
+        }
+      }
+      if (loc) {
         latitude = loc.latitude;
         longitude = loc.longitude;
         await prisma.user.update({

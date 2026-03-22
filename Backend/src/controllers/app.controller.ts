@@ -3,7 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { AppVersionService } from '../services/appVersion.service';
 import { ApiError } from '../utils/ApiError';
 import type { AuthRequest } from '../middleware/auth';
-import { getClientIp, getLocationByIp } from '../services/ipLocation.service';
+import { AllIpGeoProvidersFailedError, getClientIp, getLocationByIp } from '../services/ipLocation.service';
 
 export const getLocation = asyncHandler(async (req: AuthRequest, res: Response) => {
   const user = req.user as { latitudeByIP?: number | null; longitudeByIP?: number | null } | undefined;
@@ -12,9 +12,13 @@ export const getLocation = asyncHandler(async (req: AuthRequest, res: Response) 
   }
   const ip = await getClientIp(req);
   if (!ip) throw new ApiError(404, 'Location not available');
-  const loc = await getLocationByIp(ip);
-  if (!loc) throw new ApiError(404, 'Location not available');
-  res.json(loc);
+  try {
+    const loc = await getLocationByIp(ip);
+    res.json(loc);
+  } catch (e) {
+    if (e instanceof AllIpGeoProvidersFailedError) throw new ApiError(404, 'Location not available');
+    throw e;
+  }
 });
 
 export const checkVersion = asyncHandler(async (req: Request, res: Response) => {
