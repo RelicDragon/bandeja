@@ -115,6 +115,11 @@ export interface InvitablePlayer extends BasicUser {
   gamesTogetherCount: number;
 }
 
+export interface InvitablePlayersPayload {
+  players: InvitablePlayer[];
+  maxSocialLevel: number;
+}
+
 export type NotificationChannelType = 'PUSH' | 'TELEGRAM' | 'WHATSAPP' | 'VIBER';
 
 export interface NotificationPreference {
@@ -179,7 +184,7 @@ export const usersApi = {
   },
 
   getInvitablePlayers: async (gameId?: string) => {
-    const response = await api.get<ApiResponse<InvitablePlayer[]>>('/users/invitable-players', {
+    const response = await api.get<ApiResponse<InvitablePlayersPayload>>('/users/invitable-players', {
       params: gameId ? { gameId } : {},
     });
     return response.data;

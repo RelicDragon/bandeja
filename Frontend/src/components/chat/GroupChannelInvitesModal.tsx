@@ -89,7 +89,7 @@ export const GroupChannelInvitesModal = ({
       
       setInvites(invitesData.data || []);
       
-      const allPlayers = usersData.data || [];
+      const allPlayers = usersData.data?.players ?? [];
       const participantIds = new Set(participantsIdsRef.current);
       const filtered = allPlayers.filter((player) => !participantIds.has(player.id));
       setAllUsers(filtered);

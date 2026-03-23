@@ -82,17 +82,25 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
 
   const gamesTogetherMap = new Map(coplayRows.map((r) => [r.userId, r.count]));
 
-  const users = await prisma.user.findMany({
-    where: {
-      id: {
-        notIn: [...participantIds, req.userId!],
+  const [socialAgg, users] = await Promise.all([
+    prisma.user.aggregate({
+      where: { isActive: true },
+      _max: { socialLevel: true },
+    }),
+    prisma.user.findMany({
+      where: {
+        id: {
+          notIn: [...participantIds, req.userId!],
+        },
+        isActive: true,
+        currentCityId: cityId,
       },
-      isActive: true,
-      currentCityId: cityId,
-    },
-    select: USER_SELECT_FIELDS,
-    take: 1000,
-  });
+      select: USER_SELECT_FIELDS,
+      take: 1000,
+    }),
+  ]);
+
+  const maxSocialLevel = Math.max(socialAgg._max.socialLevel ?? 1, 1);
 
   const usersWithInteractions = users.map((user: BasicUser) => ({
     ...user,
@@ -104,7 +112,10 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
 
   res.json({
     success: true,
-    data: usersWithInteractions,
+    data: {
+      players: usersWithInteractions,
+      maxSocialLevel,
+    },
   });
 });
 

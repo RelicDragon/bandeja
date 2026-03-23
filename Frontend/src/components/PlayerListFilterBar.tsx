@@ -4,7 +4,7 @@ import { Filter, RotateCcw, Sparkles, Users } from 'lucide-react';
 import { RangeSlider } from '@/components/RangeSlider';
 import {
   PLAYER_INVITE_GAMES_TOGETHER_STEPS,
-  PLAYER_INVITE_LEVEL_MAX,
+  PLAYER_INVITE_RATING_MAX,
   type PlayerInviteFilters,
   type PlayerInviteGenderFilter,
 } from '@/components/playerInvite/playerInviteFilters';
@@ -12,6 +12,7 @@ import {
 interface PlayerListFilterBarProps {
   filters: PlayerInviteFilters;
   onChange: (next: PlayerInviteFilters) => void;
+  socialLevelMax: number;
   genderLocked?: PlayerInviteGenderFilter | null;
   resultCount: number;
   totalCount: number;
@@ -20,6 +21,7 @@ interface PlayerListFilterBarProps {
 export function PlayerListFilterBar({
   filters,
   onChange,
+  socialLevelMax,
   genderLocked,
   resultCount,
   totalCount,
@@ -29,18 +31,18 @@ export function PlayerListFilterBar({
   const effectiveGender = genderLocked && genderLocked !== 'ALL' ? genderLocked : filters.gender;
 
   const hasActiveFilters = useMemo(() => {
-    const levelWide = filters.levelRange[0] <= 0 && filters.levelRange[1] >= PLAYER_INVITE_LEVEL_MAX;
-    const socialWide = filters.socialRange[0] <= 0 && filters.socialRange[1] >= PLAYER_INVITE_LEVEL_MAX;
+    const levelWide = filters.levelRange[0] <= 0 && filters.levelRange[1] >= PLAYER_INVITE_RATING_MAX;
+    const socialWide = filters.socialRange[0] <= 0 && filters.socialRange[1] >= socialLevelMax;
     const genderActive = !genderLocked && filters.gender !== 'ALL';
     return genderActive || !levelWide || !socialWide || filters.minGamesTogether > 0;
-  }, [filters, genderLocked]);
+  }, [filters, genderLocked, socialLevelMax]);
 
   const resetAdjustable = () => {
     onChange({
       ...filters,
       gender: genderLocked && genderLocked !== 'ALL' ? genderLocked : 'ALL',
-      levelRange: [0, PLAYER_INVITE_LEVEL_MAX],
-      socialRange: [0, PLAYER_INVITE_LEVEL_MAX],
+      levelRange: [0, PLAYER_INVITE_RATING_MAX],
+      socialRange: [0, socialLevelMax],
       minGamesTogether: 0,
     });
   };
@@ -117,7 +119,7 @@ export function PlayerListFilterBar({
         </div>
         <RangeSlider
           min={0}
-          max={PLAYER_INVITE_LEVEL_MAX}
+          max={PLAYER_INVITE_RATING_MAX}
           value={filters.levelRange}
           onChange={(v) => onChange({ ...filters, levelRange: v })}
         />
@@ -130,7 +132,7 @@ export function PlayerListFilterBar({
         </div>
         <RangeSlider
           min={0}
-          max={PLAYER_INVITE_LEVEL_MAX}
+          max={socialLevelMax}
           value={filters.socialRange}
           onChange={(v) => onChange({ ...filters, socialRange: v })}
         />

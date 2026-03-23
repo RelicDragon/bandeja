@@ -28,6 +28,7 @@ interface UsersState {
   isFetchingChats: boolean;
   lastPlayersFetchTime: number;
   lastChatsFetchTime: number;
+  invitableMaxSocialLevel: number | null;
   
   getUser: (userId: string) => BasicUser | undefined;
   getUserMetadata: (userId: string) => UserMetadata | undefined;
@@ -186,6 +187,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
   isFetchingChats: false,
   lastPlayersFetchTime: 0,
   lastChatsFetchTime: 0,
+  invitableMaxSocialLevel: null,
 
   getUser: (userId: string) => {
     return get().users[userId];
@@ -401,7 +403,9 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     set({ loading: true, isFetching: true });
     try {
       const response = await usersApi.getInvitablePlayers();
-      const players = response.data || [];
+      const payload = response.data;
+      const players = payload?.players ?? [];
+      const maxSocialLevel = payload?.maxSocialLevel ?? null;
 
       set((currentState) => {
         const newUsers: Record<string, BasicUser> = {};
@@ -423,6 +427,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
           lastPlayersFetchTime: now,
           loading: false,
           isFetching: false,
+          invitableMaxSocialLevel: maxSocialLevel,
         };
       });
       return players;
@@ -535,6 +540,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       unreadCounts: {},
       lastPlayersFetchTime: 0,
       lastChatsFetchTime: 0,
+      invitableMaxSocialLevel: null,
       isFetching: false,
       isFetchingChats: false,
     });

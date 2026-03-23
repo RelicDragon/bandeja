@@ -711,7 +711,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     setCityUsersLoading(true);
     try {
       const response = await usersApi.getInvitablePlayers();
-      setCityUsers(response.data || []);
+      setCityUsers(response.data?.players ?? []);
     } catch {
       setCityUsers([]);
     } finally {
@@ -724,7 +724,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     setCityUsersLoading(true);
     try {
       const [usersRes, following, followers] = await Promise.all([
-        usersApi.getInvitablePlayers().then((r) => r.data || []).catch(() => []),
+        usersApi.getInvitablePlayers().then((r) => r.data?.players ?? []).catch(() => []),
         favoritesApi.getFollowing().catch(() => []),
         favoritesApi.getFollowers().catch(() => [])
       ]);

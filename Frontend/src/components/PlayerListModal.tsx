@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Search, UserPlus } from 'lucide-react';
@@ -42,6 +42,7 @@ export const PlayerListModal = ({
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
+  const invitableMaxSocial = usePlayersStore((s) => s.invitableMaxSocialLevel);
   const { getUserMetadata, fetchPlayers } = usePlayersStore();
   const [players, setPlayers] = useState<BasicUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +52,34 @@ export const PlayerListModal = ({
   const [isOpen, setIsOpen] = useState(true);
   const [canInviteAsTrainer, setCanInviteAsTrainer] = useState(inviteAsTrainerOnly);
   const [inviteAsTrainer, setInviteAsTrainer] = useState(inviteAsTrainerOnly);
-  const [filters, setFilters] = useState<PlayerInviteFilters>(() => defaultPlayerInviteFilters());
+  const [filters, setFilters] = useState<PlayerInviteFilters>(() => defaultPlayerInviteFilters(1));
+
+  const inviteSessionKey = useMemo(
+    () => `${gameId ?? ''}:${inviteAsTrainerOnly}`,
+    [gameId, inviteAsTrainerOnly],
+  );
+  const inviteFiltersBootstrappedForKeyRef = useRef<string | null>(null);
+
+  const socialLevelSliderMax = useMemo(() => {
+    return invitableMaxSocial ?? Math.max(1, ...players.map((p) => Number(p.socialLevel) || 0));
+  }, [invitableMaxSocial, players]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (inviteFiltersBootstrappedForKeyRef.current === inviteSessionKey) return;
+
+    const cap =
+      invitableMaxSocial ?? Math.max(1, ...players.map((p) => Number(p.socialLevel) || 0));
+    setFilters({
+      ...defaultPlayerInviteFilters(cap),
+      gender: filterGender ?? 'ALL',
+    });
+    inviteFiltersBootstrappedForKeyRef.current = inviteSessionKey;
+  }, [loading, inviteSessionKey, invitableMaxSocial, players, filterGender]);
+
+  useEffect(() => {
+    setFilters((f) => ({ ...f, gender: filterGender ?? 'ALL' }));
+  }, [filterGender]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -68,13 +96,8 @@ export const PlayerListModal = ({
   }, [inviteAsTrainerOnly]);
 
   useEffect(() => {
-    if (filterGender) {
-      setFilters((f) => ({ ...f, gender: filterGender }));
-    }
-  }, [filterGender]);
-
-  useEffect(() => {
     const loadPlayers = async () => {
+      setLoading(true);
       if (!inviteAsTrainerOnly) setCanInviteAsTrainer(false);
       try {
         await fetchPlayers();
@@ -278,6 +301,7 @@ export const PlayerListModal = ({
                 <PlayerListFilterBar
                   filters={filters}
                   onChange={setFilters}
+                  socialLevelMax={socialLevelSliderMax}
                   genderLocked={filterGender ?? null}
                   resultCount={baseFilteredPlayers.length}
                   totalCount={preFilterCount}
