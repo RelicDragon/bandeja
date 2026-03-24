@@ -2145,6 +2145,9 @@
     "gamesTogetherBadge_one": "{{count}} juntos",
     "gamesTogetherBadge_other": "{{count}} juntos",
     "levelShort": "N {{value}}",
-    "socialShort": "S {{value}}"
+    "socialShort": "S {{value}}",
+    "showMore": "Mostrar más",
+    "listShowing": "{{visible}} / {{total}} mostrados",
+    "applyFilters": "Aplicar filtros"
   }
 }

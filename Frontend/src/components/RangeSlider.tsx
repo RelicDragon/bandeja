@@ -7,25 +7,55 @@ interface RangeSliderProps {
   value: [number, number];
   onChange: (value: [number, number]) => void;
   step?: number;
+  compact?: boolean;
 }
 
-export const RangeSlider = ({ min, max, value, onChange, step = 0.1 }: RangeSliderProps) => {
+export const RangeSlider = ({
+  min,
+  max,
+  value,
+  onChange,
+  step = 0.1,
+  compact = false,
+}: RangeSliderProps) => {
+  const trackH = compact ? 4 : 6;
+  const handleSize = compact ? 14 : 20;
+  const handleMarginTop = compact ? -5 : -7;
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4 px-2">
-        <div className="inline-flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-1.5">
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+    <div className={compact ? 'space-y-1.5' : 'space-y-4'}>
+      <div
+        className={`flex items-center justify-between gap-2 ${compact ? 'px-0' : 'gap-4 px-2'}`}
+      >
+        <div
+          className={`inline-flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 ${
+            compact ? 'px-2 py-0.5' : 'px-4 py-1.5'
+          }`}
+        >
+          <span
+            className={`font-semibold text-gray-700 dark:text-gray-300 ${
+              compact ? 'text-xs' : 'text-sm'
+            }`}
+          >
             {value[0].toFixed(1)}
           </span>
         </div>
-        <div className="inline-flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-1.5">
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <div
+          className={`inline-flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 ${
+            compact ? 'px-2 py-0.5' : 'px-4 py-1.5'
+          }`}
+        >
+          <span
+            className={`font-semibold text-gray-700 dark:text-gray-300 ${
+              compact ? 'text-xs' : 'text-sm'
+            }`}
+          >
             {value[1].toFixed(1)}
           </span>
         </div>
       </div>
 
-      <div className="px-2 py-2">
+      <div className={compact ? 'px-0 py-0.5' : 'px-2 py-2'}>
         <Slider
           range
           min={min}
@@ -40,24 +70,26 @@ export const RangeSlider = ({ min, max, value, onChange, step = 0.1 }: RangeSlid
           styles={{
             track: {
               backgroundColor: 'transparent',
-              height: 6,
+              height: trackH,
             },
             tracks: {
               backgroundColor: 'rgb(59 130 246)',
-              height: 6,
+              height: trackH,
             },
             rail: {
               backgroundColor: 'rgb(229 231 235)',
-              height: 6,
+              height: trackH,
             },
             handle: {
               backgroundColor: 'rgb(59 130 246)',
-              border: '3px solid white',
-              width: 20,
-              height: 20,
-              marginTop: -7,
+              border: compact ? '2px solid white' : '3px solid white',
+              width: handleSize,
+              height: handleSize,
+              marginTop: handleMarginTop,
               opacity: 1,
-              boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
+              boxShadow: compact
+                ? '0 1px 4px rgba(59, 130, 246, 0.35)'
+                : '0 2px 8px rgba(59, 130, 246, 0.3)',
             },
           }}
         />
@@ -65,4 +97,3 @@ export const RangeSlider = ({ min, max, value, onChange, step = 0.1 }: RangeSlid
     </div>
   );
 };
-

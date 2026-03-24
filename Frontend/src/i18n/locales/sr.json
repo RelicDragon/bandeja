@@ -2174,8 +2174,12 @@
     "gamesTogetherAny": "Било ко",
     "gamesTogetherMin": "{{count}}+",
     "gamesTogetherBadge_one": "{{count}} заједно",
+    "gamesTogetherBadge_few": "{{count}} заједно",
     "gamesTogetherBadge_other": "{{count}} заједно",
     "levelShort": "Р {{value}}",
-    "socialShort": "Д {{value}}"
+    "socialShort": "Д {{value}}",
+    "showMore": "Прикажи још",
+    "listShowing": "{{visible}} од {{total}} приказано",
+    "applyFilters": "Примени филтере"
   }
 }

@@ -8,6 +8,7 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, i
   const [availableGames, setAvailableGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
   const hasDataRef = useRef(false);
+  const userCityId = user?.currentCity?.id || user?.currentCityId;
 
   const isLoadingRef = useRef(false);
   const lastFetchParamsRef = useRef<string | null>(null);
@@ -22,8 +23,8 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, i
     if (!user?.id) return;
 
     const fetchParams = startDate && endDate 
-      ? `available-games-${user.id}-${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}-${includeLeagues}`
-      : `available-games-${user.id}-${includeLeagues}`;
+      ? `available-games-${user.id}-${userCityId ?? 'no-city'}-${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}-${includeLeagues}`
+      : `available-games-${user.id}-${userCityId ?? 'no-city'}-${includeLeagues}`;
 
     if (!force && (isLoadingRef.current || lastFetchParamsRef.current === fetchParams)) {
       return;
@@ -53,13 +54,13 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, i
       isLoadingRef.current = false;
       setLoading(false);
     }
-  }, [user?.id, startDate, endDate, includeLeagues]);
+  }, [user?.id, userCityId, startDate, endDate, includeLeagues]);
 
   useEffect(() => {
     if (user?.id) {
       fetchData();
     }
-  }, [user?.id, startDate, endDate, fetchData]);
+  }, [user?.id, userCityId, startDate, endDate, fetchData]);
 
   const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);
 

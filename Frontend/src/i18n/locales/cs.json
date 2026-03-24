@@ -2240,8 +2240,13 @@
     "gamesTogetherAny": "Libovolně",
     "gamesTogetherMin": "{{count}}+",
     "gamesTogetherBadge_one": "{{count}}× spolu",
+    "gamesTogetherBadge_few": "{{count}}× spolu",
+    "gamesTogetherBadge_many": "{{count}}× spolu",
     "gamesTogetherBadge_other": "{{count}}× spolu",
     "levelShort": "R {{value}}",
-    "socialShort": "S {{value}}"
+    "socialShort": "S {{value}}",
+    "showMore": "Zobrazit další",
+    "listShowing": "Zobrazeno {{visible}} z {{total}}",
+    "applyFilters": "Použít filtry"
   }
 }

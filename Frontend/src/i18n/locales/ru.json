@@ -2261,8 +2261,13 @@
     "gamesTogetherAny": "Любое",
     "gamesTogetherMin": "{{count}}+",
     "gamesTogetherBadge_one": "{{count}} вместе",
+    "gamesTogetherBadge_few": "{{count}} вместе",
+    "gamesTogetherBadge_many": "{{count}} вместе",
     "gamesTogetherBadge_other": "{{count}} вместе",
     "levelShort": "Р {{value}}",
-    "socialShort": "С {{value}}"
+    "socialShort": "С {{value}}",
+    "showMore": "Показать ещё",
+    "listShowing": "Показано {{visible}} из {{total}}",
+    "applyFilters": "Применить фильтры"
   }
 }

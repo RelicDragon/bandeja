@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Search, UserPlus } from 'lucide-react';
+import { ChevronDown, ChevronUp, RotateCcw, Search, UserPlus } from 'lucide-react';
 import { BasicUser } from '@/types';
 import { invitesApi } from '@/api';
 import { gamesApi } from '@/api/games';
@@ -12,7 +12,13 @@ import { usePlayersStore } from '@/store/playersStore';
 import { matchesSearch } from '@/utils/transliteration';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { PlayerListFilterBar } from '@/components/PlayerListFilterBar';
-import { defaultPlayerInviteFilters, type PlayerInviteFilters } from '@/components/playerInvite/playerInviteFilters';
+import {
+  defaultPlayerInviteFilters,
+  PLAYER_INVITE_LIST_PAGE_SIZE,
+  PLAYER_INVITE_RATING_MAX,
+  PLAYER_INVITE_RATING_MIN,
+  type PlayerInviteFilters,
+} from '@/components/playerInvite/playerInviteFilters';
 import { PlayerListItem } from '@/components/PlayerListItem';
 
 interface PlayerListModalProps {
@@ -53,6 +59,8 @@ export const PlayerListModal = ({
   const [canInviteAsTrainer, setCanInviteAsTrainer] = useState(inviteAsTrainerOnly);
   const [inviteAsTrainer, setInviteAsTrainer] = useState(inviteAsTrainerOnly);
   const [filters, setFilters] = useState<PlayerInviteFilters>(() => defaultPlayerInviteFilters(1));
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [visibleListCount, setVisibleListCount] = useState(PLAYER_INVITE_LIST_PAGE_SIZE);
 
   const inviteSessionKey = useMemo(
     () => `${gameId ?? ''}:${inviteAsTrainerOnly}`,
@@ -156,9 +164,12 @@ export const PlayerListModal = ({
     }
 
     const genderApply = filterGender ?? filters.gender;
-    if (genderApply !== 'ALL') {
-      filtered = filtered.filter((player) => player.gender === genderApply);
-    }
+    filtered = filtered.filter((player) => {
+      if (genderApply === 'ALL') {
+        return player.gender === 'MALE' || player.gender === 'FEMALE' || player.gender === 'PREFER_NOT_TO_SAY';
+      }
+      return player.gender === genderApply;
+    });
 
     if (filterPlayerIds.length > 0) {
       filtered = filtered.filter((player) => !filterPlayerIds.includes(player.id));
@@ -208,6 +219,33 @@ export const PlayerListModal = ({
     isFavorite,
     getUserMetadata,
   ]);
+
+  const filterPlayerIdsKey = useMemo(() => filterPlayerIds.join(','), [filterPlayerIds]);
+
+  useEffect(() => {
+    setVisibleListCount(PLAYER_INVITE_LIST_PAGE_SIZE);
+  }, [players, searchQuery, filterPlayerIdsKey, filterGender, inviteAsTrainerOnly, filters]);
+
+  const hasMoreFilteredPlayers = visibleListCount < baseFilteredPlayers.length;
+
+  const displayFilteredPlayers = useMemo(() => {
+    const slice = baseFilteredPlayers.slice(0, visibleListCount);
+    if (!hasMoreFilteredPlayers && slice.length > 0) {
+      return [...slice].sort((a, b) => {
+        const aI = getUserMetadata(a.id)?.interactionCount || 0;
+        const bI = getUserMetadata(b.id)?.interactionCount || 0;
+        if (bI !== aI) return bI - aI;
+        const aF = isFavorite(a.id);
+        const bF = isFavorite(b.id);
+        if (aF && !bF) return -1;
+        if (!aF && bF) return 1;
+        const aG = getUserMetadata(a.id)?.gamesTogetherCount ?? 0;
+        const bG = getUserMetadata(b.id)?.gamesTogetherCount ?? 0;
+        return bG - aG;
+      });
+    }
+    return slice;
+  }, [baseFilteredPlayers, visibleListCount, hasMoreFilteredPlayers, getUserMetadata, isFavorite]);
 
   const handlePlayerClick = (playerId: string) => {
     if (multiSelect && !inviteAsTrainerOnly) {
@@ -263,6 +301,24 @@ export const PlayerListModal = ({
     return list.length;
   }, [players, inviteAsTrainerOnly, filterPlayerIds]);
 
+  const hasActiveFilters = useMemo(() => {
+    const levelWide =
+      filters.levelRange[0] <= PLAYER_INVITE_RATING_MIN && filters.levelRange[1] >= PLAYER_INVITE_RATING_MAX;
+    const socialWide = filters.socialRange[0] <= 0 && filters.socialRange[1] >= socialLevelSliderMax;
+    const genderActive = !filterGender && filters.gender !== 'ALL';
+    return genderActive || !levelWide || !socialWide || filters.minGamesTogether > 0;
+  }, [filters, filterGender, socialLevelSliderMax]);
+
+  const resetFilters = () => {
+    setFilters({
+      ...filters,
+      gender: filterGender ?? 'ALL',
+      levelRange: [PLAYER_INVITE_RATING_MIN, PLAYER_INVITE_RATING_MAX],
+      socialRange: [0, socialLevelSliderMax],
+      minGamesTogether: 0,
+    });
+  };
+
   return (
     <Dialog open={isOpen} onClose={handleClose} modalId="player-list-modal">
       <DialogContent className="max-h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0">
@@ -297,48 +353,121 @@ export const PlayerListModal = ({
             </div>
 
             {players.length > 0 && (
-              <div className="flex-shrink-0 pt-3 max-h-[42vh] overflow-y-auto min-h-0">
-                <PlayerListFilterBar
-                  filters={filters}
-                  onChange={setFilters}
-                  socialLevelMax={socialLevelSliderMax}
-                  genderLocked={filterGender ?? null}
-                  resultCount={baseFilteredPlayers.length}
-                  totalCount={preFilterCount}
-                />
+              <div className="flex-shrink-0 px-4 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen((v) => !v)}
+                  className="w-full flex items-center justify-between rounded-xl border border-gray-200/90 bg-white/90 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-primary-300 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-900/80 dark:text-gray-200 dark:hover:border-primary-600 dark:hover:text-primary-300"
+                >
+                  <span className="flex items-center gap-2">
+                    <span>{t('playerInvite.filtersTitle')}</span>
+                    <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-bold text-primary-700 dark:bg-primary-900/60 dark:text-primary-300">
+                      {baseFilteredPlayers.length} / {preFilterCount}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-2 text-xs font-medium">
+                    {hasActiveFilters && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          resetFilters();
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            resetFilters();
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full border border-gray-200/90 bg-white/80 px-2 py-0.5 text-[11px] font-medium text-gray-600 shadow-sm transition hover:border-primary-300 hover:text-primary-700 active:scale-[0.98] dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:text-primary-200"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                        {t('playerInvite.reset')}
+                      </span>
+                    )}
+                    {filtersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </span>
+                </button>
+
+                {filtersOpen && (
+                  <div className="pt-2">
+                    <PlayerListFilterBar
+                      filters={filters}
+                      onChange={setFilters}
+                      socialLevelMax={socialLevelSliderMax}
+                      genderLocked={filterGender ?? null}
+                      onApplyClose={() => setFiltersOpen(false)}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto min-h-0 px-3 pb-2 pt-1">
-              {players.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-inner dark:from-gray-800 dark:to-gray-900">
-                    <UserPlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
+            {!filtersOpen && (
+              <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+                <div
+                  className={`min-h-0 flex-1 overflow-y-auto px-4 pt-1 ${
+                    baseFilteredPlayers.length > 0
+                      ? showCountHint
+                        ? 'pb-28'
+                        : 'pb-20'
+                      : 'pb-4'
+                  }`}
+                >
+                  {players.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-inner dark:from-gray-800 dark:to-gray-900">
+                        <UserPlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
+                    </div>
+                  ) : baseFilteredPlayers.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <p className="text-gray-600 dark:text-gray-400">{t('common.noResults') || 'No results found'}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 pb-2">
+                      {displayFilteredPlayers.map((player) => (
+                        <PlayerListItem
+                          key={player.id}
+                          player={player}
+                          isSelected={selectedIds.includes(player.id)}
+                          gamesTogetherCount={getUserMetadata(player.id)?.gamesTogetherCount ?? 0}
+                          onSelect={() => handlePlayerClick(player.id)}
+                        />
+                      ))}
+                      {hasMoreFilteredPlayers && (
+                        <div className="flex flex-col items-center gap-1 pb-1 pt-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setVisibleListCount((c) => c + PLAYER_INVITE_LIST_PAGE_SIZE)
+                            }
+                            className="rounded-xl border border-primary-300 bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50 active:scale-[0.98] dark:border-primary-600 dark:bg-gray-900 dark:text-primary-300 dark:hover:bg-primary-950/40"
+                          >
+                            {t('playerInvite.showMore')}
+                          </button>
+                          <p className="text-center text-[11px] text-gray-500 dark:text-gray-400">
+                            {t('playerInvite.listShowing', {
+                              visible: displayFilteredPlayers.length,
+                              total: baseFilteredPlayers.length,
+                            })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ) : baseFilteredPlayers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <p className="text-gray-600 dark:text-gray-400">{t('common.noResults') || 'No results found'}</p>
-                </div>
-              ) : (
-                <div className="space-y-1.5 pb-2">
-                  {baseFilteredPlayers.map((player) => (
-                    <PlayerListItem
-                      key={player.id}
-                      player={player}
-                      isSelected={selectedIds.includes(player.id)}
-                      gamesTogetherCount={getUserMetadata(player.id)?.gamesTogetherCount ?? 0}
-                      onSelect={() => handlePlayerClick(player.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {showCountHint && (
-              <div className="flex-shrink-0 mx-4 mb-2 rounded-xl bg-primary-100 dark:bg-primary-900/40 px-4 py-2.5 text-center text-sm font-medium text-primary-700 dark:text-primary-300">
-                {t('games.playersSelected', { count: selectedCount })}
+                {showCountHint && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center">
+                    <div className="rounded-full bg-primary-100/95 px-4 py-2 text-center text-sm font-medium text-primary-700 shadow-lg shadow-primary-500/30 backdrop-blur-sm dark:bg-primary-900/70 dark:text-primary-300 dark:shadow-primary-900/50">
+                      {t('games.playersSelected', { count: selectedCount })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -357,7 +486,7 @@ export const PlayerListModal = ({
             )}
 
             {baseFilteredPlayers.length > 0 && (
-              <div className="flex-shrink-0 p-4 pt-2 border-t border-gray-100 dark:border-gray-800 bg-gradient-to-t from-gray-50/90 to-transparent dark:from-gray-950/90">
+              <div className="relative z-30 flex-shrink-0 border-t border-gray-100 bg-gray-50/95 p-4 pt-2 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95">
                 <div className="flex gap-3">
                   <Button
                     onClick={handleClose}

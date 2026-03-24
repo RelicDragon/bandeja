@@ -2259,6 +2259,9 @@
     "gamesTogetherBadge_one": "{{count}} together",
     "gamesTogetherBadge_other": "{{count}} together",
     "levelShort": "R {{value}}",
-    "socialShort": "S {{value}}"
+    "socialShort": "S {{value}}",
+    "showMore": "Show more",
+    "listShowing": "{{visible}} / {{total}} shown",
+    "applyFilters": "Apply filters"
   }
 }
