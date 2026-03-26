@@ -31,6 +31,8 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Bandeja mirrors your padel workout from Apple Watch.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>This app needs access to your calendar to add game events.</string>
 	<key>NSCalendarsUsageDescription</key>

@@ -111,6 +111,15 @@ const translateDraftLimiter = rateLimit({
   keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
 });
 
+const translateMessageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { success: false, message: 'Too many translation requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
+
 const mentionIdsElementValidator = (val: unknown) => {
   if (!Array.isArray(val)) return true;
   const invalid = val.some((id: unknown) => typeof id !== 'string' || (id as string).length < 1 || (id as string).length > 128);
@@ -267,6 +276,7 @@ router.post(
 
 router.post(
   '/messages/:messageId/translate',
+  translateMessageLimiter,
   validate([
     param('messageId').notEmpty().withMessage('Message ID is required')
   ]),

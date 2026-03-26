@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { User } from '@/types';
 import i18n from '@/i18n/config';
+import { syncTokenToNative, syncLogoutToNative } from '@/services/authBridge';
 import { extractLanguageCode, detectTimeFormat, detectWeekStart, normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { usersApi } from '@/api';
 
@@ -27,6 +28,7 @@ export const useAuthStore = create<AuthState>((set) => {
     if (tokenStr) {
       savedToken = tokenStr;
       console.log('Token loaded from localStorage');
+      syncTokenToNative(tokenStr);
     }
     
     if (userStr) {
@@ -52,6 +54,7 @@ export const useAuthStore = create<AuthState>((set) => {
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
       set({ user, token, isAuthenticated: true });
+      syncTokenToNative(token);
 
       const deviceLocale = navigator.language || 'en-US';
       const normalizedLanguage = normalizeLanguageForProfile(user.language);
@@ -100,6 +103,7 @@ export const useAuthStore = create<AuthState>((set) => {
       try {
         localStorage.setItem('token', token);
         set({ token, isAuthenticated: true });
+        syncTokenToNative(token);
       } catch (error) {
         console.error('Error saving token to localStorage:', error);
       }
@@ -120,6 +124,7 @@ export const useAuthStore = create<AuthState>((set) => {
       } catch (error) {
         console.error('Error clearing auth from localStorage:', error);
       }
+      syncLogoutToNative();
     },
     updateUser: (user) => {
       try {
