@@ -81,6 +81,12 @@ export class TranslationService {
 
     try {
       for (let attempt = 0; attempt < 2; attempt++) {
+        console.info('[translation] llm_request', {
+          attempt,
+          targetLanguage,
+          sourceChars: text.length,
+          userId: userId ?? null,
+        });
         const raw = await ai.createCompletion({
           messages: [
             {
@@ -94,23 +100,37 @@ export class TranslationService {
           reason: LLM_REASON.MESSAGE_TRANSLATION,
           userId,
         });
+        console.info('[translation] llm_response', {
+          attempt,
+          targetLanguage,
+          rawChars: typeof raw === 'string' ? raw.length : 0,
+        });
         const normalized = normalizeTranslationOutput(raw);
         if (!normalized) {
+          console.info('[translation] normalize_empty', { attempt, targetLanguage });
           if (attempt === 0) {
-            console.warn('Translation empty after normalize, retrying LLM once', { targetLanguage });
+            console.info('[translation] retry', { reason: 'empty_after_normalize', nextAttempt: 1 });
             continue;
           }
           throw new ApiError(503, 'Translation service is temporarily unavailable. Please try again later.');
         }
-        if (await translationMatchesTargetFranc(normalized, targetLanguage)) {
+        console.info('[translation] normalized', {
+          attempt,
+          targetLanguage,
+          outChars: normalized.length,
+        });
+        const checkOk = await translationMatchesTargetFranc(normalized, targetLanguage, {
+          llmAttempt: attempt,
+        });
+        if (checkOk) {
+          console.info('[translation] done', { attempt, targetLanguage, outChars: normalized.length });
           return normalized;
         }
         if (attempt === 0) {
-          console.warn('Translation franc check failed, retrying LLM once', {
-            targetLanguage,
-          });
+          console.info('[translation] retry', { reason: 'lang_check_failed', nextAttempt: 1, targetLanguage });
         }
       }
+      console.info('[translation] exhausted_retries', { targetLanguage });
       throw new ApiError(503, 'Translation service is temporarily unavailable. Please try again later.');
     } catch (error: unknown) {
       if (error instanceof ApiError) {

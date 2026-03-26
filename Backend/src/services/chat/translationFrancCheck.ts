@@ -84,13 +84,17 @@ function sampleForFrancDetection(text: string): string {
     .trim();
 }
 
-function tinyldTopKPasses(sample: string, targetLanguage: string): boolean {
+function tinyldTopKPasses(
+  sample: string,
+  targetLanguage: string,
+  precomputed?: ReturnType<typeof detectAll>
+): boolean {
   const code = targetLanguage.toLowerCase();
   const allowed = TINYLD_ACCEPT[code];
   if (!allowed?.length || sample.length < TINYLD_MIN_SAMPLE) {
     return false;
   }
-  const hits = detectAll(sample).slice(0, TINYLD_TOP_K);
+  const hits = (precomputed ?? detectAll(sample)).slice(0, TINYLD_TOP_K);
   for (const { lang } of hits) {
     const l = lang.toLowerCase();
     if (allowed.includes(l)) {
@@ -116,7 +120,8 @@ function evalFrancTop(
 
 export async function translationMatchesTargetFranc(
   translation: string,
-  targetLanguage: string
+  targetLanguage: string,
+  meta?: { llmAttempt?: number }
 ): Promise<boolean> {
   const cleaned = normalizeTranslationOutput(translation);
   const code = targetLanguage.toLowerCase();
@@ -152,21 +157,25 @@ export async function translationMatchesTargetFranc(
     francOk = evalFrancTop(rankedLoose, expected);
   }
 
-  const tinyldOk = tinyldTopKPasses(sample, code);
+  const tinyldHits = detectAll(sample);
+  const tinyldOk = tinyldTopKPasses(sample, code, tinyldHits);
   const scriptOk = scriptFallbackPasses(sample, code);
 
-  if (francOk || tinyldOk || scriptOk) {
-    return true;
-  }
+  const pass = francOk || tinyldOk || scriptOk;
+  const francTop = ranked.slice(0, FRANC_TOP_K).map(([c]) => c);
+  const tinyldTop = tinyldHits.slice(0, TINYLD_TOP_K).map((h) => h.lang);
 
-  const topLangs = ranked.slice(0, FRANC_TOP_K).map(([c]) => c);
-  console.warn('Translation language check mismatch', {
-    targetLanguage: code,
-    francTop: topLangs,
-    tinyldTop: detectAll(sample)
-      .slice(0, TINYLD_TOP_K)
-      .map((h) => h.lang),
+  console.info('[translation] lang_check', {
+    llmAttempt: meta?.llmAttempt,
+    target: code,
+    pass,
+    francOk,
+    tinyldOk,
+    scriptOk,
+    francTop,
+    tinyldTop,
     sampleLen: sample.length,
   });
-  return false;
+
+  return pass;
 }
