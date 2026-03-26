@@ -3,6 +3,7 @@ import SwiftUI
 struct GameDetailView: View {
     let gameId: String
     @State private var vm: GameDetailViewModel
+    @Environment(WatchPreferencesStore.self) private var prefs
 
     init(gameId: String) {
         self.gameId = gameId
@@ -12,14 +13,14 @@ struct GameDetailView: View {
     var body: some View {
         Group {
             if vm.isLoading && vm.game == nil {
-                ProgressView("Loading…")
+                ProgressView(WatchCopy.loadingEllipsis(prefs.uiLanguageCode))
             } else if let error = vm.error, vm.game == nil {
                 errorView(error)
             } else if let game = vm.game {
                 gameContent(game)
             }
         }
-        .navigationTitle(vm.game?.displayTitle ?? "Game")
+        .navigationTitle(vm.game?.displayTitle ?? WatchCopy.gameTitle(prefs.uiLanguageCode))
         .task { await vm.load() }
         .onDisappear { vm.stopPolling() }
     }
@@ -43,7 +44,7 @@ struct GameDetailView: View {
             HStack(spacing: 6) {
                 Image(systemName: game.gameType.gameTypeIconName)
                     .font(.caption2)
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(Color.accentColor)
                 Text(game.gameType.capitalized)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -69,7 +70,7 @@ struct GameDetailView: View {
             Circle()
                 .fill(color)
                 .frame(width: 8, height: 8)
-            Text(statusLabel(game))
+            Text(statusLabel(game, lang: prefs.uiLanguageCode))
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(color)
         }
@@ -80,7 +81,7 @@ struct GameDetailView: View {
 
     private func participantsSection(_ game: WatchGame) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Players")
+            Text(WatchCopy.players(prefs.uiLanguageCode))
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 3)
@@ -94,14 +95,15 @@ struct GameDetailView: View {
 
     @ViewBuilder
     private func actionButton(_ game: WatchGame) -> some View {
+        let lang = prefs.uiLanguageCode
         if vm.canStartGame {
-            comingSoonButton("Start Game", icon: "play.fill", color: .green)
+            comingSoonButton(WatchCopy.startGame(lang), icon: "play.fill", color: .green)
         } else if vm.canEnterResults {
-            comingSoonButton("Enter Results", icon: "pencil.and.list.clipboard", color: .blue)
+            comingSoonButton(WatchCopy.enterResults(lang), icon: "pencil.and.list.clipboard", color: .blue)
         } else if vm.canContinueScoring {
-            comingSoonButton("Continue Scoring", icon: "arrow.clockwise", color: .orange)
+            comingSoonButton(WatchCopy.continueScoring(lang), icon: "arrow.clockwise", color: .orange)
         } else if vm.resultsAreFinal {
-            Label("Results Final", systemImage: "checkmark.seal.fill")
+            Label(WatchCopy.resultsFinal(lang), systemImage: "checkmark.seal.fill")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.green)
                 .frame(maxWidth: .infinity)
@@ -119,7 +121,7 @@ struct GameDetailView: View {
         .tint(color)
         .disabled(true)
         .overlay(alignment: .topTrailing) {
-            Text("Soon")
+            Text(WatchCopy.soon(prefs.uiLanguageCode))
                 .font(.system(size: 8).weight(.bold))
                 .padding(.horizontal, 4)
                 .padding(.vertical, 2)
@@ -129,13 +131,19 @@ struct GameDetailView: View {
     }
 
     private func errorView(_ error: Error) -> some View {
-        VStack(spacing: 8) {
+        let message: String
+        if let api = error as? APIError {
+            message = api.localizedMessage(uiLanguageCode: prefs.uiLanguageCode)
+        } else {
+            message = error.localizedDescription
+        }
+        return VStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle")
                 .foregroundStyle(.red)
-            Text(error.localizedDescription)
+            Text(message)
                 .font(.caption2)
                 .multilineTextAlignment(.center)
-            Button("Retry") { Task { await vm.load() } }
+            Button(WatchCopy.retry(prefs.uiLanguageCode)) { Task { await vm.load() } }
         }
     }
 
@@ -148,14 +156,14 @@ struct GameDetailView: View {
         }
     }
 
-    private func statusLabel(_ game: WatchGame) -> String {
+    private func statusLabel(_ game: WatchGame, lang: String) -> String {
         switch (game.status, game.resultsStatus) {
-        case ("ANNOUNCED", _):         return "Announced"
-        case ("STARTED", "NONE"):      return "In Progress"
-        case ("STARTED", "IN_PROGRESS"): return "Scoring"
-        case (_, "FINAL"):             return "Results Final"
-        case ("FINISHED", _):          return "Finished"
-        case ("ARCHIVED", _):          return "Archived"
+        case ("ANNOUNCED", _):         return WatchCopy.statusAnnounced(lang)
+        case ("STARTED", "NONE"):      return WatchCopy.statusInProgress(lang)
+        case ("STARTED", "IN_PROGRESS"): return WatchCopy.statusScoring(lang)
+        case (_, "FINAL"):             return WatchCopy.resultsFinal(lang)
+        case ("FINISHED", _):          return WatchCopy.statusFinished(lang)
+        case ("ARCHIVED", _):          return WatchCopy.statusArchived(lang)
         default:                       return game.status.capitalized
         }
     }

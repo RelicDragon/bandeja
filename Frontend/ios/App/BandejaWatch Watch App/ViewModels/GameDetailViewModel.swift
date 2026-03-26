@@ -11,7 +11,8 @@ final class GameDetailViewModel {
     private let gameId: String
     private let currentUserId: String?
     private let api = APIClient()
-    private var pollingTask: Task<Void, Never>?
+    @ObservationIgnored
+    nonisolated(unsafe) private var pollingTask: Task<Void, Never>?
 
     init(gameId: String) {
         self.gameId = gameId

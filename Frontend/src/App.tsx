@@ -30,6 +30,8 @@ import { restoreAuthIfNeeded, monitorAuthPersistence } from './utils/authPersist
 import { useDeepLink } from './hooks/useDeepLink';
 import { useDeepLinkStore } from './store/deepLinkStore';
 import { extractLanguageCode } from './utils/displayPreferences';
+import { syncWatchPreferencesToNative } from './services/authBridge';
+import { Capacitor } from '@capacitor/core';
 import { GeoProvider } from './contexts/GeoProvider';
 import { useAppVersionCheck } from './hooks/useAppVersionCheck';
 import { backButtonService } from './services/backButtonService';
@@ -137,6 +139,11 @@ function AppContent() {
       }
     }
   }, [user?.language]);
+
+  useEffect(() => {
+    if (Capacitor.getPlatform() !== 'ios' || !user) return;
+    void syncWatchPreferencesToNative(user);
+  }, [user]);
 
   useEffect(() => {
     const checkServiceWorker = async () => {

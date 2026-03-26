@@ -15,6 +15,19 @@ enum APIError: Error, LocalizedError {
             return "Unexpected server response: \(underlying.localizedDescription)"
         }
     }
+
+    func localizedMessage(uiLanguageCode: String) -> String {
+        switch self {
+        case .httpError(let code):
+            return code == 401
+                ? WatchCopy.errorSignInOnIPhone(uiLanguageCode)
+                : WatchCopy.errorServer(uiLanguageCode, code: code)
+        case .noToken:
+            return WatchCopy.errorNotSignedIn(uiLanguageCode)
+        case .decodingError:
+            return WatchCopy.errorUnexpectedResponse(uiLanguageCode)
+        }
+    }
 }
 
 struct APIClient: Sendable {

@@ -1,14 +1,57 @@
 import WatchConnectivity
 import Observation
 
+private enum WatchConnectivityPayload {
+    nonisolated static func apply(_ dict: [String: Any]) {
+        let token = dict["token"] as? String
+        let isLogout = dict["event"] as? String == "logout"
+        let language = dict["language"] as? String
+        let weekStart = dict["weekStart"] as? String
+        let defaultCurrency = dict["defaultCurrency"] as? String
+        let timeFormat = dict["timeFormat"] as? String
+        let prefsVersion = dict["prefsVersion"] as? Double
+            ?? (dict["prefsVersion"] as? Int).map { Double($0) }
+        let hasPrefs = language != nil || weekStart != nil || defaultCurrency != nil
+            || timeFormat != nil || prefsVersion != nil
+
+        Task { @MainActor in
+            if isLogout {
+                KeychainHelper.shared.deleteToken()
+                WatchPreferencesStore.shared.clear()
+                WatchSessionManager.shared.logoutDidArrive.toggle()
+                return
+            }
+            if let token, !token.isEmpty {
+                KeychainHelper.shared.write(token: token)
+                if hasPrefs {
+                    WatchPreferencesStore.shared.applyFromPhone(
+                        language: language,
+                        weekStart: weekStart,
+                        defaultCurrency: defaultCurrency,
+                        timeFormat: timeFormat,
+                        prefsVersion: prefsVersion
+                    )
+                }
+                WatchSessionManager.shared.tokenDidArrive.toggle()
+            } else if hasPrefs {
+                WatchPreferencesStore.shared.applyFromPhone(
+                    language: language,
+                    weekStart: weekStart,
+                    defaultCurrency: defaultCurrency,
+                    timeFormat: timeFormat,
+                    prefsVersion: prefsVersion
+                )
+            }
+        }
+    }
+}
+
 @Observable
 @MainActor
 final class WatchSessionManager: NSObject {
     static let shared = WatchSessionManager()
 
-    /// Toggled on the main actor whenever a new token arrives via WCSession.
     var tokenDidArrive = false
-    /// Toggled on the main actor whenever a logout event arrives via WCSession.
     var logoutDidArrive = false
 
     private let session = WCSession.default
@@ -33,24 +76,18 @@ final class WatchSessionManager: NSObject {
 extension WatchSessionManager: WCSessionDelegate {
     nonisolated func session(_ session: WCSession,
                              didReceiveUserInfo userInfo: [String: Any]) {
-        if let token = userInfo["token"] as? String {
-            KeychainHelper.shared.write(token: token)
-            Task { @MainActor in
-                WatchSessionManager.shared.tokenDidArrive.toggle()
-            }
-        } else if userInfo["event"] as? String == "logout" {
-            KeychainHelper.shared.deleteToken()
-            Task { @MainActor in
-                WatchSessionManager.shared.logoutDidArrive.toggle()
-            }
-        }
+        WatchConnectivityPayload.apply(userInfo)
     }
 
-    nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
-
-    nonisolated func sessionDidDeactivate(_ session: WCSession) {}
+    nonisolated func session(_ session: WCSession,
+                             didReceiveApplicationContext applicationContext: [String: Any]) {
+        WatchConnectivityPayload.apply(applicationContext)
+    }
 
     nonisolated func session(_ session: WCSession,
-                             activationDidCompleteWith activationState: WCActivationState,
-                             error: Error?) {}
+                             activationDidCompleteWith activationState: WCSessionActivationState,
+                             error: (any Error)?) {
+        guard activationState == .activated else { return }
+        WatchConnectivityPayload.apply(session.receivedApplicationContext)
+    }
 }

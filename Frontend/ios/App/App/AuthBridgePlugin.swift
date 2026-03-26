@@ -6,7 +6,8 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "AuthBridge"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "setToken", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "deleteToken", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "deleteToken", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "syncWatchPreferences", returnType: CAPPluginReturnPromise)
     ]
 
     @objc func setToken(_ call: CAPPluginCall) {
@@ -21,6 +22,16 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func deleteToken(_ call: CAPPluginCall) {
         KeychainHelper.shared.deleteToken(accessGroup: "group.com.funified.bandeja")
         WatchSessionManager.shared.sendLogout()
+        call.resolve()
+    }
+
+    @objc func syncWatchPreferences(_ call: CAPPluginCall) {
+        WatchSessionManager.shared.setWatchPreferences(
+            language: call.getString("language"),
+            weekStart: call.getString("weekStart"),
+            defaultCurrency: call.getString("defaultCurrency"),
+            timeFormat: call.getString("timeFormat")
+        )
         call.resolve()
     }
 }

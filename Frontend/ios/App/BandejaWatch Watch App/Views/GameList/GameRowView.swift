@@ -30,7 +30,7 @@ struct GameRowView: View {
             HStack(spacing: 6) {
                 Image(systemName: game.gameType.gameTypeIconName)
                     .font(.caption2)
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(Color.accentColor)
                 statusDot
                 Text(game.participantCountLabel)
                     .font(.caption2)

@@ -3,6 +3,7 @@ import Foundation
 enum Endpoint: Sendable {
     case myGames
     case gameDetail(id: String)
+    case userProfile
 
     var path: String {
         switch self {
@@ -10,6 +11,8 @@ enum Endpoint: Sendable {
             return "/games/my-games"
         case .gameDetail(let id):
             return "/games/\(id)"
+        case .userProfile:
+            return "/users/profile"
         }
     }
 

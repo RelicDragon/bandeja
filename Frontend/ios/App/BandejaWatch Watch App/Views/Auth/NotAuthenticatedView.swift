@@ -1,15 +1,18 @@
 import SwiftUI
 
 struct NotAuthenticatedView: View {
+    @Environment(WatchPreferencesStore.self) private var prefs
+
     var body: some View {
+        let lang = prefs.uiLanguageCode
         VStack(spacing: 12) {
             Image(systemName: "iphone.and.arrow.forward")
                 .font(.system(size: 36))
                 .foregroundStyle(.yellow)
-            Text("Sign In Required")
+            Text(WatchCopy.signInRequired(lang))
                 .font(.headline)
                 .multilineTextAlignment(.center)
-            Text("Open Bandeja on your iPhone to sign in.")
+            Text(WatchCopy.openOnIPhone(lang))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

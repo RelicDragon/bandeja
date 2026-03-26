@@ -2,6 +2,10 @@ import UIKit
 import Capacitor
 
 final class MainViewController: CAPBridgeViewController {
+    override public func capacitorDidLoad() {
+        bridge?.registerPluginInstance(AuthBridgePlugin())
+    }
+
     private var splashOverlay: UIView?
     private var logoImageView: UIImageView?
 

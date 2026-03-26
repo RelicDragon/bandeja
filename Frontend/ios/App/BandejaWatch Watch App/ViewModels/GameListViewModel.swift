@@ -30,6 +30,7 @@ final class GameListViewModel {
     func loadGames() async {
         refreshAuthState()
         guard isAuthenticated else { return }
+        await WatchPreferencesStore.shared.refreshFromProfile(api: api)
         isLoading = true
         error = nil
         defer { isLoading = false }
@@ -42,7 +43,7 @@ final class GameListViewModel {
 
     private func rebuildGrouped() {
         let now = Date()
-        let calendar = Calendar.current
+        let calendar = WatchPreferencesStore.shared.resolvedCalendar
         let todayStart = calendar.startOfDay(for: now)
         guard let tomorrowStart = calendar.date(byAdding: .day, value: 1, to: todayStart) else {
             grouped = []
@@ -66,5 +67,9 @@ final class GameListViewModel {
         if !upcoming.isEmpty { result.append(("Upcoming", upcoming)) }
         if !recent.isEmpty   { result.append(("Recent", recent)) }
         grouped = result
+    }
+
+    func refreshSectionGrouping() {
+        rebuildGrouped()
     }
 }
