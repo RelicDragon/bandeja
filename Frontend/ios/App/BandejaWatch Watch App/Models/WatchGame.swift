@@ -117,6 +117,7 @@ struct WatchUser: Decodable, Sendable {
     let id: String
     let firstName: String?
     let lastName: String?
+    let avatar: String?
     let level: Double?
 
     var displayName: String {
@@ -126,7 +127,59 @@ struct WatchUser: Decodable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, firstName, lastName, level
+        case id, firstName, lastName, level, avatar
+    }
+
+    var resolvedAvatarURL: URL? {
+        guard let raw = avatar?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            return nil
+        }
+        if raw.hasPrefix("http://") || raw.hasPrefix("https://") {
+            return URL(string: raw)
+        }
+        let path = raw.hasPrefix("/") ? raw : "/\(raw)"
+        return URL(string: APIClient.mediaOrigin + path)
+    }
+
+    /// Circular avatars: `_avatar.jpg` or legacy `_avatar.jpeg`. Tiny is always `_avatar.tiny.jpg`.
+    private static func userAvatarTinyRaw(from raw: String) -> String? {
+        let t = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return nil }
+        var endIdx = t.endIndex
+        if let q = t.firstIndex(of: "?") { endIdx = min(endIdx, q) }
+        if let h = t.firstIndex(of: "#") { endIdx = min(endIdx, h) }
+        let base = String(t[..<endIdx])
+        let baseLower = base.lowercased()
+        let tailIdx: String.Index
+        if baseLower.hasSuffix("_avatar.jpeg") {
+            tailIdx = base.index(base.endIndex, offsetBy: -"_avatar.jpeg".count)
+        } else if baseLower.hasSuffix("_avatar.jpg") {
+            tailIdx = base.index(base.endIndex, offsetBy: -"_avatar.jpg".count)
+        } else {
+            return nil
+        }
+        let tinyBase = String(base[..<tailIdx]) + "_avatar.tiny.jpg"
+        let rest = endIdx < t.endIndex ? String(t[endIdx...]) : ""
+        return tinyBase + rest
+    }
+
+    var resolvedTinyAvatarURL: URL? {
+        guard let raw = avatar?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            return nil
+        }
+        guard let tinyRaw = Self.userAvatarTinyRaw(from: raw) else { return nil }
+        if tinyRaw.hasPrefix("http://") || tinyRaw.hasPrefix("https://") {
+            return URL(string: tinyRaw)
+        }
+        let path = tinyRaw.hasPrefix("/") ? tinyRaw : "/\(tinyRaw)"
+        return URL(string: APIClient.mediaOrigin + path)
+    }
+
+    var initials: String {
+        let first = firstName?.prefix(1) ?? ""
+        let last = lastName?.prefix(1) ?? ""
+        let s = "\(first)\(last)"
+        return s.isEmpty ? "?" : String(s)
     }
 
     nonisolated init(from decoder: Decoder) throws {
@@ -134,9 +187,18 @@ struct WatchUser: Decodable, Sendable {
         id = try c.decode(String.self, forKey: .id)
         firstName = try c.decodeIfPresent(String.self, forKey: .firstName)
         lastName = try c.decodeIfPresent(String.self, forKey: .lastName)
-        level = try c.decodeIfPresent(Double.self, forKey: .level)
+        avatar = try c.decodeIfPresent(String.self, forKey: .avatar)
+        if let d = try? c.decode(Double.self, forKey: .level) {
+            level = d
+        } else if let s = try? c.decode(String.self, forKey: .level), let d = Double(s) {
+            level = d
+        } else {
+            level = nil
+        }
     }
 }
+
+extension WatchUser: Identifiable {}
 
 struct WatchClub: Decodable, Sendable {
     let id: String
@@ -153,17 +215,7 @@ struct WatchClub: Decodable, Sendable {
     }
 }
 
-struct ApiResponse<T: Decodable & Sendable>: Decodable, Sendable {
+struct ApiResponse<T: Decodable>: Decodable, Sendable {
     let success: Bool
     let data: T
-
-    private enum CodingKeys: String, CodingKey {
-        case success, data
-    }
-
-    nonisolated init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        success = try c.decode(Bool.self, forKey: .success)
-        data = try c.decode(T.self, forKey: .data)
-    }
 }

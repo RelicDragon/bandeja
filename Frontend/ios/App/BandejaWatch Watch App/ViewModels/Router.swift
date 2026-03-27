@@ -8,6 +8,8 @@ final class Router {
 
     enum Destination: Hashable {
         case gameDetail(id: String)
+        case scoringList(gameId: String)
+        case scoringMatch(gameId: String, matchId: String)
     }
 
     func navigate(to destination: Destination) {

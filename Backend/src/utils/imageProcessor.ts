@@ -7,20 +7,32 @@ export interface ImageProcessingResult {
   originalPath: string;
   avatarPath?: string;
   thumbnailPath?: string;
+  avatarTinyPath?: string;
   originalSize: { width: number; height: number };
   avatarSize?: { width: number; height: number };
   thumbnailSize?: { width: number; height: number };
+  avatarTinySize?: { width: number; height: number };
+}
+
+export interface ProcessAvatarOptions {
+  userTiny?: boolean;
 }
 
 export class ImageProcessor {
-  static async processAvatar(imageBuffer: Buffer, filename: string): Promise<ImageProcessingResult> {
+  static async processAvatar(
+    imageBuffer: Buffer,
+    filename: string,
+    options?: ProcessAvatarOptions
+  ): Promise<ImageProcessingResult> {
     const uniqueId = crypto.randomUUID();
     const ext = path.extname(filename);
     const baseName = `${uniqueId}${ext}`;
     const avatarName = `${uniqueId}_avatar.jpg`;
+    const avatarTinyName = `${uniqueId}_avatar.tiny.jpg`;
     
     const originalS3Key = `uploads/avatars/originals/${baseName}`;
     const avatarS3Key = `uploads/avatars/circular/${avatarName}`;
+    const avatarTinyS3Key = `uploads/avatars/circular/${avatarTinyName}`;
     
     // Process original image to max 1920x1920 while maintaining aspect ratio
     const originalImage = await sharp(imageBuffer)
@@ -42,14 +54,32 @@ export class ImageProcessor {
     
     const originalMetadata = await sharp(originalImage).metadata();
     const avatarMetadata = await sharp(avatarImage).metadata();
-    
-    // Upload to S3
+
+    let avatarTinyPath: string | undefined;
+    let avatarTinySize: { width: number; height: number } | undefined;
+    if (options?.userTiny) {
+      const avatarTinyImage = await sharp(imageBuffer)
+        .resize(96, 96, {
+          fit: 'cover',
+          position: 'center'
+        })
+        .jpeg({ quality: 82 })
+        .toBuffer();
+      const avatarTinyMetadata = await sharp(avatarTinyImage).metadata();
+      avatarTinyPath = await S3Service.uploadFile(avatarTinyImage, avatarTinyS3Key, 'image/jpeg');
+      avatarTinySize = {
+        width: avatarTinyMetadata.width || 0,
+        height: avatarTinyMetadata.height || 0
+      };
+    }
+
     const originalPath = await S3Service.uploadFile(originalImage, originalS3Key, 'image/jpeg');
     const avatarPath = await S3Service.uploadFile(avatarImage, avatarS3Key, 'image/jpeg');
-    
+
     return {
       originalPath,
       avatarPath,
+      avatarTinyPath,
       originalSize: {
         width: originalMetadata.width || 0,
         height: originalMetadata.height || 0
@@ -57,7 +87,8 @@ export class ImageProcessor {
       avatarSize: {
         width: avatarMetadata.width || 0,
         height: avatarMetadata.height || 0
-      }
+      },
+      avatarTinySize
     };
   }
   

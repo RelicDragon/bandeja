@@ -4,6 +4,11 @@ import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import multer, { FileFilterCallback } from 'multer';
 import { ImageProcessor } from '../utils/imageProcessor';
+import {
+  userAvatarTinyUrlFromStandard,
+  isOurCircularAvatarUrl,
+  isOurAvatarOriginalUrl,
+} from '../utils/userAvatarTiny';
 import prisma from '../config/database';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { ParticipantRole } from '@prisma/client';
@@ -85,14 +90,20 @@ async function uploadAvatarForEntity(
     throw new ApiError(404, `${entityType} not found`);
   }
 
-  if (entity.avatar) {
+  if (entity.avatar && isOurCircularAvatarUrl(entity.avatar)) {
+    if (entityType === 'user') {
+      const tiny = userAvatarTinyUrlFromStandard(entity.avatar);
+      if (tiny) await ImageProcessor.deleteFile(tiny);
+    }
     await ImageProcessor.deleteFile(entity.avatar);
   }
-  if (entity.originalAvatar) {
+  if (entity.originalAvatar && isOurAvatarOriginalUrl(entity.originalAvatar)) {
     await ImageProcessor.deleteFile(entity.originalAvatar);
   }
 
-  const result = await ImageProcessor.processAvatar(originalFile.buffer, originalFile.originalname);
+  const result = await ImageProcessor.processAvatar(originalFile.buffer, originalFile.originalname, {
+    userTiny: entityType === 'user',
+  });
 
   if (!result.avatarPath || !result.avatarSize) {
     throw new ApiError(500, 'Failed to process avatar');

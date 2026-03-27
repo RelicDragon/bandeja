@@ -4,6 +4,11 @@ import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
 import { ImageProcessor } from '../../utils/imageProcessor';
+import {
+  userAvatarTinyUrlFromStandard,
+  isOurCircularAvatarUrl,
+  isOurAvatarOriginalUrl,
+} from '../../utils/userAvatarTiny';
 import { PROFILE_SELECT_FIELDS, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { config } from '../../config/env';
 import { getClientIp, updateUserIpLocation } from '../../services/ipLocation.service';
@@ -122,11 +127,38 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         )
       : null;
 
+  const deleteOurCircularAvatar = async (url: string | null | undefined) => {
+    if (!url || !isOurCircularAvatarUrl(url)) return;
+    const tiny = userAvatarTinyUrlFromStandard(url);
+    if (tiny) await ImageProcessor.deleteFile(tiny);
+    await ImageProcessor.deleteFile(url);
+  };
+
+  const deleteOurAvatarOriginal = async (url: string | null | undefined) => {
+    if (!url || !isOurAvatarOriginalUrl(url)) return;
+    await ImageProcessor.deleteFile(url);
+  };
+
   if (avatar === null && currentUser?.avatar) {
-    await ImageProcessor.deleteFile(currentUser.avatar);
+    await deleteOurCircularAvatar(currentUser.avatar);
+  } else if (
+    avatar !== undefined &&
+    avatar !== null &&
+    currentUser?.avatar &&
+    avatar !== currentUser.avatar
+  ) {
+    await deleteOurCircularAvatar(currentUser.avatar);
   }
+
   if (originalAvatar === null && currentUser?.originalAvatar) {
-    await ImageProcessor.deleteFile(currentUser.originalAvatar);
+    await deleteOurAvatarOriginal(currentUser.originalAvatar);
+  } else if (
+    originalAvatar !== undefined &&
+    originalAvatar !== null &&
+    currentUser?.originalAvatar &&
+    originalAvatar !== currentUser.originalAvatar
+  ) {
+    await deleteOurAvatarOriginal(currentUser.originalAvatar);
   }
 
   if (favoriteTrainerId !== undefined && favoriteTrainerId) {

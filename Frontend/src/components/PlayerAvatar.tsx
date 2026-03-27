@@ -12,6 +12,7 @@ import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { PublicGamePrompt } from './GameDetails/PublicGamePrompt';
 import { getLevelColor } from '@/utils/levelColor';
+import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface PlayerAvatarProps {
@@ -45,6 +46,15 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const useTinyWhenAvailable = extrasmall || smallLayout;
+  const tinyAvatarUrl =
+    useTinyWhenAvailable ? userAvatarTinyUrlFromStandard(player?.avatar) : null;
+  const [tinyLoadFailed, setTinyLoadFailed] = useState(false);
+  useEffect(() => {
+    setTinyLoadFailed(false);
+  }, [player?.id, player?.avatar, extrasmall, smallLayout]);
+  const avatarImgSrc =
+    tinyAvatarUrl && !tinyLoadFailed ? tinyAvatarUrl : player?.avatar ?? '';
   useEffect(() => {
     const observer = new MutationObserver(() => {
       setIsDark(document.documentElement.classList.contains('dark'));
@@ -148,9 +158,12 @@ export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, 
       {player.avatar ? (
         <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
           <img
-            src={player.avatar || ''}
+            src={avatarImgSrc}
             alt={`${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Player'}
             className="w-full h-full object-cover"
+            onError={() => {
+              if (tinyAvatarUrl && !tinyLoadFailed) setTinyLoadFailed(true);
+            }}
           />
         </div>
       ) : (

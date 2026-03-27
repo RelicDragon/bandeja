@@ -47,6 +47,15 @@ export class GameUpdateService {
     });
 
     const maxParticipants = data.maxParticipants !== undefined ? data.maxParticipants : game!.maxParticipants;
+    if (data.maxParticipants !== undefined && maxParticipants > 12 && !isAdmin) {
+      const actor = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { canCreateTournament: true },
+      });
+      if (!actor?.canCreateTournament) {
+        throw new ApiError(403, 'You cannot set more than 12 participants');
+      }
+    }
     const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams !== undefined ? data.hasFixedTeams : game!.hasFixedTeams || false);
 
     const updateData: any = { ...data };

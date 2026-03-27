@@ -167,30 +167,32 @@ export const EditMaxParticipantsModal = ({
     return new Set(Array.from(removedPlayerIds).filter(userId => currentParticipantIds.has(userId)));
   }, [removedPlayerIds, originalParticipants]);
 
+  const canUseTournamentCapacity = Boolean(user?.isAdmin || user?.canCreateTournament);
   const maxParticipants = useMemo(() => {
     if (game.entityType === 'LEAGUE_SEASON') {
-      return 128;
+      return canUseTournamentCapacity ? 128 : 12;
     }
     if (game.entityType === 'TOURNAMENT') {
-      return 32;
+      return canUseTournamentCapacity ? 32 : 12;
     }
     if (game.entityType === 'GAME') {
       return 12;
     }
     return 8;
-  }, [game.entityType]);
+  }, [canUseTournamentCapacity, game.entityType]);
 
   const minParticipants = 2;
 
   const validOptions = useMemo(() => {
     if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE_SEASON') {
-      return Array.from({ length: 13 }, (_, i) => 8 + i * 2);
+      const maxAllowed = canUseTournamentCapacity ? 32 : 12;
+      return Array.from({ length: Math.floor((maxAllowed - 8) / 2) + 1 }, (_, i) => 8 + i * 2);
     }
     if (game.entityType === 'GAME') {
       return [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     }
     return [2, 3, 4, 5, 6, 7, 8];
-  }, [game.entityType]);
+  }, [canUseTournamentCapacity, game.entityType]);
 
   const canSave = !needsRemoval && 
     (genderTeams === 'ANY' || 
@@ -326,7 +328,7 @@ export const EditMaxParticipantsModal = ({
                     <input
                       type="number"
                       min={8}
-                      max={128}
+                      max={maxParticipants}
                       value={tempMaxParticipants}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -336,7 +338,7 @@ export const EditMaxParticipantsModal = ({
                       }}
                       onBlur={() => {
                         const num = parseInt(tempMaxParticipants);
-                        if (!isNaN(num) && num >= 8 && num <= 128) {
+                        if (!isNaN(num) && num >= 8 && num <= maxParticipants) {
                           setNewMaxParticipants(num);
                         } else {
                           setTempMaxParticipants(newMaxParticipants.toString());
@@ -346,7 +348,7 @@ export const EditMaxParticipantsModal = ({
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           const num = parseInt(tempMaxParticipants);
-                          if (!isNaN(num) && num >= 8 && num <= 128) {
+                          if (!isNaN(num) && num >= 8 && num <= maxParticipants) {
                             setNewMaxParticipants(num);
                             setIsEditingMaxParticipants(false);
                           } else {
@@ -378,7 +380,7 @@ export const EditMaxParticipantsModal = ({
                 <div className="px-2 py-2">
                   <Slider
                     min={8}
-                    max={128}
+                    max={maxParticipants}
                     step={1}
                     value={newMaxParticipants}
                     onChange={(val) => {

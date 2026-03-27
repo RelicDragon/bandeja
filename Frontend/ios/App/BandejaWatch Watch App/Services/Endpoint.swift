@@ -4,6 +4,11 @@ enum Endpoint: Sendable {
     case myGames
     case gameDetail(id: String)
     case userProfile
+    case gameResults(gameId: String)
+    case createRound(gameId: String)
+    case createMatch(gameId: String, roundId: String)
+    case updateMatch(gameId: String, matchId: String)
+    case recalculateOutcomes(gameId: String)
 
     var path: String {
         switch self {
@@ -13,10 +18,29 @@ enum Endpoint: Sendable {
             return "/games/\(id)"
         case .userProfile:
             return "/users/profile"
+        case .gameResults(let gameId):
+            return "/results/game/\(gameId)"
+        case .createRound(let gameId):
+            return "/results/game/\(gameId)/rounds"
+        case .createMatch(let gameId, let roundId):
+            return "/results/game/\(gameId)/rounds/\(roundId)/matches"
+        case .updateMatch(let gameId, let matchId):
+            return "/results/game/\(gameId)/matches/\(matchId)"
+        case .recalculateOutcomes(let gameId):
+            return "/results/game/\(gameId)/recalculate"
         }
     }
 
-    var method: String { "GET" }
+    var method: String {
+        switch self {
+        case .myGames, .gameDetail, .userProfile, .gameResults:
+            return "GET"
+        case .createRound, .createMatch, .recalculateOutcomes:
+            return "POST"
+        case .updateMatch:
+            return "PUT"
+        }
+    }
 
     func urlRequest(baseURL: URL) -> URLRequest {
         // Use string concatenation — appendingPathComponent percent-encodes

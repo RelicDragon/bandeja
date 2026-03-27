@@ -95,6 +95,248 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func matches(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Partidos"
+        case "ru": return "Матчи"
+        case "sr": return "Мечеви"
+        default: return "Matches"
+        }
+    }
+
+    nonisolated static func scoresPreview(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Marcador"
+        case "ru": return "Счёт"
+        case "sr": return "Резултат"
+        default: return "Scores"
+        }
+    }
+
+    nonisolated static func roundMatch(_ lang: String, round: Int, match: Int) -> String {
+        switch lang {
+        case "ru": return "Р\(round) · М\(match)"
+        case "sr": return "Р\(round) · М\(match)"
+        default: return "R\(round) · M\(match)"
+        }
+    }
+
+    nonisolated static func waitingForRound(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Esperando a que empiece la ronda…"
+        case "ru": return "Ожидание начала раунда…"
+        case "sr": return "Чека се почетак рунде…"
+        default: return "Waiting for round start..."
+        }
+    }
+
+    nonisolated static func finalizeResults(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Finalizar resultados"
+        case "ru": return "Завершить результаты"
+        case "sr": return "Заврши резултате"
+        default: return "Finalize Results"
+        }
+    }
+
+    nonisolated static func outcomes(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Resultados"
+        case "ru": return "Итоги"
+        case "sr": return "Исходи"
+        default: return "Outcomes"
+        }
+    }
+
+    nonisolated static func match(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Partido"
+        case "ru": return "Матч"
+        case "sr": return "Меч"
+        default: return "Match"
+        }
+    }
+
+    nonisolated static func review(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Revisar"
+        case "ru": return "Проверка"
+        case "sr": return "Провера"
+        default: return "Review"
+        }
+    }
+
+    nonisolated static func finishMatch(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Terminar partido"
+        case "ru": return "Завершить матч"
+        case "sr": return "Заврши меч"
+        default: return "Finish Match"
+        }
+    }
+
+    nonisolated static func backToScoring(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Volver al marcador"
+        case "ru": return "Назад к счёту"
+        case "sr": return "Назад на бодовање"
+        default: return "Back to Scoring"
+        }
+    }
+
+    nonisolated static func close(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Cerrar"
+        case "ru": return "Закрыть"
+        case "sr": return "Затвори"
+        default: return "Close"
+        }
+    }
+
+    nonisolated static func now(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Ahora"
+        case "ru": return "Сейчас"
+        case "sr": return "Сада"
+        default: return "Now"
+        }
+    }
+
+    nonisolated static func open(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Abrir"
+        case "ru": return "Открыть"
+        case "sr": return "Отвори"
+        default: return "Open"
+        }
+    }
+
+    nonisolated static func view(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Ver"
+        case "ru": return "Смотреть"
+        case "sr": return "Погледај"
+        default: return "View"
+        }
+    }
+
+    nonisolated static func sets(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Sets"
+        case "ru": return "Сеты"
+        case "sr": return "Сетови"
+        default: return "Sets"
+        }
+    }
+
+    nonisolated static func setLabel(_ lang: String, number: Int) -> String {
+        switch lang {
+        case "es": return "Set \(number)"
+        case "ru": return "Сет \(number)"
+        case "sr": return "Сет \(number)"
+        default: return "Set \(number)"
+        }
+    }
+
+    nonisolated static func teamAPlus(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Equipo A +"
+        case "ru": return "Команда A +"
+        case "sr": return "Тим A +"
+        default: return "Team A +"
+        }
+    }
+
+    nonisolated static func teamBPlus(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Equipo B +"
+        case "ru": return "Команда B +"
+        case "sr": return "Тим B +"
+        default: return "Team B +"
+        }
+    }
+
+    nonisolated static func tieBreak(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Tie-break"
+        case "ru": return "Тай-брейк"
+        case "sr": return "Тај-брејк"
+        default: return "Tie-break"
+        }
+    }
+
+    nonisolated static func saveSet(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Guardar set"
+        case "ru": return "Сохранить сет"
+        case "sr": return "Сачувај сет"
+        default: return "Save Set"
+        }
+    }
+
+    nonisolated static func nextSet(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Siguiente set"
+        case "ru": return "Следующий сет"
+        case "sr": return "Следећи сет"
+        default: return "Next Set"
+        }
+    }
+
+    nonisolated static func saving(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Guardando..."
+        case "ru": return "Сохранение..."
+        case "sr": return "Чување..."
+        default: return "Saving..."
+        }
+    }
+
+    nonisolated static func deuce(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Iguales"
+        case "ru": return "Ровно"
+        case "sr": return "Изједначење"
+        default: return "Deuce"
+        }
+    }
+
+    nonisolated static func advantageA(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Ventaja A"
+        case "ru": return "Преимущество A"
+        case "sr": return "Предност A"
+        default: return "Advantage A"
+        }
+    }
+
+    nonisolated static func advantageB(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Ventaja B"
+        case "ru": return "Преимущество B"
+        case "sr": return "Предност B"
+        default: return "Advantage B"
+        }
+    }
+
+    nonisolated static func advantageAbbrev(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Vent."
+        case "ru": return "Пр-во"
+        case "sr": return "Пред."
+        default: return "Adv"
+        }
+    }
+
+    nonisolated static func americano(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Americano"
+        case "ru": return "Американо"
+        case "sr": return "Американо"
+        default: return "Americano"
+        }
+    }
+
     nonisolated static func players(_ lang: String) -> String {
         switch lang {
         case "es": return "Jugadores"

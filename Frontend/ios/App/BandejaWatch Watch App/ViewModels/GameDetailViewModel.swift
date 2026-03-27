@@ -5,8 +5,11 @@ import Observation
 @MainActor
 final class GameDetailViewModel {
     var game: WatchGame?
-    var isLoading = false
+    /// True until first successful game load finishes (avoids blank first frame).
+    var isLoading = true
     var error: Error?
+    /// Loaded when available; used for scores preview on game detail.
+    var results: WatchResultsGame?
 
     private let gameId: String
     private let currentUserId: String?
@@ -37,9 +40,11 @@ final class GameDetailViewModel {
     private func fetchGame() async {
         do {
             game = try await api.fetch(.gameDetail(id: gameId))
+            results = try? await api.fetch(.gameResults(gameId: gameId))
             schedulePollingIfNeeded()
         } catch {
             self.error = error
+            results = nil
         }
     }
 
@@ -80,6 +85,20 @@ final class GameDetailViewModel {
 
     var resultsAreFinal: Bool {
         game?.resultsStatus == "FINAL"
+    }
+
+    var hasResultsPreview: Bool {
+        guard let rounds = results?.rounds else { return false }
+        return rounds.contains { !$0.matches.isEmpty }
+    }
+
+    /// Participant can open match list when scoring/results exist or rounds are present.
+    var canOpenMatchList: Bool {
+        guard let game, let uid = currentUserId else { return false }
+        let isParticipant = game.participants.contains { $0.userId == uid }
+        guard isParticipant else { return false }
+        if game.resultsStatus == "IN_PROGRESS" || game.resultsStatus == "FINAL" { return true }
+        return hasResultsPreview
     }
 
     /// True only if the currently signed-in user has OWNER or ADMIN role in this game.

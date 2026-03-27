@@ -33,18 +33,60 @@ enum APIError: Error, LocalizedError {
 struct APIClient: Sendable {
     static let baseURL = URL(string: "https://bandeja.me/api")!
 
+    /// Host root for relative `avatar` paths from the API (e.g. `https://bandeja.me`).
+    static var mediaOrigin: String {
+        var s = Self.baseURL.absoluteString
+        if s.hasSuffix("/api/") {
+            s.removeLast(5)
+        } else if s.hasSuffix("/api") {
+            s.removeLast(4)
+        }
+        return s.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+    }
+
     private static let decoder: JSONDecoder = {
         let d = JSONDecoder()
         d.dateDecodingStrategy = .iso8601
         return d
     }()
 
-    func fetch<T: Decodable & Sendable>(_ endpoint: Endpoint) async throws -> T {
+    func fetch<T: Decodable>(_ endpoint: Endpoint) async throws -> T {
+        try await execute(endpoint)
+    }
+
+    func send<T: Decodable, Body: Encodable>(_ endpoint: Endpoint, body: Body) async throws -> T {
+        try await execute(endpoint, body: body)
+    }
+
+    func sendVoid<Body: Encodable>(_ endpoint: Endpoint, body: Body? = nil) async throws {
+        if let body {
+            _ = try await execute(endpoint, body: body) as SimpleSuccessResponse
+        } else {
+            _ = try await execute(endpoint, body: OptionalBody(), includeBody: false) as SimpleSuccessResponse
+        }
+    }
+
+    func sendVoid(_ endpoint: Endpoint) async throws {
+        _ = try await execute(endpoint, body: OptionalBody(), includeBody: false) as SimpleSuccessResponse
+    }
+
+    private func execute<T: Decodable>(_ endpoint: Endpoint) async throws -> T {
+        try await execute(endpoint, body: OptionalBody(), includeBody: false)
+    }
+
+    private func execute<T: Decodable, Body: Encodable>(
+        _ endpoint: Endpoint,
+        body: Body,
+        includeBody: Bool = true
+    ) async throws -> T {
         guard let token = KeychainHelper.shared.readToken() else {
             throw APIError.noToken
         }
         var request = endpoint.urlRequest(baseURL: Self.baseURL)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if includeBody {
+            request.httpBody = try JSONEncoder().encode(body)
+        }
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else {
@@ -58,7 +100,16 @@ struct APIClient: Sendable {
             let wrapped = try Self.decoder.decode(ApiResponse<T>.self, from: data)
             return wrapped.data
         } catch {
+            if let direct = try? Self.decoder.decode(T.self, from: data) {
+                return direct
+            }
             throw APIError.decodingError(error)
         }
     }
+}
+
+private struct OptionalBody: Codable, Sendable {}
+
+private struct SimpleSuccessResponse: Codable, Sendable {
+    let success: Bool
 }

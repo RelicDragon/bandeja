@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { config } from '../config/env';
 
 export class S3Service {
@@ -37,6 +37,23 @@ export class S3Service {
 
     await this.client!.send(command);
     return this.getCloudFrontUrl(key);
+  }
+
+  static async objectExists(key: string): Promise<boolean> {
+    this.initialize();
+    const cleanKey = key.startsWith('/') ? key.substring(1) : key;
+    try {
+      await this.client!.send(
+        new HeadObjectCommand({ Bucket: this.bucket, Key: cleanKey })
+      );
+      return true;
+    } catch (e: unknown) {
+      const err = e as { $metadata?: { httpStatusCode?: number }; name?: string; Code?: string };
+      if (err?.$metadata?.httpStatusCode === 404) return false;
+      const code = err?.Code || err?.name;
+      if (code === 'NotFound' || code === 'NoSuchKey') return false;
+      throw e;
+    }
   }
 
   static async deleteFile(key: string): Promise<boolean> {

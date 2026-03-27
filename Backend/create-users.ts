@@ -113,7 +113,9 @@ async function createUsers() {
         console.log(`  [${i + 1}/${numberOfUsersToInsert}] Creating user: ${firstName} ${lastName} (${phone})...`);
 
         const avatarBuffer = await getRandomAvatar();
-        const avatarResult = await ImageProcessor.processAvatar(avatarBuffer, 'avatar.jpg');
+        const avatarResult = await ImageProcessor.processAvatar(avatarBuffer, 'avatar.jpg', {
+          userTiny: true,
+        });
 
         const user = await prisma.user.create({
           data: {

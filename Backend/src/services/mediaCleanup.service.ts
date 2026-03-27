@@ -1,5 +1,10 @@
 import prisma from '../config/database';
 import { ImageProcessor } from '../utils/imageProcessor';
+import {
+  userAvatarTinyUrlFromStandard,
+  isOurCircularAvatarUrl,
+  isOurAvatarOriginalUrl,
+} from '../utils/userAvatarTiny';
 
 export class MediaCleanupService {
   /**
@@ -26,10 +31,12 @@ export class MediaCleanupService {
 
       if (user) {
         // Clean up avatar files
-        if (user.avatar) {
+        if (user.avatar && isOurCircularAvatarUrl(user.avatar)) {
+          const tiny = userAvatarTinyUrlFromStandard(user.avatar);
+          if (tiny) await ImageProcessor.deleteFile(tiny);
           await ImageProcessor.deleteFile(user.avatar);
         }
-        if (user.originalAvatar) {
+        if (user.originalAvatar && isOurAvatarOriginalUrl(user.originalAvatar)) {
           await ImageProcessor.deleteFile(user.originalAvatar);
         }
       }
@@ -110,7 +117,13 @@ export class MediaCleanupService {
         select: { avatar: true, originalAvatar: true }
       });
       users.forEach(user => {
-        if (user.avatar) referencedFiles.add(user.avatar);
+        if (user.avatar) {
+          referencedFiles.add(user.avatar);
+          if (isOurCircularAvatarUrl(user.avatar)) {
+            const tiny = userAvatarTinyUrlFromStandard(user.avatar);
+            if (tiny) referencedFiles.add(tiny);
+          }
+        }
         if (user.originalAvatar) referencedFiles.add(user.originalAvatar);
       });
 

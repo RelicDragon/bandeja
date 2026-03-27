@@ -3,6 +3,7 @@ import SwiftUI
 struct GameDetailView: View {
     let gameId: String
     @State private var vm: GameDetailViewModel
+    @Environment(Router.self) private var router
     @Environment(WatchPreferencesStore.self) private var prefs
 
     init(gameId: String) {
@@ -18,6 +19,8 @@ struct GameDetailView: View {
                 errorView(error)
             } else if let game = vm.game {
                 gameContent(game)
+            } else {
+                ProgressView(WatchCopy.loadingEllipsis(prefs.uiLanguageCode))
             }
         }
         .navigationTitle(vm.game?.displayTitle ?? WatchCopy.gameTitle(prefs.uiLanguageCode))
@@ -32,6 +35,9 @@ struct GameDetailView: View {
                 headerSection(game)
                 statusBanner(game)
                 participantsSection(game)
+                if vm.hasResultsPreview {
+                    resultsPreviewSection
+                }
                 actionButton(game)
             }
             .padding(.horizontal, 4)
@@ -99,16 +105,56 @@ struct GameDetailView: View {
         if vm.canStartGame {
             comingSoonButton(WatchCopy.startGame(lang), icon: "play.fill", color: .green)
         } else if vm.canEnterResults {
-            comingSoonButton(WatchCopy.enterResults(lang), icon: "pencil.and.list.clipboard", color: .blue)
+            actionNavButton(WatchCopy.enterResults(lang), icon: "pencil.and.list.clipboard", color: .blue)
         } else if vm.canContinueScoring {
-            comingSoonButton(WatchCopy.continueScoring(lang), icon: "arrow.clockwise", color: .orange)
+            actionNavButton(WatchCopy.continueScoring(lang), icon: "arrow.clockwise", color: .orange)
         } else if vm.resultsAreFinal {
-            Label(WatchCopy.resultsFinal(lang), systemImage: "checkmark.seal.fill")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.green)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+            actionNavButton(WatchCopy.resultsFinal(lang), icon: "checkmark.seal.fill", color: .green)
+        } else if vm.canOpenMatchList {
+            actionNavButton(WatchCopy.matches(lang), icon: "list.bullet.rectangle", color: .blue)
         }
+    }
+
+    private var resultsPreviewSection: some View {
+        let lang = prefs.uiLanguageCode
+        return VStack(alignment: .leading, spacing: 6) {
+            Text(WatchCopy.scoresPreview(lang))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            ForEach((vm.results?.rounds ?? []).sorted { $0.roundNumber < $1.roundNumber }, id: \.id) { round in
+                ForEach(round.matches.sorted { $0.matchNumber < $1.matchNumber }, id: \.id) { match in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(WatchCopy.roundMatch(lang, round: round.roundNumber, match: match.matchNumber))
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                        if match.sets.isEmpty {
+                            Text("—")
+                                .font(.caption2)
+                        } else {
+                            Text(
+                                match.sets
+                                    .sorted { $0.setNumber < $1.setNumber }
+                                    .map { "\($0.teamAScore)-\($0.teamBScore)" }
+                                    .joined(separator: "  ")
+                            )
+                            .font(.caption2.monospacedDigit())
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func actionNavButton(_ title: String, icon: String, color: Color) -> some View {
+        Button {
+            router.navigate(to: .scoringList(gameId: gameId))
+        } label: {
+            Label(title, systemImage: icon)
+                .font(.caption.weight(.semibold))
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(color)
     }
 
     private func comingSoonButton(_ title: String, icon: String, color: Color) -> some View {
