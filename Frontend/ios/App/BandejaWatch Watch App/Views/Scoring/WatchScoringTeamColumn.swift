@@ -9,42 +9,60 @@ struct WatchScoringTeamColumn: View {
     var decrementDisabled: Bool = false
 
     var body: some View {
-        VStack(spacing: 6) {
-            VStack(spacing: 4) {
-                if users.isEmpty {
-                    Text("—")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                } else {
-                    HStack(spacing: 4) {
+        VStack(spacing: 8) {
+            Button(action: action) {
+                VStack(spacing: 6) {
+                    if users.isEmpty {
+                        Text("—")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    } else {
+                        HStack(spacing: 4) {
+                            ForEach(users) { user in
+                                WatchPlayerAvatarView(user: user, size: 24, role: nil)
+                            }
+                        }
+
                         ForEach(users) { user in
-                            WatchPlayerAvatarView(user: user, size: 22, role: nil)
+                            Text(user.displayName)
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.white.opacity(0.88))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .multilineTextAlignment(.center)
                         }
                     }
-                    ForEach(users) { user in
-                        Text(user.displayName)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.65)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity)
 
-            Button(action: action) {
-                Text(scoreLabel)
-                    .font(.title3.monospacedDigit())
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
+                    Text(scoreLabel)
+                        .font(.system(size: 30, weight: .bold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                }
+                .frame(maxWidth: .infinity, minHeight: 112)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 10)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color.accentColor.opacity(0.95),
+                            Color.accentColor.opacity(0.65)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                )
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.plain)
             .disabled(disabled)
 
             Button(action: decrementAction) {
                 Image(systemName: "minus")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 4)
             }
