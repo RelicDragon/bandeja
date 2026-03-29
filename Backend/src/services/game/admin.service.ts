@@ -7,6 +7,7 @@ import { ParticipantMessageHelper } from './participantMessageHelper';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { hasParentGamePermission, getParentGameParticipant } from '../../utils/parentGamePermissions';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
 
 export class AdminService {
   static async addAdmin(gameId: string, ownerId: string, userId: string) {
@@ -162,6 +163,7 @@ export class AdminService {
           where: { id: targetParticipant.id },
           data: { status: 'NON_PLAYING' },
         });
+        await removeUserFromGameFixedTeams(tx, gameId, targetUserId);
       });
     } else {
       await prisma.$transaction(async (tx) => {
@@ -169,6 +171,7 @@ export class AdminService {
         if (game?.trainerId === targetUserId) {
           await tx.game.update({ where: { id: gameId }, data: { trainerId: null } });
         }
+        await removeUserFromGameFixedTeams(tx, gameId, targetUserId);
         await tx.gameParticipant.delete({ where: { id: targetParticipant.id } });
       });
 

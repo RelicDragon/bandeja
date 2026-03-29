@@ -71,6 +71,8 @@ export function VirtualizedList<T>({
         {virtualItems.map((row) => (
           <div
             key={row.key}
+            data-index={row.index}
+            ref={virtualizer.measureElement}
             style={{
               position: 'absolute',
               top: 0,

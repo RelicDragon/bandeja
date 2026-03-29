@@ -13,6 +13,7 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { createSystemMessageWithNotification } from '../../utils/systemMessageHelper';
 import { ChatType, ParticipantRole } from '@prisma/client';
 import { BetService } from '../bets/bet.service';
+import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
 
 const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
@@ -138,6 +139,7 @@ export class ParticipantService {
             where: { id: participant.id },
             data: { status: 'NON_PLAYING' },
           });
+          await removeUserFromGameFixedTeams(tx, gameId, userId);
         });
       } else {
         await prisma.$transaction(async (tx) => {
@@ -145,6 +147,7 @@ export class ParticipantService {
           if (game?.trainerId === userId) {
             await tx.game.update({ where: { id: gameId }, data: { trainerId: null } });
           }
+          await removeUserFromGameFixedTeams(tx, gameId, userId);
           await tx.gameParticipant.delete({
             where: { id: participant.id },
           });
@@ -166,11 +169,11 @@ export class ParticipantService {
     }
 
     await prisma.$transaction(async (tx) => {
-      // Clear trainerId if this participant is the trainer
       const game = await tx.game.findUnique({ where: { id: gameId }, select: { trainerId: true } });
       if (game?.trainerId === userId) {
         await tx.game.update({ where: { id: gameId }, data: { trainerId: null } });
       }
+      await removeUserFromGameFixedTeams(tx, gameId, userId);
       await tx.gameParticipant.delete({
         where: { id: participant.id },
       });
@@ -314,14 +317,19 @@ export class ParticipantService {
       }
     }
 
-    await prisma.gameParticipant.update({
-      where: { id: participant.id },
-      data: {
-        status: newStatus,
-        invitedByUserId: null,
-        inviteMessage: null,
-        inviteExpiresAt: null,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.gameParticipant.update({
+        where: { id: participant.id },
+        data: {
+          status: newStatus,
+          invitedByUserId: null,
+          inviteMessage: null,
+          inviteExpiresAt: null,
+        },
+      });
+      if (participant.status === PLAYING_STATUS && !isPlaying) {
+        await removeUserFromGameFixedTeams(tx, gameId, userId);
+      }
     });
 
     if (isPlaying) {
@@ -346,9 +354,12 @@ export class ParticipantService {
     if (!game) throw new ApiError(404, 'Game not found');
     validateGameCanAcceptParticipants(game);
 
-    await prisma.gameParticipant.updateMany({
-      where: { gameId, userId },
-      data: { status: IN_QUEUE_STATUS },
+    await prisma.$transaction(async (tx) => {
+      await tx.gameParticipant.updateMany({
+        where: { gameId, userId },
+        data: { status: IN_QUEUE_STATUS },
+      });
+      await removeUserFromGameFixedTeams(tx, gameId, userId);
     });
 
     await createSystemMessageWithNotification(
