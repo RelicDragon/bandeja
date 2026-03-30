@@ -8,6 +8,7 @@ import { PreferenceKey } from '../../../types/notifications.types';
 import { getUserLanguageFromTelegramId } from '../utils';
 import { config } from '../../../config/env';
 import { buildMessageWithButtons } from '../shared/message-builder';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
 export async function sendLeagueGameAssignedNotification(api: any, game: any, userId: string) {
   const allowed = await NotificationPreferenceService.doesUserAllow(
@@ -36,6 +37,7 @@ export async function sendLeagueGameAssignedNotification(api: any, game: any, us
   try {
     await api.sendMessage(user.telegramId, finalMessage, options);
   } catch (error) {
+    if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram league game assigned to user ${userId}:`, error);
   }
 }

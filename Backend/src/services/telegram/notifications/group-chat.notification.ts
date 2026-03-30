@@ -10,6 +10,7 @@ import { NotificationPreferenceService } from '../../notificationPreference.serv
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
 import { config } from '../../../config/env';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
 export async function sendGroupChatNotification(
   api: Api,
@@ -96,7 +97,9 @@ export async function sendGroupChatNotification(
       
       await api.sendMessage(user.telegramId, finalMessage, options);
     } catch (error) {
-      console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
+      if (!isBenignTelegramRecipientError(error)) {
+        console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
+      }
     }
   }
 }

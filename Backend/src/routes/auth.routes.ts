@@ -43,47 +43,36 @@ router.post(
 );
 
 router.post(
-  '/register/apple',
-  validate([
-    body('identityToken').notEmpty().isString().withMessage('Identity token is required'),
-    body('nonce').notEmpty().isString().isLength({ min: 1 }).withMessage('Nonce is required'),
-    body('firstName').optional().isString().isLength({ max: 100 }).withMessage('First name must be a string with max 100 characters'),
-    body('lastName').optional().isString().isLength({ max: 100 }).withMessage('Last name must be a string with max 100 characters'),
-  ]),
-  (req, res, next) => {
-    console.log('[APPLE_ROUTE] POST /auth/register/apple');
-    next();
-  },
-  authController.registerWithApple
-);
-
-router.post(
   '/login/apple',
   validate([
     body('identityToken').notEmpty().isString().withMessage('Identity token is required'),
     body('nonce').notEmpty().isString().isLength({ min: 1 }).withMessage('Nonce is required'),
     body('firstName').optional().isString().isLength({ max: 100 }).withMessage('First name must be a string with max 100 characters'),
     body('lastName').optional().isString().isLength({ max: 100 }).withMessage('Last name must be a string with max 100 characters'),
+    body('language').optional().isString(),
+    body('gender').optional().isString(),
+    body('genderIsSet').optional().isBoolean(),
+    body('preferredHandLeft').optional().isBoolean(),
+    body('preferredHandRight').optional().isBoolean(),
+    body('preferredCourtSideLeft').optional().isBoolean(),
+    body('preferredCourtSideRight').optional().isBoolean(),
   ]),
-  (req, res, next) => {
-    console.log('[APPLE_ROUTE] POST /auth/login/apple');
-    next();
-  },
   authController.loginWithApple
-);
-
-router.post(
-  '/register/google',
-  validate([
-    body('idToken').notEmpty().isString().withMessage('Google ID token is required'),
-  ]),
-  authController.registerWithGoogle
 );
 
 router.post(
   '/login/google',
   validate([
     body('idToken').notEmpty().isString().withMessage('Google ID token is required'),
+    body('firstName').optional().isString().isLength({ max: 100 }).withMessage('First name must be a string with max 100 characters'),
+    body('lastName').optional().isString().isLength({ max: 100 }).withMessage('Last name must be a string with max 100 characters'),
+    body('language').optional().isString(),
+    body('gender').optional().isString(),
+    body('genderIsSet').optional().isBoolean(),
+    body('preferredHandLeft').optional().isBoolean(),
+    body('preferredHandRight').optional().isBoolean(),
+    body('preferredCourtSideLeft').optional().isBoolean(),
+    body('preferredCourtSideRight').optional().isBoolean(),
   ]),
   authController.loginWithGoogle
 );

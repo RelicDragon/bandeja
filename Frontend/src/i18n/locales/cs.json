@@ -820,6 +820,8 @@
     "selectPlayer": "Vybrat hráče",
     "selectPlayers": "Vybrat hráče",
     "noPlayersAvailable": "Žádní hráči k pozvání",
+    "inviteFriendToBandeja": "Pozvat přítele do Bandeja",
+    "shareAppBody": "Přidej se ke mně na Bandeja: {{url}}",
     "pendingInvites": "Čekající pozvánky",
     "inviteSent": "Pozvánka odeslána",
     "invitedYou": "Pozvánka do"

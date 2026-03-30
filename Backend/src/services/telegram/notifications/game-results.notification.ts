@@ -7,6 +7,7 @@ import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { formatGameInfoForUser } from '../../shared/notification-base';
 
 interface PlayerStats {
@@ -261,6 +262,7 @@ export async function sendGameFinishedNotification(
     await api.sendMessage(participant.user.telegramId, trimmedMessage, options);
     console.log(`[GAME RESULTS NOTIFICATION] Message sent successfully to user ${userId}`);
   } catch (error) {
+    if (isBenignTelegramRecipientError(error)) return;
     console.error(`[GAME RESULTS NOTIFICATION] Failed to send Telegram game results notification to user ${userId}:`, error);
   }
 }

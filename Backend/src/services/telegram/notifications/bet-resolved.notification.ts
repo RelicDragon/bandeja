@@ -8,6 +8,7 @@ import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser } from '../../shared/notification-base';
 import prisma from '../../../config/database';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
 export async function sendBetResolvedNotification(
   api: Api,
@@ -92,6 +93,7 @@ export async function sendBetResolvedNotification(
     const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
     await api.sendMessage(user.telegramId, finalMessage, options);
   } catch (error) {
+    if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram bet resolved notification to user ${userId}:`, error);
   }
 }
@@ -167,6 +169,7 @@ export async function sendBetNeedsReviewNotification(
     const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
     await api.sendMessage(user.telegramId, finalMessage, options);
   } catch (error) {
+    if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram bet needs review notification to user ${userId}:`, error);
   }
 }
@@ -222,6 +225,7 @@ export async function sendBetCancelledNotification(api: Api, betId: string, user
     const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
     await api.sendMessage(user.telegramId, finalMessage, options);
   } catch (error) {
+    if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram bet cancelled notification to user ${userId}:`, error);
   }
 }

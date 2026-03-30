@@ -7,6 +7,7 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import prisma from '../../../config/database';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { TransactionType } from '@prisma/client';
 
 export async function sendTransactionNotification(
@@ -121,6 +122,7 @@ export async function sendTransactionNotification(
     const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
     await api.sendMessage(user.telegramId, finalMessage, options);
   } catch (error) {
+    if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram transaction notification to user ${userId}:`, error);
   }
 }

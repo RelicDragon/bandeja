@@ -10,6 +10,7 @@ import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser, getEntityTypeLabel, getShowEntityButtonText } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { canParticipantSeeGameChatMessage } from '../../chat/gameChatVisibility';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
 function translateSystemMessage(message: any, lang: string): string {
   let messageData: any = null;
@@ -96,7 +97,9 @@ export async function sendGameSystemMessageNotification(
         
         await api.sendMessage(user.telegramId, trimmedMessage, options);
       } catch (error) {
-        console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
+        if (!isBenignTelegramRecipientError(error)) {
+          console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
+        }
       }
     }
   }

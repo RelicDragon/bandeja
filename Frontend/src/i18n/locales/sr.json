@@ -823,6 +823,8 @@
     "selectPlayer": "Изаберите играча",
     "selectPlayers": "Изаберите играче",
     "noPlayersAvailable": "Нема доступних играча за позивање",
+    "inviteFriendToBandeja": "Позови пријatelja на Bandeja",
+    "shareAppBody": "Придружи ми се на Bandeja: {{url}}",
     "invitePlayers": "Позови играче",
     "pendingInvites": "Позиви на чекању",
     "inviteSent": "Позив послат",

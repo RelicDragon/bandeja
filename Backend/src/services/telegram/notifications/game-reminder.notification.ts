@@ -8,6 +8,7 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
 export async function sendGameReminderNotification(
   api: Api,
@@ -83,7 +84,9 @@ export async function sendGameReminderNotification(
 
       await api.sendMessage(user.telegramId, finalMessage, options);
     } catch (error) {
-      console.error(`Failed to send Telegram reminder to user ${user.id}:`, error);
+      if (!isBenignTelegramRecipientError(error)) {
+        console.error(`Failed to send Telegram reminder to user ${user.id}:`, error);
+      }
     }
   }
 }

@@ -97,47 +97,13 @@ export const Login = () => {
       const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
       const firstName = appleResult.user?.name?.firstName;
       const lastName = appleResult.user?.name?.lastName;
-      let response;
-      try {
-        response = await authApi.loginApple({
-          identityToken: appleResult.identityToken,
-          nonce,
-          language: normalizedLanguage,
-          firstName,
-          lastName,
-        });
-      } catch (loginErr: any) {
-        if (loginErr?.response?.status === 401) {
-          try {
-            response = await authApi.registerApple({
-              identityToken: appleResult.identityToken,
-              nonce,
-              firstName,
-              lastName,
-              language: normalizedLanguage,
-            });
-          } catch (registerErr: any) {
-            if (registerErr?.response?.status === 400) {
-              const errorMessage = registerErr?.response?.data?.message || '';
-              if (errorMessage.includes('appleAccountAlreadyExists') || errorMessage.includes('Apple account already exists')) {
-                response = await authApi.loginApple({
-                  identityToken: appleResult.identityToken,
-                  nonce,
-                  language: normalizedLanguage,
-                  firstName,
-                  lastName,
-                });
-              } else {
-                throw registerErr;
-              }
-            } else {
-              throw registerErr;
-            }
-          }
-        } else {
-          throw loginErr;
-        }
-      }
+      const response = await authApi.loginApple({
+        identityToken: appleResult.identityToken,
+        nonce,
+        language: normalizedLanguage,
+        firstName,
+        lastName,
+      });
       await setAuth(response.data.user, response.data.token);
       await pushNotificationService.ensureTokenSentToBackend();
       navigate('/');
@@ -159,46 +125,12 @@ export const Login = () => {
       }
       const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
       const profile = result.profile;
-      let response;
-      try {
-        response = await authApi.loginGoogle({
-          idToken: result.idToken,
-          language: normalizedLanguage,
-          firstName: profile?.givenName,
-          lastName: profile?.familyName,
-        });
-      } catch (loginErr: any) {
-        if (loginErr?.response?.status === 401) {
-          try {
-            response = await authApi.registerGoogle({
-              idToken: result.idToken,
-              firstName: profile?.givenName,
-              lastName: profile?.familyName,
-              language: normalizedLanguage,
-            });
-          } catch (registerErr: any) {
-            if (registerErr?.response?.status === 400) {
-              const errorMessage = registerErr?.response?.data?.message || '';
-              if (errorMessage.includes('googleAccountAlreadyExists')) {
-                response = await authApi.loginGoogle({
-                  idToken: result.idToken,
-                  language: normalizedLanguage,
-                  firstName: profile?.givenName,
-                  lastName: profile?.familyName,
-                });
-              } else {
-                throw registerErr;
-              }
-            } else {
-              throw registerErr;
-            }
-          }
-        } else if (loginErr?.response?.status === 403) {
-          throw loginErr;
-        } else {
-          throw loginErr;
-        }
-      }
+      const response = await authApi.loginGoogle({
+        idToken: result.idToken,
+        language: normalizedLanguage,
+        firstName: profile?.givenName,
+        lastName: profile?.familyName,
+      });
       await setAuth(response.data.user, response.data.token);
       await pushNotificationService.ensureTokenSentToBackend();
       navigate('/');

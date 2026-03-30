@@ -6,6 +6,7 @@ import { PreferenceKey } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { config } from '../../../config/env';
 
 export interface GameCancelledMeta {
@@ -52,6 +53,7 @@ export async function sendGameCancelledNotification(
       const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
       await api.sendMessage(user.telegramId, finalMessage, options);
     } catch (error) {
+      if (isBenignTelegramRecipientError(error)) continue;
       console.error(`Failed to send Telegram game cancelled to user ${user.id}:`, error);
     }
   }

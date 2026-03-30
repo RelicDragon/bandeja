@@ -7,6 +7,7 @@ import { formatGameInfoForUser } from '../../shared/notification-base';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
 export async function sendLeagueRoundStartNotification(
   api: Api,
@@ -39,6 +40,7 @@ export async function sendLeagueRoundStartNotification(
   try {
     await api.sendMessage(user.telegramId, finalMessage, options);
   } catch (error) {
+    if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram league round start notification to user ${user.id}:`, error);
   }
 }

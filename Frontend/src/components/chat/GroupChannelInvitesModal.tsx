@@ -10,6 +10,10 @@ import { useAuthStore } from '@/store/authStore';
 import { matchesSearch } from '@/utils/transliteration';
 import { formatRelativeTime } from '@/utils/dateFormat';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import {
+  InviteFriendToBandejaButton,
+  INVITE_FRIEND_CTA_MAX_RESULTS,
+} from '@/components/InviteFriendToBandejaButton';
 import { BasicUser } from '@/types';
 
 const buttonTransitionStyle = `
@@ -212,6 +216,9 @@ export const GroupChannelInvitesModal = ({
     await handleCancelInvite(inviteId);
   }, [handleCancelInvite]);
 
+  const showInviteFriendCta =
+    searchQuery.trim().length > 0 && filteredAllUsers.length < INVITE_FRIEND_CTA_MAX_RESULTS;
+
   return (
     <>
       <style>{buttonTransitionStyle}</style>
@@ -241,12 +248,18 @@ export const GroupChannelInvitesModal = ({
         ) : (
           <div className="flex-1 overflow-y-auto p-3 space-y-1">
             {filteredAllUsers.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400 px-1">
                 <User size={48} className="mx-auto mb-4 opacity-50" />
                 <p>{t('chat.noUsersFound', { defaultValue: 'No users found' })}</p>
+                {showInviteFriendCta && (
+                  <div className="mt-4 mx-auto max-w-sm">
+                    <InviteFriendToBandejaButton />
+                  </div>
+                )}
               </div>
             ) : (
-              filteredAllUsers.map((player, index) => {
+              <>
+              {filteredAllUsers.map((player, index) => {
                 const invite = getInviteForUser(player.id);
                 const isActive = activePlayerId === player.id;
                 const isInviting = invitingPlayerId === player.id;
@@ -336,7 +349,13 @@ export const GroupChannelInvitesModal = ({
                     )}
                   </div>
                 );
-              })
+              })}
+              {showInviteFriendCta && (
+                <div className="pt-2">
+                  <InviteFriendToBandejaButton />
+                </div>
+              )}
+              </>
             )}
           </div>
         )}

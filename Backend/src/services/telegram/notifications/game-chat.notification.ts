@@ -10,6 +10,7 @@ import { canParticipantSeeGameChatMessage } from '../../chat/gameChatVisibility'
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
 export async function sendGameChatNotification(
   api: Api,
@@ -89,7 +90,9 @@ export async function sendGameChatNotification(
         
         await api.sendMessage(user.telegramId, trimmedMessage, options);
       } catch (error) {
-        console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
+        if (!isBenignTelegramRecipientError(error)) {
+          console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
+        }
       }
     }
   }
@@ -167,7 +170,9 @@ export async function sendGameChatNotification(
         
         await api.sendMessage(user.telegramId, trimmedMessage, options);
       } catch (error) {
-        console.error(`Failed to send Telegram notification to parent game admin ${user.id}:`, error);
+        if (!isBenignTelegramRecipientError(error)) {
+          console.error(`Failed to send Telegram notification to parent game admin ${user.id}:`, error);
+        }
       }
     }
   }

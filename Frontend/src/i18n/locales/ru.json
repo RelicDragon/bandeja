@@ -832,6 +832,8 @@
     "selectPlayer": "Выберите игрока",
     "selectPlayers": "Выберите игроков",
     "noPlayersAvailable": "Нет доступных игроков для приглашения",
+    "inviteFriendToBandeja": "Пригласить друга в Bandeja",
+    "shareAppBody": "Присоединяйся к Bandeja: {{url}}",
     "pendingInvites": "Ожидающие приглашения",
     "inviteSent": "Приглашение отправлено",
     "invitedYou": "Приглашение в"

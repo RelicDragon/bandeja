@@ -839,6 +839,8 @@
     "selectPlayer": "Select a Player",
     "selectPlayers": "Select Players",
     "noPlayersAvailable": "No players available to invite",
+    "inviteFriendToBandeja": "Invite friend to Bandeja",
+    "shareAppBody": "Join me on Bandeja: {{url}}",
     "pendingInvites": "Pending Invites",
     "inviteSent": "Invite sent",
     "invitedYou": "Invite to"

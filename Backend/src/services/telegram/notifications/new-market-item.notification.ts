@@ -3,6 +3,7 @@ import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
 export async function sendNewMarketItemNotification(
   api: Api,
@@ -41,6 +42,7 @@ export async function sendNewMarketItemNotification(
 
     await api.sendMessage(recipient.telegramId, trimmedMessage, options);
   } catch (error) {
+    if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram new market item notification to user ${recipient.id}:`, error);
   }
 }

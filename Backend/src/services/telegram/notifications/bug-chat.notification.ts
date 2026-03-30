@@ -10,6 +10,7 @@ import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { formatUserName } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { buildMessageWithButtons } from '../shared/message-builder';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
 export async function sendBugChatNotification(
   api: Api,
@@ -117,7 +118,9 @@ export async function sendBugChatNotification(
           const { message: finalMessage, options } = buildMessageWithButtons(`${getBugMessage(lang)}`, buttons, lang);
           await api.sendMessage(user.telegramId, finalMessage, options);
         } catch (error) {
-          console.error(`Failed to send Telegram notification to mentioned user ${userId}:`, error);
+          if (!isBenignTelegramRecipientError(error)) {
+            console.error(`Failed to send Telegram notification to mentioned user ${userId}:`, error);
+          }
         }
       }
     }
@@ -167,7 +170,9 @@ export async function sendBugChatNotification(
           const { message: finalMessage, options } = buildMessageWithButtons(getBugMessage(lang), buttons, lang);
           await api.sendMessage(bugCreator.telegramId, finalMessage, options);
         } catch (error) {
-          console.error(`Failed to send Telegram notification to bug creator ${bugCreator.id}:`, error);
+          if (!isBenignTelegramRecipientError(error)) {
+            console.error(`Failed to send Telegram notification to bug creator ${bugCreator.id}:`, error);
+          }
         }
       }
       notifiedUserIds.add(bugCreator.id);
@@ -192,7 +197,9 @@ export async function sendBugChatNotification(
         const { message: finalMessage, options } = buildMessageWithButtons(getBugMessage(lang), buttons, lang);
         await api.sendMessage(user.telegramId, finalMessage, options);
       } catch (error) {
-        console.error(`Failed to send Telegram notification to bug participant ${user.id}:`, error);
+        if (!isBenignTelegramRecipientError(error)) {
+          console.error(`Failed to send Telegram notification to bug participant ${user.id}:`, error);
+        }
       }
     }
 
@@ -212,7 +219,9 @@ export async function sendBugChatNotification(
         const { message: finalMessage, options } = buildMessageWithButtons(getBugMessage(lang), buttons, lang);
         await api.sendMessage(admin.telegramId, finalMessage, options);
       } catch (error) {
-        console.error(`Failed to send Telegram notification to admin ${admin.id}:`, error);
+        if (!isBenignTelegramRecipientError(error)) {
+          console.error(`Failed to send Telegram notification to admin ${admin.id}:`, error);
+        }
       }
     }
   }

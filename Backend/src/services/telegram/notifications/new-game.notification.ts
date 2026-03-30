@@ -3,6 +3,7 @@ import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { formatNewGameText } from '../../shared/notification-base';
 import { getUserTimezoneFromCityId } from '../../user-timezone.service';
 
@@ -44,6 +45,7 @@ export async function sendNewGameNotification(
 
     await api.sendMessage(recipient.telegramId, trimmedMessage, options);
   } catch (error) {
+    if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram new game notification to user ${recipient.id}:`, error);
   }
 }

@@ -8,6 +8,7 @@ import { formatGameInfoForUser, formatUserName } from '../../shared/notification
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
 export async function sendInviteNotification(
   api: Api,
@@ -68,6 +69,7 @@ export async function sendInviteNotification(
   try {
     await api.sendMessage(receiver.telegramId, finalMessage, options);
   } catch (error) {
+    if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram invite notification to user ${receiver.id}:`, error);
   }
 }

@@ -816,6 +816,8 @@
     "selectPlayer": "Selecciona un jugador",
     "selectPlayers": "Selecciona jugadores",
     "noPlayersAvailable": "No hay jugadores disponibles para invitar",
+    "inviteFriendToBandeja": "Invitar amigo a Bandeja",
+    "shareAppBody": "Únete a Bandeja: {{url}}",
     "pendingInvites": "Invitaciones pendientes",
     "inviteSent": "Invitación enviada",
     "invitedYou": "te invitó a"

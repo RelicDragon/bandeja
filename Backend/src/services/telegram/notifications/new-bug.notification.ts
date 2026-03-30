@@ -3,6 +3,7 @@ import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
+import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
 export async function sendNewBugNotification(
   api: Api,
@@ -29,6 +30,7 @@ export async function sendNewBugNotification(
     const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
     await api.sendMessage(recipient.telegramId, finalMessage, options);
   } catch (error) {
+    if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram new bug notification to user ${recipient.id}:`, error);
   }
 }

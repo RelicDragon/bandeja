@@ -58,12 +58,12 @@ export const authApi = {
     return response.data;
   },
 
-  registerApple: async (data: {
+  loginApple: async (data: {
     identityToken: string;
     nonce: string;
+    language?: string;
     firstName?: string;
     lastName?: string;
-    language?: string;
     gender?: string;
     genderIsSet?: boolean;
     preferredHandLeft?: boolean;
@@ -71,40 +71,21 @@ export const authApi = {
     preferredCourtSideLeft?: boolean;
     preferredCourtSideRight?: boolean;
   }) => {
-    console.log('[APPLE_API] registerApple called', { hasIdentityToken: !!data.identityToken, hasNonce: !!data.nonce, language: data.language });
-    const response = await api.post<ApiResponse<LoginResponse>>('/auth/register/apple', data);
-    console.log('[APPLE_API] registerApple response received');
-    return response.data;
-  },
-
-  loginApple: async (data: { identityToken: string; nonce: string; language?: string; firstName?: string; lastName?: string }) => {
-    console.log('[APPLE_API] loginApple called', { hasIdentityToken: !!data.identityToken, hasNonce: !!data.nonce, language: data.language });
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/login/apple', data);
-    console.log('[APPLE_API] loginApple response received');
     return response.data;
   },
 
-  registerGoogle: async (data: {
+  loginGoogle: async (data: {
     idToken: string;
+    language?: string;
     firstName?: string;
     lastName?: string;
-    language?: string;
     gender?: string;
     genderIsSet?: boolean;
     preferredHandLeft?: boolean;
     preferredHandRight?: boolean;
     preferredCourtSideLeft?: boolean;
     preferredCourtSideRight?: boolean;
-  }) => {
-    const response = await api.post<ApiResponse<LoginResponse>>('/auth/register/google', data);
-    return response.data;
-  },
-
-  loginGoogle: async (data: { 
-    idToken: string; 
-    language?: string; 
-    firstName?: string; 
-    lastName?: string;
   }) => {
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/login/google', data);
     return response.data;

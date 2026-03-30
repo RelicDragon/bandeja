@@ -20,6 +20,10 @@ import {
   type PlayerInviteFilters,
 } from '@/components/playerInvite/playerInviteFilters';
 import { PlayerListItem } from '@/components/PlayerListItem';
+import {
+  InviteFriendToBandejaButton,
+  INVITE_FRIEND_CTA_MAX_RESULTS,
+} from '@/components/InviteFriendToBandejaButton';
 
 interface PlayerListModalProps {
   gameId?: string;
@@ -319,6 +323,11 @@ export const PlayerListModal = ({
     });
   };
 
+  const showInviteFriendCta =
+    searchQuery.trim().length > 0 &&
+    players.length > 0 &&
+    baseFilteredPlayers.length < INVITE_FRIEND_CTA_MAX_RESULTS;
+
   return (
     <Dialog open={isOpen} onClose={handleClose} modalId="player-list-modal">
       <DialogContent className="max-h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0">
@@ -424,8 +433,13 @@ export const PlayerListModal = ({
                       <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
                     </div>
                   ) : baseFilteredPlayers.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="flex flex-col items-center justify-center py-16 text-center px-1">
                       <p className="text-gray-600 dark:text-gray-400">{t('common.noResults') || 'No results found'}</p>
+                      {showInviteFriendCta && (
+                        <div className="mt-5 w-full max-w-sm">
+                          <InviteFriendToBandejaButton />
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-1.5 pb-2">
@@ -438,6 +452,11 @@ export const PlayerListModal = ({
                           onSelect={() => handlePlayerClick(player.id)}
                         />
                       ))}
+                      {showInviteFriendCta && (
+                        <div className="pt-2">
+                          <InviteFriendToBandejaButton />
+                        </div>
+                      )}
                       {hasMoreFilteredPlayers && (
                         <div className="flex flex-col items-center gap-1 pb-1 pt-2">
                           <button
@@ -485,7 +504,7 @@ export const PlayerListModal = ({
               </label>
             )}
 
-            {baseFilteredPlayers.length > 0 && (
+            {players.length > 0 && (
               <div className="relative z-30 flex-shrink-0 border-t border-gray-100 bg-gray-50/95 p-4 pt-2 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95">
                 <div className="flex gap-3">
                   <Button
@@ -499,7 +518,9 @@ export const PlayerListModal = ({
                   <Button
                     onClick={handleConfirm}
                     className="flex-1 rounded-xl font-medium shadow-lg shadow-primary-500/25 dark:shadow-primary-900/30"
-                    disabled={selectedIds.length === 0 || inviting === 'confirming'}
+                    disabled={
+                      baseFilteredPlayers.length === 0 || selectedIds.length === 0 || inviting === 'confirming'
+                    }
                   >
                     {inviting === 'confirming' ? (
                       <span className="flex items-center justify-center gap-2">
