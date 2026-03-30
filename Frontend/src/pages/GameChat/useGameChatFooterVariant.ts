@@ -140,6 +140,8 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
       !(contextType === 'GROUP' && isChannelParticipant) &&
       !(contextType === 'GAME' && currentChatType === 'PHOTOS' && !isPlayingParticipant && !isAdminOrOwner);
     if (showJoin) {
+      if (contextType === 'GROUP' && !groupChannel) return { type: 'contextLoading' };
+      if (contextType === 'GAME' && !game) return { type: 'contextLoading' };
       return {
         type: 'join',
         contextType,

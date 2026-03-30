@@ -26,11 +26,16 @@ export default {
       },
       animation: {
         'fadeOutUp': 'fadeOutUp 0.3s ease-out forwards',
+        'loadingTextShimmer': 'loadingTextShimmer 2.4s ease-in-out infinite',
       },
       keyframes: {
         fadeOutUp: {
           '0%': { opacity: '1', transform: 'translateY(0)' },
           '100%': { opacity: '0', transform: 'translateY(-1rem)' },
+        },
+        loadingTextShimmer: {
+          '0%': { backgroundPosition: '160% center' },
+          '100%': { backgroundPosition: '-160% center' },
         },
       },
     },

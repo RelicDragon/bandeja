@@ -95,7 +95,7 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
     if (onItemClick) {
       onItemClick(item);
     } else if (item.groupChannel?.id) {
-      navigate(buildUrl('channelChat', { id: item.groupChannel.id }));
+      navigate(buildUrl('channelChat', { id: item.groupChannel.id, filter: 'market' }));
     } else {
       navigate(buildUrl('marketplaceItem', { id: item.id }));
     }

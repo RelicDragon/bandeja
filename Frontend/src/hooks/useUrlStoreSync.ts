@@ -50,6 +50,11 @@ export function useUrlStoreSync() {
       case 'groupChat':
         state.setChatsFilter('users');
         break;
+      case 'channelChat': {
+        const fp = new URLSearchParams(location.search).get('filter');
+        state.setChatsFilter(fp === 'market' ? 'market' : 'channels');
+        break;
+      }
       case 'marketplace':
       case 'createMarketItem':
       case 'marketplaceItem':

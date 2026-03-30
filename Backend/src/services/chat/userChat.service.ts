@@ -6,6 +6,7 @@ import { SystemMessageType, createSystemMessageContent, getUserDisplayName } fro
 import { computeContentSearchable } from '../../utils/messageSearchContent';
 import { SystemMessageService } from './systemMessage.service';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
+import { ChatMuteService } from './chatMute.service';
 
 export class UserChatService {
   static async getUserChats(userId: string) {
@@ -34,7 +35,7 @@ export class UserChatService {
       }
     });
 
-    return chats.map((chat) => ({
+    const rows = chats.map((chat) => ({
       ...chat,
       lastMessage: chat.lastMessagePreview
         ? { preview: chat.lastMessagePreview, updatedAt: chat.updatedAt }
@@ -42,6 +43,12 @@ export class UserChatService {
       isPinned: chat.pinnedByUsers.length > 0,
       pinnedAt: chat.pinnedByUsers[0]?.pinnedAt?.toISOString() ?? null
     }));
+    const muted = await ChatMuteService.getMutedContextIdSet(
+      userId,
+      ChatContextType.USER,
+      rows.map((r) => r.id)
+    );
+    return rows.map((r) => ({ ...r, isMuted: muted.has(r.id) }));
   }
 
   static async getOrCreateChatWithUser(currentUserId: string, otherUserId: string) {
@@ -84,7 +91,12 @@ export class UserChatService {
       });
     }
 
-    return userChat;
+    const isMuted = await ChatMuteService.isChatMuted(
+      currentUserId,
+      ChatContextType.USER,
+      userChat.id
+    );
+    return { ...userChat, isMuted };
   }
 
   static async getChatById(chatId: string, userId: string) {

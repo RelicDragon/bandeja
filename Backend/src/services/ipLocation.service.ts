@@ -1,4 +1,5 @@
 import { Request } from 'express';
+import { config } from '../config/env';
 import prisma from '../config/database';
 import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from '../utils/constants';
 import { IP_GEO_PROVIDER_CHAIN, IpGeoProvider } from '../utils/ipGeoProvider';
@@ -109,7 +110,7 @@ export async function getClientIp(req: Request): Promise<string | null> {
   if (ip && !isLocalIp(ip)) return ip;
   const hint = ip ? maskIpForLog(ip) : null;
   const external = await fetchExternalIp();
-  if (!external) {
+  if (!external && config.nodeEnv !== 'development') {
     console.warn('[ipLocation] getClientIp: no usable IP', {
       hadDirectIp: Boolean(ip),
       directWasLocal: Boolean(ip && isLocalIp(ip)),

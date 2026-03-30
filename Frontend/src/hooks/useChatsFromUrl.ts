@@ -11,7 +11,11 @@ export function useChatsFromUrl() {
       ? 'bugs'
       : location.pathname === '/chats/marketplace'
         ? 'market'
-        : ((searchParams.get('filter') || 'users') as ChatsFilter);
+        : location.pathname.startsWith('/channel-chat/')
+          ? searchParams.get('filter') === 'market'
+            ? 'market'
+            : 'channels'
+          : ((searchParams.get('filter') || 'users') as ChatsFilter);
 
   const q = searchParams.get('q') || '';
   const role = (searchParams.get('role') || 'buyer') as 'buyer' | 'seller';

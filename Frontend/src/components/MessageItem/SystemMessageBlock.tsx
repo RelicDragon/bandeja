@@ -22,11 +22,13 @@ export const SystemMessageBlock: React.FC<SystemMessageBlockProps> = ({
   formatMessageTime,
   t,
 }) => (
-  <div className="flex justify-center mb-4">
+  <div className="flex justify-center">
     <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl px-3 py-2 max-w-[80%]">
-      <p className="text-xs text-gray-600 dark:text-gray-300 text-center whitespace-pre-wrap break-words break-all overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-        {displayContent}
-      </p>
+      <div data-message-bubble="true" className="select-none">
+        <p className="text-xs text-gray-600 dark:text-gray-300 text-center whitespace-pre-wrap break-words break-all overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+          {displayContent}
+        </p>
+      </div>
       {showAcceptDecline && (
         <div className="flex gap-2 mt-2 justify-center">
           <button

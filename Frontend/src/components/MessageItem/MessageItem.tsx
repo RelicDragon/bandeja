@@ -40,6 +40,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   isPinned = false,
   onPin,
   onUnpin,
+  showReply = true,
 }) => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -159,7 +160,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
   const handleImageClick = (url: string) => setFullscreenImage(url || null);
 
-  const handleCopyMessage = (msg: ChatMessage) => navigator.clipboard.writeText(msg.content);
+  const handleCopyMessage = (msg: ChatMessage) => {
+    const text = !msg.senderId ? formatSystemMessageForDisplay(msg.content, t) : msg.content;
+    void navigator.clipboard.writeText(text);
+  };
 
   const handleQuickReaction = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -214,26 +218,31 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   return (
     <>
       {isSystemMessage ? (
-        <SystemMessageBlock
-          displayContent={displayContent}
-          showAcceptDecline={showAcceptDecline}
-          onAccept={() => {
-            if (respondingToRequest) return;
-            setRespondingToRequest(true);
-            onChatRequestRespond!(currentMessage.id, true);
-            setRespondingToRequest(false);
-          }}
-          onDecline={() => {
-            if (respondingToRequest) return;
-            setRespondingToRequest(true);
-            onChatRequestRespond!(currentMessage.id, false);
-            setRespondingToRequest(false);
-          }}
-          respondingToRequest={respondingToRequest}
-          createdAt={currentMessage.createdAt}
-          formatMessageTime={formatMessageTime}
-          t={t}
-        />
+        <div
+          ref={messageRef}
+          className={`group flex justify-center mb-4 relative transition-all duration-300 ease-out overflow-visible ${isDeleting ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' : 'opacity-100 scale-100 translate-y-0'}`}
+        >
+          <SystemMessageBlock
+            displayContent={displayContent}
+            showAcceptDecline={showAcceptDecline}
+            onAccept={() => {
+              if (respondingToRequest) return;
+              setRespondingToRequest(true);
+              onChatRequestRespond!(currentMessage.id, true);
+              setRespondingToRequest(false);
+            }}
+            onDecline={() => {
+              if (respondingToRequest) return;
+              setRespondingToRequest(true);
+              onChatRequestRespond!(currentMessage.id, false);
+              setRespondingToRequest(false);
+            }}
+            respondingToRequest={respondingToRequest}
+            createdAt={currentMessage.createdAt}
+            formatMessageTime={formatMessageTime}
+            t={t}
+          />
+        </div>
       ) : (
         <div
           ref={messageRef}
@@ -396,11 +405,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         </div>
       )}
 
-      {isMenuOpen && !isSystemMessage && (
+      {isMenuOpen && (
         <UnifiedMessageMenu
           message={currentMessage}
           isOwnMessage={isOwnMessage}
           currentReaction={getCurrentUserReaction()}
+          showReply={showReply}
           onReply={onReplyMessage}
           onEdit={onEditMessage}
           onCopy={handleCopyMessage}

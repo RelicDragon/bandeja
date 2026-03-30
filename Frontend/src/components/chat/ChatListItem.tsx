@@ -60,7 +60,8 @@ export const ChatListItem = ({
     const isSelected = selectedChatType === 'user' && selectedChatId === chat.data.id;
     const isPinned = !!liveChat.isPinned;
     const isPinning = pinningId === chat.data.id;
-    const isMuted = mutedChats[chat.data.id] === true;
+    const isMuted =
+      mutedChats && chat.data.id in mutedChats ? mutedChats[chat.data.id] : !!liveChat.isMuted;
     const isTogglingMute = togglingMuteId === chat.data.id;
     return (
       <UserChatCard
@@ -109,7 +110,8 @@ export const ChatListItem = ({
     const isSelected = (selectedChatType === 'group' || selectedChatType === 'channel') && selectedChatId === chat.data.id;
     const isPinned = !!chat.data.isPinned;
     const isPinning = pinningId === chat.data.id;
-    const isMuted = mutedChats[chat.data.id] === true;
+    const isMuted =
+      mutedChats && chat.data.id in mutedChats ? mutedChats[chat.data.id] : !!chat.data.isMuted;
     const isTogglingMute = togglingMuteId === chat.data.id;
     return (
       <div

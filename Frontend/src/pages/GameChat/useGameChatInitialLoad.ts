@@ -1,5 +1,11 @@
 import { useEffect } from 'react';
-import { chatApi, type UserChat as UserChatType } from '@/api/chat';
+import {
+  chatApi,
+  type ChatContextType,
+  type ChatMessageWithStatus,
+  type GroupChannel,
+  type UserChat as UserChatType,
+} from '@/api/chat';
 import { blockedUsersApi } from '@/api/blockedUsers';
 import { useHeaderStore } from '@/store/headerStore';
 import { usePlayersStore } from '@/store/playersStore';
@@ -7,10 +13,8 @@ import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToStat
 import { getAvailableGameChatTypes } from '@/utils/chatType';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { normalizeChatType } from '@/utils/chatType';
-import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
-import type { ChatMessageWithStatus } from '@/api/chat';
 
 export interface UseGameChatInitialLoadParams {
   id: string | undefined;
@@ -100,12 +104,26 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
           }
         }
 
-        try {
-          const muteStatus = await chatApi.isChatMuted(contextType, id);
+        let muteFromContext: boolean | undefined;
+        if (contextType === 'USER') {
+          const uc = (loadedContext || userChat) as UserChatType | null;
+          if (uc && typeof uc.isMuted === 'boolean') muteFromContext = uc.isMuted;
+        } else if (contextType === 'GROUP') {
+          const gc = loadedContext as GroupChannel | null;
+          if (gc && typeof gc.isMuted === 'boolean') muteFromContext = gc.isMuted;
+        }
+
+        if (muteFromContext !== undefined) {
           if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
-          setIsMuted(muteStatus.isMuted);
-        } catch (error) {
-          if (!signal.aborted) console.error('Failed to check mute status:', error);
+          setIsMuted(muteFromContext);
+        } else {
+          try {
+            const muteStatus = await chatApi.isChatMuted(contextType, id);
+            if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
+            setIsMuted(muteStatus.isMuted);
+          } catch (error) {
+            if (!signal.aborted) console.error('Failed to check mute status:', error);
+          }
         }
 
         try {

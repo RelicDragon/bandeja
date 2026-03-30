@@ -6,6 +6,7 @@ import { createSystemMessage } from '../../controllers/chat.controller';
 import { ChatContextType, ParticipantRole, InviteStatus, ChatType, Prisma, BugStatus, BugType } from '@prisma/client';
 import { MessageService } from './message.service';
 import { UserChatService } from './userChat.service';
+import { ChatMuteService } from './chatMute.service';
 import { TranslationService } from './translation.service';
 import { t } from '../../utils/translations';
 import { config } from '../../config/env';
@@ -15,7 +16,7 @@ type GcWithParticipants = Awaited<ReturnType<typeof prisma.groupChannel.findMany
   pinnedByUsers?: Array<{ pinnedAt: Date }>;
 };
 
-function mapGroupChannelToResponse(gc: GcWithParticipants, userId: string) {
+function mapGroupChannelToResponse(gc: GcWithParticipants, userId: string, isMuted: boolean) {
   const userParticipant = gc.participants.find((p) => p.userId === userId);
   const isOwner = userParticipant?.role === ParticipantRole.OWNER;
   const isParticipant = !!userParticipant;
@@ -28,7 +29,8 @@ function mapGroupChannelToResponse(gc: GcWithParticipants, userId: string) {
     isParticipant,
     isOwner,
     isPinned: !!pinned,
-    pinnedAt: pinned?.pinnedAt?.toISOString() ?? null
+    pinnedAt: pinned?.pinnedAt?.toISOString() ?? null,
+    isMuted
   };
 }
 
@@ -154,11 +156,15 @@ export class GroupChannelService {
     const userParticipant = userId ? groupChannel.participants.find(p => p.userId === userId) : null;
     const isOwner = userParticipant?.role === ParticipantRole.OWNER;
     const isParticipant = !!userParticipant;
+    const isMuted = userId
+      ? await ChatMuteService.isChatMuted(userId, ChatContextType.GROUP, groupChannel.id)
+      : false;
 
     return {
       ...groupChannel,
       isParticipant,
-      isOwner
+      isOwner,
+      isMuted
     };
   }
 
@@ -371,6 +377,8 @@ export class GroupChannelService {
     }
 
     const typedChannels = groupChannels as GcWithParticipants[];
+    const channelIds = typedChannels.map((gc) => gc.id);
+    const mutedIds = await ChatMuteService.getMutedContextIdSet(userId, ChatContextType.GROUP, channelIds);
 
     if (isPaged) {
       const hasBugFilters = filter === 'bugs' && (opts?.status?.length || opts?.bugType?.length || opts?.myBugsOnly);
@@ -405,11 +413,11 @@ export class GroupChannelService {
       } else {
         total = await prisma.groupChannel.count({ where: baseWhere });
       }
-      const mapped = typedChannels.map((gc) => mapGroupChannelToResponse(gc, userId));
+      const mapped = typedChannels.map((gc) => mapGroupChannelToResponse(gc, userId, mutedIds.has(gc.id)));
       return { data: mapped, pagination: { page, limit, total, hasMore: page * limit < total } };
     }
 
-    return typedChannels.map((gc) => mapGroupChannelToResponse(gc, userId));
+    return typedChannels.map((gc) => mapGroupChannelToResponse(gc, userId, mutedIds.has(gc.id)));
   }
 
   static async getPublicGroupChannels(userId?: string) {
@@ -427,7 +435,15 @@ export class GroupChannelService {
       }
     });
 
-    return groupChannels;
+    if (!userId || groupChannels.length === 0) {
+      return groupChannels.map((gc) => ({ ...gc, isMuted: false }));
+    }
+    const mutedIds = await ChatMuteService.getMutedContextIdSet(
+      userId,
+      ChatContextType.GROUP,
+      groupChannels.map((g) => g.id)
+    );
+    return groupChannels.map((gc) => ({ ...gc, isMuted: mutedIds.has(gc.id) }));
   }
 
   static async pinGroupChannel(userId: string, groupChannelId: string) {

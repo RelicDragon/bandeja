@@ -572,11 +572,12 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               pinnedMessageIds={pinnedMessages.map(m => m.id)}
               onPin={derived.canWriteChat ? handlePinMessage : undefined}
               onUnpin={derived.canWriteChat ? handleUnpinMessage : undefined}
+              showReply={!derived.isChannel || (derived.canWriteChat ?? false)}
             />
           </div>
         </main>
 
-        {(!isInitialLoad || isEmbedded) && !(contextType === 'GROUP' && (panels.showParticipantsPage || panels.showItemPage || panels.isParticipantsPageAnimating || panels.isItemPageAnimating)) && (
+        {((!isInitialLoad || isEmbedded) || footerVariant?.type === 'contextLoading') && !(contextType === 'GROUP' && (panels.showParticipantsPage || panels.showItemPage || panels.isParticipantsPageAnimating || panels.isItemPageAnimating)) && (
           <GameChatFooter visible keyboardHeight={keyboardHeight} variant={footerVariant} />
         )}
 

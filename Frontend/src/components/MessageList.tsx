@@ -31,6 +31,7 @@ interface MessageListProps {
   pinnedMessageIds?: string[];
   onPin?: (message: ChatMessage) => void;
   onUnpin?: (messageId: string) => void;
+  showReply?: boolean;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -59,6 +60,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   pinnedMessageIds = [],
   onPin,
   onUnpin,
+  showReply = true,
 }) => {
   const { t } = useTranslation();
   const pinnedSet = useMemo(() => new Set(pinnedMessageIds), [pinnedMessageIds]);
@@ -250,6 +252,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             isPinned={pinnedSet.has(message.id)}
             onPin={onPin}
             onUnpin={onUnpin}
+            showReply={showReply}
           />
         </div>
       ))}

@@ -28,6 +28,7 @@ export interface MessageItemProps {
   isPinned?: boolean;
   onPin?: (message: ChatMessage) => void;
   onUnpin?: (messageId: string) => void;
+  showReply?: boolean;
 }
 
 export type ParsedContentPart =

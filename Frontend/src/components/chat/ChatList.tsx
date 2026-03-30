@@ -506,6 +506,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       if (!cached) return;
       chatsCacheRef.current[filter] = cached;
       setChats(deduplicateChats(cached.chats));
+      if (filter === 'users') setMutedChats({});
       if (cached.cityUsers) {
         setCityUsers(cached.cityUsers);
         setSearchableUsersData({ activeChats: cached.chats, cityUsers: cached.cityUsers });
@@ -522,6 +523,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     const applyCacheToState = (cached: FilterCache) => {
       chatsCacheRef.current[chatsFilter] = cached;
       setChats(deduplicateChats(cached.chats));
+      if (chatsFilter === 'users') setMutedChats({});
       if (cached.cityUsers) {
         setCityUsers(cached.cityUsers);
         setSearchableUsersData({ activeChats: cached.chats, cityUsers: cached.cityUsers });
@@ -1174,33 +1176,6 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const activeChats = useMemo(() => {
     return chats.filter((c) => c.type === 'user' || c.type === 'group') as ChatItem[];
   }, [chats]);
-
-  useEffect(() => {
-    if (chatsFilter !== 'users' || activeChats.length === 0) return;
-    const controller = new AbortController();
-    Promise.all(
-      activeChats.slice(0, 100).map(async (chat) => {
-        const id = (chat as { type: string; data: { id: string } }).data.id;
-        const contextType = (chat as { type: string }).type === 'user' ? 'USER' : 'GROUP';
-        try {
-          const { isMuted } = await chatApi.isChatMuted(contextType, id);
-          return { id, isMuted };
-        } catch {
-          return { id, isMuted: false };
-        }
-      })
-    ).then((results) => {
-      if (controller.signal.aborted) return;
-      setMutedChats((prev) => {
-        const next = { ...prev };
-        results.forEach(({ id, isMuted }) => {
-          next[id] = isMuted;
-        });
-        return next;
-      });
-    });
-    return () => controller.abort();
-  }, [chatsFilter, activeChats]);
 
   const matchesSearch = useCallback((title: string) => {
     if (!debouncedSearchQuery.trim()) return true;

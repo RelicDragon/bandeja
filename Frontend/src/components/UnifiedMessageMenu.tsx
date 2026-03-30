@@ -30,6 +30,7 @@ interface UnifiedMessageMenuProps {
   isPinned?: boolean;
   onPin?: (message: ChatMessage) => void;
   onUnpin?: (messageId: string) => void;
+  showReply?: boolean;
 }
 
 export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
@@ -50,9 +51,11 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   isPinned = false,
   onPin,
   onUnpin,
+  showReply = true,
 }) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const isSystemMessage = !message.senderId;
   const displaySettings = user ? resolveDisplaySettings(user) : null;
   const menuRef = useRef<HTMLDivElement>(null);
   const mainMenuRef = useRef<HTMLDivElement>(null);
@@ -412,16 +415,18 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                </svg>
              </button>
             
-            <button
-              onClick={handleReply}
-              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-              </svg>
-              <span>{t('chat.contextMenu.reply')}</span>
-            </button>
-            {isOwnMessage && onEdit && message.content != null && !message.poll && (
+            {showReply && (
+              <button
+                onClick={handleReply}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                </svg>
+                <span>{t('chat.contextMenu.reply')}</span>
+              </button>
+            )}
+            {isOwnMessage && onEdit && !isSystemMessage && message.content != null && !message.poll && (
               <button
                 onClick={() => { onEdit(message); onClose(); }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
@@ -439,7 +444,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </svg>
               <span>{t('chat.contextMenu.copy')}</span>
             </button>
-            {onPin && !isPinned && (
+            {onPin && !isPinned && !isSystemMessage && (
               <button
                 onClick={() => { onPin(message); onClose(); }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
@@ -448,7 +453,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                 <span>{t('chat.contextMenu.pin')}</span>
               </button>
             )}
-            {onUnpin && isPinned && (
+            {onUnpin && isPinned && !isSystemMessage && (
               <button
                 onClick={() => { onUnpin(message.id); onClose(); }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
@@ -457,7 +462,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                 <span>{t('chat.contextMenu.unpin')}</span>
               </button>
             )}
-            {message.content && message.content.trim() && (
+            {message.content && message.content.trim() && !isSystemMessage && (
               <button
                 onClick={handleTranslate}
                 disabled={isTranslating}
@@ -468,7 +473,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </button>
             )}
             
-            {!isOwnMessage && onReport && (
+            {!isOwnMessage && onReport && !isSystemMessage && (
               <button
                 onClick={handleReport}
                 className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3"
@@ -478,7 +483,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </button>
             )}
             
-            {isOwnMessage && (
+            {isOwnMessage && !isSystemMessage && (
               <button
                 onClick={handleDelete}
                 className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3"

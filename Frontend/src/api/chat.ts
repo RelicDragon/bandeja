@@ -174,6 +174,7 @@ export interface UserChat {
   lastMessage?: ChatMessage | LastMessagePreview | null;
   isPinned?: boolean;
   pinnedAt?: string | null;
+  isMuted?: boolean;
 }
 
 export interface GroupChannel {
@@ -209,6 +210,7 @@ export interface GroupChannel {
   isPinned?: boolean;
   pinnedAt?: string | null;
   isCityGroup?: boolean;
+  isMuted?: boolean;
 }
 
 export interface GroupChannelParticipant {

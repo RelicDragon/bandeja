@@ -69,5 +69,24 @@ export class ChatMuteService {
 
     return mutedChats;
   }
+
+  static async getMutedContextIdSet(
+    userId: string,
+    chatContextType: ChatContextType,
+    contextIds: string[]
+  ): Promise<Set<string>> {
+    if (contextIds.length === 0) {
+      return new Set();
+    }
+    const rows = await prisma.chatMute.findMany({
+      where: {
+        userId,
+        chatContextType,
+        contextId: { in: contextIds }
+      },
+      select: { contextId: true }
+    });
+    return new Set(rows.map((r) => r.contextId));
+  }
 }
 

@@ -25,6 +25,7 @@ interface AnimatedMessageItemProps {
   isPinned?: boolean;
   onPin?: (message: ChatMessage) => void;
   onUnpin?: (messageId: string) => void;
+  showReply?: boolean;
 }
 
 export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
@@ -50,6 +51,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   isPinned = false,
   onPin,
   onUnpin,
+  showReply = true,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -96,6 +98,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
         isPinned={isPinned}
         onPin={onPin}
         onUnpin={onUnpin}
+        showReply={showReply}
       />
     </div>
   );

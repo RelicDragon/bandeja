@@ -46,7 +46,8 @@ export type GameChatFooterVariant =
       isChannel: boolean;
       onJoin: () => void;
       isLoading: boolean;
-    };
+    }
+  | { type: 'contextLoading' };
 
 export interface GameChatFooterProps {
   visible: boolean;
@@ -115,6 +116,15 @@ export const GameChatFooter: React.FC<GameChatFooterProps> = ({
             translateToLanguage={variant.translateToLanguage}
             onTranslateToLanguageChange={variant.onTranslateToLanguageChange}
           />
+        </div>
+      )}
+      {variant?.type === 'contextLoading' && (
+        <div className="px-4 py-3" style={padStyle}>
+          <div className="flex items-center justify-center py-2">
+            <span className="text-xs font-medium tabular-nums tracking-wide bg-gradient-to-r from-gray-400 via-gray-600 to-gray-400 dark:from-gray-500 dark:via-gray-300 dark:to-gray-500 bg-[length:220%_100%] bg-clip-text text-transparent animate-loadingTextShimmer">
+              {t('common.loading')}
+            </span>
+          </div>
         </div>
       )}
       {variant?.type === 'join' && (
