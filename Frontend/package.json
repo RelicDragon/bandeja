@@ -89,8 +89,5 @@
     "typescript": "^5.2.2",
     "typescript-eslint": "^8.46.2",
     "vite": "^7.3.0"
-  },
-  "optionalDependencies": {
-    "@capacitor/assets": "^3.0.5"
   }
 }
