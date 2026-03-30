@@ -252,7 +252,7 @@ export const GroupChannelInvitesModal = ({
                 <User size={48} className="mx-auto mb-4 opacity-50" />
                 <p>{t('chat.noUsersFound', { defaultValue: 'No users found' })}</p>
                 {showInviteFriendCta && (
-                  <div className="mt-4 mx-auto max-w-sm">
+                  <div className="mt-4 flex justify-center">
                     <InviteFriendToBandejaButton />
                   </div>
                 )}
@@ -351,7 +351,7 @@ export const GroupChannelInvitesModal = ({
                 );
               })}
               {showInviteFriendCta && (
-                <div className="pt-2">
+                <div className="flex justify-center pt-2">
                   <InviteFriendToBandejaButton />
                 </div>
               )}

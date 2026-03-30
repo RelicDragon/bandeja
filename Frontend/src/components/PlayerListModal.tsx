@@ -436,7 +436,7 @@ export const PlayerListModal = ({
                     <div className="flex flex-col items-center justify-center py-16 text-center px-1">
                       <p className="text-gray-600 dark:text-gray-400">{t('common.noResults') || 'No results found'}</p>
                       {showInviteFriendCta && (
-                        <div className="mt-5 w-full max-w-sm">
+                        <div className="mt-5 flex w-full max-w-sm justify-center">
                           <InviteFriendToBandejaButton />
                         </div>
                       )}
@@ -453,7 +453,7 @@ export const PlayerListModal = ({
                         />
                       ))}
                       {showInviteFriendCta && (
-                        <div className="pt-2">
+                        <div className="flex justify-center pt-2">
                           <InviteFriendToBandejaButton />
                         </div>
                       )}
