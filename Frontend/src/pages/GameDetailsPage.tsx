@@ -6,13 +6,9 @@ import { useDesktop } from '@/hooks/useDesktop';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useNavigationStore } from '@/store/navigationStore';
 import { gamesApi } from '@/api';
+import { canShowTournamentTableView } from '@/utils/gameResults';
 import { GameDetailsContent } from './GameDetails';
 import { GameChat } from './GameChat';
-
-const canShowTableViewFromGame = (g: { entityType?: string; fixedNumberOfSets?: number; resultsStatus?: string }) =>
-  g?.entityType === 'TOURNAMENT' &&
-  g?.fixedNumberOfSets === 1 &&
-  (g?.resultsStatus === 'FINAL' || g?.resultsStatus === 'IN_PROGRESS');
 
 export const GameDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,7 +43,7 @@ export const GameDetailsPage = () => {
     let cancelled = false;
     gamesApi.getById(id).then((res) => {
       if (!cancelled) {
-        setLayoutTableAvailable(canShowTableViewFromGame(res.data));
+        setLayoutTableAvailable(canShowTournamentTableView(res.data));
       }
     }).catch((err: { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } }) => {
       if (!cancelled) {

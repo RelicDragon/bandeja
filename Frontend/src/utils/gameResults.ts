@@ -193,6 +193,24 @@ export const canUserSeeGame = (game: Game, user: User | null): boolean => {
   return isUserGameParticipant(game, user.id);
 };
 
+type TournamentTableViewGameLike = Pick<Game, 'entityType' | 'fixedNumberOfSets' | 'resultsStatus'> | null | undefined;
+type TournamentTableViewUserLike = Pick<User, 'isPremium'> | null | undefined;
+
+export const canShowTournamentTableView = (game: TournamentTableViewGameLike): boolean => {
+  if (!game) return false;
+  return game.entityType === 'TOURNAMENT'
+    && game.fixedNumberOfSets === 1
+    && (game.resultsStatus === 'IN_PROGRESS' || game.resultsStatus === 'FINAL');
+};
+
+export const canViewTournamentTableByAccess = (
+  game: TournamentTableViewGameLike,
+  user: TournamentTableViewUserLike
+): boolean => {
+  if (!canShowTournamentTableView(game)) return false;
+  return !!(user?.isPremium || game?.resultsStatus === 'FINAL');
+};
+
 /**
  * Validates set index bounds
  * 

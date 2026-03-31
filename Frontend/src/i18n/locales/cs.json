@@ -703,6 +703,7 @@
     "total": "Celkem",
     "games": "Zápasy",
     "gamesPlayed": "Odehrané zápasy",
+    "playerStatsNoMatches": "Žádné odehrané zápasy",
     "playerNotInRound": "{{playerName}} se neúčastní kola {{roundNumber}}",
     "loss": "Prohra",
     "tie": "Remíza",

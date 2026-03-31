@@ -11,6 +11,7 @@ import { calculateGameStandings } from '@/services/gameStandings';
 
 interface PlayerRoundData {
   score: number | null;
+  hasActualScore: boolean;
   won: boolean;
   lost: boolean;
   roundId: string;
@@ -37,16 +38,17 @@ function buildRoundScoresForPlayer(rounds: Round[], playerId: string): PlayerRou
       if (!inA && !inB) continue;
 
       const set = match.sets[0];
-      if (!set) return { score: null, won: false, lost: false, roundId: round.id, matchId: match.id, courtId: match.courtId, teamIndex: inA ? 1 : 2 };
+      if (!set) return { score: null, hasActualScore: false, won: false, lost: false, roundId: round.id, matchId: match.id, courtId: match.courtId, teamIndex: inA ? 1 : 2 };
 
       const myScore = inA ? set.teamA : set.teamB;
       const oppScore = inA ? set.teamB : set.teamA;
-      const won = myScore > oppScore;
-      const lost = myScore < oppScore;
+      const hasActualScore = myScore > 0 || oppScore > 0;
+      const won = hasActualScore && myScore > oppScore;
+      const lost = hasActualScore && myScore < oppScore;
       const teamIndex = inA ? 1 : 2;
-      return { score: myScore, won, lost, roundId: round.id, matchId: match.id, courtId: match.courtId, teamIndex };
+      return { score: myScore, hasActualScore, won, lost, roundId: round.id, matchId: match.id, courtId: match.courtId, teamIndex };
     }
-    return { score: null, won: false, lost: false, roundId: round.id, matchId: null, courtId: undefined };
+    return { score: null, hasActualScore: false, won: false, lost: false, roundId: round.id, matchId: null, courtId: undefined };
   });
 }
 
@@ -83,7 +85,7 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
           delta: s.scoresDelta,
           wins: s.matchesWon,
           ties: s.ties,
-          games: roundScores.filter((d) => d.score !== null).length,
+          games: roundScores.filter((d) => d.hasActualScore).length,
         };
       });
     }
@@ -91,7 +93,7 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
       const roundScores = buildRoundScoresForPlayer(rounds, player.id);
       const total = roundScores.reduce((sum, d) => sum + (d.score ?? 0), 0);
       const delta = roundScores.reduce((s, d) => {
-        if (d.score === null) return s;
+        if (!d.hasActualScore || d.score === null) return s;
         const opp = rounds
           .find((r) => r.id === d.roundId)
           ?.matches.find((m) => m.id === d.matchId);
@@ -101,7 +103,7 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
         return s + (d.score! - oppScore);
       }, 0);
       const wins = roundScores.filter((d) => d.won).length;
-      const ties = roundScores.filter((d) => !d.won && !d.lost && d.score !== null).length;
+      const ties = roundScores.filter((d) => d.hasActualScore && !d.won && !d.lost).length;
       return {
         player,
         roundScores,
@@ -109,7 +111,7 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
         delta,
         wins,
         ties,
-        games: roundScores.filter((d) => d.score !== null).length,
+        games: roundScores.filter((d) => d.hasActualScore).length,
       };
     }).sort((a, b) => b.wins - a.wins || b.ties - a.ties || b.delta - a.delta);
   }, [game, rounds, players]);
@@ -254,6 +256,7 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
                 {row.roundScores.map((data, ri) => {
                   const wlt = getWltBadge(data);
                   const roundNumber = rounds.findIndex((r) => r.id === data.roundId) + 1;
+                  const isFinal = game?.resultsStatus === 'FINAL';
                   const handleCellClick = () => {
                     if (!isEditing) return;
                     if (data.matchId) {
@@ -269,7 +272,9 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
                     onClick={handleCellClick}
                   >
                     <span className={`relative inline-flex items-center justify-center w-9 h-7 rounded text-sm font-semibold ${getCellStyle(data)}`}>
-                      {data.score !== null ? (data.score === 0 ? <span className="animate-question-bounce">?</span> : data.score) : '—'}
+                      {data.score !== null
+                        ? (data.hasActualScore ? data.score : (isFinal ? '—' : <span className="animate-question-bounce">?</span>))
+                        : '—'}
                       {data.teamIndex !== undefined && (
                         <span className="absolute bottom-0.5 left-0.5 text-[8px] leading-none font-bold text-gray-500 dark:text-gray-400">
                           {data.teamIndex}

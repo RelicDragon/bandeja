@@ -705,6 +705,7 @@
     "total": "Total",
     "games": "Partidos",
     "gamesPlayed": "Partidos jugados",
+    "playerStatsNoMatches": "Sin partidos jugados",
     "playerNotInRound": "{{playerName}} no participa en la ronda {{roundNumber}}",
     "tie": "Empate",
     "loose": "Derrota",

@@ -14,7 +14,7 @@ import { useLoadingState } from '@/hooks/useLoadingState';
 import { useOfflineMessage } from '@/hooks/useOfflineMessage';
 import { useGameResultsTabs } from '@/hooks/useGameResultsTabs';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
-import { validateSetIndex, validateSetScores, validateSetIndexAgainstFixed, isUserGameAdminOrOwner, isLastSet, validateTieBreak } from '@/utils/gameResults';
+import { validateSetIndex, validateSetScores, validateSetIndexAgainstFixed, isUserGameAdminOrOwner, isLastSet, validateTieBreak, canShowTournamentTableView } from '@/utils/gameResults';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { 
   RoundCard,
@@ -713,9 +713,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const effectiveHorizontalLayout = !isLandscape;
 
   const { setGameDetailsCanShowTableView } = useNavigationStore();
-  const canShowTableView = currentGame?.entityType === 'TOURNAMENT' &&
-    currentGame?.fixedNumberOfSets === 1 &&
-    (currentGame?.resultsStatus === 'FINAL' || currentGame?.resultsStatus === 'IN_PROGRESS');
+  const canShowTableView = canShowTournamentTableView(currentGame);
 
   useEffect(() => {
     setGameDetailsCanShowTableView(!!canShowTableView);

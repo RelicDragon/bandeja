@@ -708,6 +708,7 @@
     "total": "Укупно",
     "games": "Мечеви",
     "gamesPlayed": "Одиграно мечева",
+    "playerStatsNoMatches": "Нема одиграних мечева",
     "playerNotInRound": "{{playerName}} не учествује у рунди {{roundNumber}}",
     "tie": "Нерешено",
     "loose": "Пораз",

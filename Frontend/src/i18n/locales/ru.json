@@ -710,6 +710,7 @@
     "total": "Всего",
     "games": "Игры",
     "gamesPlayed": "Сыграно матчей",
+    "playerStatsNoMatches": "Нет сыгранных матчей",
     "playerNotInRound": "{{playerName}} не участвует в раунде {{roundNumber}}",
     "tie": "Ничья",
     "loose": "Поражение",

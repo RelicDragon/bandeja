@@ -51,7 +51,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
 import { Round } from '@/types/gameResults';
-import { isUserGameAdminOrOwner, canUserEditResults } from '@/utils/gameResults';
+import { isUserGameAdminOrOwner, canUserEditResults, canViewTournamentTableByAccess } from '@/utils/gameResults';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { BasicUser } from '@/types';
 import { createPortal } from 'react-dom';
@@ -1098,7 +1098,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   };
 
   const tableIsEditing = game ? (engineCanEdit && game.resultsStatus === 'IN_PROGRESS') : false;
-  const isTableViewActive = !!(game && effectiveTableView && game.entityType === 'TOURNAMENT' && game.resultsStatus !== 'NONE' && (user?.isPremium || game.resultsStatus === 'FINAL'));
+  const isTableViewActive = !!(game && effectiveTableView && canViewTournamentTableByAccess(game, user));
   const handleTableAddRound = useCallback(async () => {
     await GameResultsEngine.addRound();
     const rounds = useGameResultsStore.getState().rounds;
@@ -1598,7 +1598,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     return null;
   };
 
-  if (effectiveTableView && game.entityType === 'TOURNAMENT' && game.resultsStatus !== 'NONE' && (user?.isPremium || game.resultsStatus === 'FINAL')) {
+  if (effectiveTableView && canViewTournamentTableByAccess(game, user)) {
     return (
       <>
           <ResultsTableView
