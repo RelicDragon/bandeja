@@ -22,6 +22,16 @@ interface CreateGameProps {
   initialGameData?: Partial<Game>;
 }
 
+const getDefaultLevelRange = (level?: number): [number, number] => {
+  if (typeof level !== 'number' || Number.isNaN(level)) {
+    return [1.0, 7.0];
+  }
+
+  const minLevel = Math.max(1.0, Math.min(7.0, level - 0.7));
+  const maxLevel = Math.max(1.0, Math.min(7.0, level + 0.7));
+  return [minLevel, maxLevel];
+};
+
 export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -38,8 +48,8 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const [selectedClub, setSelectedClub] = useState<string>(() => initialGameData?.clubId || '');
   const [selectedCourt, setSelectedCourt] = useState<string>(() => initialGameData?.courtId || 'notBooked');
   const [playerLevelRange, setPlayerLevelRange] = useState<[number, number]>(() => [
-    initialGameData?.minLevel ?? 1.0,
-    initialGameData?.maxLevel ?? 7.0
+    initialGameData?.minLevel ?? getDefaultLevelRange(user?.level)[0],
+    initialGameData?.maxLevel ?? getDefaultLevelRange(user?.level)[1]
   ]);
   const [maxParticipants, setMaxParticipants] = useState<number>(() => {
     return initialGameData?.maxParticipants ?? (entityType === 'TOURNAMENT' ? 8 : 4);
@@ -203,6 +213,16 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
       setHasBookedCourt(false);
     }
   }, [selectedCourt]);
+
+  useEffect(() => {
+    if (initialGameData?.minLevel !== undefined || initialGameData?.maxLevel !== undefined) {
+      return;
+    }
+
+    if (playerLevelRange[0] === 1.0 && playerLevelRange[1] === 7.0) {
+      setPlayerLevelRange(getDefaultLevelRange(user?.level));
+    }
+  }, [initialGameData?.maxLevel, initialGameData?.minLevel, playerLevelRange, user?.level]);
 
   useEffect(() => {
     // Initialize time and duration from initialGameData
