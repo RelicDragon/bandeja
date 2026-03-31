@@ -1,6 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown } from 'lucide-react';
 import { Game, GameOutcome } from '@/types';
 import { Round } from '@/types/gameResults';
 import { calculateGameStandings, PlayerStanding } from '@/services/gameStandings';
@@ -93,6 +92,23 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
       .sort((a, b) => a.place - b.place);
   }, [standings, isMixPairsWithoutFixedTeams]);
 
+  const playerNameById = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const participant of game.participants || []) {
+      const fullName = [participant.user?.firstName, participant.user?.lastName].filter(Boolean).join(' ').trim();
+      if (participant.userId && fullName) {
+        map[participant.userId] = fullName;
+      }
+    }
+    for (const standing of standings) {
+      const fullName = [standing.user?.firstName, standing.user?.lastName].filter(Boolean).join(' ').trim();
+      if (standing.user?.id && fullName && !map[standing.user.id]) {
+        map[standing.user.id] = fullName;
+      }
+    }
+    return map;
+  }, [game.participants, standings]);
+
   if (standings.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[200px] text-gray-500 dark:text-gray-400">
@@ -153,7 +169,7 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
           <div key={groupIndex} className="space-y-0">
             {group.standings.map((standing) => {
               const isExpanded = expandedPlayerIds.has(standing.user.id);
-              const details = buildPlayerMatchDetails(rounds, standing.user.id);
+              const details = buildPlayerMatchDetails(rounds, standing.user.id, playerNameById);
               const toggleExpanded = () => {
                 setExpandedPlayerIds((prev) => {
                   const next = new Set(prev);
@@ -188,12 +204,8 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
                       <PlayerAvatar player={standing.user} extrasmall showName={false} fullHideName={true} />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-small text-gray-900 dark:text-gray-100 break-words line-clamp-2 flex items-center gap-1.5">
-                        <ChevronDown
-                          size={14}
-                          className={`text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                        />
-                        <span>{[standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ') || '-'}</span>
+                      <div className="text-sm font-small text-gray-900 dark:text-gray-100 break-words line-clamp-2">
+                        {[standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ') || '-'}
                       </div>
                       {standing.user.verbalStatus && (
                         <p className="verbal-status">
