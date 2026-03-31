@@ -81,7 +81,7 @@ function calculateMatchWinner(
 
     if (teamASetsWon > teamBSetsWon) return 'teamA';
     if (teamBSetsWon > teamASetsWon) return 'teamB';
-    if (teamASetsWon === teamBSetsWon && teamASetsWon > 0) return 'tie';
+    if (teamASetsWon === teamBSetsWon && validSets.length > 0) return 'tie';
     return null;
   }
 

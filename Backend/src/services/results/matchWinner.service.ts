@@ -97,7 +97,12 @@ function calculateMatchWinnerBySets(match: MatchWithTeamsAndSets): string | null
     return teamB.id;
   }
 
-  console.log(`[MATCH WINNER BY SETS] Tie - sets won equal (${teamASetsWon} = ${teamBSetsWon}), returning null`);
+  if (validSets.length > 0) {
+    console.log(`[MATCH WINNER BY SETS] Tie - sets won equal (${teamASetsWon} = ${teamBSetsWon}) with ${validSets.length} valid set(s), returning null`);
+    return null;
+  }
+
+  console.log(`[MATCH WINNER BY SETS] No valid sets, returning null`);
   return null;
 }
 
