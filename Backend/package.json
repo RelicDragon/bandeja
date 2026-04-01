@@ -63,6 +63,7 @@
     "jwks-rsa": "^3.2.1",
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
+    "music-metadata": "^11.12.3",
     "node-cron": "^4.2.1",
     "openai": "^6.16.0",
     "puppeteer": "^24.35.0",

@@ -1,5 +1,6 @@
 import path from 'path';
 import OpenAI from 'openai';
+import { parseBuffer } from 'music-metadata';
 import { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { config } from '../../config/env';
@@ -54,6 +55,38 @@ function filenameFromAudioUrl(audioUrl: string): string {
   return 'audio.webm';
 }
 
+async function assertParsedAudioWithinMaxDuration(
+  buffer: Buffer,
+  contentType: string | undefined,
+  logCtx: { messageId: string; userId: string; audioKey: string }
+): Promise<void> {
+  try {
+    const meta = await parseBuffer(new Uint8Array(buffer), {
+      mimeType: contentType,
+      size: buffer.length,
+    });
+    const sec = meta.format.duration;
+    if (
+      typeof sec === 'number' &&
+      Number.isFinite(sec) &&
+      sec * 1000 > TRANSCRIPTION_MAX_DURATION_MS
+    ) {
+      console.warn('[transcription] parsed_audio_too_long', {
+        ...logCtx,
+        parsedMs: Math.round(sec * 1000),
+        maxMs: TRANSCRIPTION_MAX_DURATION_MS,
+      });
+      throw new ApiError(400, 'Audio longer than 3 minutes cannot be transcribed');
+    }
+  } catch (e) {
+    if (e instanceof ApiError) throw e;
+    console.warn('[transcription] duration_parse_failed', {
+      ...logCtx,
+      message: e instanceof Error ? e.message : String(e),
+    });
+  }
+}
+
 export class TranscriptionService {
   private static async waitForPendingTranscription(
     messageId: string
@@ -87,7 +120,11 @@ export class TranscriptionService {
     return { status: 'timeout' };
   }
 
-  private static async transcribeWithWhisper(audioUrl: string, userId: string): Promise<{ text: string; language: string | null }> {
+  private static async transcribeWithWhisper(
+    audioUrl: string,
+    userId: string,
+    messageId: string
+  ): Promise<{ text: string; language: string | null }> {
     if (!config.openai.apiKey) {
       console.error('[transcription] missing_openai_api_key', { userId, audioKey: S3Service.extractS3Key(audioUrl) });
       throw new ApiError(503, 'Transcription service is temporarily unavailable. Please try again later.');
@@ -111,6 +148,13 @@ export class TranscriptionService {
       });
       throw e;
     }
+
+    await assertParsedAudioWithinMaxDuration(buffer, contentType, {
+      messageId,
+      userId,
+      audioKey: S3Service.extractS3Key(audioUrl),
+    });
+
     const name = filenameFromAudioUrl(audioUrl);
     const file = new File([new Uint8Array(buffer)], name, { type: contentType || 'application/octet-stream' });
 
@@ -179,19 +223,6 @@ export class TranscriptionService {
       throw new ApiError(400, 'Voice message has no audio');
     }
 
-    if (
-      audioDurationMs != null &&
-      audioDurationMs > TRANSCRIPTION_MAX_DURATION_MS
-    ) {
-      console.warn('[transcription] audio_too_long', {
-        messageId,
-        userId,
-        audioDurationMs,
-        maxMs: TRANSCRIPTION_MAX_DURATION_MS,
-      });
-      throw new ApiError(400, 'Audio longer than 3 minutes cannot be transcribed');
-    }
-
     for (let pass = 0; pass < TRANSCRIPTION_CLAIM_MAX_PASSES; pass++) {
       const existing = await prisma.messageTranscription.findUnique({
         where: { messageId },
@@ -251,7 +282,20 @@ export class TranscriptionService {
       }
 
       try {
-        const { text, language } = await this.transcribeWithWhisper(audioUrl, userId);
+        if (audioDurationMs == null) {
+          console.warn('[transcription] missing_stored_duration', { messageId, userId });
+          throw new ApiError(400, 'Voice message duration is required for transcription');
+        }
+        if (audioDurationMs > TRANSCRIPTION_MAX_DURATION_MS) {
+          console.warn('[transcription] audio_too_long', {
+            messageId,
+            userId,
+            audioDurationMs,
+            maxMs: TRANSCRIPTION_MAX_DURATION_MS,
+          });
+          throw new ApiError(400, 'Audio longer than 3 minutes cannot be transcribed');
+        }
+        const { text, language } = await this.transcribeWithWhisper(audioUrl, userId, messageId);
         await prisma.messageTranscription.update({
           where: { messageId },
           data: {
