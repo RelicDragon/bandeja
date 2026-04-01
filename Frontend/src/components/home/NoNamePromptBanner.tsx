@@ -10,7 +10,7 @@ export function NoNamePromptBanner() {
   const user = useAuthStore((s) => s.user);
   const [openNameModal, setOpenNameModal] = useState(false);
 
-  if (!user || user.nameIsSet === true) return null;
+  if (!user || user.cityIsSet !== true || user.nameIsSet === true) return null;
 
   const handleSaved = () => {
     setOpenNameModal(false);

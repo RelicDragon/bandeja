@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { format, parse, startOfDay } from 'date-fns';
-import { InvitesSection, MyGamesSection, PastGamesSection, NoNamePromptBanner } from '@/components/home';
+import { InvitesSection, MyGamesSection, PastGamesSection, NoNamePromptBanner, CityPromptBanner } from '@/components/home';
 import { WelcomeQuestionnairePrompt } from '@/components/welcome';
 import { Button, Divider, MainTabFooter, MonthCalendar } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -390,6 +390,7 @@ export const MyTab = () => {
       <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
         <WelcomeQuestionnairePrompt />
         <NoNamePromptBanner />
+        <CityPromptBanner />
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!loading ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
           <InvitesSection
             invites={invites}
@@ -476,6 +477,7 @@ export const MyTab = () => {
       >
         <WelcomeQuestionnairePrompt />
         <NoNamePromptBanner />
+        <CityPromptBanner />
         <div
           className={`transition-all duration-500 ease-in-out overflow-hidden ${
             !loading

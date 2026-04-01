@@ -11,6 +11,7 @@ import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MonthCalendar } from '@/components/MonthCalendar';
 import { TrainersList } from './TrainersList';
 import { GenderPromptBanner } from './GenderPromptBanner';
+import { CityPromptBanner } from './CityPromptBanner';
 import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
@@ -330,6 +331,7 @@ export const AvailableGamesSection = ({
   const filterBlock = (
     <div className="mb-4">
       <GenderPromptBanner />
+      <CityPromptBanner />
       <div className="flex items-center justify-between mb-3 max-w-md mx-auto">
         <button
           onClick={handleCityClick}

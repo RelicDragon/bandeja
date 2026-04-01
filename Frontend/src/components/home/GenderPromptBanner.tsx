@@ -14,7 +14,7 @@ export function GenderPromptBanner() {
   const [openDismissConfirm, setOpenDismissConfirm] = useState(false);
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(GENDER_PROMPT_DISMISSED_KEY) === 'true');
 
-  if (!user || user.genderIsSet === true || dismissed) return null;
+  if (!user || user.cityIsSet !== true || user.genderIsSet === true || dismissed) return null;
 
   const handleDismiss = () => {
     localStorage.setItem(GENDER_PROMPT_DISMISSED_KEY, 'true');

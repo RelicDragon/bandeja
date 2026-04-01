@@ -100,6 +100,7 @@ export interface User extends BasicUser {
   defaultCurrency?: string;
   genderIsSet?: boolean;
   nameIsSet?: boolean;
+  cityIsSet?: boolean;
   welcomeScreenPassed?: boolean;
   isAdmin?: boolean;
   canCreateTournament?: boolean;

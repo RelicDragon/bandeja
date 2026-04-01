@@ -62,6 +62,7 @@ const survivorSelect = {
   gender: true,
   genderIsSet: true,
   nameIsSet: true,
+  cityIsSet: true,
   welcomeScreenPassed: true,
   approvedLevel: true,
   approvedById: true,
@@ -319,6 +320,7 @@ function buildMergedUserData(survivor: SurvivorRow, source: SurvivorRow): Prisma
     gender: survivor.gender !== 'PREFER_NOT_TO_SAY' ? survivor.gender : source.gender,
     genderIsSet: survivor.genderIsSet || source.genderIsSet,
     nameIsSet: nameResolved.nameIsSet,
+    cityIsSet: survivor.cityIsSet || source.cityIsSet,
     welcomeScreenPassed: survivor.welcomeScreenPassed || source.welcomeScreenPassed,
     approvedLevel: survivor.approvedLevel || source.approvedLevel,
     approvedWhen:

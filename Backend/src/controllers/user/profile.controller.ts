@@ -72,7 +72,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, showOnlineStatus, favoriteTrainerId, appIcon, verbalStatus, bio } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, showOnlineStatus, favoriteTrainerId, appIcon, verbalStatus, bio } = req.body;
   
   // Explicitly ignore level and socialLevel - only backend can modify these
 
@@ -203,6 +203,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(gender !== undefined && { gender }),
         ...(finalGenderIsSet !== undefined && { genderIsSet: finalGenderIsSet }),
         ...(!resolvedNames && nameIsSet !== undefined && { nameIsSet }),
+        ...(cityIsSet !== undefined && { cityIsSet }),
         ...(preferredHandLeft !== undefined && { preferredHandLeft }),
         ...(preferredHandRight !== undefined && { preferredHandRight }),
         ...(preferredCourtSideLeft !== undefined && { preferredCourtSideLeft }),

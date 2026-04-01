@@ -17,7 +17,7 @@ export function WelcomeQuestionnairePrompt() {
   const [dismissConfirmOpen, setDismissConfirmOpen] = useState(false);
   const [skipLoading, setSkipLoading] = useState(false);
 
-  if (user == null || user.welcomeScreenPassed === true) return null;
+  if (user == null || user.welcomeScreenPassed === true || user.cityIsSet !== true) return null;
 
   const levelLabel =
     typeof user.level === 'number' && Number.isFinite(user.level) ? user.level.toFixed(1) : '—';

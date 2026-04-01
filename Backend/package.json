@@ -26,6 +26,7 @@
     "backfill:city-groups": "ts-node scripts/backfillCityGroups.ts",
     "backfill:city-group-welcome-messages": "ts-node scripts/backfillCityGroupWelcomeMessages.ts",
     "backfill:user-name-is-set": "ts-node scripts/backfillUserNameIsSet.ts",
+    "backfill:city-is-set": "ts-node scripts/backfillCityIsSet.ts",
     "backfill:user-avatar-tiny": "ts-node scripts/backfillUserAvatarTiny.ts",
     "migrateBugsToGroups": "ts-node scripts/migrateBugsToGroups.ts",
     "test:currency": "ts-node scripts/test-currency-service.ts",

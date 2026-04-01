@@ -4,4 +4,5 @@ export { PastGamesSection } from './PastGamesSection';
 export { AvailableGamesSection } from './AvailableGamesSection';
 export { GamesTabController } from './GamesTabController';
 export { NoNamePromptBanner } from './NoNamePromptBanner';
+export { CityPromptBanner } from './CityPromptBanner';
 

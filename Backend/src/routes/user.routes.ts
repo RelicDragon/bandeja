@@ -38,6 +38,7 @@ router.put(
   authenticate,
   validate([
     body('email').optional().isEmail().withMessage('Valid email is required'),
+    body('cityIsSet').optional().isBoolean().withMessage('cityIsSet must be a boolean'),
     body('verbalStatus').optional({ values: 'null' }).custom((v) => v == null || (typeof v === 'string' && v.length <= 32)).withMessage('Verbal status must be 32 characters or less'),
     body('bio').optional({ values: 'null' }).custom((v) => v == null || (typeof v === 'string' && v.length <= 128)).withMessage('Bio must be 128 characters or less'),
   ]),

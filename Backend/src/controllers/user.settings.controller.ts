@@ -18,7 +18,7 @@ export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) =
 
   const user = await prisma.user.update({
     where: { id: req.userId },
-    data: { currentCityId: cityId },
+    data: { currentCityId: cityId, cityIsSet: true },
     select: PROFILE_SELECT_FIELDS,
   });
 

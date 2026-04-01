@@ -193,6 +193,7 @@ export const PROFILE_SELECT_FIELDS = {
   originalAvatar: true,
   genderIsSet: true,
   nameIsSet: true,
+  cityIsSet: true,
   welcomeScreenPassed: true,
   reliability: true,
   isAdmin: true,
