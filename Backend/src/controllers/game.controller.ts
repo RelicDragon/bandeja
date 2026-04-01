@@ -13,6 +13,8 @@ import { generateResultsImage } from '../services/telegram/results-image.service
 import telegramBotService from '../services/telegram/bot.service';
 import { getGameInclude } from '../services/game/read.service';
 import prisma from '../config/database';
+import { GameWorkoutService } from '../services/game/gameWorkout.service';
+import { WorkoutSessionSource } from '@prisma/client';
 
 export const createGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const game = await GameService.createGame(req.body, req.userId!);
@@ -453,4 +455,58 @@ export const resetTelegramResultsSent = asyncHandler(async (req: AuthRequest, re
     data: { resultsSentToTelegram: false },
   });
   res.json({ success: true });
+});
+
+export const upsertGameWorkoutSummary = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id: gameId } = req.params;
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+  const {
+    durationSeconds,
+    totalEnergyKcal,
+    avgHeartRate,
+    maxHeartRate,
+    startedAt,
+    endedAt,
+    source,
+    healthExternalId,
+  } = req.body;
+
+  const started = startedAt ? new Date(startedAt) : null;
+  const ended = endedAt ? new Date(endedAt) : null;
+  if (!started || Number.isNaN(started.getTime()) || !ended || Number.isNaN(ended.getTime())) {
+    throw new ApiError(400, 'startedAt and endedAt must be valid ISO dates');
+  }
+
+  let sourceEnum: WorkoutSessionSource | undefined;
+  if (source === 'ANDROID_HEALTH_CONNECT') {
+    sourceEnum = WorkoutSessionSource.ANDROID_HEALTH_CONNECT;
+  } else if (source === 'APPLE_WATCH' || source == null) {
+    sourceEnum = WorkoutSessionSource.APPLE_WATCH;
+  } else {
+    throw new ApiError(400, 'Invalid source');
+  }
+
+  const row = await GameWorkoutService.upsertForParticipant(gameId, req.userId, {
+    durationSeconds: Number(durationSeconds),
+    totalEnergyKcal: totalEnergyKcal != null ? Number(totalEnergyKcal) : null,
+    avgHeartRate: avgHeartRate != null ? Number(avgHeartRate) : null,
+    maxHeartRate: maxHeartRate != null ? Number(maxHeartRate) : null,
+    startedAt: started,
+    endedAt: ended,
+    source: sourceEnum,
+    healthExternalId: typeof healthExternalId === 'string' ? healthExternalId : null,
+  });
+
+  res.json({ success: true, data: row });
+});
+
+export const getMyGameWorkoutSummary = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id: gameId } = req.params;
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+  const row = await GameWorkoutService.getMineForGame(gameId, req.userId);
+  res.json({ success: true, data: row });
 });

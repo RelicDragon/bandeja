@@ -6,6 +6,7 @@ struct MatchResultCard: View {
     let isCurrent: Bool
     let isFinal: Bool
     let canEdit: Bool
+    let isMatchCompleted: Bool
     let onOpen: () -> Void
     @Environment(WatchPreferencesStore.self) private var prefs
 
@@ -30,7 +31,7 @@ struct MatchResultCard: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-            Button(isFinal || !canEdit ? WatchCopy.view(lang) : WatchCopy.open(lang)) { onOpen() }
+            Button(rowActionLabel(lang)) { onOpen() }
                 .buttonStyle(.bordered)
                 .controlSize(.mini)
         }
@@ -62,5 +63,12 @@ struct MatchResultCard: View {
             .sorted { $0.setNumber < $1.setNumber }
             .map { "\($0.teamAScore)-\($0.teamBScore)" }
             .joined(separator: "  ")
+    }
+
+    private func rowActionLabel(_ lang: String) -> String {
+        if isFinal || !canEdit { return WatchCopy.view(lang) }
+        if isMatchCompleted { return WatchCopy.edit(lang) }
+        if isCurrent { return WatchCopy.score(lang) }
+        return WatchCopy.open(lang)
     }
 }

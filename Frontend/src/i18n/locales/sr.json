@@ -411,6 +411,19 @@
     "trainingsBy": "Тренинзи од",
     "clearTrainerFilter": "Поништи филтер тренера"
   },
+  "healthWorkout": {
+    "title": "Падел тренинзи",
+    "subtitle": "Сачувано са Apple Watch-а при уносу резултата",
+    "yourSession": "Ваш тренинг",
+    "kcal": "kcal",
+    "avgBpm": "прос. отк/мин",
+    "maxBpm": "макс. отк/мин",
+    "loading": "Учитавање…",
+    "loadError": "Није могло учитати тренинг.",
+    "retry": "Покушај поново",
+    "emptyProfile": "Још нема тренинга. Снимај Apple Watch-ом при уносу резултата.",
+    "loadErrorProfile": "Није могло учитати тренинге."
+  },
   "games": {
     "title": "Пронађи игре",
     "all": "Све игре",

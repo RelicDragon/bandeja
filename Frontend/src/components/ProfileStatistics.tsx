@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { usersApi, UserStats } from '@/api/users';
 import { Loading } from './Loading';
 import { LevelHistoryView } from './LevelHistoryView';
+import { ProfileWorkoutHealthSection } from './ProfileWorkoutHealthSection';
 import { useAuthStore } from '@/store/authStore';
 
 export const ProfileStatistics = () => {
@@ -48,6 +49,7 @@ export const ProfileStatistics = () => {
       className="space-y-6"
     >
       <LevelHistoryView stats={stats} padding="p-0" />
+      <ProfileWorkoutHealthSection />
     </motion.div>
   );
 };

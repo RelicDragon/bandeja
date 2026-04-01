@@ -19,6 +19,25 @@ router.get('/available', authenticate, gameController.getAvailableGames);
 
 router.get('/booked-courts', authenticate, gameController.getBookedCourts);
 
+router.get('/:id/workout/me', authenticate, canAccessGame, gameController.getMyGameWorkoutSummary);
+
+router.post(
+  '/:id/workout',
+  authenticate,
+  canAccessGame,
+  validate([
+    body('durationSeconds').isInt({ min: 1, max: 86400 }).withMessage('durationSeconds required'),
+    body('startedAt').isISO8601().withMessage('startedAt required'),
+    body('endedAt').isISO8601().withMessage('endedAt required'),
+    body('totalEnergyKcal').optional({ nullable: true }).isFloat({ min: 0, max: 5000 }),
+    body('avgHeartRate').optional({ nullable: true }).isFloat({ min: 35, max: 250 }),
+    body('maxHeartRate').optional({ nullable: true }).isFloat({ min: 35, max: 250 }),
+    body('source').optional().isIn(['APPLE_WATCH', 'ANDROID_HEALTH_CONNECT']),
+    body('healthExternalId').optional({ nullable: true }).isString().isLength({ max: 512 }),
+  ]),
+  gameController.upsertGameWorkoutSummary
+);
+
 router.get('/:id', optionalAuth, gameController.getGameById);
 
 router.post(

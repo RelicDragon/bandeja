@@ -130,12 +130,48 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func finalizingResults(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Finalizando…"
+        case "ru": return "Завершение…"
+        case "sr": return "Завршавање…"
+        default: return "Finalizing…"
+        }
+    }
+
     nonisolated static func finalizeResults(_ lang: String) -> String {
         switch lang {
         case "es": return "Finalizar resultados"
         case "ru": return "Завершить результаты"
         case "sr": return "Заврши резултате"
         default: return "Finalize Results"
+        }
+    }
+
+    nonisolated static func workoutBandejaSyncPending(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Entreno en Salud. Sincronizando con Bandeja…"
+        case "ru": return "Тренировка в «Здоровье». Синхронизация с Bandeja…"
+        case "sr": return "Тренинг у Здрављу. Синхронизација са Bandeja…"
+        default: return "Workout saved to Health. Syncing to Bandeja…"
+        }
+    }
+
+    nonisolated static func resultsRefreshFailed(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Resultados guardados. Desliza hacia abajo para actualizar."
+        case "ru": return "Результаты сохранены. Потяните вниз, чтобы обновить."
+        case "sr": return "Резултати сачувани. Повуци надоле за освежавање."
+        default: return "Results saved. Pull down to refresh."
+        }
+    }
+
+    nonisolated static func resultsServerProcessing(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Procesando resultados en el servidor…"
+        case "ru": return "Сервер обрабатывает результаты…"
+        case "sr": return "Сервер обрађује резултате…"
+        default: return "Server is still processing results…"
         }
     }
 
@@ -220,6 +256,51 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func score(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Marcar"
+        case "ru": return "Внести счёт"
+        case "sr": return "Унеси"
+        default: return "Score"
+        }
+    }
+
+    nonisolated static func edit(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Editar"
+        case "ru": return "Изменить"
+        case "sr": return "Измени"
+        default: return "Edit"
+        }
+    }
+
+    nonisolated static func roundSection(_ lang: String, number: Int) -> String {
+        switch lang {
+        case "es": return "Ronda \(number)"
+        case "ru": return "Раунд \(number)"
+        case "sr": return "Рунда \(number)"
+        default: return "Round \(number)"
+        }
+    }
+
+    nonisolated static func viewOnlyFinal(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Los resultados están cerrados. Solo lectura."
+        case "ru": return "Итоги зафиксированы. Только просмотр."
+        case "sr": return "Резултати су коначни. Само преглед."
+        default: return "Results are final. View only."
+        }
+    }
+
+    nonisolated static func viewOnlyNotOnMatch(_ lang: String) -> String {
+        switch lang {
+        case "es": return "No estás en este partido."
+        case "ru": return "Вы не участвуете в этом матче."
+        case "sr": return "Нисте на овом мечу."
+        default: return "You're not on this match."
+        }
+    }
+
     nonisolated static func sets(_ lang: String) -> String {
         switch lang {
         case "es": return "Sets"
@@ -280,6 +361,15 @@ enum WatchCopy {
         case "ru": return "Следующий сет"
         case "sr": return "Следећи сет"
         default: return "Next Set"
+        }
+    }
+
+    nonisolated static func moreScoringActions(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Más"
+        case "ru": return "Ещё"
+        case "sr": return "Још"
+        default: return "More"
         }
     }
 
@@ -470,5 +560,27 @@ enum WatchCopy {
         case "sr": return "Неочекиван одговор сервера."
         default: return "Unexpected server response."
         }
+    }
+
+    nonisolated static func workoutKcal(_ lang: String, value: Int) -> String {
+        switch lang {
+        case "es": return "\(value) kcal"
+        case "ru": return "\(value) ккал"
+        case "sr": return "\(value) kcal"
+        default: return "\(value) kcal"
+        }
+    }
+
+    nonisolated static func workoutBpm(_ lang: String, value: Int) -> String {
+        switch lang {
+        case "es": return "\(value) lpm"
+        case "ru": return "\(value) уд/мин"
+        case "sr": return "\(value) отк/мин"
+        default: return "\(value) bpm"
+        }
+    }
+
+    nonisolated static func workoutTimerShort(_: String, minutes: Int, seconds: Int) -> String {
+        String(format: "%d:%02d", minutes, seconds)
     }
 }

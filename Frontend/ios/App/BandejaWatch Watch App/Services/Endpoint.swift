@@ -9,6 +9,8 @@ enum Endpoint: Sendable {
     case createMatch(gameId: String, roundId: String)
     case updateMatch(gameId: String, matchId: String)
     case recalculateOutcomes(gameId: String)
+    case postGameWorkout(gameId: String)
+    case getMyGameWorkout(gameId: String)
 
     var path: String {
         switch self {
@@ -28,14 +30,18 @@ enum Endpoint: Sendable {
             return "/results/game/\(gameId)/matches/\(matchId)"
         case .recalculateOutcomes(let gameId):
             return "/results/game/\(gameId)/recalculate"
+        case .postGameWorkout(let gameId):
+            return "/games/\(gameId)/workout"
+        case .getMyGameWorkout(let gameId):
+            return "/games/\(gameId)/workout/me"
         }
     }
 
     var method: String {
         switch self {
-        case .myGames, .gameDetail, .userProfile, .gameResults:
+        case .myGames, .gameDetail, .userProfile, .gameResults, .getMyGameWorkout:
             return "GET"
-        case .createRound, .createMatch, .recalculateOutcomes:
+        case .createRound, .createMatch, .recalculateOutcomes, .postGameWorkout:
             return "POST"
         case .updateMatch:
             return "PUT"

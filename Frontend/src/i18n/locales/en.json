@@ -426,6 +426,19 @@
     "trainingsBy": "Trainings by",
     "clearTrainerFilter": "Clear trainer filter"
   },
+  "healthWorkout": {
+    "title": "Padel workouts",
+    "subtitle": "Saved from Apple Watch during scoring",
+    "yourSession": "Your workout",
+    "kcal": "kcal",
+    "avgBpm": "avg bpm",
+    "maxBpm": "max bpm",
+    "loading": "Loading…",
+    "loadError": "Couldn’t load workout.",
+    "retry": "Retry",
+    "emptyProfile": "No workouts synced yet. Record on your Apple Watch while scoring.",
+    "loadErrorProfile": "Couldn’t load workouts."
+  },
   "games": {
     "title": "Find Games",
     "all": "All Games",

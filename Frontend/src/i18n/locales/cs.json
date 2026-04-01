@@ -409,6 +409,19 @@
     "trainingsBy": "Tréninky od",
     "clearTrainerFilter": "Zrušit filtr trenéra"
   },
+  "healthWorkout": {
+    "title": "Padelové tréninky",
+    "subtitle": "Uloženo z Apple Watch při zadávání výsledků",
+    "yourSession": "Váš trénink",
+    "kcal": "kcal",
+    "avgBpm": "prům. tep",
+    "maxBpm": "max. tep",
+    "loading": "Načítání…",
+    "loadError": "Trénink se nepodařilo načíst.",
+    "retry": "Zkusit znovu",
+    "emptyProfile": "Zatím žádné tréninky. Nahrávej je Apple Watch při zadávání výsledků.",
+    "loadErrorProfile": "Tréninky se nepodařilo načíst."
+  },
   "games": {
     "title": "Najít zápasy",
     "all": "Všechny zápasy",

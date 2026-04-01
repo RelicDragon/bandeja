@@ -10,7 +10,11 @@ struct WatchScoringTeamColumn: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Button(action: action) {
+            Button {
+                guard !disabled else { return }
+                WatchScoreHaptics.point()
+                action()
+            } label: {
                 VStack(spacing: 6) {
                     if users.isEmpty {
                         Text("—")
@@ -34,11 +38,13 @@ struct WatchScoringTeamColumn: View {
                     }
 
                     Text(scoreLabel)
-                        .font(.system(size: 30, weight: .bold, design: .rounded).monospacedDigit())
+                        .font(.system(size: 34, weight: .bold, design: .rounded).monospacedDigit())
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
+                        .contentTransition(.numericText())
+                        .animation(.snappy(duration: 0.2), value: scoreLabel)
                 }
-                .frame(maxWidth: .infinity, minHeight: 112)
+                .frame(maxWidth: .infinity, minHeight: 118)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 10)
                 .background(
@@ -51,16 +57,20 @@ struct WatchScoringTeamColumn: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.white.opacity(0.22), lineWidth: 1)
                 )
             }
             .buttonStyle(.plain)
             .disabled(disabled)
 
-            Button(action: decrementAction) {
+            Button {
+                guard !disabled, !decrementDisabled else { return }
+                WatchScoreHaptics.undo()
+                decrementAction()
+            } label: {
                 Image(systemName: "minus")
                     .font(.system(size: 12, weight: .semibold))
                     .frame(maxWidth: .infinity)

@@ -18,6 +18,7 @@ struct BandejaWatchApp: App {
 
     init() {
         WatchSessionManager.shared.activate()
+        WorkoutOutboxNetworkMonitor.shared.start()
     }
 
     var body: some Scene {
@@ -26,6 +27,10 @@ struct BandejaWatchApp: App {
                 ContentView()
                     .environment(router)
                     .environment(gameListVM)
+                    .task {
+                        await WorkoutManager.shared.recoverIfNeeded()
+                        await WorkoutSyncOutbox.shared.flush()
+                    }
             }
             .environment(WatchPreferencesStore.shared)
         }

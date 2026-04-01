@@ -1,5 +1,6 @@
 import api from './axios';
 import { ApiResponse, User, BasicUser, EntityType, GameType, GameStatus, ParticipantRole, ParticipantStatus } from '@/types';
+import type { GameWorkoutSummary } from './games';
 
 export interface LevelHistoryItem {
   id: string;
@@ -120,6 +121,16 @@ export interface InvitablePlayersPayload {
   maxSocialLevel: number;
 }
 
+export interface GameWorkoutSessionListItem extends GameWorkoutSummary {
+  game: {
+    id: string;
+    name: string | null;
+    gameType: string;
+    startTime: string;
+    club: { id: string; name: string } | null;
+  };
+}
+
 export type NotificationChannelType = 'PUSH' | 'TELEGRAM' | 'WHATSAPP' | 'VIBER';
 
 export interface NotificationPreference {
@@ -135,6 +146,11 @@ export interface NotificationPreference {
 export const usersApi = {
   getProfile: async () => {
     const response = await api.get<ApiResponse<User>>('/users/profile');
+    return response.data;
+  },
+
+  getWorkoutSessions: async (params?: { limit?: number; from?: string; to?: string }) => {
+    const response = await api.get<ApiResponse<GameWorkoutSessionListItem[]>>('/users/workout-sessions', { params });
     return response.data;
   },
 

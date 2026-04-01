@@ -5,3 +5,4 @@ export { getUserStats, getPlayerComparison } from './user/stats.controller';
 export { getInvitablePlayers, trackUserInteraction } from './user/social.controller';
 export { setFavoriteTrainer } from './user/favoriteTrainer.controller';
 export { getPresence } from './user/presence.controller';
+export { getMyWorkoutSessions } from './user/workoutSessions.controller';

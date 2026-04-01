@@ -9,7 +9,9 @@ final class ScoringViewModel {
     var results: WatchResultsGame?
     var isLoading = false
     var isFinal = false
+    var isFinalizing = false
     var error: Error?
+    var postFinalizeHint: ScoringPostFinalizeHint = .none
 
     private let api = APIClient()
     private let currentUserId: String?
@@ -37,6 +39,7 @@ final class ScoringViewModel {
             game = try await api.fetch(.gameDetail(id: gameId))
             results = try await api.fetch(.gameResults(gameId: gameId))
             isFinal = game?.resultsStatus == "FINAL"
+            postFinalizeHint = .none
             schedulePolling()
         } catch {
             self.error = error
@@ -86,18 +89,42 @@ final class ScoringViewModel {
     }
 
     func canEditMatch(_ match: WatchMatch) -> Bool {
-        !isFinal && match.id == latestActiveMatchId
+        guard !isFinal, let uid = currentUserId else { return false }
+        return match.teams.contains { team in
+            team.players.contains { $0.userId == uid }
+        }
     }
 
     func finalizeResults() async {
-        guard canFinalizeResults else { return }
+        guard canFinalizeResults, !isFinalizing else { return }
+        isFinalizing = true
+        defer { isFinalizing = false }
+
         do {
             try await api.sendVoid(.recalculateOutcomes(gameId: gameId))
+        } catch {
+            self.error = error
+            return
+        }
+
+        error = nil
+        postFinalizeHint = .none
+        await WorkoutManager.shared.endSessionUploadAndClear(gameId: gameId)
+        isFinal = true
+        stopPolling()
+
+        do {
             game = try await api.fetch(.gameDetail(id: gameId))
             results = try await api.fetch(.gameResults(gameId: gameId))
             isFinal = true
+            if let g = game, g.resultsStatus != "FINAL" {
+                postFinalizeHint = .serverNotYetFinal
+            } else {
+                postFinalizeHint = .none
+            }
         } catch {
-            self.error = error
+            postFinalizeHint = .refreshFailed
+            isFinal = true
         }
     }
 

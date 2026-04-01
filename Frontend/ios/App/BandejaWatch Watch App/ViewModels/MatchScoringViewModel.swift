@@ -62,24 +62,16 @@ final class MatchScoringViewModel {
             game = try await api.fetch(.gameDetail(id: gameId))
             let results: WatchResultsGame = try await api.fetch(.gameResults(gameId: gameId))
             let currentUserId = KeychainHelper.shared.readUserId()
-            let myMatches = results.rounds
-                .sorted { $0.roundNumber < $1.roundNumber }
-                .flatMap { round in
-                    round.matches
-                        .sorted { $0.matchNumber < $1.matchNumber }
-                        .filter { match in
-                            guard let currentUserId else { return false }
-                            return match.teams.contains { team in
-                                team.players.contains { $0.userId == currentUserId }
-                            }
-                        }
-                }
-            let latestEditableId = myMatches.last(where: { !isCompletedForGate($0) })?.id
             for r in results.rounds {
                 if let m = r.matches.first(where: { $0.id == matchId }) {
                     round = r
                     match = m
-                    isReadOnly = (game?.resultsStatus == "FINAL") || (latestEditableId != nil && latestEditableId != matchId)
+                    let onMatch = currentUserId.map { uid in
+                        m.teams.contains { team in
+                            team.players.contains { $0.userId == uid }
+                        }
+                    } ?? false
+                    isReadOnly = (game?.resultsStatus == "FINAL") || !onMatch
                     sets = m.sets.sorted { $0.setNumber < $1.setNumber }.map {
                         WatchSetWrite(teamA: $0.teamAScore, teamB: $0.teamBScore, isTieBreak: $0.isTieBreak)
                     }
@@ -319,15 +311,5 @@ final class MatchScoringViewModel {
             return idx
         }
         return max(0, sets.count - 1)
-    }
-
-    private func isCompletedForGate(_ match: WatchMatch) -> Bool {
-        let scoredSets = match.sets.filter { $0.teamAScore > 0 || $0.teamBScore > 0 }
-        guard !scoredSets.isEmpty else { return false }
-        if match.winnerId != nil { return true }
-        if let fixedSets = game?.fixedNumberOfSets, fixedSets > 0 {
-            return scoredSets.count >= fixedSets
-        }
-        return true
     }
 }

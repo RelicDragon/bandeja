@@ -1,6 +1,24 @@
 import api from './axios';
 import { ApiResponse, Game, GameTeam, GameTeamData, BookedCourtSlot } from '@/types';
 
+export type WorkoutSessionSource = 'APPLE_WATCH' | 'ANDROID_HEALTH_CONNECT';
+
+export interface GameWorkoutSummary {
+  id: string;
+  gameId: string;
+  userId: string;
+  source: WorkoutSessionSource;
+  durationSeconds: number;
+  totalEnergyKcal: number | null;
+  avgHeartRate: number | null;
+  maxHeartRate: number | null;
+  startedAt: string;
+  endedAt: string;
+  healthExternalId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const gamesApi = {
   getAll: async (params?: {
     cityId?: string;
@@ -191,6 +209,28 @@ export const gamesApi = {
 
   resetTelegramResultsSent: async (id: string) => {
     const response = await api.patch<ApiResponse<void>>(`/games/${id}/reset-telegram-results-sent`);
+    return response.data;
+  },
+
+  upsertWorkoutSummary: async (
+    gameId: string,
+    body: {
+      durationSeconds: number;
+      totalEnergyKcal?: number | null;
+      avgHeartRate?: number | null;
+      maxHeartRate?: number | null;
+      startedAt: string;
+      endedAt: string;
+      source?: WorkoutSessionSource;
+      healthExternalId?: string | null;
+    }
+  ) => {
+    const response = await api.post<ApiResponse<GameWorkoutSummary>>(`/games/${gameId}/workout`, body);
+    return response.data;
+  },
+
+  getMyWorkoutForGame: async (gameId: string) => {
+    const response = await api.get<ApiResponse<GameWorkoutSummary | null>>(`/games/${gameId}/workout/me`);
     return response.data;
   },
 };

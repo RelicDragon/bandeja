@@ -137,6 +137,7 @@ model User {
   buyerGroupChannels      GroupChannel[]       @relation("GroupChannelBuyer")
   reviewsReceivedAsTrainer TrainerReview[]      @relation("TrainerReviewsReceived")
   reviewsGiven            TrainerReview[]      @relation("TrainerReviewsGiven")
+  gameWorkoutSummaries    GameWorkoutSummary[]
 
   @@index([phone])
   @@index([telegramId])
@@ -333,6 +334,7 @@ model Game {
   faqs                   GameFaq[]
   bets                   Bet[]
   trainerReviews         TrainerReview[]
+  workoutSummaries       GameWorkoutSummary[]
 
   @@index([clubId])
   @@index([courtId])
@@ -512,6 +514,32 @@ model RoundOutcome {
   @@unique([roundId, userId])
   @@index([roundId])
   @@index([userId])
+}
+
+enum WorkoutSessionSource {
+  APPLE_WATCH
+  ANDROID_HEALTH_CONNECT
+}
+
+model GameWorkoutSummary {
+  id               String              @id @default(cuid())
+  gameId           String
+  userId           String
+  source           WorkoutSessionSource @default(APPLE_WATCH)
+  durationSeconds  Int
+  totalEnergyKcal  Float?
+  avgHeartRate     Float?
+  maxHeartRate     Float?
+  startedAt        DateTime
+  endedAt          DateTime
+  healthExternalId String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  game             Game                @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userId])
+  @@index([userId, endedAt])
 }
 
 model GameOutcome {

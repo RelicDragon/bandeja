@@ -6,13 +6,18 @@ struct ScoreHintBanner: View {
 
     var body: some View {
         let lang = prefs.uiLanguageCode
-        HStack {
+        let set = vm.sets[safe: vm.activeSetIndex]
+        HStack(alignment: .firstTextBaseline) {
             Text(WatchCopy.setLabel(lang, number: vm.activeSetIndex + 1))
-            Spacer()
-            let set = vm.sets[safe: vm.activeSetIndex]
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.primary.opacity(0.92))
+            Spacer(minLength: 8)
             Text("\(set?.teamA ?? 0)-\(set?.teamB ?? 0)")
+                .font(.footnote.weight(.semibold).monospacedDigit())
+                .foregroundStyle(.secondary)
+                .contentTransition(.numericText())
         }
-        .font(.caption2)
-        .foregroundStyle(.secondary)
+        .animation(.snappy(duration: 0.2), value: set?.teamA)
+        .animation(.snappy(duration: 0.2), value: set?.teamB)
     }
 }

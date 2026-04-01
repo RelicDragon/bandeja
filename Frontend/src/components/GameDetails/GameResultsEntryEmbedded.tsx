@@ -27,6 +27,7 @@ import { getRestartText, getFinishText, getAvailablePlayers, canEnterResults } f
 import { GameResultsTabs } from './GameResultsTabs';
 import { OfflineBanner } from './OfflineBanner';
 import { GameResultsModals } from './GameResultsModals';
+import { GameWorkoutSummaryCard } from './GameWorkoutSummaryCard';
 import { TelegramSummaryModal } from './TelegramSummaryModal';
 import { ConfirmationModal } from '@/components';
 import { Send, Edit } from 'lucide-react';
@@ -871,6 +872,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
                 openModal({ type: 'explanation', explanation, playerName, levelBefore });
               }}
             />
+            {user?.id ? <GameWorkoutSummaryCard gameId={currentGame.id} /> : null}
           </div>
         ) : currentGame && currentGame.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
           <PlayerStatsPanel game={currentGame as NonNullable<typeof currentGame>} rounds={rounds} />

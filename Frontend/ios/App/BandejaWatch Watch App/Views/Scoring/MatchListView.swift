@@ -3,6 +3,8 @@ import SwiftUI
 struct MatchListView: View {
     let gameId: String
     @State private var vm: ScoringViewModel
+    @Bindable private var workoutManager = WorkoutManager.shared
+    @Bindable private var workoutOutbox = WorkoutSyncOutbox.shared
     @Environment(Router.self) private var router
     @Environment(WatchPreferencesStore.self) private var prefs
 
@@ -12,47 +14,120 @@ struct MatchListView: View {
     }
 
     var body: some View {
+        let lang = prefs.uiLanguageCode
         Group {
             if vm.isLoading && vm.results == nil {
-                ProgressView(WatchCopy.loadingEllipsis(prefs.uiLanguageCode))
+                ProgressView(WatchCopy.loadingEllipsis(lang))
             } else if let error = vm.error, vm.results == nil {
                 VStack(spacing: 8) {
                     Text(error.localizedDescription).font(.caption2).multilineTextAlignment(.center)
-                    Button(WatchCopy.retry(prefs.uiLanguageCode)) { Task { await vm.load() } }
+                    Button(WatchCopy.retry(lang)) { Task { await vm.load() } }
                 }
             } else {
                 content
             }
         }
-        .navigationTitle(WatchCopy.matches(prefs.uiLanguageCode))
-        .task { await vm.load() }
-        .onDisappear { vm.stopPolling() }
+        .navigationTitle(WatchCopy.matches(lang))
+        .task(id: gameId) {
+            await WorkoutManager.shared.recoverIfNeeded()
+            if Task.isCancelled {
+                await WorkoutManager.shared.handleLeaveMatchList(gameId: gameId, resultsFinal: vm.isFinal)
+                return
+            }
+            await vm.load()
+            if Task.isCancelled {
+                await WorkoutManager.shared.handleLeaveMatchList(gameId: gameId, resultsFinal: vm.isFinal)
+                return
+            }
+            if !vm.isFinal {
+                await WorkoutManager.shared.startIfNeeded(gameId: gameId, isIndoor: true)
+            }
+            if Task.isCancelled {
+                await WorkoutManager.shared.handleLeaveMatchList(gameId: gameId, resultsFinal: vm.isFinal)
+            }
+        }
+        .onDisappear {
+            vm.stopPolling()
+            Task {
+                await WorkoutManager.shared.handleLeaveMatchList(gameId: gameId, resultsFinal: vm.isFinal)
+            }
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if workoutManager.isActive, workoutManager.activeGameId == gameId, !workoutManager.authDenied {
+                WorkoutMetricsBar(
+                    lang: lang,
+                    calories: workoutManager.activeCalories,
+                    heartRate: workoutManager.heartRate,
+                    elapsedSeconds: workoutManager.elapsedSeconds
+                )
+                .frame(maxWidth: .infinity)
+                .background(.ultraThinMaterial)
+            }
+        }
+    }
+
+    private var matchesByRound: [(round: WatchRound, matches: [WatchMatch])] {
+        guard let rounds = vm.results?.rounds else { return [] }
+        return rounds
+            .sorted { $0.roundNumber < $1.roundNumber }
+            .compactMap { r in
+                let ms = vm.myMatches
+                    .filter { $0.round.id == r.id }
+                    .map(\.match)
+                    .sorted { $0.matchNumber < $1.matchNumber }
+                return ms.isEmpty ? nil : (r, ms)
+            }
     }
 
     private var content: some View {
         List {
+            if workoutOutbox.hasPending(forGameId: gameId) {
+                Text(WatchCopy.workoutBandejaSyncPending(prefs.uiLanguageCode))
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .listRowBackground(Color.clear)
+            }
+            if vm.postFinalizeHint == .refreshFailed {
+                Text(WatchCopy.resultsRefreshFailed(prefs.uiLanguageCode))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .listRowBackground(Color.clear)
+            }
+            if vm.postFinalizeHint == .serverNotYetFinal {
+                Text(WatchCopy.resultsServerProcessing(prefs.uiLanguageCode))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .listRowBackground(Color.clear)
+            }
+
             if vm.myMatches.isEmpty {
                 Text(WatchCopy.waitingForRound(prefs.uiLanguageCode))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
 
-            ForEach(vm.myMatches, id: \.match.id) { item in
-                MatchResultCard(
-                    roundNumber: item.round.roundNumber,
-                    match: item.match,
-                    isCurrent: vm.latestActiveMatchId == item.match.id,
-                    isFinal: vm.isFinal,
-                    canEdit: vm.canEditMatch(item.match)
-                ) {
-                    router.navigate(to: .scoringMatch(gameId: gameId, matchId: item.match.id))
+            ForEach(matchesByRound, id: \.round.id) { group in
+                Section(WatchCopy.roundSection(prefs.uiLanguageCode, number: group.round.roundNumber)) {
+                    ForEach(group.matches, id: \.id) { match in
+                        MatchResultCard(
+                            roundNumber: group.round.roundNumber,
+                            match: match,
+                            isCurrent: vm.latestActiveMatchId == match.id,
+                            isFinal: vm.isFinal,
+                            canEdit: vm.canEditMatch(match),
+                            isMatchCompleted: vm.isMatchCompleted(match)
+                        ) {
+                            router.navigate(to: .scoringMatch(gameId: gameId, matchId: match.id))
+                        }
+                    }
                 }
             }
 
             if vm.canFinalizeResults {
-                Button(WatchCopy.finalizeResults(prefs.uiLanguageCode)) {
+                Button(vm.isFinalizing ? WatchCopy.finalizingResults(prefs.uiLanguageCode) : WatchCopy.finalizeResults(prefs.uiLanguageCode)) {
                     Task { await vm.finalizeResults() }
                 }
+                .disabled(vm.isFinalizing)
                 .buttonStyle(.borderedProminent)
             }
 
@@ -81,6 +156,9 @@ struct MatchListView: View {
                 }
             }
         }
-        .refreshable { await vm.refresh() }
+        .refreshable {
+            await vm.refresh()
+            await WorkoutSyncOutbox.shared.flush()
+        }
     }
 }

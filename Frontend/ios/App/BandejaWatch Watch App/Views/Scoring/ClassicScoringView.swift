@@ -4,16 +4,17 @@ struct ClassicScoringView: View {
     @Bindable var vm: MatchScoringViewModel
     let onFinish: () -> Void
     @Environment(WatchPreferencesStore.self) private var prefs
+    @State private var showMoreActions = false
 
     var body: some View {
         let lang = prefs.uiLanguageCode
         ScrollView {
-            VStack(spacing: 10) {
+            VStack(spacing: 12) {
                 ScoreHintBanner(vm: vm)
 
                 if vm.isTieBreakMode {
                     Text(WatchCopy.tieBreak(lang))
-                        .font(.caption)
+                        .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                     HStack(alignment: .top, spacing: 8) {
                         WatchScoringTeamColumn(
@@ -36,7 +37,7 @@ struct ClassicScoringView: View {
                 } else {
                     if case .deuce = vm.classicPointState {
                         Text(WatchCopy.deuce(lang))
-                            .font(.caption)
+                            .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
                     }
                     HStack(alignment: .top, spacing: 8) {
@@ -59,20 +60,26 @@ struct ClassicScoringView: View {
                     }
                 }
 
-                let set = vm.sets[safe: vm.activeSetIndex]
-                Text("\(WatchCopy.setLabel(lang, number: vm.activeSetIndex + 1)): \(set?.teamA ?? 0)-\(set?.teamB ?? 0)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Button(WatchCopy.saveSet(lang)) {
-                    Task { await vm.saveCurrentSets() }
-                }
-                .buttonStyle(.bordered)
-                .disabled(vm.isSaving || vm.isReadOnly)
-
-                if vm.canAdvanceToNextSet() && !vm.isReadOnly {
-                    Button(WatchCopy.nextSet(lang)) { vm.nextSet() }
-                        .buttonStyle(.bordered)
+                if !vm.isReadOnly {
+                    Button {
+                        showMoreActions = true
+                    } label: {
+                        Label(WatchCopy.moreScoringActions(lang), systemImage: "ellipsis.circle")
+                    }
+                    .buttonStyle(.bordered)
+                    .confirmationDialog(
+                        WatchCopy.moreScoringActions(lang),
+                        isPresented: $showMoreActions,
+                        titleVisibility: .visible
+                    ) {
+                        Button(WatchCopy.saveSet(lang)) {
+                            Task { await vm.saveCurrentSets() }
+                        }
+                        .disabled(vm.isSaving)
+                        if vm.canAdvanceToNextSet() {
+                            Button(WatchCopy.nextSet(lang)) { vm.nextSet() }
+                        }
+                    }
                 }
 
                 Button(vm.isSaving ? WatchCopy.saving(lang) : WatchCopy.finishMatch(lang)) {
