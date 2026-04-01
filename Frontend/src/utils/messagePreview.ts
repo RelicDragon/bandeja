@@ -9,7 +9,7 @@ export function parseMessagePreview(preview: string | null | undefined, t: TFunc
     }
 
     if (preview.startsWith('[TYPE:VOICE]')) {
-        const dur = preview.slice(11);
+        const dur = preview.slice(12);
         return `🎤 ${t('chat.voiceMessage', 'Voice message')} (${dur})`;
     }
 

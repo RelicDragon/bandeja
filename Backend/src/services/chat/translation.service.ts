@@ -2,7 +2,7 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { getAiService } from '../ai/ai.service';
 import { LLM_REASON } from '../ai/llmReasons';
-import { translationMatchesTargetFranc } from './translationFrancCheck';
+import { sourceAppearsToBeTargetLanguage, translationMatchesTargetFranc } from './translationFrancCheck';
 import { MESSAGE_TRANSLATION_PENDING } from './translationPending';
 import { normalizeTranslationOutput } from './translationOutputNormalize';
 
@@ -51,13 +51,21 @@ export class TranslationService {
     targetLanguage: string,
     userId?: string
   ): Promise<string> {
+    if (!text || !text.trim()) {
+      throw new ApiError(400, 'Text to translate is required');
+    }
+
+    if (await sourceAppearsToBeTargetLanguage(text, targetLanguage)) {
+      const out = normalizeTranslationOutput(text);
+      if (out) {
+        console.info('[translation] skip_same_language', { targetLanguage, userId: userId ?? null });
+        return out;
+      }
+    }
+
     const ai = getAiService();
     if (!ai.isConfigured()) {
       throw new ApiError(503, 'Translation service is temporarily unavailable. Please try again later.');
-    }
-
-    if (!text || !text.trim()) {
-      throw new ApiError(400, 'Text to translate is required');
     }
 
     const targetLanguageName = TRANSLATION_LANGUAGE_NAMES[targetLanguage] || targetLanguage;

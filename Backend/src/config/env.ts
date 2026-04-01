@@ -61,5 +61,10 @@ export const config = {
   cityGroupWelcomeSenderId: process.env.CITY_GROUP_WELCOME_SENDER_ID || null,
   /** Fallback city id used when IP-based city detection fails (env: FALLBACK_CITY_ID). */
   fallbackCityId: process.env.FALLBACK_CITY_ID || null,
+  /**
+   * City group chats: emit join system messages on auto-add; omit leave system messages.
+   * Env: CITY_GROUP_REFINED_SYSTEM_MESSAGES=true
+   */
+  cityGroupRefinedSystemMessages: process.env.CITY_GROUP_REFINED_SYSTEM_MESSAGES === 'true',
 };
 

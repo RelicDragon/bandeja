@@ -118,6 +118,20 @@ function evalFrancTop(
   return topLangs.some((c) => expected.includes(c));
 }
 
+function evalFrancSourceMatchesTarget(
+  ranked: Array<[string, number]>,
+  expected: readonly string[]
+): boolean {
+  const topLangs = ranked.slice(0, FRANC_TOP_K).map(([c]) => c);
+  if (topLangs.length === 0) {
+    return false;
+  }
+  if (topLangs.every((c) => c === 'und')) {
+    return false;
+  }
+  return topLangs.some((c) => expected.includes(c));
+}
+
 export async function translationMatchesTargetFranc(
   translation: string,
   targetLanguage: string,
@@ -178,4 +192,63 @@ export async function translationMatchesTargetFranc(
   });
 
   return pass;
+}
+
+export async function sourceAppearsToBeTargetLanguage(
+  text: string,
+  targetLanguage: string
+): Promise<boolean> {
+  const code = targetLanguage.toLowerCase();
+  const expected = FRANC_EXPECTED_BY_TARGET[code];
+  if (!expected?.length) {
+    return false;
+  }
+
+  const cleaned = normalizeTranslationOutput(text);
+  if (!cleaned) {
+    return false;
+  }
+
+  const sample = sampleForFrancDetection(cleaned);
+  if (!sample) {
+    return false;
+  }
+
+  if (shouldSkipObviousShortNoTargetScript(sample, code)) {
+    return false;
+  }
+
+  const minLen = useLowFrancMinLength(sample, code) ? FRANC_MIN_AGGRESSIVE : FRANC_MIN_DEFAULT;
+  const francAll = await getFrancAll();
+
+  const ranked = francAll(sample, {
+    minLength: minLen,
+    only: [...ALL_FRANC_ONLY_CODES],
+  });
+  let francOk = evalFrancSourceMatchesTarget(ranked, expected);
+
+  if (!francOk && minLen > FRANC_MIN_AGGRESSIVE && sample.length >= FRANC_MIN_AGGRESSIVE) {
+    const rankedLoose = francAll(sample, {
+      minLength: FRANC_MIN_AGGRESSIVE,
+      only: [...ALL_FRANC_ONLY_CODES],
+    });
+    francOk = evalFrancSourceMatchesTarget(rankedLoose, expected);
+  }
+
+  const tinyldHits = detectAll(sample);
+  const tinyldOk = tinyldTopKPasses(sample, code, tinyldHits);
+  const scriptOk = scriptFallbackPasses(sample, code);
+
+  const same = francOk || tinyldOk || scriptOk;
+
+  console.info('[translation] source_same_lang', {
+    target: code,
+    same,
+    francOk,
+    tinyldOk,
+    scriptOk,
+    sampleLen: sample.length,
+  });
+
+  return same;
 }

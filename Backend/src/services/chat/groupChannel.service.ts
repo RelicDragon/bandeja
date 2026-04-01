@@ -16,6 +16,47 @@ type GcWithParticipants = Awaited<ReturnType<typeof prisma.groupChannel.findMany
   pinnedByUsers?: Array<{ pinnedAt: Date }>;
 };
 
+async function emitPrivateGroupUserJoinedSystemMessage(
+  groupChannelId: string,
+  isChannel: boolean,
+  userId: string
+): Promise<void> {
+  if (isChannel) return;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: USER_SELECT_FIELDS,
+  });
+  if (!user) return;
+  const userName = getUserDisplayName(user.firstName, user.lastName);
+  await createSystemMessage(
+    groupChannelId,
+    { type: SystemMessageType.USER_JOINED_CHAT, variables: { userName } },
+    undefined,
+    ChatContextType.GROUP
+  );
+}
+
+async function emitPrivateGroupUserLeftSystemMessage(
+  groupChannelId: string,
+  meta: { isChannel: boolean; isCityGroup: boolean },
+  userId: string
+): Promise<void> {
+  if (meta.isChannel) return;
+  if (config.cityGroupRefinedSystemMessages && meta.isCityGroup) return;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: USER_SELECT_FIELDS,
+  });
+  if (!user) return;
+  const userName = getUserDisplayName(user.firstName, user.lastName);
+  await createSystemMessage(
+    groupChannelId,
+    { type: SystemMessageType.USER_LEFT_CHAT, variables: { userName } },
+    undefined,
+    ChatContextType.GROUP
+  );
+}
+
 function mapGroupChannelToResponse(gc: GcWithParticipants, userId: string, isMuted: boolean) {
   const userParticipant = gc.participants.find((p) => p.userId === userId);
   const isOwner = userParticipant?.role === ParticipantRole.OWNER;
@@ -35,6 +76,8 @@ function mapGroupChannelToResponse(gc: GcWithParticipants, userId: string, isMut
 }
 
 export class GroupChannelService {
+  static emitPrivateGroupUserJoinedSystemMessage = emitPrivateGroupUserJoinedSystemMessage;
+
   static async getGroupChannelOwner(groupChannelId: string) {
     const owner = await prisma.groupChannelParticipant.findFirst({
       where: {
@@ -592,25 +635,7 @@ export class GroupChannelService {
       }
     });
 
-    if (!groupChannel.isChannel) {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: USER_SELECT_FIELDS,
-      });
-
-      if (user) {
-        const userName = getUserDisplayName(user.firstName, user.lastName);
-        await createSystemMessage(
-          groupChannelId,
-          {
-            type: SystemMessageType.USER_JOINED_CHAT,
-            variables: { userName }
-          },
-          undefined,
-          ChatContextType.GROUP
-        );
-      }
-    }
+    await emitPrivateGroupUserJoinedSystemMessage(groupChannelId, groupChannel.isChannel, userId);
 
     return 'Successfully joined the group/channel';
   }
@@ -659,25 +684,11 @@ export class GroupChannelService {
       }
     });
 
-    if (!groupChannel.isChannel) {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: USER_SELECT_FIELDS,
-      });
-
-      if (user) {
-        const userName = getUserDisplayName(user.firstName, user.lastName);
-        await createSystemMessage(
-          groupChannelId,
-          {
-            type: SystemMessageType.USER_LEFT_CHAT,
-            variables: { userName }
-          },
-          undefined,
-          ChatContextType.GROUP
-        );
-      }
-    }
+    await emitPrivateGroupUserLeftSystemMessage(
+      groupChannelId,
+      { isChannel: groupChannel.isChannel, isCityGroup: groupChannel.isCityGroup },
+      userId
+    );
 
     return 'Successfully left the group/channel';
   }
@@ -848,25 +859,11 @@ export class GroupChannelService {
       }
     });
 
-    if (!invite.groupChannel.isChannel) {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: USER_SELECT_FIELDS,
-      });
-
-      if (user) {
-        const userName = getUserDisplayName(user.firstName, user.lastName);
-        await createSystemMessage(
-          invite.groupChannelId,
-          {
-            type: SystemMessageType.USER_JOINED_CHAT,
-            variables: { userName }
-          },
-          undefined,
-          ChatContextType.GROUP
-        );
-      }
-    }
+    await emitPrivateGroupUserJoinedSystemMessage(
+      invite.groupChannelId,
+      invite.groupChannel.isChannel,
+      userId
+    );
 
     return 'Successfully accepted invitation';
   }
@@ -1179,25 +1176,11 @@ export class GroupChannelService {
       }
     });
 
-    if (!groupChannel.isChannel) {
-      const user = await prisma.user.findUnique({
-        where: { id: targetUserId },
-        select: USER_SELECT_FIELDS,
-      });
-
-      if (user) {
-        const userName = getUserDisplayName(user.firstName, user.lastName);
-        await createSystemMessage(
-          groupChannelId,
-          {
-            type: SystemMessageType.USER_LEFT_CHAT,
-            variables: { userName }
-          },
-          undefined,
-          ChatContextType.GROUP
-        );
-      }
-    }
+    await emitPrivateGroupUserLeftSystemMessage(
+      groupChannelId,
+      { isChannel: groupChannel.isChannel, isCityGroup: groupChannel.isCityGroup },
+      targetUserId
+    );
 
     return { success: true };
   }
