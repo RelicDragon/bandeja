@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
+import toast from 'react-hot-toast';
+import { ChatMessage, ChatMessageWithStatus, chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { UnifiedMessageMenu } from '../UnifiedMessageMenu';
 import { ReplyPreview } from '../ReplyPreview';
@@ -54,6 +55,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const [showFailedMenu, setShowFailedMenu] = useState(false);
   const [respondingToRequest, setRespondingToRequest] = useState(false);
   const [currentMessage, setCurrentMessage] = useState(message);
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   const isOwnMessage = currentMessage.senderId === user?.id;
   const isSystemMessage = !currentMessage.senderId;
@@ -115,7 +117,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
   const displayContent = isSystemMessage
     ? formatSystemMessageForDisplay(currentMessage.content, t)
-    : currentMessage.content;
+    : currentMessage.messageType === 'VOICE' && currentMessage.audioTranscription?.transcription?.trim()
+      ? currentMessage.audioTranscription.transcription
+      : currentMessage.content;
 
   const parsedContent = isSystemMessage ? null : parseContentWithMentionsAndUrls(displayContent);
   const userLanguageCode = user?.language ? extractLanguageCode(user.language).toLowerCase() : 'en';
@@ -153,6 +157,29 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     }
   };
 
+  const runTranscribe = useCallback(async (): Promise<boolean> => {
+    const id = currentMessage.id;
+    if (isTranscribing) return false;
+    setIsTranscribing(true);
+    try {
+      const data = await chatApi.transcribeMessage(id);
+      setCurrentMessage((prev) => (prev.id === id ? { ...prev, audioTranscription: data } : prev));
+      return true;
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number } };
+      const msg =
+        err?.response?.status === 503
+          ? t('chat.transcriptionUnavailable', { defaultValue: 'Transcription is temporarily unavailable. Please try again later.' })
+          : err?.response?.status === 404
+            ? t('chat.transcriptionAudioMissing', { defaultValue: 'Voice audio could not be loaded.' })
+            : t('chat.transcriptionError', { defaultValue: 'Failed to transcribe voice message. Please try again.' });
+      toast.error(msg);
+      return false;
+    } finally {
+      setIsTranscribing(false);
+    }
+  }, [currentMessage.id, isTranscribing, t]);
+
   const getThumbnailUrl = (index: number): string => {
     if (currentMessage.thumbnailUrls?.[index]) return currentMessage.thumbnailUrls[index] || '';
     return currentMessage.mediaUrls?.[index] || '';
@@ -161,7 +188,14 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const handleImageClick = (url: string) => setFullscreenImage(url || null);
 
   const handleCopyMessage = (msg: ChatMessage) => {
-    const text = !msg.senderId ? formatSystemMessageForDisplay(msg.content, t) : msg.content;
+    let text: string;
+    if (!msg.senderId) {
+      text = formatSystemMessageForDisplay(msg.content, t);
+    } else if (msg.messageType === 'VOICE' && msg.audioTranscription?.transcription?.trim()) {
+      text = msg.audioTranscription.transcription;
+    } else {
+      text = msg.content ?? '';
+    }
     void navigator.clipboard.writeText(text);
   };
 
@@ -301,6 +335,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     translationContent={translationContent}
                     displayContent={displayContent}
                     hasTranslation={hasTranslation}
+                    onTranscribe={!isOffline ? () => void runTranscribe() : undefined}
+                    isTranscribing={isTranscribing}
                     formatMessageTime={formatMessageTime}
                     getThumbnailUrl={getThumbnailUrl}
                     onImageClick={handleImageClick}
@@ -422,6 +458,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           onDeleteStart={handleDeleteStart}
           onReport={(msg) => setReportMessage(msg)}
           onTranslationUpdate={handleTranslationUpdate}
+          isTranscribing={isTranscribing}
+          onTranscribe={!isOffline ? runTranscribe : undefined}
           isPinned={isPinned}
           onPin={onPin}
           onUnpin={onUnpin}

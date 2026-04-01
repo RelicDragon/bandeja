@@ -1,5 +1,6 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { config } from '../config/env';
+import { ApiError } from '../utils/ApiError';
 
 export class S3Service {
   private static client: S3Client | null = null;
@@ -94,5 +95,64 @@ export class S3Service {
     }
     
     return url;
+  }
+
+  static async getObjectBuffer(keyOrUrl: string): Promise<{ buffer: Buffer; contentType: string | undefined }> {
+    this.initialize();
+    const key = this.extractS3Key(keyOrUrl);
+    try {
+      const out = await this.client!.send(
+        new GetObjectCommand({ Bucket: this.bucket, Key: key })
+      );
+      const body = out.Body;
+      if (!body) {
+        console.error('[S3] getObjectBuffer missing Body on successful response', { bucket: this.bucket, key });
+        throw new ApiError(503, 'Transcription service is temporarily unavailable. Please try again later.');
+      }
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of body as AsyncIterable<Uint8Array>) {
+        chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+      return { buffer, contentType: out.ContentType ?? undefined };
+    } catch (e: unknown) {
+      if (e instanceof ApiError) {
+        console.error('[S3] getObjectBuffer ApiError', {
+          bucket: this.bucket,
+          key,
+          statusCode: e.statusCode,
+          message: e.message,
+        });
+        throw e;
+      }
+      const err = e as {
+        name?: string;
+        message?: string;
+        $metadata?: { httpStatusCode?: number; requestId?: string };
+        Code?: string;
+      };
+      const code = err.Code || err.name;
+      const status = err.$metadata?.httpStatusCode;
+      const requestId = err.$metadata?.requestId;
+      if (status === 404 || code === 'NoSuchKey' || code === 'NotFound') {
+        console.error('[S3] getObjectBuffer object missing', { bucket: this.bucket, key, code, status, requestId, message: err.message });
+        throw new ApiError(404, 'Audio file not found');
+      }
+      if (status === 403 || code === 'AccessDenied') {
+        console.error('[S3] getObjectBuffer access denied', { bucket: this.bucket, key, code, status, requestId, message: err.message });
+        throw new ApiError(503, 'Transcription service is temporarily unavailable. Please try again later.');
+      }
+      console.error('[S3] getObjectBuffer failed', {
+        bucket: this.bucket,
+        key,
+        code,
+        status,
+        requestId,
+        message: err.message,
+        errorName: err.name,
+        raw: e,
+      });
+      throw new ApiError(503, 'Transcription service is temporarily unavailable. Please try again later.');
+    }
   }
 }

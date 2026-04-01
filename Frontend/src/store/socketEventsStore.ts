@@ -50,6 +50,14 @@ interface ChatUnreadCountData {
   unreadCount: number;
 }
 
+interface ChatMessageTranscriptionData {
+  contextType: string;
+  contextId: string;
+  messageId: string;
+  audioTranscription: { transcription: string; languageCode: string | null };
+  timestamp?: string;
+}
+
 interface BetCreatedData {
   gameId: string;
   bet: any;
@@ -106,6 +114,7 @@ interface SocketEventsState {
   lastChatReadReceipt: ChatReadReceiptData | null;
   lastChatDeleted: ChatDeletedData | null;
   lastChatMessageUpdated: ChatMessageData | null;
+  lastChatMessageTranscription: ChatMessageTranscriptionData | null;
   lastChatUnreadCount: ChatUnreadCountData | null;
   lastSyncRequired: { timestamp: string } | null;
   lastBetCreated: BetCreatedData | null;
@@ -139,6 +148,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     lastChatReadReceipt: null,
     lastChatDeleted: null,
     lastChatMessageUpdated: null,
+    lastChatMessageTranscription: null,
     lastChatUnreadCount: null,
     lastSyncRequired: null,
     lastBetCreated: null,
@@ -191,6 +201,10 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
 
       const handleChatMessageUpdated = (data: ChatMessageData) => {
         set({ lastChatMessageUpdated: data });
+      };
+
+      const handleChatMessageTranscription = (data: ChatMessageTranscriptionData) => {
+        set({ lastChatMessageTranscription: data });
       };
 
       const handleChatUnreadCount = (data: ChatUnreadCountData) => {
@@ -256,6 +270,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('chat:read-receipt', handleChatReadReceipt);
       socketService.on('chat:deleted', handleChatDeleted);
       socketService.on('chat:message-updated', handleChatMessageUpdated);
+      socketService.on('chat:message-transcription', handleChatMessageTranscription);
       socketService.on('chat:unread-count', handleChatUnreadCount);
       socketService.on('sync-required', handleSyncRequired);
       socketService.on('bet:created', handleBetCreated);
@@ -278,6 +293,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         () => socketService.off('chat:read-receipt', handleChatReadReceipt),
         () => socketService.off('chat:deleted', handleChatDeleted),
         () => socketService.off('chat:message-updated', handleChatMessageUpdated),
+        () => socketService.off('chat:message-transcription', handleChatMessageTranscription),
         () => socketService.off('chat:unread-count', handleChatUnreadCount),
         () => socketService.off('sync-required', handleSyncRequired),
         () => socketService.off('bet:created', handleBetCreated),
@@ -308,6 +324,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         lastChatReadReceipt: null,
         lastChatDeleted: null,
         lastChatMessageUpdated: null,
+        lastChatMessageTranscription: null,
         lastChatUnreadCount: null,
         lastSyncRequired: null,
         lastBetCreated: null,

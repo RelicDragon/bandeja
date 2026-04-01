@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
-import { ChatType, ChatContextType } from '@prisma/client';
+import { ChatType, ChatContextType, MessageType } from '@prisma/client';
 import { SystemMessageType } from '../utils/systemMessages';
 import { MessageService } from '../services/chat/message.service';
 import { ReactionService } from '../services/chat/reaction.service';
@@ -15,6 +15,8 @@ import { withTimeout } from '../utils/promiseWithTimeout';
 import { ChatMuteService } from '../services/chat/chatMute.service';
 import { ChatTranslationPreferenceService } from '../services/chat/chatTranslationPreference.service';
 import { TranslationService, TRANSLATE_TO_LANGUAGE_CODES } from '../services/chat/translation.service';
+import { TranscriptionService } from '../services/chat/transcription.service';
+import { MESSAGE_TRANSCRIPTION_PENDING } from '../services/chat/transcriptionPending';
 import { DraftService } from '../services/chat/draft.service';
 import { GameReadService } from '../services/game/read.service';
 import { PollService } from '../services/chat/poll.service';
@@ -45,7 +47,19 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     headers: req.headers
   });
 
-  const { chatContextType = 'GAME', contextId, content, mediaUrls, replyToId, chatType = ChatType.PUBLIC, mentionIds = [], poll } = req.body;
+  const {
+    chatContextType = 'GAME',
+    contextId,
+    content,
+    mediaUrls,
+    replyToId,
+    chatType = ChatType.PUBLIC,
+    mentionIds = [],
+    poll,
+    messageType: rawMessageType,
+    audioDurationMs: rawAudioDurationMs,
+    waveformData: rawWaveformData,
+  } = req.body;
   const senderId = req.userId;
 
   console.log('[createMessage] Parsed data:', {
@@ -74,6 +88,12 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
 
   // Ensure mediaUrls is an array
   const finalMediaUrls = Array.isArray(mediaUrls) ? mediaUrls : [];
+  const messageType = rawMessageType === 'VOICE' ? MessageType.VOICE : undefined;
+  const audioDurationMs =
+    rawAudioDurationMs != null && rawAudioDurationMs !== '' ? Number(rawAudioDurationMs) : undefined;
+  const waveformData = Array.isArray(rawWaveformData)
+    ? rawWaveformData.map((x: unknown) => Number(x)).filter((x: number) => !Number.isNaN(x))
+    : undefined;
   console.log('[createMessage] Final mediaUrls:', finalMediaUrls);
 
   // Validate that message has content, media, or poll
@@ -107,7 +127,10 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
       replyToId,
       chatType: chatType as ChatType,
       mentionIds: Array.isArray(mentionIds) ? mentionIds : [],
-      poll
+      poll,
+      messageType,
+      audioDurationMs: audioDurationMs !== undefined && !Number.isNaN(audioDurationMs) ? audioDurationMs : undefined,
+      waveformData,
     });
 
     console.log('[createMessage] Message created successfully:', message.id);
@@ -834,14 +857,25 @@ export const translateMessage = asyncHandler(async (req: AuthRequest, res: Respo
 
   const message = await prisma.chatMessage.findUnique({
     where: { id: messageId },
-    select: { content: true },
+    select: { content: true, messageType: true },
   });
 
   if (!message) {
     throw new ApiError(404, 'Message not found');
   }
 
-  if (!message.content || !message.content.trim()) {
+  let sourceText = message.content?.trim() ?? '';
+  if (!sourceText && message.messageType === MessageType.VOICE) {
+    const tr = await prisma.messageTranscription.findUnique({
+      where: { messageId },
+      select: { transcription: true },
+    });
+    if (tr?.transcription && tr.transcription !== MESSAGE_TRANSCRIPTION_PENDING) {
+      sourceText = tr.transcription.trim();
+    }
+  }
+
+  if (!sourceText) {
     throw new ApiError(400, 'Message has no text content to translate');
   }
 
@@ -860,13 +894,103 @@ export const translateMessage = asyncHandler(async (req: AuthRequest, res: Respo
     messageId,
     languageCode,
     userId,
-    message.content
+    sourceText
   );
 
   res.json({
     success: true,
     data: translation
   });
+});
+
+export const transcribeMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { messageId } = req.params;
+  const userId = req.userId;
+
+  if (!userId) {
+    console.warn('[transcription] http_unauthorized', { messageId });
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const message = await prisma.chatMessage.findUnique({
+    where: { id: messageId },
+    select: {
+      messageType: true,
+      mediaUrls: true,
+      audioDurationMs: true,
+      chatContextType: true,
+      contextId: true,
+      chatType: true,
+    },
+  });
+
+  if (!message) {
+    console.warn('[transcription] http_message_not_found', { messageId, userId });
+    throw new ApiError(404, 'Message not found');
+  }
+
+  if (message.messageType !== MessageType.VOICE) {
+    console.warn('[transcription] http_not_voice_message', {
+      messageId,
+      userId,
+      messageType: message.messageType,
+    });
+    throw new ApiError(400, 'Only voice messages can be transcribed');
+  }
+
+  const audioUrl = message.mediaUrls[0];
+  if (!audioUrl?.trim()) {
+    console.warn('[transcription] http_no_media_url', { messageId, userId, mediaCount: message.mediaUrls?.length ?? 0 });
+    throw new ApiError(400, 'Voice message has no audio');
+  }
+
+  try {
+    await MessageService.validateMessageAccess(message, userId, false);
+  } catch (e: unknown) {
+    console.warn('[transcription] http_access_denied', {
+      messageId,
+      userId,
+      contextType: message.chatContextType,
+      contextId: message.contextId,
+      isApiError: e instanceof ApiError,
+      statusCode: e instanceof ApiError ? e.statusCode : undefined,
+      message: e instanceof ApiError ? e.message : (e as Error)?.message,
+    });
+    throw e;
+  }
+
+  try {
+    const data = await TranscriptionService.getOrCreateTranscription(
+      messageId,
+      userId,
+      audioUrl,
+      message.audioDurationMs
+    );
+
+    const socketService = (global as any).socketService;
+    if (socketService?.emitMessageTranscription) {
+      socketService.emitMessageTranscription(
+        message.chatContextType,
+        message.contextId,
+        messageId,
+        data
+      );
+    }
+
+    res.json({
+      success: true,
+      data,
+    });
+  } catch (e: unknown) {
+    if (!(e instanceof ApiError)) {
+      console.error('[transcription] http_service_unexpected_error', {
+        messageId,
+        userId,
+        raw: e,
+      });
+    }
+    throw e;
+  }
 });
 
 const TRANSLATE_DRAFT_MAX_LENGTH = 4000;

@@ -1708,8 +1708,13 @@
       "notReadYet": "Aún no leído",
       "back": "Atrás",
       "translate": "Traducir",
-      "translating": "Traduciendo..."
+      "translating": "Traduciendo...",
+      "transcribe": "Transcribir",
+      "transcribingVoice": "Transcribiendo…"
     },
+    "transcriptionUnavailable": "La transcripción no está disponible temporalmente. Inténtalo de nuevo más tarde.",
+    "transcriptionError": "No se pudo transcribir el mensaje de voz. Inténtalo de nuevo.",
+    "transcriptionAudioMissing": "No se pudo cargar el audio de la nota de voz.",
     "translationUnavailable": "La traducción no está disponible temporalmente. Por favor, inténtalo de nuevo más tarde.",
     "translationRateLimited": "Demasiadas solicitudes de traducción. Inténtalo de nuevo en unos segundos.",
     "translationError": "Error al traducir el mensaje. Por favor, inténtalo de nuevo.",
@@ -1780,6 +1785,21 @@
       "typeMessage": "Escribe un mensaje...",
       "sendMessage": "Enviar mensaje",
       "helpText": "Presiona Enter para enviar, Shift+Enter para nueva línea"
+    },
+    "voiceMessage": "Mensaje de voz",
+    "micPermissionDenied": "Acceso al micrófono denegado",
+    "micNeedsHttps": "El micrófono requiere conexión segura (HTTPS)",
+    "voiceTooShort": "Grabación demasiado corta",
+    "voiceMaxDuration": "La grabación no puede superar 30 minutos",
+    "voice": {
+      "record": "Grabar mensaje de voz",
+      "playPause": "Reproducir o pausar mensaje de voz",
+      "skipBack10": "Retroceder 10 segundos",
+      "skipForward10": "Avanzar 10 segundos",
+      "cancelRecording": "Cancelar grabación",
+      "sendRecording": "Enviar mensaje de voz",
+      "transcribe": "Transcribir",
+      "transcribing": "Transcribiendo…"
     },
     "systemMessages": {
       "USER_JOINED_GAME": "{{userName}} se unió al juego",

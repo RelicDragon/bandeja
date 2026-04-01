@@ -1779,8 +1779,13 @@
       "notReadYet": "Ещё не прочитано",
       "back": "Назад",
       "translate": "Перевести",
-      "translating": "Переводится..."
+      "translating": "Переводится...",
+      "transcribe": "Расшифровать",
+      "transcribingVoice": "Расшифровка…"
     },
+    "transcriptionUnavailable": "Расшифровка временно недоступна. Попробуйте позже.",
+    "transcriptionError": "Не удалось расшифровать голосовое сообщение. Попробуйте снова.",
+    "transcriptionAudioMissing": "Не удалось загрузить аудио голосового сообщения.",
     "translationUnavailable": "Перевод временно недоступен. Пожалуйста, попробуйте позже.",
     "translationRateLimited": "Слишком много запросов на перевод. Попробуйте через несколько секунд.",
     "translationError": "Не удалось перевести сообщение. Пожалуйста, попробуйте снова.",
@@ -1855,6 +1860,21 @@
       "typeMessage": "Напишите сообщение...",
       "sendMessage": "Отправить сообщение",
       "helpText": "Нажмите Enter для отправки, Shift+Enter для новой строки"
+    },
+    "voiceMessage": "Голосовое сообщение",
+    "micPermissionDenied": "Доступ к микрофону запрещён",
+    "micNeedsHttps": "Для микрофона нужно безопасное соединение (HTTPS)",
+    "voiceTooShort": "Слишком короткая запись",
+    "voiceMaxDuration": "Запись не может быть длиннее 30 минут",
+    "voice": {
+      "record": "Записать голосовое сообщение",
+      "playPause": "Воспроизвести или пауза",
+      "skipBack10": "Назад на 10 секунд",
+      "skipForward10": "Вперёд на 10 секунд",
+      "cancelRecording": "Отменить запись",
+      "sendRecording": "Отправить голосовое сообщение",
+      "transcribe": "Расшифровать",
+      "transcribing": "Расшифровка…"
     },
     "systemMessages": {
       "USER_JOINED_GAME": "{{userName}} присоединился к игре",

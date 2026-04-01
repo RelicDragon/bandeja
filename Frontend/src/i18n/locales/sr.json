@@ -1732,8 +1732,13 @@
       "notReadYet": "Још није прочитано",
       "back": "Назад",
       "translate": "Преведи",
-      "translating": "Преводи се..."
+      "translating": "Преводи се...",
+      "transcribe": "Транскрибуј",
+      "transcribingVoice": "Транскрибује се…"
     },
+    "transcriptionUnavailable": "Транскрипција је привремено недоступна. Покушајте касније.",
+    "transcriptionError": "Није успела транскрипција гласовне поруке. Покушајте поново.",
+    "transcriptionAudioMissing": "Аудио гласовне поруке није учитано.",
     "translationUnavailable": "Превод је привремено недоступан. Молимо покушајте касније.",
     "translationRateLimited": "Превише захтева за превод. Покушајте поново за неколико секунди.",
     "translationError": "Неуспешно превођење поруке. Молимо покушајте поново.",
@@ -1808,6 +1813,21 @@
       "typeMessage": "Укуцај поруку...",
       "sendMessage": "Пошаљи поруку",
       "helpText": "Притисни Enter за слање, Shift+Enter за нови ред"
+    },
+    "voiceMessage": "Гласовна порука",
+    "micPermissionDenied": "Приступ микрофону одбијен",
+    "micNeedsHttps": "Микрофон захтева безбедну везу (HTTPS)",
+    "voiceTooShort": "Снимак је прекратак",
+    "voiceMaxDuration": "Снимак не може бити дужи од 30 минута",
+    "voice": {
+      "record": "Сними гласовну поруку",
+      "playPause": "Пусти или паузирај",
+      "skipBack10": "Назад 10 секунди",
+      "skipForward10": "Напред 10 секунди",
+      "cancelRecording": "Откажи снимање",
+      "sendRecording": "Пошаљи гласовну поруку",
+      "transcribe": "Транскрибуј",
+      "transcribing": "Транскрибује се…"
     },
     "systemMessages": {
       "USER_JOINED_GAME": "{{userName}} се придружио игри",

@@ -1,5 +1,9 @@
 import { useCallback, useRef, startTransition } from 'react';
-import { type ChatMessage, type ChatMessageWithStatus, type OptimisticMessagePayload } from '@/api/chat';
+import {
+  type ChatMessage,
+  type ChatMessageWithStatus,
+  type OptimisticMessagePayload,
+} from '@/api/chat';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
@@ -47,6 +51,9 @@ export function useGameChatOptimistic({
         mentionIds: payload.mentionIds,
         state: 'SENT',
         chatType: payload.chatType,
+        messageType: payload.messageType,
+        audioDurationMs: payload.audioDurationMs,
+        waveformData: payload.waveformData,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         replyToId: payload.replyToId,
@@ -205,7 +212,13 @@ export function useGameChatOptimistic({
           const idx = prevMessages.findIndex((m): m is ChatMessageWithStatus => {
             const status = (m as ChatMessageWithStatus)._status;
             if (status !== 'SENDING' && status !== 'FAILED') return false;
-            if (m.content !== message.content || m.senderId !== message.senderId) return false;
+            if (m.senderId !== message.senderId) return false;
+            const mt = (msg: ChatMessage) => msg.messageType ?? 'TEXT';
+            if (mt(m as ChatMessage) !== mt(message)) return false;
+            if (message.messageType === 'VOICE') {
+              return (m.mediaUrls?.[0] ?? '') === (message.mediaUrls?.[0] ?? '');
+            }
+            if (m.content !== message.content) return false;
             if (normalizeChatType(m.chatType) !== normalizedMessageChatType) return false;
             const mReply = m.replyToId ?? null;
             if (mReply !== msgReplyToId) return false;

@@ -28,6 +28,7 @@ import {
   respondToChatRequest,
   reportMessage,
   translateMessage,
+  transcribeMessage,
   translateDraft,
   getUnreadObjects,
   muteChat,
@@ -115,6 +116,15 @@ const translateMessageLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
   message: { success: false, message: 'Too many translation requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
+
+const transcribeMessageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: { success: false, message: 'Too many transcription requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
@@ -281,6 +291,13 @@ router.post(
     param('messageId').notEmpty().withMessage('Message ID is required')
   ]),
   translateMessage
+);
+
+router.post(
+  '/messages/:messageId/transcribe',
+  transcribeMessageLimiter,
+  validate([param('messageId').notEmpty().withMessage('Message ID is required')]),
+  transcribeMessage
 );
 
 router.post(

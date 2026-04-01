@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Reply } from 'lucide-react';
-import { ChatMessage } from '@/api/chat';
+import type { ChatMessage } from '@/api/chat';
 import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 
 const REPLY_TRUNCATE_LEN = 100;
@@ -46,7 +46,10 @@ export const ReplyPreview: React.FC<ReplyPreviewProps> = ({
   };
 
   const raw = convertMentionsToPlaintext(replyTo.content || '');
-  const displayContent = truncate(raw, REPLY_TRUNCATE_LEN);
+  const displayContent =
+    (replyTo as ChatMessage['replyTo'])?.messageType === 'VOICE'
+      ? t('chat.voiceMessage', { defaultValue: 'Voice message' })
+      : truncate(raw, REPLY_TRUNCATE_LEN);
 
   return (
     <div className={`bg-gray-50 dark:bg-gray-700 border-l-4 border-green-500 p-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${className}`}>

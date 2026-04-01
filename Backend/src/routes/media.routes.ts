@@ -6,7 +6,9 @@ import {
   uploadAvatar, 
   uploadGameAvatar,
   uploadGroupChannelAvatar,
-  uploadChatImage, 
+  uploadChatImage,
+  uploadChatAudio,
+  uploadChatAudioMulter,
   uploadChatDocument, 
   uploadGameMedia, 
   uploadMarketItemImage,
@@ -48,6 +50,12 @@ router.post(
   '/upload/chat/image',
   upload.single('image'),
   uploadChatImage
+);
+
+router.post(
+  '/upload/chat/audio',
+  uploadChatAudioMulter.single('audio'),
+  uploadChatAudio
 );
 
 router.post(

@@ -15,6 +15,10 @@ export interface ChatImageUploadResponse {
   thumbnailSize: { width: number; height: number };
 }
 
+export interface ChatAudioUploadResponse {
+  audioUrl: string;
+}
+
 export const mediaApi = {
   uploadAvatar: async (avatarFile: File, originalFile: File): Promise<MediaUploadResponse> => {
     console.log('mediaApi.uploadAvatar: Received files:', {
@@ -100,6 +104,24 @@ export const mediaApi = {
       },
     });
     
+    return response.data.data;
+  },
+
+  uploadChatAudio: async (audioBlob: Blob, filename: string, contextId: string, contextType?: 'GAME' | 'BUG' | 'USER' | 'GROUP'): Promise<ChatAudioUploadResponse> => {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, filename);
+    if (contextType === 'BUG') {
+      formData.append('bugId', contextId);
+    } else if (contextType === 'USER') {
+      formData.append('userChatId', contextId);
+    } else if (contextType === 'GROUP') {
+      formData.append('groupChannelId', contextId);
+    } else {
+      formData.append('gameId', contextId);
+    }
+    const response = await api.post<ApiResponse<ChatAudioUploadResponse>>('/media/upload/chat/audio', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data.data;
   },
 };

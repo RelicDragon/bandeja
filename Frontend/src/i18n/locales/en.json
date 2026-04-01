@@ -1776,8 +1776,13 @@
       "notReadYet": "Not read yet",
       "back": "Back",
       "translate": "Translate",
-      "translating": "Translating..."
+      "translating": "Translating...",
+      "transcribe": "Transcribe",
+      "transcribingVoice": "Transcribing…"
     },
+    "transcriptionUnavailable": "Transcription is temporarily unavailable. Please try again later.",
+    "transcriptionError": "Failed to transcribe voice message. Please try again.",
+    "transcriptionAudioMissing": "Voice audio could not be loaded.",
     "translationUnavailable": "Translation is temporarily unavailable. Please try again later.",
     "translationRateLimited": "Too many translation requests. Please try again in a few seconds.",
     "translationError": "Failed to translate message. Please try again.",
@@ -1848,6 +1853,21 @@
       "typeMessage": "Type a message...",
       "sendMessage": "Send message",
       "helpText": "Press Enter to send, Shift+Enter for new line"
+    },
+    "voiceMessage": "Voice message",
+    "micPermissionDenied": "Microphone access denied",
+    "micNeedsHttps": "Microphone requires a secure connection (HTTPS)",
+    "voiceTooShort": "Recording too short",
+    "voiceMaxDuration": "Recording cannot exceed 30 minutes",
+    "voice": {
+      "record": "Record voice message",
+      "playPause": "Play or pause voice message",
+      "skipBack10": "Skip back 10 seconds",
+      "skipForward10": "Skip forward 10 seconds",
+      "cancelRecording": "Cancel recording",
+      "sendRecording": "Send voice message",
+      "transcribe": "Transcribe",
+      "transcribing": "Transcribing…"
     },
     "systemMessages": {
       "USER_JOINED_GAME": "{{userName}} joined the game",

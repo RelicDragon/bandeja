@@ -10,7 +10,7 @@ import { REACTION_EMOJIS, formatFullDateTime, getUserDisplayName, getUserInitial
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { isCapacitor } from '@/utils/capacitor';
-import { Flag, Languages, Pencil, Pin, PinOff } from 'lucide-react';
+import { FileText, Flag, Languages, Pencil, Pin, PinOff } from 'lucide-react';
 
 interface UnifiedMessageMenuProps {
   message: ChatMessage;
@@ -27,6 +27,8 @@ interface UnifiedMessageMenuProps {
   onDeleteStart?: (messageId: string) => void;
   onReport?: (message: ChatMessage) => void;
   onTranslationUpdate?: (messageId: string, translation: { languageCode: string; translation: string }) => void;
+  onTranscribe?: () => Promise<boolean>;
+  isTranscribing?: boolean;
   isPinned?: boolean;
   onPin?: (message: ChatMessage) => void;
   onUnpin?: (messageId: string) => void;
@@ -48,6 +50,8 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   onDeleteStart,
   onReport,
   onTranslationUpdate,
+  onTranscribe,
+  isTranscribing = false,
   isPinned = false,
   onPin,
   onUnpin,
@@ -163,8 +167,18 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     onClose();
   };
 
+  const translateSourceText = (): string => {
+    const c = message.content?.trim() ?? '';
+    if (c) return c;
+    if (message.messageType === 'VOICE') {
+      return message.audioTranscription?.transcription?.trim() ?? '';
+    }
+    return '';
+  };
+
   const handleTranslate = async () => {
-    if (!message.content || !message.content.trim() || isTranslating) {
+    const source = translateSourceText();
+    if (!source || isTranslating) {
       return;
     }
 
@@ -185,6 +199,12 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     } finally {
       setIsTranslating(false);
     }
+  };
+
+  const handleTranscribe = async () => {
+    if (!onTranscribe || isTranscribing) return;
+    const ok = await onTranscribe();
+    if (ok) onClose();
   };
 
   const handleReport = () => {
@@ -426,7 +446,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                 <span>{t('chat.contextMenu.reply')}</span>
               </button>
             )}
-            {isOwnMessage && onEdit && !isSystemMessage && message.content != null && !message.poll && (
+            {isOwnMessage && onEdit && !isSystemMessage && message.content != null && !message.poll && message.messageType !== 'VOICE' && (
               <button
                 onClick={() => { onEdit(message); onClose(); }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
@@ -462,7 +482,25 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                 <span>{t('chat.contextMenu.unpin')}</span>
               </button>
             )}
-            {message.content && message.content.trim() && !isSystemMessage && (
+            {message.messageType === 'VOICE' &&
+              message.mediaUrls?.[0] &&
+              !message.audioTranscription?.transcription?.trim() &&
+              !isSystemMessage &&
+              onTranscribe && (
+                <button
+                  onClick={() => void handleTranscribe()}
+                  disabled={isTranscribing}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>
+                    {isTranscribing
+                      ? t('chat.contextMenu.transcribingVoice', { defaultValue: 'Transcribing…' })
+                      : t('chat.contextMenu.transcribe', { defaultValue: 'Transcribe' })}
+                  </span>
+                </button>
+              )}
+            {translateSourceText() && !isSystemMessage && (
               <button
                 onClick={handleTranslate}
                 disabled={isTranslating}

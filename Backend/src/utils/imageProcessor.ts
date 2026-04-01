@@ -136,6 +136,20 @@ export class ImageProcessor {
       }
     };
   }
+
+  static async processChatAudio(
+    audioBuffer: Buffer,
+    filename: string,
+    mimetype: string
+  ): Promise<{ audioUrl: string }> {
+    const uniqueId = crypto.randomUUID();
+    const ext = path.extname(filename) || '.webm';
+    const baseName = `${uniqueId}${ext}`;
+    const audioS3Key = `uploads/chat/voice/${baseName}`;
+    const contentType = mimetype || 'application/octet-stream';
+    const audioUrl = await S3Service.uploadFile(audioBuffer, audioS3Key, contentType);
+    return { audioUrl };
+  }
   
   static async processGameMedia(imageBuffer: Buffer, filename: string): Promise<ImageProcessingResult> {
     const uniqueId = crypto.randomUUID();

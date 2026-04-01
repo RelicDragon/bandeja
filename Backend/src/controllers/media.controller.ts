@@ -30,6 +30,34 @@ const fileFilter = (req: any, file: any, cb: FileFilterCallback) => {
   }
 };
 
+const CHAT_AUDIO_MIMES = [
+  'audio/webm',
+  'audio/ogg',
+  'audio/mp4',
+  'audio/m4a',
+  'audio/x-m4a',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/mpeg',
+  'audio/mp3',
+];
+
+const audioFileFilter = (req: any, file: any, cb: FileFilterCallback) => {
+  if (file.fieldname === 'audio' && CHAT_AUDIO_MIMES.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new ApiError(400, `Invalid audio file: ${file.mimetype}`));
+  }
+};
+
+export const uploadChatAudioMulter = multer({
+  storage: storage,
+  fileFilter: audioFileFilter,
+  limits: {
+    fileSize: 15 * 1024 * 1024,
+  },
+});
+
 export const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
@@ -241,6 +269,43 @@ export const uploadGroupChannelAvatar = asyncHandler(async (req: AuthRequest, re
       avatarSize: result.avatarSize,
       originalSize: result.originalSize
     }
+  });
+});
+
+export const uploadChatAudio = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.file) {
+    throw new ApiError(400, 'No audio file provided');
+  }
+
+  const { gameId, bugId, userChatId, groupChannelId } = req.body;
+  const senderId = req.userId;
+
+  if (!senderId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!gameId && !bugId && !userChatId && !groupChannelId) {
+    throw new ApiError(400, 'At least one of gameId, bugId, userChatId, or groupChannelId is required');
+  }
+
+  if (gameId) {
+    await MessageService.validateGameAccess(gameId, senderId);
+  } else if (bugId) {
+    await MessageService.validateBugAccess(bugId, senderId, true);
+  } else if (userChatId) {
+    await MessageService.validateUserChatAccess(userChatId, senderId, true);
+  } else if (groupChannelId) {
+    await MessageService.validateGroupChannelAccess(groupChannelId, senderId, true);
+  }
+
+  const result = await ImageProcessor.processChatAudio(req.file.buffer, req.file.originalname, req.file.mimetype);
+
+  res.status(200).json({
+    success: true,
+    message: 'Chat audio uploaded successfully',
+    data: {
+      audioUrl: result.audioUrl,
+    },
   });
 });
 

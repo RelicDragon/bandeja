@@ -41,6 +41,7 @@ export interface Poll {
 
 export type MessageState = 'SENT' | 'DELIVERED' | 'READ';
 export type ChatContextType = 'GAME' | 'BUG' | 'USER' | 'GROUP';
+export type MessageType = 'TEXT' | 'IMAGE' | 'VOICE' | 'POLL';
 
 const unreadCountCache = new Map<string, { data: any; timestamp: number }>();
 const UNREAD_COUNT_CACHE_TTL = 1000;
@@ -57,6 +58,9 @@ export interface ChatMessage {
   mentionIds: string[];
   state: MessageState;
   chatType: ChatType;
+  messageType?: MessageType;
+  audioDurationMs?: number | null;
+  waveformData?: number[];
   createdAt: string;
   updatedAt: string;
   editedAt?: string | null;
@@ -64,6 +68,9 @@ export interface ChatMessage {
   replyTo?: {
     id: string;
     content: string;
+    messageType?: MessageType;
+    mediaUrls?: string[];
+    audioDurationMs?: number | null;
     sender: {
       id: string;
       firstName?: string;
@@ -81,6 +88,10 @@ export interface ChatMessage {
     languageCode: string;
     translation: string;
   }>;
+  audioTranscription?: {
+    transcription: string;
+    languageCode: string | null;
+  };
   poll?: Poll;
 }
 
@@ -132,6 +143,9 @@ export interface OptimisticMessagePayload {
   replyTo?: ChatMessage['replyTo'];
   chatType: ChatType;
   mentionIds: string[];
+  messageType?: MessageType;
+  audioDurationMs?: number;
+  waveformData?: number[];
 }
 
 export interface CreateMessageRequest {
@@ -143,6 +157,9 @@ export interface CreateMessageRequest {
   replyToId?: string;
   chatType?: ChatType;
   mentionIds?: string[];
+  messageType?: MessageType;
+  audioDurationMs?: number;
+  waveformData?: number[];
   poll?: {
     question: string;
     type: PollType;
@@ -737,6 +754,13 @@ export const chatApi = {
   translateMessage: async (messageId: string) => {
     const response = await api.post<ApiResponse<{ translation: string; languageCode: string }>>(
       `/chat/messages/${messageId}/translate`
+    );
+    return response.data.data;
+  },
+
+  transcribeMessage: async (messageId: string) => {
+    const response = await api.post<ApiResponse<{ transcription: string; languageCode: string | null }>>(
+      `/chat/messages/${messageId}/transcribe`
     );
     return response.data.data;
   },

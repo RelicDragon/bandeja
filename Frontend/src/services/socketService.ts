@@ -40,6 +40,13 @@ export interface SocketEvents {
   // Unified chat events
   'chat:message': (data: { contextType: string; contextId: string; message: any; messageId?: string; timestamp?: string }) => void;
   'chat:message-updated': (data: { contextType: string; contextId: string; message: any; messageId?: string; timestamp?: string }) => void;
+  'chat:message-transcription': (data: {
+    contextType: string;
+    contextId: string;
+    messageId: string;
+    audioTranscription: { transcription: string; languageCode: string | null };
+    timestamp?: string;
+  }) => void;
   'chat:reaction': (data: { contextType: string; contextId: string; reaction: any }) => void;
   'chat:read-receipt': (data: { contextType: string; contextId: string; readReceipt: any }) => void;
   'chat:deleted': (data: { contextType: string; contextId: string; messageId: string }) => void;

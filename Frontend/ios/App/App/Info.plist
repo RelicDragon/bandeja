@@ -41,6 +41,8 @@
 	<string>This app needs access to add events to your calendar.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to your camera to capture photos during games.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access to record voice messages in chat.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to your photo library to upload and share photos from your games.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

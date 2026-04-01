@@ -566,6 +566,22 @@ class SocketService {
     }
   }
 
+  public emitMessageTranscription(
+    contextType: ChatContextType,
+    contextId: string,
+    messageId: string,
+    audioTranscription: { transcription: string; languageCode: string | null }
+  ): void {
+    const room = this.getChatRoomName(contextType, contextId);
+    this.io.to(room).emit('chat:message-transcription', {
+      contextType,
+      contextId,
+      messageId,
+      audioTranscription,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   public emitPinnedMessagesUpdated(contextType: ChatContextType, contextId: string, chatType: ChatType): void {
     const room = this.getChatRoomName(contextType, contextId);
     this.io.to(room).emit('chat:pinned-messages-updated', {

@@ -1,5 +1,5 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
-import { formatUserName } from '../../shared/notification-base';
+import { formatChatNotificationMessageBody, formatUserName } from '../../shared/notification-base';
 import { t } from '../../../utils/translations';
 
 export async function createBugChatPushNotification(
@@ -11,7 +11,7 @@ export async function createBugChatPushNotification(
   const lang = recipient?.language ?? 'en';
   const bugText = (bug.text || 'Bug').substring(0, 50);
   const senderName = formatUserName(sender);
-  const messageContent = message.content || '[Media]';
+  const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
 
   return {
     type: NotificationType.BUG_CHAT,

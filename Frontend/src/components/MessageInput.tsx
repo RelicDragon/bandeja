@@ -2,7 +2,14 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Capacitor } from '@capacitor/core';
-import { chatApi, CreateMessageRequest, ChatMessage, ChatContextType, GroupChannel, OptimisticMessagePayload } from '@/api/chat';
+import {
+  chatApi,
+  CreateMessageRequest,
+  ChatMessage,
+  ChatContextType,
+  GroupChannel,
+  OptimisticMessagePayload,
+} from '@/api/chat';
 import { mediaApi } from '@/api/media';
 import { ChatType, Game, Bug } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
@@ -21,6 +28,14 @@ import { pickImages } from '@/utils/photoCapture';
 import { isCapacitor } from '@/utils/capacitor';
 import { PollType } from '@/api/chat';
 import { draftStorage } from '@/services/draftStorage';
+import { VoiceRecordingOverlay } from './audio/VoiceRecordingOverlay';
+import { VoiceRecordButton } from './audio/VoiceRecordButton';
+import { useAudioRecorder } from './audio/useAudioRecorder';
+import {
+  extractWaveformPeaksFromBlob,
+  placeholderWaveform,
+  VOICE_MESSAGE_MAX_MS,
+} from './audio/audioWaveformUtils';
 
 const isValidImage = (file: File): boolean => {
   return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
@@ -138,6 +153,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [, setIsMultiline] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const voiceRecorder = useAudioRecorder();
   const [isAttachExpanded, setIsAttachExpanded] = useState(false);
   const [originalMessageBeforeTranslate, setOriginalMessageBeforeTranslate] = useState<string | null>(null);
   const [originalMentionIdsBeforeTranslate, setOriginalMentionIdsBeforeTranslate] = useState<string[] | null>(null);
@@ -182,6 +200,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   }, [imagePreviewUrls]);
 
   const resolvedChatType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
+  const showMic =
+    !message.trim() &&
+    selectedImages.length === 0 &&
+    !editingMessage &&
+    resolvedChatType !== 'PHOTOS' &&
+    !isDisabled;
+
+  useEffect(() => {
+    if (voiceRecorder.error === 'denied') {
+      toast.error(t('chat.micPermissionDenied', { defaultValue: 'Microphone access denied' }));
+    } else if (voiceRecorder.error === 'insecure') {
+      toast.error(t('chat.micNeedsHttps', { defaultValue: 'Microphone requires HTTPS' }));
+    }
+  }, [voiceRecorder.error, t]);
 
   const saveDraft = useCallback(async (content: string, mentionIds: string[]) => {
     if (!finalContextId || !user?.id) return;
@@ -735,8 +767,125 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
+  const handleStartVoice = async () => {
+    if (isDisabled || inputBlocked) return;
+    const ok = await voiceRecorder.start();
+    if (ok) setVoiceMode(true);
+  };
+
+  const handleVoiceCancel = () => {
+    voiceRecorder.cancel();
+    setVoiceMode(false);
+  };
+
+  const handleVoiceConfirm = async () => {
+    const result = await voiceRecorder.stop();
+    setVoiceMode(false);
+    if (!result || result.durationMs < 500) {
+      toast.error(t('chat.voiceTooShort', { defaultValue: 'Recording too short' }));
+      return;
+    }
+    if (result.durationMs > VOICE_MESSAGE_MAX_MS) {
+      toast.error(t('chat.voiceMaxDuration', { defaultValue: 'Recording cannot exceed 30 minutes' }));
+      return;
+    }
+    const durationMs = Math.min(result.durationMs, VOICE_MESSAGE_MAX_MS);
+    if (!finalContextId) {
+      toast.error(t('chat.missingContextId'));
+      return;
+    }
+    let optimisticId: string | undefined;
+    setVoiceBusy(true);
+    try {
+      let peaks: number[] = [];
+      try {
+        peaks = await extractWaveformPeaksFromBlob(result.blob);
+      } catch {
+        peaks = placeholderWaveform(48);
+      }
+      if (!peaks.length) peaks = placeholderWaveform(48);
+      const ext = result.blob.type.includes('mp4') ? 'm4a' : 'webm';
+      const uploaded = await mediaApi.uploadChatAudio(result.blob, `voice.${ext}`, finalContextId, contextType);
+      const payload: OptimisticMessagePayload = {
+        content: '',
+        mediaUrls: [uploaded.audioUrl],
+        thumbnailUrls: [],
+        replyToId: replyTo?.id,
+        replyTo: replyTo
+          ? {
+              id: replyTo.id,
+              content: replyTo.content,
+              sender: replyTo.sender || { id: 'system', firstName: 'System' },
+            }
+          : undefined,
+        chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
+        mentionIds: [],
+        messageType: 'VOICE',
+        audioDurationMs: durationMs,
+        waveformData: peaks,
+      };
+      const useOptimistic = !!onOptimisticMessage;
+      const useQueue = useOptimistic && !!onSendQueued && propContextType != null && propContextId != null;
+      if (useOptimistic) {
+        optimisticId = onOptimisticMessage(payload);
+        if (optimisticId) {
+          onMessageSent?.();
+          onCancelReply?.();
+        }
+      }
+      if (useQueue && optimisticId) {
+        onSendQueued!({
+          tempId: optimisticId,
+          contextType: propContextType!,
+          contextId: propContextId!,
+          payload,
+          mediaUrls: [uploaded.audioUrl],
+          thumbnailUrls: [],
+        });
+      } else {
+        const messageData: CreateMessageRequest = {
+          chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
+          contextId: finalContextId,
+          mediaUrls: [uploaded.audioUrl],
+          replyToId: replyTo?.id,
+          chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
+          messageType: 'VOICE',
+          audioDurationMs: durationMs,
+          waveformData: peaks,
+        };
+        const created = await chatApi.createMessage(messageData);
+        if (useOptimistic && optimisticId && onMessageCreated) {
+          onMessageCreated(optimisticId, created);
+        }
+      }
+      if (finalContextId && user?.id) {
+        const resolvedType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
+        await draftStorage.remove(user.id, contextType, finalContextId, resolvedType);
+        try {
+          await chatApi.deleteDraft(contextType, finalContextId, resolvedType);
+          window.dispatchEvent(
+            new CustomEvent('draft-deleted', {
+              detail: { chatContextType: contextType, contextId: finalContextId, chatType: resolvedType },
+            })
+          );
+        } catch {
+          /* noop */
+        }
+      }
+    } catch (err) {
+      if (optimisticId && onSendFailed) {
+        onSendFailed(optimisticId);
+      }
+      console.error('Voice send failed:', err);
+      toast.error(t('chat.sendFailed'));
+    } finally {
+      setVoiceBusy(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (voiceMode) return;
     if ((!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled) return;
 
     if (editingMessage && onEditMessage) {
@@ -1066,7 +1215,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           replyTo={{
             id: replyTo.id,
             content: replyTo.content,
-            sender: replyTo.sender || { id: 'system', firstName: 'System' }
+            messageType: replyTo.messageType,
+            sender: replyTo.sender || { id: 'system', firstName: 'System' },
           }}
           onCancel={onCancelReply}
           onScrollToMessage={onScrollToMessage}
@@ -1100,7 +1250,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             <button
               type="button"
               onClick={() => setIsAttachExpanded(prev => !prev)}
-              disabled={isDisabled || inputBlocked}
+              disabled={isDisabled || inputBlocked || voiceMode}
               className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_4px_12px_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.12),0_16px_48px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25),0_16px_48px_rgba(0,0,0,0.2)]"
               title={t('chat.attach', 'Attach')}
             >
@@ -1114,7 +1264,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               <button
                 type="button"
                 onClick={handleImageButtonClick}
-                disabled={isDisabled || inputBlocked}
+                disabled={isDisabled || inputBlocked || voiceMode}
                 className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.12),0_16px_48px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25),0_16px_48px_rgba(0,0,0,0.2)] hover:scale-105"
                 title={t('chat.attachImages', 'Images')}
               >
@@ -1123,7 +1273,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               <button
                 type="button"
                 onClick={handlePollButtonClick}
-                disabled={isDisabled || inputBlocked}
+                disabled={isDisabled || inputBlocked || voiceMode}
                 className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.12),0_16px_48px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25),0_16px_48px_rgba(0,0,0,0.2)] hover:scale-105"
                 title={t('chat.poll.createTitle', 'Create Poll')}
               >
@@ -1131,54 +1281,75 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               </button>
             </div>
           </div>
-          <div className={`flex-1 message-input-panel relative overflow-visible !bg-transparent rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
+          <div className={`flex-1 min-w-0 message-input-panel relative overflow-visible !bg-transparent rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
           }`}>
-          <div ref={inputContainerRef} className="relative overflow-visible">
-            <div className="rounded-[24px] bg-white dark:bg-gray-800">
-              <MentionInput
-              value={message}
-              onChange={handleMessageChange}
-              placeholder={t('chat.messages.typeMessage')}
-              disabled={isDisabled || inputBlocked}
-              game={game}
-              bug={bug}
-              groupChannel={groupChannel}
-              userChatId={userChatId}
-              contextType={contextType}
-              chatType={chatType}
-              onKeyDown={handleKeyDown}
-              className="w-full"
-              style={{
-                minHeight: '48px',
-                maxHeight: '120px',
-                paddingLeft: '20px',
-              }}
+          <div ref={inputContainerRef} className="relative overflow-visible min-w-0 w-full max-w-full">
+            {voiceMode ? (
+              <VoiceRecordingOverlay
+                durationMs={voiceRecorder.durationMs}
+                liveLevels={voiceRecorder.liveLevels}
+                busy={voiceBusy}
+                onCancel={handleVoiceCancel}
+                onConfirm={handleVoiceConfirm}
               />
-            </div>
-            <button
-              type="submit"
-              disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
-              className="absolute bottom-0.5 right-[2px] w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_4px_24px_rgba(59,130,246,0.6),0_8px_48px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_32px_rgba(59,130,246,0.7),0_12px_56px_rgba(59,130,246,0.5)] hover:scale-105 z-10"
-              aria-label={inputBlocked ? t('common.sending') : t('chat.messages.sendMessage')}
-            >
-              {inputBlocked ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+            ) : (
+              <>
+                <div className="rounded-[24px] bg-white dark:bg-gray-800">
+                  <MentionInput
+                    value={message}
+                    onChange={handleMessageChange}
+                    placeholder={t('chat.messages.typeMessage')}
+                    disabled={isDisabled || inputBlocked}
+                    game={game}
+                    bug={bug}
+                    groupChannel={groupChannel}
+                    userChatId={userChatId}
+                    contextType={contextType}
+                    chatType={chatType}
+                    onKeyDown={handleKeyDown}
+                    className="w-full"
+                    style={{
+                      minHeight: '48px',
+                      maxHeight: '120px',
+                      paddingLeft: '20px',
+                    }}
                   />
-                </svg>
-              )}
-            </button>
+                </div>
+                {showMic ? (
+                  <VoiceRecordButton
+                    onClick={() => void handleStartVoice()}
+                    disabled={inputBlocked || isDisabled}
+                    title={t('chat.voice.record', { defaultValue: 'Record voice' })}
+                    aria-label={t('chat.voice.record', { defaultValue: 'Record voice message' })}
+                  />
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
+                    className="absolute bottom-0.5 right-[2px] w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_4px_24px_rgba(59,130,246,0.6),0_8px_48px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_32px_rgba(59,130,246,0.7),0_12px_56px_rgba(59,130,246,0.5)] hover:scale-105 z-10"
+                    aria-label={inputBlocked ? t('common.sending') : t('chat.messages.sendMessage')}
+                  >
+                    {inputBlocked ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>

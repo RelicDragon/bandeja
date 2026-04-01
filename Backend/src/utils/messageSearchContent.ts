@@ -31,3 +31,11 @@ export function computeContentSearchable(
   const extracted = extractSearchableContent(content, pollQuestion);
   return extracted ? normalizeForSearch(extracted) : null;
 }
+
+export function computeVoiceContentSearchable(audioDurationMs: number): string | null {
+  const totalSec = Math.floor(audioDurationMs / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  const label = `${m}:${s.toString().padStart(2, '0')}`;
+  return normalizeForSearch(`voice message ${label}`);
+}

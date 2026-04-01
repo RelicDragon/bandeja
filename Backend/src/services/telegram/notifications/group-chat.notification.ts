@@ -3,7 +3,7 @@ import { ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
-import { formatUserName } from '../../shared/notification-base';
+import { formatChatNotificationMessageBody, formatUserName } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import prisma from '../../../config/database';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
@@ -19,7 +19,7 @@ export async function sendGroupChatNotification(
   sender: any
 ) {
   const senderName = formatUserName(sender);
-  const messageContent = message.content || '[Media]';
+  const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
   const mentionIds = message.mentionIds || [];
   const hasMentions = mentionIds.length > 0;
   const mentionedUserIds = hasMentions ? new Set(mentionIds) : null;

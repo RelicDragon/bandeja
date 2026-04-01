@@ -36,6 +36,7 @@ export const config = {
     s3Bucket: process.env.AWS_S3_BUCKET || 'bandeja-padel-eu',
     cloudFrontDomain: process.env.AWS_CLOUDFRONT_DOMAIN || 'd1afylun4w6qxe.cloudfront.net',
   },
+  /** Required for voice transcription (Whisper); independent of AI_PROVIDER. */
   openai: {
     apiKey: process.env.OPENAI_API_KEY || '',
   },

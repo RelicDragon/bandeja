@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { MessageState, ChatType, ChatContextType, ParticipantRole, PollType, Prisma } from '@prisma/client';
+import { MessageState, ChatType, ChatContextType, ParticipantRole, PollType, Prisma, MessageType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import notificationService from '../notification.service';
@@ -7,12 +7,37 @@ import { GameReadService } from '../game/read.service';
 import { UserChatService } from './userChat.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { TranslationService } from './translation.service';
+import { MESSAGE_TRANSCRIPTION_PENDING } from './transcriptionPending';
 import { ReadReceiptService } from './readReceipt.service';
 import { DraftService } from './draft.service';
 import { ChatMuteService } from './chatMute.service';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
-import { computeContentSearchable } from '../../utils/messageSearchContent';
+import { computeContentSearchable, computeVoiceContentSearchable } from '../../utils/messageSearchContent';
 import { ImageProcessor } from '../../utils/imageProcessor';
+import { S3Service } from '../s3.service';
+import { config } from '../../config/env';
+
+const VOICE_MESSAGE_MAX_MS = 30 * 60 * 1000;
+
+function isAllowedChatVoiceMediaUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  let key: string;
+  try {
+    key = S3Service.extractS3Key(url);
+  } catch {
+    return false;
+  }
+  if (!/^uploads\/chat\/voice\/[a-zA-Z0-9._-]+$/.test(key)) return false;
+  const allowedHost = config.aws.cloudFrontDomain.replace(/^https?:\/\//, '').split('/')[0].toLowerCase();
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    try {
+      return new URL(url).hostname.toLowerCase() === allowedHost;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
 
 export class MessageService {
   static async validateGameAccess(gameId: string, userId: string) {
@@ -253,6 +278,9 @@ export class MessageService {
         select: {
           id: true,
           content: true,
+          messageType: true,
+          mediaUrls: true,
+          audioDurationMs: true,
           sender: {
             select: USER_SELECT_FIELDS
           }
@@ -319,14 +347,32 @@ export class MessageService {
 
     const translationMap = new Map(translations.map(t => [t.messageId, t]));
 
+    const voiceMessageIds = messages.filter((m: { messageType?: string }) => m.messageType === 'VOICE').map((m: { id: string }) => m.id);
+    const transcriptionRows =
+      voiceMessageIds.length > 0
+        ? await prisma.messageTranscription.findMany({
+            where: { messageId: { in: voiceMessageIds } },
+            select: { messageId: true, transcription: true, languageCode: true },
+          })
+        : [];
+    const transcriptionMap = new Map(transcriptionRows.map((r) => [r.messageId, r]));
+
     return messages.map(message => {
       const translation = translationMap.get(message.id);
+      const trRow = transcriptionMap.get(message.id);
+      const audioTranscription =
+        trRow &&
+        trRow.transcription &&
+        trRow.transcription !== MESSAGE_TRANSCRIPTION_PENDING
+          ? { transcription: trRow.transcription, languageCode: trRow.languageCode }
+          : undefined;
       let sanitized = {
         ...message,
         translation: translation ? {
           languageCode: translation.languageCode,
           translation: translation.translation
-        } : undefined
+        } : undefined,
+        audioTranscription,
       };
       if (message.poll?.isAnonymous && message.poll.options) {
         sanitized = {
@@ -354,6 +400,9 @@ export class MessageService {
     replyToId?: string;
     chatType: ChatType;
     mentionIds?: string[];
+    messageType?: MessageType;
+    audioDurationMs?: number | null;
+    waveformData?: number[];
     poll?: {
       question: string;
       options: string[];
@@ -363,7 +412,20 @@ export class MessageService {
       quizCorrectOptionIndex?: number;
     };
   }) {
-    const { chatContextType, contextId, senderId, content, mediaUrls, replyToId, chatType, mentionIds = [], poll } = data;
+    const {
+      chatContextType,
+      contextId,
+      senderId,
+      content,
+      mediaUrls,
+      replyToId,
+      chatType,
+      mentionIds = [],
+      poll,
+      messageType: requestedMessageType,
+      audioDurationMs,
+      waveformData,
+    } = data;
 
     // Validate access based on context type
     let game, participant, bug, userChat, groupChannel;
@@ -401,7 +463,62 @@ export class MessageService {
       }
     }
 
-    const thumbnailUrls = this.generateThumbnailUrls(mediaUrls);
+    let resolvedMessageType: MessageType;
+    if (poll) {
+      resolvedMessageType = MessageType.POLL;
+    } else if (requestedMessageType === MessageType.VOICE) {
+      resolvedMessageType = MessageType.VOICE;
+    } else if (mediaUrls.length > 0) {
+      resolvedMessageType = MessageType.IMAGE;
+    } else {
+      resolvedMessageType = MessageType.TEXT;
+    }
+
+    if (poll && mediaUrls.length > 0) {
+      throw new ApiError(400, 'Poll messages cannot include media');
+    }
+
+    let voiceWaveform: number[] = [];
+    if (resolvedMessageType === MessageType.VOICE) {
+      if (poll) {
+        throw new ApiError(400, 'Voice messages cannot include a poll');
+      }
+      if (mediaUrls.length !== 1) {
+        throw new ApiError(400, 'Voice message requires exactly one audio URL');
+      }
+      if (audioDurationMs == null || audioDurationMs < 500 || audioDurationMs > VOICE_MESSAGE_MAX_MS) {
+        throw new ApiError(400, 'Invalid voice message duration');
+      }
+      const wf = Array.isArray(waveformData) ? waveformData : [];
+      if (wf.length < 1 || wf.length > 80) {
+        throw new ApiError(400, 'Invalid waveform data');
+      }
+      if (!wf.every((x) => typeof x === 'number' && Number.isFinite(x) && x >= 0 && x <= 1)) {
+        throw new ApiError(400, 'Invalid waveform values');
+      }
+      const url = mediaUrls[0];
+      if (!url || !isAllowedChatVoiceMediaUrl(url)) {
+        throw new ApiError(400, 'Invalid voice audio URL');
+      }
+      voiceWaveform = wf;
+    } else if (requestedMessageType === MessageType.VOICE) {
+      throw new ApiError(400, 'Invalid voice message payload');
+    }
+
+    const thumbnailUrls =
+      resolvedMessageType === MessageType.VOICE ? [] : this.generateThumbnailUrls(mediaUrls);
+
+    const contentForStore =
+      resolvedMessageType === MessageType.VOICE
+        ? ''
+        : content?.startsWith('[TYPE:')
+          ? content.substring(1)
+          : (content ?? '');
+
+    const contentSearchableValue =
+      resolvedMessageType === MessageType.VOICE && audioDurationMs != null
+        ? computeVoiceContentSearchable(audioDurationMs)
+        : computeContentSearchable(content ?? null, poll?.question);
 
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create the message
@@ -411,14 +528,17 @@ export class MessageService {
           contextId,
           gameId: chatContextType === 'GAME' ? contextId : null,
           senderId,
-          content: content?.startsWith('[TYPE:') ? content.substring(1) : (content ?? ''),
-          contentSearchable: computeContentSearchable(content ?? null, poll?.question),
+          content: contentForStore,
+          contentSearchable: contentSearchableValue,
           mediaUrls,
           thumbnailUrls,
           replyToId,
           chatType,
           mentionIds: mentionIds || [],
-          state: MessageState.SENT
+          state: MessageState.SENT,
+          messageType: resolvedMessageType,
+          audioDurationMs: resolvedMessageType === MessageType.VOICE ? audioDurationMs ?? null : null,
+          waveformData: resolvedMessageType === MessageType.VOICE ? voiceWaveform : [],
         } as any,
         include: this.getMessageInclude()
       }) as any;
@@ -464,7 +584,7 @@ export class MessageService {
 
     // Post-creation logic (notifications, counts, etc.)
     if (chatContextType === 'GAME' && game) {
-      if (chatType === ChatType.PHOTOS && mediaUrls.length > 0) {
+      if (chatType === ChatType.PHOTOS && mediaUrls.length > 0 && resolvedMessageType === MessageType.IMAGE) {
         const currentGame = await prisma.game.findUnique({
           where: { id: contextId },
           select: { mainPhotoId: true }
@@ -584,6 +704,9 @@ export class MessageService {
     replyToId?: string;
     chatType: ChatType;
     mentionIds?: string[];
+    messageType?: MessageType;
+    audioDurationMs?: number | null;
+    waveformData?: number[];
     poll?: {
       question: string;
       options: string[];
@@ -693,10 +816,22 @@ export class MessageService {
       const senderLanguageCode = sender ? TranslationService.extractLanguageCode(sender.language) : 'en';
       const senderTranslation = translationsArray?.find(t => t.languageCode === senderLanguageCode);
 
+      const trRow = await prisma.messageTranscription.findUnique({
+        where: { messageId: message.id },
+        select: { transcription: true, languageCode: true },
+      });
+      const audioTranscription =
+        trRow &&
+        trRow.transcription &&
+        trRow.transcription !== MESSAGE_TRANSCRIPTION_PENDING
+          ? { transcription: trRow.transcription, languageCode: trRow.languageCode }
+          : undefined;
+
       const messageWithTranslations = {
         ...message,
         translation: senderTranslation || (translationsArray && translationsArray.length > 0 ? translationsArray[0] : undefined),
-        translations: translationsArray
+        translations: translationsArray,
+        audioTranscription,
       };
 
       // NEW unified event with messageId for acknowledgment
@@ -904,6 +1039,10 @@ export class MessageService {
 
     if (message.senderId !== userId) {
       throw new ApiError(403, 'You can only edit your own messages');
+    }
+
+    if (message.messageType === MessageType.VOICE) {
+      throw new ApiError(400, 'Voice messages cannot be edited');
     }
 
     await this.validateMessageAccess(message, userId, true);

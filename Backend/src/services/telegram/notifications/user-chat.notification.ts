@@ -3,7 +3,7 @@ import { ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
-import { formatUserName } from '../../shared/notification-base';
+import { formatChatNotificationMessageBody, formatUserName } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
@@ -17,7 +17,7 @@ export async function sendUserChatNotification(
   sender: any
 ) {
   const senderName = formatUserName(sender);
-  const messageContent = message.content || '[Media]';
+  const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
 
   const recipient = userChat.user1Id === sender.id ? userChat.user2 : userChat.user1;
 

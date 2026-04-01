@@ -53,6 +53,7 @@ export function useGameChatSocket({
 
   const lastChatMessage = useSocketEventsStore((s) => s.lastChatMessage);
   const lastChatMessageUpdated = useSocketEventsStore((s) => s.lastChatMessageUpdated);
+  const lastChatMessageTranscription = useSocketEventsStore((s) => s.lastChatMessageTranscription);
   const lastChatReaction = useSocketEventsStore((s) => s.lastChatReaction);
   const lastChatReadReceipt = useSocketEventsStore((s) => s.lastChatReadReceipt);
   const lastChatDeleted = useSocketEventsStore((s) => s.lastChatDeleted);
@@ -138,6 +139,25 @@ export function useGameChatSocket({
     if (!lastChatMessageUpdated || lastChatMessageUpdated.contextType !== contextType || lastChatMessageUpdated.contextId !== id || !lastChatMessageUpdated.message) return;
     handleMessageUpdated(lastChatMessageUpdated.message);
   }, [lastChatMessageUpdated, contextType, id, handleMessageUpdated]);
+
+  useEffect(() => {
+    if (
+      !lastChatMessageTranscription ||
+      lastChatMessageTranscription.contextType !== contextType ||
+      lastChatMessageTranscription.contextId !== id
+    ) {
+      return;
+    }
+    const { messageId, audioTranscription } = lastChatMessageTranscription;
+    setMessages((prev) => {
+      const idx = prev.findIndex((m) => m.id === messageId);
+      if (idx < 0) return prev;
+      const next = [...prev];
+      next[idx] = { ...next[idx], audioTranscription };
+      messagesRef.current = next;
+      return next;
+    });
+  }, [lastChatMessageTranscription, contextType, id, setMessages, messagesRef]);
 
   useEffect(() => {
     if (!lastSyncRequired || !id) return;

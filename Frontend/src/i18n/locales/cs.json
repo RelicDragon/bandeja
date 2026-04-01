@@ -1759,8 +1759,13 @@
       "notReadYet": "Nepřečteno",
       "back": "Zpět",
       "translate": "Přeložit",
-      "translating": "Překládám..."
+      "translating": "Překládám...",
+      "transcribe": "Přepsat",
+      "transcribingVoice": "Přepisuji…"
     },
+    "transcriptionUnavailable": "Přepis je dočasně nedostupný. Zkuste to později.",
+    "transcriptionError": "Přepis hlasové zprávy se nepodařil. Zkuste to znovu.",
+    "transcriptionAudioMissing": "Hlasovou zprávu se nepodařilo načíst.",
     "translationUnavailable": "Překlad je dočasně nedostupný. Zkuste to později.",
     "translationRateLimited": "Příliš mnoho žádostí o překlad. Zkuste to za pár sekund.",
     "translationError": "Nepodařilo se přeložit zprávu. Zkuste to znovu.",
@@ -1831,6 +1836,21 @@
       "typeMessage": "Napište zprávu...",
       "sendMessage": "Odeslat zprávu",
       "helpText": "Enter pro odeslání, Shift+Enter pro nový řádek"
+    },
+    "voiceMessage": "Hlasová zpráva",
+    "micPermissionDenied": "Přístup k mikrofonu byl odepřen",
+    "micNeedsHttps": "Mikrofon vyžaduje zabezpečené připojení (HTTPS)",
+    "voiceTooShort": "Nahrávka je příliš krátká",
+    "voiceMaxDuration": "Nahrávka nesmí být delší než 30 minut",
+    "voice": {
+      "record": "Nahrát hlasovou zprávu",
+      "playPause": "Přehrát nebo pozastavit",
+      "skipBack10": "Posunout zpět o 10 sekund",
+      "skipForward10": "Posunout vpřed o 10 sekund",
+      "cancelRecording": "Zrušit nahrávání",
+      "sendRecording": "Odeslat hlasovou zprávu",
+      "transcribe": "Přepsat",
+      "transcribing": "Přepisuji…"
     },
     "systemMessages": {
       "USER_JOINED_GAME": "{{userName}} se připojil k zápasu",

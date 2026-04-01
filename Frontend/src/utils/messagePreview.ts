@@ -8,6 +8,11 @@ export function parseMessagePreview(preview: string | null | undefined, t: TFunc
         return t('chat.messages.media', '[Media]');
     }
 
+    if (preview.startsWith('[TYPE:VOICE]')) {
+        const dur = preview.slice(11);
+        return `🎤 ${t('chat.voiceMessage', 'Voice message')} (${dur})`;
+    }
+
     if (preview.startsWith('[TYPE:POLL]')) {
         const question = preview.substring(11);
         return `📊 ${t('chat.poll.poll')}: ${question}`;

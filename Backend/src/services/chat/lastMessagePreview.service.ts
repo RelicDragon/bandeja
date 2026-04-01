@@ -7,10 +7,22 @@ interface MessageForPreview {
   content: string | null;
   mediaUrls: string[];
   pollId: string | null;
+  messageType?: string;
+  audioDurationMs?: number | null;
 }
 
+function formatVoicePreviewLabel(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 export function extractPreviewFromMessage(message: MessageForPreview): string {
+  if (message.messageType === 'VOICE' && message.audioDurationMs != null) {
+    return `[TYPE:VOICE]${formatVoicePreviewLabel(message.audioDurationMs)}`;
+  }
+
   const hasMedia = Array.isArray(message.mediaUrls) && message.mediaUrls.length > 0;
   const hasText = Boolean(message.content?.trim());
 
@@ -53,6 +65,8 @@ export async function updateLastMessagePreview(
       content: true,
       mediaUrls: true,
       pollId: true,
+      messageType: true,
+      audioDurationMs: true,
     },
   });
 

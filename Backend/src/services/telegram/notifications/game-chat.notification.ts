@@ -4,7 +4,7 @@ import { ChatType, ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
-import { formatGameInfoForUser, formatUserName, getEntityTypeLabel, getShowEntityButtonText } from '../../shared/notification-base';
+import { formatChatNotificationMessageBody, formatGameInfoForUser, formatUserName, getEntityTypeLabel, getShowEntityButtonText } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { canParticipantSeeGameChatMessage } from '../../chat/gameChatVisibility';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
@@ -19,7 +19,7 @@ export async function sendGameChatNotification(
   sender: any
 ) {
   const senderName = formatUserName(sender);
-  const messageContent = message.content || '[Media]';
+  const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
 
   const chatType = message.chatType as ChatType;
   const participants = await prisma.gameParticipant.findMany({

@@ -55,6 +55,9 @@ export function sendWithTimeout(
     replyToId: payload.replyToId,
     chatType: payload.chatType ? normalizeChatType(payload.chatType) : undefined,
     mentionIds: payload.mentionIds?.length ? payload.mentionIds : undefined,
+    messageType: payload.messageType,
+    audioDurationMs: payload.audioDurationMs,
+    waveformData: payload.waveformData,
   };
 
   const timeoutId = setTimeout(() => {

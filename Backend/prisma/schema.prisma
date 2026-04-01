@@ -125,6 +125,7 @@ model User {
   betsWon                     Bet[]                @relation("BetWinner")
   betParticipants             BetParticipant[]
   messageTranslations         MessageTranslation[]
+  messageTranscriptions       MessageTranscription[]
   chatDrafts                  ChatDraft[]
   notificationPreferences     NotificationPreference[]
   pollVotes              PollVote[]
@@ -631,6 +632,9 @@ model ChatMessage {
   mentionIds      String[]
   state           MessageState         @default(SENT)
   chatType        ChatType             @default(PUBLIC)
+  messageType     MessageType          @default(TEXT)
+  audioDurationMs Int?
+  waveformData    Float[]            @default([])
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
   editedAt        DateTime?
@@ -642,6 +646,7 @@ model ChatMessage {
   readReceipts    MessageReadReceipt[]
   reports         MessageReport[]
   translations    MessageTranslation[]
+  audioTranscription MessageTranscription?
   poll            Poll?
   pollId          String?              @unique
   pinnedIn        PinnedMessage[]
@@ -806,6 +811,19 @@ model MessageTranslation {
   @@index([languageCode])
 }
 
+model MessageTranscription {
+  id              String      @id @default(cuid())
+  messageId       String      @unique
+  message         ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  transcription   String
+  languageCode    String?     @db.VarChar(16)
+  createdBy       String
+  createdByUser   User        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt       DateTime    @default(now())
+
+  @@index([messageId])
+}
+
 model UserFavoriteClub {
   id        String   @id @default(cuid())
   userId    String
@@ -907,6 +925,13 @@ enum ChatType {
   PRIVATE
   ADMINS
   PHOTOS
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VOICE
+  POLL
 }
 
 enum ChatContextType {

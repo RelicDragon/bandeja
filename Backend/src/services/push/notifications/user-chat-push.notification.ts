@@ -1,5 +1,5 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
-import { formatUserName } from '../../shared/notification-base';
+import { formatChatNotificationMessageBody, formatUserName } from '../../shared/notification-base';
 export async function createUserChatPushNotification(
   message: any,
   userChat: any,
@@ -7,7 +7,7 @@ export async function createUserChatPushNotification(
   _recipient: any
 ): Promise<NotificationPayload | null> {
   const senderName = formatUserName(sender);
-  const messageContent = message.content || '[Media]';
+  const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
 
   return {
     type: NotificationType.USER_CHAT,

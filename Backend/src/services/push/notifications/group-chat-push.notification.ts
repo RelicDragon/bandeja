@@ -1,5 +1,5 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
-import { formatUserName } from '../../shared/notification-base';
+import { formatChatNotificationMessageBody, formatUserName } from '../../shared/notification-base';
 import { t } from '../../../utils/translations';
 
 function getGroupNotificationTitle(groupChannel: any, lang: string): string {
@@ -21,7 +21,7 @@ export async function createGroupChatPushNotification(
   }
 
   const senderName = formatUserName(sender);
-  const messageContent = message.content || '[Media]';
+  const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
   const lang = recipient?.language ?? 'en';
 
   const title = getGroupNotificationTitle(groupChannel, lang);
