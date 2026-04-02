@@ -7,29 +7,31 @@ struct GameWinConfirmSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 10) {
                     let winners = vm.pendingGameWinWinningUsers()
                     let wonGrammarCount = winners.isEmpty ? 1 : winners.count
 
-                    if winners.isEmpty {
-                        HStack(alignment: .center, spacing: 8) {
-                            Image(systemName: "person.2.fill")
-                                .font(.system(size: 18))
-                                .foregroundStyle(.tertiary)
-                                .frame(width: 28, height: 28)
-                            Text(WatchCopy.gameWonUnknownSide(lang))
-                                .font(.caption.weight(.semibold))
-                                .lineLimit(2)
-                        }
-                    } else {
-                        ForEach(winners, id: \.id) { user in
-                            let trimmed = user.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    VStack(alignment: .leading, spacing: 0) {
+                        if winners.isEmpty {
                             HStack(alignment: .center, spacing: 8) {
-                                WatchPlayerAvatarView(user: user, size: 28, role: nil)
-                                Text(trimmed.isEmpty ? WatchCopy.gameWonUnknownSide(lang) : trimmed)
+                                Image(systemName: "person.2.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundStyle(.tertiary)
+                                    .frame(width: 28, height: 28)
+                                Text(WatchCopy.gameWonUnknownSide(lang))
                                     .font(.caption.weight(.semibold))
                                     .lineLimit(2)
-                                    .multilineTextAlignment(.leading)
+                            }
+                        } else {
+                            ForEach(winners, id: \.id) { user in
+                                let trimmed = user.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+                                HStack(alignment: .center, spacing: 8) {
+                                    WatchPlayerAvatarView(user: user, size: 28, role: nil)
+                                    Text(trimmed.isEmpty ? WatchCopy.gameWonUnknownSide(lang) : trimmed)
+                                        .font(.caption.weight(.semibold))
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.leading)
+                                }
                             }
                         }
                     }
@@ -38,7 +40,7 @@ struct GameWinConfirmSheet: View {
                         .font(.title3.weight(.bold))
 
                     if let p = vm.pendingGameWinProjectedScoresIfBalls() {
-                        Text(WatchCopy.gameWonScoreWillBe(lang, teamA: p.teamA, teamB: p.teamB))
+                        Text(WatchCopy.gameWonSetScoreWillBe(lang, teamA: p.teamA, teamB: p.teamB))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }

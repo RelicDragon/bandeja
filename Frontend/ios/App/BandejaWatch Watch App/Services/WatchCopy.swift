@@ -455,12 +455,12 @@ enum WatchCopy {
         }
     }
 
-    nonisolated static func gameWonScoreWillBe(_ lang: String, teamA: Int, teamB: Int) -> String {
+    nonisolated static func gameWonSetScoreWillBe(_ lang: String, teamA: Int, teamB: Int) -> String {
         switch lang {
-        case "es": return "El marcador de juegos será \(teamA):\(teamB)."
-        case "ru": return "Счёт по геймам будет \(teamA):\(teamB)."
-        case "sr": return "Гемови ће бити \(teamA):\(teamB)."
-        default: return "Game score will be \(teamA):\(teamB)."
+        case "es": return "El marcador del set será \(teamA):\(teamB)."
+        case "ru": return "Счёт в сете будет \(teamA):\(teamB)."
+        case "sr": return "Резултат у сету биће \(teamA):\(teamB)."
+        default: return "Set score will be \(teamA):\(teamB)."
         }
     }
 
