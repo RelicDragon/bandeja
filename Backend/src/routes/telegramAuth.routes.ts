@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
+import { optionalAuth } from '../middleware/auth';
 import * as telegramAuthController from '../controllers/telegramAuth.controller';
 
 const router = Router();
@@ -15,6 +16,7 @@ router.post(
 
 router.post(
   '/verify-link-key',
+  optionalAuth,
   validate([
     body('key').isString().isLength({ min: 20 }).withMessage('Invalid key'),
   ]),

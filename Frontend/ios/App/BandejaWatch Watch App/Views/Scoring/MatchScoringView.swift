@@ -4,6 +4,8 @@ struct MatchScoringView: View {
     let gameId: String
     let matchId: String
     @State private var vm: MatchScoringViewModel
+    @Bindable private var workoutManager = WorkoutManager.shared
+    @Bindable private var networkMonitor = NetworkMonitor.shared
     @Environment(\.dismiss) private var dismiss
     @Environment(WatchPreferencesStore.self) private var prefs
     @State private var isReviewing = false
@@ -23,19 +25,52 @@ struct MatchScoringView: View {
             } else if vm.isReadOnly, vm.match != nil {
                 readOnlyMatchContent
             } else if isReviewing {
-                MatchReviewView(
-                    vm: vm,
-                    onBack: { isReviewing = false },
-                    onFinish: saveAndDismiss
-                )
-            } else if vm.isAmericano {
-                AmericanoScoringView(vm: vm, onFinish: finish)
+                VStack(spacing: 6) {
+                    if !networkMonitor.isConnected {
+                        Label(WatchCopy.offline(prefs.uiLanguageCode), systemImage: "wifi.slash")
+                            .font(.caption2)
+                            .foregroundStyle(.yellow)
+                            .frame(maxWidth: .infinity)
+                    }
+                    MatchReviewView(
+                        vm: vm,
+                        onBack: { isReviewing = false },
+                        onFinish: saveAndDismiss
+                    )
+                }
             } else {
-                ClassicScoringView(vm: vm, onFinish: finish)
+                VStack(spacing: 6) {
+                    if !networkMonitor.isConnected {
+                        Label(WatchCopy.offline(prefs.uiLanguageCode), systemImage: "wifi.slash")
+                            .font(.caption2)
+                            .foregroundStyle(.yellow)
+                            .frame(maxWidth: .infinity)
+                    }
+                    if vm.isAmericano {
+                        AmericanoScoringView(vm: vm, onFinish: finish)
+                    } else {
+                        ClassicScoringView(vm: vm, onFinish: finish)
+                    }
+                }
             }
         }
         .navigationTitle(scoringNavTitle)
         .task { await vm.load() }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if workoutManager.isActive, workoutManager.activeGameId == gameId, !workoutManager.authDenied {
+                WorkoutMetricsBar(
+                    lang: prefs.uiLanguageCode,
+                    calories: workoutManager.activeCalories,
+                    heartRate: workoutManager.heartRate,
+                    elapsedSeconds: workoutManager.elapsedSeconds,
+                    sessionState: workoutManager.sessionState,
+                    isOffline: !networkMonitor.isConnected,
+                    onTogglePause: { workoutManager.togglePauseResume() }
+                )
+                .frame(maxWidth: .infinity)
+                .background(.ultraThinMaterial)
+            }
+        }
     }
 
     private var scoringNavTitle: String {

@@ -10,6 +10,7 @@ const CACHE_VERSION = 'v1';
 if (isCapacitor() && isAndroid()) {
   document.body.classList.add('capacitor-android');
   setAndroidViewportVars();
+  [150, 400].forEach((ms) => setTimeout(setAndroidViewportVars, ms));
 }
 setupCapacitor();
 setupBrowserKeyboardDetection();

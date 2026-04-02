@@ -138,6 +138,7 @@ model User {
   reviewsReceivedAsTrainer TrainerReview[]      @relation("TrainerReviewsReceived")
   reviewsGiven            TrainerReview[]      @relation("TrainerReviewsGiven")
   gameWorkoutSummaries    GameWorkoutSummary[]
+  telegramLinkIntents     TelegramAccountLinkIntent[]
 
   @@index([phone])
   @@index([telegramId])
@@ -1008,6 +1009,7 @@ model TelegramOtp {
   codeMessageId  String?  @db.VarChar(255)
   linkKey        String?  @db.VarChar(64)
   linkMessageId  String?  @db.VarChar(255)
+  linkUserId     String?  @db.VarChar(255)
   expiresAt      DateTime
   createdAt      DateTime @default(now())
 
@@ -1015,6 +1017,18 @@ model TelegramOtp {
   @@index([telegramId])
   @@index([expiresAt])
   @@index([linkKey])
+  @@index([linkUserId])
+}
+
+model TelegramAccountLinkIntent {
+  id        String   @id @default(cuid())
+  token     String   @unique @db.VarChar(32)
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Bug {

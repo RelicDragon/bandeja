@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
@@ -369,6 +370,17 @@ export const deleteUser = asyncHandler(async (req: AuthRequest, res: Response) =
     success: true,
     message: 'User deleted successfully',
   });
+});
+
+export const createTelegramLinkIntent = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId!;
+  await prisma.telegramAccountLinkIntent.deleteMany({ where: { userId } });
+  const linkToken = randomBytes(16).toString('hex');
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+  await prisma.telegramAccountLinkIntent.create({
+    data: { token: linkToken, userId, expiresAt },
+  });
+  res.json({ success: true, data: { linkToken } });
 });
 
 export const syncTelegramProfile = asyncHandler(async (req: AuthRequest, res: Response) => {

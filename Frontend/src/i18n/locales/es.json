@@ -39,6 +39,8 @@
     "enterCodePlaceholder": "Ingresa código de 6 dígitos",
     "enterCodeRequired": "Por favor ingresa el código de 6 dígitos",
     "invalidCode": "Código inválido o expirado. Por favor intenta de nuevo",
+    "telegramLinkRequiresLogin": "Abre este enlace desde la app de Bandeja iniciando sesión (vuelve a la app y usa Abrir Bandeja otra vez).",
+    "telegramLinkWrongAccount": "Este enlace se inició desde otra cuenta. Abre Perfil → Vincular Telegram con la cuenta correcta.",
     "codeRequired": "El código es requerido",
     "accountInactive": "La cuenta está inactiva",
     "eula": "Términos de servicio",
@@ -1634,6 +1636,9 @@
     "warningMessage": "Esta acción no se puede deshacer. Asegúrate de entender qué cambios estás conservando.",
     "serverAccepted": "Cambios del servidor aceptados exitosamente",
     "clientForced": "Tus cambios han sido aplicados exitosamente"
+  },
+  "telegram": {
+    "telegramInUse": "Esta cuenta de Telegram ya está vinculada a otro usuario de Bandeja."
   },
   "errors": {
     "generic": "Algo salió mal",

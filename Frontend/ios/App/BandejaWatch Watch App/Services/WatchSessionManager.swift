@@ -18,6 +18,7 @@ private enum WatchConnectivityPayload {
             if isLogout {
                 KeychainHelper.shared.deleteToken()
                 WatchPreferencesStore.shared.clear()
+                ScoringOutbox.shared.clear()
                 WatchSessionManager.shared.logoutDidArrive.toggle()
                 return
             }

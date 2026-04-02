@@ -20,6 +20,14 @@ struct ContentView: View {
                     }
                 }
         }
+        .onChange(of: router.path) { oldPath, newPath in
+            guard let gid = WorkoutManager.shared.activeGameId else { return }
+            let had = Router.pathContainsScoring(for: gid, path: oldPath)
+            let has = Router.pathContainsScoring(for: gid, path: newPath)
+            if had, !has {
+                Task { await WorkoutManager.shared.discardIfStillActive(gameId: gid) }
+            }
+        }
         .onOpenURL { url in
             guard let id = WatchDeepLink.parseGameId(from: url) else { return }
             router.popToRoot()

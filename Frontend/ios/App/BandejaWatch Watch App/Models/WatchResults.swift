@@ -64,7 +64,7 @@ struct WatchUpdateMatchBody: Encodable, Sendable {
     let sets: [WatchSetWrite]
 }
 
-struct WatchSetWrite: Encodable, Sendable {
+struct WatchSetWrite: Codable, Sendable {
     var teamA: Int
     var teamB: Int
     var isTieBreak: Bool = false

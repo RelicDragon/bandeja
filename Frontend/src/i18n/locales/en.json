@@ -39,6 +39,8 @@
     "enterCodePlaceholder": "Enter 6-digit code",
     "enterCodeRequired": "Please enter the 6-digit code",
     "invalidCode": "Invalid or expired code. Please try again",
+    "telegramLinkRequiresLogin": "Open this link from the Bandeja app while you are logged in (e.g. return to the app and use Open Bandeja again).",
+    "telegramLinkWrongAccount": "This link was started from another account. Open Profile → Link Telegram while logged into the account you want to link.",
     "codeRequired": "Code is required",
     "accountInactive": "Account is inactive",
     "eula": "Terms of Service",
@@ -1702,6 +1704,9 @@
     "warningMessage": "This action cannot be undone. Make sure you understand which changes you're keeping.",
     "serverAccepted": "Server changes accepted successfully",
     "clientForced": "Your changes have been applied successfully"
+  },
+  "telegram": {
+    "telegramInUse": "This Telegram account is already linked to another Bandeja user."
   },
   "errors": {
     "generic": "Something went wrong",

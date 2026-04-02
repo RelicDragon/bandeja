@@ -9,6 +9,7 @@ import { NotificationPreferenceService } from '../services/notificationPreferenc
 import { NotificationChannelType } from '@prisma/client';
 import type { TelegramOtp } from '@prisma/client';
 import { ensureUserCityAssigned } from '../services/user-city-bootstrap.service';
+import { AuthRequest } from '../middleware/auth';
 import {
   mergeOAuthLoginNames,
   needsDisplayNamePersist,
@@ -80,6 +81,64 @@ async function completeTelegramAuth(
   return { user, token };
 }
 
+async function mergeTelegramIntoUser(
+  otp: TelegramOtp,
+  linkUserId: string,
+  req: Request,
+  language: string | undefined
+): Promise<{ user: any; token: string }> {
+  const tgId = otp.telegramId;
+
+  const conflicting = await prisma.user.findFirst({
+    where: { telegramId: tgId, id: { not: linkUserId } },
+    select: { id: true },
+  });
+  if (conflicting) {
+    throw new ApiError(409, 'telegram.telegramInUse');
+  }
+
+  let user = await prisma.user.findUnique({
+    where: { id: linkUserId },
+    select: PROFILE_SELECT_FIELDS,
+  });
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+  if (!user.isActive) {
+    throw new ApiError(403, 'auth.accountInactive');
+  }
+
+  const nameResolved = mergeOAuthLoginNames(
+    user.firstName,
+    user.lastName,
+    otp.firstName ?? undefined,
+    otp.lastName ?? undefined,
+    user.nameIsSet
+  );
+  const updateData: any = {
+    telegramId: tgId,
+    telegramUsername: otp.username ?? null,
+  };
+  if (language) {
+    updateData.language = language;
+  }
+  if (needsDisplayNamePersist(user, nameResolved)) {
+    updateData.firstName = nameResolved.firstName ?? null;
+    updateData.lastName = nameResolved.lastName ?? null;
+    updateData.nameIsSet = nameResolved.nameIsSet;
+  }
+
+  user = await prisma.user.update({
+    where: { id: linkUserId },
+    data: updateData,
+    select: PROFILE_SELECT_FIELDS,
+  });
+  user = await ensureUserCityAssigned(user.id, req);
+  const token = generateToken({ userId: user.id, telegramId: tgId });
+  await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
+  return { user, token };
+}
+
 export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response) => {
   await new Promise(resolve => setTimeout(resolve, 1000));
   const { code, language } = req.body;
@@ -94,7 +153,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
   res.json({ success: true, data: { user, token } });
 });
 
-export const verifyTelegramLinkKey = asyncHandler(async (req: Request, res: Response) => {
+export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: Response) => {
   await new Promise(resolve => setTimeout(resolve, 1000));
   const { key, language } = req.body;
   if (!key || typeof key !== 'string' || key.length < 20) {
@@ -103,6 +162,17 @@ export const verifyTelegramLinkKey = asyncHandler(async (req: Request, res: Resp
   const otp = await telegramBotService.verifyLinkKey(key);
   if (!otp) {
     throw new ApiError(401, 'auth.invalidCode');
+  }
+  if (otp.linkUserId) {
+    if (!req.userId) {
+      throw new ApiError(401, 'auth.telegramLinkRequiresLogin');
+    }
+    if (req.userId !== otp.linkUserId) {
+      throw new ApiError(403, 'auth.telegramLinkWrongAccount');
+    }
+    const merged = await mergeTelegramIntoUser(otp, otp.linkUserId, req, language);
+    res.json({ success: true, data: merged });
+    return;
   }
   const { user, token } = await completeTelegramAuth(otp, req, language);
   res.json({ success: true, data: { user, token } });

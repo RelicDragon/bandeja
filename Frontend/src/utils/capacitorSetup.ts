@@ -70,6 +70,7 @@ export const setupCapacitor = async () => {
       setTimeout(setAndroidViewportVars, 50);
       requestAnimationFrame(setAndroidViewportVars);
     });
+    [100, 300, 500, 1000].forEach((ms) => setTimeout(setAndroidViewportVars, ms));
   }
 
   try {

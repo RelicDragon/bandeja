@@ -20,6 +20,7 @@ const router = Router();
 router.get('/profile', authenticate, userController.getProfile);
 router.get('/workout-sessions', authenticate, userController.getMyWorkoutSessions);
 router.post('/profile/sync-telegram', authenticate, userController.syncTelegramProfile);
+router.post('/profile/telegram-link-intent', authenticate, userController.createTelegramLinkIntent);
 router.get('/notification-preferences', authenticate, userController.getNotificationPreferences);
 router.put(
   '/notification-preferences',

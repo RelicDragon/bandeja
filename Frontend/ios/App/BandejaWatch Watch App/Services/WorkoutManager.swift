@@ -27,6 +27,7 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
 
     var isActive = false
     var authDenied = false
+    var sessionState: HKWorkoutSessionState = .notStarted
     var activeCalories: Double = 0
     var heartRate: Double = 0
     var maxHeartRateTracked: Double = 0
@@ -60,6 +61,8 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
             b.delegate = self
             activeGameId = ud?.string(forKey: Self.activeGameIdKey)
             workoutStartDate = recovered.startDate
+            sessionState = recovered.state
+            elapsedSeconds = b.elapsedTime
             isActive = true
             authDenied = false
         } catch {
@@ -70,7 +73,11 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
 
     func startIfNeeded(gameId: String, isIndoor: Bool) async {
         guard HKHealthStore.isHealthDataAvailable() else { return }
-        if isActive, activeGameId == gameId { return }
+        if isActive, activeGameId == gameId {
+            if let s = session { sessionState = s.state }
+            if let b = builder { elapsedSeconds = b.elapsedTime }
+            return
+        }
         if isActive, activeGameId != gameId {
             await discardWorkout()
         }
@@ -109,14 +116,12 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
             builder = newBuilder
             activeGameId = gameId
             ud?.set(gameId, forKey: Self.activeGameIdKey)
+            sessionState = newSession.state
             isActive = true
             activeCalories = 0
             heartRate = 0
             maxHeartRateTracked = 0
-            elapsedSeconds = 0
-            if Task.isCancelled {
-                await discardWorkout()
-            }
+            elapsedSeconds = newBuilder.elapsedTime
         } catch {
             Self.log.error("startIfNeeded failed: \(error.localizedDescription, privacy: .public)")
             session = nil
@@ -124,15 +129,26 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
             activeGameId = nil
             workoutStartDate = nil
             isActive = false
+            sessionState = .notStarted
             ud?.removeObject(forKey: Self.activeGameIdKey)
         }
     }
 
-    /// Leaving the match list without finalizing: discard in-progress workout.
-    func handleLeaveMatchList(gameId: String, resultsFinal: Bool) async {
-        if resultsFinal { return }
+    func discardIfStillActive(gameId: String) async {
         guard activeGameId == gameId, isActive else { return }
         await discardWorkout()
+    }
+
+    func togglePauseResume() {
+        guard let session, isActive else { return }
+        switch session.state {
+        case .running:
+            session.pause()
+        case .paused:
+            session.resume()
+        default:
+            break
+        }
     }
 
     /// After results are finalized on the server: save HK workout and upload summary.
@@ -155,7 +171,8 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
             let startDate = workout.startDate
             let endDate = workout.endDate
             let durationSeconds = max(1, Int(floor(endDate.timeIntervalSince(startDate))))
-            let kcal = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie())
+            let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
+            let kcal = workout.statistics(for: energyType)?.sumQuantity()?.doubleValue(for: .kilocalorie())
 
             let hrType = HKQuantityType.quantityType(forIdentifier: .heartRate)!
             let hrStats = workout.statistics(for: hrType)
@@ -227,6 +244,7 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
         heartRate = 0
         maxHeartRateTracked = 0
         elapsedSeconds = 0
+        sessionState = .notStarted
         ud?.removeObject(forKey: Self.activeGameIdKey)
     }
 
@@ -275,7 +293,15 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
         didChangeTo toState: HKWorkoutSessionState,
         from fromState: HKWorkoutSessionState,
         date: Date
-    ) {}
+    ) {
+        Task { @MainActor in
+            guard let s = self.session, ObjectIdentifier(s) == ObjectIdentifier(workoutSession) else { return }
+            sessionState = toState
+            if let b = builder {
+                elapsedSeconds = b.elapsedTime
+            }
+        }
+    }
 
     nonisolated func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {
         Task { @MainActor in

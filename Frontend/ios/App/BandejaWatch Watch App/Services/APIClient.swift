@@ -28,6 +28,14 @@ enum APIError: Error, LocalizedError {
             return WatchCopy.errorUnexpectedResponse(uiLanguageCode)
         }
     }
+
+    /// Whether a failed HTTP response should be retried via the scoring outbox (enqueue on save, keep on flush).
+    nonisolated static func httpStatusWarrantsOutboxRetry(_ statusCode: Int) -> Bool {
+        if statusCode == 401 { return false }
+        if statusCode == 408 || statusCode == 429 { return true }
+        if (400..<500).contains(statusCode) { return false }
+        return true
+    }
 }
 
 struct APIClient: Sendable {

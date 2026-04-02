@@ -29,6 +29,7 @@ import { AppleIcon } from '@/components/AppleIcon';
 import { getCurrencyOptions, getCurrencySymbol } from '@/utils/currency';
 import { setNativeAppIcon } from '@/services/appIcon.service';
 import type { AppIconId } from '@/config/appIcons';
+import { config as appConfig } from '@/config/media';
 
 export const ProfileContent = () => {
   const { t, i18n } = useTranslation();
@@ -76,6 +77,7 @@ export const ProfileContent = () => {
   const [showUnlinkAppleModal, setShowUnlinkAppleModal] = useState(false);
   const [showUnlinkGoogleModal, setShowUnlinkGoogleModal] = useState(false);
   const [isSyncingTelegram, setIsSyncingTelegram] = useState(false);
+  const [isOpeningTelegramLink, setIsOpeningTelegramLink] = useState(false);
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>([]);
   const [allowMessagesFromNonContacts, setAllowMessagesFromNonContacts] = useState(user?.allowMessagesFromNonContacts !== false);
   const [showOnlineStatus, setShowOnlineStatus] = useState(user?.showOnlineStatus !== false);
@@ -882,10 +884,36 @@ export const ProfileContent = () => {
               </div>
               {!user?.telegramUsername && (
                 <Button
-                  onClick={() => window.open('https://t.me/BandejaBot', '_blank')}
+                  onClick={async () => {
+                    setIsOpeningTelegramLink(true);
+                    try {
+                      const res = await usersApi.createTelegramLinkIntent();
+                      const linkToken = res?.data?.linkToken;
+                      if (!linkToken) {
+                        toast.error(t('errors.generic'));
+                        return;
+                      }
+                      const base = appConfig.telegramBotUrl.replace(/\/$/, '');
+                      const start = `link_${linkToken}`;
+                      const url = base.includes('?')
+                        ? `${base}&start=${encodeURIComponent(start)}`
+                        : `${base}?start=${encodeURIComponent(start)}`;
+                      window.open(url, '_blank');
+                    } catch (err: any) {
+                      const msg = err.response?.data?.message;
+                      toast.error(msg || t('errors.generic'));
+                    } finally {
+                      setIsOpeningTelegramLink(false);
+                    }
+                  }}
+                  disabled={isOpeningTelegramLink}
                   className="w-full h-10 text-sm font-medium"
                 >
-                  {t('profile.linkTelegram')}
+                  {isOpeningTelegramLink ? (
+                    <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                  ) : (
+                    t('profile.linkTelegram')
+                  )}
                 </Button>
               )}
               {user?.telegramId && (

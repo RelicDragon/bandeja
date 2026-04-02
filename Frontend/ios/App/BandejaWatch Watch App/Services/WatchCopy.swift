@@ -157,6 +157,24 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func offline(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Sin conexión"
+        case "ru": return "Офлайн"
+        case "sr": return "Ван мреже"
+        default: return "Offline"
+        }
+    }
+
+    nonisolated static func scoresSyncPending(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Puntuaciones: se enviarán al volver la conexión…"
+        case "ru": return "Счёт: отправится при появлении сети…"
+        case "sr": return "Резултати: шаљу се када се мрежа врати…"
+        default: return "Scores will sync when you’re back online…"
+        }
+    }
+
     nonisolated static func resultsRefreshFailed(_ lang: String) -> String {
         switch lang {
         case "es": return "Resultados guardados. Desliza hacia abajo para actualizar."
@@ -736,5 +754,23 @@ enum WatchCopy {
 
     nonisolated static func workoutTimerShort(_: String, minutes: Int, seconds: Int) -> String {
         String(format: "%d:%02d", minutes, seconds)
+    }
+
+    nonisolated static func workoutPauseA11y(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Pausar entrenamiento"
+        case "ru": return "Приостановить тренировку"
+        case "sr": return "Пауза тренинга"
+        default: return "Pause workout"
+        }
+    }
+
+    nonisolated static func workoutResumeA11y(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Reanudar entrenamiento"
+        case "ru": return "Продолжить тренировку"
+        case "sr": return "Настави тренинг"
+        default: return "Resume workout"
+        }
     }
 }

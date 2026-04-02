@@ -159,6 +159,11 @@ export const usersApi = {
     return response.data;
   },
 
+  createTelegramLinkIntent: async () => {
+    const response = await api.post<ApiResponse<{ linkToken: string }>>('/users/profile/telegram-link-intent');
+    return response.data;
+  },
+
   getNotificationPreferences: async () => {
     const response = await api.get<ApiResponse<NotificationPreference[]>>('/users/notification-preferences');
     return response.data;

@@ -130,12 +130,12 @@ final class MatchScoringViewModel {
     func saveCurrentSets() async {
         guard !isReadOnly else { return }
         guard let match else { return }
+        let sortedTeams = match.sortedTeams
+        let teamAIds = sortedTeams.first(where: { $0.teamNumber == 1 })?.players.map(\.userId) ?? []
+        let teamBIds = sortedTeams.first(where: { $0.teamNumber == 2 })?.players.map(\.userId) ?? []
         isSaving = true
         defer { isSaving = false }
         do {
-            let sortedTeams = match.sortedTeams
-            let teamAIds = sortedTeams.first(where: { $0.teamNumber == 1 })?.players.map(\.userId) ?? []
-            let teamBIds = sortedTeams.first(where: { $0.teamNumber == 2 })?.players.map(\.userId) ?? []
             let body = WatchUpdateMatchBody(
                 teamA: teamAIds,
                 teamB: teamBIds,
@@ -143,9 +143,36 @@ final class MatchScoringViewModel {
             )
             try await api.sendVoid(.updateMatch(gameId: gameId, matchId: match.id), body: body)
             WatchSessionManager.shared.notifyScoreUpdated(gameId: gameId)
+            ScoringOutbox.shared.remove(matchId: match.id)
         } catch {
-            self.error = error
+            if Self.shouldQueueSaveForLater(error) {
+                ScoringOutbox.shared.enqueue(
+                    ScoringOutbox.Entry(
+                        gameId: gameId,
+                        matchId: match.id,
+                        teamA: teamAIds,
+                        teamB: teamBIds,
+                        sets: sets,
+                        enqueuedAt: Date()
+                    )
+                )
+            } else {
+                self.error = error
+            }
         }
+    }
+
+    private static func shouldQueueSaveForLater(_ error: Error) -> Bool {
+        if let api = error as? APIError {
+            switch api {
+            case .httpError(let code):
+                return APIError.httpStatusWarrantsOutboxRetry(code)
+            case .noToken, .decodingError:
+                return false
+            }
+        }
+        let ns = error as NSError
+        return ns.domain == NSURLErrorDomain
     }
 
     func incrementAmericanoTeamA() {
@@ -153,8 +180,12 @@ final class MatchScoringViewModel {
         guard isAmericano, activeSetIndex < sets.count else { return }
         let maxTotal = maxPointsPerSet
         guard maxTotal > 0 else { return }
+        let prev = sets[activeSetIndex].teamA
         sets[activeSetIndex].teamA = min(maxTotal, sets[activeSetIndex].teamA + 1)
         sets[activeSetIndex].teamB = maxTotal - sets[activeSetIndex].teamA
+        if sets[activeSetIndex].teamA != prev {
+            WatchScoreHaptics.point()
+        }
     }
 
     func decrementAmericanoTeamA() {
@@ -162,8 +193,12 @@ final class MatchScoringViewModel {
         guard isAmericano, activeSetIndex < sets.count else { return }
         let maxTotal = maxPointsPerSet
         guard maxTotal > 0 else { return }
+        let prev = sets[activeSetIndex].teamA
         sets[activeSetIndex].teamA = max(0, sets[activeSetIndex].teamA - 1)
         sets[activeSetIndex].teamB = maxTotal - sets[activeSetIndex].teamA
+        if sets[activeSetIndex].teamA != prev {
+            WatchScoreHaptics.undo()
+        }
     }
 
     func canUnscore(_ side: TeamSide) -> Bool {
@@ -203,18 +238,22 @@ final class MatchScoringViewModel {
             ensureSetExists(activeSetIndex)
             if side == .teamA, sets[activeSetIndex].teamA > 0 {
                 sets[activeSetIndex].teamA -= 1
+                WatchScoreHaptics.undo()
             } else if side == .teamB, sets[activeSetIndex].teamB > 0 {
                 sets[activeSetIndex].teamB -= 1
+                WatchScoreHaptics.undo()
             }
             return
         }
         if withinSetTieBreakMode {
             if side == .teamA, tieBreakA > 0 {
                 tieBreakA -= 1
+                WatchScoreHaptics.undo()
                 return
             }
             if side == .teamB, tieBreakB > 0 {
                 tieBreakB -= 1
+                WatchScoreHaptics.undo()
                 return
             }
             if tieBreakA == 0, tieBreakB == 0 {
@@ -224,11 +263,13 @@ final class MatchScoringViewModel {
                    sets[activeSetIndex].teamA > 0 {
                     sets[activeSetIndex].teamA -= 1
                     withinSetTieBreakMode = false
+                    WatchScoreHaptics.undo()
                 } else if side == .teamB, sets[activeSetIndex].teamA == gamesScoreForTieBreak,
                           sets[activeSetIndex].teamB == gamesScoreForTieBreak,
                           sets[activeSetIndex].teamB > 0 {
                     sets[activeSetIndex].teamB -= 1
                     withinSetTieBreakMode = false
+                    WatchScoreHaptics.undo()
                 }
             }
             return
@@ -237,23 +278,29 @@ final class MatchScoringViewModel {
         switch classicPointState {
         case .advantage:
             classicPointState = .deuce
+            WatchScoreHaptics.undo()
         case .deuce:
             classicPointState = .regular(a: .forty, b: .forty)
+            WatchScoreHaptics.undo()
         case .regular(let a, let b):
             if side == .teamA {
                 if let p = a.previous {
                     classicPointState = .regular(a: p, b: b)
+                    WatchScoreHaptics.undo()
                 } else if sets[safe: activeSetIndex]?.teamA ?? 0 > 0 {
                     ensureSetExists(activeSetIndex)
                     sets[activeSetIndex].teamA -= 1
                     classicPointState = .regular(a: .forty, b: .forty)
+                    WatchScoreHaptics.undo()
                 }
             } else if let p = b.previous {
                 classicPointState = .regular(a: a, b: p)
+                WatchScoreHaptics.undo()
             } else if sets[safe: activeSetIndex]?.teamB ?? 0 > 0 {
                 ensureSetExists(activeSetIndex)
                 sets[activeSetIndex].teamB -= 1
                 classicPointState = .regular(a: .forty, b: .forty)
+                WatchScoreHaptics.undo()
             }
         }
     }
@@ -396,6 +443,7 @@ final class MatchScoringViewModel {
             } else {
                 sets[activeSetIndex].teamB += 1
             }
+            WatchScoreHaptics.point()
             return
         }
         if withinSetTieBreakMode {
@@ -403,6 +451,7 @@ final class MatchScoringViewModel {
             if withinSetTieBreakPointRaceCompleted() {
                 finishWithinSetTieBreakAsGames()
             }
+            WatchScoreHaptics.point()
             return
         }
 
@@ -418,25 +467,31 @@ final class MatchScoringViewModel {
                     awardGame(.teamA)
                 } else if a == .forty && b == .forty {
                     classicPointState = .deuce
+                    WatchScoreHaptics.point()
                 } else {
                     classicPointState = .regular(a: a.next ?? .forty, b: b)
+                    WatchScoreHaptics.point()
                 }
             } else {
                 if b == .forty && a != .forty {
                     awardGame(.teamB)
                 } else if a == .forty && b == .forty {
                     classicPointState = .deuce
+                    WatchScoreHaptics.point()
                 } else {
                     classicPointState = .regular(a: a, b: b.next ?? .forty)
+                    WatchScoreHaptics.point()
                 }
             }
         case .deuce:
             classicPointState = .advantage(side)
+            WatchScoreHaptics.point()
         case .advantage(let adv):
             if adv == side {
                 awardGame(side)
             } else {
                 classicPointState = .deuce
+                WatchScoreHaptics.point()
             }
         }
     }
@@ -449,6 +504,7 @@ final class MatchScoringViewModel {
             sets[activeSetIndex].teamB += 1
         }
         classicPointState = .regular(a: .zero, b: .zero)
+        WatchScoreHaptics.point()
         if sets[activeSetIndex].teamA == gamesScoreForTieBreak && sets[activeSetIndex].teamB == gamesScoreForTieBreak {
             withinSetTieBreakMode = true
             tieBreakA = 0

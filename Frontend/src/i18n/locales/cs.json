@@ -39,6 +39,8 @@
     "enterCodePlaceholder": "Zadejte 6místný kód",
     "enterCodeRequired": "Prosím zadejte 6místný kód",
     "invalidCode": "Neplatný nebo vypršený kód. Zkuste to znovu",
+    "telegramLinkRequiresLogin": "Otevřete odkaz z aplikace Bandeja, kde jste přihlášeni (vraťte se do aplikace a znovu klepněte na Otevřít Bandeja).",
+    "telegramLinkWrongAccount": "Odkaz patří k jinému účtu. V profilu použijte Propojit Telegram u správného účtu.",
     "codeRequired": "Kód je povinný",
     "accountInactive": "Účet je neaktivní",
     "eula": "Podmínky užívání",
@@ -1685,6 +1687,9 @@
     "warningMessage": "Tuto akci nelze vrátit. Ujistěte se, které změny zachováte.",
     "serverAccepted": "Změny ze serveru byly přijaty",
     "clientForced": "Vaše změny byly aplikovány"
+  },
+  "telegram": {
+    "telegramInUse": "Tento Telegram je už propojen s jiným uživatelem Bandeja."
   },
   "errors": {
     "generic": "Něco se pokazilo",

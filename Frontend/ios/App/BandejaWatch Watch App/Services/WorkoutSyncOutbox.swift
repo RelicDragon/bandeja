@@ -1,5 +1,4 @@
 import Foundation
-import Network
 import Observation
 import os
 
@@ -110,22 +109,4 @@ private struct WorkoutOutboxUploadBody: Encodable, Sendable {
 
 private struct WorkoutOutboxUpsertResponse: Decodable, Sendable {
     let id: String
-}
-
-@MainActor
-final class WorkoutOutboxNetworkMonitor {
-    static let shared = WorkoutOutboxNetworkMonitor()
-
-    private let monitor = NWPathMonitor()
-    private let queue = DispatchQueue(label: "bandeja.watch.outbox.network")
-
-    func start() {
-        monitor.pathUpdateHandler = { path in
-            guard path.status == .satisfied else { return }
-            Task { @MainActor in
-                await WorkoutSyncOutbox.shared.flush()
-            }
-        }
-        monitor.start(queue: queue)
-    }
 }

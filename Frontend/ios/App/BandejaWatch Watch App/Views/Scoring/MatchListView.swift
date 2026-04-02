@@ -5,6 +5,8 @@ struct MatchListView: View {
     @State private var vm: ScoringViewModel
     @Bindable private var workoutManager = WorkoutManager.shared
     @Bindable private var workoutOutbox = WorkoutSyncOutbox.shared
+    @Bindable private var scoringOutbox = ScoringOutbox.shared
+    @Bindable private var networkMonitor = NetworkMonitor.shared
     @Environment(Router.self) private var router
     @Environment(WatchPreferencesStore.self) private var prefs
 
@@ -30,35 +32,22 @@ struct MatchListView: View {
         .navigationTitle(WatchCopy.matches(lang))
         .task(id: gameId) {
             await WorkoutManager.shared.recoverIfNeeded()
-            if Task.isCancelled {
-                await WorkoutManager.shared.handleLeaveMatchList(gameId: gameId, resultsFinal: vm.isFinal)
-                return
-            }
             await vm.load()
-            if Task.isCancelled {
-                await WorkoutManager.shared.handleLeaveMatchList(gameId: gameId, resultsFinal: vm.isFinal)
-                return
-            }
             if !vm.isFinal {
                 await WorkoutManager.shared.startIfNeeded(gameId: gameId, isIndoor: true)
             }
-            if Task.isCancelled {
-                await WorkoutManager.shared.handleLeaveMatchList(gameId: gameId, resultsFinal: vm.isFinal)
-            }
         }
-        .onDisappear {
-            vm.stopPolling()
-            Task {
-                await WorkoutManager.shared.handleLeaveMatchList(gameId: gameId, resultsFinal: vm.isFinal)
-            }
-        }
+        .onDisappear { vm.stopPolling() }
         .safeAreaInset(edge: .top, spacing: 0) {
             if workoutManager.isActive, workoutManager.activeGameId == gameId, !workoutManager.authDenied {
                 WorkoutMetricsBar(
                     lang: lang,
                     calories: workoutManager.activeCalories,
                     heartRate: workoutManager.heartRate,
-                    elapsedSeconds: workoutManager.elapsedSeconds
+                    elapsedSeconds: workoutManager.elapsedSeconds,
+                    sessionState: workoutManager.sessionState,
+                    isOffline: !networkMonitor.isConnected,
+                    onTogglePause: { workoutManager.togglePauseResume() }
                 )
                 .frame(maxWidth: .infinity)
                 .background(.ultraThinMaterial)
@@ -83,6 +72,12 @@ struct MatchListView: View {
         List {
             if workoutOutbox.hasPending(forGameId: gameId) {
                 Text(WatchCopy.workoutBandejaSyncPending(prefs.uiLanguageCode))
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .listRowBackground(Color.clear)
+            }
+            if scoringOutbox.hasPending(forGameId: gameId) {
+                Text(WatchCopy.scoresSyncPending(prefs.uiLanguageCode))
                     .font(.caption2)
                     .foregroundStyle(.orange)
                     .listRowBackground(Color.clear)
@@ -156,6 +151,7 @@ struct MatchListView: View {
         }
         .refreshable {
             await vm.refresh()
+            await ScoringOutbox.shared.flush()
             await WorkoutSyncOutbox.shared.flush()
         }
     }

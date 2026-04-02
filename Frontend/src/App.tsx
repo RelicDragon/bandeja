@@ -296,13 +296,9 @@ function AppContent() {
         <Route
           path="/login/:telegramKey"
           element={
-            isAuthenticated ? (
-              <Navigate to="/" replace />
-            ) : (
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                <TelegramAutoLogin />
-              </Suspense>
-            )
+            <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <TelegramAutoLogin />
+            </Suspense>
           }
         />
         <Route

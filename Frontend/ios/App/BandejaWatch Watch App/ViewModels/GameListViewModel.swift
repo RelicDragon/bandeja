@@ -27,6 +27,7 @@ final class GameListViewModel {
         currentUserId = nil
         error = nil
         GameCache.clear()
+        ScoringOutbox.shared.clear()
         WidgetCenter.shared.reloadAllTimelines()
     }
 
