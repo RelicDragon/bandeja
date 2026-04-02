@@ -111,21 +111,11 @@ struct ClassicScoringView: View {
                 .disabled(vm.isSaving)
             }
         }
-        .alert(
-            WatchCopy.gameWonConfirmAlertTitle(lang),
-            isPresented: Binding(
-                get: { vm.pendingGameWinConfirmSide != nil },
-                set: { if !$0 { vm.cancelPendingGameWinConfirm() } }
-            )
-        ) {
-            Button(WatchCopy.cancelAction(lang), role: .cancel) {
-                vm.cancelPendingGameWinConfirm()
-            }
-            Button(WatchCopy.confirmAction(lang)) {
-                vm.confirmPendingGameWin()
-            }
-        } message: {
-            Text(vm.pendingGameWinAlertMessage(lang: lang))
+        .sheet(isPresented: Binding(
+            get: { vm.pendingGameWinConfirmSide != nil },
+            set: { if !$0 { vm.cancelPendingGameWinConfirm() } }
+        )) {
+            GameWinConfirmSheet(vm: vm, lang: lang)
         }
         .confirmationDialog(
             WatchCopy.setFormatChoiceTitle(lang),

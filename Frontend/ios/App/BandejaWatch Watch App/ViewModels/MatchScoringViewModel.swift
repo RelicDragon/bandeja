@@ -262,34 +262,16 @@ final class MatchScoringViewModel {
         pendingGameWinConfirmSide = nil
     }
 
-    func pendingGameWinAlertMessage(lang: String) -> String {
-        guard let side = pendingGameWinConfirmSide else { return "" }
-        let users = side == .teamA ? teamAUsers : teamBUsers
-        let names = users
-            .map { $0.displayName.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-            .joined(separator: " * ")
-        let visibleUserCount = users.filter {
-            !$0.displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        }.count
-        let balls = game?.ballsInGames == true
-        let projA: Int?
-        let projB: Int?
-        if balls {
-            projA = (sets[safe: activeSetIndex]?.teamA ?? 0) + (side == .teamA ? 1 : 0)
-            projB = (sets[safe: activeSetIndex]?.teamB ?? 0) + (side == .teamB ? 1 : 0)
-        } else {
-            projA = nil
-            projB = nil
-        }
-        return WatchCopy.gameWonConfirmFullMessage(
-            lang,
-            names: names,
-            playerCount: visibleUserCount,
-            projectedTeamA: projA,
-            projectedTeamB: projB,
-            ballsInGames: balls
-        )
+    func pendingGameWinWinningUsers() -> [WatchUser] {
+        guard let side = pendingGameWinConfirmSide else { return [] }
+        return side == .teamA ? teamAUsers : teamBUsers
+    }
+
+    func pendingGameWinProjectedScoresIfBalls() -> (teamA: Int, teamB: Int)? {
+        guard let side = pendingGameWinConfirmSide, game?.ballsInGames == true else { return nil }
+        let a = (sets[safe: activeSetIndex]?.teamA ?? 0) + (side == .teamA ? 1 : 0)
+        let b = (sets[safe: activeSetIndex]?.teamB ?? 0) + (side == .teamB ? 1 : 0)
+        return (a, b)
     }
 
     func confirmPendingGameWin() {

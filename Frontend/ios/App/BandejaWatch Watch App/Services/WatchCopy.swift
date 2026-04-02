@@ -445,16 +445,13 @@ enum WatchCopy {
         }
     }
 
-    nonisolated static func gameWonWinnerSentence(_ lang: String, names: String, playerCount: Int) -> String {
+    nonisolated static func gameWonConfirmWonLabel(_ lang: String, playerCount: Int) -> String {
+        let plural = playerCount > 1
         switch lang {
-        case "es":
-            return playerCount <= 1 ? "\(names) gana el juego." : "\(names) ganan el juego."
-        case "ru":
-            return playerCount <= 1 ? "\(names) выигрывает гейм." : "\(names) выигрывают гейм."
-        case "sr":
-            return playerCount <= 1 ? "\(names) осваја гем." : "\(names) освајају гем."
-        default:
-            return playerCount <= 1 ? "\(names) won." : "\(names) won."
+        case "es": return plural ? "Ganaron" : "Ganó"
+        case "ru": return plural ? "Выиграли" : "Победа"
+        case "sr": return plural ? "Победили" : "Победа"
+        default: return "Won"
         }
     }
 
@@ -474,21 +471,6 @@ enum WatchCopy {
         case "sr": return "Ова страна"
         default: return "This side"
         }
-    }
-
-    nonisolated static func gameWonConfirmFullMessage(
-        _ lang: String,
-        names: String,
-        playerCount: Int,
-        projectedTeamA: Int?,
-        projectedTeamB: Int?,
-        ballsInGames: Bool
-    ) -> String {
-        let label = names.isEmpty ? gameWonUnknownSide(lang) : names
-        let countForGrammar = names.isEmpty ? 1 : max(playerCount, 1)
-        let first = gameWonWinnerSentence(lang, names: label, playerCount: countForGrammar)
-        guard ballsInGames, let a = projectedTeamA, let b = projectedTeamB else { return first }
-        return first + "\n\n" + gameWonScoreWillBe(lang, teamA: a, teamB: b)
     }
 
     nonisolated static func confirmAction(_ lang: String) -> String {
