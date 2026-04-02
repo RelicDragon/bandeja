@@ -19,9 +19,38 @@ final class MatchScoringViewModel {
     var classicPointState: PadelPointState = .regular(a: .zero, b: .zero)
     var tieBreakA = 0
     var tieBreakB = 0
-    var isTieBreakMode = false
+    /// 6–6 games: tie-break points until set is stored as 7–6 / 6–7 with isTieBreak false.
+    var withinSetTieBreakMode = false
+    /// When set, user must pick normal set vs super tie-break before advancing (index = next set).
+    var pendingSetFormatChoiceIndex: Int?
+
+    var pendingGameWinConfirmSide: TeamSide?
 
     private let api = APIClient()
+
+    private static let tennisGamesPerSet = 6
+
+    private var usesTennisSetRules: Bool {
+        game?.ballsInGames == true
+    }
+
+    private var gamesScoreForTieBreak: Int {
+        usesTennisSetRules ? Self.tennisGamesPerSet : max(game?.maxPointsPerTeam ?? Self.tennisGamesPerSet, 1)
+    }
+
+    private var withinSetTieBreakTarget: Int {
+        let t = game?.maxTotalPointsPerSet ?? 0
+        return t > 0 ? t : 7
+    }
+
+    private var superTieBreakTarget: Int {
+        let t = game?.maxTotalPointsPerSet ?? 0
+        return t > 0 ? t : 10
+    }
+
+    private var rawFixedNumberOfSets: Int {
+        game?.fixedNumberOfSets ?? 0
+    }
 
     init(gameId: String, matchId: String) {
         self.gameId = gameId
@@ -42,8 +71,9 @@ final class MatchScoringViewModel {
         game?.maxTotalPointsPerSet ?? 0
     }
 
-    var maxGamesPerSet: Int {
-        max(game?.maxPointsPerTeam ?? 6, 1)
+    /// Match-deciding super tie-break set (points only, isTieBreak on row).
+    var activeSetIsSuperTieBreak: Bool {
+        usesTennisSetRules && (sets[safe: activeSetIndex]?.isTieBreak == true)
     }
 
     var teamAUsers: [WatchUser] {
@@ -77,6 +107,11 @@ final class MatchScoringViewModel {
                     }
                     if sets.isEmpty { sets = [WatchSetWrite(teamA: 0, teamB: 0)] }
                     activeSetIndex = max(0, min(sets.count - 1, nextEditableSetIndex()))
+                    pendingGameWinConfirmSide = nil
+                    pendingSetFormatChoiceIndex = nil
+                    tieBreakA = 0
+                    tieBreakB = 0
+                    syncWithinSetTieBreakForActiveSet()
                     return
                 }
             }
@@ -133,13 +168,18 @@ final class MatchScoringViewModel {
 
     func canUnscore(_ side: TeamSide) -> Bool {
         guard !isReadOnly, !isAmericano else { return false }
-        if isTieBreakMode {
+        if activeSetIsSuperTieBreak {
+            ensureSetExists(activeSetIndex)
+            if side == .teamA { return sets[activeSetIndex].teamA > 0 }
+            return sets[activeSetIndex].teamB > 0
+        }
+        if withinSetTieBreakMode {
             if side == .teamA, tieBreakA > 0 { return true }
             if side == .teamB, tieBreakB > 0 { return true }
             if tieBreakA == 0, tieBreakB == 0 {
                 let s = sets[safe: activeSetIndex]
                 guard let s else { return false }
-                return s.teamA == maxGamesPerSet && s.teamB == maxGamesPerSet
+                return s.teamA == gamesScoreForTieBreak && s.teamB == gamesScoreForTieBreak
                     && (side == .teamA ? s.teamA > 0 : s.teamB > 0)
             }
             return false
@@ -159,7 +199,16 @@ final class MatchScoringViewModel {
 
     func unscorePoint(_ side: TeamSide) {
         guard !isReadOnly, !isAmericano else { return }
-        if isTieBreakMode {
+        if activeSetIsSuperTieBreak {
+            ensureSetExists(activeSetIndex)
+            if side == .teamA, sets[activeSetIndex].teamA > 0 {
+                sets[activeSetIndex].teamA -= 1
+            } else if side == .teamB, sets[activeSetIndex].teamB > 0 {
+                sets[activeSetIndex].teamB -= 1
+            }
+            return
+        }
+        if withinSetTieBreakMode {
             if side == .teamA, tieBreakA > 0 {
                 tieBreakA -= 1
                 return
@@ -170,16 +219,16 @@ final class MatchScoringViewModel {
             }
             if tieBreakA == 0, tieBreakB == 0 {
                 ensureSetExists(activeSetIndex)
-                if side == .teamA, sets[activeSetIndex].teamA == maxGamesPerSet,
-                   sets[activeSetIndex].teamB == maxGamesPerSet,
+                if side == .teamA, sets[activeSetIndex].teamA == gamesScoreForTieBreak,
+                   sets[activeSetIndex].teamB == gamesScoreForTieBreak,
                    sets[activeSetIndex].teamA > 0 {
                     sets[activeSetIndex].teamA -= 1
-                    isTieBreakMode = false
-                } else if side == .teamB, sets[activeSetIndex].teamA == maxGamesPerSet,
-                          sets[activeSetIndex].teamB == maxGamesPerSet,
+                    withinSetTieBreakMode = false
+                } else if side == .teamB, sets[activeSetIndex].teamA == gamesScoreForTieBreak,
+                          sets[activeSetIndex].teamB == gamesScoreForTieBreak,
                           sets[activeSetIndex].teamB > 0 {
                     sets[activeSetIndex].teamB -= 1
-                    isTieBreakMode = false
+                    withinSetTieBreakMode = false
                 }
             }
             return
@@ -209,13 +258,168 @@ final class MatchScoringViewModel {
         }
     }
 
-    func scorePoint(_ side: TeamSide) {
+    func cancelPendingGameWinConfirm() {
+        pendingGameWinConfirmSide = nil
+    }
+
+    func pendingGameWinAlertMessage(lang: String) -> String {
+        guard let side = pendingGameWinConfirmSide else { return "" }
+        let users = side == .teamA ? teamAUsers : teamBUsers
+        let names = users
+            .map { $0.displayName.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " * ")
+        let visibleUserCount = users.filter {
+            !$0.displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }.count
+        let balls = game?.ballsInGames == true
+        let projA: Int?
+        let projB: Int?
+        if balls {
+            projA = (sets[safe: activeSetIndex]?.teamA ?? 0) + (side == .teamA ? 1 : 0)
+            projB = (sets[safe: activeSetIndex]?.teamB ?? 0) + (side == .teamB ? 1 : 0)
+        } else {
+            projA = nil
+            projB = nil
+        }
+        return WatchCopy.gameWonConfirmFullMessage(
+            lang,
+            names: names,
+            playerCount: visibleUserCount,
+            projectedTeamA: projA,
+            projectedTeamB: projB,
+            ballsInGames: balls
+        )
+    }
+
+    func confirmPendingGameWin() {
+        guard let side = pendingGameWinConfirmSide else { return }
+        pendingGameWinConfirmSide = nil
+        scorePoint(side, skipGameWinConfirm: true)
+    }
+
+    func cancelSetFormatChoice() {
+        pendingSetFormatChoiceIndex = nil
+    }
+
+    func confirmSetFormatNormal() {
+        guard let idx = pendingSetFormatChoiceIndex else { return }
+        pendingSetFormatChoiceIndex = nil
+        advanceToSet(index: idx, superTieBreak: false)
+    }
+
+    func confirmSetFormatSuper() {
+        guard let idx = pendingSetFormatChoiceIndex else { return }
+        pendingSetFormatChoiceIndex = nil
+        advanceToSet(index: idx, superTieBreak: true)
+    }
+
+    /// Call from Next Set — may set `pendingSetFormatChoiceIndex` instead of advancing.
+    func beginAdvanceToNextSet() {
         guard !isReadOnly else { return }
-        if isTieBreakMode {
-            if side == .teamA { tieBreakA += 1 } else { tieBreakB += 1 }
-            if tieBreakSetCompleted() {
-                commitSet(teamA: tieBreakA, teamB: tieBreakB, isTieBreak: true)
+        guard canAdvanceToNextSet() else { return }
+        let next = activeSetIndex + 1
+        if shouldOfferSuperTieBreakChoice(nextIndex: next) {
+            pendingSetFormatChoiceIndex = next
+        } else {
+            advanceToSet(index: next, superTieBreak: false)
+        }
+    }
+
+    private func advanceToSet(index: Int, superTieBreak: Bool) {
+        activeSetIndex = index
+        ensureSetExists(activeSetIndex)
+        let empty = sets[activeSetIndex].teamA == 0 && sets[activeSetIndex].teamB == 0
+        if empty {
+            sets[activeSetIndex].isTieBreak = superTieBreak
+        }
+        classicPointState = .regular(a: .zero, b: .zero)
+        tieBreakA = 0
+        tieBreakB = 0
+        syncWithinSetTieBreakForActiveSet()
+    }
+
+    /// After load or changing active set: resume 6–6 (or N–N) within-set tie-break scoring.
+    private func syncWithinSetTieBreakForActiveSet() {
+        withinSetTieBreakMode = false
+        if isAmericano { return }
+        if activeSetIsSuperTieBreak { return }
+        guard let s = sets[safe: activeSetIndex] else { return }
+        if s.teamA == gamesScoreForTieBreak && s.teamB == gamesScoreForTieBreak {
+            withinSetTieBreakMode = true
+            tieBreakA = 0
+            tieBreakB = 0
+        }
+    }
+
+    private func shouldOfferSuperTieBreakChoice(nextIndex: Int) -> Bool {
+        guard usesTennisSetRules, !isAmericano else { return false }
+        let allowedIndices = [2, 4, 6, 8]
+        guard allowedIndices.contains(nextIndex) else { return false }
+        guard arePreviousSetsTiedForSuper(nextIndex: nextIndex) else { return false }
+        if rawFixedNumberOfSets > 0 {
+            return nextIndex == rawFixedNumberOfSets - 1
+        }
+        // Dynamic formats: only when this set is the last slot in the row list (Bo3 vs Bo5 from API).
+        return nextIndex >= sets.count - 1
+    }
+
+    private func arePreviousSetsTiedForSuper(nextIndex: Int) -> Bool {
+        guard nextIndex >= 2 else { return false }
+        var aWins = 0
+        var bWins = 0
+        for i in 0..<nextIndex {
+            guard let s = sets[safe: i] else { continue }
+            guard s.teamA > 0 || s.teamB > 0 else { continue }
+            guard s.teamA != s.teamB else { continue }
+            if s.isTieBreak {
+                if s.teamA > s.teamB { aWins += 1 } else { bWins += 1 }
+            } else if s.teamA > s.teamB {
+                aWins += 1
+            } else {
+                bWins += 1
             }
+        }
+        return aWins == bWins && aWins > 0
+    }
+
+    private func tapWouldAwardCurrentGame(_ side: TeamSide) -> Bool {
+        guard usesTennisSetRules, !withinSetTieBreakMode, !activeSetIsSuperTieBreak, !isAmericano else { return false }
+        switch classicPointState {
+        case .regular(let a, let b):
+            if side == .teamA { return a == .forty && b != .forty }
+            return b == .forty && a != .forty
+        case .deuce:
+            return false
+        case .advantage(let adv):
+            return adv == side
+        }
+    }
+
+    func scorePoint(_ side: TeamSide, skipGameWinConfirm: Bool = false) {
+        guard !isReadOnly else { return }
+        if activeSetIsSuperTieBreak {
+            ensureSetExists(activeSetIndex)
+            let a = sets[activeSetIndex].teamA
+            let b = sets[activeSetIndex].teamB
+            guard !superTieBreakPointRaceCompleted(teamA: a, teamB: b) else { return }
+            if side == .teamA {
+                sets[activeSetIndex].teamA += 1
+            } else {
+                sets[activeSetIndex].teamB += 1
+            }
+            return
+        }
+        if withinSetTieBreakMode {
+            if side == .teamA { tieBreakA += 1 } else { tieBreakB += 1 }
+            if withinSetTieBreakPointRaceCompleted() {
+                finishWithinSetTieBreakAsGames()
+            }
+            return
+        }
+
+        if usesTennisSetRules, !isAmericano, !skipGameWinConfirm, tapWouldAwardCurrentGame(side) {
+            pendingGameWinConfirmSide = side
             return
         }
 
@@ -257,8 +461,8 @@ final class MatchScoringViewModel {
             sets[activeSetIndex].teamB += 1
         }
         classicPointState = .regular(a: .zero, b: .zero)
-        if sets[activeSetIndex].teamA == maxGamesPerSet && sets[activeSetIndex].teamB == maxGamesPerSet {
-            isTieBreakMode = true
+        if sets[activeSetIndex].teamA == gamesScoreForTieBreak && sets[activeSetIndex].teamB == gamesScoreForTieBreak {
+            withinSetTieBreakMode = true
             tieBreakA = 0
             tieBreakB = 0
             return
@@ -273,35 +477,58 @@ final class MatchScoringViewModel {
         sets[activeSetIndex].teamA = teamA
         sets[activeSetIndex].teamB = teamB
         sets[activeSetIndex].isTieBreak = isTieBreak
-        isTieBreakMode = false
+        withinSetTieBreakMode = false
     }
 
-    private func tieBreakSetCompleted() -> Bool {
+    private func withinSetTieBreakPointRaceCompleted() -> Bool {
+        let target = withinSetTieBreakTarget
         let winner = max(tieBreakA, tieBreakB)
         let loser = min(tieBreakA, tieBreakB)
-        return winner >= 7 && (winner - loser) >= 2
+        return winner >= target && (winner - loser) >= 2
+    }
+
+    private func finishWithinSetTieBreakAsGames() {
+        let n = gamesScoreForTieBreak
+        let aWon = tieBreakA > tieBreakB
+        tieBreakA = 0
+        tieBreakB = 0
+        withinSetTieBreakMode = false
+        if aWon {
+            commitSet(teamA: n + 1, teamB: n, isTieBreak: false)
+        } else {
+            commitSet(teamA: n, teamB: n + 1, isTieBreak: false)
+        }
+    }
+
+    private func superTieBreakPointRaceCompleted(teamA: Int, teamB: Int) -> Bool {
+        let target = superTieBreakTarget
+        let winner = max(teamA, teamB)
+        let loser = min(teamA, teamB)
+        return winner >= target && (winner - loser) >= 2
     }
 
     private func setCompleted(teamA: Int, teamB: Int) -> Bool {
+        if usesTennisSetRules {
+            let hi = max(teamA, teamB)
+            let lo = min(teamA, teamB)
+            if hi == Self.tennisGamesPerSet && lo == Self.tennisGamesPerSet { return false }
+            if hi >= Self.tennisGamesPerSet && hi - lo >= 2 { return true }
+            return false
+        }
         let winner = max(teamA, teamB)
         let loser = min(teamA, teamB)
-        return winner >= maxGamesPerSet && (winner - loser) >= 2
+        let need = max(game?.maxPointsPerTeam ?? Self.tennisGamesPerSet, 1)
+        return winner >= need && (winner - loser) >= 2
     }
 
     func nextSet() {
-        guard !isReadOnly else { return }
-        activeSetIndex += 1
-        ensureSetExists(activeSetIndex)
-        classicPointState = .regular(a: .zero, b: .zero)
-        tieBreakA = 0
-        tieBreakB = 0
-        isTieBreakMode = false
+        beginAdvanceToNextSet()
     }
 
     func canAdvanceToNextSet() -> Bool {
         if isAmericano { return false }
-        if fixedNumberOfSets > 0 {
-            return activeSetIndex + 1 < fixedNumberOfSets
+        if rawFixedNumberOfSets > 0 {
+            return activeSetIndex + 1 < rawFixedNumberOfSets
         }
         return true
     }

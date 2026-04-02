@@ -12,7 +12,29 @@ struct ClassicScoringView: View {
             VStack(spacing: 12) {
                 ScoreHintBanner(vm: vm)
 
-                if vm.isTieBreakMode {
+                if vm.activeSetIsSuperTieBreak {
+                    Text(WatchCopy.superTieBreak(lang))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    HStack(alignment: .top, spacing: 8) {
+                        WatchScoringTeamColumn(
+                            users: vm.teamAUsers,
+                            scoreLabel: "\(vm.sets[safe: vm.activeSetIndex]?.teamA ?? 0)",
+                            action: { vm.scorePoint(.teamA) },
+                            decrementAction: { vm.unscorePoint(.teamA) },
+                            disabled: vm.isReadOnly,
+                            decrementDisabled: !vm.canUnscore(.teamA)
+                        )
+                        WatchScoringTeamColumn(
+                            users: vm.teamBUsers,
+                            scoreLabel: "\(vm.sets[safe: vm.activeSetIndex]?.teamB ?? 0)",
+                            action: { vm.scorePoint(.teamB) },
+                            decrementAction: { vm.unscorePoint(.teamB) },
+                            disabled: vm.isReadOnly,
+                            decrementDisabled: !vm.canUnscore(.teamB)
+                        )
+                    }
+                } else if vm.withinSetTieBreakMode {
                     Text(WatchCopy.tieBreak(lang))
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
@@ -77,7 +99,7 @@ struct ClassicScoringView: View {
                         }
                         .disabled(vm.isSaving)
                         if vm.canAdvanceToNextSet() {
-                            Button(WatchCopy.nextSet(lang)) { vm.nextSet() }
+                            Button(WatchCopy.nextSet(lang)) { vm.beginAdvanceToNextSet() }
                         }
                     }
                 }
@@ -88,6 +110,42 @@ struct ClassicScoringView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(vm.isSaving)
             }
+        }
+        .alert(
+            WatchCopy.gameWonConfirmAlertTitle(lang),
+            isPresented: Binding(
+                get: { vm.pendingGameWinConfirmSide != nil },
+                set: { if !$0 { vm.cancelPendingGameWinConfirm() } }
+            )
+        ) {
+            Button(WatchCopy.cancelAction(lang), role: .cancel) {
+                vm.cancelPendingGameWinConfirm()
+            }
+            Button(WatchCopy.confirmAction(lang)) {
+                vm.confirmPendingGameWin()
+            }
+        } message: {
+            Text(vm.pendingGameWinAlertMessage(lang: lang))
+        }
+        .confirmationDialog(
+            WatchCopy.setFormatChoiceTitle(lang),
+            isPresented: Binding(
+                get: { vm.pendingSetFormatChoiceIndex != nil },
+                set: { if !$0 { vm.cancelSetFormatChoice() } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(WatchCopy.normalSetChoice(lang)) {
+                vm.confirmSetFormatNormal()
+            }
+            Button(WatchCopy.superTieBreakChoice(lang)) {
+                vm.confirmSetFormatSuper()
+            }
+            Button(WatchCopy.cancelAction(lang), role: .cancel) {
+                vm.cancelSetFormatChoice()
+            }
+        } message: {
+            Text(WatchCopy.setFormatChoiceMessage(lang))
         }
     }
 

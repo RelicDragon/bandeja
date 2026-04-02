@@ -346,6 +346,51 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func superTieBreak(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Super tie-break"
+        case "ru": return "Супер тай-брейк"
+        case "sr": return "Супер тај-брејк"
+        default: return "Super tie-break"
+        }
+    }
+
+    nonisolated static func setFormatChoiceTitle(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Tipo de set"
+        case "ru": return "Тип сета"
+        case "sr": return "Тип сета"
+        default: return "Set type"
+        }
+    }
+
+    nonisolated static func setFormatChoiceMessage(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Sets empatados. ¿Cómo se juega el decisivo?"
+        case "ru": return "Счёт по сетам равный. Как играть решающий сет?"
+        case "sr": return "Сетови су изједначени. Како играти одлучујући сет?"
+        default: return "Sets are split. How should the deciding set be played?"
+        }
+    }
+
+    nonisolated static func normalSetChoice(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Set normal (juegos)"
+        case "ru": return "Обычный сет (геймы)"
+        case "sr": return "Нормалан сет (гемови)"
+        default: return "Normal set (games)"
+        }
+    }
+
+    nonisolated static func superTieBreakChoice(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Super tie-break (puntos)"
+        case "ru": return "Супер ТБ (очки)"
+        case "sr": return "Супер ТБ (поени)"
+        default: return "Super tie-break (points)"
+        }
+    }
+
     nonisolated static func saveSet(_ lang: String) -> String {
         switch lang {
         case "es": return "Guardar set"
@@ -388,6 +433,79 @@ enum WatchCopy {
         case "ru": return "Ровно"
         case "sr": return "Изједначење"
         default: return "Deuce"
+        }
+    }
+
+    nonisolated static func gameWonConfirmAlertTitle(_ lang: String) -> String {
+        switch lang {
+        case "es": return "¿Contar juego?"
+        case "ru": return "Засчитать гейм?"
+        case "sr": return "Уписати гем?"
+        default: return "Award game?"
+        }
+    }
+
+    nonisolated static func gameWonWinnerSentence(_ lang: String, names: String, playerCount: Int) -> String {
+        switch lang {
+        case "es":
+            return playerCount <= 1 ? "\(names) gana el juego." : "\(names) ganan el juego."
+        case "ru":
+            return playerCount <= 1 ? "\(names) выигрывает гейм." : "\(names) выигрывают гейм."
+        case "sr":
+            return playerCount <= 1 ? "\(names) осваја гем." : "\(names) освајају гем."
+        default:
+            return playerCount <= 1 ? "\(names) won." : "\(names) won."
+        }
+    }
+
+    nonisolated static func gameWonScoreWillBe(_ lang: String, teamA: Int, teamB: Int) -> String {
+        switch lang {
+        case "es": return "El marcador de juegos será \(teamA):\(teamB)."
+        case "ru": return "Счёт по геймам будет \(teamA):\(teamB)."
+        case "sr": return "Гемови ће бити \(teamA):\(teamB)."
+        default: return "Game score will be \(teamA):\(teamB)."
+        }
+    }
+
+    nonisolated static func gameWonUnknownSide(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Este bando"
+        case "ru": return "Эта сторона"
+        case "sr": return "Ова страна"
+        default: return "This side"
+        }
+    }
+
+    nonisolated static func gameWonConfirmFullMessage(
+        _ lang: String,
+        names: String,
+        playerCount: Int,
+        projectedTeamA: Int?,
+        projectedTeamB: Int?,
+        ballsInGames: Bool
+    ) -> String {
+        let label = names.isEmpty ? gameWonUnknownSide(lang) : names
+        let countForGrammar = names.isEmpty ? 1 : max(playerCount, 1)
+        let first = gameWonWinnerSentence(lang, names: label, playerCount: countForGrammar)
+        guard ballsInGames, let a = projectedTeamA, let b = projectedTeamB else { return first }
+        return first + "\n\n" + gameWonScoreWillBe(lang, teamA: a, teamB: b)
+    }
+
+    nonisolated static func confirmAction(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Confirmar"
+        case "ru": return "Подтвердить"
+        case "sr": return "Потврди"
+        default: return "Confirm"
+        }
+    }
+
+    nonisolated static func cancelAction(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Cancelar"
+        case "ru": return "Отмена"
+        case "sr": return "Откажи"
+        default: return "Cancel"
         }
     }
 

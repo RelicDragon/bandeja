@@ -113,9 +113,7 @@ struct MatchListView: View {
                             roundNumber: group.round.roundNumber,
                             match: match,
                             isCurrent: vm.latestActiveMatchId == match.id,
-                            isFinal: vm.isFinal,
-                            canEdit: vm.canEditMatch(match),
-                            isMatchCompleted: vm.isMatchCompleted(match)
+                            isFinal: vm.isFinal
                         ) {
                             router.navigate(to: .scoringMatch(gameId: gameId, matchId: match.id))
                         }

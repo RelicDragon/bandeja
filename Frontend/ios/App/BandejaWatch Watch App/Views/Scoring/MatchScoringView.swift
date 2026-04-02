@@ -57,15 +57,20 @@ struct MatchScoringView: View {
                     .foregroundStyle(.secondary)
                 if let m = vm.match {
                     ForEach(m.sortedTeams, id: \.id) { team in
-                        HStack(alignment: .center, spacing: 6) {
+                        HStack(alignment: .top, spacing: 6) {
                             HStack(spacing: 3) {
                                 ForEach(team.players, id: \.userId) { p in
                                     WatchPlayerAvatarView(user: p.user, size: 20, role: nil)
                                 }
                             }
-                            Text(team.players.map(\.user.displayName).joined(separator: " / "))
-                                .font(.caption2)
-                                .lineLimit(2)
+                            VStack(alignment: .leading, spacing: 2) {
+                                ForEach(team.players, id: \.userId) { p in
+                                    Text(p.user.displayName)
+                                        .font(.caption2)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.75)
+                                }
+                            }
                             Spacer(minLength: 0)
                         }
                     }
