@@ -238,6 +238,15 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func gameEnded(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Terminado"
+        case "ru": return "Завершено"
+        case "sr": return "Завршено"
+        default: return "Ended"
+        }
+    }
+
     nonisolated static func open(_ lang: String) -> String {
         switch lang {
         case "es": return "Abrir"
@@ -533,6 +542,51 @@ enum WatchCopy {
         case "ru": return "Игроки"
         case "sr": return "Играчи"
         default: return "Players"
+        }
+    }
+
+    nonisolated static func readinessHeading(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Preparación"
+        case "ru": return "Готовность"
+        case "sr": return "Спремност"
+        default: return "Readiness"
+        }
+    }
+
+    nonisolated static func readinessParticipantsOk(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Jugadores: listos"
+        case "ru": return "Игроки: готово"
+        case "sr": return "Играчи: спремни"
+        default: return "Players: ready"
+        }
+    }
+
+    nonisolated static func readinessParticipantsWaiting(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Jugadores: faltan"
+        case "ru": return "Игроки: ждём"
+        case "sr": return "Играчи: чека се"
+        default: return "Players: waiting"
+        }
+    }
+
+    nonisolated static func readinessTeamsOk(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Equipos: listos"
+        case "ru": return "Команды: готово"
+        case "sr": return "Тимови: спремни"
+        default: return "Teams: ready"
+        }
+    }
+
+    nonisolated static func readinessTeamsWaiting(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Equipos: incompletos"
+        case "ru": return "Команды: не готовы"
+        case "sr": return "Тимови: нису спремни"
+        default: return "Teams: not set"
         }
     }
 

@@ -1,7 +1,9 @@
 import SwiftUI
+import WidgetKit
 
 struct ContentView: View {
     @Environment(Router.self) private var router
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         @Bindable var router = router
@@ -17,6 +19,16 @@ struct ContentView: View {
                         MatchScoringView(gameId: gameId, matchId: matchId)
                     }
                 }
+        }
+        .onOpenURL { url in
+            guard let id = WatchDeepLink.parseGameId(from: url) else { return }
+            router.popToRoot()
+            router.navigate(to: .gameDetail(id: id))
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                WidgetCenter.shared.reloadAllTimelines()
+            }
         }
     }
 }

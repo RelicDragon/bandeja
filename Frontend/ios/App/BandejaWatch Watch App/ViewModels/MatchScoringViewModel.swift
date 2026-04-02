@@ -262,6 +262,12 @@ final class MatchScoringViewModel {
         pendingGameWinConfirmSide = nil
     }
 
+    /// Clears modal scoring state before the review screen (avoids crown/stepper glitches stacking with pending confirms).
+    func prepareForMatchReview() {
+        pendingGameWinConfirmSide = nil
+        pendingSetFormatChoiceIndex = nil
+    }
+
     func pendingGameWinWinningUsers() -> [WatchUser] {
         guard let side = pendingGameWinConfirmSide else { return [] }
         return side == .teamA ? teamAUsers : teamBUsers

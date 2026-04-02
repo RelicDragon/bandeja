@@ -36,8 +36,13 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     let timeIsSet: Bool
     let affectsRating: Bool?
     let hasFixedTeams: Bool?
+    let participantsReady: Bool
+    let teamsReady: Bool
+    let matchGenerationType: String?
+    let fixedTeams: [WatchFixedTeam]?
     let resultsByAnyone: Bool?
     let participants: [WatchParticipant]
+    let parent: WatchGameParent?
     let club: WatchClub?
 
     var displayTitle: String {
@@ -58,8 +63,8 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         case id, name, gameType, entityType, status, resultsStatus
         case startTime, endTime, winnerOfMatch, winnerOfGame
         case fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames
-        case maxParticipants, timeIsSet, affectsRating, hasFixedTeams, resultsByAnyone
-        case participants, club
+        case maxParticipants, timeIsSet, affectsRating, hasFixedTeams, participantsReady, teamsReady, matchGenerationType, fixedTeams, resultsByAnyone
+        case participants, parent, club
     }
 
     nonisolated init(from decoder: Decoder) throws {
@@ -86,31 +91,65 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         timeIsSet = try c.decodeIfPresent(Bool.self, forKey: .timeIsSet) ?? false
         affectsRating = try c.decodeIfPresent(Bool.self, forKey: .affectsRating)
         hasFixedTeams = try c.decodeIfPresent(Bool.self, forKey: .hasFixedTeams)
+        participantsReady = try c.decodeIfPresent(Bool.self, forKey: .participantsReady) ?? false
+        teamsReady = try c.decodeIfPresent(Bool.self, forKey: .teamsReady) ?? false
+        matchGenerationType = try c.decodeIfPresent(String.self, forKey: .matchGenerationType)
+        fixedTeams = try c.decodeIfPresent([WatchFixedTeam].self, forKey: .fixedTeams)
         resultsByAnyone = try c.decodeIfPresent(Bool.self, forKey: .resultsByAnyone)
         participants = try c.decode([WatchParticipant].self, forKey: .participants)
+        parent = try c.decodeIfPresent(WatchGameParent.self, forKey: .parent)
         club = try c.decodeIfPresent(WatchClub.self, forKey: .club)
+    }
+}
+
+struct WatchGameParent: Decodable, Sendable {
+    let participants: [WatchParticipant]?
+
+    private enum CodingKeys: String, CodingKey {
+        case participants
     }
 }
 
 struct WatchParticipant: Decodable, Sendable {
     let userId: String
     let role: String
+    let status: String
     let user: WatchUser
 
+    var isPlaying: Bool { status == "PLAYING" }
+
     private enum CodingKeys: String, CodingKey {
-        case userId, role, user
+        case userId, role, status, user
     }
 
     nonisolated init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         userId = try c.decode(String.self, forKey: .userId)
         role = try c.decode(String.self, forKey: .role)
+        status = try c.decodeIfPresent(String.self, forKey: .status) ?? "PLAYING"
         user = try c.decode(WatchUser.self, forKey: .user)
     }
 }
 
 extension WatchParticipant: Identifiable {
     var id: String { userId }
+}
+
+struct WatchFixedTeam: Decodable, Sendable {
+    let teamNumber: Int
+    let players: [WatchFixedTeamPlayer]
+
+    private enum CodingKeys: String, CodingKey {
+        case teamNumber, players
+    }
+}
+
+struct WatchFixedTeamPlayer: Decodable, Sendable {
+    let userId: String
+
+    private enum CodingKeys: String, CodingKey {
+        case userId
+    }
 }
 
 struct WatchUser: Decodable, Sendable {

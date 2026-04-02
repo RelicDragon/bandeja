@@ -103,6 +103,7 @@ struct MatchScoringView: View {
     }
 
     private func finish() {
+        vm.prepareForMatchReview()
         isReviewing = true
     }
 

@@ -34,7 +34,14 @@ struct GameDetailView: View {
             VStack(alignment: .leading, spacing: 10) {
                 headerSection(game)
                 statusBanner(game)
+                if let err = vm.error {
+                    Text((err as? APIError).map { $0.localizedMessage(uiLanguageCode: prefs.uiLanguageCode) } ?? err.localizedDescription)
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.leading)
+                }
                 participantsSection(game)
+                readinessSection(game)
                 if vm.hasResultsPreview {
                     resultsPreviewSection
                 }
@@ -99,13 +106,53 @@ struct GameDetailView: View {
         }
     }
 
+    private func readinessSection(_ game: WatchGame) -> some View {
+        let lang = prefs.uiLanguageCode
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(WatchCopy.readinessHeading(lang))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            readinessRow(
+                ok: game.participantsReady,
+                okLabel: WatchCopy.readinessParticipantsOk(lang),
+                waitingLabel: WatchCopy.readinessParticipantsWaiting(lang)
+            )
+            if game.hasFixedTeams == true {
+                readinessRow(
+                    ok: game.teamsReady,
+                    okLabel: WatchCopy.readinessTeamsOk(lang),
+                    waitingLabel: WatchCopy.readinessTeamsWaiting(lang)
+                )
+            }
+        }
+    }
+
+    private func readinessRow(ok: Bool, okLabel: String, waitingLabel: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: ok ? "checkmark.circle.fill" : "clock.fill")
+                .font(.caption2)
+                .foregroundStyle(ok ? .green : .orange)
+            Text(ok ? okLabel : waitingLabel)
+                .font(.caption2)
+                .foregroundStyle(ok ? .primary : .secondary)
+        }
+    }
+
     @ViewBuilder
     private func actionButton(_ game: WatchGame) -> some View {
         let lang = prefs.uiLanguageCode
-        if vm.canStartGame {
-            comingSoonButton(WatchCopy.startGame(lang), icon: "play.fill", color: .green)
+        if vm.canStartAnnouncedGame {
+            resultsEntryFlowButton(
+                title: WatchCopy.startGame(lang),
+                systemImage: "play.fill",
+                color: .green
+            )
         } else if vm.canEnterResults {
-            actionNavButton(WatchCopy.enterResults(lang), icon: "pencil.and.list.clipboard", color: .blue)
+            resultsEntryFlowButton(
+                title: WatchCopy.enterResults(lang),
+                systemImage: "pencil.and.list.clipboard",
+                color: .blue
+            )
         } else if vm.canContinueScoring {
             actionNavButton(WatchCopy.continueScoring(lang), icon: "arrow.clockwise", color: .orange)
         } else if vm.resultsAreFinal {
@@ -145,6 +192,30 @@ struct GameDetailView: View {
         }
     }
 
+    private func resultsEntryFlowButton(title: String, systemImage: String, color: Color) -> some View {
+        Button {
+            Task {
+                if await vm.startResultsEntry() {
+                    router.navigate(to: .scoringList(gameId: gameId))
+                }
+            }
+        } label: {
+            Group {
+                if vm.isStartingResultsEntry {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                } else {
+                    Label(title, systemImage: systemImage)
+                        .font(.caption.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(color)
+        .disabled(vm.isStartingResultsEntry)
+    }
+
     private func actionNavButton(_ title: String, icon: String, color: Color) -> some View {
         Button {
             router.navigate(to: .scoringList(gameId: gameId))
@@ -155,25 +226,6 @@ struct GameDetailView: View {
         }
         .buttonStyle(.borderedProminent)
         .tint(color)
-    }
-
-    private func comingSoonButton(_ title: String, icon: String, color: Color) -> some View {
-        Button { } label: {
-            Label(title, systemImage: icon)
-                .font(.caption.weight(.semibold))
-                .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.bordered)
-        .tint(color)
-        .disabled(true)
-        .overlay(alignment: .topTrailing) {
-            Text(WatchCopy.soon(prefs.uiLanguageCode))
-                .font(.system(size: 8).weight(.bold))
-                .padding(.horizontal, 4)
-                .padding(.vertical, 2)
-                .background(.ultraThinMaterial, in: Capsule())
-                .offset(x: 2, y: -4)
-        }
     }
 
     private func errorView(_ error: Error) -> some View {

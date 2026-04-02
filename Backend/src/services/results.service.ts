@@ -571,11 +571,23 @@ export async function syncResults(gameId: string, rounds: any[]) {
       }
     }
 
+    const cityTimezone = await getUserTimezoneFromCityId(game.cityId);
     await tx.game.update({
       where: { id: gameId },
       data: {
         resultsStatus: 'IN_PROGRESS',
         finishedDate: null,
+        status: calculateGameStatus(
+          {
+            startTime: game.startTime,
+            endTime: game.endTime,
+            resultsStatus: 'IN_PROGRESS',
+            timeIsSet: game.timeIsSet,
+            entityType: game.entityType,
+            finishedDate: null,
+          },
+          cityTimezone
+        ),
       },
     });
   });
@@ -593,11 +605,30 @@ export async function createRound(gameId: string, roundId: string) {
     },
   });
 
+  const gameRow = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: { startTime: true, endTime: true, cityId: true, timeIsSet: true, entityType: true },
+  });
+  if (!gameRow) {
+    throw new ApiError(404, 'Game not found');
+  }
+  const cityTimezone = await getUserTimezoneFromCityId(gameRow.cityId);
   await prisma.game.update({
     where: { id: gameId },
     data: {
       resultsStatus: 'IN_PROGRESS',
       finishedDate: null,
+      status: calculateGameStatus(
+        {
+          startTime: gameRow.startTime,
+          endTime: gameRow.endTime,
+          resultsStatus: 'IN_PROGRESS',
+          timeIsSet: gameRow.timeIsSet,
+          entityType: gameRow.entityType,
+          finishedDate: null,
+        },
+        cityTimezone
+      ),
     },
   });
 }
@@ -754,6 +785,11 @@ export async function updateMatch(
     select: {
       fixedNumberOfSets: true,
       ballsInGames: true,
+      startTime: true,
+      endTime: true,
+      cityId: true,
+      timeIsSet: true,
+      entityType: true,
     },
   });
 
@@ -892,11 +928,23 @@ export async function updateMatch(
     }
   });
 
+  const cityTimezone = await getUserTimezoneFromCityId(game.cityId);
   await prisma.game.update({
     where: { id: gameId },
     data: {
       resultsStatus: 'IN_PROGRESS',
       finishedDate: null,
+      status: calculateGameStatus(
+        {
+          startTime: game.startTime,
+          endTime: game.endTime,
+          resultsStatus: 'IN_PROGRESS',
+          timeIsSet: game.timeIsSet,
+          entityType: game.entityType,
+          finishedDate: null,
+        },
+        cityTimezone
+      ),
     },
   });
 }

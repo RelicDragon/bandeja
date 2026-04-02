@@ -58,6 +58,10 @@ struct APIClient: Sendable {
         try await execute(endpoint, body: body)
     }
 
+    func put<T: Decodable, Body: Encodable>(_ endpoint: Endpoint, body: Body) async throws -> T {
+        try await execute(endpoint, body: body)
+    }
+
     func sendVoid<Body: Encodable>(_ endpoint: Endpoint, body: Body? = nil) async throws {
         if let body {
             _ = try await execute(endpoint, body: body) as SimpleSuccessResponse

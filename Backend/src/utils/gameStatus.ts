@@ -34,6 +34,10 @@ export const calculateGameStatus = (
     return 'ANNOUNCED';
   }
 
+  if (game.resultsStatus === 'IN_PROGRESS') {
+    return 'STARTED';
+  }
+
   const now = new Date();
   const startTime = new Date(game.startTime);
   const endTime = new Date(game.endTime);
@@ -47,13 +51,13 @@ export const calculateGameStatus = (
   } else {
     shouldArchive = isPastArchiveTime(endTime, clubTimezone) && !(game.entityType === EntityType.LEAGUE_SEASON && game.resultsStatus !== 'FINAL');
   }
-  
+
+  if (game.resultsStatus === 'FINAL') {
+    return shouldArchive ? 'ARCHIVED' : 'FINISHED';
+  }
+
   if (shouldArchive) {
     return 'ARCHIVED';
-  }
-  
-  if (game.resultsStatus !== 'NONE') {
-    return 'FINISHED';
   }
   
   if (hoursUntilStart <= 0 && hoursSinceEnd < 0) {

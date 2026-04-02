@@ -72,6 +72,9 @@ final class WatchPreferencesStore {
             deviceLocale: device
         )
         uiLanguageCode = WatchDisplayPreferences.uiLanguageCode(language: payload.language, deviceLocale: device)
+        if let suite = UserDefaults(suiteName: WatchWidgetLangBridge.appGroupSuiteName) {
+            suite.set(uiLanguageCode, forKey: WatchWidgetLangBridge.uiLanguageDefaultsKey)
+        }
         prefsRevision += 1
     }
 }

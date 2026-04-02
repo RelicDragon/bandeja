@@ -10,19 +10,14 @@ struct MatchReviewView: View {
         let lang = prefs.uiLanguageCode
         List {
             Section(WatchCopy.sets(lang)) {
-                ForEach(Array(vm.sets.enumerated()), id: \.offset) { idx, _ in
+                ForEach(0..<vm.sets.count, id: \.self) { idx in
                     HStack {
                         Text(WatchCopy.setLabel(lang, number: idx + 1))
                             .font(.caption2)
-                        Spacer()
-                        Stepper(value: bindingA(idx), in: 0...99) {
-                            Text("A \(vm.sets[idx].teamA)")
-                                .font(.caption2)
-                        }
-                        Stepper(value: bindingB(idx), in: 0...99) {
-                            Text("B \(vm.sets[idx].teamB)")
-                                .font(.caption2)
-                        }
+                        Spacer(minLength: 8)
+                        Text("\(vm.sets[idx].teamA)-\(vm.sets[idx].teamB)")
+                            .font(.caption2.monospacedDigit().weight(.semibold))
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -38,25 +33,5 @@ struct MatchReviewView: View {
             }
         }
         .navigationTitle(WatchCopy.review(lang))
-    }
-
-    private func bindingA(_ index: Int) -> Binding<Int> {
-        Binding(
-            get: { vm.sets[safe: index]?.teamA ?? 0 },
-            set: { newValue in
-                guard !vm.isReadOnly, vm.sets.indices.contains(index) else { return }
-                vm.sets[index].teamA = newValue
-            }
-        )
-    }
-
-    private func bindingB(_ index: Int) -> Binding<Int> {
-        Binding(
-            get: { vm.sets[safe: index]?.teamB ?? 0 },
-            set: { newValue in
-                guard !vm.isReadOnly, vm.sets.indices.contains(index) else { return }
-                vm.sets[index].teamB = newValue
-            }
-        )
     }
 }

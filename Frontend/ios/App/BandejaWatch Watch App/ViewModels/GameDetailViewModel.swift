@@ -10,6 +10,8 @@ final class GameDetailViewModel {
     var error: Error?
     /// Loaded when available; used for scores preview on game detail.
     var results: WatchResultsGame?
+    /// Start game (ANNOUNCED) or enter results both run the same API flow.
+    var isStartingResultsEntry = false
 
     private let gameId: String
     private let currentUserId: String?
@@ -41,6 +43,7 @@ final class GameDetailViewModel {
         do {
             game = try await api.fetch(.gameDetail(id: gameId))
             results = try? await api.fetch(.gameResults(gameId: gameId))
+            error = nil
             schedulePollingIfNeeded()
         } catch {
             self.error = error
@@ -65,18 +68,76 @@ final class GameDetailViewModel {
         pollingTask = nil
     }
 
+    @discardableResult
+    func startResultsEntry() async -> Bool {
+        guard let game else { return false }
+        isStartingResultsEntry = true
+        error = nil
+        defer { isStartingResultsEntry = false }
+        do {
+            let round = try WatchResultsRoundBuilder.firstRound(for: game)
+            _ = try await api.put(
+                .updateGame(id: gameId),
+                body: WatchGameResultsStatusPatch(resultsStatus: "IN_PROGRESS")
+            ) as WatchGame
+            try await api.sendVoid(
+                .syncGameResults(gameId: gameId),
+                body: WatchSyncResultsBody(rounds: [round])
+            )
+            self.game = try await api.fetch(.gameDetail(id: gameId))
+            results = try? await api.fetch(.gameResults(gameId: gameId))
+            schedulePollingIfNeeded()
+            return true
+        } catch {
+            self.error = error
+            return false
+        }
+    }
+
     // MARK: - Contextual action state
 
-    var canStartGame: Bool {
-        guard let game else { return false }
-        return game.status == "ANNOUNCED" && isCurrentUserOwnerOrAdmin
+    /// ANNOUNCED → same PUT+sync as web “start results”; backend sets STARTED when results go IN_PROGRESS.
+    var canStartAnnouncedGame: Bool {
+        guard let game, currentUserId != nil else { return false }
+        guard game.status == "ANNOUNCED", game.resultsStatus == "NONE" else { return false }
+        guard !["BAR", "TRAINING", "LEAGUE_SEASON"].contains(game.entityType) else { return false }
+        guard isCurrentUserPlayingOnGame else { return false }
+        let allowed: Bool
+        if isCurrentUserOwnerOrAdmin || isCurrentUserOwnerOrAdminOnParent {
+            allowed = true
+        } else if game.resultsByAnyone == true {
+            allowed = true
+        } else {
+            allowed = false
+        }
+        guard allowed else { return false }
+        return readinessAndRoundGates(for: game)
     }
 
     var canEnterResults: Bool {
-        guard let game else { return false }
-        return game.status == "STARTED"
-            && game.resultsStatus == "NONE"
-            && (isCurrentUserOwnerOrAdmin || game.resultsByAnyone == true)
+        guard let game, let uid = currentUserId else { return false }
+        guard game.status == "STARTED", game.resultsStatus == "NONE" else { return false }
+        guard !["BAR", "TRAINING", "LEAGUE_SEASON"].contains(game.entityType) else { return false }
+        let canEdit: Bool
+        if isCurrentUserOwnerOrAdmin || isCurrentUserOwnerOrAdminOnParent {
+            canEdit = true
+        } else if game.resultsByAnyone == true {
+            canEdit = game.participants.contains { $0.userId == uid && $0.isPlaying }
+        } else {
+            canEdit = false
+        }
+        guard canEdit else { return false }
+        return readinessAndRoundGates(for: game)
+    }
+
+    private func readinessAndRoundGates(for game: WatchGame) -> Bool {
+        guard game.participantsReady else { return false }
+        if game.hasFixedTeams == true {
+            guard game.teamsReady else { return false }
+        }
+        let playingCount = game.participants.filter(\.isPlaying).count
+        guard playingCount == 4 else { return false }
+        return WatchResultsRoundBuilder.canBuildFirstRound(for: game)
     }
 
     var canContinueScoring: Bool {
@@ -107,5 +168,17 @@ final class GameDetailViewModel {
         return game.participants.contains {
             $0.userId == uid && ($0.role == "OWNER" || $0.role == "ADMIN")
         }
+    }
+
+    private var isCurrentUserOwnerOrAdminOnParent: Bool {
+        guard let uid = currentUserId, let parts = game?.parent?.participants else { return false }
+        return parts.contains {
+            $0.userId == uid && ($0.role == "OWNER" || $0.role == "ADMIN")
+        }
+    }
+
+    private var isCurrentUserPlayingOnGame: Bool {
+        guard let uid = currentUserId, let game else { return false }
+        return game.participants.contains { $0.userId == uid && $0.isPlaying }
     }
 }

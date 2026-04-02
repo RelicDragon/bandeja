@@ -3,8 +3,10 @@ import Foundation
 enum Endpoint: Sendable {
     case myGames
     case gameDetail(id: String)
+    case updateGame(id: String)
     case userProfile
     case gameResults(gameId: String)
+    case syncGameResults(gameId: String)
     case createRound(gameId: String)
     case createMatch(gameId: String, roundId: String)
     case updateMatch(gameId: String, matchId: String)
@@ -18,10 +20,14 @@ enum Endpoint: Sendable {
             return "/games/my-games"
         case .gameDetail(let id):
             return "/games/\(id)"
+        case .updateGame(let id):
+            return "/games/\(id)"
         case .userProfile:
             return "/users/profile"
         case .gameResults(let gameId):
             return "/results/game/\(gameId)"
+        case .syncGameResults(let gameId):
+            return "/results/game/\(gameId)/sync"
         case .createRound(let gameId):
             return "/results/game/\(gameId)/rounds"
         case .createMatch(let gameId, let roundId):
@@ -41,9 +47,9 @@ enum Endpoint: Sendable {
         switch self {
         case .myGames, .gameDetail, .userProfile, .gameResults, .getMyGameWorkout:
             return "GET"
-        case .createRound, .createMatch, .recalculateOutcomes, .postGameWorkout:
+        case .createRound, .createMatch, .recalculateOutcomes, .postGameWorkout, .syncGameResults:
             return "POST"
-        case .updateMatch:
+        case .updateMatch, .updateGame:
             return "PUT"
         }
     }
