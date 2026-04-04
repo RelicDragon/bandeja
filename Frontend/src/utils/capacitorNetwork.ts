@@ -2,6 +2,7 @@ import type { PluginListenerHandle } from '@capacitor/core';
 import { Network } from '@capacitor/network';
 import { isCapacitor } from './capacitor';
 import { useNetworkStore } from './networkStatus';
+import { triggerForegroundChatSync } from '@/utils/foregroundChatSyncRegistry';
 
 let networkListenerHandle: PluginListenerHandle | null = null;
 
@@ -22,6 +23,9 @@ export const setupCapacitorNetwork = async () => {
     networkListenerHandle = await Network.addListener('networkStatusChange', (status) => {
       console.log('Network status changed:', status);
       useNetworkStore.getState().setOnline(status.connected);
+      if (status.connected) {
+        triggerForegroundChatSync();
+      }
     });
   } catch (error) {
     console.error('Error setting up Capacitor network listener:', error);

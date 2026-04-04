@@ -19,11 +19,13 @@ import {
   channelsToChatItems,
   applyPaginationState,
   createLoadMore,
+  mergeChatListOutboxFromDexieSlice,
   type FilterCache
 } from '@/utils/chatListHelpers';
 import { usersApi } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
 import { useAuthStore } from '@/store/authStore';
+import { useNetworkStore } from '@/utils/networkStatus';
 import { usePlayersStore } from '@/store/playersStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -51,6 +53,15 @@ import { draftStorage, mergeServerAndLocalDrafts } from '@/services/draftStorage
 import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
 import { MAX_PINNED_CHATS } from '@/utils/chatListConstants';
+import {
+  loadThreadIndexForList,
+  patchThreadIndexClearUnread,
+  patchThreadIndexSetUnreadCount,
+  persistThreadIndexReplace,
+  persistThreadIndexUpsert,
+} from '@/services/chat/chatThreadIndex';
+import { prefetchTopChatsSync } from '@/services/chat/chatPrefetch';
+import { enqueueChatSyncPull, SYNC_PRIORITY_VIEWING } from '@/services/chat/chatSyncScheduler';
 
 export type { ChatType };
 
@@ -60,15 +71,13 @@ const chatListModuleCache: {
   chats: Partial<Record<ChatsFilterType, FilterCache>>;
   drafts: ChatDraft[] | null;
   lastFetchTime: number;
-  inFlight: Promise<void> | null;
-  inFlightFilter: ChatsFilterType | null;
+  inFlightByFilter: Partial<Record<ChatsFilterType, Promise<void>>>;
 } = {
   userId: null,
   chats: {},
   drafts: null,
   lastFetchTime: 0,
-  inFlight: null,
-  inFlightFilter: null,
+  inFlightByFilter: {},
 };
 
 function clearChatListModuleCacheWhenUserMismatch(userId: string | undefined) {
@@ -77,6 +86,7 @@ function clearChatListModuleCacheWhenUserMismatch(userId: string | undefined) {
     chatListModuleCache.chats = {};
     chatListModuleCache.drafts = null;
     chatListModuleCache.lastFetchTime = 0;
+    chatListModuleCache.inFlightByFilter = {};
   }
 }
 
@@ -92,13 +102,21 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const isOnline = useNetworkStore((s) => s.isOnline);
   const { chatsFilter, bugsFilter, openBugModal, setOpenBugModal } = useNavigationStore();
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
   const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
   const lastChatUnreadCount = useSocketEventsStore((state) => state.lastChatUnreadCount);
   const lastNewBug = useSocketEventsStore((state) => state.lastNewBug);
   const lastSyncCompletedAt = useChatSyncStore((state) => state.lastSyncCompletedAt);
+  const chatListDexieBump = useChatSyncStore((state) => state.chatListDexieBump);
   const [chats, setChats] = useState<ChatItem[]>([]);
+  const chatsRef = useRef(chats);
+  chatsRef.current = chats;
+  const chatPrefetchSignature = useMemo(
+    () => chats.slice(0, 18).map((c) => getChatKey(c)).join('\0'),
+    [chats]
+  );
   const [loading, setLoading] = useState(true);
   const urlQuery = searchParams.get('q') ?? '';
   const [searchInput, setSearchInput] = useState(urlQuery);
@@ -171,6 +189,32 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   useEffect(() => () => {
     draftsCacheRef.current = null;
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || chatListDexieBump === 0) return;
+    let cancelled = false;
+    void loadThreadIndexForList(chatsFilter).then((fromDex) => {
+      if (cancelled || fromDex.length === 0) return;
+      setChats((prev) => mergeChatListOutboxFromDexieSlice(prev, fromDex));
+      const cur = chatsCacheRef.current[chatsFilter];
+      if (cur) {
+        chatsCacheRef.current[chatsFilter] = {
+          ...cur,
+          chats: mergeChatListOutboxFromDexieSlice(cur.chats, fromDex),
+        };
+      }
+      const mc = chatListModuleCache.chats[chatsFilter];
+      if (mc && chatListModuleCache.userId === user.id) {
+        chatListModuleCache.chats[chatsFilter] = {
+          ...mc,
+          chats: mergeChatListOutboxFromDexieSlice(mc.chats, fromDex),
+        };
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [chatListDexieBump, chatsFilter, user?.id]);
 
   const applyDraftToCache = useCallback((
     draft: ChatDraft | null,
@@ -408,6 +452,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         chatListModuleCache.chats.users = cacheEntry;
         chatListModuleCache.userId = user.id;
         chatListModuleCache.lastFetchTime = Date.now();
+        void persistThreadIndexReplace('users', usersChatItems);
         return;
       }
 
@@ -431,6 +476,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         chatListModuleCache.chats.bugs = cacheEntry;
         chatListModuleCache.userId = user.id;
         chatListModuleCache.lastFetchTime = Date.now();
+        void persistThreadIndexReplace('bugs', cacheEntry.chats);
         return;
       }
       if (filter === 'channels') {
@@ -451,6 +497,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         chatListModuleCache.chats.channels = cacheEntry;
         chatListModuleCache.userId = user.id;
         chatListModuleCache.lastFetchTime = Date.now();
+        void persistThreadIndexReplace('channels', cacheEntry.chats);
         return;
       }
       if (filter === 'market') {
@@ -472,9 +519,28 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
         chatListModuleCache.chats.market = cacheEntry;
         chatListModuleCache.userId = user.id;
         chatListModuleCache.lastFetchTime = Date.now();
+        void persistThreadIndexReplace('market', cacheEntry.chats);
       }
     },
     [user, getMergedDrafts]
+  );
+
+  const runCoalescedFilterFetch = useCallback(
+    async (filter: ChatsFilterType) => {
+      let p = chatListModuleCache.inFlightByFilter[filter];
+      if (!p) {
+        p = (async () => {
+          try {
+            await fetchFilter(filter);
+          } finally {
+            delete chatListModuleCache.inFlightByFilter[filter];
+          }
+        })();
+        chatListModuleCache.inFlightByFilter[filter] = p;
+      }
+      await p;
+    },
+    [fetchFilter]
   );
 
   const paginationSetters = useMemo(
@@ -496,7 +562,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       const filter = filterArg ?? useNavigationStore.getState().chatsFilter;
       if (filter !== 'users' && filter !== 'bugs' && filter !== 'channels' && filter !== 'market') return;
       try {
-        await fetchFilter(filter);
+        await runCoalescedFilterFetch(filter);
       } catch (err) {
         console.error('fetchChatsForFilter failed:', err);
         return;
@@ -513,7 +579,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       }
       applyPaginationState(filter, cached, paginationSetters);
     },
-    [fetchFilter, paginationSetters]
+    [paginationSetters, runCoalescedFilterFetch]
   );
 
   useEffect(() => {
@@ -544,30 +610,77 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     let cancelled = false;
     const run = async () => {
       try {
-        if (chatListModuleCache.inFlight) {
-          await chatListModuleCache.inFlight;
+        let showedDisk = false;
+        try {
+          const fromDex = await loadThreadIndexForList(chatsFilter);
+          if (!cancelled && fromDex.length > 0) {
+            showedDisk = true;
+            const dexOnly: FilterCache = { chats: deduplicateChats(fromDex) };
+            if (chatsFilter === 'users') {
+              dexOnly.cityUsers = [];
+              dexOnly.usersHasMore = false;
+            }
+            if (chatsFilter === 'bugs') dexOnly.bugsHasMore = false;
+            if (chatsFilter === 'channels') dexOnly.channelsHasMore = false;
+            if (chatsFilter === 'market') dexOnly.marketHasMore = false;
+            applyCacheToState(dexOnly);
+            setLoading(false);
+          } else if (!cancelled && fromDex.length === 0 && !useNetworkStore.getState().isOnline) {
+            showedDisk = true;
+            const empty: FilterCache = { chats: [] };
+            if (chatsFilter === 'users') {
+              empty.cityUsers = [];
+              empty.usersHasMore = false;
+            }
+            if (chatsFilter === 'bugs') empty.bugsHasMore = false;
+            if (chatsFilter === 'channels') empty.channelsHasMore = false;
+            if (chatsFilter === 'market') empty.marketHasMore = false;
+            applyCacheToState(empty);
+            setLoading(false);
+            return;
+          }
+        } catch {
+          /* ignore */
+        }
+        if (showedDisk && !useNetworkStore.getState().isOnline) return;
+        if (showedDisk && useNetworkStore.getState().isOnline) {
+          const currentFilter = chatsFilter;
+          void (async () => {
+            try {
+              await runCoalescedFilterFetch(currentFilter);
+            } catch (err) {
+              console.error('Failed to fetch chats:', err);
+            }
+            if (cancelled) return;
+            const c = chatListModuleCache.chats[currentFilter];
+            if (c && chatListModuleCache.userId === user.id) {
+              chatsCacheRef.current[currentFilter] = c;
+              if (useNavigationStore.getState().chatsFilter !== currentFilter) return;
+              setChats(deduplicateChats(c.chats));
+              if (currentFilter === 'users') setMutedChats({});
+              if (c.cityUsers) {
+                setCityUsers(c.cityUsers);
+                setSearchableUsersData({ activeChats: c.chats, cityUsers: c.cityUsers });
+              }
+              applyPaginationState(currentFilter, c, paginationSetters);
+            }
+          })();
+          return;
+        }
+        const inflight = chatListModuleCache.inFlightByFilter[chatsFilter];
+        if (inflight) {
+          await inflight;
           if (cancelled) return;
           const after = chatListModuleCache.chats[chatsFilter];
           if (after && chatListModuleCache.userId === user.id) {
             applyCacheToState(after);
+            setLoading(false);
             return;
           }
         }
-        setLoading(true);
+        if (!showedDisk) setLoading(true);
         const currentFilter = chatsFilter;
-        const inFlightPromise = (async () => {
-          try {
-            await fetchFilter(currentFilter);
-          } finally {
-            if (chatListModuleCache.inFlightFilter === currentFilter) {
-              chatListModuleCache.inFlight = null;
-              chatListModuleCache.inFlightFilter = null;
-            }
-          }
-        })();
-        chatListModuleCache.inFlight = inFlightPromise;
-        chatListModuleCache.inFlightFilter = currentFilter;
-        await inFlightPromise;
+        await runCoalescedFilterFetch(currentFilter);
         if (cancelled) return;
         const c = chatListModuleCache.chats[chatsFilter];
         if (c) applyCacheToState(c);
@@ -579,7 +692,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
     };
     run();
     return () => { cancelled = true; };
-  }, [fetchFilter, chatsFilter, paginationSetters, user?.id]);
+  }, [fetchFilter, chatsFilter, paginationSetters, user?.id, runCoalescedFilterFetch]);
 
   const prevBugsFilterRef = useRef(bugsFilter);
   useEffect(() => {
@@ -596,8 +709,12 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       setChats(deduped);
       setBugsHasMore(hasMore);
       bugsPageRef.current = 1;
-    }).catch(() => {
-      if (!cancelled) setChats([]);
+      void persistThreadIndexReplace('bugs', deduped);
+    }).catch(async () => {
+      if (cancelled) return;
+      const d = await loadThreadIndexForList('bugs');
+      if (d.length) setChats(deduplicateChats(d));
+      else setChats([]);
     });
     return () => { cancelled = true; };
   }, [chatsFilter, bugsFilter, fetchBugs]);
@@ -614,7 +731,8 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       setHasMore: setBugsHasMore,
       cacheKey: 'bugs',
       cacheRef: chatsCacheRef,
-      deduplicate: deduplicateChats
+      deduplicate: deduplicateChats,
+      afterMore: (more) => void persistThreadIndexUpsert('bugs', more),
     });
     await fn();
   }, [chatsFilter, bugsLoadingMore, bugsHasMore, fetchBugs]);
@@ -631,7 +749,8 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       setHasMore: setUsersHasMore,
       cacheKey: 'users',
       cacheRef: chatsCacheRef,
-      deduplicate: deduplicateChats
+      deduplicate: deduplicateChats,
+      afterMore: (more) => void persistThreadIndexUpsert('users', more),
     });
     await fn();
   }, [chatsFilter, usersLoadingMore, usersHasMore, fetchUsersGroups]);
@@ -648,7 +767,8 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       setHasMore: setChannelsHasMore,
       cacheKey: 'channels',
       cacheRef: chatsCacheRef,
-      deduplicate: deduplicateChats
+      deduplicate: deduplicateChats,
+      afterMore: (more) => void persistThreadIndexUpsert('channels', more),
     });
     await fn();
   }, [chatsFilter, channelsLoadingMore, channelsHasMore, fetchChannels]);
@@ -665,7 +785,8 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       setHasMore: setMarketHasMore,
       cacheKey: 'market',
       cacheRef: chatsCacheRef,
-      deduplicate: deduplicateChats
+      deduplicate: deduplicateChats,
+      afterMore: (more) => void persistThreadIndexUpsert('market', more),
     });
     await fn();
   }, [chatsFilter, marketLoadingMore, marketHasMore, fetchMarket]);
@@ -699,6 +820,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       if (cancelled) return;
       const deduped = deduplicateChats(chats);
       chatsCacheRef.current.market = { chats: deduped, marketHasMore: hasMore };
+      void persistThreadIndexReplace('market', deduped);
       if (chatsFilter === 'market') {
         setChats(deduped);
         setMarketHasMore(hasMore);
@@ -781,6 +903,12 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   useEffect(() => {
     setUnreadFilterActive(false);
   }, [chatsFilter]);
+
+  useEffect(() => {
+    if (!user?.id || !isOnline || chatPrefetchSignature.length === 0) return;
+    const t = window.setTimeout(() => prefetchTopChatsSync(chatsRef.current), 450);
+    return () => window.clearTimeout(t);
+  }, [user?.id, isOnline, chatPrefetchSignature]);
 
   useEffect(() => {
     if (chatsFilter !== 'users' || !debouncedSearchQuery.trim() || contactsMode) return;
@@ -932,7 +1060,8 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
 
     const handleViewingClearUnread = (event: Event) => {
       const customEvent = event as CustomEvent<{ contextType: string; contextId: string }>;
-      const { contextId } = customEvent.detail;
+      const { contextType, contextId } = customEvent.detail;
+      void patchThreadIndexClearUnread(contextType as ChatContextType, contextId);
       setChats((prev) =>
         prev.map((chat) =>
           (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId ? { ...chat, unreadCount: 0 } : chat
@@ -1005,26 +1134,67 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
             return next;
           }
 
+          if (contextType === 'USER' && chatsFilter === 'users') {
+            usePlayersStore.getState().invalidateUserChatsCache();
+            void fetchChatsForFilter('users');
+          }
+
           return prevChats;
         });
       }
     };
 
     handleNewMessage(lastChatMessage);
-  }, [lastChatMessage, chatsFilter, updateChatMessage, isDesktop, selectedChatId, selectedChatType]);
+  }, [lastChatMessage, chatsFilter, updateChatMessage, isDesktop, selectedChatId, selectedChatType, fetchChatsForFilter]);
 
   useEffect(() => {
-    if (!lastChatUnreadCount || lastChatUnreadCount.contextType !== 'GROUP') return;
-    const { contextId, unreadCount } = lastChatUnreadCount;
-    const isViewingThis = isDesktop && selectedChatId === contextId && (selectedChatType === 'group' || selectedChatType === 'channel');
-    setChats((prev) =>
-      prev.map((chat) =>
-        (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId
-          ? { ...chat, unreadCount: isViewingThis ? 0 : unreadCount }
-          : chat
-      )
-    );
-  }, [lastChatUnreadCount, isDesktop, selectedChatId, selectedChatType]);
+    if (!lastChatUnreadCount) return;
+    const { contextType, contextId, unreadCount } = lastChatUnreadCount;
+
+    if (contextType === 'GROUP') {
+      const isViewingThis =
+        isDesktop &&
+        selectedChatId === contextId &&
+        (selectedChatType === 'group' || selectedChatType === 'channel');
+      const nextCount = isViewingThis ? 0 : unreadCount;
+      void patchThreadIndexSetUnreadCount('GROUP', contextId, nextCount);
+      setChats((prev) =>
+        prev.map((chat) =>
+          (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId
+            ? { ...chat, unreadCount: nextCount }
+            : chat
+        )
+      );
+      return;
+    }
+
+    if (contextType === 'USER') {
+      const isViewingThis = isDesktop && selectedChatType === 'user' && selectedChatId === contextId;
+      const nextCount = isViewingThis ? 0 : unreadCount;
+      void patchThreadIndexSetUnreadCount('USER', contextId, nextCount);
+      usePlayersStore.getState().updateUnreadCount(contextId, nextCount);
+      if (chatsFilter === 'users') {
+        setChats((prev) => {
+          const exists = prev.some((c) => c.type === 'user' && c.data.id === contextId);
+          if (!exists && nextCount > 0) {
+            usePlayersStore.getState().invalidateUserChatsCache();
+            void fetchChatsForFilter('users');
+            return prev;
+          }
+          return prev.map((chat) =>
+            chat.type === 'user' && chat.data.id === contextId ? { ...chat, unreadCount: nextCount } : chat
+          );
+        });
+      }
+      return;
+    }
+
+    if (contextType === 'GAME') {
+      const viewingGameId = useNavigationStore.getState().viewingGameChatId;
+      const nextCount = viewingGameId === contextId ? 0 : unreadCount;
+      void patchThreadIndexSetUnreadCount('GAME', contextId, nextCount);
+    }
+  }, [lastChatUnreadCount, isDesktop, selectedChatId, selectedChatType, chatsFilter, fetchChatsForFilter]);
 
   useEffect(() => {
     if (lastSyncCompletedAt == null) return;
@@ -1040,6 +1210,7 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
       if (cancelled) return;
       const deduped = deduplicateChats(chats);
       chatsCacheRef.current.bugs = { chats: deduped, bugsHasMore: hasMore };
+      void persistThreadIndexReplace('bugs', deduped);
       setChats(deduped);
       setBugsHasMore(hasMore);
       bugsPageRef.current = 1;
@@ -1070,6 +1241,11 @@ export const ChatList = ({ onChatSelect, isDesktop = false, selectedChatId, sele
   }, [chatsFilter, fetchChatsForFilter, onChatSelect]);
 
   const handleChatClick = useCallback((chatId: string, chatType: ChatType, options?: { initialChatType?: string; searchQuery?: string }) => {
+    let ct: ChatContextType | null = null;
+    if (chatType === 'user') ct = 'USER';
+    else if (chatType === 'game') ct = 'GAME';
+    else if (chatType === 'group' || chatType === 'channel' || chatType === 'bug') ct = 'GROUP';
+    if (ct) enqueueChatSyncPull(ct, chatId, SYNC_PRIORITY_VIEWING);
     onChatSelect?.(chatId, chatType, options);
   }, [onChatSelect]);
 

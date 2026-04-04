@@ -1,6 +1,8 @@
 import api from './axios';
 import { ApiResponse, Game, ChatType, BasicUser } from '@/types';
+import type { UnreadObjectsApiPayload } from '@/services/chat/chatUnreadPayload';
 import { normalizeChatType } from '@/utils/chatType';
+import { withChatSyncRetry, withMessageCreateRetry } from '@/services/chat/chatHttpRetry';
 
 export type { ChatType };
 
@@ -47,6 +49,9 @@ const unreadCountCache = new Map<string, { data: any; timestamp: number }>();
 const UNREAD_COUNT_CACHE_TTL = 1000;
 let unreadCountPromise: Promise<any> | null = null;
 
+let unreadObjectsInFlight: Promise<ApiResponse<UnreadObjectsApiPayload>> | null = null;
+const UNREAD_OBJECTS_IN_FLIGHT_TTL_MS = 1800;
+
 export interface ChatMessage {
   id: string;
   chatContextType: ChatContextType;
@@ -64,6 +69,7 @@ export interface ChatMessage {
   createdAt: string;
   updatedAt: string;
   editedAt?: string | null;
+  deletedAt?: string | null;
   replyToId?: string;
   replyTo?: {
     id: string;
@@ -93,6 +99,11 @@ export interface ChatMessage {
     languageCode: string | null;
   };
   poll?: Poll;
+  clientMutationId?: string | null;
+  /** Server conversation sync sequence when known (socket / sync log). */
+  syncSeq?: number;
+  /** DB column; preferred for ordering when applying sync events (avoids max() with bogus local syncSeq). */
+  serverSyncSeq?: number | null;
 }
 
 export interface MessageReaction {
@@ -112,7 +123,11 @@ export interface MessageReadReceipt {
   user?: BasicUser;
 }
 
-export type ChatMessageWithStatus = ChatMessage & { _status?: 'SENDING' | 'FAILED'; _optimisticId?: string };
+export type ChatMessageWithStatus = ChatMessage & {
+  _status?: 'SENDING' | 'FAILED';
+  _optimisticId?: string;
+  _clientMutationId?: string;
+};
 
 export interface LastMessagePreview {
   preview: string;
@@ -160,6 +175,7 @@ export interface CreateMessageRequest {
   messageType?: MessageType;
   audioDurationMs?: number;
   waveformData?: number[];
+  clientMutationId?: string;
   poll?: {
     question: string;
     type: PollType;
@@ -306,12 +322,25 @@ export const chatApi = {
       ...data,
       chatType: data.chatType ? normalizeChatType(data.chatType) : data.chatType
     };
-    const response = await api.post<ApiResponse<ChatMessage>>('/chat/messages', normalizedData);
+    return withMessageCreateRetry(() =>
+      api
+        .post<ApiResponse<ChatMessage>>('/chat/messages', normalizedData, { timeout: 55_000 })
+        .then((response) => response.data.data)
+    );
+  },
+
+  editMessage: async (
+    messageId: string,
+    body: { content: string; mentionIds?: string[]; clientMutationId?: string }
+  ) => {
+    const response = await api.patch<ApiResponse<ChatMessage>>(`/chat/messages/${messageId}`, body);
     return response.data.data;
   },
 
-  editMessage: async (messageId: string, body: { content: string; mentionIds?: string[] }) => {
-    const response = await api.patch<ApiResponse<ChatMessage>>(`/chat/messages/${messageId}`, body);
+  getBugMessages: async (bugId: string, page = 1, limit = 50, beforeMessageId?: string) => {
+    const params: Record<string, string | number> = { page, limit };
+    if (beforeMessageId) params.beforeMessageId = beforeMessageId;
+    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/bugs/${bugId}/messages`, { params });
     return response.data.data;
   },
 
@@ -334,19 +363,28 @@ export const chatApi = {
     return response.data;
   },
 
-  addReaction: async (messageId: string, data: AddReactionRequest) => {
+  addReaction: async (messageId: string, data: AddReactionRequest & { clientMutationId?: string }) => {
     const response = await api.post<ApiResponse<MessageReaction>>(`/chat/messages/${messageId}/reactions`, data);
     return response.data.data;
   },
 
-  removeReaction: async (messageId: string) => {
-    const response = await api.delete<ApiResponse<{ success: boolean }>>(`/chat/messages/${messageId}/reactions`);
+  removeReaction: async (messageId: string, clientMutationId?: string) => {
+    const response = await api.delete<ApiResponse<{ success: boolean }>>(`/chat/messages/${messageId}/reactions`, {
+      params: clientMutationId ? { clientMutationId } : undefined,
+    });
     return response.data;
   },
 
-  deleteMessage: async (messageId: string) => {
-    const response = await api.delete<ApiResponse<{ success: boolean }>>(`/chat/messages/${messageId}`);
+  deleteMessage: async (messageId: string, clientMutationId?: string) => {
+    const response = await api.delete<ApiResponse<{ success: boolean }>>(`/chat/messages/${messageId}`, {
+      params: clientMutationId ? { clientMutationId } : undefined,
+    });
     return response.data;
+  },
+
+  getChatMessageById: async (messageId: string): Promise<ChatMessage> => {
+    const response = await api.get<ApiResponse<ChatMessage>>(`/chat/messages/${messageId}`);
+    return response.data.data;
   },
 
   getPinnedMessages: async (
@@ -360,13 +398,17 @@ export const chatApi = {
     return response.data.data;
   },
 
-  pinMessage: async (messageId: string) => {
-    const response = await api.post<ApiResponse<{ pinned: boolean }>>(`/chat/messages/${messageId}/pin`);
+  pinMessage: async (messageId: string, clientMutationId?: string) => {
+    const response = await api.post<ApiResponse<{ pinned: boolean }>>(`/chat/messages/${messageId}/pin`, {
+      ...(clientMutationId ? { clientMutationId } : {}),
+    });
     return response.data;
   },
 
-  unpinMessage: async (messageId: string) => {
-    const response = await api.delete<ApiResponse<{ pinned: boolean }>>(`/chat/messages/${messageId}/pin`);
+  unpinMessage: async (messageId: string, clientMutationId?: string) => {
+    const response = await api.delete<ApiResponse<{ pinned: boolean }>>(`/chat/messages/${messageId}/pin`, {
+      params: clientMutationId ? { clientMutationId } : undefined,
+    });
     return response.data;
   },
 
@@ -399,14 +441,19 @@ export const chatApi = {
   },
 
   getUnreadObjects: async () => {
-    const response = await api.get<ApiResponse<{
-      games: Array<{ game: Game; unreadCount: number }>;
-      bugs: Array<{ bug: any; unreadCount: number }>;
-      userChats: Array<{ chat: UserChat; unreadCount: number }>;
-      groupChannels: Array<{ groupChannel: GroupChannel; unreadCount: number }>;
-      marketItems: Array<{ marketItem: any; groupChannelId: string; unreadCount: number }>;
-    }>>('/chat/unread-objects');
-    return response.data;
+    if (unreadObjectsInFlight) return unreadObjectsInFlight;
+    unreadObjectsInFlight = api
+      .get<ApiResponse<UnreadObjectsApiPayload>>('/chat/unread-objects')
+      .then((response) => response.data)
+      .catch((error) => {
+        unreadObjectsInFlight = null;
+        throw error;
+      });
+    const data = await unreadObjectsInFlight;
+    setTimeout(() => {
+      unreadObjectsInFlight = null;
+    }, UNREAD_OBJECTS_IN_FLIGHT_TTL_MS);
+    return data;
   },
 
   getUserChatGames: async () => {
@@ -522,6 +569,8 @@ export const chatApi = {
   ) => {
     if (chatContextType === 'GAME') {
       return chatApi.getGameMessages(contextId, page, limit, chatType, beforeMessageId);
+    } else if (chatContextType === 'BUG') {
+      return chatApi.getBugMessages(contextId, page, limit, beforeMessageId);
     } else if (chatContextType === 'USER') {
       return chatApi.getUserChatMessages(contextId, page, limit, beforeMessageId);
     } else if (chatContextType === 'GROUP') {
@@ -718,13 +767,21 @@ export const chatApi = {
     return response.data;
   },
 
-  getMissedMessages: async (contextType: ChatContextType, contextId: string, lastMessageId?: string): Promise<ChatMessage[]> => {
+  getMissedMessages: async (
+    contextType: ChatContextType,
+    contextId: string,
+    lastMessageId?: string,
+    gameChatType?: ChatType
+  ): Promise<ChatMessage[]> => {
     const params = new URLSearchParams({
       contextType,
       contextId
     });
     if (lastMessageId) {
       params.append('lastMessageId', lastMessageId);
+    }
+    if (contextType === 'GAME' && gameChatType) {
+      params.append('chatType', normalizeChatType(gameChatType));
     }
     const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/messages/missed?${params.toString()}`);
     return response.data.data ?? [];
@@ -733,6 +790,7 @@ export const chatApi = {
   invalidateUnreadCache: () => {
     unreadCountCache.clear();
     unreadCountPromise = null;
+    unreadObjectsInFlight = null;
   },
 
   getUnreadCountForContext: async (contextType: ChatContextType, contextId: string): Promise<number> => {
@@ -831,5 +889,54 @@ export const chatApi = {
   votePoll: async (pollId: string, optionIds: string[]) => {
     const response = await api.post<ApiResponse<Poll>>(`/chat/polls/${pollId}/vote`, { optionIds });
     return response.data.data;
+  },
+
+  getChatSyncHead: async (contextType: ChatContextType, contextId: string): Promise<number> => {
+    return withChatSyncRetry('head', () =>
+      api
+        .get<ApiResponse<{ maxSeq: number }>>('/chat/sync/head', {
+          params: { contextType, contextId },
+          timeout: 25_000,
+        })
+        .then((response) => response.data.data.maxSeq)
+    );
+  },
+
+  getChatSyncEvents: async (
+    contextType: ChatContextType,
+    contextId: string,
+    afterSeq: number,
+    limit = 200
+  ): Promise<{
+    events: Array<{ id: string; seq: number; eventType: string; payload: unknown; createdAt: string }>;
+    hasMore: boolean;
+    oldestRetainedSeq?: number | null;
+    cursorStale?: boolean;
+  }> => {
+    return withChatSyncRetry('events', () =>
+      api
+        .get<
+          ApiResponse<{
+            events: Array<{ id: string; seq: number; eventType: string; payload: unknown; createdAt: string }>;
+            hasMore: boolean;
+            oldestRetainedSeq?: number | null;
+            cursorStale?: boolean;
+          }>
+        >('/chat/sync/events', {
+          params: { contextType, contextId, afterSeq, limit },
+          timeout: 55_000,
+        })
+        .then((response) => response.data.data)
+    );
+  },
+
+  postChatSyncBatchHead: async (
+    items: Array<{ contextType: ChatContextType; contextId: string }>
+  ): Promise<Record<string, number>> => {
+    return withChatSyncRetry('batch-head', () =>
+      api
+        .post<ApiResponse<Record<string, number>>>('/chat/sync/batch-head', { items }, { timeout: 35_000 })
+        .then((response) => response.data.data)
+    );
   },
 };

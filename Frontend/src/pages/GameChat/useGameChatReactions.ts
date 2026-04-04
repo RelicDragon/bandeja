@@ -1,23 +1,43 @@
 import { useState, useCallback } from 'react';
-import { chatApi, type ChatMessage, type ChatMessageWithStatus } from '@/api/chat';
-import type { Poll } from '@/api/chat';
+import { chatApi, type ChatMessage, type ChatMessageWithStatus, type ChatContextType, type Poll } from '@/api/chat';
 import { usePlayersStore } from '@/store/playersStore';
+import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
+import {
+  enqueueChatMutationReactionAdd,
+  enqueueChatMutationReactionRemove,
+  enqueueChatMutationDelete,
+} from '@/services/chat/chatMutationEnqueue';
+import { putLocalMessage } from '@/services/chat/chatLocalApply';
+import { compareChatMessagesAscending } from '@/utils/chatMessageSort';
 
 export interface UseGameChatReactionsParams {
   id: string | undefined;
+  contextType: ChatContextType;
   user: { id: string } | null;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
   setUserChat: React.Dispatch<React.SetStateAction<import('@/api/chat').UserChat | null>>;
 }
 
-export function useGameChatReactions({ id, user, setMessages, messagesRef, setUserChat }: UseGameChatReactionsParams) {
+function isQueuedSendMessageId(messageId: string): boolean {
+  return messageId.startsWith('opt-');
+}
+
+export function useGameChatReactions({
+  id,
+  contextType,
+  user,
+  setMessages,
+  messagesRef,
+  setUserChat,
+}: UseGameChatReactionsParams) {
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
 
   const handleAddReaction = useCallback(
     async (messageId: string, emoji: string) => {
       if (!user?.id) return;
+      if (isQueuedSendMessageId(messageId)) return;
       const optimisticReaction = {
         id: `pending-${Date.now()}`,
         messageId,
@@ -27,6 +47,10 @@ export function useGameChatReactions({ id, user, setMessages, messagesRef, setUs
         user: user as import('@/types').BasicUser,
         _pending: true as const,
       };
+      const prevMsg = messagesRef.current.find((m) => m.id === messageId);
+      const nextReactions = prevMsg
+        ? [...prevMsg.reactions.filter((r) => r.userId !== user.id), optimisticReaction as (typeof prevMsg.reactions)[0]]
+        : [];
       setMessages((prev) => {
         const next = prev.map((m) =>
           m.id === messageId ? { ...m, reactions: [...m.reactions.filter((r) => r.userId !== user.id), optimisticReaction] } : m
@@ -34,6 +58,35 @@ export function useGameChatReactions({ id, user, setMessages, messagesRef, setUs
         messagesRef.current = next;
         return next;
       });
+      if (shouldQueueChatMutation() && id) {
+        try {
+          await enqueueChatMutationReactionAdd({
+            contextType,
+            contextId: id,
+            messageId,
+            nextReactions,
+            emoji,
+            userId: user.id,
+          });
+        } catch (e) {
+          console.error('enqueue reaction', e);
+          setMessages((prev) => {
+            const next = prev.map((m) =>
+              m.id === messageId
+                ? {
+                    ...m,
+                    reactions: m.reactions.filter(
+                      (r) => !(r.userId === user.id && (r as { _pending?: boolean })._pending)
+                    ),
+                  }
+                : m
+            );
+            messagesRef.current = next;
+            return next;
+          });
+        }
+        return;
+      }
       try {
         const reaction = await chatApi.addReaction(messageId, { emoji });
         setMessages((prev) => {
@@ -45,6 +98,35 @@ export function useGameChatReactions({ id, user, setMessages, messagesRef, setUs
         });
       } catch (error) {
         console.error('Failed to add reaction:', error);
+        if (id && isRetryableMutationError(error)) {
+          try {
+            await enqueueChatMutationReactionAdd({
+              contextType,
+              contextId: id,
+              messageId,
+              nextReactions,
+              emoji,
+              userId: user.id,
+            });
+          } catch (e) {
+            console.error('enqueue reaction', e);
+            setMessages((prev) => {
+              const next = prev.map((m) =>
+                m.id === messageId
+                  ? {
+                      ...m,
+                      reactions: m.reactions.filter(
+                        (r) => !(r.userId === user.id && (r as { _pending?: boolean })._pending)
+                      ),
+                    }
+                  : m
+              );
+              messagesRef.current = next;
+              return next;
+            });
+          }
+          return;
+        }
         setMessages((prev) => {
           const next = prev.map((m) =>
             m.id === messageId ? { ...m, reactions: m.reactions.filter((r) => !(r.userId === user.id && (r as { _pending?: boolean })._pending)) } : m
@@ -54,23 +136,67 @@ export function useGameChatReactions({ id, user, setMessages, messagesRef, setUs
         });
       }
     },
-    [user, setMessages, messagesRef]
+    [user, id, contextType, setMessages, messagesRef]
   );
 
   const handleRemoveReaction = useCallback(
     async (messageId: string) => {
       if (!user?.id) return;
+      if (isQueuedSendMessageId(messageId)) return;
       const message = messagesRef.current.find((m) => m.id === messageId);
       const removedReactions = message?.reactions.filter((r) => r.userId === user.id) ?? [];
+      const nextReactions = message?.reactions.filter((r) => r.userId !== user.id) ?? [];
       setMessages((prev) => {
         const next = prev.map((m) => (m.id === messageId ? { ...m, reactions: m.reactions.filter((r) => r.userId !== user.id) } : m));
         messagesRef.current = next;
         return next;
       });
+      if (shouldQueueChatMutation() && id) {
+        try {
+          await enqueueChatMutationReactionRemove({
+            contextType,
+            contextId: id,
+            messageId,
+            nextReactions,
+            userId: user.id,
+          });
+        } catch (e) {
+          console.error('enqueue reaction remove', e);
+          setMessages((prev) => {
+            const next = prev.map((m) =>
+              m.id === messageId ? { ...m, reactions: [...m.reactions, ...removedReactions] } : m
+            );
+            messagesRef.current = next;
+            return next;
+          });
+        }
+        return;
+      }
       try {
         await chatApi.removeReaction(messageId);
       } catch (error) {
         console.error('Failed to remove reaction:', error);
+        if (id && isRetryableMutationError(error)) {
+          try {
+            await enqueueChatMutationReactionRemove({
+              contextType,
+              contextId: id,
+              messageId,
+              nextReactions,
+              userId: user.id,
+            });
+          } catch (e) {
+            console.error('enqueue reaction remove', e);
+            setMessages((prev) => {
+              const next = prev.map((m) =>
+                m.id === messageId ? { ...m, reactions: [...m.reactions, ...removedReactions] } : m
+              );
+              messagesRef.current = next;
+              return next;
+            });
+          }
+          return;
+        }
         setMessages((prev) => {
           const next = prev.map((m) => (m.id === messageId ? { ...m, reactions: [...m.reactions, ...removedReactions] } : m));
           messagesRef.current = next;
@@ -78,7 +204,7 @@ export function useGameChatReactions({ id, user, setMessages, messagesRef, setUs
         });
       }
     },
-    [user?.id, setMessages, messagesRef]
+    [user?.id, id, contextType, setMessages, messagesRef]
   );
 
   const handlePollUpdated = useCallback(
@@ -94,18 +220,55 @@ export function useGameChatReactions({ id, user, setMessages, messagesRef, setUs
 
   const handleDeleteMessage = useCallback(
     async (messageId: string) => {
-      try {
+      if (isQueuedSendMessageId(messageId)) {
         setMessages((prevMessages) => {
           const newMessages = prevMessages.filter((m) => m.id !== messageId);
           messagesRef.current = newMessages;
           return newMessages;
         });
+        return;
+      }
+      const removedSnapshot = messagesRef.current.find((m) => m.id === messageId);
+      const restoreRemoved = () => {
+        if (!removedSnapshot) return;
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === messageId)) return prev;
+          const next = [...prev, removedSnapshot as ChatMessageWithStatus].sort(compareChatMessagesAscending);
+          messagesRef.current = next;
+          return next;
+        });
+      };
+      setMessages((prevMessages) => {
+        const newMessages = prevMessages.filter((m) => m.id !== messageId);
+        messagesRef.current = newMessages;
+        return newMessages;
+      });
+      if (shouldQueueChatMutation() && id) {
+        try {
+          await enqueueChatMutationDelete({ contextType, contextId: id, messageId });
+        } catch (e) {
+          console.error('enqueue delete', e);
+          restoreRemoved();
+        }
+        return;
+      }
+      try {
         await chatApi.deleteMessage(messageId);
       } catch (error) {
         console.error('Failed to delete message:', error);
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        if (status === 404) return;
+        if (id && isRetryableMutationError(error)) {
+          try {
+            await enqueueChatMutationDelete({ contextType, contextId: id, messageId });
+          } catch (e) {
+            console.error('enqueue delete', e);
+            restoreRemoved();
+          }
+        }
       }
     },
-    [setMessages, messagesRef]
+    [id, contextType, setMessages, messagesRef]
   );
 
   const handleReplyMessage = useCallback((message: ChatMessage) => setReplyTo(message), []);
@@ -115,6 +278,7 @@ export function useGameChatReactions({ id, user, setMessages, messagesRef, setUs
 
   const handleMessageUpdated = useCallback(
     (updated: ChatMessage) => {
+      void putLocalMessage(updated);
       setMessages((prev) => {
         const idx = prev.findIndex((m) => m.id === updated.id);
         if (idx < 0) return prev;

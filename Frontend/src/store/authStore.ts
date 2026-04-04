@@ -98,6 +98,11 @@ export const useAuthStore = create<AuthState>((set) => {
         const langCode = extractLanguageCode(userToSet.language);
         i18n.changeLanguage(langCode);
       }
+
+      void import('@/services/chat/chatSyncBatchWarm').then((m) => {
+        m.resetChatSyncWarmSession();
+        void m.ensureChatSyncWarmBootstrap();
+      });
     },
     setToken: (token) => {
       try {
@@ -114,6 +119,21 @@ export const useAuthStore = create<AuthState>((set) => {
         await pushApi.removeAllTokens();
       } catch {
         // ignore so logout always completes
+      }
+      try {
+        const { clearChatLocalStores } = await import('@/services/chat/chatThreadIndex');
+        const { clearChatSyncScheduler } = await import('@/services/chat/chatSyncScheduler');
+        const { clearChatSyncWarmDrainQueue, resetChatSyncWarmSession } = await import(
+          '@/services/chat/chatSyncBatchWarm'
+        );
+        resetChatSyncWarmSession();
+        await clearChatLocalStores();
+        clearChatSyncScheduler();
+        clearChatSyncWarmDrainQueue();
+        const { useChatSyncStore } = await import('@/store/chatSyncStore');
+        useChatSyncStore.getState().resetChatListDexieBump();
+      } catch {
+        /* ignore */
       }
       try {
         localStorage.removeItem('user');

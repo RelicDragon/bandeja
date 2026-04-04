@@ -21,6 +21,7 @@ export class UnreadCountBatchService {
         SELECT m."contextId", COUNT(*)::bigint as cnt
         FROM "ChatMessage" m
         WHERE m."chatContextType"::text = ${chatContextType}
+          AND m."deletedAt" IS NULL
           AND m."senderId" IS NOT NULL AND m."senderId" != ${userId}
           AND m."contextId" IN (${Prisma.join(batch)})
           AND NOT EXISTS (
@@ -53,6 +54,7 @@ export class UnreadCountBatchService {
         SELECT m."contextId" as context_id, m."chatType"::text as chat_type, COUNT(*)::bigint as cnt
         FROM "ChatMessage" m
         WHERE m."chatContextType" = 'GAME'
+          AND m."deletedAt" IS NULL
           AND m."senderId" IS NOT NULL AND m."senderId" != ${userId}
           AND m."contextId" IN (${Prisma.join(batch)})
           AND NOT EXISTS (
@@ -77,6 +79,7 @@ export class UnreadCountBatchService {
         chatContextType: 'GAME',
         contextId: gameId,
         chatType: { in: chatTypeFilter },
+        deletedAt: null,
         senderId: { not: userId },
         readReceipts: { none: { userId } },
       },

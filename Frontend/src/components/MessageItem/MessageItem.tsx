@@ -99,12 +99,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
   useEffect(() => {
     if (!showFailedMenu) return;
-    const onDocClick = (e: MouseEvent) => {
+    const close = (e: PointerEvent) => {
       if (messageRef.current?.contains(e.target as Node)) return;
       setShowFailedMenu(false);
     };
-    document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
   }, [showFailedMenu]);
 
   useEffect(() => {

@@ -23,17 +23,23 @@ import { PollService } from '../services/chat/poll.service';
 import { MessageSearchService } from '../services/chat/messageSearch.service';
 import { PinnedMessageService } from '../services/chat/pinnedMessage.service';
 import prisma from '../config/database';
+import { ChatSyncEventService } from '../services/chat/chatSyncEvent.service';
+import { ChatMutationIdempotencyService } from '../services/chat/chatMutationIdempotency.service';
+import { hashChatMutationPayload } from '../utils/chatClientMutationId';
 
 export const createSystemMessage = async (contextId: string, messageData: { type: SystemMessageType; variables: Record<string, string> }, chatType: ChatType = ChatType.PUBLIC, chatContextType: ChatContextType = ChatContextType.GAME) => {
   const message = await SystemMessageService.createSystemMessage(contextId, messageData, chatType, chatContextType);
 
   const socketService = (global as any).socketService;
   if (socketService) {
+    const syncSeq = (message as { syncSeq?: number }).syncSeq;
     socketService.emitChatEvent(
       chatContextType,
       contextId,
       'message',
-      { message }
+      { message },
+      message.id,
+      syncSeq
     );
   }
 
@@ -59,6 +65,7 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     messageType: rawMessageType,
     audioDurationMs: rawAudioDurationMs,
     waveformData: rawWaveformData,
+    clientMutationId: rawClientMutationId,
   } = req.body;
   const senderId = req.userId;
 
@@ -118,6 +125,9 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
       mentionIdsCount: Array.isArray(mentionIds) ? mentionIds.length : 0
     });
 
+    const clientMutationId =
+      typeof rawClientMutationId === 'string' ? rawClientMutationId.trim() : undefined;
+
     const message = await MessageService.createMessageWithEvent({
       chatContextType: chatContextType as ChatContextType,
       contextId,
@@ -131,11 +141,15 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
       messageType,
       audioDurationMs: audioDurationMs !== undefined && !Number.isNaN(audioDurationMs) ? audioDurationMs : undefined,
       waveformData,
+      clientMutationId: clientMutationId || undefined,
     });
 
     console.log('[createMessage] Message created successfully:', message.id);
 
-    res.status(201).json({
+    const deduped = !!(message as { _deduped?: boolean })._deduped;
+    delete (message as { _deduped?: boolean })._deduped;
+
+    res.status(deduped ? 200 : 201).json({
       success: true,
       data: message
     });
@@ -165,48 +179,39 @@ export const votePoll = asyncHandler(async (req: AuthRequest, res: Response) => 
     throw new ApiError(400, 'Option IDs must be an array');
   }
 
-  const updatedPoll = await PollService.vote(pollId, userId, optionIds);
+  const { poll: updatedPoll, syncSeq } = await PollService.vote(pollId, userId, optionIds);
+  if (!updatedPoll) {
+    throw new ApiError(500, 'Poll vote failed');
+  }
 
   const socketService = (global as any).socketService;
   if (socketService) {
-    // We need to notify about the vote update.
-    // Ideally we should emit 'message-updated' or specific 'poll-updated' event.
-    // 'message-updated' is usually for edits.
-    // Let's check `updatedPoll.message`. We need to include message to know context.
-
-    // PollService.vote calls finds unique with message include.
-    // But updatedPoll return value might not have context info if we just return poll.
-    // Let's fetch context info or ensure PollService returns it.
-
-    // Actually PollService.vote query:
-    // const updatedPoll = await prisma.poll.findUnique({ ... include: { options: ..., votes: ... } });
-    // It does NOT include message context.
-
-    // Let's fetch the message context separately or update PollService to return it.
     const message = await prisma.chatMessage.findUnique({
-      where: { id: updatedPoll!.messageId },
+      where: { id: updatedPoll.messageId },
       select: { chatContextType: true, contextId: true }
     });
 
     if (message) {
-      const sanitized = updatedPoll!.isAnonymous
-        ? { ...updatedPoll, options: updatedPoll!.options.map(o => ({ ...o, votes: o.votes.map(v => ({ ...v, user: undefined })) })), votes: updatedPoll!.votes.map(v => ({ ...v, user: undefined })) }
+      const sanitized = updatedPoll.isAnonymous
+        ? { ...updatedPoll, options: updatedPoll.options.map(o => ({ ...o, votes: o.votes.map(v => ({ ...v, user: undefined })) })), votes: updatedPoll.votes.map(v => ({ ...v, user: undefined })) }
         : updatedPoll;
       socketService.emitChatEvent(
         message.chatContextType,
         message.contextId,
         'poll-vote',
         {
-          pollId: updatedPoll!.id,
-          messageId: updatedPoll!.messageId,
+          pollId: updatedPoll.id,
+          messageId: updatedPoll.messageId,
           updatedPoll: sanitized
-        }
+        },
+        updatedPoll.messageId,
+        syncSeq
       );
     }
   }
 
-  const responsePoll = updatedPoll!.isAnonymous
-    ? { ...updatedPoll, options: updatedPoll!.options.map(o => ({ ...o, votes: o.votes.map(v => ({ ...v, user: undefined })) })), votes: updatedPoll!.votes.map(v => ({ ...v, user: undefined })) }
+  const responsePoll = updatedPoll.isAnonymous
+    ? { ...updatedPoll, options: updatedPoll.options.map(o => ({ ...o, votes: o.votes.map(v => ({ ...v, user: undefined })) })), votes: updatedPoll.votes.map(v => ({ ...v, user: undefined })) }
     : updatedPoll;
   res.json({
     success: true,
@@ -234,6 +239,38 @@ export const getGameMessages = asyncHandler(async (req: AuthRequest, res: Respon
     success: true,
     data: messages
   });
+});
+
+export const getBugMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { bugId } = req.params;
+  const userId = req.userId;
+  const { page = 1, limit = 50, beforeMessageId } = req.query;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const messages = await MessageService.getMessages('BUG', bugId, userId, {
+    page: Number(page),
+    limit: Number(limit),
+    chatType: ChatType.PUBLIC,
+    ...(typeof beforeMessageId === 'string' && beforeMessageId ? { beforeMessageId } : {})
+  });
+
+  res.json({
+    success: true,
+    data: messages
+  });
+});
+
+export const getChatMessageById = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { messageId } = req.params;
+  const userId = req.userId;
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+  const message = await MessageService.getMessageById(messageId, userId);
+  res.json({ success: true, data: message });
 });
 
 export const getPinnedMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -265,65 +302,118 @@ export const getPinnedMessages = asyncHandler(async (req: AuthRequest, res: Resp
 
 export const pinMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { messageId } = req.params;
+  const { clientMutationId: rawCid } = req.body ?? {};
   const userId = req.userId;
 
   if (!userId) {
     throw new ApiError(401, 'Unauthorized');
   }
 
-  await PinnedMessageService.pinMessage(messageId, userId);
+  const idem = await ChatMutationIdempotencyService.begin(userId, rawCid, 'pin', messageId, null);
+  if (idem.outcome === 'cached') {
+    res.json(idem.body);
+    return;
+  }
+  if (idem.outcome === 'conflict') {
+    throw new ApiError(409, 'This change is already being processed. Try again in a moment.');
+  }
+  const leaseCid = idem.outcome === 'lease' ? idem.cid : null;
 
-  res.json({
-    success: true,
-    data: { pinned: true }
-  });
+  try {
+    await PinnedMessageService.pinMessage(messageId, userId);
+    const body = { success: true, data: { pinned: true } };
+    if (leaseCid) await ChatMutationIdempotencyService.complete(userId, leaseCid, body);
+    res.json(body);
+  } catch (e) {
+    if (leaseCid) await ChatMutationIdempotencyService.abort(userId, leaseCid);
+    throw e;
+  }
 });
 
 export const unpinMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { messageId } = req.params;
+  const rawCid = (req.query.clientMutationId as string | undefined) ?? (req.body as { clientMutationId?: string } | undefined)?.clientMutationId;
   const userId = req.userId;
 
   if (!userId) {
     throw new ApiError(401, 'Unauthorized');
   }
 
-  await PinnedMessageService.unpinMessage(messageId, userId);
+  const idem = await ChatMutationIdempotencyService.begin(userId, rawCid, 'unpin', messageId, null);
+  if (idem.outcome === 'cached') {
+    res.json(idem.body);
+    return;
+  }
+  if (idem.outcome === 'conflict') {
+    throw new ApiError(409, 'This change is already being processed. Try again in a moment.');
+  }
+  const leaseCid = idem.outcome === 'lease' ? idem.cid : null;
 
-  res.json({
-    success: true,
-    data: { pinned: false }
-  });
+  try {
+    await PinnedMessageService.unpinMessage(messageId, userId);
+    const body = { success: true, data: { pinned: false } };
+    if (leaseCid) await ChatMutationIdempotencyService.complete(userId, leaseCid, body);
+    res.json(body);
+  } catch (e) {
+    if (leaseCid) await ChatMutationIdempotencyService.abort(userId, leaseCid);
+    throw e;
+  }
 });
 
 export const updateMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { messageId } = req.params;
-  const { content, mentionIds } = req.body;
+  const { content, mentionIds, clientMutationId: rawCid } = req.body;
   const userId = req.userId;
 
   if (!userId) {
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const updatedMessage = await MessageService.updateMessageContent(messageId, userId, {
-    content: content ?? '',
-    mentionIds
+  const payloadHash = hashChatMutationPayload({
+    content: (content ?? '').trim(),
+    mentionIds: Array.isArray(mentionIds) ? [...mentionIds].sort() : [],
   });
-
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    socketService.emitChatEvent(
-      updatedMessage.chatContextType,
-      updatedMessage.contextId,
-      'message-updated',
-      { message: updatedMessage },
-      updatedMessage.id
-    );
+  const idem = await ChatMutationIdempotencyService.begin(userId, rawCid, 'edit', messageId, payloadHash);
+  if (idem.outcome === 'cached') {
+    res.json(idem.body);
+    return;
+  }
+  if (idem.outcome === 'conflict') {
+    throw new ApiError(409, 'This change is already being processed. Try again in a moment.');
   }
 
-  res.json({
-    success: true,
-    data: updatedMessage
-  });
+  const leaseCid = idem.outcome === 'lease' ? idem.cid : null;
+
+  try {
+    const updatedMessage = await MessageService.updateMessageContent(messageId, userId, {
+      content: content ?? '',
+      mentionIds
+    });
+
+    const body = { success: true, data: updatedMessage };
+    if (leaseCid) {
+      await ChatMutationIdempotencyService.complete(userId, leaseCid, body);
+    }
+
+    const socketService = (global as any).socketService;
+    if (socketService) {
+      socketService.emitChatEvent(
+        updatedMessage.chatContextType,
+        updatedMessage.contextId,
+        'message-updated',
+        { message: updatedMessage },
+        updatedMessage.id,
+        (updatedMessage as { syncSeq?: number }).syncSeq
+      );
+    }
+
+    res.json(body);
+  } catch (e) {
+    if (leaseCid) {
+      await ChatMutationIdempotencyService.abort(userId, leaseCid);
+    }
+    throw e;
+  }
 });
 
 export const updateMessageState = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -336,6 +426,19 @@ export const updateMessageState = asyncHandler(async (req: AuthRequest, res: Res
   }
 
   const updatedMessage = await MessageService.updateMessageState(messageId, userId, state);
+  const syncSeq = (updatedMessage as { syncSeq?: number }).syncSeq;
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    socketService.emitChatEvent(
+      updatedMessage.chatContextType,
+      updatedMessage.contextId,
+      'message-updated',
+      { message: updatedMessage },
+      messageId,
+      syncSeq
+    );
+  }
 
   res.json({
     success: true,
@@ -351,23 +454,24 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const readReceipt = await ReadReceiptService.markMessageAsRead(messageId, userId);
+  const marked = await ReadReceiptService.markMessageAsRead(messageId, userId);
+  const { syncSeq, ...readReceipt } = marked;
 
   const socketService = (global as any).socketService;
   if (socketService) {
-    // Get the context from the message to emit to the correct room
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId },
       select: { chatContextType: true, contextId: true }
     });
 
     if (message) {
-      // NEW unified event
       socketService.emitChatEvent(
         message.chatContextType,
         message.contextId,
         'read-receipt',
-        { readReceipt }
+        { readReceipt },
+        messageId,
+        syncSeq
       );
 
       // Emit unread count update
@@ -390,69 +494,105 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
 
 export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { messageId } = req.params;
-  const { emoji } = req.body;
+  const { emoji, clientMutationId: rawCid } = req.body;
   const userId = req.userId;
 
   if (!userId) {
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const reaction = await ReactionService.addReaction(messageId, userId, emoji);
-
-  const socketService = (global as any).socketService;
-  if (socketService && reaction) {
-    // Get the context from the message to emit to the correct room
-    const message = await prisma.chatMessage.findUnique({
-      where: { id: messageId },
-      select: { chatContextType: true, contextId: true }
-    });
-
-    if (message) {
-      socketService.emitChatEvent(
-        message.chatContextType,
-        message.contextId,
-        'reaction',
-        { reaction }
-      );
-    }
+  const payloadHash = hashChatMutationPayload({ emoji: String(emoji ?? '') });
+  const idem = await ChatMutationIdempotencyService.begin(userId, rawCid, 'reaction_add', messageId, payloadHash);
+  if (idem.outcome === 'cached') {
+    res.json(idem.body);
+    return;
   }
+  if (idem.outcome === 'conflict') {
+    throw new ApiError(409, 'This change is already being processed. Try again in a moment.');
+  }
+  const leaseCid = idem.outcome === 'lease' ? idem.cid : null;
 
-  res.json({
-    success: true,
-    data: reaction
-  });
+  try {
+    const { reaction, syncSeq } = await ReactionService.addReaction(messageId, userId, emoji);
+
+    const body = { success: true, data: reaction };
+    if (leaseCid) await ChatMutationIdempotencyService.complete(userId, leaseCid, body);
+
+    const socketService = (global as any).socketService;
+    if (socketService && reaction) {
+      const message = await prisma.chatMessage.findUnique({
+        where: { id: messageId },
+        select: { chatContextType: true, contextId: true }
+      });
+
+      if (message) {
+        socketService.emitChatEvent(
+          message.chatContextType,
+          message.contextId,
+          'reaction',
+          { reaction },
+          messageId,
+          syncSeq
+        );
+      }
+    }
+
+    res.json(body);
+  } catch (e) {
+    if (leaseCid) await ChatMutationIdempotencyService.abort(userId, leaseCid);
+    throw e;
+  }
 });
 
 export const removeReaction = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { messageId } = req.params;
+  const rawCid = req.query.clientMutationId as string | undefined;
   const userId = req.userId;
 
   if (!userId) {
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const result = await ReactionService.removeReaction(messageId, userId);
-
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    // Get the context from the message to emit to the correct room
-    const message = await prisma.chatMessage.findUnique({
-      where: { id: messageId },
-      select: { chatContextType: true, contextId: true }
-    });
-
-    if (message) {
-      // NEW unified event
-      socketService.emitChatEvent(
-        message.chatContextType,
-        message.contextId,
-        'reaction',
-        { reaction: result }
-      );
-    }
+  const idem = await ChatMutationIdempotencyService.begin(userId, rawCid, 'reaction_remove', messageId, null);
+  if (idem.outcome === 'cached') {
+    res.json(idem.body);
+    return;
   }
+  if (idem.outcome === 'conflict') {
+    throw new ApiError(409, 'This change is already being processed. Try again in a moment.');
+  }
+  const leaseCid = idem.outcome === 'lease' ? idem.cid : null;
 
-  res.json({ success: true });
+  try {
+    const result = await ReactionService.removeReaction(messageId, userId);
+
+    const body = { success: true };
+    if (leaseCid) await ChatMutationIdempotencyService.complete(userId, leaseCid, body);
+
+    const socketService = (global as any).socketService;
+    if (socketService) {
+      const message = await prisma.chatMessage.findUnique({
+        where: { id: messageId },
+        select: { chatContextType: true, contextId: true }
+      });
+
+      if (message) {
+        socketService.emitChatEvent(
+          message.chatContextType,
+          message.contextId,
+          'reaction',
+          { reaction: result },
+          messageId,
+          result.syncSeq
+        );
+      }
+    }
+
+    res.json(body);
+  } catch (e) {
+    if (leaseCid) await ChatMutationIdempotencyService.abort(userId, leaseCid);
+    throw e;
+  }
 });
 
 export const getUserChatGames = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -578,7 +718,16 @@ export const markAllMessagesAsRead = asyncHandler(async (req: AuthRequest, res: 
 
   const socketService = (global as any).socketService;
   if (socketService) {
-    socketService.emitReadReceipt(gameId, { userId, readAt: new Date() });
+    if (result.count > 0 && result.syncSeq != null) {
+      socketService.emitChatEvent(
+        'GAME',
+        gameId,
+        'read-receipt',
+        { readReceipt: { userId, readAt: new Date().toISOString(), allRead: true } },
+        undefined,
+        result.syncSeq
+      );
+    }
 
     // Emit unread count update
     const unreadCount = await ReadReceiptService.getUnreadCountForContext(
@@ -602,26 +751,46 @@ export const markAllMessagesAsRead = asyncHandler(async (req: AuthRequest, res: 
 
 export const deleteMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { messageId } = req.params;
+  const rawCid = req.query.clientMutationId as string | undefined;
   const userId = req.userId;
 
   if (!userId) {
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const message = await MessageService.deleteMessage(messageId, userId);
-
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    // NEW unified event
-    socketService.emitChatEvent(
-      message.chatContextType,
-      message.contextId,
-      'deleted',
-      { messageId }
-    );
+  const idem = await ChatMutationIdempotencyService.begin(userId, rawCid, 'delete', messageId, null);
+  if (idem.outcome === 'cached') {
+    res.json(idem.body);
+    return;
   }
+  if (idem.outcome === 'conflict') {
+    throw new ApiError(409, 'This change is already being processed. Try again in a moment.');
+  }
+  const leaseCid = idem.outcome === 'lease' ? idem.cid : null;
 
-  res.json({ success: true });
+  try {
+    const message = await MessageService.deleteMessage(messageId, userId);
+
+    const body = { success: true };
+    if (leaseCid) await ChatMutationIdempotencyService.complete(userId, leaseCid, body);
+
+    const socketService = (global as any).socketService;
+    if (socketService) {
+      socketService.emitChatEvent(
+        message.chatContextType,
+        message.contextId,
+        'deleted',
+        { messageId: message.id },
+        message.id,
+        (message as { syncSeq?: number }).syncSeq
+      );
+    }
+
+    res.json(body);
+  } catch (e) {
+    if (leaseCid) await ChatMutationIdempotencyService.abort(userId, leaseCid);
+    throw e;
+  }
 });
 
 // User Chat Controllers
@@ -726,6 +895,16 @@ export const markUserChatAsRead = asyncHandler(async (req: AuthRequest, res: Res
 
   const socketService = (global as any).socketService;
   if (socketService) {
+    if (result.count > 0 && result.syncSeq != null) {
+      socketService.emitChatEvent(
+        'USER',
+        chatId,
+        'read-receipt',
+        { readReceipt: { userId, readAt: new Date().toISOString(), allRead: true } },
+        undefined,
+        result.syncSeq
+      );
+    }
     // Emit unread count update
     const unreadCount = await ReadReceiptService.getUnreadCountForContext(
       'USER',
@@ -973,7 +1152,8 @@ export const transcribeMessage = asyncHandler(async (req: AuthRequest, res: Resp
         message.chatContextType,
         message.contextId,
         messageId,
-        data
+        { transcription: data.transcription, languageCode: data.languageCode },
+        data.syncSeq
       );
     }
 
@@ -1151,8 +1331,47 @@ export const confirmMessageReceipt = asyncHandler(async (req: AuthRequest, res: 
   res.json({ success: true });
 });
 
+export const confirmMessageReceiptBatch = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { messageIds, deliveryMethod } = req.body as { messageIds?: unknown; deliveryMethod?: string };
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!Array.isArray(messageIds) || messageIds.length === 0) {
+    throw new ApiError(400, 'messageIds must be a non-empty array');
+  }
+
+  if (messageIds.length > 200) {
+    throw new ApiError(400, 'messageIds must contain at most 200 items');
+  }
+
+  if (deliveryMethod !== 'socket' && deliveryMethod !== 'push') {
+    throw new ApiError(400, 'deliveryMethod must be socket or push');
+  }
+
+  const ids = messageIds.filter((id): id is string => typeof id === 'string' && id.length > 0);
+  if (ids.length === 0) {
+    throw new ApiError(400, 'messageIds must contain valid string ids');
+  }
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    for (const messageId of ids) {
+      if (deliveryMethod === 'socket') {
+        socketService.markSocketDelivered(messageId, userId);
+      } else {
+        socketService.markPushDelivered(messageId, userId);
+      }
+    }
+  }
+
+  res.json({ success: true, data: { processed: ids.length } });
+});
+
 export const getMissedMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { contextType, contextId, lastMessageId } = req.query;
+  const { contextType, contextId, lastMessageId, chatType } = req.query;
   const userId = req.userId;
 
   if (!userId) {
@@ -1168,17 +1387,113 @@ export const getMissedMessages = asyncHandler(async (req: AuthRequest, res: Resp
     throw new ApiError(400, 'Invalid contextType');
   }
 
+  const ct = contextType as ChatContextType;
+  const gameChatType =
+    ct === 'GAME' && typeof chatType === 'string' ? (chatType as ChatType) : null;
+
   const messages = await MessageService.getMissedMessages(
-    contextType as ChatContextType,
+    ct,
     contextId as string,
     userId,
-    (lastMessageId as string) || undefined
+    (lastMessageId as string) || undefined,
+    gameChatType
   );
 
   res.json({
     success: true,
     data: messages
   });
+});
+
+async function assertChatSyncAccess(contextType: ChatContextType, contextId: string, userId: string) {
+  if (contextType === 'GAME') {
+    await MessageService.validateGameAccess(contextId, userId);
+  } else if (contextType === 'BUG') {
+    await MessageService.validateBugAccess(contextId, userId);
+  } else if (contextType === 'USER') {
+    await MessageService.validateUserChatAccess(contextId, userId);
+  } else {
+    await MessageService.validateGroupChannelAccess(contextId, userId);
+  }
+}
+
+export const getChatSyncHead = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+  const { contextType, contextId } = req.query;
+  if (!userId) throw new ApiError(401, 'Unauthorized');
+  if (!contextType || !contextId || typeof contextType !== 'string' || typeof contextId !== 'string') {
+    throw new ApiError(400, 'contextType and contextId are required');
+  }
+  const ct = contextType as ChatContextType;
+  if (!['GAME', 'BUG', 'USER', 'GROUP'].includes(contextType)) {
+    throw new ApiError(400, 'Invalid contextType');
+  }
+  await assertChatSyncAccess(ct, contextId, userId);
+  const maxSeq = await ChatSyncEventService.getHeadSeq(ct, contextId);
+  res.json({ success: true, data: { maxSeq } });
+});
+
+/**
+ * Event log page after `afterSeq`. When retention prunes old rows, `cursorStale` is true if the client
+ * cursor sits before a gap (`afterSeq < oldestRetainedSeq - 1` with `afterSeq > 0`). Client should reset
+ * cursor, reload the visible message window, and re-pull. `oldestRetainedSeq` is null if no rows exist.
+ */
+export const getChatSyncEvents = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+  const { contextType, contextId, afterSeq, limit } = req.query;
+  if (!userId) throw new ApiError(401, 'Unauthorized');
+  if (!contextType || !contextId || typeof contextType !== 'string' || typeof contextId !== 'string') {
+    throw new ApiError(400, 'contextType and contextId are required');
+  }
+  const ct = contextType as ChatContextType;
+  if (!['GAME', 'BUG', 'USER', 'GROUP'].includes(contextType)) {
+    throw new ApiError(400, 'Invalid contextType');
+  }
+  await assertChatSyncAccess(ct, contextId, userId);
+  const after = Math.max(0, Number(afterSeq ?? 0) || 0);
+  const lim = Math.min(500, Math.max(1, Number(limit ?? 200) || 200));
+  const oldestRetainedSeq = await ChatSyncEventService.getOldestRetainedSeq(ct, contextId);
+  const cursorStale =
+    after > 0 && oldestRetainedSeq != null && after < oldestRetainedSeq - 1;
+  const events = await ChatSyncEventService.getEventsAfter(ct, contextId, after, lim);
+  res.json({
+    success: true,
+    data: {
+      events,
+      hasMore: events.length === lim,
+      oldestRetainedSeq,
+      cursorStale,
+    },
+  });
+});
+
+const SYNC_BATCH_HEAD_MAX = 120;
+
+export const postChatSyncBatchHead = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+  if (!userId) throw new ApiError(401, 'Unauthorized');
+  const items = req.body?.items;
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new ApiError(400, 'items must be a non-empty array');
+  }
+  if (items.length > SYNC_BATCH_HEAD_MAX) {
+    throw new ApiError(400, `items must contain at most ${SYNC_BATCH_HEAD_MAX} entries`);
+  }
+  const normalized: Array<{ contextType: ChatContextType; contextId: string }> = [];
+  for (const raw of items) {
+    if (!raw || typeof raw.contextType !== 'string' || typeof raw.contextId !== 'string') {
+      throw new ApiError(400, 'Each item needs contextType and contextId');
+    }
+    if (!['GAME', 'BUG', 'USER', 'GROUP'].includes(raw.contextType)) {
+      throw new ApiError(400, 'Invalid contextType in items');
+    }
+    normalized.push({ contextType: raw.contextType as ChatContextType, contextId: raw.contextId });
+  }
+  for (const it of normalized) {
+    await assertChatSyncAccess(it.contextType, it.contextId, userId);
+  }
+  const heads = await ChatSyncEventService.getHeadsForContexts(normalized);
+  res.json({ success: true, data: heads });
 });
 
 export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -1207,12 +1522,19 @@ export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequ
 
   const socketService = (global as any).socketService;
   if (socketService) {
-    // Emit read receipt event
     socketService.emitChatEvent(
       contextType as ChatContextType,
       contextId,
       'read-receipt',
-      { readReceipt: { userId, readAt: new Date() } }
+      {
+        readReceipt: {
+          userId,
+          readAt: new Date().toISOString(),
+          allRead: result.count > 0,
+        },
+      },
+      undefined,
+      result.syncSeq
     );
 
     // Emit unread count update

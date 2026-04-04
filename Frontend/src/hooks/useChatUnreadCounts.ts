@@ -1,9 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { chatApi, GroupChannel } from '@/api/chat';
-import { Game } from '@/types';
+import { useState, useEffect, useCallback, useRef, type Dispatch, type SetStateAction } from 'react';
+import { chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { chatItemsFromUnreadGames, persistThreadIndexReplace } from '@/services/chat/chatThreadIndex';
+import { scheduleWarmFromUnreadApiPayload } from '@/services/chat/chatSyncBatchWarm';
+import type { UnreadObjectsApiPayload } from '@/services/chat/chatUnreadPayload';
+import { unreadCategoryTotalsFromPayload } from '@/services/chat/chatUnreadPayload';
 
 interface ChatUnreadCounts {
   users: number;
@@ -13,18 +16,34 @@ interface ChatUnreadCounts {
   marketplace: number;
 }
 
-interface UnreadObjectsResponse {
-  games: Array<{ game: Game; unreadCount: number }>;
-  bugs: Array<{ bug: unknown; unreadCount: number }>;
-  userChats: Array<{ chat: unknown; unreadCount: number }>;
-  groupChannels: Array<{ groupChannel: GroupChannel; unreadCount: number }>;
-  marketItems: Array<{ marketItem: unknown; groupChannelId: string; unreadCount: number }>;
-}
-
-const unreadObjectsCache = new Map<string, { data: UnreadObjectsResponse; timestamp: number }>();
-const unreadObjectsLoading = new Map<string, Promise<{ data: UnreadObjectsResponse }>>();
+const unreadObjectsCache = new Map<string, { data: UnreadObjectsApiPayload; timestamp: number }>();
+const unreadObjectsLoading = new Map<string, Promise<{ data: UnreadObjectsApiPayload }>>();
 const UNREAD_CACHE_TTL = 2000;
 const DEBOUNCE_DELAY = 300;
+const INVALIDATION_DEBOUNCE_MS = 550;
+
+let unreadObjectsInvalidationEpoch = 0;
+
+function persistGamesThreadIndex(data: UnreadObjectsApiPayload): void {
+  void persistThreadIndexReplace('games', chatItemsFromUnreadGames(data.games), { pruneRemoved: true });
+}
+
+function applyUnreadPayloadToState(
+  data: UnreadObjectsApiPayload,
+  userChatsUnreadCounts: Record<string, number>,
+  setCounts: Dispatch<SetStateAction<ChatUnreadCounts>>
+): void {
+  const t = unreadCategoryTotalsFromPayload(data);
+  setCounts({
+    users: Object.values(userChatsUnreadCounts).reduce((sum: number, count: number) => sum + count, 0),
+    games: t.games,
+    bugs: t.bugs,
+    channels: t.channels,
+    marketplace: t.marketplace,
+  });
+  persistGamesThreadIndex(data);
+  scheduleWarmFromUnreadApiPayload(data);
+}
 
 export const useChatUnreadCounts = () => {
   const { user } = useAuthStore();
@@ -41,28 +60,29 @@ export const useChatUnreadCounts = () => {
   });
   const [loading, setLoading] = useState(false);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const invalidationDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchUnreadCounts = useCallback(async () => {
     if (!user?.id) return;
 
     const cacheKey = `unread-objects-${user.id}`;
+    const fetchEpoch = unreadObjectsInvalidationEpoch;
+    const applyIfCurrent = (data: UnreadObjectsApiPayload) => {
+      if (fetchEpoch !== unreadObjectsInvalidationEpoch) {
+        queueMicrotask(() => {
+          void fetchUnreadCounts();
+        });
+        return;
+      }
+      const liveUserCounts = usePlayersStore.getState().unreadCounts;
+      applyUnreadPayloadToState(data, liveUserCounts, setCounts);
+    };
+
     const cached = unreadObjectsCache.get(cacheKey);
     const now = Date.now();
 
     if (cached && (now - cached.timestamp) < UNREAD_CACHE_TTL) {
-      const data = cached.data;
-      const gamesTotal = data.games.reduce((sum: number, item) => sum + item.unreadCount, 0);
-      const bugsTotal = data.bugs.reduce((sum: number, item) => sum + item.unreadCount, 0);
-      const channelsTotal = (data.groupChannels || []).reduce((sum: number, item) => sum + item.unreadCount, 0);
-      const marketplaceTotal = (data.marketItems || []).reduce((sum: number, item) => sum + item.unreadCount, 0);
-
-      setCounts({
-        users: Object.values(userChatsUnreadCounts).reduce((sum: number, count: number) => sum + count, 0),
-        games: gamesTotal,
-        bugs: bugsTotal,
-        channels: channelsTotal,
-        marketplace: marketplaceTotal,
-      });
+      applyIfCurrent(cached.data);
       return;
     }
 
@@ -70,19 +90,7 @@ export const useChatUnreadCounts = () => {
     if (existingPromise) {
       try {
         const response = await existingPromise;
-        const data = response.data;
-        const gamesTotal = data.games.reduce((sum: number, item) => sum + item.unreadCount, 0);
-        const bugsTotal = data.bugs.reduce((sum: number, item) => sum + item.unreadCount, 0);
-        const channelsTotal = (data.groupChannels || []).reduce((sum: number, item) => sum + item.unreadCount, 0);
-        const marketplaceTotal = (data.marketItems || []).reduce((sum: number, item) => sum + item.unreadCount, 0);
-
-        setCounts({
-          users: Object.values(userChatsUnreadCounts).reduce((sum: number, count: number) => sum + count, 0),
-          games: gamesTotal,
-          bugs: bugsTotal,
-          channels: channelsTotal,
-          marketplace: marketplaceTotal,
-        });
+        applyIfCurrent(response.data);
       } catch (error) {
         console.error('Failed to fetch chat unread counts:', error);
       }
@@ -90,13 +98,14 @@ export const useChatUnreadCounts = () => {
     }
 
     setLoading(true);
-    const promise = chatApi.getUnreadObjects().then(response => {
-      unreadObjectsCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
+    const promise = chatApi.getUnreadObjects().then((response) => {
+      const data = response.data;
+      unreadObjectsCache.set(cacheKey, { data, timestamp: Date.now() });
       setTimeout(() => {
         unreadObjectsCache.delete(cacheKey);
         unreadObjectsLoading.delete(cacheKey);
       }, UNREAD_CACHE_TTL);
-      return response;
+      return { data };
     }).catch(error => {
       unreadObjectsLoading.delete(cacheKey);
       throw error;
@@ -106,26 +115,13 @@ export const useChatUnreadCounts = () => {
 
     try {
       const response = await promise;
-      const data = response.data;
-
-      const gamesTotal = data.games.reduce((sum: number, item) => sum + item.unreadCount, 0);
-      const bugsTotal = data.bugs.reduce((sum: number, item) => sum + item.unreadCount, 0);
-      const channelsTotal = (data.groupChannels || []).reduce((sum: number, item) => sum + item.unreadCount, 0);
-      const marketplaceTotal = (data.marketItems || []).reduce((sum: number, item) => sum + item.unreadCount, 0);
-
-      setCounts({
-        users: Object.values(userChatsUnreadCounts).reduce((sum: number, count: number) => sum + count, 0),
-        games: gamesTotal,
-        bugs: bugsTotal,
-        channels: channelsTotal,
-        marketplace: marketplaceTotal,
-      });
+      applyIfCurrent(response.data);
     } catch (error) {
       console.error('Failed to fetch chat unread counts:', error);
     } finally {
       setLoading(false);
     }
-  }, [user?.id, userChatsUnreadCounts]);
+  }, [user?.id]);
 
   const debouncedFetch = useCallback(() => {
     if (debounceTimeoutRef.current) {
@@ -145,18 +141,22 @@ export const useChatUnreadCounts = () => {
 
   useEffect(() => {
     const handleInvalidation = () => {
-      if (user?.id) {
-        const cacheKey = `unread-objects-${user.id}`;
-        unreadObjectsCache.delete(cacheKey);
-        unreadObjectsLoading.delete(cacheKey);
+      if (!user?.id) return;
+      unreadObjectsInvalidationEpoch += 1;
+      const cacheKey = `unread-objects-${user.id}`;
+      unreadObjectsCache.delete(cacheKey);
+      if (invalidationDebounceRef.current) clearTimeout(invalidationDebounceRef.current);
+      invalidationDebounceRef.current = setTimeout(() => {
+        invalidationDebounceRef.current = null;
         debouncedFetch();
-      }
+      }, INVALIDATION_DEBOUNCE_MS);
     };
 
     window.addEventListener('unread-count-invalidated', handleInvalidation);
 
     return () => {
       window.removeEventListener('unread-count-invalidated', handleInvalidation);
+      if (invalidationDebounceRef.current) clearTimeout(invalidationDebounceRef.current);
     };
   }, [user?.id, debouncedFetch]);
 
@@ -175,8 +175,8 @@ export const useChatUnreadCounts = () => {
   useEffect(() => {
     if (!lastChatUnreadCount) return;
     if (user?.id) {
+      unreadObjectsInvalidationEpoch += 1;
       unreadObjectsCache.delete(`unread-objects-${user.id}`);
-      unreadObjectsLoading.delete(`unread-objects-${user.id}`);
     }
     debouncedFetch();
   }, [lastChatUnreadCount, user?.id, debouncedFetch]);

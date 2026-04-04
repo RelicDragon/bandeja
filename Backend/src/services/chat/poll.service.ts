@@ -1,7 +1,8 @@
-import { Prisma } from '@prisma/client';
+import { ChatSyncEventType, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { ChatSyncEventService } from './chatSyncEvent.service';
 
 export class PollService {
     /**
@@ -15,6 +16,14 @@ export class PollService {
             });
 
             if (!poll) {
+                throw new ApiError(404, 'Poll not found');
+            }
+
+            const hostMessage = await tx.chatMessage.findUnique({
+                where: { id: poll.messageId },
+                select: { deletedAt: true },
+            });
+            if (!hostMessage || hostMessage.deletedAt) {
                 throw new ApiError(404, 'Poll not found');
             }
 
@@ -64,7 +73,7 @@ export class PollService {
                 });
             }
 
-            return await tx.poll.findUnique({
+            const updatedPoll = await tx.poll.findUnique({
                 where: { id: pollId },
                 include: {
                     options: {
@@ -86,6 +95,37 @@ export class PollService {
                     }
                 }
             });
+
+            const ctxMsg = await tx.chatMessage.findUnique({
+                where: { id: poll.messageId },
+                select: { chatContextType: true, contextId: true },
+            });
+            let syncSeq: number | undefined;
+            if (ctxMsg && updatedPoll) {
+                const sanitized = updatedPoll.isAnonymous
+                    ? {
+                        ...updatedPoll,
+                        options: updatedPoll.options.map((o) => ({
+                            ...o,
+                            votes: o.votes.map((v) => ({ ...v, user: undefined })),
+                        })),
+                        votes: updatedPoll.votes.map((v) => ({ ...v, user: undefined })),
+                    }
+                    : updatedPoll;
+                syncSeq = await ChatSyncEventService.appendEventInTransaction(
+                    tx,
+                    ctxMsg.chatContextType,
+                    ctxMsg.contextId,
+                    ChatSyncEventType.POLL_VOTED,
+                    {
+                        pollId: updatedPoll.id,
+                        messageId: updatedPoll.messageId,
+                        updatedPoll: sanitized,
+                    }
+                );
+            }
+
+            return { poll: updatedPoll, syncSeq };
         });
     }
 }

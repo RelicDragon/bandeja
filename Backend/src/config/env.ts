@@ -66,5 +66,7 @@ export const config = {
    * Env: CITY_GROUP_REFINED_SYSTEM_MESSAGES=true
    */
   cityGroupRefinedSystemMessages: process.env.CITY_GROUP_REFINED_SYSTEM_MESSAGES === 'true',
+  /** JSON lines to stderr for /api/chat/sync/* errors (log drain / external APM). */
+  chatSyncHttpErrorLog: process.env.CHAT_SYNC_HTTP_ERROR_LOG === 'true' || process.env.CHAT_SYNC_HTTP_ERROR_LOG === '1',
 };
 

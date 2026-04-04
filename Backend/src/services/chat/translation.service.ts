@@ -1,5 +1,7 @@
 import prisma from '../../config/database';
+import { ChatSyncEventType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
+import { ChatSyncEventService } from './chatSyncEvent.service';
 import { getAiService } from '../ai/ai.service';
 import { LLM_REASON } from '../ai/llmReasons';
 import { sourceAppearsToBeTargetLanguage, translationMatchesTargetFranc } from './translationFrancCheck';
@@ -230,14 +232,29 @@ export class TranslationService {
             normalizedLanguageCode,
             userId
           );
-          await prisma.messageTranslation.update({
-            where: {
-              messageId_languageCode: {
-                messageId,
-                languageCode: normalizedLanguageCode,
+          await prisma.$transaction(async (tx) => {
+            await tx.messageTranslation.update({
+              where: {
+                messageId_languageCode: {
+                  messageId,
+                  languageCode: normalizedLanguageCode,
+                },
               },
-            },
-            data: { translation },
+              data: { translation },
+            });
+            const msgCtx = await tx.chatMessage.findUnique({
+              where: { id: messageId },
+              select: { chatContextType: true, contextId: true },
+            });
+            if (msgCtx) {
+              await ChatSyncEventService.appendEventInTransaction(
+                tx,
+                msgCtx.chatContextType,
+                msgCtx.contextId,
+                ChatSyncEventType.MESSAGE_TRANSLATION_UPDATED,
+                { messageId, languageCode: normalizedLanguageCode, translation }
+              );
+            }
           });
           return {
             translation,

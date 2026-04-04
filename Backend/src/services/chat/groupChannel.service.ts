@@ -18,10 +18,10 @@ type GcWithParticipants = Awaited<ReturnType<typeof prisma.groupChannel.findMany
 
 async function emitPrivateGroupUserJoinedSystemMessage(
   groupChannelId: string,
-  isChannel: boolean,
+  meta: { isChannel: boolean; isCityGroup: boolean },
   userId: string
 ): Promise<void> {
-  if (isChannel) return;
+  if (meta.isChannel || meta.isCityGroup) return;
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: USER_SELECT_FIELDS,
@@ -76,8 +76,6 @@ function mapGroupChannelToResponse(gc: GcWithParticipants, userId: string, isMut
 }
 
 export class GroupChannelService {
-  static emitPrivateGroupUserJoinedSystemMessage = emitPrivateGroupUserJoinedSystemMessage;
-
   static async getGroupChannelOwner(groupChannelId: string) {
     const owner = await prisma.groupChannelParticipant.findFirst({
       where: {
@@ -635,7 +633,11 @@ export class GroupChannelService {
       }
     });
 
-    await emitPrivateGroupUserJoinedSystemMessage(groupChannelId, groupChannel.isChannel, userId);
+    await emitPrivateGroupUserJoinedSystemMessage(
+      groupChannelId,
+      { isChannel: groupChannel.isChannel, isCityGroup: groupChannel.isCityGroup },
+      userId
+    );
 
     return 'Successfully joined the group/channel';
   }
@@ -861,7 +863,10 @@ export class GroupChannelService {
 
     await emitPrivateGroupUserJoinedSystemMessage(
       invite.groupChannelId,
-      invite.groupChannel.isChannel,
+      {
+        isChannel: invite.groupChannel.isChannel,
+        isCityGroup: invite.groupChannel.isCityGroup,
+      },
       userId
     );
 

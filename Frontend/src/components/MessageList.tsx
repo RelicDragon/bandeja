@@ -1,9 +1,38 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  useCallback,
+  useState,
+  useReducer,
+} from 'react';
 import { useTranslation } from 'react-i18next';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { ChatMessage, Poll } from '@/api/chat';
 import { AnimatedMessageItem } from './AnimatedMessageItem';
 import { useContextMenuManager } from '@/hooks/useContextMenuManager';
-import { ArrowUp } from 'lucide-react';
+import {
+  flushThreadScrollSave,
+  getThreadScrollState,
+  scheduleThreadScrollSave,
+} from '@/services/chat/chatThreadScroll';
+import {
+  getCachedMessageRowHeight,
+  preloadMessageRowHeights,
+  rememberMeasuredMessageHeight,
+} from '@/services/chat/chatMessageHeights';
+
+const END_SPACER_PX = 128;
+const ROW_ESTIMATE_PX = 88;
+const VIRTUAL_OVERSCAN_BASE = 10;
+const VIRTUAL_OVERSCAN_FAST = 22;
+
+export type MessageListHandle = {
+  scrollToMessageById: (messageId: string) => void;
+};
 
 interface MessageListProps {
   messages: ChatMessage[];
@@ -32,56 +61,262 @@ interface MessageListProps {
   onPin?: (message: ChatMessage) => void;
   onUnpin?: (messageId: string) => void;
   showReply?: boolean;
+  threadScrollKey?: string | null;
 }
 
-export const MessageList: React.FC<MessageListProps> = ({
-  messages,
-  onAddReaction,
-  onRemoveReaction,
-  onDeleteMessage,
-  onReplyMessage,
-  onEditMessage,
-  onPollUpdated,
-  onResendQueued,
-  onRemoveFromQueue,
-  isLoading = false,
-  isLoadingMessages = false,
-  isSwitchingChatType = false,
-  onScrollToMessage,
-  hasMoreMessages = false,
-  onLoadMore,
-  isInitialLoad = false,
-  isLoadingMore = false,
-  isChannel = false,
-  userChatUser1Id,
-  userChatUser2Id,
-  onChatRequestRespond,
-  hasContextPanel = false,
-  pinnedMessageIds = [],
-  onPin,
-  onUnpin,
-  showReply = true,
-}) => {
+export const MessageList = forwardRef<MessageListHandle, MessageListProps>(function MessageList(
+  {
+    messages,
+    onAddReaction,
+    onRemoveReaction,
+    onDeleteMessage,
+    onReplyMessage,
+    onEditMessage,
+    onPollUpdated,
+    onResendQueued,
+    onRemoveFromQueue,
+    isLoading = false,
+    isLoadingMessages = false,
+    isSwitchingChatType = false,
+    onScrollToMessage,
+    hasMoreMessages = false,
+    onLoadMore,
+    isInitialLoad = false,
+    isLoadingMore = false,
+    isChannel = false,
+    userChatUser1Id,
+    userChatUser2Id,
+    onChatRequestRespond,
+    hasContextPanel = false,
+    pinnedMessageIds = [],
+    onPin,
+    onUnpin,
+    showReply = true,
+    threadScrollKey = null,
+  },
+  ref
+) {
   const { t } = useTranslation();
   const pinnedSet = useMemo(() => new Set(pinnedMessageIds), [pinnedMessageIds]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const topLoadSentinelRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const previousScrollHeightRef = useRef(0);
   const previousScrollTopRef = useRef(0);
   const isLoadingMoreRef = useRef(false);
   const justLoadedOlderMessagesRef = useRef(false);
+  const loadMoreCooldownRef = useRef(0);
   const { contextMenuState, openContextMenu, closeContextMenu, handleScrollStart } = useContextMenuManager();
-  const [isButtonVisible, setIsButtonVisible] = React.useState(true);
-  const [shouldRenderButton, setShouldRenderButton] = React.useState(true);
+
+  const rowCount = messages.length + 1;
+  const [virtualOverscan, setVirtualOverscan] = useState(VIRTUAL_OVERSCAN_BASE);
+  const scrollVelRef = useRef({ top: 0, t: 0 });
+  const [, bumpHeightEstimates] = useReducer((n: number) => n + 1, 0);
+
+  const virtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => messagesContainerRef.current,
+    estimateSize: (index) => {
+      if (index === rowCount - 1) return END_SPACER_PX;
+      const id = messages[index]?.id;
+      return getCachedMessageRowHeight(id) ?? ROW_ESTIMATE_PX;
+    },
+    overscan: virtualOverscan,
+    getItemKey: (index) => (index === rowCount - 1 ? '__end__' : messages[index]?.id ?? `i-${index}`),
+  });
+
+  const virtualizerRef = useRef(virtualizer);
+  virtualizerRef.current = virtualizer;
+  const messagesForScrollRef = useRef(messages);
+  messagesForScrollRef.current = messages;
+
+  const messagesMeasureRef = useRef(messages);
+  messagesMeasureRef.current = messages;
+
+  const virtualItemsSnapshot = virtualizer.getVirtualItems();
+  const virtualMeasureKey = virtualItemsSnapshot
+    .filter((vi) => vi.index < rowCount - 1)
+    .map((vi) => `${vi.index}:${messages[vi.index]?.id ?? ''}:${Math.round(vi.size)}`)
+    .join('|');
+
+  const tailIdsForHeightPreload = messages.slice(-140).map((m) => m.id).join('\x1e');
+
+  useEffect(() => {
+    let alive = true;
+    const ids = tailIdsForHeightPreload.length === 0 ? [] : tailIdsForHeightPreload.split('\x1e');
+    void preloadMessageRowHeights(ids).then(() => {
+      if (alive) bumpHeightEstimates();
+    });
+    return () => {
+      alive = false;
+    };
+  }, [threadScrollKey, tailIdsForHeightPreload]);
+
+  useLayoutEffect(() => {
+    const items = virtualizerRef.current.getVirtualItems();
+    const msgs = messagesMeasureRef.current;
+    for (const vi of items) {
+      if (vi.index === rowCount - 1) continue;
+      const m = msgs[vi.index];
+      if (m?.id && vi.size > 2) rememberMeasuredMessageHeight(m.id, vi.size);
+    }
+  }, [virtualMeasureKey, rowCount]);
+
+  const overscanRafRef = useRef<number | null>(null);
+
+  const prevThreadScrollKeyRef = useRef<string | null | undefined>(undefined);
+  const restoredScrollThreadRef = useRef<string | null>(null);
+
+  useLayoutEffect(() => {
+    if (prevThreadScrollKeyRef.current !== threadScrollKey) {
+      prevThreadScrollKeyRef.current = threadScrollKey;
+      restoredScrollThreadRef.current = null;
+    }
+    if (!threadScrollKey) return;
+    if (isSwitchingChatType || messages.length === 0) return;
+    if (!messagesContainerRef.current) return;
+    if (restoredScrollThreadRef.current === threadScrollKey) return;
+
+    const snapshot = messages;
+    let cancelled = false;
+
+    const markRestored = () => {
+      if (!cancelled) restoredScrollThreadRef.current = threadScrollKey;
+    };
+
+    void getThreadScrollState(threadScrollKey)
+      .then((st) => {
+        if (cancelled) return;
+        const el = messagesContainerRef.current;
+        if (!el) {
+          markRestored();
+          return;
+        }
+        if (!st) {
+          markRestored();
+          return;
+        }
+        if (st.atBottom) {
+          el.scrollTop = el.scrollHeight;
+          markRestored();
+          return;
+        }
+        if (st.anchorMessageId) {
+          const idx = snapshot.findIndex((m) => m.id === st.anchorMessageId);
+          if (idx < 0) {
+            markRestored();
+            return;
+          }
+          const runScroll = () => {
+            if (cancelled) return;
+            virtualizerRef.current.scrollToIndex(idx, { align: 'start', behavior: 'auto' });
+          };
+          runScroll();
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              runScroll();
+              requestAnimationFrame(() => {
+                runScroll();
+                markRestored();
+              });
+            });
+          });
+          return;
+        }
+        markRestored();
+      })
+      .catch(() => {
+        markRestored();
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [threadScrollKey, isSwitchingChatType, messages]);
+
+  useEffect(() => {
+    if (!threadScrollKey) return;
+    if (isSwitchingChatType || messages.length === 0) return;
+
+    const tick = () => {
+      const el = messagesContainerRef.current;
+      if (!el) return;
+      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+      const items = virtualizerRef.current.getVirtualItems();
+      let anchorMessageId: string | null = null;
+      for (const vi of items) {
+        if (vi.index >= messagesForScrollRef.current.length) continue;
+        const m = messagesForScrollRef.current[vi.index];
+        if (m) {
+          anchorMessageId = m.id;
+          break;
+        }
+      }
+      scheduleThreadScrollSave(threadScrollKey, {
+        atBottom: nearBottom,
+        anchorMessageId: nearBottom ? null : anchorMessageId,
+      });
+    };
+
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const onScrollVel = () => {
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const top = el.scrollTop;
+      const prev = scrollVelRef.current;
+      const dt = Math.max(now - prev.t, 1);
+      const pxPerMs = Math.abs(top - prev.top) / dt;
+      scrollVelRef.current = { top, t: now };
+      const wantFast = pxPerMs > 0.35;
+      if (overscanRafRef.current != null) cancelAnimationFrame(overscanRafRef.current);
+      overscanRafRef.current = requestAnimationFrame(() => {
+        overscanRafRef.current = null;
+        setVirtualOverscan((cur) => {
+          const next = wantFast ? VIRTUAL_OVERSCAN_FAST : VIRTUAL_OVERSCAN_BASE;
+          return cur === next ? cur : next;
+        });
+      });
+    };
+    el.addEventListener('scroll', tick, { passive: true });
+    el.addEventListener('scroll', onScrollVel, { passive: true });
+    tick();
+    return () => {
+      el.removeEventListener('scroll', tick);
+      el.removeEventListener('scroll', onScrollVel);
+      if (overscanRafRef.current != null) cancelAnimationFrame(overscanRafRef.current);
+      flushThreadScrollSave(threadScrollKey);
+    };
+  }, [threadScrollKey, isSwitchingChatType, messages.length]);
+
+  const scrollToMessageById = useCallback(
+    (messageId: string) => {
+      const idx = messages.findIndex(
+        (m) =>
+          m.id === messageId ||
+          (m as { _optimisticId?: string })._optimisticId === messageId
+      );
+      if (idx < 0) {
+        const el = messagesContainerRef.current?.querySelector(`#message-${messageId}`) as HTMLElement | null;
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      virtualizer.scrollToIndex(idx, { align: 'center', behavior: 'smooth' });
+    },
+    [messages, virtualizer]
+  );
+
+  useImperativeHandle(ref, () => ({ scrollToMessageById }), [scrollToMessageById]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   };
 
   useEffect(() => {
+    const wasLoading = isLoadingMoreRef.current;
     isLoadingMoreRef.current = isLoadingMore;
-    
+
     const container = messagesContainerRef.current;
     if (!container) return;
 
@@ -89,7 +324,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       previousScrollHeightRef.current = container.scrollHeight;
       previousScrollTopRef.current = container.scrollTop;
       justLoadedOlderMessagesRef.current = false;
-    } else if (isLoadingMoreRef.current) {
+    } else if (wasLoading) {
       justLoadedOlderMessagesRef.current = true;
       setTimeout(() => {
         justLoadedOlderMessagesRef.current = false;
@@ -108,18 +343,18 @@ export const MessageList: React.FC<MessageListProps> = ({
     if (isNewMessagesAdded) {
       const wasLoadingMore = isLoadingMoreRef.current || isLoadingMore;
       const justLoadedOlder = justLoadedOlderMessagesRef.current;
-      
+
       if (wasLoadingMore || justLoadedOlder) {
         const previousScrollHeight = previousScrollHeightRef.current;
         const previousScrollTop = previousScrollTopRef.current;
-        
+
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            if (container) {
-              const currentScrollHeight = container.scrollHeight;
+            const c = messagesContainerRef.current;
+            if (c) {
+              const currentScrollHeight = c.scrollHeight;
               const scrollDifference = currentScrollHeight - previousScrollHeight;
-              const newScrollTop = previousScrollTop + scrollDifference;
-              container.scrollTop = newScrollTop;
+              c.scrollTop = previousScrollTop + scrollDifference;
             }
           });
         });
@@ -134,8 +369,9 @@ export const MessageList: React.FC<MessageListProps> = ({
     previousMessageCountRef.current = currentMessageCount;
     if (!isLoadingMore) {
       requestAnimationFrame(() => {
-        if (container) {
-          previousScrollHeightRef.current = container.scrollHeight;
+        const c = messagesContainerRef.current;
+        if (c) {
+          previousScrollHeightRef.current = c.scrollHeight;
         }
       });
     }
@@ -150,20 +386,37 @@ export const MessageList: React.FC<MessageListProps> = ({
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
-    
+
     return () => {
       container.removeEventListener('scroll', handleScroll);
     };
   }, [handleScrollStart]);
 
-  useEffect(() => {
-    if (hasMoreMessages && !isInitialLoad) {
-      setIsButtonVisible(true);
-      setShouldRenderButton(true);
-    }
-  }, [hasMoreMessages, isInitialLoad]);
+  const loadMoreBlockedRef = useRef(false);
+  loadMoreBlockedRef.current = isLoading || isLoadingMore;
 
-  if (isLoadingMessages || isSwitchingChatType || isInitialLoad) {
+  useEffect(() => {
+    const root = messagesContainerRef.current;
+    const target = topLoadSentinelRef.current;
+    if (!root || !target || !onLoadMore || !hasMoreMessages || (isInitialLoad && messages.length === 0))
+      return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        if (loadMoreBlockedRef.current) return;
+        const now = Date.now();
+        if (now - loadMoreCooldownRef.current < 400) return;
+        loadMoreCooldownRef.current = now;
+        onLoadMore();
+      },
+      { root, rootMargin: '160px 0px 0px 0px', threshold: 0 }
+    );
+    io.observe(target);
+    return () => io.disconnect();
+  }, [onLoadMore, hasMoreMessages, isInitialLoad, isSwitchingChatType, messages.length]);
+
+  if (isSwitchingChatType || (messages.length === 0 && (isLoadingMessages || isInitialLoad))) {
     return (
       <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4 space-y-1 min-h-0" />
     );
@@ -194,71 +447,93 @@ export const MessageList: React.FC<MessageListProps> = ({
     );
   }
 
-  const handleLoadMoreClick = () => {
-    if (onLoadMore && !isLoading) {
-      setIsButtonVisible(false);
-      setTimeout(() => {
-        setShouldRenderButton(false);
-        onLoadMore();
-      }, 300);
-    }
-  };
+  const virtualItems = virtualizer.getVirtualItems();
 
   return (
     <div
       ref={messagesContainerRef}
-      className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto bg-gray-50 dark:bg-gray-800 p-4 space-y-1 min-h-0 overscroll-contain"
+      className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto bg-gray-50 dark:bg-gray-800 p-4 min-h-0 overscroll-contain"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       {hasContextPanel && <div className="pt-6 flex-shrink-0" />}
-      {hasMoreMessages && !isInitialLoad && onLoadMore && shouldRenderButton && (
-        <div 
-          className={`flex justify-center mb-4 transition-opacity duration-300 ${
-            isButtonVisible ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          <button
-            onClick={handleLoadMoreClick}
-            disabled={isLoading}
-            className="py-3 px-6 rounded-xl font-medium text-sm text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-600/60 transition-all duration-300 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-          >
-            <span>{isLoading ? t('common.loading') : t('chat.messages.loadMore')}</span>
-            {!isLoading && <ArrowUp size={16} className="animate-bounce" />}
-          </button>
-        </div>
-      )}
-      {messages.map((message, index) => (
-        <div key={(message as { _optimisticId?: string })._optimisticId ?? message.id} id={`message-${message.id}`}>
-          <AnimatedMessageItem
-            message={message}
-            index={index}
-            onAddReaction={onAddReaction}
-            onRemoveReaction={onRemoveReaction}
-            onDeleteMessage={onDeleteMessage}
-            onReplyMessage={onReplyMessage}
-            onEditMessage={onEditMessage}
-            onPollUpdated={onPollUpdated}
-            onResendQueued={onResendQueued}
-            onRemoveFromQueue={onRemoveFromQueue}
-            contextMenuState={contextMenuState}
-            onOpenContextMenu={openContextMenu}
-            onCloseContextMenu={closeContextMenu}
-            allMessages={messages}
-            onScrollToMessage={onScrollToMessage}
-            isChannel={isChannel}
-            userChatUser1Id={userChatUser1Id}
-            userChatUser2Id={userChatUser2Id}
-            onChatRequestRespond={onChatRequestRespond}
-            isPinned={pinnedSet.has(message.id)}
-            onPin={onPin}
-            onUnpin={onUnpin}
-            showReply={showReply}
+      <div
+        ref={topLoadSentinelRef}
+        className="w-full shrink-0 flex flex-col items-center justify-center min-h-[8px] py-2 pointer-events-none gap-2"
+        aria-hidden
+      >
+        {isLoadingMore && hasMoreMessages ? (
+          <div
+            className="h-5 w-5 rounded-full border-2 border-gray-300 border-t-blue-500 dark:border-gray-600 dark:border-t-blue-400 animate-spin"
+            role="status"
           />
-        </div>
-      ))}
-      
-      
-      <div ref={messagesEndRef} className="pb-32" />
+        ) : null}
+      </div>
+      <div
+        className="space-y-1 relative w-full"
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+        }}
+      >
+        {virtualItems.map((row) => {
+          if (row.index === rowCount - 1) {
+            return (
+              <div
+                key={row.key}
+                data-index={row.index}
+                ref={virtualizer.measureElement}
+                className="left-0 top-0 w-full"
+                style={{
+                  position: 'absolute',
+                  transform: `translateY(${row.start}px)`,
+                }}
+                aria-hidden
+              >
+                <div className="h-32" />
+              </div>
+            );
+          }
+          const message = messages[row.index]!;
+          return (
+            <div
+              key={row.key}
+              data-index={row.index}
+              ref={virtualizer.measureElement}
+              id={`message-${message.id}`}
+              className="left-0 top-0 w-full"
+              style={{
+                position: 'absolute',
+                transform: `translateY(${row.start}px)`,
+              }}
+            >
+              <AnimatedMessageItem
+                message={message}
+                staggerKey={message.id}
+                onAddReaction={onAddReaction}
+                onRemoveReaction={onRemoveReaction}
+                onDeleteMessage={onDeleteMessage}
+                onReplyMessage={onReplyMessage}
+                onEditMessage={onEditMessage}
+                onPollUpdated={onPollUpdated}
+                onResendQueued={onResendQueued}
+                onRemoveFromQueue={onRemoveFromQueue}
+                contextMenuState={contextMenuState}
+                onOpenContextMenu={openContextMenu}
+                onCloseContextMenu={closeContextMenu}
+                allMessages={messages}
+                onScrollToMessage={onScrollToMessage}
+                isChannel={isChannel}
+                userChatUser1Id={userChatUser1Id}
+                userChatUser2Id={userChatUser2Id}
+                onChatRequestRespond={onChatRequestRespond}
+                isPinned={pinnedSet.has(message.id)}
+                onPin={onPin}
+                onUnpin={onUnpin}
+                showReply={showReply}
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
-};
+});

@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { ChatContextType } from '@prisma/client';
+import { ChatContextType, ChatSyncEventType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { SystemMessageType, createSystemMessageContent, getUserDisplayName } from '../../utils/systemMessages';
@@ -7,6 +7,7 @@ import { computeContentSearchable } from '../../utils/messageSearchContent';
 import { SystemMessageService } from './systemMessage.service';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
 import { ChatMuteService } from './chatMute.service';
+import { ChatSyncEventService } from './chatSyncEvent.service';
 
 export class UserChatService {
   static async getUserChats(userId: string) {
@@ -181,7 +182,8 @@ export class UserChatService {
     const count = await prisma.chatMessage.count({
       where: {
         chatContextType: ChatContextType.USER,
-        contextId: chatId
+        contextId: chatId,
+        deletedAt: null,
       }
     });
     if (count > 0) {
@@ -198,29 +200,59 @@ export class UserChatService {
       requesterId,
       responded: false
     });
-    const message = await prisma.chatMessage.create({
-      data: {
-        chatContextType: ChatContextType.USER,
-        contextId: chatId,
-        senderId: null,
-        content,
-        contentSearchable: computeContentSearchable(content),
-        mediaUrls: [],
-        thumbnailUrls: [],
-        chatType: 'PUBLIC',
-        state: 'SENT'
-      },
-      include: {
-        sender: { select: USER_SELECT_FIELDS },
-        replyTo: { select: { id: true, content: true, sender: { select: USER_SELECT_FIELDS } } },
-        reactions: { include: { user: { select: USER_SELECT_FIELDS } } },
-        readReceipts: { include: { user: { select: USER_SELECT_FIELDS } } }
-      }
+    const message = await prisma.$transaction(async (tx) => {
+      const m = await tx.chatMessage.create({
+        data: {
+          chatContextType: ChatContextType.USER,
+          contextId: chatId,
+          senderId: null,
+          content,
+          contentSearchable: computeContentSearchable(content),
+          mediaUrls: [],
+          thumbnailUrls: [],
+          chatType: 'PUBLIC',
+          state: 'SENT'
+        },
+        include: {
+          sender: { select: USER_SELECT_FIELDS },
+          replyTo: { select: { id: true, content: true, sender: { select: USER_SELECT_FIELDS } } },
+          reactions: { include: { user: { select: USER_SELECT_FIELDS } } },
+          readReceipts: { include: { user: { select: USER_SELECT_FIELDS } } }
+        }
+      });
+      const syncSeq = await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        ChatContextType.USER,
+        chatId,
+        ChatSyncEventType.MESSAGE_CREATED,
+        { message: m }
+      );
+      await tx.chatMessage.update({
+        where: { id: m.id },
+        data: { serverSyncSeq: syncSeq },
+      });
+      const refreshed = await tx.chatMessage.findUnique({
+        where: { id: m.id },
+        include: {
+          sender: { select: USER_SELECT_FIELDS },
+          replyTo: { select: { id: true, content: true, sender: { select: USER_SELECT_FIELDS } } },
+          reactions: { include: { user: { select: USER_SELECT_FIELDS } } },
+          readReceipts: { include: { user: { select: USER_SELECT_FIELDS } } },
+        },
+      });
+      return refreshed ?? m;
     });
     await updateLastMessagePreview(ChatContextType.USER, chatId);
     const socketService = (global as any).socketService;
     if (socketService) {
-      await socketService.emitUserChatMessageToUsers(chatId, message, message.id);
+      socketService.emitChatEvent(
+        ChatContextType.USER,
+        chatId,
+        'message',
+        { message },
+        message.id,
+        message.serverSyncSeq ?? undefined
+      );
     }
     return message;
   }
@@ -228,7 +260,7 @@ export class UserChatService {
   static async respondToChatRequest(chatId: string, messageId: string, respondentId: string, accepted: boolean) {
     const chat = await this.getChatById(chatId, respondentId);
     const msg = await prisma.chatMessage.findFirst({
-      where: { id: messageId, contextId: chatId, chatContextType: ChatContextType.USER }
+      where: { id: messageId, contextId: chatId, chatContextType: ChatContextType.USER, deletedAt: null }
     });
     if (!msg || !msg.content) throw new ApiError(404, 'Message not found');
     let parsed: { type?: string; responded?: boolean; requesterId?: string };
@@ -258,9 +290,29 @@ export class UserChatService {
       ChatContextType.USER
     );
     const updatedContent = JSON.stringify({ ...parsed, responded: true });
-    await prisma.chatMessage.update({
-      where: { id: messageId },
-      data: { content: updatedContent }
+    const { MessageService } = await import('./message.service');
+    const messageInclude = MessageService.getMessageInclude();
+    const { updatedRequest, requestSyncSeq } = await prisma.$transaction(async (tx) => {
+      const u = await tx.chatMessage.update({
+        where: { id: messageId },
+        data: {
+          content: updatedContent,
+          contentSearchable: computeContentSearchable(updatedContent),
+        },
+        include: messageInclude,
+      });
+      const seq = await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        ChatContextType.USER,
+        chatId,
+        ChatSyncEventType.MESSAGE_UPDATED,
+        { message: u }
+      );
+      await tx.chatMessage.update({
+        where: { id: messageId },
+        data: { serverSyncSeq: seq },
+      });
+      return { updatedRequest: u, requestSyncSeq: seq };
     });
     if (accepted) {
       await prisma.userChat.update({
@@ -268,9 +320,28 @@ export class UserChatService {
         data: isRequesterUser1 ? { user2allowed: true } : { user1allowed: true }
       });
     }
+    await updateLastMessagePreview(ChatContextType.USER, chatId);
     const socketService = (global as any).socketService;
     if (socketService) {
-      await socketService.emitUserChatMessageToUsers(chatId, responseMessage, responseMessage.id);
+      const resSync =
+        (responseMessage as { syncSeq?: number }).syncSeq ?? responseMessage.serverSyncSeq ?? undefined;
+      socketService.emitChatEvent(
+        ChatContextType.USER,
+        chatId,
+        'message',
+        { message: responseMessage },
+        responseMessage.id,
+        resSync
+      );
+      (updatedRequest as { syncSeq?: number }).syncSeq = requestSyncSeq;
+      socketService.emitChatEvent(
+        ChatContextType.USER,
+        chatId,
+        'message',
+        { message: updatedRequest },
+        updatedRequest.id,
+        requestSyncSeq
+      );
     }
     return { message: responseMessage, userChat: await prisma.userChat.findUnique({ where: { id: chatId }, include: { user1: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } }, user2: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } } } }) };
   }

@@ -1,7 +1,9 @@
 import prisma from '../../config/database';
+import { ChatSyncEventType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { ChatSyncEventService } from './chatSyncEvent.service';
 
 export class ReactionService {
   static async addReaction(messageId: string, userId: string, emoji: string) {
@@ -13,32 +15,43 @@ export class ReactionService {
       throw new ApiError(404, 'Message not found');
     }
 
+    if (message.deletedAt) {
+      throw new ApiError(404, 'Message not found');
+    }
+
     await MessageService.validateMessageAccess(message, userId, true);
 
-    // Use upsert to atomically create or update the reaction
-    const reaction = await prisma.messageReaction.upsert({
-      where: {
-        messageId_userId: {
+    return prisma.$transaction(async (tx) => {
+      const reaction = await tx.messageReaction.upsert({
+        where: {
+          messageId_userId: {
+            messageId,
+            userId
+          }
+        },
+        create: {
           messageId,
-          userId
+          userId,
+          emoji
+        },
+        update: {
+          emoji
+        },
+        include: {
+          user: {
+            select: USER_SELECT_FIELDS
+          }
         }
-      },
-      create: {
-        messageId,
-        userId,
-        emoji
-      },
-      update: {
-        emoji
-      },
-      include: {
-        user: {
-          select: USER_SELECT_FIELDS
-        }
-      }
+      });
+      const syncSeq = await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        message.chatContextType,
+        message.contextId,
+        ChatSyncEventType.REACTION_ADDED,
+        { reaction }
+      );
+      return { reaction, syncSeq };
     });
-
-    return reaction;
   }
 
   static async removeReaction(messageId: string, userId: string) {
@@ -50,15 +63,27 @@ export class ReactionService {
       throw new ApiError(404, 'Message not found');
     }
 
+    if (message.deletedAt) {
+      throw new ApiError(404, 'Message not found');
+    }
+
     await MessageService.validateMessageAccess(message, userId, true);
 
-    await prisma.messageReaction.deleteMany({
-      where: {
-        messageId,
-        userId
-      }
+    return prisma.$transaction(async (tx) => {
+      await tx.messageReaction.deleteMany({
+        where: {
+          messageId,
+          userId
+        }
+      });
+      const syncSeq = await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        message.chatContextType,
+        message.contextId,
+        ChatSyncEventType.REACTION_REMOVED,
+        { messageId, userId, action: 'removed' }
+      );
+      return { messageId, userId, action: 'removed' as const, syncSeq };
     });
-
-    return { messageId, userId, action: 'removed' };
   }
 }

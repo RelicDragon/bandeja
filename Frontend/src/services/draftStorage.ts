@@ -1,6 +1,7 @@
 import { get, set, del, keys, createStore } from 'idb-keyval';
 import type { ChatContextType, ChatType } from '@/api/chat';
 import type { ChatDraft } from '@/api/chat';
+import { chatLocalDb } from '@/services/chat/chatLocalDb';
 
 const draftStore = createStore('padelpulse-drafts-db', 'drafts');
 const PREFIX = 'padelpulse-draft';
@@ -43,6 +44,19 @@ function parseKeyLegacy(key: string): { userId: string; chatContextType: ChatCon
   return { userId, chatContextType: chatContextType as ChatContextType, contextId, chatType };
 }
 
+async function migrateFromIdbToDexie(k: string, value: LocalDraftPayload): Promise<void> {
+  try {
+    await chatLocalDb.chatDrafts.put({
+      key: k,
+      content: value.content,
+      mentionIds: value.mentionIds ?? [],
+      updatedAt: value.updatedAt,
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
 export const draftStorage = {
   async get(
     userId: string,
@@ -52,12 +66,25 @@ export const draftStorage = {
   ): Promise<LocalDraftPayload | null> {
     try {
       const k = storageKey(userId, chatContextType, contextId, chatType);
+      const row = await chatLocalDb.chatDrafts.get(k);
+      if (row) {
+        if (isExpired(row.updatedAt)) {
+          await chatLocalDb.chatDrafts.delete(k);
+          return null;
+        }
+        return {
+          content: row.content,
+          mentionIds: row.mentionIds ?? [],
+          updatedAt: row.updatedAt,
+        };
+      }
       let value = await get<LocalDraftPayload>(k, draftStore);
       if (value) {
         if (isExpired(value.updatedAt)) {
           await del(k, draftStore);
           return null;
         }
+        await migrateFromIdbToDexie(k, value);
         return value;
       }
       const legacyKey = `${PREFIX}:${userId}:${chatContextType}:${contextId}:${chatType}`;
@@ -69,6 +96,7 @@ export const draftStorage = {
         }
         await set(k, value, draftStore);
         await del(legacyKey);
+        await migrateFromIdbToDexie(k, value);
         return value;
       }
       return null;
@@ -91,11 +119,30 @@ export const draftStorage = {
       const payload: LocalDraftPayload = {
         content,
         mentionIds: mentionIds ?? [],
-        updatedAt: updatedAt ?? new Date().toISOString()
+        updatedAt: updatedAt ?? new Date().toISOString(),
       };
+      await chatLocalDb.chatDrafts.put({
+        key: k,
+        content: payload.content,
+        mentionIds: payload.mentionIds,
+        updatedAt: payload.updatedAt,
+      });
       await set(k, payload, draftStore);
     } catch {
-      // idb full or unavailable; server sync will still run
+      try {
+        const k = storageKey(userId, chatContextType, contextId, chatType);
+        await set(
+          k,
+          {
+            content,
+            mentionIds: mentionIds ?? [],
+            updatedAt: updatedAt ?? new Date().toISOString(),
+          },
+          draftStore
+        );
+      } catch {
+        /* ignore */
+      }
     }
   },
 
@@ -107,10 +154,11 @@ export const draftStorage = {
   ): Promise<void> {
     try {
       const k = storageKey(userId, chatContextType, contextId, chatType);
+      await chatLocalDb.chatDrafts.delete(k);
       await del(k, draftStore);
       await del(`${PREFIX}:${userId}:${chatContextType}:${contextId}:${chatType}`);
     } catch {
-      // continue to attempt server delete
+      /* continue */
     }
   },
 
@@ -119,6 +167,7 @@ export const draftStorage = {
       const result: ChatDraft[] = [];
       const seen = new Set<string>();
       const prefixNew = `${PREFIX}${SEP}${userId}${SEP}`;
+
       const addDraft = (parsed: ReturnType<typeof parseKey> | ReturnType<typeof parseKeyLegacy>, value: LocalDraftPayload) => {
         if (!parsed) return;
         const dedupeKey = `${parsed.chatContextType}:${parsed.contextId}:${parsed.chatType}`;
@@ -133,9 +182,25 @@ export const draftStorage = {
           content: value.content,
           mentionIds: value.mentionIds ?? [],
           updatedAt: value.updatedAt,
-          createdAt: value.updatedAt
+          createdAt: value.updatedAt,
         });
       };
+
+      const dexieRows = await chatLocalDb.chatDrafts.toArray();
+      for (const row of dexieRows) {
+        if (!row.key.startsWith(prefixNew)) continue;
+        const parsed = parseKey(row.key);
+        if (!parsed || isExpired(row.updatedAt)) {
+          if (parsed && isExpired(row.updatedAt)) await chatLocalDb.chatDrafts.delete(row.key);
+          continue;
+        }
+        addDraft(parsed, {
+          content: row.content,
+          mentionIds: row.mentionIds ?? [],
+          updatedAt: row.updatedAt,
+        });
+      }
+
       const storeKeys = await keys(draftStore);
       for (const key of storeKeys) {
         if (typeof key !== 'string' || !key.startsWith(prefixNew)) continue;
@@ -147,9 +212,10 @@ export const draftStorage = {
             await del(key, draftStore);
             continue;
           }
+          await migrateFromIdbToDexie(key, value);
           addDraft(parsed, value);
         } catch {
-          // skip
+          /* skip */
         }
       }
       const legacyPrefix = `${PREFIX}:${userId}:`;
@@ -163,14 +229,15 @@ export const draftStorage = {
             if (value) await del(key);
             continue;
           }
-          addDraft(parsed, value);
           const newKey = parsed ? storageKey(parsed.userId, parsed.chatContextType, parsed.contextId, parsed.chatType) : null;
           if (newKey) {
             await set(newKey, value, draftStore);
+            await migrateFromIdbToDexie(newKey, value);
             await del(key);
           }
+          addDraft(parsed, value);
         } catch {
-          // skip
+          /* skip */
         }
       }
       result.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
@@ -178,7 +245,7 @@ export const draftStorage = {
     } catch {
       return [];
     }
-  }
+  },
 };
 
 export function mergeServerAndLocalDrafts(serverDrafts: ChatDraft[] | null | undefined, localDrafts: ChatDraft[] | null | undefined): ChatDraft[] {

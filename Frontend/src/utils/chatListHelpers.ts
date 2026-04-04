@@ -2,11 +2,31 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { ChatDraft, GroupChannel, getLastMessageTime } from '@/api/chat';
 import { matchDraftToChat } from '@/utils/chatListUtils';
 import { sortChatItems } from '@/utils/chatListSort';
-import type { ChatItem } from '@/utils/chatListSort';
+import type { ChatItem, ChatListOutbox } from '@/utils/chatListSort';
 import type { ChatMessage } from '@/api/chat';
 import type { BasicUser } from '@/types';
 
 export const getChatKey = (c: ChatItem) => `${c.type}-${c.type === 'contact' ? c.userId : c.data.id}`;
+
+export function mergeChatListOutboxFromDexieSlice(prev: ChatItem[], dexSlice: ChatItem[]): ChatItem[] {
+  if (dexSlice.length === 0) return prev;
+  const dexByKey = new Map<string, ChatItem>();
+  for (const d of dexSlice) {
+    dexByKey.set(getChatKey(d), d);
+  }
+  return prev.map((p) => {
+    if (p.type === 'contact') return p;
+    const d = dexByKey.get(getChatKey(p));
+    if (!d || d.type === 'contact') return p;
+    const next = { ...p } as ChatItem & { listOutbox?: ChatListOutbox | null };
+    if ('listOutbox' in d && d.listOutbox != null) {
+      next.listOutbox = d.listOutbox;
+    } else {
+      delete next.listOutbox;
+    }
+    return next as ChatItem;
+  });
+}
 
 export const deduplicateChats = (chats: ChatItem[]) => {
   const seen = new Set<string>();
@@ -143,6 +163,7 @@ export type LoadMoreConfig = {
   cacheKey: 'users' | 'bugs' | 'channels' | 'market';
   cacheRef: MutableRefObject<Partial<Record<'users' | 'bugs' | 'channels' | 'market', FilterCache>>>;
   deduplicate: (chats: ChatItem[]) => ChatItem[];
+  afterMore?: (moreChats: ChatItem[]) => void;
 };
 
 export const createLoadMore = (config: LoadMoreConfig) => async () => {
@@ -157,7 +178,8 @@ export const createLoadMore = (config: LoadMoreConfig) => async () => {
     setHasMore,
     cacheKey,
     cacheRef,
-    deduplicate
+    deduplicate,
+    afterMore,
   } = config;
   if (!isActive || loadingMore || !hasMore) return;
   setLoadingMore(true);
@@ -166,6 +188,7 @@ export const createLoadMore = (config: LoadMoreConfig) => async () => {
     const { chats: moreChats, hasMore: nextHasMore } = await fetcher(nextPage);
     pageRef.current = nextPage;
     setChats((prev) => deduplicate([...prev, ...moreChats]));
+    afterMore?.(moreChats);
     setHasMore(nextHasMore);
     const cached = cacheRef.current[cacheKey];
     if (cached) {

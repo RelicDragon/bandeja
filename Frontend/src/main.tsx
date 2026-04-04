@@ -4,13 +4,17 @@ import './index.css';
 import { setupCapacitor, setupBrowserKeyboardDetection, setAndroidViewportVars } from './utils/capacitorSetup';
 import { isCapacitor, isAndroid } from './utils/capacitor';
 import { initializeSocialLogin } from './services/socialLoginInit.service';
+import { initChatSyncMetricsSession } from './services/chat/chatSyncMetricsSession';
+import { initChatLocalDbLifecycle } from './services/chat/chatLocalDbLifecycle';
 
 const CACHE_VERSION = 'v1';
+
+initChatSyncMetricsSession();
+initChatLocalDbLifecycle();
 
 if (isCapacitor() && isAndroid()) {
   document.body.classList.add('capacitor-android');
   setAndroidViewportVars();
-  [150, 400].forEach((ms) => setTimeout(setAndroidViewportVars, ms));
 }
 setupCapacitor();
 setupBrowserKeyboardDetection();

@@ -6,6 +6,7 @@ import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { isCapacitor, isAndroid } from '@/utils/capacitor';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
+import { mediaCacheKeyForSrc, readCachedMediaResponse, writeCachedMediaResponse } from '@/services/chat/chatMediaCache';
 
 interface FullscreenImageViewerProps {
   imageUrl: string;
@@ -24,7 +25,53 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   const touchStartX = useRef<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [displayUrl, setDisplayUrl] = useState(imageUrl);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setDisplayUrl(imageUrl);
+  }, [imageUrl]);
+
+  useEffect(() => {
+    if (!isOpen || !imageUrl) return;
+    if (imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) return;
+    const key = mediaCacheKeyForSrc(imageUrl);
+    let revoked: string | null = null;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const hit = await readCachedMediaResponse(key);
+        if (cancelled) return;
+        if (hit?.ok) {
+          const blob = await hit.blob();
+          const u = URL.createObjectURL(blob);
+          revoked = u;
+          setDisplayUrl(u);
+        }
+      } catch {
+        /* keep network src */
+      }
+      try {
+        const res = await fetch(key, { mode: 'cors', credentials: 'include' });
+        if (cancelled) return;
+        if (res.ok) {
+          await writeCachedMediaResponse(key, res);
+          if (!revoked) {
+            const b = await res.blob();
+            const u = URL.createObjectURL(b);
+            revoked = u;
+            setDisplayUrl(u);
+          }
+        }
+      } catch {
+        /* keep network src */
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (revoked) URL.revokeObjectURL(revoked);
+    };
+  }, [isOpen, imageUrl]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -47,7 +94,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     setIsDownloading(true);
     try {
       if (isCapacitor()) {
-        const response = await fetch(imageUrl);
+        const response = await fetch(displayUrl);
         const blob = await response.blob();
         
         const reader = new FileReader();
@@ -81,7 +128,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           dialogTitle: t('media.download'),
         });
       } else {
-        const response = await fetch(imageUrl);
+        const response = await fetch(displayUrl);
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -97,7 +144,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     } finally {
       setIsDownloading(false);
     }
-  }, [imageUrl, t]);
+  }, [displayUrl, t]);
 
   const resetView = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -199,7 +246,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                 <img
-                  src={imageUrl}
+                  src={displayUrl}
                   alt="Fullscreen view"
                   className="max-w-full max-h-full object-contain"
                 />

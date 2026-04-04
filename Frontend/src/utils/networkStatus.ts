@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { isCapacitor } from './capacitor';
+import { triggerForegroundChatSync } from '@/utils/foregroundChatSyncRegistry';
 
 interface NetworkState {
   isOnline: boolean;
@@ -18,10 +19,17 @@ export const initNetworkListener = () => {
     return () => {}; // Return empty cleanup function
   }
 
+  let wasOnline = typeof navigator !== 'undefined' && navigator.onLine;
+
   const updateOnlineStatus = () => {
     const online = navigator.onLine;
+    const prev = wasOnline;
+    wasOnline = online;
     useNetworkStore.getState().setOnline(online);
     console.log(`Network status changed: ${online ? 'ONLINE' : 'OFFLINE'}`);
+    if (online && !prev) {
+      triggerForegroundChatSync();
+    }
   };
 
   // Set initial status

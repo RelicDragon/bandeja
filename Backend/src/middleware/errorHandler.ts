@@ -1,6 +1,27 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '../utils/ApiError';
 import { config } from '../config/env';
+import type { AuthRequest } from './auth';
+
+function isChatSyncApiPath(url: string): boolean {
+  return url.includes('/chat/sync/');
+}
+
+function logChatSyncHttpError(req: Request, err: Error, statusCode: number): void {
+  if (!config.chatSyncHttpErrorLog || !isChatSyncApiPath(req.originalUrl || req.url)) return;
+  const auth = req as AuthRequest;
+  const line = JSON.stringify({
+    evt: 'chat_sync_http_error',
+    path: req.originalUrl || req.url,
+    method: req.method,
+    status: statusCode,
+    userId: auth.userId ?? null,
+    name: err.name,
+    message: err.message,
+    ts: new Date().toISOString(),
+  });
+  console.error(line);
+}
 
 export const errorHandler = (
   err: Error,
@@ -9,6 +30,7 @@ export const errorHandler = (
   _next: NextFunction
 ) => {
   if (err instanceof ApiError) {
+    logChatSyncHttpError(req, err, err.statusCode);
     return res.status(err.statusCode).json({
       success: false,
       message: err.message,
@@ -17,6 +39,7 @@ export const errorHandler = (
     });
   }
 
+  logChatSyncHttpError(req, err, 500);
   console.error('Unhandled error:', err);
 
   return res.status(500).json({

@@ -2,9 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { ChatMessage } from '@/api/chat';
 import { MessageItem, ContextMenuState } from './MessageItem';
 
+function staggerMsForId(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) {
+    h = Math.imul(31, h) + id.charCodeAt(i);
+  }
+  return 20 + (Math.abs(h) % 11) * 10;
+}
+
+const STAGGER_SKIP_AGE_MS = 90_000;
+
+function isRecentMessage(createdAt: string | undefined): boolean {
+  if (!createdAt) return true;
+  const t = Date.parse(createdAt);
+  if (!Number.isFinite(t)) return true;
+  return Date.now() - t < STAGGER_SKIP_AGE_MS;
+}
+
 interface AnimatedMessageItemProps {
   message: ChatMessage;
-  index: number;
+  staggerKey: string;
   onAddReaction: (messageId: string, emoji: string) => void;
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
@@ -30,7 +47,7 @@ interface AnimatedMessageItemProps {
 
 export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   message,
-  index,
+  staggerKey,
   onAddReaction,
   onRemoveReaction,
   onDeleteMessage,
@@ -53,14 +70,16 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   onUnpin,
   showReply = true,
 }) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const skipStagger = !isRecentMessage(message.createdAt);
+  const [isVisible, setIsVisible] = useState(skipStagger);
 
   useEffect(() => {
-    // Fade in with staggered delay based on index, starting earlier for parallel transition
-    const baseDelay = 20; // Start fading in after 200ms
-    const staggerDelay = Math.min(index * 10, 100); // Max 800ms stagger
-    const totalDelay = baseDelay + staggerDelay;
-    
+    if (skipStagger || !isRecentMessage(message.createdAt)) {
+      setIsVisible(true);
+      return;
+    }
+    setIsVisible(false);
+    const totalDelay = staggerMsForId(staggerKey);
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, totalDelay);
@@ -68,7 +87,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [index]);
+  }, [staggerKey, message.createdAt, skipStagger]);
 
   return (
     <div

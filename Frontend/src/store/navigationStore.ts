@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { BugStatus, BugType } from '@/types';
+import type { BugStatus, BugType, ChatType } from '@/types';
 
 interface BugsFilterState {
   status: BugStatus | null;
@@ -32,6 +32,12 @@ interface NavigationState {
   setRequestFindGoToCurrent: (mode: 'calendar' | 'list' | null) => void;
   viewingGroupChannelId: string | null;
   setViewingGroupChannelId: (id: string | null) => void;
+  viewingUserChatId: string | null;
+  setViewingUserChatId: (id: string | null) => void;
+  viewingGameChatId: string | null;
+  viewingGameChatChatType: ChatType | null;
+  setViewingGameChatId: (id: string | null) => void;
+  setViewingGameChat: (id: string | null, chatType: ChatType | null) => void;
   pendingPlayerCardReopen: { playerId: string; sourceIdx: number } | null;
   setPendingPlayerCardReopen: (data: { playerId: string; sourceIdx: number } | null) => void;
   setMarketplaceTab: (tab: 'market' | 'my') => void;
@@ -80,11 +86,21 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   findViewMode: 'calendar',
   requestFindGoToCurrent: null,
   viewingGroupChannelId: null,
+  viewingUserChatId: null,
+  viewingGameChatId: null,
+  viewingGameChatChatType: null,
   pendingPlayerCardReopen: null,
   myGamesSubtabBeforeCreate: null,
   myGamesCalendarDateAfterCreate: null,
   setCurrentPage: (page) => set({ currentPage: page }),
   setViewingGroupChannelId: (id) => set({ viewingGroupChannelId: id }),
+  setViewingUserChatId: (id) => set({ viewingUserChatId: id }),
+  setViewingGameChatId: (id) =>
+    set((s) => ({
+      viewingGameChatId: id,
+      viewingGameChatChatType: id ? s.viewingGameChatChatType : null,
+    })),
+  setViewingGameChat: (id, chatType) => set({ viewingGameChatId: id, viewingGameChatChatType: chatType }),
   setPendingPlayerCardReopen: (data) => set({ pendingPlayerCardReopen: data }),
   setBottomTabsVisible: (visible) => set({ bottomTabsVisible: visible }),
   setInitShellAnimationPlayed: (played) => set({ initShellAnimationPlayed: played }),

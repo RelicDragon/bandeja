@@ -6,7 +6,9 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowInsetsController;
+import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.PluginHandle;
@@ -55,6 +57,48 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
             );
             getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
             getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+        }
+    }
+
+    private void resetContentChildToMatchParent() {
+        View content = findViewById(android.R.id.content);
+        if (content == null || !(content instanceof ViewGroup)) {
+            return;
+        }
+        ViewGroup group = (ViewGroup) content;
+        if (group.getChildCount() == 0) {
+            return;
+        }
+        View child = group.getChildAt(0);
+        ViewGroup.LayoutParams lp = child.getLayoutParams();
+        if (lp == null) {
+            return;
+        }
+        if (lp.height != ViewGroup.LayoutParams.MATCH_PARENT) {
+            lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            child.setLayoutParams(lp);
+            child.requestLayout();
+        }
+    }
+
+    private void reapplyInsetsAfterFocus() {
+        resetContentChildToMatchParent();
+        View decor = getWindow() != null ? getWindow().getDecorView() : null;
+        if (decor != null) {
+            ViewCompat.requestApplyInsets(decor);
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            View decor = getWindow() != null ? getWindow().getDecorView() : null;
+            if (decor != null) {
+                decor.post(this::reapplyInsetsAfterFocus);
+            } else {
+                reapplyInsetsAfterFocus();
+            }
         }
     }
 

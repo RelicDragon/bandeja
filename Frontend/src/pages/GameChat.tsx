@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { chatApi } from '@/api/chat';
 import { ChatType } from '@/types';
-import { MessageList } from '@/components/MessageList';
+import { MessageList, type MessageListHandle } from '@/components/MessageList';
 import { ChatParticipantsModal } from '@/components/ChatParticipantsModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { normalizeChatType } from '@/utils/chatType';
+import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
 import { ChatContextPanel } from '@/components/chat/contextPanels';
 import { PinnedMessagesBar } from '@/components/chat/PinnedMessagesBar';
@@ -36,10 +37,12 @@ import { useGameChatSocket } from './GameChat/useGameChatSocket';
 import { useKeyboardHeight } from './GameChat/useKeyboardHeight';
 import { useGameChatDisplay } from './GameChat/useGameChatDisplay';
 import { useGameChatReactions } from './GameChat/useGameChatReactions';
+import { useGameChatMutationRetry } from './GameChat/useGameChatMutationRetry';
 import { useGameChatDerived } from './GameChat/useGameChatDerived';
 import { useGameChatPanels } from './GameChat/useGameChatPanels';
 import { useGameChatInitialLoad } from './GameChat/useGameChatInitialLoad';
 import { useGameChatFooterVariant } from './GameChat/useGameChatFooterVariant';
+import { recordChatThreadOpened } from '@/services/chat/chatThreadOpenStats';
 
 export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: propChatId, chatType: propChatType }) => {
   const { t } = useTranslation();
@@ -55,6 +58,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const initialChatType = locationState?.initialChatType;
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const messageListRef = useRef<MessageListHandle>(null);
   const previousIdRef = useRef<string | undefined>(undefined);
   const currentIdRef = useRef<string | undefined>(id);
   currentIdRef.current = id;
@@ -99,6 +103,24 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     [contextType, currentChatType]
   );
 
+  useEffect(() => {
+    if (!id) return;
+    void recordChatThreadOpened(
+      contextType,
+      id,
+      contextType === 'GAME' ? effectiveChatType : undefined
+    );
+  }, [id, contextType, effectiveChatType]);
+
+  const threadScrollKey = useMemo(() => {
+    if (!id) return null;
+    return chatSyncTailKey(
+      contextType,
+      id,
+      contextType === 'GAME' ? effectiveChatType : undefined
+    );
+  }, [id, contextType, effectiveChatType]);
+
   const {
     messages,
     setMessages,
@@ -113,7 +135,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     isLoadingMore,
     isSwitchingChatType,
     setIsSwitchingChatType,
-    justLoadedOlderMessagesRef,
     loadingIdRef,
     hasLoadedRef,
     isLoadingRef,
@@ -121,6 +142,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     loadMessages,
     loadMoreMessages,
     loadMessagesBeforeMessageId,
+    bootstrapThread,
   } = useGameChatMessages({
     id,
     contextType,
@@ -130,6 +152,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     chatContainerRef,
     currentIdRef,
   });
+
+  const reloadMessagesFirstPage = useCallback(async () => {
+    if (!id) return;
+    await loadMessages(false, contextType === 'GAME' ? effectiveChatType : undefined);
+  }, [id, contextType, effectiveChatType, loadMessages]);
 
   const derived = useGameChatDerived({
     game,
@@ -187,7 +214,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     handleReadReceipt,
     handleMessageDeleted,
     handleChatRequestRespond,
-  } = useGameChatReactions({ id, user, setMessages, messagesRef, setUserChat });
+  } = useGameChatReactions({ id, contextType, user, setMessages, messagesRef, setUserChat });
+
+  const { failedMutationCount, retryMutations } = useGameChatMutationRetry(contextType, id);
 
   const {
     pinnedMessages,
@@ -205,6 +234,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     effectiveChatType,
     canAccessChat: !!derived.canAccessChat,
     chatContainerRef,
+    messageListRef,
     loadMessagesBeforeMessageId,
     messagesRef,
   });
@@ -217,6 +247,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     handleJoinChannel,
     handleChatTypeChange,
   } = useGameChatActions({
+    currentIdRef,
     id,
     contextType,
     loadContext,
@@ -251,22 +282,18 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   useGameChatSocket({
     id,
     contextType,
+    effectiveChatType,
     userId: user?.id,
     setMessages,
     messagesRef,
-    scrollToBottom,
-    justLoadedOlderMessagesRef,
+    chatContainerRef,
     handleNewMessage,
     handleMessageReaction,
     handleReadReceipt,
     handleMessageDeleted,
     fetchPinnedMessages,
     handleMessageUpdated,
-    isLoadingMessages,
-    isSwitchingChatType,
-    isLoadingMore,
-    isInitialLoad,
-    messagesLength: messages.length,
+    reloadMessagesFirstPage,
   });
 
   const keyboardHeight = useKeyboardHeight();
@@ -304,7 +331,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     currentChatType,
     hasSetDefaultChatType,
     loadContext,
-    loadMessages,
+    bootstrapThread,
     userChat,
     handleMarkFailed,
     handleNewMessageRef,
@@ -450,6 +477,16 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           } : null}
         />
 
+        {!showLoadingHeader && failedMutationCount > 0 && (
+          <button
+            type="button"
+            onClick={() => retryMutations()}
+            className="w-full text-center text-sm py-2 px-3 bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-b border-amber-200 dark:border-amber-800"
+          >
+            {t('chat.mutationsSyncFailed', { defaultValue: 'Some actions did not sync. Tap to retry.' })}
+          </button>
+        )}
+
         {!showLoadingHeader && contextType === 'GAME' && ((derived.isParticipant && derived.isPlayingParticipant) || derived.isAdminOrOwner || (game?.status && game.status !== 'ANNOUNCED')) && (
           <GameChatTabs
             availableChatTypes={derived.availableChatTypes}
@@ -547,6 +584,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             }`}
           >
             <MessageList
+              ref={messageListRef}
               messages={messages}
               onAddReaction={handleAddReaction}
               onRemoveReaction={handleRemoveReaction}
@@ -573,6 +611,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               onPin={derived.canWriteChat ? handlePinMessage : undefined}
               onUnpin={derived.canWriteChat ? handleUnpinMessage : undefined}
               showReply={!derived.isChannel || (derived.canWriteChat ?? false)}
+              threadScrollKey={threadScrollKey}
             />
           </div>
         </main>

@@ -28,6 +28,8 @@ import { pickImages } from '@/utils/photoCapture';
 import { isCapacitor } from '@/utils/capacitor';
 import { PollType } from '@/api/chat';
 import { draftStorage } from '@/services/draftStorage';
+import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
+import { enqueueChatMutationEdit } from '@/services/chat/chatMutationEnqueue';
 import { VoiceRecordingOverlay } from './audio/VoiceRecordingOverlay';
 import { VoiceRecordButton } from './audio/VoiceRecordButton';
 import { useAudioRecorder } from './audio/useAudioRecorder';
@@ -93,7 +95,7 @@ interface MessageInputProps {
   bug?: Bug | null;
   groupChannel?: GroupChannel | null;
   onMessageSent?: () => void;
-  onOptimisticMessage?: (payload: OptimisticMessagePayload) => string;
+  onOptimisticMessage?: (payload: OptimisticMessagePayload, pendingImageBlobs?: Blob[], pendingVoiceBlob?: Blob) => string;
   onSendQueued?: (params: SendQueuedParams) => void;
   onSendFailed?: (optimisticId: string) => void;
   onMessageCreated?: (optimisticId: string, serverMessage: ChatMessage) => void;
@@ -641,13 +643,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const uploadImages = async (): Promise<{ originalUrls: string[]; thumbnailUrls: string[] }> => {
-    if (selectedImages.length === 0) return { originalUrls: [], thumbnailUrls: [] };
+  const uploadImagesForFiles = async (
+    files: File[]
+  ): Promise<{ originalUrls: string[]; thumbnailUrls: string[] }> => {
+    if (files.length === 0) return { originalUrls: [], thumbnailUrls: [] };
 
     const targetId = gameId || bugId || userChatId || groupChannelId;
     if (!targetId) return { originalUrls: [], thumbnailUrls: [] };
 
-    const uploadPromises = selectedImages.map(async (file) => {
+    const uploadPromises = files.map(async (file) => {
       try {
         const response = await mediaApi.uploadChatImage(file, targetId, contextType);
         return {
@@ -804,45 +808,70 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         peaks = placeholderWaveform(48);
       }
       if (!peaks.length) peaks = placeholderWaveform(48);
-      const ext = result.blob.type.includes('mp4') ? 'm4a' : 'webm';
-      const uploaded = await mediaApi.uploadChatAudio(result.blob, `voice.${ext}`, finalContextId, contextType);
-      const payload: OptimisticMessagePayload = {
-        content: '',
-        mediaUrls: [uploaded.audioUrl],
-        thumbnailUrls: [],
-        replyToId: replyTo?.id,
-        replyTo: replyTo
-          ? {
-              id: replyTo.id,
-              content: replyTo.content,
-              sender: replyTo.sender || { id: 'system', firstName: 'System' },
-            }
-          : undefined,
-        chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
-        mentionIds: [],
-        messageType: 'VOICE',
-        audioDurationMs: durationMs,
-        waveformData: peaks,
-      };
       const useOptimistic = !!onOptimisticMessage;
       const useQueue = useOptimistic && !!onSendQueued && propContextType != null && propContextId != null;
-      if (useOptimistic) {
-        optimisticId = onOptimisticMessage(payload);
+
+      if (useQueue && onOptimisticMessage) {
+        const blobUrl = URL.createObjectURL(result.blob);
+        const payload: OptimisticMessagePayload = {
+          content: '',
+          mediaUrls: [blobUrl],
+          thumbnailUrls: [],
+          replyToId: replyTo?.id,
+          replyTo: replyTo
+            ? {
+                id: replyTo.id,
+                content: replyTo.content,
+                sender: replyTo.sender || { id: 'system', firstName: 'System' },
+              }
+            : undefined,
+          chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
+          mentionIds: [],
+          messageType: 'VOICE',
+          audioDurationMs: durationMs,
+          waveformData: peaks,
+        };
+        optimisticId = onOptimisticMessage(payload, undefined, result.blob);
         if (optimisticId) {
           onMessageSent?.();
           onCancelReply?.();
         }
-      }
-      if (useQueue && optimisticId) {
-        onSendQueued!({
-          tempId: optimisticId,
-          contextType: propContextType!,
-          contextId: propContextId!,
-          payload,
+        if (optimisticId) {
+          onSendQueued!({
+            tempId: optimisticId,
+            contextType: propContextType!,
+            contextId: propContextId!,
+            payload: { ...payload, mediaUrls: [], thumbnailUrls: [] },
+          });
+        }
+      } else {
+        const ext = result.blob.type.includes('mp4') ? 'm4a' : 'webm';
+        const uploaded = await mediaApi.uploadChatAudio(result.blob, `voice.${ext}`, finalContextId, contextType);
+        const payload: OptimisticMessagePayload = {
+          content: '',
           mediaUrls: [uploaded.audioUrl],
           thumbnailUrls: [],
-        });
-      } else {
+          replyToId: replyTo?.id,
+          replyTo: replyTo
+            ? {
+                id: replyTo.id,
+                content: replyTo.content,
+                sender: replyTo.sender || { id: 'system', firstName: 'System' },
+              }
+            : undefined,
+          chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
+          mentionIds: [],
+          messageType: 'VOICE',
+          audioDurationMs: durationMs,
+          waveformData: peaks,
+        };
+        if (useOptimistic) {
+          optimisticId = onOptimisticMessage!(payload);
+          if (optimisticId) {
+            onMessageSent?.();
+            onCancelReply?.();
+          }
+        }
         const messageData: CreateMessageRequest = {
           chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
           contextId: finalContextId,
@@ -894,11 +923,27 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       editInFlightRef.current = editingMessage.id;
       setIsLoading(true);
       try {
-        const updated = await chatApi.editMessage(editingMessage.id, {
-          content: trimmedContent,
-          mentionIds: [...mentionIds],
-        });
-        onEditMessage(updated);
+        if (shouldQueueChatMutation() && propContextType && propContextId) {
+          await enqueueChatMutationEdit({
+            contextType: propContextType,
+            contextId: propContextId,
+            messageId: editingMessage.id,
+            content: trimmedContent,
+            mentionIds: [...mentionIds],
+          });
+          onEditMessage({
+            ...editingMessage,
+            content: trimmedContent,
+            mentionIds: [...mentionIds],
+            editedAt: new Date().toISOString(),
+          });
+        } else {
+          const updated = await chatApi.editMessage(editingMessage.id, {
+            content: trimmedContent,
+            mentionIds: [...mentionIds],
+          });
+          onEditMessage(updated);
+        }
         setMessage('');
         setMentionIds([]);
         setOriginalMessageBeforeTranslate(null);
@@ -913,6 +958,32 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         if (status === 404) {
           onCancelEdit?.();
           toast.error(t('chat.editMessageDeleted', { defaultValue: 'Message was deleted' }));
+        } else if (propContextType && propContextId && isRetryableMutationError(err)) {
+          try {
+            await enqueueChatMutationEdit({
+              contextType: propContextType,
+              contextId: propContextId,
+              messageId: editingMessage.id,
+              content: trimmedContent,
+              mentionIds: [...mentionIds],
+            });
+            onEditMessage({
+              ...editingMessage,
+              content: trimmedContent,
+              mentionIds: [...mentionIds],
+              editedAt: new Date().toISOString(),
+            });
+            setMessage('');
+            setMentionIds([]);
+            setOriginalMessageBeforeTranslate(null);
+            setOriginalMentionIdsBeforeTranslate(null);
+            onCancelEdit?.();
+            requestAnimationFrame(() => {
+              (inputContainerRef.current?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus();
+            });
+          } catch {
+            toast.error(t('chat.sendFailed') || 'Failed to update message');
+          }
         } else {
           toast.error(t('chat.sendFailed') || 'Failed to update message');
         }
@@ -934,11 +1005,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     const trimmedContent = message.trim();
     const useOptimistic = !!onOptimisticMessage;
     let optimisticId: string | undefined;
+    const filesSnapshot = selectedImages.filter(isValidImage);
 
+    const previewUrls =
+      filesSnapshot.length > 0 ? filesSnapshot.map((f) => URL.createObjectURL(f)) : [];
     const payload: OptimisticMessagePayload = {
       content: trimmedContent,
-      mediaUrls: [],
-      thumbnailUrls: [],
+      mediaUrls: previewUrls,
+      thumbnailUrls: previewUrls,
       replyToId: replyTo?.id,
       replyTo: replyTo ? { id: replyTo.id, content: replyTo.content, sender: replyTo.sender || { id: 'system', firstName: 'System' } } : undefined,
       chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
@@ -949,7 +1023,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     if (useQueue) queueSendRef.current = true;
 
     if (useOptimistic) {
-      optimisticId = onOptimisticMessage(payload);
+      optimisticId = onOptimisticMessage(payload, filesSnapshot.length ? filesSnapshot : undefined);
       if (optimisticId) {
         onMessageSent?.();
         setMessage('');
@@ -963,6 +1037,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         requestAnimationFrame(() => {
           (inputContainerRef.current?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus();
         });
+      } else {
+        previewUrls.forEach((u) => URL.revokeObjectURL(u));
       }
     } else {
       setIsLoading(true);
@@ -972,15 +1048,28 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     queueMicrotask(() => {
       (async () => {
         try {
-          const { originalUrls, thumbnailUrls } = await uploadImages();
+          const queueDeferImages = !!(useQueue && optimisticId && filesSnapshot.length > 0);
+          let originalUrls: string[] = [];
+          let thumbnailUrls: string[] = [];
+          if (!queueDeferImages && filesSnapshot.length > 0) {
+            const up = await uploadImagesForFiles(filesSnapshot);
+            originalUrls = up.originalUrls;
+            thumbnailUrls = up.thumbnailUrls;
+          }
           if (useQueue && optimisticId) {
             onSendQueued!({
               tempId: optimisticId,
               contextType: propContextType!,
               contextId: propContextId!,
-              payload: { ...payload, mediaUrls: originalUrls, thumbnailUrls },
-              mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
-              thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+              payload: queueDeferImages
+                ? payload
+                : { ...payload, mediaUrls: originalUrls, thumbnailUrls },
+              ...(queueDeferImages
+                ? {}
+                : {
+                    mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
+                    thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+                  }),
             });
           } else {
             const messageData: CreateMessageRequest = {

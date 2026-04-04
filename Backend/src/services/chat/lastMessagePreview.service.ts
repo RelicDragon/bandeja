@@ -59,7 +59,7 @@ export async function updateLastMessagePreview(
   contextId: string
 ): Promise<void> {
   const lastMessage = await prisma.chatMessage.findFirst({
-    where: { chatContextType, contextId },
+    where: { chatContextType, contextId, deletedAt: null },
     orderBy: { createdAt: 'desc' },
     select: {
       content: true,

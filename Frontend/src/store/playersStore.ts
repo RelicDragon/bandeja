@@ -5,6 +5,9 @@ import { useAuthStore } from './authStore';
 import { useSocketEventsStore } from './socketEventsStore';
 import { BasicUser } from '@/types';
 import type { NewUserChatMessage, UserChatReadReceipt } from '@/services/socketService';
+import { warmChatSyncHeads } from '@/services/chat/chatSyncBatchWarm';
+import { pruneThreadIndexUserChatsNotIn, syncUserThreadIndexFromUnreadMap } from '@/services/chat/chatThreadIndex';
+import { useChatSyncStore } from '@/store/chatSyncStore';
 
 export interface UserMetadata {
   chatId?: string;
@@ -322,6 +325,9 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         [chatId]: 0,
       },
     }));
+    void import('@/services/chat/chatThreadIndex').then((m) =>
+      m.patchThreadIndexClearUnread('USER', chatId)
+    );
   },
 
   addChat: async (chat: UserChat) => {
@@ -361,12 +367,14 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     try {
       const unreadResponse = await chatApi.getUserChatsUnreadCounts([chat.id]);
       if (unreadResponse.data && unreadResponse.data[chat.id] !== undefined) {
+        const n = unreadResponse.data[chat.id];
         set((state) => ({
           unreadCounts: {
             ...state.unreadCounts,
-            [chat.id]: unreadResponse.data[chat.id],
+            [chat.id]: n,
           },
         }));
+        syncUserThreadIndexFromUnreadMap({ [chat.id]: n });
       }
     } catch (error) {
       console.error('Failed to fetch unread count for new chat:', error);
@@ -494,14 +502,21 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         };
       });
 
+      void pruneThreadIndexUserChatsNotIn(new Set(Object.keys(chatsMap))).then(() => {
+        useChatSyncStore.getState().bumpChatListDexieBump();
+      });
+
       if (chats.length > 0) {
         const chatIds = Object.keys(chatsMap);
         try {
           const unreadResponse = await chatApi.getUserChatsUnreadCounts(chatIds);
-          set({ unreadCounts: unreadResponse.data || {} });
+          const u = unreadResponse.data || {};
+          set({ unreadCounts: u });
+          syncUserThreadIndexFromUnreadMap(u);
         } catch (error) {
           console.error('Failed to fetch unread counts:', error);
         }
+        void warmChatSyncHeads(chatIds.map((id) => ({ contextType: 'USER' as const, contextId: id })));
       }
     } catch (error) {
       console.error('Failed to fetch user chats:', error);
@@ -520,7 +535,9 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
 
     try {
       const response = await chatApi.getUserChatsUnreadCounts(chatIds);
-      set({ unreadCounts: response.data || {} });
+      const u = response.data || {};
+      set({ unreadCounts: u });
+      syncUserThreadIndexFromUnreadMap(u);
     } catch (error) {
       console.error('Failed to fetch unread counts:', error);
     }

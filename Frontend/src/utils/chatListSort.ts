@@ -1,11 +1,46 @@
 import { UserChat, GroupChannel, ChatDraft } from '@/api/chat';
-import { BasicUser } from '@/types';
+import { BasicUser, Game } from '@/types';
+
+export type ChatListOutbox = {
+  state: 'queued' | 'sending' | 'failed';
+  preview?: string;
+  previewKind?: 'text' | 'voice' | 'media';
+};
 
 export type ChatItem =
-  | { type: 'user'; data: UserChat; lastMessageDate: Date | null; unreadCount: number; otherUser?: BasicUser; draft?: ChatDraft | null }
+  | {
+      type: 'user';
+      data: UserChat;
+      lastMessageDate: Date | null;
+      unreadCount: number;
+      otherUser?: BasicUser;
+      draft?: ChatDraft | null;
+      listOutbox?: ChatListOutbox | null;
+    }
   | { type: 'contact'; userId: string; user: BasicUser; interactionCount: number; isFavorite: boolean; lastMessageDate: null }
-  | { type: 'group'; data: GroupChannel; lastMessageDate: Date | null; unreadCount: number; draft?: ChatDraft | null }
-  | { type: 'channel'; data: GroupChannel; lastMessageDate: Date | null; unreadCount: number; draft?: ChatDraft | null };
+  | {
+      type: 'group';
+      data: GroupChannel;
+      lastMessageDate: Date | null;
+      unreadCount: number;
+      draft?: ChatDraft | null;
+      listOutbox?: ChatListOutbox | null;
+    }
+  | {
+      type: 'channel';
+      data: GroupChannel;
+      lastMessageDate: Date | null;
+      unreadCount: number;
+      draft?: ChatDraft | null;
+      listOutbox?: ChatListOutbox | null;
+    }
+  | {
+      type: 'game';
+      data: Game;
+      lastMessageDate: Date | null;
+      unreadCount: number;
+      listOutbox?: ChatListOutbox | null;
+    };
 
 export const getChatTitle = (chat: ChatItem, currentUserId: string): string => {
   if (chat.type === 'user') {
@@ -15,6 +50,8 @@ export const getChatTitle = (chat: ChatItem, currentUserId: string): string => {
     return `${chat.user.firstName || ''} ${chat.user.lastName || ''}`.trim() || 'Unknown';
   } else if (chat.type === 'group' || chat.type === 'channel') {
     return chat.data.name || '';
+  } else if (chat.type === 'game') {
+    return chat.data.name?.trim() || '';
   }
   return '';
 };
@@ -42,7 +79,8 @@ const sortForBugsChannels = (a: ChatItem, b: ChatItem): number => {
   if (bTime === null) return -1;
   if (bTime !== aTime) return bTime - aTime;
 
-  const hasUnread = (item: ChatItem) => (item.type === 'user' || item.type === 'group' || item.type === 'channel') && item.unreadCount > 0;
+  const hasUnread = (item: ChatItem) =>
+    (item.type === 'user' || item.type === 'group' || item.type === 'channel' || item.type === 'game') && item.unreadCount > 0;
   if (hasUnread(a) && !hasUnread(b)) return -1;
   if (!hasUnread(a) && hasUnread(b)) return 1;
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { getImageGridLayout } from './utils';
+import { ChatMediaImage } from './ChatMediaImage';
 
 interface MessageMediaGridProps {
   mediaUrls: string[];
@@ -41,7 +42,7 @@ export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
             }}
             onClick={() => onImageClick(url)}
           >
-            <img
+            <ChatMediaImage
               src={getThumbnailUrl(index)}
               alt={`Media ${index + 1}`}
               className={isSingleImage ? 'w-full h-auto object-cover' : 'w-full h-full object-cover'}

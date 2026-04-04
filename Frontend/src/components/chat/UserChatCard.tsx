@@ -10,6 +10,8 @@ import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { parseMessagePreview } from '@/utils/messagePreview';
 import { Pin, Loader2, BellOff } from 'lucide-react';
+import { ChatListOutboxLine } from '@/components/chat/ChatListOutboxLine';
+import type { ChatListOutbox } from '@/utils/chatListSort';
 
 interface UserChatCardProps {
   chat: UserChat;
@@ -17,6 +19,9 @@ interface UserChatCardProps {
   onClick?: () => void;
   isSelected?: boolean;
   draft?: ChatDraft | null;
+  listOutbox?: ChatListOutbox | null;
+  onOutboxRetry?: () => void;
+  onOutboxDismiss?: () => void;
   isPinned?: boolean;
   onPinToggle?: () => void;
   canPin?: boolean;
@@ -26,7 +31,7 @@ interface UserChatCardProps {
   isTogglingMute?: boolean;
 }
 
-export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = false, draft, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: UserChatCardProps) => {
+export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = false, draft, listOutbox, onOutboxRetry, onOutboxDismiss, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: UserChatCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -126,6 +131,13 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
             )}
           </div>
         </div>
+        {listOutbox ? (
+          <ChatListOutboxLine
+            listOutbox={listOutbox}
+            onRetry={listOutbox.state === 'failed' ? onOutboxRetry : undefined}
+            onDismiss={listOutbox.state === 'failed' ? onOutboxDismiss : undefined}
+          />
+        ) : null}
         {(() => {
           const lastMessageTime = getLastMessageTime(chat.lastMessage);
           const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;

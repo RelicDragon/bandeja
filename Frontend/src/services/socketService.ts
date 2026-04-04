@@ -1,8 +1,11 @@
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/authStore';
+import { useChatOfflineStore } from '@/store/chatOfflineStore';
 import { isCapacitor } from '@/utils/capacitor';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { chatSyncService } from '@/services/chatSyncService';
+import { runChatSyncBatchWarmOnConnect } from '@/services/chat/chatSyncBatchWarm';
+import { refreshChatOfflineBanner, setChatBannerSocketConnected } from '@/services/chat/chatOfflineBanner';
 
 export interface NewUserChatMessage {
   contextId: string;
@@ -38,18 +41,26 @@ export interface SocketEvents {
   'wallet-update': (data: { wallet: number }) => void;
   'error': (error: { message: string }) => void;
   // Unified chat events
-  'chat:message': (data: { contextType: string; contextId: string; message: any; messageId?: string; timestamp?: string }) => void;
-  'chat:message-updated': (data: { contextType: string; contextId: string; message: any; messageId?: string; timestamp?: string }) => void;
+  'chat:message': (data: { contextType: string; contextId: string; message: any; messageId?: string; timestamp?: string; syncSeq?: number }) => void;
+  'chat:message-updated': (data: { contextType: string; contextId: string; message: any; messageId?: string; timestamp?: string; syncSeq?: number }) => void;
   'chat:message-transcription': (data: {
     contextType: string;
     contextId: string;
     messageId: string;
     audioTranscription: { transcription: string; languageCode: string | null };
     timestamp?: string;
+    syncSeq?: number;
   }) => void;
-  'chat:reaction': (data: { contextType: string; contextId: string; reaction: any }) => void;
-  'chat:read-receipt': (data: { contextType: string; contextId: string; readReceipt: any }) => void;
-  'chat:deleted': (data: { contextType: string; contextId: string; messageId: string }) => void;
+  'chat:reaction': (data: { contextType: string; contextId: string; reaction: any; syncSeq?: number }) => void;
+  'chat:read-receipt': (data: {
+    contextType: string;
+    contextId: string;
+    readReceipt: any;
+    messageId?: string;
+    timestamp?: string;
+    syncSeq?: number;
+  }) => void;
+  'chat:deleted': (data: { contextType: string; contextId: string; messageId: string; syncSeq?: number }) => void;
   'chat:unread-count': (data: { contextType: string; contextId: string; unreadCount: number }) => void;
   'sync-required': (data: { timestamp: string }) => void;
   'sync-ready': (data: { contextType: string; contextId: string }) => void;
@@ -61,11 +72,18 @@ export interface SocketEvents {
   'bet:updated': (data: { gameId: string; bet: any }) => void;
   'bet:deleted': (data: { gameId: string; betId: string }) => void;
   'bet:resolved': (data: { gameId: string; betId: string; winnerId: string; loserId: string }) => void;
-  // Poll events
-  'poll-vote': (data: { contextType: string; contextId: string; pollId: string; messageId: string; updatedPoll: any }) => void;
+  'chat:poll-vote': (data: {
+    contextType: string;
+    contextId: string;
+    pollId: string;
+    messageId: string;
+    updatedPoll: any;
+    syncSeq?: number;
+  }) => void;
   // Presence
   'presence-initial': (data: Record<string, boolean>) => void;
   'presence-update': (data: { online: string[]; offline: string[] }) => void;
+  'typing-indicator': (data: { gameId: string; userId: string; isTyping: boolean; timestamp?: string }) => void;
 }
 
 class SocketService {
@@ -115,6 +133,7 @@ class SocketService {
   private setConnectionState(state: SocketConnectionState) {
     if (this.connectionState === state) return;
     this.connectionState = state;
+    setChatBannerSocketConnected(state === 'connected');
     this.connectionStateListeners.forEach((cb) => {
       try {
         cb(state);
@@ -122,6 +141,7 @@ class SocketService {
         console.error('[SocketService] connectionState listener error:', e);
       }
     });
+    refreshChatOfflineBanner();
   }
 
   private setupNetworkListeners() {
@@ -278,6 +298,7 @@ class SocketService {
           console.error('[SocketService] Connect callback error:', e);
         }
       });
+      void runChatSyncBatchWarmOnConnect();
     });
 
     this.socket.on('disconnect', (reason) => {
@@ -762,11 +783,17 @@ class SocketService {
 
     // If this is the first subscriber, create the socket listener
     if (!this.socketListeners.has(eventKey)) {
+      const TYPING_INDICATOR_CLIENT_MAX_AGE_MS = 15_000;
       const socketListener = ((data: any) => {
+        if (eventKey === 'typing-indicator' && data && typeof data === 'object' && typeof data.timestamp === 'string') {
+          const t = new Date(data.timestamp).getTime();
+          if (Number.isFinite(t) && Date.now() - t > TYPING_INDICATOR_CLIENT_MAX_AGE_MS) {
+            return;
+          }
+        }
         const subs = this.eventSubscribers.get(eventKey);
         if (subs) {
-          // Dispatch to all subscribers
-          subs.forEach(cb => {
+          subs.forEach((cb) => {
             try {
               cb(data);
             } catch (error) {
@@ -823,10 +850,12 @@ class SocketService {
     }
   }
 
-  // Emit typing indicator
   public emitTypingIndicator(gameId: string, isTyping: boolean) {
+    const chatSt = useChatOfflineStore.getState().chatConnectionState;
+    if (chatSt === 'OFFLINE') {
+      return;
+    }
     if (!this.socket || !this.socket.connected) {
-      console.warn('[SocketService] Socket not connected, cannot emit typing indicator');
       return;
     }
 
@@ -919,16 +948,10 @@ class SocketService {
   /**
    * Confirm message receipt (socket or push)
    */
-  public async confirmMessageReceipt(messageId: string, deliveryMethod: 'socket' | 'push') {
-    try {
-      const { api } = await import('@/api');
-      await api.post('/chat/messages/confirm-receipt', {
-        messageId,
-        deliveryMethod
-      });
-    } catch (error) {
-      console.error('[SocketService] Failed to confirm message receipt:', error);
-    }
+  public confirmMessageReceipt(messageId: string, deliveryMethod: 'socket' | 'push') {
+    void import('@/services/chat/chatDeliveryConfirmBatcher').then((m) =>
+      m.enqueueConfirmMessageReceipt(messageId, deliveryMethod)
+    );
   }
 
   /**

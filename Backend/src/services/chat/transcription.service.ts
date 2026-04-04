@@ -1,8 +1,9 @@
 import path from 'path';
 import OpenAI from 'openai';
 import { parseBuffer } from 'music-metadata';
-import { Prisma } from '@prisma/client';
+import { ChatSyncEventType, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
+import { ChatSyncEventService } from './chatSyncEvent.service';
 import { config } from '../../config/env';
 import { ApiError } from '../../utils/ApiError';
 import { logLlmUsage } from '../ai/llmUsageLog.service';
@@ -217,7 +218,7 @@ export class TranscriptionService {
     userId: string,
     audioUrl: string,
     audioDurationMs?: number | null
-  ): Promise<{ transcription: string; languageCode: string | null }> {
+  ): Promise<{ transcription: string; languageCode: string | null; syncSeq?: number }> {
     if (!audioUrl?.trim()) {
       console.error('[transcription] missing_audio_url', { messageId, userId });
       throw new ApiError(400, 'Voice message has no audio');
@@ -295,15 +296,32 @@ export class TranscriptionService {
           });
           throw new ApiError(400, 'Audio longer than 3 minutes cannot be transcribed');
         }
-        const { text, language } = await this.transcribeWithWhisper(audioUrl, userId, messageId);
-        await prisma.messageTranscription.update({
-          where: { messageId },
-          data: {
-            transcription: text,
-            languageCode: language,
-          },
+        const chatMsg = await prisma.chatMessage.findUnique({
+          where: { id: messageId },
+          select: { chatContextType: true, contextId: true },
         });
-        return { transcription: text, languageCode: language };
+        if (!chatMsg) {
+          throw new ApiError(404, 'Message not found');
+        }
+        const { text, language } = await this.transcribeWithWhisper(audioUrl, userId, messageId);
+        const audioTranscription = { transcription: text, languageCode: language };
+        const syncSeq = await prisma.$transaction(async (tx) => {
+          await tx.messageTranscription.update({
+            where: { messageId },
+            data: {
+              transcription: text,
+              languageCode: language,
+            },
+          });
+          return ChatSyncEventService.appendEventInTransaction(
+            tx,
+            chatMsg.chatContextType,
+            chatMsg.contextId,
+            ChatSyncEventType.MESSAGE_TRANSCRIPTION_UPDATED,
+            { messageId, audioTranscription }
+          );
+        });
+        return { transcription: text, languageCode: language, syncSeq };
       } catch (err) {
         const cleared = await prisma.messageTranscription.deleteMany({
           where: {

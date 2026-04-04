@@ -24,24 +24,28 @@ interface ChatMessageData {
   message: any;
   messageId?: string;
   timestamp?: string;
+  syncSeq?: number;
 }
 
 interface ChatReactionData {
   contextType: string;
   contextId: string;
   reaction: any;
+  syncSeq?: number;
 }
 
 interface ChatReadReceiptData {
   contextType: string;
   contextId: string;
   readReceipt: any;
+  syncSeq?: number;
 }
 
 interface ChatDeletedData {
   contextType: string;
   contextId: string;
   messageId: string;
+  syncSeq?: number;
 }
 
 interface ChatUnreadCountData {
@@ -56,6 +60,7 @@ interface ChatMessageTranscriptionData {
   messageId: string;
   audioTranscription: { transcription: string; languageCode: string | null };
   timestamp?: string;
+  syncSeq?: number;
 }
 
 interface BetCreatedData {
@@ -98,6 +103,7 @@ interface PollVoteData {
   pollId: string;
   messageId: string;
   updatedPoll: any;
+  syncSeq?: number;
 }
 
 interface NewBugData {
@@ -279,7 +285,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('bet:resolved', handleBetResolved);
       socketService.on('game-results-updated', handleGameResultsUpdated);
       socketService.on('game-cancelled', handleGameCancelled);
-      socketService.on('poll-vote', handlePollVote);
+      socketService.on('chat:poll-vote', handlePollVote);
       socketService.on('new-bug', handleNewBug);
       socketService.on('presence-initial', handlePresenceInitial);
       socketService.on('presence-update', handlePresenceUpdate);
@@ -302,7 +308,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         () => socketService.off('bet:resolved', handleBetResolved),
         () => socketService.off('game-results-updated', handleGameResultsUpdated),
         () => socketService.off('game-cancelled', handleGameCancelled),
-        () => socketService.off('poll-vote', handlePollVote),
+        () => socketService.off('chat:poll-vote', handlePollVote),
         () => socketService.off('new-bug', handleNewBug),
         () => socketService.off('presence-initial', handlePresenceInitial),
         () => socketService.off('presence-update', handlePresenceUpdate),

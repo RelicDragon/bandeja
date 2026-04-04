@@ -1,10 +1,19 @@
 import { UserChatCard } from './UserChatCard';
 import { GroupChannelCard } from './GroupChannelCard';
+import { ChatListOutboxLine } from './ChatListOutboxLine';
 import { UserChat } from '@/api/chat';
 import { ChatItem, ChatType } from './chatListTypes';
 import { usePlayersStore } from '@/store/playersStore';
 import { useAuthStore } from '@/store/authStore';
 import { MAX_PINNED_CHATS } from '@/utils/chatListConstants';
+import { getChatTitle } from '@/utils/chatListSort';
+import { formatRelativeTime } from '@/utils/dateFormat';
+import { useTranslation } from 'react-i18next';
+import { Trophy } from 'lucide-react';
+import {
+  dismissFailedOutboxForContext,
+  retryFailedOutboxForContext,
+} from '@/services/chat/chatOutboxContextActions';
 
 interface ChatListItemProps {
   item: ChatItem;
@@ -47,6 +56,7 @@ export const ChatListItem = ({
   onMuteUserChat,
   onMuteGroupChannel,
 }: ChatListItemProps) => {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const liveChats = usePlayersStore((state) => state.chats);
   const liveUnreadCounts = usePlayersStore((state) => state.unreadCounts);
@@ -71,6 +81,21 @@ export const ChatListItem = ({
         onClick={() => onChatClick(chat.data.id, 'user', clickOpts)}
         isSelected={isSelected}
         draft={chat.draft}
+        listOutbox={'listOutbox' in chat ? chat.listOutbox ?? undefined : undefined}
+        onOutboxRetry={
+          'listOutbox' in chat && chat.listOutbox?.state === 'failed'
+            ? () => {
+                void retryFailedOutboxForContext('USER', chat.data.id);
+              }
+            : undefined
+        }
+        onOutboxDismiss={
+          'listOutbox' in chat && chat.listOutbox?.state === 'failed'
+            ? () => {
+                void dismissFailedOutboxForContext('USER', chat.data.id);
+              }
+            : undefined
+        }
         isPinned={isPinned}
         onPinToggle={onPinUserChat ? () => onPinUserChat(chat.data.id, isPinned) : undefined}
         canPin={pinnedCount < MAX_PINNED_CHATS || isPinned}
@@ -105,6 +130,64 @@ export const ChatListItem = ({
     );
   }
 
+  if (chat.type === 'game') {
+    const isSelected = selectedChatType === 'game' && selectedChatId === chat.data.id;
+    const title = user ? getChatTitle(chat, user.id) : chat.data.name?.trim() || '';
+    const subtitle =
+      chat.lastMessageDate != null ? formatRelativeTime(chat.lastMessageDate.toISOString()) : null;
+    const listOutbox = 'listOutbox' in chat ? chat.listOutbox ?? undefined : undefined;
+    return (
+      <button
+        type="button"
+        key={`game-${chat.data.id}`}
+        onClick={() => onChatClick(chat.data.id, 'game', clickOpts)}
+        className={`w-full text-left border-b border-gray-200 dark:border-gray-700 last:border-b-0 px-4 py-3 flex flex-col gap-0.5 transition-colors ${
+          isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'
+        }`}
+      >
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="shrink-0 w-11 h-11 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-300">
+            <Trophy className="w-5 h-5" aria-hidden />
+          </div>
+          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-semibold text-gray-900 dark:text-gray-100 truncate flex-1 text-left">
+                {title || t('chat.game', { defaultValue: 'Game' })}
+              </span>
+              {subtitle ? (
+                <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">{subtitle}</span>
+              ) : null}
+              {chat.unreadCount > 0 ? (
+                <span className="shrink-0 min-w-[1.25rem] h-5 px-1.5 rounded-full bg-primary-500 text-white text-xs font-semibold flex items-center justify-center">
+                  {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+                </span>
+              ) : null}
+            </div>
+            {listOutbox ? (
+              <ChatListOutboxLine
+                listOutbox={listOutbox}
+                onRetry={
+                  listOutbox.state === 'failed'
+                    ? () => {
+                        void retryFailedOutboxForContext('GAME', chat.data.id);
+                      }
+                    : undefined
+                }
+                onDismiss={
+                  listOutbox.state === 'failed'
+                    ? () => {
+                        void dismissFailedOutboxForContext('GAME', chat.data.id);
+                      }
+                    : undefined
+                }
+              />
+            ) : null}
+          </div>
+        </div>
+      </button>
+    );
+  }
+
   if (chat.type === 'group' || chat.type === 'channel') {
     const chatTypeForNav: ChatType = chat.type === 'channel' ? 'channel' : 'group';
     const isSelected = (selectedChatType === 'group' || selectedChatType === 'channel') && selectedChatId === chat.data.id;
@@ -124,6 +207,21 @@ export const ChatListItem = ({
           onClick={() => onChatClick(chat.data.id, chatTypeForNav, clickOpts)}
           isSelected={isSelected}
           draft={chat.draft}
+          listOutbox={'listOutbox' in chat ? chat.listOutbox ?? undefined : undefined}
+          onOutboxRetry={
+            'listOutbox' in chat && chat.listOutbox?.state === 'failed'
+              ? () => {
+                  void retryFailedOutboxForContext('GROUP', chat.data.id);
+                }
+              : undefined
+          }
+          onOutboxDismiss={
+            'listOutbox' in chat && chat.listOutbox?.state === 'failed'
+              ? () => {
+                  void dismissFailedOutboxForContext('GROUP', chat.data.id);
+                }
+              : undefined
+          }
           displayTitle={displayTitle}
           displaySubtitle={displaySubtitle}
           sellerGroupedByItem={sellerGroupedByItem}

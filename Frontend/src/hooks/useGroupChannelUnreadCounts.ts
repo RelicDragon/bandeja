@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { chatApi } from '@/api/chat';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useNavigationStore } from '@/store/navigationStore';
+import { patchThreadIndexSetUnreadCount } from '@/services/chat/chatThreadIndex';
 
 export const useGroupChannelUnreadCounts = (channelIds: string[]): Record<string, number> => {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
@@ -26,6 +27,10 @@ export const useGroupChannelUnreadCounts = (channelIds: string[]): Record<string
       const merged = { ...data };
       if (viewing && ids.includes(viewing)) merged[viewing] = 0;
       setUnreadCounts(merged);
+      for (const id of ids) {
+        const n = id === viewing ? 0 : merged[id] ?? 0;
+        void patchThreadIndexSetUnreadCount('GROUP', id, n);
+      }
     } catch {
       if (runId !== fetchRunRef.current) return;
     }
@@ -40,7 +45,9 @@ export const useGroupChannelUnreadCounts = (channelIds: string[]): Record<string
     const { contextId, unreadCount } = lastChatUnreadCount;
     if (channelIdsRef.current.includes(contextId)) {
       const viewing = useNavigationStore.getState().viewingGroupChannelId;
-      setUnreadCounts((prev) => ({ ...prev, [contextId]: contextId === viewing ? 0 : unreadCount }));
+      const next = contextId === viewing ? 0 : unreadCount;
+      setUnreadCounts((prev) => ({ ...prev, [contextId]: next }));
+      void patchThreadIndexSetUnreadCount('GROUP', contextId, next);
     }
   }, [lastChatUnreadCount]);
 

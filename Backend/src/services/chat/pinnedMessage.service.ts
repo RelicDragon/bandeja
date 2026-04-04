@@ -1,8 +1,9 @@
 import prisma from '../../config/database';
-import { ChatContextType, ChatType } from '@prisma/client';
+import { ChatContextType, ChatSyncEventType, ChatType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
 import { TranslationService } from './translation.service';
+import { ChatSyncEventService } from './chatSyncEvent.service';
 
 export class PinnedMessageService {
   static async getPinnedMessages(
@@ -25,7 +26,8 @@ export class PinnedMessageService {
       where: {
         chatContextType,
         contextId,
-        chatType
+        chatType,
+        message: { deletedAt: null },
       },
       orderBy: { order: 'asc' },
       include: {
@@ -35,7 +37,7 @@ export class PinnedMessageService {
       }
     });
 
-    const messages = pins.map((p) => p.message);
+    const messages = pins.map((p) => p.message).filter(Boolean);
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { language: true }
@@ -50,6 +52,10 @@ export class PinnedMessageService {
     });
 
     if (!message) {
+      throw new ApiError(404, 'Message not found');
+    }
+
+    if (message.deletedAt) {
       throw new ApiError(404, 'Message not found');
     }
 
@@ -79,18 +85,35 @@ export class PinnedMessageService {
       _max: { order: true }
     });
 
-    const pin = await prisma.pinnedMessage.create({
-      data: {
-        chatContextType: message.chatContextType,
-        contextId: message.contextId,
-        chatType: message.chatType,
-        messageId: message.id,
-        order: (maxOrder._max.order ?? -1) + 1,
-        pinnedById: userId
-      }
+    const nextOrder = (maxOrder._max.order ?? -1) + 1;
+    let pinSyncSeq: number | undefined;
+    const pin = await prisma.$transaction(async (tx) => {
+      const created = await tx.pinnedMessage.create({
+        data: {
+          chatContextType: message.chatContextType,
+          contextId: message.contextId,
+          chatType: message.chatType,
+          messageId: message.id,
+          order: nextOrder,
+          pinnedById: userId
+        }
+      });
+      pinSyncSeq = await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        message.chatContextType,
+        message.contextId,
+        ChatSyncEventType.MESSAGE_PINNED,
+        {
+          messageId: message.id,
+          chatType: message.chatType,
+          order: created.order,
+          pinnedById: userId,
+        }
+      );
+      return created;
     });
 
-    this.emitPinnedUpdated(message.chatContextType, message.contextId, message.chatType);
+    this.emitPinnedUpdated(message.chatContextType, message.contextId, message.chatType, pinSyncSeq);
     return pin;
   }
 
@@ -105,27 +128,43 @@ export class PinnedMessageService {
 
     await MessageService.validateMessageAccess(message, userId, true);
 
-    await prisma.pinnedMessage.deleteMany({
-      where: {
-        chatContextType: message.chatContextType,
-        contextId: message.contextId,
-        chatType: message.chatType,
-        messageId: message.id
+    let unpinSyncSeq: number | undefined;
+    const removed = await prisma.$transaction(async (tx) => {
+      const del = await tx.pinnedMessage.deleteMany({
+        where: {
+          chatContextType: message.chatContextType,
+          contextId: message.contextId,
+          chatType: message.chatType,
+          messageId: message.id
+        }
+      });
+      if (del.count > 0) {
+        unpinSyncSeq = await ChatSyncEventService.appendEventInTransaction(
+          tx,
+          message.chatContextType,
+          message.contextId,
+          ChatSyncEventType.MESSAGE_UNPINNED,
+          { messageId: message.id, chatType: message.chatType }
+        );
       }
+      return del.count;
     });
 
-    this.emitPinnedUpdated(message.chatContextType, message.contextId, message.chatType);
+    if (removed > 0) {
+      this.emitPinnedUpdated(message.chatContextType, message.contextId, message.chatType, unpinSyncSeq);
+    }
   }
 
   private static emitPinnedUpdated(
     contextType: ChatContextType,
     contextId: string,
-    chatType: ChatType
+    chatType: ChatType,
+    syncSeq?: number
   ) {
     try {
       const socketService = (global as any).socketService;
       if (socketService) {
-        socketService.emitPinnedMessagesUpdated(contextType, contextId, chatType);
+        socketService.emitPinnedMessagesUpdated(contextType, contextId, chatType, syncSeq);
       }
     } catch { /* ignore */ }
   }

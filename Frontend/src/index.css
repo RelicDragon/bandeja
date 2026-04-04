@@ -317,7 +317,7 @@ body {
   width: 100%;
   min-height: 100vh;
   min-height: -webkit-fill-available;
-  min-height: var(--viewport-height, 100vh);
+  min-height: 100dvh;
 }
 
 .capacitor-android body,
@@ -326,7 +326,7 @@ body {
   width: 100%;
   min-height: 100vh;
   min-height: -webkit-fill-available;
-  min-height: var(--viewport-height, 100vh);
+  min-height: 100dvh;
 }
 
 .scrollbar-hide::-webkit-scrollbar {

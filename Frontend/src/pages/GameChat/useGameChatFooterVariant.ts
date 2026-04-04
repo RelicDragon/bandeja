@@ -30,7 +30,11 @@ export interface UseGameChatFooterVariantParams {
   setUserChat: React.Dispatch<React.SetStateAction<import('@/api/chat').UserChat | null>>;
   setTranslateToLanguageForChat: (v: string | null) => void;
   loadContext: () => Promise<unknown>;
-  handleAddOptimisticMessage: (payload: import('@/api/chat').OptimisticMessagePayload) => string;
+  handleAddOptimisticMessage: (
+    payload: import('@/api/chat').OptimisticMessagePayload,
+    pendingImageBlobs?: Blob[],
+    pendingVoiceBlob?: Blob
+  ) => string;
   handleSendQueued: (params: any) => void;
   handleSendFailed: (optimisticId: string) => void;
   handleReplaceOptimisticWithServerMessage: (optimisticId: string, serverMessage: import('@/api/chat').ChatMessage) => void;

@@ -333,7 +333,8 @@ export class GameUpdateService {
           where: {
             gameId: id,
             chatType: 'PHOTOS',
-            mediaUrls: { isEmpty: false }
+            mediaUrls: { isEmpty: false },
+            deletedAt: null,
           }
         });
 
@@ -342,7 +343,8 @@ export class GameUpdateService {
             where: {
               gameId: id,
               chatType: 'PHOTOS',
-              mediaUrls: { isEmpty: false }
+              mediaUrls: { isEmpty: false },
+              deletedAt: null,
             },
             orderBy: { createdAt: 'asc' }
           });
@@ -359,7 +361,8 @@ export class GameUpdateService {
             id: data.mainPhotoId,
             gameId: id,
             chatType: 'PHOTOS',
-            mediaUrls: { isEmpty: false }
+            mediaUrls: { isEmpty: false },
+            deletedAt: null,
           }
         });
 

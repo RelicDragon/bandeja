@@ -128,6 +128,7 @@ model User {
   messageTranslations         MessageTranslation[]
   messageTranscriptions       MessageTranscription[]
   chatDrafts                  ChatDraft[]
+  chatMutationIdempotencies   ChatMutationIdempotency[]
   notificationPreferences     NotificationPreference[]
   pollVotes              PollVote[]
   marketItems             MarketItem[]         @relation("MarketItemSeller")
@@ -668,6 +669,9 @@ model ChatMessage {
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
   editedAt        DateTime?
+  deletedAt       DateTime?
+  clientMutationId String?
+  serverSyncSeq    Int?
   replyToId       String?
   replyTo         ChatMessage?         @relation("MessageReply", fields: [replyToId], references: [id])
   replies         ChatMessage[]        @relation("MessageReply")
@@ -682,6 +686,7 @@ model ChatMessage {
   pinnedIn        PinnedMessage[]
 
   @@index([chatContextType, contextId])
+  @@index([chatContextType, contextId, serverSyncSeq])
   @@index([gameId])
   @@index([senderId])
   @@index([createdAt])
@@ -689,6 +694,8 @@ model ChatMessage {
   @@index([replyToId])
   @@index([chatType])
   @@index([contextId])
+  @@index([deletedAt])
+  @@unique([senderId, clientMutationId])
 }
 
 model PinnedMessage {
@@ -797,6 +804,21 @@ model ChatDraft {
   @@index([userId, updatedAt])
   @@index([chatContextType, contextId])
   @@index([updatedAt])
+}
+
+model ChatMutationIdempotency {
+  id               String   @id @default(cuid())
+  userId           String
+  clientMutationId String   @db.VarChar(128)
+  kind             String   @db.VarChar(32)
+  messageId        String   @db.VarChar(40)
+  payloadHash      String?  @db.VarChar(64)
+  responseJson     Json?
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientMutationId])
+  @@index([userId, createdAt])
 }
 
 model MessageReaction {
@@ -969,6 +991,45 @@ enum ChatContextType {
   BUG
   USER
   GROUP
+}
+
+enum ChatSyncEventType {
+  MESSAGE_CREATED
+  MESSAGE_UPDATED
+  MESSAGE_DELETED
+  REACTION_ADDED
+  REACTION_REMOVED
+  POLL_VOTED
+  MESSAGE_TRANSCRIPTION_UPDATED
+  MESSAGE_READ_RECEIPT
+  MESSAGE_TRANSLATION_UPDATED
+  MESSAGES_READ_BATCH
+  MESSAGE_PINNED
+  MESSAGE_UNPINNED
+  MESSAGE_STATE_UPDATED
+  THREAD_LOCAL_INVALIDATE
+}
+
+model ConversationSyncState {
+  contextType ChatContextType
+  contextId   String
+  maxSeq      Int             @default(0)
+
+  @@id([contextType, contextId])
+  @@index([contextId])
+}
+
+model ChatSyncEvent {
+  id          String            @id @default(cuid())
+  contextType ChatContextType
+  contextId   String
+  seq         Int
+  eventType   ChatSyncEventType
+  payload     Json
+  createdAt   DateTime          @default(now())
+
+  @@unique([contextType, contextId, seq])
+  @@index([contextType, contextId, seq])
 }
 
 enum PollType {

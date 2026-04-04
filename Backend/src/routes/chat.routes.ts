@@ -4,6 +4,7 @@ import { ChatType } from '@prisma/client';
 import {
   createMessage,
   getGameMessages,
+  getBugMessages,
   getGameParticipants,
   updateMessage,
   updateMessageState,
@@ -37,7 +38,11 @@ import {
   getChatTranslationPreference,
   setChatTranslationPreference,
   confirmMessageReceipt,
+  confirmMessageReceiptBatch,
   getMissedMessages,
+  getChatSyncHead,
+  getChatSyncEvents,
+  postChatSyncBatchHead,
   markAllMessagesAsReadForContext,
   saveDraft,
   getDraft,
@@ -47,7 +52,8 @@ import {
   searchMessages,
   getPinnedMessages,
   pinMessage,
-  unpinMessage
+  unpinMessage,
+  getChatMessageById
 } from '../controllers/chat.controller';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -78,7 +84,7 @@ const createMessageLimiter = rateLimit({
 
 const unreadObjectsLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 30,
+  max: 90,
   message: { success: false, message: 'Too many unread requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -89,6 +95,33 @@ const searchMessagesLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
   message: { success: false, message: 'Too many search requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
+
+const chatSyncHeadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: { success: false, message: 'Too many sync requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
+
+const chatSyncEventsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 90,
+  message: { success: false, message: 'Too many sync requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
+
+const chatSyncBatchHeadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 150,
+  message: { success: false, message: 'Too many sync batch requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
@@ -176,6 +209,7 @@ router.get(
 );
 
 router.get('/games/:gameId/messages', getGameMessages);
+router.get('/bugs/:bugId/messages', getBugMessages);
 router.get('/games/:gameId/participants', getGameParticipants);
 router.get('/games/:gameId/unread-count', getGameUnreadCount);
 router.post(
@@ -189,6 +223,12 @@ router.post(
 router.get('/unread-count', getUnreadCount);
 router.get('/unread-objects', unreadObjectsLimiter, getUnreadObjects);
 router.get('/user-games', getUserChatGames);
+
+router.get(
+  '/messages/:messageId',
+  validate([param('messageId').notEmpty().withMessage('Message ID is required')]),
+  getChatMessageById
+);
 
 router.patch(
   '/messages/:messageId',
@@ -366,14 +406,54 @@ router.post(
   confirmMessageReceipt
 );
 
+router.post(
+  '/messages/confirm-receipt-batch',
+  validate([
+    body('messageIds').isArray({ min: 1, max: 200 }).withMessage('messageIds must be an array with 1–200 items'),
+    body('messageIds.*').isString().notEmpty().withMessage('Each messageId must be a non-empty string'),
+    body('deliveryMethod').isIn(['socket', 'push']).withMessage('deliveryMethod must be socket or push')
+  ]),
+  confirmMessageReceiptBatch
+);
+
 router.get(
   '/messages/missed',
   validate([
     query('contextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid contextType'),
     query('contextId').notEmpty().withMessage('contextId is required'),
-    query('lastMessageId').optional().isString().withMessage('lastMessageId must be a string')
+    query('lastMessageId').optional().isString().withMessage('lastMessageId must be a string'),
+    query('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type'),
   ]),
   getMissedMessages
+);
+
+router.get(
+  '/sync/head',
+  chatSyncHeadLimiter,
+  validate([
+    query('contextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid contextType'),
+    query('contextId').notEmpty().withMessage('contextId is required'),
+  ]),
+  getChatSyncHead
+);
+
+router.get(
+  '/sync/events',
+  chatSyncEventsLimiter,
+  validate([
+    query('contextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid contextType'),
+    query('contextId').notEmpty().withMessage('contextId is required'),
+    query('afterSeq').optional().isInt({ min: 0 }).withMessage('afterSeq must be a non-negative integer'),
+    query('limit').optional().isInt({ min: 1, max: 500 }).withMessage('limit must be 1–500'),
+  ]),
+  getChatSyncEvents
+);
+
+router.post(
+  '/sync/batch-head',
+  chatSyncBatchHeadLimiter,
+  validate([body('items').isArray({ min: 1, max: 120 }).withMessage('items is required')]),
+  postChatSyncBatchHead
 );
 
 router.post(

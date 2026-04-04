@@ -5,7 +5,6 @@ import { ChatContextType, ParticipantRole } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { ChatMuteService } from './chatMute.service';
 import { createCityGroupWelcomeMessage, isWelcomeSenderValid } from './cityGroupWelcome.service';
-import { GroupChannelService } from './groupChannel.service';
 
 function isPrismaUniqueViolation(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
@@ -97,13 +96,6 @@ export class CityGroupService {
         where: { id: groupChannelId },
         data: { participantsCount: { increment: 1 } }
       });
-      if (config.cityGroupRefinedSystemMessages) {
-        await GroupChannelService.emitPrivateGroupUserJoinedSystemMessage(
-          groupChannelId,
-          channel.isChannel,
-          userId
-        );
-      }
     }
 
     if (mute) {

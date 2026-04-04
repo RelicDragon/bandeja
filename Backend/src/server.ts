@@ -12,6 +12,7 @@ import { AuctionScheduler } from './services/auctionScheduler.service';
 import { DraftScheduler } from './services/draftScheduler.service';
 import { UnreadAutoReadScheduler } from './services/unreadAutoReadScheduler.service';
 import { BugArchivedScheduler } from './services/bugArchivedScheduler.service';
+import { ChatSyncStatsScheduler } from './services/chatSyncStatsScheduler.service';
 import { reportCriticalError, maybeReportFromConsole } from './services/developerAlert.service';
 import { createServer } from 'http';
 
@@ -62,6 +63,9 @@ const startServer = async () => {
     const bugArchivedScheduler = new BugArchivedScheduler();
     bugArchivedScheduler.start();
 
+    const chatSyncStatsScheduler = new ChatSyncStatsScheduler();
+    chatSyncStatsScheduler.start();
+
     // Create HTTP server
     const httpServer = createServer(app);
     
@@ -99,6 +103,7 @@ const startServer = async () => {
         draftScheduler.stop();
         unreadAutoReadScheduler.stop();
         bugArchivedScheduler.stop();
+        chatSyncStatsScheduler.stop();
         telegramBotService.stop();
         pushNotificationService.shutdown();
 

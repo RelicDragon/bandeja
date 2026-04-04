@@ -13,6 +13,8 @@ import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToStat
 import { getAvailableGameChatTypes } from '@/utils/chatType';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { normalizeChatType } from '@/utils/chatType';
+import { shouldQueueChatMutation } from '@/services/chat/chatMutationNetwork';
+import { enqueueChatMutationMarkReadBatch } from '@/services/chat/chatMutationEnqueue';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
 
@@ -24,7 +26,7 @@ export interface UseGameChatInitialLoadParams {
   currentChatType: ChatType;
   hasSetDefaultChatType: boolean;
   loadContext: () => Promise<unknown>;
-  loadMessages: (page: number, append: boolean, chatType?: ChatType) => Promise<void>;
+  bootstrapThread: (gameChatType?: ChatType) => Promise<boolean>;
   userChat: UserChatType | null;
   handleMarkFailed: (tempId: string) => void;
   handleNewMessageRef: React.MutableRefObject<((message: import('@/api/chat').ChatMessage) => string | void) | undefined>;
@@ -51,7 +53,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     currentChatType,
     hasSetDefaultChatType,
     loadContext,
-    loadMessages,
+    bootstrapThread,
     userChat,
     handleMarkFailed,
     handleNewMessageRef,
@@ -83,8 +85,11 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
       loadingIdRef.current = currentLoadId;
       isLoadingRef.current = true;
       hasLoadedRef.current = false;
-      setIsInitialLoad(true);
-      setIsLoadingMessages(true);
+      const hasCachedThread = messagesRef.current.length > 0;
+      if (!hasCachedThread) {
+        setIsInitialLoad(true);
+        setIsLoadingMessages(true);
+      }
 
       try {
         const loadedContext = await loadContext();
@@ -148,7 +153,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
         }
         if (signal.aborted) return;
 
-        await loadMessages(1, false, contextType === 'GAME' ? effectiveChatType : undefined);
+        await bootstrapThread(contextType === 'GAME' ? effectiveChatType : undefined);
         if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
 
         if (user?.id) {
@@ -176,6 +181,14 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
             if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
               const loadedParentParticipant = loadedGame.parent?.participants?.find(p => p.userId === user.id);
               const availableChatTypes = getAvailableGameChatTypes(loadedGame, loadedUserParticipant ?? undefined, loadedParentParticipant ?? undefined);
+              if (shouldQueueChatMutation() && id) {
+                void enqueueChatMutationMarkReadBatch({
+                  contextType: 'GAME',
+                  contextId: id,
+                  payload: { target: 'context', chatTypes: availableChatTypes as ChatType[] },
+                });
+                return;
+              }
               chatApi.markAllMessagesAsReadForContext('GAME', id, availableChatTypes).then((markReadResponse) => {
                 const markedCount = markReadResponse.data?.count || 0;
                 const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
@@ -184,21 +197,37 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
               }).catch(() => {});
             }
           } else if (contextType === 'USER' && id) {
-            chatApi.markAllMessagesAsReadForContext('USER', id).then((markReadResponse) => {
-              const markedCount = markReadResponse.data?.count || 0;
-              const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-              setUnreadMessages(Math.max(0, unreadMessages - markedCount));
-              const { updateUnreadCount } = usePlayersStore.getState();
-              updateUnreadCount(id, () => 0);
-              window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
-            }).catch(() => {});
+            if (shouldQueueChatMutation()) {
+              void enqueueChatMutationMarkReadBatch({
+                contextType: 'USER',
+                contextId: id,
+                payload: { target: 'context' },
+              });
+            } else {
+              chatApi.markAllMessagesAsReadForContext('USER', id).then((markReadResponse) => {
+                const markedCount = markReadResponse.data?.count || 0;
+                const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+                setUnreadMessages(Math.max(0, unreadMessages - markedCount));
+                const { updateUnreadCount } = usePlayersStore.getState();
+                updateUnreadCount(id, () => 0);
+                window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
+              }).catch(() => {});
+            }
           } else if (contextType === 'GROUP' && id) {
-            chatApi.markGroupChannelAsRead(id).then((markReadResponse) => {
-              const markedCount = markReadResponse.data?.count || 0;
-              const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-              setUnreadMessages(Math.max(0, unreadMessages - markedCount));
-              window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
-            }).catch(() => {});
+            if (shouldQueueChatMutation()) {
+              void enqueueChatMutationMarkReadBatch({
+                contextType: 'GROUP',
+                contextId: id,
+                payload: { target: 'group_channel' },
+              });
+            } else {
+              chatApi.markGroupChannelAsRead(id).then((markReadResponse) => {
+                const markedCount = markReadResponse.data?.count || 0;
+                const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+                setUnreadMessages(Math.max(0, unreadMessages - markedCount));
+                window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
+              }).catch(() => {});
+            }
           }
         };
         runMarkReadBackground();
@@ -213,5 +242,5 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
       ac.abort();
       if (loadingIdRef.current === `${id}-${contextType}`) isLoadingRef.current = false;
     };
-  }, [id, user, contextType, initialChatType, currentChatType, hasSetDefaultChatType, loadContext, loadMessages, userChat, handleMarkFailed, handleNewMessageRef, loadingIdRef, hasLoadedRef, isLoadingRef, messagesRef, setMessages, setCurrentChatType, setIsBlockedByUser, setIsMuted, setTranslateToLanguageForChat, setHasSetDefaultChatType, setIsInitialLoad, setIsLoadingMessages]);
+  }, [id, user, contextType, initialChatType, currentChatType, hasSetDefaultChatType, loadContext, bootstrapThread, userChat, handleMarkFailed, handleNewMessageRef, loadingIdRef, hasLoadedRef, isLoadingRef, messagesRef, setMessages, setCurrentChatType, setIsBlockedByUser, setIsMuted, setTranslateToLanguageForChat, setHasSetDefaultChatType, setIsInitialLoad, setIsLoadingMessages]);
 }

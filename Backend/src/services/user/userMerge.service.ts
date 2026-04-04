@@ -1,10 +1,12 @@
 import {
   ChatContextType,
+  ChatSyncEventType,
   ParticipantRole,
   Prisma,
 } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
+import { ChatSyncEventService } from '../chat/chatSyncEvent.service';
 import { resolveDisplayNameData } from './userDisplayName.service';
 import {
   mergeDuplicateUserInteractions,
@@ -158,6 +160,16 @@ async function resolveOverlappingGameParticipants(
   }
 }
 
+async function appendThreadLocalInvalidate(tx: Tx, contextType: ChatContextType, contextId: string) {
+  await ChatSyncEventService.appendEventInTransaction(
+    tx,
+    contextType,
+    contextId,
+    ChatSyncEventType.THREAD_LOCAL_INVALIDATE,
+    {}
+  );
+}
+
 async function mergeUserChats(tx: Tx, survivorId: string, sourceId: string) {
   const chats = await tx.userChat.findMany({
     where: { OR: [{ user1Id: sourceId }, { user2Id: sourceId }] },
@@ -166,6 +178,7 @@ async function mergeUserChats(tx: Tx, survivorId: string, sourceId: string) {
   for (const chat of chats) {
     const other = chat.user1Id === sourceId ? chat.user2Id : chat.user1Id;
     if (other === survivorId) {
+      await appendThreadLocalInvalidate(tx, ChatContextType.USER, chat.id);
       await tx.pinnedUserChat.deleteMany({ where: { userChatId: chat.id } });
       await tx.chatMessage.deleteMany({
         where: { chatContextType: ChatContextType.USER, contextId: chat.id },
@@ -196,6 +209,8 @@ async function mergeUserChats(tx: Tx, survivorId: string, sourceId: string) {
         where: { chatContextType: ChatContextType.USER, contextId: chat.id },
         data: { contextId: target.id },
       });
+      await appendThreadLocalInvalidate(tx, ChatContextType.USER, target.id);
+      await appendThreadLocalInvalidate(tx, ChatContextType.USER, chat.id);
       await tx.chatMute.updateMany({
         where: { chatContextType: ChatContextType.USER, contextId: chat.id },
         data: { contextId: target.id },
@@ -530,10 +545,24 @@ export class UserMergeService {
           data: { receiverId: survivorId },
         });
 
+        const senderMessageContexts = await tx.chatMessage.groupBy({
+          by: ['chatContextType', 'contextId'],
+          where: { senderId: sourceId },
+        });
+        const mentionMessageContexts = await tx.chatMessage.groupBy({
+          by: ['chatContextType', 'contextId'],
+          where: { mentionIds: { has: sourceId } },
+        });
         await tx.chatMessage.updateMany({
           where: { senderId: sourceId },
           data: { senderId: survivorId },
         });
+        const invalidatedThreadKeys = new Set(
+          senderMessageContexts.map((g) => `${g.chatContextType}:${g.contextId}`)
+        );
+        for (const g of senderMessageContexts) {
+          await appendThreadLocalInvalidate(tx, g.chatContextType, g.contextId);
+        }
         await tx.pinnedMessage.updateMany({
           where: { pinnedById: sourceId },
           data: { pinnedById: survivorId },
@@ -605,6 +634,14 @@ export class UserMergeService {
           SET "mentionIds" = array_replace(COALESCE("mentionIds", ARRAY[]::text[]), ${sourceId}, ${survivorId})
           WHERE ${sourceId} = ANY(COALESCE("mentionIds", ARRAY[]::text[]))
         `;
+
+        for (const g of mentionMessageContexts) {
+          const k = `${g.chatContextType}:${g.contextId}`;
+          if (!invalidatedThreadKeys.has(k)) {
+            await appendThreadLocalInvalidate(tx, g.chatContextType, g.contextId);
+            invalidatedThreadKeys.add(k);
+          }
+        }
 
         await dedupePairTables(tx, survivorId);
         await dedupeLeagueParticipants(tx, survivorId);

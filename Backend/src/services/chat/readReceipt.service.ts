@@ -2,8 +2,11 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
-import { ParticipantRole, ChatContextType } from '@prisma/client';
+import { ChatContextType, ChatSyncEventType, ParticipantRole, Prisma } from '@prisma/client';
 import { UnreadCountBatchService } from './unreadCountBatch.service';
+import { ChatSyncEventService } from './chatSyncEvent.service';
+
+const READ_SYNC_CHUNK = 400;
 
 export class ReadReceiptService {
   static async markMessageAsRead(messageId: string, userId: string) {
@@ -15,29 +18,52 @@ export class ReadReceiptService {
       throw new ApiError(404, 'Message not found');
     }
 
+    if (message.deletedAt) {
+      throw new ApiError(404, 'Message not found');
+    }
+
     await MessageService.validateMessageAccess(message, userId);
 
-    await prisma.messageReadReceipt.upsert({
-      where: {
-        messageId_userId: {
+    const readAt = new Date();
+
+    const syncSeq = await prisma.$transaction(async (tx) => {
+      await tx.messageReadReceipt.upsert({
+        where: {
+          messageId_userId: {
+            messageId,
+            userId
+          }
+        },
+        update: {
+          readAt
+        },
+        create: {
           messageId,
-          userId
+          userId,
+          readAt
         }
-      },
-      update: {
-        readAt: new Date()
-      },
-      create: {
-        messageId,
-        userId,
-        readAt: new Date()
-      }
+      });
+
+      return ChatSyncEventService.appendEventInTransaction(
+        tx,
+        message.chatContextType,
+        message.contextId,
+        ChatSyncEventType.MESSAGE_READ_RECEIPT,
+        {
+          readReceipt: {
+            messageId,
+            userId,
+            readAt: readAt.toISOString(),
+          },
+        }
+      );
     });
 
-    return { 
-      messageId, 
-      userId, 
-      readAt: new Date() 
+    return {
+      messageId,
+      userId,
+      readAt,
+      syncSeq,
     };
   }
 
@@ -69,6 +95,7 @@ export class ReadReceiptService {
           chatType: {
             in: chatTypeFilter
           },
+          deletedAt: null,
           senderId: {
             not: userId
           },
@@ -98,6 +125,7 @@ export class ReadReceiptService {
         where: {
           chatContextType: 'USER',
           contextId: chat.id,
+          deletedAt: null,
           senderId: { not: userId },
           readReceipts: {
             none: { userId }
@@ -119,6 +147,7 @@ export class ReadReceiptService {
       const bugUnreadCount = await prisma.chatMessage.count({
         where: {
           chatContextType: 'BUG',
+          deletedAt: null,
           senderId: { not: userId },
           readReceipts: {
             none: { userId }
@@ -149,6 +178,7 @@ export class ReadReceiptService {
           where: {
             chatContextType: 'BUG',
             contextId: bugId,
+            deletedAt: null,
             senderId: { not: userId },
             readReceipts: {
               none: { userId }
@@ -181,6 +211,7 @@ export class ReadReceiptService {
         chatType: {
           in: chatTypeFilter
         },
+        deletedAt: null,
         senderId: {
           not: userId
         },
@@ -210,6 +241,7 @@ export class ReadReceiptService {
           chatContextType: 'GAME',
           contextId: game.id,
           chatType: { in: chatTypeFilter },
+          deletedAt: null,
           senderId: { not: userId },
           readReceipts: { none: { userId } },
         },
@@ -255,6 +287,7 @@ export class ReadReceiptService {
       where: {
         chatContextType: 'USER',
         contextId: chatId,
+        deletedAt: null,
         senderId: { not: userId },
         readReceipts: {
           none: { userId }
@@ -290,6 +323,7 @@ export class ReadReceiptService {
       where: {
         chatContextType: ChatContextType.USER,
         contextId: { in: Array.from(validChatIds) },
+        deletedAt: null,
         senderId: { not: userId },
         readReceipts: { none: { userId } }
       },
@@ -350,6 +384,7 @@ export class ReadReceiptService {
         chatType: {
           in: chatTypeFilter
         },
+        deletedAt: null,
         senderId: {
           not: userId
         },
@@ -365,23 +400,35 @@ export class ReadReceiptService {
     });
 
     if (unreadMessages.length === 0) {
-      return { count: 0 };
+      return { count: 0, syncSeq: undefined as number | undefined };
     }
 
-    // Mark all messages as read
     const readAt = new Date();
-    const readReceipts = unreadMessages.map(message => ({
+    const readAtIso = readAt.toISOString();
+    const readReceipts = unreadMessages.map((message) => ({
       messageId: message.id,
       userId,
-      readAt
+      readAt,
     }));
 
-    await prisma.messageReadReceipt.createMany({
-      data: readReceipts,
-      skipDuplicates: true
+    return prisma.$transaction(async (tx) => {
+      await tx.messageReadReceipt.createMany({
+        data: readReceipts,
+        skipDuplicates: true,
+      });
+      const ids = unreadMessages.map((m) => m.id);
+      let syncSeq: number | undefined;
+      for (let i = 0; i < ids.length; i += READ_SYNC_CHUNK) {
+        syncSeq = await ChatSyncEventService.appendEventInTransaction(
+          tx,
+          'GAME',
+          gameId,
+          ChatSyncEventType.MESSAGES_READ_BATCH,
+          { userId, readAt: readAtIso, messageIds: ids.slice(i, i + READ_SYNC_CHUNK) }
+        );
+      }
+      return { count: unreadMessages.length, syncSeq };
     });
-
-    return { count: unreadMessages.length };
   }
 
   static async markUserChatAsRead(chatId: string, userId: string) {
@@ -391,6 +438,7 @@ export class ReadReceiptService {
       where: {
         chatContextType: 'USER',
         contextId: chatId,
+        deletedAt: null,
         senderId: { not: userId },
         readReceipts: {
           none: { userId }
@@ -402,22 +450,35 @@ export class ReadReceiptService {
     });
 
     if (unreadMessages.length === 0) {
-      return { count: 0 };
+      return { count: 0, syncSeq: undefined as number | undefined };
     }
 
     const readAt = new Date();
-    const readReceipts = unreadMessages.map(message => ({
+    const readAtIso = readAt.toISOString();
+    const readReceipts = unreadMessages.map((message) => ({
       messageId: message.id,
       userId,
-      readAt
+      readAt,
     }));
 
-    await prisma.messageReadReceipt.createMany({
-      data: readReceipts,
-      skipDuplicates: true
+    return prisma.$transaction(async (tx) => {
+      await tx.messageReadReceipt.createMany({
+        data: readReceipts,
+        skipDuplicates: true,
+      });
+      const ids = unreadMessages.map((m) => m.id);
+      let syncSeq: number | undefined;
+      for (let i = 0; i < ids.length; i += READ_SYNC_CHUNK) {
+        syncSeq = await ChatSyncEventService.appendEventInTransaction(
+          tx,
+          'USER',
+          chatId,
+          ChatSyncEventType.MESSAGES_READ_BATCH,
+          { userId, readAt: readAtIso, messageIds: ids.slice(i, i + READ_SYNC_CHUNK) }
+        );
+      }
+      return { count: unreadMessages.length, syncSeq };
     });
-
-    return { count: unreadMessages.length };
   }
 
   /**
@@ -435,19 +496,22 @@ export class ReadReceiptService {
       const result = await this.getUserChatUnreadCount(contextId, userId);
       return result.count;
     } else if (contextType === 'GROUP') {
-      const messages = await prisma.chatMessage.findMany({
-        where: {
-          chatContextType: 'GROUP',
-          contextId,
-          senderId: { not: userId }
-        },
-        include: {
-          readReceipts: {
-            where: { userId }
-          }
-        }
-      });
-      return messages.filter(msg => msg.readReceipts.length === 0).length;
+      const rows = await prisma.$queryRaw<Array<{ n: bigint }>>(
+        Prisma.sql`
+          SELECT COUNT(*)::bigint AS n
+          FROM "ChatMessage" m
+          WHERE m."chatContextType" = 'GROUP'::"ChatContextType"
+            AND m."contextId" = ${contextId}
+            AND m."deletedAt" IS NULL
+            AND m."senderId" IS NOT NULL
+            AND m."senderId" <> ${userId}
+            AND NOT EXISTS (
+              SELECT 1 FROM "MessageReadReceipt" r
+              WHERE r."messageId" = m.id AND r."userId" = ${userId}
+            )
+        `
+      );
+      return Number(rows[0]?.n ?? 0);
     }
     return 0;
   }
@@ -471,33 +535,49 @@ export class ReadReceiptService {
         where: {
           chatContextType: 'GROUP',
           contextId,
-          senderId: { not: userId }
-        }
+          deletedAt: null,
+          senderId: { not: userId },
+        },
       });
 
-      const readReceipts = await Promise.all(
-        messages.map(message =>
-          prisma.messageReadReceipt.upsert({
+      if (messages.length === 0) {
+        return { count: 0, syncSeq: undefined as number | undefined };
+      }
+
+      const readAt = new Date();
+      const readAtIso = readAt.toISOString();
+
+      return prisma.$transaction(async (tx) => {
+        for (const message of messages) {
+          await tx.messageReadReceipt.upsert({
             where: {
               messageId_userId: {
                 messageId: message.id,
-                userId
-              }
+                userId,
+              },
             },
-            update: {
-              readAt: new Date()
-            },
+            update: { readAt },
             create: {
               messageId: message.id,
               userId,
-              readAt: new Date()
-            }
-          })
-        )
-      );
-
-      return { count: readReceipts.length };
+              readAt,
+            },
+          });
+        }
+        const ids = messages.map((m) => m.id);
+        let syncSeq: number | undefined;
+        for (let i = 0; i < ids.length; i += READ_SYNC_CHUNK) {
+          syncSeq = await ChatSyncEventService.appendEventInTransaction(
+            tx,
+            'GROUP',
+            contextId,
+            ChatSyncEventType.MESSAGES_READ_BATCH,
+            { userId, readAt: readAtIso, messageIds: ids.slice(i, i + READ_SYNC_CHUNK) }
+          );
+        }
+        return { count: messages.length, syncSeq };
+      });
     }
-    return { count: 0 };
+    return { count: 0, syncSeq: undefined as number | undefined };
   }
 }

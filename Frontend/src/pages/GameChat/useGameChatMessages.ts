@@ -1,10 +1,24 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { chatApi, type ChatMessage, type ChatMessageWithStatus } from '@/api/chat';
+import {
+  loadLocalMessagesForThread,
+  loadLocalMessagesForThreadProgressive,
+  loadLocalMessagesOlderThan,
+  persistChatMessagesFromApi,
+} from '@/services/chat/chatLocalApply';
+import { reconcileChatThreadOpen } from '@/services/chat/chatOpenReconcile';
+import { hydrateLastMessageIdFromDexieIfMissing } from '@/services/chat/messageContextHead';
+import { backfillChatHistoryPages } from '@/services/chat/chatHistoryBackfill';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { normalizeChatType } from '@/utils/chatType';
+import { scrollChatToBottom } from '@/utils/chatScrollHelpers';
+import { recordChatSyncThreadDexiePaintMs } from '@/services/chat/chatSyncMetrics';
+import { mergeChatMessagesAscending, mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import type { RefObject } from 'react';
+
+const PAGE_SIZE = 50;
 
 export interface UseGameChatMessagesParams {
   id: string | undefined;
@@ -14,6 +28,11 @@ export interface UseGameChatMessagesParams {
   isEmbedded: boolean;
   chatContainerRef: RefObject<HTMLDivElement | null>;
   currentIdRef: RefObject<string | undefined>;
+}
+
+function tailMessageId(messages: ChatMessage[]): string | null {
+  if (messages.length === 0) return null;
+  return messages[messages.length - 1]!.id;
 }
 
 export function useGameChatMessages({
@@ -37,26 +56,81 @@ export function useGameChatMessages({
   const loadingIdRef = useRef<string | undefined>(undefined);
   const hasLoadedRef = useRef(false);
   const isLoadingRef = useRef(false);
+  const pendingHistoryBackfillRef = useRef(false);
+
+  useEffect(() => {
+    if (!id) return;
+    let alive = true;
+    const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
+    (async () => {
+      const local = await loadLocalMessagesForThreadProgressive(contextType, id, effectiveChatType, (tail) => {
+        if (!alive || tail.length === 0) return;
+        const asStatus = tail as ChatMessageWithStatus[];
+        messagesRef.current = asStatus;
+        setMessages(asStatus);
+        useChatSyncStore.getState().setLastThreadPaint('dexie');
+        if (typeof performance !== 'undefined' && t0 > 0) {
+          recordChatSyncThreadDexiePaintMs(performance.now() - t0);
+        }
+        setIsLoadingMessages(false);
+        setIsInitialLoad(false);
+      });
+      if (!alive || local.length === 0) return;
+      const asStatus = local as ChatMessageWithStatus[];
+      messagesRef.current = asStatus;
+      setMessages(asStatus);
+      useChatSyncStore.getState().setLastThreadPaint('dexie');
+      if (typeof performance !== 'undefined' && t0 > 0) {
+        recordChatSyncThreadDexiePaintMs(performance.now() - t0);
+      }
+      setIsLoadingMessages(false);
+      setIsInitialLoad(false);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [id, contextType, effectiveChatType]);
 
   const scrollToBottom = useCallback(() => {
-    const scroll = () => {
-      if (chatContainerRef.current) {
-        const messagesContainer = chatContainerRef.current.querySelector('.overflow-y-auto') as HTMLElement;
-        if (messagesContainer) {
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-      }
-    };
-    requestAnimationFrame(() => {
-      scroll();
-      setTimeout(scroll, 50);
-      setTimeout(scroll, 150);
-    });
+    scrollChatToBottom(chatContainerRef);
   }, [chatContainerRef]);
 
+  const fetchMessagesPage = useCallback(
+    async (
+      opts: { append: false; chatTypeOverride?: ChatType } | { append: true; oldestMessageId: string; chatTypeOverride?: ChatType }
+    ): Promise<ChatMessage[]> => {
+      if (!id) return [];
+      const effectiveType = opts.chatTypeOverride ?? currentChatType;
+      if (contextType === 'USER') {
+        if (opts.append) {
+          return chatApi.getUserChatMessages(id, 1, PAGE_SIZE, opts.oldestMessageId);
+        }
+        return chatApi.getUserChatMessages(id, 1, PAGE_SIZE);
+      }
+      if (contextType === 'GROUP') {
+        if (opts.append) {
+          return chatApi.getGroupChannelMessages(id, 1, PAGE_SIZE, opts.oldestMessageId);
+        }
+        return chatApi.getGroupChannelMessages(id, 1, PAGE_SIZE);
+      }
+      if (contextType === 'BUG') {
+        if (opts.append) {
+          return chatApi.getBugMessages(id, 1, PAGE_SIZE, opts.oldestMessageId);
+        }
+        return chatApi.getBugMessages(id, 1, PAGE_SIZE);
+      }
+      const normalizedChatType = normalizeChatType(effectiveType);
+      if (opts.append) {
+        return chatApi.getMessages(contextType, id, 1, PAGE_SIZE, normalizedChatType, opts.oldestMessageId);
+      }
+      return chatApi.getMessages(contextType, id, 1, PAGE_SIZE, normalizedChatType);
+    },
+    [id, contextType, currentChatType]
+  );
+
   const loadMessages = useCallback(
-    async (pageNum = 1, append = false, chatTypeOverride?: ChatType) => {
-      if (!id) return;
+    async (append = false, chatTypeOverride?: ChatType): Promise<boolean> => {
+      if (!id) return false;
       const requestId = id;
       const effectiveType = chatTypeOverride ?? currentChatType;
       try {
@@ -65,29 +139,64 @@ export function useGameChatMessages({
           setIsInitialLoad(true);
         }
         let response: ChatMessage[];
-        if (contextType === 'USER') {
-          response = await chatApi.getUserChatMessages(id, pageNum, 50);
-        } else if (contextType === 'GROUP') {
-          response = await chatApi.getGroupChannelMessages(id, pageNum, 50);
+        if (append) {
+          const oldest = messagesRef.current[0];
+          if (!oldest) return false;
+          response = await fetchMessagesPage({
+            append: true,
+            oldestMessageId: oldest.id,
+            chatTypeOverride: effectiveType,
+          });
         } else {
-          const normalizedChatType = normalizeChatType(effectiveType);
-          response = await chatApi.getMessages(contextType, id, pageNum, 50, normalizedChatType);
+          response = await fetchMessagesPage({ append: false, chatTypeOverride: effectiveType });
         }
-        if (currentIdRef.current !== requestId) return;
+        if (currentIdRef.current !== requestId) return false;
         if (append) {
           setMessages((prev) => {
-            const newMessages = [...response, ...prev];
+            const newMessages = mergeChatMessagesAscending(response, prev);
             messagesRef.current = newMessages;
             return newMessages;
           });
         } else {
-          messagesRef.current = response;
-          setMessages(response);
+          setMessages((prev) => {
+            const merged = mergeServerPageWithPendingOptimistics(prev, response);
+            messagesRef.current = merged;
+            return merged;
+          });
           scrollToBottom();
-          const lastId = response.length > 0 ? response[response.length - 1]?.id : null;
-          if (id && lastId) useChatSyncStore.getState().setLastMessageId(contextType, id, lastId);
+          const lastId = tailMessageId(response);
+          if (id && lastId) {
+            useChatSyncStore
+              .getState()
+              .setLastMessageId(
+                contextType,
+                id,
+                lastId,
+                contextType === 'GAME' ? effectiveType : undefined
+              );
+          }
         }
-        setHasMoreMessages(response.length === 50);
+        setHasMoreMessages(response.length === PAGE_SIZE);
+        void persistChatMessagesFromApi(response).catch(() => {});
+        if (!append && currentIdRef.current === requestId) {
+          useChatSyncStore.getState().setLastThreadPaint('network');
+          await reconcileChatThreadOpen({
+            contextType,
+            contextId: requestId,
+            gameChatType: effectiveType,
+            currentIdRef,
+            messagesRef,
+            setMessages,
+          });
+          const shouldBackfill = pendingHistoryBackfillRef.current;
+          pendingHistoryBackfillRef.current = false;
+          if (shouldBackfill && response.length === PAGE_SIZE) {
+            const oldest = messagesRef.current[0];
+            if (oldest && currentIdRef.current === requestId) {
+              void backfillChatHistoryPages(contextType, requestId, effectiveType, oldest.id).catch(() => {});
+            }
+          }
+        }
         if (!append) {
           setIsLoadingMessages(false);
           const delay = isEmbedded ? 100 : 500;
@@ -95,53 +204,214 @@ export function useGameChatMessages({
             if (currentIdRef.current === requestId) setIsInitialLoad(false);
           }, delay);
         }
+        return true;
       } catch (error) {
         console.error('Failed to load messages:', error);
         if (!append) {
+          pendingHistoryBackfillRef.current = false;
           setIsLoadingMessages(false);
           setIsInitialLoad(false);
         }
+        return false;
       }
     },
-    [id, contextType, currentChatType, isEmbedded, scrollToBottom, currentIdRef]
+    [id, contextType, currentChatType, isEmbedded, scrollToBottom, currentIdRef, fetchMessagesPage]
+  );
+
+  const bootstrapThread = useCallback(
+    async (gameChatType?: ChatType): Promise<boolean> => {
+      if (!id) return false;
+      const requestId = id;
+      const effectiveType = gameChatType ?? currentChatType;
+      const runBackgroundReconcile = () => {
+        void reconcileChatThreadOpen({
+          contextType,
+          contextId: requestId,
+          gameChatType: effectiveType,
+          currentIdRef,
+          messagesRef,
+          setMessages,
+        });
+      };
+
+      const paintFromDexie = (localMsgs: ChatMessage[]) => {
+        setMessages((prev) => {
+          const merged = mergeServerPageWithPendingOptimistics(prev, localMsgs);
+          messagesRef.current = merged;
+          return merged;
+        });
+        setHasMoreMessages(true);
+        setPage(1);
+        setIsLoadingMessages(false);
+        const delay = isEmbedded ? 100 : 500;
+        setTimeout(() => {
+          if (currentIdRef.current === requestId) setIsInitialLoad(false);
+        }, delay);
+        const lid = tailMessageId(localMsgs);
+        if (lid) {
+          useChatSyncStore
+            .getState()
+            .setLastMessageId(contextType, requestId, lid, contextType === 'GAME' ? effectiveType : undefined);
+        }
+        useChatSyncStore.getState().setLastThreadPaint('dexie');
+        scrollToBottom();
+      };
+
+      try {
+        const local = await loadLocalMessagesForThreadProgressive(
+          contextType,
+          requestId,
+          effectiveType,
+          (tail) => {
+            if (currentIdRef.current !== requestId || tail.length === 0) return;
+            paintFromDexie(tail);
+          }
+        );
+        if (currentIdRef.current !== requestId) return false;
+
+        if (local.length > 0) {
+          paintFromDexie(local);
+          runBackgroundReconcile();
+          return true;
+        }
+
+        await hydrateLastMessageIdFromDexieIfMissing(
+          contextType,
+          requestId,
+          contextType === 'GAME' ? effectiveType : undefined
+        );
+        if (currentIdRef.current !== requestId) return false;
+
+        const lastId = useChatSyncStore
+          .getState()
+          .getLastMessageId(contextType, requestId, contextType === 'GAME' ? effectiveType : undefined);
+        if (lastId) {
+          await reconcileChatThreadOpen({
+            contextType,
+            contextId: requestId,
+            gameChatType: effectiveType,
+            currentIdRef,
+            messagesRef,
+            setMessages,
+          });
+          if (currentIdRef.current !== requestId) return false;
+          const afterSync = await loadLocalMessagesForThread(contextType, requestId, effectiveType);
+          if (afterSync.length > 0) {
+            paintFromDexie(afterSync);
+            return true;
+          }
+        }
+
+        pendingHistoryBackfillRef.current = true;
+        return loadMessages(false, gameChatType);
+      } catch (e) {
+        console.error('bootstrapThread:', e);
+        pendingHistoryBackfillRef.current = true;
+        return loadMessages(false, gameChatType);
+      }
+    },
+    [id, contextType, currentChatType, isEmbedded, scrollToBottom, currentIdRef, loadMessages]
   );
 
   const loadMoreMessages = useCallback(async () => {
-    if (!hasMoreMessages || isLoadingMore) return;
+    if (!hasMoreMessages || isLoadingMore || !id) return;
     setIsLoadingMore(true);
     justLoadedOlderMessagesRef.current = true;
-    const nextPage = page + 1;
-    await loadMessages(nextPage, true);
-    setPage(nextPage);
-    setIsLoadingMore(false);
-    setTimeout(() => {
-      justLoadedOlderMessagesRef.current = false;
-    }, 500);
-  }, [hasMoreMessages, isLoadingMore, page, loadMessages]);
+    try {
+      const oldest = messagesRef.current[0];
+      if (!oldest) {
+        setHasMoreMessages(false);
+        return;
+      }
+      const olderLocal = await loadLocalMessagesOlderThan(
+        contextType,
+        id,
+        effectiveChatType,
+        oldest,
+        PAGE_SIZE
+      );
+      if (currentIdRef.current !== id) return;
+
+      if (olderLocal.length > 0) {
+        void persistChatMessagesFromApi(olderLocal).catch(() => {});
+        setMessages((prev) => {
+          const merged = mergeChatMessagesAscending(olderLocal, prev);
+          messagesRef.current = merged;
+          return merged;
+        });
+        setHasMoreMessages(true);
+        return;
+      }
+
+      const response = await fetchMessagesPage({
+        append: true,
+        oldestMessageId: oldest.id,
+        chatTypeOverride: currentChatType,
+      });
+      if (currentIdRef.current !== id) return;
+      void persistChatMessagesFromApi(response).catch(() => {});
+      setMessages((prev) => {
+        const merged = mergeChatMessagesAscending(response, prev);
+        messagesRef.current = merged;
+        return merged;
+      });
+      setHasMoreMessages(response.length === PAGE_SIZE);
+    } catch (error) {
+      console.error('Failed to load more messages:', error);
+    } finally {
+      setIsLoadingMore(false);
+      setTimeout(() => {
+        justLoadedOlderMessagesRef.current = false;
+      }, 500);
+    }
+  }, [hasMoreMessages, isLoadingMore, id, contextType, effectiveChatType, currentChatType, currentIdRef, fetchMessagesPage]);
 
   const loadMessagesBeforeMessageId = useCallback(
     async (messageId: string): Promise<boolean> => {
       if (!id) return false;
-      let cursor: string | undefined = messageId;
-      const maxIterations = 20;
-      for (let i = 0; i < maxIterations; i++) {
-        const batch = await chatApi.getMessages(contextType, id, 1, 50, effectiveChatType, cursor);
-        if (batch.length > 0) {
-          setMessages((prev) => {
-            const next = [...batch, ...prev];
-            messagesRef.current = next;
-            return next;
-          });
-          if (batch.some((m) => m.id === messageId)) return true;
-          if (batch.length < 50) return false;
-          cursor = batch[0].id;
-        } else {
-          return false;
-        }
+      let anchor: ChatMessage;
+      try {
+        anchor = await chatApi.getChatMessageById(messageId);
+      } catch {
+        return false;
       }
-      return false;
+      if (anchor.chatContextType !== contextType || anchor.contextId !== id) return false;
+      if (
+        contextType === 'GAME' &&
+        normalizeChatType(anchor.chatType as ChatType) !== normalizeChatType(effectiveChatType)
+      ) {
+        return false;
+      }
+
+      let acc = mergeChatMessagesAscending(messagesRef.current, [anchor]);
+      messagesRef.current = acc;
+      setMessages(acc);
+      void persistChatMessagesFromApi([anchor]).catch(() => {});
+
+      let cursor = messageId;
+      for (let i = 0; i < 20; i++) {
+        const batch = await chatApi.getMessages(contextType, id, 1, PAGE_SIZE, effectiveChatType, cursor);
+        if (batch.length === 0) break;
+        void persistChatMessagesFromApi(batch).catch(() => {});
+        acc = mergeChatMessagesAscending(acc, batch);
+        messagesRef.current = acc;
+        setMessages(acc);
+        if (batch.length < PAGE_SIZE) break;
+        cursor = batch[0].id;
+      }
+
+      if (currentIdRef.current !== id) return acc.some((m) => m.id === messageId);
+      await reconcileChatThreadOpen({
+        contextType,
+        contextId: id,
+        gameChatType: effectiveChatType,
+        currentIdRef,
+        messagesRef,
+        setMessages,
+      });
+      return messagesRef.current.some((m) => m.id === messageId);
     },
-    [id, contextType, effectiveChatType]
+    [id, contextType, effectiveChatType, currentIdRef, messagesRef, setMessages]
   );
 
   return {
@@ -167,5 +437,6 @@ export function useGameChatMessages({
     loadMessages,
     loadMoreMessages,
     loadMessagesBeforeMessageId,
+    bootstrapThread,
   };
 }

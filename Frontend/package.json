@@ -41,6 +41,8 @@
     "axios": "^1.6.2",
     "bootstrap-icons": "^1.13.1",
     "date-fns": "^3.0.0",
+    "dexie": "^4.4.2",
+    "dexie-react-hooks": "^1.1.7",
     "dom-to-image": "^2.6.0",
     "framer-motion": "^12.23.24",
     "html2canvas": "^1.4.1",

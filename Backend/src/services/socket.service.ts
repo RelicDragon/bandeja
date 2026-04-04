@@ -19,6 +19,7 @@ const PRESENCE_OFFLINE_FLUSH_MS = 2000;
 const MAX_PRESENCE_SUBSCRIPTION = 3000;
 const PRESENCE_SUBSCRIBE_COOLDOWN_MS = 2000;
 const MAX_PRESENCE_USER_ID_LENGTH = 64;
+const TYPING_INDICATOR_TTL_MS = 6000;
 
 class SocketService {
   private io: SocketIOServer;
@@ -28,6 +29,7 @@ class SocketService {
   private presenceBufferBySocket: Map<string, { online: Set<string>; offline: Set<string> }> = new Map();
   private presenceFlushTimers: Map<string, NodeJS.Timeout> = new Map();
   private presenceLastSubscribeAt: Map<string, number> = new Map();
+  private typingExpiryTimers = new Map<string, NodeJS.Timeout>();
   private messageDeliveryAttempts = new Map<string, {
     messageId: string;
     contextType: ChatContextType;
@@ -159,13 +161,34 @@ class SocketService {
         socket.emit('joined-game-room', { gameId });
       }));
 
-      // Handle leaving game chat rooms
-      socket.on('leave-game-room', (gameId: string) => {
-        socket.leave(`game-${gameId}`);
-        socket.gameRooms?.delete(gameId);
-        console.log(`User ${socket.userId} left game room ${gameId}`);
-        socket.emit('left-game-room', { gameId });
-      });
+      socket.on(
+        'leave-game-room',
+        this.wrapAsync(socket, async (gameId: string) => {
+          if (typeof gameId !== 'string' || !gameId) {
+            socket.emit('left-game-room', { gameId });
+            return;
+          }
+          const uid = socket.userId;
+          if (uid) {
+            const roomSockets = await this.io.in(`game-${gameId}`).fetchSockets();
+            const sameUserOtherTab = roomSockets.some((s) => {
+              if (s.id === socket.id) return false;
+              const otherUid = (s as unknown as AuthenticatedSocket).userId;
+              return otherUid === uid;
+            });
+            socket.leave(`game-${gameId}`);
+            socket.gameRooms?.delete(gameId);
+            if (!sameUserOtherTab) {
+              this.forceTypingOffForUserInGame(gameId, uid);
+            }
+          } else {
+            socket.leave(`game-${gameId}`);
+            socket.gameRooms?.delete(gameId);
+          }
+          console.log(`User ${socket.userId} left game room ${gameId}`);
+          socket.emit('left-game-room', { gameId });
+        })
+      );
 
       socket.on('join-bug-room', this.wrapAsync(socket, async (bugId: string) => {
         if (!socket.userId) return;
@@ -292,6 +315,7 @@ class SocketService {
         console.log(`User ${userId} disconnected`);
 
         if (userId) {
+          this.clearTypingTimersForUser(userId);
           const userSockets = this.connectedUsers.get(userId);
           if (userSockets) {
             userSockets.delete(socket.id);
@@ -312,6 +336,33 @@ class SocketService {
           // Still respond to maintain connection, but log invalid ping
           console.warn(`[SocketService] Invalid ping from user ${socket.userId}:`, data);
           socket.emit('pong', { timestamp: Date.now() });
+        }
+      });
+
+      socket.on('typing-indicator', (data: { gameId?: string; isTyping?: boolean }) => {
+        const userId = socket.userId;
+        const gameId = typeof data?.gameId === 'string' ? data.gameId : '';
+        if (!userId || !gameId || !socket.gameRooms?.has(gameId)) return;
+        const isTyping = !!data?.isTyping;
+        const typingPayload = { gameId, userId, isTyping, timestamp: new Date().toISOString() };
+        this.io.to(`game-${gameId}`).emit('typing-indicator', typingPayload);
+        const key = `${gameId}:${userId}`;
+        const prev = this.typingExpiryTimers.get(key);
+        if (prev) {
+          clearTimeout(prev);
+          this.typingExpiryTimers.delete(key);
+        }
+        if (isTyping) {
+          const t = setTimeout(() => {
+            this.typingExpiryTimers.delete(key);
+            this.io.to(`game-${gameId}`).emit('typing-indicator', {
+              gameId,
+              userId,
+              isTyping: false,
+              timestamp: new Date().toISOString(),
+            });
+          }, TYPING_INDICATOR_TTL_MS);
+          this.typingExpiryTimers.set(key, t);
         }
       });
 
@@ -469,54 +520,29 @@ class SocketService {
     this.presenceBufferBySocket.delete(socketId);
   }
 
-  // Emit message reaction to all users in a game room
-  public emitMessageReaction(gameId: string, reaction: any) {
-    this.io.to(`game-${gameId}`).emit('message-reaction', reaction);
+  private forceTypingOffForUserInGame(gameId: string, userId: string): void {
+    const key = `${gameId}:${userId}`;
+    const t = this.typingExpiryTimers.get(key);
+    if (t) {
+      clearTimeout(t);
+      this.typingExpiryTimers.delete(key);
+    }
+    this.io.to(`game-${gameId}`).emit('typing-indicator', {
+      gameId,
+      userId,
+      isTyping: false,
+      timestamp: new Date().toISOString(),
+    });
   }
 
-  // Emit message read receipt to all users in a game room
-  public emitReadReceipt(gameId: string, readReceipt: any) {
-    this.io.to(`game-${gameId}`).emit('read-receipt', readReceipt);
-  }
-
-  // Emit message deletion to all users in a game room
-  public emitMessageDeleted(gameId: string, messageId: string) {
-    this.io.to(`game-${gameId}`).emit('message-deleted', { messageId });
-  }
-
-  // Emit bug message reaction to all users in a bug room
-  public emitBugMessageReaction(bugId: string, reaction: any) {
-    this.io.to(`bug-${bugId}`).emit('bug-message-reaction', reaction);
-  }
-
-  // Emit bug message read receipt to all users in a bug room
-  public emitBugReadReceipt(bugId: string, readReceipt: any) {
-    this.io.to(`bug-${bugId}`).emit('bug-read-receipt', readReceipt);
-  }
-
-  // Emit bug message deletion to all users in a bug room
-  public emitBugMessageDeleted(bugId: string, messageId: string) {
-    this.io.to(`bug-${bugId}`).emit('bug-message-deleted', { messageId });
-  }
-
-  // Emit user chat message reaction to all users in a user chat room
-  public emitUserMessageReaction(chatId: string, reaction: any) {
-    this.io.to(`user-chat-${chatId}`).emit('user-chat-message-reaction', reaction);
-  }
-
-  // Emit user chat message read receipt to all users in a user chat room
-  public emitUserReadReceipt(chatId: string, readReceipt: any) {
-    this.io.to(`user-chat-${chatId}`).emit('user-chat-read-receipt', readReceipt);
-  }
-
-  // Emit user chat message deletion to all users in a user chat room
-  public emitUserMessageDeleted(chatId: string, messageId: string) {
-    this.io.to(`user-chat-${chatId}`).emit('user-chat-message-deleted', { messageId });
-  }
-
-  // Emit typing indicator
-  public emitTypingIndicator(gameId: string, userId: string, isTyping: boolean) {
-    this.io.to(`game-${gameId}`).emit('typing-indicator', { userId, isTyping });
+  private clearTypingTimersForUser(userId: string): void {
+    const suffix = `:${userId}`;
+    for (const key of [...this.typingExpiryTimers.keys()]) {
+      if (key.endsWith(suffix)) {
+        const gameId = key.slice(0, -suffix.length);
+        if (gameId) this.forceTypingOffForUserInGame(gameId, userId);
+      }
+    }
   }
 
   // ========== UNIFIED CHAT METHODS (NEW) ==========
@@ -541,36 +567,47 @@ class SocketService {
     contextId: string, 
     eventType: 'message' | 'message-updated' | 'reaction' | 'read-receipt' | 'deleted' | 'poll-vote',
     data: any,
-    messageId?: string
+    messageId?: string,
+    syncSeq?: number
   ) {
-    const room = this.getChatRoomName(contextType, contextId);
-    const eventName = eventType === 'poll-vote' ? 'poll-vote' : `chat:${eventType}`;
-    
-    // Emit to room with messageId for acknowledgment
-    this.io.to(room).emit(eventName, { 
-      contextType, 
-      contextId, 
+    const eventName = eventType === 'poll-vote' ? 'chat:poll-vote' : `chat:${eventType}`;
+    const payload = {
+      contextType,
+      contextId,
       messageId,
       timestamp: new Date().toISOString(),
-      ...data 
-    });
-    
-    // For user chats, also emit directly to both users (for notifications)
-    if (contextType === 'USER' && eventType === 'message') {
-      this.emitUserChatMessageToUsers(contextId, data.message, messageId);
+      ...data,
+      ...(syncSeq != null ? { syncSeq } : {}),
+    };
+
+    if (contextType === ChatContextType.USER) {
+      void prisma.userChat
+        .findUnique({
+          where: { id: contextId },
+          select: { user1Id: true, user2Id: true },
+        })
+        .then((chat) => {
+          if (!chat) return;
+          for (const uid of [chat.user1Id, chat.user2Id]) {
+            if (!uid) continue;
+            this.connectedUsers.get(uid)?.forEach((socketId) => {
+              this.io.sockets.sockets.get(socketId)?.emit(eventName, payload);
+            });
+          }
+        });
+      return;
     }
 
-    // For group channels, also emit directly to all participants
-    if (contextType === 'GROUP' && eventType === 'message') {
-      this.emitGroupChannelMessageToParticipants(contextId, data.message, messageId);
-    }
+    const room = this.getChatRoomName(contextType, contextId);
+    this.io.to(room).emit(eventName, payload);
   }
 
   public emitMessageTranscription(
     contextType: ChatContextType,
     contextId: string,
     messageId: string,
-    audioTranscription: { transcription: string; languageCode: string | null }
+    audioTranscription: { transcription: string; languageCode: string | null },
+    syncSeq?: number
   ): void {
     const room = this.getChatRoomName(contextType, contextId);
     this.io.to(room).emit('chat:message-transcription', {
@@ -579,91 +616,24 @@ class SocketService {
       messageId,
       audioTranscription,
       timestamp: new Date().toISOString(),
+      ...(syncSeq != null ? { syncSeq } : {}),
     });
   }
 
-  public emitPinnedMessagesUpdated(contextType: ChatContextType, contextId: string, chatType: ChatType): void {
+  public emitPinnedMessagesUpdated(
+    contextType: ChatContextType,
+    contextId: string,
+    chatType: ChatType,
+    syncSeq?: number
+  ): void {
     const room = this.getChatRoomName(contextType, contextId);
     this.io.to(room).emit('chat:pinned-messages-updated', {
       contextType,
       contextId,
       chatType,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      ...(syncSeq != null ? { syncSeq } : {}),
     });
-  }
-
-  public async emitUserChatMessageToUsers(chatId: string, message: any, messageId?: string) {
-    try {
-      const chat = await prisma.userChat.findUnique({
-        where: { id: chatId },
-        select: { user1Id: true, user2Id: true }
-      });
-      
-      if (chat) {
-        // Emit to user1
-        this.connectedUsers.get(chat.user1Id)?.forEach(socketId => {
-          const socket = this.io.sockets.sockets.get(socketId);
-          if (socket) {
-            socket.emit('chat:message', { 
-              contextType: 'USER', 
-              contextId: chatId, 
-              messageId,
-              timestamp: new Date().toISOString(),
-              message 
-            });
-          }
-        });
-        
-        // Emit to user2
-        this.connectedUsers.get(chat.user2Id)?.forEach(socketId => {
-          const socket = this.io.sockets.sockets.get(socketId);
-          if (socket) {
-            socket.emit('chat:message', { 
-              contextType: 'USER', 
-              contextId: chatId, 
-              messageId,
-              timestamp: new Date().toISOString(),
-              message 
-            });
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Failed to emit user chat message to individual users:', error);
-    }
-  }
-
-  public async emitGroupChannelMessageToParticipants(groupChannelId: string, message: any, messageId?: string) {
-    try {
-      const groupChannel = await prisma.groupChannel.findUnique({
-        where: { id: groupChannelId },
-        include: {
-          participants: {
-            select: { userId: true }
-          }
-        }
-      });
-
-      if (groupChannel) {
-        // Emit to all participants (including sender to ensure they see their own message)
-        groupChannel.participants.forEach(participant => {
-          this.connectedUsers.get(participant.userId)?.forEach(socketId => {
-            const socket = this.io.sockets.sockets.get(socketId);
-            if (socket) {
-              socket.emit('chat:message', {
-                contextType: 'GROUP',
-                contextId: groupChannelId,
-                messageId,
-                timestamp: new Date().toISOString(),
-                message
-              });
-            }
-          });
-        });
-      }
-    } catch (error) {
-      console.error('Failed to emit group channel message to individual participants:', error);
-    }
   }
 
   /**

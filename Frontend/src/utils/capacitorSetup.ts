@@ -1,3 +1,4 @@
+import { App } from '@capacitor/app';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { isCapacitor, isIOS, isAndroid } from './capacitor';
@@ -70,7 +71,11 @@ export const setupCapacitor = async () => {
       setTimeout(setAndroidViewportVars, 50);
       requestAnimationFrame(setAndroidViewportVars);
     });
-    [100, 300, 500, 1000].forEach((ms) => setTimeout(setAndroidViewportVars, ms));
+    void App.addListener('appStateChange', ({ isActive }) => {
+      if (!isActive) return;
+      setAndroidViewportVars();
+      requestAnimationFrame(() => setAndroidViewportVars());
+    });
   }
 
   try {
@@ -129,8 +134,9 @@ export const setupCapacitor = async () => {
       attributeFilter: ['class']
     });
 
-    // Use Body resize mode for better keyboard handling
-    await Keyboard.setResizeMode({ mode: KeyboardResize.Body });
+    if (isIOS()) {
+      await Keyboard.setResizeMode({ mode: KeyboardResize.Body });
+    }
 
     // Store reference to currently focused input
     let currentFocusedInput: HTMLElement | null = null;

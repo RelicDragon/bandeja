@@ -58,6 +58,7 @@ async function searchMarketByListingTitle(
     JOIN "GroupChannel" gc ON gc.id = m."contextId" AND gc."marketItemId" IS NOT NULL
     JOIN "MarketItem" mi ON mi.id = gc."marketItemId"
     WHERE m."chatContextType" = 'GROUP'
+      AND m."deletedAt" IS NULL
       AND word_similarity(LOWER(mi.title), ${normalizedQuery}) > 0.1
     ORDER BY gc.id, m."createdAt" DESC
     LIMIT ${limit}
@@ -82,6 +83,7 @@ async function searchSection(
   if (filter === 'market') {
     const contentCondition = Prisma.sql`
       WHERE m."contentSearchable" IS NOT NULL AND m."contentSearchable" != ''
+        AND m."deletedAt" IS NULL
         AND m."contentSearchable" %> ${normalizedQuery}
         AND m."chatContextType" = 'GROUP'
         AND EXISTS (SELECT 1 FROM "GroupChannel" gc WHERE gc.id = m."contextId" AND gc."marketItemId" IS NOT NULL)
@@ -140,6 +142,7 @@ async function searchSection(
   let skipped = 0;
   const baseCondition = Prisma.sql`
     WHERE m."contentSearchable" IS NOT NULL AND m."contentSearchable" != ''
+      AND m."deletedAt" IS NULL
       AND m."contentSearchable" %> ${normalizedQuery}
       AND NOT (
         m."chatContextType" = 'GAME'

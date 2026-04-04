@@ -1,17 +1,11 @@
 import axios, { AxiosError } from 'axios';
 import { isCapacitor } from '@/utils/capacitor';
 import { processDeletedUsers } from '@/utils/deletedUserHandler';
-import { useAuthStore } from '@/store/authStore';
-
-const getBaseURL = () => {
-  if (isCapacitor()) {
-    return 'https://bandeja.me/api';
-  }
-  return '/api';
-};
+import { getApiAxiosBaseURL } from '@/api/apiBaseUrl';
+import { handleApiUnauthorizedIfNeeded } from '@/api/handleApiUnauthorized';
 
 const api = axios.create({
-  baseURL: getBaseURL(),
+  baseURL: getApiAxiosBaseURL(),
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -49,15 +43,7 @@ api.interceptors.response.use(
   },
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      const path = window.location.pathname;
-      const isAuthPage =
-        path === '/login' ||
-        path === '/register' ||
-        (path.startsWith('/login/') && path !== '/login/phone' && path !== '/login/telegram');
-      const isPublicGamePage = window.location.pathname.startsWith('/games/');
-      if (!isAuthPage && !isPublicGamePage) {
-        useAuthStore.getState().logout();
-      }
+      handleApiUnauthorizedIfNeeded();
     }
     return Promise.reject(error);
   }

@@ -1,11 +1,13 @@
 import prisma from '../../config/database';
-import { ChatContextType } from '@prisma/client';
+import { ChatContextType, ChatSyncEventType } from '@prisma/client';
 import { subMonths } from 'date-fns';
+import { ChatSyncEventService } from './chatSyncEvent.service';
 
 const CUTOFF_MONTHS = 1;
 const MESSAGE_BATCH = 500;
 const RECEIPT_BATCH = 1000;
 const EXISTING_OR_BATCH = 400;
+const READ_SYNC_CHUNK = 400;
 
 function cutoffDate(): Date {
   return subMonths(new Date(), CUTOFF_MONTHS);
@@ -25,6 +27,7 @@ export class UnreadAutoReadService {
             chatContextType,
             createdAt: { lt: cutoff },
             senderId: { not: null },
+            deletedAt: null,
           },
           select: { id: true, contextId: true, senderId: true },
           take: MESSAGE_BATCH,
@@ -38,6 +41,11 @@ export class UnreadAutoReadService {
           chatContextType,
           contextIds
         );
+
+        const messageIdToContextId = new Map<string, string>();
+        for (const m of messages) {
+          messageIdToContextId.set(m.id, m.contextId);
+        }
 
         const toCreate: { messageId: string; userId: string }[] = [];
         for (const msg of messages) {
@@ -65,6 +73,7 @@ export class UnreadAutoReadService {
             (p) => !existingSet.has(`${p.messageId}:${p.userId}`)
           );
 
+          const readAtIso = cutoff.toISOString();
           for (let i = 0; i < filtered.length; i += RECEIPT_BATCH) {
             const batch = filtered.slice(i, i + RECEIPT_BATCH);
             const readAt = cutoff;
@@ -77,6 +86,12 @@ export class UnreadAutoReadService {
               skipDuplicates: true,
             });
             totalCreated += batch.length;
+            await this.appendReadBatchSyncEvents(
+              chatContextType,
+              batch,
+              messageIdToContextId,
+              readAtIso
+            );
           }
         }
 
@@ -159,5 +174,36 @@ export class UnreadAutoReadService {
     }
 
     return map;
+  }
+
+  private static async appendReadBatchSyncEvents(
+    chatContextType: ChatContextType,
+    batch: { messageId: string; userId: string }[],
+    messageIdToContextId: Map<string, string>,
+    readAtIso: string
+  ): Promise<void> {
+    const byKey = new Map<string, { contextId: string; userId: string; messageIds: string[] }>();
+    for (const { messageId, userId } of batch) {
+      const contextId = messageIdToContextId.get(messageId);
+      if (!contextId) continue;
+      const key = `${contextId}\0${userId}`;
+      let g = byKey.get(key);
+      if (!g) {
+        g = { contextId, userId, messageIds: [] };
+        byKey.set(key, g);
+      }
+      g.messageIds.push(messageId);
+    }
+    for (const g of byKey.values()) {
+      for (let j = 0; j < g.messageIds.length; j += READ_SYNC_CHUNK) {
+        const slice = g.messageIds.slice(j, j + READ_SYNC_CHUNK);
+        await ChatSyncEventService.appendEvent(
+          chatContextType,
+          g.contextId,
+          ChatSyncEventType.MESSAGES_READ_BATCH,
+          { userId: g.userId, readAt: readAtIso, messageIds: slice }
+        );
+      }
+    }
   }
 }

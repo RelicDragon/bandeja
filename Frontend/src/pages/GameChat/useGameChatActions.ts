@@ -5,14 +5,22 @@ import { chatApi } from '@/api/chat';
 import { gamesApi } from '@/api/games';
 import { useHeaderStore } from '@/store/headerStore';
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
+import { loadLocalMessagesForThread, persistChatMessagesFromApi } from '@/services/chat/chatLocalApply';
+import { reconcileChatThreadOpen } from '@/services/chat/chatOpenReconcile';
+import { useChatSyncStore } from '@/store/chatSyncStore';
 import { normalizeChatType } from '@/utils/chatType';
+import { mergeChatMessagesAscending, mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
+import { shouldQueueChatMutation } from '@/services/chat/chatMutationNetwork';
+import { enqueueChatMutationMarkReadBatch } from '@/services/chat/chatMutationEnqueue';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
 import type { GroupChannel } from '@/api/chat';
 import type { ChatMessageWithStatus } from '@/api/chat';
+import type { RefObject } from 'react';
 
 export interface UseGameChatActionsParams {
+  currentIdRef: RefObject<string | undefined>;
   id: string | undefined;
   contextType: ChatContextType;
   loadContext: () => Promise<unknown>;
@@ -47,6 +55,7 @@ export interface UseGameChatActionsParams {
 export function useGameChatActions(params: UseGameChatActionsParams) {
   const { t } = useTranslation();
   const {
+    currentIdRef,
     id,
     contextType,
     loadContext,
@@ -186,12 +195,94 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
       setCurrentChatType(newChatType);
       setPage(1);
       setHasMoreMessages(true);
+      const normalizedChatType = normalizeChatType(newChatType);
+      const requestId = id;
+
+      const mergeForTab = (prev: ChatMessageWithStatus[], fresh: import('@/api/chat').ChatMessage[]) => {
+        const pending =
+          contextType === 'GAME'
+            ? prev.filter(
+                (m) =>
+                  Boolean(m._optimisticId) &&
+                  normalizeChatType((m as import('@/api/chat').ChatMessage).chatType as ChatType) ===
+                    normalizedChatType
+              )
+            : prev.filter((m) => Boolean(m._optimisticId));
+        return mergeChatMessagesAscending(pending, fresh);
+      };
+
+      const reconcileAfterLocal = () => {
+        void reconcileChatThreadOpen({
+          contextType,
+          contextId: requestId,
+          gameChatType: normalizedChatType,
+          currentIdRef,
+          messagesRef,
+          setMessages,
+          mergeLocalRefresh: mergeForTab,
+        });
+      };
+
       try {
-        const normalizedChatType = normalizeChatType(newChatType);
-        const response = await chatApi.getMessages(contextType, id, 1, 50, normalizedChatType);
-        messagesRef.current = response;
-        setMessages(response);
-        setHasMoreMessages(response.length === 50);
+        const local = await loadLocalMessagesForThread(contextType, id, normalizedChatType);
+        if (local.length > 0) {
+          setMessages((prev) => {
+            const pending =
+              contextType === 'GAME'
+                ? prev.filter(
+                    (m) =>
+                      Boolean(m._optimisticId) &&
+                      normalizeChatType((m as import('@/api/chat').ChatMessage).chatType as ChatType) ===
+                        normalizedChatType
+                  )
+                : prev.filter((m) => Boolean(m._optimisticId));
+            const merged = mergeChatMessagesAscending(pending, local);
+            messagesRef.current = merged;
+            return merged;
+          });
+          setHasMoreMessages(true);
+          const last = local[local.length - 1];
+          if (last) {
+            useChatSyncStore
+              .getState()
+              .setLastMessageId(
+                contextType,
+                id,
+                last.id,
+                contextType === 'GAME' ? normalizedChatType : undefined
+              );
+          }
+          reconcileAfterLocal();
+        } else {
+          const response = await chatApi.getMessages(contextType, id, 1, 50, normalizedChatType);
+          void persistChatMessagesFromApi(response).catch(() => {});
+          setMessages((prev) => {
+            const merged = mergeServerPageWithPendingOptimistics(prev, response);
+            messagesRef.current = merged;
+            return merged;
+          });
+          setHasMoreMessages(response.length === 50);
+          const tail = response[response.length - 1];
+          if (tail) {
+            useChatSyncStore
+              .getState()
+              .setLastMessageId(
+                contextType,
+                id,
+                tail.id,
+                contextType === 'GAME' ? normalizedChatType : undefined
+              );
+          }
+          await reconcileChatThreadOpen({
+            contextType,
+            contextId: id!,
+            gameChatType: normalizedChatType,
+            currentIdRef,
+            messagesRef,
+            setMessages,
+            mergeLocalRefresh: mergeForTab,
+          });
+        }
         if (user?.id) {
           await applyQueuedMessagesToState({
             contextType,
@@ -207,11 +298,19 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
         }
         scrollToBottom();
         if (id && user?.id && contextType === 'GAME') {
-          chatApi.markAllMessagesAsRead(id, [normalizedChatType]).then((markReadResponse) => {
-            const markedCount = markReadResponse.data.count || 0;
-            const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-            setUnreadMessages(Math.max(0, unreadMessages - markedCount));
-          }).catch(() => {});
+          if (shouldQueueChatMutation()) {
+            void enqueueChatMutationMarkReadBatch({
+              contextType: 'GAME',
+              contextId: id,
+              payload: { target: 'context', chatTypes: [normalizedChatType] },
+            });
+          } else {
+            chatApi.markAllMessagesAsRead(id, [normalizedChatType]).then((markReadResponse) => {
+              const markedCount = markReadResponse.data.count || 0;
+              const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
+              setUnreadMessages(Math.max(0, unreadMessages - markedCount));
+            }).catch(() => {});
+          }
         }
       } catch (error) {
         console.error('Failed to load messages:', error);
@@ -222,6 +321,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
       }
     },
     [
+      currentIdRef,
       currentChatType,
       contextType,
       id,

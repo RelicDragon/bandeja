@@ -1,5 +1,14 @@
 import prisma from '../../config/database';
-import { MessageState, ChatType, ChatContextType, ParticipantRole, PollType, Prisma, MessageType } from '@prisma/client';
+import {
+  MessageState,
+  ChatType,
+  ChatContextType,
+  ParticipantRole,
+  PollType,
+  Prisma,
+  MessageType,
+  ChatSyncEventType,
+} from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import notificationService from '../notification.service';
@@ -16,8 +25,14 @@ import { computeContentSearchable, computeVoiceContentSearchable } from '../../u
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { S3Service } from '../s3.service';
 import { config } from '../../config/env';
+import { ChatSyncEventService } from './chatSyncEvent.service';
+import { normalizeChatClientMutationId } from '../../utils/chatClientMutationId';
 
 const VOICE_MESSAGE_MAX_MS = 30 * 60 * 1000;
+
+function isPrismaUniqueViolation(e: unknown): boolean {
+  return e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
+}
 
 function isAllowedChatVoiceMediaUrl(url: string): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -358,6 +373,7 @@ export class MessageService {
     const transcriptionMap = new Map(transcriptionRows.map((r) => [r.messageId, r]));
 
     return messages.map(message => {
+      const { serverSyncSeq, ...rest } = message as typeof message & { serverSyncSeq?: number | null };
       const translation = translationMap.get(message.id);
       const trRow = transcriptionMap.get(message.id);
       const audioTranscription =
@@ -367,7 +383,8 @@ export class MessageService {
           ? { transcription: trRow.transcription, languageCode: trRow.languageCode }
           : undefined;
       let sanitized = {
-        ...message,
+        ...rest,
+        syncSeq: serverSyncSeq ?? (message as { syncSeq?: number }).syncSeq,
         translation: translation ? {
           languageCode: translation.languageCode,
           translation: translation.translation
@@ -411,6 +428,7 @@ export class MessageService {
       allowsMultipleAnswers: boolean;
       quizCorrectOptionIndex?: number;
     };
+    clientMutationId?: string | null;
   }) {
     const {
       chatContextType,
@@ -426,6 +444,8 @@ export class MessageService {
       audioDurationMs,
       waveformData,
     } = data;
+
+    const cid = normalizeChatClientMutationId(data.clientMutationId);
 
     // Validate access based on context type
     let game, participant, bug, userChat, groupChannel;
@@ -454,7 +474,8 @@ export class MessageService {
         where: {
           id: replyToId,
           chatContextType,
-          contextId
+          contextId,
+          deletedAt: null,
         }
       });
 
@@ -520,7 +541,31 @@ export class MessageService {
         ? computeVoiceContentSearchable(audioDurationMs)
         : computeContentSearchable(content ?? null, poll?.question);
 
-    const result = await prisma.$transaction(async (tx) => {
+    if (cid) {
+      const existing = await prisma.chatMessage.findFirst({
+        where: { senderId, clientMutationId: cid },
+        include: this.getMessageInclude(),
+      });
+      if (existing) {
+        if (existing.chatContextType !== chatContextType || existing.contextId !== contextId) {
+          console.warn('[chat] clientMutationId conflict (wrong context)', {
+            senderId,
+            cid,
+            wanted: { chatContextType, contextId },
+            found: { chatContextType: existing.chatContextType, contextId: existing.contextId },
+          });
+          throw new ApiError(409, 'clientMutationId already used for another conversation');
+        }
+        const headSeq = await ChatSyncEventService.getHeadSeq(chatContextType, contextId);
+        (existing as { syncSeq?: number; _deduped?: boolean }).syncSeq = headSeq;
+        (existing as { _deduped?: boolean })._deduped = true;
+        return existing as any;
+      }
+    }
+
+    let result: { message: any; syncSeq: number };
+    try {
+      result = await prisma.$transaction(async (tx) => {
       // 1. Create the message
       const message = await tx.chatMessage.create({
         data: {
@@ -539,11 +584,13 @@ export class MessageService {
           messageType: resolvedMessageType,
           audioDurationMs: resolvedMessageType === MessageType.VOICE ? audioDurationMs ?? null : null,
           waveformData: resolvedMessageType === MessageType.VOICE ? voiceWaveform : [],
+          clientMutationId: cid ?? undefined,
         } as any,
         include: this.getMessageInclude()
       }) as any;
 
-      // 2. If it's a poll, create the poll and link it back
+      let finalMessage = message;
+
       if (poll) {
         const createdPoll = await tx.poll.create({
           data: {
@@ -570,17 +617,51 @@ export class MessageService {
           }
         });
 
-        // Return the refetched message with all relations
-        return await tx.chatMessage.findUnique({
+        finalMessage = (await tx.chatMessage.findUnique({
           where: { id: message.id },
           include: this.getMessageInclude()
-        });
+        })) as any;
       }
 
-      return message;
+      const syncSeq = await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        chatContextType,
+        contextId,
+        ChatSyncEventType.MESSAGE_CREATED,
+        { message: finalMessage }
+      );
+      await tx.chatMessage.update({
+        where: { id: finalMessage.id },
+        data: { serverSyncSeq: syncSeq },
+      });
+      const withSeq = await tx.chatMessage.findUnique({
+        where: { id: finalMessage.id },
+        include: this.getMessageInclude(),
+      });
+      return { message: (withSeq ?? finalMessage) as any, syncSeq };
     });
+    } catch (e) {
+      if (cid && isPrismaUniqueViolation(e)) {
+        const recovered = await prisma.chatMessage.findFirst({
+          where: { senderId, clientMutationId: cid },
+          include: this.getMessageInclude(),
+        });
+        if (
+          recovered &&
+          recovered.chatContextType === chatContextType &&
+          recovered.contextId === contextId
+        ) {
+          const headSeq = await ChatSyncEventService.getHeadSeq(chatContextType, contextId);
+          (recovered as { syncSeq?: number; _deduped?: boolean }).syncSeq = headSeq;
+          (recovered as { _deduped?: boolean })._deduped = true;
+          return recovered as any;
+        }
+      }
+      throw e;
+    }
 
-    const message = result;
+    const message = result.message as typeof result.message & { syncSeq: number };
+    (message as { syncSeq: number }).syncSeq = result.syncSeq;
 
     // Post-creation logic (notifications, counts, etc.)
     if (chatContextType === 'GAME' && game) {
@@ -715,8 +796,13 @@ export class MessageService {
       allowsMultipleAnswers: boolean;
       quizCorrectOptionIndex?: number;
     };
+    clientMutationId?: string | null;
   }) {
     const message = await this.createMessage(data);
+
+    if ((message as { _deduped?: boolean })._deduped) {
+      return message;
+    }
 
     const socketService = (global as any).socketService;
     if (socketService) {
@@ -834,13 +920,15 @@ export class MessageService {
         audioTranscription,
       };
 
-      // NEW unified event with messageId for acknowledgment
+      const syncSeq = (message as { syncSeq?: number }).syncSeq;
+
       socketService.emitChatEvent(
         data.chatContextType,
         data.contextId,
         'message',
         { message: messageWithTranslations },
-        message.id
+        message.id,
+        syncSeq
       );
 
       // Emit unread count updates immediately to all recipients (not just undelivered)
@@ -938,7 +1026,8 @@ export class MessageService {
           id: beforeMessageId,
           chatContextType,
           contextId,
-          chatType: chatType as ChatType
+          chatType: chatType as ChatType,
+          deletedAt: null,
         },
         select: { createdAt: true }
       });
@@ -950,6 +1039,7 @@ export class MessageService {
           chatContextType,
           contextId,
           chatType: chatType as ChatType,
+          deletedAt: null,
           createdAt: { lt: beforeMessage.createdAt }
         },
         include: this.getMessageInclude(),
@@ -965,7 +1055,8 @@ export class MessageService {
       where: {
         chatContextType,
         contextId,
-        chatType: chatType as ChatType
+        chatType: chatType as ChatType,
+        deletedAt: null,
       },
       include: this.getMessageInclude(),
       orderBy: { createdAt: 'desc' },
@@ -977,11 +1068,30 @@ export class MessageService {
     return messagesWithTranslation.reverse();
   }
 
+  static async getMessageById(messageId: string, userId: string) {
+    const message = await prisma.chatMessage.findFirst({
+      where: { id: messageId, deletedAt: null },
+      include: this.getMessageInclude(),
+    });
+    if (!message) {
+      throw new ApiError(404, 'Message not found');
+    }
+    await this.validateMessageAccess(message, userId, false);
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
+    const [enriched] = await this.enrichMessagesWithTranslations([message], languageCode);
+    return enriched;
+  }
+
   static async getMissedMessages(
     chatContextType: ChatContextType,
     contextId: string,
     userId: string,
-    lastMessageId?: string | null
+    lastMessageId?: string | null,
+    gameChatType?: ChatType | null
   ) {
     if (chatContextType === 'GAME') {
       await this.validateGameAccess(contextId, userId);
@@ -993,34 +1103,91 @@ export class MessageService {
       await this.validateGroupChannelAccess(contextId, userId);
     }
 
-    const where: Prisma.ChatMessageWhereInput = {
+    const baseWhere: Prisma.ChatMessageWhereInput = {
       chatContextType,
       contextId,
+      deletedAt: null,
     };
+    if (chatContextType === 'GAME' && gameChatType != null) {
+      baseWhere.chatType = gameChatType;
+    }
+
+    const PAGE = 500;
+    const MAX_PAGES = 40;
+    const all: Awaited<ReturnType<typeof prisma.chatMessage.findMany>> = [];
+
+    let cursorId: string | undefined = lastMessageId ?? undefined;
 
     if (lastMessageId) {
-      const lastMessage = await prisma.chatMessage.findFirst({
-        where: { id: lastMessageId, chatContextType, contextId },
-        select: { createdAt: true },
+      const anchor0Where: Prisma.ChatMessageWhereInput = {
+        id: lastMessageId,
+        chatContextType,
+        contextId,
+        deletedAt: null,
+      };
+      if (chatContextType === 'GAME' && gameChatType != null) {
+        anchor0Where.chatType = gameChatType;
+      }
+      const anchor0 = await prisma.chatMessage.findFirst({
+        where: anchor0Where,
+        select: { id: true },
       });
-      if (lastMessage) {
-        where.createdAt = { gt: lastMessage.createdAt };
+      if (!anchor0) {
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { language: true },
+        });
+        const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
+        return this.enrichMessagesWithTranslations([], languageCode);
       }
     }
 
-    const messages = await prisma.chatMessage.findMany({
-      where,
-      include: this.getMessageInclude(),
-      orderBy: { createdAt: 'asc' },
-      take: 100,
-    });
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const where: Prisma.ChatMessageWhereInput = { ...baseWhere };
+      if (cursorId) {
+        const anchorWhere: Prisma.ChatMessageWhereInput = {
+          id: cursorId,
+          chatContextType,
+          contextId,
+          deletedAt: null,
+        };
+        if (chatContextType === 'GAME' && gameChatType != null) {
+          anchorWhere.chatType = gameChatType;
+        }
+        const anchor = await prisma.chatMessage.findFirst({
+          where: anchorWhere,
+          select: { createdAt: true, id: true },
+        });
+        if (!anchor) break;
+        where.AND = [
+          {
+            OR: [
+              { createdAt: { gt: anchor.createdAt } },
+              { AND: [{ createdAt: anchor.createdAt }, { id: { gt: anchor.id } }] },
+            ],
+          },
+        ];
+      }
+
+      const batch = await prisma.chatMessage.findMany({
+        where,
+        include: this.getMessageInclude(),
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        take: PAGE,
+      });
+
+      if (batch.length === 0) break;
+      all.push(...batch);
+      if (batch.length < PAGE) break;
+      cursorId = batch[batch.length - 1]!.id;
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { language: true },
     });
     const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
-    return this.enrichMessagesWithTranslations(messages, languageCode);
+    return this.enrichMessagesWithTranslations(all, languageCode);
   }
 
   static async updateMessageContent(
@@ -1034,6 +1201,10 @@ export class MessageService {
     });
 
     if (!message) {
+      throw new ApiError(404, 'Message not found');
+    }
+
+    if (message.deletedAt) {
       throw new ApiError(404, 'Message not found');
     }
 
@@ -1055,18 +1226,29 @@ export class MessageService {
     const mentionIds = Array.isArray(data.mentionIds) ? data.mentionIds : message.mentionIds;
     const contentSearchable = computeContentSearchable(content, message.poll?.question);
 
-    const updated = await prisma.chatMessage.update({
-      where: { id: messageId },
-      data: {
-        content,
-        mentionIds,
-        contentSearchable,
-        editedAt: new Date()
-      },
-      include: this.getMessageInclude()
+    const { updated, syncSeq } = await prisma.$transaction(async (tx) => {
+      const u = await tx.chatMessage.update({
+        where: { id: messageId },
+        data: {
+          content,
+          mentionIds,
+          contentSearchable,
+          editedAt: new Date()
+        },
+        include: this.getMessageInclude()
+      });
+      const seq = await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        u.chatContextType,
+        u.contextId,
+        ChatSyncEventType.MESSAGE_UPDATED,
+        { message: u }
+      );
+      return { updated: u, syncSeq: seq };
     });
 
     await updateLastMessagePreview(message.chatContextType, message.contextId);
+    (updated as { syncSeq?: number }).syncSeq = syncSeq;
     return updated;
   }
 
@@ -1079,38 +1261,55 @@ export class MessageService {
       throw new ApiError(404, 'Message not found');
     }
 
+    if (message.deletedAt) {
+      throw new ApiError(404, 'Message not found');
+    }
+
     await this.validateMessageAccess(message, userId, true);
 
-    return await prisma.chatMessage.update({
-      where: { id: messageId },
-      data: { state },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-            level: true,
-            gender: true,
-          }
-        },
-        reactions: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true
+    const { updated, syncSeq } = await prisma.$transaction(async (tx) => {
+      const u = await tx.chatMessage.update({
+        where: { id: messageId },
+        data: { state },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatar: true,
+              level: true,
+              gender: true,
+            }
+          },
+          reactions: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  avatar: true,
+                  level: true,
+                  gender: true
+                }
               }
             }
           }
         }
-      }
+      });
+      const seq = await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        u.chatContextType,
+        u.contextId,
+        ChatSyncEventType.MESSAGE_STATE_UPDATED,
+        { messageId: u.id, state: u.state }
+      );
+      return { updated: u, syncSeq: seq };
     });
+
+    (updated as { syncSeq?: number }).syncSeq = syncSeq;
+    return updated;
   }
 
   static async deleteMessage(messageId: string, userId: string) {
@@ -1122,11 +1321,71 @@ export class MessageService {
       throw new ApiError(404, 'Message not found');
     }
 
+    if (message.deletedAt) {
+      throw new ApiError(404, 'Message not found');
+    }
+
     if (message.senderId !== userId) {
       throw new ApiError(403, 'You can only delete your own messages');
     }
 
     await this.validateMessageAccess(message, userId, true);
+
+    const deletedAt = new Date();
+    const deletedIso = deletedAt.toISOString();
+
+    const softDeleted = await prisma.$transaction(async (tx) => {
+      const row = await tx.chatMessage.update({
+        where: { id: messageId },
+        data: { deletedAt },
+      });
+
+      const syncSeq = await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        message.chatContextType,
+        message.contextId,
+        ChatSyncEventType.MESSAGE_DELETED,
+        { messageId, deletedAt: deletedIso }
+      );
+
+      if (message.chatContextType === 'GAME' && message.chatType === ChatType.PHOTOS && message.mediaUrls.length > 0) {
+        const currentGame = await tx.game.findUnique({
+          where: { id: message.contextId },
+          select: { mainPhotoId: true },
+        });
+
+        const updateData: Record<string, unknown> = {
+          photosCount: {
+            decrement: message.mediaUrls.length,
+          },
+        };
+
+        if (currentGame?.mainPhotoId === messageId) {
+          const remainingPhotos = await tx.chatMessage.findFirst({
+            where: {
+              contextId: message.contextId,
+              chatType: ChatType.PHOTOS,
+              mediaUrls: { isEmpty: false },
+              id: { not: messageId },
+              deletedAt: null,
+            },
+            orderBy: { createdAt: 'asc' },
+          });
+
+          updateData.mainPhotoId = remainingPhotos?.id || null;
+        }
+
+        await tx.game.update({
+          where: { id: message.contextId },
+          data: updateData as any,
+        });
+      }
+
+      (row as { syncSeq?: number }).syncSeq = syncSeq;
+      return row;
+    });
+
+    await updateLastMessagePreview(message.chatContextType, message.contextId);
 
     if (message.mediaUrls && message.mediaUrls.length > 0) {
       for (const mediaUrl of message.mediaUrls) {
@@ -1148,45 +1407,7 @@ export class MessageService {
       }
     }
 
-    await prisma.chatMessage.delete({
-      where: { id: messageId }
-    });
-
-    await updateLastMessagePreview(message.chatContextType, message.contextId);
-
-    // Handle game-specific photo count update
     if (message.chatContextType === 'GAME' && message.chatType === ChatType.PHOTOS && message.mediaUrls.length > 0) {
-      const currentGame = await prisma.game.findUnique({
-        where: { id: message.contextId },
-        select: { mainPhotoId: true }
-      });
-
-      const updateData: any = {
-        photosCount: {
-          decrement: message.mediaUrls.length
-        }
-      };
-
-      if (currentGame?.mainPhotoId === messageId) {
-        const remainingPhotos = await prisma.chatMessage.findFirst({
-          where: {
-            contextId: message.contextId,
-            chatType: ChatType.PHOTOS,
-            mediaUrls: { isEmpty: false },
-            id: { not: messageId }
-          },
-          orderBy: { createdAt: 'asc' }
-        });
-
-        updateData.mainPhotoId = remainingPhotos?.id || null;
-      }
-
-      await prisma.game.update({
-        where: { id: message.contextId },
-        data: updateData
-      });
-
-      // Emit game update to refresh photosCount
       try {
         const socketService = (global as any).socketService;
         if (socketService) {
@@ -1200,7 +1421,7 @@ export class MessageService {
       }
     }
 
-    return message;
+    return softDeleted;
   }
 
   static async getUserChatGames(userId: string) {

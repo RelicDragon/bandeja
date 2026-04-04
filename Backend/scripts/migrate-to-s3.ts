@@ -1,7 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { ChatContextType, ChatSyncEventType } from '@prisma/client';
 import { S3Service } from '../src/services/s3.service';
 import prisma from '../src/config/database';
+import { ChatSyncEventService } from '../src/services/chat/chatSyncEvent.service';
 
 interface MigrationStats {
   totalFiles: number;
@@ -241,8 +243,16 @@ async function updateChatMessages(stats: MigrationStats, dryRun: boolean) {
   console.log('\n=== Migrating Chat Messages ===');
   
   const messages = await prisma.chatMessage.findMany({
-    select: { id: true, mediaUrls: true, thumbnailUrls: true }
+    select: {
+      id: true,
+      chatContextType: true,
+      contextId: true,
+      mediaUrls: true,
+      thumbnailUrls: true
+    }
   });
+
+  const contextsToInvalidate = new Set<string>();
   
   let sectionUploaded = 0;
   let sectionSkipped = 0;
@@ -320,10 +330,26 @@ async function updateChatMessages(stats: MigrationStats, dryRun: boolean) {
           thumbnailUrls: updatedThumbnailUrls
         }
       });
+      contextsToInvalidate.add(`${message.chatContextType}:${message.contextId}`);
       stats.dbUpdated++;
     }
   }
-  
+
+  if (!dryRun && contextsToInvalidate.size > 0) {
+    for (const key of contextsToInvalidate) {
+      const i = key.indexOf(':');
+      const contextType = key.slice(0, i) as ChatContextType;
+      const contextId = key.slice(i + 1);
+      await ChatSyncEventService.appendEvent(
+        contextType,
+        contextId,
+        ChatSyncEventType.THREAD_LOCAL_INVALIDATE,
+        {}
+      );
+    }
+    console.log(`Chat sync: THREAD_LOCAL_INVALIDATE for ${contextsToInvalidate.size} thread(s)`);
+  }
+
   console.log(`Chat messages: ${sectionUploaded} uploaded, ${sectionSkipped} skipped`);
 }
 

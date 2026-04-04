@@ -1,3 +1,7 @@
+/**
+ * Updates DB-only search indexing. Does not change message content/ordering for clients;
+ * Dexie threads do not need THREAD_LOCAL_INVALIDATE (DB-only search index, not client-visible message rows).
+ */
 import dotenv from 'dotenv';
 dotenv.config();
 

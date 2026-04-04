@@ -1,8 +1,10 @@
 import prisma from '../../config/database';
-import { ChatContextType, ChatType, MessageState } from '@prisma/client';
+import { ChatContextType, ChatSyncEventType, ChatType, MessageState } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { computeContentSearchable } from '../../utils/messageSearchContent';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
+import { MessageService } from './message.service';
+import { ChatSyncEventService } from './chatSyncEvent.service';
 
 export async function isWelcomeSenderValid(senderId: string): Promise<boolean> {
   const user = await prisma.user.findUnique({
@@ -33,6 +35,7 @@ export async function createCityGroupWelcomeMessage(
     throw new ApiError(400, 'CITY_GROUP_WELCOME_SENDER_ID must be a valid user ID');
   }
   const content = CITY_GROUP_WELCOME_MESSAGE_EN;
+  const include = MessageService.getMessageInclude();
   await prisma.$transaction(async (tx) => {
     const message = await tx.chatMessage.create({
       data: {
@@ -46,6 +49,7 @@ export async function createCityGroupWelcomeMessage(
         chatType: ChatType.PUBLIC,
         state: MessageState.SENT,
       },
+      include,
     });
 
     await tx.messageTranslation.createMany({
@@ -67,6 +71,37 @@ export async function createCityGroupWelcomeMessage(
         pinnedById: senderId,
       },
     });
+
+    const withTranslations = await tx.chatMessage.findUnique({
+      where: { id: message.id },
+      include,
+    });
+    if (!withTranslations) return;
+
+    const syncSeq = await ChatSyncEventService.appendEventInTransaction(
+      tx,
+      ChatContextType.GROUP,
+      groupChannelId,
+      ChatSyncEventType.MESSAGE_CREATED,
+      { message: withTranslations }
+    );
+    await tx.chatMessage.update({
+      where: { id: message.id },
+      data: { serverSyncSeq: syncSeq },
+    });
+
+    await ChatSyncEventService.appendEventInTransaction(
+      tx,
+      ChatContextType.GROUP,
+      groupChannelId,
+      ChatSyncEventType.MESSAGE_PINNED,
+      {
+        messageId: message.id,
+        chatType: ChatType.PUBLIC,
+        order: 0,
+        pinnedById: senderId,
+      }
+    );
   });
 
   await updateLastMessagePreview(ChatContextType.GROUP, groupChannelId);

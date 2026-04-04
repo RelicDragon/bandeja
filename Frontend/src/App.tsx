@@ -26,6 +26,7 @@ import { isCapacitor, isIOS, isAndroid } from './utils/capacitor';
 import { unregisterServiceWorkers, clearAllCaches } from './utils/serviceWorkerUtils';
 import { cleanupCapacitorNetwork } from './utils/capacitorNetwork';
 import { initNetworkListener, useNetworkStore } from './utils/networkStatus';
+import { refreshChatOfflineBanner } from '@/services/chat/chatOfflineBanner';
 import { restoreAuthIfNeeded, monitorAuthPersistence } from './utils/authPersistence';
 import { useDeepLink } from './hooks/useDeepLink';
 import { useDeepLinkStore } from './store/deepLinkStore';
@@ -36,6 +37,8 @@ import { GeoProvider } from './contexts/GeoProvider';
 import { useAppVersionCheck } from './hooks/useAppVersionCheck';
 import { backButtonService } from './services/backButtonService';
 import { appLifecycleService } from './services/appLifecycle.service';
+import { ensureChatSyncWarmBootstrap, warmChatSyncHeads } from '@/services/chat/chatSyncBatchWarm';
+import { scheduleUnifiedChatOfflineFlush } from '@/services/chat/chatUnifiedOfflineFlush';
 import pushNotificationService from './services/pushNotificationService';
 import { navigationService } from './services/navigationService';
 import { markNavigation, setupPopstateFallback } from './utils/navigation';
@@ -95,6 +98,19 @@ function AppContent() {
     }
     previousPathnameRef.current = location.pathname;
   }, [location.pathname]);
+
+  useEffect(() => {
+    const syncChatNet = () => {
+      const online = useNetworkStore.getState().isOnline;
+      refreshChatOfflineBanner();
+      if (online && useAuthStore.getState().isAuthenticated) {
+        void warmChatSyncHeads(undefined, { enrichFromUnread: true });
+        scheduleUnifiedChatOfflineFlush();
+      }
+    };
+    syncChatNet();
+    return useNetworkStore.subscribe(syncChatNet);
+  }, []);
 
   useEffect(() => {
     restoreAuthIfNeeded();
@@ -209,6 +225,11 @@ function AppContent() {
       headerService.stopPolling();
     }
   }, [isAuthenticated, isInitializing, fetchFavorites]);
+
+  useEffect(() => {
+    if (!isAuthenticated || isInitializing) return;
+    void ensureChatSyncWarmBootstrap();
+  }, [isAuthenticated, isInitializing]);
 
   const initializeSocketEvents = useSocketEventsStore((state) => state.initialize);
   const cleanupSocketEvents = useSocketEventsStore((state) => state.cleanup);

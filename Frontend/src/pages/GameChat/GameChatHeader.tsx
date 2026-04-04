@@ -1,8 +1,11 @@
-import React, { ReactNode } from 'react';
-import { ArrowLeft, Bug as BugIcon } from 'lucide-react';
+import React, { ReactNode, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ArrowLeft, Bug as BugIcon, Loader2, WifiOff } from 'lucide-react';
 import { ChatHeaderActions } from '@/components/chat/ChatHeaderActions';
 import type { ChatContextType } from '@/api/chat';
 import type { Game } from '@/types';
+import { useChatOfflineStore } from '@/store/chatOfflineStore';
+import { useChatSyncStore } from '@/store/chatSyncStore';
 
 export interface GameChatHeaderActionsProps {
   showMute: boolean;
@@ -50,6 +53,45 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
   showHeaderActions,
   headerActions,
 }) => {
+  const { t } = useTranslation();
+  const chatConnectionState = useChatOfflineStore((s) => s.chatConnectionState);
+  const paint = useChatSyncStore((s) => s.lastThreadPaintSource);
+  const paintHint = useMemo(
+    () =>
+      paint === 'dexie'
+        ? t('chat.statusPaintDexie', 'Opened from saved messages')
+        : paint === 'network'
+          ? t('chat.statusPaintNetwork', 'Loaded from server')
+          : undefined,
+    [paint, t]
+  );
+  const statusTitle =
+    chatConnectionState === 'OFFLINE'
+      ? t('chat.offlineBanner', 'No connection — showing saved messages')
+      : chatConnectionState === 'SYNCING'
+        ? t('chat.syncingBanner', 'Syncing…')
+        : undefined;
+  const headerStatusSlot =
+    chatConnectionState === 'OFFLINE' ? (
+      <div
+        className="w-10 h-10 rounded-full flex items-center justify-center bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 flex-shrink-0"
+        role="status"
+        title={paintHint ?? statusTitle}
+        aria-label={statusTitle}
+      >
+        <WifiOff size={22} strokeWidth={2} />
+      </div>
+    ) : chatConnectionState === 'SYNCING' ? (
+      <div
+        className="w-10 h-10 rounded-full flex items-center justify-center bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex-shrink-0"
+        role="status"
+        title={paintHint ?? statusTitle}
+        aria-label={statusTitle}
+      >
+        <Loader2 size={22} className="animate-spin" strokeWidth={2} />
+      </div>
+    ) : null;
+
   return (
     <header
       className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg"
@@ -64,7 +106,7 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
       >
         {showLoadingHeader ? (
           <div className="flex items-center gap-3 w-full">
-            <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full" />
+            {headerStatusSlot ?? <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full flex-shrink-0" />}
             <div className="flex-1">
               <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-1" />
               <div className="h-3 w-48 bg-gray-200 dark:bg-gray-700 rounded" />
@@ -98,11 +140,12 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
                 onClick={isTitleClickable ? onTitleClick : undefined}
                 role={isTitleClickable ? 'button' : undefined}
               >
-                {!isBugChat && <div className="flex-shrink-0">{icon}</div>}
+                {!isBugChat && <div className="flex-shrink-0">{headerStatusSlot ?? icon}</div>}
                 <div className="min-w-0 flex-1">
                   <h1
                     className={`${isBugChat ? 'text-base' : 'text-lg'} font-semibold text-gray-900 dark:text-white flex items-center gap-2 whitespace-nowrap overflow-hidden`}
                   >
+                    {isBugChat && headerStatusSlot}
                     {isBugChat && (
                       <BugIcon size={16} className="text-red-500 flex-shrink-0" />
                     )}

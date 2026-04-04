@@ -9,6 +9,8 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseMessagePreview } from '@/utils/messagePreview';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
+import { ChatListOutboxLine } from '@/components/chat/ChatListOutboxLine';
+import type { ChatListOutbox } from '@/utils/chatListSort';
 
 interface GroupChannelCardProps {
   groupChannel: GroupChannel;
@@ -16,6 +18,9 @@ interface GroupChannelCardProps {
   onClick: () => void;
   isSelected?: boolean;
   draft?: ChatDraft | null;
+  listOutbox?: ChatListOutbox | null;
+  onOutboxRetry?: () => void;
+  onOutboxDismiss?: () => void;
   displayTitle?: string;
   displaySubtitle?: string;
   sellerGroupedByItem?: boolean;
@@ -28,7 +33,7 @@ interface GroupChannelCardProps {
   isTogglingMute?: boolean;
 }
 
-export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSelected, draft, displayTitle, displaySubtitle, sellerGroupedByItem, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: GroupChannelCardProps) => {
+export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSelected, draft, listOutbox, onOutboxRetry, onOutboxDismiss, displayTitle, displaySubtitle, sellerGroupedByItem, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: GroupChannelCardProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const { translateCity } = useTranslatedGeo();
@@ -249,6 +254,13 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
             </div>
           </div>
         )}
+        {listOutbox ? (
+          <ChatListOutboxLine
+            listOutbox={listOutbox}
+            onRetry={listOutbox.state === 'failed' ? onOutboxRetry : undefined}
+            onDismiss={listOutbox.state === 'failed' ? onOutboxDismiss : undefined}
+          />
+        ) : null}
         {(() => {
           if (showDraft) {
             const draftContent = draft?.content || '';
