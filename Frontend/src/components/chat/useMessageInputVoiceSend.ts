@@ -27,10 +27,7 @@ type Params = {
   inputBlocked: boolean;
   finalContextId: string | undefined;
   contextType: ChatContextType;
-  gameId?: string;
-  bugId?: string;
   userChatId?: string;
-  groupChannelId?: string;
   chatType: ChatType;
   replyTo?: ChatMessage | null;
   propContextType?: ChatContextType;
@@ -62,10 +59,7 @@ export function useMessageInputVoiceSend({
   inputBlocked,
   finalContextId,
   contextType,
-  gameId,
-  bugId,
   userChatId,
-  groupChannelId,
   chatType,
   replyTo,
   propContextType,
@@ -192,7 +186,7 @@ export function useMessageInputVoiceSend({
           }
         }
         const messageData = {
-          chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
+          chatContextType: contextType,
           contextId: finalContextId,
           mediaUrls: [uploaded.audioUrl],
           replyToId: replyTo?.id,

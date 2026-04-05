@@ -8,7 +8,8 @@ export const CHAT_OFFLINE_FLUSH_ACK = 'CHAT_OFFLINE_FLUSH_ACK';
 export function initChatBackgroundSyncClient(): void {
   if (typeof navigator === 'undefined' || !navigator.serviceWorker?.addEventListener) return;
   navigator.serviceWorker.addEventListener('message', (event: MessageEvent) => {
-    if (event.source !== navigator.serviceWorker) return;
+    const ctrl = navigator.serviceWorker.controller;
+    if (!ctrl || event.source !== ctrl) return;
     if (event.data?.type !== CHAT_OFFLINE_FLUSH_REQUEST) return;
     const port = event.ports[0];
     if (!port) return;
