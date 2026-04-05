@@ -12,8 +12,12 @@ import { enqueueChatSyncPull, SYNC_PRIORITY_VIEWING } from '@/services/chat/chat
 import { setChatSyncNativeAppActive } from '@/services/chat/chatSyncAppVisibility';
 import { recordChatSyncForegroundSyncMs } from '@/services/chat/chatSyncMetrics';
 import { purgeExpiredFailedOutbox } from '@/services/chat/chatOutboxExpiry';
-import { scheduleUnifiedChatOfflineFlush } from '@/services/chat/chatUnifiedOfflineFlush';
+import {
+  flushAllChatOfflineQueues,
+  scheduleUnifiedChatOfflineFlush,
+} from '@/services/chat/chatUnifiedOfflineFlush';
 import { registerForegroundChatSync } from '@/utils/foregroundChatSyncRegistry';
+import { ensureChatPersistentStorageOnce, probeChatStoragePressure } from '@/services/chat/chatPersistentStorage';
 
 let capUnsubscribe: PluginListenerHandle | null = null;
 let visibilityCleanup: (() => void) | null = null;
@@ -30,6 +34,8 @@ async function runForegroundSync(): Promise<void> {
     }
   };
   if (useAuthStore.getState().isAuthenticated) {
+    void ensureChatPersistentStorageOnce();
+    void probeChatStoragePressure();
     void warmChatSyncHeads(undefined, { enrichFromUnread: true });
     void purgeExpiredFailedOutbox();
     scheduleUnifiedChatOfflineFlush();
@@ -106,10 +112,12 @@ export const appLifecycleService = {
           .catch(() => {});
         CapApp.addListener('appStateChange', ({ isActive }) => {
           setChatSyncNativeAppActive(isActive);
-          if (isActive) {
-            runForegroundSync();
-            void pushNotificationService.ensureTokenSentToBackend();
+          if (!isActive) {
+            void flushAllChatOfflineQueues();
+            return;
           }
+          runForegroundSync();
+          void pushNotificationService.ensureTokenSentToBackend();
         }).then((h) => {
           capUnsubscribe = h;
         });

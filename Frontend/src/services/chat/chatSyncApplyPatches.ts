@@ -4,9 +4,12 @@ import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';
 import type { ChatSyncPatch } from './chatSyncEventsToPatches';
 import { mergeReactionListSync, mergeReadReceiptSync } from './chatSyncEventsToPatches';
 import { rowFromMessage } from './chatSyncRowUtils';
+import { putChatLocalRowsWithSearchTokens } from './chatLocalApplyWrite';
 
 export type ChatSyncPatchApplySideEffects = {
   putMessagesForMedia: ChatMessage[];
+  /** Compact MESSAGE_UPDATED with no Dexie row: caller may GET message and persist. */
+  patchMessageFallbacks: { messageId: string; syncSeq: number }[];
 };
 
 export async function applyChatSyncPatchesInSlice(
@@ -15,6 +18,7 @@ export async function applyChatSyncPatchesInSlice(
   contextId: string
 ): Promise<ChatSyncPatchApplySideEffects> {
   const putMessagesForMedia: ChatMessage[] = [];
+  const patchFallbackById = new Map<string, number>();
 
   const cache = new Map<string, ChatLocalRow>();
   const dirty = new Set<string>();
@@ -37,6 +41,23 @@ export async function applyChatSyncPatchesInSlice(
         writeRow(rowFromMessage(p.message));
         putMessagesForMedia.push(p.message);
         break;
+      case 'patchMessage': {
+        const r = await ensureRow(p.messageId);
+        if (!r) {
+          const prev = patchFallbackById.get(p.messageId) ?? 0;
+          if (p.syncSeq >= prev) patchFallbackById.set(p.messageId, p.syncSeq);
+          break;
+        }
+        const merged = {
+          ...r.payload,
+          ...p.patch,
+          syncSeq: p.syncSeq,
+          serverSyncSeq: p.syncSeq,
+        } as ChatMessage;
+        writeRow(rowFromMessage(merged));
+        putMessagesForMedia.push(merged);
+        break;
+      }
       case 'deleteMessage': {
         const r = await ensureRow(p.messageId);
         if (!r) break;
@@ -139,7 +160,14 @@ export async function applyChatSyncPatchesInSlice(
       case 'stateUpdated': {
         const r = await ensureRow(p.messageId);
         if (!r) break;
-        writeRow(rowFromMessage({ ...r.payload, state: p.state }));
+        writeRow(
+          rowFromMessage({
+            ...r.payload,
+            state: p.state,
+            syncSeq: p.syncSeq,
+            serverSyncSeq: p.syncSeq,
+          })
+        );
         break;
       }
       case 'pinsBroadcast':
@@ -160,7 +188,12 @@ export async function applyChatSyncPatchesInSlice(
   }
 
   const outRows = [...dirty].map((id) => cache.get(id)).filter((r): r is ChatLocalRow => r != null);
-  if (outRows.length) await chatLocalDb.messages.bulkPut(outRows);
+  if (outRows.length) await putChatLocalRowsWithSearchTokens(outRows);
 
-  return { putMessagesForMedia };
+  const patchMessageFallbacks = [...patchFallbackById.entries()].map(([messageId, syncSeq]) => ({
+    messageId,
+    syncSeq,
+  }));
+
+  return { putMessagesForMedia, patchMessageFallbacks };
 }

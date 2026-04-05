@@ -6,7 +6,7 @@ import { patchThreadIndexSetUnreadCount } from '@/services/chat/chatThreadIndex'
 
 export const useGroupChannelUnreadCounts = (channelIds: string[]): Record<string, number> => {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-  const lastChatUnreadCount = useSocketEventsStore((state) => state.lastChatUnreadCount);
+  const groupUnreadSeq = useSocketEventsStore((state) => state.groupUnreadSeq);
   const viewingGroupChannelId = useNavigationStore((state) => state.viewingGroupChannelId);
   const channelIdsKey = channelIds.length ? channelIds.slice().sort().join(',') : '';
   const channelIdsRef = useRef(channelIds);
@@ -41,15 +41,18 @@ export const useGroupChannelUnreadCounts = (channelIds: string[]): Record<string
   }, [fetchCounts, channelIdsKey]);
 
   useEffect(() => {
-    if (!lastChatUnreadCount || lastChatUnreadCount.contextType !== 'GROUP') return;
-    const { contextId, unreadCount } = lastChatUnreadCount;
-    if (channelIdsRef.current.includes(contextId)) {
-      const viewing = useNavigationStore.getState().viewingGroupChannelId;
-      const next = contextId === viewing ? 0 : unreadCount;
-      setUnreadCounts((prev) => ({ ...prev, [contextId]: next }));
-      void patchThreadIndexSetUnreadCount('GROUP', contextId, next);
+    const batch = useSocketEventsStore.getState().takeGroupUnreadInbound();
+    for (const item of batch) {
+      if (item.contextType !== 'GROUP') continue;
+      const { contextId, unreadCount } = item;
+      if (channelIdsRef.current.includes(contextId)) {
+        const viewing = useNavigationStore.getState().viewingGroupChannelId;
+        const next = contextId === viewing ? 0 : unreadCount;
+        setUnreadCounts((prev) => ({ ...prev, [contextId]: next }));
+        void patchThreadIndexSetUnreadCount('GROUP', contextId, next);
+      }
     }
-  }, [lastChatUnreadCount]);
+  }, [groupUnreadSeq]);
 
   if (viewingGroupChannelId && channelIds.includes(viewingGroupChannelId)) {
     return { ...unreadCounts, [viewingGroupChannelId]: 0 };

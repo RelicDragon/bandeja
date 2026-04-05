@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useLayoutEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -42,6 +42,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onPin,
   onUnpin,
   showReply = true,
+  onForwardMessage,
 }) => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -122,6 +123,20 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       : currentMessage.content;
 
   const parsedContent = isSystemMessage ? null : parseContentWithMentionsAndUrls(displayContent);
+  const firstExternalHttpUrl = useMemo(() => {
+    if (!parsedContent) return null;
+    for (const part of parsedContent) {
+      if (part.type !== 'url' || !part.url) continue;
+      if (part.urlType && part.urlType !== 'other') continue;
+      try {
+        const u = new URL(part.url);
+        if (u.protocol === 'http:' || u.protocol === 'https:') return part.url;
+      } catch {
+        /* skip */
+      }
+    }
+    return null;
+  }, [parsedContent]);
   const userLanguageCode = user?.language ? extractLanguageCode(user.language).toLowerCase() : 'en';
 
   let matchingTranslation = currentMessage.translation;
@@ -352,6 +367,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     optimisticId={optimisticId}
                     onResendQueued={onResendQueued}
                     onRemoveFromQueue={onRemoveFromQueue}
+                    firstExternalHttpUrl={!isOffline ? firstExternalHttpUrl : null}
                     t={t}
                   />
 
@@ -463,6 +479,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           isPinned={isPinned}
           onPin={onPin}
           onUnpin={onUnpin}
+          onForward={onForwardMessage}
         />
       )}
 

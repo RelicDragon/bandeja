@@ -1,5 +1,8 @@
-import Dexie, { type Table } from 'dexie';
+import Dexie, { type Table, type Transaction } from 'dexie';
 import type { ChatContextType, ChatMessage, ChatType, OptimisticMessagePayload } from '@/api/chat';
+import { computeMessageSortKey } from '@/utils/chatMessageSort';
+import { computeChatLocalSearchText } from './chatLocalMessageSearchText';
+import { replaceMessageSearchTokensInTransaction } from './chatLocalMessageSearchTokens';
 
 export type ChatLocalRow = {
   id: string;
@@ -8,6 +11,8 @@ export type ChatLocalRow = {
   chatType: ChatType;
   createdAt: number;
   deletedAt?: number;
+  sortKey: string;
+  searchText?: string;
   payload: ChatMessage;
 };
 
@@ -123,6 +128,12 @@ export type ChatMutationQueueRow = {
   nextRetryAt?: number;
 };
 
+export type MessageSearchTokenRow = {
+  id: string;
+  messageId: string;
+  token: string;
+};
+
 class ChatLocalDexie extends Dexie {
   messages!: Table<ChatLocalRow, string>;
   chatSyncCursor!: Table<ChatLocalCursorRow, string>;
@@ -135,6 +146,7 @@ class ChatLocalDexie extends Dexie {
   chatDrafts!: Table<ChatDraftLocalRow, string>;
   mutationQueue!: Table<ChatMutationQueueRow, string>;
   outboxMediaBlobs!: Table<OutboxMediaBlobRow, string>;
+  messageSearchTokens!: Table<MessageSearchTokenRow, string>;
 
   constructor() {
     super('BandejaChatLocal');
@@ -282,6 +294,92 @@ class ChatLocalDexie extends Dexie {
       chatDrafts: 'key, updatedAt',
       mutationQueue: 'id, [contextType+contextId], status, createdAt',
       outboxMediaBlobs: 'id, tempId',
+    });
+    this.version(12).stores({
+      messages:
+        'id, [contextType+contextId+chatType], [contextType+contextId], createdAt, deletedAt, searchText',
+      chatSyncCursor: 'key',
+      outbox: 'tempId, [contextType+contextId], createdAt',
+      chatThreads: 'key, updatedAt, lastOpenedAt, openCount',
+      threadIndex: 'rowKey, listFilter, sortAt, contextType, contextId, [contextType+contextId]',
+      messageContextHead: 'key, updatedAt',
+      threadScroll: 'key, updatedAt',
+      messageRowHeights: 'messageId, updatedAt',
+      chatDrafts: 'key, updatedAt',
+      mutationQueue: 'id, [contextType+contextId], status, createdAt',
+      outboxMediaBlobs: 'id, tempId',
+    }).upgrade(async (tx) => {
+      const table = tx.table('messages');
+      const rows = await table.toArray();
+      for (const row of rows as ChatLocalRow[]) {
+        const st = computeChatLocalSearchText(row.payload);
+        await table.put({ ...row, searchText: st ?? undefined });
+      }
+    });
+    this.version(13).stores({
+      messages:
+        'id, [contextType+contextId+chatType], [contextType+contextId], createdAt, deletedAt, searchText',
+      chatSyncCursor: 'key',
+      outbox: 'tempId, [contextType+contextId], createdAt',
+      chatThreads: 'key, updatedAt, lastOpenedAt, openCount',
+      threadIndex: 'rowKey, listFilter, sortAt, contextType, contextId, [contextType+contextId]',
+      messageContextHead: 'key, updatedAt',
+      threadScroll: 'key, updatedAt',
+      messageRowHeights: 'messageId, updatedAt',
+      chatDrafts: 'key, updatedAt',
+      mutationQueue: 'id, [contextType+contextId], status, createdAt',
+      outboxMediaBlobs: 'id, tempId',
+      messageSearchTokens: 'id, token, messageId',
+    }).upgrade(async (tx) => {
+      const msgs = tx.table('messages');
+      const rows = (await msgs.toArray()) as ChatLocalRow[];
+      for (const row of rows) {
+        const st = row.deletedAt != null ? undefined : row.searchText;
+        await replaceMessageSearchTokensInTransaction(tx as Transaction, row.id, st);
+      }
+    });
+    this.version(14).stores({
+      messages:
+        'id, [contextType+contextId+chatType], [contextType+contextId+chatType+sortKey], [contextType+contextId], createdAt, deletedAt, searchText',
+      chatSyncCursor: 'key',
+      outbox: 'tempId, [contextType+contextId], createdAt',
+      chatThreads: 'key, updatedAt, lastOpenedAt, openCount',
+      threadIndex: 'rowKey, listFilter, sortAt, contextType, contextId, [contextType+contextId]',
+      messageContextHead: 'key, updatedAt',
+      threadScroll: 'key, updatedAt',
+      messageRowHeights: 'messageId, updatedAt',
+      chatDrafts: 'key, updatedAt',
+      mutationQueue: 'id, [contextType+contextId], status, createdAt',
+      outboxMediaBlobs: 'id, tempId',
+      messageSearchTokens: 'id, token, messageId',
+    }).upgrade(async (tx) => {
+      const msgs = tx.table('messages');
+      const rows = (await msgs.toArray()) as ChatLocalRow[];
+      for (const row of rows) {
+        const sk = computeMessageSortKey(row.payload);
+        await msgs.put({ ...row, sortKey: sk });
+      }
+    });
+    this.version(15).stores({
+      messages:
+        'id, [contextType+contextId+chatType], [contextType+contextId+chatType+sortKey], [contextType+contextId], createdAt, deletedAt, searchText',
+      chatSyncCursor: 'key',
+      outbox: 'tempId, [contextType+contextId], createdAt',
+      chatThreads: 'key, updatedAt, lastOpenedAt, openCount',
+      threadIndex: 'rowKey, listFilter, sortAt, contextType, contextId, [contextType+contextId]',
+      messageContextHead: 'key, updatedAt',
+      threadScroll: 'key, updatedAt',
+      messageRowHeights: 'messageId, updatedAt',
+      chatDrafts: 'key, updatedAt',
+      mutationQueue: 'id, [contextType+contextId], status, createdAt',
+      outboxMediaBlobs: 'id, tempId',
+      messageSearchTokens: 'id, token, messageId',
+    }).upgrade(async (tx) => {
+      const msgs = tx.table('messages');
+      const rows = (await msgs.toArray()) as ChatLocalRow[];
+      for (const row of rows) {
+        await msgs.put({ ...row, sortKey: computeMessageSortKey(row.payload) });
+      }
     });
   }
 }

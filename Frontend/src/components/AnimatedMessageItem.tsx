@@ -43,6 +43,7 @@ interface AnimatedMessageItemProps {
   onPin?: (message: ChatMessage) => void;
   onUnpin?: (messageId: string) => void;
   showReply?: boolean;
+  onForwardMessage?: (message: ChatMessage) => void;
 }
 
 export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
@@ -69,6 +70,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   onPin,
   onUnpin,
   showReply = true,
+  onForwardMessage,
 }) => {
   const skipStagger = !isRecentMessage(message.createdAt);
   const [isVisible, setIsVisible] = useState(skipStagger);
@@ -118,6 +120,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
         onPin={onPin}
         onUnpin={onUnpin}
         showReply={showReply}
+        onForwardMessage={onForwardMessage}
       />
     </div>
   );

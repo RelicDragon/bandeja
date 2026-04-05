@@ -8,6 +8,20 @@ function conversationSeq(m: ChatMessage): number | null {
   return null;
 }
 
+function encodeSeqLex(sa: number): string {
+  const s = String(Math.trunc(sa));
+  return `${String(s.length).padStart(3, '0')}${s}`;
+}
+
+export function computeMessageSortKey(m: ChatMessage): string {
+  const sa = conversationSeq(m);
+  const seqStr = sa != null ? `a${encodeSeqLex(sa)}` : `b${'0'.repeat(19)}`;
+  const t = new Date(m.createdAt).getTime();
+  const timeStr = String(Number.isFinite(t) ? t : 0).padStart(15, '0');
+  const idPart = typeof m.id === 'string' ? m.id.normalize('NFC') : String(m.id);
+  return `${seqStr}|${timeStr}|${idPart}`;
+}
+
 export function compareChatMessagesAscending(a: ChatMessage, b: ChatMessage): number {
   const sa = conversationSeq(a);
   const sb = conversationSeq(b);

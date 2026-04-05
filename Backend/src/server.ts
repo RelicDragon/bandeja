@@ -71,6 +71,7 @@ const startServer = async () => {
     
     // Initialize Socket.IO
     const socketService = new SocketService(httpServer);
+    await socketService.adapterReady;
     console.log('🔌 Socket.IO service initialized');
     
     // Make socket service available globally

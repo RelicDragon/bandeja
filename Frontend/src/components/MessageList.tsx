@@ -32,6 +32,7 @@ const VIRTUAL_OVERSCAN_FAST = 22;
 
 export type MessageListHandle = {
   scrollToMessageById: (messageId: string) => void;
+  scrollToBottomAlign: () => void;
 };
 
 interface MessageListProps {
@@ -61,7 +62,10 @@ interface MessageListProps {
   onPin?: (message: ChatMessage) => void;
   onUnpin?: (messageId: string) => void;
   showReply?: boolean;
+  onForwardMessage?: (message: ChatMessage) => void;
   threadScrollKey?: string | null;
+  /** While true, keep bottom aligned as row heights / total size settle (Dexie preload, virtualizer measure). */
+  threadLayoutSettling?: boolean;
 }
 
 export const MessageList = forwardRef<MessageListHandle, MessageListProps>(function MessageList(
@@ -92,13 +96,16 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     onPin,
     onUnpin,
     showReply = true,
+    onForwardMessage,
     threadScrollKey = null,
+    threadLayoutSettling = false,
   },
   ref
 ) {
   const { t } = useTranslation();
   const pinnedSet = useMemo(() => new Set(pinnedMessageIds), [pinnedMessageIds]);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const innerListRef = useRef<HTMLDivElement>(null);
   const topLoadSentinelRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const previousScrollHeightRef = useRef(0);
@@ -129,6 +136,13 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   virtualizerRef.current = virtualizer;
   const messagesForScrollRef = useRef(messages);
   messagesForScrollRef.current = messages;
+
+  const scrollToBottomAlign = useCallback(() => {
+    const v = virtualizerRef.current;
+    const len = messagesForScrollRef.current.length;
+    const idx = len === 0 ? 0 : len;
+    v.scrollToIndex(idx, { align: 'end', behavior: 'auto' });
+  }, []);
 
   const messagesMeasureRef = useRef(messages);
   messagesMeasureRef.current = messages;
@@ -197,7 +211,8 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
           return;
         }
         if (st.atBottom) {
-          el.scrollTop = el.scrollHeight;
+          const len = snapshot.length;
+          virtualizerRef.current.scrollToIndex(len === 0 ? 0 : len, { align: 'end', behavior: 'auto' });
           markRestored();
           return;
         }
@@ -215,10 +230,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               runScroll();
-              requestAnimationFrame(() => {
-                runScroll();
-                markRestored();
-              });
+              markRestored();
             });
           });
           return;
@@ -233,6 +245,27 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       cancelled = true;
     };
   }, [threadScrollKey, isSwitchingChatType, messages]);
+
+  useLayoutEffect(() => {
+    if (!threadLayoutSettling || messages.length === 0) return;
+    const inner = innerListRef.current;
+    const run = () => {
+      const len = messagesForScrollRef.current.length;
+      if (len === 0) return;
+      virtualizerRef.current.scrollToIndex(len, { align: 'end', behavior: 'auto' });
+    };
+    run();
+    if (!inner) return;
+    const ro = new ResizeObserver(() => {
+      run();
+    });
+    ro.observe(inner);
+    const tid = window.setTimeout(() => ro.disconnect(), 800);
+    return () => {
+      window.clearTimeout(tid);
+      ro.disconnect();
+    };
+  }, [threadLayoutSettling, messages.length, threadScrollKey]);
 
   useEffect(() => {
     if (!threadScrollKey) return;
@@ -305,13 +338,11 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     [messages, virtualizer]
   );
 
-  useImperativeHandle(ref, () => ({ scrollToMessageById }), [scrollToMessageById]);
-
-  const scrollToBottom = () => {
-    const el = messagesContainerRef.current;
-    if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  };
+  useImperativeHandle(
+    ref,
+    () => ({ scrollToMessageById, scrollToBottomAlign }),
+    [scrollToMessageById, scrollToBottomAlign]
+  );
 
   useEffect(() => {
     const wasLoading = isLoadingMoreRef.current;
@@ -358,10 +389,10 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
             }
           });
         });
-      } else {
+      } else if (!threadLayoutSettling) {
         const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-        if (isAtBottom) {
-          scrollToBottom();
+        if (isAtBottom && messages.length > 0) {
+          virtualizerRef.current.scrollToIndex(messages.length, { align: 'end', behavior: 'smooth' });
         }
       }
     }
@@ -375,7 +406,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
         }
       });
     }
-  }, [messages, isLoadingMore]);
+  }, [messages, isLoadingMore, threadLayoutSettling]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -469,6 +500,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
         ) : null}
       </div>
       <div
+        ref={innerListRef}
         className="space-y-1 relative w-full"
         style={{
           height: `${virtualizer.getTotalSize()}px`,
@@ -529,6 +561,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
                 onPin={onPin}
                 onUnpin={onUnpin}
                 showReply={showReply}
+                onForwardMessage={onForwardMessage}
               />
             </div>
           );

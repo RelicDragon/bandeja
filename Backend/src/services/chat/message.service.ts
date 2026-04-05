@@ -27,6 +27,7 @@ import { S3Service } from '../s3.service';
 import { config } from '../../config/env';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { normalizeChatClientMutationId } from '../../utils/chatClientMutationId';
+import { chatSyncMessageUpdatedCompactPayload } from '../../utils/chatSyncMessageUpdatePayload';
 
 const VOICE_MESSAGE_MAX_MS = 30 * 60 * 1000;
 
@@ -557,7 +558,9 @@ export class MessageService {
           throw new ApiError(409, 'clientMutationId already used for another conversation');
         }
         const headSeq = await ChatSyncEventService.getHeadSeq(chatContextType, contextId);
-        (existing as { syncSeq?: number; _deduped?: boolean }).syncSeq = headSeq;
+        const orderingSeq =
+          (existing as { serverSyncSeq?: number | null }).serverSyncSeq ?? headSeq;
+        (existing as { syncSeq?: number; _deduped?: boolean }).syncSeq = orderingSeq;
         (existing as { _deduped?: boolean })._deduped = true;
         return existing as any;
       }
@@ -652,7 +655,8 @@ export class MessageService {
           recovered.contextId === contextId
         ) {
           const headSeq = await ChatSyncEventService.getHeadSeq(chatContextType, contextId);
-          (recovered as { syncSeq?: number; _deduped?: boolean }).syncSeq = headSeq;
+          const orderingSeq = recovered.serverSyncSeq ?? headSeq;
+          (recovered as { syncSeq?: number; _deduped?: boolean }).syncSeq = orderingSeq;
           (recovered as { _deduped?: boolean })._deduped = true;
           return recovered as any;
         }
@@ -1242,9 +1246,23 @@ export class MessageService {
         u.chatContextType,
         u.contextId,
         ChatSyncEventType.MESSAGE_UPDATED,
-        { message: u }
+        chatSyncMessageUpdatedCompactPayload({
+          id: u.id,
+          content: u.content,
+          mentionIds: u.mentionIds,
+          editedAt: u.editedAt,
+          updatedAt: u.updatedAt,
+        })
       );
-      return { updated: u, syncSeq: seq };
+      await tx.chatMessage.update({
+        where: { id: messageId },
+        data: { serverSyncSeq: seq },
+      });
+      const fresh = await tx.chatMessage.findUnique({
+        where: { id: messageId },
+        include: this.getMessageInclude(),
+      });
+      return { updated: (fresh ?? u) as typeof u, syncSeq: seq };
     });
 
     await updateLastMessagePreview(message.chatContextType, message.contextId);
@@ -1305,11 +1323,127 @@ export class MessageService {
         ChatSyncEventType.MESSAGE_STATE_UPDATED,
         { messageId: u.id, state: u.state }
       );
-      return { updated: u, syncSeq: seq };
+      await tx.chatMessage.update({
+        where: { id: messageId },
+        data: { serverSyncSeq: seq },
+      });
+      const fresh = await tx.chatMessage.findUnique({
+        where: { id: messageId },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatar: true,
+              level: true,
+              gender: true,
+            }
+          },
+          reactions: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  avatar: true,
+                  level: true,
+                  gender: true
+                }
+              }
+            }
+          }
+        },
+      });
+      return { updated: (fresh ?? u) as typeof u, syncSeq: seq };
     });
 
     (updated as { syncSeq?: number }).syncSeq = syncSeq;
     return updated;
+  }
+
+  /**
+   * After confirm-receipt (socket/push), promote SENT → DELIVERED when delivery policy is met.
+   * USER / GAME / BUG: every listed recipient must have acked.
+   * GROUP: first ack from any recipient is enough (avoids huge channels never reaching “delivered”).
+   */
+  static async tryPromoteToDeliveredWhenRecipientsAcked(
+    messageId: string,
+    contextType: ChatContextType,
+    recipients: string[],
+    socketDelivered: ReadonlySet<string>,
+    pushDelivered: ReadonlySet<string>
+  ): Promise<void> {
+    if (recipients.length === 0) return;
+
+    const acked = (uid: string) => socketDelivered.has(uid) || pushDelivered.has(uid);
+    const satisfied =
+      contextType === ChatContextType.GROUP
+        ? recipients.some(acked)
+        : recipients.every(acked);
+
+    if (!satisfied) return;
+
+    try {
+      const { updated, syncSeq } = await prisma.$transaction(async (tx) => {
+        const cur = await tx.chatMessage.findUnique({
+          where: { id: messageId },
+          select: {
+            id: true,
+            state: true,
+            deletedAt: true,
+            chatContextType: true,
+            contextId: true,
+          },
+        });
+        if (!cur || cur.deletedAt || cur.state !== MessageState.SENT) {
+          return { updated: null, syncSeq: undefined as number | undefined };
+        }
+
+        await tx.chatMessage.update({
+          where: { id: messageId },
+          data: { state: MessageState.DELIVERED },
+        });
+
+        const seq = await ChatSyncEventService.appendEventInTransaction(
+          tx,
+          cur.chatContextType,
+          cur.contextId,
+          ChatSyncEventType.MESSAGE_STATE_UPDATED,
+          { messageId, state: MessageState.DELIVERED }
+        );
+
+        await tx.chatMessage.update({
+          where: { id: messageId },
+          data: { serverSyncSeq: seq },
+        });
+
+        const fresh = await tx.chatMessage.findUnique({
+          where: { id: messageId },
+          include: this.getMessageInclude(),
+        });
+        return { updated: fresh, syncSeq: seq };
+      });
+
+      if (!updated) return;
+
+      (updated as { syncSeq?: number }).syncSeq = syncSeq;
+
+      const socketService = (global as any).socketService;
+      if (socketService) {
+        socketService.emitChatEvent(
+          updated.chatContextType,
+          updated.contextId,
+          'message-updated',
+          { message: updated },
+          updated.id,
+          syncSeq
+        );
+      }
+    } catch (e) {
+      console.error('[MessageService] tryPromoteToDeliveredWhenRecipientsAcked', e);
+    }
   }
 
   static async deleteMessage(messageId: string, userId: string) {
@@ -1335,11 +1469,6 @@ export class MessageService {
     const deletedIso = deletedAt.toISOString();
 
     const softDeleted = await prisma.$transaction(async (tx) => {
-      const row = await tx.chatMessage.update({
-        where: { id: messageId },
-        data: { deletedAt },
-      });
-
       const syncSeq = await ChatSyncEventService.appendEventInTransaction(
         tx,
         message.chatContextType,
@@ -1347,6 +1476,11 @@ export class MessageService {
         ChatSyncEventType.MESSAGE_DELETED,
         { messageId, deletedAt: deletedIso }
       );
+
+      const row = await tx.chatMessage.update({
+        where: { id: messageId },
+        data: { deletedAt, serverSyncSeq: syncSeq },
+      });
 
       if (message.chatContextType === 'GAME' && message.chatType === ChatType.PHOTOS && message.mediaUrls.length > 0) {
         const currentGame = await tx.game.findUnique({

@@ -1,10 +1,20 @@
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, useMemo, useRef, useReducer, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { chatApi, SearchMessageResult, ChatMessage, getLastMessageText } from '@/api/chat';
 import { getSystemMessageText } from '@/utils/systemMessages';
 import { formatRelativeTime, formatDate } from '@/utils/dateFormat';
 import { MessageCircle, Gamepad2, Swords, Trophy, Dumbbell, Beer, Bug, User, ShoppingBag, Hash } from 'lucide-react';
 import { CollapsibleSection } from './CollapsibleSection';
+import { useNetworkStore } from '@/utils/networkStatus';
+import {
+  mergeSearchSection,
+  searchLocalCachedMessageResults,
+  type LocalSearchBuckets,
+} from '@/services/chat/chatLocalMessageSearch';
+
+function emptyLocalBuckets(): Omit<LocalSearchBuckets, 'hasMoreLocal'> {
+  return { messages: [], gameMessages: [], channelMessages: [], bugMessages: [], marketMessages: [] };
+}
 
 interface ChatMessageSearchResultsProps {
   query: string;
@@ -25,6 +35,9 @@ interface ChatMessageSearchResultsProps {
 
 function getContextLabel(result: SearchMessageResult, t: (key: string, opts?: any) => string): string {
   const { context, message } = result;
+  if (result.fromLocalCache) {
+    return t('chat.localSearchCached', { defaultValue: 'On this device' });
+  }
   if (!context) return '';
   if (message.chatContextType === 'GAME' && context && 'name' in context) {
     return (context as { name?: string }).name || t('chat.inGame', { defaultValue: 'In game' });
@@ -90,7 +103,17 @@ function getMessagePreview(message: ChatMessage): string {
 }
 
 function ResultItem({ r, onResultClick, t }: { r: SearchMessageResult; onResultClick: ChatMessageSearchResultsProps['onResultClick']; t: (k: string, o?: any) => string }) {
-  const chatType = r.message.chatContextType === 'GROUP' && (r.context as { isChannel?: boolean })?.isChannel ? 'channel' : r.message.chatContextType === 'USER' ? 'user' : r.message.chatContextType === 'BUG' ? 'bug' : r.message.chatContextType === 'GAME' ? 'game' : 'group';
+  const gc = r.message.chatContextType === 'GROUP' ? (r.context as { isChannel?: boolean; marketItemId?: string | null }) : null;
+  const chatType =
+    r.message.chatContextType === 'GROUP' && (gc?.isChannel || gc?.marketItemId)
+      ? 'channel'
+      : r.message.chatContextType === 'USER'
+        ? 'user'
+        : r.message.chatContextType === 'BUG'
+          ? 'bug'
+          : r.message.chatContextType === 'GAME'
+            ? 'game'
+            : 'group';
   const ctxLabel = getContextLabel(r, t);
   const preview = getMessagePreview(r.message);
   return (
@@ -120,11 +143,16 @@ function ResultItem({ r, onResultClick, t }: { r: SearchMessageResult; onResultC
 
 export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, onResultClick, messagesExpanded = true, gamesExpanded = true, channelsExpanded = true, bugsExpanded = true, marketListingsExpanded = true, onMessagesToggle, onGamesToggle, onChannelsToggle, onBugsToggle, onMarketListingsToggle }: ChatMessageSearchResultsProps) => {
   const { t } = useTranslation();
-  const [messages, setMessages] = useState<SearchMessageResult[]>([]);
-  const [gameMessages, setGameMessages] = useState<SearchMessageResult[]>([]);
-  const [channelMessages, setChannelMessages] = useState<SearchMessageResult[]>([]);
-  const [bugMessages, setBugMessages] = useState<SearchMessageResult[]>([]);
-  const [marketMessages, setMarketMessages] = useState<SearchMessageResult[]>([]);
+  const isOnline = useNetworkStore((s) => s.isOnline);
+  const [remoteMessages, setRemoteMessages] = useState<SearchMessageResult[]>([]);
+  const [remoteGameMessages, setRemoteGameMessages] = useState<SearchMessageResult[]>([]);
+  const [remoteChannelMessages, setRemoteChannelMessages] = useState<SearchMessageResult[]>([]);
+  const [remoteBugMessages, setRemoteBugMessages] = useState<SearchMessageResult[]>([]);
+  const [remoteMarketMessages, setRemoteMarketMessages] = useState<SearchMessageResult[]>([]);
+  const [localHits, setLocalHits] = useState<Omit<LocalSearchBuckets, 'hasMoreLocal'>>(() => emptyLocalBuckets());
+  const [localDeviceHasMore, setLocalDeviceHasMore] = useState(false);
+  const localDeviceSearchLimitRef = useRef(48);
+  const [localSearchEpoch, bumpLocalDeviceSearch] = useReducer((x: number) => x + 1, 0);
   const [messagesPage, setMessagesPage] = useState(1);
   const [gamePage, setGamePage] = useState(1);
   const [channelPage, setChannelPage] = useState(1);
@@ -141,14 +169,20 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
   const [loadingChannels, setLoadingChannels] = useState(false);
   const [loadingBugs, setLoadingBugs] = useState(false);
   const [loadingMarket, setLoadingMarket] = useState(false);
+  const prevSearchQueryRef = useRef('');
 
   useEffect(() => {
-    if (!query.trim()) {
-      setMessages([]);
-      setGameMessages([]);
-      setChannelMessages([]);
-      setBugMessages([]);
-      setMarketMessages([]);
+    const qTrim = query.trim();
+    if (!qTrim) {
+      prevSearchQueryRef.current = '';
+      localDeviceSearchLimitRef.current = 48;
+      setRemoteMessages([]);
+      setRemoteGameMessages([]);
+      setRemoteChannelMessages([]);
+      setRemoteBugMessages([]);
+      setRemoteMarketMessages([]);
+      setLocalHits(emptyLocalBuckets());
+      setLocalDeviceHasMore(false);
       setMessagesPage(1);
       setGamePage(1);
       setChannelPage(1);
@@ -156,43 +190,77 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
       setMarketPage(1);
       return;
     }
+
+    const queryChanged = prevSearchQueryRef.current !== qTrim;
+    prevSearchQueryRef.current = qTrim;
+    if (queryChanged) {
+      localDeviceSearchLimitRef.current = 48;
+    }
+    const sectionLimit = localDeviceSearchLimitRef.current;
+
     let cancelled = false;
     setLoading(true);
-    chatApi.searchMessages(query)
-      .then((res) => {
+    void (async () => {
+      const local = await searchLocalCachedMessageResults(qTrim, { sectionLimit });
+      if (cancelled) return;
+      const { hasMoreLocal, ...rest } = local;
+      setLocalHits(rest);
+      setLocalDeviceHasMore(Object.values(hasMoreLocal).some(Boolean));
+      if (!useNetworkStore.getState().isOnline) {
+        setRemoteMessages([]);
+        setRemoteGameMessages([]);
+        setRemoteChannelMessages([]);
+        setRemoteBugMessages([]);
+        setRemoteMarketMessages([]);
+        setMessagesHasMore(false);
+        setGameHasMore(false);
+        setChannelHasMore(false);
+        setBugsHasMore(false);
+        setMarketHasMore(false);
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await chatApi.searchMessages(qTrim);
         if (cancelled) return;
-        setMessages(res.messages || []);
-        setGameMessages(res.gameMessages || []);
-        setChannelMessages(res.channelMessages || []);
-        setBugMessages(res.bugMessages || []);
-        setMarketMessages(res.marketMessages || []);
+        setRemoteMessages(res.messages || []);
+        setRemoteGameMessages(res.gameMessages || []);
+        setRemoteChannelMessages(res.channelMessages || []);
+        setRemoteBugMessages(res.bugMessages || []);
+        setRemoteMarketMessages(res.marketMessages || []);
         setMessagesHasMore(res.messagesPagination?.hasMore ?? false);
         setGameHasMore(res.gamePagination?.hasMore ?? false);
         setChannelHasMore(res.channelPagination?.hasMore ?? false);
         setBugsHasMore(res.bugsPagination?.hasMore ?? false);
         setMarketHasMore(res.marketPagination?.hasMore ?? false);
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
-          setMessages([]);
-          setGameMessages([]);
-          setChannelMessages([]);
-          setBugMessages([]);
-          setMarketMessages([]);
+          setRemoteMessages([]);
+          setRemoteGameMessages([]);
+          setRemoteChannelMessages([]);
+          setRemoteBugMessages([]);
+          setRemoteMarketMessages([]);
+          setMessagesHasMore(false);
+          setGameHasMore(false);
+          setChannelHasMore(false);
+          setBugsHasMore(false);
+          setMarketHasMore(false);
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [query]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [query, isOnline, localSearchEpoch]);
 
   const loadMoreMessages = () => {
     if (!messagesHasMore || loadingMessages) return;
     setLoadingMessages(true);
     chatApi.searchMessages(query, { section: 'messages', messagesPage: messagesPage + 1 })
       .then((res) => {
-        setMessages((prev) => [...prev, ...(res.messages || [])]);
+        setRemoteMessages((prev) => [...prev, ...(res.messages || [])]);
         setMessagesHasMore(res.messagesPagination?.hasMore ?? false);
         setMessagesPage((p) => p + 1);
       })
@@ -205,7 +273,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
     setLoadingGames(true);
     chatApi.searchMessages(query, { section: 'games', gamePage: gamePage + 1 })
       .then((res) => {
-        setGameMessages((prev) => [...prev, ...(res.gameMessages || [])]);
+        setRemoteGameMessages((prev) => [...prev, ...(res.gameMessages || [])]);
         setGameHasMore(res.gamePagination?.hasMore ?? false);
         setGamePage((p) => p + 1);
       })
@@ -218,7 +286,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
     setLoadingChannels(true);
     chatApi.searchMessages(query, { section: 'channels', channelPage: channelPage + 1 })
       .then((res) => {
-        setChannelMessages((prev) => [...prev, ...(res.channelMessages || [])]);
+        setRemoteChannelMessages((prev) => [...prev, ...(res.channelMessages || [])]);
         setChannelHasMore(res.channelPagination?.hasMore ?? false);
         setChannelPage((p) => p + 1);
       })
@@ -231,7 +299,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
     setLoadingBugs(true);
     chatApi.searchMessages(query, { section: 'bugs', bugsPage: bugsPage + 1 })
       .then((res) => {
-        setBugMessages((prev) => [...prev, ...(res.bugMessages || [])]);
+        setRemoteBugMessages((prev) => [...prev, ...(res.bugMessages || [])]);
         setBugsHasMore(res.bugsPagination?.hasMore ?? false);
         setBugsPage((p) => p + 1);
       })
@@ -244,13 +312,34 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
     setLoadingMarket(true);
     chatApi.searchMessages(query, { section: 'market', marketPage: marketPage + 1 })
       .then((res) => {
-        setMarketMessages((prev) => [...prev, ...(res.marketMessages || [])]);
+        setRemoteMarketMessages((prev) => [...prev, ...(res.marketMessages || [])]);
         setMarketHasMore(res.marketPagination?.hasMore ?? false);
         setMarketPage((p) => p + 1);
       })
       .catch(() => setMarketHasMore(false))
       .finally(() => setLoadingMarket(false));
   };
+
+  const messages = useMemo(
+    () => mergeSearchSection(remoteMessages, localHits.messages),
+    [remoteMessages, localHits.messages]
+  );
+  const gameMessages = useMemo(
+    () => mergeSearchSection(remoteGameMessages, localHits.gameMessages),
+    [remoteGameMessages, localHits.gameMessages]
+  );
+  const channelMessages = useMemo(
+    () => mergeSearchSection(remoteChannelMessages, localHits.channelMessages),
+    [remoteChannelMessages, localHits.channelMessages]
+  );
+  const bugMessages = useMemo(
+    () => mergeSearchSection(remoteBugMessages, localHits.bugMessages),
+    [remoteBugMessages, localHits.bugMessages]
+  );
+  const marketMessages = useMemo(
+    () => mergeSearchSection(remoteMarketMessages, localHits.marketMessages),
+    [remoteMarketMessages, localHits.marketMessages]
+  );
 
   const totalCount = messages.length + gameMessages.length + channelMessages.length + bugMessages.length + marketMessages.length;
 
@@ -462,6 +551,18 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
           {renderMarketSection()}
         </>
       )}
+      {localDeviceHasMore && query.trim() ? (
+        <button
+          type="button"
+          onClick={() => {
+            localDeviceSearchLimitRef.current += 48;
+            bumpLocalDeviceSearch();
+          }}
+          className="w-full py-3 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700"
+        >
+          {t('chat.loadMoreLocalResults', { defaultValue: 'Load more from this device' })}
+        </button>
+      ) : null}
     </>
   );
 };

@@ -1,8 +1,7 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { ChatDraft, GroupChannel, getLastMessageTime } from '@/api/chat';
 import { matchDraftToChat } from '@/utils/chatListUtils';
-import { sortChatItems } from '@/utils/chatListSort';
-import type { ChatItem, ChatListOutbox } from '@/utils/chatListSort';
+import { sortChatItems, type ChatItem, type ChatListOutbox } from '@/utils/chatListSort';
 import type { ChatMessage } from '@/api/chat';
 import type { BasicUser } from '@/types';
 
@@ -26,6 +25,53 @@ export function mergeChatListOutboxFromDexieSlice(prev: ChatItem[], dexSlice: Ch
     }
     return next as ChatItem;
   });
+}
+
+export function mergeChatListFromThreadIndexDexie(
+  prev: ChatItem[],
+  dexSlice: ChatItem[],
+  listFilter: 'users' | 'bugs' | 'channels' | 'market',
+  userId?: string
+): ChatItem[] {
+  if (dexSlice.length === 0) return prev;
+  const dexByKey = new Map<string, ChatItem>();
+  for (const d of dexSlice) {
+    if (d.type !== 'contact') dexByKey.set(getChatKey(d), d);
+  }
+  const next = prev.map((p) => {
+    if (p.type === 'contact') return p;
+    const d = dexByKey.get(getChatKey(p));
+    if (!d || d.type === 'contact') return p;
+    type NonContact = Exclude<ChatItem, { type: 'contact' }>;
+    const pn = p as NonContact;
+    const dn = d as NonContact;
+    return {
+      ...pn,
+      ...dn,
+      data: { ...pn.data, ...dn.data },
+    } as ChatItem;
+  });
+  return deduplicateChats(sortChatItems(next, listFilter, userId));
+}
+
+export function threadIndexLiveMergeSig(chats: ChatItem[]): string {
+  return chats
+    .map((c) => {
+      if (c.type === 'contact') return `c:${c.userId}`;
+      const lm =
+        c.type === 'user' || c.type === 'group' || c.type === 'channel'
+          ? (c.data as { lastMessage?: { id?: string; updatedAt?: string } }).lastMessage
+          : c.type === 'game'
+            ? (c.data as { lastMessage?: { id?: string; updatedAt?: string } }).lastMessage
+            : undefined;
+      const ob = 'listOutbox' in c ? c.listOutbox : undefined;
+      const obState =
+        ob && typeof ob === 'object' && ob !== null && 'state' in ob
+          ? String((ob as { state?: string }).state ?? '')
+          : '';
+      return `${getChatKey(c)}:${c.lastMessageDate?.getTime() ?? 0}:${lm?.id ?? ''}:${lm?.updatedAt ?? ''}:${obState}`;
+    })
+    .join('\0');
 }
 
 export const deduplicateChats = (chats: ChatItem[]) => {

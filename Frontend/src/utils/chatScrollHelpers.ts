@@ -10,16 +10,19 @@ export function isNearChatBottom(el: HTMLElement): boolean {
   return el.scrollHeight - el.scrollTop - el.clientHeight < BOTTOM_THRESHOLD_PX;
 }
 
+let scrollChatBottomRaf: number | null = null;
+
 export function scrollChatToBottom(chatContainerRef: RefObject<HTMLElement | null>): void {
-  const el = getChatScrollContainer(chatContainerRef);
-  if (!el) return;
-  const run = () => {
-    el.scrollTop = el.scrollHeight;
-  };
-  requestAnimationFrame(() => {
+  if (scrollChatBottomRaf != null) cancelAnimationFrame(scrollChatBottomRaf);
+  scrollChatBottomRaf = requestAnimationFrame(() => {
+    scrollChatBottomRaf = null;
+    const run = () => {
+      const el = getChatScrollContainer(chatContainerRef);
+      if (!el) return;
+      el.scrollTop = el.scrollHeight;
+    };
     run();
-    setTimeout(run, 50);
-    setTimeout(run, 150);
+    requestAnimationFrame(run);
   });
 }
 

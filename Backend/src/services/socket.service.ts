@@ -1,7 +1,12 @@
-import { Server as SocketIOServer, Socket } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { createClient } from 'redis';
+import { DefaultEventsMap, RemoteSocket, Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import jwt from 'jsonwebtoken';
+
+type RedisPubSubClient = ReturnType<typeof createClient>;
 import prisma from '../config/database';
+import { MessageService } from './chat/message.service';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import { GameReadService } from './game/read.service';
 import { ChatContextType, ChatType } from '@prisma/client';
@@ -9,6 +14,7 @@ import { presenceService } from './presence.service';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
+  isDeveloper?: boolean;
   gameRooms?: Set<string>;
   bugRooms?: Set<string>;
   userChatRooms?: Set<string>;
@@ -23,13 +29,15 @@ const TYPING_INDICATOR_TTL_MS = 6000;
 
 class SocketService {
   private io: SocketIOServer;
-  private connectedUsers: Map<string, Set<string>> = new Map(); // userId -> Set of socketIds
+  /** Local node only; use `notify-user-*` rooms + `io.to()` for cross-node delivery when Redis adapter is on. */
+  private connectedUsers: Map<string, Set<string>> = new Map();
   private presenceSubscriptionBySocket: Map<string, Set<string>> = new Map(); // socketId -> Set of userIds
   private presenceSubscribersByUser: Map<string, Set<string>> = new Map(); // userId -> Set of socketIds
   private presenceBufferBySocket: Map<string, { online: Set<string>; offline: Set<string> }> = new Map();
   private presenceFlushTimers: Map<string, NodeJS.Timeout> = new Map();
   private presenceLastSubscribeAt: Map<string, number> = new Map();
   private typingExpiryTimers = new Map<string, NodeJS.Timeout>();
+  /** Per-process only; undelivered push fallback may run before another node records a socket ack. */
   private messageDeliveryAttempts = new Map<string, {
     messageId: string;
     contextType: ChatContextType;
@@ -39,6 +47,10 @@ class SocketService {
     pushDelivered: Set<string>;
     timestamp: Date;
   }>();
+
+  private redisPub: RedisPubSubClient | null = null;
+  private redisSub: RedisPubSubClient | null = null;
+  readonly adapterReady: Promise<void>;
 
   constructor(server: HTTPServer) {
     const allowedOrigins = [
@@ -57,12 +69,37 @@ class SocketService {
       transports: ['websocket', 'polling']
     });
 
+    this.adapterReady = this.attachRedisAdapterIfConfigured();
+
     this.setupMiddleware();
     this.setupEventHandlers();
     presenceService.setNotifier((userId, online) => {
       this.notifyPresenceChange(userId, online).catch((err) => console.error('[SocketService] notifyPresenceChange', err));
     });
     presenceService.startExpiryLoop();
+  }
+
+  private async attachRedisAdapterIfConfigured(): Promise<void> {
+    const url = (process.env.REDIS_URL || process.env.SOCKET_IO_REDIS_URL || '').trim();
+    if (!url) return;
+    try {
+      const pubClient = createClient({ url });
+      const subClient = pubClient.duplicate();
+      this.redisPub = pubClient;
+      this.redisSub = subClient;
+      await Promise.all([pubClient.connect(), subClient.connect()]);
+      this.io.adapter(createAdapter(pubClient, subClient));
+      console.log('[SocketService] Redis adapter enabled (horizontal scale)');
+    } catch (e) {
+      console.error('[SocketService] Redis adapter failed:', e);
+    }
+  }
+
+  private socketDataUserId(socket: Socket | RemoteSocket<DefaultEventsMap, unknown>): string | undefined {
+    const s = socket as AuthenticatedSocket;
+    if (s.userId) return s.userId;
+    const auth = socket.handshake?.auth as { userId?: string } | undefined;
+    return auth?.userId;
   }
 
   private setupMiddleware() {
@@ -78,14 +115,19 @@ class SocketService {
         const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
         socket.userId = decoded.userId;
 
-        // Verify user exists
         const user = await prisma.user.findUnique({
-          where: { id: decoded.userId }
+          where: { id: decoded.userId },
+          select: { id: true, isDeveloper: true },
         });
 
         if (!user) {
           return next(new Error('Authentication error: User not found'));
         }
+
+        socket.isDeveloper = user.isDeveloper;
+        Object.assign(socket.handshake.auth as Record<string, unknown>, { userId: decoded.userId });
+        socket.data.userId = decoded.userId;
+        socket.data.isDeveloper = user.isDeveloper;
 
         next();
       } catch {
@@ -115,6 +157,10 @@ class SocketService {
         }
         this.connectedUsers.get(socket.userId)!.add(socket.id);
         presenceService.recordActivity(socket.userId);
+        socket.join(`notify-user-${socket.userId}`);
+        if (socket.isDeveloper) {
+          socket.join('notify-developers');
+        }
       }
 
       // Initialize rooms tracking
@@ -590,9 +636,7 @@ class SocketService {
           if (!chat) return;
           for (const uid of [chat.user1Id, chat.user2Id]) {
             if (!uid) continue;
-            this.connectedUsers.get(uid)?.forEach((socketId) => {
-              this.io.sockets.sockets.get(socketId)?.emit(eventName, payload);
-            });
+            this.io.to(`notify-user-${uid}`).emit(eventName, payload);
           }
         });
       return;
@@ -668,6 +712,13 @@ class SocketService {
     const attempt = this.messageDeliveryAttempts.get(messageId);
     if (attempt) {
       attempt.socketDelivered.add(userId);
+      void MessageService.tryPromoteToDeliveredWhenRecipientsAcked(
+        messageId,
+        attempt.contextType,
+        attempt.recipients,
+        attempt.socketDelivered,
+        attempt.pushDelivered
+      );
     }
   }
 
@@ -678,6 +729,13 @@ class SocketService {
     const attempt = this.messageDeliveryAttempts.get(messageId);
     if (attempt) {
       attempt.pushDelivered.add(userId);
+      void MessageService.tryPromoteToDeliveredWhenRecipientsAcked(
+        messageId,
+        attempt.contextType,
+        attempt.recipients,
+        attempt.socketDelivered,
+        attempt.pushDelivered
+      );
     }
   }
 
@@ -698,39 +756,15 @@ class SocketService {
 
   // Emit new invite notification to specific user
   public emitNewInvite(receiverId: string, invite: any) {
-    // Emit to all sockets connected by this user
-    this.connectedUsers.get(receiverId)?.forEach(socketId => {
-      const socket = this.io.sockets.sockets.get(socketId);
-      if (socket) {
-        socket.emit('new-invite', invite);
-      }
-    });
+    this.io.to(`notify-user-${receiverId}`).emit('new-invite', invite);
   }
 
-  // Emit invite deleted notification to specific user
   public emitInviteDeleted(receiverId: string, inviteId: string, gameId?: string) {
-    // Emit to all sockets connected by this user
-    this.connectedUsers.get(receiverId)?.forEach(socketId => {
-      const socket = this.io.sockets.sockets.get(socketId);
-      if (socket) {
-        socket.emit('invite-deleted', { inviteId, gameId });
-      }
-    });
+    this.io.to(`notify-user-${receiverId}`).emit('invite-deleted', { inviteId, gameId });
   }
 
   public async emitNewBug() {
-    const developers = await prisma.user.findMany({
-      where: { isDeveloper: true },
-      select: { id: true }
-    });
-    for (const dev of developers) {
-      this.connectedUsers.get(dev.id)?.forEach(socketId => {
-        const socket = this.io.sockets.sockets.get(socketId);
-        if (socket) {
-          socket.emit('new-bug', { timestamp: new Date().toISOString() });
-        }
-      });
-    }
+    this.io.to('notify-developers').emit('new-bug', { timestamp: new Date().toISOString() });
   }
 
   // Emit game update to all users who have access to the game
@@ -764,42 +798,26 @@ class SocketService {
       const roomName = `game-${gameId}`;
       const socketsInRoom = await this.io.in(roomName).fetchSockets();
       const userIdsInRoom = new Set<string>();
-      
-      // Check which users have sockets in this room by checking all connected sockets
-      for (const [userId, socketIds] of this.connectedUsers) {
-        for (const socketId of socketIds) {
-          const socket = this.io.sockets.sockets.get(socketId) as AuthenticatedSocket | undefined;
-          if (socket && socket.gameRooms?.has(gameId)) {
-            userIdsInRoom.add(userId);
-            break; // User found, no need to check other sockets for this user
-          }
-        }
+      for (const s of socketsInRoom) {
+        const uid = this.socketDataUserId(s);
+        if (uid) userIdsInRoom.add(uid);
       }
-      
+
       console.log(`[SocketService] Users in room ${roomName}:`, Array.from(userIdsInRoom), `(${socketsInRoom.length} total sockets)`);
-      
-      // Emit directly to participants and users with pending invites who are NOT in the room
+
       let directEmittedCount = 0;
-      userIds.forEach(userId => {
-        // Skip if user is already in the room (will get it via room broadcast)
+      userIds.forEach((userId) => {
         if (userIdsInRoom.has(userId)) {
           console.log(`[SocketService] User ${userId} is in room, skipping direct emit`);
           return;
         }
-        
-        const userSockets = this.connectedUsers.get(userId);
-        if (userSockets) {
-          console.log(`[SocketService] User ${userId} has ${userSockets.size} socket(s), emitting directly`);
-          userSockets.forEach(socketId => {
-            const socket = this.io.sockets.sockets.get(socketId);
-            if (socket) {
-              socket.emit('game-updated', { gameId, senderId, game: gameToEmit, forceUpdate });
-              directEmittedCount++;
-            }
-          });
-        } else {
-          console.log(`[SocketService] User ${userId} is not connected`);
-        }
+        this.io.to(`notify-user-${userId}`).emit('game-updated', {
+          gameId,
+          senderId,
+          game: gameToEmit,
+          forceUpdate,
+        });
+        directEmittedCount++;
       });
       
       // For public games, emit to all users in the game room (includes participants and non-participants)
@@ -821,28 +839,23 @@ class SocketService {
     }
   }
 
-  public emitGameResultsUpdated(gameId: string, senderId: string) {
+  public async emitGameResultsUpdated(gameId: string, senderId: string) {
+    const roomName = `game-${gameId}`;
+    const sockets = await this.io.in(roomName).fetchSockets();
+    const recipientUserIds = new Set<string>();
     let recipientCount = 0;
-    const recipientUserIds: string[] = [];
-    
-    this.connectedUsers.forEach((socketIds, userId) => {
-      if (userId === senderId) return;
-      
-      socketIds.forEach(socketId => {
-        const socket = this.io.sockets.sockets.get(socketId) as AuthenticatedSocket;
-        if (socket && socket.gameRooms?.has(gameId)) {
-          socket.emit('game-results-updated', { gameId });
-          recipientCount++;
-          if (!recipientUserIds.includes(userId)) {
-            recipientUserIds.push(userId);
-          }
-        }
-      });
-    });
-    
-    console.log(`[SocketService] Emitted game-results-updated for game ${gameId} from user ${senderId} to ${recipientCount} socket(s) (${recipientUserIds.length} unique user(s))`);
-    if (recipientUserIds.length > 0) {
-      console.log(`[SocketService] Recipients: ${recipientUserIds.join(', ')}`);
+    for (const s of sockets) {
+      const uid = this.socketDataUserId(s);
+      if (!uid || uid === senderId) continue;
+      s.emit('game-results-updated', { gameId });
+      recipientCount++;
+      recipientUserIds.add(uid);
+    }
+    console.log(
+      `[SocketService] Emitted game-results-updated for game ${gameId} from user ${senderId} to ${recipientCount} socket(s) (${recipientUserIds.size} unique user(s))`
+    );
+    if (recipientUserIds.size > 0) {
+      console.log(`[SocketService] Recipients: ${[...recipientUserIds].join(', ')}`);
     }
   }
 
@@ -856,23 +869,8 @@ class SocketService {
       return;
     }
 
-    const userSockets = this.connectedUsers.get(userId);
-    if (!userSockets || userSockets.size === 0) {
-      return;
-    }
-
-    let emittedCount = 0;
-    userSockets.forEach(socketId => {
-      const socket = this.io.sockets.sockets.get(socketId);
-      if (socket) {
-        socket.emit('wallet-update', { wallet });
-        emittedCount++;
-      }
-    });
-
-    if (emittedCount > 0) {
-      console.log(`[SocketService] Emitted wallet-update to user ${userId} (${emittedCount} socket(s))`);
-    }
+    this.io.to(`notify-user-${userId}`).emit('wallet-update', { wallet });
+    console.log(`[SocketService] Emitted wallet-update to user ${userId} (notify-user room)`);
   }
 
   public isUserOnline(userId: string): boolean {
@@ -889,23 +887,13 @@ class SocketService {
 
   // Get online users for a game
   public async getOnlineUsersForGame(gameId: string): Promise<string[]> {
-    const onlineUsers: string[] = [];
-    
-    for (const [userId, sockets] of this.connectedUsers) {
-      if (sockets.size > 0) {
-        // Check if any of this user's sockets are in the game room
-        const userSockets = Array.from(sockets);
-        for (const socketId of userSockets) {
-          const socket = this.io.sockets.sockets.get(socketId) as AuthenticatedSocket;
-          if (socket && socket.gameRooms?.has(gameId)) {
-            onlineUsers.push(userId);
-            break;
-          }
-        }
-      }
+    const sockets = await this.io.in(`game-${gameId}`).fetchSockets();
+    const ids = new Set<string>();
+    for (const s of sockets) {
+      const uid = this.socketDataUserId(s);
+      if (uid) ids.add(uid);
     }
-    
-    return onlineUsers;
+    return [...ids];
   }
 
   // Check if user is in a specific chat room
@@ -914,29 +902,9 @@ class SocketService {
     contextId: string,
     userId: string
   ): Promise<boolean> {
-    if (!this.connectedUsers.has(userId)) {
-      return false;
-    }
-
-    const userSockets = this.connectedUsers.get(userId);
-    if (!userSockets || userSockets.size === 0) {
-      return false;
-    }
-
-    for (const socketId of userSockets) {
-      const socket = this.io.sockets.sockets.get(socketId) as AuthenticatedSocket | undefined;
-      if (socket) {
-        if (contextType === 'GAME' && socket.gameRooms?.has(contextId)) {
-          return true;
-        } else if (contextType === 'BUG' && socket.bugRooms?.has(contextId)) {
-          return true;
-        } else if (contextType === 'USER' && socket.userChatRooms?.has(contextId)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    const room = this.getChatRoomName(contextType, contextId);
+    const sockets = await this.io.in(room).fetchSockets();
+    return sockets.some((s) => this.socketDataUserId(s) === userId);
   }
 
   // Get users who are in a specific chat room
@@ -944,26 +912,13 @@ class SocketService {
     contextType: ChatContextType,
     contextId: string
   ): Promise<Set<string>> {
+    const room = this.getChatRoomName(contextType, contextId);
+    const sockets = await this.io.in(room).fetchSockets();
     const userIds = new Set<string>();
-    
-    for (const [userId, socketIds] of this.connectedUsers) {
-      for (const socketId of socketIds) {
-        const socket = this.io.sockets.sockets.get(socketId) as AuthenticatedSocket | undefined;
-        if (socket) {
-          if (contextType === 'GAME' && socket.gameRooms?.has(contextId)) {
-            userIds.add(userId);
-            break;
-          } else if (contextType === 'BUG' && socket.bugRooms?.has(contextId)) {
-            userIds.add(userId);
-            break;
-          } else if (contextType === 'USER' && socket.userChatRooms?.has(contextId)) {
-            userIds.add(userId);
-            break;
-          }
-        }
-      }
+    for (const s of sockets) {
+      const uid = this.socketDataUserId(s);
+      if (uid) userIds.add(uid);
     }
-
     return userIds;
   }
 
@@ -977,17 +932,11 @@ class SocketService {
     unreadCount: number
   ) {
     const eventName = 'chat:unread-count';
-    
-    // Emit to the specific user
-    this.connectedUsers.get(userId)?.forEach(socketId => {
-      const socket = this.io.sockets.sockets.get(socketId);
-      if (socket) {
-        socket.emit(eventName, {
-          contextType,
-          contextId,
-          unreadCount
-        });
-      }
+
+    this.io.to(`notify-user-${userId}`).emit(eventName, {
+      contextType,
+      contextId,
+      unreadCount,
     });
   }
 
@@ -1021,7 +970,7 @@ class SocketService {
     return this.io;
   }
 
-  public close(): Promise<void> {
+  public async close(): Promise<void> {
     for (const timer of this.presenceFlushTimers.values()) {
       clearTimeout(timer);
     }
@@ -1031,6 +980,12 @@ class SocketService {
     this.presenceSubscribersByUser.clear();
     this.presenceLastSubscribeAt.clear();
     presenceService.stop();
+    await Promise.all([
+      this.redisPub?.quit().catch(() => {}),
+      this.redisSub?.quit().catch(() => {}),
+    ]);
+    this.redisPub = null;
+    this.redisSub = null;
     return new Promise((resolve) => {
       this.io.close(() => resolve());
     });

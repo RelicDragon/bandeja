@@ -1,5 +1,6 @@
 import { chatApi, ChatContextType, ChatMessage, CreateMessageRequest } from '@/api/chat';
 import { mediaApi } from '@/api/media';
+import { uploadChatImageFileWithRetry } from '@/services/chat/chatImageUploadRetry';
 import { messageQueueStorage, QueuedMessage } from './chatMessageQueueStorage';
 import { withMessageCreateRetry } from '@/services/chat/chatHttpRetry';
 import { normalizeChatType } from '@/utils/chatType';
@@ -126,7 +127,7 @@ export function sendWithTimeout(
         try {
           const parts = await Promise.all(
             imageBlobs.map((blob, i) =>
-              mediaApi.uploadChatImage(imageFileForBlob(blob, i), contextId, contextType)
+              uploadChatImageFileWithRetry(imageFileForBlob(blob, i), contextId, contextType)
             )
           );
           finalMedia = parts.map((p) => p.originalUrl);

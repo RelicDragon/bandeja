@@ -1,9 +1,9 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { chatApi, type ChatMessage, type ChatMessageWithStatus } from '@/api/chat';
 import {
   loadLocalMessagesForThread,
-  loadLocalMessagesForThreadProgressive,
   loadLocalMessagesOlderThan,
+  loadLocalThreadBootstrap,
   persistChatMessagesFromApi,
 } from '@/services/chat/chatLocalApply';
 import { reconcileChatThreadOpen } from '@/services/chat/chatOpenReconcile';
@@ -12,7 +12,7 @@ import { backfillChatHistoryPages } from '@/services/chat/chatHistoryBackfill';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { normalizeChatType } from '@/utils/chatType';
 import { scrollChatToBottom } from '@/utils/chatScrollHelpers';
-import { recordChatSyncThreadDexiePaintMs } from '@/services/chat/chatSyncMetrics';
+import type { MessageListHandle } from '@/components/MessageList';
 import { mergeChatMessagesAscending, mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
@@ -27,6 +27,7 @@ export interface UseGameChatMessagesParams {
   effectiveChatType: ChatType;
   isEmbedded: boolean;
   chatContainerRef: RefObject<HTMLDivElement | null>;
+  messageListRef: RefObject<MessageListHandle | null>;
   currentIdRef: RefObject<string | undefined>;
 }
 
@@ -42,6 +43,7 @@ export function useGameChatMessages({
   effectiveChatType,
   isEmbedded,
   chatContainerRef,
+  messageListRef,
   currentIdRef,
 }: UseGameChatMessagesParams) {
   const [messages, setMessages] = useState<ChatMessageWithStatus[]>([]);
@@ -58,42 +60,14 @@ export function useGameChatMessages({
   const isLoadingRef = useRef(false);
   const pendingHistoryBackfillRef = useRef(false);
 
-  useEffect(() => {
-    if (!id) return;
-    let alive = true;
-    const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
-    (async () => {
-      const local = await loadLocalMessagesForThreadProgressive(contextType, id, effectiveChatType, (tail) => {
-        if (!alive || tail.length === 0) return;
-        const asStatus = tail as ChatMessageWithStatus[];
-        messagesRef.current = asStatus;
-        setMessages(asStatus);
-        useChatSyncStore.getState().setLastThreadPaint('dexie');
-        if (typeof performance !== 'undefined' && t0 > 0) {
-          recordChatSyncThreadDexiePaintMs(performance.now() - t0);
-        }
-        setIsLoadingMessages(false);
-        setIsInitialLoad(false);
-      });
-      if (!alive || local.length === 0) return;
-      const asStatus = local as ChatMessageWithStatus[];
-      messagesRef.current = asStatus;
-      setMessages(asStatus);
-      useChatSyncStore.getState().setLastThreadPaint('dexie');
-      if (typeof performance !== 'undefined' && t0 > 0) {
-        recordChatSyncThreadDexiePaintMs(performance.now() - t0);
-      }
-      setIsLoadingMessages(false);
-      setIsInitialLoad(false);
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [id, contextType, effectiveChatType]);
-
   const scrollToBottom = useCallback(() => {
+    const list = messageListRef.current;
+    if (list) {
+      list.scrollToBottomAlign();
+      return;
+    }
     scrollChatToBottom(chatContainerRef);
-  }, [chatContainerRef]);
+  }, [chatContainerRef, messageListRef]);
 
   const fetchMessagesPage = useCallback(
     async (
@@ -163,7 +137,6 @@ export function useGameChatMessages({
             messagesRef.current = merged;
             return merged;
           });
-          scrollToBottom();
           const lastId = tailMessageId(response);
           if (id && lastId) {
             useChatSyncStore
@@ -215,7 +188,7 @@ export function useGameChatMessages({
         return false;
       }
     },
-    [id, contextType, currentChatType, isEmbedded, scrollToBottom, currentIdRef, fetchMessagesPage]
+    [id, contextType, currentChatType, isEmbedded, currentIdRef, fetchMessagesPage]
   );
 
   const bootstrapThread = useCallback(
@@ -254,11 +227,10 @@ export function useGameChatMessages({
             .setLastMessageId(contextType, requestId, lid, contextType === 'GAME' ? effectiveType : undefined);
         }
         useChatSyncStore.getState().setLastThreadPaint('dexie');
-        scrollToBottom();
       };
 
       try {
-        const local = await loadLocalMessagesForThreadProgressive(
+        const { messages: local } = await loadLocalThreadBootstrap(
           contextType,
           requestId,
           effectiveType,
@@ -310,7 +282,7 @@ export function useGameChatMessages({
         return loadMessages(false, gameChatType);
       }
     },
-    [id, contextType, currentChatType, isEmbedded, scrollToBottom, currentIdRef, loadMessages]
+    [id, contextType, currentChatType, isEmbedded, currentIdRef, loadMessages]
   );
 
   const loadMoreMessages = useCallback(async () => {

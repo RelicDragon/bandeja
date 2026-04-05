@@ -115,25 +115,28 @@ const setupSocketSubscriptions = () => {
     }
   };
 
-  let lastChatMessage: any = null;
-  let lastChatReadReceipt: any = null;
-
+  let prevUserMsgQLen = 0;
+  let prevUserReadQLen = 0;
   unifiedMessageHandler = useSocketEventsStore.subscribe((state) => {
-    if (state.lastChatMessage !== lastChatMessage) {
-      lastChatMessage = state.lastChatMessage;
-      if (lastChatMessage && lastChatMessage.contextType === 'USER' && newMessageHandler) {
-        newMessageHandler(lastChatMessage.message);
-      }
+    const len = state.userChatMessageQueue.length;
+    if (len <= prevUserMsgQLen) return;
+    prevUserMsgQLen = len;
+    const batch = useSocketEventsStore.getState().takeUserChatMessages();
+    for (const item of batch) {
+      if (item.contextType === 'USER' && newMessageHandler) newMessageHandler(item.message);
     }
+    prevUserMsgQLen = useSocketEventsStore.getState().userChatMessageQueue.length;
   });
 
   unifiedReadReceiptHandler = useSocketEventsStore.subscribe((state) => {
-    if (state.lastChatReadReceipt !== lastChatReadReceipt) {
-      lastChatReadReceipt = state.lastChatReadReceipt;
-      if (lastChatReadReceipt && lastChatReadReceipt.contextType === 'USER' && readReceiptHandler) {
-        readReceiptHandler(lastChatReadReceipt.readReceipt);
-      }
+    const len = state.userChatReadReceiptQueue.length;
+    if (len <= prevUserReadQLen) return;
+    prevUserReadQLen = len;
+    const batch = useSocketEventsStore.getState().takeUserChatReadReceipts();
+    for (const item of batch) {
+      if (item.contextType === 'USER' && readReceiptHandler) readReceiptHandler(item.readReceipt);
     }
+    prevUserReadQLen = useSocketEventsStore.getState().userChatReadReceiptQueue.length;
   });
 };
 

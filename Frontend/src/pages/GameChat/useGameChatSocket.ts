@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -59,14 +59,15 @@ export function useGameChatSocket({
   const tailKey = id ? chatSyncTailKey(contextType, id, contextType === 'GAME' ? effectiveChatType : undefined) : '';
   const missedForContext = useChatSyncStore((s) => (tailKey ? s.missedMessagesByContext[tailKey] ?? [] : []));
 
-  const lastChatMessage = useSocketEventsStore((s) => s.lastChatMessage);
-  const lastChatMessageUpdated = useSocketEventsStore((s) => s.lastChatMessageUpdated);
-  const lastChatMessageTranscription = useSocketEventsStore((s) => s.lastChatMessageTranscription);
-  const lastChatReaction = useSocketEventsStore((s) => s.lastChatReaction);
-  const lastChatReadReceipt = useSocketEventsStore((s) => s.lastChatReadReceipt);
-  const lastChatDeleted = useSocketEventsStore((s) => s.lastChatDeleted);
+  const roomKey = useMemo(
+    () => (id ? `${contextType}:${id}` : ''),
+    [contextType, id]
+  );
+  const roomPushSeq = useSocketEventsStore((s) => (roomKey ? s.chatRoomPushSeq[roomKey] ?? 0 : 0));
+
+  const syncRequiredEpoch = useSocketEventsStore((s) => s.syncRequiredEpoch);
   const lastSyncRequired = useSocketEventsStore((s) => s.lastSyncRequired);
-  const lastPollVote = useSocketEventsStore((s) => s.lastPollVote);
+  const syncEpochBaselineRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -122,117 +123,173 @@ export function useGameChatSocket({
   }, [missedForContext.length, contextType, id, effectiveChatType, chatContainerRef, setMessages, messagesRef]);
 
   useEffect(() => {
-    if (!lastChatMessage || lastChatMessage.contextType !== contextType || lastChatMessage.contextId !== id) return;
-    void persistSocketInboundMessage(contextType, id, lastChatMessage.message, lastChatMessage.syncSeq).then(() => {
-      handleNewMessage(lastChatMessage.message);
-    }).catch(() => {});
+    if (!roomKey || !id) return;
+    const batch = useSocketEventsStore.getState().takeChatRoomQueue(roomKey);
+    if (batch.length === 0) return;
 
-    if (id) {
-      if (contextType === 'USER') {
-        usePlayersStore.getState().updateUnreadCount(id, 0);
-        void patchThreadIndexClearUnread('USER', id);
-      } else if (contextType === 'GROUP') {
-        window.dispatchEvent(new CustomEvent('chat-viewing-clear-unread', { detail: { contextType: 'GROUP', contextId: id } }));
-      } else if (contextType === 'GAME') {
-        void patchThreadIndexClearUnread('GAME', id);
+    for (const ev of batch) {
+      switch (ev.kind) {
+        case 'message': {
+          const lastChatMessage = ev.data;
+          void persistSocketInboundMessage(contextType, id, lastChatMessage.message, lastChatMessage.syncSeq)
+            .then(() => {
+              handleNewMessage(lastChatMessage.message);
+            })
+            .catch(() => {});
+
+          if (id) {
+            if (contextType === 'USER') {
+              usePlayersStore.getState().updateUnreadCount(id, 0);
+              void patchThreadIndexClearUnread('USER', id);
+            } else if (contextType === 'GROUP') {
+              window.dispatchEvent(new CustomEvent('chat-viewing-clear-unread', { detail: { contextType: 'GROUP', contextId: id } }));
+            } else if (contextType === 'GAME') {
+              void patchThreadIndexClearUnread('GAME', id);
+            }
+          }
+
+          if (lastChatMessage.messageId && lastChatMessage.message?.senderId !== userId) {
+            socketService.acknowledgeMessage(
+              lastChatMessage.messageId,
+              contextType as 'GAME' | 'BUG' | 'USER' | 'GROUP',
+              id
+            );
+            socketService.confirmMessageReceipt(lastChatMessage.messageId, 'socket');
+          }
+          break;
+        }
+        case 'reaction': {
+          const lastChatReaction = ev.data;
+          void persistReactionSocketPayload(lastChatReaction.reaction).catch(() => {});
+          void onSocketSyncSeq(contextType, id, lastChatReaction.syncSeq).catch(() => {});
+          handleMessageReaction(lastChatReaction.reaction);
+          break;
+        }
+        case 'readReceipt': {
+          const lastChatReadReceipt = ev.data;
+          const rr = lastChatReadReceipt.readReceipt;
+          void onSocketSyncSeq(contextType, id, lastChatReadReceipt.syncSeq).catch(() => {});
+          if (rr?.messageId && rr?.userId && rr?.readAt && !rr.allRead) {
+            void patchLocalReadReceipt({
+              messageId: rr.messageId,
+              userId: rr.userId,
+              readAt: typeof rr.readAt === 'string' ? rr.readAt : new Date(rr.readAt).toISOString(),
+            }).catch(() => {});
+          }
+          handleReadReceipt(rr);
+          break;
+        }
+        case 'deleted': {
+          const lastChatDeleted = ev.data;
+          void markLocalMessageDeleted(lastChatDeleted.messageId).catch(() => {});
+          void onSocketSyncSeq(contextType, id, lastChatDeleted.syncSeq).catch(() => {});
+          handleMessageDeleted({ messageId: lastChatDeleted.messageId });
+          fetchPinnedMessages();
+          break;
+        }
+        case 'messageUpdated': {
+          const lastChatMessageUpdated = ev.data;
+          if (!lastChatMessageUpdated.message) break;
+          void persistSocketInboundMessage(contextType, id, lastChatMessageUpdated.message, lastChatMessageUpdated.syncSeq)
+            .then(() => {
+              handleMessageUpdated(lastChatMessageUpdated.message);
+            })
+            .catch(() => {});
+          break;
+        }
+        case 'transcription': {
+          const lastChatMessageTranscription = ev.data;
+          const { messageId, audioTranscription, syncSeq } = lastChatMessageTranscription;
+          void persistSocketTranscriptionAndSyncSeq(contextType, id, messageId, audioTranscription, syncSeq).catch(() => {});
+          setMessages((prev) => {
+            const idx = prev.findIndex((m) => m.id === messageId);
+            if (idx < 0) return prev;
+            const next = [...prev];
+            next[idx] = { ...next[idx], audioTranscription };
+            messagesRef.current = next;
+            return next;
+          });
+          break;
+        }
+        case 'pollVote': {
+          const lastPollVote = ev.data;
+          void persistSocketPollVoteAndSyncSeq(
+            contextType,
+            id,
+            lastPollVote.messageId,
+            lastPollVote.updatedPoll,
+            lastPollVote.syncSeq
+          ).catch(() => {});
+          setMessages((prevMessages) => {
+            const newMessages = prevMessages.map((message) => {
+              if (message.id === lastPollVote.messageId && message.poll) {
+                return { ...message, poll: lastPollVote.updatedPoll };
+              }
+              return message;
+            });
+            messagesRef.current = newMessages;
+            return newMessages;
+          });
+          break;
+        }
+        default:
+          break;
       }
     }
-
-    if (lastChatMessage.messageId && lastChatMessage.message?.senderId !== userId) {
-      socketService.acknowledgeMessage(
-        lastChatMessage.messageId,
-        contextType as 'GAME' | 'BUG' | 'USER' | 'GROUP',
-        id
-      );
-      socketService.confirmMessageReceipt(lastChatMessage.messageId, 'socket');
-    }
-  }, [lastChatMessage, contextType, id, userId, handleNewMessage]);
-
-  useEffect(() => {
-    if (!lastChatReaction || lastChatReaction.contextType !== contextType || lastChatReaction.contextId !== id) return;
-    void persistReactionSocketPayload(lastChatReaction.reaction).catch(() => {});
-    void onSocketSyncSeq(contextType, id, lastChatReaction.syncSeq).catch(() => {});
-    handleMessageReaction(lastChatReaction.reaction);
-  }, [lastChatReaction, contextType, id, handleMessageReaction]);
+  }, [
+    roomPushSeq,
+    roomKey,
+    id,
+    contextType,
+    userId,
+    handleNewMessage,
+    handleMessageReaction,
+    handleReadReceipt,
+    handleMessageDeleted,
+    fetchPinnedMessages,
+    handleMessageUpdated,
+    setMessages,
+    messagesRef,
+  ]);
 
   useEffect(() => {
-    if (!lastChatReadReceipt || lastChatReadReceipt.contextType !== contextType || lastChatReadReceipt.contextId !== id) return;
-    const rr = lastChatReadReceipt.readReceipt;
-    void onSocketSyncSeq(contextType, id, lastChatReadReceipt.syncSeq).catch(() => {});
-    if (rr?.messageId && rr?.userId && rr?.readAt && !rr.allRead) {
-      void patchLocalReadReceipt({
-        messageId: rr.messageId,
-        userId: rr.userId,
-        readAt: typeof rr.readAt === 'string' ? rr.readAt : new Date(rr.readAt).toISOString(),
-      }).catch(() => {});
-    }
-    handleReadReceipt(rr);
-  }, [lastChatReadReceipt, contextType, id, handleReadReceipt]);
+    syncEpochBaselineRef.current = null;
+  }, [id, contextType]);
 
   useEffect(() => {
-    if (!lastChatDeleted || lastChatDeleted.contextType !== contextType || lastChatDeleted.contextId !== id) return;
-    void markLocalMessageDeleted(lastChatDeleted.messageId).catch(() => {});
-    void onSocketSyncSeq(contextType, id, lastChatDeleted.syncSeq).catch(() => {});
-    handleMessageDeleted({ messageId: lastChatDeleted.messageId });
-    fetchPinnedMessages();
-  }, [lastChatDeleted, contextType, id, handleMessageDeleted, fetchPinnedMessages]);
+    if (!id) return;
+    const ep = syncRequiredEpoch;
+    const currentMessages = messagesRef.current;
+    const lastMessage = currentMessages[currentMessages.length - 1];
+    const ct = contextType as 'GAME' | 'BUG' | 'USER' | 'GROUP';
 
-  useEffect(() => {
-    if (!lastChatMessageUpdated || lastChatMessageUpdated.contextType !== contextType || lastChatMessageUpdated.contextId !== id || !lastChatMessageUpdated.message) return;
-    void persistSocketInboundMessage(contextType, id, lastChatMessageUpdated.message, lastChatMessageUpdated.syncSeq).then(() => {
-      handleMessageUpdated(lastChatMessageUpdated.message);
-    }).catch(() => {});
-  }, [lastChatMessageUpdated, contextType, id, handleMessageUpdated]);
-
-  useEffect(() => {
-    if (
-      !lastChatMessageTranscription ||
-      lastChatMessageTranscription.contextType !== contextType ||
-      lastChatMessageTranscription.contextId !== id
-    ) {
+    if (!lastMessage) {
+      if (syncEpochBaselineRef.current === null) syncEpochBaselineRef.current = ep;
       return;
     }
-    const { messageId, audioTranscription, syncSeq } = lastChatMessageTranscription;
-    void persistSocketTranscriptionAndSyncSeq(contextType, id, messageId, audioTranscription, syncSeq).catch(() => {});
-    setMessages((prev) => {
-      const idx = prev.findIndex((m) => m.id === messageId);
-      if (idx < 0) return prev;
-      const next = [...prev];
-      next[idx] = { ...next[idx], audioTranscription };
-      messagesRef.current = next;
-      return next;
-    });
-  }, [lastChatMessageTranscription, contextType, id, setMessages, messagesRef]);
 
-  useEffect(() => {
-    if (!lastSyncRequired || !id) return;
-    const currentMessages = messagesRef.current;
-    if (currentMessages.length > 0) {
-      const lastMessage = currentMessages[currentMessages.length - 1];
-      socketService.syncMessages(contextType as 'GAME' | 'BUG' | 'USER' | 'GROUP', id, lastMessage.id);
+    if (syncEpochBaselineRef.current === null) {
+      syncEpochBaselineRef.current = ep;
+      if (lastSyncRequired) {
+        socketService.syncMessages(ct, id, lastMessage.id);
+      }
+      return;
     }
-  }, [lastSyncRequired, contextType, id, messagesRef]);
 
-  useEffect(() => {
-    if (!lastPollVote || lastPollVote.contextType !== contextType || lastPollVote.contextId !== id) return;
-    void persistSocketPollVoteAndSyncSeq(
-      contextType,
-      id,
-      lastPollVote.messageId,
-      lastPollVote.updatedPoll,
-      lastPollVote.syncSeq
-    ).catch(() => {});
-    setMessages((prevMessages) => {
-      const newMessages = prevMessages.map((message) => {
-        if (message.id === lastPollVote.messageId && message.poll) {
-          return { ...message, poll: lastPollVote.updatedPoll };
-        }
-        return message;
-      });
-      messagesRef.current = newMessages;
-      return newMessages;
-    });
-  }, [lastPollVote, contextType, id, setMessages, messagesRef]);
+    const prevEp = syncEpochBaselineRef.current;
+    syncEpochBaselineRef.current = ep;
+    const extra = ep - prevEp;
+    if (extra > 0) {
+      for (let i = 0; i < extra; i++) {
+        socketService.syncMessages(ct, id, lastMessage.id);
+      }
+      return;
+    }
+
+    if (lastSyncRequired) {
+      socketService.syncMessages(ct, id, lastMessage.id);
+    }
+  }, [syncRequiredEpoch, lastSyncRequired, contextType, id, messagesRef]);
 
   useEffect(() => {
     if (!id) return;
@@ -244,5 +301,4 @@ export function useGameChatSocket({
     window.addEventListener(BANDEJA_CHAT_SYNC_STALE, onStale);
     return () => window.removeEventListener(BANDEJA_CHAT_SYNC_STALE, onStale);
   }, [id, contextType, reloadMessagesFirstPage]);
-
 }

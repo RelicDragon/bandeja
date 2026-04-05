@@ -5,6 +5,8 @@ import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePerm
 import { ChatContextType, ChatSyncEventType, ParticipantRole, Prisma } from '@prisma/client';
 import { UnreadCountBatchService } from './unreadCountBatch.service';
 import { ChatSyncEventService } from './chatSyncEvent.service';
+import { ChatReadCursorService } from './chatReadCursor.service';
+import { sqlMessageNotReadByUser } from './chatReadUnreadSql';
 
 const READ_SYNC_CHUNK = 400;
 
@@ -44,17 +46,24 @@ export class ReadReceiptService {
         }
       });
 
+      await ChatReadCursorService.mergeFromMessage(tx, userId, {
+        id: message.id,
+        chatContextType: message.chatContextType,
+        contextId: message.contextId,
+        chatType: message.chatType,
+        serverSyncSeq: message.serverSyncSeq,
+        createdAt: message.createdAt,
+      });
+
       return ChatSyncEventService.appendEventInTransaction(
         tx,
         message.chatContextType,
         message.contextId,
-        ChatSyncEventType.MESSAGE_READ_RECEIPT,
+        ChatSyncEventType.MESSAGES_READ_BATCH,
         {
-          readReceipt: {
-            messageId,
-            userId,
-            readAt: readAt.toISOString(),
-          },
+          userId,
+          readAt: readAt.toISOString(),
+          messageIds: [messageId],
         }
       );
     });
@@ -88,26 +97,21 @@ export class ReadReceiptService {
       const participant = game.participants[0];
       const chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(participant, game.status);
 
-      const gameUnreadCount = await prisma.chatMessage.count({
-        where: {
-          chatContextType: 'GAME',
-          contextId: game.id,
-          chatType: {
-            in: chatTypeFilter
-          },
-          deletedAt: null,
-          senderId: {
-            not: userId
-          },
-          readReceipts: {
-            none: {
-              userId
-            }
-          }
-        }
-      });
+      const gameUnreadRow = await prisma.$queryRaw<[{ n: bigint }]>(
+        Prisma.sql`
+          SELECT COUNT(*)::bigint AS n
+          FROM "ChatMessage" m
+          WHERE m."chatContextType" = 'GAME'::"ChatContextType"
+            AND m."contextId" = ${game.id}
+            AND m."chatType"::text IN (${Prisma.join(chatTypeFilter)})
+            AND m."deletedAt" IS NULL
+            AND m."senderId" IS NOT NULL
+            AND m."senderId" <> ${userId}
+            AND ${sqlMessageNotReadByUser(userId)}
+        `
+      );
 
-      totalUnreadCount += gameUnreadCount;
+      totalUnreadCount += Number(gameUnreadRow[0]?.n ?? 0);
     }
 
     // 2. Count unread messages from USER chats
@@ -121,19 +125,20 @@ export class ReadReceiptService {
     });
 
     for (const chat of userChats) {
-      const userChatUnreadCount = await prisma.chatMessage.count({
-        where: {
-          chatContextType: 'USER',
-          contextId: chat.id,
-          deletedAt: null,
-          senderId: { not: userId },
-          readReceipts: {
-            none: { userId }
-          }
-        }
-      });
+      const userChatRow = await prisma.$queryRaw<[{ n: bigint }]>(
+        Prisma.sql`
+          SELECT COUNT(*)::bigint AS n
+          FROM "ChatMessage" m
+          WHERE m."chatContextType" = 'USER'::"ChatContextType"
+            AND m."contextId" = ${chat.id}
+            AND m."deletedAt" IS NULL
+            AND m."senderId" IS NOT NULL
+            AND m."senderId" <> ${userId}
+            AND ${sqlMessageNotReadByUser(userId)}
+        `
+      );
 
-      totalUnreadCount += userChatUnreadCount;
+      totalUnreadCount += Number(userChatRow[0]?.n ?? 0);
     }
 
     // 3. Count unread messages from BUG chats
@@ -143,19 +148,19 @@ export class ReadReceiptService {
     });
 
     if (user && user.isAdmin) {
-      // Admin can see all bug chats
-      const bugUnreadCount = await prisma.chatMessage.count({
-        where: {
-          chatContextType: 'BUG',
-          deletedAt: null,
-          senderId: { not: userId },
-          readReceipts: {
-            none: { userId }
-          }
-        }
-      });
+      const bugAdminRow = await prisma.$queryRaw<[{ n: bigint }]>(
+        Prisma.sql`
+          SELECT COUNT(*)::bigint AS n
+          FROM "ChatMessage" m
+          WHERE m."chatContextType" = 'BUG'::"ChatContextType"
+            AND m."deletedAt" IS NULL
+            AND m."senderId" IS NOT NULL
+            AND m."senderId" <> ${userId}
+            AND ${sqlMessageNotReadByUser(userId)}
+        `
+      );
 
-      totalUnreadCount += bugUnreadCount;
+      totalUnreadCount += Number(bugAdminRow[0]?.n ?? 0);
     } else {
       // Regular users can see bugs they created or bugs they joined as participants
       const userBugs = await prisma.bug.findMany({
@@ -174,19 +179,20 @@ export class ReadReceiptService {
       ]);
 
       for (const bugId of allBugIds) {
-        const bugUnreadCount = await prisma.chatMessage.count({
-          where: {
-            chatContextType: 'BUG',
-            contextId: bugId,
-            deletedAt: null,
-            senderId: { not: userId },
-            readReceipts: {
-              none: { userId }
-            }
-          }
-        });
+        const bugRow = await prisma.$queryRaw<[{ n: bigint }]>(
+          Prisma.sql`
+            SELECT COUNT(*)::bigint AS n
+            FROM "ChatMessage" m
+            WHERE m."chatContextType" = 'BUG'::"ChatContextType"
+              AND m."contextId" = ${bugId}
+              AND m."deletedAt" IS NULL
+              AND m."senderId" IS NOT NULL
+              AND m."senderId" <> ${userId}
+              AND ${sqlMessageNotReadByUser(userId)}
+          `
+        );
 
-        totalUnreadCount += bugUnreadCount;
+        totalUnreadCount += Number(bugRow[0]?.n ?? 0);
       }
     }
 
@@ -204,26 +210,21 @@ export class ReadReceiptService {
 
     const chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(participant, game.status, isParentGameAdminOrOwner);
 
-    const unreadCount = await prisma.chatMessage.count({
-      where: {
-        chatContextType: 'GAME',
-        contextId: gameId,
-        chatType: {
-          in: chatTypeFilter
-        },
-        deletedAt: null,
-        senderId: {
-          not: userId
-        },
-        readReceipts: {
-          none: {
-            userId
-          }
-        }
-      }
-    });
+    const row = await prisma.$queryRaw<[{ n: bigint }]>(
+      Prisma.sql`
+        SELECT COUNT(*)::bigint AS n
+        FROM "ChatMessage" m
+        WHERE m."chatContextType" = 'GAME'::"ChatContextType"
+          AND m."contextId" = ${gameId}
+          AND m."chatType"::text IN (${Prisma.join(chatTypeFilter)})
+          AND m."deletedAt" IS NULL
+          AND m."senderId" IS NOT NULL
+          AND m."senderId" <> ${userId}
+          AND ${sqlMessageNotReadByUser(userId)}
+      `
+    );
 
-    return { count: unreadCount };
+    return { count: Number(row[0]?.n ?? 0) };
   }
 
   static async getGamesUnreadCounts(gameIds: string[], userId: string) {
@@ -236,17 +237,20 @@ export class ReadReceiptService {
     for (const game of games) {
       const participant = game.participants[0];
       const chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(participant, game.status);
-      const gameUnreadCount = await prisma.chatMessage.count({
-        where: {
-          chatContextType: 'GAME',
-          contextId: game.id,
-          chatType: { in: chatTypeFilter },
-          deletedAt: null,
-          senderId: { not: userId },
-          readReceipts: { none: { userId } },
-        },
-      });
-      unreadCounts[game.id] = gameUnreadCount;
+      const row = await prisma.$queryRaw<[{ n: bigint }]>(
+        Prisma.sql`
+          SELECT COUNT(*)::bigint AS n
+          FROM "ChatMessage" m
+          WHERE m."chatContextType" = 'GAME'::"ChatContextType"
+            AND m."contextId" = ${game.id}
+            AND m."chatType"::text IN (${Prisma.join(chatTypeFilter)})
+            AND m."deletedAt" IS NULL
+            AND m."senderId" IS NOT NULL
+            AND m."senderId" <> ${userId}
+            AND ${sqlMessageNotReadByUser(userId)}
+        `
+      );
+      unreadCounts[game.id] = Number(row[0]?.n ?? 0);
     }
     return unreadCounts;
   }
@@ -283,19 +287,20 @@ export class ReadReceiptService {
   static async getUserChatUnreadCount(chatId: string, userId: string) {
     await MessageService.validateUserChatAccess(chatId, userId);
 
-    const unreadCount = await prisma.chatMessage.count({
-      where: {
-        chatContextType: 'USER',
-        contextId: chatId,
-        deletedAt: null,
-        senderId: { not: userId },
-        readReceipts: {
-          none: { userId }
-        }
-      }
-    });
+    const row = await prisma.$queryRaw<[{ n: bigint }]>(
+      Prisma.sql`
+        SELECT COUNT(*)::bigint AS n
+        FROM "ChatMessage" m
+        WHERE m."chatContextType" = 'USER'::"ChatContextType"
+          AND m."contextId" = ${chatId}
+          AND m."deletedAt" IS NULL
+          AND m."senderId" IS NOT NULL
+          AND m."senderId" <> ${userId}
+          AND ${sqlMessageNotReadByUser(userId)}
+      `
+    );
 
-    return { count: unreadCount };
+    return { count: Number(row[0]?.n ?? 0) };
   }
 
   static async getUserChatsUnreadCounts(chatIds: string[], userId: string) {
@@ -318,20 +323,23 @@ export class ReadReceiptService {
       return unreadCounts;
     }
 
-    const counts = await prisma.chatMessage.groupBy({
-      by: ['contextId'],
-      where: {
-        chatContextType: ChatContextType.USER,
-        contextId: { in: Array.from(validChatIds) },
-        deletedAt: null,
-        senderId: { not: userId },
-        readReceipts: { none: { userId } }
-      },
-      _count: { id: true }
-    });
+    const idList = Array.from(validChatIds);
+    const counts = await prisma.$queryRaw<Array<{ contextId: string; n: bigint }>>(
+      Prisma.sql`
+        SELECT m."contextId", COUNT(*)::bigint AS n
+        FROM "ChatMessage" m
+        WHERE m."chatContextType" = 'USER'::"ChatContextType"
+          AND m."contextId" IN (${Prisma.join(idList)})
+          AND m."deletedAt" IS NULL
+          AND m."senderId" IS NOT NULL
+          AND m."senderId" <> ${userId}
+          AND ${sqlMessageNotReadByUser(userId)}
+        GROUP BY m."contextId"
+      `
+    );
 
     for (const row of counts) {
-      unreadCounts[row.contextId] = row._count.id;
+      unreadCounts[row.contextId] = Number(row.n);
     }
 
     return unreadCounts;
@@ -395,7 +403,12 @@ export class ReadReceiptService {
         }
       },
       select: {
-        id: true
+        id: true,
+        chatContextType: true,
+        contextId: true,
+        chatType: true,
+        serverSyncSeq: true,
+        createdAt: true,
       }
     });
 
@@ -416,6 +429,7 @@ export class ReadReceiptService {
         data: readReceipts,
         skipDuplicates: true,
       });
+      await ChatReadCursorService.mergeFromMessages(tx, userId, unreadMessages);
       const ids = unreadMessages.map((m) => m.id);
       let syncSeq: number | undefined;
       for (let i = 0; i < ids.length; i += READ_SYNC_CHUNK) {
@@ -445,7 +459,12 @@ export class ReadReceiptService {
         }
       },
       select: {
-        id: true
+        id: true,
+        chatContextType: true,
+        contextId: true,
+        chatType: true,
+        serverSyncSeq: true,
+        createdAt: true,
       }
     });
 
@@ -466,6 +485,7 @@ export class ReadReceiptService {
         data: readReceipts,
         skipDuplicates: true,
       });
+      await ChatReadCursorService.mergeFromMessages(tx, userId, unreadMessages);
       const ids = unreadMessages.map((m) => m.id);
       let syncSeq: number | undefined;
       for (let i = 0; i < ids.length; i += READ_SYNC_CHUNK) {
@@ -505,10 +525,7 @@ export class ReadReceiptService {
             AND m."deletedAt" IS NULL
             AND m."senderId" IS NOT NULL
             AND m."senderId" <> ${userId}
-            AND NOT EXISTS (
-              SELECT 1 FROM "MessageReadReceipt" r
-              WHERE r."messageId" = m.id AND r."userId" = ${userId}
-            )
+            AND ${sqlMessageNotReadByUser(userId)}
         `
       );
       return Number(rows[0]?.n ?? 0);
@@ -564,6 +581,18 @@ export class ReadReceiptService {
             },
           });
         }
+        await ChatReadCursorService.mergeFromMessages(
+          tx,
+          userId,
+          messages.map((msg) => ({
+            id: msg.id,
+            chatContextType: msg.chatContextType,
+            contextId: msg.contextId,
+            chatType: msg.chatType,
+            serverSyncSeq: msg.serverSyncSeq,
+            createdAt: msg.createdAt,
+          }))
+        );
         const ids = messages.map((m) => m.id);
         let syncSeq: number | undefined;
         for (let i = 0; i < ids.length; i += READ_SYNC_CHUNK) {

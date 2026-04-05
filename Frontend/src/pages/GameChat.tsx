@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { chatApi } from '@/api/chat';
+import { chatApi, type ChatMessage } from '@/api/chat';
+import toast from 'react-hot-toast';
+import { formatChatMessageForForwardClipboard } from '@/utils/chatForwardClipboard';
 import { ChatType } from '@/types';
 import { MessageList, type MessageListHandle } from '@/components/MessageList';
 import { ChatParticipantsModal } from '@/components/ChatParticipantsModal';
@@ -150,6 +152,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     effectiveChatType,
     isEmbedded,
     chatContainerRef,
+    messageListRef,
     currentIdRef,
   });
 
@@ -215,6 +218,28 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     handleMessageDeleted,
     handleChatRequestRespond,
   } = useGameChatReactions({ id, contextType, user, setMessages, messagesRef, setUserChat });
+
+  const handleForwardMessage = useCallback(
+    async (m: ChatMessage) => {
+      const text = formatChatMessageForForwardClipboard(m);
+      if (!text.trim()) return;
+      try {
+        if (typeof navigator.share === 'function') {
+          try {
+            await navigator.share({ text });
+            return;
+          } catch (shareErr: unknown) {
+            if ((shareErr as { name?: string })?.name === 'AbortError') return;
+          }
+        }
+        await navigator.clipboard.writeText(text);
+        toast.success(t('chat.forwardCopied', { defaultValue: 'Copied — paste in another chat' }));
+      } catch {
+        toast.error(t('chat.forwardFailed', { defaultValue: 'Could not forward' }));
+      }
+    },
+    [t]
+  );
 
   const { failedMutationCount, retryMutations } = useGameChatMutationRetry(contextType, id);
 
@@ -611,7 +636,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               onPin={derived.canWriteChat ? handlePinMessage : undefined}
               onUnpin={derived.canWriteChat ? handleUnpinMessage : undefined}
               showReply={!derived.isChannel || (derived.canWriteChat ?? false)}
+              onForwardMessage={handleForwardMessage}
               threadScrollKey={threadScrollKey}
+              threadLayoutSettling={isInitialLoad || isLoadingMessages}
             />
           </div>
         </main>

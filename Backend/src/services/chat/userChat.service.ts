@@ -8,6 +8,7 @@ import { SystemMessageService } from './systemMessage.service';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
 import { ChatMuteService } from './chatMute.service';
 import { ChatSyncEventService } from './chatSyncEvent.service';
+import { chatSyncMessageUpdatedCompactPayload } from '../../utils/chatSyncMessageUpdatePayload';
 
 export class UserChatService {
   static async getUserChats(userId: string) {
@@ -306,7 +307,13 @@ export class UserChatService {
         ChatContextType.USER,
         chatId,
         ChatSyncEventType.MESSAGE_UPDATED,
-        { message: u }
+        chatSyncMessageUpdatedCompactPayload({
+          id: u.id,
+          content: u.content,
+          mentionIds: u.mentionIds,
+          editedAt: u.editedAt,
+          updatedAt: u.updatedAt,
+        })
       );
       await tx.chatMessage.update({
         where: { id: messageId },

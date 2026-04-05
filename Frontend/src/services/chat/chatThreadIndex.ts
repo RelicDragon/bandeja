@@ -128,26 +128,36 @@ export async function pruneThreadIndexUserChatsNotIn(validChatIds: Set<string>):
   if (toDelete.length) await chatLocalDb.threadIndex.bulkDelete(toDelete);
 }
 
-export async function loadThreadIndexForList(listFilter: ChatListFilterTab): Promise<ChatItem[]> {
-  const rows = await chatLocalDb.threadIndex.where('listFilter').equals(listFilter).toArray();
+export function mapThreadIndexRowsToSortedChatItems(rows: ChatThreadIndexRow[]): ChatItem[] {
   const pairs: { row: ChatThreadIndexRow; item: ChatItem }[] = [];
-  const toDelete: string[] = [];
   for (const r of rows) {
     const it = parseItem(r.itemJson);
-    if (!it || it.type === 'contact') {
-      toDelete.push(r.rowKey);
-      continue;
-    }
+    if (!it || it.type === 'contact') continue;
     pairs.push({ row: r, item: it });
-  }
-  if (toDelete.length) {
-    await chatLocalDb.threadIndex.bulkDelete(toDelete);
   }
   pairs.sort((a, b) => {
     if (a.item.type === 'contact' || b.item.type === 'contact') return 0;
     return listSortTimestamp(b.row, b.item) - listSortTimestamp(a.row, a.item);
   });
   return pairs.map((p) => p.item);
+}
+
+export async function loadThreadIndexForList(listFilter: ChatListFilterTab): Promise<ChatItem[]> {
+  const rows = await chatLocalDb.threadIndex.where('listFilter').equals(listFilter).toArray();
+  const toDelete: string[] = [];
+  const validRows: ChatThreadIndexRow[] = [];
+  for (const r of rows) {
+    const it = parseItem(r.itemJson);
+    if (!it || it.type === 'contact') {
+      toDelete.push(r.rowKey);
+      continue;
+    }
+    validRows.push(r);
+  }
+  if (toDelete.length) {
+    await chatLocalDb.threadIndex.bulkDelete(toDelete);
+  }
+  return mapThreadIndexRowsToSortedChatItems(validRows);
 }
 
 function rowToPutBase(row: ChatThreadIndexRow): Omit<ChatThreadIndexRow, 'itemJson' | 'sortAt' | 'updatedAt'> {
@@ -442,8 +452,10 @@ export async function clearChatLocalStores(): Promise<void> {
       chatLocalDb.messageRowHeights,
       chatLocalDb.chatDrafts,
       chatLocalDb.mutationQueue,
+      chatLocalDb.messageSearchTokens,
     ],
     async () => {
+      await chatLocalDb.messageSearchTokens.clear();
       await chatLocalDb.messages.clear();
       await chatLocalDb.chatSyncCursor.clear();
       await chatLocalDb.outboxMediaBlobs.clear();

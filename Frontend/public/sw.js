@@ -1,6 +1,10 @@
-const CACHE_VERSION = 'v508';
+const CACHE_VERSION = 'v512';
 const CACHE_NAME = `bandeja-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `bandeja-runtime-${CACHE_VERSION}`;
+
+const CHAT_OFFLINE_BACKGROUND_SYNC_TAG = 'chat-offline-flush';
+const CHAT_OFFLINE_FLUSH_REQUEST = 'CHAT_OFFLINE_FLUSH_REQUEST';
+const CHAT_OFFLINE_FLUSH_ACK = 'CHAT_OFFLINE_FLUSH_ACK';
 
 const urlsToCache = [
   '/',
@@ -37,6 +41,72 @@ self.addEventListener('activate', (event) => {
     ])
   );
 });
+
+self.addEventListener('sync', (event) => {
+  if (event.tag !== CHAT_OFFLINE_BACKGROUND_SYNC_TAG) return;
+  event.waitUntil(runChatOfflineBackgroundSync());
+});
+
+function pickFlushClient(clientList) {
+  if (!clientList.length) return null;
+  const visible = clientList.filter((c) => c.visibilityState === 'visible');
+  const pool = visible.length ? visible : clientList;
+  const focused = pool.find((c) => c.focused);
+  return focused ?? pool[0];
+}
+
+function waitForFlushAck(port, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    let done = false;
+    const finish = (fn) => {
+      if (done) return;
+      done = true;
+      clearTimeout(t);
+      port.onmessage = null;
+      fn();
+    };
+    const t = setTimeout(() => {
+      finish(() => reject(new Error('chat-offline-flush-ack-timeout')));
+    }, timeoutMs);
+    port.onmessage = (ev) => {
+      if (ev.data?.type === CHAT_OFFLINE_FLUSH_ACK) {
+        finish(() => resolve());
+      }
+    };
+  });
+}
+
+async function probeReachableOrigin() {
+  const paths = ['/api/health', '/health'];
+  for (const p of paths) {
+    try {
+      const res = await fetch(new URL(p, self.location.origin), {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (res.ok) return;
+    } catch {
+      /* try next */
+    }
+  }
+}
+
+async function runChatOfflineBackgroundSync() {
+  const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  const client = pickFlushClient(clientList);
+  if (client) {
+    const mc = new MessageChannel();
+    const ackPromise = waitForFlushAck(mc.port1, 30000);
+    try {
+      client.postMessage({ type: CHAT_OFFLINE_FLUSH_REQUEST }, [mc.port2]);
+    } catch (err) {
+      mc.port1.onmessage = null;
+      throw err;
+    }
+    await ackPromise;
+  }
+  await probeReachableOrigin();
+}
 
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;

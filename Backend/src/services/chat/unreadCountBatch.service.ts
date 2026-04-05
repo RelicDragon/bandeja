@@ -1,5 +1,6 @@
 import { ChatType, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
+import { sqlMessageNotReadByUser } from './chatReadUnreadSql';
 
 export type UnreadCountMap = Record<string, number>;
 
@@ -24,10 +25,7 @@ export class UnreadCountBatchService {
           AND m."deletedAt" IS NULL
           AND m."senderId" IS NOT NULL AND m."senderId" != ${userId}
           AND m."contextId" IN (${Prisma.join(batch)})
-          AND NOT EXISTS (
-            SELECT 1 FROM "MessageReadReceipt" r
-            WHERE r."messageId" = m.id AND r."userId" = ${userId}
-          )
+          AND ${sqlMessageNotReadByUser(userId)}
         GROUP BY m."contextId"
       `
       );
@@ -57,10 +55,7 @@ export class UnreadCountBatchService {
           AND m."deletedAt" IS NULL
           AND m."senderId" IS NOT NULL AND m."senderId" != ${userId}
           AND m."contextId" IN (${Prisma.join(batch)})
-          AND NOT EXISTS (
-            SELECT 1 FROM "MessageReadReceipt" r
-            WHERE r."messageId" = m.id AND r."userId" = ${userId}
-          )
+          AND ${sqlMessageNotReadByUser(userId)}
         GROUP BY m."contextId", m."chatType"
         `
       );
@@ -74,17 +69,20 @@ export class UnreadCountBatchService {
     userId: string,
     chatTypeFilter: ChatType[]
   ): Promise<number> {
-    const result = await prisma.chatMessage.count({
-      where: {
-        chatContextType: 'GAME',
-        contextId: gameId,
-        chatType: { in: chatTypeFilter },
-        deletedAt: null,
-        senderId: { not: userId },
-        readReceipts: { none: { userId } },
-      },
-    });
-    return result;
+    const row = await prisma.$queryRaw<[{ n: bigint }]>(
+      Prisma.sql`
+        SELECT COUNT(*)::bigint AS n
+        FROM "ChatMessage" m
+        WHERE m."chatContextType" = 'GAME'::"ChatContextType"
+          AND m."contextId" = ${gameId}
+          AND m."chatType"::text IN (${Prisma.join(chatTypeFilter)})
+          AND m."deletedAt" IS NULL
+          AND m."senderId" IS NOT NULL
+          AND m."senderId" <> ${userId}
+          AND ${sqlMessageNotReadByUser(userId)}
+      `
+    );
+    return Number(row[0]?.n ?? 0);
   }
 
   static buildGameChatTypeFilter(

@@ -5,6 +5,7 @@ import { useHeaderStore } from './headerStore';
 import { useAuthStore } from './authStore';
 import { usePresenceStore } from './presenceStore';
 import { Game, Invite } from '@/types';
+import { logChatSocketQueueTrim } from '@/services/chat/chatDiagnostics';
 
 interface GameUpdateData {
   gameId: string;
@@ -18,7 +19,7 @@ interface InviteDeletedData {
   gameId?: string;
 }
 
-interface ChatMessageData {
+export interface ChatMessageData {
   contextType: string;
   contextId: string;
   message: any;
@@ -110,6 +111,28 @@ interface NewBugData {
   timestamp: string;
 }
 
+export type ChatRoomEvent =
+  | { kind: 'message'; data: ChatMessageData }
+  | { kind: 'reaction'; data: ChatReactionData }
+  | { kind: 'readReceipt'; data: ChatReadReceiptData }
+  | { kind: 'deleted'; data: ChatDeletedData }
+  | { kind: 'messageUpdated'; data: ChatMessageData }
+  | { kind: 'transcription'; data: ChatMessageTranscriptionData }
+  | { kind: 'pollVote'; data: PollVoteData };
+
+const CHAT_ROOM_QUEUE_CAP = 280;
+const CHAT_FIFO_CAP = 500;
+
+function chatRoomKey(contextType: string, contextId: string): string {
+  return `${contextType}:${contextId}`;
+}
+
+function capQueue<T>(q: T[], cap: number, label: string): T[] {
+  if (q.length <= cap) return q;
+  logChatSocketQueueTrim(label, q.length - cap, cap);
+  return q.slice(-cap);
+}
+
 interface SocketEventsState {
   gameUpdates: Map<string, GameUpdateData>;
   lastGameUpdate: GameUpdateData | null;
@@ -123,6 +146,7 @@ interface SocketEventsState {
   lastChatMessageTranscription: ChatMessageTranscriptionData | null;
   lastChatUnreadCount: ChatUnreadCountData | null;
   lastSyncRequired: { timestamp: string } | null;
+  syncRequiredEpoch: number;
   lastBetCreated: BetCreatedData | null;
   lastBetUpdated: BetUpdatedData | null;
   lastBetDeleted: BetDeletedData | null;
@@ -131,6 +155,22 @@ interface SocketEventsState {
   lastGameCancelled: GameCancelledData | null;
   lastPollVote: PollVoteData | null;
   lastNewBug: NewBugData | null;
+  chatRoomQueues: Record<string, ChatRoomEvent[]>;
+  chatRoomPushSeq: Record<string, number>;
+  listChatMessageQueue: ChatMessageData[];
+  listChatUnreadQueue: ChatUnreadCountData[];
+  listChatMessageSeq: number;
+  listChatUnreadSeq: number;
+  groupUnreadInbound: ChatUnreadCountData[];
+  groupUnreadSeq: number;
+  userChatMessageQueue: ChatMessageData[];
+  userChatReadReceiptQueue: ChatReadReceiptData[];
+  takeChatRoomQueue: (key: string) => ChatRoomEvent[];
+  takeListChatMessages: () => ChatMessageData[];
+  takeListChatUnreads: () => ChatUnreadCountData[];
+  takeGroupUnreadInbound: () => ChatUnreadCountData[];
+  takeUserChatMessages: () => ChatMessageData[];
+  takeUserChatReadReceipts: () => ChatReadReceiptData[];
   initialized: boolean;
   initialize: () => void;
   cleanup: () => void;
@@ -157,6 +197,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     lastChatMessageTranscription: null,
     lastChatUnreadCount: null,
     lastSyncRequired: null,
+    syncRequiredEpoch: 0,
     lastBetCreated: null,
     lastBetUpdated: null,
     lastBetDeleted: null,
@@ -165,6 +206,56 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     lastGameCancelled: null,
     lastPollVote: null,
     lastNewBug: null,
+    chatRoomQueues: {},
+    chatRoomPushSeq: {},
+    listChatMessageQueue: [],
+    listChatUnreadQueue: [],
+    listChatMessageSeq: 0,
+    listChatUnreadSeq: 0,
+    groupUnreadInbound: [],
+    groupUnreadSeq: 0,
+    userChatMessageQueue: [],
+    userChatReadReceiptQueue: [],
+    takeChatRoomQueue: (key) => {
+      const q = get().chatRoomQueues[key];
+      if (!q?.length) return [];
+      set((s) => {
+        const next = { ...s.chatRoomQueues };
+        delete next[key];
+        return { chatRoomQueues: next };
+      });
+      return q;
+    },
+    takeListChatMessages: () => {
+      const q = get().listChatMessageQueue;
+      if (!q.length) return [];
+      set({ listChatMessageQueue: [] });
+      return q;
+    },
+    takeListChatUnreads: () => {
+      const q = get().listChatUnreadQueue;
+      if (!q.length) return [];
+      set({ listChatUnreadQueue: [] });
+      return q;
+    },
+    takeGroupUnreadInbound: () => {
+      const q = get().groupUnreadInbound;
+      if (!q.length) return [];
+      set({ groupUnreadInbound: [] });
+      return q;
+    },
+    takeUserChatMessages: () => {
+      const q = get().userChatMessageQueue;
+      if (!q.length) return [];
+      set({ userChatMessageQueue: [] });
+      return q;
+    },
+    takeUserChatReadReceipts: () => {
+      const q = get().userChatReadReceiptQueue;
+      if (!q.length) return [];
+      set({ userChatReadReceiptQueue: [] });
+      return q;
+    },
     initialized: false,
     initialize: () => {
       if (get().initialized) return;
@@ -190,35 +281,128 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       };
 
       const handleChatMessage = (data: ChatMessageData) => {
-        set({ lastChatMessage: data });
+        const rk = chatRoomKey(data.contextType, data.contextId);
+        set((s) => {
+          const roomQ = capQueue(
+            [...(s.chatRoomQueues[rk] ?? []), { kind: 'message' as const, data }],
+            CHAT_ROOM_QUEUE_CAP,
+            `room:${rk}`
+          );
+          const listQ = capQueue([...s.listChatMessageQueue, data], CHAT_FIFO_CAP, 'listMessage');
+          const userQ =
+            data.contextType === 'USER'
+              ? capQueue([...s.userChatMessageQueue, data], CHAT_FIFO_CAP, 'userMessage')
+              : s.userChatMessageQueue;
+          return {
+            lastChatMessage: data,
+            chatRoomQueues: { ...s.chatRoomQueues, [rk]: roomQ },
+            chatRoomPushSeq: { ...s.chatRoomPushSeq, [rk]: (s.chatRoomPushSeq[rk] ?? 0) + 1 },
+            listChatMessageQueue: listQ,
+            listChatMessageSeq: s.listChatMessageSeq + 1,
+            userChatMessageQueue: userQ,
+          };
+        });
       };
 
       const handleChatReaction = (data: ChatReactionData) => {
-        set({ lastChatReaction: data });
+        const rk = chatRoomKey(data.contextType, data.contextId);
+        set((s) => ({
+          lastChatReaction: data,
+          chatRoomQueues: {
+            ...s.chatRoomQueues,
+            [rk]: capQueue([...(s.chatRoomQueues[rk] ?? []), { kind: 'reaction' as const, data }], CHAT_ROOM_QUEUE_CAP, `room:${rk}`),
+          },
+          chatRoomPushSeq: { ...s.chatRoomPushSeq, [rk]: (s.chatRoomPushSeq[rk] ?? 0) + 1 },
+        }));
       };
 
       const handleChatReadReceipt = (data: ChatReadReceiptData) => {
-        set({ lastChatReadReceipt: data });
+        const rk = chatRoomKey(data.contextType, data.contextId);
+        set((s) => {
+          const roomQ = capQueue(
+            [...(s.chatRoomQueues[rk] ?? []), { kind: 'readReceipt' as const, data }],
+            CHAT_ROOM_QUEUE_CAP,
+            `room:${rk}`
+          );
+          const userReadQ =
+            data.contextType === 'USER'
+              ? capQueue([...s.userChatReadReceiptQueue, data], CHAT_FIFO_CAP, 'userReadReceipt')
+              : s.userChatReadReceiptQueue;
+          return {
+            lastChatReadReceipt: data,
+            chatRoomQueues: { ...s.chatRoomQueues, [rk]: roomQ },
+            chatRoomPushSeq: { ...s.chatRoomPushSeq, [rk]: (s.chatRoomPushSeq[rk] ?? 0) + 1 },
+            userChatReadReceiptQueue: userReadQ,
+          };
+        });
       };
 
       const handleChatDeleted = (data: ChatDeletedData) => {
-        set({ lastChatDeleted: data });
+        const rk = chatRoomKey(data.contextType, data.contextId);
+        set((s) => ({
+          lastChatDeleted: data,
+          chatRoomQueues: {
+            ...s.chatRoomQueues,
+            [rk]: capQueue([...(s.chatRoomQueues[rk] ?? []), { kind: 'deleted' as const, data }], CHAT_ROOM_QUEUE_CAP, `room:${rk}`),
+          },
+          chatRoomPushSeq: { ...s.chatRoomPushSeq, [rk]: (s.chatRoomPushSeq[rk] ?? 0) + 1 },
+        }));
       };
 
       const handleChatMessageUpdated = (data: ChatMessageData) => {
-        set({ lastChatMessageUpdated: data });
+        const rk = chatRoomKey(data.contextType, data.contextId);
+        set((s) => ({
+          lastChatMessageUpdated: data,
+          chatRoomQueues: {
+            ...s.chatRoomQueues,
+            [rk]: capQueue(
+              [...(s.chatRoomQueues[rk] ?? []), { kind: 'messageUpdated' as const, data }],
+              CHAT_ROOM_QUEUE_CAP,
+              `room:${rk}`
+            ),
+          },
+          chatRoomPushSeq: { ...s.chatRoomPushSeq, [rk]: (s.chatRoomPushSeq[rk] ?? 0) + 1 },
+        }));
       };
 
       const handleChatMessageTranscription = (data: ChatMessageTranscriptionData) => {
-        set({ lastChatMessageTranscription: data });
+        const rk = chatRoomKey(data.contextType, data.contextId);
+        set((s) => ({
+          lastChatMessageTranscription: data,
+          chatRoomQueues: {
+            ...s.chatRoomQueues,
+            [rk]: capQueue(
+              [...(s.chatRoomQueues[rk] ?? []), { kind: 'transcription' as const, data }],
+              CHAT_ROOM_QUEUE_CAP,
+              `room:${rk}`
+            ),
+          },
+          chatRoomPushSeq: { ...s.chatRoomPushSeq, [rk]: (s.chatRoomPushSeq[rk] ?? 0) + 1 },
+        }));
       };
 
       const handleChatUnreadCount = (data: ChatUnreadCountData) => {
-        set({ lastChatUnreadCount: data });
+        set((s) => {
+          const listU = capQueue([...s.listChatUnreadQueue, data], CHAT_FIFO_CAP, 'listUnread');
+          const groupU =
+            data.contextType === 'GROUP'
+              ? capQueue([...s.groupUnreadInbound, data], CHAT_FIFO_CAP, 'groupUnread')
+              : s.groupUnreadInbound;
+          return {
+            lastChatUnreadCount: data,
+            listChatUnreadQueue: listU,
+            listChatUnreadSeq: s.listChatUnreadSeq + 1,
+            groupUnreadInbound: groupU,
+            groupUnreadSeq: data.contextType === 'GROUP' ? s.groupUnreadSeq + 1 : s.groupUnreadSeq,
+          };
+        });
       };
 
       const handleSyncRequired = (data: { timestamp: string }) => {
-        set({ lastSyncRequired: data });
+        set((s) => ({
+          lastSyncRequired: data,
+          syncRequiredEpoch: s.syncRequiredEpoch + 1,
+        }));
         invitesApi.getMyInvites('PENDING')
           .then((res) => useHeaderStore.getState().setPendingInvites(res.data.length))
           .catch(() => {});
@@ -249,7 +433,15 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       };
 
       const handlePollVote = (data: PollVoteData) => {
-        set({ lastPollVote: data });
+        const rk = chatRoomKey(data.contextType, data.contextId);
+        set((s) => ({
+          lastPollVote: data,
+          chatRoomQueues: {
+            ...s.chatRoomQueues,
+            [rk]: capQueue([...(s.chatRoomQueues[rk] ?? []), { kind: 'pollVote' as const, data }], CHAT_ROOM_QUEUE_CAP, `room:${rk}`),
+          },
+          chatRoomPushSeq: { ...s.chatRoomPushSeq, [rk]: (s.chatRoomPushSeq[rk] ?? 0) + 1 },
+        }));
       };
 
       const handleNewBug = (data: NewBugData) => {
@@ -333,6 +525,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         lastChatMessageTranscription: null,
         lastChatUnreadCount: null,
         lastSyncRequired: null,
+        syncRequiredEpoch: 0,
         lastBetCreated: null,
         lastBetUpdated: null,
         lastBetDeleted: null,
@@ -341,6 +534,16 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         lastGameCancelled: null,
         lastPollVote: null,
         lastNewBug: null,
+        chatRoomQueues: {},
+        chatRoomPushSeq: {},
+        listChatMessageQueue: [],
+        listChatUnreadQueue: [],
+        listChatMessageSeq: 0,
+        listChatUnreadSeq: 0,
+        groupUnreadInbound: [],
+        groupUnreadSeq: 0,
+        userChatMessageQueue: [],
+        userChatReadReceiptQueue: [],
       });
     },
     clearLastBetCreated: () => set({ lastBetCreated: null }),

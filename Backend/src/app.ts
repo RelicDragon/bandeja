@@ -1,5 +1,6 @@
 import express, { Application } from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
@@ -42,6 +43,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+app.use(compression());
 
 if (config.nodeEnv === 'development') {
   app.use(morgan('dev'));

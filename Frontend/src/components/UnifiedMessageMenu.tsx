@@ -10,7 +10,8 @@ import { REACTION_EMOJIS, formatFullDateTime, getUserDisplayName, getUserInitial
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { isCapacitor } from '@/utils/capacitor';
-import { FileText, Flag, Languages, Pencil, Pin, PinOff } from 'lucide-react';
+import { FileText, Flag, Forward, Languages, Pencil, Pin, PinOff } from 'lucide-react';
+import { formatChatMessageForForwardClipboard } from '@/utils/chatForwardClipboard';
 
 interface UnifiedMessageMenuProps {
   message: ChatMessage;
@@ -33,6 +34,7 @@ interface UnifiedMessageMenuProps {
   onPin?: (message: ChatMessage) => void;
   onUnpin?: (messageId: string) => void;
   showReply?: boolean;
+  onForward?: (message: ChatMessage) => void;
 }
 
 export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
@@ -56,6 +58,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   onPin,
   onUnpin,
   showReply = true,
+  onForward,
 }) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
@@ -164,6 +167,15 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
   const handleCopy = () => {
     onCopy(message);
+    onClose();
+  };
+
+  const forwardPayload = formatChatMessageForForwardClipboard(message);
+  const canForward = !!onForward && !isSystemMessage && forwardPayload.length > 0;
+
+  const handleForward = () => {
+    if (!onForward || !canForward) return;
+    onForward(message);
     onClose();
   };
 
@@ -464,6 +476,16 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </svg>
               <span>{t('chat.contextMenu.copy')}</span>
             </button>
+            {canForward && (
+              <button
+                type="button"
+                onClick={handleForward}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
+              >
+                <Forward className="w-4 h-4" />
+                <span>{t('chat.contextMenu.forward', { defaultValue: 'Forward' })}</span>
+              </button>
+            )}
             {onPin && !isPinned && !isSystemMessage && (
               <button
                 onClick={() => { onPin(message); onClose(); }}

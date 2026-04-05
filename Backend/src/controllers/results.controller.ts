@@ -117,7 +117,7 @@ export const syncResults = asyncHandler(async (req: AuthRequest, res: Response) 
 
   const socketService = (global as any).socketService;
   if (socketService) {
-    socketService.emitGameResultsUpdated(gameId, req.userId!);
+    await socketService.emitGameResultsUpdated(gameId, req.userId!);
   }
 
   res.json({
@@ -180,7 +180,7 @@ export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) 
 
   const socketService = (global as any).socketService;
   if (socketService) {
-    socketService.emitGameResultsUpdated(gameId, req.userId!);
+    await socketService.emitGameResultsUpdated(gameId, req.userId!);
   }
 
   res.json({

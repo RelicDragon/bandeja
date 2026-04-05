@@ -276,6 +276,7 @@ export interface SearchMessageResult {
   context: Game | UserChat | GroupChannel | { id: string; status: string; bugType: string; sender: BasicUser };
   relevanceScore?: number;
   gameEntityType?: string;
+  fromLocalCache?: boolean;
 }
 
 export interface SearchMessagesResponse {

@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { compareChatReadCursorRows } from '../chat/chatReadCursor.service';
 
 export type MergeTx = Prisma.TransactionClient;
 
@@ -537,6 +538,40 @@ async function remapChatTranslationPreferencesForMerge(
   }
 }
 
+async function remapChatReadCursorsForMerge(tx: MergeTx, survivorId: string, sourceId: string) {
+  const rows = await tx.chatReadCursor.findMany({ where: { userId: sourceId } });
+  for (const row of rows) {
+    const twin = await tx.chatReadCursor.findFirst({
+      where: {
+        userId: survivorId,
+        chatContextType: row.chatContextType,
+        contextId: row.contextId,
+        chatType: row.chatType,
+      },
+    });
+    if (twin) {
+      if (compareChatReadCursorRows(twin, row) >= 0) {
+        await tx.chatReadCursor.delete({ where: { id: row.id } });
+      } else {
+        await tx.chatReadCursor.update({
+          where: { id: twin.id },
+          data: {
+            readMaxServerSyncSeq: row.readMaxServerSyncSeq,
+            readMaxCreatedAt: row.readMaxCreatedAt,
+            readMaxMessageId: row.readMaxMessageId,
+          },
+        });
+        await tx.chatReadCursor.delete({ where: { id: row.id } });
+      }
+    } else {
+      await tx.chatReadCursor.update({
+        where: { id: row.id },
+        data: { userId: survivorId },
+      });
+    }
+  }
+}
+
 async function remapChatDraftsForMerge(tx: MergeTx, survivorId: string, sourceId: string) {
   const rows = await tx.chatDraft.findMany({ where: { userId: sourceId } });
   for (const row of rows) {
@@ -637,6 +672,7 @@ export async function remapAllUserScopedCompositeRows(
   await remapChatMutesForMerge(tx, survivorId, sourceId);
   await remapChatTranslationPreferencesForMerge(tx, survivorId, sourceId);
   await remapChatDraftsForMerge(tx, survivorId, sourceId);
+  await remapChatReadCursorsForMerge(tx, survivorId, sourceId);
   await remapTrainerReviewsReviewer(tx, survivorId, sourceId);
   await remapTrainerReviewsTrainer(tx, survivorId, sourceId);
   await remapUserFavoriteUserForMerge(tx, survivorId, sourceId);

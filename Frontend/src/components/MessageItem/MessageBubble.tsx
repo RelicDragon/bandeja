@@ -2,6 +2,7 @@ import React from 'react';
 import { ChatMessage } from '@/api/chat';
 import { PollMessage } from '../chat/PollMessage';
 import { MessageContentBody, ContentVariant } from './MessageContentBody';
+import { MessageExternalLinkPreview } from './MessageExternalLinkPreview';
 import { MessageMediaGrid } from './MessageMediaGrid';
 import { AudioMessageBubble } from '../audio/AudioMessageBubble';
 import { ParsedContentPart } from './types';
@@ -34,6 +35,7 @@ interface MessageBubbleProps {
   onRemoveFromQueue?: (tempId: string) => void;
   onTranscribe?: () => void;
   isTranscribing?: boolean;
+  firstExternalHttpUrl?: string | null;
   t: TFunction;
 }
 
@@ -62,6 +64,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onRemoveFromQueue,
   onTranscribe,
   isTranscribing,
+  firstExternalHttpUrl,
   t,
 }) => {
   const isVoice = message.messageType === 'VOICE';
@@ -75,6 +78,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     ? ({ filter: 'drop-shadow(0 0 2px #000) drop-shadow(0 0 4px #000) drop-shadow(1px 1px 2px #000) drop-shadow(-1px -1px 2px #000)' } as const)
     : undefined;
   const variant: ContentVariant = isChannel ? 'channel' : isOwnMessage ? 'own' : 'other';
+  const tickRead = message.state === 'READ' || (message.readReceipts?.length ?? 0) > 0;
+  const tickDelivered = message.state === 'DELIVERED' && !tickRead;
   const contentVariantForTranslation = isOwnMessage ? 'own' : 'other';
   const hasMediaOrVoice = isVoice || hasMedia;
   const paddingClass = hasTranslation
@@ -157,6 +162,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               onUrlClick={onUrlClick}
             />
           )}
+          {firstExternalHttpUrl && <MessageExternalLinkPreview url={firstExternalHttpUrl} variant={variant} />}
         </div>
       )}
 
@@ -220,17 +226,33 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     </div>
                   )}
                 </span>
-              ) : message.readReceipts && message.readReceipts.length > 0 ? (
+              ) : tickRead ? (
                 <span
                   className="text-purple-200 inline-flex"
-                  title={`Read by ${message.readReceipts.length} ${message.readReceipts.length === 1 ? 'person' : 'people'}`}
+                  title={
+                    (message.readReceipts?.length ?? 0) > 0
+                      ? `Read by ${message.readReceipts!.length} ${message.readReceipts!.length === 1 ? 'person' : 'people'}`
+                      : t('chat.tickRead', { defaultValue: 'Read' })
+                  }
                   style={mediaOnlyIconStyle}
                 >
                   <DoubleTickIcon size={14} variant="double" />
                 </span>
+              ) : tickDelivered ? (
+                <span
+                  className="text-blue-100/90 inline-flex"
+                  title={t('chat.tickDelivered', { defaultValue: 'Delivered' })}
+                  style={mediaOnlyIconStyle}
+                >
+                  <DoubleTickIcon size={14} variant="double" className="opacity-85" />
+                </span>
               ) : (
-                <span className="text-blue-100 inline-flex" title="Sent" style={mediaOnlyIconStyle}>
-                  <DoubleTickIcon size={14} variant="secondary" />
+                <span
+                  className="text-blue-100 inline-flex"
+                  title={t('chat.tickSent', { defaultValue: 'Sent' })}
+                  style={mediaOnlyIconStyle}
+                >
+                  <DoubleTickIcon size={14} variant="single" />
                 </span>
               )}
             </>

@@ -10,7 +10,6 @@ import {
   GroupChannel,
   OptimisticMessagePayload,
 } from '@/api/chat';
-import { mediaApi } from '@/api/media';
 import { ChatType, Game, Bug } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { isGroupChannelAdminOrOwner } from '@/utils/gameResults';
@@ -22,69 +21,23 @@ import { PollCreationModal } from './chat/PollCreationModal';
 import { TranslationLanguageModal } from './chat/TranslationLanguageModal';
 import { TranslateToButton } from './chat/TranslateToButton';
 import { UndoTranslateButton } from './chat/UndoTranslateButton';
-import { X, ListPlus, Paperclip, Image } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
-import { pickImages } from '@/utils/photoCapture';
-import { isCapacitor } from '@/utils/capacitor';
 import { PollType } from '@/api/chat';
 import { draftStorage } from '@/services/draftStorage';
-import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
-import { enqueueChatMutationEdit } from '@/services/chat/chatMutationEnqueue';
 import { VoiceRecordingOverlay } from './audio/VoiceRecordingOverlay';
 import { VoiceRecordButton } from './audio/VoiceRecordButton';
 import { useAudioRecorder } from './audio/useAudioRecorder';
-import {
-  extractWaveformPeaksFromBlob,
-  placeholderWaveform,
-  VOICE_MESSAGE_MAX_MS,
-} from './audio/audioWaveformUtils';
+import { isValidImage } from '@/components/chat/messageInputDraftUtils';
+import { MessageInputImagePreviewStrip } from '@/components/chat/MessageInputImagePreviewStrip';
+import { MessageInputAttachMenu } from '@/components/chat/MessageInputAttachMenu';
+import { useMessageInputDraftSync } from '@/components/chat/useMessageInputDraftSync';
+import { useMessageInputMultiline } from '@/components/chat/useMessageInputMultiline';
+import { useMessageInputTranslation } from '@/components/chat/useMessageInputTranslation';
+import { useMessageInputVoiceSend } from '@/components/chat/useMessageInputVoiceSend';
+import { useMessageInputSubmit, type SendQueuedParams } from '@/components/chat/useMessageInputSubmit';
+import { uploadChatImageSlotWithRetry } from '@/components/chat/messageInputImageUpload';
 
-const isValidImage = (file: File): boolean => {
-  return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
-};
-
-const draftLoadingCache = new Map<string, Promise<any>>();
-
-const SAVE_DRAFT_RETRIES = 3;
-const SAVE_DRAFT_RETRY_MS = 1200;
-const DRAFT_MAX_CONTENT_LENGTH = 10000;
-const TRANSLATE_DRAFT_MAX_LENGTH = 4000;
-
-function isRetryableDraftError(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return true;
-  const err = error as { response?: { status?: number }; code?: string };
-  if (err.code === 'ECONNABORTED' || err.code === 'ERR_NETWORK') return true;
-  const status = err.response?.status;
-  if (status == null) return true;
-  if (status >= 500 || status === 408 || status === 429) return true;
-  return false;
-}
-
-async function withRetry<T>(fn: () => Promise<T>, retries = SAVE_DRAFT_RETRIES): Promise<T> {
-  let last: unknown;
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (e) {
-      last = e;
-      if (i < retries - 1 && isRetryableDraftError(e)) {
-        await new Promise((r) => setTimeout(r, SAVE_DRAFT_RETRY_MS));
-      } else {
-        throw last;
-      }
-    }
-  }
-  throw last;
-}
-
-export interface SendQueuedParams {
-  tempId: string;
-  contextType: ChatContextType;
-  contextId: string;
-  payload: OptimisticMessagePayload;
-  mediaUrls?: string[];
-  thumbnailUrls?: string[];
-}
+export type { SendQueuedParams };
 
 interface MessageInputProps {
   gameId?: string;
@@ -147,173 +100,32 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 }) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const translateToLanguage = translateToLanguageProp ?? null;
+
+  const contextType: ChatContextType = gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER';
+  const finalContextId = gameId || bugId || userChatId || groupChannelId;
+  const resolvedChatType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
+
+  const isChannel = groupChannel?.isChannel ?? false;
+  const isGroup = groupChannel && !isChannel;
+  const isChannelAdminOrOwner =
+    isChannel && user && groupChannel ? isGroupChannelAdminOrOwner(groupChannel, user.id) : false;
+  const isChannelParticipant = groupChannel?.isParticipant ?? false;
+  const canWrite = isChannel ? isChannelAdminOrOwner : isGroup ? isChannelParticipant : true;
+  const shouldShowJoinButton = isChannel && !isChannelAdminOrOwner && !isChannelParticipant;
+  const isDisabled = !canWrite || disabled;
+
   const [message, setMessage] = useState('');
   const [mentionIds, setMentionIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imageUploadFailedSlots, setImageUploadFailedSlots] = useState<Set<number>>(() => new Set());
+  const [retryingImageSlot, setRetryingImageSlot] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [, setIsMultiline] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
-  const [voiceMode, setVoiceMode] = useState(false);
-  const [voiceBusy, setVoiceBusy] = useState(false);
   const voiceRecorder = useAudioRecorder();
-  const [isAttachExpanded, setIsAttachExpanded] = useState(false);
-  const [originalMessageBeforeTranslate, setOriginalMessageBeforeTranslate] = useState<string | null>(null);
-  const [originalMentionIdsBeforeTranslate, setOriginalMentionIdsBeforeTranslate] = useState<string[] | null>(null);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [translationModalOpen, setTranslationModalOpen] = useState(false);
-  const translateToLanguage = translateToLanguageProp ?? null;
-  const attachMenuRef = useRef<HTMLDivElement>(null);
-  const inputContainerRef = useRef<HTMLDivElement>(null);
-  const saveDraftTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasLoadedDraftRef = useRef(false);
-  const loadingDraftKeyRef = useRef<string | null>(null);
-  const currentContextRef = useRef<{ contextType: string; contextId: string; chatType: ChatType }>({ contextType: '', contextId: '', chatType: 'PUBLIC' });
-  const lastSavedContentRef = useRef<string>('');
-  const lastSavedMentionIdsRef = useRef<string[]>([]);
-  const queueSendRef = useRef(false);
   const lastAppliedEditIdRef = useRef<string | null>(null);
-  const editInFlightRef = useRef<string | null>(null);
-
-  const mentionIdsEqual = (a: string[], b: string[]) =>
-    a.length === b.length && a.every((id, i) => id === b[i]);
-
-  const contextType: ChatContextType = gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER';
-  const finalContextId = gameId || bugId || userChatId || groupChannelId;
-
-  const isChannel = groupChannel?.isChannel ?? false;
-  const isGroup = groupChannel && !isChannel;
-  const isChannelAdminOrOwner = isChannel && user && groupChannel ? isGroupChannelAdminOrOwner(groupChannel, user.id) : false;
-  const isChannelParticipant = groupChannel?.isParticipant ?? false;
-  const canWrite = isChannel ? isChannelAdminOrOwner : (isGroup ? isChannelParticipant : true);
-  const shouldShowJoinButton = isChannel && !isChannelAdminOrOwner && !isChannelParticipant;
-  const isDisabled = (!canWrite) || disabled;
-  const inputBlocked = isLoading && !queueSendRef.current;
-
-  const imagePreviewUrls = useMemo(() => {
-    return selectedImages.map(file => URL.createObjectURL(file));
-  }, [selectedImages]);
-
-  useEffect(() => {
-    return () => {
-      imagePreviewUrls.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [imagePreviewUrls]);
-
-  const resolvedChatType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
-  const showMic =
-    !message.trim() &&
-    selectedImages.length === 0 &&
-    !editingMessage &&
-    resolvedChatType !== 'PHOTOS' &&
-    !isDisabled;
-
-  useEffect(() => {
-    if (voiceRecorder.error === 'denied') {
-      toast.error(t('chat.micPermissionDenied', { defaultValue: 'Microphone access denied' }));
-    } else if (voiceRecorder.error === 'insecure') {
-      toast.error(t('chat.micNeedsHttps', { defaultValue: 'Microphone requires HTTPS' }));
-    }
-  }, [voiceRecorder.error, t]);
-
-  const saveDraft = useCallback(async (content: string, mentionIds: string[]) => {
-    if (!finalContextId || !user?.id) return;
-
-    const trimmedContent = (content?.trim() ?? '').slice(0, DRAFT_MAX_CONTENT_LENGTH);
-    const safeMentionIds = (mentionIds ?? []).slice(0, 50);
-    if (!trimmedContent && safeMentionIds.length === 0) {
-      if (lastSavedContentRef.current === '' && lastSavedMentionIdsRef.current.length === 0) return;
-      lastSavedContentRef.current = '';
-      lastSavedMentionIdsRef.current = [];
-      await draftStorage.remove(user.id, contextType, finalContextId, resolvedChatType);
-      try {
-        await withRetry(() =>
-          chatApi.deleteDraft(contextType, finalContextId, resolvedChatType)
-        );
-        window.dispatchEvent(new CustomEvent('draft-deleted', {
-          detail: { chatContextType: contextType, contextId: finalContextId, chatType: resolvedChatType }
-        }));
-      } catch (error) {
-        console.error('Failed to delete draft:', error);
-      }
-      return;
-    }
-
-    if (
-      trimmedContent === lastSavedContentRef.current &&
-      mentionIdsEqual(safeMentionIds, lastSavedMentionIdsRef.current)
-    ) {
-      return;
-    }
-
-    await draftStorage.set(
-      user.id,
-      contextType,
-      finalContextId,
-      resolvedChatType,
-      trimmedContent,
-      safeMentionIds
-    );
-    const payload = {
-      chatContextType: contextType,
-      contextId: finalContextId,
-      chatType: resolvedChatType,
-      content: trimmedContent || undefined,
-      mentionIds: safeMentionIds.length > 0 ? safeMentionIds : undefined
-    };
-    try {
-      const savedDraft = await withRetry(() => chatApi.saveDraft(payload));
-      lastSavedContentRef.current = trimmedContent;
-      lastSavedMentionIdsRef.current = safeMentionIds.slice();
-      window.dispatchEvent(new CustomEvent('draft-updated', {
-        detail: { draft: savedDraft, chatContextType: contextType, contextId: finalContextId }
-      }));
-    } catch (error) {
-      console.error('Failed to save draft to server:', error);
-    }
-  }, [finalContextId, user?.id, contextType, resolvedChatType]);
-
-  const debouncedSaveDraft = useCallback((content: string, mentionIds: string[]) => {
-    if (saveDraftTimeoutRef.current) {
-      clearTimeout(saveDraftTimeoutRef.current);
-    }
-
-    saveDraftTimeoutRef.current = setTimeout(() => {
-      saveDraft(content, mentionIds);
-      saveDraftTimeoutRef.current = null;
-    }, 800);
-  }, [saveDraft]);
-
-  const updateMultilineState = useCallback(() => {
-    requestAnimationFrame(() => {
-      if (inputContainerRef.current) {
-        const textarea = inputContainerRef.current.querySelector('textarea');
-        if (textarea) {
-          const computedStyle = window.getComputedStyle(textarea);
-          const lineHeight = parseFloat(computedStyle.lineHeight);
-
-          if (lineHeight && lineHeight > 0) {
-            const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
-            const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
-            const scrollHeight = textarea.scrollHeight;
-            const contentHeight = scrollHeight - paddingTop - paddingBottom;
-            const rowCount = Math.ceil(contentHeight / lineHeight);
-            setIsMultiline(rowCount > 2);
-          } else {
-            const fontSize = parseFloat(computedStyle.fontSize) || 14;
-            const estimatedLineHeight = fontSize * 1.5;
-            const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
-            const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
-            const scrollHeight = textarea.scrollHeight;
-            const contentHeight = scrollHeight - paddingTop - paddingBottom;
-            const rowCount = Math.ceil(contentHeight / estimatedLineHeight);
-            setIsMultiline(rowCount > 2);
-          }
-        }
-      }
-    });
-  }, []);
+  const queueSendRef = useRef(false);
 
   const messageRef = useRef(message);
   const mentionIdsRef = useRef(mentionIds);
@@ -325,375 +137,121 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     editingMessageRef.current = editingMessage;
   }, [message, mentionIds, editingMessage]);
 
-  const loadDraft = useCallback(async () => {
-    if (!finalContextId || !user?.id) return;
+  const { inputContainerRef, updateMultilineState } = useMessageInputMultiline(message, selectedImages.length);
 
-    const draftKey = `${contextType}-${finalContextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
-    currentContextRef.current = { contextType: contextType, contextId: finalContextId, chatType: resolvedChatType };
-    loadingDraftKeyRef.current = draftKey;
-    hasLoadedDraftRef.current = true;
+  const translation = useMessageInputTranslation({
+    message,
+    mentionIds,
+    setMessage,
+    setMentionIds,
+    translateToLanguage,
+    onTranslateToLanguageChange,
+    updateMultilineState,
+    t,
+  });
 
-    if (saveDraftTimeoutRef.current) {
-      clearTimeout(saveDraftTimeoutRef.current);
-      saveDraftTimeoutRef.current = null;
-    }
+  const { debouncedSaveDraft, saveDraftTimeoutRef, hasLoadedDraftRef } = useMessageInputDraftSync({
+    finalContextId,
+    userId: user?.id,
+    contextType,
+    resolvedChatType,
+    chatType,
+    userChatId,
+    messageRef,
+    mentionIdsRef,
+    editingMessageRef,
+    setMessage,
+    setMentionIds,
+    setOriginalMessageBeforeTranslate: translation.setOriginalMessageBeforeTranslate,
+    setOriginalMentionIdsBeforeTranslate: translation.setOriginalMentionIdsBeforeTranslate,
+    updateMultilineState,
+  });
 
-    const applyDraftToState = (content: string, ids: string[], markAsSaved: boolean) => {
-      const hasUserTyped = messageRef.current.trim().length > 0 || mentionIdsRef.current.length > 0;
-      if (!hasUserTyped) {
-        setMessage(content || '');
-        setMentionIds(ids ?? []);
-        setTimeout(() => updateMultilineState(), 100);
-      }
-      if (markAsSaved) {
-        const trimmed = (content ?? '').trim().slice(0, DRAFT_MAX_CONTENT_LENGTH);
-        const safeIds = (ids ?? []).slice(0, 50);
-        lastSavedContentRef.current = trimmed;
-        lastSavedMentionIdsRef.current = safeIds.slice();
-      }
-    };
+  const inputBlocked = isLoading && !queueSendRef.current;
 
-    const local = await draftStorage.get(user.id, contextType, finalContextId, resolvedChatType);
-    if (local && loadingDraftKeyRef.current === draftKey) {
-      applyDraftToState(local.content, local.mentionIds, false);
-    }
+  const voice = useMessageInputVoiceSend({
+    voiceRecorder,
+    isDisabled,
+    inputBlocked,
+    finalContextId,
+    contextType,
+    gameId,
+    bugId,
+    userChatId,
+    groupChannelId,
+    chatType,
+    replyTo,
+    propContextType,
+    propContextId,
+    userId: user?.id,
+    onOptimisticMessage,
+    onSendQueued,
+    onMessageSent,
+    onCancelReply,
+    onMessageCreated,
+    onSendFailed,
+    t,
+  });
 
-    let serverPromise: Promise<typeof chatApi.getDraft extends (...a: any[]) => Promise<infer R> ? R : never>;
-    if (draftLoadingCache.has(draftKey)) {
-      serverPromise = draftLoadingCache.get(draftKey)!;
-    } else {
-      serverPromise = chatApi
-        .getDraft(contextType, finalContextId, resolvedChatType)
-        .then((draft) => {
-          setTimeout(() => draftLoadingCache.delete(draftKey), 5000);
-          return draft;
-        })
-        .catch((error) => {
-          draftLoadingCache.delete(draftKey);
-          throw error;
-        });
-      draftLoadingCache.set(draftKey, serverPromise);
-    }
+  const { handleSubmit } = useMessageInputSubmit({
+    gameId,
+    bugId,
+    userChatId,
+    groupChannelId,
+    contextType,
+    finalContextId,
+    propContextType,
+    propContextId,
+    chatType,
+    message,
+    setMessage,
+    mentionIds,
+    setMentionIds,
+    selectedImages,
+    setSelectedImages,
+    editingMessage,
+    onEditMessage,
+    onCancelEdit,
+    replyTo,
+    onCancelReply,
+    onMessageSent,
+    onOptimisticMessage,
+    onSendQueued,
+    onSendFailed,
+    onMessageCreated,
+    isDisabled,
+    inputBlocked,
+    voiceMode: voice.voiceMode,
+    saveDraftTimeoutRef,
+    userId: user?.id,
+    updateMultilineState,
+    inputContainerRef,
+    hasLoadedDraftRef,
+    clearTranslationOriginals: translation.clearTranslationOriginals,
+    setIsLoading,
+    t,
+    queueSendRef,
+    onImageBatchUploadFailed: (failedIndices, files) => {
+      setSelectedImages(files);
+      setImageUploadFailedSlots(new Set(failedIndices));
+    },
+    onClearImageUploadFailures: () => setImageUploadFailedSlots(new Set()),
+  });
 
-    try {
-      const serverDraft = await serverPromise;
-      if (loadingDraftKeyRef.current !== draftKey) return;
-
-      const localUpdated = local ? new Date(local.updatedAt).getTime() : 0;
-      const serverUpdated = serverDraft ? new Date(serverDraft.updatedAt).getTime() : 0;
-      const useLocal = local && (!serverDraft || localUpdated >= serverUpdated);
-      if (useLocal && local) {
-        if (!serverDraft || localUpdated > serverUpdated) {
-          const pushContext = { contextType, contextId: finalContextId, chatType: resolvedChatType };
-          draftStorage
-            .set(user.id, contextType, finalContextId, resolvedChatType, local.content, local.mentionIds)
-            .then(() => {
-              const cur = currentContextRef.current;
-              if (cur.contextType !== pushContext.contextType || cur.contextId !== pushContext.contextId || cur.chatType !== pushContext.chatType) return;
-              if (loadingDraftKeyRef.current !== draftKey) return;
-              if (local.content.trim() || local.mentionIds.length > 0) {
-                saveDraft(local.content, local.mentionIds);
-              }
-            });
-        }
-      } else if (serverDraft) {
-        applyDraftToState(serverDraft.content ?? '', serverDraft.mentionIds ?? [], true);
-        await draftStorage.set(
-          user.id,
-          contextType,
-          finalContextId,
-          resolvedChatType,
-          serverDraft.content ?? '',
-          serverDraft.mentionIds ?? [],
-          serverDraft.updatedAt
-        );
-      }
-    } catch (error) {
-      console.error('Failed to load draft from server:', error);
-    }
-  }, [finalContextId, user?.id, contextType, chatType, userChatId, resolvedChatType, updateMultilineState, saveDraft]);
-
-  useEffect(() => {
-    if (saveDraftTimeoutRef.current) {
-      clearTimeout(saveDraftTimeoutRef.current);
-      saveDraftTimeoutRef.current = null;
-    }
-    lastSavedContentRef.current = '';
-    lastSavedMentionIdsRef.current = [];
-    currentContextRef.current = { contextType, contextId: finalContextId ?? '', chatType: resolvedChatType };
-    const draftKey = `${contextType}-${finalContextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
-    if (loadingDraftKeyRef.current !== draftKey) {
-      hasLoadedDraftRef.current = false;
-      draftLoadingCache.delete(draftKey);
-    }
-    setMessage('');
-    setMentionIds([]);
-    setOriginalMessageBeforeTranslate(null);
-    setOriginalMentionIdsBeforeTranslate(null);
-    loadDraft();
-  }, [finalContextId, contextType, chatType, loadDraft, userChatId, resolvedChatType]);
+  const imagePreviewUrls = useMemo(() => selectedImages.map((file) => URL.createObjectURL(file)), [selectedImages]);
 
   useEffect(() => {
-    updateMultilineState();
-  }, [message, selectedImages, updateMultilineState]);
-
-  useEffect(() => {
-    if (!inputContainerRef.current) return;
-
-    const textarea = inputContainerRef.current.querySelector('textarea');
-    if (!textarea) return;
-
-    const resizeObserver = new ResizeObserver(() => {
-      updateMultilineState();
-    });
-
-    resizeObserver.observe(textarea);
-
     return () => {
-      resizeObserver.disconnect();
+      imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [updateMultilineState]);
+  }, [imagePreviewUrls]);
 
-  useEffect(() => {
-    const handleDraftUpdated = (event: CustomEvent) => {
-      const { chatContextType, contextId } = event.detail;
-      const draftKey = `${chatContextType}-${contextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
-      draftLoadingCache.delete(draftKey);
-    };
-
-    const handleDraftDeleted = (event: CustomEvent) => {
-      const { chatContextType, contextId } = event.detail;
-      const draftKey = `${chatContextType}-${contextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
-      draftLoadingCache.delete(draftKey);
-    };
-
-    window.addEventListener('draft-updated', handleDraftUpdated as EventListener);
-    window.addEventListener('draft-deleted', handleDraftDeleted as EventListener);
-
-    return () => {
-      window.removeEventListener('draft-updated', handleDraftUpdated as EventListener);
-      window.removeEventListener('draft-deleted', handleDraftDeleted as EventListener);
-    };
-  }, [contextType, finalContextId, chatType, userChatId]);
-
-  useEffect(() => {
-    const flush = () => {
-      if (saveDraftTimeoutRef.current) {
-        clearTimeout(saveDraftTimeoutRef.current);
-        saveDraftTimeoutRef.current = null;
-      }
-      if (editingMessageRef.current) return;
-      if (finalContextId && user?.id) {
-        const currentMessage = messageRef.current?.trim();
-        const currentMentionIds = mentionIdsRef.current || [];
-        if (currentMessage || currentMentionIds.length > 0) {
-          saveDraft(currentMessage || '', currentMentionIds).catch(error => {
-            console.error('Failed to save draft:', error);
-          });
-        }
-      }
-    };
-    const onHidden = () => {
-      if (document.visibilityState === 'hidden') flush();
-    };
-    const onBeforeUnload = () => flush();
-    const onPageHide = () => flush();
-    document.addEventListener('visibilitychange', onHidden);
-    window.addEventListener('beforeunload', onBeforeUnload);
-    window.addEventListener('pagehide', onPageHide);
-    return () => {
-      document.removeEventListener('visibilitychange', onHidden);
-      window.removeEventListener('beforeunload', onBeforeUnload);
-      window.removeEventListener('pagehide', onPageHide);
-      flush();
-    };
-  }, [finalContextId, user?.id, saveDraft]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (attachMenuRef.current && !attachMenuRef.current.contains(e.target as Node)) {
-        setIsAttachExpanded(false);
-      }
-    };
-    if (isAttachExpanded) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isAttachExpanded]);
-
-  const handleImageSelect = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-
-    const imageFiles = Array.from(files).filter(isValidImage);
-
-    if (imageFiles.length === 0) {
-      toast.error(t('chat.invalidImageType'));
-      return;
-    }
-
-    setSelectedImages(prev => [...prev, ...imageFiles]);
-  };
-
-  const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
-    if (isDisabled || inputBlocked) return;
-
-    const items = e.clipboardData?.items;
-    if (!items) return;
-
-    const imageFiles: File[] = [];
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-
-      if (item.type.startsWith('image/')) {
-        const file = item.getAsFile();
-        if (file && isValidImage(file)) {
-          imageFiles.push(file);
-        }
-      }
-    }
-
-    if (imageFiles.length > 0) {
-      e.preventDefault();
-      setSelectedImages(prev => [...prev, ...imageFiles]);
-    }
-  }, [isDisabled, inputBlocked]);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    if (isDisabled || inputBlocked) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (e.dataTransfer.types.includes('Files')) {
-      setIsDragOver(true);
-    }
-  }, [isDisabled, inputBlocked]);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = e.clientX;
-    const y = e.clientY;
-
-    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-      setIsDragOver(false);
-    }
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    if (isDisabled || inputBlocked) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-
-    const files = e.dataTransfer.files;
-    if (!files || files.length === 0) return;
-
-    const imageFiles = Array.from(files).filter(isValidImage);
-
-    if (imageFiles.length === 0) {
-      toast.error(t('chat.invalidImageType'));
-      return;
-    }
-
-    setSelectedImages(prev => [...prev, ...imageFiles]);
-  }, [isDisabled, inputBlocked, t]);
-
-  const handleImageButtonClick = async () => {
-    if (isDisabled || inputBlocked) return;
-
-    if (isCapacitor()) {
-      try {
-        const result = await pickImages(10);
-        if (result && result.files.length > 0) {
-          const validFiles = result.files.filter(isValidImage);
-
-          if (validFiles.length === 0) {
-            toast.error(t('chat.invalidImageType'));
-            return;
-          }
-
-          setSelectedImages(prev => [...prev, ...validFiles]);
-        }
-      } catch (error: any) {
-        console.error('Error picking images:', error);
-        if (error.message?.includes('too large')) {
-          toast.error(error.message);
-        } else {
-          toast.error(t('chat.photoPickFailed') || 'Failed to pick photos');
-        }
-      }
-    } else {
-      fileInputRef.current?.click();
-    }
-    setIsAttachExpanded(false);
-  };
-
-  const handlePollButtonClick = () => {
-    if (isDisabled || inputBlocked) return;
-    setIsPollModalOpen(true);
-    setIsAttachExpanded(false);
-  };
-
-  const removeImage = (index: number) => {
-    setSelectedImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const uploadImagesForFiles = async (
-    files: File[]
-  ): Promise<{ originalUrls: string[]; thumbnailUrls: string[] }> => {
-    if (files.length === 0) return { originalUrls: [], thumbnailUrls: [] };
-
-    const targetId = gameId || bugId || userChatId || groupChannelId;
-    if (!targetId) return { originalUrls: [], thumbnailUrls: [] };
-
-    const uploadPromises = files.map(async (file) => {
-      try {
-        const response = await mediaApi.uploadChatImage(file, targetId, contextType);
-        return {
-          success: true as const,
-          originalUrl: response.originalUrl,
-          thumbnailUrl: response.thumbnailUrl
-        };
-      } catch (error) {
-        console.error('Failed to upload image:', error);
-        return {
-          success: false as const,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
-      }
-    });
-
-    const results = await Promise.allSettled(uploadPromises);
-
-    const successful = results
-      .filter((result): result is PromiseFulfilledResult<{ success: true; originalUrl: string; thumbnailUrl: string }> =>
-        result.status === 'fulfilled' && result.value.success === true
-      )
-      .map(result => result.value);
-
-    const failed = results.filter(result =>
-      result.status === 'rejected' ||
-      (result.status === 'fulfilled' && result.value.success === false)
-    );
-
-    if (failed.length > 0) {
-      console.warn(`${failed.length} image(s) failed to upload`);
-      if (successful.length === 0) {
-        throw new Error('All images failed to upload');
-      }
-      toast.error(t('chat.someImagesFailed') || `${failed.length} image(s) failed to upload`);
-    }
-
-    return {
-      originalUrls: successful.map(r => r.originalUrl),
-      thumbnailUrls: successful.map(r => r.thumbnailUrl)
-    };
-  };
+  const showMic =
+    !message.trim() &&
+    selectedImages.length === 0 &&
+    !editingMessage &&
+    resolvedChatType !== 'PHOTOS' &&
+    !isDisabled;
 
   useEffect(() => {
     const currentId = editingMessage?.id ?? null;
@@ -715,8 +273,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const handleMessageChange = (newValue: string, newMentionIds: string[]) => {
     setMessage(newValue);
     setMentionIds(newMentionIds);
-    setOriginalMessageBeforeTranslate(null);
-    setOriginalMentionIdsBeforeTranslate(null);
+    translation.clearTranslationOriginals();
     if (!editingMessage) debouncedSaveDraft(newValue, newMentionIds);
     updateMultilineState();
   };
@@ -730,12 +287,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     quizCorrectOptionIndex?: number;
   }) => {
     if (inputBlocked || isDisabled) return;
-
     if (!finalContextId) {
       toast.error(t('chat.missingContextId'));
       return;
     }
-
     setIsLoading(true);
     try {
       const messageData: CreateMessageRequest = {
@@ -743,22 +298,21 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         contextId: finalContextId,
         chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
         content: pollData.question,
-        poll: pollData
+        poll: pollData,
       };
-
       const created = await chatApi.createMessage(messageData);
-
       onMessageSent?.();
       onMessageCreated?.('temp-' + Date.now(), created);
-
       if (user?.id) {
         const resolvedType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
         await draftStorage.remove(user.id, contextType, finalContextId, resolvedType);
         try {
           await chatApi.deleteDraft(contextType, finalContextId, resolvedType);
-          window.dispatchEvent(new CustomEvent('draft-deleted', {
-            detail: { chatContextType: contextType, contextId: finalContextId, chatType: resolvedType }
-          }));
+          window.dispatchEvent(
+            new CustomEvent('draft-deleted', {
+              detail: { chatContextType: contextType, contextId: finalContextId, chatType: resolvedType },
+            })
+          );
         } catch (err) {
           console.error('Failed to delete draft after poll:', err);
         }
@@ -771,477 +325,128 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  const handleStartVoice = async () => {
-    if (isDisabled || inputBlocked) return;
-    const ok = await voiceRecorder.start();
-    if (ok) setVoiceMode(true);
-  };
-
-  const handleVoiceCancel = () => {
-    voiceRecorder.cancel();
-    setVoiceMode(false);
-  };
-
-  const handleVoiceConfirm = async () => {
-    const result = await voiceRecorder.stop();
-    setVoiceMode(false);
-    if (!result || result.durationMs < 500) {
-      toast.error(t('chat.voiceTooShort', { defaultValue: 'Recording too short' }));
-      return;
-    }
-    if (result.durationMs > VOICE_MESSAGE_MAX_MS) {
-      toast.error(t('chat.voiceMaxDuration', { defaultValue: 'Recording cannot exceed 30 minutes' }));
-      return;
-    }
-    const durationMs = Math.min(result.durationMs, VOICE_MESSAGE_MAX_MS);
-    if (!finalContextId) {
-      toast.error(t('chat.missingContextId'));
-      return;
-    }
-    let optimisticId: string | undefined;
-    setVoiceBusy(true);
-    try {
-      let peaks: number[] = [];
-      try {
-        peaks = await extractWaveformPeaksFromBlob(result.blob);
-      } catch {
-        peaks = placeholderWaveform(48);
-      }
-      if (!peaks.length) peaks = placeholderWaveform(48);
-      const useOptimistic = !!onOptimisticMessage;
-      const useQueue = useOptimistic && !!onSendQueued && propContextType != null && propContextId != null;
-
-      if (useQueue && onOptimisticMessage) {
-        const blobUrl = URL.createObjectURL(result.blob);
-        const payload: OptimisticMessagePayload = {
-          content: '',
-          mediaUrls: [blobUrl],
-          thumbnailUrls: [],
-          replyToId: replyTo?.id,
-          replyTo: replyTo
-            ? {
-                id: replyTo.id,
-                content: replyTo.content,
-                sender: replyTo.sender || { id: 'system', firstName: 'System' },
-              }
-            : undefined,
-          chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
-          mentionIds: [],
-          messageType: 'VOICE',
-          audioDurationMs: durationMs,
-          waveformData: peaks,
-        };
-        optimisticId = onOptimisticMessage(payload, undefined, result.blob);
-        if (optimisticId) {
-          onMessageSent?.();
-          onCancelReply?.();
-        }
-        if (optimisticId) {
-          onSendQueued!({
-            tempId: optimisticId,
-            contextType: propContextType!,
-            contextId: propContextId!,
-            payload: { ...payload, mediaUrls: [], thumbnailUrls: [] },
-          });
-        }
-      } else {
-        const ext = result.blob.type.includes('mp4') ? 'm4a' : 'webm';
-        const uploaded = await mediaApi.uploadChatAudio(result.blob, `voice.${ext}`, finalContextId, contextType);
-        const payload: OptimisticMessagePayload = {
-          content: '',
-          mediaUrls: [uploaded.audioUrl],
-          thumbnailUrls: [],
-          replyToId: replyTo?.id,
-          replyTo: replyTo
-            ? {
-                id: replyTo.id,
-                content: replyTo.content,
-                sender: replyTo.sender || { id: 'system', firstName: 'System' },
-              }
-            : undefined,
-          chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
-          mentionIds: [],
-          messageType: 'VOICE',
-          audioDurationMs: durationMs,
-          waveformData: peaks,
-        };
-        if (useOptimistic) {
-          optimisticId = onOptimisticMessage!(payload);
-          if (optimisticId) {
-            onMessageSent?.();
-            onCancelReply?.();
-          }
-        }
-        const messageData: CreateMessageRequest = {
-          chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
-          contextId: finalContextId,
-          mediaUrls: [uploaded.audioUrl],
-          replyToId: replyTo?.id,
-          chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
-          messageType: 'VOICE',
-          audioDurationMs: durationMs,
-          waveformData: peaks,
-        };
-        const created = await chatApi.createMessage(messageData);
-        if (useOptimistic && optimisticId && onMessageCreated) {
-          onMessageCreated(optimisticId, created);
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      if (isDisabled || inputBlocked) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const imageFiles: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file && isValidImage(file)) imageFiles.push(file);
         }
       }
-      if (finalContextId && user?.id) {
-        const resolvedType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
-        await draftStorage.remove(user.id, contextType, finalContextId, resolvedType);
-        try {
-          await chatApi.deleteDraft(contextType, finalContextId, resolvedType);
-          window.dispatchEvent(
-            new CustomEvent('draft-deleted', {
-              detail: { chatContextType: contextType, contextId: finalContextId, chatType: resolvedType },
-            })
-          );
-        } catch {
-          /* noop */
-        }
+      if (imageFiles.length > 0) {
+        e.preventDefault();
+        setSelectedImages((prev) => [...prev, ...imageFiles]);
       }
-    } catch (err) {
-      if (optimisticId && onSendFailed) {
-        onSendFailed(optimisticId);
-      }
-      console.error('Voice send failed:', err);
-      toast.error(t('chat.sendFailed'));
-    } finally {
-      setVoiceBusy(false);
-    }
-  };
+    },
+    [isDisabled, inputBlocked]
+  );
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      if (isDisabled || inputBlocked) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.dataTransfer.types.includes('Files')) setIsDragOver(true);
+    },
+    [isDisabled, inputBlocked]
+  );
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    if (voiceMode) return;
-    if ((!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled) return;
+    e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const { clientX: x, clientY: y } = e;
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) setIsDragOver(false);
+  }, []);
 
-    if (editingMessage && onEditMessage) {
-      const trimmedContent = message.trim();
-      if (!trimmedContent) return;
-      editInFlightRef.current = editingMessage.id;
-      setIsLoading(true);
-      try {
-        if (shouldQueueChatMutation() && propContextType && propContextId) {
-          await enqueueChatMutationEdit({
-            contextType: propContextType,
-            contextId: propContextId,
-            messageId: editingMessage.id,
-            content: trimmedContent,
-            mentionIds: [...mentionIds],
-          });
-          onEditMessage({
-            ...editingMessage,
-            content: trimmedContent,
-            mentionIds: [...mentionIds],
-            editedAt: new Date().toISOString(),
-          });
-        } else {
-          const updated = await chatApi.editMessage(editingMessage.id, {
-            content: trimmedContent,
-            mentionIds: [...mentionIds],
-          });
-          onEditMessage(updated);
-        }
-        setMessage('');
-        setMentionIds([]);
-        setOriginalMessageBeforeTranslate(null);
-        setOriginalMentionIdsBeforeTranslate(null);
-        onCancelEdit?.();
-        requestAnimationFrame(() => {
-          (inputContainerRef.current?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus();
-        });
-      } catch (err: unknown) {
-        console.error('Edit message failed:', err);
-        const status = (err as { response?: { status?: number } })?.response?.status;
-        if (status === 404) {
-          onCancelEdit?.();
-          toast.error(t('chat.editMessageDeleted', { defaultValue: 'Message was deleted' }));
-        } else if (propContextType && propContextId && isRetryableMutationError(err)) {
-          try {
-            await enqueueChatMutationEdit({
-              contextType: propContextType,
-              contextId: propContextId,
-              messageId: editingMessage.id,
-              content: trimmedContent,
-              mentionIds: [...mentionIds],
-            });
-            onEditMessage({
-              ...editingMessage,
-              content: trimmedContent,
-              mentionIds: [...mentionIds],
-              editedAt: new Date().toISOString(),
-            });
-            setMessage('');
-            setMentionIds([]);
-            setOriginalMessageBeforeTranslate(null);
-            setOriginalMentionIdsBeforeTranslate(null);
-            onCancelEdit?.();
-            requestAnimationFrame(() => {
-              (inputContainerRef.current?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus();
-            });
-          } catch {
-            toast.error(t('chat.sendFailed') || 'Failed to update message');
-          }
-        } else {
-          toast.error(t('chat.sendFailed') || 'Failed to update message');
-        }
-      } finally {
-        editInFlightRef.current = null;
-        setIsLoading(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      if (isDisabled || inputBlocked) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(false);
+      const files = e.dataTransfer.files;
+      if (!files || files.length === 0) return;
+      const imageFiles = Array.from(files).filter(isValidImage);
+      if (imageFiles.length === 0) {
+        toast.error(t('chat.invalidImageType'));
+        return;
       }
-      return;
-    }
+      setSelectedImages((prev) => [...prev, ...imageFiles]);
+    },
+    [isDisabled, inputBlocked, t]
+  );
 
-    if (editInFlightRef.current !== null) return;
-
-    if (!finalContextId) {
-      console.error('[MessageInput] Missing contextId:', { gameId, bugId, userChatId, groupChannelId });
-      toast.error(t('chat.missingContextId') || 'Missing chat context');
-      return;
-    }
-
-    const trimmedContent = message.trim();
-    const useOptimistic = !!onOptimisticMessage;
-    let optimisticId: string | undefined;
-    const filesSnapshot = selectedImages.filter(isValidImage);
-
-    const previewUrls =
-      filesSnapshot.length > 0 ? filesSnapshot.map((f) => URL.createObjectURL(f)) : [];
-    const payload: OptimisticMessagePayload = {
-      content: trimmedContent,
-      mediaUrls: previewUrls,
-      thumbnailUrls: previewUrls,
-      replyToId: replyTo?.id,
-      replyTo: replyTo ? { id: replyTo.id, content: replyTo.content, sender: replyTo.sender || { id: 'system', firstName: 'System' } } : undefined,
-      chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
-      mentionIds: [...mentionIds],
-    };
-
-    const useQueue = useOptimistic && !!onSendQueued && (propContextType != null) && (propContextId != null);
-    if (useQueue) queueSendRef.current = true;
-
-    if (useOptimistic) {
-      optimisticId = onOptimisticMessage(payload, filesSnapshot.length ? filesSnapshot : undefined);
-      if (optimisticId) {
-        onMessageSent?.();
-        setMessage('');
-        setMentionIds([]);
-        setSelectedImages([]);
-        setOriginalMessageBeforeTranslate(null);
-        setOriginalMentionIdsBeforeTranslate(null);
-        hasLoadedDraftRef.current = false;
-        setTimeout(() => updateMultilineState(), 100);
-        onCancelReply?.();
-        requestAnimationFrame(() => {
-          (inputContainerRef.current?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus();
-        });
-      } else {
-        previewUrls.forEach((u) => URL.revokeObjectURL(u));
+  const removeImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+    setImageUploadFailedSlots((prev) => {
+      const n = new Set<number>();
+      for (const j of prev) {
+        if (j < index) n.add(j);
+        else if (j > index) n.add(j - 1);
       }
-    } else {
-      setIsLoading(true);
-      onMessageSent?.();
-    }
-
-    queueMicrotask(() => {
-      (async () => {
-        try {
-          const queueDeferImages = !!(useQueue && optimisticId && filesSnapshot.length > 0);
-          let originalUrls: string[] = [];
-          let thumbnailUrls: string[] = [];
-          if (!queueDeferImages && filesSnapshot.length > 0) {
-            const up = await uploadImagesForFiles(filesSnapshot);
-            originalUrls = up.originalUrls;
-            thumbnailUrls = up.thumbnailUrls;
-          }
-          if (useQueue && optimisticId) {
-            onSendQueued!({
-              tempId: optimisticId,
-              contextType: propContextType!,
-              contextId: propContextId!,
-              payload: queueDeferImages
-                ? payload
-                : { ...payload, mediaUrls: originalUrls, thumbnailUrls },
-              ...(queueDeferImages
-                ? {}
-                : {
-                    mediaUrls: originalUrls.length > 0 ? originalUrls : undefined,
-                    thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
-                  }),
-            });
-          } else {
-            const messageData: CreateMessageRequest = {
-              chatContextType: gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER',
-              contextId: finalContextId,
-              content: trimmedContent || undefined,
-              mediaUrls: originalUrls.length > 0 ? originalUrls : [],
-              thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
-              replyToId: replyTo?.id,
-              chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
-              mentionIds: mentionIds.length > 0 ? mentionIds : undefined,
-            };
-            const created = await chatApi.createMessage(messageData);
-            if (useOptimistic && optimisticId && onMessageCreated) {
-              onMessageCreated(optimisticId, created);
-            }
-          }
-          if (saveDraftTimeoutRef.current) {
-            clearTimeout(saveDraftTimeoutRef.current);
-            saveDraftTimeoutRef.current = null;
-          }
-          if (finalContextId && user?.id) {
-            const resolvedType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
-            await draftStorage.remove(user.id, contextType, finalContextId, resolvedType);
-            try {
-              await chatApi.deleteDraft(contextType, finalContextId, resolvedType);
-              window.dispatchEvent(new CustomEvent('draft-deleted', {
-                detail: { chatContextType: contextType, contextId: finalContextId, chatType: resolvedType }
-              }));
-            } catch (err) {
-              console.error('Failed to delete draft:', err);
-            }
-          }
-          if (!useOptimistic) {
-            setMessage('');
-            setMentionIds([]);
-            setSelectedImages([]);
-            setOriginalMessageBeforeTranslate(null);
-            setOriginalMentionIdsBeforeTranslate(null);
-            hasLoadedDraftRef.current = false;
-            setTimeout(() => updateMultilineState(), 100);
-            onCancelReply?.();
-          }
-        } catch (error) {
-          console.error('Failed to send message:', error);
-          if (optimisticId && onSendFailed) onSendFailed(optimisticId);
-          else if (!useOptimistic) setMessage(trimmedContent);
-          toast.error(t('chat.sendFailed') || 'Failed to send message');
-        } finally {
-          if (useQueue) queueSendRef.current = false;
-          if (!useQueue) setIsLoading(false);
-          requestAnimationFrame(() => {
-            (inputContainerRef.current?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus();
-          });
-        }
-      })();
+      return n;
     });
   };
+
+  const handleRetryImageSlot = useCallback(
+    async (index: number) => {
+      const file = selectedImages[index];
+      const targetId = gameId || bugId || userChatId || groupChannelId;
+      if (!file || !targetId) return;
+      setRetryingImageSlot(index);
+      try {
+        await uploadChatImageSlotWithRetry(file, targetId, contextType);
+        setImageUploadFailedSlots((prev) => {
+          const n = new Set(prev);
+          n.delete(index);
+          return n;
+        });
+        toast.success(
+          t('chat.imageSlotRetryOk', { defaultValue: 'Photo uploaded — send when all attachments are ready.' })
+        );
+      } catch {
+        toast.error(t('chat.imageSlotRetryFail', { defaultValue: 'Could not upload this photo.' }));
+      } finally {
+        setRetryingImageSlot(null);
+      }
+    },
+    [selectedImages, gameId, bugId, userChatId, groupChannelId, contextType, t]
+  );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const platform = Capacitor.getPlatform();
     const isMobile = platform === 'ios' || platform === 'android';
-
     if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
       e.preventDefault();
-      handleSubmit(e);
+      void handleSubmit(e as unknown as React.FormEvent);
       return;
     }
-    if (e.key === 'ArrowUp' && !isMobile && !message.trim() && !replyTo && !editingMessage && lastOwnMessage && onStartEditMessage) {
+    if (
+      e.key === 'ArrowUp' &&
+      !isMobile &&
+      !message.trim() &&
+      !replyTo &&
+      !editingMessage &&
+      lastOwnMessage &&
+      onStartEditMessage
+    ) {
       e.preventDefault();
       onStartEditMessage(lastOwnMessage);
     }
   };
-
-  const runTranslateDraft = useCallback(async (text: string, code: string, currentMentionIds: string[]) => {
-    const result = await chatApi.translateDraft(text, code);
-    setOriginalMessageBeforeTranslate(text);
-    setOriginalMentionIdsBeforeTranslate(currentMentionIds.length ? [...currentMentionIds] : null);
-    setMessage(result.translation);
-    setMentionIds([]);
-    setTimeout(() => updateMultilineState(), 100);
-  }, [updateMultilineState]);
-
-  const handleTranslateLanguageSelect = useCallback(async (languageCode: string) => {
-    const code = languageCode.toLowerCase();
-    try {
-      if (onTranslateToLanguageChange) {
-        await onTranslateToLanguageChange(code);
-      }
-      setTranslationModalOpen(false);
-      const trimmed = message.trim();
-      if (trimmed) {
-        if (trimmed.length > TRANSLATE_DRAFT_MAX_LENGTH) {
-          toast.error(t('chat.translateTextTooLong', { defaultValue: 'Text is too long to translate.', max: TRANSLATE_DRAFT_MAX_LENGTH }));
-          return;
-        }
-        setIsTranslating(true);
-        await new Promise((r) => setTimeout(r, 0));
-        try {
-          await runTranslateDraft(trimmed, code, mentionIds);
-        } catch (err) {
-          console.error('Translate draft failed:', err);
-          const status = (err as { response?: { status?: number } })?.response?.status;
-          toast.error(status === 429 ? t('chat.translationRateLimited', { defaultValue: 'Too many translation requests. Please try again in a few seconds.' }) : t('chat.translationUnavailable', { defaultValue: 'Translation is temporarily unavailable.' }));
-        } finally {
-          setIsTranslating(false);
-        }
-      }
-    } catch (err) {
-      console.error('Update translateToLanguage failed:', err);
-      toast.error(t('chat.sendFailed') || 'Failed to save');
-    }
-  }, [message, mentionIds, onTranslateToLanguageChange, runTranslateDraft, t]);
-
-  const handleTranslateClick = useCallback(async () => {
-    if (!translateToLanguage) return;
-    const trimmed = message.trim();
-    if (!trimmed) return;
-    if (trimmed.length > TRANSLATE_DRAFT_MAX_LENGTH) {
-      toast.error(t('chat.translateTextTooLong', { defaultValue: 'Text is too long to translate.', max: TRANSLATE_DRAFT_MAX_LENGTH }));
-      return;
-    }
-    setIsTranslating(true);
-    await new Promise((r) => setTimeout(r, 0));
-    try {
-      await runTranslateDraft(trimmed, translateToLanguage, mentionIds);
-    } catch (err) {
-      console.error('Translate draft failed:', err);
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      toast.error(status === 429 ? t('chat.translationRateLimited', { defaultValue: 'Too many translation requests. Please try again in a few seconds.' }) : t('chat.translationUnavailable', { defaultValue: 'Translation is temporarily unavailable.' }));
-    } finally {
-      setIsTranslating(false);
-    }
-  }, [translateToLanguage, message, mentionIds, runTranslateDraft, t]);
-
-  const handleTranslateButtonClick = useCallback(() => {
-    if (translateToLanguage && !message.trim()) {
-      setTranslationModalOpen(true);
-    } else {
-      handleTranslateClick();
-    }
-  }, [translateToLanguage, message, handleTranslateClick]);
-
-  const handleRemoveTranslateLanguage = useCallback(async () => {
-    try {
-      if (onTranslateToLanguageChange) {
-        await onTranslateToLanguageChange(null);
-      }
-    } catch (err) {
-      console.error('Clear translateToLanguage failed:', err);
-      toast.error(t('chat.sendFailed') || 'Failed to save');
-    }
-  }, [onTranslateToLanguageChange, t]);
-
-  const handleUndoTranslate = useCallback(() => {
-    if (originalMessageBeforeTranslate != null) {
-      setMessage(originalMessageBeforeTranslate);
-      setMentionIds(originalMentionIdsBeforeTranslate ?? []);
-      setOriginalMessageBeforeTranslate(null);
-      setOriginalMentionIdsBeforeTranslate(null);
-      setTimeout(() => updateMultilineState(), 100);
-    }
-  }, [originalMessageBeforeTranslate, originalMentionIdsBeforeTranslate, updateMultilineState]);
 
   const handleJoinChannel = async () => {
     if (!groupChannelId || !groupChannel) return;
     setIsLoading(true);
     try {
       await chatApi.joinGroupChannel(groupChannelId);
-      if (onGroupChannelUpdate) {
-        await onGroupChannelUpdate();
-      }
+      if (onGroupChannelUpdate) await onGroupChannelUpdate();
       onMessageSent?.();
     } catch (error) {
       console.error('Failed to join channel:', error);
@@ -1254,51 +459,38 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     return (
       <div className="p-3 overflow-visible">
         <div className="flex items-center justify-center">
-          <JoinGroupChannelButton
-            groupChannel={groupChannel}
-            onJoin={handleJoinChannel}
-            isLoading={isLoading}
-          />
+          <JoinGroupChannelButton groupChannel={groupChannel} onJoin={handleJoinChannel} isLoading={isLoading} />
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      className="p-3 overflow-visible"
-      onPaste={handlePaste}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
+    <div className="p-3 overflow-visible" onPaste={handlePaste} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
       <div className="flex items-center justify-end gap-2 mb-1">
-        {originalMessageBeforeTranslate != null && (
-          <UndoTranslateButton onClick={handleUndoTranslate} disabled={isDisabled || inputBlocked || isTranslating} />
+        {translation.originalMessageBeforeTranslate != null && (
+          <UndoTranslateButton
+            onClick={translation.handleUndoTranslate}
+            disabled={isDisabled || inputBlocked || translation.isTranslating}
+          />
         )}
         <TranslateToButton
           translateToLanguage={translateToLanguage}
-          isTranslating={isTranslating}
+          isTranslating={translation.isTranslating}
           disabled={isDisabled || inputBlocked}
           translateDisabled={!message.trim()}
-          onOpenModal={() => setTranslationModalOpen(true)}
-          onTranslate={handleTranslateButtonClick}
+          onOpenModal={() => translation.setTranslationModalOpen(true)}
+          onTranslate={translation.handleTranslateButtonClick}
         />
       </div>
       <TranslationLanguageModal
-        open={translationModalOpen}
-        onClose={() => setTranslationModalOpen(false)}
-        onSelect={handleTranslateLanguageSelect}
+        open={translation.translationModalOpen}
+        onClose={() => translation.setTranslationModalOpen(false)}
+        onSelect={translation.handleTranslateLanguageSelect}
         selectedLanguageCode={translateToLanguage}
-        onRemoveLanguage={handleRemoveTranslateLanguage}
+        onRemoveLanguage={translation.handleRemoveTranslateLanguage}
       />
-      {editingMessage && (
-        <EditPreview
-          message={editingMessage}
-          onCancel={onCancelEdit!}
-          className="mb-3"
-        />
-      )}
+      {editingMessage && <EditPreview message={editingMessage} onCancel={onCancelEdit!} className="mb-3" />}
       {replyTo && !editingMessage && (
         <ReplyPreview
           replyTo={{
@@ -1312,151 +504,85 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           className="mb-3"
         />
       )}
-
-      {selectedImages.length > 0 && (
-        <div className="mb-3 flex gap-2 overflow-x-auto overflow-y-visible pb-1">
-          {imagePreviewUrls.map((url, index) => (
-            <div key={index} className="relative flex-shrink-0 pt-1 pr-1">
-              <img
-                src={url}
-                alt={`Preview ${index + 1}`}
-                className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
-              />
-              <button
-                onClick={() => removeImage(index)}
-                className="absolute top-0 right-0 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm z-10"
-              >
-                <X size={16} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
+      <MessageInputImagePreviewStrip
+        imagePreviewUrls={imagePreviewUrls}
+        onRemove={removeImage}
+        failedSlotIndices={imageUploadFailedSlots}
+        retryingSlotIndex={retryingImageSlot}
+        onRetrySlot={handleRetryImageSlot}
+      />
       <form onSubmit={handleSubmit} className="relative overflow-visible">
         <div className="flex items-end gap-2">
-          <div ref={attachMenuRef} className="pb-0.5 relative flex flex-shrink-0 items-end flex-col-reverse">
-            <button
-              type="button"
-              onClick={() => setIsAttachExpanded(prev => !prev)}
-              disabled={isDisabled || inputBlocked || voiceMode}
-              className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_4px_12px_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.12),0_16px_48px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25),0_16px_48px_rgba(0,0,0,0.2)]"
-              title={t('chat.attach', 'Attach')}
-            >
-              <Paperclip size={20} className="text-gray-700 dark:text-gray-300" />
-            </button>
-            <div
-              className={`absolute bottom-full left-0 mb-2 flex flex-col-reverse items-center gap-2 transition-all duration-300 ease-out bg-transparent z-50 ${
-                isAttachExpanded ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-              }`}
-            >
-              <button
-                type="button"
-                onClick={handleImageButtonClick}
-                disabled={isDisabled || inputBlocked || voiceMode}
-                className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.12),0_16px_48px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25),0_16px_48px_rgba(0,0,0,0.2)] hover:scale-105"
-                title={t('chat.attachImages', 'Images')}
-              >
-                <Image size={20} className="text-gray-700 dark:text-gray-300" />
-              </button>
-              <button
-                type="button"
-                onClick={handlePollButtonClick}
-                disabled={isDisabled || inputBlocked || voiceMode}
-                className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.12),0_16px_48px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25),0_16px_48px_rgba(0,0,0,0.2)] hover:scale-105"
-                title={t('chat.poll.createTitle', 'Create Poll')}
-              >
-                <ListPlus size={20} className="text-gray-700 dark:text-gray-300" />
-              </button>
+          <MessageInputAttachMenu
+            isDisabled={isDisabled}
+            inputBlocked={inputBlocked}
+            voiceMode={voice.voiceMode}
+            onAddImages={(files) => setSelectedImages((prev) => [...prev, ...files])}
+            onOpenPoll={() => setIsPollModalOpen(true)}
+          />
+          <div
+            className={`flex-1 min-w-0 message-input-panel relative overflow-visible !bg-transparent rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${
+              isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
+            }`}
+          >
+            <div ref={inputContainerRef} className="relative overflow-visible min-w-0 w-full max-w-full">
+              {voice.voiceMode ? (
+                <VoiceRecordingOverlay
+                  durationMs={voiceRecorder.durationMs}
+                  liveLevels={voiceRecorder.liveLevels}
+                  busy={voice.voiceBusy}
+                  onCancel={voice.handleVoiceCancel}
+                  onConfirm={voice.handleVoiceConfirm}
+                />
+              ) : (
+                <>
+                  <div className="rounded-[24px] bg-white dark:bg-gray-800">
+                    <MentionInput
+                      value={message}
+                      onChange={handleMessageChange}
+                      placeholder={t('chat.messages.typeMessage')}
+                      disabled={isDisabled || inputBlocked}
+                      game={game}
+                      bug={bug}
+                      groupChannel={groupChannel}
+                      userChatId={userChatId}
+                      contextType={contextType}
+                      chatType={chatType}
+                      onKeyDown={handleKeyDown}
+                      className="w-full"
+                      style={{ minHeight: '48px', maxHeight: '120px', paddingLeft: '20px' }}
+                    />
+                  </div>
+                  {showMic ? (
+                    <VoiceRecordButton
+                      onClick={() => void voice.handleStartVoice()}
+                      disabled={inputBlocked || isDisabled}
+                      title={t('chat.voice.record', { defaultValue: 'Record voice' })}
+                      aria-label={t('chat.voice.record', { defaultValue: 'Record voice message' })}
+                    />
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
+                      className="absolute bottom-0.5 right-[2px] w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_4px_24px_rgba(59,130,246,0.6),0_8px_48px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_32px_rgba(59,130,246,0.7),0_12px_56px_rgba(59,130,246,0.5)] hover:scale-105 z-10"
+                      aria-label={inputBlocked ? t('common.sending') : t('chat.messages.sendMessage')}
+                    >
+                      {inputBlocked ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                      )}
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
-          <div className={`flex-1 min-w-0 message-input-panel relative overflow-visible !bg-transparent rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
-          }`}>
-          <div ref={inputContainerRef} className="relative overflow-visible min-w-0 w-full max-w-full">
-            {voiceMode ? (
-              <VoiceRecordingOverlay
-                durationMs={voiceRecorder.durationMs}
-                liveLevels={voiceRecorder.liveLevels}
-                busy={voiceBusy}
-                onCancel={handleVoiceCancel}
-                onConfirm={handleVoiceConfirm}
-              />
-            ) : (
-              <>
-                <div className="rounded-[24px] bg-white dark:bg-gray-800">
-                  <MentionInput
-                    value={message}
-                    onChange={handleMessageChange}
-                    placeholder={t('chat.messages.typeMessage')}
-                    disabled={isDisabled || inputBlocked}
-                    game={game}
-                    bug={bug}
-                    groupChannel={groupChannel}
-                    userChatId={userChatId}
-                    contextType={contextType}
-                    chatType={chatType}
-                    onKeyDown={handleKeyDown}
-                    className="w-full"
-                    style={{
-                      minHeight: '48px',
-                      maxHeight: '120px',
-                      paddingLeft: '20px',
-                    }}
-                  />
-                </div>
-                {showMic ? (
-                  <VoiceRecordButton
-                    onClick={() => void handleStartVoice()}
-                    disabled={inputBlocked || isDisabled}
-                    title={t('chat.voice.record', { defaultValue: 'Record voice' })}
-                    aria-label={t('chat.voice.record', { defaultValue: 'Record voice message' })}
-                  />
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
-                    className="absolute bottom-0.5 right-[2px] w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_4px_24px_rgba(59,130,246,0.6),0_8px_48px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_32px_rgba(59,130,246,0.7),0_12px_56px_rgba(59,130,246,0.5)] hover:scale-105 z-10"
-                    aria-label={inputBlocked ? t('common.sending') : t('chat.messages.sendMessage')}
-                  >
-                    {inputBlocked ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                        />
-                      </svg>
-                    )}
-                  </button>
-                )}
-              </>
-            )}
-          </div>
         </div>
-      </div>
       </form>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={(e) => handleImageSelect(e.target.files)}
-        className="hidden"
-      />
-      <PollCreationModal
-        isOpen={isPollModalOpen}
-        onClose={() => setIsPollModalOpen(false)}
-        onSubmit={handlePollCreate}
-      />
+      <PollCreationModal isOpen={isPollModalOpen} onClose={() => setIsPollModalOpen(false)} onSubmit={handlePollCreate} />
     </div>
   );
 };

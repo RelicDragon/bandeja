@@ -3,6 +3,7 @@ import type { ChatSyncEventDTO } from './chatSyncEventTypes';
 
 export type ChatSyncPatch =
   | { op: 'putMessage'; message: ChatMessage }
+  | { op: 'patchMessage'; messageId: string; patch: Partial<ChatMessage>; syncSeq: number }
   | { op: 'deleteMessage'; messageId: string; deletedAt: string }
   | { op: 'reactionAdded'; reaction: MessageReaction }
   | { op: 'reactionRemoved'; messageId: string; userId: string }
@@ -11,7 +12,7 @@ export type ChatSyncPatch =
   | { op: 'readBatch'; userId: string; readAt: string; messageIds: string[] }
   | { op: 'readReceipt'; receipt: { messageId: string; userId: string; readAt: string } }
   | { op: 'translationUpdated'; messageId: string; languageCode: string; translation: string }
-  | { op: 'stateUpdated'; messageId: string; state: ChatMessage['state'] }
+  | { op: 'stateUpdated'; messageId: string; state: ChatMessage['state']; syncSeq: number }
   | { op: 'pinsBroadcast'; chatType: string }
   | { op: 'devUnhandled'; eventType: string; seq: number };
 
@@ -22,14 +23,24 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
     switch (ev.eventType) {
       case 'MESSAGE_CREATED': {
         const message = p.message as ChatMessage | undefined;
-        if (message?.id) out.push({ op: 'putMessage', message: { ...message, syncSeq: ev.seq } });
+        if (message?.id) {
+          const rowSeq = message.serverSyncSeq ?? message.syncSeq ?? ev.seq;
+          out.push({ op: 'putMessage', message: { ...message, syncSeq: rowSeq } });
+        }
         break;
       }
       case 'MESSAGE_UPDATED': {
         const message = p.message as ChatMessage | undefined;
-        if (!message?.id) break;
-        const authoritativeSeq = message.serverSyncSeq ?? message.syncSeq ?? ev.seq;
-        out.push({ op: 'putMessage', message: { ...message, syncSeq: authoritativeSeq } });
+        if (message?.id) {
+          const authoritativeSeq = message.serverSyncSeq ?? message.syncSeq ?? ev.seq;
+          out.push({ op: 'putMessage', message: { ...message, syncSeq: authoritativeSeq } });
+          break;
+        }
+        const messageId = p.messageId as string | undefined;
+        const patch = p.patch as Partial<ChatMessage> | undefined;
+        if (messageId && patch && typeof patch === 'object') {
+          out.push({ op: 'patchMessage', messageId, patch, syncSeq: ev.seq });
+        }
         break;
       }
       case 'MESSAGE_DELETED': {
@@ -98,7 +109,7 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
       case 'MESSAGE_STATE_UPDATED': {
         const messageId = p.messageId as string | undefined;
         const state = p.state as ChatMessage['state'] | undefined;
-        if (messageId && state) out.push({ op: 'stateUpdated', messageId, state });
+        if (messageId && state) out.push({ op: 'stateUpdated', messageId, state, syncSeq: ev.seq });
         break;
       }
       case 'MESSAGE_PINNED':

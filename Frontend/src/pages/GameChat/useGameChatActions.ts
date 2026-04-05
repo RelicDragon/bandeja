@@ -5,7 +5,7 @@ import { chatApi } from '@/api/chat';
 import { gamesApi } from '@/api/games';
 import { useHeaderStore } from '@/store/headerStore';
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
-import { loadLocalMessagesForThread, persistChatMessagesFromApi } from '@/services/chat/chatLocalApply';
+import { loadLocalThreadBootstrap, persistChatMessagesFromApi } from '@/services/chat/chatLocalApply';
 import { reconcileChatThreadOpen } from '@/services/chat/chatOpenReconcile';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { normalizeChatType } from '@/utils/chatType';
@@ -224,7 +224,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
       };
 
       try {
-        const local = await loadLocalMessagesForThread(contextType, id, normalizedChatType);
+        const { messages: local } = await loadLocalThreadBootstrap(contextType, id, normalizedChatType);
         if (local.length > 0) {
           setMessages((prev) => {
             const pending =

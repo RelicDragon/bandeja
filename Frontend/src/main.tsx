@@ -6,11 +6,13 @@ import { isCapacitor, isAndroid } from './utils/capacitor';
 import { initializeSocialLogin } from './services/socialLoginInit.service';
 import { initChatSyncMetricsSession } from './services/chat/chatSyncMetricsSession';
 import { initChatLocalDbLifecycle } from './services/chat/chatLocalDbLifecycle';
+import { initChatBackgroundSyncClient } from './services/chat/chatBackgroundSync';
 
 const CACHE_VERSION = 'v1';
 
 initChatSyncMetricsSession();
 initChatLocalDbLifecycle();
+initChatBackgroundSyncClient();
 
 if (isCapacitor() && isAndroid()) {
   document.body.classList.add('capacitor-android');

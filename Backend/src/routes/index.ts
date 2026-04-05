@@ -36,6 +36,10 @@ import currencyRoutes from './currency.routes';
 
 const router = Router();
 
+router.get('/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 router.use('/app', appRoutes);
 router.use('/auth', authRoutes);
 router.use('/telegram', telegramAuthRoutes);
