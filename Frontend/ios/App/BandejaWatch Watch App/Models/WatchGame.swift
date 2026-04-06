@@ -50,13 +50,17 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         return club?.name ?? gameType.capitalized
     }
 
-    var participantCount: Int { participants.count }
+    var participantCount: Int { participants.filter(\.isPlaying).count }
 
     var participantCountLabel: String {
-        if let max = maxParticipants {
-            return "\(participants.count)/\(max)"
+        let n = participantCount
+        if entityType == "BAR" {
+            return "\(n)"
         }
-        return "\(participants.count) players"
+        if let max = maxParticipants {
+            return "\(n)/\(max)"
+        }
+        return "\(n) players"
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -126,7 +130,7 @@ struct WatchParticipant: Decodable, Sendable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         userId = try c.decode(String.self, forKey: .userId)
         role = try c.decode(String.self, forKey: .role)
-        status = try c.decodeIfPresent(String.self, forKey: .status) ?? "PLAYING"
+        status = try c.decodeIfPresent(String.self, forKey: .status) ?? ""
         user = try c.decode(WatchUser.self, forKey: .user)
     }
 }
