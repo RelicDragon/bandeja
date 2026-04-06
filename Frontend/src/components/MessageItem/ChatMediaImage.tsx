@@ -35,7 +35,7 @@ export const ChatMediaImage: React.FC<ChatMediaImageProps> = ({ src, alt, classN
         }
       }
       try {
-        const res = await fetch(key, { mode: 'cors', credentials: 'include' });
+        const res = await fetch(key, { mode: 'cors', credentials: 'omit' });
         if (!cancelled && res.ok) void writeCachedMediaResponse(key, res);
       } catch {
         /* noop */

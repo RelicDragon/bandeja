@@ -52,7 +52,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         /* keep network src */
       }
       try {
-        const res = await fetch(key, { mode: 'cors', credentials: 'include' });
+        const res = await fetch(key, { mode: 'cors', credentials: 'omit' });
         if (cancelled) return;
         if (res.ok) {
           await writeCachedMediaResponse(key, res);

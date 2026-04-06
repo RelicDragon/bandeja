@@ -23,7 +23,7 @@ async function drainBatch(): Promise<void> {
   for (const k of batch) pending.delete(k);
   for (const key of batch) {
     try {
-      const res = await fetch(key, { mode: 'cors', credentials: 'include' });
+      const res = await fetch(key, { mode: 'cors', credentials: 'omit' });
       if (res.ok) await writeCachedMediaResponse(key, res);
     } catch {
       /* offline / CORS */
