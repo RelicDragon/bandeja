@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseMessagePreview } from '@/utils/messagePreview';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
-import { ChatListOutboxLine } from '@/components/chat/ChatListOutboxLine';
+import { ChatListOutboxAnimated } from '@/components/chat/ChatListOutboxAnimated';
 import type { ChatListOutbox } from '@/utils/chatListSort';
 
 interface GroupChannelCardProps {
@@ -254,13 +254,11 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
             </div>
           </div>
         )}
-        {listOutbox ? (
-          <ChatListOutboxLine
-            listOutbox={listOutbox}
-            onRetry={listOutbox.state === 'failed' ? onOutboxRetry : undefined}
-            onDismiss={listOutbox.state === 'failed' ? onOutboxDismiss : undefined}
-          />
-        ) : null}
+        <ChatListOutboxAnimated
+          listOutbox={listOutbox}
+          onRetry={listOutbox?.state === 'failed' ? onOutboxRetry : undefined}
+          onDismiss={listOutbox?.state === 'failed' ? onOutboxDismiss : undefined}
+        />
         {(() => {
           if (showDraft) {
             const draftContent = draft?.content || '';

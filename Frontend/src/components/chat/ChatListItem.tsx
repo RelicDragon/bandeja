@@ -1,6 +1,6 @@
 import { UserChatCard } from './UserChatCard';
 import { GroupChannelCard } from './GroupChannelCard';
-import { ChatListOutboxLine } from './ChatListOutboxLine';
+import { ChatListOutboxAnimated } from './ChatListOutboxAnimated';
 import { UserChat } from '@/api/chat';
 import { ChatItem, ChatType } from './chatListTypes';
 import { usePlayersStore } from '@/store/playersStore';
@@ -163,25 +163,23 @@ export const ChatListItem = ({
                 </span>
               ) : null}
             </div>
-            {listOutbox ? (
-              <ChatListOutboxLine
-                listOutbox={listOutbox}
-                onRetry={
-                  listOutbox.state === 'failed'
-                    ? () => {
-                        void retryFailedOutboxForContext('GAME', chat.data.id);
-                      }
-                    : undefined
-                }
-                onDismiss={
-                  listOutbox.state === 'failed'
-                    ? () => {
-                        void dismissFailedOutboxForContext('GAME', chat.data.id);
-                      }
-                    : undefined
-                }
-              />
-            ) : null}
+            <ChatListOutboxAnimated
+              listOutbox={listOutbox}
+              onRetry={
+                listOutbox?.state === 'failed'
+                  ? () => {
+                      void retryFailedOutboxForContext('GAME', chat.data.id);
+                    }
+                  : undefined
+              }
+              onDismiss={
+                listOutbox?.state === 'failed'
+                  ? () => {
+                      void dismissFailedOutboxForContext('GAME', chat.data.id);
+                    }
+                  : undefined
+              }
+            />
           </div>
         </div>
       </button>

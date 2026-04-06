@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 import type { ChatListOutbox } from '@/utils/chatListSort';
 
 type Props = {
@@ -28,15 +29,27 @@ export function ChatListOutboxLine({ listOutbox, onRetry, onDismiss }: Props) {
           ? t('chat.listOutboxMedia', { defaultValue: 'Photo or video' })
           : null;
   const showFailedActions = listOutbox.state === 'failed' && (onRetry || onDismiss);
+  const showProgress = listOutbox.state === 'sending' || listOutbox.state === 'queued';
   return (
     <div className="mb-0.5">
-      <p className={`text-xs font-medium ${color} line-clamp-2`}>
-        {label}
-        {listOutbox.preview?.trim() ? (
-          <span className="font-normal text-gray-600 dark:text-gray-400 ml-1">· {listOutbox.preview.trim()}</span>
-        ) : kindHint ? (
-          <span className="font-normal text-gray-600 dark:text-gray-400 ml-1">· {kindHint}</span>
+      <p className={`text-xs font-medium ${color} line-clamp-2 flex items-start gap-1.5`}>
+        {showProgress ? (
+          <Loader2
+            className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
+              listOutbox.state === 'sending' ? 'animate-spin' : 'animate-spin opacity-80'
+            }`}
+            style={listOutbox.state === 'queued' ? { animationDuration: '1.6s' } : undefined}
+            aria-hidden
+          />
         ) : null}
+        <span className={`min-w-0 flex-1 line-clamp-2 ${showProgress ? 'animate-pulse' : ''}`}>
+          {label}
+          {listOutbox.preview?.trim() ? (
+            <span className="font-normal text-gray-600 dark:text-gray-400 ml-1">· {listOutbox.preview.trim()}</span>
+          ) : kindHint ? (
+            <span className="font-normal text-gray-600 dark:text-gray-400 ml-1">· {kindHint}</span>
+          ) : null}
+        </span>
       </p>
       {showFailedActions ? (
         <div className="flex flex-wrap items-center gap-2 mt-1">

@@ -447,7 +447,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     return () => io.disconnect();
   }, [onLoadMore, hasMoreMessages, isInitialLoad, isSwitchingChatType, messages.length]);
 
-  if (isSwitchingChatType || (messages.length === 0 && (isLoadingMessages || isInitialLoad))) {
+  if (messages.length === 0 && (isSwitchingChatType || isLoadingMessages || isInitialLoad)) {
     return (
       <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4 space-y-1 min-h-0" />
     );
@@ -483,9 +483,15 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   return (
     <div
       ref={messagesContainerRef}
-      className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto bg-gray-50 dark:bg-gray-800 p-4 min-h-0 overscroll-contain"
+      className="relative flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto bg-gray-50 dark:bg-gray-800 p-4 min-h-0 overscroll-contain"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
+      {isSwitchingChatType && messages.length > 0 ? (
+        <div
+          className="pointer-events-none absolute top-0 left-4 right-4 z-[2] h-1 rounded-full bg-primary-400/35 dark:bg-primary-500/25 animate-pulse"
+          aria-hidden
+        />
+      ) : null}
       {hasContextPanel && <div className="pt-6 flex-shrink-0" />}
       <div
         ref={topLoadSentinelRef}

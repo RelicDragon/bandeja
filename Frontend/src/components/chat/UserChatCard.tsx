@@ -10,7 +10,7 @@ import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { parseMessagePreview } from '@/utils/messagePreview';
 import { Pin, Loader2, BellOff } from 'lucide-react';
-import { ChatListOutboxLine } from '@/components/chat/ChatListOutboxLine';
+import { ChatListOutboxAnimated } from '@/components/chat/ChatListOutboxAnimated';
 import type { ChatListOutbox } from '@/utils/chatListSort';
 
 interface UserChatCardProps {
@@ -131,13 +131,11 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
             )}
           </div>
         </div>
-        {listOutbox ? (
-          <ChatListOutboxLine
-            listOutbox={listOutbox}
-            onRetry={listOutbox.state === 'failed' ? onOutboxRetry : undefined}
-            onDismiss={listOutbox.state === 'failed' ? onOutboxDismiss : undefined}
-          />
-        ) : null}
+        <ChatListOutboxAnimated
+          listOutbox={listOutbox}
+          onRetry={listOutbox?.state === 'failed' ? onOutboxRetry : undefined}
+          onDismiss={listOutbox?.state === 'failed' ? onOutboxDismiss : undefined}
+        />
         {(() => {
           const lastMessageTime = getLastMessageTime(chat.lastMessage);
           const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;

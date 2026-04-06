@@ -1,4 +1,4 @@
-import { useCallback, useRef, startTransition, useEffect } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import {
   type ChatMessage,
   type ChatMessageWithStatus,
@@ -79,12 +79,10 @@ export function useGameChatOptimistic({
       };
       const persistPayload =
         pendingVoiceBlob != null ? { ...payload, mediaUrls: [], thumbnailUrls: [] } : payload;
-      startTransition(() => {
-        setMessages((prev) => {
-          const next = [...prev, optimistic];
-          messagesRef.current = next;
-          return next;
-        });
+      setMessages((prev) => {
+        const next = [...prev, optimistic];
+        messagesRef.current = next;
+        return next;
       });
       messageQueueStorage
         .add({
@@ -201,7 +199,7 @@ export function useGameChatOptimistic({
         if (idx < 0) return prev;
         revokeChatBlobUrls(prev[idx] as ChatMessageWithStatus);
         const next = [...prev];
-        next[idx] = { ...serverMessage, _optimisticId: optimisticId } as ChatMessageWithStatus;
+        next[idx] = { ...serverMessage } as ChatMessageWithStatus;
         next.sort(compareChatMessagesAscending);
         messagesRef.current = next;
         return next;
@@ -253,7 +251,7 @@ export function useGameChatOptimistic({
           replacedOptimisticId = (prev[idx] as ChatMessageWithStatus)._optimisticId;
           revokeChatBlobUrls(prev[idx] as ChatMessageWithStatus);
           next = [...prev];
-          next[idx] = { ...message, _optimisticId: replacedOptimisticId } as ChatMessageWithStatus;
+          next[idx] = { ...message } as ChatMessageWithStatus;
           next.sort(compareChatMessagesAscending);
           messagesRef.current = next;
           setMessages(next);
@@ -300,7 +298,7 @@ export function useGameChatOptimistic({
           replacedOptimisticId = (prev[idx] as ChatMessageWithStatus)._optimisticId;
           revokeChatBlobUrls(prev[idx] as ChatMessageWithStatus);
           next = [...prev];
-          next[idx] = { ...message, _optimisticId: replacedOptimisticId } as ChatMessageWithStatus;
+          next[idx] = { ...message } as ChatMessageWithStatus;
           next.sort(compareChatMessagesAscending);
           messagesRef.current = next;
           setMessages(next);
