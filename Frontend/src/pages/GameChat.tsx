@@ -45,6 +45,8 @@ import { useGameChatPanels } from './GameChat/useGameChatPanels';
 import { useGameChatInitialLoad } from './GameChat/useGameChatInitialLoad';
 import { useGameChatFooterVariant } from './GameChat/useGameChatFooterVariant';
 import { recordChatThreadOpened } from '@/services/chat/chatThreadOpenStats';
+import { reconcileThreadIndexOutboxForContext } from '@/services/chat/chatThreadIndex';
+import type { ChatContextType } from '@/api/chat';
 
 export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: propChatId, chatType: propChatType }) => {
   const { t } = useTranslation();
@@ -113,6 +115,16 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       contextType === 'GAME' ? effectiveChatType : undefined
     );
   }, [id, contextType, effectiveChatType]);
+
+  useEffect(() => {
+    const ct = contextType as ChatContextType;
+    const cid = id;
+    return () => {
+      if (!cid) return;
+      if (ct !== 'USER' && ct !== 'GROUP' && ct !== 'GAME' && ct !== 'BUG') return;
+      void reconcileThreadIndexOutboxForContext(ct, cid);
+    };
+  }, [id, contextType]);
 
   const threadScrollKey = useMemo(() => {
     if (!id) return null;

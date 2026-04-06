@@ -7,8 +7,11 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { chatLocalDb, type ChatListFilterTab, type ChatThreadIndexRow } from './chatLocalDb';
 import { getLatestLocalMessageRowAcrossChatTypes } from './messageContextHead';
 import { normalizeChatType } from '@/utils/chatType';
+import { computeListOutboxForContext } from './chatOutboxListOutboxCompute';
+import { scheduleChatListOutboxBump } from './chatListOutboxBumpScheduler';
 
 const ITEM_JSON_VERSION = 1 as const;
+const THREAD_INDEX_CAS_RETRIES = 8;
 
 function shouldIncrementThreadUnread(message: ChatMessage): boolean {
   if (
@@ -174,17 +177,11 @@ async function putThreadRowIfUnchanged(
   rowKey: string,
   expectedUpdatedAt: number,
   next: ChatThreadIndexRow
-): Promise<void> {
+): Promise<boolean> {
   const latest = await chatLocalDb.threadIndex.get(rowKey);
-  if (!latest || latest.updatedAt !== expectedUpdatedAt) return;
+  if (!latest || latest.updatedAt !== expectedUpdatedAt) return false;
   await chatLocalDb.threadIndex.put(next);
-}
-
-function mergeListOutboxFromParsed(existingItem: ChatItem | null, incoming: ChatItem): ChatItem {
-  if (!existingItem || existingItem.type === 'contact' || incoming.type === 'contact') return incoming;
-  const lo = 'listOutbox' in existingItem ? existingItem.listOutbox : undefined;
-  if (lo == null) return incoming;
-  return { ...incoming, listOutbox: lo } as ChatItem;
+  return true;
 }
 
 export type PersistThreadIndexOptions = {
@@ -198,8 +195,6 @@ export async function persistThreadIndexReplace(
   options?: PersistThreadIndexOptions
 ): Promise<void> {
   const pruneRemoved = options?.pruneRemoved === true;
-  const existing = await chatLocalDb.threadIndex.where('listFilter').equals(listFilter).toArray();
-  const prevByKey = new Map(existing.map((r) => [r.rowKey, r]));
 
   const rows = chats
     .map((item) => {
@@ -208,18 +203,15 @@ export async function persistThreadIndexReplace(
       if (!rk) return null;
       const ctx = contextForChatItem(item);
       if (!ctx) return null;
-      const prevRow = prevByKey.get(rk);
-      const prevItem = prevRow ? parseItem(prevRow.itemJson) : null;
-      const merged = mergeListOutboxFromParsed(prevItem, item);
-      const sk = sortKey(merged);
+      const sk = sortKey(item);
       return {
         rowKey: rk,
         listFilter,
         contextType: ctx.contextType,
         contextId: ctx.contextId,
-        itemType: merged.type as ChatThreadIndexRow['itemType'],
+        itemType: item.type as ChatThreadIndexRow['itemType'],
         sortAt: sk,
-        itemJson: stringifyItem(merged),
+        itemJson: stringifyItem(item),
         updatedAt: Date.now(),
       };
     })
@@ -235,21 +227,20 @@ export async function persistThreadIndexReplace(
     }
     if (rows.length) await chatLocalDb.threadIndex.bulkPut(rows);
   });
+  const seenCtx = new Set<string>();
+  let outboxBump = false;
+  for (const r of rows) {
+    const k = `${r.contextType}:${r.contextId}`;
+    if (seenCtx.has(k)) continue;
+    seenCtx.add(k);
+    const lo = await computeListOutboxForContext(r.contextType, r.contextId);
+    await patchThreadIndexOutbox(r.contextType, r.contextId, lo);
+    outboxBump = true;
+  }
+  if (outboxBump) scheduleChatListOutboxBump();
 }
 
 export async function persistThreadIndexUpsert(listFilter: ChatListFilterTab, chats: ChatItem[]): Promise<void> {
-  const keys = chats
-    .map((item) => (item.type === 'contact' ? null : rowKeyForItem(listFilter, item)))
-    .filter((k): k is string => k != null);
-  const prevByKey = new Map<string, ChatThreadIndexRow>();
-  if (keys.length) {
-    const prevRows = await Promise.all(keys.map((k) => chatLocalDb.threadIndex.get(k)));
-    keys.forEach((k, i) => {
-      const r = prevRows[i];
-      if (r) prevByKey.set(k, r);
-    });
-  }
-
   const rows = chats
     .map((item) => {
       if (item.type === 'contact') return null;
@@ -257,18 +248,15 @@ export async function persistThreadIndexUpsert(listFilter: ChatListFilterTab, ch
       if (!rk) return null;
       const ctx = contextForChatItem(item);
       if (!ctx) return null;
-      const prevRow = prevByKey.get(rk);
-      const prevItem = prevRow ? parseItem(prevRow.itemJson) : null;
-      const merged = mergeListOutboxFromParsed(prevItem, item);
-      const sk = sortKey(merged);
+      const sk = sortKey(item);
       return {
         rowKey: rk,
         listFilter,
         contextType: ctx.contextType,
         contextId: ctx.contextId,
-        itemType: merged.type as ChatThreadIndexRow['itemType'],
+        itemType: item.type as ChatThreadIndexRow['itemType'],
         sortAt: sk,
-        itemJson: stringifyItem(merged),
+        itemJson: stringifyItem(item),
         updatedAt: Date.now(),
       };
     })
@@ -276,40 +264,17 @@ export async function persistThreadIndexUpsert(listFilter: ChatListFilterTab, ch
 
   if (rows.length === 0) return;
   await chatLocalDb.threadIndex.bulkPut(rows);
-}
-
-export async function patchThreadIndexFromMessage(message: ChatMessage): Promise<void> {
-  const rows = await chatLocalDb.threadIndex
-    .where('[contextType+contextId]')
-    .equals([message.chatContextType, message.contextId])
-    .toArray();
-  if (!rows.length) return;
-  const sortAt = Math.max(
-    new Date(message.createdAt).getTime(),
-    new Date(message.updatedAt ?? message.createdAt).getTime()
-  );
-  const updatedAtIso = message.updatedAt ?? message.createdAt;
-  const bumpUnread = shouldIncrementThreadUnread(message);
-  for (const row of rows) {
-    const seenAt = row.updatedAt;
-    const item = parseItem(row.itemJson);
-    if (!item || item.type === 'contact') continue;
-    const draft = 'draft' in item ? item.draft : undefined;
-    const lastMessageDate = calculateLastMessageDate(message, draft ?? null, updatedAtIso);
-    const prevUnread = 'unreadCount' in item ? (item.unreadCount ?? 0) : 0;
-    const next = {
-      ...item,
-      data: { ...item.data, lastMessage: message, updatedAt: updatedAtIso },
-      lastMessageDate,
-      ...(bumpUnread && 'unreadCount' in item ? { unreadCount: prevUnread + 1 } : {}),
-    } as ChatItem;
-    await putThreadRowIfUnchanged(row.rowKey, seenAt, {
-      ...rowToPutBase(row),
-      sortAt: Math.max(row.sortAt, sortAt, lastMessageDate.getTime()),
-      itemJson: stringifyItem(next),
-      updatedAt: Date.now(),
-    });
+  const seenUpsert = new Set<string>();
+  let outboxBumpUpsert = false;
+  for (const r of rows) {
+    const k = `${r.contextType}:${r.contextId}`;
+    if (seenUpsert.has(k)) continue;
+    seenUpsert.add(k);
+    const lo = await computeListOutboxForContext(r.contextType, r.contextId);
+    await patchThreadIndexOutbox(r.contextType, r.contextId, lo);
+    outboxBumpUpsert = true;
   }
+  if (outboxBumpUpsert) scheduleChatListOutboxBump();
 }
 
 export async function patchThreadIndexSetUnreadCount(
@@ -364,29 +329,84 @@ export async function patchThreadIndexOutbox(
   contextId: string,
   listOutbox: ChatListOutbox | null
 ): Promise<void> {
-  const rows = await chatLocalDb.threadIndex
+  const initial = await chatLocalDb.threadIndex
     .where('[contextType+contextId]')
     .equals([contextType, contextId])
     .toArray();
-  for (const row of rows) {
-    const seenAt = row.updatedAt;
-    const item = parseItem(row.itemJson);
-    if (!item || item.type === 'contact') continue;
-    const next = { ...item } as ChatItem & { listOutbox?: ChatListOutbox | null };
-    if (listOutbox == null) {
-      delete next.listOutbox;
-    } else {
-      next.listOutbox = listOutbox;
+  const rowKeys = [...new Set(initial.map((r) => r.rowKey))];
+  for (const rowKey of rowKeys) {
+    for (let attempt = 0; attempt < THREAD_INDEX_CAS_RETRIES; attempt++) {
+      const latest = await chatLocalDb.threadIndex.get(rowKey);
+      if (!latest) break;
+      if (latest.contextType !== contextType || latest.contextId !== contextId) break;
+      const item = parseItem(latest.itemJson);
+      if (!item || item.type === 'contact') break;
+      const next = { ...item } as ChatItem & { listOutbox?: ChatListOutbox | null };
+      if (listOutbox == null) {
+        delete next.listOutbox;
+      } else {
+        next.listOutbox = listOutbox;
+      }
+      const itemSort = sortKey(next);
+      const nextSort = listOutbox != null ? Math.max(latest.sortAt, Date.now()) : itemSort;
+      const applied = await putThreadRowIfUnchanged(rowKey, latest.updatedAt, {
+        ...rowToPutBase(latest),
+        sortAt: nextSort,
+        itemJson: stringifyItem(next),
+        updatedAt: Date.now(),
+      });
+      if (applied) break;
     }
-    const itemSort = sortKey(next);
-    const nextSort = listOutbox != null ? Math.max(row.sortAt, Date.now()) : itemSort;
-    await putThreadRowIfUnchanged(row.rowKey, seenAt, {
-      ...rowToPutBase(row),
-      sortAt: nextSort,
-      itemJson: stringifyItem(next),
-      updatedAt: Date.now(),
-    });
   }
+}
+
+export async function reconcileThreadIndexOutboxForContext(
+  contextType: ChatContextType,
+  contextId: string
+): Promise<void> {
+  const lo = await computeListOutboxForContext(contextType, contextId);
+  await patchThreadIndexOutbox(contextType, contextId, lo);
+  scheduleChatListOutboxBump();
+}
+
+export async function patchThreadIndexFromMessage(message: ChatMessage): Promise<void> {
+  const initialRows = await chatLocalDb.threadIndex
+    .where('[contextType+contextId]')
+    .equals([message.chatContextType, message.contextId])
+    .toArray();
+  if (!initialRows.length) return;
+  const sortAtMsg = Math.max(
+    new Date(message.createdAt).getTime(),
+    new Date(message.updatedAt ?? message.createdAt).getTime()
+  );
+  const updatedAtIso = message.updatedAt ?? message.createdAt;
+  const bumpUnread = shouldIncrementThreadUnread(message);
+  for (const rowRef of initialRows) {
+    for (let attempt = 0; attempt < THREAD_INDEX_CAS_RETRIES; attempt++) {
+      const latest = await chatLocalDb.threadIndex.get(rowRef.rowKey);
+      if (!latest) break;
+      const item = parseItem(latest.itemJson);
+      if (!item || item.type === 'contact') break;
+      const draft = 'draft' in item ? item.draft : undefined;
+      const lastMessageDate = calculateLastMessageDate(message, draft ?? null, updatedAtIso);
+      const prevUnread = 'unreadCount' in item ? (item.unreadCount ?? 0) : 0;
+      const next = {
+        ...item,
+        data: { ...item.data, lastMessage: message, updatedAt: updatedAtIso },
+        lastMessageDate,
+        ...(bumpUnread && 'unreadCount' in item ? { unreadCount: prevUnread + 1 } : {}),
+      } as ChatItem & { listOutbox?: ChatListOutbox | null };
+      delete next.listOutbox;
+      const applied = await putThreadRowIfUnchanged(rowRef.rowKey, latest.updatedAt, {
+        ...rowToPutBase(latest),
+        sortAt: Math.max(latest.sortAt, sortAtMsg, lastMessageDate.getTime()),
+        itemJson: stringifyItem(next),
+        updatedAt: Date.now(),
+      });
+      if (applied) break;
+    }
+  }
+  await reconcileThreadIndexOutboxForContext(message.chatContextType, message.contextId);
 }
 
 export async function patchThreadIndexAfterMessageDeleted(messageId: string): Promise<void> {
@@ -434,6 +454,7 @@ export async function patchThreadIndexAfterMessageDeleted(messageId: string): Pr
       updatedAt: Date.now(),
     });
   }
+  await reconcileThreadIndexOutboxForContext(contextType, contextId);
 }
 
 export async function clearChatLocalStores(): Promise<void> {

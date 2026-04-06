@@ -1,4 +1,4 @@
-import { ChatContextType, type OptimisticMessagePayload } from '@/api/chat';
+import { ChatContextType } from '@/api/chat';
 import { chatLocalDb, type ChatOutboxRow } from './chat/chatLocalDb';
 import {
   deleteOutboxImageBlobSlots,
@@ -6,19 +6,7 @@ import {
   deleteOutboxVoiceBlob,
 } from './chat/chatOutboxMediaBlobs';
 import { revokeOutboxRehydrateBlobUrls } from './chat/chatOutboxRehydrateUrls';
-import { patchThreadIndexOutbox } from './chat/chatThreadIndex';
-import { scheduleChatListOutboxBump } from './chat/chatListOutboxBumpScheduler';
-
-function outboxPreviewFromPayload(payload: OptimisticMessagePayload): {
-  preview?: string;
-  previewKind?: 'text' | 'voice' | 'media';
-} {
-  const text = (payload.content || '').trim();
-  if (text) return { preview: text.slice(0, 80), previewKind: 'text' };
-  if (payload.messageType === 'VOICE') return { previewKind: 'voice' };
-  if (payload.messageType === 'IMAGE' || (payload.mediaUrls?.length ?? 0) > 0) return { previewKind: 'media' };
-  return {};
-}
+import { reconcileThreadIndexOutboxForContext } from './chat/chatThreadIndex';
 
 export type QueuedMessageStatus = ChatOutboxRow['status'];
 export type QueuedMessage = ChatOutboxRow;
@@ -28,25 +16,7 @@ export type QueuedMessageEnqueue = ChatOutboxRow & {
 };
 
 async function flushOutboxToThreadIndex(contextType: ChatContextType, contextId: string): Promise<void> {
-  const rows = await chatLocalDb.outbox
-    .where('[contextType+contextId]')
-    .equals([contextType, contextId])
-    .toArray();
-  rows.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  if (rows.length === 0) {
-    await patchThreadIndexOutbox(contextType, contextId, null);
-    scheduleChatListOutboxBump();
-    return;
-  }
-  const state = rows.some((r) => r.status === 'failed')
-    ? ('failed' as const)
-    : rows.some((r) => r.status === 'sending')
-      ? ('sending' as const)
-      : ('queued' as const);
-  const last = rows[rows.length - 1]!;
-  const meta = outboxPreviewFromPayload(last.payload);
-  await patchThreadIndexOutbox(contextType, contextId, { state, ...meta });
-  scheduleChatListOutboxBump();
+  await reconcileThreadIndexOutboxForContext(contextType, contextId);
 }
 
 export const messageQueueStorage = {
