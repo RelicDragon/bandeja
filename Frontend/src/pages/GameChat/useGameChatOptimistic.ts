@@ -233,106 +233,86 @@ export function useGameChatOptimistic({
         }
       }
 
-      const prev = messagesRef.current;
-      if (prev.some((msg) => msg.id === message.id)) return;
+      let effectPack: { replacedOptimisticId?: string; lastMessageId: string } | undefined;
 
-      const isOwnServerMessage = message.senderId === user?.id;
-      let replacedOptimisticId: string | undefined;
-      let next: ChatMessageWithStatus[];
+      setMessages((prev) => {
+        if (prev.some((msg) => msg.id === message.id)) return prev;
 
-      const serverCid = message.clientMutationId ?? null;
-      if (isOwnServerMessage && serverCid) {
-        const idx = prev.findIndex((m) => {
-          const sm = m as ChatMessageWithStatus;
-          if (sm._status !== 'SENDING' && sm._status !== 'FAILED') return false;
-          return sm._clientMutationId === serverCid;
-        });
-        if (idx >= 0) {
-          replacedOptimisticId = (prev[idx] as ChatMessageWithStatus)._optimisticId;
-          revokeChatBlobUrls(prev[idx] as ChatMessageWithStatus);
-          next = [...prev];
-          next[idx] = { ...message } as ChatMessageWithStatus;
-          next.sort(compareChatMessagesAscending);
-          messagesRef.current = next;
-          setMessages(next);
-          if (id) {
-            useChatSyncStore
-              .getState()
-              .setLastMessageId(
-                contextType,
-                id,
-                message.id,
-                contextType === 'GAME' ? normalizedCurrentChatType : undefined
-              );
+        const isOwnServerMessage = message.senderId === user?.id;
+        const serverCid = message.clientMutationId ?? null;
+
+        if (isOwnServerMessage && serverCid) {
+          const idx = prev.findIndex((m) => {
+            const sm = m as ChatMessageWithStatus;
+            if (sm._status !== 'SENDING' && sm._status !== 'FAILED') return false;
+            return sm._clientMutationId === serverCid;
+          });
+          if (idx >= 0) {
+            const replacedOptimisticId = (prev[idx] as ChatMessageWithStatus)._optimisticId;
+            revokeChatBlobUrls(prev[idx] as ChatMessageWithStatus);
+            const next = [...prev];
+            next[idx] = { ...message } as ChatMessageWithStatus;
+            next.sort(compareChatMessagesAscending);
+            messagesRef.current = next;
+            effectPack = { replacedOptimisticId, lastMessageId: message.id };
+            return next;
           }
-          if (replacedOptimisticId && id) {
-            messageQueueStorage.remove(replacedOptimisticId, contextType, id).catch((err) => console.error('[messageQueue] remove', err));
-            cancelSend(replacedOptimisticId);
-            return replacedOptimisticId;
-          }
-          return;
         }
-      }
 
-      if (isOwnServerMessage) {
-        const msgReplyToId = message.replyToId ?? null;
-        const msgMentionIds = message.mentionIds?.slice().sort() ?? [];
-        const idx = prev.findIndex((m): m is ChatMessageWithStatus => {
-          const status = (m as ChatMessageWithStatus)._status;
-          if (status !== 'SENDING' && status !== 'FAILED') return false;
-          if (m.senderId !== message.senderId) return false;
-          const mt = (msg: ChatMessage) => msg.messageType ?? 'TEXT';
-          if (mt(m as ChatMessage) !== mt(message)) return false;
-          if (message.messageType === 'VOICE') {
-            return (m.mediaUrls?.[0] ?? '') === (message.mediaUrls?.[0] ?? '');
+        if (isOwnServerMessage) {
+          const msgReplyToId = message.replyToId ?? null;
+          const msgMentionIds = message.mentionIds?.slice().sort() ?? [];
+          const idx = prev.findIndex((m): m is ChatMessageWithStatus => {
+            const status = (m as ChatMessageWithStatus)._status;
+            if (status !== 'SENDING' && status !== 'FAILED') return false;
+            if (m.senderId !== message.senderId) return false;
+            const mt = (msg: ChatMessage) => msg.messageType ?? 'TEXT';
+            if (mt(m as ChatMessage) !== mt(message)) return false;
+            if (message.messageType === 'VOICE') {
+              return (m.mediaUrls?.[0] ?? '') === (message.mediaUrls?.[0] ?? '');
+            }
+            if (m.content !== message.content) return false;
+            if (normalizeChatType(m.chatType) !== normalizedMessageChatType) return false;
+            const mReply = m.replyToId ?? null;
+            if (mReply !== msgReplyToId) return false;
+            const mIds = (m.mentionIds?.slice().sort() ?? []) as string[];
+            if (mIds.length !== msgMentionIds.length || mIds.some((mid, i) => mid !== msgMentionIds[i])) return false;
+            return true;
+          });
+          if (idx >= 0) {
+            const replacedOptimisticId = (prev[idx] as ChatMessageWithStatus)._optimisticId;
+            revokeChatBlobUrls(prev[idx] as ChatMessageWithStatus);
+            const next = [...prev];
+            next[idx] = { ...message } as ChatMessageWithStatus;
+            next.sort(compareChatMessagesAscending);
+            messagesRef.current = next;
+            effectPack = { replacedOptimisticId, lastMessageId: message.id };
+            return next;
           }
-          if (m.content !== message.content) return false;
-          if (normalizeChatType(m.chatType) !== normalizedMessageChatType) return false;
-          const mReply = m.replyToId ?? null;
-          if (mReply !== msgReplyToId) return false;
-          const mIds = (m.mentionIds?.slice().sort() ?? []) as string[];
-          if (mIds.length !== msgMentionIds.length || mIds.some((mid, i) => mid !== msgMentionIds[i])) return false;
-          return true;
-        });
-        if (idx >= 0) {
-          replacedOptimisticId = (prev[idx] as ChatMessageWithStatus)._optimisticId;
-          revokeChatBlobUrls(prev[idx] as ChatMessageWithStatus);
-          next = [...prev];
-          next[idx] = { ...message } as ChatMessageWithStatus;
-          next.sort(compareChatMessagesAscending);
-          messagesRef.current = next;
-          setMessages(next);
-          if (id) {
-            useChatSyncStore
-              .getState()
-              .setLastMessageId(
-                contextType,
-                id,
-                message.id,
-                contextType === 'GAME' ? normalizedCurrentChatType : undefined
-              );
-          }
-          if (replacedOptimisticId && id) {
-            messageQueueStorage.remove(replacedOptimisticId, contextType, id).catch((err) => console.error('[messageQueue] remove', err));
-            cancelSend(replacedOptimisticId);
-            return replacedOptimisticId;
-          }
-          return;
         }
-      }
 
-      next = [...prev, message as ChatMessageWithStatus].sort(compareChatMessagesAscending);
-      messagesRef.current = next;
-      setMessages(next);
-      if (id) {
+        const next = [...prev, message as ChatMessageWithStatus].sort(compareChatMessagesAscending);
+        messagesRef.current = next;
+        effectPack = { lastMessageId: message.id };
+        return next;
+      });
+
+      if (effectPack && id) {
         useChatSyncStore
           .getState()
           .setLastMessageId(
             contextType,
             id,
-            message.id,
+            effectPack.lastMessageId,
             contextType === 'GAME' ? normalizedCurrentChatType : undefined
           );
+      }
+      if (effectPack?.replacedOptimisticId && id) {
+        messageQueueStorage
+          .remove(effectPack.replacedOptimisticId, contextType, id)
+          .catch((err) => console.error('[messageQueue] remove', err));
+        cancelSend(effectPack.replacedOptimisticId);
+        return effectPack.replacedOptimisticId;
       }
     },
     [contextType, currentChatType, id, user?.id, setUserChat, setMessages, messagesRef]

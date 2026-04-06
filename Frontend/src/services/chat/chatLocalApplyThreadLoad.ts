@@ -85,7 +85,7 @@ export async function loadLocalThreadBootstrap(
 ): Promise<LocalThreadBootstrapResult> {
   const ct = normalizeChatType(chatType);
   const rows = await loadTailRows(contextType, contextId, ct, CHAT_LOCAL_THREAD_WINDOW_SIZE);
-  const payloads = rows.map((r) => r.payload);
+  const payloads = rows.map((r) => r.payload).sort(compareChatMessagesAscending);
   const completeThread = rows.length < CHAT_LOCAL_THREAD_WINDOW_SIZE;
   const first = rows[0];
   const firstSk = first ? (first.sortKey || computeMessageSortKey(first.payload)) : '';
@@ -112,7 +112,7 @@ export async function loadLocalMessagesForThread(
 ): Promise<ChatMessage[]> {
   const ct = normalizeChatType(chatType);
   const rows = await loadThreadOrderedAscending(contextType, contextId, ct);
-  return rows.map((r) => r.payload);
+  return rows.map((r) => r.payload).sort(compareChatMessagesAscending);
 }
 
 export async function loadLocalMessagesForThreadProgressive(

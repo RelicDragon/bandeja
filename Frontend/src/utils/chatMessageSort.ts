@@ -14,23 +14,23 @@ function encodeSeqLex(sa: number): string {
 }
 
 export function computeMessageSortKey(m: ChatMessage): string {
-  const sa = conversationSeq(m);
-  const seqStr = sa != null ? `a${encodeSeqLex(sa)}` : `b${'0'.repeat(19)}`;
   const t = new Date(m.createdAt).getTime();
   const timeStr = String(Number.isFinite(t) ? t : 0).padStart(15, '0');
+  const sa = conversationSeq(m);
+  const seqStr = sa != null ? `0${encodeSeqLex(sa)}` : `1`;
   const idPart = typeof m.id === 'string' ? m.id.normalize('NFC') : String(m.id);
-  return `${seqStr}|${timeStr}|${idPart}`;
+  return `${timeStr}|${seqStr}|${idPart}`;
 }
 
 export function compareChatMessagesAscending(a: ChatMessage, b: ChatMessage): number {
+  const ta = new Date(a.createdAt).getTime();
+  const tb = new Date(b.createdAt).getTime();
+  if (ta !== tb) return ta - tb;
   const sa = conversationSeq(a);
   const sb = conversationSeq(b);
   if (sa != null && sb != null && sa !== sb) return sa - sb;
   if (sa != null && sb == null) return -1;
   if (sb != null && sa == null) return 1;
-  const ta = new Date(a.createdAt).getTime();
-  const tb = new Date(b.createdAt).getTime();
-  if (ta !== tb) return ta - tb;
   return a.id.localeCompare(b.id);
 }
 
@@ -38,12 +38,7 @@ function shouldPreferIncomingMessage(
   existing: ChatMessageWithStatus,
   incoming: ChatMessage
 ): boolean {
-  const es = conversationSeq(existing);
-  const isn = conversationSeq(incoming);
-  if (isn != null && es != null) return isn >= es;
-  if (isn != null && es == null) return true;
-  if (isn == null && es != null) return false;
-  return new Date(incoming.createdAt).getTime() >= new Date(existing.createdAt).getTime();
+  return compareChatMessagesAscending(existing, incoming) <= 0;
 }
 
 export function mergeChatMessagesAscending(
