@@ -64,8 +64,7 @@ export function mergeServerPageWithPendingOptimistics(
   prev: ChatMessageWithStatus[],
   response: ChatMessage[]
 ): ChatMessageWithStatus[] {
-  const pending = prev.filter((m) => Boolean(m._optimisticId));
-  return mergeChatMessagesAscending(pending, response);
+  return mergeChatMessagesAscending(prev, response);
 }
 
 function swap(arr: ChatMessage[], i: number, j: number): void {
