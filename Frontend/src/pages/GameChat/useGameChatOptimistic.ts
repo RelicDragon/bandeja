@@ -234,9 +234,13 @@ export function useGameChatOptimistic({
       }
 
       let effectPack: { replacedOptimisticId?: string; lastMessageId: string } | undefined;
+      let shortCircuitDuplicateId = false;
 
       setMessages((prev) => {
-        if (prev.some((msg) => msg.id === message.id)) return prev;
+        if (prev.some((msg) => msg.id === message.id)) {
+          shortCircuitDuplicateId = true;
+          return prev;
+        }
 
         const isOwnServerMessage = message.senderId === user?.id;
         const serverCid = message.clientMutationId ?? null;
@@ -296,6 +300,21 @@ export function useGameChatOptimistic({
         effectPack = { lastMessageId: message.id };
         return next;
       });
+
+      if (shortCircuitDuplicateId && id && message.senderId === user?.id) {
+        const cid = message.clientMutationId?.trim();
+        if (cid) {
+          void messageQueueStorage.getByContext(contextType, id).then((rows) => {
+            const hit = rows.find((r) => (r.clientMutationId ?? '').trim() === cid);
+            if (hit) {
+              void messageQueueStorage.remove(hit.tempId, contextType, id).catch((err) =>
+                console.error('[messageQueue] remove duplicate message id', err)
+              );
+              cancelSend(hit.tempId);
+            }
+          });
+        }
+      }
 
       if (effectPack && id) {
         useChatSyncStore

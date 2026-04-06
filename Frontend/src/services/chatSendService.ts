@@ -171,6 +171,9 @@ export function sendWithTimeout(
       (created) => {
         clearDeadlineFor(tempId);
         onSuccess?.(created);
+        void messageQueueStorage.remove(tempId, contextType, contextId).catch((err) => {
+          console.error('[messageQueue] remove after send success', err);
+        });
       },
       () => {
         clearDeadlineFor(tempId);
