@@ -1859,7 +1859,8 @@
       "cancelRecording": "Откажи снимање",
       "sendRecording": "Пошаљи гласовну поруку",
       "transcribe": "Транскрибуј",
-      "transcribing": "Транскрибује се…"
+      "transcribing": "Транскрибује се…",
+      "noSpeechTranscription": "Није откривен говор."
     },
     "systemMessages": {
       "USER_JOINED_GAME": "{{userName}} се придружио игри",

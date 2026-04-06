@@ -12,6 +12,7 @@ import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferenc
 import { isCapacitor } from '@/utils/capacitor';
 import { FileText, Flag, Forward, Languages, Pencil, Pin, PinOff } from 'lucide-react';
 import { formatChatMessageForForwardClipboard } from '@/utils/chatForwardClipboard';
+import { isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay';
 
 interface UnifiedMessageMenuProps {
   message: ChatMessage;
@@ -183,7 +184,9 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     const c = message.content?.trim() ?? '';
     if (c) return c;
     if (message.messageType === 'VOICE') {
-      return message.audioTranscription?.transcription?.trim() ?? '';
+      const tx = message.audioTranscription?.transcription?.trim() ?? '';
+      if (!tx || isVoiceTranscriptionNoSpeech(tx)) return '';
+      return tx;
     }
     return '';
   };

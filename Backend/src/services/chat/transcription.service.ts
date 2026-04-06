@@ -9,7 +9,7 @@ import { ApiError } from '../../utils/ApiError';
 import { logLlmUsage } from '../ai/llmUsageLog.service';
 import { LLM_REASON } from '../ai/llmReasons';
 import { S3Service } from '../s3.service';
-import { MESSAGE_TRANSCRIPTION_PENDING } from './transcriptionPending';
+import { MESSAGE_TRANSCRIPTION_NO_SPEECH, MESSAGE_TRANSCRIPTION_PENDING } from './transcriptionPending';
 
 export const TRANSCRIPTION_MAX_DURATION_MS = 3 * 60 * 1000;
 
@@ -171,6 +171,7 @@ export class TranscriptionService {
         file,
         model: 'whisper-1',
         response_format: 'verbose_json',
+        prompt: `If the audio contains no intelligible human speech (silence, noise only, or unintelligible), respond with exactly this single token and nothing else: ${MESSAGE_TRANSCRIPTION_NO_SPEECH}`,
       });
     } catch (e: unknown) {
       logOpenAiTranscriptionError(e);
@@ -178,15 +179,22 @@ export class TranscriptionService {
       throw new ApiError(503, 'Transcription service is temporarily unavailable. Please try again later.');
     }
 
-    const text = typeof res.text === 'string' ? res.text.trim() : '';
+    const rawText = typeof res.text === 'string' ? res.text.trim() : '';
     const language = typeof (res as { language?: string }).language === 'string'
       ? (res as { language: string }).language
       : null;
+
+    const strippedNoSpeech = rawText.replace(/^["'`]+|["'`]+$/g, '').trim();
+    const text =
+      !rawText || strippedNoSpeech === MESSAGE_TRANSCRIPTION_NO_SPEECH
+        ? MESSAGE_TRANSCRIPTION_NO_SPEECH
+        : rawText;
 
     console.info('[transcription] whisper_response', {
       userId,
       outChars: text.length,
       language,
+      noSpeech: text === MESSAGE_TRANSCRIPTION_NO_SPEECH,
     });
 
     await logLlmUsage({
@@ -199,16 +207,6 @@ export class TranscriptionService {
       inputTokens: null,
       outputTokens: null,
     });
-
-    if (!text) {
-      console.error('[transcription] whisper_empty_text_after_response', {
-        userId,
-        audioKey: S3Service.extractS3Key(audioUrl),
-        language,
-        rawTextType: typeof res.text,
-      });
-      throw new ApiError(503, 'Transcription service is temporarily unavailable. Please try again later.');
-    }
 
     return { text, language };
   }

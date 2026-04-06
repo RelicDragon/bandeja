@@ -1882,7 +1882,8 @@
       "cancelRecording": "Zrušit nahrávání",
       "sendRecording": "Odeslat hlasovou zprávu",
       "transcribe": "Přepsat",
-      "transcribing": "Přepisuji…"
+      "transcribing": "Přepisuji…",
+      "noSpeechTranscription": "Nepodařilo se rozpoznat řeč."
     },
     "systemMessages": {
       "USER_JOINED_GAME": "{{userName}} se připojil k zápasu",

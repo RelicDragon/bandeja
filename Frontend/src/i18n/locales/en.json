@@ -1899,7 +1899,8 @@
       "cancelRecording": "Cancel recording",
       "sendRecording": "Send voice message",
       "transcribe": "Transcribe",
-      "transcribing": "Transcribing…"
+      "transcribing": "Transcribing…",
+      "noSpeechTranscription": "Couldn't detect any speech."
     },
     "systemMessages": {
       "USER_JOINED_GAME": "{{userName}} joined the game",

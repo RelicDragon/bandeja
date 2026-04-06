@@ -1831,7 +1831,8 @@
       "cancelRecording": "Cancelar grabación",
       "sendRecording": "Enviar mensaje de voz",
       "transcribe": "Transcribir",
-      "transcribing": "Transcribiendo…"
+      "transcribing": "Transcribiendo…",
+      "noSpeechTranscription": "No se detectó ninguna voz."
     },
     "systemMessages": {
       "USER_JOINED_GAME": "{{userName}} se unió al juego",

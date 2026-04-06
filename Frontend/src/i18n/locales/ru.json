@@ -1906,7 +1906,8 @@
       "cancelRecording": "Отменить запись",
       "sendRecording": "Отправить голосовое сообщение",
       "transcribe": "Расшифровать",
-      "transcribing": "Расшифровка…"
+      "transcribing": "Расшифровка…",
+      "noSpeechTranscription": "Не удалось распознать речь."
     },
     "systemMessages": {
       "USER_JOINED_GAME": "{{userName}} присоединился к игре",

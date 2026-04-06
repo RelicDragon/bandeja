@@ -14,6 +14,7 @@ import { extractLanguageCode } from '@/utils/language';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MessageItemProps } from './types';
 import { parseContentWithMentionsAndUrls, formatMessageTime as formatMessageTimeUtil } from './utils';
+import { formatVoiceTranscriptionForDisplay, isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay';
 import { SystemMessageBlock } from './SystemMessageBlock';
 import { MessageBubble } from './MessageBubble';
 import { useMessageLongPress } from './useMessageLongPress';
@@ -116,10 +117,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     return () => document.removeEventListener('contextmenu', preventContextMenu, { capture: true });
   }, [isMenuOpen]);
 
+  const voiceTxRaw = currentMessage.audioTranscription?.transcription;
   const displayContent = isSystemMessage
     ? formatSystemMessageForDisplay(currentMessage.content, t)
-    : currentMessage.messageType === 'VOICE' && currentMessage.audioTranscription?.transcription?.trim()
-      ? currentMessage.audioTranscription.transcription
+    : currentMessage.messageType === 'VOICE' && voiceTxRaw?.trim()
+      ? formatVoiceTranscriptionForDisplay(voiceTxRaw, t)
       : currentMessage.content;
 
   const parsedContent = isSystemMessage ? null : parseContentWithMentionsAndUrls(displayContent);
@@ -207,7 +209,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     if (!msg.senderId) {
       text = formatSystemMessageForDisplay(msg.content, t);
     } else if (msg.messageType === 'VOICE' && msg.audioTranscription?.transcription?.trim()) {
-      text = msg.audioTranscription.transcription;
+      text = formatVoiceTranscriptionForDisplay(msg.audioTranscription.transcription, t);
     } else {
       text = msg.content ?? '';
     }
@@ -350,6 +352,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     translationContent={translationContent}
                     displayContent={displayContent}
                     hasTranslation={hasTranslation}
+                    voiceTranscriptionNoSpeech={
+                      currentMessage.messageType === 'VOICE' && isVoiceTranscriptionNoSpeech(voiceTxRaw)
+                    }
                     onTranscribe={!isOffline ? () => void runTranscribe() : undefined}
                     isTranscribing={isTranscribing}
                     formatMessageTime={formatMessageTime}

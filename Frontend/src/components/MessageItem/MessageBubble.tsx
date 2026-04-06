@@ -36,6 +36,7 @@ interface MessageBubbleProps {
   onTranscribe?: () => void;
   isTranscribing?: boolean;
   firstExternalHttpUrl?: string | null;
+  voiceTranscriptionNoSpeech?: boolean;
   t: TFunction;
 }
 
@@ -65,6 +66,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onTranscribe,
   isTranscribing,
   firstExternalHttpUrl,
+  voiceTranscriptionNoSpeech,
   t,
 }) => {
   const isVoice = message.messageType === 'VOICE';
@@ -126,7 +128,19 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
       {showTextBlock && (
         <div className={`w-full ${hasMedia ? 'px-4' : isVoice ? 'px-3' : ''} overflow-visible`}>
-          {hasTranslation ? (
+          {voiceTranscriptionNoSpeech && !hasTranslation ? (
+            <p
+              className={`text-xs text-center italic select-none ${
+                isChannel
+                  ? 'text-gray-500 dark:text-gray-400'
+                  : isOwnMessage
+                    ? 'text-blue-100/90'
+                    : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              {displayContent}
+            </p>
+          ) : hasTranslation ? (
             <div className="space-y-2">
               <div className="pb-2 border-b border-gray-300 dark:border-gray-600">
                 <MessageContentBody
