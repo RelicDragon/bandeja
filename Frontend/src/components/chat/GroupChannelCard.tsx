@@ -1,13 +1,22 @@
 import { formatChatTime } from '@/utils/dateFormat';
-import { GroupChannel, ChatDraft, getLastMessageTime, getLastMessageText, isLastMessagePreview } from '@/api/chat';
-import { Users, Hash, Package, Pin, Loader2, BellOff, Home } from 'lucide-react';
+import {
+  ChatMessage,
+  GroupChannel,
+  ChatDraft,
+  getLastMessageTime,
+  isLastMessagePreview,
+} from '@/api/chat';
+import { Users, Hash, Package, Pin, Loader2, BellOff, Home, Mic } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { BugPriorityBadge } from '@/components/chat/BugPriorityBadge';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { parseMessagePreview } from '@/utils/messagePreview';
+import { convertMentionsToPlaintext } from '@/utils/parseMentions';
+import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
+import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
+import { ChatListGenericMediaRow, ChatListPreviewContent } from '@/components/chat/ChatListPreviewContent';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { ChatListOutboxAnimated } from '@/components/chat/ChatListOutboxAnimated';
 import type { ChatListOutbox } from '@/utils/chatListSort';
@@ -277,11 +286,27 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
 
           if (lastMessage) {
             const isPreviewOnly = isLastMessagePreview(lastMessage);
-            const displayText = isPreviewOnly
-              ? parseMessagePreview(lastMessage.preview, t)
-              : getLastMessageText(lastMessage);
-            const fullMsg = !isPreviewOnly && lastMessage && 'mediaUrls' in lastMessage ? lastMessage as { mediaUrls?: string[] } : null;
-            const hasMedia = (fullMsg?.mediaUrls?.length ?? 0) > 0;
+            const fullMsg =
+              !isPreviewOnly && lastMessage && 'mediaUrls' in lastMessage
+                ? (lastMessage as ChatMessage)
+                : null;
+            const displayText =
+              fullMsg != null
+                ? fullMsg.senderId
+                  ? convertMentionsToPlaintext(fullMsg.content || '')
+                  : convertMentionsToPlaintext(
+                      formatSystemMessageForDisplay(fullMsg.content || '', t)
+                    )
+                : '';
+            const isFullVoice = fullMsg?.messageType === 'VOICE';
+            const voiceAsTextOnly = isFullVoice && !!(fullMsg?.content?.trim());
+            const showVoiceRow = isFullVoice && !voiceAsTextOnly;
+            const hasMediaUrls = (fullMsg?.mediaUrls?.length ?? 0) > 0;
+            const mt = fullMsg?.messageType;
+            const showGenericMediaRow =
+              !isPreviewOnly && !isFullVoice && hasMediaUrls && mt === undefined;
+            const showPhotoRow =
+              !isPreviewOnly && !isFullVoice && hasMediaUrls && mt !== undefined;
             const sender =
               !isPreviewOnly && lastMessage && 'sender' in lastMessage
                 ? (lastMessage as { sender?: { firstName?: string; lastName?: string } }).sender ?? null
@@ -289,13 +314,38 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
 
             return (
               <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 pr-2">
-                {hasMedia ? (
+                {showVoiceRow ? (
+                  <>
+                    {sender && (
+                      <span className="font-medium">
+                        {sender.firstName} {sender.lastName}:{' '}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1">
+                      <Mic className="w-4 h-4 shrink-0" aria-hidden />
+                      <span>
+                        {t('chat.voiceMessage', { defaultValue: 'Voice message' })}
+                        {fullMsg?.audioDurationMs != null && fullMsg.audioDurationMs > 0
+                          ? ` (${formatVoiceDurationMmSs(fullMsg.audioDurationMs)})`
+                          : ''}
+                      </span>
+                    </span>
+                  </>
+                ) : showPhotoRow ? (
                   <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     {t('chat.photo')}
                   </span>
+                ) : showGenericMediaRow ? (
+                  <ChatListGenericMediaRow t={t} />
+                ) : isPreviewOnly ? (
+                  lastMessage.preview?.trim() ? (
+                    <ChatListPreviewContent preview={lastMessage.preview} t={t} />
+                  ) : (
+                    t('chat.noMessage')
+                  )
                 ) : (
                   <>
                     {sender && (

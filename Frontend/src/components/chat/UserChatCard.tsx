@@ -2,15 +2,22 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { formatChatTime } from '@/utils/dateFormat';
-import { UserChat, ChatDraft, getLastMessageTime, isLastMessagePreview } from '@/api/chat';
+import {
+  UserChat,
+  ChatDraft,
+  ChatMessage,
+  getLastMessageTime,
+  isLastMessagePreview,
+} from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useMemo } from 'react';
 import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
-import { parseMessagePreview } from '@/utils/messagePreview';
-import { Pin, Loader2, BellOff } from 'lucide-react';
+import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
+import { Pin, Loader2, BellOff, Mic } from 'lucide-react';
 import { ChatListOutboxAnimated } from '@/components/chat/ChatListOutboxAnimated';
+import { ChatListGenericMediaRow, ChatListPreviewContent } from '@/components/chat/ChatListPreviewContent';
 import type { ChatListOutbox } from '@/utils/chatListSort';
 
 interface UserChatCardProps {
@@ -164,28 +171,56 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
           }
 
           if (chat.lastMessage) {
-            const fullMessage = !isLastMessagePreview(chat.lastMessage) ? chat.lastMessage : null;
-            const displayContent = isLastMessagePreview(chat.lastMessage)
-              ? parseMessagePreview(chat.lastMessage.preview, t)
-              : fullMessage
-                ? fullMessage.senderId
-                  ? convertMentionsToPlaintext(fullMessage.content || '')
-                  : convertMentionsToPlaintext(
+            const lm = chat.lastMessage;
+            const previewOnly = isLastMessagePreview(lm);
+            const fullMessage = !previewOnly ? lm : null;
+            const displayContent = fullMessage
+              ? fullMessage.senderId
+                ? convertMentionsToPlaintext(fullMessage.content || '')
+                : convertMentionsToPlaintext(
                     formatSystemMessageForDisplay(fullMessage.content || '', t)
                   )
-                : '';
+              : '';
+            const fullLm = previewOnly ? null : (lm as ChatMessage);
+            const isFullVoice = fullLm?.messageType === 'VOICE';
+            const voiceAsTextOnly = isFullVoice && !!(fullMessage?.content?.trim());
+            const showVoiceRow = isFullVoice && !voiceAsTextOnly;
+            const hasMediaUrls = (fullLm?.mediaUrls?.length ?? 0) > 0;
+            const mt = fullLm?.messageType;
+            const showGenericMediaRow =
+              !previewOnly && !isFullVoice && hasMediaUrls && mt === undefined;
+            const showPhotoRow =
+              !previewOnly && !isFullVoice && hasMediaUrls && mt !== undefined;
 
             return (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 pr-2">
-                  {!isLastMessagePreview(chat.lastMessage) &&
-                    chat.lastMessage.mediaUrls?.length > 0 ? (
+                  {previewOnly ? (
+                    lm.preview?.trim() ? (
+                      <ChatListPreviewContent preview={lm.preview} t={t} />
+                    ) : (
+                      t('chat.noMessage')
+                    )
+                  ) : showVoiceRow ? (
                     <span className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <Mic className="w-4 h-4 shrink-0" aria-hidden />
+                      <span>
+                        {t('chat.voiceMessage', { defaultValue: 'Voice message' })}
+                        {fullMessage?.audioDurationMs != null &&
+                        fullMessage.audioDurationMs > 0
+                          ? ` (${formatVoiceDurationMmSs(fullMessage.audioDurationMs)})`
+                          : ''}
+                      </span>
+                    </span>
+                  ) : showPhotoRow ? (
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                       {t('chat.photo')}
                     </span>
+                  ) : showGenericMediaRow ? (
+                    <ChatListGenericMediaRow t={t} />
                   ) : (
                     displayContent || t('chat.noMessage')
                   )}

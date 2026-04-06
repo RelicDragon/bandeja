@@ -1,6 +1,13 @@
 import { TFunction } from 'i18next';
 import { formatSystemMessageForDisplay } from './systemMessages';
 
+export function formatVoiceDurationMmSs(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 export function parseMessagePreview(preview: string | null | undefined, t: TFunction): string {
     if (!preview) return '';
 
@@ -10,12 +17,14 @@ export function parseMessagePreview(preview: string | null | undefined, t: TFunc
 
     if (preview.startsWith('[TYPE:VOICE]')) {
         const dur = preview.slice(12);
-        return `🎤 ${t('chat.voiceMessage', 'Voice message')} (${dur})`;
+        return dur
+            ? `${t('chat.voiceMessage', 'Voice message')} (${dur})`
+            : t('chat.voiceMessage', 'Voice message');
     }
 
     if (preview.startsWith('[TYPE:POLL]')) {
         const question = preview.substring(11);
-        return `📊 ${t('chat.poll.poll')}: ${question}`;
+        return `${t('chat.poll.poll')}: ${question}`;
     }
 
     if (preview.startsWith('[TYPE:SYSTEM]')) {
