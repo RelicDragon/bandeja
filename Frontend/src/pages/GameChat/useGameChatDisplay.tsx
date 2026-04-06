@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { MapPin, Bug as BugIcon, Users, Hash, Package } from 'lucide-react';
+import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { formatDate } from '@/utils/dateFormat';
 import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
@@ -69,18 +70,7 @@ export function useGameChatDisplay({
     if (contextType === 'GAME' && !game?.name) return <MapPin size={16} className="text-gray-500 dark:text-gray-400" />;
     if (contextType === 'USER' && userChat) {
       const otherUser = userChat.user1Id === userId ? userChat.user2 : userChat.user1;
-      return (
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
-          {otherUser.avatar ? (
-            <img src={otherUser.avatar || ''} alt={otherUser.firstName || ''} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-600 dark:text-gray-300 font-semibold">
-              {otherUser.firstName?.[0]}
-              {otherUser.lastName?.[0]}
-            </div>
-          )}
-        </div>
-      );
+      return <PlayerAvatar player={otherUser} extrasmall fullHideName asDiv />;
     }
     if (contextType === 'GROUP' && groupChannel) {
       const handleClick = () => {
