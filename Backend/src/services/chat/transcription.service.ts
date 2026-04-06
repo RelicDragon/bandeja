@@ -18,6 +18,17 @@ const TRANSCRIPTION_FOLLOWER_MAX_WAIT_MS = 15 * 60 * 1000;
 const TRANSCRIPTION_STALE_PENDING_MS = 20 * 60 * 1000;
 const TRANSCRIPTION_CLAIM_MAX_PASSES = 32;
 
+function resolveTranscriptionText(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return MESSAGE_TRANSCRIPTION_NO_SPEECH;
+  const unquoted = trimmed.replace(/^["'`]+|["'`]+$/g, '').trim();
+  if (unquoted === MESSAGE_TRANSCRIPTION_NO_SPEECH) return MESSAGE_TRANSCRIPTION_NO_SPEECH;
+  if (/^__PP[_A-Z0-9]*TRANSCRIPTION[_A-Z0-9_]*__$/i.test(unquoted)) {
+    return MESSAGE_TRANSCRIPTION_NO_SPEECH;
+  }
+  return trimmed;
+}
+
 function isPrismaUniqueViolation(e: unknown): boolean {
   return e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
 }
@@ -171,7 +182,6 @@ export class TranscriptionService {
         file,
         model: 'whisper-1',
         response_format: 'verbose_json',
-        prompt: `If the audio contains no intelligible human speech (silence, noise only, or unintelligible), respond with exactly this single token and nothing else: ${MESSAGE_TRANSCRIPTION_NO_SPEECH}`,
       });
     } catch (e: unknown) {
       logOpenAiTranscriptionError(e);
@@ -179,16 +189,12 @@ export class TranscriptionService {
       throw new ApiError(503, 'Transcription service is temporarily unavailable. Please try again later.');
     }
 
-    const rawText = typeof res.text === 'string' ? res.text.trim() : '';
+    const rawText = typeof res.text === 'string' ? res.text : '';
     const language = typeof (res as { language?: string }).language === 'string'
       ? (res as { language: string }).language
       : null;
 
-    const strippedNoSpeech = rawText.replace(/^["'`]+|["'`]+$/g, '').trim();
-    const text =
-      !rawText || strippedNoSpeech === MESSAGE_TRANSCRIPTION_NO_SPEECH
-        ? MESSAGE_TRANSCRIPTION_NO_SPEECH
-        : rawText;
+    const text = resolveTranscriptionText(rawText);
 
     console.info('[transcription] whisper_response', {
       userId,
