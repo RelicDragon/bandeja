@@ -1137,12 +1137,20 @@ export class MessageService {
         select: { id: true },
       });
       if (!anchor0) {
+        const STALE_TAIL_RECOVERY = 150;
+        const recent = await prisma.chatMessage.findMany({
+          where: baseWhere,
+          include: this.getMessageInclude(),
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          take: STALE_TAIL_RECOVERY,
+        });
+        recent.reverse();
         const user = await prisma.user.findUnique({
           where: { id: userId },
           select: { language: true },
         });
         const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
-        return this.enrichMessagesWithTranslations([], languageCode);
+        return this.enrichMessagesWithTranslations(recent, languageCode);
       }
     }
 

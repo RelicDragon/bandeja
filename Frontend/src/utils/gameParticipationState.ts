@@ -2,6 +2,16 @@ import type { GameParticipant, Game } from '@/types';
 import { isParticipantPlaying, isParticipantNonPlaying, isParticipantGuest, isParticipantInQueue } from './participantStatus';
 import { isUserGameAdminOrOwner } from './gameResults';
 
+function userIsPlayingInParticipantList(parts: GameParticipant[] | undefined, userId: string): boolean {
+  return !!parts?.some((p) => p.userId === userId && isParticipantPlaying(p));
+}
+
+/** User listed as PLAYING on this game or its parent (e.g. league). */
+export function userIsPlayingInGameOrParent(game: Game | null | undefined, userId: string | undefined): boolean {
+  if (!userId || !game) return false;
+  return userIsPlayingInParticipantList(game.participants, userId) || userIsPlayingInParticipantList(game.parent?.participants, userId);
+}
+
 export interface GameParticipationState {
   userParticipant: GameParticipant | undefined;
   isParticipant: boolean;

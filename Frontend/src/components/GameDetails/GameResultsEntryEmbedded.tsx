@@ -16,6 +16,7 @@ import { useGameResultsTabs } from '@/hooks/useGameResultsTabs';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { validateSetIndex, validateSetScores, validateSetIndexAgainstFixed, isUserGameAdminOrOwner, isLastSet, validateTieBreak, canShowTournamentTableView } from '@/utils/gameResults';
 import { isParticipantPlaying } from '@/utils/participantStatus';
+import { userIsPlayingInGameOrParent } from '@/utils/gameParticipationState';
 import { 
   RoundCard,
   AvailablePlayersFooter, 
@@ -82,6 +83,11 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const players = useMemo(() => 
     (currentGame?.participants.filter(isParticipantPlaying).map(p => p.user) || []) as BasicUser[], 
     [currentGame?.participants]
+  );
+
+  const showWorkoutSummaryCard = useMemo(
+    () => userIsPlayingInGameOrParent(currentGame, user?.id),
+    [currentGame, user?.id]
   );
 
   const isPresetGame = players.length === 2 || players.length === 4;
@@ -872,7 +878,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
                 openModal({ type: 'explanation', explanation, playerName, levelBefore });
               }}
             />
-            {user?.id ? <GameWorkoutSummaryCard gameId={currentGame.id} /> : null}
+            {showWorkoutSummaryCard ? <GameWorkoutSummaryCard gameId={currentGame.id} /> : null}
           </div>
         ) : currentGame && currentGame.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
           <PlayerStatsPanel game={currentGame as NonNullable<typeof currentGame>} rounds={rounds} />

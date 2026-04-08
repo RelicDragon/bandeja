@@ -79,7 +79,6 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
       if (!id || !user?.id) return;
 
       const currentLoadId = `${id}-${contextType}`;
-      if (loadingIdRef.current === currentLoadId && hasLoadedRef.current) return;
       if (isLoadingRef.current && loadingIdRef.current === currentLoadId) return;
 
       loadingIdRef.current = currentLoadId;
@@ -242,5 +241,29 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
       ac.abort();
       if (loadingIdRef.current === `${id}-${contextType}`) isLoadingRef.current = false;
     };
-  }, [id, user, contextType, initialChatType, currentChatType, hasSetDefaultChatType, loadContext, bootstrapThread, userChat, handleMarkFailed, handleNewMessageRef, loadingIdRef, hasLoadedRef, isLoadingRef, messagesRef, setMessages, setCurrentChatType, setIsBlockedByUser, setIsMuted, setTranslateToLanguageForChat, setHasSetDefaultChatType, setIsInitialLoad, setIsLoadingMessages]);
+  }, [
+    id,
+    user?.id,
+    contextType,
+    initialChatType,
+    currentChatType,
+    hasSetDefaultChatType,
+    loadContext,
+    bootstrapThread,
+    userChat,
+    handleMarkFailed,
+    handleNewMessageRef,
+    loadingIdRef,
+    hasLoadedRef,
+    isLoadingRef,
+    messagesRef,
+    setMessages,
+    setCurrentChatType,
+    setIsBlockedByUser,
+    setIsMuted,
+    setTranslateToLanguageForChat,
+    setHasSetDefaultChatType,
+    setIsInitialLoad,
+    setIsLoadingMessages,
+  ]);
 }
