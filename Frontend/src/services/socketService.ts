@@ -83,7 +83,20 @@ export interface SocketEvents {
   // Presence
   'presence-initial': (data: Record<string, boolean>) => void;
   'presence-update': (data: { online: string[]; offline: string[] }) => void;
-  'typing-indicator': (data: { gameId: string; userId: string; isTyping: boolean; timestamp?: string }) => void;
+  'typing-indicator': (data: {
+    contextType?: 'GAME' | 'BUG' | 'USER' | 'GROUP';
+    contextId?: string;
+    gameId?: string;
+    userId?: string;
+    isTyping?: boolean;
+    timestamp?: string;
+  }) => void;
+  'user-team:invite': (data: unknown) => void;
+  'user-team:invite-accepted': (data: unknown) => void;
+  'user-team:invite-declined': (data: unknown) => void;
+  'user-team:member-removed': (data: unknown) => void;
+  'user-team:updated': (data: unknown) => void;
+  'user-team:deleted': (data: unknown) => void;
 }
 
 class SocketService {
@@ -850,7 +863,11 @@ class SocketService {
     }
   }
 
-  public emitTypingIndicator(gameId: string, isTyping: boolean) {
+  public emitTypingIndicator(
+    contextType: 'GAME' | 'BUG' | 'USER' | 'GROUP',
+    contextId: string,
+    isTyping: boolean
+  ) {
     const chatSt = useChatOfflineStore.getState().chatConnectionState;
     if (chatSt === 'OFFLINE') {
       return;
@@ -858,8 +875,11 @@ class SocketService {
     if (!this.socket || !this.socket.connected) {
       return;
     }
+    if (!contextId) {
+      return;
+    }
 
-    this.socket.emit('typing-indicator', { gameId, isTyping });
+    this.socket.emit('typing-indicator', { contextType, contextId, isTyping });
   }
 
   public subscribePresence(userIds: string[]) {

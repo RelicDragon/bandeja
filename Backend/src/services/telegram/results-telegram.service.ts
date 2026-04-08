@@ -10,14 +10,14 @@ import { escapeHTML, trimTextForTelegram } from './utils';
 import { RankingService } from '../ranking.service';
 import { getUserTimezoneFromCityId, formatDateInTimezone, convertToUserTimezone } from '../user-timezone.service';
 import { format } from 'date-fns';
-import { enUS } from 'date-fns/locale/en-US';
+import { enGB } from 'date-fns/locale/en-GB';
 import { ru } from 'date-fns/locale/ru';
 import { sr } from 'date-fns/locale/sr';
 import { es } from 'date-fns/locale/es';
 import { cs } from 'date-fns/locale/cs';
 
 const localeMap: Record<string, any> = {
-  en: enUS,
+  en: enGB,
   ru: ru,
   sr: sr,
   es: es,
@@ -35,7 +35,8 @@ function getRelativeDateLabel(date: Date | string, timezone: string, lang: strin
   const diffTime = todayOnly.getTime() - dateOnly.getTime();
   const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
   
-  const locale = localeMap[lang] || enUS;
+  const base = (lang || 'en').split('-')[0].toLowerCase();
+  const locale = localeMap[base] || enGB;
   
   if (diffDays === 0) {
     return 'today';

@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Card, GameCard, Button, CityModal } from '@/components';
 import { Game } from '@/types';
-import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy, Users } from 'lucide-react';
+import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy, Users, RotateCcw } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { format, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
@@ -15,6 +16,8 @@ import { CityPromptBanner } from './CityPromptBanner';
 import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
+import { FiltersPanel } from './FiltersPanel';
+import { passesAvailableGamePanelFilters } from '@/utils/availableGamePanelFilters';
 
 interface AvailableGamesSectionProps {
   availableGames: Game[];
@@ -57,14 +60,95 @@ export const AvailableGamesSection = ({
   const [leaguesFilter, setLeaguesFilter] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [showCityModal, setShowCityModal] = useState(false);
+  const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
+  const [filterClubIds, setFilterClubIds] = useState<string[]>([]);
+  const [filterTimeStart, setFilterTimeStart] = useState('00:00');
+  const [filterTimeEnd, setFilterTimeEnd] = useState('24:00');
+  const [filterLevelMin, setFilterLevelMin] = useState(1.0);
+  const [filterLevelMax, setFilterLevelMax] = useState(7.0);
 
   const userFilterVal = externalFilters?.userFilter ?? userFilter;
   const gameFilterVal = externalFilters?.gameFilter ?? gameFilter;
   const trainingFilterVal = externalFilters?.trainingFilter ?? trainingFilter;
   const tournamentFilterVal = externalFilters?.tournamentFilter ?? tournamentFilter;
   const leaguesFilterVal = externalFilters?.leaguesFilter ?? leaguesFilter;
+  const filtersPanelOpenVal = externalFilters?.filtersPanelOpen ?? filtersPanelOpen;
+  const filterClubIdsVal = externalFilters?.filterClubIds ?? filterClubIds;
+  const filterTimeStartVal = externalFilters?.filterTimeStart ?? filterTimeStart;
+  const filterTimeEndVal = externalFilters?.filterTimeEnd ?? filterTimeEnd;
+  const filterLevelMinVal = externalFilters?.filterLevelMin ?? filterLevelMin;
+  const filterLevelMaxVal = externalFilters?.filterLevelMax ?? filterLevelMax;
+
+  const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
+
+  const panelCriteriaActive = useMemo(() => {
+    return (
+      filterClubIdsVal.length > 0 ||
+      filterTimeStartVal !== '00:00' ||
+      filterTimeEndVal !== '24:00' ||
+      filterLevelMinVal > 1.0 + 1e-6 ||
+      filterLevelMaxVal < 7.0 - 1e-6
+    );
+  }, [
+    filterClubIdsVal,
+    filterTimeStartVal,
+    filterTimeEndVal,
+    filterLevelMinVal,
+    filterLevelMaxVal,
+  ]);
+
+  const filtersControlActive = filtersPanelOpenVal || userFilterVal || panelCriteriaActive;
+  const panelFiltersApplied = userFilterVal || panelCriteriaActive;
 
   const setUserFilterVal = (v: boolean) => (onFilterChange ? onFilterChange('userFilter', v) : setUserFilter(v));
+
+  const resetPanelFilters = () => {
+    if (onFiltersChange) {
+      onFiltersChange({
+        userFilter: false,
+        filterClubIds: [],
+        filterTimeStart: '00:00',
+        filterTimeEnd: '24:00',
+        filterLevelMin: 1.0,
+        filterLevelMax: 7.0,
+      });
+    } else {
+      setUserFilter(false);
+      setFilterClubIds([]);
+      setFilterTimeStart('00:00');
+      setFilterTimeEnd('24:00');
+      setFilterLevelMin(1.0);
+      setFilterLevelMax(7.0);
+    }
+    if (onFilterChange && !onFiltersChange) {
+      onFilterChange('userFilter', false);
+    }
+  };
+
+  const patchPanelFields = (updates: Partial<GameFilters>) => {
+    if (onFiltersChange) onFiltersChange(updates);
+    else {
+      if (updates.filterClubIds !== undefined) setFilterClubIds(updates.filterClubIds);
+      if (updates.filterTimeStart !== undefined) setFilterTimeStart(updates.filterTimeStart);
+      if (updates.filterTimeEnd !== undefined) setFilterTimeEnd(updates.filterTimeEnd);
+      if (updates.filterLevelMin !== undefined) setFilterLevelMin(updates.filterLevelMin);
+      if (updates.filterLevelMax !== undefined) setFilterLevelMax(updates.filterLevelMax);
+    }
+  };
+
+  const toggleFiltersPanel = () => {
+    if (filtersPanelOpenVal) {
+      if (onFiltersChange) {
+        onFiltersChange({ filtersPanelOpen: false });
+      } else {
+        setFiltersPanelOpen(false);
+      }
+    } else if (onFiltersChange) {
+      onFiltersChange({ filtersPanelOpen: true });
+    } else {
+      setFiltersPanelOpen(true);
+    }
+  };
 
   const setEntityFilters = (game: boolean, training: boolean, tournament: boolean, leagues: boolean) => {
     if (onFiltersChange) {
@@ -89,6 +173,7 @@ export const AvailableGamesSection = ({
     }
   };
   const lastDateRangeRef = useRef<{ start: string; end: string } | null>(null);
+  const hydratedViewPeriodFromStorageRef = useRef(false);
 
   useEffect(() => {
     const loadFilters = async () => {
@@ -99,22 +184,29 @@ export const AvailableGamesSection = ({
         setTrainingFilter(filters.trainingFilter);
         setTournamentFilter(filters.tournamentFilter ?? false);
         setLeaguesFilter(filters.leaguesFilter ?? false);
+        setFiltersPanelOpen(filters.filtersPanelOpen ?? false);
+        setFilterClubIds(filters.filterClubIds ?? []);
+        setFilterTimeStart(filters.filterTimeStart ?? '00:00');
+        setFilterTimeEnd(filters.filterTimeEnd ?? '24:00');
+        setFilterLevelMin(filters.filterLevelMin ?? 1.0);
+        setFilterLevelMax(filters.filterLevelMax ?? 7.0);
       }
-      if (filters.activeTab) {
-        setFindViewMode(filters.activeTab);
-      }
-
-      if (filters.listViewStartDate) {
-        const restoredDate = new Date(filters.listViewStartDate);
-        if (!isNaN(restoredDate.getTime())) {
-          setListViewStartDate(restoredDate);
+      if (!hydratedViewPeriodFromStorageRef.current) {
+        hydratedViewPeriodFromStorageRef.current = true;
+        if (filters.activeTab) {
+          setFindViewMode(filters.activeTab);
         }
-      }
-
-      if (filters.calendarSelectedDate) {
-        const restoredDate = new Date(filters.calendarSelectedDate);
-        if (!isNaN(restoredDate.getTime())) {
-          setSelectedDate(restoredDate);
+        if (filters.listViewStartDate) {
+          const restoredDate = new Date(filters.listViewStartDate);
+          if (!isNaN(restoredDate.getTime())) {
+            setListViewStartDate(restoredDate);
+          }
+        }
+        if (filters.calendarSelectedDate) {
+          const restoredDate = new Date(filters.calendarSelectedDate);
+          if (!isNaN(restoredDate.getTime())) {
+            setSelectedDate(restoredDate);
+          }
         }
       }
 
@@ -124,7 +216,7 @@ export const AvailableGamesSection = ({
   }, [setFindViewMode, externalFilters]);
 
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized || onFilterChange) return;
 
     const saveFilters = async () => {
       await setGameFilters({
@@ -136,10 +228,33 @@ export const AvailableGamesSection = ({
         activeTab: findViewMode,
         listViewStartDate: findViewMode === 'list' ? listViewStartDate.toISOString() : undefined,
         calendarSelectedDate: findViewMode === 'calendar' ? selectedDate.toISOString() : undefined,
+        filtersPanelOpen: filtersPanelOpenVal,
+        filterClubIds: filterClubIdsVal,
+        filterTimeStart: filterTimeStartVal,
+        filterTimeEnd: filterTimeEndVal,
+        filterLevelMin: filterLevelMinVal,
+        filterLevelMax: filterLevelMaxVal,
       });
     };
     saveFilters();
-  }, [isInitialized, userFilterVal, gameFilterVal, trainingFilterVal, tournamentFilterVal, leaguesFilterVal, findViewMode, listViewStartDate, selectedDate]);
+  }, [
+    isInitialized,
+    onFilterChange,
+    userFilterVal,
+    gameFilterVal,
+    trainingFilterVal,
+    tournamentFilterVal,
+    leaguesFilterVal,
+    findViewMode,
+    listViewStartDate,
+    selectedDate,
+    filtersPanelOpenVal,
+    filterClubIdsVal,
+    filterTimeStartVal,
+    filterTimeEndVal,
+    filterLevelMinVal,
+    filterLevelMaxVal,
+  ]);
 
   const handleCityClick = () => {
     setShowCityModal(true);
@@ -208,38 +323,23 @@ export const AvailableGamesSection = ({
     }
   }, [isInitialized, findViewMode, listViewStartDate, onDateRangeChange]);
 
-  const getFilteredGames = () => {
-    if (findViewMode === 'calendar') {
-      return availableGames.filter(game => {
-        const gameDate = startOfDay(new Date(game.startTime));
-        const selectedDateStr = format(startOfDay(selectedDate), 'yyyy-MM-dd');
-        const gameDateStr = format(gameDate, 'yyyy-MM-dd');
-        
-        if (gameDateStr !== selectedDateStr) {
-          return false;
-        }
-
-        return applyCommonFilters(game);
-      });
-    } else {
-      const { start, end } = getListDateRange();
-      return availableGames.filter(game => {
-        const gameDate = startOfDay(new Date(game.startTime));
-        const gameDateStr = format(gameDate, 'yyyy-MM-dd');
-        const startStr = format(start, 'yyyy-MM-dd');
-        const endStr = format(end, 'yyyy-MM-dd');
-        
-        if (gameDateStr < startStr || gameDateStr > endStr) {
-          return false;
-        }
-
-        return applyCommonFilters(game);
-      });
-    }
-  };
+  const panelFilterState = useMemo(
+    () => ({
+      filterClubIds: filterClubIdsVal,
+      filterTimeStart: filterTimeStartVal,
+      filterTimeEnd: filterTimeEndVal,
+      filterLevelMin: filterLevelMinVal,
+      filterLevelMax: filterLevelMaxVal,
+    }),
+    [filterClubIdsVal, filterTimeStartVal, filterTimeEndVal, filterLevelMinVal, filterLevelMaxVal]
+  );
 
   const applyCommonFilters = (game: Game) => {
     if (game.timeIsSet === false) {
+      return false;
+    }
+
+    if (!passesAvailableGamePanelFilters(game, panelFilterState)) {
       return false;
     }
 
@@ -319,6 +419,36 @@ export const AvailableGamesSection = ({
     return true;
   };
 
+  const getFilteredGames = () => {
+    if (findViewMode === 'calendar') {
+      return availableGames.filter((game) => {
+        const gameDate = startOfDay(new Date(game.startTime));
+        const selectedDateStr = format(startOfDay(selectedDate), 'yyyy-MM-dd');
+        const gameDateStr = format(gameDate, 'yyyy-MM-dd');
+
+        if (gameDateStr !== selectedDateStr) {
+          return false;
+        }
+
+        return applyCommonFilters(game);
+      });
+    } else {
+      const { start, end } = getListDateRange();
+      return availableGames.filter((game) => {
+        const gameDate = startOfDay(new Date(game.startTime));
+        const gameDateStr = format(gameDate, 'yyyy-MM-dd');
+        const startStr = format(start, 'yyyy-MM-dd');
+        const endStr = format(end, 'yyyy-MM-dd');
+
+        if (gameDateStr < startStr || gameDateStr > endStr) {
+          return false;
+        }
+
+        return applyCommonFilters(game);
+      });
+    }
+  };
+
   const filteredGames = getFilteredGames();
 
   const handleSubscriptionsClick = () => {
@@ -332,28 +462,106 @@ export const AvailableGamesSection = ({
     <div className="mb-4">
       <GenderPromptBanner />
       <CityPromptBanner />
-      <div className="flex items-center justify-between mb-3 max-w-md mx-auto">
+      <div className="flex items-center justify-between gap-2 mb-3 max-w-md mx-auto">
         <button
           onClick={handleCityClick}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0 min-w-0"
         >
-          <MapPin size={16} className="text-primary-600 dark:text-primary-400" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <MapPin size={16} className="text-primary-600 dark:text-primary-400 shrink-0" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
             {user?.currentCity ? translateCity(user.currentCity.id, user.currentCity.name, user.currentCity.country) : t('auth.selectCity')}
           </span>
         </button>
         <button
-          onClick={() => setUserFilterVal(!userFilterVal)}
-          className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors ${
-            userFilterVal
+          type="button"
+          onClick={toggleFiltersPanel}
+          className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors shrink-0 ${
+            filtersControlActive
               ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
               : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
           }`}
         >
-          <Filter size={16} className={userFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={userFilterVal ? 'currentColor' : 'none'} />
-          <span className="text-xs font-medium">{t('games.availableForMe', { defaultValue: 'Available for me' })}</span>
+          <Filter
+            size={16}
+            className={filtersControlActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'}
+            fill={filtersControlActive ? 'currentColor' : 'none'}
+          />
+          <span className="text-xs font-medium">{t('games.filters')}</span>
         </button>
       </div>
+      <AnimatePresence initial={false}>
+        {!filtersPanelOpenVal && panelFiltersApplied && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+            className="max-w-md mx-auto mb-3 overflow-hidden rounded-xl"
+          >
+            <div className="rounded-xl border border-gray-200/90 bg-white px-3 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+              <div className="flex gap-3">
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800"
+                  aria-hidden
+                >
+                  <Filter size={16} className="text-primary-600 dark:text-primary-400" />
+                </div>
+                <div className="min-w-0 flex-1 space-y-2.5">
+                  <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                    {t('games.filtersActiveCollapsedHint')}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <button
+                      type="button"
+                      onClick={resetPanelFilters}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+                    >
+                      <RotateCcw size={14} className="shrink-0" aria-hidden />
+                      {t('games.resetFilters')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleFiltersPanel}
+                      className="inline-flex items-center gap-0.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
+                    >
+                      {t('games.changeFilters')}
+                      <ChevronRight size={16} className="shrink-0" aria-hidden />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence initial={false}>
+        {filtersPanelOpenVal && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+            className="max-w-md mx-auto overflow-hidden mb-3"
+          >
+            <div className="pb-1">
+              <FiltersPanel
+                cityId={user?.currentCity?.id}
+                userFilter={userFilterVal}
+                onUserFilterChange={setUserFilterVal}
+                clubIds={filterClubIdsVal}
+                onClubIdsChange={(ids) => patchPanelFields({ filterClubIds: ids })}
+                timeRange={[filterTimeStartVal, filterTimeEndVal]}
+                onTimeRangeChange={(v) => patchPanelFields({ filterTimeStart: v[0], filterTimeEnd: v[1] })}
+                playerLevelRange={[filterLevelMinVal, filterLevelMaxVal]}
+                onPlayerLevelRangeChange={(v) => patchPanelFields({ filterLevelMin: v[0], filterLevelMax: v[1] })}
+                hour12={displaySettings.hour12}
+                onResetFilters={resetPanelFilters}
+                showResetFooter={panelFiltersApplied}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
         <button
           onClick={() => handleEntityFilterClick('game')}
@@ -402,19 +610,6 @@ export const AvailableGamesSection = ({
           <span className="text-sm font-medium">{t('games.entityTypes.LEAGUE', { defaultValue: 'Leagues' })}</span>
         </button>
       </div>
-      <div
-        className={`max-w-md mx-auto mb-3 overflow-hidden transition-all duration-300 ease-in-out ${
-          userFilterVal
-            ? 'max-h-20 opacity-100'
-            : 'max-h-0 opacity-0'
-        }`}
-      >
-        <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
-          <p className="text-xs text-primary-700 dark:text-primary-300 text-center">
-            {t('games.availableForMeHint', { defaultValue: 'Showing games with available slots and suitable level limits' })}
-          </p>
-        </div>
-      </div>
     </div>
   );
 
@@ -443,6 +638,7 @@ export const AvailableGamesSection = ({
                   favoriteTrainerId={user?.favoriteTrainerId}
                   onMonthChange={onMonthChange}
                   onDateRangeChange={onDateRangeChange}
+                  panelFilters={panelFilterState}
                 />
               </div>
             </div>
@@ -534,6 +730,7 @@ export const AvailableGamesSection = ({
             favoriteTrainerId={user?.favoriteTrainerId}
             onMonthChange={onMonthChange}
             onDateRangeChange={onDateRangeChange}
+            panelFilters={panelFilterState}
           />
           
           {filteredGames.length === 0 ? (

@@ -1,11 +1,16 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Users, Swords, Dumbbell, Trophy, Beer } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
-import { enUS, ru, es, sr, cs } from 'date-fns/locale';
+import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import {
+  passesAvailableGamePanelFilters,
+  DEFAULT_AVAILABLE_GAME_PANEL_FILTERS,
+  type AvailableGamePanelFilterState,
+} from '@/utils/availableGamePanelFilters';
 
 type DisplayEntityType = 'GAME' | 'TOURNAMENT' | 'TRAINING' | 'LEAGUE' | 'BAR';
 
@@ -43,10 +48,11 @@ export interface MonthCalendarProps {
   favoriteTrainerId?: string | null;
   onMonthChange?: (month: number, year: number) => void;
   onDateRangeChange?: (startDate: Date, endDate: Date) => void;
+  panelFilters?: AvailableGamePanelFilterState;
 }
 
 const localeMap = {
-  en: enUS,
+  en: enGB,
   ru: ru,
   es: es,
   sr: sr,
@@ -65,6 +71,7 @@ export const MonthCalendar = ({
   favoriteTrainerId,
   onMonthChange,
   onDateRangeChange,
+  panelFilters = DEFAULT_AVAILABLE_GAME_PANEL_FILTERS,
 }: MonthCalendarProps) => {
   const { user } = useAuthStore();
   const { i18n } = useTranslation();
@@ -74,7 +81,7 @@ export const MonthCalendar = ({
 
   const displaySettings = useMemo(() => user ? resolveDisplaySettings(user) : resolveDisplaySettings(null), [user]);
   const locale = useMemo(() => {
-    return localeMap[i18n.language as keyof typeof localeMap] || enUS;
+    return localeMap[i18n.language as keyof typeof localeMap] || enGB;
   }, [i18n.language]);
   const weekStartsOn = useMemo(() => displaySettings.weekStart, [displaySettings.weekStart]);
 
@@ -100,6 +107,8 @@ export const MonthCalendar = ({
 
     availableGames.forEach(game => {
       if (game.timeIsSet === false) return;
+
+      if (!passesAvailableGamePanelFilters(game, panelFilters)) return;
 
       const organizer = game.entityType === 'TRAINING'
         ? (game.trainerId ? game.participants?.find((p: any) => p.userId === game.trainerId) : null) || game.participants?.find((p: any) => p.role === 'OWNER')
@@ -180,7 +189,7 @@ export const MonthCalendar = ({
     });
 
     return dataMap;
-  }, [availableGames, userFilter, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user?.id, user?.level, user?.blockedUserIds]);
+  }, [availableGames, userFilter, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user?.id, user?.level, user?.blockedUserIds, panelFilters]);
 
   const handlePreviousMonth = () => {
     isNavigatingRef.current = true;

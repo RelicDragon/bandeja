@@ -374,7 +374,7 @@ export const prepareTelegramSummary = asyncHandler(async (req: AuthRequest, res:
 
   const { game, city } = await validateGameForTelegram(id, req.userId!);
 
-  const language = city.telegramPinnedLanguage || 'en-US';
+  const language = city.telegramPinnedLanguage || 'en-GB';
   const summary = await ResultsTelegramService.generateResultsSummary(
     game,
     language,
@@ -397,7 +397,7 @@ export const sendResultsToTelegram = asyncHandler(async (req: AuthRequest, res: 
 
   const { game, city, bot } = await validateGameForTelegram(id, req.userId!);
 
-  const language = city.telegramPinnedLanguage || 'en-US';
+  const language = city.telegramPinnedLanguage || 'en-GB';
   
   let finalSummaryText: string;
   if (summaryText && typeof summaryText === 'string' && summaryText.trim()) {

@@ -24,7 +24,8 @@ export type Place =
   | 'loginPhone'
   | 'loginTelegram'
   | 'telegramAutoLogin'
-  | 'register';
+  | 'register'
+  | 'userTeam';
 
 export interface PlaceParams {
   [key: string]: string | number | boolean | undefined;
@@ -50,7 +51,8 @@ export type PageType =
   | 'leaderboard'
   | 'gameDetails'
   | 'gameSubscriptions'
-  | 'marketplace';
+  | 'marketplace'
+  | 'teams';
 
 interface PlaceDefinition {
   pattern: RegExp;
@@ -71,6 +73,7 @@ const PLACE_DEFS: PlaceDefinition[] = [
   { pattern: /^\/bugs\/([^/]+)$/, place: 'bugs', extractParams: (m) => ({ id: m[1] }) },
   { pattern: /^\/bugs\/?$/, place: 'bugs' },
   { pattern: /^\/find\/?$/, place: 'find' },
+  { pattern: /^\/user-team\/([^/]+)$/, place: 'userTeam', extractParams: (m) => ({ id: m[1] }) },
   { pattern: /^\/profile\/?$/, place: 'profile' },
   { pattern: /^\/leaderboard\/?$/, place: 'leaderboard' },
   { pattern: /^\/game-subscriptions\/?$/, place: 'gameSubscriptions' },
@@ -140,6 +143,7 @@ export function buildUrl(place: Place, params?: PlaceParams, overlay?: Overlay):
     case 'loginTelegram': path = '/login'; break;
     case 'telegramAutoLogin': path = `/login/${params?.telegramKey ?? ''}`; break;
     case 'register': path = '/register'; break;
+    case 'userTeam': path = `/user-team/${params?.id ?? ''}`; break;
     default: path = '/'; break;
   }
 
@@ -205,6 +209,8 @@ export function placeToPageType(place: Place): PageType {
       return 'marketplace';
     case 'leaderboard': return 'leaderboard';
     case 'profile': return 'profile';
+    case 'userTeam':
+      return 'teams';
     case 'game':
     case 'gameChat':
       return 'gameDetails';
@@ -214,7 +220,7 @@ export function placeToPageType(place: Place): PageType {
 }
 
 const APP_PATH_RE =
-  /^\/(find|chats|profile|leaderboard|games|create-game|create-league|rating|bugs|game-subscriptions|marketplace|user-chat|group-chat|channel-chat|select-city|login|register)(\/.*)?$/;
+  /^\/(find|chats|profile|leaderboard|games|create-game|create-league|rating|bugs|game-subscriptions|marketplace|user-team|user-chat|group-chat|channel-chat|select-city|login|register)(\/.*)?$/;
 
 export function isAppPath(pathname: string): boolean {
   return pathname === '/' || APP_PATH_RE.test(pathname);

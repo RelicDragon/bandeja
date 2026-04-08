@@ -2,7 +2,14 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { format, parse, startOfDay } from 'date-fns';
-import { InvitesSection, MyGamesSection, PastGamesSection, NoNamePromptBanner, CityPromptBanner } from '@/components/home';
+import {
+  InvitesSection,
+  MyGamesSection,
+  PastGamesSection,
+  NoNamePromptBanner,
+  CityPromptBanner,
+  UserTeamsHomeSection,
+} from '@/components/home';
 import { WelcomeQuestionnairePrompt } from '@/components/welcome';
 import { Button, Divider, MainTabFooter, MonthCalendar } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -21,7 +28,7 @@ import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { navigationService } from '@/services/navigationService';
-
+import { useUserTeamsStore } from '@/store/userTeamsStore';
 const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string; parentId?: string; id: string }>(
   list: T[] = [],
   unreadCounts?: Record<string, number>
@@ -157,6 +164,7 @@ export const MyTab = () => {
     () => filteredMyGames.some((g) => g.status === 'ANNOUNCED' || g.status === 'STARTED'),
     [filteredMyGames]
   );
+  const showTeamsInMyGamesPanel = !(isDesktop && hasUpcomingGames);
   const [myGamesSelectedDate, setMyGamesSelectedDate] = useState<Date>(() => new Date());
   useEffect(() => {
     if (myGamesCalendarDateAfterCreate) {
@@ -376,6 +384,7 @@ export const MyTab = () => {
     await Promise.all([
       fetchData(false, true),
       loadPastGames?.(),
+      useUserTeamsStore.getState().refreshAll(),
     ]);
   }, [fetchData, loadPastGames]);
 
@@ -391,6 +400,7 @@ export const MyTab = () => {
         <WelcomeQuestionnairePrompt />
         <NoNamePromptBanner />
         <CityPromptBanner />
+        {showTeamsInMyGamesPanel && <UserTeamsHomeSection className="mb-3" />}
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!loading ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
           <InvitesSection
             invites={invites}
@@ -444,6 +454,7 @@ export const MyTab = () => {
             leftPanel={
               <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
                 <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
+                  <UserTeamsHomeSection className="mb-3" />
                   <MonthCalendar
                     selectedDate={myGamesSelectedDate}
                     onDateSelect={setMyGamesSelectedDate}
@@ -510,6 +521,7 @@ export const MyTab = () => {
                 : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
             }`}
           >
+            <UserTeamsHomeSection className="mb-3" />
             {hasUpcomingGames && (
               <MonthCalendar
                 selectedDate={myGamesSelectedDate}
@@ -538,6 +550,7 @@ export const MyTab = () => {
                 : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
             }`}
           >
+            <UserTeamsHomeSection className="mb-3" />
             <MyGamesSection
               games={filteredMyGames}
               user={user}

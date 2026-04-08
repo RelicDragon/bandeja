@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { format, addDays, isToday, isTomorrow } from 'date-fns';
-import { enUS, ru, es, sr, cs } from 'date-fns/locale';
+import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
 import { CalendarComponent } from '@/components/Calendar';
@@ -21,7 +21,7 @@ interface DateSelectorWithCountProps {
 }
 
 const localeMap = {
-  en: enUS,
+  en: enGB,
   ru: ru,
   es: es,
   sr: sr,
@@ -52,7 +52,7 @@ export const DateSelectorWithCount = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isAtLeft, setIsAtLeft] = useState(true);
 
-  const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enUS, [i18n.language]);
+  const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enGB, [i18n.language]);
   const dateFormat = useMemo(() => dateFormatMap[i18n.language] || 'MM/dd/yyyy', [i18n.language]);
 
   const fixedDates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));

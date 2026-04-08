@@ -4,6 +4,7 @@ import { invitesApi } from '@/api';
 import { useHeaderStore } from './headerStore';
 import { useAuthStore } from './authStore';
 import { usePresenceStore } from './presenceStore';
+import { useUserTeamsStore } from './userTeamsStore';
 import { Game, Invite } from '@/types';
 import { logChatSocketQueueTrim } from '@/services/chat/chatDiagnostics';
 
@@ -448,6 +449,21 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         set({ lastNewBug: data });
       };
 
+      const refreshUserTeams = () => {
+        useUserTeamsStore.getState().refreshAll().catch(() => {});
+      };
+
+      const handleUserTeamInvite = () => refreshUserTeams();
+      const handleUserTeamInviteAccepted = () => refreshUserTeams();
+      const handleUserTeamInviteDeclined = () => refreshUserTeams();
+      const handleUserTeamMemberRemoved = () => refreshUserTeams();
+      const handleUserTeamUpdated = () => refreshUserTeams();
+      const handleUserTeamDeleted = (data: unknown) => {
+        const payload = data as { teamId?: string };
+        if (payload?.teamId) useUserTeamsStore.getState().removeTeamLocal(payload.teamId);
+        else refreshUserTeams();
+      };
+
       const handlePresenceInitial = (data: Record<string, boolean>) => {
         if (useAuthStore.getState().user?.showOnlineStatus === false) {
           usePresenceStore.getState().clearPresence();
@@ -479,6 +495,12 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('game-cancelled', handleGameCancelled);
       socketService.on('chat:poll-vote', handlePollVote);
       socketService.on('new-bug', handleNewBug);
+      socketService.on('user-team:invite', handleUserTeamInvite);
+      socketService.on('user-team:invite-accepted', handleUserTeamInviteAccepted);
+      socketService.on('user-team:invite-declined', handleUserTeamInviteDeclined);
+      socketService.on('user-team:member-removed', handleUserTeamMemberRemoved);
+      socketService.on('user-team:updated', handleUserTeamUpdated);
+      socketService.on('user-team:deleted', handleUserTeamDeleted);
       socketService.on('presence-initial', handlePresenceInitial);
       socketService.on('presence-update', handlePresenceUpdate);
 
@@ -502,6 +524,12 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         () => socketService.off('game-cancelled', handleGameCancelled),
         () => socketService.off('chat:poll-vote', handlePollVote),
         () => socketService.off('new-bug', handleNewBug),
+        () => socketService.off('user-team:invite', handleUserTeamInvite),
+        () => socketService.off('user-team:invite-accepted', handleUserTeamInviteAccepted),
+        () => socketService.off('user-team:invite-declined', handleUserTeamInviteDeclined),
+        () => socketService.off('user-team:member-removed', handleUserTeamMemberRemoved),
+        () => socketService.off('user-team:updated', handleUserTeamUpdated),
+        () => socketService.off('user-team:deleted', handleUserTeamDeleted),
         () => socketService.off('presence-initial', handlePresenceInitial),
         () => socketService.off('presence-update', handlePresenceUpdate),
       ];

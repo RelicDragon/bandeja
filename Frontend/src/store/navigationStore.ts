@@ -8,7 +8,7 @@ interface BugsFilterState {
 }
 
 interface NavigationState {
-  currentPage: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace';
+  currentPage: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace' | 'teams';
   bottomTabsVisible: boolean;
   initShellAnimationPlayed: boolean;
   isAnimating: boolean;
@@ -41,7 +41,7 @@ interface NavigationState {
   pendingPlayerCardReopen: { playerId: string; sourceIdx: number } | null;
   setPendingPlayerCardReopen: (data: { playerId: string; sourceIdx: number } | null) => void;
   setMarketplaceTab: (tab: 'market' | 'my') => void;
-  setCurrentPage: (page: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace') => void;
+  setCurrentPage: (page: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace' | 'teams') => void;
   setBottomTabsVisible: (visible: boolean) => void;
   setInitShellAnimationPlayed: (played: boolean) => void;
   setIsAnimating: (animating: boolean) => void;

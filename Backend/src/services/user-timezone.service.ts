@@ -1,6 +1,6 @@
 import { format, Locale } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import { enUS } from 'date-fns/locale/en-US';
+import { enGB } from 'date-fns/locale/en-GB';
 import { ru } from 'date-fns/locale/ru';
 import { sr } from 'date-fns/locale/sr';
 import { es } from 'date-fns/locale/es';
@@ -16,7 +16,7 @@ const timezoneCache = new TtlCache<string, string>(TIMEZONE_CACHE_TTL_MS);
 const shortDayCache = new TtlCache<string, string>(SHORT_DAY_CACHE_TTL_MS);
 
 const localeMap: Record<string, Locale> = {
-  en: enUS,
+  en: enGB,
   ru: ru,
   sr: sr,
   es: es,
@@ -70,7 +70,8 @@ export async function formatDateInUserTimezone(
 ): Promise<string> {
   const timezone = await getUserTimezone(userId);
   const zonedDate = convertToUserTimezone(date, timezone);
-  const locale = localeMap[lang] || enUS;
+  const base = (lang || 'en').split('-')[0].toLowerCase();
+  const locale = localeMap[base] || enGB;
   return format(zonedDate, formatStr, { locale });
 }
 
@@ -81,7 +82,8 @@ export async function formatDateInTimezone(
   lang: string = 'en'
 ): Promise<string> {
   const zonedDate = convertToUserTimezone(date, timezone);
-  const locale = localeMap[lang] || enUS;
+  const base = (lang || 'en').split('-')[0].toLowerCase();
+  const locale = localeMap[base] || enGB;
   return format(zonedDate, formatStr, { locale });
 }
 

@@ -3,10 +3,17 @@ import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFilters
 
 const DEFAULT_FILTERS: GameFilters = {
   userFilter: false,
+  gameFilter: false,
   trainingFilter: false,
   tournamentFilter: false,
   leaguesFilter: false,
   activeTab: 'calendar',
+  filtersPanelOpen: false,
+  filterClubIds: [],
+  filterTimeStart: '00:00',
+  filterTimeEnd: '24:00',
+  filterLevelMin: 1.0,
+  filterLevelMax: 7.0,
 };
 
 export const useGameFilters = () => {

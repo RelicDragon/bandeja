@@ -39,6 +39,14 @@ export const useDeepLink = () => {
           }
         }
         
+        if (pathname.startsWith('/user-team/')) {
+          const id = pathname.split('/user-team/')[1]?.split('/')[0];
+          if (id) {
+            navigateWithTracking(navigate, `/user-team/${id}`, { replace: true });
+            return;
+          }
+        }
+
         // Chat routes
         if (pathname.startsWith('/user-chat/')) {
           const id = pathname.split('/user-chat/')[1]?.split('/')[0];

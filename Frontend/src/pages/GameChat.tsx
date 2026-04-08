@@ -21,7 +21,6 @@ import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBack } from '@/utils/backNavigation';
 import { cancelAllForContext } from '@/services/chatSendService';
-import { isCapacitor } from '@/utils/capacitor';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { LocationState, GameChatProps } from './GameChat/types';
 import { getContextTypeFromRoute } from './GameChat/types';
@@ -36,7 +35,6 @@ import { useGameChatMessages } from './GameChat/useGameChatMessages';
 import { useGameChatActions } from './GameChat/useGameChatActions';
 import { useGameChatOptimistic } from './GameChat/useGameChatOptimistic';
 import { useGameChatSocket } from './GameChat/useGameChatSocket';
-import { useKeyboardHeight } from './GameChat/useKeyboardHeight';
 import { useGameChatDisplay } from './GameChat/useGameChatDisplay';
 import { useGameChatReactions } from './GameChat/useGameChatReactions';
 import { useGameChatMutationRetry } from './GameChat/useGameChatMutationRetry';
@@ -333,8 +331,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     reloadMessagesFirstPage,
   });
 
-  const keyboardHeight = useKeyboardHeight();
-
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
   const { title, subtitle, icon } = useGameChatDisplay({
     contextType,
@@ -554,10 +550,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           )}
         </AnimatePresence>
 
-        <main
-          className="flex-1 flex flex-col min-h-0 overflow-hidden overflow-x-hidden relative transition-all duration-300"
-          style={{ marginBottom: isCapacitor() && keyboardHeight > 0 ? `${keyboardHeight}px` : '0px' }}
-        >
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden overflow-x-hidden relative transition-all duration-300">
           <AnimatePresence>
             {!showLoadingHeader && pinnedMessagesOrdered.length > 0 && !panels.showParticipantsPage && !panels.showItemPage && (
               <motion.div key="pinned-shadow" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} className="absolute top-0 left-0 right-0 z-[1] pointer-events-none">
@@ -656,7 +649,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         </main>
 
         {((!isInitialLoad || isEmbedded) || footerVariant?.type === 'contextLoading') && !(contextType === 'GROUP' && (panels.showParticipantsPage || panels.showItemPage || panels.isParticipantsPageAnimating || panels.isItemPageAnimating)) && (
-          <GameChatFooter visible keyboardHeight={keyboardHeight} variant={footerVariant} />
+          <GameChatFooter visible variant={footerVariant} />
         )}
 
         {contextType === 'GAME' && panels.showParticipantsModal && game && (

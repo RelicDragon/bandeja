@@ -9,6 +9,15 @@ export type ResolvedDisplayName = {
   nameIsSet: boolean;
 };
 
+export function generateRandomAdjectiveAnimalLabel(): string {
+  return uniqueNamesGenerator({
+    dictionaries: [adjectives, animals],
+    separator: ' ',
+    style: 'capital',
+    length: 2,
+  });
+}
+
 export function resolveDisplayNameData(
   firstName?: string | null,
   lastName?: string | null
@@ -26,12 +35,7 @@ export function resolveDisplayNameData(
   }
 
   return {
-    firstName: uniqueNamesGenerator({
-      dictionaries: [adjectives, animals],
-      separator: ' ',
-      style: 'capital',
-      length: 2,
-    }),
+    firstName: generateRandomAdjectiveAnimalLabel(),
     lastName: undefined,
     nameIsSet: false,
   };

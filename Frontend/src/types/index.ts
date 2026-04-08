@@ -93,7 +93,7 @@ export interface User extends BasicUser {
   approvedWhen?: Date | string | null;
   favoriteTrainerId?: string | null;
   approvedBy?: BasicUser | null;
-  language?: string; // Full locale (e.g., "en-US", "ru-RU") or "auto"
+  language?: string; // Full locale (e.g., "en-GB", "ru-RU") or "auto"
   translateToLanguage?: string | null;
   timeFormat?: 'auto' | '12h' | '24h';
   weekStart?: 'auto' | 'monday' | 'sunday';
@@ -560,3 +560,5 @@ export interface LoginResponse {
   user: User;
   token: string;
 }
+
+export type { UserTeam, UserTeamMember, UserTeamMembership, UserTeamMemberStatus } from './userTeam';

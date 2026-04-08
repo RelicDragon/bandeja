@@ -36,6 +36,8 @@ import { useMessageInputTranslation } from '@/components/chat/useMessageInputTra
 import { useMessageInputVoiceSend } from '@/components/chat/useMessageInputVoiceSend';
 import { useMessageInputSubmit, type SendQueuedParams } from '@/components/chat/useMessageInputSubmit';
 import { uploadChatImageSlotWithRetry } from '@/components/chat/messageInputImageUpload';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { TypingIndicator } from '@/components/chat/TypingIndicator';
 
 export type { SendQueuedParams };
 
@@ -115,6 +117,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const shouldShowJoinButton = isChannel && !isChannelAdminOrOwner && !isChannelParticipant;
   const isDisabled = !canWrite || disabled;
 
+  const typingEnabled = !isDisabled && !!finalContextId && canWrite && !shouldShowJoinButton;
+  const { typingUserIds, notifyKeystroke, stopTyping } = useTypingIndicator({
+    contextType,
+    contextId: finalContextId,
+    enabled: typingEnabled,
+  });
+
   const [message, setMessage] = useState('');
   const [mentionIds, setMentionIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -187,6 +196,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     onCancelReply,
     onMessageCreated,
     onSendFailed,
+    onStopTyping: stopTyping,
     t,
   });
 
@@ -233,6 +243,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       setImageUploadFailedSlots(new Set(failedIndices));
     },
     onClearImageUploadFailures: () => setImageUploadFailedSlots(new Set()),
+    onStopTyping: stopTyping,
   });
 
   const imagePreviewUrls = useMemo(() => selectedImages.map((file) => URL.createObjectURL(file)), [selectedImages]);
@@ -273,6 +284,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     translation.clearTranslationOriginals();
     if (!editingMessage) debouncedSaveDraft(newValue, newMentionIds);
     updateMultilineState();
+    if (newValue.trim()) notifyKeystroke();
+    else stopTyping();
   };
 
   const handlePollCreate = async (pollData: {
@@ -508,6 +521,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         retryingSlotIndex={retryingImageSlot}
         onRetrySlot={handleRetryImageSlot}
       />
+      <TypingIndicator typingUserIds={typingUserIds} />
       <form onSubmit={handleSubmit} className="relative overflow-visible">
         <div className="flex items-end gap-2">
           <MessageInputAttachMenu

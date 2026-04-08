@@ -1,5 +1,5 @@
 import { format as dateFnsFormat, formatDistanceToNow, isToday, isYesterday, differenceInHours, differenceInDays, Locale } from 'date-fns';
-import { enUS } from 'date-fns/locale/en-US';
+import { enGB } from 'date-fns/locale/en-GB';
 import { ru } from 'date-fns/locale/ru';
 import { sr } from 'date-fns/locale/sr';
 import { es } from 'date-fns/locale/es';
@@ -7,7 +7,7 @@ import { cs } from 'date-fns/locale/cs';
 import i18n from '@/i18n/config';
 
 const localeMap: Record<string, Locale> = {
-  en: enUS,
+  en: enGB,
   ru: ru,
   sr: sr,
   es: es,
@@ -15,13 +15,13 @@ const localeMap: Record<string, Locale> = {
 };
 
 export const formatDate = (date: Date | string, formatStr: string): string => {
-  const currentLocale = localeMap[i18n.language] || enUS;
+  const currentLocale = localeMap[i18n.language] || enGB;
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   return dateFnsFormat(dateObj, formatStr, { locale: currentLocale });
 };
 
 export const formatRelativeTime = (date: Date | string): string => {
-  const currentLocale = localeMap[i18n.language] || enUS;
+  const currentLocale = localeMap[i18n.language] || enGB;
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   
   return formatDistanceToNow(dateObj, { 
@@ -31,7 +31,7 @@ export const formatRelativeTime = (date: Date | string): string => {
 };
 
 export const formatSmartRelativeTime = (date: Date | string, t?: (key: string) => string): string => {
-  const currentLocale = localeMap[i18n.language] || enUS;
+  const currentLocale = localeMap[i18n.language] || enGB;
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   const now = new Date();
   

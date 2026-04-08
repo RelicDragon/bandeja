@@ -5,6 +5,57 @@ import { isCapacitor, isIOS, isAndroid } from './capacitor';
 import { setupCapacitorNetwork } from './capacitorNetwork';
 import pushNotificationService from '@/services/pushNotificationService';
 
+let lastPluginKeyboardInsetPx = 0;
+let currentFocusedInput: HTMLElement | null = null;
+let scrollFocusedInputTimer: ReturnType<typeof setTimeout> | null = null;
+
+const MAX_KEYBOARD_INSET_RATIO = 0.92;
+const SCROLL_FOCUSED_INPUT_MS = 120;
+
+const isInsideChatComposerFooter = (el: HTMLElement | null) =>
+  !!el?.closest('.chat-container footer');
+
+const resetAppRootScrollIfChatInput = () => {
+  if (!isInsideChatComposerFooter(currentFocusedInput)) return;
+  const root = document.getElementById('root');
+  if (root) root.scrollTop = 0;
+  window.scrollTo(0, 0);
+};
+
+const resetKeyboardLayoutUi = () => {
+  document.body.classList.remove('keyboard-visible');
+  lastPluginKeyboardInsetPx = 0;
+  currentFocusedInput = null;
+  syncKeyboardLayoutFromViewport();
+};
+
+export const syncKeyboardLayoutFromViewport = () => {
+  if (typeof document === 'undefined' || !document.documentElement) return;
+
+  const innerH = window.innerHeight || 0;
+  const maxInset = innerH > 0 ? Math.round(innerH * MAX_KEYBOARD_INSET_RATIO) : 10_000;
+
+  const vv = window.visualViewport;
+  const derived = vv
+    ? Math.max(0, Math.round(innerH - vv.height - vv.offsetTop))
+    : 0;
+  const raw = Math.max(derived, lastPluginKeyboardInsetPx);
+  const effective = Math.min(raw, maxInset);
+
+  document.documentElement.style.setProperty('--keyboard-height', `${effective}px`);
+  if (vv) {
+    document.documentElement.style.setProperty('--vv-height', `${Math.round(vv.height)}px`);
+    document.documentElement.style.setProperty('--vv-offset-top', `${Math.round(vv.offsetTop)}px`);
+  }
+};
+
+const isEditableFocusTarget = (el: HTMLElement) => {
+  if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return true;
+  if (el.isContentEditable) return true;
+  const role = el.getAttribute('role');
+  return role === 'textbox' || role === 'searchbox';
+};
+
 export const updateStatusBarStyle = async () => {
   if (!isCapacitor()) return;
   
@@ -57,24 +108,37 @@ export const setAndroidViewportVars = () => {
   document.documentElement.style.setProperty('--viewport-height', `${h}px`);
 };
 
+const scrollInputIntoViewIfAble = (el: HTMLElement | null) => {
+  if (!el) return;
+  if (isInsideChatComposerFooter(el)) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+};
+
+const scheduleScrollFocusedInput = () => {
+  if (scrollFocusedInputTimer) clearTimeout(scrollFocusedInputTimer);
+  scrollFocusedInputTimer = setTimeout(() => {
+    scrollFocusedInputTimer = null;
+    scrollInputIntoViewIfAble(currentFocusedInput);
+  }, SCROLL_FOCUSED_INPUT_MS);
+};
+
 export const setupCapacitor = async () => {
   if (!isCapacitor()) return;
 
   if (isAndroid()) {
-    setAndroidViewportVars();
-    requestAnimationFrame(() => setAndroidViewportVars());
-    window.addEventListener('load', () => setAndroidViewportVars());
-    window.visualViewport?.addEventListener('resize', setAndroidViewportVars);
-    window.visualViewport?.addEventListener('scroll', setAndroidViewportVars);
-    window.addEventListener('resize', setAndroidViewportVars);
-    window.addEventListener('orientationchange', () => {
-      setTimeout(setAndroidViewportVars, 50);
-      requestAnimationFrame(setAndroidViewportVars);
-    });
-    void App.addListener('appStateChange', ({ isActive }) => {
-      if (!isActive) return;
+    const onAndroidViewport = () => {
       setAndroidViewportVars();
-      requestAnimationFrame(() => setAndroidViewportVars());
+      syncKeyboardLayoutFromViewport();
+    };
+    onAndroidViewport();
+    requestAnimationFrame(onAndroidViewport);
+    window.addEventListener('load', () => onAndroidViewport());
+    window.visualViewport?.addEventListener('resize', onAndroidViewport);
+    window.visualViewport?.addEventListener('scroll', onAndroidViewport);
+    window.addEventListener('resize', onAndroidViewport);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(onAndroidViewport, 50);
+      requestAnimationFrame(onAndroidViewport);
     });
   }
 
@@ -134,86 +198,80 @@ export const setupCapacitor = async () => {
       attributeFilter: ['class']
     });
 
-    if (isIOS()) {
-      await Keyboard.setResizeMode({ mode: KeyboardResize.Body });
+    if (isIOS() || isAndroid()) {
+      await Keyboard.setResizeMode({ mode: KeyboardResize.None });
     }
 
-    // Store reference to currently focused input
-    let currentFocusedInput: HTMLElement | null = null;
+    void App.addListener('appStateChange', ({ isActive }) => {
+      if (!isActive) {
+        resetKeyboardLayoutUi();
+        return;
+      }
+      if (isAndroid()) {
+        const refresh = () => {
+          setAndroidViewportVars();
+          syncKeyboardLayoutFromViewport();
+        };
+        refresh();
+        requestAnimationFrame(refresh);
+      }
+    });
 
-    // Track keyboard height for dynamic adjustments
     Keyboard.addListener('keyboardWillShow', (info) => {
       document.body.classList.add('keyboard-visible');
-
-      // Store keyboard height in CSS custom property for dynamic adjustments
-      if (info && info.keyboardHeight) {
-        document.documentElement.style.setProperty('--keyboard-height', `${info.keyboardHeight}px`);
+      if (info && typeof info.keyboardHeight === 'number' && info.keyboardHeight >= 0) {
+        lastPluginKeyboardInsetPx = info.keyboardHeight;
       }
-
-      // Scroll focused input into view after keyboard appears
-      if (currentFocusedInput) {
-        setTimeout(() => {
-          currentFocusedInput?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'nearest'
-          });
-        }, 100);
-      }
+      syncKeyboardLayoutFromViewport();
+      requestAnimationFrame(() => resetAppRootScrollIfChatInput());
     });
 
     Keyboard.addListener('keyboardWillHide', () => {
-      document.body.classList.remove('keyboard-visible');
-      document.documentElement.style.setProperty('--keyboard-height', '0px');
-      currentFocusedInput = null;
+      resetKeyboardLayoutUi();
     });
 
     Keyboard.addListener('keyboardDidShow', (info) => {
-      // Ensure keyboard height is set even if willShow didn't fire
-      if (info && info.keyboardHeight) {
-        document.documentElement.style.setProperty('--keyboard-height', `${info.keyboardHeight}px`);
+      document.body.classList.add('keyboard-visible');
+      if (info && typeof info.keyboardHeight === 'number' && info.keyboardHeight >= 0) {
+        lastPluginKeyboardInsetPx = info.keyboardHeight;
       }
-
-      // Double-check that input is visible after keyboard animation completes
-      if (currentFocusedInput) {
-        setTimeout(() => {
-          currentFocusedInput?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'nearest'
-          });
-        }, 50);
-      }
+      syncKeyboardLayoutFromViewport();
+      requestAnimationFrame(() => {
+        resetAppRootScrollIfChatInput();
+        requestAnimationFrame(resetAppRootScrollIfChatInput);
+      });
+      scheduleScrollFocusedInput();
     });
 
     Keyboard.addListener('keyboardDidHide', () => {
-      document.documentElement.style.setProperty('--keyboard-height', '0px');
-      currentFocusedInput = null;
+      resetKeyboardLayoutUi();
     });
 
-    // Listen for input/textarea focus to track which element needs to be visible
+    if (isIOS()) {
+      syncKeyboardLayoutFromViewport();
+      window.visualViewport?.addEventListener('resize', syncKeyboardLayoutFromViewport);
+      window.visualViewport?.addEventListener('scroll', syncKeyboardLayoutFromViewport);
+    }
+
     document.addEventListener('focusin', (e) => {
       const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-        currentFocusedInput = target;
-
-        // Pre-emptively scroll the input into view
-        // This helps on Android where keyboardWillShow might not fire early enough
-        setTimeout(() => {
-          target.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'nearest'
-          });
-        }, 50);
+      if (!isEditableFocusTarget(target)) return;
+      currentFocusedInput = target;
+      if (document.body.classList.contains('keyboard-visible')) {
+        requestAnimationFrame(() => resetAppRootScrollIfChatInput());
+        scheduleScrollFocusedInput();
       }
     });
 
     document.addEventListener('focusout', (e) => {
       const target = e.target as HTMLElement;
-      if (target === currentFocusedInput) {
-        currentFocusedInput = null;
+      if (target !== currentFocusedInput) return;
+      const next = e.relatedTarget;
+      if (next instanceof HTMLElement && isEditableFocusTarget(next)) {
+        currentFocusedInput = next;
+        return;
       }
+      currentFocusedInput = null;
     });
 
   } catch (error) {
@@ -248,8 +306,9 @@ export const setupBrowserKeyboardDetection = () => {
   if (window.visualViewport) {
     const handleViewportChange = () => {
       const viewport = window.visualViewport!;
+      syncKeyboardLayoutFromViewport();
       const heightDifference = initialViewportHeight - viewport.height;
-      
+
       if (heightDifference > KEYBOARD_THRESHOLD && !isKeyboardVisible) {
         isKeyboardVisible = true;
         document.body.classList.add('keyboard-visible');
@@ -261,6 +320,7 @@ export const setupBrowserKeyboardDetection = () => {
 
     window.visualViewport.addEventListener('resize', handleViewportChange);
     window.visualViewport.addEventListener('scroll', handleViewportChange);
+    handleViewportChange();
 
     // Update initial height when orientation changes
     const handleOrientationChange = () => {

@@ -60,7 +60,7 @@ export class TelegramGamesScheduler {
 
     const chatId = city.telegramGroupId;
     const timezone = await getUserTimezoneFromCityId(city.id);
-    const lang = getUserLanguage(city.telegramPinnedLanguage || 'en-US', undefined);
+    const lang = getUserLanguage(city.telegramPinnedLanguage || 'en-GB', undefined);
 
     const games = await prisma.game.findMany({
       where: {

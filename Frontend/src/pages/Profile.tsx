@@ -1029,8 +1029,8 @@ export const ProfileContent = () => {
               <Select
                 options={[
                   { value: 'auto', label: t('profile.auto') || 'Auto', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
-                  { value: 'en-US', label: 'English (US)', icon: <span className="text-lg leading-none">{getCountryFlag('United States')}</span> },
                   { value: 'en-GB', label: 'English (UK)', icon: <span className="text-lg leading-none">{getCountryFlag('United Kingdom')}</span> },
+                  { value: 'en-US', label: 'English (US)', icon: <span className="text-lg leading-none">{getCountryFlag('United States')}</span> },
                   { value: 'ru-RU', label: 'Русский', icon: <span className="text-lg leading-none">{getLanguageFlag('ru')}</span> },
                   { value: 'sr-RS', label: 'Српски', icon: <span className="text-lg leading-none">{getLanguageFlag('sr')}</span> },
                   { value: 'es-ES', label: 'Español', icon: <span className="text-lg leading-none">{getLanguageFlag('es')}</span> },

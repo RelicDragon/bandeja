@@ -133,7 +133,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
           </div>
 
           <div className="flex-shrink-0 min-w-28 flex items-center justify-end gap-4">
-            {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard' || (currentPage === 'marketplace' && isMarketplaceList)) && (
+            {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard' || currentPage === 'teams' || (currentPage === 'marketplace' && isMarketplaceList)) && (
               <HomeHeaderContent />
             )}
 

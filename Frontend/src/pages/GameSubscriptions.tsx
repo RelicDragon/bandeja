@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
-import { enUS, ru, es, sr, cs, Locale } from 'date-fns/locale';
+import { enGB, ru, es, sr, cs, Locale } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import { Plus, Edit2, Trash2, MapPin } from 'lucide-react';
 import { Button, Card, ConfirmationModal } from '@/components';
@@ -16,7 +16,7 @@ import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 
 const localeMap: Record<string, Locale> = {
-  en: enUS,
+  en: enGB,
   ru: ru,
   es: es,
   sr: sr,
@@ -33,7 +33,7 @@ export const GameSubscriptionsContent = () => {
   const [showForm, setShowForm] = useState(false);
   const [deleteSubscriptionId, setDeleteSubscriptionId] = useState<string | null>(null);
   
-  const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enUS, [i18n.language]);
+  const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enGB, [i18n.language]);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
   const fetchSubscriptions = useCallback(async () => {

@@ -18,6 +18,7 @@ interface AuthenticatedSocket extends Socket {
   gameRooms?: Set<string>;
   bugRooms?: Set<string>;
   userChatRooms?: Set<string>;
+  groupRooms?: Set<string>;
 }
 
 const PRESENCE_ONLINE_FLUSH_MS = 5000;
@@ -167,6 +168,7 @@ class SocketService {
       socket.gameRooms = new Set();
       socket.bugRooms = new Set();
       socket.userChatRooms = new Set();
+      socket.groupRooms = new Set();
 
       socket.on('join-game-room', this.wrapAsync(socket, async (gameId: string) => {
         if (!socket.userId) return;
@@ -225,7 +227,7 @@ class SocketService {
             socket.leave(`game-${gameId}`);
             socket.gameRooms?.delete(gameId);
             if (!sameUserOtherTab) {
-              this.forceTypingOffForUserInGame(gameId, uid);
+              this.forceTypingOffForUserInContext(ChatContextType.GAME, gameId, uid);
             }
           } else {
             socket.leave(`game-${gameId}`);
@@ -255,13 +257,35 @@ class SocketService {
         socket.emit('joined-bug-room', { bugId });
       }));
 
-      // Handle leaving bug chat rooms
-      socket.on('leave-bug-room', (bugId: string) => {
-        socket.leave(`bug-${bugId}`);
-        socket.bugRooms?.delete(bugId);
-        console.log(`User ${socket.userId} left bug room ${bugId}`);
-        socket.emit('left-bug-room', { bugId });
-      });
+      socket.on(
+        'leave-bug-room',
+        this.wrapAsync(socket, async (bugId: string) => {
+          if (typeof bugId !== 'string' || !bugId) {
+            socket.emit('left-bug-room', { bugId });
+            return;
+          }
+          const room = `bug-${bugId}`;
+          const uid = socket.userId;
+          if (uid) {
+            const roomSockets = await this.io.in(room).fetchSockets();
+            const sameUserOtherTab = roomSockets.some((s) => {
+              if (s.id === socket.id) return false;
+              const otherUid = (s as unknown as AuthenticatedSocket).userId;
+              return otherUid === uid;
+            });
+            socket.leave(room);
+            socket.bugRooms?.delete(bugId);
+            if (!sameUserOtherTab) {
+              this.forceTypingOffForUserInContext(ChatContextType.BUG, bugId, uid);
+            }
+          } else {
+            socket.leave(room);
+            socket.bugRooms?.delete(bugId);
+          }
+          console.log(`User ${socket.userId} left bug room ${bugId}`);
+          socket.emit('left-bug-room', { bugId });
+        })
+      );
 
       socket.on('join-user-chat-room', this.wrapAsync(socket, async (chatId: string) => {
         if (!socket.userId) return;
@@ -287,13 +311,35 @@ class SocketService {
         socket.emit('joined-user-chat-room', { chatId });
       }));
 
-      // Handle leaving user chat rooms
-      socket.on('leave-user-chat-room', (chatId: string) => {
-        socket.leave(`user-chat-${chatId}`);
-        socket.userChatRooms?.delete(chatId);
-        console.log(`User ${socket.userId} left user chat room ${chatId}`);
-        socket.emit('left-user-chat-room', { chatId });
-      });
+      socket.on(
+        'leave-user-chat-room',
+        this.wrapAsync(socket, async (chatId: string) => {
+          if (typeof chatId !== 'string' || !chatId) {
+            socket.emit('left-user-chat-room', { chatId });
+            return;
+          }
+          const room = `user-chat-${chatId}`;
+          const uid = socket.userId;
+          if (uid) {
+            const roomSockets = await this.io.in(room).fetchSockets();
+            const sameUserOtherTab = roomSockets.some((s) => {
+              if (s.id === socket.id) return false;
+              const otherUid = (s as unknown as AuthenticatedSocket).userId;
+              return otherUid === uid;
+            });
+            socket.leave(room);
+            socket.userChatRooms?.delete(chatId);
+            if (!sameUserOtherTab) {
+              this.forceTypingOffForUserInContext(ChatContextType.USER, chatId, uid);
+            }
+          } else {
+            socket.leave(room);
+            socket.userChatRooms?.delete(chatId);
+          }
+          console.log(`User ${socket.userId} left user chat room ${chatId}`);
+          socket.emit('left-user-chat-room', { chatId });
+        })
+      );
 
       socket.on('join-chat-room', this.wrapAsync(socket, async (data: { contextType: ChatContextType; contextId: string }) => {
         if (!socket.userId) return;
@@ -324,21 +370,40 @@ class SocketService {
 
           const room = this.getChatRoomName('GROUP', data.contextId);
           socket.join(room);
+          socket.groupRooms?.add(data.contextId);
 
           console.log(`User ${socket.userId} joined group room ${data.contextId}`);
           socket.emit('joined-chat-room', { contextType: 'GROUP', contextId: data.contextId });
         }
       }));
 
-      // Handle leaving unified chat rooms
-      socket.on('leave-chat-room', (data: { contextType: ChatContextType; contextId: string }) => {
-        if (data.contextType === 'GROUP') {
-          const room = this.getChatRoomName('GROUP', data.contextId);
-          socket.leave(room);
-          console.log(`User ${socket.userId} left group room ${data.contextId}`);
-          socket.emit('left-chat-room', { contextType: 'GROUP', contextId: data.contextId });
-        }
-      });
+      socket.on(
+        'leave-chat-room',
+        this.wrapAsync(socket, async (data: { contextType: ChatContextType; contextId: string }) => {
+          if (data.contextType === 'GROUP') {
+            const room = this.getChatRoomName('GROUP', data.contextId);
+            const uid = socket.userId;
+            if (uid) {
+              const roomSockets = await this.io.in(room).fetchSockets();
+              const sameUserOtherTab = roomSockets.some((s) => {
+                if (s.id === socket.id) return false;
+                const otherUid = (s as unknown as AuthenticatedSocket).userId;
+                return otherUid === uid;
+              });
+              socket.leave(room);
+              socket.groupRooms?.delete(data.contextId);
+              if (!sameUserOtherTab) {
+                this.forceTypingOffForUserInContext(ChatContextType.GROUP, data.contextId, uid);
+              }
+            } else {
+              socket.leave(room);
+              socket.groupRooms?.delete(data.contextId);
+            }
+            console.log(`User ${socket.userId} left group room ${data.contextId}`);
+            socket.emit('left-chat-room', { contextType: 'GROUP', contextId: data.contextId });
+          }
+        })
+      );
 
       socket.on('join-market-item-room', (marketItemId: string) => {
         if (marketItemId) {
@@ -385,32 +450,72 @@ class SocketService {
         }
       });
 
-      socket.on('typing-indicator', (data: { gameId?: string; isTyping?: boolean }) => {
-        const userId = socket.userId;
-        const gameId = typeof data?.gameId === 'string' ? data.gameId : '';
-        if (!userId || !gameId || !socket.gameRooms?.has(gameId)) return;
-        const isTyping = !!data?.isTyping;
-        const typingPayload = { gameId, userId, isTyping, timestamp: new Date().toISOString() };
-        this.io.to(`game-${gameId}`).emit('typing-indicator', typingPayload);
-        const key = `${gameId}:${userId}`;
-        const prev = this.typingExpiryTimers.get(key);
-        if (prev) {
-          clearTimeout(prev);
-          this.typingExpiryTimers.delete(key);
-        }
-        if (isTyping) {
-          const t = setTimeout(() => {
+      socket.on(
+        'typing-indicator',
+        (data: {
+          gameId?: string;
+          contextType?: ChatContextType;
+          contextId?: string;
+          isTyping?: boolean;
+        }) => {
+          const userId = socket.userId;
+          if (!userId) return;
+
+          let contextType: ChatContextType | null = null;
+          let contextId = '';
+          if (
+            data?.contextType &&
+            data.contextId &&
+            typeof data.contextId === 'string' &&
+            (data.contextType === ChatContextType.GAME ||
+              data.contextType === ChatContextType.BUG ||
+              data.contextType === ChatContextType.USER ||
+              data.contextType === ChatContextType.GROUP)
+          ) {
+            contextType = data.contextType;
+            contextId = data.contextId;
+          } else if (typeof data?.gameId === 'string' && data.gameId) {
+            contextType = ChatContextType.GAME;
+            contextId = data.gameId;
+          }
+          if (!contextType || !contextId) return;
+
+          const inRoom =
+            (contextType === ChatContextType.GAME && socket.gameRooms?.has(contextId)) ||
+            (contextType === ChatContextType.BUG && socket.bugRooms?.has(contextId)) ||
+            (contextType === ChatContextType.USER && socket.userChatRooms?.has(contextId)) ||
+            (contextType === ChatContextType.GROUP && socket.groupRooms?.has(contextId));
+          if (!inRoom) return;
+
+          const isTyping = !!data?.isTyping;
+          const room = this.getChatRoomName(contextType, contextId);
+          const typingPayload = {
+            contextType,
+            contextId,
+            userId,
+            isTyping,
+            timestamp: new Date().toISOString(),
+          };
+          this.io.to(room).emit('typing-indicator', typingPayload);
+          const key = `${contextType}:${contextId}:${userId}`;
+          const prev = this.typingExpiryTimers.get(key);
+          if (prev) {
+            clearTimeout(prev);
             this.typingExpiryTimers.delete(key);
-            this.io.to(`game-${gameId}`).emit('typing-indicator', {
-              gameId,
-              userId,
-              isTyping: false,
-              timestamp: new Date().toISOString(),
-            });
-          }, TYPING_INDICATOR_TTL_MS);
-          this.typingExpiryTimers.set(key, t);
+          }
+          if (isTyping) {
+            const t = setTimeout(() => {
+              this.typingExpiryTimers.delete(key);
+              this.io.to(room).emit('typing-indicator', {
+                ...typingPayload,
+                isTyping: false,
+                timestamp: new Date().toISOString(),
+              });
+            }, TYPING_INDICATOR_TTL_MS);
+            this.typingExpiryTimers.set(key, t);
+          }
         }
-      });
+      );
 
       socket.on('chat:message-ack', this.wrapAsync(socket, async (data: { messageId: string; contextType: ChatContextType; contextId: string }) => {
         if (!socket.userId) return;
@@ -566,15 +671,21 @@ class SocketService {
     this.presenceBufferBySocket.delete(socketId);
   }
 
-  private forceTypingOffForUserInGame(gameId: string, userId: string): void {
-    const key = `${gameId}:${userId}`;
+  private forceTypingOffForUserInContext(
+    contextType: ChatContextType,
+    contextId: string,
+    userId: string
+  ): void {
+    const key = `${contextType}:${contextId}:${userId}`;
     const t = this.typingExpiryTimers.get(key);
     if (t) {
       clearTimeout(t);
       this.typingExpiryTimers.delete(key);
     }
-    this.io.to(`game-${gameId}`).emit('typing-indicator', {
-      gameId,
+    const room = this.getChatRoomName(contextType, contextId);
+    this.io.to(room).emit('typing-indicator', {
+      contextType,
+      contextId,
       userId,
       isTyping: false,
       timestamp: new Date().toISOString(),
@@ -584,9 +695,21 @@ class SocketService {
   private clearTypingTimersForUser(userId: string): void {
     const suffix = `:${userId}`;
     for (const key of [...this.typingExpiryTimers.keys()]) {
-      if (key.endsWith(suffix)) {
-        const gameId = key.slice(0, -suffix.length);
-        if (gameId) this.forceTypingOffForUserInGame(gameId, userId);
+      if (!key.endsWith(suffix)) continue;
+      const prefix = key.slice(0, -suffix.length);
+      const firstSep = prefix.indexOf(':');
+      if (firstSep <= 0) continue;
+      const ctStr = prefix.slice(0, firstSep);
+      const cid = prefix.slice(firstSep + 1);
+      if (!cid) continue;
+      const ct = ctStr as ChatContextType;
+      if (
+        ct === ChatContextType.GAME ||
+        ct === ChatContextType.BUG ||
+        ct === ChatContextType.USER ||
+        ct === ChatContextType.GROUP
+      ) {
+        this.forceTypingOffForUserInContext(ct, cid, userId);
       }
     }
   }
@@ -761,6 +884,40 @@ class SocketService {
 
   public emitInviteDeleted(receiverId: string, inviteId: string, gameId?: string) {
     this.io.to(`notify-user-${receiverId}`).emit('invite-deleted', { inviteId, gameId });
+  }
+
+  public emitUserTeamInvite(receiverId: string, payload: unknown) {
+    this.io.to(`notify-user-${receiverId}`).emit('user-team:invite', payload);
+  }
+
+  public emitUserTeamInviteAccepted(ownerId: string, payload: unknown) {
+    this.io.to(`notify-user-${ownerId}`).emit('user-team:invite-accepted', payload);
+  }
+
+  public emitUserTeamInviteDeclined(ownerId: string, payload: unknown) {
+    this.io.to(`notify-user-${ownerId}`).emit('user-team:invite-declined', payload);
+  }
+
+  public emitUserTeamMemberRemoved(userId: string, payload: unknown) {
+    this.io.to(`notify-user-${userId}`).emit('user-team:member-removed', payload);
+  }
+
+  public emitUserTeamUpdated(userIds: string[], payload: unknown) {
+    const seen = new Set<string>();
+    for (const id of userIds) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      this.io.to(`notify-user-${id}`).emit('user-team:updated', payload);
+    }
+  }
+
+  public emitUserTeamDeleted(userIds: string[], teamId: string) {
+    const seen = new Set<string>();
+    for (const id of userIds) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      this.io.to(`notify-user-${id}`).emit('user-team:deleted', { teamId });
+    }
   }
 
   public async emitNewBug() {

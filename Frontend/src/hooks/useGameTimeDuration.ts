@@ -15,7 +15,7 @@ export const getClubTimezone = (club: Club | undefined): string => {
 
 const getCurrentTimeInTimezone = (timezone: string): { date: Date; hour: number; minute: number } => {
   const now = new Date();
-  const formatter = new Intl.DateTimeFormat('en-US', {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone: timezone,
     year: 'numeric',
     month: '2-digit',
@@ -39,7 +39,7 @@ const getCurrentTimeInTimezone = (timezone: string): { date: Date; hour: number;
 };
 
 const isSameDateInTimezone = (date1: Date, date2: Date, timezone: string): boolean => {
-  const formatter = new Intl.DateTimeFormat('en-US', {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone: timezone,
     year: 'numeric',
     month: '2-digit',
@@ -60,7 +60,7 @@ export const createDateFromClubTime = (date: Date, time: string, club: Club | un
   
   const localDate = new Date(dateStr);
   
-  const formatter = new Intl.DateTimeFormat('en-US', {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone: clubTimezone,
     year: 'numeric',
     month: '2-digit',
@@ -84,7 +84,7 @@ export const createDateFromClubTime = (date: Date, time: string, club: Club | un
 
 export const formatTimeInClubTimezone = (date: Date, club: Club | undefined): string => {
   const clubTimezone = getClubTimezone(club);
-  const formatter = new Intl.DateTimeFormat('en-US', {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone: clubTimezone,
     hour: '2-digit',
     minute: '2-digit',
@@ -98,8 +98,8 @@ export const getTimezoneOffsetString = (club: Club | undefined): string => {
   const now = new Date();
   
   try {
-    const utcTime = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
-    const tzTime = new Date(now.toLocaleString('en-US', { timeZone: clubTimezone }));
+    const utcTime = new Date(now.toLocaleString('en-GB', { timeZone: 'UTC' }));
+    const tzTime = new Date(now.toLocaleString('en-GB', { timeZone: clubTimezone }));
     const offsetMs = tzTime.getTime() - utcTime.getTime();
     const offsetHours = offsetMs / (1000 * 60 * 60);
     const sign = offsetHours >= 0 ? '+' : '-';
@@ -139,8 +139,8 @@ export const isTimezoneDifferent = (club: Club | undefined): boolean => {
   const now = new Date();
   const localOffset = -now.getTimezoneOffset() / 60;
   
-  const utcTime = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
-  const clubTime = new Date(now.toLocaleString('en-US', { timeZone: clubTimezone }));
+  const utcTime = new Date(now.toLocaleString('en-GB', { timeZone: 'UTC' }));
+  const clubTime = new Date(now.toLocaleString('en-GB', { timeZone: clubTimezone }));
   const clubOffsetMs = clubTime.getTime() - utcTime.getTime();
   const clubOffset = clubOffsetMs / (1000 * 60 * 60);
   

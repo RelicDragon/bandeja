@@ -4,7 +4,6 @@ import { MessageCircle } from 'lucide-react';
 import { MessageInput } from '@/components/MessageInput';
 import { RequestToChat } from '@/components/chat/RequestToChat';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
-import { isCapacitor } from '@/utils/capacitor';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatMessage, GroupChannel } from '@/api/chat';
 import type { Game, Bug } from '@/types';
@@ -51,28 +50,21 @@ export type GameChatFooterVariant =
 
 export interface GameChatFooterProps {
   visible: boolean;
-  keyboardHeight: number;
   variant: GameChatFooterVariant | null;
 }
 
 export const GameChatFooter: React.FC<GameChatFooterProps> = ({
   visible,
-  keyboardHeight,
   variant,
 }) => {
   const { t } = useTranslation();
   if (!visible) return null;
-  const bottom = isCapacitor() && keyboardHeight > 0 ? `${keyboardHeight}px` : '0px';
-  const paddingBottom = isCapacitor() && keyboardHeight > 0 ? '8px' : 'env(safe-area-inset-bottom)';
   const padStyle = {
     paddingLeft: 'max(1rem, env(safe-area-inset-left))' as const,
     paddingRight: 'max(1rem, env(safe-area-inset-right))' as const,
   };
   return (
-    <footer
-      className="flex-shrink-0 absolute left-0 right-0 bottom-0 z-50 !bg-transparent border-transparent transition-all duration-300"
-      style={{ bottom, paddingBottom }}
-    >
+    <footer className="flex-shrink-0 absolute left-0 right-0 bottom-0 z-50 !bg-transparent border-transparent transition-all duration-300">
       {variant?.type === 'blocked' && (
         <div className="px-4 py-3" style={padStyle}>
           <div className="text-sm text-center text-gray-700 dark:text-gray-300 rounded-[20px] px-4 py-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700">

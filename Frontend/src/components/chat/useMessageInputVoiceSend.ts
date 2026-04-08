@@ -50,6 +50,7 @@ type Params = {
   onCancelReply?: () => void;
   onMessageCreated?: (optimisticId: string, serverMessage: ChatMessage) => void;
   onSendFailed?: (optimisticId: string) => void;
+  onStopTyping?: () => void;
   t: TFunction;
 };
 
@@ -71,6 +72,7 @@ export function useMessageInputVoiceSend({
   onCancelReply,
   onMessageCreated,
   onSendFailed,
+  onStopTyping,
   t,
 }: Params) {
   const [voiceMode, setVoiceMode] = useState(false);
@@ -156,6 +158,7 @@ export function useMessageInputVoiceSend({
             contextId: propContextId!,
             payload: { ...payload, mediaUrls: [], thumbnailUrls: [] },
           });
+          onStopTyping?.();
         }
       } else {
         const ext = result.blob.type.includes('mp4') ? 'm4a' : 'webm';
@@ -199,6 +202,7 @@ export function useMessageInputVoiceSend({
         if (useOptimistic && optimisticId && onMessageCreated) {
           onMessageCreated(optimisticId, created);
         }
+        onStopTyping?.();
       }
       if (finalContextId && userId) {
         const resolvedType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);

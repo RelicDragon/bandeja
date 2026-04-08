@@ -30,7 +30,7 @@ interface PlayerListModalProps {
   onClose: () => void;
   onInviteSent?: () => void;
   multiSelect?: boolean;
-  onConfirm?: (playerIds: string[]) => void;
+  onConfirm?: (playerIds: string[]) => void | Promise<void>;
   preSelectedIds?: string[];
   filterPlayerIds?: string[];
   filterGender?: 'MALE' | 'FEMALE';
@@ -267,8 +267,15 @@ export const PlayerListModal = ({
     if (selectedIds.length === 0) return;
 
     if (!gameId) {
-      onConfirm?.(selectedIds);
-      handleClose();
+      setInviting('confirming');
+      try {
+        await Promise.resolve(onConfirm?.(selectedIds));
+        handleClose();
+      } catch {
+        // keep modal open
+      } finally {
+        setInviting(null);
+      }
       return;
     }
 

@@ -7,7 +7,7 @@ import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 const DIALOG_OVERLAY_CLASS =
   'dialog-overlay-animate fixed inset-0 z-50 bg-black/80';
 const DIALOG_CONTENT_CLASS =
-  'dialog-content-animate fixed left-[50%] top-[50%] z-50 w-[90vw] max-w-[420px] max-h-[85vh] translate-x-[-50%] translate-y-[-50%] flex flex-col overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-2xl focus:outline-none';
+  'cap-keyboard-aware-dialog dialog-content-animate fixed left-[50%] top-[50%] z-50 w-[90vw] max-w-[420px] max-h-[85vh] translate-x-[-50%] translate-y-[-50%] flex flex-col overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-2xl focus:outline-none';
 
 interface DialogProps {
   open: boolean;

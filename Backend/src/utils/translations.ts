@@ -1,12 +1,12 @@
 import { format, Locale } from 'date-fns';
-import { enUS } from 'date-fns/locale/en-US';
+import { enGB } from 'date-fns/locale/en-GB';
 import { ru } from 'date-fns/locale/ru';
 import { sr } from 'date-fns/locale/sr';
 import { es } from 'date-fns/locale/es';
 import { cs } from 'date-fns/locale/cs';
 
 const localeMap: Record<string, Locale> = {
-  en: enUS,
+  en: enGB,
   ru: ru,
   sr: sr,
   es: es,
@@ -947,7 +947,8 @@ export const t = (key: string, lang: string = 'en'): string => {
 };
 
 export const formatDate = (date: Date | string, formatStr: string, lang: string = 'en'): string => {
-  const locale = localeMap[lang] || enUS;
+  const base = (lang || 'en').split('-')[0].toLowerCase();
+  const locale = localeMap[base] || enGB;
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   return format(dateObj, formatStr, { locale });
 };

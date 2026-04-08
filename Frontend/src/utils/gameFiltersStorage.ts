@@ -13,6 +13,12 @@ export interface GameFilters {
   listViewStartDate?: string;
   calendarSelectedDate?: string;
   dateSavedAt?: number;
+  filtersPanelOpen?: boolean;
+  filterClubIds?: string[];
+  filterTimeStart?: string;
+  filterTimeEnd?: string;
+  filterLevelMin?: number;
+  filterLevelMax?: number;
 }
 
 const DEFAULT_FILTERS: GameFilters = {
@@ -22,6 +28,12 @@ const DEFAULT_FILTERS: GameFilters = {
   tournamentFilter: false,
   leaguesFilter: false,
   activeTab: 'calendar',
+  filtersPanelOpen: false,
+  filterClubIds: [],
+  filterTimeStart: '00:00',
+  filterTimeEnd: '24:00',
+  filterLevelMin: 1.0,
+  filterLevelMax: 7.0,
 };
 
 export const getGameFilters = async (): Promise<GameFilters> => {

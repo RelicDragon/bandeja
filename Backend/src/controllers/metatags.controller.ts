@@ -79,7 +79,7 @@ const generateGameMetaTags = (game: any): string => {
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Bandeja Padel">
     <meta property="og:url" content="${pageUrl}">
-    <meta property="og:locale" content="en_US">
+    <meta property="og:locale" content="en_GB">
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${description}">
     

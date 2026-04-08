@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
-import { enUS, ru, es, sr, cs, Locale } from 'date-fns/locale';
+import { enGB, ru, es, sr, cs, Locale } from 'date-fns/locale';
 import { Calendar, X, Star } from 'lucide-react';
 import { Button, Card, Select, CalendarComponent, PlayerLevelSection } from '@/components';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
@@ -47,7 +47,7 @@ const ALL_DAYS_OF_WEEK = [
 const ENTITY_TYPES: EntityType[] = ['GAME', 'TOURNAMENT', 'BAR', 'TRAINING'];
 
 const localeMap: Record<string, Locale> = {
-  en: enUS,
+  en: enGB,
   ru: ru,
   es: es,
   sr: sr,
@@ -64,7 +64,7 @@ export const GameSubscriptionForm = ({
   const { translateCity } = useTranslatedGeo();
   const user = useAuthStore((state) => state.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
-  const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enUS, [i18n.language]);
+  const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enGB, [i18n.language]);
   
   const daysOfWeek = useMemo(() => {
     const baseDays = displaySettings.weekStart === 1

@@ -141,6 +141,8 @@ model User {
   reviewsGiven            TrainerReview[]      @relation("TrainerReviewsGiven")
   gameWorkoutSummaries    GameWorkoutSummary[]
   telegramLinkIntents     TelegramAccountLinkIntent[]
+  ownedUserTeams          UserTeam[]                    @relation("UserTeamOwner")
+  userTeamMemberships     UserTeamMember[]
 
   @@index([phone])
   @@index([telegramId])
@@ -184,7 +186,7 @@ model City {
   isCorrect              Boolean  @default(false)
   telegramGroupId        String?
   telegramPinnedMessageId String?
-  telegramPinnedLanguage String   @default("en-US")
+  telegramPinnedLanguage String   @default("en-GB")
   isActive               Boolean  @default(true)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
@@ -932,6 +934,46 @@ model BlockedUser {
   @@unique([userId, blockedUserId])
   @@index([userId])
   @@index([blockedUserId])
+}
+
+model UserTeam {
+  id             String           @id @default(cuid())
+  name           String
+  avatar         String?
+  originalAvatar String?
+  cutAngle       Float            @default(45)
+  ownerId        String
+  size           Int              @default(2)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  owner          User             @relation("UserTeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members        UserTeamMember[]
+
+  @@index([ownerId])
+}
+
+model UserTeamMember {
+  id        String               @id @default(cuid())
+  teamId    String
+  userId    String
+  status    UserTeamMemberStatus @default(PENDING)
+  isOwner   Boolean              @default(false)
+  joinedAt  DateTime?
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  team      UserTeam             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+  @@index([status])
+}
+
+enum UserTeamMemberStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }
 
 enum Gender {

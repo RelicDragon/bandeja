@@ -1,0 +1,226 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { ChevronDown, Loader2, Plus, X } from 'lucide-react';
+import { ConfirmationModal, TeamAvatar } from '@/components';
+import { useAuthStore } from '@/store/authStore';
+import { useUserTeamsStore } from '@/store/userTeamsStore';
+import { userTeamsApi } from '@/api';
+import type { UserTeam } from '@/types';
+import toast from 'react-hot-toast';
+import { toastApiError } from '@/utils/toastApiError';
+
+function isSoloAcceptedTeam(team: UserTeam, userId: string | undefined): boolean {
+  if (!userId) return false;
+  const accepted = (team.members ?? []).filter((m) => m.status === 'ACCEPTED');
+  return accepted.length === 1 && accepted[0].userId === userId;
+}
+import {
+  hydrateUserTeamsHomeExpandedFromIdb,
+  persistUserTeamsHomeExpanded,
+  readUserTeamsHomeExpandedSync,
+} from '@/utils/userTeamsHomeSectionStorage';
+
+interface UserTeamsHomeSectionProps {
+  className?: string;
+}
+
+export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionProps) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const { teams, memberships, refreshAll, isLoading, removeTeamLocal } = useUserTeamsStore();
+  const [creating, setCreating] = useState(false);
+  const [expanded, setExpanded] = useState(readUserTeamsHomeExpandedSync);
+  const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null);
+  const [deletingTeam, setDeletingTeam] = useState(false);
+
+  useEffect(() => {
+    refreshAll();
+  }, [refreshAll]);
+
+  useEffect(() => {
+    let cancel = false;
+    void hydrateUserTeamsHomeExpandedFromIdb().then((v) => {
+      if (!cancel) setExpanded(v);
+    });
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  const pending = useMemo(
+    () => memberships.filter((m) => !m.isOwner && m.status === 'PENDING'),
+    [memberships]
+  );
+
+  const totalTiles = teams.length + pending.length;
+  const showSkeleton = isLoading && teams.length === 0 && pending.length === 0;
+
+  const handleNewTeam = async () => {
+    setCreating(true);
+    try {
+      const team = await userTeamsApi.create({});
+      useUserTeamsStore.getState().setTeam(team);
+      await refreshAll();
+      navigate(`/user-team/${team.id}`);
+    } catch (e: unknown) {
+      toastApiError(t, e);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleConfirmDeleteTeam = async () => {
+    if (!deleteTeamId) return;
+    setDeletingTeam(true);
+    try {
+      await userTeamsApi.delete(deleteTeamId);
+      removeTeamLocal(deleteTeamId);
+      toast.success(t('teams.deleted'));
+      setDeleteTeamId(null);
+    } catch (e: unknown) {
+      toastApiError(t, e);
+    } finally {
+      setDeletingTeam(false);
+    }
+  };
+
+  return (
+    <section className={`overflow-hidden rounded-3xl px-3 py-2 ${className}`}>
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-2 rounded-2xl py-0.5 text-left transition-colors hover:bg-zinc-500/[0.06] active:bg-zinc-500/[0.08] dark:hover:bg-white/[0.05] dark:active:bg-white/[0.07]"
+        onClick={() =>
+          setExpanded((v) => {
+            const next = !v;
+            persistUserTeamsHomeExpanded(next);
+            return next;
+          })
+        }
+        aria-expanded={expanded}
+      >
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <h3 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t('teams.title')}</h3>
+          {!showSkeleton && totalTiles > 0 && (
+            <span className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-zinc-900/5 px-2 text-xs font-semibold tabular-nums text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
+              {totalTiles}
+            </span>
+          )}
+        </div>
+        <ChevronDown
+          size={22}
+          strokeWidth={2}
+          className={`shrink-0 text-zinc-500 transition-transform duration-300 ease-out dark:text-zinc-400 ${expanded ? '' : '-rotate-90'}`}
+          aria-hidden
+        />
+      </button>
+
+      <div
+        className="grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none"
+        style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <button
+              type="button"
+              className="group flex min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-dashed border-zinc-300/90 bg-transparent py-3.5 text-center shadow-none transition-[transform,background-color,border-color] duration-200 hover:border-primary-400/70 hover:bg-primary-500/[0.04] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:hover:border-primary-500/50 dark:hover:bg-primary-400/[0.06]"
+              onClick={handleNewTeam}
+              disabled={creating}
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-900 text-white shadow-md transition group-hover:bg-primary-600 dark:bg-zinc-100 dark:text-zinc-900 dark:group-hover:bg-primary-400 dark:group-hover:text-zinc-950">
+                {creating ? <Loader2 size={20} className="animate-spin" /> : <Plus size={22} strokeWidth={2} />}
+              </span>
+              <div className="flex min-h-[2.5rem] w-full flex-col justify-start px-1">
+                <span className="line-clamp-2 whitespace-pre-line text-[11px] font-semibold leading-tight text-zinc-800 dark:text-zinc-200">
+                  {t('teams.create')}
+                </span>
+              </div>
+            </button>
+
+            {pending.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => navigate(`/user-team/${m.teamId}`)}
+                className="flex min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-amber-200/80 bg-white py-3.5 text-center shadow-lg shadow-gray-900/5 transition-[transform,box-shadow,border-color] duration-200 hover:border-amber-300 hover:shadow-md active:scale-[0.98] dark:border-amber-500/35 dark:bg-gray-800 dark:shadow-black/20 dark:hover:border-amber-500/50"
+              >
+                <span className="relative flex h-11 w-11 shrink-0 items-center justify-center">
+                  <TeamAvatar team={m.team} size="tile" />
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500 dark:border-gray-800" />
+                </span>
+                <div className="flex min-h-[2.5rem] w-full flex-col justify-start px-1">
+                  <span className="line-clamp-2 text-[11px] font-semibold leading-tight text-amber-950 dark:text-amber-50">
+                    {m.team.name}
+                  </span>
+                </div>
+              </button>
+            ))}
+
+            {teams.map((team) => {
+              const showSoloDelete = isSoloAcceptedTeam(team, user?.id);
+              return (
+                <div
+                  key={team.id}
+                  className="relative min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start"
+                >
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/user-team/${team.id}`)}
+                    className="flex w-full flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white py-3.5 text-center shadow-lg shadow-gray-900/5 transition-[transform,box-shadow,border-color] duration-200 hover:border-gray-300 hover:shadow-md active:scale-[0.98] dark:border-gray-700 dark:bg-gray-800 dark:shadow-black/20 dark:hover:border-gray-600"
+                  >
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center">
+                      <TeamAvatar team={team} size="tile" />
+                    </span>
+                    <div className="flex min-h-[2.5rem] w-full flex-col justify-start px-1">
+                      <span className="line-clamp-2 text-[11px] font-semibold leading-tight text-zinc-900 dark:text-zinc-50">
+                        {team.name}
+                      </span>
+                    </div>
+                  </button>
+                  {showSoloDelete && (
+                    <button
+                      type="button"
+                      className="absolute -right-0.5 -top-0.5 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-zinc-500 shadow-md transition hover:bg-red-50 hover:text-red-600 dark:border-gray-600 dark:bg-gray-800 dark:text-zinc-400 dark:hover:bg-red-950/50 dark:hover:text-red-400"
+                      aria-label={t('teams.deleteTeam')}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDeleteTeamId(team.id);
+                      }}
+                    >
+                      <X size={14} strokeWidth={2.5} aria-hidden />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+
+            {showSkeleton && (
+              <div className="flex min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start flex-col items-center gap-2 py-3.5">
+                <div className="h-11 w-11 shrink-0 animate-pulse rounded-2xl bg-zinc-200/90 dark:bg-zinc-700/80" />
+                <div className="flex min-h-[2.5rem] w-full items-start justify-center px-1 pt-0.5">
+                  <div className="h-2.5 w-12 animate-pulse rounded-md bg-zinc-200/90 dark:bg-zinc-700/80" />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {deleteTeamId && (
+        <ConfirmationModal
+          isOpen
+          onClose={() => !deletingTeam && setDeleteTeamId(null)}
+          title={t('teams.deleteTeam')}
+          message={t('teams.deleteTeamConfirm')}
+          confirmVariant="danger"
+          confirmText={t('teams.deleteTeam')}
+          isLoading={deletingTeam}
+          closeOnConfirm={false}
+          onConfirm={() => void handleConfirmDeleteTeam()}
+        />
+      )}
+    </section>
+  );
+}

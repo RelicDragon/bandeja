@@ -351,7 +351,7 @@ class CurrencyService {
     const noDecimalCurrencies: PriceCurrency[] = ['JPY', 'KRW', 'IDR'];
     const decimals = noDecimalCurrencies.includes(currency) ? 0 : 2;
 
-    const formatted = amount.toLocaleString('en-US', {
+    const formatted = amount.toLocaleString('en-GB', {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     });

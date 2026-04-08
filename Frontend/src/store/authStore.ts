@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthState>((set) => {
       set({ user, token, isAuthenticated: true });
       syncTokenToNative(token);
 
-      const deviceLocale = navigator.language || 'en-US';
+      const deviceLocale = navigator.language || 'en-GB';
       const normalizedLanguage = normalizeLanguageForProfile(user.language);
       const needsLanguageNormalization = user.language && normalizedLanguage !== user.language;
       const needsUpdate =

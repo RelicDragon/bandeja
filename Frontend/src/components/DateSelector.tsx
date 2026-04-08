@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { format, addDays, isToday, isTomorrow } from 'date-fns';
-import { enUS, ru, es, sr, cs } from 'date-fns/locale';
+import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 
 interface DateSelectorProps {
@@ -15,7 +15,7 @@ interface DateSelectorProps {
 }
 
 const localeMap = {
-  en: enUS,
+  en: enGB,
   ru: ru,
   es: es,
   sr: sr,
@@ -34,7 +34,7 @@ export const DateSelector = ({ selectedDate, onDateSelect, onCalendarClick, show
   const { t, i18n } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
-  const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enUS, [i18n.language]);
+  const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enGB, [i18n.language]);
   const dateFormat = useMemo(() => dateFormatMap[i18n.language] || 'MM/dd/yyyy', [i18n.language]);
   
   useEffect(() => {

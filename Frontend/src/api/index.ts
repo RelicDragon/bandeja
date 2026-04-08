@@ -17,5 +17,6 @@ export * from './transactions';
 export * from './ranking';
 export * from './userGameNotes';
 export * from './currency';
+export * from './userTeams';
 export { default as api } from './axios';
 

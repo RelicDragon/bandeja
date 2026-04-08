@@ -1,5 +1,5 @@
 export interface DisplayPreferences {
-  language?: string; // Full locale (e.g., "en-US", "ru-RU") or "auto"
+  language?: string; // Full locale (e.g., "en-GB", "ru-RU") or "auto"
   timeFormat?: 'auto' | '12h' | '24h';
   weekStart?: 'auto' | 'monday' | 'sunday';
 }
@@ -40,7 +40,7 @@ export function detectWeekStart(locale: string): 'sunday' | 'monday' {
 export function resolveDisplaySettings(
   prefs: DisplayPreferences | null | undefined
 ): ResolvedDisplaySettings {
-  const deviceLocale = navigator.language || 'en-US';
+  const deviceLocale = navigator.language || 'en-GB';
 
   if (!prefs) {
     return {
@@ -91,9 +91,9 @@ export function formatGameTime(
     console.error('Error formatting game time:', error);
     const date = new Date(utcDate);
     if (settings.hour12) {
-      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      return date.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true });
     } else {
-      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+      return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
     }
   }
 }
@@ -106,7 +106,7 @@ export function normalizeLanguageForProfile(locale: string | null | undefined): 
   const langCode = locale.toLowerCase().split('-')[0];
   
   const languageMap: Record<string, string> = {
-    'en': 'en-US',
+    'en': 'en-GB',
     'ru': 'ru-RU',
     'sr': 'sr-RS',
     'es': 'es-ES',
@@ -117,7 +117,7 @@ export function normalizeLanguageForProfile(locale: string | null | undefined): 
     return languageMap[langCode];
   }
   
-  const validLocales = ['en-US', 'en-GB', 'ru-RU', 'sr-RS', 'es-ES', 'cs-CZ', 'auto'];
+  const validLocales = ['en-GB', 'en-US', 'ru-RU', 'sr-RS', 'es-ES', 'cs-CZ', 'auto'];
   if (validLocales.includes(locale)) {
     return locale;
   }

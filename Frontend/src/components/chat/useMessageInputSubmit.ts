@@ -72,6 +72,7 @@ type Params = {
   queueSendRef: React.MutableRefObject<boolean>;
   onImageBatchUploadFailed?: (failedIndices: number[], recoveredFiles: File[]) => void;
   onClearImageUploadFailures?: () => void;
+  onStopTyping?: () => void;
 };
 
 export function useMessageInputSubmit(params: Params) {
@@ -139,6 +140,7 @@ export function useMessageInputSubmit(params: Params) {
           });
           p.onEditMessage(updated);
         }
+        p.onStopTyping?.();
         p.setMessage('');
         p.setMentionIds([]);
         p.clearTranslationOriginals();
@@ -165,6 +167,7 @@ export function useMessageInputSubmit(params: Params) {
               mentionIds: [...p.mentionIds],
               editedAt: new Date().toISOString(),
             });
+            p.onStopTyping?.();
             p.setMessage('');
             p.setMentionIds([]);
             p.clearTranslationOriginals();
@@ -226,6 +229,7 @@ export function useMessageInputSubmit(params: Params) {
     if (useOptimistic) {
       optimisticId = p.onOptimisticMessage!(payload, filesSnapshot.length ? filesSnapshot : undefined);
       if (optimisticId) {
+        p.onStopTyping?.();
         p.onMessageSent?.();
         p.setMessage('');
         p.setMentionIds([]);
@@ -240,6 +244,7 @@ export function useMessageInputSubmit(params: Params) {
       }
     } else {
       p.setIsLoading(true);
+      p.onStopTyping?.();
       p.onMessageSent?.();
     }
 
@@ -299,6 +304,7 @@ export function useMessageInputSubmit(params: Params) {
           await clearDraftAfterSend();
           p.onClearImageUploadFailures?.();
           if (!useOptimistic) {
+            p.onStopTyping?.();
             p.setMessage('');
             p.setMentionIds([]);
             p.setSelectedImages([]);

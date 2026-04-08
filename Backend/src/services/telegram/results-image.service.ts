@@ -11,7 +11,7 @@ interface Game {
   rounds?: any[];
 }
 
-export async function generateResultsImage(game: Game, language: string = 'en-US'): Promise<Buffer> {
+export async function generateResultsImage(game: Game, language: string = 'en-GB'): Promise<Buffer> {
   let browser;
   
   try {

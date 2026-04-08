@@ -412,6 +412,16 @@ function AppContent() {
           }
         />
         <Route
+          path="/user-team/:id"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                <MainPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/leaderboard"
           element={
             <ProtectedRoute>

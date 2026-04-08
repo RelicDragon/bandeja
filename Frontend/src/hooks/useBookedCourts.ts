@@ -179,7 +179,7 @@ export const useBookedCourts = ({
 
 const formatTimeInClubTimezone = (date: Date, club?: Club): string => {
   const clubTimezone = getClubTimezone(club);
-  const formatter = new Intl.DateTimeFormat('en-US', {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone: clubTimezone,
     hour: '2-digit',
     minute: '2-digit',

@@ -141,7 +141,7 @@ function getTranslations(language: string): Record<string, string> {
   return translations[langCode] || translations.en;
 }
 
-export function generateResultsHTML(game: Game, language: string = 'en-US'): string {
+export function generateResultsHTML(game: Game, language: string = 'en-GB'): string {
   const t = getTranslations(language);
   const outcomes = [...game.outcomes].sort((a, b) => {
     if (a.position && b.position) return a.position - b.position;

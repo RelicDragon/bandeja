@@ -16,6 +16,7 @@ import { GameSubscriptionsContent } from './GameSubscriptions';
 import { MarketplaceList } from './MarketplaceList';
 import { MarketplaceItemRedirect } from './MarketplaceItemRedirect';
 import { CreateMarketItem } from './CreateMarketItem';
+import { UserTeamPage } from './UserTeamPage';
 
 function MarketplaceContent() {
   const location = useLocation();
@@ -45,6 +46,12 @@ export const MainPage = () => {
     (currentPage === 'find' && findViewMode === 'calendar')
   );
 
+  const scrollablePage = currentPage === 'my' || currentPage === 'find';
+  const isTeamsPage = currentPage === 'teams';
+  const teamsShellHeightClass = bottomTabsVisible
+    ? 'h-[calc(100dvh-12.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] max-h-[calc(100dvh-12.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]'
+    : 'h-[calc(100dvh-7.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] max-h-[calc(100dvh-7.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]';
+
   const renderContent = useMemo(() => {
     switch (currentPage) {
       case 'my':
@@ -63,6 +70,8 @@ export const MainPage = () => {
         return <GameSubscriptionsContent />;
       case 'marketplace':
         return <MarketplaceContent />;
+      case 'teams':
+        return <UserTeamPage />;
       default:
         return <MyTab />;
     }
@@ -111,11 +120,17 @@ export const MainPage = () => {
 
   return (
     <MainLayout>
-      <div className={`relative px-2 
-        ${currentPage !== 'my' && currentPage != 'find' 
-          ?'overflow-hidden':''}`} 
-          style={{ paddingBottom: bottomTabsVisible ? '5rem' : '0' }}>
-        <div className="transition-all duration-300 ease-in-out opacity-100 transform translate-x-0">
+      <div
+        className={`relative px-2 ${!scrollablePage ? 'min-h-0 overflow-hidden' : ''} ${
+          isTeamsPage ? `flex flex-col ${teamsShellHeightClass}` : ''
+        }`}
+        style={{ paddingBottom: bottomTabsVisible && !isTeamsPage ? '5rem' : '0' }}
+      >
+        <div
+          className={`transition-all duration-300 ease-in-out transform translate-x-0 opacity-100 ${
+            isTeamsPage ? 'flex min-h-0 flex-1 flex-col overflow-hidden' : ''
+          }`}
+        >
           {renderContent}
         </div>
       </div>

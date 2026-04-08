@@ -7,7 +7,7 @@ const FULL_SCREEN_OVERLAY_CLASS =
   'fixed inset-0 z-50 bg-black/80 transition-opacity duration-200 data-[state=open]:opacity-100 data-[state=closed]:opacity-0';
 
 const FULL_SCREEN_CONTENT_CLASS =
-  'fixed inset-0 z-50 flex flex-col focus:outline-none';
+  'fullscreen-dialog-root fixed inset-0 z-50 flex flex-col min-h-0 focus:outline-none';
 
 interface FullScreenDialogProps {
   open: boolean;
@@ -65,7 +65,9 @@ export const FullScreenDialog = ({
               aria-hidden
             />
           )}
-          <div className={`relative z-10 flex-1 flex flex-col ${closeOnInteractOutside ? 'pointer-events-none' : ''}`}>
+          <div
+            className={`cap-fullscreen-dialog-body relative z-10 min-h-0 flex-1 flex flex-col overflow-y-auto ${closeOnInteractOutside ? 'pointer-events-none' : ''}`}
+          >
             {children}
           </div>
         </DialogPrimitive.Content>

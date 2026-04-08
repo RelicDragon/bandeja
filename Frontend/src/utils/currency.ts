@@ -76,7 +76,7 @@ export function formatPrice(priceCents: number | null | undefined, currency: Pri
   const info = CURRENCY_INFO[currency];
   const amount = priceCents / 100;
 
-  const formatted = amount.toLocaleString('en-US', {
+  const formatted = amount.toLocaleString('en-GB', {
     minimumFractionDigits: info.decimals,
     maximumFractionDigits: info.decimals,
   });
