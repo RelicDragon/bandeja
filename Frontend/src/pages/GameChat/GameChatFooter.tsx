@@ -64,7 +64,10 @@ export const GameChatFooter: React.FC<GameChatFooterProps> = ({
     paddingRight: 'max(1rem, env(safe-area-inset-right))' as const,
   };
   return (
-    <footer className="flex-shrink-0 absolute left-0 right-0 bottom-0 z-50 !bg-transparent border-transparent transition-all duration-300">
+    <footer
+      data-cap-chat-composer
+      className="flex-shrink-0 absolute left-0 right-0 bottom-0 z-50 !bg-transparent border-transparent transition-all duration-300"
+    >
       {variant?.type === 'blocked' && (
         <div className="px-4 py-3" style={padStyle}>
           <div className="text-sm text-center text-gray-700 dark:text-gray-300 rounded-[20px] px-4 py-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700">

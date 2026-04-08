@@ -13,7 +13,7 @@ const MAX_KEYBOARD_INSET_RATIO = 0.92;
 const SCROLL_FOCUSED_INPUT_MS = 120;
 
 const isInsideChatComposerFooter = (el: HTMLElement | null) =>
-  !!el?.closest('.chat-container footer');
+  !!el?.closest('[data-cap-chat-composer], .chat-container footer');
 
 const resetAppRootScrollIfChatInput = () => {
   if (!isInsideChatComposerFooter(currentFocusedInput)) return;
@@ -23,10 +23,21 @@ const resetAppRootScrollIfChatInput = () => {
 };
 
 const resetKeyboardLayoutUi = () => {
+  if (scrollFocusedInputTimer) {
+    clearTimeout(scrollFocusedInputTimer);
+    scrollFocusedInputTimer = null;
+  }
   document.body.classList.remove('keyboard-visible');
   lastPluginKeyboardInsetPx = 0;
   currentFocusedInput = null;
   syncKeyboardLayoutFromViewport();
+};
+
+const applyVisualViewportCssVars = () => {
+  const vv = window.visualViewport;
+  if (!vv || !document.documentElement) return;
+  document.documentElement.style.setProperty('--vv-height', `${Math.round(vv.height)}px`);
+  document.documentElement.style.setProperty('--vv-offset-top', `${Math.round(vv.offsetTop)}px`);
 };
 
 export const syncKeyboardLayoutFromViewport = () => {
@@ -43,10 +54,7 @@ export const syncKeyboardLayoutFromViewport = () => {
   const effective = Math.min(raw, maxInset);
 
   document.documentElement.style.setProperty('--keyboard-height', `${effective}px`);
-  if (vv) {
-    document.documentElement.style.setProperty('--vv-height', `${Math.round(vv.height)}px`);
-    document.documentElement.style.setProperty('--vv-offset-top', `${Math.round(vv.offsetTop)}px`);
-  }
+  applyVisualViewportCssVars();
 };
 
 const isEditableFocusTarget = (el: HTMLElement) => {
@@ -108,10 +116,18 @@ export const setAndroidViewportVars = () => {
   document.documentElement.style.setProperty('--viewport-height', `${h}px`);
 };
 
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 const scrollInputIntoViewIfAble = (el: HTMLElement | null) => {
   if (!el) return;
   if (isInsideChatComposerFooter(el)) return;
-  el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+  el.scrollIntoView({
+    behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    block: 'nearest',
+    inline: 'nearest',
+  });
 };
 
 const scheduleScrollFocusedInput = () => {
@@ -306,7 +322,6 @@ export const setupBrowserKeyboardDetection = () => {
   if (window.visualViewport) {
     const handleViewportChange = () => {
       const viewport = window.visualViewport!;
-      syncKeyboardLayoutFromViewport();
       const heightDifference = initialViewportHeight - viewport.height;
 
       if (heightDifference > KEYBOARD_THRESHOLD && !isKeyboardVisible) {
@@ -315,6 +330,13 @@ export const setupBrowserKeyboardDetection = () => {
       } else if (heightDifference <= KEYBOARD_THRESHOLD && isKeyboardVisible) {
         isKeyboardVisible = false;
         document.body.classList.remove('keyboard-visible');
+      }
+
+      if (document.body.classList.contains('keyboard-visible')) {
+        syncKeyboardLayoutFromViewport();
+      } else {
+        document.documentElement.style.setProperty('--keyboard-height', '0px');
+        applyVisualViewportCssVars();
       }
     };
 
@@ -346,13 +368,22 @@ export const setupBrowserKeyboardDetection = () => {
     const updateKeyboardState = () => {
       const currentHeight = window.innerHeight;
       const heightDifference = initialViewportHeight - currentHeight;
-      
+
       if (heightDifference > KEYBOARD_THRESHOLD && !isKeyboardVisible) {
         isKeyboardVisible = true;
         document.body.classList.add('keyboard-visible');
       } else if (heightDifference <= KEYBOARD_THRESHOLD && isKeyboardVisible) {
         isKeyboardVisible = false;
         document.body.classList.remove('keyboard-visible');
+      }
+
+      if (document.body.classList.contains('keyboard-visible')) {
+        const innerH = window.innerHeight || 0;
+        const maxInset = innerH > 0 ? Math.round(innerH * MAX_KEYBOARD_INSET_RATIO) : 10_000;
+        const approx = Math.min(Math.max(0, heightDifference), maxInset);
+        document.documentElement.style.setProperty('--keyboard-height', `${approx}px`);
+      } else {
+        document.documentElement.style.setProperty('--keyboard-height', '0px');
       }
     };
 

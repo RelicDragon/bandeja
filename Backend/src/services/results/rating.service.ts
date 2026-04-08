@@ -31,7 +31,7 @@ const MAX_MULTIPLIER = 2.0;
 const CLOSE_MATCH_THRESHOLD = 3;
 const BLOWOUT_THRESHOLD = 15;
 
-const ELO_SCALING_FACTOR = 1.7;
+const ELO_SCALING_FACTOR = 0.8;
 const HIGH_LEVEL_THRESHOLD = 5.0;
 const MAX_ACHIEVABLE_LEVEL = 6.8;
 
@@ -43,7 +43,7 @@ export function calculateEnduranceCoefficient(
     return 0.5;
   }
 
-  return ballsInGames ? 0.5 : 0.05;
+  return ballsInGames ? 0.5 : 0.1;
 }
 
 export function calculateReliabilityChange(
@@ -129,7 +129,7 @@ export function calculateRatingUpdate(
 
   const performanceDifference = actualScore - expectedWinProbability;
   
-  const K_FACTOR = 10.0;
+  const K_FACTOR = 15.0;
   let baseLevelChange = K_FACTOR * BASE_LEVEL_CHANGE * performanceDifference;
 
   let multiplier = 1.0;

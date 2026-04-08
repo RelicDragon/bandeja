@@ -334,7 +334,7 @@ body {
   background-color: #111827;
 }
 
-.capacitor-android html {
+html:has(body.capacitor-android) {
   min-width: 100%;
   width: 100%;
   min-height: 100vh;
@@ -342,8 +342,8 @@ body {
   min-height: 100dvh;
 }
 
-.capacitor-android body,
-.capacitor-android #root {
+body.capacitor-android,
+body.capacitor-android #root {
   min-width: 100%;
   width: 100%;
   min-height: 100vh;
@@ -1058,8 +1058,8 @@ body.keyboard-visible #root {
 }
 
 /* Modern keyboard handling for iOS/Android with rounded corners */
-.capacitor-ios body.keyboard-visible,
-.capacitor-android body.keyboard-visible {
+body.capacitor-ios.keyboard-visible,
+body.capacitor-android.keyboard-visible {
   height: 100vh;
   height: 100dvh;
   max-height: 100vh;
@@ -1067,8 +1067,8 @@ body.keyboard-visible #root {
 }
 
 /* Handle keyboard rounded corners gap - add subtle padding to fill the space */
-.capacitor-ios .keyboard-visible footer,
-.capacitor-android .keyboard-visible footer {
+body.capacitor-ios.keyboard-visible footer,
+body.capacitor-android.keyboard-visible footer {
   /* Add padding to account for keyboard rounded corners (typically ~12-16px) */
   padding-bottom: max(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)), 12px);
 }
@@ -1088,12 +1088,12 @@ body.keyboard-visible #root {
 }
 
 /* Centered Radix dialogs: shift into visible area above keyboard */
-.capacitor-ios body.keyboard-visible .dialog-content-animate,
-.capacitor-android body.keyboard-visible .dialog-content-animate,
-.capacitor-ios body.keyboard-visible .cap-keyboard-aware-dialog,
-.capacitor-android body.keyboard-visible .cap-keyboard-aware-dialog,
-.capacitor-ios body.keyboard-visible .modal-content,
-.capacitor-android body.keyboard-visible .modal-content {
+body.capacitor-ios.keyboard-visible .dialog-content-animate,
+body.capacitor-android.keyboard-visible .dialog-content-animate,
+body.capacitor-ios.keyboard-visible .cap-keyboard-aware-dialog,
+body.capacitor-android.keyboard-visible .cap-keyboard-aware-dialog,
+body.capacitor-ios.keyboard-visible .modal-content,
+body.capacitor-android.keyboard-visible .modal-content {
   top: max(
     calc(env(safe-area-inset-top, 0px) + 4px),
     calc(50% - var(--keyboard-height, 0px) / 2)
@@ -1112,8 +1112,8 @@ body.keyboard-visible #root {
     max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.capacitor-ios body.keyboard-visible .fullscreen-dialog-root .cap-fullscreen-dialog-body,
-.capacitor-android body.keyboard-visible .fullscreen-dialog-root .cap-fullscreen-dialog-body {
+body.capacitor-ios.keyboard-visible .fullscreen-dialog-root .cap-fullscreen-dialog-body,
+body.capacitor-android.keyboard-visible .fullscreen-dialog-root .cap-fullscreen-dialog-body {
   padding-bottom: var(--keyboard-height, 0px);
 }
 
@@ -1273,8 +1273,8 @@ input[type="range"].slider:disabled::-moz-range-thumb {
   transition: padding-bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.capacitor-ios body.keyboard-visible .keyboard-safe-container,
-.capacitor-android body.keyboard-visible .keyboard-safe-container {
+body.capacitor-ios.keyboard-visible .keyboard-safe-container,
+body.capacitor-android.keyboard-visible .keyboard-safe-container {
   /* Automatically add padding when keyboard is visible to fill rounded corner gap */
   padding-bottom: 16px;
 }
@@ -1285,17 +1285,12 @@ input[type="range"].slider:disabled::-moz-range-thumb {
   transition: padding-bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.capacitor-ios body.keyboard-visible .keyboard-safe-padding,
-.capacitor-android body.keyboard-visible .keyboard-safe-padding {
+body.capacitor-ios.keyboard-visible .keyboard-safe-padding,
+body.capacitor-android.keyboard-visible .keyboard-safe-padding {
   padding-bottom: 12px;
 }
 
-/* Prevent pull-to-refresh on iOS */
-.capacitor-ios body {
-  overscroll-behavior-y: none;
-}
-
-.capacitor-ios html {
+html:has(body.capacitor-ios) {
   overscroll-behavior-y: none;
 }
 
