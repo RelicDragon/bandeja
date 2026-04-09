@@ -99,6 +99,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [isTogglingMute, setIsTogglingMute] = useState(false);
   const [translateToLanguageForChat, setTranslateToLanguageForChat] = useState<string | null>(null);
   const [hasSetDefaultChatType, setHasSetDefaultChatType] = useState(false);
+  const [chatNearBottom, setChatNearBottom] = useState(true);
 
   const effectiveChatType = useMemo(
     () => (contextType === 'GAME' ? normalizeChatType(currentChatType) : 'PUBLIC') as ChatType,
@@ -170,6 +171,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     if (!id) return;
     await loadMessages(false, contextType === 'GAME' ? effectiveChatType : undefined);
   }, [id, contextType, effectiveChatType, loadMessages]);
+
+  const scrollToBottomSmooth = useCallback(() => {
+    messageListRef.current?.scrollToBottomSmooth();
+  }, []);
 
   const derived = useGameChatDerived({
     game,
@@ -452,6 +457,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     handleEditMessage,
     handleScrollToMessage,
     handleJoinAsGuest,
+    chatNearBottom,
+    scrollToBottomSmooth,
   });
 
   if (isLoadingContext && !isEmbedded) {
@@ -616,6 +623,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
             <MessageList
               ref={messageListRef}
               messages={messages}
+              onChatScrollNearBottomChange={setChatNearBottom}
               onAddReaction={handleAddReaction}
               onRemoveReaction={handleRemoveReaction}
               onDeleteMessage={handleDeleteMessage}

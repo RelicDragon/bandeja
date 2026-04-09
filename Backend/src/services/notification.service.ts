@@ -23,6 +23,14 @@ import { createTransactionPushNotification } from './push/notifications/transact
 import { createNewMarketItemPushNotification } from './push/notifications/new-market-item-push.notification';
 import { createNewBugPushNotification } from './push/notifications/new-bug-push.notification';
 import { createGameCancelledPushNotification, GameCancelledMeta } from './push/notifications/game-cancelled-push.notification';
+import {
+  createUserTeamInvitePushNotification,
+  createUserTeamInviteAcceptedPushNotification,
+  createUserTeamInviteDeclinedPushNotification,
+  createUserTeamMemberRemovedPushNotification,
+  createUserTeamMemberLeftPushNotification,
+  createUserTeamDeletedPushNotification,
+} from './push/notifications/team-push.notification';
 import { GameSubscriptionService } from './gameSubscription.service';
 
 class NotificationService {
@@ -785,6 +793,102 @@ class NotificationService {
       }
     }
     await telegramNotificationService.sendGameCancelledNotification(meta, recipientUserIds);
+  }
+
+  async sendUserTeamInviteNotification(team: { id: string; name: string }, inviter: any, inviteeUserId: string) {
+    const payload = await createUserTeamInvitePushNotification(team, inviter, inviteeUserId);
+    if (payload) {
+      await this.sendNotification({
+        userId: inviteeUserId,
+        type: NotificationType.TEAM_INVITE,
+        payload,
+      });
+    }
+    try {
+      await telegramNotificationService.sendUserTeamInviteNotification(team, inviter, inviteeUserId);
+    } catch (e) {
+      console.error('[NotificationService] Team invite Telegram failed:', e);
+    }
+  }
+
+  async sendUserTeamInviteAcceptedNotification(team: { id: string; name: string }, accepter: any, ownerId: string) {
+    const payload = await createUserTeamInviteAcceptedPushNotification(team, accepter, ownerId);
+    if (payload) {
+      await this.sendNotification({
+        userId: ownerId,
+        type: NotificationType.TEAM_INVITE_ACCEPTED,
+        payload,
+      });
+    }
+    try {
+      await telegramNotificationService.sendUserTeamInviteAcceptedNotification(team, accepter, ownerId);
+    } catch (e) {
+      console.error('[NotificationService] Team invite accepted Telegram failed:', e);
+    }
+  }
+
+  async sendUserTeamInviteDeclinedNotification(team: { id: string; name: string }, decliner: any, ownerId: string) {
+    const payload = await createUserTeamInviteDeclinedPushNotification(team, decliner, ownerId);
+    if (payload) {
+      await this.sendNotification({
+        userId: ownerId,
+        type: NotificationType.TEAM_INVITE_DECLINED,
+        payload,
+      });
+    }
+    try {
+      await telegramNotificationService.sendUserTeamInviteDeclinedNotification(team, decliner, ownerId);
+    } catch (e) {
+      console.error('[NotificationService] Team invite declined Telegram failed:', e);
+    }
+  }
+
+  async sendUserTeamMemberRemovedNotification(team: { id: string; name: string }, removedUserId: string) {
+    const payload = await createUserTeamMemberRemovedPushNotification(team, removedUserId);
+    if (payload) {
+      await this.sendNotification({
+        userId: removedUserId,
+        type: NotificationType.TEAM_MEMBER_REMOVED,
+        payload,
+      });
+    }
+    try {
+      await telegramNotificationService.sendUserTeamMemberRemovedNotification(team, removedUserId);
+    } catch (e) {
+      console.error('[NotificationService] Team member removed Telegram failed:', e);
+    }
+  }
+
+  async sendUserTeamMemberLeftNotification(team: { id: string; name: string }, leaver: any, ownerId: string) {
+    const payload = await createUserTeamMemberLeftPushNotification(team, leaver, ownerId);
+    if (payload) {
+      await this.sendNotification({
+        userId: ownerId,
+        type: NotificationType.TEAM_MEMBER_LEFT,
+        payload,
+      });
+    }
+    try {
+      await telegramNotificationService.sendUserTeamMemberLeftNotification(team, leaver, ownerId);
+    } catch (e) {
+      console.error('[NotificationService] Team member left Telegram failed:', e);
+    }
+  }
+
+  async sendUserTeamDeletedNotification(teamName: string, memberUserId: string) {
+    const payload = await createUserTeamDeletedPushNotification(teamName, memberUserId);
+    if (payload) {
+      await this.sendNotification({
+        userId: memberUserId,
+        type: NotificationType.TEAM_DELETED,
+        payload,
+      });
+    }
+    try {
+      await telegramNotificationService.sendUserTeamDeletedNotification(teamName, memberUserId);
+    } catch (e) {
+      console.error('[NotificationService] Team deleted Telegram failed:', e);
+    }
   }
 }
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Trash2, Loader2, Check, Plus, ImagePlus } from 'lucide-react';
+import { Loader2, Check, Plus, ImagePlus, X } from 'lucide-react';
 import {
   type AvatarUploadHandle,
   Button,
@@ -35,7 +35,10 @@ export function UserTeamPage() {
   const [editName, setEditName] = useState('');
   const [showInvite, setShowInvite] = useState(false);
   const [showDeleteTeam, setShowDeleteTeam] = useState(false);
-  const [showRemoveMember, setShowRemoveMember] = useState<string | null>(null);
+  const [memberActionModal, setMemberActionModal] = useState<{
+    userId: string;
+    kind: 'removeAccepted' | 'cancelInvite';
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [nameError, setNameError] = useState('');
   const [nameValidationStatus, setNameValidationStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -68,19 +71,6 @@ export function UserTeamPage() {
   useEffect(() => {
     setCutAngleLive(null);
   }, [id]);
-
-  useEffect(() => {
-    const html = document.documentElement;
-    const { body } = document;
-    const prevHtml = html.style.overflow;
-    const prevBody = body.style.overflow;
-    html.style.overflow = 'hidden';
-    body.style.overflow = 'hidden';
-    return () => {
-      html.style.overflow = prevHtml;
-      body.style.overflow = prevBody;
-    };
-  }, []);
 
   useEffect(() => {
     if (!team || !user || team.ownerId !== user.id) return;
@@ -199,8 +189,9 @@ export function UserTeamPage() {
     }
   };
 
-  const handleRemoveMember = async (userId: string) => {
-    if (!team) return;
+  const handleConfirmMemberAction = async () => {
+    if (!team || !memberActionModal) return;
+    const { userId, kind } = memberActionModal;
     setBusy(true);
     try {
       const updated = await userTeamsApi.removeMember(team.id, userId);
@@ -212,12 +203,12 @@ export function UserTeamPage() {
         leaveTeam();
       }
       await refreshAll();
-      toast.success(t('teams.memberRemoved'));
+      toast.success(kind === 'cancelInvite' ? t('teams.invitationCancelled') : t('teams.memberRemoved'));
+      setMemberActionModal(null);
     } catch (e: unknown) {
       toastApiError(t, e);
     } finally {
       setBusy(false);
-      setShowRemoveMember(null);
     }
   };
 
@@ -340,30 +331,57 @@ export function UserTeamPage() {
                     smallLayout
                   />
                 </div>
-                <div className="relative flex w-16 shrink-0 flex-col items-center">
+                <div className="relative flex min-w-[4.5rem] max-w-[5.5rem] shrink-0 flex-col items-center">
                   {secondUser ? (
                     <>
-                      <PlayerAvatar
-                        player={secondUser}
-                        isCurrentUser={secondUser.id === user.id}
-                        removable={!isOwner && !!teammateAccepted && teammateAccepted.userId === user.id}
-                        onRemoveClick={
-                          !isOwner && !!teammateAccepted && teammateAccepted.userId === user.id
-                            ? () => setShowRemoveMember(user.id)
-                            : undefined
+                      <div
+                        className={
+                          isOwner && teammatePending
+                            ? 'relative z-0 rounded-full p-[3px] ring-2 ring-dashed ring-amber-500/80 dark:ring-amber-400/70'
+                            : 'relative z-0'
                         }
-                        role="PLAYER"
-                        smallLayout
-                      />
+                      >
+                        <PlayerAvatar
+                          player={secondUser}
+                          isCurrentUser={secondUser.id === user.id}
+                          removable={!isOwner && !!teammateAccepted && teammateAccepted.userId === user.id}
+                          onRemoveClick={
+                            !isOwner && !!teammateAccepted && teammateAccepted.userId === user.id
+                              ? () => setMemberActionModal({ userId: user.id, kind: 'removeAccepted' })
+                              : undefined
+                          }
+                          role="PLAYER"
+                          smallLayout
+                        />
+                      </div>
                       {isOwner && teammateAccepted && teammateAccepted.userId !== user.id ? (
                         <button
                           type="button"
-                          className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border border-white bg-red-500 text-white shadow-md dark:border-gray-900 dark:bg-red-600"
-                          onClick={() => setShowRemoveMember(teammateAccepted.userId)}
+                          className="absolute -right-1 -top-1 z-20 flex h-6 w-6 items-center justify-center rounded-full border border-white bg-red-500 text-white shadow-md dark:border-gray-900 dark:bg-red-600"
+                          onClick={() =>
+                            setMemberActionModal({ userId: teammateAccepted.userId, kind: 'removeAccepted' })
+                          }
                           aria-label={t('teams.removeMember')}
                         >
-                          <Trash2 size={12} strokeWidth={2.5} />
+                          <X size={12} strokeWidth={2.5} />
                         </button>
+                      ) : null}
+                      {isOwner && teammatePending && teammatePending.userId !== user.id ? (
+                        <button
+                          type="button"
+                          className="absolute -right-1 -top-1 z-20 flex h-6 w-6 items-center justify-center rounded-full border border-white bg-amber-600 text-white shadow-md dark:border-gray-900 dark:bg-amber-700"
+                          onClick={() =>
+                            setMemberActionModal({ userId: teammatePending.userId, kind: 'cancelInvite' })
+                          }
+                          aria-label={t('teams.cancelInvitation')}
+                        >
+                          <X size={12} strokeWidth={2.5} />
+                        </button>
+                      ) : null}
+                      {isOwner && teammatePending ? (
+                        <span className="mt-1 text-center text-[10px] font-semibold leading-tight text-amber-800 dark:text-amber-200">
+                          {t('teams.invitedAwaitingReply')}
+                        </span>
                       ) : null}
                     </>
                   ) : showPlusSlot ? (
@@ -472,21 +490,35 @@ export function UserTeamPage() {
         />
 
         <ConfirmationModal
-          isOpen={!!showRemoveMember}
-          onClose={() => setShowRemoveMember(null)}
-          onConfirm={() => showRemoveMember && handleRemoveMember(showRemoveMember)}
-          title={t('teams.removeMember')}
-          message={t('teams.removeMemberConfirm')}
-          confirmText={t('common.confirm')}
-          confirmVariant="danger"
+          isOpen={!!memberActionModal}
+          onClose={() => setMemberActionModal(null)}
+          onConfirm={() => void handleConfirmMemberAction()}
+          title={
+            memberActionModal?.kind === 'cancelInvite'
+              ? t('teams.cancelInvitation')
+              : t('teams.removeMember')
+          }
+          message={
+            memberActionModal?.kind === 'cancelInvite'
+              ? t('teams.cancelInvitationConfirm')
+              : t('teams.removeMemberConfirm')
+          }
+          confirmText={
+            memberActionModal?.kind === 'cancelInvite'
+              ? t('teams.cancelInvitation')
+              : t('common.confirm')
+          }
+          confirmVariant={memberActionModal?.kind === 'cancelInvite' ? 'primary' : 'danger'}
+          closeOnConfirm={false}
+          isLoading={busy}
         />
       </div>
     );
   }
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden overscroll-none">
-      <div className="relative min-h-0 flex-1 overflow-hidden">{body}</div>
+    <div className="relative flex h-full min-h-0 flex-col">
+      <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">{body}</div>
     </div>
   );
 }

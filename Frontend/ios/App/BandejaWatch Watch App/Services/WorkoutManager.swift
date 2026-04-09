@@ -151,6 +151,16 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
         }
     }
 
+    func autoPause() {
+        guard let session, isActive, session.state == .running else { return }
+        session.pause()
+    }
+
+    func autoResume() {
+        guard let session, isActive, session.state == .paused else { return }
+        session.resume()
+    }
+
     /// After results are finalized on the server: save HK workout and upload summary.
     func endSessionUploadAndClear(gameId: String) async {
         guard activeGameId == gameId, isActive, let session, let builder else {

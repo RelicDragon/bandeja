@@ -119,11 +119,12 @@ struct WatchParticipant: Decodable, Sendable {
     let role: String
     let status: String
     let user: WatchUser
+    let activeMatchId: String?
 
     var isPlaying: Bool { status == "PLAYING" }
 
     private enum CodingKeys: String, CodingKey {
-        case userId, role, status, user
+        case userId, role, status, user, activeMatchId
     }
 
     nonisolated init(from decoder: Decoder) throws {
@@ -132,6 +133,7 @@ struct WatchParticipant: Decodable, Sendable {
         role = try c.decode(String.self, forKey: .role)
         status = try c.decodeIfPresent(String.self, forKey: .status) ?? ""
         user = try c.decode(WatchUser.self, forKey: .user)
+        activeMatchId = try c.decodeIfPresent(String.self, forKey: .activeMatchId)
     }
 }
 

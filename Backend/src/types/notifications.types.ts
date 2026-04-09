@@ -5,6 +5,7 @@ export enum PreferenceKey {
   SEND_REMINDERS = 'sendReminders',
   SEND_WALLET_NOTIFICATIONS = 'sendWalletNotifications',
   SEND_MARKETPLACE_NOTIFICATIONS = 'sendMarketplaceNotifications',
+  SEND_TEAM_NOTIFICATIONS = 'sendTeamNotifications',
 }
 
 export enum NotificationType {
@@ -25,6 +26,12 @@ export enum NotificationType {
   AUCTION_WON = 'AUCTION_WON',
   AUCTION_BIN_ACCEPTED = 'AUCTION_BIN_ACCEPTED',
   GAME_CANCELLED = 'GAME_CANCELLED',
+  TEAM_INVITE = 'TEAM_INVITE',
+  TEAM_INVITE_ACCEPTED = 'TEAM_INVITE_ACCEPTED',
+  TEAM_INVITE_DECLINED = 'TEAM_INVITE_DECLINED',
+  TEAM_MEMBER_REMOVED = 'TEAM_MEMBER_REMOVED',
+  TEAM_MEMBER_LEFT = 'TEAM_MEMBER_LEFT',
+  TEAM_DELETED = 'TEAM_DELETED',
 }
 
 export interface NotificationAction {
@@ -45,6 +52,7 @@ export interface NotificationData {
   transactionId?: string;
   marketItemId?: string;
   shortDayOfWeek?: string;
+  teamId?: string;
 }
 
 export interface NotificationPayload {

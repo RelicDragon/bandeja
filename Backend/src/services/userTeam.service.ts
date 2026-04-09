@@ -3,6 +3,7 @@ import { ApiError } from '../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import { generateRandomAdjectiveAnimalLabel } from './user/userDisplayName.service';
 import { UserTeamMemberStatus, Prisma } from '@prisma/client';
+import notificationService from './notification.service';
 
 const TEAM_INCLUDE = {
   owner: { select: USER_SELECT_FIELDS },
@@ -169,11 +170,25 @@ export class UserTeamService {
   }
 
   static async deleteTeam(teamId: string, requesterId: string) {
-    const team = await prisma.userTeam.findUnique({ where: { id: teamId } });
+    const team = await prisma.userTeam.findUnique({
+      where: { id: teamId },
+      include: { members: true },
+    });
     if (!team) throw new ApiError(404, 'errors.userTeams.notFound');
     if (team.ownerId !== requesterId) throw new ApiError(403, 'errors.userTeams.onlyOwner');
 
-    const ids = await collectNotifyUserIds(teamId);
+    const notifyDeleted = team.members.filter(
+      (m) =>
+        !m.isOwner &&
+        (m.status === UserTeamMemberStatus.ACCEPTED || m.status === UserTeamMemberStatus.PENDING)
+    );
+    for (const m of notifyDeleted) {
+      void notificationService.sendUserTeamDeletedNotification(team.name, m.userId).catch((err) =>
+        console.error('[UserTeam] delete notify', err)
+      );
+    }
+
+    const ids = [...new Set(team.members.map((x) => x.userId))];
     await prisma.userTeam.delete({ where: { id: teamId } });
     socketSvc()?.emitUserTeamDeleted(ids, teamId);
   }
@@ -252,6 +267,16 @@ export class UserTeamService {
     const notifyIds = await collectNotifyUserIds(teamId);
     socketSvc()?.emitUserTeamUpdated(notifyIds, { team: fullTeam });
 
+    if (ownerUser && existing?.status !== UserTeamMemberStatus.PENDING) {
+      void notificationService
+        .sendUserTeamInviteNotification(
+          { id: fullTeam.id, name: fullTeam.name },
+          ownerUser,
+          targetUserId
+        )
+        .catch((err) => console.error('[UserTeam] invite notify', err));
+    }
+
     return { team: fullTeam, membership };
   }
 
@@ -291,6 +316,16 @@ export class UserTeamService {
     const notifyIds = await collectNotifyUserIds(teamId);
     socketSvc()?.emitUserTeamUpdated(notifyIds, { team: fullTeam });
 
+    if (user) {
+      void notificationService
+        .sendUserTeamInviteAcceptedNotification(
+          { id: fullTeam.id, name: fullTeam.name },
+          user,
+          team.ownerId
+        )
+        .catch((err) => console.error('[UserTeam] accept notify', err));
+    }
+
     return fullTeam;
   }
 
@@ -308,6 +343,15 @@ export class UserTeamService {
     await prisma.userTeamMember.delete({ where: { id: row.id } });
 
     const user = await prisma.user.findUnique({ where: { id: userId }, select: USER_SELECT_FIELDS });
+    if (user) {
+      void notificationService
+        .sendUserTeamInviteDeclinedNotification(
+          { id: team.id, name: team.name },
+          user,
+          team.ownerId
+        )
+        .catch((err) => console.error('[UserTeam] decline notify', err));
+    }
     socketSvc()?.emitUserTeamInviteDeclined(team.ownerId, { teamId, user });
 
     const fullTeam = await prisma.userTeam.findUnique({
@@ -340,7 +384,23 @@ export class UserTeamService {
       throw new ApiError(403, 'errors.userTeams.accessDenied');
     }
 
+    const leaverUser = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: USER_SELECT_FIELDS,
+    });
+
     await prisma.userTeamMember.delete({ where: { id: targetRow.id } });
+
+    const teamMini = { id: team.id, name: team.name };
+    if (requesterId === team.ownerId && targetUserId !== team.ownerId) {
+      void notificationService
+        .sendUserTeamMemberRemovedNotification(teamMini, targetUserId)
+        .catch((err) => console.error('[UserTeam] removed notify', err));
+    } else if (requesterId === targetUserId && leaverUser) {
+      void notificationService
+        .sendUserTeamMemberLeftNotification(teamMini, leaverUser, team.ownerId)
+        .catch((err) => console.error('[UserTeam] left notify', err));
+    }
 
     socketSvc()?.emitUserTeamMemberRemoved(targetUserId, { teamId });
 

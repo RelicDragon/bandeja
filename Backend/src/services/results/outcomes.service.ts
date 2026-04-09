@@ -379,6 +379,10 @@ export async function recalculateGameOutcomes(gameId: string) {
   let wasEdited = false;
   
   const result = await prisma.$transaction(async (tx) => {
+    await tx.gameParticipant.updateMany({
+      where: { gameId },
+      data: { activeMatchId: null },
+    });
     console.log(`[RECALCULATE GAME OUTCOMES] Step 1: Undoing existing outcomes`);
     await undoGameOutcomes(gameId, tx);
 

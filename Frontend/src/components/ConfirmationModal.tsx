@@ -37,9 +37,7 @@ export const ConfirmationModal = ({
   const [internalIsOpen, setInternalIsOpen] = useState(isOpen);
 
   useEffect(() => {
-    if (isOpen) {
-      setInternalIsOpen(true);
-    }
+    setInternalIsOpen(isOpen);
   }, [isOpen]);
 
   const handleClose = () => {

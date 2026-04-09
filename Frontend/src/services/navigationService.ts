@@ -29,6 +29,11 @@ class NavigationService {
     this.navigate!(buildUrl('userChat', { id: userChatId }), { replace: true });
   }
 
+  navigateToUserTeam(teamId: string) {
+    if (!this.ensureInitialized() || !teamId) return;
+    this.navigate!(buildUrl('userTeam', { id: teamId }), { replace: true });
+  }
+
   async navigateToBugChat(bugId: string) {
     if (!this.ensureInitialized() || !bugId) return;
     try {
@@ -69,6 +74,11 @@ class NavigationService {
   navigateToCreateListing() {
     if (!this.ensureInitialized()) return;
     this.navigate!(buildUrl('createMarketItem'), { replace: true });
+  }
+
+  navigateToHome() {
+    if (!this.ensureInitialized()) return;
+    this.navigate!(buildUrl('home'), { replace: true });
   }
 
   navigateToFind(params?: PlaceParams) {

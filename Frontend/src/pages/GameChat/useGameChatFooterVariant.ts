@@ -47,6 +47,8 @@ export interface UseGameChatFooterVariantParams {
   handleEditMessage: (message: ChatMessageWithStatus) => void;
   handleScrollToMessage: (messageId: string) => void;
   handleJoinAsGuest: () => void;
+  chatNearBottom: boolean;
+  scrollToBottomSmooth: () => void;
 }
 
 export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams): GameChatFooterVariant | null {
@@ -87,6 +89,8 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
     handleEditMessage,
     handleScrollToMessage,
     handleJoinAsGuest,
+    chatNearBottom,
+    scrollToBottomSmooth,
   } = params;
 
   return useMemo((): GameChatFooterVariant | null => {
@@ -136,6 +140,8 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
           await chatApi.setChatTranslationPreference(contextType, id, value);
           setTranslateToLanguageForChat(value);
         },
+        chatNearBottom,
+        onScrollToBottomSmooth: scrollToBottomSmooth,
       };
     }
     const showJoin =
@@ -193,5 +199,7 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
     isJoiningAsGuest,
     setUserChat,
     setTranslateToLanguageForChat,
+    chatNearBottom,
+    scrollToBottomSmooth,
   ]);
 }

@@ -43,23 +43,35 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const isDesktopChatsSplitView = isDesktopChats && !isOnBugsListPage;
   const anySplitView = isDesktopChatsSplitView || isDesktopGameDetailsSplitView || isDesktopCalendarSplitView;
   const shouldAddBottomPadding = bottomTabsVisible && !isDesktopChats && !isDesktopGameDetailsSplitView && !isDesktopCalendarSplitView;
+  const isUserTeamRoute = /^\/user-team\/[^/]+$/.test(location.pathname);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div
+      className={`bg-gray-50 dark:bg-gray-900 ${isUserTeamRoute ? 'flex min-h-screen flex-col' : 'min-h-screen'}`}
+    >
       {!shouldHideHeader && (
         <div className="relative z-50">
           <Header animateEntry={isHomeInit} />
         </div>
       )}
-      <main 
-        style={{ 
-          paddingTop: shouldHideHeader ? '0' : (anySplitView ? '0' : `calc(4rem + env(safe-area-inset-top))`),
+      <main
+        className={isUserTeamRoute ? 'flex min-h-0 flex-1 flex-col' : undefined}
+        style={{
+          paddingTop: shouldHideHeader ? '0' : anySplitView ? '0' : `calc(4rem + env(safe-area-inset-top))`,
           paddingBottom: shouldAddBottomPadding ? 'calc(5rem + env(safe-area-inset-bottom))' : '1.5rem',
           paddingLeft: anySplitView ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
-          paddingRight: anySplitView ? '0' : `max(0.5rem, env(safe-area-inset-right))`
+          paddingRight: anySplitView ? '0' : `max(0.5rem, env(safe-area-inset-right))`,
         }}
       >
-        {anySplitView ? children : <div className="container mx-auto px-2 py-4">{children}</div>}
+        {anySplitView ? (
+          children
+        ) : isUserTeamRoute ? (
+          <div className="container mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col px-2 py-1">
+            {children}
+          </div>
+        ) : (
+          <div className="container mx-auto px-2 py-4">{children}</div>
+        )}
       </main>
     </div>
   );

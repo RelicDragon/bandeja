@@ -191,6 +191,8 @@ export interface GameParticipant {
   inviteMessage?: string | null;
   inviteExpiresAt?: string | null;
   invitedByUser?: BasicUser | null;
+  /** Watch scoring session: current match id or null */
+  activeMatchId?: string | null;
 }
 
 export interface GameTeamPlayer {

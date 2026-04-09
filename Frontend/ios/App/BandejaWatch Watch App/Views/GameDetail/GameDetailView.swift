@@ -4,6 +4,7 @@ struct GameDetailView: View {
     let gameId: String
     @State private var vm: GameDetailViewModel
     @Environment(Router.self) private var router
+    @Environment(ActiveSessionManager.self) private var session
     @Environment(WatchPreferencesStore.self) private var prefs
 
     init(gameId: String) {
@@ -154,11 +155,11 @@ struct GameDetailView: View {
                 color: .blue
             )
         } else if vm.canContinueScoring {
-            actionNavButton(WatchCopy.continueScoring(lang), icon: "arrow.clockwise", color: .orange)
+            continueScoringButton(lang: lang)
         } else if vm.resultsAreFinal {
-            actionNavButton(WatchCopy.resultsFinal(lang), icon: "checkmark.seal.fill", color: .green)
+            outcomesNavButton(WatchCopy.resultsFinal(lang), icon: "checkmark.seal.fill", color: .green)
         } else if vm.canOpenMatchList {
-            actionNavButton(WatchCopy.matches(lang), icon: "list.bullet.rectangle", color: .blue)
+            outcomesNavButton(WatchCopy.matches(lang), icon: "list.bullet.rectangle", color: .blue)
         }
     }
 
@@ -196,7 +197,8 @@ struct GameDetailView: View {
         Button {
             Task {
                 if await vm.startResultsEntry() {
-                    router.navigate(to: .scoringList(gameId: gameId))
+                    router.popToRoot()
+                    await session.enterScoringSession(gameId: gameId)
                 }
             }
         } label: {
@@ -216,9 +218,24 @@ struct GameDetailView: View {
         .disabled(vm.isStartingResultsEntry)
     }
 
-    private func actionNavButton(_ title: String, icon: String, color: Color) -> some View {
+    private func continueScoringButton(lang: String) -> some View {
         Button {
-            router.navigate(to: .scoringList(gameId: gameId))
+            Task {
+                router.popToRoot()
+                await session.enterScoringSession(gameId: gameId)
+            }
+        } label: {
+            Label(WatchCopy.continueScoring(lang), systemImage: "arrow.clockwise")
+                .font(.caption.weight(.semibold))
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(.orange)
+    }
+
+    private func outcomesNavButton(_ title: String, icon: String, color: Color) -> some View {
+        Button {
+            router.navigate(to: .gameOutcomes(gameId: gameId))
         } label: {
             Label(title, systemImage: icon)
                 .font(.caption.weight(.semibold))

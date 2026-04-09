@@ -416,15 +416,19 @@ model GameParticipant {
   invitedByUserId  String?
   inviteMessage    String?
   inviteExpiresAt  DateTime?
+  /// Watch / client: match the user is currently scoring (cleared on finalize).
+  activeMatchId    String?
   game             Game               @relation(fields: [gameId], references: [id], onDelete: Cascade)
   user             User               @relation("ParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
   invitedByUser    User?              @relation("ParticipantInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  activeMatch      Match?             @relation("ParticipantActiveMatch", fields: [activeMatchId], references: [id], onDelete: SetNull)
 
   @@unique([userId, gameId])
   @@index([userId])
   @@index([gameId])
   @@index([role])
   @@index([status])
+  @@index([activeMatchId])
 }
 
 model Round {
@@ -456,6 +460,7 @@ model Match {
   court       Court?   @relation(fields: [courtId], references: [id])
   teams       Team[]
   sets        Set[]
+  participantsWithActiveMatch GameParticipant[] @relation("ParticipantActiveMatch")
 
   @@index([roundId])
   @@index([winnerId])
@@ -1735,6 +1740,7 @@ model NotificationPreference {
   sendReminders           Boolean                @default(true)
   sendWalletNotifications      Boolean                @default(true)
   sendMarketplaceNotifications Boolean                @default(true)
+  sendTeamNotifications        Boolean                @default(true)
   createdAt                    DateTime               @default(now())
   updatedAt                    DateTime               @updatedAt
   user                         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)

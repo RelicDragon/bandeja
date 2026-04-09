@@ -37,6 +37,8 @@ export type GameChatFooterVariant =
       contextId: string;
       translateToLanguage: string | null;
       onTranslateToLanguageChange: (value: string | null) => void | Promise<void>;
+      chatNearBottom: boolean;
+      onScrollToBottomSmooth: () => void;
     }
   | {
       type: 'join';
@@ -110,6 +112,8 @@ export const GameChatFooter: React.FC<GameChatFooterProps> = ({
             contextId={variant.contextId}
             translateToLanguage={variant.translateToLanguage}
             onTranslateToLanguageChange={variant.onTranslateToLanguageChange}
+            chatNearBottom={variant.chatNearBottom}
+            onScrollToBottomSmooth={variant.onScrollToBottomSmooth}
           />
         </div>
       )}

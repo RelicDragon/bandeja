@@ -9,17 +9,22 @@ import { userTeamsApi } from '@/api';
 import type { UserTeam } from '@/types';
 import toast from 'react-hot-toast';
 import { toastApiError } from '@/utils/toastApiError';
-
-function isSoloAcceptedTeam(team: UserTeam, userId: string | undefined): boolean {
-  if (!userId) return false;
-  const accepted = (team.members ?? []).filter((m) => m.status === 'ACCEPTED');
-  return accepted.length === 1 && accepted[0].userId === userId;
-}
 import {
   hydrateUserTeamsHomeExpandedFromIdb,
   persistUserTeamsHomeExpanded,
   readUserTeamsHomeExpandedSync,
 } from '@/utils/userTeamsHomeSectionStorage';
+import { findLatestSoloOwnedTeam, isSoloOwnedTeam } from '@/utils/soloOwnedUserTeam';
+
+function teamNameWordRows(name: string): string[] {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts.length > 0 ? parts : [name.trim() || '\u00A0'];
+}
+
+function isUserTeamReady(team: UserTeam): boolean {
+  const accepted = team.members.filter((m) => m.status === 'ACCEPTED').length;
+  return accepted >= team.size;
+}
 
 interface UserTeamsHomeSectionProps {
   className?: string;
@@ -54,12 +59,37 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
     [memberships]
   );
 
-  const totalTiles = teams.length + pending.length;
-  const showSkeleton = isLoading && teams.length === 0 && pending.length === 0;
+  const displayTeams = useMemo(() => {
+    const asParticipant = memberships
+      .filter((m) => !m.isOwner && m.status === 'ACCEPTED')
+      .map((m) => m.team)
+      .filter(Boolean) as UserTeam[];
+    const merged = [...teams, ...asParticipant];
+    merged.sort((a, b) => {
+      const ra = isUserTeamReady(a);
+      const rb = isUserTeamReady(b);
+      if (ra !== rb) return Number(ra) - Number(rb);
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+    return merged;
+  }, [teams, memberships]);
+
+  const totalTiles = displayTeams.length + pending.length;
+  const showSkeleton = isLoading && displayTeams.length === 0 && pending.length === 0;
 
   const handleNewTeam = async () => {
     setCreating(true);
     try {
+      const refreshed = await refreshAll();
+      if (!refreshed) {
+        toast.error(t('errors.networkError'));
+        return;
+      }
+      const existing = findLatestSoloOwnedTeam(useUserTeamsStore.getState().teams, user?.id);
+      if (existing) {
+        navigate(`/user-team/${existing.id}`);
+        return;
+      }
       const team = await userTeamsApi.create({});
       useUserTeamsStore.getState().setTeam(team);
       await refreshAll();
@@ -124,17 +154,22 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
           <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               type="button"
-              className="group flex min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-dashed border-zinc-300/90 bg-transparent py-3.5 text-center shadow-none transition-[transform,background-color,border-color] duration-200 hover:border-primary-400/70 hover:bg-primary-500/[0.04] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:hover:border-primary-500/50 dark:hover:bg-primary-400/[0.06]"
+              className="group flex min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start flex-col items-center gap-1.5 rounded-2xl border border-dashed border-zinc-300/90 bg-transparent py-2 text-center shadow-none transition-[transform,background-color,border-color] duration-200 hover:border-primary-400/70 hover:bg-primary-500/[0.04] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:hover:border-primary-500/50 dark:hover:bg-primary-400/[0.06]"
               onClick={handleNewTeam}
               disabled={creating}
             >
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-900 text-white shadow-md transition group-hover:bg-primary-600 dark:bg-zinc-100 dark:text-zinc-900 dark:group-hover:bg-primary-400 dark:group-hover:text-zinc-950">
                 {creating ? <Loader2 size={20} className="animate-spin" /> : <Plus size={22} strokeWidth={2} />}
               </span>
-              <div className="flex min-h-[2.5rem] w-full flex-col justify-start px-1">
-                <span className="line-clamp-2 whitespace-pre-line text-[11px] font-semibold leading-tight text-zinc-800 dark:text-zinc-200">
-                  {t('teams.create')}
-                </span>
+              <div className="flex w-full flex-col items-center justify-start px-1 pb-px">
+                {teamNameWordRows(t('teams.create')).map((word, i) => (
+                  <span
+                    key={i}
+                    className="block max-w-full break-words text-center text-[11px] font-semibold leading-snug text-zinc-800 dark:text-zinc-200"
+                  >
+                    {word}
+                  </span>
+                ))}
               </div>
             </button>
 
@@ -143,22 +178,28 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
                 key={m.id}
                 type="button"
                 onClick={() => navigate(`/user-team/${m.teamId}`)}
-                className="flex min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-amber-200/80 bg-white py-3.5 text-center shadow-lg shadow-gray-900/5 transition-[transform,box-shadow,border-color] duration-200 hover:border-amber-300 hover:shadow-md active:scale-[0.98] dark:border-amber-500/35 dark:bg-gray-800 dark:shadow-black/20 dark:hover:border-amber-500/50"
+                className="flex min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start flex-col items-center gap-1.5 rounded-2xl border border-amber-200/80 bg-white py-2 text-center shadow-lg shadow-gray-900/5 transition-[transform,box-shadow,border-color] duration-200 hover:border-amber-300 hover:shadow-md active:scale-[0.98] dark:border-amber-500/35 dark:bg-gray-800 dark:shadow-black/20 dark:hover:border-amber-500/50"
               >
                 <span className="relative flex h-11 w-11 shrink-0 items-center justify-center">
                   <TeamAvatar team={m.team} size="tile" />
                   <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500 dark:border-gray-800" />
                 </span>
-                <div className="flex min-h-[2.5rem] w-full flex-col justify-start px-1">
-                  <span className="line-clamp-2 text-[11px] font-semibold leading-tight text-amber-950 dark:text-amber-50">
-                    {m.team.name}
-                  </span>
+                <div className="flex w-full flex-col items-center justify-start px-1 pb-px">
+                  {teamNameWordRows(m.team.name).map((word, i) => (
+                    <span
+                      key={i}
+                      className="block max-w-full break-words text-center text-[11px] font-semibold leading-snug text-amber-950 dark:text-amber-50"
+                    >
+                      {word}
+                    </span>
+                  ))}
                 </div>
               </button>
             ))}
 
-            {teams.map((team) => {
-              const showSoloDelete = isSoloAcceptedTeam(team, user?.id);
+            {displayTeams.map((team) => {
+              const showSoloDelete = isSoloOwnedTeam(team, user?.id);
+              const ready = isUserTeamReady(team);
               return (
                 <div
                   key={team.id}
@@ -167,15 +208,24 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
                   <button
                     type="button"
                     onClick={() => navigate(`/user-team/${team.id}`)}
-                    className="flex w-full flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white py-3.5 text-center shadow-lg shadow-gray-900/5 transition-[transform,box-shadow,border-color] duration-200 hover:border-gray-300 hover:shadow-md active:scale-[0.98] dark:border-gray-700 dark:bg-gray-800 dark:shadow-black/20 dark:hover:border-gray-600"
+                    className={`flex w-full flex-col items-center gap-1.5 rounded-2xl border py-2 text-center shadow-lg transition-[transform,box-shadow,border-color,background-color] duration-200 hover:shadow-md active:scale-[0.98] ${
+                      ready
+                        ? 'border-emerald-200/85 bg-emerald-50/95 shadow-emerald-900/5 hover:border-emerald-300 hover:bg-emerald-50 dark:border-emerald-800/45 dark:bg-emerald-950/35 dark:shadow-black/20 dark:hover:border-emerald-700/50 dark:hover:bg-emerald-950/45'
+                        : 'border-zinc-200/90 bg-zinc-100/90 shadow-gray-900/5 hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800/85 dark:shadow-black/20 dark:hover:border-zinc-500 dark:hover:bg-zinc-800'
+                    }`}
                   >
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center">
                       <TeamAvatar team={team} size="tile" />
                     </span>
-                    <div className="flex min-h-[2.5rem] w-full flex-col justify-start px-1">
-                      <span className="line-clamp-2 text-[11px] font-semibold leading-tight text-zinc-900 dark:text-zinc-50">
-                        {team.name}
-                      </span>
+                    <div className="flex w-full flex-col items-center justify-start px-1 pb-px">
+                      {teamNameWordRows(team.name).map((word, i) => (
+                        <span
+                          key={i}
+                          className="block max-w-full break-words text-center text-[11px] font-semibold leading-snug text-zinc-900 dark:text-zinc-50"
+                        >
+                          {word}
+                        </span>
+                      ))}
                     </div>
                   </button>
                   {showSoloDelete && (
@@ -197,9 +247,9 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
             })}
 
             {showSkeleton && (
-              <div className="flex min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start flex-col items-center gap-2 py-3.5">
+              <div className="flex min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start flex-col items-center gap-1.5 py-2">
                 <div className="h-11 w-11 shrink-0 animate-pulse rounded-2xl bg-zinc-200/90 dark:bg-zinc-700/80" />
-                <div className="flex min-h-[2.5rem] w-full items-start justify-center px-1 pt-0.5">
+                <div className="flex w-full items-start justify-center px-1 pb-px pt-0.5">
                   <div className="h-2.5 w-12 animate-pulse rounded-md bg-zinc-200/90 dark:bg-zinc-700/80" />
                 </div>
               </div>

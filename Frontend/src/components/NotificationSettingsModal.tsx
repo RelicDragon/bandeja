@@ -45,7 +45,7 @@ export const NotificationSettingsModal = ({
 }: NotificationSettingsModalProps) => {
   const { t } = useTranslation();
   const [activeChannel, setActiveChannel] = useState<NotificationChannelType | null>(null);
-  const TOGGLE_KEYS: (keyof NotificationPreference)[] = ['sendMessages', 'sendInvites', 'sendDirectMessages', 'sendReminders', 'sendWalletNotifications', 'sendMarketplaceNotifications'];
+  const TOGGLE_KEYS: (keyof NotificationPreference)[] = ['sendMessages', 'sendInvites', 'sendDirectMessages', 'sendReminders', 'sendWalletNotifications', 'sendMarketplaceNotifications', 'sendTeamNotifications'];
   const [isSaving, setIsSaving] = useState(false);
   const [localPrefs, setLocalPrefs] = useState<Record<string, NotificationPreference>>({});
 
@@ -53,7 +53,7 @@ export const NotificationSettingsModal = ({
     if (isOpen && preferences.length > 0) {
       const map: Record<string, NotificationPreference> = {};
       for (const p of preferences) {
-        map[p.channelType] = { ...p };
+        map[p.channelType] = { ...p, sendTeamNotifications: p.sendTeamNotifications ?? true };
       }
       setLocalPrefs(map);
       setActiveChannel(preferences[0].channelType);
@@ -63,7 +63,7 @@ export const NotificationSettingsModal = ({
   const resetToInitialValues = () => {
     const map: Record<string, NotificationPreference> = {};
     for (const p of preferences) {
-      map[p.channelType] = { ...p };
+      map[p.channelType] = { ...p, sendTeamNotifications: p.sendTeamNotifications ?? true };
     }
     setLocalPrefs(map);
   };
@@ -81,6 +81,7 @@ export const NotificationSettingsModal = ({
         sendReminders: p.sendReminders,
         sendWalletNotifications: p.sendWalletNotifications,
         sendMarketplaceNotifications: p.sendMarketplaceNotifications,
+        sendTeamNotifications: p.sendTeamNotifications,
       }));
       const res = await usersApi.updateNotificationPreferences(payload);
       onUpdate(res.data);
@@ -156,6 +157,7 @@ export const NotificationSettingsModal = ({
     sendReminders: { label: 'profile.sendReminders', desc: 'profile.sendRemindersDescription' },
     sendWalletNotifications: { label: 'profile.walletNotifications', desc: 'profile.walletNotificationsDescription' },
     sendMarketplaceNotifications: { label: 'profile.marketplaceNotifications', desc: 'profile.marketplaceNotificationsDescription' },
+    sendTeamNotifications: { label: 'profile.teamNotifications', desc: 'profile.teamNotificationsDescription' },
   };
 
   if (preferences.length === 0) return null;

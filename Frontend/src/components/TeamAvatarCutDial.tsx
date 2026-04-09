@@ -63,8 +63,8 @@ export function TeamAvatarCutDial({
 
   if (!enabled) {
     return (
-      <div className="relative inline-flex flex-col items-center gap-2.5">
-        {children}
+      <div className="relative inline-flex flex-col items-center gap-2.5 p-3">
+        <div className="relative h-[7.5rem] w-[7.5rem] shrink-0 sm:h-32 sm:w-32">{children}</div>
         {footer ? (
           <div className="mx-auto shrink-0" style={{ width: controlsW }}>
             {footer}

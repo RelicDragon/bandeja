@@ -7,7 +7,7 @@ interface UserTeamsState {
   memberships: UserTeamMembership[];
   isLoading: boolean;
   lastFetchedAt: number | null;
-  refreshAll: () => Promise<void>;
+  refreshAll: () => Promise<boolean>;
   setTeam: (team: UserTeam) => void;
   removeTeamLocal: (teamId: string) => void;
 }
@@ -26,8 +26,10 @@ export const useUserTeamsStore = create<UserTeamsState>((set, get) => ({
         userTeamsApi.getMemberships(),
       ]);
       set({ teams, memberships, isLoading: false, lastFetchedAt: Date.now() });
+      return true;
     } catch {
       set({ isLoading: false });
+      return false;
     }
   },
 

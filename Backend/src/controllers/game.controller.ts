@@ -14,6 +14,7 @@ import telegramBotService from '../services/telegram/bot.service';
 import { getGameInclude } from '../services/game/read.service';
 import prisma from '../config/database';
 import { GameWorkoutService } from '../services/game/gameWorkout.service';
+import { patchMyWatchSession } from '../services/game/watchSession.service';
 import { WorkoutSessionSource } from '@prisma/client';
 
 export const createGame = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -127,6 +128,19 @@ export const updateGame = asyncHandler(async (req: AuthRequest, res: Response) =
     success: true,
     data: game,
   });
+});
+
+export const patchMyWatchSessionHandler = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  if (!('activeMatchId' in req.body)) {
+    throw new ApiError(400, 'activeMatchId is required (string or null)');
+  }
+  const raw = req.body.activeMatchId;
+  if (raw !== null && typeof raw !== 'string') {
+    throw new ApiError(400, 'activeMatchId must be a string or null');
+  }
+  const data = await patchMyWatchSession(id, req.userId!, raw);
+  res.json({ success: true, data });
 });
 
 export const deleteGame = asyncHandler(async (req: AuthRequest, res: Response) => {

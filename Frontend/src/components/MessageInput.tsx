@@ -10,6 +10,7 @@ import {
   GroupChannel,
   OptimisticMessagePayload,
 } from '@/api/chat';
+import { ChevronDown } from 'lucide-react';
 import { ChatType, Game, Bug } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { isGroupChannelAdminOrOwner } from '@/utils/gameResults';
@@ -19,7 +20,7 @@ import { MentionInput } from './MentionInput';
 import { JoinGroupChannelButton } from './JoinGroupChannelButton';
 import { PollCreationModal } from './chat/PollCreationModal';
 import { TranslationLanguageModal } from './chat/TranslationLanguageModal';
-import { TranslateToButton } from './chat/TranslateToButton';
+import { TranslateToButton, composerFabButtonClass } from './chat/TranslateToButton';
 import { UndoTranslateButton } from './chat/UndoTranslateButton';
 import { useAuthStore } from '@/store/authStore';
 import { PollType } from '@/api/chat';
@@ -38,6 +39,28 @@ import { useMessageInputSubmit, type SendQueuedParams } from '@/components/chat/
 import { uploadChatImageSlotWithRetry } from '@/components/chat/messageInputImageUpload';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
+import { AnimatePresence, motion } from 'framer-motion';
+
+const scrollToBottomFabMotion = {
+  initial: { opacity: 0, y: 40, scale: 0.72 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 380,
+      damping: 22,
+      mass: 0.75,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
 
 export type { SendQueuedParams };
 
@@ -69,6 +92,8 @@ interface MessageInputProps {
   onStartEditMessage?: (message: ChatMessage) => void;
   translateToLanguage?: string | null;
   onTranslateToLanguageChange?: (translateToLanguage: string | null) => void | Promise<void>;
+  chatNearBottom?: boolean;
+  onScrollToBottomSmooth?: () => void;
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
@@ -99,6 +124,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onStartEditMessage,
   translateToLanguage: translateToLanguageProp = null,
   onTranslateToLanguageChange,
+  chatNearBottom = true,
+  onScrollToBottomSmooth,
 }) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
@@ -477,6 +504,37 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <div className="p-3 overflow-visible" onPaste={handlePaste} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
+      <AnimatePresence>
+        {!chatNearBottom && onScrollToBottomSmooth ? (
+          <motion.div
+            key="chat-scroll-to-bottom"
+            className="flex justify-end mb-1"
+            initial={scrollToBottomFabMotion.initial}
+            animate={scrollToBottomFabMotion.animate}
+            exit={scrollToBottomFabMotion.exit}
+          >
+            <motion.button
+              type="button"
+              onClick={onScrollToBottomSmooth}
+              className={`${composerFabButtonClass} origin-bottom-right`}
+              title={t('chat.scrollToBottom', { defaultValue: 'Scroll to latest' })}
+              aria-label={t('chat.scrollToBottom', { defaultValue: 'Scroll to latest' })}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+            >
+              <motion.span
+                className="flex items-center justify-center"
+                initial={{ y: -4, opacity: 0.6 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 18, delay: 0.08 }}
+              >
+                <ChevronDown size={24} strokeWidth={2.25} className="text-gray-700 dark:text-gray-300" aria-hidden />
+              </motion.span>
+            </motion.button>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
       <div className="flex items-center justify-end gap-2 mb-1">
         {translation.originalMessageBeforeTranslate != null && (
           <UndoTranslateButton

@@ -141,6 +141,7 @@ export interface NotificationPreference {
   sendReminders: boolean;
   sendWalletNotifications: boolean;
   sendMarketplaceNotifications: boolean;
+  sendTeamNotifications: boolean;
 }
 
 export const usersApi = {

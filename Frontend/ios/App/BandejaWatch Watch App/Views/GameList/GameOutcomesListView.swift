@@ -1,12 +1,10 @@
 import SwiftUI
 
-struct MatchListView: View {
+struct GameOutcomesListView: View {
     let gameId: String
     @State private var vm: ScoringViewModel
-    @Bindable private var workoutManager = WorkoutManager.shared
     @Bindable private var workoutOutbox = WorkoutSyncOutbox.shared
     @Bindable private var scoringOutbox = ScoringOutbox.shared
-    @Bindable private var networkMonitor = NetworkMonitor.shared
     @Environment(Router.self) private var router
     @Environment(WatchPreferencesStore.self) private var prefs
 
@@ -31,28 +29,9 @@ struct MatchListView: View {
         }
         .navigationTitle(WatchCopy.matches(lang))
         .task(id: gameId) {
-            await WorkoutManager.shared.recoverIfNeeded()
             await vm.load()
-            if !vm.isFinal {
-                await WorkoutManager.shared.startIfNeeded(gameId: gameId, isIndoor: true)
-            }
         }
         .onDisappear { vm.stopPolling() }
-        .safeAreaInset(edge: .top, spacing: 0) {
-            if workoutManager.isActive, workoutManager.activeGameId == gameId, !workoutManager.authDenied {
-                WorkoutMetricsBar(
-                    lang: lang,
-                    calories: workoutManager.activeCalories,
-                    heartRate: workoutManager.heartRate,
-                    elapsedSeconds: workoutManager.elapsedSeconds,
-                    sessionState: workoutManager.sessionState,
-                    isOffline: !networkMonitor.isConnected,
-                    onTogglePause: { workoutManager.togglePauseResume() }
-                )
-                .frame(maxWidth: .infinity)
-                .background(.ultraThinMaterial)
-            }
-        }
     }
 
     private var matchesByRound: [(round: WatchRound, matches: [WatchMatch])] {
@@ -110,7 +89,7 @@ struct MatchListView: View {
                             isCurrent: vm.latestActiveMatchId == match.id,
                             isFinal: vm.isFinal
                         ) {
-                            router.navigate(to: .scoringMatch(gameId: gameId, matchId: match.id))
+                            router.navigate(to: .gameOutcomeMatch(gameId: gameId, matchId: match.id))
                         }
                     }
                 }

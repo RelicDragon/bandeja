@@ -11,7 +11,7 @@ import {
   UserTeamsHomeSection,
 } from '@/components/home';
 import { WelcomeQuestionnairePrompt } from '@/components/welcome';
-import { Button, Divider, MainTabFooter, MonthCalendar } from '@/components';
+import { Button, MainTabFooter, MonthCalendar } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { gamesApi } from '@/api';
 import { chatApi } from '@/api/chat';
@@ -164,7 +164,6 @@ export const MyTab = () => {
     () => filteredMyGames.some((g) => g.status === 'ANNOUNCED' || g.status === 'STARTED'),
     [filteredMyGames]
   );
-  const showTeamsInMyGamesPanel = !(isDesktop && hasUpcomingGames);
   const [myGamesSelectedDate, setMyGamesSelectedDate] = useState<Date>(() => new Date());
   useEffect(() => {
     if (myGamesCalendarDateAfterCreate) {
@@ -400,7 +399,6 @@ export const MyTab = () => {
         <WelcomeQuestionnairePrompt />
         <NoNamePromptBanner />
         <CityPromptBanner />
-        {showTeamsInMyGamesPanel && <UserTeamsHomeSection className="mb-3" />}
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!loading ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
           <InvitesSection
             invites={invites}
@@ -409,12 +407,7 @@ export const MyTab = () => {
             onNoteSaved={() => fetchData(false, true)}
           />
         </div>
-        {invites.length > 0 && (
-          <>
-            <Divider />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{t('home.myGames')}</h2>
-          </>
-        )}
+        <UserTeamsHomeSection className="mb-3" />
         <MyGamesSection
           games={myGamesForSelectedDate}
           user={user}
@@ -454,7 +447,6 @@ export const MyTab = () => {
             leftPanel={
               <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
                 <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
-                  <UserTeamsHomeSection className="mb-3" />
                   <MonthCalendar
                     selectedDate={myGamesSelectedDate}
                     onDateSelect={setMyGamesSelectedDate}
@@ -504,14 +496,7 @@ export const MyTab = () => {
           />
         </div>
 
-        {invites.length > 0 && (activeTab === 'calendar' || activeTab === 'list') && (
-          <>
-            <Divider />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              {t('home.myGames')}
-            </h2>
-          </>
-        )}
+        {(activeTab === 'calendar' || activeTab === 'list') && <UserTeamsHomeSection className="mb-3" />}
 
         <div className="relative min-h-[100px] overflow-hidden">
           <div
@@ -521,7 +506,6 @@ export const MyTab = () => {
                 : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
             }`}
           >
-            <UserTeamsHomeSection className="mb-3" />
             {hasUpcomingGames && (
               <MonthCalendar
                 selectedDate={myGamesSelectedDate}
@@ -550,7 +534,6 @@ export const MyTab = () => {
                 : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
             }`}
           >
-            <UserTeamsHomeSection className="mb-3" />
             <MyGamesSection
               games={filteredMyGames}
               user={user}

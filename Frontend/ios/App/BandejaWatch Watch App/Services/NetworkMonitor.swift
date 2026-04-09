@@ -7,6 +7,7 @@ import Observation
 final class NetworkMonitor {
     static let shared = NetworkMonitor()
 
+    /// Do not drive “offline” UI on watchOS: `NWPathMonitor` often reports unsatisfied when traffic goes via the paired iPhone.
     private(set) var isConnected = true
 
     private let monitor = NWPathMonitor()

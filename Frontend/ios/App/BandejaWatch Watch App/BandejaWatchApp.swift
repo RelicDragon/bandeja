@@ -27,11 +27,13 @@ struct BandejaWatchApp: App {
                 ContentView()
                     .environment(router)
                     .environment(gameListVM)
-                .task {
-                    await WorkoutManager.shared.recoverIfNeeded()
-                    await ScoringOutbox.shared.flush()
-                    await WorkoutSyncOutbox.shared.flush()
-                }
+                    .environment(ActiveSessionManager.shared)
+                    .task {
+                        await WorkoutManager.shared.recoverIfNeeded()
+                        await ActiveSessionManager.shared.recoverIfNeeded()
+                        await ScoringOutbox.shared.flush()
+                        await WorkoutSyncOutbox.shared.flush()
+                    }
             }
             .environment(WatchPreferencesStore.shared)
         }

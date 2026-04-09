@@ -5,6 +5,7 @@ import prisma from '../../../config/database';
 import { t } from '../../../utils/translations';
 import telegramNotificationService from '../notification.service';
 import { acceptInviteFromTelegram, declineInviteFromTelegram } from '../invite.service';
+import { acceptUserTeamInviteFromTelegram, declineUserTeamInviteFromTelegram } from '../userTeamInviteTelegram.service';
 import { escapeMarkdown, escapeHTML, getUserLanguage } from '../utils';
 
 export function createCallbackHandler(
@@ -106,6 +107,98 @@ export function createCallbackHandler(
               }
             } catch (editError) {
               console.error('Failed to edit invite message:', editError);
+            }
+          }
+        }
+      } else if (query.data.startsWith('uti:')) {
+        const parts = query.data.split(':');
+        if (parts.length !== 3) {
+          await ctx.answerCallbackQuery({ text: 'Invalid request', show_alert: true });
+          return;
+        }
+
+        const [, teamId, action] = parts;
+        const telegramId = ctx.telegramId;
+
+        if (action !== 'accept' && action !== 'decline') {
+          await ctx.answerCallbackQuery({ text: 'Invalid action', show_alert: true });
+          return;
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { telegramId },
+          select: {
+            id: true,
+            language: true,
+          }
+        });
+
+        if (!user) {
+          await ctx.answerCallbackQuery({
+            text: 'Unauthorized',
+            show_alert: true
+          });
+          return;
+        }
+
+        const lang = getUserLanguage(user.language, ctx.from?.language_code);
+
+        const result = action === 'accept'
+          ? await acceptUserTeamInviteFromTelegram(teamId, user.id)
+          : await declineUserTeamInviteFromTelegram(teamId, user.id);
+
+        let feedbackMessage: string;
+        if (result.success) {
+          feedbackMessage = t(result.message, lang);
+        } else {
+          feedbackMessage = t(result.message, lang) || t('telegram.teamInviteActionError', lang);
+        }
+
+        await ctx.answerCallbackQuery({
+          text: feedbackMessage,
+          show_alert: true
+        });
+
+        if (query.message && 'text' in query.message && query.message.text && query.message.chat) {
+          const chat = query.message.chat;
+          if ('id' in chat && typeof chat.id === 'number') {
+            const originalMessage = query.message.text;
+            const isHTML = originalMessage.includes('<') && originalMessage.includes('>');
+            const parseMode = isHTML ? 'HTML' : 'Markdown';
+            const escapeFunction = isHTML ? escapeHTML : escapeMarkdown;
+
+            let updatedMessage: string;
+            let statusText: string;
+
+            if (result.success) {
+              statusText = action === 'accept'
+                ? t('telegram.teamInviteAccepted', lang)
+                : t('telegram.teamInviteDeclined', lang);
+
+              let cleanedMessage = originalMessage.replace(/^(✅|❌)[^\n]*(?:\n\n?)?/s, '');
+              cleanedMessage = cleanedMessage.replace(/^🎯[^\n]*(?:\n\n?)?/s, '');
+              cleanedMessage = cleanedMessage.replace(/^👥[^\n]*(?:\n\n?)?/s, '');
+              updatedMessage = escapeFunction('✅ ' + statusText) + '\n\n' + cleanedMessage.trim();
+            } else {
+              const errorText = t(result.message, lang) || t('telegram.teamInviteActionError', lang);
+              let cleanedMessage = originalMessage.replace(/^(✅|❌)[^\n]*(?:\n\n?)?/s, '');
+              updatedMessage = escapeFunction('❌ ' + errorText) + '\n\n' + cleanedMessage.trim();
+            }
+
+            try {
+              const newReplyMarkup = result.success ? { inline_keyboard: [] } : query.message.reply_markup;
+              const hasContentChanged = originalMessage !== updatedMessage;
+              const hasMarkupChanged = result.success && query.message.reply_markup &&
+                JSON.stringify(query.message.reply_markup) !== JSON.stringify(newReplyMarkup);
+
+              if (hasContentChanged || hasMarkupChanged) {
+                await ctx.api.editMessageText(chat.id, query.message.message_id, updatedMessage, {
+                  parse_mode: parseMode,
+                  reply_markup: newReplyMarkup
+                });
+              }
+            } catch (editError) {
+              console.error('Failed to edit team invite message:', editError);
             }
           }
         }

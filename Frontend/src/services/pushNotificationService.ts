@@ -2,6 +2,7 @@ import { PushNotifications, PushNotificationSchema, ActionPerformed, Token } fro
 import { Capacitor } from '@capacitor/core';
 import api from '@/api/axios';
 import { invitesApi } from '@/api/invites';
+import { userTeamsApi } from '@/api/userTeams';
 import { navigationService } from './navigationService';
 import { getAppInfo } from '@/utils/capacitor';
 import { pushApi } from '@/api/push';
@@ -18,6 +19,7 @@ interface NotificationData {
     messageId?: string;
     userChatId?: string;
     groupChannelId?: string;
+    teamId?: string;
   };
 }
 
@@ -200,9 +202,17 @@ class PushNotificationService {
     if (actionId === 'tap') {
       await this.handleNotificationTap(normalizedData);
     } else if (actionId === 'accept') {
-      await this.handleAcceptInvite(normalizedData);
+      if (normalizedData.type === 'TEAM_INVITE') {
+        await this.handleAcceptTeamInvite(normalizedData);
+      } else {
+        await this.handleAcceptInvite(normalizedData);
+      }
     } else if (actionId === 'decline') {
-      await this.handleDeclineInvite(normalizedData);
+      if (normalizedData.type === 'TEAM_INVITE') {
+        await this.handleDeclineTeamInvite(normalizedData);
+      } else {
+        await this.handleDeclineInvite(normalizedData);
+      }
     }
   }
 
@@ -262,6 +272,20 @@ class PushNotificationService {
         }
         break;
 
+      case 'TEAM_INVITE':
+      case 'TEAM_INVITE_ACCEPTED':
+      case 'TEAM_INVITE_DECLINED':
+      case 'TEAM_MEMBER_REMOVED':
+      case 'TEAM_MEMBER_LEFT':
+        if (payload?.teamId) {
+          navigationService.navigateToUserTeam(payload.teamId);
+        }
+        break;
+
+      case 'TEAM_DELETED':
+        navigationService.navigateToHome();
+        break;
+
       default:
         console.log('Unknown notification type:', type);
     }
@@ -299,6 +323,32 @@ class PushNotificationService {
     }
   }
 
+  private async handleAcceptTeamInvite(data: NotificationData) {
+    const teamId = data.data?.teamId;
+    if (!teamId) {
+      console.error('No team ID in notification data');
+      return;
+    }
+    try {
+      await userTeamsApi.accept(teamId);
+      navigationService.navigateToUserTeam(teamId);
+    } catch (error) {
+      console.error('❌ Failed to accept team invite:', error);
+    }
+  }
+
+  private async handleDeclineTeamInvite(data: NotificationData) {
+    const teamId = data.data?.teamId;
+    if (!teamId) {
+      console.error('No team ID in notification data');
+      return;
+    }
+    try {
+      await userTeamsApi.decline(teamId);
+    } catch (error) {
+      console.error('❌ Failed to decline team invite:', error);
+    }
+  }
 
   async removeToken() {
     try {

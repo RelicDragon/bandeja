@@ -33,6 +33,7 @@ const VIRTUAL_OVERSCAN_FAST = 22;
 export type MessageListHandle = {
   scrollToMessageById: (messageId: string) => void;
   scrollToBottomAlign: () => void;
+  scrollToBottomSmooth: () => void;
 };
 
 interface MessageListProps {
@@ -66,6 +67,7 @@ interface MessageListProps {
   threadScrollKey?: string | null;
   /** While true, keep bottom aligned as row heights / total size settle (Dexie preload, virtualizer measure). */
   threadLayoutSettling?: boolean;
+  onChatScrollNearBottomChange?: (nearBottom: boolean) => void;
 }
 
 export const MessageList = forwardRef<MessageListHandle, MessageListProps>(function MessageList(
@@ -99,6 +101,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     onForwardMessage,
     threadScrollKey = null,
     threadLayoutSettling = false,
+    onChatScrollNearBottomChange,
   },
   ref
 ) {
@@ -142,6 +145,13 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     const len = messagesForScrollRef.current.length;
     const idx = len === 0 ? 0 : len;
     v.scrollToIndex(idx, { align: 'end', behavior: 'auto' });
+  }, []);
+
+  const scrollToBottomSmooth = useCallback(() => {
+    const v = virtualizerRef.current;
+    const len = messagesForScrollRef.current.length;
+    const idx = len === 0 ? 0 : len;
+    v.scrollToIndex(idx, { align: 'end', behavior: 'smooth' });
   }, []);
 
   const messagesMeasureRef = useRef(messages);
@@ -338,10 +348,49 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     [messages, virtualizer]
   );
 
+  const onChatNearBottomRef = useRef(onChatScrollNearBottomChange);
+  onChatNearBottomRef.current = onChatScrollNearBottomChange;
+  const prevChatNearBottomReportedRef = useRef(true);
+
+  useLayoutEffect(() => {
+    const cb = onChatNearBottomRef.current;
+    if (!threadScrollKey || !cb) return;
+    prevChatNearBottomReportedRef.current = true;
+    cb(true);
+  }, [threadScrollKey]);
+
+  useLayoutEffect(() => {
+    const el = messagesContainerRef.current;
+    const cb = onChatNearBottomRef.current;
+    if (!el || !cb) return;
+    const threshold = 120;
+    const tick = () => {
+      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+      if (prevChatNearBottomReportedRef.current !== nearBottom) {
+        prevChatNearBottomReportedRef.current = nearBottom;
+        cb(nearBottom);
+      }
+    };
+    el.addEventListener('scroll', tick, { passive: true });
+    const ro = new ResizeObserver(tick);
+    ro.observe(el);
+    tick();
+    return () => {
+      el.removeEventListener('scroll', tick);
+      ro.disconnect();
+    };
+  }, [
+    messages.length,
+    isLoadingMessages,
+    isInitialLoad,
+    isSwitchingChatType,
+    threadScrollKey,
+  ]);
+
   useImperativeHandle(
     ref,
-    () => ({ scrollToMessageById, scrollToBottomAlign }),
-    [scrollToMessageById, scrollToBottomAlign]
+    () => ({ scrollToMessageById, scrollToBottomAlign, scrollToBottomSmooth }),
+    [scrollToMessageById, scrollToBottomAlign, scrollToBottomSmooth]
   );
 
   useEffect(() => {

@@ -65,6 +65,8 @@ router.post(
 
 router.put('/:id', authenticate, gameController.updateGame);
 
+router.patch('/:id/my-session', authenticate, canAccessGame, gameController.patchMyWatchSessionHandler);
+
 router.delete('/:id', authenticate, requireGamePermission([ParticipantRole.OWNER]), gameController.deleteGame);
 
 router.post('/:id/join', authenticate, gameController.joinGame);

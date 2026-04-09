@@ -1,7 +1,7 @@
 import apn from 'apn';
 import { config } from '../../config/env';
 import { PushTokenService } from './push-token.service';
-import { NotificationPayload } from '../../types/notifications.types';
+import { NotificationPayload, NotificationType } from '../../types/notifications.types';
 import { PushPlatform } from '@prisma/client';
 import fcmService from './fcm.service';
 
@@ -76,7 +76,8 @@ class PushNotificationService {
       };
 
       if (payload.actions && payload.actions.length > 0) {
-        (notification as any).category = payload.type;
+        (notification as any).category =
+          payload.type === NotificationType.TEAM_INVITE ? NotificationType.INVITE : payload.type;
       }
 
       console.log(`[APNS] Sending notification with topic: ${config.apns.bundleId}`);

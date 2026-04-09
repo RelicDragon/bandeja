@@ -229,6 +229,51 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func sessionWaitFirstMatch(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Pulsa Inicio en un partido"
+        case "ru": return "Начните матч"
+        case "sr": return "Покрени меч"
+        default: return "Start a match"
+        }
+    }
+
+    nonisolated static func sessionFinishGame(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Finalizar"
+        case "ru": return "Завершить игру"
+        case "sr": return "Заврши игру"
+        default: return "Finish game"
+        }
+    }
+
+    nonisolated static func sessionExitScoring(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Salir"
+        case "ru": return "Выйти"
+        case "sr": return "Изађи"
+        default: return "Exit"
+        }
+    }
+
+    nonisolated static func sessionNeedScoresToFinalize(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Marca al menos un partido para finalizar."
+        case "ru": return "Введите счёт хотя бы в одном матче."
+        case "sr": return "Унесите резултат бар у једном мечу."
+        default: return "Enter at least one match score to finalize."
+        }
+    }
+
+    nonisolated static func sessionCannotFinishReadOnly(_ lang: String) -> String {
+        switch lang {
+        case "es": return "No puedes cerrar este partido aquí."
+        case "ru": return "Нельзя завершить этот матч здесь."
+        case "sr": return "Не можете завршити овај меч овде."
+        default: return "You can’t finish this match here."
+        }
+    }
+
     nonisolated static func backToScoring(_ lang: String) -> String {
         switch lang {
         case "es": return "Volver al marcador"

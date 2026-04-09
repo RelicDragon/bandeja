@@ -22,6 +22,12 @@ export const NOTIFICATION_TYPE_TO_PREF: Record<NotificationType, PreferenceKey> 
   [NotificationType.AUCTION_WON]: PreferenceKey.SEND_MARKETPLACE_NOTIFICATIONS,
   [NotificationType.AUCTION_BIN_ACCEPTED]: PreferenceKey.SEND_MARKETPLACE_NOTIFICATIONS,
   [NotificationType.GAME_CANCELLED]: PreferenceKey.SEND_REMINDERS,
+  [NotificationType.TEAM_INVITE]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,
+  [NotificationType.TEAM_INVITE_ACCEPTED]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,
+  [NotificationType.TEAM_INVITE_DECLINED]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,
+  [NotificationType.TEAM_MEMBER_REMOVED]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,
+  [NotificationType.TEAM_MEMBER_LEFT]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,
+  [NotificationType.TEAM_DELETED]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,
 };
 
 export type NotificationPreferenceData = {
@@ -32,6 +38,7 @@ export type NotificationPreferenceData = {
   sendReminders: boolean;
   sendWalletNotifications: boolean;
   sendMarketplaceNotifications: boolean;
+  sendTeamNotifications: boolean;
 };
 
 export const DEFAULT_PREFERENCES: Omit<NotificationPreferenceData, 'channelType'> = {
@@ -41,6 +48,7 @@ export const DEFAULT_PREFERENCES: Omit<NotificationPreferenceData, 'channelType'
   sendReminders: true,
   sendWalletNotifications: true,
   sendMarketplaceNotifications: true,
+  sendTeamNotifications: true,
 };
 
 export class NotificationPreferenceService {
@@ -68,6 +76,7 @@ export class NotificationPreferenceService {
         sendReminders: p.sendReminders,
         sendWalletNotifications: p.sendWalletNotifications,
         sendMarketplaceNotifications: p.sendMarketplaceNotifications,
+        sendTeamNotifications: p.sendTeamNotifications,
       }));
   }
 
@@ -87,6 +96,7 @@ export class NotificationPreferenceService {
         sendReminders: existing.sendReminders,
         sendWalletNotifications: existing.sendWalletNotifications,
         sendMarketplaceNotifications: existing.sendMarketplaceNotifications,
+        sendTeamNotifications: existing.sendTeamNotifications,
       };
     }
 
@@ -97,7 +107,7 @@ export class NotificationPreferenceService {
     const basePrefs = otherPrefs.length > 0
       ? (() => {
           const mostTrue = otherPrefs.reduce((best, p) => {
-            const trueCount = [p.sendMessages, p.sendInvites, p.sendDirectMessages, p.sendReminders, p.sendWalletNotifications, p.sendMarketplaceNotifications].filter(Boolean).length;
+            const trueCount = [p.sendMessages, p.sendInvites, p.sendDirectMessages, p.sendReminders, p.sendWalletNotifications, p.sendMarketplaceNotifications, p.sendTeamNotifications].filter(Boolean).length;
             return trueCount > best.count ? { prefs: p, count: trueCount } : best;
           }, { prefs: otherPrefs[0], count: 0 });
           return {
@@ -107,6 +117,7 @@ export class NotificationPreferenceService {
             sendReminders: mostTrue.prefs.sendReminders,
             sendWalletNotifications: mostTrue.prefs.sendWalletNotifications,
             sendMarketplaceNotifications: mostTrue.prefs.sendMarketplaceNotifications,
+            sendTeamNotifications: mostTrue.prefs.sendTeamNotifications,
           };
         })()
       : DEFAULT_PREFERENCES;
@@ -127,6 +138,7 @@ export class NotificationPreferenceService {
       sendReminders: created.sendReminders,
       sendWalletNotifications: created.sendWalletNotifications,
       sendMarketplaceNotifications: created.sendMarketplaceNotifications,
+      sendTeamNotifications: created.sendTeamNotifications,
     };
   }
 
@@ -153,6 +165,7 @@ export class NotificationPreferenceService {
       sendReminders: updated.sendReminders,
       sendWalletNotifications: updated.sendWalletNotifications,
       sendMarketplaceNotifications: updated.sendMarketplaceNotifications,
+      sendTeamNotifications: updated.sendTeamNotifications,
     };
   }
 
@@ -185,6 +198,7 @@ export class NotificationPreferenceService {
       sendReminders: pref.sendReminders,
       sendWalletNotifications: pref.sendWalletNotifications,
       sendMarketplaceNotifications: pref.sendMarketplaceNotifications,
+      sendTeamNotifications: pref.sendTeamNotifications,
     };
   }
 
@@ -203,8 +217,8 @@ export class NotificationPreferenceService {
   }
 
   static async getEffectivePreferencesForNotification(userId: string): Promise<{
-    telegram: { sendMessages: boolean; sendInvites: boolean; sendDirectMessages: boolean; sendReminders: boolean; sendWalletNotifications: boolean; sendMarketplaceNotifications: boolean } | null;
-    push: { sendMessages: boolean; sendInvites: boolean; sendDirectMessages: boolean; sendReminders: boolean; sendWalletNotifications: boolean; sendMarketplaceNotifications: boolean } | null;
+    telegram: { sendMessages: boolean; sendInvites: boolean; sendDirectMessages: boolean; sendReminders: boolean; sendWalletNotifications: boolean; sendMarketplaceNotifications: boolean; sendTeamNotifications: boolean } | null;
+    push: { sendMessages: boolean; sendInvites: boolean; sendDirectMessages: boolean; sendReminders: boolean; sendWalletNotifications: boolean; sendMarketplaceNotifications: boolean; sendTeamNotifications: boolean } | null;
   }> {
     const [user, prefs, pushCount] = await Promise.all([
       prisma.user.findUnique({
@@ -242,11 +256,12 @@ export class NotificationPreferenceService {
           sendReminders: p.sendReminders,
           sendWalletNotifications: p.sendWalletNotifications,
           sendMarketplaceNotifications: p.sendMarketplaceNotifications,
+          sendTeamNotifications: p.sendTeamNotifications,
         };
       }
     }
 
-    const toPref = (p: { sendMessages: boolean; sendInvites: boolean; sendDirectMessages: boolean; sendReminders: boolean; sendWalletNotifications: boolean; sendMarketplaceNotifications: boolean }) => p;
+    const toPref = (p: { sendMessages: boolean; sendInvites: boolean; sendDirectMessages: boolean; sendReminders: boolean; sendWalletNotifications: boolean; sendMarketplaceNotifications: boolean; sendTeamNotifications: boolean }) => p;
 
     const telegramPref = hasTelegram
       ? (prefMap.TELEGRAM
@@ -258,6 +273,7 @@ export class NotificationPreferenceService {
               sendReminders: user.sendTelegramReminders,
               sendWalletNotifications: user.sendTelegramWalletNotifications,
               sendMarketplaceNotifications: true,
+              sendTeamNotifications: true,
             }))
       : null;
 
@@ -271,6 +287,7 @@ export class NotificationPreferenceService {
               sendReminders: user.sendPushReminders,
               sendWalletNotifications: user.sendPushWalletNotifications,
               sendMarketplaceNotifications: true,
+              sendTeamNotifications: true,
             }))
       : null;
 

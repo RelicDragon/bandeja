@@ -15,6 +15,14 @@ import { sendNewMarketItemNotification } from './notifications/new-market-item.n
 import { sendNewBugNotification } from './notifications/new-bug.notification';
 import { sendLeagueGameAssignedNotification as sendLeagueGameAssignedTelegram } from './notifications/league-game-assigned.notification';
 import { sendGameCancelledNotification as sendGameCancelledTelegram } from './notifications/game-cancelled.notification';
+import {
+  sendUserTeamInviteTelegram,
+  sendUserTeamInviteAcceptedTelegram,
+  sendUserTeamInviteDeclinedTelegram,
+  sendUserTeamMemberRemovedTelegram,
+  sendUserTeamMemberLeftTelegram,
+  sendUserTeamDeletedTelegram,
+} from './notifications/team.notification';
 
 class TelegramNotificationService {
   private bot: Bot | null = null;
@@ -123,6 +131,36 @@ class TelegramNotificationService {
   async sendTransactionNotification(transactionId: string, userId: string, isSender: boolean) {
     if (!this.bot) return;
     await sendTransactionNotificationFunc(this.bot.api, transactionId, userId, isSender);
+  }
+
+  async sendUserTeamInviteNotification(team: { id: string; name: string }, inviter: any, inviteeUserId: string) {
+    if (!this.bot) return;
+    await sendUserTeamInviteTelegram(this.bot.api, team, inviter, inviteeUserId);
+  }
+
+  async sendUserTeamInviteAcceptedNotification(team: { id: string; name: string }, accepter: any, ownerId: string) {
+    if (!this.bot) return;
+    await sendUserTeamInviteAcceptedTelegram(this.bot.api, team, accepter, ownerId);
+  }
+
+  async sendUserTeamInviteDeclinedNotification(team: { id: string; name: string }, decliner: any, ownerId: string) {
+    if (!this.bot) return;
+    await sendUserTeamInviteDeclinedTelegram(this.bot.api, team, decliner, ownerId);
+  }
+
+  async sendUserTeamMemberRemovedNotification(team: { id: string; name: string }, removedUserId: string) {
+    if (!this.bot) return;
+    await sendUserTeamMemberRemovedTelegram(this.bot.api, team, removedUserId);
+  }
+
+  async sendUserTeamMemberLeftNotification(team: { id: string; name: string }, leaver: any, ownerId: string) {
+    if (!this.bot) return;
+    await sendUserTeamMemberLeftTelegram(this.bot.api, team, leaver, ownerId);
+  }
+
+  async sendUserTeamDeletedNotification(teamName: string, memberUserId: string) {
+    if (!this.bot) return;
+    await sendUserTeamDeletedTelegram(this.bot.api, teamName, memberUserId);
   }
 }
 

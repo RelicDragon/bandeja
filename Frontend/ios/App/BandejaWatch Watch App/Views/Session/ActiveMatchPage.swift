@@ -1,12 +1,14 @@
 import SwiftUI
 
-struct MatchScoringView: View {
+struct ActiveMatchPage: View {
     let gameId: String
     let matchId: String
     @State private var vm: MatchScoringViewModel
-    @Environment(\.dismiss) private var dismiss
+    @Environment(ActiveSessionManager.self) private var session
     @Environment(WatchPreferencesStore.self) private var prefs
     @State private var isReviewing = false
+    @State private var lastFinishSignal = 0
+    @State private var showReadOnlyFinishAlert = false
 
     init(gameId: String, matchId: String) {
         self.gameId = gameId
@@ -27,7 +29,7 @@ struct MatchScoringView: View {
                     MatchReviewView(
                         vm: vm,
                         onBack: { isReviewing = false },
-                        onFinish: saveAndDismiss
+                        onFinish: saveAndFinishSession
                     )
                 }
             } else {
@@ -41,7 +43,22 @@ struct MatchScoringView: View {
             }
         }
         .navigationTitle(scoringNavTitle)
-        .task { await vm.load() }
+        .task(id: matchId) { await vm.load() }
+        .onChange(of: session.finishMatchSignal) { _, newVal in
+            guard newVal > lastFinishSignal else { return }
+            lastFinishSignal = newVal
+            if vm.isReadOnly || vm.match == nil {
+                showReadOnlyFinishAlert = true
+                return
+            }
+            vm.prepareForMatchReview()
+            isReviewing = true
+        }
+        .alert(WatchCopy.finishMatch(prefs.uiLanguageCode), isPresented: $showReadOnlyFinishAlert) {
+            Button(WatchCopy.close(prefs.uiLanguageCode), role: .cancel) {}
+        } message: {
+            Text(WatchCopy.sessionCannotFinishReadOnly(prefs.uiLanguageCode))
+        }
     }
 
     private var scoringNavTitle: String {
@@ -86,9 +103,6 @@ struct MatchScoringView: View {
                             .foregroundStyle(.tertiary)
                     }
                 }
-                Button(WatchCopy.close(lang)) { dismiss() }
-                    .buttonStyle(.borderedProminent)
-                    .frame(maxWidth: .infinity)
             }
             .padding(.vertical, 4)
         }
@@ -113,10 +127,12 @@ struct MatchScoringView: View {
         isReviewing = true
     }
 
-    private func saveAndDismiss() {
+    private func saveAndFinishSession() {
         Task {
             await vm.saveCurrentSets()
-            if vm.error == nil { dismiss() }
+            if vm.error == nil {
+                await session.finishMatchAfterSave()
+            }
         }
     }
 }

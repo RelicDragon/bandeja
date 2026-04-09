@@ -8,12 +8,12 @@ final class Router {
 
     enum Destination: Hashable {
         case gameDetail(id: String)
-        case scoringList(gameId: String)
-        case scoringMatch(gameId: String, matchId: String)
+        case gameOutcomes(gameId: String)
+        case gameOutcomeMatch(gameId: String, matchId: String)
 
         var scoringGameId: String? {
             switch self {
-            case .scoringList(let g), .scoringMatch(let g, _): return g
+            case .gameOutcomes(let g), .gameOutcomeMatch(let g, _): return g
             case .gameDetail: return nil
             }
         }

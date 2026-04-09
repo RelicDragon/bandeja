@@ -48,9 +48,6 @@ export const MainPage = () => {
 
   const scrollablePage = currentPage === 'my' || currentPage === 'find';
   const isTeamsPage = currentPage === 'teams';
-  const teamsShellHeightClass = bottomTabsVisible
-    ? 'h-[calc(100dvh-12.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] max-h-[calc(100dvh-12.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]'
-    : 'h-[calc(100dvh-7.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] max-h-[calc(100dvh-7.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]';
 
   const renderContent = useMemo(() => {
     switch (currentPage) {
@@ -121,14 +118,14 @@ export const MainPage = () => {
   return (
     <MainLayout>
       <div
-        className={`relative px-2 ${!scrollablePage ? 'min-h-0 overflow-hidden' : ''} ${
-          isTeamsPage ? `flex flex-col ${teamsShellHeightClass}` : ''
+        className={`relative px-2 ${!scrollablePage && !isTeamsPage ? 'min-h-0 overflow-hidden' : ''} ${
+          isTeamsPage ? 'flex min-h-0 min-w-0 flex-1 flex-col' : ''
         }`}
         style={{ paddingBottom: bottomTabsVisible && !isTeamsPage ? '5rem' : '0' }}
       >
         <div
           className={`transition-all duration-300 ease-in-out transform translate-x-0 opacity-100 ${
-            isTeamsPage ? 'flex min-h-0 flex-1 flex-col overflow-hidden' : ''
+            isTeamsPage ? 'flex min-h-0 min-w-0 flex-1 flex-col' : ''
           }`}
         >
           {renderContent}

@@ -6,8 +6,10 @@ import { Gamepad2, Trophy, Swords, Dumbbell, Beer, Users, Hash, Bug, X, Shopping
 import { EntityType } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
+import toast from 'react-hot-toast';
 import { userTeamsApi } from '@/api';
 import { toastApiError } from '@/utils/toastApiError';
+import { findLatestSoloOwnedTeam } from '@/utils/soloOwnedUserTeam';
 import { CreateGroupChannelForm } from './chat/CreateGroupChannelForm';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { navigationService } from '@/services/navigationService';
@@ -169,6 +171,20 @@ export const CreateMenuModal = ({
     if (creatingTeam) return;
     setCreatingTeam(true);
     try {
+      const refreshed = await refreshAllTeams();
+      if (!refreshed) {
+        toast.error(t('errors.networkError'));
+        return;
+      }
+      const existing = findLatestSoloOwnedTeam(useUserTeamsStore.getState().teams, user?.id);
+      if (existing) {
+        setIsExiting(true);
+        setTimeout(() => {
+          onClose();
+          navigate(`/user-team/${existing.id}`, { replace: true });
+        }, 400);
+        return;
+      }
       const team = await userTeamsApi.create({});
       useUserTeamsStore.getState().setTeam(team);
       await refreshAllTeams();

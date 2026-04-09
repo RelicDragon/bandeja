@@ -4,6 +4,7 @@ enum Endpoint: Sendable {
     case myGames
     case gameDetail(id: String)
     case updateGame(id: String)
+    case patchGameMySession(id: String)
     case userProfile
     case gameResults(gameId: String)
     case syncGameResults(gameId: String)
@@ -22,6 +23,8 @@ enum Endpoint: Sendable {
             return "/games/\(id)"
         case .updateGame(let id):
             return "/games/\(id)"
+        case .patchGameMySession(let id):
+            return "/games/\(id)/my-session"
         case .userProfile:
             return "/users/profile"
         case .gameResults(let gameId):
@@ -51,6 +54,8 @@ enum Endpoint: Sendable {
             return "POST"
         case .updateMatch, .updateGame:
             return "PUT"
+        case .patchGameMySession:
+            return "PATCH"
         }
     }
 
