@@ -119,8 +119,7 @@ export async function pullEventsLoop(
         const patches = chatSyncEventsToPatches(slice);
         const { putMessagesForMedia, patchMessageFallbacks } = await chatLocalDb.transaction(
           'rw',
-          chatLocalDb.messages,
-          chatLocalDb.chatSyncCursor,
+          [chatLocalDb.messages, chatLocalDb.chatSyncCursor, chatLocalDb.messageSearchTokens],
           async () => {
             const side = await applyChatSyncPatchesInSlice(patches, contextType, contextId);
             const lastSeq = slice[slice.length - 1]!.seq;
