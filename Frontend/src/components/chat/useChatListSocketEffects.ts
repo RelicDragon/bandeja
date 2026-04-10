@@ -1,18 +1,52 @@
 import { useEffect } from 'react';
 import { matchDraftToChat } from '@/utils/chatListUtils';
-import { deduplicateChats, type FilterCache } from '@/utils/chatListHelpers';
+import { calculateLastMessageDate, deduplicateChats, type FilterCache } from '@/utils/chatListHelpers';
 import {
   patchThreadIndexClearUnread,
+  patchThreadIndexFromMessage,
   patchThreadIndexSetUnreadCount,
   persistThreadIndexReplace,
 } from '@/services/chat/chatThreadIndex';
 import { usePlayersStore } from '@/store/playersStore';
 import { useNavigationStore } from '@/store/navigationStore';
-import type { ChatContextType, ChatDraft, ChatMessage } from '@/api/chat';
+import { chatApi, type ChatContextType, type ChatDraft, type ChatMessage, type GroupChannel } from '@/api/chat';
 import type { ChatItem, ChatType } from './chatListTypes';
 import { updateChatDraftInList, updateChatMessageInList } from './chatListModelMessageUpdates';
 import { chatListModuleCache } from './chatListModuleCache';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
+
+function mergeGroupChannelSnapshotIntoChats(prev: ChatItem[], channelId: string, fresh: GroupChannel): ChatItem[] {
+  return prev.map((chat) => {
+    if ((chat.type !== 'group' && chat.type !== 'channel') || chat.data.id !== channelId) return chat;
+    const draft = 'draft' in chat ? chat.draft ?? null : null;
+    const updatedAt = fresh.updatedAt ?? chat.data.updatedAt;
+    const lastMessage =
+      fresh.lastMessage !== undefined && fresh.lastMessage !== null ? fresh.lastMessage : chat.data.lastMessage;
+    const lastMessageDate =
+      lastMessage || draft ? calculateLastMessageDate(lastMessage, draft, updatedAt) : chat.lastMessageDate;
+    return {
+      ...chat,
+      data: { ...chat.data, lastMessage, updatedAt },
+      lastMessageDate,
+    };
+  });
+}
+
+function refreshGroupChannelRowFromApi(
+  channelId: string,
+  setChats: React.Dispatch<React.SetStateAction<ChatItem[]>>,
+  chatsRef: React.MutableRefObject<ChatItem[]>
+): void {
+  const inList = chatsRef.current.some(
+    (c) => (c.type === 'group' || c.type === 'channel') && c.data.id === channelId
+  );
+  if (!inList) return;
+  void chatApi.getGroupChannelById(channelId).then((res) => {
+    const fresh = res.data;
+    if (!fresh) return;
+    setChats((prev) => mergeGroupChannelSnapshotIntoChats(prev, channelId, fresh));
+  }).catch(() => {});
+}
 
 type SocketEventsParams = {
   chatsFilter: string;
@@ -37,6 +71,7 @@ type SocketEventsParams = {
   ) => void;
   bugsPageRef: React.MutableRefObject<number>;
   setBugsHasMore: (v: boolean) => void;
+  chatsRef: React.MutableRefObject<ChatItem[]>;
 };
 
 export function useChatListSocketEffects(p: SocketEventsParams) {
@@ -58,6 +93,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
     applyDraftToCache,
     bugsPageRef,
     setBugsHasMore,
+    chatsRef,
   } = p;
 
   useEffect(() => {
@@ -135,25 +171,69 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
 
     const shouldUpdate =
       (chatsFilter === 'users' && (contextType === 'USER' || contextType === 'GROUP')) ||
-      (chatsFilter === 'bugs' && contextType === 'GROUP') ||
+      (chatsFilter === 'bugs' && (contextType === 'GROUP' || contextType === 'BUG')) ||
       (chatsFilter === 'channels' && contextType === 'GROUP') ||
       (chatsFilter === 'market' && contextType === 'GROUP');
 
     if (shouldUpdate) {
+      const raw = message as ChatMessage;
+      const normalized: ChatMessage = {
+        ...raw,
+        chatContextType: (raw.chatContextType ?? contextType) as ChatContextType,
+        contextId: raw.contextId ?? contextId,
+      };
+      if (contextType !== 'BUG') {
+        void patchThreadIndexFromMessage(normalized, { applyUnread: false }).catch(() => {});
+      }
+
       const isViewingThis =
         isDesktop &&
-        selectedChatId === contextId &&
-        ((contextType === 'USER' && selectedChatType === 'user') ||
-          (contextType === 'GROUP' && (selectedChatType === 'group' || selectedChatType === 'channel')));
+        ((contextType === 'USER' &&
+          selectedChatType === 'user' &&
+          selectedChatId === contextId) ||
+          (contextType === 'GROUP' &&
+            (selectedChatType === 'group' || selectedChatType === 'channel') &&
+            selectedChatId === contextId) ||
+          (contextType === 'BUG' &&
+            chatsFilter === 'bugs' &&
+            (selectedChatType === 'group' || selectedChatType === 'channel') &&
+            !!selectedChatId &&
+            chatsRef.current.some(
+              (c) =>
+                (c.type === 'channel' || c.type === 'group') &&
+                c.data.id === selectedChatId &&
+                (c.data.bug?.id === contextId || c.data.bugId === contextId)
+            )));
       if (isViewingThis && contextType === 'USER') {
         usePlayersStore.getState().markChatAsRead(contextId);
       }
       setChats((prevChats) => {
+        if (contextType === 'BUG' && chatsFilter === 'bugs') {
+          const bugRow = prevChats.find(
+            (c) =>
+              (c.type === 'channel' || c.type === 'group') &&
+              (c.data.bug?.id === contextId || c.data.bugId === contextId)
+          );
+          if (bugRow && (bugRow.type === 'group' || bugRow.type === 'channel')) {
+            void patchThreadIndexFromMessage(
+              { ...normalized, chatContextType: 'GROUP', contextId: bugRow.data.id },
+              { applyUnread: false }
+            ).catch(() => {});
+          }
+        }
+
         const chatExists = prevChats.some((chat) => {
           if (contextType === 'USER' && chat.type === 'user' && chat.data.id === contextId) return true;
+          if (
+            contextType === 'BUG' &&
+            chatsFilter === 'bugs' &&
+            (chat.type === 'channel' || chat.type === 'group')
+          ) {
+            return !!(chat.data.bug?.id === contextId || chat.data.bugId === contextId);
+          }
           if (contextType === 'GROUP' && (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId) {
             if (chatsFilter === 'channels') return chat.type === 'channel';
-            if (chatsFilter === 'users') return chat.type === 'group';
+            if (chatsFilter === 'users') return chat.type === 'group' || chat.type === 'channel';
             if (chatsFilter === 'bugs') return chat.type === 'channel' && chat.data.bug;
             if (chatsFilter === 'market') return chat.type === 'channel' && chat.data.marketItemId;
             return true;
@@ -170,6 +250,12 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
               if (contextType === 'USER' && chat.type === 'user' && chat.data.id === contextId) return { ...chat, unreadCount: 0 };
               if (contextType === 'GROUP' && (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId)
                 return { ...chat, unreadCount: 0 };
+              if (
+                contextType === 'BUG' &&
+                (chat.type === 'group' || chat.type === 'channel') &&
+                (chat.data.bug?.id === contextId || chat.data.bugId === contextId)
+              )
+                return { ...chat, unreadCount: 0 };
               return chat;
             });
           }
@@ -185,12 +271,49 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
       });
     }
     }
-  }, [listChatMessageSeq, chatsFilter, userId, isDesktop, selectedChatId, selectedChatType, fetchChatsForFilter, setChats]);
+  }, [
+    listChatMessageSeq,
+    chatsFilter,
+    userId,
+    isDesktop,
+    selectedChatId,
+    selectedChatType,
+    fetchChatsForFilter,
+    setChats,
+    chatsRef,
+  ]);
 
   useEffect(() => {
     const unreadBatch = useSocketEventsStore.getState().takeListChatUnreads();
     for (const lastChatUnreadCount of unreadBatch) {
     const { contextType, contextId, unreadCount } = lastChatUnreadCount;
+
+    if (contextType === 'BUG') {
+      if (chatsFilter !== 'bugs') continue;
+      const matchBug = (c: ChatItem): boolean => {
+        if (c.type !== 'channel' && c.type !== 'group') return false;
+        return c.data.bug?.id === contextId || c.data.bugId === contextId;
+      };
+      const rowForApi = chatsRef.current.find(matchBug);
+      const channelIdForApi =
+        rowForApi && (rowForApi.type === 'channel' || rowForApi.type === 'group') ? rowForApi.data.id : undefined;
+
+      setChats((prev) => {
+        const row = prev.find(matchBug);
+        const channelId =
+          row && (row.type === 'channel' || row.type === 'group') ? row.data.id : undefined;
+        const isViewingThis =
+          isDesktop &&
+          channelId != null &&
+          selectedChatId === channelId &&
+          (selectedChatType === 'group' || selectedChatType === 'channel');
+        const nextCount = isViewingThis ? 0 : unreadCount;
+        if (channelId) void patchThreadIndexSetUnreadCount('GROUP', channelId, nextCount);
+        return prev.map((chat) => (matchBug(chat) ? { ...chat, unreadCount: nextCount } : chat));
+      });
+      if (channelIdForApi) refreshGroupChannelRowFromApi(channelIdForApi, setChats, chatsRef);
+      continue;
+    }
 
     if (contextType === 'GROUP') {
       const isViewingThis =
@@ -204,6 +327,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
           (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId ? { ...chat, unreadCount: nextCount } : chat
         )
       );
+      refreshGroupChannelRowFromApi(contextId, setChats, chatsRef);
       continue;
     }
 
@@ -234,7 +358,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
       void patchThreadIndexSetUnreadCount('GAME', contextId, nextCount);
     }
     }
-  }, [listChatUnreadSeq, isDesktop, selectedChatId, selectedChatType, chatsFilter, fetchChatsForFilter, setChats]);
+  }, [listChatUnreadSeq, isDesktop, selectedChatId, selectedChatType, chatsFilter, fetchChatsForFilter, setChats, chatsRef]);
 
   useEffect(() => {
     if (lastSyncCompletedAt == null) return;

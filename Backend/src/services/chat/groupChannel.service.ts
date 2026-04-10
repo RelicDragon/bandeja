@@ -57,16 +57,41 @@ async function emitPrivateGroupUserLeftSystemMessage(
   );
 }
 
+/** Strips denormalized last-message DB fields and adds API `lastMessage` object. */
+function withGroupChannelLastMessage(row: Record<string, unknown>) {
+  const {
+    lastMessagePreview,
+    lastMessageSenderId,
+    lastMessageSender,
+    ...rest
+  } = row as Record<string, unknown> & {
+    lastMessagePreview?: string | null;
+    lastMessageSenderId?: string | null;
+    lastMessageSender?: object | null;
+    updatedAt: Date;
+  };
+  const updatedAt = row.updatedAt as Date;
+  return {
+    ...rest,
+    lastMessage: lastMessagePreview
+      ? {
+          preview: lastMessagePreview as string,
+          updatedAt: updatedAt.toISOString(),
+          senderId: (lastMessageSenderId as string | null | undefined) ?? null,
+          sender: (lastMessageSender as object | null | undefined) ?? null,
+        }
+      : null,
+  };
+}
+
 function mapGroupChannelToResponse(gc: GcWithParticipants, userId: string, isMuted: boolean) {
   const userParticipant = gc.participants.find((p) => p.userId === userId);
   const isOwner = userParticipant?.role === ParticipantRole.OWNER;
   const isParticipant = !!userParticipant;
   const pinned = gc.pinnedByUsers && gc.pinnedByUsers.length > 0 ? gc.pinnedByUsers[0] : null;
+  const base = withGroupChannelLastMessage(gc as unknown as Record<string, unknown>);
   return {
-    ...gc,
-    lastMessage: gc.lastMessagePreview
-      ? { preview: gc.lastMessagePreview, updatedAt: gc.updatedAt }
-      : null,
+    ...base,
     isParticipant,
     isOwner,
     isPinned: !!pinned,
@@ -150,18 +175,20 @@ export class GroupChannelService {
       }
     });
 
-    await MessageService.createMessage({
-      chatContextType: ChatContextType.GROUP,
-      contextId: groupChannel.id,
-      senderId: data.ownerId,
-      content: 'Group created',
-      mediaUrls: [],
-      chatType: ChatType.PUBLIC
-    }).catch(error => {
+    try {
+      await MessageService.createMessage({
+        chatContextType: ChatContextType.GROUP,
+        contextId: groupChannel.id,
+        senderId: data.ownerId,
+        content: 'Group created',
+        mediaUrls: [],
+        chatType: ChatType.PUBLIC
+      });
+    } catch (error) {
       console.error('Failed to send "Group created" message:', error);
-    });
+    }
 
-    return groupChannel;
+    return GroupChannelService.getGroupChannelById(groupChannel.id, data.ownerId);
   }
 
   static async getGroupChannelById(groupChannelId: string, userId?: string) {
@@ -180,6 +207,7 @@ export class GroupChannelService {
             city: true
           }
         },
+        lastMessageSender: { select: USER_SELECT_FIELDS },
         participants: {
           include: {
             user: {
@@ -202,7 +230,7 @@ export class GroupChannelService {
       : false;
 
     return {
-      ...groupChannel,
+      ...withGroupChannelLastMessage(groupChannel as unknown as Record<string, unknown>),
       isParticipant,
       isOwner,
       isMuted
@@ -366,6 +394,7 @@ export class GroupChannelService {
               sender: { select: USER_SELECT_FIELDS }
             }
           },
+          lastMessageSender: { select: USER_SELECT_FIELDS },
           participants: {
             where: { userId },
             include: {
@@ -404,7 +433,8 @@ export class GroupChannelService {
               }
             }
           },
-          pinnedByUsers: { where: { userId }, select: { pinnedAt: true } }
+          pinnedByUsers: { where: { userId }, select: { pinnedAt: true } },
+          lastMessageSender: { select: USER_SELECT_FIELDS }
         },
         orderBy: {
           updatedAt: 'desc'
@@ -467,6 +497,7 @@ export class GroupChannelService {
         isPublic: true
       },
       include: {
+        lastMessageSender: { select: USER_SELECT_FIELDS },
         participants: userId ? {
           where: { userId }
         } : undefined
@@ -477,14 +508,20 @@ export class GroupChannelService {
     });
 
     if (!userId || groupChannels.length === 0) {
-      return groupChannels.map((gc) => ({ ...gc, isMuted: false }));
+      return groupChannels.map((gc) => ({
+        ...withGroupChannelLastMessage(gc as unknown as Record<string, unknown>),
+        isMuted: false
+      }));
     }
     const mutedIds = await ChatMuteService.getMutedContextIdSet(
       userId,
       ChatContextType.GROUP,
       groupChannels.map((g) => g.id)
     );
-    return groupChannels.map((gc) => ({ ...gc, isMuted: mutedIds.has(gc.id) }));
+    return groupChannels.map((gc) => ({
+      ...withGroupChannelLastMessage(gc as unknown as Record<string, unknown>),
+      isMuted: mutedIds.has(gc.id)
+    }));
   }
 
   static async pinGroupChannel(userId: string, groupChannelId: string) {
@@ -560,12 +597,12 @@ export class GroupChannelService {
       throw new ApiError(403, 'Only owner or admin can update group/channel');
     }
 
-    const updated = await prisma.groupChannel.update({
+    await prisma.groupChannel.update({
       where: { id: groupChannelId },
       data
     });
 
-    return updated;
+    return GroupChannelService.getGroupChannelById(groupChannelId, userId);
   }
 
   static async deleteGroupChannel(groupChannelId: string, userId: string) {

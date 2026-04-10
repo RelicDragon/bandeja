@@ -132,6 +132,8 @@ export type ChatMessageWithStatus = ChatMessage & {
 export interface LastMessagePreview {
   preview: string;
   updatedAt: string;
+  senderId?: string | null;
+  sender?: BasicUser | null;
 }
 
 export function isLastMessagePreview(

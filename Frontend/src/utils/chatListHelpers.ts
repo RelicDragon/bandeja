@@ -1,11 +1,61 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
-import { ChatDraft, GroupChannel, getLastMessageTime } from '@/api/chat';
+import {
+  ChatDraft,
+  GroupChannel,
+  getLastMessageTime,
+  isLastMessagePreview,
+  type ChatMessage,
+  type LastMessagePreview,
+} from '@/api/chat';
 import { matchDraftToChat } from '@/utils/chatListUtils';
 import { sortChatItems, type ChatItem, type ChatListOutbox } from '@/utils/chatListSort';
-import type { ChatMessage } from '@/api/chat';
 import type { BasicUser } from '@/types';
 
 export const getChatKey = (c: ChatItem) => `${c.type}-${c.type === 'contact' ? c.userId : c.data.id}`;
+
+type ThreadIndexData = { lastMessage?: ChatMessage | LastMessagePreview | null; updatedAt?: string };
+
+function threadLastMessageSortTime(m: ChatMessage | LastMessagePreview | null | undefined): number {
+  if (!m) return 0;
+  if (isLastMessagePreview(m)) return new Date(m.updatedAt).getTime();
+  const cm = m as ChatMessage;
+  const c = new Date(cm.createdAt).getTime();
+  const u = cm.updatedAt ? new Date(cm.updatedAt).getTime() : 0;
+  return Math.max(c, u || c);
+}
+
+function mergeDexieThreadData<T extends ThreadIndexData>(pnData: T, dnData: T): T {
+  const tP = threadLastMessageSortTime(pnData.lastMessage);
+  const tD = threadLastMessageSortTime(dnData.lastMessage);
+  const base = { ...pnData, ...dnData } as T;
+  if (!pnData.lastMessage && !dnData.lastMessage) return base;
+  if (dnData.lastMessage && !pnData.lastMessage) {
+    return {
+      ...base,
+      lastMessage: dnData.lastMessage,
+      updatedAt: dnData.updatedAt ?? base.updatedAt,
+    };
+  }
+  if (pnData.lastMessage && !dnData.lastMessage) {
+    return {
+      ...base,
+      lastMessage: pnData.lastMessage,
+      updatedAt: pnData.updatedAt ?? base.updatedAt,
+    };
+  }
+  if (tD > tP) {
+    return {
+      ...base,
+      lastMessage: dnData.lastMessage,
+      updatedAt: dnData.updatedAt ?? base.updatedAt,
+    };
+  }
+  return {
+    ...base,
+    lastMessage: pnData.lastMessage,
+    updatedAt: pnData.updatedAt ?? base.updatedAt,
+  };
+}
 
 export function mergeChatListOutboxFromDexieSlice(prev: ChatItem[], dexSlice: ChatItem[]): ChatItem[] {
   if (dexSlice.length === 0) return prev;
@@ -45,11 +95,22 @@ export function mergeChatListFromThreadIndexDexie(
     type NonContact = Exclude<ChatItem, { type: 'contact' }>;
     const pn = p as NonContact;
     const dn = d as NonContact;
-    return {
-      ...pn,
-      ...dn,
-      data: { ...pn.data, ...dn.data },
-    } as ChatItem;
+    const mergedData = mergeDexieThreadData(
+      pn.data as ThreadIndexData,
+      dn.data as ThreadIndexData
+    ) as NonContact['data'];
+    const merged = { ...pn, ...dn, data: mergedData } as NonContact;
+    const draft = 'draft' in merged ? merged.draft ?? null : null;
+    const updatedAtForSort =
+      (mergedData as { updatedAt?: string }).updatedAt ??
+      (pn.data as { updatedAt?: string }).updatedAt ??
+      (dn.data as { updatedAt?: string }).updatedAt ??
+      '';
+    const lastMessageDate =
+      mergedData.lastMessage || draft
+        ? calculateLastMessageDate(mergedData.lastMessage, draft, updatedAtForSort)
+        : null;
+    return { ...merged, lastMessageDate } as ChatItem;
   });
   return deduplicateChats(sortChatItems(next, listFilter, userId));
 }

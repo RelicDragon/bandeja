@@ -67,6 +67,7 @@ export async function updateLastMessagePreview(
       pollId: true,
       messageType: true,
       audioDurationMs: true,
+      senderId: true,
     },
   });
 
@@ -96,7 +97,10 @@ export async function updateLastMessagePreview(
     case 'GROUP':
       await prisma.groupChannel.update({
         where: { id: contextId },
-        data: { lastMessagePreview: preview },
+        data: {
+          lastMessagePreview: preview,
+          lastMessageSenderId: lastMessage?.senderId ?? null,
+        },
       });
       break;
   }

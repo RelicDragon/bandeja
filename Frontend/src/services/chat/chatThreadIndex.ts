@@ -369,7 +369,16 @@ export async function reconcileThreadIndexOutboxForContext(
   scheduleChatListOutboxBump();
 }
 
-export async function patchThreadIndexFromMessage(message: ChatMessage): Promise<void> {
+export type PatchThreadIndexFromMessageOptions = {
+  /** When false, only lastMessage / sort fields are updated (socket unread events own counts). Default true. */
+  applyUnread?: boolean;
+};
+
+export async function patchThreadIndexFromMessage(
+  message: ChatMessage,
+  options?: PatchThreadIndexFromMessageOptions
+): Promise<void> {
+  const applyUnread = options?.applyUnread !== false;
   const initialRows = await chatLocalDb.threadIndex
     .where('[contextType+contextId]')
     .equals([message.chatContextType, message.contextId])
@@ -380,7 +389,7 @@ export async function patchThreadIndexFromMessage(message: ChatMessage): Promise
     new Date(message.updatedAt ?? message.createdAt).getTime()
   );
   const updatedAtIso = message.updatedAt ?? message.createdAt;
-  const bumpUnread = shouldIncrementThreadUnread(message);
+  const bumpUnread = applyUnread && shouldIncrementThreadUnread(message);
   for (const rowRef of initialRows) {
     for (let attempt = 0; attempt < THREAD_INDEX_CAS_RETRIES; attempt++) {
       const latest = await chatLocalDb.threadIndex.get(rowRef.rowKey);

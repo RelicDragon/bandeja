@@ -5,6 +5,7 @@ import {
   ChatDraft,
   getLastMessageTime,
   isLastMessagePreview,
+  type LastMessagePreview,
 } from '@/api/chat';
 import { Users, Hash, Package, Pin, Loader2, BellOff, Home, Mic } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
@@ -117,11 +118,6 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
                 </span>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                {unreadCount > 0 && (
-                  <span className="bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
                 {(lastMessage || draft) && (
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     {formatChatTime(
@@ -205,11 +201,6 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-              {unreadCount > 0 && (
-                <span className="bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
               {(lastMessage || draft) && (
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {formatChatTime(
@@ -275,12 +266,19 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
               ? (draftContent.length > 50 ? draftContent.substring(0, 50) + '...' : draftContent)
               : '';
             return (
-              <p className="text-sm line-clamp-2 pr-2">
-                <span className="text-red-500 dark:text-red-400">Draft:</span>
-                {displayContent && (
-                  <span className="text-gray-500 dark:text-gray-400 italic ml-1">{displayContent}</span>
+              <div className="flex items-center justify-between">
+                <p className="text-sm line-clamp-2 pr-2">
+                  <span className="text-red-500 dark:text-red-400">Draft:</span>
+                  {displayContent && (
+                    <span className="text-gray-500 dark:text-gray-400 italic ml-1">{displayContent}</span>
+                  )}
+                </p>
+                {unreadCount > 0 && (
+                  <span className="flex-shrink-0 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
                 )}
-              </p>
+              </div>
             );
           }
 
@@ -307,56 +305,89 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
               !isPreviewOnly && !isFullVoice && hasMediaUrls && mt === undefined;
             const showPhotoRow =
               !isPreviewOnly && !isFullVoice && hasMediaUrls && mt !== undefined;
+            const previewLm = isPreviewOnly ? (lastMessage as LastMessagePreview) : null;
             const sender =
-              !isPreviewOnly && lastMessage && 'sender' in lastMessage
-                ? (lastMessage as { sender?: { firstName?: string; lastName?: string } }).sender ?? null
-                : null;
+              fullMsg?.sender ?? (previewLm?.sender != null ? previewLm.sender : null);
+            const senderIdForRow =
+              fullMsg?.senderId ?? (previewLm?.senderId != null ? previewLm.senderId : null);
+            const showGroupLastSender =
+              !groupChannel.isChannel && senderIdForRow != null;
+            const lastFromSelf = !!(user && senderIdForRow === user.id);
+            const showGroupSenderRow =
+              showGroupLastSender && (lastFromSelf || sender != null);
 
             return (
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 pr-2">
-                {showVoiceRow ? (
-                  <>
-                    {sender && (
-                      <span className="font-medium">
-                        {sender.firstName} {sender.lastName}:{' '}
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <div className="min-w-0 pr-2 flex-1">
+                  {showGroupSenderRow && (
+                    <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
+                      {lastFromSelf ? (
+                        <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium shrink-0">
+                          {t('chat.you')}
+                        </span>
+                      ) : (
+                        sender && (
+                          <>
+                            <PlayerAvatar player={sender} superTiny fullHideName showName={false} asDiv />
+                            <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium truncate min-w-0">
+                              {sender.firstName} {sender.lastName}
+                            </span>
+                          </>
+                        )
+                      )}
+                    </div>
+                  )}
+                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                    {showVoiceRow ? (
+                      <>
+                        {groupChannel.isChannel && sender && (
+                          <span className="font-medium">
+                            {sender.firstName} {sender.lastName}:{' '}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1">
+                          <Mic className="w-4 h-4 shrink-0" aria-hidden />
+                          <span>
+                            {t('chat.voiceMessage', { defaultValue: 'Voice message' })}
+                            {fullMsg?.audioDurationMs != null && fullMsg.audioDurationMs > 0
+                              ? ` (${formatVoiceDurationMmSs(fullMsg.audioDurationMs)})`
+                              : ''}
+                          </span>
+                        </span>
+                      </>
+                    ) : showPhotoRow ? (
+                      <span className="flex items-center gap-1">
+                        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {t('chat.photo')}
                       </span>
+                    ) : showGenericMediaRow ? (
+                      <ChatListGenericMediaRow t={t} />
+                    ) : isPreviewOnly ? (
+                      lastMessage.preview?.trim() ? (
+                        <ChatListPreviewContent preview={lastMessage.preview} t={t} />
+                      ) : (
+                        t('chat.noMessage')
+                      )
+                    ) : (
+                      <>
+                        {groupChannel.isChannel && sender && (
+                          <span className="font-medium">
+                            {sender.firstName} {sender.lastName}:{' '}
+                          </span>
+                        )}
+                        {displayText || 'No message'}
+                      </>
                     )}
-                    <span className="inline-flex items-center gap-1">
-                      <Mic className="w-4 h-4 shrink-0" aria-hidden />
-                      <span>
-                        {t('chat.voiceMessage', { defaultValue: 'Voice message' })}
-                        {fullMsg?.audioDurationMs != null && fullMsg.audioDurationMs > 0
-                          ? ` (${formatVoiceDurationMmSs(fullMsg.audioDurationMs)})`
-                          : ''}
-                      </span>
-                    </span>
-                  </>
-                ) : showPhotoRow ? (
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    {t('chat.photo')}
+                  </p>
+                </div>
+                {unreadCount > 0 && (
+                  <span className="flex-shrink-0 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
+                    {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
-                ) : showGenericMediaRow ? (
-                  <ChatListGenericMediaRow t={t} />
-                ) : isPreviewOnly ? (
-                  lastMessage.preview?.trim() ? (
-                    <ChatListPreviewContent preview={lastMessage.preview} t={t} />
-                  ) : (
-                    t('chat.noMessage')
-                  )
-                ) : (
-                  <>
-                    {sender && (
-                      <span className="font-medium">
-                        {sender.firstName} {sender.lastName}:{' '}
-                      </span>
-                    )}
-                    {displayText || 'No message'}
-                  </>
                 )}
-              </p>
+              </div>
             );
           }
 

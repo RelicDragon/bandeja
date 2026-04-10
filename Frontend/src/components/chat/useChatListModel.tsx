@@ -268,6 +268,10 @@ export function useChatListModel({
     () => (chatsFilter === 'market' ? chats.filter((c) => c.type === 'channel').map((c) => c.data.id) : []),
     [chatsFilter, chats]
   );
+  const marketChannelIdsKey = useMemo(() => {
+    if (chatsFilter !== 'market' || marketChannelIds.length === 0) return '';
+    return [...marketChannelIds].sort().join(',');
+  }, [chatsFilter, marketChannelIds]);
   const marketUnreadCounts = useGroupChannelUnreadCounts(marketChannelIds);
 
   const presenceUserIds = useMemo(() => {
@@ -835,7 +839,11 @@ export function useChatListModel({
   useEffect(() => {
     const data = lastChatUnreadCount;
     if (!data || data.contextType !== 'GROUP') return;
-    if (marketChannelIds.includes(data.contextId)) return;
+    const ids =
+      chatsFilter === 'market'
+        ? chatsRef.current.filter((c) => c.type === 'channel').map((c) => c.data.id)
+        : [];
+    if (ids.includes(data.contextId)) return;
     let cancelled = false;
     fetchMarket(1).then(({ chats, hasMore }) => {
       if (cancelled) return;
@@ -849,7 +857,7 @@ export function useChatListModel({
       }
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, [lastChatUnreadCount, marketChannelIds, chatsFilter, fetchMarket]);
+  }, [lastChatUnreadCount, marketChannelIdsKey, chatsFilter, fetchMarket]);
 
   const fetchCityUsers = useCallback(async () => {
     if (!user?.currentCity?.id) return;
@@ -963,6 +971,7 @@ export function useChatListModel({
     applyDraftToCache,
     bugsPageRef,
     setBugsHasMore,
+    chatsRef,
   });
 
   const handleRefresh = useCallback(async () => {

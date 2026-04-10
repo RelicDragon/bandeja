@@ -137,6 +137,7 @@ model User {
   marketItemBids          MarketItemBid[]
   trainedGames            Game[]               @relation("GameTrainer")
   buyerGroupChannels      GroupChannel[]       @relation("GroupChannelBuyer")
+  groupChannelsLastMessageFrom GroupChannel[]  @relation("GroupChannelLastMessageSender")
   reviewsReceivedAsTrainer TrainerReview[]      @relation("TrainerReviewsReceived")
   reviewsGiven            TrainerReview[]      @relation("TrainerReviewsGiven")
   gameWorkoutSummaries    GameWorkoutSummary[]
@@ -1274,12 +1275,14 @@ model GroupChannel {
   isCityGroup          Boolean                 @default(false)
   participantsCount    Int                     @default(0)
   lastMessagePreview   String?                 @db.VarChar(500)
+  lastMessageSenderId  String?
   createdAt            DateTime                @default(now())
   updatedAt            DateTime                @updatedAt
   city                 City?                   @relation("GroupChannelCity", fields: [cityId], references: [id], onDelete: SetNull)
   bug                  Bug?                    @relation(fields: [bugId], references: [id], onDelete: Cascade)
   marketItem           MarketItem?              @relation(fields: [marketItemId], references: [id], onDelete: Cascade)
   buyer                User?                   @relation("GroupChannelBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  lastMessageSender    User?                   @relation("GroupChannelLastMessageSender", fields: [lastMessageSenderId], references: [id], onDelete: SetNull)
   participants         GroupChannelParticipant[]
   invites              GroupChannelInvite[]
   pinnedByUsers       PinnedGroupChannel[]
