@@ -22,6 +22,15 @@ router.get('/booked-courts', authenticate, gameController.getBookedCourts);
 router.get('/:id/workout/me', authenticate, canAccessGame, gameController.getMyGameWorkoutSummary);
 
 router.post(
+  '/:id/reactions',
+  authenticate,
+  validate([body('emoji').notEmpty().withMessage('emoji is required')]),
+  gameController.addGameReaction
+);
+
+router.delete('/:id/reactions', authenticate, gameController.removeGameReaction);
+
+router.post(
   '/:id/workout',
   authenticate,
   canAccessGame,

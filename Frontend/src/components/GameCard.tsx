@@ -12,12 +12,14 @@ import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
+import { getGameCardEntityGradientClasses } from '@/utils/gameCardEntityTheme';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 
 import { useAuthStore } from '@/store/authStore';
 import { chatApi } from '@/api/chat';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { GameCardReactions } from '@/components/GameCardReactions';
 import { Calendar, MapPin, Users, MessageCircle, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star, Plane, Bookmark } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -52,6 +54,17 @@ export const GameCard = ({
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showJoinConfirm, setShowJoinConfirm] = useState(false);
   const [joinAction, setJoinAction] = useState<'game' | 'queue' | null>(null);
+  const [reactions, setReactions] = useState(() => game.reactions ?? []);
+  const lastSyncedGameIdRef = useRef(game.id);
+  useEffect(() => {
+    const next = game.reactions ?? [];
+    if (lastSyncedGameIdRef.current !== game.id) {
+      lastSyncedGameIdRef.current = game.id;
+      setReactions(next);
+      return;
+    }
+    setReactions((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+  }, [game.id, game.reactions]);
 
   useEffect(() => {
     const loadMainPhoto = async () => {
@@ -193,23 +206,6 @@ export const GameCard = ({
     }
   };
 
-  const getEntityGradient = () => {
-    switch (game.entityType) {
-      case 'TOURNAMENT':
-        return 'bg-gradient-to-br from-red-50/60 via-orange-50/40 to-red-50/60 dark:from-red-950/25 dark:via-orange-950/15 dark:to-red-950/25 border-l-2 border-red-300 dark:border-red-800 shadow-[0_0_8px_rgba(239,68,68,0.15)] dark:shadow-[0_0_8px_rgba(239,68,68,0.2)]';
-      case 'LEAGUE':
-      case 'LEAGUE_SEASON':
-        return 'bg-gradient-to-br from-blue-50/60 via-purple-50/40 to-blue-50/60 dark:from-blue-950/25 dark:via-purple-950/15 dark:to-blue-950/25 border-l-2 border-blue-300 dark:border-blue-800 shadow-[0_0_8px_rgba(59,130,246,0.15)] dark:shadow-[0_0_8px_rgba(59,130,246,0.2)]';
-      case 'TRAINING':
-        return 'bg-gradient-to-br from-green-50/60 via-teal-50/40 to-green-50/60 dark:from-green-950/25 dark:via-teal-950/15 dark:to-green-950/25 border-l-2 border-green-300 dark:border-green-800 shadow-[0_0_8px_rgba(34,197,94,0.15)] dark:shadow-[0_0_8px_rgba(34,197,94,0.2)]';
-      case 'BAR':
-        return 'bg-gradient-to-br from-yellow-50/60 via-amber-50/40 to-yellow-50/60 dark:from-yellow-950/25 dark:via-amber-950/15 dark:to-yellow-950/25 border-l-2 border-yellow-300 dark:border-yellow-800 shadow-[0_0_8px_rgba(234,179,8,0.15)] dark:shadow-[0_0_8px_rgba(234,179,8,0.2)]';
-      default:
-        return '';
-    }
-  };
-
-
   const getEntityIcon = () => {
     if (game.entityType === 'GAME') return null;
     
@@ -234,7 +230,7 @@ export const GameCard = ({
     <Card
       className={`hover:shadow-md hover:scale-[1.02] 
         active:scale-[1.05] transition-all duration-300 ease-in-out 
-        cursor-pointer relative pb-0 ${getEntityGradient()}`}
+        cursor-pointer relative pb-0 overflow-visible ${getGameCardEntityGradientClasses(game.entityType)}`}
       onClick={handleCardClick}
     >
       {game.entityType !== 'GAME' && (
@@ -486,7 +482,7 @@ export const GameCard = ({
       {/* Content */}
       <div ref={expandedContentRef} className="relative z-10">
         {mainPhotoUrl ? (
-          <div className="flex gap-4 mb-3">
+          <div className="flex gap-4 mb-2 items-center">
             {game.entityType === 'TRAINING' && (() => {
               const trainer = game.trainerId ? participants.find(p => p.userId === game.trainerId) : null;
               return trainer ? (
@@ -508,7 +504,7 @@ export const GameCard = ({
               </div>
             </div>
             {game.entityType !== 'LEAGUE_SEASON' && (
-            <div className="flex flex-col gap-2 flex-1 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex flex-col gap-2 flex-1 text-sm text-gray-600 dark:text-gray-400 justify-center min-h-0">
               <div className="flex items-center gap-2">
                 <Calendar size={16} />
                 {game.timeIsSet === false ? (
@@ -581,7 +577,7 @@ export const GameCard = ({
             )}
           </div>
         ) : (
-          <div className={`text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' ? 'flex gap-4 -mt-1' : ''}`}>
+          <div className={`text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' ? 'flex gap-4 -mt-1 items-center' : ''}`}>
             {game.entityType === 'TRAINING' && (() => {
               const trainer = game.trainerId ? participants.find(p => p.userId === game.trainerId) : null;
               return trainer ? (
@@ -667,9 +663,9 @@ export const GameCard = ({
           </div>
         )}
         {game.entityType !== 'LEAGUE_SEASON' && (
-        <div className={`space-y-2 text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' && participants.filter(p => p.status === 'PLAYING').length >= 1 ? 'pt-2 mt-2 border-t border-gray-200 dark:border-gray-700' : ''}`}>
-          <div className="flex items-center gap-2">
-            <div className="relative -mx-0 flex-1 w-full">
+        <div className={`space-y-1.5 text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' && participants.filter(p => p.status === 'PLAYING').length >= 1 ? 'pt-1.5 mt-1.5 border-t border-gray-200 dark:border-gray-700' : ''}`}>
+          <div className="flex items-center gap-2 min-h-0">
+            <div className="relative -mx-0 flex-1 w-full min-w-0">
               <PlayersCarousel
                 participants={participants.filter(p => p.status === 'PLAYING')}
                 userId={effectiveUser?.id}
@@ -682,7 +678,7 @@ export const GameCard = ({
         )}
 
         {showJoinButton && onJoin && game.status !== 'ARCHIVED' && game.status !== 'FINISHED' && game.resultsStatus === 'NONE' && game.entityType !== 'LEAGUE' && !isParticipant && !hasMyInvites && !isInJoinQueue && (
-          <div className="mt-0 mb-4">
+          <div className="mt-1 mb-0">
             {hasUnoccupiedSlots ? (
               <Button
                 onClick={(e) => {
@@ -711,6 +707,15 @@ export const GameCard = ({
           </div>
         )}
       </div>
+      {effectiveUser?.id && (
+        <GameCardReactions
+          entityType={game.entityType}
+          gameId={game.id}
+          reactions={reactions}
+          currentUserId={effectiveUser.id}
+          onReactionsChange={setReactions}
+        />
+      )}
     </Card>
       {showNoteModal && effectiveUser && (
         <UserGameNoteModal

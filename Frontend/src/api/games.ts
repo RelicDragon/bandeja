@@ -82,6 +82,21 @@ export const gamesApi = {
     return response.data;
   },
 
+  addReaction: async (gameId: string, emoji: string) => {
+    const response = await api.post<ApiResponse<{ reactions: Array<{ userId: string; emoji: string }> }>>(
+      `/games/${gameId}/reactions`,
+      { emoji }
+    );
+    return response.data;
+  },
+
+  removeReaction: async (gameId: string) => {
+    const response = await api.delete<ApiResponse<{ reactions: Array<{ userId: string; emoji: string }> }>>(
+      `/games/${gameId}/reactions`
+    );
+    return response.data;
+  },
+
   join: async (id: string) => {
     const response = await api.post<ApiResponse<Game>>(`/games/${id}/join`);
     return response.data;

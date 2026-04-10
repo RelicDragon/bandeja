@@ -78,6 +78,7 @@ model User {
   pinnedGroupChannels        PinnedGroupChannel[]
   pinnedMessages             PinnedMessage[]
   messageReactions           MessageReaction[]
+  gameReactions              GameReaction[]
   messageReadReceipts        MessageReadReceipt[]
   currentCity                City?                @relation("UserCurrentCity", fields: [currentCityId], references: [id])
   approvedBy                 User?                @relation("UserApprovedBy", fields: [approvedById], references: [id])
@@ -341,6 +342,7 @@ model Game {
   bets                   Bet[]
   trainerReviews         TrainerReview[]
   workoutSummaries       GameWorkoutSummary[]
+  reactions              GameReaction[]       @relation("GameReactions")
 
   @@index([clubId])
   @@index([courtId])
@@ -358,6 +360,20 @@ model Game {
   @@index([timeIsSet, clubId, startTime])
   @@index([endTime])
   @@index([timeIsSet, courtId])
+}
+
+model GameReaction {
+  id        String   @id @default(cuid())
+  gameId    String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+  game      Game     @relation("GameReactions", fields: [gameId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userId])
+  @@index([gameId])
+  @@index([userId])
 }
 
 model CancelledGame {

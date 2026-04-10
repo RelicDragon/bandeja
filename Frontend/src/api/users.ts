@@ -37,6 +37,7 @@ export interface PlayerComparison {
   otherUser: BasicUser;
   gamesTogether: {
     total: number;
+    gamesCoplayed: number;
     wins: number;
     losses: number;
     winRate: string;
@@ -97,18 +98,12 @@ export interface PlayerComparison {
     updatedAt: string;
   }>;
   currentUserStats?: {
-    totalGames: number;
-    totalMatches: number;
     gamesLast30Days: number;
-    totalWins: number;
-    winsPercentage: string;
+    gamesStats: GamesStat[];
   };
   otherUserStats?: {
-    totalGames: number;
-    totalMatches: number;
     gamesLast30Days: number;
-    totalWins: number;
-    winsPercentage: string;
+    gamesStats: GamesStat[];
   };
 }
 

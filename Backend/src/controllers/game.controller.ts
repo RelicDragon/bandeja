@@ -14,6 +14,7 @@ import telegramBotService from '../services/telegram/bot.service';
 import { getGameInclude } from '../services/game/read.service';
 import prisma from '../config/database';
 import { GameWorkoutService } from '../services/game/gameWorkout.service';
+import { GameReactionService } from '../services/game/gameReaction.service';
 import { patchMyWatchSession } from '../services/game/watchSession.service';
 import { WorkoutSessionSource } from '@prisma/client';
 
@@ -523,4 +524,35 @@ export const getMyGameWorkoutSummary = asyncHandler(async (req: AuthRequest, res
   }
   const row = await GameWorkoutService.getMineForGame(gameId, req.userId);
   res.json({ success: true, data: row });
+});
+
+async function emitGameUpdateWithReactions(gameId: string, senderId: string) {
+  try {
+    const socketService = (global as { socketService?: { emitGameUpdate: (a: string, b: string, c?: unknown) => Promise<void> } })
+      .socketService;
+    if (!socketService) return;
+    const fullGame = await GameService.getGameById(gameId, senderId);
+    if (fullGame) {
+      await socketService.emitGameUpdate(gameId, senderId, fullGame);
+    }
+  } catch (e) {
+    console.error('emitGameUpdateWithReactions failed', e);
+  }
+}
+
+export const addGameReaction = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id: gameId } = req.params;
+  const { emoji } = req.body;
+  const userId = req.userId!;
+  const reactions = await GameReactionService.addReaction(gameId, userId, emoji);
+  await emitGameUpdateWithReactions(gameId, userId);
+  res.json({ success: true, data: { reactions } });
+});
+
+export const removeGameReaction = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id: gameId } = req.params;
+  const userId = req.userId!;
+  const reactions = await GameReactionService.removeReaction(gameId, userId);
+  await emitGameUpdateWithReactions(gameId, userId);
+  res.json({ success: true, data: { reactions } });
 });

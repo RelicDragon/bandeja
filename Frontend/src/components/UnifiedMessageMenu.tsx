@@ -87,16 +87,6 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     onClose();
   }, [onClose]);
 
-  const readReceiptUserIdsKey = useMemo(() => {
-    return (message.readReceipts ?? [])
-      .map((r) => r.userId)
-      .filter(Boolean)
-      .sort()
-      .join(',');
-  }, [message.readReceipts]);
-
-  const hasEmbeddedSender = Boolean(message.sender);
-
   const receiptAndSenderIds = useMemo(() => {
     const ids = new Set<string>();
     for (const r of message.readReceipts ?? []) {
@@ -356,7 +346,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [showDetails, message.id, readReceiptUserIdsKey, message.senderId, hasEmbeddedSender, t]);
+  }, [showDetails, message.id, message.senderId, message.readReceipts, message.sender, t]);
 
   const handleBackdropClick = () => {
     if (Date.now() - openTimeRef.current < 400) return;

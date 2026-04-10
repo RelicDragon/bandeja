@@ -1147,6 +1147,7 @@
     "totalGames": "Total Games",
     "totalMatches": "Total Matches",
     "noGamesAgainstEachOther": "No games where both players participated",
+    "noSharedGames": "No shared finished games yet",
     "coins": "coins",
     "timeFormat": "Time Format",
     "auto": "Auto",

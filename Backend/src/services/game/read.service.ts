@@ -4,6 +4,7 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { getUserGameNote, getUserNotesForGames } from '../userGameNote.service';
 import { InviteService } from '../invite.service';
 import { ReadReceiptService } from '../chat/readReceipt.service';
+import { attachReactionsToGames, fetchReactionsByGameIds } from './gameReaction.service';
 
 const getLeagueSeasonInclude = () => ({
   league: {
@@ -346,12 +347,14 @@ export class GameReadService {
       userNote = note?.content || null;
     }
 
-    return {
+    const base = {
       ...game,
       isClubFavorite,
       userNote,
       joinQueues: computeJoinQueuesFromParticipants(game),
     };
+    const reactionsMap = await fetchReactionsByGameIds([id]);
+    return attachReactionsToGames([base], reactionsMap)[0];
   }
 
   static async getGames(filters: any, userId?: string, userCityId?: string) {
@@ -433,14 +436,16 @@ export class GameReadService {
     if (userId && games.length > 0) {
       const gameIds = games.map(g => g.id);
       const notesMap = await getUserNotesForGames(userId, gameIds);
-
-      return games.map(game => ({
+      const withNotes = games.map(game => ({
         ...game,
         userNote: notesMap.get(game.id) || null,
       }));
+      const reactionsMap = await fetchReactionsByGameIds(gameIds);
+      return attachReactionsToGames(withNotes, reactionsMap);
     }
 
-    return games;
+    const reactionsMap = await fetchReactionsByGameIds(games.map((g) => g.id));
+    return attachReactionsToGames(games, reactionsMap);
   }
 
   static async getMyGames(userId: string, _userCityId?: string) {
@@ -476,11 +481,12 @@ export class GameReadService {
     if (games.length > 0) {
       const gameIds = games.map(g => g.id);
       const notesMap = await getUserNotesForGames(userId, gameIds);
-
-      return games.map(game => ({
+      const withNotes = games.map(game => ({
         ...game,
         userNote: notesMap.get(game.id) || null,
       }));
+      const reactionsMap = await fetchReactionsByGameIds(gameIds);
+      return attachReactionsToGames(withNotes, reactionsMap);
     }
 
     return games;
@@ -546,15 +552,15 @@ export class GameReadService {
       skip: offset,
     });
 
-    // Batch fetch user notes
     if (games.length > 0) {
       const gameIds = games.map(g => g.id);
       const notesMap = await getUserNotesForGames(userId, gameIds);
-
-      return games.map(game => ({
+      const withNotes = games.map(game => ({
         ...game,
         userNote: notesMap.get(game.id) || null,
       }));
+      const reactionsMap = await fetchReactionsByGameIds(gameIds);
+      return attachReactionsToGames(withNotes, reactionsMap);
     }
 
     return games;
@@ -621,11 +627,12 @@ export class GameReadService {
     if (games.length > 0) {
       const gameIds = games.map(g => g.id);
       const notesMap = await getUserNotesForGames(userId, gameIds);
-
-      return games.map(game => ({
+      const withNotes = games.map(game => ({
         ...game,
         userNote: notesMap.get(game.id) || null,
       }));
+      const reactionsMap = await fetchReactionsByGameIds(gameIds);
+      return attachReactionsToGames(withNotes, reactionsMap);
     }
 
     return games;
