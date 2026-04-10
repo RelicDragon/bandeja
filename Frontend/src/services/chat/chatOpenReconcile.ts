@@ -9,6 +9,7 @@ import { hydrateLastMessageIdFromDexieIfMissing } from '@/services/chat/messageC
 import { pullMissedAndPersistToDexie } from '@/services/chat/chatThreadNetworkSync';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { mergeChatMessagesAscending, mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
+import { enqueueChatSyncPull, SYNC_PRIORITY_FOREGROUND } from '@/services/chat/chatSyncScheduler';
 
 function tailMessageId(messages: ChatMessage[]): string | null {
   if (messages.length === 0) return null;
@@ -83,8 +84,6 @@ export async function reconcileChatThreadOpen(params: ChatOpenReconcileParams): 
         .setLastMessageId(contextType, contextId, tid, contextType === 'GAME' ? gameChatType : undefined);
     }
   } catch {
-    void import('./chatSyncScheduler').then((m) =>
-      m.enqueueChatSyncPull(contextType, contextId, m.SYNC_PRIORITY_FOREGROUND)
-    );
+    void enqueueChatSyncPull(contextType, contextId, SYNC_PRIORITY_FOREGROUND);
   }
 }

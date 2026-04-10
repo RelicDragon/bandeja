@@ -1,6 +1,7 @@
 import type { ChatContextType } from '@/api/chat';
 import { chatCursorKey } from './chatLocalDb';
 import { reconcileCursorWithServerHead } from './chatLocalApplyCursor';
+import { enqueueChatSyncPull, SYNC_PRIORITY_GAP } from './chatSyncScheduler';
 
 const socketSeqMissingTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const lastPullCompletedAtByKey = new Map<string, number>();
@@ -31,9 +32,7 @@ export function scheduleReconcileWhenSocketSeqMissing(contextType: ChatContextTy
     setTimeout(() => {
       socketSeqMissingTimers.delete(key);
       void reconcileCursorWithServerHead(contextType, contextId).catch(() => {});
-      void import('./chatSyncScheduler').then((m) =>
-        m.enqueueChatSyncPull(contextType, contextId, m.SYNC_PRIORITY_GAP)
-      );
+      void enqueueChatSyncPull(contextType, contextId, SYNC_PRIORITY_GAP);
     }, SOCKET_SEQ_MISSING_BASE_MS + extra)
   );
 }

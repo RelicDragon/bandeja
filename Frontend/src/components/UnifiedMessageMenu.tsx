@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -10,9 +11,12 @@ import { REACTION_EMOJIS, formatFullDateTime, getUserDisplayName, getUserInitial
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { isCapacitor } from '@/utils/capacitor';
-import { FileText, Flag, Forward, Languages, Pencil, Pin, PinOff } from 'lucide-react';
+import { FileText, Flag, Forward, Languages, Loader2, Pencil, Pin, PinOff } from 'lucide-react';
 import { formatChatMessageForForwardClipboard } from '@/utils/chatForwardClipboard';
 import { isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay';
+import { usePlayersStore } from '@/store/playersStore';
+import { fetchBasicUsersBatched } from '@/services/users/fetchBasicUsersBatched';
+import type { BasicUser } from '@/types';
 
 interface UnifiedMessageMenuProps {
   message: ChatMessage;
@@ -73,8 +77,44 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const [detailsHeight, setDetailsHeight] = useState<number>(0);
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [detailsUsersLoading, setDetailsUsersLoading] = useState(false);
   const duplicateRef = useRef<HTMLDivElement>(null);
   const openTimeRef = useRef(0);
+
+  const closeMenu = useCallback(() => {
+    setShowDetails(false);
+    setDetailsUsersLoading(false);
+    onClose();
+  }, [onClose]);
+
+  const readReceiptUserIdsKey = useMemo(() => {
+    return (message.readReceipts ?? [])
+      .map((r) => r.userId)
+      .filter(Boolean)
+      .sort()
+      .join(',');
+  }, [message.readReceipts]);
+
+  const hasEmbeddedSender = Boolean(message.sender);
+
+  const receiptAndSenderIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const r of message.readReceipts ?? []) {
+      if (r.userId) ids.add(r.userId);
+    }
+    if (message.senderId) ids.add(message.senderId);
+    return [...ids];
+  }, [message.readReceipts, message.senderId]);
+
+  const usersById = usePlayersStore(
+    useShallow((s) => {
+      const o: Record<string, BasicUser | undefined> = {};
+      for (const id of receiptAndSenderIds) {
+        o[id] = s.users[id];
+      }
+      return o;
+    })
+  );
 
   useEffect(() => {
     if (isCapacitor()) {
@@ -88,26 +128,26 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node) && !shouldIgnore()) {
-        onClose();
+        closeMenu();
       }
     };
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        closeMenu();
       }
     };
 
     const handleTouchStart = (event: TouchEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node) && !shouldIgnore()) {
         event.preventDefault();
-        onClose();
+        closeMenu();
       }
     };
 
     const handleTouchEnd = (event: TouchEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node) && !shouldIgnore()) {
-        onClose();
+        closeMenu();
       }
     };
 
@@ -124,7 +164,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       document.body.style.overflow = '';
       document.body.style.pointerEvents = '';
     };
-  }, [onClose]);
+  }, [closeMenu]);
 
   // Measure heights for smooth transitions
   useEffect(() => {
@@ -159,16 +199,16 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       clearTimeout(timeoutId2);
       clearTimeout(timeoutId3);
     };
-  }, [showDetails, message.readReceipts, message.reactions, messageElementRef]);
+  }, [showDetails, message.readReceipts, message.reactions, messageElementRef, detailsUsersLoading]);
 
   const handleReply = () => {
     onReply(message);
-    onClose();
+    closeMenu();
   };
 
   const handleCopy = () => {
     onCopy(message);
-    onClose();
+    closeMenu();
   };
 
   const forwardPayload = formatChatMessageForForwardClipboard(message);
@@ -177,7 +217,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const handleForward = () => {
     if (!onForward || !canForward) return;
     onForward(message);
-    onClose();
+    closeMenu();
   };
 
   const translateSourceText = (): string => {
@@ -203,7 +243,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       if (onTranslationUpdate) {
         onTranslationUpdate(message.id, translation);
       }
-      onClose();
+      closeMenu();
     } catch (error: any) {
       console.error('Failed to translate message:', error);
       // Always use frontend translations for user-facing error messages
@@ -219,14 +259,14 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const handleTranscribe = async () => {
     if (!onTranscribe || isTranscribing) return;
     const ok = await onTranscribe();
-    if (ok) onClose();
+    if (ok) closeMenu();
   };
 
   const handleReport = () => {
     if (onReport) {
       onReport(message);
     }
-    onClose();
+    closeMenu();
   };
 
   const handleDelete = () => {
@@ -236,7 +276,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     }
     
     // Close menu first
-    onClose();
+    closeMenu();
     
     // Delay the actual deletion to allow animation to play
     setTimeout(() => {
@@ -250,7 +290,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     } else {
       onReactionSelect(message.id, emoji);
     }
-    onClose();
+    closeMenu();
   };
 
   const handleShowDetails = () => {
@@ -259,11 +299,68 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
   const handleBackToMenu = () => {
     setShowDetails(false);
+    setDetailsUsersLoading(false);
   };
+
+  useEffect(() => {
+    if (!showDetails) return;
+    let cancelled = false;
+
+    const hasReceipts = (message.readReceipts?.length ?? 0) > 0;
+    const needsSender = Boolean(message.senderId && !message.sender);
+
+    if (!hasReceipts && !needsSender) {
+      setDetailsUsersLoading(false);
+      return;
+    }
+
+    setDetailsUsersLoading(true);
+
+    const run = async () => {
+      const idSet = new Set<string>();
+      if (hasReceipts) {
+        for (const r of message.readReceipts ?? []) {
+          if (r.userId) idSet.add(r.userId);
+        }
+      }
+      if (needsSender && message.senderId) idSet.add(message.senderId);
+
+      const store = usePlayersStore.getState();
+      const missing: string[] = [];
+      for (const id of idSet) {
+        const embedded =
+          id === message.senderId ? message.sender : message.readReceipts?.find((r) => r.userId === id)?.user;
+        if (embedded) continue;
+        if (!store.getUser(id)) missing.push(id);
+      }
+
+      if (missing.length > 0) {
+        try {
+          await fetchBasicUsersBatched(message.id, missing);
+        } catch (e: unknown) {
+          const err = e as { response?: { status?: number; data?: unknown } };
+          console.error('[UnifiedMessageMenu] basic users fetch failed', {
+            messageId: message.id,
+            status: err?.response?.status,
+            body: err?.response?.data,
+            error: e,
+          });
+          toast.error(t('common.error', { defaultValue: 'Something went wrong' }));
+        }
+      }
+
+      if (!cancelled) setDetailsUsersLoading(false);
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [showDetails, message.id, readReceiptUserIdsKey, message.senderId, hasEmbeddedSender, t]);
 
   const handleBackdropClick = () => {
     if (Date.now() - openTimeRef.current < 400) return;
-    onClose();
+    closeMenu();
   };
 
   const getReadReceiptsWithReactions = () => {
@@ -279,6 +376,12 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       };
     }).sort((a, b) => new Date(a.readAt).getTime() - new Date(b.readAt).getTime());
   };
+
+  const displaySenderUser: BasicUser | undefined =
+    message.sender ?? (message.senderId ? usersById[message.senderId] : undefined);
+
+  const receiptDisplayUser = (receipt: { userId: string; user?: BasicUser }): BasicUser | undefined =>
+    receipt.user ?? usersById[receipt.userId];
 
   const formatReadTime = (readAt: string) => {
     const readDate = new Date(readAt);
@@ -463,7 +566,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             )}
             {isOwnMessage && onEdit && !isSystemMessage && message.content != null && !message.poll && message.messageType !== 'VOICE' && (
               <button
-                onClick={() => { onEdit(message); onClose(); }}
+                onClick={() => { onEdit(message); closeMenu(); }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
               >
                 <Pencil className="w-4 h-4" />
@@ -491,7 +594,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             )}
             {onPin && !isPinned && !isSystemMessage && (
               <button
-                onClick={() => { onPin(message); onClose(); }}
+                onClick={() => { onPin(message); closeMenu(); }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
               >
                 <Pin className="w-4 h-4" />
@@ -500,7 +603,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             )}
             {onUnpin && isPinned && !isSystemMessage && (
               <button
-                onClick={() => { onUnpin(message.id); onClose(); }}
+                onClick={() => { onUnpin(message.id); closeMenu(); }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
               >
                 <PinOff className="w-4 h-4" />
@@ -587,7 +690,15 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               {message.editedAt && (
                 <div>{t('chat.editedAt', { defaultValue: 'Edited' })}: {formatFullDateTime(message.editedAt, user)}</div>
               )}
-              <div>{message.sender ? getUserDisplayName(message.sender) : 'Unknown User'}</div>
+              <div className="flex items-center gap-1 min-h-[1rem]">
+                {displaySenderUser ? (
+                  getUserDisplayName(displaySenderUser)
+                ) : detailsUsersLoading && message.senderId ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" aria-hidden />
+                ) : (
+                  'Unknown User'
+                )}
+              </div>
             </div>
           </div>
 
@@ -599,37 +710,38 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </div>
             )}
             {message.readReceipts && message.readReceipts.length > 0 ? (
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {getReadReceiptsWithReactions().map((receipt) => (
-                  <div key={receipt.id} className="flex items-center space-x-2">
-                    {/* Avatar */}
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-semibold">
-                      {receipt.user?.firstName ? getUserInitials(receipt.user) : 'U'}
-                    </div>
-                    
-                    {/* User Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-                        {receipt.user && getUserDisplayName(receipt.user)}
-                        {!receipt.user && 'Unknown User'}
+              detailsUsersLoading ? (
+                <div className="flex justify-center py-8 max-h-48">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" aria-hidden />
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {getReadReceiptsWithReactions().map((receipt) => {
+                    const du = receiptDisplayUser(receipt);
+                    return (
+                      <div key={receipt.key} className="flex items-center space-x-2">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-semibold">
+                          {du?.firstName ? getUserInitials(du) : 'U'}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                            {du ? getUserDisplayName(du) : 'Unknown User'}
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <DoubleTickIcon size={14} variant="double" className="text-gray-500" />
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatReadTime(receipt.readAt)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {receipt.reaction && <div className="text-sm">{receipt.reaction.emoji}</div>}
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <DoubleTickIcon size={14} variant="double" className="text-gray-500" />
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatReadTime(receipt.readAt)}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    {/* Reaction */}
-                    {receipt.reaction && (
-                      <div className="text-sm">
-                        {receipt.reaction.emoji}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
+              )
             ) : (
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 {t('chat.contextMenu.notReadYet', { defaultValue: 'Not read yet' })}

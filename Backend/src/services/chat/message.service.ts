@@ -20,6 +20,7 @@ import { MESSAGE_TRANSCRIPTION_PENDING } from './transcriptionPending';
 import { ReadReceiptService } from './readReceipt.service';
 import { DraftService } from './draft.service';
 import { ChatMuteService } from './chatMute.service';
+import { invalidateBasicUsersAllowedCacheForMessage } from '../user/basicUsersForMessageAllowedCache';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
 import { computeContentSearchable, computeVoiceContentSearchable } from '../../utils/messageSearchContent';
 import { ImageProcessor } from '../../utils/imageProcessor';
@@ -1586,6 +1587,8 @@ export class MessageService {
       (row as { syncSeq?: number }).syncSeq = syncSeq;
       return row;
     });
+
+    invalidateBasicUsersAllowedCacheForMessage(messageId);
 
     await updateLastMessagePreview(message.chatContextType, message.contextId);
 

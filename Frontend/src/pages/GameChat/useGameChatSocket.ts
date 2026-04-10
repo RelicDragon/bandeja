@@ -17,6 +17,7 @@ import {
   persistSocketTranscriptionAndSyncSeq,
 } from '@/services/chat/chatLocalApply';
 import { patchThreadIndexClearUnread } from '@/services/chat/chatThreadIndex';
+import { enqueueChatSyncPull, SYNC_PRIORITY_FOREGROUND } from '@/services/chat/chatSyncScheduler';
 import { scrollChatToBottomIfNearBottom } from '@/utils/chatScrollHelpers';
 import { compareChatMessagesAscending } from '@/utils/chatMessageSort';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
@@ -102,9 +103,7 @@ export function useGameChatSocket({
       .getAndClearMissed(contextType, id, contextType === 'GAME' ? effectiveChatType : undefined);
     if (toMerge.length === 0) return;
     void persistChatMessagesFromApi(toMerge).catch(() => {});
-    void import('@/services/chat/chatSyncScheduler').then((m) =>
-      m.enqueueChatSyncPull(contextType, id, m.SYNC_PRIORITY_FOREGROUND)
-    );
+    void enqueueChatSyncPull(contextType, id, SYNC_PRIORITY_FOREGROUND);
     setMessages((prev) => {
       const ids = new Set(prev.map((m) => m.id));
       const added = toMerge.filter((m) => !ids.has(m.id));

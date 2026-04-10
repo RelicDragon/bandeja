@@ -5,6 +5,18 @@ import rateLimit from 'express-rate-limit';
 import { validate } from '../middleware/validate';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import * as userController from '../controllers/user.controller';
+import { MAX_BASIC_USERS_IDS_PER_REQUEST } from '../services/user/basicUsersForMessage.service';
+
+const MAX_BASIC_BY_IDS = MAX_BASIC_USERS_IDS_PER_REQUEST;
+
+const basicByIdsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  message: { success: false, message: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
 
 const welcomeScreenLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -95,9 +107,27 @@ router.post('/welcome-screen/skip', authenticate, userController.skipWelcome);
 
 router.get('/compare/:otherUserId', authenticate, userController.getPlayerComparison);
 
-router.get('/:userId/stats', authenticate, userController.getUserStats);
-
 router.get('/invitable-players', authenticate, userController.getInvitablePlayers);
+
+router.post(
+  '/basic-by-ids',
+  authenticate,
+  basicByIdsLimiter,
+  validate([
+    body('messageId')
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage('messageId is required')
+      .isLength({ max: 128 })
+      .withMessage('messageId is too long'),
+    body('ids').isArray({ max: MAX_BASIC_BY_IDS }).withMessage(`ids must be an array with at most ${MAX_BASIC_BY_IDS} items`),
+    body('ids.*').isString().isLength({ min: 1, max: 64 }).withMessage('Each id must be a non-empty string'),
+  ]),
+  userController.getBasicUsersByIds
+);
+
+router.get('/:userId/stats', authenticate, userController.getUserStats);
 
 router.put(
   '/favorite-trainer',

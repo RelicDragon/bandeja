@@ -13,6 +13,7 @@ import {
   isTrustedGroupChannelOpenContext,
   isTrustedUserChatOpenContext,
 } from './chatOpenContextValidation';
+import { clearMessageHeightMemoryCache } from './chatMessageHeights';
 
 const ITEM_JSON_VERSION = 1 as const;
 const THREAD_INDEX_CAS_RETRIES = 8;
@@ -503,7 +504,6 @@ export async function patchThreadIndexAfterMessageDeleted(messageId: string): Pr
 }
 
 export async function clearChatLocalStores(): Promise<void> {
-  const { clearMessageHeightMemoryCache } = await import('@/services/chat/chatMessageHeights');
   clearMessageHeightMemoryCache();
   await chatLocalDb.transaction(
     'rw',

@@ -4,6 +4,8 @@ import i18n from '@/i18n/config';
 import { syncTokenToNative, syncLogoutToNative } from '@/services/authBridge';
 import { extractLanguageCode, detectTimeFormat, detectWeekStart, normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { usersApi } from '@/api';
+import { clearChatSyncScheduler } from '@/services/chat/chatSyncScheduler';
+import { useChatSyncStore } from '@/store/chatSyncStore';
 
 interface AuthState {
   user: User | null;
@@ -122,7 +124,6 @@ export const useAuthStore = create<AuthState>((set) => {
       }
       try {
         const { clearChatLocalStores } = await import('@/services/chat/chatThreadIndex');
-        const { clearChatSyncScheduler } = await import('@/services/chat/chatSyncScheduler');
         const { clearChatSyncWarmDrainQueue, resetChatSyncWarmSession } = await import(
           '@/services/chat/chatSyncBatchWarm'
         );
@@ -130,7 +131,6 @@ export const useAuthStore = create<AuthState>((set) => {
         await clearChatLocalStores();
         clearChatSyncScheduler();
         clearChatSyncWarmDrainQueue();
-        const { useChatSyncStore } = await import('@/store/chatSyncStore');
         useChatSyncStore.getState().resetChatListDexieBump();
       } catch {
         /* ignore */

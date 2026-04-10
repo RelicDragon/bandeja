@@ -32,10 +32,12 @@ interface DateGroup {
   games: Game[];
 }
 
-function isStaleAnnouncedPastStart(game: Game): boolean {
+function isStalePastScheduledGame(game: Game): boolean {
   if (game.timeIsSet === false) return false;
-  if (game.status !== 'ANNOUNCED') return false;
-  return new Date(game.startTime).getTime() < Date.now();
+  if (new Date(game.startTime).getTime() >= Date.now()) return false;
+  if (game.status === 'ANNOUNCED') return true;
+  if (game.status === 'STARTED' && game.entityType !== 'LEAGUE_SEASON') return true;
+  return false;
 }
 
 function groupGamesByDate(
@@ -75,7 +77,7 @@ export const UpcomingGamesList = ({ games }: UpcomingGamesListProps) => {
     const stale: Game[] = [];
     const upcoming: Game[] = [];
     for (const g of games) {
-      if (isStaleAnnouncedPastStart(g)) stale.push(g);
+      if (isStalePastScheduledGame(g)) stale.push(g);
       else upcoming.push(g);
     }
     stale.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
@@ -124,11 +126,11 @@ export const UpcomingGamesList = ({ games }: UpcomingGamesListProps) => {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-amber-950 dark:text-amber-100 leading-tight">
-                {t('home.staleGamesTitle', { defaultValue: 'Past time — game did not start' })}
+                {t('home.staleGamesTitle', { defaultValue: 'Scheduled time has passed — game was not played' })}
               </p>
               <p className="text-xs text-amber-900/90 dark:text-amber-200/90 mt-1 leading-snug">
                 {t('home.staleGamesHint', {
-                  defaultValue: 'Ask the organizer to cancel the game or set a new date.',
+                  defaultValue: 'The organizer can cancel this listing or set a new date.',
                 })}
               </p>
             </div>
@@ -238,7 +240,7 @@ const UpcomingGameRow = ({
         <div className="flex items-center gap-1.5 flex-wrap">
           {isStale && (
             <span className="inline-flex text-[10px] font-bold uppercase tracking-wide border rounded px-1 py-px flex-shrink-0 text-amber-950 dark:text-amber-100 bg-amber-200/90 dark:bg-amber-800/80 border-amber-700 dark:border-amber-500">
-              {t('home.staleGameBadge', { defaultValue: 'Needs action' })}
+              {t('home.staleGameBadge', { defaultValue: 'Time passed' })}
             </span>
           )}
           {showEntityType && (

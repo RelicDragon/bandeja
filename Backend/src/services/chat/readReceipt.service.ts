@@ -363,7 +363,6 @@ export class ReadReceiptService {
       userId,
       readAt,
     }));
-
     return prisma.$transaction(async (tx) => {
       await tx.messageReadReceipt.createMany({
         data: readReceipts,
@@ -419,7 +418,6 @@ export class ReadReceiptService {
       userId,
       readAt,
     }));
-
     return prisma.$transaction(async (tx) => {
       await tx.messageReadReceipt.createMany({
         data: readReceipts,

@@ -6,7 +6,11 @@ import { useSocketEventsStore } from './socketEventsStore';
 import { BasicUser } from '@/types';
 import type { NewUserChatMessage, UserChatReadReceipt } from '@/services/socketService';
 import { warmChatSyncHeads } from '@/services/chat/chatSyncBatchWarm';
-import { pruneThreadIndexUserChatsNotIn, syncUserThreadIndexFromUnreadMap } from '@/services/chat/chatThreadIndex';
+import {
+  patchThreadIndexClearUnread,
+  pruneThreadIndexUserChatsNotIn,
+  syncUserThreadIndexFromUnreadMap,
+} from '@/services/chat/chatThreadIndex';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 
 export interface UserMetadata {
@@ -342,9 +346,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         [chatId]: 0,
       },
     }));
-    void import('@/services/chat/chatThreadIndex').then((m) =>
-      m.patchThreadIndexClearUnread('USER', chatId)
-    );
+    void patchThreadIndexClearUnread('USER', chatId);
   },
 
   addChat: async (chat: UserChat) => {

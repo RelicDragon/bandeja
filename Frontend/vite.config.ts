@@ -53,8 +53,14 @@ export default defineConfig({
   build: {
     // Disable source maps for production security
     sourcemap: false,
-    // Reduce chunk size warnings
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 3000,
+    rollupOptions: {
+      onwarn(warning, defaultHandler) {
+        const msg = 'message' in warning ? String((warning as { message: string }).message) : '';
+        if (msg.includes('dynamic import will not move module into another chunk')) return;
+        defaultHandler(warning);
+      },
+    },
     // Minify for smaller bundles
     minify: 'terser',
     terserOptions: {

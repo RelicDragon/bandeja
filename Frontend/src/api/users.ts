@@ -1,4 +1,5 @@
 import api from './axios';
+import { MAX_BASIC_USERS_BY_IDS } from '@/services/users/basicUsersBatchLimits';
 import { ApiResponse, User, BasicUser, EntityType, GameType, GameStatus, ParticipantRole, ParticipantStatus } from '@/types';
 import type { GameWorkoutSummary } from './games';
 
@@ -210,6 +211,16 @@ export const usersApi = {
       params: gameId ? { gameId } : {},
     });
     return response.data;
+  },
+
+  getBasicUsersByIds: async (userIds: string[], messageId: string) => {
+    const ids = [...new Set(userIds.filter(Boolean))].slice(0, MAX_BASIC_USERS_BY_IDS);
+    if (ids.length === 0) return [];
+    const response = await api.post<ApiResponse<BasicUser[]>>('/users/basic-by-ids', {
+      ids,
+      messageId,
+    });
+    return response.data.data ?? [];
   },
 
   trackInteraction: async (targetUserId: string) => {

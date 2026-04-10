@@ -9,6 +9,7 @@ import type { MessageListHandle } from '@/components/MessageList';
 import { BANDEJA_CHAT_PINS_UPDATED } from '@/utils/chatPinsEvents';
 import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
 import { enqueueChatMutationPin, enqueueChatMutationUnpin } from '@/services/chat/chatMutationEnqueue';
+import { enqueueChatSyncPull, SYNC_PRIORITY_GAP } from '@/services/chat/chatSyncScheduler';
 
 export interface UseGameChatPinnedParams {
   id: string | undefined;
@@ -224,9 +225,7 @@ export function useGameChatPinned({
       if (data.contextType !== contextType || data.contextId !== id) return;
       if (data.chatType != null && data.chatType !== effectiveChatType) return;
       if (data.syncSeq != null) {
-        void import('@/services/chat/chatSyncScheduler').then((m) =>
-          m.enqueueChatSyncPull(contextType, id, m.SYNC_PRIORITY_GAP)
-        );
+        void enqueueChatSyncPull(contextType, id, SYNC_PRIORITY_GAP);
       }
       void fetchPinnedMessages();
     };
