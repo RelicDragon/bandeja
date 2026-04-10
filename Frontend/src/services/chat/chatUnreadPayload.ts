@@ -19,15 +19,28 @@ export type UnreadObjectsWarmInner = {
 export type UnreadCategoryTotals = {
   games: number;
   bugs: number;
+  groups: number;
   channels: number;
   marketplace: number;
 };
 
+function groupChannelIsChannel(gc: { isChannel?: boolean } | null | undefined): boolean {
+  return !!(gc && typeof gc === 'object' && gc.isChannel);
+}
+
 export function unreadCategoryTotalsFromPayload(data: UnreadObjectsApiPayload): UnreadCategoryTotals {
+  let groups = 0;
+  let channels = 0;
+  for (const i of data.groupChannels ?? []) {
+    const n = i.unreadCount;
+    if (groupChannelIsChannel(i.groupChannel)) channels += n;
+    else groups += n;
+  }
   return {
     games: data.games.reduce((s, i) => s + i.unreadCount, 0),
     bugs: data.bugs.reduce((s, i) => s + i.unreadCount, 0),
-    channels: (data.groupChannels ?? []).reduce((s, i) => s + i.unreadCount, 0),
+    groups,
+    channels,
     marketplace: (data.marketItems ?? []).reduce((s, i) => s + i.unreadCount, 0),
   };
 }

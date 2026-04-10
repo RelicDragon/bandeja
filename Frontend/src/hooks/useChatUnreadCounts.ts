@@ -12,6 +12,7 @@ interface ChatUnreadCounts {
   users: number;
   games: number;
   bugs: number;
+  groups: number;
   channels: number;
   marketplace: number;
 }
@@ -38,6 +39,7 @@ function applyUnreadPayloadToState(
     users: Object.values(userChatsUnreadCounts).reduce((sum: number, count: number) => sum + count, 0),
     games: t.games,
     bugs: t.bugs,
+    groups: t.groups,
     channels: t.channels,
     marketplace: t.marketplace,
   });
@@ -55,6 +57,7 @@ export const useChatUnreadCounts = () => {
     users: 0,
     games: 0,
     bugs: 0,
+    groups: 0,
     channels: 0,
     marketplace: 0,
   });

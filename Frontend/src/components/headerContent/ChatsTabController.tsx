@@ -32,7 +32,7 @@ export const ChatsTabController = () => {
   };
 
   const tabs: SegmentedSwitchTab[] = [
-    { id: 'users', label: t('chats.chats', { defaultValue: 'Chats' }), icon: Users, badge: userChatsCount },
+    { id: 'users', label: t('chats.chats', { defaultValue: 'Chats' }), icon: Users, badge: userChatsCount + counts.groups },
     { id: 'market', label: t('bottomTab.marketplace', { defaultValue: 'Market' }), icon: Package, badge: counts.marketplace },
     { id: 'channels', label: t('chats.channels', { defaultValue: 'Channels' }), icon: Hash, badge: counts.channels },
     { id: 'bugs', label: t('chats.bugs', { defaultValue: 'Bugs' }), icon: Bug, badge: counts.bugs },
