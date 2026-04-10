@@ -42,6 +42,7 @@ export interface UseGameChatInitialLoadParams {
   setHasSetDefaultChatType: (v: boolean) => void;
   setIsInitialLoad: (v: boolean) => void;
   setIsLoadingMessages: (v: boolean) => void;
+  setIsLoadingContext: (v: boolean) => void;
 }
 
 export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
@@ -69,6 +70,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     setHasSetDefaultChatType,
     setIsInitialLoad,
     setIsLoadingMessages,
+    setIsLoadingContext,
   } = params;
 
   useEffect(() => {
@@ -76,7 +78,10 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     const signal = ac.signal;
 
     const loadData = async () => {
-      if (!id || !user?.id) return;
+      if (!id || !user?.id) {
+        setIsLoadingContext(false);
+        return;
+      }
 
       const currentLoadId = `${id}-${contextType}`;
       if (isLoadingRef.current && loadingIdRef.current === currentLoadId) return;
@@ -265,5 +270,6 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     setHasSetDefaultChatType,
     setIsInitialLoad,
     setIsLoadingMessages,
+    setIsLoadingContext,
   ]);
 }

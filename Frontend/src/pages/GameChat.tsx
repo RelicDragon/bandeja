@@ -19,7 +19,6 @@ import { PinnedMessagesBar } from '@/components/chat/PinnedMessagesBar';
 import { MarketItemPanel } from '@/components/marketplace';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
-import { handleBack } from '@/utils/backNavigation';
 import { cancelAllForContext } from '@/services/chatSendService';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { LocationState, GameChatProps } from './GameChat/types';
@@ -27,7 +26,6 @@ import { getContextTypeFromRoute } from './GameChat/types';
 import { GameChatHeader } from './GameChat/GameChatHeader';
 import { GameChatTabs } from './GameChat/GameChatTabs';
 import { GameChatFooter } from './GameChat/GameChatFooter';
-import { GameChatLoadingSkeleton } from './GameChat/GameChatLoadingSkeleton';
 import { GameChatAccessDenied } from './GameChat/GameChatAccessDenied';
 import { useGameChatPinned } from './GameChat/useGameChatPinned';
 import { useGameChatContext } from './GameChat/useGameChatContext';
@@ -54,14 +52,14 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const { user } = useAuthStore();
   const { setBottomTabsVisible, setChatsFilter } = useNavigationStore();
 
-  const id = isEmbedded ? propChatId : paramId;
+  const id = propChatId ?? paramId;
   const locationState = location.state as LocationState | null;
   const contextType = getContextTypeFromRoute(location.pathname, locationState, isEmbedded, propChatType);
   const initialChatType = locationState?.initialChatType;
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<MessageListHandle>(null);
-  const previousIdRef = useRef<string | undefined>(undefined);
+  const previousIdRef = useRef<string | undefined>(id);
   const currentIdRef = useRef<string | undefined>(id);
   currentIdRef.current = id;
 
@@ -385,32 +383,32 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setHasSetDefaultChatType,
     setIsInitialLoad,
     setIsLoadingMessages,
+    setIsLoadingContext,
   });
 
   useEffect(() => {
-    if (id !== previousIdRef.current) {
-      const prevId = previousIdRef.current;
-      if (prevId) cancelAllForContext(contextType, prevId);
-      setGame(null);
-      setBug(null);
-      setUserChat(null);
-      setGroupChannel(null);
-      setGroupChannelParticipantsCount(0);
-      setMessages([]);
-      messagesRef.current = [];
-      setPage(1);
-      setHasMoreMessages(true);
-      setIsLoadingMessages(true);
-      setIsInitialLoad(true);
-      if (!isEmbedded) setIsLoadingContext(true);
-      setIsBlockedByUser(false);
-      setIsMuted(false);
-      setReplyTo(null);
-      setEditingMessage(null);
-      setCurrentChatType(initialChatType || 'PUBLIC');
-      setHasSetDefaultChatType(false);
-      previousIdRef.current = id;
-    }
+    if (id === previousIdRef.current) return;
+    const prevId = previousIdRef.current;
+    if (prevId) cancelAllForContext(contextType, prevId);
+    setGame(null);
+    setBug(null);
+    setUserChat(null);
+    setGroupChannel(null);
+    setGroupChannelParticipantsCount(0);
+    setMessages([]);
+    messagesRef.current = [];
+    setPage(1);
+    setHasMoreMessages(true);
+    setIsLoadingMessages(true);
+    setIsInitialLoad(true);
+    if (!isEmbedded) setIsLoadingContext(true);
+    setIsBlockedByUser(false);
+    setIsMuted(false);
+    setReplyTo(null);
+    setEditingMessage(null);
+    setCurrentChatType(initialChatType || 'PUBLIC');
+    setHasSetDefaultChatType(false);
+    previousIdRef.current = id;
   }, [id, isEmbedded, contextType, initialChatType, setGame, setBug, setUserChat, setGroupChannel, setGroupChannelParticipantsCount, setIsLoadingContext, setMessages, messagesRef, setPage, setHasMoreMessages, setIsLoadingMessages, setIsInitialLoad, setReplyTo, setEditingMessage]);
 
   useEffect(() => {
@@ -460,22 +458,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     chatNearBottom,
     scrollToBottomSmooth,
   });
-
-  if (isLoadingContext && !isEmbedded) {
-    return (
-      <GameChatLoadingSkeleton
-        onBack={() => handleBack(navigate)}
-        contextType={contextType}
-        onAddReaction={handleAddReaction}
-        onRemoveReaction={handleRemoveReaction}
-        onDeleteMessage={handleDeleteMessage}
-        onReplyMessage={handleReplyMessage}
-        onPollUpdated={handlePollUpdated}
-        onScrollToMessage={handleScrollToMessage}
-        onLoadMore={loadMoreMessages}
-      />
-    );
-  }
 
   if (!derived.canViewPublicChat) {
     return <GameChatAccessDenied id={id} navigate={navigate} />;

@@ -69,7 +69,10 @@ export function useGameChatContext({
   groupChannelRef.current = groupChannel;
 
   const loadContext = useCallback(async () => {
-    if (!id) return null;
+    if (!id) {
+      if (!isEmbedded) setIsLoadingContext(false);
+      return null;
+    }
     const requestId = id;
     try {
       if (contextType === 'GAME') {
