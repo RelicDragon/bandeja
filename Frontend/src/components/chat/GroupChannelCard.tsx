@@ -12,7 +12,7 @@ import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { BugPriorityBadge } from '@/components/chat/BugPriorityBadge';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
@@ -24,6 +24,7 @@ import type { ChatListOutbox } from '@/utils/chatListSort';
 
 interface GroupChannelCardProps {
   groupChannel: GroupChannel;
+  listPresenceBatched?: boolean;
   unreadCount?: number;
   onClick: () => void;
   isSelected?: boolean;
@@ -43,7 +44,7 @@ interface GroupChannelCardProps {
   isTogglingMute?: boolean;
 }
 
-export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSelected, draft, listOutbox, onOutboxRetry, onOutboxDismiss, displayTitle, displaySubtitle, sellerGroupedByItem, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: GroupChannelCardProps) => {
+const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unreadCount = 0, onClick, isSelected, draft, listOutbox, onOutboxRetry, onOutboxDismiss, displayTitle, displaySubtitle, sellerGroupedByItem, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: GroupChannelCardProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const { translateCity } = useTranslatedGeo();
@@ -71,7 +72,7 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
       {!groupChannel.bugId && (
         <div className="relative flex-shrink-0">
           {groupChannel.marketItem && sellerGroupedByItem && groupChannel.buyer ? (
-            <PlayerAvatar player={groupChannel.buyer} extrasmall fullHideName showName={false} asDiv />
+            <PlayerAvatar player={groupChannel.buyer} subscribePresence={!listPresenceBatched} extrasmall fullHideName showName={false} asDiv />
           ) : groupChannel.marketItem ? (
             groupChannel.marketItem.mediaUrls?.length ? (
               <img
@@ -170,7 +171,7 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
             </h3>
             {groupChannel.bug.sender && (
               <div className="flex items-center gap-1.5 mt-0.5">
-                <PlayerAvatar player={groupChannel.bug.sender} extrasmall fullHideName showName={false} asDiv />
+                <PlayerAvatar player={groupChannel.bug.sender} subscribePresence={!listPresenceBatched} extrasmall fullHideName showName={false} asDiv />
                 <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {groupChannel.bug.sender.firstName} {groupChannel.bug.sender.lastName}
                 </span>
@@ -328,7 +329,7 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
                       ) : (
                         sender && (
                           <>
-                            <PlayerAvatar player={sender} superTiny fullHideName showName={false} asDiv />
+                            <PlayerAvatar player={sender} subscribePresence={!listPresenceBatched} superTiny fullHideName showName={false} asDiv />
                             <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium truncate min-w-0">
                               {sender.firstName} {sender.lastName}
                             </span>
@@ -401,3 +402,5 @@ export const GroupChannelCard = ({ groupChannel, unreadCount = 0, onClick, isSel
     </div>
   );
 };
+
+export const GroupChannelCard = memo(GroupChannelCardInner);

@@ -4,7 +4,7 @@ export type UnreadObjectsApiPayload = {
   games: Array<{ game: Game; unreadCount: number }>;
   bugs: Array<{ bug: { id?: string; groupChannelId?: string } | null | undefined; unreadCount: number }>;
   userChats: Array<{ chat: { id: string }; unreadCount: number }>;
-  groupChannels: Array<{ groupChannel: { id: string }; unreadCount: number }>;
+  groupChannels: Array<{ groupChannel: { id: string; isChannel?: boolean }; unreadCount: number }>;
   marketItems: Array<{ marketItem?: { id?: string } | null; groupChannelId: string; unreadCount: number }>;
 };
 

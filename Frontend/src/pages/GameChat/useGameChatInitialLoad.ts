@@ -243,7 +243,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     };
   }, [
     id,
-    user?.id,
+    user,
     contextType,
     initialChatType,
     currentChatType,

@@ -234,7 +234,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           }}
                           className="px-3 py-1.5 text-left text-sm text-red-300 hover:bg-gray-700 dark:hover:bg-gray-600"
                         >
-                          {t('chat.delete', { defaultValue: 'Delete' })}
+                          {t('chat.contextMenu.delete', { defaultValue: 'Delete' })}
                         </button>
                       )}
                     </div>

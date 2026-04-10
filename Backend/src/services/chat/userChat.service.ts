@@ -252,7 +252,8 @@ export class UserChatService {
         'message',
         { message },
         message.id,
-        message.serverSyncSeq ?? undefined
+        message.serverSyncSeq ?? undefined,
+        [chat.user1Id, chat.user2Id]
       );
     }
     return message;
@@ -338,7 +339,8 @@ export class UserChatService {
         'message',
         { message: responseMessage },
         responseMessage.id,
-        resSync
+        resSync,
+        [chat.user1Id, chat.user2Id]
       );
       (updatedRequest as { syncSeq?: number }).syncSeq = requestSyncSeq;
       socketService.emitChatEvent(
@@ -347,7 +349,8 @@ export class UserChatService {
         'message',
         { message: updatedRequest },
         updatedRequest.id,
-        requestSyncSeq
+        requestSyncSeq,
+        [chat.user1Id, chat.user2Id]
       );
     }
     return { message: responseMessage, userChat: await prisma.userChat.findUnique({ where: { id: chatId }, include: { user1: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } }, user2: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } } } }) };

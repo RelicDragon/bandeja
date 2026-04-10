@@ -72,4 +72,54 @@ export class SystemMessageService {
 
     return message;
   }
+
+  static async createSystemMessageWithEmit(
+    contextId: string,
+    messageData: { type: SystemMessageType; variables: Record<string, string> },
+    chatType: ChatType = ChatType.PUBLIC,
+    chatContextType: ChatContextType = ChatContextType.GAME
+  ) {
+    const message = await SystemMessageService.createSystemMessage(
+      contextId,
+      messageData,
+      chatType,
+      chatContextType
+    );
+    const socketService = (global as {
+      socketService?: {
+        emitChatEvent: (
+          ct: ChatContextType,
+          cid: string,
+          ev: string,
+          data: unknown,
+          mid?: string,
+          seq?: number,
+          notifyUserIds?: string[]
+        ) => void;
+      };
+    }).socketService;
+    if (socketService) {
+      const syncSeq = (message as { syncSeq?: number }).syncSeq;
+      let notifyUserIds: string[] | undefined;
+      if (chatContextType === ChatContextType.USER) {
+        const peers = await prisma.userChat.findUnique({
+          where: { id: contextId },
+          select: { user1Id: true, user2Id: true },
+        });
+        if (peers) {
+          notifyUserIds = [peers.user1Id, peers.user2Id].filter((id): id is string => typeof id === 'string' && id.length > 0);
+        }
+      }
+      socketService.emitChatEvent(
+        chatContextType,
+        contextId,
+        'message',
+        { message },
+        message.id,
+        syncSeq,
+        notifyUserIds
+      );
+    }
+    return message;
+  }
 }

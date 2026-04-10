@@ -28,6 +28,7 @@ import { config } from '../../config/env';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { normalizeChatClientMutationId } from '../../utils/chatClientMutationId';
 import { chatSyncMessageUpdatedCompactPayload } from '../../utils/chatSyncMessageUpdatePayload';
+import { lastMessageForUnreadListSocket } from '../../utils/chatListSocketPreview';
 
 const VOICE_MESSAGE_MAX_MS = 30 * 60 * 1000;
 
@@ -812,6 +813,7 @@ export class MessageService {
     if (socketService) {
       // Get recipients for delivery tracking
       const recipients: string[] = [];
+      let userDmNotifyIds: string[] | undefined;
 
       if (data.chatContextType === 'GAME') {
         const game = await prisma.game.findUnique({
@@ -830,6 +832,9 @@ export class MessageService {
           where: { id: data.contextId }
         });
         if (userChat) {
+          userDmNotifyIds = [userChat.user1Id, userChat.user2Id].filter(
+            (id): id is string => typeof id === 'string' && id.length > 0
+          );
           const recipientId = userChat.user1Id === data.senderId
             ? userChat.user2Id
             : userChat.user1Id;
@@ -932,40 +937,48 @@ export class MessageService {
         'message',
         { message: messageWithTranslations },
         message.id,
-        syncSeq
+        syncSeq,
+        userDmNotifyIds
       );
 
       // Emit unread count updates immediately to all recipients (not just undelivered)
       // This ensures badge updates even when users are not in the room
       // Filter out muted users for GROUP channels
       if (recipients.length > 0) {
-        setTimeout(async () => {
-          for (const userId of recipients) {
-            try {
-              // Skip muted users for GROUP channels
-              if (data.chatContextType === 'GROUP') {
-                const isMuted = await ChatMuteService.isChatMuted(userId, 'GROUP', data.contextId);
-                if (isMuted) {
-                  continue;
-                }
-              }
-
-              const unreadCount = await ReadReceiptService.getUnreadCountForContext(
-                data.chatContextType,
+        const listPreview =
+          data.chatContextType === ChatContextType.USER || data.chatContextType === ChatContextType.GROUP
+            ? lastMessageForUnreadListSocket(messageWithTranslations)
+            : undefined;
+        queueMicrotask(async () => {
+          try {
+            let emitRecipients = recipients;
+            if (data.chatContextType === 'GROUP') {
+              const muted = await ChatMuteService.getMutedUserIdsForContext(
+                'GROUP',
                 data.contextId,
-                userId
+                recipients
               );
+              emitRecipients = recipients.filter((id) => !muted.has(id));
+            }
+            const countsByUser = await ReadReceiptService.getUnreadCountsForContextForUsers(
+              data.chatContextType,
+              data.contextId,
+              emitRecipients
+            );
+            for (const userId of emitRecipients) {
+              const unreadCount = countsByUser.get(userId) ?? 0;
               await socketService.emitUnreadCountUpdate(
                 data.chatContextType,
                 data.contextId,
                 userId,
-                unreadCount
+                unreadCount,
+                listPreview ?? undefined
               );
-            } catch (error) {
-              console.error(`[MessageService] Failed to emit unread count update for user ${userId}:`, error);
             }
+          } catch (error) {
+            console.error('[MessageService] Failed to emit unread count updates after send:', error);
           }
-        }, 500); // Small delay to ensure message is saved
+        });
       }
 
       // Check for undelivered recipients after a delay
@@ -1088,6 +1101,36 @@ export class MessageService {
     const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
     const [enriched] = await this.enrichMessagesWithTranslations([message], languageCode);
     return enriched;
+  }
+
+  /** Latest non-deleted message in context (any `chatType`), for list row previews. */
+  static async getLatestMessageForListRowPreview(
+    chatContextType: Extract<ChatContextType, 'GROUP' | 'USER'>,
+    contextId: string,
+    userId: string
+  ) {
+    if (chatContextType === 'GROUP') {
+      await this.validateGroupChannelAccess(contextId, userId);
+    } else {
+      await this.validateUserChatAccess(contextId, userId);
+    }
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
+    const row = await prisma.chatMessage.findFirst({
+      where: {
+        chatContextType,
+        contextId,
+        deletedAt: null,
+      },
+      include: this.getMessageInclude(),
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    if (!row) return null;
+    const [enriched] = await this.enrichMessagesWithTranslations([row], languageCode);
+    return enriched ?? null;
   }
 
   static async getMissedMessages(
@@ -1438,6 +1481,22 @@ export class MessageService {
 
       (updated as { syncSeq?: number }).syncSeq = syncSeq;
 
+      let notifyUserIds: string[] | undefined;
+      if (updated.chatContextType === ChatContextType.USER) {
+        const uc = await prisma.userChat.findUnique({
+          where: { id: updated.contextId },
+          select: { user1Id: true, user2Id: true },
+        });
+        if (uc) {
+          const pair = [uc.user1Id, uc.user2Id].filter(
+            (id): id is string => typeof id === 'string' && id.length > 0
+          );
+          if (new Set(pair).size === 2) {
+            notifyUserIds = pair;
+          }
+        }
+      }
+
       const socketService = (global as any).socketService;
       if (socketService) {
         socketService.emitChatEvent(
@@ -1446,7 +1505,8 @@ export class MessageService {
           'message-updated',
           { message: updated },
           updated.id,
-          syncSeq
+          syncSeq,
+          notifyUserIds
         );
       }
     } catch (e) {

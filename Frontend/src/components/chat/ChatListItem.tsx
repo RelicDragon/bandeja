@@ -1,25 +1,29 @@
+import { memo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { UserChatCard } from './UserChatCard';
 import { GroupChannelCard } from './GroupChannelCard';
-import { ChatListOutboxAnimated } from './ChatListOutboxAnimated';
 import { UserChat } from '@/api/chat';
-import { ChatItem, ChatType } from './chatListTypes';
+import { ChatItem, ChatSelectNavOptions, ChatType } from './chatListTypes';
 import { usePlayersStore } from '@/store/playersStore';
 import { useAuthStore } from '@/store/authStore';
 import { MAX_PINNED_CHATS } from '@/utils/chatListConstants';
-import { getChatTitle } from '@/utils/chatListSort';
-import { formatRelativeTime } from '@/utils/dateFormat';
-import { useTranslation } from 'react-i18next';
-import { Trophy } from 'lucide-react';
+import { ChatListGameCard } from './ChatListGameCard';
 import {
   dismissFailedOutboxForContext,
   retryFailedOutboxForContext,
 } from '@/services/chat/chatOutboxContextActions';
 
+const USER_ROW_STORE_EMPTY = Object.freeze({
+  live: undefined as UserChat | undefined,
+  unread: 0,
+});
+
 interface ChatListItemProps {
   item: ChatItem;
+  listPresenceBatched?: boolean;
   selectedChatId?: string | null;
   selectedChatType?: ChatType | null;
-  onChatClick: (chatId: string, chatType: ChatType, options?: { searchQuery?: string }) => void;
+  onChatClick: (chatId: string, chatType: ChatType, options?: ChatSelectNavOptions) => void;
   onContactClick: (userId: string) => void;
   isSearchMode?: boolean;
   searchQuery?: string;
@@ -36,8 +40,9 @@ interface ChatListItemProps {
   onMuteGroupChannel?: (channelId: string, isMuted: boolean) => void;
 }
 
-export const ChatListItem = ({
+const ChatListItemInner = ({
   item,
+  listPresenceBatched = false,
   selectedChatId,
   selectedChatType,
   onChatClick,
@@ -56,17 +61,22 @@ export const ChatListItem = ({
   onMuteUserChat,
   onMuteGroupChannel,
 }: ChatListItemProps) => {
-  const { t } = useTranslation();
   const { user } = useAuthStore();
-  const liveChats = usePlayersStore((state) => state.chats);
-  const liveUnreadCounts = usePlayersStore((state) => state.unreadCounts);
+  const userChatId = item.type === 'user' ? item.data.id : '';
+  const { live: liveFromStore, unread: unreadFromStore } = usePlayersStore(
+    useShallow((s) =>
+      userChatId
+        ? { live: s.chats[userChatId], unread: s.unreadCounts[userChatId] ?? 0 }
+        : USER_ROW_STORE_EMPTY
+    )
+  );
 
   const clickOpts = isSearchMode && searchQuery ? { searchQuery } : undefined;
   const chat = item;
 
   if (chat.type === 'user') {
-    const liveChat = liveChats[chat.data.id] || chat.data;
-    const liveUnreadCount = liveUnreadCounts[chat.data.id] || 0;
+    const liveChat = liveFromStore || chat.data;
+    const liveUnreadCount = unreadFromStore;
     const isSelected = selectedChatType === 'user' && selectedChatId === chat.data.id;
     const isPinned = !!liveChat.isPinned;
     const isPinning = pinningId === chat.data.id;
@@ -77,8 +87,9 @@ export const ChatListItem = ({
       <UserChatCard
         key={`user-${chat.data.id}`}
         chat={liveChat}
+        listPresenceBatched={listPresenceBatched}
         unreadCount={liveUnreadCount}
-        onClick={() => onChatClick(chat.data.id, 'user', clickOpts)}
+        onClick={() => onChatClick(chat.data.id, 'user', { ...clickOpts, userChat: liveChat })}
         isSelected={isSelected}
         draft={chat.draft}
         listOutbox={'listOutbox' in chat ? chat.listOutbox ?? undefined : undefined}
@@ -123,6 +134,7 @@ export const ChatListItem = ({
       <UserChatCard
         key={`contact-${chat.userId}`}
         chat={mockChat}
+        listPresenceBatched={listPresenceBatched}
         unreadCount={0}
         onClick={() => onContactClick(chat.userId)}
         isSelected={false}
@@ -132,57 +144,14 @@ export const ChatListItem = ({
 
   if (chat.type === 'game') {
     const isSelected = selectedChatType === 'game' && selectedChatId === chat.data.id;
-    const title = user ? getChatTitle(chat, user.id) : chat.data.name?.trim() || '';
-    const subtitle =
-      chat.lastMessageDate != null ? formatRelativeTime(chat.lastMessageDate.toISOString()) : null;
-    const listOutbox = 'listOutbox' in chat ? chat.listOutbox ?? undefined : undefined;
     return (
-      <button
-        type="button"
+      <ChatListGameCard
         key={`game-${chat.data.id}`}
+        chat={chat}
+        currentUserId={user?.id}
+        isSelected={isSelected}
         onClick={() => onChatClick(chat.data.id, 'game', clickOpts)}
-        className={`w-full text-left border-b border-gray-200 dark:border-gray-700 last:border-b-0 px-4 py-3 flex flex-col gap-0.5 transition-colors ${
-          isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'
-        }`}
-      >
-        <div className="flex items-start gap-3 min-w-0">
-          <div className="shrink-0 w-11 h-11 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-300">
-            <Trophy className="w-5 h-5" aria-hidden />
-          </div>
-          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="font-semibold text-gray-900 dark:text-gray-100 truncate flex-1 text-left">
-                {title || t('chat.game', { defaultValue: 'Game' })}
-              </span>
-              {subtitle ? (
-                <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">{subtitle}</span>
-              ) : null}
-              {chat.unreadCount > 0 ? (
-                <span className="shrink-0 min-w-[1.25rem] h-5 px-1.5 rounded-full bg-primary-500 text-white text-xs font-semibold flex items-center justify-center">
-                  {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
-                </span>
-              ) : null}
-            </div>
-            <ChatListOutboxAnimated
-              listOutbox={listOutbox}
-              onRetry={
-                listOutbox?.state === 'failed'
-                  ? () => {
-                      void retryFailedOutboxForContext('GAME', chat.data.id);
-                    }
-                  : undefined
-              }
-              onDismiss={
-                listOutbox?.state === 'failed'
-                  ? () => {
-                      void dismissFailedOutboxForContext('GAME', chat.data.id);
-                    }
-                  : undefined
-              }
-            />
-          </div>
-        </div>
-      </button>
+      />
     );
   }
 
@@ -201,8 +170,11 @@ export const ChatListItem = ({
       >
         <GroupChannelCard
           groupChannel={chat.data}
+          listPresenceBatched={listPresenceBatched}
           unreadCount={chat.unreadCount}
-          onClick={() => onChatClick(chat.data.id, chatTypeForNav, clickOpts)}
+          onClick={() =>
+          onChatClick(chat.data.id, chatTypeForNav, { ...clickOpts, groupChannel: chat.data })
+        }
           isSelected={isSelected}
           draft={chat.draft}
           listOutbox={'listOutbox' in chat ? chat.listOutbox ?? undefined : undefined}
@@ -237,3 +209,5 @@ export const ChatListItem = ({
 
   return null;
 };
+
+export const ChatListItem = memo(ChatListItemInner);

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { chatApi, UserChat } from '@/api/chat';
+import { chatApi, type ChatMessage, UserChat } from '@/api/chat';
 import { usersApi, type InvitablePlayer } from '@/api/users';
 import { useAuthStore } from './authStore';
 import { useSocketEventsStore } from './socketEventsStore';
@@ -47,6 +47,7 @@ interface UsersState {
   getUnreadCountByUserId: (userId: string) => number;
   getUnreadUserChatsCount: () => number;
   updateUnreadCount: (chatId: string, count: number | ((current: number) => number)) => void;
+  patchUserChatPreview: (chatId: string, lastMessage: ChatMessage, updatedAt: string) => void;
   markChatAsRead: (chatId: string) => void;
   addChat: (chat: UserChat) => Promise<void>;
   getOrCreateAndAddUserChat: (userId: string) => Promise<UserChat | null>;
@@ -317,6 +318,19 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       console.log('[playersStore] Objects are different?', state.unreadCounts !== newUnreadCounts);
       return {
         unreadCounts: newUnreadCounts,
+      };
+    });
+  },
+
+  patchUserChatPreview: (chatId: string, lastMessage: ChatMessage, updatedAt: string) => {
+    set((state) => {
+      const cur = state.chats[chatId];
+      if (!cur) return state;
+      return {
+        chats: {
+          ...state.chats,
+          [chatId]: { ...cur, lastMessage, updatedAt },
+        },
       };
     });
   },

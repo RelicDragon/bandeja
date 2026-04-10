@@ -737,7 +737,9 @@ class SocketService {
     eventType: 'message' | 'message-updated' | 'reaction' | 'read-receipt' | 'deleted' | 'poll-vote',
     data: any,
     messageId?: string,
-    syncSeq?: number
+    syncSeq?: number,
+    /** USER context: both participant ids (exactly two distinct) — otherwise DB lookup */
+    notifyUserIds?: string[]
   ) {
     const eventName = eventType === 'poll-vote' ? 'chat:poll-vote' : `chat:${eventType}`;
     const payload = {
@@ -750,6 +752,14 @@ class SocketService {
     };
 
     if (contextType === ChatContextType.USER) {
+      const trimmed = notifyUserIds?.filter((id): id is string => typeof id === 'string' && id.length > 0) ?? [];
+      const uniquePeers = [...new Set(trimmed)];
+      if (uniquePeers.length === 2) {
+        for (const uid of uniquePeers) {
+          this.io.to(`notify-user-${uid}`).emit(eventName, payload);
+        }
+        return;
+      }
       void prisma.userChat
         .findUnique({
           where: { id: contextId },
@@ -1086,7 +1096,8 @@ class SocketService {
     contextType: ChatContextType,
     contextId: string,
     userId: string,
-    unreadCount: number
+    unreadCount: number,
+    lastMessage?: Record<string, unknown>
   ) {
     const eventName = 'chat:unread-count';
 
@@ -1094,6 +1105,7 @@ class SocketService {
       contextType,
       contextId,
       unreadCount,
+      ...(lastMessage != null && Object.keys(lastMessage).length > 0 ? { lastMessage } : {}),
     });
   }
 

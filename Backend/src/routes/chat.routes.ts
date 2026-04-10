@@ -53,7 +53,8 @@ import {
   getPinnedMessages,
   pinMessage,
   unpinMessage,
-  getChatMessageById
+  getChatMessageById,
+  postChatListRowPreviews,
 } from '../controllers/chat.controller';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -232,6 +233,14 @@ router.post(
   getGamesUnreadCounts
 );
 router.get('/unread-count', getUnreadCount);
+router.post(
+  '/list-row-previews',
+  validate([
+    body('groupChannelIds').optional().isArray({ max: 400 }),
+    body('userChatIds').optional().isArray({ max: 400 }),
+  ]),
+  postChatListRowPreviews
+);
 router.get('/unread-objects', unreadObjectsLimiter, getUnreadObjects);
 router.get('/user-games', getUserChatGames);
 

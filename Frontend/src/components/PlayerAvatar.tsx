@@ -17,6 +17,8 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface PlayerAvatarProps {
   player?: BasicUser | null;
+  /** When false, parent is responsible for presence subscription for this user id */
+  subscribePresence?: boolean;
   isCurrentUser?: boolean;
   onRemoveClick?: () => void;
   removable?: boolean;
@@ -35,9 +37,12 @@ interface PlayerAvatarProps {
   onTouchEnd?: (e: TouchEvent) => void;
 }
 
-export const PlayerAvatar = ({ player, isCurrentUser, onRemoveClick, removable, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
+export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
   const avatarPresenceKey = `avatar:${useId()}`;
-  usePresenceSubscription(avatarPresenceKey, player && !isCurrentUser ? [player.id] : []);
+  usePresenceSubscription(
+    avatarPresenceKey,
+    subscribePresence && player && !isCurrentUser ? [player.id] : []
+  );
   const { t } = useTranslation();
   const { openPlayerCard } = usePlayerCardModal();
   const { mode: appMode } = useAppModeStore();

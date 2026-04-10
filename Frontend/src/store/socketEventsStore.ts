@@ -50,10 +50,11 @@ interface ChatDeletedData {
   syncSeq?: number;
 }
 
-interface ChatUnreadCountData {
+export interface ChatUnreadCountData {
   contextType: string;
   contextId: string;
   unreadCount: number;
+  lastMessage?: unknown;
 }
 
 interface ChatMessageTranscriptionData {

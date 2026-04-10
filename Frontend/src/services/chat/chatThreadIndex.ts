@@ -1,4 +1,4 @@
-import type { ChatContextType, ChatMessage } from '@/api/chat';
+import type { ChatContextType, ChatMessage, GroupChannel, UserChat } from '@/api/chat';
 import type { ChatItem, ChatListOutbox } from '@/utils/chatListSort';
 import type { Game } from '@/types';
 import { calculateLastMessageDate } from '@/utils/chatListHelpers';
@@ -9,6 +9,10 @@ import { getLatestLocalMessageRowAcrossChatTypes } from './messageContextHead';
 import { normalizeChatType } from '@/utils/chatType';
 import { computeListOutboxForContext } from './chatOutboxListOutboxCompute';
 import { scheduleChatListOutboxBump } from './chatListOutboxBumpScheduler';
+import {
+  isTrustedGroupChannelOpenContext,
+  isTrustedUserChatOpenContext,
+} from './chatOpenContextValidation';
 
 const ITEM_JSON_VERSION = 1 as const;
 const THREAD_INDEX_CAS_RETRIES = 8;
@@ -161,6 +165,38 @@ export async function loadThreadIndexForList(listFilter: ChatListFilterTab): Pro
     await chatLocalDb.threadIndex.bulkDelete(toDelete);
   }
   return mapThreadIndexRowsToSortedChatItems(validRows);
+}
+
+export async function loadThreadIndexItemForContext(
+  contextType: ChatContextType,
+  contextId: string
+): Promise<ChatItem | null> {
+  const rows = await chatLocalDb.threadIndex
+    .where('[contextType+contextId]')
+    .equals([contextType, contextId])
+    .toArray();
+  if (!rows.length) return null;
+  rows.sort((a, b) => b.updatedAt - a.updatedAt);
+  for (const r of rows) {
+    const it = parseItem(r.itemJson);
+    if (!it || it.type === 'contact') continue;
+    return it;
+  }
+  return null;
+}
+
+export async function loadUserChatStubFromThreadIndex(chatId: string): Promise<UserChat | null> {
+  const item = await loadThreadIndexItemForContext('USER', chatId);
+  if (!item || item.type !== 'user') return null;
+  const me = useAuthStore.getState().user?.id;
+  return isTrustedUserChatOpenContext(item.data, chatId, me) ? item.data : null;
+}
+
+export async function loadGroupChannelStubFromThreadIndex(channelId: string): Promise<GroupChannel | null> {
+  const item = await loadThreadIndexItemForContext('GROUP', channelId);
+  if (!item || (item.type !== 'group' && item.type !== 'channel')) return null;
+  const me = useAuthStore.getState().user?.id;
+  return isTrustedGroupChannelOpenContext(item.data, channelId, me) ? item.data : null;
 }
 
 function rowToPutBase(row: ChatThreadIndexRow): Omit<ChatThreadIndexRow, 'itemJson' | 'sortAt' | 'updatedAt'> {

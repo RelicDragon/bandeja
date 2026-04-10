@@ -26,25 +26,43 @@ import prisma from '../config/database';
 import { ChatSyncEventService } from '../services/chat/chatSyncEvent.service';
 import { ChatMutationIdempotencyService } from '../services/chat/chatMutationIdempotency.service';
 import { hashChatMutationPayload } from '../utils/chatClientMutationId';
+import { ChatListRowPreviewService } from '../services/chat/chatListRowPreview.service';
 
-export const createSystemMessage = async (contextId: string, messageData: { type: SystemMessageType; variables: Record<string, string> }, chatType: ChatType = ChatType.PUBLIC, chatContextType: ChatContextType = ChatContextType.GAME) => {
-  const message = await SystemMessageService.createSystemMessage(contextId, messageData, chatType, chatContextType);
+async function notifyUserIdsForUserChat(contextId: string): Promise<string[] | undefined> {
+  const peers = await prisma.userChat.findUnique({
+    where: { id: contextId },
+    select: { user1Id: true, user2Id: true },
+  });
+  if (!peers) return undefined;
+  const pair = [peers.user1Id, peers.user2Id].filter((id): id is string => typeof id === 'string' && id.length > 0);
+  return new Set(pair).size === 2 ? pair : undefined;
+}
 
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    const syncSeq = (message as { syncSeq?: number }).syncSeq;
-    socketService.emitChatEvent(
-      chatContextType,
-      contextId,
-      'message',
-      { message },
-      message.id,
-      syncSeq
-    );
+export const postChatListRowPreviews = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
   }
+  const { groupChannelIds, userChatIds } = req.body as {
+    groupChannelIds?: unknown;
+    userChatIds?: unknown;
+  };
+  const g = Array.isArray(groupChannelIds) ? (groupChannelIds as string[]) : [];
+  const u = Array.isArray(userChatIds) ? (userChatIds as string[]) : [];
+  const MAX = 400;
+  if (g.length > MAX || u.length > MAX) {
+    throw new ApiError(400, `At most ${MAX} groupChannelIds and ${MAX} userChatIds per request`);
+  }
+  const data = await ChatListRowPreviewService.getPreviews(userId, g, u);
+  res.json({ success: true, data });
+});
 
-  return message;
-};
+export const createSystemMessage = (
+  contextId: string,
+  messageData: { type: SystemMessageType; variables: Record<string, string> },
+  chatType: ChatType = ChatType.PUBLIC,
+  chatContextType: ChatContextType = ChatContextType.GAME
+) => SystemMessageService.createSystemMessageWithEmit(contextId, messageData, chatType, chatContextType);
 
 export const createMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
   console.log('[createMessage] Request received:', {
@@ -195,6 +213,10 @@ export const votePoll = asyncHandler(async (req: AuthRequest, res: Response) => 
       const sanitized = updatedPoll.isAnonymous
         ? { ...updatedPoll, options: updatedPoll.options.map(o => ({ ...o, votes: o.votes.map(v => ({ ...v, user: undefined })) })), votes: updatedPoll.votes.map(v => ({ ...v, user: undefined })) }
         : updatedPoll;
+      const notifyUserIdsPoll =
+        message.chatContextType === ChatContextType.USER
+          ? await notifyUserIdsForUserChat(message.contextId)
+          : undefined;
       socketService.emitChatEvent(
         message.chatContextType,
         message.contextId,
@@ -205,7 +227,8 @@ export const votePoll = asyncHandler(async (req: AuthRequest, res: Response) => 
           updatedPoll: sanitized
         },
         updatedPoll.messageId,
-        syncSeq
+        syncSeq,
+        notifyUserIdsPoll
       );
     }
   }
@@ -397,13 +420,18 @@ export const updateMessage = asyncHandler(async (req: AuthRequest, res: Response
 
     const socketService = (global as any).socketService;
     if (socketService) {
+      const notifyUserIds =
+        updatedMessage.chatContextType === ChatContextType.USER
+          ? await notifyUserIdsForUserChat(updatedMessage.contextId)
+          : undefined;
       socketService.emitChatEvent(
         updatedMessage.chatContextType,
         updatedMessage.contextId,
         'message-updated',
         { message: updatedMessage },
         updatedMessage.id,
-        (updatedMessage as { syncSeq?: number }).syncSeq
+        (updatedMessage as { syncSeq?: number }).syncSeq,
+        notifyUserIds
       );
     }
 
@@ -430,13 +458,18 @@ export const updateMessageState = asyncHandler(async (req: AuthRequest, res: Res
 
   const socketService = (global as any).socketService;
   if (socketService) {
+    const notifyUserIds =
+      updatedMessage.chatContextType === ChatContextType.USER
+        ? await notifyUserIdsForUserChat(updatedMessage.contextId)
+        : undefined;
     socketService.emitChatEvent(
       updatedMessage.chatContextType,
       updatedMessage.contextId,
       'message-updated',
       { message: updatedMessage },
       messageId,
-      syncSeq
+      syncSeq,
+      notifyUserIds
     );
   }
 
@@ -465,13 +498,18 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
     });
 
     if (message) {
+      const notifyUserIds =
+        message.chatContextType === ChatContextType.USER
+          ? await notifyUserIdsForUserChat(message.contextId)
+          : undefined;
       socketService.emitChatEvent(
         message.chatContextType,
         message.contextId,
         'read-receipt',
         { readReceipt },
         messageId,
-        syncSeq
+        syncSeq,
+        notifyUserIds
       );
 
       // Emit unread count update
@@ -526,13 +564,18 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
       });
 
       if (message) {
+        const notifyUserIds =
+          message.chatContextType === ChatContextType.USER
+            ? await notifyUserIdsForUserChat(message.contextId)
+            : undefined;
         socketService.emitChatEvent(
           message.chatContextType,
           message.contextId,
           'reaction',
           { reaction },
           messageId,
-          syncSeq
+          syncSeq,
+          notifyUserIds
         );
       }
     }
@@ -577,13 +620,18 @@ export const removeReaction = asyncHandler(async (req: AuthRequest, res: Respons
       });
 
       if (message) {
+        const notifyUserIds =
+          message.chatContextType === ChatContextType.USER
+            ? await notifyUserIdsForUserChat(message.contextId)
+            : undefined;
         socketService.emitChatEvent(
           message.chatContextType,
           message.contextId,
           'reaction',
           { reaction: result },
           messageId,
-          result.syncSeq
+          result.syncSeq,
+          notifyUserIds
         );
       }
     }
@@ -776,13 +824,18 @@ export const deleteMessage = asyncHandler(async (req: AuthRequest, res: Response
 
     const socketService = (global as any).socketService;
     if (socketService) {
+      const notifyUserIds =
+        message.chatContextType === ChatContextType.USER
+          ? await notifyUserIdsForUserChat(message.contextId)
+          : undefined;
       socketService.emitChatEvent(
         message.chatContextType,
         message.contextId,
         'deleted',
         { messageId: message.id },
         message.id,
-        (message as { syncSeq?: number }).syncSeq
+        (message as { syncSeq?: number }).syncSeq,
+        notifyUserIds
       );
     }
 
@@ -896,13 +949,21 @@ export const markUserChatAsRead = asyncHandler(async (req: AuthRequest, res: Res
   const socketService = (global as any).socketService;
   if (socketService) {
     if (result.count > 0 && result.syncSeq != null) {
+      const peers = await prisma.userChat.findUnique({
+        where: { id: chatId },
+        select: { user1Id: true, user2Id: true },
+      });
+      const notifyUserIds = peers
+        ? [peers.user1Id, peers.user2Id].filter((id): id is string => typeof id === 'string' && id.length > 0)
+        : undefined;
       socketService.emitChatEvent(
         'USER',
         chatId,
         'read-receipt',
         { readReceipt: { userId, readAt: new Date().toISOString(), allRead: true } },
         undefined,
-        result.syncSeq
+        result.syncSeq,
+        notifyUserIds
       );
     }
     // Emit unread count update
@@ -1522,6 +1583,16 @@ export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequ
 
   const socketService = (global as any).socketService;
   if (socketService) {
+    let notifyUserIds: string[] | undefined;
+    if (contextType === 'USER') {
+      const peers = await prisma.userChat.findUnique({
+        where: { id: contextId },
+        select: { user1Id: true, user2Id: true },
+      });
+      if (peers) {
+        notifyUserIds = [peers.user1Id, peers.user2Id].filter((id): id is string => typeof id === 'string' && id.length > 0);
+      }
+    }
     socketService.emitChatEvent(
       contextType as ChatContextType,
       contextId,
@@ -1534,7 +1605,8 @@ export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequ
         },
       },
       undefined,
-      result.syncSeq
+      result.syncSeq,
+      notifyUserIds
     );
 
     // Emit unread count update

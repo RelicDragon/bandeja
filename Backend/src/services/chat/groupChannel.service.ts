@@ -2,9 +2,9 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
-import { createSystemMessage } from '../../controllers/chat.controller';
 import { ChatContextType, ParticipantRole, InviteStatus, ChatType, Prisma, BugStatus, BugType } from '@prisma/client';
 import { MessageService } from './message.service';
+import { SystemMessageService } from './systemMessage.service';
 import { UserChatService } from './userChat.service';
 import { ChatMuteService } from './chatMute.service';
 import { TranslationService } from './translation.service';
@@ -28,7 +28,7 @@ async function emitPrivateGroupUserJoinedSystemMessage(
   });
   if (!user) return;
   const userName = getUserDisplayName(user.firstName, user.lastName);
-  await createSystemMessage(
+  await SystemMessageService.createSystemMessageWithEmit(
     groupChannelId,
     { type: SystemMessageType.USER_JOINED_CHAT, variables: { userName } },
     undefined,
@@ -49,7 +49,7 @@ async function emitPrivateGroupUserLeftSystemMessage(
   });
   if (!user) return;
   const userName = getUserDisplayName(user.firstName, user.lastName);
-  await createSystemMessage(
+  await SystemMessageService.createSystemMessageWithEmit(
     groupChannelId,
     { type: SystemMessageType.USER_LEFT_CHAT, variables: { userName } },
     undefined,
@@ -1308,7 +1308,7 @@ export class GroupChannelService {
     if (newOwnerUser) {
       const newOwnerName = getUserDisplayName(newOwnerUser.firstName, newOwnerUser.lastName);
       try {
-        await createSystemMessage(
+        await SystemMessageService.createSystemMessageWithEmit(
           groupChannelId,
           {
             type: SystemMessageType.OWNERSHIP_TRANSFERRED,

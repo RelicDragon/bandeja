@@ -415,6 +415,24 @@ export const chatApi = {
     return response.data;
   },
 
+  postChatListRowPreviews: async (payload: { groupChannelIds: string[]; userChatIds: string[] }) => {
+    const response = await api.post<
+      ApiResponse<{ groupChannels: Record<string, ChatMessage>; userChats: Record<string, ChatMessage> }>
+    >('/chat/list-row-previews', payload);
+    const raw = response.data as ApiResponse<{
+      groupChannels: Record<string, ChatMessage>;
+      userChats: Record<string, ChatMessage>;
+    }> & { groupChannels?: unknown; userChats?: unknown };
+    const d = raw.data;
+    if (d && typeof d === 'object' && ('groupChannels' in d || 'userChats' in d)) {
+      return {
+        groupChannels: (d as { groupChannels?: Record<string, ChatMessage> }).groupChannels ?? {},
+        userChats: (d as { userChats?: Record<string, ChatMessage> }).userChats ?? {},
+      };
+    }
+    return { groupChannels: {}, userChats: {} };
+  },
+
   getUnreadCount: async () => {
     const cacheKey = 'unread-count-global';
     const cached = unreadCountCache.get(cacheKey);

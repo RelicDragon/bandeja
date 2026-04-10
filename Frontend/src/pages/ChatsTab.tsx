@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
+import type { UserChat, GroupChannel } from '@/api/chat';
 import { ChatList, ChatType } from '@/components/chat/ChatList';
+import type { ChatSelectNavOptions } from '@/components/chat/chatListTypes';
 import { GameChat } from './GameChat';
 import { MessageCircle } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -9,6 +11,16 @@ import { useChatsFromUrl } from '@/hooks/useChatsFromUrl';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { SplitViewLeftPanel, SplitViewRightPanel } from '@/components/SplitViewPanels';
 import { useDesktop } from '@/hooks/useDesktop';
+
+function locationStateForChatNav(
+  options?: ChatSelectNavOptions
+): { chat?: UserChat; groupChannel?: GroupChannel } | undefined {
+  if (!options?.userChat && !options?.groupChannel) return undefined;
+  const state: { chat?: UserChat; groupChannel?: GroupChannel } = {};
+  if (options.userChat) state.chat = options.userChat;
+  if (options.groupChannel) state.groupChannel = options.groupChannel;
+  return state;
+}
 
 export const ChatsTab = () => {
   const { t } = useTranslation();
@@ -116,9 +128,10 @@ export const ChatsTab = () => {
       : `/group-chat/${chatId}`;
   }, [chatsFilter]);
 
-  const handleChatSelect = useCallback((chatId: string, chatType: ChatType, options?: { initialChatType?: string; searchQuery?: string }) => {
+  const handleChatSelect = useCallback((chatId: string, chatType: ChatType, options?: ChatSelectNavOptions) => {
     const fromSearch = !!options?.searchQuery;
     const path = getChatPath(chatId, chatType);
+    const listNavState = locationStateForChatNav(options);
 
     if (fromSearch) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -129,9 +142,11 @@ export const ChatsTab = () => {
       setSelectedChatType(chatType);
       try {
         if (chatType === 'game') {
-          navigate(`/games/${chatId}/chat`);
+          const gameState =
+            options?.initialChatType != null ? { initialChatType: options.initialChatType } : undefined;
+          navigate(`/games/${chatId}/chat`, gameState ? { state: gameState } : undefined);
         } else {
-          navigate(path);
+          navigate(path, listNavState ? { state: listNavState } : undefined);
         }
       } catch (error) {
         console.error('Navigation failed:', error);
@@ -155,7 +170,7 @@ export const ChatsTab = () => {
       requestAnimationFrame(() => {
         setSelectedChatId(chatId);
         setSelectedChatType(chatType);
-        navigate(path, { replace: true });
+        navigate(path, { replace: true, ...(listNavState ? { state: listNavState } : {}) });
         timeoutRef.current = setTimeout(() => {
           setIsTransitioning(false);
           timeoutRef.current = null;
@@ -165,7 +180,7 @@ export const ChatsTab = () => {
       if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
       setIsAnimating(true);
       try {
-        navigate(path);
+        navigate(path, listNavState ? { state: listNavState } : undefined);
         animationTimeoutRef.current = setTimeout(() => {
           setIsAnimating(false);
           animationTimeoutRef.current = null;

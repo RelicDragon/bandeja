@@ -1,12 +1,11 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import transliterate from '@sindresorhus/transliterate';
-import { chatApi, ChatDraft, getLastMessageTime, GroupChannel } from '@/api/chat';
+import { chatApi, getLastMessageTime, GroupChannel } from '@/api/chat';
 import { matchDraftToChat } from '@/utils/chatListUtils';
 import { getChatTitle, sortChatItems } from '@/utils/chatListSort';
 import { getMarketChatDisplayTitle } from '@/utils/marketChatUtils';
-import { useGroupChannelUnreadCounts } from '@/hooks/useGroupChannelUnreadCounts';
 import {
   deduplicateChats,
   getChatKey,
@@ -15,9 +14,6 @@ import {
   channelsToChatItems,
   applyPaginationState,
   createLoadMore,
-  mergeChatListOutboxFromDexieSlice,
-  mergeChatListFromThreadIndexDexie,
-  threadIndexLiveMergeSig,
   type FilterCache
 } from '@/utils/chatListHelpers';
 import { usersApi } from '@/api/users';
@@ -36,9 +32,12 @@ import { MarketItem } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
-import { ChatItem, type ChatListProps, type ChatType } from './chatListTypes';
-import { UserChat } from '@/api/chat';
-import { draftStorage, mergeServerAndLocalDrafts } from '@/services/draftStorage';
+import {
+  collectChatListPresenceUserIds,
+  collectSearchRowsPresenceUserIds,
+  type ChatSearchRow,
+} from '@/utils/chatListPresenceIds';
+import { ChatItem, type ChatListProps, type ChatSelectNavOptions, type ChatType } from './chatListTypes';
 import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
 import { MAX_PINNED_CHATS } from '@/utils/chatListConstants';
@@ -47,14 +46,18 @@ import {
   persistThreadIndexReplace,
   persistThreadIndexUpsert,
 } from '@/services/chat/chatThreadIndex';
-import { prefetchTopChatsSync } from '@/services/chat/chatPrefetch';
 import {
   chatListModuleCache,
   clearChatListModuleCacheWhenUserMismatch,
   type ChatsFilterType,
 } from '@/components/chat/chatListModuleCache';
 import { useChatListSocketEffects } from './useChatListSocketEffects';
-import { useChatListThreadIndexLive } from '@/components/chat/useChatListThreadIndexLive';
+import { useChatListMergedDrafts } from '@/components/chat/useChatListMergedDrafts';
+import { useChatListPrefetch } from '@/components/chat/useChatListPrefetch';
+import { useChatListDexieSyncEffects } from '@/components/chat/useChatListDexieSyncEffects';
+import { useChatListSearchUrlSync } from '@/components/chat/useChatListSearchUrlSync';
+import { useChatListMarketUnread } from '@/components/chat/useChatListMarketUnread';
+import { useChatListContactSections } from '@/components/chat/useChatListContactSections';
 
 export function useChatListModel({
   onChatSelect,
@@ -66,6 +69,7 @@ export function useChatListModel({
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { draftsCacheRef, getMergedDrafts, applyDraftToCache } = useChatListMergedDrafts(user?.id);
   const isOnline = useNetworkStore((s) => s.isOnline);
   const { chatsFilter, bugsFilter, openBugModal, setOpenBugModal } = useNavigationStore();
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
@@ -78,15 +82,13 @@ export function useChatListModel({
   const [chats, setChats] = useState<ChatItem[]>([]);
   const chatsRef = useRef(chats);
   chatsRef.current = chats;
-  const chatPrefetchSignature = useMemo(
-    () => chats.slice(0, 18).map((c) => getChatKey(c)).join('\0'),
-    [chats]
-  );
+  useChatListPrefetch(user?.id, isOnline, chatsRef);
   const [loading, setLoading] = useState(true);
   const urlQuery = searchParams.get('q') ?? '';
   const [searchInput, setSearchInput] = useState(urlQuery);
   const debouncedSearchQuery = useDebounce(searchInput, 500);
   const skipUrlSyncRef = useRef(false);
+  useChatListSearchUrlSync(urlQuery, skipUrlSyncRef, setSearchInput);
   const [contactsMode, setContactsMode] = useState(false);
   const [cityUsers, setCityUsers] = useState<BasicUser[]>([]);
   const [cityUsersLoading, setCityUsersLoading] = useState(false);
@@ -110,6 +112,7 @@ export function useChatListModel({
   const itemIdFromUrl = searchParams.get('item');
   const [selectedMarketItemForDrawer, setSelectedMarketItemForDrawer] = useState<MarketItem | null>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+  const listBodyScrollRef = useRef<HTMLDivElement>(null);
 
   const setMarketChatRole = useCallback(
     (role: 'buyer' | 'seller') => {
@@ -126,171 +129,18 @@ export function useChatListModel({
   );
 
   const chatsCacheRef = useRef<Partial<Record<'users' | 'bugs' | 'channels' | 'market', FilterCache>>>({});
-  const draftsCacheRef = useRef<ChatDraft[] | null>(null);
 
-  const getMergedDrafts = useCallback(
-    async (forceRefetch = false): Promise<ChatDraft[]> => {
-      if (!user?.id) return [];
-      clearChatListModuleCacheWhenUserMismatch(user.id);
-      if (chatListModuleCache.userId !== user.id) draftsCacheRef.current = null;
-      if (!forceRefetch && chatListModuleCache.drafts !== null && chatListModuleCache.userId === user.id) {
-        draftsCacheRef.current = chatListModuleCache.drafts;
-        return chatListModuleCache.drafts;
-      }
-      if (!forceRefetch && draftsCacheRef.current !== null) return draftsCacheRef.current;
-      const [res, local] = await Promise.all([
-        chatApi.getUserDrafts(1, 1000).catch(() => ({ drafts: [] })),
-        draftStorage.getLocalDraftsForUser(user.id)
-      ]);
-      const merged = mergeServerAndLocalDrafts(res?.drafts ?? [], local);
-      draftsCacheRef.current = merged;
-      chatListModuleCache.drafts = merged;
-      chatListModuleCache.userId = user.id;
-      return merged;
-    },
-    [user?.id]
-  );
+  useChatListDexieSyncEffects({
+    userId: user?.id,
+    chatsFilter,
+    contactsMode,
+    debouncedSearchQuery,
+    chatListDexieBump,
+    setChats,
+    chatsCacheRef,
+  });
 
-  useEffect(() => () => {
-    draftsCacheRef.current = null;
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (!user?.id || chatListDexieBump === 0) return;
-    let cancelled = false;
-    void loadThreadIndexForList(chatsFilter).then((fromDex) => {
-      if (cancelled || fromDex.length === 0) return;
-      setChats((prev) => mergeChatListOutboxFromDexieSlice(prev, fromDex));
-      const cur = chatsCacheRef.current[chatsFilter];
-      if (cur) {
-        chatsCacheRef.current[chatsFilter] = {
-          ...cur,
-          chats: mergeChatListOutboxFromDexieSlice(cur.chats, fromDex),
-        };
-      }
-      const mc = chatListModuleCache.chats[chatsFilter];
-      if (mc && chatListModuleCache.userId === user.id) {
-        chatListModuleCache.chats[chatsFilter] = {
-          ...mc,
-          chats: mergeChatListOutboxFromDexieSlice(mc.chats, fromDex),
-        };
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [chatListDexieBump, chatsFilter, user?.id]);
-
-  const threadIndexLiveEnabled =
-    !!user?.id &&
-    !contactsMode &&
-    debouncedSearchQuery.trim() === '' &&
-    (chatsFilter === 'users' ||
-      chatsFilter === 'bugs' ||
-      chatsFilter === 'channels' ||
-      chatsFilter === 'market');
-
-  const dexThreadSlice = useChatListThreadIndexLive(
-    threadIndexLiveEnabled ? chatsFilter : null,
-    threadIndexLiveEnabled
-  );
-
-  const threadIndexLiveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const threadIndexLiveSigRef = useRef<string>('');
-
-  useEffect(() => {
-    threadIndexLiveSigRef.current = '';
-  }, [chatsFilter, contactsMode, debouncedSearchQuery]);
-
-  useEffect(() => {
-    if (!threadIndexLiveEnabled || user?.id == null) return;
-    if (dexThreadSlice === undefined) return;
-    const sig = `${dexThreadSlice.length}|${threadIndexLiveMergeSig(dexThreadSlice)}`;
-    if (sig === threadIndexLiveSigRef.current) return;
-    threadIndexLiveSigRef.current = sig;
-    const slice = dexThreadSlice;
-    const uid = user.id;
-    if (threadIndexLiveDebounceRef.current) clearTimeout(threadIndexLiveDebounceRef.current);
-    threadIndexLiveDebounceRef.current = setTimeout(() => {
-      threadIndexLiveDebounceRef.current = null;
-      setChats((prev) => mergeChatListFromThreadIndexDexie(prev, slice, chatsFilter, uid));
-      const cur = chatsCacheRef.current[chatsFilter];
-      if (cur) {
-        chatsCacheRef.current[chatsFilter] = {
-          ...cur,
-          chats: mergeChatListFromThreadIndexDexie(cur.chats, slice, chatsFilter, uid),
-        };
-      }
-      const mc = chatListModuleCache.chats[chatsFilter];
-      if (mc && chatListModuleCache.userId === uid) {
-        chatListModuleCache.chats[chatsFilter] = {
-          ...mc,
-          chats: mergeChatListFromThreadIndexDexie(mc.chats, slice, chatsFilter, uid),
-        };
-      }
-    }, 100);
-    return () => {
-      if (threadIndexLiveDebounceRef.current) {
-        clearTimeout(threadIndexLiveDebounceRef.current);
-        threadIndexLiveDebounceRef.current = null;
-      }
-    };
-  }, [threadIndexLiveEnabled, dexThreadSlice, chatsFilter, user?.id, contactsMode, debouncedSearchQuery]);
-
-  const applyDraftToCache = useCallback((
-    draft: ChatDraft | null,
-    chatContextType: string,
-    contextId: string,
-    chatType?: string
-  ) => {
-    if (draftsCacheRef.current === null) return;
-    const sameSlot = (d: ChatDraft) =>
-      d.chatContextType === chatContextType && d.contextId === contextId && (draft == null || d.chatType === (chatType ?? draft.chatType));
-    if (draft === null) {
-      draftsCacheRef.current = draftsCacheRef.current.filter(
-        (d) =>
-          !(
-            d.chatContextType === chatContextType &&
-            d.contextId === contextId &&
-            (chatType == null || d.chatType === chatType)
-          )
-      );
-    } else {
-      draftsCacheRef.current = draftsCacheRef.current.filter((d) => !sameSlot(d));
-      draftsCacheRef.current = [...draftsCacheRef.current, draft];
-    }
-    if (chatListModuleCache.userId === useAuthStore.getState().user?.id) {
-      chatListModuleCache.drafts = draftsCacheRef.current;
-    }
-  }, []);
-
-  const marketChannelIds = useMemo(
-    () => (chatsFilter === 'market' ? chats.filter((c) => c.type === 'channel').map((c) => c.data.id) : []),
-    [chatsFilter, chats]
-  );
-  const marketChannelIdsKey = useMemo(() => {
-    if (chatsFilter !== 'market' || marketChannelIds.length === 0) return '';
-    return [...marketChannelIds].sort().join(',');
-  }, [chatsFilter, marketChannelIds]);
-  const marketUnreadCounts = useGroupChannelUnreadCounts(marketChannelIds);
-
-  const presenceUserIds = useMemo(() => {
-    const ids: string[] = [];
-    chats.forEach((c) => {
-      if (c.type === 'user') ids.push((c.data as UserChat).user1Id === user?.id ? (c.data as UserChat).user2Id : (c.data as UserChat).user1Id);
-      else if (c.type === 'contact') ids.push(c.userId);
-    });
-    return ids;
-  }, [chats, user?.id]);
-  usePresenceSubscription('chat-list', presenceUserIds);
-
-  useEffect(() => {
-    if (skipUrlSyncRef.current) {
-      skipUrlSyncRef.current = false;
-      return;
-    }
-    setSearchInput(urlQuery);
-  }, [urlQuery]);
+  const { marketChannelIdsKey, marketUnreadCounts } = useChatListMarketUnread(chatsFilter, chats);
 
   useEffect(() => {
     if (user?.id) {
@@ -823,20 +673,6 @@ export function useChatListModel({
   const loadMore = chatsFilter === 'bugs' ? loadMoreBugs : chatsFilter === 'users' ? loadMoreUsers : chatsFilter === 'market' ? loadMoreMarket : loadMoreChannels;
 
   useEffect(() => {
-    if (!shouldLoadMore) return;
-    const el = loadMoreSentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) loadMore();
-      },
-      { root: null, rootMargin: '100px', threshold: 0 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [chatsFilter, shouldLoadMore, loadMore]);
-
-  useEffect(() => {
     const data = lastChatUnreadCount;
     if (!data || data.contextType !== 'GROUP') return;
     const ids =
@@ -934,12 +770,6 @@ export function useChatListModel({
   }, [chatsFilter]);
 
   useEffect(() => {
-    if (!user?.id || !isOnline || chatPrefetchSignature.length === 0) return;
-    const t = window.setTimeout(() => prefetchTopChatsSync(chatsRef.current), 450);
-    return () => window.clearTimeout(t);
-  }, [user?.id, isOnline, chatPrefetchSignature]);
-
-  useEffect(() => {
     if (chatsFilter !== 'users' || !debouncedSearchQuery.trim() || contactsMode) return;
     const cached = chatsCacheRef.current.users?.cityUsers;
     if (cached?.length) return;
@@ -996,7 +826,7 @@ export function useChatListModel({
     }
   }, [chatsFilter, fetchChatsForFilter, onChatSelect]);
 
-  const handleChatClick = useCallback((chatId: string, chatType: ChatType, options?: { initialChatType?: string; searchQuery?: string }) => {
+  const handleChatClick = useCallback((chatId: string, chatType: ChatType, options?: ChatSelectNavOptions) => {
     onChatSelect?.(chatId, chatType, options);
   }, [onChatSelect]);
 
@@ -1135,14 +965,7 @@ export function useChatListModel({
     });
   }, [cityUsers, searchableUsersData?.cityUsers, debouncedSearchQuery, chatsFilter, matchesSearch]);
 
-  const contactSections = useMemo(() => {
-    const followingIds = new Set(followingUsers.map((u) => u.id));
-    const followerIds = new Set(followersUsers.map((u) => u.id));
-    const following = cityUsers.filter((u) => followingIds.has(u.id));
-    const followers = cityUsers.filter((u) => followerIds.has(u.id) && !followingIds.has(u.id));
-    const other = cityUsers.filter((u) => !followingIds.has(u.id) && !followerIds.has(u.id));
-    return { following, followers, other };
-  }, [cityUsers, followingUsers, followersUsers]);
+  const contactSections = useChatListContactSections(cityUsers, followingUsers, followersUsers);
 
   const activeChatUserIds = useMemo(() => {
     return new Set(
@@ -1201,7 +1024,10 @@ export function useChatListModel({
       });
     }
 
-    onChatSelect?.(chat.id, 'user', isSearchMode ? { searchQuery: debouncedSearchQuery.trim() } : undefined);
+    onChatSelect?.(chat.id, 'user', {
+      ...(isSearchMode ? { searchQuery: debouncedSearchQuery.trim() } : {}),
+      userChat: chat,
+    });
   }, [user, chatsFilter, onChatSelect, isSearchMode, debouncedSearchQuery]);
 
   const [messagesExpanded, setMessagesExpanded] = useState(true);
@@ -1271,6 +1097,30 @@ export function useChatListModel({
     if (!unreadFilterActive) return chats;
     return chats.filter((c) => (c.type === 'user' || c.type === 'group' || c.type === 'channel') && (c.unreadCount ?? 0) > 0);
   }, [chatsFilter, chats, unreadFilterActive, marketFilteredByRoleAndSearch]);
+
+  useLayoutEffect(() => {
+    if (!shouldLoadMore || loading) return;
+    const el = loadMoreSentinelRef.current;
+    if (!el) return;
+    const root = listBodyScrollRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore();
+      },
+      { root: root ?? null, rootMargin: '100px', threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [
+    chatsFilter,
+    shouldLoadMore,
+    loadMore,
+    loading,
+    displayedChats.length,
+    isSearchMode,
+    contactsMode,
+    marketChatRole,
+  ]);
 
   const pinnedCountUsers = useMemo(() => {
     if (chatsFilter !== 'users') return 0;
@@ -1393,6 +1243,21 @@ export function useChatListModel({
     return items;
   }, [isSearchMode, contactsMode, filteredActiveChats, filteredActiveChatsExcludingUsers, filteredCityUsers, filteredCityUsersExcludingActive]);
 
+  const listPresenceUserIds = useMemo(() => {
+    if (loading) return [];
+    if (isSearchMode) return collectSearchRowsPresenceUserIds(displayChats as ChatSearchRow[], user?.id);
+    if (chatsFilter === 'market' && marketGroupedByItem) {
+      const flat = marketGroupedByItem.flatMap((g) => g.channels);
+      return collectChatListPresenceUserIds(flat, user?.id);
+    }
+    return collectChatListPresenceUserIds(displayedChats, user?.id);
+  }, [loading, isSearchMode, displayChats, displayedChats, user?.id, chatsFilter, marketGroupedByItem]);
+
+  usePresenceSubscription(
+    loading ? 'chat-list:loading' : isSearchMode ? `chat-list-search:${chatsFilter}` : `chat-list:${chatsFilter}`,
+    listPresenceUserIds
+  );
+
   const showContactsEmpty = contactsMode && chatsFilter === 'users' && !isSearchMode && !cityUsersLoading && cityUsers.length === 0;
   const showChatsEmpty = !contactsMode && !isSearchMode && (chatsFilter === 'market' ? displayedChats.length === 0 : chats.length === 0) && !loading;
 
@@ -1465,6 +1330,7 @@ export function useChatListModel({
     channelsHasMore,
     marketHasMore,
     loadMoreSentinelRef,
+    listBodyScrollRef,
     bugsLoadingMore,
     usersLoadingMore,
     channelsLoadingMore,

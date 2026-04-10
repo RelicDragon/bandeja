@@ -28,8 +28,10 @@ export function scheduleRetryFailedChatOutbox(): void {
 export async function retryFailedChatOutbox(): Promise<void> {
   await purgeExpiredFailedOutbox();
   const rows = await chatLocalDb.outbox.toArray();
-  const failed = rows.filter((r) => r.status === 'failed');
-  for (const row of failed) {
+  const resumable = rows.filter(
+    (r) => r.status === 'failed' || (r.status === 'sending' && !isSending(r.tempId))
+  );
+  for (const row of resumable) {
     if (isSending(row.tempId)) continue;
     await messageQueueStorage.updateStatus(row.tempId, row.contextType, row.contextId, 'queued');
     sendWithTimeout(

@@ -25,7 +25,6 @@ export interface UseGameChatMessagesParams {
   contextType: ChatContextType;
   currentChatType: ChatType;
   effectiveChatType: ChatType;
-  isEmbedded: boolean;
   chatContainerRef: RefObject<HTMLDivElement | null>;
   messageListRef: RefObject<MessageListHandle | null>;
   currentIdRef: RefObject<string | undefined>;
@@ -41,7 +40,6 @@ export function useGameChatMessages({
   contextType,
   currentChatType,
   effectiveChatType,
-  isEmbedded,
   chatContainerRef,
   messageListRef,
   currentIdRef,
@@ -172,10 +170,7 @@ export function useGameChatMessages({
         }
         if (!append) {
           setIsLoadingMessages(false);
-          const delay = isEmbedded ? 100 : 500;
-          setTimeout(() => {
-            if (currentIdRef.current === requestId) setIsInitialLoad(false);
-          }, delay);
+          if (currentIdRef.current === requestId) setIsInitialLoad(false);
         }
         return true;
       } catch (error) {
@@ -188,7 +183,7 @@ export function useGameChatMessages({
         return false;
       }
     },
-    [id, contextType, currentChatType, isEmbedded, currentIdRef, fetchMessagesPage]
+    [id, contextType, currentChatType, currentIdRef, fetchMessagesPage]
   );
 
   const bootstrapThread = useCallback(
@@ -216,10 +211,7 @@ export function useGameChatMessages({
         setHasMoreMessages(true);
         setPage(1);
         setIsLoadingMessages(false);
-        const delay = isEmbedded ? 100 : 500;
-        setTimeout(() => {
-          if (currentIdRef.current === requestId) setIsInitialLoad(false);
-        }, delay);
+        if (currentIdRef.current === requestId) setIsInitialLoad(false);
         const lid = tailMessageId(localMsgs);
         if (lid) {
           useChatSyncStore
@@ -282,7 +274,7 @@ export function useGameChatMessages({
         return loadMessages(false, gameChatType);
       }
     },
-    [id, contextType, currentChatType, isEmbedded, currentIdRef, loadMessages]
+    [id, contextType, currentChatType, currentIdRef, loadMessages]
   );
 
   const loadMoreMessages = useCallback(async () => {

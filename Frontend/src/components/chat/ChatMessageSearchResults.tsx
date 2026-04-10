@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useReducer, ReactNode } from 'react';
+import { useState, useEffect, useMemo, useRef, useReducer, type ReactNode, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { chatApi, SearchMessageResult, ChatMessage, getLastMessageText } from '@/api/chat';
 import { getSystemMessageText } from '@/utils/systemMessages';
@@ -11,12 +11,16 @@ import {
   searchLocalCachedMessageResults,
   type LocalSearchBuckets,
 } from '@/services/chat/chatLocalMessageSearch';
+import { ChatListVirtualSlice } from './ChatListVirtualSlice';
+import { CHAT_LIST_SEARCH_RESULT_ROW_ESTIMATE_PX } from '@/utils/chatListConstants';
+import type { TFunction } from 'i18next';
 
 function emptyLocalBuckets(): Omit<LocalSearchBuckets, 'hasMoreLocal'> {
   return { messages: [], gameMessages: [], channelMessages: [], bugMessages: [], marketMessages: [] };
 }
 
 interface ChatMessageSearchResultsProps {
+  scrollElementRef: RefObject<HTMLDivElement | null>;
   query: string;
   chatsFilter?: 'users' | 'bugs' | 'channels' | 'market';
   insertBetween?: ReactNode;
@@ -141,7 +145,45 @@ function ResultItem({ r, onResultClick, t }: { r: SearchMessageResult; onResultC
   );
 }
 
-export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, onResultClick, messagesExpanded = true, gamesExpanded = true, channelsExpanded = true, bugsExpanded = true, marketListingsExpanded = true, onMessagesToggle, onGamesToggle, onChannelsToggle, onBugsToggle, onMarketListingsToggle }: ChatMessageSearchResultsProps) => {
+function MessageSearchVirtualRows({
+  scrollElementRef,
+  results,
+  onResultClick,
+  t,
+}: {
+  scrollElementRef: RefObject<HTMLDivElement | null>;
+  results: SearchMessageResult[];
+  onResultClick: ChatMessageSearchResultsProps['onResultClick'];
+  t: TFunction;
+}) {
+  return (
+    <ChatListVirtualSlice
+      scrollElementRef={scrollElementRef}
+      items={results}
+      getItemKey={(r) => r.message.id}
+      estimateSizePx={CHAT_LIST_SEARCH_RESULT_ROW_ESTIMATE_PX}
+      renderItem={(r) => <ResultItem r={r} onResultClick={onResultClick} t={t} />}
+    />
+  );
+}
+
+export const ChatMessageSearchResults = ({
+  scrollElementRef,
+  query,
+  chatsFilter,
+  insertBetween,
+  onResultClick,
+  messagesExpanded = true,
+  gamesExpanded = true,
+  channelsExpanded = true,
+  bugsExpanded = true,
+  marketListingsExpanded = true,
+  onMessagesToggle,
+  onGamesToggle,
+  onChannelsToggle,
+  onBugsToggle,
+  onMarketListingsToggle,
+}: ChatMessageSearchResultsProps) => {
   const { t } = useTranslation();
   const isOnline = useNetworkStore((s) => s.isOnline);
   const [remoteMessages, setRemoteMessages] = useState<SearchMessageResult[]>([]);
@@ -382,9 +424,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
         onToggle={onGamesToggle ?? (() => {})}
         icon={Gamepad2}
       >
-        {gameMessages.map((r) => (
-          <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
-        ))}
+        <MessageSearchVirtualRows scrollElementRef={scrollElementRef} results={gameMessages} onResultClick={onResultClick} t={t} />
         {renderLoadMore(loadMoreGames, gameHasMore, loadingGames)}
       </CollapsibleSection>
     ) : null;
@@ -397,9 +437,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
         onToggle={onBugsToggle ?? (() => {})}
         icon={Bug}
       >
-        {bugMessages.map((r) => (
-          <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
-        ))}
+        <MessageSearchVirtualRows scrollElementRef={scrollElementRef} results={bugMessages} onResultClick={onResultClick} t={t} />
         {renderLoadMore(loadMoreBugs, bugsHasMore, loadingBugs)}
       </CollapsibleSection>
     ) : null;
@@ -412,9 +450,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
         onToggle={onMarketListingsToggle ?? (() => {})}
         icon={ShoppingBag}
       >
-        {marketMessages.map((r) => (
-          <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
-        ))}
+        <MessageSearchVirtualRows scrollElementRef={scrollElementRef} results={marketMessages} onResultClick={onResultClick} t={t} />
         {renderLoadMore(loadMoreMarket, marketHasMore, loadingMarket)}
       </CollapsibleSection>
     ) : null;
@@ -431,9 +467,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
               onToggle={onMessagesToggle ?? (() => {})}
               icon={MessageCircle}
             >
-              {messages.map((r) => (
-                <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
-              ))}
+              <MessageSearchVirtualRows scrollElementRef={scrollElementRef} results={messages} onResultClick={onResultClick} t={t} />
               {renderLoadMore(loadMoreMessages, messagesHasMore, loadingMessages)}
             </CollapsibleSection>
           )}
@@ -445,9 +479,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
               onToggle={onChannelsToggle ?? (() => {})}
               icon={Hash}
             >
-              {channelMessages.map((r) => (
-                <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
-              ))}
+              <MessageSearchVirtualRows scrollElementRef={scrollElementRef} results={channelMessages} onResultClick={onResultClick} t={t} />
               {renderLoadMore(loadMoreChannels, channelHasMore, loadingChannels)}
             </CollapsibleSection>
           )}
@@ -463,9 +495,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
               onToggle={onMessagesToggle ?? (() => {})}
               icon={MessageCircle}
             >
-              {messages.map((r) => (
-                <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
-              ))}
+              <MessageSearchVirtualRows scrollElementRef={scrollElementRef} results={messages} onResultClick={onResultClick} t={t} />
               {renderLoadMore(loadMoreMessages, messagesHasMore, loadingMessages)}
             </CollapsibleSection>
           )}
@@ -477,9 +507,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
               onToggle={onChannelsToggle ?? (() => {})}
               icon={Hash}
             >
-              {channelMessages.map((r) => (
-                <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
-              ))}
+              <MessageSearchVirtualRows scrollElementRef={scrollElementRef} results={channelMessages} onResultClick={onResultClick} t={t} />
               {renderLoadMore(loadMoreChannels, channelHasMore, loadingChannels)}
             </CollapsibleSection>
           )}
@@ -494,9 +522,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
               onToggle={onChannelsToggle ?? (() => {})}
               icon={Hash}
             >
-              {channelMessages.map((r) => (
-                <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
-              ))}
+              <MessageSearchVirtualRows scrollElementRef={scrollElementRef} results={channelMessages} onResultClick={onResultClick} t={t} />
               {renderLoadMore(loadMoreChannels, channelHasMore, loadingChannels)}
             </CollapsibleSection>
           )}
@@ -508,9 +534,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
               onToggle={onMessagesToggle ?? (() => {})}
               icon={MessageCircle}
             >
-              {messages.map((r) => (
-                <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
-              ))}
+              <MessageSearchVirtualRows scrollElementRef={scrollElementRef} results={messages} onResultClick={onResultClick} t={t} />
               {renderLoadMore(loadMoreMessages, messagesHasMore, loadingMessages)}
             </CollapsibleSection>
           )}
@@ -527,9 +551,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
               onToggle={onMessagesToggle ?? (() => {})}
               icon={MessageCircle}
             >
-              {messages.map((r) => (
-                <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
-              ))}
+              <MessageSearchVirtualRows scrollElementRef={scrollElementRef} results={messages} onResultClick={onResultClick} t={t} />
               {renderLoadMore(loadMoreMessages, messagesHasMore, loadingMessages)}
             </CollapsibleSection>
           )}
@@ -541,9 +563,7 @@ export const ChatMessageSearchResults = ({ query, chatsFilter, insertBetween, on
               onToggle={onChannelsToggle ?? (() => {})}
               icon={Hash}
             >
-              {channelMessages.map((r) => (
-                <ResultItem key={r.message.id} r={r} onResultClick={onResultClick} t={t} />
-              ))}
+              <MessageSearchVirtualRows scrollElementRef={scrollElementRef} results={channelMessages} onResultClick={onResultClick} t={t} />
               {renderLoadMore(loadMoreChannels, channelHasMore, loadingChannels)}
             </CollapsibleSection>
           )}

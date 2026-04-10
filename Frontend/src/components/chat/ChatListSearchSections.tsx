@@ -1,11 +1,16 @@
-import type { ReactElement } from 'react';
+import type { ReactElement, RefObject } from 'react';
 import { CollapsibleSection } from './CollapsibleSection';
 import { ChatListItem } from './ChatListItem';
 import { CityUserCard } from './CityUserCard';
+import { ChatListVirtualSlice } from './ChatListVirtualSlice';
 import { getChatKey } from '@/utils/chatListHelpers';
 import type { BasicUser } from '@/types';
-import type { ChatItem, ChatType } from './chatListTypes';
+import type { ChatItem, ChatSelectNavOptions, ChatType } from './chatListTypes';
 import type { TFunction } from 'i18next';
+import {
+  CHAT_LIST_CHAT_ROW_ESTIMATE_PX,
+  CHAT_LIST_CONTACT_ROW_ESTIMATE_PX,
+} from '@/utils/chatListConstants';
 
 type SearchRow =
   | { type: 'section'; label: 'users' | 'active' }
@@ -13,6 +18,7 @@ type SearchRow =
   | { type: 'contact'; user: BasicUser };
 
 export type ChatListSearchSectionsSharedProps = {
+  scrollElementRef: RefObject<HTMLDivElement | null>;
   displayChats: SearchRow[];
   t: TFunction;
   activeChatsExpanded: boolean;
@@ -21,7 +27,7 @@ export type ChatListSearchSectionsSharedProps = {
   setUsersExpanded: React.Dispatch<React.SetStateAction<boolean>>;
   selectedChatId: string | null | undefined;
   selectedChatType: ChatType | null | undefined;
-  handleChatClick: (chatId: string, chatType: ChatType, options?: { initialChatType?: string; searchQuery?: string }) => void;
+  handleChatClick: (chatId: string, chatType: ChatType, options?: ChatSelectNavOptions) => void;
   handleContactClick: (userId: string) => void | Promise<void>;
   isSearchMode: boolean;
   debouncedSearchQuery: string;
@@ -34,6 +40,7 @@ export type ChatListSearchSectionsSharedProps = {
   togglingMuteId: string | null;
   handleMuteUserChat: (chatId: string, isMuted: boolean) => Promise<void>;
   handleMuteGroupChannel: (channelId: string, isMuted: boolean) => Promise<void>;
+  listPresenceBatched?: boolean;
 };
 
 export type ChatListSearchSectionsProps = ChatListSearchSectionsSharedProps & {
@@ -64,26 +71,32 @@ export function ChatListSearchSections(p: ChatListSearchSectionsProps): ReactEle
         expanded={p.activeChatsExpanded}
         onToggle={() => p.setActiveChatsExpanded((e) => !e)}
       >
-        {active.map((item) => (
-          <ChatListItem
-            key={getChatKey(item.data)}
-            item={item.data}
-            selectedChatId={p.selectedChatId}
-            selectedChatType={p.selectedChatType}
-            onChatClick={p.handleChatClick}
-            onContactClick={p.handleContactClick}
-            isSearchMode={p.isSearchMode}
-            searchQuery={q}
-            pinnedCount={isUsersTab ? p.pinnedCountUsers : undefined}
-            pinningId={isUsersTab ? p.pinningId : undefined}
-            onPinUserChat={isUsersTab ? p.handlePinUserChat : undefined}
-            onPinGroupChannel={isUsersTab ? p.handlePinGroupChannel : undefined}
-            mutedChats={isUsersTab ? p.mutedChats : undefined}
-            togglingMuteId={isUsersTab ? p.togglingMuteId : undefined}
-            onMuteUserChat={isUsersTab ? p.handleMuteUserChat : undefined}
-            onMuteGroupChannel={isUsersTab ? p.handleMuteGroupChannel : undefined}
-          />
-        ))}
+        <ChatListVirtualSlice
+          scrollElementRef={p.scrollElementRef}
+          items={active}
+          getItemKey={(item) => getChatKey(item.data)}
+          estimateSizePx={CHAT_LIST_CHAT_ROW_ESTIMATE_PX}
+          renderItem={(item) => (
+            <ChatListItem
+              item={item.data}
+              listPresenceBatched={p.listPresenceBatched}
+              selectedChatId={p.selectedChatId}
+              selectedChatType={p.selectedChatType}
+              onChatClick={p.handleChatClick}
+              onContactClick={p.handleContactClick}
+              isSearchMode={p.isSearchMode}
+              searchQuery={q}
+              pinnedCount={isUsersTab ? p.pinnedCountUsers : undefined}
+              pinningId={isUsersTab ? p.pinningId : undefined}
+              onPinUserChat={isUsersTab ? p.handlePinUserChat : undefined}
+              onPinGroupChannel={isUsersTab ? p.handlePinGroupChannel : undefined}
+              mutedChats={isUsersTab ? p.mutedChats : undefined}
+              togglingMuteId={isUsersTab ? p.togglingMuteId : undefined}
+              onMuteUserChat={isUsersTab ? p.handleMuteUserChat : undefined}
+              onMuteGroupChannel={isUsersTab ? p.handleMuteGroupChannel : undefined}
+            />
+          )}
+        />
       </CollapsibleSection>
     ) : null;
 
@@ -94,13 +107,15 @@ export function ChatListSearchSections(p: ChatListSearchSectionsProps): ReactEle
         expanded={p.usersExpanded}
         onToggle={() => p.setUsersExpanded((e) => !e)}
       >
-        {users.map((item) => (
-          <CityUserCard
-            key={`contact-${item.user.id}`}
-            user={item.user}
-            onClick={() => void p.handleContactClick(item.user.id)}
-          />
-        ))}
+        <ChatListVirtualSlice
+          scrollElementRef={p.scrollElementRef}
+          items={users}
+          getItemKey={(item) => `contact-${item.user.id}`}
+          estimateSizePx={CHAT_LIST_CONTACT_ROW_ESTIMATE_PX}
+          renderItem={(item) => (
+            <CityUserCard user={item.user} onClick={() => void p.handleContactClick(item.user.id)} />
+          )}
+        />
       </CollapsibleSection>
     ) : null;
 

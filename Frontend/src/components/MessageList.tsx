@@ -65,7 +65,7 @@ interface MessageListProps {
   showReply?: boolean;
   onForwardMessage?: (message: ChatMessage) => void;
   threadScrollKey?: string | null;
-  /** While true, keep bottom aligned as row heights / total size settle (Dexie preload, virtualizer measure). */
+  /** While true, parent signals loading/initial paint; list extends this until tail row heights are preloaded. */
   threadLayoutSettling?: boolean;
   onChatScrollNearBottomChange?: (nearBottom: boolean) => void;
 }
@@ -165,16 +165,36 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
 
   const tailIdsForHeightPreload = messages.slice(-140).map((m) => m.id).join('\x1e');
 
+  const [tailHeightsPreloaded, setTailHeightsPreloaded] = useState(true);
+
+  useLayoutEffect(() => {
+    const ids = tailIdsForHeightPreload.length === 0 ? [] : tailIdsForHeightPreload.split('\x1e');
+    setTailHeightsPreloaded(ids.length === 0);
+  }, [threadScrollKey, tailIdsForHeightPreload]);
+
   useEffect(() => {
     let alive = true;
     const ids = tailIdsForHeightPreload.length === 0 ? [] : tailIdsForHeightPreload.split('\x1e');
+    if (ids.length === 0) {
+      return () => {
+        alive = false;
+      };
+    }
     void preloadMessageRowHeights(ids).then(() => {
-      if (alive) bumpHeightEstimates();
+      if (alive) {
+        bumpHeightEstimates();
+        setTailHeightsPreloaded(true);
+      }
     });
     return () => {
       alive = false;
     };
   }, [threadScrollKey, tailIdsForHeightPreload]);
+
+  const layoutSettlingForBottomPin = useMemo(
+    () => threadLayoutSettling || (messages.length > 0 && !tailHeightsPreloaded),
+    [threadLayoutSettling, messages.length, tailHeightsPreloaded]
+  );
 
   useLayoutEffect(() => {
     const items = virtualizerRef.current.getVirtualItems();
@@ -257,7 +277,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   }, [threadScrollKey, isSwitchingChatType, messages]);
 
   useLayoutEffect(() => {
-    if (!threadLayoutSettling || messages.length === 0) return;
+    if (!layoutSettlingForBottomPin || messages.length === 0) return;
     const inner = innerListRef.current;
     const run = () => {
       const len = messagesForScrollRef.current.length;
@@ -270,18 +290,17 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       run();
     });
     ro.observe(inner);
-    const tid = window.setTimeout(() => ro.disconnect(), 800);
     return () => {
-      window.clearTimeout(tid);
       ro.disconnect();
     };
-  }, [threadLayoutSettling, messages.length, threadScrollKey]);
+  }, [layoutSettlingForBottomPin, messages.length, threadScrollKey]);
 
   useEffect(() => {
     if (!threadScrollKey) return;
     if (isSwitchingChatType || messages.length === 0) return;
 
     const tick = () => {
+      if (threadScrollKey && restoredScrollThreadRef.current !== threadScrollKey) return;
       const el = messagesContainerRef.current;
       if (!el) return;
       const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
@@ -438,7 +457,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
             }
           });
         });
-      } else if (!threadLayoutSettling) {
+      } else if (!layoutSettlingForBottomPin) {
         const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
         if (isAtBottom && messages.length > 0) {
           virtualizerRef.current.scrollToIndex(messages.length, { align: 'end', behavior: 'smooth' });
@@ -455,7 +474,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
         }
       });
     }
-  }, [messages, isLoadingMore, threadLayoutSettling]);
+  }, [messages, isLoadingMore, layoutSettlingForBottomPin]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;

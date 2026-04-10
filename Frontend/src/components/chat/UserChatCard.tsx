@@ -11,7 +11,7 @@ import {
 } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
@@ -22,6 +22,7 @@ import type { ChatListOutbox } from '@/utils/chatListSort';
 
 interface UserChatCardProps {
   chat: UserChat;
+  listPresenceBatched?: boolean;
   unreadCount?: number;
   onClick?: () => void;
   isSelected?: boolean;
@@ -38,7 +39,7 @@ interface UserChatCardProps {
   isTogglingMute?: boolean;
 }
 
-export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = false, draft, listOutbox, onOutboxRetry, onOutboxDismiss, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: UserChatCardProps) => {
+const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0, onClick, isSelected = false, draft, listOutbox, onOutboxRetry, onOutboxDismiss, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: UserChatCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -50,7 +51,7 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
     if (onClick) {
       onClick();
     } else {
-      navigate(`/user-chat/${chat.id}`);
+      navigate(`/user-chat/${chat.id}`, { state: { chat } });
     }
   };
 
@@ -65,6 +66,7 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
       <div className="flex-shrink-0">
         <PlayerAvatar
           player={otherUser}
+          subscribePresence={!listPresenceBatched}
           smallLayout
           showName={false}
           fullHideName={true}
@@ -244,3 +246,5 @@ export const UserChatCard = ({ chat, unreadCount = 0, onClick, isSelected = fals
     </div>
   );
 };
+
+export const UserChatCard = memo(UserChatCardInner);

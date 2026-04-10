@@ -162,13 +162,6 @@ export async function applyQueuedMessagesToState(params: {
     _clientMutationId: q.clientMutationId,
   }));
 
-  const prevSnap = messagesRef.current;
-  const newlyAddedTempIds = new Set(
-    optimisticList
-      .filter((msg) => !prevSnap.some((m) => (m as ChatMessageWithStatus)._optimisticId === msg._optimisticId))
-      .map((m) => m._optimisticId!)
-  );
-
   setMessages((prev) => {
     const toAdd = optimisticList.filter(
       (msg) => !prev.some((m) => (m as ChatMessageWithStatus)._optimisticId === msg._optimisticId)
@@ -180,8 +173,8 @@ export async function applyQueuedMessagesToState(params: {
 
   queueMicrotask(() => {
     for (const h of ok) {
-      if (h.q.status !== 'queued' || isSending(h.q.tempId)) continue;
-      if (!newlyAddedTempIds.has(h.q.tempId)) continue;
+      if (isSending(h.q.tempId)) continue;
+      if (h.q.status !== 'queued' && h.q.status !== 'sending') continue;
       sendWithTimeout(
         {
           tempId: h.q.tempId,

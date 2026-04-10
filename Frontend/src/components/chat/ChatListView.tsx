@@ -8,28 +8,17 @@ import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { BugModal } from '@/components/bugs/BugModal';
 import { MarketItemDrawer } from '@/components/marketplace';
 import { CityUserCard } from './CityUserCard';
-import { ChatListItem } from './ChatListItem';
-import { getMarketChatDisplayTitle, getMarketChatDisplayTitleForSellerGrouped, getMarketChatDisplayParts } from '@/utils/marketChatUtils';
+import { ChatListDisplayedRows } from './ChatListDisplayedRows';
+import { ChatListMarketGroupChannels } from './ChatListMarketGroupChannels';
 import { ChatListLoadingSkeleton } from '@/components/chat/ChatListLoadingSkeleton';
 import { ChatListEmptyPanel } from '@/components/chat/ChatListEmptyPanel';
 import { ChatListSearchSections, type ChatListSearchSectionsSharedProps } from './ChatListSearchSections';
 import { useChatListModel } from './useChatListModel';
-
 export type ChatListViewModel = ReturnType<typeof useChatListModel>;
 
 export function ChatListView({ model }: { model: ChatListViewModel }) {
-  if (model.loading) {
-    return (
-      <ChatListLoadingSkeleton
-        isDesktop={model.isDesktop}
-        isRefreshing={model.isRefreshing}
-        pullDistance={model.pullDistance}
-        pullProgress={model.pullProgress}
-      />
-    );
-  }
-
   const {
+    loading,
     activeChatsExpanded,
     bugsExpanded,
     bugsFilterPanelOpen,
@@ -47,7 +36,6 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
     displayChats,
     displayedChats,
     gamesExpanded,
-    getChatKey,
     handleBugCreated,
     handleChatClick,
     handleContactClick,
@@ -64,6 +52,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
     isSearchMode,
     listTransition,
     loadMoreSentinelRef,
+    listBodyScrollRef,
     marketBuyerSellerUnread,
     marketChatRole,
     marketGroupedByItem,
@@ -107,7 +96,19 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
     setUsersExpanded
   } = model;
 
+  if (loading) {
+    return (
+      <ChatListLoadingSkeleton
+        isDesktop={isDesktop}
+        isRefreshing={isRefreshing}
+        pullDistance={pullDistance}
+        pullProgress={pullProgress}
+      />
+    );
+  }
+
   const chatListSearchSectionProps: ChatListSearchSectionsSharedProps = {
+    scrollElementRef: listBodyScrollRef,
     displayChats,
     t,
     activeChatsExpanded,
@@ -129,6 +130,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
     togglingMuteId,
     handleMuteUserChat,
     handleMuteGroupChannel,
+    listPresenceBatched: true,
   };
 
   return (
@@ -214,6 +216,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
           </div>
         )}
         <div
+          ref={listBodyScrollRef}
           className="flex-1 min-h-0 overflow-y-auto scrollbar-auto"
           style={{
             opacity: listTransition === 'out' ? 0 : 1,
@@ -237,6 +240,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
               <>
                 {chatsFilter === 'channels' ? (
                   <ChatMessageSearchResults
+                    scrollElementRef={listBodyScrollRef}
                     query={debouncedSearchQuery}
                     chatsFilter={chatsFilter}
                     insertBetween={
@@ -256,6 +260,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
                   />
                 ) : chatsFilter === 'market' ? (
                   <ChatMessageSearchResults
+                    scrollElementRef={listBodyScrollRef}
                     query={debouncedSearchQuery}
                     chatsFilter={chatsFilter}
                     onResultClick={(chatId, chatType, options) => handleChatClick(chatId, chatType, { ...options, ...(debouncedSearchQuery.trim() ? { searchQuery: debouncedSearchQuery.trim() } : {}) })}
@@ -278,6 +283,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
                       <ChatListSearchSections order="active-first" {...chatListSearchSectionProps} />
                     )}
                     <ChatMessageSearchResults
+                      scrollElementRef={listBodyScrollRef}
                       query={debouncedSearchQuery}
                       chatsFilter={chatsFilter}
                       onResultClick={(chatId, chatType, options) => handleChatClick(chatId, chatType, { ...options, ...(debouncedSearchQuery.trim() ? { searchQuery: debouncedSearchQuery.trim() } : {}) })}
@@ -388,57 +394,51 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
                       </span>
                     </div>
                     <div className="rounded-b-xl bg-gray-50/80 dark:bg-gray-900/40 border-l-4 border-primary-200 dark:border-primary-800/60">
-                      {group.channels.map((chat) => (
-                      <ChatListItem
-                        key={getChatKey(chat)}
-                        item={chat}
+                      <ChatListMarketGroupChannels
+                        scrollElementRef={listBodyScrollRef}
+                        channels={group.channels}
                         selectedChatId={selectedChatId}
                         selectedChatType={selectedChatType}
                         onChatClick={handleChatClick}
                         onContactClick={handleContactClick}
                         isSearchMode={isSearchMode}
                         searchQuery={debouncedSearchQuery.trim()}
-                        displayTitle={getMarketChatDisplayTitleForSellerGrouped((chat as Extract<typeof chat, { type: 'channel' }>).data)}
-                        sellerGroupedByItem
-                        pinnedCount={undefined}
-                        pinningId={undefined}
-                        onPinUserChat={undefined}
-                        onPinGroupChannel={undefined}
                       />
-                    ))}
                     </div>
                   </div>
                 ))
               ) : (
-                displayedChats.map((chat) => (
-                  <ChatListItem
-                    key={getChatKey(chat)}
-                    item={chat}
-                    selectedChatId={selectedChatId}
-                    selectedChatType={selectedChatType}
-                    onChatClick={handleChatClick}
-                    onContactClick={handleContactClick}
-                    isSearchMode={isSearchMode}
-                    searchQuery={debouncedSearchQuery.trim()}
-                    displayTitle={chat.type === 'channel' && user?.id ? (marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').title : getMarketChatDisplayTitle(chat.data, marketChatRole)) : undefined}
-                    displaySubtitle={chat.type === 'channel' && user?.id && marketChatRole === 'buyer' ? getMarketChatDisplayParts(chat.data, user.id, 'buyer').subtitle : undefined}
-                    pinnedCount={chatsFilter === 'users' ? pinnedCountUsers : undefined}
-                    pinningId={chatsFilter === 'users' ? pinningId : undefined}
-                    onPinUserChat={chatsFilter === 'users' ? handlePinUserChat : undefined}
-                    onPinGroupChannel={chatsFilter === 'users' ? handlePinGroupChannel : undefined}
-                    mutedChats={chatsFilter === 'users' ? mutedChats : undefined}
-                    togglingMuteId={chatsFilter === 'users' ? togglingMuteId : undefined}
-                    onMuteUserChat={chatsFilter === 'users' ? handleMuteUserChat : undefined}
-                    onMuteGroupChannel={chatsFilter === 'users' ? handleMuteGroupChannel : undefined}
-                  />
-                ))
-              )}
-              {((chatsFilter === 'bugs' && bugsHasMore) || (chatsFilter === 'users' && usersHasMore) || (chatsFilter === 'channels' && channelsHasMore) || (chatsFilter === 'market' && marketHasMore)) && (
-                <div ref={loadMoreSentinelRef} className="py-4 flex justify-center">
-                  {(bugsLoadingMore || usersLoadingMore || channelsLoadingMore || marketLoadingMore) && (
-                    <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  )}
-                </div>
+                <ChatListDisplayedRows
+                  scrollElementRef={listBodyScrollRef}
+                  displayedChats={displayedChats}
+                  selectedChatId={selectedChatId}
+                  selectedChatType={selectedChatType}
+                  onChatClick={handleChatClick}
+                  onContactClick={handleContactClick}
+                  isSearchMode={isSearchMode}
+                  searchQuery={debouncedSearchQuery.trim()}
+                  chatsFilter={chatsFilter}
+                  marketChatRole={marketChatRole}
+                  userId={user?.id}
+                  loadMoreSentinelRef={loadMoreSentinelRef}
+                  showLoadMoreRow={
+                    (chatsFilter === 'bugs' && bugsHasMore) ||
+                    (chatsFilter === 'users' && usersHasMore) ||
+                    (chatsFilter === 'channels' && channelsHasMore) ||
+                    (chatsFilter === 'market' && marketHasMore)
+                  }
+                  loadMoreSpinner={
+                    bugsLoadingMore || usersLoadingMore || channelsLoadingMore || marketLoadingMore
+                  }
+                  pinnedCountUsers={pinnedCountUsers}
+                  pinningId={pinningId}
+                  onPinUserChat={handlePinUserChat}
+                  onPinGroupChannel={handlePinGroupChannel}
+                  mutedChats={mutedChats}
+                  togglingMuteId={togglingMuteId}
+                  onMuteUserChat={handleMuteUserChat}
+                  onMuteGroupChannel={handleMuteGroupChannel}
+                />
               )}
             </>
           )}

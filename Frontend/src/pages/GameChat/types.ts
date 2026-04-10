@@ -1,10 +1,11 @@
-import type { ChatContextType, UserChat as UserChatType } from '@/api/chat';
+import type { ChatContextType, GroupChannel, UserChat as UserChatType } from '@/api/chat';
 import type { ChatType } from '@/types';
 
 export interface LocationState {
   initialChatType?: ChatType;
   contextType?: ChatContextType;
   chat?: UserChatType;
+  groupChannel?: GroupChannel;
   forceReload?: number;
   fromExpressInterest?: boolean;
 }
