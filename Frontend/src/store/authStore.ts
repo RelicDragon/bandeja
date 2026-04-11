@@ -6,6 +6,7 @@ import { extractLanguageCode, detectTimeFormat, detectWeekStart, normalizeLangua
 import { usersApi } from '@/api';
 import { clearChatSyncScheduler } from '@/services/chat/chatSyncScheduler';
 import { useChatSyncStore } from '@/store/chatSyncStore';
+import { useNavigationStore } from '@/store/navigationStore';
 
 interface AuthState {
   user: User | null;
@@ -140,6 +141,9 @@ export const useAuthStore = create<AuthState>((set) => {
         localStorage.removeItem('token');
         localStorage.removeItem('auth_backup');
         sessionStorage.removeItem('app_navigation_tracked');
+        useNavigationStore.getState().setMyGamesSelectedDay(null);
+        useNavigationStore.getState().setFindSelectedDay(null);
+        useNavigationStore.getState().setFindListWeekStartDay(null);
         set({ user: null, token: null, isAuthenticated: false });
       } catch (error) {
         console.error('Error clearing auth from localStorage:', error);

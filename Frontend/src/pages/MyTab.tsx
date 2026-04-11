@@ -122,6 +122,8 @@ export const MyTab = () => {
     useShallow((s) => ({ unreadMessages: s.unreadMessages, setMyGamesUnreadCount: s.setMyGamesUnreadCount, setPastGamesUnreadCount: s.setPastGamesUnreadCount }))
   );
   const activeTab = useNavigationStore((s) => s.activeTab);
+  const myGamesSelectedDay = useNavigationStore((s) => s.myGamesSelectedDay);
+  const setMyGamesSelectedDay = useNavigationStore((s) => s.setMyGamesSelectedDay);
   const myGamesCalendarDateAfterCreate = useNavigationStore((s) => s.myGamesCalendarDateAfterCreate);
   const setMyGamesCalendarDateAfterCreate = useNavigationStore((s) => s.setMyGamesCalendarDateAfterCreate);
   const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
@@ -164,14 +166,24 @@ export const MyTab = () => {
     () => filteredMyGames.some((g) => g.status === 'ANNOUNCED' || g.status === 'STARTED'),
     [filteredMyGames]
   );
-  const [myGamesSelectedDate, setMyGamesSelectedDate] = useState<Date>(() => new Date());
+  const myGamesSelectedDate = useMemo(() => {
+    if (myGamesSelectedDay) {
+      const d = parse(myGamesSelectedDay, 'yyyy-MM-dd', new Date());
+      return isNaN(d.getTime()) ? startOfDay(new Date()) : startOfDay(d);
+    }
+    return startOfDay(new Date());
+  }, [myGamesSelectedDay]);
+  const setMyGamesSelectedDate = useCallback(
+    (d: Date) => setMyGamesSelectedDay(format(startOfDay(d), 'yyyy-MM-dd')),
+    [setMyGamesSelectedDay]
+  );
   useEffect(() => {
     if (myGamesCalendarDateAfterCreate) {
       const localDate = parse(myGamesCalendarDateAfterCreate, 'yyyy-MM-dd', new Date());
-      setMyGamesSelectedDate(localDate);
+      setMyGamesSelectedDay(format(startOfDay(localDate), 'yyyy-MM-dd'));
       setMyGamesCalendarDateAfterCreate(null);
     }
-  }, [myGamesCalendarDateAfterCreate, setMyGamesCalendarDateAfterCreate]);
+  }, [myGamesCalendarDateAfterCreate, setMyGamesCalendarDateAfterCreate, setMyGamesSelectedDay]);
   useEffect(() => {
     if (activeTab === 'calendar') {
       setCreateGameInitialDate(myGamesSelectedDate);

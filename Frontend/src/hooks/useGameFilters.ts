@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import { parse, startOfDay } from 'date-fns';
 import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
+import { useNavigationStore } from '@/store/navigationStore';
 
 const DEFAULT_FILTERS: GameFilters = {
   userFilter: false,
@@ -16,9 +18,14 @@ const DEFAULT_FILTERS: GameFilters = {
   filterLevelMax: 7.0,
 };
 
+const dayKeyToIso = (day: string) => startOfDay(parse(day, 'yyyy-MM-dd', new Date())).toISOString();
+
 export const useGameFilters = () => {
   const [filters, setFilters] = useState<GameFilters>(DEFAULT_FILTERS);
   const hasLoadedRef = useRef(false);
+  const findViewMode = useNavigationStore((s) => s.findViewMode);
+  const findListWeekStartDay = useNavigationStore((s) => s.findListWeekStartDay);
+  const findSelectedDay = useNavigationStore((s) => s.findSelectedDay);
 
   useEffect(() => {
     getGameFilters().then((f) => {
@@ -34,10 +41,26 @@ export const useGameFilters = () => {
   }, []);
 
   useEffect(() => {
-    if (hasLoadedRef.current) {
-      setGameFilters(filters);
-    }
-  }, [filters]);
+    if (!hasLoadedRef.current) return;
+    const listIso =
+      findViewMode === 'list'
+        ? findListWeekStartDay
+          ? dayKeyToIso(findListWeekStartDay)
+          : filters.listViewStartDate
+        : undefined;
+    const calIso =
+      findViewMode === 'calendar'
+        ? findSelectedDay
+          ? dayKeyToIso(findSelectedDay)
+          : filters.calendarSelectedDate
+        : undefined;
+    setGameFilters({
+      ...filters,
+      activeTab: findViewMode,
+      listViewStartDate: listIso,
+      calendarSelectedDate: calIso,
+    });
+  }, [filters, findViewMode, findListWeekStartDay, findSelectedDay]);
 
   const updateFilter = <K extends keyof GameFilters>(key: K, value: GameFilters[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -7,7 +7,7 @@ import { Game } from '@/types';
 import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy, Users, RotateCcw } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useHeaderStore } from '@/store/headerStore';
-import { format, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
+import { format, parse, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MonthCalendar } from '@/components/MonthCalendar';
 import { TrainersList } from './TrainersList';
@@ -50,9 +50,25 @@ export const AvailableGamesSection = ({
   const { translateCity } = useTranslatedGeo();
   const navigate = useNavigate();
   const { setCurrentPage, setIsAnimating, findViewMode, setFindViewMode, requestFindGoToCurrent, setRequestFindGoToCurrent } = useNavigationStore();
+  const findSelectedDay = useNavigationStore((s) => s.findSelectedDay);
+  const findListWeekStartDay = useNavigationStore((s) => s.findListWeekStartDay);
+  const setFindSelectedDay = useNavigationStore((s) => s.setFindSelectedDay);
+  const setFindListWeekStartDay = useNavigationStore((s) => s.setFindListWeekStartDay);
   const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [listViewStartDate, setListViewStartDate] = useState<Date>(new Date());
+  const selectedDate = useMemo(() => {
+    if (findSelectedDay) {
+      const d = parse(findSelectedDay, 'yyyy-MM-dd', new Date());
+      return isNaN(d.getTime()) ? startOfDay(new Date()) : startOfDay(d);
+    }
+    return startOfDay(new Date());
+  }, [findSelectedDay]);
+  const listViewStartDate = useMemo(() => {
+    if (findListWeekStartDay) {
+      const d = parse(findListWeekStartDay, 'yyyy-MM-dd', new Date());
+      return isNaN(d.getTime()) ? startOfDay(new Date()) : startOfDay(d);
+    }
+    return startOfDay(new Date());
+  }, [findListWeekStartDay]);
   const [userFilter, setUserFilter] = useState(false);
   const [gameFilter, setGameFilter] = useState(false);
   const [trainingFilter, setTrainingFilter] = useState(false);
@@ -196,16 +212,17 @@ export const AvailableGamesSection = ({
         if (filters.activeTab) {
           setFindViewMode(filters.activeTab);
         }
-        if (filters.listViewStartDate) {
+        const nav = useNavigationStore.getState();
+        if (filters.listViewStartDate && nav.findListWeekStartDay == null) {
           const restoredDate = new Date(filters.listViewStartDate);
           if (!isNaN(restoredDate.getTime())) {
-            setListViewStartDate(restoredDate);
+            nav.setFindListWeekStartDay(format(startOfDay(restoredDate), 'yyyy-MM-dd'));
           }
         }
-        if (filters.calendarSelectedDate) {
+        if (filters.calendarSelectedDate && nav.findSelectedDay == null) {
           const restoredDate = new Date(filters.calendarSelectedDate);
           if (!isNaN(restoredDate.getTime())) {
-            setSelectedDate(restoredDate);
+            nav.setFindSelectedDay(format(startOfDay(restoredDate), 'yyyy-MM-dd'));
           }
         }
       }
@@ -268,16 +285,16 @@ export const AvailableGamesSection = ({
     }
   }, [findViewMode, selectedDate, setCreateGameInitialDate]);
 
-  const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
-  };
+  const handleDateSelect = useCallback(
+    (date: Date) => {
+      setFindSelectedDay(format(startOfDay(date), 'yyyy-MM-dd'));
+    },
+    [setFindSelectedDay]
+  );
 
   const handleListNavigation = (direction: 'left' | 'right') => {
-    if (direction === 'left') {
-      setListViewStartDate(subDays(listViewStartDate, 7));
-    } else {
-      setListViewStartDate(addDays(listViewStartDate, 7));
-    }
+    const next = direction === 'left' ? subDays(listViewStartDate, 7) : addDays(listViewStartDate, 7);
+    setFindListWeekStartDay(format(startOfDay(next), 'yyyy-MM-dd'));
   };
 
   const getListDateRange = () => {
@@ -291,16 +308,17 @@ export const AvailableGamesSection = ({
     const mode = requestFindGoToCurrent;
     setRequestFindGoToCurrent(null);
     if (mode === 'calendar') {
-      setSelectedDate(new Date());
+      setFindSelectedDay(format(startOfDay(new Date()), 'yyyy-MM-dd'));
       requestAnimationFrame(() => {
         const el = document.querySelector('[data-calendar="true"]');
         el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     } else {
       const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
-      setListViewStartDate(startOfWeek(new Date(), { weekStartsOn: displaySettings.weekStart }));
+      const wk = startOfWeek(new Date(), { weekStartsOn: displaySettings.weekStart });
+      setFindListWeekStartDay(format(startOfDay(wk), 'yyyy-MM-dd'));
     }
-  }, [requestFindGoToCurrent, setRequestFindGoToCurrent, user]);
+  }, [requestFindGoToCurrent, setRequestFindGoToCurrent, user, setFindSelectedDay, setFindListWeekStartDay]);
 
   useEffect(() => {
     if (!isInitialized || findViewMode !== 'list' || !onDateRangeChange) {

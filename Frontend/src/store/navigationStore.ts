@@ -59,8 +59,14 @@ interface NavigationState {
   setFindViewMode: (mode: 'calendar' | 'list') => void;
   myGamesSubtabBeforeCreate: 'list' | null;
   myGamesCalendarDateAfterCreate: string | null;
+  myGamesSelectedDay: string | null;
+  findSelectedDay: string | null;
+  findListWeekStartDay: string | null;
   setMyGamesSubtabBeforeCreate: (tab: 'list' | null) => void;
   setMyGamesCalendarDateAfterCreate: (date: string | null) => void;
+  setMyGamesSelectedDay: (day: string | null) => void;
+  setFindSelectedDay: (day: string | null) => void;
+  setFindListWeekStartDay: (day: string | null) => void;
 }
 
 export const useNavigationStore = create<NavigationState>((set) => ({
@@ -92,6 +98,9 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   pendingPlayerCardReopen: null,
   myGamesSubtabBeforeCreate: null,
   myGamesCalendarDateAfterCreate: null,
+  myGamesSelectedDay: null,
+  findSelectedDay: null,
+  findListWeekStartDay: null,
   setCurrentPage: (page) => set({ currentPage: page }),
   setViewingGroupChannelId: (id) => set({ viewingGroupChannelId: id }),
   setViewingUserChatId: (id) => set({ viewingUserChatId: id }),
@@ -121,4 +130,7 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setRequestFindGoToCurrent: (mode) => set({ requestFindGoToCurrent: mode }),
   setMyGamesSubtabBeforeCreate: (tab) => set({ myGamesSubtabBeforeCreate: tab }),
   setMyGamesCalendarDateAfterCreate: (date) => set({ myGamesCalendarDateAfterCreate: date }),
+  setMyGamesSelectedDay: (day) => set({ myGamesSelectedDay: day }),
+  setFindSelectedDay: (day) => set({ findSelectedDay: day }),
+  setFindListWeekStartDay: (day) => set({ findListWeekStartDay: day }),
 }));
