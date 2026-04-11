@@ -167,12 +167,19 @@ export const requireCanModifyResults = async (req: AuthRequest, res: Response, n
   }
 };
 
+export type RequireGamePermissionOptions = {
+  allowArchived?: boolean;
+};
+
 /**
  * Middleware factory to check if user has permission on a game with specified roles
  * Requires authenticate middleware to be called first
  * Checks for gameId in req.params (gameId, id, or leagueSeasonId) or req.body.gameId
  */
-export const requireGamePermission = (allowedRoles: ParticipantRole[] = [ParticipantRole.OWNER, ParticipantRole.ADMIN]) => {
+export const requireGamePermission = (
+  allowedRoles: ParticipantRole[] = [ParticipantRole.OWNER, ParticipantRole.ADMIN],
+  options: RequireGamePermissionOptions = {}
+) => {
   return async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       if (!req.userId) {
@@ -195,7 +202,7 @@ export const requireGamePermission = (allowedRoles: ParticipantRole[] = [Partici
         throw new ApiError(404, 'Game not found');
       }
 
-      if (game.status === 'ARCHIVED') {
+      if (!options.allowArchived && game.status === 'ARCHIVED') {
         throw new ApiError(400, 'Cannot modify archived games');
       }
 
@@ -231,4 +238,10 @@ export const canEditGame = requireGamePermission([ParticipantRole.OWNER, Partici
  * Checks for gameId in req.params (gameId, id, or leagueSeasonId) or req.body.gameId
  */
 export const canAccessGame = requireGamePermission([ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT]);
+
+/** Same as canAccessGame but allows read-style access when the game is ARCHIVED (e.g. listing invites). */
+export const canAccessGameIncludingArchived = requireGamePermission(
+  [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT],
+  { allowArchived: true }
+);
 
