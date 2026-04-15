@@ -143,7 +143,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
           if (!signal.aborted) console.error('Failed to load translation preference:', error);
         }
 
-        const contextKey = `${id}-${contextType}`;
+        const contextKey = `${id}-${contextType}-${initialChatType ?? ''}`;
         let effectiveChatType: ChatType = currentChatTypeRef.current;
         let committedGameDefaultsKey: string | null = null;
         if (contextType === 'GAME' && gameDefaultsAppliedKeyRef.current !== contextKey) {

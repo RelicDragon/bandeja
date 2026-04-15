@@ -54,8 +54,20 @@ export function useGameChatPanels({
       closeParticipantsPage();
       return;
     }
+    if (contextType === 'GAME' && showParticipantsModal) {
+      setShowParticipantsModal(false);
+      return;
+    }
     handleBack(navigate);
-  }, [navigate, showItemPage, showParticipantsPage, closeItemPage, closeParticipantsPage]);
+  }, [
+    navigate,
+    contextType,
+    showItemPage,
+    showParticipantsPage,
+    showParticipantsModal,
+    closeItemPage,
+    closeParticipantsPage,
+  ]);
 
   const handlePanelBack = useCallback(() => {
     if (showItemPage) closeItemPage();
@@ -82,9 +94,21 @@ export function useGameChatPanels({
       closeParticipantsPage();
       return true;
     }
+    if (contextType === 'GAME' && showParticipantsModal) {
+      setShowParticipantsModal(false);
+      return true;
+    }
     handleBack(navigate);
     return true;
-  }, [showItemPage, showParticipantsPage, closeItemPage, closeParticipantsPage, navigate]);
+  }, [
+    navigate,
+    contextType,
+    showItemPage,
+    showParticipantsPage,
+    showParticipantsModal,
+    closeItemPage,
+    closeParticipantsPage,
+  ]);
 
   return {
     showParticipantsPage,
