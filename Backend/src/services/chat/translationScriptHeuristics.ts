@@ -15,7 +15,6 @@ const SCRIPT_FALLBACK_MIN_RATIO = 0.42;
 const SCRIPT_FALLBACK_TARGETS = new Set([
   'ru',
   'bg',
-  'sr',
   'el',
   'ar',
   'zh',

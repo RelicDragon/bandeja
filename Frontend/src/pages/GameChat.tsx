@@ -97,7 +97,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [isMuted, setIsMuted] = useState(false);
   const [isTogglingMute, setIsTogglingMute] = useState(false);
   const [translateToLanguageForChat, setTranslateToLanguageForChat] = useState<string | null>(null);
-  const [hasSetDefaultChatType, setHasSetDefaultChatType] = useState(false);
   const [chatNearBottom, setChatNearBottom] = useState(true);
 
   const effectiveChatType = useMemo(
@@ -365,7 +364,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     contextType,
     initialChatType,
     currentChatType,
-    hasSetDefaultChatType,
     loadContext,
     bootstrapThread,
     userChat,
@@ -380,7 +378,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setIsBlockedByUser,
     setIsMuted,
     setTranslateToLanguageForChat,
-    setHasSetDefaultChatType,
     setIsInitialLoad,
     setIsLoadingMessages,
     setIsLoadingContext,
@@ -407,7 +404,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setReplyTo(null);
     setEditingMessage(null);
     setCurrentChatType(initialChatType || 'PUBLIC');
-    setHasSetDefaultChatType(false);
     previousIdRef.current = id;
   }, [id, isEmbedded, contextType, initialChatType, setGame, setBug, setUserChat, setGroupChannel, setGroupChannelParticipantsCount, setIsLoadingContext, setMessages, messagesRef, setPage, setHasMoreMessages, setIsLoadingMessages, setIsInitialLoad, setReplyTo, setEditingMessage]);
 

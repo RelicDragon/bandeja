@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   chatApi,
   type ChatContextType,
@@ -24,7 +24,6 @@ export interface UseGameChatInitialLoadParams {
   contextType: ChatContextType;
   initialChatType: ChatType | undefined;
   currentChatType: ChatType;
-  hasSetDefaultChatType: boolean;
   loadContext: () => Promise<unknown>;
   bootstrapThread: (gameChatType?: ChatType) => Promise<boolean>;
   userChat: UserChatType | null;
@@ -39,7 +38,6 @@ export interface UseGameChatInitialLoadParams {
   setIsBlockedByUser: (v: boolean) => void;
   setIsMuted: (v: boolean) => void;
   setTranslateToLanguageForChat: (v: string | null) => void;
-  setHasSetDefaultChatType: (v: boolean) => void;
   setIsInitialLoad: (v: boolean) => void;
   setIsLoadingMessages: (v: boolean) => void;
   setIsLoadingContext: (v: boolean) => void;
@@ -52,7 +50,6 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     contextType,
     initialChatType,
     currentChatType,
-    hasSetDefaultChatType,
     loadContext,
     bootstrapThread,
     userChat,
@@ -67,11 +64,14 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     setIsBlockedByUser,
     setIsMuted,
     setTranslateToLanguageForChat,
-    setHasSetDefaultChatType,
     setIsInitialLoad,
     setIsLoadingMessages,
     setIsLoadingContext,
   } = params;
+
+  const currentChatTypeRef = useRef(currentChatType);
+  currentChatTypeRef.current = currentChatType;
+  const gameDefaultsAppliedKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -143,19 +143,25 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
           if (!signal.aborted) console.error('Failed to load translation preference:', error);
         }
 
-        let effectiveChatType: ChatType = currentChatType;
-        if (!hasSetDefaultChatType && contextType === 'GAME' && loadedContext) {
-          setHasSetDefaultChatType(true);
-          const loadedGame = loadedContext as Game;
-          const loadedParticipant = loadedGame.participants?.find(p => p.userId === user?.id);
-          const defaultType: ChatType = (loadedParticipant?.status === 'PLAYING') ? 'PRIVATE' : 'PUBLIC';
-          effectiveChatType = initialChatType ?? defaultType;
-          if (effectiveChatType !== currentChatType) setCurrentChatType(effectiveChatType);
-        } else if (initialChatType && initialChatType !== 'PUBLIC' && contextType === 'GAME') {
-          effectiveChatType = initialChatType;
-          if (effectiveChatType !== currentChatType) setCurrentChatType(effectiveChatType);
+        const contextKey = `${id}-${contextType}`;
+        let effectiveChatType: ChatType = currentChatTypeRef.current;
+        let committedGameDefaultsKey: string | null = null;
+        if (contextType === 'GAME' && gameDefaultsAppliedKeyRef.current !== contextKey) {
+          let resolved = currentChatTypeRef.current;
+          if (loadedContext) {
+            const loadedGame = loadedContext as Game;
+            const loadedParticipant = loadedGame.participants?.find((p) => p.userId === user?.id);
+            const defaultType: ChatType = loadedParticipant?.status === 'PLAYING' ? 'PRIVATE' : 'PUBLIC';
+            resolved = initialChatType ?? defaultType;
+          } else if (initialChatType) {
+            resolved = initialChatType;
+          }
+          effectiveChatType = resolved;
+          if (resolved !== currentChatTypeRef.current) setCurrentChatType(resolved);
+          committedGameDefaultsKey = contextKey;
         }
         if (signal.aborted) return;
+        if (committedGameDefaultsKey) gameDefaultsAppliedKeyRef.current = committedGameDefaultsKey;
 
         await bootstrapThread(contextType === 'GAME' ? effectiveChatType : undefined);
         if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
@@ -251,8 +257,6 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     user,
     contextType,
     initialChatType,
-    currentChatType,
-    hasSetDefaultChatType,
     loadContext,
     bootstrapThread,
     userChat,
@@ -267,7 +271,6 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     setIsBlockedByUser,
     setIsMuted,
     setTranslateToLanguageForChat,
-    setHasSetDefaultChatType,
     setIsInitialLoad,
     setIsLoadingMessages,
     setIsLoadingContext,
