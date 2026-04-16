@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import routes from './routes';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { errorHandler, notFoundHandler, reflectCorsOrigin } from './middleware/errorHandler';
 import { recordPresenceActivity } from './middleware/recordPresenceActivity';
 import { config } from './config/env';
 
@@ -18,28 +18,27 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Handle CORS preflight requests first
+// Handle CORS preflight (incl. file:// Admin where Origin is the literal string "null")
 app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cache-Control, Pragma, Expires, Accept');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  reflectCorsOrigin(req, res);
+  if (!res.getHeader('Access-Control-Allow-Origin')) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
   res.header('Access-Control-Max-Age', '86400');
   res.sendStatus(200);
 });
 
-// Configure CORS for API routes
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow all origins for Capacitor apps
-    callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires', 'Accept'],
-  preflightContinue: false,
-  optionsSuccessStatus: 200
-}));
+// Configure CORS for API routes (reflect request Origin, including "null")
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires', 'Accept'],
+    preflightContinue: false,
+    optionsSuccessStatus: 200,
+  })
+);
 
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
