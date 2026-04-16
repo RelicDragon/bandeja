@@ -39,7 +39,8 @@ function escapeHtml(s) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 function formatDate(dateString) {
@@ -653,7 +654,7 @@ function renderClubsTable(centers) {
     tbody.innerHTML = centers.map(center => `
         <tr>
             <td>${escapeHtml(center.name)}</td>
-            <td>${escapeHtml(center.city.name)}</td>
+            <td>${escapeHtml(center.city?.name)}</td>
             <td title="${escAttr(center.address)}">${escapeHtml(center.address)}</td>
             <td>
                 <button type="button" class="btn-small btn-edit" onclick="viewCenterCourts('${center.id}')">
@@ -926,17 +927,6 @@ function formatLogEntry(log) {
             <span class="log-message">${escapeHtml(log.message)}</span>
         </div>
     `;
-}
-
-function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
 }
 
 function updateLogsStatus(status, count) {
