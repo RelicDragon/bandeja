@@ -50,7 +50,7 @@ function ClubListItemInner({ club, isSelected, isNearest, onSelect, scrollTarget
                 <Navigation className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden />
               </span>
             )}
-            <ClubAvatar club={{ name: club.name, avatar: club.avatar ?? null }} className="h-9 w-12" />
+            <ClubAvatar club={{ avatar: club.avatar ?? null }} className="h-9 w-12" />
             <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{club.name}</span>
           </span>
           {isSelected && (

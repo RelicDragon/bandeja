@@ -755,7 +755,6 @@ window.handleDropCoinsSubmit = handleDropCoinsSubmit;
         }
         try {
             const fd = new FormData();
-            fd.append('avatar', file);
             fd.append('original', file);
             fd.append('clubId', centerId);
             const res = await window.apiMultipartRequest('/media/upload/club/avatar', fd);

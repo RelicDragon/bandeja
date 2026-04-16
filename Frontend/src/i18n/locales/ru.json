@@ -1683,7 +1683,14 @@
     "courtsCount_one": "1 корт",
     "courtsCount_few": "{{count}} корта",
     "courtsCount_many": "{{count}} кортов",
-    "courtsCount_other": "{{count}} кортов"
+    "courtsCount_other": "{{count}} кортов",
+    "openInMaps": "Открыть на карте",
+    "courtsTitle": "Корты",
+    "hoursTitle": "Часы работы",
+    "indoor": "Зал",
+    "outdoor": "Улица",
+    "perHour": "{{price}}/ч",
+    "amenitiesTitle": "Удобства"
   },
   "city": {
     "clubsCount_zero": "Нет клубов",

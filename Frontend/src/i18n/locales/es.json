@@ -1614,7 +1614,14 @@
   "club": {
     "courtsCount_zero": "Sin pistas",
     "courtsCount_one": "1 pista",
-    "courtsCount_other": "{{count}} pistas"
+    "courtsCount_other": "{{count}} pistas",
+    "openInMaps": "Abrir en mapas",
+    "courtsTitle": "Pistas",
+    "hoursTitle": "Horario",
+    "indoor": "Interior",
+    "outdoor": "Exterior",
+    "perHour": "{{price}}/h",
+    "amenitiesTitle": "Servicios"
   },
   "city": {
     "clubsCount_zero": "Sin clubes",

@@ -1,13 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Info, Phone } from 'lucide-react';
+import { ChevronLeft, Info } from 'lucide-react';
 import { Club } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { ClubAvatar } from '@/components/ClubAvatar';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
-import { openExternalUrl } from '@/utils/openExternalUrl';
-import { getTelUrl } from '@/utils/telUrl';
-import { normalizeClubPhotos } from '@/utils/clubPhotos';
+import { ClubDetailPanel } from '@/components/ClubDetailPanel';
 
 interface ClubModalProps {
   isOpen: boolean;
@@ -65,8 +63,6 @@ export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: Club
     setDetailClub(club);
     setPanel('detail');
   };
-
-  const detailPhotos = detailClub ? normalizeClubPhotos(detailClub.photos) : [];
 
   return (
     <>
@@ -159,54 +155,7 @@ export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: Club
                 )}
               </div>
             ) : detailClub ? (
-              <div className="space-y-4 text-gray-900 dark:text-white">
-                <div className="flex gap-3">
-                  <ClubAvatar club={detailClub} className="h-20 w-[7.5rem] sm:h-24 sm:w-36" />
-                  <div className="min-w-0 flex-1 text-sm space-y-1">
-                    {detailClub.address ? <p className="text-gray-600 dark:text-gray-300">{detailClub.address}</p> : null}
-                    {detailClub.description ? (
-                      <p className="text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{detailClub.description}</p>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-2">
-                  {detailClub.website ? (
-                    <button
-                      type="button"
-                      onClick={() => openExternalUrl(detailClub.website!)}
-                      className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
-                    >
-                      {t('common.openWebsite')}
-                    </button>
-                  ) : null}
-                  {detailClub.phone && getTelUrl(detailClub.phone) ? (
-                    <a
-                      href={getTelUrl(detailClub.phone)}
-                      className="inline-flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:underline"
-                    >
-                      <Phone size={14} />
-                      {t('common.call')}
-                    </a>
-                  ) : null}
-                </div>
-                {detailPhotos.length > 0 ? (
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{t('createGame.clubPhotos')}</p>
-                    <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory">
-                      {detailPhotos.map((ph) => (
-                        <button
-                          key={ph.originalUrl}
-                          type="button"
-                          onClick={() => setFullscreenUrl(ph.originalUrl)}
-                          className="snap-start shrink-0 w-28 h-28 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-                        >
-                          <img src={ph.thumbnailUrl} alt="" className="w-full h-full object-cover" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
+              <ClubDetailPanel club={detailClub} onOpenFullscreenPhoto={(url) => setFullscreenUrl(url)} />
             ) : null}
           </div>
         </DialogContent>

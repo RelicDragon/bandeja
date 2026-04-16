@@ -58,8 +58,15 @@ export const mediaApi = {
       userTeamId,
     }),
 
-  uploadClubAvatar: (clubId: string, avatarFile: File, originalFile: File) =>
-    postMultipartAvatarUpload('/media/upload/club/avatar', avatarFile, originalFile, { clubId }),
+  uploadClubAvatar: async (clubId: string, imageFile: File): Promise<MediaUploadResponse> => {
+    const formData = new FormData();
+    formData.append('original', imageFile);
+    formData.append('clubId', clubId);
+    const response = await api.post<ApiResponse<MediaUploadResponse>>('/media/upload/club/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.data;
+  },
 
   uploadClubPhoto: async (clubId: string, imageFile: File): Promise<Club> => {
     const formData = new FormData();

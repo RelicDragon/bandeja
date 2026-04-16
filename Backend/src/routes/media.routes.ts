@@ -60,7 +60,7 @@ router.post(
 
 router.post(
   '/upload/club/avatar',
-  uploadAvatarFiles,
+  upload.single('original'),
   validate([body('clubId').notEmpty().withMessage('Club ID is required')]),
   uploadClubAvatar
 );

@@ -1636,7 +1636,14 @@
     "courtsCount_one": "1 терен",
     "courtsCount_few": "{{count}} терена",
     "courtsCount_many": "{{count}} терена",
-    "courtsCount_other": "{{count}} терена"
+    "courtsCount_other": "{{count}} терена",
+    "openInMaps": "Отвори на мапи",
+    "courtsTitle": "Терени",
+    "hoursTitle": "Радно време",
+    "indoor": "У затвореном",
+    "outdoor": "Напољу",
+    "perHour": "{{price}}/h",
+    "amenitiesTitle": "Садржаји"
   },
   "city": {
     "clubsCount_zero": "Нема клубова",

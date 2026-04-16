@@ -96,6 +96,7 @@ export const getClubsByCity = asyncHandler(async (req: Request, res: Response) =
         select: {
           id: true,
           name: true,
+          country: true,
           timezone: true,
         },
       },
@@ -129,6 +130,8 @@ export const getClubById = asyncHandler(async (req: Request, res: Response) => {
         select: {
           id: true,
           name: true,
+          country: true,
+          timezone: true,
         },
       },
       courts: {

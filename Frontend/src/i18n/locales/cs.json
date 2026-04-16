@@ -1665,7 +1665,14 @@
     "courtsCount_one": "1 kurt",
     "courtsCount_few": "{{count}} kurty",
     "courtsCount_many": "{{count}} kurtů",
-    "courtsCount_other": "{{count}} kurtů"
+    "courtsCount_other": "{{count}} kurtů",
+    "openInMaps": "Otevřít v mapách",
+    "courtsTitle": "Kurty",
+    "hoursTitle": "Otevírací doba",
+    "indoor": "V hale",
+    "outdoor": "Venku",
+    "perHour": "{{price}}/h",
+    "amenitiesTitle": "Vybavení"
   },
   "city": {
     "clubsCount_zero": "Žádné kluby",

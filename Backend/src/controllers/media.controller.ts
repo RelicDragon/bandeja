@@ -19,7 +19,7 @@ import { parseClubPhotosJson } from '../utils/clubPhotosJson';
 
 const MAX_CLUB_PHOTOS = 24;
 
-/** Per file; avatar routes send `avatar` + `original` (often the same image twice). */
+/** Per file; most avatar routes send `avatar` + `original`; club admin sends `original` only. */
 const MULTIPART_IMAGE_FILE_MAX_BYTES = 32 * 1024 * 1024;
 
 const storage = multer.memoryStorage();
@@ -325,8 +325,10 @@ export const uploadClubAvatar = asyncHandler(async (req: AuthRequest, res: Respo
   if (!clubId || typeof clubId !== 'string') {
     throw new ApiError(400, 'Club ID is required');
   }
-  const originalFile = requireAvatarOriginalFile(req);
-  const result = await uploadAvatarForEntity('club', clubId, originalFile);
+  if (!req.file) {
+    throw new ApiError(400, 'Original image file is required');
+  }
+  const result = await uploadAvatarForEntity('club', clubId, req.file);
   sendAvatarUploadJson(res, result, 'Club avatar uploaded successfully');
 });
 

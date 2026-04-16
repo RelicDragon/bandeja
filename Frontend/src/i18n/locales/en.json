@@ -1683,7 +1683,14 @@
   "club": {
     "courtsCount_zero": "No courts",
     "courtsCount_one": "1 court",
-    "courtsCount_other": "{{count}} courts"
+    "courtsCount_other": "{{count}} courts",
+    "openInMaps": "Open in maps",
+    "courtsTitle": "Courts",
+    "hoursTitle": "Opening hours",
+    "indoor": "Indoor",
+    "outdoor": "Outdoor",
+    "perHour": "{{price}}/h",
+    "amenitiesTitle": "Amenities"
   },
   "city": {
     "cities": "Cities",
