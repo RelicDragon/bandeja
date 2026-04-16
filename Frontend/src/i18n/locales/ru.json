@@ -1690,7 +1690,29 @@
     "indoor": "Зал",
     "outdoor": "Улица",
     "perHour": "{{price}}/ч",
-    "amenitiesTitle": "Удобства"
+    "amenitiesTitle": "Удобства",
+    "reviews": {
+      "title": "Отзывы",
+      "subtitle": "От игроков, завершивших игру здесь",
+      "basedOn": "{{count}} отзывов",
+      "noneYet": "Новый клуб",
+      "visitLabel": "Какой визит?",
+      "pickVisit": "Выберите завершённую игру…",
+      "gameFallback": "Игра",
+      "youRated": "Ваша оценка {{count}}/5",
+      "rateLabel": "Оценка",
+      "commentPlaceholder": "Корты, атмосфера, инфраструктура…",
+      "photosHint": "До {{max}} фото",
+      "submit": "Опубликовать",
+      "noEligibleGames": "Сыграйте и завершите игру здесь, чтобы оставить отзыв.",
+      "community": "Что говорят игроки",
+      "emptyList": "Пока нет отзывов.",
+      "loadMore": "Показать ещё",
+      "maxPhotos": "Не больше {{count}} фото на отзыв",
+      "removePhoto": "Удалить фото",
+      "loadMyReviewFailed": "Не удалось загрузить ваш отзыв по этой игре.",
+      "retry": "Повторить"
+    }
   },
   "city": {
     "clubsCount_zero": "Нет клубов",

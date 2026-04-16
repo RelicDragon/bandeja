@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse, Club, EntityType } from '@/types';
+import { ApiResponse, Club, ClubReview, ClubReviewSummary, EntityType, Game } from '@/types';
 
 export interface ClubMapItem {
   id: string;
@@ -21,6 +21,16 @@ export interface MapBbox {
   minLng: number;
   maxLng: number;
 }
+
+export interface ClubReviewsListPayload {
+  summary: ClubReviewSummary;
+  reviews: ClubReview[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export type ClubEligibleReviewGame = Pick<Game, 'id' | 'name' | 'startTime' | 'entityType'>;
 
 const MAP_CLUBS_CACHE_MS = 5 * 60 * 1000;
 let mapClubsCache: { data: ClubMapItem[]; ts: number } | null = null;
@@ -50,6 +60,37 @@ export const clubsApi = {
 
   getById: async (id: string) => {
     const response = await api.get<ApiResponse<Club>>(`/clubs/${id}`);
+    return response.data;
+  },
+
+  getReviews: async (
+    clubId: string,
+    params?: { page?: number; limit?: number; withTextOnly?: boolean }
+  ): Promise<ApiResponse<ClubReviewsListPayload>> => {
+    const response = await api.get<ApiResponse<ClubReviewsListPayload>>(`/clubs/${clubId}/reviews`, { params });
+    return response.data;
+  },
+
+  getEligibleReviewGames: async (clubId: string): Promise<ApiResponse<ClubEligibleReviewGame[]>> => {
+    const response = await api.get<ApiResponse<ClubEligibleReviewGame[]>>(`/clubs/${clubId}/review-eligible-games`);
+    return response.data;
+  },
+
+  getMyClubReview: async (clubId: string, gameId: string): Promise<ApiResponse<ClubReview | null>> => {
+    const response = await api.get<ApiResponse<ClubReview | null>>(`/clubs/${clubId}/my-review`, {
+      params: { gameId },
+    });
+    return response.data;
+  },
+
+  submitClubReview: async (
+    clubId: string,
+    body: { gameId: string; stars: number; text?: string; photos?: { originalUrl: string; thumbnailUrl: string }[] }
+  ): Promise<ApiResponse<{ review: ClubReview; summary: ClubReviewSummary }>> => {
+    const response = await api.post<ApiResponse<{ review: ClubReview; summary: ClubReviewSummary }>>(
+      `/clubs/${clubId}/reviews`,
+      body
+    );
     return response.data;
   },
 };

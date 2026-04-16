@@ -1672,7 +1672,29 @@
     "indoor": "V hale",
     "outdoor": "Venku",
     "perHour": "{{price}}/h",
-    "amenitiesTitle": "Vybavení"
+    "amenitiesTitle": "Vybavení",
+    "reviews": {
+      "title": "Recenze",
+      "subtitle": "Od hráčů, kteří tu dohráli zápas",
+      "basedOn": "{{count}} recenzí",
+      "noneYet": "Nové",
+      "visitLabel": "Která návštěva?",
+      "pickVisit": "Vyberte dokončený zápas…",
+      "gameFallback": "Zápas",
+      "youRated": "Vaše hodnocení {{count}}/5",
+      "rateLabel": "Hodnocení",
+      "commentPlaceholder": "Kurty, atmosféra, zázemí…",
+      "photosHint": "Až {{max}} fotek",
+      "submit": "Odeslat recenzi",
+      "noEligibleGames": "Zahrajte si a dokončte zápas zde, abyste mohli napsat recenzi.",
+      "community": "Co říkají hráči",
+      "emptyList": "Zatím žádné recenze.",
+      "loadMore": "Načíst další",
+      "maxPhotos": "Maximálně {{count}} fotek na recenzi",
+      "removePhoto": "Odstranit fotku",
+      "loadMyReviewFailed": "Nepodařilo se načíst vaši recenzi pro tento zápas.",
+      "retry": "Zkusit znovu"
+    }
   },
   "city": {
     "clubsCount_zero": "Žádné kluby",

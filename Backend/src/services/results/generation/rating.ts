@@ -1,7 +1,8 @@
-import { Match, Round } from '@/types/gameResults';
-import { Game } from '@/types';
-import { createId } from '@paralleldrive/cuid2';
-import { calculateGameStandings } from '../gameStandings';
+import { randomUUID } from 'crypto';
+import type { GenMatch as Match, GenRound as Round, GenGame as Game } from './types';
+import { calculateGameStandings } from './gameStandings';
+
+const createId = () => randomUUID();
 import {
   getEligibleParticipants,
   getNumMatches,

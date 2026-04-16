@@ -78,6 +78,17 @@ export const mediaApi = {
     return response.data.data;
   },
 
+  uploadClubReviewPhoto: async (clubId: string, gameId: string, imageFile: File): Promise<ChatImageUploadResponse> => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('clubId', clubId);
+    formData.append('gameId', gameId);
+    const response = await api.post<ApiResponse<ChatImageUploadResponse>>('/media/upload/club/review-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.data;
+  },
+
   uploadMarketItemImage: async (imageFile: File): Promise<ChatImageUploadResponse> => {
     const formData = new FormData();
     formData.append('image', imageFile);

@@ -1621,7 +1621,29 @@
     "indoor": "Interior",
     "outdoor": "Exterior",
     "perHour": "{{price}}/h",
-    "amenitiesTitle": "Servicios"
+    "amenitiesTitle": "Servicios",
+    "reviews": {
+      "title": "Reseñas",
+      "subtitle": "De jugadores que terminaron un partido aquí",
+      "basedOn": "{{count}} reseñas",
+      "noneYet": "Nuevo",
+      "visitLabel": "¿Qué visita?",
+      "pickVisit": "Elige un partido terminado…",
+      "gameFallback": "Partido",
+      "youRated": "Tu valoración {{count}}/5",
+      "rateLabel": "Valoración",
+      "commentPlaceholder": "Pistas, ambiente, instalaciones…",
+      "photosHint": "Hasta {{max}} fotos",
+      "submit": "Publicar reseña",
+      "noEligibleGames": "Juega y termina un partido aquí para dejar una reseña.",
+      "community": "Lo que dicen los jugadores",
+      "emptyList": "Aún no hay reseñas.",
+      "loadMore": "Cargar más",
+      "maxPhotos": "Máximo {{count}} fotos por reseña",
+      "removePhoto": "Quitar foto",
+      "loadMyReviewFailed": "No se pudo cargar tu reseña de este partido.",
+      "retry": "Reintentar"
+    }
   },
   "city": {
     "clubsCount_zero": "Sin clubes",

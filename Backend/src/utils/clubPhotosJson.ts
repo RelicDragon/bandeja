@@ -19,3 +19,10 @@ export function isOurChatStorageImageUrl(url: string | null | undefined): boolea
   const u = url.trim();
   return u.includes('/uploads/chat/originals/') || u.includes('/uploads/chat/thumbnails/');
 }
+
+/** Club review photos use the same chat image pipeline. */
+export function isOurClubReviewPhotoPair(originalUrl: string, thumbnailUrl: string): boolean {
+  const o = originalUrl.trim();
+  const t = thumbnailUrl.trim();
+  return o.includes('/uploads/chat/originals/') && t.includes('/uploads/chat/thumbnails/');
+}

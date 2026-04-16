@@ -141,6 +141,7 @@ model User {
   groupChannelsLastMessageFrom GroupChannel[]  @relation("GroupChannelLastMessageSender")
   reviewsReceivedAsTrainer TrainerReview[]      @relation("TrainerReviewsReceived")
   reviewsGiven            TrainerReview[]      @relation("TrainerReviewsGiven")
+  clubReviewsGiven        ClubReview[]         @relation("ClubReviewsGiven")
   gameWorkoutSummaries    GameWorkoutSummary[]
   telegramLinkIntents     TelegramAccountLinkIntent[]
   ownedUserTeams          UserTeam[]                    @relation("UserTeamOwner")
@@ -231,6 +232,8 @@ model Club {
   integrationConfig    Json?
   ptMeta               Json?    @map("pt_meta")
   courtsNumber         Int                @default(0)
+  clubRating           Float?
+  clubReviewCount      Int                @default(0)
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   city                 City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
@@ -238,6 +241,7 @@ model Club {
   games                Game[]
   favoritedBy          UserFavoriteClub[]
   leagues              League[]
+  clubReviews          ClubReview[]
 
   @@index([cityId])
   @@index([isActive])
@@ -344,6 +348,7 @@ model Game {
   faqs                   GameFaq[]
   bets                   Bet[]
   trainerReviews         TrainerReview[]
+  clubReviews            ClubReview[]
   workoutSummaries       GameWorkoutSummary[]
   reactions              GameReaction[]       @relation("GameReactions")
 
@@ -421,6 +426,26 @@ model TrainerReview {
 
   @@unique([trainerId, reviewerId, gameId])
   @@index([trainerId])
+  @@index([gameId])
+  @@index([reviewerId])
+}
+
+model ClubReview {
+  id         String   @id @default(cuid())
+  clubId     String
+  reviewerId String
+  gameId     String
+  stars      Int
+  text       String?  @db.VarChar(1000)
+  photos     Json     @default("[]")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  club       Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  reviewer   User     @relation("ClubReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewerId, gameId])
+  @@index([clubId])
   @@index([gameId])
   @@index([reviewerId])
 }

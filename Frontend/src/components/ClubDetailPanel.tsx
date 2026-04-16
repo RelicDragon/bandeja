@@ -6,6 +6,7 @@ import { ClubAvatar } from '@/components/ClubAvatar';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 import { getTelUrl } from '@/utils/telUrl';
 import { normalizeClubPhotos } from '@/utils/clubPhotos';
+import { ClubReviewsSection } from '@/components/ClubReviewsSection';
 import { getClubMapsSearchUrl } from '@/utils/clubMapsUrl';
 import { websiteDisplayHost } from '@/utils/websiteHostname';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
@@ -18,6 +19,7 @@ const ClubMiniMap = lazy(async () => {
 type ClubDetailPanelProps = {
   club: Club;
   onOpenFullscreenPhoto: (url: string) => void;
+  onClubRefresh?: () => Promise<void>;
 };
 
 function amenityEntries(amenities: Record<string, unknown> | undefined | null): { key: string; label: string }[] {
@@ -30,10 +32,10 @@ function amenityEntries(amenities: Record<string, unknown> | undefined | null): 
   return out;
 }
 
-export function ClubDetailPanel({ club, onOpenFullscreenPhoto }: ClubDetailPanelProps) {
+export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh }: ClubDetailPanelProps) {
   const { t } = useTranslation();
   const { translateCity, translateCountry } = useTranslatedGeo();
-  const photos = useMemo(() => normalizeClubPhotos(club.photos), [club.photos]);
+  const photos = useMemo(() => normalizeClubPhotos(club.carouselPhotos ?? club.photos), [club.carouselPhotos, club.photos]);
   const courts = useMemo(
     () => [...(club.courts ?? [])].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
     [club.courts]
@@ -65,11 +67,13 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto }: ClubDetailPanel
 
   return (
     <div className="space-y-4 text-gray-900 dark:text-white">
-      {club.avatar ? (
-        <div className="flex justify-center">
-          <ClubAvatar club={club} className="h-28 w-[10.5rem] sm:h-32 sm:w-48" />
-        </div>
-      ) : null}
+      <div className="flex justify-center">
+        <ClubAvatar
+          club={club}
+          className="h-28 w-[10.5rem] sm:h-32 sm:w-48"
+          fallbackLetterClassName="text-4xl sm:text-5xl font-bold"
+        />
+      </div>
 
       {contactBlock ? (
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/40 p-3 space-y-2">
@@ -169,6 +173,13 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto }: ClubDetailPanel
           </ul>
         </div>
       ) : null}
+
+      <ClubReviewsSection
+        clubId={club.id}
+        initialSummary={{ rating: club.clubRating ?? null, reviewCount: club.clubReviewCount ?? 0 }}
+        onClubRefresh={onClubRefresh}
+        onOpenPhoto={onOpenFullscreenPhoto}
+      />
 
       {amenities.length > 0 ? (
         <div>

@@ -1690,7 +1690,29 @@
     "indoor": "Indoor",
     "outdoor": "Outdoor",
     "perHour": "{{price}}/h",
-    "amenitiesTitle": "Amenities"
+    "amenitiesTitle": "Amenities",
+    "reviews": {
+      "title": "Reviews",
+      "subtitle": "From players who finished games here",
+      "basedOn": "{{count}} reviews",
+      "noneYet": "New",
+      "visitLabel": "Which visit?",
+      "pickVisit": "Select a finished game…",
+      "gameFallback": "Game",
+      "youRated": "You rated {{count}}/5",
+      "rateLabel": "Rating",
+      "commentPlaceholder": "Courts, vibe, facilities…",
+      "photosHint": "Up to {{max}} photos",
+      "submit": "Post review",
+      "noEligibleGames": "Play and finish a game here to leave a review.",
+      "community": "What players say",
+      "emptyList": "No reviews yet.",
+      "loadMore": "Load more",
+      "maxPhotos": "Maximum {{count}} photos per review",
+      "removePhoto": "Remove photo",
+      "loadMyReviewFailed": "Could not load your review for this game.",
+      "retry": "Try again"
+    }
   },
   "city": {
     "cities": "Cities",

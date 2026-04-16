@@ -1,6 +1,7 @@
-import { createId } from '@paralleldrive/cuid2';
-import { Match, Round } from '@/types/gameResults';
-import { Game } from '@/types';
+import { randomUUID } from 'crypto';
+import type { GenMatch as Match, GenRound as Round, GenGame as Game } from './types';
+
+const createId = () => randomUUID();
 import { cloneSets, InitialSets } from './matchUtils';
 
 export function generateFixedRound(

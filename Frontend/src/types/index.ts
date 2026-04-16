@@ -144,6 +144,24 @@ export interface ClubPhoto {
   originalUrl: string;
 }
 
+export interface ClubReviewSummary {
+  rating: number | null;
+  reviewCount: number;
+}
+
+export interface ClubReview {
+  id: string;
+  clubId: string;
+  reviewerId: string;
+  gameId: string;
+  stars: number;
+  text?: string | null;
+  photos?: ClubPhoto[] | null;
+  createdAt: string;
+  updatedAt: string;
+  reviewer?: BasicUser;
+}
+
 export interface Club {
   id: string;
   name: string;
@@ -152,6 +170,9 @@ export interface Club {
   avatar?: string | null;
   originalAvatar?: string | null;
   photos?: ClubPhoto[] | null;
+  carouselPhotos?: ClubPhoto[] | null;
+  clubRating?: number | null;
+  clubReviewCount?: number;
   address: string;
   cityId: string;
   phone?: string;

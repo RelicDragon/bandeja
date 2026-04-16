@@ -75,16 +75,11 @@ final class GameDetailViewModel {
         error = nil
         defer { isStartingResultsEntry = false }
         do {
-            let round = try WatchResultsRoundBuilder.firstRound(for: game)
-            _ = try await api.put(
-                .updateGame(id: gameId),
-                body: WatchGameResultsStatusPatch(resultsStatus: "IN_PROGRESS")
-            ) as WatchGame
-            try await api.sendVoid(
-                .syncGameResults(gameId: gameId),
-                body: WatchSyncResultsBody(rounds: [round])
+            let payload: WatchStartResultsEntryApiData = try await api.send(
+                .startResultsEntryWithRound(gameId: gameId),
+                body: [String: String]()
             )
-            self.game = try await api.fetch(.gameDetail(id: gameId))
+            self.game = payload.game
             results = try? await api.fetch(.gameResults(gameId: gameId))
             schedulePollingIfNeeded()
             return true

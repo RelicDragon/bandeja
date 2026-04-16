@@ -38,6 +38,20 @@ router.post(
 );
 
 router.post(
+  '/game/:gameId/rounds/generate',
+  authenticate,
+  requireCanModifyResults,
+  resultsController.generateRound
+);
+
+router.post(
+  '/game/:gameId/start-results-entry',
+  authenticate,
+  requireCanModifyResults,
+  resultsController.startResultsEntryWithGeneratedRound
+);
+
+router.post(
   '/game/:gameId/rounds',
   authenticate,
   requireCanModifyResults,

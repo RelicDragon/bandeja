@@ -1643,7 +1643,29 @@
     "indoor": "У затвореном",
     "outdoor": "Напољу",
     "perHour": "{{price}}/h",
-    "amenitiesTitle": "Садржаји"
+    "amenitiesTitle": "Садржаји",
+    "reviews": {
+      "title": "Рецензије",
+      "subtitle": "Од играча који су завршили меч овде",
+      "basedOn": "{{count}} рецензија",
+      "noneYet": "Ново",
+      "visitLabel": "Која посета?",
+      "pickVisit": "Изаберите завршен меч…",
+      "gameFallback": "Меч",
+      "youRated": "Ваша оцена {{count}}/5",
+      "rateLabel": "Оцена",
+      "commentPlaceholder": "Терени, атмосфера, садржаји…",
+      "photosHint": "До {{max}} фотографија",
+      "submit": "Пошаљи рецензију",
+      "noEligibleGames": "Одиграјте и завршите меч овде да бисте оставили рецензију.",
+      "community": "Шта играчи кажу",
+      "emptyList": "Још нема рецензија.",
+      "loadMore": "Учитај још",
+      "maxPhotos": "Највише {{count}} фотографија по рецензији",
+      "removePhoto": "Уклони фотографију",
+      "loadMyReviewFailed": "Није успело учитавање ваше рецензије за овај меч.",
+      "retry": "Покушај поново"
+    }
   },
   "city": {
     "clubsCount_zero": "Нема клубова",

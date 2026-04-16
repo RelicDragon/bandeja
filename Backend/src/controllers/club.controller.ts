@@ -4,6 +4,8 @@ import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 import { normalizeClubName } from '../utils/normalizeClubName';
 import { refreshCityFromClubs } from '../utils/updateCityCenter';
+import { parseClubPhotosJson } from '../utils/clubPhotosJson';
+import * as clubReviewService from '../services/clubReview.service';
 
 const PUBLIC_CLUB_UPDATE_FORBIDDEN = new Set([
   'avatar',
@@ -144,9 +146,14 @@ export const getClubById = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(404, 'Club not found');
   }
 
+  const userReviewPhotos = await clubReviewService.getReviewPhotosFlattenedForCarousel(id);
+  const system = parseClubPhotosJson(club.photos);
+  const systemUrls = new Set(system.map((p) => p.originalUrl));
+  const carouselPhotos = [...system, ...userReviewPhotos.filter((p) => !systemUrls.has(p.originalUrl))];
+
   res.json({
     success: true,
-    data: club,
+    data: { ...club, carouselPhotos },
   });
 });
 

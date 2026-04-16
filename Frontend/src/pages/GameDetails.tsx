@@ -630,53 +630,14 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     try {
-      console.log('handleStartResultsEntry');
-      await gamesApi.update(id, { resultsStatus: 'IN_PROGRESS' });
-      const response = await gamesApi.getById(id);
-      const updatedGame = response.data;
+      const startRes = await resultsApi.startResultsEntryWithGeneratedRound(id);
+      const updatedGame = startRes.data.game;
       setGame(updatedGame);
-      
-      // Initialize engine if needed
-      const engineState = GameResultsEngine.getState();
-      const needsInit = !engineState.initialized || engineState.gameId !== id || engineState.userId !== user.id;
-      
-      if (needsInit) {
-        await GameResultsEngine.initialize(id, user.id, t);
-      }
-      
-      // Update engine with latest game data
+
+      await GameResultsEngine.cleanup();
+      await GameResultsEngine.initialize(id, user.id, t);
       GameResultsEngine.updateGame(updatedGame);
-      
-      // Get current state after update
-      const currentState = GameResultsEngine.getState();
-      
-      console.log('currentState', currentState);
 
-      // Ensure gameId and userId are set before calling addRound
-      if (!currentState.gameId || !currentState.userId) {
-        useGameResultsStore.setState({
-          gameId: id,
-          userId: user.id,
-        });
-      }
-
-      // If no rounds exist, add the first round (same as "Add Round" button)
-      if (currentState.rounds.length === 0 && currentState.canEdit && currentState.game) {
-        console.log('adding round');
-        await GameResultsEngine.addRound();
-        
-        // Ensure the engine is marked as initialized so the embedded component
-        // won't re-initialize and overwrite our newly added round
-        const finalState = GameResultsEngine.getState();
-        if (!finalState.initialized || finalState.gameId !== id || finalState.userId !== user.id) {
-          useGameResultsStore.setState({
-            initialized: true,
-            gameId: id,
-            userId: user.id,
-          });
-        }
-      }
-      
       toast.success(t('gameResults.resultsEntryStarted') || 'Results entry started');
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';

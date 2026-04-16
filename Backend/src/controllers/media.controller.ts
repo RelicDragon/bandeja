@@ -16,6 +16,7 @@ import { MessageService } from '../services/chat/message.service';
 import { GroupChannelService } from '../services/chat/groupChannel.service';
 import { UserTeamService } from '../services/userTeam.service';
 import { parseClubPhotosJson } from '../utils/clubPhotosJson';
+import * as clubReviewService from '../services/clubReview.service';
 
 const MAX_CLUB_PHOTOS = 24;
 
@@ -371,6 +372,39 @@ export const uploadClubPhoto = asyncHandler(async (req: AuthRequest, res: Respon
     success: true,
     message: 'Club photo uploaded successfully',
     data: updated,
+  });
+});
+
+export const uploadClubReviewPhoto = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+  if (!req.file) {
+    throw new ApiError(400, 'No image file provided');
+  }
+  const { clubId, gameId } = req.body;
+  if (!clubId || typeof clubId !== 'string') {
+    throw new ApiError(400, 'Club ID is required');
+  }
+  if (!gameId || typeof gameId !== 'string') {
+    throw new ApiError(400, 'Game ID is required');
+  }
+  await clubReviewService.assertEligibleForClubReview(userId, clubId, gameId);
+  const n = await clubReviewService.countReviewPhotosForUserGame(userId, gameId);
+  if (n >= clubReviewService.MAX_PHOTOS_PER_CLUB_REVIEW) {
+    throw new ApiError(400, `Maximum ${clubReviewService.MAX_PHOTOS_PER_CLUB_REVIEW} photos per review`);
+  }
+  const processed = await ImageProcessor.processChatImage(req.file.buffer, req.file.originalname);
+  res.status(200).json({
+    success: true,
+    message: 'Club review photo uploaded successfully',
+    data: {
+      originalUrl: processed.originalPath!,
+      thumbnailUrl: processed.thumbnailPath!,
+      originalSize: processed.originalSize,
+      thumbnailSize: processed.thumbnailSize,
+    },
   });
 });
 

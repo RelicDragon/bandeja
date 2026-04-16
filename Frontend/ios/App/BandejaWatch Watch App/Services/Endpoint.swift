@@ -8,6 +8,8 @@ enum Endpoint: Sendable {
     case userProfile
     case gameResults(gameId: String)
     case syncGameResults(gameId: String)
+    case generateRound(gameId: String)
+    case startResultsEntryWithRound(gameId: String)
     case createRound(gameId: String)
     case createMatch(gameId: String, roundId: String)
     case updateMatch(gameId: String, matchId: String)
@@ -31,6 +33,10 @@ enum Endpoint: Sendable {
             return "/results/game/\(gameId)"
         case .syncGameResults(let gameId):
             return "/results/game/\(gameId)/sync"
+        case .generateRound(let gameId):
+            return "/results/game/\(gameId)/rounds/generate"
+        case .startResultsEntryWithRound(let gameId):
+            return "/results/game/\(gameId)/start-results-entry"
         case .createRound(let gameId):
             return "/results/game/\(gameId)/rounds"
         case .createMatch(let gameId, let roundId):
@@ -50,7 +56,8 @@ enum Endpoint: Sendable {
         switch self {
         case .myGames, .gameDetail, .userProfile, .gameResults, .getMyGameWorkout:
             return "GET"
-        case .createRound, .createMatch, .recalculateOutcomes, .postGameWorkout, .syncGameResults:
+        case .createRound, .createMatch, .recalculateOutcomes, .postGameWorkout, .syncGameResults, .generateRound,
+             .startResultsEntryWithRound:
             return "POST"
         case .updateMatch, .updateGame:
             return "PUT"

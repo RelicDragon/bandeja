@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse } from '@/types';
+import { ApiResponse, Game } from '@/types';
 import { Round } from '@/types/gameResults';
 
 export interface RoundData {
@@ -67,6 +67,22 @@ export const resultsApi = {
     const response = await api.post<ApiResponse<void>>(`/results/game/${gameId}/sync`, {
       rounds,
     });
+    return response.data;
+  },
+
+  generateRound: async (gameId: string) => {
+    const response = await api.post<ApiResponse<{ round: unknown }>>(
+      `/results/game/${gameId}/rounds/generate`,
+      {}
+    );
+    return response.data;
+  },
+
+  startResultsEntryWithGeneratedRound: async (gameId: string) => {
+    const response = await api.post<ApiResponse<{ game: Game; round: unknown | null; alreadyHadRounds: boolean }>>(
+      `/results/game/${gameId}/start-results-entry`,
+      {}
+    );
     return response.data;
   },
 

@@ -6,7 +6,6 @@ import { ResultsStorage, LocalResults } from './resultsStorage';
 import { resultsApi } from '@/api/results';
 import { gamesApi } from '@/api';
 import { isUserGameAdminOrOwner, isUserGameParticipant, validateSetScores, validateSetIndexAgainstFixed, validateTieBreak } from '@/utils/gameResults';
-import { RoundGenerator } from './roundGenerator';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 
@@ -271,55 +270,22 @@ class GameResultsEngineClass {
     await ResultsStorage.saveResults(localData);
   }
 
-  private async generateRoundData(): Promise<{ matches: Match[] } | null> {
-    const state = this.getState();
-    if (!state.game) return null;
-
-    const roundNumber = state.rounds.length + 1;
-
-    const roundGenerator = new RoundGenerator({
-      rounds: state.rounds,
-      game: state.game,
-      roundNumber,
-      fixedNumberOfSets: state.game.fixedNumberOfSets,
-    });
-
-    const matches = await roundGenerator.generateRound();
-    return { matches };
-  }
-
-
   async initializeDefaultRound(): Promise<void> {
     const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit || !state.game) return;
-
-    if (state.rounds.length > 0 && state.rounds[0].matches.length > 0) return;
-
-    const roundData = await this.generateRoundData();
-    if (roundData) {
-      await this.addRound();
-    }
+    if (state.rounds.length > 0) return;
+    await this.addRound();
   }
 
   async initializePresetMatches(): Promise<void> {
     const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit || !state.game) return;
+    if (state.rounds.length > 0) return;
 
     const playingParticipants = state.game.participants.filter(p => p.status === 'PLAYING');
     if (playingParticipants.length !== 2 && playingParticipants.length !== 4) return;
 
-    const hasPlayers = state.rounds.some((round) =>
-      round.matches?.some((match) =>
-        (match.teamA?.length > 0) || (match.teamB?.length > 0)
-      )
-    );
-
-    if (hasPlayers) return;
-
-    const roundData = await this.generateRoundData();
-    if (roundData) {
-      await this.addRound();
-    }
+    await this.addRound();
   }
 
   async cleanup() {
@@ -348,29 +314,30 @@ class GameResultsEngineClass {
     const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit || !state.game) return;
 
-    const roundId = createId();
-
-    const roundData = await this.generateRoundData();
-    if (!roundData) {
-      return;
-    }
-
-    const newRoundData: Round = {
-      id: roundId,
-      matches: roundData.matches || [],
-    };
-
-    await this.updateLocalAndServer(
-      async () => {
-        useGameResultsStore.setState({
-          rounds: [...state.rounds, newRoundData],
-          expandedRoundIds: [roundId],
-        });
-      },
-      async () => {
-        await this.syncToServer();
+    try {
+      const res = await resultsApi.generateRound(state.gameId);
+      const roundPayload = res.data?.round;
+      if (!roundPayload) {
+        throw new Error('No round in generate response');
       }
-    );
+      const converted = this.convertServerResultsToState({ rounds: [roundPayload as any] }, (k) => k).rounds[0];
+      if (!converted) {
+        throw new Error('Failed to parse generated round');
+      }
+
+      useGameResultsStore.setState({
+        rounds: [...state.rounds, converted],
+        expandedRoundIds: [converted.id],
+      });
+      await ResultsStorage.setServerProblem(state.gameId, false);
+      useGameResultsStore.setState({ serverProblem: false });
+      await this.saveLocal();
+    } catch (error) {
+      console.error('Failed to generate round:', error);
+      await ResultsStorage.setServerProblem(state.gameId, true);
+      useGameResultsStore.setState({ serverProblem: true });
+      throw error;
+    }
   }
 
   async removeRound(roundId: string, _t?: (key: string) => string): Promise<void> {

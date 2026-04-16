@@ -1,5 +1,4 @@
-import { Game } from '@/types';
-import { Match, Round } from '@/types/gameResults';
+import type { GenGame as Game, GenMatch as Match, GenRound as Round } from './types';
 
 export function shuffle<T>(arr: T[]): T[] {
   const result = [...arr];

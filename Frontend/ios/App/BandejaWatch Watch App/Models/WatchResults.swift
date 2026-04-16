@@ -6,6 +6,16 @@ struct WatchResultsGame: Decodable, Sendable {
     let outcomes: [WatchOutcome]
 }
 
+struct WatchStartResultsEntryApiData: Decodable, Sendable {
+    let game: WatchGame
+    let round: WatchRound?
+    let alreadyHadRounds: Bool?
+}
+
+struct WatchGenerateRoundApiData: Decodable, Sendable {
+    let round: WatchRound
+}
+
 struct WatchRound: Decodable, Identifiable, Sendable {
     let id: String
     let roundNumber: Int

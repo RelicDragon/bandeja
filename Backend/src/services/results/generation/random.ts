@@ -1,6 +1,7 @@
-import { createId } from '@paralleldrive/cuid2';
-import { Match, Round } from '@/types/gameResults';
-import { Game } from '@/types';
+import { randomUUID } from 'crypto';
+import type { GenMatch as Match, GenRound as Round, GenGame as Game } from './types';
+
+const createId = () => randomUUID();
 import {
   shuffle,
   hasPlayers,
@@ -15,6 +16,7 @@ import {
   pairKey,
   InitialSets,
 } from './matchUtils';
+import { solveMixOptimalPairs, solveStandardOptimalPairs } from './teammateOptimalPairs';
 
 // ── Recency-based history ──────────────────────────────────────────────
 
@@ -110,6 +112,14 @@ function pairStaleness(a: string, b: string, lastRound: Map<string, number>, cur
   return lastRound.has(key) ? currentRound - lastRound.get(key)! : currentRound + 1;
 }
 
+type GenBudget = { remaining: number };
+
+function consumeGenOp(budget: GenBudget): boolean {
+  if (budget.remaining <= 0) return false;
+  budget.remaining--;
+  return true;
+}
+
 function scoreConfig(
   matches: MatchConfig[],
   partnerCounts: Map<string, number>,
@@ -173,9 +183,7 @@ function isBetterScore(a: ConfigScore, b: ConfigScore): boolean {
 
 // ── Exhaustive search ──────────────────────────────────────────────────
 
-// Safety cap: if this many complete configs are evaluated, return best found so far.
-// Prevents pathological cases from running more than ~1-2 seconds.
-const MAX_LEAF_EVALS = 500_000;
+const MAX_GEN_BUDGET = 3_500_000;
 
 // Enumerates all perfect matchings of pairs into 2-team games.
 // Optimizations:
@@ -191,15 +199,14 @@ function tryAllMatchings(
   currentRound: number,
   bestScore: { value: ConfigScore | null },
   bestConfig: { value: MatchConfig[] | null },
-  iterCount: { value: number }
+  genBudget: GenBudget
 ): void {
   const current: MatchConfig[] = [];
 
   function recurse(remaining: [string, string][], runningMinOpp: number) {
-    if (iterCount.value > MAX_LEAF_EVALS) return;
+    if (!consumeGenOp(genBudget)) return;
 
     if (remaining.length === 0) {
-      iterCount.value++;
       const score = scoreConfig(current, partnerCounts, opponentCounts, lastTeamRound, lastOpponentRound, currentRound);
       if (bestScore.value === null || isBetterScore(score, bestScore.value)) {
         bestScore.value = score;
@@ -249,155 +256,28 @@ function tryAllMatchings(
   recurse(pairs, Infinity);
 }
 
-// Enumerates all ways to partition playerIds into pairs, then all matchings for each.
-// Optimizations:
-//   1. Sorts partner candidates by team staleness DESC → best pairs explored first,
-//      giving a high baseline quickly and enabling aggressive subsequent pruning
-//   2. Prunes with break (not continue) since sorted DESC: once below threshold, stop
-//   3. Early-terminates when a perfect score is found
-function searchConfigs(
-  playerIds: string[],
+function optimizeOpponentsForPairs(
+  pairs: [string, string][],
   partnerCounts: Map<string, number>,
   opponentCounts: Map<string, number>,
   lastTeamRound: Map<string, number>,
   lastOpponentRound: Map<string, number>,
-  currentRound: number
+  currentRound: number,
+  genBudget: GenBudget
 ): MatchConfig[] {
   const bestScore: { value: ConfigScore | null } = { value: null };
   const bestConfig: { value: MatchConfig[] | null } = { value: null };
-  const iterCount: { value: number } = { value: 0 };
-  const current: [string, string][] = [];
-  // If any complete config can avoid back-to-back teammates (staleness >= 2),
-  // reject all minTeamStaleness=1 configs.
-  const hasNonConsecutiveCandidate: { value: boolean } = { value: false };
-
-  function buildPartitions(remaining: string[]) {
-    if (iterCount.value > MAX_LEAF_EVALS) return;
-    if (bestScore.value !== null && bestScore.value.minTeamStaleness === currentRound + 1) return;
-
-    if (remaining.length === 0) {
-      const partitionMinTeamStaleness = current.reduce((min, [a, b]) => {
-        const s = pairStaleness(a, b, lastTeamRound, currentRound);
-        return Math.min(min, s);
-      }, Infinity);
-
-      if (partitionMinTeamStaleness >= 2) {
-        hasNonConsecutiveCandidate.value = true;
-      }
-
-      if (!(hasNonConsecutiveCandidate.value && partitionMinTeamStaleness <= 1)) {
-        tryAllMatchings(
-          [...current],
-          partnerCounts,
-          opponentCounts,
-          lastTeamRound,
-          lastOpponentRound,
-          currentRound,
-          bestScore,
-          bestConfig,
-          iterCount
-        );
-      }
-      return;
-    }
-
-    const first = remaining[0];
-
-    // Compute and sort partner candidates by team staleness DESC
-    const candidates: { originalIdx: number; s: number }[] = [];
-    for (let i = 1; i < remaining.length; i++) {
-      candidates.push({ originalIdx: i, s: pairStaleness(first, remaining[i], lastTeamRound, currentRound) });
-    }
-    candidates.sort((a, b) => b.s - a.s);
-
-    for (const { originalIdx, s } of candidates) {
-      // Sorted DESC: once s drops below threshold all subsequent will too → break
-      if (bestScore.value !== null && s < bestScore.value.minTeamStaleness) break;
-
-      current.push([first, remaining[originalIdx]]);
-      const next = remaining.filter((_, i) => i !== 0 && i !== originalIdx);
-      buildPartitions(next);
-      current.pop();
-    }
-  }
-
-  buildPartitions(playerIds);
-  return bestConfig.value ?? [];
-}
-
-// MIX_PAIRS: each pair must be one male + one female.
-// Enumerates all permutations of females paired with males.
-// Optimizations:
-//   1. At each position, sorts remaining females by staleness with current male DESC
-//   2. Prunes when running min team staleness < best min team staleness
-//   3. Early-terminates on perfect score
-function searchMixConfigs(
-  maleIds: string[],
-  femaleIds: string[],
-  partnerCounts: Map<string, number>,
-  opponentCounts: Map<string, number>,
-  lastTeamRound: Map<string, number>,
-  lastOpponentRound: Map<string, number>,
-  currentRound: number
-): MatchConfig[] {
-  const n = Math.min(maleIds.length, femaleIds.length);
-  const males = maleIds.slice(0, n);
-  const females = [...femaleIds.slice(0, n)];
-  const bestScore: { value: ConfigScore | null } = { value: null };
-  const bestConfig: { value: MatchConfig[] | null } = { value: null };
-  const iterCount: { value: number } = { value: 0 };
-  const pairs: [string, string][] = [];
-  // If any complete config can avoid back-to-back teammates (staleness >= 2),
-  // reject all minTeamStaleness=1 configs.
-  const hasNonConsecutiveCandidate: { value: boolean } = { value: false };
-
-  function permute(idx: number, runningMinTeam: number) {
-    if (iterCount.value > MAX_LEAF_EVALS) return;
-    if (bestScore.value !== null && bestScore.value.minTeamStaleness === currentRound + 1) return;
-    if (bestScore.value !== null && runningMinTeam < bestScore.value.minTeamStaleness) return;
-
-    if (idx === n) {
-      if (runningMinTeam >= 2) {
-        hasNonConsecutiveCandidate.value = true;
-      }
-
-      if (!(hasNonConsecutiveCandidate.value && runningMinTeam <= 1)) {
-        tryAllMatchings(
-          [...pairs],
-          partnerCounts,
-          opponentCounts,
-          lastTeamRound,
-          lastOpponentRound,
-          currentRound,
-          bestScore,
-          bestConfig,
-          iterCount
-        );
-      }
-      return;
-    }
-
-    // Sort remaining females by staleness with males[idx] DESC
-    const candidates: { femaleIdx: number; s: number }[] = [];
-    for (let i = idx; i < n; i++) {
-      candidates.push({ femaleIdx: i, s: pairStaleness(males[idx], females[i], lastTeamRound, currentRound) });
-    }
-    candidates.sort((a, b) => b.s - a.s);
-
-    for (const { femaleIdx, s } of candidates) {
-      const newMinTeam = Math.min(runningMinTeam, s);
-      // Sorted DESC: once newMinTeam drops below threshold all subsequent will too
-      if (bestScore.value !== null && newMinTeam < bestScore.value.minTeamStaleness) break;
-
-      [females[idx], females[femaleIdx]] = [females[femaleIdx], females[idx]];
-      pairs.push([males[idx], females[idx]]);
-      permute(idx + 1, newMinTeam);
-      pairs.pop();
-      [females[idx], females[femaleIdx]] = [females[femaleIdx], females[idx]];
-    }
-  }
-
-  permute(0, Infinity);
+  tryAllMatchings(
+    pairs,
+    partnerCounts,
+    opponentCounts,
+    lastTeamRound,
+    lastOpponentRound,
+    currentRound,
+    bestScore,
+    bestConfig,
+    genBudget
+  );
   return bestConfig.value ?? [];
 }
 
@@ -529,6 +409,8 @@ export function generateRandomRound(
 
   let matchups: MatchConfig[];
 
+  const genBudget: GenBudget = { remaining: MAX_GEN_BUDGET };
+
   if (game.genderTeams === 'MIX_PAIRS') {
     const maleIds = selectedParticipants
       .filter((p: any) => p.user.gender === 'MALE')
@@ -536,18 +418,37 @@ export function generateRandomRound(
     const femaleIds = selectedParticipants
       .filter((p: any) => p.user.gender === 'FEMALE')
       .map((p: any) => p.userId);
-    matchups = searchMixConfigs(
-      maleIds,
-      femaleIds,
-      partnerCounts,
-      opponentCounts,
-      lastTeamRound,
-      lastOpponentRound,
-      currentRound
+    const nMix = Math.min(maleIds.length, femaleIds.length);
+    const teamPairs = solveMixOptimalPairs(
+      maleIds.slice(0, nMix),
+      femaleIds.slice(0, nMix),
+      partnerCounts
     );
+    matchups = teamPairs
+      ? optimizeOpponentsForPairs(
+          teamPairs,
+          partnerCounts,
+          opponentCounts,
+          lastTeamRound,
+          lastOpponentRound,
+          currentRound,
+          genBudget
+        )
+      : [];
   } else {
     const playerIds = shuffle(selectedParticipants.map((p: any) => p.userId));
-    matchups = searchConfigs(playerIds, partnerCounts, opponentCounts, lastTeamRound, lastOpponentRound, currentRound);
+    const teamPairs = solveStandardOptimalPairs(playerIds, partnerCounts);
+    matchups = teamPairs
+      ? optimizeOpponentsForPairs(
+          teamPairs,
+          partnerCounts,
+          opponentCounts,
+          lastTeamRound,
+          lastOpponentRound,
+          currentRound,
+          genBudget
+        )
+      : [];
   }
 
   if (matchups.length === 0) return [];

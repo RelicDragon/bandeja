@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import * as resultsService from '../services/results.service';
+import * as roundGenerationService from '../services/results/roundGeneration.service';
+import { GameService } from '../services/game/game.service';
 import * as outcomesService from '../services/results/outcomes.service';
 import * as outcomeExplanationService from '../services/results/outcomeExplanation.service';
 
@@ -123,6 +125,42 @@ export const syncResults = asyncHandler(async (req: AuthRequest, res: Response) 
   res.json({
     success: true,
     message: 'Results synced successfully',
+  });
+});
+
+export const generateRound = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId } = req.params;
+
+  const { roundId } = await roundGenerationService.generateAndCreateRound(gameId);
+  const round = await roundGenerationService.fetchRoundApiPayload(roundId);
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    await socketService.emitGameResultsUpdated(gameId, req.userId!);
+  }
+
+  res.json({
+    success: true,
+    data: { round },
+  });
+});
+
+export const startResultsEntryWithGeneratedRound = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId } = req.params;
+
+  const { roundId, alreadyHadRounds } = await roundGenerationService.startResultsEntryWithGeneratedRound(gameId);
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    await socketService.emitGameResultsUpdated(gameId, req.userId!);
+  }
+
+  const game = await GameService.getGameById(gameId, req.userId);
+  const round = roundId ? await roundGenerationService.fetchRoundApiPayload(roundId) : null;
+
+  res.json({
+    success: true,
+    data: { game, round, alreadyHadRounds },
   });
 });
 

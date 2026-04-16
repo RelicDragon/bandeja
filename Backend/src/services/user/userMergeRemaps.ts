@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { compareChatReadCursorRows } from '../chat/chatReadCursor.service';
+import { recomputeClubRating } from '../clubReview.service';
 
 export type MergeTx = Prisma.TransactionClient;
 
@@ -604,6 +605,28 @@ async function remapChatDraftsForMerge(tx: MergeTx, survivorId: string, sourceId
   }
 }
 
+async function remapClubReviewsReviewer(tx: MergeTx, survivorId: string, sourceId: string) {
+  const rows = await tx.clubReview.findMany({ where: { reviewerId: sourceId } });
+  const clubIds = new Set<string>();
+  for (const row of rows) {
+    clubIds.add(row.clubId);
+    const twin = await tx.clubReview.findFirst({
+      where: { reviewerId: survivorId, gameId: row.gameId },
+    });
+    if (twin) {
+      await tx.clubReview.delete({ where: { id: row.id } });
+    } else {
+      await tx.clubReview.update({
+        where: { id: row.id },
+        data: { reviewerId: survivorId },
+      });
+    }
+  }
+  for (const clubId of clubIds) {
+    await recomputeClubRating(clubId, tx);
+  }
+}
+
 async function remapTrainerReviewsReviewer(tx: MergeTx, survivorId: string, sourceId: string) {
   const rows = await tx.trainerReview.findMany({ where: { reviewerId: sourceId } });
   for (const row of rows) {
@@ -674,6 +697,7 @@ export async function remapAllUserScopedCompositeRows(
   await remapChatDraftsForMerge(tx, survivorId, sourceId);
   await remapChatReadCursorsForMerge(tx, survivorId, sourceId);
   await remapTrainerReviewsReviewer(tx, survivorId, sourceId);
+  await remapClubReviewsReviewer(tx, survivorId, sourceId);
   await remapTrainerReviewsTrainer(tx, survivorId, sourceId);
   await remapUserFavoriteUserForMerge(tx, survivorId, sourceId);
   await remapBlockedUserForMerge(tx, survivorId, sourceId);
