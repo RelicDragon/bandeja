@@ -55,6 +55,20 @@ export const errorHandler = (
     });
   }
 
+  if (err.name === 'MulterError') {
+    const code = (err as { code?: string }).code;
+    const status = code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+    const message =
+      code === 'LIMIT_FILE_SIZE'
+        ? 'File too large; pick a smaller image or reduce resolution.'
+        : err.message;
+    return res.status(status).json({
+      success: false,
+      message,
+      ...(config.nodeEnv === 'development' && { code, stack: err.stack }),
+    });
+  }
+
   logChatSyncHttpError(req, err, 500);
   console.error('Unhandled error:', err);
 

@@ -19,6 +19,9 @@ import { parseClubPhotosJson } from '../utils/clubPhotosJson';
 
 const MAX_CLUB_PHOTOS = 24;
 
+/** Per file; avatar routes send `avatar` + `original` (often the same image twice). */
+const MULTIPART_IMAGE_FILE_MAX_BYTES = 32 * 1024 * 1024;
+
 const storage = multer.memoryStorage();
 
 const fileFilter = (req: any, file: any, cb: FileFilterCallback) => {
@@ -66,16 +69,16 @@ export const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
-  }
+    fileSize: MULTIPART_IMAGE_FILE_MAX_BYTES,
+  },
 });
 
 export const uploadAvatarFiles = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
-  }
+    fileSize: MULTIPART_IMAGE_FILE_MAX_BYTES,
+  },
 }).fields([
   { name: 'avatar', maxCount: 1 },
   { name: 'original', maxCount: 1 }
