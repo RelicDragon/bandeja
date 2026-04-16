@@ -169,6 +169,16 @@ export class UserTeamService {
     return updated;
   }
 
+  static async emitUpdatedTeam(teamId: string) {
+    const updated = await prisma.userTeam.findUnique({
+      where: { id: teamId },
+      include: TEAM_INCLUDE,
+    });
+    if (!updated) return;
+    const ids = await collectNotifyUserIds(teamId);
+    socketSvc()?.emitUserTeamUpdated(ids, { team: updated });
+  }
+
   static async deleteTeam(teamId: string, requesterId: string) {
     const team = await prisma.userTeam.findUnique({
       where: { id: teamId },

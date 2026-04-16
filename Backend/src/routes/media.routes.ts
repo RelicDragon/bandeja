@@ -6,6 +6,7 @@ import {
   uploadAvatar, 
   uploadGameAvatar,
   uploadGroupChannelAvatar,
+  uploadUserTeamAvatar,
   uploadChatImage,
   uploadChatAudio,
   uploadChatAudioMulter,
@@ -44,6 +45,15 @@ router.post(
     body('groupChannelId').notEmpty().withMessage('Group channel ID is required')
   ]),
   uploadGroupChannelAvatar
+);
+
+router.post(
+  '/upload/user-team/avatar',
+  uploadAvatarFiles,
+  validate([
+    body('userTeamId').notEmpty().withMessage('User team ID is required')
+  ]),
+  uploadUserTeamAvatar
 );
 
 router.post(

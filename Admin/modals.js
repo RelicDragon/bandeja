@@ -111,36 +111,39 @@ async function deleteCity(cityId, cityName) {
     }
 }
 
-function createCenterModal() {
+async function createCenterModal() {
     showModal('centerModal');
     document.getElementById('centerModalTitle').textContent = 'Create Club';
     document.getElementById('centerForm').reset();
     document.getElementById('centerForm').dataset.mode = 'create';
     document.getElementById('centerForm').dataset.centerId = '';
-    loadCityOptions();
+    await loadCityOptions();
 }
 
-function editCenterModal(center) {
+async function editCenterModal(center) {
     showModal('centerModal');
     document.getElementById('centerModalTitle').textContent = 'Edit Club';
     document.getElementById('centerName').value = center.name;
     document.getElementById('centerDescription').value = center.description || '';
     document.getElementById('centerAddress').value = center.address;
-    document.getElementById('centerCityId').value = center.cityId;
     document.getElementById('centerPhone').value = center.phone || '';
     document.getElementById('centerEmail').value = center.email || '';
     document.getElementById('centerWebsite').value = center.website || '';
     document.getElementById('centerOpeningTime').value = center.openingTime || '';
     document.getElementById('centerClosingTime').value = center.closingTime || '';
+    document.getElementById('centerLatitude').value =
+        center.latitude != null && center.latitude !== '' ? String(center.latitude) : '';
+    document.getElementById('centerLongitude').value =
+        center.longitude != null && center.longitude !== '' ? String(center.longitude) : '';
     document.getElementById('centerIsActive').checked = center.isActive;
     document.getElementById('centerIsBar').checked = center.isBar || false;
     document.getElementById('centerIsForPlaying').checked = center.isForPlaying !== undefined ? center.isForPlaying : true;
     document.getElementById('centerForm').dataset.mode = 'edit';
     document.getElementById('centerForm').dataset.centerId = center.id;
-    loadCityOptions();
+    await loadCityOptions(center.cityId);
 }
 
-async function loadCityOptions() {
+async function loadCityOptions(selectedCityId) {
     try {
         const response = await apiRequest('/admin/cities');
         if (response.success) {
@@ -149,6 +152,9 @@ async function loadCityOptions() {
                 response.data.map(city => 
                     `<option value="${city.id}">${city.name}</option>`
                 ).join('');
+            if (selectedCityId) {
+                select.value = selectedCityId;
+            }
         }
     } catch (error) {
         console.error('Failed to load cities:', error);
@@ -162,6 +168,25 @@ async function handleCenterSubmit(e) {
     const centerId = form.dataset.centerId;
 
     const formData = new FormData(form);
+    const latStr = String(formData.get('centerLatitude') ?? document.getElementById('centerLatitude').value ?? '').trim();
+    const lngStr = String(formData.get('centerLongitude') ?? document.getElementById('centerLongitude').value ?? '').trim();
+    let latitude = null;
+    let longitude = null;
+    if (latStr) {
+        latitude = Number(latStr);
+        if (!Number.isFinite(latitude)) {
+            alert('Invalid latitude');
+            return;
+        }
+    }
+    if (lngStr) {
+        longitude = Number(lngStr);
+        if (!Number.isFinite(longitude)) {
+            alert('Invalid longitude');
+            return;
+        }
+    }
+
     const data = {
         name: formData.get('centerName') || document.getElementById('centerName').value,
         description: formData.get('centerDescription') || document.getElementById('centerDescription').value || null,
@@ -172,6 +197,8 @@ async function handleCenterSubmit(e) {
         website: formData.get('centerWebsite') || document.getElementById('centerWebsite').value || null,
         openingTime: formData.get('centerOpeningTime') || document.getElementById('centerOpeningTime').value || null,
         closingTime: formData.get('centerClosingTime') || document.getElementById('centerClosingTime').value || null,
+        latitude: latStr ? latitude : null,
+        longitude: lngStr ? longitude : null,
         isActive: document.getElementById('centerIsActive').checked,
         isBar: document.getElementById('centerIsBar').checked,
         isForPlaying: document.getElementById('centerIsForPlaying').checked,

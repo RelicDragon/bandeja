@@ -126,11 +126,8 @@ export function UserTeamPage() {
     if (!team) return;
     setBusy(true);
     try {
-      const up = await mediaApi.uploadAvatar(avatarFile, originalFile);
-      const updated = await userTeamsApi.update(team.id, {
-        avatar: up.avatarUrl,
-        originalAvatar: up.originalAvatarUrl,
-      });
+      await mediaApi.uploadUserTeamAvatar(team.id, avatarFile, originalFile);
+      const updated = await userTeamsApi.getById(team.id);
       setTeamLocal(updated);
       setTeam(updated);
       toast.success(t('teams.avatarUpdated'));

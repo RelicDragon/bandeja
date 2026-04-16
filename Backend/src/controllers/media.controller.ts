@@ -14,6 +14,7 @@ import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { ParticipantRole } from '@prisma/client';
 import { MessageService } from '../services/chat/message.service';
 import { GroupChannelService } from '../services/chat/groupChannel.service';
+import { UserTeamService } from '../services/userTeam.service';
 
 const storage = multer.memoryStorage();
 
@@ -77,19 +78,60 @@ export const uploadAvatarFiles = multer({
   { name: 'original', maxCount: 1 }
 ]);
 
-type AvatarEntityType = 'user' | 'game' | 'groupChannel';
+type AvatarEntityType = 'user' | 'game' | 'groupChannel' | 'userTeam';
 
 interface AvatarEntity {
   avatar: string | null;
   originalAvatar: string | null;
 }
 
+type AvatarUploadResult = {
+  avatarPath: string;
+  originalPath: string;
+  avatarSize: { width: number; height: number };
+  originalSize: { width: number; height: number };
+};
+
+function requireAvatarOriginalFile(req: AuthRequest): Express.Multer.File {
+  const bucket = req.files as Record<string, Express.Multer.File[] | Express.Multer.File> | undefined;
+  if (!bucket) {
+    throw new ApiError(400, 'Both avatar and original image files are required');
+  }
+  const av = bucket.avatar;
+  const orig = bucket.original;
+  const avatarFile = Array.isArray(av) ? av[0] : av;
+  const originalFile = Array.isArray(orig) ? orig[0] : orig;
+  if (!avatarFile || !originalFile) {
+    throw new ApiError(400, 'Both avatar and original image files are required');
+  }
+  return originalFile;
+}
+
+function requireAuthUserId(req: AuthRequest): string {
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+  return req.userId;
+}
+
+function sendAvatarUploadJson(res: Response, result: AvatarUploadResult, message: string) {
+  res.status(200).json({
+    success: true,
+    message,
+    data: {
+      avatarUrl: result.avatarPath,
+      originalAvatarUrl: result.originalPath,
+      avatarSize: result.avatarSize,
+      originalSize: result.originalSize,
+    },
+  });
+}
+
 async function uploadAvatarForEntity(
   entityType: AvatarEntityType,
   entityId: string,
-  userId: string,
   originalFile: Express.Multer.File
-): Promise<{ avatarPath: string; originalPath: string; avatarSize: { width: number; height: number }; originalSize: { width: number; height: number } }> {
+): Promise<AvatarUploadResult> {
   let entity: AvatarEntity | null = null;
 
   switch (entityType) {
@@ -111,6 +153,12 @@ async function uploadAvatarForEntity(
         select: { avatar: true, originalAvatar: true }
       });
       entity = groupChannel;
+      break;
+    case 'userTeam':
+      entity = await prisma.userTeam.findUnique({
+        where: { id: entityId },
+        select: { avatar: true, originalAvatar: true },
+      });
       break;
   }
 
@@ -159,6 +207,15 @@ async function uploadAvatarForEntity(
         }
       });
       break;
+    case 'userTeam':
+      await prisma.userTeam.update({
+        where: { id: entityId },
+        data: {
+          avatar: result.avatarPath,
+          originalAvatar: result.originalPath,
+        },
+      });
+      break;
   }
 
   return {
@@ -170,73 +227,26 @@ async function uploadAvatarForEntity(
 }
 
 export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
-  console.log('Upload avatar request files:', req.files);
-  console.log('Upload avatar request body:', req.body);
-  
-  if (!req.files || !(req.files as any).avatar || !(req.files as any).original) {
-    console.log('Missing files - req.files:', req.files);
-    throw new ApiError(400, 'Both avatar and original image files are required');
-  }
-
-  const userId = req.userId;
-  if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
-
-  const originalFile = Array.isArray((req.files as any).original) ? (req.files as any).original[0] : (req.files as any).original;
-  const result = await uploadAvatarForEntity('user', userId, userId, originalFile);
-
-  res.status(200).json({
-    success: true,
-    message: 'Avatar uploaded successfully',
-    data: {
-      avatarUrl: result.avatarPath,
-      originalAvatarUrl: result.originalPath,
-      avatarSize: result.avatarSize,
-      originalSize: result.originalSize
-    }
-  });
+  const userId = requireAuthUserId(req);
+  const originalFile = requireAvatarOriginalFile(req);
+  const result = await uploadAvatarForEntity('user', userId, originalFile);
+  sendAvatarUploadJson(res, result, 'Avatar uploaded successfully');
 });
 
 export const uploadGameAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
-  if (!req.files || !(req.files as any).avatar || !(req.files as any).original) {
-    throw new ApiError(400, 'Both avatar and original image files are required');
-  }
-
-  const userId = req.userId;
-  if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
-
+  requireAuthUserId(req);
   const { gameId } = req.body;
   if (!gameId) {
     throw new ApiError(400, 'Game ID is required');
   }
 
-  const originalFile = Array.isArray((req.files as any).original) ? (req.files as any).original[0] : (req.files as any).original;
-  const result = await uploadAvatarForEntity('game', gameId, userId, originalFile);
-
-  res.status(200).json({
-    success: true,
-    message: 'Game avatar uploaded successfully',
-    data: {
-      avatarUrl: result.avatarPath,
-      originalAvatarUrl: result.originalPath,
-      avatarSize: result.avatarSize,
-      originalSize: result.originalSize
-    }
-  });
+  const originalFile = requireAvatarOriginalFile(req);
+  const result = await uploadAvatarForEntity('game', gameId, originalFile);
+  sendAvatarUploadJson(res, result, 'Game avatar uploaded successfully');
 });
 
 export const uploadGroupChannelAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
-  if (!req.files || !(req.files as any).avatar || !(req.files as any).original) {
-    throw new ApiError(400, 'Both avatar and original image files are required');
-  }
-
-  const userId = req.userId;
-  if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
+  const userId = requireAuthUserId(req);
 
   const { groupChannelId } = req.body;
   if (!groupChannelId) {
@@ -257,19 +267,33 @@ export const uploadGroupChannelAvatar = asyncHandler(async (req: AuthRequest, re
     throw new ApiError(403, 'Only owner or admin can upload group/channel avatar');
   }
 
-  const originalFile = Array.isArray((req.files as any).original) ? (req.files as any).original[0] : (req.files as any).original;
-  const result = await uploadAvatarForEntity('groupChannel', groupChannelId, userId, originalFile);
+  const originalFile = requireAvatarOriginalFile(req);
+  const result = await uploadAvatarForEntity('groupChannel', groupChannelId, originalFile);
+  sendAvatarUploadJson(res, result, 'Group/Channel avatar uploaded successfully');
+});
 
-  res.status(200).json({
-    success: true,
-    message: 'Group/Channel avatar uploaded successfully',
-    data: {
-      avatarUrl: result.avatarPath,
-      originalAvatarUrl: result.originalPath,
-      avatarSize: result.avatarSize,
-      originalSize: result.originalSize
-    }
+export const uploadUserTeamAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = requireAuthUserId(req);
+  const { userTeamId } = req.body;
+  if (!userTeamId) {
+    throw new ApiError(400, 'User team ID is required');
+  }
+
+  const team = await prisma.userTeam.findUnique({
+    where: { id: userTeamId },
+    select: { ownerId: true },
   });
+  if (!team) {
+    throw new ApiError(404, 'User team not found');
+  }
+  if (team.ownerId !== userId) {
+    throw new ApiError(403, 'Only team owner can upload team avatar');
+  }
+
+  const originalFile = requireAvatarOriginalFile(req);
+  const result = await uploadAvatarForEntity('userTeam', userTeamId, originalFile);
+  await UserTeamService.emitUpdatedTeam(userTeamId);
+  sendAvatarUploadJson(res, result, 'User team avatar uploaded successfully');
 });
 
 export const uploadChatAudio = asyncHandler(async (req: AuthRequest, res: Response) => {

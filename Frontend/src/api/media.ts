@@ -19,61 +19,44 @@ export interface ChatAudioUploadResponse {
   audioUrl: string;
 }
 
-export const mediaApi = {
-  uploadAvatar: async (avatarFile: File, originalFile: File): Promise<MediaUploadResponse> => {
-    console.log('mediaApi.uploadAvatar: Received files:', {
-      avatarFile: { name: avatarFile.name, size: avatarFile.size, type: avatarFile.type },
-      originalFile: { name: originalFile.name, size: originalFile.size, type: originalFile.type }
-    });
-
-    const formData = new FormData();
-    formData.append('avatar', avatarFile);
-    formData.append('original', originalFile);
-
-    console.log('mediaApi.uploadAvatar: FormData entries:');
-    for (const [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value);
+async function postMultipartAvatarUpload(
+  path: string,
+  avatarFile: File,
+  originalFile: File,
+  extraFields?: Record<string, string>
+): Promise<MediaUploadResponse> {
+  const formData = new FormData();
+  formData.append('avatar', avatarFile);
+  formData.append('original', originalFile);
+  if (extraFields) {
+    for (const [key, value] of Object.entries(extraFields)) {
+      formData.append(key, value);
     }
+  }
+  const response = await api.post<ApiResponse<MediaUploadResponse>>(path, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data.data;
+}
 
-    const response = await api.post<ApiResponse<MediaUploadResponse>>('/media/upload/avatar', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    
-    return response.data.data;
-  },
+export const mediaApi = {
+  uploadAvatar: (avatarFile: File, originalFile: File) =>
+    postMultipartAvatarUpload('/media/upload/avatar', avatarFile, originalFile),
 
-  uploadGameAvatar: async (gameId: string, avatarFile: File, originalFile: File): Promise<MediaUploadResponse> => {
-    const formData = new FormData();
-    formData.append('avatar', avatarFile);
-    formData.append('original', originalFile);
-    formData.append('gameId', gameId);
+  uploadGameAvatar: (gameId: string, avatarFile: File, originalFile: File) =>
+    postMultipartAvatarUpload('/media/upload/game/avatar', avatarFile, originalFile, { gameId }),
 
-    const response = await api.post<ApiResponse<MediaUploadResponse>>('/media/upload/game/avatar', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    
-    return response.data.data;
-  },
+  uploadGroupChannelAvatar: (groupChannelId: string, avatarFile: File, originalFile: File) =>
+    postMultipartAvatarUpload('/media/upload/group-channel/avatar', avatarFile, originalFile, {
+      groupChannelId,
+    }),
 
-  uploadGroupChannelAvatar: async (groupChannelId: string, avatarFile: File, originalFile: File): Promise<MediaUploadResponse> => {
-    const formData = new FormData();
-    formData.append('avatar', avatarFile);
-    formData.append('original', originalFile);
-    formData.append('groupChannelId', groupChannelId);
-
-    const response = await api.post<ApiResponse<MediaUploadResponse>>('/media/upload/group-channel/avatar', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    
-    return response.data.data;
-  },
-
+  uploadUserTeamAvatar: (userTeamId: string, avatarFile: File, originalFile: File) =>
+    postMultipartAvatarUpload('/media/upload/user-team/avatar', avatarFile, originalFile, {
+      userTeamId,
+    }),
 
   uploadMarketItemImage: async (imageFile: File): Promise<ChatImageUploadResponse> => {
     const formData = new FormData();

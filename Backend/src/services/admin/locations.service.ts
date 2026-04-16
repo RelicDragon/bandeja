@@ -252,6 +252,8 @@ export class AdminLocationsService {
       closingTime,
       amenities,
       isActive,
+      isBar,
+      isForPlaying,
     } = data;
 
     const oldClub = await prisma.club.findUnique({
@@ -273,6 +275,8 @@ export class AdminLocationsService {
       ...(closingTime !== undefined && { closingTime }),
       ...(amenities !== undefined && { amenities }),
       ...(isActive !== undefined && { isActive }),
+      ...(isBar !== undefined && { isBar }),
+      ...(isForPlaying !== undefined && { isForPlaying }),
     };
     const center = await prisma.club.update({
       where: { id: centerId },
