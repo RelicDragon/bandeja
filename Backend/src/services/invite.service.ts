@@ -44,8 +44,8 @@ export class InviteService {
             status: true,
             resultsStatus: true,
             entityType: true,
-            court: { select: { id: true, name: true, club: { select: { id: true, name: true } } } },
-            club: { select: { id: true, name: true } },
+            court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
+            club: { select: { id: true, name: true, avatar: true } },
             participants: {
               include: {
                 user: { select: USER_SELECT_FIELDS },

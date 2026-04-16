@@ -89,7 +89,9 @@ const getGamesCourtInclude = () => ({
     include: {
       club: {
         select: {
+          id: true,
           name: true,
+          avatar: true,
           address: true,
           city: {
             select: {
@@ -134,6 +136,7 @@ const getAvailableGamesInclude = () => ({
     select: {
       id: true,
       name: true,
+      avatar: true,
       address: true,
       cityId: true,
     },
@@ -144,6 +147,7 @@ const getAvailableGamesInclude = () => ({
         select: {
           id: true,
           name: true,
+          avatar: true,
           address: true,
         },
       },

@@ -6,6 +6,7 @@ import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 import { getTelUrl } from '@/utils/telUrl';
 import type { ClubMapItem } from '@/api/clubs';
+import { ClubAvatar } from '@/components/ClubAvatar';
 
 export interface ClubListItemProps {
   club: ClubMapItem;
@@ -49,6 +50,7 @@ function ClubListItemInner({ club, isSelected, isNearest, onSelect, scrollTarget
                 <Navigation className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden />
               </span>
             )}
+            <ClubAvatar club={{ name: club.name, avatar: club.avatar ?? null }} className="h-9 w-12" />
             <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{club.name}</span>
           </span>
           {isSelected && (
@@ -97,6 +99,7 @@ function ClubListItemInner({ club, isSelected, isNearest, onSelect, scrollTarget
 
 export const ClubListItem = memo(ClubListItemInner, (prev, next) =>
   prev.club.id === next.club.id &&
+  prev.club.avatar === next.club.avatar &&
   prev.isSelected === next.isSelected &&
   prev.isNearest === next.isNearest &&
   prev.onSelect === next.onSelect &&

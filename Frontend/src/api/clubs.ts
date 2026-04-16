@@ -4,6 +4,7 @@ import { ApiResponse, Club, EntityType } from '@/types';
 export interface ClubMapItem {
   id: string;
   name: string;
+  avatar?: string | null;
   latitude: number;
   longitude: number;
   cityId: string;

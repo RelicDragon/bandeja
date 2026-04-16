@@ -194,6 +194,15 @@ export const getAllClubs = asyncHandler(async (req: AuthRequest, res: Response) 
   });
 });
 
+export const getAdminClubById = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { centerId } = req.params;
+  const center = await AdminLocationsService.getClubByIdForAdmin(centerId);
+  res.json({
+    success: true,
+    data: center,
+  });
+});
+
 export const createClub = asyncHandler(async (req: AuthRequest, res: Response) => {
   const {
     name,
@@ -255,6 +264,9 @@ export const updateClub = asyncHandler(async (req: AuthRequest, res: Response) =
     isActive,
     isBar,
     isForPlaying,
+    photos,
+    avatar,
+    originalAvatar,
   } = req.body;
 
   const center = await AdminLocationsService.updateClub(centerId, {
@@ -273,6 +285,9 @@ export const updateClub = asyncHandler(async (req: AuthRequest, res: Response) =
     isActive,
     isBar,
     isForPlaying,
+    photos,
+    avatar,
+    originalAvatar,
   });
 
   res.json({

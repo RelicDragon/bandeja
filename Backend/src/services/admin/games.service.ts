@@ -75,7 +75,7 @@ export class AdminGamesService {
               },
             },
           },
-          club: { select: { id: true, name: true } },
+          club: { select: { id: true, name: true, avatar: true } },
           city: { select: { id: true, name: true } },
           participants: {
             include: {
@@ -111,7 +111,7 @@ export class AdminGamesService {
             },
           },
         },
-        club: { select: { id: true, name: true } },
+        club: { select: { id: true, name: true, avatar: true } },
         city: { select: { id: true, name: true } },
         trainer: { select: { ...USER_SELECT_FIELDS, phone: true } },
         participants: {

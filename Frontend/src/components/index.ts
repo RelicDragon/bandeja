@@ -13,6 +13,7 @@ export * from './GameAvatar';
 export * from './GameTypeDropdown';
 export * from './RangeSlider';
 export * from './ClubModal';
+export * from './ClubAvatar';
 export * from './CourtModal';
 export * from './CityModal';
 export * from './DateSelector';

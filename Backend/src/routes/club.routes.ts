@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
-import { optionalAuth } from '../middleware/auth';
+import { optionalAuth, requireAdmin } from '../middleware/auth';
 import * as clubController from '../controllers/club.controller';
 
 const router = Router();
@@ -13,6 +13,7 @@ router.get('/:id', optionalAuth, clubController.getClubById);
 
 router.post(
   '/',
+  requireAdmin,
   validate([
     body('name').notEmpty().withMessage('Name is required'),
     body('address').notEmpty().withMessage('Address is required'),
@@ -21,7 +22,7 @@ router.post(
   clubController.createClub
 );
 
-router.put('/:id', clubController.updateClub);
+router.put('/:id', requireAdmin, clubController.updateClub);
 
 export default router;
 

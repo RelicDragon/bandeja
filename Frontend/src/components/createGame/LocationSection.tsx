@@ -1,7 +1,7 @@
 import { MapPin, ExternalLink, Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ToggleSwitch } from '../ToggleSwitch';
-import { ClubModal, CourtModal } from '@/components';
+import { ClubModal, CourtModal, ClubAvatar } from '@/components';
 import { Club, Court, EntityType } from '@/types';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 import { getTelUrl } from '@/utils/telUrl';
@@ -75,12 +75,23 @@ export const LocationSection = ({
           <div>
             <button
               onClick={onOpenClubModal}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-left hover:border-primary-500 transition-colors"
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-left hover:border-primary-500 transition-colors flex items-center gap-3 min-w-0"
             >
-              {selectedClub
-                ? clubs.find(pc => pc.id === selectedClub)?.name
-                : t('createGame.selectClub')
-              }
+              {selectedClub ? (
+                (() => {
+                  const c = clubs.find((pc) => pc.id === selectedClub);
+                  return c ? (
+                    <>
+                      <ClubAvatar club={c} className="h-10 w-[3.75rem] shrink-0" />
+                      <span className="truncate min-w-0">{c.name}</span>
+                    </>
+                  ) : (
+                    t('createGame.selectClub')
+                  );
+                })()
+              ) : (
+                t('createGame.selectClub')
+              )}
             </button>
           </div>
           {selectedClub && (

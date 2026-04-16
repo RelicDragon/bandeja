@@ -210,6 +210,9 @@ model Club {
   name                 String
   normalizedName       String
   description          String?
+  avatar               String?
+  originalAvatar       String?
+  photos               Json               @default("[]")
   address              String
   cityId               String
   phone                String?

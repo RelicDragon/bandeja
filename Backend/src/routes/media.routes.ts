@@ -7,6 +7,8 @@ import {
   uploadGameAvatar,
   uploadGroupChannelAvatar,
   uploadUserTeamAvatar,
+  uploadClubAvatar,
+  uploadClubPhoto,
   uploadChatImage,
   uploadChatAudio,
   uploadChatAudioMulter,
@@ -54,6 +56,20 @@ router.post(
     body('userTeamId').notEmpty().withMessage('User team ID is required')
   ]),
   uploadUserTeamAvatar
+);
+
+router.post(
+  '/upload/club/avatar',
+  uploadAvatarFiles,
+  validate([body('clubId').notEmpty().withMessage('Club ID is required')]),
+  uploadClubAvatar
+);
+
+router.post(
+  '/upload/club/photo',
+  upload.single('image'),
+  validate([body('clubId').notEmpty().withMessage('Club ID is required')]),
+  uploadClubPhoto
 );
 
 router.post(

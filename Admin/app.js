@@ -34,6 +34,14 @@ function toast(message, type = 'info') {
     setTimeout(() => el.remove(), 3000);
 }
 
+function escapeHtml(s) {
+    return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
 function formatDate(dateString) {
     return new Date(dateString).toLocaleString();
 }
@@ -63,6 +71,21 @@ async function apiRequest(endpoint, options = {}) {
         throw error;
     }
 }
+
+window.apiMultipartRequest = async function apiMultipartRequest(endpoint, formData) {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+            ...(authToken && { Authorization: `Bearer ${authToken}` }),
+        },
+        body: formData,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(data.message || 'Request failed');
+    }
+    return data;
+};
 
 elements.loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -530,13 +553,16 @@ async function loadCities() {
     }
 }
 
+let citiesTableCache = [];
+
 function renderCitiesTable(cities) {
+    citiesTableCache = cities;
     const tbody = document.getElementById('citiesTableBody');
     tbody.innerHTML = cities.map(city => `
         <tr>
-            <td>${city.name}</td>
-            <td>${city.country}</td>
-            <td>${city.timezone}</td>
+            <td>${escapeHtml(city.name)}</td>
+            <td>${escapeHtml(city.country)}</td>
+            <td>${escapeHtml(city.timezone)}</td>
             <td>${city._count.clubs}</td>
             <td>${city._count.users}</td>
             <td>
@@ -546,13 +572,27 @@ function renderCitiesTable(cities) {
             </td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn-small btn-edit" onclick='editCityModal(${JSON.stringify(city)})'>Edit</button>
-                    <button class="btn-small btn-secondary" onclick="recalculateCityCenter('${city.id}')">Recalc center</button>
-                    <button class="btn-small btn-delete" onclick="deleteCity('${city.id}', '${city.name}')">Delete</button>
+                    <button type="button" class="btn-small btn-edit" onclick="openEditCityModal('${city.id}')">Edit</button>
+                    <button type="button" class="btn-small btn-secondary" onclick="recalculateCityCenter('${city.id}')">Recalc center</button>
+                    <button type="button" class="btn-small btn-delete" onclick="deleteCity('${city.id}', ${JSON.stringify(city.name)})">Delete</button>
                 </div>
             </td>
         </tr>
     `).join('');
+}
+
+async function openEditCityModal(cityId) {
+    let city = citiesTableCache.find((c) => c.id === cityId);
+    if (!city) {
+        toast('City not in list — refreshing…', 'info');
+        await loadCities();
+        city = citiesTableCache.find((c) => c.id === cityId);
+    }
+    if (!city) {
+        toast('Could not open city for editing', 'error');
+        return;
+    }
+    await editCityModal(city);
 }
 
 async function recalculateCityCenter(cityId) {
@@ -600,19 +640,27 @@ async function loadClubs() {
     }
 }
 
+let clubsTableCache = [];
+
 function renderClubsTable(centers) {
+    clubsTableCache = centers;
+    const escAttr = (s) =>
+        String(s ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;');
     const tbody = document.getElementById('centersTableBody');
     tbody.innerHTML = centers.map(center => `
         <tr>
-            <td>${center.name}</td>
-            <td>${center.city.name}</td>
-            <td>${center.address}</td>
+            <td>${escapeHtml(center.name)}</td>
+            <td>${escapeHtml(center.city.name)}</td>
+            <td title="${escAttr(center.address)}">${escapeHtml(center.address)}</td>
             <td>
-                <button class="btn-small btn-edit" onclick='viewCenterCourts(${JSON.stringify(center)})'>
+                <button type="button" class="btn-small btn-edit" onclick="viewCenterCourts('${center.id}')">
                     ${center._count.courts} Courts
                 </button>
             </td>
-            <td>${center.phone || '-'}</td>
+            <td>${escapeHtml(center.phone) || '-'}</td>
             <td>
                 <span class="badge ${center.isActive ? 'badge-success' : 'badge-danger'}">
                     ${center.isActive ? 'Active' : 'Inactive'}
@@ -620,8 +668,8 @@ function renderClubsTable(centers) {
             </td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn-small btn-edit" onclick='editCenterModal(${JSON.stringify(center)})'>Edit</button>
-                    <button class="btn-small btn-delete" onclick="deleteClub('${center.id}', '${center.name}')">Delete</button>
+                    <button type="button" class="btn-small btn-edit" onclick="openEditClubModal('${center.id}')">Edit</button>
+                    <button type="button" class="btn-small btn-delete" onclick="deleteClub('${center.id}', ${JSON.stringify(center.name)})">Delete</button>
                 </div>
             </td>
         </tr>
@@ -630,12 +678,47 @@ function renderClubsTable(centers) {
 
 let currentCenter = null;
 
-function viewCenterCourts(center) {
+async function openEditClubModal(centerId) {
+    try {
+        const response = await apiRequest(`/admin/clubs/${centerId}`);
+        if (response.success && response.data) {
+            const fresh = response.data;
+            const i = clubsTableCache.findIndex((c) => c.id === centerId);
+            if (i >= 0) clubsTableCache[i] = fresh;
+            else clubsTableCache.push(fresh);
+            await editCenterModal(fresh);
+            return;
+        }
+    } catch {
+        /* use cache */
+    }
+    const center = clubsTableCache.find((c) => c.id === centerId);
+    if (center) {
+        await editCenterModal(center);
+        return;
+    }
+    toast('Could not load club', 'error');
+}
+
+async function viewCenterCourts(centerId) {
+    let center = clubsTableCache.find((c) => c.id === centerId);
+    try {
+        const response = await apiRequest(`/admin/clubs/${centerId}`);
+        if (response.success && response.data) {
+            center = response.data;
+            const i = clubsTableCache.findIndex((c) => c.id === centerId);
+            if (i >= 0) clubsTableCache[i] = center;
+            else clubsTableCache.push(center);
+        }
+    } catch {
+        /* keep cache */
+    }
+    if (!center) return;
     currentCenter = center;
     document.getElementById('centersList').style.display = 'none';
     document.getElementById('courtsView').style.display = 'block';
-    document.getElementById('centerName').textContent = center.name;
-    document.getElementById('centerLocation').textContent = `${center.address}, ${center.city.name}`;
+    document.getElementById('courtsClubTitle').textContent = center.name;
+    document.getElementById('courtsClubLocation').textContent = `${center.address}, ${center.city.name}`;
     loadCourtsForCenter(center.id);
 }
 
@@ -664,14 +747,14 @@ function renderCourtsTable(courts) {
     }
     tbody.innerHTML = courts.map(court => `
         <tr>
-            <td>${court.name}</td>
-            <td>${court.courtType || '-'}</td>
+            <td>${escapeHtml(court.name)}</td>
+            <td>${escapeHtml(court.courtType) || '-'}</td>
             <td>
                 <span class="badge ${court.isIndoor ? 'badge-info' : 'badge-warning'}">
                     ${court.isIndoor ? 'Indoor' : 'Outdoor'}
                 </span>
             </td>
-            <td>${court.surfaceType || '-'}</td>
+            <td>${escapeHtml(court.surfaceType) || '-'}</td>
             <td>${court.pricePerHour ? '$' + court.pricePerHour : '-'}</td>
             <td>
                 <span class="badge ${court.isActive ? 'badge-success' : 'badge-danger'}">
@@ -680,8 +763,8 @@ function renderCourtsTable(courts) {
             </td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn-small btn-edit" onclick='editCourtModal(${JSON.stringify(court)})'>Edit</button>
-                    <button class="btn-small btn-delete" onclick="deleteCourt('${court.id}', '${court.name}')">Delete</button>
+                    <button type="button" class="btn-small btn-edit" onclick='editCourtModal(${JSON.stringify(court)})'>Edit</button>
+                    <button type="button" class="btn-small btn-delete" onclick="deleteCourt('${court.id}', ${JSON.stringify(court.name)})">Delete</button>
                 </div>
             </td>
         </tr>
@@ -1108,8 +1191,10 @@ window.editUserById = editUserById;
 window.viewUserDetail = viewUserDetail;
 window.deleteUser = deleteUser;
 window.loadCities = loadCities;
+window.openEditCityModal = openEditCityModal;
 window.loadClubs = loadClubs;
 window.viewCenterCourts = viewCenterCourts;
+window.openEditClubModal = openEditClubModal;
 window.backToCenters = backToCenters;
 window.handleGlobalCityChange = handleGlobalCityChange;
 window.loadHistoricalLogs = loadHistoricalLogs;

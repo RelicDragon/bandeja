@@ -245,8 +245,8 @@
                     <div class="page-header">
                         <button class="btn-secondary" onclick="backToCenters()">← Back to Centers</button>
                         <div class="center-info">
-                            <h1 id="centerName"></h1>
-                            <p id="centerLocation"></p>
+                            <h1 id="courtsClubTitle"></h1>
+                            <p id="courtsClubLocation"></p>
                         </div>
                         <button class="btn-primary" onclick="createCourtForCenter()">+ Add Court</button>
                     </div>
@@ -464,6 +464,19 @@
                     <label for="centerDescription">Description</label>
                     <textarea id="centerDescription" name="centerDescription" rows="3"></textarea>
                 </div>
+                <div id="centerMediaSection" class="form-group" style="display: none;">
+                    <label>Club avatar</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start;">
+                        <img id="centerAvatarPreview" alt="" width="120" height="90" style="display: none; border-radius: 12px; object-fit: cover; box-shadow: 0 2px 10px rgba(0,0,0,0.12);" />
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <input type="file" id="centerAvatarFile" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif" />
+                            <button type="button" class="btn-secondary" id="centerAvatarRemoveBtn" style="display: none;">Remove avatar</button>
+                        </div>
+                    </div>
+                    <label style="margin-top: 12px; display: block;">Club photos</label>
+                    <div id="centerPhotosList" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;"></div>
+                    <input type="file" id="centerPhotoFile" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif" />
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="centerPhone">Phone</label>
@@ -476,7 +489,7 @@
                 </div>
                 <div class="form-group">
                     <label for="centerWebsite">Website</label>
-                    <input type="url" id="centerWebsite" name="centerWebsite">
+                    <input type="text" id="centerWebsite" name="centerWebsite" placeholder="https://… or example.com">
                 </div>
                 <div class="form-row">
                     <div class="form-group">

@@ -139,7 +139,7 @@ export class GameWorkoutService {
             name: true,
             gameType: true,
             startTime: true,
-            club: { select: { id: true, name: true } },
+            club: { select: { id: true, name: true, avatar: true } },
           },
         },
       },

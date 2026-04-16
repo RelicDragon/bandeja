@@ -65,8 +65,8 @@ export class LeagueAssignService {
         id: true,
         status: true,
         maxParticipants: true,
-        court: { select: { id: true, name: true, club: { select: { id: true, name: true } } } },
-        club: { select: { id: true, name: true } },
+        court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
+        club: { select: { id: true, name: true, avatar: true } },
         participants: { where: { status: 'PLAYING' }, select: { userId: true } },
       },
     });
@@ -89,8 +89,8 @@ export class LeagueAssignService {
           id: true,
           startTime: true,
           endTime: true,
-          court: { select: { id: true, name: true, club: { select: { id: true, name: true } } } },
-          club: { select: { id: true, name: true } },
+          court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
+          club: { select: { id: true, name: true, avatar: true } },
         },
       });
       if (gameForNotif?.startTime && gameForNotif?.endTime) {

@@ -139,11 +139,19 @@ export interface City {
   isActive: boolean;
 }
 
+export interface ClubPhoto {
+  thumbnailUrl: string;
+  originalUrl: string;
+}
+
 export interface Club {
   id: string;
   name: string;
   normalizedName?: string;
   description?: string;
+  avatar?: string | null;
+  originalAvatar?: string | null;
+  photos?: ClubPhoto[] | null;
   address: string;
   cityId: string;
   phone?: string;

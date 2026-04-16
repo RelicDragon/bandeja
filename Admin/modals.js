@@ -10,6 +10,86 @@ function closeModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
 }
 
+function formatTimeForHtmlInput(raw) {
+    if (raw == null || raw === '') return '';
+    const s = String(raw).trim();
+    const tPart = s.includes('T') ? s.split('T').pop() : s;
+    const iso = tPart.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (iso) return `${String(iso[1]).padStart(2, '0')}:${iso[2]}`;
+    const ms = Date.parse(s);
+    if (!Number.isNaN(ms)) {
+        const d = new Date(ms);
+        const hh = String(d.getUTCHours()).padStart(2, '0');
+        const mm = String(d.getUTCMinutes()).padStart(2, '0');
+        return `${hh}:${mm}`;
+    }
+    return '';
+}
+
+function optionalTrimToNull(v) {
+    if (v == null) return null;
+    const t = String(v).trim();
+    return t === '' ? null : t;
+}
+
+function normalizeWebsiteForApi(raw) {
+    const t = optionalTrimToNull(raw);
+    if (t === null) return null;
+    const trimmed = t.replace(/\s/g, '');
+    if (trimmed === '') return null;
+    if (/^https?:\/\//i.test(trimmed)) {
+        try {
+            const u = new URL(trimmed);
+            if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+            return u.href;
+        } catch {
+            return null;
+        }
+    }
+    const head = trimmed.split('/')[0];
+    const hostLike =
+        /^localhost(:\d+)?$/i.test(head) || /^[\w.-]+\.[a-z0-9-]{2,}$/i.test(head);
+    if (!hostLike) return trimmed;
+    try {
+        const u = new URL('https://' + trimmed.replace(/^\/+/, ''));
+        if (u.protocol !== 'https:') return null;
+        return u.href;
+    } catch {
+        return null;
+    }
+}
+
+function cf(form, fieldId) {
+    return form.querySelector('#' + fieldId);
+}
+
+const CLUB_FORM_CONTROL_IDS = [
+    'centerName',
+    'centerDescription',
+    'centerAddress',
+    'centerCityId',
+    'centerPhone',
+    'centerEmail',
+    'centerWebsite',
+    'centerOpeningTime',
+    'centerClosingTime',
+    'centerLatitude',
+    'centerLongitude',
+    'centerIsActive',
+    'centerIsBar',
+    'centerIsForPlaying',
+];
+
+function assertClubFormControls(form) {
+    for (const id of CLUB_FORM_CONTROL_IDS) {
+        if (!cf(form, id)) {
+            alert(`Club form is missing control “${id}”. Refresh the page.`);
+            return false;
+        }
+    }
+    return true;
+}
+
 async function loadCountriesAndTimezones() {
     try {
         const [countriesResponse, timezonesResponse] = await Promise.all([
@@ -25,6 +105,8 @@ async function loadCountriesAndTimezones() {
                     `<option value="${country}">${country}</option>`
                 ).join('');
             if (currentValue) countrySelect.value = currentValue;
+        } else {
+            alert(countriesResponse.message || 'Could not load country list.');
         }
 
         if (timezonesResponse.success) {
@@ -35,31 +117,34 @@ async function loadCountriesAndTimezones() {
                     `<option value="${timezone}">${timezone}</option>`
                 ).join('');
             if (currentValue) timezoneSelect.value = currentValue;
+        } else {
+            alert(timezonesResponse.message || 'Could not load timezone list.');
         }
     } catch (error) {
         console.error('Failed to load countries and timezones:', error);
+        alert('Could not load country or timezone list. Check your connection and try again.');
     }
 }
 
-function createCityModal() {
+async function createCityModal() {
     showModal('cityModal');
     document.getElementById('cityModalTitle').textContent = 'Create City';
     document.getElementById('cityForm').reset();
     document.getElementById('cityForm').dataset.mode = 'create';
     document.getElementById('cityForm').dataset.cityId = '';
-    loadCountriesAndTimezones();
+    await loadCountriesAndTimezones();
 }
 
-function editCityModal(city) {
+async function editCityModal(city) {
     showModal('cityModal');
     document.getElementById('cityModalTitle').textContent = 'Edit City';
-    document.getElementById('cityName').value = city.name;
-    document.getElementById('cityCountry').value = city.country;
-    document.getElementById('cityTimezone').value = city.timezone;
-    document.getElementById('cityIsActive').checked = city.isActive;
     document.getElementById('cityForm').dataset.mode = 'edit';
     document.getElementById('cityForm').dataset.cityId = city.id;
-    loadCountriesAndTimezones();
+    await loadCountriesAndTimezones();
+    document.getElementById('cityName').value = city.name;
+    document.getElementById('cityCountry').value = city.country;
+    document.getElementById('cityTimezone').value = city.timezone || '';
+    document.getElementById('cityIsActive').checked = city.isActive;
 }
 
 async function handleCitySubmit(e) {
@@ -117,30 +202,99 @@ async function createCenterModal() {
     document.getElementById('centerForm').reset();
     document.getElementById('centerForm').dataset.mode = 'create';
     document.getElementById('centerForm').dataset.centerId = '';
+    document.getElementById('centerMediaSection').style.display = 'none';
+    const pr = document.getElementById('centerAvatarPreview');
+    pr.removeAttribute('src');
+    pr.style.display = 'none';
+    document.getElementById('centerAvatarRemoveBtn').style.display = 'none';
+    document.getElementById('centerPhotosList').innerHTML = '';
+    document.getElementById('centerAvatarFile').value = '';
+    document.getElementById('centerPhotoFile').value = '';
     await loadCityOptions();
 }
 
 async function editCenterModal(center) {
+    const form = document.getElementById('centerForm');
+    if (!form || !assertClubFormControls(form)) return;
     showModal('centerModal');
     document.getElementById('centerModalTitle').textContent = 'Edit Club';
-    document.getElementById('centerName').value = center.name;
-    document.getElementById('centerDescription').value = center.description || '';
-    document.getElementById('centerAddress').value = center.address;
-    document.getElementById('centerPhone').value = center.phone || '';
-    document.getElementById('centerEmail').value = center.email || '';
-    document.getElementById('centerWebsite').value = center.website || '';
-    document.getElementById('centerOpeningTime').value = center.openingTime || '';
-    document.getElementById('centerClosingTime').value = center.closingTime || '';
-    document.getElementById('centerLatitude').value =
+    cf(form, 'centerName').value = center.name;
+    cf(form, 'centerDescription').value = center.description || '';
+    cf(form, 'centerAddress').value = center.address;
+    cf(form, 'centerPhone').value = center.phone || '';
+    cf(form, 'centerEmail').value = center.email || '';
+    cf(form, 'centerWebsite').value = center.website || '';
+    cf(form, 'centerOpeningTime').value = formatTimeForHtmlInput(center.openingTime);
+    cf(form, 'centerClosingTime').value = formatTimeForHtmlInput(center.closingTime);
+    cf(form, 'centerLatitude').value =
         center.latitude != null && center.latitude !== '' ? String(center.latitude) : '';
-    document.getElementById('centerLongitude').value =
+    cf(form, 'centerLongitude').value =
         center.longitude != null && center.longitude !== '' ? String(center.longitude) : '';
-    document.getElementById('centerIsActive').checked = center.isActive;
-    document.getElementById('centerIsBar').checked = center.isBar || false;
-    document.getElementById('centerIsForPlaying').checked = center.isForPlaying !== undefined ? center.isForPlaying : true;
-    document.getElementById('centerForm').dataset.mode = 'edit';
-    document.getElementById('centerForm').dataset.centerId = center.id;
+    cf(form, 'centerIsActive').checked = center.isActive;
+    cf(form, 'centerIsBar').checked = center.isBar || false;
+    cf(form, 'centerIsForPlaying').checked = center.isForPlaying !== undefined ? center.isForPlaying : true;
+    form.dataset.mode = 'edit';
+    form.dataset.centerId = center.id;
+    document.getElementById('centerMediaSection').style.display = 'block';
+    const pr = document.getElementById('centerAvatarPreview');
+    const rmBtn = document.getElementById('centerAvatarRemoveBtn');
+    if (center.avatar) {
+        pr.src = center.avatar;
+        pr.style.display = 'block';
+        rmBtn.style.display = 'inline-block';
+    } else {
+        pr.removeAttribute('src');
+        pr.style.display = 'none';
+        rmBtn.style.display = 'none';
+    }
+    document.getElementById('centerAvatarFile').value = '';
+    document.getElementById('centerPhotoFile').value = '';
+    editingClubPhotos = normalizeClubPhotosAdmin(center.photos);
+    renderEditingClubPhotos(center.id);
     await loadCityOptions(center.cityId);
+}
+
+let editingClubPhotos = [];
+
+function normalizeClubPhotosAdmin(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.filter((p) => p && typeof p.originalUrl === 'string' && typeof p.thumbnailUrl === 'string');
+}
+
+function renderEditingClubPhotos(clubId) {
+    const box = document.getElementById('centerPhotosList');
+    if (!box) return;
+    box.innerHTML = '';
+    editingClubPhotos.forEach((ph) => {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;border:1px solid #ccc;';
+        const img = document.createElement('img');
+        img.src = ph.thumbnailUrl;
+        img.alt = '';
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+        wrap.appendChild(img);
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.textContent = '×';
+        del.style.cssText = 'position:absolute;top:2px;right:2px;width:22px;height:22px;border:none;border-radius:50%;background:#c00;color:#fff;cursor:pointer;line-height:1;font-size:14px;';
+        del.onclick = async () => {
+            if (!confirm('Remove this photo?')) return;
+            const url = ph.originalUrl;
+            editingClubPhotos = editingClubPhotos.filter((x) => x.originalUrl !== url);
+            try {
+                await apiRequest(`/admin/clubs/${clubId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ photos: editingClubPhotos }),
+                });
+                renderEditingClubPhotos(clubId);
+                loadClubs();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        };
+        wrap.appendChild(del);
+        box.appendChild(wrap);
+    });
 }
 
 async function loadCityOptions(selectedCityId) {
@@ -155,21 +309,25 @@ async function loadCityOptions(selectedCityId) {
             if (selectedCityId) {
                 select.value = selectedCityId;
             }
+        } else {
+            alert(response.message || 'Could not load cities for this form.');
         }
     } catch (error) {
         console.error('Failed to load cities:', error);
+        alert(error.message || 'Could not load cities. Check your connection and try again.');
     }
 }
 
 async function handleCenterSubmit(e) {
     e.preventDefault();
     const form = e.target;
+    if (!assertClubFormControls(form)) return;
     const mode = form.dataset.mode;
     const centerId = form.dataset.centerId;
 
     const formData = new FormData(form);
-    const latStr = String(formData.get('centerLatitude') ?? document.getElementById('centerLatitude').value ?? '').trim();
-    const lngStr = String(formData.get('centerLongitude') ?? document.getElementById('centerLongitude').value ?? '').trim();
+    const latStr = String(formData.get('centerLatitude') ?? cf(form, 'centerLatitude').value ?? '').trim();
+    const lngStr = String(formData.get('centerLongitude') ?? cf(form, 'centerLongitude').value ?? '').trim();
     let latitude = null;
     let longitude = null;
     if (latStr) {
@@ -187,21 +345,28 @@ async function handleCenterSubmit(e) {
         }
     }
 
+    const websiteRaw = formData.get('centerWebsite');
+    const website = normalizeWebsiteForApi(websiteRaw);
+    if (optionalTrimToNull(websiteRaw) !== null && website === null) {
+        alert('Invalid website. Leave blank, use a full https://… URL, or a hostname such as example.com');
+        return;
+    }
+
     const data = {
-        name: formData.get('centerName') || document.getElementById('centerName').value,
-        description: formData.get('centerDescription') || document.getElementById('centerDescription').value || null,
-        address: formData.get('centerAddress') || document.getElementById('centerAddress').value,
-        cityId: formData.get('centerCityId') || document.getElementById('centerCityId').value,
-        phone: formData.get('centerPhone') || document.getElementById('centerPhone').value || null,
-        email: formData.get('centerEmail') || document.getElementById('centerEmail').value || null,
-        website: formData.get('centerWebsite') || document.getElementById('centerWebsite').value || null,
-        openingTime: formData.get('centerOpeningTime') || document.getElementById('centerOpeningTime').value || null,
-        closingTime: formData.get('centerClosingTime') || document.getElementById('centerClosingTime').value || null,
+        name: String(formData.get('centerName') ?? cf(form, 'centerName').value ?? '').trim(),
+        description: optionalTrimToNull(formData.get('centerDescription')),
+        address: String(formData.get('centerAddress') ?? cf(form, 'centerAddress').value ?? '').trim(),
+        cityId: String(formData.get('centerCityId') ?? cf(form, 'centerCityId').value ?? '').trim(),
+        phone: optionalTrimToNull(formData.get('centerPhone')),
+        email: optionalTrimToNull(formData.get('centerEmail')),
+        website,
+        openingTime: optionalTrimToNull(formData.get('centerOpeningTime')),
+        closingTime: optionalTrimToNull(formData.get('centerClosingTime')),
         latitude: latStr ? latitude : null,
         longitude: lngStr ? longitude : null,
-        isActive: document.getElementById('centerIsActive').checked,
-        isBar: document.getElementById('centerIsBar').checked,
-        isForPlaying: document.getElementById('centerIsForPlaying').checked,
+        isActive: cf(form, 'centerIsActive').checked,
+        isBar: cf(form, 'centerIsBar').checked,
+        isForPlaying: cf(form, 'centerIsForPlaying').checked,
     };
 
     try {
@@ -572,4 +737,76 @@ window.emitCoinsModal = emitCoinsModal;
 window.handleEmitCoinsSubmit = handleEmitCoinsSubmit;
 window.dropCoinsModal = dropCoinsModal;
 window.handleDropCoinsSubmit = handleDropCoinsSubmit;
+
+(function setupClubMediaUploads() {
+    const af = document.getElementById('centerAvatarFile');
+    const pf = document.getElementById('centerPhotoFile');
+    const rm = document.getElementById('centerAvatarRemoveBtn');
+    if (!af || !pf || !rm) return;
+    af.addEventListener('change', async (ev) => {
+        const file = ev.target.files && ev.target.files[0];
+        ev.target.value = '';
+        if (!file) return;
+        const centerId = document.getElementById('centerForm').dataset.centerId;
+        const mode = document.getElementById('centerForm').dataset.mode;
+        if (mode !== 'edit' || !centerId) {
+            alert('Save the club first, then edit it to upload an avatar.');
+            return;
+        }
+        try {
+            const fd = new FormData();
+            fd.append('avatar', file);
+            fd.append('original', file);
+            fd.append('clubId', centerId);
+            const res = await window.apiMultipartRequest('/media/upload/club/avatar', fd);
+            const pr = document.getElementById('centerAvatarPreview');
+            pr.src = res.data.avatarUrl;
+            pr.style.display = 'block';
+            rm.style.display = 'inline-block';
+            loadClubs();
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    });
+    pf.addEventListener('change', async (ev) => {
+        const file = ev.target.files && ev.target.files[0];
+        ev.target.value = '';
+        if (!file) return;
+        const centerId = document.getElementById('centerForm').dataset.centerId;
+        const mode = document.getElementById('centerForm').dataset.mode;
+        if (mode !== 'edit' || !centerId) {
+            alert('Save the club first, then edit it to upload photos.');
+            return;
+        }
+        try {
+            const fd = new FormData();
+            fd.append('image', file);
+            fd.append('clubId', centerId);
+            const res = await window.apiMultipartRequest('/media/upload/club/photo', fd);
+            editingClubPhotos = normalizeClubPhotosAdmin(res.data.photos);
+            renderEditingClubPhotos(centerId);
+            loadClubs();
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    });
+    rm.addEventListener('click', async () => {
+        const centerId = document.getElementById('centerForm').dataset.centerId;
+        if (!centerId) return;
+        if (!confirm('Remove club avatar?')) return;
+        try {
+            await apiRequest(`/admin/clubs/${centerId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ avatar: null, originalAvatar: null }),
+            });
+            const pr = document.getElementById('centerAvatarPreview');
+            pr.removeAttribute('src');
+            pr.style.display = 'none';
+            rm.style.display = 'none';
+            loadClubs();
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    });
+})();
 

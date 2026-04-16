@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse } from '@/types';
+import type { ApiResponse, Club } from '@/types';
 
 export interface MediaUploadResponse {
   avatarUrl: string;
@@ -57,6 +57,19 @@ export const mediaApi = {
     postMultipartAvatarUpload('/media/upload/user-team/avatar', avatarFile, originalFile, {
       userTeamId,
     }),
+
+  uploadClubAvatar: (clubId: string, avatarFile: File, originalFile: File) =>
+    postMultipartAvatarUpload('/media/upload/club/avatar', avatarFile, originalFile, { clubId }),
+
+  uploadClubPhoto: async (clubId: string, imageFile: File): Promise<Club> => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('clubId', clubId);
+    const response = await api.post<ApiResponse<Club>>('/media/upload/club/photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.data;
+  },
 
   uploadMarketItemImage: async (imageFile: File): Promise<ChatImageUploadResponse> => {
     const formData = new FormData();

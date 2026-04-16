@@ -5,6 +5,16 @@ import prisma from '../config/database';
 import { normalizeClubName } from '../utils/normalizeClubName';
 import { refreshCityFromClubs } from '../utils/updateCityCenter';
 
+const PUBLIC_CLUB_UPDATE_FORBIDDEN = new Set([
+  'avatar',
+  'originalAvatar',
+  'photos',
+  'id',
+  'createdAt',
+  'updatedAt',
+  'courtsNumber',
+]);
+
 export const getClubsForMap = asyncHandler(async (req: Request, res: Response) => {
   const minLat = req.query.minLat != null ? Number(req.query.minLat) : null;
   const maxLat = req.query.maxLat != null ? Number(req.query.maxLat) : null;
@@ -38,6 +48,7 @@ export const getClubsForMap = asyncHandler(async (req: Request, res: Response) =
     select: {
       id: true,
       name: true,
+      avatar: true,
       latitude: true,
       longitude: true,
       courtsNumber: true,
@@ -49,6 +60,7 @@ export const getClubsForMap = asyncHandler(async (req: Request, res: Response) =
   const data = clubs.map((c) => ({
     id: c.id,
     name: c.name,
+    avatar: c.avatar ?? undefined,
     latitude: c.latitude!,
     longitude: c.longitude!,
     cityId: c.city.id,
@@ -190,6 +202,9 @@ export const createClub = asyncHandler(async (req: Request, res: Response) => {
 export const updateClub = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const updateData = { ...req.body };
+  for (const key of PUBLIC_CLUB_UPDATE_FORBIDDEN) {
+    delete (updateData as Record<string, unknown>)[key];
+  }
   if (updateData.name != null) {
     updateData.normalizedName = normalizeClubName(updateData.name);
   }

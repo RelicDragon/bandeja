@@ -18,6 +18,7 @@ import {
   recalculateCityCenter,
   recalculateAllCitiesCenter,
   getAllClubs,
+  getAdminClubById,
   createClub,
   updateClub,
   deleteClub,
@@ -73,6 +74,7 @@ router.delete('/cities/:cityId', requireAdmin, deleteCity);
 router.post('/cities/:cityId/recalculate-center', requireAdmin, recalculateCityCenter);
 
 router.get('/clubs', requireAdmin, getAllClubs);
+router.get('/clubs/:centerId', requireAdmin, getAdminClubById);
 router.post('/clubs', requireAdmin, createClub);
 router.put('/clubs/:centerId', requireAdmin, updateClub);
 router.delete('/clubs/:centerId', requireAdmin, deleteClub);

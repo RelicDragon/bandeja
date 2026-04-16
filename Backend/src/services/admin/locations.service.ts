@@ -1,5 +1,13 @@
+import { Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
+import { ImageProcessor } from '../../utils/imageProcessor';
+import { isOurCircularAvatarUrl, isOurAvatarOriginalUrl } from '../../utils/userAvatarTiny';
+import {
+  parseClubPhotosJson,
+  isOurChatStorageImageUrl,
+  type ClubPhotoStored,
+} from '../../utils/clubPhotosJson';
 import { COUNTRIES, TIMEZONES, DEFAULT_TIMEZONE } from '../../utils/constants';
 import { normalizeClubName } from '../../utils/normalizeClubName';
 import { refreshCityFromClubs, refreshAllCitiesFromClubs } from '../../utils/updateCityCenter';
@@ -7,6 +15,29 @@ import { refreshClubCourtsCount } from '../../utils/refreshClubCourtsCount';
 import { CityGroupService } from '../chat/cityGroup.service';
 
 export class AdminLocationsService {
+  private static async deleteStoredClubAvatar(club: {
+    avatar: string | null;
+    originalAvatar: string | null;
+  }) {
+    if (club.avatar && isOurCircularAvatarUrl(club.avatar)) {
+      await ImageProcessor.deleteFile(club.avatar);
+    }
+    if (club.originalAvatar && isOurAvatarOriginalUrl(club.originalAvatar)) {
+      await ImageProcessor.deleteFile(club.originalAvatar);
+    }
+  }
+
+  private static async deleteStoredClubPhotos(photos: unknown) {
+    for (const p of parseClubPhotosJson(photos)) {
+      if (isOurChatStorageImageUrl(p.originalUrl)) {
+        await ImageProcessor.deleteFile(p.originalUrl);
+      }
+      if (isOurChatStorageImageUrl(p.thumbnailUrl)) {
+        await ImageProcessor.deleteFile(p.thumbnailUrl);
+      }
+    }
+  }
+
   static async getAllCities() {
     const cities = await prisma.city.findMany({
       include: {
@@ -153,6 +184,27 @@ export class AdminLocationsService {
     return centers;
   }
 
+  static async getClubByIdForAdmin(centerId: string) {
+    const club = await prisma.club.findFirst({
+      where: { id: centerId },
+      include: {
+        city: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            courts: true,
+          },
+        },
+      },
+    });
+    if (!club) throw new ApiError(404, 'Club not found');
+    return club;
+  }
+
   static async createClub(data: {
     name: string;
     description?: string;
@@ -237,6 +289,9 @@ export class AdminLocationsService {
     isActive?: boolean;
     isBar?: boolean;
     isForPlaying?: boolean;
+    photos?: ClubPhotoStored[];
+    avatar?: string | null;
+    originalAvatar?: string | null;
   }) {
     const {
       name,
@@ -254,11 +309,14 @@ export class AdminLocationsService {
       isActive,
       isBar,
       isForPlaying,
+      photos,
+      avatar,
+      originalAvatar,
     } = data;
 
     const oldClub = await prisma.club.findUnique({
       where: { id: centerId },
-      select: { cityId: true, isActive: true },
+      select: { cityId: true, isActive: true, avatar: true, originalAvatar: true, photos: true },
     });
     if (!oldClub) throw new ApiError(404, 'Club not found');
     const dataPayload: Parameters<typeof prisma.club.update>[0]['data'] = {
@@ -278,6 +336,40 @@ export class AdminLocationsService {
       ...(isBar !== undefined && { isBar }),
       ...(isForPlaying !== undefined && { isForPlaying }),
     };
+
+    if (photos !== undefined) {
+      const prev = parseClubPhotosJson(oldClub.photos);
+      const next = parseClubPhotosJson(photos);
+      for (const o of prev) {
+        const still = next.some(
+          (n) => n.originalUrl === o.originalUrl && n.thumbnailUrl === o.thumbnailUrl
+        );
+        if (!still) {
+          if (isOurChatStorageImageUrl(o.originalUrl)) {
+            await ImageProcessor.deleteFile(o.originalUrl);
+          }
+          if (isOurChatStorageImageUrl(o.thumbnailUrl)) {
+            await ImageProcessor.deleteFile(o.thumbnailUrl);
+          }
+        }
+      }
+      dataPayload.photos = next as Prisma.InputJsonValue;
+    }
+
+    const hasAvatarKey = Object.prototype.hasOwnProperty.call(data, 'avatar');
+    const hasOriginalKey = Object.prototype.hasOwnProperty.call(data, 'originalAvatar');
+    if (hasAvatarKey !== hasOriginalKey) {
+      throw new ApiError(400, 'avatar and originalAvatar must be sent together');
+    }
+    if (hasAvatarKey && hasOriginalKey) {
+      if (avatar === null && originalAvatar === null) {
+        await AdminLocationsService.deleteStoredClubAvatar(oldClub);
+        dataPayload.avatar = null;
+        dataPayload.originalAvatar = null;
+      } else {
+        throw new ApiError(400, 'Club avatar is managed via media upload; only null,null is allowed here');
+      }
+    }
     const center = await prisma.club.update({
       where: { id: centerId },
       data: dataPayload,
@@ -303,12 +395,17 @@ export class AdminLocationsService {
   static async deleteClub(centerId: string) {
     const club = await prisma.club.findUnique({
       where: { id: centerId },
-      select: { cityId: true },
+      select: { cityId: true, avatar: true, originalAvatar: true, photos: true },
     });
+    if (!club) {
+      throw new ApiError(404, 'Club not found');
+    }
     await prisma.club.delete({
       where: { id: centerId },
     });
-    if (club) await refreshCityFromClubs(club.cityId);
+    await AdminLocationsService.deleteStoredClubAvatar(club);
+    await AdminLocationsService.deleteStoredClubPhotos(club.photos);
+    await refreshCityFromClubs(club.cityId);
     return { message: 'Padel center deleted successfully' };
   }
 

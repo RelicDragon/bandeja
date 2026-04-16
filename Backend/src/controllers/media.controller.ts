@@ -11,10 +11,13 @@ import {
 } from '../utils/userAvatarTiny';
 import prisma from '../config/database';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
-import { ParticipantRole } from '@prisma/client';
+import { ParticipantRole, Prisma } from '@prisma/client';
 import { MessageService } from '../services/chat/message.service';
 import { GroupChannelService } from '../services/chat/groupChannel.service';
 import { UserTeamService } from '../services/userTeam.service';
+import { parseClubPhotosJson } from '../utils/clubPhotosJson';
+
+const MAX_CLUB_PHOTOS = 24;
 
 const storage = multer.memoryStorage();
 
@@ -78,7 +81,7 @@ export const uploadAvatarFiles = multer({
   { name: 'original', maxCount: 1 }
 ]);
 
-type AvatarEntityType = 'user' | 'game' | 'groupChannel' | 'userTeam';
+type AvatarEntityType = 'user' | 'game' | 'groupChannel' | 'userTeam' | 'club';
 
 interface AvatarEntity {
   avatar: string | null;
@@ -160,6 +163,12 @@ async function uploadAvatarForEntity(
         select: { avatar: true, originalAvatar: true },
       });
       break;
+    case 'club':
+      entity = await prisma.club.findUnique({
+        where: { id: entityId },
+        select: { avatar: true, originalAvatar: true },
+      });
+      break;
   }
 
   if (!entity) {
@@ -209,6 +218,15 @@ async function uploadAvatarForEntity(
       break;
     case 'userTeam':
       await prisma.userTeam.update({
+        where: { id: entityId },
+        data: {
+          avatar: result.avatarPath,
+          originalAvatar: result.originalPath,
+        },
+      });
+      break;
+    case 'club':
+      await prisma.club.update({
         where: { id: entityId },
         data: {
           avatar: result.avatarPath,
@@ -294,6 +312,61 @@ export const uploadUserTeamAvatar = asyncHandler(async (req: AuthRequest, res: R
   const result = await uploadAvatarForEntity('userTeam', userTeamId, originalFile);
   await UserTeamService.emitUpdatedTeam(userTeamId);
   sendAvatarUploadJson(res, result, 'User team avatar uploaded successfully');
+});
+
+export const uploadClubAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.user?.isAdmin) {
+    throw new ApiError(403, 'Admin access required');
+  }
+  const { clubId } = req.body;
+  if (!clubId || typeof clubId !== 'string') {
+    throw new ApiError(400, 'Club ID is required');
+  }
+  const originalFile = requireAvatarOriginalFile(req);
+  const result = await uploadAvatarForEntity('club', clubId, originalFile);
+  sendAvatarUploadJson(res, result, 'Club avatar uploaded successfully');
+});
+
+export const uploadClubPhoto = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.user?.isAdmin) {
+    throw new ApiError(403, 'Admin access required');
+  }
+  if (!req.file) {
+    throw new ApiError(400, 'No image file provided');
+  }
+  const { clubId } = req.body;
+  if (!clubId || typeof clubId !== 'string') {
+    throw new ApiError(400, 'Club ID is required');
+  }
+  const club = await prisma.club.findUnique({
+    where: { id: clubId },
+    select: { id: true, photos: true },
+  });
+  if (!club) {
+    throw new ApiError(404, 'Club not found');
+  }
+  const existing = parseClubPhotosJson(club.photos);
+  if (existing.length >= MAX_CLUB_PHOTOS) {
+    throw new ApiError(400, `Maximum ${MAX_CLUB_PHOTOS} photos per club`);
+  }
+  const processed = await ImageProcessor.processChatImage(req.file.buffer, req.file.originalname);
+  const next = [
+    ...existing,
+    { originalUrl: processed.originalPath!, thumbnailUrl: processed.thumbnailPath! },
+  ];
+  const updated = await prisma.club.update({
+    where: { id: clubId },
+    data: { photos: next as Prisma.InputJsonValue },
+    include: {
+      city: { select: { id: true, name: true } },
+      _count: { select: { courts: true } },
+    },
+  });
+  res.status(200).json({
+    success: true,
+    message: 'Club photo uploaded successfully',
+    data: updated,
+  });
 });
 
 export const uploadChatAudio = asyncHandler(async (req: AuthRequest, res: Response) => {

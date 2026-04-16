@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Club, Court, Game } from '@/types';
 import { ClubModal } from '@/components/ClubModal';
+import { ClubAvatar } from '@/components/ClubAvatar';
 import { CourtModal } from '@/components/CourtModal';
 import { ToggleSwitch } from '@/components';
 
@@ -32,9 +33,23 @@ export const WhereTab = ({ game, clubs, courts, state, onChange, isLoadingCourts
         <button
           type="button"
           onClick={() => setIsClubModalOpen(true)}
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-left hover:border-primary-500 transition-colors"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-left hover:border-primary-500 transition-colors flex items-center gap-3 min-w-0"
         >
-          {state.clubId ? clubs.find((c) => c.id === state.clubId)?.name : t('createGame.selectClub')}
+          {state.clubId ? (
+            (() => {
+              const c = clubs.find((x) => x.id === state.clubId);
+              return c ? (
+                <>
+                  <ClubAvatar club={c} className="h-10 w-[3.75rem] shrink-0" />
+                  <span className="truncate min-w-0">{c.name}</span>
+                </>
+              ) : (
+                t('createGame.selectClub')
+              );
+            })()
+          ) : (
+            t('createGame.selectClub')
+          )}
         </button>
       </div>
 

@@ -319,6 +319,59 @@ td {
     border-bottom: 1px solid var(--border-color);
 }
 
+#centersTable {
+    table-layout: fixed;
+}
+
+#centersTable th:nth-child(1),
+#centersTable td:nth-child(1) {
+    width: 14%;
+}
+
+#centersTable th:nth-child(2),
+#centersTable td:nth-child(2) {
+    width: 11%;
+}
+
+#centersTable th:nth-child(3),
+#centersTable td:nth-child(3) {
+    width: 34%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#centersTable th:nth-child(4),
+#centersTable td:nth-child(4) {
+    width: 6.5rem;
+    white-space: nowrap;
+    text-align: center;
+}
+
+#centersTable th:nth-child(5),
+#centersTable td:nth-child(5) {
+    width: 8.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#centersTable th:nth-child(6),
+#centersTable td:nth-child(6) {
+    width: 5.5rem;
+    white-space: nowrap;
+}
+
+#centersTable th:nth-child(7),
+#centersTable td:nth-child(7) {
+    width: 8.75rem;
+    white-space: nowrap;
+}
+
+#centersTable td:nth-child(7) .action-buttons {
+    flex-wrap: nowrap;
+}
+
 tbody tr:hover {
     background-color: var(--hover-bg);
 }

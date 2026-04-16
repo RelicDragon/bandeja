@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, RefreshCw, UserPlus, Check, Plane } from 'lucide-react';
-import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, GameStartSection, ConfirmationModal } from '@/components';
+import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, GameStartSection, ConfirmationModal, ClubAvatar } from '@/components';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { Game, Club, Court, EntityType, BasicUser } from '@/types';
@@ -721,12 +721,23 @@ export const EditLeagueGameTeamsModal = ({
                       </label>
                       <button
                         onClick={() => setIsClubModalOpen(true)}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-left hover:border-primary-500 transition-colors"
+                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-left hover:border-primary-500 transition-colors flex items-center gap-3 min-w-0"
                       >
-                        {selectedClubId
-                          ? clubs.find(c => c.id === selectedClubId)?.name || t('createGame.selectClub')
-                          : t('createGame.selectClub')
-                        }
+                        {selectedClubId ? (
+                          (() => {
+                            const c = clubs.find((x) => x.id === selectedClubId);
+                            return c ? (
+                              <>
+                                <ClubAvatar club={c} className="h-9 w-12 shrink-0" />
+                                <span className="truncate min-w-0">{c.name}</span>
+                              </>
+                            ) : (
+                              t('createGame.selectClub')
+                            );
+                          })()
+                        ) : (
+                          t('createGame.selectClub')
+                        )}
                       </button>
                     </div>
 
