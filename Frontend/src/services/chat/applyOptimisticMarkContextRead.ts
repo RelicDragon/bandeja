@@ -4,6 +4,19 @@ import { useHeaderStore } from '@/store/headerStore';
 import { patchThreadIndexSetUnreadCount } from '@/services/chat/chatThreadIndex';
 
 export const OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT = 'bandeja-optimistic-clear-game-unread';
+export const RESTORE_GAME_UNREAD_EVENT = 'bandeja-restore-game-unread';
+
+export function dispatchRestoreGameUnreadCount(gameId: string, unreadCount: number): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(RESTORE_GAME_UNREAD_EVENT, { detail: { gameId, unreadCount } }));
+}
+
+export const RESTORE_GROUP_UNREAD_EVENT = 'bandeja-restore-group-unread';
+
+export function dispatchRestoreGroupUnreadCount(channelId: string, unreadCount: number): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(RESTORE_GROUP_UNREAD_EVENT, { detail: { channelId, unreadCount } }));
+}
 
 export function applyOptimisticMarkContextRead(contextType: ChatContextType, contextId: string): number {
   if (contextType === 'USER') {

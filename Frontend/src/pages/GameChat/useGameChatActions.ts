@@ -13,6 +13,7 @@ import { mergeChatMessagesAscending, mergeServerPageWithPendingOptimistics } fro
 import { shouldQueueChatMutation } from '@/services/chat/chatMutationNetwork';
 import { enqueueChatMutationMarkReadBatch } from '@/services/chat/chatMutationEnqueue';
 import { applyOptimisticMarkGameRead } from '@/services/chat/applyOptimisticMarkContextRead';
+import { resyncAfterMarkReadFailure } from '@/services/chat/chatMarkReadResync';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
@@ -311,7 +312,9 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
               const markedCount = markReadResponse.data.count || 0;
               const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
               setUnreadMessages(Math.max(0, unreadMessages - markedCount));
-            }).catch(() => {});
+            }).catch(() => {
+              resyncAfterMarkReadFailure('GAME', id);
+            });
           }
         }
       } catch (error) {

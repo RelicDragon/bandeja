@@ -19,6 +19,7 @@ import {
   applyOptimisticMarkContextRead,
   applyOptimisticMarkGameRead,
 } from '@/services/chat/applyOptimisticMarkContextRead';
+import { resyncAfterMarkReadFailure } from '@/services/chat/chatMarkReadResync';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
 
@@ -100,13 +101,6 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
       }
 
       try {
-        let headerAppliedSnapshot = 0;
-        if (contextType === 'USER' && id) {
-          headerAppliedSnapshot = applyOptimisticMarkContextRead('USER', id);
-        } else if (contextType === 'GROUP' && id) {
-          applyOptimisticMarkContextRead('GROUP', id);
-        }
-
         const loadedContext = await loadContext();
         if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
 
@@ -192,7 +186,10 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
         }
         if (!signal.aborted) hasLoadedRef.current = true;
 
+        if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
+
         const runMarkReadBackground = () => {
+          let headerAppliedSnapshot = 0;
           if (contextType === 'GAME' && loadedContext) {
             const loadedGame = loadedContext as Game;
             const loadedUserParticipant = loadedGame.participants.find(p => p.userId === user.id);
@@ -216,9 +213,12 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
                 const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
                 setUnreadMessages(Math.max(0, unreadMessages - (markedCount - headerAppliedSnapshot)));
                 window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
-              }).catch(() => {});
+              }).catch(() => {
+                resyncAfterMarkReadFailure('GAME', id);
+              });
             }
           } else if (contextType === 'USER' && id) {
+            headerAppliedSnapshot = applyOptimisticMarkContextRead('USER', id);
             if (shouldQueueChatMutation()) {
               void enqueueChatMutationMarkReadBatch({
                 contextType: 'USER',
@@ -233,9 +233,12 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
                 const { updateUnreadCount } = usePlayersStore.getState();
                 updateUnreadCount(id, () => 0);
                 window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
-              }).catch(() => {});
+              }).catch(() => {
+                resyncAfterMarkReadFailure('USER', id);
+              });
             }
           } else if (contextType === 'GROUP' && id) {
+            applyOptimisticMarkContextRead('GROUP', id);
             if (shouldQueueChatMutation()) {
               void enqueueChatMutationMarkReadBatch({
                 contextType: 'GROUP',
@@ -248,7 +251,9 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
                 const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
                 setUnreadMessages(Math.max(0, unreadMessages - (markedCount - headerAppliedSnapshot)));
                 window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
-              }).catch(() => {});
+              }).catch(() => {
+                resyncAfterMarkReadFailure('GROUP', id);
+              });
             }
           }
         };

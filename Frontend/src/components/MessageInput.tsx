@@ -504,52 +504,54 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <div className="p-3 overflow-visible" onPaste={handlePaste} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
-      <AnimatePresence>
-        {!chatNearBottom && onScrollToBottomSmooth ? (
-          <motion.div
-            key="chat-scroll-to-bottom"
-            className="flex justify-end mb-1"
-            initial={scrollToBottomFabMotion.initial}
-            animate={scrollToBottomFabMotion.animate}
-            exit={scrollToBottomFabMotion.exit}
-          >
-            <motion.button
-              type="button"
-              onClick={onScrollToBottomSmooth}
-              className={`${composerFabButtonClass} origin-bottom-right`}
-              title={t('chat.scrollToBottom', { defaultValue: 'Scroll to latest' })}
-              aria-label={t('chat.scrollToBottom', { defaultValue: 'Scroll to latest' })}
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.92 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 28 }}
-            >
-              <motion.span
-                className="flex items-center justify-center"
-                initial={{ y: -4, opacity: 0.6 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 18, delay: 0.08 }}
-              >
-                <ChevronDown size={24} strokeWidth={2.25} className="text-gray-700 dark:text-gray-300" aria-hidden />
-              </motion.span>
-            </motion.button>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-      <div className="flex items-center justify-end gap-2 mb-1">
-        {translation.originalMessageBeforeTranslate != null && (
-          <UndoTranslateButton
-            onClick={translation.handleUndoTranslate}
-            disabled={isDisabled || inputBlocked || translation.isTranslating}
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="flex items-center gap-2 min-w-0 self-end">
+          <TranslateToButton
+            translateToLanguage={translateToLanguage}
+            isTranslating={translation.isTranslating}
+            disabled={isDisabled || inputBlocked}
+            translateDisabled={!message.trim()}
+            onOpenModal={() => translation.setTranslationModalOpen(true)}
+            onTranslate={translation.handleTranslateButtonClick}
           />
-        )}
-        <TranslateToButton
-          translateToLanguage={translateToLanguage}
-          isTranslating={translation.isTranslating}
-          disabled={isDisabled || inputBlocked}
-          translateDisabled={!message.trim()}
-          onOpenModal={() => translation.setTranslationModalOpen(true)}
-          onTranslate={translation.handleTranslateButtonClick}
-        />
+          {translation.originalMessageBeforeTranslate != null && (
+            <UndoTranslateButton
+              onClick={translation.handleUndoTranslate}
+              disabled={isDisabled || inputBlocked || translation.isTranslating}
+            />
+          )}
+        </div>
+        <AnimatePresence>
+          {!chatNearBottom && onScrollToBottomSmooth ? (
+            <motion.div
+              key="chat-scroll-to-bottom"
+              className="flex flex-shrink-0 self-end"
+              initial={scrollToBottomFabMotion.initial}
+              animate={scrollToBottomFabMotion.animate}
+              exit={scrollToBottomFabMotion.exit}
+            >
+              <motion.button
+                type="button"
+                onClick={onScrollToBottomSmooth}
+                className={`${composerFabButtonClass} origin-bottom-right`}
+                title={t('chat.scrollToBottom', { defaultValue: 'Scroll to latest' })}
+                aria-label={t('chat.scrollToBottom', { defaultValue: 'Scroll to latest' })}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+              >
+                <motion.span
+                  className="flex items-center justify-center"
+                  initial={{ y: -4, opacity: 0.6 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 18, delay: 0.08 }}
+                >
+                  <ChevronDown size={24} strokeWidth={2.25} className="text-gray-700 dark:text-gray-300" aria-hidden />
+                </motion.span>
+              </motion.button>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
       <TranslationLanguageModal
         open={translation.translationModalOpen}

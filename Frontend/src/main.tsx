@@ -7,12 +7,14 @@ import { initializeSocialLogin } from './services/socialLoginInit.service';
 import { initChatSyncMetricsSession } from './services/chat/chatSyncMetricsSession';
 import { initChatLocalDbLifecycle } from './services/chat/chatLocalDbLifecycle';
 import { initChatBackgroundSyncClient } from './services/chat/chatBackgroundSync';
+import { installMarkReadFlushFailureResync } from './services/chat/chatMarkReadResync';
 
 const CACHE_VERSION = 'v1';
 
 initChatSyncMetricsSession();
 initChatLocalDbLifecycle();
 initChatBackgroundSyncClient();
+installMarkReadFlushFailureResync();
 
 if (isCapacitor() && isAndroid()) {
   document.body.classList.add('capacitor-android');

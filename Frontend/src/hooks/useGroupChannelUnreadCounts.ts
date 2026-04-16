@@ -3,6 +3,7 @@ import { chatApi } from '@/api/chat';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { patchThreadIndexSetUnreadCount } from '@/services/chat/chatThreadIndex';
+import { RESTORE_GROUP_UNREAD_EVENT } from '@/services/chat/applyOptimisticMarkContextRead';
 
 export const useGroupChannelUnreadCounts = (channelIds: string[]): Record<string, number> => {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
@@ -43,13 +44,27 @@ export const useGroupChannelUnreadCounts = (channelIds: string[]): Record<string
   useEffect(() => {
     const onClear = (ev: Event) => {
       const d = (ev as CustomEvent<{ contextType?: string; contextId?: string }>).detail;
-      if (d?.contextType !== 'GROUP' || !d.contextId) return;
-      if (!channelIdsRef.current.includes(d.contextId)) return;
-      setUnreadCounts((prev) => ({ ...prev, [d.contextId]: 0 }));
-      void patchThreadIndexSetUnreadCount('GROUP', d.contextId, 0);
+      const contextId = d?.contextType === 'GROUP' ? d.contextId : undefined;
+      if (!contextId) return;
+      if (!channelIdsRef.current.includes(contextId)) return;
+      setUnreadCounts((prev) => ({ ...prev, [contextId]: 0 }));
+      void patchThreadIndexSetUnreadCount('GROUP', contextId, 0);
+    };
+    const onRestore = (ev: Event) => {
+      const d = (ev as CustomEvent<{ channelId?: string; unreadCount?: number }>).detail;
+      const channelId = d?.channelId;
+      const unreadCount = d?.unreadCount;
+      if (!channelId || unreadCount == null) return;
+      if (!channelIdsRef.current.includes(channelId)) return;
+      setUnreadCounts((prev) => ({ ...prev, [channelId]: unreadCount }));
+      void patchThreadIndexSetUnreadCount('GROUP', channelId, unreadCount);
     };
     window.addEventListener('chat-viewing-clear-unread', onClear);
-    return () => window.removeEventListener('chat-viewing-clear-unread', onClear);
+    window.addEventListener(RESTORE_GROUP_UNREAD_EVENT, onRestore);
+    return () => {
+      window.removeEventListener('chat-viewing-clear-unread', onClear);
+      window.removeEventListener(RESTORE_GROUP_UNREAD_EVENT, onRestore);
+    };
   }, []);
 
   useEffect(() => {

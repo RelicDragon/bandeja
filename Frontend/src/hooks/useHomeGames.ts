@@ -3,7 +3,10 @@ import { gamesApi, invitesApi } from '@/api';
 import { chatApi } from '@/api/chat';
 import { Game, Invite } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
-import { OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT } from '@/services/chat/applyOptimisticMarkContextRead';
+import {
+  OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT,
+  RESTORE_GAME_UNREAD_EVENT,
+} from '@/services/chat/applyOptimisticMarkContextRead';
 
 export const useHomeGames = (
   user: any,
@@ -142,8 +145,17 @@ export const useHomeGames = (
         return { ...prev, [gameId]: 0 };
       });
     };
+    const onRestore = (e: Event) => {
+      const { gameId, unreadCount } = (e as CustomEvent<{ gameId?: string; unreadCount?: number }>).detail ?? {};
+      if (!gameId || unreadCount == null) return;
+      setGamesUnreadCounts((prev) => ({ ...prev, [gameId]: unreadCount }));
+    };
     window.addEventListener(OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT, onClear);
-    return () => window.removeEventListener(OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT, onClear);
+    window.addEventListener(RESTORE_GAME_UNREAD_EVENT, onRestore);
+    return () => {
+      window.removeEventListener(OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT, onClear);
+      window.removeEventListener(RESTORE_GAME_UNREAD_EVENT, onRestore);
+    };
   }, []);
 
   const lastNewInvite = useSocketEventsStore((state) => state.lastNewInvite);
