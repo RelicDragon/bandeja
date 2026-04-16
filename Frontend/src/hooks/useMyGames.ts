@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { gamesApi } from '@/api';
 import { Game, Invite } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT } from '@/services/chat/applyOptimisticMarkContextRead';
 
 export const useMyGames = (
   user: any,
@@ -66,6 +67,22 @@ export const useMyGames = (
     }
   }, [user?.id, fetchData]);
 
+  useEffect(() => {
+    const onClear = (e: Event) => {
+      const gameId = (e as CustomEvent<{ gameId?: string }>).detail?.gameId;
+      if (!gameId) return;
+      setGamesUnreadCounts((prev) => {
+        const was = prev[gameId] ?? 0;
+        if (was === 0) return prev;
+        queueMicrotask(() => {
+          setTotalGamesUnreadFromUnreadObjects((t) => Math.max(0, t - was));
+        });
+        return { ...prev, [gameId]: 0 };
+      });
+    };
+    window.addEventListener(OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT, onClear);
+    return () => window.removeEventListener(OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT, onClear);
+  }, []);
 
   const lastNewInvite = useSocketEventsStore((state) => state.lastNewInvite);
   const lastInviteDeleted = useSocketEventsStore((state) => state.lastInviteDeleted);

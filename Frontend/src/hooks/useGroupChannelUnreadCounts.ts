@@ -41,6 +41,18 @@ export const useGroupChannelUnreadCounts = (channelIds: string[]): Record<string
   }, [fetchCounts, channelIdsKey]);
 
   useEffect(() => {
+    const onClear = (ev: Event) => {
+      const d = (ev as CustomEvent<{ contextType?: string; contextId?: string }>).detail;
+      if (d?.contextType !== 'GROUP' || !d.contextId) return;
+      if (!channelIdsRef.current.includes(d.contextId)) return;
+      setUnreadCounts((prev) => ({ ...prev, [d.contextId]: 0 }));
+      void patchThreadIndexSetUnreadCount('GROUP', d.contextId, 0);
+    };
+    window.addEventListener('chat-viewing-clear-unread', onClear);
+    return () => window.removeEventListener('chat-viewing-clear-unread', onClear);
+  }, []);
+
+  useEffect(() => {
     const batch = useSocketEventsStore.getState().takeGroupUnreadInbound();
     for (const item of batch) {
       if (item.contextType !== 'GROUP') continue;

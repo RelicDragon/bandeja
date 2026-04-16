@@ -12,6 +12,7 @@ import { normalizeChatType } from '@/utils/chatType';
 import { mergeChatMessagesAscending, mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
 import { shouldQueueChatMutation } from '@/services/chat/chatMutationNetwork';
 import { enqueueChatMutationMarkReadBatch } from '@/services/chat/chatMutationEnqueue';
+import { applyOptimisticMarkGameRead } from '@/services/chat/applyOptimisticMarkContextRead';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
@@ -298,6 +299,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
         }
         scrollToBottom();
         if (id && user?.id && contextType === 'GAME') {
+          applyOptimisticMarkGameRead(id);
           if (shouldQueueChatMutation()) {
             void enqueueChatMutationMarkReadBatch({
               contextType: 'GAME',
