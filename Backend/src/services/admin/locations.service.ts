@@ -356,18 +356,13 @@ export class AdminLocationsService {
       dataPayload.photos = next as Prisma.InputJsonValue;
     }
 
-    const hasAvatarKey = Object.prototype.hasOwnProperty.call(data, 'avatar');
-    const hasOriginalKey = Object.prototype.hasOwnProperty.call(data, 'originalAvatar');
-    if (hasAvatarKey !== hasOriginalKey) {
-      throw new ApiError(400, 'avatar and originalAvatar must be sent together');
-    }
-    if (hasAvatarKey && hasOriginalKey) {
+    if (avatar !== undefined || originalAvatar !== undefined) {
       if (avatar === null && originalAvatar === null) {
         await AdminLocationsService.deleteStoredClubAvatar(oldClub);
         dataPayload.avatar = null;
         dataPayload.originalAvatar = null;
-      } else {
-        throw new ApiError(400, 'Club avatar is managed via media upload; only null,null is allowed here');
+      } else if (avatar === null || originalAvatar === null) {
+        throw new ApiError(400, 'avatar and originalAvatar must both be null to clear, or omit both fields');
       }
     }
     const center = await prisma.club.update({
