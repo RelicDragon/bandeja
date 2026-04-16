@@ -27,9 +27,19 @@ export const TranslateToButton: React.FC<TranslateToButtonProps> = ({
   const translateButtonDisabled = disabled || isTranslating || translateDisabled;
 
   return (
-    <div className="flex items-center gap-2 flex-shrink-0">
+    <div className="flex flex-shrink-0 flex-row items-center gap-2">
       {translateToLanguage ? (
         <>
+          <button
+            type="button"
+            onClick={onOpenModal}
+            disabled={disabled}
+            className={btnClass}
+            title="Select translate language"
+            aria-label="Select translate language"
+          >
+            <Languages size={20} className="text-gray-700 dark:text-gray-300" />
+          </button>
           <button
             type="button"
             onClick={onTranslate}
@@ -50,16 +60,6 @@ export const TranslateToButton: React.FC<TranslateToButtonProps> = ({
             ) : (
               <span className="text-xl leading-none" aria-hidden>{translateToLanguage}</span>
             )}
-          </button>
-          <button
-            type="button"
-            onClick={onOpenModal}
-            disabled={disabled}
-            className={btnClass}
-            title="Select translate language"
-            aria-label="Select translate language"
-          >
-            <Languages size={20} className="text-gray-700 dark:text-gray-300" />
           </button>
         </>
       ) : (

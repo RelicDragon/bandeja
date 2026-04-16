@@ -239,7 +239,10 @@ export async function sourceAppearsToBeTargetLanguage(
   const tinyldOk = tinyldTopKPasses(sample, code, tinyldHits);
   const scriptOk = scriptFallbackPasses(sample, code);
 
-  const same = francOk || tinyldOk || scriptOk;
+  // When tinyld can run, require agreement: franc alone mislabels FR/DE as por/spa for es targets.
+  const same =
+    scriptOk ||
+    (sample.length >= TINYLD_MIN_SAMPLE ? francOk && tinyldOk : francOk);
 
   console.info('[translation] source_same_lang', {
     target: code,

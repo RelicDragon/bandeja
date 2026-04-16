@@ -10,7 +10,7 @@ import {
   GroupChannel,
   OptimisticMessagePayload,
 } from '@/api/chat';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 import { ChatType, Game, Bug } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { isGroupChannelAdminOrOwner } from '@/utils/gameResults';
@@ -492,6 +492,18 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
+  const translationBlockButtonCount =
+    (translation.originalMessageBeforeTranslate != null ? 1 : 0) + (translateToLanguage ? 2 : 1);
+  const translationBlockStackClassName = [
+    'flex min-w-0 flex-row flex-wrap items-end gap-2',
+    translationBlockButtonCount > 1
+      ? ' -mb-2 -ml-1 rounded-2xl border border-white/50 bg-white/55 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.08),inset_0_1px_0_0_rgba(255,255,255,0.85)] backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-gray-950/45 dark:shadow-[0_4px_24px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.06)]'
+      : '',
+    translateToLanguage ? 'relative overflow-visible' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   if (shouldShowJoinButton && groupChannel) {
     return (
       <div className="p-3 overflow-visible">
@@ -504,55 +516,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <div className="p-3 overflow-visible" onPaste={handlePaste} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <div className="flex items-center gap-2 min-w-0 self-end">
-          <TranslateToButton
-            translateToLanguage={translateToLanguage}
-            isTranslating={translation.isTranslating}
-            disabled={isDisabled || inputBlocked}
-            translateDisabled={!message.trim()}
-            onOpenModal={() => translation.setTranslationModalOpen(true)}
-            onTranslate={translation.handleTranslateButtonClick}
-          />
-          {translation.originalMessageBeforeTranslate != null && (
-            <UndoTranslateButton
-              onClick={translation.handleUndoTranslate}
-              disabled={isDisabled || inputBlocked || translation.isTranslating}
-            />
-          )}
-        </div>
-        <AnimatePresence>
-          {!chatNearBottom && onScrollToBottomSmooth ? (
-            <motion.div
-              key="chat-scroll-to-bottom"
-              className="flex flex-shrink-0 self-end"
-              initial={scrollToBottomFabMotion.initial}
-              animate={scrollToBottomFabMotion.animate}
-              exit={scrollToBottomFabMotion.exit}
-            >
-              <motion.button
-                type="button"
-                onClick={onScrollToBottomSmooth}
-                className={`${composerFabButtonClass} origin-bottom-right`}
-                title={t('chat.scrollToBottom', { defaultValue: 'Scroll to latest' })}
-                aria-label={t('chat.scrollToBottom', { defaultValue: 'Scroll to latest' })}
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.92 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 28 }}
-              >
-                <motion.span
-                  className="flex items-center justify-center"
-                  initial={{ y: -4, opacity: 0.6 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 18, delay: 0.08 }}
-                >
-                  <ChevronDown size={24} strokeWidth={2.25} className="text-gray-700 dark:text-gray-300" aria-hidden />
-                </motion.span>
-              </motion.button>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-      </div>
       <TranslationLanguageModal
         open={translation.translationModalOpen}
         onClose={() => translation.setTranslationModalOpen(false)}
@@ -583,16 +546,83 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       />
       <TypingIndicator typingUserIds={typingUserIds} />
       <form onSubmit={handleSubmit} className="relative overflow-visible">
-        <div className="flex items-end gap-2">
-          <MessageInputAttachMenu
-            isDisabled={isDisabled}
-            inputBlocked={inputBlocked}
-            voiceMode={voice.voiceMode}
-            onAddImages={(files) => setSelectedImages((prev) => [...prev, ...files])}
-            onOpenPoll={() => setIsPollModalOpen(true)}
-          />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="mb-1 flex min-w-0 items-end justify-between gap-2 overflow-visible">
+            <div className="flex min-w-0 flex-1 flex-row flex-wrap items-end gap-2 overflow-visible">
+              <MessageInputAttachMenu
+                isDisabled={isDisabled}
+                inputBlocked={inputBlocked}
+                voiceMode={voice.voiceMode}
+                onAddImages={(files) => setSelectedImages((prev) => [...prev, ...files])}
+                onOpenPoll={() => setIsPollModalOpen(true)}
+              />
+              <motion.div
+                layout
+                transition={{ type: 'spring', stiffness: 420, damping: 34, mass: 0.85 }}
+                className={translationBlockStackClassName}
+              >
+                <TranslateToButton
+                  translateToLanguage={translateToLanguage}
+                  isTranslating={translation.isTranslating}
+                  disabled={isDisabled || inputBlocked}
+                  translateDisabled={!message.trim()}
+                  onOpenModal={() => translation.setTranslationModalOpen(true)}
+                  onTranslate={translation.handleTranslateButtonClick}
+                />
+                {translation.originalMessageBeforeTranslate != null && (
+                  <UndoTranslateButton
+                    onClick={translation.handleUndoTranslate}
+                    disabled={isDisabled || inputBlocked || translation.isTranslating}
+                  />
+                )}
+                {translateToLanguage ? (
+                  <button
+                    type="button"
+                    onClick={() => void translation.handleRemoveTranslateLanguage()}
+                    disabled={isDisabled || inputBlocked || translation.isTranslating}
+                    className="absolute -right-1 -top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    title={t('chat.clearTranslationLanguage', { defaultValue: 'Clear translation language' })}
+                    aria-label={t('chat.clearTranslationLanguage', { defaultValue: 'Clear translation language' })}
+                  >
+                    <X size={11} strokeWidth={2.75} aria-hidden />
+                  </button>
+                ) : null}
+              </motion.div>
+            </div>
+            <AnimatePresence>
+              {!chatNearBottom && onScrollToBottomSmooth ? (
+                <motion.div
+                  key="chat-scroll-to-bottom"
+                  className="flex flex-shrink-0"
+                  initial={scrollToBottomFabMotion.initial}
+                  animate={scrollToBottomFabMotion.animate}
+                  exit={scrollToBottomFabMotion.exit}
+                >
+                  <motion.button
+                    type="button"
+                    onClick={onScrollToBottomSmooth}
+                    className={`${composerFabButtonClass} origin-bottom-right`}
+                    title={t('chat.scrollToBottom', { defaultValue: 'Scroll to latest' })}
+                    aria-label={t('chat.scrollToBottom', { defaultValue: 'Scroll to latest' })}
+                    whileHover={{ scale: 1.08 }}
+                    whileTap={{ scale: 0.92 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+                  >
+                    <motion.span
+                      className="flex items-center justify-center"
+                      initial={{ y: -4, opacity: 0.6 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 18, delay: 0.08 }}
+                    >
+                      <ChevronDown size={24} strokeWidth={2.25} className="text-gray-700 dark:text-gray-300" aria-hidden />
+                    </motion.span>
+                  </motion.button>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
           <div
-            className={`flex-1 min-w-0 message-input-panel relative overflow-visible !bg-transparent rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${
+            className={`min-w-0 w-full message-input-panel relative overflow-visible !bg-transparent rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${
               isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
             }`}
           >

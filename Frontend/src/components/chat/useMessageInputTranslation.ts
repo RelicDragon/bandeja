@@ -137,11 +137,12 @@ export function useMessageInputTranslation({
       if (onTranslateToLanguageChange) {
         await onTranslateToLanguageChange(null);
       }
+      clearTranslationOriginals();
     } catch (err) {
       console.error('Clear translateToLanguage failed:', err);
       toast.error(t('chat.sendFailed') || 'Failed to save');
     }
-  }, [onTranslateToLanguageChange, t]);
+  }, [onTranslateToLanguageChange, clearTranslationOriginals, t]);
 
   const handleUndoTranslate = useCallback(() => {
     if (originalMessageBeforeTranslate != null) {
