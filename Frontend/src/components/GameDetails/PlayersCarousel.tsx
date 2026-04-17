@@ -189,7 +189,7 @@ export const PlayersCarousel = ({
       <div className={showGenderIndicator && gender ? "flex-1 relative min-w-0" : "relative"}>
         <div 
           ref={carouselRef}
-          className="overflow-x-auto overflow-y-hidden scrollbar-hide"
+          className="touch-pan-x overscroll-x-contain overflow-x-auto overflow-y-hidden scrollbar-hide [-webkit-overflow-scrolling:touch]"
           onMouseDown={autoHideNames ? handlePressStart : undefined}
           onMouseUp={autoHideNames ? handlePressEnd : undefined}
           onMouseLeave={autoHideNames ? handlePressEnd : undefined}

@@ -285,7 +285,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
           ? 'ring-[3px] ring-green-500 dark:ring-green-400'
           : '';
 
-  const wrapperClassName = `relative z-10 ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${!asDiv ? (draggable ? 'cursor-move' : 'cursor-pointer') + ' hover:opacity-80 transition-opacity ' : ''}${ringClass}${player && isOnline ? (isFavorite ? ' avatar-online-border-favorite' : player.isTrainer ? ' avatar-online-border-trainer' : ' avatar-online-border') : ''}`;
+  const wrapperClassName = `relative z-10 ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${!asDiv ? (draggable ? 'cursor-move' : 'cursor-pointer') + ' hover:opacity-80 transition-opacity ' : ''}${smallLayout && !draggable ? 'touch-manipulation ' : ''}${ringClass}${player && isOnline ? (isFavorite ? ' avatar-online-border-favorite' : player.isTrainer ? ' avatar-online-border-trainer' : ' avatar-online-border') : ''}`;
 
   return (
     <div className="flex flex-col items-center overflow-visible">

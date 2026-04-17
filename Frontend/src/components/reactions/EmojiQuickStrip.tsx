@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
+import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronLeft } from 'lucide-react';
@@ -11,16 +11,22 @@ import {
 } from '@/components/reactions/reactionPickerTypes';
 import { isValidReactionEmoji, normalizeReactionEmoji } from '@/utils/validateReactionEmoji';
 
-function interactionOriginatedInEmojiMartShadow(detail: { originalEvent: Event }): boolean {
-  const ev = detail.originalEvent;
-  const path =
-    'composedPath' in ev && typeof (ev as PointerEvent & { composedPath?: () => EventTarget[] }).composedPath === 'function'
-      ? (ev as PointerEvent).composedPath()
-      : null;
-  if (!path) return false;
-  for (const node of path) {
-    if (!(node instanceof Element)) continue;
-    if (node.tagName === 'EM-EMOJI-PICKER' || node.hasAttribute('data-reaction-catalog-root')) return true;
+function shouldRetainCatalogOpen(
+  ev: Event,
+  stripSurface: HTMLElement | null,
+  catalogContent: HTMLElement | null
+): boolean {
+  if (typeof ev.composedPath === 'function') {
+    for (const node of ev.composedPath()) {
+      if (!(node instanceof Element)) continue;
+      if (node.tagName === 'EM-EMOJI-PICKER' || node.hasAttribute('data-reaction-catalog-root')) return true;
+    }
+  }
+  const t = ev.target;
+  if (t instanceof Node && stripSurface?.contains(t)) return true;
+  if (catalogContent && t instanceof Element) {
+    const root = t.getRootNode();
+    if (root instanceof ShadowRoot && root.host instanceof Element && catalogContent.contains(root.host)) return true;
   }
   return false;
 }
@@ -57,6 +63,8 @@ export type EmojiQuickStripProps = {
 
 export function EmojiQuickStrip({ frequentEmojis, currentEmoji, onPick, disabled }: EmojiQuickStripProps) {
   const { t, i18n } = useTranslation();
+  const stripSurfaceRef = useRef<HTMLDivElement | null>(null);
+  const catalogContentRef = useRef<HTMLDivElement | null>(null);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const reduceMotion = usePrefersReducedMotion();
   const isDark = useHtmlDarkClass();
@@ -85,8 +93,10 @@ export function EmojiQuickStrip({ frequentEmojis, currentEmoji, onPick, disabled
     [onPick]
   );
 
-  const onCatalogInteractOutside = useCallback((e: CustomEvent<{ originalEvent: Event }>) => {
-    if (interactionOriginatedInEmojiMartShadow(e.detail)) e.preventDefault();
+  const onCatalogDismissOutside = useCallback((e: CustomEvent<{ originalEvent: Event }>) => {
+    if (shouldRetainCatalogOpen(e.detail.originalEvent, stripSurfaceRef.current, catalogContentRef.current)) {
+      e.preventDefault();
+    }
   }, []);
 
   const normCurrent = useMemo(
@@ -135,6 +145,7 @@ export function EmojiQuickStrip({ frequentEmojis, currentEmoji, onPick, disabled
   return (
     <DialogPrimitive.Root modal={false} open={catalogOpen} onOpenChange={onCatalogOpenChange}>
       <div
+        ref={stripSurfaceRef}
         className="grid w-full min-w-0 gap-1 py-0.5"
         style={{
           gridTemplateColumns: stripGrid.gridTemplateColumns,
@@ -201,11 +212,13 @@ export function EmojiQuickStrip({ frequentEmojis, currentEmoji, onPick, disabled
             }}
           />
           <DialogPrimitive.Content
-            className="pointer-events-auto fixed left-[50%] top-[50%] z-[10050] flex max-h-[min(88vh,560px)] w-[min(96vw,420px)] max-w-[96vw] translate-x-[-50%] translate-y-[-50%] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl focus:outline-none dark:border-gray-700 dark:bg-gray-900"
-            onPointerDownOutside={onCatalogInteractOutside}
-            onInteractOutside={onCatalogInteractOutside}
+            ref={catalogContentRef}
+            className="pointer-events-auto fixed left-[50%] top-[50%] z-[10050] flex max-h-[min(88vh,560px)] min-h-0 w-[min(96vw,420px)] max-w-[96vw] translate-x-[-50%] translate-y-[-50%] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl focus:outline-none dark:border-gray-700 dark:bg-gray-900"
+            onPointerDownOutside={onCatalogDismissOutside}
+            onInteractOutside={onCatalogDismissOutside}
+            onFocusOutside={onCatalogDismissOutside}
           >
-            <div className="flex items-center gap-2 border-b border-gray-200 px-2 py-2 dark:border-gray-700 sm:px-3">
+            <div className="flex shrink-0 items-center gap-2 border-b border-gray-200 px-2 py-2 dark:border-gray-700 sm:px-3">
               <DialogPrimitive.Close asChild>
                 <button
                   type="button"
@@ -215,21 +228,33 @@ export function EmojiQuickStrip({ frequentEmojis, currentEmoji, onPick, disabled
                   <ChevronLeft size={22} strokeWidth={2} aria-hidden />
                 </button>
               </DialogPrimitive.Close>
-              <DialogPrimitive.Title className="min-w-0 flex-1 text-base font-semibold text-gray-900 dark:text-white">
-                {t('chat.reactions.chooseReaction')}
-              </DialogPrimitive.Title>
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <DialogPrimitive.Title className="min-w-0 flex-1 truncate text-left text-base font-semibold text-gray-900 dark:text-white">
+                  {t('chat.reactions.chooseReaction')}
+                </DialogPrimitive.Title>
+                {normCurrent && isValidReactionEmoji(normCurrent) ? (
+                  <span
+                    className="flex shrink-0 select-none text-2xl leading-none"
+                    role="img"
+                    aria-label={normCurrent}
+                  >
+                    {normCurrent}
+                  </span>
+                ) : null}
+              </div>
             </div>
             <DialogPrimitive.Description className="sr-only">
               {t('chat.reactions.catalogDescription', {
                 defaultValue: 'Search or browse categories, then choose an emoji.',
               })}
             </DialogPrimitive.Description>
-            <ReactionEmojiCatalog
-              i18nLang={i18n.language}
-              theme={martTheme}
-              onSelect={handleCatalogEmojiSelect}
-              previewNative={normCurrent && isValidReactionEmoji(normCurrent) ? normCurrent : null}
-            />
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+              <ReactionEmojiCatalog
+                i18nLang={i18n.language}
+                theme={martTheme}
+                onSelect={handleCatalogEmojiSelect}
+              />
+            </div>
           </DialogPrimitive.Content>
         </div>
       </DialogPrimitive.Portal>
