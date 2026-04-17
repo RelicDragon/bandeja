@@ -1852,7 +1852,10 @@
     "reactions": {
       "addReaction": "Добавить реакцию",
       "removeReaction": "Убрать реакцию",
-      "reactWith": "Реагировать {{emoji}}"
+      "reactWith": "Реагировать {{emoji}}",
+      "moreReactions": "Ещё реакции",
+      "chooseReaction": "Выберите реакцию",
+      "invalidEmoji": "Этот эмодзи нельзя использовать как реакцию."
     },
     "contextMenu": {
       "reply": "Ответить",

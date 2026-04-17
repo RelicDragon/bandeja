@@ -3,6 +3,7 @@ import { ApiResponse, Game, ChatType, BasicUser } from '@/types';
 import type { UnreadObjectsApiPayload } from '@/services/chat/chatUnreadPayload';
 import { normalizeChatType } from '@/utils/chatType';
 import { withChatSyncRetry, withMessageCreateRetry } from '@/services/chat/chatHttpRetry';
+import type { ReactionEmojiUsageMutationPayload } from '@/store/reactionEmojiUsageStore';
 
 export type { ChatType };
 
@@ -367,8 +368,19 @@ export const chatApi = {
   },
 
   addReaction: async (messageId: string, data: AddReactionRequest & { clientMutationId?: string }) => {
-    const response = await api.post<ApiResponse<MessageReaction>>(`/chat/messages/${messageId}/reactions`, data);
-    return response.data.data;
+    const response = await api.post<ApiResponse<MessageReaction & { emojiUsage: ReactionEmojiUsageMutationPayload }>>(
+      `/chat/messages/${messageId}/reactions`,
+      data
+    );
+    const raw = response.data.data;
+    if (raw && typeof raw === 'object' && 'emojiUsage' in raw && raw.emojiUsage) {
+      const { emojiUsage, ...reaction } = raw;
+      return { reaction: reaction as MessageReaction, emojiUsage };
+    }
+    return {
+      reaction: raw as MessageReaction,
+      emojiUsage: { version: 0, touched: null } satisfies ReactionEmojiUsageMutationPayload,
+    };
   },
 
   removeReaction: async (messageId: string, clientMutationId?: string) => {

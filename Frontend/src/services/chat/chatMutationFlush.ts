@@ -12,6 +12,7 @@ import {
 } from './chatMutationEvents';
 import { BANDEJA_CHAT_PINS_UPDATED } from '@/utils/chatPinsEvents';
 import { putLocalMessage } from './chatLocalApply';
+import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 
 let flushRunning = false;
 let scheduleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -75,7 +76,8 @@ async function executeMutation(row: ChatMutationQueueRow): Promise<void> {
     case 'reaction_add': {
       if (!mid) throw new Error('missing messageId');
       const { emoji } = row.payload as { emoji: string };
-      await chatApi.addReaction(mid, { emoji, clientMutationId: cid });
+      const r = await chatApi.addReaction(mid, { emoji, clientMutationId: cid });
+      useReactionEmojiUsageStore.getState().applyFromMutation(r.emojiUsage);
       break;
     }
     case 'reaction_remove': {

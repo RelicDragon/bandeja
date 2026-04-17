@@ -164,6 +164,15 @@ const transcribeMessageLimiter = rateLimit({
   keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
 });
 
+const chatReactionLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { success: false, message: 'Too many reactions, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
+
 const mentionIdsElementValidator = (val: unknown) => {
   if (!Array.isArray(val)) return true;
   const invalid = val.some((id: unknown) => typeof id !== 'string' || (id as string).length < 1 || (id as string).length > 128);
@@ -275,6 +284,7 @@ router.post('/games/:gameId/mark-all-read', markAllMessagesAsRead);
 
 router.post(
   '/messages/:messageId/reactions',
+  chatReactionLimiter,
   validate([
     param('messageId').notEmpty().withMessage('Message ID is required'),
     body('emoji').notEmpty().withMessage('Emoji is required')

@@ -544,9 +544,9 @@ export const addGameReaction = asyncHandler(async (req: AuthRequest, res: Respon
   const { id: gameId } = req.params;
   const { emoji } = req.body;
   const userId = req.userId!;
-  const reactions = await GameReactionService.addReaction(gameId, userId, emoji);
+  const { reactions, emojiUsage } = await GameReactionService.addReaction(gameId, userId, emoji);
   await emitGameUpdateWithReactions(gameId, userId);
-  res.json({ success: true, data: { reactions } });
+  res.json({ success: true, data: { reactions, emojiUsage } });
 });
 
 export const removeGameReaction = asyncHandler(async (req: AuthRequest, res: Response) => {

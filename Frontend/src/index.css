@@ -1160,10 +1160,6 @@ body.keyboard-visible .chat-container main .overflow-y-auto {
   transition: bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     padding-bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.chat-container footer .message-input-panel {
-  background-color: transparent !important;
-}
-
 body.keyboard-visible .chat-container footer {
   bottom: calc(var(--keyboard-height, 0px) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
   padding-bottom: max(16px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;

@@ -7,7 +7,13 @@ import { Keyboard } from '@capacitor/keyboard';
 import { ChatMessage, chatApi } from '@/api/chat';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
-import { REACTION_EMOJIS, formatFullDateTime, getUserDisplayName, getUserInitials } from '@/utils/messageMenuUtils';
+import { formatFullDateTime, getUserDisplayName, getUserInitials } from '@/utils/messageMenuUtils';
+import { EmojiQuickStrip } from '@/components/reactions/EmojiQuickStrip';
+import {
+  frequentReactionStripFromStore,
+  isEventFromReactionEmojiPickerPortal,
+} from '@/components/reactions/reactionPickerTypes';
+import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { isCapacitor } from '@/utils/capacitor';
@@ -117,18 +123,19 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     const shouldIgnore = () => Date.now() - openTimeRef.current < 400;
 
     const handleClickOutside = (event: MouseEvent) => {
+      if (isEventFromReactionEmojiPickerPortal(event)) return;
       if (menuRef.current && !menuRef.current.contains(event.target as Node) && !shouldIgnore()) {
         closeMenu();
       }
     };
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        closeMenu();
-      }
+      if (event.key !== 'Escape') return;
+      closeMenu();
     };
 
     const handleTouchStart = (event: TouchEvent) => {
+      if (isEventFromReactionEmojiPickerPortal(event)) return;
       if (menuRef.current && !menuRef.current.contains(event.target as Node) && !shouldIgnore()) {
         event.preventDefault();
         closeMenu();
@@ -136,6 +143,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     };
 
     const handleTouchEnd = (event: TouchEvent) => {
+      if (isEventFromReactionEmojiPickerPortal(event)) return;
       if (menuRef.current && !menuRef.current.contains(event.target as Node) && !shouldIgnore()) {
         closeMenu();
       }
@@ -282,6 +290,8 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     }
     closeMenu();
   };
+
+  const frequentMenuEmojis = useReactionEmojiUsageStore(useShallow((s) => frequentReactionStripFromStore(s)));
 
   const handleShowDetails = () => {
     setShowDetails(true);
@@ -509,20 +519,11 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
         >
           {/* Reactions Section */}
           <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
-            <div className="flex flex-wrap gap-1">
-              {REACTION_EMOJIS.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => handleReactionClick(emoji)}
-                  className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors ${
-                    currentReaction === emoji ? 'bg-blue-50 dark:bg-blue-900' : ''
-                  }`}
-                  title={t('chat.reactions.reactWith', { emoji })}
-                >
-                  <span className="text-lg">{emoji}</span>
-                </button>
-              ))}
-            </div>
+            <EmojiQuickStrip
+              frequentEmojis={frequentMenuEmojis}
+              currentEmoji={currentReaction}
+              onPick={(emoji) => handleReactionClick(emoji)}
+            />
           </div>
 
           {/* Context Menu Actions */}

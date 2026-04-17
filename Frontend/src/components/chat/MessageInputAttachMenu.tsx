@@ -1,10 +1,35 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Paperclip, Image, ListPlus } from 'lucide-react';
 import { pickImages } from '@/utils/photoCapture';
 import { isCapacitor } from '@/utils/capacitor';
 import { isValidImage } from '@/components/chat/messageInputDraftUtils';
+
+const attachFlyoutEase = [0.22, 1, 0.36, 1] as const;
+
+const attachFlyoutContainer = {
+  hidden: {
+    transition: { staggerChildren: 0.05, staggerDirection: -1 },
+  },
+  visible: {
+    transition: { staggerChildren: 0.07, delayChildren: 0.02 },
+  },
+};
+
+const attachFlyoutItem = {
+  hidden: {
+    opacity: 0,
+    y: 14,
+    transition: { duration: 0.18, ease: attachFlyoutEase },
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.24, ease: attachFlyoutEase },
+  },
+};
 
 type MessageInputAttachMenuProps = {
   isDisabled: boolean;
@@ -84,40 +109,49 @@ export function MessageInputAttachMenu({
 
   return (
     <>
-      <div ref={attachMenuRef} className="pb-0.5 relative flex flex-shrink-0 items-end flex-col-reverse">
+      <div ref={attachMenuRef} className="relative flex flex-shrink-0 items-end flex-col-reverse">
         <button
           type="button"
           onClick={() => setIsAttachExpanded((prev) => !prev)}
           disabled={isDisabled || inputBlocked || voiceMode}
-          className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_4px_12px_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.12),0_16px_48px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25),0_16px_48px_rgba(0,0,0,0.2)]"
+          className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_2px_6px_rgba(0,0,0,0.16),0_6px_16px_rgba(0,0,0,0.2)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.45)]"
           title={t('chat.attach', 'Attach')}
         >
           <Paperclip size={20} className="text-gray-700 dark:text-gray-300" />
         </button>
-        <div
-          className={`absolute bottom-full left-0 mb-2 flex flex-col-reverse items-center gap-2 transition-all duration-300 ease-out bg-transparent z-50 ${
-            isAttachExpanded ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-          }`}
-        >
-          <button
-            type="button"
-            onClick={() => void handleImageButtonClick()}
-            disabled={isDisabled || inputBlocked || voiceMode}
-            className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.12),0_16px_48px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25),0_16px_48px_rgba(0,0,0,0.2)] hover:scale-105"
-            title={t('chat.attachImages', 'Images')}
-          >
-            <Image size={20} className="text-gray-700 dark:text-gray-300" />
-          </button>
-          <button
-            type="button"
-            onClick={handlePollButtonClick}
-            disabled={isDisabled || inputBlocked || voiceMode}
-            className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.12),0_16px_48px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25),0_16px_48px_rgba(0,0,0,0.2)] hover:scale-105"
-            title={t('chat.poll.createTitle', 'Create Poll')}
-          >
-            <ListPlus size={20} className="text-gray-700 dark:text-gray-300" />
-          </button>
-        </div>
+        <AnimatePresence>
+          {isAttachExpanded ? (
+            <motion.div
+              key="attach-flyout"
+              className="absolute bottom-full left-0 z-50 mb-2 flex flex-col-reverse items-center gap-2 bg-transparent"
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              variants={attachFlyoutContainer}
+            >
+              <motion.button
+                type="button"
+                variants={attachFlyoutItem}
+                onClick={() => void handleImageButtonClick()}
+                disabled={isDisabled || inputBlocked || voiceMode}
+                className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_2px_6px_rgba(0,0,0,0.16),0_6px_16px_rgba(0,0,0,0.2)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.45)] hover:scale-105"
+                title={t('chat.attachImages', 'Images')}
+              >
+                <Image size={20} className="text-gray-700 dark:text-gray-300" />
+              </motion.button>
+              <motion.button
+                type="button"
+                variants={attachFlyoutItem}
+                onClick={handlePollButtonClick}
+                disabled={isDisabled || inputBlocked || voiceMode}
+                className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_2px_6px_rgba(0,0,0,0.16),0_6px_16px_rgba(0,0,0,0.2)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.45)] hover:scale-105"
+                title={t('chat.poll.createTitle', 'Create Poll')}
+              >
+                <ListPlus size={20} className="text-gray-700 dark:text-gray-300" />
+              </motion.button>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
       <input
         ref={fileInputRef}

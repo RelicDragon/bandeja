@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { chatApi, type ChatMessage, type ChatMessageWithStatus, type ChatContextType, type Poll } from '@/api/chat';
 import { usePlayersStore } from '@/store/playersStore';
 import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
@@ -9,6 +11,7 @@ import {
 } from '@/services/chat/chatMutationEnqueue';
 import { putLocalMessage } from '@/services/chat/chatLocalApply';
 import { compareChatMessagesAscending } from '@/utils/chatMessageSort';
+import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 
 export interface UseGameChatReactionsParams {
   id: string | undefined;
@@ -31,6 +34,7 @@ export function useGameChatReactions({
   messagesRef,
   setUserChat,
 }: UseGameChatReactionsParams) {
+  const { t } = useTranslation();
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
 
@@ -88,7 +92,8 @@ export function useGameChatReactions({
         return;
       }
       try {
-        const reaction = await chatApi.addReaction(messageId, { emoji });
+        const { reaction, emojiUsage } = await chatApi.addReaction(messageId, { emoji });
+        useReactionEmojiUsageStore.getState().applyFromMutation(emojiUsage);
         setMessages((prev) => {
           const next = prev.map((m) =>
             m.id === messageId ? { ...m, reactions: [...m.reactions.filter((r) => r.userId !== reaction.userId), reaction] } : m
@@ -98,6 +103,10 @@ export function useGameChatReactions({
         });
       } catch (error) {
         console.error('Failed to add reaction:', error);
+        const code = (error as { response?: { data?: { code?: string } } })?.response?.data?.code;
+        if (code === 'INVALID_REACTION_EMOJI') {
+          toast.error(t('chat.reactions.invalidEmoji', { defaultValue: 'This emoji cannot be used as a reaction.' }));
+        }
         if (id && isRetryableMutationError(error)) {
           try {
             await enqueueChatMutationReactionAdd({
@@ -136,7 +145,7 @@ export function useGameChatReactions({
         });
       }
     },
-    [user, id, contextType, setMessages, messagesRef]
+    [user, id, contextType, setMessages, messagesRef, t]
   );
 
   const handleRemoveReaction = useCallback(

@@ -1781,7 +1781,10 @@
     "reactions": {
       "addReaction": "Añadir reacción",
       "removeReaction": "Quitar reacción",
-      "reactWith": "Reaccionar con {{emoji}}"
+      "reactWith": "Reaccionar con {{emoji}}",
+      "moreReactions": "Más reacciones",
+      "chooseReaction": "Elige una reacción",
+      "invalidEmoji": "Este emoji no se puede usar como reacción."
     },
     "contextMenu": {
       "reply": "Responder",

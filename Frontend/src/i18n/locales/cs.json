@@ -1832,7 +1832,10 @@
     "reactions": {
       "addReaction": "Přidat reakci",
       "removeReaction": "Odebrat reakci",
-      "reactWith": "Reagovat {{emoji}}"
+      "reactWith": "Reagovat {{emoji}}",
+      "moreReactions": "Další reakce",
+      "chooseReaction": "Vyberte reakci",
+      "invalidEmoji": "Tento emoji nelze použít jako reakci."
     },
     "contextMenu": {
       "reply": "Odpovědět",

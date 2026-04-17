@@ -1,7 +1,8 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { isAllowedReactionEmoji } from '../../utils/allowedReactionEmojis';
 import { MessageService } from '../chat/message.service';
+import { assertValidReactionEmoji, normalizeReactionEmoji } from '../../utils/validateReactionEmoji';
+import { UserReactionEmojiUsageService } from '../user/userReactionEmojiUsage.service';
 
 export type GameReactionDto = { userId: string; emoji: string };
 
@@ -39,12 +40,16 @@ export class GameReactionService {
     return rows;
   }
 
-  static async addReaction(gameId: string, userId: string, emoji: string): Promise<GameReactionDto[]> {
+  static async addReaction(
+    gameId: string,
+    userId: string,
+    emoji: string
+  ): Promise<{
+    reactions: GameReactionDto[];
+    emojiUsage: Awaited<ReturnType<typeof UserReactionEmojiUsageService.recordUseIfChanged>>;
+  }> {
     if (!emoji || typeof emoji !== 'string') {
       throw new ApiError(400, 'Emoji is required');
-    }
-    if (!isAllowedReactionEmoji(emoji)) {
-      throw new ApiError(400, 'Invalid reaction emoji');
     }
 
     const { isParticipant } = await MessageService.validateGameAccess(gameId, userId);
@@ -52,15 +57,34 @@ export class GameReactionService {
       throw new ApiError(403, 'Access denied');
     }
 
-    await prisma.gameReaction.upsert({
-      where: {
-        gameId_userId: { gameId, userId },
-      },
-      create: { gameId, userId, emoji },
-      update: { emoji },
+    const normalizedEmoji = assertValidReactionEmoji(emoji);
+
+    const emojiUsage = await prisma.$transaction(async (tx) => {
+      const existing = await tx.gameReaction.findUnique({
+        where: {
+          gameId_userId: { gameId, userId },
+        },
+        select: { emoji: true },
+      });
+      const previousEmoji = existing?.emoji != null ? normalizeReactionEmoji(existing.emoji) : null;
+
+      await tx.gameReaction.upsert({
+        where: {
+          gameId_userId: { gameId, userId },
+        },
+        create: { gameId, userId, emoji: normalizedEmoji },
+        update: { emoji: normalizedEmoji },
+      });
+
+      return UserReactionEmojiUsageService.recordUseIfChanged(tx, {
+        userId,
+        emoji: normalizedEmoji,
+        previousEmoji,
+      });
     });
 
-    return this.listForGame(gameId);
+    const reactions = await this.listForGame(gameId);
+    return { reactions, emojiUsage };
   }
 
   static async removeReaction(gameId: string, userId: string): Promise<GameReactionDto[]> {

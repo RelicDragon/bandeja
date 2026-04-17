@@ -21,7 +21,11 @@ export function getMessagePreviewText(message: MessagePreviewLike): string {
   return 'Message';
 }
 
-export const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '😡', '🎉', '🔥'];
+import { DEFAULT_REACTION_EMOJI_SEED } from '@/utils/defaultReactionEmojiSeed';
+
+export const REACTION_EMOJIS: readonly string[] = [...DEFAULT_REACTION_EMOJI_SEED];
+
+export const QUICK_REACTION_EMOJIS: readonly string[] = REACTION_EMOJIS.slice(0, 4);
 
 export const formatFullDateTime = (dateString: string, user?: User | null): string => {
   const date = new Date(dateString);

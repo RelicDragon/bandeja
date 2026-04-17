@@ -131,6 +131,8 @@ model User {
   chatDrafts                  ChatDraft[]
   chatMutationIdempotencies   ChatMutationIdempotency[]
   chatReadCursors             ChatReadCursor[]
+  reactionEmojiUsageVersion   Int                      @default(0)
+  reactionEmojiStats          UserReactionEmojiStat[]
   notificationPreferences     NotificationPreference[]
   pollVotes              PollVote[]
   marketItems             MarketItem[]         @relation("MarketItemSeller")
@@ -382,6 +384,20 @@ model GameReaction {
   @@unique([gameId, userId])
   @@index([gameId])
   @@index([userId])
+}
+
+model UserReactionEmojiStat {
+  id         String   @id @default(cuid())
+  userId     String
+  emoji      String
+  count      Int      @default(0)
+  lastUsedAt DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, emoji])
+  @@index([userId, count(sort: Desc), lastUsedAt(sort: Desc)])
 }
 
 model CancelledGame {

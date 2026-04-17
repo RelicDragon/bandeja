@@ -44,6 +44,7 @@ import { navigationService } from './services/navigationService';
 import { markNavigation, setupPopstateFallback } from './utils/navigation';
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
 import { usePresenceSubscriptionManager } from './hooks/usePresenceSubscriptionManager';
+import { ReactionEmojiUsageBootstrap } from './components/ReactionEmojiUsageBootstrap';
 import i18n from './i18n/config';
 import './i18n/config';
 
@@ -312,6 +313,7 @@ function AppContent() {
       <GeoProvider>
         <ToastProvider>
           <PermissionModalProvider />
+          <ReactionEmojiUsageBootstrap />
           <PlayerCardModalManager>
             <Routes>
         <Route

@@ -622,11 +622,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             </AnimatePresence>
           </div>
           <div
-            className={`min-w-0 w-full message-input-panel relative overflow-visible !bg-transparent rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.16),0_16px_64px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_16px_64px_rgba(0,0,0,0.4)] transition-all ${
+            ref={inputContainerRef}
+            className={`message-input-panel relative min-w-0 w-full max-w-full overflow-visible rounded-[24px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.14),0_8px_28px_rgba(0,0,0,0.18)] transition-all dark:bg-gray-800 dark:shadow-[0_2px_10px_rgba(0,0,0,0.45),0_10px_32px_rgba(0,0,0,0.42)] ${
               isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
             }`}
           >
-            <div ref={inputContainerRef} className="relative overflow-visible min-w-0 w-full max-w-full">
               {voice.voiceMode ? (
                 <VoiceRecordingOverlay
                   durationMs={voiceRecorder.durationMs}
@@ -637,7 +637,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 />
               ) : (
                 <>
-                  <div className="rounded-[24px] bg-white dark:bg-gray-800">
                     <MentionInput
                       value={message}
                       onChange={handleMessageChange}
@@ -653,7 +652,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                       className="w-full"
                       style={{ minHeight: '48px', maxHeight: '120px', paddingLeft: '20px' }}
                     />
-                  </div>
                   {showMic ? (
                     <VoiceRecordButton
                       onClick={() => void voice.handleStartVoice()}
@@ -665,7 +663,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                     <button
                       type="submit"
                       disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
-                      className="absolute bottom-0.5 right-[2px] w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_4px_24px_rgba(59,130,246,0.6),0_8px_48px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_32px_rgba(59,130,246,0.7),0_12px_56px_rgba(59,130,246,0.5)] hover:scale-105 z-10"
+                      className="absolute bottom-0.5 right-[2px] w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_3px_14px_rgba(59,130,246,0.75),0_8px_36px_rgba(37,99,235,0.55)] hover:shadow-[0_5px_20px_rgba(59,130,246,0.85),0_12px_44px_rgba(37,99,235,0.6)] hover:scale-105 z-10"
                       aria-label={inputBlocked ? t('common.sending') : t('chat.messages.sendMessage')}
                     >
                       {inputBlocked ? (
@@ -679,7 +677,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                   )}
                 </>
               )}
-            </div>
           </div>
         </div>
       </form>

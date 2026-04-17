@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { NotificationChannelType } from '@prisma/client';
-import { body } from 'express-validator';
+import { body, query } from 'express-validator';
 import rateLimit from 'express-rate-limit';
 import { validate } from '../middleware/validate';
 import { authenticate, AuthRequest } from '../middleware/auth';
@@ -27,9 +27,25 @@ const welcomeScreenLimiter = rateLimit({
   keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
 });
 
+const reactionEmojiUsageGetLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { success: false, message: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
+
 const router = Router();
 
 router.get('/profile', authenticate, userController.getProfile);
+router.get(
+  '/me/reaction-emoji-usage',
+  authenticate,
+  reactionEmojiUsageGetLimiter,
+  validate([query('sinceVersion').optional().isInt({ min: 0 }).withMessage('sinceVersion must be a non-negative integer')]),
+  userController.getReactionEmojiUsage
+);
 router.get('/workout-sessions', authenticate, userController.getMyWorkoutSessions);
 router.post('/profile/sync-telegram', authenticate, userController.syncTelegramProfile);
 router.post('/profile/telegram-link-intent', authenticate, userController.createTelegramLinkIntent);

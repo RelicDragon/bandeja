@@ -21,7 +21,6 @@ export type GameCardReactionTheme = {
   divider: string;
   actionHover: string;
   pickerHover: string;
-  pickerSelected: string;
   spinner: string;
   muted: string;
 };
@@ -35,7 +34,6 @@ export function getGameCardReactionTheme(entityType: EntityType): GameCardReacti
         divider: 'border-red-200/65 dark:border-red-800/45',
         actionHover: 'hover:bg-red-100/65 dark:hover:bg-red-950/35',
         pickerHover: 'hover:bg-red-100/55 dark:hover:bg-red-950/28',
-        pickerSelected: 'bg-red-100/75 dark:bg-red-950/38',
         spinner: 'border-red-400 border-t-transparent dark:border-red-500',
         muted: 'text-red-900/55 dark:text-red-300/65',
       };
@@ -47,7 +45,6 @@ export function getGameCardReactionTheme(entityType: EntityType): GameCardReacti
         divider: 'border-blue-200/65 dark:border-blue-800/45',
         actionHover: 'hover:bg-blue-100/65 dark:hover:bg-blue-950/35',
         pickerHover: 'hover:bg-blue-100/55 dark:hover:bg-blue-950/28',
-        pickerSelected: 'bg-blue-100/75 dark:bg-blue-950/38',
         spinner: 'border-blue-400 border-t-transparent dark:border-blue-500',
         muted: 'text-blue-900/55 dark:text-blue-300/65',
       };
@@ -58,7 +55,6 @@ export function getGameCardReactionTheme(entityType: EntityType): GameCardReacti
         divider: 'border-green-200/65 dark:border-green-800/45',
         actionHover: 'hover:bg-green-100/65 dark:hover:bg-green-950/35',
         pickerHover: 'hover:bg-green-100/55 dark:hover:bg-green-950/28',
-        pickerSelected: 'bg-green-100/75 dark:bg-green-950/38',
         spinner: 'border-green-400 border-t-transparent dark:border-green-500',
         muted: 'text-green-900/55 dark:text-green-300/65',
       };
@@ -69,7 +65,6 @@ export function getGameCardReactionTheme(entityType: EntityType): GameCardReacti
         divider: 'border-yellow-200/65 dark:border-yellow-800/45',
         actionHover: 'hover:bg-yellow-100/65 dark:hover:bg-yellow-950/35',
         pickerHover: 'hover:bg-amber-100/55 dark:hover:bg-amber-950/28',
-        pickerSelected: 'bg-amber-100/75 dark:bg-amber-950/38',
         spinner: 'border-yellow-500 border-t-transparent dark:border-yellow-400',
         muted: 'text-yellow-900/60 dark:text-yellow-300/65',
       };
@@ -79,7 +74,6 @@ export function getGameCardReactionTheme(entityType: EntityType): GameCardReacti
         divider: 'border-gray-200 dark:border-gray-600',
         actionHover: 'hover:bg-gray-100 dark:hover:bg-gray-700',
         pickerHover: 'hover:bg-gray-100 dark:hover:bg-gray-700',
-        pickerSelected: 'bg-gray-200/70 dark:bg-gray-700/50',
         spinner: 'border-gray-400 border-t-transparent dark:border-gray-500',
         muted: 'text-gray-500 dark:text-gray-400',
       };

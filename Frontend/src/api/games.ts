@@ -1,5 +1,6 @@
 import api from './axios';
 import { ApiResponse, Game, GameTeam, GameTeamData, BookedCourtSlot } from '@/types';
+import type { ReactionEmojiUsageMutationPayload } from '@/store/reactionEmojiUsageStore';
 
 export type WorkoutSessionSource = 'APPLE_WATCH' | 'ANDROID_HEALTH_CONNECT';
 
@@ -83,10 +84,12 @@ export const gamesApi = {
   },
 
   addReaction: async (gameId: string, emoji: string) => {
-    const response = await api.post<ApiResponse<{ reactions: Array<{ userId: string; emoji: string }> }>>(
-      `/games/${gameId}/reactions`,
-      { emoji }
-    );
+    const response = await api.post<
+      ApiResponse<{
+        reactions: Array<{ userId: string; emoji: string }>;
+        emojiUsage: ReactionEmojiUsageMutationPayload;
+      }>
+    >(`/games/${gameId}/reactions`, { emoji });
     return response.data;
   },
 

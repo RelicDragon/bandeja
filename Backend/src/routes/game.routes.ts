@@ -1,9 +1,19 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
+import rateLimit from 'express-rate-limit';
 import { validate } from '../middleware/validate';
-import { authenticate, optionalAuth, canEditGame, canAccessGame, requireGamePermission } from '../middleware/auth';
+import { authenticate, optionalAuth, canEditGame, canAccessGame, requireGamePermission, AuthRequest } from '../middleware/auth';
 import { ParticipantRole } from '@prisma/client';
 import * as gameController from '../controllers/game.controller';
+
+const gameReactionLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { success: false, message: 'Too many reactions, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+});
 
 const router = Router();
 
@@ -24,6 +34,7 @@ router.get('/:id/workout/me', authenticate, canAccessGame, gameController.getMyG
 router.post(
   '/:id/reactions',
   authenticate,
+  gameReactionLimiter,
   validate([body('emoji').notEmpty().withMessage('emoji is required')]),
   gameController.addGameReaction
 );

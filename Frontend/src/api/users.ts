@@ -140,6 +140,12 @@ export interface NotificationPreference {
   sendTeamNotifications: boolean;
 }
 
+export type ReactionEmojiUsageRow = { emoji: string; count: number; lastUsedAt: string | null };
+
+export type ReactionEmojiUsageApiData =
+  | { version: number; unchanged: true; items: [] }
+  | { version: number; items: ReactionEmojiUsageRow[] };
+
 export const usersApi = {
   getProfile: async () => {
     const response = await api.get<ApiResponse<User>>('/users/profile');
@@ -259,6 +265,13 @@ export const usersApi = {
       params: { ids: ids.join(',') },
     });
     return response.data.data;
+  },
+
+  getReactionEmojiUsage: async (params?: { sinceVersion?: number }) => {
+    const response = await api.get<ApiResponse<ReactionEmojiUsageApiData>>('/users/me/reaction-emoji-usage', {
+      params: params?.sinceVersion != null ? { sinceVersion: params.sinceVersion } : undefined,
+    });
+    return response.data;
   },
 };
 

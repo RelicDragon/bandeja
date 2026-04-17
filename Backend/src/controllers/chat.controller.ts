@@ -542,6 +542,27 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
   const payloadHash = hashChatMutationPayload({ emoji: String(emoji ?? '') });
   const idem = await ChatMutationIdempotencyService.begin(userId, rawCid, 'reaction_add', messageId, payloadHash);
   if (idem.outcome === 'cached') {
+    const cached = idem.body as { success?: boolean; data?: Record<string, unknown> };
+    if (
+      cached?.success &&
+      cached.data &&
+      !('emojiUsage' in cached.data) &&
+      typeof (cached.data as { messageId?: string }).messageId === 'string'
+    ) {
+      const u = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { reactionEmojiUsageVersion: true },
+      });
+      const reaction = cached.data as Record<string, unknown>;
+      res.json({
+        ...cached,
+        data: {
+          ...reaction,
+          emojiUsage: { version: u?.reactionEmojiUsageVersion ?? 0, touched: null },
+        },
+      });
+      return;
+    }
     res.json(idem.body);
     return;
   }
@@ -551,9 +572,9 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
   const leaseCid = idem.outcome === 'lease' ? idem.cid : null;
 
   try {
-    const { reaction, syncSeq } = await ReactionService.addReaction(messageId, userId, emoji);
+    const { reaction, syncSeq, emojiUsage } = await ReactionService.addReaction(messageId, userId, emoji);
 
-    const body = { success: true, data: reaction };
+    const body = { success: true, data: { ...reaction, emojiUsage } };
     if (leaseCid) await ChatMutationIdempotencyService.complete(userId, leaseCid, body);
 
     const socketService = (global as any).socketService;

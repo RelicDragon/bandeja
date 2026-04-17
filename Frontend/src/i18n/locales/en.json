@@ -1850,7 +1850,11 @@
     "reactions": {
       "addReaction": "Add reaction",
       "removeReaction": "Remove reaction",
-      "reactWith": "React with {{emoji}}"
+      "reactWith": "React with {{emoji}}",
+      "moreReactions": "More reactions",
+      "chooseReaction": "Choose a reaction",
+      "invalidEmoji": "This emoji cannot be used as a reaction.",
+      "catalogDescription": "Search or browse categories, then choose an emoji."
     },
     "contextMenu": {
       "reply": "Reply",

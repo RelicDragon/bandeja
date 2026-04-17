@@ -1805,7 +1805,10 @@
     "reactions": {
       "addReaction": "Додај реакцију",
       "removeReaction": "Уклони реакцију",
-      "reactWith": "Реагуј са {{emoji}}"
+      "reactWith": "Реагуј са {{emoji}}",
+      "moreReactions": "Још реакција",
+      "chooseReaction": "Изаберите реакцију",
+      "invalidEmoji": "Овај емоџи се не може користити као реакција."
     },
     "contextMenu": {
       "reply": "Одговори",

@@ -7,6 +7,7 @@ import { usersApi } from '@/api';
 import { clearChatSyncScheduler } from '@/services/chat/chatSyncScheduler';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { useNavigationStore } from '@/store/navigationStore';
+import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 
 interface AuthState {
   user: User | null;
@@ -144,6 +145,7 @@ export const useAuthStore = create<AuthState>((set) => {
         useNavigationStore.getState().setMyGamesSelectedDay(null);
         useNavigationStore.getState().setFindSelectedDay(null);
         useNavigationStore.getState().setFindListWeekStartDay(null);
+        useReactionEmojiUsageStore.getState().reset();
         set({ user: null, token: null, isAuthenticated: false });
       } catch (error) {
         console.error('Error clearing auth from localStorage:', error);
