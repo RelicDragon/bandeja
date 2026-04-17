@@ -10,7 +10,7 @@ import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 import { useReactionSummary } from '@/hooks/useReactionSummary';
 import type { EntityType } from '@/types';
 import { getGameCardReactionTheme } from '@/utils/gameCardEntityTheme';
-import { EmojiQuickStrip } from '@/components/reactions/EmojiQuickStrip';
+import { EmojiQuickStrip, type ReactionEmojiPickSource } from '@/components/reactions/EmojiQuickStrip';
 import { frequentReactionStripFromStore } from '@/components/reactions/reactionPickerTypes';
 import { subscribeStripPortalScroll } from '@/utils/stripPortalScrollBus';
 
@@ -211,9 +211,13 @@ export function GameCardReactions({
   };
 
   const applyReactionEmoji = useCallback(
-    (emoji: string) => {
+    (emoji: string, source: ReactionEmojiPickSource) => {
       const cur = getCurrentUserReaction();
       if (cur === emoji) {
+        if (source === 'catalog') {
+          setPickerOpen(false);
+          return;
+        }
         void runMutation(() => gamesApi.removeReaction(gameId));
       } else {
         void runMutation(() => gamesApi.addReaction(gameId, emoji));

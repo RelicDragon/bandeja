@@ -1,14 +1,11 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth';
+import { authenticate, optionalAuth } from '../middleware/auth';
 import * as levelChangeController from '../controllers/levelChange.controller';
 
 const router = Router();
 
-router.use(authenticate);
-
-router.get('/', levelChangeController.getUserLevelChanges);
-router.get('/game/:gameId', levelChangeController.getGameLevelChanges);
-router.get('/:userId', levelChangeController.getUserLevelChangesByUserId);
+router.get('/game/:gameId', authenticate, levelChangeController.getGameLevelChanges);
+router.get('/:userId', optionalAuth, levelChangeController.getUserLevelChangesByUserId);
+router.get('/', authenticate, levelChangeController.getUserLevelChanges);
 
 export default router;
-

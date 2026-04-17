@@ -3,7 +3,7 @@ import { NotificationChannelType } from '@prisma/client';
 import { body, query } from 'express-validator';
 import rateLimit from 'express-rate-limit';
 import { validate } from '../middleware/validate';
-import { authenticate, AuthRequest } from '../middleware/auth';
+import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
 import * as userController from '../controllers/user.controller';
 import { MAX_BASIC_USERS_IDS_PER_REQUEST } from '../services/user/basicUsersForMessage.service';
 
@@ -143,7 +143,7 @@ router.post(
   userController.getBasicUsersByIds
 );
 
-router.get('/:userId/stats', authenticate, userController.getUserStats);
+router.get('/:userId/stats', optionalAuth, userController.getUserStats);
 
 router.put(
   '/favorite-trainer',

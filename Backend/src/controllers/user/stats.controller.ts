@@ -3,7 +3,7 @@ import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
-import { USER_SELECT_FIELDS, PROFILE_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_STATS_TARGET_SELECT } from '../../utils/constants';
 import { getUserGameOutcomeAggregates } from '../../services/user/userGameOutcomeStats.service';
 import { EntityType, ParticipantRole } from '@prisma/client';
 import { BasicUser } from '../../types/user.types';
@@ -132,7 +132,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
   
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: PROFILE_SELECT_FIELDS,
+    select: USER_STATS_TARGET_SELECT,
   });
 
   if (!user) {
@@ -140,7 +140,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
   }
 
   let approvedByUser = null;
-  if (user.approvedById) {
+  if (req.userId && user.approvedById) {
     approvedByUser = await prisma.user.findUnique({
       where: { id: user.approvedById },
       select: USER_SELECT_FIELDS,
@@ -184,14 +184,16 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     },
   });
 
+  const baseUser = { ...user, isFavorite: !!isFavorite, approvedBy: approvedByUser };
+  if (!req.userId) {
+    delete (baseUser as { telegramId?: unknown }).telegramId;
+    delete (baseUser as { telegramUsername?: unknown }).telegramUsername;
+  }
+
   res.json({
     success: true,
     data: {
-      user: {
-        ...user,
-        isFavorite: !!isFavorite,
-        approvedBy: approvedByUser,
-      },
+      user: baseUser,
       levelHistory: levelHistory.reverse(),
       gamesLast30Days,
       followersCount,

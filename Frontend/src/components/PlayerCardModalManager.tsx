@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { PlayerCardModalProvider } from '@/components/PlayerCardModalProvider';
 import { useNavigationStore } from '@/store/navigationStore';
+import { getOverlay } from '@/utils/urlSchema';
 
 interface PlayerCardModalManagerProps {
   children: React.ReactNode;
@@ -12,6 +13,13 @@ export const PlayerCardModalManager = ({ children }: PlayerCardModalManagerProps
   const [playerId, setPlayerId] = useState<string | null>(null);
   const location = useLocation();
   const pendingReopen = useNavigationStore((s) => s.pendingPlayerCardReopen);
+
+  useEffect(() => {
+    const overlay = getOverlay(location.search);
+    if (overlay?.type === 'player' && overlay.id) {
+      setPlayerId(overlay.id);
+    }
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     if (!pendingReopen) return;

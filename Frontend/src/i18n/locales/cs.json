@@ -924,7 +924,13 @@
     "userBlockedCannotChat": "Uživatel je blokován",
     "userBlockedCannotFavorite": "Uživatel je blokován",
     "confirmedBy": "Úroveň byla potvrzena",
-    "levelNotConfirmed": "Úroveň není potvrzena"
+    "levelNotConfirmed": "Úroveň není potvrzena",
+    "openFullProfile": "Na celou obrazovku"
+  },
+  "playerProfile": {
+    "pageTitle": "Profil hráče",
+    "publicPromptTitle": "Přihlaste se pro více informací",
+    "publicPromptBody": "Přihlaste se nebo se zaregistrujte, abyste viděli úplné statistiky, oblíbené a mohli chatovat s tímto hráčem."
   },
   "contacts": {
     "searchPlaceholder": "Hledat kontakty...",

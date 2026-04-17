@@ -289,9 +289,10 @@ function AppContent() {
   }
 
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
+  const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   
-  if (!isOnline && !isGameDetailsPage && !isAuthPage) {
+  if (!isOnline && !isGameDetailsPage && !isUserProfilePage && !isAuthPage) {
     return <NoInternetScreen />;
   }
 
@@ -435,6 +436,14 @@ function AppContent() {
         />
         <Route
           path="/games/:id"
+          element={
+            <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <MainPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/user-profile/:userId"
           element={
             <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
               <MainPage />

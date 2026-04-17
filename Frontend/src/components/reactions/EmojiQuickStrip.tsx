@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronLeft } from 'lucide-react';
 import { ReactionEmojiCatalog } from '@/components/reactions/ReactionEmojiCatalog';
 import {
+  REACTION_PICKER_FREQUENT_STRIP_COUNT,
   REACTION_EMOJI_PICKER_PORTAL_ATTR,
   REACTION_PICKER_STRIP_IDLE_FRAME,
   REACTION_PICKER_STRIP_SELECTED_INNER_FRAME,
@@ -45,10 +46,12 @@ function useHtmlDarkClass(): boolean {
   );
 }
 
+export type ReactionEmojiPickSource = 'strip' | 'catalog';
+
 export type EmojiQuickStripProps = {
   frequentEmojis: readonly string[];
   currentEmoji?: string | null;
-  onPick: (emoji: string) => void;
+  onPick: (emoji: string, source: ReactionEmojiPickSource) => void;
   disabled?: boolean;
 };
 
@@ -67,7 +70,7 @@ export function EmojiQuickStrip({ frequentEmojis, currentEmoji, onPick, disabled
     (emoji: string) => {
       const normalized = normalizeReactionEmoji(emoji);
       if (!isValidReactionEmoji(normalized)) return;
-      onPick(normalized);
+      onPick(normalized, 'strip');
     },
     [onPick]
   );
@@ -77,7 +80,7 @@ export function EmojiQuickStrip({ frequentEmojis, currentEmoji, onPick, disabled
       const normalized = normalizeReactionEmoji(emoji);
       if (!isValidReactionEmoji(normalized)) return;
       setCatalogOpen(false);
-      window.setTimeout(() => onPick(normalized), 0);
+      window.setTimeout(() => onPick(normalized, 'catalog'), 0);
     },
     [onPick]
   );
@@ -91,11 +94,23 @@ export function EmojiQuickStrip({ frequentEmojis, currentEmoji, onPick, disabled
     [currentEmoji]
   );
 
+  const stripEmojis = useMemo(() => {
+    const list = [...frequentEmojis];
+    if (!normCurrent || !isValidReactionEmoji(normCurrent)) return list;
+    const inStrip = list.some((e) => normalizeReactionEmoji(e) === normCurrent);
+    if (inStrip) return list;
+    if (list.length >= REACTION_PICKER_FREQUENT_STRIP_COUNT) {
+      list[REACTION_PICKER_FREQUENT_STRIP_COUNT - 1] = normCurrent;
+      return list;
+    }
+    return [...list, normCurrent];
+  }, [frequentEmojis, normCurrent]);
+
   const stripNormSet = useMemo(() => {
     const s = new Set<string>();
-    for (const e of frequentEmojis) s.add(normalizeReactionEmoji(e));
+    for (const e of stripEmojis) s.add(normalizeReactionEmoji(e));
     return s;
-  }, [frequentEmojis]);
+  }, [stripEmojis]);
   const highlightMore = Boolean(normCurrent && !stripNormSet.has(normCurrent));
 
   const freqBtn =
@@ -108,14 +123,14 @@ export function EmojiQuickStrip({ frequentEmojis, currentEmoji, onPick, disabled
   const overlayMotion = reduceMotion ? '' : 'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0';
 
   const stripGrid = useMemo(() => {
-    const totalCells = frequentEmojis.length + 1;
+    const totalCells = stripEmojis.length + 1;
     const colCount = Math.max(1, Math.ceil(totalCells / 2));
     const rowCount = Math.max(1, Math.ceil(totalCells / colCount));
     return {
       gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))`,
       gridTemplateRows: `repeat(${rowCount}, auto)`,
     };
-  }, [frequentEmojis.length]);
+  }, [stripEmojis.length]);
 
   return (
     <DialogPrimitive.Root modal={false} open={catalogOpen} onOpenChange={onCatalogOpenChange}>
@@ -126,11 +141,11 @@ export function EmojiQuickStrip({ frequentEmojis, currentEmoji, onPick, disabled
           gridTemplateRows: stripGrid.gridTemplateRows,
         }}
       >
-        {frequentEmojis.map((emoji) => {
+        {stripEmojis.map((emoji, i) => {
           const selected = Boolean(normCurrent && normalizeReactionEmoji(emoji) === normCurrent);
           return (
             <button
-              key={emoji}
+              key={`${normalizeReactionEmoji(emoji)}-${i}`}
               type="button"
               disabled={disabled}
               aria-label={t('chat.reactions.reactWith', { emoji })}
@@ -209,7 +224,12 @@ export function EmojiQuickStrip({ frequentEmojis, currentEmoji, onPick, disabled
                 defaultValue: 'Search or browse categories, then choose an emoji.',
               })}
             </DialogPrimitive.Description>
-            <ReactionEmojiCatalog i18nLang={i18n.language} theme={martTheme} onSelect={handleCatalogEmojiSelect} />
+            <ReactionEmojiCatalog
+              i18nLang={i18n.language}
+              theme={martTheme}
+              onSelect={handleCatalogEmojiSelect}
+              previewNative={normCurrent && isValidReactionEmoji(normCurrent) ? normCurrent : null}
+            />
           </DialogPrimitive.Content>
         </div>
       </DialogPrimitive.Portal>

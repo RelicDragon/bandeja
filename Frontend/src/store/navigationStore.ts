@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import type { ReactNode } from 'react';
 import type { BugStatus, BugType, ChatType } from '@/types';
+import type { PageType } from '@/utils/urlSchema';
 
 interface BugsFilterState {
   status: BugStatus | null;
@@ -8,7 +10,7 @@ interface BugsFilterState {
 }
 
 interface NavigationState {
-  currentPage: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace' | 'teams';
+  currentPage: PageType;
   bottomTabsVisible: boolean;
   initShellAnimationPlayed: boolean;
   isAnimating: boolean;
@@ -41,7 +43,7 @@ interface NavigationState {
   pendingPlayerCardReopen: { playerId: string; sourceIdx: number } | null;
   setPendingPlayerCardReopen: (data: { playerId: string; sourceIdx: number } | null) => void;
   setMarketplaceTab: (tab: 'market' | 'my') => void;
-  setCurrentPage: (page: 'my' | 'find' | 'chats' | 'bugs' | 'profile' | 'leaderboard' | 'gameDetails' | 'gameSubscriptions' | 'marketplace' | 'teams') => void;
+  setCurrentPage: (page: PageType) => void;
   setBottomTabsVisible: (visible: boolean) => void;
   setInitShellAnimationPlayed: (played: boolean) => void;
   setIsAnimating: (animating: boolean) => void;
@@ -62,6 +64,8 @@ interface NavigationState {
   myGamesSelectedDay: string | null;
   findSelectedDay: string | null;
   findListWeekStartDay: string | null;
+  userProfileHeaderActions: ReactNode | null;
+  setUserProfileHeaderActions: (actions: ReactNode | null) => void;
   setMyGamesSubtabBeforeCreate: (tab: 'list' | null) => void;
   setMyGamesCalendarDateAfterCreate: (date: string | null) => void;
   setMyGamesSelectedDay: (day: string | null) => void;
@@ -101,6 +105,8 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   myGamesSelectedDay: null,
   findSelectedDay: null,
   findListWeekStartDay: null,
+  userProfileHeaderActions: null,
+  setUserProfileHeaderActions: (actions) => set({ userProfileHeaderActions: actions }),
   setCurrentPage: (page) => set({ currentPage: page }),
   setViewingGroupChannelId: (id) => set({ viewingGroupChannelId: id }),
   setViewingUserChatId: (id) => set({ viewingUserChatId: id }),

@@ -8,12 +8,16 @@ interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
   shareUrl: string;
+  dialogTitle?: string;
+  modalId?: string;
 }
 
 export const ShareModal = ({
   isOpen,
   onClose,
-  shareUrl
+  shareUrl,
+  dialogTitle,
+  modalId = 'share-modal',
 }: ShareModalProps) => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
@@ -45,10 +49,10 @@ export const ShareModal = ({
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} modalId="share-modal">
+    <Dialog open={isOpen} onClose={onClose} modalId={modalId}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('gameDetails.shareGame')}</DialogTitle>
+          <DialogTitle>{dialogTitle ?? t('gameDetails.shareGame')}</DialogTitle>
         </DialogHeader>
 
         <div className="mb-6">

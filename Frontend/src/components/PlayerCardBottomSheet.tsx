@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Star, ArrowLeft, Send, MessageCircle, Ban, Check, Dumbbell } from 'lucide-react';
+import { X, ArrowLeft, Share2, Maximize2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
@@ -8,13 +8,10 @@ import { favoritesApi } from '@/api/favorites';
 import { blockedUsersApi } from '@/api/blockedUsers';
 import { Loading } from './Loading';
 import { PlayerAvatarView } from './PlayerAvatarView';
-import { LevelHistoryView } from './LevelHistoryView';
-import { GenderIndicator } from './GenderIndicator';
-import { TrainerRatingBadge } from './TrainerRatingBadge';
 import { ReviewsList } from './ReviewsList';
-import { MarketItem } from '@/types';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { ConfirmationModal } from './ConfirmationModal';
+import { ShareModal } from './ShareModal';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
@@ -28,6 +25,9 @@ import {
 } from './ui/Drawer';
 import toast from 'react-hot-toast';
 import { removeOverlay } from '@/utils/urlSchema';
+import { sharePlayerProfile } from '@/utils/sharePlayerProfile';
+import { PlayerCardProfileBody } from '@/components/player/PlayerCardProfileBody';
+import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionBar';
 
 interface PlayerCardBottomSheetProps {
   playerId: string | null;
@@ -49,23 +49,30 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [showBlockConfirmation, setShowBlockConfirmation] = useState(false);
   const [blockingUser, setBlockingUser] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareModalUrl, setShareModalUrl] = useState('');
   const isCurrentUser = playerId === user?.id;
   const navigatingToChatRef = useRef(false);
+  const navigatingToFullProfileRef = useRef(false);
 
   useEffect(() => {
     if (!playerId) return;
     setShowAvatarView(false);
     setShowReviewsView(false);
     setShowSendMoneyModal(false);
+    setShowShareModal(false);
+    setShareModalUrl('');
 
     const fetchStats = async () => {
       try {
         setLoading(true);
         const statsResponse = await usersApi.getUserStats(playerId);
         setStats(statsResponse.data);
-        if (!isCurrentUser) {
+        if (user && !isCurrentUser) {
           const blocked = await blockedUsersApi.checkIfUserBlocked(playerId);
           setIsBlocked(blocked);
+        } else {
+          setIsBlocked(false);
         }
       } catch (error) {
         console.error('Failed to fetch user stats:', error);
@@ -75,16 +82,16 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     };
 
     fetchStats();
-  }, [playerId, isCurrentUser]);
+  }, [playerId, isCurrentUser, user]);
 
-  usePresenceSubscription('player-card', playerId && !isCurrentUser ? [playerId] : []);
+  usePresenceSubscription('player-card', user && playerId && !isCurrentUser ? [playerId] : []);
 
   useEffect(() => {
-    if (!playerId || isCurrentUser) return;
+    if (!user || !playerId || isCurrentUser) return;
     usersApi.getPresence([playerId]).then((data) => {
       if (Object.keys(data).length > 0) usePresenceStore.getState().setPresenceInitial(data);
     }).catch(() => {});
-  }, [playerId, isCurrentUser]);
+  }, [playerId, isCurrentUser, user]);
 
   const markReopenOnBack = useCallback(() => {
     if (!playerId) return;
@@ -93,6 +100,11 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   }, [playerId]);
 
   const handleClose = useCallback(() => {
+    if (navigatingToFullProfileRef.current) {
+      navigatingToFullProfileRef.current = false;
+      onClose();
+      return;
+    }
     if (navigatingToChatRef.current) {
       navigatingToChatRef.current = false;
       onClose();
@@ -100,13 +112,24 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     }
     const currentPath = window.location.pathname;
     const currentSearch = window.location.search;
-    const isChatPath = currentPath.includes('/user-chat/') || currentPath.includes('/group-chat/') || currentPath.includes('/channel-chat/') || /^\/bugs\/[^/]+$/.test(currentPath);
+    const isChatPath = currentPath.includes('/user-chat/') || currentPath.includes('/group-chat/') || currentPath.includes('/channel-chat/') || /^\/bugs\/[^/]+$/.test(currentPath) || /^\/user-profile\/[^/]+$/.test(currentPath);
     if (currentSearch.includes('player=') && !isChatPath) {
       const cleanUrl = removeOverlay(currentPath, currentSearch, 'player');
       navigate(cleanUrl, { replace: true });
     }
     onClose();
   }, [onClose, navigate]);
+
+  const handleOpenFullProfile = useCallback(() => {
+    if (!playerId || isCurrentUser) return;
+    navigatingToFullProfileRef.current = true;
+    navigate(`/user-profile/${playerId}`);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        onClose();
+      });
+    });
+  }, [playerId, isCurrentUser, navigate, onClose]);
 
   const handleToggleFavorite = async () => {
     if (!playerId || !stats || isBlocked) return;
@@ -155,6 +178,20 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     }
   };
 
+  const handleShareProfile = useCallback(async () => {
+    if (!playerId || !stats || isBlocked) return;
+    const displayName = `${stats.user.firstName || ''} ${stats.user.lastName || ''}`.trim() || t('playerCard.shareProfileFallbackName');
+    await sharePlayerProfile({
+      playerId,
+      displayName,
+      t,
+      onFallbackModal: (url) => {
+        setShareModalUrl(url);
+        setShowShareModal(true);
+      },
+    });
+  }, [playerId, stats, isBlocked, t]);
+
   const handleBlockUser = async () => {
     if (!playerId || blockingUser) return;
     setBlockingUser(true);
@@ -192,13 +229,13 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
             {showReviewsView && playerId ? (
               <div className="flex items-center justify-between w-full p-2 pl-6">
                 <div className="flex items-center gap-4">
-                  <button onClick={() => setShowReviewsView(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <button type="button" onClick={() => setShowReviewsView(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
                   </button>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">{t('profile.review') || 'Reviews'}</h2>
                 </div>
                 <DrawerClose asChild>
-                  <button className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                  <button type="button" className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                     <X size={20} className="text-gray-600 dark:text-gray-300" />
                   </button>
                 </DrawerClose>
@@ -206,62 +243,78 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
             ) : showAvatarView && stats ? (
               <div className="flex items-center justify-between w-full p-2 pl-6">
                 <div className="flex items-center gap-4">
-                  <button onClick={() => setShowAvatarView(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <button type="button" onClick={() => setShowAvatarView(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
                   </button>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">{`${stats.user.firstName || ''} ${stats.user.lastName || ''}`.trim()}</h2>
                 </div>
                 <DrawerClose asChild>
-                  <button className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                  <button type="button" className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                     <X size={20} className="text-gray-600 dark:text-gray-300" />
                   </button>
                 </DrawerClose>
               </div>
             ) : (
-              <div className="flex gap-2 items-center w-full p-2 pl-6">
-                {stats && !isCurrentUser && (
-                  <button
-                    onClick={handleToggleFavorite}
-                    disabled={isBlocked}
-                    className={`p-2 rounded-xl backdrop-blur-sm shadow-sm border ${
-                      isBlocked
-                        ? 'opacity-50 cursor-not-allowed bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50'
-                        : stats.user.isFavorite
-                          ? 'bg-yellow-500 dark:bg-yellow-600 border-yellow-400 dark:border-yellow-500 hover:bg-yellow-600 dark:hover:bg-yellow-700'
-                          : 'bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800'
-                    }`}
-                    title={isBlocked ? t('playerCard.userBlockedCannotFavorite') : (stats.user.isFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites'))}
-                  >
-                    <Star size={16} className={stats.user.isFavorite ? 'text-white fill-white' : 'text-gray-400 hover:text-yellow-500 transition-colors'} />
-                  </button>
-                )}
-                {stats && !isCurrentUser && (
-                  <button
-                    onClick={() => handleStartChat()}
-                    className="px-4 py-2 rounded-xl text-white flex items-center gap-2 shadow-md bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                  >
-                    <MessageCircle size={18} />
-                    <span className="text-sm">{t('nav.chat')}</span>
-                  </button>
-                )}
-                {stats && !isCurrentUser && (
-                  <button
-                    onClick={isBlocked ? handleBlockUser : () => setShowBlockConfirmation(true)}
-                    disabled={blockingUser}
-                    className={`px-4 py-2 rounded-xl text-white flex items-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${
-                      isBlocked ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700' : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
-                    }`}
-                    title={isBlocked ? t('playerCard.unblockUser') : t('playerCard.blockUser')}
-                  >
-                    {isBlocked ? <Check size={18} /> : <Ban size={18} className="scale-x-[-1]" />}
-                  </button>
-                )}
-                <DrawerClose asChild>
-                  <button className="p-2.5 ml-auto rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 dark:border-gray-700/50">
-                    <X size={20} className="text-gray-600 dark:text-gray-300" />
-                  </button>
-                </DrawerClose>
-              </div>
+              stats && user ? (
+                <PlayerProfileActionBar
+                  stats={stats}
+                  isCurrentUser={!!isCurrentUser}
+                  isBlocked={isBlocked}
+                  blockingUser={blockingUser}
+                  startingChat={startingChat}
+                  onToggleFavorite={handleToggleFavorite}
+                  onShare={() => void handleShareProfile()}
+                  onStartChat={handleStartChat}
+                  onBlockPrimary={isBlocked ? handleBlockUser : () => setShowBlockConfirmation(true)}
+                  onOpenFullProfile={!isCurrentUser ? handleOpenFullProfile : undefined}
+                  t={t}
+                  closeSlot={(
+                    <DrawerClose asChild>
+                      <button type="button" className="p-2.5 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 dark:border-gray-700/50">
+                        <X size={20} className="text-gray-600 dark:text-gray-300" />
+                      </button>
+                    </DrawerClose>
+                  )}
+                />
+              ) : stats ? (
+                <div className="flex gap-2 items-center w-full p-2 pl-6">
+                  {!isBlocked && (
+                    <button
+                      type="button"
+                      onClick={() => void handleShareProfile()}
+                      className="px-4 py-2 rounded-xl text-white flex items-center justify-center shadow-md bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700"
+                      title={t('playerCard.shareProfileTitle')}
+                      aria-label={t('playerCard.shareProfileTitle')}
+                    >
+                      <Share2 size={18} />
+                    </button>
+                  )}
+                  {!isCurrentUser && (
+                    <button
+                      type="button"
+                      onClick={handleOpenFullProfile}
+                      className="px-4 py-2 rounded-xl text-white flex items-center gap-2 shadow-md bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700"
+                      title={t('playerCard.openFullProfile')}
+                    >
+                      <Maximize2 size={18} />
+                      <span className="text-sm">{t('playerCard.openFullProfile')}</span>
+                    </button>
+                  )}
+                  <DrawerClose asChild>
+                    <button type="button" className="p-2.5 ml-auto rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 dark:border-gray-700/50">
+                      <X size={20} className="text-gray-600 dark:text-gray-300" />
+                    </button>
+                  </DrawerClose>
+                </div>
+              ) : (
+                <div className="flex gap-2 items-center w-full p-2 pl-6 justify-end">
+                  <DrawerClose asChild>
+                    <button type="button" className="p-2.5 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 dark:border-gray-700/50">
+                      <X size={20} className="text-gray-600 dark:text-gray-300" />
+                    </button>
+                  </DrawerClose>
+                </div>
+              )
             )}
 
             <div className="flex flex-col min-h-0 flex-1 max-h-[calc(75vh-4rem)] overflow-y-auto" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}>
@@ -296,10 +349,11 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                       </motion.div>
                     ) : (
                       <motion.div key="content" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
-                        <PlayerCardContent
+                        <PlayerCardProfileBody
                           stats={stats}
                           t={t}
                           isBlocked={isBlocked}
+                          showTelegram={!!user}
                           onAvatarClick={() => { if (stats.user.originalAvatar) setShowAvatarView(true); }}
                           onRatingClick={stats.user.isTrainer && (stats.user.trainerReviewCount ?? 0) > 0 ? () => setShowReviewsView(true) : undefined}
                           onTelegramClick={() => {
@@ -328,6 +382,14 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
         <SendMoneyToUserModal toUserId={playerId} onClose={() => { setShowSendMoneyModal(false); onClose(); }} />
       )}
 
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => { setShowShareModal(false); setShareModalUrl(''); }}
+        shareUrl={shareModalUrl}
+        dialogTitle={t('playerCard.shareProfileTitle')}
+        modalId="share-modal-profile"
+      />
+
       {showBlockConfirmation && stats && !isBlocked && (
         <ConfirmationModal
           isOpen={showBlockConfirmation}
@@ -341,113 +403,5 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
         />
       )}
     </>
-  );
-};
-
-interface PlayerCardContentProps {
-  stats: UserStats;
-  t: (key: string) => string;
-  isBlocked: boolean;
-  onAvatarClick: () => void;
-  onRatingClick?: () => void;
-  onTelegramClick: () => void;
-  onOpenGame: () => void;
-  onMarketItemClick?: (item: MarketItem) => void;
-}
-
-const PlayerCardContent = ({ stats, t, isBlocked, onAvatarClick, onRatingClick, onTelegramClick, onOpenGame, onMarketItemClick }: PlayerCardContentProps) => {
-  const { user } = stats;
-  const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
-  const isOnline = usePresenceStore((state) => state.isOnline(user.id));
-  const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
-  const hasTelegram = !!(user.telegramId || (user.telegramUsername && user.telegramUsername.trim()));
-
-  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } } };
-  const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const } } };
-
-  return (
-    <motion.div className="p-6 space-y-6 pt-2" variants={containerVariants} initial="hidden" animate="visible">
-      <motion.div
-        className={`relative h-48 rounded-2xl ${isBlocked ? 'bg-gradient-to-br from-red-500 to-red-700 dark:from-red-600 dark:to-red-800' : 'bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800'}`}
-        variants={itemVariants}
-      >
-        {isOnline && (
-          <span className="absolute top-2 left-2 z-10 flex items-center gap-1 rounded-full bg-white/95 dark:bg-gray-900/95 px-2 py-0.5 text-xs font-medium shadow border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400" aria-hidden />
-            {t('playerCard.online')}
-          </span>
-        )}
-        <div className="absolute inset-0 flex items-center justify-center gap-6">
-          <div className="relative">
-            {user.originalAvatar ? (
-              <button onClick={onAvatarClick} className="cursor-pointer hover:opacity-90 transition-opacity">
-                {user.avatar ? (
-                  <img src={user.avatar || ''} alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'} className={`w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`} />
-                ) : (
-                  <div className={`w-32 h-32 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>{initials}</div>
-                )}
-              </button>
-            ) : user.avatar ? (
-              <img src={user.avatar || ''} alt={`${user.firstName} ${user.lastName}`} className={`w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`} />
-            ) : (
-              <div className={`w-32 h-32 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>{initials}</div>
-            )}
-          </div>
-          <div className="text-left text-white">
-            {(user.isTrainer || user.gender) && (
-              <div className="mb-2 flex items-center gap-2">
-                {user.isTrainer && (
-                  <div className="bg-blue-500 dark:bg-blue-600 text-white px-3 py-1 rounded-full font-semibold text-sm flex items-center gap-1.5 border-2 border-white dark:border-gray-900 w-fit" style={{ boxShadow: '0 6px 15px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2)' }}>
-                    <Dumbbell size={14} className="text-white" />
-                    <span>{t('playerCard.isTrainer')}</span>
-                  </div>
-                )}
-                <GenderIndicator gender={user.gender} layout="big" position="bottom-left" />
-              </div>
-            )}
-            <h2 className="text-2xl font-bold">
-              {user.firstName}
-              {isBlocked && <span className="ml-2 text-lg font-semibold opacity-90">({t('playerCard.blocked') || 'Blocked'})</span>}
-            </h2>
-            {user.lastName && <h3 className="text-xl font-semibold">{user.lastName}</h3>}
-            {user.verbalStatus && (
-              <div className="mt-0 text-white/90 text-[9px] font-medium">
-                {user.verbalStatus}
-              </div>
-            )}
-            {user.isTrainer && (
-              <div className="flex items-center gap-1 mt-1 text-amber-300">
-                <TrainerRatingBadge trainer={user} size="sm" showReviewCount={true} onClick={onRatingClick} />
-              </div>
-            )}
-          </div>
-        </div>
-        {hasTelegram && (
-          <button
-            onClick={onTelegramClick}
-            disabled={isBlocked}
-            className="absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:scale-105 active:scale-95"
-            style={{ backgroundColor: isBlocked ? '#9CA3AF' : '#229ED9' }}
-            onMouseEnter={(e) => { if (!isBlocked) e.currentTarget.style.backgroundColor = '#1E8BC3'; }}
-            onMouseLeave={(e) => { if (!isBlocked) e.currentTarget.style.backgroundColor = '#229ED9'; }}
-            title={isBlocked ? t('playerCard.userBlockedCannotChat') : t('playerCard.openTelegramChat')}
-          >
-            <Send size={12} className="text-white flex-shrink-0" />
-          </button>
-        )}
-      </motion.div>
-
-      {stats.user.bio && (
-        <motion.div variants={itemVariants} className="px-6 -mt-2">
-          <p className="text-sm text-gray-600 dark:text-gray-400 italic">
-            "{stats.user.bio}"
-          </p>
-        </motion.div>
-      )}
-
-      <motion.div variants={itemVariants}>
-        <LevelHistoryView stats={stats} padding="p-0 -mt-2" tabDarkBgClass="dark:bg-gray-700/50" hideUserCard onOpenGame={onOpenGame} showItemsToSell onMarketItemClick={onMarketItemClick} />
-      </motion.div>
-    </motion.div>
   );
 };

@@ -17,6 +17,7 @@ import { MarketplaceList } from './MarketplaceList';
 import { MarketplaceItemRedirect } from './MarketplaceItemRedirect';
 import { CreateMarketItem } from './CreateMarketItem';
 import { UserTeamPage } from './UserTeamPage';
+import { UserProfilePage } from './UserProfilePage';
 
 function MarketplaceContent() {
   const location = useLocation();
@@ -46,7 +47,7 @@ export const MainPage = () => {
     (currentPage === 'find' && findViewMode === 'calendar')
   );
 
-  const scrollablePage = currentPage === 'my' || currentPage === 'find';
+  const scrollablePage = currentPage === 'my' || currentPage === 'find' || currentPage === 'userProfile';
   const isTeamsPage = currentPage === 'teams';
 
   const renderContent = useMemo(() => {
@@ -69,6 +70,8 @@ export const MainPage = () => {
         return <MarketplaceContent />;
       case 'teams':
         return <UserTeamPage />;
+      case 'userProfile':
+        return <UserProfilePage />;
       default:
         return <MyTab />;
     }

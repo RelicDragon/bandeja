@@ -928,7 +928,13 @@
     "userBlockedCannotChat": "Корисник је блокиран",
     "userBlockedCannotFavorite": "Корисник је блокиран",
     "confirmedBy": "Ниво је потврђен",
-    "levelNotConfirmed": "Ниво није потврђен"
+    "levelNotConfirmed": "Ниво није потврђен",
+    "openFullProfile": "Цео екран"
+  },
+  "playerProfile": {
+    "pageTitle": "Профил играча",
+    "publicPromptTitle": "Пријавите се да видите више",
+    "publicPromptBody": "Пријавите се или региструјте се да видите целу статистику, омиљене и да ћаскате са овим играчем."
   },
   "contacts": {
     "searchPlaceholder": "Претражи контакте...",

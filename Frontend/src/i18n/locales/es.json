@@ -920,7 +920,13 @@
     "userBlockedCannotChat": "Usuario bloqueado",
     "userBlockedCannotFavorite": "Usuario bloqueado",
     "confirmedBy": "Nivel confirmado",
-    "levelNotConfirmed": "El nivel no está confirmado"
+    "levelNotConfirmed": "El nivel no está confirmado",
+    "openFullProfile": "Pantalla completa"
+  },
+  "playerProfile": {
+    "pageTitle": "Perfil del jugador",
+    "publicPromptTitle": "Inicia sesión para ver más",
+    "publicPromptBody": "Inicia sesión o regístrate para ver estadísticas completas, favoritos y chatear con este jugador."
   },
   "contacts": {
     "searchPlaceholder": "Buscar contactos...",

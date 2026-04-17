@@ -175,6 +175,16 @@ export const USER_SELECT_FIELDS = {
   trainerReviewCount: true,
 } as const;
 
+/** Public-safe fields for GET /users/:userId/stats (no phone, email, wallet, notification prefs, etc.) */
+export const USER_STATS_TARGET_SELECT = {
+  ...USER_SELECT_FIELDS,
+  originalAvatar: true,
+  telegramId: true,
+  telegramUsername: true,
+  approvedById: true,
+  reliability: true,
+} as const;
+
 export const PROFILE_SELECT_FIELDS = {
   ...USER_SELECT_FIELDS,
   approvedById: true,

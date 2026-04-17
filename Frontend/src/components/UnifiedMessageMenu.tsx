@@ -8,7 +8,7 @@ import { ChatMessage, chatApi } from '@/api/chat';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
 import { formatFullDateTime, getUserDisplayName, getUserInitials } from '@/utils/messageMenuUtils';
-import { EmojiQuickStrip } from '@/components/reactions/EmojiQuickStrip';
+import { EmojiQuickStrip, type ReactionEmojiPickSource } from '@/components/reactions/EmojiQuickStrip';
 import {
   frequentReactionStripFromStore,
   isEventFromReactionEmojiPickerPortal,
@@ -282,8 +282,12 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     }, 300);
   };
 
-  const handleReactionClick = (emoji: string) => {
+  const handleReactionClick = (emoji: string, source: ReactionEmojiPickSource) => {
     if (currentReaction === emoji) {
+      if (source === 'catalog') {
+        closeMenu();
+        return;
+      }
       onReactionRemove(message.id);
     } else {
       onReactionSelect(message.id, emoji);
@@ -522,7 +526,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             <EmojiQuickStrip
               frequentEmojis={frequentMenuEmojis}
               currentEmoji={currentReaction}
-              onPick={(emoji) => handleReactionClick(emoji)}
+              onPick={(emoji, source) => handleReactionClick(emoji, source)}
             />
           </div>
 

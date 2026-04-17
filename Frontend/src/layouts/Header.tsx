@@ -35,7 +35,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const { pendingInvites, isNewInviteAnimating } = useHeaderStore();
-  const { gameDetailsCanAccessChat, setBounceNotifications, profileActiveTab, setProfileActiveTab } = useNavigationStore();
+  const { gameDetailsCanAccessChat, setBounceNotifications, profileActiveTab, setProfileActiveTab, userProfileHeaderActions } = useNavigationStore();
   const isDesktop = useDesktop();
 
   const parsed = useMemo(
@@ -49,8 +49,20 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const isGameDetailsSplitView = currentPage === 'gameDetails' && (isDesktop || isLandscape) && isGameDetailsPath;
   
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
-  const shouldHideHeader = !user && isGameDetailsPage;
+  const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);
+  const shouldHideHeader = !user && (isGameDetailsPage || isUserProfilePage);
   const isMarketplaceList = location.pathname === '/marketplace' || location.pathname === '/marketplace/my';
+
+  const showHomeHeaderRight =
+    currentPage === 'my' ||
+    currentPage === 'find' ||
+    currentPage === 'chats' ||
+    currentPage === 'profile' ||
+    currentPage === 'leaderboard' ||
+    currentPage === 'teams' ||
+    (currentPage === 'marketplace' && isMarketplaceList);
+  const hasRightHeaderSlot =
+    showHomeHeaderRight || currentPage === 'gameDetails' || currentPage === 'gameSubscriptions';
 
   useBackButtonHandler();
 
@@ -81,11 +93,17 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
             {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard' || (currentPage === 'marketplace' && isMarketplaceList)) ? null : (
               <button
                 onClick={handleBackClick}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-110 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current  focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-110 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current  focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current shrink-0"
               >
                 <ArrowLeft size={20} />
-                {!(currentPage === 'marketplace' && (location.pathname === '/marketplace/create' || location.pathname.match(/^\/marketplace\/[^/]+\/edit$/))) && t('common.back')}
+                {!(currentPage === 'marketplace' && (location.pathname === '/marketplace/create' || location.pathname.match(/^\/marketplace\/[^/]+\/edit$/))) && currentPage !== 'userProfile' && t('common.back')}
               </button>
+            )}
+
+            {currentPage === 'userProfile' && userProfileHeaderActions && (
+              <div className="min-w-0 flex-1 flex items-center min-h-0 pl-1">
+                <div className="w-full min-w-0 overflow-visible">{userProfileHeaderActions}</div>
+              </div>
             )}
 
             {currentPage === 'marketplace' && isMarketplaceList && (
@@ -132,8 +150,8 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
             {currentPage === 'leaderboard' && <LeaderboardTabController />}
           </div>
 
-          <div className="flex-shrink-0 min-w-28 flex items-center justify-end gap-4">
-            {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard' || currentPage === 'teams' || (currentPage === 'marketplace' && isMarketplaceList)) && (
+          <div className={`flex-shrink-0 flex items-center justify-end gap-4 ${hasRightHeaderSlot ? 'min-w-28' : 'min-w-0'}`}>
+            {showHomeHeaderRight && (
               <HomeHeaderContent />
             )}
 
@@ -147,7 +165,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
           </div>
         </div>
       </motion.header>
-      {currentPage !== 'profile' && <GameModeToggle />}
+      {currentPage !== 'profile' && currentPage !== 'userProfile' && <GameModeToggle />}
     </>
   );
 };

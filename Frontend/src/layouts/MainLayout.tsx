@@ -18,7 +18,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { bottomTabsVisible, currentPage, chatsFilter, activeTab, findViewMode, initShellAnimationPlayed, setInitShellAnimationPlayed } = useNavigationStore();
   const isDesktop = useDesktop();
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
-  const shouldHideHeader = !user && isGameDetailsPage;
+  const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);
+  const shouldHideHeader = !user && (isGameDetailsPage || isUserProfilePage);
   const isHomeInit = location.pathname === '/' && !initShellAnimationPlayed;
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const isOnBugsListPage = chatsFilter === 'bugs' && !isOnSpecificChatRoute;
   const isDesktopChatsSplitView = isDesktopChats && !isOnBugsListPage;
   const anySplitView = isDesktopChatsSplitView || isDesktopGameDetailsSplitView || isDesktopCalendarSplitView;
+  const userProfileFullBleed = !!isUserProfilePage;
   const shouldAddBottomPadding = bottomTabsVisible && !isDesktopChats && !isDesktopGameDetailsSplitView && !isDesktopCalendarSplitView;
   const isUserTeamRoute = /^\/user-team\/[^/]+$/.test(location.pathname);
 
@@ -59,8 +61,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         style={{
           paddingTop: shouldHideHeader ? '0' : anySplitView ? '0' : `calc(4rem + env(safe-area-inset-top))`,
           paddingBottom: shouldAddBottomPadding ? 'calc(5rem + env(safe-area-inset-bottom))' : '1.5rem',
-          paddingLeft: anySplitView ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
-          paddingRight: anySplitView ? '0' : `max(0.5rem, env(safe-area-inset-right))`,
+          paddingLeft: anySplitView || userProfileFullBleed ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
+          paddingRight: anySplitView || userProfileFullBleed ? '0' : `max(0.5rem, env(safe-area-inset-right))`,
         }}
       >
         {anySplitView ? (
@@ -70,7 +72,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             {children}
           </div>
         ) : (
-          <div className="container mx-auto px-2 py-4">{children}</div>
+          <div className={`container mx-auto py-4 ${isUserProfilePage ? 'px-0' : 'px-2'}`}>{children}</div>
         )}
       </main>
     </div>
