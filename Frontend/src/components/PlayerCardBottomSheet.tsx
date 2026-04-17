@@ -180,10 +180,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
 
   const handleShareProfile = useCallback(async () => {
     if (!playerId || !stats || isBlocked) return;
-    const displayName = `${stats.user.firstName || ''} ${stats.user.lastName || ''}`.trim() || t('playerCard.shareProfileFallbackName');
     await sharePlayerProfile({
       playerId,
-      displayName,
       t,
       onFallbackModal: (url) => {
         setShareModalUrl(url);

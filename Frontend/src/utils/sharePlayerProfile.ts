@@ -1,7 +1,5 @@
-import { Share } from '@capacitor/share';
 import type { TFunction } from 'i18next';
 import toast from 'react-hot-toast';
-import { isCapacitor } from '@/utils/capacitor';
 import { getPublicWebBaseUrl } from '@/utils/shareUrl';
 
 export function getPlayerProfileShareUrl(playerId: string): string {
@@ -34,34 +32,11 @@ async function copyUrlToClipboard(url: string): Promise<boolean> {
 
 export async function sharePlayerProfile(options: {
   playerId: string;
-  displayName: string;
   t: TFunction;
   onFallbackModal: (url: string) => void;
 }): Promise<void> {
-  const { playerId, displayName, t, onFallbackModal } = options;
+  const { playerId, t, onFallbackModal } = options;
   const shareUrl = getPlayerProfileShareUrl(playerId);
-  const text = t('playerCard.shareProfileMessage', { name: displayName });
-  const title = t('playerCard.shareProfileTitle');
-
-  if (isCapacitor()) {
-    try {
-      await Share.share({ url: shareUrl, text, title });
-      return;
-    } catch (error) {
-      if ((error as Error).name === 'AbortError') return;
-      console.error('sharePlayerProfile Capacitor:', error);
-    }
-  }
-
-  if (navigator.share && (window.isSecureContext || location.protocol === 'https:')) {
-    try {
-      await navigator.share({ url: shareUrl, text, title });
-      return;
-    } catch (error) {
-      if ((error as Error).name === 'AbortError') return;
-      console.error('sharePlayerProfile Web Share:', error);
-    }
-  }
 
   if (await copyUrlToClipboard(shareUrl)) {
     toast.success(t('gameDetails.linkCopied'));
