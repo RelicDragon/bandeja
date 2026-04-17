@@ -1772,7 +1772,9 @@
     "cannotRemoveLastSet": "No se puede eliminar el último set"
   },
   "media": {
-    "resetView": "Restablecer Vista"
+    "resetView": "Restablecer Vista",
+    "download": "Descargar",
+    "copyImage": "Copiar imagen"
   },
   "chat": {
     "noMessages": "Aún no hay mensajes",

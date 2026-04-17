@@ -8,6 +8,7 @@ import { resolveUserCurrency, DEFAULT_CURRENCY } from '@/utils/currency';
 import { MapPin, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import { useMarketItemChatButton } from '@/components/chat/contextPanels/useMarketItemChatButton';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
+import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 
 interface MarketItemPanelProps {
   item: MarketItem;
@@ -27,6 +28,7 @@ export const MarketItemPanel = ({
   const [imageIndex, setImageIndex] = useState(0);
   const [localItem, setLocalItem] = useState(item);
   const [isEditing, setIsEditing] = useState(false);
+  const [fullscreenImageUrl, setFullscreenImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setLocalItem(item);
@@ -88,7 +90,20 @@ export const MarketItemPanel = ({
         {hasPhoto && (
           <div className="relative">
             <div className="aspect-square bg-transparent relative flex-shrink-0">
-              <img src={mediaUrls[imageIndex]} alt={localItem.title} className="w-full h-full object-cover" />
+              <img
+                src={mediaUrls[imageIndex]}
+                alt={localItem.title}
+                role="button"
+                tabIndex={0}
+                onClick={() => setFullscreenImageUrl(mediaUrls[imageIndex])}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setFullscreenImageUrl(mediaUrls[imageIndex]);
+                  }
+                }}
+                className="w-full h-full object-cover cursor-zoom-in"
+              />
               {hasMultipleImages && (
                 <>
                   <button
@@ -137,6 +152,13 @@ export const MarketItemPanel = ({
             </div>
           )}
         </div>
+        {fullscreenImageUrl && (
+          <FullscreenImageViewer
+            imageUrl={fullscreenImageUrl}
+            isOpen={!!fullscreenImageUrl}
+            onClose={() => setFullscreenImageUrl(null)}
+          />
+        )}
         <div className="px-6 pb-6">
           <MarketItemContextPanel
             marketItem={localItem}

@@ -1843,7 +1843,9 @@
     "cannotRemoveLastSet": "Нельзя удалить последний сет"
   },
   "media": {
-    "resetView": "Сбросить вид"
+    "resetView": "Сбросить вид",
+    "download": "Скачать",
+    "copyImage": "Копировать изображение"
   },
   "chat": {
     "noMessages": "Пока нет сообщений",

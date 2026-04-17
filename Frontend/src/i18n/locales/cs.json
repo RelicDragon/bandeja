@@ -1823,7 +1823,9 @@
     "cannotRemoveLastSet": "Poslední set nelze odebrat"
   },
   "media": {
-    "resetView": "Resetovat zobrazení"
+    "resetView": "Resetovat zobrazení",
+    "download": "Stáhnout",
+    "copyImage": "Kopírovat obrázek"
   },
   "chat": {
     "noMessages": "Zatím žádné zprávy",

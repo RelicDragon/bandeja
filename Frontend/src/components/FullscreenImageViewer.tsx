@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { Download, Loader2, X } from 'lucide-react';
+import { Copy, Download, Loader2, X } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { useTranslation } from 'react-i18next';
 import { Share } from '@capacitor/share';
@@ -14,6 +14,9 @@ interface FullscreenImageViewerProps {
   isOpen?: boolean;
 }
 
+const OVERLAY_CONTROL_GLASS =
+  'border border-black/25 dark:border-white/20 shadow-[0_4px_14px_rgba(0,0,0,0.35),0_12px_32px_rgba(0,0,0,0.45)] dark:shadow-[0_4px_14px_rgba(0,0,0,0.5),0_12px_36px_rgba(0,0,0,0.55)]';
+
 export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   imageUrl,
   onClose,
@@ -25,6 +28,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   const touchStartX = useRef<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
   const [displayUrl, setDisplayUrl] = useState(imageUrl);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -146,6 +150,56 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     }
   }, [displayUrl, t]);
 
+  const handleCopy = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') return;
+      setIsCopying(true);
+      try {
+        const response = await fetch(displayUrl);
+        const blob = await response.blob();
+        const fromBlob = blob.type?.trim();
+        const fromHeader = response.headers.get('content-type')?.split(';')[0]?.trim();
+        const mime =
+          fromBlob && fromBlob.startsWith('image/')
+            ? fromBlob
+            : fromHeader && fromHeader.startsWith('image/')
+              ? fromHeader
+              : '';
+
+        if (mime) {
+          await navigator.clipboard.write([
+            new ClipboardItem({ [mime]: Promise.resolve(blob) }),
+          ]);
+          return;
+        }
+
+        const bitmap = await createImageBitmap(blob);
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) throw new Error('no canvas context');
+          ctx.drawImage(bitmap, 0, 0);
+          const pngBlob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png');
+          });
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': Promise.resolve(pngBlob) }),
+          ]);
+        } finally {
+          bitmap.close();
+        }
+      } catch (error) {
+        console.error('Failed to copy image:', error);
+      } finally {
+        setIsCopying(false);
+      }
+    },
+    [displayUrl],
+  );
+
   const resetView = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     transformRef.current?.resetTransform();
@@ -263,9 +317,19 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
             }}
           >
             <button
+              type="button"
+              onClick={handleCopy}
+              disabled={isCopying}
+              className={`w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 ${OVERLAY_CONTROL_GLASS} backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed`}
+              aria-label={t('media.copyImage')}
+            >
+              {isCopying ? <Loader2 size={22} className="animate-spin" /> : <Copy size={22} />}
+            </button>
+            <button
+              type="button"
               onClick={handleDownload}
               disabled={isDownloading}
-              className="w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 shadow-xl backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 ${OVERLAY_CONTROL_GLASS} backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed`}
               aria-label={t('media.download')}
             >
               {isDownloading ? (
@@ -275,8 +339,9 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
               )}
             </button>
             <button
+              type="button"
               onClick={onClose}
-              className="w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 shadow-xl backdrop-blur-sm"
+              className={`w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 ${OVERLAY_CONTROL_GLASS} backdrop-blur-sm`}
               aria-label={t('common.close')}
             >
               <X size={22} />
@@ -291,7 +356,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           >
             <button
               onClick={resetView}
-              className="px-6 py-3 rounded-xl bg-black/60 hover:bg-black/80 text-white transition-all duration-200 text-sm font-medium shadow-xl backdrop-blur-sm"
+              className={`px-6 py-3 rounded-xl bg-black/60 hover:bg-black/80 text-white transition-all duration-200 text-sm font-medium ${OVERLAY_CONTROL_GLASS} backdrop-blur-sm`}
             >
               {t('media.resetView')}
             </button>

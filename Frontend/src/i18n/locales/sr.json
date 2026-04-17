@@ -1796,7 +1796,9 @@
     "cannotRemoveLastSet": "Не можете уклонити последњи сет"
   },
   "media": {
-    "resetView": "Ресетуј приказ"
+    "resetView": "Ресетуј приказ",
+    "download": "Преузми",
+    "copyImage": "Копирај слику"
   },
   "chat": {
     "noMessages": "Још нема порука",
