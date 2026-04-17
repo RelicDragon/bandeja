@@ -50,8 +50,8 @@ export const PlayerProfileActionBar = ({
   const headerMainRowClass = `grid w-full min-w-0 max-w-sm gap-1.5 items-stretch py-0.5 ${headerGridCols}`.trim();
   const wrapClass =
     variant === 'header'
-      ? 'flex w-full min-w-0 max-w-full items-stretch justify-end gap-1.5 py-0.5'
-      : 'flex gap-2 items-center w-full p-2 pl-6';
+      ? 'flex w-full min-w-0 max-w-full shrink-0 items-stretch justify-end gap-1.5 py-0.5'
+      : 'flex shrink-0 gap-2 items-center w-full p-2 pl-6';
 
   const mainButtons = (
     <>

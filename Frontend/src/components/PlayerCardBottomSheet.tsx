@@ -227,7 +227,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
       <Drawer open={!!playerId} onOpenChange={(open) => !open && handleClose()}>
           <DrawerContent>
             {showReviewsView && playerId ? (
-              <div className="flex items-center justify-between w-full p-2 pl-6">
+              <div className="flex shrink-0 items-center justify-between w-full p-2 pl-6">
                 <div className="flex items-center gap-4">
                   <button type="button" onClick={() => setShowReviewsView(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
@@ -241,7 +241,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                 </DrawerClose>
               </div>
             ) : showAvatarView && stats ? (
-              <div className="flex items-center justify-between w-full p-2 pl-6">
+              <div className="flex shrink-0 items-center justify-between w-full p-2 pl-6">
                 <div className="flex items-center gap-4">
                   <button type="button" onClick={() => setShowAvatarView(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
@@ -277,7 +277,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                   )}
                 />
               ) : stats ? (
-                <div className="flex gap-2 items-center w-full p-2 pl-6">
+                <div className="flex shrink-0 gap-2 items-center w-full p-2 pl-6">
                   {!isBlocked && (
                     <button
                       type="button"
@@ -307,7 +307,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                   </DrawerClose>
                 </div>
               ) : (
-                <div className="flex gap-2 items-center w-full p-2 pl-6 justify-end">
+                <div className="flex shrink-0 gap-2 items-center w-full p-2 pl-6 justify-end">
                   <DrawerClose asChild>
                     <button type="button" className="p-2.5 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 dark:border-gray-700/50">
                       <X size={20} className="text-gray-600 dark:text-gray-300" />
@@ -317,62 +317,64 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
               )
             )}
 
-            <div className="flex flex-col min-h-0 flex-1 max-h-[calc(75vh-4rem)] overflow-y-auto" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}>
-              <AnimatePresence mode="wait">
-                {loading ? (
-                  <motion.div key="loading" className="flex items-center justify-center h-64" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-                    <Loading />
-                  </motion.div>
-                ) : showReviewsView && playerId ? (
-                  <motion.div
-                    key="reviews"
-                    className="flex-1 min-h-0 flex flex-col px-4 pb-4 overflow-y-auto"
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -40 }}
-                    transition={{ duration: 0.25, ease: 'easeOut' }}
-                  >
-                    <ReviewsList
-                      trainerId={playerId}
-                      initialSummary={stats ? { rating: stats.user.trainerRating ?? null, reviewCount: stats.user.trainerReviewCount ?? 0 } : undefined}
-                      onReviewClick={(gameId) => { markReopenOnBack(); handleClose(); navigate(`/games/${gameId}`); }}
-                      showSummary
-                      showTitle={false}
-                      compact
-                    />
-                  </motion.div>
-                ) : stats ? (
-                  <>
-                    {showAvatarView && stats.user.originalAvatar ? (
-                      <motion.div key="avatar" className="flex-1 min-h-0 flex flex-col" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3, ease: 'easeInOut' }}>
-                        <PlayerAvatarView stats={stats} />
-                      </motion.div>
-                    ) : (
-                      <motion.div key="content" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
-                        <PlayerCardProfileBody
-                          stats={stats}
-                          t={t}
-                          isBlocked={isBlocked}
-                          showTelegram={!!user}
-                          onAvatarClick={() => { if (stats.user.originalAvatar) setShowAvatarView(true); }}
-                          onRatingClick={stats.user.isTrainer && (stats.user.trainerReviewCount ?? 0) > 0 ? () => setShowReviewsView(true) : undefined}
-                          onTelegramClick={() => {
-                            const getTelegramUrl = () => {
-                              if (stats.user.telegramUsername) return `https://t.me/${stats.user.telegramUsername.replace('@', '')}`;
-                              if (stats.user.telegramId) return `tg://user?id=${stats.user.telegramId}`;
-                              return null;
-                            };
-                            const telegramUrl = getTelegramUrl();
-                            if (telegramUrl && !isBlocked) window.open(telegramUrl, '_blank');
-                          }}
-                          onOpenGame={() => { markReopenOnBack(); handleClose(); }}
-                          onMarketItemClick={(item) => { markReopenOnBack(); handleClose(); navigate(`/marketplace/${item.id}`); }}
-                        />
-                      </motion.div>
-                    )}
-                  </>
-                ) : null}
-              </AnimatePresence>
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+              <div className="pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]">
+                <AnimatePresence mode="wait">
+                  {loading ? (
+                    <motion.div key="loading" className="flex items-center justify-center h-64" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                      <Loading />
+                    </motion.div>
+                  ) : showReviewsView && playerId ? (
+                    <motion.div
+                      key="reviews"
+                      className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4"
+                      initial={{ opacity: 0, x: 40 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -40 }}
+                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                    >
+                      <ReviewsList
+                        trainerId={playerId}
+                        initialSummary={stats ? { rating: stats.user.trainerRating ?? null, reviewCount: stats.user.trainerReviewCount ?? 0 } : undefined}
+                        onReviewClick={(gameId) => { markReopenOnBack(); handleClose(); navigate(`/games/${gameId}`); }}
+                        showSummary
+                        showTitle={false}
+                        compact
+                      />
+                    </motion.div>
+                  ) : stats ? (
+                    <>
+                      {showAvatarView && stats.user.originalAvatar ? (
+                        <motion.div key="avatar" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3, ease: 'easeInOut' }}>
+                          <PlayerAvatarView stats={stats} />
+                        </motion.div>
+                      ) : (
+                        <motion.div key="content" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
+                          <PlayerCardProfileBody
+                            stats={stats}
+                            t={t}
+                            isBlocked={isBlocked}
+                            showTelegram={!!user}
+                            onAvatarClick={() => { if (stats.user.originalAvatar) setShowAvatarView(true); }}
+                            onRatingClick={stats.user.isTrainer && (stats.user.trainerReviewCount ?? 0) > 0 ? () => setShowReviewsView(true) : undefined}
+                            onTelegramClick={() => {
+                              const getTelegramUrl = () => {
+                                if (stats.user.telegramUsername) return `https://t.me/${stats.user.telegramUsername.replace('@', '')}`;
+                                if (stats.user.telegramId) return `tg://user?id=${stats.user.telegramId}`;
+                                return null;
+                              };
+                              const telegramUrl = getTelegramUrl();
+                              if (telegramUrl && !isBlocked) window.open(telegramUrl, '_blank');
+                            }}
+                            onOpenGame={() => { markReopenOnBack(); handleClose(); }}
+                            onMarketItemClick={(item) => { markReopenOnBack(); handleClose(); navigate(`/marketplace/${item.id}`); }}
+                          />
+                        </motion.div>
+                      )}
+                    </>
+                  ) : null}
+                </AnimatePresence>
+              </div>
             </div>
           </DrawerContent>
       </Drawer>
