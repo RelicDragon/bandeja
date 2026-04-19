@@ -47,7 +47,11 @@ export const MainPage = () => {
     (currentPage === 'find' && findViewMode === 'calendar')
   );
 
-  const scrollablePage = currentPage === 'my' || currentPage === 'find' || currentPage === 'userProfile';
+  const scrollablePage =
+    currentPage === 'my' ||
+    currentPage === 'find' ||
+    currentPage === 'userProfile' ||
+    currentPage === 'leaderboard';
   const isTeamsPage = currentPage === 'teams';
 
   const renderContent = useMemo(() => {

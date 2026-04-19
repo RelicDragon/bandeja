@@ -25,27 +25,9 @@ export const ProfileLeaderboard = () => {
   const userRowRef = useRef<HTMLTableRowElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
 
-  const getDecimals = (value: number) => {
-    if (value === 0) return 2;
-    const absValue = Math.abs(value);
-    if (absValue < 0.01) {
-      return Math.ceil(-Math.log10(absValue)) + 1;
-    }
-    return 2;
-  };
-
-  const formatNumber = (value: number) => {
-    const formatted = value.toFixed(getDecimals(value));
-    const absValue = Math.abs(value);
-    if (absValue < 0.1 && absValue > 0) {
-      return formatted.replace(/0+$/, '').replace(/\.$/, '');
-    }
-    return formatted;
-  };
-
-  const formatChange = (change: number) => {
-    const formatted = formatNumber(change);
-    return change > 0 ? `+${formatted}` : formatted;
+  const formatRatingDelta = (change: number) => {
+    const s = change.toFixed(2);
+    return change > 0 ? `+${s}` : s;
   };
 
   const scrollToUser = () => {
@@ -166,17 +148,20 @@ export const ProfileLeaderboard = () => {
   }
 
   const renderTable = () => (
-    <div className="overflow-x-auto overflow-y-auto h-full">
-      <table className="w-full">
+    <div className="-ml-1 w-[calc(100%+1rem)] min-w-0 max-w-[calc(100%+1rem)] overflow-x-hidden">
+      <table className="w-full min-w-0 table-fixed">
+        <colgroup>
+          <col className="w-9" />
+          <col />
+          <col className="w-[5.25rem] sm:w-28" />
+        </colgroup>
         <thead className="sticky top-0 bg-white dark:bg-gray-900 z-10">
           <tr className="border-b border-gray-200 dark:border-gray-700">
-            <th className="w-14" />
-            <th className="text-left py-2 pl-0 pr-0 text-xs font-semibold text-gray-700 dark:text-gray-300">
-              <div className="-translate-x-2">
-                {t('gameDetails.player') || 'Player'}
-              </div>
+            <th className="px-0 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300" />
+            <th className="min-w-0 py-2 pl-0 pr-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
+              {t('gameDetails.player') || 'Player'}
             </th>
-            <th className="text-right py-2 pl-0 pr-4 text-xs font-semibold text-gray-700 dark:text-gray-300">
+            <th className="whitespace-nowrap py-2 pl-2 pr-0 text-right text-xs font-semibold text-gray-700 dark:text-gray-300">
               {leaderboardType === 'social' 
                 ? (t('profile.social') || 'Social') 
                 : leaderboardType === 'games' 
@@ -202,59 +187,61 @@ export const ProfileLeaderboard = () => {
                   isCurrentUser ? 'bg-primary-50 dark:bg-primary-900/20' : ''
                 }`}
               >
-                <td className="py-2 pl-0 pr-0">
-                  <div className="flex items-center justify-center -translate-x-2">
-                    <span
-                      className={`text-sm font-medium ${
-                        isCurrentUser
-                          ? 'text-primary-600 dark:text-primary-400'
-                          : 'text-gray-900 dark:text-white'
-                      }`}
-                    >
-                      {entry.rank}
-                    </span>
-                  </div>
+                <td className="px-0 py-2 text-left align-middle">
+                  <span
+                    className={`text-xs font-medium tabular-nums ${
+                      isCurrentUser
+                        ? 'text-primary-600 dark:text-primary-400'
+                        : 'text-gray-900 dark:text-white'
+                    }`}
+                  >
+                    {entry.rank}
+                  </span>
                 </td>
-                <td className="py-2 pl-0 pr-0">
-                  <div className="flex items-center gap-3 -translate-x-2">
-                    <PlayerAvatar
-                      player={entry}
-                      extrasmall={true}
-                      showName={false}
-                      fullHideName={true}
-                    />
-                    <div>
-                      <div className="text-sm text-gray-900 dark:text-white">
+                <td className="min-w-0 py-2 pl-0 pr-2 align-middle">
+                  <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+                      <PlayerAvatar
+                        player={entry}
+                        extrasmall={true}
+                        showName={false}
+                        fullHideName={true}
+                      />
+                    </div>
+                    <div className="min-w-0 w-full flex-1">
+                      <div className="line-clamp-2 min-w-0 break-words text-xs text-gray-900 dark:text-white">
                         {[entry.firstName, entry.lastName].filter(Boolean).join(' ')}
                         {isCurrentUser && (
-                          <span className="ml-2 text-xs text-primary-600 dark:text-primary-400">
+                          <span className="ml-1.5 text-[10px] text-primary-600 dark:text-primary-400">
                             ({t('profile.you')})
                           </span>
                         )}
                       </div>
                       {entry.verbalStatus && (
-                        <p className="verbal-status">
+                        <p className="verbal-status line-clamp-2 break-words">
                           {entry.verbalStatus}
                         </p>
                       )}
                     </div>
                   </div>
                 </td>
-                <td className="py-2 pl-0 pr-4 text-right">
-                  <div className="flex items-center justify-end gap-1.5">
-                    {leaderboardType !== 'games' && entry.lastGameRatingChange !== null && entry.lastGameRatingChange !== undefined && (
-                      <span
-                        className={`text-[10px] font-medium px-1 py-0.5 rounded ${
-                          entry.lastGameRatingChange > 0
-                            ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20'
-                            : entry.lastGameRatingChange < 0
-                            ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20'
-                            : 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800'
-                        }`}
-                      >
-                        {formatChange(entry.lastGameRatingChange)}
-                      </span>
-                    )}
+                <td className="whitespace-nowrap py-2 pl-2 pr-0 text-right align-middle">
+                  <div className="flex items-center justify-end gap-1">
+                    {leaderboardType !== 'games' &&
+                      entry.lastGameRatingChange !== null &&
+                      entry.lastGameRatingChange !== undefined && (
+                        <span
+                          className={`rounded px-1 py-0.5 text-[10px] font-medium tabular-nums ${
+                            entry.lastGameRatingChange > 0
+                              ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'
+                              : entry.lastGameRatingChange < 0
+                                ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+                                : 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                          }`}
+                        >
+                          {formatRatingDelta(entry.lastGameRatingChange)}
+                        </span>
+                      )}
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       {displayValue}
                     </span>
@@ -288,13 +275,13 @@ export const ProfileLeaderboard = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       {userRank && (
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <motion.button
             onClick={scrollToUser}
             layout
-            className={`flex items-center justify-between gap-2 ${isSearchFocused ? 'px-0' : 'px-4'} py-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors overflow-hidden`}
+            className={`flex min-w-0 items-center justify-between gap-1.5 ${isSearchFocused ? 'px-0' : 'px-2.5'} py-2 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors overflow-hidden`}
             animate={{
               opacity: isSearchFocused ? 0 : 1,
               scale: isSearchFocused ? 0.95 : 1,
@@ -310,14 +297,14 @@ export const ProfileLeaderboard = () => {
               pointerEvents: isSearchFocused ? 'none' : 'auto',
             }}
           >
-            <span className="text-sm font-medium text-primary-700 dark:text-primary-300 whitespace-nowrap">
+            <span className="min-w-0 flex-1 truncate text-left text-xs font-medium text-primary-700 dark:text-primary-300">
               {t('profile.myPlace', { rank: userRank, defaultValue: 'My place: {{rank}}' })}
             </span>
-            <ChevronDown size={18} className="text-primary-600 dark:text-primary-400 flex-shrink-0" />
+            <ChevronDown size={14} className="shrink-0 text-primary-600 dark:text-primary-400" />
           </motion.button>
           <motion.div
             layout
-            className="relative"
+            className="relative min-w-0"
             animate={{
               flex: isSearchFocused ? '2 1 0' : '1 1 0',
             }}
@@ -327,7 +314,7 @@ export const ProfileLeaderboard = () => {
               damping: 30,
             }}
           >
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={16} />
             <input
               type="text"
               placeholder={t('chat.search', { defaultValue: 'Search' })}
@@ -335,15 +322,15 @@ export const ProfileLeaderboard = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={handleSearchFocus}
               onBlur={handleSearchBlur}
-              className="w-full pl-10 pr-10 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              className="w-full min-w-0 rounded-full border border-gray-300 bg-white py-1.5 pl-8 pr-8 text-xs text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:ring-blue-400"
             />
             {searchQuery && (
               <button
                 onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-0.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 aria-label="Clear search"
               >
-                <X size={16} className="text-gray-400 dark:text-gray-500" />
+                <X size={14} className="text-gray-400 dark:text-gray-500" />
               </button>
             )}
           </motion.div>
