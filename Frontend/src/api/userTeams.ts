@@ -12,12 +12,22 @@ export const userTeamsApi = {
     return res.data.data;
   },
 
+  getForPlayerInvite: async (): Promise<UserTeam[]> => {
+    const res = await api.get<ApiResponse<UserTeam[]>>('/user-teams/for-player-invite');
+    return res.data.data;
+  },
+
   getById: async (id: string): Promise<UserTeam> => {
     const res = await api.get<ApiResponse<UserTeam>>(`/user-teams/${id}`);
     return res.data.data;
   },
 
-  create: async (data?: { name?: string; avatar?: string | null; originalAvatar?: string | null }): Promise<UserTeam> => {
+  create: async (data?: {
+    name?: string;
+    verbalStatus?: string | null;
+    avatar?: string | null;
+    originalAvatar?: string | null;
+  }): Promise<UserTeam> => {
     const res = await api.post<ApiResponse<UserTeam>>('/user-teams', data ?? {});
     return res.data.data;
   },
@@ -26,6 +36,7 @@ export const userTeamsApi = {
     id: string,
     data: {
       name?: string;
+      verbalStatus?: string | null;
       avatar?: string | null;
       originalAvatar?: string | null;
       cutAngle?: number;

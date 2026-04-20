@@ -7,12 +7,14 @@ import { UserTeamService } from '../services/userTeam.service';
 
 export const createTeamValidators = [
   body('name').optional().trim().isString().isLength({ min: 3, max: 120 }),
+  body('verbalStatus').optional({ nullable: true }).trim().isString().isLength({ max: 32 }),
   body('avatar').optional({ nullable: true }).isString(),
   body('originalAvatar').optional({ nullable: true }).isString(),
 ];
 
 export const updateTeamValidators = [
   body('name').optional().trim().isString().isLength({ min: 3, max: 120 }),
+  body('verbalStatus').optional({ nullable: true }).trim().isString().isLength({ max: 32 }),
   body('avatar').optional({ nullable: true }).isString(),
   body('originalAvatar').optional({ nullable: true }).isString(),
   body('cutAngle').optional().isFloat({ min: 0, max: 360 }),
@@ -32,6 +34,11 @@ export const getMyTeams = asyncHandler(async (req: AuthRequest, res: Response) =
 
 export const getMyMemberships = asyncHandler(async (req: AuthRequest, res: Response) => {
   const data = await UserTeamService.getMyMemberships(req.userId!);
+  res.json({ success: true, data });
+});
+
+export const listTeamsForPlayerInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const data = await UserTeamService.listTeamsForPlayerInvite(req.userId!);
   res.json({ success: true, data });
 });
 

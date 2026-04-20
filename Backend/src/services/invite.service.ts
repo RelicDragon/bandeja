@@ -8,6 +8,7 @@ import { validatePlayerCanJoinGame, validateGameCanAcceptParticipants } from '..
 import { fetchGameWithPlayingParticipants } from '../utils/gameQueries';
 import { addOrUpdateParticipant } from '../utils/participantOperations';
 import { performPostJoinOperations } from '../utils/postJoinOperations';
+import { applyUserTeamToFixedTeamsIfReady } from './game/userTeamFixedTeams.service';
 import { ParticipantService } from './game/participant.service';
 import { ApiError } from '../utils/ApiError';
 
@@ -157,6 +158,7 @@ export class InviteService {
     }
     const gameId = participant.gameId;
     const receiverId = participant.userId;
+    const inviteUserTeamIdForFixedTeams = participant.inviteUserTeamId ?? null;
     if (gameId && participant.game) {
       try {
         await prisma.$transaction(async (tx: any) => {
@@ -181,10 +183,17 @@ export class InviteService {
           });
         });
         await performPostJoinOperations(gameId, receiverId);
+        if (inviteUserTeamIdForFixedTeams) {
+          try {
+            await applyUserTeamToFixedTeamsIfReady(gameId, inviteUserTeamIdForFixedTeams);
+          } catch (e) {
+            console.error('[userTeamFixedTeams] apply after invite accept', e);
+          }
+        }
       } catch (error: any) {
         if (gameId && error instanceof ApiError && error.statusCode === 400) {
-          await ParticipantService.addToQueueAsParticipant(gameId, receiverId);
           await prisma.gameParticipant.deleteMany({ where: { id: participantId } });
+          await ParticipantService.addToQueueAsParticipant(gameId, receiverId, inviteUserTeamIdForFixedTeams);
           return { success: true, message: 'games.addedToJoinQueue' };
         }
         throw error;

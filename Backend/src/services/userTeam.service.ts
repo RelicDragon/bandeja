@@ -58,7 +58,12 @@ async function pickUniqueTeamNameForOwner(ownerId: string, db: Prisma.Transactio
 export class UserTeamService {
   static async createTeam(
     ownerId: string,
-    data: { name?: string; avatar?: string | null; originalAvatar?: string | null }
+    data: {
+      name?: string;
+      verbalStatus?: string | null;
+      avatar?: string | null;
+      originalAvatar?: string | null;
+    }
   ) {
     const owner = await prisma.user.findUnique({
       where: { id: ownerId },
@@ -72,11 +77,15 @@ export class UserTeamService {
       throw new ApiError(400, 'errors.userTeams.nameTooShort');
     }
 
+    const vsRaw = data.verbalStatus != null ? String(data.verbalStatus).trim().slice(0, 32) : '';
+    const verbalStatus = vsRaw.length > 0 ? vsRaw : null;
+
     const team = await prisma.$transaction(async (tx) => {
       const name = explicitName ?? (await pickUniqueTeamNameForOwner(ownerId, tx));
       const t = await tx.userTeam.create({
         data: {
           name,
+          verbalStatus,
           avatar: data.avatar ?? null,
           originalAvatar: data.originalAvatar ?? null,
           ownerId,
@@ -119,6 +128,50 @@ export class UserTeamService {
     });
   }
 
+  /** Ready teams (full accepted roster) visible to viewer: some accepted member shares viewer's city OR has ≥1 interaction with viewer. */
+  static async listTeamsForPlayerInvite(viewerId: string) {
+    const viewer = await prisma.user.findUnique({
+      where: { id: viewerId },
+      select: { currentCityId: true },
+    });
+    if (!viewer) return [];
+
+    const fromCity = viewer.currentCityId
+      ? await prisma.userTeamMember.findMany({
+          where: {
+            status: UserTeamMemberStatus.ACCEPTED,
+            user: { currentCityId: viewer.currentCityId, isActive: true },
+          },
+          select: { teamId: true },
+        })
+      : [];
+
+    const fromInteraction = await prisma.userTeamMember.findMany({
+      where: {
+        status: UserTeamMemberStatus.ACCEPTED,
+        OR: [
+          { user: { interactionsTo: { some: { fromUserId: viewerId, count: { gte: 1 } } } } },
+          { user: { interactionsFrom: { some: { toUserId: viewerId, count: { gte: 1 } } } } },
+        ],
+      },
+      select: { teamId: true },
+    });
+
+    const teamIds = [...new Set([...fromCity, ...fromInteraction].map((r) => r.teamId))];
+    if (teamIds.length === 0) return [];
+
+    const teams = await prisma.userTeam.findMany({
+      where: { id: { in: teamIds } },
+      include: TEAM_INCLUDE,
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return teams.filter((t) => {
+      const acc = t.members.filter((m) => m.status === UserTeamMemberStatus.ACCEPTED);
+      return acc.length >= t.size;
+    });
+  }
+
   static async getTeamForUser(teamId: string, userId: string) {
     const membership = await prisma.userTeamMember.findUnique({
       where: { teamId_userId: { teamId, userId } },
@@ -136,7 +189,13 @@ export class UserTeamService {
   static async updateTeam(
     teamId: string,
     requesterId: string,
-    data: { name?: string; avatar?: string | null; originalAvatar?: string | null; cutAngle?: number }
+    data: {
+      name?: string;
+      verbalStatus?: string | null;
+      avatar?: string | null;
+      originalAvatar?: string | null;
+      cutAngle?: number;
+    }
   ) {
     const team = await prisma.userTeam.findUnique({ where: { id: teamId } });
     if (!team) throw new ApiError(404, 'errors.userTeams.notFound');
@@ -145,6 +204,12 @@ export class UserTeamService {
     if (data.name !== undefined) {
       const n = data.name.trim();
       if (n.length < 3) throw new ApiError(400, 'errors.userTeams.nameTooShort');
+    }
+
+    let verbalStatus: string | null | undefined;
+    if (data.verbalStatus !== undefined) {
+      const raw = data.verbalStatus == null ? '' : String(data.verbalStatus).trim().slice(0, 32);
+      verbalStatus = raw.length > 0 ? raw : null;
     }
 
     let cutAngle: number | undefined;
@@ -157,6 +222,7 @@ export class UserTeamService {
       where: { id: teamId },
       data: {
         ...(data.name !== undefined ? { name: data.name.trim() } : {}),
+        ...(verbalStatus !== undefined ? { verbalStatus } : {}),
         ...(data.avatar !== undefined ? { avatar: data.avatar } : {}),
         ...(data.originalAvatar !== undefined ? { originalAvatar: data.originalAvatar } : {}),
         ...(cutAngle !== undefined ? { cutAngle } : {}),

@@ -43,6 +43,7 @@ export interface BasicUser {
   avatar?: string | null;
   level: number;
   socialLevel: number;
+  reliability?: number;
   gender: Gender;
   approvedLevel: boolean;
   isTrainer: boolean;

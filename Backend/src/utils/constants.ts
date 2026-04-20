@@ -173,6 +173,7 @@ export const USER_SELECT_FIELDS = {
   isPremium: true,
   trainerRating: true,
   trainerReviewCount: true,
+  reliability: true,
 } as const;
 
 /** Public-safe fields for GET /users/:userId/stats (no phone, email, wallet, notification prefs, etc.) */
@@ -182,7 +183,6 @@ export const USER_STATS_TARGET_SELECT = {
   telegramId: true,
   telegramUsername: true,
   approvedById: true,
-  reliability: true,
 } as const;
 
 export const PROFILE_SELECT_FIELDS = {
@@ -205,7 +205,6 @@ export const PROFILE_SELECT_FIELDS = {
   nameIsSet: true,
   cityIsSet: true,
   welcomeScreenPassed: true,
-  reliability: true,
   isAdmin: true,
   canCreateTournament: true,
   canCreateLeague: true,

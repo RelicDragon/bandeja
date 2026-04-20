@@ -1,15 +1,16 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { ChevronDown, ChevronUp, RotateCcw, Search, UserPlus } from 'lucide-react';
-import { BasicUser } from '@/types';
+import { BasicUser, UserTeam } from '@/types';
 import { invitesApi } from '@/api';
+import { userTeamsApi } from '@/api/userTeams';
 import { gamesApi } from '@/api/games';
 import { usersApi } from '@/api/users';
 import { Button } from './Button';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
-import { matchesSearch } from '@/utils/transliteration';
+import { useUserTeamsStore } from '@/store/userTeamsStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { PlayerListFilterBar } from '@/components/PlayerListFilterBar';
 import {
@@ -19,18 +20,35 @@ import {
   PLAYER_INVITE_RATING_MIN,
   type PlayerInviteFilters,
 } from '@/components/playerInvite/playerInviteFilters';
+import {
+  expandSelectionToPlayerIds,
+  filterAndSortInviteEntries,
+  invitePreFilterCount,
+  mergeUserTeamsForInviteList,
+  reorderInviteEntriesForFullListView,
+  teamGamesTogetherScore,
+  teamIsFullyInvitable,
+  isUserTeamReady,
+  type InviteListEntry,
+} from '@/components/playerInvite/inviteEntries';
 import { PlayerListItem } from '@/components/PlayerListItem';
+import { TeamListItem } from '@/components/playerInvite/TeamListItem';
+import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import {
   InviteFriendToBandejaButton,
   INVITE_FRIEND_CTA_MAX_RESULTS,
 } from '@/components/InviteFriendToBandejaButton';
+
+export interface PlayerListModalConfirmMeta {
+  userTeamIdByReceiverId?: Record<string, string>;
+}
 
 interface PlayerListModalProps {
   gameId?: string;
   onClose: () => void;
   onInviteSent?: () => void;
   multiSelect?: boolean;
-  onConfirm?: (playerIds: string[]) => void | Promise<void>;
+  onConfirm?: (playerIds: string[], meta?: PlayerListModalConfirmMeta) => void | Promise<void>;
   preSelectedIds?: string[];
   filterPlayerIds?: string[];
   filterGender?: 'MALE' | 'FEMALE';
@@ -53,11 +71,14 @@ export const PlayerListModal = ({
   const { t } = useTranslation();
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
   const invitableMaxSocial = usePlayersStore((s) => s.invitableMaxSocialLevel);
-  const { getUserMetadata, fetchPlayers } = usePlayersStore();
+  const { getUserMetadata } = usePlayersStore();
+
   const [players, setPlayers] = useState<BasicUser[]>([]);
+  const [readyTeams, setReadyTeams] = useState<UserTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviting, setInviting] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>(preSelectedIds);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(preSelectedIds);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(true);
   const [canInviteAsTrainer, setCanInviteAsTrainer] = useState(inviteAsTrainerOnly);
@@ -65,6 +86,26 @@ export const PlayerListModal = ({
   const [filters, setFilters] = useState<PlayerInviteFilters>(() => defaultPlayerInviteFilters(1));
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [visibleListCount, setVisibleListCount] = useState(PLAYER_INVITE_LIST_PAGE_SIZE);
+  const [inviteListKind, setInviteListKind] = useState<'all' | 'users' | 'teams'>('all');
+  const listSegmentUsers = inviteListKind === 'all' || inviteListKind === 'users';
+  const listSegmentTeams = inviteListKind === 'all' || inviteListKind === 'teams';
+
+  const showTeams = multiSelect && !inviteAsTrainerOnly;
+
+  const inviteListKindTabs = useMemo<SegmentedSwitchTab[]>(
+    () => [
+      { id: 'all', label: t('playerInvite.segmentAll') },
+      { id: 'users', label: t('playerInvite.segmentUsers') },
+      { id: 'teams', label: t('playerInvite.segmentTeams') },
+    ],
+    [t],
+  );
+
+  const teamById = useMemo(() => {
+    const m = new Map<string, UserTeam>();
+    for (const t of readyTeams) m.set(t.id, t);
+    return m;
+  }, [readyTeams]);
 
   const inviteSessionKey = useMemo(
     () => `${gameId ?? ''}:${inviteAsTrainerOnly}`,
@@ -93,6 +134,16 @@ export const PlayerListModal = ({
     setFilters((f) => ({ ...f, gender: filterGender ?? 'ALL' }));
   }, [filterGender]);
 
+  const preSelectedIdsKey = useMemo(() => [...preSelectedIds].sort().join(','), [preSelectedIds]);
+  const preSelectedIdsRef = useRef(preSelectedIds);
+  preSelectedIdsRef.current = preSelectedIds;
+  const lastSyncedPreSelectedKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (lastSyncedPreSelectedKey.current === preSelectedIdsKey) return;
+    lastSyncedPreSelectedKey.current = preSelectedIdsKey;
+    setSelectedUserIds([...preSelectedIdsRef.current]);
+  }, [preSelectedIdsKey]);
+
   const handleClose = () => {
     setIsOpen(false);
     setInviteAsTrainer(false);
@@ -107,13 +158,28 @@ export const PlayerListModal = ({
     }
   }, [inviteAsTrainerOnly]);
 
+  const filterPlayerIdsKey = useMemo(() => [...filterPlayerIds].sort().join(','), [filterPlayerIds]);
+  const filterPlayerIdsRef = useRef(filterPlayerIds);
+  filterPlayerIdsRef.current = filterPlayerIds;
+
   useEffect(() => {
     const loadPlayers = async () => {
       setLoading(true);
       if (!inviteAsTrainerOnly) setCanInviteAsTrainer(false);
+      const filterIds = filterPlayerIdsRef.current;
       try {
-        await fetchPlayers();
+        await usePlayersStore.getState().fetchPlayers();
+        const [inviteTeams] = await Promise.all([
+          userTeamsApi.getForPlayerInvite().catch(() => [] as UserTeam[]),
+          useUserTeamsStore.getState().refreshAll(),
+        ]);
         const currentUsers = usePlayersStore.getState().users;
+        const { teams, memberships } = useUserTeamsStore.getState();
+        const storeTeams = mergeUserTeamsForInviteList(teams, memberships);
+        const mergedTeamMap = new Map<string, UserTeam>();
+        for (const t of inviteTeams) mergedTeamMap.set(t.id, t);
+        for (const t of storeTeams) if (!mergedTeamMap.has(t.id)) mergedTeamMap.set(t.id, t);
+        const merged = [...mergedTeamMap.values()];
 
         const [gameResponse, invitesResponse] = await Promise.allSettled([
           gameId ? gamesApi.getById(gameId) : Promise.resolve(null),
@@ -146,11 +212,19 @@ export const PlayerListModal = ({
         }
 
         const filtered = Object.values(currentUsers).filter(
-          (player) => !participantIds.has(player.id) && !invitedUserIds.has(player.id)
+          (player) => !participantIds.has(player.id) && !invitedUserIds.has(player.id),
         );
         setPlayers(filtered);
+
+        const invitableTeams = merged.filter(
+          (team) =>
+            isUserTeamReady(team) &&
+            teamIsFullyInvitable(team, participantIds, invitedUserIds, filterIds),
+        );
+        setReadyTeams(invitableTeams);
       } catch {
         setPlayers([]);
+        setReadyTeams([]);
         toast.error(t('errors.generic'));
       } finally {
         setLoading(false);
@@ -158,118 +232,122 @@ export const PlayerListModal = ({
     };
 
     loadPlayers();
-  }, [gameId, fetchPlayers, t, inviteAsTrainerOnly]);
+  }, [gameId, t, inviteAsTrainerOnly, filterPlayerIdsKey]);
 
-  const baseFilteredPlayers = useMemo(() => {
-    let filtered = players;
-
-    if (inviteAsTrainerOnly) {
-      filtered = filtered.filter((p) => p.isTrainer === true);
-    }
-
-    const genderApply = filterGender ?? filters.gender;
-    filtered = filtered.filter((player) => {
-      if (genderApply === 'ALL') {
-        return player.gender === 'MALE' || player.gender === 'FEMALE' || player.gender === 'PREFER_NOT_TO_SAY';
-      }
-      return player.gender === genderApply;
-    });
-
-    if (filterPlayerIds.length > 0) {
-      filtered = filtered.filter((player) => !filterPlayerIds.includes(player.id));
-    }
-
-    if (searchQuery.trim()) {
-      filtered = filtered.filter((player) => {
-        const fullName = `${player.firstName || ''} ${player.lastName || ''}`;
-        return matchesSearch(searchQuery, fullName);
-      });
-    }
-
-    const [lMin, lMax] = filters.levelRange;
-    const [sMin, sMax] = filters.socialRange;
-    filtered = filtered.filter((p) => {
-      const lv = typeof p.level === 'number' ? p.level : 0;
-      const sv = typeof p.socialLevel === 'number' ? p.socialLevel : 0;
-      return lv >= lMin && lv <= lMax && sv >= sMin && sv <= sMax;
-    });
-
-    if (filters.minGamesTogether > 0) {
-      filtered = filtered.filter((p) => {
-        const c = getUserMetadata(p.id)?.gamesTogetherCount ?? 0;
-        return c >= filters.minGamesTogether;
-      });
-    }
-
-    return [...filtered].sort((a, b) => {
-      const aIsFavorite = isFavorite(a.id);
-      const bIsFavorite = isFavorite(b.id);
-      if (aIsFavorite && !bIsFavorite) return -1;
-      if (!aIsFavorite && bIsFavorite) return 1;
-      const aInteractionCount = getUserMetadata(a.id)?.interactionCount || 0;
-      const bInteractionCount = getUserMetadata(b.id)?.interactionCount || 0;
-      if (bInteractionCount !== aInteractionCount) return bInteractionCount - aInteractionCount;
-      const aG = getUserMetadata(a.id)?.gamesTogetherCount ?? 0;
-      const bG = getUserMetadata(b.id)?.gamesTogetherCount ?? 0;
-      return bG - aG;
+  const baseFilteredEntries = useMemo(() => {
+    return filterAndSortInviteEntries(players, readyTeams, {
+      searchQuery,
+      filterPlayerIds: filterPlayerIdsRef.current,
+      filters,
+      filterGender,
+      inviteAsTrainerOnly,
+      isFavorite,
+      getUserMetadata,
+      showTeams,
     });
   }, [
     players,
+    readyTeams,
     searchQuery,
-    filterPlayerIds,
+    filterPlayerIdsKey,
     filters,
     filterGender,
     inviteAsTrainerOnly,
     isFavorite,
     getUserMetadata,
+    showTeams,
   ]);
 
-  const filterPlayerIdsKey = useMemo(() => filterPlayerIds.join(','), [filterPlayerIds]);
+  useEffect(() => {
+    if (!showTeams) setInviteListKind('all');
+  }, [showTeams]);
+
+  const segmentFilteredEntries = useMemo(() => {
+    let e = baseFilteredEntries;
+    if (!showTeams) return e;
+    if (!listSegmentUsers) e = e.filter((x) => x.kind !== 'user');
+    if (!listSegmentTeams) e = e.filter((x) => x.kind !== 'team');
+    return e;
+  }, [baseFilteredEntries, showTeams, inviteListKind]);
 
   useEffect(() => {
     setVisibleListCount(PLAYER_INVITE_LIST_PAGE_SIZE);
-  }, [players, searchQuery, filterPlayerIdsKey, filterGender, inviteAsTrainerOnly, filters]);
+  }, [
+    players,
+    readyTeams,
+    searchQuery,
+    filterPlayerIdsKey,
+    filterGender,
+    inviteAsTrainerOnly,
+    filters,
+    inviteListKind,
+  ]);
 
-  const hasMoreFilteredPlayers = visibleListCount < baseFilteredPlayers.length;
+  const hasMoreFiltered = visibleListCount < segmentFilteredEntries.length;
 
-  const displayFilteredPlayers = useMemo(() => {
-    const slice = baseFilteredPlayers.slice(0, visibleListCount);
-    if (!hasMoreFilteredPlayers && slice.length > 0) {
-      return [...slice].sort((a, b) => {
-        const aI = getUserMetadata(a.id)?.interactionCount || 0;
-        const bI = getUserMetadata(b.id)?.interactionCount || 0;
-        if (bI !== aI) return bI - aI;
-        const aF = isFavorite(a.id);
-        const bF = isFavorite(b.id);
-        if (aF && !bF) return -1;
-        if (!aF && bF) return 1;
-        const aG = getUserMetadata(a.id)?.gamesTogetherCount ?? 0;
-        const bG = getUserMetadata(b.id)?.gamesTogetherCount ?? 0;
-        return bG - aG;
-      });
+  const displayFilteredEntries = useMemo(() => {
+    const slice = segmentFilteredEntries.slice(0, visibleListCount);
+    if (!hasMoreFiltered && slice.length > 0) {
+      return reorderInviteEntriesForFullListView(slice, getUserMetadata, isFavorite);
     }
     return slice;
-  }, [baseFilteredPlayers, visibleListCount, hasMoreFilteredPlayers, getUserMetadata, isFavorite]);
+  }, [segmentFilteredEntries, visibleListCount, hasMoreFiltered, getUserMetadata, isFavorite]);
 
-  const handlePlayerClick = (playerId: string) => {
+  const memberOfSelectedTeam = useCallback(
+    (userId: string) =>
+      selectedTeamIds.some((tid) => {
+        const t = teamById.get(tid);
+        return (t?.members ?? []).some((m) => m.status === 'ACCEPTED' && m.userId === userId);
+      }),
+    [selectedTeamIds, teamById],
+  );
+
+  const handleUserClick = (playerId: string) => {
     if (multiSelect && !inviteAsTrainerOnly) {
-      togglePlayer(playerId);
+      setSelectedTeamIds((prev) =>
+        prev.filter((tid) => {
+          const t = teamById.get(tid);
+          return !(t?.members ?? []).some((m) => m.status === 'ACCEPTED' && m.userId === playerId);
+        }),
+      );
+      setSelectedUserIds((prev) =>
+        prev.includes(playerId) ? prev.filter((id) => id !== playerId) : [...prev, playerId],
+      );
     } else {
-      setSelectedIds([playerId]);
+      setSelectedUserIds([playerId]);
+      setSelectedTeamIds([]);
     }
   };
 
-  const togglePlayer = (playerId: string) => {
-    setSelectedIds((prev) => (prev.includes(playerId) ? prev.filter((id) => id !== playerId) : [...prev, playerId]));
+  const handleTeamClick = (teamId: string) => {
+    if (!multiSelect) return;
+    const team = teamById.get(teamId);
+    const memberIds = (team?.members ?? [])
+      .filter((m) => m.status === 'ACCEPTED')
+      .map((m) => m.userId);
+    setSelectedUserIds((prev) => prev.filter((id) => !memberIds.includes(id)));
+    setSelectedTeamIds((prev) => (prev.includes(teamId) ? prev.filter((id) => id !== teamId) : [...prev, teamId]));
   };
 
+  const { playerIds: expandedPlayerIds, userTeamIdByReceiverId } = useMemo(
+    () => expandSelectionToPlayerIds(selectedUserIds, selectedTeamIds, teamById),
+    [selectedUserIds, selectedTeamIds, teamById],
+  );
+
+  const selectedUniqueCount = expandedPlayerIds.length;
+
   const handleConfirm = async () => {
-    if (selectedIds.length === 0) return;
+    if (expandedPlayerIds.length === 0) return;
 
     if (!gameId) {
       setInviting('confirming');
       try {
-        await Promise.resolve(onConfirm?.(selectedIds));
+        await Promise.resolve(
+          onConfirm?.(expandedPlayerIds, {
+            userTeamIdByReceiverId:
+              Object.keys(userTeamIdByReceiverId).length > 0 ? userTeamIdByReceiverId : undefined,
+          }),
+        );
         handleClose();
       } catch {
         // keep modal open
@@ -281,18 +359,24 @@ export const PlayerListModal = ({
 
     setInviting('confirming');
     try {
-      const asTrainer = (canInviteAsTrainer && inviteAsTrainer && selectedIds.length === 1) || inviteAsTrainerOnly;
-      for (const playerId of selectedIds) {
+      const asTrainer =
+        (canInviteAsTrainer && inviteAsTrainer && expandedPlayerIds.length === 1) || inviteAsTrainerOnly;
+      for (const playerId of expandedPlayerIds) {
+        const userTeamId = userTeamIdByReceiverId[playerId];
         await invitesApi.send({
           receiverId: playerId,
           gameId,
-          asTrainer: asTrainer && selectedIds[0] === playerId,
+          asTrainer: asTrainer && expandedPlayerIds[0] === playerId,
+          userTeamId,
         });
         await usersApi.trackInteraction(playerId);
       }
 
       onInviteSent?.();
-      onConfirm?.(selectedIds);
+      onConfirm?.(expandedPlayerIds, {
+        userTeamIdByReceiverId:
+          Object.keys(userTeamIdByReceiverId).length > 0 ? userTeamIdByReceiverId : undefined,
+      });
       handleClose();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
@@ -302,15 +386,30 @@ export const PlayerListModal = ({
     }
   };
 
-  const selectedCount = selectedIds.length;
-  const showCountHint = multiSelect && selectedCount > 0;
+  const showCountHint = multiSelect && selectedUniqueCount > 0;
 
-  const preFilterCount = useMemo(() => {
-    let list = players;
-    if (inviteAsTrainerOnly) list = list.filter((p) => p.isTrainer === true);
-    if (filterPlayerIds.length > 0) list = list.filter((p) => !filterPlayerIds.includes(p.id));
-    return list.length;
-  }, [players, inviteAsTrainerOnly, filterPlayerIds]);
+  const preFilterCount = useMemo(
+    () =>
+      invitePreFilterCount(players, readyTeams, {
+        inviteAsTrainerOnly,
+        filterPlayerIds: filterPlayerIdsRef.current,
+        showTeams,
+        filterGender,
+        filtersGender: filters.gender,
+        segmentUsers: listSegmentUsers,
+        segmentTeams: listSegmentTeams,
+      }),
+    [
+      players,
+      readyTeams,
+      inviteAsTrainerOnly,
+      filterPlayerIdsKey,
+      showTeams,
+      filterGender,
+      filters.gender,
+      inviteListKind,
+    ],
+  );
 
   const hasActiveFilters = useMemo(() => {
     const levelWide =
@@ -330,15 +429,42 @@ export const PlayerListModal = ({
     });
   };
 
+  const listHasSourceRows = players.length > 0 || (showTeams && readyTeams.length > 0);
+
   const showInviteFriendCta =
     searchQuery.trim().length > 0 &&
-    players.length > 0 &&
-    baseFilteredPlayers.length < INVITE_FRIEND_CTA_MAX_RESULTS;
+    listHasSourceRows &&
+    segmentFilteredEntries.length < INVITE_FRIEND_CTA_MAX_RESULTS;
+
+  const renderEntry = (entry: InviteListEntry) => {
+    if (entry.kind === 'user') {
+      const rowSelected = selectedUserIds.includes(entry.user.id) && !memberOfSelectedTeam(entry.user.id);
+      return (
+        <PlayerListItem
+          key={`u-${entry.user.id}`}
+          player={entry.user}
+          isSelected={rowSelected}
+          gamesTogetherCount={getUserMetadata(entry.user.id)?.gamesTogetherCount ?? 0}
+          onSelect={() => handleUserClick(entry.user.id)}
+        />
+      );
+    }
+    return (
+      <TeamListItem
+        key={`t-${entry.team.id}`}
+        team={entry.team}
+        members={entry.members}
+        isSelected={selectedTeamIds.includes(entry.team.id)}
+        gamesTogetherCount={teamGamesTogetherScore(entry.team, getUserMetadata)}
+        onSelect={() => handleTeamClick(entry.team.id)}
+      />
+    );
+  };
 
   return (
     <Dialog open={isOpen} onClose={handleClose} modalId="player-list-modal">
       <DialogContent className="max-h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0">
-        <DialogHeader className="flex-shrink-0 border-b border-gray-100/80 px-4 py-3 dark:border-gray-800/80">
+        <DialogHeader className="flex-shrink-0 border-b border-gray-100/80 px-2.5 py-3 dark:border-gray-800/80">
           <DialogTitle className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
             {title ||
               (inviteAsTrainerOnly
@@ -355,7 +481,7 @@ export const PlayerListModal = ({
           </div>
         ) : (
           <>
-            <div className="flex-shrink-0 px-4 pt-3">
+            <div className="flex-shrink-0 px-2.5 pt-3">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                 <input
@@ -368,17 +494,29 @@ export const PlayerListModal = ({
               </div>
             </div>
 
-            {players.length > 0 && (
-              <div className="flex-shrink-0 px-4 pt-2">
+            {listHasSourceRows && showTeams && (
+              <div className="flex flex-shrink-0 justify-center px-2.5 pt-2">
+                <SegmentedSwitch
+                  tabs={inviteListKindTabs}
+                  activeId={inviteListKind}
+                  onChange={(id) => setInviteListKind(id as 'all' | 'users' | 'teams')}
+                  titleInActiveOnly={false}
+                  layoutId="player-invite-list-kind"
+                />
+              </div>
+            )}
+
+            {listHasSourceRows && (
+              <div className="flex-shrink-0 px-2.5 pt-2">
                 <button
                   type="button"
                   onClick={() => setFiltersOpen((v) => !v)}
-                  className="w-full flex items-center justify-between rounded-xl border border-gray-200/90 bg-white/90 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-primary-300 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-900/80 dark:text-gray-200 dark:hover:border-primary-600 dark:hover:text-primary-300"
+                  className="w-full flex items-center justify-between rounded-xl border border-gray-200/90 bg-white/90 px-2.5 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-primary-300 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-900/80 dark:text-gray-200 dark:hover:border-primary-600 dark:hover:text-primary-300"
                 >
                   <span className="flex items-center gap-2">
                     <span>{t('playerInvite.filtersTitle')}</span>
                     <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-bold text-primary-700 dark:bg-primary-900/60 dark:text-primary-300">
-                      {baseFilteredPlayers.length} / {preFilterCount}
+                      {segmentFilteredEntries.length} / {preFilterCount}
                     </span>
                   </span>
                   <span className="flex items-center gap-2 text-xs font-medium">
@@ -424,22 +562,18 @@ export const PlayerListModal = ({
             {!filtersOpen && (
               <div className="relative z-10 flex min-h-0 flex-1 flex-col">
                 <div
-                  className={`min-h-0 flex-1 overflow-y-auto px-4 pt-1 ${
-                    baseFilteredPlayers.length > 0
-                      ? showCountHint
-                        ? 'pb-28'
-                        : 'pb-20'
-                      : 'pb-4'
+                  className={`min-h-0 flex-1 overflow-y-auto scrollbar-auto px-2.5 pt-1 ${
+                    segmentFilteredEntries.length > 0 ? (showCountHint ? 'pb-28' : 'pb-20') : 'pb-4'
                   }`}
                 >
-                  {players.length === 0 ? (
+                  {!listHasSourceRows ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                       <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-inner dark:from-gray-800 dark:to-gray-900">
                         <UserPlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                       </div>
                       <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
                     </div>
-                  ) : baseFilteredPlayers.length === 0 ? (
+                  ) : segmentFilteredEntries.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center px-1">
                       <p className="text-gray-600 dark:text-gray-400">{t('common.noResults') || 'No results found'}</p>
                       {showInviteFriendCta && (
@@ -450,35 +584,25 @@ export const PlayerListModal = ({
                     </div>
                   ) : (
                     <div className="space-y-1.5 pb-2">
-                      {displayFilteredPlayers.map((player) => (
-                        <PlayerListItem
-                          key={player.id}
-                          player={player}
-                          isSelected={selectedIds.includes(player.id)}
-                          gamesTogetherCount={getUserMetadata(player.id)?.gamesTogetherCount ?? 0}
-                          onSelect={() => handlePlayerClick(player.id)}
-                        />
-                      ))}
+                      {displayFilteredEntries.map(renderEntry)}
                       {showInviteFriendCta && (
                         <div className="flex justify-center pt-2">
                           <InviteFriendToBandejaButton />
                         </div>
                       )}
-                      {hasMoreFilteredPlayers && (
+                      {hasMoreFiltered && (
                         <div className="flex flex-col items-center gap-1 pb-1 pt-2">
                           <button
                             type="button"
-                            onClick={() =>
-                              setVisibleListCount((c) => c + PLAYER_INVITE_LIST_PAGE_SIZE)
-                            }
-                            className="rounded-xl border border-primary-300 bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50 active:scale-[0.98] dark:border-primary-600 dark:bg-gray-900 dark:text-primary-300 dark:hover:bg-primary-950/40"
+                            onClick={() => setVisibleListCount((c) => c + PLAYER_INVITE_LIST_PAGE_SIZE)}
+                            className="rounded-xl border border-primary-300 bg-white px-3 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50 active:scale-[0.98] dark:border-primary-600 dark:bg-gray-900 dark:text-primary-300 dark:hover:bg-primary-950/40"
                           >
                             {t('playerInvite.showMore')}
                           </button>
                           <p className="text-center text-[11px] text-gray-500 dark:text-gray-400">
                             {t('playerInvite.listShowing', {
-                              visible: displayFilteredPlayers.length,
-                              total: baseFilteredPlayers.length,
+                              visible: displayFilteredEntries.length,
+                              total: segmentFilteredEntries.length,
                             })}
                           </p>
                         </div>
@@ -489,16 +613,16 @@ export const PlayerListModal = ({
 
                 {showCountHint && (
                   <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center">
-                    <div className="rounded-full bg-primary-100/95 px-4 py-2 text-center text-sm font-medium text-primary-700 shadow-lg shadow-primary-500/30 backdrop-blur-sm dark:bg-primary-900/70 dark:text-primary-300 dark:shadow-primary-900/50">
-                      {t('games.playersSelected', { count: selectedCount })}
+                    <div className="rounded-full bg-primary-100/95 px-3 py-2 text-center text-sm font-medium text-primary-700 shadow-lg shadow-primary-500/30 backdrop-blur-sm dark:bg-primary-900/70 dark:text-primary-300 dark:shadow-primary-900/50">
+                      {t('games.playersSelected', { count: selectedUniqueCount })}
                     </div>
                   </div>
                 )}
               </div>
             )}
 
-            {canInviteAsTrainer && gameId && !multiSelect && !inviteAsTrainerOnly && baseFilteredPlayers.length > 0 && (
-              <label className="flex-shrink-0 mx-4 mb-2 flex items-center gap-2 cursor-pointer">
+            {canInviteAsTrainer && gameId && !multiSelect && !inviteAsTrainerOnly && segmentFilteredEntries.length > 0 && (
+              <label className="flex-shrink-0 mx-2.5 mb-2 flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={inviteAsTrainer}
@@ -511,8 +635,8 @@ export const PlayerListModal = ({
               </label>
             )}
 
-            {players.length > 0 && (
-              <div className="relative z-30 flex-shrink-0 border-t border-gray-100 bg-gray-50/95 p-4 pt-2 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95">
+            {listHasSourceRows && (
+              <div className="relative z-30 flex-shrink-0 border-t border-gray-100 bg-gray-50/95 px-2.5 py-3 pt-2 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95">
                 <div className="flex gap-3">
                   <Button
                     onClick={handleClose}
@@ -526,7 +650,9 @@ export const PlayerListModal = ({
                     onClick={handleConfirm}
                     className="flex-1 rounded-xl font-medium shadow-lg shadow-primary-500/25 dark:shadow-primary-900/30"
                     disabled={
-                      baseFilteredPlayers.length === 0 || selectedIds.length === 0 || inviting === 'confirming'
+                      segmentFilteredEntries.length === 0 ||
+                      selectedUniqueCount === 0 ||
+                      inviting === 'confirming'
                     }
                   >
                     {inviting === 'confirming' ? (

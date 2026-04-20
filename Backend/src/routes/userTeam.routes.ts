@@ -6,6 +6,7 @@ import * as userTeamController from '../controllers/userTeam.controller';
 const router = Router();
 
 router.get('/memberships', authenticate, userTeamController.getMyMemberships);
+router.get('/for-player-invite', authenticate, userTeamController.listTeamsForPlayerInvite);
 router.get('/', authenticate, userTeamController.getMyTeams);
 router.post(
   '/',

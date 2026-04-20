@@ -85,6 +85,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [isInvitePlayersModalOpen, setIsInvitePlayersModalOpen] = useState(false);
   const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>([]);
+  const [inviteUserTeamByReceiverId, setInviteUserTeamByReceiverId] = useState<Record<string, string>>({});
   const [invitedPlayers, setInvitedPlayers] = useState<BasicUser[]>([]);
   const [creatorNonPlaying, setCreatorNonPlaying] = useState<boolean>(false);
   
@@ -402,10 +403,14 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
 
       if (invitedPlayerIds.length > 0 && gameResponse.data.id) {
         try {
-          await invitesApi.sendMultiple({
-            receiverIds: invitedPlayerIds,
-            gameId: gameResponse.data.id,
-          });
+          const gid = gameResponse.data.id;
+          for (const receiverId of invitedPlayerIds) {
+            await invitesApi.send({
+              receiverId,
+              gameId: gid,
+              userTeamId: inviteUserTeamByReceiverId[receiverId],
+            });
+          }
         } catch (inviteError) {
           console.error('Failed to send invites:', inviteError);
         }
@@ -463,6 +468,11 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
 
   const handleRemoveInvitedPlayer = (playerId: string) => {
     setInvitedPlayerIds(invitedPlayerIds.filter(id => id !== playerId));
+    setInviteUserTeamByReceiverId((prev) => {
+      const next = { ...prev };
+      delete next[playerId];
+      return next;
+    });
     setInvitedPlayers(invitedPlayers.filter(p => p.id !== playerId));
   };
 
@@ -690,8 +700,9 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         <PlayerListModal
           onClose={() => setIsInvitePlayersModalOpen(false)}
           multiSelect={true}
-          onConfirm={async (playerIds: string[]) => {
+          onConfirm={async (playerIds, meta) => {
             setInvitedPlayerIds(playerIds);
+            setInviteUserTeamByReceiverId(meta?.userTeamIdByReceiverId ?? {});
             try {
               const { fetchPlayers, users } = usePlayersStore.getState();
               await fetchPlayers();

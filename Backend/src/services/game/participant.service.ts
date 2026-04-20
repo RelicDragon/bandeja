@@ -11,9 +11,10 @@ import { performPostJoinOperations } from '../../utils/postJoinOperations';
 import { InviteService } from '../invite.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { createSystemMessageWithNotification } from '../../utils/systemMessageHelper';
-import { ChatType, ParticipantRole } from '@prisma/client';
+import { ChatType, ParticipantRole, UserTeamMemberStatus } from '@prisma/client';
 import { BetService } from '../bets/bet.service';
 import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
+import { applyUserTeamToFixedTeamsIfReady } from './userTeamFixedTeams.service';
 
 const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
@@ -373,7 +374,7 @@ export class ParticipantService {
     return 'games.addedToJoinQueue';
   }
 
-  static async addToQueueAsParticipant(gameId: string, userId: string) {
+  static async addToQueueAsParticipant(gameId: string, userId: string, inviteUserTeamId?: string | null) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       include: {
@@ -418,6 +419,7 @@ export class ParticipantService {
             gameId,
             role: 'PARTICIPANT',
             status: IN_QUEUE_STATUS,
+            ...(inviteUserTeamId ? { inviteUserTeamId } : {}),
           },
         });
       });
@@ -457,6 +459,8 @@ export class ParticipantService {
     if (!participant) {
       throw new ApiError(404, 'games.joinQueueRequestNotFound');
     }
+
+    const queueInviteUserTeamId = participant.inviteUserTeamId ?? null;
 
     await prisma.$transaction(async (tx: any) => {
       const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
@@ -502,6 +506,13 @@ export class ParticipantService {
     await ParticipantMessageHelper.sendJoinMessage(gameId, queueUserId);
     await InviteService.deleteInvitesForUserInGame(gameId, queueUserId);
     await GameService.updateGameReadiness(gameId);
+    if (queueInviteUserTeamId) {
+      try {
+        await applyUserTeamToFixedTeamsIfReady(gameId, queueInviteUserTeamId);
+      } catch (e) {
+        console.error('[userTeamFixedTeams] after queue accept', e);
+      }
+    }
     await ParticipantMessageHelper.emitGameUpdate(gameId, currentUserId);
     return 'games.joinRequestAccepted';
   }
@@ -608,12 +619,31 @@ export class ParticipantService {
     receiverId: string,
     message?: string | null,
     expiresAt?: Date | null,
-    asTrainer?: boolean
+    asTrainer?: boolean,
+    inviteUserTeamId?: string | null
   ): Promise<{ participant: any; invite: any }> {
     const game = await prisma.game.findUniqueOrThrow({ where: { id: gameId }, select: { entityType: true, status: true } });
     validateGameCanAcceptParticipants(game);
     if (asTrainer && game.entityType !== 'TRAINING') {
       throw new ApiError(400, 'Only training games can have a trainer');
+    }
+
+    let resolvedInviteUserTeamId: string | null = null;
+    if (inviteUserTeamId && !asTrainer) {
+      const team = await prisma.userTeam.findUnique({
+        where: { id: inviteUserTeamId },
+        include: { members: true },
+      });
+      if (!team) throw new ApiError(400, 'errors.userTeams.notFound');
+      const accepted = team.members.filter((m) => m.status === UserTeamMemberStatus.ACCEPTED);
+      if (accepted.length < team.size) {
+        throw new ApiError(400, 'errors.userTeams.invalidInvite');
+      }
+      const receiverOk = accepted.some((m) => m.userId === receiverId);
+      if (!receiverOk) {
+        throw new ApiError(400, 'errors.userTeams.memberNotFound');
+      }
+      resolvedInviteUserTeamId = inviteUserTeamId;
     }
 
     const participant = await prisma.$transaction(async (tx) => {
@@ -649,6 +679,7 @@ export class ParticipantService {
           invitedByUserId: senderId,
           inviteMessage: message ?? null,
           inviteExpiresAt: expiresAt ?? null,
+          inviteUserTeamId: resolvedInviteUserTeamId,
         },
         include: {
           user: { select: USER_SELECT_FIELDS },

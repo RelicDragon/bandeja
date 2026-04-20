@@ -26,21 +26,22 @@ export const SegmentedSwitch = ({
   layoutId,
   className = '',
 }: SegmentedSwitchProps) => (
-  <div className={`relative flex w-fit mx-auto items-stretch gap-1 overflow-visible bg-gray-100 dark:bg-gray-700 rounded-lg p-1 ${className}`.trim()}>
+  <div
+    className={`relative mx-auto flex w-fit items-stretch gap-1 overflow-visible rounded-lg bg-gray-100 p-1 dark:bg-gray-700 ${className}`.trim()}
+  >
     {tabs.map((tab) => {
       const isActive = activeId === tab.id;
       const Icon = tab.icon;
       const showLabel = !titleInActiveOnly || isActive;
+      const pad = titleInActiveOnly && !isActive ? 'px-2' : 'px-3';
       return (
         <motion.button
           key={tab.id}
           type="button"
           onClick={() => onChange(tab.id)}
-          className={`relative flex min-w-0 items-center justify-center gap-1.5 rounded-md py-1.5 ${
-            titleInActiveOnly && !isActive ? 'px-2' : 'px-3'
-          } text-sm font-medium transition-colors duration-200 ${
-            titleInActiveOnly && !isActive ? 'px-2' : 'px-3'
-          } ${isActive ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
+          className={`relative flex min-w-0 items-center justify-center gap-1.5 rounded-md py-1.5 ${pad} text-sm font-medium transition-colors duration-200 ${
+            isActive ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+          }`}
           whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           layout
@@ -75,7 +76,7 @@ export const SegmentedSwitch = ({
             )}
           </span>
           {tab.badge !== undefined && tab.badge > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-medium">
+            <span className="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-medium text-white">
               {tab.badge > 99 ? '99+' : tab.badge}
             </span>
           )}

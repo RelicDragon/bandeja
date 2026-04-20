@@ -4,6 +4,7 @@ import { teamAvatarHalfPlaneClipPath } from '@/utils/teamAvatarClipPolygon';
 import { getTeamAvatarPair } from '@/utils/teamAvatarPair';
 import { teamNameInitials, userInitialsFromBasicUser } from '@/utils/teamAvatarText';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
+import { TeamAvatarParticipantTipShell } from '@/components/TeamAvatarParticipantTipShell';
 
 function SoloFace({
   user,
@@ -100,9 +101,11 @@ interface TeamAvatarProps {
   size?: TeamAvatarSize;
   className?: string;
   showRing?: boolean;
+  participantTip?: boolean;
 }
 
-export function TeamAvatar({ team, size = 'hero', className = '', showRing }: TeamAvatarProps) {
+export function TeamAvatar({ team, size = 'hero', className = '', showRing, participantTip }: TeamAvatarProps) {
+  const showParticipantTip = participantTip ?? size === 'tile';
   const seamMaskId = useId().replace(/:/g, '');
   const tile = size === 'tile';
   const ring = showRing ?? tile;
@@ -120,19 +123,21 @@ export function TeamAvatar({ team, size = 'hero', className = '', showRing }: Te
   const wrapCls = `relative overflow-hidden ${shrink} ${boxCls} ${className}`.trim();
 
   if (team.avatar) {
-    return (
+    const inner = (
       <div className={wrapCls}>
         <img src={team.avatar} alt="" className="h-full w-full object-cover" />
       </div>
     );
+    return showParticipantTip ? <TeamAvatarParticipantTipShell team={team}>{inner}</TeamAvatarParticipantTipShell> : inner;
   }
 
   if (!secondary) {
-    return (
+    const inner = (
       <div className={wrapCls}>
         <SoloFace user={primary} teamName={team.name} tile={tile} />
       </div>
     );
+    return showParticipantTip ? <TeamAvatarParticipantTipShell team={team}>{inner}</TeamAvatarParticipantTipShell> : inner;
   }
 
   const clip1 = teamAvatarHalfPlaneClipPath(cutAngle, 'first');
@@ -146,7 +151,7 @@ export function TeamAvatar({ team, size = 'hero', className = '', showRing }: Te
     ? wrapCls
     : `${wrapCls} ring-1 ring-inset ring-black/[0.06] dark:ring-white/[0.08]`;
 
-  return (
+  const splitInner = (
     <div className={splitWrapCls}>
       <SplitFaceHalf user={primary} tile={tile} clipPath={clip1} z="z-0" />
       <SplitFaceHalf user={secondary} tile={tile} clipPath={clip2} z="z-[1]" />
@@ -196,4 +201,5 @@ export function TeamAvatar({ team, size = 'hero', className = '', showRing }: Te
       </svg>
     </div>
   );
+  return showParticipantTip ? <TeamAvatarParticipantTipShell team={team}>{splitInner}</TeamAvatarParticipantTipShell> : splitInner;
 }

@@ -2,6 +2,7 @@ import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { GameService } from '../game/game.service';
+import { applyUserTeamToFixedTeamsIfReady } from '../game/userTeamFixedTeams.service';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
@@ -198,6 +199,7 @@ export class AdminGamesService {
     }
     const gameId = participant.gameId;
     const receiverId = participant.userId;
+    const inviteUserTeamId = participant.inviteUserTeamId;
     if (gameId && participant.game) {
       await validateGenderForGame(participant.game, receiverId);
       const existingParticipant = participant.game.participants.find((p) => p.userId === receiverId);
@@ -260,6 +262,13 @@ export class AdminGamesService {
         });
       } catch (error) {
         console.error('Failed to create system message for invite acceptance:', error);
+      }
+    }
+    if (gameId && inviteUserTeamId) {
+      try {
+        await applyUserTeamToFixedTeamsIfReady(gameId, inviteUserTeamId);
+      } catch (e) {
+        console.error('[userTeamFixedTeams] admin accept', e);
       }
     }
     return { message: 'invites.acceptedSuccessfully', gameId };

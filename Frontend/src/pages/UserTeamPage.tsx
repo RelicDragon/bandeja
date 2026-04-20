@@ -33,6 +33,7 @@ export function UserTeamPage() {
   const [team, setTeamLocal] = useState<UserTeam | null>(null);
   const [loading, setLoading] = useState(true);
   const [editName, setEditName] = useState('');
+  const [editVerbalStatus, setEditVerbalStatus] = useState('');
   const [showInvite, setShowInvite] = useState(false);
   const [showDeleteTeam, setShowDeleteTeam] = useState(false);
   const [memberActionModal, setMemberActionModal] = useState<{
@@ -43,6 +44,10 @@ export function UserTeamPage() {
   const [nameError, setNameError] = useState('');
   const [nameValidationStatus, setNameValidationStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const nameSaveRequestId = useRef(0);
+  const verbalStatusSaveRequestId = useRef(0);
+  const [verbalStatusValidationStatus, setVerbalStatusValidationStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle');
   const [cutAngleLive, setCutAngleLive] = useState<number | null>(null);
   const teamAvatarUploadRef = useRef<AvatarUploadHandle>(null);
 
@@ -53,9 +58,12 @@ export function UserTeamPage() {
       const data = await userTeamsApi.getById(id);
       setTeamLocal(data);
       setEditName(data.name);
+      setEditVerbalStatus(data.verbalStatus ?? '');
       setTeam(data);
       setNameError('');
       setNameValidationStatus('idle');
+      verbalStatusSaveRequestId.current += 1;
+      setVerbalStatusValidationStatus('idle');
     } catch (e: unknown) {
       toastApiError(t, e);
       setTeamLocal(null);
@@ -119,6 +127,41 @@ export function UserTeamPage() {
 
     return () => clearTimeout(timeoutId);
   }, [editName, team, user, setTeam, t]);
+
+  useEffect(() => {
+    if (!team || !user || team.ownerId !== user.id) return;
+
+    const trimmed = editVerbalStatus.trim().slice(0, 32);
+    const serverVal = (team.verbalStatus ?? '').trim();
+    if (trimmed === serverVal) {
+      verbalStatusSaveRequestId.current += 1;
+      setVerbalStatusValidationStatus('idle');
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      const rid = ++verbalStatusSaveRequestId.current;
+      setVerbalStatusValidationStatus('saving');
+      void (async () => {
+        try {
+          const updated = await userTeamsApi.update(team.id, { verbalStatus: trimmed.length > 0 ? trimmed : null });
+          if (rid !== verbalStatusSaveRequestId.current) return;
+          setTeamLocal(updated);
+          setTeam(updated);
+          setVerbalStatusValidationStatus('saved');
+          setTimeout(() => {
+            setVerbalStatusValidationStatus((prev) => (prev === 'saved' ? 'idle' : prev));
+          }, 2000);
+        } catch (e: unknown) {
+          if (rid !== verbalStatusSaveRequestId.current) return;
+          setVerbalStatusValidationStatus('error');
+          toastApiError(t, e);
+        }
+      })();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [editVerbalStatus, team, user, setTeam, t]);
 
   if (!id) return <Navigate to="/" replace />;
 
@@ -315,9 +358,14 @@ export function UserTeamPage() {
             </div>
             <div className="min-w-0 flex-1 text-center sm:pt-1 sm:text-left">
               {!isOwner ? (
-                <h2 className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-2xl">
-                  {team.name}
-                </h2>
+                <div className="mb-4">
+                  <h2 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-2xl">
+                    {team.name}
+                  </h2>
+                  {team.verbalStatus?.trim() ? (
+                    <p className="verbal-status mt-1.5">{team.verbalStatus.trim()}</p>
+                  ) : null}
+                </div>
               ) : null}
               <div className="flex justify-center gap-2 sm:justify-start">
                 <div className="flex w-16 shrink-0 flex-col items-center">
@@ -403,24 +451,51 @@ export function UserTeamPage() {
         </div>
 
         {isOwner ? (
-          <div className="relative">
-            <Input
-              label={t('teams.name')}
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              error={nameError}
-            />
-            {nameValidationStatus === 'saving' && (
-              <div className="absolute right-3 top-9">
-                <Loader2 size={16} className="animate-spin text-primary-600 dark:text-primary-400" />
-              </div>
-            )}
-            {nameValidationStatus === 'saved' && (
-              <div className="absolute right-3 top-9">
-                <Check size={16} className="text-emerald-600 dark:text-emerald-400" />
-              </div>
-            )}
-          </div>
+          <>
+            <div className="relative">
+              <Input
+                label={t('teams.name')}
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                error={nameError}
+              />
+              {nameValidationStatus === 'saving' && (
+                <div className="absolute right-3 top-9">
+                  <Loader2 size={16} className="animate-spin text-primary-600 dark:text-primary-400" />
+                </div>
+              )}
+              {nameValidationStatus === 'saved' && (
+                <div className="absolute right-3 top-9">
+                  <Check size={16} className="text-emerald-600 dark:text-emerald-400" />
+                </div>
+              )}
+            </div>
+            <div className="relative">
+              <Input
+                label={t('teams.verbalStatus')}
+                value={editVerbalStatus}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v.length <= 32) setEditVerbalStatus(v);
+                }}
+                placeholder={t('teams.verbalStatusPlaceholder')}
+                maxLength={32}
+              />
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                {editVerbalStatus.length}/32 {t('profile.characters')}
+              </p>
+              {verbalStatusValidationStatus === 'saving' && (
+                <div className="absolute right-3 top-9">
+                  <Loader2 size={16} className="animate-spin text-primary-600 dark:text-primary-400" />
+                </div>
+              )}
+              {verbalStatusValidationStatus === 'saved' && (
+                <div className="absolute right-3 top-9">
+                  <Check size={16} className="text-emerald-600 dark:text-emerald-400" />
+                </div>
+              )}
+            </div>
+          </>
         ) : null}
 
         {isPendingInvite && (

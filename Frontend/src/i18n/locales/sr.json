@@ -2305,6 +2305,8 @@
     "invitations": "Позиви у тим",
     "pendingInvite": "Позив на чекању",
     "name": "Назив тима",
+    "verbalStatus": "Статус тима",
+    "verbalStatusPlaceholder": "Кратак текст на позивима и листама",
     "nameMinLength": "Најмање 3 карактера",
     "avatarUpdated": "Фотографија тима је ажурирана",
     "inviteTeammate": "Позови саиграча",
@@ -2354,6 +2356,13 @@
     "socialShort": "Д {{value}}",
     "showMore": "Прикажи још",
     "listShowing": "{{visible}} од {{total}} приказано",
-    "applyFilters": "Примени филтере"
+    "applyFilters": "Примени филтере",
+    "segmentAll": "Све",
+    "segmentUsers": "Играчи",
+    "segmentTeams": "Тимови",
+    "statsLevelRowWithRel": "Ниво: {{level}} · {{rel}}%",
+    "statsLevelRowNoRel": "Ниво: {{level}}",
+    "statsSocialRow": "Друштвени: {{social}}",
+    "teamBadge": "Тим"
   }
 }

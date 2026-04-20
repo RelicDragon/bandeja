@@ -2371,6 +2371,8 @@
     "invitations": "Pozvánky do týmu",
     "pendingInvite": "Čekající pozvánka",
     "name": "Název týmu",
+    "verbalStatus": "Stav týmu",
+    "verbalStatusPlaceholder": "Krátký text v pozvánkách a seznamech",
     "nameMinLength": "Alespoň 3 znaky",
     "avatarUpdated": "Fotka týmu byla aktualizována",
     "inviteTeammate": "Pozvat spoluhráče",
@@ -2421,6 +2423,13 @@
     "socialShort": "S {{value}}",
     "showMore": "Zobrazit další",
     "listShowing": "Zobrazeno {{visible}} z {{total}}",
-    "applyFilters": "Použít filtry"
+    "applyFilters": "Použít filtry",
+    "segmentAll": "Vše",
+    "segmentUsers": "Hráči",
+    "segmentTeams": "Týmy",
+    "statsLevelRowWithRel": "Úroveň: {{level}} · {{rel}}%",
+    "statsLevelRowNoRel": "Úroveň: {{level}}",
+    "statsSocialRow": "Sociální: {{social}}",
+    "teamBadge": "Tým"
   }
 }

@@ -14,7 +14,7 @@ import { ParticipantService } from '../services/game/participant.service';
 import { GameReadService, participantsToInviteShape } from '../services/game/read.service';
 
 export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { receiverId, gameId, message, expiresAt, asTrainer } = req.body;
+  const { receiverId, gameId, message, expiresAt, asTrainer, inviteUserTeamId } = req.body;
 
   if (!gameId) {
     throw new ApiError(400, 'errors.invites.mustSpecifyGameId');
@@ -163,7 +163,8 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
     receiverId,
     message,
     expiresAt ? new Date(expiresAt) : null,
-    asTrainer === true
+    asTrainer === true,
+    typeof inviteUserTeamId === 'string' && inviteUserTeamId.length > 0 ? inviteUserTeamId : null
   );
 
   // Send system message to game chat if it's a game invite

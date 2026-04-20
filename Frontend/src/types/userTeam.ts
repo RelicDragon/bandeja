@@ -17,6 +17,7 @@ export interface UserTeamMember {
 export interface UserTeam {
   id: string;
   name: string;
+  verbalStatus?: string | null;
   avatar: string | null;
   originalAvatar: string | null;
   cutAngle?: number;

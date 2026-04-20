@@ -477,6 +477,8 @@ model GameParticipant {
   invitedByUserId  String?
   inviteMessage    String?
   inviteExpiresAt  DateTime?
+  /// When set, accepting this invite can auto-assign this user-team to game fixed teams once all members are playing.
+  inviteUserTeamId String?
   /// Watch / client: match the user is currently scoring (cleared on finalize).
   activeMatchId    String?
   game             Game               @relation(fields: [gameId], references: [id], onDelete: Cascade)
@@ -490,6 +492,7 @@ model GameParticipant {
   @@index([role])
   @@index([status])
   @@index([activeMatchId])
+  @@index([inviteUserTeamId])
 }
 
 model Round {
@@ -1005,6 +1008,7 @@ model BlockedUser {
 model UserTeam {
   id             String           @id @default(cuid())
   name           String
+  verbalStatus   String?          @db.VarChar(32)
   avatar         String?
   originalAvatar String?
   cutAngle       Float            @default(45)

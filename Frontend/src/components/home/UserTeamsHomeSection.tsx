@@ -15,15 +15,11 @@ import {
   readUserTeamsHomeExpandedSync,
 } from '@/utils/userTeamsHomeSectionStorage';
 import { findLatestSoloOwnedTeam, isSoloOwnedTeam } from '@/utils/soloOwnedUserTeam';
+import { isUserTeamReady } from '@/components/playerInvite/inviteEntries';
 
 function teamNameWordRows(name: string): string[] {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   return parts.length > 0 ? parts : [name.trim() || '\u00A0'];
-}
-
-function isUserTeamReady(team: UserTeam): boolean {
-  const accepted = team.members.filter((m) => m.status === 'ACCEPTED').length;
-  return accepted >= team.size;
 }
 
 interface UserTeamsHomeSectionProps {
@@ -181,7 +177,7 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
                 className="flex min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start flex-col items-center gap-1.5 rounded-2xl border border-amber-200/80 bg-white py-2 text-center shadow-lg shadow-gray-900/5 transition-[transform,box-shadow,border-color] duration-200 hover:border-amber-300 hover:shadow-md active:scale-[0.98] dark:border-amber-500/35 dark:bg-gray-800 dark:shadow-black/20 dark:hover:border-amber-500/50"
               >
                 <span className="relative flex h-11 w-11 shrink-0 items-center justify-center">
-                  <TeamAvatar team={m.team} size="tile" />
+                  <TeamAvatar team={m.team} size="tile" participantTip={false} />
                   <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500 dark:border-gray-800" />
                 </span>
                 <div className="flex w-full flex-col items-center justify-start px-1 pb-px">
@@ -215,7 +211,7 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
                     }`}
                   >
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center">
-                      <TeamAvatar team={team} size="tile" />
+                      <TeamAvatar team={team} size="tile" participantTip={false} />
                     </span>
                     <div className="flex w-full flex-col items-center justify-start px-1 pb-px">
                       {teamNameWordRows(team.name).map((word, i) => (

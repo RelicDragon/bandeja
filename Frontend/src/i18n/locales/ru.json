@@ -2392,6 +2392,8 @@
     "invitations": "Приглашения в команду",
     "pendingInvite": "Ожидает ответа",
     "name": "Название команды",
+    "verbalStatus": "Статус команды",
+    "verbalStatusPlaceholder": "Короткая строка в приглашениях и списках",
     "nameMinLength": "Не менее 3 символов",
     "avatarUpdated": "Фото команды обновлено",
     "inviteTeammate": "Пригласить напарника",
@@ -2442,6 +2444,13 @@
     "socialShort": "С {{value}}",
     "showMore": "Показать ещё",
     "listShowing": "Показано {{visible}} из {{total}}",
-    "applyFilters": "Применить фильтры"
+    "applyFilters": "Применить фильтры",
+    "segmentAll": "Все",
+    "segmentUsers": "Игроки",
+    "segmentTeams": "Команды",
+    "statsLevelRowWithRel": "Уровень: {{level}} · {{rel}}%",
+    "statsLevelRowNoRel": "Уровень: {{level}}",
+    "statsSocialRow": "Социальный: {{social}}",
+    "teamBadge": "Команда"
   }
 }

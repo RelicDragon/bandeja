@@ -2394,6 +2394,8 @@
     "invitations": "Team invitations",
     "pendingInvite": "Invitation pending",
     "name": "Team name",
+    "verbalStatus": "Team status",
+    "verbalStatusPlaceholder": "Short line shown on invites and lists",
     "nameMinLength": "At least 3 characters",
     "avatarUpdated": "Team photo updated",
     "inviteTeammate": "Invite teammate",
@@ -2442,6 +2444,13 @@
     "socialShort": "S {{value}}",
     "showMore": "Show more",
     "listShowing": "{{visible}} / {{total}} shown",
-    "applyFilters": "Apply filters"
+    "applyFilters": "Apply filters",
+    "segmentAll": "All",
+    "segmentUsers": "Users",
+    "segmentTeams": "Teams",
+    "statsLevelRowWithRel": "Level: {{level}} · {{rel}}%",
+    "statsLevelRowNoRel": "Level: {{level}}",
+    "statsSocialRow": "Social: {{social}}",
+    "teamBadge": "Team"
   }
 }

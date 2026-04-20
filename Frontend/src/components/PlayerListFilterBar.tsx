@@ -35,7 +35,7 @@ export function PlayerListFilterBar({
   };
 
   return (
-    <div className="mb-3 rounded-2xl border border-gray-200/80 bg-gradient-to-br from-white via-gray-50/90 to-primary-50/30 px-4 py-3 shadow-sm dark:border-gray-700/60 dark:from-gray-900 dark:via-gray-900/95 dark:to-primary-950/25">
+    <div className="mb-3 rounded-2xl border border-gray-200/80 bg-gradient-to-br from-white via-gray-50/90 to-primary-50/30 px-2.5 py-3 shadow-sm dark:border-gray-700/60 dark:from-gray-900 dark:via-gray-900/95 dark:to-primary-950/25">
       <div className="mb-3">
         <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
           {t('playerInvite.gender')}

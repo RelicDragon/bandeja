@@ -2274,6 +2274,8 @@
     "invitations": "Invitaciones de equipo",
     "pendingInvite": "Invitación pendiente",
     "name": "Nombre del equipo",
+    "verbalStatus": "Estado del equipo",
+    "verbalStatusPlaceholder": "Línea breve en invitaciones y listas",
     "nameMinLength": "Al menos 3 caracteres",
     "avatarUpdated": "Foto del equipo actualizada",
     "inviteTeammate": "Invitar compañero",
@@ -2322,6 +2324,13 @@
     "socialShort": "S {{value}}",
     "showMore": "Mostrar más",
     "listShowing": "{{visible}} / {{total}} mostrados",
-    "applyFilters": "Aplicar filtros"
+    "applyFilters": "Aplicar filtros",
+    "segmentAll": "Todos",
+    "segmentUsers": "Jugadores",
+    "segmentTeams": "Equipos",
+    "statsLevelRowWithRel": "Nivel: {{level}} · {{rel}}%",
+    "statsLevelRowNoRel": "Nivel: {{level}}",
+    "statsSocialRow": "Social: {{social}}",
+    "teamBadge": "Equipo"
   }
 }

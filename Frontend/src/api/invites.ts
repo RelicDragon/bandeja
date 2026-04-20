@@ -20,6 +20,7 @@ export const invitesApi = {
     message?: string;
     expiresAt?: string;
     asTrainer?: boolean;
+    userTeamId?: string;
   }) => {
     const response = await api.post<ApiResponse<Invite>>('/invites', data);
     return response.data;
