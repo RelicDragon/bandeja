@@ -52,9 +52,8 @@ export function TeamListItem({ team, members, isSelected, gamesTogetherCount, on
         <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{team.name}</p>
         {teamVerbal ? <p className="verbal-status mt-0.5">{teamVerbal}</p> : null}
         <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500 truncate">{label}</p>
-        <div className="mt-0.5 space-y-0.5 text-[11px] text-gray-400 dark:text-gray-500">
-          <p>{levelRow}</p>
-          <p>
+        <div className="mt-0.5 text-[11px] leading-none text-gray-400 dark:text-gray-500">
+          <p className="truncate">{levelRow}</p>
             {socialRow}
             {gamesTogetherCount > 0 && (
               <>
@@ -64,7 +63,6 @@ export function TeamListItem({ team, members, isSelected, gamesTogetherCount, on
                 </span>
               </>
             )}
-          </p>
         </div>
       </div>
 
