@@ -32,6 +32,7 @@ export interface GameSetupFormRef {
 interface GameSetupFormProps {
   initialValues?: GameSetupFormInitialValues;
   maxParticipants?: number;
+  hasFixedTeams?: boolean;
   isEditing?: boolean;
   onConfirm: (params: GameSetupParams) => void;
 }
