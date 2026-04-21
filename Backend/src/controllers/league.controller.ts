@@ -8,7 +8,7 @@ import { LeagueGroupManagementService } from '../services/league/groups.service'
 import { LeagueBroadcastService } from '../services/league/broadcast.service';
 
 export const createLeague = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const league = await LeagueCreateService.createLeague(req.body, req.userId!);
+  const league = await LeagueCreateService.createLeague(req.body, req.userId!, req.user?.isAdmin || false);
 
   res.status(201).json({
     success: true,

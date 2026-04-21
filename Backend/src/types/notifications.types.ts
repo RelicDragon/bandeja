@@ -26,6 +26,7 @@ export enum NotificationType {
   AUCTION_WON = 'AUCTION_WON',
   AUCTION_BIN_ACCEPTED = 'AUCTION_BIN_ACCEPTED',
   GAME_CANCELLED = 'GAME_CANCELLED',
+  MATCH_TIMER_CAP = 'MATCH_TIMER_CAP',
   TEAM_INVITE = 'TEAM_INVITE',
   TEAM_INVITE_ACCEPTED = 'TEAM_INVITE_ACCEPTED',
   TEAM_INVITE_DECLINED = 'TEAM_INVITE_DECLINED',
@@ -42,6 +43,7 @@ export interface NotificationAction {
 
 export interface NotificationData {
   gameId?: string;
+  matchId?: string;
   bugId?: string;
   userId?: string;
   inviteId?: string;

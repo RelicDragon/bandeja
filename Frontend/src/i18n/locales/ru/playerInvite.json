@@ -1,0 +1,32 @@
+{
+  "playerInvite": {
+    "filtersTitle": "Фильтры",
+    "matchingCount": "{{shown}} из {{total}}",
+    "reset": "Сброс",
+    "gender": "Пол",
+    "genderAll": "Все",
+    "genderMale": "Мужчины",
+    "genderFemale": "Женщины",
+    "rating": "Рейтинг",
+    "socialRating": "Соц. рейтинг",
+    "gamesTogether": "Играли вместе",
+    "gamesTogetherAny": "Любое",
+    "gamesTogetherMin": "{{count}}+",
+    "gamesTogetherBadge_one": "{{count}} вместе",
+    "gamesTogetherBadge_few": "{{count}} вместе",
+    "gamesTogetherBadge_many": "{{count}} вместе",
+    "gamesTogetherBadge_other": "{{count}} вместе",
+    "levelShort": "Р {{value}}",
+    "socialShort": "С {{value}}",
+    "applyFilters": "Применить фильтры",
+    "segmentAll": "Все",
+    "segmentUsers": "Игроки",
+    "segmentTeams": "Команды",
+    "statsLevelRowWithRel": "Уровень: {{level}} · {{rel}}%",
+    "statsLevelRowNoRel": "Уровень: {{level}}",
+    "statsSocialRow": "Социальный: {{social}}",
+    "teamBadge": "Команда",
+    "availabilityPartial": "Частично доступен",
+    "availabilityNone": "Недоступен в это время"
+  }
+}

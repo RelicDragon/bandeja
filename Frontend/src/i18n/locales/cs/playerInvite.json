@@ -1,0 +1,32 @@
+{
+  "playerInvite": {
+    "filtersTitle": "Filtrovat",
+    "matchingCount": "{{shown}} z {{total}}",
+    "reset": "Reset",
+    "gender": "Pohlaví",
+    "genderAll": "Vše",
+    "genderMale": "Muži",
+    "genderFemale": "Ženy",
+    "rating": "Hodnocení",
+    "socialRating": "Sociální",
+    "gamesTogether": "Hráli spolu",
+    "gamesTogetherAny": "Libovolně",
+    "gamesTogetherMin": "{{count}}+",
+    "gamesTogetherBadge_one": "{{count}}× spolu",
+    "gamesTogetherBadge_few": "{{count}}× spolu",
+    "gamesTogetherBadge_many": "{{count}}× spolu",
+    "gamesTogetherBadge_other": "{{count}}× spolu",
+    "levelShort": "R {{value}}",
+    "socialShort": "S {{value}}",
+    "applyFilters": "Použít filtry",
+    "segmentAll": "Vše",
+    "segmentUsers": "Hráči",
+    "segmentTeams": "Týmy",
+    "statsLevelRowWithRel": "Úroveň: {{level}} · {{rel}}%",
+    "statsLevelRowNoRel": "Úroveň: {{level}}",
+    "statsSocialRow": "Sociální: {{social}}",
+    "teamBadge": "Tým",
+    "availabilityPartial": "Částečně dostupný",
+    "availabilityNone": "Není k dispozici v tento čas"
+  }
+}

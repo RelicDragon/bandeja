@@ -2,20 +2,22 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
-import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameSetupSection, GameSetupModal, MultipleCourtsSelector, AvatarUpload, PriceSection } from '@/components';
+import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, MultipleCourtsSelector, AvatarUpload, PriceSection } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
 import { gameCourtsApi } from '@/api/gameCourts';
 import { mediaApi } from '@/api/media';
-import { Club, Court, EntityType, GameType, PriceType, PriceCurrency, Game, BasicUser } from '@/types';
+import { Club, Court, EntityType, GenderTeam, PriceType, PriceCurrency, Game, BasicUser } from '@/types';
 import { addHours, format, startOfDay } from 'date-fns';
-import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
+import { useGameFormat } from '@/hooks/useGameFormat';
 import { resolveUserCurrency } from '@/utils/currency';
-import { useGameTimeDuration, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
+import { useGameTimeDuration, formatTimeInClubTimezone, createDateFromClubTime, getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBack } from '@/utils/backNavigation';
+import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
+import { maxSlotsForUserGameOrLeague, maxSlotsForUserTournament } from '@/utils/userMaxParticipantsInGame';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -62,11 +64,11 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const [resultsByAnyone, setResultsByAnyone] = useState<boolean>(initialGameData?.resultsByAnyone ?? false);
   const [allowDirectJoin, setAllowDirectJoin] = useState<boolean>(initialGameData?.allowDirectJoin ?? false);
   const [afterGameGoToBar, setAfterGameGoToBar] = useState<boolean>(initialGameData?.afterGameGoToBar ?? false);
-  const [hasFixedTeams, setHasFixedTeams] = useState<boolean>(initialGameData?.hasFixedTeams ?? false);
-  const [genderTeams, setGenderTeams] = useState<'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'>(
-    (initialGameData?.genderTeams as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS') || 'ANY'
+  const gameFormat = useGameFormat({ ...initialGameData, maxParticipants });
+  const [genderTeams, setGenderTeams] = useState<GenderTeam>(
+    (initialGameData?.genderTeams as GenderTeam) ?? 'ANY',
   );
-  const [gameType, setGameType] = useState<GameType>((initialGameData?.gameType as GameType) || 'CLASSIC');
+  const [hasFixedTeams, setHasFixedTeams] = useState<boolean>(initialGameData?.hasFixedTeams ?? false);
   const [gameName, setGameName] = useState<string>(initialGameData?.name || '');
   const [comments, setComments] = useState<string>(initialGameData?.description || '');
   const [priceTotal, setPriceTotal] = useState<number | undefined>(initialGameData?.priceTotal ?? undefined);
@@ -110,37 +112,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
     initialDate: storedInitialDate,
     showPastTimes: false,
   });
-  const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
-  const [gameSetup, setGameSetup] = useState<{
-    fixedNumberOfSets?: number;
-    maxTotalPointsPerSet?: number;
-    maxPointsPerTeam?: number;
-    winnerOfGame?: any;
-    winnerOfMatch?: any;
-    matchGenerationType?: any;
-    prohibitMatchesEditing?: boolean;
-    pointsPerWin?: number;
-    pointsPerLoose?: number;
-    pointsPerTie?: number;
-    ballsInGames?: boolean;
-  }>(() => {
-    if (initialGameData) {
-      return {
-        fixedNumberOfSets: initialGameData.fixedNumberOfSets,
-        maxTotalPointsPerSet: initialGameData.maxTotalPointsPerSet,
-        maxPointsPerTeam: initialGameData.maxPointsPerTeam,
-        winnerOfGame: initialGameData.winnerOfGame,
-        winnerOfMatch: initialGameData.winnerOfMatch,
-        matchGenerationType: initialGameData.matchGenerationType,
-        prohibitMatchesEditing: initialGameData.prohibitMatchesEditing,
-        pointsPerWin: initialGameData.pointsPerWin,
-        pointsPerLoose: initialGameData.pointsPerLoose,
-        pointsPerTie: initialGameData.pointsPerTie,
-        ballsInGames: initialGameData.ballsInGames,
-      };
-    }
-    return {};
-  });
+  const [isFormatWizardOpen, setIsFormatWizardOpen] = useState(false);
   const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() => {
     return initialGameData?.gameCourts?.map(gc => gc.courtId) || [];
   });
@@ -247,14 +219,15 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
 
   useEffect(() => {
     if (entityType === 'TOURNAMENT') {
+      const tourMax = maxSlotsForUserTournament(user);
       setMaxParticipants(prev => {
         if (prev < 8) {
           setParticipants(p => p.length > 8 ? p.slice(0, 8) : p);
           return 8;
         }
-        if (prev > 32) {
-          setParticipants(p => p.length > 32 ? p.slice(0, 32) : p);
-          return 32;
+        if (prev > tourMax) {
+          setParticipants(p => p.length > tourMax ? p.slice(0, tourMax) : p);
+          return tourMax;
         }
         if (prev % 2 !== 0) {
           const evenValue = Math.ceil(prev / 2) * 2;
@@ -264,22 +237,17 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         return prev;
       });
     }
-  }, [entityType]);
+  }, [entityType, user]);
 
   useEffect(() => {
-    const template = applyGameTypeTemplate(gameType);
-    setGameSetup(prevSetup => ({
-      ...prevSetup,
-      winnerOfMatch: template.winnerOfMatch,
-      winnerOfGame: template.winnerOfGame,
-      matchGenerationType: template.matchGenerationType,
-      pointsPerWin: template.pointsPerWin ?? 0,
-      pointsPerLoose: template.pointsPerLoose ?? 0,
-      pointsPerTie: template.pointsPerTie ?? 0,
-      ballsInGames: template.ballsInGames ?? false,
-      fixedNumberOfSets: template.fixedNumberOfSets ?? 0,
-    }));
-  }, [gameType]);
+    if (entityType !== 'GAME' && entityType !== 'LEAGUE') return;
+    const cap = maxSlotsForUserGameOrLeague(user);
+    setMaxParticipants((prev) => {
+      if (prev <= cap) return prev;
+      setParticipants((p) => (p.length > cap ? p.slice(0, cap) : p));
+      return cap;
+    });
+  }, [entityType, user]);
 
   useEffect(() => {
     if (pendingAvatarFiles) {
@@ -370,21 +338,27 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
       }
 
       if (entityType !== 'TRAINING') {
-        gameData.gameType = gameType;
+        const setup = gameFormat.setupPayload;
+        gameData.gameType = gameFormat.gameType;
         gameData.affectsRating = isRatingGame;
         gameData.resultsByAnyone = entityType === 'TOURNAMENT' ? false : resultsByAnyone;
         gameData.hasFixedTeams = hasFixedTeams;
-        gameData.pointsPerWin = gameSetup.pointsPerWin;
-        gameData.pointsPerLoose = gameSetup.pointsPerLoose;
-        gameData.pointsPerTie = gameSetup.pointsPerTie;
-        gameData.fixedNumberOfSets = gameSetup.fixedNumberOfSets;
-        gameData.maxTotalPointsPerSet = gameSetup.maxTotalPointsPerSet;
-        gameData.maxPointsPerTeam = gameSetup.maxPointsPerTeam;
-        gameData.winnerOfGame = gameSetup.winnerOfGame;
-        gameData.winnerOfMatch = gameSetup.winnerOfMatch;
-        gameData.matchGenerationType = gameSetup.matchGenerationType;
-        gameData.prohibitMatchesEditing = gameSetup.prohibitMatchesEditing;
-        gameData.ballsInGames = gameSetup.ballsInGames;
+        gameData.pointsPerWin = setup.pointsPerWin;
+        gameData.pointsPerLoose = setup.pointsPerLoose;
+        gameData.pointsPerTie = setup.pointsPerTie;
+        gameData.fixedNumberOfSets = setup.fixedNumberOfSets;
+        gameData.maxTotalPointsPerSet = setup.maxTotalPointsPerSet;
+        gameData.matchTimedCapMinutes = setup.matchTimedCapMinutes;
+        gameData.maxPointsPerTeam = setup.maxPointsPerTeam;
+        gameData.winnerOfGame = setup.winnerOfGame;
+        gameData.winnerOfMatch = setup.winnerOfMatch;
+        gameData.matchGenerationType = setup.matchGenerationType;
+        Object.assign(gameData, resultsRoundGenV2Payload);
+        gameData.prohibitMatchesEditing = setup.prohibitMatchesEditing;
+        gameData.ballsInGames = setup.ballsInGames;
+        gameData.scoringPreset = setup.scoringPreset;
+        gameData.scoringMode = gameFormat.scoringMode;
+        gameData.hasGoldenPoint = setup.hasGoldenPoint;
       }
 
       if (entityType === 'GAME' || entityType === 'TOURNAMENT' || entityType === 'LEAGUE') {
@@ -476,24 +450,6 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
     setInvitedPlayers(invitedPlayers.filter(p => p.id !== playerId));
   };
 
-  const handleGameSetupConfirm = (params: {
-    fixedNumberOfSets: number;
-    maxTotalPointsPerSet: number;
-    maxPointsPerTeam: number;
-    winnerOfGame: any;
-    winnerOfMatch: any;
-    matchGenerationType: any;
-    prohibitMatchesEditing?: boolean;
-    pointsPerWin: number;
-    pointsPerLoose: number;
-    pointsPerTie: number;
-    ballsInGames: boolean;
-  }) => {
-    setGameSetup(params);
-  };
-
-  const hasGameSetup = Object.keys(gameSetup).length > 0;
-
   const handleAvatarUpload = async (avatarFile: File, originalFile: File) => {
     setPendingAvatarFiles({ avatar: avatarFile, original: originalFile });
   };
@@ -517,6 +473,23 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
             isGameAvatar={true}
           />
         </div>
+
+        {entityType !== 'BAR' && entityType !== 'TRAINING' && (
+          <GameFormatCard
+            entityType={entityType}
+            format={gameFormat}
+            generationSlotCount={maxParticipants > 0 ? maxParticipants : undefined}
+            onOpenWizard={() => setIsFormatWizardOpen(true)}
+            teams={{
+              participantCount: maxParticipants,
+              genderTeams,
+              hasFixedTeams,
+              onGenderTeamsChange: setGenderTeams,
+              onHasFixedTeamsChange: setHasFixedTeams,
+              genderSwitchLayoutId: 'createGameFormatCardTeams',
+            }}
+          />
+        )}
 
         <div ref={clubSectionRef}>
           <LocationSection
@@ -612,10 +585,6 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           resultsByAnyone={resultsByAnyone}
           allowDirectJoin={allowDirectJoin}
           afterGameGoToBar={afterGameGoToBar}
-          hasFixedTeams={hasFixedTeams}
-          genderTeams={genderTeams}
-          gameType={gameType}
-          maxParticipants={maxParticipants}
           entityType={entityType}
           onPublicChange={setIsPublic}
           onRatingGameChange={setIsRatingGame}
@@ -623,17 +592,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           onResultsByAnyoneChange={setResultsByAnyone}
           onAllowDirectJoinChange={setAllowDirectJoin}
           onAfterGameGoToBarChange={setAfterGameGoToBar}
-          onHasFixedTeamsChange={setHasFixedTeams}
-          onGenderTeamsChange={setGenderTeams}
-          onGameTypeChange={setGameType}
         />
-
-        {entityType !== 'BAR' && entityType !== 'TRAINING' && (
-          <GameSetupSection
-            onOpenSetup={() => setIsGameSetupModalOpen(true)}
-            hasSetup={hasGameSetup}
-          />
-        )}
 
         {maxParticipants > 4 && entityType !== 'BAR' && (
           <MultipleCourtsSelector
@@ -696,37 +655,52 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         />
       )}
 
-      {isInvitePlayersModalOpen && (
-        <PlayerListModal
-          onClose={() => setIsInvitePlayersModalOpen(false)}
-          multiSelect={true}
-          onConfirm={async (playerIds, meta) => {
-            setInvitedPlayerIds(playerIds);
-            setInviteUserTeamByReceiverId(meta?.userTeamIdByReceiverId ?? {});
-            try {
-              const { fetchPlayers, users } = usePlayersStore.getState();
-              await fetchPlayers();
-              const selectedPlayers = playerIds
-                .map(id => users[id])
-                .filter((p): p is BasicUser => p !== undefined);
-              setInvitedPlayers(selectedPlayers);
-            } catch (error) {
-              console.error('Failed to fetch invited players data:', error);
-            }
-          }}
-          preSelectedIds={invitedPlayerIds}
-        />
-      )}
+      {isInvitePlayersModalOpen && (() => {
+        const selectedClubData = clubs.find((c) => c.id === selectedClub);
+        let inviteGameTiming: { timeIsSet: boolean; startTime: string; endTime: string; timeZone: string | null } | null = null;
+        if (selectedTime && selectedDate && duration && selectedClubData) {
+          try {
+            const start = createDateFromClubTime(selectedDate, selectedTime, selectedClubData);
+            const end = addHours(start, duration);
+            inviteGameTiming = {
+              timeIsSet: true,
+              startTime: start.toISOString(),
+              endTime: end.toISOString(),
+              timeZone: getClubTimezone(selectedClubData),
+            };
+          } catch {
+            inviteGameTiming = null;
+          }
+        }
+        return (
+          <PlayerListModal
+            onClose={() => setIsInvitePlayersModalOpen(false)}
+            multiSelect={true}
+            gameTiming={inviteGameTiming}
+            onConfirm={async (playerIds, meta) => {
+              setInvitedPlayerIds(playerIds);
+              setInviteUserTeamByReceiverId(meta?.userTeamIdByReceiverId ?? {});
+              try {
+                const { fetchPlayers, users } = usePlayersStore.getState();
+                await fetchPlayers();
+                const selectedPlayers = playerIds
+                  .map(id => users[id])
+                  .filter((p): p is BasicUser => p !== undefined);
+                setInvitedPlayers(selectedPlayers);
+              } catch (error) {
+                console.error('Failed to fetch invited players data:', error);
+              }
+            }}
+            preSelectedIds={invitedPlayerIds}
+          />
+        );
+      })()}
 
-      {isGameSetupModalOpen && (
-        <GameSetupModal
-          isOpen={isGameSetupModalOpen}
-          entityType={entityType}
-          isEditing={true}
-          confirmButtonText={t('common.save')}
-          initialValues={gameSetup}
-          onClose={() => setIsGameSetupModalOpen(false)}
-          onConfirm={handleGameSetupConfirm}
+      {isFormatWizardOpen && entityType !== 'BAR' && entityType !== 'TRAINING' && (
+        <GameFormatWizard
+          isOpen={isFormatWizardOpen}
+          format={gameFormat}
+          onClose={() => setIsFormatWizardOpen(false)}
         />
       )}
     </div>

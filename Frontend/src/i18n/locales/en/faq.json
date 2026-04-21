@@ -1,0 +1,22 @@
+{
+  "faq": {
+    "noFaqs": "No questions available",
+    "fetchError": "Failed to fetch questions",
+    "fieldsRequired": "Question and answer are required",
+    "created": "Question created successfully",
+    "updated": "Question updated successfully",
+    "saveError": "Failed to save question",
+    "deleted": "Question deleted successfully",
+    "deleteError": "Failed to delete question",
+    "reorderError": "Failed to reorder questions",
+    "add": "Add Question",
+    "question": "Question",
+    "answer": "Answer",
+    "questionPlaceholder": "Enter question...",
+    "answerPlaceholder": "Enter answer...",
+    "deleteTitle": "Delete Question",
+    "deleteConfirm": "Are you sure you want to delete this question?",
+    "moveUp": "Move up",
+    "moveDown": "Move down"
+  }
+}

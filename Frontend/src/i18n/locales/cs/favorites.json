@@ -1,0 +1,11 @@
+{
+  "favorites": {
+    "addToFavorites": "Přidat do oblíbených",
+    "removeFromFavorites": "Odebrat z oblíbených",
+    "addedToFavorites": "Přidáno do oblíbených",
+    "removedFromFavorites": "Odebráno z oblíbených",
+    "isFavorite": "Oblíbený",
+    "userAddedToFavorites": "Hráč přidán do oblíbených",
+    "userRemovedFromFavorites": "Hráč odebrán z oblíbených"
+  }
+}

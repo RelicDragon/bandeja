@@ -1,0 +1,30 @@
+{
+  "playerInvite": {
+    "filtersTitle": "Refine list",
+    "matchingCount": "{{shown}} of {{total}} match",
+    "reset": "Reset",
+    "gender": "Gender",
+    "genderAll": "All",
+    "genderMale": "Men",
+    "genderFemale": "Women",
+    "rating": "Rating",
+    "socialRating": "Social rating",
+    "gamesTogether": "Played together",
+    "gamesTogetherAny": "Any",
+    "gamesTogetherMin": "{{count}}+",
+    "gamesTogetherBadge_one": "{{count}} together",
+    "gamesTogetherBadge_other": "{{count}} together",
+    "levelShort": "R {{value}}",
+    "socialShort": "S {{value}}",
+    "applyFilters": "Apply filters",
+    "segmentAll": "All",
+    "segmentUsers": "Users",
+    "segmentTeams": "Teams",
+    "statsLevelRowWithRel": "Level: {{level}} · {{rel}}%",
+    "statsLevelRowNoRel": "Level: {{level}}",
+    "statsSocialRow": "Social: {{social}}",
+    "teamBadge": "Team",
+    "availabilityPartial": "Partially available",
+    "availabilityNone": "Not available at this time"
+  }
+}

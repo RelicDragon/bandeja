@@ -32,6 +32,9 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     let maxTotalPointsPerSet: Int?
     let maxPointsPerTeam: Int?
     let ballsInGames: Bool?
+    let scoringPreset: String?
+    let matchTimedCapMinutes: Int?
+    let hasGoldenPoint: Bool?
     let maxParticipants: Int?
     let timeIsSet: Bool
     let affectsRating: Bool?
@@ -66,7 +69,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case id, name, gameType, entityType, status, resultsStatus
         case startTime, endTime, winnerOfMatch, winnerOfGame
-        case fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames
+        case fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames, scoringPreset, matchTimedCapMinutes, hasGoldenPoint
         case maxParticipants, timeIsSet, affectsRating, hasFixedTeams, participantsReady, teamsReady, matchGenerationType, fixedTeams, resultsByAnyone
         case participants, parent, club
     }
@@ -91,6 +94,9 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         maxTotalPointsPerSet = try c.decodeIfPresent(Int.self, forKey: .maxTotalPointsPerSet)
         maxPointsPerTeam = try c.decodeIfPresent(Int.self, forKey: .maxPointsPerTeam)
         ballsInGames = try c.decodeIfPresent(Bool.self, forKey: .ballsInGames)
+        scoringPreset = try c.decodeIfPresent(String.self, forKey: .scoringPreset)
+        matchTimedCapMinutes = try c.decodeIfPresent(Int.self, forKey: .matchTimedCapMinutes)
+        hasGoldenPoint = try c.decodeIfPresent(Bool.self, forKey: .hasGoldenPoint)
         maxParticipants = try c.decodeIfPresent(Int.self, forKey: .maxParticipants)
         timeIsSet = try c.decodeIfPresent(Bool.self, forKey: .timeIsSet) ?? false
         affectsRating = try c.decodeIfPresent(Bool.self, forKey: .affectsRating)
@@ -103,6 +109,12 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         participants = try c.decode([WatchParticipant].self, forKey: .participants)
         parent = try c.decodeIfPresent(WatchGameParent.self, forKey: .parent)
         club = try c.decodeIfPresent(WatchClub.self, forKey: .club)
+    }
+
+    var isMatchTimerEnabled: Bool {
+        let cap = matchTimedCapMinutes ?? 0
+        guard cap >= 1, let p = scoringPreset?.uppercased() else { return false }
+        return p == "TIMED" || p == "CLASSIC_TIMED"
     }
 }
 

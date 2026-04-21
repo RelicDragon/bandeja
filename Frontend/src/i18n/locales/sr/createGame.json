@@ -1,0 +1,201 @@
+{
+  "createGame": {
+    "title": "Креирај игру",
+    "createBar": "Креирај бар догађај",
+    "createTraining": "Креирај тренинг",
+    "createTournament": "Креирај Турнир",
+    "createLeague": "Креирај Лигу",
+    "selectType": "Изаберите тип",
+    "location": "Локација",
+    "locationTournament": "Локација турнира",
+    "locationLeague": "Локација лиге",
+    "club": "Клуб",
+    "selectClub": "Изаберите клуб",
+    "court": "Терен",
+    "hall": "Сала",
+    "notBookedYet": "Још није резервисан",
+    "hasBookedCourt": "Резервисао сам овај терен",
+    "hasBookedHall": "Резервисао сам сто",
+    "selectCourt": "Изаберите терен",
+    "selectHall": "Изаберите салу",
+    "selectClubFirst": "Прво изаберите клуб",
+    "noClubsAvailable": "Нема доступних клубова",
+    "clubDetailsBack": "Назад на клубове",
+    "clubInfo": "Детаљи клуба",
+    "clubPhotos": "Фотографије",
+    "noCourtsAvailable": "Нема доступних терена",
+    "noHallsAvailable": "Нема доступних сала",
+    "playerLevel": "Ниво играча",
+    "playerLevelTournament": "Ниво играча турнира",
+    "playerLevelLeague": "Ниво играча лиге",
+    "minLevel": "Минимални ниво",
+    "maxLevel": "Максимални ниво",
+    "participants": "Учесници",
+    "participantsTournament": "Учесници турнира",
+    "participantsLeague": "Учесници лиге",
+    "numberOfParticipants": "Број учесника",
+    "numberOfParticipantsTournament": "Број учесника турнира",
+    "numberOfParticipantsLeague": "Број учесника лиге",
+    "addMeToGame": "Придружити се игри",
+    "iWantToPlay": "Желим да играм",
+    "iWillPlay": "Ја ћу играти",
+    "settings": "Подешавања",
+    "settingsTournament": "Подешавања турнира",
+    "settingsLeague": "Подешавања лиге",
+    "gameType": "Тип игре",
+    "gameTypeLeague": "Тип лиге",
+    "gameTypeNote": "Можете променити детаљна подешавања игре у секцији Подешавање Игре.",
+    "gameTypeNoteLeague": "Можете променити детаљна подешавања лиге у секцији Подешавање лиге.",
+    "anyoneCanInvite": {
+      "title": "Свако може позвати друге играче",
+      "note": {
+        "false": "Само организатори могу позвати играче.",
+        "true": "Било који учесник може позвати друге играче."
+      },
+      "titleTraining": "Anyone can invite other participants",
+      "noteTraining": {
+        "true": "Any participant can invite other participants.",
+        "false": "Only organizers can invite participants."
+      }
+    },
+    "publicGame": {
+      "title": "Јавна игра",
+      "note": {
+        "false": "Биће приватан и видљив само позваним учесницима.",
+        "true": "Биће видљив свим играчима и може се наћи у претрази."
+      },
+      "titleTraining": "Public training",
+      "noteTraining": {
+        "true": "Will be visible to all players and can be found in the search.",
+        "false": "Will be private and only visible to invited participants."
+      }
+    },
+    "resultsByAnyone": {
+      "title": "Резултате може унети било ко",
+      "note": {
+        "false": "Само организатори могу уносити и мењати резултате.",
+        "true": "Било који учесник може уносити и мењати резултате."
+      }
+    },
+    "allowDirectJoin": {
+      "title": "Улаз без потврде",
+      "note": {
+        "false": "Играчима је потребна одобрење организатора пре придруживања.",
+        "true": "Играчи могу се директно придружити без чекања одобрења."
+      },
+      "titleTraining": "Join without confirmation",
+      "noteTraining": {
+        "true": "Participants can join directly without waiting for approval.",
+        "false": "Participants need approval from organizers before joining."
+      }
+    },
+    "afterGameGoToBar": {
+      "title": "Остати у бару после игре",
+      "note": {
+        "false": "Не укључује друштвени окуп након меча.",
+        "true": "Укључује друштвени окуп након меча."
+      },
+      "titleTraining": "Stay at the bar after the training",
+      "noteTraining": {
+        "true": "Includes a social gathering after the training.",
+        "false": "Does not include a social gathering after the training."
+      }
+    },
+    "hasFixedTeams": {
+      "note": {
+        "false": "Табела резултата је индивидуална. Играчи ће играти са било ким према правилима.",
+        "true": "Табела је по паровима. Моћи ћете да закључате играче у паровима који се такмиче једни против других. Састав парова се не може мењати након почетка."
+      }
+    },
+    "ratingGame": {
+      "title": "Рејтинг игра",
+      "note": {
+        "false": "Резултати неће променити нивое учесника.",
+        "true": "Резултати ће утицати на нивое учесника."
+      }
+    },
+    "tournament": "Турнир",
+    "genderTeams": {
+      "label": "Учесници по полу",
+      "any": "Било који",
+      "men": "Мушкарци",
+      "women": "Жене",
+      "mixPairs": "Микс",
+      "note": {
+        "any": "Било који пол је добродошао",
+        "men": "Дозвољени су само мушкарци",
+        "women": "Дозвољене су само жене",
+        "mixPairs": "Само за тимску игру, сваки тим ће се састојати од 1 мушкарца и 1 жене,једнак број мушкараца/жена ће моћи да се придружи."
+      }
+    },
+    "fixedTeams": {
+      "descriptionOn": "Партнери остају исти током целог догађаја.",
+      "descriptionOff": "Парови се могу мењати из кола у коло."
+    },
+    "gameName": "Назив игре",
+    "gameNameTournament": "Назив турнира",
+    "gameNameLeague": "Назив лиге",
+    "gameNamePlaceholder": "Унесите назив игре (опционално)",
+    "gameNamePlaceholderTournament": "Унесите назив турнира (опционално)",
+    "gameNamePlaceholderLeague": "Унесите назив лиге (опционално)",
+    "comments": "Коментари",
+    "commentsTournament": "Коментари турнира",
+    "commentsLeague": "Коментари лиге",
+    "commentsPlaceholder": "Додајте додатне информације о игри...",
+    "commentsPlaceholderTournament": "Додајте додатне информације о турниру...",
+    "commentsPlaceholderLeague": "Додајте додатне информације о лиги...",
+    "price": "Цена",
+    "priceType": "Тип цене",
+    "priceTypeNotKnown": "Непознато",
+    "priceTypePerPerson": "По особи",
+    "priceTypePerTeam": "По тиму",
+    "priceTypeTotal": "Укупно",
+    "priceTypeFree": "Бесплатно",
+    "priceTotal": "Износ",
+    "priceTotalPlaceholder": "Унесите износ",
+    "priceCurrency": "Валута",
+    "priceNotSet": "Цена није постављена",
+    "gameStart": "Почетак игре",
+    "gameStartTournament": "Почетак турнира",
+    "gameStartLeague": "Почетак лиге",
+    "selectDate": "Изаберите датум",
+    "date": "Датум",
+    "startTime": "Време почетка",
+    "endTime": "Време краја",
+    "duration": "Трајање",
+    "selectTime": "Изаберите време",
+    "clubTime": "време клуба",
+    "showPastTimes": "Прикажи прошла времена",
+    "timeSlot": "Изабрани слот",
+    "loadingExternalSlots": "Учитавање спољних слотова",
+    "bookedWithoutCourt": "Без терена",
+    "notConfirmed": "није потврђено",
+    "multipleCourts": "Више терена",
+    "noCourtsSelected": "Нема изабраних терена",
+    "addCourt": "Додај терен",
+    "createButton": "Креирај игру",
+    "createButtonTournament": "Креирај Турнир",
+    "createButtonLeague": "Креирај Лигу",
+    "createButtonBar": "Креирај бар догађај",
+    "createButtonTraining": "Креирај тренинг",
+    "today": "Данас",
+    "tomorrow": "Сутра",
+    "yesterday": "Јуче",
+    "selectFromCalendar": "Изаберите из календара",
+    "hours": "{{count}}ч",
+    "hoursMinutes": "{{hours}}ч {{minutes}}м",
+    "you": "Ви",
+    "invite": "Позови",
+    "remove": "Уклони",
+    "manageInvites": "Управљај позивима ({{count}})",
+    "invitesWillBeSent_one": "Играч ће бити позван након креирања игре",
+    "invitesWillBeSent_few": "{{count}} играча ће бити позвани након креирања игре",
+    "invitesWillBeSent_other": "{{count}} играча ће бити позвани након креирања игре",
+    "priceRequired": "Price must be greater than 0 for this price type",
+    "commentsTraining": "Training Comments",
+    "commentsPlaceholderTraining": "Add any additional information about the training...",
+    "gameNameTraining": "Name of training",
+    "gameNamePlaceholderTraining": "Enter training name (optional)",
+    "gameStartTraining": "Start of training"
+  }
+}

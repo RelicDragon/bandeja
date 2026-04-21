@@ -1,0 +1,24 @@
+{
+  "invites": {
+    "title": "Приглашения",
+    "pending": "Ожидающие приглашения",
+    "noInvites": "Нет ожидающих приглашений",
+    "accept": "Принять",
+    "decline": "Отклонить",
+    "from": "От",
+    "to": "Кому",
+    "message": "Сообщение",
+    "accepted": "Приглашение принято",
+    "acceptedSuccessfully": "Приглашение успешно принято",
+    "declined": "Приглашение отклонено",
+    "declinedSuccessfully": "Приглашение успешно отклонено",
+    "selectPlayer": "Выберите игрока",
+    "selectPlayers": "Выберите игроков",
+    "noPlayersAvailable": "Нет доступных игроков для приглашения",
+    "inviteFriendToBandeja": "Пригласить друга в Bandeja",
+    "shareAppBody": "Присоединяйся к Bandeja: {{url}}",
+    "pendingInvites": "Ожидающие приглашения",
+    "inviteSent": "Приглашение отправлено",
+    "invitedYou": "Приглашение в"
+  }
+}

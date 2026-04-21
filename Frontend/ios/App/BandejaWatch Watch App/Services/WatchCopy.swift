@@ -818,4 +818,54 @@ enum WatchCopy {
         default: return "Resume workout"
         }
     }
+
+    nonisolated static func matchTimerStart(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Iniciar"
+        case "ru": return "Старт"
+        case "sr": return "Старт"
+        case "cs": return "Start"
+        default: return "Start"
+        }
+    }
+
+    nonisolated static func matchTimerPause(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Pausa"
+        case "ru": return "Пауза"
+        case "sr": return "Пауза"
+        case "cs": return "Pauza"
+        default: return "Pause"
+        }
+    }
+
+    nonisolated static func matchTimerResume(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Seguir"
+        case "ru": return "Далее"
+        case "sr": return "Настави"
+        case "cs": return "Pokračovat"
+        default: return "Resume"
+        }
+    }
+
+    nonisolated static func matchTimerStop(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Parar"
+        case "ru": return "Стоп"
+        case "sr": return "Стоп"
+        case "cs": return "Stop"
+        default: return "Stop"
+        }
+    }
+
+    nonisolated static func matchTimerReset(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Reset"
+        case "ru": return "Сброс"
+        case "sr": return "Ресет"
+        case "cs": return "Reset"
+        default: return "Reset"
+        }
+    }
 }

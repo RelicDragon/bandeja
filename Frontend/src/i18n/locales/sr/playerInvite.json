@@ -1,0 +1,31 @@
+{
+  "playerInvite": {
+    "filtersTitle": "Филтери",
+    "matchingCount": "{{shown}} од {{total}}",
+    "reset": "Ресет",
+    "gender": "Пол",
+    "genderAll": "Сви",
+    "genderMale": "Мушкарци",
+    "genderFemale": "Жене",
+    "rating": "Рејтинг",
+    "socialRating": "Друштвени",
+    "gamesTogether": "Заједно играно",
+    "gamesTogetherAny": "Било ко",
+    "gamesTogetherMin": "{{count}}+",
+    "gamesTogetherBadge_one": "{{count}} заједно",
+    "gamesTogetherBadge_few": "{{count}} заједно",
+    "gamesTogetherBadge_other": "{{count}} заједно",
+    "levelShort": "Р {{value}}",
+    "socialShort": "Д {{value}}",
+    "applyFilters": "Примени филтере",
+    "segmentAll": "Све",
+    "segmentUsers": "Играчи",
+    "segmentTeams": "Тимови",
+    "statsLevelRowWithRel": "Ниво: {{level}} · {{rel}}%",
+    "statsLevelRowNoRel": "Ниво: {{level}}",
+    "statsSocialRow": "Друштвени: {{social}}",
+    "teamBadge": "Тим",
+    "availabilityPartial": "Делимично доступан",
+    "availabilityNone": "Није доступан у то време"
+  }
+}

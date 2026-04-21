@@ -69,7 +69,7 @@ export class BetService {
         throw new ApiError(400, 'Entity (team) is required for team condition');
       }
       if (!game.hasFixedTeams || !game.fixedTeams?.length || game.fixedTeams.length < 2) {
-        throw new ApiError(400, 'Game does not have fixed teams set');
+        throw new ApiError(400, 'Game does not have fixed pairs set');
       }
       const teamExists = game.fixedTeams.some((t) => t.id === condition.entityId);
       if (!teamExists) {
@@ -578,7 +578,7 @@ export class BetService {
           select: { hasFixedTeams: true, fixedTeams: { select: { id: true } } }
         });
         if (!gameWithTeams?.hasFixedTeams || !gameWithTeams.fixedTeams?.length || gameWithTeams.fixedTeams.length < 2) {
-          throw new ApiError(400, 'Game does not have fixed teams set');
+          throw new ApiError(400, 'Game does not have fixed pairs set');
         }
         if (!gameWithTeams.fixedTeams.some((t) => t.id === cond.entityId)) {
           throw new ApiError(400, 'Invalid team for this game');

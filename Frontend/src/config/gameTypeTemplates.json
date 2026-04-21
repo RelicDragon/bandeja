@@ -2,7 +2,7 @@
   "CLASSIC": {
     "winnerOfMatch": "BY_SETS",
     "winnerOfGame": "BY_MATCHES_WON",
-    "matchGenerationType": "HANDMADE",
+    "matchGenerationType": "AUTOMATIC",
     "pointsPerWin": 0,
     "pointsPerLoose": 0,
     "pointsPerTie": 0,
@@ -29,19 +29,30 @@
     "fixedNumberOfSets": 1
   },
   "ROUND_ROBIN": {
-    "winnerOfMatch": "BY_SETS",
-    "winnerOfGame": "BY_MATCHES_WON",
+    "winnerOfMatch": "BY_SCORES",
+    "winnerOfGame": "BY_POINTS",
     "matchGenerationType": "ROUND_ROBIN",
-    "pointsPerWin": 0,
+    "pointsPerWin": 3,
     "pointsPerLoose": 0,
-    "pointsPerTie": 0,
-    "ballsInGames": true
+    "pointsPerTie": 1,
+    "ballsInGames": false,
+    "fixedNumberOfSets": 1
   },
   "WINNER_COURT": {
     "winnerOfMatch": "BY_SCORES",
     "winnerOfGame": "BY_MATCHES_WON",
     "matchGenerationType": "WINNERS_COURT",
-    "pointsPerWin": 0,
+    "pointsPerWin": 1,
+    "pointsPerLoose": 0,
+    "pointsPerTie": 0,
+    "ballsInGames": false,
+    "fixedNumberOfSets": 1
+  },
+  "LADDER": {
+    "winnerOfMatch": "BY_SCORES",
+    "winnerOfGame": "BY_MATCHES_WON",
+    "matchGenerationType": "ESCALERA",
+    "pointsPerWin": 1,
     "pointsPerLoose": 0,
     "pointsPerTie": 0,
     "ballsInGames": false,

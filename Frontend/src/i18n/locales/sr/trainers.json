@@ -1,0 +1,8 @@
+{
+  "trainers": {
+    "ourTrainers": "Наши тренери",
+    "selectToFilterHint": "Додирните тренера да филтрирате тренинге",
+    "trainingsBy": "Тренинзи од",
+    "clearTrainerFilter": "Поништи филтер тренера"
+  }
+}

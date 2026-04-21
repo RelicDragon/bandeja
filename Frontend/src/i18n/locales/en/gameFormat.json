@@ -1,0 +1,223 @@
+{
+  "gameFormat": {
+    "title": "Game Format",
+    "trainingTitle": "Training",
+    "recommended": "Recommended",
+    "popular": "Popular",
+    "popularFormats": "Popular formats",
+    "moreFormats": "More formats",
+    "moreOptions": "More options",
+    "lessOptions": "Fewer options",
+    "minPlayers_one": "{{count}}+ player",
+    "minPlayers_other": "{{count}}+ players",
+    "minCourts_one": "{{count}}+ court",
+    "minCourts_other": "{{count}}+ courts",
+    "stepScoringModeHint": "How do you want to score each match?",
+    "stepSetStructureHint": "Choose the set structure for each match.",
+    "stepPointsTotalHint": "How many points are played per match?",
+    "stepGenerationHint": "How are matchups decided each round?",
+    "stepRankingHint": "Configure how the overall winner is determined.",
+    "standingPointsHint": "Points per match outcome for the standings table (separate from points scored inside a match).",
+    "classicWithRotationWarning": "Games/sets scoring with rotation formats works, but rounds take longer than points-based scoring.",
+    "steps": {
+      "scoringMode": "Scoring",
+      "setStructure": "Sets",
+      "pointsTotal": "Points",
+      "generation": "Matchups",
+      "ranking": "Ranking"
+    },
+    "scoringMode": {
+      "CLASSIC": {
+        "title": "Games / Sets",
+        "subtitle": "Tennis-style point counting (15/30/40…), then games and sets — classic padel.",
+        "hint": "e.g. 15 / 30 / 40 in a game → set score 6–4"
+      },
+      "POINTS": {
+        "title": "Simple Points",
+        "subtitle": "Count points directly to a target total. No games, no sets.",
+        "hint": "e.g. 15–7, 9–12 — running point totals, not 15/30/40 games"
+      }
+    },
+    "generation": {
+      "Handmade": {
+        "title": "Manual",
+        "subtitle": "Empty matches — you place players on each round"
+      },
+      "Automatic": {
+        "title": "Automatic",
+        "subtitle": {
+          "two": "One 1v1 match each round between the two players.",
+          "four": "Three 2v2 matches each round — every possible pairing once.",
+          "fourFixedTeams": "One 2v2 match each round — the two fixed pairs play each other.",
+          "fallback": "One match per round with 2 players, or all pairings with 4."
+        }
+      },
+      "Fixed": {
+        "title": "Fixed",
+        "subtitle": "Later rounds repeat the first round’s pairings"
+      },
+      "Random": {
+        "title": "Americano",
+        "subtitle": "Random partners each round"
+      },
+      "Rating": {
+        "title": "Mexicano",
+        "subtitle": "Partners matched by current standings"
+      },
+      "RoundRobin": {
+        "title": "Round Robin",
+        "subtitle": "Every team plays every other team"
+      },
+      "WinnersCourt": {
+        "title": "King of Court",
+        "subtitle": "Winners move up, losers rotate down"
+      },
+      "Escalera": {
+        "title": "Ladder",
+        "subtitle": "Positional ladder — winners climb courts"
+      }
+    },
+    "generationHint": {
+      "Handmade": "No preset lineups — drag players into matches yourself",
+      "Automatic": {
+        "two": "Single head-to-head match every round.",
+        "four": "Three matches per round so each team faces each other team once.",
+        "fourFixedTeams": "One match per round between your two locked pairs.",
+        "fallback": "Set max participants to 2 or 4 to see the exact schedule."
+      },
+      "Fixed": "After you set the first round, other rounds will be a copy of the first.",
+      "Random": "Classic Americano rotation",
+      "Rating": "First round random, then by leaderboard",
+      "RoundRobin": "Most fair — everyone plays everyone",
+      "WinnersCourt": "Needs at least 2 courts",
+      "Escalera": "Needs at least 2 courts"
+    },
+    "formatDescription": {
+      "CLASSIC": "One match, fixed pairs",
+      "AMERICANO": "Random partners each round",
+      "MEXICANO": "Partners rotate by standings",
+      "ROUND_ROBIN": "Everyone plays everyone",
+      "WINNER_COURT": "Winners move up courts",
+      "LADDER": "Climb the court ranking",
+      "CUSTOM": "Full manual control"
+    },
+    "formatHint": {
+      "CLASSIC": "Traditional padel match — 2 vs 2.",
+      "AMERICANO": "Rotation tournament with random partners each round.",
+      "MEXICANO": "Partners pair up based on the current standings.",
+      "ROUND_ROBIN": "Every pair plays against every other pair.",
+      "WINNER_COURT": "Winners climb to a higher court, losers drop.",
+      "LADDER": "Players sorted by level; winners climb, losers drop.",
+      "CUSTOM": "Design your own rules from scratch."
+    },
+    "formatDetail": {
+      "CLASSIC": "One match between two fixed pairs. Perfect for a casual 2 vs 2 padel game with friends.",
+      "AMERICANO": "A social tournament format — every round, players are randomly paired up so everyone plays with (and against) everyone. Individual points are summed to find the winner.",
+      "MEXICANO": "First round is random; after that, pairings are based on the current leaderboard (#1 with #3 vs #2 with #4). Strong players meet stronger opposition — great for competitive sessions.",
+      "ROUND_ROBIN": "Every team plays every other team. The most fair way to decide a winner when you have time for all matchups.",
+      "WINNER_COURT": "King of the Court: winners move up a court, losers drop down. Partners switch each round. Needs at least two courts.",
+      "LADDER": "Escalera: players are initially seeded by level across courts. Winners climb to the next court, losers drop. New teams form every round — ideal for mixed-level groups.",
+      "CUSTOM": "Start from a blank slate and control every rule using the advanced options."
+    },
+    "scoring": {
+      "CLASSIC_BEST_OF_3": {
+        "title": "Best of 3 sets",
+        "subtitle": "First to 2 sets wins the match",
+        "hint": "Tennis-style sets with games"
+      },
+      "CLASSIC_BEST_OF_5": {
+        "title": "Best of 5 sets",
+        "subtitle": "First to 3 sets wins the match",
+        "hint": "Long format, ideal for finals"
+      },
+      "CLASSIC_PRO_SET": {
+        "title": "Pro set",
+        "subtitle": "One long set decides the match",
+        "hint": "Single set with games"
+      },
+      "CLASSIC_SHORT_SET": {
+        "title": "Short sets",
+        "subtitle": "Short 4-game sets, best of 3",
+        "hint": "Faster classic format"
+      },
+      "CLASSIC_SUPER_TIEBREAK": {
+        "title": "Super tie-break",
+        "subtitle": "2 sets + super tie-break at 1-1",
+        "hint": "Compact match with classic feel"
+      },
+      "CLASSIC_TIMED": {
+        "title": "Games/sets · timed",
+        "subtitle": "One set with games and 15/30/40…; match stops when the clock ends",
+        "hint": "Americano-style rotation can still use tennis points per match"
+      },
+      "POINTS_16": {
+        "title": "16 points",
+        "subtitle": "First team to 16 balls wins",
+        "hint": "Quick matches"
+      },
+      "POINTS_21": {
+        "title": "21 points",
+        "subtitle": "First team to 21 balls wins",
+        "hint": "Standard Americano"
+      },
+      "POINTS_24": {
+        "title": "24 points",
+        "subtitle": "First team to 24 balls wins",
+        "hint": "Balanced Americano"
+      },
+      "POINTS_32": {
+        "title": "32 points",
+        "subtitle": "First team to 32 balls wins",
+        "hint": "Longer rounds"
+      },
+      "TIMED": {
+        "title": "Timed match",
+        "subtitle": "Play until the clock stops",
+        "hint": "No point limit, just play"
+      },
+      "CUSTOM": {
+        "title": "Custom",
+        "subtitle": "Fine-tune every rule",
+        "hint": "Use advanced options"
+      }
+    },
+    "scoringShort": {
+      "CLASSIC_BEST_OF_3": "Best of 3",
+      "CLASSIC_BEST_OF_5": "Best of 5",
+      "CLASSIC_PRO_SET": "Pro set",
+      "CLASSIC_SHORT_SET": "Short sets",
+      "CLASSIC_SUPER_TIEBREAK": "Super tie-break",
+      "CLASSIC_TIMED": "Games/sets · timed",
+      "POINTS_16": "To 16",
+      "POINTS_21": "To 21",
+      "POINTS_24": "To 24",
+      "POINTS_32": "To 32",
+      "TIMED": "Timed",
+      "CUSTOM": "Custom"
+    },
+    "goldenPointShort": "Golden Point",
+    "goldenPoint": {
+      "title": "Golden Point",
+      "titleAdvantage": "Advantage scoring",
+      "description": "At 40–40 (deuce), the next point wins the game—no advantage scoring.",
+      "descriptionOff": "At deuce (40–40), use standard advantage scoring: one side takes advantage, then must win the next point to take the game; if not, the score returns to deuce—until one side leads by two. (Often called advantage in or advantage out.)"
+    },
+    "timedMatch": {
+      "title": "Timed match",
+      "description": "Play until the clock runs out. Winner is whoever has most points.",
+      "descriptionClassic": "One set with tennis scoring (games, 15/30/40…). Match stops when the clock ends.",
+      "durationTitle": "Time per match",
+      "customDuration": "Custom (1–60 min)",
+      "minutesLabel": "{{minutes}} min",
+      "presetMinutes": "{{minutes}} min"
+    },
+    "customPoints": {
+      "label": "Custom total",
+      "placeholder": "e.g. 27",
+      "short": "To {{count}}"
+    },
+    "points": {
+      "title": "Points per result"
+    }
+  }
+}

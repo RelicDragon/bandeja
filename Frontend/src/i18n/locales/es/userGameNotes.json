@@ -1,0 +1,8 @@
+{
+  "userGameNotes": {
+    "title": "Mis Notas",
+    "privacyHint": "Notas privadas - solo tú puedes verlas",
+    "placeholder": "Añade tus notas...",
+    "noNotes": "Sin notas aún"
+  }
+}

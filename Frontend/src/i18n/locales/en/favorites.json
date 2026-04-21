@@ -1,0 +1,11 @@
+{
+  "favorites": {
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites",
+    "addedToFavorites": "Added to favorites",
+    "removedFromFavorites": "Removed from favorites",
+    "isFavorite": "Favorite",
+    "userAddedToFavorites": "Player added to favorites",
+    "userRemovedFromFavorites": "Player removed from favorites"
+  }
+}

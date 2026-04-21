@@ -1,0 +1,25 @@
+{
+  "createLeague": {
+    "name": "Nombre de la Liga",
+    "namePlaceholder": "Ingrese el nombre de la liga",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Ingrese la descripción de la liga (opcional)",
+    "location": "Ubicación",
+    "selectCity": "Seleccionar Ciudad",
+    "noCitiesAvailable": "No hay ciudades disponibles",
+    "noCity": "Sin Ciudad",
+    "season": "Temporada",
+    "seasonAvatar": "Avatar de la Temporada",
+    "seasonName": "Nombre de la Temporada",
+    "seasonNamePlaceholder": "Ingrese el nombre de la temporada",
+    "playerLevel": "Nivel de Jugador",
+    "maxParticipants": "Máximo de Participantes",
+    "maxParticipantsPlaceholder": "Ingrese máximo de participantes (4-999)",
+    "startDate": "Fecha de Inicio",
+    "gameSetupSeason": "Configuración del Juego (Temporada)",
+    "gameSetupPlayoff": "Configuración del Juego (Playoff)",
+    "editGameSetup": "Editar Configuración del Juego",
+    "configureGameSetup": "Configurar Configuración del Juego",
+    "createButton": "Crear Liga"
+  }
+}

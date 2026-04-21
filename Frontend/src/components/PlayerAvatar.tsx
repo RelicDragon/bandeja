@@ -1,10 +1,9 @@
-import { X, User, Crown, Beer, Check, Dumbbell } from 'lucide-react';
+import { X, User, Crown, Check, Dumbbell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BasicUser } from '@/types';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { useRef, useEffect, useState, useId } from 'react';
 import { GenderIndicator } from './GenderIndicator';
-import { useAppModeStore } from '@/store/appModeStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuthStore } from '@/store/authStore';
 import { usePresenceStore } from '@/store/presenceStore';
@@ -45,7 +44,6 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   );
   const { t } = useTranslation();
   const { openPlayerCard } = usePlayerCardModal();
-  const { mode: appMode } = useAppModeStore();
   const isFavorite = useFavoritesStore((state) => player ? state.isFavorite(player.id) : false);
   const user = useAuthStore((state) => state.user);
   const isOnline = usePresenceStore((s) => player ? s.isOnline(player.id) : false);
@@ -233,41 +231,29 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
           <Dumbbell size={smallLayout ? 10 : 12} className="text-white" />
         </div>
       )}
-      {appMode === 'PADEL' ? (
-        <div className={`absolute -bottom-1 ${levelRightClass}`}>
-          {(() => {
-            const levelColor = getLevelColor(player.level, isDark);
-            return player.approvedLevel ? (
-              <div
-                className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -mr-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1`}
-                style={{ ...levelColor, ...levelBadgeStyle }}
-              >
-                <span className={`text-white font-bold leading-none ${extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'}`}>
-                  {player.level.toFixed(1)}
-                </span>
-                <Check size={extrasmall ? 7 : smallLayout ? 9 : 12} className="text-white" strokeWidth={3} />
-              </div>
-            ) : (
-              <div
-                className={`relative ${levelBadgeClass}`}
-                style={{ ...levelColor, ...levelBadgeStyle }}
-              >
+      <div className={`absolute -bottom-1 ${levelRightClass}`}>
+        {(() => {
+          const levelColor = getLevelColor(player.level, isDark);
+          return player.approvedLevel ? (
+            <div
+              className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -mr-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1`}
+              style={{ ...levelColor, ...levelBadgeStyle }}
+            >
+              <span className={`text-white font-bold leading-none ${extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'}`}>
                 {player.level.toFixed(1)}
-              </div>
-            );
-          })()}
-        </div>
-      ) : (
-        <div className="absolute -bottom-1 -right-1 flex flex-col items-center">
-          <span className={`text-white font-bold text-center leading-none mb-0.5 ${extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'} bg-black bg-opacity-60 rounded px-1 py-0.5`}>
-            {player.socialLevel.toFixed(1)}
-          </span>
-          <div className="relative">
-            <Beer size={extrasmall ? 16 : smallLayout ? 20 : 24} className="text-amber-600 dark:text-amber-500 absolute inset-0" fill="currentColor" />
-            <Beer size={extrasmall ? 16 : smallLayout ? 20 : 24} className="text-white dark:text-gray-900 relative z-10" strokeWidth={1.5} />
-          </div>
-        </div>
-      )}
+              </span>
+              <Check size={extrasmall ? 7 : smallLayout ? 9 : 12} className="text-white" strokeWidth={3} />
+            </div>
+          ) : (
+            <div
+              className={`relative ${levelBadgeClass}`}
+              style={{ ...levelColor, ...levelBadgeStyle }}
+            >
+              {player.level.toFixed(1)}
+            </div>
+          );
+        })()}
+      </div>
     </>
   );
   };

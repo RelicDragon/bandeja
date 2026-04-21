@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback, useImperativeHandle, forwardRef, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WinnerOfGame, WinnerOfMatch, MatchGenerationType, GameSetupParams } from '@/types';
+import {
+  allowedGenerationsForMaxParticipants,
+  automaticGenerationCopyKey,
+  clampMatchGenerationType,
+} from '@/utils/gameFormat';
+import { deriveBallsInGamesFromScoring } from '@/utils/gameFormat/deriveBallsInGames';
 import { AnimatedTabs } from '@/components/AnimatedTabs';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -17,7 +23,6 @@ export interface GameSetupFormInitialValues {
   pointsPerWin?: number;
   pointsPerLoose?: number;
   pointsPerTie?: number;
-  ballsInGames?: boolean;
 }
 
 export interface GameSetupFormRef {
@@ -26,12 +31,16 @@ export interface GameSetupFormRef {
 
 interface GameSetupFormProps {
   initialValues?: GameSetupFormInitialValues;
+  maxParticipants?: number;
   isEditing?: boolean;
   onConfirm: (params: GameSetupParams) => void;
 }
 
+const genLabelKey = (g: MatchGenerationType) =>
+  `gameResults.matchGenerationType${g.split('_').map((s) => s.charAt(0) + s.slice(1).toLowerCase()).join('')}` as const;
+
 export const GameSetupForm = forwardRef<GameSetupFormRef, GameSetupFormProps>(function GameSetupForm(
-  { initialValues, isEditing = true, onConfirm },
+  { initialValues, maxParticipants, hasFixedTeams, isEditing = true, onConfirm },
   ref
 ) {
   const { t } = useTranslation();
@@ -41,20 +50,23 @@ export const GameSetupForm = forwardRef<GameSetupFormRef, GameSetupFormProps>(fu
   const [customSetPoints, setCustomSetPoints] = useState('');
   const [winnerOfGame, setWinnerOfGame] = useState<WinnerOfGame>(initialValues?.winnerOfGame ?? 'BY_MATCHES_WON');
   const [winnerOfMatch, setWinnerOfMatch] = useState<WinnerOfMatch>(initialValues?.winnerOfMatch ?? 'BY_SCORES');
-  const [matchGenerationType, setMatchGenerationType] = useState<MatchGenerationType>(
-    initialValues?.matchGenerationType ?? 'HANDMADE'
+  const [matchGenerationType, setMatchGenerationType] = useState<MatchGenerationType>(() =>
+    clampMatchGenerationType(initialValues?.matchGenerationType ?? 'HANDMADE', maxParticipants),
   );
   const [prohibitMatchesEditing, setProhibitMatchesEditing] = useState(initialValues?.prohibitMatchesEditing ?? false);
   const [pointsPerWin, setPointsPerWin] = useState(initialValues?.pointsPerWin ?? 0);
   const [pointsPerLoose, setPointsPerLoose] = useState(initialValues?.pointsPerLoose ?? 0);
   const [pointsPerTie, setPointsPerTie] = useState(initialValues?.pointsPerTie ?? 0);
-  const [ballsInGames, setBallsInGames] = useState(initialValues?.ballsInGames ?? false);
 
   useEffect(() => {
-    if (matchGenerationType === 'HANDMADE' || matchGenerationType === 'FIXED') {
+    if (matchGenerationType === 'HANDMADE' || matchGenerationType === 'FIXED' || matchGenerationType === 'AUTOMATIC') {
       setProhibitMatchesEditing(false);
     }
   }, [matchGenerationType]);
+
+  useEffect(() => {
+    setMatchGenerationType((prev) => clampMatchGenerationType(prev, maxParticipants));
+  }, [maxParticipants]);
 
   useEffect(() => {
     if (!initialValues) return;
@@ -65,15 +77,25 @@ export const GameSetupForm = forwardRef<GameSetupFormRef, GameSetupFormProps>(fu
   const buildPayload = useCallback((): GameSetupParams => ({
     fixedNumberOfSets,
     maxTotalPointsPerSet,
+    matchTimedCapMinutes: 0,
     maxPointsPerTeam: 0,
     winnerOfGame,
     winnerOfMatch,
     matchGenerationType,
-    prohibitMatchesEditing: matchGenerationType !== 'HANDMADE' && matchGenerationType !== 'FIXED' ? prohibitMatchesEditing : false,
+    prohibitMatchesEditing:
+      matchGenerationType !== 'HANDMADE' &&
+      matchGenerationType !== 'FIXED' &&
+      matchGenerationType !== 'AUTOMATIC'
+        ? prohibitMatchesEditing
+        : false,
     pointsPerWin,
     pointsPerLoose,
     pointsPerTie,
-    ballsInGames,
+    ballsInGames: deriveBallsInGamesFromScoring({
+      scoringPreset: null,
+      winnerOfMatch,
+      maxTotalPointsPerSet,
+    }),
   }), [
     fixedNumberOfSets,
     maxTotalPointsPerSet,
@@ -84,7 +106,6 @@ export const GameSetupForm = forwardRef<GameSetupFormRef, GameSetupFormProps>(fu
     pointsPerWin,
     pointsPerLoose,
     pointsPerTie,
-    ballsInGames,
   ]);
 
   const submitRef = useRef<() => void>(() => {});
@@ -196,23 +217,6 @@ export const GameSetupForm = forwardRef<GameSetupFormRef, GameSetupFormProps>(fu
                   </p>
                 </div>
               </div>
-              <hr className="border-gray-200 dark:border-gray-700 my-4" />
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  {t('gameResults.ballsInGames')}
-                </label>
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => setBallsInGames(false)} disabled={!isEditing} className={`flex-1 ${btn(!ballsInGames, !isEditing)}`}>
-                    {t('gameResults.ballsInGamesOff')}
-                  </button>
-                  <button type="button" onClick={() => setBallsInGames(true)} disabled={!isEditing} className={`flex-1 ${btn(ballsInGames, !isEditing)}`}>
-                    {t('gameResults.ballsInGamesOn')}
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  {ballsInGames ? t('gameResults.ballsInGamesNoteOn') : t('gameResults.ballsInGamesNoteOff')}
-                </p>
-              </div>
             </motion.div>
           )}
           {activeTab === 'winner' && (
@@ -272,21 +276,38 @@ export const GameSetupForm = forwardRef<GameSetupFormRef, GameSetupFormProps>(fu
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
             >
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('gameResults.matchGenerationType')}</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => { setMatchGenerationType('HANDMADE'); setProhibitMatchesEditing(false); }} disabled={!isEditing} className={btn(matchGenerationType === 'HANDMADE', !isEditing)}>{t('gameResults.matchGenerationTypeHandmade')}</button>
-                  <button type="button" onClick={() => { setMatchGenerationType('FIXED'); setProhibitMatchesEditing(false); }} disabled={!isEditing} className={btn(matchGenerationType === 'FIXED', !isEditing)}>{t('gameResults.matchGenerationTypeFixed')}</button>
-                  <button type="button" onClick={() => setMatchGenerationType('RANDOM')} disabled={!isEditing} className={btn(matchGenerationType === 'RANDOM', !isEditing)}>{t('gameResults.matchGenerationTypeRandom')}</button>
-                  <button type="button" onClick={() => setMatchGenerationType('ROUND_ROBIN')} disabled={!isEditing} className={btn(matchGenerationType === 'ROUND_ROBIN', !isEditing)}>{t('gameResults.matchGenerationTypeRoundRobin')}</button>
-                  <button type="button" onClick={() => setMatchGenerationType('ESCALERA')} disabled={!isEditing} className={btn(matchGenerationType === 'ESCALERA', !isEditing)}>{t('gameResults.matchGenerationTypeEscalera')}</button>
-                  <button type="button" onClick={() => setMatchGenerationType('RATING')} disabled={!isEditing} className={btn(matchGenerationType === 'RATING', !isEditing)}>{t('gameResults.matchGenerationTypeRating')}</button>
-                  <button type="button" onClick={() => setMatchGenerationType('WINNERS_COURT')} disabled={!isEditing} className={btn(matchGenerationType === 'WINNERS_COURT', !isEditing)}>{t('gameResults.matchGenerationTypeWinnersCourt')}</button>
+              {maxParticipants === 2 ? (
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{t('gameResults.matchGenerationAutomaticOnly')}</p>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('gameResults.matchGenerationType')}</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {allowedGenerationsForMaxParticipants(maxParticipants).map((gen) => (
+                      <button
+                        key={gen}
+                        type="button"
+                        onClick={() => {
+                          setMatchGenerationType(gen);
+                          if (gen === 'HANDMADE' || gen === 'FIXED' || gen === 'AUTOMATIC') setProhibitMatchesEditing(false);
+                        }}
+                        disabled={!isEditing}
+                        className={btn(matchGenerationType === gen, !isEditing)}
+                      >
+                        {t(genLabelKey(gen))}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   {matchGenerationType === 'HANDMADE' && t('gameResults.matchGenerationTypeHandmadeNote')}
+                  {matchGenerationType === 'AUTOMATIC' &&
+                    t(
+                      `gameFormat.generationHint.Automatic.${automaticGenerationCopyKey(maxParticipants, hasFixedTeams)}`,
+                    )}
                   {matchGenerationType === 'FIXED' && t('gameResults.matchGenerationTypeFixedNote')}
                   {matchGenerationType === 'RANDOM' && t('gameResults.matchGenerationTypeRandomNote')}
                   {matchGenerationType === 'ROUND_ROBIN' && t('gameResults.matchGenerationTypeRoundRobinNote')}
@@ -295,7 +316,7 @@ export const GameSetupForm = forwardRef<GameSetupFormRef, GameSetupFormProps>(fu
                   {matchGenerationType === 'WINNERS_COURT' && t('gameResults.matchGenerationTypeWinnersCourtNote')}
                 </p>
               </div>
-              {matchGenerationType !== 'HANDMADE' && matchGenerationType !== 'FIXED' && (
+              {matchGenerationType !== 'HANDMADE' && matchGenerationType !== 'FIXED' && matchGenerationType !== 'AUTOMATIC' && (
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('gameResults.prohibitMatchesEditing')}</label>
                   <div className="flex gap-2">

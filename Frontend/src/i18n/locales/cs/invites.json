@@ -1,0 +1,24 @@
+{
+  "invites": {
+    "title": "Pozvánky",
+    "pending": "Čekající pozvánky",
+    "noInvites": "Žádné čekající pozvánky",
+    "accept": "Přijmout",
+    "decline": "Odmítnout",
+    "from": "Od",
+    "to": "Pro",
+    "message": "Zpráva",
+    "accepted": "Pozvánka přijata",
+    "acceptedSuccessfully": "Pozvánka byla úspěšně přijata",
+    "declined": "Pozvánka odmítnuta",
+    "declinedSuccessfully": "Pozvánka byla úspěšně odmítnuta",
+    "selectPlayer": "Vybrat hráče",
+    "selectPlayers": "Vybrat hráče",
+    "noPlayersAvailable": "Žádní hráči k pozvání",
+    "inviteFriendToBandeja": "Pozvat přítele do Bandeja",
+    "shareAppBody": "Přidej se ke mně na Bandeja: {{url}}",
+    "pendingInvites": "Čekající pozvánky",
+    "inviteSent": "Pozvánka odeslána",
+    "invitedYou": "Pozvánka do"
+  }
+}

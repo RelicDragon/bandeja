@@ -38,6 +38,11 @@ export interface SocketEvents {
   'game-updated': (data: { gameId: string; senderId: string; game: any }) => void;
   'game-cancelled': (data: { gameId: string; entityType: string; name?: string; cancelledAt: string; cancelledByUser?: import('@/types').BasicUser }) => void;
   'game-results-updated': (data: { gameId: string }) => void;
+  'match-timer-updated': (data: {
+    gameId: string;
+    matchId: string;
+    snapshot: import('@/utils/matchTimer').MatchTimerSnapshot;
+  }) => void;
   'wallet-update': (data: { wallet: number }) => void;
   'error': (error: { message: string }) => void;
   // Unified chat events

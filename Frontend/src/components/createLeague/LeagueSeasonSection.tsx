@@ -9,6 +9,7 @@ interface LeagueSeasonSectionProps {
   seasonName: string;
   playerLevelRange: [number, number];
   maxParticipants: number;
+  seasonParticipantsCap: number;
   startDate: Date | null;
   seasonAvatar?: string | null;
   onSeasonNameChange: (name: string) => void;
@@ -24,6 +25,7 @@ export const LeagueSeasonSection = ({
   seasonName,
   playerLevelRange,
   maxParticipants,
+  seasonParticipantsCap,
   startDate,
   seasonAvatar,
   onSeasonNameChange,
@@ -122,11 +124,11 @@ export const LeagueSeasonSection = ({
             <input
               type="number"
               min="4"
-              max="999"
+              max={seasonParticipantsCap}
               value={maxParticipants}
               onChange={(e) => {
                 const num = parseInt(e.target.value);
-                if (!isNaN(num) && num >= 4 && num <= 999) {
+                if (!isNaN(num) && num >= 4 && num <= seasonParticipantsCap) {
                   onMaxParticipantsChange(num);
                 } else if (e.target.value === '') {
                   onMaxParticipantsChange(4);
@@ -136,7 +138,7 @@ export const LeagueSeasonSection = ({
               className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-              4-999
+              4-{seasonParticipantsCap}
             </span>
           </div>
         </div>

@@ -1,0 +1,223 @@
+{
+  "gameFormat": {
+    "title": "Formato de partido",
+    "trainingTitle": "Entrenamiento",
+    "recommended": "Recomendado",
+    "popular": "Popular",
+    "popularFormats": "Formatos populares",
+    "moreFormats": "Más formatos",
+    "moreOptions": "Más opciones",
+    "lessOptions": "Menos opciones",
+    "minPlayers_one": "{{count}}+ jugador",
+    "minPlayers_other": "{{count}}+ jugadores",
+    "minCourts_one": "{{count}}+ pista",
+    "minCourts_other": "{{count}}+ pistas",
+    "stepScoringModeHint": "¿Cómo quieres marcar cada partido?",
+    "stepSetStructureHint": "Elige la estructura de sets para cada partido.",
+    "stepPointsTotalHint": "¿Cuántos puntos se juegan por partido?",
+    "stepGenerationHint": "¿Cómo se deciden los enfrentamientos cada ronda?",
+    "stepRankingHint": "Configura cómo se determina el ganador general.",
+    "standingPointsHint": "Puntos por resultado del partido para la clasificación (no son los puntos jugados en el partido).",
+    "classicWithRotationWarning": "La puntuación por juegos y sets con formatos de rotación funciona, pero las rondas duran más que con puntuación simple.",
+    "steps": {
+      "scoringMode": "Puntuación",
+      "setStructure": "Sets",
+      "pointsTotal": "Puntos",
+      "generation": "Enfrentamientos",
+      "ranking": "Clasificación"
+    },
+    "scoringMode": {
+      "CLASSIC": {
+        "title": "Juegos / Sets",
+        "subtitle": "Conteo de puntos estilo tenis (15/30/40…), luego juegos y sets — pádel clásico.",
+        "hint": "p. ej., 15 / 30 / 40 en el juego → marcador de set 6–4"
+      },
+      "POINTS": {
+        "title": "Puntos simples",
+        "subtitle": "Cuenta puntos directamente hasta un total objetivo. Sin juegos ni sets.",
+        "hint": "p. ej., 15–7, 9–12 — totales directos (sin juegos 15/30/40)"
+      }
+    },
+    "generation": {
+      "Handmade": {
+        "title": "Manual",
+        "subtitle": "Partidos vacíos — colocas a los jugadores en cada ronda"
+      },
+      "Automatic": {
+        "title": "Automático",
+        "subtitle": {
+          "two": "Un partido 1v1 por ronda entre los dos jugadores.",
+          "four": "Tres partidos 2v2 por ronda — una vez cada emparejamiento posible.",
+          "fourFixedTeams": "Un partido 2v2 por ronda entre las dos parejas fijas.",
+          "fallback": "Un partido por ronda con 2 jugadores, o todos los emparejamientos con 4."
+        }
+      },
+      "Fixed": {
+        "title": "Fijo",
+        "subtitle": "Las rondas siguientes repiten los emparejamientos de la primera"
+      },
+      "Random": {
+        "title": "Americano",
+        "subtitle": "Parejas aleatorias cada ronda"
+      },
+      "Rating": {
+        "title": "Mexicano",
+        "subtitle": "Parejas según la clasificación actual"
+      },
+      "RoundRobin": {
+        "title": "Round Robin",
+        "subtitle": "Todos juegan contra todos"
+      },
+      "WinnersCourt": {
+        "title": "King of Court",
+        "subtitle": "Los ganadores suben, los perdedores rotan"
+      },
+      "Escalera": {
+        "title": "Escalera",
+        "subtitle": "Escalera posicional — los ganadores suben pistas"
+      }
+    },
+    "generationHint": {
+      "Handmade": "Sin alineaciones fijas — arrastras jugadores a cada partido",
+      "Automatic": {
+        "two": "Un enfrentamiento directo por ronda.",
+        "four": "Tres partidos por ronda para que cada pareja se enfrente a las demás una vez.",
+        "fourFixedTeams": "Un partido por ronda entre tus dos parejas bloqueadas.",
+        "fallback": "Indica máx. 2 o 4 jugadores para ver el calendario exacto."
+      },
+      "Fixed": "Después de configurar la primera ronda, las demás rondas serán una copia de la primera.",
+      "Random": "Rotación clásica del Americano",
+      "Rating": "Primera ronda aleatoria, luego por clasificación",
+      "RoundRobin": "Más justo — todos juegan contra todos",
+      "WinnersCourt": "Necesita al menos 2 pistas",
+      "Escalera": "Necesita al menos 2 pistas"
+    },
+    "formatDescription": {
+      "CLASSIC": "Un partido, parejas fijas",
+      "AMERICANO": "Parejas aleatorias en cada ronda",
+      "MEXICANO": "Parejas rotan por clasificación",
+      "ROUND_ROBIN": "Todos juegan contra todos",
+      "WINNER_COURT": "Los ganadores suben de pista",
+      "LADDER": "Sube en el ranking de pistas",
+      "CUSTOM": "Control manual total"
+    },
+    "formatHint": {
+      "CLASSIC": "Partido tradicional de pádel — 2 vs 2.",
+      "AMERICANO": "Torneo con rotación y parejas aleatorias cada ronda.",
+      "MEXICANO": "Las parejas se forman según la clasificación actual.",
+      "ROUND_ROBIN": "Cada pareja juega contra todas las demás.",
+      "WINNER_COURT": "Los ganadores suben de pista, los perdedores bajan.",
+      "LADDER": "Jugadores ordenados por nivel; ganadores suben, perdedores bajan.",
+      "CUSTOM": "Diseña tus propias reglas desde cero."
+    },
+    "formatDetail": {
+      "CLASSIC": "Un partido entre dos parejas fijas. Ideal para una partida 2 vs 2 con amigos.",
+      "AMERICANO": "Formato social: en cada ronda las parejas se sortean al azar para que todos jueguen con (y contra) todos. Se suman los puntos individuales.",
+      "MEXICANO": "La primera ronda es aleatoria; a partir de ahí los emparejamientos siguen la clasificación (#1 con #3 vs #2 con #4). Los mejores se enfrentan entre sí — ideal para sesiones competitivas.",
+      "ROUND_ROBIN": "Cada pareja juega contra todas las demás. La forma más justa de decidir al ganador cuando hay tiempo.",
+      "WINNER_COURT": "Rey de la pista: los ganadores suben, los perdedores bajan. Se cambian las parejas cada ronda. Necesitas al menos dos pistas.",
+      "LADDER": "Escalera: los jugadores se colocan por nivel en las pistas. Los ganadores suben, los perdedores bajan. Se forman nuevos equipos cada ronda — ideal para grupos con niveles mixtos.",
+      "CUSTOM": "Empieza desde cero y controla cada regla con las opciones avanzadas."
+    },
+    "scoring": {
+      "CLASSIC_BEST_OF_3": {
+        "title": "Al mejor de 3 sets",
+        "subtitle": "Gana el primero en ganar 2 sets",
+        "hint": "Sets estilo tenis con juegos"
+      },
+      "CLASSIC_BEST_OF_5": {
+        "title": "Al mejor de 5 sets",
+        "subtitle": "Gana el primero en ganar 3 sets",
+        "hint": "Formato largo, ideal para finales"
+      },
+      "CLASSIC_PRO_SET": {
+        "title": "Pro set",
+        "subtitle": "Un set largo decide el partido",
+        "hint": "Un solo set con juegos"
+      },
+      "CLASSIC_SHORT_SET": {
+        "title": "Sets cortos",
+        "subtitle": "Sets a 4 juegos, al mejor de 3",
+        "hint": "Formato clásico más rápido"
+      },
+      "CLASSIC_SUPER_TIEBREAK": {
+        "title": "Super tie-break",
+        "subtitle": "2 sets + super tie-break si 1-1",
+        "hint": "Compacto con estilo clásico"
+      },
+      "CLASSIC_TIMED": {
+        "title": "Juegos/sets · por tiempo",
+        "subtitle": "Un set con juegos y 15/30/40…; el partido termina al acabar el tiempo",
+        "hint": "Rotación tipo Americano puede usar tenis en cada partido"
+      },
+      "POINTS_16": {
+        "title": "16 puntos",
+        "subtitle": "Gana el primero en llegar a 16",
+        "hint": "Partidos rápidos"
+      },
+      "POINTS_21": {
+        "title": "21 puntos",
+        "subtitle": "Gana el primero en llegar a 21",
+        "hint": "Americano estándar"
+      },
+      "POINTS_24": {
+        "title": "24 puntos",
+        "subtitle": "Gana el primero en llegar a 24",
+        "hint": "Americano equilibrado"
+      },
+      "POINTS_32": {
+        "title": "32 puntos",
+        "subtitle": "Gana el primero en llegar a 32",
+        "hint": "Rondas más largas"
+      },
+      "TIMED": {
+        "title": "Partido por tiempo",
+        "subtitle": "Juega hasta que pare el reloj",
+        "hint": "Sin límite de puntos"
+      },
+      "CUSTOM": {
+        "title": "Personalizado",
+        "subtitle": "Ajusta cada regla",
+        "hint": "Usa las opciones avanzadas"
+      }
+    },
+    "scoringShort": {
+      "CLASSIC_BEST_OF_3": "Mejor de 3",
+      "CLASSIC_BEST_OF_5": "Mejor de 5",
+      "CLASSIC_PRO_SET": "Pro set",
+      "CLASSIC_SHORT_SET": "Sets cortos",
+      "CLASSIC_SUPER_TIEBREAK": "Super tie-break",
+      "CLASSIC_TIMED": "Juegos/sets · tiempo",
+      "POINTS_16": "A 16",
+      "POINTS_21": "A 21",
+      "POINTS_24": "A 24",
+      "POINTS_32": "A 32",
+      "TIMED": "Por tiempo",
+      "CUSTOM": "Personalizado"
+    },
+    "goldenPointShort": "Punto de oro",
+    "goldenPoint": {
+      "title": "Punto de oro",
+      "titleAdvantage": "Ventaja tras iguales",
+      "description": "En 40–40 (iguales), un solo punto decisivo gana el juego; no hay ventaja.",
+      "descriptionOff": "En iguales o deuce (40–40), el siguiente punto da ventaja; con ventaja, otro punto gana el juego; si se pierde, se vuelve a iguales—hasta lograr dos puntos seguidos (ventaja del sacador o del resto)."
+    },
+    "timedMatch": {
+      "title": "Partido cronometrado",
+      "description": "Juega hasta que el tiempo se acabe. Gana quien tenga más puntos.",
+      "descriptionClassic": "Un set con marcador de tenis (juegos, 15/30/40…). El partido termina al acabar el tiempo.",
+      "durationTitle": "Tiempo por partido",
+      "customDuration": "Personalizado (1–60 min)",
+      "minutesLabel": "{{minutes}} min",
+      "presetMinutes": "{{minutes}} min"
+    },
+    "customPoints": {
+      "label": "Total personalizado",
+      "placeholder": "ej. 27",
+      "short": "Hasta {{count}}"
+    },
+    "points": {
+      "title": "Puntos por resultado"
+    }
+  }
+}

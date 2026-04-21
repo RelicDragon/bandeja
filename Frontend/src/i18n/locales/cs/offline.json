@@ -1,0 +1,7 @@
+{
+  "offline": {
+    "working_offline": "Režim offline – některé funkce mohou být omezeny",
+    "noInternetConnection": "Žádné připojení k internetu",
+    "offlineEditingMessage": "Výsledky můžete upravovat offline; až budete znovu online, stiskněte Synchronizovat se serverem pro odeslání výsledků"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "invites": {
+    "title": "Invitaciones",
+    "pending": "Invitaciones pendientes",
+    "noInvites": "No hay invitaciones pendientes",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "from": "De",
+    "to": "Para",
+    "message": "Mensaje",
+    "accepted": "Invitación aceptada",
+    "acceptedSuccessfully": "Invitación aceptada exitosamente",
+    "declined": "Invitación rechazada",
+    "declinedSuccessfully": "Invitación rechazada exitosamente",
+    "selectPlayer": "Selecciona un jugador",
+    "selectPlayers": "Selecciona jugadores",
+    "noPlayersAvailable": "No hay jugadores disponibles para invitar",
+    "inviteFriendToBandeja": "Invitar amigo a Bandeja",
+    "shareAppBody": "Únete a Bandeja: {{url}}",
+    "pendingInvites": "Invitaciones pendientes",
+    "inviteSent": "Invitación enviada",
+    "invitedYou": "te invitó a"
+  }
+}

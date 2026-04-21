@@ -12,6 +12,7 @@ import { SocialParticipantLevelService } from '../socialParticipantLevel.service
 import { calculateGameStatus, isResultsBasedEntityType, ARCHIVE_BY_FINISHED_DATE_TYPES } from '../../utils/gameStatus';
 import { resolveGameBets } from '../bets/betResolution.service';
 import resultsSenderService from '../telegram/resultsSender.service';
+import { resetMatchTimersInGameTx, cancelAllMatchTimersForGame } from './matchTimer.service';
 
 export async function generateGameOutcomes(gameId: string, tx?: Prisma.TransactionClient) {
   const prismaClient = tx || prisma;
@@ -322,6 +323,8 @@ export async function applyGameOutcomes(
       data: updateData,
     });
 
+    await resetMatchTimersInGameTx(tx, gameId);
+
     if (previousResultsStatus !== 'FINAL' && game.affectsRating) {
       for (const outcome of finalOutcomes) {
         const gameOutcome = await tx.gameOutcome.findUnique({
@@ -452,7 +455,9 @@ export async function recalculateGameOutcomes(gameId: string) {
   });
   
   console.log(`[RECALCULATE GAME OUTCOMES] Transaction completed, wasEdited: ${wasEdited}`);
-  
+
+  await cancelAllMatchTimersForGame(gameId);
+
   if (result.shouldResolveBets) {
     console.log(`[BET RESOLUTION] Triggering bet resolution for game ${gameId} (results finalizing)`);
     try {

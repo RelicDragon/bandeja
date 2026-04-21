@@ -1,0 +1,12 @@
+{
+  "rating": {
+    "title": "Moje úroveň",
+    "level": "Úroveň",
+    "socialLevel": "Sociální",
+    "points": "Celkové body",
+    "gamesPlayed": "Odehrané zápasy",
+    "gamesWon": "Vyhrané zápasy",
+    "winRate": "Výherní poměr",
+    "reliability": "Spolehlivost"
+  }
+}

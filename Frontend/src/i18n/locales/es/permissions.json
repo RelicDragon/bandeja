@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "openSettings": "Abrir Configuración",
+    "photos": {
+      "title": "Acceso a Fotos Requerido",
+      "description": "Para adjuntar fotos, necesitamos acceso a tu biblioteca de fotos.",
+      "denied": "El acceso a fotos está actualmente denegado. Por favor, habilítalo en la configuración de tu dispositivo para adjuntar fotos."
+    },
+    "camera": {
+      "title": "Acceso a Cámara Requerido",
+      "description": "Para tomar fotos, necesitamos acceso a tu cámara.",
+      "denied": "El acceso a la cámara está actualmente denegado. Por favor, habilítalo en la configuración de tu dispositivo para tomar fotos."
+    }
+  }
+}

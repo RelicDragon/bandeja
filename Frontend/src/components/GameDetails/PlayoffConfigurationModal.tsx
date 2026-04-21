@@ -9,6 +9,7 @@ import { BasicUser, GameSetupParams } from '@/types';
 import { leaguesApi, LeagueStanding, LeagueGroup } from '@/api/leagues';
 import { Loader2, Check } from 'lucide-react';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
+import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
 import { PlayoffGameSetupStep } from './PlayoffGameSetupStep';
 
 const ALL_GROUP_ID = 'ALL';
@@ -189,6 +190,7 @@ export const PlayoffConfigurationModal = ({
         })
         .filter((x): x is { leagueGroupId: string; participantIds: string[] } => x !== null);
       const result = await leaguesApi.createPlayoff(leagueSeasonId, {
+        ...resultsRoundGenV2Payload,
         gameType,
         groups: groupsPayload,
         gameSetup,

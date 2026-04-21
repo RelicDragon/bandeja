@@ -22,6 +22,7 @@ export const NOTIFICATION_TYPE_TO_PREF: Record<NotificationType, PreferenceKey> 
   [NotificationType.AUCTION_WON]: PreferenceKey.SEND_MARKETPLACE_NOTIFICATIONS,
   [NotificationType.AUCTION_BIN_ACCEPTED]: PreferenceKey.SEND_MARKETPLACE_NOTIFICATIONS,
   [NotificationType.GAME_CANCELLED]: PreferenceKey.SEND_REMINDERS,
+  [NotificationType.MATCH_TIMER_CAP]: PreferenceKey.SEND_REMINDERS,
   [NotificationType.TEAM_INVITE]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,
   [NotificationType.TEAM_INVITE_ACCEPTED]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,
   [NotificationType.TEAM_INVITE_DECLINED]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,

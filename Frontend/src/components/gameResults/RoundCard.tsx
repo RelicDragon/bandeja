@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Trash2, Plus } from 'lucide-react';
 import { Round } from '@/types/gameResults';
-import { BasicUser, Court } from '@/types';
+import { BasicUser, Court, Game } from '@/types';
 import { MatchCard } from './MatchCard';
 import { HorizontalMatchCard } from './HorizontalMatchCard';
 import { ConfirmationModal } from '@/components';
@@ -34,6 +34,9 @@ interface RoundCardProps {
   onCourtClick?: (matchId: string) => void;
   fixedNumberOfSets?: number;
   prohibitMatchesEditing?: boolean;
+  game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie'> | null;
+  gameId?: string;
+  onMatchTimerTransition?: (roundId: string, matchId: string, action: import('@/utils/matchTimer').MatchTimerAction) => void | Promise<void>;
 }
 
 type RoundStatus = 'red' | 'yellow' | 'normal';
@@ -96,6 +99,9 @@ export const RoundCard = ({
   onCourtClick,
   fixedNumberOfSets,
   prohibitMatchesEditing = false,
+  game,
+  gameId,
+  onMatchTimerTransition,
 }: RoundCardProps) => {
   const { t } = useTranslation();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -141,6 +147,10 @@ export const RoundCard = ({
                     onCourtClick={() => onCourtClick && onCourtClick(match.id)}
                     fixedNumberOfSets={fixedNumberOfSets}
                     prohibitMatchesEditing={prohibitMatchesEditing}
+                    game={game}
+                    roundId={round.id}
+                    gameId={gameId}
+                    onMatchTimerTransition={onMatchTimerTransition}
                   />
                 ) : (
                   <MatchCard
@@ -167,6 +177,10 @@ export const RoundCard = ({
                     onCourtClick={() => onCourtClick && onCourtClick(match.id)}
                     fixedNumberOfSets={fixedNumberOfSets}
                     prohibitMatchesEditing={prohibitMatchesEditing}
+                    game={game}
+                    roundId={round.id}
+                    gameId={gameId}
+                    onMatchTimerTransition={onMatchTimerTransition}
                   />
                 )
               ))}

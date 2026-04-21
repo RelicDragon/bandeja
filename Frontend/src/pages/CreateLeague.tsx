@@ -8,10 +8,15 @@ import { leaguesApi } from '@/api/leagues';
 import { mediaApi } from '@/api/media';
 import { Club, City, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@/types';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
+import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
+import { useAuthStore } from '@/store/authStore';
+import { maxLeagueSeasonParticipantsCap } from '@/utils/userMaxParticipantsInGame';
 
 export const CreateLeague = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const seasonParticipantsCap = maxLeagueSeasonParticipantsCap(user);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -46,6 +51,10 @@ export const CreateLeague = () => {
   }>({});
   
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setMaxParticipants((prev) => Math.max(4, Math.min(prev, seasonParticipantsCap)));
+  }, [seasonParticipantsCap]);
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -114,6 +123,7 @@ export const CreateLeague = () => {
       }
 
       const leagueResponse = await leaguesApi.create({
+        ...resultsRoundGenV2Payload,
         name: name.trim(),
         description: description.trim() || undefined,
         cityId: selectedCityId,
@@ -214,6 +224,7 @@ export const CreateLeague = () => {
             seasonName={seasonName}
             playerLevelRange={playerLevelRange}
             maxParticipants={maxParticipants}
+            seasonParticipantsCap={seasonParticipantsCap}
             startDate={startDate}
             seasonAvatar={pendingSeasonAvatarFiles ? URL.createObjectURL(pendingSeasonAvatarFiles.avatar) : undefined}
             onSeasonNameChange={setSeasonName}
@@ -259,6 +270,7 @@ export const CreateLeague = () => {
           isEditing={true}
           confirmButtonText={t('common.save')}
           initialValues={gameSetupSeason}
+          maxParticipants={maxParticipants}
           onClose={() => setIsSeasonSetupModalOpen(false)}
           onConfirm={handleSeasonSetupConfirm}
         />

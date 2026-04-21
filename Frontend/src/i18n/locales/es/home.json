@@ -1,0 +1,33 @@
+{
+  "home": {
+    "title": "Mis juegos",
+    "myGames": "Mis juegos",
+    "myGamesShort": "Mis",
+    "upcoming": "Próximos",
+    "past": "Pasados",
+    "search": "Buscar",
+    "loadMore": "Cargar más",
+    "noPastGames": "No hay juegos pasados",
+    "noGames": "Aún no tienes juegos",
+    "upcomingGames": "Tus próximos juegos",
+    "staleGamesTitle": "Ya pasó la hora prevista — el partido no se jugó",
+    "staleGamesHint": "El organizador puede anular la convocatoria o fijar otra fecha.",
+    "staleGameBadge": "Hora vencida",
+    "createGame": "Crea un juego para comenzar",
+    "findGamesButton": "Buscar juegos",
+    "finishedToday": "Finalizados",
+    "findGames": "Buscar juegos",
+    "findGameHint": "¿Quieres encontrar un juego? Presiona la pestaña Buscar",
+    "noNamePromptSubtitle": "Para comunicarte mejor con los demás, por favor establece tu nombre.",
+    "noNamePromptAction": "Establecer nombre",
+    "noNamePromptModalTitle": "Establece tu nombre",
+    "noNamePromptModalSubtitle": "Para comunicarte mejor con los demás, por favor establece tu nombre.",
+    "questionnaireCtaTitle": "Obtén tu nivel de juego",
+    "questionnaireCtaSubtitle": "Cuestionario breve: fijamos tu nivel para mostrarte partidos acordes a tu nivel y encontrar juegos más fiables.",
+    "questionnaireCtaAction": "Rellenar el cuestionario",
+    "questionnaireDismissLink": "No volver a mostrar",
+    "questionnaireDismissTitle": "¿Ocultar el cuestionario de nivel?",
+    "questionnaireDismissMessage": "Tu nivel actual es {{level}}. Solo ocultamos el aviso; tu nivel no cambia. Este banner no volverá a aparecer.",
+    "questionnaireDismissConfirm": "Sí, ocultar"
+  }
+}

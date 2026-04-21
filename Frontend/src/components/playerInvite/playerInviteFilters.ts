@@ -18,5 +18,3 @@ export const defaultPlayerInviteFilters = (maxSocialLevel: number): PlayerInvite
 });
 
 export const PLAYER_INVITE_GAMES_TOGETHER_STEPS = [0, 1, 3, 5] as const;
-
-export const PLAYER_INVITE_LIST_PAGE_SIZE = 50;

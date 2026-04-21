@@ -1,0 +1,66 @@
+{
+  "bug": {
+    "bug": "Error",
+    "bugTracker": "Rastreador de Errores",
+    "addBug": "Agregar Error",
+    "addSuggestion": "Agregar Sugerencia",
+    "addQuestion": "Agregar Pregunta",
+    "addProblem": "Agregar Problema",
+    "addTask": "Agregar Tarea",
+    "description": "Reporta errores, sugerencias y preguntas para ayudar a mejorar la app",
+    "type": "Tipo",
+    "descriptionPlaceholder": "Describe el error, sugerencia o pregunta...",
+    "submit": "Enviar",
+    "created": "Reporte de error enviado exitosamente",
+    "createError": "Error al enviar el reporte de error",
+    "textRequired": "La descripción del error es obligatoria",
+    "loadError": "Error al cargar los errores",
+    "noBugs": "Aún no se han reportado errores",
+    "allTypes": "Todos los Tipos",
+    "allActive": "Todos activos",
+    "statusUpdated": "Estado del error actualizado",
+    "statusUpdateError": "Error al actualizar el estado del error",
+    "typeUpdated": "Tipo del error actualizado",
+    "typeUpdateError": "Error al actualizar el tipo del error",
+    "deleted": "Error eliminado",
+    "deleteError": "Error al eliminar el error",
+    "openChat": "Abrir chat",
+    "actions": "Acciones del Error",
+    "status": "Estado",
+    "priority": "Prioridad",
+    "priorityUpdated": "Prioridad del error actualizada",
+    "changeStatus": "Cambiar Estado",
+    "changeType": "Cambiar Tipo",
+    "myBugsOnly": "Creado por mí",
+    "priorities": {
+      "0": "0",
+      "1": "+1",
+      "2": "+2",
+      "-2": "−2",
+      "-1": "−1"
+    },
+    "priorityLabels": {
+      "0": "Normal",
+      "1": "Alto",
+      "2": "Muy alto",
+      "-2": "Muy bajo",
+      "-1": "Bajo"
+    },
+    "types": {
+      "BUG": "Error",
+      "CRITICAL": "Crítico",
+      "SUGGESTION": "Sugerencia",
+      "QUESTION": "Pregunta",
+      "TASK": "Tarea"
+    },
+    "statuses": {
+      "CREATED": "Creado",
+      "CONFIRMED": "Confirmado",
+      "IN_PROGRESS": "En Progreso",
+      "TEST": "Pruebas",
+      "FINISHED": "Finalizado",
+      "ARCHIVED": "Archivado"
+    },
+    "updateFailed": "Failed to update bug"
+  }
+}

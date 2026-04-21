@@ -3,6 +3,7 @@ import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
 import { authenticate, optionalAuth, requireCanModifyResults } from '../middleware/auth';
 import * as resultsController from '../controllers/results.controller';
+import * as matchTimerController from '../controllers/matchTimer.controller';
 
 const router = Router();
 
@@ -96,6 +97,42 @@ router.put(
     body('sets').isArray().withMessage('sets must be an array'),
   ]),
   resultsController.updateMatch
+);
+
+router.get(
+  '/game/:gameId/matches/:matchId/timer',
+  optionalAuth,
+  matchTimerController.getMatchTimer
+);
+router.post(
+  '/game/:gameId/matches/:matchId/timer/start',
+  authenticate,
+  requireCanModifyResults,
+  matchTimerController.startMatchTimer
+);
+router.post(
+  '/game/:gameId/matches/:matchId/timer/pause',
+  authenticate,
+  requireCanModifyResults,
+  matchTimerController.pauseMatchTimer
+);
+router.post(
+  '/game/:gameId/matches/:matchId/timer/resume',
+  authenticate,
+  requireCanModifyResults,
+  matchTimerController.resumeMatchTimer
+);
+router.post(
+  '/game/:gameId/matches/:matchId/timer/stop',
+  authenticate,
+  requireCanModifyResults,
+  matchTimerController.stopMatchTimer
+);
+router.post(
+  '/game/:gameId/matches/:matchId/timer/reset',
+  authenticate,
+  requireCanModifyResults,
+  matchTimerController.resetMatchTimer
 );
 
 export default router;

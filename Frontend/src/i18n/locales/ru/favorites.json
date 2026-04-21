@@ -1,0 +1,11 @@
+{
+  "favorites": {
+    "addToFavorites": "Добавить в избранное",
+    "removeFromFavorites": "Удалить из избранного",
+    "addedToFavorites": "Добавлено в избранное",
+    "removedFromFavorites": "Удалено из избранного",
+    "isFavorite": "Избранное",
+    "userAddedToFavorites": "Игрок добавлен в избранное",
+    "userRemovedFromFavorites": "Игрок удален из избранного"
+  }
+}

@@ -1,0 +1,200 @@
+{
+  "createGame": {
+    "title": "Crear juego",
+    "createBar": "Crear evento de bar",
+    "createTraining": "Crear sesión de entrenamiento",
+    "createTournament": "Crear Torneo",
+    "createLeague": "Crear Liga",
+    "selectType": "Seleccionar tipo",
+    "location": "Ubicación",
+    "locationTournament": "Ubicación del Torneo",
+    "locationLeague": "Ubicación de la Liga",
+    "club": "Club",
+    "selectClub": "Selecciona club",
+    "court": "Cancha",
+    "hall": "Salón",
+    "notBookedYet": "Aún no reservada",
+    "hasBookedCourt": "He reservado esta cancha",
+    "hasBookedHall": "He reservado una mesa",
+    "selectCourt": "Seleccionar cancha",
+    "selectHall": "Seleccionar salón",
+    "selectClubFirst": "Selecciona el club primero",
+    "noClubsAvailable": "No hay clubs disponibles",
+    "clubDetailsBack": "Volver a clubes",
+    "clubInfo": "Detalles del club",
+    "clubPhotos": "Fotos",
+    "noCourtsAvailable": "No hay canchas disponibles",
+    "noHallsAvailable": "No hay salones disponibles",
+    "playerLevel": "Nivel de jugador",
+    "playerLevelTournament": "Nivel de Jugador del Torneo",
+    "playerLevelLeague": "Nivel de Jugador de la Liga",
+    "minLevel": "Nivel mínimo",
+    "maxLevel": "Nivel máximo",
+    "participants": "Participantes",
+    "participantsTournament": "Participantes del Torneo",
+    "participantsLeague": "Participantes de la Liga",
+    "numberOfParticipants": "Número de participantes",
+    "numberOfParticipantsTournament": "Número de participantes del torneo",
+    "numberOfParticipantsLeague": "Número de participantes de la liga",
+    "addMeToGame": "Unirme al juego",
+    "iWantToPlay": "Quiero jugar",
+    "iWillPlay": "Yo jugaré",
+    "settings": "Configuración",
+    "settingsTournament": "Configuración del Torneo",
+    "settingsLeague": "Configuración de la Liga",
+    "gameType": "Tipo de Juego",
+    "gameTypeLeague": "Tipo de liga",
+    "gameTypeNote": "Puedes cambiar la configuración detallada del juego en la sección Configurar Juego.",
+    "gameTypeNoteLeague": "Puedes cambiar la configuración detallada de la liga en la sección Configuración de Liga.",
+    "anyoneCanInvite": {
+      "title": "Cualquiera puede invitar a otros jugadores",
+      "note": {
+        "false": "Solo los organizadores pueden invitar jugadores.",
+        "true": "Cualquier participante puede invitar a otros jugadores."
+      },
+      "titleTraining": "Anyone can invite other participants",
+      "noteTraining": {
+        "true": "Any participant can invite other participants.",
+        "false": "Only organizers can invite participants."
+      }
+    },
+    "publicGame": {
+      "title": "Juego público",
+      "note": {
+        "false": "Será privado y solo visible para los participantes invitados.",
+        "true": "Será visible para todos los jugadores y se puede encontrar en la búsqueda."
+      },
+      "titleTraining": "Public training",
+      "noteTraining": {
+        "true": "Will be visible to all players and can be found in the search.",
+        "false": "Will be private and only visible to invited participants."
+      }
+    },
+    "resultsByAnyone": {
+      "title": "Resultados por cualquiera",
+      "note": {
+        "false": "Solo los organizadores pueden ingresar y modificar los resultados.",
+        "true": "Cualquier participante puede ingresar y modificar los resultados."
+      }
+    },
+    "allowDirectJoin": {
+      "title": "Entrar sin confirmación",
+      "note": {
+        "false": "Los jugadores necesitan aprobación de los organizadores antes de unirse.",
+        "true": "Los jugadores pueden unirse directamente sin esperar aprobación."
+      },
+      "titleTraining": "Join without confirmation",
+      "noteTraining": {
+        "true": "Participants can join directly without waiting for approval.",
+        "false": "Participants need approval from organizers before joining."
+      }
+    },
+    "afterGameGoToBar": {
+      "title": "Quedarse en el bar después del juego",
+      "note": {
+        "false": "No incluye una reunión social después del partido.",
+        "true": "Incluye una reunión social después del partido."
+      },
+      "titleTraining": "Stay at the bar after the training",
+      "noteTraining": {
+        "true": "Includes a social gathering after the training.",
+        "false": "Does not include a social gathering after the training."
+      }
+    },
+    "hasFixedTeams": {
+      "note": {
+        "false": "El marcador es individual. Los jugadores jugarán con cualquiera según las reglas.",
+        "true": "El marcador es por pareja. Podrás bloquear jugadores en parejas que juegan entre sí. Las alineaciones de pareja no se pueden cambiar después de que empiece."
+      }
+    },
+    "ratingGame": {
+      "title": "Juego de puntuación",
+      "note": {
+        "false": "Los resultados no afectarán los niveles de los participantes.",
+        "true": "Los resultados afectarán los niveles de los participantes."
+      }
+    },
+    "tournament": "Torneo",
+    "genderTeams": {
+      "label": "Participantes por género",
+      "any": "Cualquiera",
+      "men": "Hombres",
+      "women": "Mujeres",
+      "mixPairs": "Mix",
+      "note": {
+        "any": "Cualquier género es bienvenido",
+        "men": "Solo se permiten hombres",
+        "women": "Solo se permiten mujeres",
+        "mixPairs": "Solo para juego en equipo, cada equipo consistirá en 1 hombre y 1 mujer, se permitirá un número igual de hombres/mujeres para unirse."
+      }
+    },
+    "fixedTeams": {
+      "descriptionOn": "Las parejas se mantienen iguales durante todo el evento.",
+      "descriptionOff": "Las parejas pueden cambiar de ronda en ronda."
+    },
+    "gameName": "Nombre del juego",
+    "gameNameTournament": "Nombre del Torneo",
+    "gameNameLeague": "Nombre de la Liga",
+    "gameNamePlaceholder": "Ingrese el nombre del juego (opcional)",
+    "gameNamePlaceholderTournament": "Ingrese el nombre del torneo (opcional)",
+    "gameNamePlaceholderLeague": "Ingrese el nombre de la liga (opcional)",
+    "comments": "Comentarios",
+    "commentsTournament": "Comentarios del Torneo",
+    "commentsLeague": "Comentarios de la Liga",
+    "commentsPlaceholder": "Añade información adicional sobre el juego...",
+    "commentsPlaceholderTournament": "Añade información adicional sobre el torneo...",
+    "commentsPlaceholderLeague": "Añade información adicional sobre la liga...",
+    "price": "Precio",
+    "priceType": "Tipo de Precio",
+    "priceTypeNotKnown": "Desconocido",
+    "priceTypePerPerson": "Por Persona",
+    "priceTypePerTeam": "Por Equipo",
+    "priceTypeTotal": "Total",
+    "priceTypeFree": "Gratis",
+    "priceTotal": "Cantidad",
+    "priceTotalPlaceholder": "Ingrese la cantidad",
+    "priceCurrency": "Moneda",
+    "priceNotSet": "Precio no establecido",
+    "gameStart": "Inicio del juego",
+    "gameStartTournament": "Inicio del torneo",
+    "gameStartLeague": "Inicio de la liga",
+    "selectDate": "Selecciona fecha",
+    "date": "Fecha",
+    "startTime": "Hora de inicio",
+    "endTime": "Hora de fin",
+    "duration": "Duración",
+    "selectTime": "Selecciona hora",
+    "clubTime": "hora del club",
+    "showPastTimes": "Mostrar horarios pasados",
+    "timeSlot": "Slot seleccionado",
+    "loadingExternalSlots": "Cargando slots externos",
+    "bookedWithoutCourt": "Sin pista",
+    "notConfirmed": "no confirmado",
+    "multipleCourts": "Múltiples Canchas",
+    "noCourtsSelected": "No hay canchas seleccionadas",
+    "addCourt": "Agregar Cancha",
+    "createButton": "Crear juego",
+    "createButtonTournament": "Crear Torneo",
+    "createButtonLeague": "Crear Liga",
+    "createButtonBar": "Crear evento de bar",
+    "createButtonTraining": "Crear sesión de entrenamiento",
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "yesterday": "Ayer",
+    "selectFromCalendar": "Seleccionar del calendario",
+    "hours": "{{count}}h",
+    "hoursMinutes": "{{hours}}h {{minutes}}m",
+    "you": "Tú",
+    "invite": "Invitar",
+    "remove": "Eliminar",
+    "manageInvites": "Gestionar invitaciones ({{count}})",
+    "invitesWillBeSent_one": "Jugador será invitado después de crear el juego",
+    "invitesWillBeSent_other": "Se invitarán {{count}} jugadores después de crear el juego",
+    "priceRequired": "Price must be greater than 0 for this price type",
+    "commentsTraining": "Training Comments",
+    "commentsPlaceholderTraining": "Add any additional information about the training...",
+    "gameNameTraining": "Name of training",
+    "gameNamePlaceholderTraining": "Enter training name (optional)",
+    "gameStartTraining": "Start of training"
+  }
+}

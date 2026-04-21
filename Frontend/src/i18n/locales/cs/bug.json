@@ -1,0 +1,66 @@
+{
+  "bug": {
+    "bug": "Chyba",
+    "bugTracker": "Sledování chyb",
+    "addBug": "Přidat chybu",
+    "addSuggestion": "Přidat návrh",
+    "addQuestion": "Přidat dotaz",
+    "addProblem": "Přidat problém",
+    "addTask": "Přidat úkol",
+    "description": "Nahlašte chyby, návrhy a dotazy, abychom mohli aplikaci vylepšit",
+    "type": "Typ",
+    "descriptionPlaceholder": "Popište chybu, návrh nebo dotaz...",
+    "submit": "Odeslat",
+    "created": "Hlášení chyby bylo úspěšně odesláno",
+    "createError": "Nepodařilo se odeslat hlášení chyby",
+    "textRequired": "Popis chyby je povinný",
+    "loadError": "Nepodařilo se načíst chyby",
+    "noBugs": "Zatím nebyly nahlášeny žádné chyby",
+    "allTypes": "Všechny typy",
+    "allActive": "Všechny aktivní",
+    "statusUpdated": "Stav chyby byl aktualizován",
+    "statusUpdateError": "Nepodařilo se aktualizovat stav chyby",
+    "typeUpdated": "Typ chyby byl aktualizován",
+    "typeUpdateError": "Nepodařilo se aktualizovat typ chyby",
+    "deleted": "Chyba byla smazána",
+    "deleteError": "Nepodařilo se smazat chybu",
+    "openChat": "Otevřít chat",
+    "actions": "Akce u chyby",
+    "status": "Stav",
+    "priority": "Priorita",
+    "priorityUpdated": "Priorita chyby aktualizována",
+    "changeStatus": "Změnit stav",
+    "changeType": "Změnit typ",
+    "myBugsOnly": "Vytvořil jsem",
+    "priorities": {
+      "0": "0",
+      "1": "+1",
+      "2": "+2",
+      "-2": "−2",
+      "-1": "−1"
+    },
+    "priorityLabels": {
+      "0": "Normální",
+      "1": "Vysoká",
+      "2": "Velmi vysoká",
+      "-2": "Velmi nízká",
+      "-1": "Nízká"
+    },
+    "types": {
+      "BUG": "Chyba",
+      "CRITICAL": "Kritická",
+      "SUGGESTION": "Návrh",
+      "QUESTION": "Dotaz",
+      "TASK": "Úkol"
+    },
+    "statuses": {
+      "CREATED": "Vytvořeno",
+      "CONFIRMED": "Potvrzeno",
+      "IN_PROGRESS": "Řeší se",
+      "TEST": "Testování",
+      "FINISHED": "Dokončeno",
+      "ARCHIVED": "Archivováno"
+    },
+    "updateFailed": "Failed to update bug"
+  }
+}

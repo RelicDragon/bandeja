@@ -27,7 +27,7 @@ async function loadGameForRoundGeneration(
 }
 
 function assertMatchGenerationSupported(matchGenerationType: string | null | undefined): void {
-  if (!matchGenerationType || matchGenerationType === 'HANDMADE') {
+  if (!matchGenerationType || matchGenerationType === 'HANDMADE' || matchGenerationType === 'AUTOMATIC') {
     return;
   }
   const supported = new Set([

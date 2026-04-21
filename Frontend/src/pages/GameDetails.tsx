@@ -15,7 +15,6 @@ import {
   GameInfo,
   GameParticipants,
   GameSettings,
-  GameSetupModal,
   MultipleCourtsSelector,
   LeagueScheduleTab,
   LeagueStandingsTab,
@@ -25,9 +24,8 @@ import { GameCancelled } from '@/components/GameDetails/GameCancelled';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsList';
 import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
-import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
-import { GameSetup } from '@/components/GameDetails/GameSetup';
+import { GameFormatSection } from '@/components/GameDetails/GameFormatSection';
 import { FaqTab } from '@/components/GameDetails/FaqTab';
 import { FaqEdit } from '@/components/GameDetails/FaqEdit';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
@@ -49,7 +47,7 @@ import { faqApi } from '@/api/faq';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
-import { Game, Invite, Court, Club, GenderTeam, GameType } from '@/types';
+import { Game, Invite, Court, Club, GenderTeam } from '@/types';
 import { Round } from '@/types/gameResults';
 import { isUserGameAdminOrOwner, canUserEditResults, canViewTournamentTableByAccess } from '@/utils/gameResults';
 import { isParticipantPlaying } from '@/utils/participantStatus';
@@ -57,7 +55,6 @@ import { BasicUser } from '@/types';
 import { createPortal } from 'react-dom';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { socketService } from '@/services/socketService';
-import { applyGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 
 type GameWithResults = Game & {
@@ -103,7 +100,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   } | null>(null);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
-  const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
   const [isEditMaxParticipantsModalOpen, setIsEditMaxParticipantsModalOpen] = useState(false);
   const [isEditGameInfoModalOpen, setIsEditGameInfoModalOpen] = useState(false);
   const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<'general' | 'when' | 'where' | 'price'>('general');
@@ -150,11 +146,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     afterGameGoToBar: false,
     hasFixedTeams: false,
     genderTeams: 'ANY' as GenderTeam,
-    gameType: 'CLASSIC' as GameType,
     description: '',
-    pointsPerWin: 0,
-    pointsPerLoose: 0,
-    pointsPerTie: 0,
   });
 
   useEffect(() => {
@@ -319,25 +311,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   }, [id, scrollContainerRef]);
 
   useEffect(() => {
-    if (!id || !isEditMode || !game) return;
-    if (editFormData.gameType === game.gameType) return;
-    
-    const template = applyGameTypeTemplate(editFormData.gameType);
-    gamesApi.update(id, { 
-      winnerOfMatch: template.winnerOfMatch,
-      winnerOfGame: template.winnerOfGame,
-      matchGenerationType: template.matchGenerationType,
-      pointsPerWin: template.pointsPerWin ?? 0,
-      pointsPerLoose: template.pointsPerLoose ?? 0,
-      pointsPerTie: template.pointsPerTie ?? 0,
-      ballsInGames: template.ballsInGames ?? false,
-      fixedNumberOfSets: template.fixedNumberOfSets ?? 0
-    }).catch(error => {
-      console.error('Failed to update game template settings:', error);
-    });
-  }, [editFormData.gameType, isEditMode, id, game]);
-
-  useEffect(() => {
     const fetchCourts = async () => {
       if (!game?.clubId) return;
       
@@ -403,11 +376,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
         afterGameGoToBar: game.afterGameGoToBar || false,
         hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
         genderTeams: (game.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS',
-        gameType: (game.gameType || 'CLASSIC') as GameType,
         description: game.description || '',
-        pointsPerWin: game.pointsPerWin ?? 0,
-        pointsPerLoose: game.pointsPerLoose ?? 0,
-        pointsPerTie: game.pointsPerTie ?? 0,
       });
     }
   }, [game]);
@@ -713,7 +682,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
       setGame(response.data);
       
       if (action === 'transfer-ownership') {
-        toast.success(t('game.ownershipTransferred') || 'Ownership transferred successfully');
+        toast.success(t('games.ownershipTransferred'));
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
@@ -828,11 +797,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
           afterGameGoToBar: game.afterGameGoToBar || false,
           hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
           genderTeams: (game.genderTeams || 'ANY') as GenderTeam,
-          gameType: (game.gameType || 'CLASSIC') as GameType,
           description: game.description || '',
-          pointsPerWin: game.pointsPerWin ?? 0,
-          pointsPerLoose: game.pointsPerLoose ?? 0,
-          pointsPerTie: game.pointsPerTie ?? 0,
         });
       }
       setIsClosingEditMode(true);
@@ -865,10 +830,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
         updateData.affectsRating = editFormData.affectsRating;
         updateData.resultsByAnyone = editFormData.resultsByAnyone;
         updateData.hasFixedTeams = game?.maxParticipants === 2 ? false : editFormData.hasFixedTeams;
-        updateData.gameType = editFormData.gameType;
-        updateData.pointsPerWin = editFormData.pointsPerWin;
-        updateData.pointsPerLoose = editFormData.pointsPerLoose;
-        updateData.pointsPerTie = editFormData.pointsPerTie;
       }
 
       if (game?.entityType === 'GAME' || game?.entityType === 'TOURNAMENT' || game?.entityType === 'LEAGUE') {
@@ -894,32 +855,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
   const handleFormDataChange = (data: Partial<typeof editFormData>) => {
     setEditFormData({...editFormData, ...data});
-  };
-
-  const handleGameSetupConfirm = async (params: {
-    fixedNumberOfSets: number;
-    maxTotalPointsPerSet: number;
-    maxPointsPerTeam: number;
-    winnerOfGame: any;
-    winnerOfMatch: any;
-    matchGenerationType: any;
-    prohibitMatchesEditing?: boolean;
-    pointsPerWin: number;
-    pointsPerLoose: number;
-    pointsPerTie: number;
-    ballsInGames: boolean;
-  }) => {
-    if (!id) return;
-
-    try {
-      await gamesApi.update(id, params);
-      const response = await gamesApi.getById(id);
-      setGame(response.data);
-      toast.success(t('gameResults.setupUpdated'));
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    }
   };
 
   const canDeleteGame = () => {
@@ -1177,12 +1112,14 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
       <SetResultModal
         {...commonProps}
         ballsInGames={game.ballsInGames || false}
+        game={game}
         onRemove={() => {}}
       />
     ) : (
       <HorizontalScoreEntryModal
         {...commonProps}
         ballsInGames={game.ballsInGames || false}
+        game={game}
         onRemove={() => {}}
       />
     );
@@ -1285,6 +1222,15 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
             </>
           )}
 
+          {user && !isLeague && canViewSettings && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
+            <GameFormatSection
+              key={game.id}
+              game={game}
+              canEdit={canEdit}
+              onGameUpdate={setGame}
+            />
+          )}
+
           {user && game.entityType === 'TRAINING' && game.resultsStatus === 'FINAL' && (
             <TrainingResultsSection
               game={game}
@@ -1326,13 +1272,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
             </div>
           )}
 
-          {user && !isLeague && canViewSettings && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
-            <GameSetup
-              onOpenSetup={() => setIsGameSetupModalOpen(true)}
-              canEdit={canEdit}
-            />
-          )}
-
           {user && isLeagueSeason && canEdit && (
             <FaqEdit 
               gameId={game.id} 
@@ -1353,16 +1292,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
                   const response = await gamesApi.getById(id);
                   setGame(response.data);
                 }
-              }}
-            />
-          )}
-
-          {user && !isLeague && game.hasFixedTeams && (
-            <FixedTeamsManagement
-              key={`fixed-teams-${game.id}`}
-              game={game}
-              onGameUpdate={(updatedGame) => {
-                setGame(prevGame => prevGame ? { ...prevGame, ...updatedGame } : updatedGame);
               }}
             />
           )}
@@ -1778,30 +1707,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
           confirmVariant="primary"
           onConfirm={proceedWithResultsEntry}
           onClose={() => setShowAnnouncedConfirm(false)}
-        />
-      )}
-
-      {isGameSetupModalOpen && (
-        <GameSetupModal
-          isOpen={isGameSetupModalOpen}
-          entityType={game.entityType}
-          isEditing={canEdit}
-          confirmButtonText={canEdit ? t('common.save') : undefined}
-          initialValues={{
-            fixedNumberOfSets: game.fixedNumberOfSets,
-            maxTotalPointsPerSet: game.maxTotalPointsPerSet,
-            maxPointsPerTeam: game.maxPointsPerTeam,
-            winnerOfGame: game.winnerOfGame,
-            winnerOfMatch: game.winnerOfMatch,
-            matchGenerationType: game.matchGenerationType,
-            prohibitMatchesEditing: game.prohibitMatchesEditing,
-            pointsPerWin: game.pointsPerWin,
-            pointsPerLoose: game.pointsPerLoose,
-            pointsPerTie: game.pointsPerTie,
-            ballsInGames: game.ballsInGames,
-          }}
-          onClose={() => setIsGameSetupModalOpen(false)}
-          onConfirm={handleGameSetupConfirm}
         />
       )}
 

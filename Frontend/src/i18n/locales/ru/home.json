@@ -1,0 +1,33 @@
+{
+  "home": {
+    "title": "Мои игры",
+    "myGames": "Мои игры",
+    "myGamesShort": "Мои",
+    "upcoming": "Предстоящие",
+    "past": "Прошедшие",
+    "search": "Поиск",
+    "loadMore": "Загрузить ещё",
+    "noPastGames": "Нет прошедших игр",
+    "noGames": "У вас пока нет игр",
+    "upcomingGames": "Ваши ближайшие игры",
+    "staleGamesTitle": "Запланированное время прошло — матч не состоялся",
+    "staleGamesHint": "Организатор может отменить игру или назначить новую дату.",
+    "staleGameBadge": "Время прошло",
+    "createGame": "Создайте игру, чтобы начать",
+    "findGamesButton": "Найти игры",
+    "finishedToday": "Завершённые",
+    "findGames": "Найти игры",
+    "findGameHint": "Хотите найти игру? Нажмите вкладку Поиск",
+    "noNamePromptSubtitle": "Чтобы вам было проще общаться с другими, пожалуйста, укажите имя.",
+    "noNamePromptAction": "Указать имя",
+    "noNamePromptModalTitle": "Укажите имя",
+    "noNamePromptModalSubtitle": "Чтобы вам было проще общаться с другими, пожалуйста, укажите имя.",
+    "questionnaireCtaTitle": "Получите игровой уровень",
+    "questionnaireCtaSubtitle": "Короткий опрос — мы зададим уровень, чтобы подбирать игры по силе и находить подходящие матчи проще.",
+    "questionnaireCtaAction": "Заполнить анкету",
+    "questionnaireDismissLink": "Больше не показывать",
+    "questionnaireDismissTitle": "Скрыть опрос об уровне?",
+    "questionnaireDismissMessage": "Ваш текущий уровень — {{level}}. Только скрываем напоминание, уровень не меняется. Баннер больше не покажется.",
+    "questionnaireDismissConfirm": "Да, скрыть"
+  }
+}

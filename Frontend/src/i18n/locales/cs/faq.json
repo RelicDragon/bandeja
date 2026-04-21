@@ -1,0 +1,22 @@
+{
+  "faq": {
+    "noFaqs": "Žádné dotazy",
+    "fetchError": "Nepodařilo se načíst dotazy",
+    "fieldsRequired": "Otázka i odpověď jsou povinné",
+    "created": "Dotaz byl vytvořen",
+    "updated": "Dotaz byl aktualizován",
+    "saveError": "Nepodařilo se uložit dotaz",
+    "deleted": "Dotaz byl smazán",
+    "deleteError": "Nepodařilo se smazat dotaz",
+    "reorderError": "Nepodařilo se změnit pořadí dotazů",
+    "add": "Přidat dotaz",
+    "question": "Otázka",
+    "answer": "Odpověď",
+    "questionPlaceholder": "Zadejte otázku...",
+    "answerPlaceholder": "Zadejte odpověď...",
+    "deleteTitle": "Smazat dotaz",
+    "deleteConfirm": "Opravdu chcete smazat tento dotaz?",
+    "moveUp": "Posunout nahoru",
+    "moveDown": "Posunout dolů"
+  }
+}

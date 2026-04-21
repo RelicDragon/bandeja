@@ -1,0 +1,33 @@
+{
+  "home": {
+    "title": "Moje zápasy",
+    "myGames": "Moje zápasy",
+    "myGamesShort": "Moje",
+    "upcoming": "Nadcházející",
+    "past": "Minulé",
+    "search": "Hledat",
+    "loadMore": "Načíst další",
+    "noPastGames": "Žádné minulé zápasy",
+    "noGames": "Zatím nemáte žádné zápasy",
+    "upcomingGames": "Vaše nadcházející zápasy",
+    "staleGamesTitle": "Plánovaný čas už uplynul — zápas se neodehrál",
+    "staleGamesHint": "Organizátor může zápas zrušit nebo domluvit nový termín.",
+    "staleGameBadge": "Po termínu",
+    "createGame": "Vytvořte zápas a začněte",
+    "findGamesButton": "Najít zápasy",
+    "finishedToday": "Dokončeno",
+    "findGames": "Najít zápasy",
+    "findGameHint": "Chcete najít zápas? Stiskněte záložku Hledat",
+    "noNamePromptSubtitle": "Pro lepší komunikaci s ostatními si prosím nastavte jméno.",
+    "noNamePromptAction": "Nastavit jméno",
+    "noNamePromptModalTitle": "Nastavte své jméno",
+    "noNamePromptModalSubtitle": "Pro lepší komunikaci s ostatními si prosím nastavte jméno.",
+    "questionnaireCtaTitle": "Získejte svou herní úroveň",
+    "questionnaireCtaSubtitle": "Krátký dotazník — nastavíme úroveň, abyste viděli zápasy podle kvality a snáze našli vhodné hry.",
+    "questionnaireCtaAction": "Vyplnit dotazník",
+    "questionnaireDismissLink": "Znovu nezobrazovat",
+    "questionnaireDismissTitle": "Skrýt dotazník úrovně?",
+    "questionnaireDismissMessage": "Vaše současná úroveň je {{level}}. Jen skryjeme připomínku — úroveň se nemění. Tento banner se už nezobrazí.",
+    "questionnaireDismissConfirm": "Ano, skrýt"
+  }
+}

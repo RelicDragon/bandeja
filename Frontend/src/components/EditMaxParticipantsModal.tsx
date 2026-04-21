@@ -8,8 +8,9 @@ import { gamesApi } from '@/api/games';
 import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
 import { RangeSlider } from './RangeSlider';
-import { Select } from './Select';
 import { ConfirmationModal } from './ConfirmationModal';
+import { GameFormatGenderFields } from '@/components/gameFormat/GameFormatTeamsFields';
+import { gameFormatGenderVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { Game, GenderTeam } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
@@ -168,31 +169,42 @@ export const EditMaxParticipantsModal = ({
   }, [removedPlayerIds, originalParticipants]);
 
   const canUseTournamentCapacity = Boolean(user?.isAdmin || user?.canCreateTournament);
-  const maxParticipants = useMemo(() => {
+  const userParticipantCap = user?.maxParticipantsInGame ?? 12;
+
+  const participantSliderMax = useMemo(() => {
     if (game.entityType === 'LEAGUE_SEASON') {
-      return canUseTournamentCapacity ? 128 : 12;
+      return canUseTournamentCapacity ? 128 : Math.min(128, userParticipantCap);
     }
     if (game.entityType === 'TOURNAMENT') {
-      return canUseTournamentCapacity ? 32 : 12;
+      return canUseTournamentCapacity ? 32 : Math.min(32, userParticipantCap);
     }
     if (game.entityType === 'GAME') {
-      return 12;
+      return canUseTournamentCapacity ? 12 : userParticipantCap;
     }
     return 8;
-  }, [canUseTournamentCapacity, game.entityType]);
+  }, [canUseTournamentCapacity, game.entityType, userParticipantCap]);
 
   const minParticipants = 2;
 
   const validOptions = useMemo(() => {
     if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE_SEASON') {
-      const maxAllowed = canUseTournamentCapacity ? 32 : 12;
+      const maxAllowed =
+        game.entityType === 'LEAGUE_SEASON'
+          ? canUseTournamentCapacity
+            ? 128
+            : Math.min(128, userParticipantCap)
+          : canUseTournamentCapacity
+            ? 32
+            : Math.min(32, userParticipantCap);
+      if (maxAllowed < 8) return [8];
       return Array.from({ length: Math.floor((maxAllowed - 8) / 2) + 1 }, (_, i) => 8 + i * 2);
     }
     if (game.entityType === 'GAME') {
-      return [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+      const maxG = canUseTournamentCapacity ? 12 : userParticipantCap;
+      return Array.from({ length: Math.max(0, maxG - 1) }, (_, i) => i + 2);
     }
     return [2, 3, 4, 5, 6, 7, 8];
-  }, [canUseTournamentCapacity, game.entityType]);
+  }, [canUseTournamentCapacity, game.entityType, userParticipantCap]);
 
   const canSave = !needsRemoval && 
     (genderTeams === 'ANY' || 
@@ -328,7 +340,7 @@ export const EditMaxParticipantsModal = ({
                     <input
                       type="number"
                       min={8}
-                      max={maxParticipants}
+                      max={participantSliderMax}
                       value={tempMaxParticipants}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -338,7 +350,7 @@ export const EditMaxParticipantsModal = ({
                       }}
                       onBlur={() => {
                         const num = parseInt(tempMaxParticipants);
-                        if (!isNaN(num) && num >= 8 && num <= maxParticipants) {
+                        if (!isNaN(num) && num >= 8 && num <= participantSliderMax) {
                           setNewMaxParticipants(num);
                         } else {
                           setTempMaxParticipants(newMaxParticipants.toString());
@@ -348,7 +360,7 @@ export const EditMaxParticipantsModal = ({
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           const num = parseInt(tempMaxParticipants);
-                          if (!isNaN(num) && num >= 8 && num <= maxParticipants) {
+                          if (!isNaN(num) && num >= 8 && num <= participantSliderMax) {
                             setNewMaxParticipants(num);
                             setIsEditingMaxParticipants(false);
                           } else {
@@ -380,7 +392,7 @@ export const EditMaxParticipantsModal = ({
                 <div className="px-2 py-2">
                   <Slider
                     min={8}
-                    max={maxParticipants}
+                    max={participantSliderMax}
                     step={1}
                     value={newMaxParticipants}
                     onChange={(val) => {
@@ -416,7 +428,7 @@ export const EditMaxParticipantsModal = ({
                   <button
                     key={num}
                     onClick={() => setNewMaxParticipants(num)}
-                    disabled={num < minParticipants || num > maxParticipants}
+                    disabled={num < minParticipants || num > participantSliderMax}
                     className={`h-10 rounded-lg font-semibold text-sm transition-all ${
                       newMaxParticipants === num
                         ? 'bg-primary-500 text-white'
@@ -443,25 +455,14 @@ export const EditMaxParticipantsModal = ({
             />
           </div>
 
-          {(game.entityType === 'GAME' || game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE') && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('createGame.genderTeams.label', { defaultValue: 'Gender Teams' })}
-              </label>
-              <Select
-                options={[
-                  { value: 'ANY', label: t('createGame.genderTeams.any', { defaultValue: 'Any' }) },
-                  { value: 'MEN', label: t('createGame.genderTeams.men', { defaultValue: 'Men' }) },
-                  { value: 'WOMEN', label: t('createGame.genderTeams.women', { defaultValue: 'Women' }) },
-                  ...(newMaxParticipants >= 4 && newMaxParticipants % 2 === 0
-                    ? [{ value: 'MIX_PAIRS', label: t('createGame.genderTeams.mixPairs', { defaultValue: 'Mix Pairs' }) }]
-                    : []),
-                ]}
-                value={genderTeams}
-                onChange={(value) => setGenderTeams(value as GenderTeam)}
-                disabled={isSaving}
-              />
-            </div>
+          {gameFormatGenderVisible(game.entityType) && (
+            <GameFormatGenderFields
+              entityType={game.entityType}
+              genderTeams={genderTeams}
+              onGenderTeamsChange={setGenderTeams}
+              genderSwitchLayoutId="editMaxParticipantsGender"
+              readOnly={isSaving}
+            />
           )}
 
           {genderTeams === 'MEN' && nonMaleParticipants.length > 0 && (

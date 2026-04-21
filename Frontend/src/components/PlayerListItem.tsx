@@ -1,19 +1,34 @@
-import { Check } from 'lucide-react';
+import { Check, CalendarClock, CalendarX2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BasicUser } from '@/types';
 import { PlayerAvatar } from './PlayerAvatar';
 import { formatInviteStatsRows } from '@/components/playerInvite/formatInviteStatsLine';
+import type { GameAvailabilityMatch } from '@/utils/availability/gameMatch';
 
 interface PlayerListItemProps {
   player: BasicUser;
   isSelected: boolean;
   gamesTogetherCount: number;
   onSelect: () => void;
+  availability?: GameAvailabilityMatch;
 }
 
-export function PlayerListItem({ player, isSelected, gamesTogetherCount, onSelect }: PlayerListItemProps) {
+export function PlayerListItem({ player, isSelected, gamesTogetherCount, onSelect, availability }: PlayerListItemProps) {
   const { t } = useTranslation();
   const { levelRow, socialRow } = formatInviteStatsRows(t, player.level, player.socialLevel, player.reliability);
+
+  const dim = availability === 'none' || availability === 'partial';
+  const availabilityLabel =
+    availability === 'none'
+      ? t('playerInvite.availabilityNone')
+      : availability === 'partial'
+        ? t('playerInvite.availabilityPartial')
+        : null;
+  const availabilityTone =
+    availability === 'none'
+      ? 'text-rose-500/90 dark:text-rose-400/90'
+      : 'text-amber-500 dark:text-amber-400';
+  const AvailabilityIcon = availability === 'none' ? CalendarX2 : CalendarClock;
 
   return (
     <div
@@ -27,7 +42,7 @@ export function PlayerListItem({ player, isSelected, gamesTogetherCount, onSelec
         isSelected
           ? 'bg-sky-500/15 dark:bg-sky-500/20'
           : 'hover:bg-gray-100 dark:hover:bg-white/5'
-      }`}
+      } ${dim && !isSelected ? 'opacity-60' : ''}`}
     >
       <PlayerAvatar player={player} showName={false} fullHideName smallLayout={false} extrasmall />
 
@@ -52,6 +67,12 @@ export function PlayerListItem({ player, isSelected, gamesTogetherCount, onSelec
               </>
             )}
           </p>
+          {availabilityLabel && (
+            <p className={`flex items-center gap-1 ${availabilityTone}`}>
+              <AvailabilityIcon size={11} />
+              <span>{availabilityLabel}</span>
+            </p>
+          )}
         </div>
       </div>
 

@@ -1,5 +1,5 @@
-import { Card, Select, Divider, AvatarUpload } from '@/components';
-import { Game, Club, GameType } from '@/types';
+import { Card, Divider, AvatarUpload } from '@/components';
+import { Game, Club, GenderTeam } from '@/types';
 import { Settings, Edit3, Save, X, HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
@@ -26,11 +26,8 @@ interface GameSettingsProps {
     hasBookedCourt: boolean;
     afterGameGoToBar: boolean;
     hasFixedTeams: boolean;
-    gameType: GameType;
+    genderTeams: GenderTeam;
     description: string;
-    pointsPerWin: number;
-    pointsPerLoose: number;
-    pointsPerTie: number;
   };
   onEditModeToggle: () => void;
   onSaveChanges: () => void;
@@ -80,8 +77,6 @@ export const GameSettings = ({
   const isTraining = game?.entityType === 'TRAINING';
   const settingsTitle = t(isLeagueSeason ? 'createGame.settingsLeague' : 'createGame.settings');
   const avatarLabel = t(isLeagueSeason ? 'createLeague.seasonAvatar' : 'gameDetails.gameAvatar');
-  const gameTypeLabel = t(isLeagueSeason ? 'createGame.gameTypeLeague' : 'createGame.gameType');
-  const gameTypeNote = t(isLeagueSeason ? 'createGame.gameTypeNoteLeague' : 'createGame.gameTypeNote');
   const nameLabel = t(
     isLeagueSeason ? 'createGame.gameNameLeague' :
     isTraining ? 'createGame.gameNameTraining' :
@@ -102,16 +97,6 @@ export const GameSettings = ({
     isTraining ? 'createGame.commentsPlaceholderTraining' :
     'createGame.commentsPlaceholder'
   );
-  const pointValues = [0, 1, 2, 3];
-  const resolvedPoints = {
-    win: isEditMode ? editFormData.pointsPerWin : (game?.pointsPerWin ?? 0),
-    loose: isEditMode ? editFormData.pointsPerLoose : (game?.pointsPerLoose ?? 0),
-    tie: isEditMode ? editFormData.pointsPerTie : (game?.pointsPerTie ?? 0),
-  };
-  const handlePointsSelect = (field: 'pointsPerWin' | 'pointsPerLoose' | 'pointsPerTie', value: number) => {
-    if (!isEditMode) return;
-    onFormDataChange({ [field]: value } as Partial<GameSettingsProps['editFormData']>);
-  };
 
   if (!canEdit) {
     return null;
@@ -236,105 +221,6 @@ export const GameSettings = ({
 
         {/* Boolean Settings */}
         <div className="space-y-2">
-          {!isTraining && (
-            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                  {gameTypeLabel}
-                </span>
-              <div className="flex-shrink-0 w-40">
-                <Select
-                  options={
-                    game?.entityType === 'GAME'
-                      ? [
-                          { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                          { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                          { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                          { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                        ]
-                      : [
-                          { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                          { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                          { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                          { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
-                          { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
-                          { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                        ]
-                  }
-                  value={isEditMode ? editFormData.gameType : (game?.gameType || 'CLASSIC')}
-                  onChange={(value) => onFormDataChange({gameType: value as GameType})}
-                  disabled={!isEditMode}
-                />
-              </div>
-            </div>
-            {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {gameTypeNote}
-              </p>
-            )}
-          </div>
-          )}
-          {isLeagueSeason && (
-            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 block mb-2">
-                {t('gameResults.points')}
-              </span>
-              <div className="space-y-3">
-                {[
-                  { label: t('gameResults.win'), field: 'pointsPerWin' as const, value: resolvedPoints.win },
-                  { label: t('gameResults.tie'), field: 'pointsPerTie' as const, value: resolvedPoints.tie },
-                  { label: t('gameResults.loose'), field: 'pointsPerLoose' as const, value: resolvedPoints.loose },
-                ].map(({ label, field, value }) => (
-                  <div key={field}>
-                    <span className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{label}</span>
-                    <div className="flex gap-2">
-                      {pointValues.map((num) => (
-                        <button
-                          key={`${field}-${num}`}
-                          type="button"
-                          disabled={!isEditMode}
-                          onClick={() => handlePointsSelect(field, num)}
-                          className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-all duration-200 ${
-                            value === num
-                              ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/50 scale-105'
-                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                          } ${!isEditMode ? 'opacity-60 cursor-not-allowed' : ''}`}
-                        >
-                          {num}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {game?.maxParticipants !== 2 && !isTraining && (
-            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                  {t('games.fixedTeams')}
-                </span>
-                <div className="flex-shrink-0">
-                  <ToggleSwitch
-                    checked={isEditMode ? editFormData.hasFixedTeams : game?.hasFixedTeams || false}
-                    onChange={(checked) => onFormDataChange({hasFixedTeams: checked})}
-                    disabled={!isEditMode || !(game?.maxParticipants >= 4 && game?.maxParticipants % 2 === 0)}
-                  />
-                </div>
-              </div>
-              {showNotes && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {(() => {
-                    const hasFixedTeams = isEditMode ? editFormData.hasFixedTeams : (game?.hasFixedTeams || false);
-                    return hasFixedTeams 
-                      ? t('createGame.hasFixedTeams.note.true')
-                      : t('createGame.hasFixedTeams.note.false');
-                  })()}
-                </p>
-              )}
-            </div>
-          )}
           {!isLeagueSeason && !isTraining && (
             <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <div className="flex items-center justify-between mb-1">
@@ -361,9 +247,7 @@ export const GameSettings = ({
               )}
             </div>
           )}
-          
-          {!isLeagueSeason && !isTraining && <Divider />}
-          
+
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">

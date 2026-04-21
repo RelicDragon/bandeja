@@ -1,0 +1,25 @@
+{
+  "invites": {
+    "title": "Позиви",
+    "pending": "На чекању позиви",
+    "noInvites": "Нема позива на чекању",
+    "accept": "Прихвати",
+    "decline": "Одбаци",
+    "from": "Од",
+    "to": "За",
+    "message": "Порука",
+    "accepted": "Позив прихваћен",
+    "acceptedSuccessfully": "Позивница је успешно прихваћена",
+    "declined": "Позив одбачен",
+    "declinedSuccessfully": "Позивница је успешно одбачена",
+    "selectPlayer": "Изаберите играча",
+    "selectPlayers": "Изаберите играче",
+    "noPlayersAvailable": "Нема доступних играча за позивање",
+    "inviteFriendToBandeja": "Позови пријatelja на Bandeja",
+    "shareAppBody": "Придружи ми се на Bandeja: {{url}}",
+    "invitePlayers": "Позови играче",
+    "pendingInvites": "Позиви на чекању",
+    "inviteSent": "Позив послат",
+    "invitedYou": "вас је позвао/ла у"
+  }
+}

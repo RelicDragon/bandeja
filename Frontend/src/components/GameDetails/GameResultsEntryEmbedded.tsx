@@ -14,7 +14,17 @@ import { useLoadingState } from '@/hooks/useLoadingState';
 import { useOfflineMessage } from '@/hooks/useOfflineMessage';
 import { useGameResultsTabs } from '@/hooks/useGameResultsTabs';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
-import { validateSetIndex, validateSetScores, validateSetIndexAgainstFixed, isUserGameAdminOrOwner, isLastSet, validateTieBreak, canShowTournamentTableView } from '@/utils/gameResults';
+import { validateSetIndex, isUserGameAdminOrOwner, canShowTournamentTableView } from '@/utils/gameResults';
+import {
+  getRules,
+  isLegalSetScore,
+  validationMessage,
+  shouldAppendSetAfterUpdate,
+  trimTrailingEmptyAfterDecision,
+  computeMatchWinner,
+  isClassicRules,
+} from '@/utils/scoring';
+import { ScoringRulebookBanner } from '@/components/gameResults/scoring';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { userIsPlayingInGameOrParent } from '@/utils/gameParticipationState';
 import { 
@@ -350,27 +360,10 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
     const currentState = GameResultsEngine.getState();
     const currentGameState = currentState.game;
-    const currentRounds = rounds;
-
-    const scoreError = validateSetScores(teamAScore, teamBScore, currentGameState);
-    if (scoreError) {
-      console.error(scoreError);
-      if (scoreError.includes('cannot exceed')) {
-        const max = scoreError.match(/\d+/)?.[0];
-        if (scoreError.includes('Total score')) {
-          toast.error(t('errors.totalScoreExceedsMax', { max }) || scoreError);
-        } else {
-          toast.error(t('errors.scoreExceedsMax', { max }) || scoreError);
-        }
-      } else {
-        toast.error(t('errors.invalidScores') || scoreError);
-      }
-      return;
-    }
+    const rules = getRules(currentGameState);
 
     try {
-      const round = currentRounds.find(r => r.id === roundId);
-      
+      const round = rounds.find(r => r.id === roundId);
       if (!round) {
         console.error('Round not found:', roundId);
         toast.error(t('errors.roundNotFound') || 'Round not found');
@@ -384,71 +377,50 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         return;
       }
 
-      const fixedNumberOfSets = currentGameState?.fixedNumberOfSets || 0;
-      
-      const indexError = validateSetIndexAgainstFixed(setIndex, fixedNumberOfSets);
-      if (indexError) {
-        toast.error(t('errors.setIndexExceedsMax', { max: fixedNumberOfSets > 0 ? fixedNumberOfSets - 1 : 0 }) || indexError);
+      const workingSets = [...match.sets];
+      const cap = rules.fixedNumberOfSets > 0 ? rules.fixedNumberOfSets : 99;
+      while (workingSets.length <= setIndex && workingSets.length < cap) {
+        workingSets.push({ teamA: 0, teamB: 0, isTieBreak: false });
+      }
+      if (setIndex >= workingSets.length) {
+        toast.error(t('errors.setIndexExceedsMax', { max: workingSets.length - 1 }) || 'Invalid set index');
         return;
       }
 
-      const newSets = [...match.sets];
-      
-      if (fixedNumberOfSets > 0) {
-        while (newSets.length < fixedNumberOfSets && newSets.length <= setIndex) {
-          newSets.push({ teamA: 0, teamB: 0, isTieBreak: false });
-        }
-        if (newSets.length > fixedNumberOfSets) {
-          newSets.splice(fixedNumberOfSets);
-        }
-      } else {
-        while (newSets.length <= setIndex) {
-          newSets.push({ teamA: 0, teamB: 0, isTieBreak: false });
-        }
-      }
-      
-      const setBeingUpdated = { teamA: teamAScore, teamB: teamBScore, isTieBreak: isTieBreak || false };
-      const lastSetCheck = isLastSet(setIndex, newSets, fixedNumberOfSets, setBeingUpdated);
-      
-      // Validate that tiebreak sets cannot have equal scores
-      if (isTieBreak && teamAScore === teamBScore && (teamAScore > 0 || teamBScore > 0)) {
-        toast.error('TieBreak sets cannot have equal scores');
+      const validation = isLegalSetScore(teamAScore, teamBScore, rules, setIndex, workingSets, isTieBreak);
+      if (!validation.ok && validation.reason) {
+        toast.error(validationMessage(t, validation.reason, validation.detail));
         return;
       }
-      
-      const tieBreakError = validateTieBreak(
-        setIndex,
-        newSets,
-        fixedNumberOfSets,
-        isTieBreak || false,
-        currentGameState?.ballsInGames || false,
-        setBeingUpdated
-      );
 
-      if (tieBreakError) {
-        console.error('TieBreak validation error:', tieBreakError);
-        toast.error(tieBreakError);
-        return;
-      }
-      
-      const finalIsTieBreak = isTieBreak && lastSetCheck ? true : false;
-      
-      newSets[setIndex] = { teamA: teamAScore, teamB: teamBScore, isTieBreak: finalIsTieBreak };
-      
-      for (let i = 0; i < newSets.length; i++) {
-        if (i !== setIndex && newSets[i].isTieBreak) {
-          newSets[i] = { ...newSets[i], isTieBreak: false };
+      const kind = validation.kind;
+      const finalIsTieBreak = kind === 'TIEBREAK_GAME' || kind === 'SUPER_TIEBREAK';
+
+      workingSets[setIndex] = { teamA: teamAScore, teamB: teamBScore, isTieBreak: finalIsTieBreak };
+
+      if (isClassicRules(rules) && rules.superTieBreakReplacesDeciderAtIndex === null) {
+        for (let i = 0; i < workingSets.length; i++) {
+          if (i !== setIndex && workingSets[i].isTieBreak) {
+            workingSets[i] = { ...workingSets[i], isTieBreak: false };
+          }
         }
       }
-      
-      if (fixedNumberOfSets === 0 && setIndex === newSets.length - 1 && (teamAScore > 0 || teamBScore > 0) && !finalIsTieBreak) {
-        newSets.push({ teamA: 0, teamB: 0, isTieBreak: false });
+
+      let nextSets = workingSets;
+      const appended = shouldAppendSetAfterUpdate(workingSets, rules);
+      if (appended) {
+        nextSets = [...workingSets, appended];
       }
-      
+
+      const decidedWinner = computeMatchWinner(nextSets, rules);
+      if (decidedWinner !== null) {
+        nextSets = trimTrailingEmptyAfterDecision(nextSets, rules);
+      }
+
       await engine.updateMatch(roundId, matchId, {
         teamA: match.teamA,
         teamB: match.teamB,
-        sets: newSets,
+        sets: nextSets,
         courtId: match.courtId,
       });
     } catch (error: any) {
@@ -483,12 +455,12 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         return;
       }
 
-      const fixedNumberOfSets = currentGameState?.fixedNumberOfSets || 0;
-      if (fixedNumberOfSets > 0) {
+      const rules = getRules(currentGameState);
+      if (rules.fixedNumberOfSets > 0 && !rules.allowRemoveSet) {
         toast.error(t('errors.cannotRemoveLastSet') || 'Cannot remove sets when fixed number of sets is set');
         return;
       }
-      
+
       if (match.sets.length <= 1) {
         toast.error(t('errors.cannotRemoveLastSet') || 'Cannot remove the last set');
         return;
@@ -892,6 +864,9 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
             onClick={handleContainerClick}
           >
             <div className="space-y-1 pt-0 pb-2">
+              {canEdit && isEditingResults && !isSendingToTelegram && currentGame?.scoringPreset && (
+                <ScoringRulebookBanner game={currentGame} />
+              )}
               {rounds.map((round, index) => (
                 <RoundCard
                   key={round.id}
@@ -949,6 +924,9 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
                   onCourtClick={(matchId) => handleCourtClick(round.id, matchId)}
                   fixedNumberOfSets={currentGame?.fixedNumberOfSets}
                   prohibitMatchesEditing={currentGame?.prohibitMatchesEditing}
+                  game={currentGame}
+                  gameId={currentGame?.id}
+                  onMatchTimerTransition={(rId, mId, action) => engine.transitionMatchTimer(rId, mId, action)}
                 />
               ))}
               

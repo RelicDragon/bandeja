@@ -41,7 +41,7 @@ export const deleteGameTeams = async (req: AuthRequest, res: Response, next: Nex
 
     res.status(200).json({
       success: true,
-      message: 'Fixed teams deleted successfully',
+      message: 'Fixed pairs deleted successfully',
     });
   } catch (error) {
     next(error);

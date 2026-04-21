@@ -1,0 +1,16 @@
+{
+  "conflicts": {
+    "title": "Zjištěn konflikt",
+    "subtitle": "Změny provedl jiný uživatel",
+    "description": "Výsledky zápasu upravil jiný uživatel během vašich změn. Zvolte, jak konflikt vyřešit.",
+    "conflictCount": "Zjištěno {{count}} konfliktů",
+    "yourChanges": "Vaše změny",
+    "serverChanges": "Změny na serveru",
+    "acceptServer": "Použít verzi ze serveru",
+    "forceClient": "Použít mé změny",
+    "warning": "Upozornění",
+    "warningMessage": "Tuto akci nelze vrátit. Ujistěte se, které změny zachováte.",
+    "serverAccepted": "Změny ze serveru byly přijaty",
+    "clientForced": "Vaše změny byly aplikovány"
+  }
+}

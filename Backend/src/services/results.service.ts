@@ -1,4 +1,6 @@
 import prisma from '../config/database';
+import { cancelAllMatchTimersForGame } from './results/matchTimer.service';
+import { matchTimerCoordinator } from './results/matchTimerCoordinator';
 import { ApiError } from '../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
@@ -450,6 +452,8 @@ export async function syncResults(gameId: string, rounds: any[]) {
     }
   }
 
+  await cancelAllMatchTimersForGame(gameId);
+
   await prisma.$transaction(async (tx) => {
     await tx.roundOutcome.deleteMany({
       where: {
@@ -725,6 +729,8 @@ export async function deleteMatch(gameId: string, matchId: string) {
   if (match.round.gameId !== gameId) {
     throw new ApiError(403, 'Match does not belong to this game');
   }
+
+  matchTimerCoordinator.cancel(matchId);
 
   await prisma.$transaction(async (tx) => {
     const deletedMatchNumber = match.matchNumber;

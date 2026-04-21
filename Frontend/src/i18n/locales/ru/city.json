@@ -1,0 +1,24 @@
+{
+  "city": {
+    "clubsCount_zero": "Нет клубов",
+    "clubsCount_one": "1 клуб",
+    "clubsCount_few": "{{count}} клуба",
+    "clubsCount_many": "{{count}} клубов",
+    "clubsCount_other": "{{count}} клубов",
+    "cities": "Города",
+    "clubs": "Клубы",
+    "searchCountries": "Поиск стран",
+    "searchCities": "Поиск города, региона...",
+    "searchClubs": "Поиск клубов...",
+    "searchCountriesAndCities": "Поиск стран и городов",
+    "searchCountriesAndClubs": "Поиск стран и клубов",
+    "map": "Карта",
+    "list": "Список",
+    "selectCity": "Выбрать",
+    "selectCityName": "Выбрать {{name}}",
+    "whereAmI": "Где я?",
+    "nearestToYou": "Ближайший к вам",
+    "yourLocation": "Ваше местоположение",
+    "approximateLocation": "Приблизительное местоположение"
+  }
+}

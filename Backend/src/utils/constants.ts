@@ -174,6 +174,8 @@ export const USER_SELECT_FIELDS = {
   trainerRating: true,
   trainerReviewCount: true,
   reliability: true,
+  weeklyAvailability: true,
+  availabilityBucketBoundaries: true,
 } as const;
 
 /** Public-safe fields for GET /users/:userId/stats (no phone, email, wallet, notification prefs, etc.) */
@@ -207,6 +209,7 @@ export const PROFILE_SELECT_FIELDS = {
   welcomeScreenPassed: true,
   isAdmin: true,
   canCreateTournament: true,
+  maxParticipantsInGame: true,
   canCreateLeague: true,
   preferredHandLeft: true,
   preferredHandRight: true,

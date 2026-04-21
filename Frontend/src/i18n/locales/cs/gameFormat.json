@@ -1,0 +1,225 @@
+{
+  "gameFormat": {
+    "title": "Formát hry",
+    "trainingTitle": "Trénink",
+    "recommended": "Doporučeno",
+    "popular": "Populární",
+    "popularFormats": "Populární formáty",
+    "moreFormats": "Další formáty",
+    "moreOptions": "Více možností",
+    "lessOptions": "Méně možností",
+    "minPlayers_one": "{{count}}+ hráč",
+    "minPlayers_few": "{{count}}+ hráči",
+    "minPlayers_other": "{{count}}+ hráčů",
+    "minCourts_one": "{{count}}+ kurt",
+    "minCourts_few": "{{count}}+ kurty",
+    "minCourts_other": "{{count}}+ kurtů",
+    "stepScoringModeHint": "Jak chcete počítat body v každém zápase?",
+    "stepSetStructureHint": "Vyberte strukturu setů pro každý zápas.",
+    "stepPointsTotalHint": "Kolik bodů se hraje v jednom zápase?",
+    "stepGenerationHint": "Jak se určují dvojice v každém kole?",
+    "stepRankingHint": "Nastavte, jak se určuje celkový vítěz.",
+    "standingPointsHint": "Body za výsledek zápasu v tabulce (nejsou to body hrané v zápase).",
+    "classicWithRotationWarning": "Klasické skóre (hry a sety) s rotačními formáty funguje, ale kola trvají déle než bodové skóre.",
+    "steps": {
+      "scoringMode": "Skóre",
+      "setStructure": "Sety",
+      "pointsTotal": "Body",
+      "generation": "Dvojice",
+      "ranking": "Hodnocení"
+    },
+    "scoringMode": {
+      "CLASSIC": {
+        "title": "Hry / Sety",
+        "subtitle": "Tenisové bodování (15/30/40…), pak hry a sety — klasický padel.",
+        "hint": "např. 15 / 30 / 40 v gamu → skóre setu 6–4"
+      },
+      "POINTS": {
+        "title": "Jednoduché body",
+        "subtitle": "Počítejte body přímo do cílového součtu.",
+        "hint": "např. 15–7, 9–12 — přímo součty bodů (ne hry 15/30/40)"
+      }
+    },
+    "generation": {
+      "Handmade": {
+        "title": "Ručně",
+        "subtitle": "Prázdné zápasy — hráče přiřadíte v každém kole"
+      },
+      "Automatic": {
+        "title": "Automaticky",
+        "subtitle": {
+          "two": "Jeden zápas 1v1 v každém kole mezi dvěma hráči.",
+          "four": "Tři zápasy 2v2 v každém kole — každé možné spárování jednou.",
+          "fourFixedTeams": "Jeden zápas 2v2 v každém kole mezi dvěma pevnými páry.",
+          "fallback": "Jeden zápas na kolo se 2 hráči, nebo všechna spárování se 4."
+        }
+      },
+      "Fixed": {
+        "title": "Pevný",
+        "subtitle": "Další kola opakují rozvrh z prvního kola"
+      },
+      "Random": {
+        "title": "Americano",
+        "subtitle": "Náhodní spoluhráči každé kolo"
+      },
+      "Rating": {
+        "title": "Mexicano",
+        "subtitle": "Dvojice podle průběžného pořadí"
+      },
+      "RoundRobin": {
+        "title": "Round Robin",
+        "subtitle": "Každý hraje s každým"
+      },
+      "WinnersCourt": {
+        "title": "King of Court",
+        "subtitle": "Vítězové postupují, poražení rotují"
+      },
+      "Escalera": {
+        "title": "Žebříček",
+        "subtitle": "Poziční žebříček — vítězové postupují"
+      }
+    },
+    "generationHint": {
+      "Handmade": "Žádné přednastavené sestavy — hráče přetahujete do zápasů sami",
+      "Automatic": {
+        "two": "V každém kole jeden vzájemný zápas.",
+        "four": "Tři zápasy na kolo tak, aby se každá dvojice utkala s každou jednou.",
+        "fourFixedTeams": "Jeden zápas na kolo mezi vašimi dvěma uzamčenými páry.",
+        "fallback": "Nastavte max. 2 nebo 4 hráče pro přesný rozvrh."
+      },
+      "Fixed": "Po nastavení prvního kola budou další kola kopií prvního.",
+      "Random": "",
+      "Rating": "",
+      "RoundRobin": "",
+      "WinnersCourt": "Vyžaduje alespoň 2 kurty",
+      "Escalera": "Vyžaduje alespoň 2 kurty"
+    },
+    "formatDescription": {
+      "CLASSIC": "Jeden zápas, pevné páry",
+      "AMERICANO": "Náhodní spoluhráči v každém kole",
+      "MEXICANO": "Dvojice podle průběžného pořadí",
+      "ROUND_ROBIN": "Každý hraje s každým",
+      "WINNER_COURT": "Vítězové postupují na vyšší kurt",
+      "LADDER": "Postupujte v žebříčku kurtů",
+      "CUSTOM": "Plná ruční kontrola"
+    },
+    "formatHint": {
+      "CLASSIC": "Klasický padelový zápas — 2 na 2.",
+      "AMERICANO": "Turnaj s rotací a náhodnými dvojicemi v každém kole.",
+      "MEXICANO": "Dvojice se tvoří podle aktuálního pořadí.",
+      "ROUND_ROBIN": "Každá dvojice hraje proti všem ostatním.",
+      "WINNER_COURT": "Vítězové postupují na vyšší kurt, poražení sestupují.",
+      "LADDER": "Hráči seřazeni dle úrovně; vítězové postupují, poražení sestupují.",
+      "CUSTOM": "Navrhněte si vlastní pravidla od nuly."
+    },
+    "formatDetail": {
+      "CLASSIC": "Jeden zápas mezi dvěma pevnými páry. Ideální pro klasický padel 2 na 2 s přáteli.",
+      "AMERICANO": "Společenský formát — v každém kole se dvojice tvoří náhodně, takže si každý zahraje se všemi i proti všem. Individuální body se sčítají.",
+      "MEXICANO": "První kolo je náhodné; další dvojice se tvoří podle průběžného pořadí (#1 s #3 vs #2 s #4). Silní hrají se silnými — skvělé pro soutěživé sezení.",
+      "ROUND_ROBIN": "Každá dvojice hraje proti všem. Nejspravedlivější způsob, jak určit vítěze, pokud máte čas.",
+      "WINNER_COURT": "Král kurtu: vítězové postupují, poražení sestupují. Dvojice se v každém kole mění. Potřeba alespoň dva kurty.",
+      "LADDER": "Escalera: hráči jsou rozmístěni podle úrovně. Vítězové jdou na vyšší kurt, poražení na nižší. V každém kole vznikají nové dvojice — ideální pro smíšené skupiny.",
+      "CUSTOM": "Začněte na čisté ploše a nastavte každé pravidlo v pokročilých možnostech."
+    },
+    "scoring": {
+      "CLASSIC_BEST_OF_3": {
+        "title": "Na 2 vítězné sety",
+        "subtitle": "Vítězem je kdo první vyhraje 2 sety",
+        "hint": "Tenisové sety s hrami"
+      },
+      "CLASSIC_BEST_OF_5": {
+        "title": "Na 3 vítězné sety",
+        "subtitle": "Vítězem je kdo první vyhraje 3 sety",
+        "hint": "Dlouhý formát, ideální pro finále"
+      },
+      "CLASSIC_PRO_SET": {
+        "title": "Pro set",
+        "subtitle": "Jeden dlouhý set rozhoduje zápas",
+        "hint": "Jeden set s hrami"
+      },
+      "CLASSIC_SHORT_SET": {
+        "title": "Krátké sety",
+        "subtitle": "Sety do 4 her, na 2 vítězné",
+        "hint": "Rychlejší klasický formát"
+      },
+      "CLASSIC_SUPER_TIEBREAK": {
+        "title": "Super tiebreak",
+        "subtitle": "2 sety + super tiebreak při 1-1",
+        "hint": "Krátký zápas v klasickém stylu"
+      },
+      "CLASSIC_TIMED": {
+        "title": "Hry/sety · na čas",
+        "subtitle": "Jeden set s hrami a 15/30/40…; zápas končí po uplynutí času",
+        "hint": "Rotace typu Americano může mít v každém zápase tenisové body"
+      },
+      "POINTS_16": {
+        "title": "16 bodů",
+        "subtitle": "Vítězí tým, který jako první získá 16",
+        "hint": "Rychlé zápasy"
+      },
+      "POINTS_21": {
+        "title": "21 bodů",
+        "subtitle": "Vítězí tým, který jako první získá 21",
+        "hint": "Standardní Americano"
+      },
+      "POINTS_24": {
+        "title": "24 bodů",
+        "subtitle": "Vítězí tým, který jako první získá 24",
+        "hint": "Vyvážené Americano"
+      },
+      "POINTS_32": {
+        "title": "32 bodů",
+        "subtitle": "Vítězí tým, který jako první získá 32",
+        "hint": "Delší kola"
+      },
+      "TIMED": {
+        "title": "Na čas",
+        "subtitle": "Hrajte, dokud běží čas",
+        "hint": "Bez limitu bodů"
+      },
+      "CUSTOM": {
+        "title": "Vlastní",
+        "subtitle": "Nastavte každé pravidlo",
+        "hint": "Použijte pokročilé možnosti"
+      }
+    },
+    "scoringShort": {
+      "CLASSIC_BEST_OF_3": "Na 2 sety",
+      "CLASSIC_BEST_OF_5": "Na 3 sety",
+      "CLASSIC_PRO_SET": "Pro set",
+      "CLASSIC_SHORT_SET": "Krátké sety",
+      "CLASSIC_SUPER_TIEBREAK": "Super tiebreak",
+      "CLASSIC_TIMED": "Hry/sety · čas",
+      "POINTS_16": "Do 16",
+      "POINTS_21": "Do 21",
+      "POINTS_24": "Do 24",
+      "POINTS_32": "Do 32",
+      "TIMED": "Na čas",
+      "CUSTOM": "Vlastní"
+    },
+    "goldenPointShort": "Zlatý míč",
+    "goldenPoint": {
+      "title": "Zlatý míč",
+      "titleAdvantage": "Shoda a výhoda",
+      "description": "Při shodě (40:40) se hraje jeden rozhodující míč místo hry na výhodu.",
+      "descriptionOff": "Při shodě (40:40) platí klasické bodování: hráč s výhodou musí dalším míčem gem uzavřít; když ho prohraje, je znovu shoda—dokud jeden z hráčů nevyhraje o dva míče po sobě."
+    },
+    "timedMatch": {
+      "title": "Zápas na čas",
+      "description": "Hrajte do konce časovače. Vítěz má nejvíce bodů.",
+      "descriptionClassic": "Jeden set s tenisovým skóre (hry, 15/30/40…). Zápas končí po uplynutí času.",
+      "durationTitle": "Čas na zápas",
+      "customDuration": "Vlastní (1–60 min)",
+      "minutesLabel": "{{minutes}} min",
+      "presetMinutes": "{{minutes}} min"
+    },
+    "customPoints": {
+      "label": "Vlastní počet",
+      "placeholder": "např. 27",
+      "short": "Do {{count}}"
+    },
+    "points": {
+      "title": "Body za výsledek"
+    }
+  }
+}

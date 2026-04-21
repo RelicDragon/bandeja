@@ -1,0 +1,13 @@
+{
+  "calendar": {
+    "days": {
+      "su": "Ne",
+      "mo": "Po",
+      "tu": "Út",
+      "we": "St",
+      "th": "Čt",
+      "fr": "Pá",
+      "sa": "So"
+    }
+  }
+}

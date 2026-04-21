@@ -47,12 +47,15 @@ model User {
   preferredCourtSideRight    Boolean              @default(false)
   verbalStatus               String?              @db.VarChar(32)
   bio                        String?              @db.VarChar(128)
+  weeklyAvailability             Json?
+  availabilityBucketBoundaries   Json?
   createdAt                  DateTime             @default(now())
   updatedAt                  DateTime             @updatedAt
   isAdmin                    Boolean              @default(false)
   isDeveloper                Boolean              @default(false)
   isTrainer                  Boolean              @default(false)
   canCreateTournament        Boolean              @default(false)
+  maxParticipantsInGame      Int                  @default(12)
   canCreateLeague            Boolean              @default(false)
   isPremium                  Boolean              @default(false)
   gender                     Gender               @default(PREFER_NOT_TO_SAY)
@@ -306,6 +309,8 @@ model Game {
   resultsMeta            Json?
   fixedNumberOfSets      Int                 @default(0)
   maxTotalPointsPerSet   Int                 @default(0)
+  /// Per-match time cap in minutes when scoringPreset is TIMED or CLASSIC_TIMED; otherwise 0.
+  matchTimedCapMinutes   Int                 @default(0)
   maxPointsPerTeam       Int                 @default(0)
   winnerOfGame           WinnerOfGame        @default(BY_MATCHES_WON)
   winnerOfMatch          WinnerOfMatch       @default(BY_SCORES)
@@ -315,6 +320,9 @@ model Game {
   pointsPerLoose         Int                 @default(0)
   pointsPerTie           Int                 @default(0)
   ballsInGames           Boolean             @default(false)
+  scoringPreset          ScoringPreset?
+  scoringMode            String?
+  hasGoldenPoint         Boolean             @default(false)
   mediaUrls              String[]
   photosCount            Int                 @default(0)
   mainPhotoId            String?
@@ -517,6 +525,14 @@ model Match {
   winnerId    String?
   courtId     String?
   metadata    Json?
+  timerStatus            MatchTimerStatus @default(IDLE)
+  timerStartedAt         DateTime?
+  timerPausedAt          DateTime?
+  timerElapsedMs         Int              @default(0)
+  timerCapMinutes        Int?
+  timerExpiryNotifiedAt  DateTime?
+  timerUpdatedBy         String?
+  timerUpdatedAt         DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   round       Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
@@ -529,6 +545,14 @@ model Match {
   @@index([roundId])
   @@index([winnerId])
   @@index([courtId])
+  @@index([timerStatus])
+}
+
+enum MatchTimerStatus {
+  IDLE
+  RUNNING
+  PAUSED
+  STOPPED
 }
 
 model Team {
@@ -1064,6 +1088,7 @@ enum GameType {
   MEXICANO
   ROUND_ROBIN
   WINNER_COURT
+  LADDER
   CUSTOM
 }
 
@@ -1453,12 +1478,28 @@ enum WinnerOfMatch {
 
 enum MatchGenerationType {
   HANDMADE
+  AUTOMATIC
   FIXED
   RANDOM
   ROUND_ROBIN
   ESCALERA
   RATING
   WINNERS_COURT
+}
+
+enum ScoringPreset {
+  CLASSIC_BEST_OF_3
+  CLASSIC_BEST_OF_5
+  CLASSIC_PRO_SET
+  CLASSIC_SHORT_SET
+  CLASSIC_SUPER_TIEBREAK
+  CLASSIC_TIMED
+  POINTS_16
+  POINTS_21
+  POINTS_24
+  POINTS_32
+  TIMED
+  CUSTOM
 }
 
 enum BetType {

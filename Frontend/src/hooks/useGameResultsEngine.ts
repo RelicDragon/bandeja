@@ -24,6 +24,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
   const serverProblem = useGameResultsStore((state) => state.serverProblem);
 
   const lastGameResultsUpdated = useSocketEventsStore((state) => state.lastGameResultsUpdated);
+  const lastMatchTimerUpdated = useSocketEventsStore((state) => state.lastMatchTimerUpdated);
 
   useEffect(() => {
     if (!gameId) return;
@@ -62,6 +63,15 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     });
   }, [lastGameResultsUpdated, gameId, userId, t]);
 
+  useEffect(() => {
+    if (!lastMatchTimerUpdated || lastMatchTimerUpdated.gameId !== gameId) return;
+    GameResultsEngine.applyRemoteMatchTimerSnapshot(
+      lastMatchTimerUpdated.gameId,
+      lastMatchTimerUpdated.matchId,
+      lastMatchTimerUpdated.snapshot
+    );
+  }, [lastMatchTimerUpdated, gameId]);
+
   const addRound = useCallback(() => GameResultsEngine.addRound(), []);
   const removeRound = useCallback((roundId: string) => GameResultsEngine.removeRound(roundId, t), [t]);
   const addMatch = useCallback((roundId: string, matchId?: string) => GameResultsEngine.addMatch(roundId, matchId), []);
@@ -82,6 +92,11 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
   const initializeDefaultRound = useCallback(() => GameResultsEngine.initializeDefaultRound(), []);
   const resetGame = useCallback(() => GameResultsEngine.resetGame(), []);
   const updateGame = useCallback((game: any) => GameResultsEngine.updateGame(game), []);
+  const transitionMatchTimer = useCallback(
+    (roundId: string, matchId: string, action: import('@/utils/matchTimer').MatchTimerAction) =>
+      GameResultsEngine.transitionMatchTimer(roundId, matchId, action),
+    []
+  );
 
   return useMemo(() => ({
     game,
@@ -111,6 +126,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     initializeDefaultRound,
     resetGame,
     updateGame,
+    transitionMatchTimer,
   }), [
     game,
     rounds,
@@ -139,6 +155,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     initializeDefaultRound,
     resetGame,
     updateGame,
+    transitionMatchTimer,
   ]);
 }
 

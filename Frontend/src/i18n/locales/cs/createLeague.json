@@ -1,0 +1,25 @@
+{
+  "createLeague": {
+    "name": "Název ligy",
+    "namePlaceholder": "Zadejte název ligy",
+    "description": "Popis",
+    "descriptionPlaceholder": "Zadejte popis ligy (volitelné)",
+    "location": "Místo",
+    "selectCity": "Vybrat město",
+    "noCitiesAvailable": "Žádná města k dispozici",
+    "noCity": "Žádné město",
+    "season": "Sezóna",
+    "seasonAvatar": "Avatar sezóny",
+    "seasonName": "Název sezóny",
+    "seasonNamePlaceholder": "Zadejte název sezóny",
+    "playerLevel": "Úroveň hráče",
+    "maxParticipants": "Max. účastníků",
+    "maxParticipantsPlaceholder": "Zadejte max. účastníků (4–999)",
+    "startDate": "Datum začátku",
+    "gameSetupSeason": "Nastavení zápasu (sezóna)",
+    "gameSetupPlayoff": "Nastavení zápasu (playoff)",
+    "editGameSetup": "Upravit nastavení zápasu",
+    "configureGameSetup": "Nastavit zápas",
+    "createButton": "Vytvořit ligu"
+  }
+}

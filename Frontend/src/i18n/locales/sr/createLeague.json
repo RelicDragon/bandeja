@@ -1,0 +1,25 @@
+{
+  "createLeague": {
+    "name": "Име Лиге",
+    "namePlaceholder": "Унесите име лиге",
+    "description": "Опис",
+    "descriptionPlaceholder": "Унесите опис лиге (опционално)",
+    "location": "Локација",
+    "selectCity": "Изаберите Град",
+    "noCitiesAvailable": "Нема доступних градова",
+    "noCity": "Без Града",
+    "season": "Сезона",
+    "seasonAvatar": "Аватар сезоне",
+    "seasonName": "Име Сезоне",
+    "seasonNamePlaceholder": "Унесите име сезоне",
+    "playerLevel": "Ниво Играча",
+    "maxParticipants": "Максимум Учесника",
+    "maxParticipantsPlaceholder": "Унесите максимум учесника (4-999)",
+    "startDate": "Датум Почетка",
+    "gameSetupSeason": "Подешавање Игре (Сезона)",
+    "gameSetupPlayoff": "Подешавање Игре (Плеј-оф)",
+    "editGameSetup": "Измени Подешавање Игре",
+    "configureGameSetup": "Подеси Подешавање Игре",
+    "createButton": "Креирај Лигу"
+  }
+}

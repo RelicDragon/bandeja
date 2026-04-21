@@ -1,10 +1,10 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import en from './locales/en.json';
-import ru from './locales/ru.json';
-import sr from './locales/sr.json';
-import es from './locales/es.json';
-import cs from './locales/cs.json';
+import en from './locales/en';
+import ru from './locales/ru';
+import sr from './locales/sr';
+import es from './locales/es';
+import cs from './locales/cs';
 import { extractLanguageCode } from '@/utils/displayPreferences';
 
 const getSystemLanguage = () => {

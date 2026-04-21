@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, PlayerAvatar } from '@/components';
 import { BasicUser } from '@/types';
 import { EntityType } from '@/types';
+import { gameOrLeagueParticipantOptions, tournamentParticipantOptions } from '@/utils/userMaxParticipantsInGame';
 
 interface ParticipantsSectionProps {
   participants: Array<string | null>;
@@ -38,6 +39,8 @@ export const ParticipantsSection = ({
   onToggleCreatorNonPlaying,
 }: ParticipantsSectionProps) => {
   const { t } = useTranslation();
+  const tournamentSlots = tournamentParticipantOptions(user);
+  const gameLeagueSlots = gameOrLeagueParticipantOptions(user);
 
   const renderParticipants = () => {
     const result = [];
@@ -115,7 +118,7 @@ export const ParticipantsSection = ({
             </label>
             <div className={`grid gap-2 ${entityType === 'TOURNAMENT' ? 'grid-cols-7' : 'grid-cols-6'}`}>
               {entityType === 'TOURNAMENT' ? (
-                Array.from({ length: 13 }, (_, i) => 8 + i * 2).map((num) => (
+                tournamentSlots.map((num) => (
                   <button
                     key={num}
                     onClick={() => onMaxParticipantsChange(num)}
@@ -129,7 +132,7 @@ export const ParticipantsSection = ({
                   </button>
                 ))
               ) : (
-                [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
+                gameLeagueSlots.map((num) => (
                   <button
                     key={num}
                     onClick={() => onMaxParticipantsChange(num)}

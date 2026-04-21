@@ -1,8 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { ToggleSwitch } from '../ToggleSwitch';
-import { Select } from '../Select';
 import { Divider } from '../Divider';
-import { EntityType, GenderTeam, GameType } from '@/types';
+import { EntityType } from '@/types';
 import { HelpCircle } from 'lucide-react';
 import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
 
@@ -13,10 +12,6 @@ interface GameSettingsSectionProps {
   resultsByAnyone: boolean;
   allowDirectJoin: boolean;
   afterGameGoToBar: boolean;
-  hasFixedTeams: boolean;
-  genderTeams: GenderTeam;
-  gameType: GameType;
-  maxParticipants: number;
   entityType: EntityType;
   onPublicChange: (checked: boolean) => void;
   onRatingGameChange: (checked: boolean) => void;
@@ -24,9 +19,6 @@ interface GameSettingsSectionProps {
   onResultsByAnyoneChange: (checked: boolean) => void;
   onAllowDirectJoinChange: (checked: boolean) => void;
   onAfterGameGoToBarChange: (checked: boolean) => void;
-  onHasFixedTeamsChange: (checked: boolean) => void;
-  onGenderTeamsChange: (value: GenderTeam) => void;
-  onGameTypeChange: (value: GameType) => void;
 }
 
 export const GameSettingsSection = ({
@@ -36,10 +28,6 @@ export const GameSettingsSection = ({
   resultsByAnyone,
   allowDirectJoin,
   afterGameGoToBar,
-  hasFixedTeams,
-  genderTeams,
-  gameType,
-  maxParticipants,
   entityType,
   onPublicChange,
   onRatingGameChange,
@@ -47,9 +35,6 @@ export const GameSettingsSection = ({
   onResultsByAnyoneChange,
   onAllowDirectJoinChange,
   onAfterGameGoToBarChange,
-  onHasFixedTeamsChange,
-  onGenderTeamsChange,
-  onGameTypeChange,
 }: GameSettingsSectionProps) => {
   const { t } = useTranslation();
   const { showNotes, toggleShowNotes } = useShowSettingsNotes();
@@ -75,100 +60,6 @@ export const GameSettingsSection = ({
         </button>
       </div>
       <div className="space-y-2">
-        {entityType !== 'BAR' && entityType !== 'TRAINING' && (
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.gameType')}
-              </span>
-              <div className="flex-shrink-0 w-40">
-                <Select
-                  options={
-                    entityType === 'GAME'
-                      ? [
-                          { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                          { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                          { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                          { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                        ]
-                      : [
-                          { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                          { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                          { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                          { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
-                          { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
-                          { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                        ]
-                  }
-                  value={gameType}
-                  onChange={(value) => onGameTypeChange(value as GameType)}
-                />
-              </div>
-            </div>
-            {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {t('createGame.gameTypeNote')}
-              </p>
-            )}
-          </div>
-        )}
-        {(entityType === 'GAME' || entityType === 'TOURNAMENT' || entityType === 'LEAGUE') && (
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.genderTeams.label')}
-              </span>
-              <div className="flex-shrink-0 w-32">
-                <Select
-                  options={[
-                    { value: 'ANY', label: t('createGame.genderTeams.any') },
-                    { value: 'MEN', label: t('createGame.genderTeams.men') },
-                    { value: 'WOMEN', label: t('createGame.genderTeams.women') },
-                    ...(maxParticipants >= 4 && maxParticipants % 2 === 0
-                      ? [{ value: 'MIX_PAIRS', label: t('createGame.genderTeams.mixPairs') }]
-                      : []),
-                  ]}
-                  value={genderTeams}
-                  onChange={(value) => onGenderTeamsChange(value as GenderTeam)}
-                />
-              </div>
-            </div>
-            {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {(() => {
-                  if (genderTeams === 'ANY') return t('createGame.genderTeams.note.any');
-                  if (genderTeams === 'MEN') return t('createGame.genderTeams.note.men');
-                  if (genderTeams === 'WOMEN') return t('createGame.genderTeams.note.women');
-                  if (genderTeams === 'MIX_PAIRS') return t('createGame.genderTeams.note.mixPairs');
-                  return '';
-                })()}
-              </p>
-            )}
-          </div>
-        )}
-        {maxParticipants !== 2 && entityType !== 'BAR' && entityType !== 'TRAINING' && (
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('games.fixedTeams')}
-              </span>
-              <div className="flex-shrink-0">
-                <ToggleSwitch 
-                  checked={hasFixedTeams} 
-                  onChange={onHasFixedTeamsChange}
-                  disabled={!(maxParticipants >= 4 && maxParticipants % 2 === 0)}
-                />
-              </div>
-            </div>
-            {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {hasFixedTeams 
-                  ? t('createGame.hasFixedTeams.note.true')
-                  : t('createGame.hasFixedTeams.note.false')}
-              </p>
-            )}
-          </div>
-        )}
         {entityType !== 'BAR' && entityType !== 'TRAINING' && (
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
@@ -284,4 +175,3 @@ export const GameSettingsSection = ({
     </div>
   );
 };
-

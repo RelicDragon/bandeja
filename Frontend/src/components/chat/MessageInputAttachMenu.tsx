@@ -115,7 +115,7 @@ export function MessageInputAttachMenu({
           onClick={() => setIsAttachExpanded((prev) => !prev)}
           disabled={isDisabled || inputBlocked || voiceMode}
           className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_2px_6px_rgba(0,0,0,0.16),0_6px_16px_rgba(0,0,0,0.2)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.45)]"
-          title={t('chat.attach', 'Attach')}
+          title={t('chat.attach', { defaultValue: 'Attach' })}
         >
           <Paperclip size={20} className="text-gray-700 dark:text-gray-300" />
         </button>
@@ -135,7 +135,7 @@ export function MessageInputAttachMenu({
                 onClick={() => void handleImageButtonClick()}
                 disabled={isDisabled || inputBlocked || voiceMode}
                 className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_2px_6px_rgba(0,0,0,0.16),0_6px_16px_rgba(0,0,0,0.2)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.45)] hover:scale-105"
-                title={t('chat.attachImages', 'Images')}
+                title={t('chat.attachImages', { defaultValue: 'Images' })}
               >
                 <Image size={20} className="text-gray-700 dark:text-gray-300" />
               </motion.button>

@@ -2,6 +2,7 @@ import type { BasicUser, UserTeam, UserTeamMembership } from '@/types';
 import type { UserMetadata } from '@/store/playersStore';
 import { matchesSearch } from '@/utils/transliteration';
 import type { PlayerInviteFilters } from '@/components/playerInvite/playerInviteFilters';
+import type { GameAvailabilityMatch } from '@/utils/availability/gameMatch';
 
 export type InviteListEntry =
   | { kind: 'user'; id: string; user: BasicUser }
@@ -106,6 +107,7 @@ export function filterAndSortInviteEntries(
     isFavorite: (id: string) => boolean;
     getUserMetadata: (id: string) => UserMetadata | undefined;
     showTeams: boolean;
+    getAvailabilityMatch?: (entry: InviteListEntry) => GameAvailabilityMatch;
   }
 ): InviteListEntry[] {
   let uList = users;
@@ -176,7 +178,15 @@ export function filterAndSortInviteEntries(
 
   const combined = [...userEntries, ...teamEntries];
 
+  const availabilityRank = (match: GameAvailabilityMatch): number =>
+    match === 'full' ? 0 : match === 'partial' ? 1 : 2;
+
   return combined.sort((a, b) => {
+    if (opts.getAvailabilityMatch) {
+      const aA = availabilityRank(opts.getAvailabilityMatch(a));
+      const bA = availabilityRank(opts.getAvailabilityMatch(b));
+      if (aA !== bA) return aA - bA;
+    }
     const aFav =
       a.kind === 'user' ? opts.isFavorite(a.user.id) : a.members.some((m) => opts.isFavorite(m.id));
     const bFav =
@@ -190,25 +200,6 @@ export function filterAndSortInviteEntries(
       a.kind === 'user' ? opts.getUserMetadata(a.user.id)?.gamesTogetherCount ?? 0 : teamGamesTogetherScore(a.team, opts.getUserMetadata);
     const bG =
       b.kind === 'user' ? opts.getUserMetadata(b.user.id)?.gamesTogetherCount ?? 0 : teamGamesTogetherScore(b.team, opts.getUserMetadata);
-    return bG - aG;
-  });
-}
-
-export function reorderInviteEntriesForFullListView(
-  entries: InviteListEntry[],
-  getUserMetadata: (id: string) => UserMetadata | undefined,
-  isFavorite: (id: string) => boolean
-): InviteListEntry[] {
-  return [...entries].sort((a, b) => {
-    const aI = a.kind === 'user' ? getUserMetadata(a.user.id)?.interactionCount ?? 0 : teamInteractionScore(a.team, getUserMetadata);
-    const bI = b.kind === 'user' ? getUserMetadata(b.user.id)?.interactionCount ?? 0 : teamInteractionScore(b.team, getUserMetadata);
-    if (bI !== aI) return bI - aI;
-    const aF = a.kind === 'user' ? isFavorite(a.user.id) : a.members.some((m) => isFavorite(m.id));
-    const bF = b.kind === 'user' ? isFavorite(b.user.id) : b.members.some((m) => isFavorite(m.id));
-    if (aF && !bF) return -1;
-    if (!aF && bF) return 1;
-    const aG = a.kind === 'user' ? getUserMetadata(a.user.id)?.gamesTogetherCount ?? 0 : teamGamesTogetherScore(a.team, getUserMetadata);
-    const bG = b.kind === 'user' ? getUserMetadata(b.user.id)?.gamesTogetherCount ?? 0 : teamGamesTogetherScore(b.team, getUserMetadata);
     return bG - aG;
   });
 }

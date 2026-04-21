@@ -1,0 +1,25 @@
+{
+  "createLeague": {
+    "name": "Название Лиги",
+    "namePlaceholder": "Введите название лиги",
+    "description": "Описание",
+    "descriptionPlaceholder": "Введите описание лиги (необязательно)",
+    "location": "Место",
+    "selectCity": "Выбрать Город",
+    "noCitiesAvailable": "Нет доступных городов",
+    "noCity": "Без Города",
+    "season": "Сезон",
+    "seasonAvatar": "Аватар сезона",
+    "seasonName": "Название Сезона",
+    "seasonNamePlaceholder": "Введите название сезона",
+    "playerLevel": "Уровень Игрока",
+    "maxParticipants": "Максимум Участников",
+    "maxParticipantsPlaceholder": "Введите максимум участников (4-999)",
+    "startDate": "Дата Начала",
+    "gameSetupSeason": "Настройки Игры (Сезон)",
+    "gameSetupPlayoff": "Настройки Игры (Плей-офф)",
+    "editGameSetup": "Редактировать Настройки Игры",
+    "configureGameSetup": "Настроить Настройки Игры",
+    "createButton": "Создать Лигу"
+  }
+}

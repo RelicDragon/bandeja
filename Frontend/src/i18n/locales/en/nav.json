@@ -1,0 +1,9 @@
+{
+  "nav": {
+    "home": "Home",
+    "findGames": "Find Games",
+    "myRating": "My Rating",
+    "profile": "Profile",
+    "chat": "Chat"
+  }
+}

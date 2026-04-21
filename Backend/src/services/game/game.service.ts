@@ -22,8 +22,8 @@ export class GameService {
     return GameReadinessService.updateGameReadiness(gameId);
   }
 
-  static async createGame(data: any, userId: string) {
-    return GameCreateService.createGame(data, userId);
+  static async createGame(data: any, userId: string, jwtIsAdmin: boolean = false) {
+    return GameCreateService.createGame(data, userId, jwtIsAdmin);
   }
 
   static async getGameById(id: string, userId?: string, skipRestrictions: boolean = false) {

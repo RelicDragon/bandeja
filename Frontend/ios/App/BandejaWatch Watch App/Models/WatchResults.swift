@@ -28,6 +28,11 @@ struct WatchMatch: Decodable, Identifiable, Sendable {
     let winnerId: String?
     let teams: [WatchTeam]
     let sets: [WatchSet]
+    let timerStatus: String?
+    let timerStartedAt: String?
+    let timerPausedAt: String?
+    let timerElapsedMs: Int?
+    let timerCapMinutes: Int?
 
     var sortedTeams: [WatchTeam] {
         teams.sorted { $0.teamNumber < $1.teamNumber }

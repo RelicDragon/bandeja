@@ -1,0 +1,22 @@
+{
+  "city": {
+    "clubsCount_zero": "Žádné kluby",
+    "clubsCount_one": "1 klub",
+    "clubsCount_other": "{{count}} klubů",
+    "cities": "Města",
+    "clubs": "Kluby",
+    "searchCountries": "Hledat země",
+    "searchCities": "Hledat město, region...",
+    "searchClubs": "Hledat kluby...",
+    "searchCountriesAndCities": "Hledat země a města",
+    "searchCountriesAndClubs": "Hledat země a kluby",
+    "map": "Mapa",
+    "list": "Seznam",
+    "selectCity": "Vybrat",
+    "selectCityName": "Vybrat {{name}}",
+    "whereAmI": "Kde jsem?",
+    "nearestToYou": "Nejbližší k vám",
+    "yourLocation": "Vaše poloha",
+    "approximateLocation": "Přibližná poloha"
+  }
+}

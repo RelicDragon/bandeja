@@ -1,3 +1,5 @@
+import type { MatchTimerSnapshot } from '@/utils/matchTimer';
+
 export interface SetResult {
   id?: string;
   teamA: number;
@@ -12,6 +14,7 @@ export interface Match {
   sets: SetResult[];
   winnerId?: 'teamA' | 'teamB' | null;
   courtId?: string;
+  timer?: MatchTimerSnapshot;
 }
 
 export interface Round {

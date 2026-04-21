@@ -1,12 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, ChevronUp, ChevronDown, Zap } from 'lucide-react';
 import { Button } from '@/components';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
-import { BasicUser } from '@/types';
+import { BasicUser, Game } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
-import { isLastSet, validateTieBreak } from '@/utils/gameResults';
+import {
+  getRules,
+  getKeypadOptions,
+  getSetKind,
+  isLegalSetScore,
+  validationMessage,
+  isClassicRules,
+  suggestLegalScores,
+} from '@/utils/scoring';
 
 interface HorizontalScoreEntryModalProps {
   match: Match;
@@ -17,6 +25,7 @@ interface HorizontalScoreEntryModalProps {
   maxPointsPerTeam?: number;
   fixedNumberOfSets?: number;
   ballsInGames?: boolean;
+  game?: Pick<Game, 'scoringPreset' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie'> | null;
   onSave: (matchId: string, setIndex: number, teamAScore: number, teamBScore: number, isTieBreak?: boolean) => void;
   onRemove?: (matchId: string, setIndex: number) => void;
   onClose: () => void;
@@ -33,6 +42,7 @@ export const HorizontalScoreEntryModal = ({
   maxPointsPerTeam,
   fixedNumberOfSets,
   ballsInGames = false,
+  game,
   onSave,
   onRemove,
   onClose,
@@ -40,6 +50,24 @@ export const HorizontalScoreEntryModal = ({
   isOpen,
 }: HorizontalScoreEntryModalProps) => {
   const { t } = useTranslation();
+
+  const rules = useMemo(
+    () =>
+      getRules(
+        game ?? {
+          scoringPreset: null,
+          fixedNumberOfSets: fixedNumberOfSets ?? 0,
+          maxTotalPointsPerSet: maxTotalPointsPerSet ?? 0,
+          maxPointsPerTeam: maxPointsPerTeam ?? 0,
+          winnerOfMatch: ballsInGames ? 'BY_SETS' : 'BY_SCORES',
+          ballsInGames,
+          hasGoldenPoint: false,
+          pointsPerTie: 0,
+        } as any
+      ),
+    [game, fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames]
+  );
+
   const currentSet = match.sets[setIndex] || { teamA: 0, teamB: 0, isTieBreak: false };
   const [teamAScore, setTeamAScore] = useState(currentSet.teamA);
   const [teamBScore, setTeamBScore] = useState(currentSet.teamB);
@@ -55,6 +83,31 @@ export const HorizontalScoreEntryModal = ({
     prevIsTieBreakRef.current = newIsTieBreak;
   }, [currentSet.teamA, currentSet.teamB, currentSet.isTieBreak]);
 
+  const kind = getSetKind(setIndex, match.sets, rules, { teamA: teamAScore, teamB: teamBScore, isTieBreak });
+  const keypad = getKeypadOptions(rules, setIndex, match.sets, isTieBreak);
+
+  const clampToAllowed = (value: number): number => {
+    if (keypad.values.length === 0) return value;
+    if (keypad.values.includes(value)) return value;
+    return Math.max(keypad.values[0], Math.min(keypad.values[keypad.values.length - 1], value));
+  };
+
+  const handleTeamAScoreChange = (newScore: number) => {
+    const clamped = Math.max(0, clampToAllowed(newScore));
+    setTeamAScore(clamped);
+    if (keypad.mode === 'PAIRED' && keypad.pairedTotal !== undefined) {
+      setTeamBScore(Math.max(0, keypad.pairedTotal - clamped));
+    }
+  };
+
+  const handleTeamBScoreChange = (newScore: number) => {
+    const clamped = Math.max(0, clampToAllowed(newScore));
+    setTeamBScore(clamped);
+    if (keypad.mode === 'PAIRED' && keypad.pairedTotal !== undefined) {
+      setTeamAScore(Math.max(0, keypad.pairedTotal - clamped));
+    }
+  };
+
   useEffect(() => {
     if (isTieBreak && !prevIsTieBreakRef.current && teamAScore === teamBScore && teamAScore > 0) {
       setTeamAScore(teamAScore + 1);
@@ -62,75 +115,27 @@ export const HorizontalScoreEntryModal = ({
     prevIsTieBreakRef.current = isTieBreak;
   }, [isTieBreak, teamAScore, teamBScore]);
 
-  const handleTeamAScoreChange = (newScore: number) => {
-    const minScore = 0;
-    const maxScore = maxTotalPointsPerSet && maxTotalPointsPerSet > 0 ? maxTotalPointsPerSet : 48;
-    let clampedScore = Math.max(minScore, Math.min(newScore, maxScore));
-    if (isTieBreak && clampedScore === teamBScore) {
-      if (clampedScore < maxScore) clampedScore = clampedScore + 1;
-      else if (clampedScore > 0) clampedScore = clampedScore - 1;
-      else return;
-    }
-    setTeamAScore(clampedScore);
-    if (maxTotalPointsPerSet && maxTotalPointsPerSet > 0) {
-      let newTeamBScore = Math.max(0, maxTotalPointsPerSet - clampedScore);
-      if (isTieBreak && newTeamBScore === clampedScore) {
-        if (newTeamBScore > 0) newTeamBScore = newTeamBScore - 1;
-        else {
-          setTeamAScore(clampedScore - 1);
-          return;
-        }
-      }
-      setTeamBScore(newTeamBScore);
-    }
-  };
+  const teamAPlayers = match.teamA.map(id => players.find(p => p.id === id)).filter(Boolean) as BasicUser[];
+  const teamBPlayers = match.teamB.map(id => players.find(p => p.id === id)).filter(Boolean) as BasicUser[];
 
-  const handleTeamBScoreChange = (newScore: number) => {
-    const minScore = 0;
-    const maxScore = maxTotalPointsPerSet && maxTotalPointsPerSet > 0 ? maxTotalPointsPerSet : 48;
-    let clampedScore = Math.max(minScore, Math.min(newScore, maxScore));
-    if (isTieBreak && clampedScore === teamAScore) {
-      if (clampedScore < maxScore) clampedScore = clampedScore + 1;
-      else if (clampedScore > 0) clampedScore = clampedScore - 1;
-      else return;
-    }
-    setTeamBScore(clampedScore);
-    if (maxTotalPointsPerSet && maxTotalPointsPerSet > 0) {
-      let newTeamAScore = Math.max(0, maxTotalPointsPerSet - clampedScore);
-      if (isTieBreak && newTeamAScore === clampedScore) {
-        if (newTeamAScore > 0) newTeamAScore = newTeamAScore - 1;
-        else {
-          setTeamBScore(clampedScore - 1);
-          return;
-        }
-      }
-      setTeamAScore(newTeamAScore);
-    }
-  };
+  const validation = isLegalSetScore(teamAScore, teamBScore, rules, setIndex, match.sets, isTieBreak);
+  const suggestions = !validation.ok && (teamAScore > 0 || teamBScore > 0)
+    ? suggestLegalScores(teamAScore, teamBScore, rules, setIndex, match.sets)
+    : [];
 
-  const setBeingUpdated = { teamA: teamAScore, teamB: teamBScore, isTieBreak };
-  const lastSetCheck = isLastSet(setIndex, match.sets, fixedNumberOfSets || 0, setBeingUpdated);
-  const hasExistingTieBreak = match.sets.some((set, idx) => idx !== setIndex && set.isTieBreak);
-  const isOddSetFromThird = setIndex >= 2 && (setIndex - 2) % 2 === 0;
-  const arePreviousSetsTied = () => {
-    if (setIndex < 2) return false;
-    let teamAWins = 0, teamBWins = 0;
-    for (let i = 0; i < setIndex; i++) {
-      const set = match.sets[i];
-      if (set && (set.teamA > 0 || set.teamB > 0)) {
-        if (set.teamA > set.teamB) teamAWins++;
-        else if (set.teamB > set.teamA) teamBWins++;
-      }
-    }
-    return teamAWins === teamBWins;
-  };
-  const showTieBreakToggle = isOddSetFromThird && arePreviousSetsTied() && lastSetCheck && ballsInGames && !hasExistingTieBreak;
+  const canToggleTieBreak = useMemo(() => {
+    if (!isClassicRules(rules)) return false;
+    if (rules.tieBreakGameAtGames === null) return false;
+    const hi = Math.max(teamAScore, teamBScore);
+    const lo = Math.min(teamAScore, teamBScore);
+    return hi === rules.gamesPerSet + 1 && lo === rules.tieBreakGameAtGames;
+  }, [rules, teamAScore, teamBScore]);
+
+  const showTieBreakToggle = canToggleTieBreak && kind !== 'SUPER_TIEBREAK';
 
   const handleSave = () => {
-    const finalIsTieBreak = showTieBreakToggle && lastSetCheck ? isTieBreak : false;
-    if (finalIsTieBreak && teamAScore === teamBScore) return;
-    const tieBreakError = validateTieBreak(setIndex, match.sets, fixedNumberOfSets || 0, finalIsTieBreak, ballsInGames, setBeingUpdated);
-    if (tieBreakError) return;
+    if (!validation.ok) return;
+    const finalIsTieBreak = kind === 'TIEBREAK_GAME' || kind === 'SUPER_TIEBREAK';
     onSave(match.id, setIndex, teamAScore, teamBScore, finalIsTieBreak);
     onClose();
   };
@@ -142,27 +147,17 @@ export const HorizontalScoreEntryModal = ({
     }
   };
 
-  const teamAPlayers = match.teamA.map(id => players.find(p => p.id === id)).filter(Boolean) as BasicUser[];
-  const teamBPlayers = match.teamB.map(id => players.find(p => p.id === id)).filter(Boolean) as BasicUser[];
-
-  const maxNumber = Math.min(
-    maxTotalPointsPerSet && maxTotalPointsPerSet > 0 ? maxTotalPointsPerSet : 32,
-    maxPointsPerTeam && maxPointsPerTeam > 0 ? maxPointsPerTeam : 32,
-    32
-  );
-  const numberOptions = Array.from({ length: maxNumber + 1 }, (_, i) => i).filter((number) => {
-    if (!isTieBreak) return true;
-    if (numberPickerTeam === 'teamA') return number !== teamBScore;
-    if (numberPickerTeam === 'teamB') return number !== teamAScore;
+  const numberOptions = keypad.values.filter((number) => {
+    if (keypad.mode !== 'PAIRED' && isTieBreak) {
+      if (numberPickerTeam === 'teamA') return number !== teamBScore;
+      if (numberPickerTeam === 'teamB') return number !== teamAScore;
+    }
     return true;
   });
 
   const handleNumberSelect = (number: number) => {
-    if (numberPickerTeam === 'teamA') {
-      handleTeamAScoreChange(number);
-    } else if (numberPickerTeam === 'teamB') {
-      handleTeamBScoreChange(number);
-    }
+    if (numberPickerTeam === 'teamA') handleTeamAScoreChange(number);
+    else if (numberPickerTeam === 'teamB') handleTeamBScoreChange(number);
     setNumberPickerTeam(null);
   };
 
@@ -172,17 +167,26 @@ export const HorizontalScoreEntryModal = ({
   const isTeamAWinning = teamAScore > teamBScore;
   const isTeamBWinning = teamBScore > teamAScore;
 
+  const aIncUpperBound = keypad.max;
+  const bIncUpperBound = keypad.max;
+
+  const titleSuffix = kind === 'SUPER_TIEBREAK'
+    ? ` · ${t('gameResults.superTieBreak')}`
+    : kind === 'TIEBREAK_GAME'
+      ? ` · ${t('gameResults.tieBreak')}`
+      : '';
+
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="horizontal-score-entry-modal">
       <DialogContent>
       <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-600/5 rounded-2xl sm:rounded-3xl pointer-events-none" />
-      
+
       <DialogHeader className="mb-3 sm:mb-5 md:mb-8">
         <DialogTitle>
-          {courtLabel != null && courtLabel !== '' ? courtLabel : (fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult'))}
+          {(courtLabel != null && courtLabel !== '' ? courtLabel : (rules.fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult'))) + titleSuffix}
         </DialogTitle>
       </DialogHeader>
-      
+
       <div className="relative mb-3 sm:mb-5 md:mb-8 px-3 sm:px-6 md:px-8">
         <div className={`transition-all duration-500 ${!isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
               <div className="flex flex-row items-center gap-3 sm:gap-6 md:gap-8">
@@ -190,8 +194,8 @@ export const HorizontalScoreEntryModal = ({
                   <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-primary-600/10 rounded-xl sm:rounded-2xl blur-lg sm:blur-xl" />
                     <div className={`relative flex flex-wrap justify-center gap-1.5 sm:gap-2 md:gap-3 p-2 sm:p-3 md:p-4 backdrop-blur-sm rounded-xl sm:rounded-2xl border transition-colors duration-200 ${
-                      isTeamAWinning 
-                        ? 'bg-yellow-100/90 dark:bg-yellow-900/40 border-yellow-300/50 dark:border-yellow-700/50' 
+                      isTeamAWinning
+                        ? 'bg-yellow-100/90 dark:bg-yellow-900/40 border-yellow-300/50 dark:border-yellow-700/50'
                         : 'bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50'
                     }`}>
                       {teamAPlayers.map(player => (
@@ -208,7 +212,7 @@ export const HorizontalScoreEntryModal = ({
                   <div className="flex flex-col items-center gap-1.5 sm:gap-2">
                     <button
                       onClick={() => handleTeamAScoreChange(teamAScore + 1)}
-                      disabled={!!(maxTotalPointsPerSet && maxTotalPointsPerSet > 0 && teamAScore >= maxTotalPointsPerSet)}
+                      disabled={teamAScore >= aIncUpperBound}
                       className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
                       <ChevronUp className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -245,8 +249,8 @@ export const HorizontalScoreEntryModal = ({
                   <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-primary-500/10 rounded-xl sm:rounded-2xl blur-lg sm:blur-xl" />
                     <div className={`relative flex flex-wrap justify-center gap-1.5 sm:gap-2 md:gap-3 p-2 sm:p-3 md:p-4 backdrop-blur-sm rounded-xl sm:rounded-2xl border transition-colors duration-200 ${
-                      isTeamBWinning 
-                        ? 'bg-yellow-100/90 dark:bg-yellow-900/40 border-yellow-300/50 dark:border-yellow-700/50' 
+                      isTeamBWinning
+                        ? 'bg-yellow-100/90 dark:bg-yellow-900/40 border-yellow-300/50 dark:border-yellow-700/50'
                         : 'bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50'
                     }`}>
                       {teamBPlayers.map(player => (
@@ -263,7 +267,7 @@ export const HorizontalScoreEntryModal = ({
                   <div className="flex flex-col items-center gap-1.5 sm:gap-2">
                     <button
                       onClick={() => handleTeamBScoreChange(teamBScore + 1)}
-                      disabled={!!(maxTotalPointsPerSet && maxTotalPointsPerSet > 0 && teamBScore >= maxTotalPointsPerSet)}
+                      disabled={teamBScore >= bIncUpperBound}
                       className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
                       <ChevronUp className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -289,7 +293,7 @@ export const HorizontalScoreEntryModal = ({
                 </div>
               </div>
         </div>
-        
+
         <div className={`transition-all duration-500 ${isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
               <div className="flex flex-col items-center gap-3 sm:gap-5 md:gap-8">
                 <div className="relative">
@@ -357,7 +361,33 @@ export const HorizontalScoreEntryModal = ({
         </div>
       )}
 
-      <div className="flex gap-2 sm:gap-3 pt-8 px-3 sm:px-6 md:px-8 pb-3 sm:pb-6 md:pb-8">
+      {!validation.ok && validation.reason && (teamAScore > 0 || teamBScore > 0) && (
+        <div className="px-3 sm:px-6 md:px-8 pb-2">
+          <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200">
+            {validationMessage(t, validation.reason, validation.detail)}
+            {suggestions.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {suggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      setTeamAScore(s.teamA);
+                      setTeamBScore(s.teamB);
+                      if (typeof s.isTieBreak === 'boolean') setIsTieBreak(s.isTieBreak);
+                    }}
+                    className="rounded-full bg-amber-200 px-2 py-0.5 font-mono font-semibold text-amber-900 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-100 dark:hover:bg-amber-700"
+                  >
+                    {s.teamA}-{s.teamB}{s.isTieBreak ? ' (TB)' : ''}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-2 sm:gap-3 pt-4 px-3 sm:px-6 md:px-8 pb-3 sm:pb-6 md:pb-8">
         <Button
           onClick={onClose}
           variant="outline"
@@ -376,7 +406,7 @@ export const HorizontalScoreEntryModal = ({
         )}
         <Button
           onClick={handleSave}
-          disabled={isTieBreak && teamAScore === teamBScore}
+          disabled={!validation.ok && (teamAScore > 0 || teamBScore > 0)}
           className="flex-1 h-10 sm:h-11 md:h-12 rounded-xl font-semibold bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {t('common.save')}
@@ -386,4 +416,3 @@ export const HorizontalScoreEntryModal = ({
     </Dialog>
   );
 };
-

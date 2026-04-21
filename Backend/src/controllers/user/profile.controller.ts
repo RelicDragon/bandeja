@@ -20,6 +20,8 @@ import { syncTelegramProfileFromUpdate } from '../../services/telegram/syncTeleg
 import { TRANSLATE_TO_LANGUAGE_CODES } from '../../services/chat/translation.service';
 import { CityGroupService } from '../../services/chat/cityGroup.service';
 import { resolveDisplayNameData } from '../../services/user/userDisplayName.service';
+import { validateWeeklyAvailability } from '../../utils/validators/weeklyAvailability';
+import { validateAvailabilityBucketBoundaries } from '../../utils/validators/availabilityBucketBoundaries';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
@@ -73,7 +75,15 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, showOnlineStatus, favoriteTrainerId, appIcon, verbalStatus, bio } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, showOnlineStatus, favoriteTrainerId, appIcon, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
+
+  const normalizedWeeklyAvailability =
+    weeklyAvailability === undefined ? undefined : validateWeeklyAvailability(weeklyAvailability);
+
+  const normalizedAvailabilityBucketBoundaries =
+    availabilityBucketBoundaries === undefined
+      ? undefined
+      : validateAvailabilityBucketBoundaries(availabilityBucketBoundaries);
   
   // Explicitly ignore level and socialLevel - only backend can modify these
 
@@ -225,6 +235,10 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(appIcon !== undefined && { appIcon: appIcon ?? null }),
         ...(verbalStatus !== undefined && { verbalStatus }),
         ...(bio !== undefined && { bio }),
+        ...(normalizedWeeklyAvailability !== undefined && { weeklyAvailability: normalizedWeeklyAvailability as any }),
+        ...(normalizedAvailabilityBucketBoundaries !== undefined && {
+          availabilityBucketBoundaries: normalizedAvailabilityBucketBoundaries as any,
+        }),
       },
       select: PROFILE_SELECT_FIELDS,
     });

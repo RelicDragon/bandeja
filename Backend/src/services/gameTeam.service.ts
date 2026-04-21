@@ -24,7 +24,7 @@ export class GameTeamService {
     }
 
     if (game.rounds.length > 0) {
-      throw new ApiError(400, 'Cannot set fixed teams after game has started');
+      throw new ApiError(400, 'Cannot set fixed pairs after game has started');
     }
 
     const allPlayerIds = teams.flatMap((t) => t.playerIds);
@@ -153,7 +153,7 @@ export class GameTeamService {
     }
 
     if (game.rounds.length > 0) {
-      throw new ApiError(400, 'Cannot delete fixed teams after game has started');
+      throw new ApiError(400, 'Cannot delete fixed pairs after game has started');
     }
 
     await prisma.$transaction(async (tx) => {

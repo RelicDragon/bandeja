@@ -1,0 +1,22 @@
+{
+  "city": {
+    "clubsCount_zero": "Sin clubes",
+    "clubsCount_one": "1 club",
+    "clubsCount_other": "{{count}} clubes",
+    "cities": "Ciudades",
+    "clubs": "Clubs",
+    "searchCountries": "Buscar países",
+    "searchCities": "Buscar ciudad, región...",
+    "searchClubs": "Buscar clubs...",
+    "searchCountriesAndCities": "Buscar países y ciudades",
+    "searchCountriesAndClubs": "Buscar países y clubs",
+    "map": "Mapa",
+    "list": "Lista",
+    "selectCity": "Seleccionar",
+    "selectCityName": "Seleccionar {{name}}",
+    "whereAmI": "¿Dónde estoy?",
+    "nearestToYou": "Más cercano a ti",
+    "yourLocation": "Tu ubicación",
+    "approximateLocation": "Ubicación aproximada"
+  }
+}

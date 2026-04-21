@@ -6,6 +6,15 @@ import { ResultsStorage, LocalResults } from './resultsStorage';
 import { resultsApi } from '@/api/results';
 import { gamesApi } from '@/api';
 import { isUserGameAdminOrOwner, isUserGameParticipant, validateSetScores, validateSetIndexAgainstFixed, validateTieBreak } from '@/utils/gameResults';
+import { getRules, initialSetsForRules } from '@/utils/scoring';
+import { matchTimerApi } from '@/api/matchTimer';
+import {
+  applyOptimisticTimerTransition,
+  buildSnapshotFromServerMatch,
+  isGameMatchTimerEnabled,
+  type MatchTimerAction,
+  type MatchTimerSnapshot,
+} from '@/utils/matchTimer';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 
@@ -368,10 +377,8 @@ class GameResultsEngineClass {
     if (!round) return;
 
     const newMatchId = matchId || createId();
-    const fixedNumberOfSets = state.game?.fixedNumberOfSets;
-    const initialSets = fixedNumberOfSets && fixedNumberOfSets > 0
-      ? Array.from({ length: fixedNumberOfSets }, () => ({ teamA: 0, teamB: 0, isTieBreak: false }))
-      : [{ teamA: 0, teamB: 0, isTieBreak: false }];
+    const rules = getRules(state.game);
+    const initialSets = initialSetsForRules(rules);
 
     const newMatch: Match = {
       id: newMatchId,
@@ -737,6 +744,7 @@ class GameResultsEngineClass {
               }
             }
             
+            const timer = buildSnapshotFromServerMatch(match);
             matches.push({
               id: match.id || createId(),
               teamA,
@@ -744,6 +752,7 @@ class GameResultsEngineClass {
               sets,
               winnerId: winnerTeam,
               courtId: match.courtId,
+              ...(timer ? { timer } : {}),
             });
           });
         }
@@ -756,6 +765,74 @@ class GameResultsEngineClass {
     }
     
     return { rounds };
+  }
+
+  applyRemoteMatchTimerSnapshot(gameId: string, matchId: string, snapshot: MatchTimerSnapshot): void {
+    const state = this.getState();
+    if (state.gameId !== gameId) return;
+    let found = false;
+    const newRounds = state.rounds.map((r) => ({
+      ...r,
+      matches: r.matches.map((m) => {
+        if (m.id !== matchId) return m;
+        found = true;
+        return { ...m, timer: snapshot };
+      }),
+    }));
+    if (!found) return;
+    useGameResultsStore.setState({ rounds: newRounds });
+    void this.saveLocal();
+  }
+
+  async transitionMatchTimer(roundId: string, matchId: string, action: MatchTimerAction): Promise<void> {
+    const state = this.getState();
+    if (!state.gameId || !state.userId || !state.canEdit) return;
+    const game = state.game;
+    if (!game || !isGameMatchTimerEnabled(game)) return;
+
+    const round = state.rounds.find((r) => r.id === roundId);
+    const match = round?.matches.find((m) => m.id === matchId);
+    if (!round || !match) return;
+
+    const cap = game.matchTimedCapMinutes ?? 15;
+    const prevRounds = state.rounds;
+    const optimistic = applyOptimisticTimerTransition(match.timer, action, cap, Date.now());
+    const optimisticRounds = prevRounds.map((r) =>
+      r.id !== roundId
+        ? r
+        : {
+            ...r,
+            matches: r.matches.map((m) => (m.id !== matchId ? m : { ...m, timer: optimistic })),
+          }
+    );
+    useGameResultsStore.setState({ rounds: optimisticRounds });
+    await this.saveLocal();
+
+    if (state.serverProblem) return;
+
+    try {
+      const res = await matchTimerApi.transition(state.gameId, matchId, action);
+      const snap = res.data?.snapshot;
+      if (snap) {
+        const latest = useGameResultsStore.getState().rounds;
+        const merged = latest.map((r) =>
+          r.id !== roundId
+            ? r
+            : {
+                ...r,
+                matches: r.matches.map((m) => (m.id !== matchId ? m : { ...m, timer: snap })),
+              }
+        );
+        useGameResultsStore.setState({ rounds: merged, serverProblem: false });
+        await ResultsStorage.setServerProblem(state.gameId, false);
+        await this.saveLocal();
+      }
+    } catch (e) {
+      console.error('Match timer transition failed:', e);
+      useGameResultsStore.setState({ rounds: prevRounds, serverProblem: true });
+      await ResultsStorage.setServerProblem(state.gameId, true);
+      await this.saveLocal();
+    }
   }
 
   private canUserEditResults(game: Game, userId: string): boolean {

@@ -118,7 +118,7 @@ function evaluatePredefinedCondition(
 ): BetEvaluationResult {
   const userId = resolveEntityToUserId(entityType, entityId, gameResults);
   if (entityType === 'TEAM' && !userId) {
-    return { won: false, reason: 'Fixed team not found' };
+    return { won: false, reason: 'Fixed pair not found' };
   }
   switch (condition) {
     case 'WIN_GAME':
@@ -254,7 +254,7 @@ function evaluateTakePlace(
   const fixedPlayerIds = getFixedTeamPlayerIds(entityId, gameResults);
   if (fixedPlayerIds?.length) {
     const outcome = gameResults.outcomes.find(o => fixedPlayerIds.includes(o.userId));
-    if (!outcome) return { won: false, reason: 'Fixed team not in outcomes' };
+    if (!outcome) return { won: false, reason: 'Fixed pair not in outcomes' };
     if (outcome.position != null && Number.isInteger(outcome.position)) {
       return { won: outcome.position === place };
     }

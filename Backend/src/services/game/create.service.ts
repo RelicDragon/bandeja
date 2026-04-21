@@ -7,9 +7,13 @@ import { GameReadinessService } from './readiness.service';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import notificationService from '../notification.service';
+import { goldenPointAllowedForFormat, validateScoringPreset } from '../../utils/validators/gameFormat';
+import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
+import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
+import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 
 export class GameCreateService {
-  static async createGame(data: any, userId: string) {
+  static async createGame(data: any, userId: string, jwtIsAdmin: boolean = false) {
     // Validate currency if provided
     if (data.priceCurrency && !SUPPORTED_CURRENCIES.includes(data.priceCurrency)) {
       throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
@@ -19,6 +23,19 @@ export class GameCreateService {
     let maxParticipants = entityType === EntityType.BAR ? 999 : (data.maxParticipants || 4);
     if (entityType === EntityType.GAME && maxParticipants >= 8) {
       entityType = EntityType.TOURNAMENT;
+    }
+
+    if (entityType !== EntityType.BAR) {
+      const actor = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { canCreateTournament: true, maxParticipantsInGame: true },
+      });
+      assertMaxParticipantsWithinUserCap({
+        jwtIsAdmin,
+        actor,
+        maxParticipants,
+        entityType,
+      });
     }
 
     let cityId: string | null = null;
@@ -137,6 +154,24 @@ export class GameCreateService {
       }
     }
     
+    const scoringPreset = validateScoringPreset(gameType, data.scoringPreset);
+    const winnerOfMatchCreate = data.winnerOfMatch ?? 'BY_SCORES';
+    const maxTotalPointsCreate = data.maxTotalPointsPerSet ?? 0;
+    const ballsInGames = deriveBallsInGamesFromScoring({
+      scoringPreset,
+      winnerOfMatch: winnerOfMatchCreate,
+      maxTotalPointsPerSet: maxTotalPointsCreate,
+    });
+    let matchTimedCapMinutes =
+      typeof data.matchTimedCapMinutes === 'number' && Number.isFinite(data.matchTimedCapMinutes)
+        ? Math.min(60, Math.max(0, Math.round(data.matchTimedCapMinutes)))
+        : 0;
+    if (scoringPreset === 'TIMED' || scoringPreset === 'CLASSIC_TIMED') {
+      if (matchTimedCapMinutes < 1) matchTimedCapMinutes = 15;
+    } else {
+      matchTimedCapMinutes = 0;
+    }
+
     const createdGame = await prisma.game.create({
       data: {
         entityType: entityType,
@@ -164,16 +199,25 @@ export class GameCreateService {
         hasFixedTeams: hasFixedTeams,
         genderTeams: data.genderTeams || 'ANY',
         fixedNumberOfSets: data.fixedNumberOfSets ?? 0,
-        maxTotalPointsPerSet: data.maxTotalPointsPerSet ?? 0,
+        maxTotalPointsPerSet: maxTotalPointsCreate,
+        matchTimedCapMinutes,
         maxPointsPerTeam: data.maxPointsPerTeam ?? 0,
         winnerOfGame: data.winnerOfGame ?? 'BY_MATCHES_WON',
-        winnerOfMatch: data.winnerOfMatch ?? 'BY_SCORES',
-        matchGenerationType: data.matchGenerationType ?? 'HANDMADE',
+        winnerOfMatch: winnerOfMatchCreate,
+        matchGenerationType: resolveMatchGenerationType({
+          resultsRoundGenV2: data.resultsRoundGenV2,
+          matchGenerationType: data.matchGenerationType,
+          maxParticipants,
+        }),
         prohibitMatchesEditing: data.prohibitMatchesEditing ?? false,
         pointsPerWin: data.pointsPerWin ?? 0,
         pointsPerLoose: data.pointsPerLoose ?? 0,
         pointsPerTie: data.pointsPerTie ?? 0,
-        ballsInGames: data.ballsInGames ?? false,
+        ballsInGames,
+        scoringPreset,
+        scoringMode: data.scoringMode ?? null,
+        hasGoldenPoint:
+          goldenPointAllowedForFormat(data.scoringMode ?? null, scoringPreset) && Boolean(data.hasGoldenPoint),
         priceTotal: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : priceTotal,
         priceType: priceType,
         priceCurrency: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : data.priceCurrency,

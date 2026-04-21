@@ -52,7 +52,18 @@ export class RoundGenerator {
         : [{ teamA: 0, teamB: 0, isTieBreak: false }];
 
     if (!matchGenerationType || matchGenerationType === 'HANDMADE') {
-      return this.generateHandmadeRound(initialSets);
+      return [
+        {
+          id: randomUUID(),
+          teamA: [],
+          teamB: [],
+          sets: cloneSets(initialSets),
+        },
+      ];
+    }
+
+    if (matchGenerationType === 'AUTOMATIC') {
+      return this.generateAutomaticRound(initialSets);
     }
 
     switch (matchGenerationType) {
@@ -73,7 +84,7 @@ export class RoundGenerator {
     }
   }
 
-  private generateHandmadeRound(
+  private generateAutomaticRound(
     initialSets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>
   ): GenMatch[] {
     const { game } = this.options;

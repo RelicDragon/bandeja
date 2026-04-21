@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "openSettings": "Open Settings",
+    "photos": {
+      "title": "Photo Access Required",
+      "description": "To attach photos, we need access to your photo library.",
+      "denied": "Photo access is currently denied. Please enable it in your device settings to attach photos."
+    },
+    "camera": {
+      "title": "Camera Access Required",
+      "description": "To take photos, we need access to your camera.",
+      "denied": "Camera access is currently denied. Please enable it in your device settings to take photos."
+    }
+  }
+}

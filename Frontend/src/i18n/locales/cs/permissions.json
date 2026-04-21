@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "openSettings": "Otevřít nastavení",
+    "photos": {
+      "title": "Vyžadován přístup k fotkám",
+      "description": "Pro přiložení fotek potřebujeme přístup k vaší fotogalerii.",
+      "denied": "Přístup k fotkám je odepřen. Povolte ho v nastavení zařízení."
+    },
+    "camera": {
+      "title": "Vyžadován přístup k fotoaparátu",
+      "description": "Pro pořizování fotek potřebujeme přístup k fotoaparátu.",
+      "denied": "Přístup k fotoaparátu je odepřen. Povolte ho v nastavení zařízení."
+    }
+  }
+}

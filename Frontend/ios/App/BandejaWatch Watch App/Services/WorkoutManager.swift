@@ -144,8 +144,10 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
         switch session.state {
         case .running:
             session.pause()
+            Task { await MatchTimerWorkoutBridge.notifyWorkoutPaused() }
         case .paused:
             session.resume()
+            Task { await MatchTimerWorkoutBridge.notifyWorkoutResumed() }
         default:
             break
         }
@@ -154,11 +156,13 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
     func autoPause() {
         guard let session, isActive, session.state == .running else { return }
         session.pause()
+        Task { await MatchTimerWorkoutBridge.notifyWorkoutPaused() }
     }
 
     func autoResume() {
         guard let session, isActive, session.state == .paused else { return }
         session.resume()
+        Task { await MatchTimerWorkoutBridge.notifyWorkoutResumed() }
     }
 
     /// After results are finalized on the server: save HK workout and upload summary.

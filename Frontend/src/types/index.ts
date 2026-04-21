@@ -1,5 +1,5 @@
 export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
-export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'WINNER_COURT' | 'CUSTOM';
+export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'WINNER_COURT' | 'LADDER' | 'CUSTOM';
 export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON' | 'BAR' | 'TRAINING';
 export type GenderTeam = 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
 export type ParticipantRole = 'OWNER' | 'ADMIN' | 'PARTICIPANT' | 'GUEST';
@@ -13,10 +13,34 @@ export type BugType = 'BUG' | 'CRITICAL' | 'SUGGESTION' | 'QUESTION' | 'TASK';
 export type BugPriority = -2 | -1 | 0 | 1 | 2;
 export type WinnerOfGame = 'BY_MATCHES_WON' | 'BY_POINTS' | 'BY_SCORES_DELTA' | 'PLAYOFF_FINALS';
 export type WinnerOfMatch = 'BY_SETS' | 'BY_SCORES';
-export type MatchGenerationType = 'HANDMADE' | 'FIXED' | 'RANDOM' | 'ROUND_ROBIN' | 'ESCALERA' | 'RATING' | 'WINNERS_COURT';
+export type MatchGenerationType =
+  | 'HANDMADE'
+  | 'AUTOMATIC'
+  | 'FIXED'
+  | 'RANDOM'
+  | 'ROUND_ROBIN'
+  | 'ESCALERA'
+  | 'RATING'
+  | 'WINNERS_COURT';
+export type ScoringMode = 'CLASSIC' | 'POINTS';
+export type ScoringPreset =
+  | 'CLASSIC_BEST_OF_3'
+  | 'CLASSIC_BEST_OF_5'
+  | 'CLASSIC_PRO_SET'
+  | 'CLASSIC_SHORT_SET'
+  | 'CLASSIC_SUPER_TIEBREAK'
+  | 'CLASSIC_TIMED'
+  | 'POINTS_16'
+  | 'POINTS_21'
+  | 'POINTS_24'
+  | 'POINTS_32'
+  | 'TIMED'
+  | 'CUSTOM';
 export interface GameSetupParams {
   fixedNumberOfSets: number;
   maxTotalPointsPerSet: number;
+  /** Minutes per match when timed preset; 0 otherwise. */
+  matchTimedCapMinutes: number;
   maxPointsPerTeam: number;
   winnerOfGame: WinnerOfGame;
   winnerOfMatch: WinnerOfMatch;
@@ -26,6 +50,8 @@ export interface GameSetupParams {
   pointsPerLoose: number;
   pointsPerTie: number;
   ballsInGames: boolean;
+  scoringPreset?: ScoringPreset | null;
+  hasGoldenPoint?: boolean;
 }
 export type PriceType = 'PER_PERSON' | 'PER_TEAM' | 'TOTAL' | 'NOT_KNOWN' | 'FREE';
 export type PriceCurrency =
@@ -53,6 +79,11 @@ export interface BasicUser {
   trainerRating?: number | null;
   trainerReviewCount?: number;
   isPremium?: boolean;
+  weeklyAvailability?: WeeklyAvailability | null;
+  availabilityBucketBoundaries?: AvailabilityBucketBoundaries | null;
+  isAdmin?: boolean;
+  canCreateTournament?: boolean;
+  maxParticipantsInGame?: number;
 }
 
 export interface TrainerReview {
@@ -71,6 +102,26 @@ export interface TrainerReviewSummary {
   rating: number | null;
   reviewCount: number;
 }
+
+export interface WeeklyAvailability {
+  mon: number;
+  tue: number;
+  wed: number;
+  thu: number;
+  fri: number;
+  sat: number;
+  sun: number;
+  v: 1;
+}
+
+export interface AvailabilityBucketBoundaries {
+  night: number;
+  morning: number;
+  afternoon: number;
+  evening: number;
+}
+
+export type WeekdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
 export interface User extends BasicUser {
   phone?: string;
@@ -103,8 +154,6 @@ export interface User extends BasicUser {
   nameIsSet?: boolean;
   cityIsSet?: boolean;
   welcomeScreenPassed?: boolean;
-  isAdmin?: boolean;
-  canCreateTournament?: boolean;
   canCreateLeague?: boolean;
   preferredHandLeft?: boolean;
   preferredHandRight?: boolean;
@@ -124,6 +173,8 @@ export interface User extends BasicUser {
   blockedUserIds?: string[];
   showOnlineStatus?: boolean;
   appIcon?: string | null;
+  weeklyAvailability?: WeeklyAvailability | null;
+  availabilityBucketBoundaries?: AvailabilityBucketBoundaries | null;
 }
 
 export interface City {
@@ -311,6 +362,7 @@ export interface Game {
   resultsStatus: 'NONE' | 'IN_PROGRESS' | 'FINAL';
   fixedNumberOfSets?: number;
   maxTotalPointsPerSet?: number;
+  matchTimedCapMinutes?: number;
   maxPointsPerTeam?: number;
   winnerOfGame?: WinnerOfGame;
   winnerOfMatch?: WinnerOfMatch;
@@ -320,6 +372,9 @@ export interface Game {
   pointsPerLoose?: number;
   pointsPerTie?: number;
   ballsInGames?: boolean;
+  scoringPreset?: ScoringPreset | null;
+  scoringMode?: ScoringMode | null;
+  hasGoldenPoint?: boolean;
   photosCount?: number;
   mainPhotoId?: string | null;
   reactions?: Array<{ userId: string; emoji: string }>;

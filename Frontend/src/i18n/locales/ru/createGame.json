@@ -1,0 +1,203 @@
+{
+  "createGame": {
+    "title": "Создать игру",
+    "createBar": "Создать бар-событие",
+    "createTraining": "Создать тренировку",
+    "createTournament": "Создать Турнир",
+    "createLeague": "Создать Лигу",
+    "selectType": "Выберите тип",
+    "location": "Место",
+    "locationTournament": "Место проведения турнира",
+    "locationLeague": "Место проведения лиги",
+    "club": "Клуб",
+    "selectClub": "Выберите клуб",
+    "court": "Корт",
+    "hall": "Зал",
+    "notBookedYet": "Еще не забронирован",
+    "hasBookedCourt": "Я забронировал этот корт",
+    "hasBookedHall": "Я забронировал стол",
+    "selectCourt": "Выбрать корт",
+    "selectHall": "Выбрать зал",
+    "selectClubFirst": "Сначала выберите клуб",
+    "noClubsAvailable": "Нет доступных клубов",
+    "clubDetailsBack": "К списку клубов",
+    "clubInfo": "О клубе",
+    "clubPhotos": "Фото",
+    "noCourtsAvailable": "Нет доступных кортов",
+    "noHallsAvailable": "Нет доступных залов",
+    "playerLevel": "Уровень игрока",
+    "playerLevelTournament": "Уровень игрока турнира",
+    "playerLevelLeague": "Уровень игрока лиги",
+    "minLevel": "Минимальный уровень",
+    "maxLevel": "Максимальный уровень",
+    "participants": "Участники",
+    "participantsTournament": "Участники турнира",
+    "participantsLeague": "Участники лиги",
+    "numberOfParticipants": "Количество участников",
+    "numberOfParticipantsTournament": "Количество участников турнира",
+    "numberOfParticipantsLeague": "Количество участников лиги",
+    "addMeToGame": "Добавиться в игру",
+    "iWantToPlay": "Хочу играть",
+    "iWillPlay": "Я буду играть",
+    "settings": "Настройки",
+    "settingsTournament": "Настройки турнира",
+    "settingsLeague": "Настройки лиги",
+    "settingsTraining": "Настройки тренировки",
+    "gameType": "Тип игры",
+    "gameTypeLeague": "Тип лиги",
+    "gameTypeNote": "Вы можете изменить детальные настройки игры в разделе Игровые Настройки.",
+    "gameTypeNoteLeague": "Вы можете изменить детальные настройки лиги в разделе Настройки лиги.",
+    "anyoneCanInvite": {
+      "title": "Любой может приглашать других игроков",
+      "titleTraining": "Любой может приглашать других участников",
+      "note": {
+        "false": "Только организаторы могут приглашать игроков.",
+        "true": "Любой участник может приглашать других игроков."
+      },
+      "noteTraining": {
+        "false": "Только организаторы могут приглашать участников.",
+        "true": "Любой участник может приглашать других участников."
+      }
+    },
+    "publicGame": {
+      "title": "Публичная игра",
+      "titleTraining": "Публичная тренировка",
+      "note": {
+        "false": "Будет приватным и видно только приглашенным участникам.",
+        "true": "Будет видно всем игрокам и может быть найдено в поиске."
+      },
+      "noteTraining": {
+        "false": "Будет приватной и видна только приглашенным участникам.",
+        "true": "Будет видна всем игрокам и может быть найдена в поиске."
+      }
+    },
+    "resultsByAnyone": {
+      "title": "Выставить результаты может любой игрок",
+      "note": {
+        "false": "Только организаторы могут вводить и изменять результаты.",
+        "true": "Любой участник может вводить и изменять результаты."
+      }
+    },
+    "allowDirectJoin": {
+      "title": "Вход без подтверждения",
+      "titleTraining": "Присоединение без подтверждения",
+      "note": {
+        "false": "Игрокам требуется одобрение организаторов перед присоединением.",
+        "true": "Игроки могут присоединиться напрямую без ожидания одобрения."
+      },
+      "noteTraining": {
+        "false": "Участникам требуется одобрение организаторов перед присоединением.",
+        "true": "Участники могут присоединиться напрямую без ожидания одобрения."
+      }
+    },
+    "afterGameGoToBar": {
+      "title": "Остаться в баре после игры",
+      "titleTraining": "Остаться в баре после тренировки",
+      "note": {
+        "false": "Не включает социальное мероприятие после матча.",
+        "true": "Включает социальное мероприятие после матча."
+      },
+      "noteTraining": {
+        "false": "Не включает социальное мероприятие после тренировки.",
+        "true": "Включает социальное мероприятие после тренировки."
+      }
+    },
+    "hasFixedTeams": {
+      "note": {
+        "false": "Таблица результатов индивидуальная. Игроки будут играть с кем угодно согласно правилам.",
+        "true": "Таблица результатов по парам. Вы сможете зафиксировать игроков в парах, которые будут играть друг против друга. Состав пар нельзя менять после начала игры."
+      }
+    },
+    "ratingGame": {
+      "title": "Рейтинговая игра",
+      "note": {
+        "false": "Результаты не изменят уровни участников.",
+        "true": "Результаты повлияют на уровни участников."
+      }
+    },
+    "tournament": "Турнир",
+    "genderTeams": {
+      "label": "Участники по полу",
+      "any": "Любые",
+      "men": "Мужчины",
+      "women": "Женщины",
+      "mixPairs": "Микс",
+      "note": {
+        "any": "Приветствуется любой пол",
+        "men": "Разрешены только мужчины",
+        "women": "Разрешены только женщины",
+        "mixPairs": "Только для командной игры, каждая команда будет состоять из 1 мужчины и 1 женщины, равное количество мужчин/женщин сможет присоединиться."
+      }
+    },
+    "fixedTeams": {
+      "descriptionOn": "Партнёры остаются одинаковыми на протяжении всего мероприятия.",
+      "descriptionOff": "Пары могут меняться между раундами."
+    },
+    "gameName": "Название игры",
+    "gameNameTournament": "Название турнира",
+    "gameNameLeague": "Название лиги",
+    "gameNameTraining": "Название тренировки",
+    "gameNamePlaceholder": "Введите название игры (необязательно)",
+    "gameNamePlaceholderTournament": "Введите название турнира (необязательно)",
+    "gameNamePlaceholderLeague": "Введите название лиги (необязательно)",
+    "gameNamePlaceholderTraining": "Введите название тренировки (необязательно)",
+    "comments": "Комментарии к игре",
+    "commentsTournament": "Комментарии к турниру",
+    "commentsLeague": "Комментарии к лиге",
+    "commentsTraining": "Комментарии к тренировке",
+    "commentsPlaceholder": "Добавьте дополнительную информацию об игре...",
+    "commentsPlaceholderTournament": "Добавьте дополнительную информацию о турнире...",
+    "commentsPlaceholderLeague": "Добавьте дополнительную информацию о лиге...",
+    "commentsPlaceholderTraining": "Добавьте дополнительную информацию о тренировке...",
+    "price": "Цена",
+    "priceType": "Тип цены",
+    "priceTypeNotKnown": "Неизвестно",
+    "priceTypePerPerson": "За человека",
+    "priceTypePerTeam": "За команду",
+    "priceTypeTotal": "Итого",
+    "priceTypeFree": "Бесплатно",
+    "priceTotal": "Сумма",
+    "priceTotalPlaceholder": "Введите сумму",
+    "priceCurrency": "Валюта",
+    "priceNotSet": "Цена не установлена",
+    "gameStart": "Начало игры",
+    "gameStartTournament": "Начало турнира",
+    "gameStartLeague": "Начало лиги",
+    "gameStartTraining": "Начало тренировки",
+    "selectDate": "Выберите дату",
+    "date": "Дата",
+    "startTime": "Время начала",
+    "endTime": "Время окончания",
+    "duration": "Продолжительность",
+    "selectTime": "Выберите время",
+    "clubTime": "время клуба",
+    "showPastTimes": "Показать прошедшее время",
+    "timeSlot": "Выбранный слот",
+    "loadingExternalSlots": "Загрузка внешних слотов",
+    "bookedWithoutCourt": "Без корта",
+    "notConfirmed": "не подтверждено",
+    "multipleCourts": "Несколько кортов",
+    "noCourtsSelected": "Корты не выбраны",
+    "addCourt": "Добавить корт",
+    "createButton": "Создать игру",
+    "createButtonTournament": "Создать Турнир",
+    "createButtonLeague": "Создать Лигу",
+    "createButtonBar": "Создать бар-событие",
+    "createButtonTraining": "Создать тренировку",
+    "today": "Сегодня",
+    "tomorrow": "Завтра",
+    "yesterday": "Вчера",
+    "selectFromCalendar": "Выбрать из календаря",
+    "hours": "{{count}}ч",
+    "hoursMinutes": "{{hours}}ч {{minutes}}м",
+    "you": "Вы",
+    "invite": "Пригласить",
+    "remove": "Удалить",
+    "manageInvites": "Управление приглашениями ({{count}})",
+    "invitesWillBeSent_one": "Игрок будет приглашен после создания игры",
+    "invitesWillBeSent_few": "{{count}} игрока будут приглашены после создания игры",
+    "invitesWillBeSent_many": "{{count}} игроков будут приглашены после создания игры",
+    "invitesWillBeSent_other": "{{count}} игроков будут приглашены после создания игры",
+    "priceRequired": "Price must be greater than 0 for this price type"
+  }
+}

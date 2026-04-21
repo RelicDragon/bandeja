@@ -1,0 +1,9 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "findGames": "Buscar juegos",
+    "myRating": "Mi puntuación",
+    "profile": "Perfil",
+    "chat": "Chat"
+  }
+}

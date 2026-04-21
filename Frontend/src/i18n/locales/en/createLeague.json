@@ -1,0 +1,25 @@
+{
+  "createLeague": {
+    "name": "League Name",
+    "namePlaceholder": "Enter league name",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter league description (optional)",
+    "location": "Location",
+    "selectCity": "Select City",
+    "noCitiesAvailable": "No cities available",
+    "noCity": "No City",
+    "season": "Season",
+    "seasonAvatar": "Season Avatar",
+    "seasonName": "Season Name",
+    "seasonNamePlaceholder": "Enter season name",
+    "playerLevel": "Player Level",
+    "maxParticipants": "Max Participants",
+    "maxParticipantsPlaceholder": "Enter max participants (4-999)",
+    "startDate": "Start Date",
+    "gameSetupSeason": "Game Setup (Season)",
+    "gameSetupPlayoff": "Game Setup (Playoff)",
+    "editGameSetup": "Edit Game Setup",
+    "configureGameSetup": "Configure Game Setup",
+    "createButton": "Create League"
+  }
+}

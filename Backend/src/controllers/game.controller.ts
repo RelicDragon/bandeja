@@ -19,7 +19,7 @@ import { patchMyWatchSession } from '../services/game/watchSession.service';
 import { WorkoutSessionSource } from '@prisma/client';
 
 export const createGame = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const game = await GameService.createGame(req.body, req.userId!);
+  const game = await GameService.createGame(req.body, req.userId!, req.user?.isAdmin || false);
 
   res.status(201).json({
     success: true,

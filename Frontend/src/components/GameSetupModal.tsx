@@ -11,6 +11,7 @@ interface GameSetupModalProps {
   isEditing?: boolean;
   confirmButtonText?: string;
   initialValues?: GameSetupFormInitialValues;
+  maxParticipants?: number;
   onClose: () => void;
   onConfirm: (params: GameSetupParams) => void;
 }
@@ -21,6 +22,7 @@ export const GameSetupModal = ({
   isEditing = true,
   confirmButtonText,
   initialValues,
+  maxParticipants,
   onClose,
   onConfirm,
 }: GameSetupModalProps) => {
@@ -55,6 +57,7 @@ export const GameSetupModal = ({
           <GameSetupForm
             ref={formRef}
             initialValues={initialValues}
+            maxParticipants={maxParticipants}
             isEditing={isEditing}
             onConfirm={handleFormConfirm}
           />

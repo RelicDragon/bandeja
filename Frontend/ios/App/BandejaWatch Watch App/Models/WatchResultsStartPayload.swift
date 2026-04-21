@@ -65,7 +65,17 @@ enum WatchResultsRoundBuilder {
         }
 
         let mgt = game.matchGenerationType?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        if !mgt.isEmpty && mgt != "HANDMADE" {
+        if mgt == "HANDMADE" {
+            let match = WatchSyncMatchBody(
+                id: UUID().uuidString,
+                teamA: [],
+                teamB: [],
+                sets: sets,
+                courtId: nil
+            )
+            return WatchSyncRoundBody(id: roundId, matches: [match])
+        }
+        if !mgt.isEmpty && mgt != "AUTOMATIC" {
             throw WatchResultsStartError.unsupportedMatchGeneration
         }
 

@@ -1,0 +1,74 @@
+{
+  "CLASSIC_BEST_OF_3": {
+    "winnerOfMatch": "BY_SETS",
+    "fixedNumberOfSets": 3,
+    "maxTotalPointsPerSet": 0,
+    "ballsInGames": true
+  },
+  "CLASSIC_BEST_OF_5": {
+    "winnerOfMatch": "BY_SETS",
+    "fixedNumberOfSets": 5,
+    "maxTotalPointsPerSet": 0,
+    "ballsInGames": true
+  },
+  "CLASSIC_PRO_SET": {
+    "winnerOfMatch": "BY_SETS",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 0,
+    "ballsInGames": true
+  },
+  "CLASSIC_SHORT_SET": {
+    "winnerOfMatch": "BY_SETS",
+    "fixedNumberOfSets": 3,
+    "maxTotalPointsPerSet": 0,
+    "ballsInGames": true
+  },
+  "CLASSIC_SUPER_TIEBREAK": {
+    "winnerOfMatch": "BY_SETS",
+    "fixedNumberOfSets": 3,
+    "maxTotalPointsPerSet": 0,
+    "ballsInGames": true
+  },
+  "CLASSIC_TIMED": {
+    "winnerOfMatch": "BY_SETS",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 0,
+    "ballsInGames": true
+  },
+  "POINTS_16": {
+    "winnerOfMatch": "BY_SCORES",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 16,
+    "ballsInGames": false
+  },
+  "POINTS_21": {
+    "winnerOfMatch": "BY_SCORES",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 21,
+    "ballsInGames": false
+  },
+  "POINTS_24": {
+    "winnerOfMatch": "BY_SCORES",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 24,
+    "ballsInGames": false
+  },
+  "POINTS_32": {
+    "winnerOfMatch": "BY_SCORES",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 32,
+    "ballsInGames": false
+  },
+  "TIMED": {
+    "winnerOfMatch": "BY_SCORES",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 0,
+    "ballsInGames": false
+  },
+  "CUSTOM": {
+    "winnerOfMatch": "BY_SCORES",
+    "fixedNumberOfSets": 0,
+    "maxTotalPointsPerSet": 0,
+    "ballsInGames": false
+  }
+}

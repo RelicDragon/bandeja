@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AnimatePresence } from 'framer-motion';
 import { Button, Card, Input, Select, ToggleGroup, ToggleSwitch, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal, CityModal, MainTabFooter, AppIconCarousel } from '@/components';
+import { AvailabilitySection } from '@/components/availability';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileComparison } from '@/components/ProfileComparison';
 import { ProfileFollowers } from '@/components/ProfileFollowers';
@@ -576,6 +577,13 @@ export const ProfileContent = () => {
             )}
           </div>
         </div>
+
+        <AvailabilitySection
+          value={user?.weeklyAvailability ?? null}
+          onChange={(wa) => updateProfile({ weeklyAvailability: wa })}
+          savedBucketBoundaries={user?.availabilityBucketBoundaries}
+          onPersistBucketBoundaries={(b) => updateProfile({ availabilityBucketBoundaries: b })}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
         <Card>

@@ -1,0 +1,85 @@
+{
+  "errors": {
+    "generic": "Нешто је пошло наопако",
+    "networkError": "Грешка мреже. Проверите везу",
+    "unauthorized": "Нисте овлашћени. Молимо пријавите се",
+    "notFound": "Није пронађено",
+    "serverError": "Грешка сервера. Покушајте касније",
+    "accessDenied": "Приступ одбијен. Немате дозволу да видите овај садржај.",
+    "navigationError": "Имамо проблема са навигацијом. Освежавање странице...",
+    "invites": {
+      "mustSpecifyGameId": "Мора се навести gameId",
+      "receiverNotFound": "Прималац није пронађен",
+      "onlyParticipantsCanSend": "Само учесници могу слати позиве",
+      "alreadySent": "Позив је већ послат овом кориснику",
+      "notFound": "Позив није пронађен",
+      "notAuthorizedToAccept": "Нисте овлашћени да прихватите овај позив",
+      "notAuthorizedToDecline": "Нисте овлашћени да одбаците овај позив",
+      "ownerCannotDecline": "Власник не може да одбије овај позив.",
+      "alreadyProcessed": "Позив је већ обрађен",
+      "expired": "Позив је истекао",
+      "gameFull": "Игра је попуњена",
+      "gameNotFound": "Игра није пронађена",
+      "onlyParticipantsCanView": "Само учесници могу прегледати позиве игре",
+      "onlySenderCanCancel": "Само пошиљалац може отказати овај позив",
+      "canOnlyCancelPending": "Може се отказати само позив на чекању"
+    },
+    "userTeams": {
+      "blocked": "Не можете позвати овог играча",
+      "userNotFound": "Корисник није пронађен",
+      "notFound": "Тим није пронађен",
+      "accessDenied": "Немате приступ овом тиму",
+      "onlyOwner": "Само власник тима то може",
+      "onlyOwnerInvites": "Само власник тима може позивати",
+      "teamFull": "Тим је пун",
+      "alreadyMember": "Овај играч је већ у тиму",
+      "cannotInviteSelf": "Не можете позвати сами себе",
+      "inviteNotFound": "Нема активног позива",
+      "invalidInvite": "Неважећи позив",
+      "memberNotFound": "Играч није у тиму",
+      "cannotRemoveOwner": "Не можете уклонити власника",
+      "userIdRequired": "Изаберите играча",
+      "nameTooShort": "Назив тима мора имати најмање 3 карактера"
+    },
+    "games": {
+      "cannotJoin": "Не може се придружити игри",
+      "cannotAddPlayer": "Не може се додати играч у игру",
+      "alreadyParticipant": "Корисник је већ учесник",
+      "cannotJoinArchivedOrFinished": "Не може се придружити архивираној или завршеној игри",
+      "directJoinNotAllowed": "Директно придруживање није дозвољено за ову игру",
+      "cannotDeleteHasChildren": "Не можете обрисати игру која има под-игре (нпр. турнир са рундама). Прво обришите под-игре."
+    },
+    "league": {
+      "gameNotFound": "Меч није пронађен",
+      "playerIdsRequired": "Потребан је бар један играч",
+      "onlyLeagueRound": "Учеснике могу директно додељивати само у мечевима кола лиге",
+      "onlySeasonOwnerAdmin": "Само власник или админ сезоне лиге могу додељивати учеснике",
+      "mustBeSeasonParticipants": "Сви играчи морају бити учесници ове сезоне лиге",
+      "tooManyPlayers": "Превише играча за овај меч"
+    },
+    "bugs": {
+      "notFound": "Грешка није пронађена",
+      "updateForbidden": "Само креатор грешке или администратор могу ажурирати ову грешку",
+      "textRequired": "Потребан је текст грешке",
+      "typeRequired": "Потребан је важећи тип грешке",
+      "statusOrTypeRequired": "Потребан је важећи статус или тип грешке"
+    },
+    "favorites": {
+      "userIdRequired": "Потребан је ID корисника",
+      "cannotAddYourself": "Не можете додати себе у омиљене",
+      "userNotFound": "Корисник није пронађен",
+      "alreadyInFavorites": "Корисник је већ у омиљеним",
+      "userNotInFavorites": "Корисник није пронађен у омиљеним"
+    },
+    "syncPending": "Молимо сачекајте да се синхронизација заврши",
+    "syncRequired": "Молимо синхронизујте са сервером пре завршетка",
+    "invalidSetIndex": "Неважећи индекс сета",
+    "invalidScores": "Резултати не могу бити негативни",
+    "scoreExceedsMax": "Резултат не може премашити {{max}}",
+    "totalScoreExceedsMax": "Укупан резултат не може премашити {{max}}",
+    "roundNotFound": "Рунда није пронађена",
+    "matchNotFound": "Меч није пронађен",
+    "setIndexExceedsMax": "Индекс сета не може премашити {{max}}",
+    "cannotRemoveLastSet": "Не можете уклонити последњи сет"
+  }
+}

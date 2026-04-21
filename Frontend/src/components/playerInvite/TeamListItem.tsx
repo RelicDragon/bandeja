@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react';
+import { Check, CalendarClock, CalendarX2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BasicUser, UserTeam } from '@/types';
@@ -9,6 +9,7 @@ import {
   teamAverageSocial,
 } from '@/components/playerInvite/inviteEntries';
 import { formatInviteStatsRows } from '@/components/playerInvite/formatInviteStatsLine';
+import type { GameAvailabilityMatch } from '@/utils/availability/gameMatch';
 
 interface TeamListItemProps {
   team: UserTeam;
@@ -16,9 +17,10 @@ interface TeamListItemProps {
   isSelected: boolean;
   gamesTogetherCount: number;
   onSelect: () => void;
+  availability?: GameAvailabilityMatch;
 }
 
-export function TeamListItem({ team, members, isSelected, gamesTogetherCount, onSelect }: TeamListItemProps) {
+export function TeamListItem({ team, members, isSelected, gamesTogetherCount, onSelect, availability }: TeamListItemProps) {
   const { t } = useTranslation();
   const label = members.map((m) => m.firstName || '').filter(Boolean).join(' · ') || team.name;
   const teamVerbal = team.verbalStatus?.trim() || '';
@@ -28,6 +30,19 @@ export function TeamListItem({ team, members, isSelected, gamesTogetherCount, on
     const rel = teamAverageReliability(team);
     return formatInviteStatsRows(t, lvl, soc, rel);
   }, [team, t]);
+
+  const dim = availability === 'none' || availability === 'partial';
+  const availabilityLabel =
+    availability === 'none'
+      ? t('playerInvite.availabilityNone')
+      : availability === 'partial'
+        ? t('playerInvite.availabilityPartial')
+        : null;
+  const availabilityTone =
+    availability === 'none'
+      ? 'text-rose-500/90 dark:text-rose-400/90'
+      : 'text-amber-500 dark:text-amber-400';
+  const AvailabilityIcon = availability === 'none' ? CalendarX2 : CalendarClock;
 
   return (
     <div
@@ -44,7 +59,7 @@ export function TeamListItem({ team, members, isSelected, gamesTogetherCount, on
         isSelected
           ? 'bg-sky-500/20 ring-1 ring-sky-400/35 dark:bg-sky-500/25 dark:ring-sky-400/25'
           : 'bg-indigo-50/90 hover:bg-indigo-100/90 dark:bg-indigo-950/45 dark:hover:bg-indigo-950/65'
-      }`}
+      } ${dim && !isSelected ? 'opacity-60' : ''}`}
     >
       <TeamAvatar team={team} size="tile" />
 
@@ -63,6 +78,12 @@ export function TeamListItem({ team, members, isSelected, gamesTogetherCount, on
                 </span>
               </>
             )}
+          {availabilityLabel && (
+            <p className={`mt-1 flex items-center gap-1 ${availabilityTone}`}>
+              <AvailabilityIcon size={11} />
+              <span>{availabilityLabel}</span>
+            </p>
+          )}
         </div>
       </div>
 

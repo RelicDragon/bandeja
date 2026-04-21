@@ -1,6 +1,9 @@
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Game, GameType } from '@/types';
-import { Select, AvatarUpload } from '@/components';
+import { AvatarUpload, GameFormatCard, GameFormatWizard } from '@/components';
+import type { GameFormatTeamsBinding } from '@/components/gameFormat';
+import { UseGameFormatResult } from '@/hooks/useGameFormat';
 
 export interface GeneralTabState {
   name: string;
@@ -15,16 +18,27 @@ interface GeneralTabProps {
   state: GeneralTabState;
   onChange: (patch: Partial<GeneralTabState>) => void;
   avatarPreviewUrl?: string | null;
+  format?: UseGameFormatResult;
+  formatTeams?: GameFormatTeamsBinding;
+  formatFixedTeamsPanel?: ReactNode;
 }
 
-export const GeneralTab = ({ game, state, onChange, avatarPreviewUrl }: GeneralTabProps) => {
+export const GeneralTab = ({
+  game,
+  state,
+  onChange,
+  avatarPreviewUrl,
+  format,
+  formatTeams,
+  formatFixedTeamsPanel,
+}: GeneralTabProps) => {
   const { t } = useTranslation();
   const isLeagueSeason = game?.entityType === 'LEAGUE_SEASON';
   const nameLabel = t(isLeagueSeason ? 'createGame.gameNameLeague' : 'createGame.gameName');
   const namePlaceholder = t(isLeagueSeason ? 'createGame.gameNamePlaceholderLeague' : 'createGame.gameNamePlaceholder');
   const commentsLabel = t(isLeagueSeason ? 'createGame.commentsLeague' : 'createGame.comments');
   const commentsPlaceholder = t(isLeagueSeason ? 'createGame.commentsPlaceholderLeague' : 'createGame.commentsPlaceholder');
-  const gameTypeLabel = t(isLeagueSeason ? 'createGame.gameTypeLeague' : 'createGame.gameType');
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const currentAvatar = state.removeAvatar ? undefined : (avatarPreviewUrl ?? game.avatar ?? undefined);
 
@@ -44,36 +58,36 @@ export const GeneralTab = ({ game, state, onChange, avatarPreviewUrl }: GeneralT
         </div>
       </div>
 
-      {game.entityType !== 'TRAINING' && (
-        <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">{gameTypeLabel}</span>
-            <div className="flex-shrink-0 w-40">
-              <Select
-                options={
-                  game?.entityType === 'GAME'
-                    ? [
-                        { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                        { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                        { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                        { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                      ]
-                    : [
-                        { value: 'CLASSIC', label: t('games.gameTypes.CLASSIC') },
-                        { value: 'AMERICANO', label: t('games.gameTypes.AMERICANO') },
-                        { value: 'MEXICANO', label: t('games.gameTypes.MEXICANO') },
-                        { value: 'ROUND_ROBIN', label: t('games.gameTypes.ROUND_ROBIN') },
-                        { value: 'WINNER_COURT', label: t('games.gameTypes.WINNER_COURT') },
-                        { value: 'CUSTOM', label: t('games.gameTypes.CUSTOM') },
-                      ]
-                }
-                value={state.gameType}
-                onChange={(value) => onChange({ gameType: value as GameType })}
-                disabled={false}
-              />
-            </div>
-          </div>
-        </div>
+      {game.entityType !== 'TRAINING' && format && (
+        <>
+          <GameFormatCard
+            entityType={game.entityType}
+            format={format}
+            generationSlotCount={
+              game.maxParticipants != null && game.maxParticipants > 0 ? game.maxParticipants : undefined
+            }
+            onOpenWizard={() => setIsWizardOpen(true)}
+            teams={
+              formatTeams
+                ? { ...formatTeams, genderSwitchLayoutId: 'editGameInfoFormatCardTeams' }
+                : undefined
+            }
+            fixedTeamsPanel={formatFixedTeamsPanel}
+            fixedTeamsPanelOpen={
+              formatFixedTeamsPanel && formatTeams ? !!formatTeams.hasFixedTeams : undefined
+            }
+          />
+          {isWizardOpen && (
+            <GameFormatWizard
+              isOpen={isWizardOpen}
+              format={format}
+              onClose={() => {
+                setIsWizardOpen(false);
+                onChange({ gameType: format.gameType });
+              }}
+            />
+          )}
+        </>
       )}
 
       <div>

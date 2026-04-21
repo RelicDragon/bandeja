@@ -15,7 +15,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { PlayerListFilterBar } from '@/components/PlayerListFilterBar';
 import {
   defaultPlayerInviteFilters,
-  PLAYER_INVITE_LIST_PAGE_SIZE,
   PLAYER_INVITE_RATING_MAX,
   PLAYER_INVITE_RATING_MIN,
   type PlayerInviteFilters,
@@ -25,7 +24,6 @@ import {
   filterAndSortInviteEntries,
   invitePreFilterCount,
   mergeUserTeamsForInviteList,
-  reorderInviteEntriesForFullListView,
   teamGamesTogetherScore,
   teamIsFullyInvitable,
   isUserTeamReady,
@@ -33,14 +31,28 @@ import {
 } from '@/components/playerInvite/inviteEntries';
 import { PlayerListItem } from '@/components/PlayerListItem';
 import { TeamListItem } from '@/components/playerInvite/TeamListItem';
+import { PlayerInviteVirtualList } from '@/components/playerInvite/PlayerInviteVirtualList';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import {
   InviteFriendToBandejaButton,
   INVITE_FRIEND_CTA_MAX_RESULTS,
 } from '@/components/InviteFriendToBandejaButton';
+import {
+  buildGameSlots,
+  matchUserToSlots,
+  matchTeamToSlots,
+  type GameAvailabilityMatch,
+} from '@/utils/availability/gameMatch';
 
 export interface PlayerListModalConfirmMeta {
   userTeamIdByReceiverId?: Record<string, string>;
+}
+
+export interface PlayerListModalGameTiming {
+  timeIsSet: boolean;
+  startTime?: string | null;
+  endTime?: string | null;
+  timeZone?: string | null;
 }
 
 interface PlayerListModalProps {
@@ -54,7 +66,10 @@ interface PlayerListModalProps {
   filterGender?: 'MALE' | 'FEMALE';
   title?: string;
   inviteAsTrainerOnly?: boolean;
+  gameTiming?: PlayerListModalGameTiming | null;
 }
+
+type GameAvailabilityContext = PlayerListModalGameTiming;
 
 export const PlayerListModal = ({
   gameId,
@@ -67,6 +82,7 @@ export const PlayerListModal = ({
   filterGender,
   title,
   inviteAsTrainerOnly = false,
+  gameTiming,
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
@@ -85,8 +101,8 @@ export const PlayerListModal = ({
   const [inviteAsTrainer, setInviteAsTrainer] = useState(inviteAsTrainerOnly);
   const [filters, setFilters] = useState<PlayerInviteFilters>(() => defaultPlayerInviteFilters(1));
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [visibleListCount, setVisibleListCount] = useState(PLAYER_INVITE_LIST_PAGE_SIZE);
   const [inviteListKind, setInviteListKind] = useState<'all' | 'users' | 'teams'>('all');
+  const [fetchedGameContext, setFetchedGameContext] = useState<GameAvailabilityContext | null>(null);
   const listSegmentUsers = inviteListKind === 'all' || inviteListKind === 'users';
   const listSegmentTeams = inviteListKind === 'all' || inviteListKind === 'teams';
 
@@ -198,6 +214,14 @@ export const PlayerListModal = ({
           if (!inviteAsTrainerOnly && gameData.entityType === 'TRAINING' && !gameData.trainerId) {
             setCanInviteAsTrainer(true);
           }
+          setFetchedGameContext({
+            timeIsSet: gameData.timeIsSet === true,
+            startTime: gameData.startTime,
+            endTime: gameData.endTime,
+            timeZone: gameData.club?.city?.timezone ?? gameData.city?.timezone ?? null,
+          });
+        } else {
+          setFetchedGameContext(null);
         }
 
         if (gameId && invitesResponse.status === 'fulfilled' && invitesResponse.value?.data) {
@@ -225,6 +249,7 @@ export const PlayerListModal = ({
       } catch {
         setPlayers([]);
         setReadyTeams([]);
+        setFetchedGameContext(null);
         toast.error(t('errors.generic'));
       } finally {
         setLoading(false);
@@ -233,6 +258,46 @@ export const PlayerListModal = ({
 
     loadPlayers();
   }, [gameId, t, inviteAsTrainerOnly, filterPlayerIdsKey]);
+
+  const effectiveGameContext: GameAvailabilityContext | null = gameTiming ?? fetchedGameContext;
+  const ctxTimeIsSet = effectiveGameContext?.timeIsSet ?? false;
+  const ctxStartTime = effectiveGameContext?.startTime ?? null;
+  const ctxEndTime = effectiveGameContext?.endTime ?? null;
+  const ctxTimeZone = effectiveGameContext?.timeZone ?? null;
+
+  const gameSlots = useMemo(() => {
+    if (!ctxTimeIsSet) return null;
+    return buildGameSlots(ctxStartTime, ctxEndTime, ctxTimeZone);
+  }, [ctxTimeIsSet, ctxStartTime, ctxEndTime, ctxTimeZone]);
+
+  const userAvailabilityById = useMemo(() => {
+    const m = new Map<string, GameAvailabilityMatch>();
+    if (!gameSlots) return m;
+    for (const p of players) m.set(p.id, matchUserToSlots(p.weeklyAvailability, gameSlots));
+    return m;
+  }, [players, gameSlots]);
+
+  const teamAvailabilityById = useMemo(() => {
+    const m = new Map<string, GameAvailabilityMatch>();
+    if (!gameSlots) return m;
+    for (const team of readyTeams) {
+      const acceptedMembers = (team.members ?? [])
+        .filter((mem) => mem.status === 'ACCEPTED')
+        .map((mem) => mem.user)
+        .filter(Boolean) as BasicUser[];
+      m.set(team.id, matchTeamToSlots(acceptedMembers, gameSlots));
+    }
+    return m;
+  }, [readyTeams, gameSlots]);
+
+  const getAvailabilityMatch = useCallback(
+    (entry: InviteListEntry): GameAvailabilityMatch => {
+      if (!gameSlots) return 'full';
+      if (entry.kind === 'user') return userAvailabilityById.get(entry.user.id) ?? 'full';
+      return teamAvailabilityById.get(entry.team.id) ?? 'full';
+    },
+    [gameSlots, userAvailabilityById, teamAvailabilityById],
+  );
 
   const baseFilteredEntries = useMemo(() => {
     return filterAndSortInviteEntries(players, readyTeams, {
@@ -244,6 +309,7 @@ export const PlayerListModal = ({
       isFavorite,
       getUserMetadata,
       showTeams,
+      getAvailabilityMatch: gameSlots ? getAvailabilityMatch : undefined,
     });
   }, [
     players,
@@ -256,6 +322,8 @@ export const PlayerListModal = ({
     isFavorite,
     getUserMetadata,
     showTeams,
+    gameSlots,
+    getAvailabilityMatch,
   ]);
 
   useEffect(() => {
@@ -269,29 +337,6 @@ export const PlayerListModal = ({
     if (!listSegmentTeams) e = e.filter((x) => x.kind !== 'team');
     return e;
   }, [baseFilteredEntries, showTeams, inviteListKind]);
-
-  useEffect(() => {
-    setVisibleListCount(PLAYER_INVITE_LIST_PAGE_SIZE);
-  }, [
-    players,
-    readyTeams,
-    searchQuery,
-    filterPlayerIdsKey,
-    filterGender,
-    inviteAsTrainerOnly,
-    filters,
-    inviteListKind,
-  ]);
-
-  const hasMoreFiltered = visibleListCount < segmentFilteredEntries.length;
-
-  const displayFilteredEntries = useMemo(() => {
-    const slice = segmentFilteredEntries.slice(0, visibleListCount);
-    if (!hasMoreFiltered && slice.length > 0) {
-      return reorderInviteEntriesForFullListView(slice, getUserMetadata, isFavorite);
-    }
-    return slice;
-  }, [segmentFilteredEntries, visibleListCount, hasMoreFiltered, getUserMetadata, isFavorite]);
 
   const memberOfSelectedTeam = useCallback(
     (userId: string) =>
@@ -441,29 +486,29 @@ export const PlayerListModal = ({
       const rowSelected = selectedUserIds.includes(entry.user.id) && !memberOfSelectedTeam(entry.user.id);
       return (
         <PlayerListItem
-          key={`u-${entry.user.id}`}
           player={entry.user}
           isSelected={rowSelected}
           gamesTogetherCount={getUserMetadata(entry.user.id)?.gamesTogetherCount ?? 0}
           onSelect={() => handleUserClick(entry.user.id)}
+          availability={gameSlots ? userAvailabilityById.get(entry.user.id) : undefined}
         />
       );
     }
     return (
       <TeamListItem
-        key={`t-${entry.team.id}`}
         team={entry.team}
         members={entry.members}
         isSelected={selectedTeamIds.includes(entry.team.id)}
         gamesTogetherCount={teamGamesTogetherScore(entry.team, getUserMetadata)}
         onSelect={() => handleTeamClick(entry.team.id)}
+        availability={gameSlots ? teamAvailabilityById.get(entry.team.id) : undefined}
       />
     );
   };
 
   return (
     <Dialog open={isOpen} onClose={handleClose} modalId="player-list-modal">
-      <DialogContent className="max-h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0">
+      <DialogContent className="h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0">
         <DialogHeader className="flex-shrink-0 border-b border-gray-100/80 px-2.5 py-3 dark:border-gray-800/80">
           <DialogTitle className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
             {title ||
@@ -561,55 +606,38 @@ export const PlayerListModal = ({
 
             {!filtersOpen && (
               <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-                <div
-                  className={`min-h-0 flex-1 overflow-y-auto scrollbar-auto px-2.5 pt-1 ${
-                    segmentFilteredEntries.length > 0 ? (showCountHint ? 'pb-28' : 'pb-20') : 'pb-4'
-                  }`}
-                >
-                  {!listHasSourceRows ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-inner dark:from-gray-800 dark:to-gray-900">
-                        <UserPlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                {!listHasSourceRows ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-inner dark:from-gray-800 dark:to-gray-900">
+                      <UserPlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
+                  </div>
+                ) : segmentFilteredEntries.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center px-1">
+                    <p className="text-gray-600 dark:text-gray-400">{t('common.noResults') || 'No results found'}</p>
+                    {showInviteFriendCta && (
+                      <div className="mt-5 flex w-full max-w-sm justify-center">
+                        <InviteFriendToBandejaButton />
                       </div>
-                      <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
-                    </div>
-                  ) : segmentFilteredEntries.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center px-1">
-                      <p className="text-gray-600 dark:text-gray-400">{t('common.noResults') || 'No results found'}</p>
-                      {showInviteFriendCta && (
-                        <div className="mt-5 flex w-full max-w-sm justify-center">
-                          <InviteFriendToBandejaButton />
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-1.5 pb-2">
-                      {displayFilteredEntries.map(renderEntry)}
-                      {showInviteFriendCta && (
+                    )}
+                  </div>
+                ) : (
+                  <PlayerInviteVirtualList
+                    entries={segmentFilteredEntries}
+                    renderEntry={renderEntry}
+                    className={`min-h-0 flex-1 overflow-y-auto scrollbar-auto px-2.5 pt-1 ${
+                      showCountHint ? 'pb-28' : 'pb-20'
+                    }`}
+                    footer={
+                      showInviteFriendCta ? (
                         <div className="flex justify-center pt-2">
                           <InviteFriendToBandejaButton />
                         </div>
-                      )}
-                      {hasMoreFiltered && (
-                        <div className="flex flex-col items-center gap-1 pb-1 pt-2">
-                          <button
-                            type="button"
-                            onClick={() => setVisibleListCount((c) => c + PLAYER_INVITE_LIST_PAGE_SIZE)}
-                            className="rounded-xl border border-primary-300 bg-white px-3 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50 active:scale-[0.98] dark:border-primary-600 dark:bg-gray-900 dark:text-primary-300 dark:hover:bg-primary-950/40"
-                          >
-                            {t('playerInvite.showMore')}
-                          </button>
-                          <p className="text-center text-[11px] text-gray-500 dark:text-gray-400">
-                            {t('playerInvite.listShowing', {
-                              visible: displayFilteredEntries.length,
-                              total: segmentFilteredEntries.length,
-                            })}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                      ) : null
+                    }
+                  />
+                )}
 
                 {showCountHint && (
                   <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center">

@@ -82,6 +82,7 @@ export const GameResultsModals = ({
         maxPointsPerTeam={currentGame?.maxPointsPerTeam}
         fixedNumberOfSets={currentGame?.fixedNumberOfSets}
         ballsInGames={currentGame?.ballsInGames || false}
+        game={currentGame}
         onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak) => {
           onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak);
         }}
@@ -102,6 +103,7 @@ export const GameResultsModals = ({
         maxPointsPerTeam={currentGame?.maxPointsPerTeam}
         fixedNumberOfSets={currentGame?.fixedNumberOfSets}
         ballsInGames={currentGame?.ballsInGames || false}
+        game={currentGame}
         onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak) => {
           onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak);
         }}

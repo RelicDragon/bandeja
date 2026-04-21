@@ -1,0 +1,85 @@
+{
+  "errors": {
+    "generic": "Něco se pokazilo",
+    "networkError": "Chyba sítě. Zkontrolujte připojení",
+    "unauthorized": "Nejste oprávněni. Přihlaste se",
+    "notFound": "Nenalezeno",
+    "serverError": "Chyba serveru. Zkuste to později",
+    "accessDenied": "Přístup odepřen. Nemáte oprávnění zobrazit tento obsah.",
+    "navigationError": "Problém s navigací. Obnovujeme stránku...",
+    "invites": {
+      "mustSpecifyGameId": "Je třeba zadat gameId",
+      "receiverNotFound": "Příjemce nenalezen",
+      "onlyParticipantsCanSend": "Pozvánky mohou posílat jen účastníci",
+      "alreadySent": "Pozvánka tomuto uživateli již byla odeslána",
+      "notFound": "Pozvánka nenalezena",
+      "notAuthorizedToAccept": "Nemáte oprávnění přijmout tuto pozvánku",
+      "notAuthorizedToDecline": "Nemáte oprávnění odmítnout tuto pozvánku",
+      "ownerCannotDecline": "Organizátor nemůže odmítnout tuto pozvánku.",
+      "alreadyProcessed": "Pozvánka již byla zpracována",
+      "expired": "Pozvánka vypršela",
+      "gameFull": "Zápas je plný",
+      "gameNotFound": "Zápas nenalezen",
+      "onlyParticipantsCanView": "Pozvánky k zápasu mohou zobrazit jen účastníci",
+      "onlySenderCanCancel": "Tuto pozvánku může zrušit jen odesílatel",
+      "canOnlyCancelPending": "Lze zrušit jen čekající pozvánky"
+    },
+    "userTeams": {
+      "blocked": "Tohoto hráče nemůžete pozvat",
+      "userNotFound": "Uživatel nenalezen",
+      "notFound": "Tým nenalezen",
+      "accessDenied": "K tomuto týmu nemáte přístup",
+      "onlyOwner": "Smí to jen vlastník týmu",
+      "onlyOwnerInvites": "Pozvat může jen vlastník týmu",
+      "teamFull": "Tým je plný",
+      "alreadyMember": "Tento hráč už v týmu je",
+      "cannotInviteSelf": "Nemůžete pozvat sami sebe",
+      "inviteNotFound": "Žádná čekající pozvánka",
+      "invalidInvite": "Neplatná pozvánka",
+      "memberNotFound": "Hráč není v týmu",
+      "cannotRemoveOwner": "Vlastníka nelze odebrat",
+      "userIdRequired": "Vyberte hráče",
+      "nameTooShort": "Název týmu musí mít alespoň 3 znaky"
+    },
+    "games": {
+      "cannotJoin": "Nelze se připojit k zápasu",
+      "cannotAddPlayer": "Nelze přidat hráče do zápasu",
+      "alreadyParticipant": "Uživatel je již účastníkem",
+      "cannotJoinArchivedOrFinished": "Nelze se připojit k archivovanému nebo ukončenému zápasu",
+      "directJoinNotAllowed": "Přímé připojení u tohoto zápasu není povoleno",
+      "cannotDeleteHasChildren": "Zápas s dceřinými zápasy (např. turnaj s koly) nelze smazat. Nejprve smažte nebo odeberte dceřiné zápasy."
+    },
+    "league": {
+      "gameNotFound": "Zápas nenalezen",
+      "playerIdsRequired": "Je vyžadován alespoň jeden hráč",
+      "onlyLeagueRound": "Účastníky lze přímo přiřadit pouze u zápasů kola ligy",
+      "onlySeasonOwnerAdmin": "Přiřazovat účastníky mohou pouze vlastník nebo admin sezóny ligy",
+      "mustBeSeasonParticipants": "Všichni hráči musí být účastníky této sezóny ligy",
+      "tooManyPlayers": "Příliš mnoho hráčů pro tento zápas"
+    },
+    "bugs": {
+      "notFound": "Chyba nenalezena",
+      "updateForbidden": "Tuto chybu může upravit jen její autor nebo admin",
+      "textRequired": "Text chyby je povinný",
+      "typeRequired": "Je vyžadován platný typ chyby",
+      "statusOrTypeRequired": "Je vyžadován platný stav nebo typ chyby"
+    },
+    "favorites": {
+      "userIdRequired": "Je vyžadováno ID uživatele",
+      "cannotAddYourself": "Nemůžete přidat sami sebe do oblíbených",
+      "userNotFound": "Uživatel nenalezen",
+      "alreadyInFavorites": "Uživatel je již v oblíbených",
+      "userNotInFavorites": "Uživatel není v oblíbených"
+    },
+    "syncPending": "Počkejte na dokončení synchronizace",
+    "syncRequired": "Před dokončením synchronizujte se serverem",
+    "invalidSetIndex": "Neplatný index setu",
+    "invalidScores": "Skóre nemůže být záporné",
+    "scoreExceedsMax": "Skóre nemůže přesáhnout {{max}}",
+    "totalScoreExceedsMax": "Celkové skóre nemůže přesáhnout {{max}}",
+    "roundNotFound": "Kolo nenalezeno",
+    "matchNotFound": "Zápas nenalezen",
+    "setIndexExceedsMax": "Index setu nemůže přesáhnout {{max}}",
+    "cannotRemoveLastSet": "Poslední set nelze odebrat"
+  }
+}

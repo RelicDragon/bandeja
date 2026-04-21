@@ -1,7 +1,10 @@
 import { Trash2, MapPin } from 'lucide-react';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
-import { BasicUser, Court } from '@/types';
+import { BasicUser, Court, Game } from '@/types';
+import { expandSetsForDisplay, getRules } from '@/utils/scoring';
+import { MatchTimerPanel } from '@/components/gameResults/matchTimer/MatchTimerPanel';
+import type { MatchTimerAction } from '@/utils/matchTimer';
 
 interface MatchCardProps {
   match: Match;
@@ -26,6 +29,10 @@ interface MatchCardProps {
   onCourtClick?: () => void;
   fixedNumberOfSets?: number;
   prohibitMatchesEditing?: boolean;
+  game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie'> | null;
+  roundId?: string;
+  gameId?: string;
+  onMatchTimerTransition?: (roundId: string, matchId: string, action: MatchTimerAction) => void | Promise<void>;
 }
 
 export const MatchCard = ({
@@ -50,38 +57,17 @@ export const MatchCard = ({
   onCourtClick,
   fixedNumberOfSets,
   prohibitMatchesEditing = false,
+  game,
+  roundId,
+  gameId,
+  onMatchTimerTransition,
 }: MatchCardProps) => {
   const effectiveIsPresetGame = isPresetGame || prohibitMatchesEditing;
   const effectiveIsEditing = prohibitMatchesEditing ? false : isEditing;
   const canEnterScores = effectiveIsEditing || (effectiveIsPresetGame && canEditResults);
-  
-  const displaySets = fixedNumberOfSets && fixedNumberOfSets > 0
-    ? Array.from({ length: fixedNumberOfSets }, (_, i) => match.sets[i] || { teamA: 0, teamB: 0, isTieBreak: false })
-    : (() => {
-        const sets = [...match.sets];
-        
-        if (canEnterScores) {
-          // When we can enter scores, always ensure there's a trailing 0:0 set for adding scores
-          if (sets.length === 0) {
-            sets.push({ teamA: 0, teamB: 0, isTieBreak: false });
-          } else {
-            const lastSet = sets[sets.length - 1];
-            if ((lastSet.teamA > 0 || lastSet.teamB > 0) && !lastSet.isTieBreak) {
-              sets.push({ teamA: 0, teamB: 0, isTieBreak: false });
-            }
-          }
-        } else {
-          // When not entering scores, only add trailing 0:0 if last set has scores
-          if (sets.length > 0) {
-            const lastSet = sets[sets.length - 1];
-            if ((lastSet.teamA > 0 || lastSet.teamB > 0) && !lastSet.isTieBreak) {
-              sets.push({ teamA: 0, teamB: 0, isTieBreak: false });
-            }
-          }
-        }
-        
-        return sets;
-      })();
+
+  const rules = getRules(game ?? { fixedNumberOfSets, maxTotalPointsPerSet: 0, maxPointsPerTeam: 0, winnerOfMatch: 'BY_SCORES', ballsInGames: false, hasGoldenPoint: false, pointsPerTie: 0, scoringPreset: null } as any);
+  const displaySets = expandSetsForDisplay(match.sets, rules, { canEnterScores });
 
   const hasNonZeroScore = match.sets.some(set => set.teamA > 0 || set.teamB > 0);
   const shouldHideCard = !canEnterScores && !hasNonZeroScore && !canEditResults;
@@ -199,6 +185,17 @@ export const MatchCard = ({
           <Trash2 size={16} />
         </button>
       )}
+
+      {game && roundId && gameId && onMatchTimerTransition ? (
+        <MatchTimerPanel
+          match={match}
+          game={game}
+          roundId={roundId}
+          gameId={gameId}
+          canControl={canEditResults && canEnterResults}
+          onTransition={onMatchTimerTransition}
+        />
+      ) : null}
 
       <div 
         className={`${!effectiveIsPresetGame && effectiveIsEditing && canEditResults ? 'ring-2 ring-green-400 dark:ring-green-500 rounded-lg p-4 bg-green-50 dark:bg-green-900/20 w-full' : 'w-full'} ${!effectiveIsPresetGame && canEditResults ? 'cursor-pointer' : ''}`}

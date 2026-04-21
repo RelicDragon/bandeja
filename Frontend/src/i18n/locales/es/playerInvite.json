@@ -1,0 +1,30 @@
+{
+  "playerInvite": {
+    "filtersTitle": "Filtrar lista",
+    "matchingCount": "{{shown}} de {{total}} coinciden",
+    "reset": "Restablecer",
+    "gender": "Género",
+    "genderAll": "Todos",
+    "genderMale": "Hombres",
+    "genderFemale": "Mujeres",
+    "rating": "Nivel",
+    "socialRating": "Nivel social",
+    "gamesTogether": "Jugaron juntos",
+    "gamesTogetherAny": "Cualquiera",
+    "gamesTogetherMin": "{{count}}+",
+    "gamesTogetherBadge_one": "{{count}} juntos",
+    "gamesTogetherBadge_other": "{{count}} juntos",
+    "levelShort": "N {{value}}",
+    "socialShort": "S {{value}}",
+    "applyFilters": "Aplicar filtros",
+    "segmentAll": "Todos",
+    "segmentUsers": "Jugadores",
+    "segmentTeams": "Equipos",
+    "statsLevelRowWithRel": "Nivel: {{level}} · {{rel}}%",
+    "statsLevelRowNoRel": "Nivel: {{level}}",
+    "statsSocialRow": "Social: {{social}}",
+    "teamBadge": "Equipo",
+    "availabilityPartial": "Parcialmente disponible",
+    "availabilityNone": "No disponible a esta hora"
+  }
+}

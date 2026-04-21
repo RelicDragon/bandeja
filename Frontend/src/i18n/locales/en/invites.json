@@ -1,0 +1,24 @@
+{
+  "invites": {
+    "title": "Invites",
+    "pending": "Pending Invites",
+    "noInvites": "No pending invites",
+    "accept": "Accept",
+    "decline": "Decline",
+    "from": "From",
+    "to": "To",
+    "message": "Message",
+    "accepted": "Invite accepted",
+    "acceptedSuccessfully": "Invite accepted successfully",
+    "declined": "Invite declined",
+    "declinedSuccessfully": "Invite declined successfully",
+    "selectPlayer": "Select a Player",
+    "selectPlayers": "Select Players",
+    "noPlayersAvailable": "No players available to invite",
+    "inviteFriendToBandeja": "Invite friend to Bandeja",
+    "shareAppBody": "Join me on Bandeja: {{url}}",
+    "pendingInvites": "Pending Invites",
+    "inviteSent": "Invite sent",
+    "invitedYou": "Invite to"
+  }
+}

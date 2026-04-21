@@ -1,0 +1,15 @@
+{
+  "healthWorkout": {
+    "title": "Entrenamientos de pádel",
+    "subtitle": "Guardados desde Apple Watch al anotar",
+    "yourSession": "Tu entrenamiento",
+    "kcal": "kcal",
+    "avgBpm": "ppm media",
+    "maxBpm": "ppm máx",
+    "loading": "Cargando…",
+    "loadError": "No se pudo cargar el entrenamiento.",
+    "retry": "Reintentar",
+    "emptyProfile": "Aún no hay entrenamientos. Grábalos con el Apple Watch al anotar.",
+    "loadErrorProfile": "No se pudieron cargar los entrenamientos."
+  }
+}

@@ -6,6 +6,7 @@ import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { isCapacitor, isAndroid } from '@/utils/capacitor';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
+import { OVERLAY_CONTROL_GLASS } from '@/components/ui/overlayControlGlass';
 import { mediaCacheKeyForSrc, readCachedMediaResponse, writeCachedMediaResponse } from '@/services/chat/chatMediaCache';
 
 interface FullscreenImageViewerProps {
@@ -13,9 +14,6 @@ interface FullscreenImageViewerProps {
   onClose: () => void;
   isOpen?: boolean;
 }
-
-const OVERLAY_CONTROL_GLASS =
-  'border border-black/25 dark:border-white/20 shadow-[0_4px_14px_rgba(0,0,0,0.35),0_12px_32px_rgba(0,0,0,0.45)] dark:shadow-[0_4px_14px_rgba(0,0,0,0.5),0_12px_36px_rgba(0,0,0,0.55)]';
 
 export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   imageUrl,
@@ -320,7 +318,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
               type="button"
               onClick={handleCopy}
               disabled={isCopying}
-              className={`w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 ${OVERLAY_CONTROL_GLASS} backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed`}
+              className={`flex h-12 w-12 items-center justify-center rounded-full ${OVERLAY_CONTROL_GLASS} disabled:cursor-not-allowed disabled:opacity-50`}
               aria-label={t('media.copyImage')}
             >
               {isCopying ? <Loader2 size={22} className="animate-spin" /> : <Copy size={22} />}
@@ -329,7 +327,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
               type="button"
               onClick={handleDownload}
               disabled={isDownloading}
-              className={`w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 ${OVERLAY_CONTROL_GLASS} backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed`}
+              className={`flex h-12 w-12 items-center justify-center rounded-full ${OVERLAY_CONTROL_GLASS} disabled:cursor-not-allowed disabled:opacity-50`}
               aria-label={t('media.download')}
             >
               {isDownloading ? (
@@ -341,7 +339,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className={`w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all duration-200 ${OVERLAY_CONTROL_GLASS} backdrop-blur-sm`}
+              className={`flex h-12 w-12 items-center justify-center rounded-full ${OVERLAY_CONTROL_GLASS}`}
               aria-label={t('common.close')}
             >
               <X size={22} />
@@ -356,7 +354,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           >
             <button
               onClick={resetView}
-              className={`px-6 py-3 rounded-xl bg-black/60 hover:bg-black/80 text-white transition-all duration-200 text-sm font-medium ${OVERLAY_CONTROL_GLASS} backdrop-blur-sm`}
+              className={`rounded-xl px-6 py-3 text-sm font-medium ${OVERLAY_CONTROL_GLASS}`}
             >
               {t('media.resetView')}
             </button>

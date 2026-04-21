@@ -1,0 +1,8 @@
+{
+  "trainers": {
+    "ourTrainers": "Naši trenéři",
+    "selectToFilterHint": "Klepněte na trenéra a filtrujte tréninky podle něj",
+    "trainingsBy": "Tréninky od",
+    "clearTrainerFilter": "Zrušit filtr trenéra"
+  }
+}

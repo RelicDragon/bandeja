@@ -32,6 +32,9 @@ struct MatchScoringView: View {
                 }
             } else {
                 VStack(spacing: 6) {
+                    if let g = vm.game, g.isMatchTimerEnabled {
+                        MatchTimerBarView(gameId: gameId, matchId: matchId, game: g)
+                    }
                     if vm.isAmericano {
                         AmericanoScoringView(vm: vm, onFinish: finish)
                     } else {

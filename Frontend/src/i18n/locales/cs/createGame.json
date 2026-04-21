@@ -1,0 +1,201 @@
+{
+  "createGame": {
+    "title": "Vytvořit zápas",
+    "createBar": "Vytvořit bar",
+    "createTraining": "Vytvořit trénink",
+    "createTournament": "Vytvořit turnaj",
+    "createLeague": "Vytvořit ligu",
+    "selectType": "Vybrat typ",
+    "location": "Místo",
+    "locationTournament": "Místo turnaje",
+    "locationLeague": "Místo ligy",
+    "club": "Klub",
+    "selectClub": "Vybrat klub",
+    "court": "Kurt",
+    "hall": "Hala",
+    "notBookedYet": "Zatím nerezervováno",
+    "hasBookedCourt": "Mám rezervovaný tento kurt",
+    "hasBookedHall": "Mám rezervovaný stůl",
+    "selectCourt": "Vybrat kurt",
+    "selectHall": "Vybrat halu",
+    "selectClubFirst": "Nejprve vyberte klub",
+    "noClubsAvailable": "Žádné kluby k dispozici",
+    "clubDetailsBack": "Zpět na kluby",
+    "clubInfo": "Detaily klubu",
+    "clubPhotos": "Fotky",
+    "noCourtsAvailable": "Žádné kurty k dispozici",
+    "noHallsAvailable": "Žádné haly k dispozici",
+    "playerLevel": "Úroveň hráče",
+    "playerLevelTournament": "Úroveň hráče turnaje",
+    "playerLevelLeague": "Úroveň hráče ligy",
+    "minLevel": "Min. úroveň",
+    "maxLevel": "Max. úroveň",
+    "participants": "Účastníci",
+    "participantsTournament": "Účastníci turnaje",
+    "participantsLeague": "Účastníci ligy",
+    "numberOfParticipants": "Počet účastníků",
+    "numberOfParticipantsTournament": "Počet účastníků turnaje",
+    "numberOfParticipantsLeague": "Počet účastníků ligy",
+    "addMeToGame": "Připojit se k zápasu",
+    "iWantToPlay": "Chci hrát",
+    "iWillPlay": "Budu také hrát",
+    "settings": "Nastavení",
+    "settingsTournament": "Nastavení turnaje",
+    "settingsLeague": "Nastavení ligy",
+    "settingsTraining": "Nastavení tréninku",
+    "gameType": "Typ zápasu",
+    "gameTypeLeague": "Typ ligy",
+    "gameTypeNote": "Podrobné nastavení zápasu lze změnit v sekci Nastavení zápasu.",
+    "gameTypeNoteLeague": "Podrobné nastavení ligy lze změnit v sekci Nastavení ligy.",
+    "anyoneCanInvite": {
+      "title": "Kdokoli může pozvat další hráče",
+      "titleTraining": "Kdokoli může pozvat další účastníky",
+      "note": {
+        "false": "Pozvat hráče mohou jen organizátoři.",
+        "true": "Jakýkoli účastník může pozvat další hráče."
+      },
+      "noteTraining": {
+        "false": "Pozvat účastníky mohou jen organizátoři.",
+        "true": "Jakýkoli účastník může pozvat další účastníky."
+      }
+    },
+    "publicGame": {
+      "title": "Veřejný zápas",
+      "titleTraining": "Veřejný trénink",
+      "note": {
+        "false": "Bude soukromý a viditelný jen pro pozvané.",
+        "true": "Bude viditelný všem a najdete ho v hledání."
+      },
+      "noteTraining": {
+        "false": "Bude soukromý a viditelný jen pro pozvané.",
+        "true": "Bude viditelný všem a najdete ho v hledání."
+      }
+    },
+    "resultsByAnyone": {
+      "title": "Výsledky může zadat kdokoli",
+      "note": {
+        "false": "Zadávat a měnit výsledky mohou jen organizátoři.",
+        "true": "Jakýkoli účastník může zadávat a měnit výsledky."
+      }
+    },
+    "allowDirectJoin": {
+      "title": "Vstup bez potvrzení",
+      "titleTraining": "Připojit se bez potvrzení",
+      "note": {
+        "false": "Hráči potřebují schválení organizátora před připojením.",
+        "true": "Hráči se mohou připojit přímo bez čekání na schválení."
+      },
+      "noteTraining": {
+        "false": "Účastníci potřebují schválení organizátora před připojením.",
+        "true": "Účastníci se mohou připojit přímo bez čekání na schválení."
+      }
+    },
+    "afterGameGoToBar": {
+      "title": "Zůstat u baru po zápase",
+      "titleTraining": "Zůstat u baru po tréninku",
+      "note": {
+        "false": "Neobsahuje společenské posezení po zápase.",
+        "true": "Obsahuje společenské posezení po zápase."
+      },
+      "noteTraining": {
+        "false": "Neobsahuje společenské posezení po tréninku.",
+        "true": "Obsahuje společenské posezení po tréninku."
+      }
+    },
+    "hasFixedTeams": {
+      "note": {
+        "false": "Tabulka je individuální. Hráči budou hrát s kýmkoli dle pravidel.",
+        "true": "Tabulka je po párech. Můžete uzamknout hráče do párů, které hrají proti sobě. Složení párů po začátku nelze měnit."
+      }
+    },
+    "ratingGame": {
+      "title": "Zápas ovlivňující úroveň",
+      "note": {
+        "false": "Výsledky neovlivní úrovně účastníků.",
+        "true": "Výsledky ovlivní úrovně účastníků."
+      }
+    },
+    "tournament": "Turnaj",
+    "genderTeams": {
+      "label": "Účastníci podle pohlaví",
+      "any": "Libovolné",
+      "men": "Muži",
+      "women": "Ženy",
+      "mixPairs": "Smíšené",
+      "note": {
+        "any": "Pohlaví neomezeno",
+        "men": "Pouze muži",
+        "women": "Pouze ženy",
+        "mixPairs": "Pouze pro týmovou hru, každé družstvo 1 muž a 1 žena, rovný počet mužů a žen."
+      }
+    },
+    "fixedTeams": {
+      "descriptionOn": "Partneři zůstávají stejní po celou dobu akce.",
+      "descriptionOff": "Páry se mohou mezi koly měnit."
+    },
+    "gameName": "Název zápasu",
+    "gameNameTournament": "Název turnaje",
+    "gameNameLeague": "Název ligy",
+    "gameNameTraining": "Název tréninku",
+    "gameNamePlaceholder": "Zadejte název zápasu (volitelné)",
+    "gameNamePlaceholderTournament": "Zadejte název turnaje (volitelné)",
+    "gameNamePlaceholderLeague": "Zadejte název ligy (volitelné)",
+    "gameNamePlaceholderTraining": "Zadejte název tréninku (volitelné)",
+    "comments": "Komentáře",
+    "commentsTournament": "Komentáře k turnaji",
+    "commentsLeague": "Komentáře k lize",
+    "commentsTraining": "Komentáře k tréninku",
+    "commentsPlaceholder": "Přidejte další informace o zápase...",
+    "commentsPlaceholderTournament": "Přidejte další informace o turnaji...",
+    "commentsPlaceholderLeague": "Přidejte další informace o lize...",
+    "commentsPlaceholderTraining": "Přidejte další informace o tréninku...",
+    "price": "Cena",
+    "priceType": "Typ ceny",
+    "priceTypeNotKnown": "Neznámá",
+    "priceTypePerPerson": "Na osobu",
+    "priceTypePerTeam": "Na družstvo",
+    "priceTypeTotal": "Celkem",
+    "priceTypeFree": "Zdarma",
+    "priceTotal": "Částka",
+    "priceTotalPlaceholder": "Zadejte částku",
+    "priceCurrency": "Měna",
+    "priceNotSet": "Cena nenastavena",
+    "gameStart": "Začátek zápasu",
+    "gameStartTournament": "Začátek turnaje",
+    "gameStartLeague": "Začátek ligy",
+    "gameStartTraining": "Začátek tréninku",
+    "selectDate": "Vybrat datum",
+    "date": "Datum",
+    "startTime": "Čas začátku",
+    "endTime": "Čas konce",
+    "duration": "Délka",
+    "selectTime": "Vybrat čas",
+    "clubTime": "čas klubu",
+    "showPastTimes": "Zobrazit minulé časy",
+    "timeSlot": "Vybraný termín",
+    "loadingExternalSlots": "Načítání externích termínů",
+    "bookedWithoutCourt": "Bez kurtu",
+    "notConfirmed": "nepotvrzeno",
+    "multipleCourts": "Více kurtů",
+    "noCourtsSelected": "Nevybrány žádné kurty",
+    "addCourt": "Přidat kurt",
+    "createButton": "Vytvořit zápas",
+    "createButtonTournament": "Vytvořit turnaj",
+    "createButtonLeague": "Vytvořit ligu",
+    "createButtonBar": "Vytvořit bar",
+    "createButtonTraining": "Vytvořit trénink",
+    "today": "Dnes",
+    "tomorrow": "Zítra",
+    "yesterday": "Včera",
+    "selectFromCalendar": "Vybrat z kalendáře",
+    "hours": "{{count}}h",
+    "hoursMinutes": "{{hours}}h {{minutes}}m",
+    "you": "Vy",
+    "invite": "Pozvat",
+    "remove": "Odebrat",
+    "manageInvites": "Spravovat pozvánky ({{count}})",
+    "invitesWillBeSent_one": "Hráč bude pozván po vytvoření zápasu",
+    "invitesWillBeSent_other": "{{count}} hráčů bude pozváno po vytvoření zápasu",
+    "priceRequired": "Price must be greater than 0 for this price type"
+  }
+}

@@ -15,6 +15,7 @@ import { BugArchivedScheduler } from './services/bugArchivedScheduler.service';
 import { ChatSyncStatsScheduler } from './services/chatSyncStatsScheduler.service';
 import { reportCriticalError, maybeReportFromConsole } from './services/developerAlert.service';
 import { createServer } from 'http';
+import { resumeMatchTimerSchedulesOnStartup } from './services/results/matchTimer.service';
 
 const startServer = async () => {
   process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
@@ -76,6 +77,8 @@ const startServer = async () => {
     
     // Make socket service available globally
     (global as any).socketService = socketService;
+
+    await resumeMatchTimerSchedulesOnStartup();
 
     const server = httpServer.listen(config.port, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${config.port} in ${config.nodeEnv} mode`);

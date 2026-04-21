@@ -7,6 +7,7 @@ export * from './GameSettings';
 export * from './FixedTeamsManagement';
 export * from './LeagueFixedTeamsSection';
 export * from './GameSetup';
+export * from './GameFormatSection';
 export * from './TeamPlayerSelector';
 export * from './PhotosSection';
 export * from './EditGameInfoModal';

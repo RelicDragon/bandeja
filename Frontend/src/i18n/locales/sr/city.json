@@ -1,0 +1,24 @@
+{
+  "city": {
+    "clubsCount_zero": "Нема клубова",
+    "clubsCount_one": "1 клуб",
+    "clubsCount_few": "{{count}} клуба",
+    "clubsCount_many": "{{count}} клубова",
+    "clubsCount_other": "{{count}} клубова",
+    "cities": "Градови",
+    "clubs": "Клубови",
+    "searchCountries": "Претрага земаља",
+    "searchCities": "Претрага града, региона...",
+    "searchClubs": "Претрага клубова...",
+    "searchCountriesAndCities": "Претрага држава и градова",
+    "searchCountriesAndClubs": "Претрага држава и клубова",
+    "map": "Мапа",
+    "list": "Листа",
+    "selectCity": "Изабери",
+    "selectCityName": "Изабери {{name}}",
+    "whereAmI": "Где сам?",
+    "nearestToYou": "Најближе вама",
+    "yourLocation": "Ваша локација",
+    "approximateLocation": "Приближна локација"
+  }
+}

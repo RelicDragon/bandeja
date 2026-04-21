@@ -1,13 +1,16 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { EntityType, WinnerOfGame, WinnerOfMatch, MatchGenerationType, RoundType } from '@prisma/client';
+import { EntityType, WinnerOfGame, WinnerOfMatch, RoundType } from '@prisma/client';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { getDistinctLeagueGroupColor } from './groupColors';
 import { createLeagueGame, createLeaguePlayoffGame, PlayoffGameSetupOverrides } from './gameCreation.util';
+import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
+import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
 import { TeamForRoundGeneration } from './generation/TeamForRoundGeneration';
+import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 
 export class LeagueCreateService {
-  static async createLeague(data: any, userId: string) {
+  static async createLeague(data: any, userId: string, jwtIsAdmin: boolean = false) {
     if (!data.name || !data.name.trim()) {
       throw new ApiError(400, 'League name is required');
     }
@@ -45,6 +48,17 @@ export class LeagueCreateService {
       throw new ApiError(400, 'Max participants must be between 4 and 999');
     }
 
+    const actor = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { canCreateTournament: true, maxParticipantsInGame: true },
+    });
+    assertMaxParticipantsWithinUserCap({
+      jwtIsAdmin,
+      actor,
+      maxParticipants,
+      entityType: EntityType.LEAGUE_SEASON,
+    });
+
     const gameSeasonData = data.season.gameSeason || {};
     const seasonName = data.season.name?.trim() || '';
 
@@ -60,12 +74,20 @@ export class LeagueCreateService {
         maxPointsPerTeam: gameSeasonData.maxPointsPerTeam ?? 0,
         winnerOfGame: (gameSeasonData.winnerOfGame as WinnerOfGame) ?? WinnerOfGame.BY_MATCHES_WON,
         winnerOfMatch: (gameSeasonData.winnerOfMatch as WinnerOfMatch) ?? WinnerOfMatch.BY_SCORES,
-        matchGenerationType: (gameSeasonData.matchGenerationType as MatchGenerationType) ?? MatchGenerationType.HANDMADE,
+        matchGenerationType: resolveMatchGenerationType({
+          resultsRoundGenV2: data.resultsRoundGenV2,
+          matchGenerationType: gameSeasonData.matchGenerationType,
+          maxParticipants,
+        }),
         prohibitMatchesEditing: gameSeasonData.prohibitMatchesEditing ?? false,
         pointsPerWin: gameSeasonData.pointsPerWin ?? 0,
         pointsPerLoose: gameSeasonData.pointsPerLoose ?? 0,
         pointsPerTie: gameSeasonData.pointsPerTie ?? 0,
-        ballsInGames: gameSeasonData.ballsInGames ?? false,
+        ballsInGames: deriveBallsInGamesFromScoring({
+          scoringPreset: gameSeasonData.scoringPreset ?? null,
+          winnerOfMatch: (gameSeasonData.winnerOfMatch as WinnerOfMatch) ?? WinnerOfMatch.BY_SCORES,
+          maxTotalPointsPerSet: gameSeasonData.maxTotalPointsPerSet ?? 0,
+        }),
         hasFixedTeams: data.hasFixedTeams ?? false,
         cityId: data.cityId,
         clubId: data.clubId || null,
@@ -613,15 +635,16 @@ export class LeagueCreateService {
       leagueGroupId?: string;
       groups?: { leagueGroupId: string; participantIds: string[] }[];
       gameSetup?: PlayoffGameSetupOverrides;
+      resultsRoundGenV2?: boolean;
     }
   ): Promise<{ round: any; game?: any; games?: any[] }> {
-    const { gameType, groups, gameSetup } = payload;
+    const { gameType, groups, gameSetup, resultsRoundGenV2 } = payload;
 
     if (groups !== undefined) {
       if (groups.length === 0) {
         throw new ApiError(400, 'groups must not be empty when provided');
       }
-      return this.createPlayoffBatch(leagueSeasonId, userId, gameType, groups, gameSetup);
+      return this.createPlayoffBatch(leagueSeasonId, userId, gameType, groups, gameSetup, resultsRoundGenV2);
     }
 
     const { participantIds, leagueGroupId } = payload;
@@ -751,6 +774,7 @@ export class LeagueCreateService {
           leagueGroupId,
           teams,
           gameSetup,
+          resultsRoundGenV2,
         },
         tx
       );
@@ -767,7 +791,8 @@ export class LeagueCreateService {
     userId: string,
     gameType: 'WINNER_COURT' | 'AMERICANO',
     groups: { leagueGroupId: string; participantIds: string[] }[],
-    gameSetup?: import('./gameCreation.util').PlayoffGameSetupOverrides
+    gameSetup?: import('./gameCreation.util').PlayoffGameSetupOverrides,
+    resultsRoundGenV2?: boolean
   ): Promise<{ round: any; games: any[] }> {
     const MIN = 4;
     for (const g of groups) {
@@ -919,6 +944,7 @@ export class LeagueCreateService {
             leagueGroupId: gd.leagueGroupId,
             teams: gd.teams,
             gameSetup,
+            resultsRoundGenV2,
           },
           tx
         );

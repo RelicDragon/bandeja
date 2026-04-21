@@ -1,0 +1,85 @@
+{
+  "errors": {
+    "generic": "Something went wrong",
+    "networkError": "Network error. Please check your connection",
+    "unauthorized": "You are not authorized. Please login",
+    "notFound": "Not found",
+    "serverError": "Server error. Please try again later",
+    "accessDenied": "Access denied. You don't have permission to view this content.",
+    "navigationError": "We're having trouble navigating. Refreshing the page...",
+    "invites": {
+      "mustSpecifyGameId": "Must specify gameId",
+      "receiverNotFound": "Receiver not found",
+      "onlyParticipantsCanSend": "Only participants can send invites",
+      "alreadySent": "Invite already sent to this user",
+      "notFound": "Invite not found",
+      "notAuthorizedToAccept": "Not authorized to accept this invite",
+      "notAuthorizedToDecline": "Not authorized to decline this invite",
+      "ownerCannotDecline": "Owner cannot decline this invite.",
+      "alreadyProcessed": "Invite has already been processed",
+      "expired": "Invite has expired",
+      "gameFull": "Game is full",
+      "gameNotFound": "Game not found",
+      "onlyParticipantsCanView": "Only participants can view game invites",
+      "onlySenderCanCancel": "Only the sender can cancel this invite",
+      "canOnlyCancelPending": "Can only cancel pending invites"
+    },
+    "userTeams": {
+      "blocked": "You cannot invite this player",
+      "userNotFound": "User not found",
+      "notFound": "Team not found",
+      "accessDenied": "You cannot view this team",
+      "onlyOwner": "Only the team owner can do this",
+      "onlyOwnerInvites": "Only the team owner can invite",
+      "teamFull": "This team is full",
+      "alreadyMember": "This player is already on the team",
+      "cannotInviteSelf": "You cannot invite yourself",
+      "inviteNotFound": "No pending invitation",
+      "invalidInvite": "Invalid invitation",
+      "memberNotFound": "Player not on team",
+      "cannotRemoveOwner": "Cannot remove the owner",
+      "userIdRequired": "Player is required",
+      "nameTooShort": "Team name must be at least 3 characters"
+    },
+    "games": {
+      "cannotJoin": "Cannot join game",
+      "cannotAddPlayer": "Cannot add player to game",
+      "alreadyParticipant": "User is already a participant",
+      "cannotJoinArchivedOrFinished": "Cannot join archived or finished game",
+      "directJoinNotAllowed": "Direct join is not allowed for this game",
+      "cannotDeleteHasChildren": "Cannot delete a game that has child games (e.g. tournament with rounds). Delete or remove child games first."
+    },
+    "league": {
+      "gameNotFound": "Game not found",
+      "playerIdsRequired": "At least one player is required",
+      "onlyLeagueRound": "Only league round games can have participants assigned directly",
+      "onlySeasonOwnerAdmin": "Only league season owner or admin can assign participants",
+      "mustBeSeasonParticipants": "All players must be participants of this league season",
+      "tooManyPlayers": "Too many players for this game"
+    },
+    "bugs": {
+      "notFound": "Bug not found",
+      "updateForbidden": "Only the bug creator or an admin can update this bug",
+      "textRequired": "Bug text is required",
+      "typeRequired": "Valid bug type is required",
+      "statusOrTypeRequired": "Valid status or bugType is required"
+    },
+    "favorites": {
+      "userIdRequired": "User ID is required",
+      "cannotAddYourself": "Cannot add yourself to favorites",
+      "userNotFound": "User not found",
+      "alreadyInFavorites": "User is already in favorites",
+      "userNotInFavorites": "User not found in favorites"
+    },
+    "syncPending": "Please wait for sync to complete",
+    "syncRequired": "Please sync to server before finishing",
+    "invalidSetIndex": "Invalid set index",
+    "invalidScores": "Scores cannot be negative",
+    "scoreExceedsMax": "Score cannot exceed {{max}}",
+    "totalScoreExceedsMax": "Total score cannot exceed {{max}}",
+    "roundNotFound": "Round not found",
+    "matchNotFound": "Match not found",
+    "setIndexExceedsMax": "Set index cannot exceed {{max}}",
+    "cannotRemoveLastSet": "Cannot remove the last set"
+  }
+}

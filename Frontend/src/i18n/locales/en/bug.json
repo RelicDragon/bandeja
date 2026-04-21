@@ -1,0 +1,66 @@
+{
+  "bug": {
+    "bug": "Bug",
+    "bugTracker": "Bug Tracker",
+    "addBug": "Add Bug",
+    "addSuggestion": "Add Suggestion",
+    "addQuestion": "Add Question",
+    "addProblem": "Add Problem",
+    "addTask": "Add Task",
+    "description": "Report bugs, suggestions, and questions to help improve the app",
+    "type": "Type",
+    "descriptionPlaceholder": "Describe the bug, suggestion, or question...",
+    "submit": "Submit",
+    "created": "Bug report submitted successfully",
+    "createError": "Failed to submit bug report",
+    "textRequired": "Bug description is required",
+    "loadError": "Failed to load bugs",
+    "noBugs": "No bugs reported yet",
+    "allTypes": "All Types",
+    "allActive": "All active",
+    "statusUpdated": "Bug status updated",
+    "statusUpdateError": "Failed to update bug status",
+    "typeUpdated": "Bug type updated",
+    "typeUpdateError": "Failed to update bug type",
+    "deleted": "Bug deleted",
+    "deleteError": "Failed to delete bug",
+    "openChat": "Open chat",
+    "actions": "Bug Actions",
+    "status": "Status",
+    "priority": "Priority",
+    "priorityUpdated": "Bug priority updated",
+    "changeStatus": "Change Status",
+    "changeType": "Change Type",
+    "updateFailed": "Failed to update bug",
+    "myBugsOnly": "Created by me",
+    "priorities": {
+      "0": "0",
+      "1": "+1",
+      "2": "+2",
+      "-2": "−2",
+      "-1": "−1"
+    },
+    "priorityLabels": {
+      "0": "Normal",
+      "1": "High",
+      "2": "Very high",
+      "-2": "Very low",
+      "-1": "Low"
+    },
+    "types": {
+      "BUG": "Bug",
+      "CRITICAL": "Critical",
+      "SUGGESTION": "Suggestion",
+      "QUESTION": "Question",
+      "TASK": "Task"
+    },
+    "statuses": {
+      "CREATED": "Created",
+      "CONFIRMED": "Confirmed",
+      "IN_PROGRESS": "In Progress",
+      "TEST": "Testing",
+      "FINISHED": "Finished",
+      "ARCHIVED": "Archived"
+    }
+  }
+}

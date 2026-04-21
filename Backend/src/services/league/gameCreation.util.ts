@@ -4,6 +4,8 @@ import { EntityType, Prisma, WinnerOfGame, WinnerOfMatch, MatchGenerationType } 
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { GameService } from '../game/game.service';
+import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
+import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 
 const PLAYOFF_GAME_TYPE_TEMPLATES: Record<
   'WINNER_COURT' | 'AMERICANO',
@@ -41,6 +43,7 @@ interface CreateLeagueGameParams {
 export interface PlayoffGameSetupOverrides {
   fixedNumberOfSets?: number;
   maxTotalPointsPerSet?: number;
+  matchTimedCapMinutes?: number;
   maxPointsPerTeam?: number;
   winnerOfGame?: WinnerOfGame;
   winnerOfMatch?: WinnerOfMatch;
@@ -49,7 +52,7 @@ export interface PlayoffGameSetupOverrides {
   pointsPerWin?: number;
   pointsPerLoose?: number;
   pointsPerTie?: number;
-  ballsInGames?: boolean;
+  scoringPreset?: string | null;
 }
 
 export interface CreateLeaguePlayoffGameParams {
@@ -62,6 +65,7 @@ export interface CreateLeaguePlayoffGameParams {
   /** When set, one GameTeam per entry (team = array of player user IDs). Game has hasFixedTeams: true. */
   teams?: string[][];
   gameSetup?: PlayoffGameSetupOverrides;
+  resultsRoundGenV2?: boolean;
 }
 
 export async function createLeagueGame(params: CreateLeagueGameParams) {
@@ -115,6 +119,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       genderTeams: seasonGame.genderTeams || 'ANY',
       fixedNumberOfSets: seasonGame.fixedNumberOfSets ?? 0,
       maxTotalPointsPerSet: seasonGame.maxTotalPointsPerSet ?? 0,
+      matchTimedCapMinutes: seasonGame.matchTimedCapMinutes ?? 0,
       maxPointsPerTeam: seasonGame.maxPointsPerTeam ?? 0,
       winnerOfGame: seasonGame.winnerOfGame ?? WinnerOfGame.BY_MATCHES_WON,
       winnerOfMatch: seasonGame.winnerOfMatch ?? WinnerOfMatch.BY_SCORES,
@@ -123,7 +128,11 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       pointsPerWin: seasonGame.pointsPerWin ?? 0,
       pointsPerLoose: seasonGame.pointsPerLoose ?? 0,
       pointsPerTie: seasonGame.pointsPerTie ?? 0,
-      ballsInGames: seasonGame.ballsInGames ?? true,
+      ballsInGames: deriveBallsInGamesFromScoring({
+        scoringPreset: seasonGame.scoringPreset ?? null,
+        winnerOfMatch: seasonGame.winnerOfMatch ?? WinnerOfMatch.BY_SCORES,
+        maxTotalPointsPerSet: seasonGame.maxTotalPointsPerSet ?? 0,
+      }),
       parentId: leagueSeasonId,
       leagueRoundId: leagueRoundId,
       leagueGroupId,
@@ -173,7 +182,17 @@ export async function createLeaguePlayoffGame(
   params: CreateLeaguePlayoffGameParams,
   tx?: Prisma.TransactionClient
 ) {
-  const { leagueRoundId, leagueSeasonId, seasonGame, gameType, participantUserIds, leagueGroupId, teams, gameSetup } = params;
+  const {
+    leagueRoundId,
+    leagueSeasonId,
+    seasonGame,
+    gameType,
+    participantUserIds,
+    leagueGroupId,
+    teams,
+    gameSetup,
+    resultsRoundGenV2,
+  } = params;
   const db = tx ?? prisma;
 
   const round = await db.leagueRound.findUnique({
@@ -216,15 +235,24 @@ export async function createLeaguePlayoffGame(
       genderTeams: seasonGame.genderTeams || 'ANY',
       fixedNumberOfSets: gameSetup?.fixedNumberOfSets ?? template.fixedNumberOfSets,
       maxTotalPointsPerSet: gameSetup?.maxTotalPointsPerSet ?? seasonGame.maxTotalPointsPerSet ?? 0,
+      matchTimedCapMinutes: gameSetup?.matchTimedCapMinutes ?? seasonGame.matchTimedCapMinutes ?? 0,
       maxPointsPerTeam: gameSetup?.maxPointsPerTeam ?? seasonGame.maxPointsPerTeam ?? 0,
       winnerOfGame: gameSetup?.winnerOfGame ?? template.winnerOfGame,
       winnerOfMatch: gameSetup?.winnerOfMatch ?? template.winnerOfMatch,
-      matchGenerationType: gameSetup?.matchGenerationType ?? template.matchGenerationType,
+      matchGenerationType: resolveMatchGenerationType({
+        resultsRoundGenV2,
+        matchGenerationType: gameSetup?.matchGenerationType ?? template.matchGenerationType,
+        maxParticipants: participantCount,
+      }),
       prohibitMatchesEditing: gameSetup?.prohibitMatchesEditing ?? seasonGame.prohibitMatchesEditing ?? false,
       pointsPerWin: gameSetup?.pointsPerWin ?? seasonGame.pointsPerWin ?? 0,
       pointsPerLoose: gameSetup?.pointsPerLoose ?? seasonGame.pointsPerLoose ?? 0,
       pointsPerTie: gameSetup?.pointsPerTie ?? seasonGame.pointsPerTie ?? 0,
-      ballsInGames: gameSetup?.ballsInGames ?? template.ballsInGames,
+      ballsInGames: deriveBallsInGamesFromScoring({
+        scoringPreset: gameSetup?.scoringPreset ?? seasonGame.scoringPreset ?? null,
+        winnerOfMatch: gameSetup?.winnerOfMatch ?? template.winnerOfMatch,
+        maxTotalPointsPerSet: gameSetup?.maxTotalPointsPerSet ?? seasonGame.maxTotalPointsPerSet ?? 0,
+      }),
       parentId: leagueSeasonId,
       leagueRoundId,
       leagueGroupId,

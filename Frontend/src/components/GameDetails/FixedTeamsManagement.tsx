@@ -12,9 +12,11 @@ import { useAuthStore } from '@/store/authStore';
 interface FixedTeamsManagementProps {
   game: Game;
   onGameUpdate: (game: Game) => void;
+  /** Omit outer Card and section title — for use inside GameFormatCard */
+  embedded?: boolean;
 }
 
-export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagementProps) => {
+export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: FixedTeamsManagementProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const isOwner = game?.participants.some(
@@ -263,75 +265,72 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
   };
 
   if (loading || !game) {
-    return (
-      <Card>
-        <div className="flex items-center justify-center py-8">
-          <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
-        </div>
-      </Card>
+    const spinner = (
+      <div className="flex items-center justify-center py-8">
+        <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600" />
+      </div>
     );
+    return embedded ? spinner : <Card>{spinner}</Card>;
   }
 
   // Check if max participants is odd - fixed teams require even number
   if (game.maxParticipants % 2 !== 0) {
-    return (
+    const body = (
+      <div className="text-center py-6">
+        <div className="text-yellow-600 dark:text-yellow-400 mb-2">
+          <Users size={embedded ? 36 : 48} className={`mx-auto ${embedded ? 'mb-2' : 'mb-4'}`} />
+        </div>
+        <h3 className={`font-medium text-gray-900 dark:text-white mb-2 ${embedded ? 'text-sm' : 'text-lg'}`}>
+          {t('games.evenPlayersRequired')}
+        </h3>
+        <p className={`text-gray-600 dark:text-gray-400 ${embedded ? 'text-xs' : ''}`}>
+          {t('games.fixedTeamsNeedEvenPlayers')}
+        </p>
+      </div>
+    );
+    return embedded ? (
+      body
+    ) : (
       <Card>
         <div className="flex items-center gap-2 mb-3">
           <Users size={18} className="text-gray-500 dark:text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('games.fixedTeams')}
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('games.fixedTeams')}</h2>
         </div>
-        <div className="text-center py-8">
-          <div className="text-yellow-600 dark:text-yellow-400 mb-2">
-            <Users size={48} className="mx-auto mb-4" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            {t('games.evenPlayersRequired')}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            {t('games.fixedTeamsNeedEvenPlayers')}
-          </p>
-        </div>
+        {body}
       </Card>
     );
   }
 
   // Check if not all participants are ready
   if (!game.participantsReady) {
-    return (
+    const body = (
+      <div className="text-center py-6">
+        <div className="text-blue-600 dark:text-blue-400 mb-2">
+          <Users size={embedded ? 36 : 48} className={`mx-auto ${embedded ? 'mb-2' : 'mb-4'}`} />
+        </div>
+        <h3 className={`font-medium text-gray-900 dark:text-white mb-2 ${embedded ? 'text-sm' : 'text-lg'}`}>
+          {t('games.waitingForPlayers')}
+        </h3>
+        <p className={`text-gray-600 dark:text-gray-400 ${embedded ? 'text-xs' : ''}`}>
+          {t('games.allPlayersMustJoin')}
+        </p>
+      </div>
+    );
+    return embedded ? (
+      body
+    ) : (
       <Card>
         <div className="flex items-center gap-2 mb-3">
           <Users size={18} className="text-gray-500 dark:text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('games.fixedTeams')}
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('games.fixedTeams')}</h2>
         </div>
-        <div className="text-center py-8">
-          <div className="text-blue-600 dark:text-blue-400 mb-2">
-            <Users size={48} className="mx-auto mb-4" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            {t('games.waitingForPlayers')}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            {t('games.allPlayersMustJoin')}
-          </p>
-        </div>
+        {body}
       </Card>
     );
   }
 
-  return (
-    <Card>
-      <div className="flex items-center gap-2 mb-3">
-        <Users size={18} className="text-gray-500 dark:text-gray-400" />
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {t('games.fixedTeams')}
-        </h2>
-      </div>
-
-
+  const main = (
+    <>
       {teams?.map((team, index) => {
         // Create exactly 2 player slots for each team
         const playerSlots = [];
@@ -432,6 +431,20 @@ export const FixedTeamsManagement = ({ game, onGameUpdate }: FixedTeamsManagemen
           title={t('games.addPlayer')}
         />
       )}
+    </>
+  );
+
+  if (embedded) {
+    return <div className="space-y-3">{main}</div>;
+  }
+
+  return (
+    <Card>
+      <div className="flex items-center gap-2 mb-3">
+        <Users size={18} className="text-gray-500 dark:text-gray-400" />
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('games.fixedTeams')}</h2>
+      </div>
+      {main}
     </Card>
   );
 };

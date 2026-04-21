@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+Avoid (if it's possible) creating custom migration files - use 'npx run migrate dev' to auto-create it.

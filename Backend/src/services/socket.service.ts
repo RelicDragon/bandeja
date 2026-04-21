@@ -1026,6 +1026,24 @@ class SocketService {
     }
   }
 
+  public emitMatchTimerUpdated(
+    gameId: string,
+    matchId: string,
+    snapshot: {
+      status: string;
+      startedAt: string | null;
+      pausedAt: string | null;
+      elapsedMs: number;
+      capMinutes: number | null;
+      serverNow: string;
+      expiresAt: string | null;
+      capJustNotified?: boolean;
+    }
+  ) {
+    const roomName = `game-${gameId}`;
+    this.io.to(roomName).emit('match-timer-updated', { gameId, matchId, snapshot });
+  }
+
   public emitGameCancelled(gameId: string, meta: { entityType: string; name?: string; cancelledAt: string; cancelledByUser?: unknown }) {
     const roomName = `game-${gameId}`;
     this.io.to(roomName).emit('game-cancelled', { gameId, ...meta });
