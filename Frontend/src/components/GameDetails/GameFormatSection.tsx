@@ -125,6 +125,11 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
         <GameFormatWizard
           isOpen={isWizardOpen}
           format={gameFormat}
+          wizardEntityType={game.entityType}
+          generationSlotCount={
+            game.maxParticipants != null && game.maxParticipants > 0 ? game.maxParticipants : undefined
+          }
+          hasFixedTeams={hasFixedTeams}
           onClose={() => setIsWizardOpen(false)}
           onDone={handleDone}
         />

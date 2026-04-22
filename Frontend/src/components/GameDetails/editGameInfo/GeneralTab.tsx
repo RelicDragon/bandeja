@@ -1,14 +1,10 @@
-import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Game, GameType } from '@/types';
-import { AvatarUpload, GameFormatCard, GameFormatWizard } from '@/components';
-import type { GameFormatTeamsBinding } from '@/components/gameFormat';
-import { UseGameFormatResult } from '@/hooks/useGameFormat';
+import { Game } from '@/types';
+import { AvatarUpload } from '@/components';
 
 export interface GeneralTabState {
   name: string;
   description: string;
-  gameType: GameType;
   pendingAvatar: { avatar: File; original: File } | null;
   removeAvatar: boolean;
 }
@@ -18,9 +14,6 @@ interface GeneralTabProps {
   state: GeneralTabState;
   onChange: (patch: Partial<GeneralTabState>) => void;
   avatarPreviewUrl?: string | null;
-  format?: UseGameFormatResult;
-  formatTeams?: GameFormatTeamsBinding;
-  formatFixedTeamsPanel?: ReactNode;
 }
 
 export const GeneralTab = ({
@@ -28,9 +21,6 @@ export const GeneralTab = ({
   state,
   onChange,
   avatarPreviewUrl,
-  format,
-  formatTeams,
-  formatFixedTeamsPanel,
 }: GeneralTabProps) => {
   const { t } = useTranslation();
   const isLeagueSeason = game?.entityType === 'LEAGUE_SEASON';
@@ -38,7 +28,6 @@ export const GeneralTab = ({
   const namePlaceholder = t(isLeagueSeason ? 'createGame.gameNamePlaceholderLeague' : 'createGame.gameNamePlaceholder');
   const commentsLabel = t(isLeagueSeason ? 'createGame.commentsLeague' : 'createGame.comments');
   const commentsPlaceholder = t(isLeagueSeason ? 'createGame.commentsPlaceholderLeague' : 'createGame.commentsPlaceholder');
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const currentAvatar = state.removeAvatar ? undefined : (avatarPreviewUrl ?? game.avatar ?? undefined);
 
@@ -57,38 +46,6 @@ export const GeneralTab = ({
           />
         </div>
       </div>
-
-      {game.entityType !== 'TRAINING' && format && (
-        <>
-          <GameFormatCard
-            entityType={game.entityType}
-            format={format}
-            generationSlotCount={
-              game.maxParticipants != null && game.maxParticipants > 0 ? game.maxParticipants : undefined
-            }
-            onOpenWizard={() => setIsWizardOpen(true)}
-            teams={
-              formatTeams
-                ? { ...formatTeams, genderSwitchLayoutId: 'editGameInfoFormatCardTeams' }
-                : undefined
-            }
-            fixedTeamsPanel={formatFixedTeamsPanel}
-            fixedTeamsPanelOpen={
-              formatFixedTeamsPanel && formatTeams ? !!formatTeams.hasFixedTeams : undefined
-            }
-          />
-          {isWizardOpen && (
-            <GameFormatWizard
-              isOpen={isWizardOpen}
-              format={format}
-              onClose={() => {
-                setIsWizardOpen(false);
-                onChange({ gameType: format.gameType });
-              }}
-            />
-          )}
-        </>
-      )}
 
       <div>
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">{nameLabel}</label>

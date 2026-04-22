@@ -186,7 +186,6 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
 
       {currentHistory.length > 0 ? (
         <>
-          <LevelHistoryTabController activeTab={activeTab} onTabChange={setActiveTab} darkBgClass={tabDarkBgClass} />
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
             <div className="relative h-48 select-none" style={{ userSelect: 'none', WebkitUserSelect: 'none' }} onClick={() => setActiveChartIndex(null)}>
               <style>{`
@@ -389,6 +388,9 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                 }
                 return null;
               })()}
+            </div>
+            <div className="mt-3">
+              <LevelHistoryTabController activeTab={activeTab} onTabChange={setActiveTab} darkBgClass={tabDarkBgClass} />
             </div>
           </div>
 

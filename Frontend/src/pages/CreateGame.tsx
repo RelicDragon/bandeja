@@ -700,6 +700,9 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         <GameFormatWizard
           isOpen={isFormatWizardOpen}
           format={gameFormat}
+          wizardEntityType={entityType}
+          generationSlotCount={maxParticipants > 0 ? maxParticipants : undefined}
+          hasFixedTeams={hasFixedTeams}
           onClose={() => setIsFormatWizardOpen(false)}
         />
       )}

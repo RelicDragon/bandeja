@@ -2,12 +2,20 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
-import { Button, CreateGameHeader, LeagueLocationSection, LeagueSeasonSection, GameSetupModal } from '@/components';
+import {
+  Button,
+  CreateGameHeader,
+  LeagueLocationSection,
+  LeagueSeasonSection,
+  GameFormatCard,
+  GameFormatWizard,
+} from '@/components';
 import { clubsApi, citiesApi } from '@/api';
 import { leaguesApi } from '@/api/leagues';
 import { mediaApi } from '@/api/media';
-import { Club, City, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@/types';
+import { Club, City } from '@/types';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
+import { useGameFormat } from '@/hooks/useGameFormat';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
 import { useAuthStore } from '@/store/authStore';
 import { maxLeagueSeasonParticipantsCap } from '@/utils/userMaxParticipantsInGame';
@@ -33,23 +41,19 @@ export const CreateLeague = () => {
   const [playerLevelRange, setPlayerLevelRange] = useState<[number, number]>([1.0, 7.0]);
   const [maxParticipants, setMaxParticipants] = useState<number>(4);
   const [startDate, setStartDate] = useState<Date | null>(null);
-  
-  const [isSeasonSetupModalOpen, setIsSeasonSetupModalOpen] = useState(false);
+
   const [pendingSeasonAvatarFiles, setPendingSeasonAvatarFiles] = useState<{ avatar: File; original: File } | null>(null);
-  const [gameSetupSeason, setGameSetupSeason] = useState<{
-    fixedNumberOfSets?: number;
-    maxTotalPointsPerSet?: number;
-    maxPointsPerTeam?: number;
-    winnerOfGame?: WinnerOfGame;
-    winnerOfMatch?: WinnerOfMatch;
-    matchGenerationType?: MatchGenerationType;
-    prohibitMatchesEditing?: boolean;
-    pointsPerWin?: number;
-    pointsPerLoose?: number;
-    pointsPerTie?: number;
-    ballsInGames?: boolean;
-  }>({});
-  
+  const [isLeagueFormatWizardOpen, setIsLeagueFormatWizardOpen] = useState(false);
+
+  const leagueGameFormat = useGameFormat(
+    {
+      maxParticipants,
+      matchGenerationType: 'HANDMADE',
+      scoringMode: 'CLASSIC',
+    },
+    { skipGenerationParticipantDefaults: true },
+  );
+
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -91,22 +95,6 @@ export const CreateLeague = () => {
     return true;
   });
 
-  const handleSeasonSetupConfirm = (params: {
-    fixedNumberOfSets: number;
-    maxTotalPointsPerSet: number;
-    maxPointsPerTeam: number;
-    winnerOfGame: WinnerOfGame;
-    winnerOfMatch: WinnerOfMatch;
-    matchGenerationType: MatchGenerationType;
-    prohibitMatchesEditing?: boolean;
-    pointsPerWin: number;
-    pointsPerLoose: number;
-    pointsPerTie: number;
-    ballsInGames: boolean;
-  }) => {
-    setGameSetupSeason(params);
-  };
-
   const handleCreateLeague = async () => {
     if (!name.trim()) {
       return;
@@ -122,6 +110,7 @@ export const CreateLeague = () => {
         return;
       }
 
+      const setup = leagueGameFormat.setupPayload;
       const leagueResponse = await leaguesApi.create({
         ...resultsRoundGenV2Payload,
         name: name.trim(),
@@ -134,18 +123,24 @@ export const CreateLeague = () => {
           maxLevel: playerLevelRange[1],
           maxParticipants,
           startDate: startDate.toISOString(),
-          gameSeason: Object.keys(gameSetupSeason).length > 0 ? {
-            fixedNumberOfSets: gameSetupSeason.fixedNumberOfSets ?? 0,
-            maxTotalPointsPerSet: gameSetupSeason.maxTotalPointsPerSet ?? 0,
-            maxPointsPerTeam: gameSetupSeason.maxPointsPerTeam ?? 0,
-            winnerOfGame: gameSetupSeason.winnerOfGame ?? 'BY_MATCHES_WON',
-            winnerOfMatch: gameSetupSeason.winnerOfMatch ?? 'BY_SCORES',
-            matchGenerationType: gameSetupSeason.matchGenerationType ?? 'HANDMADE',
-            prohibitMatchesEditing: gameSetupSeason.prohibitMatchesEditing ?? false,
-            pointsPerWin: gameSetupSeason.pointsPerWin ?? 0,
-            pointsPerLoose: gameSetupSeason.pointsPerLoose ?? 0,
-            pointsPerTie: gameSetupSeason.pointsPerTie ?? 0,
-          } : undefined,
+          gameSeason: {
+            fixedNumberOfSets: setup.fixedNumberOfSets,
+            maxTotalPointsPerSet: setup.maxTotalPointsPerSet,
+            maxPointsPerTeam: setup.maxPointsPerTeam,
+            matchTimedCapMinutes: setup.matchTimedCapMinutes,
+            winnerOfGame: setup.winnerOfGame,
+            winnerOfMatch: setup.winnerOfMatch,
+            matchGenerationType: setup.matchGenerationType,
+            prohibitMatchesEditing: setup.prohibitMatchesEditing ?? false,
+            pointsPerWin: setup.pointsPerWin,
+            pointsPerLoose: setup.pointsPerLoose,
+            pointsPerTie: setup.pointsPerTie,
+            ballsInGames: setup.ballsInGames,
+            scoringPreset: setup.scoringPreset ?? undefined,
+            scoringMode: leagueGameFormat.scoringMode,
+            hasGoldenPoint: setup.hasGoldenPoint ?? false,
+            gameType: leagueGameFormat.gameType,
+          },
         },
       });
 
@@ -236,14 +231,21 @@ export const CreateLeague = () => {
             isUploadingAvatar={loading}
           />
 
-          <Button
-            onClick={() => setIsSeasonSetupModalOpen(true)}
-            className="w-full py-3 text-base font-semibold"
-            size="lg"
-            variant="outline"
-          >
-            {t('createLeague.gameSetupSeason')}
-          </Button>
+          <GameFormatCard
+            entityType="LEAGUE_SEASON"
+            format={leagueGameFormat}
+            generationSlotCount={maxParticipants}
+            onOpenWizard={() => setIsLeagueFormatWizardOpen(true)}
+          />
+          {isLeagueFormatWizardOpen && (
+            <GameFormatWizard
+              isOpen={isLeagueFormatWizardOpen}
+              format={leagueGameFormat}
+              wizardEntityType="LEAGUE_SEASON"
+              generationSlotCount={maxParticipants}
+              onClose={() => setIsLeagueFormatWizardOpen(false)}
+            />
+          )}
 
           <Button
             onClick={handleCreateLeague}
@@ -263,18 +265,6 @@ export const CreateLeague = () => {
         </div>
       </div>
 
-      {isSeasonSetupModalOpen && (
-        <GameSetupModal
-          isOpen={isSeasonSetupModalOpen}
-          entityType="LEAGUE"
-          isEditing={true}
-          confirmButtonText={t('common.save')}
-          initialValues={gameSetupSeason}
-          maxParticipants={maxParticipants}
-          onClose={() => setIsSeasonSetupModalOpen(false)}
-          onConfirm={handleSeasonSetupConfirm}
-        />
-      )}
     </div>
   );
 };

@@ -18,6 +18,7 @@ export interface CreateLeagueRequest {
       fixedNumberOfSets: number;
       maxTotalPointsPerSet: number;
       maxPointsPerTeam: number;
+      matchTimedCapMinutes?: number;
       winnerOfGame: string;
       winnerOfMatch: string;
       matchGenerationType: string;
@@ -25,6 +26,11 @@ export interface CreateLeagueRequest {
       pointsPerWin: number;
       pointsPerLoose: number;
       pointsPerTie: number;
+      ballsInGames?: boolean;
+      scoringPreset?: string | null;
+      scoringMode?: string;
+      hasGoldenPoint?: boolean;
+      gameType?: string;
     };
   };
 }

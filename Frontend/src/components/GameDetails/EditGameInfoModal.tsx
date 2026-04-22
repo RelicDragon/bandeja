@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Save, Edit3, Clock, MapPin, Banknote } from 'lucide-react';
-import { Game, Club, Court, GameType, PriceType, PriceCurrency, GenderTeam } from '@/types';
+import { Game, Club, Court, PriceType, PriceCurrency } from '@/types';
 import { addHours } from 'date-fns';
 import { createDateFromClubTime } from '@/hooks/useGameTimeDuration';
-import { useGameFormat } from '@/hooks/useGameFormat';
 import { gamesApi, courtsApi, mediaApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { resolveUserCurrency } from '@/utils/currency';
@@ -12,14 +11,10 @@ import toast from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { GeneralTab, type GeneralTabState } from './editGameInfo/GeneralTab';
-import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
-import type { GameFormatTeamsBinding } from '@/components/gameFormat';
 import { WhenTab } from './editGameInfo/WhenTab';
 import { WhereTab, type WhereTabState } from './editGameInfo/WhereTab';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
-import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
-
 export type EditGameInfoTabId = 'general' | 'when' | 'where' | 'price';
 
 interface EditGameInfoModalProps {
@@ -44,7 +39,6 @@ function getInitialGeneralState(game: Game): GeneralTabState {
   return {
     name: game.name || '',
     description: game.description || '',
-    gameType: (game.gameType as GameType) || 'CLASSIC',
     pendingAvatar: null,
     removeAvatar: false,
   };
@@ -67,13 +61,6 @@ function getInitialPriceState(game: Game, userCurrency: PriceCurrency): PriceTab
   };
 }
 
-function getInitialTeamsState(game: Game): { genderTeams: GenderTeam; hasFixedTeams: boolean } {
-  return {
-    genderTeams: (game.genderTeams ?? 'ANY') as GenderTeam,
-    hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams ?? false),
-  };
-}
-
 export const EditGameInfoModal = ({
   isOpen,
   onClose,
@@ -89,11 +76,9 @@ export const EditGameInfoModal = ({
   const userCurrency = resolveUserCurrency(user?.defaultCurrency);
 
   const [activeTab, setActiveTab] = useState<EditGameInfoTabId>(initialTab);
-  const format = useGameFormat(game);
   const [general, setGeneral] = useState<GeneralTabState>(() => getInitialGeneralState(game));
   const [where, setWhere] = useState<WhereTabState>(() => getInitialWhereState(game));
   const [price, setPrice] = useState<PriceTabState>(() => getInitialPriceState(game, userCurrency));
-  const [teamsState, setTeamsState] = useState(() => getInitialTeamsState(game));
   const [whenSelectedDate, setWhenSelectedDate] = useState<Date>(() =>
     game.startTime ? new Date(game.startTime) : new Date()
   );
@@ -156,7 +141,6 @@ export const EditGameInfoModal = ({
       setGeneral(getInitialGeneralState(game));
       setWhere(getInitialWhereState(game));
       setPrice(getInitialPriceState(game, userCurrency));
-      setTeamsState(getInitialTeamsState(game));
       setWhenSelectedDate(whenInitialValues.initialDate);
       setWhenSelectedTime(whenInitialValues.initialTime);
       setWhenDuration(whenInitialValues.initialDuration);
@@ -268,35 +252,6 @@ export const EditGameInfoModal = ({
         priceType: price.priceType,
       };
 
-      if (game.entityType !== 'TRAINING') {
-        const setup = format.setupPayload;
-        updateData.gameType = format.gameType;
-        updateData.scoringPreset = setup.scoringPreset;
-        updateData.hasGoldenPoint = setup.hasGoldenPoint;
-        updateData.winnerOfMatch = setup.winnerOfMatch;
-        updateData.winnerOfGame = setup.winnerOfGame;
-        updateData.matchGenerationType = setup.matchGenerationType;
-        Object.assign(updateData, resultsRoundGenV2Payload);
-        updateData.pointsPerWin = setup.pointsPerWin;
-        updateData.pointsPerLoose = setup.pointsPerLoose;
-        updateData.pointsPerTie = setup.pointsPerTie;
-        updateData.ballsInGames = setup.ballsInGames;
-        updateData.fixedNumberOfSets = setup.fixedNumberOfSets;
-        updateData.maxTotalPointsPerSet = setup.maxTotalPointsPerSet;
-        updateData.matchTimedCapMinutes = setup.matchTimedCapMinutes;
-        updateData.maxPointsPerTeam = setup.maxPointsPerTeam;
-        updateData.prohibitMatchesEditing = setup.prohibitMatchesEditing;
-        updateData.hasFixedTeams = game.maxParticipants === 2 ? false : teamsState.hasFixedTeams;
-        if (
-          game.entityType === 'GAME' ||
-          game.entityType === 'TOURNAMENT' ||
-          game.entityType === 'LEAGUE' ||
-          game.entityType === 'LEAGUE_SEASON'
-        ) {
-          updateData.genderTeams = teamsState.genderTeams;
-        }
-      }
-
       if (general.removeAvatar) {
         updateData.avatar = null;
         updateData.originalAvatar = null;
@@ -340,19 +295,6 @@ export const EditGameInfoModal = ({
 
   if (!isOpen) return null;
 
-  const formatTeams: GameFormatTeamsBinding = {
-    participantCount: game.maxParticipants ?? 0,
-    genderTeams: teamsState.genderTeams,
-    hasFixedTeams: teamsState.hasFixedTeams,
-    onGenderTeamsChange: (v) => setTeamsState((s) => ({ ...s, genderTeams: v })),
-    onHasFixedTeamsChange: (v) => setTeamsState((s) => ({ ...s, hasFixedTeams: v })),
-  };
-
-  const formatFixedTeamsPanel =
-    game.entityType !== 'TRAINING' && game.entityType !== 'BAR' && onGameUpdate ? (
-      <FixedTeamsManagement embedded game={game} onGameUpdate={onGameUpdate} />
-    ) : undefined;
-
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="edit-game-info-modal">
       <DialogContent className="max-w-[480px]">
@@ -373,9 +315,6 @@ export const EditGameInfoModal = ({
               state={general}
               onChange={(patch) => setGeneral((s) => ({ ...s, ...patch }))}
               avatarPreviewUrl={avatarPreviewUrl}
-              format={format}
-              formatTeams={formatTeams}
-              formatFixedTeamsPanel={formatFixedTeamsPanel}
             />
           )}
           {activeTab === 'when' && (

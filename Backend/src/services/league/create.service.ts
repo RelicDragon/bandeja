@@ -1,6 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { EntityType, WinnerOfGame, WinnerOfMatch, RoundType } from '@prisma/client';
+import { EntityType, GameType, WinnerOfGame, WinnerOfMatch, RoundType, ScoringPreset } from '@prisma/client';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { getDistinctLeagueGroupColor } from './groupColors';
 import { createLeagueGame, createLeaguePlayoffGame, PlayoffGameSetupOverrides } from './gameCreation.util';
@@ -65,13 +65,14 @@ export class LeagueCreateService {
     const gameSeasonGame = await prisma.game.create({
       data: {
         entityType: 'LEAGUE_SEASON' as EntityType,
-        gameType: 'CLASSIC',
+        gameType: (gameSeasonData.gameType as GameType) ?? GameType.CLASSIC,
         name: seasonName,
         avatar: data.season?.avatar,
         originalAvatar: data.season?.originalAvatar,
         fixedNumberOfSets: gameSeasonData.fixedNumberOfSets ?? 0,
         maxTotalPointsPerSet: gameSeasonData.maxTotalPointsPerSet ?? 0,
         maxPointsPerTeam: gameSeasonData.maxPointsPerTeam ?? 0,
+        matchTimedCapMinutes: gameSeasonData.matchTimedCapMinutes ?? 0,
         winnerOfGame: (gameSeasonData.winnerOfGame as WinnerOfGame) ?? WinnerOfGame.BY_MATCHES_WON,
         winnerOfMatch: (gameSeasonData.winnerOfMatch as WinnerOfMatch) ?? WinnerOfMatch.BY_SCORES,
         matchGenerationType: resolveMatchGenerationType({
@@ -83,11 +84,17 @@ export class LeagueCreateService {
         pointsPerWin: gameSeasonData.pointsPerWin ?? 0,
         pointsPerLoose: gameSeasonData.pointsPerLoose ?? 0,
         pointsPerTie: gameSeasonData.pointsPerTie ?? 0,
-        ballsInGames: deriveBallsInGamesFromScoring({
-          scoringPreset: gameSeasonData.scoringPreset ?? null,
-          winnerOfMatch: (gameSeasonData.winnerOfMatch as WinnerOfMatch) ?? WinnerOfMatch.BY_SCORES,
-          maxTotalPointsPerSet: gameSeasonData.maxTotalPointsPerSet ?? 0,
-        }),
+        scoringPreset: (gameSeasonData.scoringPreset as ScoringPreset | null) ?? null,
+        scoringMode: gameSeasonData.scoringMode != null ? String(gameSeasonData.scoringMode) : null,
+        hasGoldenPoint: gameSeasonData.hasGoldenPoint ?? false,
+        ballsInGames:
+          typeof gameSeasonData.ballsInGames === 'boolean'
+            ? gameSeasonData.ballsInGames
+            : deriveBallsInGamesFromScoring({
+                scoringPreset: gameSeasonData.scoringPreset ?? null,
+                winnerOfMatch: (gameSeasonData.winnerOfMatch as WinnerOfMatch) ?? WinnerOfMatch.BY_SCORES,
+                maxTotalPointsPerSet: gameSeasonData.maxTotalPointsPerSet ?? 0,
+              }),
         hasFixedTeams: data.hasFixedTeams ?? false,
         cityId: data.cityId,
         clubId: data.clubId || null,

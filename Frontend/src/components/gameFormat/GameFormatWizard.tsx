@@ -9,11 +9,12 @@ import {
   DialogTitle,
 } from '@/components/ui/Dialog';
 import { OVERLAY_CONTROL_GLASS_STABLE } from '@/components/ui/overlayControlGlass';
-import { ScoringPreset } from '@/types';
+import { EntityType, MatchGenerationType, ScoringPreset } from '@/types';
 import { GameFormatStepScoringMode } from './GameFormatStepScoringMode';
 import { GameFormatStepSetStructure } from './GameFormatStepSetStructure';
 import { GameFormatStepPointsTotal } from './GameFormatStepPointsTotal';
 import { GameFormatStepRanking } from './GameFormatStepRanking';
+import { GameFormatStepGeneration } from './GameFormatStepGeneration';
 import { GameFormatSummary } from './GameFormatSummary';
 import { UseGameFormatResult } from '@/hooks/useGameFormat';
 
@@ -21,6 +22,7 @@ export type GameFormatWizardStep =
   | 'scoringMode'
   | 'setStructure'
   | 'pointsTotal'
+  | 'generation'
   | 'ranking';
 
 interface GameFormatWizardProps {
@@ -28,6 +30,13 @@ interface GameFormatWizardProps {
   format: UseGameFormatResult;
   onClose: () => void;
   onDone?: () => void;
+  /** When set (and generation step is shown), users can pick match generation. */
+  wizardEntityType?: EntityType;
+  /** Max participants / capacity — generation options and copy (omit or 0 to allow all defs). */
+  generationSlotCount?: number;
+  hasFixedTeams?: boolean;
+  /** e.g. playoff: scoring wizard only, generation fixed by template */
+  hideGenerationStep?: boolean;
 }
 
 const CLASSIC_STRUCTURE_PRESETS: ScoringPreset[] = [
@@ -68,6 +77,16 @@ function isRankingStepValid(f: UseGameFormatResult): boolean {
   return f.pointsPerWin + f.pointsPerTie + f.pointsPerLoose > 0;
 }
 
+const rotationGeneration = (g: MatchGenerationType) =>
+  g !== 'HANDMADE' && g !== 'FIXED' && g !== 'AUTOMATIC';
+
+const prohibitPill = (active: boolean) =>
+  `flex-1 px-3 py-2 text-xs rounded-lg font-semibold transition-all duration-200 ${
+    active
+      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md'
+      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+  }`;
+
 function canFloatingContinueForStep(step: GameFormatWizardStep, f: UseGameFormatResult): boolean {
   if (step === 'setStructure') return isSetStructureStepValid(f);
   if (step === 'pointsTotal') return isPointsTotalStepValid(f);
@@ -104,6 +123,10 @@ export const GameFormatWizard = ({
   format,
   onClose,
   onDone,
+  wizardEntityType,
+  generationSlotCount,
+  hasFixedTeams,
+  hideGenerationStep = false,
 }: GameFormatWizardProps) => {
   const { t } = useTranslation();
 
@@ -113,13 +136,17 @@ export const GameFormatWizard = ({
   const prevStepsSigRef = useRef('');
   const lastViewedStepRef = useRef<GameFormatWizardStep>('scoringMode');
 
+  const showGenerationStep =
+    Boolean(wizardEntityType) && !hideGenerationStep && generationSlotCount !== 2;
+
   const currentSteps = useMemo((): GameFormatWizardStep[] => {
     const arr: GameFormatWizardStep[] = ['scoringMode'];
     if (format.scoringMode === 'CLASSIC') arr.push('setStructure');
     if (format.scoringMode === 'POINTS') arr.push('pointsTotal');
+    if (showGenerationStep && wizardEntityType) arr.push('generation');
     arr.push('ranking');
     return arr;
-  }, [format.scoringMode]);
+  }, [format.scoringMode, showGenerationStep, wizardEntityType]);
 
   const stepsSig = useMemo(() => currentSteps.join(','), [currentSteps]);
 
@@ -273,6 +300,46 @@ export const GameFormatWizard = ({
                   onCustomPointsChange={format.setCustomPointsTotal}
                   onSelectAdvance={handleNext}
                 />
+              )}
+              {safeCurrentStep === 'generation' && wizardEntityType && (
+                <div className="space-y-4">
+                  <GameFormatStepGeneration
+                    generationType={format.generationType}
+                    scoringMode={format.scoringMode}
+                    entityType={wizardEntityType}
+                    maxParticipants={generationSlotCount}
+                    hasFixedTeams={hasFixedTeams}
+                    onChange={(gen) => {
+                      format.setGenerationType(gen);
+                      if (gen === 'HANDMADE' || gen === 'FIXED' || gen === 'AUTOMATIC') {
+                        format.setRanking({ prohibitMatchesEditing: false });
+                      }
+                    }}
+                  />
+                  {rotationGeneration(format.generationType) && (
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        {t('gameResults.prohibitMatchesEditing')}
+                      </label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => format.setRanking({ prohibitMatchesEditing: false })}
+                          className={prohibitPill(!format.prohibitMatchesEditing)}
+                        >
+                          {t('gameResults.allow')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => format.setRanking({ prohibitMatchesEditing: true })}
+                          className={prohibitPill(format.prohibitMatchesEditing)}
+                        >
+                          {t('gameResults.prohibit')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
               {safeCurrentStep === 'ranking' && (
                 <GameFormatStepRanking

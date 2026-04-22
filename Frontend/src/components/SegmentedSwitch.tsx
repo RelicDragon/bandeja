@@ -1,10 +1,13 @@
-import { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import type { ComponentType } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+export type SegmentedSwitchIcon = LucideIcon | ComponentType<{ size?: number; className?: string }>;
 
 export interface SegmentedSwitchTab {
   id: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: SegmentedSwitchIcon;
   badge?: number;
   ariaLabel?: string;
 }

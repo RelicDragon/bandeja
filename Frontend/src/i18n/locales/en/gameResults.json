@@ -132,6 +132,7 @@
     "games": "Games",
     "gamesPlayed": "Matches played",
     "playerStatsNoMatches": "No played matches",
+    "playerStatsExpandAllMatches": "Expand all matches",
     "playerNotInRound": "{{playerName}} is not participating in round {{roundNumber}}",
     "loss": "Loss",
     "tie": "Tie",

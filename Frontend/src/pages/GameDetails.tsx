@@ -29,7 +29,7 @@ import { GameFormatSection } from '@/components/GameDetails/GameFormatSection';
 import { FaqTab } from '@/components/GameDetails/FaqTab';
 import { FaqEdit } from '@/components/GameDetails/FaqEdit';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
-import { EditGameInfoModal } from '@/components/GameDetails/EditGameInfoModal';
+import { EditGameInfoModal, type EditGameInfoTabId } from '@/components/GameDetails/EditGameInfoModal';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
 import { ResultsTableView } from '@/components/gameResults/ResultsTableView';
 import { HorizontalScoreEntryModal, RoundAddedModal } from '@/components/gameResults';
@@ -102,7 +102,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const [isLeaving, setIsLeaving] = useState(false);
   const [isEditMaxParticipantsModalOpen, setIsEditMaxParticipantsModalOpen] = useState(false);
   const [isEditGameInfoModalOpen, setIsEditGameInfoModalOpen] = useState(false);
-  const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<'general' | 'when' | 'where' | 'price'>('general');
+  const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<EditGameInfoTabId>('general');
   const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'standings' | 'faq'>('general');
   const [hasFaqs, setHasFaqs] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -1222,7 +1222,12 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
             </>
           )}
 
-          {user && !isLeague && canViewSettings && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
+          {user &&
+            !isLeague &&
+            canEdit &&
+            game.status !== 'ARCHIVED' &&
+            game.entityType !== 'BAR' &&
+            game.entityType !== 'TRAINING' && (
             <GameFormatSection
               key={game.id}
               game={game}

@@ -52,6 +52,8 @@ export interface GameSetupParams {
   ballsInGames: boolean;
   scoringPreset?: ScoringPreset | null;
   hasGoldenPoint?: boolean;
+  /** Stored on `Game` when API supports it (e.g. playoff create); not always set by `buildSetupFromFormat`. */
+  scoringMode?: ScoringMode;
 }
 export type PriceType = 'PER_PERSON' | 'PER_TEAM' | 'TOTAL' | 'NOT_KNOWN' | 'FREE';
 export type PriceCurrency =

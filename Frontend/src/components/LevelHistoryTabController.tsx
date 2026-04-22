@@ -10,7 +10,7 @@ export const LevelHistoryTabController = ({ activeTab, onTabChange, darkBgClass 
   const { t } = useTranslation();
 
   return (
-    <div className={`flex items-center gap-2 mb-4 bg-gray-100 ${darkBgClass} rounded-xl p-1.5 w-full`}>
+    <div className={`flex items-center gap-2 bg-gray-100 ${darkBgClass} rounded-xl p-1.5 w-full`}>
       <button
         onClick={() => onTabChange('10')}
         className={`flex-1 px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-300 ease-in-out ${

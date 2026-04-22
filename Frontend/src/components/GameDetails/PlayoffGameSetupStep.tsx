@@ -1,10 +1,10 @@
-import { useRef } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
-import { Button } from '@/components';
-import { GameSetupForm, type GameSetupFormRef } from '@/components/GameSetup/GameSetupForm';
+import { Button, GameFormatCard, GameFormatWizard } from '@/components';
+import { useGameFormat } from '@/hooks/useGameFormat';
 import type { GameSetupParams } from '@/types';
-import { PLAYOFF_GAME_TYPE_TEMPLATES } from './playoffTemplates';
+import { PLAYOFF_GAME_TYPE_SEEDS } from './playoffTemplates';
 
 type PlayoffGameType = 'WINNER_COURT' | 'AMERICANO';
 
@@ -17,25 +17,33 @@ interface PlayoffGameSetupStepProps {
 
 export const PlayoffGameSetupStep = ({ gameType, onBack, onConfirm, submitting }: PlayoffGameSetupStepProps) => {
   const { t } = useTranslation();
-  const formRef = useRef<GameSetupFormRef>(null);
-
-  const initialValues = PLAYOFF_GAME_TYPE_TEMPLATES[gameType];
+  const gameFormat = useGameFormat(PLAYOFF_GAME_TYPE_SEEDS[gameType], {
+    skipGenerationParticipantDefaults: true,
+  });
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const handleConfirm = () => {
-    formRef.current?.submit();
+    onConfirm({
+      ...gameFormat.setupPayload,
+      scoringMode: gameFormat.scoringMode,
+    });
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex-1 overflow-y-auto">
-        <GameSetupForm
-          key={gameType}
-          ref={formRef}
-          initialValues={initialValues}
-          isEditing={!submitting}
-          onConfirm={onConfirm}
+      <GameFormatCard
+        entityType="LEAGUE_SEASON"
+        format={gameFormat}
+        onOpenWizard={() => setWizardOpen(true)}
+      />
+      {wizardOpen && (
+        <GameFormatWizard
+          isOpen={wizardOpen}
+          format={gameFormat}
+          hideGenerationStep
+          onClose={() => setWizardOpen(false)}
         />
-      </div>
+      )}
       <div className="flex gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
         <Button variant="outline" onClick={onBack} className="flex-1" disabled={submitting}>
           {t('common.back', { defaultValue: 'Back' })}

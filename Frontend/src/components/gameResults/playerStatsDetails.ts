@@ -12,6 +12,9 @@ export interface PlayerMatchDetail {
   matchNumber: number;
   setsSummary: string;
   result: 'W' | 'L' | 'T' | null;
+  statsPlayerId: string;
+  teamAPlayerIds: string[];
+  teamBPlayerIds: string[];
   teamAPlayers: string[];
   teamBPlayers: string[];
   sets: PlayerSetDetail[];
@@ -88,6 +91,9 @@ export function buildPlayerMatchDetails(
         matchNumber: matchIdx + 1,
         setsSummary,
         result: resolveMatchResult(sets),
+        statsPlayerId: playerId,
+        teamAPlayerIds: [...match.teamA],
+        teamBPlayerIds: [...match.teamB],
         teamAPlayers: match.teamA.map((id) => resolvePlayerName(id, playerNameById)),
         teamBPlayers: match.teamB.map((id) => resolvePlayerName(id, playerNameById)),
         sets,

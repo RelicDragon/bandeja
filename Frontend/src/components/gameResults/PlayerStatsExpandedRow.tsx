@@ -31,8 +31,26 @@ export const PlayerStatsExpandedRow = ({ details }: PlayerStatsExpandedRowProps)
     );
   }
 
+  const showExpandAll =
+    details.length > 1 && expandedMatchIds.size < details.length;
+
+  const expandAllMatches = () => {
+    setExpandedMatchIds(new Set(details.map((d) => d.matchId)));
+  };
+
   return (
     <div className="px-4 pb-3 pt-1">
+      {showExpandAll ? (
+        <div className="mb-2 flex justify-end">
+          <button
+            type="button"
+            onClick={expandAllMatches}
+            className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            {t('gameResults.playerStatsExpandAllMatches')}
+          </button>
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         {details.map((detail) => {
           const isExpanded = expandedMatchIds.has(detail.matchId);

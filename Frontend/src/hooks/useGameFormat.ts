@@ -8,6 +8,8 @@ import {
   DEFAULT_PRESET_BY_MODE,
   DEFAULT_GENERATION_BY_MODE,
   defaultMatchGenerationForParticipants,
+  clampMatchGenerationType,
+  effectiveMatchGeneration,
   getScoringPresetConfig,
   getCompatibleScorings,
 } from '@/utils/gameFormat';
@@ -45,7 +47,16 @@ export interface UseGameFormatResult {
   resetOverrides: () => void;
 }
 
-export const useGameFormat = (initial?: Partial<Game>): UseGameFormatResult => {
+export interface UseGameFormatOptions {
+  /**
+   * When true, skip `defaultMatchGenerationForParticipants` so explicit `matchGenerationType`
+   * (e.g. HANDMADE for league season defaults) is not replaced by small-game AUTOMATIC rules.
+   */
+  skipGenerationParticipantDefaults?: boolean;
+}
+
+export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOptions): UseGameFormatResult => {
+  const skipGenerationParticipantDefaults = options?.skipGenerationParticipantDefaults === true;
   const initialPreset = detectScoringPreset(initial) ?? 'CLASSIC_BEST_OF_3';
   const initialMode: ScoringMode = detectScoringMode(initial);
   const maxParticipants = initial?.maxParticipants;
@@ -55,11 +66,12 @@ export const useGameFormat = (initial?: Partial<Game>): UseGameFormatResult => {
     (initial?.matchGenerationType as MatchGenerationType) ??
     getGameTypeTemplate(initialGameType).matchGenerationType ??
     DEFAULT_GENERATION_BY_MODE[initialMode];
-  const initialGeneration = defaultMatchGenerationForParticipants(
-    initialMode,
-    maxParticipants,
-    rawInitialGeneration,
-  );
+  const initialGeneration = skipGenerationParticipantDefaults
+    ? clampMatchGenerationType(
+        effectiveMatchGeneration(initialMode, rawInitialGeneration, maxParticipants),
+        maxParticipants,
+      )
+    : defaultMatchGenerationForParticipants(initialMode, maxParticipants, rawInitialGeneration);
 
   const [scoringMode, setScoringModeState] = useState<ScoringMode>(initialMode);
   const [scoringPreset, setScoringPresetState] = useState<ScoringPreset>(initialPreset);
@@ -82,9 +94,9 @@ export const useGameFormat = (initial?: Partial<Game>): UseGameFormatResult => {
   }, [scoringMode, scoringPreset]);
 
   useEffect(() => {
-    if (maxParticipants == null) return;
+    if (skipGenerationParticipantDefaults || maxParticipants == null) return;
     setGenerationTypeState((prev) => defaultMatchGenerationForParticipants(scoringMode, maxParticipants, prev));
-  }, [maxParticipants, scoringMode]);
+  }, [skipGenerationParticipantDefaults, maxParticipants, scoringMode]);
 
   useEffect(() => {
     if (scoringMode === 'POINTS' && hasGoldenPoint) setHasGoldenPoint(false);
@@ -117,22 +129,27 @@ export const useGameFormat = (initial?: Partial<Game>): UseGameFormatResult => {
 
   const isTimed = scoringPreset === 'TIMED' || scoringPreset === 'CLASSIC_TIMED';
 
-  const setScoringMode = useCallback((mode: ScoringMode) => {
-    setScoringModeState(mode);
-    if (mode === 'POINTS') setHasGoldenPoint(false);
-    setScoringPresetState(DEFAULT_PRESET_BY_MODE[mode]);
-    setCustomPointsTotalState(null);
-    setGenerationTypeState((prev) => {
-      const nextGen = defaultMatchGenerationForParticipants(mode, maxParticipants, prev);
-      const tmpl = getGameTypeTemplate(deriveGameType(mode, nextGen));
-      setWinnerOfGame(tmpl.winnerOfGame);
-      setPointsPerWin(tmpl.pointsPerWin ?? 0);
-      setPointsPerLoose(tmpl.pointsPerLoose ?? 0);
-      setPointsPerTie(tmpl.pointsPerTie ?? 0);
-      return nextGen;
-    });
-    setOverridesState({});
-  }, [maxParticipants]);
+  const setScoringMode = useCallback(
+    (mode: ScoringMode) => {
+      setScoringModeState(mode);
+      if (mode === 'POINTS') setHasGoldenPoint(false);
+      setScoringPresetState(DEFAULT_PRESET_BY_MODE[mode]);
+      setCustomPointsTotalState(null);
+      setGenerationTypeState((prev) => {
+        const nextGen = skipGenerationParticipantDefaults
+          ? clampMatchGenerationType(effectiveMatchGeneration(mode, prev, maxParticipants), maxParticipants)
+          : defaultMatchGenerationForParticipants(mode, maxParticipants, prev);
+        const tmpl = getGameTypeTemplate(deriveGameType(mode, nextGen));
+        setWinnerOfGame(tmpl.winnerOfGame);
+        setPointsPerWin(tmpl.pointsPerWin ?? 0);
+        setPointsPerLoose(tmpl.pointsPerLoose ?? 0);
+        setPointsPerTie(tmpl.pointsPerTie ?? 0);
+        return nextGen;
+      });
+      setOverridesState({});
+    },
+    [maxParticipants, skipGenerationParticipantDefaults],
+  );
 
   const setScoringPreset = useCallback((preset: ScoringPreset) => {
     setScoringPresetState(preset);
@@ -191,6 +208,23 @@ export const useGameFormat = (initial?: Partial<Game>): UseGameFormatResult => {
     if (patch.winnerOfGame !== undefined) setWinnerOfGame(patch.winnerOfGame);
     if (patch.prohibitMatchesEditing !== undefined) setProhibitMatchesEditing(patch.prohibitMatchesEditing);
   }, []);
+
+  useEffect(() => {
+    if (!skipGenerationParticipantDefaults || maxParticipants == null) return;
+    const next = clampMatchGenerationType(generationType, maxParticipants);
+    if (next !== generationType) {
+      setGenerationType(next);
+      if (next === 'HANDMADE' || next === 'FIXED' || next === 'AUTOMATIC') {
+        setRanking({ prohibitMatchesEditing: false });
+      }
+    }
+  }, [
+    skipGenerationParticipantDefaults,
+    maxParticipants,
+    generationType,
+    setGenerationType,
+    setRanking,
+  ]);
 
   const setOverrides = useCallback((patch: Partial<GameSetupParams>) => {
     setOverridesState((prev) => ({ ...prev, ...patch }));

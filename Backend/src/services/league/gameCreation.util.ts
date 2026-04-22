@@ -1,6 +1,13 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { EntityType, Prisma, WinnerOfGame, WinnerOfMatch, MatchGenerationType } from '@prisma/client';
+import {
+  EntityType,
+  Prisma,
+  WinnerOfGame,
+  WinnerOfMatch,
+  MatchGenerationType,
+  ScoringPreset,
+} from '@prisma/client';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { GameService } from '../game/game.service';
@@ -53,6 +60,9 @@ export interface PlayoffGameSetupOverrides {
   pointsPerLoose?: number;
   pointsPerTie?: number;
   scoringPreset?: string | null;
+  scoringMode?: string;
+  hasGoldenPoint?: boolean;
+  ballsInGames?: boolean;
 }
 
 export interface CreateLeaguePlayoffGameParams {
@@ -248,11 +258,23 @@ export async function createLeaguePlayoffGame(
       pointsPerWin: gameSetup?.pointsPerWin ?? seasonGame.pointsPerWin ?? 0,
       pointsPerLoose: gameSetup?.pointsPerLoose ?? seasonGame.pointsPerLoose ?? 0,
       pointsPerTie: gameSetup?.pointsPerTie ?? seasonGame.pointsPerTie ?? 0,
-      ballsInGames: deriveBallsInGamesFromScoring({
-        scoringPreset: gameSetup?.scoringPreset ?? seasonGame.scoringPreset ?? null,
-        winnerOfMatch: gameSetup?.winnerOfMatch ?? template.winnerOfMatch,
-        maxTotalPointsPerSet: gameSetup?.maxTotalPointsPerSet ?? seasonGame.maxTotalPointsPerSet ?? 0,
-      }),
+      scoringPreset:
+        (gameSetup?.scoringPreset as ScoringPreset | null) ?? seasonGame.scoringPreset ?? null,
+      scoringMode:
+        gameSetup?.scoringMode != null
+          ? String(gameSetup.scoringMode)
+          : seasonGame.scoringMode != null
+            ? String(seasonGame.scoringMode)
+            : null,
+      hasGoldenPoint: gameSetup?.hasGoldenPoint ?? seasonGame.hasGoldenPoint ?? false,
+      ballsInGames:
+        typeof gameSetup?.ballsInGames === 'boolean'
+          ? gameSetup.ballsInGames
+          : deriveBallsInGamesFromScoring({
+              scoringPreset: gameSetup?.scoringPreset ?? seasonGame.scoringPreset ?? null,
+              winnerOfMatch: gameSetup?.winnerOfMatch ?? template.winnerOfMatch,
+              maxTotalPointsPerSet: gameSetup?.maxTotalPointsPerSet ?? seasonGame.maxTotalPointsPerSet ?? 0,
+            }),
       parentId: leagueSeasonId,
       leagueRoundId,
       leagueGroupId,
