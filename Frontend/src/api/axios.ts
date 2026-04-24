@@ -1,17 +1,18 @@
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 import { isCapacitor } from '@/utils/capacitor';
 import { processDeletedUsers } from '@/utils/deletedUserHandler';
-import { getApiAxiosBaseURL } from '@/api/apiBaseUrl';
-import { handleApiUnauthorizedIfNeeded } from '@/api/handleApiUnauthorized';
+import { getClientAppSemver } from '@/utils/clientAppVersion';
+import { Capacitor } from '@capacitor/core';
+import { handleAxios401MaybeRefresh } from '@/api/authRefresh';
+import { api } from '@/api/httpClient';
 
-const api = axios.create({
-  baseURL: getApiAxiosBaseURL(),
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  },
-  timeout: 10000,
-});
+function clientPlatformHeader(): string {
+  if (!isCapacitor()) return 'web';
+  const p = Capacitor.getPlatform();
+  if (p === 'ios') return 'ios';
+  if (p === 'android') return 'android';
+  return 'unknown';
+}
 
 api.interceptors.request.use(
   (config) => {
@@ -19,14 +20,16 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+    config.headers['X-Client-Version'] = getClientAppSemver();
+    config.headers['X-Client-Platform'] = clientPlatformHeader();
+
     if (!isCapacitor()) {
       config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
       config.headers['Pragma'] = 'no-cache';
       config.headers['Expires'] = '0';
       config.params = { ...config.params, _t: Date.now() };
     }
-    
+
     return config;
   },
   (error) => {
@@ -41,13 +44,16 @@ api.interceptors.response.use(
     }
     return response;
   },
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
     if (error.response?.status === 401) {
-      handleApiUnauthorizedIfNeeded();
+      try {
+        return await handleAxios401MaybeRefresh(error);
+      } catch (e) {
+        return Promise.reject(e);
+      }
     }
     return Promise.reject(error);
   }
 );
 
 export default api;
-

@@ -1,8 +1,21 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import { copyFileSync, existsSync, mkdirSync } from 'fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
 import { join } from 'path'
+
+const appSemver = (() => {
+  try {
+    const raw = readFileSync(join(__dirname, 'package.json'), 'utf8')
+    const v = JSON.parse(raw) as { version?: string }
+    return process.env.VITE_APP_SEMVER || v.version || '0.0.0'
+  } catch {
+    return process.env.VITE_APP_SEMVER || '0.0.0'
+  }
+})()
+
+const accessRefreshLeewayMs =
+  Math.max(1, Number(process.env.VITE_ACCESS_REFRESH_LEEWAY_SECONDS || 120)) * 1000
 
 const ensureWellKnown = () => {
   return {
@@ -76,6 +89,8 @@ export default defineConfig({
     // Define environment variables with defaults
     'import.meta.env.VITE_MEDIA_BASE_URL': JSON.stringify(process.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'),
     'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || 'http://localhost:3000/api'),
+    'import.meta.env.VITE_APP_SEMVER': JSON.stringify(appSemver),
+    'import.meta.env.VITE_ACCESS_REFRESH_LEEWAY_MS': JSON.stringify(accessRefreshLeewayMs),
   },
   // Optimize dependencies
   optimizeDeps: {

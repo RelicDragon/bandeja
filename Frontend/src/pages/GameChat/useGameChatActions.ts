@@ -20,6 +20,8 @@ import type { Game } from '@/types';
 import type { GroupChannel } from '@/api/chat';
 import type { ChatMessageWithStatus } from '@/api/chat';
 import type { RefObject } from 'react';
+import { useAuthStore } from '@/store/authStore';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 
 export interface UseGameChatActionsParams {
   currentIdRef: RefObject<string | undefined>;
@@ -107,6 +109,11 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
 
   const handleJoinAsGuest = useCallback(async () => {
     if (!id) return;
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleJoinAsGuest());
+      return;
+    }
     if (contextType === 'GAME') {
       setIsJoiningAsGuest(true);
       try {
@@ -135,6 +142,11 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
 
   const handleLeaveChat = useCallback(async () => {
     if (!id || isLeavingChat) return;
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleLeaveChat());
+      return;
+    }
     setIsLeavingChat(true);
     try {
       if (contextType === 'GAME') {

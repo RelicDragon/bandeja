@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse, LoginResponse } from '@/types';
+import type { ApiResponse, AuthSessionRow, LoginResponse } from '@/types';
 
 export const authApi = {
   registerPhone: async (data: {
@@ -117,6 +117,27 @@ export const authApi = {
 
   unlinkGoogle: async () => {
     const response = await api.post<ApiResponse<{ user: any }>>('/auth/unlink/google');
+    return response.data;
+  },
+
+  logoutWithRefresh: async (body?: { refreshToken?: string }) => {
+    await api.post('/auth/logout', body ?? {});
+  },
+
+  logoutAllSessions: async () => {
+    const response = await api.post<ApiResponse<Record<string, never>>>('/auth/logout-all');
+    return response.data;
+  },
+
+  getSessions: async () => {
+    const response = await api.get<ApiResponse<{ sessions: AuthSessionRow[] }>>('/auth/sessions');
+    return response.data;
+  },
+
+  revokeSession: async (sessionId: string) => {
+    const response = await api.delete<ApiResponse<{ revokedCurrentWebRefresh: boolean }>>(
+      `/auth/sessions/${sessionId}`
+    );
     return response.data;
   },
 };

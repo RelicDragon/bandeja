@@ -94,10 +94,13 @@ enum WatchResultsRoundBuilder {
 
     private static func initialSets(for game: WatchGame) -> [WatchSyncSetBody] {
         let n = game.fixedNumberOfSets ?? 0
-        if n > 0 {
-            return (0..<n).map { _ in WatchSyncSetBody(teamA: 0, teamB: 0, isTieBreak: false) }
+        if n <= 0 {
+            return [WatchSyncSetBody(teamA: 0, teamB: 0, isTieBreak: false)]
         }
-        return [WatchSyncSetBody(teamA: 0, teamB: 0, isTieBreak: false)]
+        let wom = game.winnerOfMatch?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let classicBySets = game.ballsInGames == true && wom == "BY_SETS"
+        let rowCount = classicBySets ? (n / 2 + 1) : n
+        return (0..<rowCount).map { _ in WatchSyncSetBody(teamA: 0, teamB: 0, isTieBreak: false) }
     }
 }
 

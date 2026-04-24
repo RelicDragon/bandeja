@@ -1,6 +1,11 @@
 import type { ChatContextType } from '@/api/chat';
 import { chatApi } from '@/api/chat';
 import { resolveAbsoluteApiBaseUrlForFetch } from '@/api/apiBaseUrl';
+import {
+  AUTH_CODES_SKIP_REFRESH,
+  consumeRefreshRunClearedCredentials,
+  refreshAccessTokenSingleFlight,
+} from '@/api/authRefresh';
 import { handleApiUnauthorizedIfNeeded } from '@/api/handleApiUnauthorized';
 import type { ApiResponse } from '@/types';
 import { isCapacitor } from '@/utils/capacitor';
@@ -134,15 +139,16 @@ export async function fetchChatSyncEventsPackOffMainThread(
   }
 
   const url = buildChatSyncEventsUrl(contextType, contextId, afterSeq, limit);
-  const headers = buildSyncFetchHeaders();
-  const id = nextId++;
 
-  let result: { status: number; body: unknown };
-  try {
-    result = await new Promise<{ status: number; body: unknown }>((resolve, reject) => {
+  async function workerFetchOnce(
+    worker: Worker,
+    headers: Record<string, string>
+  ): Promise<{ status: number; body: unknown }> {
+    const id = nextId++;
+    return new Promise<{ status: number; body: unknown }>((resolve, reject) => {
       pending.set(id, { resolve, reject });
       try {
-        w.postMessage({
+        worker.postMessage({
           type: 'FETCH',
           id,
           url,
@@ -154,6 +160,15 @@ export async function fetchChatSyncEventsPackOffMainThread(
         reject(e);
       }
     });
+  }
+
+  const initialHeaders = buildSyncFetchHeaders();
+  const hadBearerOnRequest =
+    typeof initialHeaders.Authorization === 'string' && initialHeaders.Authorization.startsWith('Bearer ');
+
+  let result: { status: number; body: unknown };
+  try {
+    result = await workerFetchOnce(w, initialHeaders);
   } catch (e: unknown) {
     if (e && typeof e === 'object' && (e as { workerErr?: boolean }).workerErr) {
       const we = e as { code?: string; status?: number };
@@ -167,9 +182,40 @@ export async function fetchChatSyncEventsPackOffMainThread(
 
   if (result.status >= 400) {
     if (result.status === 401) {
-      handleApiUnauthorizedIfNeeded();
+      const body401 = result.body as { code?: string } | undefined;
+      const c401 = body401 && typeof body401 === 'object' ? body401.code : undefined;
+      if (typeof c401 === 'string' && AUTH_CODES_SKIP_REFRESH.has(c401)) {
+        handleApiUnauthorizedIfNeeded({ forceSessionClear: true });
+        throwAxiosLike({ status: 401 });
+      }
+      const authLike =
+        c401 === 'auth.accessExpired' ||
+        c401 === 'auth.invalidToken' ||
+        c401 === 'auth.refreshExpired' ||
+        c401 === 'auth.refreshInvalid' ||
+        (c401 === undefined && hadBearerOnRequest);
+      if (authLike) {
+        const newTok = await refreshAccessTokenSingleFlight();
+        if (newTok) {
+          try {
+            result = await workerFetchOnce(w, buildSyncFetchHeaders());
+          } catch {
+            handleApiUnauthorizedIfNeeded({ forceSessionClear: true });
+            throwAxiosLike({ status: 401 });
+          }
+        } else if (consumeRefreshRunClearedCredentials()) {
+          handleApiUnauthorizedIfNeeded({ forceSessionClear: true });
+        } else {
+          handleApiUnauthorizedIfNeeded();
+        }
+      }
+      if (result.status === 401) {
+        handleApiUnauthorizedIfNeeded();
+      }
     }
-    throwAxiosLike({ status: result.status });
+    if (result.status >= 400) {
+      throwAxiosLike({ status: result.status });
+    }
   }
 
   return extractPackFromApiBody(result.body);

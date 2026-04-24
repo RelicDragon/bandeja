@@ -41,7 +41,7 @@ async function notifyUserIdsForUserChat(contextId: string): Promise<string[] | u
 export const postChatListRowPreviews = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
   const { groupChannelIds, userChatIds } = req.body as {
     groupChannelIds?: unknown;
@@ -103,7 +103,7 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
 
   if (!senderId) {
     console.error('[createMessage] No senderId found');
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!contextId) {
@@ -190,7 +190,7 @@ export const votePoll = asyncHandler(async (req: AuthRequest, res: Response) => 
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!optionIds || !Array.isArray(optionIds)) {
@@ -248,7 +248,7 @@ export const getGameMessages = asyncHandler(async (req: AuthRequest, res: Respon
   const { page = 1, limit = 50, chatType = ChatType.PUBLIC, beforeMessageId } = req.query;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const messages = await MessageService.getMessages('GAME', gameId, userId, {
@@ -270,7 +270,7 @@ export const getBugMessages = asyncHandler(async (req: AuthRequest, res: Respons
   const { page = 1, limit = 50, beforeMessageId } = req.query;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const messages = await MessageService.getMessages('BUG', bugId, userId, {
@@ -290,7 +290,7 @@ export const getChatMessageById = asyncHandler(async (req: AuthRequest, res: Res
   const { messageId } = req.params;
   const userId = req.userId;
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
   const message = await MessageService.getMessageById(messageId, userId);
   res.json({ success: true, data: message });
@@ -301,7 +301,7 @@ export const getPinnedMessages = asyncHandler(async (req: AuthRequest, res: Resp
   const { contextType, contextId, chatType = ChatType.PUBLIC } = req.query;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
   if (!contextType || !contextId || typeof contextType !== 'string' || typeof contextId !== 'string') {
     throw new ApiError(400, 'contextType and contextId are required');
@@ -329,7 +329,7 @@ export const pinMessage = asyncHandler(async (req: AuthRequest, res: Response) =
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const idem = await ChatMutationIdempotencyService.begin(userId, rawCid, 'pin', messageId, null);
@@ -359,7 +359,7 @@ export const unpinMessage = asyncHandler(async (req: AuthRequest, res: Response)
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const idem = await ChatMutationIdempotencyService.begin(userId, rawCid, 'unpin', messageId, null);
@@ -389,7 +389,7 @@ export const updateMessage = asyncHandler(async (req: AuthRequest, res: Response
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const payloadHash = hashChatMutationPayload({
@@ -450,7 +450,7 @@ export const updateMessageState = asyncHandler(async (req: AuthRequest, res: Res
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const updatedMessage = await MessageService.updateMessageState(messageId, userId, state);
@@ -484,7 +484,7 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const marked = await ReadReceiptService.markMessageAsRead(messageId, userId);
@@ -536,7 +536,7 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const payloadHash = hashChatMutationPayload({ emoji: String(emoji ?? '') });
@@ -614,7 +614,7 @@ export const removeReaction = asyncHandler(async (req: AuthRequest, res: Respons
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const idem = await ChatMutationIdempotencyService.begin(userId, rawCid, 'reaction_remove', messageId, null);
@@ -668,7 +668,7 @@ export const getUserChatGames = asyncHandler(async (req: AuthRequest, res: Respo
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const games = await MessageService.getUserChatGames(userId);
@@ -683,7 +683,7 @@ export const getUnreadCount = asyncHandler(async (req: AuthRequest, res: Respons
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const result = await ReadReceiptService.getUnreadCount(userId);
@@ -700,7 +700,7 @@ export const getUnreadObjects = asyncHandler(async (req: AuthRequest, res: Respo
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const result = await withTimeout(
@@ -719,7 +719,7 @@ export const getGameParticipants = asyncHandler(async (req: AuthRequest, res: Re
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const game = await GameReadService.getGameById(gameId, userId, true) as any;
@@ -739,7 +739,7 @@ export const getGameUnreadCount = asyncHandler(async (req: AuthRequest, res: Res
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const result = await ReadReceiptService.getGameUnreadCount(gameId, userId);
@@ -755,7 +755,7 @@ export const getGamesUnreadCounts = asyncHandler(async (req: AuthRequest, res: R
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!gameIds || !Array.isArray(gameIds) || gameIds.length === 0) {
@@ -776,7 +776,7 @@ export const markAllMessagesAsRead = asyncHandler(async (req: AuthRequest, res: 
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!gameId) {
@@ -824,7 +824,7 @@ export const deleteMessage = asyncHandler(async (req: AuthRequest, res: Response
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const idem = await ChatMutationIdempotencyService.begin(userId, rawCid, 'delete', messageId, null);
@@ -872,7 +872,7 @@ export const getUserChats = asyncHandler(async (req: AuthRequest, res: Response)
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const chats = await UserChatService.getUserChats(userId);
@@ -888,7 +888,7 @@ export const getOrCreateChatWithUser = asyncHandler(async (req: AuthRequest, res
   const currentUserId = req.userId;
 
   if (!currentUserId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const chat = await UserChatService.getOrCreateChatWithUser(currentUserId, otherUserId);
@@ -905,7 +905,7 @@ export const getUserChatMessages = asyncHandler(async (req: AuthRequest, res: Re
   const { page = 1, limit = 50, beforeMessageId } = req.query;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const messages = await MessageService.getMessages('USER', chatId, userId, {
@@ -926,7 +926,7 @@ export const getUserChatUnreadCount = asyncHandler(async (req: AuthRequest, res:
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const result = await ReadReceiptService.getUserChatUnreadCount(chatId, userId);
@@ -942,7 +942,7 @@ export const getUserChatsUnreadCounts = asyncHandler(async (req: AuthRequest, re
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!chatIds || !Array.isArray(chatIds) || chatIds.length === 0) {
@@ -962,7 +962,7 @@ export const markUserChatAsRead = asyncHandler(async (req: AuthRequest, res: Res
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const result = await ReadReceiptService.markUserChatAsRead(chatId, userId);
@@ -1012,7 +1012,7 @@ export const pinUserChat = asyncHandler(async (req: AuthRequest, res: Response) 
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const pinnedChat = await UserChatService.pinUserChat(userId, chatId);
@@ -1028,7 +1028,7 @@ export const unpinUserChat = asyncHandler(async (req: AuthRequest, res: Response
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   await UserChatService.unpinUserChat(userId, chatId);
@@ -1043,7 +1043,7 @@ export const requestToChat = asyncHandler(async (req: AuthRequest, res: Response
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const message = await UserChatService.requestToChat(chatId, userId);
@@ -1063,7 +1063,7 @@ export const respondToChatRequest = asyncHandler(async (req: AuthRequest, res: R
   const { accepted } = req.body;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (typeof accepted !== 'boolean') {
@@ -1084,7 +1084,7 @@ export const reportMessage = asyncHandler(async (req: AuthRequest, res: Response
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!reason) {
@@ -1113,7 +1113,7 @@ export const translateMessage = asyncHandler(async (req: AuthRequest, res: Respo
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const message = await prisma.chatMessage.findUnique({
@@ -1170,7 +1170,7 @@ export const transcribeMessage = asyncHandler(async (req: AuthRequest, res: Resp
 
   if (!userId) {
     console.warn('[transcription] http_unauthorized', { messageId });
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const message = await prisma.chatMessage.findUnique({
@@ -1259,7 +1259,7 @@ const TRANSLATE_DRAFT_MAX_LENGTH = 4000;
 
 export const translateDraft = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
-  if (!userId) throw new ApiError(401, 'Unauthorized');
+  if (!userId) throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
 
   const { text, languageCode } = req.body;
   const trimmed = typeof text === 'string' ? text.trim() : '';
@@ -1286,7 +1286,7 @@ export const muteChat = asyncHandler(async (req: AuthRequest, res: Response) => 
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!chatContextType || !contextId) {
@@ -1311,7 +1311,7 @@ export const unmuteChat = asyncHandler(async (req: AuthRequest, res: Response) =
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!chatContextType || !contextId) {
@@ -1335,7 +1335,7 @@ export const isChatMuted = asyncHandler(async (req: AuthRequest, res: Response) 
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!chatContextType || !contextId) {
@@ -1359,7 +1359,7 @@ export const getChatTranslationPreference = asyncHandler(async (req: AuthRequest
   const { chatContextType, contextId } = req.query;
   const userId = req.userId;
 
-  if (!userId) throw new ApiError(401, 'Unauthorized');
+  if (!userId) throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   if (!chatContextType || !contextId) throw new ApiError(400, 'chatContextType and contextId are required');
   const validContextTypes = ['GAME', 'BUG', 'USER', 'GROUP'];
   if (!validContextTypes.includes(chatContextType as string)) throw new ApiError(400, 'Invalid chatContextType');
@@ -1372,7 +1372,7 @@ export const setChatTranslationPreference = asyncHandler(async (req: AuthRequest
   const { chatContextType, contextId, translateToLanguage } = req.body;
   const userId = req.userId;
 
-  if (!userId) throw new ApiError(401, 'Unauthorized');
+  if (!userId) throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   if (!chatContextType || !contextId) throw new ApiError(400, 'chatContextType and contextId are required');
   const validContextTypes = ['GAME', 'BUG', 'USER', 'GROUP'];
   if (!validContextTypes.includes(chatContextType)) throw new ApiError(400, 'Invalid chatContextType');
@@ -1386,7 +1386,7 @@ export const confirmMessageReceipt = asyncHandler(async (req: AuthRequest, res: 
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!messageId) {
@@ -1418,7 +1418,7 @@ export const confirmMessageReceiptBatch = asyncHandler(async (req: AuthRequest, 
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!Array.isArray(messageIds) || messageIds.length === 0) {
@@ -1457,7 +1457,7 @@ export const getMissedMessages = asyncHandler(async (req: AuthRequest, res: Resp
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!contextType || !contextId) {
@@ -1502,7 +1502,7 @@ async function assertChatSyncAccess(contextType: ChatContextType, contextId: str
 export const getChatSyncHead = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
   const { contextType, contextId } = req.query;
-  if (!userId) throw new ApiError(401, 'Unauthorized');
+  if (!userId) throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   if (!contextType || !contextId || typeof contextType !== 'string' || typeof contextId !== 'string') {
     throw new ApiError(400, 'contextType and contextId are required');
   }
@@ -1523,7 +1523,7 @@ export const getChatSyncHead = asyncHandler(async (req: AuthRequest, res: Respon
 export const getChatSyncEvents = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
   const { contextType, contextId, afterSeq, limit } = req.query;
-  if (!userId) throw new ApiError(401, 'Unauthorized');
+  if (!userId) throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   if (!contextType || !contextId || typeof contextType !== 'string' || typeof contextId !== 'string') {
     throw new ApiError(400, 'contextType and contextId are required');
   }
@@ -1553,7 +1553,7 @@ const SYNC_BATCH_HEAD_MAX = 120;
 
 export const postChatSyncBatchHead = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
-  if (!userId) throw new ApiError(401, 'Unauthorized');
+  if (!userId) throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   const items = req.body?.items;
   if (!Array.isArray(items) || items.length === 0) {
     throw new ApiError(400, 'items must be a non-empty array');
@@ -1583,7 +1583,7 @@ export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequ
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!contextType || !contextId) {
@@ -1655,7 +1655,7 @@ export const saveDraft = asyncHandler(async (req: AuthRequest, res: Response) =>
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!chatContextType || !contextId) {
@@ -1713,7 +1713,7 @@ export const getDraft = asyncHandler(async (req: AuthRequest, res: Response) => 
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!chatContextType || !contextId) {
@@ -1754,7 +1754,7 @@ export const getUserDrafts = asyncHandler(async (req: AuthRequest, res: Response
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
@@ -1772,7 +1772,7 @@ export const getUserDrafts = asyncHandler(async (req: AuthRequest, res: Response
 export const searchMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
   const { q, section, messagesPage = 1, messagesLimit = 20, gamePage = 1, gameLimit = 20, bugsPage = 1, channelPage = 1, channelLimit = 20, marketPage = 1, marketLimit = 20 } = req.query;
-  if (!userId) throw new ApiError(401, 'Unauthorized');
+  if (!userId) throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   const result = await MessageSearchService.search(userId, String(q).trim(), {
     section: section as 'messages' | 'games' | 'channels' | 'bugs' | 'market' | undefined,
     messagesPage: Number(messagesPage),
@@ -1805,7 +1805,7 @@ export const deleteDraft = asyncHandler(async (req: AuthRequest, res: Response) 
   const userId = req.userId;
 
   if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   if (!chatContextType || !contextId) {

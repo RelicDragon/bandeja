@@ -15,6 +15,7 @@ import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation as useI18nTranslation } from 'react-i18next';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 
 const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string }>(list: T[] = []): T[] => {
   const getStatusPriority = (status?: string): number => {
@@ -78,6 +79,11 @@ export const FindTab = () => {
 
   const handleJoinGame = async (gameId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleJoinGame(gameId, e));
+      return;
+    }
     try {
       const { gamesApi } = await import('@/api');
       const response = await gamesApi.join(gameId);

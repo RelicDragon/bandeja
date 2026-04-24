@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, MultipleCourtsSelector, AvatarUpload, PriceSection } from '@/components';
 import { useAuthStore } from '@/store/authStore';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 import { usePlayersStore } from '@/store/playersStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
@@ -284,6 +285,11 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
 
   const handleCreateGame = async () => {
     if (!user) return;
+
+    if (user.nameIsSet !== true) {
+      runWithProfileName(() => void handleCreateGame());
+      return;
+    }
 
     if (!selectedClub) {
       scrollToAndHighlightError(clubSectionRef);

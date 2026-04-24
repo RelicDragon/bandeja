@@ -7,6 +7,8 @@ import { invitesApi } from '@/api';
 import { userTeamsApi } from '@/api/userTeams';
 import { gamesApi } from '@/api/games';
 import { usersApi } from '@/api/users';
+import { useAuthStore } from '@/store/authStore';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 import { Button } from './Button';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
@@ -404,6 +406,12 @@ export const PlayerListModal = ({
 
     setInviting('confirming');
     try {
+      const authUser = useAuthStore.getState().user;
+      if (authUser && authUser.nameIsSet !== true) {
+        setInviting(null);
+        runWithProfileName(() => void handleConfirm());
+        return;
+      }
       const asTrainer =
         (canInviteAsTrainer && inviteAsTrainer && expandedPlayerIds.length === 1) || inviteAsTrainerOnly;
       for (const playerId of expandedPlayerIds) {

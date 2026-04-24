@@ -13,6 +13,10 @@ import { calculateGameStatus, isResultsBasedEntityType, ARCHIVE_BY_FINISHED_DATE
 import { resolveGameBets } from '../bets/betResolution.service';
 import resultsSenderService from '../telegram/resultsSender.service';
 import { resetMatchTimersInGameTx, cancelAllMatchTimersForGame } from './matchTimer.service';
+import {
+  isPlacementProtectedFromNegativeRating,
+  mergePlacementRatingFloorMetadata,
+} from './ratingPlacementFloor';
 
 export async function generateGameOutcomes(gameId: string, tx?: Prisma.TransactionClient) {
   const prismaClient = tx || prisma;
@@ -159,11 +163,12 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
         ? {
             level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
             reliability: outcome.reliabilityBefore,
+            reliabilityDecayPostGraceDaysApplied: 0,
             totalPoints: { decrement: outcome.pointsEarned },
             gamesPlayed: { decrement: 1 },
             gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
           }
-        : { reliability: outcome.reliabilityBefore },
+        : { reliability: outcome.reliabilityBefore, reliabilityDecayPostGraceDaysApplied: 0 },
     });
   }
 
@@ -214,6 +219,31 @@ export async function applyGameOutcomes(
   console.log(`[APPLY GAME OUTCOMES] Updating game outcomes (position, isWinner) for game ${gameId}`);
   await updateGameOutcomes(gameId, game.winnerOfGame, tx);
 
+  const placementRows = await tx.gameOutcome.findMany({
+    where: { gameId },
+    select: { userId: true, position: true, metadata: true },
+  });
+  const placementByUser = new Map(placementRows.map((r) => [r.userId, r]));
+  const uncappedLevelByUser = new Map<string, number>();
+
+  if (game.affectsRating) {
+    for (const outcome of finalOutcomes) {
+      if (outcome.levelChange >= 0) continue;
+      const row = placementByUser.get(outcome.userId);
+      if (
+        !isPlacementProtectedFromNegativeRating(
+          game.entityType,
+          row?.position ?? null,
+          game.affectsRating
+        )
+      ) {
+        continue;
+      }
+      uncappedLevelByUser.set(outcome.userId, outcome.levelChange);
+      outcome.levelChange = 0;
+    }
+  }
+
   console.log(`[APPLY GAME OUTCOMES] Applying level/reliability changes and updating player stats for game ${gameId}`);
   for (const outcome of finalOutcomes) {
     const user = await tx.user.findUnique({
@@ -229,6 +259,13 @@ export async function applyGameOutcomes(
     const reliabilityAfter = Math.max(0.0, Math.min(100.0, reliabilityBefore + outcome.reliabilityChange));
     const actualLevelChange = levelAfter - levelBefore;
     const actualReliabilityChange = reliabilityAfter - reliabilityBefore;
+
+    const placementRow = placementByUser.get(outcome.userId);
+    const mergedMetadata = mergePlacementRatingFloorMetadata(
+      placementRow?.metadata,
+      uncappedLevelByUser.get(outcome.userId)
+    );
+    const storedPosition = placementRow?.position ?? outcome.position ?? null;
 
     await tx.gameOutcome.upsert({
       where: {
@@ -247,13 +284,14 @@ export async function applyGameOutcomes(
         reliabilityAfter,
         reliabilityChange: actualReliabilityChange,
         pointsEarned: outcome.pointsEarned,
-        position: outcome.position,
+        position: storedPosition ?? undefined,
         isWinner: outcome.isWinner || false,
         wins: outcome.wins || 0,
         ties: outcome.ties || 0,
         losses: outcome.losses || 0,
         scoresMade: outcome.scoresMade || 0,
         scoresLost: outcome.scoresLost || 0,
+        metadata: mergedMetadata,
       },
       update: {
         levelBefore,
@@ -268,6 +306,7 @@ export async function applyGameOutcomes(
         losses: outcome.losses || 0,
         scoresMade: outcome.scoresMade || 0,
         scoresLost: outcome.scoresLost || 0,
+        metadata: mergedMetadata,
       },
     });
 
@@ -277,11 +316,12 @@ export async function applyGameOutcomes(
         ? {
             level: levelAfter,
             reliability: reliabilityAfter,
+            reliabilityDecayPostGraceDaysApplied: 0,
             totalPoints: { increment: outcome.pointsEarned },
             gamesPlayed: { increment: 1 },
             gamesWon: outcome.isWinner ? { increment: 1 } : undefined,
           }
-        : { reliability: reliabilityAfter },
+        : { reliability: reliabilityAfter, reliabilityDecayPostGraceDaysApplied: 0 },
     });
   }
 

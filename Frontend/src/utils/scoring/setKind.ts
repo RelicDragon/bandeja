@@ -29,3 +29,7 @@ export const getSetKind = (
 
   return 'REGULAR';
 };
+
+/** Persisted `isTieBreak` on the match-decider super tie-break row (points, not games). */
+export const isSuperTieBreakDeciderRow = (rules: ScoringRules, setIndex: number, isTieBreak?: boolean): boolean =>
+  Boolean(isTieBreak && rules.superTieBreakReplacesDeciderAtIndex === setIndex);

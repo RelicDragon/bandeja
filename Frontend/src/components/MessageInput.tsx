@@ -23,6 +23,7 @@ import { TranslationLanguageModal } from './chat/TranslationLanguageModal';
 import { TranslateToButton, composerFabButtonClass } from './chat/TranslateToButton';
 import { UndoTranslateButton } from './chat/UndoTranslateButton';
 import { useAuthStore } from '@/store/authStore';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 import { PollType } from '@/api/chat';
 import { draftStorage } from '@/services/draftStorage';
 import { VoiceRecordingOverlay } from './audio/VoiceRecordingOverlay';
@@ -326,6 +327,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     if (inputBlocked || isDisabled) return;
     if (!finalContextId) {
       toast.error(t('chat.missingContextId'));
+      return;
+    }
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handlePollCreate(pollData));
       return;
     }
     setIsLoading(true);

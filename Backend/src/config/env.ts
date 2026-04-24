@@ -15,6 +15,39 @@ export const config = {
   },
   jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '90d',
+  jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '30m',
+  jwtIssuer: process.env.JWT_ISS || 'padelpulse',
+  jwtAudience: process.env.JWT_AUD || 'padelpulse-app',
+  refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '60d',
+  refreshTokenEnabled: process.env.REFRESH_TOKEN_ENABLED !== 'false',
+  /** Web: Set-Cookie httpOnly refresh; omit refresh from JSON. Kill-switch: REFRESH_WEB_HTTPONLY_COOKIE=false */
+  refreshWebHttpOnlyCookie: process.env.REFRESH_WEB_HTTPONLY_COOKIE !== 'false',
+  refreshCookieName: process.env.REFRESH_COOKIE_NAME || 'pp_rt',
+  refreshCookiePath: process.env.REFRESH_COOKIE_PATH || '/api',
+  refreshCookieDomain: (process.env.REFRESH_COOKIE_DOMAIN || '').trim() || null,
+  refreshCookieSameSite: (() => {
+    const raw = (process.env.REFRESH_COOKIE_SAME_SITE || 'lax').toLowerCase();
+    if (raw === 'strict' || raw === 'none') return raw as 'strict' | 'none';
+    return 'lax' as const;
+  })(),
+  refreshCookieSecure:
+    process.env.REFRESH_COOKIE_SECURE === 'true' ||
+    ((process.env.NODE_ENV || 'development') === 'production' && process.env.REFRESH_COOKIE_SECURE !== 'false'),
+  minClientVersionForRefresh: process.env.MIN_CLIENT_VERSION_FOR_REFRESH || '0.94.1',
+  /**
+   * After this instant (UTC), with refresh enabled, clients below min version cannot receive new long-lived JWTs.
+   * Default `2026-05-15T00:00:00.000Z` when unset. Set `LEGACY_JWT_ISSUANCE_END_AT=off` (or `false` / `none` / `disabled`) to disable the calendar check.
+   * Invalid ISO → null (no sunset).
+   */
+  legacyJwtIssuanceEndAt: (() => {
+    const raw = (process.env.LEGACY_JWT_ISSUANCE_END_AT || '').trim();
+    const defaultEnd = new Date('2026-05-15T00:00:00.000Z');
+    if (!raw) return defaultEnd;
+    if (/^(off|false|none|disabled)$/i.test(raw)) return null as Date | null;
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime()) ? null : d;
+  })(),
+  accessRefreshLeewaySeconds: parseInt(process.env.ACCESS_REFRESH_LEEWAY_SECONDS || '120', 10),
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   apns: {

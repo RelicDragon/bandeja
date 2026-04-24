@@ -6,6 +6,7 @@ import {
   ROLE_MULTIPLIERS,
 } from '../socialLevelConstants';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { isPlacementProtectedFromNegativeRating } from './ratingPlacementFloor';
 
 interface ExplanationData {
   userId: string;
@@ -36,6 +37,10 @@ interface ExplanationData {
       gamesPlayedTogether: number;
       boost: number;
     }>;
+  };
+  placementRatingFloor?: {
+    applied: boolean;
+    uncappedLevelChange: number;
   };
 }
 
@@ -139,6 +144,7 @@ export async function getOutcomeExplanation(
       reliabilityBefore: true,
       reliabilityAfter: true,
       reliabilityChange: true,
+      position: true,
     },
   });
 
@@ -301,7 +307,25 @@ export async function getOutcomeExplanation(
   const clampedReliability = Math.max(0.0, Math.min(100.0, startingReliability));
   const reliabilityCoefficient = Math.max(0.05, Math.exp(-0.15 * Math.pow(clampedReliability, 0.68)));
 
-  const finalLevel = Math.max(1.0, Math.min(7.0, startingLevel + totalLevelChange));
+  let aggregatedLevelChange = totalLevelChange;
+  let placementRatingFloor: ExplanationData['placementRatingFloor'] = undefined;
+  if (
+    game.affectsRating &&
+    isPlacementProtectedFromNegativeRating(
+      game.entityType,
+      existingOutcome?.position ?? null,
+      game.affectsRating
+    ) &&
+    aggregatedLevelChange < 0
+  ) {
+    placementRatingFloor = {
+      applied: true,
+      uncappedLevelChange: aggregatedLevelChange,
+    };
+    aggregatedLevelChange = 0;
+  }
+
+  const finalLevel = Math.max(1.0, Math.min(7.0, startingLevel + aggregatedLevelChange));
   const clampedLevelChange = finalLevel - startingLevel;
 
   // Get social level change data if it exists
@@ -419,6 +443,7 @@ export async function getOutcomeExplanation(
       averageOpponentLevel,
     },
     socialLevelChange: socialLevelChangeData,
+    placementRatingFloor,
   };
 }
 

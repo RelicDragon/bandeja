@@ -1,7 +1,16 @@
 import { useAuthStore } from '@/store/authStore';
 
-export function handleApiUnauthorizedIfNeeded(): void {
+export type HandleApiUnauthorizedOpts = {
+  /** Always clear cookies/session (e.g. refresh rotation failed); avoids refresh spam on public routes. */
+  forceSessionClear?: boolean;
+};
+
+export function handleApiUnauthorizedIfNeeded(opts?: HandleApiUnauthorizedOpts): void {
   if (typeof window === 'undefined') return;
+  if (opts?.forceSessionClear) {
+    void useAuthStore.getState().logout();
+    return;
+  }
   const path = window.location.pathname;
   const isAuthPage =
     path === '/login' ||
@@ -10,6 +19,6 @@ export function handleApiUnauthorizedIfNeeded(): void {
   const isPublicGamePage = path.startsWith('/games/');
   const isPublicUserProfilePage = path.startsWith('/user-profile/');
   if (!isAuthPage && !isPublicGamePage && !isPublicUserProfilePage) {
-    useAuthStore.getState().logout();
+    void useAuthStore.getState().logout();
   }
 }

@@ -44,6 +44,7 @@ export async function sendGameChatNotification(
   for (const participant of participants) {
     const user = participant.user;
     if (user.id === sender.id) continue;
+    if (participant.status === 'INVITED') continue;
     const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
     if (!allowed || !user.telegramId) continue;
 
@@ -123,6 +124,7 @@ export async function sendGameChatNotification(
     for (const parentParticipant of parentGameAdmins) {
       const user = parentParticipant.user;
       if (user.id === sender.id) continue;
+      if (parentParticipant.status === 'INVITED') continue;
       const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
       if (!allowed || !user.telegramId) continue;
 

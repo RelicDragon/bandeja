@@ -454,7 +454,7 @@ export class GameReadService {
 
   static async getMyGames(userId: string, _userCityId?: string) {
     if (!userId) {
-      throw new ApiError(401, 'Unauthorized');
+      throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
     }
 
     const today = new Date();
@@ -520,7 +520,7 @@ export class GameReadService {
     endDate?: string
   ) {
     if (!userId) {
-      throw new ApiError(401, 'Unauthorized');
+      throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
     }
 
     const today = new Date();
@@ -572,7 +572,7 @@ export class GameReadService {
 
   static async getAvailableGames(userId: string, userCityId?: string, startDate?: string, endDate?: string, showArchived?: boolean, includeLeagues?: boolean) {
     if (!userId) {
-      throw new ApiError(401, 'Unauthorized');
+      throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
     }
 
     const where: any = {
@@ -596,17 +596,23 @@ export class GameReadService {
     }
 
     if (startDate || endDate) {
-      where.startTime = {};
+      const startTimeRange: { gte?: Date; lte?: Date } = {};
       if (startDate) {
         const start = new Date(startDate);
         start.setHours(0, 0, 0, 0);
-        where.startTime.gte = start;
+        startTimeRange.gte = start;
       }
       if (endDate) {
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
-        where.startTime.lte = end;
+        startTimeRange.lte = end;
       }
+      where.AND = [
+        ...(Array.isArray(where.AND) ? where.AND : []),
+        {
+          OR: [{ entityType: 'LEAGUE_SEASON' }, { startTime: startTimeRange }],
+        },
+      ];
     }
 
     const cityIdToFilter = userCityId;

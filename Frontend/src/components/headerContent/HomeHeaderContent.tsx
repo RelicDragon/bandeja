@@ -9,6 +9,7 @@ import { EntityType } from '@/types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { handleBack } from '@/utils/backNavigation';
 import { parseLocation, placeToPageType } from '@/utils/urlSchema';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 
 export const HomeHeaderContent = () => {
   const { t } = useTranslation();
@@ -45,6 +46,11 @@ export const HomeHeaderContent = () => {
   }, [currentPage, pendingChatType, setChatsFilter]);
 
   const handleSelectGameType = (entityType: EntityType) => {
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => handleSelectGameType(entityType));
+      return;
+    }
     const fromMyGamesList = parsed.place === 'home' && parsed.params?.tab === 'list';
     setMyGamesSubtabBeforeCreate(fromMyGamesList ? 'list' : null);
     const initialGameData = createGameInitialDate

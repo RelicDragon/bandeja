@@ -117,6 +117,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
           game.maxParticipants != null && game.maxParticipants > 0 ? game.maxParticipants : undefined
         }
         onOpenWizard={handleOpenWizard}
+        showWizardButton={canEdit}
         teams={teamsForCard}
         fixedTeamsPanel={fixedTeamsPanel}
         fixedTeamsPanelOpen={hasFixedTeams}

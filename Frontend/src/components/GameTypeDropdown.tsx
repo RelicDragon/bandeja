@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Gamepad2, Trophy, Swords, Dumbbell, Beer } from 'lucide-react';
 import { EntityType } from '@/types';
 import { useAuthStore } from '@/store/authStore';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 
 interface GameTypeDropdownProps {
   isOpen: boolean;
@@ -71,6 +72,11 @@ export const GameTypeDropdown = ({ isOpen, onClose, onSelectType }: GameTypeDrop
   if (!isOpen || !shouldRender) return null;
 
   const handleSelectType = (type: EntityType) => {
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => handleSelectType(type));
+      return;
+    }
     setIsExiting(true);
     setTimeout(() => {
       if (type === 'LEAGUE') {

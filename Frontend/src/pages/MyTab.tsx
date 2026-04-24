@@ -6,7 +6,6 @@ import {
   InvitesSection,
   MyGamesSection,
   PastGamesSection,
-  NoNamePromptBanner,
   CityPromptBanner,
   UserTeamsHomeSection,
 } from '@/components/home';
@@ -26,6 +25,7 @@ import { getAvailableGameChatTypes } from '@/utils/chatType';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { navigationService } from '@/services/navigationService';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
@@ -352,6 +352,11 @@ export const MyTab = () => {
   };
 
   const handleAcceptInvite = async (inviteId: string) => {
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleAcceptInvite(inviteId));
+      return;
+    }
     try {
       const { invitesApi } = await import('@/api');
       const response = await invitesApi.accept(inviteId);
@@ -377,6 +382,11 @@ export const MyTab = () => {
   };
 
   const handleDeclineInvite = async (inviteId: string) => {
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleDeclineInvite(inviteId));
+      return;
+    }
     try {
       const { invitesApi } = await import('@/api');
       await invitesApi.decline(inviteId);
@@ -409,7 +419,6 @@ export const MyTab = () => {
     <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
       <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
         <WelcomeQuestionnairePrompt />
-        <NoNamePromptBanner />
         <CityPromptBanner />
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!loading ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
           <InvitesSection
@@ -491,7 +500,6 @@ export const MyTab = () => {
         }}
       >
         <WelcomeQuestionnairePrompt />
-        <NoNamePromptBanner />
         <CityPromptBanner />
         <div
           className={`transition-all duration-500 ease-in-out overflow-hidden ${

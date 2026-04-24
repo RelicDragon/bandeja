@@ -2,7 +2,7 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 import { DefaultEventsMap, RemoteSocket, Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
-import jwt from 'jsonwebtoken';
+import { verifyToken } from '../utils/jwt';
 
 type RedisPubSubClient = ReturnType<typeof createClient>;
 import prisma from '../config/database';
@@ -113,7 +113,7 @@ class SocketService {
           return next(new Error('Authentication error: No token provided'));
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+        const decoded = verifyToken(token);
         socket.userId = decoded.userId;
 
         const user = await prisma.user.findUnique({

@@ -64,12 +64,12 @@ declare global {
 async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') {
-      reject(new Error('Window is not available'));
+      reject(new Error('auth.googleSignInUnavailable'));
       return;
     }
 
     if (!config.googleWebClientId) {
-      reject(new Error('Google Web Client ID not configured'));
+      reject(new Error('auth.googleClientNotConfigured'));
       return;
     }
 
@@ -82,7 +82,7 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
       } else {
         const elapsed = Date.now() - startTime;
         if (elapsed >= MAX_WAIT_TIME) {
-          reject(new Error('Google Identity Services failed to load. Please refresh the page.'));
+          reject(new Error('auth.googleIdentityLoadTimeout'));
           return;
         }
         setTimeout(waitForGoogle, 100);
@@ -135,7 +135,7 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
             cleanup();
             
             if (!response.credential) {
-              reject(new Error('No credential received from Google'));
+              reject(new Error('auth.googleNoCredential'));
               return;
             }
 
@@ -186,16 +186,15 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
             button.click();
           } else {
             cleanup();
-            reject(new Error('Failed to initialize Google sign in button'));
+            reject(new Error('auth.googleButtonInitFailed'));
           }
         };
         requestAnimationFrame(() => {
           requestAnimationFrame(clickRendered);
         });
-      } catch (error: unknown) {
+      } catch {
         cleanup();
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        reject(new Error(`Failed to initialize Google sign in: ${errorMessage}`));
+        reject(new Error('auth.googleSignInInitFailed'));
       }
     };
 
@@ -232,7 +231,7 @@ async function signInWithGoogleNative(): Promise<GoogleAuthResult | null> {
   });
 
   const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('Google Sign-In timed out. Please try again.')), LOGIN_TIMEOUT_MS)
+    setTimeout(() => reject(new Error('auth.googleSignInTimedOut')), LOGIN_TIMEOUT_MS)
   );
 
   const response = await Promise.race([loginPromise, timeoutPromise]);
@@ -240,16 +239,13 @@ async function signInWithGoogleNative(): Promise<GoogleAuthResult | null> {
   const result: GoogleLoginResponse = response.result;
 
   if (result.responseType === 'offline') {
-    return {
-      idToken: '',
-      serverAuthCode: result.serverAuthCode,
-    };
+    throw new Error('auth.googleSignInRequiresOnline');
   }
 
   const onlineResult: GoogleLoginResponseOnline = result;
 
   if (!onlineResult.idToken) {
-    throw new Error('No ID token received from Google');
+    throw new Error('auth.googleNoIdToken');
   }
 
   return {
@@ -271,7 +267,7 @@ export async function signInWithGoogle(): Promise<GoogleAuthResult | null> {
 
     if (isNative) {
       if (!config.googleWebClientId) {
-        throw new Error('Google Web Client ID not configured');
+        throw new Error('auth.googleClientNotConfigured');
       }
 
       try {

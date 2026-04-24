@@ -6,3 +6,4 @@ export * from './displaySets';
 export * from './keypad';
 export * from './suggestFix';
 export * from './messages';
+export * from './scoreEntryExamples';

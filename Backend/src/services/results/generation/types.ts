@@ -63,6 +63,7 @@ export interface GenGame {
   gameCourts?: GenGameCourt[];
   matchGenerationType?: string | null;
   genderTeams?: string;
+  ballsInGames?: boolean;
   fixedNumberOfSets?: number;
   entityType: string;
   parentId?: string | null;

@@ -6,6 +6,9 @@ import { NavigationErrorBoundary } from './components/NavigationErrorBoundary';
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
 const TelegramAutoLogin = lazy(() => import('./pages/TelegramAutoLogin').then(module => ({ default: module.TelegramAutoLogin })));
 const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.Register })));
+const SessionsPage = lazy(() =>
+  import('./pages/SessionsPage').then((module) => ({ default: module.SessionsPage }))
+);
 const SelectCity = lazy(() => import('./pages/SelectCity').then(module => ({ default: module.SelectCity })));
 const MainPage = lazy(() => import('./pages/MainPage').then(module => ({ default: module.MainPage })));
 const CreateGameWrapper = lazy(() => import('./pages/CreateGameWrapper').then(module => ({ default: module.CreateGameWrapper })));
@@ -42,9 +45,11 @@ import { scheduleUnifiedChatOfflineFlush } from '@/services/chat/chatUnifiedOffl
 import pushNotificationService from './services/pushNotificationService';
 import { navigationService } from './services/navigationService';
 import { markNavigation, setupPopstateFallback } from './utils/navigation';
+import { ensureAuthBroadcastListener, scheduleProactiveAccessRefresh } from '@/api/authRefresh';
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
 import { usePresenceSubscriptionManager } from './hooks/usePresenceSubscriptionManager';
 import { ReactionEmojiUsageBootstrap } from './components/ReactionEmojiUsageBootstrap';
+import { ProfileNameGateHost } from './components/home/ProfileNameGateHost';
 import i18n from './i18n/config';
 import './i18n/config';
 
@@ -53,6 +58,7 @@ function AppContent() {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
   const isInitializing = useAuthStore((state) => state.isInitializing);
   const finishInitializing = useAuthStore((state) => state.finishInitializing);
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
@@ -85,6 +91,15 @@ function AppContent() {
     navigationService.initialize(navigate);
     backButtonService.setNavigate(navigate);
   }, [navigate]);
+
+  useEffect(() => {
+    ensureAuthBroadcastListener();
+  }, []);
+
+  useEffect(() => {
+    if (isInitializing || !token) return;
+    scheduleProactiveAccessRefresh(token);
+  }, [isInitializing, token]);
 
   useEffect(() => {
     if (!isCapacitor()) return;
@@ -313,6 +328,7 @@ function AppContent() {
       )}
       <GeoProvider>
         <ToastProvider>
+          <ProfileNameGateHost />
           <PermissionModalProvider />
           <ReactionEmojiUsageBootstrap />
           <PlayerCardModalManager>
@@ -400,6 +416,16 @@ function AppContent() {
             <ProtectedRoute>
               <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
                 <MainPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/sessions"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                <SessionsPage />
               </Suspense>
             </ProtectedRoute>
           }

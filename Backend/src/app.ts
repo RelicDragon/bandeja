@@ -34,7 +34,16 @@ app.use(
     origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires', 'Accept'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Cache-Control',
+      'Pragma',
+      'Expires',
+      'Accept',
+      'X-Client-Version',
+      'X-Client-Platform',
+    ],
     preflightContinue: false,
     optionsSuccessStatus: 200,
   })

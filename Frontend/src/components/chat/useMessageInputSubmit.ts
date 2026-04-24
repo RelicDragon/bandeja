@@ -18,6 +18,8 @@ import {
   ChatImageBatchUploadError,
   uploadChatImagesForMessage,
 } from '@/components/chat/messageInputImageUpload';
+import { useAuthStore } from '@/store/authStore';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 
 export type SendQueuedParams = {
   tempId: string;
@@ -85,6 +87,12 @@ export function useMessageInputSubmit(params: Params) {
     e.preventDefault();
     if (p.voiceMode) return;
     if ((!p.message.trim() && p.selectedImages.length === 0) || p.inputBlocked || p.isDisabled) return;
+
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleSubmit(e));
+      return;
+    }
 
     const focusTextarea = () => {
       requestAnimationFrame(() => {

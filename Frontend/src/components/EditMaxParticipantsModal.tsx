@@ -13,6 +13,7 @@ import { GameFormatGenderFields } from '@/components/gameFormat/GameFormatTeamsF
 import { gameFormatGenderVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { Game, GenderTeam } from '@/types';
 import { useAuthStore } from '@/store/authStore';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface EditMaxParticipantsModalProps {
@@ -215,6 +216,12 @@ export const EditMaxParticipantsModal = ({
   const handleSave = useCallback(async () => {
     if (!canSave || isSaving) return;
 
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleSave());
+      return;
+    }
+
     setIsSaving(true);
     try {
       // Handle marked players - set current user to not playing, kick others
@@ -261,6 +268,12 @@ export const EditMaxParticipantsModal = ({
   }, []);
 
   const handleKickAllNonCompliant = useCallback(async () => {
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleKickAllNonCompliant());
+      return;
+    }
+
     let playersToKick: string[] = [];
     
     if (confirmationModal.type === 'NON_MALE') {

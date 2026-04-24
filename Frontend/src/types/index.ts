@@ -649,6 +649,19 @@ export interface ApiResponse<T> {
 export interface LoginResponse {
   user: User;
   token: string;
+  refreshToken?: string;
+  currentSessionId?: string;
 }
+
+export type AuthSessionRow = {
+  id: string;
+  createdAt: string;
+  lastUsedAt: string;
+  expiresAt: string;
+  deviceLabel: string | null;
+  platform: string;
+  userAgent: string | null;
+  ip: string | null;
+};
 
 export type { UserTeam, UserTeamMember, UserTeamMembership, UserTeamMemberStatus } from './userTeam';

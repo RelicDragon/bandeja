@@ -5,22 +5,21 @@ import { Button } from '@/components';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser, Game } from '@/types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 import {
   getRules,
   getKeypadOptions,
   getSetKind,
   isLegalSetScore,
   validationMessage,
-  isClassicRules,
   suggestLegalScores,
+  getScoreEntryExampleList,
 } from '@/utils/scoring';
 
 interface HorizontalScoreEntryModalProps {
   match: Match;
   setIndex: number;
   players: BasicUser[];
-  courtLabel?: string | null;
   maxTotalPointsPerSet?: number;
   maxPointsPerTeam?: number;
   fixedNumberOfSets?: number;
@@ -31,13 +30,13 @@ interface HorizontalScoreEntryModalProps {
   onClose: () => void;
   canRemove?: boolean;
   isOpen: boolean;
+  roundNumber?: number;
 }
 
 export const HorizontalScoreEntryModal = ({
   match,
   setIndex,
   players,
-  courtLabel,
   maxTotalPointsPerSet,
   maxPointsPerTeam,
   fixedNumberOfSets,
@@ -48,6 +47,7 @@ export const HorizontalScoreEntryModal = ({
   onClose,
   canRemove = false,
   isOpen,
+  roundNumber,
 }: HorizontalScoreEntryModalProps) => {
   const { t } = useTranslation();
 
@@ -123,13 +123,7 @@ export const HorizontalScoreEntryModal = ({
     ? suggestLegalScores(teamAScore, teamBScore, rules, setIndex, match.sets)
     : [];
 
-  const canToggleTieBreak = useMemo(() => {
-    if (!isClassicRules(rules)) return false;
-    if (rules.tieBreakGameAtGames === null) return false;
-    const hi = Math.max(teamAScore, teamBScore);
-    const lo = Math.min(teamAScore, teamBScore);
-    return hi === rules.gamesPerSet + 1 && lo === rules.tieBreakGameAtGames;
-  }, [rules, teamAScore, teamBScore]);
+  const canToggleTieBreak = false;
 
   const showTieBreakToggle = canToggleTieBreak && kind !== 'SUPER_TIEBREAK';
 
@@ -170,21 +164,39 @@ export const HorizontalScoreEntryModal = ({
   const aIncUpperBound = keypad.max;
   const bIncUpperBound = keypad.max;
 
-  const titleSuffix = kind === 'SUPER_TIEBREAK'
-    ? ` · ${t('gameResults.superTieBreak')}`
-    : kind === 'TIEBREAK_GAME'
-      ? ` · ${t('gameResults.tieBreak')}`
-      : '';
+  const mainTitle =
+    (rules.fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')) +
+    (kind === 'SUPER_TIEBREAK'
+      ? ` · ${t('gameResults.superTieBreak')}`
+      : kind === 'TIEBREAK_GAME'
+        ? ` · ${t('gameResults.tieBreak')}`
+        : '');
+
+  const exampleList = useMemo(() => getScoreEntryExampleList(rules, kind), [rules, kind]);
+
+  const descriptionLine = useMemo(() => {
+    const parts: string[] = [];
+    if (roundNumber != null && roundNumber > 0) {
+      parts.push(t('gameResults.roundNumber', { number: roundNumber }));
+    }
+    if (exampleList) {
+      parts.push(t('gameResults.scoreEntryExamples', { examples: exampleList }));
+    }
+    return parts.length > 0 ? parts.join(' · ') : null;
+  }, [roundNumber, exampleList, t]);
 
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="horizontal-score-entry-modal">
       <DialogContent>
       <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-600/5 rounded-2xl sm:rounded-3xl pointer-events-none" />
 
-      <DialogHeader className="mb-3 sm:mb-5 md:mb-8">
-        <DialogTitle>
-          {(courtLabel != null && courtLabel !== '' ? courtLabel : (rules.fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult'))) + titleSuffix}
-        </DialogTitle>
+      <DialogHeader className="mb-3 sm:mb-5 md:mb-8 flex-col items-stretch gap-0 text-left">
+        <DialogTitle className="mb-0 text-left leading-tight">{mainTitle}</DialogTitle>
+        {descriptionLine ? (
+          <DialogDescription className="mt-0 max-w-full whitespace-nowrap text-left text-xs font-medium normal-case leading-tight text-gray-500 dark:text-gray-400 overflow-x-auto sm:text-sm">
+            {descriptionLine}
+          </DialogDescription>
+        ) : null}
       </DialogHeader>
 
       <div className="relative mb-3 sm:mb-5 md:mb-8 px-3 sm:px-6 md:px-8">

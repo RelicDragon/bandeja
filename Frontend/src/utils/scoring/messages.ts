@@ -23,8 +23,6 @@ export const validationMessage = (
       return t('gameResults.scoringErrors.classicScoreTooHigh', { target: detail?.target ?? '' }) || `Max games per set is ${detail?.target}`;
     case 'CLASSIC_SCORE_TOO_LOW_TO_WIN':
       return t('gameResults.scoringErrors.classicScoreTooLowToWin', { target: detail?.target ?? '' }) || `A team must reach ${detail?.target} games to win the set`;
-    case 'CLASSIC_INCOMPLETE':
-      return t('gameResults.scoringErrors.classicIncomplete') || 'Set looks incomplete — did you mean tiebreak?';
     case 'TIEBREAK_DRAW':
       return t('gameResults.scoringErrors.tiebreakDraw') || 'Tiebreak cannot end in a draw';
     case 'TIEBREAK_WIN_BY_2':

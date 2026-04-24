@@ -6,6 +6,7 @@ import { Trash2, LogOut, Copy, HelpCircle, ChevronRight, Trophy } from 'lucide-r
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 import {
   Card,
   PlayerListModal,
@@ -384,6 +385,12 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const handleJoin = async () => {
     if (!id) return;
 
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleJoin());
+      return;
+    }
+
     try {
       const response = await gamesApi.join(id);
       const message = (response as any).message || 'Successfully joined the game';
@@ -408,6 +415,12 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const handleAddToGame = async () => {
     if (!id) return;
 
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleAddToGame());
+      return;
+    }
+
     try {
       const result = await gamesApi.togglePlayingStatus(id, 'PLAYING') as { message?: string };
       const response = await gamesApi.getById(id);
@@ -422,6 +435,11 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   };
 
   const handleAcceptInvite = async (inviteId: string) => {
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleAcceptInvite(inviteId));
+      return;
+    }
     try {
       const response = await invitesApi.accept(inviteId);
       const message = (response as any).message || 'Invite accepted successfully';
@@ -446,6 +464,11 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   };
 
   const handleDeclineInvite = async (inviteId: string) => {
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleDeclineInvite(inviteId));
+      return;
+    }
     try {
       await invitesApi.decline(inviteId);
       setMyInvites(myInvites.filter((inv) => inv.id !== inviteId));
@@ -456,6 +479,11 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   };
 
   const handleCancelInvite = async (inviteId: string) => {
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleCancelInvite(inviteId));
+      return;
+    }
     try {
       await invitesApi.cancel(inviteId);
       setGameInvites(gameInvites.filter((inv) => inv.id !== inviteId));
@@ -498,6 +526,12 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const handleAcceptJoinQueue = async (queueUserId: string) => {
     if (!id) return;
 
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleAcceptJoinQueue(queueUserId));
+      return;
+    }
+
     try {
       await gamesApi.acceptJoinQueue(id, queueUserId);
       const response = await gamesApi.getById(id);
@@ -510,6 +544,12 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
   const handleDeclineJoinQueue = async (queueUserId: string) => {
     if (!id) return;
+
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleDeclineJoinQueue(queueUserId));
+      return;
+    }
 
     try {
       await gamesApi.declineJoinQueue(id, queueUserId);
@@ -649,6 +689,12 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
   const handleUserAction = async (action: string, userId: string) => {
     if (!id) return;
+
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleUserAction(action, userId));
+      return;
+    }
     
     try {
       switch (action) {
@@ -961,6 +1007,12 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   const handleLeaveGame = async () => {
     if (!id || isLeaving) return;
 
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleLeaveGame());
+      return;
+    }
+
     setIsLeaving(true);
     try {
       await gamesApi.leave(id);
@@ -978,6 +1030,12 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
   const handleLeaveChat = async () => {
     if (!id || isLeaving) return;
+
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleLeaveChat());
+      return;
+    }
     
     setIsLeaving(true);
     try {
@@ -1092,14 +1150,15 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
     const courts = game.gameCourts?.map(gc => gc.court) || [];
     const court = courts.find((c: { id: string }) => c.id === match.courtId);
-    const courtLabel = court?.name ?? (!match.courtId ? t('gameResults.bench', { defaultValue: 'Bench' }) : t('gameResults.court', { defaultValue: 'Court' }));
+    const courtSideLabel = court?.name;
+    const roundNumber = engineRounds.findIndex((r) => r.id === tableSetModal.roundId) + 1;
 
     const commonProps = {
       isOpen: true,
       match,
       setIndex: 0,
       players: tablePlayers,
-      courtLabel,
+      roundNumber,
       maxTotalPointsPerSet: game.maxTotalPointsPerSet,
       maxPointsPerTeam: game.maxPointsPerTeam,
       fixedNumberOfSets: game.fixedNumberOfSets,
@@ -1111,6 +1170,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     const modal = isLandscape ? (
       <SetResultModal
         {...commonProps}
+        courtLabel={courtSideLabel}
         ballsInGames={game.ballsInGames || false}
         game={game}
         onRemove={() => {}}
@@ -1224,7 +1284,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
           {user &&
             !isLeague &&
-            canEdit &&
             game.status !== 'ARCHIVED' &&
             game.entityType !== 'BAR' &&
             game.entityType !== 'TRAINING' && (
@@ -1392,6 +1451,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
                 </div>
                 <button
                   onClick={() => {
+                    const doDuplicate = () => {
                     const gameData: Partial<Game> = {
                       entityType: game.entityType,
                       gameType: game.gameType,
@@ -1446,6 +1506,13 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
                       },
                       replace: true,
                     });
+                    };
+                    const authUser = useAuthStore.getState().user;
+                    if (authUser && authUser.nameIsSet !== true) {
+                      runWithProfileName(doDuplicate);
+                      return;
+                    }
+                    doDuplicate();
                   }}
                   className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
                 >
@@ -1723,7 +1790,15 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
           onUpdate={(updatedGame) => setGame(updatedGame)}
           onKickUser={async (userId) => {
             if (!id) return;
-            await gamesApi.kickUser(id, userId);
+            const run = async () => {
+              await gamesApi.kickUser(id, userId);
+            };
+            const authUser = useAuthStore.getState().user;
+            if (authUser && authUser.nameIsSet !== true) {
+              runWithProfileName(() => void run());
+              return;
+            }
+            await run();
           }}
         />
       )}

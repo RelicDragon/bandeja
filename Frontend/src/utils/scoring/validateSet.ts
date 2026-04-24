@@ -12,7 +12,6 @@ export type ValidationReason =
   | 'CLASSIC_NEEDS_WIN_BY_2'
   | 'CLASSIC_SCORE_TOO_HIGH'
   | 'CLASSIC_SCORE_TOO_LOW_TO_WIN'
-  | 'CLASSIC_INCOMPLETE'
   | 'TIEBREAK_DRAW'
   | 'TIEBREAK_WIN_BY_2'
   | 'TIEBREAK_TOO_LOW'
@@ -50,8 +49,8 @@ export const validateClassicRegularSet = (a: number, b: number, rules: ScoringRu
   const lo = Math.min(a, b);
 
   if (hi < target) return fail('CLASSIC_SCORE_TOO_LOW_TO_WIN', { target });
-  if (winBy >= 2 && tbAt !== null && hi === target + 1 && lo === tbAt) {
-    return fail('CLASSIC_INCOMPLETE');
+  if (winBy >= 2 && tbAt !== null && hi === tbAt + 1 && lo === tbAt) {
+    return ok('REGULAR');
   }
   if (winBy >= 2 && hi > target + 1 && hi - lo !== 2) {
     if (hi - lo < 2) return fail('CLASSIC_NEEDS_WIN_BY_2', { diff: hi - lo });

@@ -30,14 +30,14 @@ export const suggestLegalScores = (
     if (winningSide === 'A') {
       pushIfLegal(target, Math.min(b, target - 2));
       if (tb !== null) {
+        pushIfLegal(tb + 1, tb);
         pushIfLegal(target + 1, tb - 1);
-        pushIfLegal(target + 1, tb, true);
       }
     } else if (winningSide === 'B') {
       pushIfLegal(Math.min(a, target - 2), target);
       if (tb !== null) {
+        pushIfLegal(tb, tb + 1);
         pushIfLegal(tb - 1, target + 1);
-        pushIfLegal(tb, target + 1, true);
       }
     }
   }

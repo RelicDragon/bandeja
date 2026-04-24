@@ -353,7 +353,7 @@ export const AvailableGamesSection = ({
   );
 
   const applyCommonFilters = (game: Game) => {
-    if (game.timeIsSet === false) {
+    if (game.timeIsSet === false && game.entityType !== 'LEAGUE_SEASON') {
       return false;
     }
 

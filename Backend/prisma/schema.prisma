@@ -28,6 +28,7 @@ model User {
   level                      Float                @default(1.0)
   socialLevel                Float                @default(1.0)
   reliability                Float                @default(0)
+  reliabilityDecayPostGraceDaysApplied Int         @default(0)
   totalPoints                Int                  @default(0)
   gamesPlayed                Int                  @default(0)
   gamesWon                   Int                  @default(0)
@@ -151,6 +152,7 @@ model User {
   telegramLinkIntents     TelegramAccountLinkIntent[]
   ownedUserTeams          UserTeam[]                    @relation("UserTeamOwner")
   userTeamMemberships     UserTeamMember[]
+  refreshSessions         UserRefreshSession[]
 
   @@index([phone])
   @@index([telegramId])
@@ -158,6 +160,29 @@ model User {
   @@index([level])
   @@index([totalPoints])
   @@index([approvedById])
+}
+
+model UserRefreshSession {
+  id                    String    @id @default(cuid())
+  userId                String
+  tokenHash             String    @unique
+  expiresAt             DateTime
+  createdAt             DateTime  @default(now())
+  lastUsedAt            DateTime  @default(now())
+  deviceLabel           String?
+  platform              String    @default("unknown")
+  userAgent             String?
+  deviceId              String?
+  ip                    String?   @db.VarChar(64)
+  revokedAt             DateTime?
+  replacedBySessionId   String?
+  rotationFamilyId      String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([rotationFamilyId])
+  @@map("user_refresh_sessions")
 }
 
 model IpLocationCache {

@@ -6,6 +6,7 @@ import { Gender } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { PROFILE_SELECT_FIELDS, USER_SELECT_FIELDS } from '../../utils/constants';
 import { resolveDisplayNameData } from '../user/userDisplayName.service';
+import { revokeAllRefreshSessionsForUser } from '../auth/userRefreshSession.service';
 
 const USERS_PAGE_SIZE = 50;
 
@@ -296,6 +297,8 @@ export class AdminUsersService {
       where: { id: userId },
       data: { passwordHash },
     });
+
+    await revokeAllRefreshSessionsForUser(userId);
 
     return { message: 'Password reset successfully' };
   }

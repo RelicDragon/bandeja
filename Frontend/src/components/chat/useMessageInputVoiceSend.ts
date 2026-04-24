@@ -12,6 +12,8 @@ import {
   placeholderWaveform,
   VOICE_MESSAGE_MAX_MS,
 } from '@/components/audio/audioWaveformUtils';
+import { useAuthStore } from '@/store/authStore';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 type VoiceRecorder = {
   start: () => Promise<boolean>;
   stop: () => Promise<{ blob: Blob; durationMs: number } | null>;
@@ -98,6 +100,11 @@ export function useMessageInputVoiceSend({
   };
 
   const handleVoiceConfirm = async () => {
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleVoiceConfirm());
+      return;
+    }
     const result = await voiceRecorder.stop();
     setVoiceMode(false);
     if (!result || result.durationMs < 500) {

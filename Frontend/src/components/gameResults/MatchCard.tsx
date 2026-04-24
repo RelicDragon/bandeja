@@ -1,8 +1,9 @@
 import { Trash2, MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser, Court, Game } from '@/types';
-import { expandSetsForDisplay, getRules } from '@/utils/scoring';
+import { expandSetsForDisplay, getRules, isSuperTieBreakDeciderRow } from '@/utils/scoring';
 import { MatchTimerPanel } from '@/components/gameResults/matchTimer/MatchTimerPanel';
 import type { MatchTimerAction } from '@/utils/matchTimer';
 
@@ -62,6 +63,7 @@ export const MatchCard = ({
   gameId,
   onMatchTimerTransition,
 }: MatchCardProps) => {
+  const { t } = useTranslation();
   const effectiveIsPresetGame = isPresetGame || prohibitMatchesEditing;
   const effectiveIsEditing = prohibitMatchesEditing ? false : isEditing;
   const canEnterScores = effectiveIsEditing || (effectiveIsPresetGame && canEditResults);
@@ -262,7 +264,9 @@ export const MatchCard = ({
                         </div>
                         {set.isTieBreak && (
                           <span className="absolute -top-1 -right-1 text-[8px] sm:text-[9px] font-bold text-primary-600 dark:text-primary-400 bg-white dark:bg-gray-800 px-1 rounded">
-                            TB
+                            {isSuperTieBreakDeciderRow(rules, setIndex, set.isTieBreak)
+                              ? t('gameResults.superTieBreakAbbr')
+                              : t('gameResults.tieBreakAbbr')}
                           </span>
                         )}
                   </button>
@@ -347,7 +351,9 @@ export const MatchCard = ({
                         </div>
                         {set.isTieBreak && (
                           <span className="absolute -top-1 -right-1 text-[8px] sm:text-[9px] font-bold text-primary-600 dark:text-primary-400 bg-white dark:bg-gray-800 px-1 rounded">
-                            TB
+                            {isSuperTieBreakDeciderRow(rules, setIndex, set.isTieBreak)
+                              ? t('gameResults.superTieBreakAbbr')
+                              : t('gameResults.tieBreakAbbr')}
                           </span>
                         )}
                   </button>

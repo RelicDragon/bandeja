@@ -7,6 +7,7 @@ import { getUserTimezoneFromCityId } from './user-timezone.service';
 import { LeagueGameResultsService } from './league/gameResults.service';
 import { SocialParticipantLevelService } from './socialParticipantLevel.service';
 import { calculateGameStatus } from '../utils/gameStatus';
+import { validateMatchClassicSetScores } from './results/classicSetScoreValidation';
 
 
 export async function getGameResults(gameId: string) {
@@ -158,11 +159,12 @@ export async function deleteGameResults(gameId: string) {
             ? {
                 level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
                 reliability: outcome.reliabilityBefore,
+                reliabilityDecayPostGraceDaysApplied: 0,
                 totalPoints: { decrement: outcome.pointsEarned },
                 gamesPlayed: { decrement: 1 },
                 gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
               }
-            : { reliability: outcome.reliabilityBefore },
+            : { reliability: outcome.reliabilityBefore, reliabilityDecayPostGraceDaysApplied: 0 },
         });
       }
     }
@@ -237,11 +239,12 @@ export async function resetGameResults(gameId: string) {
             ? {
                 level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
                 reliability: outcome.reliabilityBefore,
+                reliabilityDecayPostGraceDaysApplied: 0,
                 totalPoints: { decrement: outcome.pointsEarned },
                 gamesPlayed: { decrement: 1 },
                 gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
               }
-            : { reliability: outcome.reliabilityBefore },
+            : { reliability: outcome.reliabilityBefore, reliabilityDecayPostGraceDaysApplied: 0 },
         });
       }
     }
@@ -368,11 +371,12 @@ export async function editGameResults(gameId: string) {
             ? {
                 level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
                 reliability: outcome.reliabilityBefore,
+                reliabilityDecayPostGraceDaysApplied: 0,
                 totalPoints: { decrement: outcome.pointsEarned },
                 gamesPlayed: { decrement: 1 },
                 gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
               }
-            : { reliability: outcome.reliabilityBefore },
+            : { reliability: outcome.reliabilityBefore, reliabilityDecayPostGraceDaysApplied: 0 },
         });
       }
     }
@@ -791,6 +795,8 @@ export async function updateMatch(
     select: {
       fixedNumberOfSets: true,
       ballsInGames: true,
+      winnerOfMatch: true,
+      scoringPreset: true,
       startTime: true,
       endTime: true,
       cityId: true,
@@ -880,6 +886,11 @@ export async function updateMatch(
     if (!isLastSet) {
       throw new ApiError(400, 'TieBreak can only be set on the last set of a match');
     }
+  }
+
+  const classicErr = validateMatchClassicSetScores(game, matchData.sets || []);
+  if (classicErr) {
+    throw new ApiError(400, classicErr);
   }
 
   await prisma.$transaction(async (tx) => {

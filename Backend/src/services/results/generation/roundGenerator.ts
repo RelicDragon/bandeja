@@ -32,6 +32,22 @@ function createTwoOnTwoMatches(players: { id: string }[]): { teamA: string[]; te
   ];
 }
 
+function emptySetRow(): { teamA: number; teamB: number; isTieBreak: boolean } {
+  return { teamA: 0, teamB: 0, isTieBreak: false };
+}
+
+/** Classic best-of-N: start with min sets to win (e.g. 2 for Bo3), not all N empty rows. */
+function initialSetRowsForMatch(
+  game: RoundGeneratorOptions['game'],
+  fixedNumberOfSets: number
+): Array<{ teamA: number; teamB: number; isTieBreak: boolean }> {
+  const n = fixedNumberOfSets > 0 ? fixedNumberOfSets : 0;
+  if (n <= 0) return [emptySetRow()];
+  const classicBySets = !!game.ballsInGames && game.winnerOfMatch === 'BY_SETS';
+  const rowCount = classicBySets ? Math.floor(n / 2) + 1 : n;
+  return Array.from({ length: rowCount }, () => emptySetRow());
+}
+
 export class RoundGenerator {
   private options: RoundGeneratorOptions;
 
@@ -42,14 +58,7 @@ export class RoundGenerator {
   async generateRound(): Promise<GenMatch[]> {
     const { matchGenerationType } = this.options.game;
     const fixedNumberOfSets = this.options.fixedNumberOfSets || 0;
-    const initialSets =
-      fixedNumberOfSets > 0
-        ? Array.from({ length: fixedNumberOfSets }, () => ({
-            teamA: 0,
-            teamB: 0,
-            isTieBreak: false,
-          }))
-        : [{ teamA: 0, teamB: 0, isTieBreak: false }];
+    const initialSets = initialSetRowsForMatch(this.options.game, fixedNumberOfSets);
 
     if (!matchGenerationType || matchGenerationType === 'HANDMADE') {
       return [

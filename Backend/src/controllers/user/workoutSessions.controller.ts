@@ -6,7 +6,7 @@ import { GameWorkoutService } from '../../services/game/gameWorkout.service';
 
 export const getMyWorkoutSessions = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.userId) {
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
   const rawLimit = parseInt(String(req.query.limit ?? '30'), 10);

@@ -38,6 +38,15 @@ export const expandSetsForDisplay = (
     const scoredCount = base.filter(isScored).length;
 
     const minVisible = rules.fixedNumberOfSets === 1 ? 1 : Math.max(rules.minSetsToWin, 1);
+    if (!decided && rules.fixedNumberOfSets !== 1) {
+      while (base.length > minVisible) {
+        const last = base[base.length - 1];
+        if (isScored(last)) break;
+        const { a, b } = countSetsWon(base.slice(0, -1));
+        if (a === b && a > 0) break;
+        base.pop();
+      }
+    }
     while (base.length < minVisible) base.push(emptySet());
 
     if (decided) {

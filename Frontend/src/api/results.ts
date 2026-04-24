@@ -150,6 +150,10 @@ export interface OutcomeExplanation {
       boost: number;
     }>;
   };
+  placementRatingFloor?: {
+    applied: boolean;
+    uncappedLevelChange: number;
+  };
 }
 
 export interface SetExplanation {

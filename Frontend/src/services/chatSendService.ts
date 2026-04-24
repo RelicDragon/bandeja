@@ -1,4 +1,6 @@
 import { chatApi, ChatContextType, ChatMessage, CreateMessageRequest } from '@/api/chat';
+import { useAuthStore } from '@/store/authStore';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 import { mediaApi } from '@/api/media';
 import { uploadChatImageFileWithRetry } from '@/services/chat/chatImageUploadRetry';
 import { messageQueueStorage, QueuedMessage } from './chatMessageQueueStorage';
@@ -66,6 +68,12 @@ export function sendWithTimeout(
     clientMutationId,
   } = params;
   const { onFailed, onSuccess } = callbacks;
+
+  const gateUser = useAuthStore.getState().user;
+  if (gateUser && gateUser.nameIsSet !== true) {
+    runWithProfileName(() => sendWithTimeout(params, callbacks));
+    return;
+  }
 
   clearDeadlineFor(tempId);
 

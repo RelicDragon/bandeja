@@ -2,7 +2,12 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
-import { generateToken } from '../utils/jwt';
+import {
+  assertLoginIssuanceAllowed,
+  issueLoginTokens,
+  jwtPayloadFromAuthUser,
+} from '../services/auth/authIssuance.service';
+import { issuedRefreshJsonPayload } from '../utils/refreshWebCookie';
 import telegramBotService from '../services/telegram/bot.service';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 import { NotificationPreferenceService } from '../services/notificationPreference.service';
@@ -20,7 +25,8 @@ async function completeTelegramAuth(
   otp: TelegramOtp,
   req: Request,
   language: string | undefined
-): Promise<{ user: any; token: string }> {
+): Promise<{ user: any; token: string; refreshToken?: string; currentSessionId?: string }> {
+  assertLoginIssuanceAllowed(req);
   const actualTelegramId = otp.telegramId;
   let user = await prisma.user.findUnique({
     where: { telegramId: actualTelegramId },
@@ -58,9 +64,14 @@ async function completeTelegramAuth(
       });
     }
     user = await ensureUserCityAssigned(user.id, req);
-    const token = generateToken({ userId: user.id, telegramId: actualTelegramId });
+    const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
     await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
-    return { user, token };
+    return {
+      user,
+      token: issued.token,
+      refreshToken: issued.refreshToken,
+      currentSessionId: issued.currentSessionId,
+    };
   }
 
   const newName = resolveDisplayNameData(otp.firstName, otp.lastName);
@@ -76,9 +87,14 @@ async function completeTelegramAuth(
     select: PROFILE_SELECT_FIELDS,
   });
   user = await ensureUserCityAssigned(user.id, req);
-  const token = generateToken({ userId: user.id, telegramId: actualTelegramId });
+  const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
   await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
-  return { user, token };
+  return {
+    user,
+    token: issued.token,
+    refreshToken: issued.refreshToken,
+    currentSessionId: issued.currentSessionId,
+  };
 }
 
 async function mergeTelegramIntoUser(
@@ -86,7 +102,7 @@ async function mergeTelegramIntoUser(
   linkUserId: string,
   req: Request,
   language: string | undefined
-): Promise<{ user: any; token: string }> {
+): Promise<{ user: any; token: string; refreshToken?: string; currentSessionId?: string }> {
   const tgId = otp.telegramId;
 
   const conflicting = await prisma.user.findFirst({
@@ -134,13 +150,17 @@ async function mergeTelegramIntoUser(
     select: PROFILE_SELECT_FIELDS,
   });
   user = await ensureUserCityAssigned(user.id, req);
-  const token = generateToken({ userId: user.id, telegramId: tgId });
+  const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
   await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
-  return { user, token };
+  return {
+    user,
+    token: issued.token,
+    refreshToken: issued.refreshToken,
+    currentSessionId: issued.currentSessionId,
+  };
 }
 
 export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response) => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
   const { code, language } = req.body;
   if (!code) {
     throw new ApiError(400, 'auth.codeRequired');
@@ -149,12 +169,18 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
   if (!otp) {
     throw new ApiError(401, 'auth.invalidCode');
   }
-  const { user, token } = await completeTelegramAuth(otp, req, language);
-  res.json({ success: true, data: { user, token } });
+  const { user, token, refreshToken, currentSessionId } = await completeTelegramAuth(otp, req, language);
+  res.json({
+    success: true,
+    data: {
+      user,
+      token,
+      ...issuedRefreshJsonPayload(req, res, { refreshToken, currentSessionId }),
+    },
+  });
 });
 
 export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: Response) => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
   const { key, language } = req.body;
   if (!key || typeof key !== 'string' || key.length < 20) {
     throw new ApiError(400, 'auth.codeRequired');
@@ -171,10 +197,27 @@ export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: 
       throw new ApiError(403, 'auth.telegramLinkWrongAccount');
     }
     const merged = await mergeTelegramIntoUser(otp, otp.linkUserId, req, language);
-    res.json({ success: true, data: merged });
+    res.json({
+      success: true,
+      data: {
+        user: merged.user,
+        token: merged.token,
+        ...issuedRefreshJsonPayload(req, res, {
+          refreshToken: merged.refreshToken,
+          currentSessionId: merged.currentSessionId,
+        }),
+      },
+    });
     return;
   }
-  const { user, token } = await completeTelegramAuth(otp, req, language);
-  res.json({ success: true, data: { user, token } });
+  const { user, token, refreshToken, currentSessionId } = await completeTelegramAuth(otp, req, language);
+  res.json({
+    success: true,
+    data: {
+      user,
+      token,
+      ...issuedRefreshJsonPayload(req, res, { refreshToken, currentSessionId }),
+    },
+  });
 });
 

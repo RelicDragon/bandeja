@@ -77,6 +77,7 @@ const PLACE_DEFS: PlaceDefinition[] = [
   { pattern: /^\/bugs\/?$/, place: 'bugs' },
   { pattern: /^\/find\/?$/, place: 'find' },
   { pattern: /^\/user-team\/([^/]+)$/, place: 'userTeam', extractParams: (m) => ({ id: m[1] }) },
+  { pattern: /^\/profile\/sessions\/?$/, place: 'profile' },
   { pattern: /^\/profile\/?$/, place: 'profile' },
   { pattern: /^\/leaderboard\/?$/, place: 'leaderboard' },
   { pattern: /^\/game-subscriptions\/?$/, place: 'gameSubscriptions' },

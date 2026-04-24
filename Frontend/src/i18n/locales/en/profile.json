@@ -222,6 +222,17 @@
     "noLeaderboardData": "No leaderboard data available",
     "photoPickFailed": "Failed to pick photo",
     "characterGenerator": "Character Generator",
-    "characterCreation": "Character Creation"
+    "characterCreation": "Character Creation",
+    "sessionsTitle": "Signed-in devices",
+    "sessionsSubtitle": "Manage where you stay logged in",
+    "sessionsPageTitle": "Devices & sessions",
+    "sessionsSignOutAll": "Sign out everywhere",
+    "sessionsCurrent": "This device",
+    "sessionsPlatform": "Platform",
+    "sessionsLastActive": "Last active",
+    "sessionsRevoke": "Sign out",
+    "sessionsEmpty": "No other active sessions.",
+    "sessionsRevoked": "Session ended",
+    "sessionsSignedOutAll": "Signed out on all other devices"
   }
 }

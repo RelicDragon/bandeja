@@ -17,7 +17,24 @@ import { usersApi, mediaApi, authApi, NotificationPreference } from '@/api';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
 import { Gender, User } from '@/types';
-import { Moon, Sun, Globe, MapPin, Monitor, LogOut, Eye, Beer, Wallet, Check, Loader2, Trash2, X, Bell } from 'lucide-react';
+import {
+  Moon,
+  Sun,
+  Globe,
+  MapPin,
+  Monitor,
+  LogOut,
+  Eye,
+  Beer,
+  Wallet,
+  Check,
+  Loader2,
+  Trash2,
+  X,
+  Bell,
+  Smartphone,
+  ChevronRight,
+} from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -1173,6 +1190,25 @@ export const ProfileContent = () => {
           <BlockedUsersSection />
         )}
         </div>
+
+        <Card>
+          <button
+            type="button"
+            onClick={() => navigate('/profile/sessions')}
+            className="w-full flex items-center justify-between gap-3 rounded-xl p-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/60"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/40 dark:text-primary-300">
+                <Smartphone size={20} />
+              </div>
+              <div className="min-w-0">
+                <div className="font-medium text-gray-900 dark:text-white">{t('profile.sessionsTitle')}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{t('profile.sessionsSubtitle')}</div>
+              </div>
+            </div>
+            <ChevronRight className="shrink-0 text-gray-400" size={20} aria-hidden />
+          </button>
+        </Card>
 
         <Card>
           <div className="space-y-4">

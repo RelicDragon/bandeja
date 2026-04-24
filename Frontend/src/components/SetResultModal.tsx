@@ -1,22 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, Minus, Plus, Zap, X } from 'lucide-react';
 import { Button } from '@/components';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser, Game } from '@/types';
-import { Dialog, DialogContent, DialogFooter, DialogClose } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogFooter, DialogClose, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 import {
   getRules,
   getKeypadOptions,
   getSetKind,
   isLegalSetScore,
   validationMessage,
-  isClassicRules,
   suggestLegalScores,
+  getScoreEntryExampleList,
 } from '@/utils/scoring';
-import { useMemo } from 'react';
-
 interface SetResultModalProps {
   match: Match;
   setIndex: number;
@@ -32,6 +30,7 @@ interface SetResultModalProps {
   onClose: () => void;
   canRemove?: boolean;
   isOpen: boolean;
+  roundNumber?: number;
 }
 
 export const SetResultModal = ({
@@ -49,6 +48,7 @@ export const SetResultModal = ({
   onClose,
   canRemove = false,
   isOpen,
+  roundNumber,
 }: SetResultModalProps) => {
   const { t } = useTranslation();
 
@@ -163,15 +163,30 @@ export const SetResultModal = ({
   const isTeamAWinning = teamAScore > teamBScore;
   const isTeamBWinning = teamBScore > teamAScore;
 
-  const canToggleTieBreak = useMemo(() => {
-    if (!isClassicRules(rules)) return false;
-    if (rules.tieBreakGameAtGames === null) return false;
-    const hi = Math.max(teamAScore, teamBScore);
-    const lo = Math.min(teamAScore, teamBScore);
-    return hi === rules.gamesPerSet + 1 && lo === rules.tieBreakGameAtGames;
-  }, [rules, teamAScore, teamBScore]);
+  const canToggleTieBreak = false;
 
   const showTieBreakToggle = canToggleTieBreak && kind !== 'SUPER_TIEBREAK';
+
+  const mainTitle =
+    (rules.fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')) +
+    (kind === 'SUPER_TIEBREAK'
+      ? ` · ${t('gameResults.superTieBreak')}`
+      : kind === 'TIEBREAK_GAME'
+        ? ` · ${t('gameResults.tieBreak')}`
+        : '');
+
+  const exampleList = useMemo(() => getScoreEntryExampleList(rules, kind), [rules, kind]);
+
+  const descriptionLine = useMemo(() => {
+    const parts: string[] = [];
+    if (roundNumber != null && roundNumber > 0) {
+      parts.push(t('gameResults.roundNumber', { number: roundNumber }));
+    }
+    if (exampleList) {
+      parts.push(t('gameResults.scoreEntryExamples', { examples: exampleList }));
+    }
+    return parts.length > 0 ? parts.join(' · ') : null;
+  }, [roundNumber, exampleList, t]);
 
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="set-result-modal">
@@ -186,18 +201,26 @@ export const SetResultModal = ({
         </button>
       </DialogClose>
       <div className="overflow-hidden rounded-xl flex flex-row flex-1 min-h-0">
-      {courtLabel != null && courtLabel !== '' && (
-        <div className="relative flex items-center justify-center w-7 sm:w-8 flex-shrink-0 bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
-          <span className="absolute [writing-mode:vertical-lr] rotate-180 text-[10px] sm:text-xs font-semibold tracking-wider text-gray-500 dark:text-gray-400 uppercase whitespace-nowrap select-none">
-            {courtLabel}
-          </span>
-        </div>
-      )}
-      <div className="flex flex-col flex-1 min-w-0">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-600/5 rounded-2xl sm:rounded-3xl pointer-events-none" />
+      <div className="relative flex items-center justify-center w-7 sm:w-8 flex-shrink-0 bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+        <span className="absolute [writing-mode:vertical-lr] rotate-180 text-[10px] sm:text-xs font-semibold tracking-wider text-gray-500 dark:text-gray-400 uppercase whitespace-nowrap select-none">
+          {courtLabel?.trim() ? courtLabel.trim() : t('gameResults.court')}
+        </span>
+      </div>
+      <div className="flex flex-col flex-1 min-w-0 min-h-0">
+      <div className="relative z-[1] shrink-0 px-3 sm:px-4 pt-3 pb-2 border-b border-gray-200/80 dark:border-gray-700/80 bg-white/95 dark:bg-gray-900/95">
+        <DialogTitle className="mb-0 text-base sm:text-lg font-semibold leading-tight text-gray-900 dark:text-white pr-2">
+          {mainTitle}
+        </DialogTitle>
+        {descriptionLine ? (
+          <DialogDescription className="mt-0 max-w-full whitespace-nowrap text-xs font-medium normal-case leading-tight text-gray-500 dark:text-gray-400 overflow-x-auto">
+            {descriptionLine}
+          </DialogDescription>
+        ) : null}
+      </div>
 
-      <div className="relative py-4 px-3 sm:px-4">
-        <div className={`transition-all duration-500 ${!isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
+      <div className="relative z-0 flex-1 min-h-0 overflow-y-auto py-4 px-3 sm:px-4">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-primary-600/5 rounded-2xl sm:rounded-3xl" />
+        <div className={`relative z-[1] transition-all duration-500 ${!isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
               <div className="flex flex-col items-center gap-2 sm:gap-3">
                 <div className="w-full flex flex-row items-center gap-2 sm:gap-3">
                   <div className="flex-1 relative">
@@ -303,7 +326,7 @@ export const SetResultModal = ({
               </div>
         </div>
         
-        <div className={`transition-all duration-500 ${isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
+        <div className={`relative z-[1] transition-all duration-500 ${isNumberPickerMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
               <div className="flex flex-col items-center gap-2 sm:gap-4">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-primary-600/10 rounded-lg sm:rounded-xl blur-md" />

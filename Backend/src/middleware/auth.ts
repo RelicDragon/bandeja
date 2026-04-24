@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken } from '../utils/jwt';
+import jwt from 'jsonwebtoken';
+import { LegacyJwtVerifyRejectedError, verifyToken } from '../utils/jwt';
+import { config } from '../config/env';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 import { USER_SELECT_FIELDS } from '../utils/constants';
@@ -27,7 +29,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     }
 
     if (!token) {
-      throw new ApiError(401, 'No token provided');
+      throw new ApiError(401, 'No token provided', true, { code: 'auth.noToken' });
     }
 
     const decoded = verifyToken(token);
@@ -49,8 +51,11 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       },
     });
 
-    if (!user || !user.isActive) {
-      throw new ApiError(401, 'User not found or inactive');
+    if (!user) {
+      throw new ApiError(401, 'User not found or inactive', true, { code: 'auth.userNotFound' });
+    }
+    if (!user.isActive) {
+      throw new ApiError(401, 'User not found or inactive', true, { code: 'auth.userInactive' });
     }
 
     req.userId = user.id;
@@ -64,8 +69,21 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
   } catch (error) {
     if (error instanceof ApiError) {
       next(error);
+    } else if (error instanceof LegacyJwtVerifyRejectedError) {
+      const endedAt = config.legacyJwtIssuanceEndAt;
+      next(
+        new ApiError(401, 'auth.clientUpgradeRequired', true, {
+          code: 'auth.clientUpgradeRequired',
+          minClientVersion: config.minClientVersionForRefresh,
+          ...(endedAt && { legacyJwtIssuanceEndedAt: endedAt.toISOString() }),
+        })
+      );
+    } else if (error instanceof jwt.TokenExpiredError) {
+      next(new ApiError(401, 'auth.accessExpired', true, { code: 'auth.accessExpired' }));
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      next(new ApiError(401, 'auth.invalidToken', true, { code: 'auth.invalidToken' }));
     } else {
-      next(new ApiError(401, 'Invalid token'));
+      next(new ApiError(401, 'auth.invalidToken', true, { code: 'auth.invalidToken' }));
     }
   }
 };
@@ -106,7 +124,7 @@ export const requireAdmin = async (req: AuthRequest, res: Response, next: NextFu
     }
 
     if (!token) {
-      throw new ApiError(401, 'No token provided');
+      throw new ApiError(401, 'No token provided', true, { code: 'auth.noToken' });
     }
 
     const decoded = verifyToken(token);
@@ -123,8 +141,11 @@ export const requireAdmin = async (req: AuthRequest, res: Response, next: NextFu
       },
     });
 
-    if (!user || !user.isActive) {
-      throw new ApiError(401, 'User not found or inactive');
+    if (!user) {
+      throw new ApiError(401, 'User not found or inactive', true, { code: 'auth.userNotFound' });
+    }
+    if (!user.isActive) {
+      throw new ApiError(401, 'User not found or inactive', true, { code: 'auth.userInactive' });
     }
 
     if (!user.isAdmin) {
@@ -137,8 +158,21 @@ export const requireAdmin = async (req: AuthRequest, res: Response, next: NextFu
   } catch (error) {
     if (error instanceof ApiError) {
       next(error);
+    } else if (error instanceof LegacyJwtVerifyRejectedError) {
+      const endedAt = config.legacyJwtIssuanceEndAt;
+      next(
+        new ApiError(401, 'auth.clientUpgradeRequired', true, {
+          code: 'auth.clientUpgradeRequired',
+          minClientVersion: config.minClientVersionForRefresh,
+          ...(endedAt && { legacyJwtIssuanceEndedAt: endedAt.toISOString() }),
+        })
+      );
+    } else if (error instanceof jwt.TokenExpiredError) {
+      next(new ApiError(401, 'auth.accessExpired', true, { code: 'auth.accessExpired' }));
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      next(new ApiError(401, 'auth.invalidToken', true, { code: 'auth.invalidToken' }));
     } else {
-      next(new ApiError(401, 'Invalid token'));
+      next(new ApiError(401, 'auth.invalidToken', true, { code: 'auth.invalidToken' }));
     }
   }
 };
@@ -157,7 +191,7 @@ export const requireCanModifyResults = async (req: AuthRequest, res: Response, n
     }
 
     if (!req.userId) {
-      throw new ApiError(401, 'User not authenticated');
+      throw new ApiError(401, 'User not authenticated', true, { code: 'auth.notAuthenticated' });
     }
 
     await canModifyResults(gameId, req.userId, req.user?.isAdmin || false);
@@ -183,7 +217,7 @@ export const requireGamePermission = (
   return async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       if (!req.userId) {
-        throw new ApiError(401, 'User not authenticated');
+        throw new ApiError(401, 'User not authenticated', true, { code: 'auth.notAuthenticated' });
       }
 
       const gameId = req.params.gameId || req.params.id || req.params.leagueSeasonId || req.body.gameId;

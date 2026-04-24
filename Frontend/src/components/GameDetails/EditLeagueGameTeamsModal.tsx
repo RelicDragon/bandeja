@@ -13,6 +13,7 @@ import { createDateFromClubTime, formatTimeInClubTimezone } from '@/hooks/useGam
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
 import { isParticipantPlaying } from '@/utils/participantStatus';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 
 interface EditLeagueGameTeamsModalProps {
   isOpen: boolean;
@@ -352,6 +353,12 @@ export const EditLeagueGameTeamsModal = ({
   };
 
   const handleSave = async () => {
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleSave());
+      return;
+    }
+
     const team1Valid = team1Players.filter(p => p !== null);
     const team2Valid = team2Players.filter(p => p !== null);
 

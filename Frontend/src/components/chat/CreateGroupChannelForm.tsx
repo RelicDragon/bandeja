@@ -4,6 +4,8 @@ import { Loader2 } from 'lucide-react';
 import { chatApi, GroupChannel } from '@/api/chat';
 import toast from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { useAuthStore } from '@/store/authStore';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 
 interface CreateGroupChannelFormProps {
   isChannel: boolean;
@@ -26,6 +28,12 @@ export const CreateGroupChannelForm = ({ isChannel, onClose, onSuccess }: Create
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleSubmit(e));
+      return;
+    }
     
     if (!name.trim()) {
       toast.error(t('chat.nameRequired', { defaultValue: 'Name is required' }));

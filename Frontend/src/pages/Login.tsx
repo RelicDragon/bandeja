@@ -17,6 +17,7 @@ import { isIOS, isCapacitor, getAppInfo } from '@/utils/capacitor';
 import { openEula } from '@/utils/openEula';
 import { AppleIcon } from '@/components/AppleIcon';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
+import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 
 type LoginTab = 'main' | 'phone';
 
@@ -62,11 +63,14 @@ export const Login = () => {
     try {
       const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
       const response = await authApi.loginPhone({ phone, password, language: normalizedLanguage });
-      await setAuth(response.data.user, response.data.token);
+      await setAuth(response.data.user, response.data.token, {
+        refreshToken: response.data.refreshToken,
+        currentSessionId: response.data.currentSessionId,
+      });
       await pushNotificationService.ensureTokenSentToBackend();
       navigate('/');
     } catch (err: any) {
-      setError(extractError(err, t));
+      setError(extractApiErrorMessage(err, t));
     } finally {
       setLoading(false);
     }
@@ -104,11 +108,14 @@ export const Login = () => {
         firstName,
         lastName,
       });
-      await setAuth(response.data.user, response.data.token);
+      await setAuth(response.data.user, response.data.token, {
+        refreshToken: response.data.refreshToken,
+        currentSessionId: response.data.currentSessionId,
+      });
       await pushNotificationService.ensureTokenSentToBackend();
       navigate('/');
     } catch (err: any) {
-      if (!isCancelError(err)) setError(extractError(err, t));
+      if (!isCancelError(err)) setError(extractApiErrorMessage(err, t));
     } finally {
       setLoading(false);
     }
@@ -131,11 +138,14 @@ export const Login = () => {
         firstName: profile?.givenName,
         lastName: profile?.familyName,
       });
-      await setAuth(response.data.user, response.data.token);
+      await setAuth(response.data.user, response.data.token, {
+        refreshToken: response.data.refreshToken,
+        currentSessionId: response.data.currentSessionId,
+      });
       await pushNotificationService.ensureTokenSentToBackend();
       navigate('/');
     } catch (err: any) {
-      if (!isCancelError(err)) setError(extractError(err, t));
+      if (!isCancelError(err)) setError(extractApiErrorMessage(err, t));
     } finally {
       setLoading(false);
     }
@@ -296,18 +306,6 @@ function GoogleIcon() {
       </g>
     </svg>
   );
-}
-
-function extractError(err: any, t: (k: string) => string): string {
-  if (err?.response?.data?.message) {
-    const key = err.response.data.message;
-    return t(key) !== key ? t(key) : key;
-  }
-  if (err?.response?.data) return JSON.stringify(err.response.data);
-  if (err?.response) return `Error ${err.response.status}: ${err.response.statusText}`;
-  if (err?.code === 'ERR_NETWORK' || err?.code === 'ECONNABORTED') return 'Network unavailable';
-  if (err?.message && err.message !== 'Network Error') return err.message;
-  return t('errors.generic');
 }
 
 function isCancelError(err: any): boolean {

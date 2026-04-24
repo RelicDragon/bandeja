@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { pickImages } from '@/utils/photoCapture';
 import { isCapacitor } from '@/utils/capacitor';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 
 interface PhotosSectionProps {
   game: Game;
@@ -108,6 +109,12 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
 
   const handlePhotoSelect = async (files: File[]) => {
     if (!files || files.length === 0 || isUploadingPhoto || !game.id) return;
+
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handlePhotoSelect(files));
+      return;
+    }
 
     const imageFiles = files.filter(file => 
       file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024

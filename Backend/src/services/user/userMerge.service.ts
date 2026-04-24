@@ -311,6 +311,7 @@ function buildMergedUserData(survivor: SurvivorRow, source: SurvivorRow): Prisma
     level: Math.max(survivor.level, source.level),
     socialLevel: Math.max(survivor.socialLevel, source.socialLevel),
     reliability: Math.max(survivor.reliability, source.reliability),
+    reliabilityDecayPostGraceDaysApplied: 0,
     wallet: survivor.wallet + source.wallet,
     currentCityId: nn(survivor.currentCityId, source.currentCityId) ?? null,
     lastUserIP: nn(survivor.lastUserIP, source.lastUserIP) ?? null,

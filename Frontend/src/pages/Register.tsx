@@ -142,7 +142,10 @@ export const Register = () => {
         genderIsSet,
         language: normalizedLanguage,
       });
-      await setAuth(response.data.user, response.data.token);
+      await setAuth(response.data.user, response.data.token, {
+        refreshToken: response.data.refreshToken,
+        currentSessionId: response.data.currentSessionId,
+      });
       await pushNotificationService.ensureTokenSentToBackend();
       navigate('/');
     } catch (err: any) {

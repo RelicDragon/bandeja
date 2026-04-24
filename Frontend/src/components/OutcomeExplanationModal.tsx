@@ -140,6 +140,17 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                   {formatChange(explanation.levelChange)}
                 </span>
               </div>
+              {explanation.placementRatingFloor?.applied && (
+                <div className="col-span-2 mt-2 p-3 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-100 text-sm leading-snug">
+                  <p className="font-semibold mb-1">{t('gameResults.placementRatingFloorTitle')}</p>
+                  <p>
+                    {t('gameResults.placementRatingFloorBody', {
+                      uncapped: formatChange(explanation.placementRatingFloor.uncappedLevelChange),
+                      applied: formatChange(explanation.levelChange),
+                    })}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

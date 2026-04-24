@@ -18,6 +18,7 @@ import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { useGameFormat } from '@/hooks/useGameFormat';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
 import { useAuthStore } from '@/store/authStore';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 import { maxLeagueSeasonParticipantsCap } from '@/utils/userMaxParticipantsInGame';
 
 export const CreateLeague = () => {
@@ -96,6 +97,12 @@ export const CreateLeague = () => {
   });
 
   const handleCreateLeague = async () => {
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleCreateLeague());
+      return;
+    }
+
     if (!name.trim()) {
       return;
     }

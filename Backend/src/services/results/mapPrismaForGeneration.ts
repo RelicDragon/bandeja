@@ -40,6 +40,7 @@ export function prismaGameToGenGame(game: GameForRoundGeneration): GenGame {
       })),
     matchGenerationType: game.matchGenerationType,
     genderTeams: game.genderTeams,
+    ballsInGames: game.ballsInGames,
     fixedNumberOfSets: game.fixedNumberOfSets,
     entityType: game.entityType,
     parentId: game.parentId,

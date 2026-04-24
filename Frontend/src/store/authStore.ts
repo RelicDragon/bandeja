@@ -2,19 +2,32 @@ import { create } from 'zustand';
 import { User } from '@/types';
 import i18n from '@/i18n/config';
 import { syncTokenToNative, syncLogoutToNative } from '@/services/authBridge';
+import {
+  clearRefreshBundle,
+  getRefreshTokenForRequest,
+  isWebHttpOnlyRefreshCookie,
+  persistRefreshBundle,
+} from '@/services/refreshTokenPersistence';
 import { extractLanguageCode, detectTimeFormat, detectWeekStart, normalizeLanguageForProfile } from '@/utils/displayPreferences';
-import { usersApi } from '@/api';
+import { usersApi, authApi, pushApi } from '@/api';
+import { clearProactiveAccessRefresh, scheduleProactiveAccessRefresh } from '@/api/authRefresh';
+import { clearChatLocalStores } from '@/services/chat/chatThreadIndex';
 import { clearChatSyncScheduler } from '@/services/chat/chatSyncScheduler';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
+import { registerAuthAccessTokenSink } from '@/store/authAccessSink';
 
 interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   isInitializing: boolean;
-  setAuth: (user: User, token: string) => Promise<void>;
+  setAuth: (
+    user: User,
+    token: string,
+    opts?: { refreshToken?: string; currentSessionId?: string }
+  ) => Promise<void>;
   setToken: (token: string) => void;
   logout: () => void | Promise<void>;
   updateUser: (user: User) => void;
@@ -54,11 +67,19 @@ export const useAuthStore = create<AuthState>((set) => {
     token: savedToken,
     isAuthenticated: !!savedToken,
     isInitializing: true,
-    setAuth: async (user, token) => {
+    setAuth: async (user, token, opts) => {
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
       set({ user, token, isAuthenticated: true });
       syncTokenToNative(token);
+      if (opts?.refreshToken) {
+        await persistRefreshBundle(opts.refreshToken, opts.currentSessionId);
+      } else if (opts?.currentSessionId && isWebHttpOnlyRefreshCookie()) {
+        await persistRefreshBundle(undefined, opts.currentSessionId, { webCookieMode: true });
+      } else {
+        await clearRefreshBundle();
+      }
+      scheduleProactiveAccessRefresh(token);
 
       const deviceLocale = navigator.language || 'en-GB';
       const normalizedLanguage = normalizeLanguageForProfile(user.language);
@@ -103,9 +124,9 @@ export const useAuthStore = create<AuthState>((set) => {
         i18n.changeLanguage(langCode);
       }
 
-      void import('@/services/chat/chatSyncBatchWarm').then((m) => {
-        m.resetChatSyncWarmSession();
-        void m.ensureChatSyncWarmBootstrap();
+      void import('@/services/chat/chatSyncBatchWarm').then((warm) => {
+        warm.resetChatSyncWarmSession();
+        void warm.ensureChatSyncWarmBootstrap();
       });
     },
     setToken: (token) => {
@@ -113,26 +134,33 @@ export const useAuthStore = create<AuthState>((set) => {
         localStorage.setItem('token', token);
         set({ token, isAuthenticated: true });
         syncTokenToNative(token);
+        scheduleProactiveAccessRefresh(token);
       } catch (error) {
         console.error('Error saving token to localStorage:', error);
       }
     },
     logout: async () => {
       try {
-        const { pushApi } = await import('@/api');
+        const rt = await getRefreshTokenForRequest();
+        if (rt?.trim() || isWebHttpOnlyRefreshCookie()) {
+          await authApi.logoutWithRefresh(rt?.trim() ? { refreshToken: rt.trim() } : {});
+        }
+      } catch {
+        /* ignore */
+      }
+      clearProactiveAccessRefresh();
+      await clearRefreshBundle();
+      try {
         await pushApi.removeAllTokens();
       } catch {
         // ignore so logout always completes
       }
       try {
-        const { clearChatLocalStores } = await import('@/services/chat/chatThreadIndex');
-        const { clearChatSyncWarmDrainQueue, resetChatSyncWarmSession } = await import(
-          '@/services/chat/chatSyncBatchWarm'
-        );
-        resetChatSyncWarmSession();
+        const warm = await import('@/services/chat/chatSyncBatchWarm');
+        warm.resetChatSyncWarmSession();
         await clearChatLocalStores();
         clearChatSyncScheduler();
-        clearChatSyncWarmDrainQueue();
+        warm.clearChatSyncWarmDrainQueue();
         useChatSyncStore.getState().resetChatListDexieBump();
       } catch {
         /* ignore */
@@ -169,5 +197,9 @@ export const useAuthStore = create<AuthState>((set) => {
       set({ isInitializing: false });
     },
   };
+});
+
+registerAuthAccessTokenSink((token) => {
+  useAuthStore.getState().setToken(token);
 });
 

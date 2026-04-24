@@ -120,12 +120,14 @@ export async function updateParticipantLevel(
     const updateData: {
       level: number;
       reliability: number;
+      reliabilityDecayPostGraceDaysApplied: number;
       approvedLevel?: boolean;
       approvedById?: string;
       approvedWhen?: Date;
     } = {
       level: levelAfter,
       reliability: reliabilityAfter,
+      reliabilityDecayPostGraceDaysApplied: 0,
     };
 
     if (user.isTrainer || user.isAdmin || isTrainerOrOwner) {
@@ -234,6 +236,7 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
           data: {
             level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
             reliability: outcome.reliabilityBefore,
+            reliabilityDecayPostGraceDaysApplied: 0,
           },
         });
       }

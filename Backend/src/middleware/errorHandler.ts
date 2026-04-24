@@ -4,7 +4,7 @@ import { config } from '../config/env';
 import type { AuthRequest } from './auth';
 
 const CORS_ALLOW_HEADERS =
-  'Content-Type, Authorization, Cache-Control, Pragma, Expires, Accept';
+  'Content-Type, Authorization, Cache-Control, Pragma, Expires, Accept, X-Client-Version, X-Client-Platform';
 
 /** Browsers need this on error JSON too; `Origin: null` = Admin opened as file:// */
 export function reflectCorsOrigin(req: Request, res: Response): void {

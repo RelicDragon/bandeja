@@ -3,7 +3,11 @@ import { Gender, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
-import { generateToken } from '../../utils/jwt';
+import {
+  assertLoginIssuanceAllowed,
+  issueLoginTokens,
+  jwtPayloadFromAuthUser,
+} from './authIssuance.service';
 import { verifyGoogleIdToken } from '../google/googleAuth.service';
 import { verifyAppleIdentityToken } from '../apple/appleAuth.service';
 import { ensureUserCityAssigned } from '../user-city-bootstrap.service';
@@ -35,17 +39,18 @@ type ProfileUser = Prisma.UserGetPayload<{ select: typeof PROFILE_SELECT_FIELDS 
 type OAuthResult = {
   user: ProfileUser;
   token: string;
+  refreshToken?: string;
+  currentSessionId?: string;
   statusCode: 200 | 201;
 };
 
 async function finalizeGoogleUser(
   userId: string,
-  googleId: string,
   req: Request
-): Promise<{ user: ProfileUser; token: string }> {
+): Promise<{ user: ProfileUser; token: string; refreshToken?: string; currentSessionId?: string }> {
   const user = await ensureUserCityAssigned(userId, req);
-  const token = generateToken({ userId: user.id, googleId });
-  return { user, token };
+  const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
+  return { user, token: issued.token, refreshToken: issued.refreshToken, currentSessionId: issued.currentSessionId };
 }
 
 async function applyGoogleLoginProfileUpdates(
@@ -120,6 +125,7 @@ export async function loginOrRegisterWithGoogle(req: Request): Promise<OAuthResu
   }
 
   const googleToken = await verifyGoogleIdToken(idToken);
+  assertLoginIssuanceAllowed(req);
   const googleId = googleToken.sub;
 
   let user = await prisma.user.findUnique({
@@ -136,8 +142,8 @@ export async function loginOrRegisterWithGoogle(req: Request): Promise<OAuthResu
       firstName: body.firstName,
       lastName: body.lastName,
     });
-    const { user: out, token } = await finalizeGoogleUser(user.id, googleId, req);
-    return { user: out, token, statusCode: 200 };
+    const { user: out, token, refreshToken, currentSessionId } = await finalizeGoogleUser(user.id, req);
+    return { user: out, token, refreshToken, currentSessionId, statusCode: 200 };
   }
 
   const emailToUse = googleToken.email || undefined;
@@ -205,8 +211,8 @@ export async function loginOrRegisterWithGoogle(req: Request): Promise<OAuthResu
         firstName: body.firstName,
         lastName: body.lastName,
       });
-      const { user: out, token } = await finalizeGoogleUser(user.id, googleId, req);
-      return { user: out, token, statusCode: 200 };
+      const { user: out, token, refreshToken, currentSessionId } = await finalizeGoogleUser(user.id, req);
+      return { user: out, token, refreshToken, currentSessionId, statusCode: 200 };
     }
     if (err.code === 'P2002' && targetIncludes(err.meta?.target, 'email')) {
       throw new ApiError(400, 'auth.emailAlreadyExistsUseLogin');
@@ -214,8 +220,8 @@ export async function loginOrRegisterWithGoogle(req: Request): Promise<OAuthResu
     throw createError;
   }
 
-  const { user: out, token } = await finalizeGoogleUser(user.id, googleId, req);
-  return { user: out, token, statusCode: 201 };
+  const { user: out, token, refreshToken, currentSessionId } = await finalizeGoogleUser(user.id, req);
+  return { user: out, token, refreshToken, currentSessionId, statusCode: 201 };
 }
 
 function targetIncludes(target: unknown, field: string): boolean {
@@ -226,12 +232,11 @@ function targetIncludes(target: unknown, field: string): boolean {
 
 async function finalizeAppleUser(
   userId: string,
-  appleSub: string,
   req: Request
-): Promise<{ user: ProfileUser; token: string }> {
+): Promise<{ user: ProfileUser; token: string; refreshToken?: string; currentSessionId?: string }> {
   const user = await ensureUserCityAssigned(userId, req);
-  const token = generateToken({ userId: user.id, appleId: appleSub });
-  return { user, token };
+  const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
+  return { user, token: issued.token, refreshToken: issued.refreshToken, currentSessionId: issued.currentSessionId };
 }
 
 async function applyAppleLoginProfileUpdates(
@@ -299,6 +304,7 @@ export async function loginOrRegisterWithApple(req: Request): Promise<OAuthResul
   }
 
   const appleToken = await verifyAppleIdentityToken(identityToken, nonce);
+  assertLoginIssuanceAllowed(req);
   const appleSub = appleToken.sub;
 
   let user = await prisma.user.findUnique({
@@ -315,8 +321,8 @@ export async function loginOrRegisterWithApple(req: Request): Promise<OAuthResul
       firstName: body.firstName,
       lastName: body.lastName,
     });
-    const { user: out, token } = await finalizeAppleUser(user.id, appleSub, req);
-    return { user: out, token, statusCode: 200 };
+    const { user: out, token, refreshToken, currentSessionId } = await finalizeAppleUser(user.id, req);
+    return { user: out, token, refreshToken, currentSessionId, statusCode: 200 };
   }
 
   const emailToUse = appleToken.email || undefined;
@@ -384,8 +390,8 @@ export async function loginOrRegisterWithApple(req: Request): Promise<OAuthResul
         firstName: body.firstName,
         lastName: body.lastName,
       });
-      const { user: out, token } = await finalizeAppleUser(user.id, appleSub, req);
-      return { user: out, token, statusCode: 200 };
+      const { user: out, token, refreshToken, currentSessionId } = await finalizeAppleUser(user.id, req);
+      return { user: out, token, refreshToken, currentSessionId, statusCode: 200 };
     }
     if (err.code === 'P2002' && targetIncludes(err.meta?.target, 'email')) {
       throw new ApiError(400, 'auth.emailAlreadyExistsUseLogin');
@@ -393,6 +399,6 @@ export async function loginOrRegisterWithApple(req: Request): Promise<OAuthResul
     throw createError;
   }
 
-  const { user: out, token } = await finalizeAppleUser(user.id, appleSub, req);
-  return { user: out, token, statusCode: 201 };
+  const { user: out, token, refreshToken, currentSessionId } = await finalizeAppleUser(user.id, req);
+  return { user: out, token, refreshToken, currentSessionId, statusCode: 201 };
 }

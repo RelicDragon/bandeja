@@ -1,6 +1,6 @@
 import { Edit2, ExternalLink, Award, MapPin, Calendar, Trash2, Plane, MessageCircle, BookmarkPlus, Bookmark } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { PlayerAvatar, ConfirmationModal } from '@/components';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { Game } from '@/types';
@@ -13,6 +13,7 @@ import { gamesApi } from '@/api/games';
 import toast from 'react-hot-toast';
 import { RoundData } from '@/api/results';
 import { useNavigate } from 'react-router-dom';
+import { getRules, isSuperTieBreakDeciderRow } from '@/utils/scoring';
 
 interface LeagueGameCardProps {
   game: Game;
@@ -41,6 +42,7 @@ export const LeagueGameCard = ({
 }: LeagueGameCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const leagueCardRules = useMemo(() => getRules(game), [game]);
   const { user } = useAuthStore();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -268,7 +270,11 @@ export const LeagueGameCard = ({
                     >
                       <span>{set.teamAScore}:{set.teamBScore}</span>
                       {set.isTieBreak && (
-                        <span className="text-[9px] font-medium text-primary-600 dark:text-primary-400 leading-none">TB</span>
+                        <span className="text-[9px] font-medium text-primary-600 dark:text-primary-400 leading-none">
+                          {isSuperTieBreakDeciderRow(leagueCardRules, setIndex, set.isTieBreak)
+                            ? t('gameResults.superTieBreakAbbr')
+                            : t('gameResults.tieBreakAbbr')}
+                        </span>
                       )}
                     </div>
                   );

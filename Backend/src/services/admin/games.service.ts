@@ -330,11 +330,12 @@ export class AdminGamesService {
               ? {
                   level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
                   reliability: outcome.reliabilityBefore,
+                  reliabilityDecayPostGraceDaysApplied: 0,
                   totalPoints: { decrement: outcome.pointsEarned },
                   gamesPlayed: { decrement: 1 },
                   gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
                 }
-              : { reliability: outcome.reliabilityBefore },
+              : { reliability: outcome.reliabilityBefore, reliabilityDecayPostGraceDaysApplied: 0 },
           });
         }
       }

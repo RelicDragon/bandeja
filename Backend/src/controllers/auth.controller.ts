@@ -2,7 +2,12 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
-import { generateToken } from '../utils/jwt';
+import {
+  assertLoginIssuanceAllowed,
+  issueLoginTokens,
+  jwtPayloadFromAuthUser,
+} from '../services/auth/authIssuance.service';
+import { issuedRefreshJsonPayload } from '../utils/refreshWebCookie';
 import { hashPassword, comparePassword } from '../utils/hash';
 import { NotificationChannelType } from '@prisma/client';
 import { NotificationPreferenceService } from '../services/notificationPreference.service';
@@ -36,6 +41,8 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
     }
   }
 
+  assertLoginIssuanceAllowed(req);
+
   const passwordHash = await hashPassword(password);
 
   let user = await prisma.user.create({
@@ -64,17 +71,19 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
   }
 
   user = await ensureUserCityAssigned(user.id, req);
-  const token = generateToken({ userId: user.id, phone: user.phone! });
+  const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
 
   res.status(201).json({
     success: true,
-    data: { user, token },
+    data: {
+      user,
+      token: issued.token,
+      ...issuedRefreshJsonPayload(req, res, issued),
+    },
   });
 });
 
 export const loginWithPhone = asyncHandler(async (req: Request, res: Response) => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
   const { phone, password, language } = req.body;
 
   const userWithPassword = await prisma.user.findUnique({
@@ -85,18 +94,25 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
     },
   });
 
-  if (!userWithPassword || !userWithPassword.passwordHash) {
-    throw new ApiError(401, 'Invalid credentials');
+  if (!userWithPassword) {
+    throw new ApiError(401, 'auth.invalidCredentials', true, { code: 'auth.invalidCredentials' });
+  }
+
+  if (!userWithPassword.passwordHash) {
+    if (!userWithPassword.isActive) {
+      throw new ApiError(403, 'auth.accountInactive');
+    }
+    throw new ApiError(401, 'auth.phoneLoginRequiresOAuth', true, { code: 'auth.phoneLoginRequiresOAuth' });
   }
 
   const isPasswordValid = await comparePassword(password, userWithPassword.passwordHash);
 
   if (!isPasswordValid) {
-    throw new ApiError(401, 'Invalid credentials');
+    throw new ApiError(401, 'auth.invalidCredentials', true, { code: 'auth.invalidCredentials' });
   }
 
   if (!userWithPassword.isActive) {
-    throw new ApiError(403, 'Account is inactive');
+    throw new ApiError(403, 'auth.accountInactive');
   }
 
   if (language) {
@@ -107,13 +123,14 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
   }
 
   const user = await ensureUserCityAssigned(userWithPassword.id, req);
-  const token = generateToken({ userId: user.id, phone: user.phone! });
+  const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
 
   res.json({
     success: true,
     data: {
       user,
-      token,
+      token: issued.token,
+      ...issuedRefreshJsonPayload(req, res, issued),
     },
   });
 });
@@ -138,6 +155,8 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
       throw new ApiError(400, 'User with this email already exists');
     }
   }
+
+  assertLoginIssuanceAllowed(req);
 
   let user = await prisma.user.create({
     data: {
@@ -167,17 +186,19 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
   await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
 
   user = await ensureUserCityAssigned(user.id, req);
-  const token = generateToken({ userId: user.id, telegramId: user.telegramId! });
+  const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
 
   res.status(201).json({
     success: true,
-    data: { user, token },
+    data: {
+      user,
+      token: issued.token,
+      ...issuedRefreshJsonPayload(req, res, issued),
+    },
   });
 });
 
 export const loginWithTelegram = asyncHandler(async (req: Request, res: Response) => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
   const { telegramId, language } = req.body;
 
   let user = await prisma.user.findUnique({
@@ -186,11 +207,11 @@ export const loginWithTelegram = asyncHandler(async (req: Request, res: Response
   });
 
   if (!user) {
-    throw new ApiError(401, 'User not found');
+    throw new ApiError(401, 'User not found', true, { code: 'auth.userNotFound' });
   }
 
   if (!user.isActive) {
-    throw new ApiError(403, 'Account is inactive');
+    throw new ApiError(403, 'auth.accountInactive');
   }
 
   if (language) {
@@ -204,67 +225,55 @@ export const loginWithTelegram = asyncHandler(async (req: Request, res: Response
   await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
 
   user = await ensureUserCityAssigned(user.id, req);
-  const token = generateToken({ userId: user.id, telegramId: user.telegramId! });
+  const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
 
   res.json({
     success: true,
     data: {
       user,
-      token,
+      token: issued.token,
+      ...issuedRefreshJsonPayload(req, res, issued),
     },
   });
 });
 
 export const loginWithApple = asyncHandler(async (req: Request, res: Response) => {
-  const { user, token, statusCode } = await loginOrRegisterWithApple(req);
+  const { user, token, refreshToken, currentSessionId, statusCode } = await loginOrRegisterWithApple(req);
   res.status(statusCode).json({
     success: true,
-    data: { user, token },
+    data: {
+      user,
+      token,
+      ...issuedRefreshJsonPayload(req, res, { refreshToken, currentSessionId }),
+    },
   });
 });
 
 export const loginWithGoogle = asyncHandler(async (req: Request, res: Response) => {
-  const { user, token, statusCode } = await loginOrRegisterWithGoogle(req);
+  const { user, token, refreshToken, currentSessionId, statusCode } = await loginOrRegisterWithGoogle(req);
   res.status(statusCode).json({
     success: true,
-    data: { user, token },
+    data: {
+      user,
+      token,
+      ...issuedRefreshJsonPayload(req, res, { refreshToken, currentSessionId }),
+    },
   });
 });
 
 export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) => {
-  console.log('[APPLE_LINK] linkApple called, userId:', req.userId);
-  console.log('[APPLE_LINK] Request body received:', {
-    hasIdentityToken: !!req.body.identityToken,
-    identityTokenLength: req.body.identityToken?.length || 0,
-    identityTokenPreview: req.body.identityToken ? req.body.identityToken.substring(0, 50) + '...' : undefined,
-    hasNonce: !!req.body.nonce,
-    nonceLength: req.body.nonce?.length || 0,
-  });
   const { identityToken, nonce } = req.body;
 
   if (!identityToken) {
-    console.error('[APPLE_LINK] Missing identityToken');
     throw new ApiError(400, 'auth.identityTokenRequired');
   }
 
   if (!req.userId) {
-    console.error('[APPLE_LINK] Missing userId');
-    throw new ApiError(401, 'Authentication required');
+    throw new ApiError(401, 'Authentication required', true, { code: 'auth.notAuthenticated' });
   }
 
-  console.log('[APPLE_LINK] Verifying Apple identity token');
   const appleToken = await verifyAppleIdentityToken(identityToken, nonce);
   const appleSub = appleToken.sub;
-  console.log('[APPLE_LINK] Apple token verified, full decoded token:', {
-    sub: appleToken.sub,
-    email: appleToken.email || 'none',
-    email_verified: appleToken.email_verified || false,
-    iss: appleToken.iss,
-    aud: appleToken.aud,
-    exp: appleToken.exp,
-    iat: appleToken.iat,
-    hasNonce: !!appleToken.nonce,
-  });
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
@@ -272,12 +281,10 @@ export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) =>
   });
 
   if (!currentUser) {
-    console.log('[APPLE_LINK] Current user not found');
     throw new ApiError(404, 'errors.userNotFound');
   }
 
   if (currentUser.appleSub) {
-    console.log('[APPLE_LINK] User already has appleSub linked');
     throw new ApiError(400, 'auth.appleAccountAlreadyLinked');
   }
 
@@ -286,7 +293,6 @@ export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) =>
   });
 
   if (existingAppleUser && existingAppleUser.id !== req.userId) {
-    console.log('[APPLE_LINK] Apple account already linked to another user');
     throw new ApiError(400, 'auth.appleAccountAlreadyLinkedToAnotherUser');
   }
 
@@ -298,20 +304,17 @@ export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) =>
   };
 
   if (emailToUse) {
-    console.log('[APPLE_LINK] Checking email conflict:', emailToUse);
     const existingEmail = await prisma.user.findUnique({
       where: { email: emailToUse },
     });
-    
+
     if (!existingEmail || existingEmail.id === req.userId) {
       if (!currentUser.email) {
         updateData.email = emailToUse;
-        console.log('[APPLE_LINK] Setting email from Apple token');
       }
     }
   }
 
-  console.log('[APPLE_LINK] Updating user with Apple account');
   let user = await prisma.user.update({
     where: { id: req.userId },
     data: updateData,
@@ -331,7 +334,6 @@ export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) =>
     });
   }
 
-  console.log('[APPLE_LINK] Apple account linked successfully');
   res.json({
     success: true,
     data: { user },
@@ -339,11 +341,8 @@ export const linkApple = asyncHandler(async (req: AuthRequest, res: Response) =>
 });
 
 export const unlinkApple = asyncHandler(async (req: AuthRequest, res: Response) => {
-  console.log('[APPLE_UNLINK] unlinkApple called, userId:', req.userId);
-  
   if (!req.userId) {
-    console.error('[APPLE_UNLINK] Missing userId');
-    throw new ApiError(401, 'Authentication required');
+    throw new ApiError(401, 'Authentication required', true, { code: 'auth.notAuthenticated' });
   }
 
   const currentUser = await prisma.user.findUnique({
@@ -352,20 +351,16 @@ export const unlinkApple = asyncHandler(async (req: AuthRequest, res: Response) 
   });
 
   if (!currentUser) {
-    console.log('[APPLE_UNLINK] Current user not found');
     throw new ApiError(404, 'errors.userNotFound');
   }
 
   if (!currentUser.appleSub) {
-    console.log('[APPLE_UNLINK] User does not have appleSub linked');
     throw new ApiError(400, 'auth.appleAccountNotLinked');
   }
 
   const hasOtherAuthMethods = !!(currentUser.phone || currentUser.telegramId || currentUser.googleId);
-  console.log('[APPLE_UNLINK] Has other auth methods:', hasOtherAuthMethods, { phone: !!currentUser.phone, telegramId: !!currentUser.telegramId, googleId: !!currentUser.googleId });
-  
+
   if (!hasOtherAuthMethods) {
-    console.log('[APPLE_UNLINK] Cannot unlink last auth method');
     throw new ApiError(400, 'auth.cannotUnlinkLastAuthMethod');
   }
 
@@ -375,14 +370,12 @@ export const unlinkApple = asyncHandler(async (req: AuthRequest, res: Response) 
     appleEmailVerified: false,
   };
 
-  console.log('[APPLE_UNLINK] Updating user to unlink Apple account');
   const user = await prisma.user.update({
     where: { id: req.userId },
     data: updateData,
     select: PROFILE_SELECT_FIELDS,
   });
 
-  console.log('[APPLE_UNLINK] Apple account unlinked successfully');
   res.json({
     success: true,
     data: { user },
@@ -397,7 +390,7 @@ export const linkGoogle = asyncHandler(async (req: AuthRequest, res: Response) =
   }
 
   if (!req.userId) {
-    throw new ApiError(401, 'Authentication required');
+    throw new ApiError(401, 'Authentication required', true, { code: 'auth.notAuthenticated' });
   }
 
   const googleToken = await verifyGoogleIdToken(idToken);
@@ -470,7 +463,7 @@ export const linkGoogle = asyncHandler(async (req: AuthRequest, res: Response) =
 
 export const unlinkGoogle = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.userId) {
-    throw new ApiError(401, 'Authentication required');
+    throw new ApiError(401, 'Authentication required', true, { code: 'auth.notAuthenticated' });
   }
 
   const currentUser = await prisma.user.findUnique({

@@ -6,6 +6,8 @@ import { userTeamsApi } from '@/api/userTeams';
 import { navigationService } from './navigationService';
 import { getAppInfo } from '@/utils/capacitor';
 import { pushApi } from '@/api/push';
+import { useAuthStore } from '@/store/authStore';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 
 interface NotificationData {
   type: string;
@@ -297,6 +299,12 @@ class PushNotificationService {
       return;
     }
 
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void this.handleAcceptInvite(data));
+      return;
+    }
+
     try {
       await invitesApi.accept(data.data.inviteId);
       console.log('✅ Invite accepted');
@@ -315,6 +323,12 @@ class PushNotificationService {
       return;
     }
 
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void this.handleDeclineInvite(data));
+      return;
+    }
+
     try {
       await invitesApi.decline(data.data.inviteId);
       console.log('✅ Invite declined');
@@ -329,6 +343,11 @@ class PushNotificationService {
       console.error('No team ID in notification data');
       return;
     }
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void this.handleAcceptTeamInvite(data));
+      return;
+    }
     try {
       await userTeamsApi.accept(teamId);
       navigationService.navigateToUserTeam(teamId);
@@ -341,6 +360,11 @@ class PushNotificationService {
     const teamId = data.data?.teamId;
     if (!teamId) {
       console.error('No team ID in notification data');
+      return;
+    }
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void this.handleDeclineTeamInvite(data));
       return;
     }
     try {

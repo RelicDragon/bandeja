@@ -1,10 +1,37 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
+import rateLimit from 'express-rate-limit';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
 import * as authController from '../controllers/auth.controller';
+import * as authRefreshController from '../controllers/authRefresh.controller';
 
 const router = Router();
+
+const authRefreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { success: false, message: 'Too many refresh attempts' },
+});
+
+router.post(
+  '/refresh',
+  authRefreshLimiter,
+  validate([body('refreshToken').optional({ checkFalsy: true }).isString()]),
+  authRefreshController.postRefresh
+);
+
+router.post(
+  '/logout',
+  validate([body('refreshToken').optional({ checkFalsy: true }).isString()]),
+  authRefreshController.postLogout
+);
+
+router.post('/logout-all', authenticate, authRefreshController.postLogoutAll);
+
+router.get('/sessions', authenticate, authRefreshController.getSessions);
+
+router.delete('/sessions/:id', authenticate, authRefreshController.deleteSession);
 
 router.post(
   '/register/phone',
@@ -84,20 +111,12 @@ router.post(
     body('identityToken').notEmpty().isString().withMessage('Identity token is required'),
     body('nonce').notEmpty().isString().isLength({ min: 1 }).withMessage('Nonce is required'),
   ]),
-  (req, res, next) => {
-    console.log('[APPLE_ROUTE] POST /auth/link/apple');
-    next();
-  },
   authController.linkApple
 );
 
 router.post(
   '/unlink/apple',
   authenticate,
-  (req, res, next) => {
-    console.log('[APPLE_ROUTE] POST /auth/unlink/apple');
-    next();
-  },
   authController.unlinkApple
 );
 

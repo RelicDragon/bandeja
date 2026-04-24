@@ -123,6 +123,7 @@ class NotificationService {
       for (const participant of currentGameParticipants) {
         const user = participant.user;
         if (user.id === sender.id) continue;
+        if (participant.status === 'INVITED') continue;
         if (!mentionedUserIds.has(user.id)) continue;
 
         const canSeeMessage = canParticipantSeeGameChatMessage(participant, game, chatType);
@@ -143,6 +144,7 @@ class NotificationService {
       for (const participant of currentGameParticipants) {
         const user = participant.user;
         if (user.id === sender.id) continue;
+        if (participant.status === 'INVITED') continue;
 
         const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
         if (isMuted) continue;
@@ -190,6 +192,7 @@ class NotificationService {
       for (const parentParticipant of parentGameAdmins) {
         const user = parentParticipant.user;
         if (user.id === sender.id) continue;
+        if (parentParticipant.status === 'INVITED') continue;
         if (currentGameUserIds.has(user.id)) continue;
 
         if (hasMentions) {

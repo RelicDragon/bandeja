@@ -65,9 +65,7 @@ export async function generateAuthCode(ctx: BotContext) {
     });
 
     const textMessage = await ctx.reply(t('telegram.authCodeText', lang));
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     const code = generateOTP();
     const linkKey = generateLinkKey();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);

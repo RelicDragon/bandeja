@@ -19,6 +19,7 @@ import { userTeamsApi, mediaApi } from '@/api';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 import type { UserTeam } from '@/types';
 import { toastApiError } from '@/utils/toastApiError';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 
 export function UserTeamPage() {
   const { id } = useParams<{ id: string }>();
@@ -183,6 +184,11 @@ export function UserTeamPage() {
 
   const handleDeleteTeam = async () => {
     if (!team) return;
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleDeleteTeam());
+      return;
+    }
     setBusy(true);
     try {
       await userTeamsApi.delete(team.id);
@@ -199,6 +205,11 @@ export function UserTeamPage() {
 
   const handleAccept = async () => {
     if (!team) return;
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleAccept());
+      return;
+    }
     setBusy(true);
     try {
       const updated = await userTeamsApi.accept(team.id);
@@ -215,6 +226,11 @@ export function UserTeamPage() {
 
   const handleDecline = async () => {
     if (!team) return;
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleDecline());
+      return;
+    }
     setBusy(true);
     try {
       await userTeamsApi.decline(team.id);
@@ -231,6 +247,11 @@ export function UserTeamPage() {
 
   const handleConfirmMemberAction = async () => {
     if (!team || !memberActionModal) return;
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void handleConfirmMemberAction());
+      return;
+    }
     const { userId, kind } = memberActionModal;
     setBusy(true);
     try {
@@ -533,20 +554,28 @@ export function UserTeamPage() {
             title={t('teams.inviteTeammate')}
             filterPlayerIds={memberUserIds}
             onConfirm={async (ids) => {
-              const uid = ids[0];
-              if (!uid) return;
-              setBusy(true);
-              try {
-                const { team: next } = await userTeamsApi.invite(team.id, uid);
-                setTeamLocal(next);
-                setTeam(next);
-                await refreshAll();
-                toast.success(t('teams.inviteSent'));
-              } catch (e: unknown) {
-                toastApiError(t, e);
-              } finally {
-                setBusy(false);
+              const run = async () => {
+                const uid = ids[0];
+                if (!uid) return;
+                setBusy(true);
+                try {
+                  const { team: next } = await userTeamsApi.invite(team.id, uid);
+                  setTeamLocal(next);
+                  setTeam(next);
+                  await refreshAll();
+                  toast.success(t('teams.inviteSent'));
+                } catch (e: unknown) {
+                  toastApiError(t, e);
+                } finally {
+                  setBusy(false);
+                }
+              };
+              const authUser = useAuthStore.getState().user;
+              if (authUser && authUser.nameIsSet !== true) {
+                runWithProfileName(() => void run());
+                return;
               }
+              await run();
             }}
           />
         )}
