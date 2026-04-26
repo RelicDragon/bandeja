@@ -72,7 +72,7 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
     return googleWebSignInInFlight;
   }
 
-  googleWebSignInInFlight = new Promise((resolve, reject) => {
+  googleWebSignInInFlight = new Promise<GoogleAuthResult>((resolve, reject) => {
     if (typeof window === 'undefined') {
       reject(new Error('auth.googleSignInUnavailable'));
       return;
@@ -228,7 +228,7 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
     activeGoogleCredentialHandler = null;
   });
 
-  return googleWebSignInInFlight;
+  return googleWebSignInInFlight!;
 }
 
 function isReauthError(error: unknown): boolean {
