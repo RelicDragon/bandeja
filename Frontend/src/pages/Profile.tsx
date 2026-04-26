@@ -83,6 +83,7 @@ export const ProfileContent = () => {
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
   const [showSecondDeleteConfirmation, setShowSecondDeleteConfirmation] = useState(false);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
   const [nameError, setNameError] = useState('');
@@ -319,9 +320,15 @@ export const ProfileContent = () => {
     updateProfile({ showOnlineStatus: value });
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate('/login', { replace: true });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const handleFirstDeleteConfirmation = () => {
@@ -334,8 +341,8 @@ export const ProfileContent = () => {
       setIsDeletingUser(true);
       await usersApi.deleteUser();
       toast.success(t('profile.userDeleted') || 'Account deleted successfully');
-      logout();
-      navigate('/login');
+      await logout();
+      navigate('/login', { replace: true });
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
       setIsDeletingUser(false);
@@ -1212,10 +1219,11 @@ export const ProfileContent = () => {
           <div className="space-y-4">
             <Button 
               variant="danger" 
-              onClick={handleLogout}
+              onClick={() => void handleLogout()}
+              disabled={isLoggingOut}
               className="w-full flex items-center justify-center gap-2"
             >
-              <LogOut size={16} />
+              {isLoggingOut ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
               {t('auth.logout')}
             </Button>
           </div>
