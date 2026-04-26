@@ -1185,11 +1185,6 @@ export const ProfileContent = () => {
           </Button>
         </Card>
 
-        {user?.blockedUserIds && user.blockedUserIds.length > 0 && (
-          <BlockedUsersSection />
-        )}
-        </div>
-
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.sessionsTitle')}
@@ -1207,6 +1202,11 @@ export const ProfileContent = () => {
             {t('profile.sessionsManageDevices')}
           </Button>
         </Card>
+
+        {user?.blockedUserIds && user.blockedUserIds.length > 0 && (
+          <BlockedUsersSection />
+        )}
+        </div>
 
         <Card>
           <div className="space-y-4">

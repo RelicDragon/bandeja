@@ -146,7 +146,9 @@ export function SessionsPage() {
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 space-y-0.5">
                           <div>
-                            {t('profile.sessionsLastActive')}: {formatRelativeTime(s.lastUsedAt)}
+                            {t('profile.sessionsLastActiveLine', {
+                              time: formatRelativeTime(s.lastUsedAt),
+                            })}
                           </div>
                           {s.ip ? (
                             <div className="truncate">{t('profile.sessionsIp', { ip: s.ip })}</div>
@@ -189,6 +191,7 @@ export function SessionsPage() {
         cancelText={t('common.cancel')}
         confirmVariant="danger"
         isLoading={signingOutAll}
+        loadingText={t('profile.sessionsSigningOut')}
       />
     </div>
   );
