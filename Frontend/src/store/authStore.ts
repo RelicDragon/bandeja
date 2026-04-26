@@ -142,6 +142,8 @@ export const useAuthStore = create<AuthState>((set) => {
       }
     },
     logout: async () => {
+      if (logoutInFlight) return logoutInFlight;
+
       const execute = async () => {
         clearProactiveAccessRefresh();
         try {
@@ -185,11 +187,11 @@ export const useAuthStore = create<AuthState>((set) => {
       };
 
       const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
-      if (typeof locks?.request === 'function') {
-        return locks.request('padelpulse-auth-logout', execute);
-      }
-      if (logoutInFlight) return logoutInFlight;
-      const run = execute();
+      const run =
+        typeof locks?.request === 'function'
+          ? locks.request('padelpulse-auth-logout', execute)
+          : execute();
+
       logoutInFlight = run.finally(() => {
         if (logoutInFlight === run) logoutInFlight = null;
       });
