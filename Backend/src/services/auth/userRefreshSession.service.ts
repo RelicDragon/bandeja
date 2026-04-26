@@ -35,69 +35,85 @@ export async function createUserRefreshSession(
   return { refreshToken: raw, sessionId: row.id };
 }
 
+const REFRESH_SERIALIZATION_MAX_ATTEMPTS = 5;
+
+const refreshTransactionOptions = {
+  maxWait: 5000,
+  timeout: 15000,
+  isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+} as const;
+
 export async function refreshWithRotation(
   refreshTokenRaw: string,
   req: Request
 ): Promise<{ token: string; refreshToken: string; user: unknown; currentSessionId: string }> {
   const hash = hashRefreshToken(refreshTokenRaw.trim());
-  try {
-    return await prisma.$transaction(
-      async (tx) => {
-        const row = await tx.userRefreshSession.findUnique({ where: { tokenHash: hash } });
-        if (!row) {
-          throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
-        }
-        if (row.revokedAt) {
-          if (row.replacedBySessionId) {
+
+  for (let attempt = 0; attempt < REFRESH_SERIALIZATION_MAX_ATTEMPTS; attempt++) {
+    try {
+      return await prisma.$transaction(
+        async (tx) => {
+          const row = await tx.userRefreshSession.findUnique({ where: { tokenHash: hash } });
+          if (!row) {
             throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
           }
-          throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
-        }
-        if (row.expiresAt < new Date()) {
-          throw new ApiError(401, 'auth.refreshExpired', true, { code: 'auth.refreshExpired' });
-        }
-        const user = await tx.user.findUnique({
-          where: { id: row.userId },
-          select: PROFILE_SELECT_FIELDS,
-        });
-        if (!user?.isActive) {
-          throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
-        }
-        const newRaw = generateOpaqueRefreshToken();
-        const newHash = hashRefreshToken(newRaw);
-        const ip = await getClientIp(req).catch(() => null);
-        const ua = typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'].slice(0, 512) : null;
-        const newRow = await tx.userRefreshSession.create({
-          data: {
-            userId: row.userId,
-            tokenHash: newHash,
-            expiresAt: expiresInToDate(config.refreshTokenExpiresIn),
-            rotationFamilyId: row.rotationFamilyId,
-            platform: getClientPlatform(req),
-            userAgent: ua,
-            ip: ip ? ip.slice(0, 64) : null,
-          },
-        });
-        await tx.userRefreshSession.update({
-          where: { id: row.id },
-          data: { revokedAt: new Date(), replacedBySessionId: newRow.id, lastUsedAt: new Date() },
-        });
-        const token = generateShortAccessToken(jwtPayloadFromAuthUser(user));
-        return { token, refreshToken: newRaw, user, currentSessionId: newRow.id };
-      },
-      {
-        maxWait: 5000,
-        timeout: 15000,
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+          if (row.revokedAt) {
+            if (row.replacedBySessionId) {
+              throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
+            }
+            throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
+          }
+          if (row.expiresAt < new Date()) {
+            throw new ApiError(401, 'auth.refreshExpired', true, { code: 'auth.refreshExpired' });
+          }
+          const user = await tx.user.findUnique({
+            where: { id: row.userId },
+            select: PROFILE_SELECT_FIELDS,
+          });
+          if (!user?.isActive) {
+            throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
+          }
+          const newRaw = generateOpaqueRefreshToken();
+          const newHash = hashRefreshToken(newRaw);
+          const ip = await getClientIp(req).catch(() => null);
+          const ua = typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'].slice(0, 512) : null;
+          const newRow = await tx.userRefreshSession.create({
+            data: {
+              userId: row.userId,
+              tokenHash: newHash,
+              expiresAt: expiresInToDate(config.refreshTokenExpiresIn),
+              rotationFamilyId: row.rotationFamilyId,
+              platform: getClientPlatform(req),
+              userAgent: ua,
+              ip: ip ? ip.slice(0, 64) : null,
+            },
+          });
+          await tx.userRefreshSession.update({
+            where: { id: row.id },
+            data: { revokedAt: new Date(), replacedBySessionId: newRow.id, lastUsedAt: new Date() },
+          });
+          const token = generateShortAccessToken(jwtPayloadFromAuthUser(user));
+          return { token, refreshToken: newRaw, user, currentSessionId: newRow.id };
+        },
+        refreshTransactionOptions
+      );
+    } catch (e) {
+      if (e instanceof ApiError) throw e;
+      const isSerializationConflict =
+        e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2034';
+      if (isSerializationConflict && attempt + 1 < REFRESH_SERIALIZATION_MAX_ATTEMPTS) {
+        const base = 20 * (attempt + 1);
+        await new Promise((r) => setTimeout(r, base + Math.floor(Math.random() * 60)));
+        continue;
       }
-    );
-  } catch (e) {
-    if (e instanceof ApiError) throw e;
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2034') {
-      throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
+      if (isSerializationConflict) {
+        throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
+      }
+      throw e;
     }
-    throw e;
   }
+
+  throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
 }
 
 export async function revokeByRawToken(refreshTokenRaw: string | undefined): Promise<void> {
