@@ -317,7 +317,6 @@ export const PlayerListModal = ({
     players,
     readyTeams,
     searchQuery,
-    filterPlayerIdsKey,
     filters,
     filterGender,
     inviteAsTrainerOnly,
@@ -338,7 +337,7 @@ export const PlayerListModal = ({
     if (!listSegmentUsers) e = e.filter((x) => x.kind !== 'user');
     if (!listSegmentTeams) e = e.filter((x) => x.kind !== 'team');
     return e;
-  }, [baseFilteredEntries, showTeams, inviteListKind]);
+  }, [baseFilteredEntries, showTeams, listSegmentUsers, listSegmentTeams]);
 
   const memberOfSelectedTeam = useCallback(
     (userId: string) =>
@@ -452,16 +451,7 @@ export const PlayerListModal = ({
         segmentUsers: listSegmentUsers,
         segmentTeams: listSegmentTeams,
       }),
-    [
-      players,
-      readyTeams,
-      inviteAsTrainerOnly,
-      filterPlayerIdsKey,
-      showTeams,
-      filterGender,
-      filters.gender,
-      inviteListKind,
-    ],
+    [players, readyTeams, inviteAsTrainerOnly, showTeams, filterGender, filters.gender, listSegmentUsers, listSegmentTeams],
   );
 
   const hasActiveFilters = useMemo(() => {

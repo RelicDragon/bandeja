@@ -13,7 +13,7 @@ export function getApiAuthCredentialGeneration(): number {
 }
 
 export function stampApiAuthCredentialGeneration(config: InternalAxiosRequestConfig): void {
-  (config as Record<string, unknown>)[KEY] = generation;
+  (config as unknown as Record<string, unknown>)[KEY] = generation;
 }
 
 export function isStaleApiAuthCredentialGeneration(config: unknown): boolean {

@@ -51,6 +51,13 @@ export function MatchTimerPanel({
     }
   }, [match.timer?.capJustNotified, t]);
 
+  const run = useCallback(
+    (a: MatchTimerAction) => {
+      void onTransition(roundId, match.id, a);
+    },
+    [onTransition, roundId, match.id]
+  );
+
   if (!gameId || !isGameMatchTimerEnabled(game)) return null;
 
   const snap = match.timer;
@@ -58,13 +65,6 @@ export function MatchTimerPanel({
   const elapsed = snap ? liveElapsedMs(snap, now) : 0;
   const capMs = (game.matchTimedCapMinutes ?? 0) * 60_000;
   const overCap = capMs > 0 && elapsed >= capMs && snap?.status === 'RUNNING';
-
-  const run = useCallback(
-    (a: MatchTimerAction) => {
-      void onTransition(roundId, match.id, a);
-    },
-    [onTransition, roundId, match.id]
-  );
 
   const st = snap?.status ?? 'IDLE';
 

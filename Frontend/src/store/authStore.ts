@@ -30,7 +30,7 @@ interface AuthState {
     opts?: { refreshToken?: string; currentSessionId?: string }
   ) => Promise<void>;
   setToken: (token: string) => void;
-  logout: () => void | Promise<void>;
+  logout: () => Promise<void>;
   updateUser: (user: User) => void;
   finishInitializing: () => void;
 }
@@ -143,10 +143,13 @@ export const useAuthStore = create<AuthState>((set) => {
         console.error('Error saving token to localStorage:', error);
       }
     },
-    logout: async () => {
-      if (logoutInFlight) return logoutInFlight;
+    logout: async (): Promise<void> => {
+      if (logoutInFlight) {
+        await logoutInFlight;
+        return;
+      }
 
-      const execute = async () => {
+      const execute = async (): Promise<void> => {
         clearProactiveAccessRefresh();
         try {
           await pushApi.removeAllTokens();
@@ -190,15 +193,17 @@ export const useAuthStore = create<AuthState>((set) => {
       };
 
       const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
-      const run =
+      const run: Promise<void> =
         typeof locks?.request === 'function'
-          ? locks.request('padelpulse-auth-logout', execute)
+          ? (locks.request('padelpulse-auth-logout', async () => {
+              await execute();
+            }) as unknown as Promise<void>)
           : execute();
 
       logoutInFlight = run.finally(() => {
         if (logoutInFlight === run) logoutInFlight = null;
       });
-      return logoutInFlight;
+      await logoutInFlight;
     },
     updateUser: (user) => {
       try {
