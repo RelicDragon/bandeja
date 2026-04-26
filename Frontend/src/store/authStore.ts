@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { Capacitor } from '@capacitor/core';
 import { User } from '@/types';
 import i18n from '@/i18n/config';
 import { syncTokenToNative, syncLogoutToNative } from '@/services/authBridge';
@@ -158,7 +159,7 @@ export const useAuthStore = create<AuthState>((set) => {
         }
         try {
           const rt = await getRefreshTokenForRequest();
-          if (rt?.trim() || isWebHttpOnlyRefreshCookie()) {
+          if (!Capacitor.isNativePlatform() || rt?.trim() || isWebHttpOnlyRefreshCookie()) {
             await authApi.logoutWithRefresh(rt?.trim() ? { refreshToken: rt.trim() } : {});
           }
         } catch {
@@ -192,13 +193,7 @@ export const useAuthStore = create<AuthState>((set) => {
         bumpApiAuthCredentialGeneration();
       };
 
-      const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
-      const run: Promise<void> =
-        typeof locks?.request === 'function'
-          ? (locks.request('padelpulse-auth-logout', async () => {
-              await execute();
-            }) as unknown as Promise<void>)
-          : execute();
+      const run = execute();
 
       logoutInFlight = run.finally(() => {
         if (logoutInFlight === run) logoutInFlight = null;
