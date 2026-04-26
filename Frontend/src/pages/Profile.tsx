@@ -321,11 +321,33 @@ export const ProfileContent = () => {
   };
 
   const handleLogout = async () => {
-    if (isLoggingOut) return;
+    if (isLoggingOut) {
+      console.info('[logout] Profile ignored (already logging out)');
+      return;
+    }
     setIsLoggingOut(true);
     try {
+      console.info('[logout] Profile start', {
+        path: window.location.pathname,
+        isAuthenticated: useAuthStore.getState().isAuthenticated,
+      });
       await logout();
-      navigate('/login', { replace: true });
+      const snap = useAuthStore.getState();
+      console.info('[logout] Profile after store.logout()', {
+        isAuthenticated: snap.isAuthenticated,
+        hasStoreToken: !!snap.token,
+        lsToken: !!localStorage.getItem('token'),
+      });
+      window.setTimeout(() => {
+        const s2 = useAuthStore.getState();
+        console.info('[logout] Profile navigate → /login', {
+          isAuthenticated: s2.isAuthenticated,
+          lsToken: !!localStorage.getItem('token'),
+        });
+        navigate('/login', { replace: true });
+      }, 0);
+    } catch (e) {
+      console.error('[logout] Profile failed', e);
     } finally {
       setIsLoggingOut(false);
     }
@@ -342,7 +364,7 @@ export const ProfileContent = () => {
       await usersApi.deleteUser();
       toast.success(t('profile.userDeleted') || 'Account deleted successfully');
       await logout();
-      navigate('/login', { replace: true });
+      window.setTimeout(() => navigate('/login', { replace: true }), 0);
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
       setIsDeletingUser(false);

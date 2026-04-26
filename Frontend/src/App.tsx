@@ -88,6 +88,14 @@ function AppContent() {
   }, [isAuthenticated, location.pathname, pendingAuthPath, setPendingAuthPath, navigate]);
 
   useEffect(() => {
+    if (location.pathname !== '/login' || !isAuthenticated) return;
+    console.warn('[auth:login-route] authenticated on /login → Navigate to / (this is why logout can bounce to home)', {
+      hasStoreToken: !!token,
+      lsToken: typeof localStorage !== 'undefined' ? !!localStorage.getItem('token') : null,
+    });
+  }, [location.pathname, isAuthenticated, token]);
+
+  useEffect(() => {
     navigationService.initialize(navigate);
     backButtonService.setNavigate(navigate);
   }, [navigate]);

@@ -38,7 +38,7 @@ interface AuthState {
 
 let logoutInFlight: Promise<void> | null = null;
 
-export const useAuthStore = create<AuthState>((set) => {
+export const useAuthStore = create<AuthState>((set, get) => {
   let savedUser = null;
   let savedToken = null;
   
@@ -146,24 +146,42 @@ export const useAuthStore = create<AuthState>((set) => {
     },
     logout: async (): Promise<void> => {
       if (logoutInFlight) {
+        console.info('[auth:logout] awaiting in-flight logout');
         await logoutInFlight;
+        console.info('[auth:logout] in-flight done (coalesced return)');
         return;
       }
 
       const execute = async (): Promise<void> => {
+        console.info('[auth:logout] execute start', {
+          path: typeof window !== 'undefined' ? window.location.pathname : '',
+          capNative: Capacitor.isNativePlatform(),
+        });
         clearProactiveAccessRefresh();
         try {
           await pushApi.removeAllTokens();
-        } catch {
-          /* ignore */
+          console.info('[auth:logout] push removeAllTokens ok');
+        } catch (e) {
+          console.warn('[auth:logout] push removeAllTokens failed', e);
         }
         try {
           const rt = await getRefreshTokenForRequest();
-          if (!Capacitor.isNativePlatform() || rt?.trim() || isWebHttpOnlyRefreshCookie()) {
+          const httpOnly = isWebHttpOnlyRefreshCookie();
+          const willCallServer =
+            !Capacitor.isNativePlatform() || !!rt?.trim() || httpOnly;
+          console.info('[auth:logout] server revoke check', {
+            hasRtLen: (rt?.trim() ?? '').length,
+            httpOnly,
+            willCallServer,
+          });
+          if (willCallServer) {
             await authApi.logoutWithRefresh(rt?.trim() ? { refreshToken: rt.trim() } : {});
+            console.info('[auth:logout] POST /auth/logout ok');
+          } else {
+            console.warn('[auth:logout] skipped POST /auth/logout (native, no refresh token)');
           }
-        } catch {
-          /* ignore */
+        } catch (e) {
+          console.warn('[auth:logout] server revoke failed', e);
         }
         await clearRefreshBundle();
         try {
@@ -173,8 +191,8 @@ export const useAuthStore = create<AuthState>((set) => {
           clearChatSyncScheduler();
           warm.clearChatSyncWarmDrainQueue();
           useChatSyncStore.getState().resetChatListDexieBump();
-        } catch {
-          /* ignore */
+        } catch (e) {
+          console.warn('[auth:logout] chat clear failed', e);
         }
         try {
           localStorage.removeItem('user');
@@ -186,11 +204,16 @@ export const useAuthStore = create<AuthState>((set) => {
           useNavigationStore.getState().setFindListWeekStartDay(null);
           useReactionEmojiUsageStore.getState().reset();
           set({ user: null, token: null, isAuthenticated: false });
+          console.info('[auth:logout] local session cleared', {
+            lsToken: localStorage.getItem('token'),
+            storeAuth: get().isAuthenticated,
+          });
         } catch (error) {
-          console.error('Error clearing auth from localStorage:', error);
+          console.error('[auth:logout] Error clearing auth from localStorage:', error);
         }
         syncLogoutToNative();
         bumpApiAuthCredentialGeneration();
+        console.info('[auth:logout] execute end');
       };
 
       const run = execute();
