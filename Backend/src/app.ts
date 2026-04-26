@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import routes from './routes';
+import { rateLimitKeyFromRequest } from './utils/rateLimitClientKey';
 import { errorHandler, notFoundHandler, reflectCorsOrigin } from './middleware/errorHandler';
 import { recordPresenceActivity } from './middleware/recordPresenceActivity';
 import { config } from './config/env';
@@ -63,7 +64,13 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: config.nodeEnv === 'development' ? 10000 : 10000,
   message: 'Too many requests from this IP, please try again later.',
-  skip: (req) => req.path.includes('/logs/stream'),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => rateLimitKeyFromRequest(req),
+  skip: (req) =>
+    req.path.includes('/logs/stream') ||
+    req.path.startsWith('/auth/login') ||
+    req.path.startsWith('/auth/register'),
 });
 
 app.use('/api/', limiter);

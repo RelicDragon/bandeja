@@ -34,6 +34,8 @@ interface AuthState {
   finishInitializing: () => void;
 }
 
+let logoutInFlight: Promise<void> | null = null;
+
 export const useAuthStore = create<AuthState>((set) => {
   let savedUser = null;
   let savedToken = null;
@@ -140,45 +142,52 @@ export const useAuthStore = create<AuthState>((set) => {
       }
     },
     logout: async () => {
-      try {
-        const rt = await getRefreshTokenForRequest();
-        if (rt?.trim() || isWebHttpOnlyRefreshCookie()) {
-          await authApi.logoutWithRefresh(rt?.trim() ? { refreshToken: rt.trim() } : {});
+      if (logoutInFlight) return logoutInFlight;
+      const run = (async () => {
+        try {
+          const rt = await getRefreshTokenForRequest();
+          if (rt?.trim() || isWebHttpOnlyRefreshCookie()) {
+            await authApi.logoutWithRefresh(rt?.trim() ? { refreshToken: rt.trim() } : {});
+          }
+        } catch {
+          /* ignore */
         }
-      } catch {
-        /* ignore */
-      }
-      clearProactiveAccessRefresh();
-      await clearRefreshBundle();
-      try {
-        await pushApi.removeAllTokens();
-      } catch {
-        // ignore so logout always completes
-      }
-      try {
-        const warm = await import('@/services/chat/chatSyncBatchWarm');
-        warm.resetChatSyncWarmSession();
-        await clearChatLocalStores();
-        clearChatSyncScheduler();
-        warm.clearChatSyncWarmDrainQueue();
-        useChatSyncStore.getState().resetChatListDexieBump();
-      } catch {
-        /* ignore */
-      }
-      try {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        localStorage.removeItem('auth_backup');
-        sessionStorage.removeItem('app_navigation_tracked');
-        useNavigationStore.getState().setMyGamesSelectedDay(null);
-        useNavigationStore.getState().setFindSelectedDay(null);
-        useNavigationStore.getState().setFindListWeekStartDay(null);
-        useReactionEmojiUsageStore.getState().reset();
-        set({ user: null, token: null, isAuthenticated: false });
-      } catch (error) {
-        console.error('Error clearing auth from localStorage:', error);
-      }
-      syncLogoutToNative();
+        clearProactiveAccessRefresh();
+        await clearRefreshBundle();
+        try {
+          await pushApi.removeAllTokens();
+        } catch {
+          // ignore so logout always completes
+        }
+        try {
+          const warm = await import('@/services/chat/chatSyncBatchWarm');
+          warm.resetChatSyncWarmSession();
+          await clearChatLocalStores();
+          clearChatSyncScheduler();
+          warm.clearChatSyncWarmDrainQueue();
+          useChatSyncStore.getState().resetChatListDexieBump();
+        } catch {
+          /* ignore */
+        }
+        try {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          localStorage.removeItem('auth_backup');
+          sessionStorage.removeItem('app_navigation_tracked');
+          useNavigationStore.getState().setMyGamesSelectedDay(null);
+          useNavigationStore.getState().setFindSelectedDay(null);
+          useNavigationStore.getState().setFindListWeekStartDay(null);
+          useReactionEmojiUsageStore.getState().reset();
+          set({ user: null, token: null, isAuthenticated: false });
+        } catch (error) {
+          console.error('Error clearing auth from localStorage:', error);
+        }
+        syncLogoutToNative();
+      })();
+      logoutInFlight = run.finally(() => {
+        if (logoutInFlight === run) logoutInFlight = null;
+      });
+      return logoutInFlight;
     },
     updateUser: (user) => {
       try {

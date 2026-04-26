@@ -194,7 +194,9 @@ export async function fetchChatSyncEventsPackOffMainThread(
         c401 === 'auth.refreshExpired' ||
         c401 === 'auth.refreshInvalid' ||
         (c401 === undefined && hadBearerOnRequest);
-      if (authLike) {
+      if (!authLike) {
+        handleApiUnauthorizedIfNeeded();
+      } else {
         const newTok = await refreshAccessTokenSingleFlight();
         if (newTok) {
           try {
@@ -203,14 +205,14 @@ export async function fetchChatSyncEventsPackOffMainThread(
             handleApiUnauthorizedIfNeeded({ forceSessionClear: true });
             throwAxiosLike({ status: 401 });
           }
+          if (result.status === 401) {
+            handleApiUnauthorizedIfNeeded();
+          }
         } else if (consumeRefreshRunClearedCredentials()) {
           handleApiUnauthorizedIfNeeded({ forceSessionClear: true });
         } else {
           handleApiUnauthorizedIfNeeded();
         }
-      }
-      if (result.status === 401) {
-        handleApiUnauthorizedIfNeeded();
       }
     }
     if (result.status >= 400) {
