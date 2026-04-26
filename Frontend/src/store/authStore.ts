@@ -75,7 +75,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       bumpApiAuthCredentialGeneration();
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
-      set({ user, token, isAuthenticated: true });
+      set({ user, token, isAuthenticated: false });
       syncTokenToNative(token);
       if (opts?.refreshToken) {
         await persistRefreshBundle(opts.refreshToken, opts.currentSessionId);
@@ -128,6 +128,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
         const langCode = extractLanguageCode(userToSet.language);
         i18n.changeLanguage(langCode);
       }
+
+      set({ user: userToSet, token, isAuthenticated: true });
 
       void import('@/services/chat/chatSyncBatchWarm').then((warm) => {
         warm.resetChatSyncWarmSession();

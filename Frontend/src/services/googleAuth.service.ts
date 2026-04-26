@@ -45,6 +45,11 @@ interface GoogleButtonConfig {
   width?: number;
 }
 
+let googleWebSignInInFlight: Promise<GoogleAuthResult> | null = null;
+let googleIdentityInitialized = false;
+let activeGoogleCredentialHandler: ((response: GoogleCredentialResponse) => void) | null = null;
+const GOOGLE_IDENTITY_GLOBAL_INIT_KEY = '__padelpulseGoogleIdentityInitialized';
+
 declare global {
   interface Window {
     google?: {
@@ -58,11 +63,16 @@ declare global {
         };
       };
     };
+    [GOOGLE_IDENTITY_GLOBAL_INIT_KEY]?: boolean;
   }
 }
 
 async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
-  return new Promise((resolve, reject) => {
+  if (googleWebSignInInFlight) {
+    return googleWebSignInInFlight;
+  }
+
+  googleWebSignInInFlight = new Promise((resolve, reject) => {
     if (typeof window === 'undefined') {
       reject(new Error('auth.googleSignInUnavailable'));
       return;
@@ -128,33 +138,43 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
           /* ignore */
         }
 
-        window.google!.accounts.id.initialize({
-          client_id: config.googleWebClientId,
-          context: 'signin',
-          callback: (response: GoogleCredentialResponse) => {
-            cleanup();
-            
-            if (!response.credential) {
-              reject(new Error('auth.googleNoCredential'));
-              return;
-            }
+        activeGoogleCredentialHandler = (response: GoogleCredentialResponse) => {
+          cleanup();
 
-            const idToken = response.credential;
-            const decoded = decodeJWT(idToken);
-            
-            resolve({
-              idToken,
-              profile: decoded ? {
-                email: decoded.email,
-                name: decoded.name,
-                givenName: decoded.given_name,
-                familyName: decoded.family_name,
-                picture: decoded.picture,
-              } : undefined,
-            });
-          },
-          auto_select: false,
-        });
+          if (!response.credential) {
+            reject(new Error('auth.googleNoCredential'));
+            return;
+          }
+
+          const idToken = response.credential;
+          const decoded = decodeJWT(idToken);
+
+          resolve({
+            idToken,
+            profile: decoded ? {
+              email: decoded.email,
+              name: decoded.name,
+              givenName: decoded.given_name,
+              familyName: decoded.family_name,
+              picture: decoded.picture,
+            } : undefined,
+          });
+        };
+
+        const isGoogleInitialized =
+          googleIdentityInitialized || window[GOOGLE_IDENTITY_GLOBAL_INIT_KEY] === true;
+        if (!isGoogleInitialized) {
+          window.google!.accounts.id.initialize({
+            client_id: config.googleWebClientId,
+            context: 'signin',
+            callback: (response: GoogleCredentialResponse) => {
+              activeGoogleCredentialHandler?.(response);
+            },
+            auto_select: false,
+          });
+          googleIdentityInitialized = true;
+          window[GOOGLE_IDENTITY_GLOBAL_INIT_KEY] = true;
+        }
 
         buttonContainer = document.createElement('div');
         buttonContainer.id = 'google-signin-button-temp';
@@ -199,11 +219,16 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
     };
 
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', waitForGoogle);
+      document.addEventListener('DOMContentLoaded', waitForGoogle, { once: true });
     } else {
       waitForGoogle();
     }
+  }).finally(() => {
+    googleWebSignInInFlight = null;
+    activeGoogleCredentialHandler = null;
   });
+
+  return googleWebSignInInFlight;
 }
 
 function isReauthError(error: unknown): boolean {
