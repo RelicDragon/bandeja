@@ -233,6 +233,15 @@
     "sessionsRevoke": "Sign out",
     "sessionsEmpty": "No other active sessions.",
     "sessionsRevoked": "Session ended",
-    "sessionsSignedOutAll": "Signed out on all other devices"
+    "sessionsSignedOutAll": "Signed out on all other devices",
+    "sessionsSignOutAllConfirm": "You will be logged out on every device. You will need to sign in again on each device you use.",
+    "sessionsIp": "IP: {{ip}}",
+    "sessionsManageDevices": "Manage devices",
+    "sessionsPlatforms": {
+      "web": "Web",
+      "ios": "iOS",
+      "android": "Android",
+      "unknown": "Unknown device"
+    }
   }
 }

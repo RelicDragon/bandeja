@@ -222,6 +222,26 @@
     "verbalStatusPlaceholder": "What's on your mind?",
     "characters": "characters",
     "bio": "Bio",
-    "bioPlaceholder": "Tell others about yourself..."
+    "bioPlaceholder": "Tell others about yourself...",
+    "sessionsTitle": "Dispositivos con sesión iniciada",
+    "sessionsSubtitle": "Administra dónde mantienes la sesión",
+    "sessionsPageTitle": "Dispositivos y sesiones",
+    "sessionsSignOutAll": "Cerrar sesión en todos lados",
+    "sessionsCurrent": "Este dispositivo",
+    "sessionsPlatform": "Plataforma",
+    "sessionsLastActive": "Última actividad",
+    "sessionsRevoke": "Cerrar sesión",
+    "sessionsEmpty": "No hay otras sesiones activas.",
+    "sessionsRevoked": "Sesión finalizada",
+    "sessionsSignedOutAll": "Sesión cerrada en todos los demás dispositivos",
+    "sessionsSignOutAllConfirm": "Se cerrará tu sesión en todos los dispositivos. Tendrás que volver a iniciar sesión en cada uno.",
+    "sessionsIp": "IP: {{ip}}",
+    "sessionsManageDevices": "Gestionar dispositivos",
+    "sessionsPlatforms": {
+      "web": "Web",
+      "ios": "iOS",
+      "android": "Android",
+      "unknown": "Dispositivo desconocido"
+    }
   }
 }

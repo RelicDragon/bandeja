@@ -39,8 +39,12 @@ export async function getRefreshTokenForRequest(): Promise<string | null> {
     const n = await getRefreshTokenNative();
     if (n) return n;
   }
-  if (isWebHttpOnlyRefreshCookie()) return null;
-  return getStoredRefreshTokenSync();
+  const ls = getStoredRefreshTokenSync()?.trim() ?? '';
+  if (isWebHttpOnlyRefreshCookie()) {
+    if (ls) return ls;
+    return null;
+  }
+  return ls || null;
 }
 
 export async function persistRefreshBundle(

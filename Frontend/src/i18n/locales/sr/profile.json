@@ -222,6 +222,26 @@
     "characterCreation": "Креирање карактера",
     "photoPickFailed": "Failed to pick photo",
     "noSharedGames": "No shared finished games yet",
-    "noLeaderboardData": "No leaderboard data available"
+    "noLeaderboardData": "No leaderboard data available",
+    "sessionsTitle": "Уређаји са пријавом",
+    "sessionsSubtitle": "Управљајте где остајете пријављени",
+    "sessionsPageTitle": "Уређаји и сесије",
+    "sessionsSignOutAll": "Одјави се свуда",
+    "sessionsCurrent": "Овај уређај",
+    "sessionsPlatform": "Платформа",
+    "sessionsLastActive": "Последња активност",
+    "sessionsRevoke": "Одјави се",
+    "sessionsEmpty": "Нема других активних сесија.",
+    "sessionsRevoked": "Сесија је завршена",
+    "sessionsSignedOutAll": "Одјављени сте на свим осталим уређајима",
+    "sessionsSignOutAllConfirm": "Бићете одјављени на свим уређајима. Мораћете поново да се пријавите на сваком од њих.",
+    "sessionsIp": "IP: {{ip}}",
+    "sessionsManageDevices": "Управљај уређајима",
+    "sessionsPlatforms": {
+      "web": "Веб",
+      "ios": "iOS",
+      "android": "Android",
+      "unknown": "Непознат уређај"
+    }
   }
 }

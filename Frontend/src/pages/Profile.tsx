@@ -33,7 +33,6 @@ import {
   X,
   Bell,
   Smartphone,
-  ChevronRight,
 } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -1192,22 +1191,21 @@ export const ProfileContent = () => {
         </div>
 
         <Card>
-          <button
-            type="button"
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            {t('profile.sessionsTitle')}
+          </h2>
+          <div className="flex items-center gap-2 mb-4">
+            <Smartphone size={20} className="text-primary-600 dark:text-primary-400 shrink-0" />
+            <span className="text-gray-900 dark:text-white">{t('profile.sessionsSubtitle')}</span>
+          </div>
+          <Button
+            variant="primary"
             onClick={() => navigate('/profile/sessions')}
-            className="w-full flex items-center justify-between gap-3 rounded-xl p-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/60"
+            className="w-full flex items-center justify-center gap-2 rounded-xl"
           >
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/40 dark:text-primary-300">
-                <Smartphone size={20} />
-              </div>
-              <div className="min-w-0">
-                <div className="font-medium text-gray-900 dark:text-white">{t('profile.sessionsTitle')}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{t('profile.sessionsSubtitle')}</div>
-              </div>
-            </div>
-            <ChevronRight className="shrink-0 text-gray-400" size={20} aria-hidden />
-          </button>
+            <Smartphone size={16} />
+            {t('profile.sessionsManageDevices')}
+          </Button>
         </Card>
 
         <Card>

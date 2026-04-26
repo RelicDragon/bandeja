@@ -33,6 +33,11 @@ export const config = {
   refreshTokenEnabled: process.env.REFRESH_TOKEN_ENABLED !== 'false',
   /** Web: Set-Cookie httpOnly refresh; omit refresh from JSON. Kill-switch: REFRESH_WEB_HTTPONLY_COOKIE=false */
   refreshWebHttpOnlyCookie: process.env.REFRESH_WEB_HTTPONLY_COOKIE !== 'false',
+  /**
+   * With web httpOnly cookie, also return refreshToken in JSON (login/register/refresh) so clients can persist
+   * when Set-Cookie is dropped (e.g. strict mobile / cross-site). Set REFRESH_WEB_HTTPONLY_JSON_BODY=false for cookie-only JSON.
+   */
+  refreshWebHttpOnlyJsonBody: process.env.REFRESH_WEB_HTTPONLY_JSON_BODY !== 'false',
   refreshCookieName: process.env.REFRESH_COOKIE_NAME || 'pp_rt',
   refreshCookiePath: process.env.REFRESH_COOKIE_PATH || '/api',
   refreshCookieDomain: (process.env.REFRESH_COOKIE_DOMAIN || '').trim() || null,

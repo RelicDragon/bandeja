@@ -71,6 +71,12 @@ export function issuedRefreshJsonPayload(
   }
   if (shouldUseWebRefreshHttpOnlyCookie(req)) {
     setRefreshTokenCookie(res, issued.refreshToken);
+    if (config.refreshWebHttpOnlyJsonBody) {
+      return {
+        refreshToken: issued.refreshToken,
+        ...(issued.currentSessionId ? { currentSessionId: issued.currentSessionId } : {}),
+      };
+    }
     return issued.currentSessionId ? { currentSessionId: issued.currentSessionId } : {};
   }
   return {

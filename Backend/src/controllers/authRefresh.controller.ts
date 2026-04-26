@@ -16,6 +16,7 @@ import {
   setRefreshTokenCookie,
   shouldUseWebRefreshHttpOnlyCookie,
 } from '../utils/refreshWebCookie';
+import { config } from '../config/env';
 
 export const postRefresh = asyncHandler(async (req, res: Response) => {
   const raw = readRefreshTokenFromRequest(req);
@@ -27,11 +28,12 @@ export const postRefresh = asyncHandler(async (req, res: Response) => {
   if (webCookie) {
     setRefreshTokenCookie(res, out.refreshToken);
   }
+  const includeJsonRefresh = !webCookie || config.refreshWebHttpOnlyJsonBody;
   res.json({
     success: true,
     data: {
       token: out.token,
-      ...(webCookie ? {} : { refreshToken: out.refreshToken }),
+      ...(includeJsonRefresh ? { refreshToken: out.refreshToken } : {}),
       user: out.user,
       currentSessionId: out.currentSessionId,
     },

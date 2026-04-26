@@ -1,14 +1,28 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import toast from 'react-hot-toast';
-import { formatDistanceToNow } from 'date-fns';
-import { ArrowLeft, Loader2, Monitor, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, LogOut, Monitor } from 'lucide-react';
 import { authApi } from '@/api';
 import { Button, Card, ConfirmationModal } from '@/components';
 import { getCurrentSessionIdSync } from '@/services/refreshTokenPersistence';
 import { useAuthStore } from '@/store/authStore';
+import { formatRelativeTime } from '@/utils/dateFormat';
 import type { AuthSessionRow } from '@/types';
+
+function sessionPlatformLabel(platform: string, t: TFunction): string {
+  const raw = platform.trim();
+  const k = raw.toLowerCase();
+  if (k === 'web' || k === 'ios' || k === 'android') {
+    return t(`profile.sessionsPlatforms.${k}`);
+  }
+  if (k === 'unknown' || !k) {
+    return t('profile.sessionsPlatforms.unknown');
+  }
+  const cap = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+  return t(`profile.sessionsPlatforms.${k}`, { defaultValue: cap });
+}
 
 export function SessionsPage() {
   const { t } = useTranslation();
@@ -77,7 +91,7 @@ export function SessionsPage() {
           type="button"
           onClick={() => navigate('/profile')}
           className="flex h-10 w-10 items-center justify-center rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-          aria-label="Back"
+          aria-label={t('common.back')}
         >
           <ArrowLeft size={22} />
         </button>
@@ -93,11 +107,11 @@ export function SessionsPage() {
           </p>
           <Button
             variant="danger"
-            className="w-full"
+            className="w-full rounded-xl flex items-center justify-center gap-2"
             onClick={() => setConfirmAll(true)}
             disabled={signingOutAll || sessions.length === 0}
           >
-            {signingOutAll ? <Loader2 className="animate-spin" size={18} /> : null}
+            {signingOutAll ? <Loader2 className="animate-spin shrink-0" size={18} /> : <LogOut size={18} className="shrink-0" />}
             {t('profile.sessionsSignOutAll')}
           </Button>
         </Card>
@@ -123,7 +137,7 @@ export function SessionsPage() {
                       </div>
                       <div className="min-w-0">
                         <div className="font-medium text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
-                          <span className="capitalize">{s.platform}</span>
+                          <span>{sessionPlatformLabel(s.platform, t)}</span>
                           {isCurrent ? (
                             <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
                               {t('profile.sessionsCurrent')}
@@ -132,26 +146,27 @@ export function SessionsPage() {
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 space-y-0.5">
                           <div>
-                            {t('profile.sessionsLastActive')}:{' '}
-                            {formatDistanceToNow(new Date(s.lastUsedAt), { addSuffix: true })}
+                            {t('profile.sessionsLastActive')}: {formatRelativeTime(s.lastUsedAt)}
                           </div>
-                          {s.ip ? <div className="truncate">IP: {s.ip}</div> : null}
+                          {s.ip ? (
+                            <div className="truncate">{t('profile.sessionsIp', { ip: s.ip })}</div>
+                          ) : null}
                         </div>
                       </div>
                     </div>
                     {!isCurrent ? (
                       <Button
-                        variant="secondary"
-                        className="shrink-0 self-start sm:self-center"
+                        variant="ghost"
+                        className="shrink-0 self-stretch sm:self-center w-full sm:w-auto rounded-xl border border-red-200/90 text-red-700 hover:bg-red-50 dark:border-red-800/90 dark:text-red-300 dark:hover:bg-red-950/50 justify-center gap-2 px-4 py-2.5 font-medium"
                         onClick={() => revoke(s.id)}
                         disabled={busyId === s.id}
                       >
                         {busyId === s.id ? (
-                          <Loader2 className="animate-spin" size={16} />
+                          <Loader2 className="animate-spin shrink-0" size={16} />
                         ) : (
-                          <Trash2 size={16} />
+                          <LogOut size={16} className="shrink-0" />
                         )}
-                        <span className="ml-1">{t('profile.sessionsRevoke')}</span>
+                        {t('profile.sessionsRevoke')}
                       </Button>
                     ) : null}
                   </Card>
@@ -169,8 +184,9 @@ export function SessionsPage() {
           void signOutAll();
         }}
         title={t('profile.sessionsSignOutAll')}
-        message={t('profile.sessionsSubtitle')}
+        message={t('profile.sessionsSignOutAllConfirm')}
         confirmText={t('profile.sessionsSignOutAll')}
+        cancelText={t('common.cancel')}
         confirmVariant="danger"
         isLoading={signingOutAll}
       />
