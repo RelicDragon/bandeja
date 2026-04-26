@@ -260,6 +260,9 @@ export function clearProactiveAccessRefresh() {
 export async function handleAxios401MaybeRefresh(error: AxiosError): Promise<unknown> {
   const status = error.response?.status;
   if (status !== 401) return Promise.reject(error);
+  if ((error.config as { skipAuth401Handler?: boolean } | undefined)?.skipAuth401Handler) {
+    return Promise.reject(error);
+  }
 
   const data = error.response?.data as { code?: string } | undefined;
   const code = data?.code;

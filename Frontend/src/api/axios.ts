@@ -46,6 +46,9 @@ api.interceptors.response.use(
   },
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
+      if ((error.config as { skipAuth401Handler?: boolean } | undefined)?.skipAuth401Handler) {
+        return Promise.reject(error);
+      }
       try {
         return await handleAxios401MaybeRefresh(error);
       } catch (e) {

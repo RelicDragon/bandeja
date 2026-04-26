@@ -142,8 +142,13 @@ export const useAuthStore = create<AuthState>((set) => {
       }
     },
     logout: async () => {
-      if (logoutInFlight) return logoutInFlight;
-      const run = (async () => {
+      const execute = async () => {
+        clearProactiveAccessRefresh();
+        try {
+          await pushApi.removeAllTokens();
+        } catch {
+          /* ignore */
+        }
         try {
           const rt = await getRefreshTokenForRequest();
           if (rt?.trim() || isWebHttpOnlyRefreshCookie()) {
@@ -152,13 +157,7 @@ export const useAuthStore = create<AuthState>((set) => {
         } catch {
           /* ignore */
         }
-        clearProactiveAccessRefresh();
         await clearRefreshBundle();
-        try {
-          await pushApi.removeAllTokens();
-        } catch {
-          // ignore so logout always completes
-        }
         try {
           const warm = await import('@/services/chat/chatSyncBatchWarm');
           warm.resetChatSyncWarmSession();
@@ -183,7 +182,14 @@ export const useAuthStore = create<AuthState>((set) => {
           console.error('Error clearing auth from localStorage:', error);
         }
         syncLogoutToNative();
-      })();
+      };
+
+      const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+      if (typeof locks?.request === 'function') {
+        return locks.request('padelpulse-auth-logout', execute);
+      }
+      if (logoutInFlight) return logoutInFlight;
+      const run = execute();
       logoutInFlight = run.finally(() => {
         if (logoutInFlight === run) logoutInFlight = null;
       });
