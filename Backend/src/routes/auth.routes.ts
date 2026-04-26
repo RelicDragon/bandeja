@@ -5,13 +5,17 @@ import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
 import * as authController from '../controllers/auth.controller';
 import * as authRefreshController from '../controllers/authRefresh.controller';
+import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 
 const router = Router();
 
 const authRefreshLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 800,
   message: { success: false, message: 'Too many refresh attempts' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => rateLimitKeyFromRequest(req),
 });
 
 router.post(

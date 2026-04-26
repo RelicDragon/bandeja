@@ -12,7 +12,7 @@ import { config } from './config/env';
 
 const app: Application = express();
 
-app.set('trust proxy', ['10.0.0.0/8', '127.0.0.1', '::1']);
+app.set('trust proxy', config.trustProxy);
 
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
@@ -67,10 +67,15 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => rateLimitKeyFromRequest(req),
-  skip: (req) =>
-    req.path.includes('/logs/stream') ||
-    req.path.startsWith('/auth/login') ||
-    req.path.startsWith('/auth/register'),
+  skip: (req) => {
+    const p = req.path || '';
+    return (
+      p.includes('/logs/stream') ||
+      p.includes('/auth/login') ||
+      p.includes('/auth/register') ||
+      p.includes('/auth/refresh')
+    );
+  },
 });
 
 app.use('/api/', limiter);

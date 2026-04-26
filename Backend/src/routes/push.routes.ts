@@ -9,8 +9,9 @@ import {
   getTokens,
   sendTestNotification
 } from '../controllers/push.controller';
-import { authenticate } from '../middleware/auth';
+import { authenticate, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 
 const router = Router();
 
@@ -22,6 +23,7 @@ const registerTokenLimiter = rateLimit({
   message: { success: false, message: 'Too many token registrations, try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 router.post(

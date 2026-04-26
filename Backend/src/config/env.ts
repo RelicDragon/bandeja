@@ -2,9 +2,20 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+function parseTrustProxy(): boolean | number | string {
+  const v = (process.env.TRUST_PROXY || '').trim();
+  if (v === '' || v === '1') return 1;
+  if (v === 'false' || v === '0') return false;
+  if (v === 'true') return true;
+  if (/^\d+$/.test(v)) return parseInt(v, 10);
+  return v;
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
+  /** Express trust proxy (default 1 hop). Set TRUST_PROXY=false behind no proxy. */
+  trustProxy: parseTrustProxy(),
   db: {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432', 10),
