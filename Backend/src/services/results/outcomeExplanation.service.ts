@@ -207,7 +207,11 @@ export async function getOutcomeExplanation(
         opponentTeam.players.reduce((sum: number, p) => sum + (playerLevelsMap.get(p.userId) ?? p.user.level), 0) / opponentTeam.players.length;
 
       const userTeamLevel =
-        userTeam.players.reduce((sum: number, p) => sum + (playerLevelsMap.get(p.userId) ?? p.user.level), 0) / userTeam.players.length;
+        userTeam.players.reduce((sum: number, p) => {
+          const lvl =
+            p.userId === userId ? currentLevel : (playerLevelsMap.get(p.userId) ?? p.user.level);
+          return sum + lvl;
+        }, 0) / userTeam.players.length;
 
       opponentLevels.push(opponentLevel);
 
@@ -240,6 +244,7 @@ export async function getOutcomeExplanation(
         {
           isWinner,
           isDraw: isTie,
+          ownTeamLevel: userTeamLevel,
           opponentsLevel: opponentLevel,
           setScores,
         },

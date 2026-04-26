@@ -8,6 +8,7 @@ interface MatchResult {
   isWinner: boolean;
   isDraw?: boolean;
   scoreDelta?: number;
+  ownTeamLevel: number;
   opponentsLevel: number;
   setScores?: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }>;
 }
@@ -116,7 +117,10 @@ export function calculateRatingUpdate(
   matchResult: MatchResult,
   ballsInGames: boolean = false
 ): RatingUpdate {
-  const expectedWinProbability = calculateExpectedWinProbability(playerStats.level, matchResult.opponentsLevel);
+  const expectedWinProbability = calculateExpectedWinProbability(
+    matchResult.ownTeamLevel,
+    matchResult.opponentsLevel
+  );
   
   let actualScore: number;
   if (matchResult.isDraw) {
@@ -139,7 +143,7 @@ export function calculateRatingUpdate(
     const result = calculateDifferentialMultiplier(matchResult.setScores);
     totalPointDifferential = result.totalPointDifferential;
 
-    const levelGap = Math.abs(playerStats.level - matchResult.opponentsLevel);
+    const levelGap = Math.abs(matchResult.ownTeamLevel - matchResult.opponentsLevel);
     const expectednessScale = 1 / (1 + levelGap);
     multiplier = 1.0 + (result.multiplier - 1.0) * expectednessScale;
   }

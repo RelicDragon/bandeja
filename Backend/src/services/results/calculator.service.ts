@@ -101,6 +101,21 @@ function updateWinLossTie(
   }
 }
 
+function teamAverageLevelAtMatchStart(
+  playerIds: string[],
+  players: PlayerData[],
+  playerTotalChanges: Record<string, PlayerChanges>
+): number {
+  if (playerIds.length === 0) return 0;
+  let sum = 0;
+  for (const id of playerIds) {
+    const p = players.find(x => x.userId === id);
+    const baseLevel = p ? p.level : 1;
+    sum += baseLevel + (playerTotalChanges[id]?.levelChange ?? 0);
+  }
+  return sum / playerIds.length;
+}
+
 function calculatePointsEarned(
   changes: PlayerChanges,
   pointsPerWin: number,
@@ -178,6 +193,9 @@ export function calculateByMatchesWonOutcomes(
       const teamAAvgLevel = teamAPlayers.reduce((sum, p) => sum + p.level, 0) / teamAPlayers.length;
       const teamBAvgLevel = teamBPlayers.reduce((sum, p) => sum + p.level, 0) / teamBPlayers.length;
 
+      const teamAOwnAvgStart = teamAverageLevelAtMatchStart(teamA.playerIds, players, playerTotalChanges);
+      const teamBOwnAvgStart = teamAverageLevelAtMatchStart(teamB.playerIds, players, playerTotalChanges);
+
       for (const player of teamAPlayers) {
         const update = calculateRatingUpdate(
           {
@@ -188,7 +206,8 @@ export function calculateByMatchesWonOutcomes(
           {
             isWinner: teamAWins,
             isDraw: isTie,
-            opponentsLevel: teamBAvgLevel,
+            ownTeamLevel: teamAOwnAvgStart,
+            opponentsLevel: teamBOwnAvgStart,
             setScores: validSets,
           },
           ballsInGames
@@ -218,7 +237,8 @@ export function calculateByMatchesWonOutcomes(
           {
             isWinner: teamBWins,
             isDraw: isTie,
-            opponentsLevel: teamAAvgLevel,
+            ownTeamLevel: teamBOwnAvgStart,
+            opponentsLevel: teamAOwnAvgStart,
             setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore, isTieBreak: s.isTieBreak })),
           },
           ballsInGames
@@ -309,6 +329,9 @@ export function calculateByPointsOutcomes(
         })
         .reduce((sum, level) => sum + level, 0) / teamA.playerIds.length;
 
+      const teamAOwnAvgStart = teamAverageLevelAtMatchStart(teamA.playerIds, players, playerTotalChanges);
+      const teamBOwnAvgStart = teamAverageLevelAtMatchStart(teamB.playerIds, players, playerTotalChanges);
+
       for (const playerId of teamA.playerIds) {
         const player = players.find(p => p.userId === playerId);
         if (!player) continue;
@@ -322,7 +345,8 @@ export function calculateByPointsOutcomes(
           {
             isWinner: teamAWins,
             isDraw: isTie,
-            opponentsLevel: teamBAvgLevel,
+            ownTeamLevel: teamAOwnAvgStart,
+            opponentsLevel: teamBOwnAvgStart,
             setScores: validSets,
           },
           ballsInGames
@@ -355,7 +379,8 @@ export function calculateByPointsOutcomes(
           {
             isWinner: teamBWins,
             isDraw: isTie,
-            opponentsLevel: teamAAvgLevel,
+            ownTeamLevel: teamBOwnAvgStart,
+            opponentsLevel: teamAOwnAvgStart,
             setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore, isTieBreak: s.isTieBreak })),
           },
           ballsInGames
@@ -446,6 +471,9 @@ export function calculateByScoresDeltaOutcomes(
         })
         .reduce((sum, level) => sum + level, 0) / teamA.playerIds.length;
 
+      const teamAOwnAvgStart = teamAverageLevelAtMatchStart(teamA.playerIds, players, playerTotalChanges);
+      const teamBOwnAvgStart = teamAverageLevelAtMatchStart(teamB.playerIds, players, playerTotalChanges);
+
       for (const playerId of teamA.playerIds) {
         const player = players.find(p => p.userId === playerId);
         if (!player) continue;
@@ -459,7 +487,8 @@ export function calculateByScoresDeltaOutcomes(
           {
             isWinner: teamAWins,
             isDraw: isTie,
-            opponentsLevel: teamBAvgLevel,
+            ownTeamLevel: teamAOwnAvgStart,
+            opponentsLevel: teamBOwnAvgStart,
             setScores: validSets,
           },
           ballsInGames
@@ -493,7 +522,8 @@ export function calculateByScoresDeltaOutcomes(
           {
             isWinner: teamBWins,
             isDraw: isTie,
-            opponentsLevel: teamAAvgLevel,
+            ownTeamLevel: teamBOwnAvgStart,
+            opponentsLevel: teamAOwnAvgStart,
             setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore, isTieBreak: s.isTieBreak })),
           },
           ballsInGames
