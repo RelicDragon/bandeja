@@ -17,6 +17,7 @@ import { useChatSyncStore } from '@/store/chatSyncStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 import { registerAuthAccessTokenSink } from '@/store/authAccessSink';
+import { bumpApiAuthCredentialGeneration } from '@/api/apiAuthCredentialGeneration';
 
 interface AuthState {
   user: User | null;
@@ -70,6 +71,7 @@ export const useAuthStore = create<AuthState>((set) => {
     isAuthenticated: !!savedToken,
     isInitializing: true,
     setAuth: async (user, token, opts) => {
+      bumpApiAuthCredentialGeneration();
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
       set({ user, token, isAuthenticated: true });
@@ -184,6 +186,7 @@ export const useAuthStore = create<AuthState>((set) => {
           console.error('Error clearing auth from localStorage:', error);
         }
         syncLogoutToNative();
+        bumpApiAuthCredentialGeneration();
       };
 
       const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;

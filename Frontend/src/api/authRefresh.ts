@@ -13,6 +13,7 @@ import {
   persistSessionIdOnly,
 } from '@/services/refreshTokenPersistence';
 import { handleApiUnauthorizedIfNeeded } from '@/api/handleApiUnauthorized';
+import { isStaleApiAuthCredentialGeneration } from '@/api/apiAuthCredentialGeneration';
 
 const AUTH_CHANNEL = 'padelpulse-auth-v2';
 const AUTH_SYNC_TYPE = 'padelpulse-auth-sync-v2';
@@ -264,6 +265,10 @@ export async function handleAxios401MaybeRefresh(error: AxiosError): Promise<unk
     return Promise.reject(error);
   }
 
+  if (isStaleApiAuthCredentialGeneration(error.config)) {
+    return Promise.reject(error);
+  }
+
   const data = error.response?.data as { code?: string } | undefined;
   const code = data?.code;
 
@@ -319,11 +324,9 @@ export async function handleAxios401MaybeRefresh(error: AxiosError): Promise<unk
   }
 
   const hadBearer = requestHadBearer(error.config);
-  const authLike =
-    code === 'auth.accessExpired' ||
-    code === 'auth.invalidToken' ||
-    code === 'auth.refreshExpired' ||
-    (code === undefined && hadBearer);
+  // Skip-refresh codes already returned above. Any other 401 with Bearer may be a stale
+  // access token; try refresh instead of logging out (fixes e.g. re-login after logout on web).
+  const authLike = hadBearer;
 
   const rt = await getRefreshTokenForRequest();
   const canRefresh = !!(rt && rt.trim()) || isWebHttpOnlyRefreshCookie();

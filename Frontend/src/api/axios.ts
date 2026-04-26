@@ -4,6 +4,7 @@ import { processDeletedUsers } from '@/utils/deletedUserHandler';
 import { getClientAppSemver } from '@/utils/clientAppVersion';
 import { Capacitor } from '@capacitor/core';
 import { handleAxios401MaybeRefresh } from '@/api/authRefresh';
+import { stampApiAuthCredentialGeneration } from '@/api/apiAuthCredentialGeneration';
 import { api } from '@/api/httpClient';
 
 function clientPlatformHeader(): string {
@@ -16,6 +17,7 @@ function clientPlatformHeader(): string {
 
 api.interceptors.request.use(
   (config) => {
+    stampApiAuthCredentialGeneration(config);
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
