@@ -49,6 +49,11 @@ let googleWebSignInInFlight: Promise<GoogleAuthResult> | null = null;
 let googleIdentityInitialized = false;
 let activeGoogleCredentialHandler: ((response: GoogleCredentialResponse) => void) | null = null;
 const GOOGLE_IDENTITY_GLOBAL_INIT_KEY = '__padelpulseGoogleIdentityInitialized';
+const GOOGLE_IDENTITY_SDK_INIT_KEY = '__padelpulseGoogleIdentityInitialized';
+
+type GoogleAccountsIdApi = NonNullable<Window['google']>['accounts']['id'] & {
+  [GOOGLE_IDENTITY_SDK_INIT_KEY]?: boolean;
+};
 
 declare global {
   interface Window {
@@ -161,10 +166,13 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
           });
         };
 
+        const googleAccountsId = window.google!.accounts.id as GoogleAccountsIdApi;
         const isGoogleInitialized =
-          googleIdentityInitialized || window[GOOGLE_IDENTITY_GLOBAL_INIT_KEY] === true;
+          googleIdentityInitialized ||
+          window[GOOGLE_IDENTITY_GLOBAL_INIT_KEY] === true ||
+          googleAccountsId[GOOGLE_IDENTITY_SDK_INIT_KEY] === true;
         if (!isGoogleInitialized) {
-          window.google!.accounts.id.initialize({
+          googleAccountsId.initialize({
             client_id: config.googleWebClientId,
             context: 'signin',
             callback: (response: GoogleCredentialResponse) => {
@@ -174,6 +182,7 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
           });
           googleIdentityInitialized = true;
           window[GOOGLE_IDENTITY_GLOBAL_INIT_KEY] = true;
+          googleAccountsId[GOOGLE_IDENTITY_SDK_INIT_KEY] = true;
         }
 
         buttonContainer = document.createElement('div');
