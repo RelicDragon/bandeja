@@ -123,14 +123,12 @@ export const Login = () => {
 
   const handleGoogleSignIn = async () => {
     setError('');
-    const flow = signInWithGoogle();
-    setLoading(true);
     try {
-      const result = await flow;
+      const result = await signInWithGoogle();
       if (!result) {
-        setLoading(false);
         return;
       }
+      setLoading(true);
       const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
       const profile = result.profile;
       const response = await authApi.loginGoogle({

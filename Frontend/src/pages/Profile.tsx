@@ -426,14 +426,12 @@ export const ProfileContent = () => {
 
   const handleLinkGoogle = async () => {
     try {
-      const flow = signInWithGoogle();
-      setIsLinkingGoogle(true);
-      const result = await flow;
+      const result = await signInWithGoogle();
       
       if (!result || !result.idToken) {
-        setIsLinkingGoogle(false);
         return;
       }
+      setIsLinkingGoogle(true);
 
       const response = await authApi.linkGoogle({
         idToken: result.idToken,
