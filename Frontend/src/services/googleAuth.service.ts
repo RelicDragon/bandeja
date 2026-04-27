@@ -43,6 +43,7 @@ interface GoogleButtonConfig {
   size?: 'large' | 'medium' | 'small';
   type?: 'standard' | 'icon';
   text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin';
+  shape?: 'rectangular' | 'pill' | 'circle' | 'square';
   width?: number;
 }
 
@@ -182,10 +183,11 @@ export function renderGoogleSignInButton(
         const dynamicWidth = options.width ?? Math.max(220, Math.floor(container.clientWidth));
         container.innerHTML = '';
         window.google!.accounts.id.renderButton(container, {
-          theme: 'filled_blue',
-          size: 'large',
+          theme: 'outline',
+          size: 'medium',
           type: 'standard',
           text: 'continue_with',
+          shape: 'pill',
           width: dynamicWidth,
         });
       };
