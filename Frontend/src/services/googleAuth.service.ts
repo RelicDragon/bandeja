@@ -46,6 +46,13 @@ interface GoogleButtonConfig {
   width?: number;
 }
 
+interface GooglePromptMomentNotification {
+  isDismissedMoment?: () => boolean;
+  isSkippedMoment?: () => boolean;
+  isNotDisplayed?: () => boolean;
+  getNotDisplayedReason?: () => string;
+}
+
 type ActiveWebAttempt = {
   id: number;
   settled: boolean;
@@ -72,6 +79,7 @@ declare global {
         id: {
           initialize: (config: GoogleAccountsConfig) => void;
           renderButton: (element: HTMLElement, config: GoogleButtonConfig) => void;
+          prompt: (callback: (notification: GooglePromptMomentNotification) => void) => void;
           disableAutoSelect: () => void;
           cancel?: () => void;
         };
@@ -157,6 +165,12 @@ function signInWithGoogleWeb(options?: GoogleSignInOptions): Promise<GoogleAuthR
     const initializeGoogle = () => {
       try {
         const googleAccountsId = window.google!.accounts.id;
+        const ua = navigator.userAgent || '';
+        const isIosSafariWeb =
+          !Capacitor.isNativePlatform() &&
+          /iP(hone|ad|od)/.test(ua) &&
+          /Safari/.test(ua) &&
+          !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/i.test(ua);
         const clientId = config.googleWebClientId;
         const needsInit =
           !window[GSI_INIT_DONE_KEY] || window[GSI_INIT_CLIENT_ID_KEY] !== clientId;
@@ -199,6 +213,34 @@ function signInWithGoogleWeb(options?: GoogleSignInOptions): Promise<GoogleAuthR
             } : undefined,
           });
         };
+
+        if (isIosSafariWeb) {
+          options?.onUiOpened?.();
+          googleAccountsId.prompt((notification: GooglePromptMomentNotification) => {
+            if (!activeWebAttempt || activeWebAttempt.id !== attemptId || activeWebAttempt.settled) return;
+            if (notification.isDismissedMoment?.() || notification.isSkippedMoment?.()) {
+              finishResolve(null);
+              return;
+            }
+            if (notification.isNotDisplayed?.()) {
+              const reason = notification.getNotDisplayedReason?.() ?? '';
+              if (reason === 'invalid_client' || reason === 'unregistered_origin') {
+                finishReject(new Error('auth.googleSignInInitFailed'));
+                return;
+              }
+              if (reason === 'missing_client_id') {
+                finishReject(new Error('auth.googleClientNotConfigured'));
+                return;
+              }
+              if (reason === 'secure_http_required') {
+                finishReject(new Error('auth.googleSignInUnavailable'));
+                return;
+              }
+              finishResolve(null);
+            }
+          });
+          return;
+        }
 
         buttonContainer = document.createElement('div');
         buttonContainer.id = `google-signin-button-temp-${attemptId}`;
