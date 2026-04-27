@@ -289,7 +289,11 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
 
   const ringClass =
     inlineFace
-      ? ''
+      ? isFavorite
+        ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400'
+        : player.isTrainer
+          ? 'ring-[3px] ring-green-500 dark:ring-green-400'
+          : ''
       : superTiny
         ? isFavorite
           ? 'ring-2 ring-yellow-600 dark:ring-yellow-400'
