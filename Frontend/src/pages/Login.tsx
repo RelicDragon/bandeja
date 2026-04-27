@@ -122,10 +122,11 @@ export const Login = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
     setError('');
+    const flow = signInWithGoogle();
+    setLoading(true);
     try {
-      const result = await signInWithGoogle();
+      const result = await flow;
       if (!result) {
         setLoading(false);
         return;

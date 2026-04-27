@@ -48,6 +48,7 @@ interface GisPromptMomentNotification {
 const GSI_INIT_DONE_KEY = '__padelpulseGsiInitDone';
 const GSI_INIT_CLIENT_ID_KEY = '__padelpulseGsiInitClientId';
 const GSI_DISPATCH_KEY = '__padelpulseGsiDispatchCredential';
+const GSI_AUTO_SELECT_OFF_KEY = '__padelpulseGsiAutoSelectOff';
 
 let googleWebSignInInFlight: Promise<GoogleAuthResult | null> | null = null;
 let abortCurrentWebGoogleSignIn: (() => void) | null = null;
@@ -67,10 +68,11 @@ declare global {
     [GSI_INIT_DONE_KEY]?: boolean;
     [GSI_INIT_CLIENT_ID_KEY]?: string;
     [GSI_DISPATCH_KEY]?: (response: GoogleCredentialResponse) => void;
+    [GSI_AUTO_SELECT_OFF_KEY]?: boolean;
   }
 }
 
-async function signInWithGoogleWeb(): Promise<GoogleAuthResult | null> {
+function signInWithGoogleWeb(): Promise<GoogleAuthResult | null> {
   abortCurrentWebGoogleSignIn?.();
 
   let abortThisAttempt: (() => void) | null = null;
@@ -187,18 +189,6 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult | null> {
 
     const initializeGoogle = () => {
       try {
-        try {
-          window.google!.accounts.id.cancel?.();
-        } catch {
-          /* ignore */
-        }
-
-        try {
-          window.google!.accounts.id.disableAutoSelect();
-        } catch {
-          /* ignore */
-        }
-
         window[GSI_DISPATCH_KEY] = (response: GoogleCredentialResponse) => {
           if (settled) return;
           if (!response.credential) {
@@ -227,6 +217,14 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult | null> {
         const needsInit =
           !window[GSI_INIT_DONE_KEY] || window[GSI_INIT_CLIENT_ID_KEY] !== clientId;
         if (needsInit) {
+          if (!window[GSI_AUTO_SELECT_OFF_KEY]) {
+            try {
+              window.google!.accounts.id.disableAutoSelect();
+            } catch {
+              /* ignore */
+            }
+            window[GSI_AUTO_SELECT_OFF_KEY] = true;
+          }
           googleAccountsId.initialize({
             client_id: clientId,
             context: 'signin',

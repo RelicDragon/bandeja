@@ -426,8 +426,9 @@ export const ProfileContent = () => {
 
   const handleLinkGoogle = async () => {
     try {
+      const flow = signInWithGoogle();
       setIsLinkingGoogle(true);
-      const result = await signInWithGoogle();
+      const result = await flow;
       
       if (!result || !result.idToken) {
         setIsLinkingGoogle(false);
