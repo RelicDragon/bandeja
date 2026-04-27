@@ -17,6 +17,7 @@ import { parseContentWithMentionsAndUrls, formatMessageTime as formatMessageTime
 import { formatVoiceTranscriptionForDisplay, isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay';
 import { SystemMessageBlock } from './SystemMessageBlock';
 import { MessageBubble } from './MessageBubble';
+import { PlayerAvatar } from '../PlayerAvatar';
 import { useMessageLongPress } from './useMessageLongPress';
 import { useMessageReactions } from './useMessageReactions';
 
@@ -305,22 +306,24 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             {!isChannel && !isOwnMessage && (
               <div className="flex-shrink-0 mr-3 self-center">
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     setShowPlayerCard(true);
                   }}
-                  className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-semibold hover:opacity-80 transition-opacity cursor-pointer"
+                  className="rounded-full p-0 flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer overflow-hidden"
+                  aria-label={getSenderName()}
                 >
-                  {currentMessage.sender?.avatar ? (
-                    <img
-                      src={currentMessage.sender.avatar || ''}
-                      alt={getSenderName()}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    getSenderName().charAt(0).toUpperCase()
-                  )}
+                  <PlayerAvatar
+                    player={currentMessage.sender}
+                    inlineFace
+                    inlineFaceSize="md"
+                    asDiv
+                    subscribePresence={false}
+                    showName={false}
+                    fullHideName
+                  />
                 </button>
               </div>
             )}

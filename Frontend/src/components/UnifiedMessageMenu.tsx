@@ -7,7 +7,8 @@ import { Keyboard } from '@capacitor/keyboard';
 import { ChatMessage, chatApi } from '@/api/chat';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
-import { formatFullDateTime, getUserDisplayName, getUserInitials } from '@/utils/messageMenuUtils';
+import { formatFullDateTime, getUserDisplayName } from '@/utils/messageMenuUtils';
+import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { EmojiQuickStrip, type ReactionEmojiPickSource } from '@/components/reactions/EmojiQuickStrip';
 import {
   frequentReactionStripFromStore,
@@ -23,6 +24,13 @@ import { isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay'
 import { usePlayersStore } from '@/store/playersStore';
 import { fetchBasicUsersBatched } from '@/services/users/fetchBasicUsersBatched';
 import type { BasicUser } from '@/types';
+
+function mergeBasicUsers(fromMessage: BasicUser | undefined, fromStore: BasicUser | undefined): BasicUser | undefined {
+  if (fromMessage && fromStore) {
+    return { ...fromStore, ...fromMessage, avatar: fromMessage.avatar ?? fromStore.avatar ?? null };
+  }
+  return fromMessage ?? fromStore;
+}
 
 interface UnifiedMessageMenuProps {
   message: ChatMessage;
@@ -381,11 +389,13 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     }).sort((a, b) => new Date(a.readAt).getTime() - new Date(b.readAt).getTime());
   };
 
-  const displaySenderUser: BasicUser | undefined =
-    message.sender ?? (message.senderId ? usersById[message.senderId] : undefined);
+  const displaySenderUser = useMemo((): BasicUser | undefined => {
+    const fromStore = message.senderId ? usersById[message.senderId] : undefined;
+    return mergeBasicUsers(message.sender ?? undefined, fromStore);
+  }, [message.sender, message.senderId, usersById]);
 
   const receiptDisplayUser = (receipt: { userId: string; user?: BasicUser }): BasicUser | undefined =>
-    receipt.user ?? usersById[receipt.userId];
+    mergeBasicUsers(receipt.user, usersById[receipt.userId]);
 
   const formatReadTime = (readAt: string) => {
     const readDate = new Date(readAt);
@@ -685,14 +695,32 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               {message.editedAt && (
                 <div>{t('chat.editedAt', { defaultValue: 'Edited' })}: {formatFullDateTime(message.editedAt, user)}</div>
               )}
-              <div className="flex items-center gap-1 min-h-[1rem]">
-                {displaySenderUser ? (
-                  getUserDisplayName(displaySenderUser)
-                ) : detailsUsersLoading && message.senderId ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" aria-hidden />
-                ) : (
-                  'Unknown User'
-                )}
+              <div className={`flex items-center min-h-[1.5rem] ${message.senderId ? 'gap-2' : ''}`}>
+                {message.senderId ? (
+                  <div className="shrink-0 w-6 h-6 flex items-center justify-center">
+                    {displaySenderUser ? (
+                      <PlayerAvatar
+                        player={displaySenderUser}
+                        inlineFace
+                        asDiv
+                        subscribePresence={false}
+                        showName={false}
+                        fullHideName
+                      />
+                    ) : detailsUsersLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" aria-hidden />
+                    ) : null}
+                  </div>
+                ) : null}
+                <div className={`min-w-0 text-gray-700 dark:text-gray-200 ${message.senderId ? 'flex-1' : ''}`}>
+                  {displaySenderUser ? (
+                    getUserDisplayName(displaySenderUser)
+                  ) : detailsUsersLoading && message.senderId ? (
+                    <span className="text-gray-400">…</span>
+                  ) : (
+                    'Unknown User'
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -714,10 +742,15 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                   {getReadReceiptsWithReactions().map((receipt) => {
                     const du = receiptDisplayUser(receipt);
                     return (
-                      <div key={receipt.key} className="flex items-center space-x-2">
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-semibold">
-                          {du?.firstName ? getUserInitials(du) : 'U'}
-                        </div>
+                      <div key={receipt.key} className="flex items-center gap-2">
+                        <PlayerAvatar
+                          player={du ?? null}
+                          inlineFace
+                          asDiv
+                          subscribePresence={false}
+                          showName={false}
+                          fullHideName
+                        />
 
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">

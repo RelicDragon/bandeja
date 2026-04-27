@@ -27,6 +27,10 @@ interface PlayerAvatarProps {
   smallLayout?: boolean;
   extrasmall?: boolean;
   superTiny?: boolean;
+  /** 24px face only: tiny CDN avatar, no badges/rings/dialog (e.g. message menus). */
+  inlineFace?: boolean;
+  /** With `inlineFace`: `sm` = 24px (menus), `md` = 32px (message list). */
+  inlineFaceSize?: 'sm' | 'md';
   role?: 'OWNER' | 'ADMIN' | 'PLAYER';
   asDiv?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
@@ -36,7 +40,7 @@ interface PlayerAvatarProps {
   onTouchEnd?: (e: TouchEvent) => void;
 }
 
-export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
+export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, inlineFace = false, inlineFaceSize = 'sm', role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
   const avatarPresenceKey = `avatar:${useId()}`;
   usePresenceSubscription(
     avatarPresenceKey,
@@ -50,13 +54,13 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const useTinyWhenAvailable = superTiny || extrasmall || smallLayout;
+  const useTinyWhenAvailable = superTiny || extrasmall || smallLayout || inlineFace;
   const tinyAvatarUrl =
     useTinyWhenAvailable ? userAvatarTinyUrlFromStandard(player?.avatar) : null;
   const [tinyLoadFailed, setTinyLoadFailed] = useState(false);
   useEffect(() => {
     setTinyLoadFailed(false);
-  }, [player?.id, player?.avatar, extrasmall, smallLayout, superTiny]);
+  }, [player?.id, player?.avatar, extrasmall, smallLayout, superTiny, inlineFace, inlineFaceSize]);
   const avatarImgSrc =
     tinyAvatarUrl && !tinyLoadFailed ? tinyAvatarUrl : player?.avatar ?? '';
   useEffect(() => {
@@ -68,6 +72,19 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   }, []);
 
   const getSizeClasses = () => {
+    if (inlineFace) {
+      const md = inlineFaceSize === 'md';
+      return {
+        avatar: md ? 'w-8 h-8' : 'w-6 h-6',
+        text: md ? 'text-xs leading-none' : 'text-[9px] leading-none',
+        name: '',
+        level: 'w-4 h-4 text-[8px]',
+        crown: 'w-4 h-4',
+        crownIcon: 8,
+        remove: 'w-3 h-3',
+        removeIcon: 6,
+      };
+    }
     if (superTiny) return { avatar: 'w-4 h-4', text: 'text-[7px] leading-none', name: '', level: 'w-4 h-4 text-[8px]', crown: 'w-4 h-4', crownIcon: 8, remove: 'w-3 h-3', removeIcon: 6 };
     if (extrasmall) return { avatar: 'w-8 h-8', text: 'text-xs', name: 'pt-1.5   text-[10px] h-8 leading-tight', level: 'w-4 h-4 text-[8px]', crown: 'w-4 h-4', crownIcon: 8, remove: 'w-4 h-4', removeIcon: 8 };
     if (smallLayout) return { avatar: 'w-12 h-12', text: 'text-sm', name: 'mt-1 text-xs h-8 w-full', level: 'w-5 h-5 text-[10px]', crown: 'w-5 h-5', crownIcon: 10, remove: 'w-5 h-5', removeIcon: 10 };
@@ -133,10 +150,20 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   }, [draggable, onTouchStart, onTouchMove, onTouchEnd]);
 
   if (!player) {
+    const placeholderUserIcon =
+      inlineFace && inlineFaceSize === 'md'
+        ? 'w-5 h-5'
+        : inlineFace
+          ? 'w-4 h-4'
+          : extrasmall
+            ? 'w-4 h-4'
+            : smallLayout
+              ? 'w-6 h-6'
+              : 'w-8 h-8';
     return (
-      <div className="flex flex-col items-center">
+      <div className={inlineFace ? 'inline-flex flex-col items-center shrink-0 overflow-visible' : 'flex flex-col items-center'}>
         <div className={`${sizeClasses.avatar} rounded-full border-2 border-dashed border-gray-400 dark:border-gray-600 shadow-sm flex items-center justify-center`}>
-          <User className={`text-gray-400 dark:text-gray-600 ${extrasmall ? 'w-4 h-4' : smallLayout ? 'w-6 h-6' : 'w-8 h-8'}`} />
+          <User className={`text-gray-400 dark:text-gray-600 ${placeholderUserIcon}`} />
         </div>
       </div>
     );
@@ -149,8 +176,10 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
 
   const onlineDotClass = player && isOnline ? 'avatar-online-dot' : '';
 
+  const faceOnlyLayout = superTiny || inlineFace;
+
   const renderAvatarContent = () => {
-    if (superTiny) {
+    if (faceOnlyLayout) {
       return (
         <>
           {player.avatar ? (
@@ -259,24 +288,40 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   };
 
   const ringClass =
-    superTiny
-      ? isFavorite
-        ? 'ring-2 ring-yellow-600 dark:ring-yellow-400'
-        : player.isTrainer
-          ? 'ring-2 ring-green-500 dark:ring-green-400'
-          : ''
-      : isFavorite
-        ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400'
-        : player.isTrainer
-          ? 'ring-[3px] ring-green-500 dark:ring-green-400'
-          : '';
+    inlineFace
+      ? ''
+      : superTiny
+        ? isFavorite
+          ? 'ring-2 ring-yellow-600 dark:ring-yellow-400'
+          : player.isTrainer
+            ? 'ring-2 ring-green-500 dark:ring-green-400'
+            : ''
+        : isFavorite
+          ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400'
+          : player.isTrainer
+            ? 'ring-[3px] ring-green-500 dark:ring-green-400'
+            : '';
 
-  const wrapperClassName = `relative z-10 ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${!asDiv ? (draggable ? 'cursor-move' : 'cursor-pointer') + ' hover:opacity-80 transition-opacity ' : ''}${smallLayout && !draggable ? 'touch-manipulation ' : ''}${ringClass}${player && isOnline ? (isFavorite ? ' avatar-online-border-favorite' : player.isTrainer ? ' avatar-online-border-trainer' : ' avatar-online-border') : ''}`;
+  const wrapperClassName = `relative z-10 ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${!asDiv ? (draggable ? 'cursor-move' : 'cursor-pointer') + ' hover:opacity-80 transition-opacity ' : ''}${smallLayout && !draggable ? 'touch-manipulation ' : ''}${ringClass}${
+    !inlineFace && player && isOnline
+      ? isFavorite
+        ? ' avatar-online-border-favorite'
+        : player.isTrainer
+          ? ' avatar-online-border-trainer'
+          : ' avatar-online-border'
+      : ''
+  }`;
 
   return (
-    <div className="flex flex-col items-center overflow-visible">
+    <div
+      className={
+        inlineFace
+          ? 'inline-flex flex-col items-center shrink-0 overflow-visible'
+          : 'flex flex-col items-center overflow-visible'
+      }
+    >
       <div className="relative overflow-visible">
-        {isFavorite && !superTiny && (
+        {isFavorite && !superTiny && !inlineFace && (
           <div
             className={`absolute top-0 left-0 ${sizeClasses.avatar} rounded-full pointer-events-none z-0`}
             style={getGlowStyle()}
@@ -313,7 +358,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
           </button>
         )}
       </div>
-      {!fullHideName && !superTiny && (
+      {!fullHideName && !superTiny && !inlineFace && (
         <div className={`overflow-visible transition-all duration-300 ease-in-out ${
           showName ? 'max-h-20 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-2'
         }`}>
@@ -335,11 +380,13 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
           </div>
         </div>
       )}
-      <Dialog open={showAuthModal} onClose={() => setShowAuthModal(false)} modalId="player-avatar-auth-modal">
-        <DialogContent>
-          <PublicGamePrompt />
-        </DialogContent>
-      </Dialog>
+      {!inlineFace && (
+        <Dialog open={showAuthModal} onClose={() => setShowAuthModal(false)} modalId="player-avatar-auth-modal">
+          <DialogContent>
+            <PublicGamePrompt />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
