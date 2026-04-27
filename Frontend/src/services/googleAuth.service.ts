@@ -45,7 +45,18 @@ interface GoogleButtonConfig {
   width?: number;
 }
 
-let googleWebSignInInFlight: Promise<GoogleAuthResult> | null = null;
+interface GisPromptMomentNotification {
+  isDisplayMoment?: () => boolean;
+  isDisplayed?: () => boolean;
+  isNotDisplayed?: () => boolean;
+  isSkippedMoment?: () => boolean;
+  isDismissedMoment?: () => boolean;
+  getNotDisplayedReason?: () => string;
+  getSkippedReason?: () => string;
+  getDismissedReason?: () => string;
+}
+
+let googleWebSignInInFlight: Promise<GoogleAuthResult | null> | null = null;
 let googleIdentityInitialized = false;
 let activeGoogleCredentialHandler: ((response: GoogleCredentialResponse) => void) | null = null;
 const GOOGLE_IDENTITY_GLOBAL_INIT_KEY = '__padelpulseGoogleIdentityInitialized';
@@ -72,12 +83,12 @@ declare global {
   }
 }
 
-async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
+async function signInWithGoogleWeb(): Promise<GoogleAuthResult | null> {
   if (googleWebSignInInFlight) {
     return googleWebSignInInFlight;
   }
 
-  googleWebSignInInFlight = new Promise<GoogleAuthResult>((resolve, reject) => {
+  googleWebSignInInFlight = new Promise<GoogleAuthResult | null>((resolve, reject) => {
     if (typeof window === 'undefined') {
       reject(new Error('auth.googleSignInUnavailable'));
       return;
@@ -88,6 +99,63 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
       return;
     }
 
+    let settled = false;
+
+    const finishResolve = (value: GoogleAuthResult | null) => {
+      if (settled) return;
+      settled = true;
+      if (value === null) {
+        try {
+          window.google?.accounts.id.cancel?.();
+        } catch {
+          /* ignore */
+        }
+      }
+      resolve(value);
+    };
+
+    const finishReject = (err: Error) => {
+      if (settled) return;
+      settled = true;
+      reject(err);
+    };
+
+    const handlePromptMoment = (notification: unknown) => {
+      if (settled) return;
+      const n = notification as GisPromptMomentNotification;
+
+      if (typeof n.isDismissedMoment === 'function' && n.isDismissedMoment()) {
+        const reason = n.getDismissedReason?.();
+        if (reason === 'credential_returned' || reason === 'flow_restarted') {
+          return;
+        }
+        finishResolve(null);
+        return;
+      }
+
+      if (typeof n.isSkippedMoment === 'function' && n.isSkippedMoment()) {
+        finishResolve(null);
+        return;
+      }
+
+      if (typeof n.isNotDisplayed === 'function' && n.isNotDisplayed()) {
+        const reason = n.getNotDisplayedReason?.() ?? '';
+        if (reason === 'invalid_client' || reason === 'unregistered_origin') {
+          finishReject(new Error('auth.googleSignInInitFailed'));
+          return;
+        }
+        if (reason === 'missing_client_id') {
+          finishReject(new Error('auth.googleClientNotConfigured'));
+          return;
+        }
+        if (reason === 'secure_http_required') {
+          finishReject(new Error('auth.googleSignInUnavailable'));
+          return;
+        }
+        finishResolve(null);
+      }
+    };
+
     const MAX_WAIT_TIME = 10000; // 10 seconds
     const startTime = Date.now();
 
@@ -97,19 +165,10 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
       } else {
         const elapsed = Date.now() - startTime;
         if (elapsed >= MAX_WAIT_TIME) {
-          reject(new Error('auth.googleIdentityLoadTimeout'));
+          finishReject(new Error('auth.googleIdentityLoadTimeout'));
           return;
         }
         setTimeout(waitForGoogle, 100);
-      }
-    };
-
-    let buttonContainer: HTMLElement | null = null;
-
-    const cleanup = () => {
-      if (buttonContainer && buttonContainer.parentNode) {
-        buttonContainer.parentNode.removeChild(buttonContainer);
-        buttonContainer = null;
       }
     };
 
@@ -144,17 +203,16 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
         }
 
         activeGoogleCredentialHandler = (response: GoogleCredentialResponse) => {
-          cleanup();
-
+          if (settled) return;
           if (!response.credential) {
-            reject(new Error('auth.googleNoCredential'));
+            finishResolve(null);
             return;
           }
 
           const idToken = response.credential;
           const decoded = decodeJWT(idToken);
 
-          resolve({
+          finishResolve({
             idToken,
             profile: decoded ? {
               email: decoded.email,
@@ -185,45 +243,9 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult> {
           googleAccountsId[GOOGLE_IDENTITY_SDK_INIT_KEY] = true;
         }
 
-        buttonContainer = document.createElement('div');
-        buttonContainer.id = 'google-signin-button-temp';
-        buttonContainer.setAttribute('aria-hidden', 'true');
-        Object.assign(buttonContainer.style, {
-          position: 'fixed',
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '300px',
-          height: '44px',
-          opacity: '0.02',
-          pointerEvents: 'auto',
-          zIndex: '2147483646',
-        });
-        document.body.appendChild(buttonContainer);
-
-        window.google!.accounts.id.renderButton(buttonContainer, {
-          theme: 'outline',
-          size: 'large',
-          type: 'standard',
-          text: 'signin_with',
-          width: 300,
-        });
-
-        const clickRendered = () => {
-          const button = buttonContainer?.querySelector('div[role="button"]') as HTMLElement;
-          if (button) {
-            button.click();
-          } else {
-            cleanup();
-            reject(new Error('auth.googleButtonInitFailed'));
-          }
-        };
-        requestAnimationFrame(() => {
-          requestAnimationFrame(clickRendered);
-        });
+        window.google!.accounts.id.prompt(handlePromptMoment);
       } catch {
-        cleanup();
-        reject(new Error('auth.googleSignInInitFailed'));
+        finishReject(new Error('auth.googleSignInInitFailed'));
       }
     };
 
@@ -344,6 +366,7 @@ export async function signInWithGoogle(): Promise<GoogleAuthResult | null> {
       'dismissed',
       'user cancelled',
       'user dismissed',
+      'googlenocredential',
     ];
 
     const isCancelled = canceledMessages.some(msg =>
