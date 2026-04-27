@@ -159,6 +159,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           path: typeof window !== 'undefined' ? window.location.pathname : '',
           capNative: Capacitor.isNativePlatform(),
         });
+        bumpApiAuthCredentialGeneration();
         clearProactiveAccessRefresh();
         try {
           await pushApi.removeAllTokens();

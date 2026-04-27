@@ -13,7 +13,10 @@ import {
   persistSessionIdOnly,
 } from '@/services/refreshTokenPersistence';
 import { handleApiUnauthorizedIfNeeded } from '@/api/handleApiUnauthorized';
-import { isStaleApiAuthCredentialGeneration } from '@/api/apiAuthCredentialGeneration';
+import {
+  getApiAuthCredentialGeneration,
+  isStaleApiAuthCredentialGeneration,
+} from '@/api/apiAuthCredentialGeneration';
 
 const AUTH_CHANNEL = 'padelpulse-auth-v2';
 const AUTH_SYNC_TYPE = 'padelpulse-auth-sync-v2';
@@ -213,7 +216,11 @@ export async function runRefresh(): Promise<string | null> {
     const rt = (await getRefreshTokenForRequest())?.trim() ?? '';
     if (!rt && !isWebHttpOnlyRefreshCookie()) return null;
     try {
+      const genBeforePost = getApiAuthCredentialGeneration();
       const out = await postRefresh(rt);
+      if (getApiAuthCredentialGeneration() !== genBeforePost) {
+        return null;
+      }
       applyAccessTokenFromRefresh(out.token);
       const webRt = isWebHttpOnlyRefreshCookie();
       if (out.refreshToken || !webRt) {
