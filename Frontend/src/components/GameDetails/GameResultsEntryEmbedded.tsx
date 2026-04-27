@@ -69,6 +69,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const [isTelegramSummaryModalOpen, setIsTelegramSummaryModalOpen] = useState(false);
   const [telegramSummary, setTelegramSummary] = useState('');
   const [showResendTelegramConfirm, setShowResendTelegramConfirm] = useState(false);
+  const [showNoPhotosTelegramConfirm, setShowNoPhotosTelegramConfirm] = useState(false);
   const [isResettingTelegram, setIsResettingTelegram] = useState(false);
   const resultsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -135,11 +136,15 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     );
   }, [rounds]);
 
+  const hasPhotosForTelegramPost = useMemo(() => {
+    if (!currentGame) return false;
+    return (currentGame.photosCount || 0) > 0 || !!currentGame.mainPhotoId;
+  }, [currentGame]);
+
   const showSendToTelegramButton = useMemo(() => {
     if (!currentGame || !hasResultsEntered) return false;
     if (currentGame.resultsSentToTelegram) return false;
     if (!currentGame.city?.telegramGroupId) return false;
-    if ((currentGame.photosCount || 0) === 0 && !currentGame.mainPhotoId) return false;
     return true;
   }, [currentGame, hasResultsEntered]);
 
@@ -150,13 +155,22 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     return true;
   }, [currentGame, hasResultsEntered]);
 
-  const handleSendToTelegram = async () => {
+  const handleSendToTelegram = () => {
     if (!currentGame || isSendingToTelegram) return;
     if (currentGame.resultsStatus !== 'FINAL') {
       toast.error(t('gameResults.sendToTelegramFailed') || 'Game must be finalized before sending results to Telegram');
       return;
     }
-    await openTelegramSummaryModal();
+    if (!hasPhotosForTelegramPost) {
+      setShowNoPhotosTelegramConfirm(true);
+      return;
+    }
+    void openTelegramSummaryModal();
+  };
+
+  const handleConfirmNoPhotosTelegram = () => {
+    setShowNoPhotosTelegramConfirm(false);
+    void openTelegramSummaryModal();
   };
 
   const handleSendSummaryToTelegram = async (summaryText: string) => {
@@ -197,9 +211,15 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     setIsResettingTelegram(true);
     try {
       await gamesApi.resetTelegramResultsSent(currentGame.id);
-      onGameUpdate({ ...currentGame, resultsSentToTelegram: false });
+      const updated = { ...currentGame, resultsSentToTelegram: false };
+      onGameUpdate(updated);
       setShowResendTelegramConfirm(false);
-      await openTelegramSummaryModal();
+      const hasPhotos = (updated.photosCount || 0) > 0 || !!updated.mainPhotoId;
+      if (!hasPhotos) {
+        setShowNoPhotosTelegramConfirm(true);
+      } else {
+        await openTelegramSummaryModal();
+      }
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || t('errors.generic');
       toast.error(errorMessage);
@@ -827,6 +847,18 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         loadingText={t('common.loading')}
         onConfirm={handleResendToTelegramConfirm}
         onClose={() => setShowResendTelegramConfirm(false)}
+      />
+
+      <ConfirmationModal
+        isOpen={showNoPhotosTelegramConfirm}
+        title={t('gameResults.sendWithoutPhotosTitle')}
+        message={t('gameResults.sendWithoutPhotosMessage')}
+        confirmText={t('gameResults.sendWithoutPhotosConfirm')}
+        cancelText={t('common.cancel')}
+        tone="info"
+        confirmVariant="primary"
+        onConfirm={handleConfirmNoPhotosTelegram}
+        onClose={() => setShowNoPhotosTelegramConfirm(false)}
       />
 
       {isResultsEntryMode && (

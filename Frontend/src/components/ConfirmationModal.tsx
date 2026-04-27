@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ImageOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 
 interface ConfirmationModalProps {
@@ -10,6 +10,8 @@ interface ConfirmationModalProps {
   confirmText?: string;
   cancelText?: string;
   confirmVariant?: 'primary' | 'danger';
+  /** warning: caution (default). info: neutral emphasis for reversible / informational checks. */
+  tone?: 'warning' | 'info';
   highlightedText?: string;
   isLoading?: boolean;
   loadingText?: string;
@@ -25,6 +27,7 @@ export const ConfirmationModal = ({
   confirmText,
   cancelText,
   confirmVariant = 'primary',
+  tone = 'warning',
   highlightedText,
   isLoading = false,
   loadingText,
@@ -58,11 +61,18 @@ export const ConfirmationModal = ({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center mx-auto mt-4">
-          <AlertTriangle
-            size={24}
-            className="text-orange-600 dark:text-orange-400"
-          />
+        <div
+          className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mt-4 ${
+            tone === 'info'
+              ? 'bg-sky-100 dark:bg-sky-950/40'
+              : 'bg-orange-100 dark:bg-orange-900/20'
+          }`}
+        >
+          {tone === 'info' ? (
+            <ImageOff size={24} className="text-sky-600 dark:text-sky-400" aria-hidden />
+          ) : (
+            <AlertTriangle size={24} className="text-orange-600 dark:text-orange-400" aria-hidden />
+          )}
         </div>
         
         <DialogDescription className="p-4">
