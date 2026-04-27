@@ -231,9 +231,7 @@ export const Login = () => {
                   </div>
                 )}
                 {isWeb ? (
-                  <div className="w-full rounded-xl bg-white dark:bg-slate-700/90 border-2 border-slate-200 dark:border-slate-600 px-1 py-1 flex items-center justify-center">
-                    <div ref={googleButtonContainerRef} className="w-full flex items-center justify-center" />
-                  </div>
+                  <div ref={googleButtonContainerRef} className="w-full flex items-center justify-center" />
                 ) : (
                   <button
                     type="button"

@@ -179,7 +179,7 @@ export function renderGoogleSignInButton(
 
       const render = () => {
         if (disposed) return;
-        const dynamicWidth = options.width ?? Math.max(220, Math.floor(container.clientWidth) - 8);
+        const dynamicWidth = options.width ?? Math.max(220, Math.floor(container.clientWidth));
         container.innerHTML = '';
         window.google!.accounts.id.renderButton(container, {
           theme: 'filled_blue',
