@@ -100,6 +100,7 @@ export const config = {
   },
   google: {
     webClientId: process.env.GOOGLE_WEB_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     iosClientId: process.env.GOOGLE_IOS_CLIENT_ID || '',
     androidClientId: process.env.GOOGLE_ANDROID_CLIENT_ID || '',
   },

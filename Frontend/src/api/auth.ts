@@ -75,6 +75,11 @@ export const authApi = {
     return response.data;
   },
 
+  exchangeGoogleCode: async (data: { code: string }) => {
+    const response = await api.post<ApiResponse<LoginResponse>>('/auth/google/exchange', data);
+    return response.data;
+  },
+
   loginGoogle: async (data: {
     idToken: string;
     language?: string;

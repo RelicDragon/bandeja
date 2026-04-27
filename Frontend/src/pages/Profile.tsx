@@ -892,7 +892,7 @@ export const ProfileContent = () => {
                     )}
                   </Button>
                 </div>
-              ) : (
+              ) : isCapacitor() ? (
                 <Button
                   onClick={handleLinkGoogle}
                   disabled={isLinkingGoogle}
@@ -914,7 +914,7 @@ export const ProfileContent = () => {
                     </span>
                   )}
                 </Button>
-              )}
+              ) : null}
             </div>
 
             {/* Telegram */}

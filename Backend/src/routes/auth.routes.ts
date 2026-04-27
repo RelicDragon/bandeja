@@ -5,6 +5,7 @@ import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
 import * as authController from '../controllers/auth.controller';
 import * as authRefreshController from '../controllers/authRefresh.controller';
+import * as googleOAuthController from '../controllers/googleOAuthRedirect.controller';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 
 const router = Router();
@@ -106,6 +107,17 @@ router.post(
     body('preferredCourtSideRight').optional().isBoolean(),
   ]),
   authController.loginWithGoogle
+);
+
+// Google OAuth redirect flow (Safari-safe, server-side authorization code + PKCE)
+router.get('/google/redirect', googleOAuthController.googleOAuthRedirect);
+router.get('/google/callback', googleOAuthController.googleOAuthCallback);
+router.post(
+  '/google/exchange',
+  validate([
+    body('code').notEmpty().isString().withMessage('One-time code is required'),
+  ]),
+  googleOAuthController.googleOAuthExchange
 );
 
 router.post(

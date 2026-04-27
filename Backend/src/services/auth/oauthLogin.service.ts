@@ -36,7 +36,7 @@ function pickLoginLanguage(language: unknown): string | undefined {
 
 type ProfileUser = Prisma.UserGetPayload<{ select: typeof PROFILE_SELECT_FIELDS }>;
 
-type OAuthResult = {
+export type OAuthResult = {
   user: ProfileUser;
   token: string;
   refreshToken?: string;
@@ -44,14 +44,6 @@ type OAuthResult = {
   statusCode: 200 | 201;
 };
 
-async function finalizeGoogleUser(
-  userId: string,
-  req: Request
-): Promise<{ user: ProfileUser; token: string; refreshToken?: string; currentSessionId?: string }> {
-  const user = await ensureUserCityAssigned(userId, req);
-  const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
-  return { user, token: issued.token, refreshToken: issued.refreshToken, currentSessionId: issued.currentSessionId };
-}
 
 async function applyGoogleLoginProfileUpdates(
   user: ProfileUser,
@@ -117,15 +109,14 @@ async function applyGoogleLoginProfileUpdates(
   return user;
 }
 
-export async function loginOrRegisterWithGoogle(req: Request): Promise<OAuthResult> {
-  const body = req.body as Record<string, unknown>;
-  const idToken = body.idToken;
-  if (!idToken || typeof idToken !== 'string') {
-    throw new ApiError(400, 'auth.googleIdTokenRequired');
-  }
-
-  const googleToken = await verifyGoogleIdToken(idToken);
-  assertLoginIssuanceAllowed(req);
+/**
+ * Core user-lookup/creation/profile-update logic for Google sign-in.
+ * Takes a verified GoogleTokenPayload directly (no req dependency).
+ */
+export async function loginOrRegisterWithGoogleToken(
+  googleToken: GoogleTokenPayload,
+  opts: { language?: string; firstName?: string; lastName?: string }
+): Promise<{ user: ProfileUser; isNewUser: boolean }> {
   const googleId = googleToken.sub;
 
   let user = await prisma.user.findUnique({
@@ -138,12 +129,11 @@ export async function loginOrRegisterWithGoogle(req: Request): Promise<OAuthResu
       throw new ApiError(403, 'auth.accountInactive');
     }
     user = await applyGoogleLoginProfileUpdates(user, googleToken, {
-      language: body.language,
-      firstName: body.firstName,
-      lastName: body.lastName,
+      language: opts.language,
+      firstName: opts.firstName,
+      lastName: opts.lastName,
     });
-    const { user: out, token, refreshToken, currentSessionId } = await finalizeGoogleUser(user.id, req);
-    return { user: out, token, refreshToken, currentSessionId, statusCode: 200 };
+    return { user, isNewUser: false };
   }
 
   const emailToUse = googleToken.email || undefined;
@@ -158,19 +148,11 @@ export async function loginOrRegisterWithGoogle(req: Request): Promise<OAuthResu
   }
 
   const nameData = resolveDisplayNameData(
-    typeof body.firstName === 'string' ? body.firstName : googleToken.given_name || undefined,
-    typeof body.lastName === 'string' ? body.lastName : googleToken.family_name || undefined
+    opts.firstName || googleToken.given_name || undefined,
+    opts.lastName || googleToken.family_name || undefined
   );
 
-  const validatedLanguage = normalizeRegisterLanguage(body.language);
-
-  const rawGender = typeof body.gender === 'string' ? body.gender : undefined;
-  const gender = rawGender ? (rawGender as Gender) : undefined;
-  const genderIsSet = body.genderIsSet === true;
-  const preferredHandLeft = body.preferredHandLeft === true;
-  const preferredHandRight = body.preferredHandRight === true;
-  const preferredCourtSideLeft = body.preferredCourtSideLeft === true;
-  const preferredCourtSideRight = body.preferredCourtSideRight === true;
+  const validatedLanguage = normalizeRegisterLanguage(opts.language);
 
   try {
     user = (await prisma.user.create({
@@ -183,12 +165,6 @@ export async function loginOrRegisterWithGoogle(req: Request): Promise<OAuthResu
         nameIsSet: nameData.nameIsSet,
         email: emailToUse,
         language: validatedLanguage,
-        gender: gender || undefined,
-        genderIsSet,
-        preferredHandLeft,
-        preferredHandRight,
-        preferredCourtSideLeft,
-        preferredCourtSideRight,
       },
       select: PROFILE_SELECT_FIELDS,
     })) as ProfileUser;
@@ -207,12 +183,11 @@ export async function loginOrRegisterWithGoogle(req: Request): Promise<OAuthResu
       if (!user) throw createError;
       if (!user.isActive) throw new ApiError(403, 'auth.accountInactive');
       user = await applyGoogleLoginProfileUpdates(user, googleToken, {
-        language: body.language,
-        firstName: body.firstName,
-        lastName: body.lastName,
+        language: opts.language,
+        firstName: opts.firstName,
+        lastName: opts.lastName,
       });
-      const { user: out, token, refreshToken, currentSessionId } = await finalizeGoogleUser(user.id, req);
-      return { user: out, token, refreshToken, currentSessionId, statusCode: 200 };
+      return { user, isNewUser: false };
     }
     if (err.code === 'P2002' && targetIncludes(err.meta?.target, 'email')) {
       throw new ApiError(400, 'auth.emailAlreadyExistsUseLogin');
@@ -220,8 +195,45 @@ export async function loginOrRegisterWithGoogle(req: Request): Promise<OAuthResu
     throw createError;
   }
 
-  const { user: out, token, refreshToken, currentSessionId } = await finalizeGoogleUser(user.id, req);
-  return { user: out, token, refreshToken, currentSessionId, statusCode: 201 };
+  return { user, isNewUser: true };
+}
+
+/**
+ * Finalize a Google login: city assignment, token issuance, etc.
+ * Requires `req` for headers (X-Client-Version/X-Client-Platform).
+ */
+export async function finalizeGoogleLogin(
+  userId: string,
+  isNewUser: boolean,
+  req: Request
+): Promise<OAuthResult> {
+  assertLoginIssuanceAllowed(req);
+  const user = await ensureUserCityAssigned(userId, req);
+  const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
+  return {
+    user,
+    token: issued.token,
+    refreshToken: issued.refreshToken,
+    currentSessionId: issued.currentSessionId,
+    statusCode: isNewUser ? 201 : 200,
+  };
+}
+
+/** Existing endpoint wrapper: idToken from body → verify → login/register → finalize */
+export async function loginOrRegisterWithGoogle(req: Request): Promise<OAuthResult> {
+  const body = req.body as Record<string, unknown>;
+  const idToken = body.idToken;
+  if (!idToken || typeof idToken !== 'string') {
+    throw new ApiError(400, 'auth.googleIdTokenRequired');
+  }
+
+  const googleToken = await verifyGoogleIdToken(idToken);
+  const { user, isNewUser } = await loginOrRegisterWithGoogleToken(googleToken, {
+    language: typeof body.language === 'string' ? body.language : undefined,
+    firstName: typeof body.firstName === 'string' ? body.firstName : undefined,
+    lastName: typeof body.lastName === 'string' ? body.lastName : undefined,
+  });
+  return finalizeGoogleLogin(user.id, isNewUser, req);
 }
 
 function targetIncludes(target: unknown, field: string): boolean {

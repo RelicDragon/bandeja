@@ -68,16 +68,53 @@ interface RenderGoogleButtonOptions {
 const GSI_INIT_DONE_KEY = '__padelpulseGsiInitDone';
 const GSI_INIT_CLIENT_ID_KEY = '__padelpulseGsiInitClientId';
 const GSI_DISPATCH_KEY = '__padelpulseGsiDispatchCredential';
+const GSI_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
 
 let webAttemptSeq = 0;
 let activeWebAttempt: ActiveWebAttempt | null = null;
+let gsiScriptLoadPromise: Promise<void> | null = null;
+
+function loadGoogleIdentityScript(): Promise<void> {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('auth.googleSignInUnavailable'));
+  }
+  if (window.google?.accounts?.id) {
+    return Promise.resolve();
+  }
+  if (!gsiScriptLoadPromise) {
+    gsiScriptLoadPromise = new Promise<void>((resolve, reject) => {
+      const fail = () => {
+        gsiScriptLoadPromise = null;
+        reject(new Error('auth.googleIdentityScriptFailed'));
+      };
+
+      let script = document.querySelector(`script[src="${GSI_SCRIPT_SRC}"]`) as HTMLScriptElement | null;
+      if (!script) {
+        script = document.createElement('script');
+        script.src = GSI_SCRIPT_SRC;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+
+      script.addEventListener('load', () => resolve(), { once: true });
+      script.addEventListener('error', fail, { once: true });
+      queueMicrotask(() => {
+        if (window.google?.accounts?.id) resolve();
+      });
+    });
+  }
+  return gsiScriptLoadPromise;
+}
 
 const decodeGoogleIdToken = (token: string): GoogleJWTPayload | null => {
   try {
     const base64Url = token.split('.')[1];
+    if (!base64Url) return null;
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
     const jsonPayload = decodeURIComponent(
-      atob(base64)
+      atob(padded)
         .split('')
         .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
@@ -89,6 +126,7 @@ const decodeGoogleIdToken = (token: string): GoogleJWTPayload | null => {
 };
 
 const ensureGoogleReady = async (): Promise<void> => {
+  await loadGoogleIdentityScript();
   const MAX_WAIT_TIME = 10000;
   const startTime = Date.now();
 
@@ -269,9 +307,6 @@ function signInWithGoogleWeb(options?: GoogleSignInOptions): Promise<GoogleAuthR
 
     activeWebAttempt = { id: attemptId, settled: false, cleanup, resolve, reject };
 
-    const MAX_WAIT_TIME = 10000;
-    const startTime = Date.now();
-
     const initializeGoogle = () => {
       try {
         const googleAccountsId = window.google!.accounts.id;
@@ -360,24 +395,19 @@ function signInWithGoogleWeb(options?: GoogleSignInOptions): Promise<GoogleAuthR
       }
     };
 
-    const waitForGoogle = () => {
-      if (window.google && window.google.accounts && window.google.accounts.id) {
-        initializeGoogle();
-      } else {
-        const elapsed = Date.now() - startTime;
-        if (elapsed >= MAX_WAIT_TIME) {
-          finishReject(new Error('auth.googleIdentityLoadTimeout'));
-          return;
+    void (async () => {
+      try {
+        if (document.readyState === 'loading') {
+          await new Promise<void>((res) => {
+            document.addEventListener('DOMContentLoaded', () => res(), { once: true });
+          });
         }
-        setTimeout(waitForGoogle, 100);
+        await ensureGoogleReady();
+        initializeGoogle();
+      } catch (err) {
+        finishReject(err instanceof Error ? err : new Error('auth.googleSignInInitFailed'));
       }
-    };
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', waitForGoogle, { once: true });
-    } else {
-      waitForGoogle();
-    }
+    })();
   });
 }
 
@@ -406,35 +436,40 @@ async function signInWithGoogleNative(options?: GoogleSignInOptions): Promise<Go
     },
   });
 
-  const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('auth.googleSignInTimedOut')), LOGIN_TIMEOUT_MS)
-  );
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('auth.googleSignInTimedOut')), LOGIN_TIMEOUT_MS);
+  });
 
-  const response = await Promise.race([loginPromise, timeoutPromise]);
+  try {
+    const response = await Promise.race([loginPromise, timeoutPromise]);
 
-  const result: GoogleLoginResponse = response.result;
+    const result: GoogleLoginResponse = response.result;
 
-  if (result.responseType === 'offline') {
-    throw new Error('auth.googleSignInRequiresOnline');
+    if (result.responseType === 'offline') {
+      throw new Error('auth.googleSignInRequiresOnline');
+    }
+
+    const onlineResult: GoogleLoginResponseOnline = result;
+
+    if (!onlineResult.idToken) {
+      throw new Error('auth.googleNoIdToken');
+    }
+
+    return {
+      idToken: onlineResult.idToken,
+      accessToken: onlineResult.accessToken?.token,
+      profile: onlineResult.profile ? {
+        email: onlineResult.profile.email || undefined,
+        name: onlineResult.profile.name || undefined,
+        givenName: onlineResult.profile.givenName || undefined,
+        familyName: onlineResult.profile.familyName || undefined,
+        picture: onlineResult.profile.imageUrl || undefined,
+      } : undefined,
+    };
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
   }
-
-  const onlineResult: GoogleLoginResponseOnline = result;
-
-  if (!onlineResult.idToken) {
-    throw new Error('auth.googleNoIdToken');
-  }
-
-  return {
-    idToken: onlineResult.idToken,
-    accessToken: onlineResult.accessToken?.token,
-    profile: onlineResult.profile ? {
-      email: onlineResult.profile.email || undefined,
-      name: onlineResult.profile.name || undefined,
-      givenName: onlineResult.profile.givenName || undefined,
-      familyName: onlineResult.profile.familyName || undefined,
-      picture: onlineResult.profile.imageUrl || undefined,
-    } : undefined,
-  };
 }
 
 export async function signInWithGoogle(options?: GoogleSignInOptions): Promise<GoogleAuthResult | null> {
@@ -464,7 +499,10 @@ export async function signInWithGoogle(options?: GoogleSignInOptions): Promise<G
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : '';
-    const errorCode = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
+    const errorCode =
+      error && typeof error === 'object' && 'code' in error
+        ? String((error as { code: unknown }).code)
+        : '';
     const errorString = (errorMessage + errorCode).toLowerCase();
 
     const isNativeSignInFailure = errorString.includes('google sign-in failed') ||

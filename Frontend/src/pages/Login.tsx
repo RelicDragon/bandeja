@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { Input, Button } from '@/components';
@@ -11,7 +11,7 @@ import { config } from '@/config/media';
 import { Phone, AlertCircle } from 'lucide-react';
 import { TelegramIcon } from '@/components';
 import { signInWithApple } from '@/services/appleAuth.service';
-import { renderGoogleSignInButton, signInWithGoogle } from '@/services/googleAuth.service';
+import { signInWithGoogle } from '@/services/googleAuth.service';
 import pushNotificationService from '@/services/pushNotificationService';
 import { isIOS, isCapacitor, getAppInfo } from '@/utils/capacitor';
 import { openEula } from '@/utils/openEula';
@@ -36,7 +36,7 @@ export const Login = () => {
   const [error, setError] = useState('');
   const [telegramHint, setTelegramHint] = useState(false);
   const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
-  const googleButtonContainerRef = useRef<HTMLDivElement | null>(null);
+  const [searchParams] = useSearchParams();
   const isWeb = !isCapacitor();
 
   useEffect(() => {
@@ -54,42 +54,37 @@ export const Login = () => {
     }
   }, []);
 
+  // Handle Google OAuth redirect return (?google_code= or ?google_error=)
   useEffect(() => {
-    if (!isWeb || tab !== 'main' || !googleButtonContainerRef.current) return;
+    const googleCode = searchParams.get('google_code');
+    const googleError = searchParams.get('google_error');
 
-    const cleanup = renderGoogleSignInButton(googleButtonContainerRef.current, {
-      onSuccess: async (result) => {
-        try {
-          setLoading(true);
-          setError('');
-          const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
-          const profile = result.profile;
-          const response = await authApi.loginGoogle({
-            idToken: result.idToken,
-            language: normalizedLanguage,
-            firstName: profile?.givenName,
-            lastName: profile?.familyName,
-          });
+    // Clean query params from URL
+    if (googleCode || googleError) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    if (googleCode) {
+      setLoading(true);
+      setError('');
+      authApi.exchangeGoogleCode({ code: googleCode })
+        .then(async (response) => {
           await setAuth(response.data.user, response.data.token, {
             refreshToken: response.data.refreshToken,
             currentSessionId: response.data.currentSessionId,
           });
           await pushNotificationService.ensureTokenSentToBackend();
           navigate('/');
-        } catch (err: any) {
+        })
+        .catch((err: any) => {
           if (!isCancelError(err)) setError(extractApiErrorMessage(err, t));
-        } finally {
-          setLoading(false);
-        }
-      },
-      onError: (err) => {
-        if (!isCancelError(err)) setError(extractApiErrorMessage(err, t));
-      },
-      width: 280,
-    });
-
-    return cleanup;
-  }, [isWeb, navigate, setAuth, t, tab]);
+        })
+        .finally(() => setLoading(false));
+    } else if (googleError && googleError !== 'access_denied') {
+      setError(t('auth.googleSignInFailed') || 'Google sign-in failed');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const goToTab = (next: LoginTab) => setTab(next);
 
@@ -231,7 +226,17 @@ export const Login = () => {
                   </div>
                 )}
                 {isWeb ? (
-                  <div ref={googleButtonContainerRef} className="w-[280px] max-w-full mx-auto flex items-center justify-center" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const lang = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
+                      window.location.href = `/api/auth/google/redirect?lang=${encodeURIComponent(lang)}`;
+                    }}
+                    disabled={loading}
+                    className={`${btnBase} bg-white dark:bg-slate-700/90 text-slate-800 dark:text-slate-100 border-2 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700`}
+                  >
+                    {loading ? loadingSpinner : <><GoogleIcon /><span>{t('auth.googleSignIn')}</span></>}
+                  </button>
                 ) : (
                   <button
                     type="button"
