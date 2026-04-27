@@ -220,11 +220,11 @@ export const useAuthStore = create<AuthState>((set, get) => {
       };
 
       const run = execute();
-
-      logoutInFlight = run.finally(() => {
-        if (logoutInFlight === run) logoutInFlight = null;
+      const fin = run.finally(() => {
+        if (logoutInFlight === fin) logoutInFlight = null;
       });
-      await logoutInFlight;
+      logoutInFlight = fin;
+      await fin;
     },
     updateUser: (user) => {
       try {
