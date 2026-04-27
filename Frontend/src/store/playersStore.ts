@@ -171,16 +171,18 @@ const initializeStore = () => {
   initSubscribed = true;
 
   useAuthStore.subscribe((state) => {
-    if (state.isAuthenticated && state.user?.id) {
+    const hasSession = !!(state.token && state.user?.id);
+    if (hasSession) {
       usePlayersStore.getState().fetchUserChats();
       setupSocketSubscriptions();
-    } else {
+    } else if (!state.token && !state.user) {
       usePlayersStore.getState().clear();
       cleanupSocketSubscriptions();
     }
   });
 
-  if (useAuthStore.getState().isAuthenticated) {
+  const snap = useAuthStore.getState();
+  if (snap.token && snap.user?.id) {
     usePlayersStore.getState().fetchUserChats();
     setupSocketSubscriptions();
   }

@@ -474,6 +474,12 @@ export const chatApi = {
   },
 
   getUnreadObjects: async () => {
+    if (typeof window !== 'undefined') {
+      const t = localStorage.getItem('token')?.trim();
+      if (!t) {
+        return Promise.reject(new Error('auth.noLocalToken'));
+      }
+    }
     if (unreadObjectsInFlight) return unreadObjectsInFlight;
     unreadObjectsInFlight = api
       .get<ApiResponse<UnreadObjectsApiPayload>>('/chat/unread-objects')

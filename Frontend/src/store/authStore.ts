@@ -75,7 +75,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       bumpApiAuthCredentialGeneration();
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
-      set({ user, token, isAuthenticated: false });
+      set({ user, token, isAuthenticated: true });
       syncTokenToNative(token);
       if (opts?.refreshToken) {
         await persistRefreshBundle(opts.refreshToken, opts.currentSessionId);

@@ -48,7 +48,8 @@ function applyUnreadPayloadToState(
 }
 
 export const useChatUnreadCounts = () => {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const userChatsUnreadCounts = usePlayersStore((state) => state.unreadCounts);
   const lastChatMessage = useSocketEventsStore((state) => state.lastChatMessage);
   const lastChatUnreadCount = useSocketEventsStore((state) => state.lastChatUnreadCount);
@@ -66,9 +67,11 @@ export const useChatUnreadCounts = () => {
   const invalidationDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchUnreadCounts = useCallback(async () => {
-    if (!user?.id) return;
+    const { user: u, isAuthenticated: authed, token } = useAuthStore.getState();
+    const lsTok = typeof localStorage !== 'undefined' ? localStorage.getItem('token')?.trim() : '';
+    if (!authed || !u?.id || !(token?.trim() || lsTok)) return;
 
-    const cacheKey = `unread-objects-${user.id}`;
+    const cacheKey = `unread-objects-${u.id}`;
     const fetchEpoch = unreadObjectsInvalidationEpoch;
     const applyIfCurrent = (data: UnreadObjectsApiPayload) => {
       if (fetchEpoch !== unreadObjectsInvalidationEpoch) {
@@ -124,7 +127,7 @@ export const useChatUnreadCounts = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, []);
 
   const debouncedFetch = useCallback(() => {
     if (debounceTimeoutRef.current) {
@@ -137,16 +140,17 @@ export const useChatUnreadCounts = () => {
   }, [fetchUnreadCounts]);
 
   useEffect(() => {
-    if (user?.id) {
+    if (isAuthenticated && user?.id) {
       fetchUnreadCounts();
     }
-  }, [user?.id, fetchUnreadCounts]);
+  }, [isAuthenticated, user?.id, fetchUnreadCounts]);
 
   useEffect(() => {
     const handleInvalidation = () => {
-      if (!user?.id) return;
+      const { user: u, isAuthenticated: authed } = useAuthStore.getState();
+      if (!authed || !u?.id) return;
       unreadObjectsInvalidationEpoch += 1;
-      const cacheKey = `unread-objects-${user.id}`;
+      const cacheKey = `unread-objects-${u.id}`;
       unreadObjectsCache.delete(cacheKey);
       if (invalidationDebounceRef.current) clearTimeout(invalidationDebounceRef.current);
       invalidationDebounceRef.current = setTimeout(() => {
@@ -161,7 +165,7 @@ export const useChatUnreadCounts = () => {
       window.removeEventListener('unread-count-invalidated', handleInvalidation);
       if (invalidationDebounceRef.current) clearTimeout(invalidationDebounceRef.current);
     };
-  }, [user?.id, debouncedFetch]);
+  }, [debouncedFetch]);
 
   useEffect(() => {
     setCounts(prev => ({
@@ -171,23 +175,24 @@ export const useChatUnreadCounts = () => {
   }, [userChatsUnreadCounts]);
 
   useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
     if (!lastChatMessage || lastChatMessage.message?.senderId === user?.id) return;
     debouncedFetch();
-  }, [lastChatMessage, user?.id, debouncedFetch]);
+  }, [lastChatMessage, user?.id, isAuthenticated, debouncedFetch]);
 
   useEffect(() => {
     if (!lastChatUnreadCount) return;
-    if (user?.id) {
-      unreadObjectsInvalidationEpoch += 1;
-      unreadObjectsCache.delete(`unread-objects-${user.id}`);
-    }
+    if (!isAuthenticated || !user?.id) return;
+    unreadObjectsInvalidationEpoch += 1;
+    unreadObjectsCache.delete(`unread-objects-${user.id}`);
     debouncedFetch();
-  }, [lastChatUnreadCount, user?.id, debouncedFetch]);
+  }, [lastChatUnreadCount, user?.id, isAuthenticated, debouncedFetch]);
 
   useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
     if (!lastChatReadReceipt || lastChatReadReceipt.readReceipt?.userId !== user?.id) return;
     debouncedFetch();
-  }, [lastChatReadReceipt, user?.id, debouncedFetch]);
+  }, [lastChatReadReceipt, user?.id, isAuthenticated, debouncedFetch]);
 
   useEffect(() => {
     return () => {
