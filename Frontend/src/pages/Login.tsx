@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +11,7 @@ import { config } from '@/config/media';
 import { Phone, AlertCircle } from 'lucide-react';
 import { TelegramIcon } from '@/components';
 import { signInWithApple } from '@/services/appleAuth.service';
-import { signInWithGoogle } from '@/services/googleAuth.service';
+import { renderGoogleSignInButton, signInWithGoogle } from '@/services/googleAuth.service';
 import pushNotificationService from '@/services/pushNotificationService';
 import { isIOS, isCapacitor, getAppInfo } from '@/utils/capacitor';
 import { openEula } from '@/utils/openEula';
@@ -36,6 +36,8 @@ export const Login = () => {
   const [error, setError] = useState('');
   const [telegramHint, setTelegramHint] = useState(false);
   const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
+  const googleButtonContainerRef = useRef<HTMLDivElement | null>(null);
+  const isWeb = !isCapacitor();
 
   useEffect(() => {
     if (error) {
@@ -51,6 +53,43 @@ export const Login = () => {
       });
     }
   }, []);
+
+  useEffect(() => {
+    if (!isWeb || tab !== 'main' || !googleButtonContainerRef.current) return;
+
+    const cleanup = renderGoogleSignInButton(googleButtonContainerRef.current, {
+      onSuccess: async (result) => {
+        try {
+          setLoading(true);
+          setError('');
+          const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
+          const profile = result.profile;
+          const response = await authApi.loginGoogle({
+            idToken: result.idToken,
+            language: normalizedLanguage,
+            firstName: profile?.givenName,
+            lastName: profile?.familyName,
+          });
+          await setAuth(response.data.user, response.data.token, {
+            refreshToken: response.data.refreshToken,
+            currentSessionId: response.data.currentSessionId,
+          });
+          await pushNotificationService.ensureTokenSentToBackend();
+          navigate('/');
+        } catch (err: any) {
+          if (!isCancelError(err)) setError(extractApiErrorMessage(err, t));
+        } finally {
+          setLoading(false);
+        }
+      },
+      onError: (err) => {
+        if (!isCancelError(err)) setError(extractApiErrorMessage(err, t));
+      },
+      width: 320,
+    });
+
+    return cleanup;
+  }, [isWeb, navigate, setAuth, t, tab]);
 
   const goToTab = (next: LoginTab) => setTab(next);
 
@@ -191,14 +230,20 @@ export const Login = () => {
                     <span className="text-sm font-medium">{t('auth.followInstructionsInTelegram')}</span>
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={handleGoogleSignIn}
-                  disabled={loading}
-                  className={`${btnBase} bg-white dark:bg-slate-700/90 text-slate-800 dark:text-slate-100 border-2 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700`}
-                >
-                  {loading ? loadingSpinner : <><GoogleIcon /><span>{t('auth.googleSignIn')}</span></>}
-                </button>
+                {isWeb ? (
+                  <div className="w-full h-12 rounded-xl bg-white dark:bg-slate-700/90 border-2 border-slate-200 dark:border-slate-600 flex items-center justify-center overflow-hidden">
+                    <div ref={googleButtonContainerRef} className="w-full flex items-center justify-center" />
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleGoogleSignIn}
+                    disabled={loading}
+                    className={`${btnBase} bg-white dark:bg-slate-700/90 text-slate-800 dark:text-slate-100 border-2 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700`}
+                  >
+                    {loading ? loadingSpinner : <><GoogleIcon /><span>{t('auth.googleSignIn')}</span></>}
+                  </button>
+                )}
                 {isIOS() && (
                   <button
                     type="button"
