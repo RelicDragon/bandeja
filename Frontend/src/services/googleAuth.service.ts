@@ -46,13 +46,8 @@ interface GoogleButtonConfig {
 }
 
 interface GisPromptMomentNotification {
-  isDisplayMoment?: () => boolean;
-  isDisplayed?: () => boolean;
-  isNotDisplayed?: () => boolean;
   isSkippedMoment?: () => boolean;
   isDismissedMoment?: () => boolean;
-  getNotDisplayedReason?: () => string;
-  getSkippedReason?: () => string;
   getDismissedReason?: () => string;
 }
 
@@ -136,23 +131,6 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult | null> {
       if (typeof n.isSkippedMoment === 'function' && n.isSkippedMoment()) {
         finishResolve(null);
         return;
-      }
-
-      if (typeof n.isNotDisplayed === 'function' && n.isNotDisplayed()) {
-        const reason = n.getNotDisplayedReason?.() ?? '';
-        if (reason === 'invalid_client' || reason === 'unregistered_origin') {
-          finishReject(new Error('auth.googleSignInInitFailed'));
-          return;
-        }
-        if (reason === 'missing_client_id') {
-          finishReject(new Error('auth.googleClientNotConfigured'));
-          return;
-        }
-        if (reason === 'secure_http_required') {
-          finishReject(new Error('auth.googleSignInUnavailable'));
-          return;
-        }
-        finishResolve(null);
       }
     };
 
