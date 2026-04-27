@@ -35,15 +35,14 @@ interface GoogleAccountsConfig {
   callback: (response: GoogleCredentialResponse) => void;
   auto_select?: boolean;
   context?: 'signin' | 'signup' | 'use';
-  use_fedcm_for_button?: boolean;
 }
 
-interface GoogleButtonConfig {
-  theme?: 'outline' | 'filled_blue' | 'filled_black';
-  size?: 'large' | 'medium' | 'small';
-  type?: 'standard' | 'icon';
-  text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin';
-  width?: number;
+interface GisPromptMomentNotification {
+  isSkippedMoment?: () => boolean;
+  isDismissedMoment?: () => boolean;
+  isNotDisplayed?: () => boolean;
+  getNotDisplayedReason?: () => string;
+  getDismissedReason?: () => string;
 }
 
 const GSI_INIT_DONE_KEY = '__padelpulseGsiInitDone';
@@ -60,7 +59,6 @@ declare global {
         id: {
           initialize: (config: GoogleAccountsConfig) => void;
           prompt: (callback: (notification: unknown) => void) => void;
-          renderButton: (element: HTMLElement, config: GoogleButtonConfig) => void;
           disableAutoSelect: () => void;
           cancel?: () => void;
         };
@@ -88,19 +86,10 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult | null> {
     }
 
     let settled = false;
-    let buttonContainer: HTMLElement | null = null;
-
-    const cleanup = () => {
-      if (buttonContainer?.parentNode) {
-        buttonContainer.parentNode.removeChild(buttonContainer);
-      }
-      buttonContainer = null;
-    };
 
     const finishResolve = (value: GoogleAuthResult | null) => {
       if (settled) return;
       settled = true;
-      cleanup();
       if (value === null) {
         try {
           window.google?.accounts.id.cancel?.();
@@ -114,7 +103,6 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult | null> {
     const finishReject = (err: Error) => {
       if (settled) return;
       settled = true;
-      cleanup();
       reject(err);
     };
 
@@ -128,6 +116,42 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult | null> {
     };
     abortThisAttempt = attemptAbort;
     abortCurrentWebGoogleSignIn = attemptAbort;
+
+    const handlePromptMoment = (notification: unknown) => {
+      if (settled) return;
+      const n = notification as GisPromptMomentNotification;
+
+      if (typeof n.isDismissedMoment === 'function' && n.isDismissedMoment()) {
+        const reason = n.getDismissedReason?.();
+        if (reason === 'credential_returned' || reason === 'flow_restarted') {
+          return;
+        }
+        finishResolve(null);
+        return;
+      }
+
+      if (typeof n.isSkippedMoment === 'function' && n.isSkippedMoment()) {
+        finishResolve(null);
+        return;
+      }
+
+      if (typeof n.isNotDisplayed === 'function' && n.isNotDisplayed()) {
+        const reason = n.getNotDisplayedReason?.() ?? '';
+        if (reason === 'invalid_client' || reason === 'unregistered_origin') {
+          finishReject(new Error('auth.googleSignInInitFailed'));
+          return;
+        }
+        if (reason === 'missing_client_id') {
+          finishReject(new Error('auth.googleClientNotConfigured'));
+          return;
+        }
+        if (reason === 'secure_http_required') {
+          finishReject(new Error('auth.googleSignInUnavailable'));
+          return;
+        }
+        finishResolve(null);
+      }
+    };
 
     const MAX_WAIT_TIME = 10000; // 10 seconds
     const startTime = Date.now();
@@ -210,47 +234,12 @@ async function signInWithGoogleWeb(): Promise<GoogleAuthResult | null> {
               window[GSI_DISPATCH_KEY]?.(response);
             },
             auto_select: false,
-            use_fedcm_for_button: true,
           });
           window[GSI_INIT_DONE_KEY] = true;
           window[GSI_INIT_CLIENT_ID_KEY] = clientId;
         }
 
-        buttonContainer = document.createElement('div');
-        buttonContainer.id = `google-signin-button-temp-${Date.now()}`;
-        buttonContainer.setAttribute('aria-hidden', 'true');
-        Object.assign(buttonContainer.style, {
-          position: 'fixed',
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '300px',
-          height: '44px',
-          opacity: '0.02',
-          pointerEvents: 'auto',
-          zIndex: '2147483646',
-        });
-        document.body.appendChild(buttonContainer);
-
-        googleAccountsId.renderButton(buttonContainer, {
-          theme: 'outline',
-          size: 'large',
-          type: 'standard',
-          text: 'signin_with',
-          width: 300,
-        });
-
-        const clickRendered = () => {
-          const button = buttonContainer?.querySelector('div[role="button"]') as HTMLElement;
-          if (button) {
-            button.click();
-          } else {
-            finishReject(new Error('auth.googleButtonInitFailed'));
-          }
-        };
-        requestAnimationFrame(() => {
-          requestAnimationFrame(clickRendered);
-        });
+        googleAccountsId.prompt(handlePromptMoment);
       } catch {
         finishReject(new Error('auth.googleSignInInitFailed'));
       }
