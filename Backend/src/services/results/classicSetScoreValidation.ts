@@ -149,6 +149,7 @@ export function validateMatchClassicSetScores(
         if (err) return `Set ${i + 1}: ${err}`;
       }
     } else {
+      if (game.scoringPreset === ScoringPreset.CLASSIC_TIMED) continue;
       const err = validateClassicRegularGames(ta, tb, rules);
       if (err) return `Set ${i + 1}: ${err}`;
     }

@@ -1,7 +1,7 @@
 import type { SetResult } from '@/types/gameResults';
 import type { ScoringRules, SetKind } from './rulebook';
 import { getSetKind } from './setKind';
-import { isClassicRules } from './rulebook';
+import { isClassicRules, isClassicTimedRelaxedGameScores } from './rulebook';
 
 export type ValidationReason =
   | 'NEGATIVE_SCORE'
@@ -127,6 +127,9 @@ export const isLegalSetScore = (
   if (kind === 'SUPER_TIEBREAK') return validateSuperTiebreak(a, b, rules);
   if (kind === 'TIEBREAK_GAME') return validateClassicTiebreakGame(a, b, rules);
 
-  if (isClassicRules(rules)) return validateClassicRegularSet(a, b, rules);
+  if (isClassicRules(rules)) {
+    if (isClassicTimedRelaxedGameScores(rules) && kind === 'REGULAR') return validateTimedSet(a, b);
+    return validateClassicRegularSet(a, b, rules);
+  }
   return ok(kind);
 };

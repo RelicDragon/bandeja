@@ -1,7 +1,7 @@
 import type { SetResult } from '@/types/gameResults';
 import type { ScoringRules, SetKind } from './rulebook';
 import { getSetKind } from './setKind';
-import { isClassicRules, isPointsRules } from './rulebook';
+import { isClassicRules, isClassicTimedRelaxedGameScores, isPointsRules } from './rulebook';
 
 export interface KeypadOptions {
   values: number[];
@@ -53,6 +53,11 @@ export const getKeypadOptions = (
   if (kind === 'TIEBREAK_GAME') {
     const max = rules.gamesPerSet + 1;
     return { values: range(max), mode: 'CLASSIC', max, kind: 'TIEBREAK_GAME' };
+  }
+
+  if (isClassicRules(rules) && isClassicTimedRelaxedGameScores(rules) && kind === 'REGULAR') {
+    const max = rules.maxPointsPerTeam > 0 ? rules.maxPointsPerTeam : 99;
+    return { values: range(max), mode: 'FREE', max, kind: 'REGULAR' };
   }
 
   if (isClassicRules(rules)) {

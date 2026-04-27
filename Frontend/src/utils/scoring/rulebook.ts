@@ -203,3 +203,6 @@ const deriveFromGame = (game: RulesSource): RuleSkeleton => {
 export const isClassicRules = (rules: ScoringRules): boolean => rules.ballsInGames && rules.winnerOfMatch === 'BY_SETS';
 export const isPointsRules = (rules: ScoringRules): boolean => !rules.ballsInGames && rules.totalPointsPerSet > 0;
 export const isTimedRules = (rules: ScoringRules): boolean => !rules.ballsInGames && rules.totalPointsPerSet === 0 && rules.winnerOfMatch === 'BY_SCORES' && rules.fixedNumberOfSets === 1;
+
+/** Timed one-set classic: any non-negative games score (e.g. at buzzer) except tiebreak rows stay strict. */
+export const isClassicTimedRelaxedGameScores = (rules: ScoringRules): boolean => rules.preset === 'CLASSIC_TIMED';
