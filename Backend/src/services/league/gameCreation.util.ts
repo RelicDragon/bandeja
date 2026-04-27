@@ -50,6 +50,7 @@ interface CreateLeagueGameParams {
 export interface PlayoffGameSetupOverrides {
   fixedNumberOfSets?: number;
   maxTotalPointsPerSet?: number;
+  matchTimerEnabled?: boolean;
   matchTimedCapMinutes?: number;
   maxPointsPerTeam?: number;
   winnerOfGame?: WinnerOfGame;
@@ -130,6 +131,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       fixedNumberOfSets: seasonGame.fixedNumberOfSets ?? 0,
       maxTotalPointsPerSet: seasonGame.maxTotalPointsPerSet ?? 0,
       matchTimedCapMinutes: seasonGame.matchTimedCapMinutes ?? 0,
+      matchTimerEnabled: seasonGame.matchTimerEnabled ?? false,
       maxPointsPerTeam: seasonGame.maxPointsPerTeam ?? 0,
       winnerOfGame: seasonGame.winnerOfGame ?? WinnerOfGame.BY_MATCHES_WON,
       winnerOfMatch: seasonGame.winnerOfMatch ?? WinnerOfMatch.BY_SCORES,
@@ -246,6 +248,7 @@ export async function createLeaguePlayoffGame(
       fixedNumberOfSets: gameSetup?.fixedNumberOfSets ?? template.fixedNumberOfSets,
       maxTotalPointsPerSet: gameSetup?.maxTotalPointsPerSet ?? seasonGame.maxTotalPointsPerSet ?? 0,
       matchTimedCapMinutes: gameSetup?.matchTimedCapMinutes ?? seasonGame.matchTimedCapMinutes ?? 0,
+      matchTimerEnabled: gameSetup?.matchTimerEnabled ?? seasonGame.matchTimerEnabled ?? false,
       maxPointsPerTeam: gameSetup?.maxPointsPerTeam ?? seasonGame.maxPointsPerTeam ?? 0,
       winnerOfGame: gameSetup?.winnerOfGame ?? template.winnerOfGame,
       winnerOfMatch: gameSetup?.winnerOfMatch ?? template.winnerOfMatch,

@@ -22,7 +22,7 @@ import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 type LoginTab = 'main' | 'phone';
 
 const btnBase =
-  'w-full h-12 rounded-xl font-semibold transition-all duration-200 active:scale-[0.98] disabled:active:scale-100 flex items-center justify-center gap-3';
+  'w-[280px] max-w-full mx-auto h-12 rounded-xl font-semibold transition-all duration-200 active:scale-[0.98] disabled:active:scale-100 flex items-center justify-center gap-3';
 
 export const Login = () => {
   const { t } = useTranslation();
@@ -85,7 +85,7 @@ export const Login = () => {
       onError: (err) => {
         if (!isCancelError(err)) setError(extractApiErrorMessage(err, t));
       },
-      width: 320,
+      width: 280,
     });
 
     return cleanup;
@@ -231,7 +231,7 @@ export const Login = () => {
                   </div>
                 )}
                 {isWeb ? (
-                  <div ref={googleButtonContainerRef} className="w-full flex items-center justify-center" />
+                  <div ref={googleButtonContainerRef} className="w-[280px] max-w-full mx-auto flex items-center justify-center" />
                 ) : (
                   <button
                     type="button"
@@ -263,7 +263,7 @@ export const Login = () => {
                 <button
                   type="button"
                   onClick={() => goToTab('phone')}
-                  className="w-full h-11 flex items-center justify-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-700/60 rounded-xl transition-all"
+                  className="w-[280px] max-w-full mx-auto h-11 flex items-center justify-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-700/60 rounded-xl transition-all"
                 >
                   <Phone size={16} />
                   <span>{t('auth.legacyPhoneSignIn')}</span>
@@ -297,7 +297,7 @@ export const Login = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
-                  <Button type="submit" disabled={loading} className="w-full h-12">
+                  <Button type="submit" disabled={loading} className="w-[280px] max-w-full mx-auto h-12">
                     {loading ? loadingSpinner : t('auth.login')}
                   </Button>
                 </form>

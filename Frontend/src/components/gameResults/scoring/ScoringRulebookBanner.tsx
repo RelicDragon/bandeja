@@ -3,6 +3,7 @@ import { Zap, Dumbbell } from 'lucide-react';
 import { Game } from '@/types';
 import { summarizeGameFormat } from '@/utils/gameFormat/summarizeGameFormat';
 import { detectScoringMode } from '@/utils/gameFormat/detectPreset';
+import { isGameMatchTimerEnabled } from '@/utils/matchTimer';
 
 interface ScoringRulebookBannerProps {
   game:
@@ -14,6 +15,7 @@ interface ScoringRulebookBannerProps {
         | 'matchGenerationType'
         | 'hasGoldenPoint'
         | 'matchTimedCapMinutes'
+        | 'matchTimerEnabled'
       >
     | null
     | undefined;
@@ -24,13 +26,12 @@ export const ScoringRulebookBanner = ({ game }: ScoringRulebookBannerProps) => {
   if (!game || !game.scoringPreset) return null;
 
   const scoringMode = detectScoringMode(game as Partial<Game>);
-  const isTimed = game.scoringPreset === 'TIMED' || game.scoringPreset === 'CLASSIC_TIMED';
   const text = summarizeGameFormat(t, {
     scoringMode,
     scoringPreset: game.scoringPreset,
     generationType: game.matchGenerationType ?? undefined,
     hasGoldenPoint: !!game.hasGoldenPoint,
-    isTimed,
+    matchTimerEnabled: isGameMatchTimerEnabled(game),
     matchTimedCapMinutes: game.matchTimedCapMinutes,
   });
 

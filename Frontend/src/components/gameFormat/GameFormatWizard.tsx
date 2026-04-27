@@ -45,31 +45,30 @@ const CLASSIC_STRUCTURE_PRESETS: ScoringPreset[] = [
   'CLASSIC_BEST_OF_5',
   'CLASSIC_SHORT_SET',
   'CLASSIC_PRO_SET',
+  'CLASSIC_SINGLE_SET',
 ];
 
 const POINTS_TARGET_PRESETS: ScoringPreset[] = ['POINTS_16', 'POINTS_21', 'POINTS_24', 'POINTS_32'];
 
 function isSetStructureStepValid(f: UseGameFormatResult): boolean {
   if (f.scoringMode !== 'CLASSIC') return true;
-  if (f.isTimed) {
-    return (
-      f.scoringPreset === 'CLASSIC_TIMED' &&
-      f.matchTimedCapMinutes >= 1 &&
-      f.matchTimedCapMinutes <= 60
-    );
+  const structureOk = CLASSIC_STRUCTURE_PRESETS.includes(f.scoringPreset);
+  if (f.matchTimerEnabled) {
+    return structureOk && f.matchTimedCapMinutes >= 1 && f.matchTimedCapMinutes <= 60;
   }
-  return CLASSIC_STRUCTURE_PRESETS.includes(f.scoringPreset);
+  return structureOk;
 }
 
 function isPointsTotalStepValid(f: UseGameFormatResult): boolean {
   if (f.scoringMode !== 'POINTS') return true;
-  if (f.isTimed) {
-    return f.scoringPreset === 'TIMED' && f.matchTimedCapMinutes >= 1 && f.matchTimedCapMinutes <= 60;
+  const targetOk =
+    f.customPointsTotal != null
+      ? f.customPointsTotal > 0 && f.customPointsTotal <= 999
+      : POINTS_TARGET_PRESETS.includes(f.scoringPreset);
+  if (f.matchTimerEnabled) {
+    return targetOk && f.matchTimedCapMinutes >= 1 && f.matchTimedCapMinutes <= 60;
   }
-  if (f.customPointsTotal != null) {
-    return f.customPointsTotal > 0 && f.customPointsTotal <= 999;
-  }
-  return POINTS_TARGET_PRESETS.includes(f.scoringPreset);
+  return targetOk;
 }
 
 function isRankingStepValid(f: UseGameFormatResult): boolean {
@@ -246,7 +245,7 @@ export const GameFormatWizard = ({
                 scoringPreset={format.scoringPreset}
                 generationType={format.generationType}
                 hasGoldenPoint={format.hasGoldenPoint}
-                isTimed={format.isTimed}
+                matchTimerEnabled={format.matchTimerEnabled}
                 matchTimedCapMinutes={format.matchTimedCapMinutes}
                 customPointsTotal={format.customPointsTotal}
               />
@@ -279,11 +278,11 @@ export const GameFormatWizard = ({
                 <GameFormatStepSetStructure
                   scoringPreset={format.scoringPreset}
                   hasGoldenPoint={format.hasGoldenPoint}
-                  isTimed={format.isTimed}
+                  matchTimerEnabled={format.matchTimerEnabled}
                   matchTimedCapMinutes={format.matchTimedCapMinutes}
                   onPresetChange={format.setScoringPreset}
                   onGoldenPointChange={format.setHasGoldenPoint}
-                  onTimedCapChange={format.setMatchTimedCap}
+                  onMatchTimerEnabledChange={format.setMatchTimerEnabled}
                   onTimedCapMinutesChange={format.setMatchTimedCapMinutes}
                   onSelectAdvance={handleNext}
                 />
@@ -291,11 +290,11 @@ export const GameFormatWizard = ({
               {safeCurrentStep === 'pointsTotal' && (
                 <GameFormatStepPointsTotal
                   scoringPreset={format.scoringPreset}
-                  isTimed={format.isTimed}
+                  matchTimerEnabled={format.matchTimerEnabled}
                   matchTimedCapMinutes={format.matchTimedCapMinutes}
                   customPointsTotal={format.customPointsTotal}
                   onPresetChange={format.setScoringPreset}
-                  onTimedChange={format.setMatchTimedCap}
+                  onMatchTimerEnabledChange={format.setMatchTimerEnabled}
                   onTimedCapMinutesChange={format.setMatchTimedCapMinutes}
                   onCustomPointsChange={format.setCustomPointsTotal}
                   onSelectAdvance={handleNext}

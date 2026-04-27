@@ -6,6 +6,7 @@ import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser, Game } from '@/types';
 import { Dialog, DialogContent, DialogFooter, DialogClose, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
+import { ScorePickerNumberGrid } from '@/components/gameResults/ScorePickerNumberGrid';
 import {
   getRules,
   getKeypadOptions,
@@ -14,6 +15,7 @@ import {
   validationMessage,
   suggestLegalScores,
   getScoreEntryExampleList,
+  isClassicTimedRelaxedGameScores,
 } from '@/utils/scoring';
 interface SetResultModalProps {
   match: Match;
@@ -24,7 +26,18 @@ interface SetResultModalProps {
   maxPointsPerTeam?: number;
   fixedNumberOfSets?: number;
   ballsInGames?: boolean;
-  game?: Pick<Game, 'scoringPreset' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie'> | null;
+  game?: Pick<
+    Game,
+    | 'scoringPreset'
+    | 'fixedNumberOfSets'
+    | 'maxTotalPointsPerSet'
+    | 'maxPointsPerTeam'
+    | 'winnerOfMatch'
+    | 'ballsInGames'
+    | 'hasGoldenPoint'
+    | 'pointsPerTie'
+    | 'matchTimedCapMinutes'
+  > | null;
   onSave: (matchId: string, setIndex: number, teamAScore: number, teamBScore: number, isTieBreak?: boolean) => void;
   onRemove?: (matchId: string, setIndex: number) => void;
   onClose: () => void;
@@ -178,6 +191,32 @@ export const SetResultModal = ({
   const exampleList = useMemo(() => getScoreEntryExampleList(rules, kind), [rules, kind]);
 
   const descriptionLine = useMemo(() => {
+    if (isClassicTimedRelaxedGameScores(rules) && kind === 'REGULAR') {
+      const parts: string[] = [];
+      if (roundNumber != null && roundNumber > 0) {
+        parts.push(t('gameResults.roundNumber', { number: roundNumber }));
+      }
+      parts.push(t('gameResults.scoreEntryGamesInSetShort'));
+      const cap = game?.matchTimedCapMinutes;
+      if (cap != null && cap >= 1) {
+        parts.push(t('gameResults.classicTimedTimerMinutes', { minutes: cap }));
+      }
+      if (exampleList) {
+        parts.push(t('gameResults.scoreEntryExampleLabel', { examples: exampleList }));
+      }
+      return parts.length > 0 ? parts.join(' · ') : null;
+    }
+    if (isClassicTimedRelaxedGameScores(rules) && (kind === 'TIEBREAK_GAME' || kind === 'SUPER_TIEBREAK')) {
+      const parts: string[] = [];
+      if (roundNumber != null && roundNumber > 0) {
+        parts.push(t('gameResults.roundNumber', { number: roundNumber }));
+      }
+      parts.push(t('gameResults.scoreEntryTiebreakPointsShort'));
+      if (exampleList) {
+        parts.push(t('gameResults.scoreEntryExampleLabel', { examples: exampleList }));
+      }
+      return parts.length > 0 ? parts.join(' · ') : null;
+    }
     const parts: string[] = [];
     if (roundNumber != null && roundNumber > 0) {
       parts.push(t('gameResults.roundNumber', { number: roundNumber }));
@@ -186,7 +225,7 @@ export const SetResultModal = ({
       parts.push(t('gameResults.scoreEntryExamples', { examples: exampleList }));
     }
     return parts.length > 0 ? parts.join(' · ') : null;
-  }, [roundNumber, exampleList, t]);
+  }, [roundNumber, exampleList, t, rules, kind, game?.matchTimedCapMinutes]);
 
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="set-result-modal">
@@ -212,7 +251,7 @@ export const SetResultModal = ({
           {mainTitle}
         </DialogTitle>
         {descriptionLine ? (
-          <DialogDescription className="mt-0 max-w-full whitespace-nowrap text-xs font-medium normal-case leading-tight text-gray-500 dark:text-gray-400 overflow-x-auto">
+          <DialogDescription className="mt-0 max-w-full whitespace-normal text-xs font-medium normal-case leading-snug text-gray-500 dark:text-gray-400">
             {descriptionLine}
           </DialogDescription>
         ) : null}
@@ -342,21 +381,15 @@ export const SetResultModal = ({
                     ))}
                   </div>
                 </div>
-                <div className="grid grid-cols-6 sm:grid-cols-8 gap-1 sm:gap-1.5 w-full max-w-xs sm:max-w-sm px-0">
-                  {numberOptions.map((number) => (
-                    <button
-                      key={number}
-                      onClick={() => handleNumberSelect(number)}
-                      className={`aspect-square rounded-md sm:rounded-lg font-bold text-xs sm:text-sm transition-all duration-200 ${
-                        number === currentScore
-                          ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/40 scale-105 ring-2 ring-primary-400 ring-offset-1 dark:ring-offset-gray-900'
-                          : 'bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900 text-gray-700 dark:text-gray-300 hover:from-gray-200 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-800 hover:scale-105 active:scale-95 shadow border border-gray-200 dark:border-gray-700'
-                      }`}
-                    >
-                      {number}
-                    </button>
-                  ))}
-                </div>
+                <ScorePickerNumberGrid
+                  numberOptions={numberOptions}
+                  keypadMax={keypad.max}
+                  currentScore={currentScore}
+                  onSelect={handleNumberSelect}
+                  clampToAllowed={clampToAllowed}
+                  density="compact"
+                  pickerResetKey={numberPickerTeam}
+                />
               </div>
         </div>
       </div>

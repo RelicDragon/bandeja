@@ -33,6 +33,7 @@ const PRESET_RULES: Partial<Record<ScoringPreset, ClassicGameRules>> = {
     superTieBreakReplacesDeciderAtIndex: null,
   },
   CLASSIC_SHORT_SET: { ...classicBo3, gamesPerSet: 4, tieBreakGameAtGames: 3 },
+  CLASSIC_SINGLE_SET: { ...classicBo3 },
   CLASSIC_TIMED: { ...classicBo3 },
 };
 
@@ -128,6 +129,7 @@ export function validateMatchClassicSetScores(
     fixedNumberOfSets: number;
     ballsInGames: boolean;
     winnerOfMatch: WinnerOfMatch;
+    matchTimerEnabled?: boolean;
   },
   sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>
 ): string | null {
@@ -149,7 +151,7 @@ export function validateMatchClassicSetScores(
         if (err) return `Set ${i + 1}: ${err}`;
       }
     } else {
-      if (game.scoringPreset === ScoringPreset.CLASSIC_TIMED) continue;
+      if (game.matchTimerEnabled || game.scoringPreset === ScoringPreset.CLASSIC_TIMED) continue;
       const err = validateClassicRegularGames(ta, tb, rules);
       if (err) return `Set ${i + 1}: ${err}`;
     }

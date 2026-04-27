@@ -135,6 +135,7 @@ export const CreateLeague = () => {
             maxTotalPointsPerSet: setup.maxTotalPointsPerSet,
             maxPointsPerTeam: setup.maxPointsPerTeam,
             matchTimedCapMinutes: setup.matchTimedCapMinutes,
+            matchTimerEnabled: setup.matchTimerEnabled ?? false,
             winnerOfGame: setup.winnerOfGame,
             winnerOfMatch: setup.winnerOfMatch,
             matchGenerationType: setup.matchGenerationType,

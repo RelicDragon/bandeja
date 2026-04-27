@@ -797,6 +797,7 @@ export async function updateMatch(
       ballsInGames: true,
       winnerOfMatch: true,
       scoringPreset: true,
+      matchTimerEnabled: true,
       startTime: true,
       endTime: true,
       cityId: true,

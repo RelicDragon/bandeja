@@ -355,6 +355,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         gameData.fixedNumberOfSets = setup.fixedNumberOfSets;
         gameData.maxTotalPointsPerSet = setup.maxTotalPointsPerSet;
         gameData.matchTimedCapMinutes = setup.matchTimedCapMinutes;
+        gameData.matchTimerEnabled = setup.matchTimerEnabled ?? false;
         gameData.maxPointsPerTeam = setup.maxPointsPerTeam;
         gameData.winnerOfGame = setup.winnerOfGame;
         gameData.winnerOfMatch = setup.winnerOfMatch;

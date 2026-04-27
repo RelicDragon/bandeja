@@ -94,7 +94,7 @@ export const GameFormatCard = ({
                 scoringPreset={format.scoringPreset}
                 generationType={format.generationType}
                 hasGoldenPoint={format.hasGoldenPoint}
-                isTimed={format.isTimed}
+                matchTimerEnabled={format.matchTimerEnabled}
                 matchTimedCapMinutes={format.matchTimedCapMinutes}
                 customPointsTotal={format.customPointsTotal}
                 twoRows

@@ -7,11 +7,11 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 
 interface GameFormatStepPointsTotalProps {
   scoringPreset: ScoringPreset;
-  isTimed: boolean;
+  matchTimerEnabled: boolean;
   matchTimedCapMinutes: number;
   customPointsTotal: number | null;
   onPresetChange: (preset: ScoringPreset) => void;
-  onTimedChange: (v: boolean) => void;
+  onMatchTimerEnabledChange: (v: boolean) => void;
   onTimedCapMinutesChange: (n: number) => void;
   onCustomPointsChange: (n: number | null) => void;
   onSelectAdvance?: () => void;
@@ -26,18 +26,18 @@ const POINTS_PRESETS: { value: ScoringPreset; recommended?: boolean }[] = [
 
 export const GameFormatStepPointsTotal = ({
   scoringPreset,
-  isTimed,
+  matchTimerEnabled,
   matchTimedCapMinutes,
   customPointsTotal,
   onPresetChange,
-  onTimedChange,
+  onMatchTimerEnabledChange,
   onTimedCapMinutesChange,
   onCustomPointsChange,
   onSelectAdvance,
 }: GameFormatStepPointsTotalProps) => {
   const { t } = useTranslation();
 
-  const activePreset = isTimed || customPointsTotal != null ? null : scoringPreset;
+  const activePreset = customPointsTotal != null ? null : scoringPreset;
 
   const handleCustomInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
@@ -55,7 +55,7 @@ export const GameFormatStepPointsTotal = ({
     <div className="space-y-3">
       <p className="text-xs text-gray-500 dark:text-gray-400 px-1">{t('gameFormat.stepPointsTotalHint')}</p>
 
-      <div className={`space-y-2.5 transition-opacity ${isTimed ? 'opacity-40 pointer-events-none' : ''}`}>
+      <div className="space-y-2.5">
         {POINTS_PRESETS.map((p) => (
           <FormatOptionCard
             key={p.value}
@@ -95,9 +95,9 @@ export const GameFormatStepPointsTotal = ({
             <div className="text-sm font-medium text-gray-900 dark:text-white">{t('gameFormat.timedMatch.title')}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('gameFormat.timedMatch.description')}</div>
           </div>
-          <ToggleSwitch checked={isTimed} onChange={onTimedChange} />
+          <ToggleSwitch checked={matchTimerEnabled} onChange={onMatchTimerEnabledChange} />
         </div>
-        {isTimed && (
+        {matchTimerEnabled && (
           <GameFormatTimedDuration
             minutes={matchTimedCapMinutes}
             onChange={onTimedCapMinutesChange}

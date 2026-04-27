@@ -15,13 +15,17 @@ export interface MatchTimerSnapshot {
   capJustNotified?: boolean;
 }
 
-const TIMED = new Set(['TIMED', 'CLASSIC_TIMED']);
+const LEGACY_TIMED_PRESETS = new Set(['TIMED', 'CLASSIC_TIMED']);
 
-export function isGameMatchTimerEnabled(game: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes'> | null | undefined): boolean {
-  if (!game?.scoringPreset) return false;
-  if (!TIMED.has(game.scoringPreset)) return false;
-  const cap = game.matchTimedCapMinutes ?? 0;
-  return cap >= 1;
+export function isGameMatchTimerEnabled(
+  game: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'matchTimerEnabled'> | null | undefined,
+): boolean {
+  const cap = game?.matchTimedCapMinutes ?? 0;
+  if (cap < 1) return false;
+  if (game?.matchTimerEnabled) return true;
+  const p = game?.scoringPreset;
+  if (!p) return false;
+  return LEGACY_TIMED_PRESETS.has(p);
 }
 
 function computeElapsedFromFields(

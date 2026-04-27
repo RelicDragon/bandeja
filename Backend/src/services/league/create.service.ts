@@ -73,6 +73,7 @@ export class LeagueCreateService {
         maxTotalPointsPerSet: gameSeasonData.maxTotalPointsPerSet ?? 0,
         maxPointsPerTeam: gameSeasonData.maxPointsPerTeam ?? 0,
         matchTimedCapMinutes: gameSeasonData.matchTimedCapMinutes ?? 0,
+        matchTimerEnabled: Boolean(gameSeasonData.matchTimerEnabled),
         winnerOfGame: (gameSeasonData.winnerOfGame as WinnerOfGame) ?? WinnerOfGame.BY_MATCHES_WON,
         winnerOfMatch: (gameSeasonData.winnerOfMatch as WinnerOfMatch) ?? WinnerOfMatch.BY_SCORES,
         matchGenerationType: resolveMatchGenerationType({

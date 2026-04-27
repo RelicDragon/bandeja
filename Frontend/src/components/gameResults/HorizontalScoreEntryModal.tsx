@@ -6,6 +6,7 @@ import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser, Game } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
+import { ScorePickerNumberGrid } from '@/components/gameResults/ScorePickerNumberGrid';
 import {
   getRules,
   getKeypadOptions,
@@ -14,6 +15,7 @@ import {
   validationMessage,
   suggestLegalScores,
   getScoreEntryExampleList,
+  isClassicTimedRelaxedGameScores,
 } from '@/utils/scoring';
 
 interface HorizontalScoreEntryModalProps {
@@ -24,7 +26,18 @@ interface HorizontalScoreEntryModalProps {
   maxPointsPerTeam?: number;
   fixedNumberOfSets?: number;
   ballsInGames?: boolean;
-  game?: Pick<Game, 'scoringPreset' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie'> | null;
+  game?: Pick<
+    Game,
+    | 'scoringPreset'
+    | 'fixedNumberOfSets'
+    | 'maxTotalPointsPerSet'
+    | 'maxPointsPerTeam'
+    | 'winnerOfMatch'
+    | 'ballsInGames'
+    | 'hasGoldenPoint'
+    | 'pointsPerTie'
+    | 'matchTimedCapMinutes'
+  > | null;
   onSave: (matchId: string, setIndex: number, teamAScore: number, teamBScore: number, isTieBreak?: boolean) => void;
   onRemove?: (matchId: string, setIndex: number) => void;
   onClose: () => void;
@@ -175,6 +188,32 @@ export const HorizontalScoreEntryModal = ({
   const exampleList = useMemo(() => getScoreEntryExampleList(rules, kind), [rules, kind]);
 
   const descriptionLine = useMemo(() => {
+    if (isClassicTimedRelaxedGameScores(rules) && kind === 'REGULAR') {
+      const parts: string[] = [];
+      if (roundNumber != null && roundNumber > 0) {
+        parts.push(t('gameResults.roundNumber', { number: roundNumber }));
+      }
+      parts.push(t('gameResults.scoreEntryGamesInSetShort'));
+      const cap = game?.matchTimedCapMinutes;
+      if (cap != null && cap >= 1) {
+        parts.push(t('gameResults.classicTimedTimerMinutes', { minutes: cap }));
+      }
+      if (exampleList) {
+        parts.push(t('gameResults.scoreEntryExampleLabel', { examples: exampleList }));
+      }
+      return parts.length > 0 ? parts.join(' · ') : null;
+    }
+    if (isClassicTimedRelaxedGameScores(rules) && (kind === 'TIEBREAK_GAME' || kind === 'SUPER_TIEBREAK')) {
+      const parts: string[] = [];
+      if (roundNumber != null && roundNumber > 0) {
+        parts.push(t('gameResults.roundNumber', { number: roundNumber }));
+      }
+      parts.push(t('gameResults.scoreEntryTiebreakPointsShort'));
+      if (exampleList) {
+        parts.push(t('gameResults.scoreEntryExampleLabel', { examples: exampleList }));
+      }
+      return parts.length > 0 ? parts.join(' · ') : null;
+    }
     const parts: string[] = [];
     if (roundNumber != null && roundNumber > 0) {
       parts.push(t('gameResults.roundNumber', { number: roundNumber }));
@@ -183,7 +222,7 @@ export const HorizontalScoreEntryModal = ({
       parts.push(t('gameResults.scoreEntryExamples', { examples: exampleList }));
     }
     return parts.length > 0 ? parts.join(' · ') : null;
-  }, [roundNumber, exampleList, t]);
+  }, [roundNumber, exampleList, t, rules, kind, game?.matchTimedCapMinutes]);
 
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="horizontal-score-entry-modal">
@@ -193,7 +232,7 @@ export const HorizontalScoreEntryModal = ({
       <DialogHeader className="mb-3 sm:mb-5 md:mb-8 flex-col items-stretch gap-0 text-left">
         <DialogTitle className="mb-0 text-left leading-tight">{mainTitle}</DialogTitle>
         {descriptionLine ? (
-          <DialogDescription className="mt-0 max-w-full whitespace-nowrap text-left text-xs font-medium normal-case leading-tight text-gray-500 dark:text-gray-400 overflow-x-auto sm:text-sm">
+          <DialogDescription className="mt-0 max-w-full whitespace-normal text-left text-xs font-medium normal-case leading-snug text-gray-500 dark:text-gray-400 sm:text-sm">
             {descriptionLine}
           </DialogDescription>
         ) : null}
@@ -322,21 +361,15 @@ export const HorizontalScoreEntryModal = ({
                     ))}
                   </div>
                 </div>
-                <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5 sm:gap-2 md:gap-2.5 w-full max-w-xs sm:max-w-md px-1">
-                  {numberOptions.map((number) => (
-                    <button
-                      key={number}
-                      onClick={() => handleNumberSelect(number)}
-                      className={`aspect-square rounded-lg sm:rounded-xl font-bold text-sm sm:text-base transition-all duration-200 ${
-                        number === currentScore
-                          ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-xl shadow-primary-500/40 scale-110 ring-2 ring-primary-400 ring-offset-1 sm:ring-offset-2 dark:ring-offset-gray-900'
-                          : 'bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900 text-gray-700 dark:text-gray-300 hover:from-gray-200 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-800 hover:scale-110 active:scale-95 shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-700'
-                      }`}
-                    >
-                      {number}
-                    </button>
-                  ))}
-                </div>
+                <ScorePickerNumberGrid
+                  numberOptions={numberOptions}
+                  keypadMax={keypad.max}
+                  currentScore={currentScore}
+                  onSelect={handleNumberSelect}
+                  clampToAllowed={clampToAllowed}
+                  density="comfortable"
+                  pickerResetKey={numberPickerTeam}
+                />
               </div>
         </div>
       </div>

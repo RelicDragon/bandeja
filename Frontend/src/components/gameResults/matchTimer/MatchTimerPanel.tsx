@@ -11,7 +11,7 @@ import {
   type MatchTimerAction,
 } from '@/utils/matchTimer';
 
-type GameTimerFields = Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes'>;
+type GameTimerFields = Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'matchTimerEnabled'>;
 
 interface MatchTimerPanelProps {
   match: Match;

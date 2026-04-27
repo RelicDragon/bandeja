@@ -81,6 +81,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
         fixedNumberOfSets: setup.fixedNumberOfSets,
         maxTotalPointsPerSet: setup.maxTotalPointsPerSet,
         matchTimedCapMinutes: setup.matchTimedCapMinutes,
+        matchTimerEnabled: setup.matchTimerEnabled ?? false,
         maxPointsPerTeam: setup.maxPointsPerTeam,
         winnerOfGame: setup.winnerOfGame,
         winnerOfMatch: setup.winnerOfMatch,

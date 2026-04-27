@@ -9,6 +9,7 @@ import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import notificationService from '../notification.service';
 import { goldenPointAllowedForFormat, validateScoringPreset } from '../../utils/validators/gameFormat';
 import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
+import { normalizeLegacyTimedScoringPreset } from '../../utils/scoring/matchTimerGame';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 
@@ -154,9 +155,17 @@ export class GameCreateService {
       }
     }
     
-    const scoringPreset = validateScoringPreset(gameType, data.scoringPreset);
+    let scoringPreset = validateScoringPreset(gameType, data.scoringPreset);
     const winnerOfMatchCreate = data.winnerOfMatch ?? 'BY_SCORES';
-    const maxTotalPointsCreate = data.maxTotalPointsPerSet ?? 0;
+    let maxTotalPointsCreate = data.maxTotalPointsPerSet ?? 0;
+    const legacyNorm = normalizeLegacyTimedScoringPreset(scoringPreset);
+    if (legacyNorm.scoringPreset !== scoringPreset) {
+      scoringPreset = legacyNorm.scoringPreset;
+    }
+    if (legacyNorm.bumpPointsCapTo21 && maxTotalPointsCreate < 1) {
+      maxTotalPointsCreate = 21;
+    }
+    const matchTimerEnabled = legacyNorm.matchTimerEnabled || Boolean(data.matchTimerEnabled);
     const ballsInGames = deriveBallsInGamesFromScoring({
       scoringPreset,
       winnerOfMatch: winnerOfMatchCreate,
@@ -166,7 +175,7 @@ export class GameCreateService {
       typeof data.matchTimedCapMinutes === 'number' && Number.isFinite(data.matchTimedCapMinutes)
         ? Math.min(60, Math.max(0, Math.round(data.matchTimedCapMinutes)))
         : 0;
-    if (scoringPreset === 'TIMED' || scoringPreset === 'CLASSIC_TIMED') {
+    if (matchTimerEnabled) {
       if (matchTimedCapMinutes < 1) matchTimedCapMinutes = 15;
     } else {
       matchTimedCapMinutes = 0;
@@ -201,6 +210,7 @@ export class GameCreateService {
         fixedNumberOfSets: data.fixedNumberOfSets ?? 0,
         maxTotalPointsPerSet: maxTotalPointsCreate,
         matchTimedCapMinutes,
+        matchTimerEnabled,
         maxPointsPerTeam: data.maxPointsPerTeam ?? 0,
         winnerOfGame: data.winnerOfGame ?? 'BY_MATCHES_WON',
         winnerOfMatch: winnerOfMatchCreate,

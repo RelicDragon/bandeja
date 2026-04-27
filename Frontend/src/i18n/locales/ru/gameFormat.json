@@ -139,6 +139,11 @@
         "subtitle": "Один длинный сет решает матч",
         "hint": "Один сет с геймами"
       },
+      "CLASSIC_SINGLE_SET": {
+        "title": "Один сет",
+        "subtitle": "Стандартный сет до 6 геймов (ТБ при 6:6)",
+        "hint": "Один сет с геймами; опциональный таймер на следующем шаге"
+      },
       "CLASSIC_SHORT_SET": {
         "title": "Короткие сеты",
         "subtitle": "Сеты до 4 геймов, до 2 выигранных",
@@ -189,6 +194,7 @@
       "CLASSIC_BEST_OF_3": "До 2 сетов",
       "CLASSIC_BEST_OF_5": "До 3 сетов",
       "CLASSIC_PRO_SET": "Про-сет",
+      "CLASSIC_SINGLE_SET": "Один сет",
       "CLASSIC_SHORT_SET": "Короткие сеты",
       "CLASSIC_SUPER_TIEBREAK": "Супер тай-брейк",
       "CLASSIC_TIMED": "Геймы/сеты · время",

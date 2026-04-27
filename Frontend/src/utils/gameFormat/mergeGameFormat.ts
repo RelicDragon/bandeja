@@ -16,8 +16,9 @@ export interface GameFormatState {
   prohibitMatchesEditing: boolean;
   /** When set, overrides preset-based scoring with a custom points total. */
   customPointsTotal: number | null;
-  /** 1–60 when timed preset is selected; ignored otherwise. */
+  /** 1–60 when `matchTimerEnabled`; ignored otherwise. */
   matchTimedCapMinutes: number;
+  matchTimerEnabled: boolean;
   overrides?: Partial<GameSetupParams>;
 }
 
@@ -34,8 +35,7 @@ export const buildSetupFromFormat = (state: GameFormatState): GameSetupParams =>
 
   const useCustomPoints = state.scoringMode === 'POINTS' && state.customPointsTotal != null;
   const scoring = getScoringPresetConfig(state.scoringPreset);
-  const isTimedPreset = state.scoringPreset === 'TIMED' || state.scoringPreset === 'CLASSIC_TIMED';
-  const capMinutes = isTimedPreset
+  const capMinutes = state.matchTimerEnabled
     ? Math.min(60, Math.max(1, state.matchTimedCapMinutes || 15))
     : 0;
 
@@ -50,6 +50,7 @@ export const buildSetupFromFormat = (state: GameFormatState): GameSetupParams =>
     fixedNumberOfSets: scoring.fixedNumberOfSets ?? template.fixedNumberOfSets ?? 0,
     maxTotalPointsPerSet: useCustomPoints ? state.customPointsTotal! : (scoring.maxTotalPointsPerSet ?? 0),
     matchTimedCapMinutes: capMinutes,
+    matchTimerEnabled: state.matchTimerEnabled,
     maxPointsPerTeam: 0,
     pointsPerWin: state.pointsPerWin ?? template.pointsPerWin ?? 0,
     pointsPerLoose: state.pointsPerLoose ?? template.pointsPerLoose ?? 0,
@@ -67,6 +68,8 @@ export const buildSetupFromFormat = (state: GameFormatState): GameSetupParams =>
     ...restOverrides,
     scoringPreset: useCustomPoints ? null : state.scoringPreset,
     hasGoldenPoint: effectiveGolden,
+    matchTimerEnabled: state.matchTimerEnabled,
+    matchTimedCapMinutes: capMinutes,
   };
   return {
     ...merged,

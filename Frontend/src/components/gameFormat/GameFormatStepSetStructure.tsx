@@ -8,11 +8,11 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 interface GameFormatStepSetStructureProps {
   scoringPreset: ScoringPreset;
   hasGoldenPoint: boolean;
-  isTimed: boolean;
+  matchTimerEnabled: boolean;
   matchTimedCapMinutes: number;
   onPresetChange: (preset: ScoringPreset) => void;
   onGoldenPointChange: (v: boolean) => void;
-  onTimedCapChange: (v: boolean) => void;
+  onMatchTimerEnabledChange: (v: boolean) => void;
   onTimedCapMinutesChange: (n: number) => void;
   onSelectAdvance?: () => void;
 }
@@ -23,16 +23,17 @@ const CLASSIC_PRESETS: { value: ScoringPreset; icon: typeof Medal; recommended?:
   { value: 'CLASSIC_BEST_OF_5', icon: Award },
   { value: 'CLASSIC_SHORT_SET', icon: Target },
   { value: 'CLASSIC_PRO_SET', icon: Target },
+  { value: 'CLASSIC_SINGLE_SET', icon: Target },
 ];
 
 export const GameFormatStepSetStructure = ({
   scoringPreset,
   hasGoldenPoint,
-  isTimed,
+  matchTimerEnabled,
   matchTimedCapMinutes,
   onPresetChange,
   onGoldenPointChange,
-  onTimedCapChange,
+  onMatchTimerEnabledChange,
   onTimedCapMinutesChange,
   onSelectAdvance,
 }: GameFormatStepSetStructureProps) => {
@@ -41,7 +42,7 @@ export const GameFormatStepSetStructure = ({
   return (
     <div className="space-y-3">
       <p className="text-xs text-gray-500 dark:text-gray-400 px-1">{t('gameFormat.stepSetStructureHint')}</p>
-      <div className={`space-y-2.5 transition-opacity ${isTimed ? 'opacity-40 pointer-events-none' : ''}`}>
+      <div className="space-y-2.5">
         {CLASSIC_PRESETS.map((p) => (
           <FormatOptionCard
             key={p.value}
@@ -65,9 +66,9 @@ export const GameFormatStepSetStructure = ({
             <div className="text-sm font-medium text-gray-900 dark:text-white">{t('gameFormat.timedMatch.title')}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('gameFormat.timedMatch.descriptionClassic')}</div>
           </div>
-          <ToggleSwitch checked={isTimed} onChange={onTimedCapChange} />
+          <ToggleSwitch checked={matchTimerEnabled} onChange={onMatchTimerEnabledChange} />
         </div>
-        {isTimed && (
+        {matchTimerEnabled && (
           <GameFormatTimedDuration
             minutes={matchTimedCapMinutes}
             onChange={onTimedCapMinutesChange}

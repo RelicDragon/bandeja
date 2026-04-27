@@ -140,7 +140,6 @@ export function renderGoogleSignInButton(
   options: RenderGoogleButtonOptions
 ): () => void {
   let disposed = false;
-  let resizeObserver: ResizeObserver | null = null;
 
   const fail = (error: Error) => {
     if (!disposed) options.onError(error);
@@ -178,25 +177,17 @@ export function renderGoogleSignInButton(
         });
       };
 
-      const render = () => {
-        if (disposed) return;
-        const dynamicWidth = options.width ?? Math.max(220, Math.floor(container.clientWidth));
-        container.innerHTML = '';
-        window.google!.accounts.id.renderButton(container, {
-          theme: 'outline',
-          size: 'medium',
-          type: 'standard',
-          text: 'continue_with',
-          shape: 'pill',
-          width: dynamicWidth,
-        });
-      };
-
-      render();
-      if (typeof ResizeObserver !== 'undefined') {
-        resizeObserver = new ResizeObserver(() => render());
-        resizeObserver.observe(container);
-      }
+      if (disposed) return;
+      const dynamicWidth = options.width ?? Math.max(220, Math.floor(container.clientWidth));
+      container.innerHTML = '';
+      window.google!.accounts.id.renderButton(container, {
+        theme: 'outline',
+        size: 'medium',
+        type: 'standard',
+        text: 'continue_with',
+        shape: 'pill',
+        width: dynamicWidth,
+      });
     })
     .catch((error) => {
       fail(error instanceof Error ? error : new Error('auth.googleSignInInitFailed'));
@@ -204,7 +195,6 @@ export function renderGoogleSignInButton(
 
   return () => {
     disposed = true;
-    resizeObserver?.disconnect();
     if (container) container.innerHTML = '';
   };
 }

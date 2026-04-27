@@ -135,6 +135,11 @@
         "subtitle": "One long set decides the match",
         "hint": "Single set with games"
       },
+      "CLASSIC_SINGLE_SET": {
+        "title": "Single set",
+        "subtitle": "Standard set to 6 (or 7 in tie-break)",
+        "hint": "One set with games; optional match timer in the next step"
+      },
       "CLASSIC_SHORT_SET": {
         "title": "Short sets",
         "subtitle": "Short 4-game sets, best of 3",
@@ -185,6 +190,7 @@
       "CLASSIC_BEST_OF_3": "Best of 3",
       "CLASSIC_BEST_OF_5": "Best of 5",
       "CLASSIC_PRO_SET": "Pro set",
+      "CLASSIC_SINGLE_SET": "Single set",
       "CLASSIC_SHORT_SET": "Short sets",
       "CLASSIC_SUPER_TIEBREAK": "Super tie-break",
       "CLASSIC_TIMED": "Games/sets · timed",

@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { MatchTimerStatus, Prisma, ScoringPreset } from '@prisma/client';
+import { MatchTimerStatus, Prisma } from '@prisma/client';
+import { isGameMatchTimerEnabled } from '../../utils/scoring/matchTimerGame';
 import { NotificationChannelType } from '@prisma/client';
 import { canModifyResults } from '../../utils/parentGamePermissions';
 import { matchTimerCoordinator } from './matchTimerCoordinator';
@@ -8,8 +9,6 @@ import type { MatchTimerAction, MatchTimerSnapshotJson } from './matchTimer.type
 import { createMatchTimerCapPushNotification } from '../push/notifications/match-timer-cap-push.notification';
 import pushNotificationService from '../push/push-notification.service';
 import { NotificationPreferenceService, PreferenceKey } from '../notificationPreference.service';
-
-const TIMED_PRESETS = new Set<ScoringPreset>([ScoringPreset.TIMED, ScoringPreset.CLASSIC_TIMED]);
 
 const timerSelect = {
   id: true,
@@ -72,6 +71,7 @@ async function assertTimedResultsGame(gameId: string) {
       resultsStatus: true,
       scoringPreset: true,
       matchTimedCapMinutes: true,
+      matchTimerEnabled: true,
     },
   });
   if (!game) throw new ApiError(404, 'Game not found');
@@ -79,7 +79,7 @@ async function assertTimedResultsGame(gameId: string) {
   if (game.resultsStatus !== 'IN_PROGRESS') {
     throw new ApiError(400, 'Match timer is only available while results are in progress');
   }
-  if (!game.scoringPreset || !TIMED_PRESETS.has(game.scoringPreset)) {
+  if (!isGameMatchTimerEnabled(game)) {
     throw new ApiError(400, 'Match timer is only available for timed scoring formats');
   }
   if (!game.matchTimedCapMinutes || game.matchTimedCapMinutes < 1) {

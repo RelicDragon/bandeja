@@ -135,6 +135,11 @@
         "subtitle": "Un set largo decide el partido",
         "hint": "Un solo set con juegos"
       },
+      "CLASSIC_SINGLE_SET": {
+        "title": "Un set",
+        "subtitle": "Set estándar a 6 juegos (TB a 6-6)",
+        "hint": "Un set con juegos; temporizador opcional en el siguiente paso"
+      },
       "CLASSIC_SHORT_SET": {
         "title": "Sets cortos",
         "subtitle": "Sets a 4 juegos, al mejor de 3",
@@ -185,6 +190,7 @@
       "CLASSIC_BEST_OF_3": "Mejor de 3",
       "CLASSIC_BEST_OF_5": "Mejor de 5",
       "CLASSIC_PRO_SET": "Pro set",
+      "CLASSIC_SINGLE_SET": "Un set",
       "CLASSIC_SHORT_SET": "Sets cortos",
       "CLASSIC_SUPER_TIEBREAK": "Super tie-break",
       "CLASSIC_TIMED": "Juegos/sets · tiempo",

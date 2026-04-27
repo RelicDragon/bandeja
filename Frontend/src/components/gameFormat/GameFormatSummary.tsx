@@ -9,7 +9,7 @@ interface GameFormatSummaryProps {
   scoringPreset: ScoringPreset;
   generationType?: MatchGenerationType;
   hasGoldenPoint?: boolean;
-  isTimed?: boolean;
+  matchTimerEnabled?: boolean;
   matchTimedCapMinutes?: number;
   customPointsTotal?: number | null;
   className?: string;
@@ -21,7 +21,7 @@ export const GameFormatSummary = ({
   scoringPreset,
   generationType,
   hasGoldenPoint,
-  isTimed,
+  matchTimerEnabled,
   matchTimedCapMinutes,
   customPointsTotal,
   className,
@@ -33,7 +33,7 @@ export const GameFormatSummary = ({
     scoringPreset,
     generationType,
     hasGoldenPoint,
-    isTimed,
+    matchTimerEnabled,
     matchTimedCapMinutes,
     customPointsTotal,
   });

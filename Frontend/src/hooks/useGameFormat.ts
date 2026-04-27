@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Game, GameSetupParams, GameType, ScoringMode, ScoringPreset, MatchGenerationType } from '@/types';
 import {
   buildSetupFromFormat,
@@ -15,6 +15,12 @@ import {
 } from '@/utils/gameFormat';
 import { getGameTypeTemplate } from '@/utils/gameTypeTemplates';
 
+function initialMatchTimerEnabled(game?: Partial<Game> | null): boolean {
+  if (!game) return false;
+  if (game.matchTimerEnabled) return true;
+  return game.scoringPreset === 'TIMED' || game.scoringPreset === 'CLASSIC_TIMED';
+}
+
 export interface UseGameFormatResult {
   scoringMode: ScoringMode;
   scoringPreset: ScoringPreset;
@@ -26,13 +32,9 @@ export interface UseGameFormatResult {
   winnerOfGame: GameSetupParams['winnerOfGame'];
   prohibitMatchesEditing: boolean;
   overrides: Partial<GameSetupParams>;
-  /** Custom points total when user enters a non-standard value (POINTS mode only). */
   customPointsTotal: number | null;
-  /** Match ends when clock runs out (simple points or tennis-style one set). */
-  isTimed: boolean;
-  /** 1–60; used when `isTimed`. */
+  matchTimerEnabled: boolean;
   matchTimedCapMinutes: number;
-  /** Derived — do not use as wizard selection */
   gameType: GameType;
   setupPayload: GameSetupParams;
   setScoringMode: (mode: ScoringMode) => void;
@@ -40,7 +42,7 @@ export interface UseGameFormatResult {
   setGenerationType: (gen: MatchGenerationType) => void;
   setHasGoldenPoint: (v: boolean) => void;
   setCustomPointsTotal: (n: number | null) => void;
-  setMatchTimedCap: (v: boolean) => void;
+  setMatchTimerEnabled: (v: boolean) => void;
   setMatchTimedCapMinutes: (n: number) => void;
   setRanking: (patch: Partial<Pick<UseGameFormatResult, 'pointsPerWin' | 'pointsPerLoose' | 'pointsPerTie' | 'winnerOfGame' | 'prohibitMatchesEditing'>>) => void;
   setOverrides: (patch: Partial<GameSetupParams>) => void;
@@ -48,10 +50,6 @@ export interface UseGameFormatResult {
 }
 
 export interface UseGameFormatOptions {
-  /**
-   * When true, skip `defaultMatchGenerationForParticipants` so explicit `matchGenerationType`
-   * (e.g. HANDMADE for league season defaults) is not replaced by small-game AUTOMATIC rules.
-   */
   skipGenerationParticipantDefaults?: boolean;
 }
 
@@ -80,18 +78,6 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     initialMode === 'POINTS' ? false : Boolean(initial?.hasGoldenPoint),
   );
   const [customPointsTotal, setCustomPointsTotalState] = useState<number | null>(null);
-
-  const classicBeforeTimedRef = useRef<ScoringPreset>('CLASSIC_BEST_OF_3');
-  const pointsBeforeTimedRef = useRef<ScoringPreset>('POINTS_16');
-
-  useEffect(() => {
-    if (scoringMode === 'CLASSIC' && scoringPreset !== 'CLASSIC_TIMED' && scoringPreset.startsWith('CLASSIC_')) {
-      classicBeforeTimedRef.current = scoringPreset;
-    }
-    if (scoringMode === 'POINTS' && scoringPreset !== 'TIMED' && scoringPreset.startsWith('POINTS_')) {
-      pointsBeforeTimedRef.current = scoringPreset;
-    }
-  }, [scoringMode, scoringPreset]);
 
   useEffect(() => {
     if (skipGenerationParticipantDefaults || maxParticipants == null) return;
@@ -126,8 +112,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     return 15;
   })();
   const [matchTimedCapMinutes, setMatchTimedCapMinutesState] = useState<number>(initialTimedCap);
-
-  const isTimed = scoringPreset === 'TIMED' || scoringPreset === 'CLASSIC_TIMED';
+  const [matchTimerEnabled, setMatchTimerEnabledState] = useState<boolean>(() => initialMatchTimerEnabled(initial));
 
   const setScoringMode = useCallback(
     (mode: ScoringMode) => {
@@ -135,6 +120,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
       if (mode === 'POINTS') setHasGoldenPoint(false);
       setScoringPresetState(DEFAULT_PRESET_BY_MODE[mode]);
       setCustomPointsTotalState(null);
+      setMatchTimerEnabledState(false);
       setGenerationTypeState((prev) => {
         const nextGen = skipGenerationParticipantDefaults
           ? clampMatchGenerationType(effectiveMatchGeneration(mode, prev, maxParticipants), maxParticipants)
@@ -165,24 +151,13 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     setOverridesState({});
   }, []);
 
-  const setMatchTimedCap = useCallback(
-    (v: boolean) => {
-      if (scoringMode === 'CLASSIC') {
-        if (v) {
-          setScoringPresetState('CLASSIC_TIMED');
-          setMatchTimedCapMinutesState((prev) => (prev >= 1 && prev <= 60 ? prev : 15));
-        } else setScoringPresetState(classicBeforeTimedRef.current);
-      } else if (v) {
-        setCustomPointsTotalState(null);
-        setScoringPresetState('TIMED');
-        setMatchTimedCapMinutesState((prev) => (prev >= 1 && prev <= 60 ? prev : 15));
-      } else {
-        setScoringPresetState(pointsBeforeTimedRef.current);
-      }
-      setOverridesState({});
-    },
-    [scoringMode],
-  );
+  const setMatchTimerEnabled = useCallback((v: boolean) => {
+    setMatchTimerEnabledState(v);
+    if (v) {
+      setMatchTimedCapMinutesState((prev) => (prev >= 1 && prev <= 60 ? prev : 15));
+    }
+    setOverridesState({});
+  }, []);
 
   const setMatchTimedCapMinutes = useCallback((n: number) => {
     if (!Number.isFinite(n)) return;
@@ -245,9 +220,24 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
       prohibitMatchesEditing,
       customPointsTotal,
       matchTimedCapMinutes,
+      matchTimerEnabled,
       overrides,
     });
-  }, [scoringMode, scoringPreset, generationType, hasGoldenPoint, pointsPerWin, pointsPerLoose, pointsPerTie, winnerOfGame, prohibitMatchesEditing, customPointsTotal, matchTimedCapMinutes, overrides]);
+  }, [
+    scoringMode,
+    scoringPreset,
+    generationType,
+    hasGoldenPoint,
+    pointsPerWin,
+    pointsPerLoose,
+    pointsPerTie,
+    winnerOfGame,
+    prohibitMatchesEditing,
+    customPointsTotal,
+    matchTimedCapMinutes,
+    matchTimerEnabled,
+    overrides,
+  ]);
 
   return {
     scoringMode,
@@ -261,7 +251,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     prohibitMatchesEditing,
     overrides,
     customPointsTotal,
-    isTimed,
+    matchTimerEnabled,
     matchTimedCapMinutes,
     gameType: derivedGameType,
     setupPayload,
@@ -270,7 +260,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     setGenerationType,
     setHasGoldenPoint,
     setCustomPointsTotal,
-    setMatchTimedCap,
+    setMatchTimerEnabled,
     setMatchTimedCapMinutes,
     setRanking,
     setOverrides,

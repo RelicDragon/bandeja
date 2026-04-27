@@ -19,6 +19,7 @@ export interface CreateLeagueRequest {
       maxTotalPointsPerSet: number;
       maxPointsPerTeam: number;
       matchTimedCapMinutes?: number;
+      matchTimerEnabled?: boolean;
       winnerOfGame: string;
       winnerOfMatch: string;
       matchGenerationType: string;

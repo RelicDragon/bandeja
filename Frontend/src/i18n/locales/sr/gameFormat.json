@@ -137,6 +137,11 @@
         "subtitle": "Један дуг сет одлучује меч",
         "hint": "Један сет са гемовима"
       },
+      "CLASSIC_SINGLE_SET": {
+        "title": "Један сет",
+        "subtitle": "Стандардни сет до 6 гемова (ТБ при 6:6)",
+        "hint": "Један сет са гемовима; опционални тајмер у следећем кораку"
+      },
       "CLASSIC_SHORT_SET": {
         "title": "Кратки сетови",
         "subtitle": "Сетови до 4 гема, на 2 добијена",
@@ -187,6 +192,7 @@
       "CLASSIC_BEST_OF_3": "На 2 сета",
       "CLASSIC_BEST_OF_5": "На 3 сета",
       "CLASSIC_PRO_SET": "Про сет",
+      "CLASSIC_SINGLE_SET": "Један сет",
       "CLASSIC_SHORT_SET": "Кратки сетови",
       "CLASSIC_SUPER_TIEBREAK": "Супер тај-брејк",
       "CLASSIC_TIMED": "Гемови/сетови · вријеме",

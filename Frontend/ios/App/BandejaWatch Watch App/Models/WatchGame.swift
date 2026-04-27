@@ -34,6 +34,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     let ballsInGames: Bool?
     let scoringPreset: String?
     let matchTimedCapMinutes: Int?
+    let matchTimerEnabled: Bool?
     let hasGoldenPoint: Bool?
     let maxParticipants: Int?
     let timeIsSet: Bool
@@ -69,7 +70,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case id, name, gameType, entityType, status, resultsStatus
         case startTime, endTime, winnerOfMatch, winnerOfGame
-        case fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames, scoringPreset, matchTimedCapMinutes, hasGoldenPoint
+        case fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames, scoringPreset, matchTimedCapMinutes, matchTimerEnabled, hasGoldenPoint
         case maxParticipants, timeIsSet, affectsRating, hasFixedTeams, participantsReady, teamsReady, matchGenerationType, fixedTeams, resultsByAnyone
         case participants, parent, club
     }
@@ -96,6 +97,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         ballsInGames = try c.decodeIfPresent(Bool.self, forKey: .ballsInGames)
         scoringPreset = try c.decodeIfPresent(String.self, forKey: .scoringPreset)
         matchTimedCapMinutes = try c.decodeIfPresent(Int.self, forKey: .matchTimedCapMinutes)
+        matchTimerEnabled = try c.decodeIfPresent(Bool.self, forKey: .matchTimerEnabled)
         hasGoldenPoint = try c.decodeIfPresent(Bool.self, forKey: .hasGoldenPoint)
         maxParticipants = try c.decodeIfPresent(Int.self, forKey: .maxParticipants)
         timeIsSet = try c.decodeIfPresent(Bool.self, forKey: .timeIsSet) ?? false
@@ -113,7 +115,9 @@ struct WatchGame: Decodable, Identifiable, Sendable {
 
     var isMatchTimerEnabled: Bool {
         let cap = matchTimedCapMinutes ?? 0
-        guard cap >= 1, let p = scoringPreset?.uppercased() else { return false }
+        guard cap >= 1 else { return false }
+        if matchTimerEnabled == true { return true }
+        guard let p = scoringPreset?.uppercased() else { return false }
         return p == "TIMED" || p == "CLASSIC_TIMED"
     }
 }

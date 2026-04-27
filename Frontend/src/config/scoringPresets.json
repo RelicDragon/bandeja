@@ -17,6 +17,12 @@
     "maxTotalPointsPerSet": 0,
     "ballsInGames": true
   },
+  "CLASSIC_SINGLE_SET": {
+    "winnerOfMatch": "BY_SETS",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 0,
+    "ballsInGames": true
+  },
   "CLASSIC_SHORT_SET": {
     "winnerOfMatch": "BY_SETS",
     "fixedNumberOfSets": 3,

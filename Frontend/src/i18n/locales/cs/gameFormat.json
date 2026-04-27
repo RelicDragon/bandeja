@@ -137,6 +137,11 @@
         "subtitle": "Jeden dlouhý set rozhoduje zápas",
         "hint": "Jeden set s hrami"
       },
+      "CLASSIC_SINGLE_SET": {
+        "title": "Jeden set",
+        "subtitle": "Klasický set do 6 her (TB při 6:6)",
+        "hint": "Jeden set s hrami; volitelný časovač v dalším kroku"
+      },
       "CLASSIC_SHORT_SET": {
         "title": "Krátké sety",
         "subtitle": "Sety do 4 her, na 2 vítězné",
@@ -187,6 +192,7 @@
       "CLASSIC_BEST_OF_3": "Na 2 sety",
       "CLASSIC_BEST_OF_5": "Na 3 sety",
       "CLASSIC_PRO_SET": "Pro set",
+      "CLASSIC_SINGLE_SET": "Jeden set",
       "CLASSIC_SHORT_SET": "Krátké sety",
       "CLASSIC_SUPER_TIEBREAK": "Super tiebreak",
       "CLASSIC_TIMED": "Hry/sety · čas",

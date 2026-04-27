@@ -18,7 +18,7 @@ export const detectScoringPreset = (game?: Partial<Game> | null): ScoringPreset 
   if (pts === 21) return 'POINTS_21';
   if (pts === 24) return 'POINTS_24';
   if (pts === 32) return 'POINTS_32';
-  if (winnerOfMatch === 'BY_SCORES' && sets === 1 && pts === 0) return 'TIMED';
+  if (winnerOfMatch === 'BY_SCORES' && sets === 1 && pts === 0) return 'POINTS_21';
   return null;
 };
 

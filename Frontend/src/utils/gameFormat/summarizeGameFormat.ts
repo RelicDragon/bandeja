@@ -6,7 +6,7 @@ export interface SummarizeArgs {
   scoringPreset: ScoringPreset;
   generationType?: MatchGenerationType;
   hasGoldenPoint?: boolean;
-  isTimed?: boolean;
+  matchTimerEnabled?: boolean;
   matchTimedCapMinutes?: number;
   customPointsTotal?: number | null;
 }
@@ -16,20 +16,17 @@ const genKey = (g: MatchGenerationType) =>
 
 export const summarizeGameFormat = (t: TFunction, args: SummarizeArgs): string => {
   let scoring: string;
-  if (args.isTimed) {
-    scoring =
-      args.scoringMode === 'CLASSIC'
-        ? t('gameFormat.scoringShort.CLASSIC_TIMED')
-        : t('gameFormat.scoringShort.TIMED');
+  if (args.customPointsTotal != null) {
+    scoring = t('gameFormat.customPoints.short', { count: args.customPointsTotal });
+  } else {
+    scoring = t(`gameFormat.scoringShort.${args.scoringPreset}`);
+  }
+  if (args.matchTimerEnabled) {
     const cap =
       typeof args.matchTimedCapMinutes === 'number' && args.matchTimedCapMinutes >= 1 && args.matchTimedCapMinutes <= 60
         ? args.matchTimedCapMinutes
         : 15;
     scoring = `${scoring} · ${t('gameFormat.timedMatch.minutesLabel', { minutes: cap })}`;
-  } else if (args.customPointsTotal != null) {
-    scoring = t('gameFormat.customPoints.short', { count: args.customPointsTotal });
-  } else {
-    scoring = t(`gameFormat.scoringShort.${args.scoringPreset}`);
   }
 
   const parts: string[] = [scoring];

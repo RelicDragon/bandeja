@@ -26,9 +26,14 @@ export interface ScoringRules {
   allowDrawPerSet: boolean;
   hasGoldenPoint: boolean;
   allowRemoveSet: boolean;
+  /** Incomplete regular set games (e.g. at buzzer) when match timer is on or legacy timed preset. */
+  allowIncompleteRegularSetGames: boolean;
 }
 
-type RuleSkeleton = Omit<ScoringRules, 'preset' | 'hasGoldenPoint' | 'allowDrawPerSet' | 'maxPointsPerTeam'>;
+type RuleSkeleton = Omit<
+  ScoringRules,
+  'preset' | 'hasGoldenPoint' | 'allowDrawPerSet' | 'maxPointsPerTeam' | 'allowIncompleteRegularSetGames'
+>;
 
 const classicBo3: RuleSkeleton = {
   ballsInGames: true,
@@ -128,6 +133,7 @@ const PRESETS: Record<ScoringPreset, RuleSkeleton> = {
   CLASSIC_BEST_OF_5: classicBo5,
   CLASSIC_SUPER_TIEBREAK: classicSuperTb,
   CLASSIC_PRO_SET: classicProSet,
+  CLASSIC_SINGLE_SET: classicTimedMatch,
   CLASSIC_SHORT_SET: classicShortSet,
   CLASSIC_TIMED: classicTimedMatch,
   POINTS_16: pointsRule(16),
@@ -148,6 +154,7 @@ type RulesSource = Pick<
   | 'ballsInGames'
   | 'hasGoldenPoint'
   | 'pointsPerTie'
+  | 'matchTimerEnabled'
 > | null | undefined;
 
 export const getRulesFromPreset = (preset: ScoringPreset): RuleSkeleton => PRESETS[preset];
@@ -161,12 +168,16 @@ export const getRules = (game: RulesSource): ScoringRules => {
 
   const goldenApplies = base.ballsInGames && base.winnerOfMatch === 'BY_SETS';
 
+  const allowIncompleteRegularSetGames =
+    Boolean(game?.matchTimerEnabled) || preset === 'CLASSIC_TIMED';
+
   return {
     ...base,
     preset: preset ?? 'DERIVED',
     allowDrawPerSet,
     hasGoldenPoint: goldenApplies && !!game?.hasGoldenPoint,
     maxPointsPerTeam: game?.maxPointsPerTeam ?? 0,
+    allowIncompleteRegularSetGames,
   };
 };
 
@@ -205,4 +216,5 @@ export const isPointsRules = (rules: ScoringRules): boolean => !rules.ballsInGam
 export const isTimedRules = (rules: ScoringRules): boolean => !rules.ballsInGames && rules.totalPointsPerSet === 0 && rules.winnerOfMatch === 'BY_SCORES' && rules.fixedNumberOfSets === 1;
 
 /** Timed one-set classic: any non-negative games score (e.g. at buzzer) except tiebreak rows stay strict. */
-export const isClassicTimedRelaxedGameScores = (rules: ScoringRules): boolean => rules.preset === 'CLASSIC_TIMED';
+export const isClassicTimedRelaxedGameScores = (rules: ScoringRules): boolean =>
+  rules.allowIncompleteRegularSetGames === true;

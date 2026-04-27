@@ -45,7 +45,7 @@ export const GameFormatDetails = ({ format, generationSlotCount, hasFixedTeams }
     scoringPreset,
     generationType,
     hasGoldenPoint,
-    isTimed,
+    matchTimerEnabled,
     matchTimedCapMinutes,
     customPointsTotal,
     pointsPerWin,
@@ -55,18 +55,12 @@ export const GameFormatDetails = ({ format, generationSlotCount, hasFixedTeams }
     setupPayload,
   } = format;
 
-  const scoringTitle = isTimed
-    ? scoringPreset === 'CLASSIC_TIMED'
-      ? t('gameFormat.scoring.CLASSIC_TIMED.title')
-      : t('gameFormat.timedMatch.title')
-    : customPointsTotal != null
+  const scoringTitle =
+    customPointsTotal != null
       ? t('gameFormat.customPoints.short', { count: customPointsTotal })
       : t(`gameFormat.scoring.${scoringPreset}.title`);
-  const scoringSubtitle = isTimed
-    ? scoringPreset === 'CLASSIC_TIMED'
-      ? t('gameFormat.timedMatch.descriptionClassic')
-      : t('gameFormat.timedMatch.description')
-    : customPointsTotal != null
+  const scoringSubtitle =
+    customPointsTotal != null
       ? ''
       : t(`gameFormat.scoring.${scoringPreset}.subtitle`, { defaultValue: '' });
 
@@ -103,7 +97,7 @@ export const GameFormatDetails = ({ format, generationSlotCount, hasFixedTeams }
         value={scoringTitle}
         note={scoringSubtitle || undefined}
       />
-      {isTimed && (
+      {matchTimerEnabled && (
         <DetailRow
           label={t('gameFormat.timedMatch.durationTitle')}
           value={t('gameFormat.timedMatch.minutesLabel', {

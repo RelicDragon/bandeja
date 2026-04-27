@@ -29,6 +29,7 @@ export type ScoringPreset =
   | 'CLASSIC_PRO_SET'
   | 'CLASSIC_SHORT_SET'
   | 'CLASSIC_SUPER_TIEBREAK'
+  | 'CLASSIC_SINGLE_SET'
   | 'CLASSIC_TIMED'
   | 'POINTS_16'
   | 'POINTS_21'
@@ -39,7 +40,8 @@ export type ScoringPreset =
 export interface GameSetupParams {
   fixedNumberOfSets: number;
   maxTotalPointsPerSet: number;
-  /** Minutes per match when timed preset; 0 otherwise. */
+  matchTimerEnabled?: boolean;
+  /** Minutes per match when `matchTimerEnabled`; 0 otherwise. */
   matchTimedCapMinutes: number;
   maxPointsPerTeam: number;
   winnerOfGame: WinnerOfGame;
@@ -365,6 +367,7 @@ export interface Game {
   fixedNumberOfSets?: number;
   maxTotalPointsPerSet?: number;
   matchTimedCapMinutes?: number;
+  matchTimerEnabled?: boolean;
   maxPointsPerTeam?: number;
   winnerOfGame?: WinnerOfGame;
   winnerOfMatch?: WinnerOfMatch;

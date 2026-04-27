@@ -14,6 +14,8 @@ import { BarResultsService } from '../barResults.service';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { goldenPointAllowedForFormat, validateScoringPreset } from '../../utils/validators/gameFormat';
 import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
+import { normalizeLegacyTimedScoringPreset } from '../../utils/scoring/matchTimerGame';
+import { ScoringPreset } from '@prisma/client';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 
@@ -85,31 +87,60 @@ export class GameUpdateService {
     }
 
     if (data.scoringPreset !== undefined) {
-      updateData.scoringPreset = validateScoringPreset(data.gameType, data.scoringPreset);
+      let p = validateScoringPreset(data.gameType, data.scoringPreset);
+      const leg = normalizeLegacyTimedScoringPreset(p);
+      updateData.scoringPreset = leg.scoringPreset;
+      if (leg.matchTimerEnabled) updateData.matchTimerEnabled = true;
+      if (leg.bumpPointsCapTo21) {
+        const nextPts =
+          data.maxTotalPointsPerSet !== undefined ? data.maxTotalPointsPerSet : undefined;
+        if (nextPts === undefined) {
+          const r = await prisma.game.findUnique({ where: { id }, select: { maxTotalPointsPerSet: true } });
+          if ((r?.maxTotalPointsPerSet ?? 0) < 1) updateData.maxTotalPointsPerSet = 21;
+        } else if (typeof nextPts === 'number' && nextPts < 1) {
+          updateData.maxTotalPointsPerSet = 21;
+        }
+      }
     }
 
     if (data.scoringMode !== undefined) {
       updateData.scoringMode = data.scoringMode ?? null;
     }
 
+    if (data.matchTimerEnabled !== undefined) {
+      updateData.matchTimerEnabled = Boolean(data.matchTimerEnabled);
+    }
+
+    const timerRow = async () =>
+      prisma.game.findUnique({
+        where: { id },
+        select: { scoringPreset: true, matchTimerEnabled: true },
+      });
+
     if (data.matchTimedCapMinutes !== undefined) {
       let m =
         typeof data.matchTimedCapMinutes === 'number' && Number.isFinite(data.matchTimedCapMinutes)
           ? Math.min(60, Math.max(0, Math.round(data.matchTimedCapMinutes)))
           : 0;
-      let preset = updateData.scoringPreset as string | null | undefined;
-      if (preset === undefined) {
-        const row = await prisma.game.findUnique({ where: { id }, select: { scoringPreset: true } });
-        preset = row?.scoringPreset ?? null;
-      }
-      if (preset !== 'TIMED' && preset !== 'CLASSIC_TIMED') m = 0;
+      const row = await timerRow();
+      const preset =
+        (updateData.scoringPreset as ScoringPreset | null | undefined) ?? row?.scoringPreset ?? null;
+      const timerOn =
+        (updateData.matchTimerEnabled ?? row?.matchTimerEnabled) === true ||
+        preset === ScoringPreset.TIMED ||
+        preset === ScoringPreset.CLASSIC_TIMED;
+      if (!timerOn) m = 0;
       else if (m < 1) m = 15;
       updateData.matchTimedCapMinutes = m;
-    } else if (data.scoringPreset !== undefined) {
-      const p = updateData.scoringPreset;
-      if (p !== 'TIMED' && p !== 'CLASSIC_TIMED') {
-        updateData.matchTimedCapMinutes = 0;
-      }
+    } else if (data.scoringPreset !== undefined || data.matchTimerEnabled !== undefined) {
+      const row = await timerRow();
+      const preset =
+        (updateData.scoringPreset as ScoringPreset | null | undefined) ?? row?.scoringPreset ?? null;
+      const timerOn =
+        (updateData.matchTimerEnabled ?? row?.matchTimerEnabled) === true ||
+        preset === ScoringPreset.TIMED ||
+        preset === ScoringPreset.CLASSIC_TIMED;
+      if (!timerOn) updateData.matchTimedCapMinutes = 0;
     }
 
     // Handle avatar deletion

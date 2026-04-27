@@ -334,8 +334,9 @@ model Game {
   resultsMeta            Json?
   fixedNumberOfSets      Int                 @default(0)
   maxTotalPointsPerSet   Int                 @default(0)
-  /// Per-match time cap in minutes when scoringPreset is TIMED or CLASSIC_TIMED; otherwise 0.
+  /// Per-match time cap in minutes when `matchTimerEnabled` is true; otherwise 0.
   matchTimedCapMinutes   Int                 @default(0)
+  matchTimerEnabled      Boolean             @default(false)
   maxPointsPerTeam       Int                 @default(0)
   winnerOfGame           WinnerOfGame        @default(BY_MATCHES_WON)
   winnerOfMatch          WinnerOfMatch       @default(BY_SCORES)
@@ -1518,6 +1519,7 @@ enum ScoringPreset {
   CLASSIC_PRO_SET
   CLASSIC_SHORT_SET
   CLASSIC_SUPER_TIEBREAK
+  CLASSIC_SINGLE_SET
   CLASSIC_TIMED
   POINTS_16
   POINTS_21
