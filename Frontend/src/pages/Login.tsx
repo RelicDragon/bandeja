@@ -123,11 +123,19 @@ export const Login = () => {
 
   const handleGoogleSignIn = async () => {
     setError('');
+    setLoading(true);
+    const clearLoadingTimer = setTimeout(() => setLoading(false), 5000);
     try {
-      const result = await signInWithGoogle();
+      const result = await signInWithGoogle({
+        onUiOpened: () => {
+          clearTimeout(clearLoadingTimer);
+          setLoading(false);
+        },
+      });
       if (!result) {
         return;
       }
+      clearTimeout(clearLoadingTimer);
       setLoading(true);
       const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
       const profile = result.profile;
@@ -144,8 +152,10 @@ export const Login = () => {
       await pushNotificationService.ensureTokenSentToBackend();
       navigate('/');
     } catch (err: any) {
+      clearTimeout(clearLoadingTimer);
       if (!isCancelError(err)) setError(extractApiErrorMessage(err, t));
     } finally {
+      clearTimeout(clearLoadingTimer);
       setLoading(false);
     }
   };

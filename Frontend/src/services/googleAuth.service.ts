@@ -54,6 +54,10 @@ type ActiveWebAttempt = {
   reject: (error: Error) => void;
 };
 
+interface GoogleSignInOptions {
+  onUiOpened?: () => void;
+}
+
 const GSI_INIT_DONE_KEY = '__padelpulseGsiInitDone';
 const GSI_INIT_CLIENT_ID_KEY = '__padelpulseGsiInitClientId';
 const GSI_DISPATCH_KEY = '__padelpulseGsiDispatchCredential';
@@ -79,7 +83,7 @@ declare global {
   }
 }
 
-function signInWithGoogleWeb(): Promise<GoogleAuthResult | null> {
+function signInWithGoogleWeb(options?: GoogleSignInOptions): Promise<GoogleAuthResult | null> {
   if (activeWebAttempt && !activeWebAttempt.settled) {
     try {
       window.google?.accounts.id.cancel?.();
@@ -226,6 +230,7 @@ function signInWithGoogleWeb(): Promise<GoogleAuthResult | null> {
             finishReject(new Error('auth.googleButtonInitFailed'));
             return;
           }
+          options?.onUiOpened?.();
           button.click();
         };
 
@@ -265,10 +270,11 @@ function isReauthError(error: unknown): boolean {
   return s.includes('reauth') || s.includes('[16]') || s.includes('account reauth failed');
 }
 
-async function signInWithGoogleNative(): Promise<GoogleAuthResult | null> {
+async function signInWithGoogleNative(options?: GoogleSignInOptions): Promise<GoogleAuthResult | null> {
   const LOGIN_TIMEOUT_MS = 60_000;
   const platform = Capacitor.getPlatform();
 
+  options?.onUiOpened?.();
   const loginPromise = SocialLogin.login({
     provider: 'google',
     options: {
@@ -313,7 +319,7 @@ async function signInWithGoogleNative(): Promise<GoogleAuthResult | null> {
   };
 }
 
-export async function signInWithGoogle(): Promise<GoogleAuthResult | null> {
+export async function signInWithGoogle(options?: GoogleSignInOptions): Promise<GoogleAuthResult | null> {
   try {
     const isNative = Capacitor.isNativePlatform();
 
@@ -323,7 +329,7 @@ export async function signInWithGoogle(): Promise<GoogleAuthResult | null> {
       }
 
       try {
-        return await signInWithGoogleNative();
+        return await signInWithGoogleNative(options);
       } catch (firstError) {
         if (isReauthError(firstError)) {
           try {
@@ -331,12 +337,12 @@ export async function signInWithGoogle(): Promise<GoogleAuthResult | null> {
           } catch {
             // ignore logout errors
           }
-          return await signInWithGoogleNative();
+          return await signInWithGoogleNative(options);
         }
         throw firstError;
       }
     } else {
-      return await signInWithGoogleWeb();
+      return await signInWithGoogleWeb(options);
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : '';

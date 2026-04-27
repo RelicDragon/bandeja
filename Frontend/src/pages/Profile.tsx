@@ -425,12 +425,20 @@ export const ProfileContent = () => {
   };
 
   const handleLinkGoogle = async () => {
+    setIsLinkingGoogle(true);
+    const clearLoadingTimer = setTimeout(() => setIsLinkingGoogle(false), 5000);
     try {
-      const result = await signInWithGoogle();
+      const result = await signInWithGoogle({
+        onUiOpened: () => {
+          clearTimeout(clearLoadingTimer);
+          setIsLinkingGoogle(false);
+        },
+      });
       
       if (!result || !result.idToken) {
         return;
       }
+      clearTimeout(clearLoadingTimer);
       setIsLinkingGoogle(true);
 
       const response = await authApi.linkGoogle({
@@ -440,9 +448,11 @@ export const ProfileContent = () => {
       updateUser(response.data.user);
       toast.success(t('profile.googleLinked') || 'Google account linked successfully');
     } catch (error: any) {
+      clearTimeout(clearLoadingTimer);
       const errorMessage = error.response?.data?.message || error.message || t('errors.generic');
       toast.error(t(errorMessage) !== errorMessage ? t(errorMessage) : errorMessage);
     } finally {
+      clearTimeout(clearLoadingTimer);
       setIsLinkingGoogle(false);
     }
   };
