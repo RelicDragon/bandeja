@@ -135,7 +135,12 @@ export class ResultsTelegramService {
 
           const setsText = match.sets
             ?.filter((set: any) => set.teamAScore > 0 || set.teamBScore > 0)
-            .map((set: any) => `${set.teamAScore}:${set.teamBScore}`)
+            .map((set: any) => {
+              const base = `${set.teamAScore}:${set.teamBScore}`;
+              if (set.role === 'EXTRA_GAMES') return `${base} (extra games · stats only)`;
+              if (set.role === 'EXTRA_BALLS') return `${base} (extra balls · stats only)`;
+              return base;
+            })
             .join(', ') || '';
 
           if (!setsText) return '';

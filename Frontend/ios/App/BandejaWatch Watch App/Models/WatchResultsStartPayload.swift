@@ -25,6 +25,14 @@ struct WatchSyncSetBody: Encodable, Sendable {
     let teamA: Int
     let teamB: Int
     let isTieBreak: Bool
+    let role: WatchMatchSetRole
+
+    init(teamA: Int, teamB: Int, isTieBreak: Bool, role: WatchMatchSetRole = .official) {
+        self.teamA = teamA
+        self.teamB = teamB
+        self.isTieBreak = isTieBreak
+        self.role = role
+    }
 }
 
 enum WatchResultsRoundBuilder {
@@ -100,7 +108,7 @@ enum WatchResultsRoundBuilder {
         let wom = game.winnerOfMatch?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let classicBySets = game.ballsInGames == true && wom == "BY_SETS"
         let rowCount = classicBySets ? (n / 2 + 1) : n
-        return (0..<rowCount).map { _ in WatchSyncSetBody(teamA: 0, teamB: 0, isTieBreak: false) }
+        return (0..<rowCount).map { _ in WatchSyncSetBody(teamA: 0, teamB: 0, isTieBreak: false, role: .official) }
     }
 }
 

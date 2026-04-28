@@ -7,6 +7,7 @@ import {
 } from '../socialLevelConstants';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { isPlacementProtectedFromNegativeRating } from './ratingPlacementFloor';
+import { isOfficialMatchSetRole } from './matchSetRole';
 
 interface ExplanationData {
   userId: string;
@@ -178,7 +179,9 @@ export async function getOutcomeExplanation(
 
   for (const round of game.rounds) {
     for (const match of round.matches) {
-      const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+      const validSets = match.sets.filter(
+        set => (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role)
+      );
       if (validSets.length === 0) continue;
 
       const userTeam = match.teams.find(t => t.players.some(p => p.userId === userId));

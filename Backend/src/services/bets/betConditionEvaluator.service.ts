@@ -1,4 +1,4 @@
-import { Bet } from '@prisma/client';
+import { Bet, MatchSetRole } from '@prisma/client';
 
 export interface BetCondition {
   type: 'PREDEFINED' | 'CUSTOM';
@@ -26,6 +26,7 @@ interface GameResultsData {
       sets: Array<{
         teamAScore: number;
         teamBScore: number;
+        role?: MatchSetRole;
       }>;
       winnerId?: string | null;
     }>;
@@ -39,6 +40,10 @@ interface GameResultsData {
     position?: number;
   }>;
   fixedTeams?: Array<{ id: string; teamNumber: number; playerIds: string[] }>;
+}
+
+function isOfficialBetSet(set: { role?: MatchSetRole }): boolean {
+  return !set.role || set.role === MatchSetRole.OFFICIAL;
 }
 
 function getFixedTeamPlayerIds(entityId: string, gameResults: GameResultsData): string[] | null {
@@ -182,6 +187,7 @@ function evaluateWinAtLeastOneSet(entityType: 'USER' | 'TEAM', entityId: string,
       const entityTeam = findEntityMatchTeam(entityType, entityId, match, gameResults);
       if (entityTeam) {
         for (const set of match.sets) {
+          if (!isOfficialBetSet(set)) continue;
           const wonSet = (entityTeam.teamNumber === 1 && set.teamAScore > set.teamBScore) ||
             (entityTeam.teamNumber === 2 && set.teamBScore > set.teamAScore);
           if (wonSet) return { won: true };
@@ -200,6 +206,7 @@ function evaluateLoseAllSets(entityType: 'USER' | 'TEAM', entityId: string, game
       const entityTeam = findEntityMatchTeam(entityType, entityId, match, gameResults);
       if (entityTeam) {
         for (const set of match.sets) {
+          if (!isOfficialBetSet(set)) continue;
           playedAnySet = true;
           const wonSet = (entityTeam.teamNumber === 1 && set.teamAScore > set.teamBScore) ||
             (entityTeam.teamNumber === 2 && set.teamBScore > set.teamAScore);
@@ -219,6 +226,7 @@ function evaluateWinAllSets(entityType: 'USER' | 'TEAM', entityId: string, gameR
       const entityTeam = findEntityMatchTeam(entityType, entityId, match, gameResults);
       if (entityTeam) {
         for (const set of match.sets) {
+          if (!isOfficialBetSet(set)) continue;
           playedAnySet = true;
           const lostSet = (entityTeam.teamNumber === 1 && set.teamAScore < set.teamBScore) ||
             (entityTeam.teamNumber === 2 && set.teamBScore < set.teamAScore);

@@ -4,14 +4,21 @@ struct AmericanoScoringView: View {
     @Bindable var vm: MatchScoringViewModel
     let onFinish: () -> Void
     @Environment(WatchPreferencesStore.self) private var prefs
+    @State private var showMoreActions = false
 
     var body: some View {
         let lang = prefs.uiLanguageCode
         VStack(spacing: 10) {
-            Text(vm.ballCapScoringTitle(lang: lang))
+            Text(
+                vm.sets[safe: vm.activeSetIndex].map { s in
+                    s.resolvedRole == .official
+                        ? vm.ballCapScoringTitle(lang: lang)
+                        : WatchCopy.supplementalBanner(lang, role: s.resolvedRole)
+                } ?? vm.ballCapScoringTitle(lang: lang)
+            )
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            if vm.rawFixedNumberOfSets > 1 {
+            if vm.rawFixedNumberOfSets > 1, !vm.activeSetIsSupplemental {
                 Text("\(WatchCopy.setWord(lang)) \(vm.activeSetIndex + 1)/\(vm.rawFixedNumberOfSets)")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
@@ -37,11 +44,38 @@ struct AmericanoScoringView: View {
                     decrementDisabled: bScore <= 0
                 )
             }
-            if vm.canAdvanceToNextSet {
+            if vm.canAdvanceToNextSet() {
                 Button(WatchCopy.nextSet(lang)) {
                     vm.nextSet()
                 }
                 .buttonStyle(.bordered)
+            }
+            if !vm.isReadOnly {
+                Button {
+                    showMoreActions = true
+                } label: {
+                    Label(WatchCopy.moreScoringActions(lang), systemImage: "ellipsis.circle")
+                }
+                .buttonStyle(.bordered)
+                .confirmationDialog(
+                    WatchCopy.moreScoringActions(lang),
+                    isPresented: $showMoreActions,
+                    titleVisibility: .visible
+                ) {
+                    Button(WatchCopy.saveSet(lang)) {
+                        Task { await vm.saveCurrentSets() }
+                    }
+                    .disabled(vm.isSaving)
+                    Button(WatchCopy.addExtraGamesRow(lang)) {
+                        vm.appendSupplementalSet(kind: .extraGames)
+                    }
+                    Button(WatchCopy.addExtraBallsRow(lang)) {
+                        vm.appendSupplementalSet(kind: .extraBalls)
+                    }
+                    if vm.canAdvanceToNextSet() {
+                        Button(WatchCopy.nextSet(lang)) { vm.nextSet() }
+                    }
+                }
             }
             Button(vm.isSaving ? WatchCopy.saving(lang) : WatchCopy.finishMatch(lang)) {
                 onFinish()

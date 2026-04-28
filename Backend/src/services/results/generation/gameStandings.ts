@@ -8,6 +8,10 @@ import type {
   GenSetResult as SetResult,
 } from './types';
 
+function isOfficialGenSet(set: SetResult): boolean {
+  return !set.role || set.role === 'OFFICIAL';
+}
+
 function getSetScoreForDelta(set: SetResult, side: 'A' | 'B'): number {
   if (set.isTieBreak) {
     const aWon = set.teamA > set.teamB;
@@ -69,7 +73,9 @@ function calculateMatchWinner(
     return match.winnerId;
   }
 
-  const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
+  const validSets = match.sets.filter(
+    set => (set.teamA > 0 || set.teamB > 0) && isOfficialGenSet(set)
+  );
   if (validSets.length === 0) {
     return null;
   }
@@ -122,7 +128,9 @@ function calculatePlayerStats(
     if (!round.matches || round.matches.length === 0) continue;
 
     for (const match of round.matches) {
-      const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
+      const validSets = match.sets.filter(
+        set => (set.teamA > 0 || set.teamB > 0) && isOfficialGenSet(set)
+      );
       if (validSets.length === 0) continue;
 
       const isInTeamA = match.teamA.includes(playerId);

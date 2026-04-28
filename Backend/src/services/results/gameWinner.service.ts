@@ -1,5 +1,6 @@
 import { WinnerOfGame, WinnerOfMatch, Prisma } from '@prisma/client';
 import { getMatchScoresForDelta } from './setScoreDelta';
+import { isOfficialMatchSetRole } from './matchSetRole';
 
 interface PlayerGameScore {
   userId: string;
@@ -265,7 +266,9 @@ async function getPlayerGameScores(
         continue;
       }
 
-      const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+      const validSets = match.sets.filter(
+        set => (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role)
+      );
       if (validSets.length === 0) {
         console.log(`[GAME PLAYER SCORES] Skipping match ${match.id} - no valid sets (all sets are 0:0)`);
         continue;
@@ -314,7 +317,7 @@ function calculateHeadToHeadMap(
           teamNumber: number;
           players: Array<{ userId: string }>;
         }>;
-        sets: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }>;
+        sets: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean; role: import('@prisma/client').MatchSetRole }>;
         winnerId: string | null;
       }>;
     }>;
@@ -348,7 +351,9 @@ function calculateHeadToHeadMap(
 
       for (const round of game.rounds) {
         for (const match of round.matches) {
-          const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+          const validSets = match.sets.filter(
+            set => (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role)
+          );
           if (validSets.length === 0) continue;
 
           const teamA = match.teams.find(t => t.teamNumber === 1);

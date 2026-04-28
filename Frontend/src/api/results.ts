@@ -26,6 +26,7 @@ export interface MatchData {
     teamAScore: number;
     teamBScore: number;
     isTieBreak?: boolean;
+    role?: string;
   }>;
   courtId?: string;
 }
@@ -109,7 +110,7 @@ export const resultsApi = {
   updateMatch: async (gameId: string, matchId: string, match: {
     teamA: string[];
     teamB: string[];
-    sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>;
+    sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: string }>;
     courtId?: string;
   }) => {
     const response = await api.put<ApiResponse<void>>(

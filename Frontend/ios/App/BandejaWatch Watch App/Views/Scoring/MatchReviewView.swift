@@ -12,7 +12,7 @@ struct MatchReviewView: View {
             Section(WatchCopy.sets(lang)) {
                 ForEach(0..<vm.sets.count, id: \.self) { idx in
                     HStack {
-                        Text(WatchCopy.setLabel(lang, number: idx + 1))
+                        Text(WatchCopy.setReviewLabel(lang, oneBasedIndex: idx + 1, role: vm.sets[idx].role))
                             .font(.caption2)
                         Spacer(minLength: 8)
                         Text("\(vm.sets[idx].teamA)-\(vm.sets[idx].teamB)")

@@ -268,7 +268,12 @@ export const LeagueGameCard = ({
                       key={`r${roundIndex}-m${matchIndex}-s${setIndex}`}
                       className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 flex flex-col items-center gap-0"
                     >
-                      <span>{set.teamAScore}:{set.teamBScore}</span>
+                      <span>
+                        {set.teamAScore}:{set.teamBScore}
+                        {set.role === 'EXTRA_GAMES' || set.role === 'EXTRA_BALLS' ? (
+                          <span className="text-violet-500">*</span>
+                        ) : null}
+                      </span>
                       {set.isTieBreak && (
                         <span className="text-[9px] font-medium text-primary-600 dark:text-primary-400 leading-none">
                           {isSuperTieBreakDeciderRow(leagueCardRules, setIndex, set.isTieBreak)

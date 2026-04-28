@@ -15,6 +15,12 @@ import {
   type MatchTimerAction,
   type MatchTimerSnapshot,
 } from '@/utils/matchTimer';
+import {
+  isSupplementalMatchSet,
+  parseMatchSetRole,
+  splitOfficialAndSupplementalSets,
+  validateSupplementalSetOrder,
+} from '@/utils/matchSetRole';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 
@@ -524,7 +530,7 @@ class GameResultsEngineClass {
   async updateMatch(roundId: string, matchId: string, match: {
     teamA: string[];
     teamB: string[];
-    sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>;
+    sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: import('@/utils/matchSetRole').MatchSetRole }>;
     courtId?: string;
   }): Promise<void> {
     const state = this.getState();
@@ -556,25 +562,45 @@ class GameResultsEngineClass {
 
     if (state.game) {
       const fixedNumberOfSets = state.game.fixedNumberOfSets || 0;
+      const orderErr = validateSupplementalSetOrder(match.sets.map((s) => parseMatchSetRole(s.role)));
+      if (orderErr) {
+        throw new Error(orderErr);
+      }
+
+      const { official, supplemental } = splitOfficialAndSupplementalSets(match.sets);
+      if (supplemental.some((s) => s.isTieBreak)) {
+        throw new Error('Extra sets cannot be tie-breaks');
+      }
+
+      if (fixedNumberOfSets > 0 && official.length > fixedNumberOfSets) {
+        throw new Error(`Cannot have more than ${fixedNumberOfSets} official sets`);
+      }
 
       for (let i = 0; i < match.sets.length; i++) {
         const set = match.sets[i];
-        
+        if (isSupplementalMatchSet(set)) {
+          if (set.teamA < 0 || set.teamB < 0 || set.teamA > 9999 || set.teamB > 9999) {
+            throw new Error('Invalid extra set scores');
+          }
+          continue;
+        }
+
         const scoreError = validateSetScores(set.teamA, set.teamB, state.game);
         if (scoreError) {
           throw new Error(scoreError);
         }
 
-        const indexError = validateSetIndexAgainstFixed(i, fixedNumberOfSets);
+        const officialIndex = official.indexOf(set);
+        const indexForFixed = officialIndex >= 0 ? officialIndex : i;
+        const indexError = validateSetIndexAgainstFixed(indexForFixed, fixedNumberOfSets);
         if (indexError) {
           throw new Error(indexError);
         }
 
-        // Validate TieBreak rules
         if (set.isTieBreak) {
           const tieBreakError = validateTieBreak(
-            i,
-            match.sets,
+            indexForFixed,
+            official,
             fixedNumberOfSets,
             set.isTieBreak,
             state.game.ballsInGames || false
@@ -583,10 +609,6 @@ class GameResultsEngineClass {
             throw new Error(tieBreakError);
           }
         }
-      }
-
-      if (fixedNumberOfSets > 0 && match.sets.length > fixedNumberOfSets) {
-        throw new Error(`Cannot have more than ${fixedNumberOfSets} sets`);
       }
     }
 
@@ -730,7 +752,12 @@ class GameResultsEngineClass {
           }
             
             const sets = match.sets && Array.isArray(match.sets) && match.sets.length > 0
-              ? match.sets.map((s: any) => ({ teamA: s.teamAScore || 0, teamB: s.teamBScore || 0, isTieBreak: s.isTieBreak || false }))
+              ? match.sets.map((s: any) => ({
+                  teamA: s.teamAScore || 0,
+                  teamB: s.teamBScore || 0,
+                  isTieBreak: s.isTieBreak || false,
+                  role: parseMatchSetRole(s.role),
+                }))
               : [{ teamA: 0, teamB: 0, isTieBreak: false }];
             
             let winnerTeam: 'teamA' | 'teamB' | null = null;

@@ -1,10 +1,12 @@
 import type { MatchTimerSnapshot } from '@/utils/matchTimer';
+import type { MatchSetRole } from '@/utils/matchSetRole';
 
 export interface SetResult {
   id?: string;
   teamA: number;
   teamB: number;
   isTieBreak?: boolean;
+  role?: MatchSetRole;
 }
 
 export interface Match {

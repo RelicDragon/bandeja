@@ -1124,14 +1124,19 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     const fixedNumberOfSets = game.fixedNumberOfSets || 0;
     if (fixedNumberOfSets > 0) {
       while (newSets.length < fixedNumberOfSets && newSets.length <= setIndex) {
-        newSets.push({ teamA: 0, teamB: 0, isTieBreak: false });
+        newSets.push({ teamA: 0, teamB: 0, isTieBreak: false, role: 'OFFICIAL' });
       }
     } else {
       while (newSets.length <= setIndex) {
-        newSets.push({ teamA: 0, teamB: 0, isTieBreak: false });
+        newSets.push({ teamA: 0, teamB: 0, isTieBreak: false, role: 'OFFICIAL' });
       }
     }
-    newSets[setIndex] = { teamA: teamAScore, teamB: teamBScore, isTieBreak: isTieBreak || false };
+    newSets[setIndex] = {
+      ...newSets[setIndex],
+      teamA: teamAScore,
+      teamB: teamBScore,
+      isTieBreak: isTieBreak || false,
+    };
 
     await GameResultsEngine.updateMatch(tableSetModal.roundId, matchId, {
       teamA: match.teamA,

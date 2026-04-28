@@ -69,6 +69,7 @@ export function prismaRoundsToGenRounds(game: GameForRoundGeneration): GenRound[
         teamA: s.teamAScore || 0,
         teamB: s.teamBScore || 0,
         isTieBreak: s.isTieBreak || false,
+        role: s.role,
       }));
       const slicedSets = sets.length > 0 ? sets : [{ teamA: 0, teamB: 0, isTieBreak: false }];
       let winnerId: 'teamA' | 'teamB' | null = null;

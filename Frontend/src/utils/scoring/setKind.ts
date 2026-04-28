@@ -1,4 +1,5 @@
 import type { SetResult } from '@/types/gameResults';
+import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import type { ScoringRules, SetKind } from './rulebook';
 import { isClassicRules, isPointsRules, isTimedRules } from './rulebook';
 import { countSetsWon } from './matchWinner';
@@ -9,6 +10,8 @@ export const getSetKind = (
   rules: ScoringRules,
   setBeingUpdated?: Pick<SetResult, 'teamA' | 'teamB' | 'isTieBreak'>
 ): SetKind => {
+  const row = sets[setIndex];
+  if (row && isSupplementalMatchSet(row)) return 'CUSTOM';
   if (isPointsRules(rules)) return 'POINTS';
   if (isTimedRules(rules)) return 'TIMED';
   if (!isClassicRules(rules)) return 'CUSTOM';

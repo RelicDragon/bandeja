@@ -17,6 +17,8 @@ import {
   getScoreEntryExampleList,
   isClassicTimedRelaxedGameScores,
 } from '@/utils/scoring';
+import { isSupplementalMatchSet, type MatchSetRole } from '@/utils/matchSetRole';
+
 interface SetResultModalProps {
   match: Match;
   setIndex: number;
@@ -38,7 +40,14 @@ interface SetResultModalProps {
     | 'pointsPerTie'
     | 'matchTimedCapMinutes'
   > | null;
-  onSave: (matchId: string, setIndex: number, teamAScore: number, teamBScore: number, isTieBreak?: boolean) => void;
+  onSave: (
+    matchId: string,
+    setIndex: number,
+    teamAScore: number,
+    teamBScore: number,
+    isTieBreak?: boolean,
+    supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>
+  ) => void;
   onRemove?: (matchId: string, setIndex: number) => void;
   onClose: () => void;
   canRemove?: boolean;
@@ -81,7 +90,14 @@ export const SetResultModal = ({
     [game, fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames]
   );
 
-  const currentSet = match.sets[setIndex] || { teamA: 0, teamB: 0, isTieBreak: false };
+  const currentSet = useMemo(
+    () => match.sets[setIndex] || { teamA: 0, teamB: 0, isTieBreak: false },
+    [match.sets, setIndex]
+  );
+  const isSupplementalRow = isSupplementalMatchSet(currentSet);
+  const [extraRole, setExtraRole] = useState<'EXTRA_GAMES' | 'EXTRA_BALLS'>(
+    currentSet.role === 'EXTRA_BALLS' ? 'EXTRA_BALLS' : 'EXTRA_GAMES'
+  );
   const [teamAScore, setTeamAScore] = useState(currentSet.teamA);
   const [teamBScore, setTeamBScore] = useState(currentSet.teamB);
   const [isTieBreak, setIsTieBreak] = useState(currentSet.isTieBreak || false);
@@ -94,7 +110,10 @@ export const SetResultModal = ({
     const newIsTieBreak = currentSet.isTieBreak || false;
     setIsTieBreak(newIsTieBreak);
     prevIsTieBreakRef.current = newIsTieBreak;
-  }, [currentSet.teamA, currentSet.teamB, currentSet.isTieBreak]);
+    if (isSupplementalMatchSet(currentSet)) {
+      setExtraRole(currentSet.role === 'EXTRA_BALLS' ? 'EXTRA_BALLS' : 'EXTRA_GAMES');
+    }
+  }, [currentSet]);
 
   // Prevent equal scores when tiebreak is enabled
   useEffect(() => {
@@ -108,6 +127,7 @@ export const SetResultModal = ({
 
   const keypad = getKeypadOptions(rules, setIndex, match.sets, isTieBreak);
   const kind = getSetKind(setIndex, match.sets, rules, { teamA: teamAScore, teamB: teamBScore, isTieBreak });
+  const scoreMax = isSupplementalRow ? 9999 : keypad.max;
 
   const clampToAllowed = (value: number): number => {
     if (keypad.values.length === 0) return value;
@@ -116,6 +136,10 @@ export const SetResultModal = ({
   };
 
   const handleTeamAScoreChange = (newScore: number) => {
+    if (isSupplementalRow) {
+      setTeamAScore(Math.min(9999, Math.max(0, newScore)));
+      return;
+    }
     const clamped = Math.max(0, clampToAllowed(newScore));
     setTeamAScore(clamped);
     if (keypad.mode === 'PAIRED' && keypad.pairedTotal !== undefined) {
@@ -124,6 +148,10 @@ export const SetResultModal = ({
   };
 
   const handleTeamBScoreChange = (newScore: number) => {
+    if (isSupplementalRow) {
+      setTeamBScore(Math.min(9999, Math.max(0, newScore)));
+      return;
+    }
     const clamped = Math.max(0, clampToAllowed(newScore));
     setTeamBScore(clamped);
     if (keypad.mode === 'PAIRED' && keypad.pairedTotal !== undefined) {
@@ -131,12 +159,19 @@ export const SetResultModal = ({
     }
   };
 
-  const validation = isLegalSetScore(teamAScore, teamBScore, rules, setIndex, match.sets, isTieBreak);
+  const validation = isSupplementalRow
+    ? { ok: true, reason: undefined, detail: undefined }
+    : isLegalSetScore(teamAScore, teamBScore, rules, setIndex, match.sets, isTieBreak);
   const suggestions = !validation.ok && (teamAScore > 0 || teamBScore > 0)
     ? suggestLegalScores(teamAScore, teamBScore, rules, setIndex, match.sets)
     : [];
 
   const handleSave = () => {
+    if (isSupplementalRow) {
+      onSave(match.id, setIndex, teamAScore, teamBScore, false, extraRole);
+      onClose();
+      return;
+    }
     if (!validation.ok) return;
     const finalIsTieBreak = kind === 'TIEBREAK_GAME' || kind === 'SUPER_TIEBREAK';
     onSave(match.id, setIndex, teamAScore, teamBScore, finalIsTieBreak);
@@ -180,13 +215,14 @@ export const SetResultModal = ({
 
   const showTieBreakToggle = canToggleTieBreak && kind !== 'SUPER_TIEBREAK';
 
-  const mainTitle =
-    (rules.fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')) +
-    (kind === 'SUPER_TIEBREAK'
-      ? ` · ${t('gameResults.superTieBreak')}`
-      : kind === 'TIEBREAK_GAME'
-        ? ` · ${t('gameResults.tieBreak')}`
-        : '');
+  const mainTitle = isSupplementalRow
+    ? t('gameResults.extraSetTitle', { defaultValue: 'Extra · not counted for result or rating' })
+    : (rules.fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')) +
+      (kind === 'SUPER_TIEBREAK'
+        ? ` · ${t('gameResults.superTieBreak')}`
+        : kind === 'TIEBREAK_GAME'
+          ? ` · ${t('gameResults.tieBreak')}`
+          : '');
 
   const exampleList = useMemo(() => getScoreEntryExampleList(rules, kind), [rules, kind]);
 
@@ -250,10 +286,43 @@ export const SetResultModal = ({
         <DialogTitle className="mb-0 text-base sm:text-lg font-semibold leading-tight text-gray-900 dark:text-white pr-2">
           {mainTitle}
         </DialogTitle>
-        {descriptionLine ? (
+        {descriptionLine && !isSupplementalRow ? (
           <DialogDescription className="mt-0 max-w-full whitespace-normal text-xs font-medium normal-case leading-snug text-gray-500 dark:text-gray-400">
             {descriptionLine}
           </DialogDescription>
+        ) : null}
+        {isSupplementalRow ? (
+          <>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {t('gameResults.extraSetHint', {
+                defaultValue: 'Statistics only. Does not change match outcome, standings, or rating.',
+              })}
+            </p>
+            <div className="mt-2 flex rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden max-w-xs">
+              <button
+                type="button"
+                onClick={() => setExtraRole('EXTRA_GAMES')}
+                className={`flex-1 py-2 text-xs font-semibold transition-colors ${
+                  extraRole === 'EXTRA_GAMES'
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                {t('gameResults.extraUnitGames', { defaultValue: 'Games' })}
+              </button>
+              <button
+                type="button"
+                onClick={() => setExtraRole('EXTRA_BALLS')}
+                className={`flex-1 py-2 text-xs font-semibold transition-colors ${
+                  extraRole === 'EXTRA_BALLS'
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                {t('gameResults.extraUnitBalls', { defaultValue: 'Balls' })}
+              </button>
+            </div>
+          </>
         ) : null}
       </div>
 
@@ -300,7 +369,7 @@ export const SetResultModal = ({
                     </button>
                     <button
                       onClick={() => handleTeamAScoreChange(teamAScore + 1)}
-                      disabled={teamAScore >= keypad.max}
+                      disabled={teamAScore >= scoreMax}
                       className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
                       <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -355,7 +424,7 @@ export const SetResultModal = ({
                     </button>
                     <button
                       onClick={() => handleTeamBScoreChange(teamBScore + 1)}
-                      disabled={teamBScore >= keypad.max}
+                      disabled={teamBScore >= scoreMax}
                       className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
                       <Plus className="w-4 h-4 sm:w-5 sm:h-5" />

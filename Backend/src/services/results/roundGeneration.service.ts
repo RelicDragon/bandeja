@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, MatchSetRole } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { calculateGameStatus } from '../../utils/gameStatus';
@@ -92,6 +92,7 @@ async function persistGeneratedMatches(
               teamAScore: setData.teamA ?? 0,
               teamBScore: setData.teamB ?? 0,
               isTieBreak: setData.isTieBreak ?? false,
+              role: MatchSetRole.OFFICIAL,
             })),
           },
         })),

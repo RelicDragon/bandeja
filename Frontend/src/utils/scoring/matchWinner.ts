@@ -1,4 +1,5 @@
 import type { SetResult } from '@/types/gameResults';
+import { isOfficialMatchSet } from '@/utils/matchSetRole';
 import type { ScoringRules } from './rulebook';
 
 export type MatchWinnerSide = 'A' | 'B' | null;
@@ -13,7 +14,7 @@ const setWinner = (set: SetResult): MatchWinnerSide => {
 };
 
 export const computeMatchWinner = (sets: SetResult[], rules: ScoringRules): MatchWinnerSide => {
-  const playedSets = sets.filter(isSetPlayed);
+  const playedSets = sets.filter(isSetPlayed).filter(isOfficialMatchSet);
   if (playedSets.length === 0) return null;
 
   if (rules.winnerOfMatch === 'BY_SETS') {
@@ -47,7 +48,7 @@ export const computeMatchWinner = (sets: SetResult[], rules: ScoringRules): Matc
 export const countSetsWon = (sets: SetResult[]): { a: number; b: number } => {
   let a = 0;
   let b = 0;
-  for (const set of sets) {
+  for (const set of sets.filter(isOfficialMatchSet)) {
     const w = setWinner(set);
     if (w === 'A') a += 1;
     else if (w === 'B') b += 1;

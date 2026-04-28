@@ -1,5 +1,6 @@
-import { WinnerOfMatch, Prisma } from '@prisma/client';
+import { WinnerOfMatch, Prisma, MatchSetRole } from '@prisma/client';
 import { getMatchScoresForDelta } from './setScoreDelta';
+import { isOfficialMatchSetRole } from './matchSetRole';
 
 interface MatchWithTeamsAndSets {
   id: string;
@@ -11,6 +12,7 @@ interface MatchWithTeamsAndSets {
     teamAScore: number;
     teamBScore: number;
     isTieBreak?: boolean;
+    role: MatchSetRole;
   }>;
 }
 
@@ -18,7 +20,9 @@ function calculateMatchWinnerByScores(match: MatchWithTeamsAndSets): string | nu
   console.log(`[MATCH WINNER BY SCORES] Starting calculation for match ${match.id}`);
   console.log(`[MATCH WINNER BY SCORES] Match has ${match.sets.length} sets`);
   
-  const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+  const validSets = match.sets.filter(
+    set => (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role)
+  );
   if (validSets.length === 0) {
     console.log(`[MATCH WINNER BY SCORES] No valid sets found, returning null`);
     return null;
@@ -55,7 +59,9 @@ function calculateMatchWinnerBySets(match: MatchWithTeamsAndSets): string | null
   console.log(`[MATCH WINNER BY SETS] Starting calculation for match ${match.id}`);
   console.log(`[MATCH WINNER BY SETS] Match has ${match.sets.length} sets`);
   
-  const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+  const validSets = match.sets.filter(
+    set => (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role)
+  );
   if (validSets.length === 0) {
     console.log(`[MATCH WINNER BY SETS] No valid sets found, returning null`);
     return null;

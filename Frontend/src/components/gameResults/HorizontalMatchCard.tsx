@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import { Trash2, MapPin } from 'lucide-react';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser, Court, Game } from '@/types';
 import { expandSetsForDisplay, getRules } from '@/utils/scoring';
+import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import { MatchTimerPanel } from '@/components/gameResults/matchTimer/MatchTimerPanel';
 import type { MatchTimerAction } from '@/utils/matchTimer';
 
@@ -33,6 +35,7 @@ interface HorizontalMatchCardProps {
   roundId?: string;
   gameId?: string;
   onMatchTimerTransition?: (roundId: string, matchId: string, action: MatchTimerAction) => void | Promise<void>;
+  onAddSupplementalSet?: () => void;
 }
 
 export const HorizontalMatchCard = ({
@@ -61,7 +64,9 @@ export const HorizontalMatchCard = ({
   roundId,
   gameId,
   onMatchTimerTransition,
+  onAddSupplementalSet,
 }: HorizontalMatchCardProps) => {
+  const { t } = useTranslation();
   const effectiveIsPresetGame = isPresetGame || prohibitMatchesEditing;
   const effectiveIsEditing = prohibitMatchesEditing ? false : isEditing;
   const canEnterScores = effectiveIsEditing || (effectiveIsPresetGame && canEditResults);
@@ -202,10 +207,12 @@ export const HorizontalMatchCard = ({
           </div>
           
           {canEnterResults && (
+            <div className="flex flex-col items-center gap-1 flex-shrink-0">
             <div className="flex items-center gap-2">
               {displaySets.map((set, setIndex) => {
                 const teamAScore = set.teamA;
                 const teamBScore = set.teamB;
+                const isExtra = isSupplementalMatchSet(set);
                 const isEditable = (effectiveIsPresetGame || (!effectiveIsPresetGame && effectiveIsEditing)) && canEditResults;
                 const teamAIsWinning = teamAScore > teamBScore && teamAScore > 0 && teamBScore >= 0;
                 const teamAIsLosing = teamAScore < teamBScore && teamAScore >= 0 && teamBScore > 0;
@@ -214,11 +221,22 @@ export const HorizontalMatchCard = ({
                 const teamBIsLosing = teamBScore < teamAScore && teamBScore >= 0 && teamAScore > 0;
                 const teamBIsTie = teamAScore === teamBScore && teamAScore > 0 && teamBScore > 0;
                 const shouldShowScore = set.teamA !== 0 || set.teamB !== 0 || effectiveIsPresetGame || effectiveIsEditing || (fixedNumberOfSets && fixedNumberOfSets > 0);
+                const extraCls = isExtra
+                  ? ' !border-violet-400 border-dashed dark:!border-violet-500 bg-violet-50/80 dark:bg-violet-950/30'
+                  : '';
 
                 if (!shouldShowScore) return null;
 
                 return (
-                  <div key={setIndex} className="flex items-center gap-1">
+                  <div key={setIndex} className="flex flex-col items-center gap-0.5">
+                    {isExtra ? (
+                      <span className="text-[7px] font-bold uppercase text-violet-600 dark:text-violet-400">
+                        {set.role === 'EXTRA_BALLS'
+                          ? t('gameResults.extraUnitBallsAbbr', { defaultValue: 'Balls' })
+                          : t('gameResults.extraUnitGamesAbbr', { defaultValue: 'Games' })}
+                      </span>
+                    ) : null}
+                    <div className="flex items-center gap-1">
                     <button
                       onClick={isEditable ? (e) => {
                         e.stopPropagation();
@@ -228,7 +246,9 @@ export const HorizontalMatchCard = ({
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-200 blur-lg" />
                       <div className={`relative w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center rounded-xl border-2 transition-all duration-200 shadow-lg group-hover:shadow-xl group-hover:scale-105 active:scale-95 ${
-                        teamAIsWinning
+                        isExtra
+                          ? extraCls + (isEditable ? ' cursor-pointer' : '')
+                          : teamAIsWinning
                           ? 'bg-gradient-to-br from-green-100/90 to-green-200/80 dark:from-green-900/40 dark:to-green-800/30 border-green-300/70 dark:border-green-700/50 shadow-green-500/30'
                           : teamAIsLosing
                             ? 'bg-gradient-to-br from-red-50/60 to-red-100/40 dark:from-red-900/30 dark:to-red-800/20 border-red-200/50 dark:border-red-700/40 shadow-red-500/20'
@@ -261,7 +281,9 @@ export const HorizontalMatchCard = ({
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-200 blur-lg" />
                       <div className={`relative w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center rounded-xl border-2 transition-all duration-200 shadow-lg group-hover:shadow-xl group-hover:scale-105 active:scale-95 ${
-                        teamBIsWinning
+                        isExtra
+                          ? extraCls + (isEditable ? ' cursor-pointer' : '')
+                          : teamBIsWinning
                           ? 'bg-gradient-to-br from-green-100/90 to-green-200/80 dark:from-green-900/40 dark:to-green-800/30 border-green-300/70 dark:border-green-700/50 shadow-green-500/30'
                           : teamBIsLosing
                             ? 'bg-gradient-to-br from-red-50/60 to-red-100/40 dark:from-red-900/30 dark:to-red-800/20 border-red-200/50 dark:border-red-700/40 shadow-red-500/20'
@@ -284,9 +306,25 @@ export const HorizontalMatchCard = ({
                         </span>
                       </div>
                     </button>
+                    </div>
                   </div>
                 );
               })}
+            </div>
+            {effectiveIsEditing && canEditResults && !effectiveIsPresetGame && onAddSupplementalSet ? (
+              <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddSupplementalSet();
+                  }}
+                  className="text-[10px] font-semibold text-violet-700 dark:text-violet-300 border border-dashed border-violet-400/70 rounded-lg px-2 py-0.5 hover:bg-violet-50 dark:hover:bg-violet-950/40"
+                >
+                  {t('gameResults.addExtraSet', { defaultValue: '+ Extra (stats only)' })}
+                </button>
+              </div>
+            ) : null}
             </div>
           )}
           

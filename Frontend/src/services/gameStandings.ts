@@ -1,5 +1,6 @@
 import { Game, BasicUser, WinnerOfGame, WinnerOfMatch } from '@/types';
 import { Round, Match, SetResult } from '@/types/gameResults';
+import { isOfficialMatchSet } from '@/utils/matchSetRole';
 
 function getSetScoreForDelta(set: SetResult, side: 'A' | 'B'): number {
   if (set.isTieBreak) {
@@ -62,7 +63,9 @@ function calculateMatchWinner(
     return match.winnerId;
   }
 
-  const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
+  const validSets = match.sets.filter(
+    set => (set.teamA > 0 || set.teamB > 0) && isOfficialMatchSet(set)
+  );
   if (validSets.length === 0) {
     return null;
   }
@@ -115,7 +118,9 @@ function calculatePlayerStats(
     if (!round.matches || round.matches.length === 0) continue;
 
     for (const match of round.matches) {
-      const validSets = match.sets.filter(set => set.teamA > 0 || set.teamB > 0);
+      const validSets = match.sets.filter(
+        set => (set.teamA > 0 || set.teamB > 0) && isOfficialMatchSet(set)
+      );
       if (validSets.length === 0) continue;
 
       const isInTeamA = match.teamA.includes(playerId);

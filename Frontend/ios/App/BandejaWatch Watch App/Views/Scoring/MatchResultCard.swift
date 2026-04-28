@@ -63,9 +63,6 @@ struct MatchResultCard: View {
     }
 
     private func setsLabel() -> String {
-        match.sets
-            .sorted { $0.setNumber < $1.setNumber }
-            .map { "\($0.teamAScore)-\($0.teamBScore)" }
-            .joined(separator: "  ")
+        match.sets.watchDisplayScoresLine()
     }
 }

@@ -1,9 +1,10 @@
 import type { SetResult } from '@/types/gameResults';
+import { splitOfficialAndSupplementalSets } from '@/utils/matchSetRole';
 import type { ScoringRules } from './rulebook';
 import { isClassicRules, isPointsRules, isTimedRules } from './rulebook';
 import { computeMatchWinner, countSetsWon } from './matchWinner';
 
-const emptySet = (isTieBreak = false): SetResult => ({ teamA: 0, teamB: 0, isTieBreak });
+const emptySet = (isTieBreak = false): SetResult => ({ teamA: 0, teamB: 0, isTieBreak, role: 'OFFICIAL' });
 
 const isScored = (set: SetResult | undefined): boolean => !!set && (set.teamA > 0 || set.teamB > 0);
 
@@ -27,14 +28,16 @@ export const expandSetsForDisplay = (
   rules: ScoringRules,
   options: { canEnterScores: boolean }
 ): SetResult[] => {
+  const { official, supplemental } = splitOfficialAndSupplementalSets(sets);
+
   if (isPointsRules(rules) || isTimedRules(rules)) {
-    const existing = sets[0] ?? emptySet();
-    return [existing];
+    const existing = official[0] ?? sets[0] ?? emptySet();
+    return [existing, ...supplemental];
   }
 
   if (isClassicRules(rules)) {
-    const decided = computeMatchWinner(sets, rules) !== null;
-    const base = [...sets];
+    const decided = computeMatchWinner(official, rules) !== null;
+    const base = [...official];
     const scoredCount = base.filter(isScored).length;
 
     const minVisible = rules.fixedNumberOfSets === 1 ? 1 : Math.max(rules.minSetsToWin, 1);
@@ -54,8 +57,8 @@ export const expandSetsForDisplay = (
       for (const s of base) {
         if (isScored(s)) trimmed.push(s);
       }
-      if (trimmed.length === 0) return base.slice(0, minVisible);
-      return trimmed;
+      if (trimmed.length === 0) return [...base.slice(0, minVisible), ...supplemental];
+      return [...trimmed, ...supplemental];
     }
 
     const cap = rules.fixedNumberOfSets > 0 ? rules.fixedNumberOfSets : Math.max(minVisible, base.length);
@@ -69,16 +72,16 @@ export const expandSetsForDisplay = (
       }
     }
 
-    return base;
+    return [...base, ...supplemental];
   }
 
   if (rules.fixedNumberOfSets > 0) {
-    const base = [...sets];
+    const base = [...official];
     while (base.length < rules.fixedNumberOfSets) base.push(emptySet());
-    return base.slice(0, rules.fixedNumberOfSets);
+    return [...base.slice(0, rules.fixedNumberOfSets), ...supplemental];
   }
 
-  const base = [...sets];
+  const base = [...official];
   if (options.canEnterScores) {
     if (base.length === 0) base.push(emptySet());
     else {
@@ -89,29 +92,32 @@ export const expandSetsForDisplay = (
     const last = base[base.length - 1];
     if (isScored(last) && !last.isTieBreak) base.push(emptySet());
   }
-  return base;
+  return [...base, ...supplemental];
 };
 
 export const shouldAppendSetAfterUpdate = (sets: SetResult[], rules: ScoringRules): SetResult | null => {
   if (!isClassicRules(rules) || rules.fixedNumberOfSets === 1) return null;
-  if (computeMatchWinner(sets, rules) !== null) return null;
+  const { official } = splitOfficialAndSupplementalSets(sets);
+  if (computeMatchWinner(official, rules) !== null) return null;
   const cap = rules.fixedNumberOfSets > 0 ? rules.fixedNumberOfSets : 99;
-  if (sets.length >= cap) return null;
-  const scoredCount = sets.filter(isScored).length;
-  if (scoredCount !== sets.length) return null;
-  const { a, b } = countSetsWon(sets);
+  if (official.length >= cap) return null;
+  const scoredCount = official.filter(isScored).length;
+  if (scoredCount !== official.length) return null;
+  const { a, b } = countSetsWon(official);
   if (a !== b) return null;
   const isSuperTb =
     rules.superTieBreakReplacesDeciderAtIndex !== null &&
-    sets.length === rules.superTieBreakReplacesDeciderAtIndex;
-  return { teamA: 0, teamB: 0, isTieBreak: isSuperTb };
+    official.length === rules.superTieBreakReplacesDeciderAtIndex;
+  return { teamA: 0, teamB: 0, isTieBreak: isSuperTb, role: 'OFFICIAL' };
 };
 
 export const trimTrailingEmptyAfterDecision = (sets: SetResult[], rules: ScoringRules): SetResult[] => {
-  if (computeMatchWinner(sets, rules) === null) return sets;
+  const { official, supplemental } = splitOfficialAndSupplementalSets(sets);
+  if (computeMatchWinner(official, rules) === null) return sets;
   const trimmed: SetResult[] = [];
-  for (const s of sets) {
+  for (const s of official) {
     if (isScored(s)) trimmed.push(s);
   }
-  return trimmed.length > 0 ? trimmed : sets;
+  const officialOut = trimmed.length > 0 ? trimmed : official;
+  return [...officialOut, ...supplemental];
 };

@@ -8,6 +8,10 @@ import { LeagueGameResultsService } from './league/gameResults.service';
 import { SocialParticipantLevelService } from './socialParticipantLevel.service';
 import { calculateGameStatus } from '../utils/gameStatus';
 import { validateMatchClassicSetScores } from './results/classicSetScoreValidation';
+import { MatchSetRole } from '@prisma/client';
+import { isOfficialMatchSetRole, parseMatchSetRole, validateMatchSetRoleOrder } from './results/matchSetRole';
+
+const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
 
 
 export async function getGameResults(gameId: string) {
@@ -573,6 +577,7 @@ export async function syncResults(gameId: string, rounds: any[]) {
               teamAScore: setData.teamA || 0,
               teamBScore: setData.teamB || 0,
               isTieBreak: setData.isTieBreak || false,
+              role: parseMatchSetRole((setData as { role?: unknown }).role),
             },
           });
         }
@@ -765,7 +770,7 @@ export async function updateMatch(
   matchData: {
     teamA: string[];
     teamB: string[];
-    sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>;
+    sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: string }>;
     courtId?: string;
   }
 ) {
@@ -810,35 +815,63 @@ export async function updateMatch(
     throw new ApiError(404, 'Game not found');
   }
 
-  // Validate TieBreak rules
-  const setsWithTieBreak = (matchData.sets || []).filter((set, _idx) => set.isTieBreak === true);
-  
+  const normalizedSets: Array<{
+    teamA: number;
+    teamB: number;
+    isTieBreak: boolean;
+    role: MatchSetRole;
+  }> = (matchData.sets || []).map((s) => ({
+    teamA: Math.min(SUPPLEMENTAL_SET_SCORE_MAX, Math.max(0, Number(s.teamA) || 0)),
+    teamB: Math.min(SUPPLEMENTAL_SET_SCORE_MAX, Math.max(0, Number(s.teamB) || 0)),
+    isTieBreak: Boolean(s.isTieBreak),
+    role: parseMatchSetRole((s as { role?: unknown }).role),
+  }));
+
+  const orderErr = validateMatchSetRoleOrder(normalizedSets.map((s) => s.role));
+  if (orderErr) {
+    throw new ApiError(400, orderErr);
+  }
+
+  for (const s of normalizedSets) {
+    if (!isOfficialMatchSetRole(s.role) && s.isTieBreak) {
+      throw new ApiError(400, 'Extra sets cannot be tie-breaks');
+    }
+  }
+
+  const officialForClassic = normalizedSets
+    .filter((s) => isOfficialMatchSetRole(s.role))
+    .map((s) => ({ teamA: s.teamA, teamB: s.teamB, isTieBreak: s.isTieBreak }));
+
+  const setsWithTieBreak = normalizedSets.filter((set) => set.isTieBreak);
+
   if (setsWithTieBreak.length > 1) {
     throw new ApiError(400, 'Only one TieBreak can exist per match');
   }
 
   if (setsWithTieBreak.length === 1) {
-    const tieBreakSetIndex = (matchData.sets || []).findIndex(set => set.isTieBreak === true);
-    
+    const tieBreakSetIndex = normalizedSets.findIndex((set) => set.isTieBreak);
+
+    if (!isOfficialMatchSetRole(normalizedSets[tieBreakSetIndex].role)) {
+      throw new ApiError(400, 'TieBreak can only be set on official sets');
+    }
+
     if (!game.ballsInGames) {
       throw new ApiError(400, 'TieBreak can only be set when ballsInGames is enabled');
     }
 
-    // Check if this is an odd set starting from 3rd (setIndex 2, 4, 6, 8)
-    // 3rd set = index 2, 5th set = index 4, 7th set = index 6, 9th set = index 8
     const isOddSetFromThird = tieBreakSetIndex >= 2 && (tieBreakSetIndex - 2) % 2 === 0;
     if (!isOddSetFromThird) {
       throw new ApiError(400, 'TieBreak can only be set on the 3rd, 5th, 7th, or 9th set');
     }
 
-    // Check if previous sets are equally won by both teams
     if (tieBreakSetIndex >= 2) {
       let teamAWins = 0;
       let teamBWins = 0;
 
       for (let i = 0; i < tieBreakSetIndex; i++) {
-        const set = matchData.sets[i];
-        if (set && (set.teamA > 0 || set.teamB > 0)) {
+        const set = normalizedSets[i];
+        if (!isOfficialMatchSetRole(set.role)) continue;
+        if (set.teamA > 0 || set.teamB > 0) {
           if (set.teamA > set.teamB) {
             teamAWins++;
           } else if (set.teamB > set.teamA) {
@@ -852,33 +885,29 @@ export async function updateMatch(
       }
     }
 
-    // Check if tiebreak set has equal scores
-    const tieBreakSet = matchData.sets[tieBreakSetIndex];
+    const tieBreakSet = normalizedSets[tieBreakSetIndex];
     if (tieBreakSet && tieBreakSet.teamA === tieBreakSet.teamB && (tieBreakSet.teamA > 0 || tieBreakSet.teamB > 0)) {
       throw new ApiError(400, 'TieBreak sets cannot have equal scores');
     }
 
-    // Check if it's the last set
     const fixedNumberOfSets = game.fixedNumberOfSets || 0;
-    
+
     let isLastSet: boolean;
     if (fixedNumberOfSets > 0) {
       isLastSet = tieBreakSetIndex === fixedNumberOfSets - 1;
     } else {
-      // For dynamic sets, find the last set with scores
       const validSetIndices: number[] = [];
-      for (let i = 0; i < (matchData.sets || []).length; i++) {
-        const set = matchData.sets[i];
+      for (let i = 0; i < normalizedSets.length; i++) {
+        const set = normalizedSets[i];
+        if (!isOfficialMatchSetRole(set.role)) continue;
         if (set.teamA > 0 || set.teamB > 0) {
           validSetIndices.push(i);
         }
       }
-      
+
       if (validSetIndices.length === 0) {
-        // If no valid sets exist, the first set (index 0) is considered the last set
         isLastSet = tieBreakSetIndex === 0;
       } else {
-        // The last set is the highest index among valid sets
         const lastValidSetIndex = Math.max(...validSetIndices);
         isLastSet = tieBreakSetIndex === lastValidSetIndex;
       }
@@ -889,7 +918,7 @@ export async function updateMatch(
     }
   }
 
-  const classicErr = validateMatchClassicSetScores(game, matchData.sets || []);
+  const classicErr = validateMatchClassicSetScores(game, officialForClassic);
   if (classicErr) {
     throw new ApiError(400, classicErr);
   }
@@ -932,15 +961,16 @@ export async function updateMatch(
     }
 
     await tx.set.deleteMany({ where: { matchId: match.id } });
-    for (let i = 0; i < (matchData.sets || []).length; i++) {
-      const setData = matchData.sets[i];
+    for (let i = 0; i < normalizedSets.length; i++) {
+      const s = normalizedSets[i];
       await tx.set.create({
         data: {
           matchId: match.id,
           setNumber: i + 1,
-          teamAScore: setData.teamA || 0,
-          teamBScore: setData.teamB || 0,
-          isTieBreak: setData.isTieBreak || false,
+          teamAScore: s.teamA,
+          teamBScore: s.teamB,
+          isTieBreak: s.isTieBreak,
+          role: s.role,
         },
       });
     }

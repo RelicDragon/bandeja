@@ -9,6 +9,7 @@ import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } fr
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { isOfficialMatchSetRole } from '../../results/matchSetRole';
 
 interface PlayerStats {
   wins: number;
@@ -28,7 +29,10 @@ function calculateMatchWinner(match: any): 'teamA' | 'teamB' | 'tie' | null {
     return 'teamB';
   }
 
-  const validSets = match.sets.filter((set: any) => set.teamAScore > 0 || set.teamBScore > 0);
+  const validSets = match.sets.filter(
+    (set: any) =>
+      (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role)
+  );
   const { teamAScore: totalScoreA, teamBScore: totalScoreB } = getMatchScoresForDelta(
     validSets.map((s: any) => ({ teamAScore: s.teamAScore, teamBScore: s.teamBScore, isTieBreak: s.isTieBreak }))
   );
@@ -55,7 +59,10 @@ function calculatePlayerStats(
     if (!round.matches || round.matches.length === 0) continue;
 
     for (const match of round.matches) {
-      const validSets = match.sets.filter((set: any) => set.teamAScore > 0 || set.teamBScore > 0);
+      const validSets = match.sets.filter(
+        (set: any) =>
+          (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role)
+      );
       if (validSets.length === 0) continue;
 
       const teamA = match.teams.find((t: any) => t.teamNumber === 1);

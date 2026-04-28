@@ -24,6 +24,7 @@ interface RoundCardProps {
   onRemoveMatch: (matchId: string) => void;
   onMatchClick: (matchId: string) => void;
   onSetClick: (matchId: string, setIndex: number) => void;
+  onAddSupplementalSet?: (matchId: string) => void;
   onRemovePlayer: (matchId: string, team: 'teamA' | 'teamB', playerId: string) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, matchId: string, team: 'teamA' | 'teamB') => void;
@@ -89,6 +90,7 @@ export const RoundCard = ({
   onRemoveMatch,
   onMatchClick,
   onSetClick,
+  onAddSupplementalSet,
   onRemovePlayer,
   onDragOver,
   onDrop,
@@ -136,6 +138,7 @@ export const RoundCard = ({
                     onRemoveMatch={() => onRemoveMatch(match.id)}
                     onMatchClick={() => onMatchClick(match.id)}
                     onSetClick={(setIndex) => onSetClick(match.id, setIndex)}
+                    onAddSupplementalSet={onAddSupplementalSet ? () => onAddSupplementalSet(match.id) : undefined}
                     onRemovePlayer={(team, playerId) => onRemovePlayer(match.id, team, playerId)}
                     onDragOver={onDragOver}
                     onDrop={(e, team) => onDrop(e, match.id, team)}
@@ -166,6 +169,7 @@ export const RoundCard = ({
                     onRemoveMatch={() => onRemoveMatch(match.id)}
                     onMatchClick={() => onMatchClick(match.id)}
                     onSetClick={(setIndex) => onSetClick(match.id, setIndex)}
+                    onAddSupplementalSet={onAddSupplementalSet ? () => onAddSupplementalSet(match.id) : undefined}
                     onRemovePlayer={(team, playerId) => onRemovePlayer(match.id, team, playerId)}
                     onDragOver={onDragOver}
                     onDrop={(e, team) => onDrop(e, match.id, team)}

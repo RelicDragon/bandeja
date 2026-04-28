@@ -105,10 +105,7 @@ struct MatchScoringView: View {
     }
 
     private func readOnlySetsLine(_ m: WatchMatch) -> String {
-        m.sets
-            .sorted { $0.setNumber < $1.setNumber }
-            .map { "\($0.teamAScore)-\($0.teamBScore)" }
-            .joined(separator: "  ")
+        m.sets.watchDisplayScoresLine()
     }
 
     private func finish() {

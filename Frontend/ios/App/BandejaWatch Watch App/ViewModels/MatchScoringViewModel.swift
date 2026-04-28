@@ -79,9 +79,13 @@ final class MatchScoringViewModel {
         game?.maxTotalPointsPerSet ?? 0
     }
 
+    var activeSetIsSupplemental: Bool {
+        sets[safe: activeSetIndex].map { $0.resolvedRole != .official } ?? false
+    }
+
     /// Match-deciding super tie-break set (points only, isTieBreak on row).
     var activeSetIsSuperTieBreak: Bool {
-        usesTennisSetRules && (sets[safe: activeSetIndex]?.isTieBreak == true)
+        usesTennisSetRules && !activeSetIsSupplemental && (sets[safe: activeSetIndex]?.isTieBreak == true)
     }
 
     var teamAUsers: [WatchUser] {
@@ -110,8 +114,14 @@ final class MatchScoringViewModel {
                         }
                     } ?? false
                     isReadOnly = (game?.resultsStatus == "FINAL") || !onMatch
-                    sets = m.sets.sorted { $0.setNumber < $1.setNumber }.map {
-                        WatchSetWrite(teamA: $0.teamAScore, teamB: $0.teamBScore, isTieBreak: $0.isTieBreak)
+                    sets = m.sets.sorted { $0.setNumber < $1.setNumber }.map { s in
+                        let official = s.resolvedRole == .official
+                        return WatchSetWrite(
+                            teamA: s.teamAScore,
+                            teamB: s.teamBScore,
+                            isTieBreak: official && s.isTieBreak,
+                            role: s.role
+                        )
                     }
                     if sets.isEmpty { sets = [WatchSetWrite(teamA: 0, teamB: 0)] }
                     activeSetIndex = max(0, min(sets.count - 1, nextEditableSetIndex()))
@@ -131,8 +141,19 @@ final class MatchScoringViewModel {
 
     func ensureSetExists(_ index: Int) {
         while sets.count <= index {
-            sets.append(WatchSetWrite(teamA: 0, teamB: 0))
+            sets.append(WatchSetWrite(teamA: 0, teamB: 0, role: .official))
         }
+    }
+
+    func appendSupplementalSet(kind: WatchMatchSetRole) {
+        guard !isReadOnly else { return }
+        guard kind == .extraGames || kind == .extraBalls else { return }
+        sets.append(WatchSetWrite(teamA: 0, teamB: 0, isTieBreak: false, role: kind))
+        activeSetIndex = sets.count - 1
+        classicPointState = .regular(a: .zero, b: .zero)
+        tieBreakA = 0
+        tieBreakB = 0
+        withinSetTieBreakMode = false
     }
 
     func saveCurrentSets() async {
@@ -186,6 +207,13 @@ final class MatchScoringViewModel {
     func incrementAmericanoTeamA() {
         guard !isReadOnly else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
+        if activeSetIsSupplemental {
+            ensureSetExists(activeSetIndex)
+            let prev = sets[activeSetIndex].teamA
+            sets[activeSetIndex].teamA = min(99, sets[activeSetIndex].teamA + 1)
+            if sets[activeSetIndex].teamA != prev { WatchScoreHaptics.point() }
+            return
+        }
         let maxTotal = maxPointsPerSet
         guard maxTotal > 0 else { return }
         let prev = sets[activeSetIndex].teamA
@@ -199,6 +227,13 @@ final class MatchScoringViewModel {
     func decrementAmericanoTeamA() {
         guard !isReadOnly else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
+        if activeSetIsSupplemental {
+            ensureSetExists(activeSetIndex)
+            let prev = sets[activeSetIndex].teamA
+            sets[activeSetIndex].teamA = max(0, sets[activeSetIndex].teamA - 1)
+            if sets[activeSetIndex].teamA != prev { WatchScoreHaptics.undo() }
+            return
+        }
         let maxTotal = maxPointsPerSet
         guard maxTotal > 0 else { return }
         let prev = sets[activeSetIndex].teamA
@@ -212,6 +247,13 @@ final class MatchScoringViewModel {
     func incrementAmericanoTeamB() {
         guard !isReadOnly else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
+        if activeSetIsSupplemental {
+            ensureSetExists(activeSetIndex)
+            let prev = sets[activeSetIndex].teamB
+            sets[activeSetIndex].teamB = min(99, sets[activeSetIndex].teamB + 1)
+            if sets[activeSetIndex].teamB != prev { WatchScoreHaptics.point() }
+            return
+        }
         let maxTotal = maxPointsPerSet
         guard maxTotal > 0 else { return }
         let prev = sets[activeSetIndex].teamB
@@ -225,6 +267,13 @@ final class MatchScoringViewModel {
     func decrementAmericanoTeamB() {
         guard !isReadOnly else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
+        if activeSetIsSupplemental {
+            ensureSetExists(activeSetIndex)
+            let prev = sets[activeSetIndex].teamB
+            sets[activeSetIndex].teamB = max(0, sets[activeSetIndex].teamB - 1)
+            if sets[activeSetIndex].teamB != prev { WatchScoreHaptics.undo() }
+            return
+        }
         let maxTotal = maxPointsPerSet
         guard maxTotal > 0 else { return }
         let prev = sets[activeSetIndex].teamB
@@ -237,6 +286,11 @@ final class MatchScoringViewModel {
 
     func canUnscore(_ side: TeamSide) -> Bool {
         guard !isReadOnly, !usesBallCapPerSetUI else { return false }
+        if activeSetIsSupplemental {
+            ensureSetExists(activeSetIndex)
+            if side == .teamA { return sets[activeSetIndex].teamA > 0 }
+            return sets[activeSetIndex].teamB > 0
+        }
         if activeSetIsSuperTieBreak {
             ensureSetExists(activeSetIndex)
             if side == .teamA { return sets[activeSetIndex].teamA > 0 }
@@ -268,6 +322,17 @@ final class MatchScoringViewModel {
 
     func unscorePoint(_ side: TeamSide) {
         guard !isReadOnly, !usesBallCapPerSetUI else { return }
+        if activeSetIsSupplemental {
+            ensureSetExists(activeSetIndex)
+            if side == .teamA, sets[activeSetIndex].teamA > 0 {
+                sets[activeSetIndex].teamA -= 1
+                WatchScoreHaptics.undo()
+            } else if side == .teamB, sets[activeSetIndex].teamB > 0 {
+                sets[activeSetIndex].teamB -= 1
+                WatchScoreHaptics.undo()
+            }
+            return
+        }
         if activeSetIsSuperTieBreak {
             ensureSetExists(activeSetIndex)
             if side == .teamA, sets[activeSetIndex].teamA > 0 {
@@ -355,7 +420,7 @@ final class MatchScoringViewModel {
     }
 
     func pendingGameWinProjectedScoresIfBalls() -> (teamA: Int, teamB: Int)? {
-        guard let side = pendingGameWinConfirmSide, game?.ballsInGames == true else { return nil }
+        guard let side = pendingGameWinConfirmSide, game?.ballsInGames == true, !activeSetIsSupplemental else { return nil }
         let a = (sets[safe: activeSetIndex]?.teamA ?? 0) + (side == .teamA ? 1 : 0)
         let b = (sets[safe: activeSetIndex]?.teamB ?? 0) + (side == .teamB ? 1 : 0)
         return (a, b)
@@ -399,7 +464,9 @@ final class MatchScoringViewModel {
         activeSetIndex = index
         ensureSetExists(activeSetIndex)
         let empty = sets[activeSetIndex].teamA == 0 && sets[activeSetIndex].teamB == 0
-        if empty {
+        if sets[activeSetIndex].resolvedRole != .official {
+            sets[activeSetIndex].isTieBreak = false
+        } else if empty {
             sets[activeSetIndex].isTieBreak = superTieBreak
         }
         classicPointState = .regular(a: .zero, b: .zero)
@@ -411,6 +478,7 @@ final class MatchScoringViewModel {
     /// After load or changing active set: resume 6–6 (or N–N) within-set tie-break scoring.
     private func syncWithinSetTieBreakForActiveSet() {
         withinSetTieBreakMode = false
+        if activeSetIsSupplemental { return }
         if usesBallCapPerSetUI { return }
         if activeSetIsSuperTieBreak { return }
         guard let s = sets[safe: activeSetIndex] else { return }
@@ -423,6 +491,7 @@ final class MatchScoringViewModel {
 
     private func shouldOfferSuperTieBreakChoice(nextIndex: Int) -> Bool {
         guard usesTennisSetRules, !usesBallCapPerSetUI else { return false }
+        if sets[safe: nextIndex].map({ $0.resolvedRole != .official }) ?? false { return false }
         let allowedIndices = [2, 4, 6, 8]
         guard allowedIndices.contains(nextIndex) else { return false }
         guard arePreviousSetsTiedForSuper(nextIndex: nextIndex) else { return false }
@@ -439,6 +508,7 @@ final class MatchScoringViewModel {
         var bWins = 0
         for i in 0..<nextIndex {
             guard let s = sets[safe: i] else { continue }
+            guard s.resolvedRole == .official else { continue }
             guard s.teamA > 0 || s.teamB > 0 else { continue }
             guard s.teamA != s.teamB else { continue }
             if s.isTieBreak {
@@ -453,7 +523,7 @@ final class MatchScoringViewModel {
     }
 
     private func tapWouldAwardCurrentGame(_ side: TeamSide) -> Bool {
-        guard usesTennisSetRules, !withinSetTieBreakMode, !activeSetIsSuperTieBreak, !usesBallCapPerSetUI else { return false }
+        guard usesTennisSetRules, !activeSetIsSupplemental, !withinSetTieBreakMode, !activeSetIsSuperTieBreak, !usesBallCapPerSetUI else { return false }
         switch classicPointState {
         case .regular(let a, let b):
             if side == .teamA { return a == .forty && b != .forty }
@@ -467,6 +537,16 @@ final class MatchScoringViewModel {
 
     func scorePoint(_ side: TeamSide, skipGameWinConfirm: Bool = false) {
         guard !isReadOnly else { return }
+        if activeSetIsSupplemental {
+            ensureSetExists(activeSetIndex)
+            if side == .teamA {
+                sets[activeSetIndex].teamA = min(99, sets[activeSetIndex].teamA + 1)
+            } else {
+                sets[activeSetIndex].teamB = min(99, sets[activeSetIndex].teamB + 1)
+            }
+            WatchScoreHaptics.point()
+            return
+        }
         if activeSetIsSuperTieBreak {
             ensureSetExists(activeSetIndex)
             let a = sets[activeSetIndex].teamA
@@ -604,9 +684,11 @@ final class MatchScoringViewModel {
     }
 
     func canAdvanceToNextSet() -> Bool {
-        if isAmericano { return false }
+        guard activeSetIndex + 1 < sets.count else { return false }
+        if isAmericano { return true }
         if rawFixedNumberOfSets > 0 {
-            return activeSetIndex + 1 < rawFixedNumberOfSets
+            if activeSetIndex + 1 < rawFixedNumberOfSets { return true }
+            return sets[activeSetIndex + 1].resolvedRole != .official
         }
         return true
     }

@@ -12,7 +12,32 @@ struct ClassicScoringView: View {
             VStack(spacing: 12) {
                 ScoreHintBanner(vm: vm)
 
-                if vm.activeSetIsSuperTieBreak {
+                if vm.activeSetIsSupplemental {
+                    Text(WatchCopy.supplementalBanner(
+                        lang,
+                        role: vm.sets[safe: vm.activeSetIndex]?.resolvedRole ?? .official
+                    ))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    HStack(alignment: .top, spacing: 8) {
+                        WatchScoringTeamColumn(
+                            users: vm.teamAUsers,
+                            scoreLabel: "\(vm.sets[safe: vm.activeSetIndex]?.teamA ?? 0)",
+                            action: { vm.scorePoint(.teamA) },
+                            decrementAction: { vm.unscorePoint(.teamA) },
+                            disabled: vm.isReadOnly,
+                            decrementDisabled: !vm.canUnscore(.teamA)
+                        )
+                        WatchScoringTeamColumn(
+                            users: vm.teamBUsers,
+                            scoreLabel: "\(vm.sets[safe: vm.activeSetIndex]?.teamB ?? 0)",
+                            action: { vm.scorePoint(.teamB) },
+                            decrementAction: { vm.unscorePoint(.teamB) },
+                            disabled: vm.isReadOnly,
+                            decrementDisabled: !vm.canUnscore(.teamB)
+                        )
+                    }
+                } else if vm.activeSetIsSuperTieBreak {
                     Text(WatchCopy.superTieBreak(lang))
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
@@ -98,6 +123,12 @@ struct ClassicScoringView: View {
                             Task { await vm.saveCurrentSets() }
                         }
                         .disabled(vm.isSaving)
+                        Button(WatchCopy.addExtraGamesRow(lang)) {
+                            vm.appendSupplementalSet(kind: .extraGames)
+                        }
+                        Button(WatchCopy.addExtraBallsRow(lang)) {
+                            vm.appendSupplementalSet(kind: .extraBalls)
+                        }
                         if vm.canAdvanceToNextSet() {
                             Button(WatchCopy.nextSet(lang)) { vm.beginAdvanceToNextSet() }
                         }

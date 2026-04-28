@@ -35,10 +35,13 @@ export interface GenGameCourt {
   order: number;
 }
 
+export type GenMatchSetRole = 'OFFICIAL' | 'EXTRA_GAMES' | 'EXTRA_BALLS';
+
 export interface GenSetResult {
   teamA: number;
   teamB: number;
   isTieBreak?: boolean;
+  role?: GenMatchSetRole;
 }
 
 export interface GenMatch {

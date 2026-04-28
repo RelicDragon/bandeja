@@ -8,6 +8,7 @@ import { OutcomeExplanationModal } from '@/components/OutcomeExplanationModal';
 import { ModalType } from '@/hooks/useModalManager';
 import { Game, BasicUser } from '@/types';
 import { Round } from '@/types/gameResults';
+import type { MatchSetRole } from '@/utils/matchSetRole';
 import { getRestartTitle, getFinishTitle, getEditTitle } from '@/utils/gameResultsHelpers';
 
 interface GameResultsModalsProps {
@@ -18,7 +19,15 @@ interface GameResultsModalsProps {
   primaryRoundId: string | null;
   effectiveHorizontalLayout: boolean;
   onClose: () => void;
-  onUpdateSetResult: (roundId: string, matchId: string, setIndex: number, teamAScore: number, teamBScore: number, isTieBreak?: boolean) => Promise<void>;
+  onUpdateSetResult: (
+    roundId: string,
+    matchId: string,
+    setIndex: number,
+    teamAScore: number,
+    teamBScore: number,
+    isTieBreak?: boolean,
+    supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>
+  ) => Promise<void>;
   onRemoveSet: (roundId: string, matchId: string, setIndex: number) => Promise<void>;
   onPlayerSelect: (playerId: string) => Promise<void>;
   onCourtSelect: (courtId: string) => Promise<void>;
@@ -84,8 +93,8 @@ export const GameResultsModals = ({
         fixedNumberOfSets={currentGame?.fixedNumberOfSets}
         ballsInGames={currentGame?.ballsInGames || false}
         game={currentGame}
-        onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak) => {
-          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak);
+        onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole) => {
+          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole);
         }}
         onRemove={(matchId, setIndex) => {
           onRemoveSet(modal.roundId, matchId, setIndex);
@@ -106,8 +115,8 @@ export const GameResultsModals = ({
         fixedNumberOfSets={currentGame?.fixedNumberOfSets}
         ballsInGames={currentGame?.ballsInGames || false}
         game={currentGame}
-        onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak) => {
-          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak);
+        onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole) => {
+          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole);
         }}
         onRemove={(matchId, setIndex) => {
           onRemoveSet(modal.roundId, matchId, setIndex);

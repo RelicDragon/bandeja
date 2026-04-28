@@ -4,6 +4,7 @@ import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser, Court, Game } from '@/types';
 import { expandSetsForDisplay, getRules, isSuperTieBreakDeciderRow } from '@/utils/scoring';
+import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import { MatchTimerPanel } from '@/components/gameResults/matchTimer/MatchTimerPanel';
 import type { MatchTimerAction } from '@/utils/matchTimer';
 
@@ -34,6 +35,7 @@ interface MatchCardProps {
   roundId?: string;
   gameId?: string;
   onMatchTimerTransition?: (roundId: string, matchId: string, action: MatchTimerAction) => void | Promise<void>;
+  onAddSupplementalSet?: () => void;
 }
 
 export const MatchCard = ({
@@ -62,6 +64,7 @@ export const MatchCard = ({
   roundId,
   gameId,
   onMatchTimerTransition,
+  onAddSupplementalSet,
 }: MatchCardProps) => {
   const { t } = useTranslation();
   const effectiveIsPresetGame = isPresetGame || prohibitMatchesEditing;
@@ -220,12 +223,16 @@ export const MatchCard = ({
                 const set = displaySets[setIndex];
                 const teamAScore = set.teamA;
                 const teamBScore = set.teamB;
+                const isExtra = isSupplementalMatchSet(set);
                 const isEditable = (effectiveIsPresetGame || (!effectiveIsPresetGame && effectiveIsEditing)) && canEditResults;
                 const isWinning = teamAScore > teamBScore && teamAScore > 0 && teamBScore >= 0;
                 const isLosing = teamAScore < teamBScore && teamAScore >= 0 && teamBScore > 0;
                 const isTie = teamAScore === teamBScore && teamAScore > 0 && teamBScore > 0;
 
                 const shouldShowScore = set.teamA !== 0 || set.teamB !== 0 || canEnterScores;
+                const extraCls = isExtra
+                  ? ' !border-violet-400 border-dashed dark:!border-violet-500 bg-violet-50/80 dark:bg-violet-950/30'
+                  : '';
 
                 return (
                 <div key={`teamA-${setIndex}`} className="flex items-center justify-center" style={{
@@ -240,7 +247,9 @@ export const MatchCard = ({
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-200 blur-lg" />
                         <div className={`relative w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center rounded-xl border-2 transition-all duration-200 shadow-lg group-hover:shadow-xl group-hover:scale-105 active:scale-95 ${
-                          isWinning
+                          isExtra
+                            ? extraCls + (isEditable ? ' cursor-pointer' : '')
+                            : isWinning
                             ? 'bg-gradient-to-br from-green-100/90 to-green-200/80 dark:from-green-900/40 dark:to-green-800/30 border-green-300/70 dark:border-green-700/50 shadow-green-500/30'
                             : isLosing
                               ? 'bg-gradient-to-br from-red-50/60 to-red-100/40 dark:from-red-900/30 dark:to-red-800/20 border-red-200/50 dark:border-red-700/40 shadow-red-500/20'
@@ -269,6 +278,13 @@ export const MatchCard = ({
                               : t('gameResults.tieBreakAbbr')}
                           </span>
                         )}
+                        {isExtra ? (
+                          <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[7px] font-bold uppercase tracking-tight text-violet-600 dark:text-violet-400 whitespace-nowrap">
+                            {set.role === 'EXTRA_BALLS'
+                              ? t('gameResults.extraUnitBallsAbbr', { defaultValue: 'Balls' })
+                              : t('gameResults.extraUnitGamesAbbr', { defaultValue: 'Games' })}
+                          </span>
+                        ) : null}
                   </button>
                     )}
                 </div>
@@ -307,12 +323,16 @@ export const MatchCard = ({
                 const set = displaySets[setIndex];
                 const teamAScore = set.teamA;
                 const teamBScore = set.teamB;
+                const isExtra = isSupplementalMatchSet(set);
                 const isEditable = (effectiveIsPresetGame || (!effectiveIsPresetGame && effectiveIsEditing)) && canEditResults;
                 const isWinning = teamBScore > teamAScore && teamBScore > 0 && teamAScore >= 0;
                 const isLosing = teamBScore < teamAScore && teamBScore >= 0 && teamAScore > 0;
                 const isTie = teamAScore === teamBScore && teamAScore > 0 && teamBScore > 0;
 
                 const shouldShowScore = set.teamA !== 0 || set.teamB !== 0 || canEnterScores;
+                const extraCls = isExtra
+                  ? ' !border-violet-400 border-dashed dark:!border-violet-500 bg-violet-50/80 dark:bg-violet-950/30'
+                  : '';
 
                 return (
                 <div key={`teamB-${setIndex}`} className="flex items-center justify-center" style={{
@@ -327,7 +347,9 @@ export const MatchCard = ({
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-200 blur-lg" />
                         <div className={`relative w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center rounded-xl border-2 transition-all duration-200 shadow-lg group-hover:shadow-xl group-hover:scale-105 active:scale-95 ${
-                          isWinning
+                          isExtra
+                            ? extraCls + (isEditable ? ' cursor-pointer' : '')
+                            : isWinning
                             ? 'bg-gradient-to-br from-green-100/90 to-green-200/80 dark:from-green-900/40 dark:to-green-800/30 border-green-300/70 dark:border-green-700/50 shadow-green-500/30'
                             : isLosing
                               ? 'bg-gradient-to-br from-red-50/60 to-red-100/40 dark:from-red-900/30 dark:to-red-800/20 border-red-200/50 dark:border-red-700/40 shadow-red-500/20'
@@ -356,12 +378,33 @@ export const MatchCard = ({
                               : t('gameResults.tieBreakAbbr')}
                           </span>
                         )}
+                        {isExtra ? (
+                          <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[7px] font-bold uppercase tracking-tight text-violet-600 dark:text-violet-400 whitespace-nowrap">
+                            {set.role === 'EXTRA_BALLS'
+                              ? t('gameResults.extraUnitBallsAbbr', { defaultValue: 'Balls' })
+                              : t('gameResults.extraUnitGamesAbbr', { defaultValue: 'Games' })}
+                          </span>
+                        ) : null}
                   </button>
                     )}
                 </div>
                 );
               })}
             </div>
+            {effectiveIsEditing && canEditResults && !effectiveIsPresetGame && onAddSupplementalSet ? (
+              <div className="mt-2 flex justify-center w-full" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddSupplementalSet();
+                  }}
+                  className="text-[11px] font-semibold text-violet-700 dark:text-violet-300 border border-dashed border-violet-400/70 rounded-lg px-2.5 py-1 hover:bg-violet-50 dark:hover:bg-violet-950/40"
+                >
+                  {t('gameResults.addExtraSet', { defaultValue: '+ Extra (stats only)' })}
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="overflow-x-auto w-full">

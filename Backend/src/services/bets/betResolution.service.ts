@@ -115,7 +115,8 @@ export async function resolveGameBets(gameId: string): Promise<void> {
           })),
           sets: match.sets.map(set => ({
             teamAScore: set.teamAScore,
-            teamBScore: set.teamBScore
+            teamBScore: set.teamBScore,
+            role: set.role,
           })),
           winnerId: match.winnerId
         }))

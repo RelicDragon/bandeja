@@ -179,12 +179,7 @@ struct GameDetailView: View {
                             Text("—")
                                 .font(.caption2)
                         } else {
-                            Text(
-                                match.sets
-                                    .sorted { $0.setNumber < $1.setNumber }
-                                    .map { "\($0.teamAScore)-\($0.teamBScore)" }
-                                    .joined(separator: "  ")
-                            )
+                            Text(match.sets.watchDisplayScoresLine())
                             .font(.caption2.monospacedDigit())
                         }
                     }

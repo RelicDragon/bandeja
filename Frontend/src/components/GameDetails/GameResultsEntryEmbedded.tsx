@@ -24,6 +24,7 @@ import {
   computeMatchWinner,
   isClassicRules,
 } from '@/utils/scoring';
+import { isSupplementalMatchSet, type MatchSetRole } from '@/utils/matchSetRole';
 import { ScoringRulebookBanner } from '@/components/gameResults/scoring';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { userIsPlayingInGameOrParent } from '@/utils/gameParticipationState';
@@ -370,7 +371,15 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     await engine.addPlayerToTeam(roundId, matchId, team, draggedPlayer);
   };
 
-  const updateSetResult = async (roundId: string, matchId: string, setIndex: number, teamAScore: number, teamBScore: number, isTieBreak?: boolean) => {
+  const updateSetResult = async (
+    roundId: string,
+    matchId: string,
+    setIndex: number,
+    teamAScore: number,
+    teamBScore: number,
+    isTieBreak?: boolean,
+    supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>
+  ) => {
     const setIndexError = validateSetIndex(setIndex);
     if (setIndexError) {
       console.error(setIndexError, setIndex);
@@ -397,10 +406,30 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         return;
       }
 
+      const existingAt = match.sets[setIndex];
+      if (supplementalRole || (existingAt && isSupplementalMatchSet(existingAt))) {
+        const role = supplementalRole ?? existingAt?.role ?? 'EXTRA_GAMES';
+        const workingSets = [...match.sets];
+        workingSets[setIndex] = {
+          ...workingSets[setIndex],
+          teamA: teamAScore,
+          teamB: teamBScore,
+          isTieBreak: false,
+          role,
+        };
+        await engine.updateMatch(roundId, matchId, {
+          teamA: match.teamA,
+          teamB: match.teamB,
+          sets: workingSets,
+          courtId: match.courtId,
+        });
+        return;
+      }
+
       const workingSets = [...match.sets];
       const cap = rules.fixedNumberOfSets > 0 ? rules.fixedNumberOfSets : 99;
       while (workingSets.length <= setIndex && workingSets.length < cap) {
-        workingSets.push({ teamA: 0, teamB: 0, isTieBreak: false });
+        workingSets.push({ teamA: 0, teamB: 0, isTieBreak: false, role: 'OFFICIAL' });
       }
       if (setIndex >= workingSets.length) {
         toast.error(t('errors.setIndexExceedsMax', { max: workingSets.length - 1 }) || 'Invalid set index');
@@ -416,7 +445,13 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       const kind = validation.kind;
       const finalIsTieBreak = kind === 'TIEBREAK_GAME' || kind === 'SUPER_TIEBREAK';
 
-      workingSets[setIndex] = { teamA: teamAScore, teamB: teamBScore, isTieBreak: finalIsTieBreak };
+      workingSets[setIndex] = {
+        ...workingSets[setIndex],
+        teamA: teamAScore,
+        teamB: teamBScore,
+        isTieBreak: finalIsTieBreak,
+        role: workingSets[setIndex].role ?? 'OFFICIAL',
+      };
 
       if (isClassicRules(rules) && rules.superTieBreakReplacesDeciderAtIndex === null) {
         for (let i = 0; i < workingSets.length; i++) {
@@ -446,6 +481,27 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     } catch (error: any) {
       console.error('Failed to update set result:', error);
       toast.error(error?.response?.data?.message || t('errors.generic') || 'Failed to update set result');
+    }
+  };
+
+  const addSupplementalSet = async (roundId: string, matchId: string) => {
+    const round = rounds.find((r) => r.id === roundId);
+    const match = round?.matches.find((m) => m.id === matchId);
+    if (!round || !match) return;
+    const next = [
+      ...match.sets,
+      { teamA: 0, teamB: 0, isTieBreak: false, role: 'EXTRA_GAMES' as const },
+    ];
+    try {
+      await engine.updateMatch(roundId, matchId, {
+        teamA: match.teamA,
+        teamB: match.teamB,
+        sets: next,
+        courtId: match.courtId,
+      });
+      openModal({ type: 'set', roundId, matchId, setIndex: next.length - 1 });
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || t('errors.generic'));
     }
   };
 
@@ -928,6 +984,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
                     }
                   }}
                   onSetClick={(matchId, setIndex) => openModal({ type: 'set', roundId: round.id, matchId, setIndex })}
+                  onAddSupplementalSet={(matchId) => addSupplementalSet(round.id, matchId)}
                   onRemovePlayer={(matchId, team, playerId) => engine.removePlayerFromTeam(round.id, matchId, team, playerId)}
                   onDragOver={dragAndDrop.handleDragOver}
                   onDrop={(e, matchId, team) => {

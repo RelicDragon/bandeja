@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "MatchSetRole" AS ENUM ('OFFICIAL', 'EXTRA_GAMES', 'EXTRA_BALLS');
+
+-- AlterTable
+ALTER TABLE "Set" ADD COLUMN "role" "MatchSetRole" NOT NULL DEFAULT 'OFFICIAL';

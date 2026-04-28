@@ -391,6 +391,58 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func supplementalGamesBanner(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Juegos extra"
+        case "ru": return "Доп. геймы"
+        case "sr": return "Дод. гемови"
+        default: return "Extra games"
+        }
+    }
+
+    nonisolated static func supplementalBallsBanner(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Pelotas extra"
+        case "ru": return "Доп. очки"
+        case "sr": return "Дод. поени"
+        default: return "Extra balls"
+        }
+    }
+
+    nonisolated static func supplementalBanner(_ lang: String, role: WatchMatchSetRole) -> String {
+        switch role {
+        case .official: return ""
+        case .extraGames: return supplementalGamesBanner(lang)
+        case .extraBalls: return supplementalBallsBanner(lang)
+        }
+    }
+
+    nonisolated static func setReviewLabel(_ lang: String, oneBasedIndex: Int, role: WatchMatchSetRole?) -> String {
+        switch role ?? .official {
+        case .official: return setLabel(lang, number: oneBasedIndex)
+        case .extraGames: return supplementalGamesBanner(lang)
+        case .extraBalls: return supplementalBallsBanner(lang)
+        }
+    }
+
+    nonisolated static func addExtraGamesRow(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Añadir juegos extra"
+        case "ru": return "Добавить геймы"
+        case "sr": return "Додај гемове"
+        default: return "Add extra games"
+        }
+    }
+
+    nonisolated static func addExtraBallsRow(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Añadir pelotas extra"
+        case "ru": return "Добавить очки"
+        case "sr": return "Додај поене"
+        default: return "Add extra balls"
+        }
+    }
+
     nonisolated static func teamAPlus(_ lang: String) -> String {
         switch lang {
         case "es": return "Equipo A +"

@@ -17,6 +17,7 @@ import {
   isPlacementProtectedFromNegativeRating,
   mergePlacementRatingFloorMetadata,
 } from './ratingPlacementFloor';
+import { isOfficialMatchSetRole } from './matchSetRole';
 
 export async function generateGameOutcomes(gameId: string, tx?: Prisma.TransactionClient) {
   const prismaClient = tx || prisma;
@@ -71,7 +72,9 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
   const roundResults = game.rounds.map(round => ({
     matches: round.matches
       .map(match => {
-        const validSets = match.sets.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
+        const validSets = match.sets.filter(
+          set => (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role)
+        );
         if (validSets.length === 0) return null;
         
         const { teamAScore: scoreA, teamBScore: scoreB } = getMatchScoresForDelta(validSets);

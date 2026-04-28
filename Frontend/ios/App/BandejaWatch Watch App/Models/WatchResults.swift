@@ -56,6 +56,7 @@ struct WatchSet: Decodable, Identifiable, Sendable {
     let teamAScore: Int
     let teamBScore: Int
     let isTieBreak: Bool
+    let role: WatchMatchSetRole?
 }
 
 struct WatchOutcome: Decodable, Sendable {
@@ -79,8 +80,44 @@ struct WatchUpdateMatchBody: Encodable, Sendable {
     let sets: [WatchSetWrite]
 }
 
-struct WatchSetWrite: Codable, Sendable {
+struct WatchSetWrite: Codable, Sendable, Equatable {
     var teamA: Int
     var teamB: Int
-    var isTieBreak: Bool = false
+    var isTieBreak: Bool
+    var role: WatchMatchSetRole?
+
+    enum CodingKeys: String, CodingKey {
+        case teamA, teamB, isTieBreak, role
+    }
+
+    init(teamA: Int, teamB: Int, isTieBreak: Bool = false, role: WatchMatchSetRole? = .official) {
+        self.teamA = teamA
+        self.teamB = teamB
+        self.isTieBreak = isTieBreak
+        self.role = role
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        teamA = try c.decode(Int.self, forKey: .teamA)
+        teamB = try c.decode(Int.self, forKey: .teamB)
+        isTieBreak = try c.decodeIfPresent(Bool.self, forKey: .isTieBreak) ?? false
+        role = try c.decodeIfPresent(WatchMatchSetRole.self, forKey: .role)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(teamA, forKey: .teamA)
+        try c.encode(teamB, forKey: .teamB)
+        try c.encode(isTieBreak, forKey: .isTieBreak)
+        try c.encode(role ?? .official, forKey: .role)
+    }
+}
+
+extension WatchSet {
+    var resolvedRole: WatchMatchSetRole { role ?? .official }
+}
+
+extension WatchSetWrite {
+    var resolvedRole: WatchMatchSetRole { role ?? .official }
 }
