@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Medal, Award, Flag, Target } from 'lucide-react';
-import { ScoringPreset } from '@/types';
+import { GameSetupParams, ScoringPreset } from '@/types';
 import { FormatOptionCard } from './FormatOptionCard';
+import { GameFormatCustomScoringSection } from './GameFormatCustomScoringSection';
 import { GameFormatTimedDuration } from './GameFormatTimedDuration';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 
@@ -10,7 +11,10 @@ interface GameFormatStepSetStructureProps {
   hasGoldenPoint: boolean;
   matchTimerEnabled: boolean;
   matchTimedCapMinutes: number;
+  overrides: Partial<GameSetupParams>;
+  onOverridesChange: (patch: Partial<GameSetupParams>) => void;
   onPresetChange: (preset: ScoringPreset) => void;
+  onActivateCustomScoring: () => void;
   onGoldenPointChange: (v: boolean) => void;
   onMatchTimerEnabledChange: (v: boolean) => void;
   onTimedCapMinutesChange: (n: number) => void;
@@ -31,7 +35,10 @@ export const GameFormatStepSetStructure = ({
   hasGoldenPoint,
   matchTimerEnabled,
   matchTimedCapMinutes,
+  overrides,
+  onOverridesChange,
   onPresetChange,
+  onActivateCustomScoring,
   onGoldenPointChange,
   onMatchTimerEnabledChange,
   onTimedCapMinutesChange,
@@ -58,6 +65,17 @@ export const GameFormatStepSetStructure = ({
             }}
           />
         ))}
+      </div>
+
+      <div className="mt-4 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
+        <GameFormatCustomScoringSection
+          scoringPreset={scoringPreset}
+          overrides={overrides}
+          onOverridesChange={onOverridesChange}
+          fromClassicHint
+          onPickCustomScoring={onActivateCustomScoring}
+          onSelectAdvance={onSelectAdvance}
+        />
       </div>
 
       <div className="mt-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">

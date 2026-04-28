@@ -61,6 +61,11 @@ function isSetStructureStepValid(f: UseGameFormatResult): boolean {
 
 function isPointsTotalStepValid(f: UseGameFormatResult): boolean {
   if (f.scoringMode !== 'POINTS') return true;
+  if (f.scoringPreset === 'CUSTOM_SCORING') {
+    const s = f.setupPayload.fixedNumberOfSets ?? 0;
+    const p = f.setupPayload.maxTotalPointsPerSet ?? 0;
+    return s >= 1 && s <= 99 && p >= 1 && p <= 999;
+  }
   const targetOk =
     f.customPointsTotal != null
       ? f.customPointsTotal > 0 && f.customPointsTotal <= 999
@@ -248,6 +253,7 @@ export const GameFormatWizard = ({
                 matchTimerEnabled={format.matchTimerEnabled}
                 matchTimedCapMinutes={format.matchTimedCapMinutes}
                 customPointsTotal={format.customPointsTotal}
+                setupPayload={format.setupPayload}
               />
             </p>
           </div>
@@ -280,7 +286,14 @@ export const GameFormatWizard = ({
                   hasGoldenPoint={format.hasGoldenPoint}
                   matchTimerEnabled={format.matchTimerEnabled}
                   matchTimedCapMinutes={format.matchTimedCapMinutes}
+                  overrides={format.overrides}
+                  onOverridesChange={format.setOverrides}
                   onPresetChange={format.setScoringPreset}
+                  onActivateCustomScoring={() => {
+                    format.setScoringMode('POINTS');
+                    format.setCustomPointsTotal(null);
+                    format.setScoringPreset('CUSTOM_SCORING');
+                  }}
                   onGoldenPointChange={format.setHasGoldenPoint}
                   onMatchTimerEnabledChange={format.setMatchTimerEnabled}
                   onTimedCapMinutesChange={format.setMatchTimedCapMinutes}
@@ -293,6 +306,8 @@ export const GameFormatWizard = ({
                   matchTimerEnabled={format.matchTimerEnabled}
                   matchTimedCapMinutes={format.matchTimedCapMinutes}
                   customPointsTotal={format.customPointsTotal}
+                  overrides={format.overrides}
+                  onOverridesChange={format.setOverrides}
                   onPresetChange={format.setScoringPreset}
                   onMatchTimerEnabledChange={format.setMatchTimerEnabled}
                   onTimedCapMinutesChange={format.setMatchTimedCapMinutes}

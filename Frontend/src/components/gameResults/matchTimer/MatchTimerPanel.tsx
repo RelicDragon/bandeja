@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { Pause, Play, RotateCcw, Square } from 'lucide-react';
 import type { Match } from '@/types/gameResults';
 import type { Game } from '@/types';
+import { GameResultsEngine } from '@/services/gameResultsEngine';
 import {
   formatMatchTimerMs,
   isGameMatchTimerEnabled,
@@ -38,6 +39,23 @@ export function MatchTimerPanel({
     if (match.timer?.status !== 'RUNNING') return;
     const id = window.setInterval(() => setTick((x) => x + 1), 500);
     return () => window.clearInterval(id);
+  }, [match.timer?.status, match.id]);
+
+  useEffect(() => {
+    if (match.timer?.status !== 'RUNNING') return;
+    void GameResultsEngine.refreshMatchTimerSnapshot(match.id);
+    const resync = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      void GameResultsEngine.refreshMatchTimerSnapshot(match.id);
+    };
+    const onVis = () => resync();
+    const onOnline = () => resync();
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('online', onOnline);
+    return () => {
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('online', onOnline);
+    };
   }, [match.timer?.status, match.id]);
 
   useEffect(() => {

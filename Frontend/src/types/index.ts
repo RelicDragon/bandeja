@@ -36,7 +36,8 @@ export type ScoringPreset =
   | 'POINTS_24'
   | 'POINTS_32'
   | 'TIMED'
-  | 'CUSTOM';
+  | 'CUSTOM'
+  | 'CUSTOM_SCORING';
 export interface GameSetupParams {
   fixedNumberOfSets: number;
   maxTotalPointsPerSet: number;

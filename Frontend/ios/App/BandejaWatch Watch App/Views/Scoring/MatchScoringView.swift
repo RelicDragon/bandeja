@@ -35,7 +35,7 @@ struct MatchScoringView: View {
                     if let g = vm.game, g.isMatchTimerEnabled {
                         MatchTimerBarView(gameId: gameId, matchId: matchId, game: g)
                     }
-                    if vm.isAmericano {
+                    if vm.usesBallCapPerSetUI {
                         AmericanoScoringView(vm: vm, onFinish: finish)
                     } else {
                         ClassicScoringView(vm: vm, onFinish: finish)

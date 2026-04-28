@@ -34,7 +34,7 @@ struct ActiveMatchPage: View {
                 }
             } else {
                 VStack(spacing: 6) {
-                    if vm.isAmericano {
+                    if vm.usesBallCapPerSetUI {
                         AmericanoScoringView(vm: vm, onFinish: finish)
                     } else {
                         ClassicScoringView(vm: vm, onFinish: finish)

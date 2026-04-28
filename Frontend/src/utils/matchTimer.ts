@@ -175,5 +175,14 @@ export function applyOptimisticTimerTransition(
 }
 
 export function liveElapsedMs(snapshot: MatchTimerSnapshot, nowMs: number): number {
-  return computeElapsedFromFields(snapshot.status, snapshot.startedAt, snapshot.elapsedMs, nowMs);
+  if (snapshot.status === 'RUNNING') {
+    const anchor = Date.parse(snapshot.serverNow);
+    if (!Number.isNaN(anchor)) {
+      return Math.max(0, snapshot.elapsedMs + Math.max(0, nowMs - anchor));
+    }
+    if (snapshot.startedAt) {
+      return computeElapsedFromFields('RUNNING', snapshot.startedAt, snapshot.elapsedMs, nowMs);
+    }
+  }
+  return Math.max(0, snapshot.elapsedMs);
 }

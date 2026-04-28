@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { EntityType } from '@prisma/client';
+import { EntityType, ScoringPreset } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
@@ -12,6 +12,7 @@ import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsIn
 import { normalizeLegacyTimedScoringPreset } from '../../utils/scoring/matchTimerGame';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
+import { assertValidCustomScoringNumbers } from '../../utils/scoring/customScoringGame';
 
 export class GameCreateService {
   static async createGame(data: any, userId: string, jwtIsAdmin: boolean = false) {
@@ -181,6 +182,18 @@ export class GameCreateService {
       matchTimedCapMinutes = 0;
     }
 
+    const fixedSetsCreate = data.fixedNumberOfSets ?? 0;
+    if (scoringPreset === ScoringPreset.CUSTOM_SCORING) {
+      assertValidCustomScoringNumbers(fixedSetsCreate, maxTotalPointsCreate);
+    }
+
+    const affectsRatingCreate =
+      scoringPreset === ScoringPreset.CUSTOM_SCORING
+        ? false
+        : data.affectsRating !== undefined
+          ? data.affectsRating
+          : true;
+
     const createdGame = await prisma.game.create({
       data: {
         entityType: entityType,
@@ -199,7 +212,7 @@ export class GameCreateService {
         minLevel: data.minLevel,
         maxLevel: data.maxLevel,
         isPublic: data.isPublic !== undefined ? data.isPublic : true,
-        affectsRating: data.affectsRating !== undefined ? data.affectsRating : true,
+        affectsRating: affectsRatingCreate,
         anyoneCanInvite: data.anyoneCanInvite || false,
         resultsByAnyone: entityType === EntityType.TOURNAMENT ? false : (data.resultsByAnyone || false),
         allowDirectJoin: data.allowDirectJoin || false,
@@ -207,7 +220,7 @@ export class GameCreateService {
         afterGameGoToBar: data.afterGameGoToBar || false,
         hasFixedTeams: hasFixedTeams,
         genderTeams: data.genderTeams || 'ANY',
-        fixedNumberOfSets: data.fixedNumberOfSets ?? 0,
+        fixedNumberOfSets: fixedSetsCreate,
         maxTotalPointsPerSet: maxTotalPointsCreate,
         matchTimedCapMinutes,
         matchTimerEnabled,

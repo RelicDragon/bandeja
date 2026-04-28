@@ -184,6 +184,11 @@
         "title": "Personalizado",
         "subtitle": "Ajusta cada regla",
         "hint": "Usa las opciones avanzadas"
+      },
+      "CUSTOM_SCORING": {
+        "title": "Sets y pelotas a medida",
+        "subtitle": "Elige cuántos sets y cuántas pelotas cierran cada set",
+        "hint": "No cuenta para el nivel — ideal para entrenar o jugar relajado"
       }
     },
     "scoringShort": {
@@ -199,7 +204,8 @@
       "POINTS_24": "A 24",
       "POINTS_32": "A 32",
       "TIMED": "Por tiempo",
-      "CUSTOM": "Personalizado"
+      "CUSTOM": "Personalizado",
+      "CUSTOM_SCORING": "Sets a medida"
     },
     "goldenPointShort": "Punto de oro",
     "goldenPoint": {
@@ -221,6 +227,16 @@
       "label": "Total personalizado",
       "placeholder": "ej. 27",
       "short": "Hasta {{count}}"
+    },
+    "customScoring": {
+      "fromClassicHint": "¿Quieres un número fijo de sets con un tope de pelotas por set (no juegos al tenis)? Úsalo — pasaremos el marcador a puntos simples.",
+      "badge": "Avanzado",
+      "ratingNote": "Con este formato el nivel nunca cuenta: los resultados son informales.",
+      "setsLabel": "Sets del partido",
+      "ballsPerSetLabel": "Pelotas por set",
+      "helper": "Ejemplo: 3 sets y 21 pelotas, como un Americano al mejor de tres con 21 pelotas por set.",
+      "detail": "Hasta {{sets}} sets · {{points}} pelotas para cerrar un set",
+      "short": "{{sets}} sets · {{points}} pelotas"
     },
     "points": {
       "title": "Puntos por resultado"

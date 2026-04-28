@@ -66,6 +66,11 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const [allowDirectJoin, setAllowDirectJoin] = useState<boolean>(initialGameData?.allowDirectJoin ?? false);
   const [afterGameGoToBar, setAfterGameGoToBar] = useState<boolean>(initialGameData?.afterGameGoToBar ?? false);
   const gameFormat = useGameFormat({ ...initialGameData, maxParticipants });
+
+  useEffect(() => {
+    if (gameFormat.scoringPreset === 'CUSTOM_SCORING') setIsRatingGame(false);
+  }, [gameFormat.scoringPreset]);
+
   const [genderTeams, setGenderTeams] = useState<GenderTeam>(
     (initialGameData?.genderTeams as GenderTeam) ?? 'ANY',
   );
@@ -346,7 +351,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
       if (entityType !== 'TRAINING') {
         const setup = gameFormat.setupPayload;
         gameData.gameType = gameFormat.gameType;
-        gameData.affectsRating = isRatingGame;
+        gameData.affectsRating = gameFormat.scoringPreset === 'CUSTOM_SCORING' ? false : isRatingGame;
         gameData.resultsByAnyone = entityType === 'TOURNAMENT' ? false : resultsByAnyone;
         gameData.hasFixedTeams = hasFixedTeams;
         gameData.pointsPerWin = setup.pointsPerWin;
@@ -588,6 +593,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         <GameSettingsSection
           isPublic={isPublic}
           isRatingGame={isRatingGame}
+          ratingLockedOff={gameFormat.scoringPreset === 'CUSTOM_SCORING'}
           anyoneCanInvite={anyoneCanInvite}
           resultsByAnyone={resultsByAnyone}
           allowDirectJoin={allowDirectJoin}

@@ -14,6 +14,7 @@ export const SCORING_PRESETS = [
   'POINTS_32',
   'TIMED',
   'CUSTOM',
+  'CUSTOM_SCORING',
 ] as const;
 
 export type ScoringPreset = (typeof SCORING_PRESETS)[number];
@@ -31,6 +32,7 @@ const CLASSIC_SCORINGS: ScoringPreset[] = [
   'CLASSIC_TIMED',
   'TIMED',
   'CUSTOM',
+  'CUSTOM_SCORING',
 ];
 
 const POINTS_SCORINGS: ScoringPreset[] = [
@@ -47,6 +49,7 @@ const POINTS_SCORINGS: ScoringPreset[] = [
   'CLASSIC_SUPER_TIEBREAK',
   'CLASSIC_SINGLE_SET',
   'CLASSIC_TIMED',
+  'CUSTOM_SCORING',
 ];
 
 export const SCORING_COMPATIBILITY: Record<GameTypeStr, ScoringPreset[]> = {

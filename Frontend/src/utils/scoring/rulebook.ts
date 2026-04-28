@@ -128,6 +128,18 @@ const customRule: RuleSkeleton = {
   allowRemoveSet: true,
 };
 
+const customScoringSkeletonFromGame = (game: RulesSource): RuleSkeleton => {
+  const sets = Math.min(99, Math.max(1, game?.fixedNumberOfSets ?? 3));
+  const pts = Math.min(999, Math.max(1, game?.maxTotalPointsPerSet ?? 21));
+  return {
+    ...pointsRule(pts),
+    fixedNumberOfSets: sets,
+    minSetsToWin: Math.ceil(sets / 2),
+    maxSetsPlayed: sets,
+    allowRemoveSet: false,
+  };
+};
+
 const PRESETS: Record<ScoringPreset, RuleSkeleton> = {
   CLASSIC_BEST_OF_3: classicBo3,
   CLASSIC_BEST_OF_5: classicBo5,
@@ -142,6 +154,7 @@ const PRESETS: Record<ScoringPreset, RuleSkeleton> = {
   POINTS_32: pointsRule(32),
   TIMED: timedRule,
   CUSTOM: customRule,
+  CUSTOM_SCORING: pointsRule(21),
 };
 
 type RulesSource = Pick<
@@ -161,7 +174,12 @@ export const getRulesFromPreset = (preset: ScoringPreset): RuleSkeleton => PRESE
 
 export const getRules = (game: RulesSource): ScoringRules => {
   const preset = game?.scoringPreset ?? null;
-  const base: RuleSkeleton = preset ? PRESETS[preset] : deriveFromGame(game);
+  const base: RuleSkeleton =
+    preset === 'CUSTOM_SCORING'
+      ? customScoringSkeletonFromGame(game)
+      : preset
+        ? PRESETS[preset]
+        : deriveFromGame(game);
   const allowDrawPerSet = !preset
     ? (game?.pointsPerTie ?? 0) > 0
     : base.winnerOfMatch === 'BY_SCORES' && (game?.pointsPerTie ?? 0) > 0 && base.totalPointsPerSet === 0;

@@ -7,6 +7,7 @@ struct MatchTimerBarView: View {
     let matchId: String
     let game: WatchGame
     @Environment(WatchPreferencesStore.self) private var prefs
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var snapshot: WatchMatchTimerSnapshot?
     @State private var tick = 0
@@ -22,6 +23,11 @@ struct MatchTimerBarView: View {
             }
         }
         .task { await refresh() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active, snapshot?.status == "RUNNING" {
+                Task { await refresh() }
+            }
+        }
     }
 
     @ViewBuilder
@@ -105,11 +111,15 @@ struct MatchTimerBarView: View {
     }
 
     private func liveElapsedMs(_ s: WatchMatchTimerSnapshot) -> Double {
-        var ms = Double(s.elapsedMs)
-        if s.status == "RUNNING", let start = s.startedAt, let t0 = parseIso8601(start) {
-            ms += Date().timeIntervalSince(t0) * 1000
+        if s.status == "RUNNING" {
+            if let anchor = parseIso8601(s.serverNow) {
+                return max(0, Double(s.elapsedMs) + Date().timeIntervalSince(anchor) * 1000)
+            }
+            if let start = s.startedAt, let t0 = parseIso8601(start) {
+                return max(0, Double(s.elapsedMs) + Date().timeIntervalSince(t0) * 1000)
+            }
         }
-        return max(0, ms)
+        return max(0, Double(s.elapsedMs))
     }
 
     private func parseIso8601(_ string: String) -> Date? {

@@ -8,6 +8,8 @@ import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
 interface GameSettingsSectionProps {
   isPublic: boolean;
   isRatingGame: boolean;
+  /** When true, rating cannot apply (e.g. custom scoring format). */
+  ratingLockedOff?: boolean;
   anyoneCanInvite: boolean;
   resultsByAnyone: boolean;
   allowDirectJoin: boolean;
@@ -24,6 +26,7 @@ interface GameSettingsSectionProps {
 export const GameSettingsSection = ({
   isPublic,
   isRatingGame,
+  ratingLockedOff = false,
   anyoneCanInvite,
   resultsByAnyone,
   allowDirectJoin,
@@ -67,10 +70,17 @@ export const GameSettingsSection = ({
                 {t('createGame.ratingGame.title')}
               </span>
               <div className="flex-shrink-0">
-                <ToggleSwitch checked={isRatingGame} onChange={onRatingGameChange} />
+                <ToggleSwitch
+                  checked={ratingLockedOff ? false : isRatingGame}
+                  disabled={ratingLockedOff}
+                  onChange={onRatingGameChange}
+                />
               </div>
             </div>
-            {showNotes && (
+            {ratingLockedOff ? (
+              <p className="text-xs text-amber-700 dark:text-amber-300/90">{t('createGame.ratingGame.note.customScoring')}</p>
+            ) : null}
+            {showNotes && !ratingLockedOff && (
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {isRatingGame 
                   ? t('createGame.ratingGame.note.true')

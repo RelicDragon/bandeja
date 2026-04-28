@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { MatchGenerationType, ScoringMode, ScoringPreset } from '@/types';
+import { GameSetupParams, MatchGenerationType, ScoringMode, ScoringPreset } from '@/types';
 import { summarizeGameFormat } from '@/utils/gameFormat';
 
 const SUMMARY_SEP = ' · ';
@@ -12,6 +12,7 @@ interface GameFormatSummaryProps {
   matchTimerEnabled?: boolean;
   matchTimedCapMinutes?: number;
   customPointsTotal?: number | null;
+  setupPayload?: Pick<GameSetupParams, 'fixedNumberOfSets' | 'maxTotalPointsPerSet'>;
   className?: string;
   twoRows?: boolean;
 }
@@ -24,6 +25,7 @@ export const GameFormatSummary = ({
   matchTimerEnabled,
   matchTimedCapMinutes,
   customPointsTotal,
+  setupPayload,
   className,
   twoRows,
 }: GameFormatSummaryProps) => {
@@ -36,6 +38,12 @@ export const GameFormatSummary = ({
     matchTimerEnabled,
     matchTimedCapMinutes,
     customPointsTotal,
+    ...(scoringPreset === 'CUSTOM_SCORING' && setupPayload
+      ? {
+          customScoringSets: setupPayload.fixedNumberOfSets,
+          customScoringPointsPerSet: setupPayload.maxTotalPointsPerSet,
+        }
+      : {}),
   });
   if (!twoRows) {
     return <span className={className}>{summary}</span>;

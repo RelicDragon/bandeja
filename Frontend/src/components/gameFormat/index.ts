@@ -11,3 +11,4 @@ export * from './GameFormatStepGeneration';
 export * from './GameFormatStepRanking';
 export * from './FormatOptionCard';
 export * from './GameFormatTimedDuration';
+export * from './GameFormatCustomScoringSection';

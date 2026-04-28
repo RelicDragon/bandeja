@@ -784,6 +784,18 @@ class GameResultsEngineClass {
     void this.saveLocal();
   }
 
+  async refreshMatchTimerSnapshot(matchId: string): Promise<void> {
+    const state = this.getState();
+    if (!state.gameId) return;
+    try {
+      const res = await matchTimerApi.getSnapshot(state.gameId, matchId);
+      const snap = res.data?.snapshot;
+      if (snap) this.applyRemoteMatchTimerSnapshot(state.gameId, matchId, snap);
+    } catch {
+      /* ignore */
+    }
+  }
+
   async transitionMatchTimer(roundId: string, matchId: string, action: MatchTimerAction): Promise<void> {
     const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit) return;

@@ -481,6 +481,15 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func setWord(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Set"
+        case "ru": return "Сет"
+        case "sr": return "Сет"
+        default: return "Set"
+        }
+    }
+
     nonisolated static func moreScoringActions(_ lang: String) -> String {
         switch lang {
         case "es": return "Más"
@@ -596,6 +605,15 @@ enum WatchCopy {
         case "ru": return "Американо"
         case "sr": return "Американо"
         default: return "Americano"
+        }
+    }
+
+    nonisolated static func ballCapScoring(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Puntos (tope)"
+        case "ru": return "Очки (лимит)"
+        case "sr": return "Поени (лимит)"
+        default: return "Points (cap)"
         }
     }
 

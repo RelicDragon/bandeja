@@ -8,9 +8,14 @@ struct AmericanoScoringView: View {
     var body: some View {
         let lang = prefs.uiLanguageCode
         VStack(spacing: 10) {
-            Text(WatchCopy.americano(lang))
+            Text(vm.ballCapScoringTitle(lang: lang))
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            if vm.rawFixedNumberOfSets > 1 {
+                Text("\(WatchCopy.setWord(lang)) \(vm.activeSetIndex + 1)/\(vm.rawFixedNumberOfSets)")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
             let idx = vm.activeSetIndex
             let aScore = vm.sets[safe: idx]?.teamA ?? 0
             let bScore = vm.sets[safe: idx]?.teamB ?? 0
@@ -26,11 +31,17 @@ struct AmericanoScoringView: View {
                 WatchScoringTeamColumn(
                     users: vm.teamBUsers,
                     scoreLabel: "\(bScore)",
-                    action: { vm.decrementAmericanoTeamA() },
-                    decrementAction: { vm.incrementAmericanoTeamA() },
+                    action: { vm.incrementAmericanoTeamB() },
+                    decrementAction: { vm.decrementAmericanoTeamB() },
                     disabled: vm.isReadOnly,
                     decrementDisabled: bScore <= 0
                 )
+            }
+            if vm.canAdvanceToNextSet {
+                Button(WatchCopy.nextSet(lang)) {
+                    vm.nextSet()
+                }
+                .buttonStyle(.bordered)
             }
             Button(vm.isSaving ? WatchCopy.saving(lang) : WatchCopy.finishMatch(lang)) {
                 onFinish()

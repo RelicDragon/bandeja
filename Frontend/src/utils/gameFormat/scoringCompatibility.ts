@@ -13,7 +13,14 @@ const CLASSIC_PRESETS: ScoringPreset[] = [
 
 const POINTS_PRESETS: ScoringPreset[] = ['POINTS_16', 'POINTS_21', 'POINTS_24', 'POINTS_32'];
 
-const ALL_PRESETS: ScoringPreset[] = [...CLASSIC_PRESETS, ...POINTS_PRESETS, 'TIMED', 'CLASSIC_TIMED', 'CUSTOM'];
+const ALL_PRESETS: ScoringPreset[] = [
+  ...CLASSIC_PRESETS,
+  ...POINTS_PRESETS,
+  'TIMED',
+  'CLASSIC_TIMED',
+  'CUSTOM',
+  'CUSTOM_SCORING',
+];
 
 // --- ScoringMode → compatible presets ---
 
@@ -133,9 +140,9 @@ export const isPointsPreset = (preset: ScoringPreset): boolean => preset.startsW
 
 // Legacy: GameType-based compatibility (kept for rulebook / validation paths)
 export const getCompatibleScorings = (gameType: GameType): ScoringPreset[] => {
-  if (gameType === 'CLASSIC') return [...CLASSIC_PRESETS, 'CUSTOM'];
+  if (gameType === 'CLASSIC') return [...CLASSIC_PRESETS, 'CUSTOM', 'CUSTOM_SCORING'];
   if (gameType === 'CUSTOM') return ALL_PRESETS;
-  return [...CLASSIC_PRESETS, ...POINTS_PRESETS, 'CUSTOM'];
+  return [...CLASSIC_PRESETS, ...POINTS_PRESETS, 'CUSTOM', 'CUSTOM_SCORING'];
 };
 
 export const DEFAULT_SCORING_BY_FORMAT: Record<GameType, ScoringPreset> = {
