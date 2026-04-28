@@ -111,8 +111,7 @@
       "title": "Juego de puntuación",
       "note": {
         "false": "Los resultados no afectarán los niveles de los participantes.",
-        "true": "Los resultados afectarán los niveles de los participantes.",
-        "customScoring": "La puntuación personalizada es para partidos informales. El nivel no cuenta para nadie."
+        "true": "Los resultados afectarán los niveles de los participantes."
       }
     },
     "tournament": "Torneo",

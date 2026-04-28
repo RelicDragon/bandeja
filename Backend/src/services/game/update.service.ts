@@ -18,8 +18,6 @@ import { normalizeLegacyTimedScoringPreset } from '../../utils/scoring/matchTime
 import { ScoringPreset } from '@prisma/client';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
-import { assertValidCustomScoringNumbers, isCustomScoringPreset } from '../../utils/scoring/customScoringGame';
-
 export class GameUpdateService {
   static async updateGame(id: string, data: any, userId: string, isAdmin: boolean) {
     // Validate currency if provided
@@ -467,7 +465,7 @@ export class GameUpdateService {
 
     const scoringRow = await prisma.game.findUnique({
       where: { id },
-      select: { scoringPreset: true, winnerOfMatch: true, maxTotalPointsPerSet: true, fixedNumberOfSets: true },
+      select: { scoringPreset: true, winnerOfMatch: true, maxTotalPointsPerSet: true },
     });
     if (scoringRow) {
       const preset =
@@ -478,20 +476,12 @@ export class GameUpdateService {
         updateData.maxTotalPointsPerSet !== undefined
           ? updateData.maxTotalPointsPerSet
           : scoringRow.maxTotalPointsPerSet;
-      const fixedNumberOfSets =
-        updateData.fixedNumberOfSets !== undefined
-          ? updateData.fixedNumberOfSets
-          : scoringRow.fixedNumberOfSets;
       updateData.ballsInGames = deriveBallsInGamesFromScoring({
         scoringPreset: preset ?? null,
         winnerOfMatch,
         maxTotalPointsPerSet,
       });
 
-      if (isCustomScoringPreset(preset as ScoringPreset | null)) {
-        assertValidCustomScoringNumbers(fixedNumberOfSets ?? 0, maxTotalPointsPerSet ?? 0);
-        updateData.affectsRating = false;
-      }
     }
 
     delete updateData.resultsRoundGenV2;

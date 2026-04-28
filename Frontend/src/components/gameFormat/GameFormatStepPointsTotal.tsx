@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Target } from 'lucide-react';
-import { GameSetupParams, ScoringPreset } from '@/types';
+import { ScoringPreset } from '@/types';
 import { FormatOptionCard } from './FormatOptionCard';
 import { GameFormatTimedDuration } from './GameFormatTimedDuration';
-import { GameFormatCustomScoringSection } from './GameFormatCustomScoringSection';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 
 interface GameFormatStepPointsTotalProps {
@@ -11,8 +10,6 @@ interface GameFormatStepPointsTotalProps {
   matchTimerEnabled: boolean;
   matchTimedCapMinutes: number;
   customPointsTotal: number | null;
-  overrides: Partial<GameSetupParams>;
-  onOverridesChange: (patch: Partial<GameSetupParams>) => void;
   onPresetChange: (preset: ScoringPreset) => void;
   onMatchTimerEnabledChange: (v: boolean) => void;
   onTimedCapMinutesChange: (n: number) => void;
@@ -32,8 +29,6 @@ export const GameFormatStepPointsTotal = ({
   matchTimerEnabled,
   matchTimedCapMinutes,
   customPointsTotal,
-  overrides,
-  onOverridesChange,
   onPresetChange,
   onMatchTimerEnabledChange,
   onTimedCapMinutesChange,
@@ -42,8 +37,7 @@ export const GameFormatStepPointsTotal = ({
 }: GameFormatStepPointsTotalProps) => {
   const { t } = useTranslation();
 
-  const activePreset =
-    customPointsTotal != null || scoringPreset === 'CUSTOM_SCORING' ? null : scoringPreset;
+  const activePreset = customPointsTotal != null ? null : scoringPreset;
 
   const handleCustomInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
@@ -79,33 +73,20 @@ export const GameFormatStepPointsTotal = ({
           />
         ))}
 
-        {scoringPreset !== 'CUSTOM_SCORING' && (
-          <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-200 dark:border-gray-700">
-            <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-              {t('gameFormat.customPoints.label')}
-            </div>
-            <input
-              type="number"
-              min={1}
-              max={999}
-              value={customPointsTotal ?? ''}
-              onChange={handleCustomInput}
-              placeholder={t('gameFormat.customPoints.placeholder')}
-              className="w-full px-3 py-2 text-sm rounded-lg bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 focus:border-primary-500 text-gray-900 dark:text-white placeholder-gray-400 transition-all outline-none"
-            />
+        <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-200 dark:border-gray-700">
+          <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+            {t('gameFormat.customPoints.label')}
           </div>
-        )}
-
-        <GameFormatCustomScoringSection
-          scoringPreset={scoringPreset}
-          overrides={overrides}
-          onOverridesChange={onOverridesChange}
-          onPickCustomScoring={() => {
-            onCustomPointsChange(null);
-            onPresetChange('CUSTOM_SCORING');
-          }}
-          onSelectAdvance={onSelectAdvance}
-        />
+          <input
+            type="number"
+            min={1}
+            max={999}
+            value={customPointsTotal ?? ''}
+            onChange={handleCustomInput}
+            placeholder={t('gameFormat.customPoints.placeholder')}
+            className="w-full px-3 py-2 text-sm rounded-lg bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 focus:border-primary-500 text-gray-900 dark:text-white placeholder-gray-400 transition-all outline-none"
+          />
+        </div>
       </div>
 
       <div className="mt-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">

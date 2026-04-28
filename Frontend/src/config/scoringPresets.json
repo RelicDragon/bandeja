@@ -76,11 +76,5 @@
     "fixedNumberOfSets": 0,
     "maxTotalPointsPerSet": 0,
     "ballsInGames": false
-  },
-  "CUSTOM_SCORING": {
-    "winnerOfMatch": "BY_SCORES",
-    "fixedNumberOfSets": 3,
-    "maxTotalPointsPerSet": 21,
-    "ballsInGames": false
   }
 }

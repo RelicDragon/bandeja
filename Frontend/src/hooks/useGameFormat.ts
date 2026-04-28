@@ -104,17 +104,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     initial?.prohibitMatchesEditing ?? false,
   );
 
-  const [overrides, setOverridesState] = useState<Partial<GameSetupParams>>(() => {
-    if (initial?.scoringPreset === 'CUSTOM_SCORING') {
-      const fs = initial.fixedNumberOfSets;
-      const mp = initial.maxTotalPointsPerSet;
-      return {
-        fixedNumberOfSets: typeof fs === 'number' && fs >= 1 && fs <= 99 ? fs : 3,
-        maxTotalPointsPerSet: typeof mp === 'number' && mp >= 1 && mp <= 999 ? mp : 21,
-      };
-    }
-    return {};
-  });
+  const [overrides, setOverridesState] = useState<Partial<GameSetupParams>>({});
 
   const initialTimedCap = (() => {
     const m = initial?.matchTimedCapMinutes;
@@ -150,22 +140,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
   const setScoringPreset = useCallback((preset: ScoringPreset) => {
     setScoringPresetState(preset);
     setCustomPointsTotalState(null);
-    if (preset === 'CUSTOM_SCORING') {
-      setOverridesState((prev) => ({
-        fixedNumberOfSets:
-          typeof prev.fixedNumberOfSets === 'number' && prev.fixedNumberOfSets >= 1 && prev.fixedNumberOfSets <= 99
-            ? prev.fixedNumberOfSets
-            : 3,
-        maxTotalPointsPerSet:
-          typeof prev.maxTotalPointsPerSet === 'number' &&
-          prev.maxTotalPointsPerSet >= 1 &&
-          prev.maxTotalPointsPerSet <= 999
-            ? prev.maxTotalPointsPerSet
-            : 21,
-      }));
-    } else {
-      setOverridesState({});
-    }
+    setOverridesState({});
   }, []);
 
   const setCustomPointsTotal = useCallback((n: number | null) => {

@@ -62,18 +62,12 @@ final class MatchScoringViewModel {
         return (game.fixedNumberOfSets ?? 0) == 1 && (game.maxTotalPointsPerSet ?? 0) > 0
     }
 
-    private var isCustomScoringPreset: Bool {
-        (game?.scoringPreset ?? "").uppercased() == "CUSTOM_SCORING"
-    }
-
-    /// Single-set Americano or CUSTOM_SCORING (ball total per set).
     var usesBallCapPerSetUI: Bool {
-        isAmericano || isCustomScoringPreset
+        isAmericano
     }
 
     func ballCapScoringTitle(lang: String) -> String {
-        if isCustomScoringPreset { return WatchCopy.ballCapScoring(lang) }
-        return WatchCopy.americano(lang)
+        WatchCopy.americano(lang)
     }
 
     var fixedNumberOfSets: Int {

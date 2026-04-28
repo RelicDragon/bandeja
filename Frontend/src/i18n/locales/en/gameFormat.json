@@ -184,11 +184,6 @@
         "title": "Custom",
         "subtitle": "Fine-tune every rule",
         "hint": "Use advanced options"
-      },
-      "CUSTOM_SCORING": {
-        "title": "Custom sets & ball cap",
-        "subtitle": "Pick how many sets and how many balls decide each set",
-        "hint": "Does not count for level rating — best for training or fun formats"
       }
     },
     "scoringShort": {
@@ -204,8 +199,7 @@
       "POINTS_24": "To 24",
       "POINTS_32": "To 32",
       "TIMED": "Timed",
-      "CUSTOM": "Custom",
-      "CUSTOM_SCORING": "Custom sets"
+      "CUSTOM": "Custom"
     },
     "goldenPointShort": "Golden Point",
     "goldenPoint": {
@@ -227,16 +221,6 @@
       "label": "Custom total",
       "placeholder": "e.g. 27",
       "short": "To {{count}}"
-    },
-    "customScoring": {
-      "fromClassicHint": "Want a fixed number of sets with a ball total per set (not tennis games)? Use this — we’ll switch scoring to simple points for you.",
-      "badge": "Advanced",
-      "ratingNote": "Level rating is always off for this format so results stay informal.",
-      "setsLabel": "Sets in the match",
-      "ballsPerSetLabel": "Balls per set",
-      "helper": "Example: 3 sets and 21 balls works like Americano best-of-three with 21 balls each set.",
-      "detail": "Up to {{sets}} sets · {{points}} balls to finish a set",
-      "short": "{{sets}} sets · {{points}} balls"
     },
     "points": {
       "title": "Points per result"

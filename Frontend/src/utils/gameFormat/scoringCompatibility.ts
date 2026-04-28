@@ -19,7 +19,6 @@ const ALL_PRESETS: ScoringPreset[] = [
   'TIMED',
   'CLASSIC_TIMED',
   'CUSTOM',
-  'CUSTOM_SCORING',
 ];
 
 // --- ScoringMode → compatible presets ---
@@ -140,9 +139,9 @@ export const isPointsPreset = (preset: ScoringPreset): boolean => preset.startsW
 
 // Legacy: GameType-based compatibility (kept for rulebook / validation paths)
 export const getCompatibleScorings = (gameType: GameType): ScoringPreset[] => {
-  if (gameType === 'CLASSIC') return [...CLASSIC_PRESETS, 'CUSTOM', 'CUSTOM_SCORING'];
+  if (gameType === 'CLASSIC') return [...CLASSIC_PRESETS, 'CUSTOM'];
   if (gameType === 'CUSTOM') return ALL_PRESETS;
-  return [...CLASSIC_PRESETS, ...POINTS_PRESETS, 'CUSTOM', 'CUSTOM_SCORING'];
+  return [...CLASSIC_PRESETS, ...POINTS_PRESETS, 'CUSTOM'];
 };
 
 export const DEFAULT_SCORING_BY_FORMAT: Record<GameType, ScoringPreset> = {

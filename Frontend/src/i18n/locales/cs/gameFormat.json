@@ -186,11 +186,6 @@
         "title": "Vlastní",
         "subtitle": "Nastavte každé pravidlo",
         "hint": "Použijte pokročilé možnosti"
-      },
-      "CUSTOM_SCORING": {
-        "title": "Vlastní sety a počet míčů",
-        "subtitle": "Zvolte počet setů a kolik míčů rozhodne set",
-        "hint": "Nezapočítává se do ratingu — vhodné na trénink nebo zábavu"
       }
     },
     "scoringShort": {
@@ -206,8 +201,7 @@
       "POINTS_24": "Do 24",
       "POINTS_32": "Do 32",
       "TIMED": "Na čas",
-      "CUSTOM": "Vlastní",
-      "CUSTOM_SCORING": "Vlastní sety"
+      "CUSTOM": "Vlastní"
     },
     "goldenPointShort": "Zlatý míč",
     "goldenPoint": {
@@ -229,16 +223,6 @@
       "label": "Vlastní počet",
       "placeholder": "např. 27",
       "short": "Do {{count}}"
-    },
-    "customScoring": {
-      "fromClassicHint": "Chcete pevný počet setů s limitem míčů na set (ne tenisové hry)? Použijte toto — přepneme vás na jednoduché body.",
-      "badge": "Pokročilé",
-      "ratingNote": "U tohoto formátu je rating vždy vypnutý — výsledky zůstávají neformální.",
-      "setsLabel": "Setů v zápase",
-      "ballsPerSetLabel": "Míčů na set",
-      "helper": "Příklad: 3 sety a 21 míčů jako Americano na tři sety s 21 míči na set.",
-      "detail": "Až {{sets}} setů · {{points}} míčů na ukončení setu",
-      "short": "{{sets}} setů · {{points}} míčů"
     },
     "points": {
       "title": "Body za výsledek"

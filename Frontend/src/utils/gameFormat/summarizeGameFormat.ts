@@ -9,9 +9,6 @@ export interface SummarizeArgs {
   matchTimerEnabled?: boolean;
   matchTimedCapMinutes?: number;
   customPointsTotal?: number | null;
-  /** When preset is CUSTOM_SCORING — sets and ball cap per set for the summary line. */
-  customScoringSets?: number;
-  customScoringPointsPerSet?: number;
 }
 
 const genKey = (g: MatchGenerationType) =>
@@ -21,15 +18,6 @@ export const summarizeGameFormat = (t: TFunction, args: SummarizeArgs): string =
   let scoring: string;
   if (args.customPointsTotal != null) {
     scoring = t('gameFormat.customPoints.short', { count: args.customPointsTotal });
-  } else if (
-    args.scoringPreset === 'CUSTOM_SCORING' &&
-    typeof args.customScoringSets === 'number' &&
-    typeof args.customScoringPointsPerSet === 'number'
-  ) {
-    scoring = t('gameFormat.customScoring.short', {
-      sets: args.customScoringSets,
-      points: args.customScoringPointsPerSet,
-    });
   } else {
     scoring = t(`gameFormat.scoringShort.${args.scoringPreset}`);
   }

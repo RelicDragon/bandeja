@@ -608,15 +608,6 @@ enum WatchCopy {
         }
     }
 
-    nonisolated static func ballCapScoring(_ lang: String) -> String {
-        switch lang {
-        case "es": return "Puntos (tope)"
-        case "ru": return "Очки (лимит)"
-        case "sr": return "Поени (лимит)"
-        default: return "Points (cap)"
-        }
-    }
-
     nonisolated static func players(_ lang: String) -> String {
         switch lang {
         case "es": return "Jugadores"

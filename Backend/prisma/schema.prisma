@@ -1527,7 +1527,6 @@ enum ScoringPreset {
   POINTS_32
   TIMED
   CUSTOM
-  CUSTOM_SCORING
 }
 
 enum BetType {

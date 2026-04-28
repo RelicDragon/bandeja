@@ -58,18 +58,11 @@ export const GameFormatDetails = ({ format, generationSlotCount, hasFixedTeams }
   const scoringTitle =
     customPointsTotal != null
       ? t('gameFormat.customPoints.short', { count: customPointsTotal })
-      : scoringPreset === 'CUSTOM_SCORING'
-        ? t('gameFormat.scoring.CUSTOM_SCORING.title')
-        : t(`gameFormat.scoring.${scoringPreset}.title`);
+      : t(`gameFormat.scoring.${scoringPreset}.title`);
   const scoringSubtitle =
     customPointsTotal != null
       ? ''
-      : scoringPreset === 'CUSTOM_SCORING'
-        ? t('gameFormat.customScoring.detail', {
-            sets: setupPayload.fixedNumberOfSets ?? 0,
-            points: setupPayload.maxTotalPointsPerSet ?? 0,
-          })
-        : t(`gameFormat.scoring.${scoringPreset}.subtitle`, { defaultValue: '' });
+      : t(`gameFormat.scoring.${scoringPreset}.subtitle`, { defaultValue: '' });
 
   const genLabel = t(`gameFormat.generation.${genKey(generationType)}.title`);
   const automaticCopyKey = automaticGenerationCopyKey(generationSlotCount, hasFixedTeams);

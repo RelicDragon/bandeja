@@ -112,8 +112,7 @@
       "title": "Zápas ovlivňující úroveň",
       "note": {
         "false": "Výsledky neovlivní úrovně účastníků.",
-        "true": "Výsledky ovlivní úrovně účastníků.",
-        "customScoring": "Vlastní skóre je pro neformální zápasy. Rating zůstane pro všechny vypnutý."
+        "true": "Výsledky ovlivní úrovně účastníků."
       }
     },
     "tournament": "Turnaj",

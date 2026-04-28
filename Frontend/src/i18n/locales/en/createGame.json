@@ -113,8 +113,7 @@
       "title": "Rating game",
       "note": {
         "false": "Results will not affect participants' levels.",
-        "true": "Results will affect participants' levels.",
-        "customScoring": "Custom scoring is for informal matches. Rating stays off for everyone."
+        "true": "Results will affect participants' levels."
       }
     },
     "tournament": "Tournament",
