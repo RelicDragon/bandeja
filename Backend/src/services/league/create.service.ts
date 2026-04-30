@@ -10,6 +10,24 @@ import { TeamForRoundGeneration } from './generation/TeamForRoundGeneration';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 
 export class LeagueCreateService {
+  private static getSeasonParticipantType(hasFixedTeams: boolean) {
+    return hasFixedTeams ? 'TEAM' as const : 'USER' as const;
+  }
+
+  private static getLeagueParticipantSortLevel(participant: any, hasFixedTeams: boolean): number {
+    if (!hasFixedTeams) {
+      return participant.user ? participant.user.level : 0;
+    }
+
+    const teamPlayers = participant.leagueTeam?.players ?? [];
+    if (teamPlayers.length === 0) {
+      return 0;
+    }
+
+    const total = teamPlayers.reduce((sum: number, p: any) => sum + (p.user?.level ?? 0), 0);
+    return total / teamPlayers.length;
+  }
+
   static async createLeague(data: any, userId: string, jwtIsAdmin: boolean = false) {
     if (!data.name || !data.name.trim()) {
       throw new ApiError(400, 'League name is required');
@@ -309,6 +327,7 @@ export class LeagueCreateService {
     const standings = await prisma.leagueParticipant.findMany({
       where: {
         leagueSeasonId: round.leagueSeasonId,
+        participantType: this.getSeasonParticipantType(hasFixedTeams),
         ...(leagueGroupId ? { currentGroupId: leagueGroupId } : {}),
       },
       include: {
@@ -460,6 +479,7 @@ export class LeagueCreateService {
     const updatedStandings = await prisma.leagueParticipant.findMany({
       where: {
         leagueSeasonId: round.leagueSeasonId,
+        participantType: this.getSeasonParticipantType(hasFixedTeams),
         ...(leagueGroupId ? { currentGroupId: leagueGroupId } : {}),
       },
       include: {
@@ -1017,7 +1037,10 @@ export class LeagueCreateService {
     }
 
     const participants = await prisma.leagueParticipant.findMany({
-      where: { leagueSeasonId },
+      where: {
+        leagueSeasonId,
+        participantType: this.getSeasonParticipantType(leagueSeason.game.hasFixedTeams || false),
+      },
       include: {
         user: {
           select: {
@@ -1042,20 +1065,22 @@ export class LeagueCreateService {
       },
     });
 
-    if (participants.length < 4) {
-      throw new ApiError(400, 'At least 4 participants are required to create groups');
-    }
-
+    const hasFixedTeams = leagueSeason.game.hasFixedTeams || false;
+    const minParticipantsPerGroup = hasFixedTeams ? 2 : 4;
     const minGroups = 1;
-    const maxGroups = Math.floor(participants.length / 4);
+    const maxGroups = Math.floor(participants.length / minParticipantsPerGroup);
+
+    if (participants.length < minParticipantsPerGroup) {
+      throw new ApiError(400, `At least ${minParticipantsPerGroup} participants are required to create groups`);
+    }
 
     if (numberOfGroups < minGroups || numberOfGroups > maxGroups) {
       throw new ApiError(400, `Number of groups must be between ${minGroups} and ${maxGroups}`);
     }
 
     const sortedParticipants = participants.sort((a, b) => {
-      const aLevel = a.user ? a.user.level : 0;
-      const bLevel = b.user ? b.user.level : 0;
+      const aLevel = this.getLeagueParticipantSortLevel(a, hasFixedTeams);
+      const bLevel = this.getLeagueParticipantSortLevel(b, hasFixedTeams);
       return bLevel - aLevel;
     });
 
@@ -1080,7 +1105,9 @@ export class LeagueCreateService {
     for (let i = 0; i < numberOfGroups; i++) {
       let groupSize = baseSize;
       if (i < numberOfGroups - 1) {
-        if (groupSize % 2 === 1) {
+        if (hasFixedTeams && groupSize % 2 === 1) {
+          groupSize += 1;
+        } else if (!hasFixedTeams && groupSize % 2 === 1) {
           groupSize += 1;
         }
       } else {

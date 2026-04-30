@@ -111,6 +111,20 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
   const participantUserIds = normalizeUserIds([...team1PlayerIds, ...team2PlayerIds]);
   const normalizedTeam1PlayerIds = normalizeUserIds(team1PlayerIds);
   const normalizedTeam2PlayerIds = normalizeUserIds(team2PlayerIds);
+
+  if (normalizedTeam1PlayerIds.length === 0 || normalizedTeam2PlayerIds.length === 0) {
+    throw new ApiError(400, 'Each fixed team must contain at least one valid participant');
+  }
+
+  if (participantUserIds.length < 2) {
+    throw new ApiError(400, 'League game requires at least 2 distinct participants');
+  }
+
+  const team1Set = new Set(normalizedTeam1PlayerIds);
+  const hasOverlap = normalizedTeam2PlayerIds.some((userId) => team1Set.has(userId));
+  if (hasOverlap) {
+    throw new ApiError(400, 'Fixed teams must not share participants');
+  }
   const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
   const startTime = new Date();
   const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000);
@@ -238,6 +252,10 @@ export async function createLeaguePlayoffGame(
   const participantCount = Math.max(userIds.length, 4);
   const hasFixedTeams = Boolean(teams?.length);
 
+  if (userIds.length === 0) {
+    throw new ApiError(400, 'Playoff game requires at least one valid participant');
+  }
+
   const game = await db.game.create({
     data: {
       entityType: EntityType.LEAGUE,
@@ -325,6 +343,10 @@ export async function createLeaguePlayoffGame(
           )
         )
       );
+
+      if (normalizedTeamUserIds.length === 0) {
+        throw new ApiError(400, 'Each fixed playoff team must contain at least one valid participant');
+      }
 
       await db.gameTeam.create({
         data: {

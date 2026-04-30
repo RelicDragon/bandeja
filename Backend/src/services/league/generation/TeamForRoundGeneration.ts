@@ -148,8 +148,9 @@ export class TeamForRoundGeneration {
     });
 
     if (seasonGame.hasFixedTeams) {
+      const teamParticipants = participants.filter((p) => p.participantType === 'TEAM');
       await this.generateGamesForFixedTeamsGroup(
-        participants,
+        teamParticipants,
         leagueSeasonId,
         groupId,
         leagueRoundId,
@@ -228,10 +229,10 @@ export class TeamForRoundGeneration {
   ) {
     const fixedTeams: FixedLeagueTeamEntry[] = participants
       .filter((p) => p.participantType === 'TEAM' && p.leagueTeam?.players?.length)
-      .map((p) => ({
+      .map((p): FixedLeagueTeamEntry => ({
         participant: p,
         playerIds: Array.from(
-          new Set(
+          new Set<string>(
             p.leagueTeam.players
               .map((player: { userId: string | null }) => player.userId)
               .filter((userId: string | null): userId is string => typeof userId === 'string' && userId.trim().length > 0)
@@ -239,6 +240,15 @@ export class TeamForRoundGeneration {
         ),
       }))
       .filter((entry) => entry.playerIds.length === 2);
+
+    if (fixedTeams.length !== participants.length) {
+      throw new ApiError(400, 'Each fixed-team participant must have exactly 2 valid players');
+    }
+
+    const allPlayerIds = fixedTeams.flatMap((team) => team.playerIds);
+    if (new Set(allPlayerIds).size !== allPlayerIds.length) {
+      throw new ApiError(400, 'Fixed teams in a group cannot share players');
+    }
 
     if (fixedTeams.length < 2) {
       return;
