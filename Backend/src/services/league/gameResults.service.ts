@@ -341,15 +341,14 @@ export class LeagueGameResultsService {
         t.players.some((p: any) => p.userId === outcome.userId)
       );
 
-      if (team) {
+      if (team && !teamResults.has(team.teamNumber)) {
         console.log(`[LEAGUE SYNC TEAM] User ${outcome.userId} in team ${team.teamNumber}: wins=${wins}, ties=${ties}, losses=${losses}`);
-        const existing = teamResults.get(team.teamNumber) || { wins: 0, ties: 0, losses: 0, scoresMade: 0, scoresLost: 0 };
         teamResults.set(team.teamNumber, {
-          wins: existing.wins + wins,
-          ties: existing.ties + ties,
-          losses: existing.losses + losses,
-          scoresMade: existing.scoresMade + scoresMade,
-          scoresLost: existing.scoresLost + scoresLost,
+          wins,
+          ties,
+          losses,
+          scoresMade,
+          scoresLost,
         });
       }
     }
@@ -455,14 +454,13 @@ export class LeagueGameResultsService {
         t.players.some((p: any) => p.userId === outcome.userId)
       );
 
-      if (team) {
-        const existing = teamResults.get(team.teamNumber) || { wins: 0, ties: 0, losses: 0, scoresMade: 0, scoresLost: 0 };
+      if (team && !teamResults.has(team.teamNumber)) {
         teamResults.set(team.teamNumber, {
-          wins: existing.wins + wins,
-          ties: existing.ties + ties,
-          losses: existing.losses + losses,
-          scoresMade: existing.scoresMade + scoresMade,
-          scoresLost: existing.scoresLost + scoresLost,
+          wins,
+          ties,
+          losses,
+          scoresMade,
+          scoresLost,
         });
       }
     }
