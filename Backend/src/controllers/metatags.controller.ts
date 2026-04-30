@@ -3,6 +3,23 @@ import { GameReadService } from '../services/game/game.service';
 import { formatInTimeZone } from 'date-fns-tz';
 import { config } from '../config/env';
 
+function formatPreviewLevel(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  let n: number;
+  if (typeof value === 'number') n = value;
+  else if (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { toNumber?: () => number }).toNumber === 'function'
+  ) {
+    n = (value as { toNumber: () => number }).toNumber();
+  } else {
+    n = Number(value);
+  }
+  if (!Number.isFinite(n)) return null;
+  return parseFloat(n.toFixed(2)).toString();
+}
+
 const generateGameMetaTags = (game: any): string => {
   const location = game.location || 
                    (game.court?.club?.name) || 
@@ -40,13 +57,15 @@ const generateGameMetaTags = (game: any): string => {
     : game.participants?.find((p: any) => p.role === 'OWNER');
   const creatorName = organizer?.user ? `${organizer.user.firstName || ''} ${organizer.user.lastName || ''}`.trim() : null;
   
-  const levelInfo = [];
-  if (game.minLevel) levelInfo.push(`Level ${game.minLevel}`);
-  if (game.maxLevel) {
-    if (game.minLevel && game.minLevel !== game.maxLevel) {
-      levelInfo[0] = `Level ${game.minLevel}-${game.maxLevel}`;
-    } else if (!game.minLevel) {
-      levelInfo.push(`Level up to ${game.maxLevel}`);
+  const minLv = formatPreviewLevel(game.minLevel);
+  const maxLv = formatPreviewLevel(game.maxLevel);
+  const levelInfo: string[] = [];
+  if (minLv) levelInfo.push(`Level ${minLv}`);
+  if (maxLv) {
+    if (minLv && game.minLevel !== game.maxLevel) {
+      levelInfo[0] = `Level ${minLv}-${maxLv}`;
+    } else if (!minLv) {
+      levelInfo.push(`Level up to ${maxLv}`);
     }
   }
   

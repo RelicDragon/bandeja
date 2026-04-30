@@ -47,6 +47,7 @@ export const expandSetsForDisplay = (
         if (isScored(last)) break;
         const { a, b } = countSetsWon(base.slice(0, -1));
         if (a === b && a > 0) break;
+        if (Math.max(a, b) < rules.minSetsToWin) break;
         base.pop();
       }
     }
@@ -62,9 +63,9 @@ export const expandSetsForDisplay = (
     }
 
     const cap = rules.fixedNumberOfSets > 0 ? rules.fixedNumberOfSets : Math.max(minVisible, base.length);
-    if (options.canEnterScores && scoredCount >= minVisible && base.length < cap) {
+    if (options.canEnterScores && scoredCount === base.length && base.length < cap) {
       const { a, b } = countSetsWon(base);
-      if (a === b) {
+      if (Math.max(a, b) < rules.minSetsToWin) {
         const isSuperTb =
           rules.superTieBreakReplacesDeciderAtIndex !== null &&
           base.length === rules.superTieBreakReplacesDeciderAtIndex;
@@ -104,7 +105,7 @@ export const shouldAppendSetAfterUpdate = (sets: SetResult[], rules: ScoringRule
   const scoredCount = official.filter(isScored).length;
   if (scoredCount !== official.length) return null;
   const { a, b } = countSetsWon(official);
-  if (a !== b) return null;
+  if (Math.max(a, b) >= rules.minSetsToWin) return null;
   const isSuperTb =
     rules.superTieBreakReplacesDeciderAtIndex !== null &&
     official.length === rules.superTieBreakReplacesDeciderAtIndex;
