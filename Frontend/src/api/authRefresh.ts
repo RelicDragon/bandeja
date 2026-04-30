@@ -20,6 +20,7 @@ import {
 
 const AUTH_CHANNEL = 'padelpulse-auth-v2';
 const AUTH_SYNC_TYPE = 'padelpulse-auth-sync-v2';
+const CROSS_TAB_REFRESH_LOCK = 'padelpulse-auth-refresh';
 
 const BROADCAST_TAB_ID =
   typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -156,13 +157,9 @@ export function scheduleProactiveAccessRefresh(accessToken: string) {
   const expMs = decodeJwtExpMs(accessToken);
   if (!expMs) return;
   const msUntilExp = expMs - Date.now();
-  if (msUntilExp <= ACCESS_LEEWAY_MS + 3_000) {
-    void refreshAccessTokenSingleFlight().then((t) => {
-      if (t) scheduleProactiveAccessRefresh(t);
-    });
-    return;
-  }
-  const delay = Math.max(2_000, expMs - Date.now() - ACCESS_LEEWAY_MS);
+  if (msUntilExp <= 0) return;
+  const desiredLeadMs = Math.min(ACCESS_LEEWAY_MS, Math.floor(msUntilExp * 0.5));
+  const delay = Math.max(2_000, msUntilExp - desiredLeadMs);
   proactiveTimer = setTimeout(() => {
     void refreshAccessTokenSingleFlight().then((t) => {
       if (t) scheduleProactiveAccessRefresh(t);
@@ -212,44 +209,51 @@ async function postRefresh(refreshToken: string): Promise<{
 
 export async function runRefresh(): Promise<string | null> {
   lastRefreshRunClearedCredentials = false;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const rt = (await getRefreshTokenForRequest())?.trim() ?? '';
-    if (!rt && !isWebHttpOnlyRefreshCookie()) return null;
-    try {
-      const genBeforePost = getApiAuthCredentialGeneration();
-      const out = await postRefresh(rt);
-      if (getApiAuthCredentialGeneration() !== genBeforePost) {
+  const execute = async (): Promise<string | null> => {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const rt = (await getRefreshTokenForRequest())?.trim() ?? '';
+      if (!rt && !isWebHttpOnlyRefreshCookie()) return null;
+      try {
+        const genBeforePost = getApiAuthCredentialGeneration();
+        const out = await postRefresh(rt);
+        if (getApiAuthCredentialGeneration() !== genBeforePost) {
+          return null;
+        }
+        applyAccessTokenFromRefresh(out.token);
+        const webRt = isWebHttpOnlyRefreshCookie();
+        if (out.refreshToken || !webRt) {
+          await persistRefreshBundle(out.refreshToken ?? rt, out.currentSessionId);
+        } else {
+          await persistRefreshBundle(undefined, out.currentSessionId, { webCookieMode: true });
+        }
+        scheduleProactiveAccessRefresh(out.token);
+        broadcastAuthRefreshSignal(out.currentSessionId);
+        return out.token;
+      } catch (e) {
+        const code = (e as { refreshCode?: string }).refreshCode;
+        if (code === 'auth.refreshReused' || code === 'auth.refreshExpired') {
+          await clearRefreshBundle();
+          lastRefreshRunClearedCredentials = true;
+          return null;
+        }
+        if (code === 'auth.refreshInvalid' && attempt === 0) {
+          await new Promise((r) => setTimeout(r, 180));
+          continue;
+        }
+        if (code === 'auth.refreshInvalid') {
+          await clearRefreshBundle();
+          lastRefreshRunClearedCredentials = true;
+        }
         return null;
       }
-      applyAccessTokenFromRefresh(out.token);
-      const webRt = isWebHttpOnlyRefreshCookie();
-      if (out.refreshToken || !webRt) {
-        await persistRefreshBundle(out.refreshToken ?? rt, out.currentSessionId);
-      } else {
-        await persistRefreshBundle(undefined, out.currentSessionId, { webCookieMode: true });
-      }
-      scheduleProactiveAccessRefresh(out.token);
-      broadcastAuthRefreshSignal(out.currentSessionId);
-      return out.token;
-    } catch (e) {
-      const code = (e as { refreshCode?: string }).refreshCode;
-      if (code === 'auth.refreshReused' || code === 'auth.refreshExpired') {
-        await clearRefreshBundle();
-        lastRefreshRunClearedCredentials = true;
-        return null;
-      }
-      if (code === 'auth.refreshInvalid' && attempt === 0) {
-        await new Promise((r) => setTimeout(r, 180));
-        continue;
-      }
-      if (code === 'auth.refreshInvalid') {
-        await clearRefreshBundle();
-        lastRefreshRunClearedCredentials = true;
-      }
-      return null;
     }
+    return null;
+  };
+
+  if (typeof navigator !== 'undefined' && typeof navigator.locks?.request === 'function') {
+    return navigator.locks.request(CROSS_TAB_REFRESH_LOCK, execute);
   }
-  return null;
+  return execute();
 }
 
 export function refreshAccessTokenSingleFlight(): Promise<string | null> {

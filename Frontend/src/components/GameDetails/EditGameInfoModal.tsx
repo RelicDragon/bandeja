@@ -246,11 +246,24 @@ export const EditGameInfoModal = ({
       const updateData: Partial<Game> = {
         name: general.name.trim() || null,
         description: general.description.trim() || null,
-        clubId: where.clubId || undefined,
-        courtId: where.courtId || '',
-        hasBookedCourt: where.courtId ? where.hasBookedCourt : false,
         priceType: price.priceType,
       };
+
+      const currentClubId = game.clubId || '';
+      const currentCourtId = game.courtId || '';
+      const clubChanged = where.clubId !== currentClubId;
+      const courtChanged = where.courtId !== currentCourtId;
+
+      if (clubChanged) {
+        updateData.clubId = where.clubId || undefined;
+      }
+
+      if (courtChanged) {
+        updateData.courtId = where.courtId || '';
+        updateData.hasBookedCourt = where.courtId ? where.hasBookedCourt : false;
+      } else if (where.courtId && where.hasBookedCourt !== (game.hasBookedCourt ?? false)) {
+        updateData.hasBookedCourt = where.hasBookedCourt;
+      }
 
       if (general.removeAvatar) {
         updateData.avatar = null;

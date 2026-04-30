@@ -52,7 +52,25 @@ export async function refreshWithRotation(
     try {
       return await prisma.$transaction(
         async (tx) => {
-          const row = await tx.userRefreshSession.findUnique({ where: { tokenHash: hash } });
+          const locked = await tx.$queryRaw<
+            Array<{
+              id: string;
+              userId: string;
+              tokenHash: string;
+              expiresAt: Date;
+              revokedAt: Date | null;
+              replacedBySessionId: string | null;
+              rotationFamilyId: string;
+            }>
+          >(
+            Prisma.sql`
+              SELECT id, "userId", "tokenHash", "expiresAt", "revokedAt", "replacedBySessionId", "rotationFamilyId"
+              FROM "user_refresh_sessions"
+              WHERE "tokenHash" = ${hash}
+              FOR UPDATE
+            `
+          );
+          const row = locked[0];
           if (!row) {
             throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
           }
@@ -87,17 +105,10 @@ export async function refreshWithRotation(
               ip: ip ? ip.slice(0, 64) : null,
             },
           });
-          const revoked = await tx.userRefreshSession.updateMany({
-            where: { id: row.id, revokedAt: null },
+          await tx.userRefreshSession.update({
+            where: { id: row.id },
             data: { revokedAt: new Date(), replacedBySessionId: newRow.id, lastUsedAt: new Date() },
           });
-          if (revoked.count === 0) {
-            await tx.userRefreshSession.updateMany({
-              where: { id: newRow.id, revokedAt: null },
-              data: { revokedAt: new Date() },
-            });
-            throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
-          }
           const token = generateShortAccessToken(jwtPayloadFromAuthUser(user));
           return { token, refreshToken: newRaw, user, currentSessionId: newRow.id };
         },
