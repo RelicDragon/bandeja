@@ -41,7 +41,7 @@ async function collectDesiredTeamPlayerIds(leagueSeasonId: string): Promise<stri
   const ingestFixedTeams = (fixedTeams: GameTeamWithPlayers[]) => {
     for (const ft of fixedTeams) {
       const ids = ft.players.map((p) => p.userId).sort();
-      if (ids.length === 0) continue;
+      if (ids.length !== 2) continue;
       byKey.set(sortedPlayerKey(ids), ids);
     }
   };

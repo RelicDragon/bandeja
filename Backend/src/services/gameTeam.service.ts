@@ -3,6 +3,7 @@ import { ApiError } from '../utils/ApiError';
 import { GameService } from './game/game.service';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import { LeagueSyncService } from './league/sync.service';
+import { EntityType } from '@prisma/client';
 
 interface GameTeamData {
   teamNumber: number;
@@ -10,14 +11,20 @@ interface GameTeamData {
   playerIds: string[];
 }
 
-async function syncLeagueSeasonIfLeagueRoundGame(gameId: string) {
+async function syncLeagueSeasonAfterFixedTeamsChange(gameId: string) {
   const row = await prisma.game.findUnique({
     where: { id: gameId },
     select: {
+      entityType: true,
       leagueRound: { select: { leagueSeasonId: true } },
     },
   });
-  const leagueSeasonId = row?.leagueRound?.leagueSeasonId;
+  if (!row) return;
+  if (row.entityType === EntityType.LEAGUE_SEASON) {
+    await LeagueSyncService.syncLeagueParticipants(gameId);
+    return;
+  }
+  const leagueSeasonId = row.leagueRound?.leagueSeasonId;
   if (leagueSeasonId) {
     await LeagueSyncService.syncLeagueParticipants(leagueSeasonId);
   }
@@ -41,9 +48,28 @@ export class GameTeamService {
       throw new ApiError(400, 'Cannot set fixed pairs after game has started');
     }
 
-    const allPlayerIds = teams.flatMap((t) => t.playerIds);
+    const slotCount = Math.floor(game.maxParticipants / 2);
+    if (slotCount < 1) {
+      throw new ApiError(400, 'Game must allow at least one fixed pair');
+    }
+
+    const byNumber = new Map<number, string[]>();
+    const nameByNumber = new Map<number, string | undefined>();
+    for (const t of teams) {
+      const n = t.teamNumber;
+      if (typeof n !== 'number' || !Number.isFinite(n) || n < 1 || n > slotCount) {
+        continue;
+      }
+      const ids = Array.isArray(t.playerIds) ? t.playerIds.filter((id) => typeof id === 'string' && id.length > 0) : [];
+      byNumber.set(n, ids);
+      if (t.name !== undefined) {
+        nameByNumber.set(n, t.name);
+      }
+    }
+
+    const allPlayerIds = [...byNumber.values()].flat();
     const uniquePlayerIds = new Set(allPlayerIds);
-    
+
     if (allPlayerIds.length !== uniquePlayerIds.size) {
       throw new ApiError(400, 'A player cannot be in multiple teams');
     }
@@ -60,14 +86,15 @@ export class GameTeamService {
         where: { gameId },
       });
 
-      for (const teamData of teams) {
+      for (let teamNumber = 1; teamNumber <= slotCount; teamNumber++) {
+        const playerIds = byNumber.get(teamNumber) ?? [];
         await tx.gameTeam.create({
           data: {
             gameId,
-            teamNumber: teamData.teamNumber,
-            name: teamData.name,
+            teamNumber,
+            name: nameByNumber.get(teamNumber),
             players: {
-              create: teamData.playerIds.map(userId => ({ userId })),
+              create: playerIds.map((userId) => ({ userId })),
             },
           },
         });
@@ -80,7 +107,7 @@ export class GameTeamService {
     });
 
     await GameService.updateGameReadiness(gameId);
-    await syncLeagueSeasonIfLeagueRoundGame(gameId);
+    await syncLeagueSeasonAfterFixedTeamsChange(gameId);
 
     const updatedGame = await prisma.game.findUnique({
       where: { id: gameId },
@@ -183,7 +210,7 @@ export class GameTeamService {
     });
 
     await GameService.updateGameReadiness(gameId);
-    await syncLeagueSeasonIfLeagueRoundGame(gameId);
+    await syncLeagueSeasonAfterFixedTeamsChange(gameId);
   }
 }
 

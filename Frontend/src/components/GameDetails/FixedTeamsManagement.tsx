@@ -8,6 +8,7 @@ import { Game, GameTeam } from '@/types';
 import { Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
+import { getFixedTeamSlotCount } from '@/utils/fixedTeamSlotCount';
 
 interface FixedTeamsManagementProps {
   game: Game;
@@ -33,14 +34,19 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
   gameRef.current = game;
   onGameUpdateRef.current = onGameUpdate;
 
-  const areTeamsReady = useCallback((teamsToCheck = teams) => {
-    if (!teamsToCheck || teamsToCheck.length === 0) return false;
-    return teamsToCheck.every(team => team.players.length === 2);
-  }, [teams]);
+  const areTeamsReady = useCallback(
+    (teamsToCheck = teams, g = gameRef.current) => {
+      if (!g || !teamsToCheck || teamsToCheck.length === 0) return false;
+      const n = getFixedTeamSlotCount(g);
+      return teamsToCheck.slice(0, n).every((team) => team.players.length === 2);
+    },
+    [teams],
+  );
 
-  const isTeamsReady = useCallback((teamsToCheck: GameTeam[]) => {
+  const isTeamsReady = useCallback((teamsToCheck: GameTeam[], g: Game) => {
     if (!teamsToCheck || teamsToCheck.length === 0) return false;
-    return teamsToCheck.every(team => team.players.length === 2);
+    const n = getFixedTeamSlotCount(g);
+    return teamsToCheck.slice(0, n).every((team) => team.players.length === 2);
   }, []);
 
   const fetchTeams = useCallback(async () => {
@@ -52,10 +58,10 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
 
     try {
       setLoading(true);
-      const maxTeams = Math.floor(g.maxParticipants / 2);
+      const slotCount = getFixedTeamSlotCount(g);
       const localTeams: GameTeam[] = [];
 
-      for (let i = 1; i <= maxTeams; i++) {
+      for (let i = 1; i <= slotCount; i++) {
         localTeams.push({
           id: `temp-${i}`,
           gameId: g.id,
@@ -71,14 +77,14 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
 
         const existingTeams = response.data;
 
-        const mergedTeams = localTeams.map(localTeam => {
-          const existingTeam = existingTeams.find(team => team.teamNumber === localTeam.teamNumber);
+        const mergedTeams = localTeams.map((localTeam) => {
+          const existingTeam = existingTeams.find((team) => team.teamNumber === localTeam.teamNumber);
           return existingTeam || localTeam;
         });
 
         setTeams(mergedTeams);
 
-        const ready = isTeamsReady(mergedTeams);
+        const ready = isTeamsReady(mergedTeams, g);
         if (g.teamsReady !== ready) {
           onGameUpdateRef.current({
             ...g,
@@ -108,7 +114,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
     if (game?.id) {
       fetchTeams();
     }
-  }, [game?.id, fetchTeams]);
+  }, [game?.id, game?.maxParticipants, game?.entityType, game?.leagueRoundId, fetchTeams]);
 
   const handlePlayerSelect = async (playerId: string) => {
     if (selectedTeamIndex === null || !game?.id) return;
@@ -142,16 +148,18 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
       if (!participant?.user) {
         throw new Error('User not found');
       }
-      
+
+      const newEntry = {
+        id: `temp-${Date.now()}`,
+        gameTeamId: currentTeam.id,
+        userId: playerId,
+        user: participant.user,
+      };
+
       const updatedTeams = [...teams];
       updatedTeams[selectedTeamIndex] = {
         ...currentTeam,
-        players: [...currentTeam.players, {
-          id: `temp-${Date.now()}`,
-          gameTeamId: currentTeam.id,
-          userId: playerId,
-          user: participant.user
-        }]
+        players: [...currentTeam.players, newEntry],
       };
 
       // Update local state immediately for better UX
@@ -206,29 +214,24 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
       return;
     }
 
-    // Only save teams that have players
-    const teamsWithPlayers = updatedTeams.filter(team => team.players.length > 0);
-
-    if (teamsWithPlayers.length === 0) {
-      // If no teams have players, just update local state
-      setTeams(updatedTeams);
-      return;
+    const slotCount = getFixedTeamSlotCount(game);
+    const teamsData = [];
+    for (let i = 1; i <= slotCount; i++) {
+      const team = updatedTeams.find((t) => t.teamNumber === i);
+      teamsData.push({
+        teamNumber: i,
+        name: team?.name,
+        playerIds: team?.players.map((p) => p.userId) ?? [],
+      });
     }
-
-    const teamsData = teamsWithPlayers.map(team => ({
-      teamNumber: team.teamNumber,
-      name: team.name,
-      playerIds: team.players.map(p => p.userId)
-    }));
 
     try {
       const response = await gamesApi.setFixedTeams(game.id, teamsData);
 
-      // Update local state with the response, keeping empty teams as placeholders
-      const maxTeams = Math.floor(game.maxParticipants / 2);
+      const slotCount = getFixedTeamSlotCount(game);
       const updatedLocalTeams: GameTeam[] = [];
 
-      for (let i = 1; i <= maxTeams; i++) {
+      for (let i = 1; i <= slotCount; i++) {
         const savedTeam = response.data.fixedTeams?.find((team: GameTeam) => team.teamNumber === i);
         if (savedTeam) {
           updatedLocalTeams.push(savedTeam);
@@ -258,9 +261,11 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
   };
 
   const hasEmptySlots = () => {
-    if (!teams || teams.length === 0) return false;
-    const totalSlots = teams.length * 2;
-    const filledSlots = teams.reduce((total, team) => total + team.players.length, 0);
+    if (!teams || teams.length === 0 || !game) return false;
+    const n = getFixedTeamSlotCount(game);
+    const visible = teams.slice(0, n);
+    const totalSlots = visible.length * 2;
+    const filledSlots = visible.reduce((total, team) => total + team.players.length, 0);
     return filledSlots < totalSlots;
   };
 
@@ -330,9 +335,10 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
     );
   }
 
+  const slotCount = getFixedTeamSlotCount(game);
   const main = (
     <>
-      {teams?.map((team, index) => {
+      {teams?.slice(0, slotCount).map((team, index) => {
         // Create exactly 2 player slots for each team
         const playerSlots = [];
         for (let i = 0; i < 2; i++) {
@@ -390,7 +396,6 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
               }`}
               onClick={() => {
                 if (!team.players[0] && canEdit) {
-                  // Add player to slot 0
                   setSelectedTeamIndex(index);
                   setShowPlayerSelector(true);
                 }
@@ -407,7 +412,10 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
               }`}
               onClick={() => {
                 if (!team.players[1] && canEdit) {
-                  // Add player to slot 1
+                  if (!team.players[0]) {
+                    toast.error(t('games.fillFirstPlayerSlotFirst', { defaultValue: 'Add the first player before the second.' }));
+                    return;
+                  }
                   setSelectedTeamIndex(index);
                   setShowPlayerSelector(true);
                 }
