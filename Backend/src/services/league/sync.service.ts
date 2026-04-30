@@ -1,6 +1,60 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { LeagueParticipantType } from '@prisma/client';
+
+function sortedPlayerKey(userIds: string[]): string {
+  return [...userIds].sort().join(':');
+}
+
+type GameTeamWithPlayers = {
+  players: { userId: string }[];
+};
+
+async function collectDesiredTeamPlayerIds(leagueSeasonId: string): Promise<string[][]> {
+  const [seasonGame, roundGames] = await Promise.all([
+    prisma.game.findUnique({
+      where: { id: leagueSeasonId },
+      include: {
+        fixedTeams: {
+          include: { players: true },
+          orderBy: { teamNumber: 'asc' },
+        },
+      },
+    }),
+    prisma.game.findMany({
+      where: {
+        hasFixedTeams: true,
+        leagueRound: { leagueSeasonId },
+      },
+      include: {
+        fixedTeams: {
+          include: { players: true },
+          orderBy: { teamNumber: 'asc' },
+        },
+      },
+    }),
+  ]);
+
+  const byKey = new Map<string, string[]>();
+
+  const ingestFixedTeams = (fixedTeams: GameTeamWithPlayers[]) => {
+    for (const ft of fixedTeams) {
+      const ids = ft.players.map((p) => p.userId).sort();
+      if (ids.length === 0) continue;
+      byKey.set(sortedPlayerKey(ids), ids);
+    }
+  };
+
+  if (seasonGame?.hasFixedTeams) {
+    ingestFixedTeams(seasonGame.fixedTeams);
+  }
+  for (const g of roundGames) {
+    ingestFixedTeams(g.fixedTeams);
+  }
+
+  return [...byKey.values()].sort((a, b) => sortedPlayerKey(a).localeCompare(sortedPlayerKey(b)));
+}
 
 export class LeagueSyncService {
   static async syncLeagueParticipants(leagueSeasonId: string) {
@@ -30,18 +84,6 @@ export class LeagueSyncService {
             },
           },
         },
-        fixedTeams: {
-          include: {
-            players: {
-              include: {
-                user: {
-                  select: USER_SELECT_FIELDS,
-                },
-              },
-            },
-          },
-          orderBy: { teamNumber: 'asc' },
-        },
       },
     });
 
@@ -49,168 +91,195 @@ export class LeagueSyncService {
       throw new ApiError(404, 'League season game not found');
     }
 
-    const hasFixedTeams = seasonGame.hasFixedTeams || false;
     const leagueId = leagueSeason.leagueId;
+    const desiredTeamPlayerIds = await collectDesiredTeamPlayerIds(leagueSeasonId);
+    const useTeamPath = desiredTeamPlayerIds.length > 0;
 
-    const standings = await prisma.leagueParticipant.findMany({
-      where: { leagueSeasonId },
-      include: {
-        user: {
-          select: USER_SELECT_FIELDS,
-        },
-        leagueTeam: {
-          include: {
-            players: {
-              include: {
-                user: {
-                  select: USER_SELECT_FIELDS,
+    return prisma.$transaction(async (tx) => {
+      const standings = await tx.leagueParticipant.findMany({
+        where: { leagueSeasonId },
+        include: {
+          user: {
+            select: USER_SELECT_FIELDS,
+          },
+          leagueTeam: {
+            include: {
+              players: {
+                include: {
+                  user: {
+                    select: USER_SELECT_FIELDS,
+                  },
                 },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    if (hasFixedTeams) {
-      const consumedParticipantIds = new Set<string>();
+      if (useTeamPath) {
+        const consumedParticipantIds = new Set<string>();
 
-      for (const fixedTeam of seasonGame.fixedTeams) {
-        const teamPlayerIds = fixedTeam.players.map(p => p.userId).sort();
-        let matchingLeagueTeam = null;
-        let matchingStanding: (typeof standings)[number] | null = null;
+        for (const teamPlayerIds of desiredTeamPlayerIds) {
+          let matchingLeagueTeam = null;
+          let matchingStanding: (typeof standings)[number] | null = null;
 
-        for (const standing of standings) {
-          if (consumedParticipantIds.has(standing.id)) {
-            continue;
-          }
-          if (standing.leagueTeam) {
-            const standingPlayerIds = standing.leagueTeam.players.map(p => p.userId).sort();
-            if (teamPlayerIds.length === standingPlayerIds.length &&
-                teamPlayerIds.every((id, idx) => id === standingPlayerIds[idx])) {
+          for (const standing of standings) {
+            if (consumedParticipantIds.has(standing.id)) {
+              continue;
+            }
+            if (standing.participantType !== LeagueParticipantType.TEAM || !standing.leagueTeam) {
+              continue;
+            }
+            const standingPlayerIds = standing.leagueTeam.players.map((p) => p.userId).sort();
+            if (
+              teamPlayerIds.length === standingPlayerIds.length &&
+              teamPlayerIds.every((id, idx) => id === standingPlayerIds[idx])
+            ) {
               matchingLeagueTeam = standing.leagueTeam;
               matchingStanding = standing;
               break;
             }
           }
-        }
 
-        if (matchingStanding) {
-          consumedParticipantIds.add(matchingStanding.id);
-        }
-
-        if (!matchingLeagueTeam) {
-          const newLeagueTeam = await prisma.leagueTeam.create({
-            data: {
-              players: {
-                create: teamPlayerIds.map(userId => ({
-                  userId,
-                })),
-              },
-            },
-          });
-
-          let reusableParticipant: (typeof standings)[number] | null = null;
-          let bestOverlap = -1;
-
-          for (const standing of standings) {
-            if (consumedParticipantIds.has(standing.id) || !standing.leagueTeam) {
-              continue;
-            }
-            const standingPlayerIds = standing.leagueTeam.players.map(p => p.userId);
-            const overlap = standingPlayerIds.filter(id => teamPlayerIds.includes(id)).length;
-            if (overlap > bestOverlap) {
-              bestOverlap = overlap;
-              reusableParticipant = standing;
-            }
+          if (matchingStanding) {
+            consumedParticipantIds.add(matchingStanding.id);
           }
 
-          if (reusableParticipant) {
-            await prisma.leagueParticipant.update({
-              where: { id: reusableParticipant.id },
+          if (!matchingLeagueTeam) {
+            const newLeagueTeam = await tx.leagueTeam.create({
               data: {
-                leagueTeamId: newLeagueTeam.id,
+                players: {
+                  create: teamPlayerIds.map((userId) => ({
+                    userId,
+                  })),
+                },
               },
             });
-            consumedParticipantIds.add(reusableParticipant.id);
-          } else {
-            await prisma.leagueParticipant.create({
-              data: {
-                leagueId,
-                leagueSeasonId,
-                participantType: 'TEAM',
-                leagueTeamId: newLeagueTeam.id,
-                points: 0,
-                wins: 0,
-                ties: 0,
-                losses: 0,
-                scoreDelta: 0,
-              },
-            });
+
+            let reusableParticipant: (typeof standings)[number] | null = null;
+            let bestOverlap = -1;
+
+            for (const standing of standings) {
+              if (
+                consumedParticipantIds.has(standing.id) ||
+                standing.participantType !== LeagueParticipantType.TEAM ||
+                !standing.leagueTeam
+              ) {
+                continue;
+              }
+              const standingPlayerIds = standing.leagueTeam.players.map((p) => p.userId);
+              const overlap = standingPlayerIds.filter((id) => teamPlayerIds.includes(id)).length;
+              if (overlap > bestOverlap) {
+                bestOverlap = overlap;
+                reusableParticipant = standing;
+              }
+            }
+
+            if (reusableParticipant && reusableParticipant.leagueTeamId) {
+              const oldTeamId = reusableParticipant.leagueTeamId;
+              await tx.leagueParticipant.update({
+                where: { id: reusableParticipant.id },
+                data: {
+                  leagueTeamId: newLeagueTeam.id,
+                },
+              });
+              consumedParticipantIds.add(reusableParticipant.id);
+              const othersOnOldTeam = await tx.leagueParticipant.count({
+                where: { leagueTeamId: oldTeamId },
+              });
+              if (othersOnOldTeam === 0) {
+                await tx.leagueTeam.delete({ where: { id: oldTeamId } });
+              }
+            } else {
+              await tx.leagueParticipant.create({
+                data: {
+                  leagueId,
+                  leagueSeasonId,
+                  participantType: LeagueParticipantType.TEAM,
+                  leagueTeamId: newLeagueTeam.id,
+                  points: 0,
+                  wins: 0,
+                  ties: 0,
+                  losses: 0,
+                  scoreDelta: 0,
+                },
+              });
+            }
           }
         }
-      }
-    } else {
-      const standingsUserIds = new Set(
-        standings
-          .filter(s => s.userId)
-          .map(s => s.userId!)
-      );
 
-      for (const participant of seasonGame.participants) {
-        if (!standingsUserIds.has(participant.userId)) {
-          const existingParticipant = await prisma.leagueParticipant.findFirst({
-            where: {
-              leagueSeasonId,
-              userId: participant.userId,
-              participantType: 'USER',
-            },
+        const staleTeamParticipants = standings.filter(
+          (s) => s.participantType === LeagueParticipantType.TEAM && !consumedParticipantIds.has(s.id)
+        );
+        const staleLeagueTeamIds = staleTeamParticipants
+          .map((s) => s.leagueTeamId)
+          .filter((id): id is string => Boolean(id));
+
+        if (staleTeamParticipants.length > 0) {
+          await tx.leagueParticipant.deleteMany({
+            where: { id: { in: staleTeamParticipants.map((s) => s.id) } },
           });
-          if (!existingParticipant) {
-            await prisma.leagueParticipant.create({
-              data: {
-                leagueId,
+        }
+
+        for (const teamId of staleLeagueTeamIds) {
+          const refCount = await tx.leagueParticipant.count({ where: { leagueTeamId: teamId } });
+          if (refCount === 0) {
+            await tx.leagueTeam.delete({ where: { id: teamId } });
+          }
+        }
+      } else {
+        const standingsUserIds = new Set(
+          standings.filter((s) => s.userId).map((s) => s.userId!)
+        );
+
+        for (const participant of seasonGame.participants) {
+          if (!standingsUserIds.has(participant.userId)) {
+            const existingParticipant = await tx.leagueParticipant.findFirst({
+              where: {
                 leagueSeasonId,
-                participantType: 'USER',
                 userId: participant.userId,
-                points: 0,
-                wins: 0,
-                ties: 0,
-                losses: 0,
-                scoreDelta: 0,
+                participantType: LeagueParticipantType.USER,
               },
             });
+            if (!existingParticipant) {
+              await tx.leagueParticipant.create({
+                data: {
+                  leagueId,
+                  leagueSeasonId,
+                  participantType: LeagueParticipantType.USER,
+                  userId: participant.userId,
+                  points: 0,
+                  wins: 0,
+                  ties: 0,
+                  losses: 0,
+                  scoreDelta: 0,
+                },
+              });
+            }
           }
         }
       }
-    }
 
-    const updatedStandings = await prisma.leagueParticipant.findMany({
-      where: { leagueSeasonId },
-      include: {
-        user: {
-          select: USER_SELECT_FIELDS,
-        },
-        leagueTeam: {
-          include: {
-            players: {
-              include: {
-                user: {
-                  select: USER_SELECT_FIELDS,
+      return tx.leagueParticipant.findMany({
+        where: { leagueSeasonId },
+        include: {
+          user: {
+            select: USER_SELECT_FIELDS,
+          },
+          leagueTeam: {
+            include: {
+              players: {
+                include: {
+                  user: {
+                    select: USER_SELECT_FIELDS,
+                  },
                 },
               },
             },
           },
         },
-      },
-      orderBy: [
-        { points: 'desc' },
-        { wins: 'desc' },
-        { scoreDelta: 'desc' },
-      ],
+        orderBy: [{ points: 'desc' }, { wins: 'desc' }, { scoreDelta: 'desc' }],
+      });
     });
-
-    return updatedStandings;
   }
 }
-

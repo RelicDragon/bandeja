@@ -2,11 +2,25 @@ import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { GameService } from './game/game.service';
 import { USER_SELECT_FIELDS } from '../utils/constants';
+import { LeagueSyncService } from './league/sync.service';
 
 interface GameTeamData {
   teamNumber: number;
   name?: string;
   playerIds: string[];
+}
+
+async function syncLeagueSeasonIfLeagueRoundGame(gameId: string) {
+  const row = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: {
+      leagueRound: { select: { leagueSeasonId: true } },
+    },
+  });
+  const leagueSeasonId = row?.leagueRound?.leagueSeasonId;
+  if (leagueSeasonId) {
+    await LeagueSyncService.syncLeagueParticipants(leagueSeasonId);
+  }
 }
 
 export class GameTeamService {
@@ -66,6 +80,7 @@ export class GameTeamService {
     });
 
     await GameService.updateGameReadiness(gameId);
+    await syncLeagueSeasonIfLeagueRoundGame(gameId);
 
     const updatedGame = await prisma.game.findUnique({
       where: { id: gameId },
@@ -167,8 +182,8 @@ export class GameTeamService {
       });
     });
 
-    // Update readiness status after teams are deleted
     await GameService.updateGameReadiness(gameId);
+    await syncLeagueSeasonIfLeagueRoundGame(gameId);
   }
 }
 
