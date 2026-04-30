@@ -21,12 +21,16 @@ interface GameFormatSectionProps {
 
 export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSectionProps) => {
   const { t } = useTranslation();
-  const gameFormat = useGameFormat(game);
+  const formatMaxParticipants = game.entityType === 'LEAGUE_SEASON' ? 4 : game.maxParticipants;
+  const gameFormat = useGameFormat({
+    ...game,
+    maxParticipants: formatMaxParticipants,
+  });
   const [isWizardOpen, setIsWizardOpen] = useState(false);
 
-  const maxParticipants = game.maxParticipants ?? 0;
+  const maxParticipants = formatMaxParticipants ?? 0;
   const genderTeams = (game.genderTeams || 'ANY') as GenderTeam;
-  const hasFixedTeams = game.maxParticipants === 2 ? false : (game.hasFixedTeams || false);
+  const hasFixedTeams = maxParticipants === 2 ? false : (game.hasFixedTeams || false);
 
   const persistTeams = useCallback(
     async (patch: { genderTeams?: GenderTeam; hasFixedTeams?: boolean }) => {
@@ -71,19 +75,31 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
     if (!canEdit) return;
     const setup = gameFormat.setupPayload;
     try {
+      const winnerOfGame =
+        game.entityType === 'LEAGUE_SEASON' && setup.winnerOfGame === 'BY_POINTS'
+          ? gameFormat.scoringMode === 'POINTS'
+            ? 'BY_SCORES_DELTA'
+            : 'BY_MATCHES_WON'
+          : setup.winnerOfGame;
+      const rankingPointsPayload =
+        game.entityType === 'LEAGUE_SEASON'
+          ? {}
+          : {
+              pointsPerWin: setup.pointsPerWin,
+              pointsPerLoose: setup.pointsPerLoose,
+              pointsPerTie: setup.pointsPerTie,
+            };
       await gamesApi.update(game.id, {
         ...resultsRoundGenV2Payload,
         gameType: gameFormat.gameType,
         scoringMode: gameFormat.scoringMode,
-        pointsPerWin: setup.pointsPerWin,
-        pointsPerLoose: setup.pointsPerLoose,
-        pointsPerTie: setup.pointsPerTie,
+        ...rankingPointsPayload,
         fixedNumberOfSets: setup.fixedNumberOfSets,
         maxTotalPointsPerSet: setup.maxTotalPointsPerSet,
         matchTimedCapMinutes: setup.matchTimedCapMinutes,
         matchTimerEnabled: setup.matchTimerEnabled ?? false,
         maxPointsPerTeam: setup.maxPointsPerTeam,
-        winnerOfGame: setup.winnerOfGame,
+        winnerOfGame,
         winnerOfMatch: setup.winnerOfMatch,
         matchGenerationType: setup.matchGenerationType,
         prohibitMatchesEditing: setup.prohibitMatchesEditing,
@@ -115,7 +131,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
         entityType={game.entityType}
         format={gameFormat}
         generationSlotCount={
-          game.maxParticipants != null && game.maxParticipants > 0 ? game.maxParticipants : undefined
+          formatMaxParticipants != null && formatMaxParticipants > 0 ? formatMaxParticipants : undefined
         }
         onOpenWizard={handleOpenWizard}
         showWizardButton={canEdit}
@@ -129,9 +145,10 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
           format={gameFormat}
           wizardEntityType={game.entityType}
           generationSlotCount={
-            game.maxParticipants != null && game.maxParticipants > 0 ? game.maxParticipants : undefined
+            formatMaxParticipants != null && formatMaxParticipants > 0 ? formatMaxParticipants : undefined
           }
           hasFixedTeams={hasFixedTeams}
+          allowByPointsInRanking={game.entityType !== 'LEAGUE_SEASON'}
           onClose={() => setIsWizardOpen(false)}
           onDone={handleDone}
         />

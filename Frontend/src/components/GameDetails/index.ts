@@ -12,3 +12,4 @@ export * from './TeamPlayerSelector';
 export * from './PhotosSection';
 export * from './EditGameInfoModal';
 export * from './UserGameNoteModal';
+export * from './LeagueSeasonPointsSection';

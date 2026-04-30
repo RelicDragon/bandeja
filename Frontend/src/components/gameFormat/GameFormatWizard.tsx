@@ -35,6 +35,7 @@ interface GameFormatWizardProps {
   /** Max participants / capacity — generation options and copy (omit or 0 to allow all defs). */
   generationSlotCount?: number;
   hasFixedTeams?: boolean;
+  allowByPointsInRanking?: boolean;
   /** e.g. playoff: scoring wizard only, generation fixed by template */
   hideGenerationStep?: boolean;
 }
@@ -71,7 +72,8 @@ function isPointsTotalStepValid(f: UseGameFormatResult): boolean {
   return targetOk;
 }
 
-function isRankingStepValid(f: UseGameFormatResult): boolean {
+function isRankingStepValid(f: UseGameFormatResult, allowByPointsInRanking: boolean): boolean {
+  if (!allowByPointsInRanking) return true;
   if (f.winnerOfGame !== 'BY_POINTS') return true;
   return f.pointsPerWin + f.pointsPerTie + f.pointsPerLoose > 0;
 }
@@ -86,10 +88,14 @@ const prohibitPill = (active: boolean) =>
       : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
   }`;
 
-function canFloatingContinueForStep(step: GameFormatWizardStep, f: UseGameFormatResult): boolean {
+function canFloatingContinueForStep(
+  step: GameFormatWizardStep,
+  f: UseGameFormatResult,
+  allowByPointsInRanking: boolean
+): boolean {
   if (step === 'setStructure') return isSetStructureStepValid(f);
   if (step === 'pointsTotal') return isPointsTotalStepValid(f);
-  if (step === 'ranking') return isRankingStepValid(f);
+  if (step === 'ranking') return isRankingStepValid(f, allowByPointsInRanking);
   return true;
 }
 
@@ -125,6 +131,7 @@ export const GameFormatWizard = ({
   wizardEntityType,
   generationSlotCount,
   hasFixedTeams,
+  allowByPointsInRanking = true,
   hideGenerationStep = false,
 }: GameFormatWizardProps) => {
   const { t } = useTranslation();
@@ -204,7 +211,11 @@ export const GameFormatWizard = ({
 
   const showFloatingPrev = safeStepIdx >= 1;
   const isLastStep = safeStepIdx >= currentSteps.length - 1;
-  const canFloatingContinue = canFloatingContinueForStep(safeCurrentStep, format);
+  const canFloatingContinue = canFloatingContinueForStep(
+    safeCurrentStep,
+    format,
+    allowByPointsInRanking
+  );
 
   const bodyBottomPad = 'pb-20';
 
@@ -348,6 +359,7 @@ export const GameFormatWizard = ({
                   pointsPerLoose={format.pointsPerLoose}
                   pointsPerTie={format.pointsPerTie}
                   winnerOfGame={format.winnerOfGame}
+                  allowByPoints={allowByPointsInRanking}
                   onChange={format.setRanking}
                 />
               )}

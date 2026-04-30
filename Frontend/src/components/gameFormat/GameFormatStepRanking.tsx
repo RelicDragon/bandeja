@@ -15,6 +15,7 @@ interface GameFormatStepRankingProps {
     winnerOfGame?: GameSetupParams['winnerOfGame'];
   }) => void;
   onDone?: () => void;
+  allowByPoints?: boolean;
 }
 
 const pill = (active: boolean) =>
@@ -86,6 +87,7 @@ export const GameFormatStepRanking = ({
   winnerOfGame,
   onChange,
   onDone,
+  allowByPoints = true,
 }: GameFormatStepRankingProps) => {
   const { t } = useTranslation();
   const recommended = recommendedWinnerOfGame(scoringMode);
@@ -99,6 +101,11 @@ export const GameFormatStepRanking = ({
     }
   };
 
+  const visibleWinnerOptions = allowByPoints
+    ? orderedWinnerOptions(recommended)
+    : orderedWinnerOptions(recommended).filter((key) => key !== 'BY_POINTS');
+  const selectedWinner = !allowByPoints && winnerOfGame === 'BY_POINTS' ? recommended : winnerOfGame;
+
   return (
     <div className="space-y-4">
       <p className="text-xs text-gray-500 dark:text-gray-400 px-1">{t('gameFormat.stepRankingHint')}</p>
@@ -111,14 +118,14 @@ export const GameFormatStepRanking = ({
           <div className="text-sm font-semibold text-gray-900 dark:text-white">{t('gameResults.winnerOfGame')}</div>
         </div>
         <div className="flex flex-col gap-2">
-          {orderedWinnerOptions(recommended).map((key) => {
+          {visibleWinnerOptions.map((key) => {
             const label =
               key === 'BY_POINTS'
                 ? t('gameResults.byPoints')
                 : key === 'BY_MATCHES_WON'
                   ? t('gameResults.byMatchesWon')
                   : t('gameResults.byScoresDelta');
-            const selected = winnerOfGame === key;
+            const selected = selectedWinner === key;
             return (
               <button
                 key={key}
@@ -138,7 +145,7 @@ export const GameFormatStepRanking = ({
         </div>
       </div>
 
-      {winnerOfGame === 'BY_POINTS' && (
+      {allowByPoints && selectedWinner === 'BY_POINTS' && (
         <div className="p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 space-y-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-500/20 flex items-center justify-center">

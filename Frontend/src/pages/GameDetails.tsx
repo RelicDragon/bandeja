@@ -27,6 +27,7 @@ import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsLis
 import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
 import { GameFormatSection } from '@/components/GameDetails/GameFormatSection';
+import { LeagueSeasonPointsSection } from '@/components/GameDetails/LeagueSeasonPointsSection';
 import { FaqTab } from '@/components/GameDetails/FaqTab';
 import { FaqEdit } from '@/components/GameDetails/FaqEdit';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
@@ -1298,6 +1299,10 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
               canEdit={canEdit}
               onGameUpdate={setGame}
             />
+          )}
+
+          {user && game.entityType === 'LEAGUE_SEASON' && (
+            <LeagueSeasonPointsSection game={game} canEdit={canEdit} onGameUpdate={setGame} />
           )}
 
           {user && game.entityType === 'TRAINING' && game.resultsStatus === 'FINAL' && (
