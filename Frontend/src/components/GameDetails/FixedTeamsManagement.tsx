@@ -95,7 +95,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
         if (gameRef.current?.id !== g.id) return;
 
         setTeams(localTeams);
-        const ready = isTeamsReady(localTeams);
+        const ready = isTeamsReady(localTeams, g);
         if (g.teamsReady !== ready) {
           onGameUpdateRef.current({
             ...g,
