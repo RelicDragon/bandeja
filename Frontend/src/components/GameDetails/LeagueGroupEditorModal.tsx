@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2, Loader2, UserPlus, ChevronDown, Check, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Trash2, Loader2, UserPlus, ChevronDown, Check, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PlayerAvatar } from '@/components';
 import { leaguesApi, LeagueGroupManagementPayload, LeagueStanding } from '@/api/leagues';
@@ -36,21 +36,40 @@ export const LeagueGroupEditorModal = ({
   const [participantSelections, setParticipantSelections] = useState<Record<string, string>>({});
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [reorderLoading, setReorderLoading] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
   const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const renameTimeouts = useRef<Record<string, ReturnType<typeof setTimeout> | null>>({});
 
-  const fetchGroups = useCallback(async () => {
-    setLoading(true);
+  const fetchGroups = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setLoading(true);
+      try {
+        const response = await leaguesApi.getGroups(leagueSeasonId);
+        setData(response.data);
+      } catch (error: any) {
+        const errorMessage = error.response?.data?.message || 'errors.generic';
+        toast.error(t(errorMessage, { defaultValue: errorMessage }));
+      } finally {
+        if (!opts?.silent) setLoading(false);
+      }
+    },
+    [leagueSeasonId, t]
+  );
+
+  const handleSyncParticipants = async () => {
+    setSyncLoading(true);
     try {
-      const response = await leaguesApi.getGroups(leagueSeasonId);
-      setData(response.data);
+      await leaguesApi.syncParticipants(leagueSeasonId);
+      await fetchGroups({ silent: true });
+      onUpdated?.();
+      toast.success(t('gameDetails.participantsSynced'));
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
-      setLoading(false);
+      setSyncLoading(false);
     }
-  }, [leagueSeasonId, t]);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -307,9 +326,20 @@ export const LeagueGroupEditorModal = ({
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="league-group-editor-modal">
       <DialogContent>
-        <DialogHeader className="flex-col items-start">
-          <DialogTitle>{t('gameDetails.groupEditorTitle')}</DialogTitle>
-          <DialogDescription>{t('gameDetails.manageGroupsDescription')}</DialogDescription>
+        <DialogHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0 space-y-1.5">
+            <DialogTitle>{t('gameDetails.groupEditorTitle')}</DialogTitle>
+            <DialogDescription>{t('gameDetails.manageGroupsDescription')}</DialogDescription>
+          </div>
+          <button
+            type="button"
+            onClick={handleSyncParticipants}
+            disabled={syncLoading || loading}
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+          >
+            {syncLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+            {t('gameDetails.syncParticipants')}
+          </button>
         </DialogHeader>
 
         <div className="border-b border-gray-200 dark:border-gray-800">

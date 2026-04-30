@@ -270,7 +270,35 @@ export class LeagueSyncService {
             await tx.leagueTeam.delete({ where: { id: teamId } });
           }
         }
+
+        await tx.leagueParticipant.deleteMany({
+          where: {
+            leagueSeasonId,
+            participantType: LeagueParticipantType.USER,
+          },
+        });
       } else {
+        const teamParticipantRows = await tx.leagueParticipant.findMany({
+          where: { leagueSeasonId, participantType: LeagueParticipantType.TEAM },
+          select: { leagueTeamId: true },
+        });
+        const teamIdsToMaybeDelete = [
+          ...new Set(
+            teamParticipantRows.map((s) => s.leagueTeamId).filter((id): id is string => Boolean(id))
+          ),
+        ];
+        if (teamParticipantRows.length > 0) {
+          await tx.leagueParticipant.deleteMany({
+            where: { leagueSeasonId, participantType: LeagueParticipantType.TEAM },
+          });
+        }
+        for (const teamId of teamIdsToMaybeDelete) {
+          const refCount = await tx.leagueParticipant.count({ where: { leagueTeamId: teamId } });
+          if (refCount === 0) {
+            await tx.leagueTeam.delete({ where: { id: teamId } });
+          }
+        }
+
         const standingsUserIds = new Set(
           standings.filter((s) => s.userId).map((s) => s.userId!)
         );

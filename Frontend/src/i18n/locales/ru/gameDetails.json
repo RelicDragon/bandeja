@@ -196,6 +196,8 @@
     "participantAddedToGroup": "Участник добавлен в группу",
     "participantRemovedFromGroup": "Участник удален из группы",
     "syncingParticipants": "Синхронизация участников...",
+    "syncParticipants": "Синхронизировать участников",
+    "participantsSynced": "Участники синхронизированы с игрой сезона",
     "generalTab": "Главная",
     "orderTab": "Порядок",
     "groupOrderDescription": "Группы упорядочены от лучших к худшим. Первая группа - лучшая, последняя - худшая.",

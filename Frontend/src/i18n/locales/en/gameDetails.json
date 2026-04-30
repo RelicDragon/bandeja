@@ -191,6 +191,8 @@
     "participantAddedToGroup": "Participant added to group",
     "participantRemovedFromGroup": "Participant removed from group",
     "syncingParticipants": "Syncing participants...",
+    "syncParticipants": "Sync participants",
+    "participantsSynced": "Participants synced with the season game",
     "generalTab": "Main",
     "orderTab": "Order",
     "groupOrderDescription": "Groups are ordered from best to worst. The first group is the best, the last is the worst.",

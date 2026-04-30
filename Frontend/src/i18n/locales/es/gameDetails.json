@@ -178,6 +178,8 @@
     "participantAddedToGroup": "Participante agregado al grupo",
     "participantRemovedFromGroup": "Participante eliminado del grupo",
     "syncingParticipants": "Sincronizando participantes...",
+    "syncParticipants": "Sincronizar participantes",
+    "participantsSynced": "Participantes sincronizados con el partido de la temporada",
     "generalTab": "Principal",
     "orderTab": "Orden",
     "groupOrderDescription": "Los grupos están ordenados del mejor al peor. El primer grupo es el mejor, el último es el peor.",

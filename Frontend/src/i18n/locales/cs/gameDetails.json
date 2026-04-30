@@ -190,6 +190,8 @@
     "participantAddedToGroup": "Účastník byl přidán do skupiny",
     "participantRemovedFromGroup": "Účastník byl odebrán ze skupiny",
     "syncingParticipants": "Synchronizuji účastníky...",
+    "syncParticipants": "Synchronizovat účastníky",
+    "participantsSynced": "Účastníci synchronizováni se sezónním zápasem",
     "generalTab": "Hlavní",
     "orderTab": "Pořadí",
     "groupOrderDescription": "Skupiny jsou seřazeny od nejlepší po nejhorší. První skupina je nejlepší, poslední nejhorší.",

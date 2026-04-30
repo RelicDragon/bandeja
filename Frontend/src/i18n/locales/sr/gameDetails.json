@@ -184,6 +184,8 @@
     "participantAddedToGroup": "Учесник је додат у групу",
     "participantRemovedFromGroup": "Учесник је уклоњен из групе",
     "syncingParticipants": "Синхронизујем учеснике...",
+    "syncParticipants": "Синхронизуј учеснике",
+    "participantsSynced": "Учесници синхронизовани са сезонском утакмицом",
     "generalTab": "Главни",
     "orderTab": "Редослед",
     "groupOrderDescription": "Групе су поређане од најбољих до најлошијих. Прва група је најбоља, последња је најлошија.",
