@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
-import { LeagueParticipantType } from '@prisma/client';
+import { LeagueParticipantType, Prisma } from '@prisma/client';
 
 function sortedPlayerKey(userIds: string[]): string {
   return [...userIds].sort().join(':');
@@ -54,6 +54,38 @@ async function collectDesiredTeamPlayerIds(leagueSeasonId: string): Promise<stri
   }
 
   return [...byKey.values()].sort((a, b) => sortedPlayerKey(a).localeCompare(sortedPlayerKey(b)));
+}
+
+async function resolveLeagueGroupIdForTeam(
+  tx: Prisma.TransactionClient,
+  leagueSeasonId: string,
+  teamPlayerIds: string[],
+): Promise<string | null> {
+  const key = sortedPlayerKey(teamPlayerIds);
+  const games = await tx.game.findMany({
+    where: {
+      hasFixedTeams: true,
+      leagueRound: { leagueSeasonId },
+    },
+    select: {
+      leagueGroupId: true,
+      fixedTeams: {
+        select: {
+          players: { select: { userId: true } },
+        },
+      },
+    },
+  });
+  for (const g of games) {
+    if (!g.leagueGroupId) continue;
+    for (const ft of g.fixedTeams) {
+      const ids = ft.players.map((p) => p.userId).sort();
+      if (sortedPlayerKey(ids) === key) {
+        return g.leagueGroupId;
+      }
+    }
+  }
+  return null;
 }
 
 export class LeagueSyncService {
@@ -143,6 +175,13 @@ export class LeagueSyncService {
 
           if (matchingStanding) {
             consumedParticipantIds.add(matchingStanding.id);
+            const resolvedGroupId = await resolveLeagueGroupIdForTeam(tx, leagueSeasonId, teamPlayerIds);
+            if (resolvedGroupId != null && matchingStanding.currentGroupId !== resolvedGroupId) {
+              await tx.leagueParticipant.update({
+                where: { id: matchingStanding.id },
+                data: { currentGroupId: resolvedGroupId },
+              });
+            }
           }
 
           if (!matchingLeagueTeam) {
@@ -155,6 +194,8 @@ export class LeagueSyncService {
                 },
               },
             });
+
+            const resolvedGroupId = await resolveLeagueGroupIdForTeam(tx, leagueSeasonId, teamPlayerIds);
 
             let reusableParticipant: (typeof standings)[number] | null = null;
             let bestOverlap = -1;
@@ -181,6 +222,7 @@ export class LeagueSyncService {
                 where: { id: reusableParticipant.id },
                 data: {
                   leagueTeamId: newLeagueTeam.id,
+                  ...(resolvedGroupId != null ? { currentGroupId: resolvedGroupId } : {}),
                 },
               });
               consumedParticipantIds.add(reusableParticipant.id);
@@ -197,6 +239,7 @@ export class LeagueSyncService {
                   leagueSeasonId,
                   participantType: LeagueParticipantType.TEAM,
                   leagueTeamId: newLeagueTeam.id,
+                  currentGroupId: resolvedGroupId ?? undefined,
                   points: 0,
                   wins: 0,
                   ties: 0,

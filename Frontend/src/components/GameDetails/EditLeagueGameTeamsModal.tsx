@@ -195,8 +195,6 @@ export const EditLeagueGameTeamsModal = ({
         gameIdRef.current = game.id;
         setActiveTab('teams');
         setIsEditingTime(false);
-        fetchStandings();
-        initializeTeams();
         initializeGameData();
         fetchClubs().then(() => {
           if (game.clubId) {
@@ -204,6 +202,8 @@ export const EditLeagueGameTeamsModal = ({
           }
         });
       }
+      fetchStandings();
+      initializeTeams();
       setTimeManuallySelected(false);
     } else {
       if (!isOpen && gameIdRef.current === game.id) {
@@ -290,20 +290,23 @@ export const EditLeagueGameTeamsModal = ({
   };
 
   const getAllAvailablePlayers = (): Array<BasicUser & { points: number; gamesPlayed: number }> => {
-    const players: Array<BasicUser & { points: number; gamesPlayed: number }> = [];
-    
-    standings.forEach(standing => {
-      // Filter by group - only show players from the same group as this game
-      if (game.leagueGroupId && standing.currentGroupId !== game.leagueGroupId) {
+    const byId = new Map<string, BasicUser & { points: number; gamesPlayed: number }>();
+
+    standings.forEach((standing) => {
+      if (
+        game.leagueGroupId &&
+        standing.currentGroupId != null &&
+        standing.currentGroupId !== game.leagueGroupId
+      ) {
         return;
       }
-      
+
       const gamesPlayed = standing.wins + standing.ties + standing.losses;
-      
+
       if (hasFixedTeams && standing.leagueTeam) {
         standing.leagueTeam.players.forEach((player: any) => {
           if (player.user) {
-            players.push({
+            byId.set(player.user.id, {
               ...player.user,
               points: standing.points,
               gamesPlayed,
@@ -311,15 +314,27 @@ export const EditLeagueGameTeamsModal = ({
           }
         });
       } else if (standing.user) {
-        players.push({
+        byId.set(standing.user.id, {
           ...standing.user,
           points: standing.points,
           gamesPlayed,
         });
       }
     });
-    
-    return players;
+
+    if (hasFixedTeams) {
+      game.participants.filter(isParticipantPlaying).forEach((p) => {
+        if (p.user && !byId.has(p.userId)) {
+          byId.set(p.userId, {
+            ...p.user,
+            points: 0,
+            gamesPlayed: 0,
+          });
+        }
+      });
+    }
+
+    return [...byId.values()];
   };
 
   const handlePlayerSelect = (player: BasicUser) => {
