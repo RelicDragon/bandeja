@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
@@ -70,6 +70,14 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
     setRoundTypeFilter(leagueSeasonId, selectedRoundType);
   }, [selectedRoundType, leagueSeasonId]);
 
+  const displayStandings = useMemo(
+    () =>
+      standings.filter((s) =>
+        hasFixedTeams ? s.participantType === 'TEAM' : s.participantType === 'USER'
+      ),
+    [standings, hasFixedTeams]
+  );
+
   const compareStandings = (a: LeagueStanding, b: LeagueStanding) => {
     if (b.points !== a.points) return b.points - a.points;
     if (b.wins !== a.wins) return b.wins - a.wins;
@@ -79,7 +87,7 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
 
   const groupStandingsMap = new Map<string, LeagueStanding[]>();
 
-  standings.forEach((standing) => {
+  displayStandings.forEach((standing) => {
     const key = standing.currentGroup?.id ?? NO_GROUP_KEY;
     if (!groupStandingsMap.has(key)) {
       groupStandingsMap.set(key, []);
@@ -115,7 +123,7 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
     );
   }
 
-  if (standings.length === 0) {
+  if (displayStandings.length === 0) {
     return (
       <Card>
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -202,26 +210,28 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
                 </div>
               </td>
               <td className="py-2 pl-0 pr-0">
-                {hasFixedTeams && standing.leagueTeam ? (
-                  <div className="flex items-center gap-3 -translate-x-2">
-                    <div className="flex -space-x-2">
-                      {standing.leagueTeam.players?.slice(0, 3).map((player: any) => (
-                        <PlayerAvatar
-                          key={player.id}
-                          player={player.user}
-                          extrasmall={true}
-                          showName={false}
-                          fullHideName={true}
-                        />
-                      ))}
+                {hasFixedTeams ? (
+                  standing.leagueTeam ? (
+                    <div className="flex items-center gap-3 -translate-x-2">
+                      <div className="flex -space-x-2">
+                        {standing.leagueTeam.players?.slice(0, 3).map((player: any) => (
+                          <PlayerAvatar
+                            key={player.id}
+                            player={player.user}
+                            extrasmall={true}
+                            showName={false}
+                            fullHideName={true}
+                          />
+                        ))}
+                      </div>
+                      <div className="text-sm text-gray-900 dark:text-white">
+                        {standing.leagueTeam.players
+                          ?.map((p: any) => `${p.user?.firstName ?? ''} ${p.user?.lastName ?? ''}`.trim())
+                          .filter(Boolean)
+                          .join(', ')}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {standing.leagueTeam.players
-                        ?.map((p: any) => `${p.user?.firstName ?? ''} ${p.user?.lastName ?? ''}`.trim())
-                        .filter(Boolean)
-                        .join(', ')}
-                    </div>
-                  </div>
+                  ) : null
                 ) : standing.user ? (
                   <div className="flex items-center gap-3 -translate-x-2">
                     <PlayerAvatar
@@ -325,7 +335,7 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
         </>
       ) : (
         <Card>
-          {renderStandingsTable(standings, 0)}
+          {renderStandingsTable(displayStandings, 0)}
         </Card>
       )}
     </div>

@@ -1,3 +1,4 @@
+import { LeagueParticipantType } from '@prisma/client';
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { getUserNotesForGames } from '../userGameNote.service';
@@ -145,6 +146,12 @@ export class LeagueReadService {
   }
 
   static async getLeagueStandings(leagueSeasonId: string) {
+    const season = await prisma.leagueSeason.findUnique({
+      where: { id: leagueSeasonId },
+      select: { game: { select: { hasFixedTeams: true } } },
+    });
+    const hasFixedTeams = season?.game?.hasFixedTeams ?? false;
+
     const participants = await prisma.leagueParticipant.findMany({
       where: { leagueSeasonId },
       include: {
@@ -179,7 +186,8 @@ export class LeagueReadService {
       ],
     });
 
-    return participants;
+    const wantType = hasFixedTeams ? LeagueParticipantType.TEAM : LeagueParticipantType.USER;
+    return participants.filter((p) => p.participantType === wantType);
   }
 }
 
