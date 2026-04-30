@@ -302,7 +302,8 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
   }
 
   // Check if not all participants are ready
-  if (!game.participantsReady) {
+  const activeParticipantsCount = game.participants.filter((p) => p.status === 'PLAYING').length;
+  if (!game.participantsReady && activeParticipantsCount < 2) {
     const body = (
       <div className="text-center py-6">
         <div className="text-blue-600 dark:text-blue-400 mb-2">
