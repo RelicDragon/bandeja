@@ -73,19 +73,30 @@ export class LeagueSyncService {
     });
 
     if (hasFixedTeams) {
+      const consumedParticipantIds = new Set<string>();
+
       for (const fixedTeam of seasonGame.fixedTeams) {
         const teamPlayerIds = fixedTeam.players.map(p => p.userId).sort();
         let matchingLeagueTeam = null;
+        let matchingStanding: (typeof standings)[number] | null = null;
 
         for (const standing of standings) {
+          if (consumedParticipantIds.has(standing.id)) {
+            continue;
+          }
           if (standing.leagueTeam) {
             const standingPlayerIds = standing.leagueTeam.players.map(p => p.userId).sort();
             if (teamPlayerIds.length === standingPlayerIds.length &&
                 teamPlayerIds.every((id, idx) => id === standingPlayerIds[idx])) {
               matchingLeagueTeam = standing.leagueTeam;
+              matchingStanding = standing;
               break;
             }
           }
+        }
+
+        if (matchingStanding) {
+          consumedParticipantIds.add(matchingStanding.id);
         }
 
         if (!matchingLeagueTeam) {
@@ -99,15 +110,30 @@ export class LeagueSyncService {
             },
           });
 
-          const existingTeamParticipant = await prisma.leagueParticipant.findFirst({
-            where: {
-              leagueSeasonId,
-              leagueTeamId: newLeagueTeam.id,
-              participantType: 'TEAM',
-            },
-          });
+          let reusableParticipant: (typeof standings)[number] | null = null;
+          let bestOverlap = -1;
 
-          if (!existingTeamParticipant) {
+          for (const standing of standings) {
+            if (consumedParticipantIds.has(standing.id) || !standing.leagueTeam) {
+              continue;
+            }
+            const standingPlayerIds = standing.leagueTeam.players.map(p => p.userId);
+            const overlap = standingPlayerIds.filter(id => teamPlayerIds.includes(id)).length;
+            if (overlap > bestOverlap) {
+              bestOverlap = overlap;
+              reusableParticipant = standing;
+            }
+          }
+
+          if (reusableParticipant) {
+            await prisma.leagueParticipant.update({
+              where: { id: reusableParticipant.id },
+              data: {
+                leagueTeamId: newLeagueTeam.id,
+              },
+            });
+            consumedParticipantIds.add(reusableParticipant.id);
+          } else {
             await prisma.leagueParticipant.create({
               data: {
                 leagueId,

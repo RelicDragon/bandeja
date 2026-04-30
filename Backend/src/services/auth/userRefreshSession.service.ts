@@ -40,7 +40,6 @@ const REFRESH_SERIALIZATION_MAX_ATTEMPTS = 5;
 const refreshTransactionOptions = {
   maxWait: 5000,
   timeout: 15000,
-  isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
 } as const;
 
 export async function refreshWithRotation(
@@ -88,10 +87,17 @@ export async function refreshWithRotation(
               ip: ip ? ip.slice(0, 64) : null,
             },
           });
-          await tx.userRefreshSession.update({
-            where: { id: row.id },
+          const revoked = await tx.userRefreshSession.updateMany({
+            where: { id: row.id, revokedAt: null },
             data: { revokedAt: new Date(), replacedBySessionId: newRow.id, lastUsedAt: new Date() },
           });
+          if (revoked.count === 0) {
+            await tx.userRefreshSession.updateMany({
+              where: { id: newRow.id, revokedAt: null },
+              data: { revokedAt: new Date() },
+            });
+            throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
+          }
           const token = generateShortAccessToken(jwtPayloadFromAuthUser(user));
           return { token, refreshToken: newRaw, user, currentSessionId: newRow.id };
         },
