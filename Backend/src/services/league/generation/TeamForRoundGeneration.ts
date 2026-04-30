@@ -14,6 +14,11 @@ interface TeamPair {
   player2Id: string;
 }
 
+interface FixedLeagueTeamEntry {
+  participant: any;
+  playerIds: string[];
+}
+
 export class TeamForRoundGeneration {
   static async generateGamesForRound(leagueRoundId: string) {
     const round = await prisma.leagueRound.findUnique({
@@ -121,8 +126,37 @@ export class TeamForRoundGeneration {
             gender: true,
           },
         },
+        leagueTeam: {
+          include: {
+            players: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    avatar: true,
+                    level: true,
+                    gender: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
+
+    if (seasonGame.hasFixedTeams) {
+      await this.generateGamesForFixedTeamsGroup(
+        participants,
+        leagueSeasonId,
+        groupId,
+        leagueRoundId,
+        seasonGame
+      );
+      return;
+    }
 
     if (participants.length < 4) {
       return;
@@ -182,6 +216,74 @@ export class TeamForRoundGeneration {
           leagueSeasonId
         );
       }
+    }
+  }
+
+  private static async generateGamesForFixedTeamsGroup(
+    participants: any[],
+    leagueSeasonId: string,
+    groupId: string,
+    leagueRoundId: string,
+    seasonGame: any
+  ) {
+    const fixedTeams: FixedLeagueTeamEntry[] = participants
+      .filter((p) => p.participantType === 'TEAM' && p.leagueTeam?.players?.length)
+      .map((p) => ({
+        participant: p,
+        playerIds: Array.from(
+          new Set(
+            p.leagueTeam.players
+              .map((player: { userId: string | null }) => player.userId)
+              .filter((userId: string | null): userId is string => typeof userId === 'string' && userId.trim().length > 0)
+          )
+        ),
+      }))
+      .filter((entry) => entry.playerIds.length === 2);
+
+    if (fixedTeams.length < 2) {
+      return;
+    }
+
+    const { playedOpponents } = await this.getPlayedTeamPairs(leagueSeasonId, groupId, leagueRoundId);
+    const availableTeams = [...fixedTeams];
+    const games: Array<{ team1: FixedLeagueTeamEntry; team2: FixedLeagueTeamEntry }> = [];
+
+    while (availableTeams.length >= 2) {
+      const team1 = availableTeams[0];
+      let bestOpponentIndex = 1;
+      let bestUnNovelty = Infinity;
+
+      for (let i = 1; i < availableTeams.length; i++) {
+        const team2 = availableTeams[i];
+        const unNovelty = this.getFixedTeamsOpponentUnNoveltyScore(team1.playerIds, team2.playerIds, playedOpponents);
+        if (unNovelty < bestUnNovelty) {
+          bestUnNovelty = unNovelty;
+          bestOpponentIndex = i;
+        }
+      }
+
+      games.push({
+        team1,
+        team2: availableTeams[bestOpponentIndex],
+      });
+
+      availableTeams.splice(bestOpponentIndex, 1);
+      availableTeams.splice(0, 1);
+    }
+
+    for (const game of games) {
+      await createLeagueGame({
+        leagueRoundId,
+        seasonGame,
+        leagueSeasonId,
+        team1PlayerIds: game.team1.playerIds,
+        team2PlayerIds: game.team2.playerIds,
+        leagueGroupId: groupId,
+        maxParticipants: 4,
+        minParticipants: 4,
+        isPublic: false,
+        affectsRating: true,
+      });
     }
   }
 
@@ -406,6 +508,20 @@ export class TeamForRoundGeneration {
       getCount(team1.player1Id, team2.player2Id) +
       getCount(team1.player2Id, team2.player1Id) +
       getCount(team1.player2Id, team2.player2Id)
+    );
+  }
+
+  private static getFixedTeamsOpponentUnNoveltyScore(
+    team1PlayerIds: string[],
+    team2PlayerIds: string[],
+    playedOpponents: Map<string, number>
+  ): number {
+    const getCount = (a: string, b: string) => playedOpponents.get([a, b].sort().join(',')) ?? 0;
+    return (
+      getCount(team1PlayerIds[0], team2PlayerIds[0]) +
+      getCount(team1PlayerIds[0], team2PlayerIds[1]) +
+      getCount(team1PlayerIds[1], team2PlayerIds[0]) +
+      getCount(team1PlayerIds[1], team2PlayerIds[1])
     );
   }
 

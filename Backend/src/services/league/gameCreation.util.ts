@@ -101,7 +101,16 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
     throw new ApiError(404, 'League round not found');
   }
 
-  const participantUserIds = Array.from(new Set([...team1PlayerIds, ...team2PlayerIds]));
+  const normalizeUserIds = (ids: Array<string | null | undefined>) =>
+    Array.from(
+      new Set(
+        ids.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+      )
+    );
+
+  const participantUserIds = normalizeUserIds([...team1PlayerIds, ...team2PlayerIds]);
+  const normalizedTeam1PlayerIds = normalizeUserIds(team1PlayerIds);
+  const normalizedTeam2PlayerIds = normalizeUserIds(team2PlayerIds);
   const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
   const startTime = new Date();
   const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000);
@@ -170,7 +179,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       gameId: game.id,
       teamNumber: 1,
       players: {
-        create: team1PlayerIds.map(userId => ({ userId })),
+        create: normalizedTeam1PlayerIds.map(userId => ({ userId })),
       },
     },
   });
@@ -180,7 +189,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       gameId: game.id,
       teamNumber: 2,
       players: {
-        create: team2PlayerIds.map(userId => ({ userId })),
+        create: normalizedTeam2PlayerIds.map(userId => ({ userId })),
       },
     },
   });
@@ -216,7 +225,13 @@ export async function createLeaguePlayoffGame(
   }
 
   const template = PLAYOFF_GAME_TYPE_TEMPLATES[gameType as 'WINNER_COURT' | 'AMERICANO'];
-  const userIds = Array.from(new Set(participantUserIds));
+  const userIds = Array.from(
+    new Set(
+      participantUserIds.filter(
+        (userId): userId is string => typeof userId === 'string' && userId.trim().length > 0
+      )
+    )
+  );
   const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
   const startTime = new Date();
   const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000);
@@ -303,12 +318,20 @@ export async function createLeaguePlayoffGame(
 
   if (hasFixedTeams && teams?.length) {
     for (let i = 0; i < teams.length; i++) {
+      const normalizedTeamUserIds = Array.from(
+        new Set(
+          teams[i].filter(
+            (userId): userId is string => typeof userId === 'string' && userId.trim().length > 0
+          )
+        )
+      );
+
       await db.gameTeam.create({
         data: {
           gameId: game.id,
           teamNumber: i + 1,
           players: {
-            create: teams[i].map((userId) => ({ userId })),
+            create: normalizedTeamUserIds.map((userId) => ({ userId })),
           },
         },
       });

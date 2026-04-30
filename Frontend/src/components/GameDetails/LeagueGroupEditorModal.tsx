@@ -297,6 +297,13 @@ export const LeagueGroupEditorModal = ({
     return null;
   };
 
+  const isFixedTeamsMode = !!data && [...data.groups.flatMap((group) => group.participants), ...data.unassignedParticipants]
+    .some((participant) => participant.participantType === 'TEAM' || !!participant.leagueTeam);
+
+  const selectableParticipants = isFixedTeamsMode
+    ? (data?.unassignedParticipants ?? []).filter((participant) => participant.participantType === 'TEAM' || !!participant.leagueTeam)
+    : (data?.unassignedParticipants ?? []);
+
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="league-group-editor-modal">
       <DialogContent>
@@ -358,7 +365,7 @@ export const LeagueGroupEditorModal = ({
               <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
             </div>
           ) : (
-            <div className="grid gap-4 lg:grid-cols-2 min-w-0">
+            <div className="grid gap-4 min-w-0">
               {data?.groups.map((group) => {
                 const color = getLeagueGroupColor(group.color);
                 const borderColor = getLeagueGroupSoftColor(group.color, '40');
@@ -450,7 +457,7 @@ export const LeagueGroupEditorModal = ({
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           {participantSelections[group.id] ? (
                             (() => {
-                              const selected = data?.unassignedParticipants.find((p) => p.id === participantSelections[group.id]);
+                              const selected = selectableParticipants.find((p) => p.id === participantSelections[group.id]);
                               if (!selected) return null;
                               
                               return selected.user ? (
@@ -482,10 +489,10 @@ export const LeagueGroupEditorModal = ({
                           }`}
                         />
                       </div>
-                      {openDropdown === group.id && data?.unassignedParticipants.length > 0 && (
+                      {openDropdown === group.id && selectableParticipants.length > 0 && (
                         <div className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                           <div className="max-h-64 overflow-y-auto py-1">
-                            {data.unassignedParticipants.map((participant) => {
+                            {selectableParticipants.map((participant) => {
                               const isSelected = participantSelections[group.id] === participant.id;
 
                               return (
@@ -541,7 +548,6 @@ export const LeagueGroupEditorModal = ({
                       className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md active:scale-95"
                     >
                       {addLoading === group.id ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
-                      <span>{t('gameDetails.addParticipant')}</span>
                     </button>
                   </div>
                   </div>
