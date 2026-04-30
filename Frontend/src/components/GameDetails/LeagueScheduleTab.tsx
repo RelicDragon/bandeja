@@ -77,21 +77,17 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
       
       const standingsResponse = await leaguesApi.getStandings(leagueSeasonId);
       setParticipantCount(standingsResponse.data.length);
-      const hasGroupsValue = standingsResponse.data.some((standing) => Boolean(standing.currentGroupId));
-      setHasGroups(hasGroupsValue);
-      
-      if (hasGroupsValue) {
-        try {
-          const groupsResponse = await leaguesApi.getGroups(leagueSeasonId);
-          setGroups(groupsResponse.data.groups);
-          setGroupsInitialized(true);
-        } catch (error) {
-          console.error('Failed to fetch groups:', error);
-          setGroups([]);
-          setGroupsInitialized(true);
-        }
-      } else {
+
+      try {
+        const groupsResponse = await leaguesApi.getGroups(leagueSeasonId);
+        const fetchedGroups = groupsResponse.data.groups;
+        setGroups(fetchedGroups);
+        setHasGroups(fetchedGroups.length > 0);
+        setGroupsInitialized(true);
+      } catch (error) {
+        console.error('Failed to fetch groups:', error);
         setGroups([]);
+        setHasGroups(false);
         setGroupsInitialized(true);
       }
     } catch (error) {
