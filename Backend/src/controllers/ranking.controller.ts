@@ -108,9 +108,9 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
     return;
   }
 
-  const where: any = { isActive: true };
+  const baseWhere: any = { isActive: true };
   if (isCity) {
-    where.currentCityId = user.currentCityId;
+    baseWhere.currentCityId = user.currentCityId;
   }
 
   let allUsers: any[] = [];
@@ -144,7 +144,7 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       where: {
         game: gameWhere,
         status: 'PLAYING',
-        user: where,
+        user: baseWhere,
       },
       _count: {
         userId: true,
@@ -156,43 +156,52 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       userGameCounts[result.userId] = result._count.userId;
     }
 
-    allUsers = await prisma.user.findMany({
-      where,
-      select: {
-        ...USER_SELECT_FIELDS,
-        reliability: true,
-        totalPoints: true,
-        gamesPlayed: true,
-        gamesWon: true,
-        socialLevel: true,
-      },
-    });
+    const userIdsWithGamesInPeriod = Object.entries(userGameCounts)
+      .filter(([, count]) => count > 0)
+      .map(([id]) => id);
 
-    const usersWithCounts = allUsers.map((u: any) => ({
-      ...u,
-      gamesCount: userGameCounts[u.id] || 0,
-    }));
+    if (userIdsWithGamesInPeriod.length === 0) {
+      allUsers = [];
+      rankMap = new Map();
+    } else {
+      allUsers = await prisma.user.findMany({
+        where: { ...baseWhere, id: { in: userIdsWithGamesInPeriod } },
+        select: {
+          ...USER_SELECT_FIELDS,
+          reliability: true,
+          totalPoints: true,
+          gamesPlayed: true,
+          gamesWon: true,
+          socialLevel: true,
+        },
+      });
 
-    usersWithCounts.sort((a: any, b: any) => {
-      if (a.gamesCount !== b.gamesCount) {
-        return b.gamesCount - a.gamesCount;
-      }
-      if (a.reliability !== b.reliability) {
-        return b.reliability - a.reliability;
-      }
-      if (a.level !== b.level) {
-        return b.level - a.level;
-      }
-      return b.totalPoints - a.totalPoints;
-    });
+      const usersWithCounts = allUsers.map((u: any) => ({
+        ...u,
+        gamesCount: userGameCounts[u.id] || 0,
+      }));
 
-    allUsers = usersWithCounts;
-    rankMap = calculateRanks(allUsers, true, false);
+      usersWithCounts.sort((a: any, b: any) => {
+        if (a.gamesCount !== b.gamesCount) {
+          return b.gamesCount - a.gamesCount;
+        }
+        if (a.reliability !== b.reliability) {
+          return b.reliability - a.reliability;
+        }
+        if (a.level !== b.level) {
+          return b.level - a.level;
+        }
+        return b.totalPoints - a.totalPoints;
+      });
+
+      allUsers = usersWithCounts;
+      rankMap = calculateRanks(allUsers, true, false);
+    }
   } else {
     const orderField = isSocial ? 'socialLevel' : 'level';
 
     allUsers = await prisma.user.findMany({
-      where,
+      where: { ...baseWhere, gamesPlayed: { gt: 0 } },
       orderBy: [
         { [orderField]: 'desc' },
         { reliability: 'desc' },

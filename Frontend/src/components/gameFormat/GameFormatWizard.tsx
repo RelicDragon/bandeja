@@ -210,7 +210,7 @@ export const GameFormatWizard = ({
 
   return (
     <Dialog open={isOpen} onClose={handleClose} modalId="game-format-wizard">
-      <DialogContent className="max-w-[500px] max-h-[92vh] flex flex-col">
+      <DialogContent className="max-w-[500px] flex h-[min(85dvh,92vh)] max-h-[92vh] flex-col min-h-0 overflow-hidden">
         <DialogHeader className="!p-4 !pb-3 flex-col items-stretch gap-3 shrink-0">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="text-base">{t('gameFormat.title')}</DialogTitle>
@@ -248,6 +248,7 @@ export const GameFormatWizard = ({
                 matchTimerEnabled={format.matchTimerEnabled}
                 matchTimedCapMinutes={format.matchTimedCapMinutes}
                 customPointsTotal={format.customPointsTotal}
+                winnerOfGame={format.winnerOfGame}
               />
             </p>
           </div>
@@ -342,6 +343,7 @@ export const GameFormatWizard = ({
               )}
               {safeCurrentStep === 'ranking' && (
                 <GameFormatStepRanking
+                  scoringMode={format.scoringMode}
                   pointsPerWin={format.pointsPerWin}
                   pointsPerLoose={format.pointsPerLoose}
                   pointsPerTie={format.pointsPerTie}

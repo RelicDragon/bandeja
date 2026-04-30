@@ -15,6 +15,14 @@ import {
 } from '@/utils/gameFormat';
 import { getGameTypeTemplate } from '@/utils/gameTypeTemplates';
 
+/** Simple-points (Americano-style): same as game templates — net score / balls difference. */
+const POINTS_MODE_RANKING_DEFAULTS = {
+  winnerOfGame: 'BY_SCORES_DELTA' as const,
+  pointsPerWin: 0,
+  pointsPerTie: 0,
+  pointsPerLoose: 0,
+};
+
 function initialMatchTimerEnabled(game?: Partial<Game> | null): boolean {
   if (!game) return false;
   if (game.matchTimerEnabled) return true;
@@ -126,10 +134,17 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
           ? clampMatchGenerationType(effectiveMatchGeneration(mode, prev, maxParticipants), maxParticipants)
           : defaultMatchGenerationForParticipants(mode, maxParticipants, prev);
         const tmpl = getGameTypeTemplate(deriveGameType(mode, nextGen));
-        setWinnerOfGame(tmpl.winnerOfGame);
-        setPointsPerWin(tmpl.pointsPerWin ?? 0);
-        setPointsPerLoose(tmpl.pointsPerLoose ?? 0);
-        setPointsPerTie(tmpl.pointsPerTie ?? 0);
+        if (mode === 'POINTS') {
+          setWinnerOfGame(POINTS_MODE_RANKING_DEFAULTS.winnerOfGame);
+          setPointsPerWin(POINTS_MODE_RANKING_DEFAULTS.pointsPerWin);
+          setPointsPerTie(POINTS_MODE_RANKING_DEFAULTS.pointsPerTie);
+          setPointsPerLoose(POINTS_MODE_RANKING_DEFAULTS.pointsPerLoose);
+        } else {
+          setWinnerOfGame(tmpl.winnerOfGame);
+          setPointsPerWin(tmpl.pointsPerWin ?? 0);
+          setPointsPerLoose(tmpl.pointsPerLoose ?? 0);
+          setPointsPerTie(tmpl.pointsPerTie ?? 0);
+        }
         return nextGen;
       });
       setOverridesState({});
@@ -169,10 +184,17 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     setGenerationTypeState(gen);
     const newGameType = deriveGameType(scoringMode, gen);
     const tmpl = getGameTypeTemplate(newGameType);
-    setWinnerOfGame(tmpl.winnerOfGame);
-    setPointsPerWin(tmpl.pointsPerWin ?? 0);
-    setPointsPerLoose(tmpl.pointsPerLoose ?? 0);
-    setPointsPerTie(tmpl.pointsPerTie ?? 0);
+    if (scoringMode === 'POINTS') {
+      setWinnerOfGame(POINTS_MODE_RANKING_DEFAULTS.winnerOfGame);
+      setPointsPerWin(POINTS_MODE_RANKING_DEFAULTS.pointsPerWin);
+      setPointsPerTie(POINTS_MODE_RANKING_DEFAULTS.pointsPerTie);
+      setPointsPerLoose(POINTS_MODE_RANKING_DEFAULTS.pointsPerLoose);
+    } else {
+      setWinnerOfGame(tmpl.winnerOfGame);
+      setPointsPerWin(tmpl.pointsPerWin ?? 0);
+      setPointsPerLoose(tmpl.pointsPerLoose ?? 0);
+      setPointsPerTie(tmpl.pointsPerTie ?? 0);
+    }
     setOverridesState({});
   }, [scoringMode]);
 

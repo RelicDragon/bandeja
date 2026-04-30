@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { MatchGenerationType, ScoringMode, ScoringPreset } from '@/types';
+import { MatchGenerationType, ScoringMode, ScoringPreset, WinnerOfGame } from '@/types';
 import { summarizeGameFormat } from '@/utils/gameFormat';
 
 const SUMMARY_SEP = ' · ';
@@ -12,6 +12,7 @@ interface GameFormatSummaryProps {
   matchTimerEnabled?: boolean;
   matchTimedCapMinutes?: number;
   customPointsTotal?: number | null;
+  winnerOfGame?: WinnerOfGame;
   className?: string;
   twoRows?: boolean;
 }
@@ -24,6 +25,7 @@ export const GameFormatSummary = ({
   matchTimerEnabled,
   matchTimedCapMinutes,
   customPointsTotal,
+  winnerOfGame,
   className,
   twoRows,
 }: GameFormatSummaryProps) => {
@@ -36,6 +38,7 @@ export const GameFormatSummary = ({
     matchTimerEnabled,
     matchTimedCapMinutes,
     customPointsTotal,
+    winnerOfGame,
   });
   if (!twoRows) {
     return <span className={className}>{summary}</span>;

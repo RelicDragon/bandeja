@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { Trophy, TrendingUp, Check } from 'lucide-react';
-import { GameSetupParams } from '@/types';
+import { GameSetupParams, ScoringMode } from '@/types';
 
 interface GameFormatStepRankingProps {
+  scoringMode: ScoringMode;
   pointsPerWin: number;
   pointsPerLoose: number;
   pointsPerTie: number;
@@ -48,7 +49,37 @@ const Stepper = ({
 
 const DEFAULT_STANDING_POINTS = { pointsPerWin: 3, pointsPerTie: 1, pointsPerLoose: 0 } as const;
 
+const RANKING_OPTION_ORDER: GameSetupParams['winnerOfGame'][] = [
+  'BY_SCORES_DELTA',
+  'BY_POINTS',
+  'BY_MATCHES_WON',
+];
+
+function recommendedWinnerOfGame(mode: ScoringMode): GameSetupParams['winnerOfGame'] {
+  return mode === 'POINTS' ? 'BY_SCORES_DELTA' : 'BY_MATCHES_WON';
+}
+
+function orderedWinnerOptions(recommended: GameSetupParams['winnerOfGame']): GameSetupParams['winnerOfGame'][] {
+  return [
+    ...RANKING_OPTION_ORDER.filter((k) => k === recommended),
+    ...RANKING_OPTION_ORDER.filter((k) => k !== recommended),
+  ];
+}
+
+function RecommendDot({ show, selected }: { show: boolean; selected: boolean }) {
+  if (!show) return null;
+  return (
+    <span
+      className={`shrink-0 w-2 h-2 rounded-full ring-2 ${
+        selected ? 'bg-white ring-white/40' : 'bg-primary-500 ring-white dark:ring-gray-800'
+      }`}
+      aria-hidden
+    />
+  );
+}
+
 export const GameFormatStepRanking = ({
+  scoringMode,
   pointsPerWin,
   pointsPerLoose,
   pointsPerTie,
@@ -57,6 +88,7 @@ export const GameFormatStepRanking = ({
   onDone,
 }: GameFormatStepRankingProps) => {
   const { t } = useTranslation();
+  const recommended = recommendedWinnerOfGame(scoringMode);
 
   const selectByPoints = () => {
     const sum = pointsPerWin + pointsPerTie + pointsPerLoose;
@@ -79,27 +111,30 @@ export const GameFormatStepRanking = ({
           <div className="text-sm font-semibold text-gray-900 dark:text-white">{t('gameResults.winnerOfGame')}</div>
         </div>
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            className={`w-full text-left ${pill(winnerOfGame === 'BY_MATCHES_WON')}`}
-            onClick={() => onChange({ winnerOfGame: 'BY_MATCHES_WON' })}
-          >
-            {t('gameResults.byMatchesWon')}
-          </button>
-          <button
-            type="button"
-            className={`w-full text-left ${pill(winnerOfGame === 'BY_SCORES_DELTA')}`}
-            onClick={() => onChange({ winnerOfGame: 'BY_SCORES_DELTA' })}
-          >
-            {t('gameResults.byScoresDelta')}
-          </button>
-          <button
-            type="button"
-            className={`w-full text-left ${pill(winnerOfGame === 'BY_POINTS')}`}
-            onClick={selectByPoints}
-          >
-            {t('gameResults.byPoints')}
-          </button>
+          {orderedWinnerOptions(recommended).map((key) => {
+            const label =
+              key === 'BY_POINTS'
+                ? t('gameResults.byPoints')
+                : key === 'BY_MATCHES_WON'
+                  ? t('gameResults.byMatchesWon')
+                  : t('gameResults.byScoresDelta');
+            const selected = winnerOfGame === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                className={`w-full text-left flex items-center justify-between gap-2 ${pill(selected)}`}
+                onClick={() => {
+                  if (key === 'BY_POINTS') selectByPoints();
+                  else onChange({ winnerOfGame: key });
+                }}
+                title={recommended === key ? t('gameFormat.recommended') : undefined}
+              >
+                <span>{label}</span>
+                <RecommendDot show={recommended === key} selected={selected} />
+              </button>
+            );
+          })}
         </div>
       </div>
 

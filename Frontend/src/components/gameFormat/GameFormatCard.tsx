@@ -97,6 +97,7 @@ export const GameFormatCard = ({
                 matchTimerEnabled={format.matchTimerEnabled}
                 matchTimedCapMinutes={format.matchTimedCapMinutes}
                 customPointsTotal={format.customPointsTotal}
+                winnerOfGame={format.winnerOfGame}
                 twoRows
               />
             </div>

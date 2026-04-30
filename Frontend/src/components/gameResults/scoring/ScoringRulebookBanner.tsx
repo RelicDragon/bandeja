@@ -16,6 +16,7 @@ interface ScoringRulebookBannerProps {
         | 'hasGoldenPoint'
         | 'matchTimedCapMinutes'
         | 'matchTimerEnabled'
+        | 'winnerOfGame'
       >
     | null
     | undefined;
@@ -33,6 +34,7 @@ export const ScoringRulebookBanner = ({ game }: ScoringRulebookBannerProps) => {
     hasGoldenPoint: !!game.hasGoldenPoint,
     matchTimerEnabled: isGameMatchTimerEnabled(game),
     matchTimedCapMinutes: game.matchTimedCapMinutes,
+    winnerOfGame: game.winnerOfGame,
   });
 
   return (

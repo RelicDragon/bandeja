@@ -14,7 +14,7 @@
     "minCourts_other": "{{count}}+ pistas",
     "stepScoringModeHint": "¿Cómo quieres marcar cada partido?",
     "stepSetStructureHint": "Elige la estructura de sets para cada partido.",
-    "stepPointsTotalHint": "¿Cuántos puntos se juegan por partido?",
+    "stepPointsTotalHint": "¿Cuántos puntos se juegan en cada set en total (ambos equipos)?",
     "stepGenerationHint": "¿Cómo se deciden los enfrentamientos cada ronda?",
     "stepRankingHint": "Configura cómo se determina el ganador general.",
     "standingPointsHint": "Puntos por resultado del partido para la clasificación (no son los puntos jugados en el partido).",
@@ -34,8 +34,8 @@
       },
       "POINTS": {
         "title": "Puntos simples",
-        "subtitle": "Cuenta puntos directamente hasta un total objetivo. Sin juegos ni sets.",
-        "hint": "p. ej., 15–7, 9–12 — totales directos (sin juegos 15/30/40)"
+        "subtitle": "Cada set tiene un total fijo de puntos (ambos equipos sumados). Gana quien tenga más al terminar — no es 15/30/40.",
+        "hint": "p. ej., 11–10 en un set a 21 — la suma debe coincidir con el tope"
       }
     },
     "generation": {
@@ -157,23 +157,23 @@
       },
       "POINTS_16": {
         "title": "16 puntos",
-        "subtitle": "Gana el primero en llegar a 16",
-        "hint": "Partidos rápidos"
+        "subtitle": "16 puntos en total en el set (ambos equipos); gana el que sume más",
+        "hint": "Sets rápidos — estilo Americano"
       },
       "POINTS_21": {
         "title": "21 puntos",
-        "subtitle": "Gana el primero en llegar a 21",
-        "hint": "Americano estándar"
+        "subtitle": "21 puntos en total en el set (ambos equipos); gana el que sume más",
+        "hint": "Duración habitual de Americano"
       },
       "POINTS_24": {
         "title": "24 puntos",
-        "subtitle": "Gana el primero en llegar a 24",
-        "hint": "Americano equilibrado"
+        "subtitle": "24 puntos en total en el set (ambos equipos); gana el que sume más",
+        "hint": "Sets algo más largos"
       },
       "POINTS_32": {
         "title": "32 puntos",
-        "subtitle": "Gana el primero en llegar a 32",
-        "hint": "Rondas más largas"
+        "subtitle": "32 puntos en total en el set (ambos equipos); gana el que sume más",
+        "hint": "Sets más largos por ronda"
       },
       "TIMED": {
         "title": "Partido por tiempo",

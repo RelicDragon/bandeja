@@ -16,7 +16,7 @@
     "minCourts_other": "{{count}}+ kurtů",
     "stepScoringModeHint": "Jak chcete počítat body v každém zápase?",
     "stepSetStructureHint": "Vyberte strukturu setů pro každý zápas.",
-    "stepPointsTotalHint": "Kolik bodů se hraje v jednom zápase?",
+    "stepPointsTotalHint": "Kolik bodů se hraje v jednom setu celkem (součet obou týmů)?",
     "stepGenerationHint": "Jak se určují dvojice v každém kole?",
     "stepRankingHint": "Nastavte, jak se určuje celkový vítěz.",
     "standingPointsHint": "Body za výsledek zápasu v tabulce (nejsou to body hrané v zápase).",
@@ -36,8 +36,8 @@
       },
       "POINTS": {
         "title": "Jednoduché body",
-        "subtitle": "Počítejte body přímo do cílového součtu.",
-        "hint": "např. 15–7, 9–12 — přímo součty bodů (ne hry 15/30/40)"
+        "subtitle": "Set má pevný celkový počet bodů (součet obou stran). Vyhrává tým s víc body na konci — ne hry 15/30/40.",
+        "hint": "např. 11–10 v setu na 21 — součet musí odpovídat limitu"
       }
     },
     "generation": {
@@ -159,23 +159,23 @@
       },
       "POINTS_16": {
         "title": "16 bodů",
-        "subtitle": "Vítězí tým, který jako první získá 16",
-        "hint": "Rychlé zápasy"
+        "subtitle": "16 bodů celkem v setu (obě strany); vyhrává vyšší skóre",
+        "hint": "Krátké sety — styl Americano"
       },
       "POINTS_21": {
         "title": "21 bodů",
-        "subtitle": "Vítězí tým, který jako první získá 21",
-        "hint": "Standardní Americano"
+        "subtitle": "21 bodů celkem v setu (obě strany); vyhrává vyšší skóre",
+        "hint": "Běžná délka Americano"
       },
       "POINTS_24": {
         "title": "24 bodů",
-        "subtitle": "Vítězí tým, který jako první získá 24",
-        "hint": "Vyvážené Americano"
+        "subtitle": "24 bodů celkem v setu (obě strany); vyhrává vyšší skóre",
+        "hint": "Delší sety"
       },
       "POINTS_32": {
         "title": "32 bodů",
-        "subtitle": "Vítězí tým, který jako první získá 32",
-        "hint": "Delší kola"
+        "subtitle": "32 bodů celkem v setu (obě strany); vyhrává vyšší skóre",
+        "hint": "Nejdelší sety v kole"
       },
       "TIMED": {
         "title": "Na čas",

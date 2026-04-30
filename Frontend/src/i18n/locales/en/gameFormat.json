@@ -14,7 +14,7 @@
     "minCourts_other": "{{count}}+ courts",
     "stepScoringModeHint": "How do you want to score each match?",
     "stepSetStructureHint": "Choose the set structure for each match.",
-    "stepPointsTotalHint": "How many points are played per match?",
+    "stepPointsTotalHint": "How many points are played in each set (both teams combined)?",
     "stepGenerationHint": "How are matchups decided each round?",
     "stepRankingHint": "Configure how the overall winner is determined.",
     "standingPointsHint": "Points per match outcome for the standings table (separate from points scored inside a match).",
@@ -34,8 +34,8 @@
       },
       "POINTS": {
         "title": "Simple Points",
-        "subtitle": "Count points directly to a target total. No games, no sets.",
-        "hint": "e.g. 15–7, 9–12 — running point totals, not 15/30/40 games"
+        "subtitle": "Each set runs for a fixed total of points (both teams added). Whoever has more at the end wins the set — not 15/30/40 games.",
+        "hint": "e.g. 11–10 in a 21-point set — combined total must match the cap"
       }
     },
     "generation": {
@@ -157,23 +157,23 @@
       },
       "POINTS_16": {
         "title": "16 points",
-        "subtitle": "First team to 16 balls wins",
-        "hint": "Quick matches"
+        "subtitle": "16 points total in the set (both teams); most points wins",
+        "hint": "Quick sets — Americano style"
       },
       "POINTS_21": {
         "title": "21 points",
-        "subtitle": "First team to 21 balls wins",
-        "hint": "Standard Americano"
+        "subtitle": "21 points total in the set (both teams); most points wins",
+        "hint": "Common Americano length"
       },
       "POINTS_24": {
         "title": "24 points",
-        "subtitle": "First team to 24 balls wins",
-        "hint": "Balanced Americano"
+        "subtitle": "24 points total in the set (both teams); most points wins",
+        "hint": "Slightly longer sets"
       },
       "POINTS_32": {
         "title": "32 points",
-        "subtitle": "First team to 32 balls wins",
-        "hint": "Longer rounds"
+        "subtitle": "32 points total in the set (both teams); most points wins",
+        "hint": "Longer sets per round"
       },
       "TIMED": {
         "title": "Timed match",
