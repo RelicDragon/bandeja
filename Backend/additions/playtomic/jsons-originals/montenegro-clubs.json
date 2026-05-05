@@ -1,0 +1,1600 @@
+[
+  {
+    "tenant_id": "8d7577b6-f16e-4764-8abd-a05681d4f7a5",
+    "tenant_name": "Padel Montenegro (Donja Lastva)",
+    "slug": "padel-montenegro-donja-lastva",
+    "address": {
+      "street": "Donja Lastva",
+      "postal_code": "85320",
+      "city": "Tivat",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 0,
+        "lon": 0
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 69 102 004",
+      "FACILITY_CHANGEROOM": "unknown",
+      "FACILITY_FREE_PARKING": "unknown",
+      "FACILITY_PRIVATE_PARKING": "unknown",
+      "FACILITY_CAFETERIA": "unknown",
+      "FACILITY_WIFI": "unknown",
+      "FACILITY_LOCKERS": "unknown",
+      "FACILITY_DISABLED_ACCESS": "unknown",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "f8ec0883-3059-4102-8041-19778ca21703",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "6081b469-a6f2-46ac-826c-91f981f801a1",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Montenegro is the first padel club in Montenegro, located in Donja Lastva near Tivat (close to Hotel Kamelija). It features 2 outdoor padel courts and offers padel court bookings, equipment sales (Head rackets, balls), and table tennis. The club was founded by former professional water polo players Damjan Danilović and Vjekoslav Pasković, who aim to promote padel as a fun and accessible sport for all ages and skill levels. The club also imports and assembles padel courts across Montenegro. Reservations can be made via phone, email, or the Taykus booking platform."
+  },
+  {
+    "tenant_id": "39ba9687-b306-4773-9770-78c28d1528d0",
+    "tenant_name": "Luštica Bay Padel Courts",
+    "slug": "lustica-bay-padel-courts",
+    "address": {
+      "street": "Novo Naselje bb",
+      "postal_code": "85320",
+      "city": "Tivat",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 0,
+        "lon": 0
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 77 200 100",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "16280460-127e-4551-974b-19279d0937a7",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "90c58852-e6eb-41e3-8353-7f3a8cc2f65c",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "12:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "12:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "12:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "12:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "12:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "12:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "12:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "12:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Luštica Bay Padel Courts are located in the Centrale neighbourhood of the luxurious Luštica Bay resort on the Luštica Peninsula in Montenegro, near Tivat. The two outdoor padel courts sit within the vibrant Piazza Centrale — a modern Mediterranean town centre surrounded by restaurants, shops, and residential buildings. The courts offer beautiful coastal and mountain views and are part of a larger sports complex that includes tennis, basketball, beach volleyball, and bocce. The padel courts have hosted international tournaments, including a FIP Promotion event in 2024. Court bookings can be made online via the Luštica Bay reservation system at €25 per court. The resort is approximately 12 km from Tivat Airport, 62 km from Dubrovnik Airport, and 92 km from Podgorica Airport."
+  },
+  {
+    "tenant_id": "00ebba64-fa24-46bc-b92a-045f481f2aa3",
+    "tenant_name": "Porto Montenegro Sports Club – Padel",
+    "slug": "porto-montenegro-sports-club-padel",
+    "address": {
+      "street": "Blaza Jovanovica No 1",
+      "postal_code": "85320",
+      "city": "Tivat",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.42979,
+        "lon": 18.69382
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 (0) 32 660 744",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "12d92b0d-33f5-4a97-9ed9-e417b2941f9e",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Porto Montenegro Sports Club's padel court offers the fastest growing sport in the world within the luxurious Porto Montenegro resort in Tivat, on the Bay of Kotor. The padel court is available for booking by residents, marina guests, crew, and the local community. Social matches and professional coaching sessions are available for all skill levels, with equipment rental included in the price. The court is part of a larger sports complex that also features tennis courts, a squash court, fitness suite, bowling alley, and more. Bookings are made via email (scbookings@portomontenegro.com) or phone (+382 32 660 744)."
+  },
+  {
+    "tenant_id": "f0780c5d-1b71-49b1-a4cc-d83a6a60e51d",
+    "tenant_name": "SIRO Boka Place",
+    "slug": "siro-boka-place",
+    "address": {
+      "street": "1 Blaža Jovanovića",
+      "postal_code": "85320",
+      "city": "Tivat",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.432,
+        "lon": 18.694
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 32 690 610",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "697b295f-d939-404b-b786-2f57db27b39e",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "SIRO Boka Place is a 5-star active lifestyle hotel in the heart of Porto Montenegro in Tivat, with padel and tennis courts available for guests, world-class fitness and recovery labs, and a retractable-roof pool."
+  },
+  {
+    "tenant_id": "d6037b0c-b471-4349-8453-00f4265923ae",
+    "tenant_name": "Olive Padel Court",
+    "slug": "olive-padel-court",
+    "address": {
+      "street": "Pržno",
+      "postal_code": "85315",
+      "city": "Sveti Stefan",
+      "sub_administrative_area": "Budva",
+      "administrative_area": "Budva Municipality",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.2585,
+        "lon": 18.8944
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 33 410 100",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "443734f6-65c6-4e44-be7c-cf43d18948d4",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "17bb604d-a21c-4482-8945-a8388cd6607e",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Olive Padel Court at Maestral Resort & Casino is a premium padel destination nestled along Montenegro's stunning Adriatic coast, right beside the sea and surrounded by ancient olive trees in the town of Pržno, near Sveti Stefan. The facility features 2 state-of-the-art outdoor padel courts operated in partnership with Olive Padel Club. Open daily from 08:00 to midnight, the courts are playable all year round thanks to Montenegro's mild coastal climate. The venue has already hosted two editions of the Adriatic Padel Cup (in partnership with the Vibe Padel Tour), attracting international players and guests. The courts cater to all skill levels — beginners can take private lessons and rent equipment, while advanced players can join competitive games. As part of the 5-star Maestral Resort, guests also enjoy access to fine dining, a world-class spa & wellness center, private beach, casino, and other resort amenities. Free parking is available, along with a bar/restaurant, showers, and free Wi-Fi."
+  },
+  {
+    "tenant_id": "03d0a24f-3bd3-40b2-a7cf-681a829e6ac6",
+    "tenant_name": "Platinum Padel Centar Budva",
+    "slug": "platinum-padel-centar-budva",
+    "address": {
+      "street": "7RPW+XGJ, Budva",
+      "postal_code": "85310",
+      "city": "Budva",
+      "sub_administrative_area": "Slovenska Plaza",
+      "administrative_area": "",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.2903,
+        "lon": 18.8379
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 68 627 176",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "d6c3d4ac-3179-4677-a65d-0622f463326e",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "111fbc78-15b4-4044-860f-4014a627a591",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "477ffbe6-fc05-4aa7-a355-13f05aa51721",
+        "name": "Padel 3 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "c32098b7-f890-4c44-831e-2d7619220538",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "aecd5f90-0706-4d72-b06a-cdf7f4ea3f30",
+        "name": "Padel 5 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "224f6c15-82c0-49f0-b902-326888e93c86",
+        "name": "Padel 6 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "fc305f33-51fd-4ac9-8689-f5496eac2600",
+        "name": "Padel 7 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:59"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:59"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:59"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:59"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:59"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:59"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:59"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:59"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Platinum Padel Centar Budva is a premier padel destination located in the heart of Budva on Slovenska Plaža (Slovenska Beach), within the popular Slovenska Plaža Resort. Spanning 3,000 m², it features 7 top-quality Padel Galis courts (3 indoor and 3 outdoor, plus additional courts) with professional lighting for day and night play. The club offers private coaching, a padel school for all levels, and a café bar where players can relax after a match with panoramic views of the surrounding area. It regularly hosts national tournaments and club events, catering to both locals and tourists. The club is open to all skill levels – from beginners to advanced players."
+  },
+  {
+    "tenant_id": "707e8490-a234-4840-9226-19c887f19c45",
+    "tenant_name": "Splendid Padel & Tennis Club",
+    "slug": "splendid-padel-&-tennis-club",
+    "address": {
+      "street": "Bečići bb",
+      "postal_code": "85310",
+      "city": "Budva",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.2844,
+        "lon": 18.8694
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 67 825 464",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "235a7464-570c-42eb-9e4c-56bc68f98b4a",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "a6f7f31d-1e3f-4e00-8c7f-d560bfd046be",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Splendid Padel & Tennis Club is part of the 5-star Splendid Conference & SPA Resort in Bečići, Budva, Montenegro. Set right by the Adriatic Sea, it features two brand-new JUBO padel courts and one US Open style hard tennis court, all surrounded by Mediterranean gardens and sea views. Open to hotel guests, locals, and tourists alike, the club offers equipment rental, certified coaching, and a full resort experience including restaurants, bars, a large SPA, gym, and private beach. Pricing for padel: €28–€32 for 55 min (depending on time slot)."
+  },
+  {
+    "tenant_id": "65d47337-8bb3-48fb-af28-0467ca7e2c85",
+    "tenant_name": "Padel Titograd Tereni",
+    "slug": "padel-titograd-tereni",
+    "address": {
+      "street": "Donja Gorica",
+      "postal_code": "81000",
+      "city": "Podgorica",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.4304,
+        "lon": 19.2594
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+38269377877",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "08f1d4b9-f64c-458f-96db-73b1797ce37e",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "8458b0c8-7afe-45c7-8de8-4012e77ecf0d",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "df675f13-6a6c-45a7-9565-b9dd4b73f356",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Titograd Tereni (Donja Gorica) is a padel club in the Donja Gorica suburb of Podgorica, Montenegro. It was among the first padel courts opened in Podgorica. The club features 3 modern padel courts and is open daily from 9 AM to 10 PM. Facilities include a café/bar with a view of the courts, a padel equipment shop, changing rooms, and free private parking. Rackets and balls are provided for players, making it accessible to beginners. The club also offers professional instruction and has hosted tournaments, summer leagues, and children's padel schools."
+  },
+  {
+    "tenant_id": "9257e77b-51fc-4d0f-b81c-e401c79627e7",
+    "tenant_name": "Bemax Arena Padel Courts",
+    "slug": "bemax-arena-padel-courts",
+    "address": {
+      "street": "Ulica Svetlane Kane Radević bb",
+      "postal_code": "81000",
+      "city": "Podgorica",
+      "sub_administrative_area": "Podgorica Capital City",
+      "administrative_area": "Podgorica",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.441,
+        "lon": 19.262
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 67 999 595",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "9373a077-f38b-4c00-9248-4af5ba116641",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "8731b4ef-c4f0-4eac-82e9-0bf3379691b5",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "74145382-ce6f-4510-94e9-3e5d2cec0422",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "d4066492-a649-4e36-a3ba-4d82a214c173",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Bemax Arena is a modern multifunctional sports hall located within the Morača Sports Centre in Podgorica, Montenegro. Originally built as an indoor swimming pool in 1983, it was completely reconstructed and reopened in 2019 as a state-of-the-art arena with over 2,200 seats. In 2025/2026, a partnership between Padel Montenegro and Bemax Arena was signed to build four new padel courts of the highest quality, suitable for both recreational players and competitive athletes. The facility already includes a modern gym (Arena Gym), outdoor basketball courts, teqball tables, and hosts various sports events, concerts, and tournaments. The new padel courts aim to further boost the padel community in Montenegro, with plans for tournaments, leagues, and children's padel schools. The arena is located in the new part of Podgorica, on the right bank of the Morača River."
+  },
+  {
+    "tenant_id": "1ee339f0-9f29-4b84-b6f1-fa21b77a6b06",
+    "tenant_name": "PADEL Club Bar",
+    "slug": "padel-club-bar",
+    "address": {
+      "street": "Šetalište, SRC Topolica",
+      "postal_code": "",
+      "city": "Bar",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.0947,
+        "lon": 19.0928
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 67 029 999",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "a218a36d-6a26-4343-a275-e1956baffc11",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "d02f0277-4ddb-4aaf-aa68-21fbef40d20a",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "5189f2c2-4c47-4401-8dfb-1ac93d3a8c69",
+        "name": "Padel 3 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "PADEL Club Bar is a newly opened padel facility located on the promenade (šetalište) in Bar, Montenegro, within the SRC Topolica sports complex. Opened in August 2025 in partnership with the Sportsko-rekreativni centar Bar and operated by brothers Dušan and Darko Bigović (PADEL CLUB DOO), it features 3 outdoor padel courts and an on-site caffe bar. The club is open daily from 8 AM to midnight. Court reservations can be made via Instagram DM or WhatsApp, or through the ZakaziTermin app. The club also runs a weekend league (@padel.league.bar). Rackets are included in the court rental price (from €30/hour)."
+  },
+  {
+    "tenant_id": "e0c4c68b-2d05-4a6a-a1f3-0fbf2bf31fa0",
+    "tenant_name": "SRC Bar Padel Courts (Topolica)",
+    "slug": "src-bar-padel-courts-topolica",
+    "address": {
+      "street": "Bulevar Revolucije 85",
+      "postal_code": "85000",
+      "city": "Bar",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.1,
+        "lon": 19.1
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 30 301 700",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "82b47fe7-22a9-4b6e-8b65-17b96531f0b2",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "c4e6bcd7-1f99-463c-b206-0c3ed42261e3",
+        "name": "Padel 2 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "The SRC Bar Padel Courts at Topolica are Montenegro's newest padel facility, officially opened in April 2026 on the grounds of the Sportsko-rekreativni centar Bar (SRC Bar) in the Madžarica area. The project was realized in partnership with brothers Dušan and Darko Bigović. The two double outdoor padel courts are part of a larger sports complex that already includes football fields, tennis courts, an indoor gym, and the modern Topolica Sports Hall (capacity 2,625). The courts are floodlit for evening play. A separate but related Padel Club Bar operates 3 additional padel courts on the city promenade (šetalište) with extended hours (8 AM – midnight) and its own café bar. Together, these facilities mark the arrival of padel as a major new sport in Bar, described by SRC director Božidar Janković as 'the beginning of a new sports era' for the city."
+  },
+  {
+    "tenant_id": "7fec433c-f9e3-425b-9aaa-df5b7338bd49",
+    "tenant_name": "Sportski Centar Igalo",
+    "slug": "sportski-centar-igalo",
+    "address": {
+      "street": "II Dalmatinske Brigade",
+      "postal_code": "85347",
+      "city": "Igalo",
+      "sub_administrative_area": "Herceg Novi",
+      "administrative_area": "Herceg Novi",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.4647,
+        "lon": 18.5217
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 67 107 117",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "fb70cecf-24d1-41d9-b26a-a31e32ec9b46",
+        "name": "Padel 1 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Sportski Centar Igalo is a large multi-sport complex in Igalo, Herceg Novi, Montenegro. Its padel court – the first ever in Herceg Novi – opened in August 2025 and features a synthetic surface with LED lighting for day and night play. The court is built to FIP (World Padel Federation) standards and is suitable for both recreational and competitive matches. The wider sports centre also offers football, tennis (3 clay courts), beach volleyball (3 sand courts), basketball, a multi-purpose indoor hall, a gym, and the Hotel Play with a restaurant. The complex covers 4,200 m² with a 2,995 m² indoor sports hall."
+  },
+  {
+    "tenant_id": "9e9d3a7c-c0ae-4892-902a-d4dd78ee9f3c",
+    "tenant_name": "Padel klub Boka",
+    "slug": "padel-klub-boka",
+    "address": {
+      "street": "Ulica Muo bb",
+      "postal_code": "",
+      "city": "Kotor",
+      "sub_administrative_area": "",
+      "administrative_area": "Kotor Municipality",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.4295,
+        "lon": 18.7712
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 69 235 510",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "e429e6af-a4a0-4874-b7c9-a5d1fdd1c5e9",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel klub 'Boka' is a registered padel club based in Kotor, Montenegro, located on Muo bb street. It is one of the five founding member clubs of the Padel Savez Crne Gore (Padel Federation of Montenegro), which was established on 30 May 2023. The club is headed by president Darko Vuković. The club serves as a representative of the padel community in the Kotor/Boka Bay area."
+  },
+  {
+    "tenant_id": "7c9df236-14ba-452e-94a7-5f4ecfb2b0b4",
+    "tenant_name": "Padel klub Tivat",
+    "slug": "padel-klub-tivat",
+    "address": {
+      "street": "Donja Lastva",
+      "postal_code": "85320",
+      "city": "Tivat",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.432,
+        "lon": 18.695
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 69 102 004",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "23b4ecf5-6fda-47dd-b2b3-b029826e4b0b",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "a5ca6282-4c71-4e83-874c-3f42d454a8ec",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "d1f21d3c-ee39-45cb-9958-3f6d652e1f5e",
+        "name": "Padel 3 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "26808f16-22e1-4589-865e-4c1f2a4d9499",
+        "name": "Padel 4 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "12c98742-2927-471c-9303-d00553d56ceb",
+        "name": "Padel 5 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "96146797-4454-4050-bd9a-afa8fd33d72f",
+        "name": "Padel 6 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "c04987a4-6f3f-43dd-93ea-f8bd5ec0ac45",
+        "name": "Padel 7 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "00:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel Montenegro (Padel klub Tivat) is the first padel club in Montenegro, established in 2021. Located in Donja Lastva, Tivat, near Hotel Kamelija, it features a total of 7 premium courts (4 indoor and 3 outdoor) with glass walls and high-quality lighting. The club is the official distributor of HEAD and Babolat padel equipment in Montenegro and offers table tennis facilities, a pro shop, and coaching services with professional trainer Luka Petranović. Open daily from 7 AM to 12:30 AM, it provides free parking and organizes tournaments, children's padel schools, and social events for the local padel community."
+  },
+  {
+    "tenant_id": "cd606f6f-aa0b-45bd-bf1e-ea0eb236bdc3",
+    "tenant_name": "Padel klub Padel Kotor",
+    "slug": "padel-klub-padel-kotor",
+    "address": {
+      "street": "Ul. Jadranska 74",
+      "postal_code": "",
+      "city": "Kotor",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.4247,
+        "lon": 18.7712
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 69 042 626",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "aa01140f-7022-41fa-b9b4-9a9864ae3729",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": []
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel klub 'Padel Kotor' is one of five officially registered padel clubs under the Padel Federation of Montenegro. Located in the historic coastal town of Kotor at Ul. Jadranska 74, it is presided over by Ljubomir Radović. Further details about the club are not publicly available."
+  },
+  {
+    "tenant_id": "d54f0a67-f8d0-4a7e-9aed-8160f00f9f65",
+    "tenant_name": "Padel klub Padel Budva / Platinum Padel Centar Budva",
+    "slug": "padel-klub-padel-budva-platinum-padel-centar-budva",
+    "address": {
+      "street": "Slovenska Plaža",
+      "postal_code": "",
+      "city": "Budva",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Montenegro",
+      "country_code": "ME",
+      "coordinate": {
+        "lat": 42.2889,
+        "lon": 18.8481
+      },
+      "timezone": "Europe/Podgorica"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+382 67 235 000",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "SPORT_PADEL": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ac8214eb-5dab-4a87-9187-e03f111686f2",
+        "name": "Padel 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "cc00444b-04b3-4a4d-84df-0f9e625edbfa",
+        "name": "Padel 2 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "cab05ca8-9b2e-431d-b46d-e76038a80246",
+        "name": "Padel 3 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "098f8543-bca5-41ce-860b-eb6ee7e7717c",
+        "name": "Padel 4 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "54f4d87a-526c-476c-ae96-250bef0f59eb",
+        "name": "Padel 5 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "d4e62f58-50a8-4e47-a6a4-f126e623552f",
+        "name": "Padel 6 - Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Padel klub Budva (commercially known as Platinum Padel Centar Budva) is a padel sports club located on Slovenska Beach (Slovenska Plaža) in the heart of Budva, Montenegro. Registered with the Padel Federation of Montenegro (Padel Savez Crne Gore), the club opened in 2023 and features a total of six courts — three indoor and three outdoor — equipped with premium Jubo Padel Infinity courts. The facility includes an on-site café with indoor and outdoor seating, shower and changing facilities, and offers private coaching and regular tournament events. Set among pine trees near the Adriatic coast, the club provides a scenic and professional padel experience for players of all levels."
+  }
+]
