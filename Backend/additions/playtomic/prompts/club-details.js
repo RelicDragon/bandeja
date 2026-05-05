@@ -3,9 +3,10 @@ Collect: full address (street, postal code, city, country, country code); phone 
 Summarize everything in a clear text block. If something is unknown, say "unknown".`;
 
 export function clubDetailsUser(clubName, url, city, country) {
+  const place = city && country ? `${city}, ${country}` : city || country || "unknown";
   const context = [clubName];
   if (url) context.push(`Website: ${url}`);
-  context.push(`Location: ${city}${country ? ", " + country : ""}`);
+  context.push(`Location: ${place}`);
   return `Get full details for this padel club:\n${context.join("\n")}`;
 }
 

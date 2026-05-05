@@ -8,7 +8,8 @@ All properties must be strings "true" or "false". opening_hours use "HH:MM" 24h 
 Output only the JSON object, no markdown or explanation.`;
 
 export function formatClubUser(detailBlob, city, country) {
-  return `Format this padel club into the schema. City context: ${city}${country ? ", " + country : ""}.
+  const place = city && country ? `${city}, ${country}` : city || country || "unknown";
+  return `Format this padel club into the schema. Location context: ${place}.
 
 Schema:
 ${SCHEMA_STR}

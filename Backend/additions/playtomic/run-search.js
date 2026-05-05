@@ -3,13 +3,27 @@ import { runPipeline } from "./runPipeline.js";
 import { createStats } from "./ui/stats.js";
 import { startLive, stopLive, render, renderFinal } from "./ui/cli.js";
 
-const city = process.argv[2] || process.env.SEARCH_CITY || "";
-const country = process.argv[3] || process.env.SEARCH_COUNTRY || "";
+const rawArgs = process.argv.slice(2);
+const cityFlagIndex = rawArgs.indexOf("--city");
+const countryFlagIndex = rawArgs.indexOf("--country");
+
+const cityFromFlag = cityFlagIndex >= 0 ? (rawArgs[cityFlagIndex + 1] || "") : "";
+const countryFromFlag = countryFlagIndex >= 0 ? (rawArgs[countryFlagIndex + 1] || "") : "";
+const positionalArgs = rawArgs.filter((arg, idx) => {
+  if (arg === "--city" || arg === "--country") return false;
+  if (cityFlagIndex >= 0 && idx === cityFlagIndex + 1) return false;
+  if (countryFlagIndex >= 0 && idx === countryFlagIndex + 1) return false;
+  return true;
+});
+
+const city = cityFromFlag || positionalArgs[0] || process.env.SEARCH_CITY || "";
+const country = countryFromFlag || positionalArgs[1] || process.env.SEARCH_COUNTRY || "";
 const maxClubs = parseInt(process.env.MAX_CLUBS || "0", 10) || 0;
 
-if (!city) {
+if (!city && !country) {
   console.error("Usage: node run-search.js <city> [country]");
-  console.error("  or set SEARCH_CITY and optionally SEARCH_COUNTRY, MAX_CLUBS in .env");
+  console.error("   or: node run-search.js --country <country> [--city <city>]");
+  console.error("  or set SEARCH_CITY and/or SEARCH_COUNTRY, plus MAX_CLUBS in .env");
   process.exit(1);
 }
 

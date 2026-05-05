@@ -91,7 +91,9 @@ export async function runPipeline(city, country = "", options = {}) {
     }
   }
   const citySlug = slugify(city);
-  const filename = country ? `${citySlug}-${slugify(country)}-clubs.json` : `${citySlug}-clubs.json`;
+  const countrySlug = slugify(country);
+  const locationSlug = [citySlug, countrySlug].filter(Boolean).join("-");
+  const filename = locationSlug ? `${locationSlug}-clubs.json` : "clubs.json";
   const filePath = path.join(outDir, filename);
   await fs.promises.mkdir(outDir, { recursive: true });
   await fs.promises.writeFile(filePath, JSON.stringify(clubs, null, 2), "utf-8");
