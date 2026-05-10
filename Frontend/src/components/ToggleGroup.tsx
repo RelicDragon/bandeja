@@ -27,7 +27,7 @@ export const ToggleGroup: React.FC<ToggleGroupProps> = ({ label, options, disabl
             onClick={() => !disabled && option.onChange(!option.checked)}
             disabled={disabled}
             className={`
-              flex-1 px-4 py-3 rounded-xl font-medium text-sm
+              flex-1 px-3 py-2 rounded-lg font-medium text-sm
               transition-all duration-200 ease-in-out
               border-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
               dark:focus:ring-offset-gray-900

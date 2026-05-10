@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
-import { authenticate, canEditGame } from '../middleware/auth';
+import { authenticate, canAccessGame, canEditGame } from '../middleware/auth';
 import * as leagueController from '../controllers/league.controller';
 
 const router = Router();
@@ -30,6 +30,20 @@ router.get(
   '/:leagueSeasonId/standings',
   authenticate,
   leagueController.getLeagueStandings
+);
+
+router.get(
+  '/:leagueSeasonId/planner',
+  authenticate,
+  canAccessGame,
+  leagueController.getLeaguePlanner
+);
+
+router.post(
+  '/:leagueSeasonId/rounds/full-round-robin',
+  authenticate,
+  canEditGame,
+  leagueController.createFullRegularRoundRobin
 );
 
 router.post(

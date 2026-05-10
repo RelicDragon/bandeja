@@ -16,7 +16,7 @@ interface SegmentedSwitchProps {
   tabs: SegmentedSwitchTab[];
   activeId: string;
   onChange: (id: string) => void;
-  titleInActiveOnly: boolean;
+  showOnlyActiveTabText: boolean;
   layoutId: string;
   className?: string;
   disabled?: boolean;
@@ -26,7 +26,7 @@ export const SegmentedSwitch = ({
   tabs,
   activeId,
   onChange,
-  titleInActiveOnly,
+  showOnlyActiveTabText,
   layoutId,
   className = '',
   disabled = false,
@@ -37,8 +37,8 @@ export const SegmentedSwitch = ({
     {tabs.map((tab) => {
       const isActive = activeId === tab.id;
       const Icon = tab.icon;
-      const showLabel = !titleInActiveOnly || isActive;
-      const pad = titleInActiveOnly && !isActive ? 'px-2' : 'px-3';
+      const showLabel = !showOnlyActiveTabText || isActive;
+      const pad = showOnlyActiveTabText && !isActive ? 'px-2' : 'px-3';
       return (
         <motion.button
           key={tab.id}
@@ -69,7 +69,7 @@ export const SegmentedSwitch = ({
           )}
           <span className="relative flex min-w-0 items-center justify-center gap-1.5">
             {Icon && <Icon size={18} className="shrink-0" />}
-            {titleInActiveOnly ? (
+            {showOnlyActiveTabText ? (
               <AnimatePresence initial={false}>
                 {showLabel && (
                   <motion.span

@@ -543,7 +543,7 @@ export const PlayerListModal = ({
                   tabs={inviteListKindTabs}
                   activeId={inviteListKind}
                   onChange={(id) => setInviteListKind(id as 'all' | 'users' | 'teams')}
-                  titleInActiveOnly={false}
+                  showOnlyActiveTabText={false}
                   layoutId="player-invite-list-kind"
                 />
               </div>

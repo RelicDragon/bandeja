@@ -36,6 +36,7 @@ struct BandejaWatchApp: App {
                     }
             }
             .environment(WatchPreferencesStore.shared)
+            .environment(WatchServeHintsSettingsStore.shared)
         }
     }
 }

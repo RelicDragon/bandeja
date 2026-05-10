@@ -143,7 +143,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
                 ] as SegmentedSwitchTab[]}
                 activeId={profileActiveTab}
                 onChange={(id) => setProfileActiveTab(id as 'general' | 'statistics' | 'comparison' | 'followers' | 'reviews')}
-                titleInActiveOnly={true}
+                showOnlyActiveTabText={true}
                 layoutId="profile-subtabs"
               />
             )}

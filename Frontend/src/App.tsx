@@ -15,6 +15,9 @@ const CreateGameWrapper = lazy(() => import('./pages/CreateGameWrapper').then(mo
 const CreateLeague = lazy(() => import('./pages/CreateLeague').then(module => ({ default: module.CreateLeague })));
 // const Rating = lazy(() => import('./pages/Rating').then(module => ({ default: module.Rating })));
 const GameChatRoute = lazy(() => import('./pages/GameChatRoute').then(module => ({ default: module.GameChatRoute })));
+const GameLiveMatchPage = lazy(() =>
+  import('./pages/GameLiveMatchPage').then((m) => ({ default: m.GameLiveMatchPage }))
+);
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
 import { usersApi } from './api';
@@ -312,10 +315,11 @@ function AppContent() {
   }
 
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
+  const isGameLiveMatchPage = /^\/games\/[^/]+\/live$/.test(location.pathname);
   const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   
-  if (!isOnline && !isGameDetailsPage && !isUserProfilePage && !isAuthPage) {
+  if (!isOnline && !isGameDetailsPage && !isGameLiveMatchPage && !isUserProfilePage && !isAuthPage) {
     return <NoInternetScreen />;
   }
 
@@ -464,6 +468,16 @@ function AppContent() {
             <ProtectedRoute>
               <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
                 <MainPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/:id/live"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                <GameLiveMatchPage />
               </Suspense>
             </ProtectedRoute>
           }

@@ -19,6 +19,7 @@ export interface Match {
   fixedTeamIdA?: string;
   fixedTeamIdB?: string;
   timer?: MatchTimerSnapshot;
+  metadata?: Record<string, unknown>;
 }
 
 export interface Round {

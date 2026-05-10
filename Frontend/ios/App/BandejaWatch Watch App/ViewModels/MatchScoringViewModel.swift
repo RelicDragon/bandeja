@@ -26,6 +26,9 @@ final class MatchScoringViewModel {
 
     var pendingGameWinConfirmSide: TeamSide?
 
+    /// Points completed in the current classic game (drives serve L/R); persisted for deuce accuracy.
+    var classicPointsPlayedInGame = 0
+
     private let api = APIClient()
 
     private static let tennisGamesPerSet = 6
@@ -64,6 +67,10 @@ final class MatchScoringViewModel {
 
     var usesBallCapPerSetUI: Bool {
         isAmericano
+    }
+
+    var usesTennisStyleServeGuide: Bool {
+        game?.ballsInGames == true && !isAmericano
     }
 
     func ballCapScoringTitle(lang: String) -> String {
@@ -130,6 +137,7 @@ final class MatchScoringViewModel {
                     tieBreakA = 0
                     tieBreakB = 0
                     syncWithinSetTieBreakForActiveSet()
+                    syncClassicPointsPlayedFromState(mergingPersisted: WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId))
                     return
                 }
             }
@@ -154,6 +162,7 @@ final class MatchScoringViewModel {
         tieBreakA = 0
         tieBreakB = 0
         withinSetTieBreakMode = false
+        classicPointsPlayedInGame = 0
     }
 
     func saveCurrentSets() async {
@@ -363,12 +372,18 @@ final class MatchScoringViewModel {
                     sets[activeSetIndex].teamA -= 1
                     withinSetTieBreakMode = false
                     WatchScoreHaptics.undo()
+                    syncClassicPointsPlayedFromState(
+                        mergingPersisted: WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId)
+                    )
                 } else if side == .teamB, sets[activeSetIndex].teamA == gamesScoreForTieBreak,
                           sets[activeSetIndex].teamB == gamesScoreForTieBreak,
                           sets[activeSetIndex].teamB > 0 {
                     sets[activeSetIndex].teamB -= 1
                     withinSetTieBreakMode = false
                     WatchScoreHaptics.undo()
+                    syncClassicPointsPlayedFromState(
+                        mergingPersisted: WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId)
+                    )
                 }
             }
             return
@@ -402,6 +417,7 @@ final class MatchScoringViewModel {
                 WatchScoreHaptics.undo()
             }
         }
+        applyClassicPointsAfterUnscore()
     }
 
     func cancelPendingGameWinConfirm() {
@@ -473,6 +489,7 @@ final class MatchScoringViewModel {
         tieBreakA = 0
         tieBreakB = 0
         syncWithinSetTieBreakForActiveSet()
+        classicPointsPlayedInGame = 0
     }
 
     /// After load or changing active set: resume 6–6 (or N–N) within-set tie-break scoring.
@@ -608,6 +625,7 @@ final class MatchScoringViewModel {
                 WatchScoreHaptics.point()
             }
         }
+        applyClassicPointsAfterUserScore()
     }
 
     private func awardGame(_ side: TeamSide) {
@@ -618,6 +636,7 @@ final class MatchScoringViewModel {
             sets[activeSetIndex].teamB += 1
         }
         classicPointState = .regular(a: .zero, b: .zero)
+        classicPointsPlayedInGame = 0
         WatchScoreHaptics.point()
         if sets[activeSetIndex].teamA == gamesScoreForTieBreak && sets[activeSetIndex].teamB == gamesScoreForTieBreak {
             withinSetTieBreakMode = true
@@ -698,5 +717,42 @@ final class MatchScoringViewModel {
             return idx
         }
         return max(0, sets.count - 1)
+    }
+
+    private static func padelRank(_ p: PadelPoint) -> Int { p.rawValue }
+
+    private func applyClassicPointsAfterUserScore() {
+        guard usesTennisStyleServeGuide, !withinSetTieBreakMode, !activeSetIsSuperTieBreak, !activeSetIsSupplemental else { return }
+        switch classicPointState {
+        case .regular(let a, let b):
+            classicPointsPlayedInGame = Self.padelRank(a) + Self.padelRank(b)
+        case .deuce, .advantage:
+            classicPointsPlayedInGame += 1
+        }
+    }
+
+    private func applyClassicPointsAfterUnscore() {
+        guard usesTennisStyleServeGuide, !withinSetTieBreakMode, !activeSetIsSuperTieBreak, !activeSetIsSupplemental else { return }
+        switch classicPointState {
+        case .regular(let a, let b):
+            classicPointsPlayedInGame = Self.padelRank(a) + Self.padelRank(b)
+        case .deuce, .advantage:
+            classicPointsPlayedInGame = max(0, classicPointsPlayedInGame - 1)
+        }
+    }
+
+    func syncClassicPointsPlayedFromState(mergingPersisted record: WatchServeGuideSessionRecord?) {
+        guard usesTennisStyleServeGuide, !withinSetTieBreakMode, !activeSetIsSuperTieBreak, !activeSetIsSupplemental else {
+            classicPointsPlayedInGame = 0
+            return
+        }
+        switch classicPointState {
+        case .regular(let a, let b):
+            classicPointsPlayedInGame = Self.padelRank(a) + Self.padelRank(b)
+        case .deuce:
+            classicPointsPlayedInGame = max(6, record?.classicPointsPlayedInGame ?? 6)
+        case .advantage:
+            classicPointsPlayedInGame = max(7, record?.classicPointsPlayedInGame ?? 7)
+        }
     }
 }

@@ -23,7 +23,7 @@ export const MarketplaceTabController = () => {
       tabs={tabs}
       activeId={subtab}
       onChange={goTo}
-      titleInActiveOnly={false}
+      showOnlyActiveTabText={false}
       layoutId="marketplaceSubtab"
     />
   );

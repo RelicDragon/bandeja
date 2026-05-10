@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Trash2, MapPin } from 'lucide-react';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
@@ -192,6 +193,26 @@ export const HorizontalMatchCard = ({
           canControl={canEditResults && canEnterResults}
           onTransition={onMatchTimerTransition}
         />
+      ) : null}
+
+      {gameId && canEnterScores ? (
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-1 text-xs">
+          <Link
+            to={`/games/${gameId}/live?matchId=${encodeURIComponent(match.id)}`}
+            className="text-primary-600 dark:text-primary-400 font-medium hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t('gameDetails.liveScore')}
+          </Link>
+          <span className="text-gray-300 dark:text-gray-600">·</span>
+          <Link
+            to={`/games/${gameId}/live?matchId=${encodeURIComponent(match.id)}&tv=1`}
+            className="text-primary-600 dark:text-primary-400 font-medium hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t('gameDetails.liveScoreTv')}
+          </Link>
+        </div>
       ) : null}
 
       <div 

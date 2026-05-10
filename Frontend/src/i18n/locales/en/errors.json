@@ -81,5 +81,15 @@
     "matchNotFound": "Match not found",
     "setIndexExceedsMax": "Set index cannot exceed {{max}}",
     "cannotRemoveLastSet": "Cannot remove the last set"
+  },
+  "leagues": {
+    "fullRoundRobin": {
+      "requiresFixedTeams": "This action is only available for fixed-team seasons.",
+      "noGroups": "Create groups before generating a full schedule.",
+      "invalidTeamParticipants": "Every participant in each group must be a team with exactly two players.",
+      "groupsMustHaveSameTeamCount": "All groups must have the same number of teams.",
+      "tooFewTeams": "At least two teams are required per group.",
+      "regularRoundsAlreadyExist": "Regular season rounds already exist. Delete them in the schedule before generating a full round-robin."
+    }
   }
 }

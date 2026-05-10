@@ -11,6 +11,8 @@ import {
 } from '@prisma/client';
 import { TeamForRoundGeneration } from '../src/services/league/generation/TeamForRoundGeneration';
 import { matchupKeyFromSigs, teamPlayerSig } from '../src/services/league/generation/fixedTeamsRoundMatching';
+import { LeagueCreateService } from '../src/services/league/create.service';
+import { roundsInSingleRoundRobinCycle } from '../src/services/league/generation/fixedTeamsRoundRobin';
 
 function ensureDbUrl() {
   let url = process.env.DB_URL;
@@ -482,6 +484,32 @@ async function main() {
       await LeagueSyncService.syncLeagueParticipants(seasonId);
       await assignAllTeamParticipantsToGroup(prisma, seasonId, group.id);
       await assertFullSingleRoundRobin(prisma, '24-team group', 24, seasonId);
+    }
+
+    // --- 7) createFullRegularRoundRobin service (4 teams → 3 rounds, 6 games) ---
+    {
+      const teams = buildDisjointTeams(users, 4);
+      const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
+      branches.push({ leagueId, seasonId });
+      const group = await prisma.leagueGroup.create({
+        data: { leagueSeasonId: seasonId, name: `QA fullRR batch ${Date.now()}` },
+      });
+      await LeagueSyncService.syncLeagueParticipants(seasonId);
+      await assignAllTeamParticipantsToGroup(prisma, seasonId, group.id);
+      const ownerId = teams[0][0];
+      await LeagueCreateService.createFullRegularRoundRobin(seasonId, ownerId);
+      const rc = await prisma.leagueRound.count({ where: { leagueSeasonId: seasonId } });
+      const expectedRounds = roundsInSingleRoundRobinCycle(4);
+      if (rc !== expectedRounds) {
+        throw new Error(`full RR batch: expected ${expectedRounds} rounds, got ${rc}`);
+      }
+      const gc = await prisma.game.count({
+        where: { parentId: seasonId, leagueGroupId: group.id, entityType: EntityType.LEAGUE },
+      });
+      if (gc !== 6) {
+        throw new Error(`full RR batch: expected 6 games, got ${gc}`);
+      }
+      console.log('ok: createFullRegularRoundRobin — 4 teams, 3 rounds, 6 games');
     }
 
     console.log('qa-leagueRoundGeneration: all checks passed');

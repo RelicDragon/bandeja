@@ -81,5 +81,15 @@
     "matchNotFound": "Меч није пронађен",
     "setIndexExceedsMax": "Индекс сета не може премашити {{max}}",
     "cannotRemoveLastSet": "Не можете уклонити последњи сет"
+  },
+  "leagues": {
+    "fullRoundRobin": {
+      "requiresFixedTeams": "Ова радња је доступна само за сезоне са фиксним тимовима.",
+      "noGroups": "Прво направите групе пре генерисања целог распореда.",
+      "invalidTeamParticipants": "Сваки учесник у групи мора бити тим са тачно два играча.",
+      "groupsMustHaveSameTeamCount": "Све групе морају имати исти број тимова.",
+      "tooFewTeams": "Потребна су најмање два тима по групи.",
+      "regularRoundsAlreadyExist": "Рунде регуларне сезоне већ постоје. Обришите их у распореду пре пуног round-robin-а."
+    }
   }
 }

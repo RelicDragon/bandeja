@@ -100,6 +100,8 @@ export const MainPage = () => {
 
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
   const isGameDetailsSplitView = currentPage === 'gameDetails' && isGameDetailsPage && (isDesktop || isLandscape);
+  const isGameDetailsMobileScroll =
+    currentPage === 'gameDetails' && isGameDetailsPage && !isGameDetailsSplitView;
   if (isGameDetailsSplitView) {
     return (
       <MainLayout>
@@ -125,9 +127,9 @@ export const MainPage = () => {
   return (
     <MainLayout>
       <div
-        className={`relative px-2 ${!scrollablePage && !isTeamsPage ? 'min-h-0 overflow-hidden' : ''} ${
-          isTeamsPage ? 'flex min-h-0 min-w-0 flex-1 flex-col' : ''
-        }`}
+        className={`relative px-2 ${
+          !scrollablePage && !isTeamsPage && !isGameDetailsMobileScroll ? 'min-h-0 overflow-hidden' : ''
+        } ${isTeamsPage ? 'flex min-h-0 min-w-0 flex-1 flex-col' : ''}`}
         style={{ paddingBottom: bottomTabsVisible && !isTeamsPage ? '5rem' : '0' }}
       >
         <div

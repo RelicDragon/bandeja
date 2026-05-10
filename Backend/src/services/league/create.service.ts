@@ -7,6 +7,7 @@ import { createLeagueGame, createLeaguePlayoffGame, PlayoffGameSetupOverrides } 
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
 import { TeamForRoundGeneration } from './generation/TeamForRoundGeneration';
+import { roundsInSingleRoundRobinCycle } from './generation/fixedTeamsRoundRobin';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 
 export class LeagueCreateService {
@@ -237,6 +238,130 @@ export class LeagueCreateService {
       default:
         break;
     }
+  }
+
+  static async createFullRegularRoundRobin(leagueSeasonId: string, userId: string) {
+    const leagueSeason = await prisma.leagueSeason.findUnique({
+      where: { id: leagueSeasonId },
+      include: {
+        game: {
+          include: {
+            participants: {
+              where: {
+                userId: userId,
+                role: { in: ['OWNER', 'ADMIN'] },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!leagueSeason) {
+      throw new ApiError(404, 'League season not found');
+    }
+
+    if (!leagueSeason.game) {
+      throw new ApiError(404, 'League season game not found');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    if (leagueSeason.game.participants.length === 0 && !user.isAdmin) {
+      throw new ApiError(403, 'Only owners and admins can create league rounds');
+    }
+
+    if (!leagueSeason.game.hasFixedTeams) {
+      throw new ApiError(400, 'leagues.fullRoundRobin.requiresFixedTeams');
+    }
+
+    const groups = await prisma.leagueGroup.findMany({
+      where: { leagueSeasonId },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (groups.length === 0) {
+      throw new ApiError(400, 'leagues.fullRoundRobin.noGroups');
+    }
+
+    const teamCounts: number[] = [];
+
+    for (const g of groups) {
+      const participants = await prisma.leagueParticipant.findMany({
+        where: { leagueSeasonId, currentGroupId: g.id },
+        include: {
+          leagueTeam: {
+            include: {
+              players: { select: { userId: true } },
+            },
+          },
+        },
+      });
+
+      const readyTeamCount = participants.filter((p) => {
+        if (p.participantType !== 'TEAM' || !p.leagueTeam?.players?.length) return false;
+        const ids = new Set(
+          p.leagueTeam.players
+            .map((pl) => pl.userId)
+            .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+        );
+        return ids.size === 2;
+      }).length;
+
+      if (readyTeamCount !== participants.length || readyTeamCount < 2) {
+        throw new ApiError(400, 'leagues.fullRoundRobin.invalidTeamParticipants');
+      }
+
+      teamCounts.push(readyTeamCount);
+    }
+
+    const expected = teamCounts[0];
+    if (!teamCounts.every((c) => c === expected)) {
+      throw new ApiError(400, 'leagues.fullRoundRobin.groupsMustHaveSameTeamCount');
+    }
+
+    const roundsToCreate = roundsInSingleRoundRobinCycle(expected);
+    if (roundsToCreate < 1) {
+      throw new ApiError(400, 'leagues.fullRoundRobin.tooFewTeams');
+    }
+
+    const existingRegularRoundCount = await prisma.leagueRound.count({
+      where: { leagueSeasonId, roundType: RoundType.REGULAR },
+    });
+
+    if (existingRegularRoundCount > 0) {
+      throw new ApiError(409, 'leagues.fullRoundRobin.regularRoundsAlreadyExist');
+    }
+
+    await prisma.$transaction(
+      async (tx) => {
+        for (let i = 0; i < roundsToCreate; i++) {
+          const last = await tx.leagueRound.findFirst({
+            where: { leagueSeasonId },
+            orderBy: { orderIndex: 'desc' },
+          });
+          const nextOrderIndex = last ? last.orderIndex + 1 : 0;
+          const round = await tx.leagueRound.create({
+            data: {
+              leagueSeasonId,
+              orderIndex: nextOrderIndex,
+              roundType: RoundType.REGULAR,
+            },
+          });
+          await TeamForRoundGeneration.generateGamesForRound(round.id, tx);
+        }
+      },
+      { maxWait: 20000, timeout: 120000 }
+    );
+
+    return { roundsCreated: roundsToCreate };
   }
 
   static async createGameForRound(leagueRoundId: string, userId: string, leagueGroupId?: string) {

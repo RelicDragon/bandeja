@@ -929,4 +929,180 @@ enum WatchCopy {
         default: return "Reset"
         }
     }
+
+    nonisolated static func serveFirstTitle(_ lang: String) -> String {
+        switch lang {
+        case "es": return "¿Quién saca primero?"
+        case "ru": return "Кто подаёт первым?"
+        default: return "Who serves first?"
+        }
+    }
+
+    nonisolated static func serveFirstBody(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Te diremos el lado en cada punto. Opcional."
+        case "ru": return "Покажем сторону подачи на каждом очке. По желанию."
+        default: return "We’ll show serve side each point. Optional."
+        }
+    }
+
+    nonisolated static func skipServeHints(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Omitir guía de saque"
+        case "ru": return "Без подсказок подачи"
+        default: return "Skip serve hints"
+        }
+    }
+
+    nonisolated static func teamAShort(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Equipo A"
+        case "ru": return "Команда A"
+        default: return "Team A"
+        }
+    }
+
+    nonisolated static func teamBShort(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Equipo B"
+        case "ru": return "Команда B"
+        default: return "Team B"
+        }
+    }
+
+    nonisolated static func whoServesFirstGame(_ lang: String) -> String {
+        switch lang {
+        case "es": return "¿Quién saca este juego?"
+        case "ru": return "Кто подаёт в первом гейме?"
+        default: return "Who serves this first game?"
+        }
+    }
+
+    nonisolated static func continueAction(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Continuar"
+        case "ru": return "Далее"
+        default: return "Continue"
+        }
+    }
+
+    nonisolated static func courtRight(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Derecha"
+        case "ru": return "Справа"
+        default: return "Right"
+        }
+    }
+
+    nonisolated static func courtLeft(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Izquierda"
+        case "ru": return "Слева"
+        default: return "Left"
+        }
+    }
+
+    nonisolated static func serveCoachChangeEnds(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Cambiar de lado"
+        case "ru": return "Смена сторон"
+        default: return "Change sides"
+        }
+    }
+
+    nonisolated static func serveCoachHideMatch(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Ocultar en este partido"
+        case "ru": return "Скрыть в этом матче"
+        default: return "Hide for this match"
+        }
+    }
+
+    nonisolated static func serveHintsMenu(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Guía de saque"
+        case "ru": return "Подсказки подачи"
+        default: return "Serve hints"
+        }
+    }
+
+    nonisolated static func serveHintsOn(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Completa"
+        case "ru": return "Полные"
+        default: return "Full"
+        }
+    }
+
+    nonisolated static func serveHintsCompact(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Compacta"
+        case "ru": return "Компактно"
+        default: return "Compact"
+        }
+    }
+
+    nonisolated static func serveHintsOff(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Apagada"
+        case "ru": return "Выкл."
+        default: return "Off"
+        }
+    }
+
+    nonisolated static func fixStartingServer(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Corregir saque inicial…"
+        case "ru": return "Исправить первую подачу…"
+        default: return "Fix starting server…"
+        }
+    }
+
+    nonisolated static func fixStartingServerConfirm(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Ya hay juegos marcados. ¿Corregir? La guía se recalculará."
+        case "ru": return "В сете уже есть геймы. Исправить? Подсказки пересчитаются."
+        default: return "Games are already entered. Fix? Serve guide will recalculate."
+        }
+    }
+
+    nonisolated static func serveCoachToast(_ lang: String) -> String {
+        switch lang {
+        case "es": return "En cada punto verás el lado de saque."
+        case "ru": return "На каждом очке покажем сторону подачи."
+        default: return "Each point, we’ll show which side to serve from."
+        }
+    }
+
+    nonisolated static func serveGuideDisclaimer(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Orientación; no sustituye reglas del club ni árbitro."
+        case "ru": return "Подсказка, не заменяет правила площадки и судью."
+        default: return "Assistive guidance, not a substitute for venue rules or an umpire."
+        }
+    }
+
+    nonisolated static func nextServeA11y(_ lang: String, team: String, name: String, side: String) -> String {
+        switch lang {
+        case "es": return "Próximo saque: \(team), \(name), \(side)."
+        case "ru": return "Следующая подача: \(team), \(name), \(side)."
+        default: return "Next serve: \(team), \(name), from the \(side)."
+        }
+    }
+
+    nonisolated static func serveDetailPerspective(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Derecha/izquierda mirando hacia la red al sacar."
+        case "ru": return "Вправо/влево — как вы смотрите на сетку при подаче."
+        default: return "Right/left is as you face the net while serving."
+        }
+    }
+
+    nonisolated static func serveDetailTbBlock(_ lang: String) -> String {
+        switch lang {
+        case "es": return "En tie-break, rotación de dos puntos salvo el primero."
+        case "ru": return "В тай-брейке — два очка подряд, кроме первого."
+        default: return "In a tie-break, two-point rotations except the first point."
+        }
+    }
 }

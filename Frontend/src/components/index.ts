@@ -42,6 +42,7 @@ export * from './GameDetails';
 export * from './GameDetails/TeamPlayerSelector';
 export * from './GameDetails/LeagueScheduleTab';
 export * from './GameDetails/LeagueStandingsTab';
+export * from './GameDetails/LeaguePlannerTab';
 export * from './headerContent';
 export * from './ToggleSwitch';
 export * from './createGame';

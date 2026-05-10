@@ -13,6 +13,7 @@ enum Endpoint: Sendable {
     case createRound(gameId: String)
     case createMatch(gameId: String, roundId: String)
     case updateMatch(gameId: String, matchId: String)
+    case patchMatchLiveScoring(gameId: String, matchId: String)
     case recalculateOutcomes(gameId: String)
     case postGameWorkout(gameId: String)
     case getMyGameWorkout(gameId: String)
@@ -45,6 +46,8 @@ enum Endpoint: Sendable {
             return "/results/game/\(gameId)/rounds/\(roundId)/matches"
         case .updateMatch(let gameId, let matchId):
             return "/results/game/\(gameId)/matches/\(matchId)"
+        case .patchMatchLiveScoring(let gameId, let matchId):
+            return "/results/game/\(gameId)/matches/\(matchId)/live-scoring"
         case .recalculateOutcomes(let gameId):
             return "/results/game/\(gameId)/recalculate"
         case .postGameWorkout(let gameId):
@@ -67,7 +70,7 @@ enum Endpoint: Sendable {
             return "POST"
         case .updateMatch, .updateGame:
             return "PUT"
-        case .patchGameMySession:
+        case .patchGameMySession, .patchMatchLiveScoring:
             return "PATCH"
         }
     }

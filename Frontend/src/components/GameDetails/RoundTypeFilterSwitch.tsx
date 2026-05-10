@@ -24,7 +24,7 @@ export const RoundTypeFilterSwitch = ({
       ]}
       activeId={value}
       onChange={(id) => onSelect(id as RoundTypeFilterValue)}
-      titleInActiveOnly={false}
+      showOnlyActiveTabText={false}
       layoutId={layoutId}
       className="w-fit"
     />

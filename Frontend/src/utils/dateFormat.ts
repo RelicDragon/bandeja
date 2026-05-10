@@ -5,6 +5,7 @@ import { sr } from 'date-fns/locale/sr';
 import { es } from 'date-fns/locale/es';
 import { cs } from 'date-fns/locale/cs';
 import i18n from '@/i18n/config';
+import { extractLanguageCode } from '@/utils/displayPreferences';
 
 const localeMap: Record<string, Locale> = {
   en: enGB,
@@ -14,14 +15,19 @@ const localeMap: Record<string, Locale> = {
   cs: cs,
 };
 
+export function getAppDateFnsLocale(lang?: string): Locale {
+  const code = extractLanguageCode(lang ?? i18n.language);
+  return localeMap[code] ?? enGB;
+}
+
 export const formatDate = (date: Date | string, formatStr: string): string => {
-  const currentLocale = localeMap[i18n.language] || enGB;
+  const currentLocale = localeMap[extractLanguageCode(i18n.language)] || enGB;
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   return dateFnsFormat(dateObj, formatStr, { locale: currentLocale });
 };
 
 export const formatRelativeTime = (date: Date | string): string => {
-  const currentLocale = localeMap[i18n.language] || enGB;
+  const currentLocale = localeMap[extractLanguageCode(i18n.language)] || enGB;
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   
   return formatDistanceToNow(dateObj, { 
@@ -31,7 +37,7 @@ export const formatRelativeTime = (date: Date | string): string => {
 };
 
 export const formatSmartRelativeTime = (date: Date | string, t?: (key: string) => string): string => {
-  const currentLocale = localeMap[i18n.language] || enGB;
+  const currentLocale = localeMap[extractLanguageCode(i18n.language)] || enGB;
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   const now = new Date();
   

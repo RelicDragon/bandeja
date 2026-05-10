@@ -250,7 +250,7 @@ export const PlayoffConfigurationModal = ({
                   ]}
                   activeId={gameType}
                   onChange={(id) => setGameType(id as PlayoffGameType)}
-                  titleInActiveOnly={false}
+                  showOnlyActiveTabText={false}
                   layoutId="playoff-format"
                 />
               </div>

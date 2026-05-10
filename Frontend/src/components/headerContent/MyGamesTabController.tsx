@@ -34,7 +34,7 @@ export const MyGamesTabController = () => {
       tabs={tabs}
       activeId={tab}
       onChange={handleTabChange}
-      titleInActiveOnly={true}
+      showOnlyActiveTabText={true}
       layoutId="myGamesSubtab"
     />
   );

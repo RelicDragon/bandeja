@@ -18,8 +18,8 @@ export class GameService {
     return GameReadinessService.calculateGameReadiness(gameId);
   }
 
-  static async updateGameReadiness(gameId: string) {
-    return GameReadinessService.updateGameReadiness(gameId);
+  static async updateGameReadiness(gameId: string, db?: import('./readiness.service').GameReadinessDb) {
+    return GameReadinessService.updateGameReadiness(gameId, db);
   }
 
   static async createGame(data: any, userId: string, jwtIsAdmin: boolean = false) {

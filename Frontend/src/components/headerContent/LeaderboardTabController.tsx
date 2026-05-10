@@ -18,7 +18,7 @@ export const LeaderboardTabController = () => {
       tabs={tabs}
       activeId={leaderboardType}
       onChange={(id) => setLeaderboardType(id as 'level' | 'social' | 'games')}
-      titleInActiveOnly
+      showOnlyActiveTabText
       layoutId="leaderboardSubtab"
     />
   );

@@ -501,6 +501,19 @@ export class GameUpdateService {
 
     delete updateData.resultsRoundGenV2;
 
+    const relationDuplicatesOfScalars = [
+      'club',
+      'court',
+      'city',
+      'parent',
+      'trainer',
+      'leagueRound',
+      'leagueGroup',
+    ] as const;
+    for (const k of relationDuplicatesOfScalars) {
+      delete updateData[k];
+    }
+
     await prisma.$transaction(async (tx) => {
       await tx.$executeRaw(Prisma.sql`SELECT id FROM "Game" WHERE id = ${id} FOR UPDATE`);
 

@@ -120,7 +120,7 @@ export const AvailabilitySection = ({
                   tabs={hourPeriodTabs}
                   activeId={showHourly ? 'hour' : 'period'}
                   onChange={(id) => setShowHourly(id === 'hour')}
-                  titleInActiveOnly={false}
+                  showOnlyActiveTabText={false}
                   layoutId="profileAvailabilityHourPeriod"
                   className="!mx-0 self-start"
                 />

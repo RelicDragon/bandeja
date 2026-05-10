@@ -118,12 +118,12 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-3 py-2 text-left bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between ${disabled ? 'opacity-50 cursor-not-allowed' : ''
+        className={`w-full px-3 py-2 text-left text-sm font-medium bg-gray-50/70 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between ${disabled ? 'opacity-50 cursor-not-allowed' : ''
           }`}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {selectedOption?.icon}
-          <span className="text-gray-900 dark:text-white">
+          <span className="truncate text-gray-800 dark:text-gray-200">
             {selectedOption?.label || placeholder}
           </span>
         </div>
@@ -153,11 +153,11 @@ export const Select = ({ options, value, onChange, placeholder, className = '', 
                 onChange(option.value);
                 setIsOpen(false);
               }}
-              className={`w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${option.value === value ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400' : 'text-gray-900 dark:text-white'
+              className={`w-full px-3 py-2 text-left text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${option.value === value ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400' : 'text-gray-800 dark:text-gray-200'
                 }`}
             >
               {option.icon}
-              <span>{option.label}</span>
+              <span className="min-w-0 truncate">{option.label}</span>
             </button>
           ))}
         </div>,

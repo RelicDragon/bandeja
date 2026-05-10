@@ -11,6 +11,7 @@ import {
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { GameService } from '../game/game.service';
+import type { GameReadinessDb } from '../game/readiness.service';
 import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 
@@ -45,6 +46,7 @@ interface CreateLeagueGameParams {
   minParticipants?: number;
   isPublic?: boolean;
   affectsRating?: boolean;
+  db?: GameReadinessDb;
 }
 
 export interface PlayoffGameSetupOverrides {
@@ -91,9 +93,10 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
     minParticipants = 4,
     isPublic = false,
     affectsRating = true,
+    db: dbClient = prisma,
   } = params;
 
-  const round = await prisma.leagueRound.findUnique({
+  const round = await dbClient.leagueRound.findUnique({
     where: { id: leagueRoundId },
   });
 
@@ -133,7 +136,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
   const startTime = new Date();
   const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000);
 
-  const game = await prisma.game.create({
+  const game = await dbClient.game.create({
     data: {
       entityType: EntityType.LEAGUE,
       gameType: seasonGame.gameType || 'CLASSIC',
@@ -193,7 +196,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
     },
   });
 
-  await prisma.gameTeam.create({
+  await dbClient.gameTeam.create({
     data: {
       gameId: game.id,
       teamNumber: 1,
@@ -203,7 +206,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
     },
   });
 
-  await prisma.gameTeam.create({
+  await dbClient.gameTeam.create({
     data: {
       gameId: game.id,
       teamNumber: 2,
@@ -213,7 +216,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
     },
   });
 
-  await GameService.updateGameReadiness(game.id);
+  await GameService.updateGameReadiness(game.id, dbClient);
 
   return game;
 }

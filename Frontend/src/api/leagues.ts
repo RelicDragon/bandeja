@@ -118,6 +118,54 @@ export interface LeagueGroupManagementPayload {
   unassignedParticipants: LeagueStanding[];
 }
 
+export type LeaguePlannerBucketId = 'night' | 'morning' | 'afternoon' | 'evening';
+
+export interface LeaguePlannerDayBucket {
+  bucket: LeaguePlannerBucketId;
+  freeCount: number;
+  busyCount: number;
+  unknownCount: number;
+  sampleFreeUsers: Array<{ id: string; firstName: string | null; avatar: string | null }>;
+}
+
+export interface LeaguePlannerDay {
+  date: string;
+  weekdayKey: string;
+  isPast: boolean;
+  buckets: LeaguePlannerDayBucket[];
+}
+
+export interface LeaguePlannerUnscheduledGame {
+  id: string;
+  name: string | null;
+  roundOrderIndex: number;
+  leagueGroupId: string | null;
+  groupName: string | null;
+  sideAUserIds: string[];
+  sideBUserIds: string[];
+  sideALabel: string;
+  sideBLabel: string;
+}
+
+export interface LeaguePlannerPayload {
+  weekStart: string;
+  timeZone: string;
+  hasFixedTeams: boolean;
+  hasGroups: boolean;
+  groupIds: string[];
+  boundaries: { night: number; morning: number; afternoon: number; evening: number };
+  days: LeaguePlannerDay[];
+  unscheduledGames: LeaguePlannerUnscheduledGame[];
+  schedulableBySlot: Record<string, string[]>;
+  participantSummaries: Array<{
+    standingId: string;
+    userId: string | null;
+    leagueTeamId: string | null;
+    groupId: string | null;
+    groupName: string | null;
+  }>;
+}
+
 export const leaguesApi = {
   create: async (data: CreateLeagueRequest) => {
     const response = await api.post<ApiResponse<League>>('/leagues', data);
@@ -133,6 +181,12 @@ export const leaguesApi = {
   },
   createRound: async (leagueSeasonId: string, creationType?: string) => {
     const response = await api.post<ApiResponse<LeagueRound>>(`/leagues/${leagueSeasonId}/rounds`, { creationType });
+    return response.data;
+  },
+  createFullRoundRobin: async (leagueSeasonId: string) => {
+    const response = await api.post<ApiResponse<{ roundsCreated: number }>>(
+      `/leagues/${leagueSeasonId}/rounds/full-round-robin`
+    );
     return response.data;
   },
   createGameForRound: async (leagueRoundId: string, leagueGroupId?: string) => {
@@ -183,6 +237,27 @@ export const leaguesApi = {
   },
   sendRoundStartMessage: async (leagueRoundId: string) => {
     const response = await api.post<ApiResponse<{ success: boolean; notifiedUsers: number }>>(`/leagues/rounds/${leagueRoundId}/send-start-message`);
+    return response.data;
+  },
+  getPlanner: async (
+    leagueSeasonId: string,
+    params: {
+      weekStart: string;
+      groupId?: string;
+      aggregateUserId?: string;
+      aggregateIntersectUserIds?: string[];
+    }
+  ) => {
+    const qs = new URLSearchParams();
+    qs.set('weekStart', params.weekStart);
+    if (params.groupId && params.groupId !== 'ALL') qs.set('groupId', params.groupId);
+    if (params.aggregateUserId) qs.set('aggregateUserId', params.aggregateUserId);
+    if (params.aggregateIntersectUserIds?.length) {
+      qs.set('aggregateIntersectUserIds', params.aggregateIntersectUserIds.join(','));
+    }
+    const response = await api.get<ApiResponse<LeaguePlannerPayload>>(
+      `/leagues/${leagueSeasonId}/planner?${qs.toString()}`
+    );
     return response.data;
   },
   createPlayoff: async (

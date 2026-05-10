@@ -54,7 +54,7 @@ export const GameFormatGenderFields = ({
           tabs={genderTabs}
           activeId={genderTeams}
           onChange={(id) => onGenderTeamsChange(id as GenderTeam)}
-          titleInActiveOnly
+          showOnlyActiveTabText
           layoutId={genderSwitchLayoutId}
           disabled={readOnly}
         />

@@ -43,7 +43,7 @@ export const ChatsTabController = () => {
       tabs={tabs}
       activeId={filter}
       onChange={handleFilter}
-      titleInActiveOnly
+      showOnlyActiveTabText
       layoutId="chatsSubtab"
     />
   );

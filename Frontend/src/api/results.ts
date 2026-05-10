@@ -1,6 +1,7 @@
 import api from './axios';
 import { ApiResponse, Game } from '@/types';
 import { Round } from '@/types/gameResults';
+import type { MatchLiveScoringEnvelopeV1 } from '@/types/matchLiveScoring';
 
 export interface RoundData {
   roundNumber: number;
@@ -116,6 +117,22 @@ export const resultsApi = {
     const response = await api.put<ApiResponse<void>>(
       `/results/game/${gameId}/matches/${matchId}`,
       match
+    );
+    return response.data;
+  },
+
+  patchMatchLiveScoring: async (
+    gameId: string,
+    matchId: string,
+    body: {
+      state: Record<string, unknown> | null;
+      baseRevision: number | null;
+      clientMessageId?: string;
+    }
+  ) => {
+    const response = await api.patch<ApiResponse<{ liveScoring: MatchLiveScoringEnvelopeV1 | null; revision: number }>>(
+      `/results/game/${gameId}/matches/${matchId}/live-scoring`,
+      body
     );
     return response.data;
   },

@@ -1,10 +1,13 @@
+import type { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 
+export type GameReadinessDb = typeof prisma | Prisma.TransactionClient;
+
 export class GameReadinessService {
-  static async calculateGameReadiness(gameId: string) {
-    const game = await prisma.game.findUnique({
+  static async calculateGameReadiness(gameId: string, db: GameReadinessDb = prisma) {
+    const game = await db.game.findUnique({
       where: { id: gameId },
       include: {
         participants: {
@@ -64,10 +67,10 @@ export class GameReadinessService {
     };
   }
 
-  static async updateGameReadiness(gameId: string) {
-    const readiness = await this.calculateGameReadiness(gameId);
+  static async updateGameReadiness(gameId: string, db: GameReadinessDb = prisma) {
+    const readiness = await this.calculateGameReadiness(gameId, db);
 
-    return await prisma.game.update({
+    return await db.game.update({
       where: { id: gameId },
       data: {
         participantsReady: readiness.participantsReady,

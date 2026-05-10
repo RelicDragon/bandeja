@@ -2,6 +2,10 @@ import SwiftUI
 
 struct ClassicScoringView: View {
     @Bindable var vm: MatchScoringViewModel
+    let gameId: String
+    let matchId: String
+    @Binding var serveGuideRecord: WatchServeGuideSessionRecord
+    let onRequestFixStartingServer: () -> Void
     let onFinish: () -> Void
     @Environment(WatchPreferencesStore.self) private var prefs
     @State private var showMoreActions = false
@@ -11,6 +15,15 @@ struct ClassicScoringView: View {
         ScrollView {
             VStack(spacing: 12) {
                 ScoreHintBanner(vm: vm)
+                if vm.usesTennisStyleServeGuide {
+                    ServeCoachStrip(
+                        vm: vm,
+                        record: $serveGuideRecord,
+                        lang: lang,
+                        gameId: gameId,
+                        matchId: matchId
+                    )
+                }
 
                 if vm.activeSetIsSupplemental {
                     Text(WatchCopy.supplementalBanner(
@@ -123,6 +136,20 @@ struct ClassicScoringView: View {
                             Task { await vm.saveCurrentSets() }
                         }
                         .disabled(vm.isSaving)
+                        if vm.usesTennisStyleServeGuide {
+                            Button(WatchCopy.serveHintsOn(lang)) {
+                                WatchServeHintsSettingsStore.shared.setMode(.on)
+                            }
+                            Button(WatchCopy.serveHintsCompact(lang)) {
+                                WatchServeHintsSettingsStore.shared.setMode(.compact)
+                            }
+                            Button(WatchCopy.serveHintsOff(lang)) {
+                                WatchServeHintsSettingsStore.shared.setMode(.off)
+                            }
+                            Button(WatchCopy.fixStartingServer(lang)) {
+                                onRequestFixStartingServer()
+                            }
+                        }
                         Button(WatchCopy.addExtraGamesRow(lang)) {
                             vm.appendSupplementalSet(kind: .extraGames)
                         }

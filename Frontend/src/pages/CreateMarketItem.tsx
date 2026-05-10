@@ -445,7 +445,7 @@ export const CreateMarketItem = () => {
                   ]}
                   activeId={form.auctionType}
                   onChange={(id) => setForm((f) => ({ ...f, auctionType: id as AuctionType }))}
-                  titleInActiveOnly={false}
+                  showOnlyActiveTabText={false}
                   layoutId="auction-type-create"
                   className="w-fit"
                 />

@@ -31,16 +31,13 @@ struct MatchScoringView: View {
                     )
                 }
             } else {
-                VStack(spacing: 6) {
-                    if let g = vm.game, g.isMatchTimerEnabled {
-                        MatchTimerBarView(gameId: gameId, matchId: matchId, game: g)
-                    }
-                    if vm.usesBallCapPerSetUI {
-                        AmericanoScoringView(vm: vm, onFinish: finish)
-                    } else {
-                        ClassicScoringView(vm: vm, onFinish: finish)
-                    }
-                }
+                MatchScoringExperience(
+                    vm: vm,
+                    gameId: gameId,
+                    matchId: matchId,
+                    showMatchTimerBar: vm.game?.isMatchTimerEnabled == true,
+                    onFinish: finish
+                )
             }
         }
         .navigationTitle(scoringNavTitle)

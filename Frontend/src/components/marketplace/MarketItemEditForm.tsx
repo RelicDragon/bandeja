@@ -306,7 +306,7 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
                   ]}
                   activeId={form.auctionType}
                   onChange={(id) => setForm((f) => ({ ...f, auctionType: id as AuctionType }))}
-                  titleInActiveOnly={false}
+                  showOnlyActiveTabText={false}
                   layoutId="auction-type-edit"
                   className="w-fit"
                 />

@@ -317,7 +317,7 @@ export const EditGameInfoModal = ({
             tabs={TABS.map((tab) => ({ id: tab.id, label: t(`gameDetails.editTab.${tab.id}`), icon: tab.icon }))}
             activeId={activeTab}
             onChange={(id) => setActiveTab(id as EditGameInfoTabId)}
-            titleInActiveOnly={true}
+            showOnlyActiveTabText={true}
             layoutId="edit-game-info-tabs"
           />
         </DialogHeader>

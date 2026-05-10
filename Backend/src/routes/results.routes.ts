@@ -99,6 +99,23 @@ router.put(
   resultsController.updateMatch
 );
 
+router.patch(
+  '/game/:gameId/matches/:matchId/live-scoring',
+  authenticate,
+  requireCanModifyResults,
+  validate([
+    body('state')
+      .custom((v) => v === null || v === undefined || (typeof v === 'object' && !Array.isArray(v)))
+      .withMessage('state must be an object or null'),
+    body('baseRevision')
+      .optional({ nullable: true })
+      .isInt()
+      .withMessage('baseRevision must be an integer or null'),
+    body('clientMessageId').optional().isString().isLength({ max: 128 }),
+  ]),
+  resultsController.patchMatchLiveScoring
+);
+
 router.get(
   '/game/:gameId/matches/:matchId/timer',
   optionalAuth,

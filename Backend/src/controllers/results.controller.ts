@@ -1,11 +1,13 @@
 import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
+import { ApiError } from '../utils/ApiError';
 import * as resultsService from '../services/results.service';
 import * as roundGenerationService from '../services/results/roundGeneration.service';
 import { GameService } from '../services/game/game.service';
 import * as outcomesService from '../services/results/outcomes.service';
 import * as outcomeExplanationService from '../services/results/outcomeExplanation.service';
+import * as matchLiveScoringService from '../services/results/matchLiveScoring.service';
 
 export const recalculateOutcomes = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
@@ -215,6 +217,7 @@ export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) 
   const matchData = req.body;
 
   await resultsService.updateMatch(gameId, matchId, matchData);
+  matchLiveScoringService.notifyMatchLiveScoringCleared(gameId, matchId);
 
   const socketService = (global as any).socketService;
   if (socketService) {
@@ -224,6 +227,41 @@ export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) 
   res.json({
     success: true,
     message: 'Match updated successfully',
+  });
+});
+
+export const patchMatchLiveScoring = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId, matchId } = req.params;
+  if (!Object.prototype.hasOwnProperty.call(req.body, 'state')) {
+    throw new ApiError(400, 'state is required (object or null)');
+  }
+  let baseRevision: number | null = null;
+  if (req.body.baseRevision !== null && req.body.baseRevision !== undefined) {
+    const n = Number(req.body.baseRevision);
+    if (!Number.isFinite(n)) {
+      throw new ApiError(400, 'baseRevision must be a finite number or null');
+    }
+    baseRevision = n;
+  }
+
+  const data = await matchLiveScoringService.patchMatchLiveScoring(
+    gameId,
+    matchId,
+    req.userId!,
+    req.user?.isAdmin || false,
+    {
+      state:
+        req.body.state === null || req.body.state === undefined
+          ? null
+          : (req.body.state as Record<string, unknown>),
+      baseRevision,
+      clientMessageId: typeof req.body.clientMessageId === 'string' ? req.body.clientMessageId : undefined,
+    }
+  );
+
+  res.json({
+    success: true,
+    data,
   });
 });
 

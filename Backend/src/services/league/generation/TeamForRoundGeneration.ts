@@ -1,5 +1,6 @@
 import { RoundType } from '@prisma/client';
 import prisma from '../../../config/database';
+import type { GameReadinessDb } from '../../game/readiness.service';
 import { ApiError } from '../../../utils/ApiError';
 import { createLeagueGame } from '../gameCreation.util';
 import {
@@ -28,8 +29,8 @@ interface FixedLeagueTeamEntry {
 }
 
 export class TeamForRoundGeneration {
-  static async generateGamesForRound(leagueRoundId: string) {
-    const round = await prisma.leagueRound.findUnique({
+  static async generateGamesForRound(leagueRoundId: string, db: GameReadinessDb = prisma) {
+    const round = await db.leagueRound.findUnique({
       where: { id: leagueRoundId },
       include: {
         leagueSeason: {
@@ -51,7 +52,7 @@ export class TeamForRoundGeneration {
     const seasonGame = round.leagueSeason.game;
     const leagueSeasonId = round.leagueSeasonId;
 
-    const groups = await prisma.leagueGroup.findMany({
+    const groups = await db.leagueGroup.findMany({
       where: { leagueSeasonId },
     });
 
@@ -65,11 +66,12 @@ export class TeamForRoundGeneration {
         leagueSeasonId,
         leagueRoundId,
         seasonGame,
-        round.orderIndex
+        round.orderIndex,
+        db
       );
     }
 
-    return await prisma.leagueRound.findUnique({
+    return await db.leagueRound.findUnique({
       where: { id: leagueRoundId },
       include: {
         games: {
@@ -118,9 +120,10 @@ export class TeamForRoundGeneration {
     leagueSeasonId: string,
     leagueRoundId: string,
     seasonGame: any,
-    leagueRoundOrderIndex: number
+    leagueRoundOrderIndex: number,
+    db: GameReadinessDb
   ) {
-    const participants = await prisma.leagueParticipant.findMany({
+    const participants = await db.leagueParticipant.findMany({
       where: {
         leagueSeasonId,
         currentGroupId: groupId,
@@ -165,7 +168,8 @@ export class TeamForRoundGeneration {
         groupId,
         leagueRoundId,
         seasonGame,
-        leagueRoundOrderIndex
+        leagueRoundOrderIndex,
+        db
       );
       return;
     }
@@ -180,7 +184,7 @@ export class TeamForRoundGeneration {
       return;
     }
 
-    const { playedTeammates, playedOpponents } = await this.getPlayedTeamPairs(leagueSeasonId, groupId, leagueRoundId);
+    const { playedTeammates, playedOpponents } = await this.getPlayedTeamPairs(leagueSeasonId, groupId, leagueRoundId, db);
 
     const allPossibleTeams = this.generateAllTeamCombinations(participantIds);
     
@@ -225,7 +229,8 @@ export class TeamForRoundGeneration {
           leagueRoundId,
           seasonGame,
           groupId,
-          leagueSeasonId
+          leagueSeasonId,
+          db
         );
       }
     }
@@ -237,7 +242,8 @@ export class TeamForRoundGeneration {
     groupId: string,
     leagueRoundId: string,
     seasonGame: any,
-    leagueRoundOrderIndex: number
+    leagueRoundOrderIndex: number,
+    db: GameReadinessDb
   ) {
     const fixedTeams: FixedLeagueTeamEntry[] = participants
       .filter((p) => p.participantType === 'TEAM' && p.leagueTeam?.players?.length)
@@ -273,10 +279,11 @@ export class TeamForRoundGeneration {
     const playCounts = await this.getRegularSeasonFixedTeamMatchupCounts(
       leagueSeasonId,
       groupId,
-      leagueRoundId
+      leagueRoundId,
+      db
     );
 
-    const priorRegularRounds = await prisma.leagueRound.count({
+    const priorRegularRounds = await db.leagueRound.count({
       where: {
         leagueSeasonId,
         roundType: RoundType.REGULAR,
@@ -323,6 +330,7 @@ export class TeamForRoundGeneration {
         minParticipants: 4,
         isPublic: false,
         affectsRating: true,
+        db,
       });
     }
   }
@@ -330,9 +338,10 @@ export class TeamForRoundGeneration {
   private static async getRegularSeasonFixedTeamMatchupCounts(
     leagueSeasonId: string,
     groupId: string,
-    currentRoundId: string
+    currentRoundId: string,
+    db: GameReadinessDb
   ): Promise<Map<string, number>> {
-    const previousGames = await prisma.game.findMany({
+    const previousGames = await db.game.findMany({
       where: {
         parentId: leagueSeasonId,
         leagueGroupId: groupId,
@@ -371,9 +380,10 @@ export class TeamForRoundGeneration {
   private static async getPlayedTeamPairs(
     leagueSeasonId: string,
     groupId: string,
-    currentRoundId: string
+    currentRoundId: string,
+    db: GameReadinessDb
   ): Promise<{ playedTeammates: Set<string>; playedOpponents: Map<string, number> }> {
-    const previousGames = await prisma.game.findMany({
+    const previousGames = await db.game.findMany({
       where: {
         parentId: leagueSeasonId,
         leagueGroupId: groupId,
@@ -619,7 +629,8 @@ export class TeamForRoundGeneration {
     leagueRoundId: string,
     seasonGame: any,
     groupId: string,
-    leagueSeasonId: string
+    leagueSeasonId: string,
+    db: GameReadinessDb
   ) {
     return await createLeagueGame({
       leagueRoundId,
@@ -632,6 +643,7 @@ export class TeamForRoundGeneration {
       minParticipants: 4,
       isPublic: false,
       affectsRating: true,
+      db,
     });
   }
 }

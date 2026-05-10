@@ -6,6 +6,8 @@ import { LeagueReadService } from '../services/league/read.service';
 import { LeagueSyncService } from '../services/league/sync.service';
 import { LeagueGroupManagementService } from '../services/league/groups.service';
 import { LeagueBroadcastService } from '../services/league/broadcast.service';
+import { LeaguePlannerService } from '../services/league/planner.service';
+import { ApiError } from '../utils/ApiError';
 
 export const createLeague = asyncHandler(async (req: AuthRequest, res: Response) => {
   const league = await LeagueCreateService.createLeague(req.body, req.userId!, req.user?.isAdmin || false);
@@ -38,6 +40,34 @@ export const getLeagueStandings = asyncHandler(async (req: AuthRequest, res: Res
   });
 });
 
+export const getLeaguePlanner = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId } = req.params;
+  const weekStart = typeof req.query.weekStart === 'string' ? req.query.weekStart : '';
+  if (!weekStart) {
+    throw new ApiError(400, 'weekStart query parameter is required (YYYY-MM-DD)');
+  }
+  const groupId = typeof req.query.groupId === 'string' ? req.query.groupId : undefined;
+  const aggregateUserId =
+    typeof req.query.aggregateUserId === 'string' ? req.query.aggregateUserId : undefined;
+  const intersectRaw = typeof req.query.aggregateIntersectUserIds === 'string' ? req.query.aggregateIntersectUserIds : '';
+  const aggregateIntersectUserIds = intersectRaw
+    .split(',')
+    .map((s: string) => s.trim())
+    .filter(Boolean);
+
+  const data = await LeaguePlannerService.getPlanner(leagueSeasonId, req.userId!, {
+    weekStart,
+    groupId: !groupId || groupId === 'ALL' ? null : groupId,
+    aggregateUserId: aggregateUserId?.trim() || null,
+    aggregateIntersectUserIds: aggregateIntersectUserIds.length ? aggregateIntersectUserIds : null,
+  });
+
+  res.json({
+    success: true,
+    data,
+  });
+});
+
 export const createLeagueRound = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { leagueSeasonId } = req.params;
   const { creationType } = req.body;
@@ -47,6 +77,17 @@ export const createLeagueRound = asyncHandler(async (req: AuthRequest, res: Resp
   res.status(201).json({
     success: true,
     data: round,
+  });
+});
+
+export const createFullRegularRoundRobin = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId } = req.params;
+
+  const result = await LeagueCreateService.createFullRegularRoundRobin(leagueSeasonId, req.userId!);
+
+  res.status(201).json({
+    success: true,
+    data: result,
   });
 });
 

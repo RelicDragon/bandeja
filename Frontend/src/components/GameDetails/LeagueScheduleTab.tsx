@@ -1,16 +1,22 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Card, ConfirmationModal } from '@/components';
+import { Card, ConfirmationModal, SegmentedSwitch, type SegmentedSwitchTab } from '@/components';
+import { LeaguePlannerTab } from './LeaguePlannerTab';
 import { EditLeagueGameTeamsModal } from './EditLeagueGameTeamsModal';
 import { GroupCreationModal } from './GroupCreationModal';
 import { LeagueGroupEditorModal } from './LeagueGroupEditorModal';
 import { PlayoffConfigurationModal } from './PlayoffConfigurationModal';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { RoundTypeFilterSwitch } from './RoundTypeFilterSwitch';
-import { leaguesApi, LeagueRound, LeagueGroup } from '@/api/leagues';
-import { Loader2, Calendar, Users, Trophy } from 'lucide-react';
+import { LeagueFixtureMatrix } from './LeagueFixtureMatrix';
+import { LeagueFixtureDetailSheet } from './LeagueFixtureDetailSheet';
+import { leaguesApi, LeagueRound, LeagueGroup, LeagueStanding } from '@/api/leagues';
+import { Loader2, Calendar, Users, Trophy, LayoutGrid } from 'lucide-react';
+import { useIsLandscape } from '@/hooks/useIsLandscape';
+import { useNavigationStore } from '@/store/navigationStore';
+import { standingsTeamsForGroup, roundsInSingleRoundRobinCycle } from '@/utils/leagueFixtureMatrix';
 import { Game } from '@/types';
 import { LeagueRoundAccordion } from './LeagueRoundAccordion';
 import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
@@ -27,10 +33,56 @@ interface LeagueScheduleTabProps {
 
 const ALL_GROUP_ID = 'ALL';
 
+function getScheduleSubView(search: string): 'fixtures' | 'planner' {
+  const v = new URLSearchParams(search).get('scheduleView');
+  return v === 'planner' ? 'planner' : 'fixtures';
+}
+
 export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTeams = false, activeTab = 'schedule', selectedGameChatId, onChatGameSelect }: LeagueScheduleTabProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const scheduleSubView = useMemo(() => getScheduleSubView(location.search), [location.search]);
+
+  const setScheduleSubView = useCallback(
+    (id: 'fixtures' | 'planner') => {
+      const sp = new URLSearchParams(location.search);
+      sp.set('tab', 'schedule');
+      if (id === 'planner') sp.set('scheduleView', 'planner');
+      else sp.delete('scheduleView');
+      navigate({ pathname: location.pathname, search: sp.toString() }, { replace: true });
+    },
+    [location.pathname, location.search, navigate]
+  );
+
+  const scheduleSubTabs = useMemo<SegmentedSwitchTab[]>(
+    () => [
+      { id: 'fixtures', label: t('gameDetails.scheduleSubtabRounds') },
+      { id: 'planner', label: t('gameDetails.plannerTab') },
+    ],
+    [t]
+  );
+
+  const scheduleSubtabBar = useMemo(
+    () => (
+      <SegmentedSwitch
+        tabs={scheduleSubTabs}
+        activeId={scheduleSubView}
+        onChange={(id) => setScheduleSubView(id as 'fixtures' | 'planner')}
+        showOnlyActiveTabText={false}
+        layoutId={`leagueScheduleSub-${leagueSeasonId}`}
+      />
+    ),
+    [leagueSeasonId, scheduleSubTabs, scheduleSubView, setScheduleSubView]
+  );
+  const isLandscape = useIsLandscape();
+  const leagueSeasonTableViewOverride = useNavigationStore((s) => s.leagueSeasonTableViewOverride);
+  const setLeagueSeasonFixtureTableEligible = useNavigationStore((s) => s.setLeagueSeasonFixtureTableEligible);
+  const effectiveFixtureTableView = leagueSeasonTableViewOverride ?? isLandscape;
   const [rounds, setRounds] = useState<LeagueRound[]>([]);
+  const [standings, setStandings] = useState<LeagueStanding[]>([]);
+  const [sheetGames, setSheetGames] = useState<Game[] | null>(null);
+  const [isCreatingFullRr, setIsCreatingFullRr] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isCreatingGame, setIsCreatingGame] = useState(false);
@@ -76,6 +128,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
       }
       
       const standingsResponse = await leaguesApi.getStandings(leagueSeasonId);
+      setStandings(standingsResponse.data);
       setParticipantCount(standingsResponse.data.length);
 
       try {
@@ -124,6 +177,50 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     setRoundTypeFilter(leagueSeasonId, selectedRoundType);
   }, [selectedRoundType, leagueSeasonId]);
 
+  const fixtureTableReadiness = useMemo(() => {
+    if (!hasFixedTeams || groups.length === 0 || standings.length === 0) {
+      return { allGroupsValidTeams: false, sameTeamCountAcrossGroups: false };
+    }
+    const counts: number[] = [];
+    for (const g of groups) {
+      const inGroup = standings.filter((s) => s.currentGroupId === g.id);
+      if (inGroup.length < 2) return { allGroupsValidTeams: false, sameTeamCountAcrossGroups: false };
+      const allValid = inGroup.every((s) => {
+        if (s.participantType !== 'TEAM') return false;
+        const ids = (s.leagueTeam?.players ?? [])
+          .map((p) => p.userId)
+          .filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
+        return ids.length === 2;
+      });
+      if (!allValid) return { allGroupsValidTeams: false, sameTeamCountAcrossGroups: false };
+      counts.push(inGroup.length);
+    }
+    const sameTeamCountAcrossGroups = counts.length > 0 && counts.every((c) => c === counts[0]);
+    return { allGroupsValidTeams: true, sameTeamCountAcrossGroups };
+  }, [hasFixedTeams, groups, standings]);
+
+  const fixtureTableEligible =
+    fixtureTableReadiness.allGroupsValidTeams && fixtureTableReadiness.sameTeamCountAcrossGroups;
+
+  useEffect(() => {
+    const on = activeTab === 'schedule' && scheduleSubView === 'fixtures' && fixtureTableEligible;
+    setLeagueSeasonFixtureTableEligible(on);
+    return () => setLeagueSeasonFixtureTableEligible(false);
+  }, [activeTab, scheduleSubView, fixtureTableEligible, setLeagueSeasonFixtureTableEligible]);
+
+  const fullRrBlockReason = useMemo(() => {
+    if (!hasFixedTeams) return 'requiresFixed' as const;
+    if (groups.length === 0) return 'noGroups' as const;
+    if (!fixtureTableReadiness.allGroupsValidTeams) return 'teams' as const;
+    if (!fixtureTableReadiness.sameTeamCountAcrossGroups) return 'mixedSizes' as const;
+    const hasAnyRegularRound = rounds.some((r) => (r.roundType ?? 'REGULAR') === 'REGULAR');
+    if (hasAnyRegularRound) return 'existing' as const;
+    return null;
+  }, [hasFixedTeams, groups.length, fixtureTableReadiness, rounds]);
+
+  const matrixGroupId = selectedGroupId === ALL_GROUP_ID ? groups[0]?.id : selectedGroupId;
+  const matrixGroupName = groups.find((g) => g.id === matrixGroupId)?.name ?? '';
+
   useEffect(() => {
     if (!groupsInitialized) return;
     if (selectedGroupId !== ALL_GROUP_ID && !groups.some((group) => group.id === selectedGroupId)) {
@@ -148,6 +245,23 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     }
   };
 
+  const handleCreateFullRoundRobin = async () => {
+    if (isCreatingFullRr || fullRrBlockReason) return;
+    setIsCreatingFullRr(true);
+    try {
+      const res = await leaguesApi.createFullRoundRobin(leagueSeasonId);
+      const n = res.data.roundsCreated ?? 0;
+      toast.success(t('gameDetails.fixtureFullRrCreated', { count: n }));
+      await fetchRounds();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setIsCreatingFullRr(false);
+    }
+  };
+
   const handleCreateGame = async (roundId: string, leagueGroupId?: string) => {
     if (isCreatingGame) return;
     
@@ -169,7 +283,10 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   };
 
   const handleOpenGame = (game: Game) => {
-    navigate(`/games/${leagueSeasonId}?tab=${activeTab}`, { replace: true });
+    const sp = new URLSearchParams();
+    sp.set('tab', 'schedule');
+    if (scheduleSubView === 'planner') sp.set('scheduleView', 'planner');
+    navigate(`/games/${leagueSeasonId}?${sp.toString()}`, { replace: true });
     navigate(`/games/${game.id}`);
   };
 
@@ -262,18 +379,51 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   };
 
   if (loading) {
+    if (scheduleSubView === 'planner') {
+      return (
+        <div className="space-y-6">
+          {scheduleSubtabBar}
+          <LeaguePlannerTab leagueSeasonId={leagueSeasonId} hasFixedTeams={hasFixedTeams} isVisible />
+        </div>
+      );
+    }
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin h-8 w-8 text-primary-600" />
+      <div className="space-y-6">
+        {scheduleSubtabBar}
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+        </div>
       </div>
     );
   }
 
   const displayedGroups = selectedGroupId === ALL_GROUP_ID ? groups : groups.filter((group) => group.id === selectedGroupId);
   const filteredRounds = rounds.filter((r) => (r.roundType ?? 'REGULAR') === selectedRoundType);
+  const firstGroupTeamCount = groups[0] ? standingsTeamsForGroup(groups[0].id, standings).length : 0;
+  const fullRrRoundCount = roundsInSingleRoundRobinCycle(firstGroupTeamCount);
+  const showMatrix =
+    effectiveFixtureTableView && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'REGULAR';
+  const matrixTeams = matrixGroupId ? standingsTeamsForGroup(matrixGroupId, standings) : [];
+
+  const fullRrHintKey =
+    fullRrBlockReason === 'noGroups'
+      ? 'gameDetails.fixtureFullRrDisabledNoGroups'
+      : fullRrBlockReason === 'teams'
+        ? 'gameDetails.fixtureFullRrDisabledTeams'
+        : fullRrBlockReason === 'mixedSizes'
+          ? 'gameDetails.fixtureFullRrDisabledMixedSizes'
+          : fullRrBlockReason === 'existing'
+            ? 'gameDetails.fixtureFullRrDisabledExisting'
+            : null;
 
   return (
     <div className="space-y-6">
+      {scheduleSubtabBar}
+
+      {scheduleSubView === 'planner' ? (
+        <LeaguePlannerTab leagueSeasonId={leagueSeasonId} hasFixedTeams={hasFixedTeams} isVisible />
+      ) : (
+        <>
       {canEdit && rounds.length === 0 && !hasGroups && (
         <Card className="bg-gradient-to-r from-primary-50 to-primary-100/50 dark:from-primary-900/20 dark:to-primary-800/10 border-primary-200 dark:border-primary-800">
           <button
@@ -332,12 +482,43 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           </div>
         </Card>
       )}
+      {canEdit && hasFixedTeams && groups.length > 0 && (
+        <Card className="border border-teal-200/80 bg-gradient-to-br from-teal-50/95 to-cyan-50/60 dark:border-teal-900/40 dark:from-teal-950/40 dark:to-cyan-950/25">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <h3 className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                <LayoutGrid className="h-5 w-5 shrink-0 text-teal-600 dark:text-teal-400" />
+                <span>{t('gameDetails.fixtureCreateFullRr')}</span>
+              </h3>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                {t('gameDetails.fixtureCreateFullRrSubtitle', { count: fullRrRoundCount })}
+              </p>
+              {fullRrHintKey && (
+                <p className="mt-2 text-xs text-amber-800 dark:text-amber-200/90">{t(fullRrHintKey)}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleCreateFullRoundRobin}
+              disabled={Boolean(fullRrBlockReason) || isCreatingFullRr}
+              className="shrink-0 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:from-teal-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isCreatingFullRr ? <Loader2 className="h-5 w-5 animate-spin" /> : t('gameDetails.fixtureCreateFullRr')}
+            </button>
+          </div>
+        </Card>
+      )}
       <RoundTypeFilterSwitch
         value={selectedRoundType}
         regularLabel={t('gameDetails.roundTypeRegular') || 'Regular season'}
         playoffLabel={t('gameDetails.roundTypePlayoff') || 'Play-off'}
         onSelect={setSelectedRoundType}
       />
+      {effectiveFixtureTableView && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'PLAYOFF' && (
+        <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+          {t('gameDetails.fixtureTableModeRegularOnly')}
+        </p>
+      )}
       {groups.length > 0 && (
         <GroupFilterDropdown
           selectedGroupId={selectedGroupId}
@@ -347,7 +528,22 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           allGroupId={ALL_GROUP_ID}
         />
       )}
-      {filteredRounds.length === 0 ? (
+      {showMatrix && matrixGroupId ? (
+        <div className="space-y-2">
+          {selectedGroupId === ALL_GROUP_ID && groups.length > 1 && (
+            <p className="rounded-lg border border-gray-200/80 bg-gray-50/90 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-200">
+              {t('gameDetails.fixtureMatrixAllGroupsNote', { groupName: matrixGroupName })}
+            </p>
+          )}
+          <LeagueFixtureMatrix
+            groupId={matrixGroupId}
+            groupName={matrixGroupName}
+            teams={matrixTeams}
+            rounds={rounds}
+            onOpenGames={(g) => setSheetGames(g)}
+          />
+        </div>
+      ) : filteredRounds.length === 0 ? (
         <Card>
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             {selectedRoundType === 'PLAYOFF' ? t('gameDetails.noPlayoffRounds', { defaultValue: 'No playoff rounds yet.' }) : t('gameDetails.noRounds')}
@@ -415,6 +611,8 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           })}
         </div>
       )}
+        </>
+      )}
 
       {editingGame && (
         <EditLeagueGameTeamsModal
@@ -477,6 +675,9 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           onConfirm={confirmSendStartMessage}
           onClose={() => setRoundPendingStartMessage(null)}
         />
+      )}
+      {sheetGames && sheetGames.length > 0 && (
+        <LeagueFixtureDetailSheet games={sheetGames} onClose={() => setSheetGames(null)} />
       )}
     </div>
   );

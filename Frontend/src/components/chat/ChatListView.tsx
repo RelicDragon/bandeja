@@ -209,7 +209,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
               ]}
               activeId={marketChatRole}
               onChange={(id) => setMarketChatRole(id as 'buyer' | 'seller')}
-              titleInActiveOnly={false}
+              showOnlyActiveTabText={false}
               layoutId="marketRoleSubtab"
               className="mx-2"
             />

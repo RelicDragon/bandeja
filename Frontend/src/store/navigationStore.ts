@@ -17,6 +17,8 @@ interface NavigationState {
   gameDetailsCanAccessChat: boolean;
   gameDetailsTableViewOverride: boolean | null;
   gameDetailsCanShowTableView: boolean;
+  leagueSeasonFixtureTableEligible: boolean;
+  leagueSeasonTableViewOverride: boolean | null;
   gameDetailsTableAddRoundCallback: (() => void) | null;
   gameDetailsTableIsEditing: boolean;
   setGameDetailsTableAddRound: (callback: (() => void) | null, isEditing: boolean) => void;
@@ -50,6 +52,8 @@ interface NavigationState {
   setGameDetailsCanAccessChat: (canAccessChat: boolean) => void;
   setGameDetailsTableViewOverride: (override: boolean | null) => void;
   setGameDetailsCanShowTableView: (can: boolean) => void;
+  setLeagueSeasonFixtureTableEligible: (eligible: boolean) => void;
+  setLeagueSeasonTableViewOverride: (override: boolean | null) => void;
   setBounceNotifications: (bounce: boolean) => void;
   setBugsButtonSlidingUp: (sliding: boolean) => void;
   setBugsButtonSlidingDown: (sliding: boolean) => void;
@@ -81,6 +85,8 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   gameDetailsCanAccessChat: false,
   gameDetailsTableViewOverride: null,
   gameDetailsCanShowTableView: false,
+  leagueSeasonFixtureTableEligible: false,
+  leagueSeasonTableViewOverride: null,
   gameDetailsTableAddRoundCallback: null,
   gameDetailsTableIsEditing: false,
   setGameDetailsTableAddRound: (callback, isEditing) => set({ gameDetailsTableAddRoundCallback: callback, gameDetailsTableIsEditing: isEditing }),
@@ -123,6 +129,8 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setGameDetailsCanAccessChat: (canAccessChat) => set({ gameDetailsCanAccessChat: canAccessChat }),
   setGameDetailsTableViewOverride: (override) => set({ gameDetailsTableViewOverride: override }),
   setGameDetailsCanShowTableView: (can) => set({ gameDetailsCanShowTableView: can }),
+  setLeagueSeasonFixtureTableEligible: (eligible) => set({ leagueSeasonFixtureTableEligible: eligible }),
+  setLeagueSeasonTableViewOverride: (override) => set({ leagueSeasonTableViewOverride: override }),
   setBounceNotifications: (bounce) => set({ bounceNotifications: bounce }),
   setBugsButtonSlidingUp: (sliding) => set({ bugsButtonSlidingUp: sliding }),
   setBugsButtonSlidingDown: (sliding) => set({ bugsButtonSlidingDown: sliding }),

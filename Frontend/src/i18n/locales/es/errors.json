@@ -81,5 +81,15 @@
     "matchNotFound": "Partido no encontrado",
     "setIndexExceedsMax": "El índice de set no puede exceder {{max}}",
     "cannotRemoveLastSet": "No se puede eliminar el último set"
+  },
+  "leagues": {
+    "fullRoundRobin": {
+      "requiresFixedTeams": "Esta acción solo está disponible para temporadas con equipos fijos.",
+      "noGroups": "Crea grupos antes de generar el calendario completo.",
+      "invalidTeamParticipants": "Cada participante en cada grupo debe ser un equipo con exactamente dos jugadores.",
+      "groupsMustHaveSameTeamCount": "Todos los grupos deben tener el mismo número de equipos.",
+      "tooFewTeams": "Se requieren al menos dos equipos por grupo.",
+      "regularRoundsAlreadyExist": "Ya existen jornadas de temporada regular. Elimínalas en el calendario antes de generar un round-robin completo."
+    }
   }
 }

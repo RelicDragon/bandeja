@@ -8,4 +8,8 @@ enum WatchScoreHaptics {
     static func undo() {
         WKInterfaceDevice.current().play(.directionDown)
     }
+
+    static func serveGuideChange() {
+        WKInterfaceDevice.current().play(.notification)
+    }
 }

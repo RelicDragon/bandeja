@@ -10,6 +10,7 @@ import { calculateGameStatus } from '../utils/gameStatus';
 import { validateMatchClassicSetScores } from './results/classicSetScoreValidation';
 import { MatchSetRole } from '@prisma/client';
 import { isOfficialMatchSetRole, parseMatchSetRole, validateMatchSetRoleOrder } from './results/matchSetRole';
+import { stripLiveScoringFromMatchMetadata } from './results/matchLiveScoring.service';
 
 const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
 
@@ -974,6 +975,13 @@ export async function updateMatch(
         },
       });
     }
+
+    await tx.match.update({
+      where: { id: match.id },
+      data: {
+        metadata: stripLiveScoringFromMatchMetadata(match.metadata),
+      },
+    });
   });
 
   const cityTimezone = await getUserTimezoneFromCityId(game.cityId);

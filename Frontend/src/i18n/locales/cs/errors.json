@@ -81,5 +81,15 @@
     "matchNotFound": "Zápas nenalezen",
     "setIndexExceedsMax": "Index setu nemůže přesáhnout {{max}}",
     "cannotRemoveLastSet": "Poslední set nelze odebrat"
+  },
+  "leagues": {
+    "fullRoundRobin": {
+      "requiresFixedTeams": "Tato akce je dostupná jen pro sezóny s pevnými družstvy.",
+      "noGroups": "Před vygenerováním kompletního rozpisu vytvořte skupiny.",
+      "invalidTeamParticipants": "Každý účastník ve skupině musí být družstvo se přesně dvěma hráči.",
+      "groupsMustHaveSameTeamCount": "Ve všech skupinách musí být stejný počet družstev.",
+      "tooFewTeams": "Ve skupině jsou potřeba alespoň dvě družstva.",
+      "regularRoundsAlreadyExist": "Kola základní části už existují. Před plným round-robinem je smažte v rozvrhu."
+    }
   }
 }

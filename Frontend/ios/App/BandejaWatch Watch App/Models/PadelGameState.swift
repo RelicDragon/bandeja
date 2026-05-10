@@ -1,6 +1,6 @@
 import Foundation
 
-enum TeamSide: String, Sendable {
+enum TeamSide: String, Sendable, Codable {
     case teamA
     case teamB
 }

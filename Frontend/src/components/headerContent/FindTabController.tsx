@@ -30,7 +30,7 @@ export const FindTabController = () => {
       tabs={tabs}
       activeId={view}
       onChange={handleViewChange}
-      titleInActiveOnly={false}
+      showOnlyActiveTabText={false}
       layoutId="findSubtab"
     />
   );

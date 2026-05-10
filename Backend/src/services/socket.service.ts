@@ -1044,6 +1044,15 @@ class SocketService {
     this.io.to(roomName).emit('match-timer-updated', { gameId, matchId, snapshot });
   }
 
+  public emitMatchLiveScoringUpdated(
+    gameId: string,
+    matchId: string,
+    liveScoring: unknown
+  ) {
+    const roomName = `game-${gameId}`;
+    this.io.to(roomName).emit('match-live-scoring-updated', { gameId, matchId, liveScoring });
+  }
+
   public emitGameCancelled(gameId: string, meta: { entityType: string; name?: string; cancelledAt: string; cancelledByUser?: unknown }) {
     const roomName = `game-${gameId}`;
     this.io.to(roomName).emit('game-cancelled', { gameId, ...meta });

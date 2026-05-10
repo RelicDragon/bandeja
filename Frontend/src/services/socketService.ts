@@ -43,6 +43,7 @@ export interface SocketEvents {
     matchId: string;
     snapshot: import('@/utils/matchTimer').MatchTimerSnapshot;
   }) => void;
+  'match-live-scoring-updated': (data: { gameId: string; matchId: string; liveScoring: unknown }) => void;
   'wallet-update': (data: { wallet: number }) => void;
   'error': (error: { message: string }) => void;
   // Unified chat events

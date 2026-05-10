@@ -545,7 +545,7 @@ export const ProfileContent = () => {
     return (
       <>
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
             {t('profile.title')}
           </h1>
         </div>
@@ -641,7 +641,7 @@ export const ProfileContent = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
         <Card>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.personalInfo')}
           </h2>
           <div className="space-y-4">
@@ -681,7 +681,7 @@ export const ProfileContent = () => {
                 </div>
               )}
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {t('profile.nameRequirement')}
             </p>
             <Input
@@ -714,7 +714,7 @@ export const ProfileContent = () => {
                 placeholder={t('profile.bioPlaceholder')}
                 maxLength={128}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+                className="w-full px-3 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50/70 dark:bg-gray-800/40 text-gray-800 dark:text-gray-200 resize-none placeholder:font-normal placeholder:text-gray-500 dark:placeholder:text-gray-400"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {bio.length}/128 {t('profile.characters')}
@@ -783,7 +783,7 @@ export const ProfileContent = () => {
         </Card>
 
         <Card>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
             {t('profile.connectedAccounts') || 'Connected Accounts'}
           </h2>
           <div className="space-y-4">
@@ -795,15 +795,15 @@ export const ProfileContent = () => {
                     <AppleIcon size={20} className="text-white dark:text-black" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 dark:text-white">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {t('profile.apple') || 'Apple'}
                     </div>
                     {user?.appleSub ? (
-                      <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                         {user.appleEmail || t('profile.linked') || 'Linked'}
                       </div>
                     ) : (
-                      <div className="text-sm text-gray-500 dark:text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         {t('profile.appleNotLinked') || 'Apple account not linked'}
                       </div>
                     )}
@@ -860,15 +860,15 @@ export const ProfileContent = () => {
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 dark:text-white">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">
                     {t('profile.google') || 'Google'}
                   </div>
                   {user?.googleId ? (
-                    <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {user.googleEmail || t('profile.linked') || 'Linked'}
                     </div>
                   ) : (
-                    <div className="text-sm text-gray-500 dark:text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                       {t('profile.googleNotLinked') || 'Google account not linked'}
                     </div>
                   )}
@@ -927,15 +927,15 @@ export const ProfileContent = () => {
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 dark:text-white">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">
                     {t('profile.telegram')}
                   </div>
                   {user?.telegramUsername ? (
-                    <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       @{user.telegramUsername}
                     </div>
                   ) : (
-                    <div className="text-sm text-gray-500 dark:text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                       {t('profile.telegramNotLinked')}
                     </div>
                   )}
@@ -1014,7 +1014,7 @@ export const ProfileContent = () => {
         </Card>
 
         <Card>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.preferences')}
           </h2>
           <div className="space-y-6">
@@ -1065,7 +1065,7 @@ export const ProfileContent = () => {
         </Card>
 
         <Card>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.appearance')}
           </h2>
           <div className="space-y-4">
@@ -1091,12 +1091,12 @@ export const ProfileContent = () => {
               <Select
                 options={[
                   { value: 'auto', label: t('profile.auto') || 'Auto', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
-                  { value: 'en-GB', label: 'English (UK)', icon: <span className="text-lg leading-none">{getCountryFlag('United Kingdom')}</span> },
-                  { value: 'en-US', label: 'English (US)', icon: <span className="text-lg leading-none">{getCountryFlag('United States')}</span> },
-                  { value: 'ru-RU', label: 'Русский', icon: <span className="text-lg leading-none">{getLanguageFlag('ru')}</span> },
-                  { value: 'sr-RS', label: 'Српски', icon: <span className="text-lg leading-none">{getLanguageFlag('sr')}</span> },
-                  { value: 'es-ES', label: 'Español', icon: <span className="text-lg leading-none">{getLanguageFlag('es')}</span> },
-                  { value: 'cs-CZ', label: 'Čeština', icon: <span className="text-lg leading-none">{getLanguageFlag('cs')}</span> },
+                  { value: 'en-GB', label: 'English (UK)', icon: <span className="text-sm leading-none">{getCountryFlag('United Kingdom')}</span> },
+                  { value: 'en-US', label: 'English (US)', icon: <span className="text-sm leading-none">{getCountryFlag('United States')}</span> },
+                  { value: 'ru-RU', label: 'Русский', icon: <span className="text-sm leading-none">{getLanguageFlag('ru')}</span> },
+                  { value: 'sr-RS', label: 'Српски', icon: <span className="text-sm leading-none">{getLanguageFlag('sr')}</span> },
+                  { value: 'es-ES', label: 'Español', icon: <span className="text-sm leading-none">{getLanguageFlag('es')}</span> },
+                  { value: 'cs-CZ', label: 'Čeština', icon: <span className="text-sm leading-none">{getLanguageFlag('cs')}</span> },
                 ]}
                 value={language}
                 onChange={handleChangeLanguage}
@@ -1154,13 +1154,13 @@ export const ProfileContent = () => {
         </Card>
 
         <Card>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.notificationSettings') || 'Notification Settings'}
           </h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-4 py-2">
               <div className="flex-1 min-w-0">
-                <label className="text-sm font-medium text-gray-900 dark:text-white block">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
                   {t('profile.allowMessagesFromNonContacts')}
                 </label>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -1174,7 +1174,7 @@ export const ProfileContent = () => {
             </div>
             <div className="flex items-center justify-between gap-4 py-2">
               <div className="flex-1 min-w-0">
-                <label className="text-sm font-medium text-gray-900 dark:text-white block">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
                   {t('profile.showOnlineStatus')}
                 </label>
                 {!showOnlineStatus && (
@@ -1202,12 +1202,12 @@ export const ProfileContent = () => {
         </Card>
 
         <Card>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.city')}
           </h2>
           <div className="flex items-center gap-2 mb-4">
             <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
-            <span className="text-gray-900 dark:text-white">
+            <span className="text-sm text-gray-900 dark:text-white">
               {user?.currentCity
                 ? translateCity(user.currentCity.id, user.currentCity.name, user.currentCity.country)
                 : ''}
@@ -1224,12 +1224,12 @@ export const ProfileContent = () => {
         </Card>
 
         <Card>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.sessionsTitle')}
           </h2>
           <div className="flex items-center gap-2 mb-4">
             <Smartphone size={20} className="text-primary-600 dark:text-primary-400 shrink-0" />
-            <span className="text-gray-900 dark:text-white">{t('profile.sessionsSubtitle')}</span>
+            <span className="text-sm text-gray-900 dark:text-white">{t('profile.sessionsSubtitle')}</span>
           </div>
           <Button
             variant="primary"
