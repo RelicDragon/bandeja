@@ -18,6 +18,82 @@ import { normalizeLegacyTimedScoringPreset } from '../../utils/scoring/matchTime
 import { ScoringPreset } from '@prisma/client';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
+
+/** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
+const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
+  'entityType',
+  'gameType',
+  'name',
+  'description',
+  'avatar',
+  'originalAvatar',
+  'clubId',
+  'courtId',
+  'cityId',
+  'startTime',
+  'endTime',
+  'maxParticipants',
+  'minParticipants',
+  'minLevel',
+  'maxLevel',
+  'isPublic',
+  'affectsRating',
+  'anyoneCanInvite',
+  'resultsByAnyone',
+  'allowDirectJoin',
+  'hasBookedCourt',
+  'afterGameGoToBar',
+  'hasFixedTeams',
+  'allowUserInMultipleTeams',
+  'genderTeams',
+  'teamsReady',
+  'participantsReady',
+  'status',
+  'resultsStatus',
+  'resultsMeta',
+  'fixedNumberOfSets',
+  'maxTotalPointsPerSet',
+  'matchTimedCapMinutes',
+  'matchTimerEnabled',
+  'maxPointsPerTeam',
+  'winnerOfGame',
+  'winnerOfMatch',
+  'matchGenerationType',
+  'prohibitMatchesEditing',
+  'pointsPerWin',
+  'pointsPerLoose',
+  'pointsPerTie',
+  'ballsInGames',
+  'scoringPreset',
+  'scoringMode',
+  'hasGoldenPoint',
+  'mediaUrls',
+  'photosCount',
+  'mainPhotoId',
+  'resultsSentToTelegram',
+  'parentId',
+  'trainerId',
+  'leagueRoundId',
+  'leagueGroupId',
+  'timeIsSet',
+  'finishedDate',
+  'priceTotal',
+  'priceType',
+  'priceCurrency',
+  'metadata',
+  'lastMessagePreview',
+]);
+
+function pickUncheckedGameScalars(src: Record<string, unknown>): Prisma.GameUncheckedUpdateInput {
+  const out: Record<string, unknown> = {};
+  for (const key of GAME_UNCHECKED_SCALAR_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(src, key) && src[key] !== undefined) {
+      out[key] = src[key];
+    }
+  }
+  return out as Prisma.GameUncheckedUpdateInput;
+}
+
 export class GameUpdateService {
   static async updateGame(id: string, data: any, userId: string, isAdmin: boolean) {
     // Validate currency if provided
@@ -301,7 +377,7 @@ export class GameUpdateService {
         cityId = null;
       }
 
-      updateData.cityId = cityId;
+      updateData.cityId = cityId ?? currentGame?.cityId;
     }
 
     if (currentGame && (data.startTime !== undefined || data.endTime !== undefined)) {
@@ -501,19 +577,6 @@ export class GameUpdateService {
 
     delete updateData.resultsRoundGenV2;
 
-    const relationDuplicatesOfScalars = [
-      'club',
-      'court',
-      'city',
-      'parent',
-      'trainer',
-      'leagueRound',
-      'leagueGroup',
-    ] as const;
-    for (const k of relationDuplicatesOfScalars) {
-      delete updateData[k];
-    }
-
     await prisma.$transaction(async (tx) => {
       await tx.$executeRaw(Prisma.sql`SELECT id FROM "Game" WHERE id = ${id} FOR UPDATE`);
 
@@ -566,7 +629,7 @@ export class GameUpdateService {
 
       await tx.game.update({
         where: { id },
-        data: updateData,
+        data: pickUncheckedGameScalars(updateData),
         include: {
           participants: {
             include: {
