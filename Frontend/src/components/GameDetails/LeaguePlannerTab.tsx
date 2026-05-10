@@ -335,7 +335,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
         <div className="flex -space-x-1.5">
           {b.sampleFreeUsers.slice(0, 3).map((u) => (
             <span key={u.id} className="inline-block rounded-full ring-2 ring-white dark:ring-gray-900">
-              <PlayerAvatar player={u as BasicUser} extrasmall showName={false} />
+              <PlayerAvatar player={u as BasicUser} extrasmall showName={false} asDiv />
             </span>
           ))}
         </div>
