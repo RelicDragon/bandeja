@@ -893,13 +893,18 @@ function generateFixedTeamEscaleraRound(
 
     let rankedTeams = teamLevels.map(t => t.team);
     if (rankedTeams.length > neededTeams) {
-      rankedTeams = selectTeamsWithRotation(
+      const reduced = selectTeamsWithRotation(
         rankedTeams,
         neededTeams,
         previousRounds,
         game.allowUserInMultipleTeams,
         game.fixedTeams
       );
+      const ntm = Math.min(numMatches, Math.floor(reduced.length / 2));
+      const reducedPairs = pickDisjointTeamPairs(reduced, ntm);
+      if (ntm > 0 && reducedPairs.length >= ntm) {
+        rankedTeams = reduced;
+      }
     }
 
     return buildFixedTeamMatches(game, rankedTeams, sortedCourts, initialSets, numMatches);

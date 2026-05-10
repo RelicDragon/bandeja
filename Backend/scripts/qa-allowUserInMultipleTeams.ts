@@ -77,6 +77,14 @@ function overlapGenGame(u1: string, u2: string, u3: string, u4: string) {
           { userId: u3, user: mkU(u3) },
         ],
       },
+      {
+        id: 'qa-ft3',
+        teamNumber: 3,
+        players: [
+          { userId: u3, user: mkU(u3) },
+          { userId: u4, user: mkU(u4) },
+        ],
+      },
     ],
     gameCourts: [{ courtId: 'qa-court', order: 0 }],
     genderTeams: 'ANY',
