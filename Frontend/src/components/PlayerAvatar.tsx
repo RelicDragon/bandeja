@@ -14,6 +14,17 @@ import { getLevelColor } from '@/utils/levelColor';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
+function parseLevelForBadge(levelRaw: unknown): number | null {
+  if (typeof levelRaw === 'number' && Number.isFinite(levelRaw)) return levelRaw;
+  if (typeof levelRaw === 'string') {
+    const t = levelRaw.trim();
+    if (t === '') return null;
+    const n = Number(t);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
 interface PlayerAvatarProps {
   player?: BasicUser | null;
   /** When false, parent is responsible for presence subscription for this user id */
@@ -178,6 +189,8 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
 
   const faceOnlyLayout = superTiny || inlineFace;
 
+  const levelForBadge = parseLevelForBadge(player.level as unknown);
+
   const renderAvatarContent = () => {
     if (faceOnlyLayout) {
       return (
@@ -260,29 +273,32 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
           <Dumbbell size={smallLayout ? 10 : 12} className="text-white" />
         </div>
       )}
-      <div className={`absolute -bottom-1 ${levelRightClass}`}>
-        {(() => {
-          const levelColor = getLevelColor(player.level, isDark);
-          return player.approvedLevel ? (
-            <div
-              className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -mr-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1`}
-              style={{ ...levelColor, ...levelBadgeStyle }}
-            >
-              <span className={`text-white font-bold leading-none ${extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'}`}>
-                {player.level.toFixed(1)}
-              </span>
-              <Check size={extrasmall ? 7 : smallLayout ? 9 : 12} className="text-white" strokeWidth={3} />
-            </div>
-          ) : (
-            <div
-              className={`relative ${levelBadgeClass}`}
-              style={{ ...levelColor, ...levelBadgeStyle }}
-            >
-              {player.level.toFixed(1)}
-            </div>
-          );
-        })()}
-      </div>
+      {levelForBadge !== null && (
+        <div className={`absolute -bottom-1 ${levelRightClass}`}>
+          {(() => {
+            const lvl = levelForBadge;
+            const levelColor = getLevelColor(lvl, isDark);
+            return player.approvedLevel ? (
+              <div
+                className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -mr-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1`}
+                style={{ ...levelColor, ...levelBadgeStyle }}
+              >
+                <span className={`text-white font-bold leading-none ${extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'}`}>
+                  {lvl.toFixed(1)}
+                </span>
+                <Check size={extrasmall ? 7 : smallLayout ? 9 : 12} className="text-white" strokeWidth={3} />
+              </div>
+            ) : (
+              <div
+                className={`relative ${levelBadgeClass}`}
+                style={{ ...levelColor, ...levelBadgeStyle }}
+              >
+                {lvl.toFixed(1)}
+              </div>
+            );
+          })()}
+        </div>
+      )}
     </>
   );
   };

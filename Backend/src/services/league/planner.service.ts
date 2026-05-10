@@ -25,9 +25,28 @@ type PlannerUser = {
   firstName: string | null;
   lastName: string | null;
   avatar: string | null;
+  level: number;
+  socialLevel: number;
+  gender: string;
+  approvedLevel: boolean;
+  isTrainer: boolean;
   weeklyAvailability: unknown;
   availabilityBucketBoundaries: unknown;
 };
+
+function plannerSampleFreeUser(u: PlannerUser) {
+  return {
+    id: u.id,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    avatar: u.avatar,
+    level: u.level,
+    socialLevel: u.socialLevel,
+    gender: u.gender,
+    approvedLevel: u.approvedLevel,
+    isTrainer: u.isTrainer,
+  };
+}
 
 function getWeekdayKeyFromZonedDate(d: Date, timeZone: string): WeekdayKey {
   const short = formatInTimeZone(d, timeZone, 'EEE', { locale: enUS });
@@ -233,7 +252,7 @@ export class LeaguePlannerService {
         freeCount: number;
         busyCount: number;
         unknownCount: number;
-        sampleFreeUsers: Array<{ id: string; firstName: string | null; avatar: string | null }>;
+        sampleFreeUsers: ReturnType<typeof plannerSampleFreeUser>[];
       }>;
     }> = [];
 
@@ -249,7 +268,7 @@ export class LeaguePlannerService {
         let freeCount = 0;
         let busyCount = 0;
         let unknownCount = 0;
-        const sampleFreeUsers: Array<{ id: string; firstName: string | null; avatar: string | null }> = [];
+        const sampleFreeUsers: ReturnType<typeof plannerSampleFreeUser>[] = [];
         if (intersectMode) {
           const states = aggregateIdsFiltered.map((uid) => {
             const u = userById.get(uid)!;
@@ -263,7 +282,7 @@ export class LeaguePlannerService {
             for (const uid of aggregateIdsFiltered) {
               const u = userById.get(uid)!;
               if (sampleFreeUsers.length < 3) {
-                sampleFreeUsers.push({ id: u.id, firstName: u.firstName, avatar: u.avatar });
+                sampleFreeUsers.push(plannerSampleFreeUser(u));
               }
             }
           } else if (anyBusy) busyCount = 1;
@@ -276,7 +295,7 @@ export class LeaguePlannerService {
             if (st === 'free') {
               freeCount++;
               if (sampleFreeUsers.length < 3) {
-                sampleFreeUsers.push({ id: u.id, firstName: u.firstName, avatar: u.avatar });
+                sampleFreeUsers.push(plannerSampleFreeUser(u));
               }
             } else if (st === 'busy') busyCount++;
             else unknownCount++;

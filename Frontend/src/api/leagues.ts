@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse, Game, GameSetupParams } from '@/types';
+import type { ApiResponse, Game, GameSetupParams, Gender } from '@/types';
 
 export interface CreateLeagueRequest {
   resultsRoundGenV2?: boolean;
@@ -125,7 +125,17 @@ export interface LeaguePlannerDayBucket {
   freeCount: number;
   busyCount: number;
   unknownCount: number;
-  sampleFreeUsers: Array<{ id: string; firstName: string | null; avatar: string | null }>;
+  sampleFreeUsers: Array<{
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatar: string | null;
+    level: number;
+    socialLevel: number;
+    gender: Gender;
+    approvedLevel: boolean;
+    isTrainer: boolean;
+  }>;
 }
 
 export interface LeaguePlannerDay {
