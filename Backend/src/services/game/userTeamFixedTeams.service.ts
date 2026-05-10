@@ -12,6 +12,7 @@ export async function applyUserTeamToFixedTeamsIfReady(gameId: string, userTeamI
     select: {
       maxParticipants: true,
       hasFixedTeams: true,
+      allowUserInMultipleTeams: true,
       rounds: { select: { id: true }, take: 1 },
     },
   });
@@ -91,7 +92,7 @@ export async function applyUserTeamToFixedTeamsIfReady(gameId: string, userTeamI
   teamsPayload.sort((a, b) => a.teamNumber - b.teamNumber);
 
   const allIds = teamsPayload.flatMap((x) => x.playerIds);
-  if (new Set(allIds).size !== allIds.length) {
+  if (!game.allowUserInMultipleTeams && new Set(allIds).size !== allIds.length) {
     logSkip('player_duplicate_across_teams', { gameId, userTeamId, teamsPayload });
     return;
   }

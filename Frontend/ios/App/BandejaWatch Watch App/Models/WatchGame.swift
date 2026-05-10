@@ -40,6 +40,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     let timeIsSet: Bool
     let affectsRating: Bool?
     let hasFixedTeams: Bool?
+    let allowUserInMultipleTeams: Bool?
     let participantsReady: Bool
     let teamsReady: Bool
     let matchGenerationType: String?
@@ -71,7 +72,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         case id, name, gameType, entityType, status, resultsStatus
         case startTime, endTime, winnerOfMatch, winnerOfGame
         case fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames, scoringPreset, matchTimedCapMinutes, matchTimerEnabled, hasGoldenPoint
-        case maxParticipants, timeIsSet, affectsRating, hasFixedTeams, participantsReady, teamsReady, matchGenerationType, fixedTeams, resultsByAnyone
+        case maxParticipants, timeIsSet, affectsRating, hasFixedTeams, allowUserInMultipleTeams, participantsReady, teamsReady, matchGenerationType, fixedTeams, resultsByAnyone
         case participants, parent, club
     }
 
@@ -103,6 +104,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         timeIsSet = try c.decodeIfPresent(Bool.self, forKey: .timeIsSet) ?? false
         affectsRating = try c.decodeIfPresent(Bool.self, forKey: .affectsRating)
         hasFixedTeams = try c.decodeIfPresent(Bool.self, forKey: .hasFixedTeams)
+        allowUserInMultipleTeams = try c.decodeIfPresent(Bool.self, forKey: .allowUserInMultipleTeams)
         participantsReady = try c.decodeIfPresent(Bool.self, forKey: .participantsReady) ?? false
         teamsReady = try c.decodeIfPresent(Bool.self, forKey: .teamsReady) ?? false
         matchGenerationType = try c.decodeIfPresent(String.self, forKey: .matchGenerationType)

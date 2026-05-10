@@ -1,5 +1,10 @@
 import { randomUUID } from 'crypto';
-import type { GenMatch as Match, GenRound as Round, GenGame as Game } from './types';
+import type {
+  GenMatch as Match,
+  GenRound as Round,
+  GenGame as Game,
+  GenFixedTeam,
+} from './types';
 import { LeagueReadService } from '../../league/read.service';
 
 const createId = () => randomUUID();
@@ -11,6 +16,9 @@ import {
   buildPartnerCounts,
   buildOpponentCounts,
   pairKey,
+  opponentPairFrequency,
+  resolveFixedTeamRosterFromGame,
+  attachFixedTeamIdsToMatch,
   hasPlayers,
   cloneSets,
   InitialSets,
@@ -157,15 +165,15 @@ function pickCrossPairing(
   if (costY < costX) return { teamA: [A, D], teamB: [B, C] };
 
   const opCostX =
-    (opponentCounts.get(pairKey(A, C)) || 0) +
-    (opponentCounts.get(pairKey(A, D)) || 0) +
-    (opponentCounts.get(pairKey(B, C)) || 0) +
-    (opponentCounts.get(pairKey(B, D)) || 0);
+    opponentPairFrequency(opponentCounts, A, C) +
+    opponentPairFrequency(opponentCounts, A, D) +
+    opponentPairFrequency(opponentCounts, B, C) +
+    opponentPairFrequency(opponentCounts, B, D);
   const opCostY =
-    (opponentCounts.get(pairKey(A, B)) || 0) +
-    (opponentCounts.get(pairKey(A, C)) || 0) +
-    (opponentCounts.get(pairKey(D, B)) || 0) +
-    (opponentCounts.get(pairKey(D, C)) || 0);
+    opponentPairFrequency(opponentCounts, A, B) +
+    opponentPairFrequency(opponentCounts, A, C) +
+    opponentPairFrequency(opponentCounts, D, B) +
+    opponentPairFrequency(opponentCounts, D, C);
 
   if (opCostX <= opCostY) return { teamA: [A, B], teamB: [C, D] };
   return { teamA: [A, D], teamB: [B, C] };
@@ -701,15 +709,15 @@ function buildMixPairsMatchesFromCourts(
         });
       } else {
         const opCostA =
-          (opponentCounts.get(pairKey(M1, M2)) || 0) +
-          (opponentCounts.get(pairKey(M1, F2)) || 0) +
-          (opponentCounts.get(pairKey(F1, M2)) || 0) +
-          (opponentCounts.get(pairKey(F1, F2)) || 0);
+          opponentPairFrequency(opponentCounts, M1, M2) +
+          opponentPairFrequency(opponentCounts, M1, F2) +
+          opponentPairFrequency(opponentCounts, F1, M2) +
+          opponentPairFrequency(opponentCounts, F1, F2);
         const opCostB =
-          (opponentCounts.get(pairKey(M1, M2)) || 0) +
-          (opponentCounts.get(pairKey(M1, F1)) || 0) +
-          (opponentCounts.get(pairKey(F2, M2)) || 0) +
-          (opponentCounts.get(pairKey(F2, F1)) || 0);
+          opponentPairFrequency(opponentCounts, M1, M2) +
+          opponentPairFrequency(opponentCounts, M1, F1) +
+          opponentPairFrequency(opponentCounts, F2, M2) +
+          opponentPairFrequency(opponentCounts, F2, F1);
 
         if (opCostA <= opCostB) {
           matches.push({
@@ -752,28 +760,47 @@ function teamKey(team: string[]): string {
 
 function buildTeamRoundsPlayed(
   allTeams: string[][],
-  previousRounds: Round[]
+  previousRounds: Round[],
+  allowUserInMultipleTeams: boolean | undefined,
+  fixedTeams: GenFixedTeam[] | undefined
 ): Map<string, number> {
-  const playerToTeam = new Map<string, string>();
-  for (const team of allTeams) {
-    const key = teamKey(team);
-    for (const playerId of team) {
-      playerToTeam.set(playerId, key);
-    }
-  }
-
   const counts = new Map<string, number>();
   for (const team of allTeams) counts.set(teamKey(team), 0);
+
+  const playerToTeam = new Map<string, string>();
+  if (!allowUserInMultipleTeams) {
+    for (const team of allTeams) {
+      const key = teamKey(team);
+      for (const playerId of team) {
+        playerToTeam.set(playerId, key);
+      }
+    }
+  }
 
   for (const round of previousRounds) {
     const counted = new Set<string>();
     for (const match of round.matches) {
       if (!hasPlayers(match)) continue;
-      for (const playerId of [...match.teamA, ...match.teamB]) {
-        const key = playerToTeam.get(playerId);
-        if (key && !counted.has(key)) {
-          counted.add(key);
-          counts.set(key, (counts.get(key) || 0) + 1);
+      if (allowUserInMultipleTeams) {
+        const ka = teamKey(
+          resolveFixedTeamRosterFromGame(match.teamA, fixedTeams, match.fixedTeamIdA, allTeams)
+        );
+        const kb = teamKey(
+          resolveFixedTeamRosterFromGame(match.teamB, fixedTeams, match.fixedTeamIdB, allTeams)
+        );
+        for (const key of [ka, kb]) {
+          if (counts.has(key) && !counted.has(key)) {
+            counted.add(key);
+            counts.set(key, (counts.get(key) || 0) + 1);
+          }
+        }
+      } else {
+        for (const playerId of [...match.teamA, ...match.teamB]) {
+          const key = playerToTeam.get(playerId);
+          if (key && !counted.has(key)) {
+            counted.add(key);
+            counts.set(key, (counts.get(key) || 0) + 1);
+          }
         }
       }
     }
@@ -785,9 +812,16 @@ function buildTeamRoundsPlayed(
 function selectTeamsWithRotation(
   rankedTeams: string[][],
   needed: number,
-  previousRounds: Round[]
+  previousRounds: Round[],
+  allowUserInMultipleTeams: boolean | undefined,
+  fixedTeams: GenFixedTeam[] | undefined
 ): string[][] {
-  const roundsPlayed = buildTeamRoundsPlayed(rankedTeams, previousRounds);
+  const roundsPlayed = buildTeamRoundsPlayed(
+    rankedTeams,
+    previousRounds,
+    allowUserInMultipleTeams,
+    fixedTeams
+  );
   const indexed = rankedTeams.map((team, rank) => ({
     team,
     rank,
@@ -829,21 +863,20 @@ function generateFixedTeamRound(
 
     let rankedTeams = teamLevels.map(t => t.team);
     if (rankedTeams.length > neededTeams) {
-      rankedTeams = selectTeamsWithRotation(rankedTeams, neededTeams, previousRounds);
+      rankedTeams = selectTeamsWithRotation(
+        rankedTeams,
+        neededTeams,
+        previousRounds,
+        game.allowUserInMultipleTeams,
+        game.fixedTeams
+      );
     }
-    return buildFixedTeamMatches(rankedTeams, sortedCourts, initialSets, numMatches);
+    return buildFixedTeamMatches(game, rankedTeams, sortedCourts, initialSets, numMatches);
   }
 
   const previousRound = previousRounds[previousRounds.length - 1];
   if (!previousRound.matches || previousRound.matches.length === 0) return [];
   if (!isRoundComplete(previousRound)) return [];
-
-  const teamMap = new Map<string, string[]>();
-  for (const team of fixedTeamPairs) {
-    for (const playerId of team) {
-      teamMap.set(playerId, team);
-    }
-  }
 
   const courtTeamResults: Array<{
     winnerTeam: string[];
@@ -866,8 +899,20 @@ function generateFixedTeamRound(
     const winnerPlayers = teamAWins ? match.teamA : match.teamB;
     const loserPlayers = teamAWins ? match.teamB : match.teamA;
 
-    const winnerTeam = teamMap.get(winnerPlayers[0]) || winnerPlayers;
-    const loserTeam = teamMap.get(loserPlayers[0]) || loserPlayers;
+    const winnerHint = teamAWins ? match.fixedTeamIdA : match.fixedTeamIdB;
+    const loserHint = teamAWins ? match.fixedTeamIdB : match.fixedTeamIdA;
+    const winnerTeam = resolveFixedTeamRosterFromGame(
+      winnerPlayers,
+      game.fixedTeams,
+      winnerHint,
+      fixedTeamPairs
+    );
+    const loserTeam = resolveFixedTeamRosterFromGame(
+      loserPlayers,
+      game.fixedTeams,
+      loserHint,
+      fixedTeamPairs
+    );
 
     if (!winnerTeam.every(id => eligibleIds.has(id))) continue;
     if (!loserTeam.every(id => eligibleIds.has(id))) continue;
@@ -914,7 +959,12 @@ function generateFixedTeamRound(
   const benchTeams = fixedTeamPairs.filter(t => !activeTeamKeys.has(teamKey(t)));
 
   if (benchTeams.length > 0) {
-    const teamsPlayed = buildTeamRoundsPlayed(fixedTeamPairs, previousRounds);
+    const teamsPlayed = buildTeamRoundsPlayed(
+      fixedTeamPairs,
+      previousRounds,
+      game.allowUserInMultipleTeams,
+      game.fixedTeams
+    );
     const benchSorted = [...benchTeams].sort(
       (a, b) => (teamsPlayed.get(teamKey(a)) || 0) - (teamsPlayed.get(teamKey(b)) || 0)
     );
@@ -949,19 +999,25 @@ function generateFixedTeamRound(
 
   const matches: Match[] = [];
   for (let i = 0; i < Math.min(courtPairings.length, numMatches); i++) {
-    matches.push({
-      id: createId(),
-      teamA: courtPairings[i].teamA,
-      teamB: courtPairings[i].teamB,
-      sets: cloneSets(initialSets),
-      courtId: sortedCourts[i]?.courtId,
-    });
+    matches.push(
+      attachFixedTeamIdsToMatch(
+        {
+          id: createId(),
+          teamA: courtPairings[i].teamA,
+          teamB: courtPairings[i].teamB,
+          sets: cloneSets(initialSets),
+          courtId: sortedCourts[i]?.courtId,
+        },
+        game
+      )
+    );
   }
 
   return matches;
 }
 
 function buildFixedTeamMatches(
+  game: Game,
   rankedTeams: string[][],
   sortedCourts: Array<{ courtId?: string; order: number }>,
   initialSets: InitialSets,
@@ -975,13 +1031,18 @@ function buildFixedTeamMatches(
     const teamB = rankedTeams[i * 2 + 1];
 
     if (teamA && teamB) {
-      matches.push({
-        id: createId(),
-        teamA,
-        teamB,
-        sets: cloneSets(initialSets),
-        courtId: sortedCourts[i]?.courtId,
-      });
+      matches.push(
+        attachFixedTeamIdsToMatch(
+          {
+            id: createId(),
+            teamA,
+            teamB,
+            sets: cloneSets(initialSets),
+            courtId: sortedCourts[i]?.courtId,
+          },
+          game
+        )
+      );
     }
   }
 

@@ -413,6 +413,19 @@ function compareStandings(
   return bValue - aValue;
 }
 
+/** Covers participants not on any fixed-team roster, or empty team score table. */
+function assignResidualPlayerPlaces(standings: PlayerStanding[]) {
+  const floor = Math.max(
+    0,
+    ...standings.map((s) => (Number.isFinite(s.place) && s.place >= 1 ? s.place : 0)),
+  );
+  let next = floor + 1;
+  for (const s of standings) {
+    if (!Number.isFinite(s.place) || s.place < 1) {
+      s.place = next++;
+    }
+  }
+}
 
 export function calculateGameStandings(
   game: Game,
@@ -575,8 +588,13 @@ export function calculateGameStandings(
     }
 
     const teamScoresMap = new Map<string, TeamScore>();
+    const fixedTeamsList = game.fixedTeams;
+    const userTeamCount = (uid: string) =>
+      fixedTeamsList.filter(ft => ft.players.some(p => p.userId === uid)).length;
+    const statWeight = (uid: string) =>
+      !game.allowUserInMultipleTeams || userTeamCount(uid) <= 1 ? 1 : 1 / userTeamCount(uid);
 
-    for (const fixedTeam of game.fixedTeams) {
+    for (const fixedTeam of fixedTeamsList) {
       const teamPlayerIds = fixedTeam.players.map(p => p.userId);
       const teamPlayerStandings = standings.filter(s => teamPlayerIds.includes(s.user.id));
       
@@ -603,14 +621,24 @@ export function calculateGameStandings(
         teamId: fixedTeam.id,
         teamNumber: fixedTeam.teamNumber,
         playerIds: teamPlayerIds,
-        matchesWon: Math.max(...teamPlayerStats.map(s => s.matchesWon)),
-        wins: Math.max(...teamPlayerStats.map(s => s.wins)),
-        ties: Math.max(...teamPlayerStats.map(s => s.ties)),
-        losses: Math.max(...teamPlayerStats.map(s => s.losses)),
-        totalPoints: teamPlayerStats.reduce((sum: number, s) => sum + s.scoresMade, 0),
-        scoresDelta: teamPlayerStats.reduce((sum: number, s) => sum + s.scoresDelta, 0),
+        matchesWon: teamPlayerStats.reduce(
+          (sum, s) => sum + s.matchesWon * statWeight(s.userId),
+          0
+        ),
+        wins: teamPlayerStats.reduce((sum, s) => sum + s.wins * statWeight(s.userId), 0),
+        ties: teamPlayerStats.reduce((sum, s) => sum + s.ties * statWeight(s.userId), 0),
+        losses: teamPlayerStats.reduce((sum, s) => sum + s.losses * statWeight(s.userId), 0),
+        totalPoints: teamPlayerStats.reduce(
+          (sum: number, s) => sum + s.scoresMade * statWeight(s.userId),
+          0
+        ),
+        scoresDelta: teamPlayerStats.reduce(
+          (sum: number, s) => sum + s.scoresDelta * statWeight(s.userId),
+          0
+        ),
         pointsEarned: teamPlayerStats.reduce((sum: number, s) => {
-          return sum + (s.wins * pointsPerWin + s.ties * pointsPerTie + s.losses * pointsPerLoose);
+          const rowPts = s.wins * pointsPerWin + s.ties * pointsPerTie + s.losses * pointsPerLoose;
+          return sum + rowPts * statWeight(s.userId);
         }, 0),
       };
 
@@ -718,10 +746,77 @@ export function calculateGameStandings(
       for (const playerId of team.playerIds) {
         const standing = standings.find(s => s.user.id === playerId);
         if (standing) {
-          standing.place = position;
+          standing.place = standing.place === 0 ? position : Math.min(standing.place, position);
         } else {
           console.warn(`[CALCULATE GAME STANDINGS] Player ${playerId} in team ${team.teamId} (teamNumber: ${team.teamNumber}) has no standing, cannot assign position`);
         }
+      }
+    }
+
+    const unassignedFixed = standings.filter(s => s.place === 0);
+    if (unassignedFixed.length > 0) {
+      const assignedPlaces = standings.filter(s => s.place > 0).map(s => s.place);
+      let currentPlace =
+        assignedPlaces.length > 0 ? Math.max(...assignedPlaces) + 1 : 1;
+
+      unassignedFixed.sort((a, b) => {
+        const aStats = playerStatsMap.get(a.user.id);
+        const bStats = playerStatsMap.get(b.user.id);
+        if (!aStats || !bStats) return 0;
+        return compareStandings(
+          a,
+          b,
+          aStats,
+          bStats,
+          winnerOfGame,
+          h2hMap,
+          pointsPerWin,
+          pointsPerTie,
+          pointsPerLoose
+        );
+      });
+
+      let i = 0;
+      while (i < unassignedFixed.length) {
+        const tiedGroup: PlayerStanding[] = [unassignedFixed[i]];
+        let j = i + 1;
+
+        while (j < unassignedFixed.length) {
+          const prev = unassignedFixed[i];
+          const current = unassignedFixed[j];
+          const prevStats = playerStatsMap.get(prev.user.id);
+          const currentStats = playerStatsMap.get(current.user.id);
+
+          if (prevStats && currentStats) {
+            const isTied = arePlayersTied(
+              prev,
+              current,
+              prevStats,
+              currentStats,
+              winnerOfGame,
+              h2hMap,
+              pointsPerWin,
+              pointsPerTie,
+              pointsPerLoose
+            );
+
+            if (isTied) {
+              tiedGroup.push(current);
+              j++;
+            } else {
+              break;
+            }
+          } else {
+            break;
+          }
+        }
+
+        for (const standing of tiedGroup) {
+          standing.place = currentPlace;
+        }
+
+        currentPlace += 1;
+        i = j;
       }
     }
 
@@ -745,6 +840,7 @@ export function calculateGameStandings(
       );
     });
 
+    assignResidualPlayerPlaces(standings);
     return standings;
   }
 

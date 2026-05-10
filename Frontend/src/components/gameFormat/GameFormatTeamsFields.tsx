@@ -136,6 +136,8 @@ export interface GameFormatTeamsFieldsProps {
   hasFixedTeams: boolean;
   onGenderTeamsChange: (v: GenderTeam) => void;
   onHasFixedTeamsChange: (v: boolean) => void;
+  allowUserInMultipleTeams?: boolean;
+  onAllowUserInMultipleTeamsChange?: (v: boolean) => void;
   genderSwitchLayoutId?: string;
   className?: string;
   readOnly?: boolean;

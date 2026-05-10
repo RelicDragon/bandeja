@@ -84,6 +84,8 @@ export class GameCreateService {
     }
     
     const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams || false);
+    const allowUserInMultipleTeams =
+      maxParticipants === 2 ? false : Boolean(data.allowUserInMultipleTeams);
     const genderTeams = data.genderTeams || 'ANY';
     
     if (genderTeams === 'MIX_PAIRS' && !(maxParticipants >= 4 && maxParticipants % 2 === 0)) {
@@ -212,6 +214,7 @@ export class GameCreateService {
         hasBookedCourt: data.hasBookedCourt || false,
         afterGameGoToBar: data.afterGameGoToBar || false,
         hasFixedTeams: hasFixedTeams,
+        allowUserInMultipleTeams,
         genderTeams: data.genderTeams || 'ANY',
         fixedNumberOfSets: fixedSetsCreate,
         maxTotalPointsPerSet: maxTotalPointsCreate,

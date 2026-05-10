@@ -125,15 +125,16 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
       return;
     }
 
-    // Check if player is already in another team
-    const playerInAnotherTeam = teams.some(team =>
-      team.teamNumber !== currentTeam.teamNumber &&
-      team.players.some(p => p.userId === playerId)
-    );
+    if (!game.allowUserInMultipleTeams) {
+      const playerInAnotherTeam = teams.some(
+        (team) =>
+          team.teamNumber !== currentTeam.teamNumber && team.players.some((p) => p.userId === playerId),
+      );
 
-    if (playerInAnotherTeam) {
-      toast.error(t('games.playerAlreadyInAnotherTeam'));
-      return;
+      if (playerInAnotherTeam) {
+        toast.error(t('games.playerAlreadyInAnotherTeam'));
+        return;
+      }
     }
 
     // Check if player is a participant in the game
@@ -436,7 +437,11 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
             setSelectedTeamIndex(null);
           }}
           onConfirm={handlePlayerSelect}
-          selectedPlayerIds={teams.flatMap(team => team.players.map(p => p.userId))}
+          selectedPlayerIds={
+            game.allowUserInMultipleTeams && selectedTeamIndex !== null
+              ? (teams[selectedTeamIndex]?.players.map((p) => p.userId) ?? [])
+              : teams.flatMap((team) => team.players.map((p) => p.userId))
+          }
           title={t('games.addPlayer')}
         />
       )}

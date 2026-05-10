@@ -20,6 +20,7 @@ export function prismaGameToGenGame(game: GameForRoundGeneration): GenGame {
       },
     })),
     hasFixedTeams: game.hasFixedTeams,
+    allowUserInMultipleTeams: game.allowUserInMultipleTeams ?? false,
     fixedTeams: (game.fixedTeams || []).map((ft) => ({
       id: ft.id,
       teamNumber: ft.teamNumber,
@@ -60,10 +61,18 @@ export function prismaRoundsToGenRounds(game: GameForRoundGeneration): GenRound[
     matches: (round.matches || []).map((match): GenMatch => {
       const teamA: string[] = [];
       const teamB: string[] = [];
+      let fixedTeamIdA: string | undefined;
+      let fixedTeamIdB: string | undefined;
       for (const team of match.teams || []) {
         const playerIds = (team.players || []).map((pl) => pl.userId).filter(Boolean);
-        if (team.teamNumber === 1) teamA.push(...playerIds);
-        else if (team.teamNumber === 2) teamB.push(...playerIds);
+        const meta = team.metadata as { gameTeamId?: string } | null | undefined;
+        if (team.teamNumber === 1) {
+          teamA.push(...playerIds);
+          fixedTeamIdA = meta?.gameTeamId;
+        } else if (team.teamNumber === 2) {
+          teamB.push(...playerIds);
+          fixedTeamIdB = meta?.gameTeamId;
+        }
       }
       const sets = (match.sets || []).map((s) => ({
         teamA: s.teamAScore || 0,
@@ -86,6 +95,8 @@ export function prismaRoundsToGenRounds(game: GameForRoundGeneration): GenRound[
         sets: slicedSets,
         winnerId,
         courtId: match.courtId || undefined,
+        ...(fixedTeamIdA ? { fixedTeamIdA } : {}),
+        ...(fixedTeamIdB ? { fixedTeamIdB } : {}),
       };
     }),
   }));

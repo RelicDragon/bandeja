@@ -11,6 +11,8 @@ import {
   buildPartnerCounts,
   buildOpponentCounts,
   pairKey,
+  opponentPairFrequency,
+  attachFixedTeamIdsToMatch,
   cloneSets,
   shuffle,
   InitialSets,
@@ -152,10 +154,10 @@ function chooseBestPairing(
       (partnerCounts.get(pairKey(teamA[0], teamA[1])) || 0) +
       (partnerCounts.get(pairKey(teamB[0], teamB[1])) || 0);
     const opponentScore =
-      (opponentCounts.get(pairKey(teamA[0], teamB[0])) || 0) +
-      (opponentCounts.get(pairKey(teamA[0], teamB[1])) || 0) +
-      (opponentCounts.get(pairKey(teamA[1], teamB[0])) || 0) +
-      (opponentCounts.get(pairKey(teamA[1], teamB[1])) || 0);
+      opponentPairFrequency(opponentCounts, teamA[0], teamB[0]) +
+      opponentPairFrequency(opponentCounts, teamA[0], teamB[1]) +
+      opponentPairFrequency(opponentCounts, teamA[1], teamB[0]) +
+      opponentPairFrequency(opponentCounts, teamA[1], teamB[1]);
 
     const score = partnerScore * 3 + opponentScore + i * 0.1;
     if (score < bestScore) {
@@ -189,10 +191,10 @@ function chooseBestMixPairing(
       (partnerCounts.get(pairKey(teamA[0], teamA[1])) || 0) +
       (partnerCounts.get(pairKey(teamB[0], teamB[1])) || 0);
     const opponentScore =
-      (opponentCounts.get(pairKey(teamA[0], teamB[0])) || 0) +
-      (opponentCounts.get(pairKey(teamA[0], teamB[1])) || 0) +
-      (opponentCounts.get(pairKey(teamA[1], teamB[0])) || 0) +
-      (opponentCounts.get(pairKey(teamA[1], teamB[1])) || 0);
+      opponentPairFrequency(opponentCounts, teamA[0], teamB[0]) +
+      opponentPairFrequency(opponentCounts, teamA[0], teamB[1]) +
+      opponentPairFrequency(opponentCounts, teamA[1], teamB[0]) +
+      opponentPairFrequency(opponentCounts, teamA[1], teamB[1]);
 
     const score = partnerScore * 3 + opponentScore + i * 0.1;
     if (score < bestScore) {
@@ -362,11 +364,17 @@ function generateFixedTeamRatingRound(
       previousRounds,
       game.winnerOfGame || 'BY_SCORES_DELTA'
     );
+    const overlap = !!game.allowUserInMultipleTeams;
+    const memberWeight = (playerId: string) => {
+      if (!overlap) return 1;
+      const n = fixedTeamPairs.filter(t => t.includes(playerId)).length;
+      return n <= 1 ? 1 : 1 / n;
+    };
     const teamScores = fixedTeamPairs.map(team => {
       let totalDelta = 0;
       for (const playerId of team) {
         const standing = standings.find(s => s.user.id === playerId);
-        if (standing) totalDelta += standing.scoresDelta;
+        if (standing) totalDelta += standing.scoresDelta * memberWeight(playerId);
       }
       return { team, totalDelta };
     });
@@ -378,10 +386,19 @@ function generateFixedTeamRatingRound(
   if (rankedTeams.length > neededTeams) {
     const allPlayerIds = rankedTeams.flat();
     const matchesPlayed = buildMatchesPlayed(allPlayerIds, previousRounds);
+    const overlapRt = !!game.allowUserInMultipleTeams;
+    const memberWeightRt = (playerId: string) => {
+      if (!overlapRt) return 1;
+      const n = fixedTeamPairs.filter(t => t.includes(playerId)).length;
+      return n <= 1 ? 1 : 1 / n;
+    };
     const teamPlayed = rankedTeams.map((team, rank) => ({
       team,
       rank,
-      played: Math.max(...team.map(id => matchesPlayed.get(id) || 0)),
+      played: team.reduce(
+        (sum, id) => sum + (matchesPlayed.get(id) || 0) * memberWeightRt(id),
+        0
+      ),
       random: Math.random(),
     }));
     teamPlayed.sort((a, b) => {
@@ -402,13 +419,18 @@ function generateFixedTeamRatingRound(
     const teamB = rankedTeams[i * 2 + 1];
 
     if (teamA && teamB) {
-      matches.push({
-        id: createId(),
-        teamA,
-        teamB,
-        sets: cloneSets(initialSets),
-        courtId: sortedCourts[i]?.courtId,
-      });
+      matches.push(
+        attachFixedTeamIdsToMatch(
+          {
+            id: createId(),
+            teamA,
+            teamB,
+            sets: cloneSets(initialSets),
+            courtId: sortedCourts[i]?.courtId,
+          },
+          game
+        )
+      );
     }
   }
 

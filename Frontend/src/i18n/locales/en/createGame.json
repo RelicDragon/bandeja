@@ -134,6 +134,17 @@
       "descriptionOn": "Partners stay the same for the whole event.",
       "descriptionOff": "Pairs may change from round to round."
     },
+    "allowUserInMultipleTeams": {
+      "title": "Same player on multiple fixed teams",
+      "helper": "Allows one person to be selected on more than one pair. Rotation and some league or standings logic may count them in unusual ways; turn off fixed teams to reset this.",
+      "editInSettingsHint": "You are editing Settings in the card below. Use the switch there for this option, then tap Save. When you leave edit mode, you can change it again from Game setup above.",
+      "tapEditHint": "Tap Edit on this card, then turn the switch and tap Save.",
+      "saveAfterChangeHint": "Turn the switch, then tap Save (top or bottom of this card). Your Game setup card shows this option again after you finish editing.",
+      "note": {
+        "false": "Each player can only be on one fixed pair.",
+        "true": "A player may appear on several fixed pairs at once."
+      }
+    },
     "gameName": "Game Name",
     "gameNameTournament": "Tournament Name",
     "gameNameLeague": "League Name",

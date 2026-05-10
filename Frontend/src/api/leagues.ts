@@ -8,6 +8,7 @@ export interface CreateLeagueRequest {
   cityId: string;
   clubId?: string;
   hasFixedTeams?: boolean;
+  allowUserInMultipleTeams?: boolean;
   season: {
     name: string;
     minLevel: number;

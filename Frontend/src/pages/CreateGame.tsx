@@ -71,6 +71,9 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
     (initialGameData?.genderTeams as GenderTeam) ?? 'ANY',
   );
   const [hasFixedTeams, setHasFixedTeams] = useState<boolean>(initialGameData?.hasFixedTeams ?? false);
+  const [allowUserInMultipleTeams, setAllowUserInMultipleTeams] = useState<boolean>(
+    initialGameData?.allowUserInMultipleTeams ?? false,
+  );
   const [gameName, setGameName] = useState<string>(initialGameData?.name || '');
   const [comments, setComments] = useState<string>(initialGameData?.description || '');
   const [priceTotal, setPriceTotal] = useState<number | undefined>(initialGameData?.priceTotal ?? undefined);
@@ -350,6 +353,8 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         gameData.affectsRating = isRatingGame;
         gameData.resultsByAnyone = entityType === 'TOURNAMENT' ? false : resultsByAnyone;
         gameData.hasFixedTeams = hasFixedTeams;
+        gameData.allowUserInMultipleTeams =
+          maxParticipants === 2 || !hasFixedTeams ? false : allowUserInMultipleTeams;
         gameData.pointsPerWin = setup.pointsPerWin;
         gameData.pointsPerLoose = setup.pointsPerLoose;
         gameData.pointsPerTie = setup.pointsPerTie;
@@ -445,6 +450,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
     }
     if (num === 2) {
       setHasFixedTeams(false);
+      setAllowUserInMultipleTeams(false);
     }
   };
 
@@ -493,7 +499,13 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
               genderTeams,
               hasFixedTeams,
               onGenderTeamsChange: setGenderTeams,
-              onHasFixedTeamsChange: setHasFixedTeams,
+              onHasFixedTeamsChange: (v) => {
+                setHasFixedTeams(v);
+                if (!v) setAllowUserInMultipleTeams(false);
+              },
+              allowUserInMultipleTeams:
+                maxParticipants === 2 ? false : allowUserInMultipleTeams,
+              onAllowUserInMultipleTeamsChange: setAllowUserInMultipleTeams,
               genderSwitchLayoutId: 'createGameFormatCardTeams',
             }}
           />

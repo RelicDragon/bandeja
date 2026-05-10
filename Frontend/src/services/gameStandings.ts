@@ -565,8 +565,13 @@ export function calculateGameStandings(
     }
 
     const teamScoresMap = new Map<string, TeamScore>();
+    const fixedTeamsList = game.fixedTeams;
+    const userTeamCount = (uid: string) =>
+      fixedTeamsList.filter(ft => ft.players.some(p => p.userId === uid)).length;
+    const statWeight = (uid: string) =>
+      !game.allowUserInMultipleTeams || userTeamCount(uid) <= 1 ? 1 : 1 / userTeamCount(uid);
 
-    for (const fixedTeam of game.fixedTeams) {
+    for (const fixedTeam of fixedTeamsList) {
       const teamPlayerIds = fixedTeam.players.map(p => p.userId);
       const teamPlayerStandings = standings.filter(s => teamPlayerIds.includes(s.user.id));
       
@@ -593,14 +598,24 @@ export function calculateGameStandings(
         teamId: fixedTeam.id,
         teamNumber: fixedTeam.teamNumber,
         playerIds: teamPlayerIds,
-        matchesWon: Math.max(...teamPlayerStats.map(s => s.matchesWon)),
-        wins: Math.max(...teamPlayerStats.map(s => s.wins)),
-        ties: Math.max(...teamPlayerStats.map(s => s.ties)),
-        losses: Math.max(...teamPlayerStats.map(s => s.losses)),
-        totalPoints: teamPlayerStats.reduce((sum: number, s) => sum + s.scoresMade, 0),
-        scoresDelta: teamPlayerStats.reduce((sum: number, s) => sum + s.scoresDelta, 0),
+        matchesWon: teamPlayerStats.reduce(
+          (sum, s) => sum + s.matchesWon * statWeight(s.userId),
+          0
+        ),
+        wins: teamPlayerStats.reduce((sum, s) => sum + s.wins * statWeight(s.userId), 0),
+        ties: teamPlayerStats.reduce((sum, s) => sum + s.ties * statWeight(s.userId), 0),
+        losses: teamPlayerStats.reduce((sum, s) => sum + s.losses * statWeight(s.userId), 0),
+        totalPoints: teamPlayerStats.reduce(
+          (sum: number, s) => sum + s.scoresMade * statWeight(s.userId),
+          0
+        ),
+        scoresDelta: teamPlayerStats.reduce(
+          (sum: number, s) => sum + s.scoresDelta * statWeight(s.userId),
+          0
+        ),
         pointsEarned: teamPlayerStats.reduce((sum: number, s) => {
-          return sum + (s.wins * pointsPerWin + s.ties * pointsPerTie + s.losses * pointsPerLoose);
+          const rowPts = s.wins * pointsPerWin + s.ties * pointsPerTie + s.losses * pointsPerLoose;
+          return sum + rowPts * statWeight(s.userId);
         }, 0),
       };
 
@@ -708,7 +723,7 @@ export function calculateGameStandings(
       for (const playerId of team.playerIds) {
         const standing = standings.find(s => s.user.id === playerId);
         if (standing) {
-          standing.place = position;
+          standing.place = standing.place === 0 ? position : Math.min(standing.place, position);
         } else {
           console.warn(`[CALCULATE GAME STANDINGS] Player ${playerId} in team ${team.teamId} (teamNumber: ${team.teamNumber}) has no standing, cannot assign position`);
         }

@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { ParticipantRole } from '@prisma/client';
+import { ParticipantRole, Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
@@ -48,10 +48,20 @@ export class GameUpdateService {
 
     const game = await prisma.game.findUnique({
       where: { id },
-      select: { maxParticipants: true, hasFixedTeams: true, entityType: true, genderTeams: true },
+      select: {
+        maxParticipants: true,
+        hasFixedTeams: true,
+        entityType: true,
+        genderTeams: true,
+        allowUserInMultipleTeams: true,
+      },
     });
 
-    const maxParticipants = data.maxParticipants !== undefined ? data.maxParticipants : game!.maxParticipants;
+    if (!game) {
+      throw new ApiError(404, 'Game not found');
+    }
+
+    const maxParticipants = data.maxParticipants !== undefined ? data.maxParticipants : game.maxParticipants;
     if (data.maxParticipants !== undefined) {
       const actor = await prisma.user.findUnique({
         where: { id: userId },
@@ -61,19 +71,24 @@ export class GameUpdateService {
         jwtIsAdmin: isAdmin,
         actor,
         maxParticipants,
-        entityType: game!.entityType,
+        entityType: game.entityType,
       });
     }
-    const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams !== undefined ? data.hasFixedTeams : game!.hasFixedTeams || false);
+    const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams !== undefined ? data.hasFixedTeams : game.hasFixedTeams || false);
 
     const updateData: any = { ...data };
     if (maxParticipants === 2) {
       updateData.hasFixedTeams = false;
+      updateData.allowUserInMultipleTeams = false;
     } else if (data.hasFixedTeams !== undefined) {
       updateData.hasFixedTeams = hasFixedTeams;
     }
 
-    if (game!.entityType === 'TOURNAMENT') {
+    if (!hasFixedTeams) {
+      updateData.allowUserInMultipleTeams = false;
+    }
+
+    if (game.entityType === 'TOURNAMENT') {
       updateData.resultsByAnyone = false;
     }
 
@@ -160,7 +175,7 @@ export class GameUpdateService {
     }
 
     if (data.genderTeams !== undefined) {
-      if (game!.entityType !== 'GAME' && game!.entityType !== 'TOURNAMENT' && game!.entityType !== 'LEAGUE' && game!.entityType !== 'LEAGUE_SEASON') {
+      if (game.entityType !== 'GAME' && game.entityType !== 'TOURNAMENT' && game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON') {
         throw new ApiError(400, 'Gender teams can only be set for GAME, TOURNAMENT, LEAGUE, or LEAGUE_SEASON entity types');
       }
       if (data.genderTeams === 'MIX_PAIRS' && !(maxParticipants >= 4 && maxParticipants % 2 === 0)) {
@@ -486,18 +501,69 @@ export class GameUpdateService {
 
     delete updateData.resultsRoundGenV2;
 
-    await prisma.game.update({
-      where: { id },
-      data: updateData,
-      include: {
-        participants: {
-          include: {
-            user: {
-              select: USER_SELECT_FIELDS,
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw(Prisma.sql`SELECT id FROM "Game" WHERE id = ${id} FOR UPDATE`);
+
+      const locked = await tx.game.findUnique({
+        where: { id },
+        select: {
+          maxParticipants: true,
+          hasFixedTeams: true,
+          allowUserInMultipleTeams: true,
+        },
+      });
+      if (!locked) {
+        throw new ApiError(404, 'Game not found');
+      }
+
+      const nextMax =
+        updateData.maxParticipants !== undefined ? updateData.maxParticipants : locked.maxParticipants;
+      const nextHasFixed =
+        nextMax === 2
+          ? false
+          : updateData.hasFixedTeams !== undefined
+            ? updateData.hasFixedTeams
+            : locked.hasFixedTeams;
+      const nextAllowUserInMultipleTeams =
+        nextMax === 2 || !nextHasFixed
+          ? false
+          : updateData.allowUserInMultipleTeams !== undefined
+            ? Boolean(updateData.allowUserInMultipleTeams)
+            : locked.allowUserInMultipleTeams;
+
+      const needsOverlapValidation =
+        !nextAllowUserInMultipleTeams &&
+        (data.allowUserInMultipleTeams !== undefined ||
+          data.maxParticipants !== undefined ||
+          data.hasFixedTeams !== undefined);
+
+      if (needsOverlapValidation) {
+        const teamsCheck = await tx.gameTeam.findMany({
+          where: { gameId: id },
+          select: { players: { select: { userId: true } } },
+        });
+        const allTeamPlayerIds = teamsCheck.flatMap((t) => t.players.map((p) => p.userId));
+        if (allTeamPlayerIds.length !== new Set(allTeamPlayerIds).size) {
+          throw new ApiError(
+            400,
+            'Cannot require one team per player while the same player is on more than one fixed team. Remove duplicate assignments first.'
+          );
+        }
+      }
+
+      await tx.game.update({
+        where: { id },
+        data: updateData,
+        include: {
+          participants: {
+            include: {
+              user: {
+                select: USER_SELECT_FIELDS,
+              },
             },
           },
         },
-      },
+      });
     });
 
     await GameReadinessService.updateGameReadiness(id);

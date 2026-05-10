@@ -461,7 +461,7 @@ export const GameCard = ({
               </div>
             )}
           </>
-        <div className="absolute -top-2 -right-3 flex items-center gap-0 z-20">
+        <div className="absolute top-1 right-1 flex items-center gap-0 z-20">
           {canAccessChat && showChatIndicator && (
             <button
               type="button"

@@ -36,6 +36,7 @@ async function collectDesiredTeamPlayerIds(leagueSeasonId: string): Promise<stri
     }),
   ]);
 
+  /** Dedupes identical 2-player rosters; distinct pairs like [p1,p2] vs [p1,p3] stay separate keys. */
   const byKey = new Map<string, string[]>();
 
   const ingestFixedTeams = (fixedTeams: GameTeamWithPlayers[]) => {
@@ -128,6 +129,8 @@ export class LeagueSyncService {
     const useTeamPath = desiredTeamPlayerIds.length > 0;
 
     return prisma.$transaction(async (tx) => {
+      await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${leagueSeasonId}::text))`);
+
       const standings = await tx.leagueParticipant.findMany({
         where: { leagueSeasonId },
         include: {
@@ -197,57 +200,20 @@ export class LeagueSyncService {
 
             const resolvedGroupId = await resolveLeagueGroupIdForTeam(tx, leagueSeasonId, teamPlayerIds);
 
-            let reusableParticipant: (typeof standings)[number] | null = null;
-            let bestOverlap = -1;
-
-            for (const standing of standings) {
-              if (
-                consumedParticipantIds.has(standing.id) ||
-                standing.participantType !== LeagueParticipantType.TEAM ||
-                !standing.leagueTeam
-              ) {
-                continue;
-              }
-              const standingPlayerIds = standing.leagueTeam.players.map((p) => p.userId);
-              const overlap = standingPlayerIds.filter((id) => teamPlayerIds.includes(id)).length;
-              if (overlap > bestOverlap) {
-                bestOverlap = overlap;
-                reusableParticipant = standing;
-              }
-            }
-
-            if (reusableParticipant && reusableParticipant.leagueTeamId) {
-              const oldTeamId = reusableParticipant.leagueTeamId;
-              await tx.leagueParticipant.update({
-                where: { id: reusableParticipant.id },
-                data: {
-                  leagueTeamId: newLeagueTeam.id,
-                  ...(resolvedGroupId != null ? { currentGroupId: resolvedGroupId } : {}),
-                },
-              });
-              consumedParticipantIds.add(reusableParticipant.id);
-              const othersOnOldTeam = await tx.leagueParticipant.count({
-                where: { leagueTeamId: oldTeamId },
-              });
-              if (othersOnOldTeam === 0) {
-                await tx.leagueTeam.delete({ where: { id: oldTeamId } });
-              }
-            } else {
-              await tx.leagueParticipant.create({
-                data: {
-                  leagueId,
-                  leagueSeasonId,
-                  participantType: LeagueParticipantType.TEAM,
-                  leagueTeamId: newLeagueTeam.id,
-                  currentGroupId: resolvedGroupId ?? undefined,
-                  points: 0,
-                  wins: 0,
-                  ties: 0,
-                  losses: 0,
-                  scoreDelta: 0,
-                },
-              });
-            }
+            await tx.leagueParticipant.create({
+              data: {
+                leagueId,
+                leagueSeasonId,
+                participantType: LeagueParticipantType.TEAM,
+                leagueTeamId: newLeagueTeam.id,
+                currentGroupId: resolvedGroupId ?? undefined,
+                points: 0,
+                wins: 0,
+                ties: 0,
+                losses: 0,
+                scoreDelta: 0,
+              },
+            });
           }
         }
 

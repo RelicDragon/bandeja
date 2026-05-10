@@ -97,6 +97,11 @@ async function testConvertAmount() {
 
   try {
     const eurCents = 10000; // 100 EUR
+    const rateToRsd = await CurrencyService.getExchangeRate('EUR', 'RSD');
+    const rateToRub = await CurrencyService.getExchangeRate('EUR', 'RUB');
+    const expectRsd = Math.round(eurCents * rateToRsd);
+    const expectRub = Math.round(eurCents * rateToRub);
+
     const rsdCents = await CurrencyService.convertAmount(eurCents, 'EUR', 'RSD');
     const rubCents = await CurrencyService.convertAmount(eurCents, 'EUR', 'RUB');
     const sameCents = await CurrencyService.convertAmount(eurCents, 'EUR', 'EUR');
@@ -105,11 +110,13 @@ async function testConvertAmount() {
     info(`${eurCents / 100} EUR = ${rubCents / 100} RUB`);
     info(`${eurCents / 100} EUR = ${sameCents / 100} EUR`);
 
-    if (rsdCents > 1000000 && rubCents > 900000 && sameCents === eurCents) {
+    if (rsdCents === expectRsd && rubCents === expectRub && sameCents === eurCents) {
       success('Convert amount test passed');
       return true;
     } else {
-      error('Convert amount test failed - unexpected conversion results');
+      error(
+        `Convert amount test failed — expected RSD cents ${expectRsd}, RUB cents ${expectRub}; got ${rsdCents}, ${rubCents}`,
+      );
       return false;
     }
   } catch (err) {

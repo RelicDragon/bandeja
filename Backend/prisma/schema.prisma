@@ -326,6 +326,7 @@ model Game {
   hasBookedCourt         Boolean             @default(false)
   afterGameGoToBar       Boolean             @default(false)
   hasFixedTeams          Boolean             @default(false)
+  allowUserInMultipleTeams Boolean           @default(false)
   genderTeams            GenderTeam          @default(ANY)
   teamsReady             Boolean             @default(false)
   participantsReady      Boolean             @default(false)

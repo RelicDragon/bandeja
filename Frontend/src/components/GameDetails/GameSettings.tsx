@@ -26,6 +26,7 @@ interface GameSettingsProps {
     hasBookedCourt: boolean;
     afterGameGoToBar: boolean;
     hasFixedTeams: boolean;
+    allowUserInMultipleTeams: boolean;
     genderTeams: GenderTeam;
     description: string;
   };
@@ -372,6 +373,52 @@ export const GameSettings = ({
               )}
             </div>
           )}
+          {!isTraining &&
+            game?.entityType !== 'BAR' &&
+            game.maxParticipants > 2 &&
+            (isEditMode ? editFormData.hasFixedTeams : game?.hasFixedTeams) && (
+              <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                    {t('createGame.allowUserInMultipleTeams.title')}
+                  </span>
+                  <div className="flex-shrink-0">
+                    <ToggleSwitch
+                      checked={
+                        isEditMode
+                          ? editFormData.allowUserInMultipleTeams
+                          : game?.allowUserInMultipleTeams ?? false
+                      }
+                      onChange={(checked) => onFormDataChange({ allowUserInMultipleTeams: checked })}
+                      disabled={!isEditMode}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  {t('createGame.allowUserInMultipleTeams.helper')}
+                </p>
+                {!isEditMode ? (
+                  <p className="text-xs text-primary-700 dark:text-primary-300 mb-1">
+                    {t('createGame.allowUserInMultipleTeams.tapEditHint')}
+                  </p>
+                ) : (
+                  <p className="text-xs text-primary-700 dark:text-primary-300 mb-1">
+                    {t('createGame.allowUserInMultipleTeams.saveAfterChangeHint')}
+                  </p>
+                )}
+                {showNotes && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t(
+                      (isEditMode
+                        ? editFormData.allowUserInMultipleTeams
+                        : game?.allowUserInMultipleTeams)
+                        ? 'createGame.allowUserInMultipleTeams.note.true'
+                        : 'createGame.allowUserInMultipleTeams.note.false',
+                    )}
+                  </p>
+                )}
+              </div>
+            )}
         </div>
 
         {/* Name - only show if in edit mode */}

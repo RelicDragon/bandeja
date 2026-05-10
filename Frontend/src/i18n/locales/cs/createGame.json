@@ -133,6 +133,17 @@
       "descriptionOn": "Partneři zůstávají stejní po celou dobu akce.",
       "descriptionOff": "Páry se mohou mezi koly měnit."
     },
+    "allowUserInMultipleTeams": {
+      "title": "Stejný hráč ve více fixních týmech",
+      "helper": "Umožní jedné osobě být ve více párech. Rotace a některá liga nebo pořadí je mohou počítat neobvykle; vypněte fixní týmy pro reset.",
+      "editInSettingsHint": "Upravujete Nastavení v kartě níže. Použijte tam přepínač pro tuto volbu a klepněte na Uložit. Po ukončení úprav ji znovu změníte v nastavení formátu hry výše.",
+      "tapEditHint": "Klepněte na Upravit na této kartě, zapněte/vypněte přepínač a klepněte na Uložit.",
+      "saveAfterChangeHint": "Změňte přepínač a klepněte na Uložit (nahoře nebo dole na kartě). Formát hry tuto volbu znovu ukáže po dokončení úprav.",
+      "note": {
+        "false": "Každý hráč může být jen v jednom fixním páru.",
+        "true": "Hráč může být najednou ve více fixních párech."
+      }
+    },
     "gameName": "Název zápasu",
     "gameNameTournament": "Název turnaje",
     "gameNameLeague": "Název ligy",

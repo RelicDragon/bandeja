@@ -115,6 +115,10 @@ export class LeagueCreateService {
                 maxTotalPointsPerSet: gameSeasonData.maxTotalPointsPerSet ?? 0,
               }),
         hasFixedTeams: data.hasFixedTeams ?? false,
+        allowUserInMultipleTeams:
+          maxParticipants === 2 || !data.hasFixedTeams
+            ? false
+            : Boolean(data.allowUserInMultipleTeams),
         cityId: data.cityId,
         clubId: data.clubId || null,
         startTime: startDate,

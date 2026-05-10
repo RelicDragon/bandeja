@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import type { GenGame, GenMatch, GenRound } from './types';
-import { cloneSets } from './matchUtils';
+import { attachFixedTeamIdsToMatch, cloneSets } from './matchUtils';
 import { generateFixedRound } from './fixed';
 import { generateRandomRound } from './random';
 import { generateRatingRound } from './rating';
@@ -108,12 +108,27 @@ export class RoundGenerator {
         const team2 = game.fixedTeams.find((t) => t.teamNumber === 2);
 
         if (team1 && team2 && team1.players.length > 0 && team2.players.length > 0) {
-          matches.push({
-            id: randomUUID(),
-            teamA: team1.players.map((p) => p.userId),
-            teamB: team2.players.map((p) => p.userId),
-            sets: cloneSets(initialSets),
-          });
+          const teamAIds = team1.players.map((p) => p.userId);
+          const teamBIds = team2.players.map((p) => p.userId);
+          if (game.allowUserInMultipleTeams) {
+            const sideA = new Set(teamAIds);
+            if (teamBIds.some((id) => sideA.has(id))) {
+              throw new Error(
+                'Automatic first round cannot pair fixed teams that share a player when overlap across teams is allowed'
+              );
+            }
+          }
+          matches.push(
+            attachFixedTeamIdsToMatch(
+              {
+                id: randomUUID(),
+                teamA: teamAIds,
+                teamB: teamBIds,
+                sets: cloneSets(initialSets),
+              },
+              game
+            )
+          );
         }
       } else {
         const matchSetups = createTwoOnTwoMatches(players);

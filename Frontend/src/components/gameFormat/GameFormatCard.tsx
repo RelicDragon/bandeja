@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pencil, HelpCircle } from 'lucide-react';
+import { Pencil, HelpCircle, Users, Info } from 'lucide-react';
 import { EntityType } from '@/types';
 import { GameFormatSummary } from './GameFormatSummary';
 import { GameFormatDetails } from './GameFormatDetails';
@@ -13,6 +13,7 @@ import {
 } from './GameFormatTeamsFields';
 import { gameFormatFixedTeamsToggleVisible, gameFormatGenderVisible } from './gameFormatTeamsVisibility';
 import { GameFormatRacketIcon } from './GameFormatRacketIcon';
+import { ToggleSwitch } from '@/components/ToggleSwitch';
 
 interface GameFormatCardProps {
   entityType: EntityType;
@@ -25,6 +26,8 @@ interface GameFormatCardProps {
   /** When set, overrides `teams?.hasFixedTeams` for showing the fixed-teams panel */
   fixedTeamsPanelOpen?: boolean;
   showWizardButton?: boolean;
+  /** When true, omit allow-multi row (e.g. draft lives in Game Settings). */
+  suppressAllowMultiToggle?: boolean;
 }
 
 export const GameFormatCard = ({
@@ -36,6 +39,7 @@ export const GameFormatCard = ({
   fixedTeamsPanel,
   fixedTeamsPanelOpen,
   showWizardButton = true,
+  suppressAllowMultiToggle = false,
 }: GameFormatCardProps) => {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
@@ -158,6 +162,50 @@ export const GameFormatCard = ({
           className="border-t border-gray-100 dark:border-gray-800 px-4 py-3"
         />
       )}
+
+      {showFixedToggle &&
+        !suppressAllowMultiToggle &&
+        teams?.hasFixedTeams &&
+        teams.onAllowUserInMultipleTeamsChange &&
+        teams.participantCount > 2 && (
+          <div className="border-t border-gray-100 dark:border-gray-800 px-4 py-3">
+            <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1">
+              <Users size={15} className="mt-0.5 shrink-0 text-primary-600 dark:text-primary-400" aria-hidden />
+              <span className="min-w-0 text-sm font-semibold text-gray-900 dark:text-white">
+                {t('createGame.allowUserInMultipleTeams.title')}
+              </span>
+              <div className="shrink-0 justify-self-end pt-0.5">
+                <ToggleSwitch
+                  checked={teams.allowUserInMultipleTeams ?? false}
+                  onChange={teams.onAllowUserInMultipleTeamsChange}
+                  disabled={readOnly}
+                />
+              </div>
+              <p className="col-span-3 min-w-0 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                {t('createGame.allowUserInMultipleTeams.helper')}
+              </p>
+            </div>
+          </div>
+        )}
+
+      {showFixedToggle &&
+        suppressAllowMultiToggle &&
+        teams?.hasFixedTeams &&
+        teams.participantCount > 2 && (
+          <div className="border-t border-gray-100 dark:border-gray-800 px-4 py-3">
+            <div className="flex gap-2.5">
+              <Info size={16} className="mt-0.5 shrink-0 text-primary-600 dark:text-primary-400" aria-hidden />
+              <div className="min-w-0 space-y-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {t('createGame.allowUserInMultipleTeams.title')}
+                </p>
+                <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                  {t('createGame.allowUserInMultipleTeams.editInSettingsHint')}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
       <AnimatePresence initial={false}>
         {showFixedTeamsPanel && (

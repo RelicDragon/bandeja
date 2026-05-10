@@ -17,9 +17,11 @@ interface GameFormatSectionProps {
   game: Game;
   canEdit: boolean;
   onGameUpdate: (game: Game) => void;
+  /** Hide allow-multi on format card while Settings edit mode uses the draft (single control). */
+  suppressAllowMultiToggle?: boolean;
 }
 
-export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSectionProps) => {
+export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMultiToggle }: GameFormatSectionProps) => {
   const { t } = useTranslation();
   const formatMaxParticipants = game.entityType === 'LEAGUE_SEASON' ? 4 : game.maxParticipants;
   const gameFormat = useGameFormat({
@@ -33,13 +35,25 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
   const hasFixedTeams = maxParticipants === 2 ? false : (game.hasFixedTeams || false);
 
   const persistTeams = useCallback(
-    async (patch: { genderTeams?: GenderTeam; hasFixedTeams?: boolean }) => {
+    async (patch: { genderTeams?: GenderTeam; hasFixedTeams?: boolean; allowUserInMultipleTeams?: boolean }) => {
       if (!canEdit) return;
       try {
         const body: Partial<Game> = {};
         if (patch.genderTeams !== undefined) body.genderTeams = patch.genderTeams;
         if (patch.hasFixedTeams !== undefined) {
           body.hasFixedTeams = game.maxParticipants === 2 ? false : patch.hasFixedTeams;
+          if (patch.hasFixedTeams === false) {
+            body.allowUserInMultipleTeams = false;
+          }
+        }
+        if (patch.allowUserInMultipleTeams !== undefined) {
+          const fixedOn =
+            game.maxParticipants === 2
+              ? false
+              : patch.hasFixedTeams !== undefined
+                ? patch.hasFixedTeams
+                : (game.hasFixedTeams ?? false);
+          body.allowUserInMultipleTeams = fixedOn ? patch.allowUserInMultipleTeams : false;
         }
         await gamesApi.update(game.id, body);
         const response = await gamesApi.getById(game.id);
@@ -49,7 +63,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
         toast.error(t(errorMessage, { defaultValue: errorMessage }));
       }
     },
-    [canEdit, game.id, game.maxParticipants, onGameUpdate, t],
+    [canEdit, game.id, game.maxParticipants, game.hasFixedTeams, onGameUpdate, t],
   );
 
   const teamsForCard: GameFormatTeamsBinding | undefined = gameFormatTeamsFieldsVisible(
@@ -65,6 +79,11 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
         },
         onHasFixedTeamsChange: (v) => {
           if (canEdit) void persistTeams({ hasFixedTeams: v });
+        },
+        allowUserInMultipleTeams:
+          maxParticipants === 2 ? false : (game.allowUserInMultipleTeams ?? false),
+        onAllowUserInMultipleTeamsChange: (v) => {
+          if (canEdit) void persistTeams({ allowUserInMultipleTeams: v });
         },
         genderSwitchLayoutId: 'gameFormatDetailsCardTeams',
         readOnly: !canEdit,
@@ -138,6 +157,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
         teams={teamsForCard}
         fixedTeamsPanel={fixedTeamsPanel}
         fixedTeamsPanelOpen={hasFixedTeams}
+        suppressAllowMultiToggle={suppressAllowMultiToggle}
       />
       {isWizardOpen && (
         <GameFormatWizard

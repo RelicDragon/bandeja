@@ -1,6 +1,14 @@
+import { RoundType } from '@prisma/client';
 import prisma from '../../../config/database';
 import { ApiError } from '../../../utils/ApiError';
 import { createLeagueGame } from '../gameCreation.util';
+import {
+  everyMatchupUntracked,
+  findMinCostMaxMatching,
+  matchupKeyFromSigs,
+  teamPlayerSig,
+} from './fixedTeamsRoundMatching';
+import { pairIndicesForRoundRobinSlot, roundsInSingleRoundRobinCycle } from './fixedTeamsRoundRobin';
 
 interface TempTeam {
   participant1Id: string;
@@ -56,7 +64,8 @@ export class TeamForRoundGeneration {
         group.id,
         leagueSeasonId,
         leagueRoundId,
-        seasonGame
+        seasonGame,
+        round.orderIndex
       );
     }
 
@@ -108,7 +117,8 @@ export class TeamForRoundGeneration {
     groupId: string,
     leagueSeasonId: string,
     leagueRoundId: string,
-    seasonGame: any
+    seasonGame: any,
+    leagueRoundOrderIndex: number
   ) {
     const participants = await prisma.leagueParticipant.findMany({
       where: {
@@ -154,7 +164,8 @@ export class TeamForRoundGeneration {
         leagueSeasonId,
         groupId,
         leagueRoundId,
-        seasonGame
+        seasonGame,
+        leagueRoundOrderIndex
       );
       return;
     }
@@ -225,7 +236,8 @@ export class TeamForRoundGeneration {
     leagueSeasonId: string,
     groupId: string,
     leagueRoundId: string,
-    seasonGame: any
+    seasonGame: any,
+    leagueRoundOrderIndex: number
   ) {
     const fixedTeams: FixedLeagueTeamEntry[] = participants
       .filter((p) => p.participantType === 'TEAM' && p.leagueTeam?.players?.length)
@@ -246,7 +258,7 @@ export class TeamForRoundGeneration {
     }
 
     const allPlayerIds = fixedTeams.flatMap((team) => team.playerIds);
-    if (new Set(allPlayerIds).size !== allPlayerIds.length) {
+    if (!seasonGame.allowUserInMultipleTeams && new Set(allPlayerIds).size !== allPlayerIds.length) {
       throw new ApiError(400, 'Fixed teams in a group cannot share players');
     }
 
@@ -254,40 +266,58 @@ export class TeamForRoundGeneration {
       return;
     }
 
-    const { playedOpponents } = await this.getPlayedTeamPairs(leagueSeasonId, groupId, leagueRoundId);
-    const availableTeams = [...fixedTeams];
-    const games: Array<{ team1: FixedLeagueTeamEntry; team2: FixedLeagueTeamEntry }> = [];
+    const sortedTeams = [...fixedTeams].sort((a, b) =>
+      String(a.participant.id).localeCompare(String(b.participant.id))
+    );
+    const sigs = sortedTeams.map((t) => teamPlayerSig(t.playerIds));
+    const playCounts = await this.getRegularSeasonFixedTeamMatchupCounts(
+      leagueSeasonId,
+      groupId,
+      leagueRoundId
+    );
 
-    while (availableTeams.length >= 2) {
-      const team1 = availableTeams[0];
-      let bestOpponentIndex = 1;
-      let bestUnNovelty = Infinity;
+    const priorRegularRounds = await prisma.leagueRound.count({
+      where: {
+        leagueSeasonId,
+        roundType: RoundType.REGULAR,
+        orderIndex: { lt: leagueRoundOrderIndex },
+      },
+    });
 
-      for (let i = 1; i < availableTeams.length; i++) {
-        const team2 = availableTeams[i];
-        const unNovelty = this.getFixedTeamsOpponentUnNoveltyScore(team1.playerIds, team2.playerIds, playedOpponents);
-        if (unNovelty < bestUnNovelty) {
-          bestUnNovelty = unNovelty;
-          bestOpponentIndex = i;
-        }
-      }
+    const usePureRoundRobin = everyMatchupUntracked(sigs, playCounts);
+    let pairIndices: [number, number][];
 
-      games.push({
-        team1,
-        team2: availableTeams[bestOpponentIndex],
+    if (usePureRoundRobin) {
+      const cycle = roundsInSingleRoundRobinCycle(sortedTeams.length);
+      const slot = cycle > 0 ? priorRegularRounds % cycle : 0;
+      pairIndices = pairIndicesForRoundRobinSlot(sortedTeams.length, slot);
+      console.log(
+        `[LEAGUE ROUND GEN] Group ${groupId}: fixed RR circle slot ${slot}/${cycle} (prior REGULAR ${priorRegularRounds}), ${pairIndices.length} matches`
+      );
+    } else {
+      pairIndices = findMinCostMaxMatching(sortedTeams.length, (i, j) => {
+        const a = sigs[i];
+        const b = sigs[j];
+        if (!a || !b || a === b) return 0;
+        return playCounts.get(matchupKeyFromSigs(a, b)) ?? 0;
       });
-
-      availableTeams.splice(bestOpponentIndex, 1);
-      availableTeams.splice(0, 1);
+      console.log(
+        `[LEAGUE ROUND GEN] Group ${groupId}: fixed adaptive matching (${pairIndices.length} matches, history-aware)`
+      );
     }
 
-    for (const game of games) {
+    for (const [ia, ib] of pairIndices) {
+      const team1 = sortedTeams[ia];
+      const team2 = sortedTeams[ib];
+      if (!team1 || !team2) {
+        throw new ApiError(500, 'Pairing produced invalid team indices');
+      }
       await createLeagueGame({
         leagueRoundId,
         seasonGame,
         leagueSeasonId,
-        team1PlayerIds: game.team1.playerIds,
-        team2PlayerIds: game.team2.playerIds,
+        team1PlayerIds: team1.playerIds,
+        team2PlayerIds: team2.playerIds,
         leagueGroupId: groupId,
         maxParticipants: 4,
         minParticipants: 4,
@@ -295,6 +325,47 @@ export class TeamForRoundGeneration {
         affectsRating: true,
       });
     }
+  }
+
+  private static async getRegularSeasonFixedTeamMatchupCounts(
+    leagueSeasonId: string,
+    groupId: string,
+    currentRoundId: string
+  ): Promise<Map<string, number>> {
+    const previousGames = await prisma.game.findMany({
+      where: {
+        parentId: leagueSeasonId,
+        leagueGroupId: groupId,
+        leagueRoundId: { not: currentRoundId },
+        hasFixedTeams: true,
+        leagueRound: { roundType: RoundType.REGULAR },
+      },
+      include: {
+        fixedTeams: {
+          orderBy: { teamNumber: 'asc' },
+          include: {
+            players: {
+              select: { userId: true },
+            },
+          },
+        },
+      },
+    });
+
+    const counts = new Map<string, number>();
+    for (const game of previousGames) {
+      if (game.fixedTeams.length < 2) continue;
+      const a = game.fixedTeams[0].players
+        .map((p) => p.userId)
+        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
+      const b = game.fixedTeams[1].players
+        .map((p) => p.userId)
+        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
+      if (a.length !== 2 || b.length !== 2) continue;
+      const key = matchupKeyFromSigs([...a].sort().join(','), [...b].sort().join(','));
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return counts;
   }
 
   private static async getPlayedTeamPairs(
@@ -347,6 +418,7 @@ export class TeamForRoundGeneration {
 
           for (const p1 of team1Players) {
             for (const p2 of team2Players) {
+              if (p1 === p2) continue;
               const key = [p1, p2].sort().join(',');
               playedOpponents.set(key, (playedOpponents.get(key) ?? 0) + 1);
             }
@@ -512,26 +584,13 @@ export class TeamForRoundGeneration {
     team2: TeamPair,
     playedOpponents: Map<string, number>
   ): number {
-    const getCount = (a: string, b: string) => playedOpponents.get([a, b].sort().join(',')) ?? 0;
+    const getCount = (a: string, b: string) =>
+      a === b ? 0 : playedOpponents.get([a, b].sort().join(',')) ?? 0;
     return (
       getCount(team1.player1Id, team2.player1Id) +
       getCount(team1.player1Id, team2.player2Id) +
       getCount(team1.player2Id, team2.player1Id) +
       getCount(team1.player2Id, team2.player2Id)
-    );
-  }
-
-  private static getFixedTeamsOpponentUnNoveltyScore(
-    team1PlayerIds: string[],
-    team2PlayerIds: string[],
-    playedOpponents: Map<string, number>
-  ): number {
-    const getCount = (a: string, b: string) => playedOpponents.get([a, b].sort().join(',')) ?? 0;
-    return (
-      getCount(team1PlayerIds[0], team2PlayerIds[0]) +
-      getCount(team1PlayerIds[0], team2PlayerIds[1]) +
-      getCount(team1PlayerIds[1], team2PlayerIds[0]) +
-      getCount(team1PlayerIds[1], team2PlayerIds[1])
     );
   }
 

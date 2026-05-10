@@ -147,6 +147,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
     hasBookedCourt: false,
     afterGameGoToBar: false,
     hasFixedTeams: false,
+    allowUserInMultipleTeams: false,
     genderTeams: 'ANY' as GenderTeam,
     description: '',
   });
@@ -364,7 +365,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   }, [game, user]);
 
   useEffect(() => {
-    if (game) {
+    if (game && !isEditMode) {
       setEditFormData({
         clubId: game.clubId || '',
         courtId: game.courtId || '',
@@ -377,11 +378,15 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
         hasBookedCourt: game.hasBookedCourt || false,
         afterGameGoToBar: game.afterGameGoToBar || false,
         hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
+        allowUserInMultipleTeams:
+          game.maxParticipants === 2 || !(game.hasFixedTeams || false)
+            ? false
+            : (game.allowUserInMultipleTeams ?? false),
         genderTeams: (game.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS',
         description: game.description || '',
       });
     }
-  }, [game]);
+  }, [game, isEditMode]);
 
   const handleJoin = async () => {
     if (!id) return;
@@ -843,6 +848,10 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
           hasBookedCourt: game.hasBookedCourt || false,
           afterGameGoToBar: game.afterGameGoToBar || false,
           hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
+          allowUserInMultipleTeams:
+            game.maxParticipants === 2 || !(game.hasFixedTeams || false)
+              ? false
+              : (game.allowUserInMultipleTeams ?? false),
           genderTeams: (game.genderTeams || 'ANY') as GenderTeam,
           description: game.description || '',
         });
@@ -877,6 +886,11 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
         updateData.affectsRating = editFormData.affectsRating;
         updateData.resultsByAnyone = editFormData.resultsByAnyone;
         updateData.hasFixedTeams = game?.maxParticipants === 2 ? false : editFormData.hasFixedTeams;
+        const allowMulti =
+          game?.maxParticipants === 2 || !editFormData.hasFixedTeams
+            ? false
+            : editFormData.allowUserInMultipleTeams;
+        updateData.allowUserInMultipleTeams = allowMulti;
       }
 
       if (game?.entityType === 'GAME' || game?.entityType === 'TOURNAMENT' || game?.entityType === 'LEAGUE') {
@@ -901,7 +915,11 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
   };
 
   const handleFormDataChange = (data: Partial<typeof editFormData>) => {
-    setEditFormData({...editFormData, ...data});
+    const next = { ...editFormData, ...data };
+    if (data.hasFixedTeams === false) {
+      next.allowUserInMultipleTeams = false;
+    }
+    setEditFormData(next);
   };
 
   const canDeleteGame = () => {
@@ -1289,7 +1307,6 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
           )}
 
           {user &&
-            !isLeague &&
             game.status !== 'ARCHIVED' &&
             game.entityType !== 'BAR' &&
             game.entityType !== 'TRAINING' && (
@@ -1298,6 +1315,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
               game={game}
               canEdit={canEdit}
               onGameUpdate={setGame}
+              suppressAllowMultiToggle={isEditMode && canViewSettings}
             />
           )}
 
@@ -1326,7 +1344,7 @@ export const GameDetailsContent = ({ scrollContainerRef, selectedGameChatId, onC
 
           {user && <UserGameNotes gameId={game.id} initialContent={game.userNote} />}
 
-          {user && !isLeague && canViewSettings && (
+          {user && canViewSettings && (
             <div id="game-settings">
               <GameSettings
                 game={game}

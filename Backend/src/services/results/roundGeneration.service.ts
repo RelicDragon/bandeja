@@ -60,6 +60,8 @@ async function persistGeneratedMatches(
     teamB: string[];
     sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>;
     courtId?: string;
+    fixedTeamIdA?: string;
+    fixedTeamIdB?: string;
   }>
 ) {
   const round = await tx.round.create({
@@ -74,12 +76,18 @@ async function persistGeneratedMatches(
             create: [
               {
                 teamNumber: 1,
+                ...(matchData.fixedTeamIdA
+                  ? { metadata: { gameTeamId: matchData.fixedTeamIdA } as Prisma.InputJsonValue }
+                  : {}),
                 players: {
                   create: (matchData.teamA ?? []).map((userId) => ({ userId })),
                 },
               },
               {
                 teamNumber: 2,
+                ...(matchData.fixedTeamIdB
+                  ? { metadata: { gameTeamId: matchData.fixedTeamIdB } as Prisma.InputJsonValue }
+                  : {}),
                 players: {
                   create: (matchData.teamB ?? []).map((userId) => ({ userId })),
                 },

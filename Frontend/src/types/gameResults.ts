@@ -16,6 +16,8 @@ export interface Match {
   sets: SetResult[];
   winnerId?: 'teamA' | 'teamB' | null;
   courtId?: string;
+  fixedTeamIdA?: string;
+  fixedTeamIdB?: string;
   timer?: MatchTimerSnapshot;
 }
 

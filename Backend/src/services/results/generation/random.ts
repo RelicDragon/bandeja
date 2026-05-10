@@ -12,6 +12,7 @@ import {
   getEligibleParticipants,
   getNumMatches,
   getFilteredFixedTeams,
+  attachFixedTeamIdsToMatch,
   cloneSets,
   pairKey,
   InitialSets,
@@ -26,7 +27,7 @@ function buildLastTeamRound(rounds: Round[]): Map<string, number> {
     for (const match of rounds[r].matches) {
       if (!hasPlayers(match)) continue;
       for (const team of [match.teamA, match.teamB]) {
-        if (team.length >= 2) last.set(pairKey(team[0], team[1]), r);
+        if (team.length >= 2 && team[0] !== team[1]) last.set(pairKey(team[0], team[1]), r);
       }
     }
   }
@@ -40,6 +41,7 @@ function buildLastOpponentRound(rounds: Round[]): Map<string, number> {
       if (!hasPlayers(match)) continue;
       for (const a of match.teamA) {
         for (const b of match.teamB) {
+          if (a === b) continue;
           last.set(pairKey(a, b), r);
         }
       }
@@ -148,6 +150,7 @@ function scoreConfig(
     }
     for (const a of match.teamA) {
       for (const b of match.teamB) {
+        if (a === b) continue;
         const frequency = opponentCounts.get(pairKey(a, b)) || 0;
         const s = pairStaleness(a, b, lastOpponentRound, currentRound);
         if (s < minOpp) minOpp = s;
@@ -235,10 +238,12 @@ function tryAllMatchings(
       let minCross = Infinity;
       for (const a of first) {
         for (const b of opp) {
+          if (a === b) continue;
           const s = pairStaleness(a, b, lastOpponentRound, currentRound);
           if (s < minCross) minCross = s;
         }
       }
+      if (!Number.isFinite(minCross)) minCross = 0;
       candidates.push({ originalIdx: i, minCross });
     }
     candidates.sort((a, b) => b.minCross - a.minCross);
@@ -283,6 +288,42 @@ function optimizeOpponentsForPairs(
 
 // ── Fixed teams ────────────────────────────────────────────────────────
 
+function rosterDisjointTeams(a: string[], b: string[]): boolean {
+  const s = new Set(a);
+  return !b.some(id => s.has(id));
+}
+
+/** `teams` has length 2 * numMatches; can they be split into legal pairings? */
+function subsetAdmitsFullRound(teams: string[][], numMatches: number): boolean {
+  if (teams.length !== numMatches * 2) return false;
+  const n = teams.length;
+  const used = new Set<number>();
+
+  function search(): boolean {
+    if (used.size === n) return true;
+    let a = -1;
+    for (let i = 0; i < n; i++) {
+      if (!used.has(i)) {
+        a = i;
+        break;
+      }
+    }
+    if (a < 0) return true;
+    for (let b = 0; b < n; b++) {
+      if (a === b || used.has(b)) continue;
+      if (!rosterDisjointTeams(teams[a]!, teams[b]!)) continue;
+      used.add(a);
+      used.add(b);
+      if (search()) return true;
+      used.delete(a);
+      used.delete(b);
+    }
+    return false;
+  }
+
+  return search();
+}
+
 function selectTeamsForRound(
   teams: string[][],
   matchesPlayed: Map<string, number>,
@@ -304,7 +345,44 @@ function selectTeamsForRound(
     return a.lastPlayed - b.lastPlayed;
   });
 
-  return scored.slice(0, neededTeams).map(s => s.team);
+  const numMatches = neededTeams / 2;
+  if (!Number.isInteger(numMatches) || numMatches <= 0) {
+    return scored.slice(0, neededTeams).map(s => s.team);
+  }
+
+  const firstSlice = scored.slice(0, neededTeams).map(s => s.team);
+  if (subsetAdmitsFullRound(firstSlice, numMatches)) return firstSlice;
+
+  const pickedIdx: number[] = [];
+  function dfsCombo(start: number): string[][] | null {
+    if (pickedIdx.length === neededTeams) {
+      const sub = pickedIdx.map(i => scored[i]!.team);
+      return subsetAdmitsFullRound(sub, numMatches) ? sub : null;
+    }
+    for (let i = start; i < scored.length; i++) {
+      pickedIdx.push(i);
+      const found = dfsCombo(i + 1);
+      if (found) return found;
+      pickedIdx.pop();
+    }
+    return null;
+  }
+
+  const smallEnough = scored.length <= 26 && neededTeams <= 12;
+  const fromCombo = smallEnough ? dfsCombo(0) : null;
+  if (fromCombo) return fromCombo;
+
+  for (let t = 0; t < 220; t++) {
+    const trial = shuffle([...scored]);
+    trial.sort((a, b) => {
+      if (a.totalPlayed !== b.totalPlayed) return a.totalPlayed - b.totalPlayed;
+      return a.lastPlayed - b.lastPlayed;
+    });
+    const cand = trial.slice(0, neededTeams).map(s => s.team);
+    if (subsetAdmitsFullRound(cand, numMatches)) return cand;
+  }
+
+  return firstSlice;
 }
 
 function generateFixedTeamMatchups(
@@ -326,15 +404,18 @@ function generateFixedTeamMatchups(
     for (let j = i + 1; j < fixedTeams.length; j++) {
       const tA = fixedTeams[i];
       const tB = fixedTeams[j];
+      if (!rosterDisjointTeams(tA, tB)) continue;
       let minOpp = Infinity;
       let totalOpp = 0;
       for (const a of tA) {
         for (const b of tB) {
+          if (a === b) continue;
           const s = pairStaleness(a, b, lastOpponentRound, currentRound);
           if (s < minOpp) minOpp = s;
           totalOpp += s;
         }
       }
+      if (!Number.isFinite(minOpp)) minOpp = 0;
       candidates.push({ teamAIdx: i, teamBIdx: j, minOppStaleness: minOpp, totalOppStaleness: totalOpp });
     }
   }
@@ -392,13 +473,18 @@ export function generateRandomRound(
     const selectedTeams = selectTeamsForRound(fixedTeamPairs, matchesPlayed, lastRoundPlayed, neededTeams);
     const matchups = generateFixedTeamMatchups(selectedTeams, lastOpponentRound, currentRound, numMatches);
 
-    return matchups.map((m, idx) => ({
-      id: createId(),
-      teamA: m.teamA,
-      teamB: m.teamB,
-      sets: cloneSets(initialSets),
-      courtId: sortedCourts[idx]?.courtId,
-    }));
+    return matchups.map((m, idx) =>
+      attachFixedTeamIdsToMatch(
+        {
+          id: createId(),
+          teamA: m.teamA,
+          teamB: m.teamB,
+          sets: cloneSets(initialSets),
+          courtId: sortedCourts[idx]?.courtId,
+        },
+        game
+      )
+    );
   }
 
   // ── Dynamic teams path ──

@@ -31,6 +31,8 @@ export function generateFixedRound(
         teamB: [...prevMatch.teamB],
         sets: cloneSets(initialSets),
         courtId: firstRound.matches?.[i]?.courtId,
+        fixedTeamIdA: prevMatch.fixedTeamIdA,
+        fixedTeamIdB: prevMatch.fixedTeamIdB,
       });
     }
   } else {

@@ -132,6 +132,17 @@
       "descriptionOn": "Las parejas se mantienen iguales durante todo el evento.",
       "descriptionOff": "Las parejas pueden cambiar de ronda en ronda."
     },
+    "allowUserInMultipleTeams": {
+      "title": "Mismo jugador en varias parejas fijas",
+      "helper": "Permite que una persona esté en más de una pareja fija. La rotación y algunas ligas o clasificaciones pueden contar de forma rara; desactiva parejas fijas para reiniciar esto.",
+      "editInSettingsHint": "Estás editando Ajustes en la tarjeta de abajo. Usa el interruptor allí para esta opción y pulsa Guardar. Al salir del modo edición podrás cambiarla otra vez desde Configuración de partido arriba.",
+      "tapEditHint": "Pulsa Editar en esta tarjeta, activa o desactiva el interruptor y pulsa Guardar.",
+      "saveAfterChangeHint": "Cambia el interruptor y pulsa Guardar (arriba o abajo en esta tarjeta). La configuración de partido volverá a mostrar esta opción al terminar de editar.",
+      "note": {
+        "false": "Cada jugador solo puede estar en una pareja fija.",
+        "true": "Un jugador puede aparecer en varias parejas fijas a la vez."
+      }
+    },
     "gameName": "Nombre del juego",
     "gameNameTournament": "Nombre del Torneo",
     "gameNameLeague": "Nombre de la Liga",

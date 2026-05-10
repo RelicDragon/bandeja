@@ -120,10 +120,14 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
     throw new ApiError(400, 'League game requires at least 2 distinct participants');
   }
 
-  const team1Set = new Set(normalizedTeam1PlayerIds);
-  const hasOverlap = normalizedTeam2PlayerIds.some((userId) => team1Set.has(userId));
-  if (hasOverlap) {
-    throw new ApiError(400, 'Fixed teams must not share participants');
+  const allowUserInMultipleTeams =
+    maxParticipants === 2 ? false : Boolean(seasonGame.allowUserInMultipleTeams);
+  if (!allowUserInMultipleTeams) {
+    const team1Set = new Set(normalizedTeam1PlayerIds);
+    const hasOverlap = normalizedTeam2PlayerIds.some((userId) => team1Set.has(userId));
+    if (hasOverlap) {
+      throw new ApiError(400, 'Fixed teams must not share participants');
+    }
   }
   const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
   const startTime = new Date();
@@ -150,6 +154,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       hasBookedCourt: false,
       afterGameGoToBar: false,
       hasFixedTeams: true,
+      allowUserInMultipleTeams,
       genderTeams: seasonGame.genderTeams || 'ANY',
       fixedNumberOfSets: seasonGame.fixedNumberOfSets ?? 0,
       maxTotalPointsPerSet: seasonGame.maxTotalPointsPerSet ?? 0,
@@ -251,9 +256,27 @@ export async function createLeaguePlayoffGame(
   const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000);
   const participantCount = Math.max(userIds.length, 4);
   const hasFixedTeams = Boolean(teams?.length);
+  const allowUserInMultipleTeams = Boolean(seasonGame.allowUserInMultipleTeams);
 
   if (userIds.length === 0) {
     throw new ApiError(400, 'Playoff game requires at least one valid participant');
+  }
+
+  if (hasFixedTeams && teams?.length && !allowUserInMultipleTeams) {
+    const seen = new Set<string>();
+    for (const row of teams) {
+      const ids = Array.from(
+        new Set(
+          row.filter((userId): userId is string => typeof userId === 'string' && userId.trim().length > 0)
+        )
+      );
+      for (const id of ids) {
+        if (seen.has(id)) {
+          throw new ApiError(400, 'Playoff fixed teams must not share participants');
+        }
+        seen.add(id);
+      }
+    }
   }
 
   const game = await db.game.create({
@@ -277,6 +300,7 @@ export async function createLeaguePlayoffGame(
       hasBookedCourt: false,
       afterGameGoToBar: false,
       hasFixedTeams,
+      allowUserInMultipleTeams,
       genderTeams: seasonGame.genderTeams || 'ANY',
       fixedNumberOfSets: gameSetup?.fixedNumberOfSets ?? template.fixedNumberOfSets,
       maxTotalPointsPerSet: gameSetup?.maxTotalPointsPerSet ?? seasonGame.maxTotalPointsPerSet ?? 0,

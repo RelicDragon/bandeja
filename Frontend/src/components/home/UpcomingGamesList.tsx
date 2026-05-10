@@ -206,6 +206,7 @@ const UpcomingGameRow = ({
   const clubName = game.court?.club?.name || game.club?.name;
   const playingCount = (game.participants ?? []).filter((p) => p.status === 'PLAYING').length;
   const showEntityType = game.entityType !== 'GAME';
+  const showTime = !(game.entityType === 'LEAGUE_SEASON' && game.timeIsSet === false);
 
   const timeDisplay = getGameTimeDisplay({
     game,
@@ -257,15 +258,17 @@ const UpcomingGameRow = ({
               {translateCity(game.city.id, game.city.name, game.city.country)}
             </span>
           )}
-          <span
-            className={
-              isStale
-                ? 'text-sm font-bold text-amber-950 dark:text-amber-50 truncate'
-                : 'text-sm font-medium text-gray-900 dark:text-white truncate'
-            }
-          >
-            {timeDisplay.primaryText}
-          </span>
+          {showTime && (
+            <span
+              className={
+                isStale
+                  ? 'text-sm font-bold text-amber-950 dark:text-amber-50 truncate'
+                  : 'text-sm font-medium text-gray-900 dark:text-white truncate'
+              }
+            >
+              {timeDisplay.primaryText}
+            </span>
+          )}
           {clubName && (
             <>
               <span className="text-gray-300 dark:text-gray-600 text-xs">•</span>

@@ -129,7 +129,14 @@ export class LeagueBroadcastService {
           )
         : [];
 
-      const allUsers = [...participants, ...fixedTeamPlayers];
+      const usersById = new Map<string, (typeof participants)[number]>();
+      for (const u of participants) {
+        if (u) usersById.set(u.id, u);
+      }
+      for (const u of fixedTeamPlayers) {
+        if (u) usersById.set(u.id, u);
+      }
+      const allUsers = [...usersById.values()];
 
       for (const user of allUsers) {
         if (!user || notifiedUserIds.has(user.id)) {

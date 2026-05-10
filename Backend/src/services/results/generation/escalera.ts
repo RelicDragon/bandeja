@@ -1,5 +1,10 @@
 import { randomUUID } from 'crypto';
-import type { GenMatch as Match, GenRound as Round, GenGame as Game } from './types';
+import type {
+  GenMatch as Match,
+  GenRound as Round,
+  GenGame as Game,
+  GenFixedTeam,
+} from './types';
 
 const createId = () => randomUUID();
 import {
@@ -8,6 +13,8 @@ import {
   getFilteredFixedTeams,
   buildMatchesPlayed,
   hasPlayers,
+  resolveFixedTeamRosterFromGame,
+  attachFixedTeamIdsToMatch,
   cloneSets,
   type InitialSets,
 } from './matchUtils';
@@ -658,32 +665,169 @@ function teamKey(team: string[]): string {
   return [...team].sort().join(',');
 }
 
+function teamsPlayerDisjoint(teamA: string[], teamB: string[]): boolean {
+  const bs = new Set(teamB);
+  return !teamA.some(p => bs.has(p));
+}
+
+function collectUsedTeamKeysForPairings(
+  pairings: Array<{ teamA: string[]; teamB: string[] }>
+): Set<string> {
+  const s = new Set<string>();
+  for (const p of pairings) {
+    s.add(teamKey(p.teamA));
+    s.add(teamKey(p.teamB));
+  }
+  return s;
+}
+
+/**
+ * When fixed teams share players, ladder/bench steps can place the same user on both sides.
+ * Repair by swapping in an unused team or exchanging sides between courts.
+ */
+function repairCourtPairingsPlayerDisjoint(
+  courtPairings: Array<{ teamA: string[]; teamB: string[] }>,
+  fixedTeamPairs: string[][]
+): boolean {
+  const trySingleReplace = (): boolean => {
+    for (let i = 0; i < courtPairings.length; i++) {
+      const p = courtPairings[i];
+      if (teamsPlayerDisjoint(p.teamA, p.teamB)) continue;
+      for (const side of ['teamA', 'teamB'] as const) {
+        const other = side === 'teamA' ? p.teamB : p.teamA;
+        const used = collectUsedTeamKeysForPairings(courtPairings);
+        used.delete(teamKey(p[side]));
+        for (const cand of fixedTeamPairs) {
+          const ck = teamKey(cand);
+          if (used.has(ck)) continue;
+          if (!teamsPlayerDisjoint(cand, other)) continue;
+          p[side] = [...cand];
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  const tryCrossCourtSwap = (): boolean => {
+    for (let i = 0; i < courtPairings.length; i++) {
+      if (teamsPlayerDisjoint(courtPairings[i].teamA, courtPairings[i].teamB)) continue;
+      const pi = courtPairings[i];
+      for (let j = i + 1; j < courtPairings.length; j++) {
+        const pj = courtPairings[j];
+        const attempts: Array<() => void> = [
+          () => {
+            const t = pi.teamA;
+            pi.teamA = pj.teamA;
+            pj.teamA = t;
+          },
+          () => {
+            const t = pi.teamA;
+            pi.teamA = pj.teamB;
+            pj.teamB = t;
+          },
+          () => {
+            const t = pi.teamB;
+            pi.teamB = pj.teamA;
+            pj.teamA = t;
+          },
+          () => {
+            const t = pi.teamB;
+            pi.teamB = pj.teamB;
+            pj.teamB = t;
+          },
+        ];
+        for (const fn of attempts) {
+          const snapI = { teamA: [...pi.teamA], teamB: [...pi.teamB] };
+          const snapJ = { teamA: [...pj.teamA], teamB: [...pj.teamB] };
+          fn();
+          if (teamsPlayerDisjoint(pi.teamA, pi.teamB) && teamsPlayerDisjoint(pj.teamA, pj.teamB)) {
+            return true;
+          }
+          pi.teamA = snapI.teamA;
+          pi.teamB = snapI.teamB;
+          pj.teamA = snapJ.teamA;
+          pj.teamB = snapJ.teamB;
+        }
+      }
+    }
+    return false;
+  };
+
+  for (let guard = 0; guard < 100; guard++) {
+    if (courtPairings.every(p => teamsPlayerDisjoint(p.teamA, p.teamB))) return true;
+    if (trySingleReplace()) continue;
+    if (tryCrossCourtSwap()) continue;
+    break;
+  }
+  return courtPairings.every(p => teamsPlayerDisjoint(p.teamA, p.teamB));
+}
+
+function pickDisjointTeamPairs(teams: string[][], pairCount: number): Array<[string[], string[]]> {
+  const pool = teams.map(t => [...t]);
+  const out: Array<[string[], string[]]> = [];
+  while (out.length < pairCount && pool.length >= 2) {
+    let found = false;
+    for (let i = 0; i < pool.length && !found; i++) {
+      for (let j = i + 1; j < pool.length; j++) {
+        if (teamsPlayerDisjoint(pool[i], pool[j])) {
+          out.push([[...pool[i]], [...pool[j]]]);
+          pool.splice(j, 1);
+          pool.splice(i, 1);
+          found = true;
+        }
+      }
+    }
+    if (!found) break;
+  }
+  return out;
+}
+
 function countTeamRoundsPlayed(
   allTeams: string[][],
-  previousRounds: Round[]
+  previousRounds: Round[],
+  allowUserInMultipleTeams: boolean | undefined,
+  fixedTeams: GenFixedTeam[] | undefined
 ): Map<string, number> {
-  const playerToTeam = new Map<string, string>();
-  for (const team of allTeams) {
-    const key = teamKey(team);
-    for (const playerId of team) {
-      playerToTeam.set(playerId, key);
-    }
-  }
-
   const counts = new Map<string, number>();
   for (const team of allTeams) {
     counts.set(teamKey(team), 0);
+  }
+
+  const playerToTeam = new Map<string, string>();
+  if (!allowUserInMultipleTeams) {
+    for (const team of allTeams) {
+      const key = teamKey(team);
+      for (const playerId of team) {
+        playerToTeam.set(playerId, key);
+      }
+    }
   }
 
   for (const round of previousRounds) {
     const counted = new Set<string>();
     for (const match of round.matches) {
       if (!hasPlayers(match)) continue;
-      for (const playerId of [...match.teamA, ...match.teamB]) {
-        const key = playerToTeam.get(playerId);
-        if (key && !counted.has(key)) {
-          counted.add(key);
-          counts.set(key, (counts.get(key) || 0) + 1);
+      if (allowUserInMultipleTeams) {
+        const ka = teamKey(
+          resolveFixedTeamRosterFromGame(match.teamA, fixedTeams, match.fixedTeamIdA, allTeams)
+        );
+        const kb = teamKey(
+          resolveFixedTeamRosterFromGame(match.teamB, fixedTeams, match.fixedTeamIdB, allTeams)
+        );
+        for (const key of [ka, kb]) {
+          if (counts.has(key) && !counted.has(key)) {
+            counted.add(key);
+            counts.set(key, (counts.get(key) || 0) + 1);
+          }
+        }
+      } else {
+        for (const playerId of [...match.teamA, ...match.teamB]) {
+          const key = playerToTeam.get(playerId);
+          if (key && !counted.has(key)) {
+            counted.add(key);
+            counts.set(key, (counts.get(key) || 0) + 1);
+          }
         }
       }
     }
@@ -695,9 +839,16 @@ function countTeamRoundsPlayed(
 function selectTeamsWithRotation(
   rankedTeams: string[][],
   needed: number,
-  previousRounds: Round[]
+  previousRounds: Round[],
+  allowUserInMultipleTeams: boolean | undefined,
+  fixedTeams: GenFixedTeam[] | undefined
 ): string[][] {
-  const roundsPlayed = countTeamRoundsPlayed(rankedTeams, previousRounds);
+  const roundsPlayed = countTeamRoundsPlayed(
+    rankedTeams,
+    previousRounds,
+    allowUserInMultipleTeams,
+    fixedTeams
+  );
 
   const indexed = rankedTeams.map((team, rank) => ({
     team,
@@ -742,22 +893,21 @@ function generateFixedTeamEscaleraRound(
 
     let rankedTeams = teamLevels.map(t => t.team);
     if (rankedTeams.length > neededTeams) {
-      rankedTeams = selectTeamsWithRotation(rankedTeams, neededTeams, previousRounds);
+      rankedTeams = selectTeamsWithRotation(
+        rankedTeams,
+        neededTeams,
+        previousRounds,
+        game.allowUserInMultipleTeams,
+        game.fixedTeams
+      );
     }
 
-    return buildFixedTeamMatches(rankedTeams, sortedCourts, initialSets, numMatches);
+    return buildFixedTeamMatches(game, rankedTeams, sortedCourts, initialSets, numMatches);
   }
 
   const previousRound = previousRounds[previousRounds.length - 1];
   if (!previousRound.matches || previousRound.matches.length === 0) return [];
   if (!isRoundComplete(previousRound)) return [];
-
-  const teamMap = new Map<string, string[]>();
-  for (const team of fixedTeamPairs) {
-    for (const playerId of team) {
-      teamMap.set(playerId, team);
-    }
-  }
 
   const courtTeamResults: Array<{
     winnerTeam: string[];
@@ -774,25 +924,42 @@ function generateFixedTeamEscaleraRound(
 
     let winnerPlayers: string[];
     let loserPlayers: string[];
+    let winnerWasTeamA: boolean;
 
     if (teamAScore === teamBScore) {
       if (Math.random() < 0.5) {
         winnerPlayers = match.teamA;
         loserPlayers = match.teamB;
+        winnerWasTeamA = true;
       } else {
         winnerPlayers = match.teamB;
         loserPlayers = match.teamA;
+        winnerWasTeamA = false;
       }
     } else if (teamAScore > teamBScore) {
       winnerPlayers = match.teamA;
       loserPlayers = match.teamB;
+      winnerWasTeamA = true;
     } else {
       winnerPlayers = match.teamB;
       loserPlayers = match.teamA;
+      winnerWasTeamA = false;
     }
 
-    const winnerTeam = teamMap.get(winnerPlayers[0]) || [...winnerPlayers];
-    const loserTeam = teamMap.get(loserPlayers[0]) || [...loserPlayers];
+    const winnerHint = winnerWasTeamA ? match.fixedTeamIdA : match.fixedTeamIdB;
+    const loserHint = winnerWasTeamA ? match.fixedTeamIdB : match.fixedTeamIdA;
+    const winnerTeam = resolveFixedTeamRosterFromGame(
+      winnerPlayers,
+      game.fixedTeams,
+      winnerHint,
+      fixedTeamPairs
+    );
+    const loserTeam = resolveFixedTeamRosterFromGame(
+      loserPlayers,
+      game.fixedTeams,
+      loserHint,
+      fixedTeamPairs
+    );
 
     if (!winnerTeam.every(id => eligibleIds.has(id))) continue;
     if (!loserTeam.every(id => eligibleIds.has(id))) continue;
@@ -840,7 +1007,12 @@ function generateFixedTeamEscaleraRound(
   const benchTeams = fixedTeamPairs.filter(t => !activeTeamKeys.has(teamKey(t)));
 
   if (benchTeams.length > 0) {
-    const teamRoundsPlayed = countTeamRoundsPlayed(fixedTeamPairs, previousRounds);
+    const teamRoundsPlayed = countTeamRoundsPlayed(
+      fixedTeamPairs,
+      previousRounds,
+      game.allowUserInMultipleTeams,
+      game.fixedTeams
+    );
 
     const benchSorted = [...benchTeams].sort(
       (a, b) => (teamRoundsPlayed.get(teamKey(a)) || 0) - (teamRoundsPlayed.get(teamKey(b)) || 0)
@@ -877,21 +1049,31 @@ function generateFixedTeamEscaleraRound(
     }
   }
 
+  if (!repairCourtPairingsPlayerDisjoint(courtPairings, fixedTeamPairs)) {
+    return [];
+  }
+
   const matches: Match[] = [];
   for (let i = 0; i < Math.min(courtPairings.length, numMatches); i++) {
-    matches.push({
-      id: createId(),
-      teamA: courtPairings[i].teamA,
-      teamB: courtPairings[i].teamB,
-      sets: cloneSets(initialSets),
-      courtId: sortedCourts[i]?.courtId,
-    });
+    matches.push(
+      attachFixedTeamIdsToMatch(
+        {
+          id: createId(),
+          teamA: courtPairings[i].teamA,
+          teamB: courtPairings[i].teamB,
+          sets: cloneSets(initialSets),
+          courtId: sortedCourts[i]?.courtId,
+        },
+        game
+      )
+    );
   }
 
   return matches;
 }
 
 function buildFixedTeamMatches(
+  game: Game,
   rankedTeams: string[][],
   sortedCourts: Array<{ courtId?: string; order: number }>,
   initialSets: InitialSets,
@@ -899,20 +1081,25 @@ function buildFixedTeamMatches(
 ): Match[] {
   const matches: Match[] = [];
   const numTeamMatches = Math.min(numMatches, Math.floor(rankedTeams.length / 2));
+  if (numTeamMatches <= 0) return [];
 
-  for (let i = 0; i < numTeamMatches; i++) {
-    const teamA = rankedTeams[i * 2];
-    const teamB = rankedTeams[i * 2 + 1];
+  const pairs = pickDisjointTeamPairs(rankedTeams, numTeamMatches);
+  if (pairs.length < numTeamMatches) return [];
 
-    if (teamA && teamB) {
-      matches.push({
-        id: createId(),
-        teamA,
-        teamB,
-        sets: cloneSets(initialSets),
-        courtId: sortedCourts[i]?.courtId,
-      });
-    }
+  for (let i = 0; i < pairs.length; i++) {
+    const [teamA, teamB] = pairs[i];
+    matches.push(
+      attachFixedTeamIdsToMatch(
+        {
+          id: createId(),
+          teamA,
+          teamB,
+          sets: cloneSets(initialSets),
+          courtId: sortedCourts[i]?.courtId,
+        },
+        game
+      )
+    );
   }
 
   return matches;

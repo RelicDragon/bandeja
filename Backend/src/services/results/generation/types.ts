@@ -51,6 +51,9 @@ export interface GenMatch {
   sets: GenSetResult[];
   winnerId?: 'teamA' | 'teamB' | null;
   courtId?: string;
+  /** `GameTeam.id` when this match side is a known fixed roster (overlap-safe identity). */
+  fixedTeamIdA?: string;
+  fixedTeamIdB?: string;
 }
 
 export interface GenRound {
@@ -62,6 +65,7 @@ export interface GenGame {
   id: string;
   participants: GenParticipant[];
   hasFixedTeams?: boolean;
+  allowUserInMultipleTeams?: boolean;
   fixedTeams?: GenFixedTeam[];
   gameCourts?: GenGameCourt[];
   matchGenerationType?: string | null;

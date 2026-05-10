@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { MoreHorizontal } from 'lucide-react';
@@ -12,41 +11,8 @@ import type { EntityType } from '@/types';
 import { getGameCardReactionTheme } from '@/utils/gameCardEntityTheme';
 import { EmojiQuickStrip, type ReactionEmojiPickSource } from '@/components/reactions/EmojiQuickStrip';
 import { frequentReactionStripFromStore } from '@/components/reactions/reactionPickerTypes';
-import { subscribeStripPortalScroll } from '@/utils/stripPortalScrollBus';
 
 type ReactionRow = { userId: string; emoji: string };
-
-function isDomSubtreeDisplayed(node: HTMLElement | null): boolean {
-  if (!node?.isConnected) return false;
-  const chk = node.checkVisibility as undefined | ((opts?: object) => boolean);
-  if (typeof chk === 'function') {
-    try {
-      return chk.call(node, {
-        opacityProperty: true,
-        visibilityProperty: true,
-        contentVisibilityAuto: true,
-      });
-    } catch {
-      /* fall through */
-    }
-  }
-  let el: HTMLElement | null = node;
-  while (el) {
-    const s = getComputedStyle(el);
-    if (s.display === 'none') return false;
-    if (s.visibility === 'hidden' || s.visibility === 'collapse') return false;
-    if (s.contentVisibility === 'hidden') return false;
-    const o = parseFloat(s.opacity);
-    if (!Number.isFinite(o) || o <= 0) return false;
-    el = el.parentElement;
-  }
-  return true;
-}
-
-function readNarrowViewport(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  return window.matchMedia('(max-width: 639px)').matches;
-}
 
 interface GameCardReactionsProps {
   entityType: EntityType;
@@ -68,94 +34,6 @@ export function GameCardReactions({
   const { getCurrentUserReaction, getReactionCounts } = useReactionSummary(reactions, currentUserId);
   const [pending, setPending] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerStyle, setPickerStyle] = useState<CSSProperties>({});
-  const [narrowViewport, setNarrowViewport] = useState(readNarrowViewport);
-  const narrowRef = useRef(narrowViewport);
-  narrowRef.current = narrowViewport;
-  const stripRef = useRef<HTMLDivElement | null>(null);
-  const anchorRef = useRef<HTMLDivElement | null>(null);
-  const lastStripLayoutRef = useRef<{ right: string; bottom: string; display: string } | null>(null);
-  const staticStripStylesRef = useRef(false);
-  const syncStripLayoutRef = useRef<() => void>(() => {});
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia('(max-width: 639px)');
-    const apply = () => setNarrowViewport(mq.matches);
-    mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
-  }, []);
-
-  const syncStripPortalLayout = useCallback(() => {
-    if (!narrowRef.current) return;
-    const anchor = anchorRef.current;
-    const node = stripRef.current;
-    if (!anchor || !node) return;
-    if (!isDomSubtreeDisplayed(anchor)) {
-      const last = lastStripLayoutRef.current;
-      if (last?.display === 'none') return;
-      lastStripLayoutRef.current = { right: '', bottom: '', display: 'none' };
-      node.style.display = 'none';
-      return;
-    }
-    const r = anchor.getBoundingClientRect();
-    const right = `${window.innerWidth - r.right}px`;
-    const bottom = `${window.innerHeight - r.bottom}px`;
-    const display = 'flex';
-    const last = lastStripLayoutRef.current;
-    if (last?.right === right && last?.bottom === bottom && last?.display === display) return;
-    lastStripLayoutRef.current = { right, bottom, display };
-
-    node.style.display = 'flex';
-    if (!staticStripStylesRef.current) {
-      staticStripStylesRef.current = true;
-      node.style.position = 'fixed';
-      node.style.flexDirection = 'row';
-      node.style.justifyContent = 'flex-end';
-      node.style.alignItems = 'flex-end';
-      node.style.zIndex = '45';
-    }
-    node.style.right = right;
-    node.style.bottom = bottom;
-  }, []);
-
-  syncStripLayoutRef.current = syncStripPortalLayout;
-
-  const setStripRefEl = useCallback((el: HTMLDivElement | null) => {
-    if (stripRef.current !== el) {
-      staticStripStylesRef.current = false;
-      lastStripLayoutRef.current = null;
-    }
-    stripRef.current = el;
-    if (el && narrowRef.current) queueMicrotask(() => syncStripLayoutRef.current());
-  }, []);
-
-  const portalMountRef = useRef<HTMLElement | null | undefined>(undefined);
-  if (typeof document !== 'undefined' && portalMountRef.current === undefined) {
-    portalMountRef.current = document.getElementById('root') ?? document.body;
-  }
-  const portalMount = portalMountRef.current ?? null;
-
-  const updatePickerPosition = useCallback(() => {
-    const el = stripRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    setPickerStyle({
-      bottom: window.innerHeight - r.top + 8,
-      right: Math.max(8, window.innerWidth - r.right),
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!pickerOpen) return;
-    updatePickerPosition();
-    window.addEventListener('resize', updatePickerPosition);
-    window.addEventListener('scroll', updatePickerPosition, true);
-    return () => {
-      window.removeEventListener('resize', updatePickerPosition);
-      window.removeEventListener('scroll', updatePickerPosition, true);
-    };
-  }, [pickerOpen, updatePickerPosition]);
 
   useEffect(() => {
     if (!pickerOpen) return;
@@ -232,16 +110,6 @@ export function GameCardReactions({
   const frequentEmojis = useReactionEmojiUsageStore(useShallow((s) => frequentReactionStripFromStore(s)));
   const otherReactionEntries = Object.entries(counts).filter(([emoji]) => userEmoji !== emoji);
 
-  useLayoutEffect(() => {
-    if (!narrowViewport) return;
-    return subscribeStripPortalScroll(() => syncStripLayoutRef.current());
-  }, [narrowViewport]);
-
-  useLayoutEffect(() => {
-    if (!narrowViewport) return;
-    syncStripLayoutRef.current();
-  }, [narrowViewport, reactions, pending, pickerOpen, userEmoji, otherReactionEntries.length]);
-
   const stripPanel = (
     <div className={`flex items-center gap-0 rounded-lg pl-0.5 pr-0.5 py-0 min-h-[28px] ${theme.panel}`}>
       <button
@@ -293,24 +161,14 @@ export function GameCardReactions({
     </div>
   );
 
-  const stripFixedPortal =
-    narrowViewport && portalMount
-      ? createPortal(
-          <div
-            ref={setStripRefEl}
-            className="pointer-events-auto flex gap-0.5"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            {stripPanel}
-          </div>,
-          portalMount
-        )
-      : null;
-
-  const pickerPortal =
-    pickerOpen && portalMount
-      ? createPortal(
+  return (
+    <>
+      <div
+        className="absolute z-30 flex items-center gap-0.5 pointer-events-auto -bottom-3 right-2"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        {pickerOpen && (
           <>
             <div
               role="presentation"
@@ -325,8 +183,7 @@ export function GameCardReactions({
               role="dialog"
               aria-modal="true"
               aria-label={t('chat.reactions.addReaction')}
-              className="fixed z-[150] flex min-w-[220px] max-w-[min(92vw,288px)] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-600 dark:bg-gray-800"
-              style={pickerStyle}
+              className="absolute bottom-[calc(100%+8px)] right-0 z-[150] flex min-w-[220px] max-w-[min(92vw,288px)] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-600 dark:bg-gray-800"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
             >
@@ -337,33 +194,10 @@ export function GameCardReactions({
                 disabled={pending}
               />
             </div>
-          </>,
-          portalMount
-        )
-      : null;
-
-  return (
-    <>
-      {stripFixedPortal}
-      {narrowViewport ? (
-        <div
-          ref={anchorRef}
-          className="pointer-events-none absolute bottom-0 right-0 size-0 translate-x-1 translate-y-1 overflow-visible"
-          aria-hidden
-        >
-          {pickerPortal}
-        </div>
-      ) : (
-        <div
-          ref={setStripRefEl}
-          className="absolute z-30 flex items-center gap-0.5 pointer-events-auto bottom-0 right-0 translate-x-1 translate-y-1"
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          {pickerPortal}
-          {stripPanel}
-        </div>
-      )}
+          </>
+        )}
+        {stripPanel}
+      </div>
     </>
   );
 }

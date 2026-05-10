@@ -1,4 +1,4 @@
-import type { GenGame as Game, GenMatch as Match, GenRound as Round } from './types';
+import type { GenGame as Game, GenMatch as Match, GenRound as Round, GenFixedTeam } from './types';
 
 export function shuffle<T>(arr: T[]): T[] {
   const result = [...arr];
@@ -81,6 +81,83 @@ export function pairKey(id1: string, id2: string): string {
   return id1 < id2 ? `${id1}:${id2}` : `${id2}:${id1}`;
 }
 
+export function rosterMultisetKey(ids: string[]): string {
+  return [...ids].sort().join('\x01');
+}
+
+export function resolveMatchSideToFixedTeamRoster(matchSide: string[], candidates: string[][]): string[] {
+  if (matchSide.length === 0 || candidates.length === 0) return [...matchSide];
+  const key = rosterMultisetKey(matchSide);
+  const found = candidates.find(t => rosterMultisetKey(t) === key);
+  return found ? [...found] : [...matchSide];
+}
+
+export function fixedTeamIdsForRosterPair(
+  teamA: string[],
+  teamB: string[],
+  fixedTeams: GenFixedTeam[] | undefined
+): Pick<Match, 'fixedTeamIdA' | 'fixedTeamIdB'> {
+  if (!fixedTeams?.length) return {};
+  const idForRoster = (roster: string[]): string | undefined => {
+    if (roster.length === 0) return undefined;
+    const k = rosterMultisetKey(roster);
+    const hits = fixedTeams.filter(
+      ft => rosterMultisetKey(ft.players.map(p => p.userId)) === k
+    );
+    if (hits.length === 0) return undefined;
+    if (hits.length === 1) return hits[0].id;
+    return [...hits].sort((a, b) => a.teamNumber - b.teamNumber)[0].id;
+  };
+  return {
+    fixedTeamIdA: idForRoster(teamA),
+    fixedTeamIdB: idForRoster(teamB),
+  };
+}
+
+export function attachFixedTeamIdsToMatch(match: Match, game: Game): Match {
+  if (!game.hasFixedTeams || !game.fixedTeams?.length) return match;
+  return { ...match, ...fixedTeamIdsForRosterPair(match.teamA, match.teamB, game.fixedTeams) };
+}
+
+export function resolveFixedTeamRosterFromGame(
+  matchSide: string[],
+  fixedTeams: GenFixedTeam[] | undefined,
+  hintFixedTeamId?: string | null,
+  stringCandidatesFallback?: string[][]
+): string[] {
+  if (matchSide.length === 0) return [];
+  if (fixedTeams?.length) {
+    if (hintFixedTeamId) {
+      const ft = fixedTeams.find(t => t.id === hintFixedTeamId);
+      if (ft) {
+        const sideK = rosterMultisetKey(matchSide);
+        const ftK = rosterMultisetKey(ft.players.map(p => p.userId));
+        if (sideK === ftK) {
+          return ft.players.map(p => p.userId);
+        }
+      }
+    }
+    const sideK = rosterMultisetKey(matchSide);
+    const hits = fixedTeams.filter(
+      ft => rosterMultisetKey(ft.players.map(p => p.userId)) === sideK
+    );
+    if (hits.length >= 1) {
+      const chosen =
+        hits.length === 1 ? hits[0] : [...hits].sort((a, b) => a.teamNumber - b.teamNumber)[0];
+      return chosen.players.map(p => p.userId);
+    }
+  }
+  if (stringCandidatesFallback?.length) {
+    return resolveMatchSideToFixedTeamRoster(matchSide, stringCandidatesFallback);
+  }
+  return [...matchSide];
+}
+
+export function opponentPairFrequency(map: Map<string, number>, a: string, b: string): number {
+  if (a === b) return 0;
+  return map.get(pairKey(a, b)) || 0;
+}
+
 export function buildPartnerCounts(rounds: Round[]): Map<string, number> {
   const counts = new Map<string, number>();
   for (const round of rounds) {
@@ -106,6 +183,7 @@ export function buildOpponentCounts(rounds: Round[]): Map<string, number> {
       if (!hasPlayers(match)) continue;
       for (const a of match.teamA) {
         for (const b of match.teamB) {
+          if (a === b) continue;
           const key = pairKey(a, b);
           counts.set(key, (counts.get(key) || 0) + 1);
         }

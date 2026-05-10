@@ -359,6 +359,7 @@ export interface Game {
   hasBookedCourt?: boolean;
   afterGameGoToBar?: boolean;
   hasFixedTeams?: boolean;
+  allowUserInMultipleTeams?: boolean;
   genderTeams?: GenderTeam;
   teamsReady?: boolean;
   participantsReady?: boolean;
