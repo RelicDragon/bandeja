@@ -276,12 +276,6 @@ export class TeamForRoundGeneration {
       String(a.participant.id).localeCompare(String(b.participant.id))
     );
     const sigs = sortedTeams.map((t) => teamPlayerSig(t.playerIds));
-    const playCounts = await this.getRegularSeasonFixedTeamMatchupCounts(
-      leagueSeasonId,
-      groupId,
-      leagueRoundId,
-      db
-    );
 
     const priorRegularRounds = await db.leagueRound.count({
       where: {
@@ -291,12 +285,23 @@ export class TeamForRoundGeneration {
       },
     });
 
+    const cycle = roundsInSingleRoundRobinCycle(sortedTeams.length);
+    if (cycle < 1 || priorRegularRounds >= cycle) {
+      return;
+    }
+
+    const playCounts = await this.getRegularSeasonFixedTeamMatchupCounts(
+      leagueSeasonId,
+      groupId,
+      leagueRoundId,
+      db
+    );
+
     const usePureRoundRobin = everyMatchupUntracked(sigs, playCounts);
     let pairIndices: [number, number][];
 
     if (usePureRoundRobin) {
-      const cycle = roundsInSingleRoundRobinCycle(sortedTeams.length);
-      const slot = cycle > 0 ? priorRegularRounds % cycle : 0;
+      const slot = priorRegularRounds % cycle;
       pairIndices = pairIndicesForRoundRobinSlot(sortedTeams.length, slot);
       console.log(
         `[LEAGUE ROUND GEN] Group ${groupId}: fixed RR circle slot ${slot}/${cycle} (prior REGULAR ${priorRegularRounds}), ${pairIndices.length} matches`

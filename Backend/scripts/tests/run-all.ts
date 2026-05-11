@@ -17,6 +17,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'match live scoring',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'qa-matchLiveScoring.ts'),
+    ],
+  },
+  {
     label: 'allow user in multiple teams (§12)',
     command: process.execPath,
     args: [

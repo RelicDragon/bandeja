@@ -164,7 +164,8 @@ export const getRules = (game: RulesSource): ScoringRules => {
   const base: RuleSkeleton = preset ? PRESETS[preset] : deriveFromGame(game);
   const allowDrawPerSet = !preset
     ? (game?.pointsPerTie ?? 0) > 0
-    : base.winnerOfMatch === 'BY_SCORES' && (game?.pointsPerTie ?? 0) > 0 && base.totalPointsPerSet === 0;
+    : base.winnerOfMatch === 'BY_SCORES' &&
+      ((game?.pointsPerTie ?? 0) > 0 || (!base.ballsInGames && base.totalPointsPerSet > 0));
 
   const goldenApplies = base.ballsInGames && base.winnerOfMatch === 'BY_SETS';
 

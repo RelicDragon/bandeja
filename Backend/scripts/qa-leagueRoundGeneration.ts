@@ -512,6 +512,64 @@ async function main() {
       console.log('ok: createFullRegularRoundRobin — 4 teams, 3 rounds, 6 games');
     }
 
+    // --- 8) createFullRegularRoundRobin: two groups (4 + 3 teams) → max cycle 3 rounds, 9 games ---
+    {
+      const teams = buildDisjointTeams(users, 7);
+      const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
+      branches.push({ leagueId, seasonId });
+      const groupA = await prisma.leagueGroup.create({
+        data: { leagueSeasonId: seasonId, name: `QA fullRR m4x3 A ${Date.now()}` },
+      });
+      const groupB = await prisma.leagueGroup.create({
+        data: { leagueSeasonId: seasonId, name: `QA fullRR m4x3 B ${Date.now()}` },
+      });
+      await LeagueSyncService.syncLeagueParticipants(seasonId);
+      const teamParts = await prisma.leagueParticipant.findMany({
+        where: { leagueSeasonId: seasonId, participantType: LeagueParticipantType.TEAM },
+        include: { leagueTeam: { include: { players: { select: { userId: true } } } } },
+      });
+      if (teamParts.length !== 7) {
+        throw new Error(`full RR mixed 4+3: expected 7 team participants, got ${teamParts.length}`);
+      }
+      const orderedIds = teams.map((pair) => {
+        const want = new Set(pair);
+        const p = teamParts.find((lp) => {
+          const ids = (lp.leagueTeam?.players ?? []).map((x) => x.userId).filter(Boolean) as string[];
+          return ids.length === 2 && ids.every((u) => want.has(u));
+        });
+        if (!p) throw new Error('full RR mixed 4+3: roster participant not found');
+        return p.id;
+      });
+      const idsA = orderedIds.slice(0, 4);
+      const idsB = orderedIds.slice(4);
+      await prisma.leagueParticipant.updateMany({
+        where: { id: { in: idsA } },
+        data: { currentGroupId: groupA.id },
+      });
+      await prisma.leagueParticipant.updateMany({
+        where: { id: { in: idsB } },
+        data: { currentGroupId: groupB.id },
+      });
+
+      const ownerId = teams[0][0];
+      await LeagueCreateService.createFullRegularRoundRobin(seasonId, ownerId);
+      const rc = await prisma.leagueRound.count({ where: { leagueSeasonId: seasonId } });
+      const expectedRounds = Math.max(
+        roundsInSingleRoundRobinCycle(4),
+        roundsInSingleRoundRobinCycle(3),
+      );
+      if (rc !== expectedRounds) {
+        throw new Error(`full RR mixed 4+3: expected ${expectedRounds} rounds, got ${rc}`);
+      }
+      const gc = await prisma.game.count({
+        where: { parentId: seasonId, entityType: EntityType.LEAGUE },
+      });
+      if (gc !== 9) {
+        throw new Error(`full RR mixed 4+3: expected 9 games, got ${gc}`);
+      }
+      console.log('ok: createFullRegularRoundRobin — mixed 4+3 teams, two groups');
+    }
+
     console.log('qa-leagueRoundGeneration: all checks passed');
   } finally {
     for (const b of branches.reverse()) {

@@ -178,12 +178,11 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
 
   const fixtureTableReadiness = useMemo(() => {
     if (!hasFixedTeams || groups.length === 0 || standings.length === 0) {
-      return { allGroupsValidTeams: false, sameTeamCountAcrossGroups: false };
+      return { allGroupsValidTeams: false };
     }
-    const counts: number[] = [];
     for (const g of groups) {
       const inGroup = standings.filter((s) => s.currentGroupId === g.id);
-      if (inGroup.length < 2) return { allGroupsValidTeams: false, sameTeamCountAcrossGroups: false };
+      if (inGroup.length < 2) return { allGroupsValidTeams: false };
       const allValid = inGroup.every((s) => {
         if (s.participantType !== 'TEAM') return false;
         const ids = (s.leagueTeam?.players ?? [])
@@ -191,15 +190,12 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           .filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
         return ids.length === 2;
       });
-      if (!allValid) return { allGroupsValidTeams: false, sameTeamCountAcrossGroups: false };
-      counts.push(inGroup.length);
+      if (!allValid) return { allGroupsValidTeams: false };
     }
-    const sameTeamCountAcrossGroups = counts.length > 0 && counts.every((c) => c === counts[0]);
-    return { allGroupsValidTeams: true, sameTeamCountAcrossGroups };
+    return { allGroupsValidTeams: true };
   }, [hasFixedTeams, groups, standings]);
 
-  const fixtureTableEligible =
-    fixtureTableReadiness.allGroupsValidTeams && fixtureTableReadiness.sameTeamCountAcrossGroups;
+  const fixtureTableEligible = fixtureTableReadiness.allGroupsValidTeams;
 
   useEffect(() => {
     const on = activeTab === 'schedule' && scheduleSubView === 'fixtures' && fixtureTableEligible;
@@ -210,7 +206,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     if (!hasFixedTeams) return 'requiresFixed' as const;
     if (groups.length === 0) return 'noGroups' as const;
     if (!fixtureTableReadiness.allGroupsValidTeams) return 'teams' as const;
-    if (!fixtureTableReadiness.sameTeamCountAcrossGroups) return 'mixedSizes' as const;
     const hasAnyRegularRound = rounds.some((r) => (r.roundType ?? 'REGULAR') === 'REGULAR');
     if (hasAnyRegularRound) return 'existing' as const;
     return null;
@@ -397,8 +392,10 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
 
   const displayedGroups = selectedGroupId === ALL_GROUP_ID ? groups : groups.filter((group) => group.id === selectedGroupId);
   const filteredRounds = rounds.filter((r) => (r.roundType ?? 'REGULAR') === selectedRoundType);
-  const firstGroupTeamCount = groups[0] ? standingsTeamsForGroup(groups[0].id, standings).length : 0;
-  const fullRrRoundCount = roundsInSingleRoundRobinCycle(firstGroupTeamCount);
+  const fullRrRoundCount = groups.reduce((max, g) => {
+    const n = standingsTeamsForGroup(g.id, standings).length;
+    return Math.max(max, roundsInSingleRoundRobinCycle(n));
+  }, 0);
   const showMatrix =
     effectiveFixtureTableView && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'REGULAR';
   const matrixTeams = matrixGroupId ? standingsTeamsForGroup(matrixGroupId, standings) : [];
@@ -408,9 +405,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
       ? 'gameDetails.fixtureFullRrDisabledNoGroups'
       : fullRrBlockReason === 'teams'
         ? 'gameDetails.fixtureFullRrDisabledTeams'
-        : fullRrBlockReason === 'mixedSizes'
-          ? 'gameDetails.fixtureFullRrDisabledMixedSizes'
-          : null;
+        : null;
 
   return (
     <div className="space-y-6">

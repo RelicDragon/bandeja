@@ -322,12 +322,7 @@ export class LeagueCreateService {
       teamCounts.push(readyTeamCount);
     }
 
-    const expected = teamCounts[0];
-    if (!teamCounts.every((c) => c === expected)) {
-      throw new ApiError(400, 'leagues.fullRoundRobin.groupsMustHaveSameTeamCount');
-    }
-
-    const roundsToCreate = roundsInSingleRoundRobinCycle(expected);
+    const roundsToCreate = Math.max(0, ...teamCounts.map((c) => roundsInSingleRoundRobinCycle(c)));
     if (roundsToCreate < 1) {
       throw new ApiError(400, 'leagues.fullRoundRobin.tooFewTeams');
     }
