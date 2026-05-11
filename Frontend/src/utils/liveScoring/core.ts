@@ -87,7 +87,7 @@ export const scoreLivePoint = (
       return { state: input, changed: false };
     }
     set[side] += 1;
-    return { state, changed: true };
+    return { state: autoAdvanceCompletedSets(state, rules), changed: true };
   }
 
   if (state.classic.withinSetTieBreak) {
@@ -96,7 +96,7 @@ export const scoreLivePoint = (
     if (pointRaceCompleted(state.classic.tieBreakA, state.classic.tieBreakB, tieBreakTarget(rules), rules.tieBreakGameWinBy)) {
       finishWithinSetTieBreak(state, rules);
     }
-    return { state, changed: true };
+    return { state: autoAdvanceCompletedSets(state, rules), changed: true };
   }
 
   if (!options.confirmGameWin && tapWouldAwardCurrentGame(state.classic.pointState, side)) {
@@ -106,7 +106,7 @@ export const scoreLivePoint = (
 
   applyClassicPoint(state, side, rules);
   applyClassicPointsAfterUserScore(state);
-  return { state, changed: true };
+  return { state: autoAdvanceCompletedSets(state, rules), changed: true };
 };
 
 export const confirmPendingGameWin = (input: LiveScoringState, rules: ScoringRules): LiveScoringActionResult => {
@@ -210,6 +210,16 @@ export const advanceLiveSet = (input: LiveScoringState, rules: ScoringRules): Li
   }
   return { state, changed: true };
 };
+
+function autoAdvanceCompletedSets(state: LiveScoringState, rules: ScoringRules): LiveScoringState {
+  let s = state;
+  while (s.mode === 'classic' && canAdvanceLiveSet(s, rules)) {
+    const next = advanceLiveSet(s, rules);
+    if (!next.changed) break;
+    s = next.state;
+  }
+  return s;
+}
 
 export const getClassicPointLabels = (classic?: LiveScoringClassicState): { teamA: string; teamB: string; center: string } => {
   if (!classic) return { teamA: '0', teamB: '0', center: '' };

@@ -17,7 +17,10 @@
     "initialSets": [{ "teamA": 6, "teamB": 6 }],
     "actions": ["teamA", "teamA", "teamA", "teamA", "teamA", "teamA", "teamA"],
     "expected": {
-      "sets": [{ "teamA": 7, "teamB": 6, "isTieBreak": false }],
+      "sets": [
+        { "teamA": 7, "teamB": 6, "isTieBreak": false },
+        { "teamA": 0, "teamB": 0 }
+      ],
       "classic": {
         "withinSetTieBreak": false,
         "tieBreakA": 0,

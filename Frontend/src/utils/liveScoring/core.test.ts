@@ -114,6 +114,8 @@ describe('live scoring core golden transitions', () => {
     for (let i = 0; i < 7; i += 1) state = scoreLivePoint(state, 'teamA', classicRules).state;
 
     expect(state.sets[0]).toMatchObject({ teamA: 7, teamB: 6, isTieBreak: false });
+    expect(state.activeSetIndex).toBe(1);
+    expect(state.sets[1]).toMatchObject({ teamA: 0, teamB: 0 });
     expect(state.classic?.withinSetTieBreak).toBe(false);
     expect(state.classic?.tieBreakA).toBe(0);
   });
@@ -122,6 +124,20 @@ describe('live scoring core golden transitions', () => {
     let state = createInitialLiveScoringState(classicRules, [{ teamA: 6, teamB: 4 }, { teamA: 0, teamB: 0 }]);
     state = advanceLiveSet(state, classicRules).state;
 
+    expect(state.activeSetIndex).toBe(1);
+    expect(state.classic?.pointState).toEqual({ kind: 'regular', teamA: 0, teamB: 0 });
+  });
+
+  it('auto-advances active set index when confirming a game that completes the set', () => {
+    let state = createInitialLiveScoringState(classicRules, [
+      { teamA: 6, teamB: 5, isTieBreak: false },
+      { teamA: 0, teamB: 0, isTieBreak: false },
+    ]);
+    state.classic = { ...state.classic!, pointState: { kind: 'regular', teamA: 40, teamB: 0 } };
+    const pending = scoreLivePoint(state, 'teamA', classicRules);
+    expect(pending.needsGameWinConfirm).toBe('teamA');
+    state = confirmPendingGameWin(pending.state, classicRules).state;
+    expect(state.sets[0]).toMatchObject({ teamA: 7, teamB: 5 });
     expect(state.activeSetIndex).toBe(1);
     expect(state.classic?.pointState).toEqual({ kind: 'regular', teamA: 0, teamB: 0 });
   });
