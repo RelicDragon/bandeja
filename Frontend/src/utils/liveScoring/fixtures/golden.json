@@ -7,7 +7,7 @@
       "sets": [{ "teamA": 0, "teamB": 0, "isTieBreak": false }],
       "classic": {
         "pointState": { "kind": "regular", "teamA": 30, "teamB": 15 },
-        "classicPointsPlayedInGame": 45
+        "classicPointsPlayedInGame": 3
       }
     }
   },

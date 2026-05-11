@@ -39,7 +39,7 @@ enum PadelPoint: Int, Sendable, Codable {
     }
 }
 
-enum PadelPointState: Sendable {
+enum PadelPointState: Sendable, Equatable {
     case regular(a: PadelPoint, b: PadelPoint)
     case deuce
     case advantage(TeamSide)

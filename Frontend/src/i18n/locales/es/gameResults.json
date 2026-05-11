@@ -247,6 +247,7 @@
       "message": "Este juego todavía está en estado ANUNCIADO. ¿Estás seguro de que quieres comenzar a ingresar resultados ahora?",
       "confirm": "Sí, continuar"
     },
+    "liveScoringResetByTable": "El marcador en vivo punto a punto se restableció porque este partido se editó desde la tabla de resultados.",
     "socialLevel": "Social Level",
     "setupUpdated": "Game setup updated successfully",
     "configure": "Configure",

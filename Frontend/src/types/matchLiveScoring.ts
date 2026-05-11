@@ -6,6 +6,7 @@ export type MatchLiveScoringEnvelopeV1 = {
   updatedAt: string;
   writerUserId?: string;
   lastClientMessageId?: string;
+  recentOpIds?: string[];
   state: Record<string, unknown> | null;
 };
 

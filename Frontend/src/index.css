@@ -1515,3 +1515,10 @@ html:not(.dark) .auth-panel {
     0 0 0 1px rgba(245, 158, 11, 0.06),
     0 0 30px -8px rgba(245, 158, 11, 0.08);
 }
+
+/* Stream overlay (OBS browser source): transparent app chrome */
+html.broadcast-transparent-root,
+html.broadcast-transparent-root body,
+html.broadcast-transparent-root #root {
+  background: transparent !important;
+}

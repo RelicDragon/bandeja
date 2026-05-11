@@ -30,6 +30,21 @@ const BROADCAST_TAB_ID =
 let lastPeerBroadcastRefreshAt = 0;
 const PEER_BROADCAST_REFRESH_COOLDOWN_MS = 450;
 
+/** Global refresh cooldown — any refresh call within this window after a successful refresh
+ * returns the cached token to prevent tight refresh loops from any source
+ * (proactive timer, BroadcastChannel ping-pong between tabs, 401 cascades, HMR module duplication). */
+const MIN_GLOBAL_REFRESH_INTERVAL_MS = 4000;
+let lastSuccessfulRefreshAt = 0;
+let lastSuccessfulRefreshToken: string | null = null;
+
+function readStoredAccessToken(): string | null {
+  try {
+    return localStorage.getItem('token');
+  } catch {
+    return null;
+  }
+}
+
 /** 401 codes where refresh cannot fix the session — go straight to client logout. */
 export const AUTH_CODES_SKIP_REFRESH = new Set([
   'auth.noToken',
@@ -139,6 +154,18 @@ export function ensureAuthBroadcastListener(): void {
     const now = Date.now();
     if (now - lastPeerBroadcastRefreshAt < PEER_BROADCAST_REFRESH_COOLDOWN_MS) return;
     lastPeerBroadcastRefreshAt = now;
+
+    const storedToken = readStoredAccessToken();
+    if (storedToken) {
+      const expMs = decodeJwtExpMs(storedToken);
+      if (expMs && expMs - Date.now() > ACCESS_LEEWAY_MS) {
+        applyAccessTokenFromRefresh(storedToken);
+        scheduleProactiveAccessRefresh(storedToken);
+        lastSuccessfulRefreshAt = now;
+        lastSuccessfulRefreshToken = storedToken;
+        return;
+      }
+    }
     void refreshAccessTokenSingleFlight().then((t) => {
       if (t) scheduleProactiveAccessRefresh(t);
     });
@@ -159,7 +186,7 @@ export function scheduleProactiveAccessRefresh(accessToken: string) {
   const msUntilExp = expMs - Date.now();
   if (msUntilExp <= 0) return;
   const desiredLeadMs = Math.min(ACCESS_LEEWAY_MS, Math.floor(msUntilExp * 0.5));
-  const delay = Math.max(2_000, msUntilExp - desiredLeadMs);
+  const delay = Math.max(30_000, msUntilExp - desiredLeadMs);
   proactiveTimer = setTimeout(() => {
     void refreshAccessTokenSingleFlight().then((t) => {
       if (t) scheduleProactiveAccessRefresh(t);
@@ -226,6 +253,8 @@ export async function runRefresh(): Promise<string | null> {
         } else {
           await persistRefreshBundle(undefined, out.currentSessionId, { webCookieMode: true });
         }
+        lastSuccessfulRefreshAt = Date.now();
+        lastSuccessfulRefreshToken = out.token;
         scheduleProactiveAccessRefresh(out.token);
         broadcastAuthRefreshSignal(out.currentSessionId);
         return out.token;
@@ -234,6 +263,8 @@ export async function runRefresh(): Promise<string | null> {
         if (code === 'auth.refreshReused' || code === 'auth.refreshExpired') {
           await clearRefreshBundle();
           lastRefreshRunClearedCredentials = true;
+          lastSuccessfulRefreshAt = 0;
+          lastSuccessfulRefreshToken = null;
           return null;
         }
         if (code === 'auth.refreshInvalid' && attempt === 0) {
@@ -243,6 +274,8 @@ export async function runRefresh(): Promise<string | null> {
         if (code === 'auth.refreshInvalid') {
           await clearRefreshBundle();
           lastRefreshRunClearedCredentials = true;
+          lastSuccessfulRefreshAt = 0;
+          lastSuccessfulRefreshToken = null;
         }
         return null;
       }
@@ -258,6 +291,13 @@ export async function runRefresh(): Promise<string | null> {
 
 export function refreshAccessTokenSingleFlight(): Promise<string | null> {
   if (!refreshPromise) {
+    if (
+      lastSuccessfulRefreshToken &&
+      lastSuccessfulRefreshAt > 0 &&
+      Date.now() - lastSuccessfulRefreshAt < MIN_GLOBAL_REFRESH_INTERVAL_MS
+    ) {
+      return Promise.resolve(lastSuccessfulRefreshToken);
+    }
     refreshPromise = runRefresh().finally(() => {
       refreshPromise = null;
     });
@@ -267,6 +307,9 @@ export function refreshAccessTokenSingleFlight(): Promise<string | null> {
 
 export function clearProactiveAccessRefresh() {
   clearProactiveTimer();
+  lastSuccessfulRefreshAt = 0;
+  lastSuccessfulRefreshToken = null;
+  lastPeerBroadcastRefreshAt = 0;
 }
 
 export async function handleAxios401MaybeRefresh(error: AxiosError): Promise<unknown> {

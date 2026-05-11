@@ -107,6 +107,7 @@ struct WatchPatchLiveScoringBody: Encodable, Sendable {
     let state: WatchLiveScoringState
     let baseRevision: Int?
     let clientMessageId: String
+    let opId: String
 }
 
 struct WatchPatchLiveScoringResponse: Decodable, Sendable {

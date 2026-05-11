@@ -251,6 +251,7 @@
       "message": "Ова игра је још увек у статусу ОБЈАВЉЕНА. Да ли сте сигурни да желите да почнете да уносите резултате сада?",
       "confirm": "Да, настави"
     },
+    "liveScoringResetByTable": "Живи резултат поен по поен је ресетован јер је меч измењен из табеле резултата.",
     "socialLevel": "Social Level",
     "setupUpdated": "Game setup updated successfully",
     "configure": "Configure",

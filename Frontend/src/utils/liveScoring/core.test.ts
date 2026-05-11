@@ -45,11 +45,11 @@ describe('live scoring core golden transitions', () => {
     state = scoreLivePoint(state, 'teamA', classicRules).state;
 
     expect(state.classic?.pointState).toEqual({ kind: 'regular', teamA: 30, teamB: 15 });
-    expect(state.classic?.classicPointsPlayedInGame).toBe(45);
+    expect(state.classic?.classicPointsPlayedInGame).toBe(3);
 
     state = unscoreLivePoint(state, 'teamA', classicRules).state;
     expect(state.classic?.pointState).toEqual({ kind: 'regular', teamA: 15, teamB: 15 });
-    expect(state.classic?.classicPointsPlayedInGame).toBe(30);
+    expect(state.classic?.classicPointsPlayedInGame).toBe(2);
   });
 
   it('requires confirmation before awarding a normal game', () => {
@@ -74,7 +74,6 @@ describe('live scoring core golden transitions', () => {
     state = play('teamA', 3, state);
     state = play('teamB', 3, state);
     state = scoreLivePoint(state, 'teamA', classicRules).state;
-    state = scoreLivePoint(state, 'teamA', classicRules).state;
 
     expect(state.classic?.pointState).toEqual({ kind: 'advantage', side: 'teamA' });
 
@@ -83,6 +82,28 @@ describe('live scoring core golden transitions', () => {
 
     state = confirmPendingGameWin(pending.state, classicRules).state;
     expect(state.sets[0]).toMatchObject({ teamA: 1, teamB: 0 });
+  });
+
+  it('undo from advantage or legacy deuce steps back in the game', () => {
+    let state = createInitialLiveScoringState(classicRules);
+    state = play('teamA', 3, state);
+    state = play('teamB', 3, state);
+    state = scoreLivePoint(state, 'teamA', classicRules).state;
+    expect(state.classic?.pointState).toEqual({ kind: 'advantage', side: 'teamA' });
+
+    state = unscoreLivePoint(state, 'teamA', classicRules).state;
+    expect(state.classic?.pointState).toEqual({ kind: 'regular', teamA: 40, teamB: 40 });
+
+    state = unscoreLivePoint(state, 'teamB', classicRules).state;
+    expect(state.classic?.pointState).toEqual({ kind: 'regular', teamA: 40, teamB: 30 });
+
+    const withLegacyDeuce = createInitialLiveScoringState(classicRules);
+    withLegacyDeuce.classic = {
+      ...withLegacyDeuce.classic!,
+      pointState: { kind: 'deuce' },
+    };
+    const afterLegacyUndo = unscoreLivePoint(withLegacyDeuce, 'teamA', classicRules).state;
+    expect(afterLegacyUndo.classic?.pointState).toEqual({ kind: 'regular', teamA: 30, teamB: 40 });
   });
 
   it('finishes an in-set tie-break as 7-6', () => {

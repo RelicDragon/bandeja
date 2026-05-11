@@ -257,6 +257,7 @@
       "title": "Game Not Started Yet",
       "message": "This game is still in ANNOUNCED status. Are you sure you want to start entering results now?",
       "confirm": "Yes, Continue"
-    }
+    },
+    "liveScoringResetByTable": "Live point-by-point state was reset because this match was edited from the results table."
   }
 }

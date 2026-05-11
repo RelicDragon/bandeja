@@ -1008,22 +1008,12 @@ class SocketService {
 
   public async emitGameResultsUpdated(gameId: string, senderId: string) {
     const roomName = `game-${gameId}`;
-    const sockets = await this.io.in(roomName).fetchSockets();
-    const recipientUserIds = new Set<string>();
-    let recipientCount = 0;
-    for (const s of sockets) {
-      const uid = this.socketDataUserId(s);
-      if (!uid || uid === senderId) continue;
-      s.emit('game-results-updated', { gameId });
-      recipientCount++;
-      recipientUserIds.add(uid);
-    }
+    // Broadcast to everyone in the game room (including sender). Live scoring and other tabs
+    // for the same user must refresh results entry; per-socket omit-sender broke multi-tab same account.
+    this.io.to(roomName).emit('game-results-updated', { gameId });
     console.log(
-      `[SocketService] Emitted game-results-updated for game ${gameId} from user ${senderId} to ${recipientCount} socket(s) (${recipientUserIds.size} unique user(s))`
+      `[SocketService] Emitted game-results-updated broadcast for game ${gameId} (room ${roomName}, from user ${senderId})`
     );
-    if (recipientUserIds.size > 0) {
-      console.log(`[SocketService] Recipients: ${[...recipientUserIds].join(', ')}`);
-    }
   }
 
   public emitMatchTimerUpdated(

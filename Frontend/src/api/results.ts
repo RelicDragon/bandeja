@@ -1,4 +1,5 @@
 import api from './axios';
+import { resolveAbsoluteApiBaseUrlForFetch } from '@/api/apiBaseUrl';
 import { ApiResponse, Game } from '@/types';
 import { Round } from '@/types/gameResults';
 import type { MatchLiveScoringEnvelopeV1 } from '@/types/matchLiveScoring';
@@ -114,7 +115,7 @@ export const resultsApi = {
     sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: string }>;
     courtId?: string;
   }) => {
-    const response = await api.put<ApiResponse<void>>(
+    const response = await api.put<ApiResponse<{ liveScoringCleared: boolean }>>(
       `/results/game/${gameId}/matches/${matchId}`,
       match
     );
@@ -128,6 +129,7 @@ export const resultsApi = {
       state: Record<string, unknown> | null;
       baseRevision: number | null;
       clientMessageId?: string;
+      opId?: string;
     }
   ) => {
     const response = await api.patch<ApiResponse<{ liveScoring: MatchLiveScoringEnvelopeV1 | null; revision: number }>>(
@@ -135,6 +137,31 @@ export const resultsApi = {
       body
     );
     return response.data;
+  },
+
+  mintLiveSpectatorToken: async (gameId: string, matchId: string) => {
+    const response = await api.post<ApiResponse<{ token: string }>>(
+      `/results/game/${gameId}/matches/${matchId}/live-spectator-token`,
+      {}
+    );
+    return response.data;
+  },
+
+  getGameResultsForSpectator: async (gameId: string, spectatorToken: string) => {
+    const MAX_ST = 4096;
+    if (spectatorToken.length > MAX_ST) {
+      throw new Error('spectator token too long');
+    }
+    const base = resolveAbsoluteApiBaseUrlForFetch();
+    const url = `${base}/results/game/${encodeURIComponent(gameId)}/spectator?st=${encodeURIComponent(spectatorToken)}`;
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) {
+      throw new Error(`spectator ${res.status}`);
+    }
+    return (await res.json()) as ApiResponse<any>;
   },
 };
 

@@ -18,9 +18,15 @@ export type NormalizedMatchSetRow = {
   role: MatchSetRole;
 };
 
+export type AssertMatchNormalizedSetsValidOptions = {
+  /** Live scoring persists in-progress game/point totals; skip finished-set classic checks. */
+  skipClassicGameScoreValidation?: boolean;
+};
+
 export function assertMatchNormalizedSetsValid(
   game: GameForMatchSetValidation,
-  normalizedSets: NormalizedMatchSetRow[]
+  normalizedSets: NormalizedMatchSetRow[],
+  options?: AssertMatchNormalizedSetsValidOptions
 ): void {
   const orderErr = validateMatchSetRoleOrder(normalizedSets.map((s) => s.role));
   if (orderErr) {
@@ -113,8 +119,10 @@ export function assertMatchNormalizedSetsValid(
     }
   }
 
-  const classicErr = validateMatchClassicSetScores(game, officialForClassic);
-  if (classicErr) {
-    throw new ApiError(400, classicErr);
+  if (!options?.skipClassicGameScoreValidation) {
+    const classicErr = validateMatchClassicSetScores(game, officialForClassic);
+    if (classicErr) {
+      throw new ApiError(400, classicErr);
+    }
   }
 }

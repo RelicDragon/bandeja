@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { createId } from '@paralleldrive/cuid2';
+import toast from 'react-hot-toast';
+import i18n from '@/i18n/config';
 import { Game } from '@/types';
 import { Round, Match, GameState } from '@/types/gameResults';
 import { ResultsStorage, LocalResults } from './resultsStorage';
@@ -68,9 +70,23 @@ class GameResultsEngineClass {
     return useGameResultsStore.subscribe(callback);
   }
 
-  async initialize(gameId: string, userId: string, t: (key: string) => string): Promise<void> {
+  private toastIfLiveScoringCleared(
+    putResponse: { success?: boolean; data?: { liveScoringCleared?: boolean } } | undefined
+  ): void {
+    if (putResponse?.success && putResponse.data?.liveScoringCleared) {
+      toast(i18n.t('gameResults.liveScoringResetByTable'));
+    }
+  }
+
+  async initialize(
+    gameId: string,
+    userId: string,
+    t: (key: string) => string,
+    options?: { force?: boolean }
+  ): Promise<void> {
+    const force = Boolean(options?.force);
     const state = this.getState();
-    if (state.initialized && state.gameId === gameId && state.userId === userId) {
+    if (!force && state.initialized && state.gameId === gameId && state.userId === userId) {
       return;
     }
 
@@ -137,8 +153,8 @@ class GameResultsEngineClass {
           if (resultsResponse?.data) {
             const serverRounds = this.convertServerResultsToState(resultsResponse.data, t).rounds;
             // If we have existing rounds in store for this game, prefer them over server
-            // This prevents overwriting rounds that were just added locally
-            if (hasExistingRounds) {
+            // This prevents overwriting rounds that were just added locally (skip when force-reloading after remote edits).
+            if (hasExistingRounds && !force) {
               rounds = currentStoreState.rounds;
               // Still save to local storage for consistency
               const localData: LocalResults = {
@@ -164,7 +180,7 @@ class GameResultsEngineClass {
           }
         } catch (error) {
           console.warn('Failed to load server results, using local:', error);
-          if (hasExistingRounds) {
+          if (hasExistingRounds && !force) {
             rounds = currentStoreState.rounds;
           } else if (localResults?.rounds) {
             rounds = localResults.rounds;
@@ -189,7 +205,7 @@ class GameResultsEngineClass {
       // but a late-finishing initialize() call writes stale (empty) rounds back.
       const latestStoreState = this.getState();
       const shouldKeepLatestRounds =
-        latestStoreState.gameId === gameId && latestStoreState.rounds.length > 0;
+        !force && latestStoreState.gameId === gameId && latestStoreState.rounds.length > 0;
 
       const finalRounds = shouldKeepLatestRounds ? latestStoreState.rounds : rounds;
       const lastRoundId = finalRounds.length > 0 ? finalRounds[finalRounds.length - 1].id : null;
@@ -407,12 +423,13 @@ class GameResultsEngineClass {
       },
       async () => {
         await resultsApi.createMatch(state.gameId!, roundId, { id: newMatchId });
-        await resultsApi.updateMatch(state.gameId!, newMatchId, {
+        const putRes = await resultsApi.updateMatch(state.gameId!, newMatchId, {
           teamA: newMatch.teamA,
           teamB: newMatch.teamB,
           sets: newMatch.sets,
           courtId: newMatch.courtId,
         });
+        this.toastIfLiveScoringCleared(putRes);
       }
     );
   }
@@ -477,12 +494,13 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({ rounds: newRounds });
       },
       async () => {
-        await resultsApi.updateMatch(state.gameId!, matchId, {
+        const putRes = await resultsApi.updateMatch(state.gameId!, matchId, {
           teamA: team === 'teamA' ? [...match.teamA, playerId] : match.teamA,
           teamB: team === 'teamB' ? [...match.teamB, playerId] : match.teamB,
           sets: match.sets,
           courtId: match.courtId,
         });
+        this.toastIfLiveScoringCleared(putRes);
       }
     );
   }
@@ -517,12 +535,13 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({ rounds: newRounds });
       },
       async () => {
-        await resultsApi.updateMatch(state.gameId!, matchId, {
+        const putRes = await resultsApi.updateMatch(state.gameId!, matchId, {
           teamA: team === 'teamA' ? match.teamA.filter(id => id !== playerId) : match.teamA,
           teamB: team === 'teamB' ? match.teamB.filter(id => id !== playerId) : match.teamB,
           sets: match.sets,
           courtId: match.courtId,
         });
+        this.toastIfLiveScoringCleared(putRes);
       }
     );
   }
@@ -635,7 +654,8 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({ rounds: newRounds });
       },
       async () => {
-        await resultsApi.updateMatch(state.gameId!, matchId, match);
+        const putRes = await resultsApi.updateMatch(state.gameId!, matchId, match);
+        this.toastIfLiveScoringCleared(putRes);
       }
     );
   }
@@ -665,12 +685,13 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({ rounds: newRounds });
       },
       async () => {
-        await resultsApi.updateMatch(state.gameId!, matchId, {
+        const putRes = await resultsApi.updateMatch(state.gameId!, matchId, {
           teamA: match.teamA,
           teamB: match.teamB,
           sets: match.sets,
           courtId,
         });
+        this.toastIfLiveScoringCleared(putRes);
       }
     );
   }

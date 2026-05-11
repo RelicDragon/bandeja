@@ -8,6 +8,8 @@ import { expandSetsForDisplay, getRules } from '@/utils/scoring';
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import { MatchTimerPanel } from '@/components/gameResults/matchTimer/MatchTimerPanel';
 import type { MatchTimerAction } from '@/utils/matchTimer';
+import { useResolvedAppAppearance } from '@/store/themeStore';
+import { liveBoardThemeSearchParam, parseLiveBoardTheme } from '@/utils/liveScoring';
 
 interface HorizontalMatchCardProps {
   match: Match;
@@ -68,6 +70,8 @@ export const HorizontalMatchCard = ({
   onAddSupplementalSet,
 }: HorizontalMatchCardProps) => {
   const { t } = useTranslation();
+  const resolvedAppAppearance = useResolvedAppAppearance();
+  const liveBoardThemeQs = liveBoardThemeSearchParam(parseLiveBoardTheme(resolvedAppAppearance));
   const effectiveIsPresetGame = isPresetGame || prohibitMatchesEditing;
   const effectiveIsEditing = prohibitMatchesEditing ? false : isEditing;
   const canEnterScores = effectiveIsEditing || (effectiveIsPresetGame && canEditResults);
@@ -206,11 +210,19 @@ export const HorizontalMatchCard = ({
           </Link>
           <span className="text-gray-300 dark:text-gray-600">·</span>
           <Link
-            to={`/games/${gameId}/live?matchId=${encodeURIComponent(match.id)}&tv=1`}
+            to={`/games/${gameId}/live?matchId=${encodeURIComponent(match.id)}&tv=1&theme=${encodeURIComponent(liveBoardThemeQs)}`}
             className="text-primary-600 dark:text-primary-400 font-medium hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             {t('gameDetails.liveScoreTv')}
+          </Link>
+          <span className="text-gray-300 dark:text-gray-600">·</span>
+          <Link
+            to={`/games/${gameId}/broadcast?matchId=${encodeURIComponent(match.id)}&theme=${encodeURIComponent(liveBoardThemeQs)}`}
+            className="text-primary-600 dark:text-primary-400 font-medium hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t('gameDetails.liveScoreBroadcast')}
           </Link>
         </div>
       ) : null}

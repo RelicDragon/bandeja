@@ -568,11 +568,29 @@ model Match {
   teams       Team[]
   sets        Set[]
   participantsWithActiveMatch GameParticipant[] @relation("ParticipantActiveMatch")
+  liveScoringAudits            MatchLiveScoringAudit[]
 
   @@index([roundId])
   @@index([winnerId])
   @@index([courtId])
   @@index([timerStatus])
+}
+
+model MatchLiveScoringAudit {
+  id               String   @id @default(cuid())
+  matchId          String
+  gameId           String
+  source           String
+  userId           String?
+  revisionBefore   Int?
+  revisionAfter    Int?
+  clientMessageId  String?
+  opId             String?
+  createdAt        DateTime @default(now())
+  match            Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([matchId, createdAt])
+  @@index([gameId, createdAt])
 }
 
 enum MatchTimerStatus {

@@ -7,6 +7,7 @@ import * as matchTimerController from '../controllers/matchTimer.controller';
 
 const router = Router();
 
+router.get('/game/:gameId/spectator', resultsController.getGameResultsForSpectator);
 router.get('/game/:gameId', optionalAuth, resultsController.getGameResults);
 router.get('/round/:roundId', optionalAuth, resultsController.getRoundResults);
 router.get('/match/:matchId', optionalAuth, resultsController.getMatchResults);
@@ -99,6 +100,13 @@ router.put(
   resultsController.updateMatch
 );
 
+router.post(
+  '/game/:gameId/matches/:matchId/live-spectator-token',
+  authenticate,
+  requireCanModifyResults,
+  resultsController.postLiveSpectatorToken
+);
+
 router.patch(
   '/game/:gameId/matches/:matchId/live-scoring',
   authenticate,
@@ -112,6 +120,7 @@ router.patch(
       .isInt()
       .withMessage('baseRevision must be an integer or null'),
     body('clientMessageId').optional().isString().isLength({ max: 128 }),
+    body('opId').optional().isString().isLength({ max: 128 }),
   ]),
   resultsController.patchMatchLiveScoring
 );

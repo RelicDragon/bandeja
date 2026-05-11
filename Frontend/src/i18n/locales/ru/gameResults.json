@@ -258,6 +258,7 @@
       "message": "Эта игра все еще в статусе ОБЪЯВЛЕНА. Вы уверены, что хотите начать вводить результаты сейчас?",
       "confirm": "Да, продолжить"
     },
+    "liveScoringResetByTable": "Живой счёт по очкам сброшен: матч был изменён через таблицу результатов.",
     "socialLevel": "Social Level",
     "roundMatches": "Round {{number}} matches",
     "courtNumber": "Court {{number}}",

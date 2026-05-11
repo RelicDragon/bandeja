@@ -15,8 +15,15 @@ const CreateGameWrapper = lazy(() => import('./pages/CreateGameWrapper').then(mo
 const CreateLeague = lazy(() => import('./pages/CreateLeague').then(module => ({ default: module.CreateLeague })));
 // const Rating = lazy(() => import('./pages/Rating').then(module => ({ default: module.Rating })));
 const GameChatRoute = lazy(() => import('./pages/GameChatRoute').then(module => ({ default: module.GameChatRoute })));
-const GameLiveMatchPage = lazy(() =>
-  import('./pages/GameLiveMatchPage').then((m) => ({ default: m.GameLiveMatchPage }))
+const GameLiveRoute = lazy(() => import('./pages/GameLiveRoute').then((m) => ({ default: m.GameLiveRoute })));
+const GameLiveTvRedirect = lazy(() =>
+  import('./pages/GameLiveTvRedirect').then((m) => ({ default: m.GameLiveTvRedirect }))
+);
+const GameLiveBroadcastRedirect = lazy(() =>
+  import('./pages/GameLiveBroadcastRedirect').then((m) => ({ default: m.GameLiveBroadcastRedirect }))
+);
+const GameBroadcastRoute = lazy(() =>
+  import('./pages/GameBroadcastRoute').then((m) => ({ default: m.GameBroadcastRoute }))
 );
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
@@ -55,6 +62,7 @@ import { ReactionEmojiUsageBootstrap } from './components/ReactionEmojiUsageBoot
 import { ProfileNameGateHost } from './components/home/ProfileNameGateHost';
 import i18n from './i18n/config';
 import './i18n/config';
+import { parseLiveBoardTheme } from '@/utils/liveScoring';
 
 function AppContent() {
   const location = useLocation();
@@ -315,7 +323,19 @@ function AppContent() {
   }
 
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
-  const isGameLiveMatchPage = /^\/games\/[^/]+\/live$/.test(location.pathname);
+  const isGameBroadcastPage = /^\/games\/[^/]+\/broadcast$/.test(location.pathname);
+  const isGameLiveBroadcastShortcut = /^\/games\/[^/]+\/live\/broadcast$/.test(location.pathname);
+  const isGameLiveMatchPage =
+    /^\/games\/[^/]+\/live$/.test(location.pathname) ||
+    /^\/games\/[^/]+\/live\/tv$/.test(location.pathname) ||
+    isGameBroadcastPage ||
+    isGameLiveBroadcastShortcut;
+  const liveViewSearch = new URLSearchParams(location.search);
+  const isGameLiveTv =
+    /^\/games\/[^/]+\/live$/.test(location.pathname) && liveViewSearch.get('tv') === '1';
+  const isGameBroadcastTransparent =
+    isGameBroadcastPage && liveViewSearch.get('transparent') === '1';
+  const liveBoardShellTheme = parseLiveBoardTheme(liveViewSearch.get('theme'));
   const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   
@@ -323,9 +343,23 @@ function AppContent() {
     return <NoInternetScreen />;
   }
 
+  const appShellClass = isGameLiveTv
+    ? liveBoardShellTheme === 'light'
+      ? 'min-h-[100dvh] bg-white text-gray-900'
+      : 'min-h-[100dvh] bg-black text-white'
+    : isGameBroadcastPage
+      ? isGameBroadcastTransparent
+        ? liveBoardShellTheme === 'light'
+          ? 'min-h-[100dvh] bg-transparent text-gray-900'
+          : 'min-h-[100dvh] bg-transparent text-white'
+        : liveBoardShellTheme === 'light'
+          ? 'min-h-[100dvh] bg-white text-gray-900'
+          : 'min-h-[100dvh] bg-black text-white'
+      : 'min-h-screen bg-gray-50 dark:bg-gray-900';
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <OfflineBanner />
+    <div className={appShellClass}>
+      {!isGameLiveTv && !isGameBroadcastPage ? <OfflineBanner /> : null}
       {showOptionalUpdateModal && versionCheck && versionCheck.status === 'optional_update' && (
         <AppVersionModal
           isBlocking={false}
@@ -473,13 +507,39 @@ function AppContent() {
           }
         />
         <Route
-          path="/games/:id/live"
+          path="/games/:id/live/tv"
           element={
             <ProtectedRoute>
               <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                <GameLiveMatchPage />
+                <GameLiveTvRedirect />
               </Suspense>
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/:id/live/broadcast"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                <GameLiveBroadcastRedirect />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/:id/broadcast"
+          element={
+            <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <GameBroadcastRoute />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/games/:id/live"
+          element={
+            <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <GameLiveRoute />
+            </Suspense>
           }
         />
         <Route

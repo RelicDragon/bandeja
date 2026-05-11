@@ -1,23 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { resultsApi } from '@/api/results';
-import { gamesApi } from '@/api/games';
-import { LiveScoreShell } from '@/components/liveScoring';
-import { socketService } from '@/services/socketService';
-import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { LiveScoreShell, LiveTvToolbar } from '@/components/liveScoring';
+import { useLiveMatchBoardState, liveBoardPlayersForTeam } from '@/hooks/useLiveMatchBoardState';
+import { useAuthStore } from '@/store/authStore';
+import { useResolvedAppAppearance } from '@/store/themeStore';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useWakeScreenForLiveScoring } from '@/hooks/useWakeScreenForLiveScoring';
 import { parseMatchLiveEnvelope } from '@/types/matchLiveScoring';
-import type { Game } from '@/types';
-import type { SetResult } from '@/types/gameResults';
-import { getRules } from '@/utils/scoring';
 import {
   advanceLiveSet,
   cancelPendingGameWin,
   confirmPendingGameWin,
-  createInitialLiveScoringState,
+  liveBoardThemeSearchParam,
+  parseLiveBoardTheme,
   parseLiveScoringState,
   scoreLivePoint,
   unscoreLivePoint,
@@ -26,153 +24,144 @@ import {
   type LiveTeamSide,
 } from '@/utils/liveScoring';
 
-type RawMatch = {
-  id: string;
-  metadata?: unknown;
-  sets?: SetResult[];
-  teams?: Array<{
-    teamNumber: number;
-    players?: Array<{ userId?: string; user?: { firstName?: string; lastName?: string } }>;
-  }>;
-};
-
-function labelForTeam(match: RawMatch, side: 1 | 2): string {
-  const team = match.teams?.find((t) => t.teamNumber === side);
-  const names =
-    team?.players
-      ?.map((p) => [p.user?.firstName, p.user?.lastName].filter(Boolean).join(' ').trim() || p.userId)
-      .filter(Boolean) ?? [];
-  return names.length ? names.join(' · ') : side === 1 ? 'Team A' : 'Team B';
-}
-
 export const GameLiveMatchPage = () => {
   const { id: gameId = '' } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
+  const { pathname, search: locationSearch } = useLocation();
   const matchId = searchParams.get('matchId') || '';
   const tv = searchParams.get('tv') === '1';
+  const boardTheme = parseLiveBoardTheme(searchParams.get('theme'));
+  const spectatorToken = searchParams.get('spectatorToken');
   const navigate = useNavigate();
   const { t } = useTranslation();
   const isLandscape = useIsLandscape();
   const isOnline = useNetworkStore((s) => s.isOnline);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const resolvedAppAppearance = useResolvedAppAppearance();
+  const shareBoardThemeParam = liveBoardThemeSearchParam(parseLiveBoardTheme(resolvedAppAppearance));
+  const [mintedSpectatorToken, setMintedSpectatorToken] = useState<string | null>(null);
+  const spectatorFetchToken = isAuthenticated ? null : spectatorToken || mintedSpectatorToken || null;
 
-  const [gameTitle, setGameTitle] = useState<string>('');
-  const [game, setGame] = useState<Game | null>(null);
-  const [rawMatch, setRawMatch] = useState<RawMatch | null>(null);
-  const [liveState, setLiveState] = useState<LiveScoringState | null>(null);
-  const [revision, setRevision] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    gameTitle,
+    rawMatch,
+    liveState,
+    setLiveState,
+    revision,
+    setRevision,
+    loading,
+    error,
+    setError,
+    rules,
+    refreshMatchLiveFromServer,
+    timerDisplay,
+  } = useLiveMatchBoardState(gameId, matchId, { spectatorToken: spectatorFetchToken });
+
   const [saving, setSaving] = useState(false);
   const [showTvChrome, setShowTvChrome] = useState(!tv);
+  const gestureOpIdRef = useRef<string | null>(null);
 
-  const lastLive = useSocketEventsStore((s) => s.lastMatchLiveScoringUpdated);
-  const rules = useMemo(() => getRules(game), [game]);
+  useEffect(() => {
+    setShowTvChrome(!tv);
+  }, [tv]);
 
-  useWakeScreenForLiveScoring(Boolean(gameId && matchId && !tv));
+  const tvChromeHideRef = useRef<number>(0);
 
-  const load = useCallback(async () => {
-    if (!gameId || !matchId) return;
-    setLoading(true);
-    setError(null);
+  const controlUrl = useMemo(() => {
+    if (typeof window === 'undefined' || !gameId || !matchId) return '';
     try {
-      const [gr, gameRes] = await Promise.all([
-        resultsApi.getGameResults(gameId),
-        gamesApi.getById(gameId).catch(() => null),
-      ]);
-      const gamePayload = gameRes?.data as { name?: string } | undefined;
-      setGame((gameRes?.data as Game | undefined) ?? null);
-      setGameTitle(gamePayload?.name || t('gameDetails.liveScore'));
-
-      const rounds = gr.data?.rounds as Array<{ matches?: RawMatch[] }> | undefined;
-      let found: RawMatch | null = null;
-      for (const r of rounds || []) {
-        const m = r.matches?.find((x) => x.id === matchId);
-        if (m) {
-          found = m;
-          break;
-        }
-      }
-      if (!found) {
-        setError('Match not found');
-        setRawMatch(null);
-        setLiveState(null);
-        setRevision(0);
-        return;
-      }
-      setRawMatch(found);
-      const env = parseMatchLiveEnvelope((found.metadata as Record<string, unknown> | undefined)?.liveScoring);
-      setLiveState(env ? parseLiveScoringState(env.state, getRules(gameRes?.data as Game | undefined), found.sets) : createInitialLiveScoringState(getRules(gameRes?.data as Game | undefined), found.sets));
-      setRevision(env?.revision ?? 0);
-    } catch (e) {
-      setError('Failed to load');
-      setRawMatch(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [gameId, matchId, t]);
-
-  const refreshMatchLiveFromServer = useCallback(async () => {
-    if (!gameId || !matchId) return;
-    try {
-      const gr = await resultsApi.getGameResults(gameId);
-      const rounds = gr.data?.rounds as Array<{ matches?: RawMatch[] }> | undefined;
-      for (const r of rounds || []) {
-        const m = r.matches?.find((x) => x.id === matchId);
-        if (m) {
-          setRawMatch(m);
-          const env = parseMatchLiveEnvelope((m.metadata as Record<string, unknown> | undefined)?.liveScoring);
-          if (env) {
-            setLiveState(parseLiveScoringState(env.state, getRules(game), m.sets));
-            setRevision(env.revision);
-          }
-          return;
-        }
-      }
+      const u = new URL(`${window.location.origin}${pathname}${locationSearch}`);
+      u.searchParams.delete('tv');
+      return u.toString();
     } catch {
-      /* ignore */
+      return '';
     }
-  }, [gameId, matchId, game]);
+  }, [gameId, matchId, pathname, locationSearch]);
+
+  const effectiveSpectatorToken = spectatorToken || mintedSpectatorToken;
+
+  const spectatorTvUrl = useMemo(() => {
+    if (typeof window === 'undefined' || !gameId || !matchId || !effectiveSpectatorToken) return '';
+    try {
+      const u = new URL(`${window.location.origin}/games/${encodeURIComponent(gameId)}/live`);
+      u.searchParams.set('matchId', matchId);
+      u.searchParams.set('tv', '1');
+      u.searchParams.set('theme', shareBoardThemeParam);
+      u.searchParams.set('spectatorToken', effectiveSpectatorToken);
+      return u.toString();
+    } catch {
+      return '';
+    }
+  }, [gameId, matchId, effectiveSpectatorToken, shareBoardThemeParam]);
+
+  const broadcastShareUrl = useMemo(() => {
+    if (typeof window === 'undefined' || !gameId || !matchId) return '';
+    try {
+      const u = new URL(`${window.location.origin}/games/${encodeURIComponent(gameId)}/broadcast`);
+      u.searchParams.set('matchId', matchId);
+      if (effectiveSpectatorToken) u.searchParams.set('spectatorToken', effectiveSpectatorToken);
+      u.searchParams.set('transparent', '1');
+      u.searchParams.set('theme', shareBoardThemeParam);
+      return u.toString();
+    } catch {
+      return '';
+    }
+  }, [gameId, matchId, effectiveSpectatorToken, shareBoardThemeParam]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    if (!gameId) return;
-    void socketService.joinGameRoom(gameId).catch(() => {});
+    if (!tv || spectatorToken || !gameId || !matchId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await resultsApi.mintLiveSpectatorToken(gameId, matchId);
+        const tok = res.data?.token;
+        if (!tok || cancelled || tok.length > 4096) return;
+        setMintedSpectatorToken(tok);
+      } catch {
+        /* ignore */
+      }
+    })();
     return () => {
-      socketService.leaveGameRoom(gameId);
+      cancelled = true;
     };
-  }, [gameId]);
+  }, [tv, spectatorToken, gameId, matchId]);
+
+  useWakeScreenForLiveScoring(Boolean(gameId && matchId));
+
+  const bumpTvChrome = useCallback(() => {
+    if (!tv) return;
+    setShowTvChrome(true);
+    window.clearTimeout(tvChromeHideRef.current);
+    tvChromeHideRef.current = window.setTimeout(() => {
+      setShowTvChrome(false);
+    }, 4200);
+  }, [tv]);
 
   useEffect(() => {
-    if (!lastLive || lastLive.gameId !== gameId || lastLive.matchId !== matchId) return;
-    if (lastLive.liveScoring === null) {
-      setLiveState(rawMatch ? createInitialLiveScoringState(rules, rawMatch.sets) : null);
-      setRevision(0);
-      return;
-    }
-    const env = parseMatchLiveEnvelope(lastLive.liveScoring);
-    if (env) {
-      setLiveState(parseLiveScoringState(env.state, rules, rawMatch?.sets));
-      setRevision(env.revision);
-    }
-  }, [lastLive, gameId, matchId, rawMatch, rules]);
+    return () => {
+      window.clearTimeout(tvChromeHideRef.current);
+    };
+  }, []);
 
   const persistLiveState = async (nextState: LiveScoringState, baseRevision: number) => {
-    if (!gameId || !matchId) return;
+    if (!gameId || !matchId || !isAuthenticated) return;
     setSaving(true);
     setError(null);
+    const opId =
+      gestureOpIdRef.current ??
+      (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `op-${Date.now()}`);
     try {
       const res = await resultsApi.patchMatchLiveScoring(gameId, matchId, {
         state: nextState as unknown as Record<string, unknown>,
         baseRevision,
         clientMessageId: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `m-${Date.now()}`,
+        opId,
       });
       const env = res.data?.liveScoring;
       if (env) {
         setLiveState(parseLiveScoringState(env.state, rules, rawMatch?.sets));
         setRevision(env.revision);
+        gestureOpIdRef.current = null;
       }
     } catch (err: unknown) {
       const ax = err as {
@@ -188,13 +177,16 @@ export const GameLiveMatchPage = () => {
         if (parsed) {
           setLiveState(parseLiveScoringState(parsed.state, rules, rawMatch?.sets));
           setRevision(parsed.revision);
+          setError(null);
+          gestureOpIdRef.current = null;
         } else {
           setRevision(rev409);
           await refreshMatchLiveFromServer();
+          setError('Out of date — try again.');
         }
-        setError('Out of date — try again.');
       } else {
         setError('Save failed');
+        gestureOpIdRef.current = null;
       }
     } finally {
       setSaving(false);
@@ -203,6 +195,8 @@ export const GameLiveMatchPage = () => {
 
   const applyLiveAction = (result: LiveScoringActionResult) => {
     if (!result.changed) return;
+    gestureOpIdRef.current =
+      typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `op-${Date.now()}`;
     const nextState = result.state;
     const baseRevision = revision;
     setLiveState(nextState);
@@ -210,40 +204,50 @@ export const GameLiveMatchPage = () => {
   };
 
   const handleScore = (side: LiveTeamSide) => {
-    if (!liveState || saving) return;
+    if (!liveState || saving || !isAuthenticated) return;
     applyLiveAction(scoreLivePoint(liveState, side, rules));
   };
 
   const handleUndo = (side: LiveTeamSide) => {
-    if (!liveState || saving) return;
+    if (!liveState || saving || !isAuthenticated) return;
     applyLiveAction(unscoreLivePoint(liveState, side, rules));
   };
 
   const handleConfirmGameWin = () => {
-    if (!liveState || saving) return;
+    if (!liveState || saving || !isAuthenticated) return;
     applyLiveAction(confirmPendingGameWin(liveState, rules));
   };
 
   const handleCancelGameWin = () => {
-    if (!liveState || saving) return;
+    if (!liveState || saving || !isAuthenticated) return;
     applyLiveAction(cancelPendingGameWin(liveState));
   };
 
-  const handleSetFirstServer = (side: LiveTeamSide) => {
-    if (!liveState || saving) return;
-    applyLiveAction({ state: { ...liveState, firstServerTeam: side }, changed: true });
+  const handleServeSetupComplete = (side: LiveTeamSide, doublesPlayerIndex: number) => {
+    if (!liveState || saving || !isAuthenticated) return;
+    applyLiveAction({
+      state: { ...liveState, firstServerTeam: side, firstServerDoublesPlayerIndex: doublesPlayerIndex },
+      changed: true,
+    });
+  };
+
+  const handleSkipServeGuide = () => {
+    if (!liveState || saving || !isAuthenticated) return;
+    applyLiveAction({ state: { ...liveState, serveGuideSkipped: true }, changed: true });
   };
 
   const handleNextSet = () => {
-    if (!liveState || saving) return;
+    if (!liveState || saving || !isAuthenticated) return;
     applyLiveAction(advanceLiveSet(liveState, rules));
   };
 
-  const teamALabel = useMemo(() => (rawMatch ? labelForTeam(rawMatch, 1) : ''), [rawMatch]);
-  const teamBLabel = useMemo(() => (rawMatch ? labelForTeam(rawMatch, 2) : ''), [rawMatch]);
+  const teamAPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 1) : []), [rawMatch]);
+  const teamBPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 2) : []), [rawMatch]);
 
   const shellClass = tv
-    ? 'min-h-[100dvh] bg-black text-white flex flex-col'
+    ? boardTheme === 'light'
+      ? 'relative flex min-h-[100dvh] flex-col bg-white text-gray-900'
+      : 'relative flex min-h-[100dvh] flex-col bg-black text-white'
     : 'min-h-[100dvh] bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col';
 
   if (!matchId) {
@@ -260,27 +264,80 @@ export const GameLiveMatchPage = () => {
   return (
     <div
       className={shellClass}
-      onClick={tv ? () => setShowTvChrome((s) => !s) : undefined}
-      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      onPointerDown={tv ? bumpTvChrome : undefined}
+      style={{
+        paddingTop: tv && !showTvChrome ? 0 : 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}
     >
-      {!tv || showTvChrome ? (
-        <header className="flex items-center justify-between gap-2 px-3 py-2 border-b border-white/10 shrink-0">
+      {!tv ? (
+        <header className="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-800">
           <button type="button" className="text-sm opacity-80 hover:opacity-100" onClick={() => navigate(-1)}>
             ←
           </button>
-          <div className="text-center text-sm font-medium truncate flex-1">{gameTitle}</div>
+          <div className="flex-1 truncate text-center text-sm font-medium">
+            {gameTitle || t('gameDetails.liveScore')}
+          </div>
           <div
-            className={`text-xs rounded-full px-2 py-0.5 ${
-              isOnline ? 'bg-emerald-600/30 text-emerald-200' : 'bg-amber-600/30 text-amber-100'
+            className={`rounded-full px-2 py-0.5 text-xs ${
+              isOnline ? 'bg-emerald-600/15 text-emerald-800 dark:text-emerald-200' : 'bg-amber-600/15 text-amber-900 dark:text-amber-100'
             }`}
           >
-            {isOnline ? 'Live' : 'Offline'}
+            {isOnline ? t('gameDetails.liveTvPillLive') : t('gameDetails.liveTvPillOffline')}
           </div>
         </header>
+      ) : showTvChrome ? (
+        <div className="pointer-events-auto absolute inset-x-0 top-0 z-30 flex justify-center px-2 pt-[env(safe-area-inset-top)]">
+          <LiveTvToolbar
+            gameId={gameId}
+            gameTitle={gameTitle}
+            isOnline={isOnline}
+            controlUrl={controlUrl}
+            broadcastUrl={broadcastShareUrl}
+            spectatorUrl={spectatorTvUrl}
+            timerDisplay={timerDisplay}
+          />
+        </div>
+      ) : null}
+
+      {tv && !showTvChrome && gameTitle.trim() ? (
+        <div
+          className={`pointer-events-none absolute left-0 right-0 top-0 z-20 flex justify-center px-3 pr-[min(12rem,calc(100%-1rem))] pt-[max(0.5rem,env(safe-area-inset-top))]`}
+        >
+          <div
+            className={`min-w-0 max-w-full truncate text-center text-sm font-semibold sm:text-base ${
+              boardTheme === 'light' ? 'text-gray-900 drop-shadow-sm' : 'text-white drop-shadow-md'
+            }`}
+          >
+            {gameTitle}
+          </div>
+        </div>
+      ) : null}
+
+      {tv && !showTvChrome ? (
+        <div
+          className={`pointer-events-none absolute z-20 max-w-[min(11rem,calc(100%-1.5rem))] rounded-full border px-2.5 py-1 text-xs font-medium shadow-md ${
+            boardTheme === 'light'
+              ? isOnline
+                ? 'border-emerald-600/25 bg-emerald-500/15 text-emerald-900'
+                : 'border-amber-600/30 bg-amber-500/20 text-amber-950'
+              : isOnline
+                ? 'border-white/15 bg-emerald-500/20 text-emerald-100'
+                : 'border-white/15 bg-amber-500/25 text-amber-50'
+          }`}
+          style={{
+            top: 'max(0.5rem, env(safe-area-inset-top))',
+            right: 'max(0.5rem, env(safe-area-inset-right))',
+          }}
+        >
+          {isOnline ? t('gameDetails.liveTvPillLive') : t('gameDetails.liveTvPillOffline')}
+        </div>
       ) : null}
 
       <main
-        className={`flex-1 flex ${isLandscape && !tv ? 'flex-row gap-4 px-4' : 'flex-col px-3'} py-4 overflow-auto`}
+        className={`flex-1 flex overflow-auto ${isLandscape && !tv ? 'flex-row gap-4 px-4' : 'flex-col px-3'} ${
+          tv && !showTvChrome && gameTitle.trim() ? 'pb-4 pt-10 sm:pt-11' : 'py-4'
+        }`}
       >
         {loading ? (
           <div className="flex-1 flex items-center justify-center text-sm opacity-70">…</div>
@@ -295,11 +352,12 @@ export const GameLiveMatchPage = () => {
           <>
             <LiveScoreShell
               state={liveState}
-              teamALabel={teamALabel}
-              teamBLabel={teamBLabel}
+              teamAPlayers={teamAPlayers}
+              teamBPlayers={teamBPlayers}
               revision={revision}
               rules={rules}
               isLandscape={isLandscape}
+              boardTheme={boardTheme}
               tv={tv}
               saving={saving}
               error={error}
@@ -307,7 +365,8 @@ export const GameLiveMatchPage = () => {
               onUndo={handleUndo}
               onConfirmGameWin={handleConfirmGameWin}
               onCancelGameWin={handleCancelGameWin}
-              onSetFirstServer={handleSetFirstServer}
+              onServeSetupComplete={handleServeSetupComplete}
+              onSkipServeGuide={handleSkipServeGuide}
               onNextSet={handleNextSet}
             />
           </>

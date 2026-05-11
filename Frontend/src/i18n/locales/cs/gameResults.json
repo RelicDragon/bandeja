@@ -254,6 +254,7 @@
       "message": "Zápas je stále ve stavu OZNÁMENO. Opravdu chcete nyní začít zadávat výsledky?",
       "confirm": "Ano, pokračovat"
     },
+    "liveScoringResetByTable": "Živé bodování bylo resetováno, protože byl zápas upraven z tabulky výsledků.",
     "socialLevel": "Social Level",
     "roundMatches": "Round {{number}} matches",
     "courtNumber": "Court {{number}}",

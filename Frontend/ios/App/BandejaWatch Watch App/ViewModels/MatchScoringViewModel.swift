@@ -183,6 +183,7 @@ final class MatchScoringViewModel {
         guard !isReadOnly else { return }
         remoteLivePollTask?.cancel()
         remoteLivePollTask = Task { [weak self] in
+            await self?.pollLiveScoringEnvelopeFromServer()
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 4_000_000_000)
                 await self?.pollLiveScoringEnvelopeFromServer()
@@ -787,7 +788,24 @@ final class MatchScoringViewModel {
         return max(0, sets.count - 1)
     }
 
-    private static func padelRank(_ p: PadelPoint) -> Int { p.rawValue }
+    /// Minimum rallies needed to reach this regular score (lower bound when counter is unknown).
+    private static func minRalliesForRegularScore(_ a: PadelPoint, _ b: PadelPoint) -> Int {
+        let sa: Int =
+            switch a {
+            case .zero: 0
+            case .fifteen: 1
+            case .thirty: 2
+            case .forty: 3
+            }
+        let sb: Int =
+            switch b {
+            case .zero: 0
+            case .fifteen: 1
+            case .thirty: 2
+            case .forty: 3
+            }
+        return sa + sb
+    }
 
     func requestLiveScoringSave() {
         scheduleLiveScoringSave()
@@ -843,7 +861,8 @@ final class MatchScoringViewModel {
             let body = WatchPatchLiveScoringBody(
                 state: makeLiveScoringState(),
                 baseRevision: liveScoringRevision,
-                clientMessageId: UUID().uuidString
+                clientMessageId: UUID().uuidString,
+                opId: UUID().uuidString
             )
             let response = try await api.patchMatchLiveScoring(gameId: gameId, matchId: matchId, body: body)
             if let envelope = response.liveScoring {
@@ -906,9 +925,9 @@ final class MatchScoringViewModel {
     private func applyClassicPointsAfterUserScore() {
         guard usesTennisStyleServeGuide, !withinSetTieBreakMode, !activeSetIsSuperTieBreak, !activeSetIsSupplemental else { return }
         switch classicPointState {
-        case .regular(let a, let b):
-            classicPointsPlayedInGame = Self.padelRank(a) + Self.padelRank(b)
-        case .deuce, .advantage:
+        case .regular(let a, let b) where a == .zero && b == .zero:
+            classicPointsPlayedInGame = 0
+        default:
             classicPointsPlayedInGame += 1
         }
     }
@@ -916,9 +935,11 @@ final class MatchScoringViewModel {
     private func applyClassicPointsAfterUnscore() {
         guard usesTennisStyleServeGuide, !withinSetTieBreakMode, !activeSetIsSuperTieBreak, !activeSetIsSupplemental else { return }
         switch classicPointState {
-        case .regular(let a, let b):
-            classicPointsPlayedInGame = Self.padelRank(a) + Self.padelRank(b)
-        case .deuce, .advantage:
+        case .regular(let a, let b) where a == .zero && b == .zero:
+            classicPointsPlayedInGame = 0
+        case .regular(let a, let b) where a == .forty && b == .forty:
+            classicPointsPlayedInGame = max(8, classicPointsPlayedInGame - 1)
+        default:
             classicPointsPlayedInGame = max(0, classicPointsPlayedInGame - 1)
         }
     }
@@ -930,11 +951,34 @@ final class MatchScoringViewModel {
         }
         switch classicPointState {
         case .regular(let a, let b):
-            classicPointsPlayedInGame = Self.padelRank(a) + Self.padelRank(b)
+            if a == .zero && b == .zero {
+                classicPointsPlayedInGame = 0
+            } else if let r = record?.classicPointsPlayedInGame, r > 0 {
+                classicPointsPlayedInGame = r
+            } else {
+                classicPointsPlayedInGame = Self.minRalliesForRegularScore(a, b)
+            }
         case .deuce:
             classicPointsPlayedInGame = max(6, record?.classicPointsPlayedInGame ?? 6)
         case .advantage:
             classicPointsPlayedInGame = max(7, record?.classicPointsPlayedInGame ?? 7)
         }
+    }
+
+    @MainActor
+    func liveWidgetTitleAndScoreLine() -> (String, String) {
+        let title = String((game?.name ?? "Live").prefix(26))
+        let row = sets[safe: activeSetIndex]
+        let ga = row?.teamA ?? 0
+        let gb = row?.teamB ?? 0
+        let score: String
+        if usesBallCapPerSetUI {
+            score = "\(ga)-\(gb)"
+        } else if withinSetTieBreakMode || activeSetIsSuperTieBreak {
+            score = "\(tieBreakA)-\(tieBreakB)"
+        } else {
+            score = "\(ga)-\(gb)"
+        }
+        return (title, score)
     }
 }

@@ -87,8 +87,18 @@ struct MatchScoringExperience: View {
         .onAppear {
             reloadServeRecord()
             vm.startLiveScoringRemotePolling()
+            pushWidgetSnapshot()
         }
-        .onDisappear { vm.stopLiveScoringRemotePolling() }
+        .onDisappear {
+            vm.stopLiveScoringRemotePolling()
+            WatchLiveActiveSnapshotStore.clear()
+        }
+        .onChange(of: vm.sets) { _, _ in pushWidgetSnapshot() }
+        .onChange(of: vm.activeSetIndex) { _, _ in pushWidgetSnapshot() }
+        .onChange(of: vm.tieBreakA) { _, _ in pushWidgetSnapshot() }
+        .onChange(of: vm.tieBreakB) { _, _ in pushWidgetSnapshot() }
+        .onChange(of: vm.withinSetTieBreakMode) { _, _ in pushWidgetSnapshot() }
+        .onChange(of: vm.classicPointState) { _, _ in pushWidgetSnapshot() }
         .onChange(of: vm.match?.id) { _, _ in reloadServeRecord() }
         .onChange(of: vm.classicPointsPlayedInGame) { _, v in
             guard !vm.usesBallCapPerSetUI, serveRecord.firstServerTeam != nil else { return }
@@ -110,6 +120,16 @@ struct MatchScoringExperience: View {
 
     private func reloadServeRecord() {
         serveRecord = WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId) ?? .empty
+    }
+
+    private func pushWidgetSnapshot() {
+        let snap = vm.liveWidgetTitleAndScoreLine()
+        WatchLiveActiveSnapshotStore.publish(
+            gameId: gameId,
+            matchId: matchId,
+            titleLine: snap.0,
+            scoreLine: snap.1
+        )
     }
 
     private func requestFixServer() {

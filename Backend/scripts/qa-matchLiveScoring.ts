@@ -1,5 +1,5 @@
 /**
- * QA: match live scoring (PATCH metadata + revision + idempotency + updateMatch clears).
+ * QA: match live scoring (PATCH + revision + idempotency + updateMatch reconcile vs live).
  * Run: DB_URL=... npx ts-node scripts/qa-matchLiveScoring.ts
  */
 import * as path from 'node:path';
@@ -102,11 +102,12 @@ async function main() {
   try {
     await createRound(gameId, roundId);
     await createMatch(gameId, roundId, matchId);
-    await updateMatch(gameId, matchId, {
+    const seedTable = await updateMatch(gameId, matchId, {
       teamA: [u1, u2],
       teamB: [u3, u4],
       sets: [{ teamA: 0, teamB: 0 }],
     });
+    assert(seedTable.liveScoringCleared === false, 'no live envelope -> cleared flag false');
 
     await expectApiError(
       patchMatchLiveScoring(gameId, matchId, u2, false, {
@@ -162,28 +163,54 @@ async function main() {
     assert((idem.liveScoring?.state as { note?: string })?.note === 'second', 'idempotent keeps prior state');
     console.log('ok: same clientMessageId -> idempotent');
 
+    const syncLive = await patchMatchLiveScoring(gameId, matchId, u1, false, {
+      state: { sets: [{ teamA: 0, teamB: 0, isTieBreak: false }] },
+      baseRevision: 2,
+      clientMessageId: 'sync-sets',
+    });
+    assert(syncLive.revision === 3, `sync sets expect revision 3, got ${syncLive.revision}`);
+    console.log('ok: PATCH with sets grid aligned to table');
+
+    const reconcilePreserve = await updateMatch(gameId, matchId, {
+      teamA: [u1, u2],
+      teamB: [u3, u4],
+      sets: [{ teamA: 0, teamB: 0 }],
+    });
+    assert(reconcilePreserve.liveScoringCleared === false, 'compatible updateMatch preserves live');
+    const rowPreserved = await prisma.match.findUnique({
+      where: { id: matchId },
+      select: { metadata: true },
+    });
+    assert(
+      ((rowPreserved?.metadata as Record<string, unknown> | null)?.liveScoring as { revision?: number })
+        ?.revision === 3,
+      'liveScoring metadata still present after compatible updateMatch',
+    );
+    console.log('ok: updateMatch preserves live when sets+rosters match live grid');
+
     const rowBeforeTable = await prisma.match.findUnique({
       where: { id: matchId },
       select: { metadata: true },
     });
     assert(
       (rowBeforeTable?.metadata as Record<string, unknown> | null)?.liveScoring != null,
-      'liveScoring present before updateMatch',
+      'liveScoring present before incompatible updateMatch',
     );
 
-    await updateMatch(gameId, matchId, {
+    const reconcileClear = await updateMatch(gameId, matchId, {
       teamA: [u1, u2],
       teamB: [u3, u4],
       sets: [{ teamA: 1, teamB: 0 }],
     });
+    assert(reconcileClear.liveScoringCleared === true, 'incompatible updateMatch clears live flag');
 
     const rowAfter = await prisma.match.findUnique({
       where: { id: matchId },
       select: { metadata: true },
     });
     const meta = rowAfter?.metadata as Record<string, unknown> | null | undefined;
-    assert(!meta?.liveScoring, 'liveScoring cleared after updateMatch');
-    console.log('ok: updateMatch clears liveScoring in DB');
+    assert(!meta?.liveScoring, 'liveScoring cleared after incompatible updateMatch');
+    console.log('ok: updateMatch clears liveScoring when table grid diverges');
 
     const emitCountBeforeClear = emitted.length;
     notifyMatchLiveScoringCleared(gameId, matchId);

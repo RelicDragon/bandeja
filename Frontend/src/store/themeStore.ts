@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 
 interface ThemeState {
@@ -9,6 +10,16 @@ interface ThemeState {
 const getSystemTheme = (): 'light' | 'dark' => {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
+
+function subscribeSystemTheme(cb: () => void) {
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  mq.addEventListener('change', cb);
+  return () => mq.removeEventListener('change', cb);
+}
+
+function getSystemThemeSnapshot() {
+  return getSystemTheme();
+}
 
 const applyTheme = (theme: 'light' | 'dark' | 'system') => {
   const actualTheme = theme === 'system' ? getSystemTheme() : theme;
@@ -59,3 +70,10 @@ export const useThemeStore = create<ThemeState>((set) => {
   };
 });
 
+/** Resolved light/dark for UI and deep links (follows `system` via matchMedia). */
+export function useResolvedAppAppearance(): 'light' | 'dark' {
+  const theme = useThemeStore((s) => s.theme);
+  const systemScheme = useSyncExternalStore(subscribeSystemTheme, getSystemThemeSnapshot, () => 'light');
+  if (theme === 'system') return systemScheme;
+  return theme;
+}

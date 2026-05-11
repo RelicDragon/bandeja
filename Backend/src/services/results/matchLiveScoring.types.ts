@@ -6,6 +6,8 @@ export type MatchLiveScoringEnvelopeV1 = {
   updatedAt: string;
   writerUserId?: string;
   lastClientMessageId?: string;
+  /** Last N logical op ids for idempotent retries (Phase 6). */
+  recentOpIds?: string[];
   state: Record<string, unknown> | null;
 };
 

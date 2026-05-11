@@ -53,7 +53,7 @@ Everything needed to render and continue **point-by-point** without inferring fr
 
 2. **Write path:** `PATCH .../matches/:matchId/live-scoring` (or sub-resource) with partial payload + `baseRevision`. Server: auth (who may score), merge, bump `revision`, validate if/when rules are ported server-side.
 
-3. **Socket:** emit **`match-live-scoring-updated`** with `{ gameId, matchId, liveScoring }` where `liveScoring` is the full envelope (includes `revision`) or `null` after table save.
+3. **Socket:** emit **`match-live-scoring-updated`** with `{ gameId, matchId, liveScoring }` where `liveScoring` is the full envelope (includes `revision`) or `null` when a table **`updateMatch` removes** an existing live session (not on every table save; see Phase 5).
 
 4. **When clients PATCH:** every point (debounced 200–400 ms), first-serve pick / skip, set/game boundaries (coordinate with `updateMatch` for sets — use a clear ordering or single transaction).
 
@@ -80,18 +80,19 @@ Everything needed to render and continue **point-by-point** without inferring fr
 
 ### Surfaces
 
-| Surface   | Goal                         | Writes                          |
-|----------|------------------------------|---------------------------------|
-| Ordinary | Fast set / table entry       | `updateMatch`                   |
-| Live     | Point-by-point + serve/timer | PATCH live + `updateMatch` edges |
-| TV       | Display (+ optional control) | Same as Live or read-only       |
+| Surface    | Goal                         | Writes                          |
+|-----------|------------------------------|---------------------------------|
+| Ordinary  | Fast set / table entry       | `updateMatch`                   |
+| Live      | Point-by-point + serve/timer | PATCH live + `updateMatch` edges |
+| TV        | Court display (+ QR to control) | Read-only board (Phase 4)   |
+| Broadcast | Stream overlay (OBS browser source) | **Never** (read-only)   |
 
 Show **which mode is active** (“Live scoring on” vs “Table edit”) to reduce confusion when both exist.
 
 ### Entry points
 
-- Prominent **“Live score”** on active match; **“Open TV mode”** (dedicated URL, e.g. `?tv=1`).
-- Deep link: `/games/:id/live?matchId=...` for QR / push.
+- Prominent **“Live score”** on active match; **“Open TV mode”** (dedicated URL, e.g. `?tv=1`); **“Broadcast / stream overlay”** (dedicated URL — Phase 7).
+- Deep link: `/games/:id/live?matchId=...` for QR / push; optional shortcut **`/games/:id/live/tv?matchId=...`** redirects to `.../live?matchId=...&tv=1`.
 
 ### Mobile layout
 
@@ -111,6 +112,7 @@ Show **which mode is active** (“Live scoring on” vs “Table edit”) to red
 ### Ordinary vs Live
 
 - Opening table edit while live exists: confirm **“may reset live point display”** or require **“End live session”** (pick one product rule).
+- **Shipped behaviour (Phase 5):** table `updateMatch` **preserves** live when rosters and the set grid still match the live blob; otherwise live is cleared and clients get `liveScoringCleared` + optional toast (see **Implemented (Phase 5)**).
 
 ---
 
@@ -135,8 +137,10 @@ Show **which mode is active** (“Live scoring on” vs “Table edit”) to red
 1. Schema/metadata shape + PATCH + socket + include in reads.
 2. TS scoring core + golden tests; web Live page + orientation shells.
 3. Watch: load/save/sync live blob; socket merge.
-4. TV route + chromeless + QR.
-5. Reconciliation polish for ordinary `updateMatch` vs live.
+4. ~~TV route + chromeless + QR.~~ **Done** — see **Implemented (Phase 4)**.
+5. Reconciliation polish for ordinary `updateMatch` vs live **(implemented — see Phase 5)**.
+6. Hardening, integrity, TV spectators without login, audit, native wake lock, watch complications — **implemented — see Implemented (Phase 6)**.
+7. **Broadcast** (OBS-friendly overlay URL alongside live/TV) — **implemented (v1) — see Implemented (Phase 7)**; wire **spectatorToken** on broadcast URL remains a small follow-up (see Phase 7 remainder).
 
 ---
 
@@ -144,7 +148,7 @@ Show **which mode is active** (“Live scoring on” vs “Table edit”) to red
 
 - **Two writers:** require `revision` + user-visible merge or reload; optional “single controller” later.
 - **Security:** validate live transitions server-side when integrity matters.
-- **Rotate / safe-area:** one shared layout shell per variant (`portrait` | `landscape` | `tv`) to avoid jank.
+- **Rotate / safe-area:** one shared layout shell per variant (`portrait` | `landscape` | `tv` | `broadcast`) to avoid jank.
 
 ---
 
@@ -154,18 +158,28 @@ Show **which mode is active** (“Live scoring on” vs “Table edit”) to red
 - `Frontend/ios/.../MatchScoringViewModel.swift` — classic state, `saveCurrentSets`, local serve store.
 - `Frontend/src/services/socketService.ts` — `game-updated`, `match-timer-updated`, `match-live-scoring-updated`.
 - `Frontend/src/pages/GameDetailsPage.tsx` — `useIsLandscape`, table layout overrides.
-- `Backend/src/services/results/matchLiveScoring.service.ts` — `PATCH` handler, revision, idempotent `clientMessageId`.
+- `Backend/src/services/results/matchLiveScoring.service.ts` — `PATCH` handler, revision, idempotent `clientMessageId`; helpers `readMatchLiveScoringEnvelope`, `readNormalizedSetsFromLiveMetadata`, `normalizedMatchSetRowsEqual`.
+- `Backend/src/services/results.service.ts` — `updateMatch` live reconcile + `liveScoringCleared` in return value.
 - `Backend/src/routes/results.routes.ts` — `PATCH /results/game/:gameId/matches/:matchId/live-scoring`.
+- `Backend/scripts/qa-matchLiveScoring.ts` — QA: PATCH, revision, idempotent replay, preserve vs clear on `updateMatch`.
 - `Frontend/src/pages/GameLiveMatchPage.tsx` — `/games/:id/live` (query `matchId`, `tv=1`).
+- `Frontend/src/services/gameResultsEngine.ts` — toast when `PUT .../matches/:id` returns `data.liveScoringCleared`.
+- `Frontend/src/pages/GameLiveTvRedirect.tsx` — `/games/:id/live/tv?matchId=…` → canonical live URL with `&tv=1`.
+- `Frontend/src/components/liveScoring/LiveTvToolbar.tsx` — TV toolbar (exit, timer, QR, copy).
+- `Frontend/src/App.tsx` — TV + broadcast chromeless root + offline allowlist for live, TV shortcut, **broadcast**, and **live/broadcast** shortcut.
+- `Frontend/src/hooks/useLiveMatchBoardState.ts` — shared load / socket / timer / revision state for live and broadcast boards.
+- `Frontend/src/pages/GameBroadcastMatchPage.tsx` — read-only broadcast surface (`transparent=1`, `pill=0` query flags).
+- `Frontend/src/pages/GameLiveBroadcastRedirect.tsx` — `/games/:id/live/broadcast?matchId=…` → `/games/:id/broadcast?…`.
+- `Frontend/src/index.css` — `html.broadcast-transparent-root` for OBS transparent browser source.
 
 ## Implemented (baseline)
 
 - **DB:** `Match.metadata.liveScoring` envelope `{ v: 1, revision, updatedAt, writerUserId?, lastClientMessageId?, state }`.
 - **API:** authenticated `PATCH` with `state`, `baseRevision`, optional `clientMessageId`; **409** with `revision` on mismatch; idempotent replay for same `clientMessageId`.
-- **Socket:** `match-live-scoring-updated` `{ gameId, matchId, liveScoring }` (`liveScoring` may be `null` after table `updateMatch`).
-- **Ordinary `updateMatch`:** clears `liveScoring` from match metadata and emits `liveScoring: null`.
+- **Socket:** `match-live-scoring-updated` `{ gameId, matchId, liveScoring }` (`liveScoring: null` only when live was actually cleared — Phase 5).
+- **Ordinary `updateMatch`:** Phase 5 reconcile (preserve vs strip); `PUT` response includes `data.liveScoringCleared` (true only when a live envelope existed and was removed).
 - **Web:** `GameLiveMatchPage`, links from `HorizontalMatchCard`, wake lock hook, `useSocketEventsStore.lastMatchLiveScoringUpdated`.
-- **Watch (iOS):** `Endpoint.patchMatchLiveScoring`, `APIClient.patch` (call from VM when wiring serve + classic state).
+- **Watch (iOS):** `Endpoint.patchMatchLiveScoring`, `APIClient.patchMatchLiveScoring` (409-aware; used from `MatchScoringViewModel`).
 
 ## Implemented (Phase 2)
 
@@ -182,23 +196,66 @@ Show **which mode is active** (“Live scoring on” vs “Table edit”) to red
 - **Watch save:** scoring changes, undo, next-set transitions, supplemental rows, Americano changes, first-serve flow, and explicit save now schedule a debounced live-scoring PATCH with `baseRevision`.
 - **Watch merge hook:** `applyLiveScoringEnvelopeIfNewer()` ignores stale revisions and can be reused by a future socket/phone relay; current watchOS target has no direct socket client.
 
-## Phase 3B (follow-up)
+## Phase 3B (hardening)
 
-- **Remote watch updates:** watch does not yet merge remote live updates while the scoring screen is open. `applyLiveScoringEnvelopeIfNewer()` is only used on initial load and own PATCH responses; add socket, polling, or phone relay delivery for `match-live-scoring-updated`.
-- **Conflict recovery:** watch background `PATCH live-scoring` failures are swallowed, including `409`; add current-envelope refetch/merge and revision refresh so saves do not keep retrying stale `baseRevision`.
-- **Mid-session watch save:** watch “Save set” still calls ordinary `updateMatch`, which clears `metadata.liveScoring`; split intermediate save from final finish or route mid-session saves through live-only persistence.
-- **Backend validation/status:** `PATCH live-scoring` writes `Set` rows without the full `updateMatch` validation and does not move game `resultsStatus` to `IN_PROGRESS`; add validation/status handling appropriate for live updates.
-- **Web conflict recovery:** web `409` handling only updates `revision` and asks retry; refetch/apply the current live envelope before accepting the next local tap.
+- **Remote watch updates:** watch polls game results on appear then every ~4s while `MatchScoringExperience` is visible; `applyLiveScoringEnvelopeIfNewer()` merges newer `metadata.liveScoring` from the server (no watch socket client).
+- **Conflict recovery:** watch `PATCH live-scoring` uses a dedicated client path that decodes `409` with `revision` and optional `liveScoring` payload, applies the server envelope or refetches results, and refreshes `liveScoringRevision` (debounced saves merge silently).
+- **Mid-session watch save:** “Save set” calls `flushLiveScoringSnapshot()` (live PATCH only). Finish / review flow still uses `saveCurrentSets()` → `updateMatch` (clears live only when that payload diverges from the stored live grid or rosters; otherwise preserved).
+- **Backend validation/status:** `PATCH live-scoring` runs the same normalized-set validation as `updateMatch` when `state.sets` is non-empty; refuses empty `sets` arrays for DB sync; sets game `resultsStatus` to `IN_PROGRESS` (with `calculateGameStatus`) when prior status was neither `IN_PROGRESS` nor `FINAL`. `409` responses include `liveScoring` when a current envelope exists.
+- **Web conflict recovery:** on `409`, applies `liveScoring` from the error body when present, otherwise refetches results for the match without a full-page loading gate; clears the error when the body envelope is applied.
+
+## Implemented (Phase 4)
+
+- **TV URLs:** Primary `GET /games/:gameId/live?matchId=:matchId&tv=1`. Shortcut `GET /games/:gameId/live/tv?matchId=:matchId` (`GameLiveTvRedirect`) issues a client `Navigate` to the canonical URL with `tv=1` (same `ProtectedRoute` + auth as live).
+- **Offline / no-internet gate:** `App.tsx` treats both `/games/:id/live` and `/games/:id/live/tv` as live surfaces (`isGameLiveMatchPage`) so `NoInternetScreen` does not block the TV shortcut while offline (parity with the live scorer route).
+- **Chromeless shell:** When `tv=1` on `/games/:id/live`, `isGameLiveTv` uses a black full-viewport root and hides `OfflineBanner`; optional-update modal and the rest of the app tree still mount above the route.
+- **Read-only board:** `LiveScoreShell` TV branch shows set / games / classic point strip only (no tap-to-score on TV).
+- **Tap → toolbar:** `GameLiveMatchPage` uses `onPointerDown` to show `LiveTvToolbar` for ~4.2s (auto-hide). Toolbar: exit link to game, title, Live/Offline pill, optional match timer (HTTP + `lastMatchTimerUpdated` when `rawMatch.id === matchId`), QR (`qrcode.react`) encoding the **control** URL (same path with `tv` removed), copy with toasts.
+- **Always-visible connection on TV:** When the toolbar is hidden, a small top-right pill shows Live/Offline (`pointer-events-none`, safe-area aware).
+- **Wake lock:** `useWakeScreenForLiveScoring` runs for live **and** TV (`gameId` + `matchId` present).
+- **i18n:** `gameDetails.liveTvExit`, `liveTvScoreOnPhone`, `liveTvCopyLink`, `liveTvPillLive`, `liveTvPillOffline` in `en` / `es` / `cs` / `ru` / `sr`; copy toasts reuse `gameDetails.linkCopied` / `copyError`.
+
+## Implemented (Phase 5)
+
+- **`updateMatch` reconcile:** If `readMatchLiveScoringEnvelope(metadata)` is present **and** incoming team A/B user id lists match the DB order (`TeamPlayer` ordered by `createdAt`) **and** normalized table `sets` equal `readNormalizedSetsFromLiveMetadata(metadata)` (`normalizedMatchSetRowsEqual`), **preserve** full match metadata (live `revision` unchanged). Otherwise **strip** `liveScoring` via `stripLiveScoringFromMatchMetadata` (same `Set` / team rewrite transaction as before).
+- **`data.liveScoringCleared`:** On `PUT .../results/game/:gameId/matches/:matchId`, `liveScoringCleared` is **true** only when a v1 live envelope existed before the call and was removed (`hadLiveEnvelope && !preserve`). **False** when there was no live session or when live was preserved — avoids spurious `match-live-scoring-updated` with `liveScoring: null` and spurious scorer toasts.
+- **Controller:** `notifyMatchLiveScoringCleared` runs only when `liveScoringCleared` is true.
+- **Web:** `gameResultsEngine` toasts `gameResults.liveScoringResetByTable` when the PUT response reports `liveScoringCleared` (copy in `en` / `cs` / `es` / `ru` / `sr`).
+- **QA:** `Backend/scripts/qa-matchLiveScoring.ts` covers no-live `updateMatch` (flag false), PATCH sync of `state.sets`, compatible `updateMatch` (preserve + flag false), incompatible `updateMatch` (strip + flag true).
+
+## Implemented (Phase 6)
+
+**Summary:** `opId` + `recentOpIds[]` idempotent dedupe on `PATCH live-scoring`; socket `onConnect` triggers HTTP resync; ignore stale `match-live-scoring-updated` when `revision` not increasing; server-side multi-step transition check using copied `liveScoringEngine` + BFS (only when both payloads look like structured live state); `MatchLiveScoringAudit` rows on live PATCH and table `updateMatch` when a live envelope existed; JWT `live_spectator` + `POST .../live-spectator-token` + public `GET /results/game/:gameId/spectator?st=`; web `/games/:id/live?spectatorToken=` without login via `GameLiveRoute`; TV mints spectator URL for third QR; spectator polling 3.5s; `@capacitor-community/keep-awake` fallback in `useWakeScreenForLiveScoring`; watch `WatchLiveActiveSnapshotStore` + `LiveActiveMatchWidget`.
+
+- **Hardening:** max `st` length before verify + JWT clock skew tolerance; `gameId` / `matchId` payload shape checks; `opId` / `clientMessageId` trimmed alphanum + length cap; BFS caps on transition verify; spectator GET `Cache-Control: private, no-store` + `nosniff`; `refreshInFlightRef` on HTTP resync; reject oversize spectator token in hook `load()`; release native keep-awake when web `WakeLock` succeeds.
+
+**Suggested order (historical):** `opId` + envelope fields → web reconnect pull by `revision` → server golden validation → audit writes on same paths → spectator token + routes/socket policy (**6.4**; prerequisite for **Phase 7** broadcast URL) → Capacitor wake lock fallback → watch widget + App Group.
+
+**Not in scope / follow-ups:** dedicated Node CI job re-running `golden.json` against `liveScoringEngine` (fixtures still run in frontend `npm run test:live-scoring`); read-only socket room for spectators (HTTP polling only); organiser `GET` for audit rows.
+
+## Phase 7: Broadcast / stream overlay
+
+**Goal:** URL for **OBS / Streamlabs “Browser” source**: read-only scoreboard, minimal chrome, strip layout, optional transparent background—alongside Live and TV.
+
+### Implemented (Phase 7 v1)
+
+- **URLs:** `GET /games/:gameId/broadcast?matchId=:matchId`; shortcut `GET /games/:gameId/live/broadcast?matchId=…` → `Navigate` to canonical broadcast query (`GameLiveBroadcastRedirect`).
+- **Query flags:** `transparent=1` toggles `html.broadcast-transparent-root` + transparent `App` shell; `pill=0` hides the Live/Offline pill (timer stays bottom-left when enabled).
+- **`App.tsx`:** `isGameBroadcastPage`, offline allowlist with live/TV, hide `OfflineBanner` on broadcast; opaque black shell or transparent shell when `transparent=1`.
+- **Data:** `useLiveMatchBoardState` shared with `GameLiveMatchPage` (results HTTP + `joinGameRoom` + `lastMatchLiveScoringUpdated` merge); **no** `useWakeScreenForLiveScoring` on broadcast.
+- **UI:** `GameBroadcastMatchPage` read-only; `LiveScoreShell` + `LiveTeamPanel` **`broadcast`** layout (horizontal strip); TV toolbar second QR + **copy broadcast link** (`LiveTvToolbar` + `broadcastUrl` from `GameLiveMatchPage`); links on `HorizontalMatchCard` / `MatchCard`; i18n `liveScoreBroadcast`, `liveTvBroadcastHint`, `liveTvCopyBroadcastLink`.
+- **Auth (v1):** `ProtectedRoute` — same session as rest of app (**not** OBS-friendly on a logged-out encoder until **Phase 6.4**).
+
+### Remainder (with Phase 6 spectator)
+
+- Public **spectatorToken** on **broadcast** URL (live/TV already mint + QR); read-only socket policy; QA for token expiry and revision.
+
+### Ops note
+
+- Streamers use **OBS Browser source** (or similar) with this URL; **YouTube** receives the composited output from the encoder, not an in-YouTube overlay URL.
 
 ## Adjacent upgrades (backlog)
 
-- Smarter reconnect: replay by `revision` after socket drop.
-- Idempotent `opId` dedupe on server beyond `clientMessageId`.
-- Full server-side transition validation (golden vectors).
-- Spectator read-only token + QR for TV without login.
 - Scoring lock (organiser-only) for leagues.
-- Audit log of live vs table edits.
-- Capacitor wake lock fallback where Screen Wake Lock unsupported.
 - Load tests on `game-{id}` room fan-out.
-- Watch complication / glance for active live match.
 - Feature flag `VITE_MATCH_LIVE_SCORING` if you need staged rollout (currently always on for API).

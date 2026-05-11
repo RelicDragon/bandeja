@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import { ApiError } from '../utils/ApiError';
@@ -8,6 +8,8 @@ import { GameService } from '../services/game/game.service';
 import * as outcomesService from '../services/results/outcomes.service';
 import * as outcomeExplanationService from '../services/results/outcomeExplanation.service';
 import * as matchLiveScoringService from '../services/results/matchLiveScoring.service';
+import { liveSpectatorQueryTokenMaxBytes, signLiveSpectatorToken, verifyLiveSpectatorToken } from '../utils/jwt';
+import { assertMatchBelongsToGame } from '../services/results/liveSpectator.service';
 
 export const recalculateOutcomes = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
@@ -216,8 +218,12 @@ export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) 
   const { gameId, matchId } = req.params;
   const matchData = req.body;
 
-  await resultsService.updateMatch(gameId, matchId, matchData);
-  matchLiveScoringService.notifyMatchLiveScoringCleared(gameId, matchId);
+  const { liveScoringCleared } = await resultsService.updateMatch(gameId, matchId, matchData, {
+    userId: req.userId ?? null,
+  });
+  if (liveScoringCleared) {
+    matchLiveScoringService.notifyMatchLiveScoringCleared(gameId, matchId);
+  }
 
   const socketService = (global as any).socketService;
   if (socketService) {
@@ -227,6 +233,7 @@ export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) 
   res.json({
     success: true,
     message: 'Match updated successfully',
+    data: { liveScoringCleared },
   });
 });
 
@@ -256,12 +263,58 @@ export const patchMatchLiveScoring = asyncHandler(async (req: AuthRequest, res: 
           : (req.body.state as Record<string, unknown>),
       baseRevision,
       clientMessageId: typeof req.body.clientMessageId === 'string' ? req.body.clientMessageId : undefined,
+      opId: typeof req.body.opId === 'string' ? req.body.opId : undefined,
     }
   );
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    await socketService.emitGameResultsUpdated(gameId, req.userId!);
+  }
 
   res.json({
     success: true,
     data,
+  });
+});
+
+export const postLiveSpectatorToken = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId, matchId } = req.params;
+  await assertMatchBelongsToGame(gameId, matchId);
+  const token = signLiveSpectatorToken(gameId, matchId);
+  res.json({ success: true, data: { token } });
+});
+
+export const getGameResultsForSpectator = asyncHandler(async (req: Request, res: Response) => {
+  const { gameId } = req.params;
+  const st = typeof req.query.st === 'string' ? req.query.st : '';
+  if (!st) {
+    throw new ApiError(400, 'Missing spectator token');
+  }
+  if (st.length > liveSpectatorQueryTokenMaxBytes()) {
+    throw new ApiError(400, 'Invalid spectator token');
+  }
+  let payload: { gameId: string; matchId: string };
+  try {
+    payload = verifyLiveSpectatorToken(st);
+  } catch {
+    throw new ApiError(401, 'Invalid or expired spectator token');
+  }
+  if (payload.gameId !== gameId) {
+    throw new ApiError(400, 'Token game mismatch');
+  }
+  await assertMatchBelongsToGame(gameId, payload.matchId);
+
+  res.setHeader('Cache-Control', 'private, no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  const results = await resultsService.getGameResults(gameId);
+  res.json({
+    success: true,
+    data: results,
+    spectator: { matchId: payload.matchId },
   });
 });
 

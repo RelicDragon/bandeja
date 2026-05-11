@@ -12,7 +12,6 @@ import type { SetResult } from '@/types/gameResults';
 
 const nextPoint: Record<LivePointValue, LivePointValue> = { 0: 15, 15: 30, 30: 40, 40: 40 };
 const previousPoint: Partial<Record<LivePointValue, LivePointValue>> = { 15: 0, 30: 15, 40: 30 };
-const pointRank: Record<LivePointValue, number> = { 0: 0, 15: 15, 30: 30, 40: 40 };
 
 const emptyClassic = (): LiveScoringClassicState => ({
   pointState: { kind: 'regular', teamA: 0, teamB: 0 },
@@ -170,14 +169,16 @@ export const unscoreLivePoint = (
 
   const pointState = state.classic.pointState;
   if (pointState.kind === 'advantage') {
-    state.classic.pointState = { kind: 'deuce' };
-  } else if (pointState.kind === 'deuce') {
     state.classic.pointState = { kind: 'regular', teamA: 40, teamB: 40 };
   } else {
-    const current = pointState[side];
+    const regular =
+      pointState.kind === 'deuce'
+        ? ({ kind: 'regular' as const, teamA: 40 as LivePointValue, teamB: 40 as LivePointValue } as const)
+        : pointState;
+    const current = regular[side];
     const previous = previousPoint[current];
     if (previous !== undefined) {
-      state.classic.pointState = { ...pointState, [side]: previous };
+      state.classic.pointState = { ...regular, [side]: previous };
     } else {
       const set = state.sets[state.activeSetIndex];
       if (set[side] <= 0) return { state: input, changed: false };
@@ -295,15 +296,15 @@ const applyClassicPoint = (state: LiveScoringState, side: LiveTeamSide, rules: S
     classic.pointState = { kind: 'advantage', side };
   } else if (point.kind === 'advantage') {
     if (point.side === side) awardGame(state, side, rules);
-    else classic.pointState = { kind: 'deuce' };
+    else classic.pointState = { kind: 'regular', teamA: 40, teamB: 40 };
   } else if (side === 'teamA') {
     if (point.teamA === 40 && point.teamB !== 40) awardGame(state, 'teamA', rules);
-    else if (point.teamA === 40 && point.teamB === 40) classic.pointState = { kind: 'deuce' };
+    else if (point.teamA === 40 && point.teamB === 40) classic.pointState = { kind: 'advantage', side: 'teamA' };
     else classic.pointState = { kind: 'regular', teamA: nextPoint[point.teamA], teamB: point.teamB };
   } else if (point.teamB === 40 && point.teamA !== 40) {
     awardGame(state, 'teamB', rules);
   } else if (point.teamA === 40 && point.teamB === 40) {
-    classic.pointState = { kind: 'deuce' };
+    classic.pointState = { kind: 'advantage', side: 'teamB' };
   } else {
     classic.pointState = { kind: 'regular', teamA: point.teamA, teamB: nextPoint[point.teamB] };
   }
@@ -368,16 +369,26 @@ const applyClassicPointsAfterUserScore = (state: LiveScoringState) => {
   const classic = state.classic;
   if (!classic || classic.withinSetTieBreak || activeSetIsSuperTieBreak(state)) return;
   const point = classic.pointState;
-  if (point.kind === 'regular') classic.classicPointsPlayedInGame = pointRank[point.teamA] + pointRank[point.teamB];
-  else classic.classicPointsPlayedInGame += 1;
+  if (point.kind === 'regular' && point.teamA === 0 && point.teamB === 0) {
+    classic.classicPointsPlayedInGame = 0;
+    return;
+  }
+  classic.classicPointsPlayedInGame += 1;
 };
 
 const applyClassicPointsAfterUnscore = (state: LiveScoringState) => {
   const classic = state.classic;
   if (!classic || classic.withinSetTieBreak || activeSetIsSuperTieBreak(state)) return;
   const point = classic.pointState;
-  if (point.kind === 'regular') classic.classicPointsPlayedInGame = pointRank[point.teamA] + pointRank[point.teamB];
-  else classic.classicPointsPlayedInGame = Math.max(0, classic.classicPointsPlayedInGame - 1);
+  if (point.kind === 'regular' && point.teamA === 0 && point.teamB === 0) {
+    classic.classicPointsPlayedInGame = 0;
+    return;
+  }
+  if (point.kind === 'regular' && point.teamA === 40 && point.teamB === 40) {
+    classic.classicPointsPlayedInGame = Math.max(8, classic.classicPointsPlayedInGame - 1);
+    return;
+  }
+  classic.classicPointsPlayedInGame = Math.max(0, classic.classicPointsPlayedInGame - 1);
 };
 
 const gamesScoreForTieBreak = (rules: ScoringRules): number => rules.tieBreakGameAtGames ?? (rules.gamesPerSet || 6);

@@ -7,10 +7,16 @@ import { getUserTimezoneFromCityId } from './user-timezone.service';
 import { LeagueGameResultsService } from './league/gameResults.service';
 import { SocialParticipantLevelService } from './socialParticipantLevel.service';
 import { calculateGameStatus } from '../utils/gameStatus';
-import { MatchSetRole } from '@prisma/client';
+import { MatchSetRole, Prisma } from '@prisma/client';
 import { parseMatchSetRole } from './results/matchSetRole';
 import { assertMatchNormalizedSetsValid, type NormalizedMatchSetRow } from './results/matchSetsValidation';
-import { stripLiveScoringFromMatchMetadata } from './results/matchLiveScoring.service';
+import {
+  stripLiveScoringFromMatchMetadata,
+  readNormalizedSetsFromLiveMetadata,
+  normalizedMatchSetRowsEqual,
+  readMatchLiveScoringEnvelope,
+} from './results/matchLiveScoring.service';
+import { appendMatchLiveScoringAudit } from './results/matchLiveScoringAudit.service';
 
 const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
 
@@ -765,6 +771,11 @@ export async function deleteMatch(gameId: string, matchId: string) {
   });
 }
 
+function orderedTeamUserIds(team: { players: { userId: string }[] } | undefined): string[] {
+  if (!team?.players?.length) return [];
+  return team.players.map((p) => p.userId);
+}
+
 export async function updateMatch(
   gameId: string,
   matchId: string,
@@ -773,14 +784,24 @@ export async function updateMatch(
     teamB: string[];
     sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: string }>;
     courtId?: string;
-  }
-) {
+  },
+  options?: { userId?: string | null }
+): Promise<{ liveScoringCleared: boolean }> {
 
   const match = await prisma.match.findUnique({
     where: { id: matchId },
     include: {
       teams: {
         orderBy: { teamNumber: 'asc' },
+        include: {
+          players: {
+            orderBy: { createdAt: 'asc' },
+            select: { userId: true },
+          },
+        },
+      },
+      sets: {
+        orderBy: { setNumber: 'asc' },
       },
       round: {
         select: { gameId: true },
@@ -824,6 +845,28 @@ export async function updateMatch(
   }));
 
   assertMatchNormalizedSetsValid(game, normalizedSets);
+
+  const teamAEntity = match.teams.find((t) => t.teamNumber === 1);
+  const teamBEntity = match.teams.find((t) => t.teamNumber === 2);
+  const prevTeamAIds = orderedTeamUserIds(teamAEntity);
+  const prevTeamBIds = orderedTeamUserIds(teamBEntity);
+  const incomingTeamA = matchData.teamA ?? [];
+  const incomingTeamB = matchData.teamB ?? [];
+  const rostersUnchanged =
+    prevTeamAIds.length === incomingTeamA.length &&
+    prevTeamBIds.length === incomingTeamB.length &&
+    prevTeamAIds.every((id, i) => id === incomingTeamA[i]) &&
+    prevTeamBIds.every((id, i) => id === incomingTeamB[i]);
+
+  const liveEnvBefore = readMatchLiveScoringEnvelope(match.metadata);
+  const hadLiveEnvelope = liveEnvBefore != null;
+  const revBefore = liveEnvBefore?.revision ?? null;
+  const liveGrid = readNormalizedSetsFromLiveMetadata(match.metadata);
+  const preserveLiveScoring =
+    rostersUnchanged &&
+    liveGrid != null &&
+    normalizedMatchSetRowsEqual(normalizedSets, liveGrid);
+  const liveScoringCleared = hadLiveEnvelope && !preserveLiveScoring;
 
   await prisma.$transaction(async (tx) => {
     if (matchData.courtId !== undefined) {
@@ -880,7 +923,9 @@ export async function updateMatch(
     await tx.match.update({
       where: { id: match.id },
       data: {
-        metadata: stripLiveScoringFromMatchMetadata(match.metadata),
+        metadata: preserveLiveScoring
+          ? (match.metadata as Prisma.InputJsonValue)
+          : stripLiveScoringFromMatchMetadata(match.metadata),
       },
     });
   });
@@ -904,5 +949,18 @@ export async function updateMatch(
       ),
     },
   });
+
+  if (hadLiveEnvelope) {
+    void appendMatchLiveScoringAudit({
+      matchId,
+      gameId,
+      source: liveScoringCleared ? 'SYSTEM_CLEAR' : 'TABLE_PUT',
+      userId: options?.userId ?? null,
+      revisionBefore: revBefore,
+      revisionAfter: preserveLiveScoring ? revBefore : null,
+    });
+  }
+
+  return { liveScoringCleared };
 }
 
