@@ -84,7 +84,11 @@ struct MatchScoringExperience: View {
         }
         .animation(.easeOut(duration: 0.2), value: coachToast)
         .animation(.easeOut(duration: 0.22), value: showServeOverlay)
-        .onAppear { reloadServeRecord() }
+        .onAppear {
+            reloadServeRecord()
+            vm.startLiveScoringRemotePolling()
+        }
+        .onDisappear { vm.stopLiveScoringRemotePolling() }
         .onChange(of: vm.match?.id) { _, _ in reloadServeRecord() }
         .onChange(of: vm.classicPointsPlayedInGame) { _, v in
             guard !vm.usesBallCapPerSetUI, serveRecord.firstServerTeam != nil else { return }

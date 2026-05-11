@@ -1,12 +1,15 @@
-import { MatchSetRole, Prisma } from '@prisma/client';
+import { MatchSetRole, Prisma, ResultsStatus } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { canModifyResults } from '../../utils/parentGamePermissions';
+import { calculateGameStatus } from '../../utils/gameStatus';
+import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import {
   MATCH_LIVE_SCORING_V,
   type MatchLiveScoringEnvelopeV1,
   isLiveScoringEnvelopeV1,
 } from './matchLiveScoring.types';
+import { assertMatchNormalizedSetsValid, type NormalizedMatchSetRow } from './matchSetsValidation';
 
 export function stripLiveScoringFromMatchMetadata(metadata: unknown): Prisma.InputJsonValue {
   if (metadata == null) return {};
@@ -41,15 +44,8 @@ export type PatchMatchLiveScoringBody = {
   clientMessageId?: string;
 };
 
-type LiveSetPatch = {
-  teamA: number;
-  teamB: number;
-  isTieBreak: boolean;
-  role: MatchSetRole;
-};
-
-function readSetsFromState(state: Record<string, unknown> | null): LiveSetPatch[] | null {
-  if (!state || !Array.isArray(state.sets)) return null;
+function readSetsFromState(state: Record<string, unknown> | null): NormalizedMatchSetRow[] | null {
+  if (!state || !Array.isArray(state.sets) || state.sets.length === 0) return null;
   return state.sets.map((raw) => {
     const o = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
     const role =
@@ -62,7 +58,7 @@ function readSetsFromState(state: Record<string, unknown> | null): LiveSetPatch[
       isTieBreak: Boolean(o.isTieBreak),
       role,
     };
-  });
+  }) as NormalizedMatchSetRow[];
 }
 
 export async function patchMatchLiveScoring(
@@ -93,13 +89,18 @@ export async function patchMatchLiveScoring(
     return { liveScoring: current, revision: currentRevision };
   }
 
+  const conflictPayload = (): Record<string, unknown> => ({
+    revision: currentRevision,
+    ...(current ? { liveScoring: current as unknown as Record<string, unknown> } : {}),
+  });
+
   const base = body.baseRevision;
   if (currentRevision === 0) {
     if (base != null && base !== 0) {
-      throw new ApiError(409, 'Live scoring revision mismatch', true, { revision: currentRevision });
+      throw new ApiError(409, 'Live scoring revision mismatch', true, conflictPayload());
     }
   } else if (base !== currentRevision) {
-    throw new ApiError(409, 'Live scoring revision mismatch', true, { revision: currentRevision });
+    throw new ApiError(409, 'Live scoring revision mismatch', true, conflictPayload());
   }
 
   const nextRevision = currentRevision + 1;
@@ -119,6 +120,23 @@ export async function patchMatchLiveScoring(
   prevMeta.liveScoring = envelope as unknown as Prisma.JsonObject;
 
   const liveSets = readSetsFromState(body.state);
+
+  if (liveSets) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: {
+        scoringPreset: true,
+        fixedNumberOfSets: true,
+        ballsInGames: true,
+        winnerOfMatch: true,
+        matchTimerEnabled: true,
+      },
+    });
+    if (!game) {
+      throw new ApiError(404, 'Game not found');
+    }
+    assertMatchNormalizedSetsValid(game, liveSets);
+  }
 
   await prisma.$transaction(async (tx) => {
     if (liveSets) {
@@ -143,6 +161,41 @@ export async function patchMatchLiveScoring(
       data: { metadata: prevMeta as Prisma.InputJsonValue },
     });
   });
+
+  if (liveSets && body.state) {
+    const gameRow = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: {
+        resultsStatus: true,
+        startTime: true,
+        endTime: true,
+        timeIsSet: true,
+        entityType: true,
+        cityId: true,
+      },
+    });
+    if (gameRow && gameRow.resultsStatus !== ResultsStatus.FINAL && gameRow.resultsStatus !== ResultsStatus.IN_PROGRESS) {
+      const cityTimezone = await getUserTimezoneFromCityId(gameRow.cityId);
+      await prisma.game.update({
+        where: { id: gameId },
+        data: {
+          resultsStatus: ResultsStatus.IN_PROGRESS,
+          finishedDate: null,
+          status: calculateGameStatus(
+            {
+              startTime: gameRow.startTime,
+              endTime: gameRow.endTime,
+              resultsStatus: 'IN_PROGRESS',
+              timeIsSet: gameRow.timeIsSet,
+              entityType: gameRow.entityType,
+              finishedDate: null,
+            },
+            cityTimezone
+          ),
+        },
+      });
+    }
+  }
 
   emitSocket(gameId, matchId, envelope);
 

@@ -32,6 +32,7 @@ final class MatchScoringViewModel {
     private let api = APIClient()
     private var liveScoringRevision = 0
     private var liveSaveTask: Task<Void, Never>?
+    private var remoteLivePollTask: Task<Void, Never>?
 
     private static let tennisGamesPerSet = 6
 
@@ -173,6 +174,43 @@ final class MatchScoringViewModel {
         scheduleLiveScoringSave()
     }
 
+    func flushLiveScoringSnapshot() async {
+        guard !isReadOnly else { return }
+        await saveLiveScoringNow(background: false)
+    }
+
+    func startLiveScoringRemotePolling() {
+        guard !isReadOnly else { return }
+        remoteLivePollTask?.cancel()
+        remoteLivePollTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 4_000_000_000)
+                await self?.pollLiveScoringEnvelopeFromServer()
+            }
+        }
+    }
+
+    func stopLiveScoringRemotePolling() {
+        remoteLivePollTask?.cancel()
+        remoteLivePollTask = nil
+    }
+
+    private func pollLiveScoringEnvelopeFromServer() async {
+        guard !isReadOnly else { return }
+        do {
+            let results: WatchResultsGame = try await api.fetch(.gameResults(gameId: gameId))
+            for r in results.rounds {
+                if let m = r.matches.first(where: { $0.id == matchId }),
+                   let live = m.metadata?.liveScoring, live.isSupported {
+                    applyLiveScoringEnvelopeIfNewer(live)
+                    return
+                }
+            }
+        } catch {
+            // Polling is best-effort.
+        }
+    }
+
     func saveCurrentSets() async {
         guard !isReadOnly else { return }
         guard let match else { return }
@@ -214,7 +252,7 @@ final class MatchScoringViewModel {
             switch api {
             case .httpError(let code):
                 return APIError.httpStatusWarrantsOutboxRetry(code)
-            case .noToken, .decodingError:
+            case .noToken, .decodingError, .liveScoringRevisionMismatch:
                 return false
             }
         }
@@ -807,16 +845,25 @@ final class MatchScoringViewModel {
                 baseRevision: liveScoringRevision,
                 clientMessageId: UUID().uuidString
             )
-            let response: WatchPatchLiveScoringResponse = try await api.patch(
-                .patchMatchLiveScoring(gameId: gameId, matchId: matchId),
-                body: body
-            )
+            let response = try await api.patchMatchLiveScoring(gameId: gameId, matchId: matchId, body: body)
             if let envelope = response.liveScoring {
                 applyLiveScoringEnvelopeIfNewer(envelope)
             } else {
                 liveScoringRevision = response.revision
             }
             WatchSessionManager.shared.notifyScoreUpdated(gameId: gameId)
+        } catch let api as APIError {
+            if case .liveScoringRevisionMismatch(_, let serverEnvelope) = api {
+                if let serverEnvelope {
+                    applyLiveScoringEnvelopeIfNewer(serverEnvelope)
+                } else {
+                    await pollLiveScoringEnvelopeFromServer()
+                }
+                return
+            }
+            if !background {
+                self.error = api
+            }
         } catch {
             if !background {
                 self.error = error

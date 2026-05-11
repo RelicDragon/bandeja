@@ -840,6 +840,15 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func errorLiveScoringOutOfDate(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Puntuación actualizada en otro dispositivo."
+        case "ru": return "Счёт обновлён на другом устройстве."
+        case "sr": return "Резултат је ажуриран на другом уређају."
+        default: return "Score was updated on another device."
+        }
+    }
+
     nonisolated static func workoutKcal(_ lang: String, value: Int) -> String {
         switch lang {
         case "es": return "\(value) kcal"

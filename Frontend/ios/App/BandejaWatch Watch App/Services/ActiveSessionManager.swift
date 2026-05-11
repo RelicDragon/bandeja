@@ -217,7 +217,7 @@ final class ActiveSessionManager {
             switch api {
             case .httpError(let code):
                 return code == 408 || code == 429 || (500...599).contains(code)
-            case .decodingError, .noToken:
+            case .decodingError, .noToken, .liveScoringRevisionMismatch:
                 return false
             }
         }

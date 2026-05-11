@@ -182,6 +182,14 @@ Show **which mode is active** (“Live scoring on” vs “Table edit”) to red
 - **Watch save:** scoring changes, undo, next-set transitions, supplemental rows, Americano changes, first-serve flow, and explicit save now schedule a debounced live-scoring PATCH with `baseRevision`.
 - **Watch merge hook:** `applyLiveScoringEnvelopeIfNewer()` ignores stale revisions and can be reused by a future socket/phone relay; current watchOS target has no direct socket client.
 
+## Phase 3B (follow-up)
+
+- **Remote watch updates:** watch does not yet merge remote live updates while the scoring screen is open. `applyLiveScoringEnvelopeIfNewer()` is only used on initial load and own PATCH responses; add socket, polling, or phone relay delivery for `match-live-scoring-updated`.
+- **Conflict recovery:** watch background `PATCH live-scoring` failures are swallowed, including `409`; add current-envelope refetch/merge and revision refresh so saves do not keep retrying stale `baseRevision`.
+- **Mid-session watch save:** watch “Save set” still calls ordinary `updateMatch`, which clears `metadata.liveScoring`; split intermediate save from final finish or route mid-session saves through live-only persistence.
+- **Backend validation/status:** `PATCH live-scoring` writes `Set` rows without the full `updateMatch` validation and does not move game `resultsStatus` to `IN_PROGRESS`; add validation/status handling appropriate for live updates.
+- **Web conflict recovery:** web `409` handling only updates `revision` and asks retry; refetch/apply the current live envelope before accepting the next local tap.
+
 ## Adjacent upgrades (backlog)
 
 - Smarter reconnect: replay by `revision` after socket drop.

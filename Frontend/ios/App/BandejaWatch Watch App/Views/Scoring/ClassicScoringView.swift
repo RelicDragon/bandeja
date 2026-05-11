@@ -133,7 +133,7 @@ struct ClassicScoringView: View {
                         titleVisibility: .visible
                     ) {
                         Button(WatchCopy.saveSet(lang)) {
-                            Task { await vm.saveCurrentSets() }
+                            Task { await vm.flushLiveScoringSnapshot() }
                         }
                         .disabled(vm.isSaving)
                         if vm.usesTennisStyleServeGuide {

@@ -111,6 +111,28 @@ export const GameLiveMatchPage = () => {
     }
   }, [gameId, matchId, t]);
 
+  const refreshMatchLiveFromServer = useCallback(async () => {
+    if (!gameId || !matchId) return;
+    try {
+      const gr = await resultsApi.getGameResults(gameId);
+      const rounds = gr.data?.rounds as Array<{ matches?: RawMatch[] }> | undefined;
+      for (const r of rounds || []) {
+        const m = r.matches?.find((x) => x.id === matchId);
+        if (m) {
+          setRawMatch(m);
+          const env = parseMatchLiveEnvelope((m.metadata as Record<string, unknown> | undefined)?.liveScoring);
+          if (env) {
+            setLiveState(parseLiveScoringState(env.state, getRules(game), m.sets));
+            setRevision(env.revision);
+          }
+          return;
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [gameId, matchId, game]);
+
   useEffect(() => {
     void load();
   }, [load]);
@@ -153,10 +175,23 @@ export const GameLiveMatchPage = () => {
         setRevision(env.revision);
       }
     } catch (err: unknown) {
-      const ax = err as { response?: { status?: number; data?: { revision?: number } } };
+      const ax = err as {
+        response?: {
+          status?: number;
+          data?: { revision?: number; liveScoring?: unknown };
+        };
+      };
       const rev409 = ax.response?.data?.revision;
+      const bodyEnv = ax.response?.data?.liveScoring;
       if (ax.response?.status === 409 && typeof rev409 === 'number') {
-        setRevision(rev409);
+        const parsed = parseMatchLiveEnvelope(bodyEnv);
+        if (parsed) {
+          setLiveState(parseLiveScoringState(parsed.state, rules, rawMatch?.sets));
+          setRevision(parsed.revision);
+        } else {
+          setRevision(rev409);
+          await refreshMatchLiveFromServer();
+        }
         setError('Out of date — try again.');
       } else {
         setError('Save failed');

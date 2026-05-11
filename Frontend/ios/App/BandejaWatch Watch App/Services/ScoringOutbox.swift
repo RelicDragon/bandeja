@@ -103,6 +103,8 @@ final class ScoringOutbox {
                 return true
             case .decodingError:
                 return true
+            case .liveScoringRevisionMismatch:
+                return true
             }
         }
         return false
