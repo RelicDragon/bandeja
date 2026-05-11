@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { MatchSetRole, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { canModifyResults } from '../../utils/parentGamePermissions';
@@ -40,6 +40,30 @@ export type PatchMatchLiveScoringBody = {
   baseRevision: number | null;
   clientMessageId?: string;
 };
+
+type LiveSetPatch = {
+  teamA: number;
+  teamB: number;
+  isTieBreak: boolean;
+  role: MatchSetRole;
+};
+
+function readSetsFromState(state: Record<string, unknown> | null): LiveSetPatch[] | null {
+  if (!state || !Array.isArray(state.sets)) return null;
+  return state.sets.map((raw) => {
+    const o = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+    const role =
+      o.role === MatchSetRole.EXTRA_GAMES || o.role === MatchSetRole.EXTRA_BALLS
+        ? o.role
+        : MatchSetRole.OFFICIAL;
+    return {
+      teamA: Math.max(0, Math.min(9999, Number(o.teamA) || 0)),
+      teamB: Math.max(0, Math.min(9999, Number(o.teamB) || 0)),
+      isTieBreak: Boolean(o.isTieBreak),
+      role,
+    };
+  });
+}
 
 export async function patchMatchLiveScoring(
   gameId: string,
@@ -94,9 +118,30 @@ export async function patchMatchLiveScoring(
       : { ...(match.metadata as Record<string, unknown>) };
   prevMeta.liveScoring = envelope as unknown as Prisma.JsonObject;
 
-  await prisma.match.update({
-    where: { id: matchId },
-    data: { metadata: prevMeta as Prisma.InputJsonValue },
+  const liveSets = readSetsFromState(body.state);
+
+  await prisma.$transaction(async (tx) => {
+    if (liveSets) {
+      await tx.set.deleteMany({ where: { matchId } });
+      for (let i = 0; i < liveSets.length; i += 1) {
+        const s = liveSets[i];
+        await tx.set.create({
+          data: {
+            matchId,
+            setNumber: i + 1,
+            teamAScore: s.teamA,
+            teamBScore: s.teamB,
+            isTieBreak: s.isTieBreak,
+            role: s.role,
+          },
+        });
+      }
+    }
+
+    await tx.match.update({
+      where: { id: matchId },
+      data: { metadata: prevMeta as Prisma.InputJsonValue },
+    });
   });
 
   emitSocket(gameId, matchId, envelope);

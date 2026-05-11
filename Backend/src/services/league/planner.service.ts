@@ -280,7 +280,7 @@ export class LeaguePlannerService {
               freeCount = 1;
               for (const uid of aggregateIdsFiltered) {
                 const u = userById.get(uid)!;
-                if (sampleFreeUsers.length < 4) {
+                if (sampleFreeUsers.length < 48) {
                   sampleFreeUsers.push(plannerSampleFreeUser(u));
                 }
               }
@@ -293,7 +293,7 @@ export class LeaguePlannerService {
             const st = bucketAggregateState(wa, weekdayKey, bucket, boundaries);
             if (st === 'free') {
               freeCount++;
-              if (sampleFreeUsers.length < 4) {
+              if (sampleFreeUsers.length < 48) {
                 sampleFreeUsers.push(plannerSampleFreeUser(u));
               }
             } else if (st === 'busy') busyCount++;

@@ -167,6 +167,21 @@ Show **which mode is active** (“Live scoring on” vs “Table edit”) to red
 - **Web:** `GameLiveMatchPage`, links from `HorizontalMatchCard`, wake lock hook, `useSocketEventsStore.lastMatchLiveScoringUpdated`.
 - **Watch (iOS):** `Endpoint.patchMatchLiveScoring`, `APIClient.patch` (call from VM when wiring serve + classic state).
 
+## Implemented (Phase 2)
+
+- **TS scoring core:** `Frontend/src/utils/liveScoring/` with classic point transitions, undo, game-win confirm, in-set tie-break completion, simple points mode, state parsing, and display helpers.
+- **Golden tests:** `Frontend/src/utils/liveScoring/core.test.ts` plus `Frontend/src/utils/liveScoring/fixtures/golden.json` cover classic point/undo, raw watch point counts, game-win confirm, deuce/advantage, tie-break finish, next-set advance, and points mode. Run with `npm run test:live-scoring`.
+- **Web Live page:** `GameLiveMatchPage` now hydrates `metadata.liveScoring.state`, creates an initial state from match sets when missing, persists point actions through `PATCH live-scoring`, advances sets, and merges socket updates by revision.
+- **Backend set sync:** `PATCH live-scoring` keeps `Set` rows aligned with `state.sets` in the same transaction as the live metadata update, without triggering ordinary table-edit live-state clearing.
+- **Orientation shells:** `Frontend/src/components/liveScoring/` provides portrait, landscape, and TV-style score shells with large tap targets, first-server selection, sync/error copy, next-set controls, and confirmation controls.
+
+## Implemented (Phase 3)
+
+- **Watch live models:** `WatchLiveScoringEnvelope` / `WatchLiveScoringState` decode `Match.metadata.liveScoring` and encode PATCH payloads compatible with the web state shape.
+- **Watch hydrate:** `MatchScoringViewModel.load()` applies newer live revisions on load, restoring active set, sets, classic point/deuce/advantage state, in-set tie-break counters, pending game confirmation, and serve-guide seed fields.
+- **Watch save:** scoring changes, undo, next-set transitions, supplemental rows, Americano changes, first-serve flow, and explicit save now schedule a debounced live-scoring PATCH with `baseRevision`.
+- **Watch merge hook:** `applyLiveScoringEnvelopeIfNewer()` ignores stale revisions and can be reused by a future socket/phone relay; current watchOS target has no direct socket client.
+
 ## Adjacent upgrades (backlog)
 
 - Smarter reconnect: replay by `revision` after socket drop.

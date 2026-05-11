@@ -86,10 +86,8 @@ export const LeagueFixtureMatrix = ({
         className="pointer-events-none absolute inset-y-0 right-0 z-20 w-8 bg-gradient-to-l from-white to-transparent dark:from-gray-900"
         aria-hidden
       />
-      <div
-        className="relative z-10 max-w-full overflow-x-auto overflow-y-auto overscroll-x-contain rounded-2xl"
-        style={{ maxHeight: 'min(70vh, 640px)' }}
-      >
+      <div className="relative z-10 max-w-full overflow-x-auto overflow-y-hidden rounded-2xl">
+        <div className="max-h-[min(70vh,640px)] overflow-y-auto rounded-2xl">
         <table className="min-w-max border-separate border-spacing-0 text-sm">
           <thead>
             <tr>
@@ -212,6 +210,7 @@ export const LeagueFixtureMatrix = ({
             </tbody>
           </table>
         </div>
+      </div>
     </div>
   );
 };

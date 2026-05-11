@@ -26,6 +26,7 @@ struct WatchMatch: Decodable, Identifiable, Sendable {
     let id: String
     let matchNumber: Int
     let winnerId: String?
+    let metadata: WatchMatchMetadata?
     let teams: [WatchTeam]
     let sets: [WatchSet]
     let timerStatus: String?
@@ -36,6 +37,26 @@ struct WatchMatch: Decodable, Identifiable, Sendable {
 
     var sortedTeams: [WatchTeam] {
         teams.sorted { $0.teamNumber < $1.teamNumber }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, matchNumber, winnerId, metadata, teams, sets, timerStatus, timerStartedAt, timerPausedAt,
+             timerElapsedMs, timerCapMinutes
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        matchNumber = try c.decode(Int.self, forKey: .matchNumber)
+        winnerId = try c.decodeIfPresent(String.self, forKey: .winnerId)
+        metadata = try? c.decodeIfPresent(WatchMatchMetadata.self, forKey: .metadata)
+        teams = try c.decode([WatchTeam].self, forKey: .teams)
+        sets = try c.decode([WatchSet].self, forKey: .sets)
+        timerStatus = try c.decodeIfPresent(String.self, forKey: .timerStatus)
+        timerStartedAt = try c.decodeIfPresent(String.self, forKey: .timerStartedAt)
+        timerPausedAt = try c.decodeIfPresent(String.self, forKey: .timerPausedAt)
+        timerElapsedMs = try c.decodeIfPresent(Int.self, forKey: .timerElapsedMs)
+        timerCapMinutes = try c.decodeIfPresent(Int.self, forKey: .timerCapMinutes)
     }
 }
 

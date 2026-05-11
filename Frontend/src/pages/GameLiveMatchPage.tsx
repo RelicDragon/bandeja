@@ -3,16 +3,33 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next';
 import { resultsApi } from '@/api/results';
 import { gamesApi } from '@/api/games';
+import { LiveScoreShell } from '@/components/liveScoring';
 import { socketService } from '@/services/socketService';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useWakeScreenForLiveScoring } from '@/hooks/useWakeScreenForLiveScoring';
-import { parseMatchLiveEnvelope, type MatchLiveScoringEnvelopeV1 } from '@/types/matchLiveScoring';
+import { parseMatchLiveEnvelope } from '@/types/matchLiveScoring';
+import type { Game } from '@/types';
+import type { SetResult } from '@/types/gameResults';
+import { getRules } from '@/utils/scoring';
+import {
+  advanceLiveSet,
+  cancelPendingGameWin,
+  confirmPendingGameWin,
+  createInitialLiveScoringState,
+  parseLiveScoringState,
+  scoreLivePoint,
+  unscoreLivePoint,
+  type LiveScoringActionResult,
+  type LiveScoringState,
+  type LiveTeamSide,
+} from '@/utils/liveScoring';
 
 type RawMatch = {
   id: string;
   metadata?: unknown;
+  sets?: SetResult[];
   teams?: Array<{
     teamNumber: number;
     players?: Array<{ userId?: string; user?: { firstName?: string; lastName?: string } }>;
@@ -39,16 +56,17 @@ export const GameLiveMatchPage = () => {
   const isOnline = useNetworkStore((s) => s.isOnline);
 
   const [gameTitle, setGameTitle] = useState<string>('');
+  const [game, setGame] = useState<Game | null>(null);
   const [rawMatch, setRawMatch] = useState<RawMatch | null>(null);
-  const [live, setLive] = useState<MatchLiveScoringEnvelopeV1 | null>(null);
+  const [liveState, setLiveState] = useState<LiveScoringState | null>(null);
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [note, setNote] = useState('');
   const [showTvChrome, setShowTvChrome] = useState(!tv);
 
   const lastLive = useSocketEventsStore((s) => s.lastMatchLiveScoringUpdated);
+  const rules = useMemo(() => getRules(game), [game]);
 
   useWakeScreenForLiveScoring(Boolean(gameId && matchId && !tv));
 
@@ -62,6 +80,7 @@ export const GameLiveMatchPage = () => {
         gamesApi.getById(gameId).catch(() => null),
       ]);
       const gamePayload = gameRes?.data as { name?: string } | undefined;
+      setGame((gameRes?.data as Game | undefined) ?? null);
       setGameTitle(gamePayload?.name || t('gameDetails.liveScore'));
 
       const rounds = gr.data?.rounds as Array<{ matches?: RawMatch[] }> | undefined;
@@ -76,15 +95,14 @@ export const GameLiveMatchPage = () => {
       if (!found) {
         setError('Match not found');
         setRawMatch(null);
-        setLive(null);
+        setLiveState(null);
         setRevision(0);
         return;
       }
       setRawMatch(found);
       const env = parseMatchLiveEnvelope((found.metadata as Record<string, unknown> | undefined)?.liveScoring);
-      setLive(env);
+      setLiveState(env ? parseLiveScoringState(env.state, getRules(gameRes?.data as Game | undefined), found.sets) : createInitialLiveScoringState(getRules(gameRes?.data as Game | undefined), found.sets));
       setRevision(env?.revision ?? 0);
-      setNote(typeof env?.state?.note === 'string' ? (env.state.note as string) : '');
     } catch (e) {
       setError('Failed to load');
       setRawMatch(null);
@@ -108,32 +126,30 @@ export const GameLiveMatchPage = () => {
   useEffect(() => {
     if (!lastLive || lastLive.gameId !== gameId || lastLive.matchId !== matchId) return;
     if (lastLive.liveScoring === null) {
-      setLive(null);
+      setLiveState(rawMatch ? createInitialLiveScoringState(rules, rawMatch.sets) : null);
       setRevision(0);
-      setNote('');
       return;
     }
     const env = parseMatchLiveEnvelope(lastLive.liveScoring);
     if (env) {
-      setLive(env);
+      setLiveState(parseLiveScoringState(env.state, rules, rawMatch?.sets));
       setRevision(env.revision);
-      setNote(typeof env.state?.note === 'string' ? (env.state.note as string) : '');
     }
-  }, [lastLive, gameId, matchId]);
+  }, [lastLive, gameId, matchId, rawMatch, rules]);
 
-  const persistNote = async () => {
+  const persistLiveState = async (nextState: LiveScoringState, baseRevision: number) => {
     if (!gameId || !matchId) return;
     setSaving(true);
     setError(null);
     try {
       const res = await resultsApi.patchMatchLiveScoring(gameId, matchId, {
-        state: { note },
-        baseRevision: revision,
+        state: nextState as unknown as Record<string, unknown>,
+        baseRevision,
         clientMessageId: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `m-${Date.now()}`,
       });
       const env = res.data?.liveScoring;
       if (env) {
-        setLive(env);
+        setLiveState(parseLiveScoringState(env.state, rules, rawMatch?.sets));
         setRevision(env.revision);
       }
     } catch (err: unknown) {
@@ -148,6 +164,44 @@ export const GameLiveMatchPage = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const applyLiveAction = (result: LiveScoringActionResult) => {
+    if (!result.changed) return;
+    const nextState = result.state;
+    const baseRevision = revision;
+    setLiveState(nextState);
+    void persistLiveState(nextState, baseRevision);
+  };
+
+  const handleScore = (side: LiveTeamSide) => {
+    if (!liveState || saving) return;
+    applyLiveAction(scoreLivePoint(liveState, side, rules));
+  };
+
+  const handleUndo = (side: LiveTeamSide) => {
+    if (!liveState || saving) return;
+    applyLiveAction(unscoreLivePoint(liveState, side, rules));
+  };
+
+  const handleConfirmGameWin = () => {
+    if (!liveState || saving) return;
+    applyLiveAction(confirmPendingGameWin(liveState, rules));
+  };
+
+  const handleCancelGameWin = () => {
+    if (!liveState || saving) return;
+    applyLiveAction(cancelPendingGameWin(liveState));
+  };
+
+  const handleSetFirstServer = (side: LiveTeamSide) => {
+    if (!liveState || saving) return;
+    applyLiveAction({ state: { ...liveState, firstServerTeam: side }, changed: true });
+  };
+
+  const handleNextSet = () => {
+    if (!liveState || saving) return;
+    applyLiveAction(advanceLiveSet(liveState, rules));
   };
 
   const teamALabel = useMemo(() => (rawMatch ? labelForTeam(rawMatch, 1) : ''), [rawMatch]);
@@ -202,60 +256,28 @@ export const GameLiveMatchPage = () => {
               Game
             </Link>
           </div>
-        ) : (
+        ) : liveState ? (
           <>
-            {tv ? (
-              <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center px-2">
-                <div className="text-[clamp(1.5rem,6vw,3rem)] font-semibold leading-tight">{teamALabel}</div>
-                <div className="text-[clamp(3rem,14vw,8rem)] font-black tracking-tight opacity-90">vs</div>
-                <div className="text-[clamp(1.5rem,6vw,3rem)] font-semibold leading-tight">{teamBLabel}</div>
-                {live?.state && Object.keys(live.state).length > 0 ? (
-                  <pre className="text-left text-[clamp(0.75rem,2.5vw,1.1rem)] opacity-70 max-w-[90vw] overflow-x-auto">
-                    {JSON.stringify(live.state, null, 0)}
-                  </pre>
-                ) : (
-                  <div className="text-sm opacity-50">—</div>
-                )}
-              </div>
-            ) : (
-              <>
-                <div
-                  className={`grid gap-3 ${isLandscape ? 'grid-cols-2 flex-1' : 'grid-cols-1'}`}
-                >
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 p-4 bg-white dark:bg-gray-900">
-                    <div className="text-xs uppercase tracking-wide opacity-60 mb-1">Team A</div>
-                    <div className="text-lg font-semibold">{teamALabel}</div>
-                  </div>
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 p-4 bg-white dark:bg-gray-900">
-                    <div className="text-xs uppercase tracking-wide opacity-60 mb-1">Team B</div>
-                    <div className="text-lg font-semibold">{teamBLabel}</div>
-                  </div>
-                </div>
-
-                <section className="mt-4 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 bg-white dark:bg-gray-900">
-                  <div className="text-sm opacity-70 mb-2">
-                    {t('gameDetails.liveScore')} · rev {revision}
-                  </div>
-                  <label className="block text-xs opacity-60 mb-1">Demo field (synced)</label>
-                  <input
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm"
-                    placeholder="Note"
-                  />
-                  <button
-                    type="button"
-                    className="mt-3 w-full rounded-xl bg-primary-600 text-white py-3 text-sm font-semibold disabled:opacity-50"
-                    disabled={saving}
-                    onClick={() => void persistNote()}
-                  >
-                    {saving ? '…' : 'Save'}
-                  </button>
-                  {error ? <p className="mt-2 text-xs text-red-500">{error}</p> : null}
-                </section>
-              </>
-            )}
+            <LiveScoreShell
+              state={liveState}
+              teamALabel={teamALabel}
+              teamBLabel={teamBLabel}
+              revision={revision}
+              rules={rules}
+              isLandscape={isLandscape}
+              tv={tv}
+              saving={saving}
+              error={error}
+              onScore={handleScore}
+              onUndo={handleUndo}
+              onConfirmGameWin={handleConfirmGameWin}
+              onCancelGameWin={handleCancelGameWin}
+              onSetFirstServer={handleSetFirstServer}
+              onNextSet={handleNextSet}
+            />
           </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-sm opacity-70">No live state</div>
         )}
       </main>
     </div>

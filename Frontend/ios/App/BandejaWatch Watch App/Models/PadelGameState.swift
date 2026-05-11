@@ -5,7 +5,7 @@ enum TeamSide: String, Sendable, Codable {
     case teamB
 }
 
-enum PadelPoint: Int, Sendable {
+enum PadelPoint: Int, Sendable, Codable {
     case zero = 0
     case fifteen = 15
     case thirty = 30

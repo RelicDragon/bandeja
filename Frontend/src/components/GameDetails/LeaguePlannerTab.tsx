@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { addDays, addWeeks, format, parseISO, startOfWeek } from 'date-fns';
@@ -12,6 +12,7 @@ import { BUCKET_META } from '@/components/availability/bucketMeta';
 import {
   leaguesApi,
   type LeaguePlannerDay,
+  type LeaguePlannerDayBucket,
   type LeaguePlannerPayload,
   type LeaguePlannerBucketId,
   type LeagueStanding,
@@ -29,6 +30,101 @@ import { getAppDateFnsLocale } from '@/utils/dateFormat';
 
 const ALL_GROUP_ID = 'ALL';
 const BUCKET_ORDER: LeaguePlannerBucketId[] = ['night', 'morning', 'afternoon', 'evening'];
+
+const PLANNER_FACE_SM_PX = 24;
+const PLANNER_FACE_MD_PX = 32;
+const PLANNER_AV_OVERLAP_PX = 6;
+
+function plannerAvatarRowWidthPx(itemCount: number, facePx: number): number {
+  if (itemCount <= 0) return 0;
+  return facePx + (itemCount - 1) * (facePx - PLANNER_AV_OVERLAP_PX);
+}
+
+function maxPlannerFacesThatFit(containerWidth: number, facePx: number, sampleLen: number, freeCount: number): number {
+  if (freeCount <= 0 || containerWidth <= 0) return 0;
+  const maxK = Math.min(sampleLen, freeCount);
+  for (let k = maxK; k >= 1; k--) {
+    const needBadge = freeCount > k;
+    const items = needBadge ? k + 1 : k;
+    if (plannerAvatarRowWidthPx(items, facePx) <= containerWidth) return k;
+  }
+  if (plannerAvatarRowWidthPx(1, facePx) <= containerWidth) return 0;
+  return 0;
+}
+
+function PlannerCellAvatarRow({
+  sampleFreeUsers,
+  freeCount,
+  variant,
+}: {
+  sampleFreeUsers: LeaguePlannerDayBucket['sampleFreeUsers'];
+  freeCount: number;
+  variant: 'matrixCompact' | 'matrix' | 'rowTail';
+}) {
+  const facePx = variant === 'rowTail' ? PLANNER_FACE_MD_PX : PLANNER_FACE_SM_PX;
+  const avatarFaceSize = variant === 'rowTail' ? 'md' : 'sm';
+  const measureRef = useRef<HTMLDivElement>(null);
+  const [visibleFaces, setVisibleFaces] = useState(() => Math.min(sampleFreeUsers.length, freeCount));
+
+  const recompute = useCallback(() => {
+    const el = measureRef.current;
+    if (!el) return;
+    const w = el.clientWidth;
+    if (w <= 0) return;
+    setVisibleFaces(maxPlannerFacesThatFit(w, facePx, sampleFreeUsers.length, freeCount));
+  }, [facePx, sampleFreeUsers.length, freeCount]);
+
+  useLayoutEffect(() => {
+    recompute();
+    const el = measureRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => recompute());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [recompute]);
+
+  if (freeCount <= 0) return null;
+
+  const overflowCircleClass =
+    avatarFaceSize === 'md'
+      ? 'h-8 w-8 text-[10px] leading-none'
+      : 'h-6 w-6 text-[8px] leading-none';
+
+  const shellClass =
+    variant === 'rowTail' ? 'min-w-0 flex-1 overflow-hidden' : 'w-full min-w-0 overflow-hidden';
+
+  const needBadge = freeCount > visibleFaces;
+  const rest = freeCount - visibleFaces;
+  const restLabel = rest > 99 ? '99+' : `${rest}+`;
+
+  return (
+    <div ref={measureRef} className={shellClass}>
+      <div className="flex items-center justify-start -space-x-1.5">
+      {sampleFreeUsers.slice(0, visibleFaces).map((u) => (
+        <span key={u.id} className="flex shrink-0 rounded-full ring-2 ring-white dark:ring-gray-900">
+          <PlayerAvatar
+            player={u as BasicUser}
+            inlineFace
+            inlineFacePlain
+            inlineFaceSize={avatarFaceSize}
+            showName={false}
+            subscribePresence={false}
+            asDiv
+          />
+        </span>
+      ))}
+      {needBadge && rest > 0 && (
+        <span
+          className={`flex shrink-0 items-center justify-center rounded-full bg-gray-200 font-bold tabular-nums text-gray-800 ring-2 ring-white dark:bg-gray-600 dark:text-gray-100 dark:ring-gray-900 ${overflowCircleClass}`}
+          aria-label={rest > 99 ? '99 or more additional' : `${rest} additional`}
+        >
+          {restLabel}
+        </span>
+      )}
+      </div>
+    </div>
+  );
+}
 
 type ScopeMode = 'all' | 'group' | 'pick';
 
@@ -201,7 +297,8 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     if (!warmShell) setLoading(true);
     if (lastFetchedLeagueSeasonIdRef.current !== leagueSeasonId) setPlanner(null);
     try {
-      const groupId = selectedGroupId === ALL_GROUP_ID ? undefined : selectedGroupId;
+      const groupId =
+        scopeMode === 'group' && selectedGroupId !== ALL_GROUP_ID ? selectedGroupId : undefined;
       const aggregateUserId =
         scopeMode === 'pick' && !hasFixedTeams && pickIntersectIds?.length === 1 ? pickIntersectIds[0] : undefined;
       const aggregateIntersectUserIds =
@@ -271,10 +368,11 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   const showEditor = canEditGrid && editMyAvailability;
 
   const pickOptions = useMemo(() => {
+    const gFilter = scopeMode === 'group' ? selectedGroupId : ALL_GROUP_ID;
     const opts: { value: string; label: string }[] = [];
     if (hasFixedTeams) {
       for (const s of standings) {
-        if (selectedGroupId !== ALL_GROUP_ID && s.currentGroupId !== selectedGroupId) continue;
+        if (gFilter !== ALL_GROUP_ID && s.currentGroupId !== gFilter) continue;
         const players = s.leagueTeam?.players ?? [];
         const label = players.map((p) => p.user?.firstName || '?').join(' · ') || t('gameDetails.planner.teamFallback');
         opts.push({ value: `team:${s.id}`, label });
@@ -282,7 +380,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     } else {
       for (const s of standings) {
         if (!s.userId || !s.user) continue;
-        if (selectedGroupId !== ALL_GROUP_ID && s.currentGroupId !== selectedGroupId) continue;
+        if (gFilter !== ALL_GROUP_ID && s.currentGroupId !== gFilter) continue;
         const u = s.user;
         opts.push({
           value: `user:${s.userId}`,
@@ -291,7 +389,14 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
       }
     }
     return opts;
-  }, [standings, hasFixedTeams, selectedGroupId, t]);
+  }, [standings, hasFixedTeams, selectedGroupId, scopeMode, t]);
+
+  useEffect(() => {
+    if (scopeMode !== 'group' || !hasGroups) return;
+    if (selectedGroupId !== ALL_GROUP_ID) return;
+    const first = groups[0]?.id;
+    if (first) setSelectedGroupId(first);
+  }, [scopeMode, hasGroups, selectedGroupId, groups]);
 
   const scopeTabs = useMemo<SegmentedSwitchTab[]>(() => {
     const tabs: SegmentedSwitchTab[] = [{ id: 'all', label: t('gameDetails.planner.scopeAll') }];
@@ -342,48 +447,12 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
         aria-hidden
       />
     ) : null;
-    const avatarFaceSize = variant === 'rowTail' ? 'md' : 'sm';
-    const free = b.freeCount;
-    const overflowMany = free > 4;
-    const avatarCount = overflowMany ? 3 : Math.min(free, 4);
-    const restCount = overflowMany ? free - 3 : 0;
-    const restLabel = restCount > 99 ? '99+' : `${restCount}+`;
-    const overflowCircleClass =
-      avatarFaceSize === 'md'
-        ? 'h-8 w-8 text-[10px] leading-none'
-        : 'h-6 w-6 text-[8px] leading-none';
-
-    const avatarRowClass =
-      variant === 'rowTail' ? 'flex min-w-0 flex-1 items-center justify-start -space-x-1.5' : 'flex w-full min-w-0 items-center justify-start -space-x-1.5';
-
     const avatars = (
-      <div className={avatarRowClass}>
-        {b.sampleFreeUsers.slice(0, avatarCount).map((u) => (
-          <span key={u.id} className="inline-block shrink-0 rounded-full ring-2 ring-white dark:ring-gray-900">
-            <PlayerAvatar
-              player={u as BasicUser}
-              inlineFace
-              inlineFacePlain
-              inlineFaceSize={avatarFaceSize}
-              showName={false}
-              subscribePresence={false}
-              asDiv
-            />
-          </span>
-        ))}
-        {overflowMany && restCount > 0 && (
-          <span
-            className={`inline-flex shrink-0 items-center justify-center rounded-full bg-gray-200 font-bold tabular-nums text-gray-800 ring-2 ring-white dark:bg-gray-600 dark:text-gray-100 dark:ring-gray-900 ${overflowCircleClass}`}
-            aria-label={restCount > 99 ? '99 or more additional' : `${restCount} additional`}
-          >
-            {restLabel}
-          </span>
-        )}
-      </div>
+      <PlannerCellAvatarRow sampleFreeUsers={b.sampleFreeUsers} freeCount={b.freeCount} variant={variant} />
     );
     if (variant === 'rowTail') {
       return (
-        <div className="relative flex min-h-[3rem] flex-1 flex-row items-center gap-2 py-0.5 pl-0 pr-1">
+        <div className="relative flex min-h-[3rem] min-w-0 flex-1 flex-row items-center gap-2 py-0.5 pl-0 pr-1">
           {ring}
           {avatars}
         </div>
@@ -392,9 +461,9 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
 
     const compact = variant === 'matrixCompact';
     return (
-      <div className="relative flex h-full min-h-[3rem] w-full flex-col items-stretch justify-center gap-0.5 p-1">
+      <div className="relative flex h-full min-h-[3rem] w-full min-w-0 flex-col items-stretch justify-center gap-0.5 p-1">
         {ring}
-        <div className="flex w-full flex-col items-center gap-0.5">
+        <div className="flex w-full min-w-0 flex-col items-center gap-0.5">
           <meta.Icon className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500" strokeWidth={2} />
           {!compact && <span className="sr-only">{t(meta.labelKey)}</span>}
           {avatars}
@@ -476,16 +545,6 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
 
   return (
     <div className="space-y-4 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-4">
-      {hasGroups && (
-        <GroupFilterDropdown
-          selectedGroupId={selectedGroupId}
-          groups={groups}
-          allGroupsLabel={t('gameDetails.allGroups') || 'All groups'}
-          onSelect={setSelectedGroupId}
-          allGroupId={ALL_GROUP_ID}
-        />
-      )}
-
       <SegmentedSwitch
         tabs={scopeTabs}
         activeId={activeScopeTabId}
@@ -493,6 +552,29 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
         showOnlyActiveTabText={false}
         layoutId={`leaguePlannerScope-${leagueSeasonId}`}
       />
+      <AnimatePresence initial={false}>
+        {scopeMode === 'group' && hasGroups && (
+          <motion.div
+            key="planner-group-scope"
+            layout
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+          >
+            <div className="pt-1">
+              <GroupFilterDropdown
+                selectedGroupId={selectedGroupId}
+                groups={groups}
+                allGroupsLabel={t('gameDetails.allGroups') || 'All groups'}
+                onSelect={setSelectedGroupId}
+                allGroupId={ALL_GROUP_ID}
+                showAllOption={false}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {scopeMode === 'pick' && (
         <Select
           className="w-full"
@@ -607,7 +689,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
                           onPointerUp={(e) => handleCellPointerUp(day, b, e)}
                           onPointerCancel={clearLongPress}
                           className={[
-                            'relative min-h-[4.5rem] rounded-xl border text-left transition',
+                            'relative min-h-[4.5rem] min-w-0 rounded-xl border text-left transition',
                             day.isPast
                               ? 'cursor-not-allowed border-gray-100 bg-gray-100/60 opacity-60 dark:border-gray-800 dark:bg-gray-900/40'
                               : schedSlot
@@ -661,7 +743,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
                         onPointerUp={(e) => handleCellPointerUp(portraitDay, b, e)}
                         onPointerCancel={clearLongPress}
                         className={[
-                          'flex w-full min-h-[4.25rem] items-center gap-3 px-3 py-2.5 text-left transition',
+                          'flex w-full min-h-[4.25rem] min-w-0 items-center gap-3 px-3 py-2.5 text-left transition',
                           portraitDay.isPast
                             ? 'cursor-not-allowed opacity-50 dark:bg-gray-900/20'
                             : schedSlot

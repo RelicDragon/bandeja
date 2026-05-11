@@ -75,6 +75,7 @@ struct MatchScoringExperience: View {
                     onFinished: {
                         forceServeGate = false
                         reloadServeRecord()
+                        vm.requestLiveScoringSave()
                         scheduleCoachToastIfNeeded()
                     }
                 )
@@ -91,6 +92,7 @@ struct MatchScoringExperience: View {
             r.classicPointsPlayedInGame = v
             serveRecord = r
             WatchServeGuideSessionStore.shared.save(gameId: gameId, matchId: matchId, record: r)
+            vm.requestLiveScoringSave()
         }
         .confirmationDialog(WatchCopy.fixStartingServer(lang), isPresented: $showFixServerConfirm, titleVisibility: .visible) {
             Button(WatchCopy.confirmAction(lang)) {

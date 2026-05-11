@@ -7,6 +7,7 @@
     "build": "tsc && vite build",
     "postbuild": "node scripts/force-sw-update.js",
     "preview": "vite preview",
+    "test:live-scoring": "vitest run src/utils/liveScoring/core.test.ts",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "increment-sw": "node scripts/increment-sw-version.js"
   },
@@ -99,6 +100,7 @@
     "terser": "^5.44.0",
     "typescript": "^5.2.2",
     "typescript-eslint": "^8.46.2",
-    "vite": "^7.3.0"
+    "vite": "^7.3.0",
+    "vitest": "^4.1.5"
   }
 }
