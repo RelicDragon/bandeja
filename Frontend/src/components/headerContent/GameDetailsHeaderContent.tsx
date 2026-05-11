@@ -21,12 +21,8 @@ export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderCon
     setGameDetailsTableViewOverride,
     gameDetailsTableAddRoundCallback,
     gameDetailsTableIsEditing,
-    leagueSeasonFixtureTableEligible,
-    leagueSeasonTableViewOverride,
-    setLeagueSeasonTableViewOverride,
   } = useNavigationStore();
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
-  const effectiveLeagueFixtureTableView = leagueSeasonTableViewOverride === true;
 
   const handleChatClick = () => {
     if (id) {
@@ -36,38 +32,24 @@ export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderCon
 
   return (
     <>
-      {(gameDetailsCanShowTableView || leagueSeasonFixtureTableEligible) && (
+      {gameDetailsCanShowTableView && (
         <div
           className="absolute left-1/2 -translate-x-1/2 z-10 flex max-w-[min(100vw-8rem,20rem)] flex-wrap items-center justify-center gap-2 px-1 h-16 sm:max-w-none"
           style={{ top: 'env(safe-area-inset-top)' }}
         >
-          {gameDetailsCanShowTableView ? (
-            <>
-              <Button
-                onClick={() => setGameDetailsTableViewOverride(!effectiveTableView)}
-                variant={effectiveTableView ? 'primary' : 'secondary'}
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <TableProperties size={18} />
-                <span className="hidden sm:inline">{t('gameResults.tableView')}</span>
-              </Button>
-              {isLandscape && effectiveTableView && gameDetailsTableIsEditing && gameDetailsTableAddRoundCallback && (
-                <Button onClick={gameDetailsTableAddRoundCallback} variant="primary" size="sm" className="flex items-center gap-2">
-                  <Plus size={16} />
-                  {t('gameResults.addRound')}
-                </Button>
-              )}
-            </>
-          ) : (
-            <Button
-              onClick={() => setLeagueSeasonTableViewOverride(!effectiveLeagueFixtureTableView)}
-              variant={effectiveLeagueFixtureTableView ? 'primary' : 'secondary'}
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <TableProperties size={18} />
-              <span className="hidden sm:inline">{t('gameDetails.fixtureTableView')}</span>
+          <Button
+            onClick={() => setGameDetailsTableViewOverride(!effectiveTableView)}
+            variant={effectiveTableView ? 'primary' : 'secondary'}
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <TableProperties size={18} />
+            <span className="hidden sm:inline">{t('gameResults.tableView')}</span>
+          </Button>
+          {isLandscape && effectiveTableView && gameDetailsTableIsEditing && gameDetailsTableAddRoundCallback && (
+            <Button onClick={gameDetailsTableAddRoundCallback} variant="primary" size="sm" className="flex items-center gap-2">
+              <Plus size={16} />
+              {t('gameResults.addRound')}
             </Button>
           )}
         </div>

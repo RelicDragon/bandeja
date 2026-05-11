@@ -75,6 +75,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     [leagueSeasonId, scheduleSubTabs, scheduleSubView, setScheduleSubView]
   );
   const leagueSeasonTableViewOverride = useNavigationStore((s) => s.leagueSeasonTableViewOverride);
+  const setLeagueSeasonTableViewOverride = useNavigationStore((s) => s.setLeagueSeasonTableViewOverride);
   const setLeagueSeasonFixtureTableEligible = useNavigationStore((s) => s.setLeagueSeasonFixtureTableEligible);
   const effectiveFixtureTableView = leagueSeasonTableViewOverride === true;
   const [rounds, setRounds] = useState<LeagueRound[]>([]);
@@ -409,9 +410,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
         ? 'gameDetails.fixtureFullRrDisabledTeams'
         : fullRrBlockReason === 'mixedSizes'
           ? 'gameDetails.fixtureFullRrDisabledMixedSizes'
-          : fullRrBlockReason === 'existing'
-            ? 'gameDetails.fixtureFullRrDisabledExisting'
-            : null;
+          : null;
 
   return (
     <div className="space-y-6">
@@ -479,7 +478,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           </div>
         </Card>
       )}
-      {canEdit && hasFixedTeams && groups.length > 0 && (
+      {canEdit && hasFixedTeams && groups.length > 0 && fullRrBlockReason !== 'existing' && (
         <Card className="border border-teal-200/80 bg-gradient-to-br from-teal-50/95 to-cyan-50/60 dark:border-teal-900/40 dark:from-teal-950/40 dark:to-cyan-950/25">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
@@ -511,6 +510,21 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
         playoffLabel={t('gameDetails.roundTypePlayoff') || 'Play-off'}
         onSelect={setSelectedRoundType}
       />
+      {hasFixedTeams && fixtureTableEligible && selectedRoundType === 'REGULAR' && (
+        <div className="flex justify-center w-full">
+          <SegmentedSwitch
+            tabs={[
+              { id: 'list', label: t('gameDetails.fixtureMatrixViewList') },
+              { id: 'table', label: t('gameDetails.fixtureTableView') },
+            ]}
+            activeId={effectiveFixtureTableView ? 'table' : 'list'}
+            onChange={(id) => setLeagueSeasonTableViewOverride(id === 'table' ? true : null)}
+            showOnlyActiveTabText={false}
+            layoutId={`leagueFixtureViewMode-${leagueSeasonId}`}
+            className="w-fit"
+          />
+        </div>
+      )}
       {effectiveFixtureTableView && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'PLAYOFF' && (
         <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
           {t('gameDetails.fixtureTableModeRegularOnly')}
@@ -534,7 +548,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           )}
           <LeagueFixtureMatrix
             groupId={matrixGroupId}
-            groupName={matrixGroupName}
             teams={matrixTeams}
             rounds={rounds}
             onOpenGames={(g) => setSheetGames(g)}

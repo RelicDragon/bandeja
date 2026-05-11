@@ -251,7 +251,6 @@ export class LeaguePlannerService {
         bucket: BucketId;
         freeCount: number;
         busyCount: number;
-        unknownCount: number;
         sampleFreeUsers: ReturnType<typeof plannerSampleFreeUser>[];
       }>;
     }> = [];
@@ -267,7 +266,6 @@ export class LeaguePlannerService {
       const buckets = BUCKET_ORDER.map((bucket) => {
         let freeCount = 0;
         let busyCount = 0;
-        let unknownCount = 0;
         const sampleFreeUsers: ReturnType<typeof plannerSampleFreeUser>[] = [];
         if (intersectMode) {
           const states = aggregateIdsFiltered.map((uid) => {
@@ -275,18 +273,19 @@ export class LeaguePlannerService {
             const wa = (u.weeklyAvailability as WeeklyAvailabilityLike | null) ?? null;
             return bucketAggregateState(wa, weekdayKey, bucket, boundaries);
           });
-          const allFree = states.length > 0 && states.every((s) => s === 'free');
-          const anyBusy = states.some((s) => s === 'busy');
-          if (allFree) {
-            freeCount = 1;
-            for (const uid of aggregateIdsFiltered) {
-              const u = userById.get(uid)!;
-              if (sampleFreeUsers.length < 3) {
-                sampleFreeUsers.push(plannerSampleFreeUser(u));
+          if (states.length > 0 && states.every((s) => s !== null)) {
+            const allFree = states.every((s) => s === 'free');
+            const anyBusy = states.some((s) => s === 'busy');
+            if (allFree) {
+              freeCount = 1;
+              for (const uid of aggregateIdsFiltered) {
+                const u = userById.get(uid)!;
+                if (sampleFreeUsers.length < 4) {
+                  sampleFreeUsers.push(plannerSampleFreeUser(u));
+                }
               }
-            }
-          } else if (anyBusy) busyCount = 1;
-          else unknownCount = 1;
+            } else if (anyBusy) busyCount = 1;
+          }
         } else {
           for (const uid of aggregateIdsFiltered) {
             const u = userById.get(uid)!;
@@ -294,14 +293,13 @@ export class LeaguePlannerService {
             const st = bucketAggregateState(wa, weekdayKey, bucket, boundaries);
             if (st === 'free') {
               freeCount++;
-              if (sampleFreeUsers.length < 3) {
+              if (sampleFreeUsers.length < 4) {
                 sampleFreeUsers.push(plannerSampleFreeUser(u));
               }
             } else if (st === 'busy') busyCount++;
-            else unknownCount++;
           }
         }
-        return { bucket, freeCount, busyCount, unknownCount, sampleFreeUsers };
+        return { bucket, freeCount, busyCount, sampleFreeUsers };
       });
       days.push({ date: dateStr, weekdayKey, isPast, buckets });
     }

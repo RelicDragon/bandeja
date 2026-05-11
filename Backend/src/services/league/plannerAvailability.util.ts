@@ -96,14 +96,14 @@ export function bucketIsPartialFor(
   return m !== 0 && m !== mask;
 }
 
-/** Free / busy / unknown for aggregate cells (unknown = no weeklyAvailability JSON). */
+/** Free / busy for aggregate cells; null = no weeklyAvailability (excluded from counts and fit). */
 export function bucketAggregateState(
   wa: WeeklyAvailabilityLike | null | undefined,
   day: WeekdayKey,
   bucket: BucketId,
   boundaries: AvailabilityBucketBoundariesLike
-): 'free' | 'busy' | 'unknown' {
-  if (wa == null) return 'unknown';
+): 'free' | 'busy' | null {
+  if (wa == null) return null;
   if (bucketIsFullFor(wa, day, bucket, boundaries) || bucketIsPartialFor(wa, day, bucket, boundaries)) {
     return 'free';
   }
@@ -111,9 +111,8 @@ export function bucketAggregateState(
 }
 
 /**
- * Fixture fit: both sides must have every member **available** in the bucket (any overlap).
- * Null weeklyAvailability is treated as fully open (same as game invite matching).
- * Product note: fixed teams use **all** members (everyone must overlap the bucket).
+ * Fixture fit: every member must have stated availability and overlap the bucket.
+ * Null weeklyAvailability does not count as available for planning.
  */
 export function userFitsBucket(
   wa: WeeklyAvailabilityLike | null | undefined,
@@ -121,7 +120,7 @@ export function userFitsBucket(
   bucket: BucketId,
   boundaries: AvailabilityBucketBoundariesLike
 ): boolean {
-  if (wa == null) return true;
+  if (wa == null) return false;
   const mask = buildBucketMasks(boundaries)[bucket];
   return (((wa[day] ?? 0) & mask) >>> 0) !== 0;
 }

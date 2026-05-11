@@ -40,6 +40,8 @@ interface PlayerAvatarProps {
   superTiny?: boolean;
   /** 24px face only: tiny CDN avatar, no badges/rings/dialog (e.g. message menus). */
   inlineFace?: boolean;
+  /** With `inlineFace`: omit trainer/favorite ring on the face. */
+  inlineFacePlain?: boolean;
   /** With `inlineFace`: `sm` = 24px (menus), `md` = 32px (message list). */
   inlineFaceSize?: 'sm' | 'md';
   role?: 'OWNER' | 'ADMIN' | 'PLAYER';
@@ -51,7 +53,7 @@ interface PlayerAvatarProps {
   onTouchEnd?: (e: TouchEvent) => void;
 }
 
-export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, inlineFace = false, inlineFaceSize = 'sm', role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
+export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, inlineFace = false, inlineFacePlain = false, inlineFaceSize = 'sm', role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
   const avatarPresenceKey = `avatar:${useId()}`;
   usePresenceSubscription(
     avatarPresenceKey,
@@ -304,13 +306,15 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   };
 
   const ringClass =
-    inlineFace
-      ? isFavorite
-        ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400'
-        : player.isTrainer
-          ? 'ring-[3px] ring-green-500 dark:ring-green-400'
-          : ''
-      : superTiny
+    inlineFace && inlineFacePlain
+      ? ''
+      : inlineFace
+        ? isFavorite
+          ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400'
+          : player.isTrainer
+            ? 'ring-[3px] ring-green-500 dark:ring-green-400'
+            : ''
+        : superTiny
         ? isFavorite
           ? 'ring-2 ring-yellow-600 dark:ring-yellow-400'
           : player.isTrainer

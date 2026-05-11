@@ -124,7 +124,6 @@ export interface LeaguePlannerDayBucket {
   bucket: LeaguePlannerBucketId;
   freeCount: number;
   busyCount: number;
-  unknownCount: number;
   sampleFreeUsers: Array<{
     id: string;
     firstName: string | null;

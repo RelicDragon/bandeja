@@ -13,12 +13,8 @@ export interface LeaguePlannerDetailSheetProps {
   bucketLabel: string;
   freeCount: number;
   busyCount: number;
-  unknownCount: number;
-  totalInView: number;
   schedulableGameIds: string[];
   unscheduledGames: LeaguePlannerUnscheduledGame[];
-  peopleLayer: boolean;
-  matchesLayer: boolean;
 }
 
 export const LeaguePlannerDetailSheet = ({
@@ -28,14 +24,18 @@ export const LeaguePlannerDetailSheet = ({
   bucketLabel,
   freeCount,
   busyCount,
-  unknownCount,
-  totalInView,
   schedulableGameIds,
   unscheduledGames,
-  peopleLayer,
-  matchesLayer,
 }: LeaguePlannerDetailSheetProps) => {
   const { t } = useTranslation();
+  const peopleCountsLabel =
+    freeCount === 0 && busyCount === 0
+      ? t('gameDetails.planner.peopleCountsNone')
+      : freeCount > 0 && busyCount === 0
+        ? t('gameDetails.planner.peopleCountsFree', { count: freeCount })
+        : freeCount === 0 && busyCount > 0
+          ? t('gameDetails.planner.peopleCountsBusy', { count: busyCount })
+          : t('gameDetails.planner.peopleCountsFreeBusy', { free: freeCount, busy: busyCount });
   const navigate = useNavigate();
   const isDesktop = useDesktop();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -104,22 +104,18 @@ export const LeaguePlannerDetailSheet = ({
             <ul className="mt-2 space-y-1.5 text-sm text-gray-800 dark:text-gray-200">
               <li>
                 <span className="font-medium">{t('gameDetails.planner.layerPeople')}:</span>{' '}
-                {peopleLayer
-                  ? t('gameDetails.planner.peopleCounts', { free: freeCount, busy: busyCount, unknown: unknownCount, total: totalInView })
-                  : t('gameDetails.planner.layerOff')}
+                {peopleCountsLabel}
               </li>
               <li>
                 <span className="font-medium">{t('gameDetails.planner.layerMatches')}:</span>{' '}
-                {matchesLayer
-                  ? schedulable.length > 0
-                    ? t('gameDetails.planner.matchesPossible', { count: schedulable.length })
-                    : t('gameDetails.planner.matchesNone')
-                  : t('gameDetails.planner.layerOff')}
+                {schedulable.length > 0
+                  ? t('gameDetails.planner.matchesPossible', { count: schedulable.length })
+                  : t('gameDetails.planner.matchesNone')}
               </li>
             </ul>
           </div>
 
-          {matchesLayer && schedulable.length > 0 && (
+          {schedulable.length > 0 && (
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 {t('gameDetails.planner.unscheduledTitle')}

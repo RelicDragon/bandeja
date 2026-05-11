@@ -27,7 +27,7 @@ export const GroupFilterDropdown = ({
   showAllOption = true,
 }: GroupFilterDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number; width: number } | null>(null);
 
@@ -176,8 +176,10 @@ export const GroupFilterDropdown = ({
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       <button
+        ref={dropdownRef}
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
       >
@@ -203,7 +205,7 @@ export const GroupFilterDropdown = ({
       </button>
 
       {renderMenu()}
-    </div>
+    </>
   );
 };
 

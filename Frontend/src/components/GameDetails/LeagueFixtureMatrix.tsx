@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flame } from 'lucide-react';
 import type { TFunction } from 'i18next';
@@ -16,7 +16,6 @@ import {
 
 interface LeagueFixtureMatrixProps {
   groupId: string;
-  groupName: string;
   teams: MatrixTeam[];
   rounds: LeagueRound[];
   onOpenGames: (games: Game[]) => void;
@@ -65,26 +64,13 @@ function cellLabel(
 
 export const LeagueFixtureMatrix = ({
   groupId,
-  groupName,
   teams,
   rounds,
   onOpenGames,
 }: LeagueFixtureMatrixProps) => {
   const { t } = useTranslation();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [showScrollHint, setShowScrollHint] = useState(false);
 
   const pairMap = useMemo(() => buildPairCellMap(rounds, groupId), [rounds, groupId]);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const check = () => setShowScrollHint(el.scrollWidth > el.clientWidth + 8);
-    check();
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [teams.length]);
 
   if (teams.length < 2) {
     return (
@@ -95,52 +81,44 @@ export const LeagueFixtureMatrix = ({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2 px-0.5">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{groupName}</p>
-        {showScrollHint && (
-          <p className="text-xs text-gray-500 dark:text-gray-400">{t('gameDetails.fixtureMatrixScrollHint')}</p>
-        )}
-      </div>
-      <div className="relative rounded-2xl border border-gray-200/90 bg-white/90 shadow-sm dark:border-gray-700 dark:bg-gray-900/80">
-        <div
-          className="pointer-events-none absolute inset-y-0 right-0 z-20 w-8 bg-gradient-to-l from-white to-transparent dark:from-gray-900"
-          aria-hidden
-        />
-        <div
-          ref={scrollRef}
-          className="relative z-10 max-w-full overflow-x-auto overflow-y-auto overscroll-x-contain rounded-2xl"
-          style={{ maxHeight: 'min(70vh, 640px)' }}
-        >
-          <table className="min-w-max border-separate border-spacing-0 text-sm">
-            <thead>
-              <tr>
+    <div className="relative rounded-2xl border border-gray-200/90 bg-white/90 shadow-sm dark:border-gray-700 dark:bg-gray-900/80">
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 z-20 w-8 bg-gradient-to-l from-white to-transparent dark:from-gray-900"
+        aria-hidden
+      />
+      <div
+        className="relative z-10 max-w-full overflow-x-auto overflow-y-auto overscroll-x-contain rounded-2xl"
+        style={{ maxHeight: 'min(70vh, 640px)' }}
+      >
+        <table className="min-w-max border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr>
+              <th
+                scope="col"
+                className="sticky left-0 top-0 z-[35] min-w-[140px] bg-gray-50/95 px-2 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm dark:bg-gray-950/95 dark:text-gray-400 border-b border-r border-gray-200 dark:border-gray-800"
+              >
+                {t('gameDetails.team')}
+              </th>
+              {teams.map((col) => (
                 <th
+                  key={col.sig}
                   scope="col"
-                  className="sticky left-0 top-0 z-[35] min-w-[140px] bg-gray-50/95 px-2 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm dark:bg-gray-950/95 dark:text-gray-400 border-b border-r border-gray-200 dark:border-gray-800"
+                  className="sticky top-0 z-[28] min-w-[72px] max-w-[132px] border-b border-gray-200 bg-gray-50/95 px-1 py-2 text-center text-[11px] font-medium text-gray-600 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95 dark:text-gray-300"
                 >
-                  {t('gameDetails.team')}
+                  <span className="flex flex-col gap-0.5 leading-snug">
+                    {col.label.split(' / ').map((segment, i) => (
+                      <span key={i} className="line-clamp-2 break-words">
+                        {segment}
+                      </span>
+                    ))}
+                  </span>
                 </th>
-                {teams.map((col) => (
-                  <th
-                    key={col.sig}
-                    scope="col"
-                    className="sticky top-0 z-[28] min-w-[72px] max-w-[132px] border-b border-gray-200 bg-gray-50/95 px-1 py-2 text-center text-[11px] font-medium text-gray-600 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95 dark:text-gray-300"
-                  >
-                    <span className="flex flex-col gap-0.5 leading-snug">
-                      {col.label.split(' / ').map((segment, i) => (
-                        <span key={i} className="line-clamp-2 break-words">
-                          {segment}
-                        </span>
-                      ))}
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {teams.map((row) => (
-                  <tr key={row.sig}>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {teams.map((row) => (
+              <tr key={row.sig}>
                     <th
                       scope="row"
                       className="sticky left-0 z-[25] min-w-[140px] border-b border-r border-gray-100 bg-white/95 px-2 py-1.5 text-left backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95"
@@ -234,7 +212,6 @@ export const LeagueFixtureMatrix = ({
             </tbody>
           </table>
         </div>
-      </div>
     </div>
   );
 };
