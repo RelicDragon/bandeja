@@ -26,7 +26,6 @@ extension ServeGuideInputs {
             classicPointsPlayedInGame: vm.classicPointsPlayedInGame,
             teamAPlayerNames: vm.teamAUsers.map(\.displayName),
             teamBPlayerNames: vm.teamBUsers.map(\.displayName),
-            pendingGameWinConfirm: vm.pendingGameWinConfirmSide != nil,
             pendingSetFormatChoice: vm.pendingSetFormatChoiceIndex != nil
         )
     }

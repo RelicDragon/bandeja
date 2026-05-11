@@ -117,16 +117,12 @@ export const GameBroadcastMatchPage = () => {
                   teamBPlayers={teamBPlayers}
                   revision={revision}
                   rules={rules}
-                  isLandscape={false}
                   boardTheme={boardTheme}
                   broadcast
                   onScore={noopSide}
                   onUndo={noopSide}
-                  onConfirmGameWin={noop}
-                  onCancelGameWin={noop}
                   onServeSetupComplete={noopServeSetup}
                   onSkipServeGuide={noop}
-                  onNextSet={noop}
                 />
               ) : (
                 <div className="w-full py-2 text-center text-sm opacity-60">No live state</div>

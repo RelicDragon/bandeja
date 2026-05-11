@@ -58,10 +58,10 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
   useEffect(() => {
     if (!lastGameResultsUpdated || lastGameResultsUpdated.gameId !== gameId) return;
     console.log(`[GameResultsEngine] Received results-updated notification for game ${gameId}`);
-    GameResultsEngine.initialize(gameId, userId || '', t, { force: true }).catch((err) => {
+    GameResultsEngine.reloadFromRemote().catch((err) => {
       console.error('Failed to reload results:', err);
     });
-  }, [lastGameResultsUpdated, gameId, userId, t]);
+  }, [lastGameResultsUpdated, gameId]);
 
   useEffect(() => {
     if (!lastMatchTimerUpdated || lastMatchTimerUpdated.gameId !== gameId) return;

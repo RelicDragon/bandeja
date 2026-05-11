@@ -678,7 +678,7 @@ export const AvailableGamesSection = ({
                     </p>
                   </Card>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4 pb-8">
                     {filteredGames.map((game) => (
                       <GameCard
                         key={game.id}
@@ -758,7 +758,7 @@ export const AvailableGamesSection = ({
               </p>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-8">
               {filteredGames.map((game) => (
                 <GameCard
                   key={game.id}
@@ -800,7 +800,7 @@ export const AvailableGamesSection = ({
               </p>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-8">
               {filteredGames.map((game) => (
                 <GameCard
                   key={game.id}

@@ -40,6 +40,7 @@ export const LiveTeamPanel = ({
 }: LiveTeamPanelProps) => {
   const roster = players.length ? players : [null];
   const nonInteractive = Boolean(tv);
+  const scoreLabelIsPoint = Boolean(!tv && onScore && point != null && point !== '');
   const rowIsServing = (rowIndex: number) => {
     if (!serveIndicator || serveIndicator.serverTeam !== side) return false;
     const n = players.length;
@@ -118,7 +119,7 @@ export const LiveTeamPanel = ({
           >
             {tv ? <AnimatedLiveBoardValue value={games} intensity="impact" /> : games}
           </div>
-          {point ? (
+          {point && !scoreLabelIsPoint ? (
             <div
               className={
                 tv
@@ -134,18 +135,30 @@ export const LiveTeamPanel = ({
         </div>
       </div>
       {!tv ? (
-        <div className="mt-5 grid w-full grid-cols-[1fr_auto] gap-2">
+        <div className="mt-5 flex w-full min-w-0 gap-2">
+          {scoreLabelIsPoint ? (
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onScore?.(side)}
+              className="min-w-0 flex-1 rounded-2xl bg-primary-600 py-5 text-4xl font-black tabular-nums leading-none text-white active:scale-[0.99] disabled:opacity-50 sm:text-5xl"
+              aria-label="Add point"
+            >
+              {point}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="min-w-0 flex-1 rounded-2xl bg-primary-600 py-5 text-lg font-black text-white active:scale-[0.99] disabled:opacity-50"
+              disabled={disabled}
+              onClick={() => onScore?.(side)}
+            >
+              + Point
+            </button>
+          )}
           <button
             type="button"
-            className="rounded-2xl bg-primary-600 py-5 text-lg font-black text-white active:scale-[0.99] disabled:opacity-50"
-            disabled={disabled}
-            onClick={() => onScore?.(side)}
-          >
-            + Point
-          </button>
-          <button
-            type="button"
-            className="rounded-2xl border border-gray-300 px-4 text-sm font-semibold dark:border-gray-700"
+            className="shrink-0 self-stretch rounded-2xl border border-gray-300 px-4 text-sm font-semibold dark:border-gray-700"
             disabled={disabled}
             onClick={() => onUndo?.(side)}
           >

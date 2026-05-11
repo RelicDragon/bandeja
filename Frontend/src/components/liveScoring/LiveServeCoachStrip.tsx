@@ -1,12 +1,15 @@
 import { useTranslation } from 'react-i18next';
-import type { ServeGuideSnapshot } from '@/utils/liveScoring';
-import type { LiveTeamSide } from '@/utils/liveScoring';
+import type { BasicUser } from '@/types';
+import type { LiveTeamSide, ServeGuideSnapshot } from '@/utils/liveScoring';
+import { ServeCourtSchema } from '@/components/liveScoring/ServeCourtSchema';
 
 type LiveServeCoachStripProps = {
   snapshot: ServeGuideSnapshot;
+  teamAPlayers: BasicUser[];
+  teamBPlayers: BasicUser[];
 };
 
-export const LiveServeCoachStrip = ({ snapshot }: LiveServeCoachStripProps) => {
+export const LiveServeCoachStrip = ({ snapshot, teamAPlayers, teamBPlayers }: LiveServeCoachStripProps) => {
   const { t } = useTranslation();
 
   const serveFromLabel = (s: ServeGuideSnapshot['courtSide']) =>
@@ -30,19 +33,24 @@ export const LiveServeCoachStrip = ({ snapshot }: LiveServeCoachStripProps) => {
         ? t('gameDetails.liveScoring.serveSlotTwo')
         : null;
 
+  const ariaLabel = [
+    `${snapshot.serverDisplayName} (${teamShort(snapshot.serverTeam)})`,
+    serveFromLabel(snapshot.courtSide),
+    slot,
+  ]
+    .filter((x): x is string => Boolean(x?.length))
+    .join('. ');
+
   return (
-    <div className="rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2.5 dark:border-gray-700 dark:bg-gray-800/80">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-        {t('gameDetails.liveScoring.nextServe')}
-      </div>
-      <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-        <div className="text-sm font-bold text-gray-900 dark:text-gray-50">
-          {snapshot.serverDisplayName}
-          <span className="ml-1 text-xs font-semibold text-gray-500 dark:text-gray-400">({teamShort(snapshot.serverTeam)})</span>
-        </div>
-      </div>
-      <div className="mt-1.5 text-xs font-semibold text-primary-700 dark:text-primary-300">{serveFromLabel(snapshot.courtSide)}</div>
-      {slot ? <div className="mt-1 text-[11px] text-gray-600 dark:text-gray-400">{slot}</div> : null}
-    </div>
+    <ServeCourtSchema
+      courtSide={snapshot.courtSide}
+      serverTeam={snapshot.serverTeam}
+      serverPlayerIndex={snapshot.serverPlayerIndex}
+      motionToken={snapshot.motionToken}
+      teamAPlayers={teamAPlayers}
+      teamBPlayers={teamBPlayers}
+      className="h-[13.5rem] w-[6.75rem] max-w-full sm:h-[15rem] sm:w-[7.5rem]"
+      aria-label={ariaLabel}
+    />
   );
 };

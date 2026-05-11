@@ -1,12 +1,5 @@
 import type { ScoringRules } from './rulebook';
-import {
-  advanceLiveSet,
-  cancelPendingGameWin,
-  confirmPendingGameWin,
-  parseLiveScoringState,
-  scoreLivePoint,
-  unscoreLivePoint,
-} from './core';
+import { advanceLiveSet, parseLiveScoringState, scoreLivePoint, unscoreLivePoint } from './core';
 import type { LiveScoringState, SetResult } from './types';
 
 /** Limits CPU on adversarial or degenerate state graphs. */
@@ -14,8 +7,50 @@ const MAX_NEIGHBORS_PER_NODE = 48;
 const MAX_LAYER_WIDTH = 400;
 const MAX_TOTAL_EXPANDED = 5000;
 
+function sortKeysDeep(x: unknown): unknown {
+  if (x === null || typeof x !== 'object') return x;
+  if (Array.isArray(x)) return x.map(sortKeysDeep);
+  const o = x as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const k of Object.keys(o).sort()) {
+    const v = o[k];
+    if (v === undefined) continue;
+    out[k] = sortKeysDeep(v);
+  }
+  return out;
+}
+
+/** Strips DB-only / client-only set fields so BFS matches server vs optimistic payloads. */
+function canonicalLiveScoringStateForTransitionCompare(state: LiveScoringState): unknown {
+  const sets = state.sets.map((s) => ({
+    teamA: s.teamA,
+    teamB: s.teamB,
+    isTieBreak: Boolean(s.isTieBreak),
+  }));
+  const out: Record<string, unknown> = {
+    activeSetIndex: state.activeSetIndex,
+    mode: state.mode,
+    sets,
+  };
+  if (state.classic) {
+    out.classic = {
+      pointState: state.classic.pointState,
+      withinSetTieBreak: state.classic.withinSetTieBreak,
+      tieBreakA: state.classic.tieBreakA,
+      tieBreakB: state.classic.tieBreakB,
+      classicPointsPlayedInGame: state.classic.classicPointsPlayedInGame,
+    };
+  }
+  if (state.firstServerTeam) out.firstServerTeam = state.firstServerTeam;
+  if (typeof state.firstServerDoublesPlayerIndex === 'number') {
+    out.firstServerDoublesPlayerIndex = state.firstServerDoublesPlayerIndex;
+  }
+  if (state.serveGuideSkipped === true) out.serveGuideSkipped = true;
+  return sortKeysDeep(out);
+}
+
 function stableSerialize(state: LiveScoringState): string {
-  return JSON.stringify(state);
+  return JSON.stringify(canonicalLiveScoringStateForTransitionCompare(state));
 }
 
 function expandNeighbors(prev: LiveScoringState, rules: ScoringRules): LiveScoringState[] {
@@ -30,17 +65,11 @@ function expandNeighbors(prev: LiveScoringState, rules: ScoringRules): LiveScori
   };
 
   for (const side of ['teamA', 'teamB'] as const) {
-    const r0 = scoreLivePoint(prev, side, rules, {});
+    const r0 = scoreLivePoint(prev, side, rules);
     if (r0.changed) push(r0.state);
-    const r1 = scoreLivePoint(prev, side, rules, { confirmGameWin: true });
-    if (r1.changed) push(r1.state);
     const u = unscoreLivePoint(prev, side, rules);
     if (u.changed) push(u.state);
   }
-  const c = confirmPendingGameWin(prev, rules);
-  if (c.changed) push(c.state);
-  const x = cancelPendingGameWin(prev);
-  if (x.changed) push(x.state);
   const a = advanceLiveSet(prev, rules);
   if (a.changed) push(a.state);
 

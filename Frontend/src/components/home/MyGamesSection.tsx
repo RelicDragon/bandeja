@@ -32,7 +32,7 @@ export const MyGamesSection = ({
   if (loading && showSkeleton) {
     return (
       <div>
-        <div className="space-y-4">
+        <div className="space-y-4 pb-8">
           {[0, 1, 2].map((skeletonIndex) => {
             const state = skeletonStates[skeletonIndex];
             if (state === 'hidden') return null;
@@ -61,13 +61,13 @@ export const MyGamesSection = ({
   if (games.length === 0) {
     if (upcomingGames && upcomingGames.length > 0) {
       return (
-        <div>
+        <div className="pb-8">
           <UpcomingGamesList games={upcomingGames} />
         </div>
       );
     }
     return (
-      <div>
+      <div className="pb-8">
         <Card className="text-center py-12">
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {t('home.noGames')}
@@ -122,7 +122,7 @@ export const MyGamesSection = ({
   return (
     <div>
       <div>
-        <div className="space-y-4">
+        <div className="space-y-4 pb-8">
           {announcedOrStartedGames.map((game) => 
             renderGame(game)
           )}

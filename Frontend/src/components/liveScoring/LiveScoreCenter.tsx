@@ -12,16 +12,13 @@ type LiveScoreCenterProps = {
   teamAPlayers: BasicUser[];
   teamBPlayers: BasicUser[];
   pointCenter: string;
-  revision: number;
   rules: ScoringRules;
   saving?: boolean;
   error?: string | null;
-  onConfirmGameWin: () => void;
-  onCancelGameWin: () => void;
+  isOnline?: boolean;
   onServeSetupComplete: (side: LiveTeamSide, doublesPlayerIndex: number) => void;
   onSkipServeGuide: () => void;
-  onNextSet: () => void;
-  canAdvanceSet: boolean;
+  showPointHeadline?: boolean;
 };
 
 const rosterNames = (players: BasicUser[]) =>
@@ -32,27 +29,15 @@ export const LiveScoreCenter = ({
   teamAPlayers,
   teamBPlayers,
   pointCenter,
-  revision,
   rules,
   saving,
   error,
-  onConfirmGameWin,
-  onCancelGameWin,
+  isOnline = true,
   onServeSetupComplete,
   onSkipServeGuide,
-  onNextSet,
-  canAdvanceSet,
+  showPointHeadline = true,
 }: LiveScoreCenterProps) => {
   const { t } = useTranslation();
-  const pendingSide = state.classic?.pendingGameWinConfirmSide;
-
-  const sideLine = (players: BasicUser[]) =>
-    players.length
-      ? players.map((p) => [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.id).join(', ')
-      : '';
-
-  const pendingLabel = pendingSide ? sideLine(pendingSide === 'teamA' ? teamAPlayers : teamBPlayers) : '';
-
   const na = useMemo(() => rosterNames(teamAPlayers), [teamAPlayers]);
   const nb = useMemo(() => rosterNames(teamBPlayers), [teamBPlayers]);
   const setupNeeded = needsServeSetup(state, rules);
@@ -62,36 +47,26 @@ export const LiveScoreCenter = ({
   }, [setupNeeded, state, rules, na, nb]);
 
   return (
-    <section className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex items-center justify-between gap-2 text-xs opacity-60">
-        <span>{t('gameDetails.liveScoring.liveScoringOn')}</span>
-        <span>
-          {t('gameDetails.liveScoring.rev')} {revision}
-        </span>
-      </div>
+    <section className="w-fit max-w-full min-w-0">
+      {!isOnline ? (
+        <div className="flex w-full min-w-0 text-xs">
+          <div className="min-w-0">
+            <span className="inline-flex max-w-[min(100%,14rem)] rounded-full border border-amber-400/40 bg-amber-500/12 px-2 py-0.5 font-semibold text-amber-950 dark:border-amber-500/35 dark:bg-amber-500/15 dark:text-amber-50">
+              {t('gameDetails.liveScoring.syncedWhenOnline')}
+            </span>
+          </div>
+        </div>
+      ) : null}
       <div className="mt-5 text-center">
         <div className="text-sm uppercase tracking-wide opacity-60">
           {t('gameDetails.liveScoring.setN', { n: state.activeSetIndex + 1 })}
         </div>
-        <div className="mt-1 text-3xl font-black">{state.mode === 'classic' ? pointCenter || t('gameDetails.liveScoring.game') : t('gameDetails.liveScoring.points')}</div>
-        <div className="mt-2 text-xs opacity-60">{saving ? t('gameDetails.liveScoring.syncing') : t('gameDetails.liveScoring.syncedWhenOnline')}</div>
+        {showPointHeadline ? (
+          <div className="mt-1 text-3xl font-black">
+            {state.mode === 'classic' ? pointCenter || t('gameDetails.liveScoring.game') : t('gameDetails.liveScoring.points')}
+          </div>
+        ) : null}
       </div>
-
-      {pendingSide ? (
-        <div className="mt-5 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
-          <div className="text-sm font-semibold">
-            {pendingLabel ? t('gameDetails.liveScoring.confirmGameFor', { name: pendingLabel }) : t('gameDetails.liveScoring.confirmGameWin')}
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button type="button" className="rounded-xl bg-amber-600 py-3 text-sm font-bold text-white" onClick={onConfirmGameWin}>
-              {t('gameDetails.liveScoring.confirmCta')}
-            </button>
-            <button type="button" className="rounded-xl border border-amber-300 py-3 text-sm font-bold" onClick={onCancelGameWin}>
-              {t('gameDetails.liveScoring.cancelCta')}
-            </button>
-          </div>
-        </div>
-      ) : null}
 
       <div className="mt-5 space-y-3">
         {setupNeeded ? (
@@ -103,18 +78,9 @@ export const LiveScoreCenter = ({
             onSkipHints={onSkipServeGuide}
           />
         ) : snapshot ? (
-          <LiveServeCoachStrip snapshot={snapshot} />
+          <LiveServeCoachStrip snapshot={snapshot} teamAPlayers={teamAPlayers} teamBPlayers={teamBPlayers} />
         ) : null}
       </div>
-
-      <button
-        type="button"
-        className="mt-5 w-full rounded-2xl border border-gray-300 py-3 text-sm font-bold disabled:opacity-40 dark:border-gray-700"
-        disabled={saving || !canAdvanceSet}
-        onClick={onNextSet}
-      >
-        {t('gameDetails.liveScoring.nextSet')}
-      </button>
 
       {error ? <p className="mt-4 text-xs text-red-500">{error}</p> : null}
     </section>

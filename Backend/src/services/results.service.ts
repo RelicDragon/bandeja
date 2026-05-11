@@ -7,7 +7,7 @@ import { getUserTimezoneFromCityId } from './user-timezone.service';
 import { LeagueGameResultsService } from './league/gameResults.service';
 import { SocialParticipantLevelService } from './socialParticipantLevel.service';
 import { calculateGameStatus } from '../utils/gameStatus';
-import { MatchSetRole, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { parseMatchSetRole } from './results/matchSetRole';
 import { assertMatchNormalizedSetsValid, type NormalizedMatchSetRow } from './results/matchSetsValidation';
 import {

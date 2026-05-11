@@ -7,18 +7,15 @@ import { useLiveMatchBoardState, liveBoardPlayersForTeam } from '@/hooks/useLive
 import { useAuthStore } from '@/store/authStore';
 import { useResolvedAppAppearance } from '@/store/themeStore';
 import { useNetworkStore } from '@/utils/networkStatus';
-import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useWakeScreenForLiveScoring } from '@/hooks/useWakeScreenForLiveScoring';
 import { parseMatchLiveEnvelope } from '@/types/matchLiveScoring';
 import {
-  advanceLiveSet,
-  cancelPendingGameWin,
-  confirmPendingGameWin,
   liveBoardThemeSearchParam,
   parseLiveBoardTheme,
   parseLiveScoringState,
   scoreLivePoint,
   unscoreLivePoint,
+  type LiveBoardTheme,
   type LiveScoringActionResult,
   type LiveScoringState,
   type LiveTeamSide,
@@ -30,14 +27,18 @@ export const GameLiveMatchPage = () => {
   const { pathname, search: locationSearch } = useLocation();
   const matchId = searchParams.get('matchId') || '';
   const tv = searchParams.get('tv') === '1';
-  const boardTheme = parseLiveBoardTheme(searchParams.get('theme'));
+  const themeParam = searchParams.get('theme');
   const spectatorToken = searchParams.get('spectatorToken');
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const isLandscape = useIsLandscape();
   const isOnline = useNetworkStore((s) => s.isOnline);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const resolvedAppAppearance = useResolvedAppAppearance();
+  const boardTheme = useMemo((): LiveBoardTheme => {
+    if (themeParam === 'light' || themeParam === 'dark') return parseLiveBoardTheme(themeParam);
+    if (tv) return 'dark';
+    return resolvedAppAppearance === 'dark' ? 'dark' : 'light';
+  }, [themeParam, tv, resolvedAppAppearance]);
   const shareBoardThemeParam = liveBoardThemeSearchParam(parseLiveBoardTheme(resolvedAppAppearance));
   const [mintedSpectatorToken, setMintedSpectatorToken] = useState<string | null>(null);
   const spectatorFetchToken = isAuthenticated ? null : spectatorToken || mintedSpectatorToken || null;
@@ -60,6 +61,27 @@ export const GameLiveMatchPage = () => {
   const [saving, setSaving] = useState(false);
   const [showTvChrome, setShowTvChrome] = useState(!tv);
   const gestureOpIdRef = useRef<string | null>(null);
+  const liveStateRef = useRef<LiveScoringState | null>(null);
+  const revisionRef = useRef(revision);
+  const savingRef = useRef(saving);
+  const rulesRef = useRef(rules);
+  const rawMatchSetsRef = useRef(rawMatch?.sets);
+
+  useEffect(() => {
+    liveStateRef.current = liveState;
+  }, [liveState]);
+  useEffect(() => {
+    revisionRef.current = revision;
+  }, [revision]);
+  useEffect(() => {
+    savingRef.current = saving;
+  }, [saving]);
+  useEffect(() => {
+    rulesRef.current = rules;
+  }, [rules]);
+  useEffect(() => {
+    rawMatchSetsRef.current = rawMatch?.sets;
+  }, [rawMatch?.sets]);
 
   useEffect(() => {
     setShowTvChrome(!tv);
@@ -143,8 +165,9 @@ export const GameLiveMatchPage = () => {
     };
   }, []);
 
-  const persistLiveState = async (nextState: LiveScoringState, baseRevision: number) => {
+  const persistLiveState = useCallback(async (nextState: LiveScoringState, baseRevision: number) => {
     if (!gameId || !matchId || !isAuthenticated) return;
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     const opId =
@@ -159,7 +182,7 @@ export const GameLiveMatchPage = () => {
       });
       const env = res.data?.liveScoring;
       if (env) {
-        setLiveState(parseLiveScoringState(env.state, rules, rawMatch?.sets));
+        setLiveState(parseLiveScoringState(env.state, rulesRef.current, rawMatchSetsRef.current));
         setRevision(env.revision);
         gestureOpIdRef.current = null;
       }
@@ -175,7 +198,7 @@ export const GameLiveMatchPage = () => {
       if (ax.response?.status === 409 && typeof rev409 === 'number') {
         const parsed = parseMatchLiveEnvelope(bodyEnv);
         if (parsed) {
-          setLiveState(parseLiveScoringState(parsed.state, rules, rawMatch?.sets));
+          setLiveState(parseLiveScoringState(parsed.state, rulesRef.current, rawMatchSetsRef.current));
           setRevision(parsed.revision);
           setError(null);
           gestureOpIdRef.current = null;
@@ -185,61 +208,70 @@ export const GameLiveMatchPage = () => {
           setError('Out of date — try again.');
         }
       } else {
-        setError('Save failed');
+        const msg =
+          ax.response?.data &&
+          typeof (ax.response.data as { message?: unknown }).message === 'string'
+            ? (ax.response.data as { message: string }).message
+            : null;
+        setError(msg || 'Save failed');
         gestureOpIdRef.current = null;
+        await refreshMatchLiveFromServer();
       }
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
-  };
+  }, [gameId, matchId, isAuthenticated, setLiveState, setRevision, setError, refreshMatchLiveFromServer]);
 
-  const applyLiveAction = (result: LiveScoringActionResult) => {
-    if (!result.changed) return;
-    gestureOpIdRef.current =
-      typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `op-${Date.now()}`;
-    const nextState = result.state;
-    const baseRevision = revision;
-    setLiveState(nextState);
-    void persistLiveState(nextState, baseRevision);
-  };
+  const applyLiveAction = useCallback(
+    (result: LiveScoringActionResult) => {
+      if (!result.changed) return;
+      gestureOpIdRef.current =
+        typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `op-${Date.now()}`;
+      const nextState = result.state;
+      const baseRevision = revisionRef.current;
+      liveStateRef.current = nextState;
+      setLiveState(nextState);
+      void persistLiveState(nextState, baseRevision);
+    },
+    [persistLiveState, setLiveState]
+  );
 
-  const handleScore = (side: LiveTeamSide) => {
-    if (!liveState || saving || !isAuthenticated) return;
-    applyLiveAction(scoreLivePoint(liveState, side, rules));
-  };
+  const handleScore = useCallback(
+    (side: LiveTeamSide) => {
+      const s = liveStateRef.current;
+      if (!s || savingRef.current || !isAuthenticated) return;
+      applyLiveAction(scoreLivePoint(s, side, rulesRef.current));
+    },
+    [isAuthenticated, applyLiveAction]
+  );
 
-  const handleUndo = (side: LiveTeamSide) => {
-    if (!liveState || saving || !isAuthenticated) return;
-    applyLiveAction(unscoreLivePoint(liveState, side, rules));
-  };
+  const handleUndo = useCallback(
+    (side: LiveTeamSide) => {
+      const s = liveStateRef.current;
+      if (!s || savingRef.current || !isAuthenticated) return;
+      applyLiveAction(unscoreLivePoint(s, side, rulesRef.current));
+    },
+    [isAuthenticated, applyLiveAction]
+  );
 
-  const handleConfirmGameWin = () => {
-    if (!liveState || saving || !isAuthenticated) return;
-    applyLiveAction(confirmPendingGameWin(liveState, rules));
-  };
+  const handleServeSetupComplete = useCallback(
+    (side: LiveTeamSide, doublesPlayerIndex: number) => {
+      const s = liveStateRef.current;
+      if (!s || savingRef.current || !isAuthenticated) return;
+      applyLiveAction({
+        state: { ...s, firstServerTeam: side, firstServerDoublesPlayerIndex: doublesPlayerIndex },
+        changed: true,
+      });
+    },
+    [isAuthenticated, applyLiveAction]
+  );
 
-  const handleCancelGameWin = () => {
-    if (!liveState || saving || !isAuthenticated) return;
-    applyLiveAction(cancelPendingGameWin(liveState));
-  };
-
-  const handleServeSetupComplete = (side: LiveTeamSide, doublesPlayerIndex: number) => {
-    if (!liveState || saving || !isAuthenticated) return;
-    applyLiveAction({
-      state: { ...liveState, firstServerTeam: side, firstServerDoublesPlayerIndex: doublesPlayerIndex },
-      changed: true,
-    });
-  };
-
-  const handleSkipServeGuide = () => {
-    if (!liveState || saving || !isAuthenticated) return;
-    applyLiveAction({ state: { ...liveState, serveGuideSkipped: true }, changed: true });
-  };
-
-  const handleNextSet = () => {
-    if (!liveState || saving || !isAuthenticated) return;
-    applyLiveAction(advanceLiveSet(liveState, rules));
-  };
+  const handleSkipServeGuide = useCallback(() => {
+    const s = liveStateRef.current;
+    if (!s || savingRef.current || !isAuthenticated) return;
+    applyLiveAction({ state: { ...s, serveGuideSkipped: true }, changed: true });
+  }, [isAuthenticated, applyLiveAction]);
 
   const teamAPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 1) : []), [rawMatch]);
   const teamBPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 2) : []), [rawMatch]);
@@ -276,14 +308,21 @@ export const GameLiveMatchPage = () => {
             ←
           </button>
           <div className="flex-1 truncate text-center text-sm font-medium">
-            {gameTitle || t('gameDetails.liveScore')}
+            {gameTitle.trim() ? gameTitle : null}
           </div>
-          <div
-            className={`rounded-full px-2 py-0.5 text-xs ${
-              isOnline ? 'bg-emerald-600/15 text-emerald-800 dark:text-emerald-200' : 'bg-amber-600/15 text-amber-900 dark:text-amber-100'
-            }`}
-          >
-            {isOnline ? t('gameDetails.liveTvPillLive') : t('gameDetails.liveTvPillOffline')}
+          <div className="flex shrink-0 items-center gap-1.5">
+            {saving ? (
+              <span className="inline-flex h-6 max-w-full shrink-0 items-center justify-center rounded-full border border-primary-400/35 bg-primary-500/12 px-2 text-xs leading-none text-primary-900 dark:border-primary-500/30 dark:bg-primary-500/15 dark:text-primary-100">
+                {t('gameDetails.liveScoring.syncing')}
+              </span>
+            ) : null}
+            <div
+              className={`inline-flex h-6 shrink-0 items-center justify-center rounded-full border border-transparent px-2 text-xs leading-none ${
+                isOnline ? 'bg-emerald-600/15 text-emerald-800 dark:text-emerald-200' : 'bg-amber-600/15 text-amber-900 dark:text-amber-100'
+              }`}
+            >
+              {isOnline ? t('gameDetails.liveTvPillLive') : t('gameDetails.liveTvPillOffline')}
+            </div>
           </div>
         </header>
       ) : showTvChrome ? (
@@ -335,7 +374,7 @@ export const GameLiveMatchPage = () => {
       ) : null}
 
       <main
-        className={`flex-1 flex overflow-auto ${isLandscape && !tv ? 'flex-row gap-4 px-4' : 'flex-col px-3'} ${
+        className={`flex-1 flex flex-col overflow-auto px-3 ${
           tv && !showTvChrome && gameTitle.trim() ? 'pb-4 pt-10 sm:pt-11' : 'py-4'
         }`}
       >
@@ -356,24 +395,39 @@ export const GameLiveMatchPage = () => {
               teamBPlayers={teamBPlayers}
               revision={revision}
               rules={rules}
-              isLandscape={isLandscape}
               boardTheme={boardTheme}
               tv={tv}
               saving={saving}
               error={error}
+              isOnline={isOnline}
               onScore={handleScore}
               onUndo={handleUndo}
-              onConfirmGameWin={handleConfirmGameWin}
-              onCancelGameWin={handleCancelGameWin}
               onServeSetupComplete={handleServeSetupComplete}
               onSkipServeGuide={handleSkipServeGuide}
-              onNextSet={handleNextSet}
             />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-sm opacity-70">No live state</div>
         )}
       </main>
+
+      {liveState ? (
+        <div
+          className={`pointer-events-none fixed z-[45] tabular-nums ${
+            tv
+              ? boardTheme === 'light'
+                ? 'text-[10px] text-gray-600 opacity-70 sm:text-xs'
+                : 'text-[10px] text-white/55 sm:text-xs'
+              : 'text-[10px] text-gray-500 opacity-70 dark:text-gray-400 sm:text-xs'
+          }`}
+          style={{
+            bottom: 'max(0.5rem, env(safe-area-inset-bottom))',
+            right: 'max(0.5rem, env(safe-area-inset-right))',
+          }}
+        >
+          {t('gameDetails.liveScoring.rev')} {revision}
+        </div>
+      ) : null}
     </div>
   );
 };

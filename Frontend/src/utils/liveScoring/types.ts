@@ -16,7 +16,6 @@ export type LiveScoringClassicState = {
   tieBreakA: number;
   tieBreakB: number;
   classicPointsPlayedInGame: number;
-  pendingGameWinConfirmSide?: LiveTeamSide;
 };
 
 export type LiveScoringState = {
@@ -32,5 +31,4 @@ export type LiveScoringState = {
 export type LiveScoringActionResult = {
   state: LiveScoringState;
   changed: boolean;
-  needsGameWinConfirm?: LiveTeamSide;
 };

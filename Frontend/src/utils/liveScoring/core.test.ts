@@ -1,14 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getRulesFromPreset } from '@/utils/scoring';
 import goldenFixtures from './fixtures/golden.json';
-import {
-  advanceLiveSet,
-  cancelPendingGameWin,
-  confirmPendingGameWin,
-  createInitialLiveScoringState,
-  scoreLivePoint,
-  unscoreLivePoint,
-} from './core';
+import { advanceLiveSet, createInitialLiveScoringState, scoreLivePoint, unscoreLivePoint } from './core';
 
 const classicRules = {
   ...getRulesFromPreset('CLASSIC_BEST_OF_3'),
@@ -31,8 +24,7 @@ const pointsRules = {
 const play = (side: 'teamA' | 'teamB', times: number, start = createInitialLiveScoringState(classicRules)) => {
   let state = start;
   for (let i = 0; i < times; i += 1) {
-    const result = scoreLivePoint(state, side, classicRules, { confirmGameWin: true });
-    state = result.state;
+    state = scoreLivePoint(state, side, classicRules).state;
   }
   return state;
 };
@@ -52,24 +44,14 @@ describe('live scoring core golden transitions', () => {
     expect(state.classic?.classicPointsPlayedInGame).toBe(2);
   });
 
-  it('requires confirmation before awarding a normal game', () => {
+  it('awards a normal game immediately at game point', () => {
     let state = play('teamA', 3);
-    const pending = scoreLivePoint(state, 'teamA', classicRules);
-
-    expect(pending.needsGameWinConfirm).toBe('teamA');
-    expect(pending.state.classic?.pendingGameWinConfirmSide).toBe('teamA');
-    expect(pending.state.sets[0]).toMatchObject({ teamA: 0, teamB: 0 });
-
-    state = cancelPendingGameWin(pending.state).state;
-    expect(state.classic?.pendingGameWinConfirmSide).toBeUndefined();
-
     state = scoreLivePoint(state, 'teamA', classicRules).state;
-    state = confirmPendingGameWin(state, classicRules).state;
     expect(state.sets[0]).toMatchObject({ teamA: 1, teamB: 0 });
     expect(state.classic?.pointState).toEqual({ kind: 'regular', teamA: 0, teamB: 0 });
   });
 
-  it('handles deuce and advantage game confirmation', () => {
+  it('handles deuce and advantage game win in one tap', () => {
     let state = createInitialLiveScoringState(classicRules);
     state = play('teamA', 3, state);
     state = play('teamB', 3, state);
@@ -77,10 +59,7 @@ describe('live scoring core golden transitions', () => {
 
     expect(state.classic?.pointState).toEqual({ kind: 'advantage', side: 'teamA' });
 
-    const pending = scoreLivePoint(state, 'teamA', classicRules);
-    expect(pending.needsGameWinConfirm).toBe('teamA');
-
-    state = confirmPendingGameWin(pending.state, classicRules).state;
+    state = scoreLivePoint(state, 'teamA', classicRules).state;
     expect(state.sets[0]).toMatchObject({ teamA: 1, teamB: 0 });
   });
 
@@ -128,15 +107,13 @@ describe('live scoring core golden transitions', () => {
     expect(state.classic?.pointState).toEqual({ kind: 'regular', teamA: 0, teamB: 0 });
   });
 
-  it('auto-advances active set index when confirming a game that completes the set', () => {
+  it('auto-advances active set index when a game point completes the set', () => {
     let state = createInitialLiveScoringState(classicRules, [
       { teamA: 6, teamB: 5, isTieBreak: false },
       { teamA: 0, teamB: 0, isTieBreak: false },
     ]);
     state.classic = { ...state.classic!, pointState: { kind: 'regular', teamA: 40, teamB: 0 } };
-    const pending = scoreLivePoint(state, 'teamA', classicRules);
-    expect(pending.needsGameWinConfirm).toBe('teamA');
-    state = confirmPendingGameWin(pending.state, classicRules).state;
+    state = scoreLivePoint(state, 'teamA', classicRules).state;
     expect(state.sets[0]).toMatchObject({ teamA: 7, teamB: 5 });
     expect(state.activeSetIndex).toBe(1);
     expect(state.classic?.pointState).toEqual({ kind: 'regular', teamA: 0, teamB: 0 });
@@ -156,7 +133,7 @@ describe('live scoring core golden transitions', () => {
   it.each(goldenFixtures)('matches golden fixture: $name', (fixture) => {
     let state = createInitialLiveScoringState(classicRules, fixture.initialSets);
     for (const side of fixture.actions) {
-      state = scoreLivePoint(state, side as 'teamA' | 'teamB', classicRules, { confirmGameWin: true }).state;
+      state = scoreLivePoint(state, side as 'teamA' | 'teamB', classicRules).state;
     }
 
     expect(state.sets).toMatchObject(fixture.expected.sets);

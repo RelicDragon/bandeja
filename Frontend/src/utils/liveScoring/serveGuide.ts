@@ -111,7 +111,6 @@ export function activeSetIsSupplemental(state: LiveScoringState): boolean {
 export function isPristineGameStart(state: LiveScoringState): boolean {
   const c = state.classic;
   if (!c || c.withinSetTieBreak) return false;
-  if (c.pendingGameWinConfirmSide) return false;
   const set = activeSetRow(state);
   if (!set || set.isTieBreak) return false;
   if (isSupplementalMatchSet(set)) return false;
@@ -141,7 +140,6 @@ export function computeServeGuideSnapshot(
   if (state.serveGuideSkipped) return null;
   const first = state.firstServerTeam;
   if (!first) return null;
-  if (state.classic?.pendingGameWinConfirmSide) return null;
   if (activeSetIsSupplemental(state)) return null;
 
   const c = state.classic;

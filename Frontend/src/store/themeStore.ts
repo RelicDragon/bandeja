@@ -73,7 +73,11 @@ export const useThemeStore = create<ThemeState>((set) => {
 /** Resolved light/dark for UI and deep links (follows `system` via matchMedia). */
 export function useResolvedAppAppearance(): 'light' | 'dark' {
   const theme = useThemeStore((s) => s.theme);
-  const systemScheme = useSyncExternalStore(subscribeSystemTheme, getSystemThemeSnapshot, () => 'light');
+  const systemScheme = useSyncExternalStore<'light' | 'dark'>(
+    subscribeSystemTheme,
+    getSystemThemeSnapshot,
+    () => 'light',
+  );
   if (theme === 'system') return systemScheme;
   return theme;
 }

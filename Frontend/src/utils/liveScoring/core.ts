@@ -64,12 +64,7 @@ export const parseLiveScoringState = (raw: unknown, rules: ScoringRules, fallbac
   };
 };
 
-export const scoreLivePoint = (
-  input: LiveScoringState,
-  side: LiveTeamSide,
-  rules: ScoringRules,
-  options: { confirmGameWin?: boolean } = {}
-): LiveScoringActionResult => {
+export const scoreLivePoint = (input: LiveScoringState, side: LiveTeamSide, rules: ScoringRules): LiveScoringActionResult => {
   const state = cloneState(input);
   ensureSetExists(state);
 
@@ -79,7 +74,6 @@ export const scoreLivePoint = (
   }
 
   state.classic = state.classic ?? emptyClassic();
-  state.classic.pendingGameWinConfirmSide = undefined;
 
   if (activeSetIsSuperTieBreak(state)) {
     const set = state.sets[state.activeSetIndex];
@@ -99,27 +93,9 @@ export const scoreLivePoint = (
     return { state: autoAdvanceCompletedSets(state, rules), changed: true };
   }
 
-  if (!options.confirmGameWin && tapWouldAwardCurrentGame(state.classic.pointState, side)) {
-    state.classic.pendingGameWinConfirmSide = side;
-    return { state, changed: true, needsGameWinConfirm: side };
-  }
-
   applyClassicPoint(state, side, rules);
   applyClassicPointsAfterUserScore(state);
   return { state: autoAdvanceCompletedSets(state, rules), changed: true };
-};
-
-export const confirmPendingGameWin = (input: LiveScoringState, rules: ScoringRules): LiveScoringActionResult => {
-  const side = input.classic?.pendingGameWinConfirmSide;
-  if (!side) return { state: input, changed: false };
-  return scoreLivePoint(input, side, rules, { confirmGameWin: true });
-};
-
-export const cancelPendingGameWin = (input: LiveScoringState): LiveScoringActionResult => {
-  if (!input.classic?.pendingGameWinConfirmSide) return { state: input, changed: false };
-  const state = cloneState(input);
-  if (state.classic) state.classic.pendingGameWinConfirmSide = undefined;
-  return { state, changed: true };
 };
 
 export const unscoreLivePoint = (
@@ -138,7 +114,6 @@ export const unscoreLivePoint = (
   }
 
   state.classic = state.classic ?? emptyClassic();
-  state.classic.pendingGameWinConfirmSide = undefined;
 
   if (activeSetIsSuperTieBreak(state)) {
     const set = state.sets[state.activeSetIndex];
@@ -261,10 +236,6 @@ const normalizeClassic = (
       tieBreakA: nonNegativeInt(o.tieBreakA),
       tieBreakB: nonNegativeInt(o.tieBreakB),
       classicPointsPlayedInGame: nonNegativeInt(o.classicPointsPlayedInGame),
-      pendingGameWinConfirmSide:
-        o.pendingGameWinConfirmSide === 'teamA' || o.pendingGameWinConfirmSide === 'teamB'
-          ? o.pendingGameWinConfirmSide
-          : undefined,
     },
     sets,
     activeSetIndex,
@@ -335,13 +306,6 @@ const awardGame = (state: LiveScoringState, side: LiveTeamSide, rules: ScoringRu
     classic.tieBreakA = 0;
     classic.tieBreakB = 0;
   }
-};
-
-const tapWouldAwardCurrentGame = (point: LiveClassicPointState, side: LiveTeamSide): boolean => {
-  if (point.kind === 'deuce') return false;
-  if (point.kind === 'advantage') return point.side === side;
-  if (side === 'teamA') return point.teamA === 40 && point.teamB !== 40;
-  return point.teamB === 40 && point.teamA !== 40;
 };
 
 const finishWithinSetTieBreak = (state: LiveScoringState, rules: ScoringRules) => {

@@ -47,7 +47,6 @@ struct WatchLiveClassicState: Codable, Sendable {
     var tieBreakA: Int
     var tieBreakB: Int
     var classicPointsPlayedInGame: Int
-    var pendingGameWinConfirmSide: TeamSide?
 }
 
 enum WatchLivePointState: Codable, Sendable {

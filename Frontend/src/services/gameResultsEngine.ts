@@ -23,6 +23,7 @@ import {
   splitOfficialAndSupplementalSets,
   validateSupplementalSetOrder,
 } from '@/utils/matchSetRole';
+import { mergeRoundsPreservingIdentity } from './gameResultsMerge';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 
@@ -224,6 +225,64 @@ class GameResultsEngineClass {
       useGameResultsStore.setState({ loading: false });
       throw error;
           }
+  }
+
+  async reloadFromRemote(): Promise<void> {
+    const startState = this.getState();
+    if (!startState.gameId || !startState.userId || !startState.initialized) return;
+
+    const gameId = startState.gameId;
+    const userId = startState.userId;
+
+    try {
+      const [gameResponse, resultsResponse] = await Promise.all([
+        gamesApi.getById(gameId).catch((error: any) => {
+          if (error?.response?.status === 401) return null;
+          console.warn('Failed to reload game for live update:', error);
+          return null;
+        }),
+        resultsApi.getGameResults(gameId).catch((error: any) => {
+          console.warn('Failed to reload server results for live update:', error);
+          return null;
+        }),
+      ]);
+
+      const liveState = this.getState();
+      if (liveState.gameId !== gameId || liveState.userId !== userId) return;
+
+      const patch: Partial<GameResultsState> = {};
+
+      if (gameResponse?.data) {
+        const game = gameResponse.data;
+        patch.game = game;
+        patch.canEdit = this.canUserEditResults(game, userId);
+        patch.gameState = this.getGameState(game, userId);
+      }
+
+      if (resultsResponse?.data) {
+        const serverRounds = this.convertServerResultsToState(resultsResponse.data, (k) => k).rounds;
+        const merged = mergeRoundsPreservingIdentity(liveState.rounds, serverRounds);
+
+        if (merged !== liveState.rounds) {
+          patch.rounds = merged;
+        }
+
+        const localData: LocalResults = {
+          gameId,
+          rounds: merged,
+          lastSyncedAt: Date.now(),
+        };
+        await ResultsStorage.saveResults(localData);
+        await ResultsStorage.setServerProblem(gameId, false);
+        if (liveState.serverProblem) patch.serverProblem = false;
+      }
+
+      if (Object.keys(patch).length > 0) {
+        useGameResultsStore.setState(patch);
+      }
+    } catch (error) {
+      console.error('Failed to reload from remote:', error);
+    }
   }
 
   async syncToServer(): Promise<void> {

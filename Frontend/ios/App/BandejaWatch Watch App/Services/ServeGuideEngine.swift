@@ -24,7 +24,6 @@ struct ServeGuideInputs: Sendable, Equatable {
     var teamAPlayerNames: [String]
     var teamBPlayerNames: [String]
 
-    var pendingGameWinConfirm: Bool
     var pendingSetFormatChoice: Bool
 }
 
@@ -33,7 +32,7 @@ enum ServeGuideEngine {
         if i.isAmericano || i.isReadOnly || i.seedSkipped || i.hiddenForMatch { return nil }
         if i.hintsMode == .off { return nil }
         if !i.usesTennisSetRules { return nil }
-        if i.pendingGameWinConfirm || i.pendingSetFormatChoice { return nil }
+        if i.pendingSetFormatChoice { return nil }
         if i.activeSetIsSupplemental { return nil }
         guard let first = i.matchFirstServerTeam else { return nil }
 

@@ -3,7 +3,6 @@ import type { BasicUser } from '@/types';
 import type { LiveScoringState, LiveTeamSide } from '@/utils/liveScoring';
 import {
   activeSetScore,
-  canAdvanceLiveSet,
   computeServeGuideSnapshot,
   getClassicPointLabels,
   needsServeSetup,
@@ -23,19 +22,17 @@ type LiveScoreShellProps = {
   teamBPlayers: BasicUser[];
   revision: number;
   rules: ScoringRules;
-  isLandscape: boolean;
   boardTheme?: LiveBoardTheme;
   tv?: boolean;
   broadcast?: boolean;
   saving?: boolean;
   error?: string | null;
+  /** Network; when true and not saving, sync status tag is hidden (header already shows Live). */
+  isOnline?: boolean;
   onScore: (side: LiveTeamSide) => void;
   onUndo: (side: LiveTeamSide) => void;
-  onConfirmGameWin: () => void;
-  onCancelGameWin: () => void;
   onServeSetupComplete: (side: LiveTeamSide, doublesPlayerIndex: number) => void;
   onSkipServeGuide: () => void;
-  onNextSet: () => void;
 };
 
 export const LiveScoreShell = ({
@@ -44,23 +41,19 @@ export const LiveScoreShell = ({
   teamBPlayers,
   revision,
   rules,
-  isLandscape,
   boardTheme = 'dark',
   tv,
   broadcast,
   saving,
   error,
+  isOnline,
   onScore,
   onUndo,
-  onConfirmGameWin,
-  onCancelGameWin,
   onServeSetupComplete,
   onSkipServeGuide,
-  onNextSet,
 }: LiveScoreShellProps) => {
   const set = activeSetScore(state);
   const points = getClassicPointLabels(state.classic);
-  const canAdvanceSet = canAdvanceLiveSet(state, rules);
   const setupBlocks = isClassicRules(rules) && needsServeSetup(state, rules);
   const panelDisabled = Boolean(saving || setupBlocks);
 
@@ -144,20 +137,16 @@ export const LiveScoreShell = ({
   }
 
   return (
-    <div
-      className={
-        isLandscape
-          ? 'grid min-h-0 flex-1 grid-cols-[1fr_minmax(16rem,22rem)_1fr] gap-4 p-4'
-          : 'flex min-h-0 flex-1 flex-col gap-3 overflow-auto p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]'
-      }
-    >
-      <LiveTeamPanel
-        side="teamA"
-        players={teamAPlayers}
-        games={set.teamA}
-        point={state.mode === 'classic' ? points.teamA : undefined}
-        disabled={panelDisabled}
+    <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-3 overflow-auto p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+      <LiveBroadcastBoard
+        state={state}
+        teamAPlayers={teamAPlayers}
+        teamBPlayers={teamBPlayers}
+        revision={revision}
+        boardTheme={boardTheme}
         serveIndicator={serveIndicator}
+        interactive
+        disabled={panelDisabled}
         onScore={onScore}
         onUndo={onUndo}
       />
@@ -166,26 +155,13 @@ export const LiveScoreShell = ({
         teamAPlayers={teamAPlayers}
         teamBPlayers={teamBPlayers}
         pointCenter={points.center}
-        revision={revision}
         rules={rules}
         saving={saving}
         error={error}
-        onConfirmGameWin={onConfirmGameWin}
-        onCancelGameWin={onCancelGameWin}
+        isOnline={isOnline ?? true}
         onServeSetupComplete={onServeSetupComplete}
         onSkipServeGuide={onSkipServeGuide}
-        onNextSet={onNextSet}
-        canAdvanceSet={canAdvanceSet}
-      />
-      <LiveTeamPanel
-        side="teamB"
-        players={teamBPlayers}
-        games={set.teamB}
-        point={state.mode === 'classic' ? points.teamB : undefined}
-        disabled={panelDisabled}
-        serveIndicator={serveIndicator}
-        onScore={onScore}
-        onUndo={onUndo}
+        showPointHeadline={false}
       />
     </div>
   );

@@ -286,7 +286,7 @@ export class TeamForRoundGeneration {
     });
 
     const cycle = roundsInSingleRoundRobinCycle(sortedTeams.length);
-    if (cycle < 1 || priorRegularRounds >= cycle) {
+    if (cycle < 1) {
       return;
     }
 

@@ -169,12 +169,6 @@ struct ClassicScoringView: View {
                 .disabled(vm.isSaving)
             }
         }
-        .sheet(isPresented: Binding(
-            get: { vm.pendingGameWinConfirmSide != nil },
-            set: { if !$0 { vm.cancelPendingGameWinConfirm() } }
-        )) {
-            GameWinConfirmSheet(vm: vm, lang: lang)
-        }
         .confirmationDialog(
             WatchCopy.setFormatChoiceTitle(lang),
             isPresented: Binding(
