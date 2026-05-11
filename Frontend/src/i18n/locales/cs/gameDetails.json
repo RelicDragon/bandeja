@@ -251,7 +251,6 @@
     "fixtureDetailTitle": "Souboj",
     "fixtureOpenMatch": "Otevřít zápas",
     "fixtureDetailScoreSummary": "Skóre: {{scores}}",
-    "fixtureSeasonRecord": "{{w}}-{{l}}-{{t}}",
     "fixtureTableModeRegularOnly": "Tabulkové zobrazení ukazuje jen základní část sezóny.",
     "fixtureFullRrDisabledNoGroups": "Nejprve vytvořte skupiny",
     "fixtureFullRrDisabledTeams": "V každé skupině přiřaďte kompletní družstva (dva hráče)",

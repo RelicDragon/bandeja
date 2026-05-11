@@ -1,6 +1,23 @@
 import type { BasicUser, Game } from '@/types';
 import type { LeagueRound, LeagueStanding } from '@/api/leagues';
 
+const letterRe = /\p{L}/u;
+
+export function formatFixtureMatrixPlayerName(user: BasicUser | null | undefined): string {
+  const first = (user?.firstName ?? '').trim();
+  const last = (user?.lastName ?? '').trim();
+  const firstChar = first ? ([...first][0] ?? '') : '';
+  const hasLetterInitial = firstChar && letterRe.test(firstChar);
+  const initial = hasLetterInitial ? `${firstChar.toLocaleUpperCase()}.` : '';
+
+  if (last) {
+    if (initial) return `${initial} ${last}`;
+    return last;
+  }
+  if (first) return first;
+  return '';
+}
+
 export function roundsInSingleRoundRobinCycle(teamCount: number): number {
   if (teamCount < 2) return 0;
   return teamCount % 2 === 0 ? teamCount - 1 : teamCount;
@@ -92,11 +109,10 @@ export function standingsTeamsForGroup(
     if (ids.length !== 2) continue;
     const u0 = players[0]?.user;
     const u1 = players[1]?.user;
-    const label =
-      [u0?.firstName, u0?.lastName].filter(Boolean).join(' ').trim() &&
-      [u1?.firstName, u1?.lastName].filter(Boolean).join(' ').trim()
-        ? `${[u0?.firstName, u0?.lastName].filter(Boolean).join(' ')} / ${[u1?.firstName, u1?.lastName].filter(Boolean).join(' ')}`
-        : (s.leagueTeam.id ?? '').slice(0, 8);
+    const p0 = formatFixtureMatrixPlayerName(u0);
+    const p1 = formatFixtureMatrixPlayerName(u1);
+    const parts = [p0, p1].filter(Boolean);
+    const label = parts.length ? parts.join(' / ') : (s.leagueTeam.id ?? '').slice(0, 8);
     out.push({
       leagueTeamId: s.leagueTeam.id,
       participantId: s.id,
@@ -106,33 +122,6 @@ export function standingsTeamsForGroup(
     });
   }
   return out.sort((a, b) => a.sig.localeCompare(b.sig));
-}
-
-export function aggregateSeasonWltForTeam(
-  teamSig: string,
-  rounds: LeagueRound[],
-  groupId: string
-): { w: number; l: number; t: number } {
-  let w = 0;
-  let l = 0;
-  let t = 0;
-  const regularGames = rounds
-    .filter((r) => (r.roundType ?? 'REGULAR') === 'REGULAR')
-    .flatMap((r) => r.games)
-    .filter((g) => g.leagueGroupId === groupId && g.hasFixedTeams && g.resultsStatus === 'FINAL');
-
-  for (const g of regularGames) {
-    const s1 = sigFromFixedTeam(g, 1);
-    const s2 = sigFromFixedTeam(g, 2);
-    if (!s1 || !s2 || s1 === s2) continue;
-    const opp = teamSig === s1 ? s2 : teamSig === s2 ? s1 : null;
-    if (!opp) continue;
-    const { outcome } = rowPerspectiveOutcome(g, teamSig, opp);
-    if (outcome === 'W') w++;
-    else if (outcome === 'L') l++;
-    else if (outcome === 'T') t++;
-  }
-  return { w, l, t };
 }
 
 export type CellGames = { games: Game[] };

@@ -245,7 +245,6 @@
     "fixtureDetailTitle": "Дуел",
     "fixtureOpenMatch": "Отвори утакмицу",
     "fixtureDetailScoreSummary": "Резултат: {{scores}}",
-    "fixtureSeasonRecord": "{{w}}-{{l}}-{{t}}",
     "fixtureTableModeRegularOnly": "Приказ табеле показује само регуларну сезону.",
     "fixtureFullRrDisabledNoGroups": "Прво направите групе",
     "fixtureFullRrDisabledTeams": "Доделите комплетне тимове (по два играча) у свакој групи",

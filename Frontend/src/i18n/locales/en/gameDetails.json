@@ -252,7 +252,6 @@
     "fixtureDetailTitle": "Matchup",
     "fixtureOpenMatch": "Open match",
     "fixtureDetailScoreSummary": "Score: {{scores}}",
-    "fixtureSeasonRecord": "{{w}}-{{l}}-{{t}}",
     "fixtureTableModeRegularOnly": "Table view shows the regular season only.",
     "fixtureFullRrDisabledNoGroups": "Create groups first",
     "fixtureFullRrDisabledTeams": "Assign complete teams (two players each) in every group",

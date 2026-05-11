@@ -239,7 +239,6 @@
     "fixtureDetailTitle": "Enfrentamiento",
     "fixtureOpenMatch": "Abrir partido",
     "fixtureDetailScoreSummary": "Resultado: {{scores}}",
-    "fixtureSeasonRecord": "{{w}}-{{l}}-{{t}}",
     "fixtureTableModeRegularOnly": "La vista de tabla muestra solo la temporada regular.",
     "fixtureFullRrDisabledNoGroups": "Crea grupos primero",
     "fixtureFullRrDisabledTeams": "Asigna equipos completos (dos jugadores cada uno) en todos los grupos",

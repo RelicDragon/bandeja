@@ -26,7 +26,7 @@ export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderCon
     setLeagueSeasonTableViewOverride,
   } = useNavigationStore();
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
-  const effectiveLeagueFixtureTableView = leagueSeasonTableViewOverride ?? isLandscape;
+  const effectiveLeagueFixtureTableView = leagueSeasonTableViewOverride === true;
 
   const handleChatClick = () => {
     if (id) {

@@ -80,7 +80,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, setGameDetailsTableAddRound, setLeagueSeasonTableViewOverride } = useNavigationStore();
+  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, setGameDetailsTableAddRound, setLeagueSeasonFixtureTableEligible } = useNavigationStore();
 
   const [game, setGame] = useState<Game | null>(null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
@@ -128,9 +128,8 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     if (prevLandscapeRef.current !== isLandscape) {
       prevLandscapeRef.current = isLandscape;
       setGameDetailsTableViewOverride(null);
-      setLeagueSeasonTableViewOverride(null);
     }
-  }, [isLandscape, setGameDetailsTableViewOverride, setLeagueSeasonTableViewOverride]);
+  }, [isLandscape, setGameDetailsTableViewOverride]);
 
   const tablePlayers = useMemo<BasicUser[]>(
     () => (game?.participants?.filter(isParticipantPlaying).map(p => p.user) || []) as BasicUser[],
@@ -144,6 +143,13 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   useEffect(() => {
     if (activeTab === 'faq' && !hasFaqs) setActiveTab('general');
   }, [activeTab, hasFaqs]);
+
+  useEffect(() => {
+    if (game?.entityType !== 'LEAGUE_SEASON') return;
+    if (activeTab !== 'schedule' || !user) {
+      setLeagueSeasonFixtureTableEligible(false);
+    }
+  }, [game?.entityType, activeTab, user, setLeagueSeasonFixtureTableEligible]);
 
   const leagueSeasonTabs = useMemo<SegmentedSwitchTab[]>(() => {
     if (game?.entityType !== 'LEAGUE_SEASON') return [];

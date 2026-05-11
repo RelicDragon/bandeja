@@ -34,7 +34,7 @@ export const GameDetailsPage = () => {
   const setLeagueSeasonTableViewOverride = useNavigationStore((s) => s.setLeagueSeasonTableViewOverride);
   const setLeagueSeasonFixtureTableEligible = useNavigationStore((s) => s.setLeagueSeasonFixtureTableEligible);
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
-  const effectiveLeagueFixtureTableView = leagueSeasonTableViewOverride ?? isLandscape;
+  const effectiveLeagueFixtureTableView = leagueSeasonTableViewOverride === true;
   const [layoutTableAvailable, setLayoutTableAvailable] = useState<boolean | null>(null);
   const [layoutCancelledInfo, setLayoutCancelledInfo] = useState<{
     entityType: string;

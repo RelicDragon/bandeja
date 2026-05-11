@@ -32,18 +32,22 @@ export class GameReadinessService {
     }
 
     const playingParticipantsCount = game.participants.length;
-    const participantsReady = playingParticipantsCount === game.maxParticipants;
+    const maxParticipants = game.maxParticipants;
 
     let teamsReady = false;
     if (game.hasFixedTeams && game.fixedTeams.length > 0) {
-      const allTeamsHavePlayers = game.fixedTeams.every(team => team.players.length > 0);
-      
+      const pairSlotsLayout =
+        maxParticipants > 0 && game.fixedTeams.length * 2 === maxParticipants;
+      const allTeamsHavePlayers = pairSlotsLayout
+        ? game.fixedTeams.every(team => team.players.length === 2)
+        : game.fixedTeams.every(team => team.players.length > 0);
+
       const allPlayersArePlayingParticipants = game.fixedTeams.every(team =>
         team.players.every(player => {
           return game.participants.some(p => p.userId === player.userId);
         })
       );
-      
+
       teamsReady = allTeamsHavePlayers && allPlayersArePlayingParticipants;
       
       console.log('Calculated teamsReady:', {
@@ -60,6 +64,17 @@ export class GameReadinessService {
         }))
       });
     }
+
+    const overlapFixedPairLayout =
+      !!game.hasFixedTeams &&
+      !!game.allowUserInMultipleTeams &&
+      game.fixedTeams.length > 0 &&
+      maxParticipants > 0 &&
+      game.fixedTeams.length * 2 === maxParticipants;
+
+    const participantsReady =
+      playingParticipantsCount === maxParticipants ||
+      (overlapFixedPairLayout && teamsReady);
 
     return {
       participantsReady,

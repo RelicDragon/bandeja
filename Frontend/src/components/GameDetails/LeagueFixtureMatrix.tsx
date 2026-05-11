@@ -8,8 +8,8 @@ import type { BasicUser, Game } from '@/types';
 import { PlayerAvatar } from '@/components';
 import { AnnouncedFireIcon } from '@/components/AnnouncedFireIcon';
 import {
-  aggregateSeasonWltForTeam,
   buildPairCellMap,
+  formatFixtureMatrixPlayerName,
   matchupKey,
   rowPerspectiveOutcome,
 } from '@/utils/leagueFixtureMatrix';
@@ -125,40 +125,40 @@ export const LeagueFixtureMatrix = ({
                   <th
                     key={col.sig}
                     scope="col"
-                    className="sticky top-0 z-[28] min-w-[52px] max-w-[100px] border-b border-gray-200 bg-gray-50/95 px-1 py-2 text-center text-[11px] font-medium text-gray-600 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95 dark:text-gray-300"
+                    className="sticky top-0 z-[28] min-w-[72px] max-w-[132px] border-b border-gray-200 bg-gray-50/95 px-1 py-2 text-center text-[11px] font-medium text-gray-600 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95 dark:text-gray-300"
                   >
-                    <span className="line-clamp-2">{col.label.split(' / ')[0]}</span>
+                    <span className="flex flex-col gap-0.5 leading-snug">
+                      {col.label.split(' / ').map((segment, i) => (
+                        <span key={i} className="line-clamp-2 break-words">
+                          {segment}
+                        </span>
+                      ))}
+                    </span>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {teams.map((row) => {
-                const rec = aggregateSeasonWltForTeam(row.sig, rounds, groupId);
-                return (
+              {teams.map((row) => (
                   <tr key={row.sig}>
                     <th
                       scope="row"
                       className="sticky left-0 z-[25] min-w-[140px] border-b border-r border-gray-100 bg-white/95 px-2 py-1.5 text-left backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95"
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="flex -space-x-1.5">
-                          {row.players.map((p) => (
+                      <div className="flex flex-col gap-1">
+                        {row.players.map((p) => (
+                          <div key={p.userId} className="flex min-w-0 items-center gap-1.5">
                             <PlayerAvatar
-                              key={p.userId}
                               player={(p.user ?? { id: p.userId }) as BasicUser}
                               showName={false}
                               inlineFace
                               extrasmall
                             />
-                          ))}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate font-medium text-gray-900 dark:text-white">{row.label}</div>
-                          <div className="text-[11px] tabular-nums text-gray-500 dark:text-gray-400">
-                            {t('gameDetails.fixtureSeasonRecord', { w: rec.w, l: rec.l, t: rec.t })}
+                            <span className="min-w-0 truncate text-xs font-medium text-gray-900 dark:text-white">
+                              {formatFixtureMatrixPlayerName(p.user)}
+                            </span>
                           </div>
-                        </div>
+                        ))}
                       </div>
                     </th>
                     {teams.map((col) => {
@@ -230,8 +230,7 @@ export const LeagueFixtureMatrix = ({
                       );
                     })}
                   </tr>
-                );
-              })}
+              ))}
             </tbody>
           </table>
         </div>

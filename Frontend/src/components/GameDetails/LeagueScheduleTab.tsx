@@ -14,7 +14,6 @@ import { LeagueFixtureMatrix } from './LeagueFixtureMatrix';
 import { LeagueFixtureDetailSheet } from './LeagueFixtureDetailSheet';
 import { leaguesApi, LeagueRound, LeagueGroup, LeagueStanding } from '@/api/leagues';
 import { Loader2, Calendar, Users, Trophy, LayoutGrid } from 'lucide-react';
-import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useNavigationStore } from '@/store/navigationStore';
 import { standingsTeamsForGroup, roundsInSingleRoundRobinCycle } from '@/utils/leagueFixtureMatrix';
 import { Game } from '@/types';
@@ -75,10 +74,9 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     ),
     [leagueSeasonId, scheduleSubTabs, scheduleSubView, setScheduleSubView]
   );
-  const isLandscape = useIsLandscape();
   const leagueSeasonTableViewOverride = useNavigationStore((s) => s.leagueSeasonTableViewOverride);
   const setLeagueSeasonFixtureTableEligible = useNavigationStore((s) => s.setLeagueSeasonFixtureTableEligible);
-  const effectiveFixtureTableView = leagueSeasonTableViewOverride ?? isLandscape;
+  const effectiveFixtureTableView = leagueSeasonTableViewOverride === true;
   const [rounds, setRounds] = useState<LeagueRound[]>([]);
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
   const [sheetGames, setSheetGames] = useState<Game[] | null>(null);
@@ -205,7 +203,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   useEffect(() => {
     const on = activeTab === 'schedule' && scheduleSubView === 'fixtures' && fixtureTableEligible;
     setLeagueSeasonFixtureTableEligible(on);
-    return () => setLeagueSeasonFixtureTableEligible(false);
   }, [activeTab, scheduleSubView, fixtureTableEligible, setLeagueSeasonFixtureTableEligible]);
 
   const fullRrBlockReason = useMemo(() => {

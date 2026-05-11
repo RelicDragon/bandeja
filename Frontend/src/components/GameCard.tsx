@@ -549,7 +549,7 @@ export const GameCard = ({
                     <span>
                       {`${participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`}
                     </span>
-                    {!game.trainerId && game.minLevel !== undefined && game.maxLevel !== undefined && (
+                    {!game.trainerId && typeof game.minLevel === 'number' && typeof game.maxLevel === 'number' && (
                       <>
                         <span className="text-gray-400 dark:text-gray-500">•</span>
                         <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -561,7 +561,7 @@ export const GameCard = ({
                       </>
                     )}
                   </div>
-                  {game.trainerId && game.minLevel !== undefined && game.maxLevel !== undefined && (
+                  {game.trainerId && typeof game.minLevel === 'number' && typeof game.maxLevel === 'number' && (
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                         {t('games.level')}:
@@ -634,7 +634,7 @@ export const GameCard = ({
                   <span>
                     {`${participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`}
                   </span>
-                  {!game.trainerId && game.minLevel !== undefined && game.maxLevel !== undefined && (
+                  {!game.trainerId && typeof game.minLevel === 'number' && typeof game.maxLevel === 'number' && (
                     <>
                       <span className="text-gray-400 dark:text-gray-500">•</span>
                       <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -646,7 +646,7 @@ export const GameCard = ({
                     </>
                   )}
                 </div>
-                {game.trainerId && game.minLevel !== undefined && game.maxLevel !== undefined && (
+                {game.trainerId && typeof game.minLevel === 'number' && typeof game.maxLevel === 'number' && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                       {t('games.level')}:

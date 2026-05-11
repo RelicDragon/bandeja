@@ -203,6 +203,40 @@ async function main() {
     ]);
     console.log('ok: setGameTeams overlap + flag on -> 200');
 
+    const gThreeHumans = await prisma.game.create({
+      data: {
+        entityType: EntityType.GAME,
+        gameType: 'CLASSIC',
+        cityId: city.id,
+        startTime: start,
+        endTime: end,
+        maxParticipants: 4,
+        minParticipants: 2,
+        allowUserInMultipleTeams: true,
+        hasFixedTeams: false,
+        timeIsSet: true,
+        participants: {
+          create: [
+            { userId: u1, role: ParticipantRole.OWNER },
+            { userId: u2, role: ParticipantRole.PARTICIPANT },
+            { userId: u3, role: ParticipantRole.PARTICIPANT },
+          ],
+        },
+      },
+    });
+    createdGameIds.push(gThreeHumans.id);
+    await GameTeamService.setGameTeams(gThreeHumans.id, [
+      { teamNumber: 1, playerIds: [u1, u2] },
+      { teamNumber: 2, playerIds: [u1, u3] },
+    ]);
+    const readinessOverlap = await GameReadinessService.calculateGameReadiness(gThreeHumans.id);
+    if (!readinessOverlap.teamsReady || !readinessOverlap.participantsReady) {
+      throw new Error(
+        `overlap 3 PLAYING / max 4: expected teamsReady+participantsReady, got ${JSON.stringify(readinessOverlap)}`,
+      );
+    }
+    console.log('ok: GameReadinessService overlap + teams*2=max -> participantsReady with < max humans');
+
     await expectApiError(
       GameTeamService.setGameTeams(gameFlagOn.id, [
         { teamNumber: 1, playerIds: [u1, u1] },

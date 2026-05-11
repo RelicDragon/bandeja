@@ -257,7 +257,6 @@
     "fixtureDetailTitle": "Пара",
     "fixtureOpenMatch": "Открыть матч",
     "fixtureDetailScoreSummary": "Счёт: {{scores}}",
-    "fixtureSeasonRecord": "{{w}}-{{l}}-{{t}}",
     "fixtureTableModeRegularOnly": "В табличном виде показывается только регулярный сезон.",
     "fixtureFullRrDisabledNoGroups": "Сначала создайте группы",
     "fixtureFullRrDisabledTeams": "Назначьте полные команды (по два игрока) во всех группах",
