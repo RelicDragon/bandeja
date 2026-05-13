@@ -32,6 +32,7 @@ export class GameStatusScheduler {
       
       const games = await prisma.game.findMany({
         where: {
+          entityType: { not: EntityType.LEAGUE_SEASON },
           OR: [
             {
               status: {
@@ -74,13 +75,6 @@ export class GameStatusScheduler {
         const newStatus = calculateGameStatus(game, cityTimezone);
         
         if (newStatus !== game.status) {
-          if (
-            game.entityType === EntityType.LEAGUE_SEASON &&
-            (newStatus === 'FINISHED' || newStatus === 'ARCHIVED')
-          ) {
-            continue;
-          }
-
           if (
             isResultsBasedEntityType(game.entityType) &&
             newStatus === 'FINISHED'
