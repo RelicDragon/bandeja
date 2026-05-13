@@ -171,6 +171,9 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       pointsPerWin: seasonGame.pointsPerWin ?? 0,
       pointsPerLoose: seasonGame.pointsPerLoose ?? 0,
       pointsPerTie: seasonGame.pointsPerTie ?? 0,
+      scoringPreset: (seasonGame.scoringPreset as ScoringPreset | null) ?? null,
+      scoringMode: seasonGame.scoringMode != null ? String(seasonGame.scoringMode) : null,
+      hasGoldenPoint: seasonGame.hasGoldenPoint ?? false,
       ballsInGames: deriveBallsInGamesFromScoring({
         scoringPreset: seasonGame.scoringPreset ?? null,
         winnerOfMatch: seasonGame.winnerOfMatch ?? WinnerOfMatch.BY_SCORES,
