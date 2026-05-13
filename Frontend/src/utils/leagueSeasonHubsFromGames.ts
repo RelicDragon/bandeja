@@ -57,7 +57,10 @@ function mergeRow(prev: HubAccum, next: HubAccum): HubAccum {
 }
 
 function isLeagueSeasonHubTerminal(
-  g: Pick<Game, 'status' | 'resultsStatus'> & { entityType?: Game['entityType']; leagueSeason?: unknown }
+  g: Partial<Pick<Game, 'status' | 'resultsStatus'>> & {
+    entityType?: Game['entityType'];
+    leagueSeason?: unknown;
+  }
 ): boolean {
   if (g.status === 'FINISHED' || g.status === 'ARCHIVED') return true;
   if (g.entityType === 'LEAGUE_SEASON' && g.resultsStatus === 'FINAL') return true;

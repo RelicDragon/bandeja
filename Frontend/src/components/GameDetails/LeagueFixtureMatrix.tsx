@@ -231,7 +231,7 @@ export const LeagueFixtureMatrix = ({
                     const stacked = cellGames.length > 1;
                     const aria = cellLabel(t, row, col, cellGames, outcomeChar, live);
                     const showScheduleHints =
-                      Boolean(primary) &&
+                      primary != null &&
                       primary.resultsStatus !== 'FINAL' &&
                       !outcomeChar;
                     const scheduleHints = showScheduleHints
