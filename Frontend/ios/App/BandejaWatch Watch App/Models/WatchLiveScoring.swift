@@ -4,14 +4,17 @@ private let watchLiveScoringVersion = 1
 
 struct WatchMatchMetadata: Decodable, Sendable {
     let liveScoring: WatchLiveScoringEnvelope?
+    let nonRallyOutcome: String?
 
     enum CodingKeys: String, CodingKey {
         case liveScoring
+        case nonRallyOutcome
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         liveScoring = try? c.decodeIfPresent(WatchLiveScoringEnvelope.self, forKey: .liveScoring)
+        nonRallyOutcome = try? c.decodeIfPresent(String.self, forKey: .nonRallyOutcome)
     }
 }
 
@@ -34,6 +37,9 @@ struct WatchLiveScoringState: Codable, Sendable {
     var firstServerTeam: TeamSide?
     var firstServerDoublesPlayerIndex: Int?
     var serveGuideSkipped: Bool?
+    /// `REGULAR_SET` | `SUPER_TIEBREAK` — mirrors web live metadata optional Bo3 decider.
+    var optionalDeciderFormat: String?
+    var timedClassicSetLocked: Bool?
 }
 
 enum WatchLiveScoringMode: String, Codable, Sendable {

@@ -58,7 +58,9 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
         offset: pastGamesOffset,
       });
       
-      const newPastGames = response.data || [];
+      const newPastGames = (response.data || []).filter(
+        (g: Game) => !(g.entityType === 'LEAGUE_SEASON' && g.resultsStatus !== 'FINAL')
+      );
       
       if (newPastGames.length < 30) {
         setHasMorePastGames(false);
@@ -105,6 +107,9 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
         const isArchived = updatedGame.status === 'ARCHIVED';
         
         if (isParticipant && isArchived) {
+          if (updatedGame.entityType === 'LEAGUE_SEASON' && updatedGame.resultsStatus !== 'FINAL') {
+            return prevPastGames;
+          }
           const gameDate = new Date(updatedGame.startTime);
           gameDate.setHours(0, 0, 0, 0);
           if (gameDate < today) {
@@ -121,7 +126,11 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
       if (!isParticipant || !isArchived) {
         return prevPastGames.filter(g => g.id !== data.gameId);
       }
-      
+
+      if (updatedGame.entityType === 'LEAGUE_SEASON' && updatedGame.resultsStatus !== 'FINAL') {
+        return prevPastGames.filter(g => g.id !== data.gameId);
+      }
+
       const gameDate = new Date(updatedGame.startTime);
       gameDate.setHours(0, 0, 0, 0);
       if (gameDate >= today) {
@@ -142,6 +151,9 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
       setPastGames(prev => {
         const idx = prev.findIndex(g => g.id === gameId);
         if (idx === -1) return prev;
+        if (updatedGame.entityType === 'LEAGUE_SEASON' && updatedGame.resultsStatus !== 'FINAL') {
+          return prev.filter(g => g.id !== gameId);
+        }
         const next = [...prev];
         next[idx] = updatedGame;
         return sortGames(next);

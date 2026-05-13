@@ -21,3 +21,15 @@ export function validateMatchSetRoleOrder(roles: MatchSetRole[]): string | null 
   }
   return null;
 }
+
+export function isSupplementalMatchSetRole(role: MatchSetRole | string | null | undefined): boolean {
+  return role === MatchSetRole.EXTRA_GAMES || role === MatchSetRole.EXTRA_BALLS;
+}
+
+export function splitOfficialAndSupplementalSets<T extends { role?: MatchSetRole | string | null }>(
+  sets: T[],
+): { official: T[]; supplemental: T[] } {
+  const i = sets.findIndex((s) => isSupplementalMatchSetRole(s.role ?? MatchSetRole.OFFICIAL));
+  if (i === -1) return { official: sets, supplemental: [] };
+  return { official: sets.slice(0, i), supplemental: sets.slice(i) };
+}

@@ -1,7 +1,10 @@
 import type { ScoringRules } from './rulebook';
 import { isClassicRules } from './rulebook';
+import { splitOfficialSupplementalLiveSets } from './matchWinner';
+import { computeMatchWinnerLiveScoring } from './matchWinnerLive';
 import type {
   LiveClassicPointState,
+  LiveOptionalDeciderFormat,
   LivePointValue,
   LiveScoringActionResult,
   LiveScoringClassicState,
@@ -31,14 +34,34 @@ const normalizeSets = (sets: SetResult[] | undefined): SetResult[] => {
   return normalized.length ? normalized : [{ teamA: 0, teamB: 0, isTieBreak: false }];
 };
 
+const validatePointsSetLive = (a: number, b: number, rules: ScoringRules): { ok: boolean } => {
+  if (rules.totalPointsPerSet > 0 && a + b !== rules.totalPointsPerSet) return { ok: false };
+  if (!rules.allowDrawPerSet && a === b && a > 0) return { ok: false };
+  return { ok: true };
+};
+
+const trimTrailingEmptyOfficialAfterDecision = (sets: SetResult[], rules: ScoringRules): SetResult[] => {
+  const { official, supplemental } = splitOfficialSupplementalLiveSets(sets);
+  if (computeMatchWinnerLiveScoring(official, rules) === null) return sets;
+  const trimmed: SetResult[] = [];
+  for (const s of official) {
+    if (s.teamA > 0 || s.teamB > 0) trimmed.push(s);
+  }
+  const officialOut = trimmed.length > 0 ? trimmed : official;
+  return [...officialOut, ...supplemental];
+};
+
 export const createInitialLiveScoringState = (rules: ScoringRules, sets?: SetResult[]): LiveScoringState => {
   const mode = isClassicRules(rules) ? 'classic' : 'points';
-  return {
+  const normalized = normalizeSets(sets);
+  const state: LiveScoringState = {
     activeSetIndex: 0,
     mode,
-    sets: normalizeSets(sets),
-    classic: mode === 'classic' ? syncClassicTieBreakForActiveSet(emptyClassic(), normalizeSets(sets), 0, rules) : undefined,
+    sets: normalized,
+    classic: mode === 'classic' ? syncClassicTieBreakForActiveSet(emptyClassic(), normalized, 0, rules) : undefined,
   };
+  if (mode === 'classic') alignMandatedSuperTieBreakDecider(state, rules);
+  return state;
 };
 
 export const parseLiveScoringState = (raw: unknown, rules: ScoringRules, fallbackSets?: SetResult[]): LiveScoringState => {
@@ -52,7 +75,7 @@ export const parseLiveScoringState = (raw: unknown, rules: ScoringRules, fallbac
       : base.activeSetIndex;
   const mode = o.mode === 'classic' || o.mode === 'points' ? o.mode : base.mode;
   const classic = mode === 'classic' ? normalizeClassic(o.classic, sets, activeSetIndex, rules) : undefined;
-  return {
+  const parsed: LiveScoringState = {
     activeSetIndex,
     mode,
     sets,
@@ -61,15 +84,34 @@ export const parseLiveScoringState = (raw: unknown, rules: ScoringRules, fallbac
     firstServerDoublesPlayerIndex:
       typeof o.firstServerDoublesPlayerIndex === 'number' ? o.firstServerDoublesPlayerIndex : undefined,
     serveGuideSkipped: typeof o.serveGuideSkipped === 'boolean' ? o.serveGuideSkipped : undefined,
+    optionalDeciderFormat:
+      o.optionalDeciderFormat === 'REGULAR_SET' || o.optionalDeciderFormat === 'SUPER_TIEBREAK'
+        ? o.optionalDeciderFormat
+        : undefined,
+    timedClassicSetLocked: o.timedClassicSetLocked === true ? true : undefined,
   };
+  if (mode === 'classic') alignMandatedSuperTieBreakDecider(parsed, rules);
+  return parsed;
 };
 
 export const scoreLivePoint = (input: LiveScoringState, side: LiveTeamSide, rules: ScoringRules): LiveScoringActionResult => {
+  if (input.mode === 'classic') {
+    if (optionalDeciderChoicePending(input, rules)) return { state: input, changed: false };
+    if (input.timedClassicSetLocked) return { state: input, changed: false };
+  }
   const state = cloneState(input);
-  ensureSetExists(state);
+  ensureSetExists(state, rules);
 
   if (state.mode !== 'classic') {
-    state.sets[state.activeSetIndex][side] = Math.min(99, state.sets[state.activeSetIndex][side] + 1);
+    const active = state.sets[state.activeSetIndex];
+    if (isLivePointsFrozen(active, rules)) return { state: input, changed: false };
+    const nextA = side === 'teamA' ? active.teamA + 1 : active.teamA;
+    const nextB = side === 'teamB' ? active.teamB + 1 : active.teamB;
+    if (rules.totalPointsPerSet > 0 && nextA + nextB > rules.totalPointsPerSet) return { state: input, changed: false };
+    if (rules.maxPointsPerTeam > 0 && (nextA > rules.maxPointsPerTeam || nextB > rules.maxPointsPerTeam)) {
+      return { state: input, changed: false };
+    }
+    active[side] += 1;
     return { state, changed: true };
   }
 
@@ -103,8 +145,9 @@ export const unscoreLivePoint = (
   side: LiveTeamSide,
   rules: ScoringRules
 ): LiveScoringActionResult => {
+  if (input.mode === 'classic' && input.timedClassicSetLocked) return { state: input, changed: false };
   const state = cloneState(input);
-  ensureSetExists(state);
+  ensureSetExists(state, rules);
 
   if (state.mode !== 'classic') {
     const set = state.sets[state.activeSetIndex];
@@ -170,16 +213,27 @@ export const canAdvanceLiveSet = (state: LiveScoringState, rules: ScoringRules):
   if (state.activeSetIndex + 1 >= rules.maxSetsPlayed) return false;
   const set = state.sets[state.activeSetIndex];
   if (!set) return false;
-  if (state.mode !== 'classic') return set.teamA > 0 || set.teamB > 0;
-  if (set.isTieBreak) return pointRaceCompleted(set.teamA, set.teamB, superTieBreakTarget(rules), rules.superTieBreakWinBy);
-  return classicSetCompleted(set.teamA, set.teamB, rules);
+  const { official } = splitOfficialSupplementalLiveSets(state.sets);
+
+  if (state.mode !== 'classic') {
+    if (!(set.teamA > 0 || set.teamB > 0)) return false;
+  } else if (set.isTieBreak) {
+    if (!pointRaceCompleted(set.teamA, set.teamB, superTieBreakTarget(rules), rules.superTieBreakWinBy)) return false;
+  } else if (!classicSetCompleted(set.teamA, set.teamB, rules, Boolean(state.timedClassicSetLocked))) {
+    return false;
+  }
+
+  if (computeMatchWinnerLiveScoring(official, rules) !== null) return false;
+
+  return true;
 };
 
 export const advanceLiveSet = (input: LiveScoringState, rules: ScoringRules): LiveScoringActionResult => {
   if (!canAdvanceLiveSet(input, rules)) return { state: input, changed: false };
   const state = cloneState(input);
   state.activeSetIndex += 1;
-  ensureSetExists(state);
+  state.timedClassicSetLocked = undefined;
+  ensureSetExists(state, rules);
   if (state.mode === 'classic') {
     state.classic = syncClassicTieBreakForActiveSet(emptyClassic(), state.sets, state.activeSetIndex, rules);
   }
@@ -193,10 +247,13 @@ function autoAdvanceCompletedSets(state: LiveScoringState, rules: ScoringRules):
     if (!next.changed) break;
     s = next.state;
   }
-  return s;
+  return normalizeLiveSetsAfterDecision(s, rules);
 }
 
-export const getClassicPointLabels = (classic?: LiveScoringClassicState): { teamA: string; teamB: string; center: string } => {
+export const getClassicPointLabels = (
+  classic?: LiveScoringClassicState,
+  rules?: Pick<ScoringRules, 'hasGoldenPoint'>
+): { teamA: string; teamB: string; center: string } => {
   if (!classic) return { teamA: '0', teamB: '0', center: '' };
   if (classic.withinSetTieBreak) {
     return { teamA: String(classic.tieBreakA), teamB: String(classic.tieBreakB), center: 'Tie-break' };
@@ -205,6 +262,9 @@ export const getClassicPointLabels = (classic?: LiveScoringClassicState): { team
   if (point.kind === 'deuce') return { teamA: '40', teamB: '40', center: 'Deuce' };
   if (point.kind === 'advantage') {
     return { teamA: point.side === 'teamA' ? 'Ad' : '40', teamB: point.side === 'teamB' ? 'Ad' : '40', center: 'Advantage' };
+  }
+  if (rules?.hasGoldenPoint && point.teamA === 40 && point.teamB === 40) {
+    return { teamA: '40', teamB: '40', center: 'GP' };
   }
   return { teamA: String(point.teamA), teamB: String(point.teamB), center: '' };
 };
@@ -231,7 +291,7 @@ const normalizeClassic = (
   const o = raw as Partial<LiveScoringClassicState>;
   return syncClassicTieBreakForActiveSet(
     {
-      pointState: normalizePointState(o.pointState),
+      pointState: normalizePointState(o.pointState, rules),
       withinSetTieBreak: typeof o.withinSetTieBreak === 'boolean' ? o.withinSetTieBreak : false,
       tieBreakA: nonNegativeInt(o.tieBreakA),
       tieBreakB: nonNegativeInt(o.tieBreakB),
@@ -243,9 +303,10 @@ const normalizeClassic = (
   );
 };
 
-const normalizePointState = (raw: unknown): LiveClassicPointState => {
+const normalizePointState = (raw: unknown, rules: ScoringRules): LiveClassicPointState => {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { kind: 'regular', teamA: 0, teamB: 0 };
   const o = raw as Partial<LiveClassicPointState>;
+  if (o.kind === 'deuce' && rules.hasGoldenPoint) return { kind: 'regular', teamA: 40, teamB: 40 };
   if (o.kind === 'deuce') return { kind: 'deuce' };
   if (o.kind === 'advantage' && (o.side === 'teamA' || o.side === 'teamB')) return { kind: 'advantage', side: o.side };
   if (o.kind === 'regular' && isPoint(o.teamA) && isPoint(o.teamB)) return { kind: 'regular', teamA: o.teamA, teamB: o.teamB };
@@ -265,13 +326,59 @@ const syncClassicTieBreakForActiveSet = (
   return classic;
 };
 
-const ensureSetExists = (state: LiveScoringState) => {
-  while (state.sets.length <= state.activeSetIndex) state.sets.push({ teamA: 0, teamB: 0 });
+const alignMandatedSuperTieBreakDecider = (state: LiveScoringState, rules: ScoringRules): void => {
+  const stbIdx = rules.superTieBreakReplacesDeciderAtIndex;
+  if (stbIdx == null) return;
+  const { official, supplemental } = splitOfficialSupplementalLiveSets(state.sets);
+  if (stbIdx >= official.length) return;
+  if (official[stbIdx].isTieBreak) return;
+  const nextOfficial = official.map((row, i) => (i === stbIdx ? { ...row, isTieBreak: true } : row));
+  state.sets = [...nextOfficial, ...supplemental];
+};
+
+const normalizeLiveSetsAfterDecision = (state: LiveScoringState, rules: ScoringRules): LiveScoringState => {
+  if (state.mode !== 'classic') return state;
+  const { official } = splitOfficialSupplementalLiveSets(state.sets);
+  if (computeMatchWinnerLiveScoring(official, rules) === null) return state;
+  const trimmed = trimTrailingEmptyOfficialAfterDecision(state.sets, rules);
+  state.sets = trimmed;
+  const { official: off } = splitOfficialSupplementalLiveSets(trimmed);
+  let lastScored = 0;
+  for (let i = 0; i < off.length; i += 1) {
+    if (off[i].teamA > 0 || off[i].teamB > 0) lastScored = i;
+  }
+  state.activeSetIndex = Math.min(state.activeSetIndex, lastScored);
+  return state;
+};
+
+const isLivePointsFrozen = (active: SetResult, rules: ScoringRules): boolean => {
+  if (rules.totalPointsPerSet <= 0) return false;
+  if (active.teamA + active.teamB !== rules.totalPointsPerSet) return false;
+  return validatePointsSetLive(active.teamA, active.teamB, rules).ok;
+};
+
+const ensureSetExists = (state: LiveScoringState, rules: ScoringRules) => {
+  for (;;) {
+    const { official, supplemental } = splitOfficialSupplementalLiveSets(state.sets);
+    if (official.length > state.activeSetIndex) break;
+    const priorOfficialLen = official.length;
+    const isSuperTb =
+      rules.superTieBreakReplacesDeciderAtIndex != null &&
+      priorOfficialLen === rules.superTieBreakReplacesDeciderAtIndex;
+    const newRow: SetResult = { teamA: 0, teamB: 0, isTieBreak: isSuperTb, role: 'OFFICIAL' };
+    state.sets = [...official, newRow, ...supplemental];
+  }
+  if (state.mode === 'classic') alignMandatedSuperTieBreakDecider(state, rules);
 };
 
 const applyClassicPoint = (state: LiveScoringState, side: LiveTeamSide, rules: ScoringRules) => {
   const classic = state.classic ?? emptyClassic();
   const point = classic.pointState;
+
+  if (point.kind === 'regular' && point.teamA === 40 && point.teamB === 40 && rules.hasGoldenPoint) {
+    awardGame(state, side, rules);
+    return;
+  }
 
   if (point.kind === 'deuce') {
     classic.pointState = { kind: 'advantage', side };
@@ -292,7 +399,7 @@ const applyClassicPoint = (state: LiveScoringState, side: LiveTeamSide, rules: S
 };
 
 const awardGame = (state: LiveScoringState, side: LiveTeamSide, rules: ScoringRules) => {
-  ensureSetExists(state);
+  ensureSetExists(state, rules);
   const set = state.sets[state.activeSetIndex];
   const classic = state.classic ?? emptyClassic();
   set[side] += 1;
@@ -330,13 +437,125 @@ const pointRaceCompleted = (teamA: number, teamB: number, target: number, winBy:
   return winner >= target && winner - loser >= winBy;
 };
 
-const classicSetCompleted = (teamA: number, teamB: number, rules: ScoringRules): boolean => {
+const classicSetCompleted = (teamA: number, teamB: number, rules: ScoringRules, timedLocked: boolean): boolean => {
+  if (timedLocked && rules.allowIncompleteRegularSetGames) {
+    return teamA > 0 || teamB > 0;
+  }
   const hi = Math.max(teamA, teamB);
   const lo = Math.min(teamA, teamB);
   const tbAt = gamesScoreForTieBreak(rules);
   if (hi === tbAt && lo === tbAt) return false;
   if (hi === tbAt + 1 && lo === tbAt) return true;
   return hi >= rules.gamesPerSet && hi - lo >= rules.winBy;
+};
+
+export function optionalDeciderChoicePending(state: LiveScoringState, rules: ScoringRules): boolean {
+  if (state.optionalDeciderFormat) return false;
+  return isOptionalDeciderContext(state, rules);
+}
+
+function countOfficialSetsWon(sets: SetResult[]): { a: number; b: number } {
+  let a = 0;
+  let b = 0;
+  for (const s of sets) {
+    if (!(s.teamA > 0 || s.teamB > 0)) continue;
+    if (s.teamA > s.teamB) a += 1;
+    else if (s.teamB > s.teamA) b += 1;
+  }
+  return { a, b };
+}
+
+function isOptionalDeciderContext(state: LiveScoringState, rules: ScoringRules): boolean {
+  if (rules.superTieBreakReplacesDeciderAtIndex !== null) return false;
+  if (state.mode !== 'classic') return false;
+  if (rules.fixedNumberOfSets < 3 || rules.maxSetsPlayed < 3) return false;
+  const { official } = splitOfficialSupplementalLiveSets(state.sets);
+  if (official.length < 3) return false;
+  const prev = official.slice(0, -1);
+  for (const s of prev) {
+    if (s.isTieBreak) {
+      if (!pointRaceCompleted(s.teamA, s.teamB, superTieBreakTarget(rules), rules.superTieBreakWinBy)) return false;
+    } else if (!classicSetCompleted(s.teamA, s.teamB, rules, false)) return false;
+  }
+  const decider = official[official.length - 1];
+  if (decider.teamA > 0 || decider.teamB > 0) return false;
+  const deciderIdx = official.length - 1;
+  if (state.activeSetIndex !== deciderIdx) return false;
+  const { a, b } = countOfficialSetsWon(prev);
+  return a === 1 && b === 1;
+}
+
+function deciderRowPristineForOptionalChoice(state: LiveScoringState, rules: ScoringRules): boolean {
+  if (!isOptionalDeciderContext(state, rules)) return false;
+  const { official } = splitOfficialSupplementalLiveSets(state.sets);
+  const idx = official.length - 1;
+  const row = state.sets[idx];
+  if (row.teamA > 0 || row.teamB > 0) return false;
+  if (row.isTieBreak) return true;
+  const c = state.classic;
+  if (!c || state.activeSetIndex !== idx) return false;
+  if (c.withinSetTieBreak) return false;
+  const ps = c.pointState;
+  return ps.kind === 'regular' && ps.teamA === 0 && ps.teamB === 0;
+}
+
+export const applyOptionalDeciderFormat = (
+  input: LiveScoringState,
+  rules: ScoringRules,
+  format: LiveOptionalDeciderFormat
+): LiveScoringActionResult => {
+  if (!deciderRowPristineForOptionalChoice(input, rules)) return { state: input, changed: false };
+  const state = cloneState(input);
+  const { official } = splitOfficialSupplementalLiveSets(state.sets);
+  const idx = official.length - 1;
+  const isTb = format === 'SUPER_TIEBREAK';
+  state.sets[idx] = { ...state.sets[idx], isTieBreak: isTb };
+  state.optionalDeciderFormat = format;
+  if (state.classic && state.activeSetIndex === idx) {
+    state.classic = syncClassicTieBreakForActiveSet(emptyClassic(), state.sets, idx, rules);
+  }
+  return { state, changed: true };
+};
+
+export const freezeTimedClassicSetAtPartialScore = (
+  input: LiveScoringState,
+  rules: ScoringRules
+): LiveScoringActionResult => {
+  if (!rules.allowIncompleteRegularSetGames || input.mode !== 'classic') return { state: input, changed: false };
+  if (input.timedClassicSetLocked) return { state: input, changed: false };
+  if (activeSetIsSuperTieBreak(input)) return { state: input, changed: false };
+  const c = input.classic;
+  if (c?.withinSetTieBreak) return { state: input, changed: false };
+  const set = input.sets[input.activeSetIndex];
+  if (!set) return { state: input, changed: false };
+  const hasGameProgress = set.teamA > 0 || set.teamB > 0;
+  const hasPointProgress =
+    c &&
+    (c.pointState.kind !== 'regular' ||
+      c.pointState.teamA > 0 ||
+      c.pointState.teamB > 0 ||
+      c.withinSetTieBreak);
+  if (!hasGameProgress && !hasPointProgress) return { state: input, changed: false };
+  const state = cloneState(input);
+  state.timedClassicSetLocked = true;
+  if (state.classic && !activeSetIsSuperTieBreak(state)) {
+    state.classic = {
+      ...state.classic,
+      pointState: { kind: 'regular', teamA: 0, teamB: 0 },
+      classicPointsPlayedInGame: 0,
+      withinSetTieBreak: false,
+      tieBreakA: 0,
+      tieBreakB: 0,
+    };
+  }
+  return { state, changed: true };
+};
+
+export const clearTimedClassicSetLock = (input: LiveScoringState): LiveScoringActionResult => {
+  if (!input.timedClassicSetLocked) return { state: input, changed: false };
+  const state = cloneState(input);
+  state.timedClassicSetLocked = undefined;
+  return { state, changed: true };
 };
 
 const applyClassicPointsAfterUserScore = (state: LiveScoringState) => {

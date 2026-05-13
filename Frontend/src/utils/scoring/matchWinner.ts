@@ -1,6 +1,10 @@
 import type { SetResult } from '@/types/gameResults';
 import { isOfficialMatchSet } from '@/utils/matchSetRole';
-import type { ScoringRules } from './rulebook';
+import { isClassicRules, type ScoringRules } from './rulebook';
+import { validatePointsSet } from './validateSet';
+import { isMatchDecidedForLiveScoring } from './matchWinnerLive';
+
+export { computeMatchWinnerLiveScoring, isMatchDecidedForLiveScoring } from './matchWinnerLive';
 
 export type MatchWinnerSide = 'A' | 'B' | null;
 
@@ -58,4 +62,22 @@ export const countSetsWon = (sets: SetResult[]): { a: number; b: number } => {
 
 export const isMatchDecided = (sets: SetResult[], rules: ScoringRules): boolean => {
   return computeMatchWinner(sets, rules) !== null;
+};
+
+/** Official points row is complete for live lock (same as live engine `isLivePointsFrozen`). */
+export const isOfficialPointsBallBudgetExhausted = (
+  sets: SetResult[],
+  activeSetIndex: number,
+  rules: ScoringRules
+): boolean => {
+  if (isClassicRules(rules) || rules.totalPointsPerSet <= 0) return false;
+  const set = sets[activeSetIndex];
+  if (!set || !isOfficialMatchSet(set)) return false;
+  if (set.teamA + set.teamB !== rules.totalPointsPerSet) return false;
+  return validatePointsSet(set.teamA, set.teamB, rules).ok;
+};
+
+export const isLiveScoringInputLocked = (sets: SetResult[], activeSetIndex: number, rules: ScoringRules): boolean => {
+  if (isMatchDecidedForLiveScoring(sets, rules)) return true;
+  return isOfficialPointsBallBudgetExhausted(sets, activeSetIndex, rules);
 };

@@ -36,6 +36,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     let matchTimedCapMinutes: Int?
     let matchTimerEnabled: Bool?
     let hasGoldenPoint: Bool?
+    let pointsPerTie: Int?
     let maxParticipants: Int?
     let timeIsSet: Bool
     let affectsRating: Bool?
@@ -71,7 +72,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case id, name, gameType, entityType, status, resultsStatus
         case startTime, endTime, winnerOfMatch, winnerOfGame
-        case fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames, scoringPreset, matchTimedCapMinutes, matchTimerEnabled, hasGoldenPoint
+        case fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames, scoringPreset, matchTimedCapMinutes, matchTimerEnabled, hasGoldenPoint, pointsPerTie
         case maxParticipants, timeIsSet, affectsRating, hasFixedTeams, allowUserInMultipleTeams, participantsReady, teamsReady, matchGenerationType, fixedTeams, resultsByAnyone
         case participants, parent, club
     }
@@ -100,6 +101,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         matchTimedCapMinutes = try c.decodeIfPresent(Int.self, forKey: .matchTimedCapMinutes)
         matchTimerEnabled = try c.decodeIfPresent(Bool.self, forKey: .matchTimerEnabled)
         hasGoldenPoint = try c.decodeIfPresent(Bool.self, forKey: .hasGoldenPoint)
+        pointsPerTie = try c.decodeIfPresent(Int.self, forKey: .pointsPerTie)
         maxParticipants = try c.decodeIfPresent(Int.self, forKey: .maxParticipants)
         timeIsSet = try c.decodeIfPresent(Bool.self, forKey: .timeIsSet) ?? false
         affectsRating = try c.decodeIfPresent(Bool.self, forKey: .affectsRating)
@@ -276,9 +278,4 @@ struct WatchClub: Decodable, Sendable {
         id = try c.decode(String.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
     }
-}
-
-struct ApiResponse<T: Decodable>: Decodable, Sendable {
-    let success: Bool
-    let data: T
 }

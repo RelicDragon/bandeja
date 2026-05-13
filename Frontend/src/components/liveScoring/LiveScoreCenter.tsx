@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BasicUser } from '@/types';
 import type { LiveScoringState, LiveTeamSide } from '@/utils/liveScoring';
-import { computeServeGuideSnapshot, needsServeSetup } from '@/utils/liveScoring';
+import { activeSetScore, computeServeGuideSnapshot, liveSetLabelForRow, needsServeSetup } from '@/utils/liveScoring';
 import type { ScoringRules } from '@/utils/scoring';
 import { LiveServeCoachStrip } from './LiveServeCoachStrip';
 import { LiveServeSetupCard } from './LiveServeSetupCard';
@@ -15,7 +15,11 @@ type LiveScoreCenterProps = {
   rules: ScoringRules;
   saving?: boolean;
   error?: string | null;
+  /** Shown below serve strip; distinct from `error` (e.g. match complete). */
+  statusNote?: string | null;
   isOnline?: boolean;
+  /** When true, the serve setup / coach strip is hidden (e.g. match decided). */
+  hideServeGuide?: boolean;
   onServeSetupComplete: (side: LiveTeamSide, doublesPlayerIndex: number) => void;
   onSkipServeGuide: () => void;
   showPointHeadline?: boolean;
@@ -32,7 +36,9 @@ export const LiveScoreCenter = ({
   rules,
   saving,
   error,
+  statusNote,
   isOnline = true,
+  hideServeGuide,
   onServeSetupComplete,
   onSkipServeGuide,
   showPointHeadline = true,
@@ -45,6 +51,16 @@ export const LiveScoreCenter = ({
     if (setupNeeded) return null;
     return computeServeGuideSnapshot(state, rules, na, nb);
   }, [setupNeeded, state, rules, na, nb]);
+  const setHeader = useMemo(() => {
+    const label = liveSetLabelForRow(activeSetScore(state), state.activeSetIndex, rules);
+    if (label.kind === 'SUPER_TIE_BREAK') return t('gameDetails.liveScoring.superTieBreakShort');
+    if (label.kind === 'TIE_BREAK') {
+      return `${t('gameDetails.liveScoring.setN', { n: label.setOneBased })} · ${t('gameDetails.liveScoring.tieBreakShort')}`;
+    }
+    return t('gameDetails.liveScoring.setN', { n: label.setOneBased });
+  }, [state, rules, t]);
+
+  const showSetPointBlock = !hideServeGuide || showPointHeadline;
 
   return (
     <section className="w-fit max-w-full min-w-0">
@@ -57,31 +73,38 @@ export const LiveScoreCenter = ({
           </div>
         </div>
       ) : null}
-      <div className="mt-5 text-center">
-        <div className="text-sm uppercase tracking-wide opacity-60">
-          {t('gameDetails.liveScoring.setN', { n: state.activeSetIndex + 1 })}
+      {showSetPointBlock ? (
+        <div className="mt-5 text-center">
+          {!hideServeGuide ? (
+            <div className="text-sm uppercase tracking-wide opacity-60">{setHeader}</div>
+          ) : null}
+          {showPointHeadline ? (
+            <div className={`text-3xl font-black ${!hideServeGuide ? 'mt-1' : ''}`}>
+              {state.mode === 'classic' ? pointCenter || t('gameDetails.liveScoring.game') : t('gameDetails.liveScoring.points')}
+            </div>
+          ) : null}
         </div>
-        {showPointHeadline ? (
-          <div className="mt-1 text-3xl font-black">
-            {state.mode === 'classic' ? pointCenter || t('gameDetails.liveScoring.game') : t('gameDetails.liveScoring.points')}
-          </div>
-        ) : null}
-      </div>
+      ) : null}
 
-      <div className="mt-5 space-y-3">
-        {setupNeeded ? (
-          <LiveServeSetupCard
-            teamAPlayers={teamAPlayers}
-            teamBPlayers={teamBPlayers}
-            saving={saving}
-            onComplete={onServeSetupComplete}
-            onSkipHints={onSkipServeGuide}
-          />
-        ) : snapshot ? (
-          <LiveServeCoachStrip snapshot={snapshot} teamAPlayers={teamAPlayers} teamBPlayers={teamBPlayers} />
-        ) : null}
-      </div>
+      {!hideServeGuide ? (
+        <div className="mt-5 space-y-3">
+          {setupNeeded ? (
+            <LiveServeSetupCard
+              teamAPlayers={teamAPlayers}
+              teamBPlayers={teamBPlayers}
+              saving={saving}
+              onComplete={onServeSetupComplete}
+              onSkipHints={onSkipServeGuide}
+            />
+          ) : snapshot ? (
+            <LiveServeCoachStrip snapshot={snapshot} teamAPlayers={teamAPlayers} teamBPlayers={teamBPlayers} />
+          ) : null}
+        </div>
+      ) : null}
 
+      {statusNote ? (
+        <p className="mt-4 text-center text-xs font-medium text-emerald-800 dark:text-emerald-200/90">{statusNote}</p>
+      ) : null}
       {error ? <p className="mt-4 text-xs text-red-500">{error}</p> : null}
     </section>
   );

@@ -8,10 +8,6 @@ import {
   MapPin,
   Users,
   Plane,
-  Swords,
-  Trophy,
-  Dumbbell,
-  Beer,
 } from 'lucide-react';
 import { Card } from '@/components';
 import { Game } from '@/types';
@@ -21,6 +17,8 @@ import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
 import { formatDate } from '@/utils/dateFormat';
 import type { TFunction } from 'i18next';
+import { isStalePastScheduledGame } from '@/utils/homeStaleScheduledGame';
+import { getEntityIcon, getEntityTagClasses } from '@/components/home/HomeGameRowEntityTags';
 
 interface UpcomingGamesListProps {
   games: Game[];
@@ -30,14 +28,6 @@ interface DateGroup {
   dateStr: string;
   label: string;
   games: Game[];
-}
-
-function isStalePastScheduledGame(game: Game): boolean {
-  if (game.timeIsSet === false) return false;
-  if (new Date(game.startTime).getTime() >= Date.now()) return false;
-  if (game.status === 'ANNOUNCED') return true;
-  if (game.status === 'STARTED' && game.entityType !== 'LEAGUE_SEASON') return true;
-  return false;
 }
 
 function groupGamesByDate(
@@ -73,16 +63,21 @@ export const UpcomingGamesList = ({ games }: UpcomingGamesListProps) => {
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
   const userCityId = user?.currentCity?.id || user?.currentCityId;
 
+  const gamesWithoutLeagueSeasonHub = useMemo(
+    () => games.filter((g) => g.entityType !== 'LEAGUE_SEASON'),
+    [games]
+  );
+
   const { staleGames, upcomingGames } = useMemo(() => {
     const stale: Game[] = [];
     const upcoming: Game[] = [];
-    for (const g of games) {
+    for (const g of gamesWithoutLeagueSeasonHub) {
       if (isStalePastScheduledGame(g)) stale.push(g);
       else upcoming.push(g);
     }
     stale.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
     return { staleGames: stale, upcomingGames: upcoming };
-  }, [games]);
+  }, [gamesWithoutLeagueSeasonHub]);
 
   const staleGrouped = useMemo(
     () => groupGamesByDate(staleGames, displaySettings, t),
@@ -159,38 +154,6 @@ interface UpcomingGameRowProps {
   translateCity: (cityId: string, cityName: string, country: string) => string;
   onClick: () => void;
 }
-
-const getEntityIcon = (entityType: Game['entityType']) => {
-  switch (entityType) {
-    case 'TOURNAMENT':
-      return <Swords size={12} />;
-    case 'LEAGUE':
-    case 'LEAGUE_SEASON':
-      return <Trophy size={12} />;
-    case 'TRAINING':
-      return <Dumbbell size={12} />;
-    case 'BAR':
-      return <Beer size={12} />;
-    default:
-      return null;
-  }
-};
-
-const getEntityTagClasses = (entityType: Game['entityType']): string => {
-  switch (entityType) {
-    case 'TOURNAMENT':
-      return 'text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-800';
-    case 'LEAGUE':
-    case 'LEAGUE_SEASON':
-      return 'text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-800';
-    case 'TRAINING':
-      return 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-800';
-    case 'BAR':
-      return 'text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-800';
-    default:
-      return 'text-primary-700 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-800';
-  }
-};
 
 const UpcomingGameRow = ({
   game,

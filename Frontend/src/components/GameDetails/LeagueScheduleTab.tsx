@@ -513,7 +513,19 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
               { id: 'table', label: t('gameDetails.fixtureTableView') },
             ]}
             activeId={effectiveFixtureTableView ? 'table' : 'list'}
-            onChange={(id) => setLeagueSeasonTableViewOverride(id === 'table' ? true : null)}
+            onChange={(id) => {
+              const table = id === 'table';
+              setLeagueSeasonTableViewOverride(table ? true : null);
+              if (table) {
+                const sp = new URLSearchParams(location.search);
+                sp.set('tab', 'schedule');
+                const next = sp.toString();
+                const cur = new URLSearchParams(location.search).toString();
+                if (next !== cur) {
+                  navigate({ pathname: location.pathname, search: next }, { replace: true });
+                }
+              }
+            }}
             showOnlyActiveTabText={false}
             layoutId={`leagueFixtureViewMode-${leagueSeasonId}`}
             className="w-fit"

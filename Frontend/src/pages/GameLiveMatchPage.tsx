@@ -1,25 +1,39 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { isLiveScoringInputLocked, isMatchDecidedForLiveScoring } from '@/utils/scoring/matchWinner';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { resultsApi } from '@/api/results';
-import { LiveScoreShell, LiveTvToolbar } from '@/components/liveScoring';
+import { LiveOptionalDeciderSheet, LiveScoreShell, LiveTvToolbar } from '@/components/liveScoring';
 import { useLiveMatchBoardState, liveBoardPlayersForTeam } from '@/hooks/useLiveMatchBoardState';
 import { useAuthStore } from '@/store/authStore';
 import { useResolvedAppAppearance } from '@/store/themeStore';
+import { isGameMatchTimerEnabled } from '@/utils/matchTimer';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { useWakeScreenForLiveScoring } from '@/hooks/useWakeScreenForLiveScoring';
 import { parseMatchLiveEnvelope } from '@/types/matchLiveScoring';
 import {
+  applyOptionalDeciderFormat,
+  clearTimedClassicSetLock,
+  freezeTimedClassicSetAtPartialScore,
   liveBoardThemeSearchParam,
+  optionalDeciderChoicePending,
   parseLiveBoardTheme,
   parseLiveScoringState,
   scoreLivePoint,
   unscoreLivePoint,
   type LiveBoardTheme,
+  type LiveOptionalDeciderFormat,
   type LiveScoringActionResult,
   type LiveScoringState,
   type LiveTeamSide,
 } from '@/utils/liveScoring';
+
+function liveScoringClosedByMatchMetadata(metadata: unknown): boolean {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return false;
+  const o = metadata as { nonRallyOutcome?: unknown };
+  const v = o.nonRallyOutcome;
+  return v === 'WALKOVER' || v === 'DEFAULT' || v === 'RETIRED';
+}
 
 export const GameLiveMatchPage = () => {
   const { id: gameId = '' } = useParams<{ id: string }>();
@@ -44,6 +58,7 @@ export const GameLiveMatchPage = () => {
   const spectatorFetchToken = isAuthenticated ? null : spectatorToken || mintedSpectatorToken || null;
 
   const {
+    game,
     gameTitle,
     rawMatch,
     liveState,
@@ -56,7 +71,44 @@ export const GameLiveMatchPage = () => {
     rules,
     refreshMatchLiveFromServer,
     timerDisplay,
+    timerSnap,
   } = useLiveMatchBoardState(gameId, matchId, { spectatorToken: spectatorFetchToken });
+
+  const scoringLocked = useMemo(() => {
+    if (!liveState || !rules) return false;
+    if (liveScoringClosedByMatchMetadata(rawMatch?.metadata)) return true;
+    if (optionalDeciderChoicePending(liveState, rules)) return true;
+    return isLiveScoringInputLocked(liveState.sets, liveState.activeSetIndex, rules);
+  }, [liveState, rawMatch?.metadata, rules]);
+
+  const liveMatchStatusNote = useMemo(() => {
+    if (liveScoringClosedByMatchMetadata(rawMatch?.metadata)) {
+      return t('gameDetails.liveScoring.scoringClosedSpecialOutcome');
+    }
+    if (!liveState || !rules) return null;
+    if (optionalDeciderChoicePending(liveState, rules)) return t('gameDetails.liveScoring.chooseDeciderFormat');
+    if (isMatchDecidedForLiveScoring(liveState.sets, rules)) return t('gameDetails.liveScoring.matchComplete');
+    if (liveState.mode === 'points' && isLiveScoringInputLocked(liveState.sets, liveState.activeSetIndex, rules)) {
+      return t('gameDetails.liveScoring.pointsBudgetComplete');
+    }
+    return null;
+  }, [liveState, rawMatch?.metadata, rules, t]);
+
+  const showOptionalDeciderSheet = Boolean(
+    liveState && rules && optionalDeciderChoicePending(liveState, rules) && !tv && isAuthenticated
+  );
+
+  const canTimedClassicFreeze = useMemo(() => {
+    if (!liveState || liveState.mode !== 'classic' || !rules?.allowIncompleteRegularSetGames) return false;
+    if (liveState.timedClassicSetLocked) return false;
+    if (!game || !isGameMatchTimerEnabled(game)) return false;
+    if (timerSnap?.status !== 'STOPPED') return false;
+    return !tv && isAuthenticated;
+  }, [liveState, rules, game, timerSnap, tv, isAuthenticated]);
+
+  const canTimedClassicUnlock = Boolean(
+    liveState?.timedClassicSetLocked && !tv && isAuthenticated && rules?.allowIncompleteRegularSetGames
+  );
 
   const [saving, setSaving] = useState(false);
   const [showTvChrome, setShowTvChrome] = useState(!tv);
@@ -205,7 +257,7 @@ export const GameLiveMatchPage = () => {
         } else {
           setRevision(rev409);
           await refreshMatchLiveFromServer();
-          setError('Out of date — try again.');
+          setError(t('gameDetails.liveScoring.syncConflictRetry'));
         }
       } else {
         const msg =
@@ -221,7 +273,7 @@ export const GameLiveMatchPage = () => {
       savingRef.current = false;
       setSaving(false);
     }
-  }, [gameId, matchId, isAuthenticated, setLiveState, setRevision, setError, refreshMatchLiveFromServer]);
+  }, [gameId, matchId, isAuthenticated, setLiveState, setRevision, setError, refreshMatchLiveFromServer, t]);
 
   const applyLiveAction = useCallback(
     (result: LiveScoringActionResult) => {
@@ -240,8 +292,11 @@ export const GameLiveMatchPage = () => {
   const handleScore = useCallback(
     (side: LiveTeamSide) => {
       const s = liveStateRef.current;
-      if (!s || savingRef.current || !isAuthenticated) return;
-      applyLiveAction(scoreLivePoint(s, side, rulesRef.current));
+      const r = rulesRef.current;
+      if (!s || savingRef.current || !isAuthenticated || !r) return;
+      if (optionalDeciderChoicePending(s, r)) return;
+      if (isLiveScoringInputLocked(s.sets, s.activeSetIndex, r)) return;
+      applyLiveAction(scoreLivePoint(s, side, r));
     },
     [isAuthenticated, applyLiveAction]
   );
@@ -249,8 +304,10 @@ export const GameLiveMatchPage = () => {
   const handleUndo = useCallback(
     (side: LiveTeamSide) => {
       const s = liveStateRef.current;
-      if (!s || savingRef.current || !isAuthenticated) return;
-      applyLiveAction(unscoreLivePoint(s, side, rulesRef.current));
+      const r = rulesRef.current;
+      if (!s || savingRef.current || !isAuthenticated || !r) return;
+      if (isMatchDecidedForLiveScoring(s.sets, r)) return;
+      applyLiveAction(unscoreLivePoint(s, side, r));
     },
     [isAuthenticated, applyLiveAction]
   );
@@ -258,7 +315,9 @@ export const GameLiveMatchPage = () => {
   const handleServeSetupComplete = useCallback(
     (side: LiveTeamSide, doublesPlayerIndex: number) => {
       const s = liveStateRef.current;
-      if (!s || savingRef.current || !isAuthenticated) return;
+      const r = rulesRef.current;
+      if (!s || !r || savingRef.current || !isAuthenticated) return;
+      if (isLiveScoringInputLocked(s.sets, s.activeSetIndex, r)) return;
       applyLiveAction({
         state: { ...s, firstServerTeam: side, firstServerDoublesPlayerIndex: doublesPlayerIndex },
         changed: true,
@@ -267,9 +326,34 @@ export const GameLiveMatchPage = () => {
     [isAuthenticated, applyLiveAction]
   );
 
-  const handleSkipServeGuide = useCallback(() => {
+  const handleOptionalDecider = useCallback(
+    (format: LiveOptionalDeciderFormat) => {
+      const s = liveStateRef.current;
+      const r = rulesRef.current;
+      if (!s || !r || savingRef.current || !isAuthenticated) return;
+      applyLiveAction(applyOptionalDeciderFormat(s, r, format));
+    },
+    [isAuthenticated, applyLiveAction]
+  );
+
+  const handleTimedFreeze = useCallback(() => {
+    const s = liveStateRef.current;
+    const r = rulesRef.current;
+    if (!s || !r || savingRef.current || !isAuthenticated) return;
+    applyLiveAction(freezeTimedClassicSetAtPartialScore(s, r));
+  }, [isAuthenticated, applyLiveAction]);
+
+  const handleTimedUnlock = useCallback(() => {
     const s = liveStateRef.current;
     if (!s || savingRef.current || !isAuthenticated) return;
+    applyLiveAction(clearTimedClassicSetLock(s));
+  }, [isAuthenticated, applyLiveAction]);
+
+  const handleSkipServeGuide = useCallback(() => {
+    const s = liveStateRef.current;
+    const r = rulesRef.current;
+    if (!s || !r || savingRef.current || !isAuthenticated) return;
+    if (isLiveScoringInputLocked(s.sets, s.activeSetIndex, r)) return;
     applyLiveAction({ state: { ...s, serveGuideSkipped: true }, changed: true });
   }, [isAuthenticated, applyLiveAction]);
 
@@ -389,16 +473,41 @@ export const GameLiveMatchPage = () => {
           </div>
         ) : liveState ? (
           <>
+            {!tv && (canTimedClassicFreeze || canTimedClassicUnlock) ? (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {canTimedClassicFreeze ? (
+                  <button
+                    type="button"
+                    className="rounded-lg border border-amber-600/40 bg-amber-500/15 px-3 py-2 text-xs font-medium text-amber-950 dark:text-amber-100"
+                    onClick={handleTimedFreeze}
+                  >
+                    {t('gameDetails.liveScoring.timedLockCta')}
+                  </button>
+                ) : null}
+                {canTimedClassicUnlock ? (
+                  <button
+                    type="button"
+                    className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium dark:border-gray-600 dark:bg-gray-900"
+                    onClick={handleTimedUnlock}
+                  >
+                    {t('gameDetails.liveScoring.timedUnlockCta')}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
             <LiveScoreShell
               state={liveState}
               teamAPlayers={teamAPlayers}
               teamBPlayers={teamBPlayers}
               revision={revision}
               rules={rules}
+              gameId={gameId}
               boardTheme={boardTheme}
               tv={tv}
               saving={saving}
               error={error}
+              statusNote={liveMatchStatusNote}
+              scoringLocked={scoringLocked}
               isOnline={isOnline}
               onScore={handleScore}
               onUndo={handleUndo}
@@ -410,6 +519,8 @@ export const GameLiveMatchPage = () => {
           <div className="flex-1 flex items-center justify-center text-sm opacity-70">No live state</div>
         )}
       </main>
+
+      <LiveOptionalDeciderSheet open={showOptionalDeciderSheet} onChoose={handleOptionalDecider} />
 
       {liveState ? (
         <div

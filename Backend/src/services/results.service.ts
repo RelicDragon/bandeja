@@ -15,6 +15,8 @@ import {
   readNormalizedSetsFromLiveMetadata,
   normalizedMatchSetRowsEqual,
   readMatchLiveScoringEnvelope,
+  shallowMergeMatchMetadata,
+  isNonRallyOutcomeClosingLiveScoring,
 } from './results/matchLiveScoring.service';
 import { appendMatchLiveScoringAudit } from './results/matchLiveScoringAudit.service';
 
@@ -784,6 +786,8 @@ export async function updateMatch(
     teamB: string[];
     sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: string }>;
     courtId?: string;
+    /** Shallow-merged into `match.metadata`. Setting `nonRallyOutcome` to WO/default/retired strips `liveScoring`. */
+    metadata?: Record<string, unknown>;
   },
   options?: { userId?: string | null }
 ): Promise<{ liveScoringCleared: boolean }> {
@@ -862,11 +866,20 @@ export async function updateMatch(
   const hadLiveEnvelope = liveEnvBefore != null;
   const revBefore = liveEnvBefore?.revision ?? null;
   const liveGrid = readNormalizedSetsFromLiveMetadata(match.metadata);
+  const mergedMetadataPreview = shallowMergeMatchMetadata(match.metadata, matchData.metadata);
+  const nonRallyBlocksLivePreserve = isNonRallyOutcomeClosingLiveScoring(mergedMetadataPreview);
   const preserveLiveScoring =
     rostersUnchanged &&
     liveGrid != null &&
-    normalizedMatchSetRowsEqual(normalizedSets, liveGrid);
-  const liveScoringCleared = hadLiveEnvelope && !preserveLiveScoring;
+    normalizedMatchSetRowsEqual(normalizedSets, liveGrid) &&
+    !nonRallyBlocksLivePreserve;
+
+  let outMatchMetadata = shallowMergeMatchMetadata(match.metadata, matchData.metadata);
+  if (!preserveLiveScoring || isNonRallyOutcomeClosingLiveScoring(outMatchMetadata)) {
+    outMatchMetadata = stripLiveScoringFromMatchMetadata(outMatchMetadata);
+  }
+  const hasLiveAfter = readMatchLiveScoringEnvelope(outMatchMetadata) != null;
+  const liveScoringCleared = hadLiveEnvelope && !hasLiveAfter;
 
   await prisma.$transaction(async (tx) => {
     if (matchData.courtId !== undefined) {
@@ -923,9 +936,7 @@ export async function updateMatch(
     await tx.match.update({
       where: { id: match.id },
       data: {
-        metadata: preserveLiveScoring
-          ? (match.metadata as Prisma.InputJsonValue)
-          : stripLiveScoringFromMatchMetadata(match.metadata),
+        metadata: outMatchMetadata,
       },
     });
   });
@@ -958,6 +969,60 @@ export async function updateMatch(
       userId: options?.userId ?? null,
       revisionBefore: revBefore,
       revisionAfter: preserveLiveScoring ? revBefore : null,
+    });
+  }
+
+  return { liveScoringCleared };
+}
+
+/** Shallow-merge `patch` into match `metadata`. Walkover/default/retired strips `liveScoring`. */
+export async function patchMatchMetadata(
+  gameId: string,
+  matchId: string,
+  patch: Record<string, unknown>,
+  options?: { userId?: string | null }
+): Promise<{ liveScoringCleared: boolean }> {
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    select: {
+      id: true,
+      metadata: true,
+      round: { select: { gameId: true } },
+    },
+  });
+
+  if (!match) {
+    throw new ApiError(404, 'Match not found');
+  }
+  if (match.round.gameId !== gameId) {
+    throw new ApiError(400, 'Match does not belong to the specified game');
+  }
+
+  const liveBefore = readMatchLiveScoringEnvelope(match.metadata);
+  const hadLiveEnvelope = liveBefore != null;
+  const revBefore = liveBefore?.revision ?? null;
+
+  let outMeta = shallowMergeMatchMetadata(match.metadata, patch);
+  if (isNonRallyOutcomeClosingLiveScoring(outMeta)) {
+    outMeta = stripLiveScoringFromMatchMetadata(outMeta);
+  }
+
+  await prisma.match.update({
+    where: { id: matchId },
+    data: { metadata: outMeta },
+  });
+
+  const hasLiveAfter = readMatchLiveScoringEnvelope(outMeta) != null;
+  const liveScoringCleared = hadLiveEnvelope && !hasLiveAfter;
+
+  if (hadLiveEnvelope) {
+    void appendMatchLiveScoringAudit({
+      matchId,
+      gameId,
+      source: liveScoringCleared ? 'SYSTEM_CLEAR' : 'TABLE_PUT',
+      userId: options?.userId ?? null,
+      revisionBefore: revBefore,
+      revisionAfter: hasLiveAfter ? revBefore : null,
     });
   }
 

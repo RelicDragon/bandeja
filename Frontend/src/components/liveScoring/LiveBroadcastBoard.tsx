@@ -6,10 +6,13 @@ import type { BasicUser } from '@/types';
 import {
   activeSetScore,
   getClassicPointLabels,
+  liveSetLabelForRow,
   type LiveBoardTheme,
   type LiveScoringState,
+  type LiveSetLabel,
   type LiveTeamSide,
 } from '@/utils/liveScoring';
+import type { ScoringRules } from '@/utils/scoring';
 import { AnimatedLiveBoardValue } from './AnimatedLiveBoardValue';
 import { LiveServeBallIndicator } from './LiveServeBallIndicator';
 import type { LiveServeIndicator } from './LiveTeamPanel';
@@ -76,6 +79,7 @@ const BroadcastTeamRoster = memo(function BroadcastTeamRoster({
 
 type LiveBroadcastBoardProps = {
   state: LiveScoringState;
+  rules?: ScoringRules;
   teamAPlayers: BasicUser[];
   teamBPlayers: BasicUser[];
   revision: number;
@@ -95,12 +99,14 @@ type ScoreCol = {
   /** classic current-points column */
   headerKind: 'game' | 'set';
   setOneBased?: number;
+  setLabel?: LiveSetLabel | null;
   /** current set column (games won in this set) */
   isActiveSet: boolean;
 };
 
 export function LiveBroadcastBoard({
   state,
+  rules,
   teamAPlayers,
   teamBPlayers,
   revision,
@@ -114,7 +120,7 @@ export function LiveBroadcastBoard({
   void revision;
   const { t } = useTranslation();
   const active = activeSetScore(state);
-  const labels = getClassicPointLabels(state.classic);
+  const labels = getClassicPointLabels(state.classic, rules);
 
   const scoreColumns = useMemo((): ScoreCol[] => {
     const cols: ScoreCol[] = [];
@@ -137,6 +143,7 @@ export function LiveBroadcastBoard({
         b: s.teamB,
         headerKind: 'set',
         setOneBased: i + 1,
+        setLabel: rules ? liveSetLabelForRow(s, i, rules) : null,
         isActiveSet: false,
       });
     });
@@ -147,19 +154,11 @@ export function LiveBroadcastBoard({
       impact: !classicPts,
       headerKind: 'set',
       setOneBased: state.activeSetIndex + 1,
+      setLabel: rules ? liveSetLabelForRow(active, state.activeSetIndex, rules) : null,
       isActiveSet: true,
     });
     return cols;
-  }, [
-    state.mode,
-    state.classic,
-    state.activeSetIndex,
-    state.sets,
-    labels.teamA,
-    labels.teamB,
-    active.teamA,
-    active.teamB,
-  ]);
+  }, [state.mode, state.classic, state.activeSetIndex, state.sets, active, labels.teamA, labels.teamB, rules]);
 
   const isLight = boardTheme === 'light';
   const embedSolid = Boolean(interactive);
@@ -215,10 +214,13 @@ export function LiveBroadcastBoard({
   const headerLabelActiveClass = isLight
     ? 'text-center text-[10px] font-bold leading-tight text-primary-700 sm:text-xs'
     : 'text-center text-[10px] font-bold leading-tight text-primary-300 sm:text-xs';
-  const columnHeaderText = (col: ScoreCol) =>
-    col.headerKind === 'game'
-      ? t('gameDetails.liveScoring.game')
-      : t('gameDetails.liveScoring.setN', { n: col.setOneBased ?? 1 });
+  const columnHeaderText = (col: ScoreCol) => {
+    if (col.headerKind === 'game') return t('gameDetails.liveScoring.game');
+    const n = col.setOneBased ?? 1;
+    if (col.setLabel?.kind === 'SUPER_TIE_BREAK') return t('gameDetails.liveScoring.superTieBreakShort');
+    if (col.setLabel?.kind === 'TIE_BREAK') return `${t('gameDetails.liveScoring.setShort')} ${n} · ${t('gameDetails.liveScoring.tieBreakShort')}`;
+    return t('gameDetails.liveScoring.setN', { n });
+  };
 
   const activeSetCell =
     ' relative z-[1] ring-2 ring-inset ' +
@@ -297,7 +299,7 @@ export function LiveBroadcastBoard({
               className={undoCell}
               disabled={disabled}
               aria-label="Undo"
-              onClick={() => onUndo('teamA')}
+              onClick={() => onUndo?.('teamA')}
             >
               <Undo2 className="h-[1.125rem] w-[1.125rem] shrink-0 sm:h-5 sm:w-5" strokeWidth={2.25} aria-hidden />
             </button>
@@ -330,7 +332,7 @@ export function LiveBroadcastBoard({
               className={undoCell}
               disabled={disabled}
               aria-label="Undo"
-              onClick={() => onUndo('teamB')}
+              onClick={() => onUndo?.('teamB')}
             >
               <Undo2 className="h-[1.125rem] w-[1.125rem] shrink-0 sm:h-5 sm:w-5" strokeWidth={2.25} aria-hidden />
             </button>

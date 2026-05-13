@@ -8,6 +8,7 @@ import { GameService } from '../services/game/game.service';
 import * as outcomesService from '../services/results/outcomes.service';
 import * as outcomeExplanationService from '../services/results/outcomeExplanation.service';
 import * as matchLiveScoringService from '../services/results/matchLiveScoring.service';
+import { LIVE_SCORING_REASON_CODE } from '../services/results/liveScoringEngine/liveScoringRejectReasons';
 import { liveSpectatorQueryTokenMaxBytes, signLiveSpectatorToken, verifyLiveSpectatorToken } from '../utils/jwt';
 import { assertMatchBelongsToGame } from '../services/results/liveSpectator.service';
 
@@ -237,16 +238,48 @@ export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) 
   });
 });
 
+export const patchMatchMetadata = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId, matchId } = req.params;
+  const patch = req.body?.patch;
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+    throw new ApiError(400, 'patch must be a non-array object');
+  }
+
+  const { liveScoringCleared } = await resultsService.patchMatchMetadata(
+    gameId,
+    matchId,
+    patch as Record<string, unknown>,
+    { userId: req.userId ?? null }
+  );
+  if (liveScoringCleared) {
+    matchLiveScoringService.notifyMatchLiveScoringCleared(gameId, matchId);
+  }
+
+  const socketService = (global as any).socketService;
+  if (socketService) {
+    await socketService.emitGameResultsUpdated(gameId, req.userId!);
+  }
+
+  res.json({
+    success: true,
+    data: { liveScoringCleared },
+  });
+});
+
 export const patchMatchLiveScoring = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, matchId } = req.params;
   if (!Object.prototype.hasOwnProperty.call(req.body, 'state')) {
-    throw new ApiError(400, 'state is required (object or null)');
+    throw new ApiError(400, 'state is required (object or null)', true, {
+      reasonCode: LIVE_SCORING_REASON_CODE.MISSING_STATE,
+    });
   }
   let baseRevision: number | null = null;
   if (req.body.baseRevision !== null && req.body.baseRevision !== undefined) {
     const n = Number(req.body.baseRevision);
     if (!Number.isFinite(n)) {
-      throw new ApiError(400, 'baseRevision must be a finite number or null');
+      throw new ApiError(400, 'baseRevision must be a finite number or null', true, {
+        reasonCode: LIVE_SCORING_REASON_CODE.INVALID_BASE_REVISION,
+      });
     }
     baseRevision = n;
   }

@@ -545,7 +545,11 @@ export class GameReadService {
         }
       },
       status: 'ARCHIVED',
-      startTime: startTimeFilter
+      startTime: startTimeFilter,
+      OR: [
+        { entityType: { not: 'LEAGUE_SEASON' } },
+        { entityType: 'LEAGUE_SEASON', resultsStatus: 'FINAL' },
+      ],
     };
 
     const games = await prisma.game.findMany({

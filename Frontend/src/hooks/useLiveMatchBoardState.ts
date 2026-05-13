@@ -259,5 +259,6 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
     load,
     refreshMatchLiveFromServer,
     timerDisplay,
+    timerSnap,
   };
 }

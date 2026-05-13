@@ -114,10 +114,19 @@ export const resultsApi = {
     teamB: string[];
     sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: string }>;
     courtId?: string;
+    metadata?: Record<string, unknown>;
   }) => {
     const response = await api.put<ApiResponse<{ liveScoringCleared: boolean }>>(
       `/results/game/${gameId}/matches/${matchId}`,
       match
+    );
+    return response.data;
+  },
+
+  patchMatchMetadata: async (gameId: string, matchId: string, patch: Record<string, unknown>) => {
+    const response = await api.patch<ApiResponse<{ liveScoringCleared: boolean }>>(
+      `/results/game/${gameId}/matches/${matchId}/metadata`,
+      { patch }
     );
     return response.data;
   },

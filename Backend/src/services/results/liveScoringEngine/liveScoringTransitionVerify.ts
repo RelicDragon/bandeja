@@ -1,5 +1,13 @@
 import type { ScoringRules } from './rulebook';
-import { advanceLiveSet, parseLiveScoringState, scoreLivePoint, unscoreLivePoint } from './core';
+import {
+  advanceLiveSet,
+  applyOptionalDeciderFormat,
+  clearTimedClassicSetLock,
+  freezeTimedClassicSetAtPartialScore,
+  parseLiveScoringState,
+  scoreLivePoint,
+  unscoreLivePoint,
+} from './core';
 import type { LiveScoringState, SetResult } from './types';
 
 /** Limits CPU on adversarial or degenerate state graphs. */
@@ -26,6 +34,7 @@ function canonicalLiveScoringStateForTransitionCompare(state: LiveScoringState):
     teamA: s.teamA,
     teamB: s.teamB,
     isTieBreak: Boolean(s.isTieBreak),
+    role: s.role ?? 'OFFICIAL',
   }));
   const out: Record<string, unknown> = {
     activeSetIndex: state.activeSetIndex,
@@ -46,6 +55,8 @@ function canonicalLiveScoringStateForTransitionCompare(state: LiveScoringState):
     out.firstServerDoublesPlayerIndex = state.firstServerDoublesPlayerIndex;
   }
   if (state.serveGuideSkipped === true) out.serveGuideSkipped = true;
+  if (state.optionalDeciderFormat) out.optionalDeciderFormat = state.optionalDeciderFormat;
+  if (state.timedClassicSetLocked === true) out.timedClassicSetLocked = true;
   return sortKeysDeep(out);
 }
 
@@ -92,6 +103,15 @@ function expandNeighbors(prev: LiveScoringState, rules: ScoringRules): LiveScori
     const cleared: LiveScoringState = { ...prev };
     delete (cleared as { firstServerDoublesPlayerIndex?: number }).firstServerDoublesPlayerIndex;
     push(cleared);
+  }
+
+  const fr = freezeTimedClassicSetAtPartialScore(prev, rules);
+  if (fr.changed) push(fr.state);
+  const unfr = clearTimedClassicSetLock(prev);
+  if (unfr.changed) push(unfr.state);
+  for (const fmt of ['REGULAR_SET', 'SUPER_TIEBREAK'] as const) {
+    const d = applyOptionalDeciderFormat(prev, rules, fmt);
+    if (d.changed) push(d.state);
   }
 
   return out.slice(0, MAX_NEIGHBORS_PER_NODE);

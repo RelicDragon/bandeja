@@ -6,6 +6,8 @@ struct MatchTimerBarView: View {
     let gameId: String
     let matchId: String
     let game: WatchGame
+    /// When the match timer reaches **STOPPED**, mirror web timed classic partial lock (`freezeTimedClassicSetAtPartialScore`).
+    var onTimerStopped: (() -> Void)? = nil
     @Environment(WatchPreferencesStore.self) private var prefs
     @Environment(\.scenePhase) private var scenePhase
 
@@ -157,6 +159,9 @@ struct MatchTimerBarView: View {
             let s = try await WatchMatchTimerService.transition(gameId: gameId, matchId: matchId, action: action)
             handleCapHaptic(s)
             snapshot = s
+            if action == "stop" {
+                await MainActor.run { onTimerStopped?() }
+            }
             if action == "pause" {
                 WorkoutManager.shared.autoPause()
             } else if action == "resume" {

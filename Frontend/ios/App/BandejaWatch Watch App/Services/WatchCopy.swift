@@ -569,6 +569,9 @@ enum WatchCopy {
         }
     }
 
+    /// Golden point at 40–40 (same center label as web `getClassicPointLabels`).
+    nonisolated static func goldenPoint(_: String) -> String { "GP" }
+
     nonisolated static func gameWonConfirmAlertTitle(_ lang: String) -> String {
         switch lang {
         case "es": return "¿Contar juego?"

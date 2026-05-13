@@ -100,6 +100,14 @@ router.put(
   resultsController.updateMatch
 );
 
+router.patch(
+  '/game/:gameId/matches/:matchId/metadata',
+  authenticate,
+  requireCanModifyResults,
+  validate([body('patch').isObject().withMessage('patch must be an object')]),
+  resultsController.patchMatchMetadata
+);
+
 router.post(
   '/game/:gameId/matches/:matchId/live-spectator-token',
   authenticate,

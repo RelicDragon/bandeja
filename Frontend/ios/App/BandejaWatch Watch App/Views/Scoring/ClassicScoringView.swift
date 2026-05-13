@@ -38,7 +38,7 @@ struct ClassicScoringView: View {
                             scoreLabel: "\(vm.sets[safe: vm.activeSetIndex]?.teamA ?? 0)",
                             action: { vm.scorePoint(.teamA) },
                             decrementAction: { vm.unscorePoint(.teamA) },
-                            disabled: vm.isReadOnly,
+                            disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
                             decrementDisabled: !vm.canUnscore(.teamA)
                         )
                         WatchScoringTeamColumn(
@@ -46,7 +46,7 @@ struct ClassicScoringView: View {
                             scoreLabel: "\(vm.sets[safe: vm.activeSetIndex]?.teamB ?? 0)",
                             action: { vm.scorePoint(.teamB) },
                             decrementAction: { vm.unscorePoint(.teamB) },
-                            disabled: vm.isReadOnly,
+                            disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
                             decrementDisabled: !vm.canUnscore(.teamB)
                         )
                     }
@@ -60,7 +60,7 @@ struct ClassicScoringView: View {
                             scoreLabel: "\(vm.sets[safe: vm.activeSetIndex]?.teamA ?? 0)",
                             action: { vm.scorePoint(.teamA) },
                             decrementAction: { vm.unscorePoint(.teamA) },
-                            disabled: vm.isReadOnly,
+                            disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
                             decrementDisabled: !vm.canUnscore(.teamA)
                         )
                         WatchScoringTeamColumn(
@@ -68,7 +68,7 @@ struct ClassicScoringView: View {
                             scoreLabel: "\(vm.sets[safe: vm.activeSetIndex]?.teamB ?? 0)",
                             action: { vm.scorePoint(.teamB) },
                             decrementAction: { vm.unscorePoint(.teamB) },
-                            disabled: vm.isReadOnly,
+                            disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
                             decrementDisabled: !vm.canUnscore(.teamB)
                         )
                     }
@@ -82,7 +82,7 @@ struct ClassicScoringView: View {
                             scoreLabel: "\(vm.tieBreakA)",
                             action: { vm.scorePoint(.teamA) },
                             decrementAction: { vm.unscorePoint(.teamA) },
-                            disabled: vm.isReadOnly,
+                            disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
                             decrementDisabled: !vm.canUnscore(.teamA)
                         )
                         WatchScoringTeamColumn(
@@ -90,12 +90,18 @@ struct ClassicScoringView: View {
                             scoreLabel: "\(vm.tieBreakB)",
                             action: { vm.scorePoint(.teamB) },
                             decrementAction: { vm.unscorePoint(.teamB) },
-                            disabled: vm.isReadOnly,
+                            disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
                             decrementDisabled: !vm.canUnscore(.teamB)
                         )
                     }
                 } else {
-                    if case .deuce = vm.classicPointState {
+                    if vm.rules.hasGoldenPoint,
+                       case .regular(let a, let b) = vm.classicPointState,
+                       a == .forty, b == .forty {
+                        Text(WatchCopy.goldenPoint(lang))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    } else if case .deuce = vm.classicPointState {
                         Text(WatchCopy.deuce(lang))
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
@@ -106,7 +112,7 @@ struct ClassicScoringView: View {
                             scoreLabel: classicTeamAScoreLabel(lang),
                             action: { vm.scorePoint(.teamA) },
                             decrementAction: { vm.unscorePoint(.teamA) },
-                            disabled: vm.isReadOnly,
+                            disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
                             decrementDisabled: !vm.canUnscore(.teamA)
                         )
                         WatchScoringTeamColumn(
@@ -114,7 +120,7 @@ struct ClassicScoringView: View {
                             scoreLabel: classicTeamBScoreLabel(lang),
                             action: { vm.scorePoint(.teamB) },
                             decrementAction: { vm.unscorePoint(.teamB) },
-                            disabled: vm.isReadOnly,
+                            disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
                             decrementDisabled: !vm.canUnscore(.teamB)
                         )
                     }

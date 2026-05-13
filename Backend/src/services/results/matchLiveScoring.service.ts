@@ -12,6 +12,10 @@ import {
 import { assertMatchNormalizedSetsValid, type NormalizedMatchSetRow } from './matchSetsValidation';
 import { getRules } from './liveScoringEngine/rulebook';
 import { isLiveScoringTransitionWithinSteps } from './liveScoringEngine/liveScoringTransitionVerify';
+import {
+  LIVE_SCORING_REASON_CODE,
+  type LiveScoringReasonCode,
+} from './liveScoringEngine/liveScoringRejectReasons';
 import type { SetResult } from './liveScoringEngine/types';
 import { appendMatchLiveScoringAudit } from './matchLiveScoringAudit.service';
 
@@ -23,6 +27,29 @@ export function stripLiveScoringFromMatchMetadata(metadata: unknown): Prisma.Inp
   const o = { ...(metadata as Record<string, unknown>) };
   delete o.liveScoring;
   return o as Prisma.InputJsonValue;
+}
+
+/** Shallow-merge JSON object patch into existing match metadata (object-only). */
+export function shallowMergeMatchMetadata(
+  metadata: unknown,
+  patch: Record<string, unknown> | null | undefined
+): Prisma.InputJsonValue {
+  const base =
+    metadata != null && typeof metadata === 'object' && !Array.isArray(metadata)
+      ? { ...(metadata as Record<string, unknown>) }
+      : {};
+  if (patch == null || typeof patch !== 'object' || Array.isArray(patch)) {
+    return base as Prisma.InputJsonValue;
+  }
+  return { ...base, ...patch } as Prisma.InputJsonValue;
+}
+
+export function isNonRallyOutcomeClosingLiveScoring(metadata: unknown): boolean {
+  if (metadata == null || typeof metadata !== 'object' || Array.isArray(metadata)) return false;
+  const v = (metadata as Record<string, unknown>).nonRallyOutcome;
+  if (typeof v !== 'string') return false;
+  const u = v.trim().toUpperCase();
+  return u === 'WALKOVER' || u === 'DEFAULT' || u === 'RETIRED';
 }
 
 export function readMatchLiveScoringEnvelope(metadata: unknown): MatchLiveScoringEnvelopeV1 | null {
@@ -50,20 +77,26 @@ export type PatchMatchLiveScoringBody = {
 };
 
 const OP_DEDUPE_MAX = 32;
-const TRANSITION_MAX_DEPTH = 8;
+const TRANSITION_MAX_DEPTH = 128;
 
 function sanitizeOptionalIdempotencyKey(value: string | undefined): string | undefined {
   if (value === undefined) return undefined;
   if (typeof value !== 'string') {
-    throw new ApiError(400, 'Invalid idempotency key');
+    throw new ApiError(400, 'Invalid idempotency key', true, {
+      reasonCode: LIVE_SCORING_REASON_CODE.INVALID_IDEMPOTENCY_KEY,
+    });
   }
   const t = value.trim();
   if (!t) return undefined;
   if (t.length > 128) {
-    throw new ApiError(400, 'Invalid idempotency key');
+    throw new ApiError(400, 'Invalid idempotency key', true, {
+      reasonCode: LIVE_SCORING_REASON_CODE.INVALID_IDEMPOTENCY_KEY,
+    });
   }
   if (!/^[A-Za-z0-9._-]+$/.test(t)) {
-    throw new ApiError(400, 'Invalid idempotency key');
+    throw new ApiError(400, 'Invalid idempotency key', true, {
+      reasonCode: LIVE_SCORING_REASON_CODE.INVALID_IDEMPOTENCY_KEY,
+    });
   }
   return t;
 }
@@ -145,11 +178,34 @@ export async function patchMatchLiveScoring(
     throw new ApiError(404, 'Match not found');
   }
   if (match.round.gameId !== gameId) {
-    throw new ApiError(400, 'Match does not belong to the specified game');
+    throw new ApiError(400, 'Match does not belong to the specified game', true, {
+      reasonCode: LIVE_SCORING_REASON_CODE.MATCH_GAME_MISMATCH,
+    });
   }
 
   const current = readMatchLiveScoringEnvelope(match.metadata);
   const currentRevision = current?.revision ?? 0;
+
+  const auditReject = (reasonCode: LiveScoringReasonCode) => {
+    void appendMatchLiveScoringAudit({
+      matchId,
+      gameId,
+      source: 'LIVE_PATCH_REJECT',
+      userId,
+      revisionBefore: currentRevision,
+      revisionAfter: null,
+      clientMessageId: clientMessageId ?? null,
+      opId: opId ?? null,
+      reasonCode,
+    });
+  };
+
+  if (isNonRallyOutcomeClosingLiveScoring(match.metadata)) {
+    auditReject(LIVE_SCORING_REASON_CODE.NON_RALLY_OUTCOME);
+    throw new ApiError(400, 'Live scoring is disabled for this match (walkover, default, or retired)', true, {
+      reasonCode: LIVE_SCORING_REASON_CODE.NON_RALLY_OUTCOME,
+    });
+  }
 
   if (clientMessageId && current?.lastClientMessageId === clientMessageId) {
     return { liveScoring: current, revision: currentRevision };
@@ -166,6 +222,7 @@ export async function patchMatchLiveScoring(
   }
 
   const conflictPayload = (): Record<string, unknown> => ({
+    reasonCode: LIVE_SCORING_REASON_CODE.REVISION_MISMATCH,
     revision: currentRevision,
     ...(current ? { liveScoring: current as unknown as Record<string, unknown> } : {}),
   });
@@ -173,9 +230,11 @@ export async function patchMatchLiveScoring(
   const base = body.baseRevision;
   if (currentRevision === 0) {
     if (base != null && base !== 0) {
+      auditReject(LIVE_SCORING_REASON_CODE.REVISION_MISMATCH);
       throw new ApiError(409, 'Live scoring revision mismatch', true, conflictPayload());
     }
   } else if (base !== currentRevision) {
+    auditReject(LIVE_SCORING_REASON_CODE.REVISION_MISMATCH);
     throw new ApiError(409, 'Live scoring revision mismatch', true, conflictPayload());
   }
 
@@ -200,7 +259,27 @@ export async function patchMatchLiveScoring(
   }
 
   if (liveSets) {
-    assertMatchNormalizedSetsValid(gameForRules, liveSets, { skipClassicGameScoreValidation: true });
+    const activeIdxRaw =
+      body.state && typeof body.state.activeSetIndex === 'number' ? body.state.activeSetIndex : undefined;
+    const liveScoringActiveSetIndex =
+      typeof activeIdxRaw === 'number' && Number.isInteger(activeIdxRaw) && activeIdxRaw >= 0 && activeIdxRaw < liveSets.length
+        ? activeIdxRaw
+        : undefined;
+    try {
+      assertMatchNormalizedSetsValid(gameForRules, liveSets, {
+        skipClassicGameScoreValidation: true,
+        liveScoringActiveSetIndex,
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 400) {
+        auditReject(LIVE_SCORING_REASON_CODE.INVALID_SETS);
+        throw new ApiError(400, err.message, true, {
+          ...(err.data ?? {}),
+          reasonCode: LIVE_SCORING_REASON_CODE.INVALID_SETS,
+        });
+      }
+      throw err;
+    }
   }
 
   if (
@@ -217,7 +296,10 @@ export async function patchMatchLiveScoring(
       TRANSITION_MAX_DEPTH
     )
   ) {
-    throw new ApiError(400, 'Live scoring state transition is not valid');
+    auditReject(LIVE_SCORING_REASON_CODE.TRANSITION_OUT_OF_GRAPH);
+    throw new ApiError(400, 'Live scoring state transition is not valid', true, {
+      reasonCode: LIVE_SCORING_REASON_CODE.TRANSITION_OUT_OF_GRAPH,
+    });
   }
 
   const nextRevision = currentRevision + 1;

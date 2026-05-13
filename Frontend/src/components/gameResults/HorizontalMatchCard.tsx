@@ -1,15 +1,13 @@
-import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Trash2, MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Trash2, MapPin, Play } from 'lucide-react';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser, Court, Game } from '@/types';
-import { expandSetsForDisplay, getRules } from '@/utils/scoring';
+import { expandSetsForDisplay, getRules, isMatchDecidedForLiveScoring } from '@/utils/scoring';
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import { MatchTimerPanel } from '@/components/gameResults/matchTimer/MatchTimerPanel';
 import type { MatchTimerAction } from '@/utils/matchTimer';
-import { useResolvedAppAppearance } from '@/store/themeStore';
-import { liveBoardThemeSearchParam, parseLiveBoardTheme } from '@/utils/liveScoring';
 
 interface HorizontalMatchCardProps {
   match: Match;
@@ -70,14 +68,14 @@ export const HorizontalMatchCard = ({
   onAddSupplementalSet,
 }: HorizontalMatchCardProps) => {
   const { t } = useTranslation();
-  const resolvedAppAppearance = useResolvedAppAppearance();
-  const liveBoardThemeQs = liveBoardThemeSearchParam(parseLiveBoardTheme(resolvedAppAppearance));
   const effectiveIsPresetGame = isPresetGame || prohibitMatchesEditing;
   const effectiveIsEditing = prohibitMatchesEditing ? false : isEditing;
   const canEnterScores = effectiveIsEditing || (effectiveIsPresetGame && canEditResults);
 
   const rules = getRules(game ?? { fixedNumberOfSets, maxTotalPointsPerSet: 0, maxPointsPerTeam: 0, winnerOfMatch: 'BY_SCORES', ballsInGames: false, hasGoldenPoint: false, pointsPerTie: 0, scoringPreset: null } as any);
   const displaySets = expandSetsForDisplay(match.sets, rules, { canEnterScores });
+  const matchFinished =
+    match.winnerId === 'teamA' || match.winnerId === 'teamB' || isMatchDecidedForLiveScoring(match.sets, rules);
   const renderTeam = (team: 'teamA' | 'teamB') => {
     const teamPlayers = match[team];
     const maxPlayersPerTeam = players.length === 2 ? 1 : 2;
@@ -197,34 +195,6 @@ export const HorizontalMatchCard = ({
           canControl={canEditResults && canEnterResults}
           onTransition={onMatchTimerTransition}
         />
-      ) : null}
-
-      {gameId && canEnterScores ? (
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-1 text-xs">
-          <Link
-            to={`/games/${gameId}/live?matchId=${encodeURIComponent(match.id)}`}
-            className="text-primary-600 dark:text-primary-400 font-medium hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {t('gameDetails.liveScore')}
-          </Link>
-          <span className="text-gray-300 dark:text-gray-600">·</span>
-          <Link
-            to={`/games/${gameId}/live?matchId=${encodeURIComponent(match.id)}&tv=1&theme=${encodeURIComponent(liveBoardThemeQs)}`}
-            className="text-primary-600 dark:text-primary-400 font-medium hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {t('gameDetails.liveScoreTv')}
-          </Link>
-          <span className="text-gray-300 dark:text-gray-600">·</span>
-          <Link
-            to={`/games/${gameId}/broadcast?matchId=${encodeURIComponent(match.id)}&theme=${encodeURIComponent(liveBoardThemeQs)}`}
-            className="text-primary-600 dark:text-primary-400 font-medium hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {t('gameDetails.liveScoreBroadcast')}
-          </Link>
-        </div>
       ) : null}
 
       <div 
@@ -356,6 +326,18 @@ export const HorizontalMatchCard = ({
                 >
                   {t('gameResults.addExtraSet', { defaultValue: '+ Extra (stats only)' })}
                 </button>
+              </div>
+            ) : null}
+            {gameId && canEnterScores && !matchFinished ? (
+              <div className="mt-2 flex w-full justify-center" onClick={(e) => e.stopPropagation()}>
+                <Link
+                  to={`/games/${gameId}/live?matchId=${encodeURIComponent(match.id)}`}
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-1.5 text-xs font-semibold text-white shadow-md transition hover:from-primary-600 hover:to-primary-700 active:scale-[0.98]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Play className="h-3.5 w-3.5 shrink-0" />
+                  {t('gameDetails.liveScorePlay')}
+                </Link>
               </div>
             ) : null}
             </div>

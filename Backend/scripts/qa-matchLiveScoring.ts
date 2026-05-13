@@ -7,7 +7,7 @@ import * as dotenv from 'dotenv';
 import { EntityType, ParticipantRole } from '@prisma/client';
 import { ApiError } from '../src/utils/ApiError';
 import { patchMatchLiveScoring, notifyMatchLiveScoringCleared } from '../src/services/results/matchLiveScoring.service';
-import { updateMatch, createRound, createMatch } from '../src/services/results.service';
+import { updateMatch, createRound, createMatch, patchMatchMetadata } from '../src/services/results.service';
 
 function ensureDbUrl() {
   let url = process.env.DB_URL;
@@ -42,6 +42,29 @@ async function expectApiError(p: Promise<unknown>, status: number): Promise<void
     if (e instanceof ApiError) {
       if (e.statusCode !== status) {
         throw new Error(`expected status ${status}, got ${e.statusCode}: ${e.message}`);
+      }
+      return;
+    }
+    throw e;
+  }
+}
+
+async function expectApiErrorReason(
+  p: Promise<unknown>,
+  status: number,
+  reasonCode: string,
+): Promise<void> {
+  try {
+    await p;
+    throw new Error(`expected ApiError ${status}, succeeded`);
+  } catch (e) {
+    if (e instanceof ApiError) {
+      if (e.statusCode !== status) {
+        throw new Error(`expected status ${status}, got ${e.statusCode}: ${e.message}`);
+      }
+      const rc = e.data && typeof e.data === 'object' ? (e.data as { reasonCode?: unknown }).reasonCode : undefined;
+      if (rc !== reasonCode) {
+        throw new Error(`expected reasonCode ${reasonCode}, got ${String(rc)}`);
       }
       return;
     }
@@ -235,6 +258,42 @@ async function main() {
     });
     assert(r3.revision === 1, `after clear expect revision 1, got ${r3.revision}`);
     console.log('ok: PATCH after clear with baseRevision null -> revision 1');
+
+    const woClear = await patchMatchMetadata(gameId, matchId, { nonRallyOutcome: 'WALKOVER' }, { userId: u1 });
+    assert(woClear.liveScoringCleared === true, 'patchMatchMetadata WO clears live');
+    const rowWo = await prisma.match.findUnique({ where: { id: matchId }, select: { metadata: true } });
+    assert(!((rowWo?.metadata as Record<string, unknown> | null)?.liveScoring), 'no liveScoring after WO');
+    console.log('ok: patchMatchMetadata walkover strips liveScoring');
+
+    await expectApiErrorReason(
+      patchMatchLiveScoring(gameId, matchId, u1, false, {
+        state: { note: 'blocked-nr' },
+        baseRevision: null,
+        clientMessageId: 'nr-live',
+      }),
+      400,
+      'LIVE_NON_RALLY_OUTCOME',
+    );
+    console.log('ok: live PATCH rejected LIVE_NON_RALLY_OUTCOME when non-rally set');
+
+    await patchMatchMetadata(gameId, matchId, { nonRallyOutcome: '' }, { userId: u1 });
+    const r4 = await patchMatchLiveScoring(gameId, matchId, u1, false, {
+      state: { sets: [{ teamA: 0, teamB: 0, isTieBreak: false }] },
+      baseRevision: null,
+      clientMessageId: 'r4-live',
+    });
+    assert(r4.revision === 1, 'live again after clearing non-rally outcome');
+
+    const umRet = await updateMatch(gameId, matchId, {
+      teamA: [u1, u2],
+      teamB: [u3, u4],
+      sets: [{ teamA: 0, teamB: 0 }],
+      metadata: { nonRallyOutcome: 'RETIRED' },
+    });
+    assert(umRet.liveScoringCleared === true, 'updateMatch RETIRED metadata clears live with same grid');
+    const rowRet = await prisma.match.findUnique({ where: { id: matchId }, select: { metadata: true } });
+    assert(!((rowRet?.metadata as Record<string, unknown> | null)?.liveScoring), 'no live after updateMatch RETIRED');
+    console.log('ok: updateMatch optional metadata RETIRED clears live when grid matches');
 
     console.log('\nqa-matchLiveScoring: all checks passed.');
   } finally {

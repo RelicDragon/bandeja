@@ -1,18 +1,21 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { BasicUser } from '@/types';
 import type { LiveScoringState, LiveTeamSide } from '@/utils/liveScoring';
 import {
   activeSetScore,
   computeServeGuideSnapshot,
   getClassicPointLabels,
+  liveSetLabelForRow,
   needsServeSetup,
 } from '@/utils/liveScoring';
 import type { ScoringRules } from '@/utils/scoring';
-import { isClassicRules } from '@/utils/scoring';
+import { isClassicRules, isMatchDecidedForLiveScoring } from '@/utils/scoring';
 import type { LiveBoardTheme } from '@/utils/liveScoring';
 import { AnimatedLiveBoardValue } from './AnimatedLiveBoardValue';
 import { LiveBandejaRotatingLogo } from './LiveBandejaRotatingLogo';
 import { LiveBroadcastBoard } from './LiveBroadcastBoard';
+import { LiveMatchCompleteBanner } from './LiveMatchCompleteBanner';
 import { LiveScoreCenter } from './LiveScoreCenter';
 import { LiveTeamPanel } from './LiveTeamPanel';
 
@@ -22,11 +25,16 @@ type LiveScoreShellProps = {
   teamBPlayers: BasicUser[];
   revision: number;
   rules: ScoringRules;
+  /** Used to deep-link to game results once match is decided. */
+  gameId?: string;
   boardTheme?: LiveBoardTheme;
   tv?: boolean;
   broadcast?: boolean;
   saving?: boolean;
   error?: string | null;
+  statusNote?: string | null;
+  /** When true, score / undo controls are disabled (match decided, points cap, etc.). */
+  scoringLocked?: boolean;
   /** Network; when true and not saving, sync status tag is hidden (header already shows Live). */
   isOnline?: boolean;
   onScore: (side: LiveTeamSide) => void;
@@ -41,21 +49,38 @@ export const LiveScoreShell = ({
   teamBPlayers,
   revision,
   rules,
+  gameId = '',
   boardTheme = 'dark',
   tv,
   broadcast,
   saving,
   error,
+  statusNote,
+  scoringLocked,
   isOnline,
   onScore,
   onUndo,
   onServeSetupComplete,
   onSkipServeGuide,
 }: LiveScoreShellProps) => {
+  const { t } = useTranslation();
   const set = activeSetScore(state);
-  const points = getClassicPointLabels(state.classic);
+  const points = getClassicPointLabels(state.classic, rules);
   const setupBlocks = isClassicRules(rules) && needsServeSetup(state, rules);
-  const panelDisabled = Boolean(saving || setupBlocks);
+  const matchDecided = isMatchDecidedForLiveScoring(state.sets, rules);
+  const panelDisabled = Boolean(saving || setupBlocks || scoringLocked);
+  const activeSetLabel = useMemo(() => liveSetLabelForRow(set, state.activeSetIndex, rules), [
+    set,
+    state.activeSetIndex,
+    rules,
+  ]);
+  const tvSetTitle = useMemo(() => {
+    if (activeSetLabel.kind === 'SUPER_TIE_BREAK') return t('gameDetails.liveScoring.superTieBreakShort');
+    if (activeSetLabel.kind === 'TIE_BREAK') {
+      return `${t('gameDetails.liveScoring.setN', { n: activeSetLabel.setOneBased })} · ${t('gameDetails.liveScoring.tieBreakShort')}`;
+    }
+    return t('gameDetails.liveScoring.setN', { n: activeSetLabel.setOneBased });
+  }, [activeSetLabel, t]);
 
   const rosterNames = (players: BasicUser[]) =>
     players.map((p) => [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.id);
@@ -72,6 +97,7 @@ export const LiveScoreShell = ({
     return (
       <LiveBroadcastBoard
         state={state}
+        rules={rules}
         teamAPlayers={teamAPlayers}
         teamBPlayers={teamBPlayers}
         revision={revision}
@@ -103,7 +129,7 @@ export const LiveScoreShell = ({
                   : 'text-sm uppercase tracking-[0.4em] text-white/50'
               }
             >
-              Set <AnimatedLiveBoardValue value={state.activeSetIndex + 1} className="tabular-nums" />
+              <AnimatedLiveBoardValue value={tvSetTitle} className="tabular-nums" />
             </div>
             <div
               className={
@@ -140,6 +166,7 @@ export const LiveScoreShell = ({
     <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-3 overflow-auto p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
       <LiveBroadcastBoard
         state={state}
+        rules={rules}
         teamAPlayers={teamAPlayers}
         teamBPlayers={teamBPlayers}
         revision={revision}
@@ -150,6 +177,15 @@ export const LiveScoreShell = ({
         onScore={onScore}
         onUndo={onUndo}
       />
+      {matchDecided ? (
+        <LiveMatchCompleteBanner
+          state={state}
+          rules={rules}
+          teamAPlayers={teamAPlayers}
+          teamBPlayers={teamBPlayers}
+          gameId={gameId}
+        />
+      ) : null}
       <LiveScoreCenter
         state={state}
         teamAPlayers={teamAPlayers}
@@ -158,7 +194,9 @@ export const LiveScoreShell = ({
         rules={rules}
         saving={saving}
         error={error}
+        statusNote={matchDecided ? null : statusNote}
         isOnline={isOnline ?? true}
+        hideServeGuide={matchDecided}
         onServeSetupComplete={onServeSetupComplete}
         onSkipServeGuide={onSkipServeGuide}
         showPointHeadline={false}

@@ -408,6 +408,9 @@ export interface Game {
   parentId?: string;
   parent?: {
     id: string;
+    status?: GameStatus;
+    resultsStatus?: 'NONE' | 'IN_PROGRESS' | 'FINAL';
+    entityType?: EntityType;
     participants?: GameParticipant[];
     leagueSeason?: {
       id: string;

@@ -206,6 +206,14 @@ enum WatchScoringRulebook {
         r.allowIncompleteRegularSetGames = (game?.isMatchTimerEnabled ?? false) || preset == .classicTimed
         let goldenApplies = r.ballsInGames && r.winnerOfMatch == .bySets
         r.hasGoldenPoint = goldenApplies && (game?.hasGoldenPoint ?? false)
+        let ppt = game?.pointsPerTie ?? 0
+        if preset == nil {
+            r.allowDrawPerSet = ppt > 0
+        } else {
+            r.allowDrawPerSet =
+                r.winnerOfMatch == .byScores
+                && (ppt > 0 || (!r.ballsInGames && r.totalPointsPerSet > 0))
+        }
         return r
     }
 
@@ -217,7 +225,12 @@ enum WatchScoringRulebook {
 
         if ballsInGames, winnerOfMatch == .bySets {
             if fixedNumberOfSets == 5 { return skeleton(for: .classicBo5) }
-            if fixedNumberOfSets == 1 { return skeleton(for: .classicProSet) }
+            if fixedNumberOfSets == 1 {
+                let gt = (game?.gameType ?? "").uppercased()
+                if gt.contains("SHORT") { return skeleton(for: .classicShortSet) }
+                if gt.contains("PRO") { return skeleton(for: .classicProSet) }
+                return skeleton(for: .classicSingleSet)
+            }
             return skeleton(for: .classicBo3)
         }
         if !ballsInGames, totalPointsPerSet > 0 {

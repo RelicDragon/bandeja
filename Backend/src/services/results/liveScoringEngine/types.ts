@@ -15,6 +15,8 @@ export type LiveClassicPointState =
 
 export type LiveScoringMode = 'classic' | 'points';
 
+export type LiveOptionalDeciderFormat = 'REGULAR_SET' | 'SUPER_TIEBREAK';
+
 export type LiveScoringClassicState = {
   pointState: LiveClassicPointState;
   withinSetTieBreak: boolean;
@@ -31,6 +33,8 @@ export type LiveScoringState = {
   firstServerTeam?: LiveTeamSide;
   firstServerDoublesPlayerIndex?: number;
   serveGuideSkipped?: boolean;
+  optionalDeciderFormat?: LiveOptionalDeciderFormat;
+  timedClassicSetLocked?: boolean;
 };
 
 export type LiveScoringActionResult = {

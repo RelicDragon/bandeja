@@ -35,7 +35,9 @@ struct MatchScoringExperience: View {
         ZStack {
             VStack(spacing: 6) {
                 if showMatchTimerBar, let g = vm.game, g.isMatchTimerEnabled {
-                    MatchTimerBarView(gameId: gameId, matchId: matchId, game: g)
+                    MatchTimerBarView(gameId: gameId, matchId: matchId, game: g, onTimerStopped: {
+                        vm.lockTimedClassicSetAtPartialScore()
+                    })
                 }
                 if vm.usesBallCapPerSetUI {
                     AmericanoScoringView(vm: vm, onFinish: onFinish)

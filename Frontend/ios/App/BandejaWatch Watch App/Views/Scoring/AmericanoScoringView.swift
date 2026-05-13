@@ -32,16 +32,16 @@ struct AmericanoScoringView: View {
                     scoreLabel: "\(aScore)",
                     action: { vm.incrementAmericanoTeamA() },
                     decrementAction: { vm.decrementAmericanoTeamA() },
-                    disabled: vm.isReadOnly,
-                    decrementDisabled: aScore <= 0
+                    disabled: vm.pointsOfficialIncrementDisabled,
+                    decrementDisabled: aScore <= 0 || vm.pointsOfficialDecrementDisabled
                 )
                 WatchScoringTeamColumn(
                     users: vm.teamBUsers,
                     scoreLabel: "\(bScore)",
                     action: { vm.incrementAmericanoTeamB() },
                     decrementAction: { vm.decrementAmericanoTeamB() },
-                    disabled: vm.isReadOnly,
-                    decrementDisabled: bScore <= 0
+                    disabled: vm.pointsOfficialIncrementDisabled,
+                    decrementDisabled: bScore <= 0 || vm.pointsOfficialDecrementDisabled
                 )
             }
             if vm.canAdvanceToNextSet() {

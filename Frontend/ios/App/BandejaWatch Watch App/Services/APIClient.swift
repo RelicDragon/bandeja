@@ -103,7 +103,7 @@ struct APIClient: Sendable {
         }
 
         do {
-            let wrapped = try Self.decoder.decode(ApiResponse<WatchPatchLiveScoringResponse>.self, from: data)
+            let wrapped = try Self.decoder.decode(BandejaApiEnvelope<WatchPatchLiveScoringResponse>.self, from: data)
             guard let d = wrapped.data else {
                 throw APIError.decodingError(NSError(domain: "APIClient", code: -1))
             }
@@ -159,8 +159,14 @@ struct APIClient: Sendable {
         }
 
         do {
-            let wrapped = try Self.decoder.decode(ApiResponse<T>.self, from: data)
-            return wrapped.data
+            let wrapped = try Self.decoder.decode(BandejaApiEnvelope<T>.self, from: data)
+            guard let d = wrapped.data else {
+                if let direct = try? Self.decoder.decode(T.self, from: data) {
+                    return direct
+                }
+                throw APIError.decodingError(NSError(domain: "APIClient", code: -1))
+            }
+            return d
         } catch {
             if let direct = try? Self.decoder.decode(T.self, from: data) {
                 return direct
@@ -172,7 +178,7 @@ struct APIClient: Sendable {
 
 private struct OptionalBody: Codable, Sendable {}
 
-private struct ApiResponse<T: Decodable>: Decodable, Sendable {
+private struct BandejaApiEnvelope<T: Decodable>: Decodable, Sendable {
     let success: Bool?
     let data: T?
 }

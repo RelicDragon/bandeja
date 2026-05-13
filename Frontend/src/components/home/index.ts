@@ -5,4 +5,5 @@ export { AvailableGamesSection } from './AvailableGamesSection';
 export { GamesTabController } from './GamesTabController';
 export { CityPromptBanner } from './CityPromptBanner';
 export { UserTeamsHomeSection } from './UserTeamsHomeSection';
+export { YourLeaguesHomeSection } from './YourLeaguesHomeSection';
 

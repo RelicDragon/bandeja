@@ -65,6 +65,14 @@ type GameWithResults = Game & {
   rounds?: Round[];
 };
 
+type LeagueSeasonShellTab = 'general' | 'schedule' | 'standings' | 'faq';
+
+function leagueTabFromSearch(search: string): LeagueSeasonShellTab {
+  const tab = new URLSearchParams(search).get('tab');
+  if (tab === 'general' || tab === 'schedule' || tab === 'standings' || tab === 'faq') return tab;
+  return 'general';
+}
+
 export interface GameDetailsShellProps {
   variant: 'game' | 'league';
   initialGame?: Game | null;
@@ -109,7 +117,25 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   const [isEditMaxParticipantsModalOpen, setIsEditMaxParticipantsModalOpen] = useState(false);
   const [isEditGameInfoModalOpen, setIsEditGameInfoModalOpen] = useState(false);
   const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<EditGameInfoTabId>('general');
-  const [activeTab, setActiveTab] = useState<'general' | 'schedule' | 'standings' | 'faq'>('general');
+  const [activeTab, setActiveTab] = useState<LeagueSeasonShellTab>(() => leagueTabFromSearch(location.search));
+
+  const persistLeagueSeasonTabInUrl = useCallback(
+    (tab: LeagueSeasonShellTab) => {
+      if (game?.entityType !== 'LEAGUE_SEASON') return;
+      const sp = new URLSearchParams(location.search);
+      sp.set('tab', tab);
+      if (tab !== 'schedule') {
+        sp.delete('scheduleView');
+      }
+      const next = sp.toString();
+      const cur = new URLSearchParams(location.search).toString();
+      if (next === cur) return;
+      navigate({ pathname: location.pathname, search: next }, { replace: true });
+    },
+    [game?.entityType, location.pathname, location.search, navigate]
+  );
+  const persistLeagueSeasonTabRef = useRef(persistLeagueSeasonTabInUrl);
+  persistLeagueSeasonTabRef.current = persistLeagueSeasonTabInUrl;
   const [hasFaqs, setHasFaqs] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -141,7 +167,10 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'faq' && !hasFaqs) setActiveTab('general');
+    if (activeTab === 'faq' && !hasFaqs) {
+      setActiveTab('general');
+      persistLeagueSeasonTabRef.current('general');
+    }
   }, [activeTab, hasFaqs]);
 
   useEffect(() => {
@@ -247,7 +276,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
       return;
     }
     if (tab === 'general' || tab === 'schedule' || tab === 'standings' || tab === 'faq') {
-      setActiveTab(tab);
+      setActiveTab((prev) => (prev === tab ? prev : tab));
     }
   }, [game?.entityType, id, location.pathname, location.search, navigate]);
 
@@ -1695,6 +1724,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
               onChange={(id) => {
                 if (id === 'general' || id === 'schedule' || id === 'standings' || id === 'faq') {
                   setActiveTab(id);
+                  persistLeagueSeasonTabInUrl(id);
                 }
               }}
               showOnlyActiveTabText

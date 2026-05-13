@@ -8,6 +8,7 @@ import {
   PastGamesSection,
   CityPromptBanner,
   UserTeamsHomeSection,
+  YourLeaguesHomeSection,
 } from '@/components/home';
 import { WelcomeQuestionnairePrompt } from '@/components/welcome';
 import { Button, MainTabFooter, MonthCalendar } from '@/components';
@@ -81,15 +82,8 @@ const sortMyGamesByStatusAndDateTime = <T extends { status?: string; startTime: 
 
   const isPrimaryGame = (game: T): boolean => !game.parentId;
   const hasUnreadChats = (game: T): boolean => (unreadCounts?.[game.id] || 0) > 0;
-  const isLeagueSeason = (game: T): boolean => game.entityType === 'LEAGUE_SEASON';
 
   return [...list].sort((a, b) => {
-    const aIsLeagueSeason = isLeagueSeason(a);
-    const bIsLeagueSeason = isLeagueSeason(b);
-
-    if (aIsLeagueSeason && !bIsLeagueSeason) return -1;
-    if (!aIsLeagueSeason && bIsLeagueSeason) return 1;
-
     const aIsPrimaryWithUnread = isPrimaryGame(a) && hasUnreadChats(a);
     const bIsPrimaryWithUnread = isPrimaryGame(b) && hasUnreadChats(b);
 
@@ -195,9 +189,10 @@ export const MyTab = () => {
   const [pastGamesInRangeUnread, setPastGamesInRangeUnread] = useState<Record<string, number>>({});
   const [loadingPastInRange, setLoadingPastInRange] = useState(false);
   const calendarMergedGames = useMemo(() => {
-    const ids = new Set(filteredMyGames.map((g) => g.id));
-    const fromPast = pastGamesInRange.filter((g) => !ids.has(g.id));
-    return [...filteredMyGames, ...fromPast];
+    const noSeason = (g: (typeof filteredMyGames)[0]) => g.entityType !== 'LEAGUE_SEASON';
+    const ids = new Set(filteredMyGames.filter(noSeason).map((g) => g.id));
+    const fromPast = pastGamesInRange.filter((g) => !ids.has(g.id) && g.entityType !== 'LEAGUE_SEASON');
+    return [...filteredMyGames.filter(noSeason), ...fromPast];
   }, [filteredMyGames, pastGamesInRange]);
   const calendarMergedUnreadCounts = useMemo(
     () => ({ ...gamesUnreadCounts, ...pastGamesInRangeUnread }),
@@ -221,6 +216,7 @@ export const MyTab = () => {
     if (activeTab !== 'calendar') return [];
     const selectedStr = format(startOfDay(myGamesSelectedDate), 'yyyy-MM-dd');
     return filteredMyGames
+      .filter((g) => g.entityType !== 'LEAGUE_SEASON')
       .filter((g) => {
         if (g.timeIsSet === false) return false;
         if (g.status !== 'ANNOUNCED' && g.status !== 'STARTED') return false;
@@ -246,7 +242,10 @@ export const MyTab = () => {
           limit: 100,
           offset: 0,
         });
-        const list = response.data ?? [];
+        const list = (response.data ?? []).filter(
+          (g: { entityType?: string; resultsStatus?: string }) =>
+            !(g.entityType === 'LEAGUE_SEASON' && g.resultsStatus !== 'FINAL')
+        );
         setPastGamesInRange(list);
         if (list.length > 0 && user?.id) {
           const unread = await chatApi.getGamesUnreadCounts(list.map((g: any) => g.id));
@@ -263,7 +262,10 @@ export const MyTab = () => {
     },
     [user?.id]
   );
-  const filteredPastGames = useMemo(() => sortGamesByStatusAndDateTime(pastGames, pastGamesUnreadCounts), [pastGames, pastGamesUnreadCounts]);
+  const filteredPastGames = useMemo(() => {
+    const list = pastGames.filter((g) => g.entityType !== 'LEAGUE_SEASON');
+    return sortGamesByStatusAndDateTime(list, pastGamesUnreadCounts);
+  }, [pastGames, pastGamesUnreadCounts]);
 
   const myGamesTotalUnread = useMemo(() => {
     return Object.values(gamesUnreadCounts).reduce((sum: number, count: number) => sum + count, 0);
@@ -429,6 +431,7 @@ export const MyTab = () => {
           />
         </div>
         <UserTeamsHomeSection className="mb-3" />
+        <YourLeaguesHomeSection games={games} gamesUnreadCounts={calendarMergedUnreadCounts} className="mb-3" />
         <MyGamesSection
           games={myGamesForSelectedDate}
           user={user}
@@ -517,6 +520,13 @@ export const MyTab = () => {
         </div>
 
         {(activeTab === 'calendar' || activeTab === 'list') && <UserTeamsHomeSection className="mb-3" />}
+        {(activeTab === 'calendar' || activeTab === 'list') && (
+          <YourLeaguesHomeSection
+            games={games}
+            gamesUnreadCounts={activeTab === 'calendar' ? calendarMergedUnreadCounts : mergedUnreadCounts}
+            className="mb-3"
+          />
+        )}
 
         <div className="relative min-h-[100px] overflow-hidden">
           <div

@@ -58,7 +58,9 @@ export const MyGamesSection = ({
     );
   }
 
-  if (games.length === 0) {
+  const displayGames = games.filter((game) => game.entityType !== 'LEAGUE_SEASON');
+
+  if (displayGames.length === 0) {
     if (upcomingGames && upcomingGames.length > 0) {
       return (
         <div className="pb-8">
@@ -66,29 +68,30 @@ export const MyGamesSection = ({
         </div>
       );
     }
-    return (
-      <div className="pb-8">
-        <Card className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {t('home.noGames')}
-          </p>
-          {onSwitchToSearch && (
-            <Button
-              variant="primary"
-              size="md"
-              onClick={onSwitchToSearch}
-              className="inline-flex items-center gap-2 animate-pulse"
-            >
-              <Search className="w-5 h-5" />
-              {t('home.findGames', { defaultValue: 'Find games' })}
-            </Button>
-          )}
-        </Card>
-      </div>
-    );
+    if (games.length === 0) {
+      return (
+        <div className="pb-8">
+          <Card className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              {t('home.noGames')}
+            </p>
+            {onSwitchToSearch && (
+              <Button
+                variant="primary"
+                size="md"
+                onClick={onSwitchToSearch}
+                className="inline-flex items-center gap-2 animate-pulse"
+              >
+                <Search className="w-5 h-5" />
+                {t('home.findGames', { defaultValue: 'Find games' })}
+              </Button>
+            )}
+          </Card>
+        </div>
+      );
+    }
+    return <div className="pb-2" />;
   }
-
-  const displayGames = games;
 
   const announcedOrStartedGames = displayGames
     .filter((game) => game.status === 'ANNOUNCED' || game.status === 'STARTED')

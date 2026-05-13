@@ -5,6 +5,7 @@ import { LiveBandejaRotatingLogo, LiveScoreShell } from '@/components/liveScorin
 import { useLiveMatchBoardState, liveBoardPlayersForTeam } from '@/hooks/useLiveMatchBoardState';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { parseLiveBoardTheme, type LiveTeamSide } from '@/utils/liveScoring';
+import { isMatchDecidedForLiveScoring } from '@/utils/scoring';
 
 const noop = () => {};
 const noopSide = (_side: LiveTeamSide) => {};
@@ -28,6 +29,7 @@ export const GameBroadcastMatchPage = () => {
 
   const teamAPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 1) : []), [rawMatch]);
   const teamBPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 2) : []), [rawMatch]);
+  const matchDecided = Boolean(liveState && rules && isMatchDecidedForLiveScoring(liveState.sets, rules));
 
   useEffect(() => {
     if (!transparent) return;
@@ -83,6 +85,17 @@ export const GameBroadcastMatchPage = () => {
                 {isOnline ? t('gameDetails.liveTvPillLive') : t('gameDetails.liveTvPillOffline')}
               </div>
             ) : null}
+            {matchDecided ? (
+              <div
+                className={`pointer-events-auto rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                  boardTheme === 'light'
+                    ? 'border-emerald-600/30 bg-emerald-500/15 text-emerald-900'
+                    : 'border-emerald-500/30 bg-emerald-500/20 text-emerald-100'
+                }`}
+              >
+                {t('gameDetails.liveScoring.matchComplete')}
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -117,8 +130,10 @@ export const GameBroadcastMatchPage = () => {
                   teamBPlayers={teamBPlayers}
                   revision={revision}
                   rules={rules}
+                  gameId={gameId}
                   boardTheme={boardTheme}
                   broadcast
+                  scoringLocked
                   onScore={noopSide}
                   onUndo={noopSide}
                   onServeSetupComplete={noopServeSetup}

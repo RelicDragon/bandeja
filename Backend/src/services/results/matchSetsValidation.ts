@@ -21,6 +21,12 @@ export type NormalizedMatchSetRow = {
 export type AssertMatchNormalizedSetsValidOptions = {
   /** Live scoring persists in-progress game/point totals; skip finished-set classic checks. */
   skipClassicGameScoreValidation?: boolean;
+  /**
+   * Live scoring PATCH: still validate prior (completed) classic sets, but exempt the row
+   * at this 0-based index because it carries in-progress game scores. Ignored when
+   * `skipClassicGameScoreValidation` is also set.
+   */
+  liveScoringActiveSetIndex?: number;
 };
 
 export function assertMatchNormalizedSetsValid(
@@ -123,6 +129,31 @@ export function assertMatchNormalizedSetsValid(
     const classicErr = validateMatchClassicSetScores(game, officialForClassic);
     if (classicErr) {
       throw new ApiError(400, classicErr);
+    }
+  } else if (typeof options.liveScoringActiveSetIndex === 'number') {
+    const activeIdx = options.liveScoringActiveSetIndex;
+    let officialCursor = 0;
+    let activeOfficialIdx: number | null = null;
+    for (let i = 0; i < normalizedSets.length; i += 1) {
+      const isOfficial = isOfficialMatchSetRole(normalizedSets[i].role);
+      if (i === activeIdx && isOfficial) {
+        activeOfficialIdx = officialCursor;
+      }
+      if (isOfficial) officialCursor += 1;
+    }
+    if (activeOfficialIdx !== null) {
+      const completedOfficial = officialForClassic.map((s, i) =>
+        i === activeOfficialIdx ? { teamA: 0, teamB: 0, isTieBreak: s.isTieBreak } : s
+      );
+      const classicErr = validateMatchClassicSetScores(game, completedOfficial);
+      if (classicErr) {
+        throw new ApiError(400, classicErr);
+      }
+    } else {
+      const classicErr = validateMatchClassicSetScores(game, officialForClassic);
+      if (classicErr) {
+        throw new ApiError(400, classicErr);
+      }
     }
   }
 }
