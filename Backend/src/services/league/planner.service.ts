@@ -104,10 +104,32 @@ function getGameSideUserIds(game: {
   return { sideA: playing.slice(0, mid), sideB: playing.slice(mid) };
 }
 
+/** Full 2v2 roster (four distinct users). Used for “slot can host this match” (green) only. */
+function getMatchQuadUserIds(game: {
+  hasFixedTeams: boolean;
+  fixedTeams: Array<{ teamNumber: number; players: Array<{ userId: string | null }> }>;
+  participants: Array<{ userId: string; status: string }>;
+}): string[] | null {
+  const teams = [...(game.fixedTeams ?? [])].sort((a, b) => a.teamNumber - b.teamNumber);
+  if (game.hasFixedTeams && teams.length >= 2) {
+    const a = teams[0].players.map((p) => p.userId).filter((id): id is string => !!id && id.trim().length > 0);
+    const b = teams[1].players.map((p) => p.userId).filter((id): id is string => !!id && id.trim().length > 0);
+    if (a.length !== 2 || b.length !== 2) return null;
+    const uniq = new Set([...a, ...b]);
+    if (uniq.size !== 4) return null;
+    return [...a, ...b];
+  }
+  const playing = game.participants.filter((p) => p.status === 'PLAYING').map((p) => p.userId);
+  const unique = [...new Set(playing)];
+  if (unique.length !== 4) return null;
+  return unique;
+}
+
 /**
  * League fixture "fits" a recurring bucket when every listed user has availability overlap
  * in that bucket and no committed game hour intersects the bucket that day.
- * Fixed teams: **all** roster members must satisfy (not "any one").
+ * Schedulable (green) slots only count games with `timeIsSet: false`, exactly four distinct
+ * players, and every one of those players fitting here.
  */
 function allUsersFitSlot(
   userIds: string[],
@@ -139,9 +161,11 @@ export class LeaguePlannerService {
       aggregateUserId?: string | null;
       /** When set (2–4 user ids), aggregates treat the set as one unit (AND across members). */
       aggregateIntersectUserIds?: string[] | null;
+      /** Team/player tab with no valid selection yet — do not aggregate whole league. */
+      pickAggregatePending?: boolean;
     }
   ) {
-    const { weekStart, groupId, aggregateUserId, aggregateIntersectUserIds } = opts;
+    const { weekStart, groupId, aggregateUserId, aggregateIntersectUserIds, pickAggregatePending } = opts;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) {
       throw new ApiError(400, 'Invalid weekStart (use YYYY-MM-DD)');
     }
@@ -222,7 +246,13 @@ export class LeaguePlannerService {
     }
 
     let aggregateIdsFiltered: string[];
-    if (aggregateIntersectUserIds && aggregateIntersectUserIds.length > 0) {
+    const pendingOnly =
+      Boolean(pickAggregatePending) &&
+      !(aggregateUserId?.trim()) &&
+      !(aggregateIntersectUserIds && aggregateIntersectUserIds.length > 0);
+    if (pendingOnly) {
+      aggregateIdsFiltered = [];
+    } else if (aggregateIntersectUserIds && aggregateIntersectUserIds.length > 0) {
       const wanted = [...new Set(aggregateIntersectUserIds.map((x) => x.trim()).filter(Boolean))];
       if (wanted.length < 2 || wanted.length > 4) {
         throw new ApiError(400, 'aggregateIntersectUserIds must list 2–4 distinct user ids');
@@ -353,6 +383,7 @@ export class LeaguePlannerService {
 
     const unscheduledGames = unscheduledGamesRaw.map((g) => {
       const sides = getGameSideUserIds(g as any);
+      const matchQuadUserIds = getMatchQuadUserIds(g as any);
       return {
         id: g.id,
         name: g.name,
@@ -361,42 +392,30 @@ export class LeaguePlannerService {
         groupName: g.leagueGroup?.name ?? null,
         sideAUserIds: sides?.sideA ?? [],
         sideBUserIds: sides?.sideB ?? [],
+        matchQuadUserIds,
       };
     });
 
     const schedulableBySlot: Record<string, string[]> = {};
 
-    for (const day of days) {
-      if (day.isPast) continue;
-      for (const bucket of BUCKET_ORDER) {
-        const bucketMask = bucketMasks[bucket];
-        const key = `${day.date}|${bucket}`;
-        const fits: string[] = [];
-        for (const ug of unscheduledGames) {
-          if (!ug.sideAUserIds.length || !ug.sideBUserIds.length) continue;
-          const okA = allUsersFitSlot(
-            ug.sideAUserIds,
-            userById,
-            day.weekdayKey,
-            bucket,
-            boundaries,
-            busyByUser,
-            day.date,
-            bucketMask
-          );
-          const okB = allUsersFitSlot(
-            ug.sideBUserIds,
-            userById,
-            day.weekdayKey,
-            bucket,
-            boundaries,
-            busyByUser,
-            day.date,
-            bucketMask
-          );
-          if (okA && okB) fits.push(ug.id);
+    if (!pendingOnly) {
+      for (const day of days) {
+        if (day.isPast) continue;
+        for (const bucket of BUCKET_ORDER) {
+          const bucketMask = bucketMasks[bucket];
+          const key = `${day.date}|${bucket}`;
+          const fits: string[] = [];
+          for (const ug of unscheduledGames) {
+            const quad = ug.matchQuadUserIds;
+            if (!quad?.length) continue;
+            if (
+              allUsersFitSlot(quad, userById, day.weekdayKey, bucket, boundaries, busyByUser, day.date, bucketMask)
+            ) {
+              fits.push(ug.id);
+            }
+          }
+          if (fits.length) schedulableBySlot[key] = fits;
         }
-        if (fits.length) schedulableBySlot[key] = fits;
       }
     }
 

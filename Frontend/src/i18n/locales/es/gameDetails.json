@@ -338,7 +338,8 @@
       "sheetTitle": "Detalle de la franja",
       "unscheduledTitle": "Partidos sin fecha",
       "roundGame": "Jornada {{round}}",
-      "openGame": "Abrir partido"
+      "openGame": "Abrir partido",
+      "mySchedule": "Mi calendario"
     },
     "photoPickFailed": "No se pudieron elegir las fotos"
   }

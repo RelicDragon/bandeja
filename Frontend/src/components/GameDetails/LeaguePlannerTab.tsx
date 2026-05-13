@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { addDays, addWeeks, format, parseISO, startOfWeek } from 'date-fns';
 import toast from 'react-hot-toast';
-import { Calendar, ChevronLeft, ChevronRight, Loader2, Pencil } from 'lucide-react';
+import { Calendar, CalendarDays, ChevronLeft, ChevronRight, Loader2, Pencil } from 'lucide-react';
 import { Card, PlayerAvatar, SegmentedSwitch, Select, type SegmentedSwitchTab } from '@/components';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { LeaguePlannerDetailSheet } from './LeaguePlannerDetailSheet';
@@ -19,7 +20,6 @@ import {
 } from '@/api/leagues';
 import { usersApi } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
-import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useAvailabilityEditor } from '@/hooks/useAvailabilityEditor';
 import { parseAvailabilityBucketBoundaries } from '@/utils/availability';
@@ -32,7 +32,6 @@ const ALL_GROUP_ID = 'ALL';
 const BUCKET_ORDER: LeaguePlannerBucketId[] = ['night', 'morning', 'afternoon', 'evening'];
 
 const PLANNER_FACE_SM_PX = 24;
-const PLANNER_FACE_MD_PX = 32;
 const PLANNER_AV_OVERLAP_PX = 6;
 
 function plannerAvatarRowWidthPx(itemCount: number, facePx: number): number {
@@ -55,14 +54,12 @@ function maxPlannerFacesThatFit(containerWidth: number, facePx: number, sampleLe
 function PlannerCellAvatarRow({
   sampleFreeUsers,
   freeCount,
-  variant,
 }: {
   sampleFreeUsers: LeaguePlannerDayBucket['sampleFreeUsers'];
   freeCount: number;
-  variant: 'matrixCompact' | 'matrix' | 'rowTail';
 }) {
-  const facePx = variant === 'rowTail' ? PLANNER_FACE_MD_PX : PLANNER_FACE_SM_PX;
-  const avatarFaceSize = variant === 'rowTail' ? 'md' : 'sm';
+  const facePx = PLANNER_FACE_SM_PX;
+  const avatarFaceSize = 'sm' as const;
   const measureRef = useRef<HTMLDivElement>(null);
   const [visibleFaces, setVisibleFaces] = useState(() => Math.min(sampleFreeUsers.length, freeCount));
 
@@ -85,13 +82,9 @@ function PlannerCellAvatarRow({
 
   if (freeCount <= 0) return null;
 
-  const overflowCircleClass =
-    avatarFaceSize === 'md'
-      ? 'h-8 w-8 text-[10px] leading-none'
-      : 'h-6 w-6 text-[8px] leading-none';
+  const overflowCircleClass = 'h-6 w-6 text-[8px] leading-none';
 
-  const shellClass =
-    variant === 'rowTail' ? 'min-w-0 flex-1 overflow-hidden' : 'w-full min-w-0 overflow-hidden';
+  const shellClass = 'w-full min-w-0 overflow-hidden';
 
   const needBadge = freeCount > visibleFaces;
   const rest = freeCount - visibleFaces;
@@ -164,10 +157,11 @@ function saveScope(leagueSeasonId: string, mode: ScopeMode, pickValue: string) {
 
 export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = true }: LeaguePlannerTabProps) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const dateFnsLocale = useMemo(() => getAppDateFnsLocale(i18n.language), [i18n.language]);
   const user = useAuthStore((s) => s.user);
   const updateUser = useAuthStore((s) => s.updateUser);
-  const isLandscape = useIsLandscape();
   const display = useMemo(() => resolveDisplaySettings(user), [user]);
   const weekStartsOn = display.weekStart === 0 ? 0 : 1;
 
@@ -181,7 +175,6 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   const [editMyAvailability, setEditMyAvailability] = useState(false);
   const [planner, setPlanner] = useState<LeaguePlannerPayload | null>(null);
   const [loading, setLoading] = useState(true);
-  const [portraitDayIndex, setPortraitDayIndex] = useState(0);
   const [sheet, setSheet] = useState<{
     day: LeaguePlannerDay;
     bucket: LeaguePlannerDay['buckets'][0];
@@ -203,6 +196,13 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     const end = addDays(start, 6);
     return `${format(start, 'd MMM', { locale: dateFnsLocale })} – ${format(end, 'd MMM yyyy', { locale: dateFnsLocale })}`;
   }, [weekStartStr, dateFnsLocale]);
+
+  const goToMySchedule = useCallback(() => {
+    const sp = new URLSearchParams(location.search);
+    sp.set('tab', 'schedule');
+    sp.delete('scheduleView');
+    navigate({ pathname: location.pathname, search: sp.toString() }, { replace: true });
+  }, [location.pathname, location.search, navigate]);
 
   useEffect(() => {
     const { mode, pickValue: pv } = loadScope(leagueSeasonId);
@@ -299,10 +299,22 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     try {
       const groupId =
         scopeMode === 'group' && selectedGroupId !== ALL_GROUP_ID ? selectedGroupId : undefined;
+      const pickAggregatePending =
+        scopeMode === 'pick' &&
+        (!pickIntersectIds || pickIntersectIds.length < (hasFixedTeams ? 2 : 1));
       const aggregateUserId =
-        scopeMode === 'pick' && !hasFixedTeams && pickIntersectIds?.length === 1 ? pickIntersectIds[0] : undefined;
+        scopeMode === 'pick' &&
+        !pickAggregatePending &&
+        !hasFixedTeams &&
+        pickIntersectIds?.length === 1
+          ? pickIntersectIds[0]
+          : undefined;
       const aggregateIntersectUserIds =
-        scopeMode === 'pick' && hasFixedTeams && pickIntersectIds && pickIntersectIds.length >= 2
+        scopeMode === 'pick' &&
+        !pickAggregatePending &&
+        hasFixedTeams &&
+        pickIntersectIds &&
+        pickIntersectIds.length >= 2
           ? pickIntersectIds
           : undefined;
 
@@ -311,6 +323,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
         groupId,
         aggregateUserId,
         aggregateIntersectUserIds: aggregateIntersectUserIds ?? undefined,
+        pickAggregatePending,
       });
       if (fetchSerial !== plannerFetchSerialRef.current) return;
       setPlanner(res.data);
@@ -339,10 +352,6 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     if (!isVisible) return;
     void fetchPlanner();
   }, [isVisible, fetchPlanner]);
-
-  useEffect(() => {
-    setPortraitDayIndex(0);
-  }, [weekOffset, weekStartStr]);
 
   const bucketBoundaries = useMemo(
     () => parseAvailabilityBucketBoundaries(user?.availabilityBucketBoundaries),
@@ -434,11 +443,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     return (planner.schedulableBySlot[`${day.date}|${b.bucket}`] ?? []).length > 0;
   };
 
-  const renderCellInner = (
-    day: LeaguePlannerDay,
-    b: LeaguePlannerDay['buckets'][0],
-    variant: 'matrixCompact' | 'matrix' | 'rowTail'
-  ) => {
+  const renderCellInner = (day: LeaguePlannerDay, b: LeaguePlannerDay['buckets'][0]) => {
     const schedulable = isSchedulableSlot(day, b);
     const meta = BUCKET_META[b.bucket];
     const ring = schedulable ? (
@@ -447,25 +452,12 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
         aria-hidden
       />
     ) : null;
-    const avatars = (
-      <PlannerCellAvatarRow sampleFreeUsers={b.sampleFreeUsers} freeCount={b.freeCount} variant={variant} />
-    );
-    if (variant === 'rowTail') {
-      return (
-        <div className="relative flex min-h-[3rem] min-w-0 flex-1 flex-row items-center gap-2 py-0.5 pl-0 pr-1">
-          {ring}
-          {avatars}
-        </div>
-      );
-    }
-
-    const compact = variant === 'matrixCompact';
+    const avatars = <PlannerCellAvatarRow sampleFreeUsers={b.sampleFreeUsers} freeCount={b.freeCount} />;
     return (
       <div className="relative flex h-full min-h-[3rem] w-full min-w-0 flex-col items-stretch justify-center gap-0.5 p-1">
         {ring}
-        <div className="flex w-full min-w-0 flex-col items-center gap-0.5">
-          <meta.Icon className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500" strokeWidth={2} />
-          {!compact && <span className="sr-only">{t(meta.labelKey)}</span>}
+        <div className="flex w-full min-w-0 flex-col items-center justify-center gap-0.5">
+          <span className="sr-only">{t(meta.labelKey)}</span>
           {avatars}
         </div>
       </div>
@@ -492,8 +484,6 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
       openSheet(day, b);
     }
   };
-
-  const portraitDay = planner?.days[portraitDayIndex] ?? planner?.days[0];
 
   const plannerDayShortLabel = (day: LeaguePlannerDay) =>
     `${getShortDayLabel(t, day.weekdayKey as WeekdayKey)} ${format(parseISO(day.date), 'd', { locale: dateFnsLocale })}`;
@@ -644,13 +634,12 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
             </Card>
           )}
 
-          {isLandscape ? (
-            <div className="overflow-x-auto border-b border-gray-200 dark:border-gray-700">
-              <div className="border-b border-gray-200 p-2 dark:border-gray-700">{weekSelectorRow}</div>
-              <div className="p-2 pt-3">
+          <div className="overflow-x-auto border-b border-gray-200 dark:border-gray-700">
+            <div className="border-b border-gray-200 p-2 dark:border-gray-700">{weekSelectorRow}</div>
+            <div className="p-2 pt-3">
               <div
                 className="grid min-w-[720px] gap-1"
-                style={{ gridTemplateColumns: `minmax(4rem,1fr) repeat(${planner.days.length}, minmax(0,1fr))` }}
+                style={{ gridTemplateColumns: `auto repeat(${planner.days.length}, minmax(0,1fr))` }}
               >
                 <div />
                 {planner.days.map((d) => (
@@ -666,13 +655,13 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
                 ))}
                 {BUCKET_ORDER.map((bid) => (
                   <React.Fragment key={bid}>
-                    <div className="flex items-center gap-1 border-r border-gray-100 py-2 pr-2 text-[10px] font-semibold uppercase text-gray-500 dark:border-gray-800">
+                    <div className="flex w-min min-w-0 max-w-[3.25rem] flex-col items-center justify-center gap-px border-r border-gray-100 py-1 pr-1.5 text-center text-[8px] font-semibold uppercase leading-none tracking-tight text-gray-500 dark:border-gray-800 sm:max-w-[3.5rem] sm:text-[9px] sm:pr-2">
                       {(() => {
                         const M = BUCKET_META[bid];
                         return (
                           <>
-                            <M.Icon className="h-3.5 w-3.5 shrink-0" />
-                            <span className="line-clamp-2">{t(M.labelKey)}</span>
+                            <M.Icon className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" strokeWidth={2} />
+                            <span className="line-clamp-3 break-words hyphens-auto">{t(M.labelKey)}</span>
                           </>
                         );
                       })()}
@@ -698,75 +687,28 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
                             showEditor ? 'cursor-cell' : '',
                           ].join(' ')}
                         >
-                          {renderCellInner(day, b, 'matrixCompact')}
+                          {renderCellInner(day, b)}
                         </button>
                       );
                     })}
                   </React.Fragment>
                 ))}
               </div>
-              </div>
             </div>
-          ) : (
-            <div className="border-b border-gray-200 dark:border-gray-700">
-              <div className="border-b border-gray-200 px-2 py-3 dark:border-gray-700">{weekSelectorRow}</div>
-              <div className="border-b border-gray-200 px-1 py-2 dark:border-gray-700">
-                <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {planner.days.map((d, idx) => (
-                    <button
-                      key={d.date}
-                      type="button"
-                      onClick={() => setPortraitDayIndex(idx)}
-                      className={[
-                        'shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition',
-                        idx === portraitDayIndex
-                          ? 'bg-primary-600 text-white shadow-md'
-                          : 'border border-gray-200 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200',
-                      ].join(' ')}
-                    >
-                      {plannerDayShortLabel(d)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {portraitDay && (
-                <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {portraitDay.buckets.map((b) => {
-                    const M = BUCKET_META[b.bucket as LeaguePlannerBucketId];
-                    const schedSlot = isSchedulableSlot(portraitDay, b);
-                    return (
-                      <button
-                        key={b.bucket}
-                        type="button"
-                        disabled={portraitDay.isPast}
-                        onPointerDown={(e) => handleCellPointerDown(portraitDay, b, e)}
-                        onPointerUp={(e) => handleCellPointerUp(portraitDay, b, e)}
-                        onPointerCancel={clearLongPress}
-                        className={[
-                          'flex w-full min-h-[4.25rem] min-w-0 items-center gap-3 px-3 py-2.5 text-left transition',
-                          portraitDay.isPast
-                            ? 'cursor-not-allowed opacity-50 dark:bg-gray-900/20'
-                            : schedSlot
-                              ? 'bg-emerald-50/95 active:bg-emerald-100/90 dark:bg-emerald-950/40 dark:active:bg-emerald-900/50'
-                              : 'active:bg-gray-50 dark:active:bg-gray-800/60',
-                        ].join(' ')}
-                      >
-                        <div className="flex min-w-0 shrink-0 items-center gap-2 sm:w-40">
-                          <M.Icon className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" strokeWidth={2} />
-                          <span className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {t(M.labelKey)}
-                          </span>
-                        </div>
-                        {renderCellInner(portraitDay, b, 'rowTail')}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+          </div>
         </>
       )}
+
+      <div className="flex justify-center px-2 pt-3">
+        <button
+          type="button"
+          onClick={goToMySchedule}
+          className="inline-flex w-full max-w-md items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 shadow-sm transition hover:border-primary-300 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-primary-600 dark:hover:bg-gray-700"
+        >
+          <CalendarDays className="h-4 w-4 shrink-0 text-primary-600 dark:text-primary-400" />
+          {t('gameDetails.planner.mySchedule')}
+        </button>
+      </div>
 
       {sheet && planner && (
         <LeaguePlannerDetailSheet

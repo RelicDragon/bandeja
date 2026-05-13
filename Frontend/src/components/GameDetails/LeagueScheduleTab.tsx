@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Card, ConfirmationModal, SegmentedSwitch, type SegmentedSwitchTab } from '@/components';
-import { LeaguePlannerTab } from './LeaguePlannerTab';
+import { Card, ConfirmationModal, SegmentedSwitch } from '@/components';
 import { EditLeagueGameTeamsModal } from './EditLeagueGameTeamsModal';
 import { GroupCreationModal } from './GroupCreationModal';
 import { LeagueGroupEditorModal } from './LeagueGroupEditorModal';
@@ -15,7 +14,7 @@ import { LeagueFixtureDetailSheet } from './LeagueFixtureDetailSheet';
 import { leaguesApi, LeagueRound, LeagueGroup, LeagueStanding } from '@/api/leagues';
 import { Loader2, Calendar, Users, Trophy, LayoutGrid } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
-import { standingsTeamsForGroup, roundsInSingleRoundRobinCycle } from '@/utils/leagueFixtureMatrix';
+import { standingsTeamsForGroup, roundsInSingleRoundRobinCycle, type MatrixTeam } from '@/utils/leagueFixtureMatrix';
 import { Game } from '@/types';
 import { LeagueRoundAccordion } from './LeagueRoundAccordion';
 import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
@@ -25,62 +24,26 @@ interface LeagueScheduleTabProps {
   leagueSeasonId: string;
   canEdit?: boolean;
   hasFixedTeams?: boolean;
-  activeTab?: 'general' | 'schedule' | 'standings' | 'faq';
   selectedGameChatId?: string | null;
   onChatGameSelect?: (gameId: string) => void;
 }
 
 const ALL_GROUP_ID = 'ALL';
 
-function getScheduleSubView(search: string): 'fixtures' | 'planner' {
-  const v = new URLSearchParams(search).get('scheduleView');
-  return v === 'planner' ? 'planner' : 'fixtures';
-}
-
-export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTeams = false, activeTab = 'schedule', selectedGameChatId, onChatGameSelect }: LeagueScheduleTabProps) => {
+export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTeams = false, selectedGameChatId, onChatGameSelect }: LeagueScheduleTabProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const scheduleSubView = useMemo(() => getScheduleSubView(location.search), [location.search]);
-
-  const setScheduleSubView = useCallback(
-    (id: 'fixtures' | 'planner') => {
-      const sp = new URLSearchParams(location.search);
-      sp.set('tab', 'schedule');
-      if (id === 'planner') sp.set('scheduleView', 'planner');
-      else sp.delete('scheduleView');
-      navigate({ pathname: location.pathname, search: sp.toString() }, { replace: true });
-    },
-    [location.pathname, location.search, navigate]
-  );
-
-  const scheduleSubTabs = useMemo<SegmentedSwitchTab[]>(
-    () => [
-      { id: 'fixtures', label: t('gameDetails.scheduleSubtabRounds') },
-      { id: 'planner', label: t('gameDetails.plannerTab') },
-    ],
-    [t]
-  );
-
-  const scheduleSubtabBar = useMemo(
-    () => (
-      <SegmentedSwitch
-        tabs={scheduleSubTabs}
-        activeId={scheduleSubView}
-        onChange={(id) => setScheduleSubView(id as 'fixtures' | 'planner')}
-        showOnlyActiveTabText={false}
-        layoutId={`leagueScheduleSub-${leagueSeasonId}`}
-      />
-    ),
-    [leagueSeasonId, scheduleSubTabs, scheduleSubView, setScheduleSubView]
-  );
   const leagueSeasonTableViewOverride = useNavigationStore((s) => s.leagueSeasonTableViewOverride);
   const setLeagueSeasonTableViewOverride = useNavigationStore((s) => s.setLeagueSeasonTableViewOverride);
-  const setLeagueSeasonFixtureTableEligible = useNavigationStore((s) => s.setLeagueSeasonFixtureTableEligible);
   const effectiveFixtureTableView = leagueSeasonTableViewOverride === true;
   const [rounds, setRounds] = useState<LeagueRound[]>([]);
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
-  const [sheetGames, setSheetGames] = useState<Game[] | null>(null);
+  const [fixtureSheet, setFixtureSheet] = useState<{
+    games: Game[];
+    row: MatrixTeam;
+    col: MatrixTeam;
+  } | null>(null);
   const [isCreatingFullRr, setIsCreatingFullRr] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -197,11 +160,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
 
   const fixtureTableEligible = fixtureTableReadiness.allGroupsValidTeams;
 
-  useEffect(() => {
-    const on = activeTab === 'schedule' && scheduleSubView === 'fixtures' && fixtureTableEligible;
-    setLeagueSeasonFixtureTableEligible(on);
-  }, [activeTab, scheduleSubView, fixtureTableEligible, setLeagueSeasonFixtureTableEligible]);
-
   const fullRrBlockReason = useMemo(() => {
     if (!hasFixedTeams) return 'requiresFixed' as const;
     if (groups.length === 0) return 'noGroups' as const;
@@ -278,7 +236,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const handleOpenGame = (game: Game) => {
     const sp = new URLSearchParams();
     sp.set('tab', 'schedule');
-    if (scheduleSubView === 'planner') sp.set('scheduleView', 'planner');
     navigate(`/games/${leagueSeasonId}?${sp.toString()}`, { replace: true });
     navigate(`/games/${game.id}`);
   };
@@ -372,20 +329,9 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   };
 
   if (loading) {
-    if (scheduleSubView === 'planner') {
-      return (
-        <div className="space-y-6">
-          {scheduleSubtabBar}
-          <LeaguePlannerTab leagueSeasonId={leagueSeasonId} hasFixedTeams={hasFixedTeams} isVisible />
-        </div>
-      );
-    }
     return (
-      <div className="space-y-6">
-        {scheduleSubtabBar}
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
       </div>
     );
   }
@@ -409,12 +355,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
 
   return (
     <div className="space-y-6">
-      {scheduleSubtabBar}
-
-      {scheduleSubView === 'planner' ? (
-        <LeaguePlannerTab leagueSeasonId={leagueSeasonId} hasFixedTeams={hasFixedTeams} isVisible />
-      ) : (
-        <>
       {canEdit && rounds.length === 0 && !hasGroups && (
         <Card className="bg-gradient-to-r from-primary-50 to-primary-100/50 dark:from-primary-900/20 dark:to-primary-800/10 border-primary-200 dark:border-primary-800">
           <button
@@ -557,7 +497,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
             groupId={matrixGroupId}
             teams={matrixTeams}
             rounds={rounds}
-            onOpenGames={(g) => setSheetGames(g)}
+            onFixtureCell={({ games, row, col }) => setFixtureSheet({ games, row, col })}
           />
         </div>
       ) : filteredRounds.length === 0 ? (
@@ -628,8 +568,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           })}
         </div>
       )}
-        </>
-      )}
 
       {editingGame && (
         <EditLeagueGameTeamsModal
@@ -693,8 +631,13 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           onClose={() => setRoundPendingStartMessage(null)}
         />
       )}
-      {sheetGames && sheetGames.length > 0 && (
-        <LeagueFixtureDetailSheet games={sheetGames} onClose={() => setSheetGames(null)} />
+      {fixtureSheet && (
+        <LeagueFixtureDetailSheet
+          games={fixtureSheet.games}
+          rowTeam={fixtureSheet.row}
+          colTeam={fixtureSheet.col}
+          onClose={() => setFixtureSheet(null)}
+        />
       )}
     </div>
   );

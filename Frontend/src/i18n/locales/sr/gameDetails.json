@@ -346,7 +346,8 @@
       "sheetTitle": "Детаљи термина",
       "unscheduledTitle": "Неназначене утакмице",
       "roundGame": "Рунда {{round}}",
-      "openGame": "Отвори утакмицу"
+      "openGame": "Отвори утакмицу",
+      "mySchedule": "Мој распоред"
     },
     "photoPickFailed": "Није успело бирање фотографија"
   }

@@ -312,6 +312,8 @@
     "fixtureDetailTitle": "Пара",
     "fixtureOpenMatch": "Открыть матч",
     "fixtureDetailScoreSummary": "Счёт: {{scores}}",
+    "fixtureDetailNoGameYet": "Для этой пары ещё не создан матч лиги. Он появится здесь, когда игра будет добавлена в регулярный тур.",
+    "fixtureDetailNoDatetimeFinal": "Дата и площадка для этого матча не указаны.",
     "fixtureTableModeRegularOnly": "В табличном виде показывается только регулярный сезон.",
     "fixtureFullRrDisabledNoGroups": "Сначала создайте группы",
     "fixtureFullRrDisabledTeams": "Назначьте полные команды (по два игрока) во всех группах",
@@ -358,7 +360,8 @@
       "sheetTitle": "Детали слота",
       "unscheduledTitle": "Неназначенные игры",
       "roundGame": "Раунд {{round}}",
-      "openGame": "Открыть игру"
+      "openGame": "Открыть игру",
+      "mySchedule": "Моё расписание"
     },
     "photoPickFailed": "Не удалось выбрать фото"
   }

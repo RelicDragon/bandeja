@@ -314,6 +314,8 @@
     "fixtureDetailTitle": "Matchup",
     "fixtureOpenMatch": "Open match",
     "fixtureDetailScoreSummary": "Score: {{scores}}",
+    "fixtureDetailNoGameYet": "No league match exists for this pairing yet. It will appear here once a game is created in a regular round.",
+    "fixtureDetailNoDatetimeFinal": "Date and venue were not recorded for this match.",
     "fixtureTableModeRegularOnly": "Table view shows the regular season only.",
     "fixtureFullRrDisabledNoGroups": "Create groups first",
     "fixtureFullRrDisabledTeams": "Assign complete teams (two players each) in every group",
@@ -358,7 +360,8 @@
       "sheetTitle": "Slot details",
       "unscheduledTitle": "Unscheduled games",
       "roundGame": "Round {{round}}",
-      "openGame": "Open game"
+      "openGame": "Open game",
+      "mySchedule": "My schedule"
     }
   }
 }

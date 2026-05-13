@@ -35,7 +35,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const { pendingInvites, isNewInviteAnimating } = useHeaderStore();
-  const { gameDetailsCanAccessChat, setBounceNotifications, profileActiveTab, setProfileActiveTab, userProfileHeaderActions } = useNavigationStore();
+  const { gameDetailsCanAccessChat, setBounceNotifications, profileActiveTab, setProfileActiveTab, userProfileHeaderActions, gameDetailsOccludesSideChat } = useNavigationStore();
   const isDesktop = useDesktop();
 
   const parsed = useMemo(
@@ -46,7 +46,11 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
 
   const isGameDetailsPath = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
   const isLandscape = useIsLandscape();
-  const isGameDetailsSplitView = currentPage === 'gameDetails' && (isDesktop || isLandscape) && isGameDetailsPath;
+  const isGameDetailsSplitView =
+    currentPage === 'gameDetails' &&
+    (isDesktop || isLandscape) &&
+    isGameDetailsPath &&
+    !gameDetailsOccludesSideChat;
   
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
   const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);

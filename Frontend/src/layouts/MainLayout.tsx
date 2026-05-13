@@ -15,7 +15,7 @@ const INIT_SHELL_DURATION_MS = 400;
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const { bottomTabsVisible, currentPage, chatsFilter, activeTab, findViewMode, initShellAnimationPlayed, setInitShellAnimationPlayed } = useNavigationStore();
+  const { bottomTabsVisible, currentPage, chatsFilter, activeTab, findViewMode, initShellAnimationPlayed, setInitShellAnimationPlayed, gameDetailsOccludesSideChat } = useNavigationStore();
   const isDesktop = useDesktop();
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
   const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);
@@ -31,7 +31,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const isDesktopChats = isDesktop && currentPage === 'chats';
   const isGameDetailsPath = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
   const isLandscape = useIsLandscape();
-  const isDesktopGameDetailsSplitView = (isDesktop || isLandscape) && currentPage === 'gameDetails' && isGameDetailsPath;
+  const isGameDetailsWidePath =
+    (isDesktop || isLandscape) && currentPage === 'gameDetails' && isGameDetailsPath;
+  const isDesktopGameDetailsSplitView = isGameDetailsWidePath && !gameDetailsOccludesSideChat;
+  const isGameDetailsTableFullBleed = isGameDetailsWidePath && gameDetailsOccludesSideChat;
   const isDesktopCalendarSplitView = isDesktop && (
     (currentPage === 'my' && activeTab === 'calendar') ||
     (currentPage === 'find' && findViewMode === 'calendar')
@@ -43,8 +46,14 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const isOnBugsListPage = chatsFilter === 'bugs' && !isOnSpecificChatRoute;
   const isDesktopChatsSplitView = isDesktopChats && !isOnBugsListPage;
   const anySplitView = isDesktopChatsSplitView || isDesktopGameDetailsSplitView || isDesktopCalendarSplitView;
+  const gameDetailsWideBleedChrome = isGameDetailsTableFullBleed;
   const userProfileFullBleed = !!isUserProfilePage;
-  const shouldAddBottomPadding = bottomTabsVisible && !isDesktopChats && !isDesktopGameDetailsSplitView && !isDesktopCalendarSplitView;
+  const shouldAddBottomPadding =
+    bottomTabsVisible &&
+    !isDesktopChats &&
+    !isDesktopGameDetailsSplitView &&
+    !isGameDetailsTableFullBleed &&
+    !isDesktopCalendarSplitView;
   const isUserTeamRoute = /^\/user-team\/[^/]+$/.test(location.pathname);
 
   return (
@@ -59,13 +68,13 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <main
         className={isUserTeamRoute ? 'flex min-h-0 flex-1 flex-col' : undefined}
         style={{
-          paddingTop: shouldHideHeader ? '0' : anySplitView ? '0' : `calc(4rem + env(safe-area-inset-top))`,
+          paddingTop: shouldHideHeader ? '0' : anySplitView || gameDetailsWideBleedChrome ? '0' : `calc(4rem + env(safe-area-inset-top))`,
           paddingBottom: shouldAddBottomPadding ? 'calc(5rem + env(safe-area-inset-bottom))' : '1.5rem',
-          paddingLeft: anySplitView || userProfileFullBleed ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
-          paddingRight: anySplitView || userProfileFullBleed ? '0' : `max(0.5rem, env(safe-area-inset-right))`,
+          paddingLeft: anySplitView || userProfileFullBleed || gameDetailsWideBleedChrome ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
+          paddingRight: anySplitView || userProfileFullBleed || gameDetailsWideBleedChrome ? '0' : `max(0.5rem, env(safe-area-inset-right))`,
         }}
       >
-        {anySplitView ? (
+        {anySplitView || gameDetailsWideBleedChrome ? (
           children
         ) : isUserTeamRoute ? (
           <div className="container mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col px-2 py-1">

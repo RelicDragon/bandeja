@@ -29,10 +29,9 @@ export const GameDetailsPage = () => {
   const setGameDetailsTableViewOverride = useNavigationStore((s) => s.setGameDetailsTableViewOverride);
   const setGameDetailsCanShowTableView = useNavigationStore((s) => s.setGameDetailsCanShowTableView);
   const gameDetailsCanShowTableView = useNavigationStore((s) => s.gameDetailsCanShowTableView);
-  const leagueSeasonFixtureTableEligible = useNavigationStore((s) => s.leagueSeasonFixtureTableEligible);
   const leagueSeasonTableViewOverride = useNavigationStore((s) => s.leagueSeasonTableViewOverride);
   const setLeagueSeasonTableViewOverride = useNavigationStore((s) => s.setLeagueSeasonTableViewOverride);
-  const setLeagueSeasonFixtureTableEligible = useNavigationStore((s) => s.setLeagueSeasonFixtureTableEligible);
+  const setGameDetailsOccludesSideChat = useNavigationStore((s) => s.setGameDetailsOccludesSideChat);
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
   const effectiveLeagueFixtureTableView = leagueSeasonTableViewOverride === true;
   const [layoutTableAvailable, setLayoutTableAvailable] = useState<boolean | null>(null);
@@ -48,7 +47,6 @@ export const GameDetailsPage = () => {
     entityRoute.variant === 'league' &&
     entityRoute.initialGame.entityType === 'LEAGUE_SEASON' &&
     !!entityRoute.initialGame.hasFixedTeams &&
-    leagueSeasonFixtureTableEligible &&
     effectiveLeagueFixtureTableView;
   const useTournamentTableLayout =
     effectiveTableView && (layoutTableAvailable === null || layoutTableAvailable || gameDetailsCanShowTableView);
@@ -56,11 +54,20 @@ export const GameDetailsPage = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedGameChatId, setSelectedGameChatId] = useState<string | null>(null);
 
+  const bootstrapMatchesRoute =
+    entityRoute.status !== 'ready' || entityRoute.initialGame.id === id;
+
+  const occludesSideChat =
+    (isDesktop || isLandscape) &&
+    entityRoute.status !== 'loading' &&
+    bootstrapMatchesRoute &&
+    (useTableViewLayout || !!layoutCancelledInfo);
+
   useEffect(() => {
     setGameDetailsTableViewOverride(null);
     setLeagueSeasonTableViewOverride(null);
-    setLeagueSeasonFixtureTableEligible(false);
     setGameDetailsCanShowTableView(false);
+    setGameDetailsOccludesSideChat(false);
     setLayoutTableAvailable(null);
     setLayoutCancelledInfo(null);
     setSelectedGameChatId(null);
@@ -69,9 +76,14 @@ export const GameDetailsPage = () => {
     id,
     setGameDetailsTableViewOverride,
     setLeagueSeasonTableViewOverride,
-    setLeagueSeasonFixtureTableEligible,
     setGameDetailsCanShowTableView,
+    setGameDetailsOccludesSideChat,
   ]);
+
+  useEffect(() => {
+    setGameDetailsOccludesSideChat(occludesSideChat);
+    return () => setGameDetailsOccludesSideChat(false);
+  }, [occludesSideChat, setGameDetailsOccludesSideChat]);
 
   useEffect(() => {
     if (!id) return;

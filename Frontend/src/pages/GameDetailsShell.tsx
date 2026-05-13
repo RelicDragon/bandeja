@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Trash2, LogOut, Copy, HelpCircle, ChevronRight, Trophy, LayoutDashboard, CalendarDays } from 'lucide-react';
+import { Trash2, LogOut, Copy, HelpCircle, ChevronRight, Trophy, LayoutDashboard, CalendarDays, LayoutGrid } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -18,6 +18,7 @@ import {
   GameSettings,
   MultipleCourtsSelector,
   LeagueScheduleTab,
+  LeaguePlannerTab,
   LeagueStandingsTab,
   ConfirmationModal,
   SegmentedSwitch,
@@ -65,11 +66,11 @@ type GameWithResults = Game & {
   rounds?: Round[];
 };
 
-type LeagueSeasonShellTab = 'general' | 'schedule' | 'standings' | 'faq';
+type LeagueSeasonShellTab = 'general' | 'schedule' | 'planner' | 'standings' | 'faq';
 
 function leagueTabFromSearch(search: string): LeagueSeasonShellTab {
   const tab = new URLSearchParams(search).get('tab');
-  if (tab === 'general' || tab === 'schedule' || tab === 'standings' || tab === 'faq') return tab;
+  if (tab === 'general' || tab === 'schedule' || tab === 'planner' || tab === 'standings' || tab === 'faq') return tab;
   return 'general';
 }
 
@@ -88,7 +89,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, setGameDetailsTableAddRound, setLeagueSeasonFixtureTableEligible } = useNavigationStore();
+  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, setGameDetailsTableAddRound } = useNavigationStore();
 
   const [game, setGame] = useState<Game | null>(null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
@@ -124,9 +125,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
       if (game?.entityType !== 'LEAGUE_SEASON') return;
       const sp = new URLSearchParams(location.search);
       sp.set('tab', tab);
-      if (tab !== 'schedule') {
-        sp.delete('scheduleView');
-      }
+      if (tab !== 'schedule') sp.delete('scheduleView');
       const next = sp.toString();
       const cur = new URLSearchParams(location.search).toString();
       if (next === cur) return;
@@ -173,18 +172,12 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     }
   }, [activeTab, hasFaqs]);
 
-  useEffect(() => {
-    if (game?.entityType !== 'LEAGUE_SEASON') return;
-    if (activeTab !== 'schedule' || !user) {
-      setLeagueSeasonFixtureTableEligible(false);
-    }
-  }, [game?.entityType, activeTab, user, setLeagueSeasonFixtureTableEligible]);
-
   const leagueSeasonTabs = useMemo<SegmentedSwitchTab[]>(() => {
     if (game?.entityType !== 'LEAGUE_SEASON') return [];
     const tabs: SegmentedSwitchTab[] = [
       { id: 'general', label: t('gameDetails.general'), icon: LayoutDashboard },
       { id: 'schedule', label: t('gameDetails.schedule'), icon: CalendarDays },
+      { id: 'planner', label: t('gameDetails.plannerTab'), icon: LayoutGrid },
       { id: 'standings', label: t('gameDetails.standings'), icon: Trophy },
     ];
     if (hasFaqs) {
@@ -267,15 +260,16 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     if (game?.entityType !== 'LEAGUE_SEASON') return;
     const sp = new URLSearchParams(location.search);
     const tab = sp.get('tab');
-    if (tab === 'planner') {
+    const scheduleView = sp.get('scheduleView');
+    if (tab === 'schedule' && scheduleView === 'planner') {
       const next = new URLSearchParams(location.search);
-      next.set('tab', 'schedule');
-      next.set('scheduleView', 'planner');
+      next.set('tab', 'planner');
+      next.delete('scheduleView');
       navigate({ pathname: location.pathname, search: next.toString() }, { replace: true });
-      setActiveTab('schedule');
+      setActiveTab('planner');
       return;
     }
-    if (tab === 'general' || tab === 'schedule' || tab === 'standings' || tab === 'faq') {
+    if (tab === 'general' || tab === 'schedule' || tab === 'planner' || tab === 'standings' || tab === 'faq') {
       setActiveTab((prev) => (prev === tab ? prev : tab));
     }
   }, [game?.entityType, id, location.pathname, location.search, navigate]);
@@ -1654,7 +1648,11 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     }
 
     if (user && activeTab === 'schedule') {
-      return <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} hasFixedTeams={game.hasFixedTeams || false} activeTab={activeTab} selectedGameChatId={selectedGameChatId} onChatGameSelect={onChatGameSelect} />;
+      return <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} hasFixedTeams={game.hasFixedTeams || false} selectedGameChatId={selectedGameChatId} onChatGameSelect={onChatGameSelect} />;
+    }
+
+    if (user && activeTab === 'planner') {
+      return <LeaguePlannerTab leagueSeasonId={game.id} hasFixedTeams={game.hasFixedTeams || false} isVisible />;
     }
 
     if (user && activeTab === 'standings') {
@@ -1722,7 +1720,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
               tabs={leagueSeasonTabs}
               activeId={activeTab}
               onChange={(id) => {
-                if (id === 'general' || id === 'schedule' || id === 'standings' || id === 'faq') {
+                if (id === 'general' || id === 'schedule' || id === 'planner' || id === 'standings' || id === 'faq') {
                   setActiveTab(id);
                   persistLeagueSeasonTabInUrl(id);
                 }

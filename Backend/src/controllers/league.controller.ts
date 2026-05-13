@@ -54,12 +54,15 @@ export const getLeaguePlanner = asyncHandler(async (req: AuthRequest, res: Respo
     .split(',')
     .map((s: string) => s.trim())
     .filter(Boolean);
+  const pickAggregatePending =
+    req.query.pickAggregatePending === 'true' || req.query.pickAggregatePending === '1';
 
   const data = await LeaguePlannerService.getPlanner(leagueSeasonId, req.userId!, {
     weekStart,
     groupId: !groupId || groupId === 'ALL' ? null : groupId,
     aggregateUserId: aggregateUserId?.trim() || null,
     aggregateIntersectUserIds: aggregateIntersectUserIds.length ? aggregateIntersectUserIds : null,
+    pickAggregatePending,
   });
 
   res.json({

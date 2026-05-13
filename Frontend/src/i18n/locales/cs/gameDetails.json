@@ -352,7 +352,8 @@
       "sheetTitle": "Detail slotu",
       "unscheduledTitle": "Nenaplánované zápasy",
       "roundGame": "Kolo {{round}}",
-      "openGame": "Otevřít zápas"
+      "openGame": "Otevřít zápas",
+      "mySchedule": "Můj rozvrh"
     },
     "photoPickFailed": "Nepodařilo se vybrat fotky"
   }

@@ -255,6 +255,7 @@ export const leaguesApi = {
       groupId?: string;
       aggregateUserId?: string;
       aggregateIntersectUserIds?: string[];
+      pickAggregatePending?: boolean;
     }
   ) => {
     const qs = new URLSearchParams();
@@ -264,6 +265,7 @@ export const leaguesApi = {
     if (params.aggregateIntersectUserIds?.length) {
       qs.set('aggregateIntersectUserIds', params.aggregateIntersectUserIds.join(','));
     }
+    if (params.pickAggregatePending) qs.set('pickAggregatePending', 'true');
     const response = await api.get<ApiResponse<LeaguePlannerPayload>>(
       `/leagues/${leagueSeasonId}/planner?${qs.toString()}`
     );
