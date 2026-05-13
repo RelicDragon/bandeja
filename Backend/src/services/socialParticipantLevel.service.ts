@@ -127,7 +127,7 @@ export class SocialParticipantLevelService {
             levelBefore,
             levelAfter,
             eventType: LevelChangeEventType.SOCIAL_PARTICIPANT,
-            linkEntityType: EntityType.GAME,
+            linkEntityType: game.entityType,
             gameId: gameId,
           },
         });

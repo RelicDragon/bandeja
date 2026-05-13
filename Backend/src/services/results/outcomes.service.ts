@@ -386,7 +386,7 @@ export async function applyGameOutcomes(
               levelBefore: gameOutcome.levelBefore,
               levelAfter: gameOutcome.levelAfter,
               eventType: 'GAME',
-              linkEntityType: 'GAME',
+              linkEntityType: game.entityType,
               gameId: gameId,
             },
           });

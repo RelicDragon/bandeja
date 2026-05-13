@@ -11,6 +11,7 @@ export interface LevelHistoryItem {
   levelChange: number;
   createdAt: string;
   eventType?: 'GAME' | 'LUNDA' | 'SET' | 'QUESTIONNAIRE' | 'OTHER' | 'SOCIAL_BAR' | 'SOCIAL_PARTICIPANT';
+  linkEntityType?: EntityType | null;
 }
 
 export type GamesStatType = '30' | '90' | 'all';

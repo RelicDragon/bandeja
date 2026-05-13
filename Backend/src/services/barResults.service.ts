@@ -148,7 +148,7 @@ export class BarResultsService {
               levelBefore,
               levelAfter,
               eventType: LevelChangeEventType.SOCIAL_BAR,
-              linkEntityType: EntityType.BAR,
+              linkEntityType: game.entityType,
               gameId: gameId,
             },
           });

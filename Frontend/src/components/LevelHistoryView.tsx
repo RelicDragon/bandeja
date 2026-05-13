@@ -85,6 +85,14 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
     return allMergedHistory.slice(-limit);
   }, [allMergedHistory, activeTab]);
   const currentValue = showSocialLevel ? user.socialLevel : user.level;
+
+  const getEventBadgeLabel = (item: LevelHistoryItem) => {
+    if (item.eventType === 'GAME' && item.linkEntityType) {
+      return t(`games.entityTypes.${item.linkEntityType}`);
+    }
+
+    return item.eventType ? t(`playerCard.eventType.${item.eventType}`) : '';
+  };
   
   const maxLevel = currentHistory.length > 0 
     ? Math.max(...currentHistory.map(h => h.levelAfter), currentValue)
@@ -446,7 +454,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                             ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
                             : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                       }`}>
-                        {t(`playerCard.eventType.${item.eventType}`)}
+                        {getEventBadgeLabel(item)}
                       </span>
                     )}
                   </div>
