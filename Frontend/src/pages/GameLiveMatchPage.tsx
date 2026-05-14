@@ -183,7 +183,8 @@ export const GameLiveMatchPage = () => {
   }, [gameId, matchId, effectiveSpectatorToken, shareBoardThemeParam]);
 
   useEffect(() => {
-    if (!tv || spectatorToken || !gameId || !matchId) return;
+    if (spectatorToken || mintedSpectatorToken || !gameId || !matchId) return;
+    if (!tv && !isAuthenticated) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -198,7 +199,7 @@ export const GameLiveMatchPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [tv, spectatorToken, gameId, matchId]);
+  }, [tv, spectatorToken, mintedSpectatorToken, gameId, matchId, isAuthenticated]);
 
   useWakeScreenForLiveScoring(Boolean(gameId && matchId));
 
@@ -513,6 +514,9 @@ export const GameLiveMatchPage = () => {
               onUndo={handleUndo}
               onServeSetupComplete={handleServeSetupComplete}
               onSkipServeGuide={handleSkipServeGuide}
+              {...(!tv
+                ? { shareTvUrl: spectatorTvUrl, shareBroadcastUrl: broadcastShareUrl }
+                : {})}
             />
           </>
         ) : (

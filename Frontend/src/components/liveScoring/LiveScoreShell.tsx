@@ -17,6 +17,7 @@ import { LiveBandejaRotatingLogo } from './LiveBandejaRotatingLogo';
 import { LiveBroadcastBoard } from './LiveBroadcastBoard';
 import { LiveMatchCompleteBanner } from './LiveMatchCompleteBanner';
 import { LiveScoreCenter } from './LiveScoreCenter';
+import { LiveScoringUrlButtons } from './LiveScoringUrlButtons';
 import { LiveTeamPanel } from './LiveTeamPanel';
 
 type LiveScoreShellProps = {
@@ -41,6 +42,8 @@ type LiveScoreShellProps = {
   onUndo: (side: LiveTeamSide) => void;
   onServeSetupComplete: (side: LiveTeamSide, doublesPlayerIndex: number) => void;
   onSkipServeGuide: () => void;
+  shareTvUrl?: string;
+  shareBroadcastUrl?: string;
 };
 
 export const LiveScoreShell = ({
@@ -62,6 +65,8 @@ export const LiveScoreShell = ({
   onUndo,
   onServeSetupComplete,
   onSkipServeGuide,
+  shareTvUrl,
+  shareBroadcastUrl,
 }: LiveScoreShellProps) => {
   const { t } = useTranslation();
   const set = activeSetScore(state);
@@ -162,45 +167,52 @@ export const LiveScoreShell = ({
     );
   }
 
+  const showShareUrls = shareTvUrl !== undefined || shareBroadcastUrl !== undefined;
+
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-3 overflow-auto p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
-      <LiveBroadcastBoard
-        state={state}
-        rules={rules}
-        teamAPlayers={teamAPlayers}
-        teamBPlayers={teamBPlayers}
-        revision={revision}
-        boardTheme={boardTheme}
-        serveIndicator={serveIndicator}
-        interactive
-        disabled={panelDisabled}
-        onScore={onScore}
-        onUndo={onUndo}
-      />
-      {matchDecided ? (
-        <LiveMatchCompleteBanner
+    <div className="flex min-h-0 w-full flex-1 flex-col items-stretch">
+      <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-3 overflow-auto p-3 pb-3">
+        <LiveBroadcastBoard
           state={state}
           rules={rules}
           teamAPlayers={teamAPlayers}
           teamBPlayers={teamBPlayers}
-          gameId={gameId}
+          revision={revision}
+          boardTheme={boardTheme}
+          serveIndicator={serveIndicator}
+          interactive
+          disabled={panelDisabled}
+          onScore={onScore}
+          onUndo={onUndo}
         />
+        {matchDecided ? (
+          <LiveMatchCompleteBanner
+            state={state}
+            rules={rules}
+            teamAPlayers={teamAPlayers}
+            teamBPlayers={teamBPlayers}
+            gameId={gameId}
+          />
+        ) : null}
+        <LiveScoreCenter
+          state={state}
+          teamAPlayers={teamAPlayers}
+          teamBPlayers={teamBPlayers}
+          pointCenter={points.center}
+          rules={rules}
+          saving={saving}
+          error={error}
+          statusNote={matchDecided ? null : statusNote}
+          isOnline={isOnline ?? true}
+          hideServeGuide={matchDecided}
+          onServeSetupComplete={onServeSetupComplete}
+          onSkipServeGuide={onSkipServeGuide}
+          showPointHeadline={false}
+        />
+      </div>
+      {showShareUrls ? (
+        <LiveScoringUrlButtons tvUrl={shareTvUrl ?? ''} broadcastUrl={shareBroadcastUrl ?? ''} />
       ) : null}
-      <LiveScoreCenter
-        state={state}
-        teamAPlayers={teamAPlayers}
-        teamBPlayers={teamBPlayers}
-        pointCenter={points.center}
-        rules={rules}
-        saving={saving}
-        error={error}
-        statusNote={matchDecided ? null : statusNote}
-        isOnline={isOnline ?? true}
-        hideServeGuide={matchDecided}
-        onServeSetupComplete={onServeSetupComplete}
-        onSkipServeGuide={onSkipServeGuide}
-        showPointHeadline={false}
-      />
     </div>
   );
 };
