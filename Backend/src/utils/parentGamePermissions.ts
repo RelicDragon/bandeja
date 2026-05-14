@@ -23,6 +23,7 @@ export async function hasParentGamePermission(
       gameId,
       userId,
       role: { in: allowedRoles },
+      status: { in: ['PLAYING', 'NON_PLAYING', 'IN_QUEUE'] },
     },
   });
 
@@ -42,6 +43,7 @@ export async function hasParentGamePermission(
         gameId: game.parentId,
         userId,
         role: { in: allowedRoles },
+        status: { in: ['PLAYING', 'NON_PLAYING', 'IN_QUEUE'] },
       },
     });
 
@@ -168,6 +170,7 @@ export async function getParentGameParticipant(
       gameId,
       userId,
       role: { in: allowedRoles },
+      status: { in: ['PLAYING', 'NON_PLAYING', 'IN_QUEUE'] },
     },
   });
 
@@ -187,6 +190,7 @@ export async function getParentGameParticipant(
         gameId: game.parentId,
         userId,
         role: { in: allowedRoles },
+        status: { in: ['PLAYING', 'NON_PLAYING', 'IN_QUEUE'] },
       },
     });
 

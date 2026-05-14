@@ -1,6 +1,7 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { EntityType, LevelChangeEventType } from '@prisma/client';
+import { cleanupInviteParticipantsForEndedGame } from '../utils/gameInviteCleanup';
 
 export async function finishTraining(gameId: string, _userId: string): Promise<void> {
   const game = await prisma.game.findUnique({
@@ -26,6 +27,7 @@ export async function finishTraining(gameId: string, _userId: string): Promise<v
       ...(isFirstTimeFinal && { finishedDate: new Date() }),
     },
   });
+  await cleanupInviteParticipantsForEndedGame(gameId);
 }
 
 export async function updateParticipantLevel(

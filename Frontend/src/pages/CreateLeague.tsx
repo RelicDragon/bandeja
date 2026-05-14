@@ -139,7 +139,6 @@ export const CreateLeague = () => {
             winnerOfGame: setup.winnerOfGame,
             winnerOfMatch: setup.winnerOfMatch,
             matchGenerationType: setup.matchGenerationType,
-            prohibitMatchesEditing: setup.prohibitMatchesEditing ?? false,
             pointsPerWin: setup.pointsPerWin,
             pointsPerLoose: setup.pointsPerLoose,
             pointsPerTie: setup.pointsPerTie,

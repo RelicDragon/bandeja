@@ -40,7 +40,7 @@ export const LiveServeSetupCard = ({
     return (
       <button
         type="button"
-        className={`flex flex-col items-center gap-2 rounded-xl border py-3 text-left ${
+        className={`flex w-full min-w-0 flex-col items-center gap-2 rounded-xl border py-3 text-left ${
           sel ? 'border-primary-600 bg-primary-50 dark:bg-primary-950/40' : 'border-gray-300 dark:border-gray-700'
         }`}
         onClick={() => {
@@ -51,13 +51,17 @@ export const LiveServeSetupCard = ({
         <div className="px-2 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
           {which === 'teamA' ? t('gameDetails.liveScoring.teamBenchA') : t('gameDetails.liveScoring.teamBenchB')}
         </div>
-        <div className="flex flex-col gap-1.5 px-2">
-          {(players.length ? players : [null]).map((p, i) => (
-            <div key={p?.id ?? `e-${which}-${i}`} className="flex items-center gap-2">
-              <PlayerAvatar player={p} showName={false} extrasmall subscribePresence={false} />
-              <span className="max-w-[7rem] truncate text-xs font-medium">{p ? lineName(p) : '—'}</span>
-            </div>
-          ))}
+        <div className="flex w-full justify-center px-2">
+          <div className="inline-flex max-w-full min-w-0 flex-col gap-1.5">
+            {(players.length ? players : [null]).map((p, i) => (
+              <div key={p?.id ?? `e-${which}-${i}`} className="flex w-full min-w-0 items-center gap-2">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+                  <PlayerAvatar player={p} showName={false} extrasmall asDiv subscribePresence={false} />
+                </div>
+                <span className="min-w-0 flex-1 truncate text-left text-xs font-medium">{p ? lineName(p) : '—'}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </button>
     );
@@ -69,7 +73,7 @@ export const LiveServeSetupCard = ({
         {t('gameDetails.liveScoring.serveSetupTitle')}
       </div>
       <p className="mt-1 text-center text-xs text-gray-600 dark:text-gray-400">{t('gameDetails.liveScoring.serveSetupSubtitle')}</p>
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {teamBlock('teamA', teamAPlayers)}
         {teamBlock('teamB', teamBPlayers)}
       </div>
@@ -78,7 +82,7 @@ export const LiveServeSetupCard = ({
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             {t('gameDetails.liveScoring.whichDoublesPlayer')}
           </div>
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <button
               type="button"
               className={`rounded-xl border py-2 text-sm font-bold ${

@@ -80,28 +80,30 @@ export const ScorePickerNumberGrid = ({
     density === 'comfortable' ? numButtonClass('comfortable', selected) : numButtonClassCompactSelected(selected);
 
   return (
-    <div className="w-full flex flex-col items-stretch gap-2">
-      <div className={gridClass[density]}>
-        {presetValues.map(number => (
-          <button
-            key={number}
-            type="button"
-            onClick={() => onSelect(number)}
-            className={btnClass(number === currentScore)}
-          >
-            {number}
-          </button>
-        ))}
-        {showMoreTile && (
-          <button
-            type="button"
-            onClick={openCustom}
-            aria-label={t('gameResults.scorePickerOtherScore')}
-            className={btnClass(moreSelected)}
-          >
-            ...
-          </button>
-        )}
+    <div className="flex w-full min-h-0 max-w-full flex-col items-stretch gap-2">
+      <div className="max-h-[min(48dvh,320px)] min-h-0 touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+        <div className={gridClass[density]}>
+          {presetValues.map(number => (
+            <button
+              key={number}
+              type="button"
+              onClick={() => onSelect(number)}
+              className={btnClass(number === currentScore)}
+            >
+              {number}
+            </button>
+          ))}
+          {showMoreTile && (
+            <button
+              type="button"
+              onClick={openCustom}
+              aria-label={t('gameResults.scorePickerOtherScore')}
+              className={btnClass(moreSelected)}
+            >
+              ...
+            </button>
+          )}
+        </div>
       </div>
       {customOpen && (
         <div className="flex flex-col gap-2 w-full max-w-xs sm:max-w-md mx-auto px-1">

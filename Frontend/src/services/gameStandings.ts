@@ -1,6 +1,8 @@
-import { Game, BasicUser, WinnerOfGame, WinnerOfMatch } from '@/types';
+import { Game, BasicUser, WinnerOfGame } from '@/types';
 import { Round, Match, SetResult } from '@/types/gameResults';
 import { isOfficialMatchSet } from '@/utils/matchSetRole';
+import { getRules } from '@/utils/scoring/rulebook';
+import { getStandingsMatchOutcome } from '@/utils/scoring/matchWinnerLive';
 
 function getSetScoreForDelta(set: SetResult, side: 'A' | 'B'): number {
   if (set.isTieBreak) {
@@ -46,61 +48,23 @@ interface PlayerStats {
   scoresDelta: number;
 }
 
-/**
- * Match winner for W-T-L stats. Mirrors backend matchWinner.service so in-progress
- * stats match final outcomes: use winnerId when set, else derive from sets (BY_SCORES
- * = total points, BY_SETS = sets won); tie when equal and at least one set played.
- */
-function calculateMatchWinner(
-  match: Match,
-  winnerOfMatch: WinnerOfMatch = 'BY_SCORES'
-): 'teamA' | 'teamB' | 'tie' | null {
+function calculateMatchWinner(match: Match, game: Game): 'teamA' | 'teamB' | 'tie' | null {
   if (!match.sets || match.sets.length === 0) {
     return null;
   }
 
-  if (match.winnerId) {
-    return match.winnerId;
-  }
-
-  const validSets = match.sets.filter(
-    set => (set.teamA > 0 || set.teamB > 0) && isOfficialMatchSet(set)
-  );
-  if (validSets.length === 0) {
-    return null;
-  }
-
-  if (winnerOfMatch === 'BY_SETS') {
-    let teamASetsWon = 0;
-    let teamBSetsWon = 0;
-    
-    for (const set of validSets) {
-      if (set.teamA > set.teamB) {
-        teamASetsWon++;
-      } else if (set.teamB > set.teamA) {
-        teamBSetsWon++;
-      }
-    }
-
-    if (teamASetsWon > teamBSetsWon) return 'teamA';
-    if (teamBSetsWon > teamASetsWon) return 'teamB';
-    if (teamASetsWon === teamBSetsWon && validSets.length > 0) return 'tie';
-    return null;
-  }
-
-  const { scoreA: totalScoreA, scoreB: totalScoreB } = getMatchScoresForDelta(validSets);
-
-  if (totalScoreA > totalScoreB) return 'teamA';
-  if (totalScoreB > totalScoreA) return 'teamB';
-  if (totalScoreA === totalScoreB && totalScoreA > 0) return 'tie';
-
+  const rules = getRules(game);
+  const o = getStandingsMatchOutcome(match.sets, rules);
+  if (o === 'A') return 'teamA';
+  if (o === 'B') return 'teamB';
+  if (o === 'tie') return 'tie';
   return null;
 }
 
 function calculatePlayerStats(
   playerId: string,
   rounds: Round[],
-  winnerOfMatch: WinnerOfMatch = 'BY_SCORES'
+  game: Game
 ): PlayerStats {
   const stats: PlayerStats = {
     userId: playerId,
@@ -132,7 +96,7 @@ function calculatePlayerStats(
         continue;
       }
 
-      const matchWinner = calculateMatchWinner(match, winnerOfMatch);
+      const matchWinner = calculateMatchWinner(match, game);
       const { scoreA: totalScoreA, scoreB: totalScoreB } = getMatchScoresForDelta(validSets);
 
       if (isInTeamA) {
@@ -209,7 +173,7 @@ function getHeadToHeadWinner(
   playerAId: string,
   playerBId: string,
   rounds: Round[],
-  winnerOfMatch: WinnerOfMatch = 'BY_SCORES'
+  game: Game
 ): 'A' | 'B' | 'tie' | null {
   let aWins = 0;
   let bWins = 0;
@@ -231,7 +195,7 @@ function getHeadToHeadWinner(
 
       if (!areOpponents) continue;
 
-      const matchWinner = calculateMatchWinner(match, winnerOfMatch);
+      const matchWinner = calculateMatchWinner(match, game);
       
       if (matchWinner === 'teamA') {
         if (aInTeamA) aWins++;
@@ -252,7 +216,7 @@ function getHeadToHeadWinner(
 function calculateHeadToHeadMap(
   players: BasicUser[],
   rounds: Round[],
-  winnerOfMatch: WinnerOfMatch = 'BY_SCORES'
+  game: Game
 ): Map<string, Map<string, 'A' | 'B' | 'tie' | null>> {
   const h2hMap = new Map<string, Map<string, 'A' | 'B' | 'tie' | null>>();
   
@@ -260,7 +224,7 @@ function calculateHeadToHeadMap(
     for (let j = i + 1; j < players.length; j++) {
       const playerA = players[i];
       const playerB = players[j];
-      const result = getHeadToHeadWinner(playerA.id, playerB.id, rounds, winnerOfMatch);
+      const result = getHeadToHeadWinner(playerA.id, playerB.id, rounds, game);
       
       if (!h2hMap.has(playerA.id)) {
         h2hMap.set(playerA.id, new Map());
@@ -416,12 +380,10 @@ export function calculateGameStandings(
     return [];
   }
 
-  const winnerOfMatch = game.winnerOfMatch || 'BY_SCORES';
-
   const playerStatsMap = new Map<string, PlayerStats>();
 
   for (const player of players) {
-    const stats = calculatePlayerStats(player.id, rounds, winnerOfMatch);
+    const stats = calculatePlayerStats(player.id, rounds, game);
     playerStatsMap.set(player.id, stats);
   }
 
@@ -429,7 +391,7 @@ export function calculateGameStandings(
   const pointsPerTie = game.pointsPerTie ?? 0;
   const pointsPerLoose = game.pointsPerLoose ?? 0;
 
-  const h2hMap = calculateHeadToHeadMap(players, rounds, winnerOfMatch);
+  const h2hMap = calculateHeadToHeadMap(players, rounds, game);
 
   const standings: PlayerStanding[] = [];
 

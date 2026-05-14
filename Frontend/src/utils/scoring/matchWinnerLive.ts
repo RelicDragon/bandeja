@@ -65,3 +65,47 @@ export const computeMatchWinnerLiveScoring = (sets: SetResult[], rules: ScoringR
 
 export const isMatchDecidedForLiveScoring = (sets: SetResult[], rules: ScoringRules): boolean =>
   computeMatchWinnerLiveScoring(sets, rules) !== null;
+
+export const isLiveMatchCompleteForScoring = (sets: SetResult[], rules: ScoringRules): boolean =>
+  getStandingsMatchOutcome(sets, rules) !== null;
+
+export function getStandingsMatchOutcome(
+  sets: SetResult[],
+  rules: ScoringRules
+): 'A' | 'B' | 'tie' | null {
+  const decided = computeMatchWinnerLiveScoring(sets, rules);
+  if (decided === 'A') return 'A';
+  if (decided === 'B') return 'B';
+
+  const played = completedOfficialSetsForLive(sets, rules);
+  if (played.length === 0) return null;
+
+  if (rules.winnerOfMatch === 'BY_SCORES') {
+    let a = 0;
+    let b = 0;
+    for (const s of played) {
+      a += s.teamA;
+      b += s.teamB;
+    }
+    if (a === b && a > 0) return 'tie';
+    return null;
+  }
+
+  let a = 0;
+  let b = 0;
+  for (const set of played) {
+    const w = setWinner(set);
+    if (w === 'A') a += 1;
+    else if (w === 'B') b += 1;
+  }
+  const anyBallOfficial = sets.filter(isOfficialMatchSet).filter(isSetPlayed).length;
+  if (
+    rules.fixedNumberOfSets > 0 &&
+    anyBallOfficial >= rules.fixedNumberOfSets &&
+    a === b &&
+    played.length > 0
+  ) {
+    return 'tie';
+  }
+  return null;
+}

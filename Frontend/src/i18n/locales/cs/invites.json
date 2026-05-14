@@ -12,12 +12,17 @@
     "acceptedSuccessfully": "Pozvánka byla úspěšně přijata",
     "declined": "Pozvánka odmítnuta",
     "declinedSuccessfully": "Pozvánka byla úspěšně odmítnuta",
+    "cancelledSuccessfully": "Pozvánka byla zrušena",
     "selectPlayer": "Vybrat hráče",
     "selectPlayers": "Vybrat hráče",
     "noPlayersAvailable": "Žádní hráči k pozvání",
     "inviteFriendToBandeja": "Pozvat přítele do Bandeja",
     "shareAppBody": "Přidej se ke mně na Bandeja: {{url}}",
     "pendingInvites": "Čekající pozvánky",
+    "badgeDeclined": "Declined",
+    "badgeInviteCancelled": "Invite cancelled",
+    "sectionTerminalInvites": "Invite responses",
+    "inviteAgainHint": "You can send a new invite.",
     "inviteSent": "Pozvánka odeslána",
     "invitedYou": "Pozvánka do"
   }

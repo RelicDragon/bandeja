@@ -53,7 +53,7 @@ interface PlayerAvatarProps {
   onTouchEnd?: (e: TouchEvent) => void;
 }
 
-export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, inlineFace = false, inlineFacePlain = false, inlineFaceSize = 'sm', role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
+export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable = false, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, inlineFace = false, inlineFacePlain = false, inlineFaceSize = 'sm', role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
   const avatarPresenceKey = `avatar:${useId()}`;
   usePresenceSubscription(
     avatarPresenceKey,

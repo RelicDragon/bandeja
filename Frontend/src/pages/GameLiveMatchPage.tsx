@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { isLiveScoringInputLocked, isMatchDecidedForLiveScoring } from '@/utils/scoring/matchWinner';
+import { isLiveScoringInputLocked, isLiveMatchCompleteForScoring } from '@/utils/scoring/matchWinner';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { resultsApi } from '@/api/results';
@@ -87,7 +87,7 @@ export const GameLiveMatchPage = () => {
     }
     if (!liveState || !rules) return null;
     if (optionalDeciderChoicePending(liveState, rules)) return t('gameDetails.liveScoring.chooseDeciderFormat');
-    if (isMatchDecidedForLiveScoring(liveState.sets, rules)) return t('gameDetails.liveScoring.matchComplete');
+    if (isLiveMatchCompleteForScoring(liveState.sets, rules)) return t('gameDetails.liveScoring.matchComplete');
     if (liveState.mode === 'points' && isLiveScoringInputLocked(liveState.sets, liveState.activeSetIndex, rules)) {
       return t('gameDetails.liveScoring.pointsBudgetComplete');
     }
@@ -307,7 +307,7 @@ export const GameLiveMatchPage = () => {
       const s = liveStateRef.current;
       const r = rulesRef.current;
       if (!s || savingRef.current || !isAuthenticated || !r) return;
-      if (isMatchDecidedForLiveScoring(s.sets, r)) return;
+      if (isLiveMatchCompleteForScoring(s.sets, r)) return;
       applyLiveAction(unscoreLivePoint(s, side, r));
     },
     [isAuthenticated, applyLiveAction]

@@ -160,27 +160,29 @@ const PRESETS: Record<ScoringPreset, RuleSkeleton> = {
 };
 
 type RulesSource =
-  | Pick<
-      {
-        scoringPreset: ScoringPreset | null;
-        fixedNumberOfSets: number | null;
-        maxTotalPointsPerSet: number | null;
-        maxPointsPerTeam: number | null;
-        winnerOfMatch: WinnerOfMatch | null;
-        ballsInGames: boolean | null;
-        hasGoldenPoint: boolean | null;
-        pointsPerTie: number | null;
-        matchTimerEnabled: boolean | null;
-      },
-      | 'scoringPreset'
-      | 'fixedNumberOfSets'
-      | 'maxTotalPointsPerSet'
-      | 'maxPointsPerTeam'
-      | 'winnerOfMatch'
-      | 'ballsInGames'
-      | 'hasGoldenPoint'
-      | 'pointsPerTie'
-      | 'matchTimerEnabled'
+  | Partial<
+      Pick<
+        {
+          scoringPreset: ScoringPreset | null;
+          fixedNumberOfSets: number | null;
+          maxTotalPointsPerSet: number | null;
+          maxPointsPerTeam: number | null;
+          winnerOfMatch: WinnerOfMatch | null;
+          ballsInGames: boolean | null;
+          hasGoldenPoint: boolean | null;
+          pointsPerTie: number | null;
+          matchTimerEnabled: boolean | null;
+        },
+        | 'scoringPreset'
+        | 'fixedNumberOfSets'
+        | 'maxTotalPointsPerSet'
+        | 'maxPointsPerTeam'
+        | 'winnerOfMatch'
+        | 'ballsInGames'
+        | 'hasGoldenPoint'
+        | 'pointsPerTie'
+        | 'matchTimerEnabled'
+      >
     >
   | null
   | undefined;

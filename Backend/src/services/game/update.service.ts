@@ -18,6 +18,7 @@ import { normalizeLegacyTimedScoringPreset } from '../../utils/scoring/matchTime
 import { ScoringPreset } from '@prisma/client';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
+import { cleanupInviteParticipantsForEndedGame } from '../../utils/gameInviteCleanup';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -59,7 +60,6 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'winnerOfGame',
   'winnerOfMatch',
   'matchGenerationType',
-  'prohibitMatchesEditing',
   'pointsPerWin',
   'pointsPerLoose',
   'pointsPerTie',
@@ -665,6 +665,13 @@ export class GameUpdateService {
 
     if (!updatedGame) {
       throw new ApiError(404, 'Game not found after update');
+    }
+
+    if (
+      oldStatus !== updatedGame.status &&
+      (updatedGame.status === 'FINISHED' || updatedGame.status === 'ARCHIVED')
+    ) {
+      await cleanupInviteParticipantsForEndedGame(id);
     }
 
     // Handle BAR game completion when status changes to FINISHED

@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/Dialog';
 import { OVERLAY_CONTROL_GLASS_STABLE } from '@/components/ui/overlayControlGlass';
-import { EntityType, MatchGenerationType, ScoringPreset } from '@/types';
+import { EntityType, ScoringPreset } from '@/types';
 import { GameFormatStepScoringMode } from './GameFormatStepScoringMode';
 import { GameFormatStepSetStructure } from './GameFormatStepSetStructure';
 import { GameFormatStepPointsTotal } from './GameFormatStepPointsTotal';
@@ -77,16 +77,6 @@ function isRankingStepValid(f: UseGameFormatResult, allowByPointsInRanking: bool
   if (f.winnerOfGame !== 'BY_POINTS') return true;
   return f.pointsPerWin + f.pointsPerTie + f.pointsPerLoose > 0;
 }
-
-const rotationGeneration = (g: MatchGenerationType) =>
-  g !== 'HANDMADE' && g !== 'FIXED' && g !== 'AUTOMATIC';
-
-const prohibitPill = (active: boolean) =>
-  `flex-1 px-3 py-2 text-xs rounded-lg font-semibold transition-all duration-200 ${
-    active
-      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md'
-      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-  }`;
 
 function canFloatingContinueForStep(
   step: GameFormatWizardStep,
@@ -322,34 +312,8 @@ export const GameFormatWizard = ({
                     hasFixedTeams={hasFixedTeams}
                     onChange={(gen) => {
                       format.setGenerationType(gen);
-                      if (gen === 'HANDMADE' || gen === 'FIXED' || gen === 'AUTOMATIC') {
-                        format.setRanking({ prohibitMatchesEditing: false });
-                      }
                     }}
                   />
-                  {rotationGeneration(format.generationType) && (
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                        {t('gameResults.prohibitMatchesEditing')}
-                      </label>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => format.setRanking({ prohibitMatchesEditing: false })}
-                          className={prohibitPill(!format.prohibitMatchesEditing)}
-                        >
-                          {t('gameResults.allow')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => format.setRanking({ prohibitMatchesEditing: true })}
-                          className={prohibitPill(format.prohibitMatchesEditing)}
-                        >
-                          {t('gameResults.prohibit')}
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
               {safeCurrentStep === 'ranking' && (

@@ -24,7 +24,6 @@ export interface CreateLeagueRequest {
       winnerOfGame: string;
       winnerOfMatch: string;
       matchGenerationType: string;
-      prohibitMatchesEditing?: boolean;
       pointsPerWin: number;
       pointsPerLoose: number;
       pointsPerTie: number;

@@ -13,7 +13,6 @@ export interface GameFormatState {
   pointsPerLoose: number;
   pointsPerTie: number;
   winnerOfGame: GameSetupParams['winnerOfGame'];
-  prohibitMatchesEditing: boolean;
   /** When set, overrides preset-based scoring with a custom points total. */
   customPointsTotal: number | null;
   /** 1–60 when `matchTimerEnabled`; ignored otherwise. */
@@ -55,7 +54,6 @@ export const buildSetupFromFormat = (state: GameFormatState): GameSetupParams =>
     pointsPerWin: state.pointsPerWin ?? template.pointsPerWin ?? 0,
     pointsPerLoose: state.pointsPerLoose ?? template.pointsPerLoose ?? 0,
     pointsPerTie: state.pointsPerTie ?? template.pointsPerTie ?? 0,
-    prohibitMatchesEditing: state.prohibitMatchesEditing ?? false,
     scoringPreset: useCustomPoints ? null : state.scoringPreset,
     hasGoldenPoint: effectiveGolden,
   };

@@ -1,7 +1,7 @@
 import * as cron from 'node-cron';
 import prisma from '../config/database';
 import { calculateGameStatus, isResultsBasedEntityType } from '../utils/gameStatus';
-import { deleteInvitesForStartedGame, deleteInvitesForArchivedGame } from '../controllers/invite.controller';
+import { cleanupInviteParticipantsForEndedGame } from '../utils/gameInviteCleanup';
 import { EntityType } from '@prisma/client';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
 import notificationService from './notification.service';
@@ -99,14 +99,8 @@ export class GameStatusScheduler {
             }
           }
 
-          // Delete invites when game status changes to STARTED
-          if (newStatus === 'STARTED') {
-            await deleteInvitesForStartedGame(game.id);
-          }
-
-          // Delete invites when game status changes to ARCHIVED
-          if (newStatus === 'ARCHIVED') {
-            await deleteInvitesForArchivedGame(game.id);
+          if (newStatus === 'FINISHED' || newStatus === 'ARCHIVED') {
+            await cleanupInviteParticipantsForEndedGame(game.id);
           }
         }
       }

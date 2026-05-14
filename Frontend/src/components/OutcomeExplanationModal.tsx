@@ -185,17 +185,26 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                     {t('gameResults.round')} {roundNumber}
                   </h4>
                 )}
-                {groupedMatches[roundNumber].map((match, index) => (
+                {groupedMatches[roundNumber].map((match, index) => {
+                  const isNf = !!match.notFinishedByRules;
+                  return (
                   <div
                     key={index}
                     className={`p-3 rounded-lg border ${
-                      match.isDraw
+                      isNf
+                        ? 'bg-amber-50 dark:bg-amber-950/25 border-amber-200 dark:border-amber-800'
+                        : match.isDraw
                         ? 'bg-gray-50 dark:bg-gray-700/20 border-gray-300 dark:border-gray-600'
                         : match.isWinner
                         ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                         : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
                     }`}
                   >
+                    {isNf && (
+                      <p className="mb-2 text-xs font-medium text-amber-900 dark:text-amber-100 leading-snug">
+                        {t('gameResults.explanationMatchNotFinishedByRules')}
+                      </p>
+                    )}
                     <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-gray-900 dark:text-gray-100">
@@ -207,7 +216,9 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                               <span
                                 key={setIndex}
                                 className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                                  set.isWinner
+                                  isNf
+                                    ? 'bg-gray-100 dark:bg-gray-600/40 text-gray-700 dark:text-gray-200'
+                                    : set.isWinner
                                     ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                                     : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                                 }`}
@@ -309,7 +320,8 @@ export const OutcomeExplanationModal = ({ explanation, playerName, levelBefore, 
                   )}
                 </div>
               </div>
-                ))}
+                  );
+                })}
               </div>
             ))}
           </div>

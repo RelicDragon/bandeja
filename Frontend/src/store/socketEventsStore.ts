@@ -6,6 +6,7 @@ import { useAuthStore } from './authStore';
 import { usePresenceStore } from './presenceStore';
 import { useUserTeamsStore } from './userTeamsStore';
 import { Game, Invite } from '@/types';
+import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
 import { logChatSocketQueueTrim } from '@/services/chat/chatDiagnostics';
 
 interface GameUpdateData {
@@ -13,11 +14,6 @@ interface GameUpdateData {
   senderId: string;
   game: Game;
   forceUpdate?: boolean;
-}
-
-interface InviteDeletedData {
-  inviteId: string;
-  gameId?: string;
 }
 
 export interface ChatMessageData {
@@ -153,7 +149,7 @@ interface SocketEventsState {
   gameUpdates: Map<string, GameUpdateData>;
   lastGameUpdate: GameUpdateData | null;
   lastNewInvite: Invite | null;
-  lastInviteDeleted: InviteDeletedData | null;
+  lastInviteDeleted: InviteDeletedSocketPayload | null;
   lastChatMessage: ChatMessageData | null;
   lastChatReaction: ChatReactionData | null;
   lastChatReadReceipt: ChatReadReceiptData | null;
@@ -288,7 +284,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         set({ lastNewInvite: invite });
       };
 
-      const handleInviteDeleted = (data: InviteDeletedData) => {
+      const handleInviteDeleted = (data: InviteDeletedSocketPayload) => {
         const { setPendingInvites } = useHeaderStore.getState();
         const currentCount = useHeaderStore.getState().pendingInvites;
         setPendingInvites(Math.max(0, currentCount - 1));

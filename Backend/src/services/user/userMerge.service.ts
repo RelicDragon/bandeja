@@ -99,6 +99,20 @@ function roleRank(r: ParticipantRole): number {
   return 1;
 }
 
+function participantStatusMergeRank(status: string): number {
+  const order = [
+    'PLAYING',
+    'NON_PLAYING',
+    'IN_QUEUE',
+    'INVITED',
+    'GUEST',
+    'INVITE_DECLINED',
+    'INVITE_CANCELLED',
+  ];
+  const i = order.indexOf(status);
+  return i === -1 ? 99 : i;
+}
+
 async function resolveOverlappingGameParticipants(
   tx: Tx,
   survivorId: string,
@@ -138,6 +152,8 @@ async function resolveOverlappingGameParticipants(
     if (!dup) continue;
     const rr = roleRank(dup.role);
     const sr = roleRank(src.role);
+    const dupSr = participantStatusMergeRank(dup.status);
+    const srcSr = participantStatusMergeRank(src.status);
     if (sr > rr) {
       await tx.gameParticipant.update({
         where: { id: dup.id },
@@ -150,10 +166,17 @@ async function resolveOverlappingGameParticipants(
           inviteExpiresAt: nn(dup.inviteExpiresAt, src.inviteExpiresAt) ?? null,
         },
       });
-    } else if (sr === rr && src.stats != null && dup.stats == null) {
+    } else if (sr === rr) {
+      const mergedStatus = dupSr <= srcSr ? dup.status : src.status;
       await tx.gameParticipant.update({
         where: { id: dup.id },
-        data: { stats: src.stats as Prisma.InputJsonValue },
+        data: {
+          status: mergedStatus,
+          stats: (src.stats ?? dup.stats) as Prisma.InputJsonValue | undefined,
+          invitedByUserId: nn(dup.invitedByUserId, src.invitedByUserId) ?? null,
+          inviteMessage: nn(dup.inviteMessage, src.inviteMessage) ?? null,
+          inviteExpiresAt: nn(dup.inviteExpiresAt, src.inviteExpiresAt) ?? null,
+        },
       });
     }
     await tx.gameParticipant.delete({ where: { id: src.id } });

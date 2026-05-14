@@ -5,7 +5,7 @@ import { LiveBandejaRotatingLogo, LiveScoreShell } from '@/components/liveScorin
 import { useLiveMatchBoardState, liveBoardPlayersForTeam } from '@/hooks/useLiveMatchBoardState';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { parseLiveBoardTheme, type LiveTeamSide } from '@/utils/liveScoring';
-import { isMatchDecidedForLiveScoring } from '@/utils/scoring';
+import { isLiveMatchCompleteForScoring } from '@/utils/scoring';
 
 const noop = () => {};
 const noopSide = (_side: LiveTeamSide) => {};
@@ -29,7 +29,7 @@ export const GameBroadcastMatchPage = () => {
 
   const teamAPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 1) : []), [rawMatch]);
   const teamBPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 2) : []), [rawMatch]);
-  const matchDecided = Boolean(liveState && rules && isMatchDecidedForLiveScoring(liveState.sets, rules));
+  const matchDecided = Boolean(liveState && rules && isLiveMatchCompleteForScoring(liveState.sets, rules));
 
   useEffect(() => {
     if (!transparent) return;

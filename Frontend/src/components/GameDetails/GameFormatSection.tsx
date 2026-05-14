@@ -121,7 +121,6 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
         winnerOfGame,
         winnerOfMatch: setup.winnerOfMatch,
         matchGenerationType: setup.matchGenerationType,
-        prohibitMatchesEditing: setup.prohibitMatchesEditing,
         ballsInGames: setup.ballsInGames,
         scoringPreset: setup.scoringPreset,
         hasGoldenPoint: setup.hasGoldenPoint,

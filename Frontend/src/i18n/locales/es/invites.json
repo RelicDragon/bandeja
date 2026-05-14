@@ -12,12 +12,17 @@
     "acceptedSuccessfully": "Invitación aceptada exitosamente",
     "declined": "Invitación rechazada",
     "declinedSuccessfully": "Invitación rechazada exitosamente",
+    "cancelledSuccessfully": "Invitación cancelada exitosamente",
     "selectPlayer": "Selecciona un jugador",
     "selectPlayers": "Selecciona jugadores",
     "noPlayersAvailable": "No hay jugadores disponibles para invitar",
     "inviteFriendToBandeja": "Invitar amigo a Bandeja",
     "shareAppBody": "Únete a Bandeja: {{url}}",
     "pendingInvites": "Invitaciones pendientes",
+    "badgeDeclined": "Rechazada",
+    "badgeInviteCancelled": "Invitación cancelada",
+    "sectionTerminalInvites": "Respuestas a invitaciones",
+    "inviteAgainHint": "Puedes enviar una nueva invitación.",
     "inviteSent": "Invitación enviada",
     "invitedYou": "te invitó a"
   }

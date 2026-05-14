@@ -6,6 +6,7 @@ import { useNetworkStore } from '@/utils/networkStatus';
 import { chatSyncService } from '@/services/chatSyncService';
 import { runChatSyncBatchWarmOnConnect } from '@/services/chat/chatSyncBatchWarm';
 import { refreshChatOfflineBanner, setChatBannerSocketConnected } from '@/services/chat/chatOfflineBanner';
+import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
 
 export interface NewUserChatMessage {
   contextId: string;
@@ -22,7 +23,7 @@ export type SocketConnectionState = 'disconnected' | 'connecting' | 'connected';
 
 export interface SocketEvents {
   'new-invite': (invite: any) => void;
-  'invite-deleted': (data: { inviteId: string; gameId?: string }) => void;
+  'invite-deleted': (data: InviteDeletedSocketPayload) => void;
   'joined-game-room': (data: { gameId: string }) => void;
   'left-game-room': (data: { gameId: string }) => void;
   'joined-bug-room': (data: { bugId: string }) => void;

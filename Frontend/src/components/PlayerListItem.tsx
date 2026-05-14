@@ -11,9 +11,19 @@ interface PlayerListItemProps {
   gamesTogetherCount: number;
   onSelect: () => void;
   availability?: GameAvailabilityMatch;
+  inviteTerminalMain?: string;
+  inviteTerminalSub?: string;
 }
 
-export function PlayerListItem({ player, isSelected, gamesTogetherCount, onSelect, availability }: PlayerListItemProps) {
+export function PlayerListItem({
+  player,
+  isSelected,
+  gamesTogetherCount,
+  onSelect,
+  availability,
+  inviteTerminalMain,
+  inviteTerminalSub,
+}: PlayerListItemProps) {
   const { t } = useTranslation();
   const { levelRow, socialRow } = formatInviteStatsRows(t, player.level, player.socialLevel, player.reliability);
 
@@ -54,6 +64,12 @@ export function PlayerListItem({ player, isSelected, gamesTogetherCount, onSelec
           )}
         </p>
         {player.verbalStatus && <p className="verbal-status mt-0.5">{player.verbalStatus}</p>}
+        {inviteTerminalMain && (
+          <p className="mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">{inviteTerminalMain}</p>
+        )}
+        {inviteTerminalSub && (
+          <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">{inviteTerminalSub}</p>
+        )}
         <div className="mt-0.5 space-y-0.5 text-[11px] text-gray-400 dark:text-gray-500">
           <p>{levelRow}</p>
           <p>

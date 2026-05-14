@@ -21,6 +21,8 @@ export const validationMessage = (
       return t('gameResults.scoringErrors.classicNeedsWinBy2') || 'Set must be won by 2 games';
     case 'CLASSIC_SCORE_TOO_HIGH':
       return t('gameResults.scoringErrors.classicScoreTooHigh', { target: detail?.target ?? '' }) || `Max games per set is ${detail?.target}`;
+    case 'CLASSIC_SCORE_IMPOSSIBLE_MARGIN':
+      return t('gameResults.scoringErrors.classicImpossibleSetGames') || 'This set score is not possible (the set would already have been won)';
     case 'CLASSIC_SCORE_TOO_LOW_TO_WIN':
       return t('gameResults.scoringErrors.classicScoreTooLowToWin', { target: detail?.target ?? '' }) || `A team must reach ${detail?.target} games to win the set`;
     case 'TIEBREAK_DRAW':

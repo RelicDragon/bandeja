@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Game, GameParticipant, ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { isParticipantPlaying } from '@/utils/participantStatus';
+import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { PlayerAvatar } from './PlayerAvatar';
 import { useState, useEffect } from 'react';
 import { gamesApi } from '@/api/games';
@@ -36,7 +37,7 @@ export const ChatParticipantsModal = ({ game: initialGame, onClose, currentChatT
 
   const allParticipants = [
     ...participants.filter(isParticipantPlaying).map(p => ({ ...p.user, isParticipant: true, isInvited: false, isGuest: false, role: p.role })),
-    ...participants.filter(p => !isParticipantPlaying(p)).map(p => ({ ...p.user, isParticipant: false, isInvited: p.status === 'INVITED', isGuest: p.status === 'GUEST' || (p.role !== 'OWNER' && p.role !== 'ADMIN'), role: p.role }))
+    ...participants.filter(p => !isParticipantPlaying(p)).map(p => ({ ...p.user, isParticipant: false, isInvited: isPendingGameInvite(p), isGuest: p.status === 'GUEST' || (p.role !== 'OWNER' && p.role !== 'ADMIN'), role: p.role }))
   ];
 
   const isParticipantVisibleForChatType = (participant: any) => {

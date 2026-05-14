@@ -1,5 +1,6 @@
 import React from 'react';
 import { Game } from '@/types';
+import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 
 interface ChatParticipantsButtonProps {
   game: Game | null;
@@ -16,7 +17,7 @@ export const ChatParticipantsButton: React.FC<ChatParticipantsButtonProps> = ({ 
       {(() => {
         const playingParticipants = participants.filter(p => p.status === 'PLAYING');
         const guestParticipants = participants.filter(p => p.status === 'GUEST' || p.status === 'IN_QUEUE');
-        const invitedParticipants = participants.filter(p => p.status === 'INVITED');
+        const invitedParticipants = participants.filter((p) => isPendingGameInvite(p));
         const totalUsers = participants.length;
         const maxVisible = 3;
         

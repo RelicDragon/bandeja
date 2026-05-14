@@ -88,6 +88,9 @@ enum WatchValidateSet {
         let lo = min(a, b)
 
         if hi < target { return false }
+        if winBy >= 2, hi == target + 1, lo < target - 1 {
+            return false
+        }
         if winBy >= 2, let tbAt, hi == tbAt + 1, lo == tbAt {
             return true
         }

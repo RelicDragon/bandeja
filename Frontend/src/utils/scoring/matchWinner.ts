@@ -1,10 +1,21 @@
-import type { SetResult } from '@/types/gameResults';
+import type { Match, Round, SetResult } from '@/types/gameResults';
+import { parseMatchLiveEnvelope } from '@/types/matchLiveScoring';
 import { isOfficialMatchSet } from '@/utils/matchSetRole';
+import type { MatchTimerStatus } from '@/utils/matchTimer';
 import { isClassicRules, type ScoringRules } from './rulebook';
 import { validatePointsSet } from './validateSet';
-import { isMatchDecidedForLiveScoring } from './matchWinnerLive';
+import {
+  computeMatchWinnerLiveScoring,
+  getStandingsMatchOutcome,
+  isLiveMatchCompleteForScoring,
+} from './matchWinnerLive';
 
-export { computeMatchWinnerLiveScoring, isMatchDecidedForLiveScoring } from './matchWinnerLive';
+export {
+  computeMatchWinnerLiveScoring,
+  isMatchDecidedForLiveScoring,
+  getStandingsMatchOutcome,
+  isLiveMatchCompleteForScoring,
+} from './matchWinnerLive';
 
 export type MatchWinnerSide = 'A' | 'B' | null;
 
@@ -17,37 +28,8 @@ const setWinner = (set: SetResult): MatchWinnerSide => {
   return null;
 };
 
-export const computeMatchWinner = (sets: SetResult[], rules: ScoringRules): MatchWinnerSide => {
-  const playedSets = sets.filter(isSetPlayed).filter(isOfficialMatchSet);
-  if (playedSets.length === 0) return null;
-
-  if (rules.winnerOfMatch === 'BY_SETS') {
-    let a = 0;
-    let b = 0;
-    for (const set of playedSets) {
-      const w = setWinner(set);
-      if (w === 'A') a += 1;
-      else if (w === 'B') b += 1;
-    }
-    if (a >= rules.minSetsToWin) return 'A';
-    if (b >= rules.minSetsToWin) return 'B';
-    if (a === b) return null;
-    if (rules.fixedNumberOfSets > 0 && playedSets.length >= rules.fixedNumberOfSets) {
-      return a > b ? 'A' : 'B';
-    }
-    return null;
-  }
-
-  let a = 0;
-  let b = 0;
-  for (const set of playedSets) {
-    a += set.teamA;
-    b += set.teamB;
-  }
-  if (a > b) return 'A';
-  if (b > a) return 'B';
-  return null;
-};
+/** @deprecated Prefer `computeMatchWinnerLiveScoring`. */
+export const computeMatchWinner = computeMatchWinnerLiveScoring;
 
 export const countSetsWon = (sets: SetResult[]): { a: number; b: number } => {
   let a = 0;
@@ -60,8 +42,74 @@ export const countSetsWon = (sets: SetResult[]): { a: number; b: number } => {
   return { a, b };
 };
 
-export const isMatchDecided = (sets: SetResult[], rules: ScoringRules): boolean => {
-  return computeMatchWinner(sets, rules) !== null;
+export const isMatchDecided = (sets: SetResult[], rules: ScoringRules): boolean =>
+  getStandingsMatchOutcome(sets, rules) !== null;
+
+export const isResultsMatchFinished = (
+  match: Pick<Match, 'sets'>,
+  rules: ScoringRules
+): boolean => getStandingsMatchOutcome(match.sets, rules) !== null;
+
+export const matchSetsHaveAnyNonZeroScore = (sets: SetResult[]): boolean =>
+  sets.some((s) => s.teamA > 0 || s.teamB > 0);
+
+export const isMatchTimerStarted = (match: Pick<Match, 'timer'>): boolean => {
+  const st = match.timer?.status as MatchTimerStatus | undefined;
+  if (!st || st === 'IDLE') return false;
+  if (st === 'RUNNING' || st === 'PAUSED') return true;
+  if (st === 'STOPPED') return (match.timer?.elapsedMs ?? 0) > 0;
+  return false;
+};
+
+export const isMatchLiveScoringEnvelopeActive = (match: Pick<Match, 'metadata'>): boolean => {
+  const env = parseMatchLiveEnvelope((match.metadata as Record<string, unknown> | undefined)?.liveScoring);
+  if (!env) return false;
+  if (env.revision > 0) return true;
+  const st = env.state;
+  if (!st || typeof st !== 'object') return false;
+  const sets = (st as Record<string, unknown>).sets;
+  if (!Array.isArray(sets)) return false;
+  return sets.some((row) => {
+    if (!row || typeof row !== 'object') return false;
+    const o = row as Record<string, unknown>;
+    return (Number(o.teamA) || 0) > 0 || (Number(o.teamB) || 0) > 0;
+  });
+};
+
+/** Match has begun (scores, match timer, or live scoring) but is not finished per `isResultsMatchFinished`. */
+export const isResultsMatchInProgressForResultsHeader = (match: Match, rules: ScoringRules): boolean => {
+  if (isResultsMatchFinished(match, rules)) return false;
+  return (
+    matchSetsHaveAnyNonZeroScore(match.sets) ||
+    isMatchTimerStarted(match) ||
+    isMatchLiveScoringEnvelopeActive(match)
+  );
+};
+
+export type RoundResultsHeaderTone = 'neutral' | 'in_progress' | 'complete';
+
+export const getRoundResultsHeaderTone = (round: Round, rules: ScoringRules): RoundResultsHeaderTone => {
+  const matches = round.matches;
+  if (matches.length === 0) return 'neutral';
+  if (matches.every((m) => isResultsMatchFinished(m, rules))) return 'complete';
+  if (
+    matches.some(
+      (m) => isResultsMatchFinished(m, rules) || isResultsMatchInProgressForResultsHeader(m, rules)
+    )
+  ) {
+    return 'in_progress';
+  }
+  return 'neutral';
+};
+
+export const getResultsMatchResolvedWinnerTeam = (
+  match: Pick<Match, 'sets'>,
+  rules: ScoringRules
+): 'teamA' | 'teamB' | null => {
+  const o = getStandingsMatchOutcome(match.sets, rules);
+  if (o === 'A') return 'teamA';
+  if (o === 'B') return 'teamB';
+  return null;
 };
 
 /** Official points row is complete for live lock (same as live engine `isLivePointsFrozen`). */
@@ -78,6 +126,6 @@ export const isOfficialPointsBallBudgetExhausted = (
 };
 
 export const isLiveScoringInputLocked = (sets: SetResult[], activeSetIndex: number, rules: ScoringRules): boolean => {
-  if (isMatchDecidedForLiveScoring(sets, rules)) return true;
+  if (isLiveMatchCompleteForScoring(sets, rules)) return true;
   return isOfficialPointsBallBudgetExhausted(sets, activeSetIndex, rules);
 };

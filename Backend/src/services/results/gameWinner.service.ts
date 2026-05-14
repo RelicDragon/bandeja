@@ -1,6 +1,13 @@
-import { WinnerOfGame, WinnerOfMatch, Prisma } from '@prisma/client';
+import { WinnerOfGame, WinnerOfMatch, Prisma, MatchSetRole } from '@prisma/client';
 import { getMatchScoresForDelta } from './setScoreDelta';
 import { isOfficialMatchSetRole } from './matchSetRole';
+import type { GameRulesSource } from './matchStandingsPrisma';
+import {
+  isPrismaMatchCountedForStandingsAndRating,
+  prismaMatchSetsToLiveSets,
+} from './matchStandingsPrisma';
+import { getStandingsMatchOutcome } from './liveScoringEngine/matchWinnerLive';
+import { getRules } from './liveScoringEngine/rulebook';
 
 interface PlayerGameScore {
   userId: string;
@@ -215,7 +222,7 @@ async function getPlayerGameScores(
                   },
                 },
               },
-              sets: true,
+              sets: { orderBy: { setNumber: 'asc' } },
             },
           },
         },
@@ -274,6 +281,11 @@ async function getPlayerGameScores(
         continue;
       }
 
+      if (!isPrismaMatchCountedForStandingsAndRating(match, game)) {
+        console.log(`[GAME PLAYER SCORES] Skipping match ${match.id} - not finished by rules`);
+        continue;
+      }
+
       const { teamAScore, teamBScore } = getMatchScoresForDelta(validSets.map(s => ({ teamAScore: s.teamAScore, teamBScore: s.teamBScore, isTieBreak: s.isTieBreak })));
 
       console.log(`[GAME PLAYER SCORES] Match ${match.id}: Team A scored ${teamAScore}, Team B scored ${teamBScore}, winnerId: ${match.winnerId || 'null'}`);
@@ -308,22 +320,22 @@ async function getPlayerGameScores(
   return playerScores;
 }
 
-function calculateHeadToHeadMap(
-  game: {
-    rounds: Array<{
-      matches: Array<{
-        teams: Array<{
-          id: string;
-          teamNumber: number;
-          players: Array<{ userId: string }>;
-        }>;
-        sets: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean; role: import('@prisma/client').MatchSetRole }>;
-        winnerId: string | null;
+type GameForHeadToHead = GameRulesSource & {
+  rounds: Array<{
+    matches: Array<{
+      teams: Array<{
+        id: string;
+        teamNumber: number;
+        players: Array<{ userId: string }>;
       }>;
+      sets: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean | null; role: MatchSetRole }>;
+      winnerId: string | null;
     }>;
-    winnerOfMatch: WinnerOfMatch;
-  }
-): Map<string, Map<string, 'A' | 'B' | 'tie' | null>> {
+  }>;
+  winnerOfMatch: WinnerOfMatch;
+};
+
+function calculateHeadToHeadMap(game: GameForHeadToHead): Map<string, Map<string, 'A' | 'B' | 'tie' | null>> {
   const h2hMap = new Map<string, Map<string, 'A' | 'B' | 'tie' | null>>();
   const allPlayerIds = new Set<string>();
 
@@ -368,33 +380,14 @@ function calculateHeadToHeadMap(
           const areOpponents = (aInTeamA && bInTeamB) || (aInTeamB && bInTeamA);
           if (!areOpponents) continue;
 
-          // Determine match winner based on winnerOfMatch
+          if (!isPrismaMatchCountedForStandingsAndRating(match, game)) continue;
+
+          const rules = getRules(game);
+          const o = getStandingsMatchOutcome(prismaMatchSetsToLiveSets(match.sets), rules);
           let matchWinner: 'teamA' | 'teamB' | 'tie' | null = null;
-          
-          if (match.winnerId) {
-            if (match.winnerId === teamA.id) {
-              matchWinner = 'teamA';
-            } else if (match.winnerId === teamB.id) {
-              matchWinner = 'teamB';
-            }
-          } else {
-            if (game.winnerOfMatch === WinnerOfMatch.BY_SETS) {
-              let teamASetsWon = 0;
-              let teamBSetsWon = 0;
-              for (const set of validSets) {
-                if (set.teamAScore > set.teamBScore) teamASetsWon++;
-                else if (set.teamBScore > set.teamAScore) teamBSetsWon++;
-              }
-              if (teamASetsWon > teamBSetsWon) matchWinner = 'teamA';
-              else if (teamBSetsWon > teamASetsWon) matchWinner = 'teamB';
-              else if (teamASetsWon === teamBSetsWon && teamASetsWon > 0) matchWinner = 'tie';
-            } else {
-              const { teamAScore, teamBScore } = getMatchScoresForDelta(validSets.map(s => ({ teamAScore: s.teamAScore, teamBScore: s.teamBScore, isTieBreak: s.isTieBreak })));
-              if (teamAScore > teamBScore) matchWinner = 'teamA';
-              else if (teamBScore > teamAScore) matchWinner = 'teamB';
-              else if (teamAScore === teamBScore && teamAScore > 0) matchWinner = 'tie';
-            }
-          }
+          if (o === 'A') matchWinner = 'teamA';
+          else if (o === 'B') matchWinner = 'teamB';
+          else if (o === 'tie') matchWinner = 'tie';
 
           if (matchWinner === 'teamA') {
             if (aInTeamA) aWins++;
@@ -509,7 +502,7 @@ export async function calculateGameWinner(
                   players: true,
                 },
               },
-              sets: true,
+              sets: { orderBy: { setNumber: 'asc' } },
             },
           },
         },
@@ -525,10 +518,7 @@ export async function calculateGameWinner(
   const playerScores = await getPlayerGameScores(gameId, tx);
   
   // Calculate head-to-head map
-  const h2hMap = calculateHeadToHeadMap({
-    rounds: game.rounds,
-    winnerOfMatch: game.winnerOfMatch || WinnerOfMatch.BY_SCORES,
-  });
+  const h2hMap = calculateHeadToHeadMap(game as GameForHeadToHead);
 
   const winners = determineGameWinners(
     playerScores, 
@@ -561,7 +551,7 @@ export async function updateGameOutcomes(
                   players: true,
                 },
               },
-              sets: true,
+              sets: { orderBy: { setNumber: 'asc' } },
             },
           },
         },
@@ -598,10 +588,7 @@ export async function updateGameOutcomes(
   }
 
   // Calculate head-to-head map
-  const h2hMap = calculateHeadToHeadMap({
-    rounds: game.rounds,
-    winnerOfMatch: game.winnerOfMatch || WinnerOfMatch.BY_SCORES,
-  });
+  const h2hMap = calculateHeadToHeadMap(game as GameForHeadToHead);
 
   const winners = determineGameWinners(playerScores, winnerOfGame, pointsPerWin, pointsPerTie, pointsPerLoose, h2hMap);
 

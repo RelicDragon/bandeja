@@ -58,7 +58,6 @@ export interface PlayoffGameSetupOverrides {
   winnerOfGame?: WinnerOfGame;
   winnerOfMatch?: WinnerOfMatch;
   matchGenerationType?: MatchGenerationType;
-  prohibitMatchesEditing?: boolean;
   pointsPerWin?: number;
   pointsPerLoose?: number;
   pointsPerTie?: number;
@@ -167,7 +166,6 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       winnerOfGame: seasonGame.winnerOfGame ?? WinnerOfGame.BY_MATCHES_WON,
       winnerOfMatch: seasonGame.winnerOfMatch ?? WinnerOfMatch.BY_SCORES,
       matchGenerationType: seasonGame.matchGenerationType ?? MatchGenerationType.HANDMADE,
-      prohibitMatchesEditing: seasonGame.prohibitMatchesEditing ?? false,
       pointsPerWin: seasonGame.pointsPerWin ?? 0,
       pointsPerLoose: seasonGame.pointsPerLoose ?? 0,
       pointsPerTie: seasonGame.pointsPerTie ?? 0,
@@ -320,7 +318,6 @@ export async function createLeaguePlayoffGame(
         matchGenerationType: gameSetup?.matchGenerationType ?? template.matchGenerationType,
         maxParticipants: participantCount,
       }),
-      prohibitMatchesEditing: gameSetup?.prohibitMatchesEditing ?? seasonGame.prohibitMatchesEditing ?? false,
       pointsPerWin: gameSetup?.pointsPerWin ?? seasonGame.pointsPerWin ?? 0,
       pointsPerLoose: gameSetup?.pointsPerLoose ?? seasonGame.pointsPerLoose ?? 0,
       pointsPerTie: gameSetup?.pointsPerTie ?? seasonGame.pointsPerTie ?? 0,

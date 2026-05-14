@@ -12,6 +12,7 @@ import { usePlayersStore } from '@/store/playersStore';
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
 import { getAvailableGameChatTypes } from '@/utils/chatType';
 import { isParticipantPlaying } from '@/utils/participantStatus';
+import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { normalizeChatType } from '@/utils/chatType';
 import { shouldQueueChatMutation } from '@/services/chat/chatMutationNetwork';
 import { enqueueChatMutationMarkReadBatch } from '@/services/chat/chatMutationEnqueue';
@@ -194,7 +195,8 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
             const loadedGame = loadedContext as Game;
             const loadedUserParticipant = loadedGame.participants.find(p => p.userId === user.id);
             const loadedIsParticipant = !!loadedUserParticipant;
-            const loadedHasPendingInvite = loadedGame.participants?.some(p => p.userId === user.id && p.status === 'INVITED') ?? false;
+            const loadedHasPendingInvite =
+              loadedGame.participants?.some((p) => p.userId === user.id && isPendingGameInvite(p)) ?? false;
             const loadedIsGuest = loadedGame.participants.some(p => p.userId === user.id && (p.status === 'GUEST' || !isParticipantPlaying(p))) ?? false;
             if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
               const loadedParentParticipant = loadedGame.parent?.participants?.find(p => p.userId === user.id);

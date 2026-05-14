@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { ChevronDown, ChevronUp, RotateCcw, Search, UserPlus } from 'lucide-react';
-import { BasicUser, UserTeam } from '@/types';
+import { BasicUser, UserTeam, GameParticipant } from '@/types';
 import { invitesApi } from '@/api';
 import { userTeamsApi } from '@/api/userTeams';
 import { gamesApi } from '@/api/games';
@@ -45,6 +45,7 @@ import {
   matchTeamToSlots,
   type GameAvailabilityMatch,
 } from '@/utils/availability/gameMatch';
+import { participantBlocksInvitePlayerPicker, isTerminalInviteStatus } from '@/utils/gameInviteParticipant';
 
 export interface PlayerListModalConfirmMeta {
   userTeamIdByReceiverId?: Record<string, string>;
@@ -105,6 +106,7 @@ export const PlayerListModal = ({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [inviteListKind, setInviteListKind] = useState<'all' | 'users' | 'teams'>('all');
   const [fetchedGameContext, setFetchedGameContext] = useState<GameAvailabilityContext | null>(null);
+  const [invitePickerGameParticipants, setInvitePickerGameParticipants] = useState<GameParticipant[]>([]);
   const listSegmentUsers = inviteListKind === 'all' || inviteListKind === 'users';
   const listSegmentTeams = inviteListKind === 'all' || inviteListKind === 'teams';
 
@@ -211,7 +213,12 @@ export const PlayerListModal = ({
           const gameData = gameResponse.value.data;
           const participants = gameData.participants;
           if (Array.isArray(participants)) {
-            participants.forEach((p: { userId: string }) => participantIds.add(p.userId));
+            (participants as GameParticipant[]).forEach((p) => {
+              if (participantBlocksInvitePlayerPicker(p)) participantIds.add(p.userId);
+            });
+            setInvitePickerGameParticipants(participants as GameParticipant[]);
+          } else {
+            setInvitePickerGameParticipants([]);
           }
           if (!inviteAsTrainerOnly && gameData.entityType === 'TRAINING' && !gameData.trainerId) {
             setCanInviteAsTrainer(true);
@@ -223,6 +230,7 @@ export const PlayerListModal = ({
             timeZone: gameData.club?.city?.timezone ?? gameData.city?.timezone ?? null,
           });
         } else {
+          setInvitePickerGameParticipants([]);
           setFetchedGameContext(null);
         }
 
@@ -251,6 +259,7 @@ export const PlayerListModal = ({
       } catch {
         setPlayers([]);
         setReadyTeams([]);
+        setInvitePickerGameParticipants([]);
         setFetchedGameContext(null);
         toast.error(t('errors.generic'));
       } finally {
@@ -291,6 +300,17 @@ export const PlayerListModal = ({
     }
     return m;
   }, [readyTeams, gameSlots]);
+
+  const terminalInviteLabelByUserId = useMemo(() => {
+    const m = new Map<string, { main: string; sub: string }>();
+    for (const pc of invitePickerGameParticipants) {
+      if (!isTerminalInviteStatus(pc.status)) continue;
+      const main =
+        pc.status === 'INVITE_DECLINED' ? t('invites.badgeDeclined') : t('invites.badgeInviteCancelled');
+      m.set(pc.userId, { main, sub: t('invites.inviteAgainHint') });
+    }
+    return m;
+  }, [invitePickerGameParticipants, t]);
 
   const getAvailabilityMatch = useCallback(
     (entry: InviteListEntry): GameAvailabilityMatch => {
@@ -482,6 +502,7 @@ export const PlayerListModal = ({
   const renderEntry = (entry: InviteListEntry) => {
     if (entry.kind === 'user') {
       const rowSelected = selectedUserIds.includes(entry.user.id) && !memberOfSelectedTeam(entry.user.id);
+      const term = terminalInviteLabelByUserId.get(entry.user.id);
       return (
         <PlayerListItem
           player={entry.user}
@@ -489,6 +510,8 @@ export const PlayerListModal = ({
           gamesTogetherCount={getUserMetadata(entry.user.id)?.gamesTogetherCount ?? 0}
           onSelect={() => handleUserClick(entry.user.id)}
           availability={gameSlots ? userAvailabilityById.get(entry.user.id) : undefined}
+          inviteTerminalMain={term?.main}
+          inviteTerminalSub={term?.sub}
         />
       );
     }

@@ -79,7 +79,7 @@ export const ConfirmationModal = ({
           {message}
         </DialogDescription>
         {highlightedText && (
-          <div className="mb-6">
+          <div className="mb-6 flex justify-center">
             <span className="inline-block px-3 py-1 bg-red-100 dark:bg-red-900/30 rounded-full text-red-800 dark:text-red-200 font-medium text-sm">
               {highlightedText}
             </span>

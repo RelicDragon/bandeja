@@ -224,6 +224,7 @@ export interface MatchExplanation {
   roundNumber: number;
   isWinner: boolean;
   isDraw: boolean;
+  notFinishedByRules?: boolean;
   opponentLevel: number;
   levelDifference: number;
   scoreDelta?: number;

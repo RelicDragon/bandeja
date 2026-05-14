@@ -59,6 +59,7 @@ import { isParticipantPlaying } from '@/utils/participantStatus';
 import { BasicUser } from '@/types';
 import { createPortal } from 'react-dom';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
+import { mergeGameWithInviteDeletedPayload, isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { socketService } from '@/services/socketService';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 
@@ -298,8 +299,12 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   useEffect(() => {
     if (!lastInviteDeleted) return;
     if (lastInviteDeleted.gameId === id || !lastInviteDeleted.gameId) {
-      setMyInvites(prev => prev.filter(inv => inv.id !== lastInviteDeleted.inviteId));
-      setGameInvites(prev => prev.filter(inv => inv.id !== lastInviteDeleted.inviteId));
+      setMyInvites((prev) => prev.filter((inv) => inv.id !== lastInviteDeleted.inviteId));
+      setGameInvites((prev) => prev.filter((inv) => inv.id !== lastInviteDeleted.inviteId));
+      setGame((prev) => {
+        if (!prev) return prev;
+        return mergeGameWithInviteDeletedPayload(prev, lastInviteDeleted);
+      });
     }
   }, [lastInviteDeleted, id]);
 
@@ -583,7 +588,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
 
 
   const pendingTrainerParticipant = game?.entityType === 'TRAINING' && !game.trainerId
-    ? game.participants?.find(p => p.status === 'INVITED' && p.role === 'ADMIN')
+    ? game.participants?.find((p) => isPendingGameInvite(p) && p.role === 'ADMIN')
     : undefined;
   const pendingTrainerInvite = pendingTrainerParticipant
     ? gameInvites.find(inv => inv.receiverId === pendingTrainerParticipant.userId && inv.status === 'PENDING')
@@ -1585,7 +1590,6 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
                       winnerOfGame: game.winnerOfGame,
                       winnerOfMatch: game.winnerOfMatch,
                       matchGenerationType: game.matchGenerationType,
-                      prohibitMatchesEditing: game.prohibitMatchesEditing,
                       pointsPerWin: game.pointsPerWin,
                       pointsPerLoose: game.pointsPerLoose,
                       pointsPerTie: game.pointsPerTie,

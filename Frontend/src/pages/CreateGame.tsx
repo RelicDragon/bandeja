@@ -367,7 +367,6 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         gameData.winnerOfMatch = setup.winnerOfMatch;
         gameData.matchGenerationType = setup.matchGenerationType;
         Object.assign(gameData, resultsRoundGenV2Payload);
-        gameData.prohibitMatchesEditing = setup.prohibitMatchesEditing;
         gameData.ballsInGames = setup.ballsInGames;
         gameData.scoringPreset = setup.scoringPreset;
         gameData.scoringMode = gameFormat.scoringMode;

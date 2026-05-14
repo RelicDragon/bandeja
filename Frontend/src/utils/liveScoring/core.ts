@@ -1,7 +1,7 @@
 import type { ScoringRules } from '@/utils/scoring';
 import { isClassicRules } from '@/utils/scoring';
 import { trimTrailingEmptyAfterDecision } from '@/utils/scoring/displaySets';
-import { computeMatchWinnerLiveScoring } from '@/utils/scoring/matchWinner';
+import { getStandingsMatchOutcome } from '@/utils/scoring/matchWinner';
 import { splitOfficialAndSupplementalSets } from '@/utils/matchSetRole';
 import { validatePointsSet } from '@/utils/scoring/validateSet';
 import type {
@@ -208,7 +208,7 @@ export const canAdvanceLiveSet = (state: LiveScoringState, rules: ScoringRules):
     return false;
   }
 
-  if (computeMatchWinnerLiveScoring(official, rules) !== null) return false;
+  if (getStandingsMatchOutcome(official, rules) !== null) return false;
 
   return true;
 };
@@ -324,7 +324,7 @@ const alignMandatedSuperTieBreakDecider = (state: LiveScoringState, rules: Scori
 const normalizeLiveSetsAfterDecision = (state: LiveScoringState, rules: ScoringRules): LiveScoringState => {
   if (state.mode !== 'classic') return state;
   const { official } = splitOfficialAndSupplementalSets(state.sets);
-  if (computeMatchWinnerLiveScoring(official, rules) === null) return state;
+  if (getStandingsMatchOutcome(official, rules) === null) return state;
   const trimmed = trimTrailingEmptyAfterDecision(state.sets, rules);
   state.sets = trimmed;
   const { official: off } = splitOfficialAndSupplementalSets(trimmed);

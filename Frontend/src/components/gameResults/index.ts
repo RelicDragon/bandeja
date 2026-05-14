@@ -1,5 +1,6 @@
 export { MatchCard } from './MatchCard';
 export { HorizontalMatchCard } from './HorizontalMatchCard';
+export { MatchResultsHeaderBadges } from './MatchResultsHeaderBadges';
 export { HorizontalScoreEntryModal } from './HorizontalScoreEntryModal';
 export { AvailablePlayersFooter } from './AvailablePlayersFooter';
 export { FloatingDraggedPlayer } from './FloatingDraggedPlayer';

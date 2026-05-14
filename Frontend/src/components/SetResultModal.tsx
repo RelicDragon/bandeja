@@ -17,7 +17,7 @@ import {
   getScoreEntryExampleList,
   isClassicTimedRelaxedGameScores,
 } from '@/utils/scoring';
-import { isSupplementalMatchSet, type MatchSetRole } from '@/utils/matchSetRole';
+import { isSupplementalMatchSet, EXTRA_BALLS_SCORE_MAX, type MatchSetRole } from '@/utils/matchSetRole';
 
 interface SetResultModalProps {
   match: Match;
@@ -115,6 +115,12 @@ export const SetResultModal = ({
     }
   }, [currentSet]);
 
+  useEffect(() => {
+    if (!isSupplementalRow || extraRole !== 'EXTRA_BALLS') return;
+    setTeamAScore((a) => Math.min(EXTRA_BALLS_SCORE_MAX, a));
+    setTeamBScore((b) => Math.min(EXTRA_BALLS_SCORE_MAX, b));
+  }, [extraRole, isSupplementalRow]);
+
   // Prevent equal scores when tiebreak is enabled
   useEffect(() => {
     // Only adjust when tiebreak is toggled ON (not when it's already on)
@@ -127,9 +133,18 @@ export const SetResultModal = ({
 
   const keypad = getKeypadOptions(rules, setIndex, match.sets, isTieBreak);
   const kind = getSetKind(setIndex, match.sets, rules, { teamA: teamAScore, teamB: teamBScore, isTieBreak });
-  const scoreMax = isSupplementalRow ? 9999 : keypad.max;
+  const extraBallsPicker = isSupplementalRow && extraRole === 'EXTRA_BALLS';
+  const scoreMax = extraBallsPicker
+    ? EXTRA_BALLS_SCORE_MAX
+    : isSupplementalRow
+      ? 9999
+      : keypad.max;
+  const scorePickerKeypadMax = extraBallsPicker ? EXTRA_BALLS_SCORE_MAX : keypad.max;
 
   const clampToAllowed = (value: number): number => {
+    if (extraBallsPicker) {
+      return Math.max(0, Math.min(EXTRA_BALLS_SCORE_MAX, Math.round(value)));
+    }
     if (keypad.values.length === 0) return value;
     if (keypad.values.includes(value)) return value;
     return Math.max(keypad.values[0], Math.min(keypad.values[keypad.values.length - 1], value));
@@ -137,7 +152,8 @@ export const SetResultModal = ({
 
   const handleTeamAScoreChange = (newScore: number) => {
     if (isSupplementalRow) {
-      setTeamAScore(Math.min(9999, Math.max(0, newScore)));
+      const cap = extraRole === 'EXTRA_BALLS' ? EXTRA_BALLS_SCORE_MAX : 9999;
+      setTeamAScore(Math.min(cap, Math.max(0, newScore)));
       return;
     }
     const clamped = Math.max(0, clampToAllowed(newScore));
@@ -149,7 +165,8 @@ export const SetResultModal = ({
 
   const handleTeamBScoreChange = (newScore: number) => {
     if (isSupplementalRow) {
-      setTeamBScore(Math.min(9999, Math.max(0, newScore)));
+      const cap = extraRole === 'EXTRA_BALLS' ? EXTRA_BALLS_SCORE_MAX : 9999;
+      setTeamBScore(Math.min(cap, Math.max(0, newScore)));
       return;
     }
     const clamped = Math.max(0, clampToAllowed(newScore));
@@ -188,13 +205,15 @@ export const SetResultModal = ({
   const teamAPlayers = match.teamA.map(id => players.find(p => p.id === id)).filter(Boolean) as BasicUser[];
   const teamBPlayers = match.teamB.map(id => players.find(p => p.id === id)).filter(Boolean) as BasicUser[];
 
-  const numberOptions = keypad.values.filter((number) => {
-    if (keypad.mode !== 'PAIRED' && isTieBreak) {
-      if (numberPickerTeam === 'teamA') return number !== teamBScore;
-      if (numberPickerTeam === 'teamB') return number !== teamAScore;
-    }
-    return true;
-  });
+  const numberOptions = extraBallsPicker
+    ? Array.from({ length: EXTRA_BALLS_SCORE_MAX + 1 }, (_, i) => i)
+    : keypad.values.filter((number) => {
+        if (keypad.mode !== 'PAIRED' && isTieBreak) {
+          if (numberPickerTeam === 'teamA') return number !== teamBScore;
+          if (numberPickerTeam === 'teamB') return number !== teamAScore;
+        }
+        return true;
+      });
 
   const handleNumberSelect = (number: number) => {
     if (numberPickerTeam === 'teamA') {
@@ -216,7 +235,7 @@ export const SetResultModal = ({
   const showTieBreakToggle = canToggleTieBreak && kind !== 'SUPER_TIEBREAK';
 
   const mainTitle = isSupplementalRow
-    ? t('gameResults.extraSetTitle', { defaultValue: 'Extra · not counted for result or rating' })
+    ? t('gameResults.extraSetTitle')
     : (rules.fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')) +
       (kind === 'SUPER_TIEBREAK'
         ? ` · ${t('gameResults.superTieBreak')}`
@@ -294,9 +313,7 @@ export const SetResultModal = ({
         {isSupplementalRow ? (
           <>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {t('gameResults.extraSetHint', {
-                defaultValue: 'Statistics only. Does not change match outcome, standings, or rating.',
-              })}
+              {t('gameResults.extraSetHint')}
             </p>
             <div className="mt-2 flex rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden max-w-xs">
               <button
@@ -308,7 +325,7 @@ export const SetResultModal = ({
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
                 }`}
               >
-                {t('gameResults.extraUnitGames', { defaultValue: 'Games' })}
+                {t('gameResults.extraUnitGames')}
               </button>
               <button
                 type="button"
@@ -319,7 +336,7 @@ export const SetResultModal = ({
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
                 }`}
               >
-                {t('gameResults.extraUnitBalls', { defaultValue: 'Balls' })}
+                {t('gameResults.extraUnitBalls')}
               </button>
             </div>
           </>
@@ -452,7 +469,7 @@ export const SetResultModal = ({
                 </div>
                 <ScorePickerNumberGrid
                   numberOptions={numberOptions}
-                  keypadMax={keypad.max}
+                  keypadMax={scorePickerKeypadMax}
                   currentScore={currentScore}
                   onSelect={handleNumberSelect}
                   clampToAllowed={clampToAllowed}

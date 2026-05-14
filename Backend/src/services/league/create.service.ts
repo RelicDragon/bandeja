@@ -100,7 +100,6 @@ export class LeagueCreateService {
           matchGenerationType: gameSeasonData.matchGenerationType,
           maxParticipants,
         }),
-        prohibitMatchesEditing: gameSeasonData.prohibitMatchesEditing ?? false,
         pointsPerWin: gameSeasonData.pointsPerWin ?? 0,
         pointsPerLoose: gameSeasonData.pointsPerLoose ?? 0,
         pointsPerTie: gameSeasonData.pointsPerTie ?? 0,

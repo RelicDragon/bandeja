@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { gamesApi } from '@/api';
 import { chatApi } from '@/api/chat';
-import { Game } from '@/types';
+import { Game, GameParticipant } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { isPendingGameInvite, mergeGameWithInviteDeletedPayload } from '@/utils/gameInviteParticipant';
 
 export const usePastGames = (user: any, shouldLoad: boolean = false) => {
   const [pastGames, setPastGames] = useState<Game[]>([]);
@@ -25,7 +26,9 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
       .filter(game => {
         const participants = game.participants ?? [];
         const isParticipant = participants.some((p: { userId?: string }) => p.userId === userId);
-        const hasPendingInvite = participants.some((p: { userId?: string; status?: string }) => p.userId === userId && p.status === 'INVITED');
+        const hasPendingInvite = participants.some(
+          (p: GameParticipant) => p.userId === userId && isPendingGameInvite(p),
+        );
         return isParticipant || hasPendingInvite;
       })
       .map(game => game.id);
@@ -90,6 +93,15 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
   }, [shouldLoad, pastGames.length, loadingPastGames, user?.id, loadPastGames]);
 
   const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);
+  const lastInviteDeleted = useSocketEventsStore((state) => state.lastInviteDeleted);
+
+  useEffect(() => {
+    if (!lastInviteDeleted) return;
+    const gid = lastInviteDeleted.gameId;
+    if (!gid) return;
+    const patch = (g: Game) => mergeGameWithInviteDeletedPayload(g, lastInviteDeleted);
+    setPastGames((prev) => prev.map((g) => (g.id === gid ? patch(g) : g)));
+  }, [lastInviteDeleted]);
 
   useEffect(() => {
     if (!lastGameUpdate || lastGameUpdate.senderId === user?.id) return;

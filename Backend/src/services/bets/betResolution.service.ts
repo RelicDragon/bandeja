@@ -58,7 +58,7 @@ export async function resolveGameBets(gameId: string): Promise<void> {
                     }
                   }
                 },
-                sets: true
+                sets: { orderBy: { setNumber: 'asc' } }
               }
             }
           }

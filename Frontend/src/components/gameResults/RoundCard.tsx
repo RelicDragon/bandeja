@@ -6,12 +6,12 @@ import { BasicUser, Court, Game } from '@/types';
 import { MatchCard } from './MatchCard';
 import { HorizontalMatchCard } from './HorizontalMatchCard';
 import { ConfirmationModal } from '@/components';
+import { getRules, getRoundResultsHeaderTone, type RoundResultsHeaderTone } from '@/utils/scoring';
 
 interface RoundCardProps {
   round: Round;
   roundIndex: number;
   players: BasicUser[];
-  isPresetGame: boolean;
   isExpanded: boolean;
   canEditResults: boolean;
   editingMatchId: string | null;
@@ -23,6 +23,7 @@ interface RoundCardProps {
   onAddMatch: () => void;
   onRemoveMatch: (matchId: string) => void;
   onMatchClick: (matchId: string) => void;
+  onCancelMatchEdit: () => void;
   onSetClick: (matchId: string, setIndex: number) => void;
   onAddSupplementalSet?: (matchId: string) => void;
   onRemovePlayer: (matchId: string, team: 'teamA' | 'teamB', playerId: string) => void;
@@ -34,50 +35,36 @@ interface RoundCardProps {
   courts?: Court[];
   onCourtClick?: (matchId: string) => void;
   fixedNumberOfSets?: number;
-  prohibitMatchesEditing?: boolean;
-  game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie'> | null;
+  game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie' | 'resultsStatus'> | null;
   gameId?: string;
   onMatchTimerTransition?: (roundId: string, matchId: string, action: import('@/utils/matchTimer').MatchTimerAction) => void | Promise<void>;
 }
 
-type RoundStatus = 'red' | 'yellow' | 'normal';
-
-const getRoundStatus = (round: Round): RoundStatus => {
-  if (!round.matches || round.matches.length === 0) {
-    return 'red';
-  }
-
-  const matchStatuses = round.matches.map(match => {
-    if (!match.sets || match.sets.length === 0) {
-      return 'no-sets';
-    }
-    
-    const hasNonZeroSet = match.sets.some(set => set.teamA > 0 || set.teamB > 0);
-    if (hasNonZeroSet) {
-      return 'has-results';
-    }
-    
-    return 'all-zero';
-  });
-
-  const allNoSetsOrZero = matchStatuses.every(status => status === 'no-sets' || status === 'all-zero');
-  if (allNoSetsOrZero) {
-    return 'red';
-  }
-
-  const someAllZero = matchStatuses.some(status => status === 'all-zero');
-  if (someAllZero) {
-    return 'yellow';
-  }
-
-  return 'normal';
+const ROUND_HEADER_TONE: Record<
+  RoundResultsHeaderTone,
+  { bg: string; hover: string; borderIdle: string }
+> = {
+  neutral: {
+    bg: 'bg-white dark:bg-gray-800',
+    hover: 'hover:bg-gray-50/80 dark:hover:bg-gray-800',
+    borderIdle: 'border-b border-gray-200 dark:border-gray-700',
+  },
+  in_progress: {
+    bg: 'bg-amber-50/90 dark:bg-amber-950/35',
+    hover: 'hover:bg-amber-100/90 dark:hover:bg-amber-950/45',
+    borderIdle: 'border-b border-amber-200/80 dark:border-amber-800/60',
+  },
+  complete: {
+    bg: 'bg-emerald-50/85 dark:bg-emerald-950/30',
+    hover: 'hover:bg-emerald-100/80 dark:hover:bg-emerald-950/40',
+    borderIdle: 'border-b border-emerald-200/80 dark:border-emerald-800/50',
+  },
 };
 
 export const RoundCard = ({
   round,
   roundIndex,
   players,
-  isPresetGame,
   isExpanded,
   canEditResults,
   editingMatchId,
@@ -89,6 +76,7 @@ export const RoundCard = ({
   onAddMatch,
   onRemoveMatch,
   onMatchClick,
+  onCancelMatchEdit,
   onSetClick,
   onAddSupplementalSet,
   onRemovePlayer,
@@ -100,7 +88,6 @@ export const RoundCard = ({
   courts = [],
   onCourtClick,
   fixedNumberOfSets,
-  prohibitMatchesEditing = false,
   game,
   gameId,
   onMatchTimerTransition,
@@ -109,8 +96,26 @@ export const RoundCard = ({
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
   const roundName = `${t('gameResults.round')} ${roundIndex + 1}`;
-  
-  const roundStatus = useMemo(() => getRoundStatus(round), [round]);
+
+  const rules = useMemo(
+    () =>
+      getRules(
+        game ??
+          ({
+            fixedNumberOfSets,
+            maxTotalPointsPerSet: 0,
+            maxPointsPerTeam: 0,
+            winnerOfMatch: 'BY_SCORES',
+            ballsInGames: false,
+            hasGoldenPoint: false,
+            pointsPerTie: 0,
+            scoringPreset: null,
+          } as Game)
+      ),
+    [game, fixedNumberOfSets]
+  );
+
+  const headerTone = useMemo(() => getRoundResultsHeaderTone(round, rules), [round, rules]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -122,7 +127,7 @@ export const RoundCard = ({
   }, []);
 
   const matchesContent = (
-    <div className={hideFrame ? "" : "p-2"}>
+    <div className={hideFrame ? '' : 'py-2'}>
               {round.matches.map((match, matchIndex) => (
                 fixedNumberOfSets === 1 && windowWidth >= 390 ? (
                   <HorizontalMatchCard
@@ -130,13 +135,14 @@ export const RoundCard = ({
                     match={match}
                     matchIndex={matchIndex}
                     players={players}
-                    isPresetGame={isPresetGame}
                     isEditing={editingMatchId === match.id}
                     canEditResults={canEditResults}
                     draggedPlayer={draggedPlayer}
-                    showDeleteButton={round.matches.length > 1 && !isPresetGame && editingMatchId === match.id && canEditResults && !prohibitMatchesEditing}
+                    showHeaderEditButton={canEditResults}
+                    showDeleteButton={round.matches.length > 1 && canEditResults}
                     onRemoveMatch={() => onRemoveMatch(match.id)}
                     onMatchClick={() => onMatchClick(match.id)}
+                    onCancelMatchEdit={onCancelMatchEdit}
                     onSetClick={(setIndex) => onSetClick(match.id, setIndex)}
                     onAddSupplementalSet={onAddSupplementalSet ? () => onAddSupplementalSet(match.id) : undefined}
                     onRemovePlayer={(team, playerId) => onRemovePlayer(match.id, team, playerId)}
@@ -149,7 +155,6 @@ export const RoundCard = ({
                     courts={courts}
                     onCourtClick={() => onCourtClick && onCourtClick(match.id)}
                     fixedNumberOfSets={fixedNumberOfSets}
-                    prohibitMatchesEditing={prohibitMatchesEditing}
                     game={game}
                     roundId={round.id}
                     gameId={gameId}
@@ -161,13 +166,14 @@ export const RoundCard = ({
                     match={match}
                     matchIndex={matchIndex}
                     players={players}
-                    isPresetGame={isPresetGame}
                     isEditing={editingMatchId === match.id}
                     canEditResults={canEditResults}
                     draggedPlayer={draggedPlayer}
-                    showDeleteButton={round.matches.length > 1 && !isPresetGame && editingMatchId === match.id && canEditResults && !prohibitMatchesEditing}
+                    showHeaderEditButton={canEditResults}
+                    showDeleteButton={round.matches.length > 1 && canEditResults}
                     onRemoveMatch={() => onRemoveMatch(match.id)}
                     onMatchClick={() => onMatchClick(match.id)}
+                    onCancelMatchEdit={onCancelMatchEdit}
                     onSetClick={(setIndex) => onSetClick(match.id, setIndex)}
                     onAddSupplementalSet={onAddSupplementalSet ? () => onAddSupplementalSet(match.id) : undefined}
                     onRemovePlayer={(team, playerId) => onRemovePlayer(match.id, team, playerId)}
@@ -180,7 +186,6 @@ export const RoundCard = ({
                     courts={courts}
                     onCourtClick={() => onCourtClick && onCourtClick(match.id)}
                     fixedNumberOfSets={fixedNumberOfSets}
-                    prohibitMatchesEditing={prohibitMatchesEditing}
                     game={game}
                     roundId={round.id}
                     gameId={gameId}
@@ -189,7 +194,7 @@ export const RoundCard = ({
                 )
               ))}
 
-      {!isPresetGame && !prohibitMatchesEditing && editingMatchId && canEditResults && (
+      {editingMatchId && canEditResults && (
         <div className="flex justify-center mt-4">
           <button
             onClick={(e) => {
@@ -226,52 +231,14 @@ export const RoundCard = ({
     );
   }
 
-  const getBorderClasses = () => {
-    if (isExpanded) {
-      return 'border-blue-500 dark:border-blue-400';
-    }
-    
-    if (roundStatus === 'red') {
-      return 'border-red-400 dark:border-red-500';
-    }
-    
-    if (roundStatus === 'yellow') {
-      return 'border-yellow-400 dark:border-yellow-500';
-    }
-    
-    return 'border-gray-200 dark:border-gray-700';
-  };
-
-  const getBackgroundClasses = () => {
-    if (roundStatus === 'red') {
-      return 'bg-red-50 dark:bg-red-900/20';
-    }
-    
-    if (roundStatus === 'yellow') {
-      return 'bg-yellow-50 dark:bg-yellow-900/20';
-    }
-    
-    return 'bg-white dark:bg-gray-800';
-  };
-
-  const getHoverClasses = () => {
-    if (roundStatus === 'red') {
-      return 'hover:bg-red-100 dark:hover:bg-red-900/30';
-    }
-    
-    if (roundStatus === 'yellow') {
-      return 'hover:bg-yellow-100 dark:hover:bg-yellow-900/30';
-    }
-    
-    return 'hover:bg-gray-50 dark:hover:bg-gray-700/50';
-  };
+  const toneStyle = ROUND_HEADER_TONE[headerTone];
 
   return (
-    <div
-      className={`${getBackgroundClasses()} rounded-lg border-2 shadow-sm ${getBorderClasses()} transition-colors`}
-    >
+    <div className="rounded-lg border border-gray-200 bg-white shadow-sm transition-colors dark:border-gray-700 dark:bg-gray-800">
       <div
-        className={`flex items-center justify-between cursor-pointer ${getHoverClasses()} transition-colors`}
+        className={`flex cursor-pointer items-center justify-between rounded-t-lg transition-colors ${toneStyle.bg} ${
+          isExpanded ? 'border-b border-gray-200 dark:border-gray-600' : toneStyle.borderIdle
+        } ${toneStyle.hover}`}
         onClick={onToggleExpand}
       >
         <div className="flex items-center gap-1">

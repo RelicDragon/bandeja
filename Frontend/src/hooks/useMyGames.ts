@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { gamesApi } from '@/api';
 import { Game, Invite } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { mergeGameWithInviteDeletedPayload } from '@/utils/gameInviteParticipant';
 import {
   OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT,
   RESTORE_GAME_UNREAD_EVENT,
@@ -117,7 +118,11 @@ export const useMyGames = (
 
   useEffect(() => {
     if (!lastInviteDeleted) return;
-    setInvites(prevInvites => prevInvites.filter(invite => invite.id !== lastInviteDeleted.inviteId));
+    setInvites((prevInvites) => prevInvites.filter((invite) => invite.id !== lastInviteDeleted.inviteId));
+    const gid = lastInviteDeleted.gameId;
+    if (!gid) return;
+    const patch = (g: Game) => mergeGameWithInviteDeletedPayload(g, lastInviteDeleted);
+    setGames((prev) => prev.map((g) => (g.id === gid ? patch(g) : g)));
   }, [lastInviteDeleted]);
 
   useEffect(() => {

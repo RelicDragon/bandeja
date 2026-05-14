@@ -21,8 +21,11 @@ import {
   validationMessage,
   shouldAppendSetAfterUpdate,
   trimTrailingEmptyAfterDecision,
-  computeMatchWinner,
+  getStandingsMatchOutcome,
   isClassicRules,
+  isResultsMatchFinished,
+  isResultsMatchInProgressForResultsHeader,
+  matchSetsHaveAnyNonZeroScore,
 } from '@/utils/scoring';
 import { isSupplementalMatchSet, type MatchSetRole } from '@/utils/matchSetRole';
 import { ScoringRulebookBanner } from '@/components/gameResults/scoring';
@@ -111,6 +114,28 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     const hasResults = currentGame?.resultsStatus !== 'NONE';
     return hasResults && !isFinalStatus && canEdit;
   }, [engine.initialized, currentGame?.resultsStatus, isFinalStatus, canEdit]);
+
+  const canEditResultsForRounds = useMemo(
+    () => canEdit && isEditingResults && isResultsEntryMode && !isSendingToTelegram,
+    [canEdit, isEditingResults, isResultsEntryMode, isSendingToTelegram]
+  );
+
+  const displayRounds = useMemo(() => {
+    if (canEditResultsForRounds) return rounds;
+    const rules = currentGame ? getRules(currentGame) : null;
+    return rounds.filter((r) =>
+      r.matches.some((m) => {
+        if (!rules) {
+          return (m.sets ?? []).some((s) => s.teamA > 0 || s.teamB > 0);
+        }
+        return (
+          matchSetsHaveAnyNonZeroScore(m.sets) ||
+          isResultsMatchFinished(m, rules) ||
+          isResultsMatchInProgressForResultsHeader(m, rules)
+        );
+      })
+    );
+  }, [rounds, canEditResultsForRounds, currentGame]);
 
   const hasMatchesWithTeamsReady = useMemo(() => {
     if (rounds.length === 0) return false;
@@ -271,16 +296,21 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
   useEffect(() => {
     const matches = rounds.length > 0 ? rounds[0].matches || [] : [];
-    const shouldAutoEdit = matches.length === 1 && !editingMatchId && !isPresetGame && 
-      canEdit && isEditingResults && matches[0].teamA.length === 0 && 
-      matches[0].teamB.length === 0 && !mountedRef.current;
+    const shouldAutoEdit =
+      matches.length === 1 &&
+      !editingMatchId &&
+      canEdit &&
+      isEditingResults &&
+      matches[0].teamA.length === 0 &&
+      matches[0].teamB.length === 0 &&
+      !mountedRef.current;
 
     if (shouldAutoEdit) {
       engine.setEditingMatchId(matches[0].id);
-    } else if (isPresetGame || !(canEdit && isEditingResults)) {
+    } else if (!(canEdit && isEditingResults)) {
       engine.setEditingMatchId(null);
     }
-  }, [rounds, editingMatchId, isPresetGame, canEdit, isEditingResults, engine]);
+  }, [rounds, editingMatchId, canEdit, isEditingResults, engine]);
 
   const handleSyncToServerFirst = async () => {
     if (!user?.id) return;
@@ -467,8 +497,8 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         nextSets = [...workingSets, appended];
       }
 
-      const decidedWinner = computeMatchWinner(nextSets, rules);
-      if (decidedWinner !== null) {
+      const outcome = getStandingsMatchOutcome(nextSets, rules);
+      if (outcome !== null) {
         nextSets = trimTrailingEmptyAfterDecision(nextSets, rules);
       }
 
@@ -532,7 +562,8 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       }
 
       const rules = getRules(currentGameState);
-      if (rules.fixedNumberOfSets > 0 && !rules.allowRemoveSet) {
+      const removingSupplemental = isSupplementalMatchSet(match.sets[setIndex]);
+      if (rules.fixedNumberOfSets > 0 && !rules.allowRemoveSet && !removingSupplemental) {
         toast.error(t('errors.cannotRemoveLastSet') || 'Cannot remove sets when fixed number of sets is set');
         return;
       }
@@ -754,7 +785,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   };
 
   const handleContainerClick = (e: React.MouseEvent) => {
-    if (!isPresetGame && !currentGame?.prohibitMatchesEditing && editingMatchId && canEdit && isEditingResults) {
+    if (editingMatchId && canEdit && isEditingResults) {
       const target = e.target as HTMLElement;
       const isClickInsideMatch = target.closest('[data-match-container]');
       if (!isClickInsideMatch) {
@@ -955,19 +986,18 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
               {canEdit && isEditingResults && !isSendingToTelegram && currentGame?.scoringPreset && (
                 <ScoringRulebookBanner game={currentGame} />
               )}
-              {rounds.map((round, index) => (
+              {displayRounds.map((round) => (
                 <RoundCard
                   key={round.id}
                   round={round}
-                  roundIndex={index}
+                  roundIndex={Math.max(0, rounds.findIndex((r) => r.id === round.id))}
                   players={players}
-                  isPresetGame={isPresetGame}
                   isExpanded={expandedRoundIds.includes(round.id)}
-                  canEditResults={canEdit && isEditingResults && isResultsEntryMode && !isSendingToTelegram}
+                  canEditResults={canEditResultsForRounds}
                   editingMatchId={editingMatchId}
                   draggedPlayer={dragAndDrop.draggedPlayer}
                   showDeleteButton={rounds.length > 1 && canEdit && isEditingResults && !isSendingToTelegram}
-                  hideFrame={rounds.length === 1}
+                  hideFrame={displayRounds.length === 1}
                   onRemoveRound={() => engine.removeRound(round.id)}
                   onToggleExpand={() => {
                     if (expandedRoundIds.includes(round.id)) {
@@ -979,9 +1009,10 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
                   onAddMatch={() => engine.addMatch(round.id)}
                   onRemoveMatch={(matchId) => engine.removeMatch(round.id, matchId)}
                   onMatchClick={(matchId) => {
-                    if (!currentGame?.prohibitMatchesEditing && editingMatchId !== matchId) {
-                      engine.setEditingMatchId(matchId);
-                    }
+                    engine.setEditingMatchId(matchId);
+                  }}
+                  onCancelMatchEdit={() => {
+                    engine.setEditingMatchId(null);
                   }}
                   onSetClick={(matchId, setIndex) => openModal({ type: 'set', roundId: round.id, matchId, setIndex })}
                   onAddSupplementalSet={(matchId) => addSupplementalSet(round.id, matchId)}
@@ -1012,7 +1043,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
                   courts={currentGame?.gameCourts?.map(gc => gc.court) || []}
                   onCourtClick={(matchId) => handleCourtClick(round.id, matchId)}
                   fixedNumberOfSets={currentGame?.fixedNumberOfSets}
-                  prohibitMatchesEditing={currentGame?.prohibitMatchesEditing}
                   game={currentGame}
                   gameId={currentGame?.id}
                   onMatchTimerTransition={(rId, mId, action) => engine.transitionMatchTimer(rId, mId, action)}
@@ -1037,7 +1067,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
                 </div>
               )}
 
-              {!isPresetGame && !currentGame?.prohibitMatchesEditing && editingMatchId && canEdit && isEditingResults && !isSendingToTelegram && (() => {
+              {editingMatchId && canEdit && isEditingResults && !isSendingToTelegram && (() => {
                 const expandedRound = rounds.find(r => r.matches.some(m => m.id === editingMatchId));
                 const editingMatch = expandedRound?.matches.find(m => m.id === editingMatchId);
                 if (!expandedRound || !editingMatch) return null;

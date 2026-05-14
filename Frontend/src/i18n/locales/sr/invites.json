@@ -12,6 +12,7 @@
     "acceptedSuccessfully": "Позивница је успешно прихваћена",
     "declined": "Позив одбачен",
     "declinedSuccessfully": "Позивница је успешно одбачена",
+    "cancelledSuccessfully": "Позивница је отказана",
     "selectPlayer": "Изаберите играча",
     "selectPlayers": "Изаберите играче",
     "noPlayersAvailable": "Нема доступних играча за позивање",
@@ -19,6 +20,10 @@
     "shareAppBody": "Придружи ми се на Bandeja: {{url}}",
     "invitePlayers": "Позови играче",
     "pendingInvites": "Позиви на чекању",
+    "badgeDeclined": "Declined",
+    "badgeInviteCancelled": "Invite cancelled",
+    "sectionTerminalInvites": "Invite responses",
+    "inviteAgainHint": "You can send a new invite.",
     "inviteSent": "Позив послат",
     "invitedYou": "вас је позвао/ла у"
   }

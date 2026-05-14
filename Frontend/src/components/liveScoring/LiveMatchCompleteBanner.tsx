@@ -4,7 +4,7 @@ import { PlayerAvatar } from '@/components';
 import type { BasicUser } from '@/types';
 import type { LiveScoringState } from '@/utils/liveScoring';
 import type { ScoringRules } from '@/utils/scoring';
-import { computeMatchWinnerLiveScoring } from '@/utils/scoring';
+import { getStandingsMatchOutcome } from '@/utils/scoring';
 
 type LiveMatchCompleteBannerProps = {
   state: LiveScoringState;
@@ -45,10 +45,10 @@ export const LiveMatchCompleteBanner = ({
   className,
 }: LiveMatchCompleteBannerProps) => {
   const { t } = useTranslation();
-  const winner = computeMatchWinnerLiveScoring(state.sets, rules);
+  const outcome = getStandingsMatchOutcome(state.sets, rules);
   const emptyRoster = t('games.emptySlot');
 
-  const draw = winner !== 'A' && winner !== 'B';
+  const draw = outcome === 'tie';
   const headline = draw
     ? t('gameDetails.liveScoring.matchCompleteDraw')
     : t('gameDetails.liveScoring.matchCompleteWinner');
@@ -64,9 +64,9 @@ export const LiveMatchCompleteBanner = ({
       >
         {headline}
       </div>
-      {winner === 'A' ? (
+      {outcome === 'A' ? (
         <TeamWinnerRows players={teamAPlayers} emptyLabel={emptyRoster} />
-      ) : winner === 'B' ? (
+      ) : outcome === 'B' ? (
         <TeamWinnerRows players={teamBPlayers} emptyLabel={emptyRoster} />
       ) : (
         <div className="mt-2 flex w-full max-w-md flex-col gap-4 sm:flex-row sm:justify-center sm:gap-6">

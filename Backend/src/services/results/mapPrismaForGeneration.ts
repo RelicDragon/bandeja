@@ -51,6 +51,11 @@ export function prismaGameToGenGame(game: GameForRoundGeneration): GenGame {
     pointsPerWin: game.pointsPerWin,
     pointsPerTie: game.pointsPerTie,
     pointsPerLoose: game.pointsPerLoose,
+    scoringPreset: game.scoringPreset,
+    matchTimerEnabled: game.matchTimerEnabled,
+    maxTotalPointsPerSet: game.maxTotalPointsPerSet,
+    maxPointsPerTeam: game.maxPointsPerTeam,
+    hasGoldenPoint: game.hasGoldenPoint,
   };
 }
 

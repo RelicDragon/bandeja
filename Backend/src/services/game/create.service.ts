@@ -228,7 +228,6 @@ export class GameCreateService {
           matchGenerationType: data.matchGenerationType,
           maxParticipants,
         }),
-        prohibitMatchesEditing: data.prohibitMatchesEditing ?? false,
         pointsPerWin: data.pointsPerWin ?? 0,
         pointsPerLoose: data.pointsPerLoose ?? 0,
         pointsPerTie: data.pointsPerTie ?? 0,

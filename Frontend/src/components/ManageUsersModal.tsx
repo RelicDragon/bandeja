@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Crown, Shield, User, UserX, ArrowRightLeft, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button, PlayerAvatar } from '@/components';
 import { Game, GameParticipant } from '@/types';
+import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { useAuthStore } from '@/store/authStore';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
@@ -73,6 +74,10 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
     switch (participant.status) {
       case 'INVITED':
         return { text: t('games.statusInvited'), color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' };
+      case 'INVITE_DECLINED':
+        return { text: t('invites.badgeDeclined'), color: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400' };
+      case 'INVITE_CANCELLED':
+        return { text: t('invites.badgeInviteCancelled'), color: 'bg-slate-200 text-slate-800 dark:bg-slate-700/40 dark:text-slate-300' };
       case 'IN_QUEUE':
         return { text: t('games.statusInQueue'), color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' };
       case 'PLAYING':
@@ -86,7 +91,7 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
     }
   };
 
-  const hasTrainer = game.entityType === 'TRAINING' && (!!game.trainerId || game.participants.some((p) => p.role === 'ADMIN' && p.status === 'INVITED'));
+  const hasTrainer = game.entityType === 'TRAINING' && (!!game.trainerId || game.participants.some((p) => p.role === 'ADMIN' && isPendingGameInvite(p)));
 
   const getAvailableActions = (participant: GameParticipant) => {
     const actions = [];

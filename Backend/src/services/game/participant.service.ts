@@ -11,7 +11,7 @@ import { performPostJoinOperations } from '../../utils/postJoinOperations';
 import { InviteService } from '../invite.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { createSystemMessageWithNotification } from '../../utils/systemMessageHelper';
-import { ChatType, ParticipantRole, UserTeamMemberStatus } from '@prisma/client';
+import { ChatType, GameStatus, ParticipantRole, UserTeamMemberStatus } from '@prisma/client';
 import { BetService } from '../bets/bet.service';
 import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
 import { applyUserTeamToFixedTeamsIfReady } from './userTeamFixedTeams.service';
@@ -20,6 +20,7 @@ const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
 const GUEST_STATUS = 'GUEST' as const;
 const INVITED_STATUS = 'INVITED' as const;
+const TERMINAL_INVITE_STATUSES = ['INVITE_DECLINED', 'INVITE_CANCELLED'] as const;
 
 export class ParticipantService {
   static async joinGame(gameId: string, userId: string) {
@@ -622,8 +623,15 @@ export class ParticipantService {
     asTrainer?: boolean,
     inviteUserTeamId?: string | null
   ): Promise<{ participant: any; invite: any }> {
-    const game = await prisma.game.findUniqueOrThrow({ where: { id: gameId }, select: { entityType: true, status: true } });
+    const game = await prisma.game.findUniqueOrThrow({
+      where: { id: gameId },
+      select: { entityType: true, status: true },
+    });
     validateGameCanAcceptParticipants(game);
+    // Gap A: single policy gate for new invites / revives (admin + Telegram use this path).
+    if (game.status === GameStatus.STARTED) {
+      throw new ApiError(400, 'errors.invites.cannotSendAfterGameStarted');
+    }
     if (asTrainer && game.entityType !== 'TRAINING') {
       throw new ApiError(400, 'Only training games can have a trainer');
     }
@@ -656,6 +664,58 @@ export class ParticipantService {
         }
         if (existing.status === PLAYING_STATUS) {
           throw new ApiError(400, 'Already a playing participant');
+        }
+        if (TERMINAL_INVITE_STATUSES.includes(existing.status as (typeof TERMINAL_INVITE_STATUSES)[number])) {
+          if (asTrainer) {
+            const [existingGame, pendingTrainerInvite] = await Promise.all([
+              tx.game.findUnique({ where: { id: gameId }, select: { trainerId: true } }),
+              tx.gameParticipant.findFirst({ where: { gameId, role: 'ADMIN', status: 'INVITED' } }),
+            ]);
+            if (existingGame?.trainerId || pendingTrainerInvite) {
+              throw new ApiError(400, 'This training already has a trainer or a pending trainer invite');
+            }
+          }
+          return tx.gameParticipant.update({
+            where: { id: existing.id },
+            data: {
+              status: INVITED_STATUS,
+              role: asTrainer ? 'ADMIN' : 'PARTICIPANT',
+              invitedByUserId: senderId,
+              inviteMessage: message ?? null,
+              inviteExpiresAt: expiresAt ?? null,
+              inviteUserTeamId: resolvedInviteUserTeamId,
+              inviteClosedAt: null,
+            },
+            include: {
+              user: { select: USER_SELECT_FIELDS },
+              invitedByUser: { select: USER_SELECT_FIELDS },
+              game: {
+                select: {
+                  id: true,
+                  name: true,
+                  gameType: true,
+                  startTime: true,
+                  endTime: true,
+                  maxParticipants: true,
+                  minParticipants: true,
+                  minLevel: true,
+                  maxLevel: true,
+                  isPublic: true,
+                  affectsRating: true,
+                  hasBookedCourt: true,
+                  afterGameGoToBar: true,
+                  hasFixedTeams: true,
+                  teamsReady: true,
+                  participantsReady: true,
+                  status: true,
+                  resultsStatus: true,
+                  entityType: true,
+                  court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
+                  club: { select: { id: true, name: true, avatar: true } },
+                },
+              },
+            },
+          });
         }
         throw new ApiError(400, 'errors.invites.alreadySent');
       }

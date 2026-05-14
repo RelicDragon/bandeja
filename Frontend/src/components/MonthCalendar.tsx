@@ -37,7 +37,7 @@ function toDisplayEntityType(entityType: Game['entityType']): DisplayEntityType 
 }
 
 export interface MonthCalendarProps {
-  selectedDate: Date;
+  selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
   availableGames: Game[];
   userFilter?: boolean;
@@ -75,7 +75,7 @@ export const MonthCalendar = ({
 }: MonthCalendarProps) => {
   const { user } = useAuthStore();
   const { i18n } = useTranslation();
-  const [currentMonth, setCurrentMonth] = useState(startOfMonth(selectedDate));
+  const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(selectedDate ?? new Date()));
   const isNavigatingRef = useRef(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
@@ -86,7 +86,7 @@ export const MonthCalendar = ({
   const weekStartsOn = useMemo(() => displaySettings.weekStart, [displaySettings.weekStart]);
 
   useEffect(() => {
-    if (!isNavigatingRef.current) {
+    if (!isNavigatingRef.current && selectedDate) {
       const newMonth = startOfMonth(selectedDate);
       if (!isSameMonth(newMonth, currentMonth)) {
         setCurrentMonth(newMonth);
@@ -293,7 +293,7 @@ export const MonthCalendar = ({
       <div className="grid grid-cols-7 gap-1">
         {calendarDays.map((day, index) => {
           const isCurrentMonth = isSameMonth(day, currentMonth);
-          const isSelected = isSameDay(day, selectedDate);
+          const isSelected = selectedDate != null && isSameDay(day, selectedDate);
           const isTodayDate = isToday(day);
           const dateStr = format(startOfDay(day), 'yyyy-MM-dd');
           const dayData = dateCellData.get(dateStr) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };

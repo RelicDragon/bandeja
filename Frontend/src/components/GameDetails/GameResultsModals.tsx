@@ -8,7 +8,7 @@ import { OutcomeExplanationModal } from '@/components/OutcomeExplanationModal';
 import { ModalType } from '@/hooks/useModalManager';
 import { Game, BasicUser } from '@/types';
 import { Round } from '@/types/gameResults';
-import type { MatchSetRole } from '@/utils/matchSetRole';
+import { isSupplementalMatchSet, type MatchSetRole } from '@/utils/matchSetRole';
 import { getRestartTitle, getFinishTitle, getEditTitle } from '@/utils/gameResultsHelpers';
 
 interface GameResultsModalsProps {
@@ -75,6 +75,9 @@ export const GameResultsModals = ({
     const canRemove = (() => {
       const currentSet = match.sets[modal.setIndex];
       if (!currentSet) return false;
+      if (isSupplementalMatchSet(currentSet)) {
+        return match.sets.length > 1;
+      }
       const isLastSet = modal.setIndex === match.sets.length - 1;
       const isZeroZero = currentSet.teamA === 0 && currentSet.teamB === 0;
       return match.sets.length > 1 && !(isLastSet && isZeroZero);

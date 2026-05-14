@@ -160,12 +160,10 @@ export const MyTab = () => {
     () => filteredMyGames.some((g) => g.status === 'ANNOUNCED' || g.status === 'STARTED'),
     [filteredMyGames]
   );
-  const myGamesSelectedDate = useMemo(() => {
-    if (myGamesSelectedDay) {
-      const d = parse(myGamesSelectedDay, 'yyyy-MM-dd', new Date());
-      return isNaN(d.getTime()) ? startOfDay(new Date()) : startOfDay(d);
-    }
-    return startOfDay(new Date());
+  const myGamesSelectedDate = useMemo((): Date | null => {
+    if (!myGamesSelectedDay) return null;
+    const d = parse(myGamesSelectedDay, 'yyyy-MM-dd', new Date());
+    return isNaN(d.getTime()) ? startOfDay(new Date()) : startOfDay(d);
   }, [myGamesSelectedDay]);
   const setMyGamesSelectedDate = useCallback(
     (d: Date) => setMyGamesSelectedDay(format(startOfDay(d), 'yyyy-MM-dd')),
@@ -199,6 +197,7 @@ export const MyTab = () => {
     [gamesUnreadCounts, pastGamesInRangeUnread]
   );
   const myGamesForSelectedDate = useMemo(() => {
+    if (!myGamesSelectedDate) return [];
     const selectedStr = format(startOfDay(myGamesSelectedDate), 'yyyy-MM-dd');
     const source = activeTab === 'calendar' ? calendarMergedGames : filteredMyGames;
     const counts = activeTab === 'calendar' ? calendarMergedUnreadCounts : mergedUnreadCounts;
@@ -210,16 +209,30 @@ export const MyTab = () => {
       }),
       counts
     );
-  }, [activeTab, myGamesSelectedDate, calendarMergedGames, filteredMyGames, calendarMergedUnreadCounts, mergedUnreadCounts]);
+  }, [
+    activeTab,
+    myGamesSelectedDate,
+    calendarMergedGames,
+    filteredMyGames,
+    calendarMergedUnreadCounts,
+    mergedUnreadCounts,
+  ]);
 
   const upcomingGamesForCalendar = useMemo(() => {
     if (activeTab !== 'calendar') return [];
-    const selectedStr = format(startOfDay(myGamesSelectedDate), 'yyyy-MM-dd');
-    return filteredMyGames
+    const base = filteredMyGames
       .filter((g) => g.entityType !== 'LEAGUE_SEASON')
       .filter((g) => {
         if (g.timeIsSet === false) return false;
         if (g.status !== 'ANNOUNCED' && g.status !== 'STARTED') return false;
+        return true;
+      });
+    if (!myGamesSelectedDate) {
+      return base.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    }
+    const selectedStr = format(startOfDay(myGamesSelectedDate), 'yyyy-MM-dd');
+    return base
+      .filter((g) => {
         const gameStr = format(startOfDay(new Date(g.startTime)), 'yyyy-MM-dd');
         return gameStr !== selectedStr;
       })

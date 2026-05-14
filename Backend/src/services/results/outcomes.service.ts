@@ -5,6 +5,7 @@ import { getMatchScoresForDelta } from './setScoreDelta';
 import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes } from './calculator.service';
 import { updateGameOutcomes } from './gameWinner.service';
 import { updateMatchWinners } from './matchWinner.service';
+import { isPrismaMatchCountedForStandingsAndRating } from './matchStandingsPrisma';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { LeagueGameResultsService } from '../league/gameResults.service';
@@ -13,6 +14,7 @@ import { calculateGameStatus, isResultsBasedEntityType, ARCHIVE_BY_FINISHED_DATE
 import { resolveGameBets } from '../bets/betResolution.service';
 import resultsSenderService from '../telegram/resultsSender.service';
 import { resetMatchTimersInGameTx, cancelAllMatchTimersForGame } from './matchTimer.service';
+import { cleanupInviteParticipantsForEndedGame } from '../../utils/gameInviteCleanup';
 import {
   isPlacementProtectedFromNegativeRating,
   mergePlacementRatingFloorMetadata,
@@ -47,7 +49,7 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
                   players: true,
                 },
               },
-              sets: true,
+              sets: { orderBy: { setNumber: 'asc' } },
             },
           },
         },
@@ -72,6 +74,8 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
   const roundResults = game.rounds.map(round => ({
     matches: round.matches
       .map(match => {
+        if (!isPrismaMatchCountedForStandingsAndRating(match, game)) return null;
+
         const validSets = match.sets.filter(
           set => (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role)
         );
@@ -366,6 +370,10 @@ export async function applyGameOutcomes(
       data: updateData,
     });
 
+    if (updateData.status === 'FINISHED' || updateData.status === 'ARCHIVED') {
+      await cleanupInviteParticipantsForEndedGame(gameId, tx);
+    }
+
     await resetMatchTimersInGameTx(tx, gameId);
 
     if (previousResultsStatus !== 'FINAL' && game.affectsRating) {
@@ -467,7 +475,7 @@ export async function recalculateGameOutcomes(gameId: string) {
                     },
                   },
                 },
-                sets: true,
+                sets: { orderBy: { setNumber: 'asc' } },
               },
             },
             outcomes: {

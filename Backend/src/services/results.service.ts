@@ -18,6 +18,7 @@ import {
   isNonRallyOutcomeClosingLiveScoring,
 } from './results/matchLiveScoring.service';
 import { appendMatchLiveScoringAudit } from './results/matchLiveScoringAudit.service';
+import { updateMatchWinners } from './results/matchWinner.service';
 
 const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
 
@@ -435,6 +436,7 @@ export async function editGameResults(gameId: string) {
             }, cityTimezone),
           },
         });
+        await updateMatchWinners(gameId, tx);
       }
   });
 }
@@ -938,6 +940,8 @@ export async function updateMatch(
         metadata: outMatchMetadata,
       },
     });
+
+    await updateMatchWinners(gameId, tx);
   });
 
   const cityTimezone = await getUserTimezoneFromCityId(game.cityId);

@@ -10,6 +10,9 @@ import { buildMessageWithButtons } from '../shared/message-builder';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { formatGameInfoForUser } from '../../shared/notification-base';
 import { isOfficialMatchSetRole } from '../../results/matchSetRole';
+import { getRules } from '../../results/liveScoringEngine/rulebook';
+import { getStandingsMatchOutcome } from '../../results/liveScoringEngine/matchWinnerLive';
+import { prismaMatchSetsToLiveSets } from '../../results/matchStandingsPrisma';
 
 interface PlayerStats {
   wins: number;
@@ -18,35 +21,19 @@ interface PlayerStats {
   scoresDelta: number;
 }
 
-function calculateMatchWinner(match: any): 'teamA' | 'teamB' | 'tie' | null {
-  if (!match.sets || match.sets.length === 0) {
-    return null;
-  }
-
-  if (match.winnerId) {
-    const teamA = match.teams.find((t: any) => t.teamNumber === 1);
-    if (match.winnerId === teamA?.id) return 'teamA';
-    return 'teamB';
-  }
-
-  const validSets = match.sets.filter(
-    (set: any) =>
-      (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role)
-  );
-  const { teamAScore: totalScoreA, teamBScore: totalScoreB } = getMatchScoresForDelta(
-    validSets.map((s: any) => ({ teamAScore: s.teamAScore, teamBScore: s.teamBScore, isTieBreak: s.isTieBreak }))
-  );
-
-  if (totalScoreA > totalScoreB) return 'teamA';
-  if (totalScoreB > totalScoreA) return 'teamB';
-  if (totalScoreA === totalScoreB && totalScoreA > 0) return 'tie';
-
+function matchWinnerForTelegram(match: any, game: any): 'teamA' | 'teamB' | 'tie' | null {
+  const rules = getRules(game);
+  const o = getStandingsMatchOutcome(prismaMatchSetsToLiveSets(match.sets), rules);
+  if (o === 'A') return 'teamA';
+  if (o === 'B') return 'teamB';
+  if (o === 'tie') return 'tie';
   return null;
 }
 
 function calculatePlayerStats(
   playerId: string,
-  rounds: any[]
+  rounds: any[],
+  game: any
 ): PlayerStats {
   const stats: PlayerStats = {
     wins: 0,
@@ -75,7 +62,8 @@ function calculatePlayerStats(
 
       if (!isInTeamA && !isInTeamB) continue;
 
-      const matchWinner = calculateMatchWinner(match);
+      const matchWinner = matchWinnerForTelegram(match, game);
+      if (matchWinner === null) continue;
       const { teamAScore: totalScoreA, teamBScore: totalScoreB } = getMatchScoresForDelta(
         validSets.map((set: any) => ({ teamAScore: set.teamAScore, teamBScore: set.teamBScore, isTieBreak: set.isTieBreak }))
       );
@@ -194,7 +182,7 @@ export async function sendGameFinishedNotification(
   console.log(`[GAME RESULTS NOTIFICATION] Telegram ID: ${participant.user.telegramId}`);
 
   const lang = await getUserLanguageFromTelegramId(participant.user.telegramId, undefined);
-  const stats = calculatePlayerStats(userId, game.rounds);
+  const stats = calculatePlayerStats(userId, game.rounds, game);
   const metadata = userOutcome.metadata as any || {};
   const gameInfo = await formatGameInfoForUser(game, participant.user.currentCityId, lang);
   

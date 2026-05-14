@@ -11,6 +11,7 @@ export type ValidationReason =
   | 'DRAW_NOT_ALLOWED'
   | 'CLASSIC_NEEDS_WIN_BY_2'
   | 'CLASSIC_SCORE_TOO_HIGH'
+  | 'CLASSIC_SCORE_IMPOSSIBLE_MARGIN'
   | 'CLASSIC_SCORE_TOO_LOW_TO_WIN'
   | 'TIEBREAK_DRAW'
   | 'TIEBREAK_WIN_BY_2'
@@ -49,6 +50,9 @@ export const validateClassicRegularSet = (a: number, b: number, rules: ScoringRu
   const lo = Math.min(a, b);
 
   if (hi < target) return fail('CLASSIC_SCORE_TOO_LOW_TO_WIN', { target });
+  if (winBy >= 2 && hi === target + 1 && lo < target - 1) {
+    return fail('CLASSIC_SCORE_IMPOSSIBLE_MARGIN');
+  }
   if (winBy >= 2 && tbAt !== null && hi === tbAt + 1 && lo === tbAt) {
     return ok('REGULAR');
   }

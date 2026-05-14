@@ -1,5 +1,8 @@
 export type MatchSetRole = 'OFFICIAL' | 'EXTRA_GAMES' | 'EXTRA_BALLS';
 
+/** Max per-team score in results UI for supplemental row when unit is balls. */
+export const EXTRA_BALLS_SCORE_MAX = 42;
+
 export interface SetRoleFields {
   role?: MatchSetRole;
 }

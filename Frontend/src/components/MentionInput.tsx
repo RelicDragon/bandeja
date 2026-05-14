@@ -3,6 +3,7 @@ import { MentionsInput, Mention, SuggestionDataItem, MentionData } from 'react-m
 import { ChatContextType, GroupChannel } from '@/api/chat';
 import { Game, Bug, BasicUser } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
+import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { PlayerAvatar } from './PlayerAvatar';
 import { matchesSearch } from '@/utils/transliteration';
 
@@ -100,7 +101,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           }
         });
         game.participants
-          ?.filter(p => p.status === 'INVITED')
+          ?.filter((p) => isPendingGameInvite(p))
           .forEach(p => {
             if (p.user && !userIds.has(p.user.id)) {
               userIds.add(p.user.id);

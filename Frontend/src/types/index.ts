@@ -3,7 +3,14 @@ export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'W
 export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON' | 'BAR' | 'TRAINING';
 export type GenderTeam = 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
 export type ParticipantRole = 'OWNER' | 'ADMIN' | 'PARTICIPANT' | 'GUEST';
-export type ParticipantStatus = 'GUEST' | 'INVITED' | 'IN_QUEUE' | 'PLAYING' | 'NON_PLAYING';
+export type ParticipantStatus =
+  | 'GUEST'
+  | 'INVITED'
+  | 'INVITE_DECLINED'
+  | 'INVITE_CANCELLED'
+  | 'IN_QUEUE'
+  | 'PLAYING'
+  | 'NON_PLAYING';
 export type Gender = 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
 export type GameStatus = 'ANNOUNCED' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
 export type ResultsStatus = 'NONE' | 'IN_PROGRESS' | 'FINAL';
@@ -47,7 +54,6 @@ export interface GameSetupParams {
   winnerOfGame: WinnerOfGame;
   winnerOfMatch: WinnerOfMatch;
   matchGenerationType: MatchGenerationType;
-  prohibitMatchesEditing?: boolean;
   pointsPerWin: number;
   pointsPerLoose: number;
   pointsPerTie: number;
@@ -267,6 +273,7 @@ export interface BookedCourtSlot {
 }
 
 export interface GameParticipant {
+  id?: string;
   userId: string;
   role: ParticipantRole;
   status: ParticipantStatus;
@@ -275,6 +282,8 @@ export interface GameParticipant {
   invitedByUserId?: string | null;
   inviteMessage?: string | null;
   inviteExpiresAt?: string | null;
+  inviteClosedAt?: string | null;
+  inviteUserTeamId?: string | null;
   invitedByUser?: BasicUser | null;
   /** Watch scoring session: current match id or null */
   activeMatchId?: string | null;
@@ -373,7 +382,6 @@ export interface Game {
   winnerOfGame?: WinnerOfGame;
   winnerOfMatch?: WinnerOfMatch;
   matchGenerationType?: MatchGenerationType;
-  prohibitMatchesEditing?: boolean;
   pointsPerWin?: number;
   pointsPerLoose?: number;
   pointsPerTie?: number;

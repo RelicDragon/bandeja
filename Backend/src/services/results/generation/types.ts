@@ -80,4 +80,9 @@ export interface GenGame {
   pointsPerWin?: number;
   pointsPerTie?: number;
   pointsPerLoose?: number;
+  scoringPreset?: import('@prisma/client').ScoringPreset | null;
+  matchTimerEnabled?: boolean | null;
+  maxTotalPointsPerSet?: number | null;
+  maxPointsPerTeam?: number | null;
+  hasGoldenPoint?: boolean | null;
 }

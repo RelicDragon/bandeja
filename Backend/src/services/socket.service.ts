@@ -892,8 +892,25 @@ class SocketService {
     this.io.to(`notify-user-${receiverId}`).emit('new-invite', invite);
   }
 
-  public emitInviteDeleted(receiverId: string, inviteId: string, gameId?: string) {
-    this.io.to(`notify-user-${receiverId}`).emit('invite-deleted', { inviteId, gameId });
+  public emitInviteDeleted(
+    receiverId: string,
+    inviteId: string,
+    gameId?: string,
+    extras?: {
+      participantPatch?: {
+        id?: string;
+        userId: string;
+        status: string;
+        inviteClosedAt?: string | null;
+      };
+      participant?: unknown;
+    }
+  ) {
+    this.io.to(`notify-user-${receiverId}`).emit('invite-deleted', {
+      inviteId,
+      ...(gameId !== undefined ? { gameId } : {}),
+      ...extras,
+    });
   }
 
   public emitUserTeamInvite(receiverId: string, payload: unknown) {
@@ -955,7 +972,13 @@ class SocketService {
         gameToEmit.participants.forEach((p: any) => userIds.add(p.userId || p.user?.id));
       }
       
-      const invitedParticipants = gameToEmit.participants?.filter((p: any) => p.status === 'INVITED') || [];
+      const invitedParticipants =
+        gameToEmit.participants?.filter(
+          (p: any) =>
+            p.status === 'INVITED' ||
+            p.status === 'INVITE_DECLINED' ||
+            p.status === 'INVITE_CANCELLED'
+        ) || [];
       invitedParticipants.forEach((p: any) => userIds.add(p.userId || p.user?.id));
       
       console.log(`[SocketService] Game ${gameId} - isPublic: ${gameToEmit.isPublic}, participant/userIds:`, Array.from(userIds));

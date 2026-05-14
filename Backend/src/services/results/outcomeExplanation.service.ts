@@ -8,6 +8,9 @@ import {
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { isPlacementProtectedFromNegativeRating } from './ratingPlacementFloor';
 import { isOfficialMatchSetRole } from './matchSetRole';
+import { getRules } from './liveScoringEngine/rulebook';
+import { getStandingsMatchOutcome } from './liveScoringEngine/matchWinnerLive';
+import { prismaMatchSetsToLiveSets } from './matchStandingsPrisma';
 
 interface ExplanationData {
   userId: string;
@@ -59,6 +62,7 @@ interface MatchExplanation {
   roundNumber: number;
   isWinner: boolean;
   isDraw: boolean;
+  notFinishedByRules?: boolean;
   opponentLevel: number;
   levelDifference: number;
   scoreDelta?: number;
@@ -99,7 +103,7 @@ export async function getOutcomeExplanation(
                   },
                 },
               },
-              sets: true,
+              sets: { orderBy: { setNumber: 'asc' } },
             },
           },
         },
@@ -176,6 +180,7 @@ export async function getOutcomeExplanation(
   let opponentLevels: number[] = [];
 
   let matchNumber = 0;
+  let ratedMatchCount = 0;
 
   for (const round of game.rounds) {
     for (const match of round.matches) {
@@ -216,12 +221,55 @@ export async function getOutcomeExplanation(
           return sum + lvl;
         }, 0) / userTeam.players.length;
 
-      opponentLevels.push(opponentLevel);
-
       const levelDifference = opponentLevel - userTeamLevel;
 
-      const isTie = match.winnerId === null;
-      const isWinner = match.winnerId === userTeam.id;
+      const rules = getRules(game);
+      const standingOutcome = getStandingsMatchOutcome(prismaMatchSetsToLiveSets(match.sets), rules);
+      const notFinishedByRules = standingOutcome === null;
+
+      const setExplanations: SetExplanation[] = [];
+      let setNumber = 0;
+      for (const set of validSets) {
+        setNumber++;
+        const setAWins = set.teamAScore > set.teamBScore;
+        const setBWins = set.teamBScore > set.teamAScore;
+        const setIsWinner = userTeam.teamNumber === 1 ? setAWins : setBWins;
+
+        setExplanations.push({
+          setNumber,
+          isWinner: setIsWinner,
+          levelChange: 0,
+          userScore: userTeam.teamNumber === 1 ? set.teamAScore : set.teamBScore,
+          opponentScore: userTeam.teamNumber === 1 ? set.teamBScore : set.teamAScore,
+          isTieBreak: set.isTieBreak || false,
+        });
+      }
+
+      if (notFinishedByRules) {
+        matches.push({
+          matchNumber,
+          roundNumber: round.roundNumber,
+          isWinner: false,
+          isDraw: false,
+          notFinishedByRules: true,
+          opponentLevel,
+          levelDifference,
+          levelChange: 0,
+          pointsEarned: 0,
+          teammates,
+          opponents,
+          sets: setExplanations.length > 0 ? setExplanations : undefined,
+        });
+        continue;
+      }
+
+      opponentLevels.push(opponentLevel);
+      ratedMatchCount++;
+
+      const isTie = standingOutcome === 'tie';
+      const isWinner =
+        (standingOutcome === 'A' && userTeam.teamNumber === 1) ||
+        (standingOutcome === 'B' && userTeam.teamNumber === 2);
 
       const setScores = validSets.map(set => {
         if (userTeam.teamNumber === 1) {
@@ -236,7 +284,6 @@ export async function getOutcomeExplanation(
       let matchMultiplier: number | undefined = undefined;
       let matchTotalPointDifferential: number | undefined = undefined;
       let matchEnduranceCoefficient: number | undefined = undefined;
-      const setExplanations: SetExplanation[] = [];
 
       const update = calculateRatingUpdate(
         {
@@ -259,23 +306,6 @@ export async function getOutcomeExplanation(
       matchMultiplier = update.multiplier;
       matchTotalPointDifferential = update.totalPointDifferential;
       matchEnduranceCoefficient = update.enduranceCoefficient;
-
-      let setNumber = 0;
-      for (const set of validSets) {
-        setNumber++;
-        const setAWins = set.teamAScore > set.teamBScore;
-        const setBWins = set.teamBScore > set.teamAScore;
-        const setIsWinner = userTeam.teamNumber === 1 ? setAWins : setBWins;
-
-        setExplanations.push({
-          setNumber,
-          isWinner: setIsWinner,
-          levelChange: 0,
-          userScore: userTeam.teamNumber === 1 ? set.teamAScore : set.teamBScore,
-          opponentScore: userTeam.teamNumber === 1 ? set.teamBScore : set.teamAScore,
-          isTieBreak: set.isTieBreak || false,
-        });
-      }
 
       matchLevelChange = rawMatchLevelChange;
       currentLevel = currentLevel + rawMatchLevelChange;
@@ -444,7 +474,7 @@ export async function getOutcomeExplanation(
     reliabilityCoefficient,
     matches,
     summary: {
-      totalMatches: matches.length,
+      totalMatches: ratedMatchCount,
       wins,
       losses,
       draws,

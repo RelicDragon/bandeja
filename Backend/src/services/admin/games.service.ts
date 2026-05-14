@@ -1,15 +1,11 @@
 import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
-import { GameService } from '../game/game.service';
-import { applyUserTeamToFixedTeamsIfReady } from '../game/userTeamFixedTeams.service';
-import { createSystemMessage } from '../../controllers/chat.controller';
-import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
-import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
+import { InviteService } from '../invite.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { LeagueGameResultsService } from '../league/gameResults.service';
 import { calculateGameStatus } from '../../utils/gameStatus';
-import { ParticipantRole, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 const GAMES_PAGE_SIZE = 50;
 
@@ -189,116 +185,43 @@ export class AdminGamesService {
   static async acceptInvite(participantId: string) {
     const participant = await prisma.gameParticipant.findUnique({
       where: { id: participantId },
-      include: {
-        user: { select: USER_SELECT_FIELDS },
-        game: { include: { participants: true } },
-      },
+      select: { userId: true, gameId: true },
     });
-    if (!participant || participant.status !== 'INVITED') {
+    if (!participant?.userId || !participant.gameId) {
       throw new ApiError(404, 'Invite not found');
     }
-    const gameId = participant.gameId;
-    const receiverId = participant.userId;
-    const inviteUserTeamId = participant.inviteUserTeamId;
-    if (gameId && participant.game) {
-      await validateGenderForGame(participant.game, receiverId);
-      const existingParticipant = participant.game.participants.find((p) => p.userId === receiverId);
-      if (existingParticipant) {
-        if (existingParticipant.status === 'PLAYING') {
-          return { message: 'invites.acceptedSuccessfully', gameId };
-        }
-        const joinResult = await canAddPlayerToGame(participant.game, receiverId);
-        if (!joinResult.canJoin && joinResult.shouldQueue) {
-          await prisma.gameParticipant.update({
-            where: { id: participantId },
-            data: {
-              status: 'IN_QUEUE',
-              invitedByUserId: null,
-              inviteMessage: null,
-              inviteExpiresAt: null,
-            },
-          });
-          await GameService.updateGameReadiness(gameId);
-          return { message: 'games.addedToJoinQueue', gameId };
-        }
-        await prisma.gameParticipant.update({
-          where: { id: existingParticipant.id },
-          data: {
-            status: 'PLAYING',
-            invitedByUserId: null,
-            inviteMessage: null,
-            inviteExpiresAt: null,
-          },
-        });
-        await GameService.updateGameReadiness(gameId);
-      } else {
-        const joinResult = await canAddPlayerToGame(participant.game, receiverId);
-        if (!joinResult.canJoin && joinResult.shouldQueue) {
-          await prisma.gameParticipant.update({
-            where: { id: participantId },
-            data: {
-              status: 'IN_QUEUE',
-              invitedByUserId: null,
-              inviteMessage: null,
-              inviteExpiresAt: null,
-            },
-          });
-          await GameService.updateGameReadiness(gameId);
-          return { message: 'games.addedToJoinQueue', gameId };
-        }
-        await prisma.gameParticipant.update({
-          where: { id: participantId },
-          data: { status: 'PLAYING', role: 'PARTICIPANT' },
-        });
-        await GameService.updateGameReadiness(gameId);
-      }
+    const result = await InviteService.acceptInvite(participantId, participant.userId, true, true);
+    if (!result.success) {
+      const code =
+        result.message === 'errors.invites.notFound'
+          ? 404
+          : result.message === 'errors.invites.notAuthorizedToAccept'
+            ? 403
+            : 400;
+      throw new ApiError(code, result.message);
     }
-    if (gameId && participant.user) {
-      const receiverName = getUserDisplayName(participant.user.firstName, participant.user.lastName);
-      try {
-        await createSystemMessage(gameId, {
-          type: SystemMessageType.USER_ACCEPTED_INVITE,
-          variables: { userName: receiverName },
-        });
-      } catch (error) {
-        console.error('Failed to create system message for invite acceptance:', error);
-      }
-    }
-    if (gameId && inviteUserTeamId) {
-      try {
-        await applyUserTeamToFixedTeamsIfReady(gameId, inviteUserTeamId);
-      } catch (e) {
-        console.error('[userTeamFixedTeams] admin accept', e);
-      }
-    }
-    return { message: 'invites.acceptedSuccessfully', gameId };
+    return { message: result.message, gameId: participant.gameId };
   }
 
   static async declineInvite(participantId: string) {
     const participant = await prisma.gameParticipant.findUnique({
       where: { id: participantId },
-      include: { user: { select: USER_SELECT_FIELDS } },
+      select: { userId: true, gameId: true },
     });
-    if (!participant || participant.status !== 'INVITED') {
+    if (!participant?.userId) {
       throw new ApiError(404, 'Invite not found');
     }
-    if (participant.role === ParticipantRole.OWNER) {
-      await prisma.gameParticipant.update({ where: { id: participantId }, data: { status: 'NON_PLAYING' } });
-      return { message: 'invites.declinedSuccessfully' };
+    const result = await InviteService.declineInvite(participantId, participant.userId, true);
+    if (!result.success) {
+      const code =
+        result.message === 'errors.invites.notFound'
+          ? 404
+          : result.message === 'errors.invites.notAuthorizedToDecline'
+            ? 403
+            : 400;
+      throw new ApiError(code, result.message);
     }
-    if (participant.gameId && participant.user) {
-      const receiverName = getUserDisplayName(participant.user.firstName, participant.user.lastName);
-      try {
-        await createSystemMessage(participant.gameId, {
-          type: SystemMessageType.USER_DECLINED_INVITE,
-          variables: { userName: receiverName },
-        });
-      } catch (error) {
-        console.error('Failed to create system message for invite decline:', error);
-      }
-    }
-    await prisma.gameParticipant.delete({ where: { id: participantId } });
-    return { message: 'invites.declinedSuccessfully' };
+    return { message: result.message };
   }
 
   static async resetGameResults(gameId: string, _adminUserId: string) {

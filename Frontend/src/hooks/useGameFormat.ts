@@ -38,7 +38,6 @@ export interface UseGameFormatResult {
   pointsPerLoose: number;
   pointsPerTie: number;
   winnerOfGame: GameSetupParams['winnerOfGame'];
-  prohibitMatchesEditing: boolean;
   overrides: Partial<GameSetupParams>;
   customPointsTotal: number | null;
   matchTimerEnabled: boolean;
@@ -52,7 +51,7 @@ export interface UseGameFormatResult {
   setCustomPointsTotal: (n: number | null) => void;
   setMatchTimerEnabled: (v: boolean) => void;
   setMatchTimedCapMinutes: (n: number) => void;
-  setRanking: (patch: Partial<Pick<UseGameFormatResult, 'pointsPerWin' | 'pointsPerLoose' | 'pointsPerTie' | 'winnerOfGame' | 'prohibitMatchesEditing'>>) => void;
+  setRanking: (patch: Partial<Pick<UseGameFormatResult, 'pointsPerWin' | 'pointsPerLoose' | 'pointsPerTie' | 'winnerOfGame'>>) => void;
   setOverrides: (patch: Partial<GameSetupParams>) => void;
   resetOverrides: () => void;
 }
@@ -108,10 +107,6 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
   const [winnerOfGame, setWinnerOfGame] = useState<GameSetupParams['winnerOfGame']>(
     initial?.winnerOfGame ?? template.winnerOfGame,
   );
-  const [prohibitMatchesEditing, setProhibitMatchesEditing] = useState<boolean>(
-    initial?.prohibitMatchesEditing ?? false,
-  );
-
   const [overrides, setOverridesState] = useState<Partial<GameSetupParams>>({});
 
   const initialTimedCap = (() => {
@@ -203,7 +198,6 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     if (patch.pointsPerLoose !== undefined) setPointsPerLoose(patch.pointsPerLoose);
     if (patch.pointsPerTie !== undefined) setPointsPerTie(patch.pointsPerTie);
     if (patch.winnerOfGame !== undefined) setWinnerOfGame(patch.winnerOfGame);
-    if (patch.prohibitMatchesEditing !== undefined) setProhibitMatchesEditing(patch.prohibitMatchesEditing);
   }, []);
 
   useEffect(() => {
@@ -211,16 +205,12 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     const next = clampMatchGenerationType(generationType, maxParticipants);
     if (next !== generationType) {
       setGenerationType(next);
-      if (next === 'HANDMADE' || next === 'FIXED' || next === 'AUTOMATIC') {
-        setRanking({ prohibitMatchesEditing: false });
-      }
     }
   }, [
     skipGenerationParticipantDefaults,
     maxParticipants,
     generationType,
     setGenerationType,
-    setRanking,
   ]);
 
   const setOverrides = useCallback((patch: Partial<GameSetupParams>) => {
@@ -239,7 +229,6 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
       pointsPerLoose,
       pointsPerTie,
       winnerOfGame,
-      prohibitMatchesEditing,
       customPointsTotal,
       matchTimedCapMinutes,
       matchTimerEnabled,
@@ -254,7 +243,6 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     pointsPerLoose,
     pointsPerTie,
     winnerOfGame,
-    prohibitMatchesEditing,
     customPointsTotal,
     matchTimedCapMinutes,
     matchTimerEnabled,
@@ -270,7 +258,6 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     pointsPerLoose,
     pointsPerTie,
     winnerOfGame,
-    prohibitMatchesEditing,
     overrides,
     customPointsTotal,
     matchTimerEnabled,

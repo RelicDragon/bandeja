@@ -34,6 +34,8 @@ export async function addOrUpdateParticipant(
         invitedByUserId: null,
         inviteMessage: null,
         inviteExpiresAt: null,
+        inviteUserTeamId: null,
+        inviteClosedAt: null,
       },
     });
 

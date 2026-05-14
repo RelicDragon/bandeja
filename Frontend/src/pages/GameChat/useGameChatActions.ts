@@ -22,6 +22,7 @@ import type { ChatMessageWithStatus } from '@/api/chat';
 import type { RefObject } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 
 export interface UseGameChatActionsParams {
   currentIdRef: RefObject<string | undefined>;
@@ -98,7 +99,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
     if (userParticipant.status === 'GUEST') {
       return { title: t('chat.leave'), message: t('chat.leaveConfirmation'), confirmText: t('chat.leave') };
     }
-    if (userParticipant.status === 'INVITED') {
+    if (userParticipant && isPendingGameInvite(userParticipant)) {
       return { title: t('chat.leaveDeclineInviteTitle'), message: t('chat.leaveDeclineInviteMessage'), confirmText: t('common.decline') };
     }
     if (userParticipant.status === 'IN_QUEUE') {

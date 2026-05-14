@@ -3,6 +3,7 @@ import { gamesApi, invitesApi } from '@/api';
 import { chatApi } from '@/api/chat';
 import { Game, Invite } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { isPendingGameInvite, mergeGameWithInviteDeletedPayload } from '@/utils/gameInviteParticipant';
 import {
   OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT,
   RESTORE_GAME_UNREAD_EVENT,
@@ -33,7 +34,7 @@ export const useHomeGames = (
     const accessibleGameIds = myGames
       .filter(game => {
         const isParticipant = game.participants.some(p => p.userId === userId);
-        const hasPendingInvite = game.participants?.some(p => p.userId === userId && p.status === 'INVITED');
+        const hasPendingInvite = game.participants?.some((p) => p.userId === userId && isPendingGameInvite(p));
         return isParticipant || hasPendingInvite;
       })
       .map(game => game.id);
@@ -173,7 +174,12 @@ export const useHomeGames = (
 
   useEffect(() => {
     if (!lastInviteDeleted) return;
-    setInvites(prevInvites => prevInvites.filter(invite => invite.id !== lastInviteDeleted.inviteId));
+    setInvites((prevInvites) => prevInvites.filter((invite) => invite.id !== lastInviteDeleted.inviteId));
+    const gid = lastInviteDeleted.gameId;
+    if (!gid) return;
+    const patch = (g: Game) => mergeGameWithInviteDeletedPayload(g, lastInviteDeleted);
+    setGames((prev) => prev.map((g) => (g.id === gid ? patch(g) : g)));
+    setAvailableGames((prev) => prev.map((g) => (g.id === gid ? patch(g) : g)));
   }, [lastInviteDeleted]);
 
   useEffect(() => {

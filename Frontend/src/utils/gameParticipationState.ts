@@ -1,5 +1,6 @@
 import type { GameParticipant, Game } from '@/types';
 import { isParticipantPlaying, isParticipantNonPlaying, isParticipantGuest, isParticipantInQueue } from './participantStatus';
+import { isPendingGameInvite } from './gameInviteParticipant';
 import { isUserGameAdminOrOwner } from './gameResults';
 
 function userIsPlayingInParticipantList(parts: GameParticipant[] | undefined, userId: string): boolean {
@@ -59,7 +60,7 @@ export function getGameParticipationState(
   const isRealParticipant = userParticipant ? (isParticipantPlaying(userParticipant) || isParticipantNonPlaying(userParticipant)) : false;
   const isPlaying = userParticipant ? isParticipantPlaying(userParticipant) : false;
   const isGuest = userParticipant ? isParticipantGuest(userParticipant) : false;
-  const hasPendingInvite = userParticipant?.status === 'INVITED';
+  const hasPendingInvite = userParticipant ? isPendingGameInvite(userParticipant) : false;
   const isInJoinQueue = userParticipant ? isParticipantInQueue(userParticipant) : false;
   const isAdminOrOwner = game && userId
     ? isUserGameAdminOrOwner(game, userId)

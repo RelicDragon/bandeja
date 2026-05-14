@@ -69,6 +69,10 @@ export function validateClassicRegularGames(a: number, b: number, r: ClassicGame
 
   if (hi < target) return `A team must reach at least ${target} games to win the set`;
 
+  if (winBy >= 2 && hi === target + 1 && lo < target - 1) {
+    return 'Invalid classic set score (set would have ended earlier)';
+  }
+
   if (winBy >= 2 && tbAt !== null && hi === tbAt + 1 && lo === tbAt) {
     return null;
   }

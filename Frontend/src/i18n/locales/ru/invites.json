@@ -12,12 +12,17 @@
     "acceptedSuccessfully": "Приглашение успешно принято",
     "declined": "Приглашение отклонено",
     "declinedSuccessfully": "Приглашение успешно отклонено",
+    "cancelledSuccessfully": "Приглашение отменено",
     "selectPlayer": "Выберите игрока",
     "selectPlayers": "Выберите игроков",
     "noPlayersAvailable": "Нет доступных игроков для приглашения",
     "inviteFriendToBandeja": "Пригласить друга в Bandeja",
     "shareAppBody": "Присоединяйся к Bandeja: {{url}}",
     "pendingInvites": "Ожидающие приглашения",
+    "badgeDeclined": "Declined",
+    "badgeInviteCancelled": "Invite cancelled",
+    "sectionTerminalInvites": "Invite responses",
+    "inviteAgainHint": "You can send a new invite.",
     "inviteSent": "Приглашение отправлено",
     "invitedYou": "Приглашение в"
   }

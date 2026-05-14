@@ -81,6 +81,7 @@ const validateClassicRegularSet = (a: number, b: number, rules: ScoringRules): V
   const lo = Math.min(a, b);
 
   if (hi < target) return { ok: false };
+  if (winBy >= 2 && hi === target + 1 && lo < target - 1) return { ok: false };
   if (winBy >= 2 && tbAt !== null && hi === tbAt + 1 && lo === tbAt) {
     return ok('REGULAR');
   }
@@ -211,3 +212,51 @@ export const computeMatchWinnerLiveScoring = (sets: SetResult[], rules: ScoringR
 
 export const isMatchDecidedForLiveScoring = (sets: SetResult[], rules: ScoringRules): boolean =>
   computeMatchWinnerLiveScoring(sets, rules) !== null;
+
+/** Match over for live UX / input lock: decisive winner or terminal draw (e.g. points tie). */
+export const isLiveMatchCompleteForScoring = (sets: SetResult[], rules: ScoringRules): boolean =>
+  getStandingsMatchOutcome(sets, rules) !== null;
+
+/**
+ * Outcome for standings / persisted winners: side winner, terminal draw, or no result (in progress or not finished by rules).
+ */
+export function getStandingsMatchOutcome(
+  sets: SetResult[],
+  rules: ScoringRules
+): 'A' | 'B' | 'tie' | null {
+  const decided = computeMatchWinnerLiveScoring(sets, rules);
+  if (decided === 'A') return 'A';
+  if (decided === 'B') return 'B';
+
+  const played = completedOfficialSetsForLive(sets, rules);
+  if (played.length === 0) return null;
+
+  if (rules.winnerOfMatch === 'BY_SCORES') {
+    let a = 0;
+    let b = 0;
+    for (const s of played) {
+      a += s.teamA;
+      b += s.teamB;
+    }
+    if (a === b && a > 0) return 'tie';
+    return null;
+  }
+
+  let a = 0;
+  let b = 0;
+  for (const set of played) {
+    const w = setWinner(set);
+    if (w === 'A') a += 1;
+    else if (w === 'B') b += 1;
+  }
+  const anyBallOfficial = sets.filter(isOfficialLiveMatchSet).filter(isSetPlayed).length;
+  if (
+    rules.fixedNumberOfSets > 0 &&
+    anyBallOfficial >= rules.fixedNumberOfSets &&
+    a === b &&
+    played.length > 0
+  ) {
+    return 'tie';
+  }
+  return null;
+}

@@ -342,7 +342,6 @@ model Game {
   winnerOfGame           WinnerOfGame        @default(BY_MATCHES_WON)
   winnerOfMatch          WinnerOfMatch       @default(BY_SCORES)
   matchGenerationType    MatchGenerationType @default(HANDMADE)
-  prohibitMatchesEditing Boolean             @default(false)
   pointsPerWin           Int                 @default(0)
   pointsPerLoose         Int                 @default(0)
   pointsPerTie           Int                 @default(0)
@@ -514,6 +513,7 @@ model GameParticipant {
   inviteExpiresAt  DateTime?
   /// When set, accepting this invite can auto-assign this user-team to game fixed teams once all members are playing.
   inviteUserTeamId String?
+  inviteClosedAt     DateTime?
   /// Watch / client: match the user is currently scoring (cleared on finalize).
   activeMatchId    String?
   game             Game               @relation(fields: [gameId], references: [id], onDelete: Cascade)
@@ -1171,6 +1171,8 @@ enum ParticipantRole {
 enum ParticipantStatus {
   GUEST
   INVITED
+  INVITE_DECLINED
+  INVITE_CANCELLED
   IN_QUEUE
   PLAYING
   NON_PLAYING
