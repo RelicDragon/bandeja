@@ -88,7 +88,8 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.welcome': '🎾 Welcome to Bandeja!\n\n💬 To receive notifications about games and new messages, keep this bot running.',
     'telegram.authCodeText': '🔐 Your authentication code:\n\n⏰ This code will expire in 5 minutes.\n\n📱 Enter this code in the app to complete authentication.',
     'telegram.orClickToLogin': 'Or tap the button below to log in instantly:',
-    'telegram.loginHint': 'Simply click the button below to log in to Bandeja.',
+    'telegram.loginHint':
+      'Simply click the button below to log in to Bandeja.\n\n‼️‼️ IMPORTANT ‼️‼️\nPlease check the App Store or Google Play and update to version 0.95.1.',
     'telegram.accountLinkHint': 'Tap the button below to finish linking Telegram to your Bandeja profile. Stay logged in in the app.',
     'telegram.linkIntentInvalid': '❌ This link expired or is invalid. Open Bandeja → Profile → Link Telegram again.',
     'telegram.telegramInUseOtherAccount': '❌ This Telegram account is already linked to another Bandeja user.',
@@ -307,7 +308,8 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.welcome': '🎾 Добро пожаловать в Bandeja!\n\n💬 Чтобы получать уведомления о играх и новых сообщениях, оставьте этого бота включенным.',
     'telegram.authCodeText': '🔐 Ваш код авторизации:\n\n⏰ Этот код истечет через 5 минут.\n\n📱 Введите этот код в приложении, чтобы завершить авторизацию.',
     'telegram.orClickToLogin': 'Или нажмите кнопку ниже, чтобы войти сразу:',
-    'telegram.loginHint': 'Просто нажмите кнопку ниже, чтобы войти в Bandeja.',
+    'telegram.loginHint':
+      'Просто нажмите кнопку ниже, чтобы войти в Bandeja.\n\n‼️‼️ ВАЖНО ‼️‼️\nПроверьте App Store или Google Play и обновите приложение до версии 0.95.1.',
     'telegram.accountLinkHint': 'Нажмите кнопку ниже, чтобы привязать Telegram к профилю Bandeja. Оставайтесь в аккаунте в приложении.',
     'telegram.linkIntentInvalid': '❌ Ссылка устарела или недействительна. Откройте Bandeja → Профиль → Привязать Telegram снова.',
     'telegram.telegramInUseOtherAccount': '❌ Этот Telegram уже привязан к другому пользователю Bandeja.',
@@ -525,7 +527,8 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.welcome': '🎾 Добродошли у Bandeja!\n\n💬 Да бисте примали обавештења о играма и новим порукама, оставите овог бота покренутог.',
     'telegram.authCodeText': '🔐 Ваш код за ауторизацију:\n\n⏰ Овај код ће истећи за 5 минута.\n\n📱 Унесите овај код у апликацији да завршите ауторизацију.',
     'telegram.orClickToLogin': 'Или притисните дугме испод да се одмах пријавите:',
-    'telegram.loginHint': 'Једноставно притисните дугме испод да се пријавите у Bandeja.',
+    'telegram.loginHint':
+      'Једноставно притисните дугме испод да се пријавите у Bandeja.\n\n‼️‼️ ВАЖНО ‼️‼️\nПроверите App Store или Google Play и ажурирајте апликацију на верзију 0.95.1.',
     'telegram.accountLinkHint': 'Притисните дугме испод да завршите повезивање Telegram-а са профилом Bandeja. Останите пријављени у апликацији.',
     'telegram.linkIntentInvalid': '❌ Линк је истекао или је неважећи. Отворите Bandeja → Профил → Повежи Telegram поново.',
     'telegram.telegramInUseOtherAccount': '❌ Овај Telegram је већ повезан са другим корисником Bandeja.',
@@ -743,7 +746,8 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.welcome': '🎾 ¡Bienvenido a Bandeja!\n\n💬 Para recibir notificaciones sobre juegos y nuevos mensajes, mantén este bot en ejecución.',
     'telegram.authCodeText': '🔐 Tu código de autenticación:\n\n⏰ Este código expirará en 5 minutos.\n\n📱 Introduce este código en la aplicación para completar la autenticación.',
     'telegram.orClickToLogin': 'O pulsa el botón de abajo para iniciar sesión al instante:',
-    'telegram.loginHint': 'Simplemente pulsa el botón de abajo para iniciar sesión en Bandeja.',
+    'telegram.loginHint':
+      'Simplemente pulsa el botón de abajo para iniciar sesión en Bandeja.\n\n‼️‼️ IMPORTANTE ‼️‼️\nComprueba la App Store o Google Play y actualiza la app a la versión 0.95.1.',
     'telegram.accountLinkHint': 'Pulsa el botón de abajo para terminar de vincular Telegram a tu perfil de Bandeja. Mantén la sesión iniciada en la app.',
     'telegram.linkIntentInvalid': '❌ El enlace caducó o no es válido. Abre Bandeja → Perfil → Vincular Telegram otra vez.',
     'telegram.telegramInUseOtherAccount': '❌ Esta cuenta de Telegram ya está vinculada a otro usuario de Bandeja.',
@@ -961,7 +965,8 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.welcome': '🎾 Vítejte v Bandeja!\n\n💬 Pro oznámení o zápasech a nových zprávách nechte tohoto bota zapnutého.',
     'telegram.authCodeText': '🔐 Váš ověřovací kód:\n\n⏰ Platnost kódu vyprší za 5 minut.\n\n📱 Zadejte tento kód v aplikaci pro dokončení přihlášení.',
     'telegram.orClickToLogin': 'Nebo klepněte na tlačítko níže pro okamžité přihlášení:',
-    'telegram.loginHint': 'Jednoduše klepněte na tlačítko níže pro přihlášení do Bandeja.',
+    'telegram.loginHint':
+      'Jednoduše klepněte na tlačítko níže pro přihlášení do Bandeja.\n\n‼️‼️ DŮLEŽITÉ ‼️‼️\nZkontrolujte App Store nebo Google Play a aktualizujte aplikaci na verzi 0.95.1.',
     'telegram.accountLinkHint': 'Klepněte na tlačítko níže a dokončete propojení Telegramu s profilem Bandeja. Zůstaňte v aplikaci přihlášeni.',
     'telegram.linkIntentInvalid': '❌ Odkaz vypršel nebo je neplatný. Otevřete Bandeja → Profil → Propojit Telegram znovu.',
     'telegram.telegramInUseOtherAccount': '❌ Tento Telegram je už propojen s jiným uživatelem Bandeja.',
