@@ -520,7 +520,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
         <div className="space-y-0">
           {filteredRounds.map((round, roundIndex) => {
             const isLastRound = roundIndex === filteredRounds.length - 1;
-            const showAddGameButton = canEdit && isLastRound;
+            const showAddGameButton = canEdit;
             const canDeleteRound =
               canEdit &&
               isLastRound &&
