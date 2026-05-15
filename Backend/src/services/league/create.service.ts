@@ -8,11 +8,169 @@ import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerat
 import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
 import { TeamForRoundGeneration } from './generation/TeamForRoundGeneration';
 import { roundsInSingleRoundRobinCycle } from './generation/fixedTeamsRoundRobin';
+import { teamPlayerSig } from './generation/fixedTeamsRoundMatching';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 
 export class LeagueCreateService {
   private static getSeasonParticipantType(hasFixedTeams: boolean) {
     return hasFixedTeams ? 'TEAM' as const : 'USER' as const;
+  }
+
+  /**
+   * Manual "Create game" for a fixed-team round: prefer teams that have met the fewest times,
+   * then pairs with the lowest combined season game load. Skips teams already in a game this round.
+   */
+  private static async pickBestFixedTeamPairForManualRound(params: {
+    leagueSeasonId: string;
+    leagueRoundId: string;
+    leagueGroupId?: string;
+    standings: any[];
+    allowUserInMultipleTeams: boolean;
+  }): Promise<{ first: any; second: any }> {
+    const { leagueSeasonId, leagueRoundId, leagueGroupId, standings, allowUserInMultipleTeams } = params;
+
+    const teamRows = standings.filter(
+      (s: any) =>
+        s.participantType === 'TEAM' &&
+        s.leagueTeamId &&
+        s.leagueTeam &&
+        Array.isArray(s.leagueTeam.players) &&
+        s.leagueTeam.players.length === 2
+    );
+
+    if (teamRows.length < 2) {
+      throw new ApiError(400, 'Not enough fixed teams in this group to create a game');
+    }
+
+    const sigToTid = new Map<string, string>();
+    const tidToUserSet = new Map<string, Set<string>>();
+
+    for (const row of teamRows) {
+      const ids = row.leagueTeam.players
+        .map((p: { userId: string | null }) => p.userId)
+        .filter((id: string | null | undefined): id is string => typeof id === 'string' && id.trim().length > 0);
+      if (ids.length !== 2) continue;
+      const sig = teamPlayerSig(ids);
+      sigToTid.set(sig, row.leagueTeamId as string);
+      tidToUserSet.set(row.leagueTeamId as string, new Set(ids));
+    }
+
+    const groupScopeIds = leagueGroupId
+      ? [leagueGroupId]
+      : [
+          ...new Set(
+            teamRows
+              .map((r: any) => r.currentGroupId as string | null | undefined)
+              .filter((id): id is string => typeof id === 'string' && id.length > 0)
+          ),
+        ];
+
+    const leagueGameWhere: {
+      parentId: string;
+      entityType: typeof EntityType.LEAGUE;
+      leagueGroupId?: string | { in: string[] };
+    } = {
+      parentId: leagueSeasonId,
+      entityType: EntityType.LEAGUE,
+    };
+    if (leagueGroupId) {
+      leagueGameWhere.leagueGroupId = leagueGroupId;
+    } else if (groupScopeIds.length > 0) {
+      leagueGameWhere.leagueGroupId = { in: groupScopeIds };
+    }
+
+    const seasonGames = await prisma.game.findMany({
+      where: leagueGameWhere,
+      select: {
+        id: true,
+        leagueRoundId: true,
+        fixedTeams: {
+          orderBy: { teamNumber: 'asc' },
+          select: {
+            players: { select: { userId: true } },
+          },
+        },
+      },
+    });
+
+    const resolveTids = (game: (typeof seasonGames)[number]): [string | null, string | null] => {
+      if (game.fixedTeams.length < 2) return [null, null];
+      const a = game.fixedTeams[0].players.map((p) => p.userId).filter(Boolean) as string[];
+      const b = game.fixedTeams[1].players.map((p) => p.userId).filter(Boolean) as string[];
+      if (a.length !== 2 || b.length !== 2) return [null, null];
+      const tA = sigToTid.get(teamPlayerSig(a)) ?? null;
+      const tB = sigToTid.get(teamPlayerSig(b)) ?? null;
+      return [tA, tB];
+    };
+
+    const busyTids = new Set<string>();
+    const matchupCounts = new Map<string, number>();
+    const gamesPerTid = new Map<string, number>();
+
+    for (const tid of sigToTid.values()) {
+      gamesPerTid.set(tid, 0);
+    }
+
+    for (const g of seasonGames) {
+      const [t1, t2] = resolveTids(g);
+      if (!t1 || !t2 || t1 === t2) continue;
+
+      const mkey = t1 < t2 ? `${t1}|${t2}` : `${t2}|${t1}`;
+      matchupCounts.set(mkey, (matchupCounts.get(mkey) ?? 0) + 1);
+      gamesPerTid.set(t1, (gamesPerTid.get(t1) ?? 0) + 1);
+      gamesPerTid.set(t2, (gamesPerTid.get(t2) ?? 0) + 1);
+
+      if (g.leagueRoundId === leagueRoundId) {
+        busyTids.add(t1);
+        busyTids.add(t2);
+      }
+    }
+
+    const teamsList = [...sigToTid.values()].sort();
+
+    let best: { ta: string; tb: string; m: number; g: number } | null = null;
+
+    for (let i = 0; i < teamsList.length; i++) {
+      for (let j = i + 1; j < teamsList.length; j++) {
+        const ta = teamsList[i]!;
+        const tb = teamsList[j]!;
+        if (busyTids.has(ta) || busyTids.has(tb)) continue;
+
+        if (!allowUserInMultipleTeams) {
+          const sa = tidToUserSet.get(ta);
+          const sb = tidToUserSet.get(tb);
+          if (sa && sb && [...sa].some((u) => sb.has(u))) continue;
+        }
+
+        const mkey = ta < tb ? `${ta}|${tb}` : `${tb}|${ta}`;
+        const m = matchupCounts.get(mkey) ?? 0;
+        const gsum = (gamesPerTid.get(ta) ?? 0) + (gamesPerTid.get(tb) ?? 0);
+        const cand = { ta, tb, m, g: gsum };
+        if (
+          best === null ||
+          cand.m < best.m ||
+          (cand.m === best.m && cand.g < best.g) ||
+          (cand.m === best.m && cand.g === best.g && cand.ta < best.ta) ||
+          (cand.m === best.m && cand.g === best.g && cand.ta === best.ta && cand.tb < best.tb)
+        ) {
+          best = cand;
+        }
+      }
+    }
+
+    if (!best) {
+      throw new ApiError(
+        400,
+        'No available team pairing for this round (teams may already be scheduled or rosters overlap).'
+      );
+    }
+
+    const first = teamRows.find((r: any) => r.leagueTeamId === best.ta);
+    const second = teamRows.find((r: any) => r.leagueTeamId === best.tb);
+    if (!first || !second) {
+      throw new ApiError(500, 'Could not resolve best league pairing');
+    }
+    return { first, second };
   }
 
   private static getLeagueParticipantSortLevel(participant: any, hasFixedTeams: boolean): number {
@@ -645,34 +803,33 @@ export class LeagueCreateService {
       throw new ApiError(400, 'At least 4 participants are required to create a game');
     }
 
-    let team1Standing = updatedStandings[0];
-    let team2Standing = updatedStandings[1];
-    
-    if (!hasFixedTeams) {
+    let team1Standing: (typeof updatedStandings)[number];
+    let team2Standing: (typeof updatedStandings)[number];
+
+    if (hasFixedTeams) {
+      const picked = await this.pickBestFixedTeamPairForManualRound({
+        leagueSeasonId: round.leagueSeasonId,
+        leagueRoundId,
+        leagueGroupId,
+        standings: updatedStandings,
+        allowUserInMultipleTeams: Boolean(seasonGame.allowUserInMultipleTeams),
+      });
+      team1Standing = picked.first;
+      team2Standing = picked.second;
+    } else {
+      team1Standing = updatedStandings[0];
+      team2Standing = updatedStandings[1];
+
       let team2Index = 1;
-      while (team2Index < updatedStandings.length && 
-             team2Standing.userId === team1Standing.userId) {
+      while (team2Index < updatedStandings.length && team2Standing.userId === team1Standing.userId) {
         team2Index++;
         if (team2Index < updatedStandings.length) {
           team2Standing = updatedStandings[team2Index];
         }
       }
-      
+
       if (team2Standing.userId === team1Standing.userId) {
         throw new ApiError(400, 'Not enough different participants in standings to create a game');
-      }
-    } else {
-      let team2Index = 1;
-      while (team2Index < updatedStandings.length && 
-             team2Standing.leagueTeamId === team1Standing.leagueTeamId) {
-        team2Index++;
-        if (team2Index < updatedStandings.length) {
-          team2Standing = updatedStandings[team2Index];
-        }
-      }
-      
-      if (team2Standing.leagueTeamId === team1Standing.leagueTeamId) {
-        throw new ApiError(400, 'Not enough different teams in standings to create a game');
       }
     }
 

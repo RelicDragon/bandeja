@@ -3,12 +3,6 @@ import prisma from '../../../config/database';
 import type { GameReadinessDb } from '../../game/readiness.service';
 import { ApiError } from '../../../utils/ApiError';
 import { createLeagueGame } from '../gameCreation.util';
-import {
-  everyMatchupUntracked,
-  findMinCostMaxMatching,
-  matchupKeyFromSigs,
-  teamPlayerSig,
-} from './fixedTeamsRoundMatching';
 import { pairIndicesForRoundRobinSlot, roundsInSingleRoundRobinCycle } from './fixedTeamsRoundRobin';
 
 interface TempTeam {
@@ -275,7 +269,6 @@ export class TeamForRoundGeneration {
     const sortedTeams = [...fixedTeams].sort((a, b) =>
       String(a.participant.id).localeCompare(String(b.participant.id))
     );
-    const sigs = sortedTeams.map((t) => teamPlayerSig(t.playerIds));
 
     const priorRegularRounds = await db.leagueRound.count({
       where: {
@@ -290,33 +283,12 @@ export class TeamForRoundGeneration {
       return;
     }
 
-    const playCounts = await this.getRegularSeasonFixedTeamMatchupCounts(
-      leagueSeasonId,
-      groupId,
-      leagueRoundId,
-      db
+    // Pure circle RR every round; min-cost branch ran from round 1+ and broke bye balance (odd n).
+    const slot = priorRegularRounds % cycle;
+    const pairIndices = pairIndicesForRoundRobinSlot(sortedTeams.length, slot);
+    console.log(
+      `[LEAGUE ROUND GEN] Group ${groupId}: fixed RR circle slot ${slot}/${cycle} (prior REGULAR ${priorRegularRounds}), ${pairIndices.length} matches`
     );
-
-    const usePureRoundRobin = everyMatchupUntracked(sigs, playCounts);
-    let pairIndices: [number, number][];
-
-    if (usePureRoundRobin) {
-      const slot = priorRegularRounds % cycle;
-      pairIndices = pairIndicesForRoundRobinSlot(sortedTeams.length, slot);
-      console.log(
-        `[LEAGUE ROUND GEN] Group ${groupId}: fixed RR circle slot ${slot}/${cycle} (prior REGULAR ${priorRegularRounds}), ${pairIndices.length} matches`
-      );
-    } else {
-      pairIndices = findMinCostMaxMatching(sortedTeams.length, (i, j) => {
-        const a = sigs[i];
-        const b = sigs[j];
-        if (!a || !b || a === b) return 0;
-        return playCounts.get(matchupKeyFromSigs(a, b)) ?? 0;
-      });
-      console.log(
-        `[LEAGUE ROUND GEN] Group ${groupId}: fixed adaptive matching (${pairIndices.length} matches, history-aware)`
-      );
-    }
 
     for (const [ia, ib] of pairIndices) {
       const team1 = sortedTeams[ia];
@@ -338,48 +310,6 @@ export class TeamForRoundGeneration {
         db,
       });
     }
-  }
-
-  private static async getRegularSeasonFixedTeamMatchupCounts(
-    leagueSeasonId: string,
-    groupId: string,
-    currentRoundId: string,
-    db: GameReadinessDb
-  ): Promise<Map<string, number>> {
-    const previousGames = await db.game.findMany({
-      where: {
-        parentId: leagueSeasonId,
-        leagueGroupId: groupId,
-        leagueRoundId: { not: currentRoundId },
-        hasFixedTeams: true,
-        leagueRound: { roundType: RoundType.REGULAR },
-      },
-      include: {
-        fixedTeams: {
-          orderBy: { teamNumber: 'asc' },
-          include: {
-            players: {
-              select: { userId: true },
-            },
-          },
-        },
-      },
-    });
-
-    const counts = new Map<string, number>();
-    for (const game of previousGames) {
-      if (game.fixedTeams.length < 2) continue;
-      const a = game.fixedTeams[0].players
-        .map((p) => p.userId)
-        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
-      const b = game.fixedTeams[1].players
-        .map((p) => p.userId)
-        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
-      if (a.length !== 2 || b.length !== 2) continue;
-      const key = matchupKeyFromSigs([...a].sort().join(','), [...b].sort().join(','));
-      counts.set(key, (counts.get(key) ?? 0) + 1);
-    }
-    return counts;
   }
 
   private static async getPlayedTeamPairs(

@@ -132,23 +132,21 @@ function scopeStorageKey(leagueSeasonId: string) {
 }
 
 function loadScope(leagueSeasonId: string): { mode: ScopeMode; pickValue: string } {
+  let pickValue = '';
   try {
     const raw = localStorage.getItem(scopeStorageKey(leagueSeasonId));
     if (!raw) return { mode: 'my', pickValue: '' };
-    const j = JSON.parse(raw) as { mode?: ScopeMode; pickValue?: string };
-    if (j.mode === 'my' || j.mode === 'group' || j.mode === 'pick' || j.mode === 'all') {
-      return { mode: j.mode, pickValue: typeof j.pickValue === 'string' ? j.pickValue : '' };
-    }
-    if (j.mode === 'me') return { mode: 'my', pickValue: '' };
+    const j = JSON.parse(raw) as { pickValue?: string };
+    if (typeof j.pickValue === 'string') pickValue = j.pickValue;
   } catch {
     /* ignore */
   }
-  return { mode: 'my', pickValue: '' };
+  return { mode: 'my', pickValue };
 }
 
-function saveScope(leagueSeasonId: string, mode: ScopeMode, pickValue: string) {
+function saveScope(leagueSeasonId: string, _mode: ScopeMode, pickValue: string) {
   try {
-    localStorage.setItem(scopeStorageKey(leagueSeasonId), JSON.stringify({ mode, pickValue }));
+    localStorage.setItem(scopeStorageKey(leagueSeasonId), JSON.stringify({ pickValue }));
   } catch {
     /* ignore */
   }
@@ -194,7 +192,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   const [scopeMode, setScopeMode] = useState<ScopeMode>(() => loadScope(leagueSeasonId).mode);
   const [pickValue, setPickValue] = useState(() => loadScope(leagueSeasonId).pickValue);
   const [planner, setPlanner] = useState<LeaguePlannerPayload | null>(null);
-  const [loading, setLoading] = useState(() => loadScope(leagueSeasonId).mode !== 'my');
+  const [loading, setLoading] = useState(false);
   const [sheet, setSheet] = useState<{
     day: LeaguePlannerDay;
     bucket: LeaguePlannerDay['buckets'][0];
@@ -229,10 +227,10 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   }, [weekStartsOn]);
 
   useEffect(() => {
-    const { mode, pickValue: pv } = loadScope(leagueSeasonId);
-    setScopeMode(mode);
+    const { pickValue: pv } = loadScope(leagueSeasonId);
+    setScopeMode('my');
     setPickValue(pv);
-    setLoading(mode !== 'my');
+    setLoading(false);
   }, [leagueSeasonId]);
 
   useEffect(() => {

@@ -187,7 +187,147 @@ async function assertFullSingleRoundRobin(
   if (allKeys.size !== expectedUniquePairings) {
     throw new Error(`${label}: expected ${expectedUniquePairings} unique pairings, got ${allKeys.size}`);
   }
+  await assertFixedTeamRoundRobinScheduleBalance(prisma, label, seasonId, n, roundsNeeded);
   console.log(`ok: ${label} — ${n} teams, ${roundsNeeded} rounds, ${allKeys.size} distinct matchups`);
+}
+
+/** Per-team games = n−1; each REGULAR round: even n → everyone plays once; odd n → exactly one bye. */
+async function assertFixedTeamRoundRobinScheduleBalance(
+  prisma: PrismaClient,
+  label: string,
+  seasonId: string,
+  n: number,
+  roundsNeeded: number,
+  groupId?: string,
+) {
+  const group =
+    groupId != null
+      ? await prisma.leagueGroup.findFirst({
+          where: { id: groupId, leagueSeasonId: seasonId },
+        })
+      : await prisma.leagueGroup.findFirst({ where: { leagueSeasonId: seasonId } });
+  if (!group) {
+    throw new Error(`${label}: schedule balance — no LeagueGroup`);
+  }
+
+  const participants = await prisma.leagueParticipant.findMany({
+    where: {
+      leagueSeasonId: seasonId,
+      participantType: LeagueParticipantType.TEAM,
+      currentGroupId: group.id,
+    },
+    include: {
+      leagueTeam: { include: { players: { select: { userId: true } } } },
+    },
+  });
+  if (participants.length !== n) {
+    throw new Error(
+      `${label}: schedule balance — expected ${n} team participants in group, got ${participants.length}`,
+    );
+  }
+
+  const rosterSigToLeagueTeamId = new Map<string, string>();
+  for (const p of participants) {
+    const ids = (p.leagueTeam?.players ?? []).map((x) => x.userId).filter(Boolean) as string[];
+    if (ids.length !== 2) {
+      throw new Error(`${label}: schedule balance — bad roster on participant ${p.id}`);
+    }
+    rosterSigToLeagueTeamId.set(teamPlayerSig(ids), p.leagueTeamId!);
+  }
+
+  const games = await prisma.game.findMany({
+    where: {
+      parentId: seasonId,
+      entityType: EntityType.LEAGUE,
+      leagueGroupId: group.id,
+    },
+    include: {
+      leagueRound: { select: { orderIndex: true, roundType: true } },
+      fixedTeams: {
+        orderBy: { teamNumber: 'asc' },
+        include: { players: { select: { userId: true } } },
+      },
+    },
+  });
+
+  const regularGames = games.filter((g) => g.leagueRound?.roundType === RoundType.REGULAR);
+  const expectedGameRows = roundsNeeded * Math.floor(n / 2);
+  if (regularGames.length !== expectedGameRows) {
+    throw new Error(
+      `${label}: schedule balance — expected ${expectedGameRows} REGULAR league games, got ${regularGames.length}`,
+    );
+  }
+
+  const gamesPerLeagueTeam = new Map<string, number>();
+  for (const tid of rosterSigToLeagueTeamId.values()) {
+    gamesPerLeagueTeam.set(tid, 0);
+  }
+
+  const appearancesByRound = new Map<number, Map<string, number>>();
+
+  for (const g of regularGames) {
+    const r = g.leagueRound!.orderIndex;
+    if (r < 0 || r >= roundsNeeded) {
+      throw new Error(`${label}: schedule balance — game ${g.id} has round orderIndex ${r} outside 0..${roundsNeeded - 1}`);
+    }
+    if (!appearancesByRound.has(r)) {
+      appearancesByRound.set(r, new Map());
+    }
+    const roundMap = appearancesByRound.get(r)!;
+
+    if (g.fixedTeams.length < 2) {
+      throw new Error(`${label}: schedule balance — game ${g.id} missing fixed teams`);
+    }
+    for (const ft of g.fixedTeams) {
+      const ids = ft.players.map((p) => p.userId).filter(Boolean) as string[];
+      if (ids.length !== 2) {
+        throw new Error(`${label}: schedule balance — game ${g.id} bad roster`);
+      }
+      const leagueTeamId = rosterSigToLeagueTeamId.get(teamPlayerSig(ids));
+      if (!leagueTeamId) {
+        throw new Error(`${label}: schedule balance — unknown roster in game ${g.id}`);
+      }
+      gamesPerLeagueTeam.set(leagueTeamId, (gamesPerLeagueTeam.get(leagueTeamId) ?? 0) + 1);
+      roundMap.set(leagueTeamId, (roundMap.get(leagueTeamId) ?? 0) + 1);
+    }
+  }
+
+  const expectedPerTeam = n - 1;
+  for (const p of participants) {
+    const tid = p.leagueTeamId!;
+    const c = gamesPerLeagueTeam.get(tid) ?? 0;
+    if (c !== expectedPerTeam) {
+      throw new Error(
+        `${label}: schedule balance — leagueTeam ${tid} played ${c} games, expected ${expectedPerTeam} for each team`,
+      );
+    }
+  }
+
+  for (let r = 0; r < roundsNeeded; r++) {
+    const roundMap = appearancesByRound.get(r);
+    if (!roundMap) {
+      throw new Error(`${label}: schedule balance — no games for round orderIndex ${r}`);
+    }
+    let byes = 0;
+    for (const p of participants) {
+      const tid = p.leagueTeamId!;
+      const appearances = roundMap.get(tid) ?? 0;
+      if (appearances > 1) {
+        throw new Error(
+          `${label}: schedule balance — leagueTeam ${tid} appears ${appearances}x in round ${r}`,
+        );
+      }
+      if (appearances === 0) {
+        byes++;
+      }
+    }
+    if (n % 2 === 0 && byes !== 0) {
+      throw new Error(`${label}: schedule balance — round ${r}: even n expects 0 byes, got ${byes}`);
+    }
+    if (n % 2 === 1 && byes !== 1) {
+      throw new Error(`${label}: schedule balance — round ${r}: odd n expects exactly 1 bye, got ${byes}`);
+    }
+  }
 }
 
 async function main() {
@@ -249,6 +389,7 @@ async function main() {
       if (allKeys.size !== 6) {
         throw new Error(`pure RR: expected 6 unique matchups, got ${allKeys.size}`);
       }
+      await assertFixedTeamRoundRobinScheduleBalance(prisma, 'pure RR 4', seasonId, 4, 3, group.id);
       console.log('ok: pure round-robin 4 teams × 3 rounds → 6 distinct pairings');
     }
 
@@ -314,7 +455,7 @@ async function main() {
       console.log('ok: PLAYOFF round ignored for REGULAR RR slot indexing');
     }
 
-    // --- 3) New team mid-season: adaptive matching, new pairings vs incumbents ---
+    // --- 3) New team mid-season: 5th team plays exactly once this round (2 games, one bye) ---
     {
       const teams = [
         [uid(0), uid(1)],
@@ -342,7 +483,6 @@ async function main() {
         data: { leagueSeasonId: seasonId, orderIndex: 0, roundType: RoundType.REGULAR },
       });
       await TeamForRoundGeneration.generateGamesForRound(round0.id);
-      const keysR0 = new Set(await matchupKeysForRound(prisma, round0.id));
 
       await prisma.gameTeam.create({
         data: {
@@ -387,13 +527,7 @@ async function main() {
       if (newTeamSides !== 1) {
         throw new Error('expected new team in exactly one match this round');
       }
-      const keysR1 = await matchupKeysForRound(prisma, round1.id);
-      for (const k of keysR1) {
-        if (keysR0.has(k)) {
-          throw new Error(`add team: round 1 repeated matchup from round 0: ${k}`);
-        }
-      }
-      console.log('ok: fifth team joins — 2 matches, new team plays, no repeat of R0 pairings');
+      console.log('ok: fifth team joins — 2 matches, new team plays once (RR may repeat an R0 pairing)');
     }
 
     // --- 4) Drop team: continue with 3 teams ---
@@ -460,7 +594,20 @@ async function main() {
       console.log('ok: team removed — 3-team round generates 1 fresh matchup');
     }
 
-    // --- 5) Full single RR: 12 teams (11 rounds × 6 games = 66 pairings) ---
+    // --- 5) Full single RR: 11 teams (odd n — 11 rounds × 5 games, one bye per round, 10 games/team) ---
+    {
+      const teams = buildDisjointTeams(users, 11);
+      const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
+      branches.push({ leagueId, seasonId });
+      const group = await prisma.leagueGroup.create({
+        data: { leagueSeasonId: seasonId, name: `QA rr11 ${Date.now()}` },
+      });
+      await LeagueSyncService.syncLeagueParticipants(seasonId);
+      await assignAllTeamParticipantsToGroup(prisma, seasonId, group.id);
+      await assertFullSingleRoundRobin(prisma, '11-team group', 11, seasonId);
+    }
+
+    // --- 6) Full single RR: 12 teams (11 rounds × 6 games = 66 pairings) ---
     {
       const teams = buildDisjointTeams(users, 12);
       const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
@@ -473,7 +620,7 @@ async function main() {
       await assertFullSingleRoundRobin(prisma, '12-team group', 12, seasonId);
     }
 
-    // --- 6) Full single RR: 24 teams (23 rounds × 12 games = 276 pairings) ---
+    // --- 7) Full single RR: 24 teams (23 rounds × 12 games = 276 pairings) ---
     {
       const teams = buildDisjointTeams(users, 24);
       const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
@@ -486,7 +633,7 @@ async function main() {
       await assertFullSingleRoundRobin(prisma, '24-team group', 24, seasonId);
     }
 
-    // --- 7) createFullRegularRoundRobin service (4 teams → 3 rounds, 6 games) ---
+    // --- 8) createFullRegularRoundRobin service (4 teams → 3 rounds, 6 games) ---
     {
       const teams = buildDisjointTeams(users, 4);
       const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
@@ -509,10 +656,11 @@ async function main() {
       if (gc !== 6) {
         throw new Error(`full RR batch: expected 6 games, got ${gc}`);
       }
+      await assertFixedTeamRoundRobinScheduleBalance(prisma, 'full RR batch', seasonId, 4, 3, group.id);
       console.log('ok: createFullRegularRoundRobin — 4 teams, 3 rounds, 6 games');
     }
 
-    // --- 8) createFullRegularRoundRobin: two groups (4 + 3 teams) → max cycle 3 rounds, 9 games ---
+    // --- 9) createFullRegularRoundRobin: two groups (4 + 3 teams) → max cycle 3 rounds, 9 games ---
     {
       const teams = buildDisjointTeams(users, 7);
       const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
@@ -567,6 +715,9 @@ async function main() {
       if (gc !== 9) {
         throw new Error(`full RR mixed 4+3: expected 9 games, got ${gc}`);
       }
+      const rrRounds = Math.max(roundsInSingleRoundRobinCycle(4), roundsInSingleRoundRobinCycle(3));
+      await assertFixedTeamRoundRobinScheduleBalance(prisma, 'full RR mixed group A', seasonId, 4, rrRounds, groupA.id);
+      await assertFixedTeamRoundRobinScheduleBalance(prisma, 'full RR mixed group B', seasonId, 3, rrRounds, groupB.id);
       console.log('ok: createFullRegularRoundRobin — mixed 4+3 teams, two groups');
     }
 
