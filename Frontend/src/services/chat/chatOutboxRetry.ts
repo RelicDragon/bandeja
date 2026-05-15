@@ -1,10 +1,10 @@
 import type { ChatContextType, ChatMessage } from '@/api/chat';
 import { chatLocalDb } from './chatLocalDb';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
-import { sendWithTimeout, isSending } from '@/services/chatSendService';
+import { sendWithTimeout, isSending, cancelSend } from '@/services/chatSendService';
 import { putLocalMessage } from './chatLocalApply';
 import { purgeExpiredFailedOutbox } from './chatOutboxExpiry';
-import { CHAT_OUTBOX_SUCCESS_EVENT } from './chatOutboxEvents';
+import { CHAT_OUTBOX_FAILED_EVENT, CHAT_OUTBOX_SUCCESS_EVENT } from './chatOutboxEvents';
 import { recordChatSendMetric } from './chatSendMetrics';
 import { outboxRowHasLocalMediaBlobs, reconcileUnsendableOutboxRow } from './chatOutboxReconcile';
 

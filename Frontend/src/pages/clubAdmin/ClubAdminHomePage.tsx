@@ -58,7 +58,7 @@ export function ClubAdminHomePage() {
         <ClubAvatar club={club} variant="card" className="h-14 w-14" />
         <div>
           <p className="text-sm text-muted-foreground">{club.city?.name}</p>
-          {club.integrationScriptName ? (
+          {club.integrationActive ? (
             <p className="text-xs text-amber-600">{t('clubAdmin.integrationLinked')}</p>
           ) : (
             <p className="text-xs text-muted-foreground">{t('clubAdmin.integrationNone')}</p>

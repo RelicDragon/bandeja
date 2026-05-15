@@ -96,7 +96,7 @@ export async function ensureChatMediaDownloaded(
       notify(url);
     }
 
-    const blob = new Blob(chunks, { type: contentType });
+    const blob = new Blob(chunks as BlobPart[], { type: contentType });
     if (!url.startsWith('blob:') && !url.startsWith('data:')) {
       await writeCachedMediaResponse(
         cacheKey,

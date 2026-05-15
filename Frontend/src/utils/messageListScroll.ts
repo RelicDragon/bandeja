@@ -1,3 +1,5 @@
+import type { Virtualizer } from '@tanstack/react-virtual';
+
 /**
  * Bottom-pin via scrollTop — avoids @tanstack/virtual scrollToIndex, which can throw when
  * targetWindow is cleared during React re-layout (null.requestAnimationFrame).
@@ -34,26 +36,23 @@ export function isMessageListNearBottom(container: HTMLElement | null, gapPx = 2
   return container.scrollHeight - container.scrollTop - container.clientHeight <= gapPx;
 }
 
-type VirtualizerScroll = {
-  scrollToOffset: (
-    offset: number,
-    opts?: { align?: 'start' | 'center' | 'end' | 'auto'; behavior?: ScrollBehavior }
-  ) => void;
-  getOffsetForIndex?: (
-    index: number,
-    align?: 'start' | 'center' | 'end' | 'auto'
-  ) => [number, 'start' | 'center' | 'end' | 'auto'] | undefined;
-};
+type MessageListVirtualizer = Pick<
+  Virtualizer<HTMLDivElement, Element>,
+  'scrollToOffset' | 'getOffsetForIndex'
+>;
 
 /** scrollToIndex without TanStack's rAF verify loop (safe when targetWindow is torn down). */
 export function scrollVirtualizerToIndex(
-  virtualizer: VirtualizerScroll,
+  virtualizer: MessageListVirtualizer,
   index: number,
   opts: { align?: 'start' | 'center' | 'end' | 'auto'; behavior?: ScrollBehavior } = {}
 ): void {
   const align = opts.align ?? 'auto';
   const info = virtualizer.getOffsetForIndex?.(index, align);
   if (info) {
-    virtualizer.scrollToOffset(info[0], { align: info[1], behavior: opts.behavior ?? 'auto' });
+    virtualizer.scrollToOffset(info[0], {
+      align: info[1],
+      behavior: opts.behavior ?? 'auto',
+    } as NonNullable<Parameters<MessageListVirtualizer['scrollToOffset']>[1]>);
   }
 }

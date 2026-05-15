@@ -37,6 +37,9 @@ const ensureWellKnown = () => {
 
 export default defineConfig({
   plugins: [react(), ensureWellKnown()],
+  worker: {
+    format: 'es',
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

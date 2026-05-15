@@ -16,9 +16,25 @@ export function ClubViewAsPlayerModal({ clubId, open, onClose }: ClubViewAsPlaye
   const [club, setClub] = useState<Club | null>(null);
   const [fullscreenUrl, setFullscreenUrl] = useState<string | null>(null);
 
+  const refreshClub = async () => {
+    if (!clubId) return;
+    try {
+      const res = await clubsApi.getById(clubId);
+      if (res.success && res.data) setClub(res.data);
+    } catch {
+      /* keep current */
+    }
+  };
+
   useEffect(() => {
     if (!open || !clubId) return;
-    clubsApi.getById(clubId).then(setClub).catch(() => setClub(null));
+    clubsApi
+      .getById(clubId)
+      .then((res) => {
+        if (res.success && res.data) setClub(res.data);
+        else setClub(null);
+      })
+      .catch(() => setClub(null));
   }, [open, clubId]);
 
   if (!open) return null;
@@ -35,13 +51,15 @@ export function ClubViewAsPlayerModal({ clubId, open, onClose }: ClubViewAsPlaye
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           {club ? (
-            <ClubDetailPanel club={club} onOpenFullscreenPhoto={setFullscreenUrl} onClubRefresh={setClub} />
+            <ClubDetailPanel club={club} onOpenFullscreenPhoto={setFullscreenUrl} onClubRefresh={refreshClub} />
           ) : (
             <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
           )}
         </div>
       </div>
-      {fullscreenUrl && <FullscreenImageViewer url={fullscreenUrl} onClose={() => setFullscreenUrl(null)} />}
+      {fullscreenUrl && (
+        <FullscreenImageViewer imageUrl={fullscreenUrl} onClose={() => setFullscreenUrl(null)} />
+      )}
     </>
   );
 }

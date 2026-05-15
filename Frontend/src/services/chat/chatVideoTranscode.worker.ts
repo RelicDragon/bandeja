@@ -31,7 +31,7 @@ self.onmessage = async (e: MessageEvent<TranscodeMsg>) => {
     });
     const outBuf = await out.arrayBuffer();
     const done: DoneMsg = { type: 'DONE', id, buffer: outBuf, fileName: out.name };
-    self.postMessage(done, [outBuf]);
+    self.postMessage(done, { transfer: [outBuf] });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'video_transcode_failed';
     const msg: ErrorMsg = { type: 'ERROR', id, message };

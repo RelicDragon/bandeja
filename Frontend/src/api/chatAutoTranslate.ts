@@ -1,5 +1,5 @@
 import api from './axios';
-import type { ApiResponse } from './types';
+import type { ApiResponse } from '@/types';
 import type { ChatContextType } from './chat';
 import type { ChatType } from '@/types';
 
