@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Round } from '@/types/gameResults';
 import { BasicUser, Game } from '@/types';
-import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useColumnResize } from '@/hooks/useColumnResize';
 import { ConfirmationModal } from '@/components';
 import { calculateGameStandings } from '@/services/gameStandings';
@@ -65,7 +64,6 @@ interface ResultsTableViewProps {
 
 export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound, onCellClick, onDeleteRound, onRoundHeaderClick }: ResultsTableViewProps) => {
   const { t } = useTranslation();
-  const isLandscape = useIsLandscape();
   const [roundIdToDelete, setRoundIdToDelete] = useState<string | null>(null);
   const { width: nameColWidth, isDragging, splitterProps } = useColumnResize({
     initialWidth: 120,
@@ -181,7 +179,7 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
 
   return (
     <div className="flex flex-col">
-      {isEditing && !isLandscape && (
+      {isEditing && (
         <div className="flex justify-center py-2 px-4 flex-shrink-0">
           <button
             onClick={onAddRound}

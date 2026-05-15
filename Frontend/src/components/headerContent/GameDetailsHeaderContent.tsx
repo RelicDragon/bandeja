@@ -1,4 +1,4 @@
-import { MessageCircle, Plus, TableProperties } from 'lucide-react';
+import { MessageCircle, TableProperties } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components';
@@ -19,8 +19,6 @@ export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderCon
     gameDetailsCanShowTableView,
     gameDetailsTableViewOverride,
     setGameDetailsTableViewOverride,
-    gameDetailsTableAddRoundCallback,
-    gameDetailsTableIsEditing,
   } = useNavigationStore();
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
 
@@ -46,12 +44,6 @@ export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderCon
             <TableProperties size={18} />
             <span className="hidden sm:inline">{t('gameResults.tableView')}</span>
           </Button>
-          {isLandscape && effectiveTableView && gameDetailsTableIsEditing && gameDetailsTableAddRoundCallback && (
-            <Button onClick={gameDetailsTableAddRoundCallback} variant="primary" size="sm" className="flex items-center gap-2">
-              <Plus size={16} />
-              {t('gameResults.addRound')}
-            </Button>
-          )}
         </div>
       )}
       {canAccessChat && (
