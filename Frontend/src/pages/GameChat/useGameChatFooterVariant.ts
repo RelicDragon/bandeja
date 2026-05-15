@@ -118,7 +118,7 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
         game: game ?? null,
         bug: bug ?? null,
         groupChannel: groupChannel ?? null,
-        userChat: contextType === 'USER' ? userChat : null,
+        userChat: contextType === 'USER' ? (userChat as import('@/api/chat').UserChat | null) : null,
         onOptimisticMessage: handleAddOptimisticMessage,
         onSendQueued: handleSendQueued,
         onSendFailed: handleSendFailed,

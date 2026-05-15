@@ -25,7 +25,7 @@ function serverMessage(clientMutationId: string): ChatMessage {
     updatedAt: new Date().toISOString(),
     reactions: [],
     readReceipts: [],
-  } as ChatMessage;
+  } as unknown as ChatMessage;
 }
 
 describe('chatSendSocketAck', () => {

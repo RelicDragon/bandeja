@@ -53,7 +53,7 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   }, [typingUserIds, contextUserMap, storeUsers]);
 
   useEffect(() => {
-    const missing = typingUserIds.filter((id, i) => !resolvedUsers[i]);
+    const missing = typingUserIds.filter((_id, i) => !resolvedUsers[i]);
     if (missing.length === 0) return;
     void fetchBasicUsersBatched('typing-indicator', missing);
   }, [typingUserIds, resolvedUsers]);
