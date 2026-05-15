@@ -1,5 +1,11 @@
+import type { AxiosRequestConfig } from 'axios';
 import api from './axios';
 import type { ApiResponse, AuthSessionRow, LoginResponse } from '@/types';
+
+export type AuthApiRequestConfig = AxiosRequestConfig & {
+  skipAuth401Handler?: boolean;
+  skipAuthorization?: boolean;
+};
 
 export const authApi = {
   registerPhone: async (data: {
@@ -53,8 +59,15 @@ export const authApi = {
     return response.data;
   },
 
-  verifyTelegramLinkKey: async (data: { key: string; language?: string }) => {
-    const response = await api.post<ApiResponse<LoginResponse>>('/telegram/verify-link-key', data);
+  verifyTelegramLinkKey: async (
+    data: { key: string; language?: string },
+    opts?: { withAuth?: boolean }
+  ) => {
+    const config: AuthApiRequestConfig = {
+      skipAuth401Handler: true,
+      skipAuthorization: !opts?.withAuth,
+    };
+    const response = await api.post<ApiResponse<LoginResponse>>('/telegram/verify-link-key', data, config);
     return response.data;
   },
 

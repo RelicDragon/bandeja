@@ -31,6 +31,10 @@ import { isSupplementalMatchSet, type MatchSetRole } from '@/utils/matchSetRole'
 import { ScoringRulebookBanner } from '@/components/gameResults/scoring';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { userIsPlayingInGameOrParent } from '@/utils/gameParticipationState';
+import {
+  resolveCurrentGameForResults,
+  shouldSyncEngineGameFromShell,
+} from '@/utils/mergeGameFormatForResults';
 import { 
   RoundCard,
   AvailablePlayersFooter, 
@@ -77,14 +81,10 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const [isResettingTelegram, setIsResettingTelegram] = useState(false);
   const resultsContainerRef = useRef<HTMLDivElement>(null);
 
-  const currentGame = useMemo(() => {
-    const base = !engine.game ? game : !game ? engine.game : (game.resultsStatus !== engine.game.resultsStatus || game.status !== engine.game.status) ? game : engine.game;
-    if (!base) return game ?? engine.game ?? null;
-    if (game && base === engine.game) {
-      return { ...base, photosCount: game.photosCount, mainPhotoId: game.mainPhotoId, resultsSentToTelegram: game.resultsSentToTelegram, city: game.city };
-    }
-    return base;
-  }, [engine.game, game]);
+  const currentGame = useMemo(
+    () => resolveCurrentGameForResults(game, engine.game),
+    [engine.game, game]
+  );
 
   const { activeTab, setActiveTab } = useGameResultsTabs(currentGame?.resultsStatus);
 
@@ -283,10 +283,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     if (game && engine.initialized) {
       const engineState = GameResultsEngine.getState();
       if (engineState.gameId === game.id) {
-        const engineGame = engine.game;
-        if (!engineGame || 
-            engineGame.resultsStatus !== game.resultsStatus ||
-            engineGame.status !== game.status) {
+        if (shouldSyncEngineGameFromShell(game, engine.game)) {
           engine.updateGame(game);
         }
       }

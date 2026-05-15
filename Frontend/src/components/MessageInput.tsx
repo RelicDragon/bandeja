@@ -9,6 +9,7 @@ import {
   ChatContextType,
   GroupChannel,
   OptimisticMessagePayload,
+  UserChat,
 } from '@/api/chat';
 import { ChevronDown, X } from 'lucide-react';
 import { ChatType, Game, Bug } from '@/types';
@@ -73,6 +74,7 @@ interface MessageInputProps {
   game?: Game | null;
   bug?: Bug | null;
   groupChannel?: GroupChannel | null;
+  userChat?: UserChat | null;
   onMessageSent?: () => void;
   onOptimisticMessage?: (payload: OptimisticMessagePayload, pendingImageBlobs?: Blob[], pendingVoiceBlob?: Blob) => string;
   onSendQueued?: (params: SendQueuedParams) => void;
@@ -105,6 +107,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   game,
   bug,
   groupChannel,
+  userChat = null,
   onMessageSent,
   onOptimisticMessage,
   onSendQueued,
@@ -550,7 +553,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         retryingSlotIndex={retryingImageSlot}
         onRetrySlot={handleRetryImageSlot}
       />
-      <TypingIndicator typingUserIds={typingUserIds} />
+      <TypingIndicator
+        typingUserIds={typingUserIds}
+        contextType={contextType}
+        chatType={resolvedChatType}
+        game={game}
+        bug={bug}
+        groupChannel={groupChannel}
+        userChat={userChat}
+        currentUserId={user?.id}
+      />
       <form onSubmit={handleSubmit} className="relative overflow-visible">
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="mb-1 flex min-w-0 items-end justify-between gap-2 overflow-visible">

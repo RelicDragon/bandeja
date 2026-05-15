@@ -5,7 +5,7 @@ import { MessageInput } from '@/components/MessageInput';
 import { RequestToChat } from '@/components/chat/RequestToChat';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
 import type { ChatContextType } from '@/api/chat';
-import type { ChatMessage, GroupChannel } from '@/api/chat';
+import type { ChatMessage, GroupChannel, UserChat } from '@/api/chat';
 import type { Game, Bug } from '@/types';
 
 export type GameChatFooterVariant =
@@ -19,6 +19,7 @@ export type GameChatFooterVariant =
       game: Game | null;
       bug: Bug | null;
       groupChannel: GroupChannel | null;
+      userChat?: UserChat | null;
       onOptimisticMessage: (payload: any) => string;
       onSendQueued: (params: any) => void;
       onSendFailed: (optimisticId: string) => void;
@@ -93,6 +94,7 @@ export const GameChatFooter: React.FC<GameChatFooterProps> = ({
             game={variant.game}
             bug={variant.bug}
             groupChannel={variant.groupChannel}
+            userChat={variant.userChat ?? null}
             onOptimisticMessage={variant.onOptimisticMessage}
             onSendQueued={variant.onSendQueued}
             onSendFailed={variant.onSendFailed}

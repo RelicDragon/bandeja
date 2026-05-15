@@ -20,6 +20,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 import { registerAuthAccessTokenSink } from '@/store/authAccessSink';
 import { bumpApiAuthCredentialGeneration } from '@/api/apiAuthCredentialGeneration';
+import { markLoginCompleted } from '@/utils/authLoginGrace';
 
 interface AuthState {
   user: User | null;
@@ -73,6 +74,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     isAuthenticated: !!savedToken,
     isInitializing: true,
     setAuth: async (user, token, opts) => {
+      markLoginCompleted();
       bumpApiAuthCredentialGeneration();
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);

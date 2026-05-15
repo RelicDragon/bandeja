@@ -4,6 +4,7 @@ import { App } from '@capacitor/app';
 import { isCapacitor } from '@/utils/capacitor';
 import { navigateWithTracking } from '@/utils/navigation';
 import { useDeepLinkStore } from '@/store/deepLinkStore';
+import { shouldHandleTelegramLoginDeepLink } from '@/utils/telegramDeepLinkDedupe';
 
 const isTelegramAutoLoginPath = (pathname: string) =>
   pathname.startsWith('/login/') && pathname !== '/login/phone' && pathname !== '/login/telegram';
@@ -87,6 +88,7 @@ export const useDeepLink = () => {
         }
 
         if (pathname.startsWith('/login/') && pathname !== '/login/phone' && pathname !== '/login/telegram') {
+          if (!shouldHandleTelegramLoginDeepLink(pathname)) return;
           navigateWithTracking(navigate, pathname, { replace: true });
           return;
         }

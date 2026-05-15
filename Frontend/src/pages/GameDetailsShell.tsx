@@ -62,6 +62,7 @@ import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { mergeGameWithInviteDeletedPayload, isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { socketService } from '@/services/socketService';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
+import { shouldSyncEngineGameFromShell } from '@/utils/mergeGameFormatForResults';
 
 type GameWithResults = Game & {
   rounds?: Round[];
@@ -360,10 +361,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
       // Only update if engine is initialized for this game
       if (engineState.initialized && engineState.gameId === game.id && engineState.userId === user.id) {
         // Check if game status has changed
-        const engineGame = engineState.game;
-        if (!engineGame || 
-            engineGame.resultsStatus !== game.resultsStatus ||
-            engineGame.status !== game.status) {
+        if (shouldSyncEngineGameFromShell(game, engineState.game)) {
           GameResultsEngine.updateGame(game);
         }
       }

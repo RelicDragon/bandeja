@@ -18,7 +18,8 @@ function clientPlatformHeader(): string {
 api.interceptors.request.use(
   (config) => {
     stampApiAuthCredentialGeneration(config);
-    const token = localStorage.getItem('token');
+    const skipAuth = (config as { skipAuthorization?: boolean }).skipAuthorization;
+    const token = skipAuth ? null : localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

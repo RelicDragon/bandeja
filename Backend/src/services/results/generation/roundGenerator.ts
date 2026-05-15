@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import type { GenGame, GenMatch, GenRound } from './types';
 import { attachFixedTeamIdsToMatch, cloneSets } from './matchUtils';
+import { getRules, isClassicRules } from '../liveScoringEngine/rulebook';
 import { generateFixedRound } from './fixed';
 import { generateRandomRound } from './random';
 import { generateRatingRound } from './rating';
@@ -36,16 +37,31 @@ function emptySetRow(): { teamA: number; teamB: number; isTieBreak: boolean } {
   return { teamA: 0, teamB: 0, isTieBreak: false };
 }
 
-/** Classic best-of-N: start with min sets to win (e.g. 2 for Bo3), not all N empty rows. */
+/** Align empty set rows with frontend `initialSetsForRules` / scoring preset (not raw fixedNumberOfSets alone). */
 function initialSetRowsForMatch(
   game: RoundGeneratorOptions['game'],
   fixedNumberOfSets: number
 ): Array<{ teamA: number; teamB: number; isTieBreak: boolean }> {
-  const n = fixedNumberOfSets > 0 ? fixedNumberOfSets : 0;
-  if (n <= 0) return [emptySetRow()];
-  const classicBySets = !!game.ballsInGames && game.winnerOfMatch === 'BY_SETS';
-  const rowCount = classicBySets ? Math.floor(n / 2) + 1 : n;
-  return Array.from({ length: rowCount }, () => emptySetRow());
+  const rules = getRules({
+    scoringPreset: game.scoringPreset ?? null,
+    fixedNumberOfSets: fixedNumberOfSets > 0 ? fixedNumberOfSets : (game.fixedNumberOfSets ?? 0),
+    maxTotalPointsPerSet: game.maxTotalPointsPerSet ?? 0,
+    maxPointsPerTeam: game.maxPointsPerTeam ?? 0,
+    winnerOfMatch: game.winnerOfMatch ?? null,
+    ballsInGames: game.ballsInGames ?? false,
+    hasGoldenPoint: game.hasGoldenPoint ?? false,
+    pointsPerTie: game.pointsPerTie ?? 0,
+    matchTimerEnabled: game.matchTimerEnabled ?? false,
+  });
+
+  if (isClassicRules(rules)) {
+    if (rules.fixedNumberOfSets === 1) return [emptySetRow()];
+    const shown = Math.max(1, rules.minSetsToWin);
+    return Array.from({ length: shown }, () => emptySetRow());
+  }
+
+  const n = rules.fixedNumberOfSets > 0 ? rules.fixedNumberOfSets : 1;
+  return Array.from({ length: n }, () => emptySetRow());
 }
 
 export class RoundGenerator {

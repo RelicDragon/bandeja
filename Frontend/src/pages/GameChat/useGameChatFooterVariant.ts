@@ -118,6 +118,7 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
         game: game ?? null,
         bug: bug ?? null,
         groupChannel: groupChannel ?? null,
+        userChat: contextType === 'USER' ? userChat : null,
         onOptimisticMessage: handleAddOptimisticMessage,
         onSendQueued: handleSendQueued,
         onSendFailed: handleSendFailed,

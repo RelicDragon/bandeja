@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/store/authStore';
+import { isWithinPostLoginGrace } from '@/utils/authLoginGrace';
 
 export type HandleApiUnauthorizedOpts = {
   /** Always clear cookies/session (e.g. refresh rotation failed); avoids refresh spam on public routes. */
@@ -9,6 +10,9 @@ export function handleApiUnauthorizedIfNeeded(opts?: HandleApiUnauthorizedOpts):
   if (typeof window === 'undefined') return;
   if (opts?.forceSessionClear) {
     void useAuthStore.getState().logout();
+    return;
+  }
+  if (isWithinPostLoginGrace()) {
     return;
   }
   const path = window.location.pathname;

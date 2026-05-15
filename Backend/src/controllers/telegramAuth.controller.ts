@@ -20,6 +20,10 @@ import {
   needsDisplayNamePersist,
   resolveDisplayNameData,
 } from '../services/user/userDisplayName.service';
+import {
+  getLinkKeyReplay,
+  storeLinkKeyReplay,
+} from '../services/telegram/linkKeyReplay.service';
 
 async function completeTelegramAuth(
   otp: TelegramOtp,
@@ -185,6 +189,23 @@ export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: 
   if (!key || typeof key !== 'string' || key.length < 20) {
     throw new ApiError(400, 'auth.codeRequired');
   }
+
+  const replay = getLinkKeyReplay(key);
+  if (replay) {
+    res.json({
+      success: true,
+      data: {
+        user: replay.user,
+        token: replay.token,
+        ...issuedRefreshJsonPayload(req, res, {
+          refreshToken: replay.refreshToken,
+          currentSessionId: replay.currentSessionId,
+        }),
+      },
+    });
+    return;
+  }
+
   const otp = await telegramBotService.verifyLinkKey(key);
   if (!otp) {
     throw new ApiError(401, 'auth.invalidCode');
@@ -197,6 +218,12 @@ export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: 
       throw new ApiError(403, 'auth.telegramLinkWrongAccount');
     }
     const merged = await mergeTelegramIntoUser(otp, otp.linkUserId, req, language);
+    storeLinkKeyReplay(key, {
+      user: merged.user,
+      token: merged.token,
+      refreshToken: merged.refreshToken,
+      currentSessionId: merged.currentSessionId,
+    });
     res.json({
       success: true,
       data: {
@@ -211,6 +238,7 @@ export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: 
     return;
   }
   const { user, token, refreshToken, currentSessionId } = await completeTelegramAuth(otp, req, language);
+  storeLinkKeyReplay(key, { user, token, refreshToken, currentSessionId });
   res.json({
     success: true,
     data: {

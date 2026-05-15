@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { authApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import pushNotificationService from '@/services/pushNotificationService';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { AppLoadingScreen } from '@/components';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
+import { verifyTelegramLinkKeySingleflight } from '@/services/telegramLinkVerifySingleflight';
+import { isLegacyAccessJwt } from '@/utils/jwtPayload';
 
 export const TelegramAutoLogin = () => {
   const { telegramKey } = useParams<{ telegramKey: string }>();
@@ -15,7 +16,6 @@ export const TelegramAutoLogin = () => {
   const { t } = useTranslation();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [done, setDone] = useState(false);
-  const requestStartedRef = useRef(false);
 
   useEffect(() => {
     if (!telegramKey || telegramKey.length < 20) {
@@ -23,32 +23,45 @@ export const TelegramAutoLogin = () => {
       navigate('/login', { replace: true });
       return;
     }
-    if (requestStartedRef.current) return;
-    requestStartedRef.current = true;
 
-    let cancelled = false;
+    let showErrorIfCancelled = true;
 
     (async () => {
       try {
         const language = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
-        const response = await authApi.verifyTelegramLinkKey({ key: telegramKey, language });
-        if (cancelled) return;
+        const { isAuthenticated, token, logout } = useAuthStore.getState();
+        const withAuth = !!(isAuthenticated && token && !isLegacyAccessJwt(token));
+
+        if (!withAuth) {
+          if (isAuthenticated && token && isLegacyAccessJwt(token)) {
+            await logout();
+          }
+        }
+
+        const response = await verifyTelegramLinkKeySingleflight(telegramKey, language, { withAuth });
+
         await setAuth(response.data.user, response.data.token, {
           refreshToken: response.data.refreshToken,
           currentSessionId: response.data.currentSessionId,
         });
-        await pushNotificationService.ensureTokenSentToBackend();
+
+        try {
+          await pushNotificationService.ensureTokenSentToBackend();
+        } catch {
+          /* non-blocking */
+        }
+
         setDone(true);
         navigate('/', { replace: true });
-      } catch (err: any) {
-        if (cancelled) return;
+      } catch (err: unknown) {
+        if (!showErrorIfCancelled) return;
         toast.error(extractApiErrorMessage(err, t));
         navigate('/login', { replace: true });
       }
     })();
 
     return () => {
-      cancelled = true;
+      showErrorIfCancelled = false;
     };
   }, [telegramKey, navigate, t, setAuth]);
 

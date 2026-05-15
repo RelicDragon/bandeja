@@ -1,27 +1,67 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePlayersStore } from '@/store/playersStore';
+import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { fetchBasicUsersBatched } from '@/services/users/fetchBasicUsersBatched';
+import {
+  buildChatContextUserMap,
+  formatBasicUserDisplayName,
+  resolveChatContextUser,
+  type ChatContextUserLookupParams,
+} from '@/utils/chatContextUserLookup';
 import type { BasicUser } from '@/types';
 
-function formatUserName(u: BasicUser | undefined): string {
-  if (!u) return '';
-  const n = [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
-  return n || '';
-}
-
-export interface TypingIndicatorProps {
+export interface TypingIndicatorProps extends ChatContextUserLookupParams {
   typingUserIds: string[];
 }
 
-export const TypingIndicator: React.FC<TypingIndicatorProps> = ({ typingUserIds }) => {
+export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
+  typingUserIds,
+  contextType,
+  chatType,
+  game,
+  bug,
+  groupChannel,
+  userChat,
+  currentUserId,
+}) => {
   const { t } = useTranslation();
-  const getUser = usePlayersStore((s) => s.getUser);
+  const contextUserMap = useMemo(
+    () =>
+      buildChatContextUserMap({
+        contextType,
+        chatType,
+        game,
+        bug,
+        groupChannel,
+        userChat,
+        currentUserId,
+      }),
+    [contextType, chatType, game, bug, groupChannel, userChat, currentUserId]
+  );
+  const storeUsers = usePlayersStore((s) => {
+    const slice: Record<string, BasicUser | undefined> = {};
+    for (const id of typingUserIds) slice[id] = s.users[id];
+    return slice;
+  });
+
+  const resolvedUsers = useMemo(() => {
+    return typingUserIds.map((id) =>
+      resolveChatContextUser(id, contextUserMap, storeUsers[id])
+    );
+  }, [typingUserIds, contextUserMap, storeUsers]);
+
+  useEffect(() => {
+    const missing = typingUserIds.filter((id, i) => !resolvedUsers[i]);
+    if (missing.length === 0) return;
+    void fetchBasicUsersBatched('typing-indicator', missing);
+  }, [typingUserIds, resolvedUsers]);
 
   const label = useMemo(() => {
     if (typingUserIds.length === 0) return '';
-    const names = typingUserIds.map((id) => {
-      const n = formatUserName(getUser(id));
+    const names = resolvedUsers.map((u) => {
+      const n = formatBasicUserDisplayName(u);
       return n || t('chat.typingSomeone', { defaultValue: 'Someone' });
     });
     if (names.length === 1) {
@@ -35,7 +75,12 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({ typingUserIds 
       });
     }
     return t('chat.typingMany', { count: names.length, defaultValue: '{{count}} people are typing…' });
-  }, [typingUserIds, getUser, t]);
+  }, [typingUserIds.length, resolvedUsers, t]);
+
+  const avatarUsers = useMemo(
+    () => resolvedUsers.filter((u): u is BasicUser => !!u).slice(0, 2),
+    [resolvedUsers]
+  );
 
   return (
     <AnimatePresence initial={false}>
@@ -51,7 +96,24 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({ typingUserIds 
           transition={{ duration: 0.2 }}
           className="overflow-hidden px-1"
         >
-          <div className="flex items-center gap-2 min-h-[22px] text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+          <div className="flex items-center gap-1.5 min-h-[22px] text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+            {avatarUsers.length > 0 && (
+              <span className="flex shrink-0 items-center -space-x-1" aria-hidden>
+                {avatarUsers.map((u) => (
+                  <PlayerAvatar
+                    key={u.id}
+                    player={u}
+                    inlineFace
+                    inlineFacePlain
+                    inlineFaceSize="sm"
+                    asDiv
+                    subscribePresence={false}
+                    showName={false}
+                    fullHideName
+                  />
+                ))}
+              </span>
+            )}
             <span className="flex gap-0.5 items-center shrink-0" aria-hidden>
               <span className="inline-block w-1 h-1 rounded-full bg-current typing-dot" />
               <span className="inline-block w-1 h-1 rounded-full bg-current typing-dot typing-dot-delay-1" />
