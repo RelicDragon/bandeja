@@ -1,5 +1,14 @@
 import type { AxiosError } from 'axios';
 
+/** Client/user abort — never retry (e.g. socket ack won, send cancelled). */
+export function isNonRetriableCancelError(e: unknown): boolean {
+  if (e instanceof DOMException && e.name === 'AbortError') return true;
+  const err = e as AxiosError & { name?: string };
+  if (err.name === 'CanceledError' || err.name === 'AbortError') return true;
+  const code = err.code;
+  return code === 'ERR_CANCELED' || code === 'ABORT_ERR';
+}
+
 function jitterMs(base: number): number {
   return base + Math.floor(Math.random() * 350);
 }
@@ -14,6 +23,7 @@ function retryAfterFromHeaders(e: AxiosError): number {
 }
 
 export function isRetriableChatSyncError(e: unknown): boolean {
+  if (isNonRetriableCancelError(e)) return false;
   const err = e as AxiosError;
   const s = err.response?.status;
   if (s === 429 || s === 408 || s === 502 || s === 503 || s === 504) return true;
@@ -23,6 +33,7 @@ export function isRetriableChatSyncError(e: unknown): boolean {
 }
 
 export function isRetriableMessageCreateError(e: unknown): boolean {
+  if (isNonRetriableCancelError(e)) return false;
   const err = e as AxiosError;
   const s = err.response?.status;
   if (s === 409) return false;

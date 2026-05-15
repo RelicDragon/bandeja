@@ -9,6 +9,7 @@ interface MessageForPreview {
   pollId: string | null;
   messageType?: string;
   audioDurationMs?: number | null;
+  videoDurationMs?: number | null;
 }
 
 function formatVoicePreviewLabel(ms: number): string {
@@ -21,6 +22,9 @@ function formatVoicePreviewLabel(ms: number): string {
 export function extractPreviewFromMessage(message: MessageForPreview): string {
   if (message.messageType === 'VOICE' && message.audioDurationMs != null) {
     return `[TYPE:VOICE]${formatVoicePreviewLabel(message.audioDurationMs)}`;
+  }
+  if (message.messageType === 'VIDEO' && message.videoDurationMs != null) {
+    return `[TYPE:VIDEO]${formatVoicePreviewLabel(message.videoDurationMs)}`;
   }
 
   const hasMedia = Array.isArray(message.mediaUrls) && message.mediaUrls.length > 0;
@@ -67,6 +71,7 @@ export async function updateLastMessagePreview(
       pollId: true,
       messageType: true,
       audioDurationMs: true,
+      videoDurationMs: true,
       senderId: true,
     },
   });

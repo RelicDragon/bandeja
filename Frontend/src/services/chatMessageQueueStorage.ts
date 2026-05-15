@@ -3,6 +3,7 @@ import { chatLocalDb, type ChatOutboxRow } from './chat/chatLocalDb';
 import {
   deleteOutboxImageBlobSlots,
   deleteOutboxMediaBlobsForTempId,
+  deleteOutboxVideoBlobs,
   deleteOutboxVoiceBlob,
 } from './chat/chatOutboxMediaBlobs';
 import { revokeOutboxRehydrateBlobUrls } from './chat/chatOutboxRehydrateUrls';
@@ -13,6 +14,8 @@ export type QueuedMessage = ChatOutboxRow;
 export type QueuedMessageEnqueue = ChatOutboxRow & {
   pendingImageBlobs?: Blob[];
   pendingVoiceBlob?: Blob;
+  pendingVideoBlob?: Blob;
+  pendingVideoPosterBlob?: Blob;
 };
 
 async function flushOutboxToThreadIndex(contextType: ChatContextType, contextId: string): Promise<void> {
@@ -34,20 +37,26 @@ export const messageQueueStorage = {
   },
 
   async add(queued: QueuedMessageEnqueue): Promise<void> {
-    const { pendingImageBlobs, pendingVoiceBlob, ...rest } = queued;
+    const { pendingImageBlobs, pendingVoiceBlob, pendingVideoBlob, pendingVideoPosterBlob, ...rest } =
+      queued;
     const imageBlobsDefined = pendingImageBlobs?.filter((b): b is Blob => b instanceof Blob) ?? [];
     let pendingImageBlobCount = rest.pendingImageBlobCount ?? 0;
     let hasPendingVoiceBlob = !!rest.hasPendingVoiceBlob;
+    let hasPendingVideoBlob = !!rest.hasPendingVideoBlob;
     if (imageBlobsDefined.length > 0) {
       pendingImageBlobCount = imageBlobsDefined.length;
     }
     if (pendingVoiceBlob) {
       hasPendingVoiceBlob = true;
     }
+    if (pendingVideoBlob) {
+      hasPendingVideoBlob = true;
+    }
     const row: ChatOutboxRow = {
       ...rest,
       pendingImageBlobCount: pendingImageBlobCount > 0 ? pendingImageBlobCount : undefined,
       hasPendingVoiceBlob: hasPendingVoiceBlob || undefined,
+      hasPendingVideoBlob: hasPendingVideoBlob || undefined,
     };
     const tid = rest.tempId;
     await chatLocalDb.transaction('rw', chatLocalDb.outbox, chatLocalDb.outboxMediaBlobs, async () => {
@@ -70,6 +79,24 @@ export const messageQueueStorage = {
           slot: -1,
           kind: 'voice',
           blob: pendingVoiceBlob,
+        });
+      }
+      if (pendingVideoBlob) {
+        await chatLocalDb.outboxMediaBlobs.put({
+          id: `${tid}:video`,
+          tempId: tid,
+          slot: -2,
+          kind: 'video',
+          blob: pendingVideoBlob,
+        });
+      }
+      if (pendingVideoPosterBlob) {
+        await chatLocalDb.outboxMediaBlobs.put({
+          id: `${tid}:video-poster`,
+          tempId: tid,
+          slot: -3,
+          kind: 'video-poster',
+          blob: pendingVideoPosterBlob,
         });
       }
       await chatLocalDb.outbox.put(row);
@@ -111,6 +138,33 @@ export const messageQueueStorage = {
       mediaUrls,
       thumbnailUrls,
       payload: { ...row.payload, mediaUrls, thumbnailUrls },
+    });
+    await flushOutboxToThreadIndex(row.contextType, row.contextId);
+  },
+
+  async commitPendingVideoUploaded(
+    tempId: string,
+    videoUrl: string,
+    thumbnailUrl: string,
+    videoDurationMs: number
+  ): Promise<void> {
+    const row = await chatLocalDb.outbox.get(tempId);
+    if (!row) return;
+    await deleteOutboxVideoBlobs(tempId);
+    const mediaUrls = [videoUrl];
+    const thumbnailUrls = [thumbnailUrl];
+    await chatLocalDb.outbox.put({
+      ...row,
+      hasPendingVideoBlob: undefined,
+      mediaUrls,
+      thumbnailUrls,
+      payload: {
+        ...row.payload,
+        mediaUrls,
+        thumbnailUrls,
+        messageType: 'VIDEO',
+        videoDurationMs,
+      },
     });
     await flushOutboxToThreadIndex(row.contextType, row.contextId);
   },

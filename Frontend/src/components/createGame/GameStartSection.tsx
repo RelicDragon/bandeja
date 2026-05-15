@@ -62,7 +62,7 @@ export const GameStartSection = ({
 }: GameStartSectionProps) => {
   const { t } = useTranslation();
   
-  const { isSlotBooked, getBookedSlotInfo, getOverlappingBookings, areAllSlotsUnconfirmed, hasExternallyBookedSlot, refetch } = useBookedCourts({
+  const { isSlotBooked, getBookedSlotInfo, getOverlappingBookings, areAllSlotsUnconfirmed, hasExternallyBookedSlot, isSlotHardBlocked, refetch } = useBookedCourts({
     clubId: selectedClub || null,
     selectedDate,
     selectedCourt: selectedCourt || null,
@@ -182,6 +182,23 @@ export const GameStartSection = ({
           </div>
         ) : (
           <>
+            {entityType !== 'BAR' && (club?.policyText || club?.cancellationNoticeHours) && (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400">
+                {club.cancellationNoticeHours != null && club.cancellationNoticeHours > 0 && (
+                  <p className="mb-1">
+                    {t('createGame.clubCancellationNotice', { hours: club.cancellationNoticeHours })}
+                  </p>
+                )}
+                {club.policyText?.trim() && (
+                  <>
+                    <p className="font-medium text-gray-800 dark:text-gray-200">
+                      {t('createGame.clubPolicyTitle')}
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap">{club.policyText.trim()}</p>
+                  </>
+                )}
+              </div>
+            )}
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                 {t('createGame.selectDate')}
@@ -261,8 +278,10 @@ export const GameStartSection = ({
                   const isBooked = isSlotBooked(time);
                   const allUnconfirmed = isBooked && areAllSlotsUnconfirmed(time);
                   const isExternallyBooked = isBooked && hasExternallyBookedSlot(time);
+                  const isHardBlocked = isBooked && isSlotHardBlocked(time);
                   
                   const handleTimeClick = () => {
+                    if (entityType !== 'BAR' && isHardBlocked) return;
                     if (entityType === 'BAR') {
                       onTimeSelect(time);
                     } else if (canAccommodate) {
@@ -278,6 +297,8 @@ export const GameStartSection = ({
                   return (
                     <button
                       key={time}
+                      type="button"
+                      disabled={entityType !== 'BAR' && isHardBlocked}
                       onClick={handleTimeClick}
                       className={`w-full h-10 flex items-center justify-center rounded-lg font-medium text-xs transition-all ${
                         isSelected

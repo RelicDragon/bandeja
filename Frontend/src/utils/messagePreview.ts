@@ -22,6 +22,13 @@ export function parseMessagePreview(preview: string | null | undefined, t: TFunc
             : t('chat.voiceMessage', 'Voice message');
     }
 
+    if (preview.startsWith('[TYPE:VIDEO]')) {
+        const dur = preview.slice(12);
+        return dur
+            ? `${t('chat.videoMessage', 'Video')} (${dur})`
+            : t('chat.videoMessage', 'Video');
+    }
+
     if (preview.startsWith('[TYPE:POLL]')) {
         const question = preview.substring(11);
         return `${t('chat.poll.poll')}: ${question}`;

@@ -17,7 +17,11 @@ import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
 import { Pin, Loader2, BellOff, Mic } from 'lucide-react';
 import { ChatListOutboxAnimated } from '@/components/chat/ChatListOutboxAnimated';
-import { ChatListGenericMediaRow, ChatListPreviewContent } from '@/components/chat/ChatListPreviewContent';
+import {
+  ChatListGenericMediaRow,
+  ChatListPreviewContent,
+  ChatListVideoRow,
+} from '@/components/chat/ChatListPreviewContent';
 import type { ChatListOutbox } from '@/utils/chatListSort';
 
 interface UserChatCardProps {
@@ -185,14 +189,16 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
               : '';
             const fullLm = previewOnly ? null : (lm as ChatMessage);
             const isFullVoice = fullLm?.messageType === 'VOICE';
+            const isFullVideo = fullLm?.messageType === 'VIDEO';
             const voiceAsTextOnly = isFullVoice && !!(fullMessage?.content?.trim());
             const showVoiceRow = isFullVoice && !voiceAsTextOnly;
+            const showVideoRow = isFullVideo;
             const hasMediaUrls = (fullLm?.mediaUrls?.length ?? 0) > 0;
             const mt = fullLm?.messageType;
             const showGenericMediaRow =
-              !previewOnly && !isFullVoice && hasMediaUrls && mt === undefined;
+              !previewOnly && !isFullVoice && !isFullVideo && hasMediaUrls && mt === undefined;
             const showPhotoRow =
-              !previewOnly && !isFullVoice && hasMediaUrls && mt !== undefined;
+              !previewOnly && !isFullVoice && !isFullVideo && hasMediaUrls && mt !== undefined;
 
             return (
               <div className="flex items-center justify-between">
@@ -214,6 +220,8 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
                           : ''}
                       </span>
                     </span>
+                  ) : showVideoRow ? (
+                    <ChatListVideoRow t={t} durationMs={fullLm?.videoDurationMs} />
                   ) : showPhotoRow ? (
                     <span className="flex items-center gap-1">
                       <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>

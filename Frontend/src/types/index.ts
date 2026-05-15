@@ -185,6 +185,7 @@ export interface User extends BasicUser {
   appIcon?: string | null;
   weeklyAvailability?: WeeklyAvailability | null;
   availabilityBucketBoundaries?: AvailabilityBucketBoundaries | null;
+  clubAdminClubs?: { id: string; name: string; avatar?: string | null }[];
 }
 
 export interface City {
@@ -244,6 +245,9 @@ export interface Club {
   longitude?: number;
   openingTime?: string;
   closingTime?: string;
+  defaultSlotMinutes?: number | null;
+  cancellationNoticeHours?: number | null;
+  policyText?: string | null;
   amenities?: Record<string, any>;
   isBar?: boolean;
   isForPlaying?: boolean;
@@ -257,8 +261,10 @@ export interface Court {
   clubId: string;
   courtType?: string;
   isIndoor: boolean;
+  isActive?: boolean;
   surfaceType?: string;
   pricePerHour?: number;
+  externalCourtId?: string;
   club?: Club;
 }
 
@@ -270,6 +276,8 @@ export interface BookedCourtSlot {
   hasBookedCourt: boolean;
   clubBooked: boolean;
   isFree?: boolean;
+  slotKind?: 'game' | 'external' | 'hold';
+  holdBlocked?: boolean;
 }
 
 export interface GameParticipant {

@@ -1,10 +1,13 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { ChatMessage } from '@/api/chat';
+import { Languages } from 'lucide-react';
 import { PollMessage } from '../chat/PollMessage';
 import { MessageContentBody, ContentVariant } from './MessageContentBody';
 import { MessageExternalLinkPreview } from './MessageExternalLinkPreview';
 import { MessageMediaGrid } from './MessageMediaGrid';
 import { AudioMessageBubble } from '../audio/AudioMessageBubble';
+import { ChatVideoBubble } from './ChatVideoBubble';
 import { ParsedContentPart } from './types';
 import { AlertCircle, Pencil } from 'lucide-react';
 import { DoubleTickIcon } from '../DoubleTickIcon';
@@ -18,6 +21,8 @@ interface MessageBubbleProps {
   translationContent: ParsedContentPart[] | null;
   displayContent: string;
   hasTranslation: boolean;
+  isTranslationLoading?: boolean;
+  translationRevealKey?: string;
   formatMessageTime: (dateString: string) => string;
   getThumbnailUrl: (index: number) => string;
   onImageClick: (url: string) => void;
@@ -38,6 +43,8 @@ interface MessageBubbleProps {
   isTranscribing?: boolean;
   firstExternalHttpUrl?: string | null;
   voiceTranscriptionNoSpeech?: boolean;
+  onVideoOpen?: (videoUrl: string, posterUrl: string) => void;
+  inlineVideoPlaybackPaused?: boolean;
   t: TFunction;
 }
 
@@ -49,6 +56,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   translationContent,
   displayContent,
   hasTranslation,
+  isTranslationLoading = false,
+  translationRevealKey,
   formatMessageTime,
   getThumbnailUrl,
   onImageClick,
@@ -69,13 +78,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   isTranscribing,
   firstExternalHttpUrl,
   voiceTranscriptionNoSpeech,
+  onVideoOpen,
+  inlineVideoPlaybackPaused = false,
   t,
 }) => {
   const isVoice = message.messageType === 'VOICE';
+  const isVideo = message.messageType === 'VIDEO';
   const hasVoiceTranscript =
     isVoice && !!(message.audioTranscription?.transcription?.trim() || message.content?.trim());
   const showTextBlock = !message.poll && (!!message.content?.trim() || hasVoiceTranscript);
-  const hasMedia = !isVoice && message.mediaUrls && message.mediaUrls.length > 0;
+  const hasMedia = !isVoice && !isVideo && message.mediaUrls && message.mediaUrls.length > 0;
   const hasMediaOnly = hasMedia && !message.content;
   const hasMediaAndContent = hasMedia && !!message.content;
   const mediaOnlyIconStyle = hasMediaOnly
@@ -85,7 +97,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const tickRead = message.state === 'READ' || (message.readReceipts?.length ?? 0) > 0;
   const tickDelivered = message.state === 'DELIVERED' && !tickRead;
   const contentVariantForTranslation = isOwnMessage ? 'own' : 'other';
-  const hasMediaOrVoice = isVoice || hasMedia;
+  const hasMediaOrVoice = isVoice || isVideo || hasMedia;
   const paddingClass = hasTranslation
     ? 'pt-2 pb-4'
     : hasMediaAndContent
@@ -119,7 +131,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         />
       )}
 
-      {message.mediaUrls && message.mediaUrls.length > 0 && !isVoice && (
+      {isVideo && message.mediaUrls?.[0] && (
+        <ChatVideoBubble
+          message={message}
+          isSending={isSending}
+          optimisticId={optimisticId}
+          posterUrl={getThumbnailUrl(0) || message.thumbnailUrls?.[0] || message.mediaUrls[0]}
+          inlinePlaybackPaused={inlineVideoPlaybackPaused}
+          onOpenFullscreen={onVideoOpen}
+        />
+      )}
+
+      {message.mediaUrls && message.mediaUrls.length > 0 && !isVoice && !isVideo && (
         <MessageMediaGrid
           mediaUrls={message.mediaUrls}
           getThumbnailUrl={getThumbnailUrl}
@@ -155,7 +178,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   onUrlClick={onUrlClick}
                 />
               </div>
-              <div className={isChannel ? 'text-gray-600 dark:text-gray-400' : isOwnMessage ? 'text-blue-50' : 'text-gray-600 dark:text-gray-400'}>
+              <motion.div
+                key={translationRevealKey ?? 'translation'}
+                initial={translationRevealKey ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                className={isChannel ? 'text-gray-600 dark:text-gray-400' : isOwnMessage ? 'text-blue-50' : 'text-gray-600 dark:text-gray-400'}
+              >
+                <p className="text-[10px] uppercase tracking-wide opacity-70 mb-1 flex items-center gap-1">
+                  <Languages size={10} aria-hidden />
+                  {t('chat.autoTranslatedLabel', { defaultValue: 'Translated' })}
+                </p>
                 <MessageContentBody
                   parts={translationContent}
                   fallbackContent={message.translation?.translation}
@@ -165,8 +198,23 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   onMentionClick={onMentionClick}
                   onUrlClick={onUrlClick}
                 />
-              </div>
+              </motion.div>
             </div>
+          ) : isTranslationLoading ? (
+            <motion.div className="space-y-2" layout>
+              <MessageContentBody
+                parts={parsedContent}
+                fallbackContent={displayContent}
+                variant={variant}
+                mentionIds={mentionIds}
+                currentUserId={currentUserId}
+                onMentionClick={onMentionClick}
+                onUrlClick={onUrlClick}
+              />
+              <p className="text-xs italic opacity-80">
+                {t('chat.translating', { defaultValue: 'Translating…' })}
+              </p>
+            </motion.div>
           ) : (
             <MessageContentBody
               parts={parsedContent}

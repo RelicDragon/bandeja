@@ -14,6 +14,8 @@ import { AdminMessageReportsService } from '../services/admin/messageReports.ser
 import { AdminAppVersionService } from '../services/admin/appVersion.service';
 import { AdminMarketCategoryService } from '../services/admin/marketCategory.service';
 import { AdminMassNotificationService } from '../services/admin/massNotification.service';
+import { ClubAdminAssignmentService } from '../services/admin/clubAdminAssignment.service';
+import { AdminTranslationQueueStatsService } from '../services/admin/translationQueueStats.service';
 import prisma from '../config/database';
 
 // Auth endpoints
@@ -201,6 +203,26 @@ export const getAdminClubById = asyncHandler(async (req: AuthRequest, res: Respo
     success: true,
     data: center,
   });
+});
+
+export const getClubAdmins = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const data = await ClubAdminAssignmentService.listClubAdmins(req.params.clubId);
+  res.json({ success: true, data });
+});
+
+export const assignClubAdmin = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { userId, role } = req.body;
+  const data = await ClubAdminAssignmentService.assignClubAdmin(
+    req.params.clubId,
+    userId,
+    role
+  );
+  res.status(201).json({ success: true, data });
+});
+
+export const removeClubAdmin = asyncHandler(async (req: AuthRequest, res: Response) => {
+  await ClubAdminAssignmentService.removeClubAdmin(req.params.clubId, req.params.userId);
+  res.json({ success: true });
 });
 
 export const createClub = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -415,6 +437,11 @@ export const getStats = asyncHandler(async (req: AuthRequest, res: Response) => 
     success: true,
     data: stats,
   });
+});
+
+export const getTranslationQueueStats = asyncHandler(async (_req: AuthRequest, res: Response) => {
+  const stats = await AdminTranslationQueueStatsService.getStats();
+  res.json({ success: true, data: stats });
 });
 
 export const getOnlineUsers = asyncHandler(async (req: AuthRequest, res: Response) => {

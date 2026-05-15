@@ -1,11 +1,12 @@
 import type { ChatContextType, ChatMessage } from '@/api/chat';
 import { chatLocalDb } from './chatLocalDb';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
-import { sendWithTimeout, isSending, cancelSend } from '@/services/chatSendService';
+import { sendWithTimeout, isSending } from '@/services/chatSendService';
 import { putLocalMessage } from './chatLocalApply';
 import { purgeExpiredFailedOutbox } from './chatOutboxExpiry';
-import { CHAT_OUTBOX_FAILED_EVENT, CHAT_OUTBOX_SUCCESS_EVENT } from './chatOutboxEvents';
+import { CHAT_OUTBOX_SUCCESS_EVENT } from './chatOutboxEvents';
 import { recordChatSendMetric } from './chatSendMetrics';
+import { outboxRowHasLocalMediaBlobs, reconcileUnsendableOutboxRow } from './chatOutboxReconcile';
 
 export { CHAT_OUTBOX_FAILED_EVENT, CHAT_OUTBOX_SUCCESS_EVENT } from './chatOutboxEvents';
 
@@ -39,16 +40,30 @@ export type RetryChatOutboxOptions = {
 
 export async function retryFailedChatOutbox(options?: RetryChatOutboxOptions): Promise<void> {
   const includeFailed = options?.includeFailed ?? true;
-  recordChatSendMetric({ kind: 'chat_outbox_stuck_retry' });
   await purgeExpiredFailedOutbox();
   const rows = await chatLocalDb.outbox.toArray();
-  const resumable = rows.filter((r) => {
+  const candidates = rows.filter((r) => {
     if (isSending(r.tempId)) return false;
     if (r.status === 'sending' || r.status === 'queued') return true;
     return includeFailed && r.status === 'failed';
   });
+
+  const resumable: typeof candidates = [];
+  for (const row of candidates) {
+    const outcome = await reconcileUnsendableOutboxRow(row);
+    if (outcome === 'needs_send') resumable.push(row);
+  }
+
+  if (resumable.length === 0) return;
+
+  recordChatSendMetric({ kind: 'chat_outbox_stuck_retry' });
+
   for (const row of resumable) {
     if (isSending(row.tempId)) continue;
+    if (!(await outboxRowHasLocalMediaBlobs(row))) {
+      await reconcileUnsendableOutboxRow(row);
+      continue;
+    }
     await messageQueueStorage.updateStatus(row.tempId, row.contextType, row.contextId, 'queued');
     sendWithTimeout(
       {

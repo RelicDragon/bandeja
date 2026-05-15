@@ -5,6 +5,7 @@ import { validate } from '../middleware/validate';
 import {
   loginAdmin,
   getStats,
+  getTranslationQueueStats,
   getOnlineUsers,
   getAllUsers,
   toggleUserStatus,
@@ -48,12 +49,16 @@ import {
   updateMarketCategory,
   deleteMarketCategory,
   sendMassNotification,
+  getClubAdmins,
+  assignClubAdmin,
+  removeClubAdmin,
 } from '../controllers/admin.controller';
 
 const router = Router();
 
 router.post('/login', loginAdmin);
 router.get('/stats', requireAdmin, getStats);
+router.get('/translation-queue/stats', requireAdmin, getTranslationQueueStats);
 router.get('/online-users', requireAdmin, getOnlineUsers);
 
 router.get('/users', requireAdmin, getAllUsers);
@@ -80,6 +85,15 @@ router.get('/clubs/:centerId', requireAdmin, getAdminClubById);
 router.post('/clubs', requireAdmin, createClub);
 router.put('/clubs/:centerId', requireAdmin, updateClub);
 router.delete('/clubs/:centerId', requireAdmin, deleteClub);
+
+router.get('/clubs/:clubId/admins', requireAdmin, getClubAdmins);
+router.post(
+  '/clubs/:clubId/admins',
+  requireAdmin,
+  validate([body('userId').notEmpty()]),
+  assignClubAdmin
+);
+router.delete('/clubs/:clubId/admins/:userId', requireAdmin, removeClubAdmin);
 
 router.get('/courts', requireAdmin, getAllCourts);
 router.post('/courts', requireAdmin, createCourt);

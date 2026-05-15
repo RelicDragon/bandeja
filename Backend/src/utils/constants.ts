@@ -245,5 +245,16 @@ export const PROFILE_SELECT_FIELDS = {
       country: true,
     },
   },
+  clubAdmins: {
+    select: {
+      club: {
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
+        },
+      },
+    },
+  },
 } as const;
 

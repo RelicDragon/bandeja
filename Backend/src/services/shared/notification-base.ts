@@ -234,12 +234,19 @@ export function formatChatNotificationMessageBody(message: {
   messageType?: string;
   mediaUrls?: string[];
   audioDurationMs?: number | null;
+  videoDurationMs?: number | null;
 }): string {
   if (message.messageType === 'VOICE' && message.audioDurationMs != null) {
     const totalSec = Math.floor(message.audioDurationMs / 1000);
     const mm = Math.floor(totalSec / 60);
     const ss = totalSec % 60;
     return `🎤 Voice message (${mm}:${ss.toString().padStart(2, '0')})`;
+  }
+  if (message.messageType === 'VIDEO' && message.videoDurationMs != null) {
+    const totalSec = Math.floor(message.videoDurationMs / 1000);
+    const mm = Math.floor(totalSec / 60);
+    const ss = totalSec % 60;
+    return `🎬 Video (${mm}:${ss.toString().padStart(2, '0')})`;
   }
   if (message.content?.trim()) return message.content;
   if (message.mediaUrls && message.mediaUrls.length > 0) return '[Media]';

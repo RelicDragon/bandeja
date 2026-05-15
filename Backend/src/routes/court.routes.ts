@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
-import { optionalAuth } from '../middleware/auth';
+import { authenticate, optionalAuth } from '../middleware/auth';
 import * as courtController from '../controllers/court.controller';
 
 const router = Router();
@@ -12,6 +12,7 @@ router.get('/:id', optionalAuth, courtController.getCourtById);
 
 router.post(
   '/',
+  authenticate,
   validate([
     body('name').notEmpty().withMessage('Name is required'),
     body('clubId').notEmpty().withMessage('Club ID is required'),
@@ -19,8 +20,8 @@ router.post(
   courtController.createCourt
 );
 
-router.put('/:id', courtController.updateCourt);
-router.delete('/:id', courtController.deleteCourt);
+router.put('/:id', authenticate, courtController.updateCourt);
+router.delete('/:id', authenticate, courtController.deleteCourt);
 
 export default router;
 

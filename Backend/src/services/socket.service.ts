@@ -797,6 +797,41 @@ class SocketService {
     });
   }
 
+  public emitMessageTranslation(
+    contextType: ChatContextType,
+    contextId: string,
+    messageId: string,
+    payload: { languageCode: string; translation: string },
+    syncSeq?: number
+  ): void {
+    const room = this.getChatRoomName(contextType, contextId);
+    this.io.to(room).emit('chat:message-translation', {
+      contextType,
+      contextId,
+      messageId,
+      languageCode: payload.languageCode,
+      translation: payload.translation,
+      timestamp: new Date().toISOString(),
+      ...(syncSeq != null ? { syncSeq } : {}),
+    });
+  }
+
+  public emitAutoTranslateConfigUpdated(
+    contextType: ChatContextType,
+    contextId: string,
+    languageCodes: string[],
+    chatTypeKey: string
+  ): void {
+    const room = this.getChatRoomName(contextType, contextId);
+    this.io.to(room).emit('chat:auto-translate-config', {
+      contextType,
+      contextId,
+      languageCodes,
+      chatTypeKey,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   public emitPinnedMessagesUpdated(
     contextType: ChatContextType,
     contextId: string,

@@ -58,6 +58,22 @@ export interface SocketEvents {
     timestamp?: string;
     syncSeq?: number;
   }) => void;
+  'chat:message-translation': (data: {
+    contextType: string;
+    contextId: string;
+    messageId: string;
+    languageCode: string;
+    translation: string;
+    timestamp?: string;
+    syncSeq?: number;
+  }) => void;
+  'chat:auto-translate-config': (data: {
+    contextType: string;
+    contextId: string;
+    languageCodes: string[];
+    chatTypeKey: string;
+    timestamp?: string;
+  }) => void;
   'chat:reaction': (data: { contextType: string; contextId: string; reaction: any; syncSeq?: number }) => void;
   'chat:read-receipt': (data: {
     contextType: string;

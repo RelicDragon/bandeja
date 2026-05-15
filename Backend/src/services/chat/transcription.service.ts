@@ -325,6 +325,19 @@ export class TranscriptionService {
             { messageId, audioTranscription }
           );
         });
+        if (text !== MESSAGE_TRANSCRIPTION_NO_SPEECH) {
+          const { ChatAutoTranslateEnqueueService } = await import(
+            './chatAutoTranslateEnqueue.service'
+          );
+          void ChatAutoTranslateEnqueueService.onTranscriptionReady(messageId).catch(
+            (enqueueErr) => {
+              console.error('[auto-translate] enqueue after transcription failed', {
+                messageId,
+                enqueueErr,
+              });
+            }
+          );
+        }
         return { transcription: text, languageCode: language, syncSeq };
       } catch (err) {
         const cleared = await prisma.messageTranscription.deleteMany({

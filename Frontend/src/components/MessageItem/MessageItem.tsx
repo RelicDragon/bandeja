@@ -9,8 +9,11 @@ import { ReplyPreview } from '../ReplyPreview';
 import { PlayerCardBottomSheet } from '../PlayerCardBottomSheet';
 import { formatSystemMessageForDisplay, SystemMessageType } from '@/utils/systemMessages';
 import { FullscreenImageViewer } from '../FullscreenImageViewer';
+import { FullscreenVideoViewer } from '../FullscreenVideoViewer';
 import { ReportMessageModal } from '../ReportMessageModal';
 import { extractLanguageCode } from '@/utils/language';
+import { isTranslationPending } from '@/constants/messageTranslationPending';
+import { useChatAutoTranslateSlots } from '@/contexts/ChatAutoTranslateContext';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MessageItemProps } from './types';
 import { parseContentWithMentionsAndUrls, formatMessageTime as formatMessageTimeUtil } from './utils';
@@ -55,6 +58,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPlayerCard, setShowPlayerCard] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [fullscreenVideo, setFullscreenVideo] = useState<{ videoUrl: string; posterUrl: string } | null>(
+    null
+  );
   const [reportMessage, setReportMessage] = useState<ChatMessage | null>(null);
   const [selectedMentionUserId, setSelectedMentionUserId] = useState<string | null>(null);
   const [showFailedMenu, setShowFailedMenu] = useState(false);
@@ -142,6 +148,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     return null;
   }, [parsedContent]);
   const userLanguageCode = user?.language ? extractLanguageCode(user.language).toLowerCase() : 'en';
+  const autoTranslateSlots = useChatAutoTranslateSlots();
 
   let matchingTranslation = currentMessage.translation;
   if (currentMessage.translations && currentMessage.translations.length > 0) {
@@ -149,12 +156,39 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       currentMessage.translations.find((tr) => tr.languageCode.toLowerCase() === userLanguageCode) ||
       currentMessage.translation;
   }
-  const hasTranslation =
-    !!matchingTranslation && matchingTranslation.languageCode.toLowerCase() === userLanguageCode;
+  const translationReady =
+    !!matchingTranslation &&
+    matchingTranslation.languageCode.toLowerCase() === userLanguageCode &&
+    !isTranslationPending(matchingTranslation.translation);
+  const localeAllowed =
+    autoTranslateSlots.length === 0 || autoTranslateSlots.map((c) => c.toLowerCase()).includes(userLanguageCode);
+  const hasTranslation = translationReady && localeAllowed;
+  const isTranslationLoading =
+    localeAllowed &&
+    !!matchingTranslation &&
+    matchingTranslation.languageCode.toLowerCase() === userLanguageCode &&
+    isTranslationPending(matchingTranslation.translation);
   const translationContent =
     hasTranslation && matchingTranslation
       ? parseContentWithMentionsAndUrls(matchingTranslation.translation)
       : null;
+  const translationRevealKey =
+    (currentMessage as ChatMessageWithStatus)._translationJustArrived && hasTranslation
+      ? `${currentMessage.id}-reveal`
+      : undefined;
+
+  const translationJustArrived = (currentMessage as ChatMessageWithStatus)._translationJustArrived;
+  useEffect(() => {
+    if (!translationJustArrived) return;
+    const timer = window.setTimeout(() => {
+      setCurrentMessage((prev) => {
+        if (!translationJustArrived) return prev;
+        const { _translationJustArrived: _, ...rest } = prev as ChatMessageWithStatus;
+        return rest;
+      });
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [translationJustArrived]);
 
   const getSenderName = () => {
     if (isSystemMessage) return 'System';
@@ -205,6 +239,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   };
 
   const handleImageClick = (url: string) => setFullscreenImage(url || null);
+  const handleVideoOpen = (videoUrl: string, posterUrl: string) =>
+    setFullscreenVideo({ videoUrl, posterUrl });
 
   const handleCopyMessage = (msg: ChatMessage) => {
     let text: string;
@@ -356,6 +392,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     translationContent={translationContent}
                     displayContent={displayContent}
                     hasTranslation={hasTranslation}
+                    isTranslationLoading={isTranslationLoading}
+                    translationRevealKey={translationRevealKey}
                     voiceTranscriptionNoSpeech={
                       currentMessage.messageType === 'VOICE' && isVoiceTranscriptionNoSpeech(voiceTxRaw)
                     }
@@ -364,6 +402,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     formatMessageTime={formatMessageTime}
                     getThumbnailUrl={getThumbnailUrl}
                     onImageClick={handleImageClick}
+                    onVideoOpen={handleVideoOpen}
+                    inlineVideoPlaybackPaused={!!fullscreenVideo}
                     onMentionClick={(userId) => setSelectedMentionUserId(userId)}
                     onUrlClick={handleUrlClick}
                     mentionIds={currentMessage.mentionIds || []}
@@ -510,6 +550,16 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           imageUrl={fullscreenImage}
           onClose={() => setFullscreenImage(null)}
           isOpen={!!fullscreenImage}
+        />
+      )}
+
+      {fullscreenVideo && (
+        <FullscreenVideoViewer
+          videoUrl={fullscreenVideo.videoUrl}
+          posterUrl={fullscreenVideo.posterUrl}
+          messageId={currentMessage.id}
+          onClose={() => setFullscreenVideo(null)}
+          isOpen={!!fullscreenVideo}
         />
       )}
     </>

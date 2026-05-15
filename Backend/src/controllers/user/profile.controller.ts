@@ -45,12 +45,21 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
   });
 
   const blockedUserIds = blockedUsers.map((block) => block.blockedUserId);
+  const clubAdminClubs =
+    user.clubAdmins?.map((ca) => ({
+      id: ca.club.id,
+      name: ca.club.name,
+      avatar: ca.club.avatar,
+    })) ?? [];
+
+  const { clubAdmins: _clubAdmins, ...profile } = user;
 
   res.json({
     success: true,
     data: {
-      ...user,
+      ...profile,
       blockedUserIds,
+      clubAdminClubs,
     },
   });
 });

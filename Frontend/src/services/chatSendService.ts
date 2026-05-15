@@ -1,11 +1,18 @@
-import { chatApi, ChatContextType, ChatMessage, CreateMessageRequest } from '@/api/chat';
+import { ChatContextType, ChatMessage, CreateMessageRequest } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { mediaApi } from '@/api/media';
 import { uploadChatImageFileWithRetry } from '@/services/chat/chatImageUploadRetry';
+import { uploadChatVideoFileWithRetry } from '@/services/chat/chatVideoUploadRetry';
 import { messageQueueStorage, QueuedMessage } from './chatMessageQueueStorage';
 import { normalizeChatType } from '@/utils/chatType';
-import { loadOutboxImageBlobs, loadOutboxVoiceBlob } from '@/services/chat/chatOutboxMediaBlobs';
+import {
+  loadOutboxImageBlobs,
+  loadOutboxVideoBlob,
+  loadOutboxVideoPosterBlob,
+  loadOutboxVoiceBlob,
+} from '@/services/chat/chatOutboxMediaBlobs';
+import { SEND_VIDEO_UPLOAD_PHASE_MS } from '@/constants/chatVideo';
 import { logChatOutboxBlobMismatch } from '@/services/chat/chatDiagnostics';
 import { waitForOutboxReady } from '@/services/chat/chatOutboxEnqueue';
 import {
@@ -26,7 +33,8 @@ import {
   throwIfAborted,
 } from '@/services/chat/chatSendCoordinator';
 import { recordChatSendMetric } from '@/services/chat/chatSendMetrics';
-import { waitForChatSendSocketAck } from '@/services/chat/chatSendSocketAck';
+import { createMessageWithSocketAck } from '@/services/chat/chatSendMessageCreate';
+import { useVideoUploadProgressStore } from '@/store/videoUploadProgressStore';
 
 function imageFileForBlob(blob: Blob, index: number): File {
   const t = (blob.type || '').toLowerCase();
@@ -41,45 +49,15 @@ function imageFileForBlob(blob: Blob, index: number): File {
 
 function rowNeedsMediaUpload(row: QueuedMessage | undefined): boolean {
   if (!row) return false;
-  return !!(row.hasPendingVoiceBlob || (row.pendingImageBlobCount ?? 0) > 0);
+  return !!(
+    row.hasPendingVoiceBlob ||
+    row.hasPendingVideoBlob ||
+    (row.pendingImageBlobCount ?? 0) > 0
+  );
 }
 
-async function createMessageWithSocketAck(
-  request: CreateMessageRequest,
-  contextType: ChatContextType,
-  contextId: string,
-  clientMutationId: string | undefined,
-  signal: AbortSignal | undefined,
-  tempId: string
-): Promise<ChatMessage> {
-  const cid = clientMutationId?.trim();
-  if (!cid) {
-    return runWithAbort(signal, () => chatApi.createMessage(request, { signal }));
-  }
-
-  const httpPromise = runWithAbort(signal, () => chatApi.createMessage(request, { signal }));
-  const ackPromise = waitForChatSendSocketAck({
-    contextType,
-    contextId,
-    clientMutationId: cid,
-    signal,
-    timeoutMs: SEND_API_PHASE_MS,
-  });
-
-  const [httpSettled, ackSettled] = await Promise.allSettled([httpPromise, ackPromise]);
-
-  if (ackSettled.status === 'fulfilled' && ackSettled.value) {
-    recordChatSendMetric({
-      kind: 'chat_send_socket_ack',
-      tempId,
-      contextType,
-      contextId,
-    });
-    return ackSettled.value;
-  }
-
-  if (httpSettled.status === 'fulfilled') return httpSettled.value;
-  throw httpSettled.status === 'rejected' ? httpSettled.reason : new Error('send_failed');
+function uploadPhaseMsForRow(row: QueuedMessage | undefined): number {
+  return row?.hasPendingVideoBlob ? SEND_VIDEO_UPLOAD_PHASE_MS : SEND_UPLOAD_PHASE_MS;
 }
 
 async function failSendAttempt(
@@ -152,6 +130,7 @@ export function sendWithTimeout(
     tempId,
     contextType,
     contextId,
+    hasVideo: payload.messageType === 'VIDEO',
   });
 
   void (async () => {
@@ -166,6 +145,7 @@ export function sendWithTimeout(
 
       let finalMedia = [...mediaUrls];
       let finalThumb = [...thumbnailUrls];
+      let videoUploadBytes: number | undefined;
       const row = await messageQueueStorage.getByTempId(tempId);
       throwIfAborted(signal);
       if (!isActiveSendGeneration(tempId, generation)) return;
@@ -174,12 +154,65 @@ export function sendWithTimeout(
       const resolvedClientMutationId = clientMutationId ?? row?.clientMutationId;
 
       if (hasMediaUpload) {
-        armPhaseDeadline(tempId, generation, SEND_UPLOAD_PHASE_MS, () => {
+        armPhaseDeadline(tempId, generation, uploadPhaseMsForRow(row), () => {
           void failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'upload_deadline');
         });
       }
 
-      if (row?.hasPendingVoiceBlob) {
+      if (row?.hasPendingVideoBlob) {
+        const vb = await loadOutboxVideoBlob(tempId);
+        const poster = await loadOutboxVideoPosterBlob(tempId);
+        throwIfAborted(signal);
+        if (!isActiveSendGeneration(tempId, generation)) return;
+        if (!vb) {
+          logChatOutboxBlobMismatch('send', { tempId, contextType, contextId, kind: 'video' });
+          await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'video_blob_missing');
+          return;
+        }
+        const durationMs = row.payload.videoDurationMs ?? row.videoDurationMs ?? 0;
+        const width = row.payload.videoWidth ?? 0;
+        const height = row.payload.videoHeight ?? 0;
+        try {
+          const videoFile =
+            vb instanceof File ? vb : new File([vb], 'chat-video.mp4', { type: vb.type || 'video/mp4' });
+          const posterFile =
+            poster instanceof File
+              ? poster
+              : poster
+                ? new File([poster], 'poster.jpg', { type: poster.type || 'image/jpeg' })
+                : undefined;
+          const uploaded = await runWithAbort(signal, () =>
+            uploadChatVideoFileWithRetry(
+              videoFile,
+              posterFile,
+              contextId,
+              contextType,
+              durationMs,
+              width,
+              height,
+              3,
+              signal,
+              (progress) => useVideoUploadProgressStore.getState().setProgress(tempId, progress)
+            )
+          );
+          useVideoUploadProgressStore.getState().clear(tempId);
+          videoUploadBytes = videoFile.size;
+          if (!isActiveSendGeneration(tempId, generation)) return;
+          await messageQueueStorage.commitPendingVideoUploaded(
+            tempId,
+            uploaded.videoUrl,
+            uploaded.thumbnailUrl,
+            uploaded.durationMs || durationMs
+          );
+          finalMedia = [uploaded.videoUrl];
+          finalThumb = [uploaded.thumbnailUrl];
+        } catch (e) {
+          useVideoUploadProgressStore.getState().clear(tempId);
+          if (isAbortError(e) || !isActiveSendGeneration(tempId, generation)) return;
+          await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'video_upload_failed');
+          return;
+        }
+      } else if (row?.hasPendingVoiceBlob) {
         const vb = await loadOutboxVoiceBlob(tempId);
         throwIfAborted(signal);
         if (!isActiveSendGeneration(tempId, generation)) return;
@@ -285,6 +318,9 @@ export function sendWithTimeout(
         mentionIds: p.mentionIds?.length ? p.mentionIds : undefined,
         messageType: p.messageType,
         audioDurationMs: p.audioDurationMs,
+        videoDurationMs: p.videoDurationMs,
+        videoWidth: p.videoWidth,
+        videoHeight: p.videoHeight,
         waveformData: p.waveformData,
         ...(resolvedClientMutationId ? { clientMutationId: resolvedClientMutationId } : {}),
       };
@@ -305,6 +341,9 @@ export function sendWithTimeout(
         contextType,
         contextId,
         hasMedia: hasMediaUpload,
+        hasVideo: p.messageType === 'VIDEO',
+        transcodeMs: latest?.videoTranscodeMs,
+        uploadBytes: videoUploadBytes,
         durationMs: Date.now() - startedAt,
       });
       onSuccess?.(created);

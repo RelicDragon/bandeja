@@ -54,6 +54,7 @@
                 <li><a href="#" data-page="app-versions" class="nav-link">📱 App Versions</a></li>
                 <li><a href="#" data-page="market-categories" class="nav-link">🛒 Market Categories</a></li>
                 <li><a href="#" data-page="mass-notifications" class="nav-link">📢 Mass Notifications</a></li>
+                <li><a href="#" data-page="translation-queue" class="nav-link">🌐 Translation Queue</a></li>
                 <li><a href="#" data-page="logs" class="nav-link">📋 Logs</a></li>
             </ul>
             <button id="logoutBtn" class="btn-logout">Logout</button>
@@ -114,6 +115,62 @@
                             <p class="stat-value" id="totalInvites">-</p>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div id="translationQueuePage" class="content-page">
+                <div class="page-header">
+                    <h1>Translation Queue</h1>
+                    <div class="online-users-controls">
+                        <span id="translationQueueUpdated" class="online-users-updated"></span>
+                        <button type="button" class="btn-secondary" onclick="loadTranslationQueueStats()">Refresh</button>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Pending</p>
+                            <p class="stat-value" id="tqPending">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⚙️</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Running</p>
+                            <p class="stat-value" id="tqRunning">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Done</p>
+                            <p class="stat-value" id="tqDone">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">❌</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Failed</p>
+                            <p class="stat-value" id="tqFailed">-</p>
+                        </div>
+                    </div>
+                </div>
+                <p class="translation-queue-worker" id="tqWorker">Workers: -</p>
+                <p class="translation-queue-sources" id="tqSources">By source: -</p>
+                <h2 class="section-subtitle">Recent failures</h2>
+                <div class="table-container">
+                    <table id="translationQueueFailedTable">
+                        <thead>
+                            <tr>
+                                <th>Message</th>
+                                <th>Language</th>
+                                <th>Error</th>
+                                <th>Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody id="translationQueueFailedBody"></tbody>
+                    </table>
                 </div>
             </div>
 
@@ -512,6 +569,14 @@
                 <div class="form-group-checkbox">
                     <input type="checkbox" id="centerIsForPlaying" checked>
                     <label for="centerIsForPlaying">Is For Playing</label>
+                </div>
+                <div id="centerAdminsSection" class="form-group" style="display: none;">
+                    <label>Club admins</label>
+                    <div id="centerAdminsList" style="margin-bottom: 8px; font-size: 0.9rem;"></div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <input type="text" id="centerAdminUserId" placeholder="User ID" style="flex: 1; min-width: 160px;" />
+                        <button type="button" class="btn-secondary" onclick="assignClubAdminForCenter()">Assign</button>
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal('centerModal')">Cancel</button>

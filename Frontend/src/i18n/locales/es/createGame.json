@@ -19,6 +19,8 @@
     "selectCourt": "Seleccionar cancha",
     "selectHall": "Seleccionar salón",
     "selectClubFirst": "Selecciona el club primero",
+    "clubCancellationNotice": "Aviso de cancelación: al menos {{hours}} horas antes de tu franja.",
+    "clubPolicyTitle": "Normas del club",
     "noClubsAvailable": "No hay clubs disponibles",
     "clubDetailsBack": "Volver a clubes",
     "clubInfo": "Detalles del club",

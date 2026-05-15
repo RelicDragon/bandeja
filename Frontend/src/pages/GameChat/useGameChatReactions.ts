@@ -292,7 +292,13 @@ export function useGameChatReactions({
         const idx = prev.findIndex((m) => m.id === updated.id);
         if (idx < 0) return prev;
         const next = [...prev];
-        next[idx] = { ...updated, _status: prev[idx]._status, _optimisticId: (prev[idx] as ChatMessageWithStatus)._optimisticId } as ChatMessageWithStatus;
+        next[idx] = {
+          ...updated,
+          _status: prev[idx]._status,
+          _optimisticId: (prev[idx] as ChatMessageWithStatus)._optimisticId,
+          translation: undefined,
+          translations: undefined,
+        } as ChatMessageWithStatus;
         messagesRef.current = next;
         return next;
       });

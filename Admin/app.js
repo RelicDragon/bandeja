@@ -5,6 +5,7 @@ let currentInvites = [];
 let usersDataTable = null;
 let gamesDataTable = null;
 let onlineUsersPollInterval = null;
+let translationQueuePollInterval = null;
 
 const elements = {
     loginPage: document.getElementById('loginPage'),
@@ -141,6 +142,10 @@ function switchPage(pageName) {
         clearInterval(onlineUsersPollInterval);
         onlineUsersPollInterval = null;
     }
+    if (pageName !== 'translation-queue' && translationQueuePollInterval) {
+        clearInterval(translationQueuePollInterval);
+        translationQueuePollInterval = null;
+    }
 
     const activeLink = document.querySelector(`[data-page="${pageName}"]`);
     const pageId = pageName.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase()) + 'Page';
@@ -204,6 +209,7 @@ async function loadStats() {
 }
 
 const ONLINE_USERS_POLL_MS = 3000;
+const TRANSLATION_QUEUE_POLL_MS = 5000;
 
 function getAuthMethodBadges(u, short = true) {
     const L = short
@@ -220,6 +226,60 @@ function getAuthMethodBadges(u, short = true) {
 function startOnlineUsersPoll() {
     if (onlineUsersPollInterval) return;
     onlineUsersPollInterval = setInterval(loadOnlineUsers, ONLINE_USERS_POLL_MS);
+}
+
+function startTranslationQueuePoll() {
+    if (translationQueuePollInterval) return;
+    translationQueuePollInterval = setInterval(loadTranslationQueueStats, TRANSLATION_QUEUE_POLL_MS);
+}
+
+async function loadTranslationQueueStats() {
+    const updatedEl = document.getElementById('translationQueueUpdated');
+    const tbody = document.getElementById('translationQueueFailedBody');
+    if (!tbody) return;
+    try {
+        const response = await apiRequest('/admin/translation-queue/stats');
+        if (!response.success) return;
+        const s = response.data;
+        const set = (id, v) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = String(v ?? '-');
+        };
+        set('tqPending', s.pending);
+        set('tqRunning', s.running);
+        set('tqDone', s.done);
+        set('tqFailed', s.failed);
+        const workerEl = document.getElementById('tqWorker');
+        if (workerEl && s.worker) {
+            const redisNote = s.redis?.configured ? ' · Redis wake/lock on' : '';
+            workerEl.textContent = `Workers: ${s.worker.active} / ${s.worker.maxConcurrency}${redisNote}`;
+        }
+        const sourcesEl = document.getElementById('tqSources');
+        if (sourcesEl && s.bySource) {
+            const b = s.bySource;
+            sourcesEl.textContent = `By source: auto ${b.auto ?? 0}, manual ${b.manual ?? 0}, backfill ${b.backfill ?? 0}`;
+        }
+        if (updatedEl) {
+            updatedEl.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+        }
+        const failed = s.recentFailed || [];
+        tbody.innerHTML = failed.length
+            ? failed
+                  .map(
+                      (row) => `
+            <tr>
+                <td>${escapeHtmlAttr(row.messageId)}</td>
+                <td>${escapeHtmlAttr(row.languageCode)}</td>
+                <td>${escapeHtmlAttr(row.lastError || '-')}</td>
+                <td>${escapeHtmlAttr(new Date(row.updatedAt).toLocaleString())}</td>
+            </tr>`
+                  )
+                  .join('')
+            : '<tr><td colspan="4">No recent failures</td></tr>';
+    } catch (error) {
+        console.error('Failed to load translation queue stats:', error);
+        if (updatedEl) updatedEl.textContent = 'Error loading stats';
+    }
 }
 
 async function loadOnlineUsers() {
@@ -285,6 +345,10 @@ async function loadPageData(page) {
             break;
         case 'mass-notifications':
             loadMassNotificationsPage();
+            break;
+        case 'translation-queue':
+            loadTranslationQueueStats();
+            startTranslationQueuePoll();
             break;
         case 'logs':
             if (!isStreamActive) {

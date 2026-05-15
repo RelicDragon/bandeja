@@ -22,6 +22,7 @@ export {
 export {
   patchLocalTranscription,
   patchLocalReadReceipt,
+  patchMessageTranslationInDexie,
   patchLocalPoll,
   persistReactionSocketPayload,
 } from './chatLocalApplyPatchFields';

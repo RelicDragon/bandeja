@@ -45,6 +45,12 @@ const translations: Record<string, Record<string, string>> = {
     'createGame.notBookedYet': 'Not booked yet',
     'createGame.hasBookedCourt': 'Court booked',
     'createGame.hasBookedHall': 'Hall booked',
+    'createGame.clubCancellationNotice': 'Cancellation notice: at least {{hours}} hours before your slot.',
+    'createGame.clubPolicyTitle': 'Club policies',
+    'clubAdmin.dm.courtCancelled':
+      'Hi {{hostName}}, your court at {{club}} on {{date}} {{time}} was cancelled by the club. Reason: {{reason}}.{{note}}',
+    'clubAdmin.dm.courtCleared':
+      'Hi {{hostName}}, your court reservation at {{club}} on {{date}} {{time}} was released by the club. Reason: {{reason}}.{{note}}',
     'telegram.viewGame': 'View Game',
     'telegram.viewChat': 'Open Chat',
     'telegram.viewBug': 'Open Bug',
@@ -265,6 +271,12 @@ const translations: Record<string, Record<string, string>> = {
     'createGame.notBookedYet': 'Еще не забронировано',
     'createGame.hasBookedCourt': 'Корт забронирован',
     'createGame.hasBookedHall': 'Зал забронирован',
+    'createGame.clubCancellationNotice': 'Уведомление об отмене: не менее чем за {{hours}} ч до слота.',
+    'createGame.clubPolicyTitle': 'Правила клуба',
+    'clubAdmin.dm.courtCancelled':
+      'Здравствуйте, {{hostName}}! Ваш корт в {{club}} {{date}} в {{time}} отменён клубом. Причина: {{reason}}.{{note}}',
+    'clubAdmin.dm.courtCleared':
+      'Здравствуйте, {{hostName}}! Бронь корта в {{club}} на {{date}} {{time}} снята клубом. Причина: {{reason}}.{{note}}',
     'telegram.viewGame': 'Посмотреть игру',
     'telegram.viewChat': 'Открыть чат',
     'telegram.viewBug': 'Открыть баг',
@@ -484,6 +496,12 @@ const translations: Record<string, Record<string, string>> = {
     'createGame.notBookedYet': 'Још није резервисано',
     'createGame.hasBookedCourt': 'Терен резервисан',
     'createGame.hasBookedHall': 'Сала резервисана',
+    'createGame.clubCancellationNotice': 'Обавештење о отказивању: најмање {{hours}} сати пре термина.',
+    'createGame.clubPolicyTitle': 'Правила клуба',
+    'clubAdmin.dm.courtCancelled':
+      'Здраво {{hostName}}, ваш терен у {{club}} {{date}} у {{time}} је отказао клуб. Разлог: {{reason}}.{{note}}',
+    'clubAdmin.dm.courtCleared':
+      'Здраво {{hostName}}, резервација терена у {{club}} за {{date}} {{time}} је уклоњена од стране клуба. Разлог: {{reason}}.{{note}}',
     'telegram.viewGame': 'Погледај игру',
     'telegram.viewChat': 'Отвори чат',
     'telegram.viewBug': 'Отвори баг',
@@ -703,6 +721,12 @@ const translations: Record<string, Record<string, string>> = {
     'createGame.notBookedYet': 'Aún no reservado',
     'createGame.hasBookedCourt': 'Pista reservada',
     'createGame.hasBookedHall': 'Salón reservado',
+    'createGame.clubCancellationNotice': 'Aviso de cancelación: al menos {{hours}} horas antes de tu franja.',
+    'createGame.clubPolicyTitle': 'Normas del club',
+    'clubAdmin.dm.courtCancelled':
+      'Hola {{hostName}}, tu pista en {{club}} el {{date}} a las {{time}} fue cancelada por el club. Motivo: {{reason}}.{{note}}',
+    'clubAdmin.dm.courtCleared':
+      'Hola {{hostName}}, tu reserva de pista en {{club}} el {{date}} a las {{time}} fue liberada por el club. Motivo: {{reason}}.{{note}}',
     'telegram.viewGame': 'Ver juego',
     'telegram.viewChat': 'Abrir chat',
     'telegram.viewBug': 'Abrir bug',
@@ -922,6 +946,12 @@ const translations: Record<string, Record<string, string>> = {
     'createGame.notBookedYet': 'Ještě neobjednáno',
     'createGame.hasBookedCourt': 'Kurt objednán',
     'createGame.hasBookedHall': 'Sál objednán',
+    'createGame.clubCancellationNotice': 'Storno podmínky: alespoň {{hours}} hodin před termínem.',
+    'createGame.clubPolicyTitle': 'Pravidla klubu',
+    'clubAdmin.dm.courtCancelled':
+      'Ahoj {{hostName}}, tvůj kurt v {{club}} dne {{date}} v {{time}} byl zrušen klubem. Důvod: {{reason}}.{{note}}',
+    'clubAdmin.dm.courtCleared':
+      'Ahoj {{hostName}}, tvoje rezervace kurtu v {{club}} dne {{date}} v {{time}} byla uvolněna klubem. Důvod: {{reason}}.{{note}}',
     'telegram.viewGame': 'Zobrazit zápas',
     'telegram.viewChat': 'Otevřít chat',
     'telegram.viewBug': 'Otevřít bug',

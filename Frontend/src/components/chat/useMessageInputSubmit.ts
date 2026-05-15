@@ -55,7 +55,10 @@ type Params = {
   onOptimisticMessage?: (
     payload: OptimisticMessagePayload,
     pendingImageBlobs?: Blob[],
-    pendingVoiceBlob?: Blob
+    pendingVoiceBlob?: Blob,
+    pendingVideoBlob?: Blob,
+    pendingVideoPosterBlob?: Blob,
+    videoTranscodeMs?: number
   ) => string;
   onSendQueued?: (params: SendQueuedParams) => void;
   onSendFailed?: (optimisticId: string) => void;

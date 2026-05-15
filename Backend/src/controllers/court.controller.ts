@@ -1,10 +1,18 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
+import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { refreshClubCourtsCount } from '../utils/refreshClubCourtsCount';
+import { ClubAdminService } from '../services/clubAdmin/clubAdmin.service';
 
-export const getCourtsByClub = asyncHandler(async (req: Request, res: Response) => {
+async function assertCourtMutationAllowed(req: AuthRequest, clubId: string) {
+  if (req.user?.isAdmin) return;
+  if (!req.userId) throw new ApiError(401, 'User not authenticated');
+  await ClubAdminService.assertClubAdmin(req.userId, clubId);
+}
+
+export const getCourtsByClub = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { clubId } = req.params;
 
   const courts = await prisma.court.findMany({
@@ -21,7 +29,7 @@ export const getCourtsByClub = asyncHandler(async (req: Request, res: Response) 
   });
 });
 
-export const getCourtById = asyncHandler(async (req: Request, res: Response) => {
+export const getCourtById = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
   const court = await prisma.court.findUnique({
@@ -47,7 +55,7 @@ export const getCourtById = asyncHandler(async (req: Request, res: Response) => 
   });
 });
 
-export const createCourt = asyncHandler(async (req: Request, res: Response) => {
+export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { name, clubId, courtType, isIndoor, surfaceType, pricePerHour } = req.body;
 
   const club = await prisma.club.findUnique({
@@ -57,6 +65,8 @@ export const createCourt = asyncHandler(async (req: Request, res: Response) => {
   if (!club) {
     throw new ApiError(404, 'Club not found');
   }
+
+  await assertCourtMutationAllowed(req, clubId);
 
   const court = await prisma.court.create({
     data: {
@@ -76,12 +86,15 @@ export const createCourt = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-export const updateCourt = asyncHandler(async (req: Request, res: Response) => {
+export const updateCourt = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const updateData = req.body;
 
   const existing = await prisma.court.findUnique({ where: { id }, select: { clubId: true } });
   if (!existing) throw new ApiError(404, 'Court not found');
+
+  const targetClubId = (updateData.clubId as string | undefined) ?? existing.clubId;
+  await assertCourtMutationAllowed(req, targetClubId);
 
   const court = await prisma.court.update({
     where: { id },
@@ -98,11 +111,13 @@ export const updateCourt = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-export const deleteCourt = asyncHandler(async (req: Request, res: Response) => {
+export const deleteCourt = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
   const court = await prisma.court.findUnique({ where: { id }, select: { clubId: true } });
   if (!court) throw new ApiError(404, 'Court not found');
+
+  await assertCourtMutationAllowed(req, court.clubId);
 
   await prisma.court.delete({ where: { id } });
   await refreshClubCourtsCount(court.clubId);

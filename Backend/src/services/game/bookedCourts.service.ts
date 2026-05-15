@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { ClubIntegrationService } from '../clubIntegration/clubIntegration.service';
@@ -10,6 +11,8 @@ export interface BookedCourtSlot {
   hasBookedCourt: boolean;
   clubBooked: boolean;
   isFree: boolean;
+  slotKind?: 'game' | 'external' | 'hold';
+  holdBlocked?: boolean;
 }
 
 export interface BookedCourtsResult {
@@ -31,6 +34,7 @@ export class BookedCourtsService {
     const where: any = {
       AND: [
         { timeIsSet: true },
+        { status: { in: ['ANNOUNCED', 'STARTED'] } },
         {
           OR: [
             { clubId: clubId },
@@ -102,7 +106,39 @@ export class BookedCourtsService {
       hasBookedCourt: game.hasBookedCourt,
       clubBooked: false,
       isFree: false,
+      slotKind: 'game',
     }));
+
+    let holdSlots: BookedCourtSlot[] = [];
+    if (startDate || endDate) {
+      const holdWhere: Prisma.CourtSlotHoldWhereInput = {
+        clubId,
+        ...(courtId ? { courtId } : {}),
+      };
+      if (startDate) {
+        holdWhere.endTime = { gte: new Date(startDate) };
+      }
+      if (endDate) {
+        const endDateObj = new Date(endDate);
+        endDateObj.setHours(23, 59, 59, 999);
+        holdWhere.startTime = { lte: endDateObj };
+      }
+      const holds = await prisma.courtSlotHold.findMany({
+        where: holdWhere,
+        include: { court: { select: { id: true, name: true } } },
+      });
+      holdSlots = holds.map((hold) => ({
+        courtId: hold.court.id,
+        courtName: hold.court.name,
+        startTime: hold.startTime.toISOString(),
+        endTime: hold.endTime.toISOString(),
+        hasBookedCourt: true,
+        clubBooked: true,
+        isFree: false,
+        slotKind: 'hold',
+        holdBlocked: true,
+      }));
+    }
 
     let externalSlots: BookedCourtSlot[] = [];
     let isLoadingExternalSlots = false;
@@ -149,6 +185,7 @@ export class BookedCourtsService {
               hasBookedCourt: slot.isBooked,
               clubBooked: true,
               isFree: false,
+              slotKind: 'external' as const,
             }));
         }
       } catch (error) {
@@ -160,7 +197,7 @@ export class BookedCourtsService {
     }
 
     return {
-      slots: [...bookedSlots, ...externalSlots],
+      slots: [...bookedSlots, ...holdSlots, ...externalSlots],
       isLoadingExternalSlots,
     };
   }

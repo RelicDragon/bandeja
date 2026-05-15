@@ -1,5 +1,6 @@
 import type { ChatContextType } from '@/api/chat';
 import { mediaApi } from '@/api/media';
+import { compressChatImageFile } from '@/services/chat/chatOutboxImageCompress';
 
 const DEFAULT_ATTEMPTS = 3;
 
@@ -10,13 +11,14 @@ export async function uploadChatImageFileWithRetry(
   maxAttempts = DEFAULT_ATTEMPTS,
   signal?: AbortSignal
 ): Promise<{ originalUrl: string; thumbnailUrl: string }> {
+  const prepared = await compressChatImageFile(file);
   let last: unknown;
   for (let a = 1; a <= maxAttempts; a++) {
     if (signal?.aborted) {
       throw new DOMException('Aborted', 'AbortError');
     }
     try {
-      const response = await mediaApi.uploadChatImage(file, contextId, contextType, { signal });
+      const response = await mediaApi.uploadChatImage(prepared, contextId, contextType, { signal });
       return { originalUrl: response.originalUrl, thumbnailUrl: response.thumbnailUrl };
     } catch (e) {
       last = e;

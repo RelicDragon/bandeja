@@ -7,6 +7,7 @@ import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatMessage, GroupChannel, UserChat } from '@/api/chat';
 import type { Game, Bug } from '@/types';
+import type { TranslationModalAutoTranslateProps } from '@/components/chat/TranslationLanguageModal';
 
 export type GameChatFooterVariant =
   | { type: 'blocked' }
@@ -38,6 +39,7 @@ export type GameChatFooterVariant =
       contextId: string;
       translateToLanguage: string | null;
       onTranslateToLanguageChange: (value: string | null) => void | Promise<void>;
+      autoTranslate?: TranslationModalAutoTranslateProps | null;
       chatNearBottom: boolean;
       onScrollToBottomSmooth: () => void;
     }
@@ -114,6 +116,7 @@ export const GameChatFooter: React.FC<GameChatFooterProps> = ({
             contextId={variant.contextId}
             translateToLanguage={variant.translateToLanguage}
             onTranslateToLanguageChange={variant.onTranslateToLanguageChange}
+            autoTranslate={variant.autoTranslate}
             chatNearBottom={variant.chatNearBottom}
             onScrollToBottomSmooth={variant.onScrollToBottomSmooth}
           />

@@ -5,13 +5,18 @@ const CACHE_NAME = 'bandeja-chat-media-v1';
 const MAX_TRACKED_KEYS = 140;
 const trackedKeys: string[] = [];
 
+function isVideoMediaCacheKey(cacheKey: string): boolean {
+  return /\/videos\//.test(cacheKey) || cacheKey.includes('uploads/chat/videos');
+}
+
 function touchTrackedCacheKey(cacheKey: string): void {
   const i = trackedKeys.indexOf(cacheKey);
   if (i >= 0) trackedKeys.splice(i, 1);
   trackedKeys.push(cacheKey);
   while (trackedKeys.length > MAX_TRACKED_KEYS) {
-    const old = trackedKeys.shift();
-    if (old) void evictChatMediaCacheKey(old);
+    const videoIdx = trackedKeys.findIndex(isVideoMediaCacheKey);
+    const evictKey = videoIdx >= 0 ? trackedKeys.splice(videoIdx, 1)[0] : trackedKeys.shift();
+    if (evictKey) void evictChatMediaCacheKey(evictKey);
   }
 }
 

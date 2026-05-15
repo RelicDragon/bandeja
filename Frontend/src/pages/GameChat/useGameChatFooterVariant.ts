@@ -5,6 +5,7 @@ import type { ChatMessageWithStatus } from '@/api/chat';
 import type { Game, Bug } from '@/types';
 import type { GroupChannel } from '@/api/chat';
 import type { GameChatFooterVariant } from './GameChatFooter';
+import type { TranslationModalAutoTranslateProps } from '@/components/chat/TranslationLanguageModal';
 
 export interface UseGameChatFooterVariantParams {
   id: string | undefined;
@@ -29,11 +30,15 @@ export interface UseGameChatFooterVariantParams {
   translateToLanguageForChat: string | null;
   setUserChat: React.Dispatch<React.SetStateAction<import('@/api/chat').UserChat | null>>;
   setTranslateToLanguageForChat: (v: string | null) => void;
+  autoTranslateForModal: TranslationModalAutoTranslateProps | null;
   loadContext: () => Promise<unknown>;
   handleAddOptimisticMessage: (
     payload: import('@/api/chat').OptimisticMessagePayload,
     pendingImageBlobs?: Blob[],
-    pendingVoiceBlob?: Blob
+    pendingVoiceBlob?: Blob,
+    pendingVideoBlob?: Blob,
+    pendingVideoPosterBlob?: Blob,
+    videoTranscodeMs?: number
   ) => string;
   handleSendQueued: (params: any) => void;
   handleSendFailed: (optimisticId: string) => void;
@@ -75,6 +80,7 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
     translateToLanguageForChat,
     setUserChat,
     setTranslateToLanguageForChat,
+    autoTranslateForModal,
     loadContext,
     handleAddOptimisticMessage,
     handleSendQueued,
@@ -141,6 +147,7 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
           await chatApi.setChatTranslationPreference(contextType, id, value);
           setTranslateToLanguageForChat(value);
         },
+        autoTranslate: autoTranslateForModal,
         chatNearBottom,
         onScrollToBottomSmooth: scrollToBottomSmooth,
       };
@@ -200,6 +207,7 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
     isJoiningAsGuest,
     setUserChat,
     setTranslateToLanguageForChat,
+    autoTranslateForModal,
     chatNearBottom,
     scrollToBottomSmooth,
   ]);

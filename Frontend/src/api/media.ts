@@ -19,6 +19,14 @@ export interface ChatAudioUploadResponse {
   audioUrl: string;
 }
 
+export interface ChatVideoUploadResponse {
+  videoUrl: string;
+  thumbnailUrl: string;
+  durationMs: number;
+  width: number;
+  height: number;
+}
+
 async function postMultipartAvatarUpload(
   path: string,
   avatarFile: File,
@@ -149,6 +157,60 @@ export const mediaApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
       signal: options?.signal,
     });
+    return response.data.data;
+  },
+
+  uploadChatVideo: async (
+    videoFile: File,
+    contextId: string,
+    contextType?: 'GAME' | 'BUG' | 'USER' | 'GROUP',
+    options?: {
+      signal?: AbortSignal;
+      posterFile?: File;
+      durationMs?: number;
+      width?: number;
+      height?: number;
+      onUploadProgress?: (progress: number) => void;
+    }
+  ): Promise<ChatVideoUploadResponse> => {
+    const formData = new FormData();
+    formData.append('video', videoFile);
+    if (options?.posterFile) {
+      formData.append('poster', options.posterFile);
+    }
+    if (options?.durationMs != null) {
+      formData.append('durationMs', String(options.durationMs));
+    }
+    if (options?.width != null) {
+      formData.append('width', String(options.width));
+    }
+    if (options?.height != null) {
+      formData.append('height', String(options.height));
+    }
+    if (contextType === 'BUG') {
+      formData.append('bugId', contextId);
+    } else if (contextType === 'USER') {
+      formData.append('userChatId', contextId);
+    } else if (contextType === 'GROUP') {
+      formData.append('groupChannelId', contextId);
+    } else {
+      formData.append('gameId', contextId);
+    }
+
+    const response = await api.post<ApiResponse<ChatVideoUploadResponse>>(
+      '/media/upload/chat/video',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        signal: options?.signal,
+        onUploadProgress: options?.onUploadProgress
+          ? (ev) => {
+              const total = ev.total ?? 0;
+              if (total > 0) options.onUploadProgress!(ev.loaded / total);
+            }
+          : undefined,
+      }
+    );
     return response.data.data;
   },
 };

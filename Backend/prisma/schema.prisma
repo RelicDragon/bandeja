@@ -153,6 +153,8 @@ model User {
   ownedUserTeams          UserTeam[]                    @relation("UserTeamOwner")
   userTeamMemberships     UserTeamMember[]
   refreshSessions         UserRefreshSession[]
+  clubAdmins              ClubAdmin[]
+  courtSlotHoldsCreated   CourtSlotHold[]
 
   @@index([phone])
   @@index([telegramId])
@@ -264,6 +266,9 @@ model Club {
   courtsNumber         Int                @default(0)
   clubRating           Float?
   clubReviewCount      Int                @default(0)
+  defaultSlotMinutes   Int?
+  cancellationNoticeHours Int?
+  policyText           String?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   city                 City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
@@ -272,6 +277,8 @@ model Club {
   favoritedBy          UserFavoriteClub[]
   leagues              League[]
   clubReviews          ClubReview[]
+  clubAdmins           ClubAdmin[]
+  courtSlotHolds       CourtSlotHold[]
 
   @@index([cityId])
   @@index([isActive])
@@ -295,10 +302,57 @@ model Court {
   games          Game[]
   gameCourts     GameCourt[]
   matches        Match[]
+  courtSlotHolds CourtSlotHold[]
 
   @@index([clubId])
   @@index([isActive])
   @@index([externalCourtId])
+}
+
+enum ClubAdminRole {
+  ADMIN
+  STAFF
+}
+
+model ClubAdmin {
+  id        String        @id @default(cuid())
+  userId    String
+  clubId    String
+  role      ClubAdminRole @default(ADMIN)
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club      Club          @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clubId])
+  @@index([clubId])
+  @@index([userId])
+}
+
+enum CourtSlotHoldLabel {
+  WALK_IN
+  PHONE
+  ACADEMY
+  MAINTENANCE
+  OTHER
+}
+
+model CourtSlotHold {
+  id              String             @id @default(cuid())
+  clubId          String
+  courtId         String
+  startTime       DateTime
+  endTime         DateTime
+  label           CourtSlotHoldLabel
+  note            String?
+  createdByUserId String
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  club            Club               @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  court           Court              @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  createdBy       User               @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  @@index([clubId, startTime, endTime])
+  @@index([courtId, startTime])
 }
 
 model Game {
@@ -815,6 +869,9 @@ model ChatMessage {
   chatType        ChatType             @default(PUBLIC)
   messageType     MessageType          @default(TEXT)
   audioDurationMs Int?
+  videoDurationMs Int?
+  videoWidth      Int?
+  videoHeight     Int?
   waveformData    Float[]            @default([])
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
@@ -936,6 +993,56 @@ model ChatTranslationPreference {
   @@unique([userId, chatContextType, contextId])
   @@index([userId])
   @@index([chatContextType, contextId])
+}
+
+model ChatAutoTranslateConfig {
+  id              String          @id @default(cuid())
+  chatContextType ChatContextType
+  contextId       String
+  chatTypeKey     String          @default("") @db.VarChar(16)
+  languageCodes   String[]
+  updatedByUserId String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([chatContextType, contextId, chatTypeKey])
+  @@index([chatContextType, contextId])
+}
+
+enum TranslationJobPriority {
+  high
+  normal
+  low
+}
+
+enum TranslationJobStatus {
+  pending
+  running
+  done
+  failed
+}
+
+enum TranslationJobSource {
+  manual
+  auto
+  backfill
+}
+
+model TranslationJob {
+  id           String                 @id @default(cuid())
+  messageId    String
+  languageCode String                 @db.VarChar(10)
+  priority     TranslationJobPriority @default(normal)
+  status       TranslationJobStatus   @default(pending)
+  source       TranslationJobSource   @default(auto)
+  runAfter     DateTime               @default(now())
+  attempts     Int                    @default(0)
+  lastError    String?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@unique([messageId, languageCode])
+  @@index([status, runAfter, priority])
 }
 
 model ChatDraft {
@@ -1195,6 +1302,7 @@ enum MessageType {
   TEXT
   IMAGE
   VOICE
+  VIDEO
   POLL
 }
 
@@ -1220,6 +1328,7 @@ enum ChatSyncEventType {
   MESSAGE_UNPINNED
   MESSAGE_STATE_UPDATED
   THREAD_LOCAL_INVALIDATE
+  CHAT_AUTO_TRANSLATE_CONFIG_UPDATED
 }
 
 model ConversationSyncState {

@@ -19,6 +19,8 @@
     "selectCourt": "Vybrat kurt",
     "selectHall": "Vybrat halu",
     "selectClubFirst": "Nejprve vyberte klub",
+    "clubCancellationNotice": "Storno podmínky: alespoň {{hours}} hodin před termínem.",
+    "clubPolicyTitle": "Pravidla klubu",
     "noClubsAvailable": "Žádné kluby k dispozici",
     "clubDetailsBack": "Zpět na kluby",
     "clubInfo": "Detaily klubu",

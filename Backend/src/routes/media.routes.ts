@@ -11,8 +11,10 @@ import {
   uploadClubPhoto,
   uploadClubReviewPhoto,
   uploadChatImage,
+  uploadChatVideo,
   uploadChatAudio,
   uploadChatAudioMulter,
+  uploadChatVideoMulter,
   uploadChatDocument, 
   uploadGameMedia, 
   uploadMarketItemImage,
@@ -93,6 +95,15 @@ router.post(
   '/upload/chat/audio',
   uploadChatAudioMulter.single('audio'),
   uploadChatAudio
+);
+
+router.post(
+  '/upload/chat/video',
+  uploadChatVideoMulter.fields([
+    { name: 'video', maxCount: 1 },
+    { name: 'poster', maxCount: 1 },
+  ]),
+  uploadChatVideo
 );
 
 router.post(

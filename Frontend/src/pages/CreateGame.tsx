@@ -19,6 +19,10 @@ import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBack } from '@/utils/backNavigation';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
 import { maxSlotsForUserGameOrLeague, maxSlotsForUserTournament } from '@/utils/userMaxParticipantsInGame';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { MarkCourtBookedModal } from '@/components/createGame/MarkCourtBookedModal';
+import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
+import toast from 'react-hot-toast';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -127,7 +131,10 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const clubSectionRef = useRef<HTMLDivElement>(null);
   const timeSectionRef = useRef<HTMLDivElement>(null);
   const durationSectionRef = useRef<HTMLDivElement>(null);
-
+  const [softOverlapOpen, setSoftOverlapOpen] = useState(false);
+  const [markCourtOpen, setMarkCourtOpen] = useState(false);
+  const [pendingGameId, setPendingGameId] = useState<string | null>(null);
+  const [pendingGameStartTime, setPendingGameStartTime] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchClubs = async () => {
@@ -287,6 +294,47 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
     }
   };
 
+  const navigateAfterCreate = (gameStartTime: string) => {
+    setIsAnimating(true);
+    setCurrentPage('my');
+    const fromList = useNavigationStore.getState().myGamesSubtabBeforeCreate;
+    setMyGamesSubtabBeforeCreate(null);
+    if (fromList === 'list') {
+      navigate('/?tab=list', { replace: true });
+    } else {
+      const startDate = format(startOfDay(new Date(gameStartTime)), 'yyyy-MM-dd');
+      setMyGamesCalendarDateAfterCreate(startDate);
+      setActiveTab('calendar');
+      navigate('/', { replace: true });
+    }
+    setTimeout(() => setIsAnimating(false), 300);
+  };
+
+  const runBookingOverlapGate = async (): Promise<boolean> => {
+    if (entityType === 'BAR' || !selectedClub || !selectedTime || !duration) return true;
+    const selectedClubData = clubs.find((c) => c.id === selectedClub);
+    try {
+      const bookings = await fetchBookedCourtsForDay({
+        clubId: selectedClub,
+        selectedDate,
+        courtId: selectedCourt !== 'notBooked' ? selectedCourt : undefined,
+        club: selectedClubData,
+      });
+      const overlap = checkBookingOverlap(bookings, selectedTime, duration, selectedClubData);
+      if (overlap.hasHardOverlap) {
+        toast.error(t('createGame.overlapHardSave'));
+        return false;
+      }
+      if (overlap.hasSoftOverlap) {
+        setSoftOverlapOpen(true);
+        return false;
+      }
+    } catch {
+      /* proceed if availability check fails */
+    }
+    return true;
+  };
+
   const handleCreateGame = async () => {
     if (!user) return;
 
@@ -309,6 +357,15 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
       scrollToAndHighlightError(durationSectionRef);
       return;
     }
+
+    const overlapOk = await runBookingOverlapGate();
+    if (!overlapOk) return;
+
+    await executeCreateGame();
+  };
+
+  const executeCreateGame = async () => {
+    if (!user) return;
 
     setLoading(true);
     try {
@@ -410,24 +467,48 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         }
       }
 
-      setIsAnimating(true);
-      setCurrentPage('my');
-      const fromList = useNavigationStore.getState().myGamesSubtabBeforeCreate;
-      setMyGamesSubtabBeforeCreate(null);
-      if (fromList === 'list') {
-        navigate('/?tab=list', { replace: true });
-      } else {
-        const startDate = format(startOfDay(new Date(gameResponse.data.startTime)), 'yyyy-MM-dd');
-        setMyGamesCalendarDateAfterCreate(startDate);
-        setActiveTab('calendar');
-        navigate('/', { replace: true });
+      const created = gameResponse.data;
+      if (
+        entityType !== 'BAR' &&
+        selectedCourt !== 'notBooked' &&
+        !hasBookedCourt &&
+        created.id
+      ) {
+        setPendingGameId(created.id);
+        setPendingGameStartTime(created.startTime);
+        setMarkCourtOpen(true);
+        return;
       }
-      setTimeout(() => setIsAnimating(false), 300);
+
+      navigateAfterCreate(created.startTime);
     } catch (error) {
       console.error('Failed to create game:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const finishPendingNavigate = () => {
+    const start = pendingGameStartTime;
+    setMarkCourtOpen(false);
+    setPendingGameId(null);
+    setPendingGameStartTime(null);
+    if (start) navigateAfterCreate(start);
+  };
+
+  const handleMarkCourtBooked = async () => {
+    if (pendingGameId) {
+      try {
+        await gamesApi.update(pendingGameId, { hasBookedCourt: true });
+      } catch (e) {
+        console.error('Failed to mark court booked:', e);
+      }
+    }
+    finishPendingNavigate();
+  };
+
+  const handleSkipMarkCourt = () => {
+    finishPendingNavigate();
   };
 
   const handleRemoveParticipant = (index: number) => {
@@ -725,6 +806,26 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           onClose={() => setIsFormatWizardOpen(false)}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={softOverlapOpen}
+        tone="warning"
+        title={t('createGame.overlapSoftTitle')}
+        message={t('createGame.overlapSoftMessage')}
+        confirmText={t('createGame.overlapSoftProceed')}
+        cancelText={t('common.cancel')}
+        onConfirm={() => {
+          setSoftOverlapOpen(false);
+          void executeCreateGame();
+        }}
+        onClose={() => setSoftOverlapOpen(false)}
+      />
+
+      <MarkCourtBookedModal
+        isOpen={markCourtOpen}
+        onMarkBooked={() => void handleMarkCourtBooked()}
+        onSkip={handleSkipMarkCourt}
+      />
     </div>
   );
 };

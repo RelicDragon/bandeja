@@ -15,6 +15,8 @@ import { WhenTab } from './editGameInfo/WhenTab';
 import { WhereTab, type WhereTabState } from './editGameInfo/WhereTab';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 export type EditGameInfoTabId = 'general' | 'when' | 'where' | 'price';
 
 interface EditGameInfoModalProps {
@@ -96,6 +98,7 @@ export const EditGameInfoModal = ({
   const [modalCourts, setModalCourts] = useState<Court[]>(courts);
   const [isLoadingCourts, setIsLoadingCourts] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [softOverlapOpen, setSoftOverlapOpen] = useState(false);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const prevIsOpenRef = useRef(false);
   const fetchAbortRef = useRef<AbortController | null>(null);
@@ -230,12 +233,55 @@ export const EditGameInfoModal = ({
     return true;
   };
 
+  const runBookingOverlapGate = async (): Promise<boolean> => {
+    if (!where.clubId || !whenSelectedTime || !whenDuration) return true;
+
+    const scheduleUnchanged =
+      where.clubId === (game.clubId || '') &&
+      (where.courtId || '') === (game.courtId || '') &&
+      whenSelectedTime === whenInitialValues.initialTime &&
+      whenDuration === whenInitialValues.initialDuration &&
+      whenSelectedDate.toDateString() === whenInitialValues.initialDate.toDateString();
+    if (scheduleUnchanged) return true;
+
+    const club = clubs.find((c) => c.id === where.clubId);
+    try {
+      const bookings = await fetchBookedCourtsForDay({
+        clubId: where.clubId,
+        selectedDate: whenSelectedDate,
+        courtId: where.courtId || undefined,
+        club,
+      });
+      const overlap = checkBookingOverlap(bookings, whenSelectedTime, whenDuration, club);
+      if (overlap.hasHardOverlap) {
+        toast.error(t('createGame.overlapHardSave'));
+        return false;
+      }
+      if (overlap.hasSoftOverlap) {
+        setSoftOverlapOpen(true);
+        return false;
+      }
+    } catch {
+      /* proceed */
+    }
+    return true;
+  };
+
   const handleSave = async () => {
     if (!game.id) return;
     if (!validatePrice()) {
       toast.error(t('createGame.priceRequired', { defaultValue: 'Price must be greater than 0 for this price type' }));
       return;
     }
+
+    const overlapOk = await runBookingOverlapGate();
+    if (!overlapOk) return;
+
+    await executeSave();
+  };
+
+  const executeSave = async () => {
+    if (!game.id) return;
 
     setIsSaving(true);
     try {
@@ -309,6 +355,7 @@ export const EditGameInfoModal = ({
   if (!isOpen) return null;
 
   return (
+    <>
     <Dialog open={isOpen} onClose={onClose} modalId="edit-game-info-modal">
       <DialogContent className="max-w-[480px]">
         <DialogHeader>
@@ -403,5 +450,20 @@ export const EditGameInfoModal = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <ConfirmationModal
+      isOpen={softOverlapOpen}
+      tone="warning"
+      title={t('createGame.overlapSoftTitle')}
+      message={t('createGame.overlapSoftMessage')}
+      confirmText={t('createGame.overlapSoftProceed')}
+      cancelText={t('common.cancel')}
+      onConfirm={() => {
+        setSoftOverlapOpen(false);
+        void executeSave();
+      }}
+      onClose={() => setSoftOverlapOpen(false)}
+    />
+    </>
   );
 };

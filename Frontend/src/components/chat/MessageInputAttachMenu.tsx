@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Paperclip, Image, ListPlus } from 'lucide-react';
+import { Paperclip, Image, ListPlus, Video } from 'lucide-react';
+import { isValidVideo } from '@/components/chat/messageInputDraftUtils';
 import { pickImages } from '@/utils/photoCapture';
+import { pickVideo } from '@/utils/videoCapture';
 import { isCapacitor } from '@/utils/capacitor';
 import { isValidImage } from '@/components/chat/messageInputDraftUtils';
 
@@ -36,7 +38,9 @@ type MessageInputAttachMenuProps = {
   inputBlocked: boolean;
   voiceMode: boolean;
   onAddImages: (files: File[]) => void;
+  onAddVideo: (file: File) => void;
   onOpenPoll: () => void;
+  videoBusy?: boolean;
 };
 
 export function MessageInputAttachMenu({
@@ -44,7 +48,9 @@ export function MessageInputAttachMenu({
   inputBlocked,
   voiceMode,
   onAddImages,
+  onAddVideo,
   onOpenPoll,
+  videoBusy = false,
 }: MessageInputAttachMenuProps) {
   const { t } = useTranslation();
   const attachMenuRef = useRef<HTMLDivElement>(null);
@@ -101,6 +107,23 @@ export function MessageInputAttachMenu({
     setIsAttachExpanded(false);
   };
 
+  const handleVideoButtonClick = async () => {
+    if (isDisabled || inputBlocked || videoBusy) return;
+    setIsAttachExpanded(false);
+    try {
+      const result = await pickVideo();
+      if (!result?.file) return;
+      if (!isValidVideo(result.file)) {
+        toast.error(t('chat.invalidVideoType', { defaultValue: 'Invalid or too large video file' }));
+        return;
+      }
+      onAddVideo(result.file);
+    } catch (error: unknown) {
+      console.error('Error picking video:', error);
+      toast.error(t('chat.videoPickFailed', { defaultValue: 'Failed to pick video' }));
+    }
+  };
+
   const handlePollButtonClick = () => {
     if (isDisabled || inputBlocked) return;
     onOpenPoll();
@@ -129,6 +152,16 @@ export function MessageInputAttachMenu({
               exit="hidden"
               variants={attachFlyoutContainer}
             >
+              <motion.button
+                type="button"
+                variants={attachFlyoutItem}
+                onClick={() => void handleVideoButtonClick()}
+                disabled={isDisabled || inputBlocked || voiceMode || videoBusy}
+                className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_2px_6px_rgba(0,0,0,0.16),0_6px_16px_rgba(0,0,0,0.2)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.45)] hover:scale-105"
+                title={t('chat.attachVideo', { defaultValue: 'Video' })}
+              >
+                <Video size={20} className="text-gray-700 dark:text-gray-300" />
+              </motion.button>
               <motion.button
                 type="button"
                 variants={attachFlyoutItem}

@@ -51,6 +51,24 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'club admin schedule',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'club-admin-schedule.ts'),
+    ],
+  },
+  {
+    label: 'club admin suite',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'club-admin.suite.ts'),
+    ],
+  },
+  {
     label: 'mexicano (escalera) round generation',
     command: process.execPath,
     args: [

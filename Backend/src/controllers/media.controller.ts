@@ -4,6 +4,7 @@ import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import multer, { FileFilterCallback } from 'multer';
 import { ImageProcessor } from '../utils/imageProcessor';
+import { VideoProcessor } from '../utils/videoProcessor';
 import {
   userAvatarTinyUrlFromStandard,
   isOurCircularAvatarUrl,
@@ -63,6 +64,31 @@ export const uploadChatAudioMulter = multer({
   fileFilter: audioFileFilter,
   limits: {
     fileSize: 15 * 1024 * 1024,
+  },
+});
+
+const CHAT_VIDEO_MIMES = ['video/mp4', 'video/quicktime', 'video/x-m4v'];
+
+const videoFileFilter = (req: any, file: any, cb: FileFilterCallback) => {
+  if (file.fieldname === 'video' && CHAT_VIDEO_MIMES.includes(file.mimetype)) {
+    cb(null, true);
+  } else if (file.fieldname === 'poster') {
+    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (allowedImageTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new ApiError(400, `Invalid poster file: ${file.mimetype}`));
+    }
+  } else {
+    cb(new ApiError(400, `Invalid video upload field: ${file.fieldname}`));
+  }
+};
+
+export const uploadChatVideoMulter = multer({
+  storage: storage,
+  fileFilter: videoFileFilter,
+  limits: {
+    fileSize: 100 * 1024 * 1024,
   },
 });
 
@@ -319,12 +345,13 @@ export const uploadUserTeamAvatar = asyncHandler(async (req: AuthRequest, res: R
 });
 
 export const uploadClubAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
-  if (!req.user?.isAdmin) {
-    throw new ApiError(403, 'Admin access required');
-  }
   const { clubId } = req.body;
   if (!clubId || typeof clubId !== 'string') {
     throw new ApiError(400, 'Club ID is required');
+  }
+  if (!req.user?.isAdmin) {
+    const { ClubAdminService } = await import('../services/clubAdmin/clubAdmin.service');
+    await ClubAdminService.assertClubAdmin(req.userId!, clubId);
   }
   if (!req.file) {
     throw new ApiError(400, 'Original image file is required');
@@ -334,15 +361,16 @@ export const uploadClubAvatar = asyncHandler(async (req: AuthRequest, res: Respo
 });
 
 export const uploadClubPhoto = asyncHandler(async (req: AuthRequest, res: Response) => {
-  if (!req.user?.isAdmin) {
-    throw new ApiError(403, 'Admin access required');
-  }
   if (!req.file) {
     throw new ApiError(400, 'No image file provided');
   }
   const { clubId } = req.body;
   if (!clubId || typeof clubId !== 'string') {
     throw new ApiError(400, 'Club ID is required');
+  }
+  if (!req.user?.isAdmin) {
+    const { ClubAdminService } = await import('../services/clubAdmin/clubAdmin.service');
+    await ClubAdminService.assertClubAdmin(req.userId!, clubId);
   }
   const club = await prisma.club.findUnique({
     where: { id: clubId },
@@ -442,6 +470,57 @@ export const uploadChatAudio = asyncHandler(async (req: AuthRequest, res: Respon
     data: {
       audioUrl: result.audioUrl,
     },
+  });
+});
+
+export const uploadChatVideo = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const bucket = req.files as Record<string, Express.Multer.File[]> | undefined;
+  const videoFile = bucket?.video?.[0];
+  if (!videoFile) {
+    throw new ApiError(400, 'No video file provided');
+  }
+
+  const { gameId, bugId, userChatId, groupChannelId, durationMs, width, height } = req.body;
+  const posterFile = bucket?.poster?.[0];
+  const senderId = req.userId;
+
+  if (!senderId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!gameId && !bugId && !userChatId && !groupChannelId) {
+    throw new ApiError(400, 'At least one of gameId, bugId, userChatId, or groupChannelId is required');
+  }
+
+  if (gameId) {
+    await MessageService.validateGameAccess(gameId, senderId);
+  } else if (bugId) {
+    await MessageService.validateBugAccess(bugId, senderId, true);
+  } else if (userChatId) {
+    await MessageService.validateUserChatAccess(userChatId, senderId, true);
+  } else if (groupChannelId) {
+    await MessageService.validateGroupChannelAccess(groupChannelId, senderId, true);
+  }
+
+  const parsedDuration = durationMs != null && durationMs !== '' ? Number(durationMs) : undefined;
+  const parsedWidth = width != null && width !== '' ? Number(width) : undefined;
+  const parsedHeight = height != null && height !== '' ? Number(height) : undefined;
+
+  const result = await VideoProcessor.processChatVideo(
+    videoFile.buffer,
+    videoFile.originalname,
+    posterFile?.buffer,
+    {
+      durationMs: parsedDuration !== undefined && !Number.isNaN(parsedDuration) ? parsedDuration : undefined,
+      width: parsedWidth !== undefined && !Number.isNaN(parsedWidth) ? parsedWidth : undefined,
+      height: parsedHeight !== undefined && !Number.isNaN(parsedHeight) ? parsedHeight : undefined,
+    }
+  );
+
+  res.status(200).json({
+    success: true,
+    message: 'Chat video uploaded successfully',
+    data: result,
   });
 });
 

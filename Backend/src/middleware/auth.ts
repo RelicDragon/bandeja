@@ -279,3 +279,22 @@ export const canAccessGameIncludingArchived = requireGamePermission(
   { allowArchived: true }
 );
 
+export const requireClubAdmin = (paramKey = 'clubId') => {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.userId) {
+        throw new ApiError(401, 'User not authenticated', true, { code: 'auth.notAuthenticated' });
+      }
+      const clubId = req.params[paramKey] as string | undefined;
+      if (!clubId) {
+        throw new ApiError(400, 'Club ID is required');
+      }
+      const { ClubAdminService } = await import('../services/clubAdmin/clubAdmin.service');
+      await ClubAdminService.assertClubAdmin(req.userId, clubId);
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+};
+

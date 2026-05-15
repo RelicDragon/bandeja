@@ -2,6 +2,10 @@ import type { ChatMessage } from '@/api/chat';
 
 export function formatChatMessageForForwardClipboard(m: ChatMessage): string {
   const parts: string[] = [];
+  if (m.messageType === 'VIDEO') {
+    parts.push('[video]');
+    return parts.join('\n\n').trim();
+  }
   if (m.content?.trim()) parts.push(m.content.trim());
   if (m.mediaUrls?.length) {
     m.mediaUrls.forEach((url, i) => {

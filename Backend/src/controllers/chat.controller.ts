@@ -76,12 +76,16 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     contextId,
     content,
     mediaUrls,
+    thumbnailUrls,
     replyToId,
     chatType = ChatType.PUBLIC,
     mentionIds = [],
     poll,
     messageType: rawMessageType,
     audioDurationMs: rawAudioDurationMs,
+    videoDurationMs: rawVideoDurationMs,
+    videoWidth: rawVideoWidth,
+    videoHeight: rawVideoHeight,
     waveformData: rawWaveformData,
     clientMutationId: rawClientMutationId,
   } = req.body;
@@ -113,9 +117,21 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
 
   // Ensure mediaUrls is an array
   const finalMediaUrls = Array.isArray(mediaUrls) ? mediaUrls : [];
-  const messageType = rawMessageType === 'VOICE' ? MessageType.VOICE : undefined;
+  const finalThumbnailUrls = Array.isArray(thumbnailUrls) ? thumbnailUrls : [];
+  const messageType =
+    rawMessageType === 'VOICE'
+      ? MessageType.VOICE
+      : rawMessageType === 'VIDEO'
+        ? MessageType.VIDEO
+        : undefined;
   const audioDurationMs =
     rawAudioDurationMs != null && rawAudioDurationMs !== '' ? Number(rawAudioDurationMs) : undefined;
+  const videoDurationMs =
+    rawVideoDurationMs != null && rawVideoDurationMs !== '' ? Number(rawVideoDurationMs) : undefined;
+  const videoWidth =
+    rawVideoWidth != null && rawVideoWidth !== '' ? Number(rawVideoWidth) : undefined;
+  const videoHeight =
+    rawVideoHeight != null && rawVideoHeight !== '' ? Number(rawVideoHeight) : undefined;
   const waveformData = Array.isArray(rawWaveformData)
     ? rawWaveformData.map((x: unknown) => Number(x)).filter((x: number) => !Number.isNaN(x))
     : undefined;
@@ -152,12 +168,17 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
       senderId,
       content,
       mediaUrls: finalMediaUrls,
+      thumbnailUrls: finalThumbnailUrls.length > 0 ? finalThumbnailUrls : undefined,
       replyToId,
       chatType: chatType as ChatType,
       mentionIds: Array.isArray(mentionIds) ? mentionIds : [],
       poll,
       messageType,
       audioDurationMs: audioDurationMs !== undefined && !Number.isNaN(audioDurationMs) ? audioDurationMs : undefined,
+      videoDurationMs:
+        videoDurationMs !== undefined && !Number.isNaN(videoDurationMs) ? videoDurationMs : undefined,
+      videoWidth: videoWidth !== undefined && !Number.isNaN(videoWidth) ? videoWidth : undefined,
+      videoHeight: videoHeight !== undefined && !Number.isNaN(videoHeight) ? videoHeight : undefined,
       waveformData,
       clientMutationId: clientMutationId || undefined,
     });
@@ -1379,6 +1400,46 @@ export const setChatTranslationPreference = asyncHandler(async (req: AuthRequest
 
   const result = await ChatTranslationPreferenceService.set(userId, chatContextType as ChatContextType, contextId, translateToLanguage ?? null);
   res.json({ success: true, data: { translateToLanguage: result } });
+});
+
+export const getChatAutoTranslateConfig = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { chatContextType, contextId, chatType } = req.query;
+  const userId = req.userId;
+
+  if (!userId) throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
+  if (!chatContextType || !contextId) throw new ApiError(400, 'chatContextType and contextId are required');
+  const validContextTypes = ['GAME', 'BUG', 'USER', 'GROUP'];
+  if (!validContextTypes.includes(chatContextType as string)) throw new ApiError(400, 'Invalid chatContextType');
+
+  const { ChatAutoTranslateService } = await import('../services/chat/chatAutoTranslate.service');
+  const data = await ChatAutoTranslateService.getConfig(
+    userId,
+    chatContextType as ChatContextType,
+    contextId as string,
+    chatType ? (chatType as ChatType) : null
+  );
+  res.json({ success: true, data });
+});
+
+export const setChatAutoTranslateConfig = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { chatContextType, contextId, chatType, languageCodes } = req.body;
+  const userId = req.userId;
+
+  if (!userId) throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
+  if (!chatContextType || !contextId) throw new ApiError(400, 'chatContextType and contextId are required');
+  if (!Array.isArray(languageCodes)) throw new ApiError(400, 'languageCodes must be an array');
+  const validContextTypes = ['GAME', 'BUG', 'USER', 'GROUP'];
+  if (!validContextTypes.includes(chatContextType)) throw new ApiError(400, 'Invalid chatContextType');
+
+  const { ChatAutoTranslateService } = await import('../services/chat/chatAutoTranslate.service');
+  const data = await ChatAutoTranslateService.setConfig(
+    userId,
+    chatContextType as ChatContextType,
+    contextId,
+    languageCodes,
+    chatType ? (chatType as ChatType) : null
+  );
+  res.json({ success: true, data });
 });
 
 export const confirmMessageReceipt = asyncHandler(async (req: AuthRequest, res: Response) => {

@@ -44,6 +44,9 @@ import { useGameChatFooterVariant } from './GameChat/useGameChatFooterVariant';
 import { recordChatThreadOpened } from '@/services/chat/chatThreadOpenStats';
 import { reconcileThreadIndexOutboxForContext } from '@/services/chat/chatThreadIndex';
 import type { ChatContextType } from '@/api/chat';
+import { ChatAutoTranslateContext } from '@/contexts/ChatAutoTranslateContext';
+import { useGameChatAutoTranslate } from './GameChat/useGameChatAutoTranslate';
+import { useGameChatTranslationLive } from './GameChat/useGameChatTranslationLive';
 
 export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: propChatId, chatType: propChatType }) => {
   const { t } = useTranslation();
@@ -99,7 +102,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   const [isTogglingMute, setIsTogglingMute] = useState(false);
   const [translateToLanguageForChat, setTranslateToLanguageForChat] = useState<string | null>(null);
   const [chatNearBottom, setChatNearBottom] = useState(true);
-
   const effectiveChatType = useMemo(
     () => (contextType === 'GAME' ? normalizeChatType(currentChatType) : 'PUBLIC') as ChatType,
     [contextType, currentChatType]
@@ -181,6 +183,28 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     contextType,
     currentChatType,
     messages,
+  });
+
+  const autoTranslate = useGameChatAutoTranslate({
+    id,
+    contextType,
+    effectiveChatType,
+    userId: user?.id,
+    userIsAdmin: user?.isAdmin,
+    groupChannel,
+    game,
+    userChat,
+    bugSenderId: groupChannel?.bug?.senderId,
+  });
+
+  useGameChatTranslationLive({
+    id,
+    contextType,
+    effectiveChatType,
+    userLanguage: user?.language,
+    setMessages,
+    messagesRef,
+    onAutoTranslateConfigFromSocket: autoTranslate.setAutoTranslateFromSocket,
   });
 
   const panels = useGameChatPanels({
@@ -336,7 +360,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   });
 
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
-  const { title, subtitle, icon } = useGameChatDisplay({
+  const { title, subtitle: baseSubtitle, icon } = useGameChatDisplay({
     contextType,
     game,
     bug,
@@ -350,6 +374,23 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     onOpenItemPage: panels.onOpenItemPage,
     onOpenParticipantsPage: panels.onOpenParticipantsPage,
   });
+
+  const autoTranslateForModal = useMemo(() => {
+    if (!id) return null;
+    return {
+      languageCodes: autoTranslate.autoTranslateConfig?.languageCodes ?? [],
+      maxSlots: autoTranslate.autoTranslateConfig?.maxSlots ?? autoTranslate.effectiveMaxSlots,
+      canEdit: autoTranslate.canEditAutoTranslate,
+      onChange: autoTranslate.applyAutoTranslateLanguageCodes,
+    };
+  }, [
+    id,
+    autoTranslate.autoTranslateConfig?.languageCodes,
+    autoTranslate.autoTranslateConfig?.maxSlots,
+    autoTranslate.effectiveMaxSlots,
+    autoTranslate.canEditAutoTranslate,
+    autoTranslate.applyAutoTranslateLanguageCodes,
+  ]);
 
   useEffect(() => {
     if (!isEmbedded) {
@@ -438,6 +479,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     translateToLanguageForChat,
     setUserChat,
     setTranslateToLanguageForChat,
+    autoTranslateForModal,
     loadContext,
     handleAddOptimisticMessage,
     handleSendQueued: handleSendQueued as (params: any) => void,
@@ -474,12 +516,14 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           contextType={contextType}
           isBugChat={derived.isBugChat}
           title={title}
-          subtitle={subtitle ?? null}
+          subtitle={baseSubtitle ?? null}
           icon={icon}
           onBack={panels.handleHeaderBack}
           showPanelBack={contextType === 'GROUP' && (panels.showParticipantsPage || panels.showItemPage || panels.isParticipantsPageAnimating || panels.isItemPageAnimating)}
           onPanelBack={panels.handlePanelBack}
-          isTitleClickable={!!(contextType === 'USER' && userChat && user?.id) || contextType === 'GROUP'}
+          isTitleClickable={
+            !!(contextType === 'USER' && userChat && user?.id) || contextType === 'GROUP'
+          }
           onTitleClick={panels.handleTitleClick}
           showHeaderActions={derived.showHeaderActions}
           headerActions={derived.showHeaderActions ? {
@@ -599,6 +643,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               panels.showParticipantsPage || panels.showItemPage || panels.isParticipantsPageAnimating || panels.isItemPageAnimating ? 'opacity-0 -translate-x-full' : 'opacity-100 translate-x-0'
             }`}
           >
+            <ChatAutoTranslateContext.Provider
+              value={autoTranslate.autoTranslateConfig?.languageCodes ?? []}
+            >
             <MessageList
               ref={messageListRef}
               messages={messages}
@@ -632,6 +679,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               threadScrollKey={threadScrollKey}
               threadLayoutSettling={isInitialLoad || isLoadingMessages || isSwitchingChatType}
             />
+            </ChatAutoTranslateContext.Provider>
           </div>
         </main>
 

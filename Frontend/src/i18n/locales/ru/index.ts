@@ -8,6 +8,7 @@ import chat from './chat.json';
 import chats from './chats.json';
 import city from './city.json';
 import club from './club.json';
+import clubAdmin from './clubAdmin.json';
 import common from './common.json';
 import conflicts from './conflicts.json';
 import contacts from './contacts.json';
@@ -53,6 +54,7 @@ export default {
     ...chats,
     ...city,
     ...club,
+    ...clubAdmin,
     ...common,
     ...conflicts,
     ...contacts,

@@ -19,6 +19,8 @@
     "selectCourt": "Select Court",
     "selectHall": "Select Hall",
     "selectClubFirst": "Select club first",
+    "clubCancellationNotice": "Cancellation notice: at least {{hours}} hours before your slot.",
+    "clubPolicyTitle": "Club policies",
     "noClubsAvailable": "No clubs available",
     "clubDetailsBack": "Back to clubs",
     "clubInfo": "Club details",
@@ -207,6 +209,14 @@
     "remove": "Remove",
     "manageInvites": "Manage Invites ({{count}})",
     "invitesWillBeSent_one": "Player will be invited after game creation",
-    "invitesWillBeSent_other": "{{count}} players will be invited after game creation"
+    "invitesWillBeSent_other": "{{count}} players will be invited after game creation",
+    "overlapHardSave": "This time overlaps a court that is unavailable (club system or blocked). Choose another slot.",
+    "overlapSoftTitle": "Another game is planned here",
+    "overlapSoftMessage": "Another player has a game on this court at this time but has not confirmed the booking yet. You can still continue.",
+    "overlapSoftProceed": "Continue anyway",
+    "markCourtBookedTitle": "Mark court as booked?",
+    "markCourtBookedMessage": "You selected a court but have not marked it as booked. Confirm when you have reserved it with the club.",
+    "markCourtBookedYes": "Yes, I've booked it",
+    "markCourtBookedSkip": "Not yet"
   }
 }

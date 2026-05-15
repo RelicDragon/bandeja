@@ -1,12 +1,4 @@
-import { CHAT_OUTBOX_FAILED_EVENT } from './chatOutboxEvents';
-import { scheduleRetryStuckChatOutbox } from './chatOutboxRetry';
-
-let installed = false;
-
+/** Reserved for future selective retry; do not re-drive stuck retry on every failure (loops + metric spam). */
 export function initChatOutboxRetryListeners(): void {
-  if (installed || typeof window === 'undefined') return;
-  installed = true;
-  window.addEventListener(CHAT_OUTBOX_FAILED_EVENT, () => {
-    scheduleRetryStuckChatOutbox();
-  });
+  /* no-op */
 }

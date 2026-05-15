@@ -19,6 +19,8 @@
     "selectCourt": "Изаберите терен",
     "selectHall": "Изаберите салу",
     "selectClubFirst": "Прво изаберите клуб",
+    "clubCancellationNotice": "Обавештење о отказивању: најмање {{hours}} сати пре термина.",
+    "clubPolicyTitle": "Правила клуба",
     "noClubsAvailable": "Нема доступних клубова",
     "clubDetailsBack": "Назад на клубове",
     "clubInfo": "Детаљи клуба",

@@ -46,3 +46,11 @@ export async function compressChatOutboxImageBlob(blob: Blob): Promise<Blob> {
 export async function compressChatOutboxImageBlobs(blobs: Blob[]): Promise<Blob[]> {
   return Promise.all(blobs.map(compressChatOutboxImageBlob));
 }
+
+/** Resize/compress a chat photo File before upload (non-outbox paths). */
+export async function compressChatImageFile(file: File): Promise<File> {
+  const blob = await compressChatOutboxImageBlob(file);
+  if (blob === file) return file;
+  const base = file.name.replace(/\.[^.]+$/i, '') || 'photo';
+  return new File([blob], `${base}.jpg`, { type: blob.type || 'image/jpeg' });
+}

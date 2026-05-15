@@ -20,7 +20,10 @@ import { EditPreview } from './EditPreview';
 import { MentionInput } from './MentionInput';
 import { JoinGroupChannelButton } from './JoinGroupChannelButton';
 import { PollCreationModal } from './chat/PollCreationModal';
-import { TranslationLanguageModal } from './chat/TranslationLanguageModal';
+import {
+  TranslationLanguageModal,
+  type TranslationModalAutoTranslateProps,
+} from './chat/TranslationLanguageModal';
 import { TranslateToButton, composerFabButtonClass } from './chat/TranslateToButton';
 import { UndoTranslateButton } from './chat/UndoTranslateButton';
 import { useAuthStore } from '@/store/authStore';
@@ -37,6 +40,7 @@ import { useMessageInputDraftSync } from '@/components/chat/useMessageInputDraft
 import { useMessageInputMultiline } from '@/components/chat/useMessageInputMultiline';
 import { useMessageInputTranslation } from '@/components/chat/useMessageInputTranslation';
 import { useMessageInputVoiceSend } from '@/components/chat/useMessageInputVoiceSend';
+import { useMessageInputVideoSend } from '@/components/chat/useMessageInputVideoSend';
 import { useMessageInputSubmit, type SendQueuedParams } from '@/components/chat/useMessageInputSubmit';
 import { uploadChatImageSlotWithRetry } from '@/components/chat/messageInputImageUpload';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
@@ -76,7 +80,14 @@ interface MessageInputProps {
   groupChannel?: GroupChannel | null;
   userChat?: UserChat | null;
   onMessageSent?: () => void;
-  onOptimisticMessage?: (payload: OptimisticMessagePayload, pendingImageBlobs?: Blob[], pendingVoiceBlob?: Blob) => string;
+  onOptimisticMessage?: (
+    payload: OptimisticMessagePayload,
+    pendingImageBlobs?: Blob[],
+    pendingVoiceBlob?: Blob,
+    pendingVideoBlob?: Blob,
+    pendingVideoPosterBlob?: Blob,
+    videoTranscodeMs?: number
+  ) => string;
   onSendQueued?: (params: SendQueuedParams) => void;
   onSendFailed?: (optimisticId: string) => void;
   onMessageCreated?: (optimisticId: string, serverMessage: ChatMessage) => void;
@@ -95,6 +106,7 @@ interface MessageInputProps {
   onStartEditMessage?: (message: ChatMessage) => void;
   translateToLanguage?: string | null;
   onTranslateToLanguageChange?: (translateToLanguage: string | null) => void | Promise<void>;
+  autoTranslate?: TranslationModalAutoTranslateProps | null;
   chatNearBottom?: boolean;
   onScrollToBottomSmooth?: () => void;
 }
@@ -128,6 +140,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onStartEditMessage,
   translateToLanguage: translateToLanguageProp = null,
   onTranslateToLanguageChange,
+  autoTranslate = null,
   chatNearBottom = true,
   onScrollToBottomSmooth,
 }) => {
@@ -176,6 +189,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     mentionIdsRef.current = mentionIds;
     editingMessageRef.current = editingMessage;
   }, [message, mentionIds, editingMessage]);
+
+  useEffect(() => {
+    return () => {
+      setIsLoading(false);
+      queueSendRef.current = false;
+    };
+  }, []);
 
   const { inputContainerRef, updateMultilineState } = useMessageInputMultiline(message, selectedImages.length);
 
@@ -228,6 +248,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     onMessageCreated,
     onSendFailed,
     onStopTyping: stopTyping,
+    t,
+  });
+
+  const video = useMessageInputVideoSend({
+    isDisabled,
+    inputBlocked,
+    finalContextId,
+    contextType,
+    chatType,
+    replyTo,
+    onOptimisticMessage,
+    onSendQueued,
+    onMessageSent,
+    onCancelReply,
     t,
   });
 
@@ -531,6 +565,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         onSelect={translation.handleTranslateLanguageSelect}
         selectedLanguageCode={translateToLanguage}
         onRemoveLanguage={translation.handleRemoveTranslateLanguage}
+        autoTranslate={autoTranslate}
       />
       {editingMessage && <EditPreview message={editingMessage} onCancel={onCancelEdit!} className="mb-3" />}
       {replyTo && !editingMessage && (
@@ -571,7 +606,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 isDisabled={isDisabled}
                 inputBlocked={inputBlocked}
                 voiceMode={voice.voiceMode}
+                videoBusy={video.videoBusy}
                 onAddImages={(files) => setSelectedImages((prev) => [...prev, ...files])}
+                onAddVideo={(file) => void video.handleVideoFile(file)}
                 onOpenPoll={() => setIsPollModalOpen(true)}
               />
               <motion.div

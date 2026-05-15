@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Club } from '@/types';
+import { resolveSlotMinutes } from '@/utils/clubSchedule/timeSlots';
 
 interface UseGameTimeDurationProps {
   clubs: Club[];
@@ -166,10 +167,13 @@ export const useGameTimeDuration = ({
     const times = [];
     const selectedCenter = clubs.find(pc => pc.id === selectedClub);
     const clubTimezone = getClubTimezone(selectedCenter);
-    
+    const step = resolveSlotMinutes(
+      (selectedCenter as Club & { defaultSlotMinutes?: number | null })?.defaultSlotMinutes
+    );
+
     let startHour = 0;
     let endHour = 24;
-    
+
     if (selectedCenter?.openingTime && selectedCenter?.closingTime) {
       const openingParts = selectedCenter.openingTime.split(':');
       const closingParts = selectedCenter.closingTime.split(':');
@@ -179,13 +183,13 @@ export const useGameTimeDuration = ({
         endHour += 1;
       }
     }
-    
+
     const nowLocal = new Date();
     const nowInClubTz = getCurrentTimeInTimezone(clubTimezone);
     const isToday = isSameDateInTimezone(date, nowLocal, clubTimezone);
-    
+
     for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
+      for (let minute = 0; minute < 60; minute += step) {
         const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         
         if (isToday && !showPastTimes) {

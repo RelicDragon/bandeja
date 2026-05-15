@@ -46,7 +46,14 @@ export function useGameChatOptimistic({
   const handleNewMessageRef = useRef<(message: ChatMessage) => string | void>(() => {});
 
   const handleAddOptimisticMessage = useCallback(
-    (payload: OptimisticMessagePayload, pendingImageBlobs?: Blob[], pendingVoiceBlob?: Blob): string => {
+    (
+      payload: OptimisticMessagePayload,
+      pendingImageBlobs?: Blob[],
+      pendingVoiceBlob?: Blob,
+      pendingVideoBlob?: Blob,
+      pendingVideoPosterBlob?: Blob,
+      videoTranscodeMs?: number
+    ): string => {
       if (!id) return '';
       const tempId = `opt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       const clientMutationId =
@@ -66,6 +73,9 @@ export function useGameChatOptimistic({
         chatType: payload.chatType,
         messageType: payload.messageType,
         audioDurationMs: payload.audioDurationMs,
+        videoDurationMs: payload.videoDurationMs,
+        videoWidth: payload.videoWidth,
+        videoHeight: payload.videoHeight,
         waveformData: payload.waveformData,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -79,7 +89,9 @@ export function useGameChatOptimistic({
         _clientMutationId: clientMutationId,
       };
       const persistPayload =
-        pendingVoiceBlob != null ? { ...payload, mediaUrls: [], thumbnailUrls: [] } : payload;
+        pendingVoiceBlob != null || pendingVideoBlob != null
+          ? { ...payload, mediaUrls: [], thumbnailUrls: [] }
+          : payload;
       setMessages((prev) => {
         const next = [...prev, optimistic];
         messagesRef.current = next;
@@ -95,8 +107,22 @@ export function useGameChatOptimistic({
         clientMutationId,
         ...(pendingImageBlobs?.length ? { pendingImageBlobs } : {}),
         ...(pendingVoiceBlob ? { pendingVoiceBlob } : {}),
+        ...(pendingVideoBlob
+          ? {
+              pendingVideoBlob,
+              pendingVideoPosterBlob,
+              videoDurationMs: payload.videoDurationMs,
+              videoTranscodeMs,
+            }
+          : {}),
       }).catch((err) => console.error('[messageQueue] add', err));
-      requestAnimationFrame(() => scrollToBottom());
+      requestAnimationFrame(() => {
+        try {
+          scrollToBottom();
+        } catch {
+          /* scroll handled by MessageList new-message effect */
+        }
+      });
       return tempId;
     },
     [contextType, id, user, scrollToBottom, setMessages, messagesRef]
@@ -272,7 +298,7 @@ export function useGameChatOptimistic({
             if (m.senderId !== message.senderId) return false;
             const mt = (msg: ChatMessage) => msg.messageType ?? 'TEXT';
             if (mt(m as ChatMessage) !== mt(message)) return false;
-            if (message.messageType === 'VOICE') {
+            if (message.messageType === 'VOICE' || message.messageType === 'VIDEO') {
               return (m.mediaUrls?.[0] ?? '') === (message.mediaUrls?.[0] ?? '');
             }
             if (m.content !== message.content) return false;

@@ -16,6 +16,7 @@ interface BookedSlotInfo {
   endTime: string;
   hasBookedCourt: boolean;
   clubBooked: boolean;
+  holdBlocked?: boolean;
 }
 
 export const useBookedCourts = ({
@@ -101,6 +102,7 @@ export const useBookedCourts = ({
           endTime: endTimeStr,
           hasBookedCourt: booking.hasBookedCourt,
           clubBooked: booking.clubBooked || false,
+          holdBlocked: booking.holdBlocked,
         });
       }
     });
@@ -145,6 +147,7 @@ export const useBookedCourts = ({
           endTime: bookingEndTimeStr,
           hasBookedCourt: booking.hasBookedCourt,
           clubBooked: booking.clubBooked || false,
+          holdBlocked: booking.holdBlocked,
         });
       }
     });
@@ -161,7 +164,13 @@ export const useBookedCourts = ({
   const hasExternallyBookedSlot = (time: string): boolean => {
     const slots = bookedSlots.get(time);
     if (!slots || slots.length === 0) return false;
-    return slots.some(slot => slot.clubBooked);
+    return slots.some((slot) => slot.clubBooked || slot.holdBlocked);
+  };
+
+  const isSlotHardBlocked = (time: string): boolean => {
+    const slots = bookedSlots.get(time);
+    if (!slots || slots.length === 0) return false;
+    return slots.some((slot) => slot.clubBooked || slot.holdBlocked);
   };
 
   return {
@@ -171,6 +180,7 @@ export const useBookedCourts = ({
     getOverlappingBookings,
     areAllSlotsUnconfirmed,
     hasExternallyBookedSlot,
+    isSlotHardBlocked,
     loading,
     isLoadingExternalSlots,
     refetch: fetchBookedCourts,

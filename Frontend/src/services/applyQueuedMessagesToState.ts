@@ -5,8 +5,14 @@ import { normalizeChatType } from '@/utils/chatType';
 import { messageQueueStorage, QueuedMessage } from '@/services/chatMessageQueueStorage';
 import { sendWithTimeout, isSending } from '@/services/chatSendService';
 import { compareChatMessagesAscending } from '@/utils/chatMessageSort';
-import { loadOutboxImageBlobs, loadOutboxVoiceBlob } from '@/services/chat/chatOutboxMediaBlobs';
+import {
+  loadOutboxImageBlobs,
+  loadOutboxVideoBlob,
+  loadOutboxVideoPosterBlob,
+  loadOutboxVoiceBlob,
+} from '@/services/chat/chatOutboxMediaBlobs';
 import { logChatOutboxBlobMismatch } from '@/services/chat/chatDiagnostics';
+import { reconcileUnsendableOutboxRow } from '@/services/chat/chatOutboxReconcile';
 import {
   registerOutboxRehydrateBlobUrls,
   revokeOutboxRehydrateBlobUrls,
@@ -106,6 +112,20 @@ export async function applyQueuedMessagesToState(params: {
         }
         mediaUrls = blobs.map((b) => URL.createObjectURL(b));
         thumbnailUrls = [...mediaUrls];
+      } else if (q.payload.messageType === 'VIDEO' && q.hasPendingVideoBlob) {
+        const vb = await loadOutboxVideoBlob(q.tempId);
+        const pb = await loadOutboxVideoPosterBlob(q.tempId);
+        if (!vb || !pb) {
+          logChatOutboxBlobMismatch('rehydrate', {
+            tempId: q.tempId,
+            contextType: q.contextType,
+            contextId: q.contextId,
+            kind: 'video',
+          });
+          return { kind: 'broken', q };
+        }
+        mediaUrls = [URL.createObjectURL(vb)];
+        thumbnailUrls = [URL.createObjectURL(pb)];
       } else if (q.payload.messageType === 'VOICE' && q.hasPendingVoiceBlob) {
         const vb = await loadOutboxVoiceBlob(q.tempId);
         if (!vb) {
@@ -127,8 +147,11 @@ export async function applyQueuedMessagesToState(params: {
   for (const r of hydrateResults) {
     if (r.kind !== 'broken') continue;
     revokeOutboxRehydrateBlobUrls(r.q.tempId);
-    await messageQueueStorage.updateStatus(r.q.tempId, r.q.contextType, r.q.contextId, 'failed').catch(() => {});
-    handleMarkFailed(r.q.tempId);
+    const reconciled = await reconcileUnsendableOutboxRow(r.q);
+    if (reconciled === 'needs_send') {
+      await messageQueueStorage.updateStatus(r.q.tempId, r.q.contextType, r.q.contextId, 'failed').catch(() => {});
+      handleMarkFailed(r.q.tempId);
+    }
   }
 
   const ok = hydrateResults.filter((r): r is HydrateOk => r.kind === 'ok');
@@ -149,6 +172,9 @@ export async function applyQueuedMessagesToState(params: {
     chatType: q.payload.chatType,
     messageType: q.payload.messageType,
     audioDurationMs: q.payload.audioDurationMs,
+    videoDurationMs: q.payload.videoDurationMs,
+    videoWidth: q.payload.videoWidth,
+    videoHeight: q.payload.videoHeight,
     waveformData: q.payload.waveformData,
     createdAt: q.createdAt,
     updatedAt: q.createdAt,

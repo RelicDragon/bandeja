@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test:live-scoring": "vitest run src/utils/liveScoring/core.test.ts",
     "test:game-invite": "vitest run src/utils/gameInviteParticipant.test.ts",
-    "test:chat-outbox": "vitest run src/services/chat/chatSendCoordinator.test.ts src/services/chat/chatOutboxEnqueue.test.ts src/services/chat/chatOutboxRetry.test.ts src/services/chat/messageSendState.test.ts src/services/chat/chatSendSocketAck.test.ts",
+    "test:chat-outbox": "vitest run src/services/chat/chatSendCoordinator.test.ts src/services/chat/chatOutboxEnqueue.test.ts src/services/chat/chatOutboxRetry.test.ts src/services/chat/messageSendState.test.ts src/services/chat/chatSendSocketAck.test.ts src/services/chat/chatSendMessageCreate.test.ts src/services/chat/chatHttpRetry.test.ts src/services/chat/chatVideoTranscode.test.ts src/services/chat/chatVideoTranscodeWorkerClient.test.ts src/services/chat/chatVideoUploadRetry.test.ts src/services/chatMessageQueueStorage.video.test.ts && cd ../Backend && npx ts-node scripts/tests/chat-video-message-type.ts",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "increment-sw": "node scripts/increment-sw-version.js"
   },
@@ -57,6 +57,7 @@
     "idb-keyval": "^6.2.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.542.0",
+    "mediabunny": "^1.45.2",
     "nanoid": "^5.1.6",
     "qrcode.react": "^4.2.0",
     "rc-slider": "^11.1.9",

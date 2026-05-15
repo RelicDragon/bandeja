@@ -4,11 +4,12 @@ import { chatLocalDb } from './chatLocalDb';
 
 function outboxPreviewFromPayload(payload: OptimisticMessagePayload): {
   preview?: string;
-  previewKind?: 'text' | 'voice' | 'media';
+  previewKind?: 'text' | 'voice' | 'media' | 'video';
 } {
   const text = (payload.content || '').trim();
   if (text) return { preview: text.slice(0, 80), previewKind: 'text' };
   if (payload.messageType === 'VOICE') return { previewKind: 'voice' };
+  if (payload.messageType === 'VIDEO') return { previewKind: 'video' };
   if (payload.messageType === 'IMAGE' || (payload.mediaUrls?.length ?? 0) > 0) return { previewKind: 'media' };
   return {};
 }

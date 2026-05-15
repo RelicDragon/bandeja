@@ -44,7 +44,7 @@ export interface Poll {
 
 export type MessageState = 'SENT' | 'DELIVERED' | 'READ';
 export type ChatContextType = 'GAME' | 'BUG' | 'USER' | 'GROUP';
-export type MessageType = 'TEXT' | 'IMAGE' | 'VOICE' | 'POLL';
+export type MessageType = 'TEXT' | 'IMAGE' | 'VOICE' | 'VIDEO' | 'POLL';
 
 const unreadCountCache = new Map<string, { data: any; timestamp: number }>();
 const UNREAD_COUNT_CACHE_TTL = 1000;
@@ -66,6 +66,9 @@ export interface ChatMessage {
   chatType: ChatType;
   messageType?: MessageType;
   audioDurationMs?: number | null;
+  videoDurationMs?: number | null;
+  videoWidth?: number | null;
+  videoHeight?: number | null;
   waveformData?: number[];
   createdAt: string;
   updatedAt: string;
@@ -78,6 +81,7 @@ export interface ChatMessage {
     messageType?: MessageType;
     mediaUrls?: string[];
     audioDurationMs?: number | null;
+    videoDurationMs?: number | null;
     sender: {
       id: string;
       firstName?: string;
@@ -128,6 +132,8 @@ export type ChatMessageWithStatus = ChatMessage & {
   _status?: 'SENDING' | 'FAILED';
   _optimisticId?: string;
   _clientMutationId?: string;
+  /** Set when a live socket translation arrives for the viewer locale (animate reveal). */
+  _translationJustArrived?: boolean;
 };
 
 export interface LastMessagePreview {
@@ -163,6 +169,9 @@ export interface OptimisticMessagePayload {
   mentionIds: string[];
   messageType?: MessageType;
   audioDurationMs?: number;
+  videoDurationMs?: number;
+  videoWidth?: number;
+  videoHeight?: number;
   waveformData?: number[];
 }
 
@@ -177,6 +186,9 @@ export interface CreateMessageRequest {
   mentionIds?: string[];
   messageType?: MessageType;
   audioDurationMs?: number;
+  videoDurationMs?: number;
+  videoWidth?: number;
+  videoHeight?: number;
   waveformData?: number[];
   clientMutationId?: string;
   poll?: {

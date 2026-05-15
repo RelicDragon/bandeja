@@ -17,7 +17,11 @@ import { useTranslation } from 'react-i18next';
 import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
-import { ChatListGenericMediaRow, ChatListPreviewContent } from '@/components/chat/ChatListPreviewContent';
+import {
+  ChatListGenericMediaRow,
+  ChatListPreviewContent,
+  ChatListVideoRow,
+} from '@/components/chat/ChatListPreviewContent';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { ChatListOutboxAnimated } from '@/components/chat/ChatListOutboxAnimated';
 import type { ChatListOutbox } from '@/utils/chatListSort';
@@ -298,14 +302,16 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
                     )
                 : '';
             const isFullVoice = fullMsg?.messageType === 'VOICE';
+            const isFullVideo = fullMsg?.messageType === 'VIDEO';
             const voiceAsTextOnly = isFullVoice && !!(fullMsg?.content?.trim());
             const showVoiceRow = isFullVoice && !voiceAsTextOnly;
+            const showVideoRow = isFullVideo;
             const hasMediaUrls = (fullMsg?.mediaUrls?.length ?? 0) > 0;
             const mt = fullMsg?.messageType;
             const showGenericMediaRow =
-              !isPreviewOnly && !isFullVoice && hasMediaUrls && mt === undefined;
+              !isPreviewOnly && !isFullVoice && !isFullVideo && hasMediaUrls && mt === undefined;
             const showPhotoRow =
-              !isPreviewOnly && !isFullVoice && hasMediaUrls && mt !== undefined;
+              !isPreviewOnly && !isFullVoice && !isFullVideo && hasMediaUrls && mt !== undefined;
             const previewLm = isPreviewOnly ? (lastMessage as LastMessagePreview) : null;
             const sender =
               fullMsg?.sender ?? (previewLm?.sender != null ? previewLm.sender : null);
@@ -355,6 +361,15 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
                               : ''}
                           </span>
                         </span>
+                      </>
+                    ) : showVideoRow ? (
+                      <>
+                        {groupChannel.isChannel && sender && (
+                          <span className="font-medium">
+                            {sender.firstName} {sender.lastName}:{' '}
+                          </span>
+                        )}
+                        <ChatListVideoRow t={t} durationMs={fullMsg?.videoDurationMs} />
                       </>
                     ) : showPhotoRow ? (
                       <span className="flex items-center gap-1">

@@ -114,10 +114,14 @@ export function useGameChatMessages({
   }, [id, contextType, effectiveChatType, setMessages, setHasMoreMessages, setPage, setIsLoadingMessages, setIsInitialLoad]);
 
   const scrollToBottom = useCallback(() => {
-    const list = messageListRef.current;
-    if (list) {
-      list.scrollToBottomAlign();
-      return;
+    try {
+      const list = messageListRef.current;
+      if (list) {
+        list.scrollToBottomAlign();
+        return;
+      }
+    } catch {
+      /* TanStack virtual scroll race — fall through to DOM pin */
     }
     scrollChatToBottom(chatContainerRef);
   }, [chatContainerRef, messageListRef]);

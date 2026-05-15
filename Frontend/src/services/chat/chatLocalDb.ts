@@ -38,13 +38,18 @@ export type ChatOutboxRow = {
   pendingImageBlobCount?: number;
   /** Pending voice audio blob in `outboxMediaBlobs` until upload+ACK. */
   hasPendingVoiceBlob?: boolean;
+  /** Pending video MP4 blob in `outboxMediaBlobs` until upload+ACK. */
+  hasPendingVideoBlob?: boolean;
+  videoDurationMs?: number;
+  /** Client transcode time (ms) for metrics; set when video is prepared for send. */
+  videoTranscodeMs?: number;
 };
 
 export type OutboxMediaBlobRow = {
   id: string;
   tempId: string;
   slot: number;
-  kind: 'image' | 'voice';
+  kind: 'image' | 'voice' | 'video' | 'video-poster';
   blob: Blob;
 };
 
@@ -380,6 +385,21 @@ class ChatLocalDexie extends Dexie {
       for (const row of rows) {
         await msgs.put({ ...row, sortKey: computeMessageSortKey(row.payload) });
       }
+    });
+    this.version(16).stores({
+      messages:
+        'id, [contextType+contextId+chatType], [contextType+contextId+chatType+sortKey], [contextType+contextId], createdAt, deletedAt, searchText',
+      chatSyncCursor: 'key',
+      outbox: 'tempId, [contextType+contextId], createdAt',
+      chatThreads: 'key, updatedAt, lastOpenedAt, openCount',
+      threadIndex: 'rowKey, listFilter, sortAt, contextType, contextId, [contextType+contextId]',
+      messageContextHead: 'key, updatedAt',
+      threadScroll: 'key, updatedAt',
+      messageRowHeights: 'messageId, updatedAt',
+      chatDrafts: 'key, updatedAt',
+      mutationQueue: 'id, [contextType+contextId], status, createdAt',
+      outboxMediaBlobs: 'id, tempId',
+      messageSearchTokens: 'id, token, messageId',
     });
   }
 }

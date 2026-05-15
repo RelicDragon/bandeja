@@ -5,6 +5,27 @@ import { mergeReactionListSync } from '@/services/chat/chatSyncEventsToPatches';
 import { rowFromMessage } from '@/services/chat/chatSyncRowUtils';
 import { putChatLocalRowsWithSearchTokens } from './chatLocalApplyWrite';
 
+export async function patchMessageTranslationInDexie(
+  messageId: string,
+  languageCode: string,
+  translation: string
+): Promise<void> {
+  const row = await chatLocalDb.messages.get(messageId);
+  if (!row) return;
+  const translations = [...(row.payload.translations ?? [])];
+  const idx = translations.findIndex((t) => t.languageCode === languageCode);
+  const entry = { languageCode, translation };
+  if (idx >= 0) translations[idx] = entry;
+  else translations.push(entry);
+  const patch: ChatMessage = {
+    ...row.payload,
+    translations,
+    translation:
+      row.payload.translation?.languageCode === languageCode ? entry : row.payload.translation,
+  };
+  await putChatLocalRowsWithSearchTokens([rowFromMessage(patch)]);
+}
+
 export async function patchLocalTranscriptionDirect(
   messageId: string,
   audioTranscription: NonNullable<ChatMessage['audioTranscription']>

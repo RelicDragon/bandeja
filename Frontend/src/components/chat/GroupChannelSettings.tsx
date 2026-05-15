@@ -10,6 +10,9 @@ import { mediaApi } from '@/api/media';
 import { useAuthStore } from '@/store/authStore';
 import { matchesSearch } from '@/utils/transliteration';
 import { GroupChannelInvitesModal } from '@/components/chat/GroupChannelInvitesModal';
+import { ChatAutoTranslateSlots } from '@/components/chat/ChatAutoTranslateSlots';
+import { useChatAutoTranslateConfig } from '@/hooks/useChatAutoTranslateConfig';
+import { ChatAutoTranslateContext } from '@/contexts/ChatAutoTranslateContext';
 import { ChannelContextPanel } from '@/components/chat/panels';
 import { getGroupChannelShareUrl } from '@/utils/shareUrl';
 import { isCapacitor } from '@/utils/capacitor';
@@ -54,6 +57,11 @@ export const GroupChannelSettings = ({
   const isAdmin = useMemo(() => currentUserParticipant?.role === 'ADMIN', [currentUserParticipant]);
   const canEdit = isOwner || isAdmin || (!!user?.isAdmin && !!groupChannel.isCityGroup);
   const isParticipant = useMemo(() => !!currentUserParticipant || groupChannelData.isParticipant, [currentUserParticipant, groupChannelData.isParticipant]);
+
+  const {
+    config: autoTranslateConfig,
+    applyLanguageCodes: applyAutoTranslateLanguageCodes,
+  } = useChatAutoTranslateConfig('GROUP', groupChannel.id);
 
 
   const loadData = useCallback(async () => {
@@ -306,8 +314,21 @@ export const GroupChannelSettings = ({
   };
 
   return (
+    <ChatAutoTranslateContext.Provider value={autoTranslateConfig?.languageCodes ?? []}>
     <div className="h-full overflow-y-auto bg-[#eefbfc] dark:bg-gray-900" ref={scrollContainerRef}>
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+          <div className="rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+              {t('chat.autoTranslateTitle', { defaultValue: 'Auto-translate for this chat' })}
+            </h3>
+            <ChatAutoTranslateSlots
+              languageCodes={autoTranslateConfig?.languageCodes ?? []}
+              maxSlots={autoTranslateConfig?.maxSlots ?? 2}
+              canEdit={autoTranslateConfig?.canEdit ?? canEdit}
+              onChange={applyAutoTranslateLanguageCodes}
+              compact
+            />
+          </div>
           <ChannelContextPanel
             groupChannel={groupChannelData}
             name={name}
@@ -498,5 +519,6 @@ export const GroupChannelSettings = ({
         />
       )}
     </div>
+    </ChatAutoTranslateContext.Provider>
   );
 };

@@ -12,6 +12,9 @@ export type ChatSendMetricDetail = {
   contextType?: string;
   contextId?: string;
   hasMedia?: boolean;
+  hasVideo?: boolean;
+  transcodeMs?: number;
+  uploadBytes?: number;
   durationMs?: number;
   phase?: 'outbox' | 'upload' | 'api';
   reason?: string;

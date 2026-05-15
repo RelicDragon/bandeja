@@ -8,6 +8,14 @@ function voiceRowId(tempId: string): string {
   return `${tempId}:voice`;
 }
 
+function videoRowId(tempId: string): string {
+  return `${tempId}:video`;
+}
+
+function videoPosterRowId(tempId: string): string {
+  return `${tempId}:video-poster`;
+}
+
 export async function loadOutboxImageBlobs(tempId: string, count: number): Promise<Blob[]> {
   if (count <= 0) return [];
   const out: Blob[] = [];
@@ -22,6 +30,14 @@ export async function loadOutboxVoiceBlob(tempId: string): Promise<Blob | undefi
   return (await chatLocalDb.outboxMediaBlobs.get(voiceRowId(tempId)))?.blob;
 }
 
+export async function loadOutboxVideoBlob(tempId: string): Promise<Blob | undefined> {
+  return (await chatLocalDb.outboxMediaBlobs.get(videoRowId(tempId)))?.blob;
+}
+
+export async function loadOutboxVideoPosterBlob(tempId: string): Promise<Blob | undefined> {
+  return (await chatLocalDb.outboxMediaBlobs.get(videoPosterRowId(tempId)))?.blob;
+}
+
 export async function deleteOutboxImageBlobSlots(tempId: string, count: number): Promise<void> {
   if (count <= 0) return;
   await chatLocalDb.transaction('rw', chatLocalDb.outboxMediaBlobs, async () => {
@@ -33,6 +49,13 @@ export async function deleteOutboxImageBlobSlots(tempId: string, count: number):
 
 export async function deleteOutboxVoiceBlob(tempId: string): Promise<void> {
   await chatLocalDb.outboxMediaBlobs.delete(voiceRowId(tempId));
+}
+
+export async function deleteOutboxVideoBlobs(tempId: string): Promise<void> {
+  await chatLocalDb.transaction('rw', chatLocalDb.outboxMediaBlobs, async () => {
+    await chatLocalDb.outboxMediaBlobs.delete(videoRowId(tempId));
+    await chatLocalDb.outboxMediaBlobs.delete(videoPosterRowId(tempId));
+  });
 }
 
 export async function deleteOutboxMediaBlobsForTempId(tempId: string): Promise<void> {

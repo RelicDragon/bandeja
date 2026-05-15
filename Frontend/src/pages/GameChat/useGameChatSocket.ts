@@ -196,7 +196,12 @@ export function useGameChatSocket({
           if (!lastChatMessageUpdated.message) break;
           void persistSocketInboundMessage(contextType, id, lastChatMessageUpdated.message, lastChatMessageUpdated.syncSeq)
             .then(() => {
-              handleMessageUpdated(lastChatMessageUpdated.message);
+              const m = lastChatMessageUpdated.message;
+              handleMessageUpdated({
+                ...m,
+                translation: undefined,
+                translations: undefined,
+              });
             })
             .catch(() => {});
           break;
@@ -213,6 +218,13 @@ export function useGameChatSocket({
             messagesRef.current = next;
             return next;
           });
+          break;
+        }
+        case 'translation': {
+          const d = ev.data;
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('chat:message-translation', { detail: d }));
+          }
           break;
         }
         case 'pollVote': {

@@ -30,6 +30,11 @@ import { ChatSyncEventService } from './chatSyncEvent.service';
 import { normalizeChatClientMutationId } from '../../utils/chatClientMutationId';
 import { chatSyncMessageUpdatedCompactPayload } from '../../utils/chatSyncMessageUpdatePayload';
 import { lastMessageForUnreadListSocket } from '../../utils/chatListSocketPreview';
+import { resolveOutgoingChatMessageType } from './resolveOutgoingChatMessageType';
+import {
+  MAX_VIDEO_DURATION_MS as VIDEO_MESSAGE_MAX_MS,
+  MIN_VIDEO_DURATION_MS,
+} from '../../constants/chatVideo';
 
 const VOICE_MESSAGE_MAX_MS = 30 * 60 * 1000;
 
@@ -46,6 +51,46 @@ function isAllowedChatVoiceMediaUrl(url: string): boolean {
     return false;
   }
   if (!/^uploads\/chat\/voice\/[a-zA-Z0-9._-]+$/.test(key)) return false;
+  const allowedHost = config.aws.cloudFrontDomain.replace(/^https?:\/\//, '').split('/')[0].toLowerCase();
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    try {
+      return new URL(url).hostname.toLowerCase() === allowedHost;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isAllowedChatVideoMediaUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  let key: string;
+  try {
+    key = S3Service.extractS3Key(url);
+  } catch {
+    return false;
+  }
+  if (!/^uploads\/chat\/videos\/[a-zA-Z0-9._-]+$/.test(key)) return false;
+  const allowedHost = config.aws.cloudFrontDomain.replace(/^https?:\/\//, '').split('/')[0].toLowerCase();
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    try {
+      return new URL(url).hostname.toLowerCase() === allowedHost;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isAllowedChatVideoThumbnailUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  let key: string;
+  try {
+    key = S3Service.extractS3Key(url);
+  } catch {
+    return false;
+  }
+  if (!/^uploads\/chat\/thumbnails\/[a-zA-Z0-9._-]+$/.test(key)) return false;
   const allowedHost = config.aws.cloudFrontDomain.replace(/^https?:\/\//, '').split('/')[0].toLowerCase();
   if (url.startsWith('http://') || url.startsWith('https://')) {
     try {
@@ -299,6 +344,7 @@ export class MessageService {
           messageType: true,
           mediaUrls: true,
           audioDurationMs: true,
+          videoDurationMs: true,
           sender: {
             select: USER_SELECT_FIELDS
           }
@@ -417,11 +463,15 @@ export class MessageService {
     senderId: string;
     content?: string;
     mediaUrls: string[];
+    thumbnailUrls?: string[];
     replyToId?: string;
     chatType: ChatType;
     mentionIds?: string[];
     messageType?: MessageType;
     audioDurationMs?: number | null;
+    videoDurationMs?: number | null;
+    videoWidth?: number | null;
+    videoHeight?: number | null;
     waveformData?: number[];
     poll?: {
       question: string;
@@ -439,14 +489,21 @@ export class MessageService {
       senderId,
       content,
       mediaUrls,
+      clientThumbnailUrls = [],
       replyToId,
       chatType,
       mentionIds = [],
       poll,
       messageType: requestedMessageType,
       audioDurationMs,
+      videoDurationMs,
+      videoWidth,
+      videoHeight,
       waveformData,
-    } = data;
+    } = {
+      ...data,
+      clientThumbnailUrls: data.thumbnailUrls ?? [],
+    };
 
     const cid = normalizeChatClientMutationId(data.clientMutationId);
 
@@ -487,16 +544,11 @@ export class MessageService {
       }
     }
 
-    let resolvedMessageType: MessageType;
-    if (poll) {
-      resolvedMessageType = MessageType.POLL;
-    } else if (requestedMessageType === MessageType.VOICE) {
-      resolvedMessageType = MessageType.VOICE;
-    } else if (mediaUrls.length > 0) {
-      resolvedMessageType = MessageType.IMAGE;
-    } else {
-      resolvedMessageType = MessageType.TEXT;
-    }
+    const resolvedMessageType = resolveOutgoingChatMessageType({
+      poll,
+      requestedMessageType,
+      mediaUrls,
+    });
 
     if (poll && mediaUrls.length > 0) {
       throw new ApiError(400, 'Poll messages cannot include media');
@@ -529,11 +581,47 @@ export class MessageService {
       throw new ApiError(400, 'Invalid voice message payload');
     }
 
+    let videoMeta: { durationMs: number; width?: number; height?: number } | null = null;
+    if (resolvedMessageType === MessageType.VIDEO) {
+      if (poll) {
+        throw new ApiError(400, 'Video messages cannot include a poll');
+      }
+      if (mediaUrls.length !== 1) {
+        throw new ApiError(400, 'Video message requires exactly one video URL');
+      }
+      if (
+        videoDurationMs == null ||
+        videoDurationMs < MIN_VIDEO_DURATION_MS ||
+        videoDurationMs > VIDEO_MESSAGE_MAX_MS
+      ) {
+        throw new ApiError(400, 'Invalid video message duration');
+      }
+      const url = mediaUrls[0];
+      if (!url || !isAllowedChatVideoMediaUrl(url)) {
+        throw new ApiError(400, 'Invalid video URL');
+      }
+      const thumbs = Array.isArray(clientThumbnailUrls) ? clientThumbnailUrls : [];
+      if (thumbs.length !== 1 || !isAllowedChatVideoThumbnailUrl(thumbs[0]!)) {
+        throw new ApiError(400, 'Video message requires a valid poster thumbnail URL');
+      }
+      videoMeta = {
+        durationMs: videoDurationMs,
+        width: videoWidth ?? undefined,
+        height: videoHeight ?? undefined,
+      };
+    } else if (requestedMessageType === MessageType.VIDEO) {
+      throw new ApiError(400, 'Invalid video message payload');
+    }
+
     const thumbnailUrls =
-      resolvedMessageType === MessageType.VOICE ? [] : this.generateThumbnailUrls(mediaUrls);
+      resolvedMessageType === MessageType.VOICE
+        ? []
+        : resolvedMessageType === MessageType.VIDEO
+          ? (Array.isArray(clientThumbnailUrls) ? clientThumbnailUrls : []).slice(0, 1)
+          : this.generateThumbnailUrls(mediaUrls);
 
     const contentForStore =
-      resolvedMessageType === MessageType.VOICE
+      resolvedMessageType === MessageType.VOICE || resolvedMessageType === MessageType.VIDEO
         ? ''
         : content?.startsWith('[TYPE:')
           ? content.substring(1)
@@ -588,6 +676,9 @@ export class MessageService {
           state: MessageState.SENT,
           messageType: resolvedMessageType,
           audioDurationMs: resolvedMessageType === MessageType.VOICE ? audioDurationMs ?? null : null,
+          videoDurationMs: resolvedMessageType === MessageType.VIDEO ? videoMeta?.durationMs ?? null : null,
+          videoWidth: resolvedMessageType === MessageType.VIDEO ? videoMeta?.width ?? null : null,
+          videoHeight: resolvedMessageType === MessageType.VIDEO ? videoMeta?.height ?? null : null,
           waveformData: resolvedMessageType === MessageType.VOICE ? voiceWaveform : [],
           clientMutationId: cid ?? undefined,
         } as any,
@@ -779,6 +870,14 @@ export class MessageService {
     }
 
     await updateLastMessagePreview(chatContextType, contextId);
+
+    if (!(message as { _deduped?: boolean })._deduped) {
+      const { ChatAutoTranslateEnqueueService } = await import('./chatAutoTranslateEnqueue.service');
+      void ChatAutoTranslateEnqueueService.enqueueForMessage(message.id).catch((err) => {
+        console.error('[auto-translate] enqueue failed', { messageId: message.id, err });
+      });
+    }
+
     return message;
   }
 
@@ -788,11 +887,15 @@ export class MessageService {
     senderId: string;
     content?: string;
     mediaUrls: string[];
+    thumbnailUrls?: string[];
     replyToId?: string;
     chatType: ChatType;
     mentionIds?: string[];
     messageType?: MessageType;
     audioDurationMs?: number | null;
+    videoDurationMs?: number | null;
+    videoWidth?: number | null;
+    videoHeight?: number | null;
     waveformData?: number[];
     poll?: {
       question: string;
@@ -1319,6 +1422,12 @@ export class MessageService {
 
     await updateLastMessagePreview(message.chatContextType, message.contextId);
     (updated as { syncSeq?: number }).syncSeq = syncSeq;
+
+    const { ChatAutoTranslateEnqueueService } = await import('./chatAutoTranslateEnqueue.service');
+    void ChatAutoTranslateEnqueueService.onMessageEdited(messageId).catch((err) => {
+      console.error('[auto-translate] re-enqueue on edit failed', { messageId, err });
+    });
+
     return updated;
   }
 

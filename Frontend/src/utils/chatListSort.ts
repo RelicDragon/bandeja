@@ -4,7 +4,7 @@ import { BasicUser, Game } from '@/types';
 export type ChatListOutbox = {
   state: 'queued' | 'sending' | 'failed';
   preview?: string;
-  previewKind?: 'text' | 'voice' | 'media';
+  previewKind?: 'text' | 'voice' | 'media' | 'video';
 };
 
 export type ChatItem =

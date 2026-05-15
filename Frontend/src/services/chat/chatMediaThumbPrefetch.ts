@@ -33,6 +33,7 @@ async function drainBatch(): Promise<void> {
 }
 
 export function scheduleChatMediaThumbPrefetchForMessage(m: ChatMessage): void {
+  if (m.messageType === 'VOICE') return;
   const thumbs = m.thumbnailUrls;
   if (!thumbs?.length) return;
   for (const u of thumbs) {

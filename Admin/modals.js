@@ -203,6 +203,8 @@ async function createCenterModal() {
     document.getElementById('centerForm').dataset.mode = 'create';
     document.getElementById('centerForm').dataset.centerId = '';
     document.getElementById('centerMediaSection').style.display = 'none';
+    const adminsSec = document.getElementById('centerAdminsSection');
+    if (adminsSec) adminsSec.style.display = 'none';
     const pr = document.getElementById('centerAvatarPreview');
     pr.removeAttribute('src');
     pr.style.display = 'none';
@@ -252,6 +254,8 @@ async function editCenterModal(center) {
     editingClubPhotos = normalizeClubPhotosAdmin(center.photos);
     renderEditingClubPhotos(center.id);
     await loadCityOptions(center.cityId);
+    document.getElementById('centerAdminsSection').style.display = 'block';
+    await loadClubAdminsForCenter(center.id);
 }
 
 let editingClubPhotos = [];
@@ -737,6 +741,65 @@ window.emitCoinsModal = emitCoinsModal;
 window.handleEmitCoinsSubmit = handleEmitCoinsSubmit;
 window.dropCoinsModal = dropCoinsModal;
 window.handleDropCoinsSubmit = handleDropCoinsSubmit;
+
+async function loadClubAdminsForCenter(clubId) {
+    const list = document.getElementById('centerAdminsList');
+    if (!list) return;
+    list.innerHTML = 'Loading…';
+    try {
+        const res = await apiRequest(`/admin/clubs/${clubId}/admins`);
+        const rows = res.data || [];
+        if (rows.length === 0) {
+            list.innerHTML = '<em>No club admins assigned</em>';
+            return;
+        }
+        list.innerHTML = rows
+            .map((row) => {
+                const u = row.user;
+                const name = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.id;
+                return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <span>${name} <small>(${row.role})</small></span>
+                    <button type="button" class="btn-small btn-delete" onclick="removeClubAdminForCenter('${clubId}','${u.id}')">Remove</button>
+                </div>`;
+            })
+            .join('');
+    } catch (e) {
+        list.innerHTML = `<span style="color:#c00">${e.message}</span>`;
+    }
+}
+
+async function assignClubAdminForCenter() {
+    const form = document.getElementById('centerForm');
+    const clubId = form?.dataset.centerId;
+    const userId = document.getElementById('centerAdminUserId')?.value?.trim();
+    if (!clubId || !userId) {
+        alert('Save club and enter a user ID');
+        return;
+    }
+    try {
+        await apiRequest(`/admin/clubs/${clubId}/admins`, {
+            method: 'POST',
+            body: JSON.stringify({ userId }),
+        });
+        document.getElementById('centerAdminUserId').value = '';
+        await loadClubAdminsForCenter(clubId);
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+async function removeClubAdminForCenter(clubId, userId) {
+    if (!confirm('Remove this club admin?')) return;
+    try {
+        await apiRequest(`/admin/clubs/${clubId}/admins/${userId}`, { method: 'DELETE' });
+        await loadClubAdminsForCenter(clubId);
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+window.assignClubAdminForCenter = assignClubAdminForCenter;
+window.removeClubAdminForCenter = removeClubAdminForCenter;
 
 (function setupClubMediaUploads() {
     const af = document.getElementById('centerAvatarFile');

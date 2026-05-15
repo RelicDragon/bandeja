@@ -24,9 +24,17 @@ import {
   preloadMessageRowHeights,
   rememberMeasuredMessageHeight,
 } from '@/services/chat/chatMessageHeights';
+import {
+  isMessageListNearBottom,
+  pinMessageListContainerToBottom,
+  pinMessageListContainerToBottomAfterLayout,
+  scrollVirtualizerToIndex,
+} from '@/utils/messageListScroll';
 
 const END_SPACER_PX = 128;
 const ROW_ESTIMATE_PX = 88;
+/** Chat video bubble max height + row chrome (reduces virtualizer remeasure after send). */
+const ROW_ESTIMATE_VIDEO_PX = 360;
 const VIRTUAL_OVERSCAN_BASE = 10;
 const VIRTUAL_OVERSCAN_FAST = 22;
 /** Skip redundant scrollToIndex(end) when already visually pinned (subpixel / end spacer). */
@@ -130,8 +138,11 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     getScrollElement: () => messagesContainerRef.current,
     estimateSize: (index) => {
       if (index === rowCount - 1) return END_SPACER_PX;
-      const id = messages[index]?.id;
-      return getCachedMessageRowHeight(id) ?? ROW_ESTIMATE_PX;
+      const msg = messages[index];
+      const cached = getCachedMessageRowHeight(msg?.id);
+      if (cached != null) return cached;
+      if (msg?.messageType === 'VIDEO') return ROW_ESTIMATE_VIDEO_PX;
+      return ROW_ESTIMATE_PX;
     },
     overscan: virtualOverscan,
     getItemKey: (index) => (index === rowCount - 1 ? '__end__' : messages[index]?.id ?? `i-${index}`),
@@ -143,17 +154,11 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   messagesForScrollRef.current = messages;
 
   const scrollToBottomAlign = useCallback(() => {
-    const v = virtualizerRef.current;
-    const len = messagesForScrollRef.current.length;
-    const idx = len === 0 ? 0 : len;
-    v.scrollToIndex(idx, { align: 'end', behavior: 'auto' });
+    pinMessageListContainerToBottomAfterLayout(() => messagesContainerRef.current, 3);
   }, []);
 
   const scrollToBottomSmooth = useCallback(() => {
-    const v = virtualizerRef.current;
-    const len = messagesForScrollRef.current.length;
-    const idx = len === 0 ? 0 : len;
-    v.scrollToIndex(idx, { align: 'end', behavior: 'smooth' });
+    pinMessageListContainerToBottom(messagesContainerRef.current, { behavior: 'smooth' });
   }, []);
 
   const messagesMeasureRef = useRef(messages);
@@ -218,11 +223,9 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       const len = messagesForScrollRef.current.length;
       if (len === 0) return;
       const el = messagesContainerRef.current;
-      if (el) {
-        const gap = el.scrollHeight - el.scrollTop - el.clientHeight;
-        if (gap <= PIN_BOTTOM_SKIP_GAP_PX) return;
-      }
-      virtualizerRef.current.scrollToIndex(len, { align: 'end', behavior: 'auto' });
+      if (!el) return;
+      if (isMessageListNearBottom(el, PIN_BOTTOM_SKIP_GAP_PX)) return;
+      pinMessageListContainerToBottom(el);
     });
   }, []);
 
@@ -273,7 +276,17 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
           }
           const runScroll = () => {
             if (cancelled) return;
-            virtualizerRef.current.scrollToIndex(idx, { align: 'start', behavior: 'auto' });
+            const anchorEl = messagesContainerRef.current?.querySelector(
+              `#message-${st.anchorMessageId}`
+            ) as HTMLElement | null;
+            if (anchorEl) {
+              anchorEl.scrollIntoView({ block: 'start', behavior: 'auto' });
+              return;
+            }
+            scrollVirtualizerToIndex(virtualizerRef.current, idx, {
+              align: 'start',
+              behavior: 'auto',
+            });
           };
           runScroll();
           requestAnimationFrame(() => {
@@ -385,7 +398,15 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
         el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
-      virtualizer.scrollToIndex(idx, { align: 'center', behavior: 'smooth' });
+      const targetId = messages[idx]?.id ?? messageId;
+      const el = messagesContainerRef.current?.querySelector(
+        `#message-${targetId}`
+      ) as HTMLElement | null;
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      scrollVirtualizerToIndex(virtualizer, idx, { align: 'center', behavior: 'smooth' });
     },
     [messages, virtualizer]
   );
@@ -481,9 +502,12 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
           });
         });
       } else if (!layoutSettlingForBottomPin) {
-        const gap = container.scrollHeight - container.scrollTop - container.clientHeight;
-        if (gap < 100 && messages.length > 0 && gap > PIN_BOTTOM_SKIP_GAP_PX) {
-          virtualizerRef.current.scrollToIndex(messages.length, { align: 'end', behavior: 'auto' });
+        if (
+          messages.length > 0 &&
+          isMessageListNearBottom(container, 100) &&
+          !isMessageListNearBottom(container, PIN_BOTTOM_SKIP_GAP_PX)
+        ) {
+          pinMessageListContainerToBottom(container);
         }
       }
     }

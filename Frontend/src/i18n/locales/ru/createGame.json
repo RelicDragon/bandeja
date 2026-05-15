@@ -19,6 +19,8 @@
     "selectCourt": "Выбрать корт",
     "selectHall": "Выбрать зал",
     "selectClubFirst": "Сначала выберите клуб",
+    "clubCancellationNotice": "Уведомление об отмене: не менее чем за {{hours}} ч до слота.",
+    "clubPolicyTitle": "Правила клуба",
     "noClubsAvailable": "Нет доступных клубов",
     "clubDetailsBack": "К списку клубов",
     "clubInfo": "О клубе",

@@ -118,5 +118,12 @@ export const config = {
   cityGroupRefinedSystemMessages: process.env.CITY_GROUP_REFINED_SYSTEM_MESSAGES === 'true',
   /** JSON lines to stderr for /api/chat/sync/* errors (log drain / external APM). */
   chatSyncHttpErrorLog: process.env.CHAT_SYNC_HTTP_ERROR_LOG === 'true' || process.env.CHAT_SYNC_HTTP_ERROR_LOG === '1',
+  translationQueue: {
+    concurrency: parseInt(process.env.TRANSLATION_QUEUE_CONCURRENCY || '3', 10),
+    minIntervalMs: parseInt(process.env.TRANSLATION_QUEUE_MIN_INTERVAL_MS || '300', 10),
+    pollIntervalMs: parseInt(process.env.TRANSLATION_QUEUE_POLL_INTERVAL_MS || '500', 10),
+    maxAttempts: parseInt(process.env.TRANSLATION_QUEUE_MAX_ATTEMPTS || '3', 10),
+    staleRunningMs: parseInt(process.env.TRANSLATION_QUEUE_STALE_RUNNING_MS || '120000', 10),
+  },
 };
 

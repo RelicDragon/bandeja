@@ -62,6 +62,24 @@ interface ChatMessageTranscriptionData {
   syncSeq?: number;
 }
 
+interface ChatMessageTranslationData {
+  contextType: string;
+  contextId: string;
+  messageId: string;
+  languageCode: string;
+  translation: string;
+  timestamp?: string;
+  syncSeq?: number;
+}
+
+interface ChatAutoTranslateConfigData {
+  contextType: string;
+  contextId: string;
+  languageCodes: string[];
+  chatTypeKey: string;
+  timestamp?: string;
+}
+
 interface BetCreatedData {
   gameId: string;
   bet: any;
@@ -130,6 +148,7 @@ export type ChatRoomEvent =
   | { kind: 'deleted'; data: ChatDeletedData }
   | { kind: 'messageUpdated'; data: ChatMessageData }
   | { kind: 'transcription'; data: ChatMessageTranscriptionData }
+  | { kind: 'translation'; data: ChatMessageTranslationData }
   | { kind: 'pollVote'; data: PollVoteData };
 
 const CHAT_ROOM_QUEUE_CAP = 280;
@@ -402,6 +421,30 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         }));
       };
 
+      const handleChatMessageTranslation = (data: ChatMessageTranslationData) => {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('chat:message-translation', { detail: data }));
+        }
+        const rk = chatRoomKey(data.contextType, data.contextId);
+        set((s) => ({
+          chatRoomQueues: {
+            ...s.chatRoomQueues,
+            [rk]: capQueue(
+              [...(s.chatRoomQueues[rk] ?? []), { kind: 'translation' as const, data }],
+              CHAT_ROOM_QUEUE_CAP,
+              `room:${rk}`
+            ),
+          },
+          chatRoomPushSeq: { ...s.chatRoomPushSeq, [rk]: (s.chatRoomPushSeq[rk] ?? 0) + 1 },
+        }));
+      };
+
+      const handleAutoTranslateConfig = (data: ChatAutoTranslateConfigData) => {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('chat:auto-translate-config', { detail: data }));
+        }
+      };
+
       const handleChatUnreadCount = (data: ChatUnreadCountData) => {
         set((s) => {
           const listU = capQueue([...s.listChatUnreadQueue, data], CHAT_FIFO_CAP, 'listUnread');
@@ -531,6 +574,8 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('chat:deleted', handleChatDeleted);
       socketService.on('chat:message-updated', handleChatMessageUpdated);
       socketService.on('chat:message-transcription', handleChatMessageTranscription);
+      socketService.on('chat:message-translation', handleChatMessageTranslation);
+      socketService.on('chat:auto-translate-config', handleAutoTranslateConfig);
       socketService.on('chat:unread-count', handleChatUnreadCount);
       socketService.on('sync-required', handleSyncRequired);
       socketService.on('bet:created', handleBetCreated);
@@ -562,6 +607,8 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         () => socketService.off('chat:deleted', handleChatDeleted),
         () => socketService.off('chat:message-updated', handleChatMessageUpdated),
         () => socketService.off('chat:message-transcription', handleChatMessageTranscription),
+        () => socketService.off('chat:message-translation', handleChatMessageTranslation),
+        () => socketService.off('chat:auto-translate-config', handleAutoTranslateConfig),
         () => socketService.off('chat:unread-count', handleChatUnreadCount),
         () => socketService.off('sync-required', handleSyncRequired),
         () => socketService.off('bet:created', handleBetCreated),
