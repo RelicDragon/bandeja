@@ -19,7 +19,7 @@ interface GameCardReactionsProps {
   entityType: EntityType;
   gameId: string;
   reactions: ReactionRow[];
-  currentUserId: string;
+  currentUserId?: string;
   onReactionsChange: (next: ReactionRow[]) => void;
   className?: string;
   pickerOpens?: 'above' | 'below';
@@ -94,7 +94,7 @@ export function GameCardReactions({
 
   const runMutation = useCallback(
     async (fn: () => Promise<{ data: { reactions: ReactionRow[]; emojiUsage?: { version: number; touched: unknown } } }>) => {
-      if (pending) return;
+      if (!currentUserId || pending) return;
       setPending(true);
       try {
         const res = await fn();
@@ -113,12 +113,16 @@ export function GameCardReactions({
         setPending(false);
       }
     },
-    [pending, onReactionsChange, t]
+    [currentUserId, pending, onReactionsChange, t]
   );
 
   const handleQuickReaction = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!currentUserId) {
+      toast.error(t('chat.reactions.loginToReact'));
+      return;
+    }
     const cur = getCurrentUserReaction();
     if (cur === '❤️') {
       void runMutation(() => gamesApi.removeReaction(gameId));
@@ -129,6 +133,10 @@ export function GameCardReactions({
 
   const applyReactionEmoji = useCallback(
     (emoji: string, source: ReactionEmojiPickSource) => {
+      if (!currentUserId) {
+        toast.error(t('chat.reactions.loginToReact'));
+        return;
+      }
       const cur = getCurrentUserReaction();
       if (cur === emoji) {
         if (source === 'catalog') {
@@ -141,15 +149,32 @@ export function GameCardReactions({
       }
       setPickerOpen(false);
     },
-    [getCurrentUserReaction, runMutation, gameId]
+    [currentUserId, getCurrentUserReaction, runMutation, gameId, t]
   );
 
   const counts = getReactionCounts();
   const userEmoji = getCurrentUserReaction();
   const frequentEmojis = useReactionEmojiUsageStore(useShallow((s) => frequentReactionStripFromStore(s)));
   const otherReactionEntries = Object.entries(counts).filter(([emoji]) => userEmoji !== emoji);
+  const canReact = Boolean(currentUserId);
+  const readOnlyEntries = Object.entries(counts);
 
-  const stripPanel = (
+  if (!canReact && readOnlyEntries.length === 0) {
+    return null;
+  }
+
+  const stripPanel = !canReact ? (
+    <div className={`flex items-center gap-0.5 rounded-lg pl-0.5 pr-0.5 py-0 min-h-[28px] ${theme.panel}`}>
+      {readOnlyEntries.map(([emoji, count]) => (
+        <div key={emoji} className="flex flex-col items-center justify-center px-0.5 min-w-[22px]">
+          <span className="text-sm leading-none">{emoji}</span>
+          {count > 1 ? (
+            <span className={`text-[10px] ${theme.muted} leading-none tabular-nums`}>{count}</span>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  ) : (
     <div className={`flex items-center gap-0 rounded-lg pl-0.5 pr-0.5 py-0 min-h-[28px] ${theme.panel}`}>
       <button
         type="button"

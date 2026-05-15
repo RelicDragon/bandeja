@@ -294,16 +294,14 @@ export const GameCard = ({
       onClick={handleCardClick}
     >
       <div className="absolute top-2 right-2 z-20 flex flex-col items-end gap-1">
-        {effectiveUser?.id && (
-          <GameCardReactions
-            entityType={game.entityType}
-            gameId={game.id}
-            reactions={reactions}
-            currentUserId={effectiveUser.id}
-            onReactionsChange={setReactions}
-            pickerOpens="below"
-          />
-        )}
+        <GameCardReactions
+          entityType={game.entityType}
+          gameId={game.id}
+          reactions={reactions}
+          currentUserId={effectiveUser?.id}
+          onReactionsChange={setReactions}
+          pickerOpens="below"
+        />
         {canAccessChat && showChatIndicator && (
           <button
             type="button"

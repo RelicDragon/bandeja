@@ -15,6 +15,7 @@
       "reactWith": "Reaccionar con {{emoji}}",
       "moreReactions": "Más reacciones",
       "chooseReaction": "Elige una reacción",
+      "loginToReact": "Inicia sesión para reaccionar a partidas.",
       "invalidEmoji": "Este emoji no se puede usar como reacción.",
       "catalogDescription": "Search or browse categories, then choose an emoji."
     },

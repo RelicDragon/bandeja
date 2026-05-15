@@ -1,6 +1,5 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { MessageService } from '../chat/message.service';
 import { assertValidReactionEmoji, normalizeReactionEmoji } from '../../utils/validateReactionEmoji';
 import { UserReactionEmojiUsageService } from '../user/userReactionEmojiUsage.service';
 
@@ -52,9 +51,12 @@ export class GameReactionService {
       throw new ApiError(400, 'Emoji is required');
     }
 
-    const { isParticipant } = await MessageService.validateGameAccess(gameId, userId);
-    if (!isParticipant) {
-      throw new ApiError(403, 'Access denied');
+    const gameExists = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { id: true },
+    });
+    if (!gameExists) {
+      throw new ApiError(404, 'Game not found');
     }
 
     const normalizedEmoji = assertValidReactionEmoji(emoji);
@@ -88,9 +90,12 @@ export class GameReactionService {
   }
 
   static async removeReaction(gameId: string, userId: string): Promise<GameReactionDto[]> {
-    const { isParticipant } = await MessageService.validateGameAccess(gameId, userId);
-    if (!isParticipant) {
-      throw new ApiError(403, 'Access denied');
+    const gameExists = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { id: true },
+    });
+    if (!gameExists) {
+      throw new ApiError(404, 'Game not found');
     }
 
     await prisma.gameReaction.deleteMany({

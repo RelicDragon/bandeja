@@ -52,7 +52,8 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
       avatar: ca.club.avatar,
     })) ?? [];
 
-  const { clubAdmins: _clubAdmins, ...profile } = user;
+  const profile = { ...user };
+  delete (profile as { clubAdmins?: (typeof user)['clubAdmins'] }).clubAdmins;
 
   res.json({
     success: true,

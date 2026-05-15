@@ -15,6 +15,7 @@
       "reactWith": "Реагировать {{emoji}}",
       "moreReactions": "Ещё реакции",
       "chooseReaction": "Выберите реакцию",
+      "loginToReact": "Войдите, чтобы ставить реакции на игры.",
       "invalidEmoji": "Этот эмодзи нельзя использовать как реакцию.",
       "catalogDescription": "Search or browse categories, then choose an emoji."
     },

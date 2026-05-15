@@ -15,6 +15,7 @@
       "reactWith": "Reagovat {{emoji}}",
       "moreReactions": "Další reakce",
       "chooseReaction": "Vyberte reakci",
+      "loginToReact": "Pro reakce na hry se přihlaste.",
       "invalidEmoji": "Tento emoji nelze použít jako reakci.",
       "catalogDescription": "Search or browse categories, then choose an emoji."
     },
