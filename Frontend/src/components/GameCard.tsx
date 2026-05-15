@@ -102,7 +102,6 @@ export const GameCard = ({
   const isParticipant = participation.isPlaying;
   const isUserParticipant = participation.isParticipant;
   const isGuest = participation.isGuest || (!participation.isPlaying && !participation.isAdminOrOwner);
-  const canAccessChat = true;
   const isLeagueSeasonGame = game.entityType === 'LEAGUE_SEASON';
   const shouldShowTiming = !isLeagueSeasonGame;
   const displaySettings = effectiveUser ? resolveDisplaySettings(effectiveUser) : resolveDisplaySettings(null);
@@ -302,7 +301,7 @@ export const GameCard = ({
           onReactionsChange={setReactions}
           pickerOpens="below"
         />
-        {canAccessChat && showChatIndicator && (
+        {showChatIndicator && (
           <button
             type="button"
             onClick={handleChatClick}

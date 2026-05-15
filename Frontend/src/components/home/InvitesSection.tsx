@@ -115,7 +115,6 @@ export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: In
                     <GameCard
                       game={invite.game}
                       user={user}
-                      showChatIndicator={false}
                       onNoteSaved={onNoteSaved}
                     />
                   </div>
