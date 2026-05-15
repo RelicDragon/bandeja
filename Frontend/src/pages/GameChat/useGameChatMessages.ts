@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { chatApi, type ChatMessage, type ChatMessageWithStatus } from '@/api/chat';
 import {
   loadLocalMessagesForThread,
@@ -17,6 +17,13 @@ import { mergeChatMessagesAscending, mergeServerPageWithPendingOptimistics } fro
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import type { RefObject } from 'react';
+import { chatSyncTailKey } from '@/utils/chatSyncScope';
+import {
+  flushChatThreadL1DebouncedPut,
+  peekChatThreadMemory,
+  putChatThreadMemory,
+  scheduleChatThreadL1DebouncedPut,
+} from '@/services/chat/chatThreadMemoryCache';
 
 const PAGE_SIZE = 50;
 
@@ -57,6 +64,54 @@ export function useGameChatMessages({
   const hasLoadedRef = useRef(false);
   const isLoadingRef = useRef(false);
   const pendingHistoryBackfillRef = useRef(false);
+  const seededThreadKeyRef = useRef<string | null>(null);
+
+  useLayoutEffect(() => {
+    const key =
+      id != null && id !== ''
+        ? chatSyncTailKey(contextType, id, contextType === 'GAME' ? effectiveChatType : undefined)
+        : null;
+
+    if (!key) {
+      seededThreadKeyRef.current = null;
+      setMessages([]);
+      messagesRef.current = [];
+      setIsLoadingMessages(true);
+      setIsInitialLoad(true);
+      setPage(1);
+      setHasMoreMessages(true);
+      return () => {};
+    }
+
+    if (key === seededThreadKeyRef.current) {
+      return () => {
+        flushChatThreadL1DebouncedPut(key, () => messagesRef.current, () => true);
+        seededThreadKeyRef.current = null;
+      };
+    }
+
+    seededThreadKeyRef.current = key;
+
+    const cached = peekChatThreadMemory(key);
+    if (cached.length > 0) {
+      setMessages(cached);
+      messagesRef.current = cached;
+      setIsLoadingMessages(false);
+      setIsInitialLoad(false);
+    } else {
+      setMessages([]);
+      messagesRef.current = [];
+      setIsLoadingMessages(true);
+      setIsInitialLoad(true);
+    }
+    setPage(1);
+    setHasMoreMessages(true);
+
+    return () => {
+      flushChatThreadL1DebouncedPut(key, () => messagesRef.current, () => true);
+      seededThreadKeyRef.current = null;
+    };
+  }, [id, contextType, effectiveChatType, setMessages, setHasMoreMessages, setPage, setIsLoadingMessages, setIsInitialLoad]);
 
   const scrollToBottom = useCallback(() => {
     const list = messageListRef.current;
@@ -107,8 +162,11 @@ export function useGameChatMessages({
       const effectiveType = chatTypeOverride ?? currentChatType;
       try {
         if (!append) {
-          setIsLoadingMessages(true);
-          setIsInitialLoad(true);
+          const showFullLoading = messagesRef.current.length === 0;
+          if (showFullLoading) {
+            setIsLoadingMessages(true);
+            setIsInitialLoad(true);
+          }
         }
         let response: ChatMessage[];
         if (append) {
@@ -129,6 +187,18 @@ export function useGameChatMessages({
             messagesRef.current = newMessages;
             return newMessages;
           });
+          if (currentIdRef.current === requestId) {
+            const memKeyAppend = chatSyncTailKey(
+              contextType,
+              requestId,
+              contextType === 'GAME' ? effectiveType : undefined
+            );
+            scheduleChatThreadL1DebouncedPut(
+              memKeyAppend,
+              () => messagesRef.current,
+              () => currentIdRef.current === requestId
+            );
+          }
         } else {
           setMessages((prev) => {
             const merged = mergeServerPageWithPendingOptimistics(prev, response);
@@ -167,6 +237,12 @@ export function useGameChatMessages({
               void backfillChatHistoryPages(contextType, requestId, effectiveType, oldest.id).catch(() => {});
             }
           }
+          const memKey = chatSyncTailKey(
+            contextType,
+            requestId,
+            contextType === 'GAME' ? effectiveType : undefined
+          );
+          putChatThreadMemory(memKey, messagesRef.current, () => currentIdRef.current === requestId);
         }
         if (!append) {
           setIsLoadingMessages(false);
@@ -206,6 +282,13 @@ export function useGameChatMessages({
         setMessages((prev) => {
           const merged = mergeServerPageWithPendingOptimistics(prev, localMsgs);
           messagesRef.current = merged;
+          const memKey =
+            currentIdRef.current === requestId
+              ? chatSyncTailKey(contextType, requestId, contextType === 'GAME' ? effectiveType : undefined)
+              : null;
+          if (memKey) {
+            putChatThreadMemory(memKey, merged, () => currentIdRef.current === requestId);
+          }
           return merged;
         });
         setHasMoreMessages(true);
@@ -236,6 +319,18 @@ export function useGameChatMessages({
         if (local.length > 0) {
           paintFromDexie(local);
           runBackgroundReconcile();
+          const rk =
+            currentIdRef.current === requestId
+              ? chatSyncTailKey(contextType, requestId, contextType === 'GAME' ? effectiveType : undefined)
+              : null;
+          if (rk) {
+            scheduleChatThreadL1DebouncedPut(
+              rk,
+              () => messagesRef.current,
+              () => currentIdRef.current === requestId,
+              800
+            );
+          }
           return true;
         }
 
@@ -304,6 +399,12 @@ export function useGameChatMessages({
           return merged;
         });
         setHasMoreMessages(true);
+        const memKeyOldest = chatSyncTailKey(
+          contextType,
+          id,
+          contextType === 'GAME' ? effectiveChatType : undefined
+        );
+        scheduleChatThreadL1DebouncedPut(memKeyOldest, () => messagesRef.current, () => currentIdRef.current === id);
         return;
       }
 
@@ -320,6 +421,12 @@ export function useGameChatMessages({
         return merged;
       });
       setHasMoreMessages(response.length === PAGE_SIZE);
+      const memKey = chatSyncTailKey(
+        contextType,
+        id,
+        contextType === 'GAME' ? effectiveChatType : undefined
+      );
+      scheduleChatThreadL1DebouncedPut(memKey, () => messagesRef.current, () => currentIdRef.current === id);
     } catch (error) {
       console.error('Failed to load more messages:', error);
     } finally {
@@ -373,6 +480,10 @@ export function useGameChatMessages({
         messagesRef,
         setMessages,
       });
+      if (currentIdRef.current === id) {
+        const mk = chatSyncTailKey(contextType, id, contextType === 'GAME' ? effectiveChatType : undefined);
+        scheduleChatThreadL1DebouncedPut(mk, () => messagesRef.current, () => currentIdRef.current === id);
+      }
       return messagesRef.current.some((m) => m.id === messageId);
     },
     [id, contextType, effectiveChatType, currentIdRef, messagesRef, setMessages]

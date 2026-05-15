@@ -13,6 +13,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { normalizeChatType } from '@/utils/chatType';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
+import { deleteChatThreadMemory } from '@/services/chat/chatThreadMemoryCache';
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
 import { ChatContextPanel } from '@/components/chat/contextPanels';
 import { PinnedMessagesBar } from '@/components/chat/PinnedMessagesBar';
@@ -320,6 +321,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     id,
     contextType,
     effectiveChatType,
+    currentIdRef,
     userId: user?.id,
     setMessages,
     messagesRef,
@@ -392,12 +394,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setUserChat(null);
     setGroupChannel(null);
     setGroupChannelParticipantsCount(0);
-    setMessages([]);
-    messagesRef.current = [];
     setPage(1);
     setHasMoreMessages(true);
-    setIsLoadingMessages(true);
-    setIsInitialLoad(true);
     if (!isEmbedded) setIsLoadingContext(true);
     setIsBlockedByUser(false);
     setIsMuted(false);
@@ -405,14 +403,17 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setEditingMessage(null);
     setCurrentChatType(initialChatType || 'PUBLIC');
     previousIdRef.current = id;
-  }, [id, isEmbedded, contextType, initialChatType, setGame, setBug, setUserChat, setGroupChannel, setGroupChannelParticipantsCount, setIsLoadingContext, setMessages, messagesRef, setPage, setHasMoreMessages, setIsLoadingMessages, setIsInitialLoad, setReplyTo, setEditingMessage]);
+  }, [id, isEmbedded, contextType, initialChatType, setGame, setBug, setUserChat, setGroupChannel, setGroupChannelParticipantsCount, setIsLoadingContext, setPage, setHasMoreMessages, setReplyTo, setEditingMessage]);
 
   useEffect(() => {
+    if (locationState?.forceReload && threadScrollKey) {
+      deleteChatThreadMemory(threadScrollKey);
+    }
     if (locationState?.forceReload) {
       hasLoadedRef.current = false;
       loadingIdRef.current = undefined;
     }
-  }, [locationState?.forceReload, hasLoadedRef, loadingIdRef]);
+  }, [locationState?.forceReload, threadScrollKey, hasLoadedRef, loadingIdRef]);
 
   const footerVariant = useGameChatFooterVariant({
     id,

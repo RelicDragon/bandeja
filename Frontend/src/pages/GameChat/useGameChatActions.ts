@@ -9,6 +9,8 @@ import { loadLocalThreadBootstrap, persistChatMessagesFromApi } from '@/services
 import { reconcileChatThreadOpen } from '@/services/chat/chatOpenReconcile';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { normalizeChatType } from '@/utils/chatType';
+import { chatSyncTailKey } from '@/utils/chatSyncScope';
+import { putChatThreadMemory } from '@/services/chat/chatThreadMemoryCache';
 import { mergeChatMessagesAscending, mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
 import { shouldQueueChatMutation } from '@/services/chat/chatMutationNetwork';
 import { enqueueChatMutationMarkReadBatch } from '@/services/chat/chatMutationEnqueue';
@@ -333,6 +335,10 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
       } catch (error) {
         console.error('Failed to load messages:', error);
       } finally {
+        if (id && currentIdRef.current === id) {
+          const memKey = chatSyncTailKey(contextType, id, contextType === 'GAME' ? normalizedChatType : undefined);
+          putChatThreadMemory(memKey, messagesRef.current, () => currentIdRef.current === id);
+        }
         setIsSwitchingChatType(false);
         setIsLoadingMessages(false);
         setIsInitialLoad(false);

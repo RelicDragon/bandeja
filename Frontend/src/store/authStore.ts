@@ -13,6 +13,7 @@ import { extractLanguageCode, detectTimeFormat, detectWeekStart, normalizeLangua
 import { usersApi, authApi, pushApi } from '@/api';
 import { clearProactiveAccessRefresh, scheduleProactiveAccessRefresh } from '@/api/authRefresh';
 import { clearChatLocalStores } from '@/services/chat/chatThreadIndex';
+import { clearChatThreadMemory } from '@/services/chat/chatThreadMemoryCache';
 import { clearChatSyncScheduler } from '@/services/chat/chatSyncScheduler';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -194,6 +195,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           clearChatSyncScheduler();
           warm.clearChatSyncWarmDrainQueue();
           useChatSyncStore.getState().resetChatListDexieBump();
+          clearChatThreadMemory();
         } catch (e) {
           console.warn('[auth:logout] chat clear failed', e);
         }

@@ -21,6 +21,7 @@ import { enqueueChatSyncPull, SYNC_PRIORITY_FOREGROUND } from '@/services/chat/c
 import { scrollChatToBottomIfNearBottom } from '@/utils/chatScrollHelpers';
 import { compareChatMessagesAscending } from '@/utils/chatMessageSort';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
+import { scheduleChatThreadL1DebouncedPut } from '@/services/chat/chatThreadMemoryCache';
 import { BANDEJA_CHAT_SYNC_STALE, type ChatSyncStaleDetail } from '@/utils/chatSyncStaleEvents';
 import type { ChatType } from '@/types';
 
@@ -28,6 +29,7 @@ export interface UseGameChatSocketParams {
   id: string | undefined;
   contextType: ChatContextType;
   effectiveChatType: ChatType;
+  currentIdRef: RefObject<string | undefined>;
   userId: string | undefined;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
@@ -45,6 +47,7 @@ export function useGameChatSocket({
   id,
   contextType,
   effectiveChatType,
+  currentIdRef,
   userId,
   setMessages,
   messagesRef,
@@ -119,7 +122,9 @@ export function useGameChatSocket({
       return next;
     });
     scrollChatToBottomIfNearBottom(chatContainerRef);
-  }, [missedForContext.length, contextType, id, effectiveChatType, chatContainerRef, setMessages, messagesRef]);
+    const tk = chatSyncTailKey(contextType, id, contextType === 'GAME' ? effectiveChatType : undefined);
+    scheduleChatThreadL1DebouncedPut(tk, () => messagesRef.current, () => currentIdRef.current === id);
+  }, [missedForContext.length, contextType, id, effectiveChatType, chatContainerRef, setMessages, messagesRef, currentIdRef]);
 
   useEffect(() => {
     if (!roomKey || !id) return;
@@ -235,12 +240,18 @@ export function useGameChatSocket({
           break;
       }
     }
+    if (batch.length > 0 && id) {
+      const tk = chatSyncTailKey(contextType, id, contextType === 'GAME' ? effectiveChatType : undefined);
+      scheduleChatThreadL1DebouncedPut(tk, () => messagesRef.current, () => currentIdRef.current === id);
+    }
   }, [
     roomPushSeq,
     roomKey,
     id,
     contextType,
     userId,
+    effectiveChatType,
+    currentIdRef,
     handleNewMessage,
     handleMessageReaction,
     handleReadReceipt,
