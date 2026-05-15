@@ -630,7 +630,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               showReply={!derived.isChannel || (derived.canWriteChat ?? false)}
               onForwardMessage={handleForwardMessage}
               threadScrollKey={threadScrollKey}
-              threadLayoutSettling={isInitialLoad || isLoadingMessages}
+              threadLayoutSettling={isInitialLoad || isLoadingMessages || isSwitchingChatType}
             />
           </div>
         </main>

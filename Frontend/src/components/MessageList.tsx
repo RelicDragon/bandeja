@@ -29,6 +29,8 @@ const END_SPACER_PX = 128;
 const ROW_ESTIMATE_PX = 88;
 const VIRTUAL_OVERSCAN_BASE = 10;
 const VIRTUAL_OVERSCAN_FAST = 22;
+/** Skip redundant scrollToIndex(end) when already visually pinned (subpixel / end spacer). */
+const PIN_BOTTOM_SKIP_GAP_PX = 20;
 
 export type MessageListHandle = {
   scrollToMessageById: (messageId: string) => void;
@@ -207,6 +209,22 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   }, [virtualMeasureKey, rowCount]);
 
   const overscanRafRef = useRef<number | null>(null);
+  const pinBottomRafRef = useRef<number | null>(null);
+
+  const schedulePinToBottom = useCallback(() => {
+    if (pinBottomRafRef.current != null) return;
+    pinBottomRafRef.current = requestAnimationFrame(() => {
+      pinBottomRafRef.current = null;
+      const len = messagesForScrollRef.current.length;
+      if (len === 0) return;
+      const el = messagesContainerRef.current;
+      if (el) {
+        const gap = el.scrollHeight - el.scrollTop - el.clientHeight;
+        if (gap <= PIN_BOTTOM_SKIP_GAP_PX) return;
+      }
+      virtualizerRef.current.scrollToIndex(len, { align: 'end', behavior: 'auto' });
+    });
+  }, []);
 
   const prevThreadScrollKeyRef = useRef<string | null | undefined>(undefined);
   const restoredScrollThreadRef = useRef<string | null>(null);
@@ -241,9 +259,10 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
           return;
         }
         if (st.atBottom) {
-          const len = snapshot.length;
-          virtualizerRef.current.scrollToIndex(len === 0 ? 0 : len, { align: 'end', behavior: 'auto' });
-          markRestored();
+          schedulePinToBottom();
+          requestAnimationFrame(() => {
+            markRestored();
+          });
           return;
         }
         if (st.anchorMessageId) {
@@ -258,10 +277,8 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
           };
           runScroll();
           requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              runScroll();
-              markRestored();
-            });
+            runScroll();
+            markRestored();
           });
           return;
         }
@@ -274,26 +291,32 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     return () => {
       cancelled = true;
     };
-  }, [threadScrollKey, isSwitchingChatType, messages]);
+  }, [threadScrollKey, isSwitchingChatType, messages, schedulePinToBottom]);
 
   useLayoutEffect(() => {
     if (!layoutSettlingForBottomPin || messages.length === 0) return;
     const inner = innerListRef.current;
-    const run = () => {
-      const len = messagesForScrollRef.current.length;
-      if (len === 0) return;
-      virtualizerRef.current.scrollToIndex(len, { align: 'end', behavior: 'auto' });
-    };
-    run();
-    if (!inner) return;
+    schedulePinToBottom();
+    if (!inner) {
+      return () => {
+        if (pinBottomRafRef.current != null) {
+          cancelAnimationFrame(pinBottomRafRef.current);
+          pinBottomRafRef.current = null;
+        }
+      };
+    }
     const ro = new ResizeObserver(() => {
-      run();
+      schedulePinToBottom();
     });
     ro.observe(inner);
     return () => {
       ro.disconnect();
+      if (pinBottomRafRef.current != null) {
+        cancelAnimationFrame(pinBottomRafRef.current);
+        pinBottomRafRef.current = null;
+      }
     };
-  }, [layoutSettlingForBottomPin, messages.length, threadScrollKey]);
+  }, [layoutSettlingForBottomPin, messages.length, threadScrollKey, schedulePinToBottom]);
 
   useEffect(() => {
     if (!threadScrollKey) return;
@@ -458,9 +481,9 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
           });
         });
       } else if (!layoutSettlingForBottomPin) {
-        const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-        if (isAtBottom && messages.length > 0) {
-          virtualizerRef.current.scrollToIndex(messages.length, { align: 'end', behavior: 'smooth' });
+        const gap = container.scrollHeight - container.scrollTop - container.clientHeight;
+        if (gap < 100 && messages.length > 0 && gap > PIN_BOTTOM_SKIP_GAP_PX) {
+          virtualizerRef.current.scrollToIndex(messages.length, { align: 'end', behavior: 'auto' });
         }
       }
     }

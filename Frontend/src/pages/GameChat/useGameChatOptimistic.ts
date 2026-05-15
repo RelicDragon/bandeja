@@ -97,7 +97,7 @@ export function useGameChatOptimistic({
           ...(pendingVoiceBlob ? { pendingVoiceBlob } : {}),
         })
         .catch((err) => console.error('[messageQueue] add', err));
-      requestAnimationFrame(() => requestAnimationFrame(scrollToBottom));
+      requestAnimationFrame(() => scrollToBottom());
       return tempId;
     },
     [contextType, id, user, scrollToBottom, setMessages, messagesRef]
