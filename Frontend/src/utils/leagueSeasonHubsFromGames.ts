@@ -19,7 +19,7 @@ function pickStr(...candidates: (string | null | undefined)[]): string {
   return '';
 }
 
-/** Strip embedded schedule snippets from labels shown in “Your leagues”. */
+/** Strip embedded schedule snippets from labels shown in “Leagues”. */
 export function stripDatesAndTimesFromLeagueHubLabel(raw: string): string {
   let s = raw.trim();
   if (!s) return '';

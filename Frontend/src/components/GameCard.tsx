@@ -9,6 +9,7 @@ import { TrainerRatingBadge } from '@/components/TrainerRatingBadge';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { Game } from '@/types';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
+import { getGameCardMyParticipationBadge } from '@/utils/gameCardMyParticipationBadge';
 import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
@@ -101,7 +102,7 @@ export const GameCard = ({
   const participation = getGameParticipationState(participants, effectiveUser?.id, game);
   const isParticipant = participation.isPlaying;
   const isUserParticipant = participation.isParticipant;
-  const isGuest = participation.isGuest || (!participation.isPlaying && !participation.isAdminOrOwner);
+  const myParticipationBadge = getGameCardMyParticipationBadge(participants, effectiveUser?.id);
   const isLeagueSeasonGame = game.entityType === 'LEAGUE_SEASON';
   const shouldShowTiming = !isLeagueSeasonGame;
   const displaySettings = effectiveUser ? resolveDisplaySettings(effectiveUser) : resolveDisplaySettings(null);
@@ -129,9 +130,8 @@ export const GameCard = ({
   const hasOtherTags = (game.photosCount ?? 0) > 0 ||
     !game.isPublic ||
     (game.genderTeams && game.genderTeams !== 'ANY') ||
-    participants.some(p => p.userId === effectiveUser?.id && ['OWNER', 'ADMIN'].includes(p.role)) ||
+    myParticipationBadge != null ||
     game.entityType !== 'GAME' ||
-    isGuest ||
     !game.affectsRating ||
     game.hasFixedTeams ||
     ((game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && game.resultsStatus === 'FINAL');
@@ -443,11 +443,39 @@ export const GameCard = ({
               )}
             </div>
           )}
-          {participants.some(
-            (p) => p.userId === effectiveUser?.id && ['OWNER', 'ADMIN'].includes(p.role)
-          ) && (
+          {myParticipationBadge === 'owner' && (
             <span className="px-2 py-1 text-xs font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
               {t('games.owner')}
+            </span>
+          )}
+          {myParticipationBadge === 'admin' && (
+            <span className="px-2 py-1 text-xs font-medium rounded bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400">
+              {t('games.admin')}
+            </span>
+          )}
+          {myParticipationBadge === 'guest' && (
+            <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+              {t('games.statusGuest')}
+            </span>
+          )}
+          {myParticipationBadge === 'invited' && (
+            <span className="px-2 py-1 text-xs font-medium rounded bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+              {t('games.statusInvited')}
+            </span>
+          )}
+          {myParticipationBadge === 'in_queue' && (
+            <span className="px-2 py-1 text-xs font-medium rounded bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400">
+              {t('games.statusInQueue')}
+            </span>
+          )}
+          {myParticipationBadge === 'playing' && (
+            <span className="px-2 py-1 text-xs font-medium rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
+              {t('games.statusPlaying')}
+            </span>
+          )}
+          {myParticipationBadge === 'non_playing' && (
+            <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
+              {t('games.statusNonPlaying')}
             </span>
           )}
           {game.entityType !== 'GAME' && !bookmarkInTitleRow && (
@@ -457,11 +485,6 @@ export const GameCard = ({
               {game.entityType === 'TRAINING' && <Dumbbell size={12} />}
               {game.entityType === 'BAR' && <Beer size={12} />}
               {t(`games.entityTypes.${game.entityType}`)}
-            </span>
-          )}
-          {isGuest && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-              {t('chat.guest')}
             </span>
           )}
           {!game.affectsRating && (

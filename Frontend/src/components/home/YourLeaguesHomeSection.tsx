@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Trophy } from 'lucide-react';
 import { Card } from '@/components';
 import type { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
@@ -81,8 +81,15 @@ export function YourLeaguesHomeSection({
         aria-expanded={expanded}
       >
         <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Trophy
+            size={18}
+            strokeWidth={2}
+            className="shrink-0 text-gray-500 dark:text-gray-400"
+            fill="none"
+            aria-hidden
+          />
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            {t('home.yourLeagues', { defaultValue: 'Your leagues' })}
+            {t('home.yourLeagues', { defaultValue: 'Leagues' })}
           </p>
           <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gray-900/5 px-1.5 text-[10px] font-semibold tabular-nums text-gray-600 dark:bg-white/10 dark:text-gray-300">
             {hubs.length}

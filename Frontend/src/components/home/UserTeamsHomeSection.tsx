@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, Loader2, Plus, X } from 'lucide-react';
-import { ConfirmationModal, TeamAvatar } from '@/components';
+import { ChevronDown, Loader2, Plus, Users, X } from 'lucide-react';
+import { Card, ConfirmationModal, TeamAvatar } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 import { userTeamsApi } from '@/api';
@@ -113,10 +113,10 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
   };
 
   return (
-    <section className={`overflow-hidden rounded-3xl px-3 py-2 ${className}`}>
+    <Card className={`mb-3 overflow-hidden py-3 ${className}`}>
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-2 rounded-2xl py-0.5 text-left transition-colors hover:bg-zinc-500/[0.06] active:bg-zinc-500/[0.08] dark:hover:bg-white/[0.05] dark:active:bg-white/[0.07]"
+        className="flex w-full items-center justify-between gap-2 px-1 text-left transition-colors hover:bg-gray-100/80 active:bg-gray-100 dark:hover:bg-gray-800/60 dark:active:bg-gray-800 rounded-lg py-1 -my-0.5"
         onClick={() =>
           setExpanded((v) => {
             const next = !v;
@@ -127,17 +127,24 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
         aria-expanded={expanded}
       >
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h3 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t('teams.title')}</h3>
+          <Users
+            size={18}
+            strokeWidth={2}
+            className="shrink-0 text-gray-500 dark:text-gray-400"
+            fill="none"
+            aria-hidden
+          />
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('teams.title')}</p>
           {!showSkeleton && totalTiles > 0 && (
-            <span className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-zinc-900/5 px-2 text-xs font-semibold tabular-nums text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
+            <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gray-900/5 px-1.5 text-[10px] font-semibold tabular-nums text-gray-600 dark:bg-white/10 dark:text-gray-300">
               {totalTiles}
             </span>
           )}
         </div>
         <ChevronDown
-          size={22}
+          size={20}
           strokeWidth={2}
-          className={`shrink-0 text-zinc-500 transition-transform duration-300 ease-out dark:text-zinc-400 ${expanded ? '' : '-rotate-90'}`}
+          className={`shrink-0 text-gray-500 transition-transform duration-300 ease-out motion-reduce:transition-none dark:text-gray-400 ${expanded ? '' : '-rotate-90'}`}
           aria-hidden
         />
       </button>
@@ -147,7 +154,8 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
         style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="px-1 pt-2">
+            <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto py-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               type="button"
               className="group flex min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start flex-col items-center gap-1.5 rounded-2xl border border-dashed border-zinc-300/90 bg-transparent py-2 text-center shadow-none transition-[transform,background-color,border-color] duration-200 hover:border-primary-400/70 hover:bg-primary-500/[0.04] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:hover:border-primary-500/50 dark:hover:bg-primary-400/[0.06]"
@@ -250,6 +258,7 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
                 </div>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
@@ -267,6 +276,6 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
           onConfirm={() => void handleConfirmDeleteTeam()}
         />
       )}
-    </section>
+    </Card>
   );
 }

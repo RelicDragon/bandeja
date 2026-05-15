@@ -36,14 +36,18 @@ export const MyGamesSection = ({
           {[0, 1, 2].map((skeletonIndex) => {
             const state = skeletonStates[skeletonIndex];
             if (state === 'hidden') return null;
-            
+
             return (
-              <Card 
-                key={skeletonIndex} 
+              <Card
+                key={skeletonIndex}
                 className={`animate-pulse transition-all duration-300 ${
-                  state === 'fading-in' ? 'opacity-0 transform translate-y-2' : 
-                  state === 'visible' ? 'opacity-100 transform translate-y-0' : 
-                  state === 'fading-out' ? 'opacity-0 transform -translate-y-2' : 'opacity-0 transform translate-y-2'
+                  state === 'fading-in'
+                    ? 'opacity-0 transform translate-y-2'
+                    : state === 'visible'
+                      ? 'opacity-100 transform translate-y-0'
+                      : state === 'fading-out'
+                        ? 'opacity-0 transform -translate-y-2'
+                        : 'opacity-0 transform translate-y-2'
                 }`}
               >
                 <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded mb-3 w-1/3"></div>
@@ -64,7 +68,12 @@ export const MyGamesSection = ({
     if (upcomingGames && upcomingGames.length > 0) {
       return (
         <div className="pb-8">
-          <UpcomingGamesList games={upcomingGames} />
+          <UpcomingGamesList
+            games={upcomingGames}
+            user={user}
+            gamesUnreadCounts={gamesUnreadCounts}
+            onNoteSaved={onNoteSaved}
+          />
         </div>
       );
     }
@@ -72,9 +81,7 @@ export const MyGamesSection = ({
       return (
         <div className="pb-8">
           <Card className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {t('home.noGames')}
-            </p>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">{t('home.noGames')}</p>
             {onSwitchToSearch && (
               <Button
                 variant="primary"
@@ -126,10 +133,8 @@ export const MyGamesSection = ({
     <div>
       <div>
         <div className="space-y-4 pb-8">
-          {announcedOrStartedGames.map((game) => 
-            renderGame(game)
-          )}
-          
+          {announcedOrStartedGames.map((game) => renderGame(game))}
+
           {announcedOrStartedGames.length > 0 && finishedOrArchivedGames.length > 0 && (
             <div>
               <Divider className="-mt-4" />
@@ -141,13 +146,10 @@ export const MyGamesSection = ({
               </div>
             </div>
           )}
-          
-          {finishedOrArchivedGames.map((game) => 
-            renderGame(game)
-          )}
+
+          {finishedOrArchivedGames.map((game) => renderGame(game))}
         </div>
       </div>
     </div>
   );
 };
-

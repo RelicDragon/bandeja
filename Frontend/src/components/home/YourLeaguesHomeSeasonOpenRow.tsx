@@ -6,7 +6,6 @@ import {
   MapPin,
   MessageCircle,
   Plane,
-  Trophy,
   Users,
 } from 'lucide-react';
 import type { Game } from '@/types';
@@ -64,13 +63,11 @@ export function YourLeaguesHomeSeasonOpenRow({ hub, hubGame, unread }: YourLeagu
           <AlertTriangle size={16} strokeWidth={2.25} />
         </div>
       ) : (
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400">
-          {hub.avatarUrl ? (
+        hub.avatarUrl ? (
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-blue-50 dark:bg-blue-950/50">
             <img src={hub.avatarUrl} alt="" className="h-10 w-10 object-cover" />
-          ) : (
-            <Trophy size={20} strokeWidth={2} />
-          )}
-        </div>
+          </div>
+        ) : null
       )}
       <div className="min-w-0 flex-1">
         {stale ? (
