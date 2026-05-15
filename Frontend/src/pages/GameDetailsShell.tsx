@@ -91,7 +91,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride } = useNavigationStore();
+  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, setGameDetailsTableAddRound } = useNavigationStore();
 
   const [game, setGame] = useState<Game | null>(null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
@@ -1141,6 +1141,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   };
 
   const tableIsEditing = game ? (engineCanEdit && game.resultsStatus === 'IN_PROGRESS') : false;
+  const isTableViewActive = !!(game && effectiveTableView && canViewTournamentTableByAccess(game, user));
   const handleTableAddRound = useCallback(async () => {
     await GameResultsEngine.addRound();
     const rounds = useGameResultsStore.getState().rounds;
@@ -1156,6 +1157,12 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     },
     [t]
   );
+  useEffect(() => {
+    if (isTableViewActive) {
+      setGameDetailsTableAddRound(handleTableAddRound, tableIsEditing);
+    }
+    return () => setGameDetailsTableAddRound(null, false);
+  }, [isTableViewActive, tableIsEditing, handleTableAddRound, setGameDetailsTableAddRound]);
 
   if (loading) {
     return (

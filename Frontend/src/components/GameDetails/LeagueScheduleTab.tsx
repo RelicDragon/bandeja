@@ -345,7 +345,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const showMatrix =
     effectiveFixtureTableView && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'REGULAR';
   const matrixTeams = matrixGroupId ? standingsTeamsForGroup(matrixGroupId, standings) : [];
-  const showFixtureMatrixUi = showMatrix && Boolean(matrixGroupId);
 
   const fullRrHintKey =
     fullRrBlockReason === 'noGroups'
@@ -378,7 +377,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           </button>
         </Card>
       )}
-      {(canManageGroups || (canAddRound && !showFixtureMatrixUi)) && (
+      {(canManageGroups || canAddRound) && (
         <Card className="bg-gradient-to-r from-primary-50 to-primary-100/50 dark:from-primary-900/20 dark:to-primary-800/10 border-primary-200 dark:border-primary-800">
           <div className="flex flex-col gap-3 md:flex-row">
             {canManageGroups && (
@@ -391,7 +390,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
                 <span className="relative z-10">{t('gameDetails.manageGroups')}</span>
               </button>
             )}
-            {canAddRound && !showFixtureMatrixUi && (
+            {canAddRound && (
               <button
                 onClick={handleCreateRound}
                 disabled={isCreating}
@@ -489,29 +488,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
       )}
       {showMatrix && matrixGroupId ? (
         <div className="space-y-2">
-          {canAddRound && (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleCreateRound}
-                disabled={isCreating}
-                className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-3 px-5 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm w-full sm:w-auto"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                {isCreating ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin relative z-10" />
-                    <span className="relative z-10">{t('common.loading')}</span>
-                  </>
-                ) : (
-                  <>
-                    <Calendar size={18} className="relative z-10" />
-                    <span className="relative z-10">{t('gameDetails.createRound')}</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
           {selectedGroupId === ALL_GROUP_ID && groups.length > 1 && (
             <p className="rounded-lg border border-gray-200/80 bg-gray-50/90 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-200">
               {t('gameDetails.fixtureMatrixAllGroupsNote', { groupName: matrixGroupName })}
