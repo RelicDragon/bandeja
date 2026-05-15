@@ -63,3 +63,19 @@ export async function issueLoginTokens(
   const { refreshToken, sessionId } = await createUserRefreshSession(jwtPayload.userId, req);
   return { token, refreshToken, currentSessionId: sessionId };
 }
+
+/**
+ * Admin HTML panel: always issue short-lived access JWTs (never legacy), so verify survives
+ * legacy JWT sunset even when REFRESH_TOKEN_ENABLED=false or X-Client-Version is absent.
+ */
+export async function issueAdminPanelLoginTokens(
+  jwtPayload: Omit<JwtPayload, 'typ' | 'jti' | 'iss' | 'aud' | 'ver'>,
+  req: Request
+): Promise<{ token: string; refreshToken?: string; currentSessionId?: string }> {
+  const token = generateShortAccessToken(jwtPayload);
+  if (!config.refreshTokenEnabled) {
+    return { token };
+  }
+  const { refreshToken, sessionId } = await createUserRefreshSession(jwtPayload.userId, req);
+  return { token, refreshToken, currentSessionId: sessionId };
+}

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -20,6 +21,8 @@ interface GameCardReactionsProps {
   reactions: ReactionRow[];
   currentUserId: string;
   onReactionsChange: (next: ReactionRow[]) => void;
+  className?: string;
+  pickerOpens?: 'above' | 'below';
 }
 
 export function GameCardReactions({
@@ -28,12 +31,48 @@ export function GameCardReactions({
   reactions,
   currentUserId,
   onReactionsChange,
+  className = '',
+  pickerOpens = 'above',
 }: GameCardReactionsProps) {
   const theme = useMemo(() => getGameCardReactionTheme(entityType), [entityType]);
   const { t } = useTranslation();
   const { getCurrentUserReaction, getReactionCounts } = useReactionSummary(reactions, currentUserId);
   const [pending, setPending] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [pickerLayout, setPickerLayout] = useState<{
+    top?: number;
+    bottom?: number;
+    right: number;
+  } | null>(null);
+
+  const updatePickerLayout = useCallback(() => {
+    if (!pickerOpen || !rootRef.current) {
+      setPickerLayout(null);
+      return;
+    }
+    const r = rootRef.current.getBoundingClientRect();
+    const right = window.innerWidth - r.right;
+    if (pickerOpens === 'below') {
+      setPickerLayout({ top: r.bottom + 8, right });
+    } else {
+      setPickerLayout({ bottom: window.innerHeight - r.top + 8, right });
+    }
+  }, [pickerOpen, pickerOpens]);
+
+  useLayoutEffect(() => {
+    if (!pickerOpen) {
+      setPickerLayout(null);
+      return;
+    }
+    updatePickerLayout();
+    window.addEventListener('resize', updatePickerLayout);
+    window.addEventListener('scroll', updatePickerLayout, true);
+    return () => {
+      window.removeEventListener('resize', updatePickerLayout);
+      window.removeEventListener('scroll', updatePickerLayout, true);
+    };
+  }, [pickerOpen, updatePickerLayout]);
 
   useEffect(() => {
     if (!pickerOpen) return;
@@ -161,14 +200,9 @@ export function GameCardReactions({
     </div>
   );
 
-  return (
-    <>
-      <div
-        className="absolute z-30 flex items-center gap-0.5 pointer-events-auto -bottom-3 right-2"
-        onClick={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        {pickerOpen && (
+  const pickerPortal =
+    pickerOpen && pickerLayout && typeof document !== 'undefined'
+      ? createPortal(
           <>
             <div
               role="presentation"
@@ -183,7 +217,12 @@ export function GameCardReactions({
               role="dialog"
               aria-modal="true"
               aria-label={t('chat.reactions.addReaction')}
-              className="absolute bottom-[calc(100%+8px)] right-0 z-[150] flex min-w-[220px] max-w-[min(92vw,288px)] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-600 dark:bg-gray-800"
+              className="fixed z-[150] flex min-w-[220px] max-w-[min(92vw,288px)] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-600 dark:bg-gray-800"
+              style={{
+                right: pickerLayout.right,
+                ...(pickerLayout.top !== undefined ? { top: pickerLayout.top } : {}),
+                ...(pickerLayout.bottom !== undefined ? { bottom: pickerLayout.bottom } : {}),
+              }}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
             >
@@ -194,8 +233,20 @@ export function GameCardReactions({
                 disabled={pending}
               />
             </div>
-          </>
-        )}
+          </>,
+          document.body
+        )
+      : null;
+
+  return (
+    <>
+      {pickerPortal}
+      <div
+        ref={rootRef}
+        className={`relative z-30 flex items-center gap-0.5 pointer-events-auto ${className}`}
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
         {stripPanel}
       </div>
     </>

@@ -1,11 +1,6 @@
 import type { ScoringRules } from './rulebook';
 import type { SetResult } from './types';
-import {
-  computeMatchWinnerLiveScoring,
-  isMatchDecidedForLiveScoring,
-  getStandingsMatchOutcome,
-  isLiveMatchCompleteForScoring,
-} from './matchWinnerLive';
+import { computeMatchWinnerLiveScoring, getStandingsMatchOutcome } from './matchWinnerLive';
 
 export type MatchWinnerSide = 'A' | 'B' | null;
 

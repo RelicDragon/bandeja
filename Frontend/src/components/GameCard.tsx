@@ -141,7 +141,26 @@ export const GameCard = ({
     (game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name) ||
     game.name;
 
+  const isLeagueComplexHeader =
+    game.entityType === 'LEAGUE' &&
+    Boolean(game.leagueRound && game.parent?.leagueSeason?.league?.name);
+
+  const isLeagueSeasonHeader =
+    game.entityType === 'LEAGUE_SEASON' && Boolean(game.leagueSeason?.league?.name);
+
+  const isNonGameEntity = game.entityType !== 'GAME';
+
+  /** Title row shows `game.name`, game-type fallback, league headers, or bookmark+entity when non-GAME without name */
+  const bookmarkInTitleRow = isLeagueSeasonHeader
+    ? true
+    : isLeagueComplexHeader
+      ? isNonGameEntity
+      : Boolean(game.name) ||
+        (!game.name && game.gameType !== 'CLASSIC') ||
+        (!game.name && isNonGameEntity);
+
   const shouldMoveIconsToTitle = hasVisibleGameName && !hasOtherTags;
+
   const userCityId = effectiveUser?.currentCity?.id || effectiveUser?.currentCityId;
   const gameCityId = game.city?.id;
   const isDifferentCity = Boolean(gameCityId && userCityId && gameCityId !== userCityId);
@@ -178,6 +197,28 @@ export const GameCard = ({
     }
   };
 
+  const noteBookmarkButton =
+    !userNoteDisplay && effectiveUser ? (
+      <span
+        role="button"
+        tabIndex={0}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          setShowNoteModal(true);
+        }}
+        onPointerDown={(e) => {
+          e.stopPropagation();
+        }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+        }}
+        className="flex h-[18px] w-[18px] shrink-0 items-center justify-center p-0 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors cursor-pointer"
+      >
+        <Bookmark size={14} />
+      </span>
+    ) : null;
+
 
   const getDateLabelFallback = (date: Date | string, includeComma = true) => {
     const gameDate = typeof date === 'string' ? new Date(date) : date;
@@ -206,24 +247,43 @@ export const GameCard = ({
     }
   };
 
-  const getEntityIcon = () => {
-    if (game.entityType === 'GAME') return null;
-    
-    switch (game.entityType) {
-      case 'TOURNAMENT':
-        return <Swords size={40} className="text-red-500 dark:text-red-400 opacity-15 dark:opacity-15" />;
-      case 'LEAGUE':
-        return <Trophy size={40} className="text-blue-500 dark:text-blue-400 opacity-15 dark:opacity-15" />;
-      case 'LEAGUE_SEASON':
-        return <Trophy size={40} className="text-blue-500 dark:text-blue-400 opacity-15 dark:opacity-15" />;
-      case 'TRAINING':
-        return <Dumbbell size={48} className="text-green-500 dark:text-green-400 opacity-15 dark:opacity-15" />;
-      case 'BAR':
-        return <Beer size={40} className="text-yellow-500 dark:text-yellow-400 opacity-15 dark:opacity-15" />;
-      default:
-        return null;
-    }
-  };
+  const titleEntityInlineIcon =
+    bookmarkInTitleRow && isNonGameEntity ? (
+      game.entityType === 'TOURNAMENT' ? (
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-red-400/80 dark:border-red-500/70 bg-transparent"
+          aria-hidden
+        >
+          <Swords size={14} className="text-red-600 dark:text-red-400" />
+        </span>
+      ) : game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON' ? (
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-blue-400/80 dark:border-blue-500/70 bg-transparent"
+          aria-hidden
+        >
+          <Trophy size={14} className="text-blue-600 dark:text-blue-400" />
+        </span>
+      ) : game.entityType === 'TRAINING' ? (
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-green-400/80 dark:border-green-500/70 bg-transparent"
+          aria-hidden
+        >
+          <Dumbbell size={14} className="text-green-600 dark:text-green-400" />
+        </span>
+      ) : game.entityType === 'BAR' ? (
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-amber-400/80 dark:border-amber-500/70 bg-transparent"
+          aria-hidden
+        >
+          <Beer size={14} className="text-amber-700 dark:text-amber-400" />
+        </span>
+      ) : null
+    ) : null;
+
+  const showTitleLeadingCluster =
+    bookmarkInTitleRow ||
+    titleEntityInlineIcon != null ||
+    shouldMoveIconsToTitle;
 
   return (
     <>
@@ -233,11 +293,32 @@ export const GameCard = ({
         cursor-pointer relative pb-0 overflow-visible ${getGameCardEntityGradientClasses(game.entityType)}`}
       onClick={handleCardClick}
     >
-      {game.entityType !== 'GAME' && (
-        <div className="absolute top-10 right-2 z-0 pointer-events-none">
-          {getEntityIcon()}
-        </div>
-      )}
+      <div className="absolute top-2 right-2 z-20 flex flex-col items-end gap-1">
+        {effectiveUser?.id && (
+          <GameCardReactions
+            entityType={game.entityType}
+            gameId={game.id}
+            reactions={reactions}
+            currentUserId={effectiveUser.id}
+            onReactionsChange={setReactions}
+            pickerOpens="below"
+          />
+        )}
+        {canAccessChat && showChatIndicator && (
+          <button
+            type="button"
+            onClick={handleChatClick}
+            className="pl-1.5 pt-1 pr-2 pb-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+          >
+            <MessageCircle size={20} className="text-gray-600 dark:text-gray-400" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </button>
+        )}
+      </div>
       {/* Header - Always visible */}
       <div className="mb-3 relative z-10">
         {isDifferentCity && game.city?.name && (
@@ -247,23 +328,29 @@ export const GameCard = ({
           </div>
         )}
         <>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-20 flex items-center gap-2">
-              {shouldMoveIconsToTitle && (
-                <>
-                  {showFireIcon && <AnnouncedFireIcon />}
-                  {isUserParticipant && (
-                    <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white flex-shrink-0">
-                      <Star 
-                        size={12} 
-                        className="text-white"
-                        fill="currentColor"
-                      />
-                    </span>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-[5.5rem] sm:pr-24 flex flex-wrap items-center gap-2">
+              {showTitleLeadingCluster && (
+                <div className="flex shrink-0 items-center gap-1">
+                  {bookmarkInTitleRow && noteBookmarkButton}
+                  {titleEntityInlineIcon}
+                  {shouldMoveIconsToTitle && (
+                    <>
+                      {showFireIcon && <AnnouncedFireIcon />}
+                      {isUserParticipant && (
+                        <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white flex-shrink-0">
+                          <Star 
+                            size={12} 
+                            className="text-white"
+                            fill="currentColor"
+                          />
+                        </span>
+                      )}
+                      {!showFireIcon && <GameStatusIcon status={game.status} />}
+                    </>
                   )}
-                  {!showFireIcon && <GameStatusIcon status={game.status} />}
-                </>
+                </div>
               )}
-              <span>
+              <span className="min-w-0">
                 {game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name
                   ? (
                     <>
@@ -322,26 +409,7 @@ export const GameCard = ({
             </span>
           )}
           {!shouldMoveIconsToTitle && !showFireIcon && <GameStatusIcon status={game.status} />}
-          {!userNoteDisplay && effectiveUser && (
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setShowNoteModal(true);
-              }}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-              }}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-              }}
-              className="p-1 text-gray-400 dark:text-gray-500 flex items-center hover:text-gray-600 dark:hover:text-gray-400 transition-colors cursor-pointer"
-            >
-              <Bookmark size={16} />
-            </span>
-          )}
+          {!bookmarkInTitleRow && noteBookmarkButton}
           {(game.photosCount ?? 0) > 0 && (
             <button
               onClick={(e) => {
@@ -385,7 +453,7 @@ export const GameCard = ({
               {t('games.owner')}
             </span>
           )}
-          {game.entityType !== 'GAME' && (
+          {game.entityType !== 'GAME' && !bookmarkInTitleRow && (
             <span className="px-2 py-1 text-xs font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
               {game.entityType === 'TOURNAMENT' && <Swords size={12} />}
               {(game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && <Trophy size={12} />}
@@ -461,22 +529,6 @@ export const GameCard = ({
               </div>
             )}
           </>
-        <div className="absolute top-1 right-1 flex items-center gap-0 z-20">
-          {canAccessChat && showChatIndicator && (
-            <button
-              type="button"
-              onClick={handleChatClick}
-              className="pl-2 pt-2 pr-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
-            >
-              <MessageCircle size={20} className="text-gray-600 dark:text-gray-400" />
-              {unreadCount > 0 && (
-                <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </button>
-          )}
-        </div>
       </div>
 
       {/* Content */}
@@ -707,15 +759,6 @@ export const GameCard = ({
           </div>
         )}
       </div>
-      {effectiveUser?.id && (
-        <GameCardReactions
-          entityType={game.entityType}
-          gameId={game.id}
-          reactions={reactions}
-          currentUserId={effectiveUser.id}
-          onReactionsChange={setReactions}
-        />
-      )}
     </Card>
       {showNoteModal && effectiveUser && (
         <UserGameNoteModal

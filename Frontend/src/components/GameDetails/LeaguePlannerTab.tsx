@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { addDays, addWeeks, format, parseISO, startOfWeek } from 'date-fns';
 import toast from 'react-hot-toast';
-import { Calendar, CalendarDays, ChevronLeft, ChevronRight, Loader2, Pencil } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Loader2, User as UserIcon } from 'lucide-react';
 import { Card, PlayerAvatar, SegmentedSwitch, Select, type SegmentedSwitchTab } from '@/components';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { LeaguePlannerDetailSheet } from './LeaguePlannerDetailSheet';
@@ -119,7 +118,7 @@ function PlannerCellAvatarRow({
   );
 }
 
-type ScopeMode = 'all' | 'group' | 'pick';
+type ScopeMode = 'my' | 'all' | 'group' | 'pick';
 
 interface LeaguePlannerTabProps {
   leagueSeasonId: string;
@@ -135,16 +134,16 @@ function scopeStorageKey(leagueSeasonId: string) {
 function loadScope(leagueSeasonId: string): { mode: ScopeMode; pickValue: string } {
   try {
     const raw = localStorage.getItem(scopeStorageKey(leagueSeasonId));
-    if (!raw) return { mode: 'all', pickValue: '' };
+    if (!raw) return { mode: 'my', pickValue: '' };
     const j = JSON.parse(raw) as { mode?: ScopeMode; pickValue?: string };
-    if (j.mode === 'group' || j.mode === 'pick' || j.mode === 'all') {
+    if (j.mode === 'my' || j.mode === 'group' || j.mode === 'pick' || j.mode === 'all') {
       return { mode: j.mode, pickValue: typeof j.pickValue === 'string' ? j.pickValue : '' };
     }
-    if (j.mode === 'me') return { mode: 'all', pickValue: '' };
+    if (j.mode === 'me') return { mode: 'my', pickValue: '' };
   } catch {
     /* ignore */
   }
-  return { mode: 'all', pickValue: '' };
+  return { mode: 'my', pickValue: '' };
 }
 
 function saveScope(leagueSeasonId: string, mode: ScopeMode, pickValue: string) {
@@ -155,10 +154,32 @@ function saveScope(leagueSeasonId: string, mode: ScopeMode, pickValue: string) {
   }
 }
 
+function LeaguePlannerMyTabIcon({ size = 18, className = '' }: { size?: number; className?: string }) {
+  const user = useAuthStore((s) => s.user);
+  const dim = size ?? 18;
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-gray-300/90 dark:ring-gray-500 ${className}`}
+      style={{ width: dim, height: dim }}
+    >
+      {user ? (
+        <PlayerAvatar
+          player={user as BasicUser}
+          superTiny
+          showName={false}
+          subscribePresence={false}
+          asDiv
+          isCurrentUser
+        />
+      ) : (
+        <UserIcon className="h-[55%] w-[55%] text-gray-500 dark:text-gray-400" strokeWidth={2} aria-hidden />
+      )}
+    </span>
+  );
+}
+
 export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = true }: LeaguePlannerTabProps) => {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const location = useLocation();
   const dateFnsLocale = useMemo(() => getAppDateFnsLocale(i18n.language), [i18n.language]);
   const user = useAuthStore((s) => s.user);
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -170,11 +191,10 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   const [groups, setGroups] = useState<Array<{ id: string; name: string; color?: string }>>([]);
   const [hasGroups, setHasGroups] = useState(false);
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
-  const [scopeMode, setScopeMode] = useState<ScopeMode>('all');
-  const [pickValue, setPickValue] = useState('');
-  const [editMyAvailability, setEditMyAvailability] = useState(false);
+  const [scopeMode, setScopeMode] = useState<ScopeMode>(() => loadScope(leagueSeasonId).mode);
+  const [pickValue, setPickValue] = useState(() => loadScope(leagueSeasonId).pickValue);
   const [planner, setPlanner] = useState<LeaguePlannerPayload | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => loadScope(leagueSeasonId).mode !== 'my');
   const [sheet, setSheet] = useState<{
     day: LeaguePlannerDay;
     bucket: LeaguePlannerDay['buckets'][0];
@@ -184,6 +204,8 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   plannerRef.current = planner;
   const lastFetchedLeagueSeasonIdRef = useRef<string | null>(null);
   const plannerFetchSerialRef = useRef(0);
+
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const weekStartStr = useMemo(() => {
     const base = startOfWeek(new Date(), { weekStartsOn });
@@ -197,17 +219,20 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     return `${format(start, 'd MMM', { locale: dateFnsLocale })} – ${format(end, 'd MMM yyyy', { locale: dateFnsLocale })}`;
   }, [weekStartStr, dateFnsLocale]);
 
-  const goToMySchedule = useCallback(() => {
-    const sp = new URLSearchParams(location.search);
-    sp.set('tab', 'schedule');
-    sp.delete('scheduleView');
-    navigate({ pathname: location.pathname, search: sp.toString() }, { replace: true });
-  }, [location.pathname, location.search, navigate]);
+  const plannerVisibleDays = useMemo(() => {
+    if (!planner) return [];
+    return planner.days.filter((d) => d.date >= todayStr);
+  }, [planner, todayStr]);
+
+  useEffect(() => {
+    setWeekOffset((o) => Math.max(0, o));
+  }, [weekStartsOn]);
 
   useEffect(() => {
     const { mode, pickValue: pv } = loadScope(leagueSeasonId);
     setScopeMode(mode);
     setPickValue(pv);
+    setLoading(mode !== 'my');
   }, [leagueSeasonId]);
 
   useEffect(() => {
@@ -285,6 +310,10 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   }, [scopeMode, pickValue, hasFixedTeams, standings]);
 
   const fetchPlanner = useCallback(async () => {
+    if (scopeMode === 'my') {
+      setLoading(false);
+      return;
+    }
     if (!user?.id) {
       setPlanner(null);
       setLoading(false);
@@ -350,8 +379,14 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
 
   useEffect(() => {
     if (!isVisible) return;
+    if (scopeMode === 'my') {
+      plannerFetchSerialRef.current += 1;
+      setPlanner(null);
+      setLoading(false);
+      return;
+    }
     void fetchPlanner();
-  }, [isVisible, fetchPlanner]);
+  }, [isVisible, scopeMode, fetchPlanner]);
 
   const bucketBoundaries = useMemo(
     () => parseAvailabilityBucketBoundaries(user?.availabilityBucketBoundaries),
@@ -367,14 +402,6 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     },
     bucketBoundaries,
   });
-
-  const canEditGrid = Boolean(
-    user &&
-      scopeMode === 'pick' &&
-      ((!hasFixedTeams && pickValue === `user:${user.id}`) ||
-        (hasFixedTeams && pickValue.startsWith('team:') && Boolean(pickIntersectIds?.includes(user.id))))
-  );
-  const showEditor = canEditGrid && editMyAvailability;
 
   const pickOptions = useMemo(() => {
     const gFilter = scopeMode === 'group' ? selectedGroupId : ALL_GROUP_ID;
@@ -408,7 +435,15 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   }, [scopeMode, hasGroups, selectedGroupId, groups]);
 
   const scopeTabs = useMemo<SegmentedSwitchTab[]>(() => {
-    const tabs: SegmentedSwitchTab[] = [{ id: 'all', label: t('gameDetails.planner.scopeAll') }];
+    const tabs: SegmentedSwitchTab[] = [
+      {
+        id: 'my',
+        label: '',
+        icon: LeaguePlannerMyTabIcon,
+        ariaLabel: t('gameDetails.planner.scopeMy'),
+      },
+      { id: 'all', label: t('gameDetails.planner.scopeAll') },
+    ];
     if (hasGroups) tabs.push({ id: 'group', label: t('gameDetails.planner.scopeGroup') });
     tabs.push({
       id: 'pick',
@@ -476,11 +511,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     if (!ref.cell || ref.cell.day.date !== day.date || ref.cell.b.bucket !== b.bucket) return;
     const dt = Date.now() - ref.t;
     const moved = Math.abs(e.clientX - ref.x) > 12 || Math.abs(e.clientY - ref.y) > 12;
-    if (showEditor && !moved && dt < 480) {
-      editor.toggleBucketOn(day.weekdayKey as WeekdayKey, b.bucket);
-      return;
-    }
-    if (dt >= 480 || (!showEditor && !moved)) {
+    if (dt >= 480 || !moved) {
       openSheet(day, b);
     }
   };
@@ -492,8 +523,14 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     <div className="flex flex-wrap items-center gap-2">
       <button
         type="button"
-        onClick={() => setWeekOffset((o) => o - 1)}
-        className="rounded-xl border border-gray-200 bg-white p-2 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700"
+        disabled={weekOffset <= 0}
+        onClick={() => setWeekOffset((o) => Math.max(0, o - 1))}
+        className={[
+          'rounded-xl border border-gray-200 bg-white p-2 shadow-sm transition dark:border-gray-600 dark:bg-gray-800',
+          weekOffset <= 0
+            ? 'cursor-not-allowed opacity-40'
+            : 'hover:bg-gray-50 dark:hover:bg-gray-700',
+        ].join(' ')}
         aria-label={t('gameDetails.planner.prevWeek')}
       >
         <ChevronLeft className="h-5 w-5 text-gray-800 dark:text-gray-100" />
@@ -578,27 +615,16 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
         />
       )}
 
-      {canEditGrid && (
-        <div className="sticky top-[calc(env(safe-area-inset-top)+0.5rem)] z-20 flex justify-center lg:static">
-          <button
-            type="button"
-            onClick={() => setEditMyAvailability((v) => !v)}
-            className={[
-              'inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold shadow-lg transition',
-              editMyAvailability
-                ? 'bg-primary-600 text-white ring-2 ring-primary-300'
-                : 'border border-gray-200 bg-white text-gray-800 dark:border-gray-600 dark:bg-gray-800 dark:text-white',
-            ].join(' ')}
-          >
-            <Pencil className="h-4 w-4 shrink-0 text-current" />
-            {editMyAvailability ? t('gameDetails.planner.editingOn') : t('gameDetails.planner.editMyTime')}
-          </button>
-        </div>
+      {!loading && user && scopeMode === 'my' && (
+        <Card className="border-primary-200/80 dark:border-primary-900/40">
+          <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{t('gameDetails.planner.editorHint')}</p>
+          <AvailabilityMobileGrid editor={editor} boundaries={bucketBoundaries} />
+        </Card>
       )}
 
-      {user && loading && weekSelectorRow && <div className="py-3">{weekSelectorRow}</div>}
+      {user && loading && scopeMode !== 'my' && weekSelectorRow && <div className="py-3">{weekSelectorRow}</div>}
 
-      {loading && (
+      {loading && scopeMode !== 'my' && (
         <div className="flex justify-center py-16">
           <Loader2 className="h-10 w-10 animate-spin text-primary-600 dark:text-primary-400" />
         </div>
@@ -610,9 +636,9 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
         </Card>
       )}
 
-      {user && !loading && !planner && weekSelectorRow && <div className="py-3">{weekSelectorRow}</div>}
+      {user && !loading && !planner && scopeMode !== 'my' && weekSelectorRow && <div className="py-3">{weekSelectorRow}</div>}
 
-      {!loading && user && !planner && (
+      {!loading && user && !planner && scopeMode !== 'my' && (
         <Card className="flex flex-col items-center gap-3 border border-gray-200 dark:border-gray-700">
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">{t('gameDetails.planner.loadFailed')}</p>
           <button
@@ -625,24 +651,20 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
         </Card>
       )}
 
-      {!loading && planner && (
+      {!loading && planner && scopeMode !== 'my' && (
         <>
-          {showEditor && (
-            <Card className="border-primary-200/80 dark:border-primary-900/40">
-              <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{t('gameDetails.planner.editorHint')}</p>
-              <AvailabilityMobileGrid editor={editor} boundaries={bucketBoundaries} />
-            </Card>
-          )}
-
-          <div className="overflow-x-auto border-b border-gray-200 dark:border-gray-700">
-            <div className="border-b border-gray-200 p-2 dark:border-gray-700">{weekSelectorRow}</div>
-            <div className="p-2 pt-3">
-              <div
-                className="grid min-w-[720px] gap-1"
-                style={{ gridTemplateColumns: `auto repeat(${planner.days.length}, minmax(0,1fr))` }}
-              >
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <div className="flex justify-center border-b border-gray-200 p-2 dark:border-gray-700">
+              {weekSelectorRow}
+            </div>
+            <div className="overflow-x-auto">
+              <div className="p-2 pt-3">
+                <div
+                  className="grid min-w-[720px] gap-1"
+                  style={{ gridTemplateColumns: `auto repeat(${plannerVisibleDays.length}, minmax(0,1fr))` }}
+                >
                 <div />
-                {planner.days.map((d) => (
+                {plannerVisibleDays.map((d) => (
                   <div
                     key={d.date}
                     className={[
@@ -666,7 +688,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
                         );
                       })()}
                     </div>
-                    {planner.days.map((day) => {
+                    {plannerVisibleDays.map((day) => {
                       const b = day.buckets.find((x) => x.bucket === bid)!;
                       const schedSlot = isSchedulableSlot(day, b);
                       return (
@@ -684,7 +706,6 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
                               : schedSlot
                                 ? 'border-emerald-200/90 bg-emerald-50/95 hover:border-emerald-400/80 hover:shadow-md dark:border-emerald-800/70 dark:bg-emerald-950/45 dark:hover:border-emerald-600'
                                 : 'border-gray-200 bg-white hover:border-primary-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800/80 dark:hover:border-primary-700',
-                            showEditor ? 'cursor-cell' : '',
                           ].join(' ')}
                         >
                           {renderCellInner(day, b)}
@@ -693,22 +714,12 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
                     })}
                   </React.Fragment>
                 ))}
+                </div>
               </div>
             </div>
           </div>
         </>
       )}
-
-      <div className="flex justify-center px-2 pt-3">
-        <button
-          type="button"
-          onClick={goToMySchedule}
-          className="inline-flex w-full max-w-md items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 shadow-sm transition hover:border-primary-300 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-primary-600 dark:hover:bg-gray-700"
-        >
-          <CalendarDays className="h-4 w-4 shrink-0 text-primary-600 dark:text-primary-400" />
-          {t('gameDetails.planner.mySchedule')}
-        </button>
-      </div>
 
       {sheet && planner && (
         <LeaguePlannerDetailSheet

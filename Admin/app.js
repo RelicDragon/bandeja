@@ -1,5 +1,44 @@
 let API_URL = localStorage.getItem('apiUrl') || 'http://localhost:9000/api';
 let authToken = null;
+/** Refresh token for admin session (short access JWT after legacy sunset). */
+let adminRefreshToken = null;
+const ADMIN_CLIENT_VERSION = '99.0.0';
+
+function adminClientHeaders() {
+    return {
+        'X-Client-Version': ADMIN_CLIENT_VERSION,
+        'X-Client-Platform': 'web',
+    };
+}
+
+async function refreshAdminAccess() {
+    const rt = adminRefreshToken || localStorage.getItem('adminRefreshToken');
+    if (!rt) return false;
+    try {
+        const response = await fetch(`${API_URL}/auth/refresh`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...adminClientHeaders(),
+            },
+            credentials: 'include',
+            body: JSON.stringify({ refreshToken: rt }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.success || !data.data?.token) return false;
+        authToken = data.data.token;
+        localStorage.setItem('adminToken', authToken);
+        if (data.data.refreshToken) {
+            adminRefreshToken = data.data.refreshToken;
+            localStorage.setItem('adminRefreshToken', data.data.refreshToken);
+        }
+        return true;
+    } catch (e) {
+        console.error('Admin token refresh failed:', e);
+        return false;
+    }
+}
+
 let selectedCityId = '';
 let currentInvites = [];
 let usersDataTable = null;
@@ -48,9 +87,21 @@ function formatDate(dateString) {
     return new Date(dateString).toLocaleString();
 }
 
-async function apiRequest(endpoint, options = {}) {
+function clearAdminSessionToLogin(message) {
+    authToken = null;
+    adminRefreshToken = null;
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminRefreshToken');
+    localStorage.removeItem('adminData');
+    if (elements.dashboardPage) elements.dashboardPage.style.display = 'none';
+    if (elements.loginPage) elements.loginPage.style.display = 'flex';
+    if (message) showError(message);
+}
+
+async function apiRequest(endpoint, options = {}, isRetry = false) {
     const headers = {
         'Content-Type': 'application/json',
+        ...adminClientHeaders(),
         ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
         ...options.headers,
     };
@@ -58,12 +109,25 @@ async function apiRequest(endpoint, options = {}) {
     try {
         const response = await fetch(`${API_URL}${endpoint}`, {
             ...options,
+            credentials: 'include',
             headers,
         });
 
         const data = await response.json();
 
         if (!response.ok) {
+            if (data.code === 'auth.clientUpgradeRequired') {
+                clearAdminSessionToLogin('Please sign in again (security update).');
+            }
+            if (
+                !isRetry &&
+                response.status === 401 &&
+                data.code === 'auth.accessExpired' &&
+                (adminRefreshToken || localStorage.getItem('adminRefreshToken'))
+            ) {
+                const refreshed = await refreshAdminAccess();
+                if (refreshed) return apiRequest(endpoint, options, true);
+            }
             throw new Error(data.message || 'Request failed');
         }
 
@@ -78,8 +142,10 @@ window.apiMultipartRequest = async function apiMultipartRequest(endpoint, formDa
     const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
+            ...adminClientHeaders(),
             ...(authToken && { Authorization: `Bearer ${authToken}` }),
         },
+        credentials: 'include',
         body: formData,
     });
     const data = await response.json().catch(() => ({}));
@@ -107,6 +173,13 @@ elements.loginForm.addEventListener('submit', async (e) => {
         if (response.success) {
             authToken = response.data.token;
             localStorage.setItem('adminToken', authToken);
+            if (response.data.refreshToken) {
+                adminRefreshToken = response.data.refreshToken;
+                localStorage.setItem('adminRefreshToken', response.data.refreshToken);
+            } else {
+                adminRefreshToken = null;
+                localStorage.removeItem('adminRefreshToken');
+            }
             localStorage.setItem('adminData', JSON.stringify(response.data.user));
             showDashboard(response.data.user);
         }
@@ -115,9 +188,22 @@ elements.loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-elements.logoutBtn.addEventListener('click', () => {
+elements.logoutBtn.addEventListener('click', async () => {
+    const rt = adminRefreshToken || localStorage.getItem('adminRefreshToken');
+    if (rt) {
+        try {
+            await fetch(`${API_URL}/auth/logout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...adminClientHeaders() },
+                credentials: 'include',
+                body: JSON.stringify({ refreshToken: rt }),
+            });
+        } catch (_) { /* ignore */ }
+    }
     authToken = null;
+    adminRefreshToken = null;
     localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminRefreshToken');
     localStorage.removeItem('adminData');
     elements.loginPage.style.display = 'flex';
     elements.dashboardPage.style.display = 'none';
@@ -1377,6 +1463,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (savedToken && savedAdmin) {
         authToken = savedToken;
+        adminRefreshToken = localStorage.getItem('adminRefreshToken');
         showDashboard(JSON.parse(savedAdmin));
     }
 

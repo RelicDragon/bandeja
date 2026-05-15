@@ -1,10 +1,11 @@
+import type { Request } from 'express';
 import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
-import { generateToken } from '../../utils/jwt';
 import { comparePassword } from '../../utils/hash';
+import { issueAdminPanelLoginTokens, jwtPayloadFromAuthUser } from '../auth/authIssuance.service';
 
 export class AdminAuthService {
-  static async loginAdmin(phone: string, password: string) {
+  static async loginAdmin(phone: string, password: string, req: Request) {
     const user = await prisma.user.findUnique({
       where: { phone },
     });
@@ -23,7 +24,14 @@ export class AdminAuthService {
       throw new ApiError(403, 'Account is inactive');
     }
 
-    const token = generateToken({ userId: user.id, phone: user.phone!, isAdmin: true });
+    const issued = await issueAdminPanelLoginTokens(
+      jwtPayloadFromAuthUser({
+        id: user.id,
+        phone: user.phone,
+        isAdmin: user.isAdmin,
+      }),
+      req
+    );
 
     return {
       user: {
@@ -35,7 +43,9 @@ export class AdminAuthService {
         isAdmin: user.isAdmin,
         isTrainer: user.isTrainer,
       },
-      token,
+      token: issued.token,
+      refreshToken: issued.refreshToken,
+      currentSessionId: issued.currentSessionId,
     };
   }
 }

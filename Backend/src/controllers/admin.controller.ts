@@ -17,6 +17,7 @@ import { AdminMassNotificationService } from '../services/admin/massNotification
 import { ClubAdminAssignmentService } from '../services/admin/clubAdminAssignment.service';
 import { AdminTranslationQueueStatsService } from '../services/admin/translationQueueStats.service';
 import prisma from '../config/database';
+import { issuedRefreshJsonPayload } from '../utils/refreshWebCookie';
 
 // Auth endpoints
 export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
@@ -24,11 +25,18 @@ export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
   
   const { phone, password } = req.body;
 
-  const result = await AdminAuthService.loginAdmin(phone, password);
+  const result = await AdminAuthService.loginAdmin(phone, password, req);
 
   res.json({
     success: true,
-    data: result,
+    data: {
+      user: result.user,
+      token: result.token,
+      ...issuedRefreshJsonPayload(req, res, {
+        refreshToken: result.refreshToken,
+        currentSessionId: result.currentSessionId,
+      }),
+    },
   });
 });
 
