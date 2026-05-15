@@ -52,6 +52,8 @@ import { backButtonService } from './services/backButtonService';
 import { appLifecycleService } from './services/appLifecycle.service';
 import { ensureChatSyncWarmBootstrap, warmChatSyncHeads } from '@/services/chat/chatSyncBatchWarm';
 import { scheduleUnifiedChatOfflineFlush } from '@/services/chat/chatUnifiedOfflineFlush';
+import { initChatOutboxRetryListeners } from '@/services/chat/chatOutboxRetryListeners';
+import { scheduleRetryStuckChatOutbox } from '@/services/chat/chatOutboxRetry';
 import pushNotificationService from './services/pushNotificationService';
 import { navigationService } from './services/navigationService';
 import { markNavigation, setupPopstateFallback } from './utils/navigation';
@@ -135,12 +137,14 @@ function AppContent() {
   }, [location.pathname]);
 
   useEffect(() => {
+    initChatOutboxRetryListeners();
     const syncChatNet = () => {
       const online = useNetworkStore.getState().isOnline;
       refreshChatOfflineBanner();
       if (online && useAuthStore.getState().isAuthenticated) {
         void warmChatSyncHeads(undefined, { enrichFromUnread: true });
         scheduleUnifiedChatOfflineFlush();
+        scheduleRetryStuckChatOutbox();
       }
     };
     syncChatNet();

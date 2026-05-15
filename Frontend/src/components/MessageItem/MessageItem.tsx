@@ -17,6 +17,8 @@ import { parseContentWithMentionsAndUrls, formatMessageTime as formatMessageTime
 import { formatVoiceTranscriptionForDisplay, isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay';
 import { SystemMessageBlock } from './SystemMessageBlock';
 import { MessageBubble } from './MessageBubble';
+import { useOptimisticSendSlowHint } from './useOptimisticSendSlowHint';
+import { getMessageSendState } from '@/services/chat/messageSendState';
 import { PlayerAvatar } from '../PlayerAvatar';
 import { useMessageLongPress } from './useMessageLongPress';
 import { useMessageReactions } from './useMessageReactions';
@@ -62,10 +64,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
   const isOwnMessage = currentMessage.senderId === user?.id;
   const isSystemMessage = !currentMessage.senderId;
-  const isSending = (currentMessage as ChatMessageWithStatus)._status === 'SENDING';
-  const isFailed = (currentMessage as ChatMessageWithStatus)._status === 'FAILED';
-  const isOffline = isSending || isFailed;
-  const optimisticId = (currentMessage as ChatMessageWithStatus)._optimisticId;
+  const sendState = getMessageSendState(currentMessage as ChatMessageWithStatus);
+  const { isSending, isFailed, isOffline, optimisticId } = sendState;
+  const isSendingSlow = useOptimisticSendSlowHint(isSending, currentMessage.createdAt);
   const isMenuOpen = contextMenuState.isOpen && contextMenuState.messageId === currentMessage.id;
 
   const displaySettings = user ? resolveDisplaySettings(user) : null;
@@ -369,6 +370,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     currentUserId={user?.id}
                     onPollUpdated={onPollUpdated}
                     isSending={isSending}
+                    isSendingSlow={isSendingSlow}
                     isFailed={isFailed}
                     showFailedMenu={showFailedMenu}
                     setShowFailedMenu={setShowFailedMenu}

@@ -4,12 +4,29 @@ import { runWithProfileName } from '@/utils/runWithProfileName';
 import { mediaApi } from '@/api/media';
 import { uploadChatImageFileWithRetry } from '@/services/chat/chatImageUploadRetry';
 import { messageQueueStorage, QueuedMessage } from './chatMessageQueueStorage';
-import { withMessageCreateRetry } from '@/services/chat/chatHttpRetry';
 import { normalizeChatType } from '@/utils/chatType';
 import { loadOutboxImageBlobs, loadOutboxVoiceBlob } from '@/services/chat/chatOutboxMediaBlobs';
 import { logChatOutboxBlobMismatch } from '@/services/chat/chatDiagnostics';
-
-const SEND_ABSOLUTE_DEADLINE_MS = 900_000;
+import { waitForOutboxReady } from '@/services/chat/chatOutboxEnqueue';
+import {
+  OUTBOX_READY_WAIT_MS,
+  SEND_API_PHASE_MS,
+  SEND_UPLOAD_PHASE_MS,
+  armPhaseDeadline,
+  beginChatSend,
+  clearDeadlineTimer,
+  sealChatSendAttempt,
+  teardownChatSendAttempt,
+  invalidateChatSend,
+  invalidateChatSendsForContext,
+  isAbortError,
+  isActiveSendGeneration,
+  isSending,
+  runWithAbort,
+  throwIfAborted,
+} from '@/services/chat/chatSendCoordinator';
+import { recordChatSendMetric } from '@/services/chat/chatSendMetrics';
+import { waitForChatSendSocketAck } from '@/services/chat/chatSendSocketAck';
 
 function imageFileForBlob(blob: Blob, index: number): File {
   const t = (blob.type || '').toLowerCase();
@@ -22,20 +39,71 @@ function imageFileForBlob(blob: Blob, index: number): File {
   return new File([blob], name, { type: blob.type || 'image/jpeg' });
 }
 
-const timeouts = new Map<string, ReturnType<typeof setTimeout>>();
-const contextByTempId = new Map<string, string>();
-
-function contextKey(contextType: ChatContextType, contextId: string): string {
-  return `${contextType}:${contextId}`;
+function rowNeedsMediaUpload(row: QueuedMessage | undefined): boolean {
+  if (!row) return false;
+  return !!(row.hasPendingVoiceBlob || (row.pendingImageBlobCount ?? 0) > 0);
 }
 
-function clearDeadlineFor(tempId: string): void {
-  const t = timeouts.get(tempId);
-  if (t) {
-    clearTimeout(t);
-    timeouts.delete(tempId);
-    contextByTempId.delete(tempId);
+async function createMessageWithSocketAck(
+  request: CreateMessageRequest,
+  contextType: ChatContextType,
+  contextId: string,
+  clientMutationId: string | undefined,
+  signal: AbortSignal | undefined,
+  tempId: string
+): Promise<ChatMessage> {
+  const cid = clientMutationId?.trim();
+  if (!cid) {
+    return runWithAbort(signal, () => chatApi.createMessage(request, { signal }));
   }
+
+  const httpPromise = runWithAbort(signal, () => chatApi.createMessage(request, { signal }));
+  const ackPromise = waitForChatSendSocketAck({
+    contextType,
+    contextId,
+    clientMutationId: cid,
+    signal,
+    timeoutMs: SEND_API_PHASE_MS,
+  });
+
+  const [httpSettled, ackSettled] = await Promise.allSettled([httpPromise, ackPromise]);
+
+  if (ackSettled.status === 'fulfilled' && ackSettled.value) {
+    recordChatSendMetric({
+      kind: 'chat_send_socket_ack',
+      tempId,
+      contextType,
+      contextId,
+    });
+    return ackSettled.value;
+  }
+
+  if (httpSettled.status === 'fulfilled') return httpSettled.value;
+  throw httpSettled.status === 'rejected' ? httpSettled.reason : new Error('send_failed');
+}
+
+async function failSendAttempt(
+  tempId: string,
+  generation: number,
+  contextType: ChatContextType,
+  contextId: string,
+  onFailed: (tempId: string) => void,
+  reason: string
+): Promise<void> {
+  if (!isActiveSendGeneration(tempId, generation)) return;
+  teardownChatSendAttempt(tempId);
+  await messageQueueStorage.updateStatus(tempId, contextType, contextId, 'failed').catch((err) => {
+    console.error('[messageQueue] updateStatus', err);
+  });
+  recordChatSendMetric({
+    kind: 'chat_send_failed',
+    tempId,
+    contextType,
+    contextId,
+    reason,
+  });
+  onFailed(tempId);
+  sealChatSendAttempt(tempId);
 }
 
 export interface SendQueuedParams {
@@ -75,140 +143,200 @@ export function sendWithTimeout(
     return;
   }
 
-  clearDeadlineFor(tempId);
+  invalidateChatSend(tempId);
+  const { generation, signal } = beginChatSend(tempId, contextType, contextId);
+  const startedAt = Date.now();
 
-  const deadlineId = setTimeout(() => {
-    timeouts.delete(tempId);
-    contextByTempId.delete(tempId);
-    messageQueueStorage.updateStatus(tempId, contextType, contextId, 'failed').catch(err => { console.error('[messageQueue] updateStatus', err); });
-    onFailed(tempId);
-  }, SEND_ABSOLUTE_DEADLINE_MS);
-  timeouts.set(tempId, deadlineId);
-  contextByTempId.set(tempId, contextKey(contextType, contextId));
+  recordChatSendMetric({
+    kind: 'chat_send_started',
+    tempId,
+    contextType,
+    contextId,
+  });
 
   void (async () => {
-    let finalMedia = [...mediaUrls];
-    let finalThumb = [...thumbnailUrls];
-    const row = await messageQueueStorage.getByTempId(tempId);
-    const resolvedClientMutationId = clientMutationId ?? row?.clientMutationId;
+    try {
+      const outboxReady = await waitForOutboxReady(tempId, OUTBOX_READY_WAIT_MS);
+      throwIfAborted(signal);
+      if (!isActiveSendGeneration(tempId, generation)) return;
+      if (!outboxReady) {
+        await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'outbox_missing');
+        return;
+      }
 
-    if (row?.hasPendingVoiceBlob) {
-      const vb = await loadOutboxVoiceBlob(tempId);
-      if (!vb) {
-        logChatOutboxBlobMismatch('send', { tempId, contextType, contextId, kind: 'voice' });
-        clearDeadlineFor(tempId);
-        await messageQueueStorage.updateStatus(tempId, contextType, contextId, 'failed');
-        onFailed(tempId);
-        return;
+      let finalMedia = [...mediaUrls];
+      let finalThumb = [...thumbnailUrls];
+      const row = await messageQueueStorage.getByTempId(tempId);
+      throwIfAborted(signal);
+      if (!isActiveSendGeneration(tempId, generation)) return;
+
+      const hasMediaUpload = rowNeedsMediaUpload(row);
+      const resolvedClientMutationId = clientMutationId ?? row?.clientMutationId;
+
+      if (hasMediaUpload) {
+        armPhaseDeadline(tempId, generation, SEND_UPLOAD_PHASE_MS, () => {
+          void failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'upload_deadline');
+        });
       }
-      try {
-        const ext = vb.type.includes('mp4') ? 'm4a' : 'webm';
-        const uploaded = await mediaApi.uploadChatAudio(vb, `voice.${ext}`, contextId, contextType);
-        await messageQueueStorage.commitPendingVoiceUploaded(tempId, uploaded.audioUrl);
-        finalMedia = [uploaded.audioUrl];
-        finalThumb = [];
-      } catch {
-        clearDeadlineFor(tempId);
-        await messageQueueStorage.updateStatus(tempId, contextType, contextId, 'failed');
-        onFailed(tempId);
-        return;
+
+      if (row?.hasPendingVoiceBlob) {
+        const vb = await loadOutboxVoiceBlob(tempId);
+        throwIfAborted(signal);
+        if (!isActiveSendGeneration(tempId, generation)) return;
+        if (!vb) {
+          logChatOutboxBlobMismatch('send', { tempId, contextType, contextId, kind: 'voice' });
+          await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'voice_blob_missing');
+          return;
+        }
+        try {
+          const ext = vb.type.includes('mp4') ? 'm4a' : 'webm';
+          const uploaded = await runWithAbort(signal, () =>
+            mediaApi.uploadChatAudio(vb, `voice.${ext}`, contextId, contextType, { signal })
+          );
+          if (!isActiveSendGeneration(tempId, generation)) return;
+          await messageQueueStorage.commitPendingVoiceUploaded(tempId, uploaded.audioUrl);
+          finalMedia = [uploaded.audioUrl];
+          finalThumb = [];
+        } catch (e) {
+          if (isAbortError(e) || !isActiveSendGeneration(tempId, generation)) return;
+          await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'voice_upload_failed');
+          return;
+        }
+      } else {
+        const pendingImgCount = row?.pendingImageBlobCount ?? 0;
+        const imageBlobs =
+          pendingImgCount > 0 ? await loadOutboxImageBlobs(tempId, pendingImgCount) : [];
+        throwIfAborted(signal);
+        if (!isActiveSendGeneration(tempId, generation)) return;
+        if (pendingImgCount > 0 && imageBlobs.length !== pendingImgCount) {
+          logChatOutboxBlobMismatch('send', {
+            tempId,
+            contextType,
+            contextId,
+            expected: pendingImgCount,
+            got: imageBlobs.length,
+            kind: 'image',
+          });
+          await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'image_blob_missing');
+          return;
+        }
+        if (imageBlobs.length > 0) {
+          try {
+            const parts = await Promise.all(
+              imageBlobs.map((blob, i) =>
+                runWithAbort(signal, () =>
+                  uploadChatImageFileWithRetry(
+                    imageFileForBlob(blob, i),
+                    contextId,
+                    contextType,
+                    3,
+                    signal
+                  )
+                )
+              )
+            );
+            if (!isActiveSendGeneration(tempId, generation)) return;
+            finalMedia = parts.map((p) => p.originalUrl);
+            finalThumb = parts.map((p) => p.thumbnailUrl);
+            await messageQueueStorage.commitPendingImagesUploaded(tempId, finalMedia, finalThumb);
+          } catch (e) {
+            if (isAbortError(e) || !isActiveSendGeneration(tempId, generation)) return;
+            await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'image_upload_failed');
+            return;
+          }
+        } else if (finalMedia.length === 0 && row?.mediaUrls?.length) {
+          finalMedia = [...row.mediaUrls];
+          finalThumb = [...(row.thumbnailUrls ?? [])];
+        }
       }
-    } else {
-      const pendingImgCount = row?.pendingImageBlobCount ?? 0;
-      const imageBlobs =
-        pendingImgCount > 0 ? await loadOutboxImageBlobs(tempId, pendingImgCount) : [];
-      if (pendingImgCount > 0 && imageBlobs.length !== pendingImgCount) {
-        logChatOutboxBlobMismatch('send', {
+
+      if (!isActiveSendGeneration(tempId, generation)) return;
+
+      clearDeadlineTimer(tempId);
+      armPhaseDeadline(tempId, generation, SEND_API_PHASE_MS, () => {
+        recordChatSendMetric({
+          kind: 'chat_send_deadline',
           tempId,
           contextType,
           contextId,
-          expected: pendingImgCount,
-          got: imageBlobs.length,
-          kind: 'image',
+          phase: 'api',
+          durationMs: Date.now() - startedAt,
         });
-        clearDeadlineFor(tempId);
-        await messageQueueStorage.updateStatus(tempId, contextType, contextId, 'failed');
-        onFailed(tempId);
-        return;
-      }
-      if (imageBlobs.length > 0) {
-        try {
-          const parts = await Promise.all(
-            imageBlobs.map((blob, i) =>
-              uploadChatImageFileWithRetry(imageFileForBlob(blob, i), contextId, contextType)
-            )
-          );
-          finalMedia = parts.map((p) => p.originalUrl);
-          finalThumb = parts.map((p) => p.thumbnailUrl);
-          await messageQueueStorage.commitPendingImagesUploaded(tempId, finalMedia, finalThumb);
-        } catch {
-          clearDeadlineFor(tempId);
-          await messageQueueStorage.updateStatus(tempId, contextType, contextId, 'failed');
-          onFailed(tempId);
-          return;
-        }
-      } else if (finalMedia.length === 0 && row?.mediaUrls?.length) {
-        finalMedia = [...row.mediaUrls];
-        finalThumb = [...(row.thumbnailUrls ?? [])];
-      }
+        void failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'api_deadline');
+      });
+
+      await messageQueueStorage
+        .updateStatus(tempId, contextType, contextId, 'sending', finalMedia, finalThumb)
+        .catch((err) => console.error('[messageQueue] updateStatus', err));
+
+      const latest = await messageQueueStorage.getByTempId(tempId);
+      throwIfAborted(signal);
+      if (!isActiveSendGeneration(tempId, generation)) return;
+      const p = latest?.payload ?? payload;
+
+      const request: CreateMessageRequest = {
+        chatContextType: contextType,
+        contextId,
+        content: p.content || undefined,
+        mediaUrls: finalMedia.length > 0 ? finalMedia : [],
+        thumbnailUrls: finalThumb.length > 0 ? finalThumb : undefined,
+        replyToId: p.replyToId,
+        chatType: p.chatType ? normalizeChatType(p.chatType) : undefined,
+        mentionIds: p.mentionIds?.length ? p.mentionIds : undefined,
+        messageType: p.messageType,
+        audioDurationMs: p.audioDurationMs,
+        waveformData: p.waveformData,
+        ...(resolvedClientMutationId ? { clientMutationId: resolvedClientMutationId } : {}),
+      };
+
+      const created = await createMessageWithSocketAck(
+        request,
+        contextType,
+        contextId,
+        resolvedClientMutationId,
+        signal,
+        tempId
+      );
+      if (!isActiveSendGeneration(tempId, generation)) return;
+      sealChatSendAttempt(tempId);
+      recordChatSendMetric({
+        kind: 'chat_send_succeeded',
+        tempId,
+        contextType,
+        contextId,
+        hasMedia: hasMediaUpload,
+        durationMs: Date.now() - startedAt,
+      });
+      onSuccess?.(created);
+      void messageQueueStorage.remove(tempId, contextType, contextId).catch((err) => {
+        console.error('[messageQueue] remove after send success', err);
+      });
+    } catch (e) {
+      if (isAbortError(e) || !isActiveSendGeneration(tempId, generation)) return;
+      await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'send_error');
     }
-
-    await messageQueueStorage
-      .updateStatus(tempId, contextType, contextId, 'sending', finalMedia, finalThumb)
-      .catch((err) => console.error('[messageQueue] updateStatus', err));
-
-    const latest = await messageQueueStorage.getByTempId(tempId);
-    const p = latest?.payload ?? payload;
-
-    const request: CreateMessageRequest = {
-      chatContextType: contextType,
-      contextId,
-      content: p.content || undefined,
-      mediaUrls: finalMedia.length > 0 ? finalMedia : [],
-      thumbnailUrls: finalThumb.length > 0 ? finalThumb : undefined,
-      replyToId: p.replyToId,
-      chatType: p.chatType ? normalizeChatType(p.chatType) : undefined,
-      mentionIds: p.mentionIds?.length ? p.mentionIds : undefined,
-      messageType: p.messageType,
-      audioDurationMs: p.audioDurationMs,
-      waveformData: p.waveformData,
-      ...(resolvedClientMutationId ? { clientMutationId: resolvedClientMutationId } : {}),
-    };
-
-    withMessageCreateRetry(() => chatApi.createMessage(request)).then(
-      (created) => {
-        clearDeadlineFor(tempId);
-        onSuccess?.(created);
-        void messageQueueStorage.remove(tempId, contextType, contextId).catch((err) => {
-          console.error('[messageQueue] remove after send success', err);
-        });
-      },
-      () => {
-        clearDeadlineFor(tempId);
-        messageQueueStorage.updateStatus(tempId, contextType, contextId, 'failed').catch((err) => {
-          console.error('[messageQueue] updateStatus', err);
-        });
-        onFailed(tempId);
-      }
-    );
   })();
 }
 
-export function isSending(tempId: string): boolean {
-  return contextByTempId.has(tempId);
-}
+export { isSending };
 
 export function cancelSend(tempId: string): void {
-  clearDeadlineFor(tempId);
+  invalidateChatSend(tempId);
 }
 
 export function cancelAllForContext(contextType: ChatContextType, contextId: string): void {
-  const k = contextKey(contextType, contextId);
-  const toCancel = [...contextByTempId.entries()].filter(([, ctx]) => ctx === k).map(([tempId]) => tempId);
-  toCancel.forEach(clearDeadlineFor);
+  invalidateChatSendsForContext(contextType, contextId);
+  void messageQueueStorage.requeueSendingForContext(contextType, contextId).catch((err) => {
+    console.error('[messageQueue] requeueSendingForContext', err);
+  });
 }
 
-export async function resend(tempId: string, contextType: ChatContextType, contextId: string, callbacks: SendQueuedCallbacks): Promise<void> {
+export async function resend(
+  tempId: string,
+  contextType: ChatContextType,
+  contextId: string,
+  callbacks: SendQueuedCallbacks
+): Promise<void> {
   const list = await messageQueueStorage.getByContext(contextType, contextId);
   const item = list.find((m) => m.tempId === tempId);
   if (!item) return;

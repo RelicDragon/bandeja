@@ -5,6 +5,7 @@ import { sendWithTimeout, isSending, cancelSend } from '@/services/chatSendServi
 import { putLocalMessage } from './chatLocalApply';
 import { purgeExpiredFailedOutbox } from './chatOutboxExpiry';
 import { CHAT_OUTBOX_FAILED_EVENT, CHAT_OUTBOX_SUCCESS_EVENT } from './chatOutboxEvents';
+import { recordChatSendMetric } from './chatSendMetrics';
 
 export { CHAT_OUTBOX_FAILED_EVENT, CHAT_OUTBOX_SUCCESS_EVENT } from './chatOutboxEvents';
 
@@ -17,20 +18,35 @@ type OutboxSuccessDetail = {
 
 let scheduleTimer: ReturnType<typeof setTimeout> | null = null;
 
-export function scheduleRetryFailedChatOutbox(): void {
+export function scheduleRetryFailedChatOutbox(options?: RetryChatOutboxOptions): void {
   if (scheduleTimer) clearTimeout(scheduleTimer);
+  const opts = options;
   scheduleTimer = setTimeout(() => {
     scheduleTimer = null;
-    void retryFailedChatOutbox();
+    void retryFailedChatOutbox(opts);
   }, 450);
 }
 
-export async function retryFailedChatOutbox(): Promise<void> {
+/** Resume in-flight outbox rows without re-driving explicit user-visible failures. */
+export function scheduleRetryStuckChatOutbox(): void {
+  scheduleRetryFailedChatOutbox({ includeFailed: false });
+}
+
+export type RetryChatOutboxOptions = {
+  /** When false, only resume orphaned `sending` / `queued` rows (avoids tight loops on hard failures). */
+  includeFailed?: boolean;
+};
+
+export async function retryFailedChatOutbox(options?: RetryChatOutboxOptions): Promise<void> {
+  const includeFailed = options?.includeFailed ?? true;
+  recordChatSendMetric({ kind: 'chat_outbox_stuck_retry' });
   await purgeExpiredFailedOutbox();
   const rows = await chatLocalDb.outbox.toArray();
-  const resumable = rows.filter(
-    (r) => r.status === 'failed' || (r.status === 'sending' && !isSending(r.tempId))
-  );
+  const resumable = rows.filter((r) => {
+    if (isSending(r.tempId)) return false;
+    if (r.status === 'sending' || r.status === 'queued') return true;
+    return includeFailed && r.status === 'failed';
+  });
   for (const row of resumable) {
     if (isSending(row.tempId)) continue;
     await messageQueueStorage.updateStatus(row.tempId, row.contextType, row.contextId, 'queued');

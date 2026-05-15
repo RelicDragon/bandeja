@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test:live-scoring": "vitest run src/utils/liveScoring/core.test.ts",
     "test:game-invite": "vitest run src/utils/gameInviteParticipant.test.ts",
+    "test:chat-outbox": "vitest run src/services/chat/chatSendCoordinator.test.ts src/services/chat/chatOutboxEnqueue.test.ts src/services/chat/chatOutboxRetry.test.ts src/services/chat/messageSendState.test.ts src/services/chat/chatSendSocketAck.test.ts",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "increment-sw": "node scripts/increment-sw-version.js"
   },

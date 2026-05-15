@@ -321,14 +321,17 @@ export interface GetUserDraftsResponse {
 }
 
 export const chatApi = {
-  createMessage: async (data: CreateMessageRequest) => {
+  createMessage: async (data: CreateMessageRequest, options?: { signal?: AbortSignal }) => {
     const normalizedData = {
       ...data,
       chatType: data.chatType ? normalizeChatType(data.chatType) : data.chatType
     };
     return withMessageCreateRetry(() =>
       api
-        .post<ApiResponse<ChatMessage>>('/chat/messages', normalizedData, { timeout: 55_000 })
+        .post<ApiResponse<ChatMessage>>('/chat/messages', normalizedData, {
+          timeout: 55_000,
+          signal: options?.signal,
+        })
         .then((response) => response.data.data)
     );
   },

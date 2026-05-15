@@ -10,6 +10,7 @@ import { blockedUsersApi } from '@/api/blockedUsers';
 import { useHeaderStore } from '@/store/headerStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
+import { scheduleRetryStuckChatOutbox } from '@/services/chat/chatOutboxRetry';
 import { getAvailableGameChatTypes } from '@/utils/chatType';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
@@ -184,6 +185,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
             handleMarkFailed,
             onMessageCreated: (created) => handleNewMessageRef.current?.(created),
           });
+          scheduleRetryStuckChatOutbox();
         }
         if (!signal.aborted) hasLoadedRef.current = true;
 

@@ -297,6 +297,11 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       };
 
       const handleChatMessage = (data: ChatMessageData) => {
+        if (data.message) {
+          void import('@/services/chat/chatSendSocketAck').then((m) =>
+            m.deliverChatSendSocketAck(data.contextType, data.contextId, data.message)
+          );
+        }
         const rk = chatRoomKey(data.contextType, data.contextId);
         set((s) => {
           const roomQ = capQueue(

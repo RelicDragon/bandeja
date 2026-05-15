@@ -142,5 +142,16 @@ export const messageQueueStorage = {
     }
   },
 
+  async requeueSendingForContext(contextType: ChatContextType, contextId: string): Promise<string[]> {
+    const rows = await this.getByContext(contextType, contextId);
+    const requeued: string[] = [];
+    for (const row of rows) {
+      if (row.status !== 'sending') continue;
+      await this.updateStatus(row.tempId, contextType, contextId, 'queued');
+      requeued.push(row.tempId);
+    }
+    return requeued;
+  },
+
   clearCache(): void {},
 };

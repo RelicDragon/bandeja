@@ -20,6 +20,7 @@ import {
   CHAT_OUTBOX_SUCCESS_EVENT,
 } from '@/services/chat/chatOutboxEvents';
 import { revokeChatBlobUrls } from '@/utils/chatBlobUrls';
+import { persistOptimisticOutbox } from '@/services/chat/chatOutboxPersist';
 
 export interface UseGameChatOptimisticParams {
   id: string | undefined;
@@ -84,19 +85,17 @@ export function useGameChatOptimistic({
         messagesRef.current = next;
         return next;
       });
-      messageQueueStorage
-        .add({
-          tempId,
-          contextType,
-          contextId: id,
-          payload: persistPayload,
-          createdAt: optimistic.createdAt,
-          status: 'queued',
-          clientMutationId,
-          ...(pendingImageBlobs?.length ? { pendingImageBlobs } : {}),
-          ...(pendingVoiceBlob ? { pendingVoiceBlob } : {}),
-        })
-        .catch((err) => console.error('[messageQueue] add', err));
+      void persistOptimisticOutbox({
+        tempId,
+        contextType,
+        contextId: id,
+        payload: persistPayload,
+        createdAt: optimistic.createdAt,
+        status: 'queued',
+        clientMutationId,
+        ...(pendingImageBlobs?.length ? { pendingImageBlobs } : {}),
+        ...(pendingVoiceBlob ? { pendingVoiceBlob } : {}),
+      }).catch((err) => console.error('[messageQueue] add', err));
       requestAnimationFrame(() => scrollToBottom());
       return tempId;
     },
@@ -126,7 +125,8 @@ export function useGameChatOptimistic({
       thumbnailUrls?: string[];
     }) => {
       if (params.contextId !== id) return;
-      void messageQueueStorage.getByTempId(params.tempId).then((row) => {
+      void (async () => {
+        const row = await messageQueueStorage.getByTempId(params.tempId);
         sendWithTimeout(
           { ...params, clientMutationId: row?.clientMutationId },
           {
@@ -134,7 +134,7 @@ export function useGameChatOptimistic({
             onSuccess: (created) => handleNewMessageRef.current?.(created),
           }
         );
-      });
+      })();
     },
     [id, handleMarkFailed]
   );

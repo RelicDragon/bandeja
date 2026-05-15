@@ -195,6 +195,8 @@
     "sendFailed": "Failed to send message",
     "editMessageDeleted": "Message was deleted",
     "failedToSend": "Failed to send",
+    "sending": "Sending…",
+    "sendingSlow": "Taking longer than usual…",
     "resend": "Resend",
     "missingContextId": "Missing chat context",
     "photoPickFailed": "Failed to pick photos",

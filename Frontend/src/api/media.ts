@@ -98,7 +98,12 @@ export const mediaApi = {
     return response.data.data;
   },
 
-  uploadChatImage: async (imageFile: File, contextId: string, contextType?: 'GAME' | 'BUG' | 'USER' | 'GROUP'): Promise<ChatImageUploadResponse> => {
+  uploadChatImage: async (
+    imageFile: File,
+    contextId: string,
+    contextType?: 'GAME' | 'BUG' | 'USER' | 'GROUP',
+    options?: { signal?: AbortSignal }
+  ): Promise<ChatImageUploadResponse> => {
     const formData = new FormData();
     formData.append('image', imageFile);
     
@@ -116,12 +121,19 @@ export const mediaApi = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      signal: options?.signal,
     });
-    
+
     return response.data.data;
   },
 
-  uploadChatAudio: async (audioBlob: Blob, filename: string, contextId: string, contextType?: 'GAME' | 'BUG' | 'USER' | 'GROUP'): Promise<ChatAudioUploadResponse> => {
+  uploadChatAudio: async (
+    audioBlob: Blob,
+    filename: string,
+    contextId: string,
+    contextType?: 'GAME' | 'BUG' | 'USER' | 'GROUP',
+    options?: { signal?: AbortSignal }
+  ): Promise<ChatAudioUploadResponse> => {
     const formData = new FormData();
     formData.append('audio', audioBlob, filename);
     if (contextType === 'BUG') {
@@ -135,6 +147,7 @@ export const mediaApi = {
     }
     const response = await api.post<ApiResponse<ChatAudioUploadResponse>>('/media/upload/chat/audio', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      signal: options?.signal,
     });
     return response.data.data;
   },

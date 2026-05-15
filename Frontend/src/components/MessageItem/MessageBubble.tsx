@@ -27,6 +27,7 @@ interface MessageBubbleProps {
   currentUserId: string | undefined;
   onPollUpdated?: (messageId: string, updatedPoll: import('@/api/chat').Poll) => void;
   isSending: boolean;
+  isSendingSlow?: boolean;
   isFailed: boolean;
   showFailedMenu: boolean;
   setShowFailedMenu: (v: boolean | ((prev: boolean) => boolean)) => void;
@@ -57,6 +58,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   currentUserId,
   onPollUpdated,
   isSending,
+  isSendingSlow = false,
   isFailed,
   showFailedMenu,
   setShowFailedMenu,
@@ -191,7 +193,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {isOwnMessage && (
             <>
               {isSending ? (
-                <span className="inline-flex items-center gap-0.5" title="Sending..." style={mediaOnlyIconStyle}>
+                <span
+                  className="inline-flex items-center gap-0.5"
+                  title={
+                    isSendingSlow
+                      ? t('chat.sendingSlow', { defaultValue: 'Taking longer than usual…' })
+                      : t('chat.sending', { defaultValue: 'Sending…' })
+                  }
+                  style={mediaOnlyIconStyle}
+                >
                   <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-1" />
                   <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-2" />
                   <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-3" />
