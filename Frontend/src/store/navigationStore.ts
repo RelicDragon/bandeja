@@ -17,7 +17,7 @@ interface NavigationState {
   gameDetailsCanAccessChat: boolean;
   gameDetailsTableViewOverride: boolean | null;
   gameDetailsCanShowTableView: boolean;
-  leagueSeasonTableViewOverride: boolean | null;
+  leagueSeasonScheduleViewMode: 'my' | 'list' | 'table' | null;
   gameDetailsOccludesSideChat: boolean;
   gameDetailsTableAddRoundCallback: (() => void) | null;
   gameDetailsTableIsEditing: boolean;
@@ -52,7 +52,7 @@ interface NavigationState {
   setGameDetailsCanAccessChat: (canAccessChat: boolean) => void;
   setGameDetailsTableViewOverride: (override: boolean | null) => void;
   setGameDetailsCanShowTableView: (can: boolean) => void;
-  setLeagueSeasonTableViewOverride: (override: boolean | null) => void;
+  setLeagueSeasonScheduleViewMode: (mode: 'my' | 'list' | 'table' | null) => void;
   setGameDetailsOccludesSideChat: (occludes: boolean) => void;
   setBounceNotifications: (bounce: boolean) => void;
   setBugsButtonSlidingUp: (sliding: boolean) => void;
@@ -85,7 +85,7 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   gameDetailsCanAccessChat: false,
   gameDetailsTableViewOverride: null,
   gameDetailsCanShowTableView: false,
-  leagueSeasonTableViewOverride: null,
+  leagueSeasonScheduleViewMode: null,
   gameDetailsOccludesSideChat: false,
   gameDetailsTableAddRoundCallback: null,
   gameDetailsTableIsEditing: false,
@@ -129,7 +129,7 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setGameDetailsCanAccessChat: (canAccessChat) => set({ gameDetailsCanAccessChat: canAccessChat }),
   setGameDetailsTableViewOverride: (override) => set({ gameDetailsTableViewOverride: override }),
   setGameDetailsCanShowTableView: (can) => set({ gameDetailsCanShowTableView: can }),
-  setLeagueSeasonTableViewOverride: (override) => set({ leagueSeasonTableViewOverride: override }),
+  setLeagueSeasonScheduleViewMode: (mode) => set({ leagueSeasonScheduleViewMode: mode }),
   setGameDetailsOccludesSideChat: (occludes) => set({ gameDetailsOccludesSideChat: occludes }),
   setBounceNotifications: (bounce) => set({ bounceNotifications: bounce }),
   setBugsButtonSlidingUp: (sliding) => set({ bugsButtonSlidingUp: sliding }),

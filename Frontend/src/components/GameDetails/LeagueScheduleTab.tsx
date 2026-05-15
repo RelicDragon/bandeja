@@ -19,6 +19,8 @@ import { Game } from '@/types';
 import { LeagueRoundAccordion } from './LeagueRoundAccordion';
 import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
 import { setRoundTypeFilter, type RoundTypeFilterValue } from '@/utils/roundTypeFilterStorage';
+import { useAuthStore } from '@/store/authStore';
+import { LeagueScheduleMyGamesList } from './LeagueScheduleMyGamesList';
 
 interface LeagueScheduleTabProps {
   leagueSeasonId: string;
@@ -34,9 +36,9 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const leagueSeasonTableViewOverride = useNavigationStore((s) => s.leagueSeasonTableViewOverride);
-  const setLeagueSeasonTableViewOverride = useNavigationStore((s) => s.setLeagueSeasonTableViewOverride);
-  const effectiveFixtureTableView = leagueSeasonTableViewOverride === true;
+  const leagueSeasonScheduleViewMode = useNavigationStore((s) => s.leagueSeasonScheduleViewMode);
+  const setLeagueSeasonScheduleViewMode = useNavigationStore((s) => s.setLeagueSeasonScheduleViewMode);
+  const user = useAuthStore((s) => s.user);
   const [rounds, setRounds] = useState<LeagueRound[]>([]);
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
   const [fixtureSheet, setFixtureSheet] = useState<{
@@ -159,6 +161,18 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   }, [hasFixedTeams, groups, standings]);
 
   const fixtureTableEligible = fixtureTableReadiness.allGroupsValidTeams;
+  const canShowTableTab = hasFixedTeams && fixtureTableEligible && selectedRoundType === 'REGULAR';
+  const storedScheduleMode = leagueSeasonScheduleViewMode ?? 'my';
+  const resolvedScheduleView = useMemo(
+    () => (storedScheduleMode === 'table' && !canShowTableTab ? 'list' : storedScheduleMode),
+    [storedScheduleMode, canShowTableTab]
+  );
+
+  useEffect(() => {
+    if (leagueSeasonScheduleViewMode === 'table' && !canShowTableTab) {
+      setLeagueSeasonScheduleViewMode('list');
+    }
+  }, [leagueSeasonScheduleViewMode, canShowTableTab, setLeagueSeasonScheduleViewMode]);
 
   const fullRrBlockReason = useMemo(() => {
     if (!hasFixedTeams) return 'requiresFixed' as const;
@@ -343,7 +357,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     return Math.max(max, roundsInSingleRoundRobinCycle(n));
   }, 0);
   const showMatrix =
-    effectiveFixtureTableView && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'REGULAR';
+    resolvedScheduleView === 'table' && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'REGULAR';
   const matrixTeams = matrixGroupId ? standingsTeamsForGroup(matrixGroupId, standings) : [];
 
   const fullRrHintKey =
@@ -445,24 +459,25 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
         playoffLabel={t('gameDetails.roundTypePlayoff') || 'Play-off'}
         onSelect={setSelectedRoundType}
       />
-      {hasFixedTeams && fixtureTableEligible && selectedRoundType === 'REGULAR' && (
+      {filteredRounds.length > 0 && (
         <div className="flex justify-center w-full">
           <SegmentedSwitch
             tabs={[
+              { id: 'my', label: t('gameDetails.fixtureScheduleViewMy') },
               { id: 'list', label: t('gameDetails.fixtureMatrixViewList') },
-              { id: 'table', label: t('gameDetails.fixtureTableView') },
+              ...(canShowTableTab ? [{ id: 'table' as const, label: t('gameDetails.fixtureTableView') }] : []),
             ]}
-            activeId={effectiveFixtureTableView ? 'table' : 'list'}
+            activeId={resolvedScheduleView}
             onChange={(id) => {
-              const table = id === 'table';
-              setLeagueSeasonTableViewOverride(table ? true : null);
-              if (table) {
+              const next = id as 'my' | 'list' | 'table';
+              setLeagueSeasonScheduleViewMode(next);
+              if (next === 'table') {
                 const sp = new URLSearchParams(location.search);
                 sp.set('tab', 'schedule');
-                const next = sp.toString();
+                const nextSearch = sp.toString();
                 const cur = new URLSearchParams(location.search).toString();
-                if (next !== cur) {
-                  navigate({ pathname: location.pathname, search: next }, { replace: true });
+                if (nextSearch !== cur) {
+                  navigate({ pathname: location.pathname, search: nextSearch }, { replace: true });
                 }
               }
             }}
@@ -472,7 +487,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           />
         </div>
       )}
-      {effectiveFixtureTableView && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'PLAYOFF' && (
+      {leagueSeasonScheduleViewMode === 'table' && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'PLAYOFF' && (
         <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
           {t('gameDetails.fixtureTableModeRegularOnly')}
         </p>
@@ -516,6 +531,21 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
             )}
           </div>
         </Card>
+      ) : resolvedScheduleView === 'my' ? (
+        <LeagueScheduleMyGamesList
+          filteredRounds={filteredRounds}
+          selectedGroupId={selectedGroupId}
+          allGroupId={ALL_GROUP_ID}
+          userId={user?.id}
+          canEdit={canEdit}
+          selectedGameChatId={selectedGameChatId}
+          onChatGameSelect={onChatGameSelect}
+          onEditGame={handleEditGame}
+          onOpenGame={handleOpenGame}
+          onDeleteGame={handleDeleteGame}
+          onNoteSaved={fetchRounds}
+          t={t}
+        />
       ) : (
         <div className="space-y-0">
           {filteredRounds.map((round, roundIndex) => {

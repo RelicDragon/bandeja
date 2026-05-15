@@ -29,11 +29,11 @@ export const GameDetailsPage = () => {
   const setGameDetailsTableViewOverride = useNavigationStore((s) => s.setGameDetailsTableViewOverride);
   const setGameDetailsCanShowTableView = useNavigationStore((s) => s.setGameDetailsCanShowTableView);
   const gameDetailsCanShowTableView = useNavigationStore((s) => s.gameDetailsCanShowTableView);
-  const leagueSeasonTableViewOverride = useNavigationStore((s) => s.leagueSeasonTableViewOverride);
-  const setLeagueSeasonTableViewOverride = useNavigationStore((s) => s.setLeagueSeasonTableViewOverride);
+  const leagueSeasonScheduleViewMode = useNavigationStore((s) => s.leagueSeasonScheduleViewMode);
+  const setLeagueSeasonScheduleViewMode = useNavigationStore((s) => s.setLeagueSeasonScheduleViewMode);
   const setGameDetailsOccludesSideChat = useNavigationStore((s) => s.setGameDetailsOccludesSideChat);
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
-  const effectiveLeagueFixtureTableView = leagueSeasonTableViewOverride === true;
+  const effectiveLeagueFixtureTableView = leagueSeasonScheduleViewMode === 'table';
   const [layoutTableAvailable, setLayoutTableAvailable] = useState<boolean | null>(null);
   const [layoutCancelledInfo, setLayoutCancelledInfo] = useState<{
     entityType: string;
@@ -65,7 +65,7 @@ export const GameDetailsPage = () => {
 
   useEffect(() => {
     setGameDetailsTableViewOverride(null);
-    setLeagueSeasonTableViewOverride(null);
+    setLeagueSeasonScheduleViewMode(null);
     setGameDetailsCanShowTableView(false);
     setGameDetailsOccludesSideChat(false);
     setLayoutTableAvailable(null);
@@ -75,7 +75,7 @@ export const GameDetailsPage = () => {
   }, [
     id,
     setGameDetailsTableViewOverride,
-    setLeagueSeasonTableViewOverride,
+    setLeagueSeasonScheduleViewMode,
     setGameDetailsCanShowTableView,
     setGameDetailsOccludesSideChat,
   ]);
