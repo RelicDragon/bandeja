@@ -6,7 +6,14 @@ export type VersionCheckResult = {
   message?: string;
 };
 
-let cachedVersionRequirements: Map<string, any> = new Map();
+type CachedRequirement = {
+  minBuildNumber: number;
+  minVersion: string;
+  isBlocking: boolean;
+  message: string | null;
+};
+
+let cachedVersionRequirements: Map<string, CachedRequirement> = new Map();
 let lastCacheUpdate = 0;
 let cacheRefreshPromise: Promise<void> | null = null;
 const CACHE_TTL = 5 * 60 * 1000;

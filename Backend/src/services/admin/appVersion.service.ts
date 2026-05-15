@@ -23,13 +23,13 @@ export class AdminAppVersionService {
     isBlocking: boolean;
     message?: string;
   }) {
-    const normalizedPlatform = data.platform.toLowerCase();
+    const normalizedPlatform = data.platform?.toLowerCase?.() ?? '';
 
     if (normalizedPlatform !== 'ios' && normalizedPlatform !== 'android') {
       throw new ApiError(400, 'Platform must be either ios or android');
     }
 
-    if (data.minBuildNumber <= 0) {
+    if (!Number.isInteger(data.minBuildNumber) || data.minBuildNumber <= 0) {
       throw new ApiError(400, 'Build number must be greater than 0');
     }
 
@@ -60,7 +60,11 @@ export class AdminAppVersionService {
   }
 
   static async deleteVersionRequirement(platform: string) {
-    const normalizedPlatform = platform.toLowerCase();
+    const normalizedPlatform = platform?.toLowerCase?.() ?? '';
+
+    if (normalizedPlatform !== 'ios' && normalizedPlatform !== 'android') {
+      throw new ApiError(400, 'Platform must be either ios or android');
+    }
 
     const requirement = await prisma.appVersionRequirement.findUnique({
       where: { platform: normalizedPlatform },

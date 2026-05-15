@@ -685,11 +685,11 @@ export const createOrUpdateAppVersion = asyncHandler(async (req: AuthRequest, re
   const { platform, minBuildNumber, minVersion, isBlocking, message } = req.body;
 
   const version = await AdminAppVersionService.createOrUpdateVersionRequirement({
-    platform,
-    minBuildNumber,
-    minVersion,
-    isBlocking,
-    message,
+    platform: String(platform),
+    minBuildNumber: Number(minBuildNumber),
+    minVersion: String(minVersion),
+    isBlocking: Boolean(isBlocking),
+    message: message == null || message === '' ? undefined : String(message),
   });
 
   res.json({

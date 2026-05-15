@@ -74,7 +74,9 @@ export class AppVersionService {
 
       if (response.data.success) {
         const result = response.data.data;
-        this.setCachedCheck(result, appInfo.buildNumber);
+        if (result.status === 'ok') {
+          this.setCachedCheck(result, appInfo.buildNumber);
+        }
         return result;
       }
 

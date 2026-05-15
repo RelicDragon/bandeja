@@ -1,5 +1,7 @@
 import { Router } from 'express';
+import { body, param } from 'express-validator';
 import { requireAdmin } from '../middleware/auth';
+import { validate } from '../middleware/validate';
 import {
   loginAdmin,
   getStats,
@@ -98,8 +100,27 @@ router.get('/message-reports', requireAdmin, getAllMessageReports);
 router.patch('/message-reports/:reportId/status', requireAdmin, updateMessageReportStatus);
 
 router.get('/app-versions', requireAdmin, getAllAppVersions);
-router.post('/app-versions', requireAdmin, createOrUpdateAppVersion);
-router.delete('/app-versions/:platform', requireAdmin, deleteAppVersion);
+router.post(
+  '/app-versions',
+  requireAdmin,
+  validate([
+    body('platform').isIn(['ios', 'android', 'iOS', 'Android']).withMessage('Platform must be ios or android'),
+    body('minBuildNumber').isInt({ min: 1 }).withMessage('Build number must be a positive integer'),
+    body('minVersion')
+      .isString()
+      .matches(/^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$/)
+      .withMessage('Version must follow semantic versioning format (e.g., 1.2.3)'),
+    body('isBlocking').isBoolean().withMessage('isBlocking must be a boolean'),
+    body('message').optional({ nullable: true }).isString().isLength({ max: 500 }),
+  ]),
+  createOrUpdateAppVersion
+);
+router.delete(
+  '/app-versions/:platform',
+  requireAdmin,
+  validate([param('platform').isIn(['ios', 'android', 'iOS', 'Android'])]),
+  deleteAppVersion
+);
 
 router.get('/market-categories', requireAdmin, getMarketCategories);
 router.post('/market-categories', requireAdmin, createMarketCategory);
