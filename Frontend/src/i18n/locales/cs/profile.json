@@ -19,6 +19,7 @@
       },
       "copyTo": "Kopírovat do…",
       "copyToAll": "Všechny ostatní dny",
+      "copyToOtherWeeks": "Kopírovat do ostatních týdnů",
       "legend": {
         "available": "Dostupný",
         "unavailable": "Nedostupný"

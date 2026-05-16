@@ -19,6 +19,7 @@
       },
       "copyTo": "Copiar a…",
       "copyToAll": "Los demás días",
+      "copyToOtherWeeks": "Copiar a otras semanas",
       "legend": {
         "available": "Disponible",
         "unavailable": "No disponible"

@@ -108,6 +108,7 @@
       },
       "copyTo": "Копировать в…",
       "copyToAll": "Во все остальные дни",
+      "copyToOtherWeeks": "Копировать в другие недели",
       "legend": {
         "available": "Доступен",
         "unavailable": "Недоступен"

@@ -15,6 +15,7 @@ import {
   ensureNormalizedRollingDoc,
   effectiveSlotMask,
   setRollingSlot,
+  copyWeekMaskToOtherRollingSlots,
   weekRangeLabel,
   addDaysToYmd,
   isRollingDocDefault,
@@ -131,6 +132,12 @@ export function WeeklyAvailabilityPanel({
     }));
   }, [rollingDoc.anchor, i18n.language, t]);
 
+  const handleCopyToOtherWeeks = useCallback(async () => {
+    const next = copyWeekMaskToOtherRollingSlots(rollingDoc, selectedSlot, editor.value);
+    setRollingDoc(next);
+    await onChange(next);
+  }, [rollingDoc, selectedSlot, editor.value, onChange]);
+
   const hourPeriodTabs = useMemo<SegmentedSwitchTab[]>(
     () => [
       { id: 'period', label: t('profile.availability.segmentPeriod') },
@@ -182,7 +189,13 @@ export function WeeklyAvailabilityPanel({
       {weekSelector}
 
       {/* P3: summary scoped to the selected slot */}
-      {!editor.isDefault && !editor.isEmptyWeek && <AvailabilitySummary value={editor.value} />}
+      {!editor.isDefault && !editor.isEmptyWeek && (
+        <AvailabilitySummary
+          value={editor.value}
+          onCopyToOtherWeeks={handleCopyToOtherWeeks}
+          copyDisabled={editor.status === 'saving'}
+        />
+      )}
 
       <SegmentedSwitch
         tabs={hourPeriodTabs}

@@ -108,6 +108,7 @@
       },
       "copyTo": "Copy to…",
       "copyToAll": "All other days",
+      "copyToOtherWeeks": "Copy to other weeks",
       "legend": {
         "available": "Available",
         "unavailable": "Unavailable"

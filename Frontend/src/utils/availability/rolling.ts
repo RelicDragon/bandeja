@@ -158,6 +158,20 @@ export function setRollingSlot(
   return { ...doc, weeks };
 }
 
+/** Apply the same weekly mask to every rolling slot except the source (source unchanged). */
+export function copyWeekMaskToOtherRollingSlots(
+  doc: RollingWeeklyAvailabilityV2,
+  sourceSlot: 0 | 1 | 2,
+  mask: WeeklyAvailability
+): RollingWeeklyAvailabilityV2 {
+  let next = doc;
+  for (const i of [0, 1, 2] as const) {
+    if (i === sourceSlot) continue;
+    next = setRollingSlot(next, i, mask);
+  }
+  return next;
+}
+
 /** Days between two YYYY-MM-DD strings (positive = target is after start). */
 function daysBetweenYmd(startYmd: string, endYmd: string): number {
   return Math.round(

@@ -19,6 +19,7 @@
       },
       "copyTo": "Kopiraj u…",
       "copyToAll": "Sve ostale dane",
+      "copyToOtherWeeks": "Kopiraj u ostale nedelje",
       "legend": {
         "available": "Dostupan",
         "unavailable": "Nedostupan"
