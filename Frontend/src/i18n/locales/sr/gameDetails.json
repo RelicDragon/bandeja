@@ -310,6 +310,8 @@
     "fixtureFullRrDisabledMixedSizes": "Све групе морају имати исти број тимова",
     "fixtureFullRrDisabledExisting": "Прво обришите постојеће рунде регуларне сезоне",
     "fixtureMatrixAllGroupsNote": "Табела термина за групу „{{groupName}}“. Изаберите групу изнад да бисте променили.",
+    "scheduleGroupProgressAria": "{{name}}: {{finished}} од {{total}} одиграних утакмица",
+    "scheduleMyGroupProgressAria": "{{name}}: одиграли сте {{finished}} од {{total}} утакмица",
     "fixtureMultipleMatches": "+{{count}}",
     "planner": {
       "prevWeek": "Претходна недеља",

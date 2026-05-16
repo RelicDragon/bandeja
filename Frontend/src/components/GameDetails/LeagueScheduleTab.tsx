@@ -22,7 +22,9 @@ import { getRoundTypeFilter, setRoundTypeFilter, type RoundTypeFilterValue } fro
 import { canShowPlayoffRoundTypeFilter } from '@/utils/leagueScheduleRegularSeasonScope';
 import { useAuthStore } from '@/store/authStore';
 import { LeagueScheduleMyGamesList } from './LeagueScheduleMyGamesList';
+import { LeagueGroupScheduleProgress } from './LeagueGroupScheduleProgress';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
+import { leagueGroupGameProgressFromRounds, leagueGroupUserGameProgressFromRounds } from '@/utils/leagueGroupGameProgress';
 
 interface LeagueScheduleTabProps {
   leagueSeasonId: string;
@@ -204,6 +206,26 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     () => rounds.filter((r) => (r.roundType ?? 'REGULAR') === selectedRoundType),
     [rounds, selectedRoundType]
   );
+
+  const progressGroupIds = useMemo(() => {
+    if (selectedGroupId === ALL_GROUP_ID) return groups.map((g) => g.id);
+    return groups.filter((g) => g.id === selectedGroupId).map((g) => g.id);
+  }, [groups, selectedGroupId]);
+
+  const groupScheduleProgress = useMemo(
+    () => leagueGroupGameProgressFromRounds(filteredRounds, progressGroupIds),
+    [filteredRounds, progressGroupIds]
+  );
+
+  const myGroupScheduleProgress = useMemo(() => {
+    const uid = user?.id;
+    if (!uid || groups.length === 0) return [];
+    return leagueGroupUserGameProgressFromRounds(
+      filteredRounds,
+      groups.map((g) => g.id),
+      uid
+    );
+  }, [filteredRounds, groups, user?.id]);
 
   const showMyTab = useMemo(() => {
     const uid = user?.id;
@@ -549,6 +571,16 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
             className="w-fit"
           />
         </div>
+      )}
+      {groups.length > 0 && resolvedScheduleView === 'my' && user?.id && (
+        <LeagueGroupScheduleProgress
+          groups={groups}
+          progress={myGroupScheduleProgress}
+          ariaLabelKey="gameDetails.scheduleMyGroupProgressAria"
+        />
+      )}
+      {groups.length > 0 && resolvedScheduleView !== 'my' && (
+        <LeagueGroupScheduleProgress groups={displayedGroups} progress={groupScheduleProgress} />
       )}
       {groups.length > 0 && resolvedScheduleView !== 'my' && (
         <GroupFilterDropdown

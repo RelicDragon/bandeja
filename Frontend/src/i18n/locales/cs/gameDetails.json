@@ -316,6 +316,8 @@
     "fixtureFullRrDisabledMixedSizes": "Ve všech skupinách musí být stejný počet družstev",
     "fixtureFullRrDisabledExisting": "Nejprve smažte stávající kola základní části",
     "fixtureMatrixAllGroupsNote": "Rozpis zápasů pro skupinu „{{groupName}}“. Skupinu změníte výše.",
+    "scheduleGroupProgressAria": "{{name}}: {{finished}} z {{total}} odehraných zápasů",
+    "scheduleMyGroupProgressAria": "{{name}}: máte {{finished}} z {{total}} odehraných zápasů",
     "fixtureMultipleMatches": "+{{count}}",
     "planner": {
       "prevWeek": "Předchozí týden",

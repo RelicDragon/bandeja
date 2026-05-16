@@ -326,6 +326,8 @@
     "fixtureFullRrDisabledMixedSizes": "All groups must have the same number of teams",
     "fixtureFullRrDisabledExisting": "Delete existing regular season rounds first",
     "fixtureMatrixAllGroupsNote": "Showing the fixture table for '{{groupName}}'. Pick a group above to switch.",
+    "scheduleGroupProgressAria": "{{name}}: {{finished}} of {{total}} games finished",
+    "scheduleMyGroupProgressAria": "{{name}}: you finished {{finished}} of {{total}} games",
     "fixtureMultipleMatches": "+{{count}}",
     "planner": {
       "prevWeek": "Previous week",

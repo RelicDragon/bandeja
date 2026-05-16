@@ -304,6 +304,8 @@
     "fixtureFullRrDisabledMixedSizes": "Todos los grupos deben tener el mismo número de equipos",
     "fixtureFullRrDisabledExisting": "Elimina primero las jornadas de temporada regular existentes",
     "fixtureMatrixAllGroupsNote": "Mostrando la tabla de partidos de «{{groupName}}». Elige un grupo arriba para cambiar.",
+    "scheduleGroupProgressAria": "{{name}}: {{finished}} de {{total}} partidos jugados",
+    "scheduleMyGroupProgressAria": "{{name}}: has jugado {{finished}} de {{total}} partidos",
     "fixtureMultipleMatches": "+{{count}}",
     "planner": {
       "prevWeek": "Semana anterior",
