@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useRef, useState, useEffect, useMemo } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 import { Card } from '@/components';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { SplitViewLeftPanel, SplitViewRightPanel } from '@/components/SplitViewPanels';
@@ -22,6 +22,7 @@ type EntityRouteState =
 
 export const GameDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const { t } = useTranslation();
   const isDesktop = useDesktop();
   const isLandscape = useIsLandscape();
@@ -29,11 +30,12 @@ export const GameDetailsPage = () => {
   const setGameDetailsTableViewOverride = useNavigationStore((s) => s.setGameDetailsTableViewOverride);
   const setGameDetailsCanShowTableView = useNavigationStore((s) => s.setGameDetailsCanShowTableView);
   const gameDetailsCanShowTableView = useNavigationStore((s) => s.gameDetailsCanShowTableView);
-  const leagueSeasonScheduleViewMode = useNavigationStore((s) => s.leagueSeasonScheduleViewMode);
-  const setLeagueSeasonScheduleViewMode = useNavigationStore((s) => s.setLeagueSeasonScheduleViewMode);
   const setGameDetailsOccludesSideChat = useNavigationStore((s) => s.setGameDetailsOccludesSideChat);
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
-  const effectiveLeagueFixtureTableView = leagueSeasonScheduleViewMode === 'table';
+  const effectiveLeagueFixtureTableView = useMemo(() => {
+    const sp = new URLSearchParams(location.search);
+    return sp.get('tab') === 'schedule' && sp.get('subtab')?.trim().toLowerCase() === 'table';
+  }, [location.search]);
   const [layoutTableAvailable, setLayoutTableAvailable] = useState<boolean | null>(null);
   const [layoutCancelledInfo, setLayoutCancelledInfo] = useState<{
     entityType: string;
@@ -65,20 +67,13 @@ export const GameDetailsPage = () => {
 
   useEffect(() => {
     setGameDetailsTableViewOverride(null);
-    setLeagueSeasonScheduleViewMode(null);
     setGameDetailsCanShowTableView(false);
     setGameDetailsOccludesSideChat(false);
     setLayoutTableAvailable(null);
     setLayoutCancelledInfo(null);
     setSelectedGameChatId(null);
     setEntityRoute({ status: 'loading' });
-  }, [
-    id,
-    setGameDetailsTableViewOverride,
-    setLeagueSeasonScheduleViewMode,
-    setGameDetailsCanShowTableView,
-    setGameDetailsOccludesSideChat,
-  ]);
+  }, [id, setGameDetailsTableViewOverride, setGameDetailsCanShowTableView, setGameDetailsOccludesSideChat]);
 
   useEffect(() => {
     setGameDetailsOccludesSideChat(occludesSideChat);

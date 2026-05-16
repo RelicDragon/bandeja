@@ -637,6 +637,7 @@ export const ProfileContent = () => {
           onChange={(wa) => updateProfile({ weeklyAvailability: wa })}
           savedBucketBoundaries={user?.availabilityBucketBoundaries}
           onPersistBucketBoundaries={(b) => updateProfile({ availabilityBucketBoundaries: b })}
+          showScheduleVisibilitySelector
         />
 
         <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">

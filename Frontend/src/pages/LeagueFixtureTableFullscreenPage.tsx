@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import { Card } from '@/components';
@@ -14,6 +14,7 @@ import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 export const LeagueFixtureTableFullscreenPage = () => {
   const { id: leagueSeasonId = '' } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [gameMeta, setGameMeta] = useState<Game | null>(null);
@@ -31,10 +32,15 @@ export const LeagueFixtureTableFullscreenPage = () => {
   const goBack = useCallback(() => {
     if (window.history.length > 1) {
       navigate(-1);
-    } else {
-      navigate(`/games/${leagueSeasonId}?tab=schedule`, { replace: false });
+      return;
     }
-  }, [navigate, leagueSeasonId]);
+    const ret = (location.state as { scheduleReturnTo?: string } | null)?.scheduleReturnTo;
+    if (ret) {
+      navigate(ret, { replace: true });
+      return;
+    }
+    navigate(`/games/${leagueSeasonId}?tab=schedule&subtab=table`, { replace: false });
+  }, [navigate, leagueSeasonId, location.state]);
 
   useBackButtonHandler(
     useCallback(() => {

@@ -127,7 +127,10 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
       if (game?.entityType !== 'LEAGUE_SEASON') return;
       const sp = new URLSearchParams(location.search);
       sp.set('tab', tab);
-      if (tab !== 'schedule') sp.delete('scheduleView');
+      if (tab !== 'schedule') {
+        sp.delete('scheduleView');
+        sp.delete('subtab');
+      }
       const next = sp.toString();
       const cur = new URLSearchParams(location.search).toString();
       if (next === cur) return;

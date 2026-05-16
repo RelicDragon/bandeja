@@ -7,8 +7,8 @@ import { Calendar, ChevronLeft, ChevronRight, Loader2, User as UserIcon } from '
 import { Card, PlayerAvatar, SegmentedSwitch, Select, type SegmentedSwitchTab } from '@/components';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { LeaguePlannerDetailSheet } from './LeaguePlannerDetailSheet';
-import { AvailabilityMobileGrid } from '@/components/availability/AvailabilityMobileGrid';
 import { BUCKET_META } from '@/components/availability/bucketMeta';
+import { WeeklyAvailabilityPanel } from '@/components/availability';
 import {
   leaguesApi,
   type LeaguePlannerDay,
@@ -20,8 +20,6 @@ import {
 import { usersApi } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { useAvailabilityEditor } from '@/hooks/useAvailabilityEditor';
-import { parseAvailabilityBucketBoundaries } from '@/utils/availability';
 import { getShortDayLabel } from '@/utils/availability/format';
 import type { BasicUser, User, WeekdayKey } from '@/types';
 import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
@@ -132,21 +130,23 @@ function scopeStorageKey(leagueSeasonId: string) {
 }
 
 function loadScope(leagueSeasonId: string): { mode: ScopeMode; pickValue: string } {
+  let mode: ScopeMode = 'all';
   let pickValue = '';
   try {
     const raw = localStorage.getItem(scopeStorageKey(leagueSeasonId));
-    if (!raw) return { mode: 'my', pickValue: '' };
-    const j = JSON.parse(raw) as { pickValue?: string };
+    if (!raw) return { mode: 'all', pickValue: '' };
+    const j = JSON.parse(raw) as { mode?: string; pickValue?: string };
+    if (j.mode === 'my' || j.mode === 'all' || j.mode === 'group' || j.mode === 'pick') mode = j.mode;
     if (typeof j.pickValue === 'string') pickValue = j.pickValue;
   } catch {
     /* ignore */
   }
-  return { mode: 'my', pickValue };
+  return { mode, pickValue };
 }
 
-function saveScope(leagueSeasonId: string, _mode: ScopeMode, pickValue: string) {
+function saveScope(leagueSeasonId: string, mode: ScopeMode, pickValue: string) {
   try {
-    localStorage.setItem(scopeStorageKey(leagueSeasonId), JSON.stringify({ pickValue }));
+    localStorage.setItem(scopeStorageKey(leagueSeasonId), JSON.stringify({ mode, pickValue }));
   } catch {
     /* ignore */
   }
@@ -181,6 +181,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   const dateFnsLocale = useMemo(() => getAppDateFnsLocale(i18n.language), [i18n.language]);
   const user = useAuthStore((s) => s.user);
   const updateUser = useAuthStore((s) => s.updateUser);
+
   const display = useMemo(() => resolveDisplaySettings(user), [user]);
   const weekStartsOn = display.weekStart === 0 ? 0 : 1;
 
@@ -227,9 +228,9 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   }, [weekStartsOn]);
 
   useEffect(() => {
-    const { pickValue: pv } = loadScope(leagueSeasonId);
-    setScopeMode('my');
-    setPickValue(pv);
+    const sc = loadScope(leagueSeasonId);
+    setScopeMode(sc.mode);
+    setPickValue(sc.pickValue);
     setLoading(false);
   }, [leagueSeasonId]);
 
@@ -308,10 +309,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   }, [scopeMode, pickValue, hasFixedTeams, standings]);
 
   const fetchPlanner = useCallback(async () => {
-    if (scopeMode === 'my') {
-      setLoading(false);
-      return;
-    }
+    if (scopeMode === 'my') return;
     if (!user?.id) {
       setPlanner(null);
       setLoading(false);
@@ -385,21 +383,6 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     }
     void fetchPlanner();
   }, [isVisible, scopeMode, fetchPlanner]);
-
-  const bucketBoundaries = useMemo(
-    () => parseAvailabilityBucketBoundaries(user?.availabilityBucketBoundaries),
-    [user?.availabilityBucketBoundaries]
-  );
-
-  const editor = useAvailabilityEditor({
-    initial: user?.weeklyAvailability,
-    onCommit: async (wa) => {
-      const res = await usersApi.updateProfile({ weeklyAvailability: wa });
-      updateUser(res.data as User);
-      void fetchPlanner();
-    },
-    bucketBoundaries,
-  });
 
   const pickOptions = useMemo(() => {
     const gFilter = scopeMode === 'group' ? selectedGroupId : ALL_GROUP_ID;
@@ -615,8 +598,21 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
 
       {!loading && user && scopeMode === 'my' && (
         <Card className="border-primary-200/80 dark:border-primary-900/40">
-          <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{t('gameDetails.planner.editorHint')}</p>
-          <AvailabilityMobileGrid editor={editor} boundaries={bucketBoundaries} />
+          <WeeklyAvailabilityPanel
+            value={user.weeklyAvailability ?? null}
+            onChange={async (wa) => {
+              const res = await usersApi.updateProfile({ weeklyAvailability: wa });
+              updateUser(res.data as User);
+            }}
+            savedBucketBoundaries={user.availabilityBucketBoundaries}
+            onPersistBucketBoundaries={async (b) => {
+              const res = await usersApi.updateProfile({ availabilityBucketBoundaries: b });
+              updateUser(res.data as User);
+            }}
+            timeFormat={user.timeFormat}
+            hourPeriodLayoutId={`leaguePlannerAvailabilityHour-${leagueSeasonId}`}
+            showScheduleVisibilitySelector={false}
+          />
         </Card>
       )}
 
@@ -636,7 +632,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
 
       {user && !loading && !planner && scopeMode !== 'my' && weekSelectorRow && <div className="py-3">{weekSelectorRow}</div>}
 
-      {!loading && user && !planner && scopeMode !== 'my' && (
+      {user && !loading && !planner && scopeMode !== 'my' && (
         <Card className="flex flex-col items-center gap-3 border border-gray-200 dark:border-gray-700">
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">{t('gameDetails.planner.loadFailed')}</p>
           <button

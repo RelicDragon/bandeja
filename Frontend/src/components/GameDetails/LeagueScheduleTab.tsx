@@ -13,8 +13,8 @@ import { LeagueFixtureMatrix } from './LeagueFixtureMatrix';
 import { LeagueFixtureDetailSheet } from './LeagueFixtureDetailSheet';
 import { leaguesApi, LeagueRound, LeagueGroup, LeagueStanding } from '@/api/leagues';
 import { Loader2, Calendar, Users, Trophy, LayoutGrid, Maximize2 } from 'lucide-react';
-import { useNavigationStore } from '@/store/navigationStore';
 import { standingsTeamsForGroup, roundsInSingleRoundRobinCycle, type MatrixTeam } from '@/utils/leagueFixtureMatrix';
+import { repairLeagueScheduleSearchIfInvalid, resolveLeagueScheduleMode } from '@/utils/leagueScheduleSubtab';
 import { Game } from '@/types';
 import { LeagueRoundAccordion } from './LeagueRoundAccordion';
 import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
@@ -38,8 +38,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const leagueSeasonScheduleViewMode = useNavigationStore((s) => s.leagueSeasonScheduleViewMode);
-  const setLeagueSeasonScheduleViewMode = useNavigationStore((s) => s.setLeagueSeasonScheduleViewMode);
   const user = useAuthStore((s) => s.user);
   const [rounds, setRounds] = useState<LeagueRound[]>([]);
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
@@ -219,23 +217,19 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   }, [filteredRounds, user?.id]);
 
   const resolvedScheduleView = useMemo(() => {
-    let m: 'my' | 'list' | 'table' = leagueSeasonScheduleViewMode ?? (showMyTab ? 'my' : 'list');
-    if (m === 'my' && !showMyTab) m = 'list';
-    if (m === 'table' && !canShowTableTab) m = 'list';
-    return m;
-  }, [leagueSeasonScheduleViewMode, showMyTab, canShowTableTab]);
+    const sp = new URLSearchParams(location.search);
+    if (sp.get('tab') !== 'schedule') return showMyTab ? 'my' : 'list';
+    return resolveLeagueScheduleMode(sp.get('subtab'), showMyTab, canShowTableTab);
+  }, [location.search, showMyTab, canShowTableTab]);
 
   useEffect(() => {
-    if (leagueSeasonScheduleViewMode === 'table' && !canShowTableTab) {
-      setLeagueSeasonScheduleViewMode('list');
-    }
-  }, [leagueSeasonScheduleViewMode, canShowTableTab, setLeagueSeasonScheduleViewMode]);
-
-  useEffect(() => {
-    if (!showMyTab && leagueSeasonScheduleViewMode === 'my') {
-      setLeagueSeasonScheduleViewMode('list');
-    }
-  }, [showMyTab, leagueSeasonScheduleViewMode, setLeagueSeasonScheduleViewMode]);
+    if (loading) return;
+    const nextSearch = repairLeagueScheduleSearchIfInvalid(location.search, showMyTab, canShowTableTab);
+    if (!nextSearch) return;
+    const cur = new URLSearchParams(location.search).toString();
+    if (cur === nextSearch) return;
+    navigate({ pathname: location.pathname, search: nextSearch }, { replace: true });
+  }, [loading, location.pathname, location.search, navigate, showMyTab, canShowTableTab]);
 
   useLayoutEffect(() => {
     if (resolvedScheduleView !== 'table' || selectedGroupId !== ALL_GROUP_ID || groups.length === 0) return;
@@ -318,7 +312,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   };
 
   const handleOpenGame = (game: Game) => {
-    const sp = new URLSearchParams();
+    const sp = new URLSearchParams(location.search);
     sp.set('tab', 'schedule');
     navigate(`/games/${leagueSeasonId}?${sp.toString()}`, { replace: true });
     navigate(`/games/${game.id}`);
@@ -541,16 +535,14 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
             activeId={resolvedScheduleView}
             onChange={(id) => {
               const next = id as 'my' | 'list' | 'table';
-              setLeagueSeasonScheduleViewMode(next);
-              if (next === 'table') {
-                const sp = new URLSearchParams(location.search);
-                sp.set('tab', 'schedule');
-                const nextSearch = sp.toString();
-                const cur = new URLSearchParams(location.search).toString();
-                if (nextSearch !== cur) {
-                  navigate({ pathname: location.pathname, search: nextSearch }, { replace: true });
-                }
+              const sp = new URLSearchParams(location.search);
+              sp.set('tab', 'schedule');
+              if (next === 'my' && showMyTab) {
+                sp.delete('subtab');
+              } else {
+                sp.set('subtab', next);
               }
+              navigate({ pathname: location.pathname, search: sp.toString() }, { replace: false });
             }}
             showOnlyActiveTabText={false}
             layoutId={`leagueFixtureViewMode-${leagueSeasonId}`}
@@ -568,7 +560,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           showAllOption={resolvedScheduleView !== 'table'}
         />
       )}
-      {leagueSeasonScheduleViewMode === 'table' && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'PLAYOFF' && (
+      {resolvedScheduleView === 'table' && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'PLAYOFF' && (
         <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
           {t('gameDetails.fixtureTableModeRegularOnly')}
         </p>
@@ -584,9 +576,11 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
             <button
               type="button"
               onClick={() =>
-                navigate(`/games/${leagueSeasonId}/league-table?group=${encodeURIComponent(matrixGroupId)}`)
+                navigate(`/games/${leagueSeasonId}/league-table?group=${encodeURIComponent(matrixGroupId)}`, {
+                  state: { scheduleReturnTo: `${location.pathname}${location.search}` },
+                })
               }
-              className="absolute right-2 top-2 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-md ring-1 ring-gray-200/90 backdrop-blur-sm transition hover:bg-white dark:bg-gray-900/95 dark:text-gray-100 dark:ring-gray-700 dark:hover:bg-gray-900"
+              className="absolute right-0 -top-4 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-md ring-1 ring-gray-200/90 backdrop-blur-sm transition hover:bg-white dark:bg-gray-900/95 dark:text-gray-100 dark:ring-gray-700 dark:hover:bg-gray-900"
               aria-label={t('gameDetails.openFixtureTableFullscreen')}
             >
               <Maximize2 className="h-5 w-5" aria-hidden />

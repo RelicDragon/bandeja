@@ -74,6 +74,17 @@ export function buildBucketMasks(b: AvailabilityBucketBoundariesLike): Record<Bu
   };
 }
 
+const WEEKDAY_KEYS: WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+/** True when the user saved at least one available hour somewhere in the weekly grid. */
+export function weeklyAvailabilityHasConfiguredSlots(wa: WeeklyAvailabilityLike | null | undefined): boolean {
+  if (wa == null || typeof wa !== 'object' || Array.isArray(wa)) return false;
+  for (const k of WEEKDAY_KEYS) {
+    if (((wa[k] ?? 0) >>> 0) !== 0) return true;
+  }
+  return false;
+}
+
 export function bucketIsFullFor(
   wa: WeeklyAvailabilityLike,
   day: WeekdayKey,
@@ -96,14 +107,14 @@ export function bucketIsPartialFor(
   return m !== 0 && m !== mask;
 }
 
-/** Free / busy for aggregate cells; null = no weeklyAvailability (excluded from counts and fit). */
+/** Free / busy for aggregate cells; null = no saved weekly availability (excluded from counts and fit). */
 export function bucketAggregateState(
   wa: WeeklyAvailabilityLike | null | undefined,
   day: WeekdayKey,
   bucket: BucketId,
   boundaries: AvailabilityBucketBoundariesLike
 ): 'free' | 'busy' | null {
-  if (wa == null) return null;
+  if (wa == null || !weeklyAvailabilityHasConfiguredSlots(wa)) return null;
   if (bucketIsFullFor(wa, day, bucket, boundaries) || bucketIsPartialFor(wa, day, bucket, boundaries)) {
     return 'free';
   }
@@ -111,8 +122,7 @@ export function bucketAggregateState(
 }
 
 /**
- * Fixture fit: every member must have stated availability and overlap the bucket.
- * Null weeklyAvailability does not count as available for planning.
+ * Fixture fit: every member must overlap the bucket; users with no saved weekly slots are excluded.
  */
 export function userFitsBucket(
   wa: WeeklyAvailabilityLike | null | undefined,
@@ -120,7 +130,7 @@ export function userFitsBucket(
   bucket: BucketId,
   boundaries: AvailabilityBucketBoundariesLike
 ): boolean {
-  if (wa == null) return false;
+  if (wa == null || !weeklyAvailabilityHasConfiguredSlots(wa)) return false;
   const mask = buildBucketMasks(boundaries)[bucket];
   return (((wa[day] ?? 0) & mask) >>> 0) !== 0;
 }

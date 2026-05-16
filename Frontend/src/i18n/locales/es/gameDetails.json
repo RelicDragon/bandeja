@@ -328,7 +328,6 @@
       "legendMatch": "Encaja — anillo esmeralda: aquí puede encajar un partido regular sin programar (ambos lados libres, sin choques con otras reservas).",
       "editMyTime": "Editar mis horarios",
       "editingOn": "Editando…",
-      "editorHint": "Toca el periodo para alternar. Mantén pulsado o espera para ver detalles. Desplaza la página con normalidad: solo los toques cortos editan.",
       "peopleCountsFree": "{{count}} libres",
       "peopleCountsBusy": "{{count}} ocupados",
       "peopleCountsFreeBusy": "{{free}} libres · {{busy}} ocupados",

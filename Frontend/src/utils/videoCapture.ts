@@ -42,8 +42,8 @@ export function pickVideo(): Promise<VideoPickResult | null> {
 
     let resolved = false;
     let consumeStarted = false;
-    let pollId: ReturnType<typeof window.setInterval> | null = null;
-    let webCancelTimer: ReturnType<typeof window.setTimeout> | null = null;
+    let pollId: number | null = null;
+    let webCancelTimer: number | null = null;
 
     const cleanup = () => {
       setTimeout(() => {

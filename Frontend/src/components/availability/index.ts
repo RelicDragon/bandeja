@@ -1,4 +1,5 @@
 export * from './AvailabilitySection';
+export * from './WeeklyAvailabilityPanel';
 export * from './AvailabilityPeriodBoundaries';
 export * from './AvailabilityHeader';
 export * from './AvailabilityPresets';
