@@ -9,8 +9,6 @@ import { useDesktop } from '@/hooks/useDesktop';
 
 interface LeagueScheduleMyGamesListProps {
   filteredRounds: LeagueRound[];
-  selectedGroupId: string;
-  allGroupId: string;
   userId: string | undefined;
   canEdit: boolean;
   selectedGameChatId?: string | null;
@@ -24,8 +22,6 @@ interface LeagueScheduleMyGamesListProps {
 
 export function LeagueScheduleMyGamesList({
   filteredRounds,
-  selectedGroupId,
-  allGroupId,
   userId,
   canEdit,
   selectedGameChatId,
@@ -42,11 +38,7 @@ export function LeagueScheduleMyGamesList({
   const entries = useMemo(() => {
     const out: { round: LeagueRound; game: Game }[] = [];
     for (const round of filteredRounds) {
-      const games =
-        selectedGroupId === allGroupId
-          ? round.games
-          : round.games.filter((g) => g.leagueGroupId === selectedGroupId);
-      for (const game of games) {
+      for (const game of round.games) {
         if (userIsOnLeagueScheduleGame(game, userId)) {
           out.push({ round, game });
         }
@@ -58,7 +50,7 @@ export function LeagueScheduleMyGamesList({
       return a.game.startTime.localeCompare(b.game.startTime);
     });
     return out;
-  }, [filteredRounds, selectedGroupId, allGroupId, userId]);
+  }, [filteredRounds, userId]);
 
   useEffect(() => {
     if (entries.length === 0) {

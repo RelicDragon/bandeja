@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -18,9 +18,11 @@ import { standingsTeamsForGroup, roundsInSingleRoundRobinCycle, type MatrixTeam 
 import { Game } from '@/types';
 import { LeagueRoundAccordion } from './LeagueRoundAccordion';
 import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
-import { setRoundTypeFilter, type RoundTypeFilterValue } from '@/utils/roundTypeFilterStorage';
+import { getRoundTypeFilter, setRoundTypeFilter, type RoundTypeFilterValue } from '@/utils/roundTypeFilterStorage';
+import { canShowPlayoffRoundTypeFilter } from '@/utils/leagueScheduleRegularSeasonScope';
 import { useAuthStore } from '@/store/authStore';
 import { LeagueScheduleMyGamesList } from './LeagueScheduleMyGamesList';
+import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
 
 interface LeagueScheduleTabProps {
   leagueSeasonId: string;
@@ -75,9 +77,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     try {
       const response = await leaguesApi.getRounds(leagueSeasonId);
       setRounds(response.data);
-      setSelectedRoundType(
-        response.data.some((r) => (r.roundType ?? 'REGULAR') === 'PLAYOFF') ? 'PLAYOFF' : 'REGULAR'
-      );
       const lastRoundId = response.data[response.data.length - 1]?.id;
       
       setExpandedRoundId((prev) => {
@@ -126,12 +125,52 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const loadSavedFilter = async () => {
       const savedGroupId = await getGroupFilter(leagueSeasonId);
+      if (cancelled) return;
       if (savedGroupId) setSelectedGroupId(savedGroupId);
     };
     loadSavedFilter();
+    return () => {
+      cancelled = true;
+    };
   }, [leagueSeasonId]);
+
+  const showPlayoffRoundTypeSwitch = useMemo(
+    () => canShowPlayoffRoundTypeFilter(rounds, selectedGroupId, ALL_GROUP_ID),
+    [rounds, selectedGroupId]
+  );
+
+  const playoffRoundTypeRestoredRef = useRef<string | null>(null);
+  useEffect(() => {
+    playoffRoundTypeRestoredRef.current = null;
+  }, [leagueSeasonId]);
+
+  useEffect(() => {
+    if (!showPlayoffRoundTypeSwitch) {
+      playoffRoundTypeRestoredRef.current = null;
+      return;
+    }
+    const key = `${leagueSeasonId}:${selectedGroupId}`;
+    if (playoffRoundTypeRestoredRef.current === key) return;
+    playoffRoundTypeRestoredRef.current = key;
+    let cancelled = false;
+    void (async () => {
+      const saved = await getRoundTypeFilter(leagueSeasonId);
+      if (cancelled || saved !== 'PLAYOFF') return;
+      setSelectedRoundType('PLAYOFF');
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showPlayoffRoundTypeSwitch, leagueSeasonId, selectedGroupId]);
+
+  useEffect(() => {
+    if (!showPlayoffRoundTypeSwitch && selectedRoundType === 'PLAYOFF') {
+      setSelectedRoundType('REGULAR');
+    }
+  }, [showPlayoffRoundTypeSwitch, selectedRoundType]);
 
   useEffect(() => {
     setGroupFilter(leagueSeasonId, selectedGroupId);
@@ -162,17 +201,41 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
 
   const fixtureTableEligible = fixtureTableReadiness.allGroupsValidTeams;
   const canShowTableTab = hasFixedTeams && fixtureTableEligible && selectedRoundType === 'REGULAR';
-  const storedScheduleMode = leagueSeasonScheduleViewMode ?? 'my';
-  const resolvedScheduleView = useMemo(
-    () => (storedScheduleMode === 'table' && !canShowTableTab ? 'list' : storedScheduleMode),
-    [storedScheduleMode, canShowTableTab]
+
+  const filteredRounds = useMemo(
+    () => rounds.filter((r) => (r.roundType ?? 'REGULAR') === selectedRoundType),
+    [rounds, selectedRoundType]
   );
+
+  const showMyTab = useMemo(() => {
+    const uid = user?.id;
+    if (!uid) return false;
+    for (const round of filteredRounds) {
+      for (const game of round.games) {
+        if (userIsOnLeagueScheduleGame(game, uid)) return true;
+      }
+    }
+    return false;
+  }, [filteredRounds, user?.id]);
+
+  const resolvedScheduleView = useMemo(() => {
+    let m: 'my' | 'list' | 'table' = leagueSeasonScheduleViewMode ?? (showMyTab ? 'my' : 'list');
+    if (m === 'my' && !showMyTab) m = 'list';
+    if (m === 'table' && !canShowTableTab) m = 'list';
+    return m;
+  }, [leagueSeasonScheduleViewMode, showMyTab, canShowTableTab]);
 
   useEffect(() => {
     if (leagueSeasonScheduleViewMode === 'table' && !canShowTableTab) {
       setLeagueSeasonScheduleViewMode('list');
     }
   }, [leagueSeasonScheduleViewMode, canShowTableTab, setLeagueSeasonScheduleViewMode]);
+
+  useEffect(() => {
+    if (!showMyTab && leagueSeasonScheduleViewMode === 'my') {
+      setLeagueSeasonScheduleViewMode('list');
+    }
+  }, [showMyTab, leagueSeasonScheduleViewMode, setLeagueSeasonScheduleViewMode]);
 
   const fullRrBlockReason = useMemo(() => {
     if (!hasFixedTeams) return 'requiresFixed' as const;
@@ -351,7 +414,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   }
 
   const displayedGroups = selectedGroupId === ALL_GROUP_ID ? groups : groups.filter((group) => group.id === selectedGroupId);
-  const filteredRounds = rounds.filter((r) => (r.roundType ?? 'REGULAR') === selectedRoundType);
   const fullRrRoundCount = groups.reduce((max, g) => {
     const n = standingsTeamsForGroup(g.id, standings).length;
     return Math.max(max, roundsInSingleRoundRobinCycle(n));
@@ -453,17 +515,28 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           </div>
         </Card>
       )}
-      <RoundTypeFilterSwitch
-        value={selectedRoundType}
-        regularLabel={t('gameDetails.roundTypeRegular') || 'Regular season'}
-        playoffLabel={t('gameDetails.roundTypePlayoff') || 'Play-off'}
-        onSelect={setSelectedRoundType}
-      />
+      {groups.length > 0 && (
+        <GroupFilterDropdown
+          selectedGroupId={selectedGroupId}
+          groups={groups.map((g) => ({ id: g.id, name: g.name, color: g.color ?? undefined }))}
+          allGroupsLabel={t('gameDetails.allGroups') || 'All groups'}
+          onSelect={setSelectedGroupId}
+          allGroupId={ALL_GROUP_ID}
+        />
+      )}
+      {showPlayoffRoundTypeSwitch && (
+        <RoundTypeFilterSwitch
+          value={selectedRoundType}
+          regularLabel={t('gameDetails.roundTypeRegular') || 'Regular season'}
+          playoffLabel={t('gameDetails.roundTypePlayoff') || 'Play-off'}
+          onSelect={setSelectedRoundType}
+        />
+      )}
       {filteredRounds.length > 0 && (
         <div className="flex justify-center w-full">
           <SegmentedSwitch
             tabs={[
-              { id: 'my', label: t('gameDetails.fixtureScheduleViewMy') },
+              ...(showMyTab ? [{ id: 'my' as const, label: t('gameDetails.fixtureScheduleViewMy') }] : []),
               { id: 'list', label: t('gameDetails.fixtureMatrixViewList') },
               ...(canShowTableTab ? [{ id: 'table' as const, label: t('gameDetails.fixtureTableView') }] : []),
             ]}
@@ -491,15 +564,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
         <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
           {t('gameDetails.fixtureTableModeRegularOnly')}
         </p>
-      )}
-      {groups.length > 0 && (
-        <GroupFilterDropdown
-          selectedGroupId={selectedGroupId}
-          groups={groups.map((g) => ({ id: g.id, name: g.name, color: g.color ?? undefined }))}
-          allGroupsLabel={t('gameDetails.allGroups') || 'All groups'}
-          onSelect={setSelectedGroupId}
-          allGroupId={ALL_GROUP_ID}
-        />
       )}
       {showMatrix && matrixGroupId ? (
         <div className="space-y-2">
@@ -534,8 +598,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
       ) : resolvedScheduleView === 'my' ? (
         <LeagueScheduleMyGamesList
           filteredRounds={filteredRounds}
-          selectedGroupId={selectedGroupId}
-          allGroupId={ALL_GROUP_ID}
           userId={user?.id}
           canEdit={canEdit}
           selectedGameChatId={selectedGameChatId}
