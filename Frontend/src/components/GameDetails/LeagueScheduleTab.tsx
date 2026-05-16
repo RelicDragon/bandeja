@@ -207,14 +207,9 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     [rounds, selectedRoundType]
   );
 
-  const progressGroupIds = useMemo(() => {
-    if (selectedGroupId === ALL_GROUP_ID) return groups.map((g) => g.id);
-    return groups.filter((g) => g.id === selectedGroupId).map((g) => g.id);
-  }, [groups, selectedGroupId]);
-
   const groupScheduleProgress = useMemo(
-    () => leagueGroupGameProgressFromRounds(filteredRounds, progressGroupIds),
-    [filteredRounds, progressGroupIds]
+    () => leagueGroupGameProgressFromRounds(filteredRounds, groups.map((g) => g.id)),
+    [filteredRounds, groups]
   );
 
   const myGroupScheduleProgress = useMemo(() => {
@@ -579,8 +574,8 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           ariaLabelKey="gameDetails.scheduleMyGroupProgressAria"
         />
       )}
-      {groups.length > 0 && resolvedScheduleView !== 'my' && (
-        <LeagueGroupScheduleProgress groups={displayedGroups} progress={groupScheduleProgress} />
+      {groups.length > 0 && resolvedScheduleView === 'list' && (
+        <LeagueGroupScheduleProgress groups={groups} progress={groupScheduleProgress} />
       )}
       {groups.length > 0 && resolvedScheduleView !== 'my' && (
         <GroupFilterDropdown

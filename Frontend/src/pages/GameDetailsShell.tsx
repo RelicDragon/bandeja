@@ -63,6 +63,7 @@ import { mergeGameWithInviteDeletedPayload, isPendingGameInvite } from '@/utils/
 import { socketService } from '@/services/socketService';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { shouldSyncEngineGameFromShell } from '@/utils/mergeGameFormatForResults';
+import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
 
 type GameWithResults = Game & {
   rounds?: Round[];
@@ -177,19 +178,33 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     }
   }, [activeTab, hasFaqs]);
 
+  const isLeagueSeasonParticipant = useMemo(
+    () => game?.entityType === 'LEAGUE_SEASON' && !!user?.id && userIsOnLeagueScheduleGame(game, user.id),
+    [game, user?.id]
+  );
+
+  useEffect(() => {
+    if (activeTab === 'planner' && !isLeagueSeasonParticipant) {
+      setActiveTab('general');
+      persistLeagueSeasonTabRef.current('general');
+    }
+  }, [activeTab, isLeagueSeasonParticipant]);
+
   const leagueSeasonTabs = useMemo<SegmentedSwitchTab[]>(() => {
     if (game?.entityType !== 'LEAGUE_SEASON') return [];
     const tabs: SegmentedSwitchTab[] = [
       { id: 'general', label: t('gameDetails.general'), icon: LayoutDashboard },
       { id: 'schedule', label: t('gameDetails.schedule'), icon: CalendarDays },
-      { id: 'planner', label: t('gameDetails.plannerTab'), icon: LayoutGrid },
-      { id: 'standings', label: t('gameDetails.standings'), icon: Trophy },
     ];
+    if (isLeagueSeasonParticipant) {
+      tabs.push({ id: 'planner', label: t('gameDetails.plannerTab'), icon: LayoutGrid });
+    }
+    tabs.push({ id: 'standings', label: t('gameDetails.standings'), icon: Trophy });
     if (hasFaqs) {
       tabs.push({ id: 'faq', label: t('gameDetails.faq', { defaultValue: 'FAQ' }), icon: HelpCircle });
     }
     return tabs;
-  }, [game?.entityType, hasFaqs, t]);
+  }, [game?.entityType, hasFaqs, isLeagueSeasonParticipant, t]);
   const [editFormData, setEditFormData] = useState({
     clubId: '',
     courtId: '',
@@ -266,7 +281,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     const sp = new URLSearchParams(location.search);
     const tab = sp.get('tab');
     const scheduleView = sp.get('scheduleView');
-    if (tab === 'schedule' && scheduleView === 'planner') {
+    if (tab === 'schedule' && scheduleView === 'planner' && isLeagueSeasonParticipant) {
       const next = new URLSearchParams(location.search);
       next.set('tab', 'planner');
       next.delete('scheduleView');
@@ -274,10 +289,14 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
       setActiveTab('planner');
       return;
     }
+    if (tab === 'planner' && !isLeagueSeasonParticipant) {
+      setActiveTab('general');
+      return;
+    }
     if (tab === 'general' || tab === 'schedule' || tab === 'planner' || tab === 'standings' || tab === 'faq') {
       setActiveTab((prev) => (prev === tab ? prev : tab));
     }
-  }, [game?.entityType, id, location.pathname, location.search, navigate]);
+  }, [game?.entityType, id, isLeagueSeasonParticipant, location.pathname, location.search, navigate]);
 
   const lastInviteDeleted = useSocketEventsStore((state) => state.lastInviteDeleted);
   const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);
@@ -1656,7 +1675,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
       return <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} hasFixedTeams={game.hasFixedTeams || false} selectedGameChatId={selectedGameChatId} onChatGameSelect={onChatGameSelect} />;
     }
 
-    if (user && activeTab === 'planner') {
+    if (user && isLeagueSeasonParticipant && activeTab === 'planner') {
       return <LeaguePlannerTab leagueSeasonId={game.id} hasFixedTeams={game.hasFixedTeams || false} isVisible />;
     }
 
