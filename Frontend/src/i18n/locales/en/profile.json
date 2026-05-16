@@ -114,6 +114,10 @@
         "unavailable": "Unavailable"
       },
       "presets": {
+        "groupDays": "Days",
+        "groupTimes": "Times",
+        "hintFullWeek": "Tap a shortcut to narrow from 24/7. Your first choice replaces the full week.",
+        "hintToggle": "Tap to add. Tap again when highlighted to remove.",
         "weekdays": "Weekdays",
         "weekends": "Weekends",
         "mornings": "Mornings",

@@ -25,6 +25,10 @@
         "unavailable": "Nedostupan"
       },
       "presets": {
+        "groupDays": "Dani",
+        "groupTimes": "Vremena",
+        "hintFullWeek": "Dodirnite prečicu da suzite sa 24/7. Prvi izbor zamenjuje celu nedelju.",
+        "hintToggle": "Dodirnite da dodate. Ponovo dodirnite kada je istaknuto da uklonite.",
         "weekdays": "Radni dani",
         "weekends": "Vikend",
         "mornings": "Jutra",

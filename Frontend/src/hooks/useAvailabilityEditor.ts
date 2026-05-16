@@ -12,7 +12,7 @@ import {
   isFullWeek,
   isEmptyWeek,
 } from '@/utils/availability/bitmask';
-import { applyPreset, toggleBucket, type PresetId, type BucketId } from '@/utils/availability/presets';
+import { togglePreset, toggleBucket, type PresetId, type BucketId } from '@/utils/availability/presets';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -34,7 +34,7 @@ export interface UseAvailabilityEditorReturn {
   setDayMask: (day: WeekdayKey, mask: number) => void;
   setDayOn: (day: WeekdayKey, on: boolean) => void;
   toggleBucketOn: (day: WeekdayKey, bucket: BucketId) => void;
-  applyPresetById: (preset: PresetId, mode?: 'replace' | 'add' | 'remove') => void;
+  applyPresetById: (preset: PresetId) => void;
   copyDayTo: (from: WeekdayKey, to: WeekdayKey[]) => void;
 }
 
@@ -132,8 +132,7 @@ export const useAvailabilityEditor = ({
   );
 
   const applyPresetById = useCallback(
-    (preset: PresetId, mode: 'replace' | 'add' | 'remove' = 'replace') =>
-      mutate((prev) => applyPreset(prev, preset, bucketBoundaries, mode)),
+    (preset: PresetId) => mutate((prev) => togglePreset(prev, preset, bucketBoundaries)),
     [mutate, bucketBoundaries]
   );
 

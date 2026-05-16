@@ -25,6 +25,10 @@
         "unavailable": "Nedostupný"
       },
       "presets": {
+        "groupDays": "Dny",
+        "groupTimes": "Časy",
+        "hintFullWeek": "Klepnutím na zkratku zúžíte dostupnost z 24/7. První volba nahradí celý týden.",
+        "hintToggle": "Klepněte pro přidání. Znovu klepněte u zvýrazněné pro odebrání.",
         "weekdays": "Pracovní dny",
         "weekends": "Víkendy",
         "mornings": "Ráno",

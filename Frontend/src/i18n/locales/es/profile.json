@@ -25,6 +25,10 @@
         "unavailable": "No disponible"
       },
       "presets": {
+        "groupDays": "Días",
+        "groupTimes": "Horas",
+        "hintFullWeek": "Toca un atajo para reducir desde 24/7. La primera opción sustituye la semana completa.",
+        "hintToggle": "Toca para añadir. Toca de nuevo cuando esté resaltado para quitar.",
         "weekdays": "Entre semana",
         "weekends": "Fin de semana",
         "mornings": "Mañanas",

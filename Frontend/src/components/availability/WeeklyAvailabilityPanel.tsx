@@ -206,7 +206,12 @@ export function WeeklyAvailabilityPanel({
         className="mx-auto"
       />
 
-      <AvailabilityPresets onApply={(p) => editor.applyPresetById(p)} />
+      <AvailabilityPresets
+        value={editor.value}
+        boundaries={bucketBoundaries}
+        isFullWeek={editor.isDefault}
+        onApply={(p) => editor.applyPresetById(p)}
+      />
 
       <div className="min-w-0 md:hidden">
         {showHourly ? (
