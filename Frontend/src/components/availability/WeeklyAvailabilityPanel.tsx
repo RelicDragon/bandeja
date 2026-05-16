@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
-import type { User, WeeklyAvailability, AvailabilityBucketBoundaries } from '@/types';
+import type { User, WeeklyAvailability, AvailabilityBucketBoundaries, WeeklyAvailabilityDoc, RollingWeeklyAvailabilityV2 } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { useAvailabilityEditor } from '@/hooks/useAvailabilityEditor';
 import {
@@ -11,6 +11,13 @@ import {
   isDefaultAvailabilityBucketBoundaries,
   DEFAULT_AVAILABILITY_BUCKET_BOUNDARIES,
 } from '@/utils/availability';
+import {
+  ensureNormalizedRollingDoc,
+  effectiveSlotMask,
+  setRollingSlot,
+  weekRangeLabel,
+  addDaysToYmd,
+} from '@/utils/availability/rolling';
 import { AvailabilityHeader } from './AvailabilityHeader';
 import { AvailabilityPresets } from './AvailabilityPresets';
 import { AvailabilityGrid } from './AvailabilityGrid';
@@ -20,19 +27,21 @@ import { AvailabilityLegend } from './AvailabilityLegend';
 import { AvailabilityPeriodBoundaries } from './AvailabilityPeriodBoundaries';
 
 export interface WeeklyAvailabilityPanelProps {
-  value: WeeklyAvailability | null | undefined;
-  onChange: (value: WeeklyAvailability | null) => Promise<void> | void;
+  value: WeeklyAvailabilityDoc | null | undefined;
+  onChange: (value: RollingWeeklyAvailabilityV2) => Promise<void> | void;
   savedBucketBoundaries: unknown;
   onPersistBucketBoundaries: (value: AvailabilityBucketBoundaries | null) => void;
-  /** When omitted, uses the signed-in user's time format. */
   timeFormat?: User['timeFormat'] | null;
-  /** Framer `layoutId` for the period/hour segmented control (avoid collisions across mounted panels). */
   hourPeriodLayoutId?: string;
-  /**
-   * When true (Profile): show/hide schedule control; body starts collapsed.
-   * When false (e.g. league planner): no toggle; schedule editor is always visible.
-   */
   showScheduleVisibilitySelector?: boolean;
+}
+
+type SlotIndex = 0 | 1 | 2;
+
+const SLOT_INDICES: SlotIndex[] = [0, 1, 2];
+
+function resolveWeekStartPref(pref: string | null | undefined): 'monday' | 'sunday' {
+  return pref === 'sunday' ? 'sunday' : 'monday';
 }
 
 export function WeeklyAvailabilityPanel({
@@ -44,11 +53,23 @@ export function WeeklyAvailabilityPanel({
   hourPeriodLayoutId = 'profileAvailabilityHourPeriod',
   showScheduleVisibilitySelector = true,
 }: WeeklyAvailabilityPanelProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const authUser = useAuthStore((s) => s.user);
   const timeFormat = timeFormatProp ?? authUser?.timeFormat;
+  const startsOn = resolveWeekStartPref(authUser?.weekStart);
+
   const [expanded, setExpanded] = useState(false);
   const [showHourly, setShowHourly] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<SlotIndex>(0);
+
+  const [rollingDoc, setRollingDoc] = useState<RollingWeeklyAvailabilityV2>(() =>
+    ensureNormalizedRollingDoc(value, startsOn)
+  );
+
+  useEffect(() => {
+    setRollingDoc(ensureNormalizedRollingDoc(value, startsOn));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   const parsedBoundaries = useMemo(
     () => parseAvailabilityBucketBoundaries(savedBucketBoundaries),
@@ -77,11 +98,37 @@ export function WeeklyAvailabilityPanel({
     [onPersistBucketBoundaries]
   );
 
+  const currentSlotInitial: WeeklyAvailability = useMemo(
+    () => effectiveSlotMask(rollingDoc, selectedSlot),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rollingDoc.anchor, selectedSlot]
+  );
+
   const editor = useAvailabilityEditor({
-    initial: value,
-    onCommit: onChange,
+    initial: currentSlotInitial,
+    onCommit: useCallback(
+      async (mask: WeeklyAvailability | null) => {
+        const next = setRollingSlot(rollingDoc, selectedSlot, mask);
+        setRollingDoc(next);
+        await onChange(next);
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [rollingDoc.anchor, rollingDoc.baseline, selectedSlot, onChange]
+    ),
     bucketBoundaries,
   });
+
+  const weekSlotLabels = useMemo(() => {
+    const locale = i18n.language || 'en';
+    return SLOT_INDICES.map((i) => ({
+      heading: [
+        t('profile.availability.weekTabs.current'),
+        t('profile.availability.weekTabs.next'),
+        t('profile.availability.weekTabs.afterThat'),
+      ][i],
+      dates: weekRangeLabel(addDaysToYmd(rollingDoc.anchor, i * 7), locale),
+    }));
+  }, [rollingDoc.anchor, i18n.language, t]);
 
   const hourPeriodTabs = useMemo<SegmentedSwitchTab[]>(
     () => [
@@ -91,8 +138,45 @@ export function WeeklyAvailabilityPanel({
     [t]
   );
 
+  const weekSelector = (
+    <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-700">
+      {SLOT_INDICES.map((i) => {
+        const active = selectedSlot === i;
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setSelectedSlot(i)}
+            className={`relative flex flex-1 flex-col items-center rounded-md px-2 py-1.5 text-center transition-colors duration-200 ${
+              active
+                ? 'text-gray-900 dark:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            {active && (
+              <motion.div
+                className="absolute inset-0 rounded-md bg-primary-500/15 dark:bg-primary-400/15 ring-1 ring-primary-500/30 dark:ring-primary-400/30"
+                layoutId={`${hourPeriodLayoutId}-weekSlot`}
+                initial={false}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              />
+            )}
+            <span className="relative text-xs font-semibold leading-tight">
+              {weekSlotLabels[i].heading}
+            </span>
+            <span className="relative mt-0.5 text-[10px] leading-tight opacity-70">
+              {weekSlotLabels[i].dates}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
   const scheduleBody = (
     <div className="min-w-0 space-y-4 pt-1">
+      {weekSelector}
+
       <SegmentedSwitch
         tabs={hourPeriodTabs}
         activeId={showHourly ? 'hour' : 'period'}

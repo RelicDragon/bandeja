@@ -3,3 +3,4 @@ export * from './bucketBoundaries';
 export * from './presets';
 export * from './format';
 export * from './gameMatch';
+export * from './rolling';

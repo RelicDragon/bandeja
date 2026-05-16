@@ -20,8 +20,13 @@ import { syncTelegramProfileFromUpdate } from '../../services/telegram/syncTeleg
 import { TRANSLATE_TO_LANGUAGE_CODES } from '../../services/chat/translation.service';
 import { CityGroupService } from '../../services/chat/cityGroup.service';
 import { resolveDisplayNameData } from '../../services/user/userDisplayName.service';
-import { validateWeeklyAvailability } from '../../utils/validators/weeklyAvailability';
+import {
+  persistWeeklyAvailabilityShape,
+  validateWeeklyAvailability,
+} from '../../utils/validators/weeklyAvailability';
 import { validateAvailabilityBucketBoundaries } from '../../utils/validators/availabilityBucketBoundaries';
+import { ensureRollingDoc } from '../../utils/weeklyAvailabilityRolling';
+import { getUserTimezone } from '../../services/user-timezone.service';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
@@ -35,6 +40,19 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
 
   if (!user) {
     throw new ApiError(404, 'User not found');
+  }
+
+  const tz = await getUserTimezone(req.userId!);
+  let weeklyAvailabilityOut = user.weeklyAvailability;
+  if (weeklyAvailabilityOut != null) {
+    const rolled = ensureRollingDoc(weeklyAvailabilityOut, tz, user.weekStart ?? 'auto');
+    if (rolled && JSON.stringify(rolled) !== JSON.stringify(weeklyAvailabilityOut)) {
+      await prisma.user.update({
+        where: { id: req.userId },
+        data: { weeklyAvailability: rolled as object },
+      });
+      weeklyAvailabilityOut = rolled as typeof user.weeklyAvailability;
+    }
   }
 
   const blockedUsers = await prisma.blockedUser.findMany({
@@ -52,7 +70,7 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
       avatar: ca.club.avatar,
     })) ?? [];
 
-  const profile = { ...user };
+  const profile = { ...user, weeklyAvailability: weeklyAvailabilityOut };
   delete (profile as { clubAdmins?: (typeof user)['clubAdmins'] }).clubAdmins;
 
   res.json({
@@ -87,8 +105,22 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, showOnlineStatus, favoriteTrainerId, appIcon, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
 
-  const normalizedWeeklyAvailability =
+  let normalizedWeeklyAvailability =
     weeklyAvailability === undefined ? undefined : validateWeeklyAvailability(weeklyAvailability);
+
+  if (normalizedWeeklyAvailability !== undefined) {
+    const prefRow = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { weekStart: true },
+    });
+    const effectiveWeekStart = weekStart !== undefined ? weekStart : prefRow?.weekStart;
+    const tz = await getUserTimezone(req.userId!);
+    normalizedWeeklyAvailability = persistWeeklyAvailabilityShape(
+      normalizedWeeklyAvailability,
+      tz,
+      effectiveWeekStart ?? 'auto'
+    );
+  }
 
   const normalizedAvailabilityBucketBoundaries =
     availabilityBucketBoundaries === undefined

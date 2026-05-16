@@ -17,6 +17,7 @@ import {
   userFitsBucket,
   WEEKDAY_FROM_SHORT,
 } from './plannerAvailability.util';
+import { resolveEffectiveWeeklyV1ForDate } from '../../utils/weeklyAvailabilityRolling';
 
 const BUCKET_ORDER: BucketId[] = ['night', 'morning', 'afternoon', 'evening'];
 
@@ -33,6 +34,15 @@ type PlannerUser = {
   weeklyAvailability: unknown;
   availabilityBucketBoundaries: unknown;
 };
+
+function resolveUserWaForPlannerDate(
+  raw: unknown,
+  dateStr: string,
+  leagueTimeZone: string,
+  leagueWeekStart: string | null | undefined
+): WeeklyAvailabilityLike | null {
+  return resolveEffectiveWeeklyV1ForDate(raw, dateStr, leagueTimeZone, leagueWeekStart ?? 'auto');
+}
 
 function plannerSampleFreeUser(u: PlannerUser) {
   return {
@@ -139,11 +149,15 @@ function allUsersFitSlot(
   boundaries: AvailabilityBucketBoundariesLike,
   busyByUser: Map<string, Map<string, number>>,
   dateStr: string,
-  bucketMask: number
+  bucketMask: number,
+  leagueTimeZone: string,
+  plannerWeekStartPref: string | null | undefined
 ): boolean {
   for (const uid of userIds) {
     const u = userById.get(uid);
-    const wa = (u?.weeklyAvailability as WeeklyAvailabilityLike | null) ?? null;
+    const wa = u
+      ? resolveUserWaForPlannerDate(u.weeklyAvailability, dateStr, leagueTimeZone, plannerWeekStartPref)
+      : null;
     if (!userFitsBucket(wa, dayKey, bucket, boundaries)) return false;
     const dayBusy = busyByUser.get(uid)?.get(dateStr) ?? 0;
     if ((dayBusy & bucketMask) !== 0) return false;
@@ -174,11 +188,13 @@ export class LeaguePlannerService {
       where: { id: requesterUserId },
       select: {
         availabilityBucketBoundaries: true,
+        weekStart: true,
       },
     });
     if (!requester) throw new ApiError(401, 'User not found');
 
     const timeZone = await getUserTimezone(requesterUserId);
+    const plannerWeekStartPref = requester.weekStart ?? 'auto';
 
     const season = await prisma.leagueSeason.findUnique({
       where: { id: leagueSeasonId },
@@ -300,7 +316,12 @@ export class LeaguePlannerService {
         if (intersectMode) {
           const states = aggregateIdsFiltered.map((uid) => {
             const u = userById.get(uid)!;
-            const wa = (u.weeklyAvailability as WeeklyAvailabilityLike | null) ?? null;
+            const wa = resolveUserWaForPlannerDate(
+              u.weeklyAvailability,
+              dateStr,
+              timeZone,
+              plannerWeekStartPref
+            );
             return bucketAggregateState(wa, weekdayKey, bucket, boundaries);
           });
           if (states.length > 0 && states.every((s) => s !== null)) {
@@ -319,7 +340,12 @@ export class LeaguePlannerService {
         } else {
           for (const uid of aggregateIdsFiltered) {
             const u = userById.get(uid)!;
-            const wa = (u.weeklyAvailability as WeeklyAvailabilityLike | null) ?? null;
+            const wa = resolveUserWaForPlannerDate(
+              u.weeklyAvailability,
+              dateStr,
+              timeZone,
+              plannerWeekStartPref
+            );
             const st = bucketAggregateState(wa, weekdayKey, bucket, boundaries);
             if (st === 'free') {
               freeCount++;
@@ -409,7 +435,18 @@ export class LeaguePlannerService {
             const quad = ug.matchQuadUserIds;
             if (!quad?.length) continue;
             if (
-              allUsersFitSlot(quad, userById, day.weekdayKey, bucket, boundaries, busyByUser, day.date, bucketMask)
+              allUsersFitSlot(
+                quad,
+                userById,
+                day.weekdayKey,
+                bucket,
+                boundaries,
+                busyByUser,
+                day.date,
+                bucketMask,
+                timeZone,
+                plannerWeekStartPref
+              )
             ) {
               fits.push(ug.id);
             }

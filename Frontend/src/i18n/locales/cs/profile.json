@@ -15,7 +15,6 @@
       "periodBoundaries": {
         "title": "Začátky částí dne",
         "subtitle": "Zobrazení po částech dne a předvolby ráno/odpoledne/večer používají tyto rozmezí.",
-        "startsAt": "Od",
         "reset": "Výchozí"
       },
       "copyTo": "Kopírovat do…",
@@ -50,6 +49,12 @@
       "summary": {
         "off": "{{days}} nedostupný",
         "allDay": "{{days}} celý den"
+      },
+      "weekTabs": {
+        "current": "Tento týden",
+        "next": "Příští týden",
+        "afterThat": "Za dva týdny",
+        "baseline": "Výchozí"
       }
     },
     "title": "Profil",

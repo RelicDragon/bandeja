@@ -15,7 +15,6 @@
       "periodBoundaries": {
         "title": "Inicio de cada franja",
         "subtitle": "La vista por franjas y los atajos mañana/tarde/noche usan estos rangos horarios.",
-        "startsAt": "Desde",
         "reset": "Restablecer"
       },
       "copyTo": "Copiar a…",
@@ -50,6 +49,12 @@
       "summary": {
         "off": "{{days}} no disponible",
         "allDay": "{{days}} todo el día"
+      },
+      "weekTabs": {
+        "current": "Esta semana",
+        "next": "Próxima semana",
+        "afterThat": "Más adelante",
+        "baseline": "Predeterminado"
       }
     },
     "title": "Perfil",

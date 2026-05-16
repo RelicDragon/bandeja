@@ -89,9 +89,7 @@ export interface BasicUser {
   trainerRating?: number | null;
   trainerReviewCount?: number;
   isPremium?: boolean;
-  weeklyAvailability?: WeeklyAvailability | null;
-  availabilityBucketBoundaries?: AvailabilityBucketBoundaries | null;
-  isAdmin?: boolean;
+  weeklyAvailability?: WeeklyAvailabilityDoc | null;
   canCreateTournament?: boolean;
   maxParticipantsInGame?: number;
 }
@@ -123,6 +121,15 @@ export interface WeeklyAvailability {
   sun: number;
   v: 1;
 }
+
+export interface RollingWeeklyAvailabilityV2 {
+  v: 2;
+  anchor: string;
+  baseline: WeeklyAvailability | null;
+  weeks: [WeeklyAvailability | null, WeeklyAvailability | null, WeeklyAvailability | null];
+}
+
+export type WeeklyAvailabilityDoc = WeeklyAvailability | RollingWeeklyAvailabilityV2;
 
 export interface AvailabilityBucketBoundaries {
   night: number;
@@ -183,7 +190,7 @@ export interface User extends BasicUser {
   blockedUserIds?: string[];
   showOnlineStatus?: boolean;
   appIcon?: string | null;
-  weeklyAvailability?: WeeklyAvailability | null;
+  weeklyAvailability?: WeeklyAvailabilityDoc | null;
   availabilityBucketBoundaries?: AvailabilityBucketBoundaries | null;
   clubAdminClubs?: { id: string; name: string; avatar?: string | null }[];
 }

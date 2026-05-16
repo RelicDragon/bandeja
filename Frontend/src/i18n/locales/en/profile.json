@@ -104,7 +104,6 @@
       "periodBoundaries": {
         "title": "When each period starts",
         "subtitle": "Period view and morning/afternoon/evening presets use these hour ranges.",
-        "startsAt": "From",
         "reset": "Reset"
       },
       "copyTo": "Copy to…",
@@ -139,6 +138,12 @@
       "summary": {
         "off": "{{days}} off",
         "allDay": "{{days}} all day"
+      },
+      "weekTabs": {
+        "current": "This week",
+        "next": "Next week",
+        "afterThat": "After that",
+        "baseline": "Default"
       }
     },
     "gender": "Gender",

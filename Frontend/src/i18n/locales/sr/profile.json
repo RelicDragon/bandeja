@@ -15,7 +15,6 @@
       "periodBoundaries": {
         "title": "Kada počinje svaki deo dana",
         "subtitle": "Prikaz po periodima i prečice jutro/popodne/veče koriste ove sate.",
-        "startsAt": "Od",
         "reset": "Podrazumevano"
       },
       "copyTo": "Kopiraj u…",
@@ -50,6 +49,12 @@
       "summary": {
         "off": "{{days}} nedostupan",
         "allDay": "{{days}} ceo dan"
+      },
+      "weekTabs": {
+        "current": "Ova sedmica",
+        "next": "Sledeća",
+        "afterThat": "Za dve sedmice",
+        "baseline": "Podrazumevano"
       }
     },
     "title": "Профил",

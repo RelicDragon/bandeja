@@ -1,5 +1,7 @@
 /** Mirrors Frontend `utils/availability` bitmask + bucket rules for league planner. */
 
+import { weeklyDocHasConfiguredSlots } from '../../utils/weeklyAvailabilityRolling';
+
 export type WeekdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 export type BucketId = 'night' | 'morning' | 'afternoon' | 'evening';
 
@@ -74,15 +76,9 @@ export function buildBucketMasks(b: AvailabilityBucketBoundariesLike): Record<Bu
   };
 }
 
-const WEEKDAY_KEYS: WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-
-/** True when the user saved at least one available hour somewhere in the weekly grid. */
-export function weeklyAvailabilityHasConfiguredSlots(wa: WeeklyAvailabilityLike | null | undefined): boolean {
-  if (wa == null || typeof wa !== 'object' || Array.isArray(wa)) return false;
-  for (const k of WEEKDAY_KEYS) {
-    if (((wa[k] ?? 0) >>> 0) !== 0) return true;
-  }
-  return false;
+/** True when the user saved at least one available hour (v1 or rolling v2). */
+export function weeklyAvailabilityHasConfiguredSlots(wa: unknown): boolean {
+  return weeklyDocHasConfiguredSlots(wa);
 }
 
 export function bucketIsFullFor(

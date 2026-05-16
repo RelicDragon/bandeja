@@ -1,4 +1,5 @@
-import type { BasicUser, WeeklyAvailability, WeekdayKey } from '@/types';
+import type { BasicUser, WeeklyAvailability, WeekdayKey, WeeklyAvailabilityDoc } from '@/types';
+import { isRollingWeeklyAvailability, resolveV1ForToday } from './rolling';
 
 export type GameAvailabilityMatch = 'full' | 'partial' | 'none';
 
@@ -102,11 +103,16 @@ const countBits = (mask: number): number => {
 
 /** How well a user's weekly availability matches the needed game slots. */
 export const matchUserToSlots = (
-  wa: WeeklyAvailability | null | undefined,
+  wa: WeeklyAvailabilityDoc | null | undefined,
   slots: GameSlots | null,
 ): GameAvailabilityMatch => {
   if (!slots) return 'full';
   if (!wa) return 'full';
+
+  const v1: WeeklyAvailability | null = isRollingWeeklyAvailability(wa)
+    ? resolveV1ForToday(wa)
+    : (wa as WeeklyAvailability);
+  if (!v1) return 'full';
 
   let needed = 0;
   let covered = 0;
@@ -114,7 +120,7 @@ export const matchUserToSlots = (
   for (const d of days) {
     const need = (slots[d] ?? 0) >>> 0;
     if (need === 0) continue;
-    const have = (wa[d] ?? 0) >>> 0;
+    const have = (v1[d] ?? 0) >>> 0;
     const overlap = (need & have) >>> 0;
     needed += countBits(need);
     covered += countBits(overlap);
