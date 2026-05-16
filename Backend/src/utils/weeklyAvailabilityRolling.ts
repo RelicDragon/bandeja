@@ -204,24 +204,27 @@ function weeklyV1HasAnyAvailableHour(wa: WeeklyHourMaskV1): boolean {
   return false;
 }
 
+/** Days between two YYYY-MM-DD strings (positive = end is after start). */
+function daysBetweenYmd(startYmd: string, endYmd: string): number {
+  return Math.round(
+    (ymdToUtcNoon(endYmd).getTime() - ymdToUtcNoon(startYmd).getTime()) / 86400000
+  );
+}
+
 export function resolveEffectiveWeeklyV1ForDate(
   raw: unknown,
   dateYmd: string,
   timeZone: string,
   weekStartPref: string | null | undefined
 ): WeeklyHourMaskV1 | null {
-  const tz = timeZone || DEFAULT_TIMEZONE;
-  const mode = weekStartPrefToMode(weekStartPref);
-
   if (raw == null) return null;
 
   if (isRollingWeeklyAvailability(raw)) {
-    const doc = normalizeRollingWeeklyAvailability(raw as RollingWeeklyAvailabilityV2, tz, weekStartPref);
-    const ws = weekStartContainingDate(dateYmd, mode);
-    const idx = weekOffsetFromAnchor(doc.anchor, ws);
-    if (idx === 0 || idx === 1 || idx === 2) {
-      return effectiveWeekMask(doc, idx);
-    }
+    const doc = normalizeRollingWeeklyAvailability(raw as RollingWeeklyAvailabilityV2, timeZone, weekStartPref);
+    const days = daysBetweenYmd(doc.anchor, dateYmd);
+    if (days >= 0 && days <= 6) return effectiveWeekMask(doc, 0);
+    if (days >= 7 && days <= 13) return effectiveWeekMask(doc, 1);
+    if (days >= 14 && days <= 20) return effectiveWeekMask(doc, 2);
     return doc.baseline ? cloneWeek(doc.baseline) : null;
   }
 

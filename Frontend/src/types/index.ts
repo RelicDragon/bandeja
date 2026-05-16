@@ -90,6 +90,7 @@ export interface BasicUser {
   trainerReviewCount?: number;
   isPremium?: boolean;
   weeklyAvailability?: WeeklyAvailabilityDoc | null;
+  isAdmin?: boolean;
   canCreateTournament?: boolean;
   maxParticipantsInGame?: number;
 }

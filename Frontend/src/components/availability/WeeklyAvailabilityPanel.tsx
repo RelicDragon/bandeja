@@ -17,6 +17,7 @@ import {
   setRollingSlot,
   weekRangeLabel,
   addDaysToYmd,
+  isRollingDocDefault,
 } from '@/utils/availability/rolling';
 import { AvailabilityHeader } from './AvailabilityHeader';
 import { AvailabilityPresets } from './AvailabilityPresets';
@@ -173,9 +174,15 @@ export function WeeklyAvailabilityPanel({
     </div>
   );
 
+  // P2: "24/7" badge only when the entire rolling doc is unrestricted
+  const isDocDefault = isRollingDocDefault(rollingDoc);
+
   const scheduleBody = (
     <div className="min-w-0 space-y-4 pt-1">
       {weekSelector}
+
+      {/* P3: summary scoped to the selected slot */}
+      {!editor.isDefault && !editor.isEmptyWeek && <AvailabilitySummary value={editor.value} />}
 
       <SegmentedSwitch
         tabs={hourPeriodTabs}
@@ -183,7 +190,7 @@ export function WeeklyAvailabilityPanel({
         onChange={(id) => setShowHourly(id === 'hour')}
         showOnlyActiveTabText={false}
         layoutId={hourPeriodLayoutId}
-        className="!mx-0 self-start"
+        className="mx-auto"
       />
 
       <AvailabilityPresets onApply={(p) => editor.applyPresetById(p)} />
@@ -228,12 +235,10 @@ export function WeeklyAvailabilityPanel({
   return (
     <div className="space-y-4">
       <AvailabilityHeader
-        isDefault={editor.isDefault}
+        isDefault={isDocDefault}
         isEmptyWeek={editor.isEmptyWeek}
         status={editor.status}
       />
-
-      {!editor.isDefault && !editor.isEmptyWeek && <AvailabilitySummary value={editor.value} />}
 
       {showScheduleVisibilitySelector ? (
         <>

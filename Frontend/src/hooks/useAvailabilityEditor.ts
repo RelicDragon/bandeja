@@ -51,6 +51,8 @@ export const useAvailabilityEditor = ({
   const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setStatus('idle');
     lastCommittedRef.current = initial ?? null;
     setValue(ensureWeek(initial));
   }, [initial]);

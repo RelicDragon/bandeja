@@ -1,18 +1,6 @@
-import type { WeeklyAvailability } from '@/types';
+import type { WeeklyAvailability, RollingWeeklyAvailabilityV2, WeeklyAvailabilityDoc } from '@/types';
 
 export const ROLLING_VERSION = 2 as const;
-
-export type RollingWeeklyAvailabilityV2 = {
-  v: typeof ROLLING_VERSION;
-  /** YYYY-MM-DD: start of slot-0 week (local calendar, no TZ conversion needed). */
-  anchor: string;
-  baseline: WeeklyAvailability | null;
-  weeks: [WeeklyAvailability | null, WeeklyAvailability | null, WeeklyAvailability | null];
-};
-
-export type WeeklyAvailabilityDoc = WeeklyAvailability | RollingWeeklyAvailabilityV2;
-
-export type WeekStartPref = 'monday' | 'sunday' | 'auto';
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 
@@ -49,19 +37,10 @@ function isoDow(ymd: string): number {
   return dow === 0 ? 7 : dow;
 }
 
-export function weekStartContainingDate(ymd: string, startsOn: 'monday' | 'sunday'): string {
+function weekStartContainingDate(ymd: string, startsOn: 'monday' | 'sunday'): string {
   const dow = isoDow(ymd);
   const daysBack = startsOn === 'monday' ? dow - 1 : dow === 7 ? 0 : dow;
   return addDaysToYmd(ymd, -daysBack);
-}
-
-/** Weeks from anchorYmd → targetWeekStartYmd. Returns -1 if before or not aligned. */
-export function weekOffsetFromAnchor(anchorYmd: string, targetWeekStartYmd: string): number {
-  const diffMs = ymdToUtcNoon(targetWeekStartYmd).getTime() - ymdToUtcNoon(anchorYmd).getTime();
-  const diffDays = Math.round(diffMs / 86400000);
-  if (diffDays < 0) return -1;
-  if (diffDays % 7 !== 0) return -1;
-  return diffDays / 7;
 }
 
 // ─── Rolling doc helpers ──────────────────────────────────────────────────────
@@ -91,6 +70,18 @@ function weeksEqual(a: WeeklyAvailability | null, b: WeeklyAvailability | null):
     if (((a[d] ?? 0) >>> 0) !== ((b[d] ?? 0) >>> 0)) return false;
   }
   return true;
+}
+
+function isFullWeekMask(wa: WeeklyAvailability | null): boolean {
+  if (wa == null) return true;
+  const full = 0xffffff;
+  return DAY_KEYS.every((d) => ((wa[d] ?? 0) >>> 0) === full);
+}
+
+/** True when the entire rolling doc resolves to 24/7 (no configured restrictions). */
+export function isRollingDocDefault(doc: RollingWeeklyAvailabilityV2): boolean {
+  if (!isFullWeekMask(doc.baseline)) return false;
+  return doc.weeks.every((w) => w === null || isFullWeekMask(w));
 }
 
 export function effectiveSlotMask(
@@ -167,27 +158,37 @@ export function setRollingSlot(
   return { ...doc, weeks };
 }
 
-/** Resolve a v1 mask for the week containing `dateYmd` (or baseline/null for out-of-window). */
+/** Days between two YYYY-MM-DD strings (positive = target is after start). */
+function daysBetweenYmd(startYmd: string, endYmd: string): number {
+  return Math.round(
+    (ymdToUtcNoon(endYmd).getTime() - ymdToUtcNoon(startYmd).getTime()) / 86400000
+  );
+}
+
+/**
+ * Resolve a v1 mask for the week containing `dateYmd`.
+ * Uses day-offset arithmetic against the anchor — no weekStart needed,
+ * because the anchor already encodes the correct week boundary.
+ */
 export function resolveV1ForDate(
   raw: WeeklyAvailabilityDoc | null | undefined,
-  dateYmd: string,
-  startsOn: 'monday' | 'sunday'
+  dateYmd: string
 ): WeeklyAvailability | null {
   if (raw == null) return null;
   if (!isRollingWeeklyAvailability(raw)) return raw as WeeklyAvailability;
   const doc = raw as RollingWeeklyAvailabilityV2;
-  const ws = weekStartContainingDate(dateYmd, startsOn);
-  const idx = weekOffsetFromAnchor(doc.anchor, ws);
-  if (idx === 0 || idx === 1 || idx === 2) return effectiveSlotMask(doc, idx);
+  const days = daysBetweenYmd(doc.anchor, dateYmd);
+  if (days >= 0 && days <= 6) return effectiveSlotMask(doc, 0);
+  if (days >= 7 && days <= 13) return effectiveSlotMask(doc, 1);
+  if (days >= 14 && days <= 20) return effectiveSlotMask(doc, 2);
   return doc.baseline ? cloneWeek(doc.baseline) : null;
 }
 
-/** Returns the effective v1 mask for today's week (for player list matching, etc). */
+/** Returns the effective v1 mask for today's week. */
 export function resolveV1ForToday(
-  raw: WeeklyAvailabilityDoc | null | undefined,
-  startsOn: 'monday' | 'sunday' = 'monday'
+  raw: WeeklyAvailabilityDoc | null | undefined
 ): WeeklyAvailability | null {
-  return resolveV1ForDate(raw, localTodayYmd(), startsOn);
+  return resolveV1ForDate(raw, localTodayYmd());
 }
 
 /** Format a date range for a week tab label, e.g. "12–18 May". */
