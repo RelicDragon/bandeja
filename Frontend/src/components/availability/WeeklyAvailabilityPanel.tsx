@@ -197,15 +197,23 @@ export function WeeklyAvailabilityPanel({
 
       <div className="min-w-0 md:hidden">
         {showHourly ? (
-          <AvailabilityGrid editor={editor} />
+          <div className="overflow-x-auto">
+            <div className="min-w-[720px]">
+              <AvailabilityGrid editor={editor} />
+            </div>
+          </div>
         ) : (
           <AvailabilityMobileGrid editor={editor} boundaries={bucketBoundaries} />
         )}
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden min-w-0 md:block">
         {showHourly ? (
-          <AvailabilityGrid editor={editor} />
+          <div className="overflow-x-auto">
+            <div className="min-w-[720px]">
+              <AvailabilityGrid editor={editor} />
+            </div>
+          </div>
         ) : (
           <AvailabilityMobileGrid editor={editor} boundaries={bucketBoundaries} />
         )}
