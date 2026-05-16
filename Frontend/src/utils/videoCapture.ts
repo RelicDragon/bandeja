@@ -41,6 +41,9 @@ export function pickVideo(): Promise<VideoPickResult | null> {
     input.style.left = '-9999px';
 
     let resolved = false;
+    let consumeStarted = false;
+    let pollId: ReturnType<typeof window.setInterval> | null = null;
+    let webCancelTimer: ReturnType<typeof window.setTimeout> | null = null;
 
     const cleanup = () => {
       setTimeout(() => {
@@ -48,36 +51,48 @@ export function pickVideo(): Promise<VideoPickResult | null> {
       }, 100);
     };
 
+    const stopCapacitorPoll = () => {
+      if (pollId != null) {
+        window.clearInterval(pollId);
+        pollId = null;
+      }
+    };
+
+    const stopWebCancelTimer = () => {
+      if (webCancelTimer != null) {
+        window.clearTimeout(webCancelTimer);
+        webCancelTimer = null;
+      }
+    };
+
+    const detachWindowListeners = () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('blur', onBlur);
+    };
+
     const finish = (file: File | null) => {
       if (resolved) return;
       resolved = true;
+      stopCapacitorPoll();
+      stopWebCancelTimer();
+      detachWindowListeners();
       cleanup();
-      window.removeEventListener('focus', onFocus);
       resolve(file ? { file } : null);
     };
 
-    const onFocus = () => {
-      setTimeout(() => {
-        if (!resolved && (!input.files || input.files.length === 0)) {
-          finish(null);
-        }
-      }, 400);
-    };
-
-    input.onchange = async () => {
-      const raw = input.files?.[0];
-      if (!raw) {
-        finish(null);
-        return;
-      }
+    const processPickedFile = async (raw: File) => {
+      if (resolved || consumeStarted) return;
+      consumeStarted = true;
+      stopCapacitorPoll();
+      stopWebCancelTimer();
       try {
         if (raw.size > 0 || !isCapacitor()) {
           finish(raw);
           return;
         }
-        const anyFile = raw as File & { path?: string };
+        const anyFile = raw as File & { path?: string; webPath?: string };
         if (anyFile.path) {
-          const blob = await blobFromCapacitorPath(anyFile.path);
+          const blob = await blobFromCapacitorPath(anyFile.path, anyFile.webPath);
           finish(fileFromBlob(blob, raw.name || 'video.mp4'));
           return;
         }
@@ -88,7 +103,65 @@ export function pickVideo(): Promise<VideoPickResult | null> {
       }
     };
 
+    const startCapacitorCancelPoll = () => {
+      if (resolved) return;
+      stopCapacitorPoll();
+      let attempts = 0;
+      const maxAttempts = 50;
+      const intervalMs = 100;
+      pollId = window.setInterval(() => {
+        if (resolved) {
+          stopCapacitorPoll();
+          return;
+        }
+        const raw = input.files?.[0];
+        if (raw) {
+          void processPickedFile(raw);
+          return;
+        }
+        attempts++;
+        if (attempts >= maxAttempts) {
+          stopCapacitorPoll();
+          finish(null);
+        }
+      }, intervalMs);
+    };
+
+    const scheduleWebPickerCancel = () => {
+      if (resolved) return;
+      stopWebCancelTimer();
+      webCancelTimer = window.setTimeout(() => {
+        webCancelTimer = null;
+        if (!resolved && (!input.files || input.files.length === 0)) {
+          finish(null);
+        }
+      }, 600);
+    };
+
+    const onFocus = () => {
+      if (resolved) return;
+      if (isCapacitor()) {
+        startCapacitorCancelPoll();
+      } else {
+        scheduleWebPickerCancel();
+      }
+    };
+
+    const onBlur = () => {
+      if (isCapacitor()) stopCapacitorPoll();
+    };
+
+    input.onchange = async () => {
+      const raw = input.files?.[0];
+      if (!raw) {
+        finish(null);
+        return;
+      }
+      await processPickedFile(raw);
+    };
+
     window.addEventListener('focus', onFocus);
+    window.addEventListener('blur', onBlur);
     document.body.appendChild(input);
     setTimeout(() => input.click(), 0);
   });
