@@ -25,6 +25,9 @@ const GameLiveBroadcastRedirect = lazy(() =>
 const GameBroadcastRoute = lazy(() =>
   import('./pages/GameBroadcastRoute').then((m) => ({ default: m.GameBroadcastRoute }))
 );
+const LeagueFixtureTableFullscreenPage = lazy(() =>
+  import('./pages/LeagueFixtureTableFullscreenPage').then((m) => ({ default: m.LeagueFixtureTableFullscreenPage }))
+);
 const MyClubsPage = lazy(() =>
   import('./pages/clubAdmin/MyClubsPage').then((m) => ({ default: m.MyClubsPage }))
 );
@@ -347,6 +350,7 @@ function AppContent() {
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
   const isGameBroadcastPage = /^\/games\/[^/]+\/broadcast$/.test(location.pathname);
   const isGameLiveBroadcastShortcut = /^\/games\/[^/]+\/live\/broadcast$/.test(location.pathname);
+  const isLeagueFixtureTableFullscreenPage = /^\/games\/[^/]+\/league-table$/.test(location.pathname);
   const isGameLiveMatchPage =
     /^\/games\/[^/]+\/live$/.test(location.pathname) ||
     /^\/games\/[^/]+\/live\/tv$/.test(location.pathname) ||
@@ -361,7 +365,14 @@ function AppContent() {
   const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   
-  if (!isOnline && !isGameDetailsPage && !isGameLiveMatchPage && !isUserProfilePage && !isAuthPage) {
+  if (
+    !isOnline &&
+    !isGameDetailsPage &&
+    !isGameLiveMatchPage &&
+    !isLeagueFixtureTableFullscreenPage &&
+    !isUserProfilePage &&
+    !isAuthPage
+  ) {
     return <NoInternetScreen />;
   }
 
@@ -562,6 +573,16 @@ function AppContent() {
             <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
               <GameLiveRoute />
             </Suspense>
+          }
+        />
+        <Route
+          path="/games/:id/league-table"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                <LeagueFixtureTableFullscreenPage />
+              </Suspense>
+            </ProtectedRoute>
           }
         />
         <Route

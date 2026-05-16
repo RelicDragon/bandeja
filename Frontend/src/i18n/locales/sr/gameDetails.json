@@ -283,6 +283,7 @@
     "minRequired": "мин. {{count}}",
     "groupsWithPlayoff": "Групе",
     "fixtureTableView": "Табела",
+    "openFixtureTableFullscreen": "Отвори табелу термина преко целог екрана",
     "fixtureMatrixViewList": "Списак",
     "fixtureScheduleViewMy": "Моје",
     "scheduleMyGamesEmpty": "Још нема утакмица у овом приказу у којима учествујете.",

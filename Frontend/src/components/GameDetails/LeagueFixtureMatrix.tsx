@@ -22,6 +22,8 @@ interface LeagueFixtureMatrixProps {
   teams: MatrixTeam[];
   rounds: LeagueRound[];
   onFixtureCell: (payload: { games: Game[]; row: MatrixTeam; col: MatrixTeam }) => void;
+  /** Use flex parent with bounded height; table scroll fills remaining space (fullscreen page). */
+  fillViewportHeight?: boolean;
 }
 
 function FireOrStatic({ small }: { small?: boolean }) {
@@ -115,6 +117,7 @@ export const LeagueFixtureMatrix = ({
   teams,
   rounds,
   onFixtureCell,
+  fillViewportHeight = false,
 }: LeagueFixtureMatrixProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -131,13 +134,23 @@ export const LeagueFixtureMatrix = ({
   }
 
   return (
-    <div className="relative w-full overflow-hidden rounded-3xl border border-gray-200/70 bg-gradient-to-br from-white via-white to-gray-50/90 shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_8px_32px_-12px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.03] dark:border-gray-800/90 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900/95 dark:shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_12px_40px_-16px_rgba(0,0,0,0.5)] dark:ring-white/[0.04]">
+    <div
+      className={`relative w-full overflow-hidden rounded-3xl border border-gray-200/70 bg-gradient-to-br from-white via-white to-gray-50/90 shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_8px_32px_-12px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.03] dark:border-gray-800/90 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900/95 dark:shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_12px_40px_-16px_rgba(0,0,0,0.5)] dark:ring-white/[0.04] ${fillViewportHeight ? 'flex h-full min-h-0 min-w-0 flex-col' : ''}`}
+    >
       <div
         className="pointer-events-none absolute inset-y-0 right-0 z-20 w-10 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-gray-950 dark:via-gray-950/70"
         aria-hidden
       />
-      <div className="relative z-10 w-full max-w-full overflow-x-auto">
-        <div className="max-h-[min(70vh,640px)] overflow-y-auto overscroll-y-contain">
+      <div
+        className={`relative z-10 w-full max-w-full overflow-x-auto ${fillViewportHeight ? 'min-h-0 flex-1' : ''}`}
+      >
+        <div
+          className={
+            fillViewportHeight
+              ? 'h-full min-h-0 max-h-none overflow-y-auto overscroll-y-contain'
+              : 'max-h-[min(70vh,640px)] overflow-y-auto overscroll-y-contain'
+          }
+        >
           <table className="w-max min-w-0 max-w-none border-separate border-spacing-0 text-sm">
             <thead>
               <tr>

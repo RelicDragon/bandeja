@@ -12,7 +12,7 @@ import { RoundTypeFilterSwitch } from './RoundTypeFilterSwitch';
 import { LeagueFixtureMatrix } from './LeagueFixtureMatrix';
 import { LeagueFixtureDetailSheet } from './LeagueFixtureDetailSheet';
 import { leaguesApi, LeagueRound, LeagueGroup, LeagueStanding } from '@/api/leagues';
-import { Loader2, Calendar, Users, Trophy, LayoutGrid } from 'lucide-react';
+import { Loader2, Calendar, Users, Trophy, LayoutGrid, Maximize2 } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { standingsTeamsForGroup, roundsInSingleRoundRobinCycle, type MatrixTeam } from '@/utils/leagueFixtureMatrix';
 import { Game } from '@/types';
@@ -580,12 +580,24 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
               {t('gameDetails.fixtureMatrixAllGroupsNote', { groupName: matrixGroupName })}
             </p>
           )}
-          <LeagueFixtureMatrix
-            groupId={matrixGroupId}
-            teams={matrixTeams}
-            rounds={rounds}
-            onFixtureCell={({ games, row, col }) => setFixtureSheet({ games, row, col })}
-          />
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() =>
+                navigate(`/games/${leagueSeasonId}/league-table?group=${encodeURIComponent(matrixGroupId)}`)
+              }
+              className="absolute right-2 top-2 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-md ring-1 ring-gray-200/90 backdrop-blur-sm transition hover:bg-white dark:bg-gray-900/95 dark:text-gray-100 dark:ring-gray-700 dark:hover:bg-gray-900"
+              aria-label={t('gameDetails.openFixtureTableFullscreen')}
+            >
+              <Maximize2 className="h-5 w-5" aria-hidden />
+            </button>
+            <LeagueFixtureMatrix
+              groupId={matrixGroupId}
+              teams={matrixTeams}
+              rounds={rounds}
+              onFixtureCell={({ games, row, col }) => setFixtureSheet({ games, row, col })}
+            />
+          </div>
         </div>
       ) : filteredRounds.length === 0 ? (
         <Card>

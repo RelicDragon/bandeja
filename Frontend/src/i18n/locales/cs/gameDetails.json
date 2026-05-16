@@ -289,6 +289,7 @@
     "minRequired": "min. {{count}}",
     "groupsWithPlayoff": "Skupiny",
     "fixtureTableView": "Tabulka",
+    "openFixtureTableFullscreen": "Otevřít tabulku zápasů na celou obrazovku",
     "fixtureMatrixViewList": "Seznam",
     "fixtureScheduleViewMy": "Moje",
     "scheduleMyGamesEmpty": "V tomto zobrazení zatím nejsou žádné zápasy s vámi.",

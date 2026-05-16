@@ -297,6 +297,7 @@
     "minRequired": "min {{count}}",
     "groupsWithPlayoff": "Groups",
     "fixtureTableView": "Table",
+    "openFixtureTableFullscreen": "Open fixture table fullscreen",
     "fixtureMatrixViewList": "List",
     "fixtureScheduleViewMy": "My",
     "scheduleMyGamesEmpty": "No games in this view include you yet.",

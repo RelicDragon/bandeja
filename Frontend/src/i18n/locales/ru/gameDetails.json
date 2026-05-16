@@ -295,6 +295,7 @@
     "minRequired": "мин. {{count}}",
     "groupsWithPlayoff": "Группы",
     "fixtureTableView": "Таблица",
+    "openFixtureTableFullscreen": "Открыть таблицу матчей на весь экран",
     "fixtureMatrixViewList": "Список",
     "fixtureScheduleViewMy": "Мои",
     "scheduleMyGamesEmpty": "В этом разделе пока нет матчей с вашим участием.",

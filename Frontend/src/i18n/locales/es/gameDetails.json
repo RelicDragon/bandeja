@@ -277,6 +277,7 @@
     "minRequired": "mín. {{count}}",
     "groupsWithPlayoff": "Grupos",
     "fixtureTableView": "Tabla",
+    "openFixtureTableFullscreen": "Abrir la tabla de partidos a pantalla completa",
     "fixtureMatrixViewList": "Lista",
     "fixtureScheduleViewMy": "Mis",
     "scheduleMyGamesEmpty": "Aún no hay partidos en esta vista en los que participes.",
