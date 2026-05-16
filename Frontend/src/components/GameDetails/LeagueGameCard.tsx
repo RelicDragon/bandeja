@@ -23,6 +23,7 @@ interface LeagueGameCardProps {
   selectedForChat?: boolean;
   isDesktop?: boolean;
   showGroupTag?: boolean;
+  showLeagueGroupSideAccent?: boolean;
   allRounds?: RoundData[] | null;
   onDelete?: () => Promise<void> | void;
   onNoteSaved?: () => void;
@@ -36,6 +37,7 @@ export const LeagueGameCard = ({
   selectedForChat = false,
   isDesktop = false,
   showGroupTag = true,
+  showLeagueGroupSideAccent = true,
   allRounds,
   onDelete,
   onNoteSaved,
@@ -195,7 +197,7 @@ export const LeagueGameCard = ({
 
   return (
     <div className="relative pl-2 pt-2 pb-6 pr-2 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-      {game.leagueGroup && (
+      {showLeagueGroupSideAccent && game.leagueGroup && (
         <div
           className="absolute left-0 top-0 bottom-0 w-1"
           style={{

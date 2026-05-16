@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -236,6 +236,13 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
       setLeagueSeasonScheduleViewMode('list');
     }
   }, [showMyTab, leagueSeasonScheduleViewMode, setLeagueSeasonScheduleViewMode]);
+
+  useLayoutEffect(() => {
+    if (resolvedScheduleView !== 'table' || selectedGroupId !== ALL_GROUP_ID || groups.length === 0) return;
+    const firstId = groups[0].id;
+    setSelectedGroupId(firstId);
+    void setGroupFilter(leagueSeasonId, firstId);
+  }, [resolvedScheduleView, selectedGroupId, groups, leagueSeasonId]);
 
   const fullRrBlockReason = useMemo(() => {
     if (!hasFixedTeams) return 'requiresFixed' as const;
@@ -515,15 +522,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           </div>
         </Card>
       )}
-      {groups.length > 0 && (
-        <GroupFilterDropdown
-          selectedGroupId={selectedGroupId}
-          groups={groups.map((g) => ({ id: g.id, name: g.name, color: g.color ?? undefined }))}
-          allGroupsLabel={t('gameDetails.allGroups') || 'All groups'}
-          onSelect={setSelectedGroupId}
-          allGroupId={ALL_GROUP_ID}
-        />
-      )}
       {showPlayoffRoundTypeSwitch && (
         <RoundTypeFilterSwitch
           value={selectedRoundType}
@@ -559,6 +557,16 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
             className="w-fit"
           />
         </div>
+      )}
+      {groups.length > 0 && resolvedScheduleView !== 'my' && (
+        <GroupFilterDropdown
+          selectedGroupId={selectedGroupId}
+          groups={groups.map((g) => ({ id: g.id, name: g.name, color: g.color ?? undefined }))}
+          allGroupsLabel={t('gameDetails.allGroups') || 'All groups'}
+          onSelect={setSelectedGroupId}
+          allGroupId={ALL_GROUP_ID}
+          showAllOption={resolvedScheduleView !== 'table'}
+        />
       )}
       {leagueSeasonScheduleViewMode === 'table' && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'PLAYOFF' && (
         <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">

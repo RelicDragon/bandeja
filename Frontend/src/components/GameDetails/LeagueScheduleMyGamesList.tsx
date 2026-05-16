@@ -97,11 +97,11 @@ export function LeagueScheduleMyGamesList({
     <div className="space-y-4">
       {entries.map(({ round, game }) => {
         const canEditGames = canEdit && game.resultsStatus === 'NONE';
+        const roundLabel = `${t('gameDetails.round')} ${round.orderIndex + 1}`;
+        const metaLine = game.leagueGroup?.name ? `${game.leagueGroup.name} · ${roundLabel}` : roundLabel;
         return (
           <div key={game.id} className="space-y-1">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              {t('gameDetails.round')} {round.orderIndex + 1}
-            </p>
+            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">{metaLine}</p>
             <LeagueGameCard
               game={game}
               onEdit={canEditGames ? () => onEditGame(game) : undefined}
@@ -115,7 +115,8 @@ export function LeagueScheduleMyGamesList({
                   : undefined
               }
               onNoteSaved={onNoteSaved}
-              showGroupTag
+              showGroupTag={false}
+              showLeagueGroupSideAccent={false}
               allRounds={gameResultsMap.get(game.id) ?? null}
             />
           </div>
