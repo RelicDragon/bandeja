@@ -22,7 +22,6 @@ import { getRoundTypeFilter, setRoundTypeFilter, type RoundTypeFilterValue } fro
 import { canShowPlayoffRoundTypeFilter } from '@/utils/leagueScheduleRegularSeasonScope';
 import { useAuthStore } from '@/store/authStore';
 import { LeagueScheduleMyGamesList } from './LeagueScheduleMyGamesList';
-import { LeagueGroupScheduleProgress } from './LeagueGroupScheduleProgress';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
 import { leagueGroupGameProgressFromRounds } from '@/utils/leagueGroupGameProgress';
 
@@ -564,23 +563,15 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           />
         </div>
       )}
-      {groups.length > 0 && resolvedScheduleView === 'list' && (
-        <LeagueGroupScheduleProgress
-          groups={groups}
-          progress={groupScheduleProgress}
-          selectedGroupId={selectedGroupId}
-          allGroupId={ALL_GROUP_ID}
-          onGroupSelect={setSelectedGroupId}
-        />
-      )}
-      {groups.length > 0 && resolvedScheduleView === 'table' && (
+      {groups.length > 0 && (resolvedScheduleView === 'list' || resolvedScheduleView === 'table') && (
         <GroupFilterDropdown
           selectedGroupId={selectedGroupId}
           groups={groups.map((g) => ({ id: g.id, name: g.name, color: g.color ?? undefined }))}
           allGroupsLabel={t('gameDetails.allGroups') || 'All groups'}
           onSelect={setSelectedGroupId}
           allGroupId={ALL_GROUP_ID}
-          showAllOption={false}
+          groupProgress={groupScheduleProgress}
+          showAllOption={resolvedScheduleView !== 'table'}
         />
       )}
       {resolvedScheduleView === 'table' && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'PLAYOFF' && (

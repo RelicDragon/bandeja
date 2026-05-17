@@ -1,7 +1,11 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Check } from 'lucide-react';
+import { LeagueGroupProgressIndicator } from './LeagueGroupProgressIndicator';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
+import type { LeagueGroupGameProgressRow } from '@/utils/leagueGroupGameProgress';
+
+const ALL_GROUPS_PROGRESS_COLOR = '#64748b';
 
 interface GroupOption {
   id: string;
@@ -16,6 +20,7 @@ interface GroupFilterDropdownProps {
   onSelect: (groupId: string) => void;
   allGroupId?: string;
   showAllOption?: boolean;
+  groupProgress?: LeagueGroupGameProgressRow[];
 }
 
 export const GroupFilterDropdown = ({
@@ -25,15 +30,44 @@ export const GroupFilterDropdown = ({
   onSelect,
   allGroupId = 'ALL',
   showAllOption = true,
+  groupProgress,
 }: GroupFilterDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number; width: number } | null>(null);
 
+  const progressByGroupId = useMemo(
+    () => new Map((groupProgress ?? []).map((row) => [row.groupId, row])),
+    [groupProgress]
+  );
+
+  const allProgress = useMemo(() => {
+    const rows = (groupProgress ?? []).filter((row) => row.total > 0);
+    return rows.reduce(
+      (acc, row) => ({ finished: acc.finished + row.finished, total: acc.total + row.total }),
+      { finished: 0, total: 0 }
+    );
+  }, [groupProgress]);
+
   const selectedGroup = groups.find((g) => g.id === selectedGroupId);
   const selectedLabel =
     showAllOption && selectedGroupId === allGroupId ? allGroupsLabel : selectedGroup?.name || allGroupsLabel;
+
+  const selectedProgress =
+    showAllOption && selectedGroupId === allGroupId
+      ? allProgress.total > 0
+        ? allProgress
+        : null
+      : (() => {
+          const row = progressByGroupId.get(selectedGroupId);
+          return row && row.total > 0 ? row : null;
+        })();
+
+  const selectedProgressColor =
+    showAllOption && selectedGroupId === allGroupId
+      ? ALL_GROUPS_PROGRESS_COLOR
+      : getLeagueGroupColor(selectedGroup?.color);
 
   const updateMenuPosition = useCallback(() => {
     if (!dropdownRef.current) return;
@@ -88,6 +122,17 @@ export const GroupFilterDropdown = ({
     setIsOpen(false);
   };
 
+  const renderProgress = (groupId: string, color: string) => {
+    const row =
+      groupId === allGroupId
+        ? allProgress.total > 0
+          ? allProgress
+          : null
+        : progressByGroupId.get(groupId);
+    if (!row || row.total <= 0) return null;
+    return <LeagueGroupProgressIndicator finished={row.finished} total={row.total} color={color} />;
+  };
+
   const renderMenu = () => {
     if (!isOpen || !menuPosition || typeof document === 'undefined') {
       return null;
@@ -116,7 +161,7 @@ export const GroupFilterDropdown = ({
                 }`}
               >
                 <span
-                  className={`text-sm font-medium ${
+                  className={`min-w-0 truncate text-sm font-medium ${
                     selectedGroupId === allGroupId
                       ? 'text-primary-700 dark:text-primary-400'
                       : 'text-gray-700 dark:text-gray-300'
@@ -124,9 +169,12 @@ export const GroupFilterDropdown = ({
                 >
                   {allGroupsLabel}
                 </span>
-                {selectedGroupId === allGroupId && (
-                  <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                )}
+                <div className="flex shrink-0 items-center gap-2">
+                  {renderProgress(allGroupId, ALL_GROUPS_PROGRESS_COLOR)}
+                  {selectedGroupId === allGroupId && (
+                    <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                  )}
+                </div>
               </button>
               <div className="border-t border-gray-200 dark:border-gray-700" />
             </>
@@ -144,10 +192,10 @@ export const GroupFilterDropdown = ({
                 className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                 style={isSelected ? { backgroundColor: soft } : undefined}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   {group.color && (
                     <span
-                      className="w-3 h-3 rounded-full border-2"
+                      className="h-3 w-3 shrink-0 rounded-full border-2"
                       style={{
                         backgroundColor: accent,
                         borderColor: accent,
@@ -155,7 +203,7 @@ export const GroupFilterDropdown = ({
                     />
                   )}
                   <span
-                    className={`text-sm font-medium ${
+                    className={`truncate text-sm font-medium ${
                       isSelected ? '' : 'text-gray-700 dark:text-gray-300'
                     }`}
                     style={isSelected ? { color: accent } : undefined}
@@ -163,9 +211,10 @@ export const GroupFilterDropdown = ({
                     {group.name}
                   </span>
                 </div>
-                {isSelected && (
-                  <Check className="h-4 w-4" style={{ color: accent }} />
-                )}
+                <div className="flex shrink-0 items-center gap-2">
+                  {renderProgress(group.id, accent)}
+                  {isSelected && <Check className="h-4 w-4 shrink-0" style={{ color: accent }} />}
+                </div>
               </button>
             );
           })}
@@ -183,29 +232,35 @@ export const GroupFilterDropdown = ({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
       >
-        <div className="flex items-center gap-2 flex-1 text-left">
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
           {selectedGroup?.color && (
             <span
-              className="w-3 h-3 rounded-full border-2"
+              className="h-3 w-3 shrink-0 rounded-full border-2"
               style={{
                 backgroundColor: getLeagueGroupColor(selectedGroup.color),
                 borderColor: getLeagueGroupColor(selectedGroup.color),
               }}
             />
           )}
-          <span className="text-sm font-medium text-gray-900 dark:text-white">
-            {selectedLabel}
-          </span>
+          <span className="truncate text-sm font-medium text-gray-900 dark:text-white">{selectedLabel}</span>
         </div>
-        <ChevronDown
-          className={`h-5 w-5 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-        />
+        <div className="flex shrink-0 items-center gap-2">
+          {selectedProgress && (
+            <LeagueGroupProgressIndicator
+              finished={selectedProgress.finished}
+              total={selectedProgress.total}
+              color={selectedProgressColor}
+            />
+          )}
+          <ChevronDown
+            className={`h-5 w-5 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </div>
       </button>
 
       {renderMenu()}
     </>
   );
 };
-

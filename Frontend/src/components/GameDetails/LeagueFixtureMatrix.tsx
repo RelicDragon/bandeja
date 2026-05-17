@@ -36,9 +36,9 @@ function FireOrStatic({ small }: { small?: boolean }) {
     return () => mq.removeEventListener('change', fn);
   }, []);
   if (reduced) {
-    return <Flame className={small ? 'h-4 w-4 text-orange-500' : 'h-5 w-5 text-orange-500'} aria-hidden />;
+    return <Flame className={small ? 'h-3.5 w-3.5 text-orange-500' : 'h-5 w-5 text-orange-500'} aria-hidden />;
   }
-  return <AnnouncedFireIcon className={small ? '[&>canvas]:max-w-4 [&>canvas]:max-h-4' : ''} />;
+  return <AnnouncedFireIcon className={small ? '[&>canvas]:max-w-3.5 [&>canvas]:max-h-3.5' : ''} />;
 }
 
 function pickPrimaryGame(games: Game[]): Game | undefined {
@@ -95,7 +95,7 @@ function matrixCellScheduleHints(
     (typeof game.club?.name === 'string' && game.club.name.trim()) ||
     (typeof game.court?.club?.name === 'string' && game.court.club.name.trim()) ||
     '';
-  const clubLine = game.clubId && rawClub ? trimClubDisplay(rawClub, 22) : null;
+  const clubLine = game.clubId && rawClub ? trimClubDisplay(rawClub, 18) : null;
   return { dateLine, clubLine };
 }
 
@@ -127,7 +127,7 @@ export const LeagueFixtureMatrix = ({
 
   if (teams.length < 2) {
     return (
-      <p className="rounded-2xl border border-dashed border-gray-200/90 bg-gray-50/40 px-5 py-10 text-center text-sm text-gray-500 backdrop-blur-sm dark:border-gray-700/80 dark:bg-gray-900/30 dark:text-gray-400">
+      <p className="rounded-xl border border-dashed border-gray-200/90 bg-gray-50/40 px-4 py-6 text-center text-xs text-gray-500 backdrop-blur-sm dark:border-gray-700/80 dark:bg-gray-900/30 dark:text-gray-400">
         {t('gameDetails.fixtureMatrixEmpty')}
       </p>
     );
@@ -135,7 +135,7 @@ export const LeagueFixtureMatrix = ({
 
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-3xl border border-gray-200/70 bg-gradient-to-br from-white via-white to-gray-50/90 shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_8px_32px_-12px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.03] dark:border-gray-800/90 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900/95 dark:shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_12px_40px_-16px_rgba(0,0,0,0.5)] dark:ring-white/[0.04] ${fillViewportHeight ? 'flex h-full min-h-0 min-w-0 flex-col' : ''}`}
+      className={`relative w-full overflow-hidden rounded-2xl border border-gray-200/70 bg-gradient-to-br from-white via-white to-gray-50/90 shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_6px_24px_-10px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.03] dark:border-gray-800/90 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900/95 dark:shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_10px_32px_-14px_rgba(0,0,0,0.5)] dark:ring-white/[0.04] ${fillViewportHeight ? 'flex h-full min-h-0 min-w-0 flex-col' : ''}`}
     >
       <div
         className="pointer-events-none absolute inset-y-0 right-0 z-20 w-10 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-gray-950 dark:via-gray-950/70"
@@ -148,17 +148,17 @@ export const LeagueFixtureMatrix = ({
           className={
             fillViewportHeight
               ? 'h-full min-h-0 max-h-none overflow-y-auto overscroll-y-contain'
-              : 'max-h-[min(70vh,640px)] overflow-y-auto overscroll-y-contain'
+              : 'max-h-[min(75vh,720px)] overflow-y-auto overscroll-y-contain'
           }
         >
-          <table className="w-max min-w-0 max-w-none border-separate border-spacing-0 text-sm">
+          <table className="w-max min-w-0 max-w-none border-separate border-spacing-0 text-xs">
             <thead>
               <tr>
                 <th
                   scope="col"
-                  className={`sticky left-0 top-0 z-[35] border-b border-r border-gray-200/80 bg-gradient-to-b from-gray-50/98 to-gray-100/95 px-3 py-4 text-left align-middle backdrop-blur-md dark:border-gray-700/80 dark:from-gray-900/98 dark:to-gray-950/95 ${stickyTeamShadow}`}
+                  className={`sticky left-0 top-0 z-[35] border-b border-r border-gray-200/80 bg-gradient-to-b from-gray-50/98 to-gray-100/95 px-2 py-2 text-left align-middle backdrop-blur-md dark:border-gray-700/80 dark:from-gray-900/98 dark:to-gray-950/95 ${stickyTeamShadow}`}
                 >
-                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500">
                     {t('gameDetails.team')}
                   </span>
                 </th>
@@ -166,13 +166,13 @@ export const LeagueFixtureMatrix = ({
                   <th
                     key={col.sig}
                     scope="col"
-                    className="sticky top-0 z-[28] border-b border-gray-200/70 bg-gradient-to-b from-gray-50/98 to-gray-100/90 px-2 py-3.5 text-center align-middle backdrop-blur-md dark:border-gray-800/80 dark:from-gray-900/98 dark:to-gray-950/90"
+                    className="sticky top-0 z-[28] border-b border-gray-200/70 bg-gradient-to-b from-gray-50/98 to-gray-100/90 px-1.5 py-2 text-center align-middle backdrop-blur-md dark:border-gray-800/80 dark:from-gray-900/98 dark:to-gray-950/90"
                   >
-                    <span className="mx-auto flex flex-col items-center justify-center gap-1 px-1">
+                    <span className="mx-auto flex flex-col items-center justify-center gap-0.5 px-0.5">
                       {col.label.split(' / ').map((segment, i) => (
                         <span
                           key={i}
-                          className="text-center text-[11px] font-semibold leading-snug tracking-tight text-gray-800 dark:text-gray-100"
+                          className="text-center text-[10px] font-semibold leading-tight tracking-tight text-gray-800 dark:text-gray-100"
                         >
                           {segment}
                         </span>
@@ -194,18 +194,18 @@ export const LeagueFixtureMatrix = ({
                 >
                   <th
                     scope="row"
-                    className={`sticky left-0 z-[25] border-b border-r border-gray-200/50 bg-white/92 px-3 py-2.5 text-left align-middle backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-950/92 ${stickyTeamShadow}`}
+                    className={`sticky left-0 z-[25] border-b border-r border-gray-200/50 bg-white/92 px-2 py-1.5 text-left align-middle backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-950/92 ${stickyTeamShadow}`}
                   >
-                    <div className="flex min-h-[52px] flex-col justify-center gap-1.5">
+                    <div className="flex min-h-[40px] flex-col justify-center gap-0.5">
                       {row.players.map((p) => (
-                        <div key={p.userId} className="flex items-center gap-2">
+                        <div key={p.userId} className="flex items-center gap-1.5">
                           <PlayerAvatar
                             player={(p.user ?? { id: p.userId }) as BasicUser}
                             showName={false}
                             inlineFace
                             extrasmall
                           />
-                          <span className="whitespace-nowrap text-[13px] font-medium tracking-tight text-gray-900 dark:text-gray-50">
+                          <span className="whitespace-nowrap text-xs font-medium tracking-tight text-gray-900 dark:text-gray-50">
                             {formatFixtureMatrixPlayerName(p.user)}
                           </span>
                         </div>
@@ -217,12 +217,12 @@ export const LeagueFixtureMatrix = ({
                       return (
                         <td
                           key={col.sig}
-                          className="border-b border-gray-100/80 bg-gray-100/25 p-1.5 align-middle dark:border-gray-800/50 dark:bg-gray-800/20"
+                          className="border-b border-gray-100/80 bg-gray-100/25 p-1 align-middle dark:border-gray-800/50 dark:bg-gray-800/20"
                           aria-hidden
                         >
-                          <div className="flex min-h-[52px] w-full items-center justify-center">
+                          <div className="flex min-h-[40px] w-full items-center justify-center">
                             <span
-                              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200/60 text-xs font-medium text-gray-400 dark:bg-gray-700/50 dark:text-gray-500"
+                              className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-200/60 text-[10px] font-medium text-gray-400 dark:bg-gray-700/50 dark:text-gray-500"
                               aria-hidden
                             >
                               —
@@ -254,7 +254,7 @@ export const LeagueFixtureMatrix = ({
 
                     const hintsBlock =
                       hasScheduleHints && (
-                        <div className="flex max-w-[6.5rem] flex-col gap-px text-center text-[9px] font-medium leading-snug text-gray-500 dark:text-gray-400">
+                        <div className="flex max-w-[5.5rem] flex-col gap-px text-center text-[8px] font-medium leading-tight text-gray-500 dark:text-gray-400">
                           {scheduleHints.dateLine && (
                             <span className="line-clamp-2 break-words">{scheduleHints.dateLine}</span>
                           )}
@@ -267,33 +267,33 @@ export const LeagueFixtureMatrix = ({
                     return (
                       <td
                         key={col.sig}
-                        className="border-b border-gray-100/80 p-1.5 align-middle dark:border-gray-800/50"
+                        className="border-b border-gray-100/80 p-1 align-middle dark:border-gray-800/50"
                       >
                         <button
                           type="button"
                           aria-label={aria}
                           onClick={() => onFixtureCell({ games: cellGames, row, col })}
-                          className={`flex min-h-[52px] w-full flex-col items-center justify-center rounded-2xl px-3 py-2 text-center transition-[transform,box-shadow,background-color] duration-200 ease-out ${
+                          className={`flex min-h-[40px] w-full flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition-[transform,box-shadow,background-color] duration-200 ease-out ${
                             cellGames.length === 0
                               ? 'cursor-pointer bg-gray-100/40 text-gray-400 hover:bg-gray-100/70 hover:ring-1 hover:ring-gray-200/70 dark:bg-gray-800/25 dark:text-gray-500 dark:hover:bg-gray-800/45 dark:hover:ring-gray-600/40'
                               : 'cursor-pointer bg-white/70 text-gray-900 shadow-sm ring-1 ring-gray-200/60 hover:bg-white hover:shadow-md hover:ring-gray-300/80 active:scale-[0.98] dark:bg-gray-900/40 dark:text-gray-100 dark:ring-gray-700/50 dark:hover:bg-gray-800/70 dark:hover:ring-gray-600/60'
                           }`}
                         >
                           {cellGames.length === 0 && (
-                            <span className="text-sm font-medium text-gray-300 dark:text-gray-600">
+                            <span className="text-xs font-medium text-gray-300 dark:text-gray-600">
                               {t('gameDetails.fixtureCellDash')}
                             </span>
                           )}
                           {cellGames.length > 0 && outcomeChar && (
                             <span
-                              className={`inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-full px-2.5 text-sm font-bold tabular-nums ${outcomeBadgeClass(outcomeChar)}`}
+                              className={`inline-flex h-7 min-w-[1.75rem] items-center justify-center rounded-full px-2 text-xs font-bold tabular-nums ${outcomeBadgeClass(outcomeChar)}`}
                             >
                               {outcomeChar}
                             </span>
                           )}
                           {cellGames.length > 0 && !outcomeChar && live && (
                             <div className="flex flex-col items-center justify-center gap-0.5">
-                              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-500/12 text-orange-600 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.25)] dark:bg-orange-400/10 dark:text-orange-300">
+                              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-500/12 text-orange-600 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.25)] dark:bg-orange-400/10 dark:text-orange-300">
                                 <FireOrStatic small />
                               </span>
                               {hintsBlock}
@@ -304,14 +304,14 @@ export const LeagueFixtureMatrix = ({
                               {hasScheduleHints ? (
                                 <div className="flex flex-col items-center justify-center">{hintsBlock}</div>
                               ) : (
-                                <span className="text-sm font-semibold text-gray-400 dark:text-gray-500">
+                                <span className="text-xs font-semibold text-gray-400 dark:text-gray-500">
                                   {t('gameDetails.fixtureCellDash')}
                                 </span>
                               )}
                             </>
                           )}
                           {stacked && (
-                            <span className="mt-1 max-w-full truncate text-[10px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                            <span className="mt-0.5 max-w-full truncate text-[9px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
                               {t('gameDetails.fixtureMultipleMatches', { count: cellGames.length - 1 })}
                             </span>
                           )}
