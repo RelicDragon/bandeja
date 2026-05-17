@@ -106,8 +106,6 @@ function participantStatusMergeRank(status: string): number {
     'IN_QUEUE',
     'INVITED',
     'GUEST',
-    'INVITE_DECLINED',
-    'INVITE_CANCELLED',
   ];
   const i = order.indexOf(status);
   return i === -1 ? 99 : i;
@@ -273,8 +271,39 @@ async function mergeUserChats(tx: Tx, survivorId: string, sourceId: string) {
   }
 }
 
+async function resolveOverlappingGameInviteOutcomes(tx: Tx, survivorId: string, sourceId: string) {
+  const sourceRows = await tx.gameInviteOutcome.findMany({ where: { userId: sourceId } });
+  for (const src of sourceRows) {
+    const dup = await tx.gameInviteOutcome.findUnique({
+      where: { gameId_userId: { gameId: src.gameId, userId: survivorId } },
+    });
+    if (dup) {
+      const keepSrc =
+        src.closedAt > dup.closedAt ||
+        (src.closedAt.getTime() === dup.closedAt.getTime() && src.outcome === 'DECLINED');
+      if (keepSrc) {
+        await tx.gameInviteOutcome.update({
+          where: { id: dup.id },
+          data: {
+            outcome: src.outcome,
+            invitedByUserId: src.invitedByUserId,
+            closedAt: src.closedAt,
+          },
+        });
+      }
+      await tx.gameInviteOutcome.delete({ where: { id: src.id } });
+    } else {
+      await tx.gameInviteOutcome.update({
+        where: { id: src.id },
+        data: { userId: survivorId },
+      });
+    }
+  }
+}
+
 async function preDeleteConflicts(tx: Tx, survivorId: string, sourceId: string) {
   await resolveOverlappingGameParticipants(tx, survivorId, sourceId);
+  await resolveOverlappingGameInviteOutcomes(tx, survivorId, sourceId);
 }
 
 async function clearSourceUniquesForTransfer(tx: Tx, survivor: SurvivorRow, source: SurvivorRow) {

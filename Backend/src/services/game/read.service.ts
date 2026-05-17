@@ -5,6 +5,7 @@ import { getUserGameNote, getUserNotesForGames } from '../userGameNote.service';
 import { InviteService } from '../invite.service';
 import { ReadReceiptService } from '../chat/readReceipt.service';
 import { attachReactionsToGames, fetchReactionsByGameIds } from './gameReaction.service';
+import { GAME_INVITE_OUTCOME_INCLUDE } from '../../utils/gameInviteOutcomeInclude';
 
 const getLeagueSeasonInclude = () => ({
   league: {
@@ -52,6 +53,9 @@ export const getBaseGameInclude = () => ({
         select: USER_SELECT_FIELDS,
       },
     },
+  },
+  inviteOutcomes: {
+    include: GAME_INVITE_OUTCOME_INCLUDE,
   },
   fixedTeams: {
     include: {

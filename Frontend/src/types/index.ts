@@ -6,11 +6,22 @@ export type ParticipantRole = 'OWNER' | 'ADMIN' | 'PARTICIPANT' | 'GUEST';
 export type ParticipantStatus =
   | 'GUEST'
   | 'INVITED'
-  | 'INVITE_DECLINED'
-  | 'INVITE_CANCELLED'
   | 'IN_QUEUE'
   | 'PLAYING'
   | 'NON_PLAYING';
+
+export type GameInviteOutcomeType = 'DECLINED' | 'CANCELLED';
+
+export interface GameInviteOutcome {
+  id: string;
+  gameId: string;
+  userId: string;
+  outcome: GameInviteOutcomeType;
+  invitedByUserId?: string | null;
+  closedAt: string;
+  user: BasicUser;
+  invitedByUser?: BasicUser | null;
+}
 export type Gender = 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
 export type GameStatus = 'ANNOUNCED' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
 export type ResultsStatus = 'NONE' | 'IN_PROGRESS' | 'FINAL';
@@ -414,6 +425,7 @@ export interface Game {
   priceType?: PriceType;
   priceCurrency?: PriceCurrency | null;
   participants: GameParticipant[];
+  inviteOutcomes?: GameInviteOutcome[];
   invites?: Invite[];
   joinQueues?: JoinQueue[];
   fixedTeams?: GameTeam[];

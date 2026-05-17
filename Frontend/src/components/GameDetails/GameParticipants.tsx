@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, Button, PlayerAvatar, InvitesList } from '@/components';
 import { Game, Invite, InviteStatus, JoinQueue } from '@/types';
-import { getSortedTerminalInviteParticipants } from '@/utils/gameInviteParticipant';
 import { Users, UserPlus, Sliders, CheckCircle, XCircle, Edit3, LayoutGrid, List } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PlayersCarousel } from './PlayersCarousel';
@@ -460,49 +459,6 @@ export const GameParticipants = ({
                   onShowPlayerList={!isUnauthorized ? onShowPlayerList : undefined}
                 />
               )}
-            </div>
-          );
-        })()}
-        {(() => {
-          const terminal = getSortedTerminalInviteParticipants(game.participants);
-          if (!terminal.length || isUnauthorized) return null;
-          return (
-            <div className="mt-4 pt-3 border-t border-gray-200/90 dark:border-gray-700/90">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-                {t('invites.sectionTerminalInvites')}
-              </h3>
-              <div className="space-y-2">
-                {terminal.map((participant) => (
-                  <div
-                    key={participant.id ?? participant.userId}
-                    className="flex items-center gap-3 rounded-xl border border-gray-200/60 bg-gray-50/70 p-2.5 opacity-80 dark:border-gray-700/60 dark:bg-gray-800/40"
-                  >
-                    <PlayerAvatar
-                      player={participant.user}
-                      isCurrentUser={participant.user.id === userId}
-                      extrasmall={true}
-                      showName={false}
-                      fullHideName={true}
-                    />
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      <p className="truncate text-sm font-medium text-gray-600 dark:text-gray-300">
-                        {participant.user.firstName} {participant.user.lastName}
-                      </p>
-                      <span
-                        className={
-                          participant.status === 'INVITE_DECLINED'
-                            ? 'inline-flex w-fit rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-800 dark:bg-rose-900/35 dark:text-rose-200'
-                            : 'inline-flex w-fit rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-slate-700/60 dark:text-slate-200'
-                        }
-                      >
-                        {participant.status === 'INVITE_DECLINED'
-                          ? t('invites.badgeDeclined')
-                          : t('invites.badgeInviteCancelled')}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           );
         })()}

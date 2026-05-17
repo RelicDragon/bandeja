@@ -45,7 +45,8 @@ import {
   matchTeamToSlots,
   type GameAvailabilityMatch,
 } from '@/utils/availability/gameMatch';
-import { participantBlocksInvitePlayerPicker, isTerminalInviteStatus } from '@/utils/gameInviteParticipant';
+import { participantBlocksInvitePlayerPicker } from '@/utils/gameInviteParticipant';
+import type { GameInviteOutcome } from '@/types';
 
 export interface PlayerListModalConfirmMeta {
   userTeamIdByReceiverId?: Record<string, string>;
@@ -106,7 +107,7 @@ export const PlayerListModal = ({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [inviteListKind, setInviteListKind] = useState<'all' | 'users' | 'teams'>('all');
   const [fetchedGameContext, setFetchedGameContext] = useState<GameAvailabilityContext | null>(null);
-  const [invitePickerGameParticipants, setInvitePickerGameParticipants] = useState<GameParticipant[]>([]);
+  const [invitePickerOutcomes, setInvitePickerOutcomes] = useState<GameInviteOutcome[]>([]);
   const listSegmentUsers = inviteListKind === 'all' || inviteListKind === 'users';
   const listSegmentTeams = inviteListKind === 'all' || inviteListKind === 'teams';
 
@@ -216,9 +217,11 @@ export const PlayerListModal = ({
             (participants as GameParticipant[]).forEach((p) => {
               if (participantBlocksInvitePlayerPicker(p)) participantIds.add(p.userId);
             });
-            setInvitePickerGameParticipants(participants as GameParticipant[]);
+            setInvitePickerOutcomes(
+              Array.isArray(gameData.inviteOutcomes) ? (gameData.inviteOutcomes as GameInviteOutcome[]) : [],
+            );
           } else {
-            setInvitePickerGameParticipants([]);
+            setInvitePickerOutcomes([]);
           }
           if (!inviteAsTrainerOnly && gameData.entityType === 'TRAINING' && !gameData.trainerId) {
             setCanInviteAsTrainer(true);
@@ -230,7 +233,7 @@ export const PlayerListModal = ({
             timeZone: gameData.club?.city?.timezone ?? gameData.city?.timezone ?? null,
           });
         } else {
-          setInvitePickerGameParticipants([]);
+          setInvitePickerOutcomes([]);
           setFetchedGameContext(null);
         }
 
@@ -259,7 +262,7 @@ export const PlayerListModal = ({
       } catch {
         setPlayers([]);
         setReadyTeams([]);
-        setInvitePickerGameParticipants([]);
+        setInvitePickerOutcomes([]);
         setFetchedGameContext(null);
         toast.error(t('errors.generic'));
       } finally {
@@ -303,14 +306,13 @@ export const PlayerListModal = ({
 
   const terminalInviteLabelByUserId = useMemo(() => {
     const m = new Map<string, { main: string; sub: string }>();
-    for (const pc of invitePickerGameParticipants) {
-      if (!isTerminalInviteStatus(pc.status)) continue;
+    for (const row of invitePickerOutcomes) {
       const main =
-        pc.status === 'INVITE_DECLINED' ? t('invites.badgeDeclined') : t('invites.badgeInviteCancelled');
-      m.set(pc.userId, { main, sub: t('invites.inviteAgainHint') });
+        row.outcome === 'DECLINED' ? t('invites.badgeDeclined') : t('invites.badgeInviteCancelled');
+      m.set(row.userId, { main, sub: t('invites.inviteAgainHint') });
     }
     return m;
-  }, [invitePickerGameParticipants, t]);
+  }, [invitePickerOutcomes, t]);
 
   const getAvailabilityMatch = useCallback(
     (entry: InviteListEntry): GameAvailabilityMatch => {

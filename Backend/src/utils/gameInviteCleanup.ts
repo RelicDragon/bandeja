@@ -1,8 +1,9 @@
 import { ParticipantRole, Prisma } from '@prisma/client';
 import prisma from '../config/database';
 import { ParticipantMessageHelper } from '../services/game/participantMessageHelper';
+import { deleteGameInviteOutcomesForGame } from './gameInviteOutcome';
 
-export const INVITE_CLEANUP_STATUSES = ['INVITED', 'INVITE_DECLINED', 'INVITE_CANCELLED'] as const;
+export const INVITE_CLEANUP_STATUSES = ['INVITED'] as const;
 
 type Tx = Prisma.TransactionClient;
 
@@ -57,6 +58,8 @@ export async function cleanupInviteParticipantsForEndedGame(
       },
     });
   }
+
+  await deleteGameInviteOutcomesForGame(gameId, tx);
 
   if (!tx) {
     emitInviteCleanupSockets(gameId, nonOwner);

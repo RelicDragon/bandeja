@@ -1,5 +1,9 @@
 import prisma from '../config/database';
-import { ChatType, EntityType, ParticipantRole } from '@prisma/client';
+import { ChatType, EntityType, GameInviteOutcomeType, ParticipantRole } from '@prisma/client';
+import {
+  deleteGameInviteOutcome,
+  upsertGameInviteOutcome,
+} from '../utils/gameInviteOutcome';
 import { createSystemMessage } from '../controllers/chat.controller';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
@@ -19,40 +23,29 @@ export interface InviteActionResult {
   invite?: any;
 }
 
+type InviteOutcomeSocketPayload = {
+  userId: string;
+  outcome: GameInviteOutcomeType;
+  closedAt: string;
+  invitedByUserId: string | null;
+};
+
 async function emitDeclineCancelSockets(
   gameId: string | null,
   participantId: string,
   userId: string,
   invitedByUserId: string | null,
-  participantPatch: { status: string; inviteClosedAt: string | null }
+  extras:
+    | { participantPatch: { id?: string; userId: string; status: string; inviteClosedAt?: string | null } }
+    | { removedParticipantId: string; removedUserId: string; inviteOutcome: InviteOutcomeSocketPayload }
 ) {
   const socketService = (global as any).socketService as
     | {
-        emitInviteDeleted: (
-          receiverId: string,
-          inviteId: string,
-          gameId?: string,
-          extras?: {
-            participantPatch?: {
-              id?: string;
-              userId: string;
-              status: string;
-              inviteClosedAt?: string | null;
-            };
-          }
-        ) => void;
+        emitInviteDeleted: (receiverId: string, inviteId: string, gameId?: string, extras?: unknown) => void;
         emitGameUpdate: (a: string, b: string, c?: unknown, d?: boolean) => Promise<void>;
       }
     | undefined;
   if (!socketService) return;
-  const extras = {
-    participantPatch: {
-      id: participantId,
-      userId,
-      status: participantPatch.status,
-      inviteClosedAt: participantPatch.inviteClosedAt,
-    },
-  };
   socketService.emitInviteDeleted(userId, participantId, gameId || undefined, extras);
   if (invitedByUserId) {
     socketService.emitInviteDeleted(invitedByUserId, participantId, gameId || undefined, extras);
@@ -60,6 +53,33 @@ async function emitDeclineCancelSockets(
   if (gameId) {
     await socketService.emitGameUpdate(gameId, userId, undefined, false);
   }
+}
+
+async function recordInviteOutcomeAndRemoveParticipant(
+  participant: { id: string; gameId: string; userId: string; invitedByUserId: string | null },
+  outcome: GameInviteOutcomeType
+): Promise<InviteOutcomeSocketPayload> {
+  const closedAt = new Date();
+  const record = await prisma.$transaction(async (tx) => {
+    const row = await upsertGameInviteOutcome(
+      {
+        gameId: participant.gameId,
+        userId: participant.userId,
+        outcome,
+        invitedByUserId: participant.invitedByUserId,
+        closedAt,
+      },
+      tx
+    );
+    await tx.gameParticipant.delete({ where: { id: participant.id } });
+    return row;
+  });
+  return {
+    userId: record.userId,
+    outcome: record.outcome,
+    closedAt: record.closedAt.toISOString(),
+    invitedByUserId: record.invitedByUserId,
+  };
 }
 
 export class InviteService {
@@ -122,9 +142,9 @@ export class InviteService {
   }
 
   static async deleteInvitesForUserInGame(gameId: string, userId: string): Promise<void> {
-    const inviteStatuses = ['INVITED', 'INVITE_DECLINED', 'INVITE_CANCELLED'] as const;
+    await deleteGameInviteOutcome(gameId, userId);
     const participants = await prisma.gameParticipant.findMany({
-      where: { gameId, userId, status: { in: [...inviteStatuses] } },
+      where: { gameId, userId, status: 'INVITED' },
       select: { id: true, role: true, userId: true, invitedByUserId: true, gameId: true },
     });
     if (participants.length === 0) return;
@@ -443,17 +463,22 @@ export class InviteService {
         console.error('Failed to create system message for invite decline:', error);
       }
     }
-    const closedAt = new Date();
-    await prisma.gameParticipant.update({
-      where: { id: participantId },
-      data: {
-        status: 'INVITE_DECLINED',
-        inviteClosedAt: closedAt,
+    if (!participant.gameId) {
+      return { success: false, message: 'errors.invites.notFound' };
+    }
+    const inviteOutcome = await recordInviteOutcomeAndRemoveParticipant(
+      {
+        id: participantId,
+        gameId: participant.gameId,
+        userId: participant.userId,
+        invitedByUserId: participant.invitedByUserId,
       },
-    });
+      GameInviteOutcomeType.DECLINED
+    );
     await emitDeclineCancelSockets(participant.gameId, participantId, participant.userId, participant.invitedByUserId, {
-      status: 'INVITE_DECLINED',
-      inviteClosedAt: closedAt.toISOString(),
+      removedParticipantId: participantId,
+      removedUserId: participant.userId,
+      inviteOutcome,
     });
     return { success: true, message: 'invites.declinedSuccessfully' };
   }
@@ -476,7 +501,6 @@ export class InviteService {
     if (participant.invitedByUserId !== cancellerUserId) {
       return { success: false, message: 'errors.invites.onlySenderCanCancel' };
     }
-    let terminalPatch: { status: string; inviteClosedAt: string | null };
     if (participant.role === ParticipantRole.OWNER) {
       await prisma.gameParticipant.update({
         where: { id: participantId },
@@ -489,25 +513,33 @@ export class InviteService {
           inviteClosedAt: null,
         },
       });
-      terminalPatch = { status: 'NON_PLAYING', inviteClosedAt: null };
-    } else {
-      const closedAt = new Date();
-      await prisma.gameParticipant.update({
-        where: { id: participantId },
-        data: {
-          status: 'INVITE_CANCELLED',
-          inviteClosedAt: closedAt,
+      await emitDeclineCancelSockets(participant.gameId, participantId, participant.userId, participant.invitedByUserId, {
+        participantPatch: {
+          id: participantId,
+          userId: participant.userId,
+          status: 'NON_PLAYING',
+          inviteClosedAt: null,
         },
       });
-      terminalPatch = { status: 'INVITE_CANCELLED', inviteClosedAt: closedAt.toISOString() };
+      return { success: true, message: 'invites.cancelledSuccessfully' };
     }
-    await emitDeclineCancelSockets(
-      participant.gameId,
-      participantId,
-      participant.userId,
-      participant.invitedByUserId,
-      terminalPatch
+    if (!participant.gameId) {
+      return { success: false, message: 'errors.invites.notFound' };
+    }
+    const inviteOutcome = await recordInviteOutcomeAndRemoveParticipant(
+      {
+        id: participantId,
+        gameId: participant.gameId,
+        userId: participant.userId,
+        invitedByUserId: participant.invitedByUserId,
+      },
+      GameInviteOutcomeType.CANCELLED
     );
+    await emitDeclineCancelSockets(participant.gameId, participantId, participant.userId, participant.invitedByUserId, {
+      removedParticipantId: participantId,
+      removedUserId: participant.userId,
+      inviteOutcome,
+    });
     return { success: true, message: 'invites.cancelledSuccessfully' };
   }
 }

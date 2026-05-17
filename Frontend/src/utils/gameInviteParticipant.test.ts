@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { Game, GameParticipant } from '@/types';
+import type { Game, GameInviteOutcome, GameParticipant } from '@/types';
 import {
-  getSortedTerminalInviteParticipants,
+  getSortedInviteOutcomes,
   isPendingGameInvite,
-  isTerminalInviteStatus,
   mergeGameWithInviteDeletedPayload,
   participantBlocksInvitePlayerPicker,
-  sortParticipantsForGameDetails,
 } from './gameInviteParticipant';
 
 function p(over: Partial<GameParticipant> & Pick<GameParticipant, 'userId' | 'status'>): GameParticipant {
@@ -18,66 +16,56 @@ function p(over: Partial<GameParticipant> & Pick<GameParticipant, 'userId' | 'st
   } as GameParticipant;
 }
 
-describe('gameInviteParticipant', () => {
-  it('isTerminalInviteStatus', () => {
-    expect(isTerminalInviteStatus('INVITE_DECLINED')).toBe(true);
-    expect(isTerminalInviteStatus('INVITE_CANCELLED')).toBe(true);
-    expect(isTerminalInviteStatus('INVITED')).toBe(false);
-    expect(isTerminalInviteStatus('PLAYING')).toBe(false);
-  });
+function outcome(over: Partial<GameInviteOutcome> & Pick<GameInviteOutcome, 'userId' | 'outcome'>): GameInviteOutcome {
+  return {
+    id: over.id ?? `o-${over.userId}`,
+    gameId: over.gameId ?? 'g1',
+    closedAt: over.closedAt ?? '2020-01-01T00:00:00.000Z',
+    user: over.user ?? ({ id: over.userId } as GameInviteOutcome['user']),
+    ...over,
+  } as GameInviteOutcome;
+}
 
+describe('gameInviteParticipant', () => {
   it('isPendingGameInvite', () => {
     expect(isPendingGameInvite({ status: 'INVITED' })).toBe(true);
-    expect(isPendingGameInvite({ status: 'INVITE_DECLINED' })).toBe(false);
+    expect(isPendingGameInvite({ status: 'PLAYING' })).toBe(false);
   });
 
   it('participantBlocksInvitePlayerPicker', () => {
     expect(participantBlocksInvitePlayerPicker({ status: 'INVITED' })).toBe(true);
     expect(participantBlocksInvitePlayerPicker({ status: 'PLAYING' })).toBe(true);
-    expect(participantBlocksInvitePlayerPicker({ status: 'INVITE_DECLINED' })).toBe(false);
-    expect(participantBlocksInvitePlayerPicker({ status: 'INVITE_CANCELLED' })).toBe(false);
   });
 
-  it('sortParticipantsForGameDetails puts terminal invites last', () => {
-    const a = p({ userId: 'u1', status: 'PLAYING' });
-    const b = p({ userId: 'u2', status: 'INVITE_DECLINED', inviteClosedAt: '2020-01-02T00:00:00.000Z' });
-    const c = p({ userId: 'u3', status: 'INVITE_CANCELLED', inviteClosedAt: '2020-01-03T00:00:00.000Z' });
-    const sorted = sortParticipantsForGameDetails([b, a, c]);
-    expect(sorted.map((x) => x.userId)).toEqual(['u1', 'u2', 'u3']);
+  it('getSortedInviteOutcomes sorts by closedAt', () => {
+    const later = outcome({ userId: 'a', outcome: 'DECLINED', closedAt: '2020-01-02T00:00:00.000Z' });
+    const earlier = outcome({ userId: 'b', outcome: 'CANCELLED', closedAt: '2020-01-01T00:00:00.000Z' });
+    expect(getSortedInviteOutcomes([later, earlier]).map((x) => x.userId)).toEqual(['b', 'a']);
   });
 
-  it('getSortedTerminalInviteParticipants sorts by inviteClosedAt then joinedAt', () => {
-    const later = p({
-      userId: 'a',
-      status: 'INVITE_DECLINED',
-      inviteClosedAt: '2020-01-02T00:00:00.000Z',
-      joinedAt: '2019-01-01T00:00:00.000Z',
-    });
-    const earlier = p({
-      userId: 'b',
-      status: 'INVITE_CANCELLED',
-      inviteClosedAt: '2020-01-01T00:00:00.000Z',
-      joinedAt: '2020-06-01T00:00:00.000Z',
-    });
-    const out = getSortedTerminalInviteParticipants([later, earlier]);
-    expect(out.map((x) => x.userId)).toEqual(['b', 'a']);
-  });
-
-  it('mergeGameWithInviteDeletedPayload merges participantPatch by id', () => {
+  it('mergeGameWithInviteDeletedPayload removes participant and adds inviteOutcome', () => {
     const game: Game = {
       id: 'g1',
       participants: [p({ id: 'gp1', userId: 'u1', status: 'INVITED' })],
+      inviteOutcomes: [],
     } as Game;
     const next = mergeGameWithInviteDeletedPayload(game, {
       inviteId: 'gp1',
       gameId: 'g1',
-      participantPatch: { id: 'gp1', userId: 'u1', status: 'INVITE_DECLINED', inviteClosedAt: '2020-01-01T00:00:00.000Z' },
+      removedParticipantId: 'gp1',
+      removedUserId: 'u1',
+      inviteOutcome: {
+        userId: 'u1',
+        outcome: 'DECLINED',
+        closedAt: '2020-01-01T00:00:00.000Z',
+        invitedByUserId: null,
+      },
     });
-    expect(next.participants?.[0].status).toBe('INVITE_DECLINED');
-    expect(next.participants?.[0].inviteClosedAt).toBe('2020-01-01T00:00:00.000Z');
+    expect(next.participants).toHaveLength(0);
+    expect(next.inviteOutcomes?.[0].outcome).toBe('DECLINED');
   });
 
-  it('mergeGameWithInviteDeletedPayload merges participantPatch by userId when id omitted', () => {
+  it('mergeGameWithInviteDeletedPayload merges participantPatch by userId', () => {
     const game: Game = {
       id: 'g1',
       participants: [p({ id: 'gp1', userId: 'u1', status: 'INVITED' })],
@@ -88,26 +76,5 @@ describe('gameInviteParticipant', () => {
       participantPatch: { userId: 'u1', status: 'IN_QUEUE', inviteClosedAt: null },
     });
     expect(next.participants?.[0].status).toBe('IN_QUEUE');
-  });
-
-  it('mergeGameWithInviteDeletedPayload ignores wrong gameId', () => {
-    const game: Game = { id: 'g1', participants: [p({ userId: 'u1', status: 'INVITED' })] } as Game;
-    const next = mergeGameWithInviteDeletedPayload(game, {
-      inviteId: 'x',
-      gameId: 'other',
-      participantPatch: { userId: 'u1', status: 'INVITE_DECLINED' },
-    });
-    expect(next.participants?.[0].status).toBe('INVITED');
-  });
-
-  it('mergeGameWithInviteDeletedPayload merges full participant', () => {
-    const game: Game = { id: 'g1', participants: [p({ id: 'gp1', userId: 'u1', status: 'INVITED' })] } as Game;
-    const incoming = p({ id: 'gp1', userId: 'u1', status: 'INVITE_CANCELLED', inviteClosedAt: '2020-01-01T00:00:00.000Z' });
-    const next = mergeGameWithInviteDeletedPayload(game, {
-      inviteId: 'gp1',
-      gameId: 'g1',
-      participant: incoming,
-    });
-    expect(next.participants?.[0].status).toBe('INVITE_CANCELLED');
   });
 });

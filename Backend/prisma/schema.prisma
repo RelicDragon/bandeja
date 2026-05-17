@@ -76,6 +76,8 @@ model User {
   chatMessages               ChatMessage[]
   participateInGames         GameParticipant[]    @relation("ParticipantUser")
   participantsInvitedByMe     GameParticipant[]    @relation("ParticipantInvitedBy")
+  gameInviteOutcomes         GameInviteOutcome[]  @relation("GameInviteOutcomeUser")
+  gameInviteOutcomesSent     GameInviteOutcome[]  @relation("GameInviteOutcomeInvitedBy")
   userChats1                 UserChat[]           @relation("UserChat1")
   userChats2                 UserChat[]           @relation("UserChat2")
   pinnedUserChats            PinnedUserChat[]
@@ -429,6 +431,7 @@ model Game {
   leagueRound            LeagueRound?        @relation(fields: [leagueRoundId], references: [id], onDelete: SetNull)
   leagueGroup            LeagueGroup?        @relation(fields: [leagueGroupId], references: [id], onDelete: SetNull)
   participants           GameParticipant[]
+  inviteOutcomes         GameInviteOutcome[]
   rounds                 Round[]
   outcomes               GameOutcome[]
   fixedTeams             GameTeam[]
@@ -582,6 +585,23 @@ model GameParticipant {
   @@index([status])
   @@index([activeMatchId])
   @@index([inviteUserTeamId])
+}
+
+/// Declined/cancelled game invites (user is not a participant while this row exists).
+model GameInviteOutcome {
+  id              String                @id @default(cuid())
+  gameId          String
+  userId          String
+  outcome         GameInviteOutcomeType
+  invitedByUserId String?
+  closedAt        DateTime              @default(now())
+  game            Game                  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user            User                  @relation("GameInviteOutcomeUser", fields: [userId], references: [id], onDelete: Cascade)
+  invitedByUser   User?                 @relation("GameInviteOutcomeInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([gameId, userId])
+  @@index([gameId])
+  @@index([userId])
 }
 
 model Round {
@@ -1278,11 +1298,18 @@ enum ParticipantRole {
 enum ParticipantStatus {
   GUEST
   INVITED
+  /// @deprecated Stored in GameInviteOutcome; kept for DB enum compatibility
   INVITE_DECLINED
+  /// @deprecated Stored in GameInviteOutcome; kept for DB enum compatibility
   INVITE_CANCELLED
   IN_QUEUE
   PLAYING
   NON_PLAYING
+}
+
+enum GameInviteOutcomeType {
+  DECLINED
+  CANCELLED
 }
 
 enum MessageState {

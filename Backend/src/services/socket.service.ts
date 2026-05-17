@@ -1008,12 +1008,7 @@ class SocketService {
       }
       
       const invitedParticipants =
-        gameToEmit.participants?.filter(
-          (p: any) =>
-            p.status === 'INVITED' ||
-            p.status === 'INVITE_DECLINED' ||
-            p.status === 'INVITE_CANCELLED'
-        ) || [];
+        gameToEmit.participants?.filter((p: any) => p.status === 'INVITED') || [];
       invitedParticipants.forEach((p: any) => userIds.add(p.userId || p.user?.id));
       
       console.log(`[SocketService] Game ${gameId} - isPublic: ${gameToEmit.isPublic}, participant/userIds:`, Array.from(userIds));
