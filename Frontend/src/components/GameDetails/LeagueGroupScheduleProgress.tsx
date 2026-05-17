@@ -15,7 +15,6 @@ function ProgressRing({
   ariaLabelKey,
   onClick,
   isSelected,
-  labelOnly,
 }: {
   finished: number;
   total: number;
@@ -24,7 +23,6 @@ function ProgressRing({
   ariaLabelKey: string;
   onClick?: () => void;
   isSelected?: boolean;
-  labelOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const radius = (RING_SIZE - STROKE) / 2;
@@ -33,7 +31,7 @@ function ProgressRing({
   const dashOffset = circumference * (1 - ratio);
   const center = RING_SIZE / 2;
 
-  const title = labelOnly ? label : t(ariaLabelKey, { name: label, finished, total });
+  const title = t(ariaLabelKey, { name: label, finished, total });
   const style = {
     borderLeftWidth: 3,
     borderLeftColor: color,
@@ -41,15 +39,10 @@ function ProgressRing({
     ...(isSelected ? { boxShadow: `0 0 0 2px ${color}` } : {}),
   } as const;
   const className =
-    'shrink-0 rounded-lg border border-gray-200/90 px-2 text-left shadow-sm transition dark:border-gray-700/90' +
-    (labelOnly ? ' flex items-center py-2.5' : ' py-1.5') +
+    'shrink-0 rounded-lg border border-gray-200/90 px-2 py-1.5 text-left shadow-sm transition dark:border-gray-700/90' +
     (onClick ? ' cursor-pointer hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600' : '');
 
-  const content = labelOnly ? (
-    <span className="block max-w-[5rem] truncate text-[10px] font-semibold leading-tight text-gray-700 dark:text-gray-300">
-      {label}
-    </span>
-  ) : (
+  const content = (
     <>
       <span className="mb-1 block max-w-[5rem] truncate text-[10px] font-semibold leading-tight text-gray-700 dark:text-gray-300">
         {label}
@@ -126,6 +119,10 @@ export const LeagueGroupScheduleProgress = ({
 }: LeagueGroupScheduleProgressProps) => {
   const { t } = useTranslation();
   const rows = progress.filter((row) => row.total > 0);
+  const allProgress = rows.reduce(
+    (acc, row) => ({ finished: acc.finished + row.finished, total: acc.total + row.total }),
+    { finished: 0, total: 0 }
+  );
   if (rows.length === 0) return null;
 
   const groupById = new Map(groups.map((g) => [g.id, g]));
@@ -137,12 +134,11 @@ export const LeagueGroupScheduleProgress = ({
       {showAllChip && (
         <ProgressRing
           key={allGroupId}
-          finished={0}
-          total={0}
+          finished={allProgress.finished}
+          total={allProgress.total}
           color={ALL_GROUPS_COLOR}
           label={t('gameDetails.planner.scopeAll')}
           ariaLabelKey={ariaLabelKey}
-          labelOnly
           isSelected={selectedGroupId === allGroupId}
           onClick={() => onGroupSelect!(allGroupId)}
         />
