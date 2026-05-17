@@ -46,7 +46,7 @@ export const LeagueFixedTeamsSection = ({ game }: LeagueFixedTeamsSectionProps) 
     <div
       className={`min-h-[48px] p-3 flex items-center justify-center ${
         highlight
-          ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-500 rounded-lg'
+          ? 'bg-emerald-50/90 dark:bg-emerald-950/35 border-2 border-emerald-200/90 dark:border-emerald-800/50 rounded-lg'
           : isTie
           ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-400 dark:border-blue-500 rounded-lg'
           : ''
@@ -67,9 +67,9 @@ export const LeagueFixedTeamsSection = ({ game }: LeagueFixedTeamsSectionProps) 
     </div>
   );
 
-  const renderBadge = (show: boolean, color: 'yellow' | 'blue') => {
+  const renderBadge = (show: boolean, color: 'emerald' | 'blue') => {
     if (!show) return null;
-    const colorClass = color === 'yellow' ? 'bg-yellow-400 dark:bg-yellow-500' : 'bg-blue-400 dark:bg-blue-500';
+    const colorClass = color === 'emerald' ? 'bg-emerald-500 dark:bg-emerald-600' : 'bg-blue-400 dark:bg-blue-500';
     return (
       <div className={`absolute -top-1.5 -right-1.5 w-7 h-7 rounded-full ${colorClass} border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-lg`}>
         <Award size={16} className="text-white" fill="white" />
@@ -81,7 +81,7 @@ export const LeagueFixedTeamsSection = ({ game }: LeagueFixedTeamsSectionProps) 
     <div className="flex items-center justify-center w-full gap-4 py-2">
       <div className="flex justify-start relative">
         {renderTeam(teamAPlayers, winner === 'teamA')}
-        {renderBadge(isFinal && winner === 'teamA', 'yellow')}
+        {renderBadge(isFinal && winner === 'teamA', 'emerald')}
         {renderBadge(isFinal && isTie, 'blue')}
       </div>
 
@@ -91,7 +91,7 @@ export const LeagueFixedTeamsSection = ({ game }: LeagueFixedTeamsSectionProps) 
 
       <div className="flex justify-start relative">
         {renderTeam(teamBPlayers, winner === 'teamB')}
-        {renderBadge(isFinal && winner === 'teamB', 'yellow')}
+        {renderBadge(isFinal && winner === 'teamB', 'emerald')}
         {renderBadge(isFinal && isTie, 'blue')}
       </div>
     </div>

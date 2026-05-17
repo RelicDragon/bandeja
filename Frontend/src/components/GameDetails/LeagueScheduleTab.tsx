@@ -26,6 +26,8 @@ import { LeagueGroupScheduleProgress } from './LeagueGroupScheduleProgress';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
 import { leagueGroupGameProgressFromRounds, leagueGroupUserGameProgressFromRounds } from '@/utils/leagueGroupGameProgress';
 import { formatRecreateSeasonTableSummary } from '@/utils/leagueRecreateSeasonSummary';
+import type { LeagueGameCardLayout } from '@/types/leagueGameCardLayout';
+import { LeagueGameCardLayoutSwitch } from './LeagueGameCardLayoutSwitch';
 
 interface LeagueScheduleTabProps {
   leagueSeasonId: string;
@@ -73,6 +75,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const [selectedRoundType, setSelectedRoundType] = useState<RoundTypeFilterValue>('REGULAR');
   const [groupsInitialized, setGroupsInitialized] = useState(false);
   const [loadedRoundIds, setLoadedRoundIds] = useState<Set<string>>(new Set());
+  const [gameCardLayout, setGameCardLayout] = useState<LeagueGameCardLayout>('type3');
   const canManageGroups = canEdit && hasGroups;
   const canAddRound = canEdit && (rounds.length > 0 || (hasGroups && participantCount > 0));
 
@@ -681,9 +684,17 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
             )}
           </div>
         </Card>
-      ) : resolvedScheduleView === 'my' ? (
+      ) : resolvedScheduleView === 'my' || resolvedScheduleView === 'list' ? (
+        <>
+          <LeagueGameCardLayoutSwitch
+            value={gameCardLayout}
+            onChange={setGameCardLayout}
+            layoutId={`league-game-card-layout-${leagueSeasonId}`}
+          />
+          {resolvedScheduleView === 'my' ? (
         <LeagueScheduleMyGamesList
           filteredRounds={filteredRounds}
+          cardLayout={gameCardLayout}
           userId={user?.id}
           canEdit={canEdit}
           selectedGameChatId={selectedGameChatId}
@@ -740,12 +751,15 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
                 onNoteSaved={fetchRounds}
                 selectedGameChatId={selectedGameChatId}
                 onChatGameSelect={onChatGameSelect}
+                cardLayout={gameCardLayout}
                 t={t}
               />
             );
           })}
         </div>
-      )}
+          )}
+        </>
+      ) : null}
 
       {editingGame && (
         <EditLeagueGameTeamsModal

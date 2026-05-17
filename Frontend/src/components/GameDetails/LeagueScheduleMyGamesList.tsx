@@ -6,8 +6,10 @@ import { resultsApi, type RoundData } from '@/api/results';
 import { LeagueGameCard } from './LeagueGameCard';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
 import { useDesktop } from '@/hooks/useDesktop';
+import type { LeagueGameCardLayout } from '@/types/leagueGameCardLayout';
 
 interface LeagueScheduleMyGamesListProps {
+  cardLayout: LeagueGameCardLayout;
   filteredRounds: LeagueRound[];
   userId: string | undefined;
   canEdit: boolean;
@@ -30,6 +32,7 @@ export function LeagueScheduleMyGamesList({
   onOpenGame,
   onDeleteGame,
   onNoteSaved,
+  cardLayout,
   t,
 }: LeagueScheduleMyGamesListProps) {
   const isDesktop = useDesktop();
@@ -103,6 +106,7 @@ export function LeagueScheduleMyGamesList({
           <div key={game.id} className="space-y-1">
             <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">{metaLine}</p>
             <LeagueGameCard
+              cardLayout={cardLayout}
               game={game}
               onEdit={canEditGames ? () => onEditGame(game) : undefined}
               onOpen={() => onOpenGame(game)}

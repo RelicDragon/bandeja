@@ -1,7 +1,8 @@
-import { Edit2, ExternalLink, Award, MapPin, Calendar, Trash2, Plane, MessageCircle, BookmarkPlus, Bookmark } from 'lucide-react';
+import { Edit2, ExternalLink, MapPin, Calendar, Trash2, Plane, MessageCircle, BookmarkPlus, Bookmark } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useMemo, useState } from 'react';
-import { PlayerAvatar, ConfirmationModal } from '@/components';
+import { ConfirmationModal } from '@/components';
+import { LeagueGameCardBoard } from '@/components/GameDetails/LeagueGameCardBoard';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { Game } from '@/types';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
@@ -13,10 +14,12 @@ import { gamesApi } from '@/api/games';
 import toast from 'react-hot-toast';
 import { RoundData } from '@/api/results';
 import { useNavigate } from 'react-router-dom';
-import { getRules, isSuperTieBreakDeciderRow } from '@/utils/scoring';
+import { getRules } from '@/utils/scoring';
+import type { LeagueGameCardLayout } from '@/types/leagueGameCardLayout';
 
 interface LeagueGameCardProps {
   game: Game;
+  cardLayout?: LeagueGameCardLayout;
   onEdit?: () => void;
   onOpen?: () => void;
   onChat?: (gameId: string) => void;
@@ -41,6 +44,7 @@ export const LeagueGameCard = ({
   allRounds,
   onDelete,
   onNoteSaved,
+  cardLayout = 'type3',
 }: LeagueGameCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -196,7 +200,7 @@ export const LeagueGameCard = ({
   };
 
   return (
-    <div className="relative pl-2 pt-2 pb-6 pr-2 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className="relative pl-2 pt-1.5 pb-2 pr-2 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       {showLeagueGroupSideAccent && game.leagueGroup && (
         <div
           className="absolute left-0 top-0 bottom-0 w-1"
@@ -218,120 +222,18 @@ export const LeagueGameCard = ({
         </div>
       )}
 
-      <div className="flex items-center justify-center w-full gap-3">
-        <div className="flex justify-start relative">
-          <div
-            className={`min-h-[20px] p-2 flex items-center justify-center ${
-              winner === 'teamA' 
-                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-500 rounded-lg' 
-                : isTie 
-                ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-400 dark:border-blue-500 rounded-lg' 
-                : ''
-            }`}
-          >
-            <div className="flex gap-5 justify-center">
-              {teamAPlayers.map(player => (
-                <div key={player.id}>
-                  <PlayerAvatar
-                    player={player}
-                    draggable={false}
-                    showName={true}
-                    extrasmall={true}
-                    removable={false}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-          {isFinal && winner === 'teamA' && (
-            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-yellow-400 dark:bg-yellow-500 border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-lg">
-              <Award size={14} className="text-white" fill="white" />
-            </div>
-          )}
-          {isFinal && isTie && (
-            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-blue-400 dark:bg-blue-500 border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-lg">
-              <Award size={14} className="text-white" fill="white" />
-            </div>
-          )}
-        </div>
-
-        {isFinal && allRounds && allRounds.length > 0 && allRounds.some(round => 
-          round.matches && round.matches.some(match => 
-            match.sets && match.sets.some(set => set.teamAScore > 0 || set.teamBScore > 0)
-          )
-        ) ? (
-          <div className="flex flex-col items-center gap-1 -ml-2 -mr-2 max-h-32 overflow-y-auto">
-            {allRounds.flatMap((round, roundIndex) => 
-              round.matches?.flatMap((match, matchIndex) => 
-                match.sets?.map((set, setIndex) => {
-                  if (set.teamAScore === 0 && set.teamBScore === 0) return null;
-                  return (
-                    <div
-                      key={`r${roundIndex}-m${matchIndex}-s${setIndex}`}
-                      className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 flex flex-col items-center gap-0"
-                    >
-                      <span>
-                        {set.teamAScore}:{set.teamBScore}
-                        {set.role === 'EXTRA_GAMES' || set.role === 'EXTRA_BALLS' ? (
-                          <span className="text-violet-500">*</span>
-                        ) : null}
-                      </span>
-                      {set.isTieBreak && (
-                        <span className="text-[9px] font-medium text-primary-600 dark:text-primary-400 leading-none">
-                          {isSuperTieBreakDeciderRow(leagueCardRules, setIndex, set.isTieBreak)
-                            ? t('gameResults.superTieBreakAbbr')
-                            : t('gameResults.tieBreakAbbr')}
-                        </span>
-                      )}
-                    </div>
-                  );
-                }) || []
-              ) || []
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center">
-            <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-              VS
-            </div>
-          </div>
-        )}
-
-        <div className="flex justify-start relative">
-          <div
-            className={`min-h-[20px] p-2 flex items-center justify-center ${
-              winner === 'teamB' 
-                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-500 rounded-lg' 
-                : isTie 
-                ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-400 dark:border-blue-500 rounded-lg' 
-                : ''
-            }`}
-          >
-            <div className="flex gap-5 justify-center">
-              {teamBPlayers.map(player => (
-                <div key={player.id}>
-                  <PlayerAvatar
-                    player={player}
-                    draggable={false}
-                    showName={true}
-                    extrasmall={true}
-                    removable={false}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-          {isFinal && winner === 'teamB' && (
-            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-yellow-400 dark:bg-yellow-500 border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-lg">
-              <Award size={14} className="text-white" fill="white" />
-            </div>
-          )}
-          {isFinal && isTie && (
-            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-blue-400 dark:bg-blue-500 border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-lg">
-              <Award size={14} className="text-white" fill="white" />
-            </div>
-          )}
-        </div>
+      <div className={`w-full ${showGroupTag && game.leagueGroup ? 'mt-5' : ''}`}>
+        <LeagueGameCardBoard
+          layout={cardLayout}
+          teamAPlayers={teamAPlayers}
+          teamBPlayers={teamBPlayers}
+          winner={winner}
+          isTie={isTie}
+          isFinal={isFinal}
+          allRounds={allRounds}
+          leagueCardRules={leagueCardRules}
+          t={t}
+        />
       </div>
 
       {(game.club?.name || game.court?.name || (game.timeIsSet && game.startTime)) && (
@@ -387,7 +289,7 @@ export const LeagueGameCard = ({
       )}
 
       {(onOpen || canEdit || canDelete || onChat) && (
-        <div className="absolute bottom-2 right-2 flex items-center gap-2 z-10">
+        <div className="flex items-center justify-end gap-1.5">
           {canDelete && (
             <button
               onClick={(e) => {
