@@ -129,7 +129,7 @@ export const LeagueGroupScheduleProgress = ({
   const showAllChip = Boolean(onGroupSelect && groups.length > 1);
 
   return (
-    <div className="w-full min-w-0 overflow-x-auto pb-0.5 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex w-full min-w-0 justify-center overflow-x-auto pb-0.5 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div className="flex w-max gap-2">
       {showAllChip && (
         <ProgressRing
