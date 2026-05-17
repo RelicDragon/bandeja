@@ -1,8 +1,7 @@
-import { Edit2, ExternalLink, MapPin, Calendar, Trash2, Plane, MessageCircle, BookmarkPlus, Bookmark } from 'lucide-react';
+import { Award, Edit2, ExternalLink, MapPin, Calendar, Trash2, Plane, MessageCircle, BookmarkPlus, Bookmark } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useMemo, useState } from 'react';
-import { ConfirmationModal } from '@/components';
-import { LeagueGameCardBoard } from '@/components/GameDetails/LeagueGameCardBoard';
+import { ConfirmationModal, PlayerAvatar } from '@/components';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { Game } from '@/types';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
@@ -14,12 +13,10 @@ import { gamesApi } from '@/api/games';
 import toast from 'react-hot-toast';
 import { RoundData } from '@/api/results';
 import { useNavigate } from 'react-router-dom';
-import { getRules } from '@/utils/scoring';
-import type { LeagueGameCardLayout } from '@/types/leagueGameCardLayout';
+import { getRules, isSuperTieBreakDeciderRow } from '@/utils/scoring';
 
 interface LeagueGameCardProps {
   game: Game;
-  cardLayout?: LeagueGameCardLayout;
   onEdit?: () => void;
   onOpen?: () => void;
   onChat?: (gameId: string) => void;
@@ -44,7 +41,6 @@ export const LeagueGameCard = ({
   allRounds,
   onDelete,
   onNoteSaved,
-  cardLayout = 'type3',
 }: LeagueGameCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -80,6 +76,11 @@ export const LeagueGameCard = ({
   const teamBPlayerIds = teamBPlayers.map(p => p.id);
 
   const isFinal = game.resultsStatus === 'FINAL';
+  const scoreSets = useMemo(
+    () => collectScoreSets(isFinal ? allRounds : null),
+    [allRounds, isFinal],
+  );
+  const showScores = isFinal && scoreSets.length > 0;
   const canEdit = game.resultsStatus === 'NONE' && onEdit;
   const canDelete = game.resultsStatus === 'NONE' && onDelete;
   const groupColor = game.leagueGroup ? getLeagueGroupColor(game.leagueGroup.color) : null;
@@ -223,17 +224,76 @@ export const LeagueGameCard = ({
       )}
 
       <div className={`w-full ${showGroupTag && game.leagueGroup ? 'mt-5' : ''}`}>
-        <LeagueGameCardBoard
-          layout={cardLayout}
-          teamAPlayers={teamAPlayers}
-          teamBPlayers={teamBPlayers}
-          winner={winner}
-          isTie={isTie}
-          isFinal={isFinal}
-          allRounds={allRounds}
-          leagueCardRules={leagueCardRules}
-          t={t}
-        />
+        <div className="flex w-full min-w-0 items-center justify-center gap-2 sm:gap-3">
+          <div className="relative flex justify-start">
+            <div
+              className={`min-h-[20px] p-2 flex items-center justify-center ${teamHighlightClass('teamA', winner, isTie)}`}
+            >
+              <div className="flex gap-3 justify-center sm:gap-5">
+                {teamAPlayers.map((player) => (
+                  <PlayerAvatar
+                    key={player.id}
+                    player={player}
+                    draggable={false}
+                    showName={true}
+                    extrasmall={true}
+                    removable={false}
+                  />
+                ))}
+              </div>
+            </div>
+            {awardBadge(isFinal && winner === 'teamA')}
+            {awardBadge(isFinal && isTie, 'blue')}
+          </div>
+
+          {showScores ? (
+            <div className="flex min-w-0 flex-row flex-wrap items-center justify-center gap-1">
+              {scoreSets.map((set) => (
+                <div
+                  key={set.key}
+                  className="flex shrink-0 flex-col items-center gap-0 rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                >
+                  <span>
+                    {set.teamAScore}:{set.teamBScore}
+                    {set.role === 'EXTRA_GAMES' || set.role === 'EXTRA_BALLS' ? (
+                      <span className="text-violet-500">*</span>
+                    ) : null}
+                  </span>
+                  {set.isTieBreak ? (
+                    <span className="text-[9px] font-medium leading-none text-primary-600 dark:text-primary-400">
+                      {isSuperTieBreakDeciderRow(leagueCardRules, set.setIndex, set.isTieBreak)
+                        ? t('gameResults.superTieBreakAbbr')
+                        : t('gameResults.tieBreakAbbr')}
+                    </span>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">VS</div>
+          )}
+
+          <div className="relative flex justify-start">
+            <div
+              className={`min-h-[20px] p-2 flex items-center justify-center ${teamHighlightClass('teamB', winner, isTie)}`}
+            >
+              <div className="flex gap-3 justify-center sm:gap-5">
+                {teamBPlayers.map((player) => (
+                  <PlayerAvatar
+                    key={player.id}
+                    player={player}
+                    draggable={false}
+                    showName={true}
+                    extrasmall={true}
+                    removable={false}
+                  />
+                ))}
+              </div>
+            </div>
+            {awardBadge(isFinal && winner === 'teamB')}
+            {awardBadge(isFinal && isTie, 'blue')}
+          </div>
+        </div>
       </div>
 
       {(game.club?.name || game.court?.name || (game.timeIsSet && game.startTime)) && (
@@ -377,4 +437,61 @@ export const LeagueGameCard = ({
     </div>
   );
 };
+
+type LeagueScoreSet = {
+  key: string;
+  teamAScore: number;
+  teamBScore: number;
+  setIndex: number;
+  isTieBreak?: boolean;
+  role?: string;
+};
+
+function collectScoreSets(allRounds: RoundData[] | null | undefined): LeagueScoreSet[] {
+  if (!allRounds?.length) return [];
+  const sets: LeagueScoreSet[] = [];
+  allRounds.forEach((round, roundIndex) => {
+    round.matches?.forEach((match, matchIndex) => {
+      match.sets?.forEach((set, setIndex) => {
+        if (set.teamAScore === 0 && set.teamBScore === 0) return;
+        sets.push({
+          key: `r${roundIndex}-m${matchIndex}-s${setIndex}`,
+          teamAScore: set.teamAScore,
+          teamBScore: set.teamBScore,
+          setIndex,
+          isTieBreak: set.isTieBreak,
+          role: set.role,
+        });
+      });
+    });
+  });
+  return sets;
+}
+
+function teamHighlightClass(
+  team: 'teamA' | 'teamB',
+  winner: 'teamA' | 'teamB' | null,
+  isTie: boolean,
+) {
+  if (winner === team) {
+    return 'rounded-lg border-2 border-yellow-400 dark:border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20';
+  }
+  if (isTie) {
+    return 'rounded-lg border-2 border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20';
+  }
+  return '';
+}
+
+function awardBadge(show: boolean, color: 'yellow' | 'blue' = 'yellow') {
+  if (!show) return null;
+  const colorClass =
+    color === 'yellow' ? 'bg-yellow-400 dark:bg-yellow-500' : 'bg-blue-400 dark:bg-blue-500';
+  return (
+    <div
+      className={`absolute -top-1.5 -right-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white shadow-lg dark:border-gray-800 ${colorClass}`}
+    >
+      <Award size={14} className="text-white" fill="white" />
+    </div>
+  );
+}
 

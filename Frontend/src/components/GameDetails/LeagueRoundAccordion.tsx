@@ -8,10 +8,7 @@ import { LeagueGameCard } from './LeagueGameCard';
 import { getLeagueGroupColor } from '@/utils/leagueGroupColors';
 import { resultsApi, RoundData } from '@/api/results';
 import { useState, useEffect } from 'react';
-import type { LeagueGameCardLayout } from '@/types/leagueGameCardLayout';
-
 interface LeagueRoundAccordionProps {
-  cardLayout: LeagueGameCardLayout;
   round: LeagueRound;
   groups: LeagueGroup[];
   canEdit: boolean;
@@ -60,7 +57,6 @@ export const LeagueRoundAccordion = ({
   onDeleteGame,
   onSendStartMessage,
   onNoteSaved,
-  cardLayout,
   t,
 }: LeagueRoundAccordionProps) => {
   const isDesktop = useDesktop();
@@ -239,7 +235,6 @@ export const LeagueRoundAccordion = ({
                               groupGames.map((game) => (
                                 <LeagueGameCard
                                   key={game.id}
-                                  cardLayout={cardLayout}
                                   game={game}
                                   onEdit={
                                     game.resultsStatus === 'NONE' && canEditGames
@@ -300,7 +295,6 @@ export const LeagueRoundAccordion = ({
                             .map((game) => (
                               <LeagueGameCard
                                 key={game.id}
-                                cardLayout={cardLayout}
                                 game={game}
                                 onEdit={
                                   game.resultsStatus === 'NONE' && canEditGames
@@ -330,7 +324,6 @@ export const LeagueRoundAccordion = ({
                     {round.games.map((game) => (
                       <LeagueGameCard
                         key={game.id}
-                        cardLayout={cardLayout}
                         game={game}
                         onEdit={
                           game.resultsStatus === 'NONE' && canEditGames
