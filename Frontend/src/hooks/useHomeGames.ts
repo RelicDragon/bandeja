@@ -4,6 +4,7 @@ import { chatApi } from '@/api/chat';
 import { Game, Invite } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import {
+  applyInviteDeletedToGame,
   applyInviteDeletedToGames,
   userHasActiveGameMembership,
 } from '@/utils/gameInviteParticipant';
