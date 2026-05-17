@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2, Loader2, UserPlus, ChevronDown, Check, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Loader2, UserPlus, ChevronDown, Check, ArrowUp, ArrowDown, RefreshCw, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { PlayerAvatar } from '@/components';
+import { PlayerAvatar, ConfirmationModal } from '@/components';
 import { leaguesApi, LeagueGroupManagementPayload } from '@/api/leagues';
 import { LeagueGroupParticipantRow } from './LeagueGroupParticipantRow';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
+import { formatRecreateSeasonTableSummary } from '@/utils/leagueRecreateSeasonSummary';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 const RENAME_DEBOUNCE_MS = 800;
 
@@ -15,6 +16,7 @@ interface LeagueGroupEditorModalProps {
   leagueSeasonId: string;
   onClose: () => void;
   onUpdated?: () => void;
+  canRecreateSeasonTable?: boolean;
 }
 
 export const LeagueGroupEditorModal = ({
@@ -22,9 +24,10 @@ export const LeagueGroupEditorModal = ({
   leagueSeasonId,
   onClose,
   onUpdated,
+  canRecreateSeasonTable = false,
 }: LeagueGroupEditorModalProps) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'general' | 'order'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'order' | 'tools'>('general');
   const [data, setData] = useState<LeagueGroupManagementPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
@@ -38,6 +41,8 @@ export const LeagueGroupEditorModal = ({
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [reorderLoading, setReorderLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
+  const [showRecreateSeasonTableConfirm, setShowRecreateSeasonTableConfirm] = useState(false);
+  const [isRecreatingSeasonTable, setIsRecreatingSeasonTable] = useState(false);
   const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const renameTimeouts = useRef<Record<string, ReturnType<typeof setTimeout> | null>>({});
 
@@ -69,6 +74,25 @@ export const LeagueGroupEditorModal = ({
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
       setSyncLoading(false);
+    }
+  };
+
+  const handleRecreateSeasonTable = async () => {
+    if (isRecreatingSeasonTable) return;
+    setIsRecreatingSeasonTable(true);
+    try {
+      const res = await leaguesApi.recreateFullRoundRobin(leagueSeasonId);
+      const summary = formatRecreateSeasonTableSummary(t, res.data);
+      toast.success(summary, { duration: 7000 });
+      setShowRecreateSeasonTableConfirm(false);
+      await fetchGroups({ silent: true });
+      onUpdated?.();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setIsRecreatingSeasonTable(false);
     }
   };
 
@@ -288,20 +312,8 @@ export const LeagueGroupEditorModal = ({
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="league-group-editor-modal">
       <DialogContent>
-        <DialogHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-          <div className="min-w-0 space-y-1.5">
-            <DialogTitle>{t('gameDetails.groupEditorTitle')}</DialogTitle>
-            <DialogDescription>{t('gameDetails.manageGroupsDescription')}</DialogDescription>
-          </div>
-          <button
-            type="button"
-            onClick={handleSyncParticipants}
-            disabled={syncLoading || loading}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-          >
-            {syncLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-            {t('gameDetails.syncParticipants')}
-          </button>
+        <DialogHeader>
+          <DialogTitle>{t('gameDetails.groupEditorTitle')}</DialogTitle>
         </DialogHeader>
 
         <div className="border-b border-gray-200 dark:border-gray-800">
@@ -325,6 +337,16 @@ export const LeagueGroupEditorModal = ({
               }`}
             >
               {t('gameDetails.orderTab')}
+            </button>
+            <button
+              onClick={() => setActiveTab('tools')}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'tools'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              {t('gameDetails.toolsTab')}
             </button>
           </div>
         </div>
@@ -538,7 +560,7 @@ export const LeagueGroupEditorModal = ({
             </div>
           )}
             </>
-          ) : (
+          ) : activeTab === 'order' ? (
             <>
               {loading ? (
                 <div className="flex items-center justify-center py-12">
@@ -613,9 +635,49 @@ export const LeagueGroupEditorModal = ({
                 </>
               )}
             </>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={handleSyncParticipants}
+                disabled={syncLoading || loading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+              >
+                {syncLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                {t('gameDetails.syncParticipants')}
+              </button>
+              {canRecreateSeasonTable && (
+                <button
+                  type="button"
+                  onClick={() => setShowRecreateSeasonTableConfirm(true)}
+                  disabled={isRecreatingSeasonTable}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300/90 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-700"
+                >
+                  {isRecreatingSeasonTable ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <RotateCcw size={16} className="opacity-80" />
+                  )}
+                  {t('gameDetails.recreateSeasonTable')}
+                </button>
+              )}
+            </div>
           )}
         </div>
       </DialogContent>
+      {showRecreateSeasonTableConfirm && (
+        <ConfirmationModal
+          isOpen={showRecreateSeasonTableConfirm}
+          title={t('gameDetails.recreateSeasonTable')}
+          message={t('gameDetails.recreateSeasonTableConfirmation')}
+          confirmText={t('gameDetails.recreateSeasonTable')}
+          cancelText={t('common.cancel')}
+          confirmVariant="danger"
+          isLoading={isRecreatingSeasonTable}
+          onConfirm={handleRecreateSeasonTable}
+          onClose={() => !isRecreatingSeasonTable && setShowRecreateSeasonTableConfirm(false)}
+        />
+      )}
     </Dialog>
   );
 };

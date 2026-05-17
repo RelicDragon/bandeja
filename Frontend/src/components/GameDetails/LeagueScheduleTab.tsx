@@ -12,7 +12,7 @@ import { RoundTypeFilterSwitch } from './RoundTypeFilterSwitch';
 import { LeagueFixtureMatrix } from './LeagueFixtureMatrix';
 import { LeagueFixtureDetailSheet } from './LeagueFixtureDetailSheet';
 import { leaguesApi, LeagueRound, LeagueGroup, LeagueStanding } from '@/api/leagues';
-import { Loader2, Calendar, Users, Trophy, LayoutGrid, Maximize2, RotateCcw } from 'lucide-react';
+import { Loader2, Calendar, Users, Trophy, LayoutGrid, Maximize2 } from 'lucide-react';
 import { standingsTeamsForGroup, roundsInSingleRoundRobinCycle, type MatrixTeam } from '@/utils/leagueFixtureMatrix';
 import { repairLeagueScheduleSearchIfInvalid, resolveLeagueScheduleMode } from '@/utils/leagueScheduleSubtab';
 import { Game } from '@/types';
@@ -25,7 +25,6 @@ import { LeagueScheduleMyGamesList } from './LeagueScheduleMyGamesList';
 import { LeagueGroupScheduleProgress } from './LeagueGroupScheduleProgress';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
 import { leagueGroupGameProgressFromRounds, leagueGroupUserGameProgressFromRounds } from '@/utils/leagueGroupGameProgress';
-import { formatRecreateSeasonTableSummary } from '@/utils/leagueRecreateSeasonSummary';
 
 interface LeagueScheduleTabProps {
   leagueSeasonId: string;
@@ -65,8 +64,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const [roundIdBeingDeleted, setRoundIdBeingDeleted] = useState<string | null>(null);
   const [roundIdSendingMessage, setRoundIdSendingMessage] = useState<string | null>(null);
   const [roundPendingStartMessage, setRoundPendingStartMessage] = useState<LeagueRound | null>(null);
-  const [showRecreateSeasonTableConfirm, setShowRecreateSeasonTableConfirm] = useState(false);
-  const [isRecreatingSeasonTable, setIsRecreatingSeasonTable] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [expandedRoundId, setExpandedRoundId] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string>(ALL_GROUP_ID);
@@ -294,24 +291,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     }
   };
 
-  const handleRecreateSeasonTable = async () => {
-    if (isRecreatingSeasonTable) return;
-    setIsRecreatingSeasonTable(true);
-    try {
-      const res = await leaguesApi.recreateFullRoundRobin(leagueSeasonId);
-      const summary = formatRecreateSeasonTableSummary(t, res.data);
-      toast.success(summary, { duration: 7000 });
-      setShowRecreateSeasonTableConfirm(false);
-      await fetchRounds();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      const errorMessage = err.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    } finally {
-      setIsRecreatingSeasonTable(false);
-    }
-  };
-
   const handleCreateFullRoundRobin = async () => {
     if (isCreatingFullRr || fullRrBlockReason) return;
     setIsCreatingFullRr(true);
@@ -534,23 +513,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
             )}
           </div>
         </Card>
-      )}
-      {hasSeasonTable && (
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => setShowRecreateSeasonTableConfirm(true)}
-            disabled={isRecreatingSeasonTable}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300/90 bg-white/80 px-3 py-2 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-800"
-          >
-            {isRecreatingSeasonTable ? (
-              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
-            ) : (
-              <RotateCcw className="h-3.5 w-3.5 shrink-0 opacity-80" />
-            )}
-            {t('gameDetails.recreateSeasonTable')}
-          </button>
-        </div>
       )}
       {canEdit && hasFixedTeams && groups.length > 0 && fullRrBlockReason !== 'existing' && (
         <Card className="border border-teal-200/80 bg-gradient-to-br from-teal-50/95 to-cyan-50/60 dark:border-teal-900/40 dark:from-teal-950/40 dark:to-cyan-950/25">
@@ -776,6 +738,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           leagueSeasonId={leagueSeasonId}
           onClose={() => setShowGroupEditor(false)}
           onUpdated={fetchRounds}
+          canRecreateSeasonTable={hasSeasonTable}
         />
       )}
       {showPlayoffModal && (
@@ -811,19 +774,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           confirmVariant="primary"
           onConfirm={confirmSendStartMessage}
           onClose={() => setRoundPendingStartMessage(null)}
-        />
-      )}
-      {isClient && showRecreateSeasonTableConfirm && (
-        <ConfirmationModal
-          isOpen={showRecreateSeasonTableConfirm}
-          title={t('gameDetails.recreateSeasonTable')}
-          message={t('gameDetails.recreateSeasonTableConfirmation')}
-          confirmText={t('gameDetails.recreateSeasonTable')}
-          cancelText={t('common.cancel')}
-          confirmVariant="danger"
-          isLoading={isRecreatingSeasonTable}
-          onConfirm={handleRecreateSeasonTable}
-          onClose={() => !isRecreatingSeasonTable && setShowRecreateSeasonTableConfirm(false)}
         />
       )}
       {fixtureSheet && (

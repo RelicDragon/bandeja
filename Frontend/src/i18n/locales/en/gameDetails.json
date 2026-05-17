@@ -260,6 +260,7 @@
     "participantsSynced": "Participants synced with the season game",
     "generalTab": "Main",
     "orderTab": "Order",
+    "toolsTab": "Tools",
     "groupOrderDescription": "Groups are ordered from best to worst. The first group is the best, the last is the worst.",
     "bestGroup": "Best group",
     "worstGroup": "Worst group",
