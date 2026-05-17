@@ -154,27 +154,29 @@ export const GroupFilterDropdown = ({
             <>
               <button
                 onClick={() => handleSelect(allGroupId)}
-                className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 ${
                   selectedGroupId === allGroupId
                     ? 'bg-primary-50 dark:bg-primary-900/20'
                     : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
                 }`}
               >
-                <span
-                  className={`min-w-0 truncate text-sm font-medium ${
-                    selectedGroupId === allGroupId
-                      ? 'text-primary-700 dark:text-primary-400'
-                      : 'text-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  {allGroupsLabel}
-                </span>
-                <div className="flex shrink-0 items-center gap-2">
-                  {renderProgress(allGroupId, ALL_GROUPS_PROGRESS_COLOR)}
-                  {selectedGroupId === allGroupId && (
-                    <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                  )}
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <span
+                    className={`min-w-0 truncate text-sm font-medium ${
+                      selectedGroupId === allGroupId
+                        ? 'text-primary-700 dark:text-primary-400'
+                        : 'text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    {allGroupsLabel}
+                  </span>
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                    {selectedGroupId === allGroupId ? (
+                      <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                    ) : null}
+                  </span>
                 </div>
+                <div className="shrink-0">{renderProgress(allGroupId, ALL_GROUPS_PROGRESS_COLOR)}</div>
               </button>
               <div className="border-t border-gray-200 dark:border-gray-700" />
             </>
@@ -189,10 +191,10 @@ export const GroupFilterDropdown = ({
               <button
                 key={group.id}
                 onClick={() => handleSelect(group.id)}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                 style={isSelected ? { backgroundColor: soft } : undefined}
               >
-                <div className="flex min-w-0 items-center gap-2">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                   {group.color && (
                     <span
                       className="h-3 w-3 shrink-0 rounded-full border-2"
@@ -203,18 +205,18 @@ export const GroupFilterDropdown = ({
                     />
                   )}
                   <span
-                    className={`truncate text-sm font-medium ${
+                    className={`min-w-0 truncate text-sm font-medium ${
                       isSelected ? '' : 'text-gray-700 dark:text-gray-300'
                     }`}
                     style={isSelected ? { color: accent } : undefined}
                   >
                     {group.name}
                   </span>
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                    {isSelected ? <Check className="h-4 w-4" style={{ color: accent }} /> : null}
+                  </span>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {renderProgress(group.id, accent)}
-                  {isSelected && <Check className="h-4 w-4 shrink-0" style={{ color: accent }} />}
-                </div>
+                <div className="shrink-0">{renderProgress(group.id, accent)}</div>
               </button>
             );
           })}
