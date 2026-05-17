@@ -441,17 +441,11 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     if (id !== 'pick') setPickValue('');
   };
 
-  const longPressRef = useRef<{ t: number; x: number; y: number; cell: { day: LeaguePlannerDay; b: LeaguePlannerDay['buckets'][0] } | null }>({
-    t: 0,
-    x: 0,
-    y: 0,
-    cell: null,
-  });
-
   const openSheet = (day: LeaguePlannerDay, b: LeaguePlannerDay['buckets'][0]) => setSheet({ day, bucket: b });
 
-  const clearLongPress = () => {
-    longPressRef.current = { t: 0, x: 0, y: 0, cell: null };
+  const activatePlannerCell = (day: LeaguePlannerDay, b: LeaguePlannerDay['buckets'][0]) => {
+    if (day.isPast) return;
+    openSheet(day, b);
   };
 
   const isSchedulableSlot = (day: LeaguePlannerDay, b: LeaguePlannerDay['buckets'][0]) => {
@@ -478,23 +472,6 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
         </div>
       </div>
     );
-  };
-
-  const handleCellPointerDown = (day: LeaguePlannerDay, b: LeaguePlannerDay['buckets'][0], e: React.PointerEvent) => {
-    if (day.isPast) return;
-    longPressRef.current = { t: Date.now(), x: e.clientX, y: e.clientY, cell: { day, b } };
-  };
-
-  const handleCellPointerUp = (day: LeaguePlannerDay, b: LeaguePlannerDay['buckets'][0], e: React.PointerEvent) => {
-    if (day.isPast) return;
-    const ref = longPressRef.current;
-    clearLongPress();
-    if (!ref.cell || ref.cell.day.date !== day.date || ref.cell.b.bucket !== b.bucket) return;
-    const dt = Date.now() - ref.t;
-    const moved = Math.abs(e.clientX - ref.x) > 12 || Math.abs(e.clientY - ref.y) > 12;
-    if (dt >= 480 || !moved) {
-      openSheet(day, b);
-    }
   };
 
   const plannerDayShortLabel = (day: LeaguePlannerDay) =>
@@ -690,11 +667,9 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
                           key={`${day.date}-${bid}`}
                           type="button"
                           disabled={day.isPast}
-                          onPointerDown={(e) => handleCellPointerDown(day, b, e)}
-                          onPointerUp={(e) => handleCellPointerUp(day, b, e)}
-                          onPointerCancel={clearLongPress}
+                          onClick={() => activatePlannerCell(day, b)}
                           className={[
-                            'relative min-h-[4.5rem] min-w-0 rounded-xl border text-left transition',
+                            'relative min-h-[4.5rem] min-w-0 touch-manipulation rounded-xl border text-left transition',
                             day.isPast
                               ? 'cursor-not-allowed border-gray-100 bg-gray-100/60 opacity-60 dark:border-gray-800 dark:bg-gray-900/40'
                               : schedSlot
