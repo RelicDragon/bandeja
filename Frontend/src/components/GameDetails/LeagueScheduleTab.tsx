@@ -24,7 +24,7 @@ import { useAuthStore } from '@/store/authStore';
 import { LeagueScheduleMyGamesList } from './LeagueScheduleMyGamesList';
 import { LeagueGroupScheduleProgress } from './LeagueGroupScheduleProgress';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
-import { leagueGroupGameProgressFromRounds, leagueGroupUserGameProgressFromRounds } from '@/utils/leagueGroupGameProgress';
+import { leagueGroupGameProgressFromRounds } from '@/utils/leagueGroupGameProgress';
 
 interface LeagueScheduleTabProps {
   leagueSeasonId: string;
@@ -211,16 +211,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     () => leagueGroupGameProgressFromRounds(filteredRounds, groups.map((g) => g.id)),
     [filteredRounds, groups]
   );
-
-  const myGroupScheduleProgress = useMemo(() => {
-    const uid = user?.id;
-    if (!uid || groups.length === 0) return [];
-    return leagueGroupUserGameProgressFromRounds(
-      filteredRounds,
-      groups.map((g) => g.id),
-      uid
-    );
-  }, [filteredRounds, groups, user?.id]);
 
   const showMyTab = useMemo(() => {
     const uid = user?.id;
@@ -574,24 +564,23 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           />
         </div>
       )}
-      {groups.length > 0 && resolvedScheduleView === 'my' && user?.id && (
+      {groups.length > 0 && resolvedScheduleView === 'list' && (
         <LeagueGroupScheduleProgress
           groups={groups}
-          progress={myGroupScheduleProgress}
-          ariaLabelKey="gameDetails.scheduleMyGroupProgressAria"
+          progress={groupScheduleProgress}
+          selectedGroupId={selectedGroupId}
+          allGroupId={ALL_GROUP_ID}
+          onGroupSelect={setSelectedGroupId}
         />
       )}
-      {groups.length > 0 && resolvedScheduleView === 'list' && (
-        <LeagueGroupScheduleProgress groups={groups} progress={groupScheduleProgress} />
-      )}
-      {groups.length > 0 && resolvedScheduleView !== 'my' && (
+      {groups.length > 0 && resolvedScheduleView === 'table' && (
         <GroupFilterDropdown
           selectedGroupId={selectedGroupId}
           groups={groups.map((g) => ({ id: g.id, name: g.name, color: g.color ?? undefined }))}
           allGroupsLabel={t('gameDetails.allGroups') || 'All groups'}
           onSelect={setSelectedGroupId}
           allGroupId={ALL_GROUP_ID}
-          showAllOption={resolvedScheduleView !== 'table'}
+          showAllOption={false}
         />
       )}
       {resolvedScheduleView === 'table' && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'PLAYOFF' && (
