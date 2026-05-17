@@ -272,8 +272,11 @@ export const LeagueFixtureMatrix = ({
                         <button
                           type="button"
                           aria-label={aria}
-                          onClick={() => onFixtureCell({ games: cellGames, row, col })}
-                          className={`flex min-h-[40px] w-full flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition-[transform,box-shadow,background-color] duration-200 ease-out ${
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onFixtureCell({ games: cellGames, row, col });
+                          }}
+                          className={`relative z-[1] flex min-h-[40px] w-full touch-manipulation flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition-[transform,box-shadow,background-color] duration-200 ease-out ${
                             cellGames.length === 0
                               ? 'cursor-pointer bg-gray-100/40 text-gray-400 hover:bg-gray-100/70 hover:ring-1 hover:ring-gray-200/70 dark:bg-gray-800/25 dark:text-gray-500 dark:hover:bg-gray-800/45 dark:hover:ring-gray-600/40'
                               : 'cursor-pointer bg-white/70 text-gray-900 shadow-sm ring-1 ring-gray-200/60 hover:bg-white hover:shadow-md hover:ring-gray-300/80 active:scale-[0.98] dark:bg-gray-900/40 dark:text-gray-100 dark:ring-gray-700/50 dark:hover:bg-gray-800/70 dark:hover:ring-gray-600/60'

@@ -44,9 +44,13 @@ export const LeagueFixtureTableFullscreenPage = () => {
 
   useBackButtonHandler(
     useCallback(() => {
+      if (fixtureSheet) {
+        setFixtureSheet(null);
+        return true;
+      }
       goBack();
       return true;
-    }, [goBack])
+    }, [fixtureSheet, goBack])
   );
 
   const fetchData = useCallback(async () => {
@@ -134,6 +138,7 @@ export const LeagueFixtureTableFullscreenPage = () => {
   if (!leagueSeasonId) return null;
 
   return (
+    <>
     <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-gray-950">
       <div className="shrink-0 pt-[env(safe-area-inset-top)]">
         <div className="relative flex h-12 items-center justify-center px-12">
@@ -176,15 +181,19 @@ export const LeagueFixtureTableFullscreenPage = () => {
           </div>
         )}
       </div>
+    </div>
 
-      {fixtureSheet && (
+    {fixtureSheet && (
+      <div className="fixed inset-0 z-[90] pointer-events-auto">
         <LeagueFixtureDetailSheet
           games={fixtureSheet.games}
           rowTeam={fixtureSheet.row}
           colTeam={fixtureSheet.col}
           onClose={() => setFixtureSheet(null)}
+          inline
         />
-      )}
-    </div>
+      </div>
+    )}
+    </>
   );
 };

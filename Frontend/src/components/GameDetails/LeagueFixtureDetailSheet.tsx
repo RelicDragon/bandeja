@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/utils/dateFormat';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +11,7 @@ import { formatFixtureMatrixPlayerName } from '@/utils/leagueFixtureMatrix';
 import { gamesApi } from '@/api';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
+import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { PlayerAvatar } from '@/components';
 
 interface LeagueFixtureDetailSheetProps {
@@ -17,6 +19,8 @@ interface LeagueFixtureDetailSheetProps {
   rowTeam: MatrixTeam;
   colTeam: MatrixTeam;
   onClose: () => void;
+  /** Render in place (for fullscreen table page) instead of portaling to document.body */
+  inline?: boolean;
 }
 
 function roundHeading(game: Game, t: (key: string) => string): string {
@@ -129,20 +133,44 @@ function scoreSummaryFromGame(game: Game): string | null {
   return parts.length > 0 ? parts.join(' · ') : null;
 }
 
+const backdropVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+};
+
+const sheetPanelVariants = {
+  hidden: { y: '100%', opacity: 0.85 },
+  visible: { y: 0, opacity: 1 },
+};
+
+const dialogPanelVariants = {
+  hidden: { y: 20, opacity: 0, scale: 0.96 },
+  visible: { y: 0, opacity: 1, scale: 1 },
+};
+
+const backdropTransition = { duration: 0.22, ease: [0.4, 0, 0.2, 1] as const };
+const panelTransition = { type: 'spring' as const, damping: 30, stiffness: 380, mass: 0.85 };
+
 export const LeagueFixtureDetailSheet = ({
   games,
   rowTeam,
   colTeam,
   onClose,
+  inline = false,
 }: LeagueFixtureDetailSheetProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isDesktop = useDesktop();
   const isLandscape = useIsLandscape();
   const panelRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(true);
   const [detailById, setDetailById] = useState<Record<string, Game>>(() =>
     Object.fromEntries(games.map((g) => [g.id, g]))
   );
+
+  const requestClose = useCallback(() => setVisible(false), []);
+
+  useBackButtonModal(visible, requestClose, 'league-fixture-detail-sheet');
 
   const loadThin = useCallback(async () => {
     if (games.length === 0) return;
@@ -164,11 +192,11 @@ export const LeagueFixtureDetailSheet = ({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') requestClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [requestClose]);
 
   useEffect(() => {
     const tmr = window.setTimeout(() => {
@@ -179,18 +207,12 @@ export const LeagueFixtureDetailSheet = ({
 
   const useDialog = isDesktop || isLandscape;
 
-  const content = (
-    <div
-      ref={panelRef}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="league-fixture-detail-title"
-      className={
-        useDialog
-          ? 'relative z-[60] mx-auto my-8 w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900'
-          : 'relative z-[60] flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-3xl border border-gray-200/80 bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.12)] dark:border-gray-700 dark:bg-gray-900'
-      }
-    >
+  const panelClassName = useDialog
+    ? 'relative z-[1] mx-auto my-8 w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900'
+    : 'relative z-[1] flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-3xl border border-gray-200/80 bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.12)] dark:border-gray-700 dark:bg-gray-900';
+
+  const panelBody = (
+    <>
       <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800">
         <h2 id="league-fixture-detail-title" className="text-lg font-semibold text-gray-900 dark:text-white">
           {t('gameDetails.fixtureDetailTitle')}
@@ -198,7 +220,7 @@ export const LeagueFixtureDetailSheet = ({
         <button
           type="button"
           data-fixture-primary-action={games.length === 0 ? true : undefined}
-          onClick={onClose}
+          onClick={requestClose}
           className="rounded-full p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
           aria-label={t('common.close')}
         >
@@ -266,7 +288,7 @@ export const LeagueFixtureDetailSheet = ({
                   data-fixture-primary-action={idx === 0 ? true : undefined}
                   onClick={() => {
                     navigate(`/games/${d.id}`);
-                    onClose();
+                    requestClose();
                   }}
                   className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700 active:scale-[0.99]"
                 >
@@ -278,20 +300,45 @@ export const LeagueFixtureDetailSheet = ({
           })
         )}
       </div>
-    </div>
+    </>
   );
 
   const overlay = (
-    <div
-      className="fixed inset-0 z-[55] flex items-end justify-center bg-black/50 backdrop-blur-[2px] sm:items-center p-0 sm:p-4"
-      role="presentation"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      {content}
-    </div>
+    <AnimatePresence onExitComplete={() => onClose()}>
+      {visible && (
+        <motion.div
+          key="league-fixture-detail-overlay"
+          className={`${inline ? 'absolute' : 'fixed'} inset-0 z-[200] flex items-end justify-center bg-black/50 p-0 backdrop-blur-[2px] sm:items-center sm:p-4`}
+          role="presentation"
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
+          variants={backdropVariants}
+          transition={backdropTransition}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) requestClose();
+          }}
+        >
+          <motion.div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="league-fixture-detail-title"
+            className={panelClassName}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={useDialog ? dialogPanelVariants : sheetPanelVariants}
+            transition={panelTransition}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {panelBody}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 
+  if (inline) return overlay;
   return createPortal(overlay, document.body);
 };
