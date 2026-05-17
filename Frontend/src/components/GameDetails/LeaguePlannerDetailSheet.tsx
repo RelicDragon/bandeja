@@ -10,7 +10,7 @@ export interface LeaguePlannerDetailSheetProps {
   isOpen: boolean;
   onClose: () => void;
   dateLabel: string;
-  bucketLabel: string;
+  slotLabel: string;
   freeCount: number;
   busyCount: number;
   schedulableGameIds: string[];
@@ -21,7 +21,7 @@ export const LeaguePlannerDetailSheet = ({
   isOpen,
   onClose,
   dateLabel,
-  bucketLabel,
+  slotLabel,
   freeCount,
   busyCount,
   schedulableGameIds,
@@ -84,7 +84,7 @@ export const LeaguePlannerDetailSheet = ({
               <span className="text-xs font-semibold uppercase tracking-wide">{t('gameDetails.planner.sheetTitle')}</span>
             </div>
             <h2 className="mt-1 truncate text-lg font-semibold text-gray-900 dark:text-white">{dateLabel}</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{bucketLabel}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{slotLabel}</p>
           </div>
           <button
             type="button"

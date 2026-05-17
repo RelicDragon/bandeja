@@ -117,10 +117,8 @@ export interface LeagueGroupManagementPayload {
   unassignedParticipants: LeagueStanding[];
 }
 
-export type LeaguePlannerBucketId = 'night' | 'morning' | 'afternoon' | 'evening';
-
-export interface LeaguePlannerDayBucket {
-  bucket: LeaguePlannerBucketId;
+export interface LeaguePlannerDayHour {
+  hour: number;
   freeCount: number;
   busyCount: number;
   sampleFreeUsers: Array<{
@@ -140,7 +138,7 @@ export interface LeaguePlannerDay {
   date: string;
   weekdayKey: string;
   isPast: boolean;
-  buckets: LeaguePlannerDayBucket[];
+  hours: LeaguePlannerDayHour[];
 }
 
 export interface LeaguePlannerUnscheduledGame {
@@ -161,7 +159,6 @@ export interface LeaguePlannerPayload {
   hasFixedTeams: boolean;
   hasGroups: boolean;
   groupIds: string[];
-  boundaries: { night: number; morning: number; afternoon: number; evening: number };
   days: LeaguePlannerDay[];
   unscheduledGames: LeaguePlannerUnscheduledGame[];
   schedulableBySlot: Record<string, string[]>;

@@ -1,9 +1,8 @@
-/** Mirrors Frontend `utils/availability` bitmask + bucket rules for league planner. */
+/** Mirrors Frontend `utils/availability` bitmask rules for league planner. */
 
 import { weeklyDocHasConfiguredSlots } from '../../utils/weeklyAvailabilityRolling';
 
 export type WeekdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
-export type BucketId = 'night' | 'morning' | 'afternoon' | 'evening';
 
 export interface WeeklyAvailabilityLike {
   mon?: number;
@@ -15,20 +14,6 @@ export interface WeeklyAvailabilityLike {
   sun?: number;
 }
 
-export type AvailabilityBucketBoundariesLike = {
-  night: number;
-  morning: number;
-  afternoon: number;
-  evening: number;
-};
-
-const DEFAULT_BOUNDARIES: AvailabilityBucketBoundariesLike = {
-  night: 0,
-  morning: 6,
-  afternoon: 12,
-  evening: 18,
-};
-
 export const WEEKDAY_FROM_SHORT: Record<string, WeekdayKey> = {
   Mon: 'mon',
   Tue: 'tue',
@@ -39,41 +24,10 @@ export const WEEKDAY_FROM_SHORT: Record<string, WeekdayKey> = {
   Sun: 'sun',
 };
 
-export function parseBoundaries(raw: unknown): AvailabilityBucketBoundariesLike {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return DEFAULT_BOUNDARIES;
-  const o = raw as Record<string, unknown>;
-  const ok = (x: unknown): x is number =>
-    typeof x === 'number' && Number.isInteger(x) && x >= 0 && x <= 23;
-  if (!ok(o.night) || !ok(o.morning) || !ok(o.afternoon) || !ok(o.evening)) {
-    return DEFAULT_BOUNDARIES;
-  }
-  if (!(o.night < o.morning && o.morning < o.afternoon && o.afternoon < o.evening)) {
-    return DEFAULT_BOUNDARIES;
-  }
-  return {
-    night: o.night,
-    morning: o.morning,
-    afternoon: o.afternoon,
-    evening: o.evening,
-  };
-}
+export const PLANNER_HOURS = Array.from({ length: 24 }, (_, h) => h);
 
-export function rangeMask(startHour: number, endHourExclusive: number): number {
-  let m = 0;
-  const start = Math.max(0, Math.min(24, startHour));
-  const end = Math.max(0, Math.min(24, endHourExclusive));
-  for (let h = start; h < end; h++) m = (m | (1 << h)) >>> 0;
-  return m;
-}
-
-export function buildBucketMasks(b: AvailabilityBucketBoundariesLike): Record<BucketId, number> {
-  const { night, morning, afternoon, evening } = b;
-  return {
-    night: rangeMask(night, morning) >>> 0,
-    morning: rangeMask(morning, afternoon) >>> 0,
-    afternoon: rangeMask(afternoon, evening) >>> 0,
-    evening: ((rangeMask(evening, 24) | rangeMask(0, night)) >>> 0),
-  };
+export function getHour(mask: number, hour: number): boolean {
+  return ((mask >>> hour) & 1) === 1;
 }
 
 /** True when the user saved at least one available hour (v1 or rolling v2). */
@@ -81,52 +35,24 @@ export function weeklyAvailabilityHasConfiguredSlots(wa: unknown): boolean {
   return weeklyDocHasConfiguredSlots(wa);
 }
 
-export function bucketIsFullFor(
-  wa: WeeklyAvailabilityLike,
-  day: WeekdayKey,
-  bucket: BucketId,
-  boundaries: AvailabilityBucketBoundariesLike
-): boolean {
-  const mask = buildBucketMasks(boundaries)[bucket];
-  const d = (wa[day] ?? 0) >>> 0;
-  return (d & mask) === mask;
-}
-
-export function bucketIsPartialFor(
-  wa: WeeklyAvailabilityLike,
-  day: WeekdayKey,
-  bucket: BucketId,
-  boundaries: AvailabilityBucketBoundariesLike
-): boolean {
-  const mask = buildBucketMasks(boundaries)[bucket];
-  const m = ((wa[day] ?? 0) & mask) >>> 0;
-  return m !== 0 && m !== mask;
-}
-
 /** Free / busy for aggregate cells; null = no saved weekly availability (excluded from counts and fit). */
-export function bucketAggregateState(
+export function hourAggregateState(
   wa: WeeklyAvailabilityLike | null | undefined,
   day: WeekdayKey,
-  bucket: BucketId,
-  boundaries: AvailabilityBucketBoundariesLike
+  hour: number
 ): 'free' | 'busy' | null {
   if (wa == null || !weeklyAvailabilityHasConfiguredSlots(wa)) return null;
-  if (bucketIsFullFor(wa, day, bucket, boundaries) || bucketIsPartialFor(wa, day, bucket, boundaries)) {
-    return 'free';
-  }
-  return 'busy';
+  return getHour(wa[day] ?? 0, hour) ? 'free' : 'busy';
 }
 
 /**
- * Fixture fit: every member must overlap the bucket; users with no saved weekly slots are excluded.
+ * Fixture fit: every member must be available in this hour; users with no saved weekly slots are excluded.
  */
-export function userFitsBucket(
+export function userFitsHour(
   wa: WeeklyAvailabilityLike | null | undefined,
   day: WeekdayKey,
-  bucket: BucketId,
-  boundaries: AvailabilityBucketBoundariesLike
+  hour: number
 ): boolean {
   if (wa == null || !weeklyAvailabilityHasConfiguredSlots(wa)) return false;
-  const mask = buildBucketMasks(boundaries)[bucket];
-  return (((wa[day] ?? 0) & mask) >>> 0) !== 0;
+  return getHour(wa[day] ?? 0, hour);
 }

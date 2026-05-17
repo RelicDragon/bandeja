@@ -44,6 +44,8 @@ interface PlayerAvatarProps {
   inlineFacePlain?: boolean;
   /** With `inlineFace`: `sm` = 24px (menus), `md` = 32px (message list). */
   inlineFaceSize?: 'sm' | 'md';
+  /** With `inlineFace`: omit default z-10 so parent controls overlap (e.g. planner avatar stacks). */
+  inlineFaceFlatStack?: boolean;
   role?: 'OWNER' | 'ADMIN' | 'PLAYER';
   asDiv?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
@@ -53,7 +55,7 @@ interface PlayerAvatarProps {
   onTouchEnd?: (e: TouchEvent) => void;
 }
 
-export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable = false, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, inlineFace = false, inlineFacePlain = false, inlineFaceSize = 'sm', role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
+export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable = false, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, inlineFace = false, inlineFacePlain = false, inlineFaceSize = 'sm', inlineFaceFlatStack = false, role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
   const avatarPresenceKey = `avatar:${useId()}`;
   usePresenceSubscription(
     avatarPresenceKey,
@@ -326,7 +328,8 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
             ? 'ring-[3px] ring-green-500 dark:ring-green-400'
             : '';
 
-  const wrapperClassName = `relative z-10 ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${!asDiv ? (draggable ? 'cursor-move' : 'cursor-pointer') + ' hover:opacity-80 transition-opacity ' : ''}${smallLayout && !draggable ? 'touch-manipulation ' : ''}${ringClass}${
+  const faceStackZ = inlineFace && inlineFaceFlatStack ? 'z-0' : 'z-10';
+  const wrapperClassName = `relative ${faceStackZ} ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${!asDiv ? (draggable ? 'cursor-move' : 'cursor-pointer') + ' hover:opacity-80 transition-opacity ' : ''}${smallLayout && !draggable ? 'touch-manipulation ' : ''}${ringClass}${
     !inlineFace && player && isOnline
       ? isFavorite
         ? ' avatar-online-border-favorite'
