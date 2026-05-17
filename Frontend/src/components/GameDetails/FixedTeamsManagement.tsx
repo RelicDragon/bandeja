@@ -29,6 +29,7 @@ function FixedTeamPlayerSlot({ player, canEdit, onRemove, onAdd }: FixedTeamPlay
         <PlayerAvatar
           player={player.user}
           showName={false}
+          fullHideName
           extrasmall
           removable={canEdit}
           onRemoveClick={onRemove}
@@ -406,12 +407,8 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
   const main = (
     <>
       {teams?.slice(0, slotCount).map((team, index) => {
-        const openSelector = (slot: 0 | 1) => {
+        const openSelector = () => {
           if (!canEdit) return;
-          if (slot === 1 && !team.players[0]) {
-            toast.error(t('games.fillFirstPlayerSlotFirst', { defaultValue: 'Add the first player before the second.' }));
-            return;
-          }
           setSelectedTeamIndex(index);
           setShowPlayerSelector(true);
         };
@@ -432,7 +429,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
                   player={team.players[0]}
                   canEdit={canEdit}
                   onRemove={() => handleRemovePlayer(index, team.players[0]!.userId)}
-                  onAdd={() => openSelector(0)}
+                  onAdd={openSelector}
                 />
               </div>
               <div className="min-w-0 flex-1 p-2.5">
@@ -440,7 +437,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
                   player={team.players[1]}
                   canEdit={canEdit}
                   onRemove={() => handleRemovePlayer(index, team.players[1]!.userId)}
-                  onAdd={() => openSelector(1)}
+                  onAdd={openSelector}
                 />
               </div>
             </div>
