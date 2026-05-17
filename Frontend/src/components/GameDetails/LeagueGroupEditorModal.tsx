@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Loader2, UserPlus, ChevronDown, Check, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PlayerAvatar } from '@/components';
-import { leaguesApi, LeagueGroupManagementPayload, LeagueStanding } from '@/api/leagues';
+import { leaguesApi, LeagueGroupManagementPayload } from '@/api/leagues';
+import { LeagueGroupParticipantRow } from './LeagueGroupParticipantRow';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 
@@ -277,45 +278,6 @@ export const LeagueGroupEditorModal = ({
     }
   };
 
-  const renderParticipant = (participant: LeagueStanding) => {
-    if (participant.user) {
-      return (
-        <div className="flex items-center gap-2">
-          <PlayerAvatar
-            player={participant.user}
-            showName={false}
-            fullHideName={true}
-            extrasmall
-          />
-          <div className="text-sm min-w-0">
-            <p className="font-medium text-gray-900 dark:text-white truncate">
-              {participant.user.firstName} {participant.user.lastName}
-            </p>
-            {participant.user.verbalStatus && (
-              <p className="verbal-status">
-                {participant.user.verbalStatus}
-              </p>
-            )}
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {t('gameDetails.points')}: {participant.points}
-            </p>
-          </div>
-        </div>
-      );
-    }
-
-    if (participant.leagueTeam) {
-      const names = participant.leagueTeam.players.map((p) => `${p.user?.firstName ?? ''} ${p.user?.lastName ?? ''}`.trim()).join(', ');
-      return (
-        <div className="text-sm text-gray-900 dark:text-white">
-          {names}
-        </div>
-      );
-    }
-
-    return null;
-  };
-
   const isFixedTeamsMode = !!data && [...data.groups.flatMap((group) => group.participants), ...data.unassignedParticipants]
     .some((participant) => participant.participantType === 'TEAM' || !!participant.leagueTeam);
 
@@ -442,30 +404,20 @@ export const LeagueGroupEditorModal = ({
                       </button>
                     </div>
 
-                  <div className="space-y-3 mb-4">
+                  <div className="space-y-2 mb-4">
                     {group.participants.length === 0 ? (
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {t('gameDetails.noStandings')}
                       </p>
                     ) : (
-                      group.participants.map((participant) => (
-                        <div
+                      group.participants.map((participant, participantIndex) => (
+                        <LeagueGroupParticipantRow
                           key={participant.id}
-                          className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 min-w-0"
-                        >
-                          <div className="min-w-0 flex-1">{renderParticipant(participant)}</div>
-                          <button
-                            onClick={() => handleRemoveParticipant(group.id, participant.id)}
-                            disabled={removeLoading === participant.id}
-                            className="flex-shrink-0 p-1.5 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
-                          >
-                            {removeLoading === participant.id ? (
-                              <Loader2 size={14} className="animate-spin" />
-                            ) : (
-                              <Trash2 size={14} />
-                            )}
-                          </button>
-                        </div>
+                          participant={participant}
+                          index={participantIndex}
+                          onRemove={() => handleRemoveParticipant(group.id, participant.id)}
+                          removing={removeLoading === participant.id}
+                        />
                       ))
                     )}
                   </div>
