@@ -41,7 +41,7 @@ function ProgressRing({
     ...(isSelected ? { boxShadow: `0 0 0 2px ${color}` } : {}),
   } as const;
   const className =
-    'min-w-0 rounded-lg border border-gray-200/90 px-2 text-left shadow-sm transition dark:border-gray-700/90' +
+    'shrink-0 rounded-lg border border-gray-200/90 px-2 text-left shadow-sm transition dark:border-gray-700/90' +
     (labelOnly ? ' flex items-center py-2.5' : ' py-1.5') +
     (onClick ? ' cursor-pointer hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600' : '');
 
@@ -132,7 +132,8 @@ export const LeagueGroupScheduleProgress = ({
   const showAllChip = Boolean(onGroupSelect && groups.length > 1);
 
   return (
-    <div className="flex flex-wrap justify-center gap-2">
+    <div className="w-full min-w-0 overflow-x-auto pb-0.5 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex w-max gap-2">
       {showAllChip && (
         <ProgressRing
           key={allGroupId}
@@ -162,6 +163,7 @@ export const LeagueGroupScheduleProgress = ({
           />
         );
       })}
+      </div>
     </div>
   );
 };
