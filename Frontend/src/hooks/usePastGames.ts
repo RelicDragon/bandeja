@@ -1,9 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { gamesApi } from '@/api';
 import { chatApi } from '@/api/chat';
-import { Game, GameParticipant } from '@/types';
+import { Game } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
-import { isPendingGameInvite, mergeGameWithInviteDeletedPayload } from '@/utils/gameInviteParticipant';
+import {
+  applyInviteDeletedToGames,
+  userHasActiveGameMembership,
+} from '@/utils/gameInviteParticipant';
 
 export const usePastGames = (user: any, shouldLoad: boolean = false) => {
   const [pastGames, setPastGames] = useState<Game[]>([]);
@@ -23,15 +26,8 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
 
   const fetchGamesWithUnread = async (myGames: Game[], userId: string): Promise<Record<string, number>> => {
     const accessibleGameIds = myGames
-      .filter(game => {
-        const participants = game.participants ?? [];
-        const isParticipant = participants.some((p: { userId?: string }) => p.userId === userId);
-        const hasPendingInvite = participants.some(
-          (p: GameParticipant) => p.userId === userId && isPendingGameInvite(p),
-        );
-        return isParticipant || hasPendingInvite;
-      })
-      .map(game => game.id);
+      .filter((game) => userHasActiveGameMembership(game, userId))
+      .map((game) => game.id);
 
     if (accessibleGameIds.length === 0) return {};
     try {
@@ -99,9 +95,15 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
     if (!lastInviteDeleted) return;
     const gid = lastInviteDeleted.gameId;
     if (!gid) return;
-    const patch = (g: Game) => mergeGameWithInviteDeletedPayload(g, lastInviteDeleted);
-    setPastGames((prev) => prev.map((g) => (g.id === gid ? patch(g) : g)));
-  }, [lastInviteDeleted]);
+    setPastGames((prev) => applyInviteDeletedToGames(prev, lastInviteDeleted, user?.id));
+    if (lastInviteDeleted.removedUserId === user?.id && gid) {
+      setPastGamesUnreadCounts((prev) => {
+        if (!(gid in prev)) return prev;
+        const { [gid]: _removed, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, [lastInviteDeleted, user?.id]);
 
   useEffect(() => {
     if (!lastGameUpdate || lastGameUpdate.senderId === user?.id) return;
@@ -115,10 +117,10 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
       today.setHours(0, 0, 0, 0);
       
       if (gameIndex === -1) {
-        const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+        const isMember = userHasActiveGameMembership(updatedGame, user?.id);
         const isArchived = updatedGame.status === 'ARCHIVED';
         
-        if (isParticipant && isArchived) {
+        if (isMember && isArchived) {
           if (updatedGame.entityType === 'LEAGUE_SEASON' && updatedGame.resultsStatus !== 'FINAL') {
             return prevPastGames;
           }
@@ -132,10 +134,10 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
         return prevPastGames;
       }
       
-      const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+      const isMember = userHasActiveGameMembership(updatedGame, user?.id);
       const isArchived = updatedGame.status === 'ARCHIVED';
       
-      if (!isParticipant || !isArchived) {
+      if (!isMember || !isArchived) {
         return prevPastGames.filter(g => g.id !== data.gameId);
       }
 

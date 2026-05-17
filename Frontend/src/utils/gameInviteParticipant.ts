@@ -34,15 +34,56 @@ export function isPendingGameInvite(p: Pick<GameParticipant, 'status'> | { statu
   return p.status === 'INVITED';
 }
 
-export function inviteOutcomeToLegacyStatus(
-  outcome: GameInviteOutcomeType
-): 'INVITE_DECLINED' | 'INVITE_CANCELLED' {
-  return outcome === 'DECLINED' ? 'INVITE_DECLINED' : 'INVITE_CANCELLED';
-}
-
 export function participantBlocksInvitePlayerPicker(p: Pick<GameParticipant, 'status'>): boolean {
   const s = p.status;
   return s === 'PLAYING' || s === 'NON_PLAYING' || s === 'IN_QUEUE' || s === 'GUEST' || s === 'INVITED';
+}
+
+/** User still tied to the game as player, queue, guest, or pending invite (not outcome-only). */
+export function userHasActiveGameMembership(game: Game, userId: string | undefined): boolean {
+  if (!userId) return false;
+  return (game.participants ?? []).some(
+    (p) =>
+      p.userId === userId &&
+      (p.status === 'PLAYING' ||
+        p.status === 'NON_PLAYING' ||
+        p.status === 'IN_QUEUE' ||
+        p.status === 'GUEST' ||
+        p.status === 'INVITED'),
+  );
+}
+
+export function removeInviteOutcomeFromGame(game: Game, userId: string): Game {
+  const next = (game.inviteOutcomes ?? []).filter((o) => o.userId !== userId);
+  if (next.length === (game.inviteOutcomes ?? []).length) return game;
+  return { ...game, inviteOutcomes: next };
+}
+
+/** Apply invite-deleted socket payload; return null if game should drop out of the current user's list. */
+export function applyInviteDeletedToGame(
+  game: Game,
+  payload: InviteDeletedSocketPayload,
+  currentUserId: string | undefined,
+): Game | null {
+  if (payload.gameId && payload.gameId !== game.id) return game;
+  const merged = mergeGameWithInviteDeletedPayload(game, payload);
+  if (!currentUserId) return merged;
+  if (payload.removedUserId === currentUserId) return null;
+  if (!userHasActiveGameMembership(merged, currentUserId)) return null;
+  return merged;
+}
+
+export function applyInviteDeletedToGames(
+  games: Game[],
+  payload: InviteDeletedSocketPayload,
+  currentUserId: string | undefined,
+): Game[] {
+  if (!payload.gameId) return games;
+  return games.flatMap((g) => {
+    if (g.id !== payload.gameId) return [g];
+    const next = applyInviteDeletedToGame(g, payload, currentUserId);
+    return next ? [next] : [];
+  });
 }
 
 export function getSortedInviteOutcomes(outcomes: GameInviteOutcome[] | undefined): GameInviteOutcome[] {

@@ -89,7 +89,15 @@
       "invalidTeamParticipants": "Cada participante en cada grupo debe ser un equipo con exactamente dos jugadores.",
       "groupsMustHaveSameTeamCount": "Todos los grupos deben tener el mismo número de equipos.",
       "tooFewTeams": "Se requieren al menos dos equipos por grupo.",
-      "regularRoundsAlreadyExist": "Ya existen jornadas de temporada regular. Elimínalas en el calendario antes de generar un round-robin completo."
+      "regularRoundsAlreadyExist": "Ya existen jornadas de temporada regular. Elimínalas en el calendario antes de generar un round-robin completo.",
+      "recreate": {
+        "noRegularRounds": "Crea un calendario de temporada regular antes de recrearlo.",
+        "duplicateProtectedMatchup": "Dos partidos programados o jugados comparten los mismos equipos. Resuélvelo manualmente primero.",
+        "cannotPlaceProtectedGame": "No se pudo colocar un partido programado en la nueva estructura de jornadas.",
+        "invalidProtectedGame": "No se pudo identificar un partido para recrear. Resuelve los partidos de la liga manualmente primero.",
+        "unknownTeamRoster": "Las plantillas actuales no coinciden con un partido existente.",
+        "pairingNotInSchedule": "Error interno al reconstruir el calendario."
+      }
     }
   }
 }

@@ -446,6 +446,8 @@ export const PlayerListModal = ({
         await usersApi.trackInteraction(playerId);
       }
 
+      setInvitePickerOutcomes((prev) => prev.filter((o) => !expandedPlayerIds.includes(o.userId)));
+
       onInviteSent?.();
       onConfirm?.(expandedPlayerIds, {
         userTeamIdByReceiverId:

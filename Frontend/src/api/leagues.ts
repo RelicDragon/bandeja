@@ -197,6 +197,25 @@ export const leaguesApi = {
     );
     return response.data;
   },
+  recreateFullRoundRobin: async (leagueSeasonId: string) => {
+    const response = await api.post<
+      ApiResponse<{
+        gamesDeleted: number;
+        gamesMoved: number;
+        roundsDeleted: number;
+        roundsCreated: number;
+        gamesCreated: number;
+        gamesPreservedDueToChat: number;
+        gamesPreservedFinal: number;
+        gamesPreservedInProgress: number;
+        gamesPreservedScheduled: number;
+        roundsSkippedDueToRemainingGames: number;
+        standingsParticipantsReset: number;
+        standingsGamesSynced: number;
+      }>
+    >(`/leagues/${leagueSeasonId}/rounds/full-round-robin/recreate`);
+    return response.data;
+  },
   createGameForRound: async (leagueRoundId: string, leagueGroupId?: string) => {
     const response = await api.post<ApiResponse<any>>(`/leagues/rounds/${leagueRoundId}/games`, {
       leagueGroupId,

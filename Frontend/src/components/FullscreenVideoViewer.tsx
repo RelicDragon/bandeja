@@ -11,6 +11,11 @@ import { ensureChatMediaDownloaded } from '@/services/chat/chatMediaDownloadMana
 import { useChatMediaDownload } from '@/hooks/useChatMediaDownload';
 import { isCapacitor, isAndroid } from '@/utils/capacitor';
 import { mediaCacheKeyForSrc, readCachedMediaResponse } from '@/services/chat/chatMediaCache';
+import {
+  isVideoPictureInPictureSupported,
+  subscribeVideoPictureInPicture,
+  toggleVideoPictureInPicture,
+} from '@/utils/videoPictureInPicture';
 
 type FullscreenVideoViewerProps = {
   videoUrl: string;
@@ -40,6 +45,7 @@ export const FullscreenVideoViewer: React.FC<FullscreenVideoViewerProps> = ({
   const [playbackUrl, setPlaybackUrl] = useState(resolved);
   const [isDownloading, setIsDownloading] = useState(false);
   const [pipActive, setPipActive] = useState(false);
+  const [pipSupported, setPipSupported] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -100,26 +106,22 @@ export const FullscreenVideoViewer: React.FC<FullscreenVideoViewerProps> = ({
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
-    const onEnter = () => setPipActive(true);
-    const onLeave = () => setPipActive(false);
-    video.addEventListener('enterpictureinpicture', onEnter);
-    video.addEventListener('leavepictureinpicture', onLeave);
-    return () => {
-      video.removeEventListener('enterpictureinpicture', onEnter);
-      video.removeEventListener('leavepictureinpicture', onLeave);
-    };
-  }, [playbackUrl, retryKey]);
+    if (!video) {
+      setPipSupported(false);
+      return;
+    }
+    setPipSupported(isVideoPictureInPictureSupported(video));
+    return subscribeVideoPictureInPicture(video, setPipActive);
+  }, [playbackUrl, retryKey, isOpen]);
 
   const handlePiP = useCallback(async () => {
     const video = videoRef.current;
-    if (!video || !document.pictureInPictureEnabled) return;
+    if (!video || !isVideoPictureInPictureSupported(video)) return;
     try {
-      if (document.pictureInPictureElement) {
-        await document.exitPictureInPicture();
-      } else {
-        await video.requestPictureInPicture();
+      if (video.paused) {
+        await video.play();
       }
+      await toggleVideoPictureInPicture(video);
     } catch {
       /* unsupported or user dismissed */
     }
@@ -234,7 +236,7 @@ export const FullscreenVideoViewer: React.FC<FullscreenVideoViewerProps> = ({
           className="absolute top-4 right-4 z-20 flex gap-2"
           style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
         >
-          {document.pictureInPictureEnabled ? (
+          {pipSupported ? (
             <button
               type="button"
               onClick={(e) => {
@@ -293,6 +295,7 @@ export const FullscreenVideoViewer: React.FC<FullscreenVideoViewerProps> = ({
           poster={posterUrl ? resolveChatMediaUrl(posterUrl) : undefined}
           controls
           playsInline
+          disablePictureInPicture={false}
           className="max-h-full max-w-full"
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}

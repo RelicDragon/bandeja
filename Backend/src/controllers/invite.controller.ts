@@ -11,6 +11,7 @@ import notificationService from '../services/notification.service';
 import { InviteService } from '../services/invite.service';
 import { hasParentGamePermission, hasRealParticipantStatus } from '../utils/parentGamePermissions';
 import { ParticipantService } from '../services/game/participant.service';
+import { ParticipantMessageHelper } from '../services/game/participantMessageHelper';
 import { GameReadService, participantsToInviteShape } from '../services/game/read.service';
 
 export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -186,6 +187,10 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
   // Emit notification to receiver via Socket.IO
   if ((global as any).socketService) {
     (global as any).socketService.emitNewInvite(receiverId, invite);
+  }
+
+  if (gameId) {
+    await ParticipantMessageHelper.emitGameUpdate(gameId, req.userId!);
   }
 
   // Send notification if enabled

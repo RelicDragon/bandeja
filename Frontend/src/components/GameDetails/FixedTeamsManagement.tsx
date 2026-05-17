@@ -4,11 +4,77 @@ import { Card } from '@/components';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { TeamPlayerSelector } from './TeamPlayerSelector';
 import { gamesApi } from '@/api/games';
-import { Game, GameTeam } from '@/types';
+import { Game, GameTeam, type BasicUser } from '@/types';
 import { Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { getFixedTeamSlotCount } from '@/utils/fixedTeamSlotCount';
+function playerDisplayName(user: BasicUser): string {
+  return [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+}
+
+interface FixedTeamPlayerSlotProps {
+  player: GameTeam['players'][number] | undefined;
+  canEdit: boolean;
+  onRemove: () => void;
+  onAdd: () => void;
+}
+
+function FixedTeamPlayerSlot({ player, canEdit, onRemove, onAdd }: FixedTeamPlayerSlotProps) {
+  const { t } = useTranslation();
+
+  if (player) {
+    return (
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <PlayerAvatar
+          player={player.user}
+          showName={false}
+          extrasmall
+          removable={canEdit}
+          onRemoveClick={onRemove}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium leading-snug text-gray-900 dark:text-white line-clamp-2">
+            {playerDisplayName(player.user)}
+          </p>
+          {player.user.verbalStatus ? (
+            <p className="verbal-status mt-0.5 line-clamp-1 text-[10px]">{player.user.verbalStatus}</p>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      role={canEdit ? 'button' : undefined}
+      tabIndex={canEdit ? 0 : undefined}
+      onClick={canEdit ? onAdd : undefined}
+      onKeyDown={
+        canEdit
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onAdd();
+              }
+            }
+          : undefined
+      }
+      className={`flex min-w-0 flex-1 items-center gap-2 rounded-lg outline-none ${
+        canEdit
+          ? 'cursor-pointer hover:bg-primary-50/80 dark:hover:bg-primary-900/25 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-gray-900'
+          : ''
+      }`}
+    >
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600">
+        {canEdit ? <span className="text-sm font-medium text-gray-400 dark:text-gray-500">+</span> : null}
+      </div>
+      <span className="min-w-0 flex-1 text-xs font-medium leading-snug text-gray-500 dark:text-gray-400">
+        {canEdit ? t('games.addPlayer') : t('games.emptySlot')}
+      </span>
+    </div>
+  );
+}
 
 interface FixedTeamsManagementProps {
   game: Game;
@@ -340,89 +406,43 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
   const main = (
     <>
       {teams?.slice(0, slotCount).map((team, index) => {
-        // Create exactly 2 player slots for each team
-        const playerSlots = [];
-        for (let i = 0; i < 2; i++) {
-          const player = team.players[i];
-          if (player) {
-            playerSlots.push(
-              <div key={player.userId} className="flex items-center gap-2 min-w-0">
-                <PlayerAvatar
-                  player={player.user}
-                  showName={false}
-                  extrasmall={true}
-                  removable={canEdit}
-                  onRemoveClick={() => handleRemovePlayer(index, player.userId)}
-                />
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-medium text-gray-900 dark:text-white block truncate">
-                    {player.user.firstName} {player.user.lastName}
-                  </span>
-                  {player.user.verbalStatus && (
-                    <span className="verbal-status block">
-                      {player.user.verbalStatus}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          } else {
-            playerSlots.push(
-              <div key={`placeholder-${i}`} className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                  {canEdit && <span className="text-xs text-gray-400 dark:text-gray-500">+</span>}
-                </div>
-                <span className="text-[10px] font-medium text-gray-500 dark:text-gray-500">
-                  {canEdit ? t('games.addPlayer') : t('games.emptySlot')}
-                </span>
-              </div>
-            );
+        const openSelector = (slot: 0 | 1) => {
+          if (!canEdit) return;
+          if (slot === 1 && !team.players[0]) {
+            toast.error(t('games.fillFirstPlayerSlotFirst', { defaultValue: 'Add the first player before the second.' }));
+            return;
           }
-        }
+          setSelectedTeamIndex(index);
+          setShowPlayerSelector(true);
+        };
 
         return (
-          <div key={team.id} className="relative grid grid-cols-2 gap-6 items-center py-2 px-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg mb-2">
-            {/* Team Counter - Small Green Circle in Top Left */}
-            <div className="absolute -top-1 -left-1">
-              <div className="w-5 h-5 bg-green-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+          <div key={team.id} className="flex items-stretch overflow-hidden rounded-xl border border-gray-200/90 bg-gray-50/90 dark:border-gray-700/70 dark:bg-gray-800/45">
+            <div
+              className="flex w-9 shrink-0 items-center justify-center border-r border-gray-200/90 bg-emerald-500/10 dark:border-gray-700/70 dark:bg-emerald-500/15"
+              aria-hidden
+            >
+              <span className="text-xs font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
                 {team.teamNumber}
+              </span>
+            </div>
+            <div className="flex min-w-0 flex-1 divide-x divide-gray-200/90 dark:divide-gray-700/70">
+              <div className="min-w-0 flex-1 p-2.5">
+                <FixedTeamPlayerSlot
+                  player={team.players[0]}
+                  canEdit={canEdit}
+                  onRemove={() => handleRemovePlayer(index, team.players[0]!.userId)}
+                  onAdd={() => openSelector(0)}
+                />
               </div>
-            </div>
-
-            <div
-              className={`flex justify-start rounded-lg p-2 transition-all ${
-                !team.players[0] && canEdit
-                  ? 'cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/20'
-                  : 'cursor-default'
-              }`}
-              onClick={() => {
-                if (!team.players[0] && canEdit) {
-                  setSelectedTeamIndex(index);
-                  setShowPlayerSelector(true);
-                }
-              }}
-            >
-              {playerSlots[0]}
-            </div>
-
-            <div
-              className={`flex justify-start rounded-lg p-2 transition-all ${
-                !team.players[1] && canEdit
-                  ? 'cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/20'
-                  : 'cursor-default'
-              }`}
-              onClick={() => {
-                if (!team.players[1] && canEdit) {
-                  if (!team.players[0]) {
-                    toast.error(t('games.fillFirstPlayerSlotFirst', { defaultValue: 'Add the first player before the second.' }));
-                    return;
-                  }
-                  setSelectedTeamIndex(index);
-                  setShowPlayerSelector(true);
-                }
-              }}
-            >
-              {playerSlots[1]}
+              <div className="min-w-0 flex-1 p-2.5">
+                <FixedTeamPlayerSlot
+                  player={team.players[1]}
+                  canEdit={canEdit}
+                  onRemove={() => handleRemovePlayer(index, team.players[1]!.userId)}
+                  onAdd={() => openSelector(1)}
+                />
+              </div>
             </div>
           </div>
         );
@@ -449,7 +469,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
   );
 
   if (embedded) {
-    return <div className="space-y-3">{main}</div>;
+    return <div className="space-y-2">{main}</div>;
   }
 
   return (

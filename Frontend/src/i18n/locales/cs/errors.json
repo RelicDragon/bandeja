@@ -89,7 +89,15 @@
       "invalidTeamParticipants": "Každý účastník ve skupině musí být družstvo se přesně dvěma hráči.",
       "groupsMustHaveSameTeamCount": "Ve všech skupinách musí být stejný počet družstev.",
       "tooFewTeams": "Ve skupině jsou potřeba alespoň dvě družstva.",
-      "regularRoundsAlreadyExist": "Kola základní části už existují. Před plným round-robinem je smažte v rozvrhu."
+      "regularRoundsAlreadyExist": "Kola základní části už existují. Před plným round-robinem je smažte v rozvrhu.",
+      "recreate": {
+        "noRegularRounds": "Nejprve vytvořte rozvrh základní části.",
+        "duplicateProtectedMatchup": "Dva naplánované nebo odehrané zápasy mají stejné týmy. Nejprve to vyřešte ručně.",
+        "cannotPlaceProtectedGame": "Naplánovaný zápas nelze umístit do nové struktury kol.",
+        "invalidProtectedGame": "Zápas nelze identifikovat pro přegenerování. Nejprve upravte ligové zápasy ručně.",
+        "unknownTeamRoster": "Aktuální soupisky neodpovídají existujícímu zápasu.",
+        "pairingNotInSchedule": "Interní chyba při přestavbě rozvrhu."
+      }
     }
   }
 }

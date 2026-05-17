@@ -47,6 +47,13 @@ router.post(
 );
 
 router.post(
+  '/:leagueSeasonId/rounds/full-round-robin/recreate',
+  authenticate,
+  canEditGame,
+  leagueController.recreateFullRegularRoundRobin
+);
+
+router.post(
   '/:leagueSeasonId/rounds',
   authenticate,
   canEditGame,

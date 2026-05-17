@@ -452,17 +452,6 @@ export class InviteService {
     if (!isReceiver && !hasAdminPermission) {
       return { success: false, message: 'errors.invites.notAuthorizedToDecline' };
     }
-    if (participant.gameId && participant.user) {
-      const receiverName = getUserDisplayName(participant.user.firstName, participant.user.lastName);
-      try {
-        await createSystemMessage(participant.gameId, {
-          type: SystemMessageType.USER_DECLINED_INVITE,
-          variables: { userName: receiverName },
-        });
-      } catch (error) {
-        console.error('Failed to create system message for invite decline:', error);
-      }
-    }
     if (!participant.gameId) {
       return { success: false, message: 'errors.invites.notFound' };
     }
@@ -475,6 +464,17 @@ export class InviteService {
       },
       GameInviteOutcomeType.DECLINED
     );
+    if (participant.user) {
+      const receiverName = getUserDisplayName(participant.user.firstName, participant.user.lastName);
+      try {
+        await createSystemMessage(participant.gameId, {
+          type: SystemMessageType.USER_DECLINED_INVITE,
+          variables: { userName: receiverName },
+        });
+      } catch (error) {
+        console.error('Failed to create system message for invite decline:', error);
+      }
+    }
     await emitDeclineCancelSockets(participant.gameId, participantId, participant.userId, participant.invitedByUserId, {
       removedParticipantId: participantId,
       removedUserId: participant.userId,

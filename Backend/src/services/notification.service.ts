@@ -453,6 +453,7 @@ class NotificationService {
 
     for (const participant of participants) {
       const user = participant.user;
+      if (participant.status === 'INVITED') continue;
 
       const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
       if (isMuted) {

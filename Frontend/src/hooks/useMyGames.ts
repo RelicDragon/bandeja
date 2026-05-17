@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { gamesApi } from '@/api';
 import { Game, Invite } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
-import { mergeGameWithInviteDeletedPayload } from '@/utils/gameInviteParticipant';
+import {
+  applyInviteDeletedToGames,
+  userHasActiveGameMembership,
+} from '@/utils/gameInviteParticipant';
 import {
   OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT,
   RESTORE_GAME_UNREAD_EVENT,
@@ -121,9 +124,25 @@ export const useMyGames = (
     setInvites((prevInvites) => prevInvites.filter((invite) => invite.id !== lastInviteDeleted.inviteId));
     const gid = lastInviteDeleted.gameId;
     if (!gid) return;
-    const patch = (g: Game) => mergeGameWithInviteDeletedPayload(g, lastInviteDeleted);
-    setGames((prev) => prev.map((g) => (g.id === gid ? patch(g) : g)));
-  }, [lastInviteDeleted]);
+    setGames((prev) => applyInviteDeletedToGames(prev, lastInviteDeleted, user?.id));
+    if (lastInviteDeleted.removedUserId === user?.id) {
+      setGamesUnreadCounts((prev) => {
+        const unread = prev[gid] ?? 0;
+        if (!(gid in prev)) return prev;
+        const { [gid]: _removed, ...rest } = prev;
+        if (unread > 0) {
+          setTotalGamesUnreadFromUnreadObjects((t) => Math.max(0, t - unread));
+        }
+        return rest;
+      });
+    } else {
+      setGamesUnreadCounts((prev) => {
+        if (!(gid in prev)) return prev;
+        const { [gid]: _removed, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, [lastInviteDeleted, user?.id]);
 
   useEffect(() => {
     if (!lastGameUpdate || (!lastGameUpdate.forceUpdate && lastGameUpdate.senderId === user?.id)) return;
@@ -133,10 +152,10 @@ export const useMyGames = (
 
     setGames(prevGames => {
       const gameIndex = prevGames.findIndex(g => g.id === data.gameId);
-      const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
+      const isMember = userHasActiveGameMembership(updatedGame, user?.id);
 
       if (gameIndex === -1) {
-        if (!isParticipant) return prevGames;
+        if (!isMember) return prevGames;
 
         const isArchived = updatedGame.status === 'ARCHIVED';
         if (!isArchived) {
@@ -155,7 +174,7 @@ export const useMyGames = (
         return prevGames;
       }
 
-      if (!isParticipant) {
+      if (!isMember) {
         return prevGames.filter(g => g.id !== data.gameId);
       }
 

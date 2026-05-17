@@ -1,9 +1,16 @@
 import UIKit
+import WebKit
 import Capacitor
 
 final class MainViewController: CAPBridgeViewController {
     override public func capacitorDidLoad() {
         bridge?.registerPluginInstance(AuthBridgePlugin())
+    }
+
+    override open func webViewConfiguration(for instanceConfiguration: InstanceConfiguration) -> WKWebViewConfiguration {
+        let config = super.webViewConfiguration(for: instanceConfiguration)
+        config.allowsPictureInPictureMediaPlayback = true
+        return config
     }
 
     private var splashOverlay: UIView?

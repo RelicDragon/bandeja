@@ -3,15 +3,19 @@
  *   DB_URL=... npx ts-node scripts/qa-leagueRoundGeneration.ts
  */
 import {
+  ChatContextType,
   EntityType,
   LeagueParticipantType,
+  MessageState,
   ParticipantRole,
+  ResultsStatus,
   RoundType,
   type PrismaClient,
 } from '@prisma/client';
 import { TeamForRoundGeneration } from '../src/services/league/generation/TeamForRoundGeneration';
 import { matchupKeyFromSigs, teamPlayerSig } from '../src/services/league/generation/fixedTeamsRoundMatching';
 import { LeagueCreateService } from '../src/services/league/create.service';
+import { LeagueRecreateRegularSeasonService } from '../src/services/league/recreateRegularSeason.service';
 import { roundsInSingleRoundRobinCycle } from '../src/services/league/generation/fixedTeamsRoundRobin';
 
 function ensureDbUrl() {
@@ -719,6 +723,226 @@ async function main() {
       await assertFixedTeamRoundRobinScheduleBalance(prisma, 'full RR mixed group A', seasonId, 4, rrRounds, groupA.id);
       await assertFixedTeamRoundRobinScheduleBalance(prisma, 'full RR mixed group B', seasonId, 3, rrRounds, groupB.id);
       console.log('ok: createFullRegularRoundRobin — mixed 4+3 teams, two groups');
+    }
+
+    // --- 10) recreate: trims extra REGULAR round and refills to single RR (4 teams) ---
+    {
+      const teams = buildDisjointTeams(users, 4);
+      const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
+      branches.push({ leagueId, seasonId });
+      const group = await prisma.leagueGroup.create({
+        data: { leagueSeasonId: seasonId, name: `QA recreate trim ${Date.now()}` },
+      });
+      const { LeagueSyncService } = await import('../src/services/league/sync.service');
+      await LeagueSyncService.syncLeagueParticipants(seasonId);
+      await assignAllTeamParticipantsToGroup(prisma, seasonId, group.id);
+      const ownerId = teams[0][0];
+      await LeagueCreateService.createFullRegularRoundRobin(seasonId, ownerId);
+
+      const extraRound = await prisma.leagueRound.create({
+        data: { leagueSeasonId: seasonId, orderIndex: 99, roundType: RoundType.REGULAR },
+      });
+      await TeamForRoundGeneration.generateGamesForRound(extraRound.id);
+
+      const beforeRounds = await prisma.leagueRound.count({
+        where: { leagueSeasonId: seasonId, roundType: RoundType.REGULAR },
+      });
+      if (beforeRounds !== 4) {
+        throw new Error(`recreate trim: expected 4 regular rounds before recreate, got ${beforeRounds}`);
+      }
+
+      await LeagueRecreateRegularSeasonService.recreateFullRegularRoundRobin(seasonId, ownerId);
+
+      const afterRounds = await prisma.leagueRound.count({
+        where: { leagueSeasonId: seasonId, roundType: RoundType.REGULAR },
+      });
+      const expectedRounds = roundsInSingleRoundRobinCycle(4);
+      if (afterRounds !== expectedRounds) {
+        throw new Error(`recreate trim: expected ${expectedRounds} rounds after, got ${afterRounds}`);
+      }
+      const gc = await prisma.game.count({
+        where: { parentId: seasonId, leagueGroupId: group.id, entityType: EntityType.LEAGUE },
+      });
+      if (gc !== 6) {
+        throw new Error(`recreate trim: expected 6 games after, got ${gc}`);
+      }
+      await assertFixedTeamRoundRobinScheduleBalance(
+        prisma,
+        'recreate trim',
+        seasonId,
+        4,
+        expectedRounds,
+        group.id
+      );
+      console.log('ok: recreateFullRegularRoundRobin — trims extra round, 4 teams × 3 rounds');
+    }
+
+    // --- 11) recreate: keeps fixture with user chat message ---
+    {
+      const teams = buildDisjointTeams(users, 4);
+      const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
+      branches.push({ leagueId, seasonId });
+      const group = await prisma.leagueGroup.create({
+        data: { leagueSeasonId: seasonId, name: `QA recreate chat ${Date.now()}` },
+      });
+      const { LeagueSyncService } = await import('../src/services/league/sync.service');
+      await LeagueSyncService.syncLeagueParticipants(seasonId);
+      await assignAllTeamParticipantsToGroup(prisma, seasonId, group.id);
+      const ownerId = teams[0][0];
+      await LeagueCreateService.createFullRegularRoundRobin(seasonId, ownerId);
+
+      const stub = await prisma.game.findFirst({
+        where: {
+          parentId: seasonId,
+          entityType: EntityType.LEAGUE,
+          resultsStatus: 'NONE',
+          timeIsSet: false,
+          clubId: null,
+        },
+        select: { id: true },
+      });
+      if (!stub) {
+        throw new Error('recreate chat: no unscheduled stub game found');
+      }
+
+      await prisma.chatMessage.create({
+        data: {
+          chatContextType: ChatContextType.GAME,
+          contextId: stub.id,
+          gameId: stub.id,
+          senderId: ownerId,
+          content: 'qa recreate chat guard',
+          chatType: 'PUBLIC',
+          state: MessageState.SENT,
+        },
+      });
+
+      const res = await LeagueRecreateRegularSeasonService.recreateFullRegularRoundRobin(seasonId, ownerId);
+      if (res.gamesPreservedDueToChat < 1) {
+        throw new Error(`recreate chat: expected gamesPreservedDueToChat >= 1, got ${res.gamesPreservedDueToChat}`);
+      }
+      const still = await prisma.game.findUnique({ where: { id: stub.id } });
+      if (!still) {
+        throw new Error('recreate chat: stub game with chat was deleted');
+      }
+      console.log('ok: recreateFullRegularRoundRobin — preserves game with user chat');
+    }
+
+    async function findUnscheduledStub(seasonId: string) {
+      return prisma.game.findFirst({
+        where: {
+          parentId: seasonId,
+          entityType: EntityType.LEAGUE,
+          resultsStatus: ResultsStatus.NONE,
+          timeIsSet: false,
+          clubId: null,
+          courtId: null,
+        },
+        select: { id: true },
+      });
+    }
+
+    // --- 12) recreate: keeps FINAL game ---
+    {
+      const teams = buildDisjointTeams(users, 4);
+      const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
+      branches.push({ leagueId, seasonId });
+      const group = await prisma.leagueGroup.create({
+        data: { leagueSeasonId: seasonId, name: `QA recreate final ${Date.now()}` },
+      });
+      await LeagueSyncService.syncLeagueParticipants(seasonId);
+      await assignAllTeamParticipantsToGroup(prisma, seasonId, group.id);
+      const ownerId = teams[0][0];
+      await LeagueCreateService.createFullRegularRoundRobin(seasonId, ownerId);
+
+      const stub = await findUnscheduledStub(seasonId);
+      if (!stub) throw new Error('recreate final: no stub game found');
+      await prisma.game.update({
+        where: { id: stub.id },
+        data: { resultsStatus: ResultsStatus.FINAL },
+      });
+
+      const res = await LeagueRecreateRegularSeasonService.recreateFullRegularRoundRobin(seasonId, ownerId);
+      if (res.gamesPreservedFinal < 1) {
+        throw new Error(`recreate final: expected gamesPreservedFinal >= 1, got ${res.gamesPreservedFinal}`);
+      }
+      const still = await prisma.game.findUnique({ where: { id: stub.id } });
+      if (!still || still.resultsStatus !== ResultsStatus.FINAL) {
+        throw new Error('recreate final: FINAL game was deleted or changed');
+      }
+      console.log('ok: recreateFullRegularRoundRobin — preserves FINAL game');
+    }
+
+    // --- 13) recreate: keeps scheduled game (time + club) ---
+    {
+      const teams = buildDisjointTeams(users, 4);
+      const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
+      branches.push({ leagueId, seasonId });
+      const group = await prisma.leagueGroup.create({
+        data: { leagueSeasonId: seasonId, name: `QA recreate scheduled ${Date.now()}` },
+      });
+      await LeagueSyncService.syncLeagueParticipants(seasonId);
+      await assignAllTeamParticipantsToGroup(prisma, seasonId, group.id);
+      const ownerId = teams[0][0];
+      await LeagueCreateService.createFullRegularRoundRobin(seasonId, ownerId);
+
+      const club = await prisma.club.findFirst({
+        where: { cityId: city.id },
+        select: { id: true },
+      });
+      if (!club) throw new Error('recreate scheduled: no club in city');
+
+      const stub = await findUnscheduledStub(seasonId);
+      if (!stub) throw new Error('recreate scheduled: no stub game found');
+      await prisma.game.update({
+        where: { id: stub.id },
+        data: { timeIsSet: true, clubId: club.id, startTime: start },
+      });
+
+      const res = await LeagueRecreateRegularSeasonService.recreateFullRegularRoundRobin(seasonId, ownerId);
+      if (res.gamesPreservedScheduled < 1) {
+        throw new Error(
+          `recreate scheduled: expected gamesPreservedScheduled >= 1, got ${res.gamesPreservedScheduled}`
+        );
+      }
+      const still = await prisma.game.findUnique({ where: { id: stub.id } });
+      if (!still || !still.timeIsSet || still.clubId !== club.id) {
+        throw new Error('recreate scheduled: scheduled game was deleted or cleared');
+      }
+      console.log('ok: recreateFullRegularRoundRobin — preserves scheduled game');
+    }
+
+    // --- 14) recreate: keeps IN_PROGRESS game ---
+    {
+      const teams = buildDisjointTeams(users, 4);
+      const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
+      branches.push({ leagueId, seasonId });
+      const group = await prisma.leagueGroup.create({
+        data: { leagueSeasonId: seasonId, name: `QA recreate inprog ${Date.now()}` },
+      });
+      await LeagueSyncService.syncLeagueParticipants(seasonId);
+      await assignAllTeamParticipantsToGroup(prisma, seasonId, group.id);
+      const ownerId = teams[0][0];
+      await LeagueCreateService.createFullRegularRoundRobin(seasonId, ownerId);
+
+      const stub = await findUnscheduledStub(seasonId);
+      if (!stub) throw new Error('recreate inprog: no stub game found');
+      await prisma.game.update({
+        where: { id: stub.id },
+        data: { resultsStatus: ResultsStatus.IN_PROGRESS },
+      });
+
+      const res = await LeagueRecreateRegularSeasonService.recreateFullRegularRoundRobin(seasonId, ownerId);
+      if (res.gamesPreservedInProgress < 1) {
+        throw new Error(
+          `recreate inprog: expected gamesPreservedInProgress >= 1, got ${res.gamesPreservedInProgress}`
+        );
+      }
+      const still = await prisma.game.findUnique({ where: { id: stub.id } });
+      if (!still || still.resultsStatus !== ResultsStatus.IN_PROGRESS) {
+        throw new Error('recreate inprog: IN_PROGRESS game was deleted');
+      }
+      console.log('ok: recreateFullRegularRoundRobin — preserves IN_PROGRESS game');
     }
 
     console.log('qa-leagueRoundGeneration: all checks passed');

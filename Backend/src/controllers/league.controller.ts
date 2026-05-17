@@ -7,6 +7,7 @@ import { LeagueSyncService } from '../services/league/sync.service';
 import { LeagueGroupManagementService } from '../services/league/groups.service';
 import { LeagueBroadcastService } from '../services/league/broadcast.service';
 import { LeaguePlannerService } from '../services/league/planner.service';
+import { LeagueRecreateRegularSeasonService } from '../services/league/recreateRegularSeason.service';
 import { ApiError } from '../utils/ApiError';
 
 export const createLeague = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -89,6 +90,20 @@ export const createFullRegularRoundRobin = asyncHandler(async (req: AuthRequest,
   const result = await LeagueCreateService.createFullRegularRoundRobin(leagueSeasonId, req.userId!);
 
   res.status(201).json({
+    success: true,
+    data: result,
+  });
+});
+
+export const recreateFullRegularRoundRobin = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId } = req.params;
+
+  const result = await LeagueRecreateRegularSeasonService.recreateFullRegularRoundRobin(
+    leagueSeasonId,
+    req.userId!
+  );
+
+  res.status(200).json({
     success: true,
     data: result,
   });

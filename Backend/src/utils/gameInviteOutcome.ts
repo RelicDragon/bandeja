@@ -10,10 +10,6 @@ export type GameInviteOutcomeRecord = {
   closedAt: Date;
 };
 
-export function mapOutcomeToLegacyStatus(outcome: GameInviteOutcomeType): 'INVITE_DECLINED' | 'INVITE_CANCELLED' {
-  return outcome === GameInviteOutcomeType.DECLINED ? 'INVITE_DECLINED' : 'INVITE_CANCELLED';
-}
-
 export async function upsertGameInviteOutcome(
   data: {
     gameId: string;
