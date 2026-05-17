@@ -29,6 +29,10 @@ function outcome(over: Partial<GameInviteOutcome> & Pick<GameInviteOutcome, 'use
   } as GameInviteOutcome;
 }
 
+function g(over: Partial<Game> & Pick<Game, 'id'>): Game {
+  return over as Game;
+}
+
 describe('gameInviteParticipant', () => {
   it('isPendingGameInvite', () => {
     expect(isPendingGameInvite({ status: 'INVITED' })).toBe(true);
@@ -36,28 +40,28 @@ describe('gameInviteParticipant', () => {
   });
 
   it('userHasActiveGameMembership', () => {
-    const game = {
+    const game = g({
       id: 'g1',
       participants: [p({ userId: 'u1', status: 'INVITED' })],
-    } as Game;
+    });
     expect(userHasActiveGameMembership(game, 'u1')).toBe(true);
     expect(userHasActiveGameMembership(game, 'u2')).toBe(false);
-    const withOutcomeOnly = {
+    const withOutcomeOnly = g({
       id: 'g1',
       participants: [],
       inviteOutcomes: [outcome({ userId: 'u1', outcome: 'DECLINED' })],
-    } as Game;
+    });
     expect(userHasActiveGameMembership(withOutcomeOnly, 'u1')).toBe(false);
   });
 
   it('applyInviteDeletedToGame drops list for removed user', () => {
-    const game = {
+    const game = g({
       id: 'g1',
       participants: [
         p({ id: 'gp1', userId: 'u1', status: 'INVITED' }),
         p({ userId: 'u2', status: 'PLAYING' }),
       ],
-    } as Game;
+    });
     const payload = {
       inviteId: 'gp1',
       gameId: 'g1',
@@ -76,8 +80,8 @@ describe('gameInviteParticipant', () => {
 
   it('applyInviteDeletedToGames', () => {
     const games = [
-      { id: 'g1', participants: [p({ id: 'gp1', userId: 'u1', status: 'INVITED' })] } as Game,
-      { id: 'g2', participants: [p({ userId: 'u1', status: 'PLAYING' })] } as Game,
+      g({ id: 'g1', participants: [p({ id: 'gp1', userId: 'u1', status: 'INVITED' })] }),
+      g({ id: 'g2', participants: [p({ userId: 'u1', status: 'PLAYING' })] }),
     ];
     const next = applyInviteDeletedToGames(games, {
       inviteId: 'gp1',
@@ -88,10 +92,10 @@ describe('gameInviteParticipant', () => {
   });
 
   it('removeInviteOutcomeFromGame', () => {
-    const game = {
+    const game = g({
       id: 'g1',
       inviteOutcomes: [outcome({ userId: 'u1', outcome: 'DECLINED' })],
-    } as Game;
+    });
     expect(removeInviteOutcomeFromGame(game, 'u1').inviteOutcomes).toHaveLength(0);
   });
 
@@ -102,11 +106,11 @@ describe('gameInviteParticipant', () => {
   });
 
   it('mergeGameWithInviteDeletedPayload removes participant and adds inviteOutcome', () => {
-    const game: Game = {
+    const game = g({
       id: 'g1',
       participants: [p({ id: 'gp1', userId: 'u1', status: 'INVITED' })],
       inviteOutcomes: [],
-    } as Game;
+    });
     const next = mergeGameWithInviteDeletedPayload(game, {
       inviteId: 'gp1',
       gameId: 'g1',
