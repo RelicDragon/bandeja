@@ -1,5 +1,11 @@
 import { Prisma } from '@prisma/client';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import {
+  ensureTeamLeagueParticipant,
+  ensureUserLeagueParticipant,
+  findTeamParticipantByRoster,
+  findUserParticipant,
+} from './leagueParticipantResolve';
 
 type ScoringRules = {
   pointsPerWin: number;
@@ -227,44 +233,18 @@ export class LeagueGameResultsService {
 
       console.log(`[LEAGUE SYNC USER] User ${outcome.userId}: wins=${wins}, ties=${ties}, losses=${losses}, scoresMade=${scoresMade}, scoresLost=${scoresLost}, points=${points}`);
 
-      const existingParticipant = await tx.leagueParticipant.findFirst({
-        where: {
-          leagueSeasonId,
-          userId: outcome.userId,
-          participantType: 'USER',
-        },
+      const existingUser = await findUserParticipant(tx, leagueSeasonId, outcome.userId);
+      const { participantId, created } = await ensureUserLeagueParticipant(tx, {
+        leagueId,
+        leagueSeasonId,
+        userId: outcome.userId,
+        leagueGroupId,
+        stats: { points, wins, ties, losses, scoreDelta },
+        useIncrement: Boolean(existingUser),
       });
-
-      if (existingParticipant) {
-        console.log(`[LEAGUE SYNC USER] Updating existing participant ${existingParticipant.id} for user ${outcome.userId}`);
-        await tx.leagueParticipant.update({
-          where: { id: existingParticipant.id },
-          data: {
-            currentGroupId: leagueGroupId,
-            points: { increment: points },
-            wins: { increment: wins },
-            ties: { increment: ties },
-            losses: { increment: losses },
-            scoreDelta: { increment: scoreDelta },
-          },
-        });
-      } else {
-        console.log(`[LEAGUE SYNC USER] Creating new participant for user ${outcome.userId}`);
-        await tx.leagueParticipant.create({
-          data: {
-            leagueId,
-            leagueSeasonId,
-            participantType: 'USER',
-            userId: outcome.userId,
-            currentGroupId: leagueGroupId,
-            points,
-            wins,
-            ties,
-            losses,
-            scoreDelta,
-          },
-        });
-      }
+      console.log(
+        `[LEAGUE SYNC USER] ${created ? 'Created' : 'Updated'} participant ${participantId} for user ${outcome.userId}`
+      );
     }
     
     console.log(`[LEAGUE SYNC USER] Completed syncing ${game.outcomes.length} outcomes`);
@@ -360,69 +340,30 @@ export class LeagueGameResultsService {
       const team = game.fixedTeams.find((t: any) => t.teamNumber === teamNumber);
       if (!team) continue;
 
-      const teamPlayerIds = team.players.map((p: any) => p.userId).sort();
-
-      const leagueTeam = await tx.leagueTeam.findFirst({
-        where: {
-          players: {
-            every: {
-              userId: { in: teamPlayerIds },
-            },
-          },
-        },
-        include: {
-          players: true,
-        },
-      });
-
-      if (!leagueTeam) continue;
-
-      if (leagueTeam.players.length !== teamPlayerIds.length) continue;
-
-      const leagueTeamPlayerIds = leagueTeam.players.map((p: any) => p.userId).sort();
-      if (!teamPlayerIds.every((id: string, idx: number) => id === leagueTeamPlayerIds[idx])) continue;
+      const teamPlayerIds = team.players.map((p: any) => p.userId);
+      if (teamPlayerIds.length !== 2) continue;
 
       const scoreDelta = results.scoresMade - results.scoresLost;
       const points = results.wins * pointsPerWin + results.ties * pointsPerTie + results.losses * pointsPerLoose;
 
-      const existingParticipant = await tx.leagueParticipant.findFirst({
-        where: {
-          leagueSeasonId,
-          leagueTeamId: leagueTeam.id,
-          participantType: 'TEAM',
+      const existingTeam = await findTeamParticipantByRoster(tx, leagueSeasonId, teamPlayerIds);
+      const { participantId, created } = await ensureTeamLeagueParticipant(tx, {
+        leagueId,
+        leagueSeasonId,
+        teamPlayerIds,
+        leagueGroupId,
+        stats: {
+          points,
+          wins: results.wins,
+          ties: results.ties,
+          losses: results.losses,
+          scoreDelta,
         },
+        useIncrement: Boolean(existingTeam),
       });
-
-      if (existingParticipant) {
-        console.log(`[LEAGUE SYNC TEAM] Updating existing participant ${existingParticipant.id} for team ${leagueTeam.id}`);
-        await tx.leagueParticipant.update({
-          where: { id: existingParticipant.id },
-          data: {
-            currentGroupId: leagueGroupId,
-            points: { increment: points },
-            wins: { increment: results.wins },
-            ties: { increment: results.ties },
-            losses: { increment: results.losses },
-            scoreDelta: { increment: scoreDelta },
-          },
-        });
-      } else {
-        console.log(`[LEAGUE SYNC TEAM] Creating new participant for team ${leagueTeam.id}`);
-        await tx.leagueParticipant.create({
-          data: {
-            leagueId,
-            leagueSeasonId,
-            participantType: 'TEAM',
-            leagueTeamId: leagueTeam.id,
-            currentGroupId: leagueGroupId,
-            points,
-            wins: results.wins,
-            ties: results.ties,
-            losses: results.losses,
-            scoreDelta,
-          },
-        });
-      }
+      console.log(
+        `[LEAGUE SYNC TEAM] ${created ? 'Created' : 'Updated'} participant ${participantId} for roster ${teamPlayerIds.join(',')}`
+      );
     }
     
     console.log(`[LEAGUE SYNC TEAM] Completed syncing team results`);
@@ -469,35 +410,10 @@ export class LeagueGameResultsService {
       const team = game.fixedTeams.find((t: any) => t.teamNumber === teamNumber);
       if (!team) continue;
 
-      const teamPlayerIds = team.players.map((p: any) => p.userId).sort();
+      const teamPlayerIds = team.players.map((p: any) => p.userId);
+      if (teamPlayerIds.length !== 2) continue;
 
-      const leagueTeam = await tx.leagueTeam.findFirst({
-        where: {
-          players: {
-            every: {
-              userId: { in: teamPlayerIds },
-            },
-          },
-        },
-        include: {
-          players: true,
-        },
-      });
-
-      if (!leagueTeam) continue;
-
-      if (leagueTeam.players.length !== teamPlayerIds.length) continue;
-
-      const leagueTeamPlayerIds = leagueTeam.players.map((p: any) => p.userId).sort();
-      if (!teamPlayerIds.every((id: string, idx: number) => id === leagueTeamPlayerIds[idx])) continue;
-
-      const participant = await tx.leagueParticipant.findFirst({
-        where: {
-          leagueSeasonId,
-          leagueTeamId: leagueTeam.id,
-          participantType: 'TEAM',
-        },
-      });
+      const participant = await findTeamParticipantByRoster(tx, leagueSeasonId, teamPlayerIds);
 
       if (participant) {
         const scoreDelta = results.scoresMade - results.scoresLost;

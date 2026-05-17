@@ -10,6 +10,11 @@ import { TeamForRoundGeneration } from './generation/TeamForRoundGeneration';
 import { roundsInSingleRoundRobinCycle } from './generation/fixedTeamsRoundRobin';
 import { teamPlayerSig } from './generation/fixedTeamsRoundMatching';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
+import {
+  ensureTeamLeagueParticipant,
+  ensureUserLeagueParticipant,
+  findTeamParticipantByRoster,
+} from './leagueParticipantResolve';
 
 export class LeagueCreateService {
   private static getSeasonParticipantType(hasFixedTeams: boolean) {
@@ -630,96 +635,22 @@ export class LeagueCreateService {
     });
 
     if (hasFixedTeams) {
-      const allGameTeamPlayerIds = new Set<string>();
-      seasonGame.fixedTeams.forEach(team => {
-        team.players.forEach(player => {
-          allGameTeamPlayerIds.add(player.userId);
-        });
-      });
-
-      const standingsPlayerIds = new Set<string>();
-      standings.forEach(standing => {
-        if (standing.leagueTeam) {
-          standing.leagueTeam.players.forEach(p => standingsPlayerIds.add(p.userId));
-        }
-      });
-
       for (const fixedTeam of seasonGame.fixedTeams) {
-        const teamPlayerIds = fixedTeam.players.map(p => p.userId).sort();
-        let matchingLeagueTeam = null;
+        const teamPlayerIds = fixedTeam.players.map((p) => p.userId);
+        if (teamPlayerIds.length !== 2) continue;
 
-        for (const standing of standings) {
-          if (standing.leagueTeam) {
-            const standingPlayerIds = standing.leagueTeam.players.map(p => p.userId).sort();
-            if (teamPlayerIds.length === standingPlayerIds.length &&
-                teamPlayerIds.every((id, idx) => id === standingPlayerIds[idx])) {
-              matchingLeagueTeam = standing.leagueTeam;
-              break;
-            }
-          }
-        }
-
-        if (!matchingLeagueTeam) {
-          const newLeagueTeam = await prisma.leagueTeam.create({
-            data: {
-              players: {
-                create: teamPlayerIds.map(userId => ({
-                  userId,
-                })),
-              },
-            },
+        const existingTeam = await findTeamParticipantByRoster(
+          prisma,
+          round.leagueSeasonId,
+          teamPlayerIds
+        );
+        if (!existingTeam) {
+          await ensureTeamLeagueParticipant(prisma, {
+            leagueId,
+            leagueSeasonId: round.leagueSeasonId,
+            teamPlayerIds,
+            leagueGroupId,
           });
-
-          const existingTeamParticipant = await prisma.leagueParticipant.findFirst({
-            where: {
-              leagueSeasonId: round.leagueSeasonId,
-              leagueTeamId: newLeagueTeam.id,
-              participantType: 'TEAM',
-            },
-          });
-
-          if (!existingTeamParticipant) {
-            await prisma.leagueParticipant.create({
-              data: {
-                leagueId,
-                leagueSeasonId: round.leagueSeasonId,
-                participantType: 'TEAM',
-                leagueTeamId: newLeagueTeam.id,
-                points: 0,
-                wins: 0,
-                ties: 0,
-                losses: 0,
-                scoreDelta: 0,
-              },
-            });
-          }
-        }
-      }
-
-      for (const playerId of allGameTeamPlayerIds) {
-        if (!standingsPlayerIds.has(playerId)) {
-          const existingParticipant = await prisma.leagueParticipant.findFirst({
-            where: {
-              leagueSeasonId: round.leagueSeasonId,
-              userId: playerId,
-              participantType: 'USER',
-            },
-          });
-          if (!existingParticipant) {
-            await prisma.leagueParticipant.create({
-              data: {
-                leagueId,
-                leagueSeasonId: round.leagueSeasonId,
-                participantType: 'USER',
-                userId: playerId,
-                points: 0,
-                wins: 0,
-                ties: 0,
-                losses: 0,
-                scoreDelta: 0,
-              },
-            });
-          }
         }
       }
     } else {
@@ -731,28 +662,12 @@ export class LeagueCreateService {
 
       for (const participant of seasonGame.participants) {
         if (!standingsUserIds.has(participant.userId)) {
-          const existingParticipant = await prisma.leagueParticipant.findFirst({
-            where: {
-              leagueSeasonId: round.leagueSeasonId,
-              userId: participant.userId,
-              participantType: 'USER',
-            },
+          await ensureUserLeagueParticipant(prisma, {
+            leagueId,
+            leagueSeasonId: round.leagueSeasonId,
+            userId: participant.userId,
+            leagueGroupId,
           });
-          if (!existingParticipant) {
-            await prisma.leagueParticipant.create({
-              data: {
-                leagueId,
-                leagueSeasonId: round.leagueSeasonId,
-                participantType: 'USER',
-                userId: participant.userId,
-                points: 0,
-                wins: 0,
-                ties: 0,
-                losses: 0,
-                scoreDelta: 0,
-              },
-            });
-          }
         }
       }
     }

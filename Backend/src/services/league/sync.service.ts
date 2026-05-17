@@ -2,10 +2,13 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { LeagueParticipantType, Prisma } from '@prisma/client';
-
-function sortedPlayerKey(userIds: string[]): string {
-  return [...userIds].sort().join(':');
-}
+import {
+  ensureUserLeagueParticipant,
+  findOrCreateLeagueTeamByRoster,
+  findTeamParticipantByRoster,
+  rostersEqual,
+  sortedPlayerKey,
+} from './leagueParticipantResolve';
 
 type GameTeamWithPlayers = {
   players: { userId: string }[];
@@ -165,11 +168,8 @@ export class LeagueSyncService {
             if (standing.participantType !== LeagueParticipantType.TEAM || !standing.leagueTeam) {
               continue;
             }
-            const standingPlayerIds = standing.leagueTeam.players.map((p) => p.userId).sort();
-            if (
-              teamPlayerIds.length === standingPlayerIds.length &&
-              teamPlayerIds.every((id, idx) => id === standingPlayerIds[idx])
-            ) {
+            const standingPlayerIds = standing.leagueTeam.players.map((p) => p.userId);
+            if (rostersEqual(teamPlayerIds, standingPlayerIds)) {
               matchingLeagueTeam = standing.leagueTeam;
               matchingStanding = standing;
               break;
@@ -188,32 +188,34 @@ export class LeagueSyncService {
           }
 
           if (!matchingLeagueTeam) {
-            const newLeagueTeam = await tx.leagueTeam.create({
-              data: {
-                players: {
-                  create: teamPlayerIds.map((userId) => ({
-                    userId,
-                  })),
-                },
-              },
-            });
-
+            const existingByRoster = await findTeamParticipantByRoster(tx, leagueSeasonId, teamPlayerIds);
             const resolvedGroupId = await resolveLeagueGroupIdForTeam(tx, leagueSeasonId, teamPlayerIds);
 
-            await tx.leagueParticipant.create({
-              data: {
-                leagueId,
-                leagueSeasonId,
-                participantType: LeagueParticipantType.TEAM,
-                leagueTeamId: newLeagueTeam.id,
-                currentGroupId: resolvedGroupId ?? undefined,
-                points: 0,
-                wins: 0,
-                ties: 0,
-                losses: 0,
-                scoreDelta: 0,
-              },
-            });
+            if (existingByRoster) {
+              consumedParticipantIds.add(existingByRoster.id);
+              if (resolvedGroupId != null && existingByRoster.currentGroupId !== resolvedGroupId) {
+                await tx.leagueParticipant.update({
+                  where: { id: existingByRoster.id },
+                  data: { currentGroupId: resolvedGroupId },
+                });
+              }
+            } else {
+              const leagueTeam = await findOrCreateLeagueTeamByRoster(tx, teamPlayerIds);
+              await tx.leagueParticipant.create({
+                data: {
+                  leagueId,
+                  leagueSeasonId,
+                  participantType: LeagueParticipantType.TEAM,
+                  leagueTeamId: leagueTeam.id,
+                  currentGroupId: resolvedGroupId ?? undefined,
+                  points: 0,
+                  wins: 0,
+                  ties: 0,
+                  losses: 0,
+                  scoreDelta: 0,
+                },
+              });
+            }
           }
         }
 
@@ -271,28 +273,11 @@ export class LeagueSyncService {
 
         for (const participant of seasonGame.participants) {
           if (!standingsUserIds.has(participant.userId)) {
-            const existingParticipant = await tx.leagueParticipant.findFirst({
-              where: {
-                leagueSeasonId,
-                userId: participant.userId,
-                participantType: LeagueParticipantType.USER,
-              },
+            await ensureUserLeagueParticipant(tx, {
+              leagueId,
+              leagueSeasonId,
+              userId: participant.userId,
             });
-            if (!existingParticipant) {
-              await tx.leagueParticipant.create({
-                data: {
-                  leagueId,
-                  leagueSeasonId,
-                  participantType: LeagueParticipantType.USER,
-                  userId: participant.userId,
-                  points: 0,
-                  wins: 0,
-                  ties: 0,
-                  losses: 0,
-                  scoreDelta: 0,
-                },
-              });
-            }
           }
         }
       }
