@@ -6,7 +6,7 @@ import { getAiService } from '../ai/ai.service';
 import { LLM_REASON } from '../ai/llmReasons';
 import { sourceAppearsToBeTargetLanguage, translationMatchesTargetFranc } from './translationFrancCheck';
 import { MESSAGE_TRANSLATION_PENDING } from './translationPending';
-import { normalizeTranslationOutput } from './translationOutputNormalize';
+import { normalizeTranslationOutput, translationEqualsSource } from './translationOutputNormalize';
 
 export const TRANSLATION_LANGUAGE_NAMES: Record<string, string> = {
   en: 'English',
@@ -183,6 +183,53 @@ export class TranslationService {
     return { status: 'timeout' };
   }
 
+  static async removeTranslationRecord(
+    messageId: string,
+    languageCode: string
+  ): Promise<void> {
+    await prisma.messageTranslation.deleteMany({
+      where: { messageId, languageCode: languageCode.toLowerCase() },
+    });
+  }
+
+  static async discardRedundantTranslation(
+    messageId: string,
+    languageCode: string
+  ): Promise<void> {
+    const normalizedLanguageCode = languageCode.toLowerCase();
+    await this.removeTranslationRecord(messageId, normalizedLanguageCode);
+
+    const msgCtx = await prisma.chatMessage.findUnique({
+      where: { id: messageId },
+      select: { chatContextType: true, contextId: true },
+    });
+    if (!msgCtx) {
+      return;
+    }
+
+    let syncSeq: number | undefined;
+    await prisma.$transaction(async (tx) => {
+      syncSeq = await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        msgCtx.chatContextType,
+        msgCtx.contextId,
+        ChatSyncEventType.MESSAGE_TRANSLATION_UPDATED,
+        { messageId, languageCode: normalizedLanguageCode, removed: true }
+      );
+    });
+
+    const socketService = (global as any).socketService;
+    if (socketService?.emitMessageTranslation) {
+      socketService.emitMessageTranslation(
+        msgCtx.chatContextType,
+        msgCtx.contextId,
+        messageId,
+        { languageCode: normalizedLanguageCode, translation: '', removed: true },
+        syncSeq
+      );
+    }
+  }
+
   static async persistTranslation(
     messageId: string,
     normalizedLanguageCode: string,
@@ -242,13 +289,6 @@ export class TranslationService {
         messageId_languageCode: { messageId, languageCode: normalizedLanguageCode },
       },
     });
-    if (existing && existing.translation !== MESSAGE_TRANSLATION_PENDING) {
-      return {
-        translation: existing.translation,
-        languageCode: existing.languageCode,
-      };
-    }
-
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId },
       select: { content: true, senderId: true, messageType: true },
@@ -266,12 +306,31 @@ export class TranslationService {
       throw new ApiError(400, 'Message has no text content to translate');
     }
 
+    if (existing && existing.translation !== MESSAGE_TRANSLATION_PENDING) {
+      if (translationEqualsSource(sourceText, existing.translation)) {
+        await this.discardRedundantTranslation(messageId, normalizedLanguageCode);
+        return { translation: sourceText, languageCode: normalizedLanguageCode };
+      }
+      return {
+        translation: existing.translation,
+        languageCode: existing.languageCode,
+      };
+    }
+
     const userId = existing?.createdBy ?? message.senderId ?? '';
     const translation = await this.getTranslationFromChatGPT(
       sourceText,
       normalizedLanguageCode,
       userId || undefined
     );
+    if (translationEqualsSource(sourceText, translation)) {
+      console.info('[translation] skip_redundant', {
+        messageId,
+        languageCode: normalizedLanguageCode,
+      });
+      await this.discardRedundantTranslation(messageId, normalizedLanguageCode);
+      return { translation: sourceText, languageCode: normalizedLanguageCode };
+    }
     await this.persistTranslation(messageId, normalizedLanguageCode, translation);
     return { translation, languageCode: normalizedLanguageCode };
   }
@@ -298,6 +357,13 @@ export class TranslationService {
     });
 
     if (existingTranslation && existingTranslation.translation !== MESSAGE_TRANSLATION_PENDING) {
+      if (translationEqualsSource(messageContent, existingTranslation.translation)) {
+        await this.discardRedundantTranslation(messageId, normalizedLanguageCode);
+        return {
+          translation: messageContent,
+          languageCode: normalizedLanguageCode,
+        };
+      }
       return {
         translation: existingTranslation.translation,
         languageCode: existingTranslation.languageCode,
@@ -316,10 +382,32 @@ export class TranslationService {
 
     const waited = await this.waitForPendingTranslationRow(messageId, normalizedLanguageCode);
     if (waited.status === 'ready') {
+      if (translationEqualsSource(messageContent, waited.translation)) {
+        await this.discardRedundantTranslation(messageId, normalizedLanguageCode);
+        return {
+          translation: messageContent,
+          languageCode: normalizedLanguageCode,
+        };
+      }
       return {
         translation: waited.translation,
         languageCode: waited.languageCode,
       };
+    }
+
+    if (waited.status === 'gone') {
+      const job = await prisma.translationJob.findUnique({
+        where: {
+          messageId_languageCode: { messageId, languageCode: normalizedLanguageCode },
+        },
+        select: { status: true },
+      });
+      if (job?.status === 'done') {
+        return {
+          translation: messageContent,
+          languageCode: normalizedLanguageCode,
+        };
+      }
     }
 
     throw new ApiError(503, 'Translation timed out. Please try again in a moment.');

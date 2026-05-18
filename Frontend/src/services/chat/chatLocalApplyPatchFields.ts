@@ -26,6 +26,27 @@ export async function patchMessageTranslationInDexie(
   await putChatLocalRowsWithSearchTokens([rowFromMessage(patch)]);
 }
 
+export async function removeMessageTranslationInDexie(
+  messageId: string,
+  languageCode: string
+): Promise<void> {
+  const row = await chatLocalDb.messages.get(messageId);
+  if (!row) return;
+  const lc = languageCode.toLowerCase();
+  const translations = (row.payload.translations ?? []).filter(
+    (t) => t.languageCode.toLowerCase() !== lc
+  );
+  const patch: ChatMessage = {
+    ...row.payload,
+    translations,
+    translation:
+      row.payload.translation?.languageCode.toLowerCase() === lc
+        ? undefined
+        : row.payload.translation,
+  };
+  await putChatLocalRowsWithSearchTokens([rowFromMessage(patch)]);
+}
+
 export async function patchLocalTranscriptionDirect(
   messageId: string,
   audioTranscription: NonNullable<ChatMessage['audioTranscription']>

@@ -13,6 +13,7 @@ import { FullscreenVideoViewer } from '../FullscreenVideoViewer';
 import { ReportMessageModal } from '../ReportMessageModal';
 import { extractLanguageCode } from '@/utils/language';
 import { isTranslationPending } from '@/constants/messageTranslationPending';
+import { translationEqualsSource } from '@/utils/translationOutputNormalize';
 import { useChatAutoTranslateSlots } from '@/contexts/ChatAutoTranslateContext';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MessageItemProps } from './types';
@@ -162,7 +163,15 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     !isTranslationPending(matchingTranslation.translation);
   const localeAllowed =
     autoTranslateSlots.length === 0 || autoTranslateSlots.map((c) => c.toLowerCase()).includes(userLanguageCode);
-  const hasTranslation = translationReady && localeAllowed;
+  const sourceTextForTranslationCompare =
+    currentMessage.messageType === 'VOICE' && voiceTxRaw?.trim()
+      ? voiceTxRaw.trim()
+      : (currentMessage.content?.trim() ?? '');
+  const translationDuplicatesOriginal =
+    !!matchingTranslation &&
+    !!sourceTextForTranslationCompare &&
+    translationEqualsSource(sourceTextForTranslationCompare, matchingTranslation.translation);
+  const hasTranslation = translationReady && localeAllowed && !translationDuplicatesOriginal;
   const isTranslationLoading =
     localeAllowed &&
     !!matchingTranslation &&

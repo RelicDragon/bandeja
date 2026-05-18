@@ -1,4 +1,6 @@
 import type { ChatContextType, ChatMessage, MessageReadReceipt } from '@/api/chat';
+import { translationEqualsSource } from '@/utils/translationOutputNormalize';
+import { isTranslationPending } from '@/constants/messageTranslationPending';
 import { BANDEJA_CHAT_PINS_UPDATED } from '@/utils/chatPinsEvents';
 import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';
 import type { ChatSyncPatch } from './chatSyncEventsToPatches';
@@ -147,13 +149,51 @@ export async function applyChatSyncPatchesInSlice(
       case 'translationUpdated': {
         const r = await ensureRow(p.messageId);
         if (!r) break;
+        const sourceText =
+          (r.payload.content?.trim() || '') ||
+          (r.payload.audioTranscription?.transcription?.trim() || '');
+        if (
+          !isTranslationPending(p.translation) &&
+          sourceText &&
+          translationEqualsSource(sourceText, p.translation)
+        ) {
+          const translations = (r.payload.translations ?? []).filter(
+            (t) => t.languageCode.toLowerCase() !== p.languageCode.toLowerCase()
+          );
+          const primary =
+            r.payload.translation?.languageCode.toLowerCase() === p.languageCode.toLowerCase()
+              ? undefined
+              : r.payload.translation;
+          writeRow({ ...r, payload: { ...r.payload, translations, translation: primary } });
+          break;
+        }
         const translations = [...(r.payload.translations ?? [])];
         const idx = translations.findIndex((t) => t.languageCode === p.languageCode);
         if (idx >= 0) translations[idx] = { languageCode: p.languageCode, translation: p.translation };
         else translations.push({ languageCode: p.languageCode, translation: p.translation });
+        const primary =
+          r.payload.translation?.languageCode === p.languageCode
+            ? { languageCode: p.languageCode, translation: p.translation }
+            : r.payload.translation;
         writeRow({
           ...r,
-          payload: { ...r.payload, translations },
+          payload: { ...r.payload, translations, translation: primary },
+        });
+        break;
+      }
+      case 'translationRemoved': {
+        const r = await ensureRow(p.messageId);
+        if (!r) break;
+        const translations = (r.payload.translations ?? []).filter(
+          (t) => t.languageCode.toLowerCase() !== p.languageCode.toLowerCase()
+        );
+        const primary =
+          r.payload.translation?.languageCode.toLowerCase() === p.languageCode.toLowerCase()
+            ? undefined
+            : r.payload.translation;
+        writeRow({
+          ...r,
+          payload: { ...r.payload, translations, translation: primary },
         });
         break;
       }

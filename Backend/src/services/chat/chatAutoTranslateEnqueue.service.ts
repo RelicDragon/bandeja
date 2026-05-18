@@ -2,6 +2,7 @@ import { MessageType } from '@prisma/client';
 import prisma from '../../config/database';
 import { MESSAGE_TRANSCRIPTION_PENDING } from './transcriptionPending';
 import { ChatAutoTranslateService } from './chatAutoTranslate.service';
+import { sourceAppearsToBeTargetLanguage } from './translationFrancCheck';
 import { TranslationQueueService } from './translationQueue.service';
 
 export class ChatAutoTranslateEnqueueService {
@@ -57,6 +58,9 @@ export class ChatAutoTranslateEnqueueService {
     const triggerUserId = message.senderId;
 
     for (const languageCode of languageCodes) {
+      if (await sourceAppearsToBeTargetLanguage(sourceText, languageCode)) {
+        continue;
+      }
       await TranslationQueueService.enqueue({
         messageId,
         languageCode,

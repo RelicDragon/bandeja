@@ -64,6 +64,7 @@ export interface SocketEvents {
     messageId: string;
     languageCode: string;
     translation: string;
+    removed?: boolean;
     timestamp?: string;
     syncSeq?: number;
   }) => void;

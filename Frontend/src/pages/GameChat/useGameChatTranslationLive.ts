@@ -4,7 +4,11 @@ import type { ChatType } from '@/types';
 import { extractLanguageCode } from '@/utils/language';
 import { isTranslationPending } from '@/constants/messageTranslationPending';
 import { chatAutoTranslateTypeKey } from '@/utils/chatAutoTranslateTypeKey';
-import { patchMessageTranslationInDexie } from '@/services/chat/chatLocalApply';
+import {
+  patchMessageTranslationInDexie,
+  removeMessageTranslationInDexie,
+} from '@/services/chat/chatLocalApply';
+import { mergeChatMessageTranslation } from './mergeChatMessageTranslation';
 
 export interface UseGameChatTranslationLiveParams {
   id: string | undefined;
@@ -36,45 +40,34 @@ export function useGameChatTranslationLive({
         messageId?: string;
         languageCode?: string;
         translation?: string;
+        removed?: boolean;
       };
       if (detail.contextId !== id || detail.contextType !== contextType) return;
-      if (!detail.messageId || !detail.languageCode || detail.translation == null) return;
-      if (isTranslationPending(detail.translation)) return;
+      if (!detail.messageId || !detail.languageCode) return;
 
-      void patchMessageTranslationInDexie(
-        detail.messageId,
-        detail.languageCode,
-        detail.translation
-      ).catch(() => {});
-
-      const merge = (prev: ChatMessageWithStatus[]) => {
-        const idx = prev.findIndex((m) => m.id === detail.messageId);
-        if (idx < 0) return prev;
-        const m = prev[idx];
-        const translations = [...(m.translations ?? [])];
-        const tIdx = translations.findIndex((t) => t.languageCode === detail.languageCode);
-        const entry = {
-          languageCode: detail.languageCode!,
-          translation: detail.translation!,
-        };
-        if (tIdx >= 0) translations[tIdx] = entry;
-        else translations.push(entry);
-        const next = [...prev];
-        const patch: ChatMessageWithStatus = {
-          ...m,
-          translations,
-          _translationJustArrived:
-            detail.languageCode?.toLowerCase() === userLocale ? true : m._translationJustArrived,
-        };
-        if (detail.languageCode?.toLowerCase() === userLocale) {
-          patch.translation = entry;
-        }
-        next[idx] = patch;
-        return next;
-      };
+      if (detail.removed) {
+        void removeMessageTranslationInDexie(detail.messageId, detail.languageCode).catch(() => {});
+      } else {
+        if (detail.translation == null) return;
+        if (isTranslationPending(detail.translation)) return;
+        void patchMessageTranslationInDexie(
+          detail.messageId,
+          detail.languageCode,
+          detail.translation
+        ).catch(() => {});
+      }
 
       setMessages((prev) => {
-        const next = merge(prev);
+        const next = mergeChatMessageTranslation(
+          prev,
+          {
+            messageId: detail.messageId!,
+            languageCode: detail.languageCode!,
+            translation: detail.translation,
+            removed: detail.removed,
+          },
+          userLocale
+        );
         messagesRef.current = next;
         return next;
       });

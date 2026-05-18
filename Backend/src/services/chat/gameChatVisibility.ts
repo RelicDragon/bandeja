@@ -12,3 +12,11 @@ export function canParticipantSeeGameChatMessage(
   if (chatType === ChatType.PHOTOS) return game.status !== 'ANNOUNCED';
   return false;
 }
+
+export function shouldNotifyParentGameAdminForMessage(
+  parentUserId: string,
+  message: { mentionIds?: string[]; replyTo?: { sender?: { id?: string } } | null }
+): boolean {
+  if ((message.mentionIds ?? []).includes(parentUserId)) return true;
+  return message.replyTo?.sender?.id === parentUserId;
+}

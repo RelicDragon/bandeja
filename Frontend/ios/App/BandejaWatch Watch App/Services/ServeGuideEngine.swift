@@ -49,12 +49,39 @@ enum ServeGuideEngine {
         return classicGameStrip(i, matchFirst: first)
     }
 
+    static func firstServerForPointsSet(
+        setIndex: Int,
+        sets: [WatchSetWrite],
+        matchFirstServer: TeamSide
+    ) -> TeamSide {
+        if setIndex <= 0 { return matchFirstServer }
+        var j = setIndex - 1
+        while j >= 0 {
+            let row = sets[safe: j]
+            if row?.resolvedRole != .official {
+                j -= 1
+                continue
+            }
+            let ta = row?.teamA ?? 0
+            let tb = row?.teamB ?? 0
+            let total = ta + tb
+            if total > 0 {
+                let prevFirst = firstServerForPointsSet(setIndex: j, sets: sets, matchFirstServer: matchFirstServer)
+                let lastServer = tbNextServerTeam(firstTBTeam: prevFirst, pointIndex: total - 1)
+                return otherTeam(lastServer)
+            }
+            j -= 1
+        }
+        return matchFirstServer
+    }
+
     private static func pointsCapStrip(_ i: ServeGuideInputs, matchFirst: TeamSide) -> ServeGuideSnapshot? {
         let set = i.sets[safe: i.activeSetIndex]
         let ta = set?.teamA ?? 0
         let tb = set?.teamB ?? 0
         let t = ta + tb
-        let nextTeam = tbNextServerTeam(firstTBTeam: matchFirst, pointIndex: t)
+        let firstForSet = firstServerForPointsSet(setIndex: i.activeSetIndex, sets: i.sets, matchFirstServer: matchFirst)
+        let nextTeam = tbNextServerTeam(firstTBTeam: firstForSet, pointIndex: t)
         let doubles = (nextTeam == .teamA ? i.teamAPlayerNames.count : i.teamBPlayerNames.count) >= 2
         let playerIdx = tbDoublesPlayerIndex(
             matchFirst: matchFirst,
@@ -69,7 +96,7 @@ enum ServeGuideEngine {
         let slot: TieBreakServeSlot? = t == 0 ? .serveOne : (((t - 1) % 2 == 0) ? .serveOne : .serveTwo)
         let changeEnds = t > 0 && t % 6 == 0
         let slotWord = slot == .serveOne ? "Serve 1" : "Serve 2"
-        let token = "pts-\(t)-\(nextTeam.rawValue)-\(playerIdx)"
+        let token = "pts-\(t)-\(nextTeam.rawValue)-\(playerIdx)-\(i.activeSetIndex)"
         return ServeGuideSnapshot(
             serverTeam: nextTeam,
             serverPlayerIndex: playerIdx,

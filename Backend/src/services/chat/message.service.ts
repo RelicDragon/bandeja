@@ -16,6 +16,8 @@ import { GameReadService } from '../game/read.service';
 import { UserChatService } from './userChat.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { TranslationService } from './translation.service';
+import { MESSAGE_TRANSLATION_PENDING } from './translationPending';
+import { translationEqualsSource } from './translationOutputNormalize';
 import { MESSAGE_TRANSCRIPTION_PENDING } from './transcriptionPending';
 import { ReadReceiptService } from './readReceipt.service';
 import { DraftService } from './draft.service';
@@ -431,13 +433,23 @@ export class MessageService {
         trRow.transcription !== MESSAGE_TRANSCRIPTION_PENDING
           ? { transcription: trRow.transcription, languageCode: trRow.languageCode }
           : undefined;
+      const sourceText =
+        (message.content?.trim() || '') ||
+        (audioTranscription?.transcription?.trim() || '');
+      const translationPayload =
+        translation &&
+        (translation.translation === MESSAGE_TRANSLATION_PENDING ||
+          !sourceText ||
+          !translationEqualsSource(sourceText, translation.translation))
+          ? {
+              languageCode: translation.languageCode,
+              translation: translation.translation,
+            }
+          : undefined;
       let sanitized = {
         ...rest,
         syncSeq: serverSyncSeq ?? (message as { syncSeq?: number }).syncSeq,
-        translation: translation ? {
-          languageCode: translation.languageCode,
-          translation: translation.translation
-        } : undefined,
+        translation: translationPayload,
         audioTranscription,
       };
       if (message.poll?.isAnonymous && message.poll.options) {
@@ -1002,19 +1014,6 @@ export class MessageService {
         }
       });
 
-      const translationsArray = allTranslations.length > 0 ? allTranslations.map(t => ({
-        languageCode: t.languageCode,
-        translation: t.translation
-      })) : undefined;
-
-      // Get sender's language to include as primary translation if available
-      const sender = await prisma.user.findUnique({
-        where: { id: data.senderId },
-        select: { language: true }
-      });
-      const senderLanguageCode = sender ? TranslationService.extractLanguageCode(sender.language) : 'en';
-      const senderTranslation = translationsArray?.find(t => t.languageCode === senderLanguageCode);
-
       const trRow = await prisma.messageTranscription.findUnique({
         where: { messageId: message.id },
         select: { transcription: true, languageCode: true },
@@ -1025,6 +1024,32 @@ export class MessageService {
         trRow.transcription !== MESSAGE_TRANSCRIPTION_PENDING
           ? { transcription: trRow.transcription, languageCode: trRow.languageCode }
           : undefined;
+
+      const emitSourceText =
+        (message.content?.trim() || '') ||
+        (audioTranscription?.transcription?.trim() || '');
+      const translationsArray =
+        allTranslations.length > 0
+          ? allTranslations
+              .filter(
+                (t) =>
+                  t.translation === MESSAGE_TRANSLATION_PENDING ||
+                  !emitSourceText ||
+                  !translationEqualsSource(emitSourceText, t.translation)
+              )
+              .map((t) => ({
+                languageCode: t.languageCode,
+                translation: t.translation,
+              }))
+          : undefined;
+
+      // Get sender's language to include as primary translation if available
+      const sender = await prisma.user.findUnique({
+        where: { id: data.senderId },
+        select: { language: true }
+      });
+      const senderLanguageCode = sender ? TranslationService.extractLanguageCode(sender.language) : 'en';
+      const senderTranslation = translationsArray?.find(t => t.languageCode === senderLanguageCode);
 
       const messageWithTranslations = {
         ...message,

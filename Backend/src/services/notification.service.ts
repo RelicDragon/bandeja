@@ -6,7 +6,7 @@ import { NotificationPreferenceService, NOTIFICATION_TYPE_TO_PREF } from './noti
 import { PreferenceKey } from '../types/notifications.types';
 import pushNotificationService from './push/push-notification.service';
 import { ChatMuteService } from './chat/chatMute.service';
-import { canParticipantSeeGameChatMessage } from './chat/gameChatVisibility';
+import { canParticipantSeeGameChatMessage, shouldNotifyParentGameAdminForMessage } from './chat/gameChatVisibility';
 import { createInvitePushNotification } from './push/notifications/invite-push.notification';
 import { createGameChatPushNotification } from './push/notifications/game-chat-push.notification';
 import { createUserChatPushNotification } from './push/notifications/user-chat-push.notification';
@@ -187,20 +187,12 @@ class NotificationService {
         }
       });
 
-      const mentionedUserIds = hasMentions ? new Set(mentionIds) : null;
-
       for (const parentParticipant of parentGameAdmins) {
         const user = parentParticipant.user;
         if (user.id === sender.id) continue;
         if (parentParticipant.status === 'INVITED' || parentParticipant.status === 'INVITE_DECLINED' || parentParticipant.status === 'INVITE_CANCELLED') continue;
         if (currentGameUserIds.has(user.id)) continue;
-
-        if (hasMentions) {
-          if (!mentionedUserIds?.has(user.id)) continue;
-        } else {
-          const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
-          if (isMuted) continue;
-        }
+        if (!shouldNotifyParentGameAdminForMessage(user.id, message)) continue;
 
         const payload = await createGameChatPushNotification(message, game, sender, user);
         

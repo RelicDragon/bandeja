@@ -6,7 +6,7 @@ import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } fr
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatChatNotificationMessageBody, formatGameInfoForUser, formatUserName, getEntityTypeLabel, getShowEntityButtonText } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
-import { canParticipantSeeGameChatMessage } from '../../chat/gameChatVisibility';
+import { canParticipantSeeGameChatMessage, shouldNotifyParentGameAdminForMessage } from '../../chat/gameChatVisibility';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
@@ -132,15 +132,8 @@ export async function sendGameChatNotification(
         continue;
       }
 
-      if (hasMentions) {
-        if (!mentionedUserIds?.has(user.id)) {
-          continue;
-        }
-      } else {
-        const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
-        if (isMuted) {
-          continue;
-        }
+      if (!shouldNotifyParentGameAdminForMessage(user.id, message)) {
+        continue;
       }
 
       try {

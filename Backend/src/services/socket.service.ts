@@ -801,7 +801,7 @@ class SocketService {
     contextType: ChatContextType,
     contextId: string,
     messageId: string,
-    payload: { languageCode: string; translation: string },
+    payload: { languageCode: string; translation: string; removed?: boolean },
     syncSeq?: number
   ): void {
     const room = this.getChatRoomName(contextType, contextId);
@@ -811,6 +811,7 @@ class SocketService {
       messageId,
       languageCode: payload.languageCode,
       translation: payload.translation,
+      ...(payload.removed ? { removed: true } : {}),
       timestamp: new Date().toISOString(),
       ...(syncSeq != null ? { syncSeq } : {}),
     });

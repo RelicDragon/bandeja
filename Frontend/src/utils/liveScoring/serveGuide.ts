@@ -128,10 +128,72 @@ export function isPristinePointsStart(state: LiveScoringState): boolean {
   return (set.teamA ?? 0) === 0 && (set.teamB ?? 0) === 0;
 }
 
+/** Super tie-break decider row at 0–0 (regular-game pristine checks exclude `isTieBreak`). */
+export function isPristineSuperTieBreakStart(state: LiveScoringState): boolean {
+  if (state.mode !== 'classic') return false;
+  const set = activeSetRow(state);
+  if (!set?.isTieBreak || isSupplementalMatchSet(set)) return false;
+  return (set.teamA ?? 0) === 0 && (set.teamB ?? 0) === 0;
+}
+
+export function officialSetsHavePlay(state: LiveScoringState): boolean {
+  return state.sets.some((s) => !isSupplementalMatchSet(s) && ((s.teamA ?? 0) > 0 || (s.teamB ?? 0) > 0));
+}
+
+function classicActiveSetHasPlay(state: LiveScoringState): boolean {
+  const set = activeSetRow(state);
+  if (!set || isSupplementalMatchSet(set)) return false;
+  if ((set.teamA ?? 0) > 0 || (set.teamB ?? 0) > 0) return true;
+  const c = state.classic;
+  if (!c) return false;
+  if (c.withinSetTieBreak && (c.tieBreakA > 0 || c.tieBreakB > 0)) return true;
+  if (set.isTieBreak && ((set.teamA ?? 0) > 0 || (set.teamB ?? 0) > 0)) return true;
+  const ps = c.pointState;
+  if (ps.kind !== 'regular' || ps.teamA !== 0 || ps.teamB !== 0) return true;
+  if (c.classicPointsPlayedInGame > 0) return true;
+  return false;
+}
+
+/** First server for a points-cap official set (multi-set aware). */
+export function firstServerForPointsSet(
+  setIndex: number,
+  sets: LiveScoringState['sets'],
+  matchFirstServer: LiveTeamSide
+): LiveTeamSide {
+  if (setIndex <= 0) return matchFirstServer;
+  let j = setIndex - 1;
+  while (j >= 0) {
+    const row = sets[j];
+    if (!row || isSupplementalMatchSet(row)) {
+      j -= 1;
+      continue;
+    }
+    const ta = row.teamA ?? 0;
+    const tb = row.teamB ?? 0;
+    const total = ta + tb;
+    if (total > 0) {
+      const prevFirst = firstServerForPointsSet(j, sets, matchFirstServer);
+      const lastServer = tbNextServerTeam(prevFirst, total - 1);
+      return otherTeam(lastServer);
+    }
+    j -= 1;
+  }
+  return matchFirstServer;
+}
+
 export function needsServeSetup(state: LiveScoringState, rules: ScoringRules): boolean {
   if (state.serveGuideSkipped || state.firstServerTeam != null) return false;
-  if (isClassicRules(rules) && isPristineGameStart(state)) return true;
-  if (isPointsRules(rules) && isPristinePointsStart(state)) return true;
+  if (isPointsRules(rules) && state.mode === 'points') {
+    return isPristinePointsStart(state) || officialSetsHavePlay(state);
+  }
+  if (isClassicRules(rules) && state.mode === 'classic') {
+    return (
+      isPristineGameStart(state) ||
+      isPristineSuperTieBreakStart(state) ||
+      classicActiveSetHasPlay(state) ||
+      officialSetsHavePlay(state)
+    );
+  }
   return false;
 }
 
@@ -175,7 +237,8 @@ function pointsCapStrip(
   const ta = set.teamA ?? 0;
   const tb = set.teamB ?? 0;
   const t = ta + tb;
-  const nextTeam = tbNextServerTeam(matchFirst, t);
+  const firstForSet = firstServerForPointsSet(state.activeSetIndex, state.sets, matchFirst);
+  const nextTeam = tbNextServerTeam(firstForSet, t);
   const namesForTeam = nextTeam === 'teamA' ? teamAPlayerNames : teamBPlayerNames;
   const doubles = namesForTeam.length >= 2;
   const matchFirstPlayerIdx = state.firstServerDoublesPlayerIndex ?? 0;
@@ -184,7 +247,7 @@ function pointsCapStrip(
   const side: CourtServeSide = t % 2 === 0 ? 'rightDeuce' : 'leftAd';
   const slot: TieBreakServeSlot | null = t === 0 ? 'serveOne' : (t - 1) % 2 === 0 ? 'serveOne' : 'serveTwo';
   const changeEnds = t > 0 && t % 6 === 0;
-  const token = `pts-${t}-${nextTeam}-${playerIdx}`;
+  const token = `pts-${t}-${nextTeam}-${playerIdx}-${state.activeSetIndex}`;
   return {
     serverTeam: nextTeam,
     serverPlayerIndex: playerIdx,

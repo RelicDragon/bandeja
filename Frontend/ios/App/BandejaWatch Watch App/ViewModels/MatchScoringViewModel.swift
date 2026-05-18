@@ -201,11 +201,70 @@ final class MatchScoringViewModel {
     }
 
     var classicOfficialScoringLocked: Bool {
-        !activeSetIsSupplemental && blocksFurtherOfficialTaps()
+        serveSeedBlocksScoring || (!activeSetIsSupplemental && blocksFurtherOfficialTaps())
     }
 
     var pointsOfficialIncrementDisabled: Bool {
-        isReadOnly || (!activeSetIsSupplemental && blocksFurtherOfficialTaps())
+        isReadOnly || serveSeedBlocksScoring || (!activeSetIsSupplemental && blocksFurtherOfficialTaps())
+    }
+
+    /// Blocks scoring until first server is chosen (or hints skipped), including mid-match recovery.
+    private var serveSeedBlocksScoring: Bool {
+        guard usesTennisStyleServeGuide, !isReadOnly else { return false }
+        let record = WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId) ?? .empty
+        if record.skipped || record.firstServerTeam != nil { return false }
+        if usesBallCapPerSetUI {
+            return isPristinePointsStart || officialSetsHavePlay
+        }
+        if usesTennisSetRules {
+            return isPristineClassicStart || isPristineSuperTieBreakStart || classicActiveSetHasPlay || officialSetsHavePlay
+        }
+        return false
+    }
+
+    private var isPristinePointsStart: Bool {
+        guard usesBallCapPerSetUI, !activeSetIsSupplemental else { return false }
+        let set = sets[safe: activeSetIndex]
+        return (set?.teamA ?? 0) == 0 && (set?.teamB ?? 0) == 0
+    }
+
+    private var officialSetsHavePlay: Bool {
+        sets.contains { $0.resolvedRole == .official && ($0.teamA > 0 || $0.teamB > 0) }
+    }
+
+    private var isPristineClassicStart: Bool {
+        guard usesTennisSetRules, !activeSetIsSupplemental else { return false }
+        let set = sets[safe: activeSetIndex]
+        guard let set, !set.isTieBreak, set.teamA == 0, set.teamB == 0 else { return false }
+        if withinSetTieBreakMode { return false }
+        switch classicPointState {
+        case .regular(let a, let b):
+            return a == .zero && b == .zero && classicPointsPlayedInGame == 0
+        default:
+            return false
+        }
+    }
+
+    private var isPristineSuperTieBreakStart: Bool {
+        guard usesTennisSetRules, !activeSetIsSupplemental, activeSetIsSuperTieBreak else { return false }
+        let set = sets[safe: activeSetIndex]
+        return (set?.teamA ?? 0) == 0 && (set?.teamB ?? 0) == 0
+    }
+
+    private var classicActiveSetHasPlay: Bool {
+        guard usesTennisSetRules, !activeSetIsSupplemental else { return false }
+        let set = sets[safe: activeSetIndex]
+        guard let set else { return false }
+        if set.teamA > 0 || set.teamB > 0 { return true }
+        if withinSetTieBreakMode, tieBreakA > 0 || tieBreakB > 0 { return true }
+        if set.isTieBreak, set.teamA > 0 || set.teamB > 0 { return true }
+        switch classicPointState {
+        case .regular(let a, let b):
+            if a != .zero || b != .zero { return true }
+        default:
+            return true
+        }
+        return classicPointsPlayedInGame > 0
     }
 
     var pointsOfficialDecrementDisabled: Bool {
@@ -289,7 +348,7 @@ final class MatchScoringViewModel {
                     tieBreakA = 0
                     tieBreakB = 0
                     syncWithinSetTieBreakForActiveSet()
-                    liveScoringRevision = 0
+                    liveScoringRevision = -1
                     if let live = m.metadata?.liveScoring, live.isSupported {
                         applyLiveScoringEnvelopeIfNewer(live)
                     } else {

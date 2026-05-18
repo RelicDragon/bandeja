@@ -12,6 +12,7 @@ export type ChatSyncPatch =
   | { op: 'readBatch'; userId: string; readAt: string; messageIds: string[] }
   | { op: 'readReceipt'; receipt: { messageId: string; userId: string; readAt: string } }
   | { op: 'translationUpdated'; messageId: string; languageCode: string; translation: string }
+  | { op: 'translationRemoved'; messageId: string; languageCode: string }
   | { op: 'stateUpdated'; messageId: string; state: ChatMessage['state']; syncSeq: number }
   | { op: 'pinsBroadcast'; chatType: string }
   | { op: 'devUnhandled'; eventType: string; seq: number };
@@ -100,8 +101,13 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
       case 'MESSAGE_TRANSLATION_UPDATED': {
         const messageId = p.messageId as string | undefined;
         const languageCode = p.languageCode as string | undefined;
+        if (!messageId || !languageCode) break;
+        if (p.removed === true) {
+          out.push({ op: 'translationRemoved', messageId, languageCode });
+          break;
+        }
         const translation = p.translation as string | undefined;
-        if (messageId && languageCode && translation != null) {
+        if (translation != null) {
           out.push({ op: 'translationUpdated', messageId, languageCode, translation });
         }
         break;
