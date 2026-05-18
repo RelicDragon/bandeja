@@ -106,6 +106,15 @@ function buildStandardCountMatrix(ids: string[], partnerCounts: Map<string, numb
   return m;
 }
 
+function countPerfectMatchingVertices(n: number, mate: number[]): number {
+  let matchedVerts = 0;
+  for (let i = 0; i < n; i++) {
+    const j = mate[i];
+    if (j !== undefined && j !== -1) matchedVerts++;
+  }
+  return matchedVerts;
+}
+
 function standardSmallestFeasibleMaxT(counts: number[][]): number {
   const n = counts.length;
   let hi = 0;
@@ -123,11 +132,12 @@ function standardSmallestFeasibleMaxT(counts: number[][]): number {
         if (counts[i][j] <= mid) edges.push([i, j, 1]);
       }
     }
-    const mate = blossom(edges, true) as number[];
-    let matchedVerts = 0;
-    for (let i = 0; i < n; i++) {
-      if (mate[i] !== -1) matchedVerts++;
+    if (edges.length === 0) {
+      lo = mid + 1;
+      continue;
     }
+    const mate = blossom(edges, true) as number[];
+    const matchedVerts = countPerfectMatchingVertices(n, mate);
     if (matchedVerts === n) hi = mid;
     else lo = mid + 1;
   }
@@ -136,10 +146,11 @@ function standardSmallestFeasibleMaxT(counts: number[][]): number {
 
 function mateToPairs(ids: string[], mate: number[]): [string, string][] | null {
   const n = ids.length;
+  if (countPerfectMatchingVertices(n, mate) !== n) return null;
   const pairs: [string, string][] = [];
   for (let i = 0; i < n; i++) {
     const j = mate[i];
-    if (j === -1) return null;
+    if (j === undefined || j === -1) return null;
     if (i < j) pairs.push([ids[i], ids[j]]);
   }
   if (pairs.length !== n / 2) return null;

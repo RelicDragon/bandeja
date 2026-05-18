@@ -520,6 +520,42 @@ async function main() {
     }
   }
 
+  // Regression: n=5 completes one full teammate-pair cycle in 5 rounds (C(5,2)=10 pairs);
+  // rounds 6+ must allow partner reuse (T>=1). Run well past that cycle.
+  {
+    const five = ids.slice(0, 5);
+    const { parts, genderByUser } = assignGendersForMode(five, 'ANY');
+    parts[1] = mkParticipant(five[1]!, 'FEMALE');
+    genderByUser.set(five[1]!, 'FEMALE');
+    const game = baseGameFields(parts, courtIds(1), 'ANY');
+    const rounds: GenRound[] = [];
+    const label = 'n=5 full partner cycle + reuse';
+    for (let r = 0; r < 5; r++) {
+      const matches = generateRandomRound(game, rounds, initialSets);
+      if (matches.length === 0) {
+        throw new Error(`${label}: dry at round ${r + 1}`);
+      }
+      validateRound(label, game, rounds, matches, r, genderByUser);
+      rounds.push({ id: `qa-five-${r}`, matches });
+    }
+    const round6 = generateRandomRound(game, rounds, initialSets);
+    if (round6.length === 0) {
+      throw new Error(`${label}: expected round 6 after full partner cycle, got dry`);
+    }
+    validateRound(label, game, rounds, round6, 5, genderByUser);
+    console.log(`ok: ${label} — round 6 after first full cycle`);
+    runSequentialRoundsUntilDry(`${label} 12+ rounds`, game, genderByUser, 12, 20);
+  }
+
+  // Small rosters: multiple full partner cycles before pigeonhole limits bind tightly.
+  for (const n of [6, 7] as const) {
+    const uidList = ids.slice(0, n);
+    const { parts, genderByUser } = assignGendersForMode(uidList, 'ANY');
+    const game = baseGameFields(parts, courtIds(1), 'ANY');
+    const minRounds = n === 6 ? 12 : 10;
+    runSequentialRoundsUntilDry(`n=${n} 1 court ${minRounds}+ rounds`, game, genderByUser, minRounds, 25);
+  }
+
   const fairnessRuns: {
     n: number;
     courts: number;
