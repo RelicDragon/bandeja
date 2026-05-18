@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { isGroupChannelOwner, isGroupChannelAdminOrOwner } from '@/utils/gameResults';
-import { getAvailableGameChatTypes } from '@/utils/chatType';
+import { getVisibleGameChatTypes } from '@/utils/chatType';
+import type { GameChatChannelActivity } from '@/utils/gameChatChannelActivity';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
@@ -16,6 +17,7 @@ export interface UseGameChatDerivedParams {
   contextType: ChatContextType;
   currentChatType: ChatType;
   messages: ChatMessageWithStatus[];
+  channelActivity?: GameChatChannelActivity;
 }
 
 export function useGameChatDerived({
@@ -25,6 +27,7 @@ export function useGameChatDerived({
   contextType,
   currentChatType,
   messages,
+  channelActivity,
 }: UseGameChatDerivedParams) {
   const { t } = useTranslation();
   const participation = getGameParticipationState(game?.participants ?? [], user?.id, game ?? undefined);
@@ -123,8 +126,13 @@ export function useGameChatDerived({
     if (contextType !== 'GAME') return ['PUBLIC'];
     const participant = game?.participants?.find(p => p.userId === user?.id);
     const parentParticipant = game?.parent?.participants?.find(p => p.userId === user?.id);
-    return getAvailableGameChatTypes(game ?? { status: undefined }, participant ?? undefined, parentParticipant ?? undefined);
-  }, [contextType, game, user?.id]);
+    return getVisibleGameChatTypes(
+      game ?? { status: undefined },
+      participant ?? undefined,
+      parentParticipant ?? undefined,
+      channelActivity
+    );
+  }, [contextType, game, user?.id, channelActivity]);
 
   return {
     participation,

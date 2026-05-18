@@ -26,6 +26,8 @@ export interface GameChatHeaderProps {
   contextType: ChatContextType;
   isBugChat: boolean;
   title: string;
+  titleContent?: React.ReactNode;
+  titleMetaRow?: React.ReactNode;
   subtitle: string | null;
   icon: ReactNode;
   onBack: () => void;
@@ -43,6 +45,8 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
   contextType,
   isBugChat,
   title,
+  titleContent,
+  titleMetaRow,
   subtitle,
   icon,
   onBack,
@@ -54,6 +58,7 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
   headerActions,
 }) => {
   const { t } = useTranslation();
+  const isStructuredTitle = titleContent != null;
   const chatConnectionState = useChatOfflineStore((s) => s.chatConnectionState);
   const paint = useChatSyncStore((s) => s.lastThreadPaintSource);
   const paintHint = useMemo(
@@ -74,7 +79,7 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
   const headerStatusSlot =
     chatConnectionState === 'OFFLINE' ? (
       <div
-        className="w-10 h-10 rounded-full flex items-center justify-center bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 flex-shrink-0"
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400"
         role="status"
         title={paintHint ?? statusTitle}
         aria-label={statusTitle}
@@ -83,7 +88,7 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
       </div>
     ) : chatConnectionState === 'SYNCING' ? (
       <div
-        className="w-10 h-10 rounded-full flex items-center justify-center bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex-shrink-0"
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
         role="status"
         title={paintHint ?? statusTitle}
         aria-label={statusTitle}
@@ -92,67 +97,135 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
       </div>
     ) : null;
 
+  const backRowSpan =
+    subtitle != null ? 4 : titleMetaRow != null ? 3 : 2;
+
   return (
     <header
-      className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-40 shadow-lg"
+      className="z-40 flex-shrink-0 border-b border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900"
       style={{ paddingTop: isEmbedded ? '0' : 'env(safe-area-inset-top)' }}
     >
       <div
-        className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between"
+        className={`mx-auto max-w-2xl px-4 ${
+          isStructuredTitle ? 'w-full py-2.5' : 'flex items-center justify-between gap-2 py-3'
+        }`}
         style={{
           paddingLeft: 'max(1rem, env(safe-area-inset-left))',
           paddingRight: 'max(1rem, env(safe-area-inset-right))',
         }}
       >
         {showLoadingHeader ? (
-          <div className="flex items-center gap-3 w-full">
-            {headerStatusSlot ?? <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full flex-shrink-0" />}
+          <div className="flex w-full items-center gap-3">
+            {headerStatusSlot ?? <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gray-200 dark:bg-gray-700" />}
             <div className="flex-1">
-              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-1" />
-              <div className="h-3 w-48 bg-gray-200 dark:bg-gray-700 rounded" />
+              <div className="mb-1 h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="h-3 w-48 rounded bg-gray-200 dark:bg-gray-700" />
             </div>
+          </div>
+        ) : isStructuredTitle ? (
+          <div
+            className={`grid w-full min-w-0 gap-x-2 gap-y-0.5 ${
+              !isEmbedded ? 'grid-cols-[auto_minmax(0,1fr)_auto]' : 'grid-cols-[minmax(0,1fr)_auto]'
+            }`}
+          >
+            {!isEmbedded && (
+              <button
+                onClick={onBack}
+                className="col-start-1 row-start-1 self-center rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                style={{ gridRowEnd: `span ${backRowSpan}` }}
+              >
+                <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
+              </button>
+            )}
+            {showPanelBack && (
+              <div className="col-start-1 row-start-1 hidden self-center md:block">
+                <button
+                  onClick={onPanelBack}
+                  className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
+                </button>
+              </div>
+            )}
+            <div className={`min-w-0 ${!isEmbedded ? 'col-start-2' : 'col-start-1'} row-start-1`}>
+              <h1 className="min-w-0" aria-label={title}>
+                {titleContent}
+              </h1>
+            </div>
+            {showHeaderActions && headerActions != null && (
+              <div
+                className={`row-start-1 row-span-2 self-start ${!isEmbedded ? 'col-start-3' : 'col-start-2'}`}
+              >
+                <ChatHeaderActions
+                  showMute={headerActions.showMute}
+                  showLeave={headerActions.showLeave}
+                  showParticipantsButton={headerActions.showParticipantsButton}
+                  isMuted={headerActions.isMuted}
+                  isTogglingMute={headerActions.isTogglingMute}
+                  onToggleMute={headerActions.onToggleMute}
+                  onLeaveClick={headerActions.onLeaveClick}
+                  leaveTitle={headerActions.leaveTitle}
+                  game={headerActions.game}
+                  onParticipantsClick={headerActions.onParticipantsClick}
+                />
+              </div>
+            )}
+            {titleMetaRow != null && (
+              <div
+                className={`min-w-0 ${!isEmbedded ? 'col-start-2 col-span-2' : 'col-span-2'} row-start-3`}
+              >
+                {titleMetaRow}
+              </div>
+            )}
+            {subtitle != null && (
+              <p
+                className={`truncate text-[11px] tabular-nums text-gray-500 dark:text-gray-400 ${
+                  !isEmbedded ? 'col-start-2 col-span-2' : 'col-span-2'
+                } ${titleMetaRow != null ? 'row-start-4' : 'row-start-3'}`}
+              >
+                {subtitle}
+              </p>
+            )}
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               {!isEmbedded && (
                 <button
                   onClick={onBack}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+                  className="flex-shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
                 </button>
               )}
               {showPanelBack && (
-                <div
-                  className="hidden md:block transition-all duration-300 ease-in-out opacity-100 translate-x-0 w-auto"
-                >
+                <div className="hidden w-auto opacity-100 transition-all duration-300 ease-in-out md:block">
                   <button
                     onClick={onPanelBack}
-                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+                    className="flex-shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
                   </button>
                 </div>
               )}
               <div
-                className={`flex items-center gap-2 min-w-0 flex-1 ${isTitleClickable ? 'cursor-pointer' : ''}`}
+                className={`flex min-w-0 flex-1 items-center gap-2 ${isTitleClickable ? 'cursor-pointer' : ''}`}
                 onClick={isTitleClickable ? onTitleClick : undefined}
                 role={isTitleClickable ? 'button' : undefined}
               >
                 {!isBugChat && <div className="flex-shrink-0">{headerStatusSlot ?? icon}</div>}
                 <div className="min-w-0 flex-1">
                   <h1
-                    className={`${isBugChat ? 'text-base' : 'text-lg'} font-semibold text-gray-900 dark:text-white flex items-center gap-2 whitespace-nowrap overflow-hidden`}
+                    className={`${isBugChat ? 'text-base' : 'text-lg'} flex min-w-0 items-center gap-2 font-semibold text-gray-900 dark:text-white`}
                   >
                     {isBugChat && headerStatusSlot}
                     {isBugChat && (
-                      <BugIcon size={16} className="text-red-500 flex-shrink-0" />
+                      <BugIcon size={16} className="flex-shrink-0 text-red-500" />
                     )}
                     <span
                       className={`truncate ${
                         contextType === 'GROUP'
-                          ? 'hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
+                          ? 'transition-colors hover:text-primary-600 dark:hover:text-primary-400'
                           : ''
                       }`}
                     >
@@ -160,9 +233,7 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
                     </span>
                   </h1>
                   {subtitle != null && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {subtitle}
-                    </p>
+                    <p className="truncate text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
                   )}
                 </div>
               </div>

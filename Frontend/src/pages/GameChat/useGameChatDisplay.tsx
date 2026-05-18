@@ -1,7 +1,16 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapPin, Bug as BugIcon, Users, Hash, Package } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { formatDate } from '@/utils/dateFormat';
+import {
+  getGameHeaderTitle,
+  getLeagueGameHeaderParts,
+  getLeagueGameHeaderTitle,
+  getLeagueSeasonHeaderParts,
+  getLeagueSeasonHeaderTitle,
+} from '@/utils/getGameHeaderTitle';
+import { GameChatGameTitleMeta, GameChatGameTitlePrimary } from './GameChatGameTitle';
 import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 import type { ChatContextType, UserChat, GroupChannel } from '@/api/chat';
@@ -38,11 +47,24 @@ export function useGameChatDisplay({
 }: UseGameChatDisplayParams) {
   const { t } = useTranslation();
 
+  const structuredHeaderParts = useMemo(() => {
+    if (contextType !== 'GAME' || !game) return null;
+    return getLeagueGameHeaderParts(game, t) ?? getLeagueSeasonHeaderParts(game);
+  }, [contextType, game, t]);
+
+  const titleContent = useMemo(() => {
+    if (!structuredHeaderParts) return null;
+    return <GameChatGameTitlePrimary parts={structuredHeaderParts} />;
+  }, [structuredHeaderParts]);
+
+  const titleMetaRow = useMemo(() => {
+    if (structuredHeaderParts?.kind !== 'league') return null;
+    return <GameChatGameTitleMeta parts={structuredHeaderParts} />;
+  }, [structuredHeaderParts]);
+
   const title = (() => {
     if (contextType === 'GAME' && game) {
-      if (game.name) return game.name;
-      if (game.club) return `${game.club.name}`;
-      return `${game.gameType} Game`;
+      return getGameHeaderTitle(game, t);
     }
     if (isBugChat && bug) return bug.text.length > 25 ? `${bug.text.substring(0, 23)}...` : bug.text;
     if (contextType === 'USER' && userChat) {
@@ -67,7 +89,15 @@ export function useGameChatDisplay({
 
   const icon = (() => {
     if (isBugChat) return <BugIcon size={16} className="text-red-500" />;
-    if (contextType === 'GAME' && !game?.name) return <MapPin size={16} className="text-gray-500 dark:text-gray-400" />;
+    if (
+      contextType === 'GAME' &&
+      game &&
+      !game.name &&
+      !getLeagueGameHeaderTitle(game, t) &&
+      !getLeagueSeasonHeaderTitle(game)
+    ) {
+      return <MapPin size={16} className="text-gray-500 dark:text-gray-400" />;
+    }
     if (contextType === 'USER' && userChat) {
       const otherUser = userChat.user1Id === userId ? userChat.user2 : userChat.user1;
       return <PlayerAvatar player={otherUser} extrasmall fullHideName asDiv />;
@@ -112,5 +142,5 @@ export function useGameChatDisplay({
     return null;
   })();
 
-  return { title, subtitle, icon };
+  return { title, titleContent, titleMetaRow, subtitle, icon };
 }

@@ -47,6 +47,7 @@ import type { ChatContextType } from '@/api/chat';
 import { ChatAutoTranslateContext } from '@/contexts/ChatAutoTranslateContext';
 import { useGameChatAutoTranslate } from './GameChat/useGameChatAutoTranslate';
 import { useGameChatTranslationLive } from './GameChat/useGameChatTranslationLive';
+import { useGameChatChannelActivity } from './GameChat/useGameChatChannelActivity';
 
 export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: propChatId, chatType: propChatType }) => {
   const { t } = useTranslation();
@@ -176,6 +177,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     messageListRef.current?.scrollToBottomSmooth();
   }, []);
 
+  const { channelActivity, channelActivityResolved, noteUserMessage } = useGameChatChannelActivity(
+    contextType === 'GAME' ? game : null,
+    user?.id
+  );
+
   const derived = useGameChatDerived({
     game,
     groupChannel,
@@ -183,7 +189,28 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     contextType,
     currentChatType,
     messages,
+    channelActivity: contextType === 'GAME' ? channelActivity : undefined,
   });
+
+  useEffect(() => {
+    if (contextType !== 'GAME' || !channelActivityResolved) return;
+    if (!derived.availableChatTypes.includes(currentChatType)) {
+      setCurrentChatType('PUBLIC');
+    }
+  }, [contextType, channelActivityResolved, derived.availableChatTypes, currentChatType]);
+
+  useEffect(() => {
+    if (contextType !== 'GAME') return;
+    if (effectiveChatType === 'PRIVATE' || effectiveChatType === 'ADMINS') {
+      const hasUser = messages.some((m) => m.senderId != null);
+      if (hasUser) {
+        noteUserMessage({
+          senderId: user?.id ?? 'probe',
+          chatType: effectiveChatType,
+        } as ChatMessage);
+      }
+    }
+  }, [contextType, effectiveChatType, messages, noteUserMessage, user?.id]);
 
   const autoTranslate = useGameChatAutoTranslate({
     id,
@@ -223,7 +250,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     handleRemoveFromQueue,
     handleSendFailed,
     handleReplaceOptimisticWithServerMessage,
-    handleNewMessage,
+    handleNewMessage: handleNewMessageBase,
     handleNewMessageRef,
   } = useGameChatOptimistic({
     id,
@@ -235,6 +262,18 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     scrollToBottom,
     setUserChat,
   });
+
+  const handleNewMessage = useCallback(
+    (message: import('@/api/chat').ChatMessage) => {
+      if (contextType === 'GAME') noteUserMessage(message);
+      return handleNewMessageBase(message);
+    },
+    [contextType, noteUserMessage, handleNewMessageBase]
+  );
+
+  useEffect(() => {
+    handleNewMessageRef.current = handleNewMessage;
+  }, [handleNewMessage, handleNewMessageRef]);
 
   const {
     replyTo,
@@ -360,7 +399,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
   });
 
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
-  const { title, subtitle: baseSubtitle, icon } = useGameChatDisplay({
+  const { title, titleContent, titleMetaRow, subtitle: baseSubtitle, icon } = useGameChatDisplay({
     contextType,
     game,
     bug,
@@ -516,6 +555,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           contextType={contextType}
           isBugChat={derived.isBugChat}
           title={title}
+          titleContent={titleContent}
+          titleMetaRow={titleMetaRow}
           subtitle={baseSubtitle ?? null}
           icon={icon}
           onBack={panels.handleHeaderBack}

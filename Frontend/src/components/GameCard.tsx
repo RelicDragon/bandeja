@@ -183,9 +183,7 @@ export const GameCard = ({
   const handleChatClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    const participant = game.participants?.find((p) => p.userId === effectiveUser?.id);
-    const state = participant?.status === 'PLAYING' ? { initialChatType: 'PRIVATE' as const } : undefined;
-    navigate(`/games/${game.id}/chat`, { state });
+    navigate(`/games/${game.id}/chat`);
   };
 
   const handleCardClick = () => {
@@ -411,7 +409,7 @@ export const GameCard = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/games/${game.id}/chat`, { state: { initialChatType: 'PHOTOS' } });
+                navigate(`/games/${game.id}/chat`);
               }}
               className="px-3 py-1.5 text-sm font-semibold rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1.5 shadow-[0_0_8px_rgba(168,85,247,0.4)] dark:shadow-[0_0_8px_rgba(168,85,247,0.5)] hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:shadow-[0_0_12px_rgba(168,85,247,0.6)] dark:hover:shadow-[0_0_12px_rgba(168,85,247,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
             >

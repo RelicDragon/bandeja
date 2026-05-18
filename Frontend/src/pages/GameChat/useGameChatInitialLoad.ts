@@ -157,10 +157,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
         if (contextType === 'GAME' && gameDefaultsAppliedKeyRef.current !== contextKey) {
           let resolved = currentChatTypeRef.current;
           if (loadedContext) {
-            const loadedGame = loadedContext as Game;
-            const loadedParticipant = loadedGame.participants?.find((p) => p.userId === user?.id);
-            const defaultType: ChatType = loadedParticipant?.status === 'PLAYING' ? 'PRIVATE' : 'PUBLIC';
-            resolved = initialChatType ?? defaultType;
+            resolved = initialChatType ?? 'PUBLIC';
           } else if (initialChatType) {
             resolved = initialChatType;
           }
