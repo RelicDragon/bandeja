@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getRulesFromPreset } from '@/utils/scoring';
 import { createInitialLiveScoringState, scoreLivePoint } from './core';
+import type { LiveScoringState } from './types';
 import {
   computeServeGuideSnapshot,
   courtSideForTieBreakPoint,
@@ -120,7 +121,7 @@ describe('serveGuide points mode', () => {
     expect(snap0?.courtSide).toBe('rightDeuce');
     expect(snap0?.tieBreakServeSlot).toBeNull();
 
-    let s = state;
+    let s: LiveScoringState = state;
     s = scoreLivePoint(s, 'teamA', pointsRules).state;
     const snap1 = computeServeGuideSnapshot(s, pointsRules, ['A1', 'A2'], ['B1', 'B2']);
     expect(snap1?.serverTeam).toBe('teamA');
@@ -142,7 +143,7 @@ describe('serveGuide points mode', () => {
     expect(courtSideForTieBreakPoint(1)).toBe('leftAd');
     expect(courtSideForTieBreakPoint(2)).toBe('rightDeuce');
 
-    let state = {
+    let state: LiveScoringState = {
       ...createInitialLiveScoringState(pointsRules),
       firstServerTeam: 'teamA' as const,
       firstServerDoublesPlayerIndex: 0,
@@ -211,7 +212,11 @@ describe('serveGuide classic games', () => {
       firstServerTeam: 'teamA' as const,
       firstServerDoublesPlayerIndex: 0,
       sets: [{ teamA: 1, teamB: 0, isTieBreak: false }],
-      classic: { ...emptyClassic(), classicPointsPlayedInGame: 2, pointState: { kind: 'regular', teamA: 30, teamB: 0 } },
+      classic: {
+        ...emptyClassic(),
+        classicPointsPlayedInGame: 2,
+        pointState: { kind: 'regular' as const, teamA: 30 as const, teamB: 0 as const },
+      },
     };
     const snap = computeServeGuideSnapshot(state, classicRules, ['A1', 'A2'], ['B1', 'B2']);
     expect(snap?.changeEndsBeforeNextPoint).toBe(false);

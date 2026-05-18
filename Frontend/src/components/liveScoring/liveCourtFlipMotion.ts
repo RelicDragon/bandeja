@@ -9,7 +9,7 @@ export const COURT_FLIP_BOUNCE_PX = 5;
 export const COURT_FLIP_BOUNCE_DURATION_S = 1.5;
 export const COURT_FLIP_BOUNCE_TIMES = [0, 0.25, 0.5, 0.75, 1] as const;
 
-export function courtFlipBounceOffset(axis: 'x' | 'y', sign: 1 | -1): number[] {
+export function courtFlipBounceOffset(_axis: 'x' | 'y', sign: 1 | -1): number[] {
   return COURT_FLIP_BOUNCE_TIMES.map((t) => Math.sin(t * Math.PI) * COURT_FLIP_BOUNCE_PX * sign);
 }
 
