@@ -9,7 +9,6 @@ export const normalizeChatType = (chatType: ChatType): ChatType => {
 };
 
 export function getAvailableGameChatTypes(
-  game: { status?: string },
   participant?: { status: string; role: string } | null,
   parentParticipant?: { role: string } | null
 ): ChatType[] {
@@ -35,12 +34,11 @@ export function getAvailableGameChatTypes(
 }
 
 export function getVisibleGameChatTypes(
-  game: { status?: string },
   participant?: { status: string; role: string } | null,
   parentParticipant?: { role: string } | null,
   channelActivity?: GameChatChannelActivity
 ): ChatType[] {
-  const types = getAvailableGameChatTypes(game, participant, parentParticipant);
+  const types = getAvailableGameChatTypes(participant, parentParticipant);
   if (!channelActivity) return types;
   return filterGameChatTypesByChannelActivity(types, channelActivity);
 }

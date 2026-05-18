@@ -127,7 +127,6 @@ export function useGameChatDerived({
     const participant = game?.participants?.find(p => p.userId === user?.id);
     const parentParticipant = game?.parent?.participants?.find(p => p.userId === user?.id);
     return getVisibleGameChatTypes(
-      game ?? { status: undefined },
       participant ?? undefined,
       parentParticipant ?? undefined,
       channelActivity

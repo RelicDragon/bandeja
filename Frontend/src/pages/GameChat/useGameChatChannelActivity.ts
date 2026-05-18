@@ -24,7 +24,7 @@ export function useGameChatChannelActivity(game: Game | null, userId: string | u
 
     const participant = game.participants?.find((p) => p.userId === userId);
     const parentParticipant = game.parent?.participants?.find((p) => p.userId === userId);
-    const eligible = getAvailableGameChatTypes(game, participant ?? undefined, parentParticipant ?? undefined);
+    const eligible = getAvailableGameChatTypes(participant ?? undefined, parentParticipant ?? undefined);
     const toProbe = (['PRIVATE', 'ADMINS'] as const).filter((t) => eligible.includes(t));
 
     if (toProbe.length === 0) {

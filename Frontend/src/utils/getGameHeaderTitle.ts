@@ -28,7 +28,7 @@ export function getLeagueGameHeaderParts(game: Game, t: TFunction): LeagueGameHe
     leagueName: game.parent.leagueSeason.league.name,
     seasonName: game.parent.leagueSeason.game?.name,
     groupName: game.leagueGroup?.name,
-    groupColor: game.leagueGroup?.color,
+    groupColor: game.leagueGroup?.color ?? undefined,
     roundLabel: `${t('gameDetails.round')} ${game.leagueRound.orderIndex + 1}`,
   };
 }
@@ -41,7 +41,7 @@ export function getLeagueSeasonHeaderParts(game: Game): LeagueSeasonHeaderParts 
   return {
     kind: 'leagueSeason',
     leagueName: game.leagueSeason.league.name,
-    seasonName: game.name,
+    seasonName: game.name ?? undefined,
   };
 }
 

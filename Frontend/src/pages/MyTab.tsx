@@ -309,7 +309,7 @@ export const MyTab = () => {
 
   const getAvailableChatTypes = (game: any) => {
     const participant = game.participants?.find((p: any) => p.userId === user?.id);
-    return getAvailableGameChatTypes(game, participant ?? undefined);
+    return getAvailableGameChatTypes(participant ?? undefined);
   };
 
   const handleMarkAllAsRead = async () => {

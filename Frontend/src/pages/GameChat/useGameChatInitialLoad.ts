@@ -201,7 +201,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
             const loadedIsGuest = loadedGame.participants.some(p => p.userId === user.id && (p.status === 'GUEST' || !isParticipantPlaying(p))) ?? false;
             if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
               const loadedParentParticipant = loadedGame.parent?.participants?.find(p => p.userId === user.id);
-              const availableChatTypes = getAvailableGameChatTypes(loadedGame, loadedUserParticipant ?? undefined, loadedParentParticipant ?? undefined);
+              const availableChatTypes = getAvailableGameChatTypes(loadedUserParticipant ?? undefined, loadedParentParticipant ?? undefined);
               applyOptimisticMarkGameRead(id);
               if (shouldQueueChatMutation() && id) {
                 void enqueueChatMutationMarkReadBatch({
