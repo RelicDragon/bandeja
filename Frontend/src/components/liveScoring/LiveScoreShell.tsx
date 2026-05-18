@@ -10,7 +10,7 @@ import {
   needsServeSetup,
 } from '@/utils/liveScoring';
 import type { ScoringRules } from '@/utils/scoring';
-import { isClassicRules, isLiveMatchCompleteForScoring } from '@/utils/scoring';
+import { isLiveMatchCompleteForScoring } from '@/utils/scoring';
 import type { LiveBoardTheme } from '@/utils/liveScoring';
 import { AnimatedLiveBoardValue } from './AnimatedLiveBoardValue';
 import { LiveBandejaRotatingLogo } from './LiveBandejaRotatingLogo';
@@ -71,7 +71,7 @@ export const LiveScoreShell = ({
   const { t } = useTranslation();
   const set = activeSetScore(state);
   const points = getClassicPointLabels(state.classic, rules);
-  const setupBlocks = isClassicRules(rules) && needsServeSetup(state, rules);
+  const setupBlocks = needsServeSetup(state, rules);
   const matchDecided = isLiveMatchCompleteForScoring(state.sets, rules);
   const panelDisabled = Boolean(saving || setupBlocks || scoringLocked);
   const activeSetLabel = useMemo(() => liveSetLabelForRow(set, state.activeSetIndex, rules), [

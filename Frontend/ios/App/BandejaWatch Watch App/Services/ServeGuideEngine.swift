@@ -29,12 +29,16 @@ struct ServeGuideInputs: Sendable, Equatable {
 
 enum ServeGuideEngine {
     static func compute(_ i: ServeGuideInputs) -> ServeGuideSnapshot? {
-        if i.isAmericano || i.isReadOnly || i.seedSkipped || i.hiddenForMatch { return nil }
+        if i.isReadOnly || i.seedSkipped || i.hiddenForMatch { return nil }
         if i.hintsMode == .off { return nil }
-        if !i.usesTennisSetRules { return nil }
         if i.pendingSetFormatChoice { return nil }
         if i.activeSetIsSupplemental { return nil }
         guard let first = i.matchFirstServerTeam else { return nil }
+
+        if i.isAmericano {
+            return pointsCapStrip(i, matchFirst: first)
+        }
+        if !i.usesTennisSetRules { return nil }
 
         if i.activeSetIsSuperTieBreak {
             return superTieBreakStrip(i, matchFirst: first)
@@ -43,6 +47,40 @@ enum ServeGuideEngine {
             return withinTieBreakStrip(i, matchFirst: first, gamesAtSixAll: gaPlusGbAtTieBreakEntry(i))
         }
         return classicGameStrip(i, matchFirst: first)
+    }
+
+    private static func pointsCapStrip(_ i: ServeGuideInputs, matchFirst: TeamSide) -> ServeGuideSnapshot? {
+        let set = i.sets[safe: i.activeSetIndex]
+        let ta = set?.teamA ?? 0
+        let tb = set?.teamB ?? 0
+        let t = ta + tb
+        let nextTeam = tbNextServerTeam(firstTBTeam: matchFirst, pointIndex: t)
+        let doubles = (nextTeam == .teamA ? i.teamAPlayerNames.count : i.teamBPlayerNames.count) >= 2
+        let playerIdx = tbDoublesPlayerIndex(
+            matchFirst: matchFirst,
+            matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
+            nextServingTeam: nextTeam,
+            pointIndex: t,
+            gamesCompletedBeforeTB: 0
+        )
+        let names = nextTeam == .teamA ? i.teamAPlayerNames : i.teamBPlayerNames
+        let display = doubles ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
+        let side: CourtServeSide = (t % 2 == 0) ? .rightDeuce : .leftAd
+        let slot: TieBreakServeSlot? = t == 0 ? .serveOne : (((t - 1) % 2 == 0) ? .serveOne : .serveTwo)
+        let changeEnds = t > 0 && t % 6 == 0
+        let slotWord = slot == .serveOne ? "Serve 1" : "Serve 2"
+        let token = "pts-\(t)-\(nextTeam.rawValue)-\(playerIdx)"
+        return ServeGuideSnapshot(
+            serverTeam: nextTeam,
+            serverPlayerIndex: playerIdx,
+            serverDisplayName: display,
+            serverInitial: String(display.prefix(1)).uppercased(),
+            courtSide: side,
+            tieBreakServeSlot: slot,
+            changeEndsBeforeNextPoint: changeEnds,
+            accessibilityLine: "\(display), \(slotWord), \(side == .rightDeuce ? "right" : "left")",
+            motionToken: token
+        )
     }
 
     private static func classicGameStrip(_ i: ServeGuideInputs, matchFirst: TeamSide) -> ServeGuideSnapshot? {

@@ -7,7 +7,7 @@ final class MainViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(AuthBridgePlugin())
     }
 
-    override open func webViewConfiguration(for instanceConfiguration: InstanceConfiguration) -> WKWebViewConfiguration {
+    override public func webViewConfiguration(for instanceConfiguration: InstanceConfiguration) -> WKWebViewConfiguration {
         let config = super.webViewConfiguration(for: instanceConfiguration)
         config.allowsPictureInPictureMediaPlayback = true
         return config

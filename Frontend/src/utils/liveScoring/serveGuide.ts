@@ -1,5 +1,5 @@
 import type { ScoringRules } from '@/utils/scoring';
-import { isClassicRules } from '@/utils/scoring';
+import { isClassicRules, isPointsRules } from '@/utils/scoring';
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import type { LiveScoringState, LiveTeamSide } from './types';
 
@@ -121,13 +121,18 @@ export function isPristineGameStart(state: LiveScoringState): boolean {
   return true;
 }
 
+export function isPristinePointsStart(state: LiveScoringState): boolean {
+  if (state.mode !== 'points') return false;
+  const set = activeSetRow(state);
+  if (!set || isSupplementalMatchSet(set)) return false;
+  return (set.teamA ?? 0) === 0 && (set.teamB ?? 0) === 0;
+}
+
 export function needsServeSetup(state: LiveScoringState, rules: ScoringRules): boolean {
-  return (
-    isClassicRules(rules) &&
-    !state.serveGuideSkipped &&
-    state.firstServerTeam == null &&
-    isPristineGameStart(state)
-  );
+  if (state.serveGuideSkipped || state.firstServerTeam != null) return false;
+  if (isClassicRules(rules) && isPristineGameStart(state)) return true;
+  if (isPointsRules(rules) && isPristinePointsStart(state)) return true;
+  return false;
 }
 
 export function computeServeGuideSnapshot(
@@ -136,11 +141,16 @@ export function computeServeGuideSnapshot(
   teamAPlayerNames: string[],
   teamBPlayerNames: string[]
 ): ServeGuideSnapshot | null {
-  if (!isClassicRules(rules) || state.mode !== 'classic') return null;
   if (state.serveGuideSkipped) return null;
   const first = state.firstServerTeam;
   if (!first) return null;
   if (activeSetIsSupplemental(state)) return null;
+
+  if (state.mode === 'points' && isPointsRules(rules)) {
+    return pointsCapStrip(state, first, teamAPlayerNames, teamBPlayerNames);
+  }
+
+  if (!isClassicRules(rules) || state.mode !== 'classic') return null;
 
   const c = state.classic;
   if (!c) return null;
@@ -152,6 +162,38 @@ export function computeServeGuideSnapshot(
     return withinTieBreakStrip(state, first, teamAPlayerNames, teamBPlayerNames);
   }
   return classicGameStrip(state, first, teamAPlayerNames, teamBPlayerNames);
+}
+
+function pointsCapStrip(
+  state: LiveScoringState,
+  matchFirst: LiveTeamSide,
+  teamAPlayerNames: string[],
+  teamBPlayerNames: string[]
+): ServeGuideSnapshot | null {
+  const set = activeSetRow(state);
+  if (!set) return null;
+  const ta = set.teamA ?? 0;
+  const tb = set.teamB ?? 0;
+  const t = ta + tb;
+  const nextTeam = tbNextServerTeam(matchFirst, t);
+  const namesForTeam = nextTeam === 'teamA' ? teamAPlayerNames : teamBPlayerNames;
+  const doubles = namesForTeam.length >= 2;
+  const matchFirstPlayerIdx = state.firstServerDoublesPlayerIndex ?? 0;
+  const playerIdx = tbDoublesPlayerIndex(matchFirst, matchFirstPlayerIdx, nextTeam, t, 0);
+  const display = doubles ? playerDisplay(namesForTeam, playerIdx) : namesForTeam[0] ?? '—';
+  const side: CourtServeSide = t % 2 === 0 ? 'rightDeuce' : 'leftAd';
+  const slot: TieBreakServeSlot | null = t === 0 ? 'serveOne' : (t - 1) % 2 === 0 ? 'serveOne' : 'serveTwo';
+  const changeEnds = t > 0 && t % 6 === 0;
+  const token = `pts-${t}-${nextTeam}-${playerIdx}`;
+  return {
+    serverTeam: nextTeam,
+    serverPlayerIndex: playerIdx,
+    serverDisplayName: display,
+    courtSide: side,
+    tieBreakServeSlot: slot,
+    changeEndsBeforeNextPoint: changeEnds,
+    motionToken: token,
+  };
 }
 
 function classicGameStrip(

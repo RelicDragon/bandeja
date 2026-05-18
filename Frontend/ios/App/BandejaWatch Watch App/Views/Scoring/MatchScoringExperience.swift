@@ -40,7 +40,14 @@ struct MatchScoringExperience: View {
                     })
                 }
                 if vm.usesBallCapPerSetUI {
-                    AmericanoScoringView(vm: vm, onFinish: onFinish)
+                    AmericanoScoringView(
+                        vm: vm,
+                        gameId: gameId,
+                        matchId: matchId,
+                        serveGuideRecord: $serveRecord,
+                        onRequestFixStartingServer: requestFixServer,
+                        onFinish: onFinish
+                    )
                 } else {
                     ClassicScoringView(
                         vm: vm,

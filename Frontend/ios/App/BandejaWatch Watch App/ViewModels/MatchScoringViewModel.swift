@@ -217,7 +217,7 @@ final class MatchScoringViewModel {
     }
 
     var usesTennisStyleServeGuide: Bool {
-        game?.ballsInGames == true && !isAmericano
+        usesTennisSetRules || usesBallCapPerSetUI
     }
 
     func ballCapScoringTitle(lang: String) -> String {

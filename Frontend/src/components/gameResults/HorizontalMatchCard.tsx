@@ -101,7 +101,7 @@ export const HorizontalMatchCard = ({
   const livePlayEnabled = canShowLivePlay && teamsFull;
 
   const matchActionRoundClass =
-    'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md transition hover:from-primary-600 hover:to-primary-700 active:scale-[0.98]';
+    'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-sm transition hover:from-primary-600 hover:to-primary-700 active:scale-[0.98]';
 
   const livePlayLink = canShowLivePlay && gameId ? (
     livePlayEnabled ? (
@@ -112,7 +112,7 @@ export const HorizontalMatchCard = ({
         className={matchActionRoundClass}
         onClick={(e) => e.stopPropagation()}
       >
-        <Play className="h-5 w-5" strokeWidth={2} />
+        <Play className="h-3.5 w-3.5" strokeWidth={2} />
       </Link>
     ) : (
       <span
@@ -121,10 +121,13 @@ export const HorizontalMatchCard = ({
         title={t('gameDetails.liveScorePlay')}
         className={`${matchActionRoundClass} cursor-not-allowed opacity-40 grayscale pointer-events-none`}
       >
-        <Play className="h-5 w-5" strokeWidth={2} />
+        <Play className="h-3.5 w-3.5" strokeWidth={2} />
       </span>
     )
   ) : null;
+
+  const showScores = canEnterResults && !isEditing && teamsFull;
+  const showCenterColumn = showScores || Boolean(livePlayLink);
 
   const headerEditButton = showHeaderEditButton ? (
     <MatchHeaderEditToggleButton
@@ -135,8 +138,6 @@ export const HorizontalMatchCard = ({
       onCancelClick={onCancelMatchEdit}
     />
   ) : null;
-
-  const showMatchActionsColumn = Boolean(livePlayLink);
 
   const renderTeam = (team: 'teamA' | 'teamB') => {
     const teamPlayers = match[team];
@@ -301,16 +302,17 @@ export const HorizontalMatchCard = ({
           </motion.div>
 
           <AnimatePresence initial={false} mode="popLayout">
-            {canEnterResults && !isEditing && teamsFull ? (
+            {showCenterColumn ? (
               <motion.div
-                key="scores-block"
+                key="center-block"
                 layout
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.92 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                className="flex flex-col items-center gap-1 flex-shrink-0"
+                className="flex flex-col items-center gap-0.5 flex-shrink-0"
               >
+            {showScores ? (
             <div className="flex items-center gap-2">
               {displaySets.map((set, setIndex) => {
                 const teamAScore = set.teamA;
@@ -424,6 +426,12 @@ export const HorizontalMatchCard = ({
                 );
               })}
             </div>
+            ) : null}
+            {livePlayLink ? (
+              <motion.div layout className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+                {livePlayLink}
+              </motion.div>
+            ) : null}
               </motion.div>
             ) : null}
           </AnimatePresence>
@@ -431,23 +439,6 @@ export const HorizontalMatchCard = ({
           <motion.div layout className="flex-1 flex justify-end min-w-0" transition={{ layout: { type: 'spring', stiffness: 380, damping: 32 } }}>
             {renderTeam('teamB')}
           </motion.div>
-
-          <AnimatePresence initial={false} mode="popLayout">
-            {showMatchActionsColumn && livePlayLink ? (
-              <motion.div
-                key="play-actions"
-                layout
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.85 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-                className="flex shrink-0 flex-row items-center gap-1.5"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {livePlayLink}
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
         </motion.div>
       </motion.div>
     </div>
