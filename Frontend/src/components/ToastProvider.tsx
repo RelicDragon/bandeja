@@ -12,8 +12,8 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
         position="top-right"
         gutter={16}
         containerStyle={{
-          top: 20,
-          right: 20,
+          top: 'calc(20px + env(safe-area-inset-top, 0px))',
+          right: 'max(20px, env(safe-area-inset-right, 0px))',
           zIndex: 999999,
         }}
         toastOptions={{

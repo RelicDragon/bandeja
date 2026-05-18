@@ -689,7 +689,12 @@ body.capacitor-android #root {
 }
 
 /* Ensure toasts are always on top, even above portals */
-[data-hot-toast-container],
+[data-hot-toast-container] {
+  z-index: 999999 !important;
+  top: calc(20px + env(safe-area-inset-top, 0px)) !important;
+  right: max(20px, env(safe-area-inset-right, 0px)) !important;
+}
+
 [data-hot-toast] {
   z-index: 999999 !important;
 }

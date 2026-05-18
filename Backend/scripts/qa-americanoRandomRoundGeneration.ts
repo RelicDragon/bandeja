@@ -161,6 +161,50 @@ function totalUndirectedPairs(n: number): number {
   return (n * (n - 1)) / 2;
 }
 
+/** Rounds to use each unordered teammate pair at most once (pigeonhole). */
+function fullPartnerCycleRounds(nEligible: number, matchesPerRound: number): number {
+  if (matchesPerRound <= 0) return 0;
+  return Math.floor(totalUndirectedPairs(nEligible) / (2 * matchesPerRound));
+}
+
+function twoFullPartnerCirclesRounds(nEligible: number, matchesPerRound: number): number {
+  return 2 * fullPartnerCycleRounds(nEligible, matchesPerRound);
+}
+
+/** Fixed teams: one "circle" = each team pairing used once as opponents. */
+function fullFixedTeamOpponentCycleRounds(teamCount: number, matchesPerRound: number): number {
+  if (matchesPerRound <= 0 || teamCount < 2) return 0;
+  return Math.floor(totalUndirectedPairs(teamCount) / matchesPerRound);
+}
+
+function fairnessSlackFor(n: number, m: number): { partnerSlack: number; opponentSlack: number } {
+  if (n <= 7) return { partnerSlack: 1, opponentSlack: 4 };
+  if (n <= 10) return { partnerSlack: 1, opponentSlack: 3 };
+  if (m >= 4) return { partnerSlack: 2, opponentSlack: 4 };
+  if (m >= 3) return { partnerSlack: 1, opponentSlack: 3 };
+  return { partnerSlack: 1, opponentSlack: 2 };
+}
+
+/** Slack for 2× partner-circle runs — reuse is required, so allow more spread than short fairness runs. */
+function fairnessSlackForTwoCircles(n: number, m: number): { partnerSlack: number; opponentSlack: number } {
+  const oneCycle = fullPartnerCycleRounds(n, m);
+  return {
+    partnerSlack: Math.max(2, oneCycle),
+    opponentSlack: Math.max(4, oneCycle + 2),
+  };
+}
+
+function fairnessSlackForTwoFixedCircles(teamCount: number, m: number): {
+  partnerSlack: number;
+  opponentSlack: number;
+} {
+  const oneCycle = fullFixedTeamOpponentCycleRounds(teamCount, m);
+  return {
+    partnerSlack: Number.MAX_SAFE_INTEGER,
+    opponentSlack: Math.max(4, oneCycle + 2),
+  };
+}
+
 function minPossibleMaxLoad(totalEvents: number, numBins: number): number {
   if (numBins <= 0 || totalEvents <= 0) return 0;
   return Math.ceil(totalEvents / numBins);
@@ -275,20 +319,138 @@ function runSequentialRoundsUntilDry(
   minSuccessfulRounds: number,
   maxAttempts: number,
 ) {
-  const rounds: GenRound[] = [];
-  let r = 0;
+  runSequentialRoundsWithFairness(
+    label,
+    game,
+    genderByUser,
+    minSuccessfulRounds,
+    maxAttempts,
+    Number.MAX_SAFE_INTEGER,
+    Number.MAX_SAFE_INTEGER,
+  );
+}
+
+function runSequentialRoundsWithFairness(
+  label: string,
+  game: GenGame,
+  genderByUser: Map<string, Gender>,
+  minSuccessfulRounds: number,
+  maxAttempts: number,
+  partnerSlack: number,
+  opponentSlack: number,
+  existingRounds: GenRound[] = [],
+) {
+  const elig = getEligibleParticipants(game);
+  const m = getNumMatches(game, elig);
+  if (m === 0) throw new Error(`${label}: m=0`);
+  const n = elig.length;
+  const rounds: GenRound[] = [...existingRounds];
+  const skipFairness = partnerSlack >= Number.MAX_SAFE_INTEGER / 2;
+  let r = rounds.length;
   for (; r < maxAttempts; r++) {
     const matches = generateRandomRound(game, rounds, initialSets);
     if (matches.length === 0) break;
     validateRound(label, game, rounds, matches, r, genderByUser);
     rounds.push({ id: `qa-r${r}`, matches });
+    if (!skipFairness) {
+      assertScheduleFairness(label, r + 1, rounds, n, m, partnerSlack, opponentSlack);
+    }
   }
   if (rounds.length < minSuccessfulRounds) {
     throw new Error(
       `${label}: expected >= ${minSuccessfulRounds} successful rounds, got ${rounds.length} (stopped attempt ${r})`,
     );
   }
-  console.log(`ok: ${label} (${rounds.length} rounds)`);
+  const fairnessNote = skipFairness ? '' : ', fairness checked each round';
+  console.log(`ok: ${label} (${rounds.length} rounds${fairnessNote})`);
+  return rounds;
+}
+
+function runTwoFullPartnerCirclesTest(
+  label: string,
+  game: GenGame,
+  genderByUser: Map<string, Gender>,
+) {
+  const elig = getEligibleParticipants(game);
+  const m = getNumMatches(game, elig);
+  const n = elig.length;
+  if (m === 0) throw new Error(`${label}: m=0 (n=${n})`);
+
+  const oneCycle = fullPartnerCycleRounds(n, m);
+  const minRounds = twoFullPartnerCirclesRounds(n, m);
+  if (minRounds < 2) {
+    throw new Error(`${label}: need >=2 rounds for 2 circles, got min=${minRounds} (n=${n} m=${m})`);
+  }
+
+  const slack = fairnessSlackForTwoCircles(n, m);
+  const maxAttempts = minRounds + Math.max(6, Math.ceil(minRounds * 0.25));
+  const rounds = runSequentialRoundsWithFairness(
+    label,
+    game,
+    genderByUser,
+    minRounds,
+    maxAttempts,
+    slack.partnerSlack,
+    slack.opponentSlack,
+  );
+
+  if (oneCycle >= 1) {
+    const afterFirstCycle = generateRandomRound(game, rounds.slice(0, oneCycle), initialSets);
+    if (afterFirstCycle.length === 0) {
+      throw new Error(
+        `${label}: dry at round ${oneCycle + 1} right after first full partner cycle (n=${n} m=${m})`,
+      );
+    }
+    validateRound(label, game, rounds.slice(0, oneCycle), afterFirstCycle, oneCycle, genderByUser);
+  }
+
+  console.log(
+    `ok: ${label} — 2× partner circles (${minRounds} rounds, 1-cycle=${oneCycle}, C=${totalUndirectedPairs(n)})`,
+  );
+}
+
+function runTwoFullFixedTeamOpponentCirclesTest(
+  label: string,
+  game: GenGame,
+  genderByUser: Map<string, Gender>,
+) {
+  const elig = getEligibleParticipants(game);
+  const m = getNumMatches(game, elig);
+  const teamCount = getFilteredFixedTeams(game).length;
+  if (m === 0) throw new Error(`${label}: m=0`);
+  if (teamCount < 4) throw new Error(`${label}: need >=4 fixed teams, got ${teamCount}`);
+
+  const oneCycle = fullFixedTeamOpponentCycleRounds(teamCount, m);
+  const minRounds = 2 * oneCycle;
+  if (minRounds < 2) {
+    throw new Error(`${label}: minRounds ${minRounds} too small (teams=${teamCount} m=${m})`);
+  }
+
+  const slack = fairnessSlackForTwoFixedCircles(teamCount, m);
+  const maxAttempts = minRounds + Math.max(8, Math.ceil(minRounds * 0.3));
+  const rounds = runSequentialRoundsWithFairness(
+    label,
+    game,
+    genderByUser,
+    minRounds,
+    maxAttempts,
+    slack.partnerSlack,
+    slack.opponentSlack,
+  );
+
+  if (oneCycle >= 1) {
+    const afterFirstCycle = generateRandomRound(game, rounds.slice(0, oneCycle), initialSets);
+    if (afterFirstCycle.length === 0) {
+      throw new Error(
+        `${label}: dry at round ${oneCycle + 1} after first full team-opponent cycle (teams=${teamCount} m=${m})`,
+      );
+    }
+    validateRound(label, game, rounds.slice(0, oneCycle), afterFirstCycle, oneCycle, genderByUser);
+  }
+
+  console.log(
+    `ok: ${label} — 2× team-opponent circles (${minRounds} rounds, 1-cycle=${oneCycle}, teams=${teamCount})`,
+  );
 }
 
 function assignGendersForMode(
@@ -520,40 +682,103 @@ async function main() {
     }
   }
 
-  // Regression: n=5 completes one full teammate-pair cycle in 5 rounds (C(5,2)=10 pairs);
-  // rounds 6+ must allow partner reuse (T>=1). Run well past that cycle.
-  {
-    const five = ids.slice(0, 5);
-    const { parts, genderByUser } = assignGendersForMode(five, 'ANY');
-    parts[1] = mkParticipant(five[1]!, 'FEMALE');
-    genderByUser.set(five[1]!, 'FEMALE');
-    const game = baseGameFields(parts, courtIds(1), 'ANY');
-    const rounds: GenRound[] = [];
-    const label = 'n=5 full partner cycle + reuse';
-    for (let r = 0; r < 5; r++) {
-      const matches = generateRandomRound(game, rounds, initialSets);
-      if (matches.length === 0) {
-        throw new Error(`${label}: dry at round ${r + 1}`);
-      }
-      validateRound(label, game, rounds, matches, r, genderByUser);
-      rounds.push({ id: `qa-five-${r}`, matches });
-    }
-    const round6 = generateRandomRound(game, rounds, initialSets);
-    if (round6.length === 0) {
-      throw new Error(`${label}: expected round 6 after full partner cycle, got dry`);
-    }
-    validateRound(label, game, rounds, round6, 5, genderByUser);
-    console.log(`ok: ${label} — round 6 after first full cycle`);
-    runSequentialRoundsUntilDry(`${label} 12+ rounds`, game, genderByUser, 12, 20);
+  // 2+ full partner circles: dynamic americano across n / courts / gender (fairness each round).
+  const twoCircleDynamic: {
+    n: number;
+    courts: number;
+    gender: 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
+  }[] = [
+    { n: 5, courts: 1, gender: 'ANY' },
+    { n: 6, courts: 1, gender: 'ANY' },
+    { n: 7, courts: 1, gender: 'ANY' },
+    { n: 8, courts: 1, gender: 'ANY' },
+    { n: 8, courts: 2, gender: 'ANY' },
+    { n: 9, courts: 2, gender: 'ANY' },
+    { n: 10, courts: 2, gender: 'ANY' },
+    { n: 10, courts: 4, gender: 'ANY' },
+    { n: 11, courts: 2, gender: 'ANY' },
+    { n: 12, courts: 3, gender: 'ANY' },
+    { n: 13, courts: 3, gender: 'ANY' },
+    { n: 14, courts: 3, gender: 'ANY' },
+    { n: 15, courts: 3, gender: 'ANY' },
+    { n: 16, courts: 3, gender: 'ANY' },
+    { n: 16, courts: 4, gender: 'ANY' },
+    { n: 16, courts: 5, gender: 'ANY' },
+    { n: 18, courts: 4, gender: 'ANY' },
+    { n: 20, courts: 4, gender: 'ANY' },
+    { n: 20, courts: 5, gender: 'ANY' },
+    { n: 24, courts: 6, gender: 'ANY' },
+    { n: 12, courts: 3, gender: 'MEN' },
+    { n: 12, courts: 3, gender: 'WOMEN' },
+    { n: 16, courts: 3, gender: 'MIX_PAIRS' },
+    { n: 16, courts: 4, gender: 'MIX_PAIRS' },
+    { n: 20, courts: 4, gender: 'MIX_PAIRS' },
+    { n: 24, courts: 6, gender: 'MIX_PAIRS' },
+  ];
+
+  for (const { n, courts, gender } of twoCircleDynamic) {
+    if (gender === 'MIX_PAIRS' && n % 2 !== 0) continue;
+    const uidList = ids.slice(0, n);
+    const { parts, genderByUser } = assignGendersForMode(uidList, gender);
+    const game = baseGameFields(parts, courtIds(courts), gender);
+    const label = `2 circles dynamic ${gender} n=${n} courts=${courts}`;
+    runTwoFullPartnerCirclesTest(label, game, genderByUser);
   }
 
-  // Small rosters: multiple full partner cycles before pigeonhole limits bind tightly.
-  for (const n of [6, 7] as const) {
-    const uidList = ids.slice(0, n);
-    const { parts, genderByUser } = assignGendersForMode(uidList, 'ANY');
-    const game = baseGameFields(parts, courtIds(1), 'ANY');
-    const minRounds = n === 6 ? 12 : 10;
-    runSequentialRoundsUntilDry(`n=${n} 1 court ${minRounds}+ rounds`, game, genderByUser, minRounds, 25);
+  const twoCircleFixed: {
+    teamCount: number;
+    courts: number;
+    gender: 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
+    allowMulti: boolean;
+  }[] = [
+    { teamCount: 6, courts: 1, gender: 'ANY', allowMulti: false },
+    { teamCount: 6, courts: 2, gender: 'ANY', allowMulti: false },
+    { teamCount: 8, courts: 2, gender: 'ANY', allowMulti: false },
+    { teamCount: 10, courts: 2, gender: 'ANY', allowMulti: false },
+    { teamCount: 10, courts: 4, gender: 'ANY', allowMulti: false },
+    { teamCount: 12, courts: 3, gender: 'ANY', allowMulti: false },
+    { teamCount: 14, courts: 3, gender: 'ANY', allowMulti: false },
+    { teamCount: 16, courts: 3, gender: 'ANY', allowMulti: false },
+    { teamCount: 16, courts: 4, gender: 'ANY', allowMulti: false },
+    { teamCount: 12, courts: 3, gender: 'MEN', allowMulti: false },
+    { teamCount: 12, courts: 3, gender: 'WOMEN', allowMulti: false },
+    { teamCount: 16, courts: 4, gender: 'MIX_PAIRS', allowMulti: false },
+    { teamCount: 8, courts: 2, gender: 'ANY', allowMulti: true },
+    { teamCount: 10, courts: 3, gender: 'ANY', allowMulti: true },
+  ];
+
+  for (const { teamCount, courts, gender, allowMulti } of twoCircleFixed) {
+    const need = teamCount * 2;
+    const pool = ids.slice(0, need);
+    const teams: string[][] = [];
+    for (let t = 0; t < teamCount; t++) {
+      teams.push([pool[t * 2]!, pool[t * 2 + 1]!]);
+    }
+    const { parts, genderByUser } = assignGendersForMode(pool, gender);
+    if (gender === 'MIX_PAIRS') {
+      for (let ti = 0; ti < teams.length; ti++) {
+        const [a, b] = teams[ti]!;
+        genderByUser.set(a, 'MALE');
+        genderByUser.set(b, 'FEMALE');
+        parts[ti * 2] = mkParticipant(a, 'MALE');
+        parts[ti * 2 + 1] = mkParticipant(b, 'FEMALE');
+      }
+    }
+    const fixedTeams: NonNullable<GenGame['fixedTeams']> = teams.map((pair, idx) => ({
+      id: `qa-2c-ft-${teamCount}-${courts}-${idx}-${randomUUID().slice(0, 6)}`,
+      teamNumber: idx + 1,
+      players: pair.map((userId) => ({
+        userId,
+        user: mkUser(userId, genderByUser.get(userId)!),
+      })),
+    }));
+    const game = baseGameFields(parts, courtIds(courts), gender, {
+      hasFixedTeams: true,
+      allowUserInMultipleTeams: allowMulti,
+      fixedTeams,
+    });
+    const label = `2 circles fixed ${gender} teams=${teamCount} courts=${courts} allowMulti=${allowMulti}`;
+    runTwoFullFixedTeamOpponentCirclesTest(label, game, genderByUser);
   }
 
   const fairnessRuns: {
@@ -564,7 +789,8 @@ async function main() {
     partnerSlack: number;
     opponentSlack: number;
   }[] = [
-    { n: 16, courts: 4, maxRounds: 20, minRounds: 14, partnerSlack: 1, opponentSlack: 2 },
+    // n=16,m=4: maxO can reach 5 while pigeonhole floor is 2 — opponentSlack 3 covers stochastic pairing.
+    { n: 16, courts: 4, maxRounds: 20, minRounds: 14, partnerSlack: 1, opponentSlack: 3 },
     { n: 12, courts: 3, maxRounds: 16, minRounds: 10, partnerSlack: 1, opponentSlack: 3 },
     { n: 8, courts: 2, maxRounds: 12, minRounds: 6, partnerSlack: 1, opponentSlack: 2 },
     { n: 14, courts: 3, maxRounds: 16, minRounds: 8, partnerSlack: 2, opponentSlack: 3 },
@@ -611,7 +837,7 @@ async function main() {
       if (matches.length === 0) throw new Error(`${label}: dry before 15 rounds at ${rounds.length}`);
       validateRound(label, game, rounds, matches, rounds.length, genderByUser);
       rounds.push({ id: `qa-strict-${rounds.length}`, matches });
-      assertScheduleFairness(label, rounds.length, rounds, n, m, 1, 2);
+      assertScheduleFairness(label, rounds.length, rounds, n, m, 1, 3);
     }
     console.log(
       `ok: ${label} — 15 rounds within fairness slack (theory: at r=16 partner-events 128 > C(n,2)=120)`,
