@@ -958,6 +958,55 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func serveRotationRulesLabel(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Rotación de saque"
+        case "ru": return "Ротация подачи"
+        case "cs": return "Rotace podání"
+        default: return "Serve rotation"
+        }
+    }
+
+    nonisolated static func serveRotationOfficialTitle(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Oficial"
+        case "ru": return "Официальная"
+        case "cs": return "Oficiální"
+        default: return "Official"
+        }
+    }
+
+    nonisolated static func serveRotationOfficialDesc(_ lang: String) -> String {
+        switch lang {
+        case "es":
+            return "STB: 1 punto el primero; luego 2 por equipo (Saque 1 derecha, Saque 2 izquierda). Cambio cada 6."
+        case "ru":
+            return "STB: 1 очко первым; затем по 2 на команду (подача 1 справа, 2 слева). Смена сторон каждые 6."
+        case "cs":
+            return "STB: 1 bod první; pak 2 na tým (Pod. 1 vpravo, 2 vlevo). Výměna stran po 6."
+        default:
+            return "STB: first server 1 pt, then 2 per team (Serve 1 right, Serve 2 left). Change ends every 6."
+        }
+    }
+
+    nonisolated static func serveRotationSimpleTitle(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Simple"
+        case "ru": return "Простая"
+        case "cs": return "Jednoduchá"
+        default: return "Simple"
+        }
+    }
+
+    nonisolated static func serveRotationSimpleDesc(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Como juego clásico: derecha, izquierda, luego tu compañero."
+        case "ru": return "Как в классике: справа, слева, затем партнёр."
+        case "cs": return "Jako game: vpravo, vlevo, pak parťák."
+        default: return "Like a game: right, left, then your partner."
+        }
+    }
+
     nonisolated static func skipServeHints(_ lang: String) -> String {
         switch lang {
         case "es": return "Omitir guía de saque"
@@ -979,6 +1028,51 @@ enum WatchCopy {
         case "es": return "Equipo B"
         case "ru": return "Команда B"
         default: return "Team B"
+        }
+    }
+
+    nonisolated static func courtEndsTitle(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Ajusta la pista"
+        case "ru": return "Совместите с кортом"
+        case "cs": return "Srovnejte kurt"
+        default: return "Match the court"
+        }
+    }
+
+    nonisolated static func courtEndsBody(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Equipo A arriba o abajo según estén ahora."
+        case "ru": return "Команда A сверху или снизу — как сейчас на корте."
+        case "cs": return "Tým A nahoře nebo dole podle toho, kde stojí."
+        default: return "Team A on top or bottom — match where they stand."
+        }
+    }
+
+    nonisolated static func flipCourtVertical(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Girar fondos"
+        case "ru": return "Поменять концы"
+        case "cs": return "Otočit konce"
+        default: return "Flip ends"
+        }
+    }
+
+    nonisolated static func flipTeamASides(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Eq. A ↔"
+        case "ru": return "Команда A ↔"
+        case "cs": return "Tým A ↔"
+        default: return "Team A ↔"
+        }
+    }
+
+    nonisolated static func flipTeamBSides(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Eq. B ↔"
+        case "ru": return "Команда B ↔"
+        case "cs": return "Tým B ↔"
+        default: return "Team B ↔"
         }
     }
 

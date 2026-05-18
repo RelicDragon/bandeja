@@ -3,6 +3,7 @@ import { PlayerAvatar } from '@/components';
 import type { LiveBoardTheme, LiveTeamSide } from '@/utils/liveScoring';
 import { AnimatedLiveBoardValue } from './AnimatedLiveBoardValue';
 import { LiveServeBallIndicator } from './LiveServeBallIndicator';
+import { servingPlayerNameClassName } from './servingRosterStyles';
 
 export type LiveServeIndicator = {
   serverTeam: LiveTeamSide;
@@ -75,11 +76,10 @@ export const LiveTeamPanel = ({
                 />
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <span
-                    className={
-                      boardTheme === 'light'
-                        ? 'min-w-0 truncate text-[clamp(0.95rem,2.8vw,1.75rem)] font-bold leading-tight text-gray-900'
-                        : 'min-w-0 truncate text-[clamp(0.95rem,2.8vw,1.75rem)] font-bold leading-tight text-white'
-                    }
+                    className={servingPlayerNameClassName(
+                      rowIsServing(i),
+                      boardTheme === 'light' ? 'tvLight' : 'tvDark'
+                    )}
                   >
                     {p ? lineName(p) : '—'}
                   </span>
@@ -96,7 +96,7 @@ export const LiveTeamPanel = ({
                   subscribePresence={false}
                 />
                 <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <span className="min-w-0 truncate text-base font-bold leading-tight dark:text-gray-100">
+                  <span className={servingPlayerNameClassName(rowIsServing(i), 'panel')}>
                     {p ? lineName(p) : '—'}
                   </span>
                   {rowIsServing(i) ? <LiveServeBallIndicator inline /> : null}

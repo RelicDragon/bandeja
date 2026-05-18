@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BasicUser } from '@/types';
-import type { LiveScoringState, LiveTeamSide } from '@/utils/liveScoring';
-import { activeSetScore, computeServeGuideSnapshot, liveSetLabelForRow, needsServeSetup } from '@/utils/liveScoring';
+import type { LiveMatchCourtOrientation, LivePointsServeRotation, LiveScoringState, LiveTeamSide } from '@/utils/liveScoring';
+import {
+  activeSetScore,
+  computeServeGuideSnapshot,
+  liveSetLabelForRow,
+} from '@/utils/liveScoring';
 import type { ScoringRules } from '@/utils/scoring';
 import { LiveServeCoachStrip } from './LiveServeCoachStrip';
-import { LiveServeSetupCard } from './LiveServeSetupCard';
 
 type LiveScoreCenterProps = {
   state: LiveScoringState;
@@ -20,7 +23,12 @@ type LiveScoreCenterProps = {
   isOnline?: boolean;
   /** When true, the serve setup / coach strip is hidden (e.g. match decided). */
   hideServeGuide?: boolean;
-  onServeSetupComplete: (side: LiveTeamSide, doublesPlayerIndex: number) => void;
+  onServeSetupComplete: (
+    side: LiveTeamSide,
+    doublesPlayerIndex: number,
+    rotation: LivePointsServeRotation,
+    courtOrientation: LiveMatchCourtOrientation
+  ) => void;
   onSkipServeGuide: () => void;
   showPointHeadline?: boolean;
 };
@@ -34,23 +42,18 @@ export const LiveScoreCenter = ({
   teamBPlayers,
   pointCenter,
   rules,
-  saving,
   error,
   statusNote,
   isOnline = true,
   hideServeGuide,
-  onServeSetupComplete,
-  onSkipServeGuide,
   showPointHeadline = true,
 }: LiveScoreCenterProps) => {
   const { t } = useTranslation();
   const na = useMemo(() => rosterNames(teamAPlayers), [teamAPlayers]);
   const nb = useMemo(() => rosterNames(teamBPlayers), [teamBPlayers]);
-  const setupNeeded = needsServeSetup(state, rules);
   const snapshot = useMemo(() => {
-    if (setupNeeded) return null;
     return computeServeGuideSnapshot(state, rules, na, nb);
-  }, [setupNeeded, state, rules, na, nb]);
+  }, [state, rules, na, nb]);
   const setHeader = useMemo(() => {
     const label = liveSetLabelForRow(activeSetScore(state), state.activeSetIndex, rules);
     if (label.kind === 'SUPER_TIE_BREAK') return t('gameDetails.liveScoring.superTieBreakShort');
@@ -60,7 +63,7 @@ export const LiveScoreCenter = ({
     return t('gameDetails.liveScoring.setN', { n: label.setOneBased });
   }, [state, rules, t]);
 
-  const showSetPointBlock = !hideServeGuide || showPointHeadline;
+  const showSetPointBlock = showPointHeadline;
 
   return (
     <section className="w-fit max-w-full min-w-0">
@@ -86,19 +89,9 @@ export const LiveScoreCenter = ({
         </div>
       ) : null}
 
-      {!hideServeGuide ? (
-        <div className="mt-5 space-y-3">
-          {setupNeeded ? (
-            <LiveServeSetupCard
-              teamAPlayers={teamAPlayers}
-              teamBPlayers={teamBPlayers}
-              saving={saving}
-              onComplete={onServeSetupComplete}
-              onSkipHints={onSkipServeGuide}
-            />
-          ) : snapshot ? (
-            <LiveServeCoachStrip snapshot={snapshot} teamAPlayers={teamAPlayers} teamBPlayers={teamBPlayers} />
-          ) : null}
+      {!hideServeGuide && snapshot ? (
+        <div className="mt-2 space-y-3">
+          <LiveServeCoachStrip snapshot={snapshot} teamAPlayers={teamAPlayers} teamBPlayers={teamBPlayers} />
         </div>
       ) : null}
 

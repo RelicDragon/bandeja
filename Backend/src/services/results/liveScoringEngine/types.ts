@@ -17,6 +17,8 @@ export type LiveScoringMode = 'classic' | 'points';
 
 export type LiveOptionalDeciderFormat = 'REGULAR_SET' | 'SUPER_TIEBREAK';
 
+export type LivePointsServeRotation = 'official' | 'simple';
+
 export type LiveScoringClassicState = {
   pointState: LiveClassicPointState;
   withinSetTieBreak: boolean;
@@ -32,6 +34,10 @@ export type LiveScoringState = {
   classic?: LiveScoringClassicState;
   firstServerTeam?: LiveTeamSide;
   firstServerDoublesPlayerIndex?: number;
+  matchStartCourtEndsSwapped?: boolean;
+  matchStartTeamASidesMirrored?: boolean;
+  matchStartTeamBSidesMirrored?: boolean;
+  pointsServeRotation?: LivePointsServeRotation;
   serveGuideSkipped?: boolean;
   optionalDeciderFormat?: LiveOptionalDeciderFormat;
   timedClassicSetLocked?: boolean;

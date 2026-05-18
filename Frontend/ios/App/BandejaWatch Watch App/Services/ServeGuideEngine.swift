@@ -25,6 +25,9 @@ struct ServeGuideInputs: Sendable, Equatable {
     var teamBPlayerNames: [String]
 
     var pendingSetFormatChoice: Bool
+
+    /// `official` | `simple`; nil = official.
+    var pointsServeRotation: String?
 }
 
 enum ServeGuideEngine {
@@ -35,13 +38,15 @@ enum ServeGuideEngine {
         if i.activeSetIsSupplemental { return nil }
         guard let first = i.matchFirstServerTeam else { return nil }
 
+        let simple = i.pointsServeRotation == "simple"
+
         if i.isAmericano {
-            return pointsCapStrip(i, matchFirst: first)
+            return simple ? simplePointsStrip(i, matchFirst: first) : pointsCapStrip(i, matchFirst: first)
         }
         if !i.usesTennisSetRules { return nil }
 
         if i.activeSetIsSuperTieBreak {
-            return superTieBreakStrip(i, matchFirst: first)
+            return simple ? simplePointsStrip(i, matchFirst: first) : superTieBreakStrip(i, matchFirst: first)
         }
         if i.withinSetTieBreakMode {
             return withinTieBreakStrip(i, matchFirst: first, gamesAtSixAll: gaPlusGbAtTieBreakEntry(i))
@@ -92,8 +97,8 @@ enum ServeGuideEngine {
         )
         let names = nextTeam == .teamA ? i.teamAPlayerNames : i.teamBPlayerNames
         let display = doubles ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
-        let side: CourtServeSide = (t % 2 == 0) ? .rightDeuce : .leftAd
-        let slot: TieBreakServeSlot? = t == 0 ? .serveOne : (((t - 1) % 2 == 0) ? .serveOne : .serveTwo)
+        let slot = tieBreakServeSlotAtPoint(t)
+        let side = courtSideForTieBreakPoint(t)
         let changeEnds = t > 0 && t % 6 == 0
         let slotWord = slot == .serveOne ? "Serve 1" : "Serve 2"
         let token = "pts-\(t)-\(nextTeam.rawValue)-\(playerIdx)-\(i.activeSetIndex)"
@@ -108,6 +113,26 @@ enum ServeGuideEngine {
             accessibilityLine: "\(display), \(slotWord), \(side == .rightDeuce ? "right" : "left")",
             motionToken: token
         )
+    }
+
+    private static func changeEndsBeforeNextPointClassic(_ i: ServeGuideInputs, segmentPointCount: Int = 0) -> Bool {
+        if segmentPointCount > 0 {
+            return segmentPointCount > 0 && segmentPointCount % 6 == 0
+        }
+        if i.classicPointsPlayedInGame > 0 || i.withinSetTieBreakMode { return false }
+        guard let set = i.sets[safe: i.activeSetIndex], set.resolvedRole == .official, !set.isTieBreak else {
+            return false
+        }
+        let completedGames = set.teamA + set.teamB
+        if completedGames > 0, completedGames % 2 == 1 { return true }
+        if completedGames == 0, i.activeSetIndex > 0 {
+            let prev = i.sets[safe: i.activeSetIndex - 1]
+            if let prev, prev.resolvedRole == .official, !prev.isTieBreak {
+                let prevTotal = prev.teamA + prev.teamB
+                return prevTotal > 0 && prevTotal % 2 == 0
+            }
+        }
+        return false
     }
 
     private static func classicGameStrip(_ i: ServeGuideInputs, matchFirst: TeamSide) -> ServeGuideSnapshot? {
@@ -139,7 +164,7 @@ enum ServeGuideEngine {
             serverInitial: String(display.prefix(1)).uppercased(),
             courtSide: side,
             tieBreakServeSlot: nil,
-            changeEndsBeforeNextPoint: false,
+            changeEndsBeforeNextPoint: changeEndsBeforeNextPointClassic(i),
             accessibilityLine: a11y,
             motionToken: token
         )
@@ -168,9 +193,9 @@ enum ServeGuideEngine {
         )
         let names = nextTeam == .teamA ? i.teamAPlayerNames : i.teamBPlayerNames
         let display = doubles ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
-        let side: CourtServeSide = (t % 2 == 0) ? .rightDeuce : .leftAd
-        let slot: TieBreakServeSlot? = t == 0 ? .serveOne : (((t - 1) % 2 == 0) ? .serveOne : .serveTwo)
-        let changeEnds = t > 0 && t % 6 == 0
+        let slot = tieBreakServeSlotAtPoint(t)
+        let side = courtSideForTieBreakPoint(t)
+        let changeEnds = changeEndsBeforeNextPointClassic(i, segmentPointCount: t)
         let slotWord = slot == .serveOne ? "Serve 1" : "Serve 2"
         let a11y = "\(display), \(slotWord), \(side == .rightDeuce ? "right" : "left")"
         let token = "wtb-\(t)-\(nextTeam.rawValue)-\(playerIdx)"
@@ -209,9 +234,9 @@ enum ServeGuideEngine {
         )
         let names = nextTeam == .teamA ? i.teamAPlayerNames : i.teamBPlayerNames
         let display = doubles ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
-        let side: CourtServeSide = (t % 2 == 0) ? .rightDeuce : .leftAd
-        let slot: TieBreakServeSlot? = t == 0 ? .serveOne : (((t - 1) % 2 == 0) ? .serveOne : .serveTwo)
-        let changeEnds = t > 0 && t % 6 == 0
+        let slot = tieBreakServeSlotAtPoint(t)
+        let side = courtSideForTieBreakPoint(t)
+        let changeEnds = changeEndsBeforeNextPointClassic(i, segmentPointCount: t)
         let slotWord = slot == .serveOne ? "Serve 1" : "Serve 2"
         let token = "stb-\(t)-\(nextTeam.rawValue)"
         return ServeGuideSnapshot(
@@ -227,6 +252,100 @@ enum ServeGuideEngine {
         )
     }
 
+    private static func simplePointsStrip(_ i: ServeGuideInputs, matchFirst: TeamSide) -> ServeGuideSnapshot? {
+        let set = i.sets[safe: i.activeSetIndex]
+        let ta = set?.teamA ?? 0
+        let tb = set?.teamB ?? 0
+        let t = ta + tb
+        let doubles = i.teamAPlayerNames.count >= 2 || i.teamBPlayerNames.count >= 2
+        let firstForSet: TeamSide
+        if i.isAmericano {
+            firstForSet = firstServerForPointsSetSimple(
+                setIndex: i.activeSetIndex,
+                sets: i.sets,
+                matchFirstServer: matchFirst,
+                doubles: doubles
+            )
+        } else {
+            firstForSet = firstServerTeamForSet(setIndex: i.activeSetIndex, sets: i.sets, matchFirstServer: matchFirst)
+        }
+        let nextTeam = simpleTeamServingAtPoint(firstForSet: firstForSet, pointIndex: t, doubles: doubles)
+        let names = nextTeam == .teamA ? i.teamAPlayerNames : i.teamBPlayerNames
+        let playerIdx = simpleDoublesPlayerIndex(
+            matchFirst: matchFirst,
+            matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
+            servingTeam: nextTeam,
+            pointIndex: t,
+            doubles: doubles
+        )
+        let display = doubles ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
+        let side: CourtServeSide = (t % 2 == 0) ? .rightDeuce : .leftAd
+        let a11y = "\(display), \(side == .rightDeuce ? "right" : "left")"
+        let token = "pts-simple-\(t)-\(nextTeam.rawValue)-\(playerIdx)-\(i.activeSetIndex)"
+        return ServeGuideSnapshot(
+            serverTeam: nextTeam,
+            serverPlayerIndex: playerIdx,
+            serverDisplayName: display,
+            serverInitial: String(display.prefix(1)).uppercased(),
+            courtSide: side,
+            tieBreakServeSlot: nil,
+            changeEndsBeforeNextPoint: false,
+            accessibilityLine: a11y,
+            motionToken: token
+        )
+    }
+
+    private static func simpleTeamServingAtPoint(firstForSet: TeamSide, pointIndex: Int, doubles: Bool) -> TeamSide {
+        let cycle = doubles ? 4 : 2
+        let block = (pointIndex / cycle) % 2
+        return block == 0 ? firstForSet : otherTeam(firstForSet)
+    }
+
+    private static func simpleDoublesPlayerIndex(
+        matchFirst: TeamSide,
+        matchFirstPlayerIdx: Int,
+        servingTeam: TeamSide,
+        pointIndex: Int,
+        doubles: Bool
+    ) -> Int {
+        guard doubles else { return 0 }
+        let posInCycle = pointIndex % 4
+        let playerSlot = posInCycle / 2
+        if servingTeam == matchFirst {
+            return (matchFirstPlayerIdx + playerSlot) % 2
+        }
+        return playerSlot % 2
+    }
+
+    static func firstServerForPointsSetSimple(
+        setIndex: Int,
+        sets: [WatchSetWrite],
+        matchFirstServer: TeamSide,
+        doubles: Bool
+    ) -> TeamSide {
+        if setIndex <= 0 { return matchFirstServer }
+        var j = setIndex - 1
+        while j >= 0 {
+            let row = sets[safe: j]
+            if row?.resolvedRole != .official {
+                j -= 1
+                continue
+            }
+            let total = (row?.teamA ?? 0) + (row?.teamB ?? 0)
+            if total > 0 {
+                let prevFirst = firstServerForPointsSetSimple(
+                    setIndex: j,
+                    sets: sets,
+                    matchFirstServer: matchFirstServer,
+                    doubles: doubles
+                )
+                return simpleTeamServingAtPoint(firstForSet: prevFirst, pointIndex: total, doubles: doubles)
+            }
+            j -= 1
+        }
+        return matchFirstServer
+    }
+
     static func otherTeam(_ t: TeamSide) -> TeamSide {
         t == .teamA ? .teamB : .teamA
     }
@@ -240,12 +359,19 @@ enum ServeGuideEngine {
         var j = setIndex - 1
         while j >= 0 {
             let row = sets[safe: j]
-            let ta = row?.teamA ?? 0
-            let tb = row?.teamB ?? 0
-            if ta > 0 || tb > 0 {
+            guard let row, row.resolvedRole == .official else {
+                j -= 1
+                continue
+            }
+            let total = row.teamA + row.teamB
+            if total > 0 {
                 let prevFirst = firstServerTeamForSet(setIndex: j, sets: sets, matchFirstServer: matchFirstServer)
-                let lastIdx = ta + tb - 1
-                let lastServer = servingTeamForGame(firstServerInSet: prevFirst, completedGamesBeforeThisGame: lastIdx)
+                let lastServer: TeamSide
+                if row.isTieBreak {
+                    lastServer = tbNextServerTeam(firstTBTeam: prevFirst, pointIndex: total - 1)
+                } else {
+                    lastServer = servingTeamForGame(firstServerInSet: prevFirst, completedGamesBeforeThisGame: total - 1)
+                }
                 return otherTeam(lastServer)
             }
             j -= 1
@@ -262,6 +388,15 @@ enum ServeGuideEngine {
         if pointIndex == 0 { return firstTBTeam }
         let seg = (pointIndex - 1) / 2
         return seg % 2 == 0 ? otherTeam(firstTBTeam) : firstTBTeam
+    }
+
+    static func tieBreakServeSlotAtPoint(_ pointIndex: Int) -> TieBreakServeSlot {
+        if pointIndex == 0 { return .serveOne }
+        return ((pointIndex - 1) % 2 == 0) ? .serveOne : .serveTwo
+    }
+
+    static func courtSideForTieBreakPoint(_ pointIndex: Int) -> CourtServeSide {
+        pointIndex % 2 == 0 ? .rightDeuce : .leftAd
     }
 
     static func doublesPlayerIndex(

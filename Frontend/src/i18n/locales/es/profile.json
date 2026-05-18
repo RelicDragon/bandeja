@@ -18,6 +18,15 @@
         "reset": "Restablecer"
       },
       "copyTo": "Copiar a…",
+      "copyToHeading": "Copiar a",
+      "dayMenu": {
+        "open": "Menú de {{day}}",
+        "turnOn": "Disponible todo el día",
+        "turnOff": "Limpiar día",
+        "availabilityGroup": "Este día",
+        "pickDay": "O elige un día"
+      },
+      "copyToThisWeek": "Toda esta semana",
       "copyToAll": "Los demás días",
       "copyToOtherWeeks": "Copiar a otras semanas",
       "legend": {

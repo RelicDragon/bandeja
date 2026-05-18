@@ -68,6 +68,11 @@ export const parseLiveScoringState = (raw: unknown, rules: ScoringRules, fallbac
     firstServerTeam: o.firstServerTeam === 'teamA' || o.firstServerTeam === 'teamB' ? o.firstServerTeam : undefined,
     firstServerDoublesPlayerIndex:
       typeof o.firstServerDoublesPlayerIndex === 'number' ? o.firstServerDoublesPlayerIndex : undefined,
+    matchStartCourtEndsSwapped: o.matchStartCourtEndsSwapped === true ? true : undefined,
+    matchStartTeamASidesMirrored: o.matchStartTeamASidesMirrored === true ? true : undefined,
+    matchStartTeamBSidesMirrored: o.matchStartTeamBSidesMirrored === true ? true : undefined,
+    pointsServeRotation:
+      o.pointsServeRotation === 'official' || o.pointsServeRotation === 'simple' ? o.pointsServeRotation : undefined,
     serveGuideSkipped: typeof o.serveGuideSkipped === 'boolean' ? o.serveGuideSkipped : undefined,
     optionalDeciderFormat:
       o.optionalDeciderFormat === 'REGULAR_SET' || o.optionalDeciderFormat === 'SUPER_TIEBREAK'

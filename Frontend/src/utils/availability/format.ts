@@ -1,6 +1,27 @@
 import type { TFunction } from 'i18next';
 import type { WeeklyAvailability, WeekdayKey } from '@/types';
 import { WEEKDAYS, DAY_FULL } from './bitmask';
+import { addDaysToYmd, localTodayYmd } from './rolling';
+
+const WEEKDAY_OFFSET_MONDAY: Record<WeekdayKey, number> = {
+  mon: 0,
+  tue: 1,
+  wed: 2,
+  thu: 3,
+  fri: 4,
+  sat: 5,
+  sun: 6,
+};
+
+const WEEKDAY_OFFSET_SUNDAY: Record<WeekdayKey, number> = {
+  sun: 0,
+  mon: 1,
+  tue: 2,
+  wed: 3,
+  thu: 4,
+  fri: 5,
+  sat: 6,
+};
 
 export interface HourRange {
   start: number;
@@ -57,6 +78,47 @@ const shortDayKey: Record<WeekdayKey, string> = {
 
 export const getShortDayLabel = (t: TFunction, day: WeekdayKey): string =>
   t(shortDayKey[day]);
+
+export const ymdForWeekdayInWeek = (
+  weekStartYmd: string,
+  day: WeekdayKey,
+  weekStart: 'monday' | 'sunday'
+): string => {
+  const offset = weekStart === 'sunday' ? WEEKDAY_OFFSET_SUNDAY[day] : WEEKDAY_OFFSET_MONDAY[day];
+  return addDaysToYmd(weekStartYmd, offset);
+};
+
+export const isWeekdayTodayInWeek = (
+  day: WeekdayKey,
+  weekStartYmd: string,
+  weekStart: 'monday' | 'sunday',
+  todayYmd: string = localTodayYmd()
+): boolean => ymdForWeekdayInWeek(weekStartYmd, day, weekStart) === todayYmd;
+
+export const isWeekdayPastInWeek = (
+  day: WeekdayKey,
+  weekStartYmd: string,
+  weekStart: 'monday' | 'sunday',
+  todayYmd: string = localTodayYmd()
+): boolean => ymdForWeekdayInWeek(weekStartYmd, day, weekStart) < todayYmd;
+
+export const getDayOfMonthInWeek = (
+  weekStartYmd: string,
+  day: WeekdayKey,
+  weekStart: 'monday' | 'sunday'
+): number => parseInt(ymdForWeekdayInWeek(weekStartYmd, day, weekStart).slice(8, 10), 10);
+
+/** e.g. "Mon, 3" / "Пн, 3" using locale short day names from i18n. */
+export const getShortDayLabelWithDate = (
+  t: TFunction,
+  day: WeekdayKey,
+  weekStartYmd: string,
+  weekStart: 'monday' | 'sunday'
+): string => {
+  const ymd = ymdForWeekdayInWeek(weekStartYmd, day, weekStart);
+  const dayOfMonth = parseInt(ymd.slice(8, 10), 10);
+  return `${getShortDayLabel(t, day)}, ${dayOfMonth}`;
+};
 
 const orderFor = (weekStart: 'auto' | 'monday' | 'sunday' | undefined): WeekdayKey[] => {
   const s = weekStart ?? 'auto';

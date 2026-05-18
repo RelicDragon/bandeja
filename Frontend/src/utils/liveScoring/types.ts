@@ -12,6 +12,9 @@ export type LiveScoringMode = 'classic' | 'points';
 
 export type LiveOptionalDeciderFormat = 'REGULAR_SET' | 'SUPER_TIEBREAK';
 
+/** Americano / super tie-break serve rotation (official = TB-style 2 points per team). */
+export type LivePointsServeRotation = 'official' | 'simple';
+
 export type LiveScoringClassicState = {
   pointState: LiveClassicPointState;
   withinSetTieBreak: boolean;
@@ -27,6 +30,13 @@ export type LiveScoringState = {
   classic?: LiveScoringClassicState;
   firstServerTeam?: LiveTeamSide;
   firstServerDoublesPlayerIndex?: number;
+  /** When true, Team A starts on the diagram top end (default: Team A bottom). XOR’d with change-of-ends history. */
+  matchStartCourtEndsSwapped?: boolean;
+  /** When true, Team A’s roster order is drawn left↔right on their baseline (match-start anchor). */
+  matchStartTeamASidesMirrored?: boolean;
+  /** When true, Team B’s roster order is drawn left↔right on their baseline (match-start anchor). */
+  matchStartTeamBSidesMirrored?: boolean;
+  pointsServeRotation?: LivePointsServeRotation;
   serveGuideSkipped?: boolean;
   /** Third-set (etc.) format when rules do not mandate super tie-break. */
   optionalDeciderFormat?: LiveOptionalDeciderFormat;
@@ -37,4 +47,10 @@ export type LiveScoringState = {
 export type LiveScoringActionResult = {
   state: LiveScoringState;
   changed: boolean;
+};
+
+export type LiveMatchCourtOrientation = {
+  endsSwapped: boolean;
+  teamASidesMirrored: boolean;
+  teamBSidesMirrored: boolean;
 };

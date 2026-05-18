@@ -107,6 +107,15 @@
         "reset": "Сброс"
       },
       "copyTo": "Копировать в…",
+      "copyToHeading": "Копировать в",
+      "dayMenu": {
+        "open": "Меню для {{day}}",
+        "turnOn": "Доступен весь день",
+        "turnOff": "Очистить день",
+        "availabilityGroup": "Этот день",
+        "pickDay": "Или выберите день"
+      },
+      "copyToThisWeek": "Всю эту неделю",
       "copyToAll": "Во все остальные дни",
       "copyToOtherWeeks": "Копировать в другие недели",
       "legend": {

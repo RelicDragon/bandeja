@@ -107,6 +107,15 @@
         "reset": "Reset"
       },
       "copyTo": "Copy to…",
+      "copyToHeading": "Copy to",
+      "dayMenu": {
+        "open": "Menu for {{day}}",
+        "turnOn": "Available all day",
+        "turnOff": "Clear day",
+        "availabilityGroup": "This day",
+        "pickDay": "Or pick a day"
+      },
+      "copyToThisWeek": "This whole week",
       "copyToAll": "All other days",
       "copyToOtherWeeks": "Copy to other weeks",
       "legend": {

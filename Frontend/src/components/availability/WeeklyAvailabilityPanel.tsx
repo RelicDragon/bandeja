@@ -61,7 +61,7 @@ export function WeeklyAvailabilityPanel({
   const startsOn = resolveWeekStartPref(authUser?.weekStart);
 
   const [expanded, setExpanded] = useState(false);
-  const [showHourly, setShowHourly] = useState(false);
+  const [showHourly, setShowHourly] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState<SlotIndex>(0);
 
   const [rollingDoc, setRollingDoc] = useState<RollingWeeklyAvailabilityV2>(() =>
@@ -132,6 +132,11 @@ export function WeeklyAvailabilityPanel({
     }));
   }, [rollingDoc.anchor, i18n.language, t]);
 
+  const weekStartYmd = useMemo(
+    () => addDaysToYmd(rollingDoc.anchor, selectedSlot * 7),
+    [rollingDoc.anchor, selectedSlot]
+  );
+
   const handleCopyToOtherWeeks = useCallback(async () => {
     const next = copyWeekMaskToOtherRollingSlots(rollingDoc, selectedSlot, editor.value);
     setRollingDoc(next);
@@ -140,8 +145,8 @@ export function WeeklyAvailabilityPanel({
 
   const hourPeriodTabs = useMemo<SegmentedSwitchTab[]>(
     () => [
-      { id: 'period', label: t('profile.availability.segmentPeriod') },
       { id: 'hour', label: t('profile.availability.segmentHour') },
+      { id: 'period', label: t('profile.availability.segmentPeriod') },
     ],
     [t]
   );
@@ -213,27 +218,37 @@ export function WeeklyAvailabilityPanel({
         onApply={(p) => editor.applyPresetById(p)}
       />
 
-      <div className="min-w-0 md:hidden">
+      <div className="min-w-0 overflow-x-hidden md:hidden">
         {showHourly ? (
-          <div className="overflow-x-auto">
-            <div className="min-w-[720px]">
-              <AvailabilityGrid editor={editor} />
-            </div>
-          </div>
+          <AvailabilityGrid
+            editor={editor}
+            weekStartYmd={weekStartYmd}
+            weekStart={startsOn}
+          />
         ) : (
-          <AvailabilityMobileGrid editor={editor} boundaries={bucketBoundaries} />
+          <AvailabilityMobileGrid
+            editor={editor}
+            boundaries={bucketBoundaries}
+            weekStartYmd={weekStartYmd}
+            weekStart={startsOn}
+          />
         )}
       </div>
 
-      <div className="hidden min-w-0 md:block">
+      <div className="hidden min-w-0 overflow-x-hidden md:block">
         {showHourly ? (
-          <div className="overflow-x-auto">
-            <div className="min-w-[720px]">
-              <AvailabilityGrid editor={editor} />
-            </div>
-          </div>
+          <AvailabilityGrid
+            editor={editor}
+            weekStartYmd={weekStartYmd}
+            weekStart={startsOn}
+          />
         ) : (
-          <AvailabilityMobileGrid editor={editor} boundaries={bucketBoundaries} />
+          <AvailabilityMobileGrid
+            editor={editor}
+            boundaries={bucketBoundaries}
+            weekStartYmd={weekStartYmd}
+            weekStart={startsOn}
+          />
         )}
       </div>
 
@@ -289,7 +304,7 @@ export function WeeklyAvailabilityPanel({
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.22, ease: 'easeOut' }}
-                className="min-w-0 overflow-hidden"
+                className="min-w-0 overflow-x-visible overflow-y-hidden"
               >
                 {scheduleBody}
               </motion.div>

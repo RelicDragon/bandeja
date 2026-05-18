@@ -1,14 +1,17 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BasicUser } from '@/types';
-import type { LiveScoringState, LiveTeamSide } from '@/utils/liveScoring';
+import type { LiveMatchCourtOrientation, LivePointsServeRotation, LiveScoringState, LiveTeamSide } from '@/utils/liveScoring';
 import {
   activeSetScore,
   computeServeGuideSnapshot,
   getClassicPointLabels,
   liveSetLabelForRow,
+  needsPointsServeRotationChoice,
   needsServeSetup,
 } from '@/utils/liveScoring';
+import { LiveServeSetupCard } from './LiveServeSetupCard';
+import { LiveServeServerLine } from './LiveServeServerLine';
 import type { ScoringRules } from '@/utils/scoring';
 import { isLiveMatchCompleteForScoring } from '@/utils/scoring';
 import type { LiveBoardTheme } from '@/utils/liveScoring';
@@ -40,7 +43,12 @@ type LiveScoreShellProps = {
   isOnline?: boolean;
   onScore: (side: LiveTeamSide) => void;
   onUndo: (side: LiveTeamSide) => void;
-  onServeSetupComplete: (side: LiveTeamSide, doublesPlayerIndex: number) => void;
+  onServeSetupComplete: (
+    side: LiveTeamSide,
+    doublesPlayerIndex: number,
+    rotation: LivePointsServeRotation,
+    courtOrientation: LiveMatchCourtOrientation
+  ) => void;
   onSkipServeGuide: () => void;
   shareTvUrl?: string;
   shareBroadcastUrl?: string;
@@ -72,6 +80,7 @@ export const LiveScoreShell = ({
   const set = activeSetScore(state);
   const points = getClassicPointLabels(state.classic, rules);
   const setupBlocks = needsServeSetup(state, rules);
+  const showServeRotationRules = needsPointsServeRotationChoice(state, rules);
   const matchDecided = isLiveMatchCompleteForScoring(state.sets, rules);
   const panelDisabled = Boolean(saving || setupBlocks || scoringLocked);
   const activeSetLabel = useMemo(() => liveSetLabelForRow(set, state.activeSetIndex, rules), [
@@ -91,12 +100,17 @@ export const LiveScoreShell = ({
     players.map((p) => [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.id);
   const teamANameList = useMemo(() => rosterNames(teamAPlayers), [teamAPlayers]);
   const teamBNameList = useMemo(() => rosterNames(teamBPlayers), [teamBPlayers]);
-  const serveIndicator = useMemo(() => {
+  const serveGuideSnapshot = useMemo(() => {
     if (setupBlocks) return null;
-    const snap = computeServeGuideSnapshot(state, rules, teamANameList, teamBNameList);
-    if (!snap) return null;
-    return { serverTeam: snap.serverTeam, serverPlayerIndex: snap.serverPlayerIndex };
+    return computeServeGuideSnapshot(state, rules, teamANameList, teamBNameList);
   }, [setupBlocks, state, rules, teamANameList, teamBNameList]);
+  const serveIndicator = useMemo(() => {
+    if (!serveGuideSnapshot) return null;
+    return {
+      serverTeam: serveGuideSnapshot.serverTeam,
+      serverPlayerIndex: serveGuideSnapshot.serverPlayerIndex,
+    };
+  }, [serveGuideSnapshot]);
 
   if (broadcast) {
     return (
@@ -172,19 +186,36 @@ export const LiveScoreShell = ({
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col items-stretch">
       <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-3 overflow-auto p-3 pb-3">
-        <LiveBroadcastBoard
-          state={state}
-          rules={rules}
-          teamAPlayers={teamAPlayers}
-          teamBPlayers={teamBPlayers}
-          revision={revision}
-          boardTheme={boardTheme}
-          serveIndicator={serveIndicator}
-          interactive
-          disabled={panelDisabled}
-          onScore={onScore}
-          onUndo={onUndo}
-        />
+        {setupBlocks && !matchDecided ? (
+          <div className="relative z-40 w-full max-w-lg shrink-0 touch-manipulation">
+            <LiveServeSetupCard
+              teamAPlayers={teamAPlayers}
+              teamBPlayers={teamBPlayers}
+              showServeRotationRules={showServeRotationRules}
+              saving={saving}
+              onComplete={onServeSetupComplete}
+              onSkipHints={onSkipServeGuide}
+            />
+          </div>
+        ) : null}
+        <div
+          className={`flex w-full shrink-0 justify-center ${setupBlocks ? 'hidden' : ''}`}
+          aria-hidden={setupBlocks || undefined}
+        >
+          <LiveBroadcastBoard
+            state={state}
+            rules={rules}
+            teamAPlayers={teamAPlayers}
+            teamBPlayers={teamBPlayers}
+            revision={revision}
+            boardTheme={boardTheme}
+            serveIndicator={serveIndicator}
+            interactive={!setupBlocks}
+            disabled={panelDisabled}
+            onScore={onScore}
+            onUndo={onUndo}
+          />
+        </div>
         {matchDecided ? (
           <LiveMatchCompleteBanner
             state={state}
@@ -194,21 +225,30 @@ export const LiveScoreShell = ({
             gameId={gameId}
           />
         ) : null}
-        <LiveScoreCenter
-          state={state}
-          teamAPlayers={teamAPlayers}
-          teamBPlayers={teamBPlayers}
-          pointCenter={points.center}
-          rules={rules}
-          saving={saving}
-          error={error}
-          statusNote={matchDecided ? null : statusNote}
-          isOnline={isOnline ?? true}
-          hideServeGuide={matchDecided}
-          onServeSetupComplete={onServeSetupComplete}
-          onSkipServeGuide={onSkipServeGuide}
-          showPointHeadline={false}
-        />
+        {serveGuideSnapshot && !matchDecided ? (
+          <LiveServeServerLine
+            snapshot={serveGuideSnapshot}
+            teamAPlayers={teamAPlayers}
+            teamBPlayers={teamBPlayers}
+          />
+        ) : null}
+        {!setupBlocks ? (
+          <LiveScoreCenter
+            state={state}
+            teamAPlayers={teamAPlayers}
+            teamBPlayers={teamBPlayers}
+            pointCenter={points.center}
+            rules={rules}
+            saving={saving}
+            error={error}
+            statusNote={matchDecided ? null : statusNote}
+            isOnline={isOnline ?? true}
+            hideServeGuide={matchDecided}
+            onServeSetupComplete={onServeSetupComplete}
+            onSkipServeGuide={onSkipServeGuide}
+            showPointHeadline={false}
+          />
+        ) : null}
       </div>
       {showShareUrls ? (
         <LiveScoringUrlButtons tvUrl={shareTvUrl ?? ''} broadcastUrl={shareBroadcastUrl ?? ''} />

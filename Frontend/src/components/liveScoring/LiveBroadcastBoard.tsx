@@ -16,6 +16,7 @@ import type { ScoringRules } from '@/utils/scoring';
 import { AnimatedLiveBoardValue } from './AnimatedLiveBoardValue';
 import { LiveServeBallIndicator } from './LiveServeBallIndicator';
 import type { LiveServeIndicator } from './LiveTeamPanel';
+import { servingPlayerNameClassName } from './servingRosterStyles';
 
 function lineName(p: BasicUser): string {
   return [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.id;
@@ -61,7 +62,9 @@ const BroadcastTeamRoster = memo(function BroadcastTeamRoster({
             asDiv
             subscribePresence={false}
           />
-          <span className="min-w-0 truncate text-sm font-medium sm:text-[0.95rem]">{p ? lineName(p) : '—'}</span>
+          <span className={servingPlayerNameClassName(rowIsServing(i), 'broadcast')}>
+            {p ? lineName(p) : '—'}
+          </span>
           {rowIsServing(i) ? <LiveServeBallIndicator inline /> : null}
         </span>
       ))}

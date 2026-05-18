@@ -1,7 +1,7 @@
 import type { ScoringRules } from '@/utils/scoring';
 import { isClassicRules, isPointsRules } from '@/utils/scoring';
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
-import type { LiveScoringState, LiveTeamSide } from './types';
+import type { LivePointsServeRotation, LiveScoringState, LiveTeamSide } from './types';
 
 export type CourtServeSide = 'rightDeuce' | 'leftAd';
 
@@ -14,8 +14,108 @@ export type ServeGuideSnapshot = {
   courtSide: CourtServeSide;
   tieBreakServeSlot: TieBreakServeSlot | null;
   changeEndsBeforeNextPoint: boolean;
+  /** Team A at diagram bottom when false; swapped after each change of ends in the match so far. */
+  courtEndsSwapped: boolean;
+  courtTeamASidesMirrored: boolean;
+  courtTeamBSidesMirrored: boolean;
   motionToken: string;
 };
+
+/** Odd change-of-ends blocks (6, 18, … points) within a single TB-style segment. */
+export function courtEndsSwappedAfterPoints(totalPointsInSegment: number): boolean {
+  return Math.floor(totalPointsInSegment / 6) % 2 === 1;
+}
+
+/**
+ * Top/bottom parity from change-of-ends events so far:
+ * classic odd games & even game-count set boundaries; plus every 6 points in `segmentPointCount`.
+ */
+export function courtEndsSwappedFromHistory(state: LiveScoringState, segmentPointCount = 0): boolean {
+  let swapped = false;
+
+  for (let si = 0; si < state.sets.length; si += 1) {
+    if (si > state.activeSetIndex) break;
+    const row = state.sets[si];
+    if (!row || isSupplementalMatchSet(row) || row.isTieBreak) continue;
+
+    const isActive = si === state.activeSetIndex;
+    const gamesCompleted = (row.teamA ?? 0) + (row.teamB ?? 0);
+
+    for (let g = 0; g < gamesCompleted; g += 1) {
+      if ((g + 1) % 2 === 1) swapped = !swapped;
+    }
+
+    if (!isActive && gamesCompleted > 0 && gamesCompleted % 2 === 0) {
+      swapped = !swapped;
+    }
+  }
+
+  if (segmentPointCount > 0) {
+    const tbBlocks = Math.floor(segmentPointCount / 6);
+    if (tbBlocks % 2 === 1) swapped = !swapped;
+  }
+
+  return swapped;
+}
+
+/** Match-start bench anchor XOR change-of-ends parity for court diagram / serve arrow. */
+export function effectiveCourtEndsSwapped(
+  state: LiveScoringState,
+  segmentPointCount = 0,
+  pointsSegmentOnly = false
+): boolean {
+  const anchored = state.matchStartCourtEndsSwapped === true;
+  const history = pointsSegmentOnly
+    ? courtEndsSwappedAfterPoints(segmentPointCount)
+    : courtEndsSwappedFromHistory(state, segmentPointCount);
+  return anchored !== history;
+}
+
+export function effectiveCourtTeamASidesMirrored(state: LiveScoringState): boolean {
+  return state.matchStartTeamASidesMirrored === true;
+}
+
+export function effectiveCourtTeamBSidesMirrored(state: LiveScoringState): boolean {
+  return state.matchStartTeamBSidesMirrored === true;
+}
+
+function courtDiagramOrientation(
+  state: LiveScoringState,
+  segmentPointCount = 0,
+  pointsSegmentOnly = false
+): Pick<ServeGuideSnapshot, 'courtEndsSwapped' | 'courtTeamASidesMirrored' | 'courtTeamBSidesMirrored'> {
+  return {
+    courtEndsSwapped: effectiveCourtEndsSwapped(state, segmentPointCount, pointsSegmentOnly),
+    courtTeamASidesMirrored: effectiveCourtTeamASidesMirrored(state),
+    courtTeamBSidesMirrored: effectiveCourtTeamBSidesMirrored(state),
+  };
+}
+
+/** When the next classic point starts a game or set that requires changing ends. */
+export function changeEndsBeforeNextPointClassic(state: LiveScoringState, segmentPointCount = 0): boolean {
+  if (segmentPointCount > 0) {
+    return segmentPointCount > 0 && segmentPointCount % 6 === 0;
+  }
+
+  const c = state.classic;
+  if (!c || c.classicPointsPlayedInGame > 0 || c.withinSetTieBreak) return false;
+
+  const set = activeSetRow(state);
+  if (!set || set.isTieBreak) return false;
+
+  const completedGames = (set.teamA ?? 0) + (set.teamB ?? 0);
+  if (completedGames > 0 && completedGames % 2 === 1) return true;
+
+  if (completedGames === 0 && state.activeSetIndex > 0) {
+    const prev = state.sets[state.activeSetIndex - 1];
+    if (prev && !isSupplementalMatchSet(prev) && !prev.isTieBreak) {
+      const prevTotal = (prev.teamA ?? 0) + (prev.teamB ?? 0);
+      return prevTotal > 0 && prevTotal % 2 === 0;
+    }
+  }
+
+  return false;
+}
 
 function otherTeam(t: LiveTeamSide): LiveTeamSide {
   return t === 'teamA' ? 'teamB' : 'teamA';
@@ -30,12 +130,18 @@ export function firstServerTeamForSet(
   let j = setIndex - 1;
   while (j >= 0) {
     const row = sets[j];
-    const ta = row?.teamA ?? 0;
-    const tb = row?.teamB ?? 0;
-    if (ta > 0 || tb > 0) {
+    if (!row || isSupplementalMatchSet(row)) {
+      j -= 1;
+      continue;
+    }
+    const ta = row.teamA ?? 0;
+    const tb = row.teamB ?? 0;
+    const total = ta + tb;
+    if (total > 0) {
       const prevFirst = firstServerTeamForSet(j, sets, matchFirstServer);
-      const lastIdx = ta + tb - 1;
-      const lastServer = servingTeamForGame(prevFirst, lastIdx);
+      const lastServer = row.isTieBreak
+        ? tbNextServerTeam(prevFirst, total - 1)
+        : servingTeamForGame(prevFirst, total - 1);
       return otherTeam(lastServer);
     }
     j -= 1;
@@ -53,6 +159,16 @@ export function tbNextServerTeam(firstTBTeam: LiveTeamSide, pointIndex: number):
   return seg % 2 === 0 ? otherTeam(firstTBTeam) : firstTBTeam;
 }
 
+export function tieBreakServeSlotAtPoint(pointIndex: number): TieBreakServeSlot {
+  if (pointIndex === 0) return 'serveOne';
+  return (pointIndex - 1) % 2 === 0 ? 'serveOne' : 'serveTwo';
+}
+
+/** Service court alternates every tie-break point (deuce → ad → …). */
+export function courtSideForTieBreakPoint(pointIndex: number): CourtServeSide {
+  return pointIndex % 2 === 0 ? 'rightDeuce' : 'leftAd';
+}
+
 export function doublesPlayerIndex(
   matchFirst: LiveTeamSide,
   matchFirstPlayerIdx: number,
@@ -65,6 +181,56 @@ export function doublesPlayerIndex(
   }
   const nth = Math.floor((completedGamesInSet - 1) / 2);
   return nth % 2;
+}
+
+export function needsPointsServeRotationChoice(state: LiveScoringState, rules: ScoringRules): boolean {
+  if (state.mode === 'points' && isPointsRules(rules)) return true;
+  if (state.mode === 'classic' && isClassicRules(rules) && activeSetIsSuperTieBreak(state)) return true;
+  return false;
+}
+
+function simpleTeamServingAtPoint(firstForSet: LiveTeamSide, pointIndex: number, doubles: boolean): LiveTeamSide {
+  const cycle = doubles ? 4 : 2;
+  const block = Math.floor(pointIndex / cycle) % 2;
+  return block === 0 ? firstForSet : otherTeam(firstForSet);
+}
+
+function simpleDoublesPlayerIndex(
+  matchFirst: LiveTeamSide,
+  matchFirstPlayerIdx: number,
+  servingTeam: LiveTeamSide,
+  pointIndex: number,
+  doubles: boolean
+): number {
+  if (!doubles) return 0;
+  const posInCycle = pointIndex % 4;
+  const playerSlot = Math.floor(posInCycle / 2);
+  if (servingTeam === matchFirst) return (matchFirstPlayerIdx + playerSlot) % 2;
+  return playerSlot % 2;
+}
+
+export function firstServerForPointsSetSimple(
+  setIndex: number,
+  sets: LiveScoringState['sets'],
+  matchFirstServer: LiveTeamSide,
+  doubles: boolean
+): LiveTeamSide {
+  if (setIndex <= 0) return matchFirstServer;
+  let j = setIndex - 1;
+  while (j >= 0) {
+    const row = sets[j];
+    if (!row || isSupplementalMatchSet(row)) {
+      j -= 1;
+      continue;
+    }
+    const total = (row.teamA ?? 0) + (row.teamB ?? 0);
+    if (total > 0) {
+      const prevFirst = firstServerForPointsSetSimple(j, sets, matchFirstServer, doubles);
+      return simpleTeamServingAtPoint(prevFirst, total, doubles);
+    }
+    j -= 1;
+  }
+  return matchFirstServer;
 }
 
 export function tbDoublesPlayerIndex(
@@ -208,8 +374,12 @@ export function computeServeGuideSnapshot(
   if (!first) return null;
   if (activeSetIsSupplemental(state)) return null;
 
+  const rotation: LivePointsServeRotation = state.pointsServeRotation ?? 'official';
+
   if (state.mode === 'points' && isPointsRules(rules)) {
-    return pointsCapStrip(state, first, teamAPlayerNames, teamBPlayerNames);
+    return rotation === 'simple'
+      ? simplePointsStrip(state, first, teamAPlayerNames, teamBPlayerNames)
+      : pointsCapStrip(state, first, teamAPlayerNames, teamBPlayerNames);
   }
 
   if (!isClassicRules(rules) || state.mode !== 'classic') return null;
@@ -218,12 +388,51 @@ export function computeServeGuideSnapshot(
   if (!c) return null;
 
   if (activeSetIsSuperTieBreak(state)) {
-    return superTieBreakStrip(state, first, teamAPlayerNames, teamBPlayerNames);
+    return rotation === 'simple'
+      ? simplePointsStrip(state, first, teamAPlayerNames, teamBPlayerNames)
+      : superTieBreakStrip(state, first, teamAPlayerNames, teamBPlayerNames);
   }
   if (c.withinSetTieBreak) {
     return withinTieBreakStrip(state, first, teamAPlayerNames, teamBPlayerNames);
   }
   return classicGameStrip(state, first, teamAPlayerNames, teamBPlayerNames);
+}
+
+function simplePointsStrip(
+  state: LiveScoringState,
+  matchFirst: LiveTeamSide,
+  teamAPlayerNames: string[],
+  teamBPlayerNames: string[]
+): ServeGuideSnapshot | null {
+  const set = activeSetRow(state);
+  if (!set) return null;
+  const ta = set.teamA ?? 0;
+  const tb = set.teamB ?? 0;
+  const t = ta + tb;
+  const namesForTeamA = teamAPlayerNames;
+  const namesForTeamB = teamBPlayerNames;
+  const doubles = namesForTeamA.length >= 2 || namesForTeamB.length >= 2;
+  const firstForSet =
+    state.mode === 'points'
+      ? firstServerForPointsSetSimple(state.activeSetIndex, state.sets, matchFirst, doubles)
+      : firstServerTeamForSet(state.activeSetIndex, state.sets, matchFirst);
+  const nextTeam = simpleTeamServingAtPoint(firstForSet, t, doubles);
+  const namesForTeam = nextTeam === 'teamA' ? namesForTeamA : namesForTeamB;
+  const matchFirstPlayerIdx = state.firstServerDoublesPlayerIndex ?? 0;
+  const playerIdx = simpleDoublesPlayerIndex(matchFirst, matchFirstPlayerIdx, nextTeam, t, doubles);
+  const display = doubles ? playerDisplay(namesForTeam, playerIdx) : namesForTeam[0] ?? '—';
+  const side: CourtServeSide = t % 2 === 0 ? 'rightDeuce' : 'leftAd';
+  const token = `pts-simple-${t}-${nextTeam}-${playerIdx}-${state.activeSetIndex}`;
+  return {
+    serverTeam: nextTeam,
+    serverPlayerIndex: playerIdx,
+    serverDisplayName: display,
+    courtSide: side,
+    tieBreakServeSlot: null,
+    changeEndsBeforeNextPoint: false,
+    ...courtDiagramOrientation(state, t),
+    motionToken: token,
+  };
 }
 
 function pointsCapStrip(
@@ -244,8 +453,8 @@ function pointsCapStrip(
   const matchFirstPlayerIdx = state.firstServerDoublesPlayerIndex ?? 0;
   const playerIdx = tbDoublesPlayerIndex(matchFirst, matchFirstPlayerIdx, nextTeam, t, 0);
   const display = doubles ? playerDisplay(namesForTeam, playerIdx) : namesForTeam[0] ?? '—';
-  const side: CourtServeSide = t % 2 === 0 ? 'rightDeuce' : 'leftAd';
-  const slot: TieBreakServeSlot | null = t === 0 ? 'serveOne' : (t - 1) % 2 === 0 ? 'serveOne' : 'serveTwo';
+  const slot = tieBreakServeSlotAtPoint(t);
+  const side = courtSideForTieBreakPoint(t);
   const changeEnds = t > 0 && t % 6 === 0;
   const token = `pts-${t}-${nextTeam}-${playerIdx}-${state.activeSetIndex}`;
   return {
@@ -255,6 +464,7 @@ function pointsCapStrip(
     courtSide: side,
     tieBreakServeSlot: slot,
     changeEndsBeforeNextPoint: changeEnds,
+    ...courtDiagramOrientation(state, t, true),
     motionToken: token,
   };
 }
@@ -285,7 +495,8 @@ function classicGameStrip(
     serverDisplayName: display,
     courtSide: side,
     tieBreakServeSlot: null,
-    changeEndsBeforeNextPoint: false,
+    changeEndsBeforeNextPoint: changeEndsBeforeNextPointClassic(state),
+    ...courtDiagramOrientation(state),
     motionToken: token,
   };
 }
@@ -317,9 +528,8 @@ function withinTieBreakStrip(
     gaPlusGbAtTieBreakEntry(state)
   );
   const display = doubles ? playerDisplay(namesForTeam, playerIdx) : namesForTeam[0] ?? '—';
-  const side: CourtServeSide = t % 2 === 0 ? 'rightDeuce' : 'leftAd';
-  const slot: TieBreakServeSlot | null = t === 0 ? 'serveOne' : (t - 1) % 2 === 0 ? 'serveOne' : 'serveTwo';
-  const changeEnds = t > 0 && t % 6 === 0;
+  const slot = tieBreakServeSlotAtPoint(t);
+  const side = courtSideForTieBreakPoint(t);
   const token = `wtb-${t}-${nextTeam}-${playerIdx}`;
   return {
     serverTeam: nextTeam,
@@ -327,7 +537,8 @@ function withinTieBreakStrip(
     serverDisplayName: display,
     courtSide: side,
     tieBreakServeSlot: slot,
-    changeEndsBeforeNextPoint: changeEnds,
+    changeEndsBeforeNextPoint: changeEndsBeforeNextPointClassic(state, t),
+    ...courtDiagramOrientation(state, t),
     motionToken: token,
   };
 }
@@ -352,9 +563,8 @@ function superTieBreakStrip(
   const matchFirstPlayerIdx = state.firstServerDoublesPlayerIndex ?? 0;
   const playerIdx = tbDoublesPlayerIndex(matchFirst, matchFirstPlayerIdx, nextTeam, t, 0);
   const display = doubles ? playerDisplay(namesForTeam, playerIdx) : namesForTeam[0] ?? '—';
-  const side: CourtServeSide = t % 2 === 0 ? 'rightDeuce' : 'leftAd';
-  const slot: TieBreakServeSlot | null = t === 0 ? 'serveOne' : (t - 1) % 2 === 0 ? 'serveOne' : 'serveTwo';
-  const changeEnds = t > 0 && t % 6 === 0;
+  const slot = tieBreakServeSlotAtPoint(t);
+  const side = courtSideForTieBreakPoint(t);
   const token = `stb-${t}-${nextTeam}`;
   return {
     serverTeam: nextTeam,
@@ -362,7 +572,8 @@ function superTieBreakStrip(
     serverDisplayName: display,
     courtSide: side,
     tieBreakServeSlot: slot,
-    changeEndsBeforeNextPoint: changeEnds,
+    changeEndsBeforeNextPoint: changeEndsBeforeNextPointClassic(state, t),
+    ...courtDiagramOrientation(state, t),
     motionToken: token,
   };
 }

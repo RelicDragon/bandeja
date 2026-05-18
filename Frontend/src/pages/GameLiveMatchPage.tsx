@@ -24,6 +24,8 @@ import {
   type LiveBoardTheme,
   type LiveOptionalDeciderFormat,
   type LiveScoringActionResult,
+  type LiveMatchCourtOrientation,
+  type LivePointsServeRotation,
   type LiveScoringState,
   type LiveTeamSide,
 } from '@/utils/liveScoring';
@@ -314,13 +316,26 @@ export const GameLiveMatchPage = () => {
   );
 
   const handleServeSetupComplete = useCallback(
-    (side: LiveTeamSide, doublesPlayerIndex: number) => {
+    (
+      side: LiveTeamSide,
+      doublesPlayerIndex: number,
+      rotation: LivePointsServeRotation,
+      courtOrientation: LiveMatchCourtOrientation
+    ) => {
       const s = liveStateRef.current;
       const r = rulesRef.current;
       if (!s || !r || savingRef.current || !isAuthenticated) return;
       if (isLiveScoringInputLocked(s.sets, s.activeSetIndex, r)) return;
       applyLiveAction({
-        state: { ...s, firstServerTeam: side, firstServerDoublesPlayerIndex: doublesPlayerIndex },
+        state: {
+          ...s,
+          firstServerTeam: side,
+          firstServerDoublesPlayerIndex: doublesPlayerIndex,
+          pointsServeRotation: rotation,
+          matchStartCourtEndsSwapped: courtOrientation.endsSwapped || undefined,
+          matchStartTeamASidesMirrored: courtOrientation.teamASidesMirrored || undefined,
+          matchStartTeamBSidesMirrored: courtOrientation.teamBSidesMirrored || undefined,
+        },
         changed: true,
       });
     },

@@ -9,7 +9,7 @@ import { isLiveMatchCompleteForScoring } from '@/utils/scoring';
 
 const noop = () => {};
 const noopSide = (_side: LiveTeamSide) => {};
-const noopServeSetup = (_side: LiveTeamSide, _idx: number) => {};
+const noopServeSetup = () => {};
 
 export const GameBroadcastMatchPage = () => {
   const { id: gameId = '' } = useParams<{ id: string }>();

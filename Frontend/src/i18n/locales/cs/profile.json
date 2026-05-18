@@ -18,6 +18,15 @@
         "reset": "Výchozí"
       },
       "copyTo": "Kopírovat do…",
+      "copyToHeading": "Kopírovat do",
+      "dayMenu": {
+        "open": "Menu pro {{day}}",
+        "turnOn": "Celý den k dispozici",
+        "turnOff": "Vyčistit den",
+        "availabilityGroup": "Tento den",
+        "pickDay": "Nebo vyberte den"
+      },
+      "copyToThisWeek": "Celý tento týden",
       "copyToAll": "Všechny ostatní dny",
       "copyToOtherWeeks": "Kopírovat do ostatních týdnů",
       "legend": {

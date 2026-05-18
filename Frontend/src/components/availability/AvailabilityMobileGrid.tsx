@@ -6,7 +6,9 @@ import {
   WEEKDAYS,
   WEEKDAYS_SUNDAY_FIRST,
   WEEKEND_DAYS,
-  getShortDayLabel,
+  getShortDayLabelWithDate,
+  isWeekdayTodayInWeek,
+  isWeekdayPastInWeek,
   dayIsFull,
   dayIsEmpty,
   BUCKET_ORDER,
@@ -15,17 +17,33 @@ import {
 } from '@/utils/availability';
 import type { UseAvailabilityEditorReturn } from '@/hooks/useAvailabilityEditor';
 import { BUCKET_META } from './bucketMeta';
+import {
+  availabilityTodayCaptionTextClass,
+  availabilityTodayCellOffClass,
+  availabilityTodayCellOffHoverClass,
+  availabilityTodayCellOnAccentClass,
+  availabilityTodayCellPartialClass,
+  availabilityTodayHeaderClass,
+  availabilityPastMutedClass,
+} from './availabilityTodayHighlight';
 
 interface AvailabilityMobileGridProps {
   editor: UseAvailabilityEditorReturn;
   boundaries: AvailabilityBucketBoundaries;
+  weekStartYmd: string;
+  weekStart: 'monday' | 'sunday';
 }
 
 /** Fluid bucket columns (shrink on narrow screens); day column capped. `min-w-0` avoids grid overflow. */
 const MOBILE_GRID_CLASS =
   'grid w-full min-w-0 grid-cols-[minmax(2.125rem,2.75rem)_repeat(4,minmax(0,1fr))] gap-x-1 gap-y-1 sm:gap-x-1.5 sm:gap-y-1';
 
-export const AvailabilityMobileGrid = ({ editor, boundaries }: AvailabilityMobileGridProps) => {
+export const AvailabilityMobileGrid = ({
+  editor,
+  boundaries,
+  weekStartYmd,
+  weekStart,
+}: AvailabilityMobileGridProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
 
@@ -54,22 +72,31 @@ export const AvailabilityMobileGrid = ({ editor, boundaries }: AvailabilityMobil
 
       {order.map((d) => {
         const isWeekend = WEEKEND_DAYS.includes(d);
+        const isToday = isWeekdayTodayInWeek(d, weekStartYmd, weekStart);
+        const isPast = isWeekdayPastInWeek(d, weekStartYmd, weekStart);
         const allOn = dayIsFull(editor.value[d]);
         const allOff = dayIsEmpty(editor.value[d]);
         return (
-          <div key={d} className={`${MOBILE_GRID_CLASS} items-center`}>
+          <div
+            key={d}
+            className={`${MOBILE_GRID_CLASS} items-center`}
+          >
             <button
               type="button"
               onClick={() => editor.toggleDay(d)}
               className={[
-                'flex min-h-0 w-full min-w-0 items-center justify-center self-stretch rounded-xl px-0.5 py-2 text-[10px] font-bold uppercase leading-none tracking-wide transition-colors sm:text-[11px]',
+                'flex min-h-0 w-full min-w-0 flex-col items-center justify-center self-stretch rounded-xl px-0.5 py-1.5 text-[9px] font-bold leading-tight tracking-tight transition-colors sm:text-[10px]',
                 isWeekend ? 'text-orange-600 dark:text-orange-400' : 'text-gray-700 dark:text-gray-300',
-                allOn ? 'bg-primary-500/10 dark:bg-primary-500/20' : '',
-                allOff ? 'opacity-50' : '',
-                'hover:bg-gray-100 dark:hover:bg-gray-800',
+                isToday
+                  ? `${availabilityTodayHeaderClass} ${availabilityTodayCaptionTextClass}`
+                  : '',
+                allOn && !isToday ? 'bg-primary-500/10 dark:bg-primary-500/20' : '',
+                allOff && !isToday ? 'opacity-50' : '',
+                !isToday ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : 'hover:bg-amber-300/90 dark:hover:bg-amber-600/48',
+                isPast && !isToday ? availabilityPastMutedClass : '',
               ].join(' ')}
             >
-              {getShortDayLabel(t, d)}
+              {getShortDayLabelWithDate(t, d, weekStartYmd, weekStart)}
             </button>
             {BUCKET_ORDER.map((b) => {
               const full = bucketIsFullFor(editor.value, d, b, boundaries);
@@ -84,11 +111,19 @@ export const AvailabilityMobileGrid = ({ editor, boundaries }: AvailabilityMobil
                     'aspect-square w-full min-w-0 rounded-xl border transition-all duration-150',
                     'flex min-h-0 items-center justify-center shadow-sm',
                     full
-                      ? 'border-primary-500/40 bg-gradient-to-br from-primary-500 to-primary-600'
+                      ? [
+                          'border-primary-500/40 bg-gradient-to-br from-primary-500 to-primary-600',
+                          isToday ? availabilityTodayCellOnAccentClass : '',
+                        ].join(' ')
                       : partial
-                        ? 'border-primary-500/30 bg-primary-500/20'
-                        : 'border-gray-200 bg-gray-100 hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700',
+                        ? isToday
+                          ? availabilityTodayCellPartialClass
+                          : 'border-primary-500/30 bg-primary-500/20'
+                        : isToday
+                          ? `${availabilityTodayCellOffClass} ${availabilityTodayCellOffHoverClass}`
+                          : 'border-gray-200 bg-gray-100 hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700',
                     'active:scale-95',
+                    isPast && !isToday ? availabilityPastMutedClass : '',
                   ].join(' ')}
                 >
                   {full && <span className="size-1.5 rounded-full bg-white/90 shadow-sm" />}

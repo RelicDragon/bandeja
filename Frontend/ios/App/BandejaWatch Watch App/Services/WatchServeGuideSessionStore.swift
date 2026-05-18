@@ -4,6 +4,12 @@ import Observation
 struct WatchServeGuideSessionRecord: Codable, Equatable, Sendable {
     var firstServerTeam: TeamSide?
     var firstServerDoublesPlayerIndex: Int?
+    /// `official` | `simple` — Americano / super tie-break serve rotation.
+    var pointsServeRotation: String?
+    /// Team A on diagram top when true (default: Team A bottom).
+    var matchStartCourtEndsSwapped: Bool?
+  var matchStartTeamASidesMirrored: Bool?
+  var matchStartTeamBSidesMirrored: Bool?
     var skipped: Bool
     var hiddenForMatch: Bool
     var classicPointsPlayedInGame: Int?
@@ -43,6 +49,10 @@ extension WatchServeGuideSessionRecord {
     static let empty = WatchServeGuideSessionRecord(
         firstServerTeam: nil,
         firstServerDoublesPlayerIndex: nil,
+        pointsServeRotation: nil,
+        matchStartCourtEndsSwapped: nil,
+        matchStartTeamASidesMirrored: nil,
+        matchStartTeamBSidesMirrored: nil,
         skipped: false,
         hiddenForMatch: false,
         classicPointsPlayedInGame: nil,

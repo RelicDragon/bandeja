@@ -18,6 +18,15 @@
         "reset": "Podrazumevano"
       },
       "copyTo": "Kopiraj u…",
+      "copyToHeading": "Kopiraj u",
+      "dayMenu": {
+        "open": "Meni za {{day}}",
+        "turnOn": "Dostupan ceo dan",
+        "turnOff": "Obriši dan",
+        "availabilityGroup": "Ovaj dan",
+        "pickDay": "Ili izaberi dan"
+      },
+      "copyToThisWeek": "Cela ova nedelja",
       "copyToAll": "Sve ostale dane",
       "copyToOtherWeeks": "Kopiraj u ostale nedelje",
       "legend": {

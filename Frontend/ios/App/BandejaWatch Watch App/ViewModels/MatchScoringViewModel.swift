@@ -1121,6 +1121,10 @@ final class MatchScoringViewModel {
         var serveRecord = WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId) ?? .empty
         if let first = state.firstServerTeam { serveRecord.firstServerTeam = first }
         if let idx = state.firstServerDoublesPlayerIndex { serveRecord.firstServerDoublesPlayerIndex = idx }
+        if let rot = state.pointsServeRotation { serveRecord.pointsServeRotation = rot }
+        if state.matchStartCourtEndsSwapped == true { serveRecord.matchStartCourtEndsSwapped = true }
+        if state.matchStartTeamASidesMirrored == true { serveRecord.matchStartTeamASidesMirrored = true }
+        if state.matchStartTeamBSidesMirrored == true { serveRecord.matchStartTeamBSidesMirrored = true }
         if let skipped = state.serveGuideSkipped { serveRecord.skipped = skipped }
         serveRecord.classicPointsPlayedInGame = classicPointsPlayedInGame
         WatchServeGuideSessionStore.shared.save(gameId: gameId, matchId: matchId, record: serveRecord)
@@ -1202,6 +1206,10 @@ final class MatchScoringViewModel {
             classic: usesBallCapPerSetUI ? nil : classic,
             firstServerTeam: record?.firstServerTeam,
             firstServerDoublesPlayerIndex: record?.firstServerDoublesPlayerIndex,
+            pointsServeRotation: record?.pointsServeRotation,
+            matchStartCourtEndsSwapped: record?.matchStartCourtEndsSwapped == true ? true : nil,
+            matchStartTeamASidesMirrored: record?.matchStartTeamASidesMirrored == true ? true : nil,
+            matchStartTeamBSidesMirrored: record?.matchStartTeamBSidesMirrored == true ? true : nil,
             serveGuideSkipped: record?.skipped,
             optionalDeciderFormat: optionalDeciderFormat,
             timedClassicSetLocked: timedClassicSetLocked ? true : nil

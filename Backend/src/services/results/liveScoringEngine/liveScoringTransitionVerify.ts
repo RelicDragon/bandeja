@@ -54,6 +54,10 @@ function canonicalLiveScoringStateForTransitionCompare(state: LiveScoringState):
   if (typeof state.firstServerDoublesPlayerIndex === 'number') {
     out.firstServerDoublesPlayerIndex = state.firstServerDoublesPlayerIndex;
   }
+  if (state.matchStartCourtEndsSwapped === true) out.matchStartCourtEndsSwapped = true;
+  if (state.matchStartTeamASidesMirrored === true) out.matchStartTeamASidesMirrored = true;
+  if (state.matchStartTeamBSidesMirrored === true) out.matchStartTeamBSidesMirrored = true;
+  if (state.pointsServeRotation) out.pointsServeRotation = state.pointsServeRotation;
   if (state.serveGuideSkipped === true) out.serveGuideSkipped = true;
   if (state.optionalDeciderFormat) out.optionalDeciderFormat = state.optionalDeciderFormat;
   if (state.timedClassicSetLocked === true) out.timedClassicSetLocked = true;
@@ -93,6 +97,12 @@ function expandNeighbors(prev: LiveScoringState, rules: ScoringRules): LiveScori
     push({ ...prev, serveGuideSkipped: true });
   }
 
+  for (const rot of ['official', 'simple'] as const) {
+    if (prev.pointsServeRotation !== rot) {
+      push({ ...prev, pointsServeRotation: rot });
+    }
+  }
+
   const curIdx = prev.firstServerDoublesPlayerIndex;
   for (const idx of [0, 1] as const) {
     if (curIdx !== idx) {
@@ -102,6 +112,32 @@ function expandNeighbors(prev: LiveScoringState, rules: ScoringRules): LiveScori
   if (curIdx !== undefined && curIdx !== null) {
     const cleared: LiveScoringState = { ...prev };
     delete (cleared as { firstServerDoublesPlayerIndex?: number }).firstServerDoublesPlayerIndex;
+    push(cleared);
+  }
+
+  if (prev.matchStartCourtEndsSwapped !== true) {
+    push({ ...prev, matchStartCourtEndsSwapped: true });
+  }
+  if (prev.matchStartCourtEndsSwapped === true) {
+    const cleared: LiveScoringState = { ...prev };
+    delete (cleared as { matchStartCourtEndsSwapped?: boolean }).matchStartCourtEndsSwapped;
+    push(cleared);
+  }
+
+  if (prev.matchStartTeamASidesMirrored !== true) {
+    push({ ...prev, matchStartTeamASidesMirrored: true });
+  }
+  if (prev.matchStartTeamASidesMirrored === true) {
+    const cleared: LiveScoringState = { ...prev };
+    delete (cleared as { matchStartTeamASidesMirrored?: boolean }).matchStartTeamASidesMirrored;
+    push(cleared);
+  }
+  if (prev.matchStartTeamBSidesMirrored !== true) {
+    push({ ...prev, matchStartTeamBSidesMirrored: true });
+  }
+  if (prev.matchStartTeamBSidesMirrored === true) {
+    const cleared: LiveScoringState = { ...prev };
+    delete (cleared as { matchStartTeamBSidesMirrored?: boolean }).matchStartTeamBSidesMirrored;
     push(cleared);
   }
 

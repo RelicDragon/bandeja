@@ -1,7 +1,15 @@
 import { memo } from 'react';
+import {
+  availabilityTodayCellOffClass,
+  availabilityTodayCellOffHoverClass,
+  availabilityTodayCellOnAccentClass,
+  availabilityPastMutedClass,
+} from './availabilityTodayHighlight';
 
 interface AvailabilityCellProps {
   on: boolean;
+  isToday?: boolean;
+  isPast?: boolean;
   dayIndex: number;
   hour: number;
   disabled?: boolean;
@@ -12,6 +20,8 @@ interface AvailabilityCellProps {
 
 const AvailabilityCellImpl = ({
   on,
+  isToday = false,
+  isPast = false,
   dayIndex,
   hour,
   disabled,
@@ -36,12 +46,18 @@ const AvailabilityCellImpl = ({
         onPointerEnter(dayIndex, hour, on);
       }}
       className={[
-        'w-full h-5 md:h-6 rounded-[4px] touch-none select-none transition-all duration-150',
+        'h-5 w-full max-w-10 md:h-6 rounded-[4px] touch-none select-none transition-all duration-150',
         'border',
         on
-          ? 'bg-gradient-to-br from-primary-500 to-primary-600 border-primary-500/40 shadow-sm hover:brightness-110'
-          : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700',
+          ? [
+              'bg-gradient-to-br from-primary-500 to-primary-600 border-primary-500/40 shadow-sm hover:brightness-110',
+              isToday ? availabilityTodayCellOnAccentClass : '',
+            ].join(' ')
+          : isToday
+            ? `${availabilityTodayCellOffClass} ${availabilityTodayCellOffHoverClass}`
+            : 'bg-gray-100 border-gray-200 hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700',
         hour % 6 === 0 ? 'mt-0.5' : '',
+        isPast && !isToday ? availabilityPastMutedClass : '',
       ].join(' ')}
       tabIndex={-1}
     />

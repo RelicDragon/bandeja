@@ -1,24 +1,29 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BasicUser } from '@/types';
-import { PlayerAvatar } from '@/components';
-import type { LiveTeamSide } from '@/utils/liveScoring';
-
-function lineName(p: BasicUser): string {
-  return [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.id;
-}
+import type { LiveMatchCourtOrientation, LivePointsServeRotation, LiveTeamSide } from '@/utils/liveScoring';
+import { LiveCourtEndsSetup } from './LiveCourtEndsSetup';
+import { LiveServeSetupPlayerOption } from './LiveServeSetupPlayerOption';
+import { LiveServeSetupTeamCard } from './LiveServeSetupTeamCard';
 
 type LiveServeSetupCardProps = {
   teamAPlayers: BasicUser[];
   teamBPlayers: BasicUser[];
+  showServeRotationRules?: boolean;
   saving?: boolean;
-  onComplete: (side: LiveTeamSide, doublesPlayerIndex: number) => void;
+  onComplete: (
+    side: LiveTeamSide,
+    doublesPlayerIndex: number,
+    rotation: LivePointsServeRotation,
+    courtOrientation: LiveMatchCourtOrientation
+  ) => void;
   onSkipHints: () => void;
 };
 
 export const LiveServeSetupCard = ({
   teamAPlayers,
   teamBPlayers,
+  showServeRotationRules,
   saving,
   onComplete,
   onSkipHints,
@@ -26,54 +31,57 @@ export const LiveServeSetupCard = ({
   const { t } = useTranslation();
   const [side, setSide] = useState<LiveTeamSide | null>(null);
   const [doublesIdx, setDoublesIdx] = useState(0);
+  const [rotation, setRotation] = useState<LivePointsServeRotation>('official');
+  const [courtOrientation, setCourtOrientation] = useState<LiveMatchCourtOrientation>({
+    endsSwapped: false,
+    teamASidesMirrored: false,
+    teamBSidesMirrored: false,
+  });
 
   const roster = side === 'teamA' ? teamAPlayers : side === 'teamB' ? teamBPlayers : [];
   const doubles = roster.length >= 2;
 
   const submit = () => {
     if (!side) return;
-    onComplete(side, doubles ? doublesIdx : 0);
+    onComplete(side, doubles ? doublesIdx : 0, rotation, courtOrientation);
   };
 
-  const teamBlock = (which: LiveTeamSide, players: BasicUser[]) => {
-    const sel = side === which;
+  const rotationOption = (value: LivePointsServeRotation, titleKey: string, descKey: string) => {
+    const sel = rotation === value;
     return (
       <button
         type="button"
-        className={`flex w-full min-w-0 flex-col items-center gap-2 rounded-xl border py-3 text-left ${
+        className={`w-full rounded-xl border px-3 py-2.5 text-left ${
           sel ? 'border-primary-600 bg-primary-50 dark:bg-primary-950/40' : 'border-gray-300 dark:border-gray-700'
         }`}
-        onClick={() => {
-          setSide(which);
-          setDoublesIdx(0);
-        }}
+        onClick={() => setRotation(value)}
       >
-        <div className="px-2 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-          {which === 'teamA' ? t('gameDetails.liveScoring.teamBenchA') : t('gameDetails.liveScoring.teamBenchB')}
-        </div>
-        <div className="flex w-full justify-center px-2">
-          <div className="inline-flex max-w-full min-w-0 flex-col gap-1.5">
-            {(players.length ? players : [null]).map((p, i) => (
-              <div key={p?.id ?? `e-${which}-${i}`} className="flex w-full min-w-0 items-center gap-2">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center">
-                  <PlayerAvatar player={p} showName={false} extrasmall asDiv subscribePresence={false} />
-                </div>
-                <span className="min-w-0 flex-1 truncate text-left text-xs font-medium">{p ? lineName(p) : '—'}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <div className="text-sm font-bold text-gray-900 dark:text-gray-100">{t(titleKey)}</div>
+        <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">{t(descKey)}</p>
       </button>
     );
   };
 
+  const teamBlock = (which: LiveTeamSide, players: BasicUser[]) => (
+    <LiveServeSetupTeamCard
+      side={which}
+      label={which === 'teamA' ? t('gameDetails.liveScoring.teamBenchA') : t('gameDetails.liveScoring.teamBenchB')}
+      players={players}
+      selected={side === which}
+      onSelect={() => {
+        setSide(which);
+        setDoublesIdx(0);
+      }}
+    />
+  );
+
   return (
-    <div className="rounded-3xl border border-primary-200 bg-primary-50/40 p-4 dark:border-primary-900 dark:bg-primary-950/30">
+    <div className="relative touch-manipulation rounded-3xl border border-primary-200 bg-primary-50/40 p-4 dark:border-primary-900 dark:bg-primary-950/30">
       <div className="text-center text-sm font-bold text-gray-900 dark:text-gray-100">
         {t('gameDetails.liveScoring.serveSetupTitle')}
       </div>
       <p className="mt-1 text-center text-xs text-gray-600 dark:text-gray-400">{t('gameDetails.liveScoring.serveSetupSubtitle')}</p>
-      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="mt-4 flex flex-col gap-2">
         {teamBlock('teamA', teamAPlayers)}
         {teamBlock('teamB', teamBPlayers)}
       </div>
@@ -82,27 +90,42 @@ export const LiveServeSetupCard = ({
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             {t('gameDetails.liveScoring.whichDoublesPlayer')}
           </div>
-          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <button
-              type="button"
-              className={`rounded-xl border py-2 text-sm font-bold ${
-                doublesIdx === 0 ? 'border-primary-600 bg-white dark:bg-gray-900' : 'border-gray-300 dark:border-gray-700'
-              }`}
-              onClick={() => setDoublesIdx(0)}
-            >
-              {lineName(roster[0]!)}
-            </button>
-            <button
-              type="button"
-              className={`rounded-xl border py-2 text-sm font-bold ${
-                doublesIdx === 1 ? 'border-primary-600 bg-white dark:bg-gray-900' : 'border-gray-300 dark:border-gray-700'
-              }`}
-              onClick={() => setDoublesIdx(1)}
-            >
-              {lineName(roster[1]!)}
-            </button>
+          <div className="mt-1.5 flex flex-col gap-1.5">
+            {roster.slice(0, 2).map((p, idx) => (
+              <LiveServeSetupPlayerOption
+                key={p.id}
+                player={p}
+                selected={doublesIdx === idx}
+                onSelect={() => setDoublesIdx(idx)}
+              />
+            ))}
           </div>
         </div>
+      ) : null}
+      {showServeRotationRules && side ? (
+        <div className="mt-4 space-y-2">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            {t('gameDetails.liveScoring.serveRotationRulesLabel')}
+          </div>
+          {rotationOption(
+            'official',
+            'gameDetails.liveScoring.serveRotationOfficialTitle',
+            'gameDetails.liveScoring.serveRotationOfficialDesc'
+          )}
+          {rotationOption(
+            'simple',
+            'gameDetails.liveScoring.serveRotationSimpleTitle',
+            'gameDetails.liveScoring.serveRotationSimpleDesc'
+          )}
+        </div>
+      ) : null}
+      {side ? (
+        <LiveCourtEndsSetup
+          teamAPlayers={teamAPlayers}
+          teamBPlayers={teamBPlayers}
+          orientation={courtOrientation}
+          onOrientationChange={setCourtOrientation}
+        />
       ) : null}
       <button
         type="button"

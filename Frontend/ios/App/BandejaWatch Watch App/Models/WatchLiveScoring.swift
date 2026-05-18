@@ -36,6 +36,10 @@ struct WatchLiveScoringState: Codable, Sendable {
     var classic: WatchLiveClassicState?
     var firstServerTeam: TeamSide?
     var firstServerDoublesPlayerIndex: Int?
+    var pointsServeRotation: String?
+    var matchStartCourtEndsSwapped: Bool?
+    var matchStartTeamASidesMirrored: Bool?
+    var matchStartTeamBSidesMirrored: Bool?
     var serveGuideSkipped: Bool?
     /// `REGULAR_SET` | `SUPER_TIEBREAK` — mirrors web live metadata optional Bo3 decider.
     var optionalDeciderFormat: String?
