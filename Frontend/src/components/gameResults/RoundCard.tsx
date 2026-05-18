@@ -144,7 +144,6 @@ export const RoundCard = ({
                     onMatchClick={() => onMatchClick(match.id)}
                     onCancelMatchEdit={onCancelMatchEdit}
                     onSetClick={(setIndex) => onSetClick(match.id, setIndex)}
-                    onAddSupplementalSet={onAddSupplementalSet ? () => onAddSupplementalSet(match.id) : undefined}
                     onRemovePlayer={(team, playerId) => onRemovePlayer(match.id, team, playerId)}
                     onDragOver={onDragOver}
                     onDrop={(e, team) => onDrop(e, match.id, team)}

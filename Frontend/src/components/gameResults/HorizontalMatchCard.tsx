@@ -46,7 +46,6 @@ interface HorizontalMatchCardProps {
   roundId?: string;
   gameId?: string;
   onMatchTimerTransition?: (roundId: string, matchId: string, action: MatchTimerAction) => void | Promise<void>;
-  onAddSupplementalSet?: () => void;
 }
 
 export const HorizontalMatchCard = ({
@@ -75,7 +74,6 @@ export const HorizontalMatchCard = ({
   roundId,
   gameId,
   onMatchTimerTransition,
-  onAddSupplementalSet,
 }: HorizontalMatchCardProps) => {
   const { t } = useTranslation();
   const rules = getRules(game ?? { fixedNumberOfSets, maxTotalPointsPerSet: 0, maxPointsPerTeam: 0, winnerOfMatch: 'BY_SCORES', ballsInGames: false, hasGoldenPoint: false, pointsPerTie: 0, scoringPreset: null } as any);
@@ -426,24 +424,6 @@ export const HorizontalMatchCard = ({
                 );
               })}
             </div>
-            {!isEditing &&
-            canEditResults &&
-            onAddSupplementalSet &&
-            canEnterResults &&
-            matchFinished ? (
-              <motion.div layout className="flex justify-center" onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onAddSupplementalSet();
-                  }}
-                  className="text-[10px] font-semibold text-violet-700 dark:text-violet-300 border border-dashed border-violet-400/70 rounded-lg px-2 py-0.5 hover:bg-violet-50 dark:hover:bg-violet-950/40"
-                >
-                  {t('gameResults.addExtraSet')}
-                </button>
-              </motion.div>
-            ) : null}
               </motion.div>
             ) : null}
           </AnimatePresence>
