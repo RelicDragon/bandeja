@@ -23,7 +23,7 @@
     }
   },
   "include": ["src", "shared"],
-  "exclude": ["android", "ios", "dist", "node_modules"],
+  "exclude": ["android", "ios", "dist", "node_modules", "src/**/*.test.ts", "src/**/__tests__/**"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
 
