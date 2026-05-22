@@ -5,6 +5,7 @@
     "lib": ["ES2022", "DOM"],
     "types": ["node"],
     "outDir": "./dist",
+    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,14 +14,13 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["../shared/*"]
+      "@shared/*": ["../Frontend/shared/*"]
     },
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "removeComments": true
   },
-  "include": ["src/**/*", "../shared/sport.ts", "../shared/timedCustomPresets.ts", "../shared/sportRegistryDefaults.ts", "../Frontend/shared/sport.ts", "../Frontend/shared/timedCustomPresets.ts", "../Frontend/shared/sportRegistryDefaults.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
-

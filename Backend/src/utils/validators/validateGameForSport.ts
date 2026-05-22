@@ -5,7 +5,7 @@ export const TRAINING_MAX_PARTICIPANTS_MAX = 24;
 import {
   isOpenEndedScoringPreset,
   timedCustomCreateAllowed,
-} from '../../../../shared/timedCustomPresets';
+} from '../../../../Frontend/shared/timedCustomPresets';
 import { ApiError } from '../ApiError';
 import { getSportConfig, resolveSport } from '../../sport/sportRegistry';
 import type { GameTypeStr, ScoringPreset } from './gameFormat';
