@@ -32,6 +32,35 @@ function testClamp(): void {
   assert(clampSportLevel(9) === 7.0, 'clamp max');
 }
 
+function testProfileUserPayloadContract(): void {
+  const constantsPath = join(__dirname, '../../src/utils/constants.ts');
+  const profileCtrlPath = join(__dirname, '../../src/controllers/user/profile.controller.ts');
+  const authCtrlPath = join(__dirname, '../../src/controllers/auth.controller.ts');
+  const refreshCtrlPath = join(__dirname, '../../src/controllers/authRefresh.controller.ts');
+  const refreshSvcPath = join(__dirname, '../../src/services/auth/userRefreshSession.service.ts');
+  const oauthPath = join(__dirname, '../../src/services/auth/oauthLogin.service.ts');
+
+  const constantsSrc = readFileSync(constantsPath, 'utf8');
+  const profileCtrlSrc = readFileSync(profileCtrlPath, 'utf8');
+  const authCtrlSrc = readFileSync(authCtrlPath, 'utf8');
+  const refreshCtrlSrc = readFileSync(refreshCtrlPath, 'utf8');
+  const refreshSvcSrc = readFileSync(refreshSvcPath, 'utf8');
+  const oauthSrc = readFileSync(oauthPath, 'utf8');
+
+  assert(
+    /export const PROFILE_SELECT_FIELDS[\s\S]*primarySportIsSet:\s*true/.test(constantsSrc),
+    'PROFILE_SELECT_FIELDS must select primarySportIsSet for API user payloads',
+  );
+  assert(
+    profileCtrlSrc.includes('select: PROFILE_SELECT_FIELDS'),
+    'GET /users/profile must use PROFILE_SELECT_FIELDS',
+  );
+  assert(authCtrlSrc.includes('PROFILE_SELECT_FIELDS'), 'auth login/register must use PROFILE_SELECT_FIELDS');
+  assert(oauthSrc.includes('PROFILE_SELECT_FIELDS'), 'oauth login must use PROFILE_SELECT_FIELDS');
+  assert(refreshSvcSrc.includes('PROFILE_SELECT_FIELDS'), 'refresh rotation must load PROFILE_SELECT_FIELDS');
+  assert(refreshCtrlSrc.includes('user: out.user'), 'POST /auth/refresh must return user in data');
+}
+
 function testSourceGuards(): void {
   const routesPath = join(__dirname, '../../src/routes/user.routes.ts');
   const servicePath = join(__dirname, '../../src/services/user/userSportProfile.service.ts');
@@ -97,6 +126,7 @@ async function testDbFlow(): Promise<void> {
 async function main(): Promise<void> {
   testRegistryParity();
   testClamp();
+  testProfileUserPayloadContract();
   testSourceGuards();
   await testDbFlow();
   console.log('multisport-phase4-profile: all passed');
