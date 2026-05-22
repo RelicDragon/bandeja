@@ -18,11 +18,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@shared/*": ["../shared/*"],
+      "@shared/*": ["./shared/*"],
       "@backend/*": ["../Backend/src/*"]
     }
   },
-  "include": ["src", "../shared/sport.ts", "../shared/timedCustomPresets.ts"],
+  "include": ["src", "shared"],
   "exclude": ["android", "ios", "dist", "node_modules"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

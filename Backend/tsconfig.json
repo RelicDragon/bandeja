@@ -20,7 +20,7 @@
     "sourceMap": true,
     "removeComments": true
   },
-  "include": ["src/**/*", "../shared/sport.ts", "../shared/timedCustomPresets.ts"],
+  "include": ["src/**/*", "../shared/sport.ts", "../shared/timedCustomPresets.ts", "../Frontend/shared/sport.ts", "../Frontend/shared/timedCustomPresets.ts"],
   "exclude": ["node_modules", "dist"]
 }
 

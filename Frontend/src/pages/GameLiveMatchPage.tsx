@@ -8,7 +8,7 @@ import { useLiveMatchBoardState, liveBoardPlayersForTeam } from '@/hooks/useLive
 import { useAuthStore } from '@/store/authStore';
 import { useResolvedAppAppearance } from '@/store/themeStore';
 import { isGameMatchTimerEnabled } from '@/utils/matchTimer';
-import { supportsTimedOpenEndedRallyFreeze } from '../../../shared/timedCustomPresets';
+import { supportsTimedOpenEndedRallyFreeze } from '@shared/timedCustomPresets';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { useWakeScreenForLiveScoring } from '@/hooks/useWakeScreenForLiveScoring';
 import { parseMatchLiveEnvelope } from '@/types/matchLiveScoring';
