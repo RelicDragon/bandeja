@@ -26,7 +26,12 @@ import { useFavoritesStore } from '@/store/favoritesStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { BasicUser } from '@/types';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { useMarketBuyerSellerUnreadBadges, useUnreadStoreWarm } from '@/hooks/useUnreadBridge';
+import {
+  useChatsSubtabUnreadBadge,
+  useMarketBuyerSellerUnreadBadges,
+  useUnreadStoreWarm,
+} from '@/hooks/useUnreadBridge';
+import { selectContextUnreadForListItem, useUnreadStore } from '@/store/unreadStore';
 import { resolveGameUnreadCounts, resolveGroupUnreadCounts, userChatUnreadCount } from '@/utils/unreadCountsFromStore';
 import { useDebounce } from '@/components/CityMap/useDebounce';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -1081,17 +1086,49 @@ export function useChatListModel({
     ) as ChatItem[];
   }, [chatsFilter, chats, marketChatRole, user?.id, debouncedSearchQuery, matchesMarketSearch, marketUnreadCounts]);
 
+  const unreadStoreWarm = useUnreadStoreWarm();
+  const usersSubtabUnread = useChatsSubtabUnreadBadge('users');
+  const bugsSubtabUnread = useChatsSubtabUnreadBadge('bugs');
+  const channelsSubtabUnread = useChatsSubtabUnreadBadge('channels');
+  const marketSubtabUnread = useChatsSubtabUnreadBadge('market');
+
   const unreadChatsCount = useMemo(() => {
-    if (chatsFilter === 'market') {
-      return marketFilteredByRoleAndSearch.reduce(
-        (sum, c) => sum + ('unreadCount' in c ? (c.unreadCount ?? 0) : 0),
-        0
-      );
+    if (unreadStoreWarm) {
+      if (chatsFilter === 'users') return usersSubtabUnread;
+      if (chatsFilter === 'bugs') return bugsSubtabUnread;
+      if (chatsFilter === 'channels') return channelsSubtabUnread;
+      if (chatsFilter === 'market') return marketSubtabUnread;
     }
-    return chats
-      .filter((c) => c.type === 'user' || c.type === 'group' || c.type === 'channel' || c.type === 'game')
-      .reduce((sum, c) => sum + ('unreadCount' in c ? (c.unreadCount ?? 0) : 0), 0);
-  }, [chatsFilter, chats, marketFilteredByRoleAndSearch]);
+    const itemUnread = (c: ChatItem) =>
+      unreadStoreWarm
+        ? selectContextUnreadForListItem(c, useUnreadStore.getState())
+        : 'unreadCount' in c
+          ? (c.unreadCount ?? 0)
+          : 0;
+    if (chatsFilter === 'market') {
+      return marketFilteredByRoleAndSearch.reduce((sum, c) => sum + itemUnread(c), 0);
+    }
+    if (chatsFilter === 'users') {
+      return chats
+        .filter((c) => c.type === 'user' || c.type === 'group' || c.type === 'game')
+        .reduce((sum, c) => sum + itemUnread(c), 0);
+    }
+    if (chatsFilter === 'bugs' || chatsFilter === 'channels') {
+      return chats
+        .filter((c) => c.type === 'channel' || c.type === 'group')
+        .reduce((sum, c) => sum + itemUnread(c), 0);
+    }
+    return 0;
+  }, [
+    chatsFilter,
+    chats,
+    marketFilteredByRoleAndSearch,
+    unreadStoreWarm,
+    usersSubtabUnread,
+    bugsSubtabUnread,
+    channelsSubtabUnread,
+    marketSubtabUnread,
+  ]);
   const hasUnreadChats = unreadChatsCount > 0;
 
   useEffect(() => {

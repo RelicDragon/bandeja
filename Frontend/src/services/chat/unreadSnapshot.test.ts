@@ -4,6 +4,8 @@ import {
   computeTotals,
   contextKey,
   normalizeSocketContextToKey,
+  selectBottomTabChatsBadgeFromTotals,
+  selectChatsSubtabBadgeFromTotals,
 } from './unreadSnapshot';
 
 describe('computeTotals', () => {
@@ -50,6 +52,34 @@ describe('normalizeSocketContextToKey', () => {
       'ch-1': { bugId: 'b1', isChannel: true },
     });
     expect(key).toBe(contextKey('GROUP', 'ch-1'));
+  });
+});
+
+describe('chat tab badges', () => {
+  const t = {
+    all: 21,
+    games: 2,
+    userChats: 1,
+    bugs: 3,
+    groups: 4,
+    channels: 5,
+    marketplace: 6,
+    myGames: 0,
+    pastGames: 0,
+  };
+
+  it('users subtab includes games shown in the users chat list', () => {
+    expect(selectChatsSubtabBadgeFromTotals('users', t)).toBe(7);
+  });
+
+  it('bottom Chats tab equals sum of subtabs', () => {
+    const subtabSum =
+      selectChatsSubtabBadgeFromTotals('users', t) +
+      selectChatsSubtabBadgeFromTotals('market', t) +
+      selectChatsSubtabBadgeFromTotals('channels', t) +
+      selectChatsSubtabBadgeFromTotals('bugs', t);
+    expect(selectBottomTabChatsBadgeFromTotals(t)).toBe(subtabSum);
+    expect(subtabSum).toBe(21);
   });
 });
 

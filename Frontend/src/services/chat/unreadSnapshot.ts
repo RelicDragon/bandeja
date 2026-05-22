@@ -253,8 +253,14 @@ export function normalizeSocketContextToKey(
   return null;
 }
 
+/** Sum of all Chats-section subtabs (users list includes game rows). */
 export function selectBottomTabChatsBadgeFromTotals(t: UnreadTotals): number {
-  return t.userChats + t.groups + t.games + t.bugs + t.channels + t.marketplace;
+  return (
+    selectChatsSubtabBadgeFromTotals('users', t) +
+    selectChatsSubtabBadgeFromTotals('market', t) +
+    selectChatsSubtabBadgeFromTotals('channels', t) +
+    selectChatsSubtabBadgeFromTotals('bugs', t)
+  );
 }
 
 export function selectChatsSubtabBadgeFromTotals(
@@ -263,7 +269,7 @@ export function selectChatsSubtabBadgeFromTotals(
 ): number {
   switch (filter) {
     case 'users':
-      return t.userChats + t.groups;
+      return t.userChats + t.groups + t.games;
     case 'market':
       return t.marketplace;
     case 'channels':
