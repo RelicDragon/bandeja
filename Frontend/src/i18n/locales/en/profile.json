@@ -21,6 +21,21 @@
     "cancel": "Cancel",
     "saved": "Profile saved",
     "preferences": "Play Preferences",
+    "sports": {
+      "title": "Sports",
+      "addSport": "Add sport",
+      "setPrimary": "Set primary",
+      "primarySport": "Main sport",
+      "primarySportToast": "This is your main sport. It is used as the default when creating games and in your profile.",
+      "gamesCount": "{{count}} games",
+      "levelInvalid": "Level must be between 1.0 and 7.0",
+      "updated": "Sports profile updated",
+      "allAdded": "All available sports are enabled",
+      "primaryLabel": "{{sport}} level",
+      "removeSport": "Remove",
+      "removeSportConfirmTitle": "Remove sport?",
+      "removeSportConfirmMessage": "Remove {{sport}} from your profile? You can add it again later."
+    },
     "preferredHand": "Hand",
     "preferredCourtSide": "Court Side",
     "appIcon": "App icon",
@@ -239,6 +254,9 @@
     "timeFormat12h": "12-hour",
     "timeFormat24h": "24-hour",
     "noLeaderboardData": "No leaderboard data available",
+    "leaderboard": {
+      "sportLabel": "Ranking sport"
+    },
     "photoPickFailed": "Failed to pick photo",
     "characterGenerator": "Character Generator",
     "characterCreation": "Character Creation",

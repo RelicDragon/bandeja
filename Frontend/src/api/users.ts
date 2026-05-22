@@ -1,15 +1,27 @@
 import api from './axios';
+import { isAxiosError } from 'axios';
 import { MAX_BASIC_USERS_BY_IDS } from '@/services/users/basicUsersBatchLimits';
-import { ApiResponse, User, BasicUser, EntityType, GameType, GameStatus, ParticipantRole, ParticipantStatus } from '@/types';
+import {
+  ApiResponse,
+  User,
+  BasicUser,
+  EntityType,
+  GameType,
+  GameStatus,
+  ParticipantRole,
+  ParticipantStatus,
+  Sport,
+} from '@/types';
 import type { GameWorkoutSummary } from './games';
 
 export interface LevelHistoryItem {
   id: string;
-  gameId: string;
+  gameId?: string;
   levelBefore: number;
   levelAfter: number;
   levelChange: number;
   createdAt: string;
+  sport?: Sport | null;
   eventType?: 'GAME' | 'LUNDA' | 'SET' | 'QUESTIONNAIRE' | 'OTHER' | 'SOCIAL_BAR' | 'SOCIAL_PARTICIPANT';
   linkEntityType?: EntityType | null;
 }
@@ -147,6 +159,14 @@ export type ReactionEmojiUsageApiData =
   | { version: number; unchanged: true; items: [] }
   | { version: number; items: ReactionEmojiUsageRow[] };
 
+export interface SportQuestionnaireStatus {
+  completed: boolean;
+  skipped: boolean;
+  suggested: boolean;
+  level: number;
+  gamesPlayed: number;
+}
+
 export const usersApi = {
   getProfile: async () => {
     const response = await api.get<ApiResponse<User>>('/users/profile');
@@ -183,6 +203,34 @@ export const usersApi = {
     return response.data;
   },
 
+  addSport: async (sport: string) => {
+    const response = await api.post<ApiResponse<User>>('/users/sports', { sport });
+    return response.data;
+  },
+
+  setPrimarySport: async (sport: string) => {
+    const response = await api.put<ApiResponse<User>>('/users/primary-sport', { sport });
+    return response.data;
+  },
+
+  confirmPrimarySport: async (sports: string[], primarySport: string) => {
+    const response = await api.post<ApiResponse<User>>('/users/primary-sport/confirm', {
+      sports,
+      primarySport,
+    });
+    return response.data;
+  },
+
+  updateSportProfileLevel: async (sport: string, level: number) => {
+    const response = await api.put<ApiResponse<User>>(`/users/sport-profiles/${sport}/level`, { level });
+    return response.data;
+  },
+
+  removeSport: async (sport: string) => {
+    const response = await api.delete<ApiResponse<User>>(`/users/me/sports/${sport}`);
+    return response.data;
+  },
+
   switchCity: async (cityId: string) => {
     const response = await api.post<ApiResponse<User>>('/users/switch-city', { cityId });
     return response.data;
@@ -203,14 +251,45 @@ export const usersApi = {
     return response.data;
   },
 
+  getSportQuestionnaireStatus: async (sport: Sport) => {
+    try {
+      const response = await api.get<ApiResponse<SportQuestionnaireStatus>>(
+        `/users/me/sports/${sport}/questionnaire/status`,
+      );
+      return response.data;
+    } catch (err) {
+      if (isAxiosError(err) && err.response?.status === 404) {
+        return { success: true, data: null };
+      }
+      throw err;
+    }
+  },
+
+  completeSportQuestionnaire: async (sport: Sport, answers: string[]) => {
+    const response = await api.post<ApiResponse<User>>(`/users/me/sports/${sport}/questionnaire`, {
+      answers,
+    });
+    return response.data;
+  },
+
+  skipSportQuestionnaire: async (sport: Sport) => {
+    const response = await api.post<ApiResponse<User>>(
+      `/users/me/sports/${sport}/questionnaire/skip`,
+    );
+    return response.data;
+  },
+
   getUserStats: async (userId: string) => {
     const response = await api.get<ApiResponse<UserStats>>(`/users/${userId}/stats`);
     return response.data;
   },
 
-  getInvitablePlayers: async (gameId?: string) => {
+  getInvitablePlayers: async (gameId?: string, sport?: string) => {
+    const params: Record<string, string> = {};
+    if (gameId) params.gameId = gameId;
+    if (sport) params.sport = sport;
     const response = await api.get<ApiResponse<InvitablePlayersPayload>>('/users/invitable-players', {
-      params: gameId ? { gameId } : {},
+      params,
     });
     return response.data;
   },
@@ -237,9 +316,12 @@ export const usersApi = {
     return response.data;
   },
 
-  getUserLevelChanges: async (userId: string, limit?: number) => {
+  getUserLevelChanges: async (userId: string, options?: { limit?: number; sport?: Sport }) => {
     const response = await api.get<ApiResponse<LevelHistoryItem[]>>(`/level-changes/${userId}`, {
-      params: limit ? { limit } : {},
+      params: {
+        ...(options?.limit ? { limit: options.limit } : {}),
+        ...(options?.sport ? { sport: options.sport } : {}),
+      },
     });
     return response.data;
   },

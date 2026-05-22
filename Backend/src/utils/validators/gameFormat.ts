@@ -8,10 +8,15 @@ export const SCORING_PRESETS = [
   'CLASSIC_SUPER_TIEBREAK',
   'CLASSIC_SINGLE_SET',
   'CLASSIC_TIMED',
+  'POINTS_11',
   'POINTS_16',
   'POINTS_21',
   'POINTS_24',
   'POINTS_32',
+  'BEST_OF_3_11',
+  'BEST_OF_3_21',
+  'BEST_OF_5_11',
+  'PAR_11',
   'TIMED',
   'CUSTOM',
 ] as const;
@@ -20,6 +25,14 @@ export type ScoringPreset = (typeof SCORING_PRESETS)[number];
 
 export const GAME_TYPES = ['CLASSIC', 'AMERICANO', 'MEXICANO', 'ROUND_ROBIN', 'WINNER_COURT', 'LADDER', 'CUSTOM'] as const;
 export type GameTypeStr = (typeof GAME_TYPES)[number];
+
+const RALLY_SCORINGS: ScoringPreset[] = [
+  'POINTS_11',
+  'BEST_OF_3_11',
+  'BEST_OF_3_21',
+  'BEST_OF_5_11',
+  'PAR_11',
+];
 
 const CLASSIC_SCORINGS: ScoringPreset[] = [
   'CLASSIC_BEST_OF_3',
@@ -31,13 +44,16 @@ const CLASSIC_SCORINGS: ScoringPreset[] = [
   'CLASSIC_TIMED',
   'TIMED',
   'CUSTOM',
+  ...RALLY_SCORINGS,
 ];
 
 const POINTS_SCORINGS: ScoringPreset[] = [
+  'POINTS_11',
   'POINTS_16',
   'POINTS_21',
   'POINTS_24',
   'POINTS_32',
+  'PAR_11',
   'TIMED',
   'CUSTOM',
   'CLASSIC_BEST_OF_3',

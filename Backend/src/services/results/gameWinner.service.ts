@@ -1,4 +1,6 @@
-import { WinnerOfGame, WinnerOfMatch, Prisma, MatchSetRole } from '@prisma/client';
+import { WinnerOfGame, WinnerOfMatch, Prisma, MatchSetRole, Sport } from '@prisma/client';
+import { USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
+import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
 import { getMatchScoresForDelta } from './setScoreDelta';
 import { isOfficialMatchSetRole } from './matchSetRole';
 import type { GameRulesSource } from './matchStandingsPrisma';
@@ -216,7 +218,10 @@ async function getPlayerGameScores(
                   players: {
                     include: {
                       user: {
-                        select: { id: true, level: true },
+                        select: {
+                          id: true,
+                          sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
+                        },
                       },
                     },
                   },
@@ -237,6 +242,7 @@ async function getPlayerGameScores(
 
   console.log(`[GAME PLAYER SCORES] Game ${gameId} has ${game.rounds.length} rounds`);
   const playerScores = new Map<string, PlayerGameScore>();
+  const gameSport = game.sport ?? Sport.PADEL;
 
   // First pass: initialize all players with their levels
   for (const round of game.rounds) {
@@ -244,7 +250,9 @@ async function getPlayerGameScores(
       for (const team of match.teams) {
         for (const player of team.players) {
           if (!playerScores.has(player.userId)) {
-            const userLevel = player.user?.level ?? 1;
+            const userLevel = player.user
+              ? resolveUserSportSnapshot(player.user, gameSport).level
+              : 1;
             playerScores.set(
               player.userId,
               initializePlayerScore(player.userId, userLevel)

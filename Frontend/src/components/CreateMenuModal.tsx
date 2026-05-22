@@ -3,8 +3,9 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Gamepad2, Trophy, Swords, Dumbbell, Beer, Users, Hash, Bug, X, ShoppingBag, UsersRound, Loader2 } from 'lucide-react';
-import { EntityType } from '@/types';
+import type { EntityType, Sport } from '@/types';
 import { useAuthStore } from '@/store/authStore';
+import { CreateGameSportPicker } from '@/components/createGame/CreateGameSportPicker';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 import toast from 'react-hot-toast';
 import { userTeamsApi } from '@/api';
@@ -13,11 +14,12 @@ import { findLatestSoloOwnedTeam } from '@/utils/soloOwnedUserTeam';
 import { CreateGroupChannelForm } from './chat/CreateGroupChannelForm';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { navigationService } from '@/services/navigationService';
+import { hasMultipleSportsEnabled, listEnabledSports } from '@/utils/profileSports';
 
 interface CreateMenuModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectGameType: (type: EntityType) => void;
+  onSelectGameType: (type: EntityType, sport?: Sport) => void;
   onSelectChatType: (type: 'group' | 'channel') => void;
   buttonRef?: React.RefObject<HTMLElement | null>;
   showChatForm?: boolean;
@@ -44,6 +46,12 @@ export const CreateMenuModal = ({
   const [shouldRender, setShouldRender] = useState(false);
   const [position, setPosition] = useState({ top: 0, right: 0 });
   const [creatingTeam, setCreatingTeam] = useState(false);
+  const [showSportPicker, setShowSportPicker] = useState(false);
+  const gameLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gameLongPressTriggered = useRef(false);
+
+  const multiSportCreate = hasMultipleSportsEnabled(user);
+  const pickableSports = multiSportCreate ? listEnabledSports(user) : [];
   
   const handleClose = useCallback(() => {
     setIsExiting(true);
@@ -134,12 +142,34 @@ export const CreateMenuModal = ({
 
   if (!isOpen || !shouldRender) return null;
 
-  const handleSelectGameType = (type: EntityType) => {
+  const clearGameLongPress = () => {
+    if (gameLongPressTimer.current) {
+      clearTimeout(gameLongPressTimer.current);
+      gameLongPressTimer.current = null;
+    }
+  };
+
+  const handleSelectGameType = (type: EntityType, sport?: Sport) => {
+    setShowSportPicker(false);
     setIsExiting(true);
     setTimeout(() => {
-      onSelectGameType(type);
+      onSelectGameType(type, sport);
       onClose();
     }, 400);
+  };
+
+  const startGameLongPress = () => {
+    if (!multiSportCreate) return;
+    gameLongPressTriggered.current = false;
+    clearGameLongPress();
+    gameLongPressTimer.current = setTimeout(() => {
+      gameLongPressTriggered.current = true;
+      setShowSportPicker(true);
+    }, 500);
+  };
+
+  const endGameLongPress = () => {
+    clearGameLongPress();
   };
 
   const handleSelectChatType = (type: 'group' | 'channel') => {
@@ -253,18 +283,43 @@ export const CreateMenuModal = ({
           {entityTypes.map((type) => {
             const delay = isExiting ? `${(totalItems - currentIndex - 1) * 100}ms` : `${currentIndex * 100}ms`;
             currentIndex++;
+            const isGame = type === 'GAME';
             return (
               <button
                 key={type}
-                onClick={(e) => { e.stopPropagation(); handleSelectGameType(type); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isGame && gameLongPressTriggered.current) {
+                    gameLongPressTriggered.current = false;
+                    return;
+                  }
+                  handleSelectGameType(type);
+                }}
+                onPointerDown={(e) => {
+                  if (!isGame) return;
+                  e.stopPropagation();
+                  startGameLongPress();
+                }}
+                onPointerUp={endGameLongPress}
+                onPointerLeave={endGameLongPress}
+                onPointerCancel={endGameLongPress}
                 className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
-                  isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
-                }`}
+                  isGame ? 'relative' : ''
+                } ${isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'}`}
                 style={{
                   animationDelay: delay,
                   boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
                 }}
               >
+                {isGame && showSportPicker && multiSportCreate ? (
+                  <div className="absolute right-full top-0 z-20 mr-2 min-w-[10rem]">
+                    <CreateGameSportPicker
+                      sports={pickableSports}
+                      onPick={(sport) => handleSelectGameType('GAME', sport)}
+                      onCancel={() => setShowSportPicker(false)}
+                    />
+                  </div>
+                ) : null}
                 {getIcon(type)}
                 {t(`games.entityTypes.${type}`)}
               </button>

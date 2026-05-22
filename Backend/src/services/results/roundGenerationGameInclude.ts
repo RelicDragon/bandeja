@@ -1,17 +1,24 @@
 import type { Prisma } from '@prisma/client';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
+
+const userSelectForRoundGeneration = {
+  ...USER_SELECT_FIELDS,
+  gamesPlayed: true,
+  gamesWon: true,
+  sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
+} as const;
 
 export const gameIncludeForRoundGeneration = {
   participants: {
     include: {
-      user: { select: USER_SELECT_FIELDS },
+      user: { select: userSelectForRoundGeneration },
     },
   },
   fixedTeams: {
     include: {
       players: {
         include: {
-          user: { select: USER_SELECT_FIELDS },
+          user: { select: userSelectForRoundGeneration },
         },
       },
     },

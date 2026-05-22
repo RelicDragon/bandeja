@@ -1,0 +1,22 @@
+{
+  "q1": "¿Cuál es tu experiencia general con el squash y otros deportes de raqueta?",
+  "q1a": "Nunca he jugado al squash ni a otro deporte de raqueta.",
+  "q1b": "He probado squash unas veces o vengo de otro deporte de raqueta, pero sigo aprendiendo.",
+  "q1c": "Juego squash de vez en cuando y conozco lo básico.",
+  "q1d": "Juego squash con regularidad y me siento cómodo en la pista.",
+  "q2": "¿Qué tan bien usas la posición T y te mueves por la pista?",
+  "q2a": "Me quedo donde está la bola y persigo sin volver a la T.",
+  "q2b": "Sé que existe la T, pero a menudo llego tarde o dejo huecos.",
+  "q2c": "Vuelvo a la T tras la mayoría de golpes y cubro la pista razonablemente.",
+  "q2d": "Me muevo por la T con eficiencia y anticipo los golpes del rival.",
+  "q3": "¿Qué tan cómodo te sientes con longitud, anchura y boast o globo?",
+  "q3a": "Golpeo sobre todo recto, sin mucho control de altura o anchura.",
+  "q3b": "Puedo dar longitud básica, pero me cuestan boast, globos o rails ajustados.",
+  "q3c": "Uso longitud y anchura para construir rallies y a veces boast o globo.",
+  "q3d": "Combino longitud, boast y globos a propósito para mover al rival.",
+  "q4": "¿Cómo describirías tu juego de partido y conocimiento de reglas de squash?",
+  "q4a": "Todavía aprendo el marcador, los lets y cómo empezar y repetir rallies.",
+  "q4b": "Conozco reglas básicas, pero sobre todo reacciono sin plan claro.",
+  "q4c": "Entiendo el marcador, lo básico de interferencias y táctica habitual.",
+  "q4d": "Domino el formato de partido, lets/stroke y ajustes durante el juego."
+}

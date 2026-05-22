@@ -6,6 +6,7 @@ import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { GameReadService } from '../../game/read.service';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport';
 
 export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
   if (!ctx.from || !ctx.lang || !ctx.telegramId) return;
@@ -19,6 +20,7 @@ export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
         id: true,
         currentCityId: true,
         language: true,
+        primarySport: true,
       },
     });
 
@@ -78,8 +80,15 @@ export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
         : `${playingParticipants.length}/${game.maxParticipants}`;
 
       message += `${statusDisplay}\n`;
-      message += `📅 ${escapeMarkdown(gameInfo.shortDate)} ${escapeMarkdown(gameInfo.startTime)}\n`;
-      message += `📍 ${clubName}${courtName}\n`;
+      message += `📅 ${escapeMarkdown(gameInfo.shortDayOfWeek)} ${escapeMarkdown(gameInfo.shortDate)} ${escapeMarkdown(gameInfo.startTime)}\n`;
+      const locationLine = appendTelegramGameScheduleExtras(
+        `📍 ${clubName}${courtName}`,
+        game,
+        user.primarySport,
+        userLang,
+        (text) => text,
+      );
+      message += `${locationLine}\n`;
       message += `👥 ${participantsCount}\n`;
 
       const gameUrl = `${config.frontendUrl}/games/${game.id}`;

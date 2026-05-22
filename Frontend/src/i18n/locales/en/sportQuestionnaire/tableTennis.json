@@ -1,0 +1,22 @@
+{
+  "q1": "What is your experience with table tennis and your grip or basic strokes?",
+  "q1a": "I have never played table tennis or I'm still choosing how to hold the bat.",
+  "q1b": "I know one basic grip and can hit forehand or backhand slowly.",
+  "q1c": "I use a consistent grip and can rally with both forehand and backhand.",
+  "q1d": "I have a settled grip style and use forehand and backhand with intent in rallies.",
+  "q2": "How easily can you keep a rally going?",
+  "q2a": "I struggle to return the ball on the table consistently.",
+  "q2b": "I can rally at a slow pace but miss under speed or spin.",
+  "q2c": "I keep medium-paced rallies going with reasonable control.",
+  "q2d": "I control pace, placement, and basic spin during extended rallies.",
+  "q3": "How confident are you with serve and receive?",
+  "q3a": "I'm still learning legal serves and mostly block returns back.",
+  "q3b": "I can serve and return at a basic level but without much variation.",
+  "q3c": "I have reliable serves and can return average serves to start rallies.",
+  "q3d": "I use serve spin/placement and read returns to gain an advantage.",
+  "q4": "How would you describe your match play and rules knowledge?",
+  "q4a": "I'm still learning scoring, lets, and how games and matches are won.",
+  "q4b": "I know basic rules but rarely play full matches with a plan.",
+  "q4c": "I understand game scoring, service order, and common match tactics.",
+  "q4d": "I'm comfortable playing full matches and adjusting tactics point by point."
+}

@@ -11,6 +11,7 @@ import {
   getChatKey,
   calculateLastMessageDate,
   groupsToChatItems,
+  gamesToChatItems,
   channelsToChatItems,
   applyPaginationState,
   createLoadMore,
@@ -25,6 +26,8 @@ import { useFavoritesStore } from '@/store/favoritesStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { BasicUser } from '@/types';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { useMarketBuyerSellerUnreadBadges, useUnreadStoreWarm } from '@/hooks/useUnreadBridge';
+import { resolveGameUnreadCounts, resolveGroupUnreadCounts, userChatUnreadCount } from '@/utils/unreadCountsFromStore';
 import { useDebounce } from '@/components/CityMap/useDebounce';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { marketplaceApi } from '@/api/marketplace';
@@ -169,7 +172,7 @@ export function useChatListModel({
           type: 'user',
           data: chat,
           lastMessageDate,
-          unreadCount: unreadCounts[chat.id] || 0,
+          unreadCount: userChatUnreadCount(chat.id) || unreadCounts[chat.id] || 0,
           otherUser,
           draft: draft || null
         });
@@ -179,11 +182,13 @@ export function useChatListModel({
       const { data: groups, pagination } = await chatApi.getGroupChannels('users', 1);
       const groupList = (groups || []) as GroupChannel[];
       const groupIds = groupList.map((g: GroupChannel) => g.id);
-      const groupUnreads = groupIds.length > 0
-        ? (await chatApi.getGroupChannelsUnreadCounts(groupIds)).data || {}
-        : {};
+      const groupUnreads = await resolveGroupUnreadCounts(groupIds);
       const groupChatItems = groupsToChatItems(groupList, groupUnreads, allDrafts, 'users', user?.id);
       activeChats.push(...groupChatItems);
+      const games = await chatApi.getUserChatGames();
+      const gameIds = games.map((g) => g.id);
+      const gameUnreads = await resolveGameUnreadCounts(gameIds);
+      activeChats.push(...gamesToChatItems(games, gameUnreads));
       sortChatItems(activeChats, 'users', user?.id);
       const cityUsersArray = Array.isArray(cityUsersData) ? cityUsersData : [];
       return { activeChats, cityUsers: cityUsersArray, usersHasMore: pagination?.hasMore ?? false };
@@ -201,9 +206,7 @@ export function useChatListModel({
       const { data: groups, pagination } = await chatApi.getGroupChannels('users', page);
       const groupList = (groups || []) as GroupChannel[];
       const groupIds = groupList.map((g: GroupChannel) => g.id);
-      const groupUnreads = groupIds.length > 0
-        ? (await chatApi.getGroupChannelsUnreadCounts(groupIds)).data || {}
-        : {};
+      const groupUnreads = await resolveGroupUnreadCounts(groupIds);
       const chatItems = groupsToChatItems(groupList, groupUnreads, allDrafts, 'users', user?.id);
       return { chats: chatItems, hasMore: pagination?.hasMore ?? false };
     } catch (err) {
@@ -225,9 +228,7 @@ export function useChatListModel({
       ]);
       const channelList = ((channelsRes.data || []) as GroupChannel[]);
       const channelIds = channelList.map((c: GroupChannel) => c.id);
-      const channelUnreads = channelIds.length > 0
-        ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {}
-        : {};
+      const channelUnreads = await resolveGroupUnreadCounts(channelIds);
       const chatItems = channelsToChatItems(channelList, channelUnreads, 'bugs', { useUpdatedAtFallback: true, filterByIsGroup: true, allDrafts });
       return { chats: chatItems, hasMore: channelsRes.pagination?.hasMore ?? false };
     } catch (err) {
@@ -245,9 +246,7 @@ export function useChatListModel({
       ]);
       const channelList = (channelsRes.data || []) as GroupChannel[];
       const channelIds = channelList.map((c: GroupChannel) => c.id);
-      const channelUnreads = channelIds.length > 0
-        ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {}
-        : {};
+      const channelUnreads = await resolveGroupUnreadCounts(channelIds);
       const chatItems = channelsToChatItems(channelList, channelUnreads, 'channels', { filterByIsChannel: true, allDrafts });
       return { chats: chatItems, hasMore: channelsRes.pagination?.hasMore ?? false };
     } catch (err) {
@@ -265,9 +264,7 @@ export function useChatListModel({
       ]);
       const channelList = (channelsRes.data || []) as GroupChannel[];
       const channelIds = channelList.map((c: GroupChannel) => c.id);
-      const channelUnreads = channelIds.length > 0
-        ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {}
-        : {};
+      const channelUnreads = await resolveGroupUnreadCounts(channelIds);
       const chatItems = channelsToChatItems(channelList, channelUnreads, 'market', { filterByIsGroup: true, useUpdatedAtFallback: true, allDrafts });
       return { chats: chatItems, hasMore: channelsRes.pagination?.hasMore ?? false };
     } catch (err) {
@@ -288,11 +285,17 @@ export function useChatListModel({
         await usePlayersStore.getState().fetchUserChats();
         const cityUsersData = await usePlayersStore.getState().fetchPlayers();
         const allDrafts = await getMergedDrafts();
-        const usersGroupsRes = await chatApi.getGroupChannels('users', 1);
+        const [usersGroupsRes, games] = await Promise.all([
+          chatApi.getGroupChannels('users', 1),
+          chatApi.getUserChatGames(),
+        ]);
         const usersGroupList = (usersGroupsRes.data || []) as GroupChannel[];
         const groupIds = usersGroupList.map((g: GroupChannel) => g.id);
-        const groupUnreads =
-          groupIds.length > 0 ? (await chatApi.getGroupChannelsUnreadCounts(groupIds)).data || {} : {};
+        const gameIds = games.map((g) => g.id);
+        const [groupUnreads, gameUnreads] = await Promise.all([
+          resolveGroupUnreadCounts(groupIds),
+          resolveGameUnreadCounts(gameIds),
+        ]);
         const { chats: userChats, unreadCounts } = usePlayersStore.getState();
         const blockedUserIds = user.blockedUserIds || [];
         const activeChats: ChatItem[] = [];
@@ -308,7 +311,7 @@ export function useChatListModel({
               type: 'user',
               data: chat,
               lastMessageDate,
-              unreadCount: unreadCounts[chat.id] || 0,
+              unreadCount: userChatUnreadCount(chat.id) || unreadCounts[chat.id] || 0,
               otherUser,
               draft: draft || null
             });
@@ -316,6 +319,7 @@ export function useChatListModel({
         });
         const usersGroupItems = groupsToChatItems(usersGroupList, groupUnreads, allDrafts, 'users', user?.id);
         activeChats.push(...usersGroupItems);
+        activeChats.push(...gamesToChatItems(games, gameUnreads));
         const usersChatItems = deduplicateChats(sortChatItems(activeChats, 'users', user?.id));
         const cityUsersArray = Array.isArray(cityUsersData) ? cityUsersData : [];
         const cacheEntry: FilterCache = {
@@ -336,8 +340,7 @@ export function useChatListModel({
         const bugsRes = await chatApi.getGroupChannels('bugs', 1, bugsFilterParams);
         const channelList = (bugsRes.data || []) as GroupChannel[];
         const channelIds = channelList.map((c: GroupChannel) => c.id);
-        const channelUnreads =
-          channelIds.length > 0 ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {} : {};
+        const channelUnreads = await resolveGroupUnreadCounts(channelIds);
         const bugsChatItems = channelsToChatItems(channelList, channelUnreads, 'bugs', {
           useUpdatedAtFallback: true,
           filterByIsGroup: true,
@@ -358,8 +361,7 @@ export function useChatListModel({
         const channelsRes = await chatApi.getGroupChannels('channels', 1);
         const channelList = (channelsRes.data || []) as GroupChannel[];
         const channelIds = channelList.map((c: GroupChannel) => c.id);
-        const channelUnreads =
-          channelIds.length > 0 ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {} : {};
+        const channelUnreads = await resolveGroupUnreadCounts(channelIds);
         const channelsChatItems = channelsToChatItems(channelList, channelUnreads, 'channels', {
           filterByIsChannel: true,
           allDrafts
@@ -379,8 +381,7 @@ export function useChatListModel({
         const marketRes = await chatApi.getGroupChannels('market', 1);
         const channelList = (marketRes.data || []) as GroupChannel[];
         const channelIds = channelList.map((c: GroupChannel) => c.id);
-        const channelUnreads =
-          channelIds.length > 0 ? (await chatApi.getGroupChannelsUnreadCounts(channelIds)).data || {} : {};
+        const channelUnreads = await resolveGroupUnreadCounts(channelIds);
         const marketChatItems = channelsToChatItems(channelList, channelUnreads, 'market', {
           filterByIsGroup: true,
           useUpdatedAtFallback: true,
@@ -487,7 +488,10 @@ export function useChatListModel({
       try {
         let showedDisk = false;
         try {
-          const fromDex = await loadThreadIndexForList(chatsFilter);
+          const fromUsersDex = await loadThreadIndexForList(chatsFilter);
+          const fromGamesDex =
+            chatsFilter === 'users' ? await loadThreadIndexForList('games') : [];
+          const fromDex = deduplicateChats([...fromUsersDex, ...fromGamesDex]);
           if (!cancelled && fromDex.length > 0) {
             showedDisk = true;
             const dexOnly: FilterCache = { chats: deduplicateChats(fromDex) };
@@ -931,7 +935,7 @@ export function useChatListModel({
   };
 
   const activeChats = useMemo(() => {
-    return chats.filter((c) => c.type === 'user' || c.type === 'group') as ChatItem[];
+    return chats.filter((c) => c.type === 'user' || c.type === 'group' || c.type === 'game') as ChatItem[];
   }, [chats]);
 
   const matchesSearch = useCallback((title: string) => {
@@ -1039,7 +1043,8 @@ export function useChatListModel({
   const [bugsFilterPanelOpen, setBugsFilterPanelOpen] = useState(true);
   const [unreadFilterActive, setUnreadFilterActive] = useState(false);
 
-  const marketBuyerSellerUnread = useMemo(() => {
+  const marketBuyerSellerUnreadFromStore = useMarketBuyerSellerUnreadBadges();
+  const marketBuyerSellerUnreadLegacy = useMemo(() => {
     let buyer = 0;
     let seller = 0;
     chats
@@ -1051,6 +1056,10 @@ export function useChatListModel({
       });
     return { buyer, seller };
   }, [chats, marketUnreadCounts, user?.id]);
+  const unreadStoreWarm = useUnreadStoreWarm();
+  const marketBuyerSellerUnread = unreadStoreWarm
+    ? marketBuyerSellerUnreadFromStore
+    : marketBuyerSellerUnreadLegacy;
 
   const marketFilteredByRoleAndSearch = useMemo(() => {
     if (chatsFilter !== 'market') return [];
@@ -1080,7 +1089,7 @@ export function useChatListModel({
       );
     }
     return chats
-      .filter((c) => c.type === 'user' || c.type === 'group' || c.type === 'channel')
+      .filter((c) => c.type === 'user' || c.type === 'group' || c.type === 'channel' || c.type === 'game')
       .reduce((sum, c) => sum + ('unreadCount' in c ? (c.unreadCount ?? 0) : 0), 0);
   }, [chatsFilter, chats, marketFilteredByRoleAndSearch]);
   const hasUnreadChats = unreadChatsCount > 0;
@@ -1095,7 +1104,11 @@ export function useChatListModel({
       return marketFilteredByRoleAndSearch.filter((c) => ('unreadCount' in c ? (c.unreadCount ?? 0) : 0) > 0);
     }
     if (!unreadFilterActive) return chats;
-    return chats.filter((c) => (c.type === 'user' || c.type === 'group' || c.type === 'channel') && (c.unreadCount ?? 0) > 0);
+    return chats.filter(
+      (c) =>
+        (c.type === 'user' || c.type === 'group' || c.type === 'channel' || c.type === 'game') &&
+        (c.unreadCount ?? 0) > 0
+    );
   }, [chatsFilter, chats, unreadFilterActive, marketFilteredByRoleAndSearch]);
 
   useLayoutEffect(() => {

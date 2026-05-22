@@ -21,6 +21,21 @@
     "cancel": "Отмена",
     "saved": "Профиль сохранен",
     "preferences": "Предпочтения в игре",
+    "sports": {
+      "title": "Виды спорта",
+      "addSport": "Добавить спорт",
+      "setPrimary": "Сделать основным",
+      "primarySport": "Основной вид спорта",
+      "primarySportToast": "Это ваш основной вид спорта. Он используется по умолчанию при создании игр и в профиле.",
+      "gamesCount": "{{count}} игр",
+      "levelInvalid": "Уровень должен быть от 1.0 до 7.0",
+      "updated": "Спортивный профиль обновлён",
+      "allAdded": "Все доступные виды спорта уже добавлены",
+      "primaryLabel": "Уровень: {{sport}}",
+      "removeSport": "Убрать",
+      "removeSportConfirmTitle": "Убрать вид спорта?",
+      "removeSportConfirmMessage": "Убрать {{sport}} из профиля? Позже можно добавить снова."
+    },
     "preferredHand": "Рука",
     "preferredCourtSide": "Сторона корта",
     "appIcon": "Иконка приложения",
@@ -242,6 +257,9 @@
     "photoPickFailed": "Failed to pick photo",
     "noSharedGames": "No shared finished games yet",
     "noLeaderboardData": "No leaderboard data available",
+    "leaderboard": {
+      "sportLabel": "Вид спорта рейтинга"
+    },
     "sessionsTitle": "Устройства с входом",
     "sessionsSubtitle": "Управляйте тем, где вы остаётесь в системе",
     "sessionsPageTitle": "Устройства и сеансы",

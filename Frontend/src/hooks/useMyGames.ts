@@ -6,10 +6,6 @@ import {
   applyInviteDeletedToGames,
   userHasActiveGameMembership,
 } from '@/utils/gameInviteParticipant';
-import {
-  OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT,
-  RESTORE_GAME_UNREAD_EVENT,
-} from '@/services/chat/applyOptimisticMarkContextRead';
 
 export const useMyGames = (
   user: any,
@@ -18,8 +14,6 @@ export const useMyGames = (
 ) => {
   const [games, setGames] = useState<Game[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
-  const [gamesUnreadCounts, setGamesUnreadCounts] = useState<Record<string, number>>({});
-  const [totalGamesUnreadFromUnreadObjects, setTotalGamesUnreadFromUnreadObjects] = useState<number>(0);
 
   const isLoadingRef = useRef(false);
   const lastFetchParamsRef = useRef<string | null>(null);
@@ -49,14 +43,11 @@ export const useMyGames = (
       }
 
       const response = await gamesApi.getMyGamesWithUnread();
-      const { games: myGames, invites: invitesData, gamesUnreadCounts: unreadCounts } = response.data;
+      const { games: myGames, invites: invitesData } = response.data;
       const sortedMyGames = sortGames([...(myGames || [])]);
-      const totalGamesUnread = Object.values(unreadCounts || {}).reduce((sum, n) => sum + n, 0);
-      setTotalGamesUnreadFromUnreadObjects(totalGamesUnread);
 
       setGames(sortedMyGames);
       setInvites(invitesData ?? []);
-      setGamesUnreadCounts(unreadCounts ?? {});
     } catch (error) {
       console.error('Failed to fetch my games:', error);
     } finally {
@@ -73,38 +64,6 @@ export const useMyGames = (
       fetchData();
     }
   }, [user?.id, fetchData]);
-
-  useEffect(() => {
-    const onClear = (e: Event) => {
-      const gameId = (e as CustomEvent<{ gameId?: string }>).detail?.gameId;
-      if (!gameId) return;
-      setGamesUnreadCounts((prev) => {
-        const was = prev[gameId] ?? 0;
-        if (was === 0) return prev;
-        queueMicrotask(() => {
-          setTotalGamesUnreadFromUnreadObjects((t) => Math.max(0, t - was));
-        });
-        return { ...prev, [gameId]: 0 };
-      });
-    };
-    const onRestore = (e: Event) => {
-      const { gameId, unreadCount } = (e as CustomEvent<{ gameId?: string; unreadCount?: number }>).detail ?? {};
-      if (!gameId || unreadCount == null) return;
-      setGamesUnreadCounts((prev) => {
-        const next = { ...prev, [gameId]: unreadCount };
-        queueMicrotask(() => {
-          setTotalGamesUnreadFromUnreadObjects(Object.values(next).reduce((s, n) => s + n, 0));
-        });
-        return next;
-      });
-    };
-    window.addEventListener(OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT, onClear);
-    window.addEventListener(RESTORE_GAME_UNREAD_EVENT, onRestore);
-    return () => {
-      window.removeEventListener(OPTIMISTIC_CLEAR_GAME_UNREAD_EVENT, onClear);
-      window.removeEventListener(RESTORE_GAME_UNREAD_EVENT, onRestore);
-    };
-  }, []);
 
   const lastNewInvite = useSocketEventsStore((state) => state.lastNewInvite);
   const lastInviteDeleted = useSocketEventsStore((state) => state.lastInviteDeleted);
@@ -125,23 +84,6 @@ export const useMyGames = (
     const gid = lastInviteDeleted.gameId;
     if (!gid) return;
     setGames((prev) => applyInviteDeletedToGames(prev, lastInviteDeleted, user?.id));
-    if (lastInviteDeleted.removedUserId === user?.id) {
-      setGamesUnreadCounts((prev) => {
-        const unread = prev[gid] ?? 0;
-        if (!(gid in prev)) return prev;
-        const { [gid]: _removed, ...rest } = prev;
-        if (unread > 0) {
-          setTotalGamesUnreadFromUnreadObjects((t) => Math.max(0, t - unread));
-        }
-        return rest;
-      });
-    } else {
-      setGamesUnreadCounts((prev) => {
-        if (!(gid in prev)) return prev;
-        const { [gid]: _removed, ...rest } = prev;
-        return rest;
-      });
-    }
   }, [lastInviteDeleted, user?.id]);
 
   useEffect(() => {
@@ -198,8 +140,6 @@ export const useMyGames = (
   return {
     games,
     invites,
-    gamesUnreadCounts,
-    totalGamesUnreadFromUnreadObjects,
     fetchData,
     setInvites,
   };

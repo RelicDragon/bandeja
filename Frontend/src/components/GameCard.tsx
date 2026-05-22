@@ -15,8 +15,14 @@ import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
 import { getGameCardEntityGradientClasses } from '@/utils/gameCardEntityTheme';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
+import { GameSportTagRow } from '@/components/GameSportTag';
+import { resolvePlayersPerMatchForGame } from '@/utils/matchFormat';
+import { shouldShowGameCardSportGlyph, getViewerPrimarySport } from '@/utils/findSportFilter';
+import { parseGameSport } from '@/utils/gameSport';
+import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 
 import { useAuthStore } from '@/store/authStore';
+import { useContextUnread } from '@/hooks/useUnreadBridge';
 import { chatApi } from '@/api/chat';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
@@ -33,6 +39,8 @@ interface GameCardProps {
   onJoin?: (gameId: string, e: React.MouseEvent) => void;
   onNoteSaved?: (gameId: string) => void;
   unreadCount?: number;
+  /** Set on Find tab only — drives sport glyph visibility. */
+  findFilterSport?: FindSportFilterValue;
 }
 
 export const GameCard = ({ 
@@ -43,8 +51,10 @@ export const GameCard = ({
   showJoinButton = false, 
   onJoin,
   onNoteSaved,
-  unreadCount = 0,
+  unreadCount: unreadCountProp = 0,
+  findFilterSport,
 }: GameCardProps) => {
+  const displayUnread = useContextUnread('GAME', game.id, unreadCountProp);
   const { t } = useTranslation();
   const { translateCity } = useTranslatedGeo();
   const navigate = useNavigate();
@@ -155,7 +165,7 @@ export const GameCard = ({
     : isLeagueComplexHeader
       ? isNonGameEntity
       : Boolean(game.name) ||
-        (!game.name && game.gameType !== 'CLASSIC') ||
+        (game.entityType !== 'TRAINING' && !game.name && game.gameType !== 'CLASSIC') ||
         (!game.name && isNonGameEntity);
 
   const shouldMoveIconsToTitle = hasVisibleGameName && !hasOtherTags;
@@ -282,6 +292,14 @@ export const GameCard = ({
     titleEntityInlineIcon != null ||
     shouldMoveIconsToTitle;
 
+  const viewerPrimarySport = getViewerPrimarySport(effectiveUser);
+  const showSportTag = shouldShowGameCardSportGlyph(
+    game.sport,
+    viewerPrimarySport,
+    findFilterSport,
+  );
+  const gameSport = parseGameSport(game.sport);
+
   return (
     <>
     <Card
@@ -306,9 +324,9 @@ export const GameCard = ({
             className="pl-1.5 pt-1 pr-2 pb-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
           >
             <MessageCircle size={20} className="text-gray-600 dark:text-gray-400" />
-            {unreadCount > 0 && (
+            {displayUnread > 0 && (
               <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {unreadCount > 99 ? '99+' : unreadCount}
+                {displayUnread > 99 ? '99+' : displayUnread}
               </span>
             )}
           </button>
@@ -316,6 +334,12 @@ export const GameCard = ({
       </div>
       {/* Header - Always visible */}
       <div className="mb-3 relative z-10">
+        <GameSportTagRow
+          sport={gameSport}
+          showSport={showSportTag}
+          playersPerMatch={resolvePlayersPerMatchForGame(game)}
+          showMatchFormat={game.entityType !== 'TRAINING'}
+        />
         {isDifferentCity && game.city?.name && (
           <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
             <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
@@ -384,12 +408,12 @@ export const GameCard = ({
                       </>
                     )
                     : game.name}
-                {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.name && game.gameType !== 'CLASSIC' && (
+                {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.entityType !== 'TRAINING' && game.name && game.gameType !== 'CLASSIC' && (
                   <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
                     ({t(`games.gameTypes.${game.gameType}`)})
                   </span>
                 )}
-                {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
+                {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.entityType !== 'TRAINING' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
               </span>
             </h3>
             <div className="flex items-center gap-2 mb-1 pr-10 flex-wrap">
@@ -467,8 +491,8 @@ export const GameCard = ({
             </span>
           )}
           {myParticipationBadge === 'playing' && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
-              {t('games.statusPlaying')}
+            <span className="px-2 py-1 text-xs font-medium rounded whitespace-nowrap bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
+              {t('games.badgePlaying', { defaultValue: 'Playing' })}
             </span>
           )}
           {myParticipationBadge === 'non_playing' && (

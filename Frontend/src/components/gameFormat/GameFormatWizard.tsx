@@ -9,14 +9,23 @@ import {
   DialogTitle,
 } from '@/components/ui/Dialog';
 import { OVERLAY_CONTROL_GLASS_STABLE } from '@/components/ui/overlayControlGlass';
-import { EntityType, ScoringPreset } from '@/types';
+import { EntityType, ScoringMode, ScoringPreset } from '@/types';
 import { GameFormatStepScoringMode } from './GameFormatStepScoringMode';
 import { GameFormatStepSetStructure } from './GameFormatStepSetStructure';
 import { GameFormatStepPointsTotal } from './GameFormatStepPointsTotal';
 import { GameFormatStepRanking } from './GameFormatStepRanking';
 import { GameFormatStepGeneration } from './GameFormatStepGeneration';
+import { MatchFormatControl } from '@/components/createGame/MatchFormatControl';
 import { GameFormatSummary } from './GameFormatSummary';
 import { UseGameFormatResult } from '@/hooks/useGameFormat';
+
+export interface GameFormatWizardMatchFormat {
+  playersPerMatch: number;
+  allowedCounts: number[];
+  disabled?: boolean;
+  sport?: string | null;
+  onChange: (count: number) => void;
+}
 
 export type GameFormatWizardStep =
   | 'scoringMode'
@@ -38,6 +47,9 @@ interface GameFormatWizardProps {
   allowByPointsInRanking?: boolean;
   /** e.g. playoff: scoring wizard only, generation fixed by template */
   hideGenerationStep?: boolean;
+  allowedScoringModes?: ScoringMode[];
+  allowedScoringPresets?: ScoringPreset[];
+  matchFormat?: GameFormatWizardMatchFormat;
 }
 
 const CLASSIC_STRUCTURE_PRESETS: ScoringPreset[] = [
@@ -49,7 +61,17 @@ const CLASSIC_STRUCTURE_PRESETS: ScoringPreset[] = [
   'CLASSIC_SINGLE_SET',
 ];
 
-const POINTS_TARGET_PRESETS: ScoringPreset[] = ['POINTS_16', 'POINTS_21', 'POINTS_24', 'POINTS_32'];
+const POINTS_TARGET_PRESETS: ScoringPreset[] = [
+  'POINTS_11',
+  'POINTS_16',
+  'POINTS_21',
+  'POINTS_24',
+  'POINTS_32',
+  'BEST_OF_3_11',
+  'BEST_OF_3_21',
+  'BEST_OF_5_11',
+  'PAR_11',
+];
 
 function isSetStructureStepValid(f: UseGameFormatResult): boolean {
   if (f.scoringMode !== 'CLASSIC') return true;
@@ -123,8 +145,12 @@ export const GameFormatWizard = ({
   hasFixedTeams,
   allowByPointsInRanking = true,
   hideGenerationStep = false,
+  allowedScoringModes,
+  allowedScoringPresets,
+  matchFormat,
 }: GameFormatWizardProps) => {
   const { t } = useTranslation();
+  const sport = matchFormat?.sport ?? null;
 
   const [stepIdx, setStepIdx] = useState(0);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
@@ -135,14 +161,17 @@ export const GameFormatWizard = ({
   const showGenerationStep =
     Boolean(wizardEntityType) && !hideGenerationStep && generationSlotCount !== 2;
 
+  const showScoringModeStep =
+    allowedScoringModes == null || allowedScoringModes.length === 0 || allowedScoringModes.length > 1;
+
   const currentSteps = useMemo((): GameFormatWizardStep[] => {
-    const arr: GameFormatWizardStep[] = ['scoringMode'];
+    const arr: GameFormatWizardStep[] = showScoringModeStep ? ['scoringMode'] : [];
     if (format.scoringMode === 'CLASSIC') arr.push('setStructure');
     if (format.scoringMode === 'POINTS') arr.push('pointsTotal');
     if (showGenerationStep && wizardEntityType) arr.push('generation');
     arr.push('ranking');
     return arr;
-  }, [format.scoringMode, showGenerationStep, wizardEntityType]);
+  }, [format.scoringMode, showGenerationStep, showScoringModeStep, wizardEntityType]);
 
   const stepsSig = useMemo(() => currentSteps.join(','), [currentSteps]);
 
@@ -250,6 +279,8 @@ export const GameFormatWizard = ({
                 matchTimedCapMinutes={format.matchTimedCapMinutes}
                 customPointsTotal={format.customPointsTotal}
                 winnerOfGame={format.winnerOfGame}
+                playersPerMatch={matchFormat?.playersPerMatch}
+                sport={matchFormat?.sport}
               />
             </p>
           </div>
@@ -268,17 +299,36 @@ export const GameFormatWizard = ({
               transition={{ duration: 0.2 }}
             >
               {safeCurrentStep === 'scoringMode' && (
-                <GameFormatStepScoringMode
-                  scoringMode={format.scoringMode}
-                  onChange={(mode) => {
-                    format.setScoringMode(mode);
-                  }}
-                  onSelectAdvance={handleNext}
-                />
+                <>
+                  <GameFormatStepScoringMode
+                    scoringMode={format.scoringMode}
+                    allowedModes={allowedScoringModes}
+                    sport={sport}
+                    onChange={(mode) => {
+                      format.setScoringMode(mode);
+                    }}
+                    onSelectAdvance={handleNext}
+                  />
+                  {matchFormat && matchFormat.allowedCounts.length > 1 && (
+                    <motion.div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
+                      <MatchFormatControl
+                        playersPerMatch={matchFormat.playersPerMatch}
+                        allowedCounts={matchFormat.allowedCounts}
+                        onChange={matchFormat.onChange}
+                        disabled={matchFormat.disabled}
+                        label={t('sport.matchFormat')}
+                        label1v1={t('sport.match1v1')}
+                        label2v2={t('sport.match2v2')}
+                      />
+                    </motion.div>
+                  )}
+                </>
               )}
               {safeCurrentStep === 'setStructure' && (
                 <GameFormatStepSetStructure
                   scoringPreset={format.scoringPreset}
+                  allowedPresets={allowedScoringPresets}
+                  sport={sport}
                   hasGoldenPoint={format.hasGoldenPoint}
                   matchTimerEnabled={format.matchTimerEnabled}
                   matchTimedCapMinutes={format.matchTimedCapMinutes}
@@ -292,6 +342,8 @@ export const GameFormatWizard = ({
               {safeCurrentStep === 'pointsTotal' && (
                 <GameFormatStepPointsTotal
                   scoringPreset={format.scoringPreset}
+                  allowedPresets={allowedScoringPresets}
+                  sport={sport}
                   matchTimerEnabled={format.matchTimerEnabled}
                   matchTimedCapMinutes={format.matchTimedCapMinutes}
                   customPointsTotal={format.customPointsTotal}

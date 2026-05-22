@@ -4,10 +4,11 @@ struct ServeGuideInputs: Sendable, Equatable {
     var matchFirstServerTeam: TeamSide?
     var matchFirstDoublesPlayerIndex: Int?
     var seedSkipped: Bool
-    var hiddenForMatch: Bool
     var hintsMode: WatchServeHintsMode
+    var resolvedSport: WatchSport?
 
     var usesTennisSetRules: Bool
+    var isDoublesMatch: Bool
     var isAmericano: Bool
     var isReadOnly: Bool
 
@@ -28,30 +29,46 @@ struct ServeGuideInputs: Sendable, Equatable {
 
     /// `official` | `simple`; nil = official.
     var pointsServeRotation: String?
+
+    /// Table tennis / badminton: points-cap serve rotation (not classic games).
+    var usesRallyPointsServeGuide: Bool
+    /// Set when `usesRallyPointsServeGuide` (sport-specific court / change-ends hints).
+    var rallyPointsSport: WatchSport?
+    var rallyPointsPerSet: Int
+
+    var matchStartCourtEndsSwapped: Bool
+    var matchStartTeamASidesMirrored: Bool
+    var matchStartTeamBSidesMirrored: Bool
 }
 
 enum ServeGuideEngine {
     static func compute(_ i: ServeGuideInputs) -> ServeGuideSnapshot? {
-        if i.isReadOnly || i.seedSkipped || i.hiddenForMatch { return nil }
+        if i.isReadOnly || i.seedSkipped { return nil }
         if i.hintsMode == .off { return nil }
         if i.pendingSetFormatChoice { return nil }
         if i.activeSetIsSupplemental { return nil }
         guard let first = i.matchFirstServerTeam else { return nil }
 
         let simple = i.pointsServeRotation == "simple"
+        let raw: ServeGuideSnapshot?
+        if i.isAmericano || i.usesRallyPointsServeGuide {
+            raw = simple ? simplePointsStrip(i, matchFirst: first) : pointsCapStrip(i, matchFirst: first)
+        } else if !i.usesTennisSetRules {
+            raw = nil
+        } else if i.activeSetIsSuperTieBreak {
+            raw = simple ? simplePointsStrip(i, matchFirst: first) : superTieBreakStrip(i, matchFirst: first)
+        } else if i.withinSetTieBreakMode {
+            raw = withinTieBreakStrip(i, matchFirst: first, gamesAtSixAll: gaPlusGbAtTieBreakEntry(i))
+        } else {
+            raw = classicGameStrip(i, matchFirst: first)
+        }
+        guard let raw else { return nil }
+        return finalizeSnapshot(raw, sport: i.resolvedSport)
+    }
 
-        if i.isAmericano {
-            return simple ? simplePointsStrip(i, matchFirst: first) : pointsCapStrip(i, matchFirst: first)
-        }
-        if !i.usesTennisSetRules { return nil }
-
-        if i.activeSetIsSuperTieBreak {
-            return simple ? simplePointsStrip(i, matchFirst: first) : superTieBreakStrip(i, matchFirst: first)
-        }
-        if i.withinSetTieBreakMode {
-            return withinTieBreakStrip(i, matchFirst: first, gamesAtSixAll: gaPlusGbAtTieBreakEntry(i))
-        }
-        return classicGameStrip(i, matchFirst: first)
+    private static func finalizeSnapshot(_ snap: ServeGuideSnapshot, sport: WatchSport?) -> ServeGuideSnapshot {
+        guard sport == .tennis, !snap.motionToken.hasPrefix("tennis-") else { return snap }
+        return snap.replacingMotionToken("tennis-\(snap.motionToken)")
     }
 
     static func firstServerForPointsSet(
@@ -81,27 +98,74 @@ enum ServeGuideEngine {
     }
 
     private static func pointsCapStrip(_ i: ServeGuideInputs, matchFirst: TeamSide) -> ServeGuideSnapshot? {
+        if i.rallyPointsPerSet <= 0 { return nil }
         let set = i.sets[safe: i.activeSetIndex]
         let ta = set?.teamA ?? 0
         let tb = set?.teamB ?? 0
         let t = ta + tb
         let firstForSet = firstServerForPointsSet(setIndex: i.activeSetIndex, sets: i.sets, matchFirstServer: matchFirst)
         let nextTeam = tbNextServerTeam(firstTBTeam: firstForSet, pointIndex: t)
-        let doubles = (nextTeam == .teamA ? i.teamAPlayerNames.count : i.teamBPlayerNames.count) >= 2
-        let playerIdx = tbDoublesPlayerIndex(
-            matchFirst: matchFirst,
-            matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
-            nextServingTeam: nextTeam,
-            pointIndex: t,
-            gamesCompletedBeforeTB: 0
-        )
+        let playerIdx = i.isDoublesMatch
+            ? tbDoublesPlayerIndex(
+                matchFirst: matchFirst,
+                matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
+                nextServingTeam: nextTeam,
+                pointIndex: t,
+                gamesCompletedBeforeTB: 0
+            )
+            : 0
         let names = nextTeam == .teamA ? i.teamAPlayerNames : i.teamBPlayerNames
-        let display = doubles ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
-        let slot = tieBreakServeSlotAtPoint(t)
-        let side = courtSideForTieBreakPoint(t)
-        let changeEnds = t > 0 && t % 6 == 0
-        let slotWord = slot == .serveOne ? "Serve 1" : "Serve 2"
-        let token = "pts-\(t)-\(nextTeam.rawValue)-\(playerIdx)-\(i.activeSetIndex)"
+        let display = i.isDoublesMatch ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
+        let slot: TieBreakServeSlot?
+        let side: CourtServeSide
+        let changeEnds: Bool
+        var motionPrefix = "pts"
+        switch i.rallyPointsSport {
+        case .tableTennis:
+            slot = nil
+            side = courtSideForTieBreakPoint(t)
+            changeEnds = t > 0 && t % 5 == 0
+            motionPrefix = "tt"
+        case .badminton:
+            slot = nil
+            let serverScore = nextTeam == .teamA ? ta : tb
+            side = ServeGuideSportRules.badmintonCourtSide(serverScore: serverScore)
+            changeEnds = ServeGuideSportRules.badmintonChangeEnds(
+                teamA: ta,
+                teamB: tb,
+                pointsPerGame: max(i.rallyPointsPerSet, 1)
+            )
+            motionPrefix = "bd"
+        case .pickleball:
+            let serverScore = nextTeam == .teamA ? ta : tb
+            side = ServeGuideSportRules.pickleballCourtSide(serverScore: serverScore)
+            slot = i.isDoublesMatch ? ServeGuideSportRules.pickleballDoublesSlot(serverPlayerIndex: playerIdx) : nil
+            changeEnds = ServeGuideSportRules.pickleballChangeEnds(
+                teamA: ta,
+                teamB: tb,
+                pointsPerGame: max(i.rallyPointsPerSet, 1)
+            )
+            motionPrefix = "pb"
+        case .squash:
+            slot = nil
+            side = courtSideForTieBreakPoint(t)
+            changeEnds = ServeGuideSportRules.squashChangeEnds(teamA: ta, teamB: tb)
+            motionPrefix = "sq"
+        default:
+            slot = tieBreakServeSlotAtPoint(t)
+            side = courtSideForTieBreakPoint(t)
+            changeEnds = t > 0 && t % 6 == 0
+        }
+        let sideWord = side == .rightDeuce ? "right" : "left"
+        let accessibilityLine: String
+        if let slot {
+            let slotWord = slot == .serveOne ? "Serve 1" : "Serve 2"
+            accessibilityLine = "\(display), \(slotWord), \(sideWord)"
+        } else {
+            accessibilityLine = "\(display), \(sideWord)"
+        }
+        let token = "\(motionPrefix)-pts-\(t)-\(nextTeam.rawValue)-\(playerIdx)-\(i.activeSetIndex)"
+        let orient = courtOrientation(i, segmentPointCount: t, pointsSegmentOnly: true)
         return ServeGuideSnapshot(
             serverTeam: nextTeam,
             serverPlayerIndex: playerIdx,
@@ -110,7 +174,10 @@ enum ServeGuideEngine {
             courtSide: side,
             tieBreakServeSlot: slot,
             changeEndsBeforeNextPoint: changeEnds,
-            accessibilityLine: "\(display), \(slotWord), \(side == .rightDeuce ? "right" : "left")",
+            courtEndsSwapped: orient.ends,
+            courtTeamASidesMirrored: orient.teamA,
+            courtTeamBSidesMirrored: orient.teamB,
+            accessibilityLine: accessibilityLine,
             motionToken: token
         )
     }
@@ -146,17 +213,23 @@ enum ServeGuideEngine {
         )
         let completedGames = ga + gb
         let servingTeam = servingTeamForGame(firstServerInSet: firstForSet, completedGamesBeforeThisGame: completedGames)
-        let playerIdx = doublesPlayerIndex(
-            matchFirst: matchFirst,
-            matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
-            servingTeam: servingTeam,
-            completedGamesInSet: completedGames
-        )
+        let playerIdx: Int
+        if i.isDoublesMatch {
+            playerIdx = doublesPlayerIndex(
+                matchFirst: matchFirst,
+                matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
+                servingTeam: servingTeam,
+                completedGamesInSet: completedGames
+            )
+        } else {
+            playerIdx = 0
+        }
         let names = servingTeam == .teamA ? i.teamAPlayerNames : i.teamBPlayerNames
         let display = playerDisplay(names: names, index: playerIdx)
         let side: CourtServeSide = (i.classicPointsPlayedInGame % 2 == 0) ? .rightDeuce : .leftAd
         let a11y = "\(display), \(side == .rightDeuce ? "right" : "left")"
         let token = "\(servingTeam.rawValue)-\(playerIdx)-\(i.classicPointsPlayedInGame)-\(ga)-\(gb)"
+        let orient = courtOrientation(i)
         return ServeGuideSnapshot(
             serverTeam: servingTeam,
             serverPlayerIndex: playerIdx,
@@ -165,6 +238,9 @@ enum ServeGuideEngine {
             courtSide: side,
             tieBreakServeSlot: nil,
             changeEndsBeforeNextPoint: changeEndsBeforeNextPointClassic(i),
+            courtEndsSwapped: orient.ends,
+            courtTeamASidesMirrored: orient.teamA,
+            courtTeamBSidesMirrored: orient.teamB,
             accessibilityLine: a11y,
             motionToken: token
         )
@@ -183,22 +259,24 @@ enum ServeGuideEngine {
         let firstTBTeam = servingTeamForGame(firstServerInSet: firstForSet, completedGamesBeforeThisGame: completedGames)
         let t = i.tieBreakA + i.tieBreakB
         let nextTeam = tbNextServerTeam(firstTBTeam: firstTBTeam, pointIndex: t)
-        let doubles = (nextTeam == .teamA ? i.teamAPlayerNames.count : i.teamBPlayerNames.count) >= 2
-        let playerIdx = tbDoublesPlayerIndex(
-            matchFirst: matchFirst,
-            matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
-            nextServingTeam: nextTeam,
-            pointIndex: t,
-            gamesCompletedBeforeTB: gamesAtSixAll
-        )
+        let playerIdx = i.isDoublesMatch
+            ? tbDoublesPlayerIndex(
+                matchFirst: matchFirst,
+                matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
+                nextServingTeam: nextTeam,
+                pointIndex: t,
+                gamesCompletedBeforeTB: gamesAtSixAll
+            )
+            : 0
         let names = nextTeam == .teamA ? i.teamAPlayerNames : i.teamBPlayerNames
-        let display = doubles ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
+        let display = i.isDoublesMatch ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
         let slot = tieBreakServeSlotAtPoint(t)
         let side = courtSideForTieBreakPoint(t)
         let changeEnds = changeEndsBeforeNextPointClassic(i, segmentPointCount: t)
         let slotWord = slot == .serveOne ? "Serve 1" : "Serve 2"
         let a11y = "\(display), \(slotWord), \(side == .rightDeuce ? "right" : "left")"
         let token = "wtb-\(t)-\(nextTeam.rawValue)-\(playerIdx)"
+        let orient = courtOrientation(i, segmentPointCount: t)
         return ServeGuideSnapshot(
             serverTeam: nextTeam,
             serverPlayerIndex: playerIdx,
@@ -207,6 +285,9 @@ enum ServeGuideEngine {
             courtSide: side,
             tieBreakServeSlot: slot,
             changeEndsBeforeNextPoint: changeEnds,
+            courtEndsSwapped: orient.ends,
+            courtTeamASidesMirrored: orient.teamA,
+            courtTeamBSidesMirrored: orient.teamB,
             accessibilityLine: a11y,
             motionToken: token
         )
@@ -224,21 +305,23 @@ enum ServeGuideEngine {
         let firstTBTeam = firstForSet
         let t = ta + tb
         let nextTeam = tbNextServerTeam(firstTBTeam: firstTBTeam, pointIndex: t)
-        let doubles = (nextTeam == .teamA ? i.teamAPlayerNames.count : i.teamBPlayerNames.count) >= 2
-        let playerIdx = tbDoublesPlayerIndex(
-            matchFirst: matchFirst,
-            matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
-            nextServingTeam: nextTeam,
-            pointIndex: t,
-            gamesCompletedBeforeTB: 0
-        )
+        let playerIdx = i.isDoublesMatch
+            ? tbDoublesPlayerIndex(
+                matchFirst: matchFirst,
+                matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
+                nextServingTeam: nextTeam,
+                pointIndex: t,
+                gamesCompletedBeforeTB: 0
+            )
+            : 0
         let names = nextTeam == .teamA ? i.teamAPlayerNames : i.teamBPlayerNames
-        let display = doubles ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
+        let display = i.isDoublesMatch ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
         let slot = tieBreakServeSlotAtPoint(t)
         let side = courtSideForTieBreakPoint(t)
         let changeEnds = changeEndsBeforeNextPointClassic(i, segmentPointCount: t)
         let slotWord = slot == .serveOne ? "Serve 1" : "Serve 2"
         let token = "stb-\(t)-\(nextTeam.rawValue)"
+        let orient = courtOrientation(i, segmentPointCount: t)
         return ServeGuideSnapshot(
             serverTeam: nextTeam,
             serverPlayerIndex: playerIdx,
@@ -247,6 +330,9 @@ enum ServeGuideEngine {
             courtSide: side,
             tieBreakServeSlot: slot,
             changeEndsBeforeNextPoint: changeEnds,
+            courtEndsSwapped: orient.ends,
+            courtTeamASidesMirrored: orient.teamA,
+            courtTeamBSidesMirrored: orient.teamB,
             accessibilityLine: "\(display), \(slotWord), \(side == .rightDeuce ? "right" : "left")",
             motionToken: token
         )
@@ -257,31 +343,31 @@ enum ServeGuideEngine {
         let ta = set?.teamA ?? 0
         let tb = set?.teamB ?? 0
         let t = ta + tb
-        let doubles = i.teamAPlayerNames.count >= 2 || i.teamBPlayerNames.count >= 2
         let firstForSet: TeamSide
         if i.isAmericano {
             firstForSet = firstServerForPointsSetSimple(
                 setIndex: i.activeSetIndex,
                 sets: i.sets,
                 matchFirstServer: matchFirst,
-                doubles: doubles
+                doubles: i.isDoublesMatch
             )
         } else {
             firstForSet = firstServerTeamForSet(setIndex: i.activeSetIndex, sets: i.sets, matchFirstServer: matchFirst)
         }
-        let nextTeam = simpleTeamServingAtPoint(firstForSet: firstForSet, pointIndex: t, doubles: doubles)
+        let nextTeam = simpleTeamServingAtPoint(firstForSet: firstForSet, pointIndex: t, doubles: i.isDoublesMatch)
         let names = nextTeam == .teamA ? i.teamAPlayerNames : i.teamBPlayerNames
         let playerIdx = simpleDoublesPlayerIndex(
             matchFirst: matchFirst,
             matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
             servingTeam: nextTeam,
             pointIndex: t,
-            doubles: doubles
+            doubles: i.isDoublesMatch
         )
-        let display = doubles ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
+        let display = i.isDoublesMatch ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
         let side: CourtServeSide = (t % 2 == 0) ? .rightDeuce : .leftAd
         let a11y = "\(display), \(side == .rightDeuce ? "right" : "left")"
         let token = "pts-simple-\(t)-\(nextTeam.rawValue)-\(playerIdx)-\(i.activeSetIndex)"
+        let orient = courtOrientation(i, segmentPointCount: t)
         return ServeGuideSnapshot(
             serverTeam: nextTeam,
             serverPlayerIndex: playerIdx,
@@ -290,8 +376,29 @@ enum ServeGuideEngine {
             courtSide: side,
             tieBreakServeSlot: nil,
             changeEndsBeforeNextPoint: false,
+            courtEndsSwapped: orient.ends,
+            courtTeamASidesMirrored: orient.teamA,
+            courtTeamBSidesMirrored: orient.teamB,
             accessibilityLine: a11y,
             motionToken: token
+        )
+    }
+
+    private static func courtOrientation(
+        _ i: ServeGuideInputs,
+        segmentPointCount: Int = 0,
+        pointsSegmentOnly: Bool = false
+    ) -> (ends: Bool, teamA: Bool, teamB: Bool) {
+        (
+            ServeGuideCourtOrientation.effectiveCourtEndsSwapped(
+                matchStartCourtEndsSwapped: i.matchStartCourtEndsSwapped,
+                activeSetIndex: i.activeSetIndex,
+                sets: i.sets,
+                segmentPointCount: segmentPointCount,
+                pointsSegmentOnly: pointsSegmentOnly
+            ),
+            i.matchStartTeamASidesMirrored,
+            i.matchStartTeamBSidesMirrored
         )
     }
 

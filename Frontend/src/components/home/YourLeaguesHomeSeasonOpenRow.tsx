@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useContextUnread } from '@/hooks/useUnreadBridge';
 import {
   AlertTriangle,
   ChevronRight,
@@ -19,7 +20,8 @@ interface YourLeaguesHomeSeasonOpenRowProps {
   unread: number;
 }
 
-export function YourLeaguesHomeSeasonOpenRow({ hub, hubGame, unread }: YourLeaguesHomeSeasonOpenRowProps) {
+export function YourLeaguesHomeSeasonOpenRow({ hub, hubGame, unread: unreadProp }: YourLeaguesHomeSeasonOpenRowProps) {
+  const displayUnread = useContextUnread('GAME', hub.hubId, unreadProp);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -115,7 +117,7 @@ export function YourLeaguesHomeSeasonOpenRow({ hub, hubGame, unread }: YourLeagu
         {seasonLabel}
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
-        {unread > 0 && (
+        {displayUnread > 0 && (
           <span
             className={
               stale
@@ -124,7 +126,7 @@ export function YourLeaguesHomeSeasonOpenRow({ hub, hubGame, unread }: YourLeagu
             }
           >
             <MessageCircle size={10} strokeWidth={2.5} />
-            {unread > 99 ? '99+' : unread}
+            {displayUnread > 99 ? '99+' : displayUnread}
           </span>
         )}
         {hubGame && (

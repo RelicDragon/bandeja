@@ -9,6 +9,7 @@ import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } fr
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport';
 import { isOfficialMatchSetRole } from '../../results/matchSetRole';
 import { getRules } from '../../results/liveScoringEngine/rulebook';
 import { getStandingsMatchOutcome } from '../../results/liveScoringEngine/matchWinnerLive';
@@ -123,6 +124,7 @@ export async function sendGameFinishedNotification(
               firstName: true,
               lastName: true,
               currentCityId: true,
+              primarySport: true,
             },
           },
         },
@@ -194,7 +196,8 @@ export async function sendGameFinishedNotification(
   message += `🎮 ${escapeMarkdown(gameName)}\n`;
   
   if (clubName) {
-    message += `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}\n`;
+    const placeLine = `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}`;
+    message += `${appendTelegramGameScheduleExtras(placeLine, game, participant.user.primarySport, lang, escapeMarkdown)}\n`;
   }
   
   message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}\n`;

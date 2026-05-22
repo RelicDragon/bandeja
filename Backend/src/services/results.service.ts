@@ -4,8 +4,6 @@ import { matchTimerCoordinator } from './results/matchTimerCoordinator';
 import { ApiError } from '../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
-import { LeagueGameResultsService } from './league/gameResults.service';
-import { SocialParticipantLevelService } from './socialParticipantLevel.service';
 import { calculateGameStatus } from '../utils/gameStatus';
 import { parseMatchSetRole } from './results/matchSetRole';
 import { assertMatchNormalizedSetsValid, type NormalizedMatchSetRow } from './results/matchSetsValidation';
@@ -19,6 +17,7 @@ import {
 } from './results/matchLiveScoring.service';
 import { appendMatchLiveScoringAudit } from './results/matchLiveScoringAudit.service';
 import { updateMatchWinners } from './results/matchWinner.service';
+import { undoGameOutcomes } from './results/outcomes.service';
 
 const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
 
@@ -162,35 +161,12 @@ export async function deleteGameResults(gameId: string) {
 
   await prisma.$transaction(async (tx) => {
     if (game.outcomes.length > 0) {
-      if (game.affectsRating) {
-        await LeagueGameResultsService.unsyncGameResults(gameId, tx);
-      }
-      for (const outcome of game.outcomes) {
-        await tx.user.update({
-          where: { id: outcome.userId },
-          data: game.affectsRating
-            ? {
-                level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
-                reliability: outcome.reliabilityBefore,
-                reliabilityDecayPostGraceDaysApplied: 0,
-                totalPoints: { decrement: outcome.pointsEarned },
-                gamesPlayed: { decrement: 1 },
-                gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
-              }
-            : { reliability: outcome.reliabilityBefore, reliabilityDecayPostGraceDaysApplied: 0 },
-        });
-      }
+      await undoGameOutcomes(gameId, tx);
     }
 
     await tx.round.deleteMany({
       where: { gameId },
     });
-
-    await tx.gameOutcome.deleteMany({
-      where: { gameId },
-    });
-
-    await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
 
     await tx.levelChangeEvent.deleteMany({
       where: {
@@ -242,24 +218,7 @@ export async function resetGameResults(gameId: string) {
 
   await prisma.$transaction(async (tx) => {
     if (game.outcomes.length > 0) {
-      if (game.affectsRating) {
-        await LeagueGameResultsService.unsyncGameResults(gameId, tx);
-      }
-      for (const outcome of game.outcomes) {
-        await tx.user.update({
-          where: { id: outcome.userId },
-          data: game.affectsRating
-            ? {
-                level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
-                reliability: outcome.reliabilityBefore,
-                reliabilityDecayPostGraceDaysApplied: 0,
-                totalPoints: { decrement: outcome.pointsEarned },
-                gamesPlayed: { decrement: 1 },
-                gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
-              }
-            : { reliability: outcome.reliabilityBefore, reliabilityDecayPostGraceDaysApplied: 0 },
-        });
-      }
+      await undoGameOutcomes(gameId, tx);
     }
 
     await tx.roundOutcome.deleteMany({
@@ -313,12 +272,6 @@ export async function resetGameResults(gameId: string) {
     await tx.round.deleteMany({
       where: { gameId },
     });
-
-    await tx.gameOutcome.deleteMany({
-      where: { gameId },
-    });
-
-    await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
 
     await tx.levelChangeEvent.deleteMany({
       where: {
@@ -374,29 +327,8 @@ export async function editGameResults(gameId: string) {
 
   await prisma.$transaction(async (tx) => {
     if (game.outcomes.length > 0) {
-      if (game.affectsRating) {
-        await LeagueGameResultsService.unsyncGameResults(gameId, tx);
-      }
-      for (const outcome of game.outcomes) {
-        await tx.user.update({
-          where: { id: outcome.userId },
-          data: game.affectsRating
-            ? {
-                level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
-                reliability: outcome.reliabilityBefore,
-                reliabilityDecayPostGraceDaysApplied: 0,
-                totalPoints: { decrement: outcome.pointsEarned },
-                gamesPlayed: { decrement: 1 },
-                gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
-              }
-            : { reliability: outcome.reliabilityBefore, reliabilityDecayPostGraceDaysApplied: 0 },
-        });
-      }
+      await undoGameOutcomes(gameId, tx);
     }
-
-    await tx.gameOutcome.deleteMany({
-      where: { gameId },
-    });
 
     await tx.roundOutcome.deleteMany({
       where: {
@@ -405,8 +337,6 @@ export async function editGameResults(gameId: string) {
         },
       },
     });
-
-    await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
 
     await tx.levelChangeEvent.deleteMany({
       where: {

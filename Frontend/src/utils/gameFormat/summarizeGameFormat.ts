@@ -1,5 +1,7 @@
 import type { TFunction } from 'i18next';
+import { getSportConfig } from '@/sport/sportRegistry';
 import { MatchGenerationType, ScoringMode, ScoringPreset, WinnerOfGame } from '@/types';
+import { tScoringShort } from './gameFormatI18n';
 
 export interface SummarizeArgs {
   scoringMode: ScoringMode;
@@ -23,12 +25,28 @@ function winnerOfGameSummaryPart(t: TFunction, w: WinnerOfGame | undefined): str
 const genKey = (g: MatchGenerationType) =>
   g.split('_').map((s) => s.charAt(0) + s.slice(1).toLowerCase()).join('');
 
-export const summarizeGameFormat = (t: TFunction, args: SummarizeArgs): string => {
+export function matchFormatSummaryPart(
+  t: TFunction,
+  playersPerMatch?: number,
+  sport?: string | null,
+): string | null {
+  if (playersPerMatch !== 2 && playersPerMatch !== 4) return null;
+  if (sport != null && playersPerMatch === getSportConfig(sport).defaultPlayersPerMatch) {
+    return null;
+  }
+  return playersPerMatch === 2 ? t('sport.match1v1') : t('sport.match2v2');
+}
+
+export const summarizeGameFormat = (
+  t: TFunction,
+  args: SummarizeArgs,
+  sport?: string | null,
+): string => {
   let scoring: string;
   if (args.customPointsTotal != null) {
     scoring = t('gameFormat.customPoints.short', { count: args.customPointsTotal });
   } else {
-    scoring = t(`gameFormat.scoringShort.${args.scoringPreset}`);
+    scoring = tScoringShort(t, args.scoringPreset, sport);
   }
   if (args.matchTimerEnabled) {
     const cap =

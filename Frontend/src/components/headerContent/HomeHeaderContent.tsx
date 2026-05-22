@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { CreateMenuModal } from '@/components/CreateMenuModal';
 import { useNavigationStore } from '@/store/navigationStore';
-import { EntityType } from '@/types';
+import type { EntityType, Sport } from '@/types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { handleBack } from '@/utils/backNavigation';
 import { parseLocation, placeToPageType } from '@/utils/urlSchema';
@@ -45,22 +45,26 @@ export const HomeHeaderContent = () => {
     }
   }, [currentPage, pendingChatType, setChatsFilter]);
 
-  const handleSelectGameType = (entityType: EntityType) => {
+  const handleSelectGameType = (entityType: EntityType, sport?: Sport) => {
     const authUser = useAuthStore.getState().user;
     if (authUser && authUser.nameIsSet !== true) {
-      runWithProfileName(() => handleSelectGameType(entityType));
+      runWithProfileName(() => handleSelectGameType(entityType, sport));
       return;
     }
     const fromMyGamesList = parsed.place === 'home' && parsed.params?.tab === 'list';
     setMyGamesSubtabBeforeCreate(fromMyGamesList ? 'list' : null);
-    const initialGameData = createGameInitialDate
-      ? { startTime: createGameInitialDate }
-      : undefined;
+    const initialGameData = {
+      ...(createGameInitialDate ? { startTime: createGameInitialDate } : {}),
+      ...(sport ? { sport } : {}),
+    };
+    const hasInitial = Object.keys(initialGameData).length > 0;
     setCreateGameInitialDate(null);
     if (entityType === 'LEAGUE') {
       navigate('/create-league');
     } else {
-      navigate('/create-game', { state: { entityType, initialGameData } });
+      navigate('/create-game', {
+        state: { entityType, initialGameData: hasInitial ? initialGameData : undefined },
+      });
     }
   };
 

@@ -11,7 +11,7 @@ import { LeagueAssignService } from '../services/league/assign.service';
 import { ResultsTelegramService } from '../services/telegram/results-telegram.service';
 import { generateResultsImage } from '../services/telegram/results-image.service';
 import telegramBotService from '../services/telegram/bot.service';
-import { getGameInclude } from '../services/game/read.service';
+import { getGameInclude, projectGameUsersForSportContext } from '../services/game/read.service';
 import prisma from '../config/database';
 import { GameWorkoutService } from '../services/game/gameWorkout.service';
 import { GameReactionService } from '../services/game/gameReaction.service';
@@ -112,7 +112,21 @@ export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Resp
   const showArchived = req.query.showArchived === 'true';
   const includeLeagues = req.query.includeLeagues === 'true';
 
-  const games = await GameService.getAvailableGames(req.userId, req.user?.currentCityId, startDate, endDate, showArchived, includeLeagues);
+  const sport = req.query.sport as string | undefined;
+  const showPrivateGames = req.query.showPrivateGames === 'true';
+
+  const games = await GameService.getAvailableGames(
+    req.userId,
+    req.user?.currentCityId,
+    startDate,
+    endDate,
+    showArchived,
+    includeLeagues,
+    sport,
+    req.user?.primarySport,
+    showPrivateGames,
+    req.user?.isAdmin,
+  );
 
   res.json({
     success: true,
@@ -377,7 +391,7 @@ const validateGameForTelegram = async (gameId: string, _userId: string) => {
     throw new ApiError(503, 'Telegram bot is not available');
   }
 
-  return { game, city, bot };
+  return { game: projectGameUsersForSportContext(game), city, bot };
 };
 
 export const prepareTelegramSummary = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -429,6 +443,7 @@ export const sendResultsToTelegram = asyncHandler(async (req: AuthRequest, res: 
 
   const imageBuffer = await generateResultsImage({
     id: game.id,
+    sport: game.sport,
     affectsRating: game.affectsRating || false,
     outcomes: game.outcomes,
     hasFixedTeams: game.hasFixedTeams || false,

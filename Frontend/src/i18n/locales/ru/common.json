@@ -71,5 +71,28 @@
     "retry": "Retry",
     "on": "On",
     "pressBackAgainToExit": "Press back again to exit"
+  },
+  "sport": {
+    "sport": "Вид спорта",
+    "padel": "Падел",
+    "padelInLevel": "паделе",
+    "tennis": "Теннис",
+    "tennisInLevel": "теннисе",
+    "pickleball": "Пиклбол",
+    "pickleballInLevel": "пиклболе",
+    "badminton": "Бадминтон",
+    "badmintonInLevel": "бадминтоне",
+    "tableTennis": "Настольный теннис",
+    "tableTennisInLevel": "настольном теннисе",
+    "squash": "Сквош",
+    "squashInLevel": "сквоше",
+    "court": "Корт",
+    "matchFormat": "Формат матча",
+    "match1v1": "1v1",
+    "match2v2": "2v2"
+  },
+  "sportFilter": {
+    "section": "Вид спорта",
+    "allSports": "Все виды спорта"
   }
 }

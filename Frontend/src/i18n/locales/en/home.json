@@ -3,6 +3,8 @@
     "title": "My Games",
     "myGames": "My Games",
     "yourLeagues": "Leagues",
+    "leagueSeasonScheduledGames": "Scheduled games",
+    "leagueSeasonUnscheduledGames": "Not scheduled yet",
     "myGamesShort": "My",
     "upcoming": "Upcoming",
     "past": "Past",

@@ -17,10 +17,12 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@shared/*": ["../shared/*"],
+      "@backend/*": ["../Backend/src/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "../shared/sport.ts", "../shared/timedCustomPresets.ts"],
   "exclude": ["android", "ios", "dist", "node_modules"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

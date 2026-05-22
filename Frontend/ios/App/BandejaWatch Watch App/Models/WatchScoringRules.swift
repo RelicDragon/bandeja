@@ -12,6 +12,11 @@ enum WatchScoringPreset: String, Sendable {
     case points21 = "POINTS_21"
     case points24 = "POINTS_24"
     case points32 = "POINTS_32"
+    case points11 = "POINTS_11"
+    case bestOf3_11 = "BEST_OF_3_11"
+    case bestOf5_11 = "BEST_OF_5_11"
+    case bestOf3_21 = "BEST_OF_3_21"
+    case par11 = "PAR_11"
     case timed = "TIMED"
     case custom = "CUSTOM"
 }
@@ -166,6 +171,16 @@ enum WatchScoringRulebook {
             return pointsRule(total: 24)
         case .points32:
             return pointsRule(total: 32)
+        case .points11:
+            return pointsRule(total: 11)
+        case .bestOf3_11:
+            return rallyBestOf(sets: 3, pointsPerSet: 11)
+        case .bestOf5_11:
+            return rallyBestOf(sets: 5, pointsPerSet: 11)
+        case .bestOf3_21:
+            return rallyBestOf(sets: 3, pointsPerSet: 21)
+        case .par11:
+            return pointsRule(total: 11)
         case .timed:
             return pointsRule(total: 0)
         case .custom:
@@ -175,6 +190,16 @@ enum WatchScoringRulebook {
             r.allowRemoveSet = true
             return r
         }
+    }
+
+    private static func rallyBestOf(sets: Int, pointsPerSet: Int) -> WatchScoringRules {
+        var r = pointsRule(total: pointsPerSet)
+        r.fixedNumberOfSets = sets
+        r.minSetsToWin = (sets / 2) + 1
+        r.maxSetsPlayed = sets
+        r.winnerOfMatch = .bySets
+        r.winBy = 2
+        return r
     }
 
     private static func pointsRule(total: Int) -> WatchScoringRules {

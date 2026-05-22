@@ -219,8 +219,9 @@ export function placeToPageType(place: Place): PageType {
     case 'userProfile':
       return 'userProfile';
     case 'game':
-    case 'gameChat':
       return 'gameDetails';
+    case 'gameChat':
+      return 'chats';
     case 'gameSubscriptions': return 'gameSubscriptions';
     default: return 'my';
   }

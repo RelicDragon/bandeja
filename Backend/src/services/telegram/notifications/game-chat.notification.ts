@@ -5,6 +5,7 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatChatNotificationMessageBody, formatGameInfoForUser, formatUserName, getEntityTypeLabel, getShowEntityButtonText } from '../../shared/notification-base';
+import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { canParticipantSeeGameChatMessage, shouldNotifyParentGameAdminForMessage } from '../../chat/gameChatVisibility';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
@@ -31,6 +32,7 @@ export async function sendGameChatNotification(
           telegramId: true,
           language: true,
           currentCityId: true,
+          primarySport: true,
         }
       }
     }
@@ -68,9 +70,16 @@ export async function sendGameChatNotification(
         const entityLabel = getEntityTypeLabel(game.entityType, lang);
         const showButtonText = getShowEntityButtonText(game.entityType, lang);
 
+        const scheduleLine = appendTelegramGameScheduleExtras(
+          `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`,
+          game,
+          user.primarySport,
+          lang,
+          escapeMarkdown,
+        );
         const header = entityLabel
-          ? `🏷️ ${escapeMarkdown(entityLabel)}\n📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`
-          : `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+          ? `🏷️ ${escapeMarkdown(entityLabel)}\n${scheduleLine}`
+          : scheduleLine;
         const formattedMessage = `${header}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
         
         const chatTypeChar = { [ChatType.PUBLIC]: 'P', [ChatType.PRIVATE]: 'V', [ChatType.ADMINS]: 'A', [ChatType.PHOTOS]: 'F' }[chatType] ?? 'P';
@@ -116,6 +125,7 @@ export async function sendGameChatNotification(
             telegramId: true,
             language: true,
             currentCityId: true,
+            primarySport: true,
           }
         }
       }
@@ -142,9 +152,16 @@ export async function sendGameChatNotification(
         const entityLabel = getEntityTypeLabel(game.entityType, lang);
         const showButtonText = getShowEntityButtonText(game.entityType, lang);
 
+        const scheduleLine = appendTelegramGameScheduleExtras(
+          `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`,
+          game,
+          user.primarySport,
+          lang,
+          escapeMarkdown,
+        );
         const header = entityLabel
-          ? `🏷️ ${escapeMarkdown(entityLabel)}\n📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`
-          : `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+          ? `🏷️ ${escapeMarkdown(entityLabel)}\n${scheduleLine}`
+          : scheduleLine;
         const formattedMessage = `${header}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
         
         const chatTypeChar = { [ChatType.PUBLIC]: 'P', [ChatType.PRIVATE]: 'V', [ChatType.ADMINS]: 'A', [ChatType.PHOTOS]: 'F' }[chatType] ?? 'P';

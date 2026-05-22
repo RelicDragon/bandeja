@@ -2,6 +2,7 @@ import prisma from '../../../config/database';
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { withOptionalSportPrefix } from '../../shared/notificationSport';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
@@ -19,13 +20,18 @@ export async function createLeagueGameAssignedPushNotification(
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, language: true, currentCityId: true },
+    select: { id: true, language: true, currentCityId: true, primarySport: true },
   });
   if (!user) return null;
 
   const lang = user.language || 'en';
   const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
-  const title = t('notifications.assignedToLeagueGame', lang);
+  const title = withOptionalSportPrefix(
+    t('notifications.assignedToLeagueGame', lang),
+    game.sport,
+    user.primarySport,
+    lang,
+  );
   const body = `${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
   return {

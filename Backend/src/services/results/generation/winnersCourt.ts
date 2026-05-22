@@ -22,6 +22,7 @@ import {
   hasPlayers,
   cloneSets,
   InitialSets,
+  playersPerMatchOf,
 } from './matchUtils';
 
 interface CourtResult {
@@ -35,7 +36,8 @@ export async function generateWinnersCourtRound(
   initialSets: InitialSets
 ): Promise<Match[]> {
   const participants = getEligibleParticipants(game);
-  if (participants.length < 4) return [];
+  const ppm = playersPerMatchOf(game);
+  if (participants.length < ppm) return [];
 
   const numMatches = getNumMatches(game, participants);
   if (numMatches === 0) return [];
@@ -184,7 +186,8 @@ function buildMatchesFromCourts(
   sortedCourts: Array<{ courtId?: string; order: number }>,
   initialSets: InitialSets,
   numMatches: number,
-  previousRounds: Round[]
+  previousRounds: Round[],
+  playersPerMatch: number
 ): Match[] {
   const partnerCounts = buildPartnerCounts(previousRounds);
   const opponentCounts = buildOpponentCounts(previousRounds);
@@ -192,7 +195,7 @@ function buildMatchesFromCourts(
 
   for (let i = 0; i < Math.min(courts.length, numMatches); i++) {
     const players = courts[i];
-    if (players.length < 4) continue;
+    if (players.length < playersPerMatch) continue;
 
     const { teamA, teamB } = pickCrossPairing(players, partnerCounts, opponentCounts);
     matches.push({
@@ -304,30 +307,24 @@ async function generateStandardRound(
   numMatches: number,
   participants: any[]
 ): Promise<Match[]> {
-  const neededPlayers = numMatches * 4;
+  const ppm = playersPerMatchOf(game);
+  const neededPlayers = numMatches * ppm;
 
   if (previousRounds.length === 0) {
     const leagueOrder = await getLeagueStandingsOrder(game, participants);
-    if (leagueOrder && leagueOrder.length >= 4) {
+    if (leagueOrder && leagueOrder.length >= ppm) {
       const playerIds = leagueOrder.slice(0, neededPlayers);
       const courts: string[][] = [];
       for (let i = 0; i < numMatches; i++) {
-        const base = i * 4;
-        if (
-          playerIds[base] &&
-          playerIds[base + 1] &&
-          playerIds[base + 2] &&
-          playerIds[base + 3]
-        ) {
-          courts.push([
-            playerIds[base],
-            playerIds[base + 1],
-            playerIds[base + 2],
-            playerIds[base + 3],
-          ]);
+        const base = i * ppm;
+        const slot: string[] = [];
+        for (let j = 0; j < ppm; j++) {
+          const id = playerIds[base + j];
+          if (id) slot.push(id);
         }
+        if (slot.length === ppm) courts.push(slot);
       }
-      return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, previousRounds);
+      return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, previousRounds, ppm);
     }
 
     const sorted = [...participants].sort((a, b) => b.user.level - a.user.level);
@@ -339,12 +336,15 @@ async function generateStandardRound(
 
     const courts: string[][] = [];
     for (let i = 0; i < numMatches; i++) {
-      const base = i * 4;
-      if (playerIds[base] && playerIds[base + 1] && playerIds[base + 2] && playerIds[base + 3]) {
-        courts.push([playerIds[base], playerIds[base + 1], playerIds[base + 2], playerIds[base + 3]]);
+      const base = i * ppm;
+      const slot: string[] = [];
+      for (let j = 0; j < ppm; j++) {
+        const id = playerIds[base + j];
+        if (id) slot.push(id);
       }
+      if (slot.length === ppm) courts.push(slot);
     }
-    return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, previousRounds);
+    return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, previousRounds, ppm);
   }
 
   const previousRound = previousRounds[previousRounds.length - 1];
@@ -366,11 +366,11 @@ async function generateStandardRound(
   if (departedSlots.length > 0 || benchPlayers.length > 0) {
     return handleBenchRotation(
       courts, benchPlayers, departedSlots, previousRounds,
-      sortedCourts, initialSets, numMatches
+      sortedCourts, initialSets, numMatches, ppm
     );
   }
 
-  return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, previousRounds);
+  return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, previousRounds, ppm);
 }
 
 function handleBenchRotation(
@@ -380,7 +380,8 @@ function handleBenchRotation(
   previousRounds: Round[],
   sortedCourts: Array<{ courtId?: string; order: number }>,
   initialSets: InitialSets,
-  numMatches: number
+  numMatches: number,
+  playersPerMatch: number
 ): Match[] {
   const allActive = courts.flat().filter(id => id !== '');
   const matchesPlayed = buildMatchesPlayed(
@@ -432,19 +433,20 @@ function handleBenchRotation(
   }
 
   cleanEmptySlots(courts);
-  return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, previousRounds);
+  return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, previousRounds, playersPerMatch);
 }
 
 // ── MIX_PAIRS ─────────────────────────────────────────────────────────
 
 function generateMixPairsRound(
-  _game: Game,
+  game: Game,
   previousRounds: Round[],
   initialSets: InitialSets,
   sortedCourts: Array<{ courtId?: string; order: number }>,
   numMatches: number,
   participants: any[]
 ): Match[] {
+  const ppm = playersPerMatchOf(game);
   const males = participants.filter((p: any) => p.user.gender === 'MALE');
   const females = participants.filter((p: any) => p.user.gender === 'FEMALE');
 
@@ -518,7 +520,7 @@ function generateMixPairsRound(
   }
 
   cleanEmptySlots(courts);
-  return buildMixPairsMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, genderMap, previousRounds);
+  return buildMixPairsMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, genderMap, previousRounds, ppm);
 }
 
 function rebalanceGendersAcrossCourts(
@@ -667,7 +669,8 @@ function buildMixPairsMatchesFromCourts(
   initialSets: InitialSets,
   numMatches: number,
   genderMap: Map<string, string>,
-  previousRounds: Round[]
+  previousRounds: Round[],
+  playersPerMatch: number
 ): Match[] {
   const partnerCounts = buildPartnerCounts(previousRounds);
   const opponentCounts = buildOpponentCounts(previousRounds);
@@ -675,7 +678,7 @@ function buildMixPairsMatchesFromCourts(
 
   for (let i = 0; i < Math.min(courts.length, numMatches); i++) {
     const players = courts[i];
-    if (players.length < 4) continue;
+    if (players.length < playersPerMatch) continue;
 
     const malesOnCourt = players.filter(id => genderMap.get(id) === 'MALE');
     const femalesOnCourt = players.filter(id => genderMap.get(id) === 'FEMALE');

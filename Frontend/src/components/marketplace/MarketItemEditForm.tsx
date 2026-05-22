@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { marketplaceApi, citiesApi, mediaApi } from '@/api';
@@ -11,6 +11,11 @@ import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { MapPin } from 'lucide-react';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { pickImages } from '@/utils/photoCapture';
+import {
+  filterCategoriesForListing,
+  getMarketplaceCategorySport,
+  toCategorySelectorItems,
+} from '@/utils/marketplaceSport';
 
 interface MarketItemEditFormProps {
   item: MarketItem;
@@ -28,6 +33,7 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
   const [uploadingMedia, setUploadingMedia] = useState(false);
 
   const userCityId = user?.currentCity?.id || user?.currentCityId;
+  const categorySport = useMemo(() => getMarketplaceCategorySport(user), [user]);
 
   const [form, setForm] = useState({
     categoryId: item.categoryId,
@@ -49,12 +55,23 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
     hollandIntervalMinutes: item.hollandIntervalMinutes ?? '',
   });
 
+  const categoryOptions = useMemo(
+    () =>
+      toCategorySelectorItems(
+        filterCategoriesForListing(categories, categorySport, form.categoryId || item.categoryId),
+        user,
+        categorySport,
+        t,
+      ),
+    [categories, categorySport, form.categoryId, item.categoryId, user, t],
+  );
+
   useEffect(() => {
-    Promise.all([marketplaceApi.getCategories(), citiesApi.getAll()]).then(([catRes, cityRes]) => {
+    Promise.all([marketplaceApi.getCategories(categorySport), citiesApi.getAll()]).then(([catRes, cityRes]) => {
       setCategories(catRes.data || []);
       setCities(cityRes.data || []);
     });
-  }, []);
+  }, [categorySport]);
 
   const handleAddPhotos = async () => {
     const result = await pickImages(5 - form.mediaUrls.length);
@@ -226,7 +243,7 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
             <CategorySelector
               value={form.categoryId}
               onChange={(v) => setForm((f) => ({ ...f, categoryId: v }))}
-              categories={categories}
+              categories={categoryOptions}
             />
           </div>
 

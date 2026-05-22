@@ -1,0 +1,22 @@
+{
+  "takeTest": "Popuni upitnik",
+  "skip": "Preskoči — počni sa 1.0",
+  "later": "Kasnije",
+  "stayAtOne": "Počni sa 1.0",
+  "socialUnaffected": "Ovo ne menja vaš socijalni rejting.",
+  "addSportTitle": "Proceniti nivo u {{sport}}?",
+  "addSportSubtitle": "Oko minut — pomaže da nađete igre po vašem nivou.",
+  "estimateLevel": "Proceni nivo",
+  "estimateLink": "Proceni",
+  "createGameBanner": "Proceni nivo — {{sport}}",
+  "createGameLevelBandWarning": "Vaš nivo za {{sport}} je procenjen na 1.0. Minimum iznad 2.5 može vas isključiti iz sopstvene igre.",
+  "inviteNudge": "Vaš nivo za {{sport}} je {{level}}.",
+  "inviteNudgeCrossSport": "{{primarySport}} {{primaryLevel}} · Nivo {{gameSport}} {{level}} —",
+  "homeCtaTitle": "Dobijte nivo — {{sport}}",
+  "homeCtaSubtitle": "Kratak upitnik — postavljamo nivo za odgovarajuće igre.",
+  "homeCtaAction": "Popuni upitnik",
+  "homeDismissLink": "Ne prikazuj ponovo",
+  "homeDismissTitle": "Sakriti upitnik za nivo?",
+  "homeDismissMessage": "Vaš trenutni nivo je {{level}}. Samo sakrivamo podsetnik — nivo se ne menja.",
+  "homeDismissConfirm": "Da, sakrij"
+}

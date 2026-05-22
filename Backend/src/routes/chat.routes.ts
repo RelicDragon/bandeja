@@ -32,6 +32,7 @@ import {
   transcribeMessage,
   translateDraft,
   getUnreadObjects,
+  markContextRead,
   muteChat,
   unmuteChat,
   isChatMuted,
@@ -253,6 +254,15 @@ router.post(
   postChatListRowPreviews
 );
 router.get('/unread-objects', unreadObjectsLimiter, getUnreadObjects);
+router.post(
+  '/mark-context-read',
+  validate([
+    body('contextType').isIn(['GAME', 'USER', 'GROUP']).withMessage('Invalid contextType'),
+    body('contextId').notEmpty().withMessage('contextId is required'),
+    body('gameChatTypes').optional().isArray().withMessage('gameChatTypes must be an array'),
+  ]),
+  markContextRead
+);
 router.get('/user-games', getUserChatGames);
 
 router.get(
@@ -502,9 +512,9 @@ router.post(
 router.post(
   '/mark-all-read',
   validate([
-    body('contextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid contextType'),
-    body('contextId').notEmpty().withMessage('contextId is required'),
-    body('chatTypes').optional().isArray().withMessage('chatTypes must be an array')
+    body('contextType').optional().isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid contextType'),
+    body('contextId').optional().notEmpty().withMessage('contextId cannot be empty'),
+    body('chatTypes').optional().isArray().withMessage('chatTypes must be an array'),
   ]),
   markAllMessagesAsReadForContext
 );

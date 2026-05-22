@@ -750,18 +750,19 @@ export const getMarketCategories = asyncHandler(async (req: AuthRequest, res: Re
 });
 
 export const createMarketCategory = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { name, order, isActive } = req.body;
-  const category = await AdminMarketCategoryService.create({ name, order, isActive });
+  const { name, order, isActive, sport } = req.body;
+  const category = await AdminMarketCategoryService.create({ name, order, isActive, sport });
   res.status(201).json({ success: true, data: category });
 });
 
 export const updateMarketCategory = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { categoryId } = req.params;
-  const { name, order, isActive } = req.body;
+  const { name, order, isActive, sport } = req.body;
   const category = await AdminMarketCategoryService.update(categoryId, {
     name,
     order,
     isActive,
+    sport,
   });
   res.json({ success: true, data: category });
 });

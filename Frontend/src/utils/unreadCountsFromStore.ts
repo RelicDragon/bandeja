@@ -1,0 +1,51 @@
+import { contextKey, type ContextKey } from '@/services/chat/unreadSnapshot';
+import { isUnreadStoreWarm, useUnreadStore } from '@/store/unreadStore';
+
+export function gameUnreadCountsMap(
+  gameIds: string[],
+  byContext: Record<ContextKey, number>
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const id of gameIds) {
+    const n = byContext[contextKey('GAME', id)] ?? 0;
+    if (n > 0) out[id] = n;
+  }
+  return out;
+}
+
+export function groupUnreadCountsMap(
+  channelIds: string[],
+  byContext: Record<ContextKey, number>
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const id of channelIds) {
+    const n = byContext[contextKey('GROUP', id)] ?? 0;
+    if (n > 0) out[id] = n;
+  }
+  return out;
+}
+
+async function ensureUnreadStoreWarm(): Promise<void> {
+  if (isUnreadStoreWarm(useUnreadStore.getState())) return;
+  await useUnreadStore.getState().refreshAll();
+}
+
+export async function resolveGameUnreadCounts(gameIds: string[]): Promise<Record<string, number>> {
+  if (gameIds.length === 0) return {};
+  await ensureUnreadStoreWarm();
+  const state = useUnreadStore.getState();
+  return gameUnreadCountsMap(gameIds, state.byContext);
+}
+
+export async function resolveGroupUnreadCounts(channelIds: string[]): Promise<Record<string, number>> {
+  if (channelIds.length === 0) return {};
+  await ensureUnreadStoreWarm();
+  const state = useUnreadStore.getState();
+  return groupUnreadCountsMap(channelIds, state.byContext);
+}
+
+export function userChatUnreadCount(chatId: string): number {
+  const state = useUnreadStore.getState();
+  if (!isUnreadStoreWarm(state)) return 0;
+  return state.byContext[contextKey('USER', chatId)] ?? 0;
+}

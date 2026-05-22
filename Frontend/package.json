@@ -7,8 +7,10 @@
     "build": "tsc && vite build",
     "postbuild": "node scripts/force-sw-update.js",
     "preview": "vite preview",
-    "test:live-scoring": "vitest run src/utils/liveScoring/core.test.ts",
+    "test:live-scoring": "vitest run src/utils/liveScoring/core.test.ts src/utils/liveScoring/badmintonServe.test.ts src/utils/liveScoring/squashServe.test.ts src/utils/liveScoring/pickleballServe.test.ts src/liveScoring/registry.test.ts src/liveScoring/rallyScoreMeta.test.ts src/sport/sportRegistry.test.ts src/utils/profileSports.test.ts src/utils/findSportFilter.test.ts src/components/liveScoring/rally/pickleballCourt.test.ts",
     "test:game-invite": "vitest run src/utils/gameInviteParticipant.test.ts",
+    "test:group-channel": "vitest run src/utils/groupChannelParticipation.test.ts",
+    "test:chat-open": "vitest run src/services/chat/__tests__/mergeOpenSnapshot.test.ts src/services/chat/__tests__/gameChatOpenPerformance.test.ts",
     "test:chat-outbox": "vitest run src/services/chat/chatSendCoordinator.test.ts src/services/chat/chatOutboxEnqueue.test.ts src/services/chat/chatOutboxRetry.test.ts src/services/chat/messageSendState.test.ts src/services/chat/chatSendSocketAck.test.ts src/services/chat/chatSendMessageCreate.test.ts src/services/chat/chatHttpRetry.test.ts src/services/chat/chatVideoTranscode.test.ts src/services/chat/chatVideoTranscodeWorkerClient.test.ts src/services/chat/chatVideoUploadRetry.test.ts src/services/chatMessageQueueStorage.video.test.ts && cd ../Backend && npx ts-node scripts/tests/chat-video-message-type.ts",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "increment-sw": "node scripts/increment-sw-version.js"

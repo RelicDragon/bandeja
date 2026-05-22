@@ -6,13 +6,21 @@ import prisma from '../config/database';
 import { ParticipantRole } from '@prisma/client';
 import { createSystemMessage } from './chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
-import { USER_SELECT_FIELDS } from '../utils/constants';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
 import notificationService from '../services/notification.service';
 import { InviteService } from '../services/invite.service';
 import { hasParentGamePermission, hasRealParticipantStatus } from '../utils/parentGamePermissions';
 import { ParticipantService } from '../services/game/participant.service';
 import { ParticipantMessageHelper } from '../services/game/participantMessageHelper';
 import { GameReadService, participantsToInviteShape } from '../services/game/read.service';
+import { projectUserForSportContext } from '../services/user/userSportProfile.service';
+
+const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
+  ...USER_SELECT_FIELDS,
+  sportProfiles: {
+    select: USER_SPORT_PROFILE_SELECT,
+  },
+} as const;
 
 export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { receiverId, gameId, message, expiresAt, asTrainer, inviteUserTeamId } = req.body;
@@ -72,8 +80,8 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
     const existingInvited = await prisma.gameParticipant.findFirst({
       where: { gameId, userId: receiverId, status: 'INVITED' },
       include: {
-        user: { select: USER_SELECT_FIELDS },
-        invitedByUser: { select: USER_SELECT_FIELDS },
+        user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+        invitedByUser: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
         game: {
           select: {
             id: true,
@@ -95,13 +103,21 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
             status: true,
             resultsStatus: true,
             entityType: true,
+            sport: true,
             court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
             club: { select: { id: true, name: true, avatar: true } },
+            participants: {
+              include: {
+                user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+                invitedByUser: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+              },
+            },
           },
         },
       },
     });
     if (existingInvited) {
+      const sport = existingInvited.game.sport;
       const inviteShape = {
         id: existingInvited.id,
         receiverId: existingInvited.userId,
@@ -111,9 +127,16 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
         expiresAt: existingInvited.inviteExpiresAt,
         createdAt: existingInvited.joinedAt,
         updatedAt: existingInvited.joinedAt,
-        receiver: existingInvited.user,
-        sender: existingInvited.invitedByUser,
-        game: existingInvited.game,
+        receiver: projectUserForSportContext(existingInvited.user, sport),
+        sender: projectUserForSportContext(existingInvited.invitedByUser, sport),
+        game: {
+          ...existingInvited.game,
+          participants: existingInvited.game.participants.map((participant) => ({
+            ...participant,
+            user: projectUserForSportContext(participant.user, sport),
+            invitedByUser: projectUserForSportContext(participant.invitedByUser, sport),
+          })),
+        },
       };
       return res.status(200).json({ success: true, data: inviteShape });
     }

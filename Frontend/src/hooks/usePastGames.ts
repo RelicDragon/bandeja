@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { gamesApi } from '@/api';
-import { chatApi } from '@/api/chat';
 import { Game } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import {
@@ -13,7 +12,6 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
   const [loadingPastGames, setLoadingPastGames] = useState(false);
   const [pastGamesOffset, setPastGamesOffset] = useState(0);
   const [hasMorePastGames, setHasMorePastGames] = useState(true);
-  const [pastGamesUnreadCounts, setPastGamesUnreadCounts] = useState<Record<string, number>>({});
 
   const isLoadingRef = useRef(false);
   const lastFetchParamsRef = useRef<string | null>(null);
@@ -22,20 +20,6 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
     return games.sort((a, b) => {
       return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
     });
-  };
-
-  const fetchGamesWithUnread = async (myGames: Game[], userId: string): Promise<Record<string, number>> => {
-    const accessibleGameIds = myGames
-      .filter((game) => userHasActiveGameMembership(game, userId))
-      .map((game) => game.id);
-
-    if (accessibleGameIds.length === 0) return {};
-    try {
-      return await chatApi.getGamesUnreadCounts(accessibleGameIds);
-    } catch (error) {
-      console.error('Failed to fetch unread counts:', error);
-      return {};
-    }
   };
 
   const loadPastGames = useCallback(async () => {
@@ -65,14 +49,11 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
         setHasMorePastGames(false);
       }
       
-      const unreadCounts = await fetchGamesWithUnread(newPastGames, user.id);
-      
       setPastGames(prev => {
         const existingGameIds = new Set(prev.map(g => g.id));
         const uniqueNewGames = newPastGames.filter(game => !existingGameIds.has(game.id));
         return sortGames([...prev, ...uniqueNewGames]);
       });
-      setPastGamesUnreadCounts(prev => ({ ...prev, ...unreadCounts }));
       setPastGamesOffset(pastGamesOffset + 30);
     } catch (error) {
       console.error('Failed to load past games:', error);
@@ -96,13 +77,6 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
     const gid = lastInviteDeleted.gameId;
     if (!gid) return;
     setPastGames((prev) => applyInviteDeletedToGames(prev, lastInviteDeleted, user?.id));
-    if (lastInviteDeleted.removedUserId === user?.id && gid) {
-      setPastGamesUnreadCounts((prev) => {
-        if (!(gid in prev)) return prev;
-        const { [gid]: _removed, ...rest } = prev;
-        return rest;
-      });
-    }
   }, [lastInviteDeleted, user?.id]);
 
   useEffect(() => {
@@ -181,7 +155,6 @@ export const usePastGames = (user: any, shouldLoad: boolean = false) => {
     pastGames,
     loadingPastGames,
     hasMorePastGames,
-    pastGamesUnreadCounts,
     loadPastGames,
     refetchGame,
   };

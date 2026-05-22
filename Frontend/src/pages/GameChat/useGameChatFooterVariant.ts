@@ -31,7 +31,7 @@ export interface UseGameChatFooterVariantParams {
   setUserChat: React.Dispatch<React.SetStateAction<import('@/api/chat').UserChat | null>>;
   setTranslateToLanguageForChat: (v: string | null) => void;
   autoTranslateForModal: TranslationModalAutoTranslateProps | null;
-  loadContext: () => Promise<unknown>;
+  loadContext: (options?: import('./useGameChatContext').LoadContextOptions) => Promise<unknown>;
   handleAddOptimisticMessage: (
     payload: import('@/api/chat').OptimisticMessagePayload,
     pendingImageBlobs?: Blob[],
@@ -138,7 +138,7 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
         onStartEditMessage: handleEditMessage,
         onScrollToMessage: handleScrollToMessage,
         chatType: currentChatType,
-        onGroupChannelUpdate: contextType === 'GROUP' ? () => { void loadContext(); } : undefined,
+        onGroupChannelUpdate: contextType === 'GROUP' ? () => { void loadContext({ force: true }); } : undefined,
         contextType,
         contextId: id ?? '',
         translateToLanguage: translateToLanguageForChat,

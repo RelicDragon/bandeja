@@ -32,6 +32,13 @@ router.get(
   leagueController.getLeagueStandings
 );
 
+router.post(
+  '/:leagueSeasonId/standings/recalculate',
+  authenticate,
+  canEditGame,
+  leagueController.recalculateLeagueStandings
+);
+
 router.get(
   '/:leagueSeasonId/planner',
   authenticate,

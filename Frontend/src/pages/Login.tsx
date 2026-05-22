@@ -28,7 +28,6 @@ export const Login = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
-
   const [tab, setTab] = useState<LoginTab>('main');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');

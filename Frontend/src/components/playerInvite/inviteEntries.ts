@@ -1,8 +1,13 @@
 import type { BasicUser, UserTeam, UserTeamMembership } from '@/types';
+import type { Sport } from '@/sport/sportRegistry';
 import type { UserMetadata } from '@/store/playersStore';
 import { matchesSearch } from '@/utils/transliteration';
 import type { PlayerInviteFilters } from '@/components/playerInvite/playerInviteFilters';
 import type { GameAvailabilityMatch } from '@/utils/availability/gameMatch';
+import {
+  passesInviteSportFilter,
+  type InviteSportFilterValue,
+} from '@/utils/inviteSportFilter';
 
 export type InviteListEntry =
   | { kind: 'user'; id: string; user: BasicUser }
@@ -57,6 +62,17 @@ export function teamAverageReliability(team: UserTeam): number | undefined {
 }
 
 /** Strict: every accepted member must match MALE or FEMALE; excludes PREFER_NOT_TO_SAY / unknown under non-ALL filters. */
+export function teamPassesInviteSportFilter(
+  team: UserTeam,
+  inviteSportFilter: InviteSportFilterValue | undefined,
+  gameSport: Sport | undefined,
+): boolean {
+  if (!gameSport) return true;
+  const users = acceptedMemberUsers(team);
+  if (users.length === 0) return false;
+  return users.every((u) => passesInviteSportFilter(u, inviteSportFilter, gameSport));
+}
+
 export function teamPassesStrictGenderFilter(team: UserTeam, genderApply: 'ALL' | 'MALE' | 'FEMALE'): boolean {
   if (genderApply === 'ALL') return true;
   const users = acceptedMemberUsers(team);
@@ -107,12 +123,18 @@ export function filterAndSortInviteEntries(
     isFavorite: (id: string) => boolean;
     getUserMetadata: (id: string) => UserMetadata | undefined;
     showTeams: boolean;
+    gameSport?: Sport;
+    inviteSportFilter?: InviteSportFilterValue;
     getAvailabilityMatch?: (entry: InviteListEntry) => GameAvailabilityMatch;
   }
 ): InviteListEntry[] {
   let uList = users;
   if (opts.inviteAsTrainerOnly) {
     uList = uList.filter((p) => p.isTrainer === true);
+  }
+
+  if (opts.gameSport) {
+    uList = uList.filter((p) => passesInviteSportFilter(p, opts.inviteSportFilter, opts.gameSport!));
   }
 
   const genderApply = opts.filterGender ?? opts.filters.gender;
@@ -153,6 +175,9 @@ export function filterAndSortInviteEntries(
     let tList = readyTeams.filter((t) => isUserTeamReady(t));
     if (genderApply !== 'ALL') {
       tList = tList.filter((t) => teamPassesStrictGenderFilter(t, genderApply));
+    }
+    if (opts.gameSport) {
+      tList = tList.filter((t) => teamPassesInviteSportFilter(t, opts.inviteSportFilter, opts.gameSport));
     }
     if (opts.filterPlayerIds.length > 0) {
       tList = tList.filter((t) => !opts.filterPlayerIds.some((id) => acceptedMemberUsers(t).some((u) => u.id === id)));
@@ -248,6 +273,8 @@ export function invitePreFilterCount(
     segmentUsers?: boolean;
     /** When false, team rows are excluded. Default true. Ignored when showTeams is false. */
     segmentTeams?: boolean;
+    gameSport?: Sport;
+    inviteSportFilter?: InviteSportFilterValue;
   }
 ): number {
   const segUsers = opts.segmentUsers !== false;
@@ -260,6 +287,9 @@ export function invitePreFilterCount(
   if (genderApply !== 'ALL') {
     u = u.filter((p) => p.gender === genderApply);
   }
+  if (opts.gameSport) {
+    u = u.filter((p) => passesInviteSportFilter(p, opts.inviteSportFilter, opts.gameSport!));
+  }
   let c = segUsers ? u.length : 0;
   if (opts.showTeams && segTeams) {
     let teams = readyTeams.filter((t) => isUserTeamReady(t));
@@ -268,6 +298,9 @@ export function invitePreFilterCount(
     }
     if (genderApply !== 'ALL') {
       teams = teams.filter((t) => teamPassesStrictGenderFilter(t, genderApply));
+    }
+    if (opts.gameSport) {
+      teams = teams.filter((t) => teamPassesInviteSportFilter(t, opts.inviteSportFilter, opts.gameSport));
     }
     c += teams.length;
   }

@@ -6,6 +6,8 @@ import { Invite } from '@/types';
 import { Check, X } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useAuthStore } from '@/store/authStore';
+import { SportQuestionnaireInviteNudge } from '@/components/sportQuestionnaire';
+import { parseGameSport } from '@/utils/gameSport';
 
 interface InvitesSectionProps {
   invites: Invite[];
@@ -118,6 +120,10 @@ export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: In
                       onNoteSaved={onNoteSaved}
                     />
                   </div>
+                )}
+
+                {invite.game?.sport && (
+                  <SportQuestionnaireInviteNudge gameSport={parseGameSport(invite.game.sport)} />
                 )}
 
                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>

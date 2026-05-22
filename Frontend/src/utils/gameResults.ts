@@ -24,6 +24,11 @@ export const isUserGameAdminOrOwner = (game: Game, userId: string): boolean => {
   return isParentGameAdminOrOwner || false;
 };
 
+export const isUserParentGameAdminOrOwner = (game: Game, userId: string): boolean =>
+  game.parent?.participants?.some(
+    (p) => p.userId === userId && ['OWNER', 'ADMIN'].includes(p.role)
+  ) ?? false;
+
 /**
  * Checks if a user is owner of a group/channel
  * 

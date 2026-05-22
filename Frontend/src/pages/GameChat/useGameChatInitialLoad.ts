@@ -7,22 +7,15 @@ import {
   type UserChat as UserChatType,
 } from '@/api/chat';
 import { blockedUsersApi } from '@/api/blockedUsers';
-import { useHeaderStore } from '@/store/headerStore';
-import { usePlayersStore } from '@/store/playersStore';
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
 import { scheduleRetryStuckChatOutbox } from '@/services/chat/chatOutboxRetry';
 import { reconcileOutboxForContext } from '@/services/chat/chatOutboxReconcile';
-import { getAvailableGameChatTypes } from '@/utils/chatType';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { normalizeChatType } from '@/utils/chatType';
-import { shouldQueueChatMutation } from '@/services/chat/chatMutationNetwork';
-import { enqueueChatMutationMarkReadBatch } from '@/services/chat/chatMutationEnqueue';
-import {
-  applyOptimisticMarkContextRead,
-  applyOptimisticMarkGameRead,
-} from '@/services/chat/applyOptimisticMarkContextRead';
-import { resyncAfterMarkReadFailure } from '@/services/chat/chatMarkReadResync';
+import { enterContextAndMarkRead } from '@/services/chat/unreadCoordinator';
+import { scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
+import type { BootstrapOutboxContext } from './useGameChatMessages';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
 
@@ -32,10 +25,11 @@ export interface UseGameChatInitialLoadParams {
   contextType: ChatContextType;
   initialChatType: ChatType | undefined;
   currentChatType: ChatType;
-  loadContext: () => Promise<unknown>;
-  bootstrapThread: (gameChatType?: ChatType) => Promise<boolean>;
+  loadContext: (options?: import('./useGameChatContext').LoadContextOptions) => Promise<unknown>;
+  bootstrapThread: (gameChatType?: ChatType, outbox?: BootstrapOutboxContext) => Promise<boolean>;
   userChat: UserChatType | null;
   handleMarkFailed: (tempId: string) => void;
+  handleReplaceOptimistic: (tempId: string, message: import('@/api/chat').ChatMessage) => void;
   handleNewMessageRef: React.MutableRefObject<((message: import('@/api/chat').ChatMessage) => string | void) | undefined>;
   loadingIdRef: React.MutableRefObject<string | undefined>;
   hasLoadedRef: React.MutableRefObject<boolean>;
@@ -62,6 +56,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     bootstrapThread,
     userChat,
     handleMarkFailed,
+    handleReplaceOptimistic,
     handleNewMessageRef,
     loadingIdRef,
     hasLoadedRef,
@@ -97,6 +92,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
       loadingIdRef.current = currentLoadId;
       isLoadingRef.current = true;
       hasLoadedRef.current = false;
+      setIsLoadingContext(true);
       const hasCachedThread = messagesRef.current.length > 0;
       if (!hasCachedThread) {
         setIsInitialLoad(true);
@@ -130,10 +126,12 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
           if (gc && typeof gc.isMuted === 'boolean') muteFromContext = gc.isMuted;
         }
 
-        if (muteFromContext !== undefined) {
-          if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
-          setIsMuted(muteFromContext);
-        } else {
+        const applyMute = async () => {
+          if (muteFromContext !== undefined) {
+            if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
+            setIsMuted(muteFromContext);
+            return;
+          }
           try {
             const muteStatus = await chatApi.isChatMuted(contextType, id);
             if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
@@ -141,15 +139,22 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
           } catch (error) {
             if (!signal.aborted) console.error('Failed to check mute status:', error);
           }
-        }
+        };
 
-        try {
-          const pref = await chatApi.getChatTranslationPreference(contextType, id);
-          if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
-          setTranslateToLanguageForChat(pref);
-        } catch (error) {
-          if (!signal.aborted) console.error('Failed to load translation preference:', error);
-        }
+        const applyTranslationPref = async () => {
+          try {
+            const pref = await chatApi.getChatTranslationPreference(contextType, id);
+            if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
+            setTranslateToLanguageForChat(pref);
+          } catch (error) {
+            if (!signal.aborted) console.error('Failed to load translation preference:', error);
+          }
+        };
+
+        scheduleChatOpenIdle(() => {
+          void applyMute();
+          void applyTranslationPref();
+        });
 
         const contextKey = `${id}-${contextType}-${initialChatType ?? ''}`;
         let effectiveChatType: ChatType = currentChatTypeRef.current;
@@ -168,7 +173,13 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
         if (signal.aborted) return;
         if (committedGameDefaultsKey) gameDefaultsAppliedKeyRef.current = committedGameDefaultsKey;
 
-        await bootstrapThread(contextType === 'GAME' ? effectiveChatType : undefined);
+        const outboxCtx: BootstrapOutboxContext | undefined = user?.id
+          ? { userId: user.id, user: user as import('@/types').BasicUser }
+          : undefined;
+        await bootstrapThread(
+          contextType === 'GAME' ? effectiveChatType : undefined,
+          outboxCtx
+        );
         if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
 
         if (user?.id) {
@@ -181,7 +192,9 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
             messagesRef,
             setMessages,
             handleMarkFailed,
+            onOptimisticReplaced: handleReplaceOptimistic,
             onMessageCreated: (created) => handleNewMessageRef.current?.(created),
+            paintState: !outboxCtx,
           });
           await reconcileOutboxForContext(contextType, id);
           scheduleRetryStuckChatOutbox();
@@ -190,77 +203,41 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
 
         if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
 
-        const runMarkReadBackground = () => {
-          let headerAppliedSnapshot = 0;
-          if (contextType === 'GAME' && loadedContext) {
-            const loadedGame = loadedContext as Game;
-            const loadedUserParticipant = loadedGame.participants.find(p => p.userId === user.id);
-            const loadedIsParticipant = !!loadedUserParticipant;
-            const loadedHasPendingInvite =
-              loadedGame.participants?.some((p) => p.userId === user.id && isPendingGameInvite(p)) ?? false;
-            const loadedIsGuest = loadedGame.participants.some(p => p.userId === user.id && (p.status === 'GUEST' || !isParticipantPlaying(p))) ?? false;
-            if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
-              const loadedParentParticipant = loadedGame.parent?.participants?.find(p => p.userId === user.id);
-              const availableChatTypes = getAvailableGameChatTypes(loadedUserParticipant ?? undefined, loadedParentParticipant ?? undefined);
-              applyOptimisticMarkGameRead(id);
-              if (shouldQueueChatMutation() && id) {
-                void enqueueChatMutationMarkReadBatch({
-                  contextType: 'GAME',
-                  contextId: id,
-                  payload: { target: 'context', chatTypes: availableChatTypes as ChatType[] },
-                });
-                return;
-              }
-              chatApi.markAllMessagesAsReadForContext('GAME', id, availableChatTypes).then((markReadResponse) => {
-                const markedCount = markReadResponse.data?.count || 0;
-                const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-                setUnreadMessages(Math.max(0, unreadMessages - (markedCount - headerAppliedSnapshot)));
-                window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
-              }).catch(() => {
-                resyncAfterMarkReadFailure('GAME', id);
-              });
-            }
-          } else if (contextType === 'USER' && id) {
-            headerAppliedSnapshot = applyOptimisticMarkContextRead('USER', id);
-            if (shouldQueueChatMutation()) {
-              void enqueueChatMutationMarkReadBatch({
-                contextType: 'USER',
-                contextId: id,
-                payload: { target: 'context' },
-              });
-            } else {
-              chatApi.markAllMessagesAsReadForContext('USER', id).then((markReadResponse) => {
-                const markedCount = markReadResponse.data?.count || 0;
-                const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-                setUnreadMessages(Math.max(0, unreadMessages - (markedCount - headerAppliedSnapshot)));
-                const { updateUnreadCount } = usePlayersStore.getState();
-                updateUnreadCount(id, () => 0);
-                window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
-              }).catch(() => {
-                resyncAfterMarkReadFailure('USER', id);
-              });
-            }
-          } else if (contextType === 'GROUP' && id) {
-            applyOptimisticMarkContextRead('GROUP', id);
-            if (shouldQueueChatMutation()) {
-              void enqueueChatMutationMarkReadBatch({
-                contextType: 'GROUP',
-                contextId: id,
-                payload: { target: 'group_channel' },
-              });
-            } else {
-              chatApi.markGroupChannelAsRead(id).then((markReadResponse) => {
-                const markedCount = markReadResponse.data?.count || 0;
-                const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-                setUnreadMessages(Math.max(0, unreadMessages - (markedCount - headerAppliedSnapshot)));
-                window.dispatchEvent(new CustomEvent('unread-count-invalidated'));
-              }).catch(() => {
-                resyncAfterMarkReadFailure('GROUP', id);
-              });
-            }
+        if (contextType === 'GAME' && loadedContext) {
+          const loadedGame = loadedContext as Game;
+          const loadedUserParticipant = loadedGame.participants.find((p) => p.userId === user.id);
+          const loadedIsParticipant = !!loadedUserParticipant;
+          const loadedHasPendingInvite =
+            loadedGame.participants?.some((p) => p.userId === user.id && isPendingGameInvite(p)) ?? false;
+          const loadedIsGuest =
+            loadedGame.participants.some(
+              (p) => p.userId === user.id && (p.status === 'GUEST' || !isParticipantPlaying(p))
+            ) ?? false;
+          if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
+            const loadedParentParticipant = loadedGame.parent?.participants?.find((p) => p.userId === user.id);
+            void enterContextAndMarkRead({
+              contextType: 'GAME',
+              contextId: id,
+              rawContextType: contextType,
+              game: { id, status: loadedGame.status },
+              participant: loadedUserParticipant ?? null,
+              parentParticipant: loadedParentParticipant ?? null,
+              gameChatType: effectiveChatType,
+            });
           }
-        };
-        runMarkReadBackground();
+        } else if (contextType === 'USER' && id) {
+          void enterContextAndMarkRead({
+            contextType: 'USER',
+            contextId: id,
+            rawContextType: contextType,
+          });
+        } else if (contextType === 'GROUP' && id) {
+          void enterContextAndMarkRead({
+            contextType: 'GROUP',
+            contextId: id,
+            rawContextType: contextType,
+          });
+        }
       } finally {
         if (!signal.aborted) isLoadingRef.current = false;
       }
@@ -281,6 +258,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     bootstrapThread,
     userChat,
     handleMarkFailed,
+    handleReplaceOptimistic,
     handleNewMessageRef,
     loadingIdRef,
     hasLoadedRef,

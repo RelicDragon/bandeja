@@ -41,6 +41,12 @@
     "maxTotalPointsPerSet": 0,
     "ballsInGames": true
   },
+  "POINTS_11": {
+    "winnerOfMatch": "BY_SCORES",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 11,
+    "ballsInGames": false
+  },
   "POINTS_16": {
     "winnerOfMatch": "BY_SCORES",
     "fixedNumberOfSets": 1,
@@ -63,6 +69,30 @@
     "winnerOfMatch": "BY_SCORES",
     "fixedNumberOfSets": 1,
     "maxTotalPointsPerSet": 32,
+    "ballsInGames": false
+  },
+  "BEST_OF_3_11": {
+    "winnerOfMatch": "BY_SETS",
+    "fixedNumberOfSets": 3,
+    "maxTotalPointsPerSet": 11,
+    "ballsInGames": false
+  },
+  "BEST_OF_3_21": {
+    "winnerOfMatch": "BY_SETS",
+    "fixedNumberOfSets": 3,
+    "maxTotalPointsPerSet": 21,
+    "ballsInGames": false
+  },
+  "BEST_OF_5_11": {
+    "winnerOfMatch": "BY_SETS",
+    "fixedNumberOfSets": 5,
+    "maxTotalPointsPerSet": 11,
+    "ballsInGames": false
+  },
+  "PAR_11": {
+    "winnerOfMatch": "BY_SCORES",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 11,
     "ballsInGames": false
   },
   "TIMED": {

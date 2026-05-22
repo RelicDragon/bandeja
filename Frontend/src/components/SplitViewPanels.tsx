@@ -23,17 +23,45 @@ interface SplitViewRightPanelProps {
   children: ReactNode;
   emptyState: ReactNode;
   selectedId: string | null;
-  isTransitioning: boolean;
+  /** Full-screen blocking overlay (thread switch uses showOverlay + hideContent=false). */
+  showOverlay?: boolean;
+  /** Legacy: maps to showOverlay + hideContent=true when showOverlay omitted. */
+  isTransitioning?: boolean;
+  /** When false, keep children visible under a brief overlay (Phase 1 thread switch). */
+  hideContent?: boolean;
 }
 
-export const SplitViewRightPanel = ({ children, emptyState, selectedId, isTransitioning }: SplitViewRightPanelProps) => (
-  <div className="h-full bg-gray-50 dark:bg-gray-900 relative">
-    {selectedId ? (
-      <div className={`absolute inset-0 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-        {children}
-      </div>
-    ) : (
-      emptyState
-    )}
-  </div>
-);
+export const SplitViewRightPanel = ({
+  children,
+  emptyState,
+  selectedId,
+  showOverlay: showOverlayProp,
+  isTransitioning,
+  hideContent = true,
+}: SplitViewRightPanelProps) => {
+  const showOverlay = showOverlayProp ?? Boolean(isTransitioning);
+  const contentHidden = showOverlay && hideContent;
+
+  return (
+    <div className="h-full bg-gray-50 dark:bg-gray-900 relative">
+      {selectedId ? (
+        <div className="absolute inset-0">
+          {showOverlay && (
+            <div
+              className={`absolute inset-0 z-10 bg-gray-50/80 dark:bg-gray-900/80 ${hideContent ? '' : 'pointer-events-none'}`}
+              aria-busy="true"
+              aria-hidden={hideContent}
+            />
+          )}
+          <div
+            className={`absolute inset-0 ${contentHidden ? 'invisible pointer-events-none' : 'opacity-100'}`}
+          >
+            {children}
+          </div>
+        </div>
+      ) : (
+        emptyState
+      )}
+    </div>
+  );
+};

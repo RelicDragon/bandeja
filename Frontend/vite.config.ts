@@ -35,7 +35,7 @@ const ensureWellKnown = () => {
   }
 }
 
-export default defineConfig({
+export default defineConfig(() => ({
   plugins: [react(), ensureWellKnown()],
   worker: {
     format: 'es',
@@ -43,6 +43,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@shared': path.resolve(__dirname, '../shared'),
+      '@backend': path.resolve(__dirname, '../Backend/src'),
+    },
+  },
+  test: {
+    server: {
+      deps: {
+        inline: ['@backend/sport/sportRegistry'],
+      },
     },
   },
   server: {
@@ -89,7 +98,6 @@ export default defineConfig({
     copyPublicDir: true,
   },
   define: {
-    // Define environment variables with defaults
     'import.meta.env.VITE_MEDIA_BASE_URL': JSON.stringify(process.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'),
     'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || 'http://localhost:3000/api'),
     'import.meta.env.VITE_APP_SEMVER': JSON.stringify(appSemver),
@@ -99,5 +107,5 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],
   },
-})
+}))
 

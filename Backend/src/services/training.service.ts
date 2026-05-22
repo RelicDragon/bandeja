@@ -1,7 +1,11 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
-import { EntityType, LevelChangeEventType } from '@prisma/client';
+import { EntityType, LevelChangeEventType, Sport } from '@prisma/client';
 import { cleanupInviteParticipantsForEndedGame } from '../utils/gameInviteCleanup';
+import {
+  ensureSportInEnabled,
+  resolveUserSportSnapshot,
+} from './user/userSportProfile.service';
 
 export async function finishTraining(gameId: string, _userId: string): Promise<void> {
   const game = await prisma.game.findUnique({
@@ -44,7 +48,15 @@ export async function updateParticipantLevel(
     }),
     prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true, entityType: true, resultsStatus: true, status: true, trainerId: true, participants: true },
+      select: {
+        id: true,
+        entityType: true,
+        sport: true,
+        resultsStatus: true,
+        status: true,
+        trainerId: true,
+        participants: true,
+      },
     }),
   ]);
 
@@ -88,6 +100,21 @@ export async function updateParticipantLevel(
 
   const participant = await prisma.user.findUnique({
     where: { id: participantUserId },
+    select: {
+      id: true,
+      level: true,
+      reliability: true,
+      sportProfiles: {
+        where: { sport: game.sport },
+        select: {
+          sport: true,
+          level: true,
+          reliability: true,
+          gamesPlayed: true,
+          gamesWon: true,
+        },
+      },
+    },
   });
 
   if (!participant) {
@@ -103,8 +130,9 @@ export async function updateParticipantLevel(
     },
   });
 
-  const levelBefore = existingOutcome ? existingOutcome.levelBefore : participant.level;
-  const reliabilityBefore = existingOutcome ? existingOutcome.reliabilityBefore : participant.reliability;
+  const sportSnapshot = resolveUserSportSnapshot(participant, game.sport);
+  const levelBefore = existingOutcome ? existingOutcome.levelBefore : sportSnapshot.level;
+  const reliabilityBefore = existingOutcome ? existingOutcome.reliabilityBefore : sportSnapshot.reliability;
   const levelAfter = Math.max(1.0, Math.min(7.0, level));
   const reliabilityAfter = Math.max(0.0, Math.min(100.0, reliability));
   const actualLevelChange = levelAfter - levelBefore;
@@ -119,29 +147,57 @@ export async function updateParticipantLevel(
       },
     });
 
-    const updateData: {
+    const padelLevelSync: {
       level: number;
       reliability: number;
       reliabilityDecayPostGraceDaysApplied: number;
-      approvedLevel?: boolean;
-      approvedById?: string;
-      approvedWhen?: Date;
     } = {
       level: levelAfter,
       reliability: reliabilityAfter,
       reliabilityDecayPostGraceDaysApplied: 0,
     };
 
+    const userPatch: {
+      approvedLevel?: boolean;
+      approvedById?: string;
+      approvedWhen?: Date;
+      level?: number;
+      reliability?: number;
+      reliabilityDecayPostGraceDaysApplied?: number;
+    } = {};
+
     if (user.isTrainer || user.isAdmin || isTrainerOrOwner) {
-      updateData.approvedLevel = true;
-      updateData.approvedById = userId;
-      updateData.approvedWhen = new Date();
+      userPatch.approvedLevel = true;
+      userPatch.approvedById = userId;
+      userPatch.approvedWhen = new Date();
     }
 
-    await tx.user.update({
-      where: { id: participantUserId },
-      data: updateData,
+    if (game.sport === Sport.PADEL) {
+      Object.assign(userPatch, padelLevelSync);
+    }
+
+    await tx.userSportProfile.upsert({
+      where: { userId_sport: { userId: participantUserId, sport: game.sport } },
+      create: {
+        userId: participantUserId,
+        sport: game.sport,
+        level: levelAfter,
+        reliability: reliabilityAfter,
+      },
+      update: {
+        level: levelAfter,
+        reliability: reliabilityAfter,
+      },
     });
+
+    await ensureSportInEnabled(participantUserId, game.sport, tx);
+
+    if (Object.keys(userPatch).length > 0) {
+      await tx.user.update({
+        where: { id: participantUserId },
+        data: userPatch,
+      });
+    }
 
     await tx.gameOutcome.upsert({
       where: {
@@ -186,6 +242,7 @@ export async function updateParticipantLevel(
           eventType: LevelChangeEventType.SET,
           linkEntityType: EntityType.TRAINING,
           gameId: gameId,
+          sport: game.sport,
         },
       });
     }
@@ -200,7 +257,16 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
     }),
     prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true, entityType: true, resultsStatus: true, status: true, trainerId: true, outcomes: true, participants: true },
+      select: {
+        id: true,
+        entityType: true,
+        sport: true,
+        resultsStatus: true,
+        status: true,
+        trainerId: true,
+        outcomes: true,
+        participants: true,
+      },
     }),
   ]);
 
@@ -233,14 +299,30 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
   await prisma.$transaction(async (tx) => {
     if (game.outcomes.length > 0) {
       for (const outcome of game.outcomes) {
-        await tx.user.update({
-          where: { id: outcome.userId },
-          data: {
-            level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
+        const levelBefore = Math.max(1.0, Math.min(7.0, outcome.levelBefore));
+        await tx.userSportProfile.upsert({
+          where: { userId_sport: { userId: outcome.userId, sport: game.sport } },
+          create: {
+            userId: outcome.userId,
+            sport: game.sport,
+            level: levelBefore,
             reliability: outcome.reliabilityBefore,
-            reliabilityDecayPostGraceDaysApplied: 0,
+          },
+          update: {
+            level: levelBefore,
+            reliability: outcome.reliabilityBefore,
           },
         });
+        if (game.sport === Sport.PADEL) {
+          await tx.user.update({
+            where: { id: outcome.userId },
+            data: {
+              level: levelBefore,
+              reliability: outcome.reliabilityBefore,
+              reliabilityDecayPostGraceDaysApplied: 0,
+            },
+          });
+        }
       }
     }
 

@@ -11,6 +11,8 @@ import {
   DEFAULT_AVAILABLE_GAME_PANEL_FILTERS,
   type AvailableGamePanelFilterState,
 } from '@/utils/availableGamePanelFilters';
+import { getDisplayLevelForSport } from '@/utils/profileSports';
+import { parseGameSport } from '@/utils/gameSport';
 
 type DisplayEntityType = 'GAME' | 'TOURNAMENT' | 'TRAINING' | 'LEAGUE' | 'BAR';
 
@@ -49,6 +51,8 @@ export interface MonthCalendarProps {
   onMonthChange?: (month: number, year: number) => void;
   onDateRangeChange?: (startDate: Date, endDate: Date) => void;
   panelFilters?: AvailableGamePanelFilterState;
+  showPrivateGames?: boolean;
+  isAdmin?: boolean;
 }
 
 const localeMap = {
@@ -72,6 +76,8 @@ export const MonthCalendar = ({
   onMonthChange,
   onDateRangeChange,
   panelFilters = DEFAULT_AVAILABLE_GAME_PANEL_FILTERS,
+  showPrivateGames = false,
+  isAdmin = false,
 }: MonthCalendarProps) => {
   const { user } = useAuthStore();
   const { i18n } = useTranslation();
@@ -120,7 +126,8 @@ export const MonthCalendar = ({
       const isUserParticipantInGame = user?.id && game.participants.some((p: any) => p.userId === user.id);
       const isLeagueGame = game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON';
 
-      if (!isPublic && !isUserParticipantInGame && !(leaguesFilter && isLeagueGame)) {
+      const showPrivateAsAdmin = isAdmin && showPrivateGames;
+      if (!isPublic && !isUserParticipantInGame && !(leaguesFilter && isLeagueGame) && !showPrivateAsAdmin) {
         return;
       }
 
@@ -136,8 +143,9 @@ export const MonthCalendar = ({
           return;
         }
 
-        if (user?.level) {
-          const userLevel = user.level;
+        if (user) {
+          const gameSport = parseGameSport(game.sport);
+          const userLevel = getDisplayLevelForSport(user, gameSport);
           const minLevel = game.minLevel || 0;
           const maxLevel = game.maxLevel || 10;
 
@@ -189,7 +197,7 @@ export const MonthCalendar = ({
     });
 
     return dataMap;
-  }, [availableGames, userFilter, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user?.id, user?.level, user?.blockedUserIds, panelFilters]);
+  }, [availableGames, userFilter, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user, panelFilters, showPrivateGames, isAdmin]);
 
   const handlePreviousMonth = () => {
     isNavigatingRef.current = true;

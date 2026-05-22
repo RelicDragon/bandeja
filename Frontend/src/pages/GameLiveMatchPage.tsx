@@ -8,13 +8,15 @@ import { useLiveMatchBoardState, liveBoardPlayersForTeam } from '@/hooks/useLive
 import { useAuthStore } from '@/store/authStore';
 import { useResolvedAppAppearance } from '@/store/themeStore';
 import { isGameMatchTimerEnabled } from '@/utils/matchTimer';
+import { supportsTimedOpenEndedRallyFreeze } from '../../../shared/timedCustomPresets';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { useWakeScreenForLiveScoring } from '@/hooks/useWakeScreenForLiveScoring';
 import { parseMatchLiveEnvelope } from '@/types/matchLiveScoring';
+import { resolvePlayersPerMatchForGame } from '@/utils/matchFormat';
 import {
   applyOptionalDeciderFormat,
   clearTimedClassicSetLock,
-  freezeTimedClassicSetAtPartialScore,
+  freezeTimedSetAtPartialScore,
   liveBoardThemeSearchParam,
   optionalDeciderChoicePending,
   parseLiveBoardTheme,
@@ -93,6 +95,9 @@ export const GameLiveMatchPage = () => {
     if (liveState.mode === 'points' && isLiveScoringInputLocked(liveState.sets, liveState.activeSetIndex, rules)) {
       return t('gameDetails.liveScoring.pointsBudgetComplete');
     }
+    if (liveState.timedClassicSetLocked && liveState.mode === 'points') {
+      return t('gameDetails.liveScoring.timedScoringFrozen');
+    }
     return null;
   }, [liveState, rawMatch?.metadata, rules, t]);
 
@@ -100,16 +105,23 @@ export const GameLiveMatchPage = () => {
     liveState && rules && optionalDeciderChoicePending(liveState, rules) && !tv && isAuthenticated
   );
 
-  const canTimedClassicFreeze = useMemo(() => {
-    if (!liveState || liveState.mode !== 'classic' || !rules?.allowIncompleteRegularSetGames) return false;
-    if (liveState.timedClassicSetLocked) return false;
-    if (!game || !isGameMatchTimerEnabled(game)) return false;
-    if (timerSnap?.status !== 'STOPPED') return false;
-    return !tv && isAuthenticated;
+  const canTimedSetFreeze = useMemo(() => {
+    if (!liveState || !rules || !game || liveState.timedClassicSetLocked) return false;
+    if (!isGameMatchTimerEnabled(game) || timerSnap?.status !== 'STOPPED') return false;
+    if (!tv && !isAuthenticated) return false;
+    if (liveState.mode === 'classic' && rules.allowIncompleteRegularSetGames) return true;
+    if (
+      liveState.mode === 'points' &&
+      supportsTimedOpenEndedRallyFreeze(game.scoringPreset, rules.totalPointsPerSet)
+    ) {
+      const row = liveState.sets[liveState.activeSetIndex];
+      return Boolean(row && (row.teamA > 0 || row.teamB > 0));
+    }
+    return false;
   }, [liveState, rules, game, timerSnap, tv, isAuthenticated]);
 
-  const canTimedClassicUnlock = Boolean(
-    liveState?.timedClassicSetLocked && !tv && isAuthenticated && rules?.allowIncompleteRegularSetGames
+  const canTimedSetUnlock = Boolean(
+    liveState?.timedClassicSetLocked && !tv && isAuthenticated
   );
 
   const [saving, setSaving] = useState(false);
@@ -356,8 +368,8 @@ export const GameLiveMatchPage = () => {
     const s = liveStateRef.current;
     const r = rulesRef.current;
     if (!s || !r || savingRef.current || !isAuthenticated) return;
-    applyLiveAction(freezeTimedClassicSetAtPartialScore(s, r));
-  }, [isAuthenticated, applyLiveAction]);
+    applyLiveAction(freezeTimedSetAtPartialScore(s, r, game?.scoringPreset));
+  }, [game?.scoringPreset, isAuthenticated, applyLiveAction]);
 
   const handleTimedUnlock = useCallback(() => {
     const s = liveStateRef.current;
@@ -373,6 +385,7 @@ export const GameLiveMatchPage = () => {
     applyLiveAction({ state: { ...s, serveGuideSkipped: true }, changed: true });
   }, [isAuthenticated, applyLiveAction]);
 
+  const playersPerMatch = useMemo(() => resolvePlayersPerMatchForGame(game ?? {}), [game]);
   const teamAPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 1) : []), [rawMatch]);
   const teamBPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 2) : []), [rawMatch]);
 
@@ -489,9 +502,9 @@ export const GameLiveMatchPage = () => {
           </div>
         ) : liveState ? (
           <>
-            {!tv && (canTimedClassicFreeze || canTimedClassicUnlock) ? (
+            {!tv && (canTimedSetFreeze || canTimedSetUnlock) ? (
               <div className="mb-3 flex flex-wrap gap-2">
-                {canTimedClassicFreeze ? (
+                {canTimedSetFreeze ? (
                   <button
                     type="button"
                     className="rounded-lg border border-amber-600/40 bg-amber-500/15 px-3 py-2 text-xs font-medium text-amber-950 dark:text-amber-100"
@@ -500,7 +513,7 @@ export const GameLiveMatchPage = () => {
                     {t('gameDetails.liveScoring.timedLockCta')}
                   </button>
                 ) : null}
-                {canTimedClassicUnlock ? (
+                {canTimedSetUnlock ? (
                   <button
                     type="button"
                     className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium dark:border-gray-600 dark:bg-gray-900"
@@ -517,6 +530,9 @@ export const GameLiveMatchPage = () => {
               teamBPlayers={teamBPlayers}
               revision={revision}
               rules={rules}
+              sport={game?.sport}
+              scoringPreset={game?.scoringPreset ?? null}
+              playersPerMatch={playersPerMatch}
               gameId={gameId}
               boardTheme={boardTheme}
               tv={tv}

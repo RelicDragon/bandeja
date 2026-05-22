@@ -1,6 +1,7 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { withOptionalSportPrefix } from '../../shared/notificationSport';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
@@ -18,7 +19,12 @@ export async function createLeagueRoundStartPushNotification(
   const leagueName = game.leagueSeason?.league?.name || 'League';
   const roundNumber = game.leagueRound?.orderIndex !== undefined ? game.leagueRound.orderIndex + 1 : 1;
 
-  const title = t('telegram.leagueRoundStartReceived', lang);
+  const title = withOptionalSportPrefix(
+    t('telegram.leagueRoundStartReceived', lang),
+    game.sport,
+    user.primarySport,
+    lang,
+  );
   const body = `${leagueName} - ${t('telegram.round', lang)} ${roundNumber}\n${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
   return {

@@ -8,6 +8,19 @@ export {
 } from './user/profile.controller';
 export { getNotificationPreferences, updateNotificationPreferences } from './user/notificationPreferences.controller';
 export { switchCity, setInitialLevel, completeWelcome, resetWelcome, skipWelcome } from './user/settings.controller';
+export {
+  addSport,
+  confirmPrimarySport,
+  removeSport,
+  setPrimarySport,
+  updateSportProfileLevel,
+} from './user/sportProfile.controller';
+export {
+  completeSportQuestionnaireHandler,
+  skipSportQuestionnaireHandler,
+  getSportQuestionnaireStatusHandler,
+  resetSportQuestionnaireHandler,
+} from './user/sportQuestionnaire.controller';
 export { getUserStats, getPlayerComparison } from './user/stats.controller';
 export { getInvitablePlayers, trackUserInteraction } from './user/social.controller';
 export { setFavoriteTrainer } from './user/favoriteTrainer.controller';

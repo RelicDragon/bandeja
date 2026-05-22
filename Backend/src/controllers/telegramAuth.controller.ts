@@ -24,11 +24,17 @@ import {
   getLinkKeyReplay,
   storeLinkKeyReplay,
 } from '../services/telegram/linkKeyReplay.service';
+import {
+  parseRegistrationPrimarySport,
+  registrationSportExplicitlyChosen,
+  registrationSportUserFields,
+} from '../services/auth/registrationSport.service';
 
 async function completeTelegramAuth(
   otp: TelegramOtp,
   req: Request,
-  language: string | undefined
+  language: string | undefined,
+  primarySportRaw: unknown
 ): Promise<{ user: any; token: string; refreshToken?: string; currentSessionId?: string }> {
   assertLoginIssuanceAllowed(req);
   const actualTelegramId = otp.telegramId;
@@ -79,6 +85,7 @@ async function completeTelegramAuth(
   }
 
   const newName = resolveDisplayNameData(otp.firstName, otp.lastName);
+  const primarySport = parseRegistrationPrimarySport(primarySportRaw);
   user = await prisma.user.create({
     data: {
       telegramId: actualTelegramId,
@@ -87,6 +94,9 @@ async function completeTelegramAuth(
       lastName: newName.lastName ?? null,
       nameIsSet: newName.nameIsSet,
       language,
+      ...registrationSportUserFields(primarySport, {
+        primarySportIsSet: registrationSportExplicitlyChosen(primarySportRaw),
+      }),
     },
     select: PROFILE_SELECT_FIELDS,
   });
@@ -165,7 +175,7 @@ async function mergeTelegramIntoUser(
 }
 
 export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response) => {
-  const { code, language } = req.body;
+  const { code, language, primarySport } = req.body;
   if (!code) {
     throw new ApiError(400, 'auth.codeRequired');
   }
@@ -173,7 +183,12 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
   if (!otp) {
     throw new ApiError(401, 'auth.invalidCode');
   }
-  const { user, token, refreshToken, currentSessionId } = await completeTelegramAuth(otp, req, language);
+  const { user, token, refreshToken, currentSessionId } = await completeTelegramAuth(
+    otp,
+    req,
+    language,
+    primarySport,
+  );
   res.json({
     success: true,
     data: {
@@ -185,7 +200,7 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
 });
 
 export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { key, language } = req.body;
+  const { key, language, primarySport } = req.body;
   if (!key || typeof key !== 'string' || key.length < 20) {
     throw new ApiError(400, 'auth.codeRequired');
   }
@@ -237,7 +252,12 @@ export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: 
     });
     return;
   }
-  const { user, token, refreshToken, currentSessionId } = await completeTelegramAuth(otp, req, language);
+  const { user, token, refreshToken, currentSessionId } = await completeTelegramAuth(
+    otp,
+    req,
+    language,
+    primarySport,
+  );
   storeLinkKeyReplay(key, { user, token, refreshToken, currentSessionId });
   res.json({
     success: true,

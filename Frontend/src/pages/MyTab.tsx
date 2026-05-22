@@ -10,19 +10,20 @@ import {
   UserTeamsHomeSection,
   YourLeaguesHomeSection,
 } from '@/components/home';
-import { WelcomeQuestionnairePrompt } from '@/components/welcome';
+import { SportQuestionnairePrompt } from '@/components/sportQuestionnaire';
+import { getUserPrimarySport } from '@/utils/profileSports';
 import { Button, MainTabFooter, MonthCalendar } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { gamesApi } from '@/api';
-import { chatApi } from '@/api/chat';
-import { useShallow } from 'zustand/react/shallow';
+import { useTotalUnreadForMarkAllBanner } from '@/hooks/useUnreadBridge';
+import { useUnreadStore } from '@/store/unreadStore';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
+import { gameUnreadCountsMap } from '@/utils/unreadCountsFromStore';
 import { useMyGames } from '@/hooks/useMyGames';
 import { usePastGames } from '@/hooks/usePastGames';
-import { getAvailableGameChatTypes } from '@/utils/chatType';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -112,15 +113,14 @@ export const MyTab = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const isDesktop = useDesktop();
-  const { unreadMessages, setMyGamesUnreadCount, setPastGamesUnreadCount } = useHeaderStore(
-    useShallow((s) => ({ unreadMessages: s.unreadMessages, setMyGamesUnreadCount: s.setMyGamesUnreadCount, setPastGamesUnreadCount: s.setPastGamesUnreadCount }))
-  );
+  const markAllBannerUnread = useTotalUnreadForMarkAllBanner();
   const activeTab = useNavigationStore((s) => s.activeTab);
   const myGamesSelectedDay = useNavigationStore((s) => s.myGamesSelectedDay);
   const setMyGamesSelectedDay = useNavigationStore((s) => s.setMyGamesSelectedDay);
   const myGamesCalendarDateAfterCreate = useNavigationStore((s) => s.myGamesCalendarDateAfterCreate);
   const setMyGamesCalendarDateAfterCreate = useNavigationStore((s) => s.setMyGamesCalendarDateAfterCreate);
   const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
+  const byContext = useUnreadStore((s) => s.byContext);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -133,8 +133,6 @@ export const MyTab = () => {
   const {
     games,
     invites,
-    gamesUnreadCounts,
-    totalGamesUnreadFromUnreadObjects,
     setInvites,
     fetchData,
   } = useMyGames(user, (loadingState) => setLoading(loadingState), {
@@ -146,14 +144,21 @@ export const MyTab = () => {
     pastGames,
     loadingPastGames,
     hasMorePastGames,
-    pastGamesUnreadCounts,
     loadPastGames,
     refetchGame,
   } = usePastGames(user, activeTab === 'past-games');
 
-  const mergedUnreadCounts = useMemo(() => {
-    return { ...gamesUnreadCounts, ...pastGamesUnreadCounts };
-  }, [gamesUnreadCounts, pastGamesUnreadCounts]);
+  const [pastGamesInRange, setPastGamesInRange] = useState<any[]>([]);
+
+  const gameUnreadForSort = useMemo(() => {
+    const ids = new Set<string>();
+    for (const g of games) ids.add(g.id);
+    for (const g of pastGames) ids.add(g.id);
+    for (const g of pastGamesInRange) ids.add(g.id);
+    return gameUnreadCountsMap([...ids], byContext);
+  }, [games, pastGames, pastGamesInRange, byContext]);
+
+  const mergedUnreadCounts = gameUnreadForSort;
 
   const filteredMyGames = useMemo(() => sortMyGamesByStatusAndDateTime(games, mergedUnreadCounts), [games, mergedUnreadCounts]);
   const hasUpcomingGames = useMemo(
@@ -183,8 +188,6 @@ export const MyTab = () => {
       setCreateGameInitialDate(null);
     }
   }, [activeTab, myGamesSelectedDate, setCreateGameInitialDate]);
-  const [pastGamesInRange, setPastGamesInRange] = useState<any[]>([]);
-  const [pastGamesInRangeUnread, setPastGamesInRangeUnread] = useState<Record<string, number>>({});
   const [loadingPastInRange, setLoadingPastInRange] = useState(false);
   const calendarMergedGames = useMemo(() => {
     const noSeason = (g: (typeof filteredMyGames)[0]) => g.entityType !== 'LEAGUE_SEASON';
@@ -192,10 +195,7 @@ export const MyTab = () => {
     const fromPast = pastGamesInRange.filter((g) => !ids.has(g.id) && g.entityType !== 'LEAGUE_SEASON');
     return [...filteredMyGames.filter(noSeason), ...fromPast];
   }, [filteredMyGames, pastGamesInRange]);
-  const calendarMergedUnreadCounts = useMemo(
-    () => ({ ...gamesUnreadCounts, ...pastGamesInRangeUnread }),
-    [gamesUnreadCounts, pastGamesInRangeUnread]
-  );
+  const calendarMergedUnreadCounts = gameUnreadForSort;
   const myGamesForSelectedDate = useMemo(() => {
     if (!myGamesSelectedDate) return [];
     const selectedStr = format(startOfDay(myGamesSelectedDate), 'yyyy-MM-dd');
@@ -244,7 +244,6 @@ export const MyTab = () => {
       const rangeStart = startOfDay(start);
       if (rangeStart >= today) {
         setPastGamesInRange([]);
-        setPastGamesInRangeUnread({});
         return;
       }
       setLoadingPastInRange(true);
@@ -260,103 +259,28 @@ export const MyTab = () => {
             !(g.entityType === 'LEAGUE_SEASON' && g.resultsStatus !== 'FINAL')
         );
         setPastGamesInRange(list);
-        if (list.length > 0 && user?.id) {
-          const unread = await chatApi.getGamesUnreadCounts(list.map((g: any) => g.id));
-          setPastGamesInRangeUnread(unread ?? {});
-        } else {
-          setPastGamesInRangeUnread({});
-        }
       } catch {
         setPastGamesInRange([]);
-        setPastGamesInRangeUnread({});
       } finally {
         setLoadingPastInRange(false);
       }
     },
-    [user?.id]
+    []
   );
   const filteredPastGames = useMemo(() => {
     const list = pastGames.filter((g) => g.entityType !== 'LEAGUE_SEASON');
-    return sortGamesByStatusAndDateTime(list, pastGamesUnreadCounts);
-  }, [pastGames, pastGamesUnreadCounts]);
-
-  const myGamesTotalUnread = useMemo(() => {
-    return Object.values(gamesUnreadCounts).reduce((sum: number, count: number) => sum + count, 0);
-  }, [gamesUnreadCounts]);
-
-  const pastGamesTotalUnread = useMemo(() => {
-    return Object.values(pastGamesUnreadCounts).reduce((sum: number, count: number) => sum + count, 0);
-  }, [pastGamesUnreadCounts]);
-
-  const totalGamesUnreadCount = totalGamesUnreadFromUnreadObjects;
-
-  useEffect(() => {
-    setMyGamesUnreadCount(myGamesTotalUnread);
-  }, [myGamesTotalUnread, setMyGamesUnreadCount]);
-
-  useEffect(() => {
-    if (loading || !totalGamesUnreadCount) {
-      setPastGamesUnreadCount(0);
-      return;
-    }
-    const calculatedPastGamesUnread = Math.max(0, totalGamesUnreadCount - myGamesTotalUnread);
-    const actualPastGamesUnread = pastGamesTotalUnread;
-    const pastGamesUnread = actualPastGamesUnread > 0 ? actualPastGamesUnread : calculatedPastGamesUnread;
-    setPastGamesUnreadCount(pastGamesUnread);
-  }, [totalGamesUnreadCount, myGamesTotalUnread, pastGamesTotalUnread, loading, setPastGamesUnreadCount]);
+    return sortGamesByStatusAndDateTime(list, gameUnreadForSort);
+  }, [pastGames, gameUnreadForSort]);
 
   const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
 
-  const getAvailableChatTypes = (game: any) => {
-    const participant = game.participants?.find((p: any) => p.userId === user?.id);
-    return getAvailableGameChatTypes(participant ?? undefined);
-  };
-
   const handleMarkAllAsRead = async () => {
-    if (!user?.id || isMarkingAllAsRead) return;
+    if (!user?.id || isMarkingAllAsRead || markAllBannerUnread === 0) return;
 
     setIsMarkingAllAsRead(true);
     try {
-      const unreadObjectsResponse = await chatApi.getUnreadObjects();
-      const unreadObjects = unreadObjectsResponse.data;
-      
-      const gamesWithUnread = unreadObjects.games.map(item => item.game);
-      const bugsWithUnreadMessages = unreadObjects.bugs.map(item => item.bug);
-      const userChatsWithUnread = unreadObjects.userChats.map(item => item.chat);
-      const groupChannelsWithUnread = (unreadObjects.groupChannels || []).map(item => item.groupChannel);
-      
-      if (gamesWithUnread.length === 0 && bugsWithUnreadMessages.length === 0 && userChatsWithUnread.length === 0 && groupChannelsWithUnread.length === 0) {
-        setIsMarkingAllAsRead(false);
-        return;
-      }
-
-      const markPromises = gamesWithUnread.map(game => {
-        const chatTypes = getAvailableChatTypes(game);
-        return chatApi.markAllMessagesAsRead(game.id, chatTypes);
-      });
-
-      const bugMarkPromises = bugsWithUnreadMessages
-        .filter((bug: any) => bug?.groupChannelId)
-        .map((bug: any) => chatApi.markGroupChannelAsRead(bug.groupChannelId));
-
-      const userChatMarkPromises = userChatsWithUnread.map(chat =>
-        chatApi.markUserChatAsRead(chat.id)
-      );
-
-      const groupChannelMarkPromises = groupChannelsWithUnread.map(groupChannel =>
-        chatApi.markAllMessagesAsReadForContext('GROUP', groupChannel.id)
-      );
-
-      await Promise.all([...markPromises, ...bugMarkPromises, ...userChatMarkPromises, ...groupChannelMarkPromises]);
-
-      const { setUnreadMessages } = useHeaderStore.getState();
-      setUnreadMessages(0);
-
+      await useUnreadStore.getState().markAllRead();
       await fetchData(false, true);
-
-      const updatedUnreadResponse = await chatApi.getUnreadCount();
-      setUnreadMessages(updatedUnreadResponse.data.count || 0);
-      
       toast.success(t('chat.allMarkedAsRead', { defaultValue: 'All messages marked as read' }));
     } catch (error) {
       console.error('Failed to mark all messages as read:', error);
@@ -433,7 +357,7 @@ export const MyTab = () => {
   const calendarContentPanel = (
     <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
       <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
-        <WelcomeQuestionnairePrompt />
+        {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
         <CityPromptBanner />
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!loading ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
           <InvitesSection
@@ -456,13 +380,13 @@ export const MyTab = () => {
           upcomingGames={upcomingGamesForCalendar}
           onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
         />
-        <div className={`transition-all duration-500 ease-in-out overflow-hidden ${unreadMessages > 0 ? 'max-h-[100px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
+        <div className={`transition-all duration-500 ease-in-out overflow-hidden ${markAllBannerUnread > 0 ? 'max-h-[100px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
           <div className="flex items-center justify-center pt-4">
             <Button
               onClick={handleMarkAllAsRead}
               variant="primary"
               size="sm"
-              disabled={isMarkingAllAsRead || unreadMessages === 0}
+              disabled={isMarkingAllAsRead || markAllBannerUnread === 0}
               className="animate-in slide-in-from-top-4 fade-in"
             >
               {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}
@@ -515,7 +439,7 @@ export const MyTab = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
-        <WelcomeQuestionnairePrompt />
+        {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
         <CityPromptBanner />
         <div
           className={`transition-all duration-500 ease-in-out overflow-hidden ${
@@ -601,7 +525,7 @@ export const MyTab = () => {
               loadingPastGames={loadingPastGames}
               hasMorePastGames={hasMorePastGames}
               user={user}
-              pastGamesUnreadCounts={pastGamesUnreadCounts}
+              pastGamesUnreadCounts={gameUnreadForSort}
               onLoadMore={loadPastGames}
               onNoteSaved={(gameId) => refetchGame(gameId)}
             />
@@ -610,7 +534,7 @@ export const MyTab = () => {
 
         <div
           className={`transition-all duration-500 ease-in-out overflow-hidden ${
-            unreadMessages > 0
+            markAllBannerUnread > 0
               ? 'max-h-[100px] opacity-100 translate-y-0 mb-4'
               : 'max-h-0 opacity-0 -translate-y-4'
           }`}
@@ -620,7 +544,7 @@ export const MyTab = () => {
               onClick={handleMarkAllAsRead}
               variant="primary"
               size="sm"
-              disabled={isMarkingAllAsRead || unreadMessages === 0}
+              disabled={isMarkingAllAsRead || markAllBannerUnread === 0}
               className="animate-in slide-in-from-top-4 fade-in"
             >
               {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}

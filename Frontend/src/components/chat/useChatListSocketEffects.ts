@@ -4,11 +4,10 @@ import { calculateLastMessageDate, deduplicateChats, type FilterCache } from '@/
 import {
   patchThreadIndexClearUnread,
   patchThreadIndexFromMessage,
-  patchThreadIndexSetUnreadCount,
   persistThreadIndexReplace,
 } from '@/services/chat/chatThreadIndex';
 import { usePlayersStore } from '@/store/playersStore';
-import { useNavigationStore } from '@/store/navigationStore';
+import { effectiveSocketUnreadCount } from '@/services/chat/unreadViewingGuard';
 import {
   chatApi,
   type ChatContextType,
@@ -18,6 +17,10 @@ import {
 } from '@/api/chat';
 import type { ChatItem, ChatType } from './chatListTypes';
 import { updateChatDraftInList, updateChatMessageInList } from './chatListModelMessageUpdates';
+import {
+  chatMessageToGameListPreview,
+  isGamePublicListPreviewMessage,
+} from '@/utils/gameChatListPreview';
 import { chatListModuleCache } from './chatListModuleCache';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 
@@ -33,6 +36,25 @@ function mergeGroupChannelSnapshotIntoChats(prev: ChatItem[], channelId: string,
     return {
       ...chat,
       data: { ...chat.data, lastMessage, updatedAt },
+      lastMessageDate,
+    };
+  });
+}
+
+function mergeGameLatestMessageIntoChats(
+  prev: ChatItem[],
+  gameId: string,
+  latest: ChatMessage,
+  updatedAt: string
+): ChatItem[] {
+  if (!isGamePublicListPreviewMessage(latest)) return prev;
+  const preview = chatMessageToGameListPreview(latest);
+  return prev.map((chat) => {
+    if (chat.type !== 'game' || chat.data.id !== gameId) return chat;
+    const lastMessageDate = calculateLastMessageDate(preview, null, updatedAt);
+    return {
+      ...chat,
+      data: { ...chat.data, lastMessage: preview, updatedAt },
       lastMessageDate,
     };
   });
@@ -330,9 +352,19 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
       const { contextType, contextId } = customEvent.detail;
       void patchThreadIndexClearUnread(contextType as ChatContextType, contextId);
       setChats((prev) =>
-        prev.map((chat) =>
-          (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId ? { ...chat, unreadCount: 0 } : chat
-        )
+        prev.map((chat) => {
+          if (contextType === 'GAME' && chat.type === 'game' && chat.data.id === contextId) {
+            return { ...chat, unreadCount: 0 };
+          }
+          if (
+            (contextType === 'GROUP' || contextType === 'BUG') &&
+            (chat.type === 'group' || chat.type === 'channel') &&
+            chat.data.id === contextId
+          ) {
+            return { ...chat, unreadCount: 0 };
+          }
+          return chat;
+        })
       );
     };
 
@@ -362,7 +394,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
     for (const lastChatMessage of batch) {
       const { contextType, contextId, message } = lastChatMessage;
       const shouldUpdate =
-        (chatsFilter === 'users' && (contextType === 'USER' || contextType === 'GROUP')) ||
+        (chatsFilter === 'users' && (contextType === 'USER' || contextType === 'GROUP' || contextType === 'GAME')) ||
         (chatsFilter === 'bugs' && (contextType === 'GROUP' || contextType === 'BUG')) ||
         (chatsFilter === 'channels' && contextType === 'GROUP') ||
         (chatsFilter === 'market' && contextType === 'GROUP');
@@ -388,6 +420,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
     const isViewingMessage = (contextType: string, contextId: string, list: ChatItem[]) =>
       isDesktop &&
       ((contextType === 'USER' && selectedChatType === 'user' && selectedChatId === contextId) ||
+        (contextType === 'GAME' && selectedChatType === 'game' && selectedChatId === contextId) ||
         (contextType === 'GROUP' &&
           (selectedChatType === 'group' || selectedChatType === 'channel') &&
           selectedChatId === contextId) ||
@@ -428,6 +461,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
 
         const chatExists = next.some((chat) => {
           if (contextType === 'USER' && chat.type === 'user' && chat.data.id === contextId) return true;
+          if (contextType === 'GAME' && chat.type === 'game' && chat.data.id === contextId) return true;
           if (
             contextType === 'BUG' &&
             chatsFilter === 'bugs' &&
@@ -450,6 +484,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
           if (isViewingMessage(contextType, contextId, next)) {
             next = next.map((chat) => {
               if (contextType === 'USER' && chat.type === 'user' && chat.data.id === contextId) return { ...chat, unreadCount: 0 };
+              if (contextType === 'GAME' && chat.type === 'game' && chat.data.id === contextId) return { ...chat, unreadCount: 0 };
               if (contextType === 'GROUP' && (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId)
                 return { ...chat, unreadCount: 0 };
               if (
@@ -461,7 +496,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
               return chat;
             });
           }
-        } else if (contextType === 'USER' && chatsFilter === 'users') {
+        } else if ((contextType === 'USER' || contextType === 'GAME') && chatsFilter === 'users') {
           needsUserListRefetch = true;
         }
       }
@@ -487,27 +522,14 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
     const unreadBatch = useSocketEventsStore.getState().takeListChatUnreads();
     if (unreadBatch.length === 0) return;
 
-    const dexieUnreadPatches: Array<() => void> = [];
     const groupRefreshIds = new Set<string>();
     const userRefreshIds = new Set<string>();
-
-    for (const u of unreadBatch) {
-      if (u.contextType === 'GAME') {
-        const viewingGameId = useNavigationStore.getState().viewingGameChatId;
-        const nextCount = viewingGameId === u.contextId ? 0 : u.unreadCount;
-        dexieUnreadPatches.push(() => {
-          void patchThreadIndexSetUnreadCount('GAME', u.contextId, nextCount);
-        });
-      }
-    }
+    let userListRefetchFromGameUnread = false;
 
     for (const u of unreadBatch) {
       if (u.contextType !== 'USER') continue;
       const isViewingThis = isDesktop && selectedChatType === 'user' && selectedChatId === u.contextId;
-      const nextCount = isViewingThis ? 0 : u.unreadCount;
-      dexieUnreadPatches.push(() => {
-        void patchThreadIndexSetUnreadCount('USER', u.contextId, nextCount);
-      });
+      const nextCount = isViewingThis ? 0 : effectiveSocketUnreadCount('USER', u.contextId, u.unreadCount);
       usePlayersStore.getState().updateUnreadCount(u.contextId, nextCount);
     }
 
@@ -541,9 +563,6 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
             (selectedChatType === 'group' || selectedChatType === 'channel');
           const nextCount = isViewingThis ? 0 : unreadCount;
           if (channelId) {
-            dexieUnreadPatches.push(() => {
-              void patchThreadIndexSetUnreadCount('GROUP', channelId, nextCount);
-            });
             if (!lm) groupRefreshIds.add(channelId);
           }
           next = next.map((chat) => (matchBug(chat) ? { ...chat, unreadCount: nextCount } : chat));
@@ -560,9 +579,6 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
             selectedChatId === contextId &&
             (selectedChatType === 'group' || selectedChatType === 'channel');
           const nextCount = isViewingThis ? 0 : unreadCount;
-          dexieUnreadPatches.push(() => {
-            void patchThreadIndexSetUnreadCount('GROUP', contextId, nextCount);
-          });
           if (!lm) groupRefreshIds.add(contextId);
           next = next.map((chat) =>
             (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId ? { ...chat, unreadCount: nextCount } : chat
@@ -574,10 +590,45 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
           continue;
         }
 
+        if (contextType === 'GAME') {
+          if (chatsFilter !== 'users') continue;
+          const isViewingThis = isDesktop && selectedChatType === 'game' && selectedChatId === contextId;
+          const nextCount = isViewingThis ? 0 : effectiveSocketUnreadCount('GAME', contextId, unreadCount);
+          const exists = next.some((c) => c.type === 'game' && c.data.id === contextId);
+          if (!exists && nextCount > 0) {
+            userListRefetchFromGameUnread = true;
+            continue;
+          }
+          next = next.map((chat) =>
+            chat.type === 'game' && chat.data.id === contextId ? { ...chat, unreadCount: nextCount } : chat
+          );
+          if (lm && typeof lm === 'object') {
+            const updatedAt =
+              (lm as { updatedAt?: string; createdAt?: string }).updatedAt ??
+              (lm as { createdAt?: string }).createdAt ??
+              new Date().toISOString();
+            const previewStr = (lm as { preview?: string }).preview;
+            if (typeof previewStr === 'string') {
+              const preview = { preview: previewStr, updatedAt };
+              next = next.map((chat) => {
+                if (chat.type !== 'game' || chat.data.id !== contextId) return chat;
+                return {
+                  ...chat,
+                  data: { ...chat.data, lastMessage: preview, updatedAt },
+                  lastMessageDate: calculateLastMessageDate(preview, null, updatedAt),
+                };
+              });
+            } else {
+              next = mergeGameLatestMessageIntoChats(next, contextId, lm as ChatMessage, updatedAt);
+            }
+          }
+          continue;
+        }
+
         if (contextType === 'USER') {
           if (chatsFilter !== 'users') continue;
           const isViewingThis = isDesktop && selectedChatType === 'user' && selectedChatId === contextId;
-          const nextCount = isViewingThis ? 0 : unreadCount;
+          const nextCount = isViewingThis ? 0 : effectiveSocketUnreadCount('USER', contextId, unreadCount);
           const exists = next.some((c) => c.type === 'user' && c.data.id === contextId);
           if (!exists && nextCount > 0) {
             userListRefetchFromUnread = true;
@@ -598,14 +649,10 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
       return next;
     });
 
-    if (userListRefetchFromUnread) {
+    if (userListRefetchFromUnread || userListRefetchFromGameUnread) {
       usePlayersStore.getState().invalidateUserChatsCache();
       void fetchChatsForFilter('users');
     }
-
-    queueMicrotask(() => {
-      for (const d of dexieUnreadPatches) d();
-    });
 
     for (const id of groupRefreshIds) {
       enqueueGroupChannelRowRefresh(id);

@@ -27,6 +27,7 @@ import {
 import { validateAvailabilityBucketBoundaries } from '../../utils/validators/availabilityBucketBoundaries';
 import { ensureRollingDoc } from '../../utils/weeklyAvailabilityRolling';
 import { getUserTimezone } from '../../services/user-timezone.service';
+import { enrichProfileUser } from '../../services/user/userSportProfile.service';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
@@ -70,7 +71,7 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
       avatar: ca.club.avatar,
     })) ?? [];
 
-  const profile = { ...user, weeklyAvailability: weeklyAvailabilityOut };
+  const profile = enrichProfileUser({ ...user, weeklyAvailability: weeklyAvailabilityOut });
   delete (profile as { clubAdmins?: (typeof user)['clubAdmins'] }).clubAdmins;
 
   res.json({
@@ -341,9 +342,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
 
   res.json({
     success: true,
-    data: {
-      ...user,
-    },
+    data: enrichProfileUser(user),
   });
 });
 
@@ -469,6 +468,6 @@ export const syncTelegramProfile = asyncHandler(async (req: AuthRequest, res: Re
   if (!updated) {
     throw new ApiError(500, 'Profile unavailable');
   }
-  res.json({ success: true, data: updated });
+  res.json({ success: true, data: enrichProfileUser(updated) });
 });
 

@@ -1,7 +1,9 @@
 import prisma from '../config/database';
-import { Gender, GenderTeam, EntityType, GameStatus } from '@prisma/client';
+import { Gender, GenderTeam, EntityType, GameStatus, Sport } from '@prisma/client';
 import { ApiError } from './ApiError';
 import { fetchGameWithPlayingParticipants } from './gameQueries';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from './constants';
+import { resolveUserSportSnapshot } from '../services/user/userSportProfile.service';
 
 interface GameWithParticipants {
   id: string;
@@ -19,6 +21,7 @@ interface GameWithParticipants {
 
 export interface GameWithStatus extends GameWithParticipants {
   status: GameStatus;
+  sport?: Sport;
   allowDirectJoin?: boolean;
   anyoneCanInvite?: boolean;
   minLevel?: number | null;
@@ -173,10 +176,19 @@ export async function validatePlayerCanJoinGame(
   if (checkLevel && game.entityType !== EntityType.BAR && game.minLevel != null && game.maxLevel != null) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { level: true },
+      select: {
+        ...USER_SELECT_FIELDS,
+        gamesPlayed: true,
+        gamesWon: true,
+        sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
+      },
     });
-    if (user && (user.level < game.minLevel || user.level > game.maxLevel)) {
-      return { canJoin: false, shouldQueue: true, reason: 'games.addedToQueueLevelOutOfRange' };
+    if (user) {
+      const gameSport = game.sport ?? Sport.PADEL;
+      const { level } = resolveUserSportSnapshot(user, gameSport);
+      if (level < game.minLevel || level > game.maxLevel) {
+        return { canJoin: false, shouldQueue: true, reason: 'games.addedToQueueLevelOutOfRange' };
+      }
     }
   }
 

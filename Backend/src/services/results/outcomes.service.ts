@@ -9,6 +9,7 @@ import { isPrismaMatchCountedForStandingsAndRating } from './matchStandingsPrism
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { LeagueGameResultsService } from '../league/gameResults.service';
+import { LeagueStandingsRecalculateService } from '../league/leagueStandingsRecalculate.service';
 import { SocialParticipantLevelService } from '../socialParticipantLevel.service';
 import { calculateGameStatus, isResultsBasedEntityType, ARCHIVE_BY_FINISHED_DATE_TYPES } from '../../utils/gameStatus';
 import { resolveGameBets } from '../bets/betResolution.service';
@@ -20,6 +21,23 @@ import {
   mergePlacementRatingFloorMetadata,
 } from './ratingPlacementFloor';
 import { isOfficialMatchSetRole } from './matchSetRole';
+import {
+  ensureSportInEnabled,
+  resolveUserSportSnapshot,
+} from '../user/userSportProfile.service';
+
+async function rebuildLeagueSeasonStandingsIfNeeded(
+  gameId: string,
+  tx: Prisma.TransactionClient,
+): Promise<void> {
+  const row = await tx.game.findUnique({
+    where: { id: gameId },
+    select: { entityType: true, parentId: true },
+  });
+  if (row?.entityType === EntityType.LEAGUE && row.parentId) {
+    await LeagueStandingsRecalculateService.recalculateFromPlayedGames(row.parentId, tx);
+  }
+}
 
 export async function generateGameOutcomes(gameId: string, tx?: Prisma.TransactionClient) {
   const prismaClient = tx || prisma;
@@ -31,8 +49,15 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
           user: {
             select: {
               ...USER_SELECT_FIELDS,
-              reliability: true,
-              gamesPlayed: true,
+              sportProfiles: {
+                select: {
+                  sport: true,
+                  level: true,
+                  reliability: true,
+                  gamesPlayed: true,
+                  gamesWon: true,
+                },
+              },
             },
           },
         },
@@ -64,12 +89,15 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
     throw new ApiError(404, 'Game not found');
   }
 
-  const players = game.participants.map(p => ({
-    userId: p.userId,
-    level: p.user.level,
-    reliability: p.user.reliability,
-    gamesPlayed: p.user.gamesPlayed,
-  }));
+  const players = game.participants.map((p) => {
+    const sportSnapshot = resolveUserSportSnapshot(p.user, game.sport);
+    return {
+      userId: p.userId,
+      level: sportSnapshot.level,
+      reliability: sportSnapshot.reliability,
+      gamesPlayed: sportSnapshot.gamesPlayed,
+    };
+  });
 
   const roundResults = game.rounds.map(round => ({
     matches: round.matches
@@ -149,7 +177,12 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
 export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionClient) {
   const game = await tx.game.findUnique({
     where: { id: gameId },
-    include: {
+    select: {
+      id: true,
+      sport: true,
+      affectsRating: true,
+      entityType: true,
+      parentId: true,
       outcomes: true,
     },
   });
@@ -158,31 +191,78 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
     return;
   }
 
-  if (game.affectsRating) {
+  const isLeagueRoundGame =
+    game.entityType === EntityType.LEAGUE && Boolean(game.parentId);
+
+  if (game.affectsRating && !isLeagueRoundGame) {
     await LeagueGameResultsService.unsyncGameResults(gameId, tx);
   }
   await SocialParticipantLevelService.revertSocialParticipantLevelChanges(gameId, tx);
 
   for (const outcome of game.outcomes) {
-    await tx.user.update({
+    const user = await tx.user.findUnique({
       where: { id: outcome.userId },
-      data: game.affectsRating
+      select: {
+        id: true,
+        sportProfiles: {
+          where: { sport: game.sport },
+          select: {
+            sport: true,
+            level: true,
+            reliability: true,
+            gamesPlayed: true,
+            gamesWon: true,
+          },
+        },
+      },
+    });
+    if (!user) continue;
+
+    const undoSnapshot = resolveUserSportSnapshot(user, game.sport);
+
+    await tx.userSportProfile.upsert({
+      where: { userId_sport: { userId: outcome.userId, sport: game.sport } },
+      create: {
+        userId: outcome.userId,
+        sport: game.sport,
+        level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
+        reliability: outcome.reliabilityBefore,
+        gamesPlayed:
+          game.affectsRating && undoSnapshot.gamesPlayed > 0
+            ? undoSnapshot.gamesPlayed - 1
+            : undoSnapshot.gamesPlayed,
+        gamesWon:
+          game.affectsRating && outcome.isWinner && undoSnapshot.gamesWon > 0
+            ? undoSnapshot.gamesWon - 1
+            : undoSnapshot.gamesWon,
+      },
+      update: game.affectsRating
         ? {
             level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
             reliability: outcome.reliabilityBefore,
-            reliabilityDecayPostGraceDaysApplied: 0,
-            totalPoints: { decrement: outcome.pointsEarned },
             gamesPlayed: { decrement: 1 },
             gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
           }
-        : { reliability: outcome.reliabilityBefore, reliabilityDecayPostGraceDaysApplied: 0 },
+        : {
+            reliability: outcome.reliabilityBefore,
+          },
     });
+
+    if (game.affectsRating && outcome.pointsEarned > 0) {
+      await tx.user.update({
+        where: { id: outcome.userId },
+        data: { totalPoints: { decrement: outcome.pointsEarned } },
+      });
+    }
   }
 
   await tx.gameOutcome.deleteMany({
     where: { gameId },
   });
 
+  if (isLeagueRoundGame && game.parentId) {
+    await LeagueStandingsRecalculateService.recalculateFromPlayedGames(game.parentId, tx);
+  }
 }
 
 export async function applyGameOutcomes(
@@ -212,6 +292,7 @@ export async function applyGameOutcomes(
       id: true,
       entityType: true,
       affectsRating: true,
+      sport: true,
       winnerOfGame: true,
       rounds: {
         orderBy: { roundNumber: 'asc' },
@@ -255,13 +336,26 @@ export async function applyGameOutcomes(
   for (const outcome of finalOutcomes) {
     const user = await tx.user.findUnique({
       where: { id: outcome.userId },
-      select: { id: true, level: true, reliability: true },
+      select: {
+        id: true,
+        sportProfiles: {
+          where: { sport: game.sport },
+          select: {
+            sport: true,
+            level: true,
+            reliability: true,
+            gamesPlayed: true,
+            gamesWon: true,
+          },
+        },
+      },
     });
 
     if (!user) continue;
 
-    const levelBefore = user.level;
-    const reliabilityBefore = user.reliability;
+    const sportSnapshot = resolveUserSportSnapshot(user, game.sport);
+    const levelBefore = sportSnapshot.level;
+    const reliabilityBefore = sportSnapshot.reliability;
     const levelAfter = Math.max(1.0, Math.min(7.0, levelBefore + outcome.levelChange));
     const reliabilityAfter = Math.max(0.0, Math.min(100.0, reliabilityBefore + outcome.reliabilityChange));
     const actualLevelChange = levelAfter - levelBefore;
@@ -317,19 +411,37 @@ export async function applyGameOutcomes(
       },
     });
 
-    await tx.user.update({
-      where: { id: outcome.userId },
-      data: game.affectsRating
+    await tx.userSportProfile.upsert({
+      where: { userId_sport: { userId: outcome.userId, sport: game.sport } },
+      create: {
+        userId: outcome.userId,
+        sport: game.sport,
+        level: levelAfter,
+        reliability: reliabilityAfter,
+        gamesPlayed: game.affectsRating ? sportSnapshot.gamesPlayed + 1 : sportSnapshot.gamesPlayed,
+        gamesWon:
+          game.affectsRating && outcome.isWinner
+            ? sportSnapshot.gamesWon + 1
+            : sportSnapshot.gamesWon,
+      },
+      update: game.affectsRating
         ? {
             level: levelAfter,
             reliability: reliabilityAfter,
-            reliabilityDecayPostGraceDaysApplied: 0,
-            totalPoints: { increment: outcome.pointsEarned },
             gamesPlayed: { increment: 1 },
             gamesWon: outcome.isWinner ? { increment: 1 } : undefined,
           }
-        : { reliability: reliabilityAfter, reliabilityDecayPostGraceDaysApplied: 0 },
+        : { reliability: reliabilityAfter },
     });
+
+    await ensureSportInEnabled(outcome.userId, game.sport, tx);
+
+    if (game.affectsRating && outcome.pointsEarned > 0) {
+      await tx.user.update({
+        where: { id: outcome.userId },
+        data: { totalPoints: { increment: outcome.pointsEarned } },
+      });
+    }
   }
 
   const updatedGame = await tx.game.findUnique({
@@ -396,13 +508,14 @@ export async function applyGameOutcomes(
               eventType: 'GAME',
               linkEntityType: game.entityType,
               gameId: gameId,
+              sport: game.sport,
             },
           });
         }
       }
     }
 
-    await LeagueGameResultsService.syncGameResults(gameId, tx);
+    await rebuildLeagueSeasonStandingsIfNeeded(gameId, tx);
 
     if (previousResultsStatus !== 'FINAL' && game.entityType !== EntityType.BAR && game.entityType !== EntityType.LEAGUE_SEASON) {
       await SocialParticipantLevelService.applySocialParticipantLevelChanges(gameId, tx);

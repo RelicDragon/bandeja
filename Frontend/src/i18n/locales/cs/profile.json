@@ -92,6 +92,21 @@
     "cancel": "Zrušit",
     "saved": "Profil uložen",
     "preferences": "Herní preference",
+    "sports": {
+      "title": "Sporty",
+      "addSport": "Přidat sport",
+      "setPrimary": "Nastavit jako hlavní",
+      "primarySport": "Hlavní sport",
+      "primarySportToast": "Toto je váš hlavní sport. Používá se jako výchozí při vytváření her a v profilu.",
+      "gamesCount": "{{count}} zápasů",
+      "levelInvalid": "Úroveň musí být mezi 1.0 a 7.0",
+      "updated": "Sportovní profil aktualizován",
+      "allAdded": "Všechny dostupné sporty jsou povoleny",
+      "primaryLabel": "Úroveň {{sport}}",
+      "removeSport": "Odebrat",
+      "removeSportConfirmTitle": "Odebrat sport?",
+      "removeSportConfirmMessage": "Odebrat {{sport}} z profilu? Později ho můžete znovu přidat."
+    },
     "preferredHand": "Ruka",
     "preferredCourtSide": "Strana kurtu",
     "appIcon": "Ikona aplikace",
@@ -242,6 +257,9 @@
     "photoPickFailed": "Failed to pick photo",
     "noSharedGames": "No shared finished games yet",
     "noLeaderboardData": "No leaderboard data available",
+    "leaderboard": {
+      "sportLabel": "Sport žebříčku"
+    },
     "sessionsTitle": "Přihlášená zařízení",
     "sessionsSubtitle": "Spravujte, kde zůstáváte přihlášeni",
     "sessionsPageTitle": "Zařízení a relace",

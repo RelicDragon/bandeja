@@ -2,7 +2,12 @@ import crypto from 'crypto';
 import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
 import { config } from '../../config/env';
 import { ApiError } from '../../utils/ApiError';
+import { Sport } from '@prisma/client';
 import { verifyGoogleIdToken, type GoogleTokenPayload } from './googleAuth.service';
+import {
+  parseRegistrationPrimarySport,
+  registrationSportExplicitlyChosen,
+} from '../auth/registrationSport.service';
 
 const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const CODE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -11,12 +16,16 @@ const CLEANUP_INTERVAL_MS = 60 * 1000; // 60 seconds
 interface StateEntry {
   codeVerifier: string;
   language: string;
+  primarySport: Sport;
+  primarySportIsSet: boolean;
   expiresAt: number;
 }
 
 interface OneTimeCodeEntry {
   googleToken: GoogleTokenPayload;
   language: string;
+  primarySport: Sport;
+  primarySportIsSet: boolean;
   expiresAt: number;
 }
 
@@ -49,17 +58,21 @@ function getOAuth2Client(): OAuth2Client {
   );
 }
 
-export function generateGoogleAuthUrl(language: string): string {
+export function generateGoogleAuthUrl(language: string, primarySportRaw?: unknown): string {
   const state = crypto.randomBytes(32).toString('hex');
   const codeVerifier = crypto.randomBytes(32).toString('base64url');
   const codeChallenge = crypto
     .createHash('sha256')
     .update(codeVerifier)
     .digest('base64url');
+  const primarySport = parseRegistrationPrimarySport(primarySportRaw);
+  const primarySportIsSet = registrationSportExplicitlyChosen(primarySportRaw);
 
   stateStore.set(state, {
     codeVerifier,
     language,
+    primarySport,
+    primarySportIsSet,
     expiresAt: Date.now() + STATE_TTL_MS,
   });
 
@@ -105,12 +118,16 @@ export async function exchangeCodeForGoogleToken(
 
 export function storeOneTimeCode(
   googleToken: GoogleTokenPayload,
-  language: string
+  language: string,
+  primarySport: Sport,
+  primarySportIsSet: boolean,
 ): string {
   const code = crypto.randomBytes(32).toString('hex');
   codeStore.set(code, {
     googleToken,
     language,
+    primarySport,
+    primarySportIsSet,
     expiresAt: Date.now() + CODE_TTL_MS,
   });
   return code;

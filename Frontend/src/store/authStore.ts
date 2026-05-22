@@ -138,6 +138,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
         warm.resetChatSyncWarmSession();
         void warm.ensureChatSyncWarmBootstrap();
       });
+
+      void import('@/store/unreadStore').then(({ useUnreadStore }) => {
+        useUnreadStore.getState().refreshAll().catch(() => {});
+      });
     },
     setToken: (token) => {
       try {
@@ -210,6 +214,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
           useNavigationStore.getState().setFindSelectedDay(null);
           useNavigationStore.getState().setFindListWeekStartDay(null);
           useReactionEmojiUsageStore.getState().reset();
+          void import('@/store/unreadStore').then(({ useUnreadStore }) => {
+            useUnreadStore.getState().reset();
+          });
           set({ user: null, token: null, isAuthenticated: false });
           console.info('[auth:logout] local session cleared', {
             lsToken: localStorage.getItem('token'),

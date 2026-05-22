@@ -8,6 +8,8 @@ import { LLM_REASON } from '../ai/llmReasons';
 import { TranslationService } from '../chat/translation.service';
 import { escapeHTML, trimTextForTelegram } from './utils';
 import { RankingService } from '../ranking.service';
+import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
+import { Sport } from '@prisma/client';
 import { getUserTimezoneFromCityId, formatDateInTimezone, convertToUserTimezone } from '../user-timezone.service';
 import { format } from 'date-fns';
 import { enGB } from 'date-fns/locale/en-GB';
@@ -74,6 +76,7 @@ export class ResultsTelegramService {
       throw new ApiError(503, 'AI service is not configured');
     }
 
+    const gameSport: Sport = game.sport ?? Sport.PADEL;
     const playingParticipants = game.participants?.filter((p: any) => p.status === 'PLAYING') || [];
     const participantUserIds = playingParticipants.map((p: any) => p.userId).filter(Boolean);
     const cityId = game.city?.id || game.cityId;
@@ -92,7 +95,10 @@ export class ResultsTelegramService {
         const firstName = p.user?.firstName || '';
         const lastName = p.user?.lastName || '';
         const name = `${firstName} ${lastName}`.trim();
-        const level = p.user?.level ? p.user.level.toFixed(2) : 'N/A';
+        const sportLevel = p.user
+          ? resolveUserSportSnapshot(p.user, gameSport).level
+          : null;
+        const level = sportLevel != null ? sportLevel.toFixed(2) : 'N/A';
         const socialLevel = p.user?.socialLevel ? p.user.socialLevel.toFixed(2) : 'N/A';
         const cityRank = cityRankMap.get(p.userId);
         const gamesLast30Days = gamesInLast30DaysMap.get(p.userId) || 0;

@@ -16,6 +16,8 @@ const DEFAULT_FILTERS: GameFilters = {
   filterTimeEnd: '24:00',
   filterLevelMin: 1.0,
   filterLevelMax: 7.0,
+  filterSport: 'primary',
+  showPrivateGames: false,
 };
 
 const dayKeyToIso = (day: string) => startOfDay(parse(day, 'yyyy-MM-dd', new Date())).toISOString();

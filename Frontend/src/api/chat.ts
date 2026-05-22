@@ -1,11 +1,23 @@
 import api from './axios';
 import { ApiResponse, Game, ChatType, BasicUser } from '@/types';
 import type { UnreadObjectsApiPayload } from '@/services/chat/chatUnreadPayload';
+import type {
+  MarkContextReadRequest,
+  MarkContextReadResponse,
+  UnreadSnapshotDto,
+} from '@/services/chat/unreadSnapshot';
 import { normalizeChatType } from '@/utils/chatType';
 import { withChatSyncRetry, withMessageCreateRetry } from '@/services/chat/chatHttpRetry';
 import type { ReactionEmojiUsageMutationPayload } from '@/store/reactionEmojiUsageStore';
 
 export type { ChatType };
+export type {
+  UnreadSnapshotDto,
+  MarkContextReadRequest,
+  MarkContextReadResponse,
+  UnreadTotals,
+  ContextKey,
+} from '@/services/chat/unreadSnapshot';
 
 export type PollType = 'CLASSICAL' | 'QUIZ';
 
@@ -489,15 +501,20 @@ export const chatApi = {
   },
 
   getUnreadObjects: async () => {
+    return chatApi.getUnreadSnapshot();
+  },
+
+  /** Canonical unread snapshot (GET /chat/unread-objects). */
+  getUnreadSnapshot: async (): Promise<ApiResponse<UnreadSnapshotDto>> => {
     if (typeof window !== 'undefined') {
       const t = localStorage.getItem('token')?.trim();
       if (!t) {
         return Promise.reject(new Error('auth.noLocalToken'));
       }
     }
-    if (unreadObjectsInFlight) return unreadObjectsInFlight;
+    if (unreadObjectsInFlight) return unreadObjectsInFlight as Promise<ApiResponse<UnreadSnapshotDto>>;
     unreadObjectsInFlight = api
-      .get<ApiResponse<UnreadObjectsApiPayload>>('/chat/unread-objects')
+      .get<ApiResponse<UnreadSnapshotDto>>('/chat/unread-objects')
       .then((response) => response.data)
       .catch((error) => {
         unreadObjectsInFlight = null;
@@ -507,12 +524,22 @@ export const chatApi = {
     setTimeout(() => {
       unreadObjectsInFlight = null;
     }, UNREAD_OBJECTS_IN_FLIGHT_TTL_MS);
-    return data;
+    return data as ApiResponse<UnreadSnapshotDto>;
+  },
+
+  markContextRead: async (body: MarkContextReadRequest) => {
+    const response = await api.post<ApiResponse<MarkContextReadResponse>>('/chat/mark-context-read', body);
+    return response.data;
+  },
+
+  markAllRead: async () => {
+    const response = await api.post<ApiResponse<UnreadSnapshotDto>>('/chat/mark-all-read', {});
+    return response.data;
   },
 
   getUserChatGames: async () => {
     const response = await api.get<ApiResponse<Game[]>>('/chat/user-games');
-    return response.data;
+    return response.data.data ?? [];
   },
 
   getGameParticipants: async (gameId: string) => {
@@ -845,6 +872,9 @@ export const chatApi = {
     unreadCountCache.clear();
     unreadCountPromise = null;
     unreadObjectsInFlight = null;
+    void import('@/store/unreadStore').then(({ useUnreadStore }) => {
+      useUnreadStore.getState().refreshAll().catch(() => {});
+    });
   },
 
   getUnreadCountForContext: async (contextType: ChatContextType, contextId: string): Promise<number> => {

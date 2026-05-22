@@ -15,6 +15,12 @@
     "stepScoringModeHint": "How do you want to score each match?",
     "stepSetStructureHint": "Choose the set structure for each match.",
     "stepPointsTotalHint": "How many points are played in each set (both teams combined)?",
+    "stepPointsTotalHintBySport": {
+      "TABLE_TENNIS": "Pick a point cap per game, or a best-of match (games to 11).",
+      "BADMINTON": "Choose match length — usually best of 3 games to 21.",
+      "SQUASH": "Best-of-5 match — games to 11, win by 2.",
+      "PICKLEBALL": "How many points are played in each game?"
+    },
     "stepGenerationHint": "How are matchups decided each round?",
     "stepRankingHint": "Configure how the overall winner is determined.",
     "standingPointsHint": "Points per match outcome for the standings table (separate from points scored inside a match).",
@@ -30,12 +36,40 @@
       "CLASSIC": {
         "title": "Games / Sets",
         "subtitle": "Tennis-style point counting (15/30/40…), then games and sets — classic padel.",
-        "hint": "e.g. 15 / 30 / 40 in a game → set score 6–4"
+        "hint": "e.g. 15 / 30 / 40 in a game → set score 6–4",
+        "sport": {
+          "TENNIS": {
+            "subtitle": "Tennis-style point counting (15/30/40…), then games and sets.",
+            "hint": "e.g. 15 / 30 / 40 in a game → set score 6–4"
+          }
+        }
       },
       "POINTS": {
         "title": "Simple Points",
         "subtitle": "Each set runs for a fixed total of points (both teams added). Whoever has more at the end wins the set — not 15/30/40 games.",
-        "hint": "e.g. 11–10 in a 21-point set — combined total must match the cap"
+        "hint": "e.g. 11–10 in a 21-point set — combined total must match the cap",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Rally scoring",
+            "subtitle": "Games to a point target with win-by-2 — no 15/30/40 game scoring.",
+            "hint": "e.g. an 11–9 game or a best-of-3 match to 11"
+          },
+          "BADMINTON": {
+            "title": "Rally scoring",
+            "subtitle": "Games to 21 points (win by 2) or a single game to 21.",
+            "hint": "e.g. 21–19 in a game, or winning 2 of 3 games"
+          },
+          "SQUASH": {
+            "title": "Rally scoring",
+            "subtitle": "PAR scoring to 11 (win by 2), or best-of matches to 11.",
+            "hint": "e.g. 11–8 per game in a best-of-5 match"
+          },
+          "PICKLEBALL": {
+            "title": "Rally scoring",
+            "subtitle": "Points to a fixed cap per game — common pickleball lengths below.",
+            "hint": "e.g. 11–9 with rally or side-out scoring you play locally"
+          }
+        }
       }
     },
     "generation": {
@@ -160,10 +194,80 @@
         "subtitle": "16 points total in the set (both teams); most points wins",
         "hint": "Quick sets — Americano style"
       },
+      "POINTS_11": {
+        "title": "11 points",
+        "subtitle": "Single game to 11 points, win by 2",
+        "hint": "Quick rally game",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Game to 11",
+            "subtitle": "One game to 11 points (win by 2)",
+            "hint": "e.g. 11–9 — win by 2 at deuce"
+          },
+          "PICKLEBALL": {
+            "title": "Game to 11",
+            "subtitle": "One rally game to 11 points, win by 2",
+            "hint": "Common recreational pickleball length"
+          }
+        }
+      },
       "POINTS_21": {
         "title": "21 points",
         "subtitle": "21 points total in the set (both teams); most points wins",
-        "hint": "Common Americano length"
+        "hint": "Common Americano length",
+        "sport": {
+          "BADMINTON": {
+            "title": "Game to 21",
+            "subtitle": "One game to 21 points, win by 2",
+            "hint": "Shorter badminton game"
+          },
+          "PICKLEBALL": {
+            "title": "Game to 21",
+            "subtitle": "One game to 21 points",
+            "hint": "Common pickleball game length"
+          }
+        }
+      },
+      "BEST_OF_3_11": {
+        "title": "Best of 3 · to 11",
+        "subtitle": "Three games to 11 points each, win by 2; first to 2 games wins",
+        "hint": "Standard table tennis match",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Best of 3 games to 11",
+            "subtitle": "Three games to 11 (win by 2); first to 2 games wins the match",
+            "hint": "Official table tennis match length"
+          }
+        }
+      },
+      "BEST_OF_5_11": {
+        "title": "Best of 5 · to 11",
+        "subtitle": "Five games to 11; first to 3 games wins the match",
+        "hint": "Longer rally match",
+        "sport": {
+          "SQUASH": {
+            "title": "Best of 5 games to 11",
+            "subtitle": "Five games to 11 (win by 2); first to 3 games wins",
+            "hint": "Standard squash match length"
+          }
+        }
+      },
+      "PAR_11": {
+        "title": "PAR to 11",
+        "subtitle": "Point-a-rally to 11, win by 2",
+        "hint": "Squash PAR scoring",
+        "sport": {
+          "SQUASH": {
+            "title": "PAR to 11",
+            "subtitle": "Official squash PAR — every rally scores, game to 11 (win by 2)",
+            "hint": "Standard competitive squash"
+          }
+        }
+      },
+      "BEST_OF_3_21": {
+        "title": "Best of 3 games to 21",
+        "subtitle": "Three games to 21 points each, win by 2; first to 2 games wins the match",
+        "hint": "Standard badminton match length"
       },
       "POINTS_24": {
         "title": "24 points",
@@ -194,8 +298,13 @@
       "CLASSIC_SHORT_SET": "Short sets",
       "CLASSIC_SUPER_TIEBREAK": "Super tie-break",
       "CLASSIC_TIMED": "Games/sets · timed",
+      "POINTS_11": "To 11",
       "POINTS_16": "To 16",
       "POINTS_21": "To 21",
+      "BEST_OF_3_11": "Bo3 · to 11",
+      "BEST_OF_3_21": "Bo3 · to 21",
+      "BEST_OF_5_11": "Bo5 · to 11",
+      "PAR_11": "PAR · 11",
       "POINTS_24": "To 24",
       "POINTS_32": "To 32",
       "TIMED": "Timed",
@@ -216,6 +325,15 @@
       "customDuration": "Custom (1–60 min)",
       "minutesLabel": "{{minutes}} min",
       "presetMinutes": "{{minutes}} min"
+    },
+    "bestOfMatch": {
+      "label": "Best-of match (games)",
+      "labelBySport": {
+        "TABLE_TENNIS": "Best-of match",
+        "BADMINTON": "Best-of match",
+        "SQUASH": "Best-of match"
+      },
+      "optionTo": "Best of {{sets}} · to {{cap}}"
     },
     "customPoints": {
       "label": "Custom total",

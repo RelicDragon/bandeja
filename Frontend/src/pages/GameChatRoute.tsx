@@ -1,14 +1,5 @@
-import { useParams, Navigate } from 'react-router-dom';
-import { useDesktop } from '@/hooks/useDesktop';
 import { GameChat } from './GameChat';
 
-export const GameChatRoute = () => {
-  const { id } = useParams<{ id: string }>();
-  const isDesktop = useDesktop();
-
-  if (isDesktop && id) {
-    return <Navigate to={`/games/${id}`} replace />;
-  }
-
-  return <GameChat />;
-};
+/** Standalone game chat (e.g. deep links). Chats tab uses MainPage + embedded GameChat.
+ *  Mobile/full-page: unmount on route leave runs socket leave + initial-load abort (I1.5). */
+export const GameChatRoute = () => <GameChat />;

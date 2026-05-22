@@ -1,3 +1,21 @@
+import type { Sport } from '@shared/sport';
+
+export type { Sport };
+
+export type SportLevelSource = 'DEFAULT' | 'QUESTIONNAIRE' | 'MANUAL';
+
+export interface UserSportProfile {
+  sport: Sport;
+  level: number;
+  reliability: number;
+  gamesPlayed: number;
+  gamesWon: number;
+  questionnaireCompletedAt?: string | null;
+  questionnaireSkippedAt?: string | null;
+  questionnaireVersion?: string | null;
+  levelSource?: SportLevelSource;
+}
+
 export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'WINNER_COURT' | 'LADDER' | 'CUSTOM';
 export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON' | 'BAR' | 'TRAINING';
@@ -49,10 +67,15 @@ export type ScoringPreset =
   | 'CLASSIC_SUPER_TIEBREAK'
   | 'CLASSIC_SINGLE_SET'
   | 'CLASSIC_TIMED'
+  | 'POINTS_11'
   | 'POINTS_16'
   | 'POINTS_21'
   | 'POINTS_24'
   | 'POINTS_32'
+  | 'BEST_OF_3_11'
+  | 'BEST_OF_3_21'
+  | 'BEST_OF_5_11'
+  | 'PAR_11'
   | 'TIMED'
   | 'CUSTOM';
 export interface GameSetupParams {
@@ -89,6 +112,8 @@ export interface BasicUser {
   lastName?: string;
   avatar?: string | null;
   level: number;
+  primarySport?: Sport;
+  sportsEnabled?: Sport[];
   socialLevel: number;
   reliability?: number;
   gender: Gender;
@@ -181,8 +206,13 @@ export interface User extends BasicUser {
   defaultCurrency?: string;
   genderIsSet?: boolean;
   nameIsSet?: boolean;
+  primarySportIsSet?: boolean;
   cityIsSet?: boolean;
   welcomeScreenPassed?: boolean;
+  sportsEnabled?: Sport[];
+  lastCreatedSport?: Sport | null;
+  sportsPlayed?: Partial<Record<Sport, number>>;
+  sportProfiles?: UserSportProfile[];
   canCreateLeague?: boolean;
   preferredHandLeft?: boolean;
   preferredHandRight?: boolean;
@@ -278,6 +308,7 @@ export interface Court {
   id: string;
   name: string;
   clubId: string;
+  sport?: Sport | null;
   courtType?: string;
   isIndoor: boolean;
   isActive?: boolean;
@@ -368,9 +399,17 @@ export interface Faq {
   updatedAt: string;
 }
 
+export type GameLastMessagePreview = {
+  preview: string;
+  updatedAt: string;
+  senderId?: string | null;
+  sender?: BasicUser | null;
+};
+
 export interface Game {
   id: string;
   entityType: EntityType;
+  sport?: Sport;
   gameType: GameType;
   name?: string | null;
   description?: string | null;
@@ -384,6 +423,7 @@ export interface Game {
   startTime: string;
   endTime: string;
   maxParticipants: number;
+  playersPerMatch?: number;
   minParticipants: number;
   minLevel?: number;
   maxLevel?: number;
@@ -451,6 +491,7 @@ export interface Game {
     leagueSeason?: {
       id: string;
       leagueId: string;
+      sport?: Sport;
       league: {
         id: string;
         name: string;
@@ -460,6 +501,7 @@ export interface Game {
         name?: string;
         avatar?: string | null;
         originalAvatar?: string | null;
+        sport?: Sport;
       } | null;
     };
   } | null;
@@ -479,6 +521,7 @@ export interface Game {
   leagueSeason?: {
     id: string;
     leagueId: string;
+    sport?: Sport;
     league: {
       id: string;
       name: string;
@@ -488,6 +531,7 @@ export interface Game {
       name?: string;
       avatar?: string | null;
       originalAvatar?: string | null;
+      sport?: Sport;
     } | null;
   };
   faqs?: Faq[];
@@ -498,10 +542,7 @@ export interface Game {
     lastBatchId?: string;
     processedOps?: string[];
   };
-  lastMessage?: {
-    preview: string;
-    updatedAt: string;
-  } | null;
+  lastMessage?: GameLastMessagePreview | import('@/api/chat').ChatMessage | null;
   userNote?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -629,6 +670,7 @@ export interface MarketItemCategory {
   id: string;
   name: string;
   order?: number;
+  sport?: Sport;
 }
 
 export interface MarketItem {

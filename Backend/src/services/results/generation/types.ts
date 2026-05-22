@@ -63,6 +63,11 @@ export interface GenRound {
 
 export interface GenGame {
   id: string;
+  sport?: import('@prisma/client').Sport;
+  /** Event roster cap (ADR-002). */
+  maxParticipants?: number;
+  /** Players per match: 2 = 1v1, 4 = 2v2 (ADR-002). */
+  playersPerMatch?: number;
   participants: GenParticipant[];
   hasFixedTeams?: boolean;
   allowUserInMultipleTeams?: boolean;

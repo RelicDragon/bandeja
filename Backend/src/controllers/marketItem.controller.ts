@@ -5,22 +5,27 @@ import { AuthRequest } from '../middleware/auth';
 import { MarketItemService } from '../services/marketItem/marketItem.service';
 import { MarketItemBidService } from '../services/marketItem/marketItemBid.service';
 import { MarketItemParticipantService } from '../services/marketItem/participant.service';
-import { MarketItemStatus, MarketItemTradeType } from '@prisma/client';
+import { MarketItemStatus, MarketItemTradeType, Sport } from '@prisma/client';
 import prisma from '../config/database';
 import { SUPPORTED_CURRENCIES, USER_SELECT_FIELDS } from '../utils/constants';
 import notificationService from '../services/notification.service';
+import { AdminMarketCategoryService } from '../services/admin/marketCategory.service';
 import {
   createAuctionOutbidPushNotification,
   createAuctionNewBidPushNotification,
   createAuctionBINAcceptedPushNotification,
 } from '../services/push/notifications/auction-push.notification';
 
-export const getMarketCategories = asyncHandler(async (_req: AuthRequest, res: Response) => {
-  const categories = await prisma.marketItemCategory.findMany({
-    where: { isActive: true },
-    orderBy: [{ order: 'asc' }, { name: 'asc' }],
-    select: { id: true, name: true, order: true },
-  });
+export const getMarketCategories = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const sportParam = req.query.sport;
+  let sport: Sport | undefined;
+  if (sportParam !== undefined && sportParam !== '') {
+    if (typeof sportParam !== 'string' || !Object.values(Sport).includes(sportParam as Sport)) {
+      throw new ApiError(400, 'Invalid sport');
+    }
+    sport = sportParam as Sport;
+  }
+  const categories = await AdminMarketCategoryService.listActive(sport);
   res.json({ success: true, data: categories });
 });
 

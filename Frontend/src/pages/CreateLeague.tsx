@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
@@ -16,10 +16,14 @@ import { mediaApi } from '@/api/media';
 import { Club, City } from '@/types';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { useGameFormat } from '@/hooks/useGameFormat';
+import { useClampGameFormatToSport } from '@/hooks/useSportGameFormatLimits';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { maxLeagueSeasonParticipantsCap } from '@/utils/userMaxParticipantsInGame';
+import type { Sport } from '@/sport/sportRegistry';
+import { listCreateFlowSports, resolveCreateGameDefaultSport } from '@/utils/profileSports';
+import { CreateFlowSportSelector } from '@/components/createGame/CreateFlowSportSelector';
 
 export const CreateLeague = () => {
   const { t } = useTranslation();
@@ -56,6 +60,21 @@ export const CreateLeague = () => {
   );
 
   const [loading, setLoading] = useState(false);
+  const enabledSports = useMemo(() => listCreateFlowSports(user), [user]);
+
+  const [selectedSport, setSelectedSport] = useState<Sport>(() =>
+    resolveCreateGameDefaultSport(user),
+  );
+
+  const showSportSelector = enabledSports.length > 1;
+
+  const sportFormatLimits = useClampGameFormatToSport(selectedSport, leagueGameFormat);
+
+  useEffect(() => {
+    if (!enabledSports.includes(selectedSport)) {
+      setSelectedSport(enabledSports[0] ?? 'PADEL');
+    }
+  }, [enabledSports, selectedSport]);
 
   useEffect(() => {
     setMaxParticipants((prev) => Math.max(4, Math.min(prev, seasonParticipantsCap)));
@@ -126,6 +145,7 @@ export const CreateLeague = () => {
         clubId: selectedClubId || undefined,
         season: {
           name: seasonName.trim(),
+          sport: selectedSport,
           minLevel: playerLevelRange[0],
           maxLevel: playerLevelRange[1],
           maxParticipants,
@@ -243,6 +263,15 @@ export const CreateLeague = () => {
             format={leagueGameFormat}
             generationSlotCount={maxParticipants}
             onOpenWizard={() => setIsLeagueFormatWizardOpen(true)}
+            sportRow={
+              showSportSelector ? (
+                <CreateFlowSportSelector
+                  sports={enabledSports}
+                  value={selectedSport}
+                  onChange={setSelectedSport}
+                />
+              ) : undefined
+            }
           />
           {isLeagueFormatWizardOpen && (
             <GameFormatWizard
@@ -251,6 +280,8 @@ export const CreateLeague = () => {
               wizardEntityType="LEAGUE_SEASON"
               generationSlotCount={maxParticipants}
               onClose={() => setIsLeagueFormatWizardOpen(false)}
+              allowedScoringModes={sportFormatLimits.allowedScoringModes}
+              allowedScoringPresets={sportFormatLimits.allowedScoringPresets}
             />
           )}
 

@@ -19,9 +19,15 @@ import { TransactionService } from '../services/transaction.service';
 import { ensureUserCityAssigned } from '../services/user-city-bootstrap.service';
 import { needsDisplayNamePersist, resolveDisplayNameData } from '../services/user/userDisplayName.service';
 import { loginOrRegisterWithApple, loginOrRegisterWithGoogle } from '../services/auth/oauthLogin.service';
+import {
+  parseRegistrationPrimarySport,
+  registrationSportExplicitlyChosen,
+  registrationSportUserFields,
+} from '../services/auth/registrationSport.service';
 
 export const registerWithPhone = asyncHandler(async (req: Request, res: Response) => {
-  const { phone, password, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
+  const { phone, password, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, primarySport: primarySportRaw } = req.body;
+  const primarySport = parseRegistrationPrimarySport(primarySportRaw);
   const nameData = resolveDisplayNameData(firstName, lastName);
 
   const existingUser = await prisma.user.findUnique({
@@ -60,6 +66,9 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
       preferredHandRight: preferredHandRight || false,
       preferredCourtSideLeft: preferredCourtSideLeft || false,
       preferredCourtSideRight: preferredCourtSideRight || false,
+      ...registrationSportUserFields(primarySport, {
+        primarySportIsSet: registrationSportExplicitlyChosen(primarySportRaw),
+      }),
     },
     select: PROFILE_SELECT_FIELDS,
   });
@@ -136,7 +145,8 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const registerWithTelegram = asyncHandler(async (req: Request, res: Response) => {
-  const { telegramId, telegramUsername, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight } = req.body;
+  const { telegramId, telegramUsername, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, primarySport: primarySportRaw } = req.body;
+  const primarySport = parseRegistrationPrimarySport(primarySportRaw);
   const nameData = resolveDisplayNameData(firstName, lastName);
 
   const existingUser = await prisma.user.findUnique({
@@ -173,6 +183,9 @@ export const registerWithTelegram = asyncHandler(async (req: Request, res: Respo
       preferredHandRight: preferredHandRight || false,
       preferredCourtSideLeft: preferredCourtSideLeft || false,
       preferredCourtSideRight: preferredCourtSideRight || false,
+      ...registrationSportUserFields(primarySport, {
+        primarySportIsSet: registrationSportExplicitlyChosen(primarySportRaw),
+      }),
     },
     select: PROFILE_SELECT_FIELDS,
   });

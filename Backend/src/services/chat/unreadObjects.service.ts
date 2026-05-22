@@ -10,7 +10,13 @@ export interface UnreadObjectsResult {
   bugs: Array<{ bug: any; unreadCount: number }>;
   userChats: Array<{ chat: any; unreadCount: number }>;
   groupChannels: Array<{ groupChannel: any; unreadCount: number }>;
-  marketItems: Array<{ marketItem: any; groupChannelId: string; unreadCount: number }>;
+  marketItems: Array<{
+    marketItem: any;
+    groupChannelId: string;
+    buyerId?: string | null;
+    sellerId?: string | null;
+    unreadCount: number;
+  }>;
 }
 
 const GAME_INCLUDE = {
@@ -54,7 +60,7 @@ const GAME_COUNT_CONCURRENCY = 30;
 
 async function getGamesWithUnread(userId: string): Promise<UnreadObjectsResult['games']> {
   const minimalGames = await prisma.game.findMany({
-    where: { participants: { some: { userId } } },
+    where: { status: { not: 'ARCHIVED' }, participants: { some: { userId } } },
     select: {
       id: true,
       status: true,
@@ -71,7 +77,9 @@ async function getGamesWithUnread(userId: string): Promise<UnreadObjectsResult['
     const batchResults = await Promise.all(
       batch.map(async (g) => {
         const participant = g.participants[0];
-        const chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(
+        const chatTypeFilter = await UnreadCountBatchService.resolveGameChatTypeFilterForUser(
+          g.id,
+          userId,
           participant,
           g.status
         );
@@ -257,7 +265,7 @@ async function getMarketItemChannelsWithUnread(
         marketItemId: { not: null },
         participants: { some: { userId, hidden: false } },
       },
-      select: { id: true, marketItemId: true },
+      select: { id: true, marketItemId: true, buyerId: true },
     }),
     ChatMuteService.getMutedChats(userId, 'GROUP'),
   ]);
@@ -280,9 +288,11 @@ async function getMarketItemChannelsWithUnread(
 
   const fullChannels = await prisma.groupChannel.findMany({
     where: { id: { in: channelIdsWithUnread } },
-    include: {
+    select: {
+      id: true,
+      buyerId: true,
       marketItem: {
-        select: { id: true, title: true, mediaUrls: true },
+        select: { id: true, title: true, mediaUrls: true, sellerId: true },
       },
     },
   });
@@ -294,6 +304,8 @@ async function getMarketItemChannelsWithUnread(
       return {
         marketItem: channel.marketItem,
         groupChannelId: channel.id,
+        buyerId: channel.buyerId,
+        sellerId: channel.marketItem?.sellerId ?? null,
         unreadCount: unreadMap[id] ?? 0,
       };
     })

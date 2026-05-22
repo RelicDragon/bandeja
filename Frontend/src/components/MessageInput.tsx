@@ -15,6 +15,7 @@ import { ChevronDown, X } from 'lucide-react';
 import { ChatType, Game, Bug } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { isGroupChannelAdminOrOwner } from '@/utils/gameResults';
+import { isUserGroupChannelParticipant } from '@/utils/groupChannelParticipation';
 import { ReplyPreview } from './ReplyPreview';
 import { EditPreview } from './EditPreview';
 import { MentionInput } from './MentionInput';
@@ -156,7 +157,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const isGroup = groupChannel && !isChannel;
   const isChannelAdminOrOwner =
     isChannel && user && groupChannel ? isGroupChannelAdminOrOwner(groupChannel, user.id) : false;
-  const isChannelParticipant = groupChannel?.isParticipant ?? false;
+  const isChannelParticipant =
+    groupChannel && user ? isUserGroupChannelParticipant(groupChannel, user.id) : false;
   const canWrite = isChannel ? isChannelAdminOrOwner : isGroup ? isChannelParticipant : true;
   const shouldShowJoinButton = isChannel && !isChannelAdminOrOwner && !isChannelParticipant;
   const isDisabled = !canWrite || disabled;

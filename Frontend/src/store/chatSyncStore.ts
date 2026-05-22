@@ -22,6 +22,9 @@ interface ChatSyncState {
   getAndClearMissed: (contextType: ChatContextType, contextId: string, gameChatType?: ChatType) => ChatMessage[];
   syncInProgress: boolean;
   setSyncInProgress: (v: boolean) => void;
+  /** Foreground open reconcile / bootstrap sync — suppresses stale full reload. */
+  isOpenSyncing: boolean;
+  setOpenSyncing: (v: boolean) => void;
   lastSyncCompletedAt: number | null;
   setLastSyncCompletedAt: (t: number) => void;
   lastThreadPaintSource: 'dexie' | 'network' | null;
@@ -77,6 +80,8 @@ export const useChatSyncStore = create<ChatSyncState>((set, get) => ({
   },
   syncInProgress: false,
   setSyncInProgress: (v) => set({ syncInProgress: v }),
+  isOpenSyncing: false,
+  setOpenSyncing: (v) => set({ isOpenSyncing: v }),
   lastSyncCompletedAt: null,
   setLastSyncCompletedAt: (t) => set({ lastSyncCompletedAt: t }),
   lastThreadPaintSource: null,

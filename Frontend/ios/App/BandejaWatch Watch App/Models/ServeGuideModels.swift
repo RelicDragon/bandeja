@@ -35,8 +35,18 @@ struct ServeGuideSnapshot: Sendable, Equatable, Identifiable {
     var courtSide: CourtServeSide
     var tieBreakServeSlot: TieBreakServeSlot?
     var changeEndsBeforeNextPoint: Bool
+    /// Team A at diagram bottom when false; XOR match-start anchor and change-of-ends parity.
+    var courtEndsSwapped: Bool
+    var courtTeamASidesMirrored: Bool
+    var courtTeamBSidesMirrored: Bool
     var accessibilityLine: String
     var motionToken: String
+
+    func replacingMotionToken(_ motionToken: String) -> ServeGuideSnapshot {
+        var copy = self
+        copy.motionToken = motionToken
+        return copy
+    }
 }
 
 enum TieBreakServeSlot: Sendable, Equatable {

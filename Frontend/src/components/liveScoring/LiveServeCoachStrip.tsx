@@ -1,9 +1,11 @@
+import type { ComponentType } from 'react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { BasicUser } from '@/types';
 import type { LiveTeamSide, ServeGuideSnapshot } from '@/utils/liveScoring';
 import { CourtFlipBounceArrow } from '@/components/liveScoring/CourtFlipBounceArrow';
 import { ServeCourtSchema } from '@/components/liveScoring/ServeCourtSchema';
+import type { ServeCourtSchemaProps } from './ServeCourtSchema';
 
 function ChangeEndsBounceArrow({ direction }: { direction: 'up' | 'down' }) {
   const Icon = direction === 'up' ? ArrowUp : ArrowDown;
@@ -40,9 +42,17 @@ type LiveServeCoachStripProps = {
   snapshot: ServeGuideSnapshot;
   teamAPlayers: BasicUser[];
   teamBPlayers: BasicUser[];
+  CourtSchemaComponent?: ComponentType<ServeCourtSchemaProps>;
+  matchDoubles?: boolean;
 };
 
-export const LiveServeCoachStrip = ({ snapshot, teamAPlayers, teamBPlayers }: LiveServeCoachStripProps) => {
+export const LiveServeCoachStrip = ({
+  snapshot,
+  teamAPlayers,
+  teamBPlayers,
+  CourtSchemaComponent = ServeCourtSchema,
+  matchDoubles = false,
+}: LiveServeCoachStripProps) => {
   const { t } = useTranslation();
 
   const serveFromLabel = (s: ServeGuideSnapshot['courtSide']) =>
@@ -72,11 +82,12 @@ export const LiveServeCoachStrip = ({ snapshot, teamAPlayers, teamBPlayers }: Li
   return (
     <div className="flex w-full items-stretch justify-center gap-1.5">
       {snapshot.changeEndsBeforeNextPoint ? <ChangeEndsSideTag side="left" label={changeEndsLabel} /> : null}
-      <ServeCourtSchema
+      <CourtSchemaComponent
         courtSide={snapshot.courtSide}
         serverTeam={snapshot.serverTeam}
         serverPlayerIndex={snapshot.serverPlayerIndex}
         motionToken={snapshot.motionToken}
+        matchDoubles={matchDoubles}
         teamAPlayers={teamAPlayers}
         teamBPlayers={teamBPlayers}
         courtEndsSwapped={snapshot.courtEndsSwapped}

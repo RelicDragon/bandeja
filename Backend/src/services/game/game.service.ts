@@ -7,6 +7,7 @@ export { ParticipantService } from './participant.service';
 export { AdminService } from './admin.service';
 export { OwnershipService } from './ownership.service';
 
+import { Sport } from '@prisma/client';
 import { GameReadinessService } from './readiness.service';
 import { GameCreateService } from './create.service';
 import { GameReadService } from './read.service';
@@ -53,8 +54,30 @@ export class GameService {
     return GameReadService.getPastGames(userId, userCityId, limit, offset, startDate, endDate);
   }
 
-  static async getAvailableGames(userId: string, userCityId?: string, startDate?: string, endDate?: string, showArchived?: boolean, includeLeagues?: boolean) {
-    return GameReadService.getAvailableGames(userId, userCityId, startDate, endDate, showArchived, includeLeagues);
+  static async getAvailableGames(
+    userId: string,
+    userCityId?: string,
+    startDate?: string,
+    endDate?: string,
+    showArchived?: boolean,
+    includeLeagues?: boolean,
+    sportQuery?: unknown,
+    primarySport?: Sport | string | null,
+    showPrivateGames?: boolean,
+    isAdmin?: boolean,
+  ) {
+    return GameReadService.getAvailableGames(
+      userId,
+      userCityId,
+      startDate,
+      endDate,
+      showArchived,
+      includeLeagues,
+      sportQuery,
+      primarySport,
+      showPrivateGames,
+      isAdmin,
+    );
   }
 
   static async updateGame(id: string, data: any, userId: string, isAdmin: boolean) {

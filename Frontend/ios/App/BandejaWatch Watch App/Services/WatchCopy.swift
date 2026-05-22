@@ -663,6 +663,96 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func tableTennisScoring(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Tenis de mesa"
+        case "ru": return "Настольный теннис"
+        case "sr": return "Stoni tenis"
+        default: return "Table tennis"
+        }
+    }
+
+    nonisolated static func badmintonScoring(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Bádminton"
+        case "ru": return "Бадминтон"
+        case "sr": return "Badminton"
+        default: return "Badminton"
+        }
+    }
+
+    nonisolated static func pickleballScoring(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Pádel pickleball"
+        case "ru": return "Пиклбол"
+        case "sr": return "Piklbol"
+        default: return "Pickleball"
+        }
+    }
+
+    nonisolated static func squashScoring(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Squash"
+        case "ru": return "Сквош"
+        case "sr": return "Skvoš"
+        default: return "Squash"
+        }
+    }
+
+    nonisolated static func pickleballUnderhandServe(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Saque bajo"
+        case "ru": return "Подача снизу"
+        case "sr": return "Servis ispod"
+        default: return "Underhand serve"
+        }
+    }
+
+    nonisolated static func pickleballUnderhandServeHint(_ lang: String) -> String {
+        switch lang {
+        case "es": return "El saque debe ser bajo, contacto bajo la cintura. Diagonal al cuadro contrario. Solo honor — el marcador no cambia."
+        case "ru": return "Подача снизу, контакт ниже пояса. По диагонали в квадрат подачи. На доверии — счёт не меняется."
+        case "sr": return "Servis ispod ruke, kontakt ispod struka. Dijagonalno u suprotan boks. Na čast — rezultat se ne menja."
+        default: return "Serve must be underhand, contact below the waist. Diagonal into the opposite service court. Honor system — score unchanged."
+        }
+    }
+
+    nonisolated static func pickleballSideOut(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Side-out"
+        case "ru": return "Side-out"
+        case "sr": return "Side-out"
+        default: return "Side-out"
+        }
+    }
+
+    nonisolated static func pickleballSideOutHint(_ lang: String) -> String {
+        switch lang {
+        case "es": return "En side-out solo anota el equipo que saca; tras perder el punto saca el rival. Aquí son puntos rally — toca cualquier equipo."
+        case "ru": return "При side-out очко забивает только подающая команда; после проигрыша подаёт соперник. Здесь rally-очки — нажимайте любую команду."
+        case "sr": return "Kod side-out poen daje samo servirajući tim. Tabla koristi rally poene — dodirnite bilo koji tim."
+        default: return "On side-out only the serving team can score; after losing the rally the other team serves. This board uses rally points — tap either team."
+        }
+    }
+
+    nonisolated static func pickleballTwoBounce(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Dos rebotes"
+        case "ru": return "Два отскока"
+        case "sr": return "Dva odskoka"
+        default: return "Two-bounce"
+        }
+    }
+
+    nonisolated static func pickleballTwoBounceHint(_ lang: String) -> String {
+        switch lang {
+        case "es": return "La pelota debe botar una vez en cada lado antes del voleo (regla de dos rebotes en la cocina). Solo honor."
+        case "ru": return "Мяч должен отскочить по разу на каждой стороне до удара в воздухе (правило двух отскоков). На доверии."
+        case "sr": return "Loptica mora jednom odskociti na svakoj strani pre voleja. Samo na čast."
+        default: return "The ball must bounce once on each side before a volley (two-bounce rule). Honor system — score unchanged."
+        }
+    }
+
     nonisolated static func players(_ lang: String) -> String {
         switch lang {
         case "es": return "Jugadores"

@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { MapPin, User } from 'lucide-react';
 import { marketplaceApi, citiesApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
-import { useGroupChannelUnreadCounts } from '@/hooks/useGroupChannelUnreadCounts';
+import { useMarketItemUnread } from '@/hooks/useUnreadBridge';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { MarketItem, MarketItemCategory, City, PriceCurrency } from '@/types';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -13,8 +13,38 @@ import { MarketItemCard, MarketplaceFilters, formatPriceDisplay, MarketItemDrawe
 import { currencyCacheService } from '@/services/currencyCache.service';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
+import { getMarketplaceCategorySport } from '@/utils/marketplaceSport';
 
 const PAGE_SIZE = 20;
+
+function MarketplaceListItemCard({
+  item,
+  formatPrice,
+  tradeTypeLabel,
+  showLocation,
+  userCurrency,
+  onItemClick,
+}: {
+  item: MarketItem;
+  formatPrice: (item: MarketItem) => string;
+  tradeTypeLabel: Record<string, string>;
+  showLocation: boolean;
+  userCurrency: PriceCurrency;
+  onItemClick: (item: MarketItem) => void;
+}) {
+  const unreadCount = useMarketItemUnread(item);
+  return (
+    <MarketItemCard
+      item={item}
+      formatPrice={formatPrice}
+      tradeTypeLabel={tradeTypeLabel}
+      unreadCount={unreadCount > 0 ? unreadCount : undefined}
+      showLocation={showLocation}
+      userCurrency={userCurrency}
+      onItemClick={onItemClick}
+    />
+  );
+}
 
 export const MarketplaceList = () => {
   const { t } = useTranslation();
@@ -31,35 +61,20 @@ export const MarketplaceList = () => {
   const [hasMore, setHasMore] = useState(false);
   const pageRef = useRef(1);
   const cityId = (user?.currentCity?.id || user?.currentCityId) ?? '';
+  const categorySport = getMarketplaceCategorySport(user);
   const [filters, setFilters] = useState({ categoryId: '' });
   const itemIdFromUrl = searchParams.get('item') ?? null;
   const [selectedItem, setSelectedItem] = useState<MarketItem | null>(null);
-  const channelIds = useMemo(
-    () =>
-      items.flatMap((item) =>
-        item.groupChannel ? [item.groupChannel.id] : (item.groupChannels ?? []).map((c) => c.id)
-      ),
-    [items]
-  );
-  const unreadCounts = useGroupChannelUnreadCounts(channelIds);
-  const getUnreadForItem = useCallback(
-    (item: MarketItem) => {
-      if (item.groupChannel) return unreadCounts[item.groupChannel.id] ?? 0;
-      return (item.groupChannels ?? []).reduce((s, c) => s + (unreadCounts[c.id] ?? 0), 0);
-    },
-    [unreadCounts]
-  );
-
   useEffect(() => {
     if (isMyTab || categories.length > 0) return;
     setLoading(true);
-    marketplaceApi.getCategories().then((r) => {
+    marketplaceApi.getCategories(categorySport).then((r) => {
       const list = r.data || [];
       setCategories(list);
       if (list.length > 0) setFilters((f) => ({ ...f, categoryId: list[0].id }));
     }).catch(() => {}).finally(() => setLoading(false));
     citiesApi.getAll().then((r) => setCities(r.data || [])).catch(() => {});
-  }, [isMyTab, categories.length]);
+  }, [isMyTab, categories.length, categorySport]);
 
   const fetchData = useCallback(async (refresh = false) => {
     const page = refresh ? 1 : pageRef.current;
@@ -74,7 +89,7 @@ export const MarketplaceList = () => {
           page,
           limit: PAGE_SIZE,
         }),
-        !isMyTab && page === 1 ? marketplaceApi.getCategories() : Promise.resolve({ data: [] }),
+        !isMyTab && page === 1 ? marketplaceApi.getCategories(categorySport) : Promise.resolve({ data: [] }),
       ]);
       const pagination = (itemsRes as { data?: MarketItem[]; pagination?: { hasMore: boolean } }).pagination;
       setHasMore(pagination?.hasMore ?? false);
@@ -94,7 +109,7 @@ export const MarketplaceList = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [cityId, filters.categoryId, isMyTab, user?.id]);
+  }, [cityId, filters.categoryId, isMyTab, user?.id, categorySport]);
 
   useEffect(() => {
     if (!isMyTab && filters.categoryId === '' && categories.length === 0) return;
@@ -230,12 +245,11 @@ export const MarketplaceList = () => {
       ) : (
         <div className="flex flex-wrap gap-2 [&>*]:w-[calc(50%-4px)] sm:[&>*]:w-[calc(33.333%-6px)] sm:[&>*]:max-w-[200px]">
           {items.map((item) => (
-            <MarketItemCard
+            <MarketplaceListItemCard
               key={item.id}
               item={item}
               formatPrice={formatPrice}
               tradeTypeLabel={tradeTypeLabels}
-              unreadCount={getUnreadForItem(item) || undefined}
               showLocation={isMyTab}
               userCurrency={(user?.defaultCurrency as PriceCurrency) || DEFAULT_CURRENCY}
               onItemClick={openDrawer}

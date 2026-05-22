@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Calendar, MapPin, MessageCircle, Users } from 'lucide-react';
 import type { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
+import { useContextUnread } from '@/hooks/useUnreadBridge';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import {
   getClubTimezone,
@@ -18,24 +19,30 @@ interface YourLeaguesHomeLeagueGameRowProps {
 
 export function YourLeaguesHomeLeagueGameRow({
   game,
-  unreadCount = 0,
+  unreadCount: unreadProp = 0,
   onClick,
 }: YourLeaguesHomeLeagueGameRowProps) {
+  const displayUnread = useContextUnread('GAME', game.id, unreadProp);
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
   const clubTz = getClubTimezone(game);
-  const dateLabel = clubTz
-    ? getDateLabelInClubTz(game.startTime, clubTz, displaySettings, t)
-    : `${formatDate(game.startTime, 'EEEE').slice(0, 3)}, ${formatDate(game.startTime, 'd MMM')}`;
-  const timeDisplay = getGameTimeDisplay({
-    game,
-    displaySettings,
-    startTime: game.startTime,
-    endTime: game.endTime,
-    kind: 'time',
-    t,
-  });
+  const timeNotSet = game.timeIsSet !== true;
+  const dateLabel = timeNotSet
+    ? null
+    : clubTz
+      ? getDateLabelInClubTz(game.startTime, clubTz, displaySettings, t)
+      : `${formatDate(game.startTime, 'EEEE').slice(0, 3)}, ${formatDate(game.startTime, 'd MMM')}`;
+  const timeDisplay = timeNotSet
+    ? null
+    : getGameTimeDisplay({
+        game,
+        displaySettings,
+        startTime: game.startTime,
+        endTime: game.endTime,
+        kind: 'time',
+        t,
+      });
   const clubName = game.court?.club?.name || game.club?.name;
   const playingCount = (game.participants ?? []).filter((p) => p.status === 'PLAYING').length;
   const groupName = game.leagueGroup?.name;
@@ -52,13 +59,21 @@ export function YourLeaguesHomeLeagueGameRow({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-            {dateLabel}
-          </span>
-          <span className="text-xs text-gray-400 dark:text-gray-500">·</span>
-          <span className="text-xs font-medium text-gray-900 dark:text-white">
-            {timeDisplay.primaryText}
-          </span>
+          {timeNotSet ? (
+            <span className="text-xs font-medium italic text-gray-500 dark:text-gray-400">
+              {t('gameDetails.datetimeNotSet')}
+            </span>
+          ) : (
+            <>
+              <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                {dateLabel}
+              </span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">·</span>
+              <span className="text-xs font-medium text-gray-900 dark:text-white">
+                {timeDisplay!.primaryText}
+              </span>
+            </>
+          )}
           {clubName && (
             <>
               <span className="text-xs text-gray-300 dark:text-gray-600">•</span>
@@ -82,10 +97,10 @@ export function YourLeaguesHomeLeagueGameRow({
         )}
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
-        {unreadCount > 0 && (
+        {displayUnread > 0 && (
           <span className="inline-flex items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
             <MessageCircle size={10} strokeWidth={2.5} />
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {displayUnread > 99 ? '99+' : displayUnread}
           </span>
         )}
         <div className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400">

@@ -71,5 +71,28 @@
     "retry": "Retry",
     "on": "On",
     "pressBackAgainToExit": "Press back again to exit"
+  },
+  "sport": {
+    "sport": "Sport",
+    "padel": "Padel",
+    "padelInLevel": "padelu",
+    "tennis": "Tenis",
+    "tennisInLevel": "tenisu",
+    "pickleball": "Pickleball",
+    "pickleballInLevel": "pickleballu",
+    "badminton": "Badminton",
+    "badmintonInLevel": "badmintonu",
+    "tableTennis": "Stoni tenis",
+    "tableTennisInLevel": "stonom tenisu",
+    "squash": "Skvoš",
+    "squashInLevel": "skvošu",
+    "court": "Teren",
+    "matchFormat": "Format meča",
+    "match1v1": "1v1",
+    "match2v2": "2v2"
+  },
+  "sportFilter": {
+    "section": "Sport",
+    "allSports": "Svi sportovi"
   }
 }

@@ -2,10 +2,11 @@ import * as cron from 'node-cron';
 import prisma from '../config/database';
 import { calculateGameStatus, isResultsBasedEntityType } from '../utils/gameStatus';
 import { cleanupInviteParticipantsForEndedGame } from '../utils/gameInviteCleanup';
-import { EntityType } from '@prisma/client';
+import { EntityType, ResultsStatus } from '@prisma/client';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
 import notificationService from './notification.service';
 import { BarResultsService } from './barResults.service';
+import { LeagueStandingsRecalculateService } from './league/leagueStandingsRecalculate.service';
 
 export class GameStatusScheduler {
   private cronJob: cron.ScheduledTask | null = null;
@@ -52,12 +53,14 @@ export class GameStatusScheduler {
           resultsStatus: true,
           status: true,
           entityType: true,
+          parentId: true,
           cityId: true,
           timeIsSet: true,
           finishedDate: true,
         },
       });
 
+      const leagueSeasonIdsToRebuild = new Set<string>();
       let updated = 0;
       for (const game of games) {
         if (!game.timeIsSet) {
@@ -102,6 +105,28 @@ export class GameStatusScheduler {
           if (newStatus === 'FINISHED' || newStatus === 'ARCHIVED') {
             await cleanupInviteParticipantsForEndedGame(game.id);
           }
+
+          if (
+            game.entityType === EntityType.LEAGUE &&
+            game.parentId &&
+            game.resultsStatus === ResultsStatus.FINAL &&
+            (newStatus === 'FINISHED' || newStatus === 'ARCHIVED')
+          ) {
+            leagueSeasonIdsToRebuild.add(game.parentId);
+          }
+        }
+      }
+
+      for (const leagueSeasonId of leagueSeasonIdsToRebuild) {
+        try {
+          await prisma.$transaction((tx) =>
+            LeagueStandingsRecalculateService.recalculateFromPlayedGames(leagueSeasonId, tx),
+          );
+        } catch (error) {
+          console.error(
+            `Failed to recalculate league standings for season ${leagueSeasonId}:`,
+            error,
+          );
         }
       }
 
@@ -225,6 +250,7 @@ export class GameStatusScheduler {
             id: true,
             language: true,
             currentCityId: true,
+            primarySport: true,
           }
         }
       }

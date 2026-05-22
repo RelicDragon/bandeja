@@ -1,7 +1,7 @@
 import { Calendar, List, History } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useHeaderStore } from '@/store/headerStore';
+import { useMyGamesSubtabUnreadBadges } from '@/hooks/useUnreadBridge';
 import { useHomeFromUrl } from '@/hooks/useHomeFromUrl';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 
@@ -10,7 +10,7 @@ export const MyGamesTabController = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { tab } = useHomeFromUrl();
-  const { myGamesUnreadCount, pastGamesUnreadCount } = useHeaderStore();
+  const { myGames: myGamesUnreadCount, pastGames: pastGamesUnreadCount } = useMyGamesSubtabUnreadBadges();
 
   const handleTabChange = (id: string) => {
     const newParams = new URLSearchParams(searchParams);

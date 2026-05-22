@@ -14,6 +14,26 @@ import { GameService } from '../game/game.service';
 import type { GameReadinessDb } from '../game/readiness.service';
 import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
+import { resolvePlayersPerMatch } from '../../sport/sportRegistry';
+import {
+  assertGameSportMatchesLeagueSeason,
+  loadLeagueSeasonSportOrThrow,
+} from '../../utils/validators/validateLeagueSeasonSport';
+import type { Sport } from '@prisma/client';
+
+export function resolveLeagueMatchCapacity(
+  seasonSport: Sport,
+  seasonGame: { playersPerMatch?: number | null },
+  participantUserIds: string[],
+): { playersPerMatch: 2 | 4; maxParticipants: number; minParticipants: number } {
+  const playersPerMatch = resolvePlayersPerMatch(seasonSport, seasonGame.playersPerMatch);
+  const rosterSize = participantUserIds.length;
+  return {
+    playersPerMatch,
+    maxParticipants: Math.max(rosterSize, playersPerMatch),
+    minParticipants: playersPerMatch,
+  };
+}
 
 const PLAYOFF_GAME_TYPE_TEMPLATES: Record<
   'WINNER_COURT' | 'AMERICANO',
@@ -122,6 +142,12 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
     throw new ApiError(400, 'League game requires at least 2 distinct participants');
   }
 
+  const seasonSport = await loadLeagueSeasonSportOrThrow(leagueSeasonId, dbClient);
+  if (seasonGame.sport) {
+    assertGameSportMatchesLeagueSeason(seasonGame.sport, { sport: seasonSport });
+  }
+  const playersPerMatch = resolvePlayersPerMatch(seasonSport, seasonGame.playersPerMatch);
+
   const allowUserInMultipleTeams =
     maxParticipants === 2 ? false : Boolean(seasonGame.allowUserInMultipleTeams);
   if (!allowUserInMultipleTeams) {
@@ -138,6 +164,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
   const game = await dbClient.game.create({
     data: {
       entityType: EntityType.LEAGUE,
+      sport: seasonSport,
       gameType: seasonGame.gameType || 'CLASSIC',
       name: `Round ${round.orderIndex + 1} - Game`,
       clubId: seasonGame.clubId,
@@ -145,6 +172,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       startTime,
       endTime,
       maxParticipants,
+      playersPerMatch,
       minParticipants,
       minLevel: seasonGame.minLevel,
       maxLevel: seasonGame.maxLevel,
@@ -255,16 +283,21 @@ export async function createLeaguePlayoffGame(
       )
     )
   );
-  const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
-  const startTime = new Date();
-  const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000);
-  const participantCount = Math.max(userIds.length, 4);
-  const hasFixedTeams = Boolean(teams?.length);
-  const allowUserInMultipleTeams = Boolean(seasonGame.allowUserInMultipleTeams);
-
   if (userIds.length === 0) {
     throw new ApiError(400, 'Playoff game requires at least one valid participant');
   }
+
+  const seasonSport = await loadLeagueSeasonSportOrThrow(leagueSeasonId, db);
+  if (seasonGame.sport) {
+    assertGameSportMatchesLeagueSeason(seasonGame.sport, { sport: seasonSport });
+  }
+  const playersPerMatch = resolvePlayersPerMatch(seasonSport, seasonGame.playersPerMatch);
+  const participantCount = Math.max(userIds.length, playersPerMatch);
+  const hasFixedTeams = Boolean(teams?.length);
+  const allowUserInMultipleTeams = Boolean(seasonGame.allowUserInMultipleTeams);
+  const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
+  const startTime = new Date();
+  const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000);
 
   if (hasFixedTeams && teams?.length && !allowUserInMultipleTeams) {
     const seen = new Set<string>();
@@ -286,6 +319,7 @@ export async function createLeaguePlayoffGame(
   const game = await db.game.create({
     data: {
       entityType: EntityType.LEAGUE,
+      sport: seasonSport,
       gameType,
       name: `Playoff - ${gameType === 'WINNER_COURT' ? 'Winners Court' : 'Americano'}`,
       clubId: seasonGame.clubId,
@@ -293,6 +327,7 @@ export async function createLeaguePlayoffGame(
       startTime,
       endTime,
       maxParticipants: participantCount,
+      playersPerMatch,
       minParticipants: 4,
       minLevel: seasonGame.minLevel,
       maxLevel: seasonGame.maxLevel,
@@ -317,6 +352,7 @@ export async function createLeaguePlayoffGame(
         resultsRoundGenV2,
         matchGenerationType: gameSetup?.matchGenerationType ?? template.matchGenerationType,
         maxParticipants: participantCount,
+        playersPerMatch,
       }),
       pointsPerWin: gameSetup?.pointsPerWin ?? seasonGame.pointsPerWin ?? 0,
       pointsPerLoose: gameSetup?.pointsPerLoose ?? seasonGame.pointsPerLoose ?? 0,

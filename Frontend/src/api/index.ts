@@ -1,6 +1,7 @@
 export * from './app';
 export * from './auth';
 export * from './users';
+export * from './sportQuestionnaire';
 export * from './cities';
 export * from './clubs';
 export * from './courts';

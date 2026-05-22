@@ -1,14 +1,26 @@
 import { Response } from 'express';
-import { Prisma } from '@prisma/client';
+import { Prisma, Sport } from '@prisma/client';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
+import {
+  parseSportParam,
+  projectUserForSportContext,
+} from '../../services/user/userSportProfile.service';
 import { BasicUser } from '../../types/user.types';
 
+const USER_SELECT_WITH_SPORT_PROFILES = {
+  ...USER_SELECT_FIELDS,
+  sportsEnabled: true,
+  sportProfiles: {
+    select: USER_SPORT_PROFILE_SELECT,
+  },
+} as const;
+
 export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { gameId } = req.query;
+  const { gameId, sport: sportQuery } = req.query;
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
@@ -17,6 +29,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
 
   let participantIds: string[] = [];
   let cityId = currentUser?.currentCityId;
+  let gameSport: Sport | null = null;
 
   if (!cityId) {
     throw new ApiError(400, 'User does not have a city');
@@ -27,6 +40,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
       where: { id: gameId as string },
       select: {
         id: true,
+        sport: true,
         cityId: true,
         participants: {
           select: {
@@ -52,6 +66,9 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
 
     participantIds = game.participants.map((p: { userId: string }) => p.userId);
     cityId = gameCityId || currentUser?.currentCityId;
+    gameSport = game.sport ?? Sport.PADEL;
+  } else if (sportQuery) {
+    gameSport = parseSportParam(sportQuery);
   }
 
   const interactions = await prisma.userInteraction.findMany({
@@ -95,18 +112,29 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
         isActive: true,
         currentCityId: cityId,
       },
-      select: USER_SELECT_FIELDS,
+      select: USER_SELECT_WITH_SPORT_PROFILES,
       take: 1000,
     }),
   ]);
 
   const maxSocialLevel = Math.max(socialAgg._max.socialLevel ?? 1, 1);
 
-  const usersWithInteractions = users.map((user: BasicUser) => ({
-    ...user,
-    interactionCount: interactionMap.get(user.id) || 0,
-    gamesTogetherCount: gamesTogetherMap.get(user.id) || 0,
-  }));
+  const usersWithInteractions = users.map((user) => {
+    const withMeta = {
+      ...user,
+      interactionCount: interactionMap.get(user.id) || 0,
+      gamesTogetherCount: gamesTogetherMap.get(user.id) || 0,
+    };
+    const projected = gameSport
+      ? projectUserForSportContext(withMeta, gameSport)
+      : withMeta;
+    return {
+      ...projected,
+      sportsEnabled: user.sportsEnabled ?? [Sport.PADEL],
+      interactionCount: withMeta.interactionCount,
+      gamesTogetherCount: withMeta.gamesTogetherCount,
+    } as BasicUser & { interactionCount: number; gamesTogetherCount: number; sportsEnabled: Sport[] };
+  });
 
   usersWithInteractions.sort((a, b) => b.interactionCount - a.interactionCount);
 

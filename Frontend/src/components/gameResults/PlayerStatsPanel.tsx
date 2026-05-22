@@ -117,7 +117,11 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
     );
   }
 
-  const gridCols = isPointsBased ? 'grid-cols-[auto_auto_1fr_1fr_1fr_1fr]' : 'grid-cols-[auto_auto_1fr_1fr_1fr]';
+  const tablePx = 'px-3';
+  const gridCols = isPointsBased
+    ? 'grid-cols-[0.65rem_1.5rem_minmax(0,1fr)_2.75rem_minmax(3.25rem,auto)_2rem]'
+    : 'grid-cols-[0.65rem_1.5rem_minmax(0,1fr)_2.75rem_minmax(3.25rem,auto)]';
+  const gridGap = 'gap-x-1';
 
   const columns = [
     {
@@ -133,7 +137,7 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
     {
       key: 'player',
       header: t('gameResults.player') || 'Player',
-      className: ''
+      className: 'pl-4'
     },
     {
       key: 'winsTiesLosses',
@@ -143,7 +147,7 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
     {
       key: 'scores',
       header: t('gameResults.scores') || 'Scores',
-      className: 'text-center'
+      className: 'text-right'
     },
     ...(isPointsBased ? [{
       key: 'points',
@@ -154,11 +158,13 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className={`grid ${gridCols} gap-2 items-center px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900`}>
+      <div
+        className={`grid ${gridCols} ${gridGap} gap-y-0 items-center ${tablePx} py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900`}
+      >
         {columns.map((column) => (
           <div
             key={column.key}
-            className={`text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase ${column.className}`}
+            className={`text-[10px] font-semibold leading-tight text-gray-500 dark:text-gray-400 uppercase tracking-wide ${column.className}`}
           >
             {column.header}
           </div>
@@ -195,48 +201,54 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
                         toggleExpanded();
                       }
                     }}
-                    className={`grid ${gridCols} gap-4 items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900/50 cursor-pointer`}
+                    className={`grid ${gridCols} ${gridGap} gap-y-0 items-start ${tablePx} py-1.5 hover:bg-gray-50 dark:hover:bg-gray-900/50 cursor-pointer`}
                   >
-                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center">
+                    <div className="self-center text-[11px] font-medium tabular-nums text-gray-500 dark:text-gray-400 text-center leading-none">
                       {group.place}
                     </div>
-                    <div>
+                    <div className="self-center flex justify-center -mx-0.5">
                       <PlayerAvatar player={standing.user} extrasmall showName={false} fullHideName={true} />
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-small text-gray-900 dark:text-gray-100 break-words line-clamp-2">
-                        {[standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ') || '-'}
+                    <div className="min-w-0 pl-2 leading-tight py-0.5">
+                      <div className="text-xs text-gray-900 dark:text-gray-100 truncate leading-none">
+                        {standing.user.firstName?.trim() || '\u00A0'}
+                      </div>
+                      <div className="text-xs text-gray-900 dark:text-gray-100 truncate leading-none mt-0.5">
+                        {standing.user.lastName?.trim() || (standing.user.firstName?.trim() ? '\u00A0' : '-')}
                       </div>
                       {standing.user.verbalStatus && (
-                        <p className="verbal-status">
+                        <p className="verbal-status text-[10px] leading-none truncate mt-0.5">
                           {standing.user.verbalStatus}
                         </p>
                       )}
                     </div>
-                    <div className="text-center text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {standing.wins}-{standing.ties}-{standing.losses}
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">
+                    <div className="text-center leading-tight tabular-nums py-0.5">
+                      <div className="text-xs font-medium text-gray-900 dark:text-gray-100 leading-none">
+                        {standing.wins}-{standing.ties}-{standing.losses}
+                      </div>
+                      <div className="text-[10px] text-gray-400 dark:text-gray-500 leading-none mt-0.5">
                         {standing.wins + standing.ties + standing.losses}
-                      </span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-center gap-1.5">
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {standing.scoresMade} - {standing.scoresLost}
-                      </span>
-                      {standing.scoresDelta !== 0 ? (
-                        <span className={`flex items-center gap-0.5 text-xs ${
+                    <div className="text-right leading-tight tabular-nums py-0.5">
+                      <div className="text-xs font-medium text-gray-900 dark:text-gray-100 leading-none">
+                        {standing.scoresMade}-{standing.scoresLost}
+                      </div>
+                      <div
+                        className={`text-[10px] leading-none mt-0.5 ${
                           standing.scoresDelta > 0
                             ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
-                        }`}>
-                          <span> {Math.abs(standing.scoresDelta)}</span>
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">0</span>
-                      )}
+                            : standing.scoresDelta < 0
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-gray-400 dark:text-gray-500'
+                        }`}
+                      >
+                        {standing.scoresDelta > 0 ? '+' : ''}
+                        {standing.scoresDelta}
+                      </div>
                     </div>
                     {isPointsBased && (
-                      <div className="text-center text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <div className="self-center text-center text-xs font-medium tabular-nums text-gray-900 dark:text-gray-100">
                         {standing.points}
                       </div>
                     )}
@@ -254,7 +266,7 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
               );
             })}
             {isMixPairsWithoutFixedTeams && groupIndex < groupedStandings.length - 1 && (
-              <div className="border-t border-gray-300 dark:border-gray-600 mx-4"></div>
+              <div className="border-t border-gray-300 dark:border-gray-600 mx-3" />
             )}
           </div>
         ))}

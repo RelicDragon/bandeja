@@ -39,7 +39,7 @@ function buildSectionCondition(filter: SectionFilter): Prisma.Sql {
     return Prisma.sql`AND m."chatContextType" = 'GROUP' AND EXISTS (SELECT 1 FROM "GroupChannel" gc WHERE gc.id = m."contextId" AND gc."marketItemId" IS NOT NULL)`;
   }
   if (filter === 'games') {
-    return Prisma.sql`AND m."chatContextType" = 'GAME'`;
+    return Prisma.sql`AND m."chatContextType" = 'GAME' AND m."chatType" = 'PUBLIC'::"ChatType"`;
   }
   return Prisma.sql`AND m."chatContextType" IN ('USER', 'GROUP') AND NOT EXISTS (SELECT 1 FROM "GroupChannel" gc WHERE gc.id = m."contextId" AND gc."isChannel" = true) AND NOT EXISTS (SELECT 1 FROM "GroupChannel" gc WHERE gc.id = m."contextId" AND gc."marketItemId" IS NOT NULL)`;
 }

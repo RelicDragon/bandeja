@@ -3,7 +3,7 @@ dotenv.config();
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { Prisma } from '@prisma/client';
+import { Prisma, Sport } from '@prisma/client';
 import prisma from '../src/config/database';
 import { normalizeClubName } from '../src/utils/normalizeClubName';
 import { normalizeCountry } from '../src/utils/normalizePlaytomicCountry';
@@ -11,9 +11,13 @@ import { refreshClubCourtsCount } from '../src/utils/refreshClubCourtsCount';
 import { resolveCityName } from './lib/dr5hnCityResolver';
 import { refreshAllCitiesFromClubs } from '../src/utils/updateCityCenter';
 import { CityGroupService } from '../src/services/chat/cityGroup.service';
+import {
+  clubHasSupportedPlaytomicSport,
+  mapPlaytomicSportToSport,
+  SUPPORTED_PLAYTOMIC_SPORT_IDS,
+} from '../src/sport/playtomicSport';
 
 const JSON_DIR = path.join(__dirname, '..', 'additions', 'playtomic', 'jsons');
-const PADEL = 'PADEL';
 const DEFAULT_TIMEZONE = 'Europe/Paris';
 
 interface PtAddress {
@@ -46,6 +50,17 @@ interface PtClub {
   sport_ids?: string[];
   description?: string;
 }
+
+export type LoadPlaytomicFileStats = {
+  clubsProcessed: number;
+  clubsSkipped: number;
+  citiesCreated: number;
+  clubsCreated: number;
+  courtsCreated: number;
+  courtsSkippedUnsupported: number;
+  unsupportedClubSports: Set<string>;
+  unsupportedResourceSports: Set<string>;
+};
 
 function buildAddress(addr: PtAddress): string {
   const parts = [addr.street, addr.postal_code, addr.city, addr.country].filter(Boolean);
@@ -142,14 +157,23 @@ async function getOrCreateClub(
 
 async function getOrCreateCourt(
   clubId: string,
-  res: PtResource
+  res: PtResource,
+  sport: Sport
 ): Promise<boolean> {
   const externalCourtId = res.resourceId;
   const existing = await prisma.court.findFirst({
     where: { clubId, externalCourtId },
-    select: { id: true },
+    select: { id: true, sport: true },
   });
-  if (existing) return false;
+  if (existing) {
+    if (existing.sport == null) {
+      await prisma.court.update({
+        where: { id: existing.id },
+        data: { sport },
+      });
+    }
+    return false;
+  }
 
   const isIndoor = (res.features || []).some((f) => f.toLowerCase() === 'indoor');
   const surfaceType = (res.features || []).find(
@@ -164,6 +188,7 @@ async function getOrCreateCourt(
       name: res.name,
       clubId,
       externalCourtId,
+      sport,
       isIndoor,
       surfaceType,
     },
@@ -171,13 +196,7 @@ async function getOrCreateCourt(
   return true;
 }
 
-async function loadFile(filePath: string): Promise<{
-  clubsProcessed: number;
-  clubsSkipped: number;
-  citiesCreated: number;
-  clubsCreated: number;
-  courtsCreated: number;
-}> {
+export async function loadPlaytomicFile(filePath: string): Promise<LoadPlaytomicFileStats> {
   const raw = await fs.promises.readFile(filePath, 'utf-8');
   const data: PtClub[] = JSON.parse(raw);
   let clubsProcessed = 0;
@@ -185,11 +204,25 @@ async function loadFile(filePath: string): Promise<{
   let citiesCreated = 0;
   let clubsCreated = 0;
   let courtsCreated = 0;
+  let courtsSkippedUnsupported = 0;
+  const unsupportedClubSports = new Set<string>();
+  const unsupportedResourceSports = new Set<string>();
   const cityIdsByKey = new Map<string, string>();
 
   for (const pt of data) {
     const sportIds = pt.sport_ids || [];
-    if (!sportIds.includes(PADEL)) {
+    if (!clubHasSupportedPlaytomicSport(sportIds)) {
+      for (const id of sportIds) {
+        const key = id.trim().toUpperCase();
+        if (key && !SUPPORTED_PLAYTOMIC_SPORT_IDS.includes(key)) {
+          unsupportedClubSports.add(key);
+        }
+      }
+      if (sportIds.length > 0) {
+        console.log(
+          `[load-playtomic] skip club "${pt.tenant_name}": no supported sport in [${sportIds.join(', ')}] (import: ${SUPPORTED_PLAYTOMIC_SPORT_IDS.join(', ')})`
+        );
+      }
       clubsSkipped++;
       continue;
     }
@@ -206,7 +239,6 @@ async function loadFile(filePath: string): Promise<{
     }
     addr.coordinate = parsedCoord;
 
-    // Use only this club's country/country_code (file may contain multiple countries)
     const { country, country_code } = normalizeCountry(addr.country, addr.country_code);
     const normalizedAddr: PtAddress = {
       ...addr,
@@ -229,12 +261,16 @@ async function loadFile(filePath: string): Promise<{
     clubsProcessed++;
     if (club.created) clubsCreated++;
 
-    const padelResources = (pt.resources || []).filter(
-      (r) => (r.sport || '').toUpperCase() === PADEL
-    );
     let courtsCreatedForClub = 0;
-    for (const res of padelResources) {
-      const created = await getOrCreateCourt(club.id, res);
+    for (const res of pt.resources || []) {
+      const sport = mapPlaytomicSportToSport(res.sport || '');
+      if (!sport) {
+        const key = (res.sport || '').trim().toUpperCase();
+        if (key) unsupportedResourceSports.add(key);
+        courtsSkippedUnsupported++;
+        continue;
+      }
+      const created = await getOrCreateCourt(club.id, res, sport);
       if (created) {
         courtsCreated++;
         courtsCreatedForClub++;
@@ -249,6 +285,9 @@ async function loadFile(filePath: string): Promise<{
     citiesCreated,
     clubsCreated,
     courtsCreated,
+    courtsSkippedUnsupported,
+    unsupportedClubSports,
+    unsupportedResourceSports,
   };
 }
 
@@ -256,34 +295,54 @@ async function main(): Promise<void> {
   const files = await fs.promises.readdir(JSON_DIR);
   const jsonFiles = files.filter((f) => f.endsWith('.json'));
   console.log(`[load-playtomic] Found ${jsonFiles.length} JSON files in ${JSON_DIR}`);
+  console.log(
+    `[load-playtomic] Supported Playtomic sports: ${SUPPORTED_PLAYTOMIC_SPORT_IDS.join(', ')}`
+  );
 
   let totalClubs = 0;
   let totalSkipped = 0;
   let totalCities = 0;
   let totalClubsCreated = 0;
   let totalCourts = 0;
+  let totalCourtsSkippedUnsupported = 0;
+  const allUnsupportedClubSports = new Set<string>();
+  const allUnsupportedResourceSports = new Set<string>();
 
   for (const file of jsonFiles.sort()) {
     const filePath = path.join(JSON_DIR, file);
     try {
       console.log(`[load-playtomic] Loading ${file} ...`);
-      const stats = await loadFile(filePath);
+      const stats = await loadPlaytomicFile(filePath);
       totalClubs += stats.clubsProcessed;
       totalSkipped += stats.clubsSkipped;
       totalCities += stats.citiesCreated;
       totalClubsCreated += stats.clubsCreated;
       totalCourts += stats.courtsCreated;
+      totalCourtsSkippedUnsupported += stats.courtsSkippedUnsupported;
+      for (const s of stats.unsupportedClubSports) allUnsupportedClubSports.add(s);
+      for (const s of stats.unsupportedResourceSports) allUnsupportedResourceSports.add(s);
       console.log(
-        `[load-playtomic] ${file} -> clubs: ${stats.clubsProcessed}, skipped: ${stats.clubsSkipped}, citiesCreated: ${stats.citiesCreated}, clubsCreated: ${stats.clubsCreated}, courtsCreated: ${stats.courtsCreated}`
+        `[load-playtomic] ${file} -> clubs: ${stats.clubsProcessed}, skipped: ${stats.clubsSkipped}, citiesCreated: ${stats.citiesCreated}, clubsCreated: ${stats.clubsCreated}, courtsCreated: ${stats.courtsCreated}, courtsSkippedUnsupported: ${stats.courtsSkippedUnsupported}`
       );
     } catch (err) {
       console.error(`[load-playtomic] Error loading ${file}:`, err);
     }
   }
 
+  if (allUnsupportedClubSports.size > 0) {
+    console.log(
+      `[load-playtomic] Unsupported club sport_ids seen: ${[...allUnsupportedClubSports].sort().join(', ')}`
+    );
+  }
+  if (allUnsupportedResourceSports.size > 0) {
+    console.log(
+      `[load-playtomic] Unsupported resource sports skipped: ${[...allUnsupportedResourceSports].sort().join(', ')}`
+    );
+  }
+
   const citiesUpdated = await refreshAllCitiesFromClubs();
   console.log(
-    `[load-playtomic] Done. clubsProcessed: ${totalClubs}, skipped: ${totalSkipped}, citiesCreated: ${totalCities}, clubsCreated: ${totalClubsCreated}, courtsCreated: ${totalCourts}, citiesRefreshed: ${citiesUpdated}`
+    `[load-playtomic] Done. clubsProcessed: ${totalClubs}, skipped: ${totalSkipped}, citiesCreated: ${totalCities}, clubsCreated: ${totalClubsCreated}, courtsCreated: ${totalCourts}, courtsSkippedUnsupported: ${totalCourtsSkippedUnsupported}, citiesRefreshed: ${citiesUpdated}`
   );
 }
 

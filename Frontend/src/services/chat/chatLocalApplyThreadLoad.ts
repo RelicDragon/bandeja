@@ -4,8 +4,10 @@ import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';
 import { compareChatMessagesAscending, computeMessageSortKey } from '@/utils/chatMessageSort';
 import { normalizeChatType } from '@/utils/chatType';
 
+/** First-paint / Dexie tail window (aligned with open snapshot; L1 may hold more). */
+export const CHAT_OPEN_FIRST_PAINT_SIZE = 50;
 const LOCAL_THREAD_TAIL_FIRST = 48;
-export const CHAT_LOCAL_THREAD_WINDOW_SIZE = Math.max(LOCAL_THREAD_TAIL_FIRST, 50);
+export const CHAT_LOCAL_THREAD_WINDOW_SIZE = Math.max(LOCAL_THREAD_TAIL_FIRST, CHAT_OPEN_FIRST_PAINT_SIZE);
 
 const IDX = '[contextType+contextId+chatType+sortKey]' as const;
 

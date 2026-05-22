@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
@@ -11,7 +11,10 @@ import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagem
 import { useGameFormat } from '@/hooks/useGameFormat';
 import { gamesApi } from '@/api';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
+import { useClampGameFormatToSport } from '@/hooks/useSportGameFormatLimits';
+import { resolvePlayersPerMatchForGame } from '@/utils/matchFormat';
 import { Game, GenderTeam } from '@/types';
+import type { GameFormatWizardMatchFormat } from '@/components/gameFormat/GameFormatWizard';
 
 interface GameFormatSectionProps {
   game: Game;
@@ -29,6 +32,10 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
     maxParticipants: formatMaxParticipants,
   });
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const sportFormatLimits = useClampGameFormatToSport(game.sport, gameFormat, canEdit);
+  const [wizardPlayersPerMatch, setWizardPlayersPerMatch] = useState<number>(() =>
+    resolvePlayersPerMatchForGame(game),
+  );
 
   const maxParticipants = formatMaxParticipants ?? 0;
   const genderTeams = (game.genderTeams || 'ANY') as GenderTeam;
@@ -108,6 +115,15 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
               pointsPerLoose: setup.pointsPerLoose,
               pointsPerTie: setup.pointsPerTie,
             };
+      const matchFormatPatch =
+        game.entityType === 'GAME' || game.entityType === 'LEAGUE'
+          ? {
+              playersPerMatch: wizardPlayersPerMatch,
+              ...(wizardPlayersPerMatch === 2
+                ? { hasFixedTeams: false, allowUserInMultipleTeams: false }
+                : {}),
+            }
+          : {};
       await gamesApi.update(game.id, {
         ...resultsRoundGenV2Payload,
         gameType: gameFormat.gameType,
@@ -124,6 +140,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
         ballsInGames: setup.ballsInGames,
         scoringPreset: setup.scoringPreset,
         hasGoldenPoint: setup.hasGoldenPoint,
+        ...matchFormatPatch,
       });
       const response = await gamesApi.getById(game.id);
       onGameUpdate(response.data);
@@ -136,18 +153,44 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
 
   const handleOpenWizard = () => {
     if (!canEdit) return;
+    setWizardPlayersPerMatch(resolvePlayersPerMatchForGame(game));
     setIsWizardOpen(true);
   };
+
+  const wizardMatchFormat = useMemo((): GameFormatWizardMatchFormat | undefined => {
+    if (game.entityType !== 'GAME' && game.entityType !== 'LEAGUE') return undefined;
+    if (sportFormatLimits.sportConfig.allowedPlayerCountsPerMatch.length <= 1) return undefined;
+    return {
+      playersPerMatch: wizardPlayersPerMatch,
+      allowedCounts: sportFormatLimits.sportConfig.allowedPlayerCountsPerMatch,
+      disabled: maxParticipants === 2,
+      sport: game.sport,
+      onChange: setWizardPlayersPerMatch,
+    };
+  }, [
+    game.entityType,
+    game.sport,
+    sportFormatLimits.sportConfig.allowedPlayerCountsPerMatch,
+    wizardPlayersPerMatch,
+    maxParticipants,
+  ]);
 
   const fixedTeamsPanel = (
     <FixedTeamsManagement embedded game={game} onGameUpdate={onGameUpdate} />
   );
+
+  const summaryPlayersPerMatch =
+    game.entityType === 'GAME' || game.entityType === 'LEAGUE'
+      ? resolvePlayersPerMatchForGame(game)
+      : undefined;
 
   return (
     <>
       <GameFormatCard
         entityType={game.entityType}
         format={gameFormat}
+        playersPerMatch={summaryPlayersPerMatch}
+        sport={game.sport}
         generationSlotCount={
           formatMaxParticipants != null && formatMaxParticipants > 0 ? formatMaxParticipants : undefined
         }
@@ -170,6 +213,9 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
           allowByPointsInRanking={game.entityType !== 'LEAGUE_SEASON'}
           onClose={() => setIsWizardOpen(false)}
           onDone={handleDone}
+          matchFormat={wizardMatchFormat}
+          allowedScoringModes={sportFormatLimits.allowedScoringModes}
+          allowedScoringPresets={sportFormatLimits.allowedScoringPresets}
         />
       )}
     </>

@@ -140,7 +140,7 @@ struct FirstServePickFlow: View {
         Button {
             pickedTeam = side
             let count = side == .teamA ? vm.teamAUsers.count : vm.teamBUsers.count
-            if count >= 2 {
+            if vm.isDoublesMatch, count >= 2 {
                 pickedPlayerIndex = 0
                 step = .pickDoublesServer
             } else {
@@ -149,7 +149,7 @@ struct FirstServePickFlow: View {
         } label: {
             HStack(spacing: 10) {
                 HStack(spacing: -6) {
-                    ForEach(Array(users.prefix(2)), id: \.id) { u in
+                    ForEach(Array(users.prefix(vm.isDoublesMatch ? 2 : 1)), id: \.id) { u in
                         WatchPlayerAvatarView(user: u, size: 36, role: nil)
                     }
                 }
@@ -214,6 +214,26 @@ struct FirstServePickFlow: View {
         }
     }
 
+    private var courtEndsSetupSnapshot: ServeGuideSnapshot? {
+        guard let team = pickedTeam else { return nil }
+        let names = team == .teamA ? vm.teamAUsers.map(\.displayName) : vm.teamBUsers.map(\.displayName)
+        let display = names[safe: pickedPlayerIndex] ?? names.first ?? "—"
+        return ServeGuideSnapshot(
+            serverTeam: team,
+            serverPlayerIndex: pickedPlayerIndex,
+            serverDisplayName: display,
+            serverInitial: String(display.prefix(1)).uppercased(),
+            courtSide: .rightDeuce,
+            tieBreakServeSlot: nil,
+            changeEndsBeforeNextPoint: false,
+            courtEndsSwapped: courtEndsSwapped,
+            courtTeamASidesMirrored: teamASidesMirrored,
+            courtTeamBSidesMirrored: teamBSidesMirrored,
+            accessibilityLine: display,
+            motionToken: "setup"
+        )
+    }
+
     private var courtEndsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(WatchCopy.courtEndsTitle(lang))
@@ -221,19 +241,29 @@ struct FirstServePickFlow: View {
             Text(WatchCopy.courtEndsBody(lang))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-            VStack(spacing: 6) {
-                Text(courtEndsSwapped ? WatchCopy.teamAShort(lang) : WatchCopy.teamBShort(lang))
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.secondary)
-                Image(systemName: "sportscourt")
-                    .font(.title2)
-                    .symbolRenderingMode(.hierarchical)
-                Text(courtEndsSwapped ? WatchCopy.teamBShort(lang) : WatchCopy.teamAShort(lang))
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.secondary)
+            if let snap = courtEndsSetupSnapshot {
+                VStack(spacing: 4) {
+                    Text(courtEndsSwapped ? WatchCopy.teamAShort(lang) : WatchCopy.teamBShort(lang))
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.secondary)
+                    WatchServeCourtView.coachCourt(
+                        snapshot: snap,
+                        sport: vm.game?.resolvedSport,
+                        uiId: vm.liveScoringUiId,
+                        teamAUsers: vm.teamAUsers,
+                        teamBUsers: vm.teamBUsers,
+                        matchDoubles: vm.isDoublesMatch,
+                        compact: false,
+                        endsSetup: true,
+                        courtAccessibilityLabel: WatchCopy.courtEndsTitle(lang)
+                    )
+                    .frame(width: 72, height: 120)
+                    Text(courtEndsSwapped ? WatchCopy.teamBShort(lang) : WatchCopy.teamAShort(lang))
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
             Button {
                 courtEndsSwapped.toggle()
             } label: {

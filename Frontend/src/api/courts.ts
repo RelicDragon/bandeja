@@ -1,9 +1,15 @@
 import api from './axios';
-import { ApiResponse, Court } from '@/types';
+import type { ApiResponse, Court, Sport } from '@/types';
+
+export type CourtsByClubOptions = {
+  sport?: Sport;
+};
 
 export const courtsApi = {
-  getByClubId: async (clubId: string) => {
-    const response = await api.get<ApiResponse<Court[]>>(`/courts/club/${clubId}`);
+  getByClubId: async (clubId: string, options?: CourtsByClubOptions) => {
+    const response = await api.get<ApiResponse<Court[]>>(`/courts/club/${clubId}`, {
+      params: options?.sport ? { sport: options.sport } : undefined,
+    });
     return response.data;
   },
 

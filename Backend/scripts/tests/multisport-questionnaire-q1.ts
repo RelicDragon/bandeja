@@ -1,0 +1,121 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { Sport } from '@prisma/client';
+import prisma from '../../src/config/database';
+import { PADEL_QUESTIONNAIRE_V1 } from '../../src/sport/questionnaires/padel';
+import { scoreToLevel } from '../../src/sport/questionnaires/scoring';
+import { getSportConfig } from '../../src/sport/sportRegistry';
+import {
+  completeSportQuestionnaire,
+  getSportQuestionnaireStatus,
+} from '../../src/services/user/sportQuestionnaire.service';
+import { resetWelcomeScreen } from '../../src/services/welcomeScreen.service';
+
+function assert(condition: boolean, message: string): void {
+  if (!condition) {
+    console.error('FAIL:', message);
+    process.exit(1);
+  }
+}
+
+function testPadelRegistry(): void {
+  const padel = getSportConfig(Sport.PADEL).questionnaire;
+  assert(padel?.id === 'padel-v1', 'padel registry questionnaire id');
+  assert(padel?.minQuestions === 5, 'padel has 5 questions');
+  assert(padel?.questionKeys[0] === 'welcome.q1', 'padel reuses welcome i18n keys');
+}
+
+function testScoreToLevelBands(): void {
+  assert(scoreToLevel(5) === 1.0, 'score 5 → 1.0');
+  assert(scoreToLevel(7) === 1.5, 'score 7 → 1.5');
+  assert(scoreToLevel(20) === 3.5, 'score 20 → 3.5');
+  assert(PADEL_QUESTIONNAIRE_V1.scoreToLevel(15) === 3.0, 'padel config scoreToLevel');
+}
+
+function testWelcomeDelegatesToSharedService(): void {
+  const welcomePath = join(__dirname, '../../src/services/welcomeScreen.service.ts');
+  const src = readFileSync(welcomePath, 'utf8');
+  assert(src.includes('completeSportQuestionnaire'), 'welcome complete uses shared service');
+  assert(src.includes('skipSportQuestionnaire'), 'welcome skip uses shared service');
+  assert(!src.includes('scoreToLevel'), 'welcome service no longer embeds scoring');
+}
+
+function testQuestionnaireServiceGuard(): void {
+  const svcPath = join(__dirname, '../../src/services/user/sportQuestionnaire.service.ts');
+  const src = readFileSync(svcPath, 'utf8');
+  assert(!src.includes('socialLevel:'), 'questionnaire service must not assign socialLevel');
+  assert(src.includes('rejectSocialLevelInQuestionnaireBody'), 'rejects socialLevel in body');
+}
+
+async function testPadelQuestionnaireFlow(): Promise<void> {
+  const user = await prisma.user.findFirst({
+    where: {
+      isActive: true,
+      welcomeScreenPassed: false,
+      gamesPlayed: 0,
+      OR: [
+        { sportProfiles: { none: { sport: Sport.PADEL } } },
+        { sportProfiles: { some: { sport: Sport.PADEL, gamesPlayed: 0 } } },
+      ],
+    },
+    select: { id: true, socialLevel: true, level: true },
+  });
+  if (!user) {
+    console.log('skip: padel questionnaire flow (no eligible user: welcome open + 0 rated padel games)');
+    return;
+  }
+
+  const socialBefore = user.socialLevel;
+  const answers = ['B', 'B', 'B', 'B', 'B'];
+
+  try {
+  const status = await completeSportQuestionnaire(user.id, Sport.PADEL, answers);
+  assert(status.completed, 'status completed after padel Q');
+  assert(status.level === 2.0, 'BBBBB → score 10 → level 2.0');
+
+  const afterUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: {
+      level: true,
+      welcomeScreenPassed: true,
+      socialLevel: true,
+      sportProfiles: {
+        where: { sport: Sport.PADEL },
+        select: {
+          level: true,
+          levelSource: true,
+          questionnaireCompletedAt: true,
+          questionnaireVersion: true,
+        },
+      },
+    },
+  });
+  assert(afterUser?.welcomeScreenPassed === true, 'welcomeScreenPassed set');
+  assert(afterUser?.socialLevel === socialBefore, 'socialLevel unchanged');
+  const profile = afterUser?.sportProfiles[0];
+  assert(profile?.level === 2.0, 'padel profile level from questionnaire');
+  assert(profile?.questionnaireCompletedAt != null, 'padel profile questionnaireCompletedAt');
+  assert(profile?.questionnaireVersion === 'padel-v1', 'padel questionnaire version');
+
+  const status2 = await getSportQuestionnaireStatus(user.id, Sport.PADEL);
+  assert(status2.completed, 'getStatus completed');
+
+  console.log('ok: padel questionnaire complete flow');
+  } finally {
+    await resetWelcomeScreen(user.id);
+  }
+}
+
+async function main(): Promise<void> {
+  testPadelRegistry();
+  testScoreToLevelBands();
+  testWelcomeDelegatesToSharedService();
+  testQuestionnaireServiceGuard();
+  await testPadelQuestionnaireFlow();
+  console.log('multisport-questionnaire-q1: all passed');
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

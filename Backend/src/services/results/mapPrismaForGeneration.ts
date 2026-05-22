@@ -1,23 +1,34 @@
+import { Sport } from '@prisma/client';
 import type { GenGame, GenMatch, GenRound } from './generation/types';
 import type { GameForRoundGeneration } from './roundGenerationGameInclude';
+import { projectUserForSportContext } from '../user/userSportProfile.service';
 
 export function prismaGameToGenGame(game: GameForRoundGeneration): GenGame {
+  const sport = game.sport ?? Sport.PADEL;
+  const mapUser = (u: NonNullable<GameForRoundGeneration['participants'][0]['user']>) => {
+    const projected = projectUserForSportContext(u, sport);
+    return {
+      id: projected.id,
+      level: Number(projected.level) || 0,
+      gender: projected.gender || 'PREFER_NOT_TO_SAY',
+      firstName: projected.firstName ?? undefined,
+      lastName: projected.lastName ?? undefined,
+      avatar: projected.avatar ?? undefined,
+      socialLevel: projected.socialLevel ?? undefined,
+      approvedLevel: projected.approvedLevel,
+      isTrainer: projected.isTrainer,
+    };
+  };
+
   return {
     id: game.id,
+    sport,
+    maxParticipants: game.maxParticipants,
+    playersPerMatch: game.playersPerMatch,
     participants: (game.participants || []).map((p) => ({
       userId: p.userId,
       status: p.status,
-      user: {
-        id: p.user!.id,
-        level: Number(p.user?.level) || 0,
-        gender: p.user?.gender || 'PREFER_NOT_TO_SAY',
-        firstName: p.user?.firstName ?? undefined,
-        lastName: p.user?.lastName ?? undefined,
-        avatar: p.user?.avatar ?? undefined,
-        socialLevel: p.user?.socialLevel ?? undefined,
-        approvedLevel: p.user?.approvedLevel,
-        isTrainer: p.user?.isTrainer,
-      },
+      user: mapUser(p.user!),
     })),
     hasFixedTeams: game.hasFixedTeams,
     allowUserInMultipleTeams: game.allowUserInMultipleTeams ?? false,
@@ -26,11 +37,7 @@ export function prismaGameToGenGame(game: GameForRoundGeneration): GenGame {
       teamNumber: ft.teamNumber,
       players: (ft.players || []).map((pl) => ({
         userId: pl.userId,
-        user: {
-          id: pl.user!.id,
-          level: Number(pl.user?.level) || 0,
-          gender: pl.user?.gender || 'PREFER_NOT_TO_SAY',
-        },
+        user: mapUser(pl.user!),
       })),
     })),
     gameCourts: [...(game.gameCourts || [])]

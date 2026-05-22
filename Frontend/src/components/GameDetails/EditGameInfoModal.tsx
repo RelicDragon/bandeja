@@ -17,6 +17,7 @@ import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
+import { isUserParentGameAdminOrOwner } from '@/utils/gameResults';
 export type EditGameInfoTabId = 'general' | 'when' | 'where' | 'price';
 
 interface EditGameInfoModalProps {
@@ -99,6 +100,7 @@ export const EditGameInfoModal = ({
   const [isLoadingCourts, setIsLoadingCourts] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [softOverlapOpen, setSoftOverlapOpen] = useState(false);
+  const [showConfirmRemoveTime, setShowConfirmRemoveTime] = useState(false);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const prevIsOpenRef = useRef(false);
   const fetchAbortRef = useRef<AbortController | null>(null);
@@ -218,6 +220,30 @@ export const EditGameInfoModal = ({
       ac.abort();
     };
   }, [isOpen, where.clubId, onCourtsChange]);
+
+  const canRemoveLeagueTime =
+    game.entityType === 'LEAGUE' &&
+    game.timeIsSet !== false &&
+    !!user?.id &&
+    (user.isAdmin || isUserParentGameAdminOrOwner(game, user.id));
+
+  const handleRemoveTime = async () => {
+    if (!game.id) return;
+    setIsSaving(true);
+    try {
+      await gamesApi.update(game.id, { timeIsSet: false });
+      const response = await gamesApi.getById(game.id);
+      onGameUpdate?.(response.data);
+      toast.success(t('gameDetails.timeRemoved'));
+      setShowConfirmRemoveTime(false);
+      onClose();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'errors.generic';
+      toast.error(t(msg, { defaultValue: msg }));
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const getDurationLabel = (dur: number) => {
     if (dur === Math.floor(dur)) return t('createGame.hours', { count: dur });
@@ -412,6 +438,8 @@ export const EditGameInfoModal = ({
               getTimeSlotsForDuration={getTimeSlotsForDuration}
               isSlotHighlighted={isSlotHighlighted}
               getDurationLabel={getDurationLabel}
+              showRemoveTime={canRemoveLeagueTime}
+              onRemoveTime={() => setShowConfirmRemoveTime(true)}
             />
             </div>
           )}
@@ -463,6 +491,17 @@ export const EditGameInfoModal = ({
         void executeSave();
       }}
       onClose={() => setSoftOverlapOpen(false)}
+    />
+
+    <ConfirmationModal
+      isOpen={showConfirmRemoveTime}
+      onClose={() => setShowConfirmRemoveTime(false)}
+      onConfirm={() => void handleRemoveTime()}
+      title={t('gameDetails.removeTime')}
+      message={t('gameDetails.removeTimeConfirmation')}
+      confirmText={isSaving ? t('common.removing') : t('common.remove')}
+      cancelText={t('common.cancel')}
+      confirmVariant="danger"
     />
     </>
   );

@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useState, type ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BasicUser } from '@/types';
 import type { LiveMatchCourtOrientation, LivePointsServeRotation, LiveTeamSide } from '@/utils/liveScoring';
 import { LiveCourtEndsSetup } from './LiveCourtEndsSetup';
 import { LiveServeSetupPlayerOption } from './LiveServeSetupPlayerOption';
 import { LiveServeSetupTeamCard } from './LiveServeSetupTeamCard';
+import type { ServeCourtSchemaProps } from './ServeCourtSchema';
 
 type LiveServeSetupCardProps = {
   teamAPlayers: BasicUser[];
   teamBPlayers: BasicUser[];
+  CourtSchemaComponent?: ComponentType<ServeCourtSchemaProps>;
+  matchDoubles?: boolean;
   showServeRotationRules?: boolean;
   saving?: boolean;
   onComplete: (
@@ -23,6 +26,8 @@ type LiveServeSetupCardProps = {
 export const LiveServeSetupCard = ({
   teamAPlayers,
   teamBPlayers,
+  CourtSchemaComponent,
+  matchDoubles = false,
   showServeRotationRules,
   saving,
   onComplete,
@@ -39,7 +44,7 @@ export const LiveServeSetupCard = ({
   });
 
   const roster = side === 'teamA' ? teamAPlayers : side === 'teamB' ? teamBPlayers : [];
-  const doubles = roster.length >= 2;
+  const doubles = matchDoubles;
 
   const submit = () => {
     if (!side) return;
@@ -123,6 +128,8 @@ export const LiveServeSetupCard = ({
         <LiveCourtEndsSetup
           teamAPlayers={teamAPlayers}
           teamBPlayers={teamBPlayers}
+          CourtSchemaComponent={CourtSchemaComponent}
+          matchDoubles={matchDoubles}
           orientation={courtOrientation}
           onOrientationChange={setCourtOrientation}
         />

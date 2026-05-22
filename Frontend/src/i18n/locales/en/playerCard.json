@@ -11,6 +11,7 @@
     "followers": "Followers",
     "following": "Following",
     "levelHistory": "Level History",
+    "levelHistorySelector": "Level history type",
     "isTrainer": "Trainer",
     "currentLevel": "Current Level",
     "recentChanges": "Recent Changes",

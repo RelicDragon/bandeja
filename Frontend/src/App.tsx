@@ -14,7 +14,6 @@ const MainPage = lazy(() => import('./pages/MainPage').then(module => ({ default
 const CreateGameWrapper = lazy(() => import('./pages/CreateGameWrapper').then(module => ({ default: module.CreateGameWrapper })));
 const CreateLeague = lazy(() => import('./pages/CreateLeague').then(module => ({ default: module.CreateLeague })));
 // const Rating = lazy(() => import('./pages/Rating').then(module => ({ default: module.Rating })));
-const GameChatRoute = lazy(() => import('./pages/GameChatRoute').then(module => ({ default: module.GameChatRoute })));
 const GameLiveRoute = lazy(() => import('./pages/GameLiveRoute').then((m) => ({ default: m.GameLiveRoute })));
 const GameLiveTvRedirect = lazy(() =>
   import('./pages/GameLiveTvRedirect').then((m) => ({ default: m.GameLiveTvRedirect }))
@@ -83,9 +82,11 @@ import { useUrlStoreSync } from './hooks/useUrlStoreSync';
 import { usePresenceSubscriptionManager } from './hooks/usePresenceSubscriptionManager';
 import { ReactionEmojiUsageBootstrap } from './components/ReactionEmojiUsageBootstrap';
 import { ProfileNameGateHost } from './components/home/ProfileNameGateHost';
+import { PrimarySportGateHost } from './components/home/PrimarySportGateHost';
 import i18n from './i18n/config';
 import './i18n/config';
 import { parseLiveBoardTheme } from '@/utils/liveScoring';
+import { useUnreadStore } from '@/store/unreadStore';
 
 function AppContent() {
   const location = useLocation();
@@ -142,6 +143,11 @@ function AppContent() {
     if (isInitializing || !token) return;
     scheduleProactiveAccessRefresh(token);
   }, [isInitializing, token]);
+
+  useEffect(() => {
+    if (isInitializing || !isAuthenticated) return;
+    void useUnreadStore.getState().refreshAll();
+  }, [isInitializing, isAuthenticated]);
 
   useEffect(() => {
     if (!isCapacitor()) return;
@@ -408,6 +414,7 @@ function AppContent() {
       <GeoProvider>
         <ToastProvider>
           <ProfileNameGateHost />
+          <PrimarySportGateHost />
           <PermissionModalProvider />
           <ReactionEmojiUsageBootstrap />
           <PlayerCardModalManager>
@@ -627,7 +634,7 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
-                <GameChatRoute />
+                <MainPage />
               </Suspense>
             </ProtectedRoute>
           }

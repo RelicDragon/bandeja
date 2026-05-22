@@ -1,11 +1,12 @@
 import prisma from '../../config/database';
 import { calculateRatingUpdate, RELIABILITY_INCREMENT } from './rating.service';
-import { LevelChangeEventType, EntityType, ParticipantRole } from '@prisma/client';
+import { LevelChangeEventType, EntityType, ParticipantRole, Sport } from '@prisma/client';
 import {
   SOCIAL_PARTICIPANT_LEVEL,
   ROLE_MULTIPLIERS,
 } from '../socialLevelConstants';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
+import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
 import { isPlacementProtectedFromNegativeRating } from './ratingPlacementFloor';
 import { isOfficialMatchSetRole } from './matchSetRole';
 import { getRules } from './liveScoringEngine/rulebook';
@@ -76,6 +77,22 @@ interface MatchExplanation {
   sets?: SetExplanation[];
 }
 
+const userSelectForExplanation = {
+  ...USER_SELECT_FIELDS,
+  reliability: true,
+  gamesPlayed: true,
+  sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
+} as const;
+
+function playerLevelForGame(
+  userId: string,
+  user: Parameters<typeof resolveUserSportSnapshot>[0],
+  sport: Sport,
+  playerLevelsMap: Map<string, number>,
+): number {
+  return playerLevelsMap.get(userId) ?? resolveUserSportSnapshot(user, sport).level;
+}
+
 export async function getOutcomeExplanation(
   gameId: string,
   userId: string
@@ -92,13 +109,7 @@ export async function getOutcomeExplanation(
                 include: {
                   players: {
                     include: {
-                      user: {
-                        select: {
-                          ...USER_SELECT_FIELDS,
-                          reliability: true,
-                          gamesPlayed: true,
-                        },
-                      },
+                      user: { select: userSelectForExplanation },
                     },
                   },
                 },
@@ -110,13 +121,7 @@ export async function getOutcomeExplanation(
       },
       participants: {
         include: {
-          user: {
-            select: {
-              ...USER_SELECT_FIELDS,
-              reliability: true,
-              gamesPlayed: true,
-            },
-          },
+          user: { select: userSelectForExplanation },
         },
       },
       outcomes: {
@@ -161,15 +166,18 @@ export async function getOutcomeExplanation(
       playerLevelsMap.set(outcome.userId, outcome.levelBefore);
     }
   } else {
-    // Fallback to current levels if no outcomes exist yet
     for (const p of game.participants) {
-      playerLevelsMap.set(p.userId, p.user.level);
+      playerLevelsMap.set(
+        p.userId,
+        resolveUserSportSnapshot(p.user, game.sport).level,
+      );
     }
   }
 
   const user = participant.user;
-  let currentLevel = existingOutcome?.levelBefore ?? user.level;
-  const startingReliability = existingOutcome?.reliabilityBefore ?? user.reliability;
+  const userSport = resolveUserSportSnapshot(user, game.sport);
+  let currentLevel = existingOutcome?.levelBefore ?? userSport.level;
+  const startingReliability = existingOutcome?.reliabilityBefore ?? userSport.reliability;
 
   const matches: MatchExplanation[] = [];
   let totalLevelChange = 0;
@@ -202,22 +210,27 @@ export async function getOutcomeExplanation(
         .map(p => ({
           firstName: p.user.firstName,
           lastName: p.user.lastName,
-          level: playerLevelsMap.get(p.userId) ?? p.user.level,
+          level: playerLevelForGame(p.userId, p.user, game.sport, playerLevelsMap),
         }));
 
       const opponents = opponentTeam.players.map(p => ({
         firstName: p.user.firstName,
         lastName: p.user.lastName,
-        level: playerLevelsMap.get(p.userId) ?? p.user.level,
+        level: playerLevelForGame(p.userId, p.user, game.sport, playerLevelsMap),
       }));
 
       const opponentLevel =
-        opponentTeam.players.reduce((sum: number, p) => sum + (playerLevelsMap.get(p.userId) ?? p.user.level), 0) / opponentTeam.players.length;
+        opponentTeam.players.reduce(
+          (sum: number, p) => sum + playerLevelForGame(p.userId, p.user, game.sport, playerLevelsMap),
+          0,
+        ) / opponentTeam.players.length;
 
       const userTeamLevel =
         userTeam.players.reduce((sum: number, p) => {
           const lvl =
-            p.userId === userId ? currentLevel : (playerLevelsMap.get(p.userId) ?? p.user.level);
+            p.userId === userId
+              ? currentLevel
+              : playerLevelForGame(p.userId, p.user, game.sport, playerLevelsMap);
           return sum + lvl;
         }, 0) / userTeam.players.length;
 
@@ -289,7 +302,7 @@ export async function getOutcomeExplanation(
         {
           level: currentLevel,
           reliability: startingReliability,
-          gamesPlayed: user.gamesPlayed,
+          gamesPlayed: userSport.gamesPlayed,
         },
         {
           isWinner,
@@ -339,7 +352,7 @@ export async function getOutcomeExplanation(
   const averageOpponentLevel =
     opponentLevels.length > 0 ? opponentLevels.reduce((sum: number, l: number) => sum + l, 0) / opponentLevels.length : 0;
 
-  const startingLevel = existingOutcome?.levelBefore ?? user.level;
+  const startingLevel = existingOutcome?.levelBefore ?? userSport.level;
   const totalReliabilityChange = existingOutcome?.reliabilityChange ?? (setsPlayed * RELIABILITY_INCREMENT);
   
   const clampedReliability = Math.max(0.0, Math.min(100.0, startingReliability));
@@ -468,7 +481,7 @@ export async function getOutcomeExplanation(
     userId,
     userLevel: startingLevel,
     userReliability: startingReliability,
-    userGamesPlayed: user.gamesPlayed,
+    userGamesPlayed: userSport.gamesPlayed,
     levelChange: clampedLevelChange,
     reliabilityChange: totalReliabilityChange,
     reliabilityCoefficient,

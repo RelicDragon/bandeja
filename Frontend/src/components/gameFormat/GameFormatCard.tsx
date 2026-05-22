@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Pencil, HelpCircle, Users, Info } from 'lucide-react';
 import { EntityType } from '@/types';
+import { useAuthStore } from '@/store/authStore';
+import { GameSportTag } from '@/components/GameSportTag';
+import { getViewerPrimarySport, shouldShowGameCardSportGlyph } from '@/utils/findSportFilter';
+import { parseGameSport } from '@/utils/gameSport';
 import { GameFormatSummary } from './GameFormatSummary';
 import { GameFormatDetails } from './GameFormatDetails';
 import { UseGameFormatResult } from '@/hooks/useGameFormat';
@@ -11,6 +15,7 @@ import {
   GameFormatFixedTeamsToggle,
   type GameFormatTeamsBinding,
 } from './GameFormatTeamsFields';
+import { tScoringModeField } from '@/utils/gameFormat';
 import { gameFormatFixedTeamsToggleVisible, gameFormatGenderVisible } from './gameFormatTeamsVisibility';
 import { GameFormatRacketIcon } from './GameFormatRacketIcon';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
@@ -28,6 +33,10 @@ interface GameFormatCardProps {
   showWizardButton?: boolean;
   /** When true, omit allow-multi row (e.g. draft lives in Game Settings). */
   suppressAllowMultiToggle?: boolean;
+  sportRow?: ReactNode;
+  questionnaireBanner?: ReactNode;
+  playersPerMatch?: number;
+  sport?: string | null;
 }
 
 export const GameFormatCard = ({
@@ -40,17 +49,22 @@ export const GameFormatCard = ({
   fixedTeamsPanelOpen,
   showWizardButton = true,
   suppressAllowMultiToggle = false,
+  sportRow,
+  questionnaireBanner,
+  playersPerMatch,
+  sport,
 }: GameFormatCardProps) => {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
   const [expanded, setExpanded] = useState(false);
   const isTraining = entityType === 'TRAINING';
+  const gameSport = parseGameSport(sport);
+  const showSportTag = shouldShowGameCardSportGlyph(gameSport, getViewerPrimarySport(user), undefined);
 
   const toggleExpanded = () => {
     if (isTraining) return;
     setExpanded((v) => !v);
   };
-
-  const titleKey = `gameFormat.scoringMode.${format.scoringMode}.title` as const;
 
   const showGender = teams && gameFormatGenderVisible(entityType);
   const showFixedToggle = teams && gameFormatFixedTeamsToggleVisible(entityType, teams.participantCount);
@@ -76,7 +90,9 @@ export const GameFormatCard = ({
           <GameFormatRacketIcon size={15} className="row-start-1 shrink-0 text-primary-600 dark:text-primary-400 mt-0.5" />
           <div className="row-start-1 flex min-w-0 items-center gap-1.5">
             <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-              {isTraining ? t('gameFormat.trainingTitle') : t(titleKey)}
+              {isTraining
+                ? t('gameFormat.trainingTitle')
+                : tScoringModeField(t, format.scoringMode, 'title', sport)}
             </div>
             {!isTraining && (
               <motion.span
@@ -93,6 +109,11 @@ export const GameFormatCard = ({
           </div>
           {!isTraining && (
             <div className="col-span-2 row-start-2 min-w-0 text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
+              {showSportTag && (
+                <div className="mb-1">
+                  <GameSportTag sport={gameSport} />
+                </div>
+              )}
               <GameFormatSummary
                 scoringMode={format.scoringMode}
                 scoringPreset={format.scoringPreset}
@@ -102,6 +123,8 @@ export const GameFormatCard = ({
                 matchTimedCapMinutes={format.matchTimedCapMinutes}
                 customPointsTotal={format.customPointsTotal}
                 winnerOfGame={format.winnerOfGame}
+                playersPerMatch={playersPerMatch}
+                sport={sport}
                 twoRows
               />
             </div>
@@ -135,6 +158,7 @@ export const GameFormatCard = ({
                 format={format}
                 generationSlotCount={generationSlotCount}
                 hasFixedTeams={teams?.hasFixedTeams}
+                sport={sport}
               />
             </div>
           </motion.div>
@@ -162,6 +186,10 @@ export const GameFormatCard = ({
           className="border-t border-gray-100 dark:border-gray-800 px-4 py-3"
         />
       )}
+
+      {sportRow && <div className="border-t border-gray-100 dark:border-gray-800 px-4 py-3">{sportRow}</div>}
+
+      {questionnaireBanner}
 
       {showFixedToggle &&
         !suppressAllowMultiToggle &&

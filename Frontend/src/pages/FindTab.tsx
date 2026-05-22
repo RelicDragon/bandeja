@@ -10,6 +10,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
+import { findSportFilterToApiParam, getViewerPrimarySport } from '@/utils/findSportFilter';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation as useI18nTranslation } from 'react-i18next';
@@ -65,11 +66,22 @@ export const FindTab = () => {
   });
 
   const { filters, updateFilter, updateFilters } = useGameFilters();
+  const findSportApiParam = useMemo(
+    () => findSportFilterToApiParam(filters.filterSport, getViewerPrimarySport(user)),
+    [filters.filterSport, user],
+  );
   const {
     availableGames,
     loading: loadingAvailableGames,
     fetchData: fetchAvailableGames,
-  } = useAvailableGames(user, dateRange.startDate, dateRange.endDate, true);
+  } = useAvailableGames(
+    user,
+    dateRange.startDate,
+    dateRange.endDate,
+    true,
+    findSportApiParam,
+    filters.showPrivateGames,
+  );
 
   const handleDateRangeChange = (startDate: Date, endDate: Date) => {
     setDateRange({ startDate, endDate });

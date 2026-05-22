@@ -1,5 +1,6 @@
-import { format, Locale } from 'date-fns';
+import { format, getISODay, Locale } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
+import { t } from '../utils/translations';
 import { enGB } from 'date-fns/locale/en-GB';
 import { ru } from 'date-fns/locale/ru';
 import { sr } from 'date-fns/locale/sr';
@@ -108,10 +109,30 @@ export async function getDateLabelInTimezone(
   return baseGetDateLabel(zonedDate, lang, includeComma);
 }
 
+const ISO_DAY_SHORT_KEY: Record<number, string> = {
+  1: 'date.shortDay.mon',
+  2: 'date.shortDay.tue',
+  3: 'date.shortDay.wed',
+  4: 'date.shortDay.thu',
+  5: 'date.shortDay.fri',
+  6: 'date.shortDay.sat',
+  7: 'date.shortDay.sun',
+};
+
+function normalizeLangCode(lang: string): string {
+  return (lang || 'en').split('-')[0].toLowerCase();
+}
+
+/** First letter uppercased (Mon, Пн); rest unchanged. */
+export function capitalizeShortDayLabel(label: string): string {
+  if (!label) return label;
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 function getShortDayCacheKey(date: Date | string, timezone: string, lang: string): string {
   const zonedDate = convertToUserTimezone(date, timezone);
   const dateKey = format(zonedDate, 'yyyy-MM-dd');
-  return `${timezone}:${lang}:${dateKey}`;
+  return `${timezone}:${normalizeLangCode(lang)}:${dateKey}`;
 }
 
 export async function getShortDayOfWeek(
@@ -122,8 +143,21 @@ export async function getShortDayOfWeek(
   const cacheKey = getShortDayCacheKey(date, timezone, lang);
   const cached = shortDayCache.get(cacheKey);
   if (cached !== undefined) return cached;
-  const formatted = await formatDateInTimezone(date, 'EEEE', timezone, lang);
-  const value = formatted.slice(0, 3);
+
+  const zonedDate = convertToUserTimezone(date, timezone);
+  const isoDay = getISODay(zonedDate);
+  const key = ISO_DAY_SHORT_KEY[isoDay];
+  const baseLang = normalizeLangCode(lang);
+  const translated = key ? t(key, baseLang) : '';
+
+  let value: string;
+  if (translated && translated !== key) {
+    value = translated;
+  } else {
+    const narrow = await formatDateInTimezone(date, 'EEEEEE', timezone, lang);
+    value = capitalizeShortDayLabel(narrow);
+  }
+
   shortDayCache.set(cacheKey, value);
   return value;
 }

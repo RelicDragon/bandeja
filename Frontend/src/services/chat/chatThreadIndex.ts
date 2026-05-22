@@ -6,7 +6,10 @@ import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { chatLocalDb, type ChatListFilterTab, type ChatThreadIndexRow } from './chatLocalDb';
 import { getLatestLocalMessageRowAcrossChatTypes } from './messageContextHead';
-import { normalizeChatType } from '@/utils/chatType';
+import {
+  chatMessageToGameListPreview,
+  isGamePublicListPreviewMessage,
+} from '@/utils/gameChatListPreview';
 import { computeListOutboxForContext } from './chatOutboxListOutboxCompute';
 import { scheduleChatListOutboxBump } from './chatListOutboxBumpScheduler';
 import {
@@ -31,15 +34,7 @@ function shouldIncrementThreadUnread(message: ChatMessage): boolean {
   const nav = useNavigationStore.getState();
   if (message.chatContextType === 'USER' && nav.viewingUserChatId === message.contextId) return false;
   if (message.chatContextType === 'GROUP' && nav.viewingGroupChannelId === message.contextId) return false;
-  if (message.chatContextType === 'GAME' && nav.viewingGameChatId === message.contextId) {
-    if (
-      nav.viewingGameChatChatType &&
-      normalizeChatType(message.chatType) !== normalizeChatType(nav.viewingGameChatChatType)
-    ) {
-      return true;
-    }
-    return false;
-  }
+  if (message.chatContextType === 'GAME' && nav.viewingGameChatId === message.contextId) return false;
   return true;
 }
 
@@ -111,7 +106,9 @@ function listSortTimestamp(row: ChatThreadIndexRow, item: ChatItem): number {
 }
 
 export function chatItemsFromUnreadGames(items: Array<{ game: Game; unreadCount: number }>): ChatItem[] {
-  return items.map((x) => {
+  return items
+    .filter((x) => x.game.status !== 'ARCHIVED')
+    .map((x) => {
     const lastMessageDate = x.game.lastMessage
       ? new Date(x.game.lastMessage.updatedAt)
       : new Date(x.game.updatedAt);
@@ -415,6 +412,8 @@ export async function patchThreadIndexFromMessage(
   message: ChatMessage,
   options?: PatchThreadIndexFromMessageOptions
 ): Promise<void> {
+  if (!isGamePublicListPreviewMessage(message)) return;
+
   const applyUnread = options?.applyUnread !== false;
   const initialRows = await chatLocalDb.threadIndex
     .where('[contextType+contextId]')
@@ -434,11 +433,13 @@ export async function patchThreadIndexFromMessage(
       const item = parseItem(latest.itemJson);
       if (!item || item.type === 'contact') break;
       const draft = 'draft' in item ? item.draft : undefined;
-      const lastMessageDate = calculateLastMessageDate(message, draft ?? null, updatedAtIso);
+      const lastMessageForData =
+        item.type === 'game' ? chatMessageToGameListPreview(message) : message;
+      const lastMessageDate = calculateLastMessageDate(lastMessageForData, draft ?? null, updatedAtIso);
       const prevUnread = 'unreadCount' in item ? (item.unreadCount ?? 0) : 0;
       const next = {
         ...item,
-        data: { ...item.data, lastMessage: message, updatedAt: updatedAtIso },
+        data: { ...item.data, lastMessage: lastMessageForData, updatedAt: updatedAtIso },
         lastMessageDate,
         ...(bumpUnread && 'unreadCount' in item ? { unreadCount: prevUnread + 1 } : {}),
       } as ChatItem & { listOutbox?: ChatListOutbox | null };

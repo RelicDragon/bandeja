@@ -1,0 +1,22 @@
+{
+  "takeTest": "Hacer el cuestionario",
+  "skip": "Omitir — empezar con 1.0",
+  "later": "Más tarde",
+  "stayAtOne": "Empezar con 1.0",
+  "socialUnaffected": "Esto no cambia tu valoración social.",
+  "addSportTitle": "¿Estimar tu nivel en {{sport}}?",
+  "addSportSubtitle": "Un minuto — te ayudamos a encontrar partidos a tu medida.",
+  "estimateLevel": "Estimar nivel",
+  "estimateLink": "Estimar",
+  "createGameBanner": "Estima tu nivel de {{sport}}",
+  "createGameLevelBandWarning": "Tu nivel de {{sport}} se estima en 1.0. Un mínimo por encima de 2.5 puede impedirte unirte a tu propio partido.",
+  "inviteNudge": "Tu nivel de {{sport}} es {{level}}.",
+  "inviteNudgeCrossSport": "{{primarySport}} {{primaryLevel}} · Nivel {{gameSport}} {{level}} —",
+  "homeCtaTitle": "Obtén tu nivel de {{sport}}",
+  "homeCtaSubtitle": "Cuestionario breve — ajustamos tu nivel para partidos acordes.",
+  "homeCtaAction": "Rellenar el cuestionario",
+  "homeDismissLink": "No volver a mostrar",
+  "homeDismissTitle": "¿Ocultar el cuestionario de nivel?",
+  "homeDismissMessage": "Tu nivel actual es {{level}}. Solo ocultamos el aviso; tu nivel no cambia.",
+  "homeDismissConfirm": "Sí, ocultar"
+}

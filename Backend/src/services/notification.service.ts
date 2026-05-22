@@ -593,6 +593,7 @@ class NotificationService {
         telegramId: true,
         language: true,
         currentCityId: true,
+        primarySport: true,
       }
     });
 

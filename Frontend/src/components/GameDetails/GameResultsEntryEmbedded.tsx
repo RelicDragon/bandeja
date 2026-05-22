@@ -858,7 +858,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
   if (!currentGame && canInitialize) {
     return (
-      <div className="flex items-center justify-center min-h-[200px] p-4">
+      <div className="flex items-center justify-center min-h-[200px] py-4">
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400">{t('errors.notFound')}</p>
         </div>
@@ -868,16 +868,18 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
   return (
     <>
-      <OfflineBanner
-        serverProblem={serverProblem}
-        showMessage={showOfflineMessage}
-        onToggle={toggleMessage}
-        onSync={handleSyncToServer}
-        isSyncing={loading.syncing}
-      />
+      <div className="w-full [&>div]:px-0 [&>div]:py-4">
+        <OfflineBanner
+          serverProblem={serverProblem}
+          showMessage={showOfflineMessage}
+          onToggle={toggleMessage}
+          onSync={handleSyncToServer}
+          isSyncing={loading.syncing}
+        />
+      </div>
 
       {showSendToTelegramButton && (
-        <div className="mb-6 flex justify-center px-4">
+        <div className="mb-6 flex justify-center">
           <button
             onClick={handleSendToTelegram}
             disabled={isSendingToTelegram}
@@ -905,7 +907,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       )}
 
       {showSentToTelegramHint && (
-        <div className="mb-6 flex flex-col items-center gap-3 px-4">
+        <div className="mb-6 flex flex-col items-center gap-3">
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
             {t('gameResults.resultsAlreadySentToTelegram') || 'Results already sent to Telegram'}
           </p>
@@ -955,18 +957,24 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
       <div>
         {currentGame?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
-          <div>
-            <OutcomesDisplay 
-              outcomes={currentGame.outcomes || []} 
-              affectsRating={currentGame.affectsRating} 
-              gameId={currentGame.id}
-              hasFixedTeams={currentGame.hasFixedTeams || false}
-              genderTeams={(currentGame.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'}
-              onExplanationClick={(explanation, playerName, levelBefore) => {
-                openModal({ type: 'explanation', explanation, playerName, levelBefore });
-              }}
-            />
-            {showWorkoutSummaryCard ? <GameWorkoutSummaryCard gameId={currentGame.id} /> : null}
+          <div className="w-full">
+            <div className="[&>div]:mx-0 [&>div]:max-w-none [&>div]:px-0">
+              <OutcomesDisplay 
+                outcomes={currentGame.outcomes || []} 
+                affectsRating={currentGame.affectsRating} 
+                gameId={currentGame.id}
+                hasFixedTeams={currentGame.hasFixedTeams || false}
+                genderTeams={(currentGame.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'}
+                onExplanationClick={(explanation, playerName, levelBefore) => {
+                  openModal({ type: 'explanation', explanation, playerName, levelBefore });
+                }}
+              />
+            </div>
+            {showWorkoutSummaryCard ? (
+              <div className="[&>div]:px-0 [&>div]:py-4">
+                <GameWorkoutSummaryCard gameId={currentGame.id} />
+              </div>
+            ) : null}
           </div>
         ) : currentGame && currentGame.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
           <PlayerStatsPanel game={currentGame as NonNullable<typeof currentGame>} rounds={rounds} />

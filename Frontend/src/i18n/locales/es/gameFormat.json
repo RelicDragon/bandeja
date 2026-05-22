@@ -15,6 +15,12 @@
     "stepScoringModeHint": "¿Cómo quieres marcar cada partido?",
     "stepSetStructureHint": "Elige la estructura de sets para cada partido.",
     "stepPointsTotalHint": "¿Cuántos puntos se juegan en cada set en total (ambos equipos)?",
+    "stepPointsTotalHintBySport": {
+      "TABLE_TENNIS": "Elige el tope de puntos por juego o un partido al mejor de (juegos a 11).",
+      "BADMINTON": "Duración del partido — suele ser al mejor de 3 juegos a 21.",
+      "SQUASH": "Partido al mejor de 5 — juegos a 11, ventaja de 2.",
+      "PICKLEBALL": "¿Cuántos puntos se juegan en cada juego?"
+    },
     "stepGenerationHint": "¿Cómo se deciden los enfrentamientos cada ronda?",
     "stepRankingHint": "Configura cómo se determina el ganador general.",
     "standingPointsHint": "Puntos por resultado del partido para la clasificación (no son los puntos jugados en el partido).",
@@ -30,12 +36,40 @@
       "CLASSIC": {
         "title": "Juegos / Sets",
         "subtitle": "Conteo de puntos estilo tenis (15/30/40…), luego juegos y sets — pádel clásico.",
-        "hint": "p. ej., 15 / 30 / 40 en el juego → marcador de set 6–4"
+        "hint": "p. ej., 15 / 30 / 40 en el juego → marcador de set 6–4",
+        "sport": {
+          "TENNIS": {
+            "subtitle": "Conteo estilo tenis (15/30/40…), luego juegos y sets.",
+            "hint": "p. ej., 15 / 30 / 40 en el juego → marcador de set 6–4"
+          }
+        }
       },
       "POINTS": {
         "title": "Puntos simples",
         "subtitle": "Cada set tiene un total fijo de puntos (ambos equipos sumados). Gana quien tenga más al terminar — no es 15/30/40.",
-        "hint": "p. ej., 11–10 en un set a 21 — la suma debe coincidir con el tope"
+        "hint": "p. ej., 11–10 en un set a 21 — la suma debe coincidir con el tope",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Puntos por rally",
+            "subtitle": "Juegos a un tope de puntos con ventaja de 2 — sin 15/30/40.",
+            "hint": "p. ej., un juego 11–9 o un partido al mejor de 3 a 11"
+          },
+          "BADMINTON": {
+            "title": "Puntos por rally",
+            "subtitle": "Juegos a 21 (ventaja de 2) o un solo juego a 21.",
+            "hint": "p. ej., 21–19 en un juego, o ganar 2 de 3 juegos"
+          },
+          "SQUASH": {
+            "title": "Puntos por rally",
+            "subtitle": "PAR a 11 (ventaja de 2), o partidos al mejor de a 11.",
+            "hint": "p. ej., 11–8 por juego en un partido al mejor de 5"
+          },
+          "PICKLEBALL": {
+            "title": "Puntos por rally",
+            "subtitle": "Tope de puntos por juego — longitudes habituales abajo.",
+            "hint": "p. ej., 11–9 según las reglas locales"
+          }
+        }
       }
     },
     "generation": {
@@ -160,10 +194,80 @@
         "subtitle": "16 puntos en total en el set (ambos equipos); gana el que sume más",
         "hint": "Sets rápidos — estilo Americano"
       },
+      "POINTS_11": {
+        "title": "11 puntos",
+        "subtitle": "Un juego a 11 puntos, ventaja de 2",
+        "hint": "Juego rápido por rally",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Juego a 11",
+            "subtitle": "Un juego a 11 puntos (ventaja de 2)",
+            "hint": "p. ej., 11–9 — ventaja de 2 en deuce"
+          },
+          "PICKLEBALL": {
+            "title": "Juego a 11",
+            "subtitle": "Un juego de rally a 11, ventaja de 2",
+            "hint": "Duración recreativa habitual"
+          }
+        }
+      },
       "POINTS_21": {
         "title": "21 puntos",
         "subtitle": "21 puntos en total en el set (ambos equipos); gana el que sume más",
-        "hint": "Duración habitual de Americano"
+        "hint": "Duración habitual de Americano",
+        "sport": {
+          "BADMINTON": {
+            "title": "Juego a 21",
+            "subtitle": "Un juego a 21 puntos, ventaja de 2",
+            "hint": "Partido de bádminton más corto"
+          },
+          "PICKLEBALL": {
+            "title": "Juego a 21",
+            "subtitle": "Un juego a 21 puntos",
+            "hint": "Duración habitual de pickleball"
+          }
+        }
+      },
+      "BEST_OF_3_11": {
+        "title": "Mejor de 3 · a 11",
+        "subtitle": "Tres juegos a 11, ventaja de 2; primero en 2 juegos gana",
+        "hint": "Partido estándar de tenis de mesa",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Mejor de 3 juegos a 11",
+            "subtitle": "Tres juegos a 11 (ventaja de 2); primero en 2 gana el partido",
+            "hint": "Duración oficial del partido"
+          }
+        }
+      },
+      "BEST_OF_5_11": {
+        "title": "Mejor de 5 · a 11",
+        "subtitle": "Cinco juegos a 11; primero en 3 gana",
+        "hint": "Partido de rally más largo",
+        "sport": {
+          "SQUASH": {
+            "title": "Mejor de 5 juegos a 11",
+            "subtitle": "Cinco juegos a 11 (ventaja de 2); primero en 3 gana",
+            "hint": "Duración estándar de squash"
+          }
+        }
+      },
+      "PAR_11": {
+        "title": "PAR a 11",
+        "subtitle": "Punto por rally a 11, ventaja de 2",
+        "hint": "Puntuación PAR de squash",
+        "sport": {
+          "SQUASH": {
+            "title": "PAR a 11",
+            "subtitle": "PAR oficial — cada rally puntúa, juego a 11 (ventaja de 2)",
+            "hint": "Squash competitivo estándar"
+          }
+        }
+      },
+      "BEST_OF_3_21": {
+        "title": "Al mejor de 3 juegos a 21",
+        "subtitle": "Tres juegos a 21 puntos, gana con 2 de diferencia; quien gane 2 juegos gana el partido",
+        "hint": "Duración estándar de un partido de bádminton"
       },
       "POINTS_24": {
         "title": "24 puntos",
@@ -194,8 +298,13 @@
       "CLASSIC_SHORT_SET": "Sets cortos",
       "CLASSIC_SUPER_TIEBREAK": "Super tie-break",
       "CLASSIC_TIMED": "Juegos/sets · tiempo",
+      "POINTS_11": "A 11",
       "POINTS_16": "A 16",
       "POINTS_21": "A 21",
+      "BEST_OF_3_11": "Bo3 · a 11",
+      "BEST_OF_3_21": "Bo3 · a 21",
+      "BEST_OF_5_11": "Bo5 · a 11",
+      "PAR_11": "PAR · 11",
       "POINTS_24": "A 24",
       "POINTS_32": "A 32",
       "TIMED": "Por tiempo",
@@ -216,6 +325,15 @@
       "customDuration": "Personalizado (1–60 min)",
       "minutesLabel": "{{minutes}} min",
       "presetMinutes": "{{minutes}} min"
+    },
+    "bestOfMatch": {
+      "label": "Partido al mejor de (juegos)",
+      "labelBySport": {
+        "TABLE_TENNIS": "Partido al mejor de",
+        "BADMINTON": "Partido al mejor de",
+        "SQUASH": "Partido al mejor de"
+      },
+      "optionTo": "Mejor de {{sets}} · a {{cap}}"
     },
     "customPoints": {
       "label": "Total personalizado",

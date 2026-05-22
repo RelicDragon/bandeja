@@ -1,11 +1,10 @@
-import type { ChatContextType, ChatMessage } from '@/api/chat';
+import type { ChatContextType } from '@/api/chat';
+import { cancelSend } from '@/services/chatSendService';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
-import { sendWithTimeout, isSending, cancelSend } from '@/services/chatSendService';
-import { putLocalMessage } from '@/services/chat/chatLocalApply';
+import { sendWithTimeout, isSending } from '@/services/chatSendService';
 import {
   CHAT_OUTBOX_FAILED_EVENT,
   CHAT_OUTBOX_REMOVED_EVENT,
-  CHAT_OUTBOX_SUCCESS_EVENT,
 } from '@/services/chat/chatOutboxEvents';
 
 export { CHAT_OUTBOX_REMOVED_EVENT } from '@/services/chat/chatOutboxEvents';
@@ -40,21 +39,6 @@ export async function retryFailedOutboxForContext(
           window.dispatchEvent(
             new CustomEvent(CHAT_OUTBOX_FAILED_EVENT, {
               detail: { tempId, contextType: row.contextType, contextId: row.contextId },
-            })
-          );
-        },
-        onSuccess: (created: ChatMessage) => {
-          void putLocalMessage(created);
-          void messageQueueStorage.remove(row.tempId, row.contextType, row.contextId);
-          cancelSend(row.tempId);
-          window.dispatchEvent(
-            new CustomEvent(CHAT_OUTBOX_SUCCESS_EVENT, {
-              detail: {
-                tempId: row.tempId,
-                contextType: row.contextType,
-                contextId: row.contextId,
-                message: created,
-              },
             })
           );
         },

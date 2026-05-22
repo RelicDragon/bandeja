@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Trash2, RotateCw } from 'lucide-react';
@@ -13,7 +13,11 @@ import { GameFormatGenderFields } from '@/components/gameFormat/GameFormatTeamsF
 import { gameFormatGenderVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { Game, GenderTeam } from '@/types';
 import { useAuthStore } from '@/store/authStore';
+import { useSportConfig } from '@/hooks/useSportConfig';
+import { gameLeagueRosterOptions, trainingParticipantOptions } from '@/utils/userMaxParticipantsInGame';
+import { MatchFormatControl } from '@/components/createGame/MatchFormatControl';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { syncPlayersPerMatchOnRosterChange } from '@/utils/matchFormat';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface EditMaxParticipantsModalProps {
@@ -33,7 +37,11 @@ export const EditMaxParticipantsModal = ({
 }: EditMaxParticipantsModalProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const sportConfig = useSportConfig(game.sport);
   const [newMaxParticipants, setNewMaxParticipants] = useState(game.maxParticipants);
+  const [playersPerMatch, setPlayersPerMatch] = useState(
+    () => game.playersPerMatch ?? sportConfig.defaultPlayersPerMatch,
+  );
   const [levelRange, setLevelRange] = useState<[number, number]>([
     game.minLevel ?? 1.0,
     game.maxLevel ?? 7.0,
@@ -49,23 +57,67 @@ export const EditMaxParticipantsModal = ({
   }>({ isOpen: false, type: 'NON_MALE', count: 0 });
   const [isEditingMaxParticipants, setIsEditingMaxParticipants] = useState(false);
   const [tempMaxParticipants, setTempMaxParticipants] = useState('');
+  const prevMaxParticipantsRef = useRef(game.maxParticipants);
 
   useEffect(() => {
     if (isOpen) {
+      prevMaxParticipantsRef.current = game.maxParticipants;
       setNewMaxParticipants(game.maxParticipants);
+      setPlayersPerMatch(game.playersPerMatch ?? sportConfig.defaultPlayersPerMatch);
       setLevelRange([game.minLevel ?? 1.0, game.maxLevel ?? 7.0]);
       setGenderTeams(game.genderTeams ?? 'ANY');
       setRemovedPlayerIds(new Set());
       setOriginalParticipants(game.participants.filter(p => p.status === 'PLAYING'));
       setIsEditingMaxParticipants(false);
     }
-  }, [isOpen, game]);
+  }, [isOpen, game, sportConfig.defaultPlayersPerMatch]);
 
   useEffect(() => {
     if (isOpen) {
       setOriginalParticipants(game.participants.filter(p => p.status === 'PLAYING'));
     }
   }, [isOpen, game.participants]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (game.entityType !== 'GAME' && game.entityType !== 'LEAGUE') return;
+    const prev = prevMaxParticipantsRef.current;
+    if (prev !== newMaxParticipants) {
+      const sync = syncPlayersPerMatchOnRosterChange(
+        prev,
+        newMaxParticipants,
+        sportConfig.defaultPlayersPerMatch,
+        sportConfig.allowedPlayerCountsPerMatch,
+      );
+      prevMaxParticipantsRef.current = newMaxParticipants;
+      if (sync) {
+        setPlayersPerMatch(sync.playersPerMatch);
+      }
+    }
+  }, [
+    isOpen,
+    game.entityType,
+    newMaxParticipants,
+    sportConfig.defaultPlayersPerMatch,
+    sportConfig.allowedPlayerCountsPerMatch,
+  ]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (game.entityType !== 'GAME' && game.entityType !== 'LEAGUE') return;
+    const allowed = sportConfig.allowedPlayerCountsPerMatch;
+    if (allowed.includes(playersPerMatch)) return;
+    const fallback = allowed.includes(sportConfig.defaultPlayersPerMatch)
+      ? sportConfig.defaultPlayersPerMatch
+      : allowed[0] ?? sportConfig.defaultPlayersPerMatch;
+    setPlayersPerMatch(fallback);
+  }, [
+    isOpen,
+    game.entityType,
+    playersPerMatch,
+    sportConfig.allowedPlayerCountsPerMatch,
+    sportConfig.defaultPlayersPerMatch,
+  ]);
 
   const handleClose = useCallback(() => {
     onClose();
@@ -182,10 +234,13 @@ export const EditMaxParticipantsModal = ({
     if (game.entityType === 'GAME') {
       return canUseTournamentCapacity ? 12 : userParticipantCap;
     }
+    if (game.entityType === 'TRAINING') {
+      return 24;
+    }
     return 8;
   }, [canUseTournamentCapacity, game.entityType, userParticipantCap]);
 
-  const minParticipants = 2;
+  const minParticipants = game.entityType === 'TRAINING' ? 1 : 2;
 
   const validOptions = useMemo(() => {
     if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE_SEASON') {
@@ -200,12 +255,15 @@ export const EditMaxParticipantsModal = ({
       if (maxAllowed < 8) return [8];
       return Array.from({ length: Math.floor((maxAllowed - 8) / 2) + 1 }, (_, i) => 8 + i * 2);
     }
-    if (game.entityType === 'GAME') {
+    if (game.entityType === 'GAME' || game.entityType === 'LEAGUE') {
       const maxG = canUseTournamentCapacity ? 12 : userParticipantCap;
-      return Array.from({ length: Math.max(0, maxG - 1) }, (_, i) => i + 2);
+      return gameLeagueRosterOptions(user).filter((n) => n <= maxG);
     }
-    return [2, 3, 4, 5, 6, 7, 8];
-  }, [canUseTournamentCapacity, game.entityType, userParticipantCap]);
+    if (game.entityType === 'TRAINING') {
+      return trainingParticipantOptions();
+    }
+    return [2, 4, 5, 6, 7, 8];
+  }, [canUseTournamentCapacity, game.entityType, user, userParticipantCap]);
 
   const canSave = !needsRemoval && 
     (genderTeams === 'ANY' || 
@@ -234,11 +292,20 @@ export const EditMaxParticipantsModal = ({
         }
       }
       
-      const updatePayload: { maxParticipants: number; minLevel: number; maxLevel: number; genderTeams?: GenderTeam } = {
+      const updatePayload: {
+        maxParticipants: number;
+        minLevel: number;
+        maxLevel: number;
+        playersPerMatch?: number;
+        genderTeams?: GenderTeam;
+      } = {
         maxParticipants: newMaxParticipants,
         minLevel: levelRange[0],
         maxLevel: levelRange[1],
       };
+      if (game.entityType === 'GAME' || game.entityType === 'LEAGUE') {
+        updatePayload.playersPerMatch = playersPerMatch;
+      }
       if (game.entityType === 'GAME' || game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') {
         updatePayload.genderTeams = genderTeams;
       }
@@ -253,7 +320,7 @@ export const EditMaxParticipantsModal = ({
     } finally {
       setIsSaving(false);
     }
-  }, [canSave, isSaving, validRemovedPlayerIds, newMaxParticipants, levelRange, genderTeams, game.id, game.entityType, user?.id, onKickUser, onUpdate, t, handleClose]);
+  }, [canSave, isSaving, validRemovedPlayerIds, newMaxParticipants, playersPerMatch, levelRange, genderTeams, game.id, game.entityType, user?.id, onKickUser, onUpdate, t, handleClose]);
 
   const handleMarkForRemoval = useCallback((userId: string) => {
     setRemovedPlayerIds(prev => {
@@ -454,6 +521,18 @@ export const EditMaxParticipantsModal = ({
               </div>
             )}
           </div>
+
+          {(game.entityType === 'GAME' || game.entityType === 'LEAGUE') && (
+            <MatchFormatControl
+              playersPerMatch={playersPerMatch}
+              allowedCounts={sportConfig.allowedPlayerCountsPerMatch}
+              onChange={setPlayersPerMatch}
+              disabled={newMaxParticipants === 2}
+              label={t('sport.matchFormat')}
+              label1v1={t('sport.match1v1')}
+              label2v2={t('sport.match2v2')}
+            />
+          )}
 
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">

@@ -1,34 +1,44 @@
-import { Check, Beer } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PlayerAvatar } from './PlayerAvatar';
+import { CompetitiveSocialLevelBadge } from '@/components/profile/CompetitiveSocialLevelBadge';
 import { formatSmartRelativeTime } from '@/utils/dateFormat';
-import type { User } from '@/types';
+import { getUserPrimarySport } from '@/utils/profileSports';
+import type { Sport, User } from '@/types';
 
 export interface ConfirmedLevelSectionProps {
   user: User;
+  sport?: Sport;
+  embedded?: boolean;
+  showBadge?: boolean;
 }
 
-export const ConfirmedLevelSection = ({ user }: ConfirmedLevelSectionProps) => {
+export const ConfirmedLevelSection = ({
+  user,
+  sport,
+  embedded = false,
+  showBadge = true,
+}: ConfirmedLevelSectionProps) => {
   const { t } = useTranslation();
+  const levelSport = sport ?? getUserPrimarySport(user);
   const confirmed = Boolean(user.approvedLevel && user.approvedBy);
 
-  return (
-    <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700/50 border border-gray-200/60 dark:border-gray-600/50">
-      <div className="px-3 py-2.5">
-        <div className="flex justify-center mb-2">
-          <span className="bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-md flex items-center gap-1 inline-flex">
-            {user.approvedLevel && <Check size={14} className="text-white" strokeWidth={3} />}
-            <span>{user.level.toFixed(2)}</span>
-            <span className="text-[10px] font-normal opacity-90">{(user.reliability ?? 0).toFixed(0)}%</span>
-            <span>•</span>
-            <div className="relative flex items-center">
-              <Beer size={14} className="text-amber-600 dark:text-amber-500 absolute" fill="currentColor" />
-              <Beer size={14} className="text-white dark:text-gray-900 relative z-10" strokeWidth={1.5} />
-            </div>
-            <span>{user.socialLevel.toFixed(2)}</span>
-          </span>
+  const content = (
+    <>
+      {showBadge && (
+        <div className={`flex justify-center ${confirmed || !embedded ? 'mb-2' : ''}`}>
+          <CompetitiveSocialLevelBadge
+            user={user}
+            sport={levelSport}
+            showSportLabel
+            showApprovedCheck={confirmed}
+            showReliability
+            levelDecimals={2}
+            className="bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-md flex items-center gap-1 inline-flex"
+          />
         </div>
-        {confirmed ? (
+      )}
+      {confirmed ? (
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
               <Check size={16} strokeWidth={3} />
@@ -47,12 +57,21 @@ export const ConfirmedLevelSection = ({ user }: ConfirmedLevelSectionProps) => {
               )}
             </div>
           </div>
-        ) : (
+        ) : showBadge ? (
           <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
             <span>{t('playerCard.levelNotConfirmed')}</span>
           </div>
-        )}
-      </div>
+        ) : null}
+    </>
+  );
+
+  if (embedded) {
+    return <div className="px-3 py-2.5">{content}</div>;
+  }
+
+  return (
+    <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700/50 border border-gray-200/60 dark:border-gray-600/50">
+      <div className="px-3 py-2.5">{content}</div>
     </div>
   );
 };

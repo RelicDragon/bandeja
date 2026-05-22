@@ -27,6 +27,16 @@ export function gameOrLeagueParticipantOptions(user: BasicUser | null | undefine
   return Array.from({ length: Math.max(0, max - 1) }, (_, i) => i + 2);
 }
 
+/** Event roster sizes for games/leagues: 2…user cap, never 3. */
+export function gameLeagueRosterOptions(user: BasicUser | null | undefined): number[] {
+  return gameOrLeagueParticipantOptions(user).filter((n) => n !== 3);
+}
+
+/** Training roster: 1…24 (even and odd). */
+export function trainingParticipantOptions(): number[] {
+  return Array.from({ length: 24 }, (_, i) => i + 1);
+}
+
 export function tournamentParticipantOptions(user: BasicUser | null | undefined): number[] {
   const max = maxSlotsForUserTournament(user);
   if (max < 8) return [];

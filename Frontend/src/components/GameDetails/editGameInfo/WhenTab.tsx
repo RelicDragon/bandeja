@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Trash2 } from 'lucide-react';
 import { Game, Club, EntityType } from '@/types';
 import { GameStartSection } from '@/components/createGame/GameStartSection';
 
@@ -24,6 +25,8 @@ interface WhenTabProps {
   getTimeSlotsForDuration: (startTime: string, duration: number) => string[];
   isSlotHighlighted: (time: string) => boolean;
   getDurationLabel: (dur: number) => string;
+  showRemoveTime?: boolean;
+  onRemoveTime?: () => void;
 }
 
 export const WhenTab = ({
@@ -47,6 +50,8 @@ export const WhenTab = ({
   getTimeSlotsForDuration,
   isSlotHighlighted,
   getDurationLabel,
+  showRemoveTime = false,
+  onRemoveTime,
 }: WhenTabProps) => {
   const { t } = useTranslation();
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -86,6 +91,16 @@ export const WhenTab = ({
         dateInputRef={dateInputRef}
         compact={true}
       />
+      {showRemoveTime && onRemoveTime && (
+        <button
+          type="button"
+          onClick={onRemoveTime}
+          className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        >
+          <Trash2 size={16} />
+          {t('gameDetails.editTab.eraseTime')}
+        </button>
+      )}
     </div>
   );
 };

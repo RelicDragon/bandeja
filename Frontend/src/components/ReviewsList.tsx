@@ -123,12 +123,26 @@ export const ReviewsList = ({
 
   const listContent = (
     <div className={compact ? 'space-y-3' : 'space-y-4'}>
-      {reviews.map((r) => (
-        <button
+      {reviews.map((r) => {
+        const rowClassName = `w-full text-left rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors ${compact ? 'p-2' : 'p-3'}`;
+        const goToGame = onReviewClick ? () => onReviewClick(r.gameId) : undefined;
+        return (
+        <div
           key={r.id}
-          type="button"
-          onClick={() => onReviewClick?.(r.gameId)}
-          className={`w-full text-left rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors ${compact ? 'p-2' : 'p-3'}`}
+          role={goToGame ? 'button' : undefined}
+          tabIndex={goToGame ? 0 : undefined}
+          onClick={goToGame}
+          onKeyDown={
+            goToGame
+              ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    goToGame();
+                  }
+                }
+              : undefined
+          }
+          className={goToGame ? `${rowClassName} cursor-pointer` : rowClassName}
         >
           <div className="flex items-start gap-3">
             {r.reviewer && (
@@ -166,8 +180,9 @@ export const ReviewsList = ({
               )}
             </div>
           </div>
-        </button>
-      ))}
+        </div>
+        );
+      })}
     </div>
   );
 

@@ -5,7 +5,10 @@ import { Card } from '@/components';
 import type { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { leagueSeasonHubsFromGames } from '@/utils/leagueSeasonHubsFromGames';
-import { leagueSeasonScheduledGamesFromGames } from '@/utils/leagueSeasonScheduledGamesFromGames';
+import {
+  leagueSeasonScheduledGamesFromGames,
+  leagueSeasonUnscheduledGamesFromGames,
+} from '@/utils/leagueSeasonScheduledGamesFromGames';
 import {
   hydrateYourLeaguesHomeExpandedFromIdb,
   persistYourLeaguesHomeExpanded,
@@ -34,8 +37,12 @@ export function YourLeaguesHomeSection({
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const hubs = useMemo(() => leagueSeasonHubsFromGames(games), [games]);
-  const gamesByHub = useMemo(
+  const scheduledGamesByHub = useMemo(
     () => leagueSeasonScheduledGamesFromGames(games, user?.id),
+    [games, user?.id]
+  );
+  const unscheduledGamesByHub = useMemo(
+    () => leagueSeasonUnscheduledGamesFromGames(games, user?.id),
     [games, user?.id]
   );
   const [expanded, setExpanded] = useState(readYourLeaguesHomeExpandedSync);
@@ -113,7 +120,8 @@ export function YourLeaguesHomeSection({
               const hubGame = games.find(
                 (g) => g.id === hub.hubId && g.entityType === 'LEAGUE_SEASON'
               );
-              const hubGames = gamesByHub[hub.hubId] ?? [];
+              const scheduledGames = scheduledGamesByHub[hub.hubId] ?? [];
+              const unscheduledGames = unscheduledGamesByHub[hub.hubId] ?? [];
               return (
                 <div key={hub.hubId} className="flex flex-col gap-1.5">
                   <YourLeaguesHomeSeasonOpenRow
@@ -122,10 +130,18 @@ export function YourLeaguesHomeSection({
                     unread={gamesUnreadCounts[hub.hubId] ?? 0}
                   />
                   <YourLeaguesHomeSeasonScheduledGamesExpandable
-                    hubGames={hubGames}
+                    hubGames={scheduledGames}
                     gamesUnreadCounts={gamesUnreadCounts}
                     expanded={!!hubExpanded[hub.hubId]}
                     onToggleExpanded={() => toggleHubExpanded(hub.hubId)}
+                    titleKey="home.leagueSeasonScheduledGames"
+                  />
+                  <YourLeaguesHomeSeasonScheduledGamesExpandable
+                    hubGames={unscheduledGames}
+                    gamesUnreadCounts={gamesUnreadCounts}
+                    expanded={!!hubExpanded[`${hub.hubId}:unscheduled`]}
+                    onToggleExpanded={() => toggleHubExpanded(`${hub.hubId}:unscheduled`)}
+                    titleKey="home.leagueSeasonUnscheduledGames"
                   />
                 </div>
               );

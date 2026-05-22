@@ -1,0 +1,22 @@
+{
+  "q1": "¿Cuál es tu experiencia en tenis de mesa y con la empuñadura o golpes básicos?",
+  "q1a": "Nunca he jugado al tenis de mesa o aún elijo cómo sujetar la pala.",
+  "q1b": "Conozco una empuñadura básica y puedo golpear de drive o revés lentamente.",
+  "q1c": "Uso una empuñadura consistente y puedo intercambiar con drive y revés.",
+  "q1d": "Tengo un estilo de empuñadura definido y uso drive y revés con intención en el rally.",
+  "q2": "¿Qué tan fácil te resulta mantener un rally?",
+  "q2a": "Me cuesta devolver la bola a la mesa con regularidad.",
+  "q2b": "Puedo rallyar lento, pero fallo con velocidad o efecto.",
+  "q2c": "Mantengo rallies a ritmo medio con control razonable.",
+  "q2d": "Controlo ritmo, colocación y efecto básico en rallies largos.",
+  "q3": "¿Qué tan seguro te sientes con el saque y la recepción?",
+  "q3a": "Todavía aprendo saques legales y sobre todo bloqueo el resto.",
+  "q3b": "Puedo sacar y recibir a nivel básico, pero sin mucha variación.",
+  "q3c": "Tengo saques fiables y devuelvo saques medios para empezar el rally.",
+  "q3d": "Uso efecto y colocación en el saque y leo el resto para ganar ventaja.",
+  "q4": "¿Cómo describirías tu juego de partido y conocimiento de reglas?",
+  "q4a": "Todavía aprendo el marcador, los lets y cómo se ganan juegos y partidos.",
+  "q4b": "Conozco reglas básicas, pero rara vez juego partidos completos con plan.",
+  "q4c": "Entiendo el marcador de juegos, el orden de saque y táctica habitual.",
+  "q4d": "Juego partidos completos con comodidad y ajusto la táctica punto a punto."
+}

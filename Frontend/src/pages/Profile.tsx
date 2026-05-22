@@ -6,6 +6,10 @@ import { AnimatePresence } from 'framer-motion';
 import { Button, Card, Input, Select, ToggleGroup, ToggleSwitch, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal, CityModal, MainTabFooter, AppIconCarousel } from '@/components';
 import { AvailabilitySection } from '@/components/availability';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
+import { ProfileSportsSection } from '@/components/profile/ProfileSportsSection';
+import { DEFAULT_SPORT } from '@shared/sport';
+import { resolveActivePrimarySport, shouldShowSportLevelBadge } from '@/utils/profileSports';
+import { CompetitiveSocialLevelBadge } from '@/components/profile/CompetitiveSocialLevelBadge';
 import { ProfileComparison } from '@/components/ProfileComparison';
 import { ProfileFollowers } from '@/components/ProfileFollowers';
 import { ProfileTrainerReviews } from '@/components/ProfileTrainerReviews';
@@ -25,7 +29,6 @@ import {
   Monitor,
   LogOut,
   Eye,
-  Beer,
   Wallet,
   Check,
   Loader2,
@@ -610,25 +613,15 @@ export const ProfileContent = () => {
                 <Eye size={14} />
               </button>
             )}
-            {!isLoadingProfile && user?.level && (
-              <div className="absolute -bottom-1 -right-20 bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1">
-                <span>{user.level.toFixed(1)}</span>
-                <span>•</span>
-                <div className="relative flex items-center">
-                  <Beer
-                    size={14}
-                    className="text-amber-600 dark:text-amber-500 absolute"
-                    fill="currentColor"
-                  />
-                  <Beer
-                    size={14}
-                    className="text-white dark:text-gray-900 relative z-10"
-                    strokeWidth={1.5}
-                  />
+            {!isLoadingProfile && user && (() => {
+              const headerSport = resolveActivePrimarySport(user) ?? DEFAULT_SPORT;
+              if (!shouldShowSportLevelBadge(user, headerSport) && user.socialLevel == null) return null;
+              return (
+                <div className="absolute -bottom-1 -right-20">
+                  <CompetitiveSocialLevelBadge user={user} sport={headerSport} showSportLabel />
                 </div>
-                <span>{user.socialLevel.toFixed(1)}</span>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
 
@@ -639,6 +632,10 @@ export const ProfileContent = () => {
           onPersistBucketBoundaries={(b) => updateProfile({ availabilityBucketBoundaries: b })}
           showScheduleVisibilitySelector
         />
+
+        {user && (
+          <ProfileSportsSection user={user} onUserUpdated={(u) => updateUser(u)} />
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
         <Card>

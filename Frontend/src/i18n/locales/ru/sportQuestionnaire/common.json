@@ -1,0 +1,22 @@
+{
+  "takeTest": "Пройти опрос",
+  "skip": "Пропустить — начать с 1.0",
+  "later": "Позже",
+  "stayAtOne": "Начать с 1.0",
+  "socialUnaffected": "Это не меняет ваш социальный рейтинг.",
+  "addSportTitle": "Оценить уровень в {{sport}}?",
+  "addSportSubtitle": "Около минуты — поможет подобрать игры по силе.",
+  "estimateLevel": "Оценить уровень",
+  "estimateLink": "Оценить",
+  "createGameBanner": "Оцените уровень — {{sport}}",
+  "createGameLevelBandWarning": "Ваш уровень {{sport}} оценён как 1.0. Минимум выше 2.5 может не позволить вам попасть в свою игру.",
+  "inviteNudge": "Ваш уровень {{sport}} — {{level}}.",
+  "inviteNudgeCrossSport": "{{primarySport}} {{primaryLevel}} · Уровень {{gameSport}} {{level}} —",
+  "homeCtaTitle": "Узнайте уровень — {{sport}}",
+  "homeCtaSubtitle": "Короткий опрос — подберём игры по силе.",
+  "homeCtaAction": "Заполнить анкету",
+  "homeDismissLink": "Больше не показывать",
+  "homeDismissTitle": "Скрыть опрос об уровне?",
+  "homeDismissMessage": "Ваш текущий уровень — {{level}}. Только скрываем напоминание, уровень не меняется.",
+  "homeDismissConfirm": "Да, скрыть"
+}

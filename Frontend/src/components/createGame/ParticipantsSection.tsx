@@ -3,7 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Button, PlayerAvatar } from '@/components';
 import { BasicUser } from '@/types';
 import { EntityType } from '@/types';
-import { gameOrLeagueParticipantOptions, tournamentParticipantOptions } from '@/utils/userMaxParticipantsInGame';
+import {
+  gameLeagueRosterOptions,
+  tournamentParticipantOptions,
+  trainingParticipantOptions,
+} from '@/utils/userMaxParticipantsInGame';
+import { MatchFormatControl } from './MatchFormatControl';
 
 interface ParticipantsSectionProps {
   participants: Array<string | null>;
@@ -14,6 +19,10 @@ interface ParticipantsSectionProps {
   entityType: EntityType;
   canInvitePlayers: boolean;
   creatorNonPlaying?: boolean;
+  allowedParticipantOptions?: number[];
+  playersPerMatch?: number;
+  allowedPlayerCountsPerMatch?: number[];
+  onPlayersPerMatchChange?: (count: number) => void;
   onMaxParticipantsChange: (num: number) => void;
   onAddUserToGame: () => void;
   onRemoveParticipant: (index: number) => void;
@@ -31,6 +40,10 @@ export const ParticipantsSection = ({
   entityType,
   canInvitePlayers,
   creatorNonPlaying = false,
+  allowedParticipantOptions,
+  playersPerMatch,
+  allowedPlayerCountsPerMatch,
+  onPlayersPerMatchChange,
   onMaxParticipantsChange,
   onAddUserToGame,
   onRemoveParticipant,
@@ -40,7 +53,20 @@ export const ParticipantsSection = ({
 }: ParticipantsSectionProps) => {
   const { t } = useTranslation();
   const tournamentSlots = tournamentParticipantOptions(user);
-  const gameLeagueSlots = gameOrLeagueParticipantOptions(user);
+  const gameLeagueSlots = gameLeagueRosterOptions(user);
+  const trainingSlots = trainingParticipantOptions();
+  const effectiveGameLeagueSlots =
+    entityType === 'TRAINING'
+      ? trainingSlots
+      : allowedParticipantOptions && allowedParticipantOptions.length > 0
+        ? allowedParticipantOptions
+        : gameLeagueSlots;
+  const showMatchFormat =
+    (entityType === 'GAME' || entityType === 'LEAGUE') &&
+    playersPerMatch != null &&
+    allowedPlayerCountsPerMatch != null &&
+    allowedPlayerCountsPerMatch.length > 1 &&
+    onPlayersPerMatchChange != null;
 
   const renderParticipants = () => {
     const result = [];
@@ -116,7 +142,15 @@ export const ParticipantsSection = ({
                entityType === 'LEAGUE' ? t('createGame.numberOfParticipantsLeague') :
                t('createGame.numberOfParticipants')}
             </label>
-            <div className={`grid gap-2 ${entityType === 'TOURNAMENT' ? 'grid-cols-7' : 'grid-cols-6'}`}>
+            <div
+              className={`grid gap-2 ${
+                entityType === 'TOURNAMENT'
+                  ? 'grid-cols-7'
+                  : entityType === 'TRAINING'
+                    ? 'grid-cols-8'
+                    : 'grid-cols-6'
+              }`}
+            >
               {entityType === 'TOURNAMENT' ? (
                 tournamentSlots.map((num) => (
                   <button
@@ -132,7 +166,7 @@ export const ParticipantsSection = ({
                   </button>
                 ))
               ) : (
-                gameLeagueSlots.map((num) => (
+                effectiveGameLeagueSlots.map((num) => (
                   <button
                     key={num}
                     onClick={() => onMaxParticipantsChange(num)}
@@ -148,6 +182,17 @@ export const ParticipantsSection = ({
               )}
             </div>
           </div>
+        )}
+        {showMatchFormat && (
+          <MatchFormatControl
+            playersPerMatch={playersPerMatch}
+            allowedCounts={allowedPlayerCountsPerMatch}
+            onChange={onPlayersPerMatchChange}
+            disabled={maxParticipants === 2}
+            label={t('sport.matchFormat')}
+            label1v1={t('sport.match1v1')}
+            label2v2={t('sport.match2v2')}
+          />
         )}
         {entityType === 'TRAINING' && onToggleCreatorNonPlaying && (
           <div className="flex items-center justify-between py-2">
@@ -175,11 +220,12 @@ export const ParticipantsSection = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
+        <div className="space-y-2">
         <div className="flex flex-wrap gap-3">
           {renderParticipants()}
         </div>
         {invitedPlayers.length > 0 && (
-          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <div className="flex items-center gap-2 text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
               <Users2 size={16} />
               <span>{t('createGame.invitesWillBeSent', { count: invitedPlayers.length })}</span>
@@ -210,6 +256,7 @@ export const ParticipantsSection = ({
             : t('games.invitePlayers')
           }
         </Button>
+        </div>
       </div>
     </div>
   );

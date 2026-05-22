@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { UserTeamMemberStatus } from '@prisma/client';
 import { GameTeamService } from '../gameTeam.service';
+import { maxFixedTeamSlots } from '../results/generation/matchUtils';
 
 function logSkip(reason: string, detail: Record<string, unknown>) {
   console.warn(`[userTeamFixedTeams] skip: ${reason}`, detail);
@@ -11,6 +12,7 @@ export async function applyUserTeamToFixedTeamsIfReady(gameId: string, userTeamI
     where: { id: gameId },
     select: {
       maxParticipants: true,
+      playersPerMatch: true,
       hasFixedTeams: true,
       allowUserInMultipleTeams: true,
       rounds: { select: { id: true }, take: 1 },
@@ -62,7 +64,7 @@ export async function applyUserTeamToFixedTeamsIfReady(gameId: string, userTeamI
     }
   }
 
-  const maxTeams = Math.floor(game.maxParticipants / 2);
+  const maxTeams = maxFixedTeamSlots(game);
   if (maxTeams < 1) {
     logSkip('max_teams_lt_1', { gameId, userTeamId, maxParticipants: game.maxParticipants });
     return;

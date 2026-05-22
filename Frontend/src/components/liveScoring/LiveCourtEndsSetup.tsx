@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react';
+import type { ComponentType, Dispatch, SetStateAction } from 'react';
 import { motion, useAnimation, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { BasicUser } from '@/types';
@@ -6,11 +6,13 @@ import type { LiveMatchCourtOrientation, LiveTeamSide } from '@/utils/liveScorin
 import { LiveCourtEndsFlipRail } from './LiveCourtEndsFlipRail';
 import { LiveCourtTeamFlipButton } from './LiveCourtTeamFlipButton';
 import { courtFlipMid, courtFlipSpring } from './liveCourtFlipMotion';
-import { ServeCourtSchema } from './ServeCourtSchema';
+import { ServeCourtSchema, type ServeCourtSchemaProps } from './ServeCourtSchema';
 
 type LiveCourtEndsSetupProps = {
   teamAPlayers: BasicUser[];
   teamBPlayers: BasicUser[];
+  CourtSchemaComponent?: ComponentType<ServeCourtSchemaProps>;
+  matchDoubles?: boolean;
   orientation: LiveMatchCourtOrientation;
   onOrientationChange: Dispatch<SetStateAction<LiveMatchCourtOrientation>>;
 };
@@ -23,6 +25,8 @@ function teamAtEnd(endsSwapped: boolean, end: 'top' | 'bottom'): LiveTeamSide {
 export function LiveCourtEndsSetup({
   teamAPlayers,
   teamBPlayers,
+  CourtSchemaComponent = ServeCourtSchema,
+  matchDoubles = false,
   orientation,
   onOrientationChange,
 }: LiveCourtEndsSetupProps) {
@@ -69,8 +73,9 @@ export function LiveCourtEndsSetup({
           <LiveCourtTeamFlipButton team={topTeam} onFlip={() => flipTeam(topTeam)} />
           <div className="[perspective:640px]">
             <motion.div animate={courtAnim} className="origin-center [transform-style:preserve-3d]">
-              <ServeCourtSchema
+              <CourtSchemaComponent
                 endsSetup
+                matchDoubles={matchDoubles}
                 courtSide="rightDeuce"
                 serverTeam="teamA"
                 serverPlayerIndex={0}

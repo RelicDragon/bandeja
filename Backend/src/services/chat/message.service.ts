@@ -1075,7 +1075,9 @@ export class MessageService {
       // Filter out muted users for GROUP channels
       if (recipients.length > 0) {
         const listPreview =
-          data.chatContextType === ChatContextType.USER || data.chatContextType === ChatContextType.GROUP
+          data.chatContextType === ChatContextType.USER ||
+          data.chatContextType === ChatContextType.GROUP ||
+          data.chatContextType === ChatContextType.GAME
             ? lastMessageForUnreadListSocket(messageWithTranslations)
             : undefined;
         queueMicrotask(async () => {
@@ -1766,24 +1768,32 @@ export class MessageService {
   static async getUserChatGames(userId: string) {
     const games = await prisma.game.findMany({
       where: {
+        status: { not: 'ARCHIVED' },
         participants: {
           some: { userId },
         },
       },
       include: {
+        city: {
+          select: {
+            id: true,
+            name: true,
+            country: true,
+            timezone: true,
+          },
+        },
+        club: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         participants: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-                gender: true
-              }
-            }
-          }
+              select: USER_SELECT_FIELDS,
+            },
+          },
         },
         court: {
           include: {

@@ -4,7 +4,7 @@
  */
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
-import { EntityType, ParticipantRole } from '@prisma/client';
+import { EntityType, ParticipantRole, Sport } from '@prisma/client';
 import { ApiError } from '../src/utils/ApiError';
 import { patchMatchLiveScoring, notifyMatchLiveScoringCleared } from '../src/services/results/matchLiveScoring.service';
 import { updateMatch, createRound, createMatch, patchMatchMetadata } from '../src/services/results.service';
@@ -88,6 +88,7 @@ async function main() {
   const gameId = `qa-mls-g-${suffix}`;
   const roundId = `qa-mls-r-${suffix}`;
   const matchId = `qa-mls-m-${suffix}`;
+  const cleanupGameIds = [gameId];
 
   const start = new Date(Date.now() + 86_400_000);
   const end = new Date(start.getTime() + 7_200_000);
@@ -121,6 +122,9 @@ async function main() {
       },
     },
   });
+  const seededGame = await prisma.game.findUnique({ where: { id: gameId }, select: { sport: true } });
+  assert(seededGame?.sport === Sport.PADEL, 'legacy create without sport defaults to PADEL');
+  console.log('ok: default game sport remains PADEL (regression)');
 
   try {
     await createRound(gameId, roundId);
@@ -295,10 +299,92 @@ async function main() {
     assert(!((rowRet?.metadata as Record<string, unknown> | null)?.liveScoring), 'no live after updateMatch RETIRED');
     console.log('ok: updateMatch optional metadata RETIRED clears live when grid matches');
 
-    console.log('\nqa-matchLiveScoring: all checks passed.');
+    const tennisSuffix = `${Date.now()}`;
+    const tennisGameId = `qa-mls-tennis-g-${tennisSuffix}`;
+    const tennisRoundId = `qa-mls-tennis-r-${tennisSuffix}`;
+    const tennisMatchId = `qa-mls-tennis-m-${tennisSuffix}`;
+    cleanupGameIds.push(tennisGameId);
+
+    await prisma.game.create({
+      data: {
+        id: tennisGameId,
+        entityType: EntityType.GAME,
+        sport: Sport.TENNIS,
+        gameType: 'CLASSIC',
+        cityId: city.id,
+        startTime: start,
+        endTime: end,
+        maxParticipants: 4,
+        minParticipants: 2,
+        hasFixedTeams: false,
+        timeIsSet: true,
+        resultsByAnyone: false,
+        ballsInGames: true,
+        scoringPreset: 'CLASSIC_BEST_OF_3',
+        fixedNumberOfSets: 3,
+        winnerOfMatch: 'BY_SETS',
+        participants: {
+          create: [
+            { userId: u1, role: ParticipantRole.OWNER },
+            { userId: u2, role: ParticipantRole.PARTICIPANT },
+            { userId: u3, role: ParticipantRole.PARTICIPANT },
+            { userId: u4, role: ParticipantRole.PARTICIPANT },
+          ],
+        },
+      },
+    });
+    const tennisGame = await prisma.game.findUnique({
+      where: { id: tennisGameId },
+      select: { sport: true, scoringPreset: true },
+    });
+    assert(tennisGame?.sport === Sport.TENNIS, 'tennis scenario game stored as TENNIS');
+    assert(tennisGame?.scoringPreset === 'CLASSIC_BEST_OF_3', 'tennis scenario preset stored');
+    console.log('ok: tennis game setup persisted');
+
+    await createRound(tennisGameId, tennisRoundId);
+    await createMatch(tennisGameId, tennisRoundId, tennisMatchId);
+    await updateMatch(tennisGameId, tennisMatchId, {
+      teamA: [u1, u2],
+      teamB: [u3, u4],
+      sets: [{ teamA: 0, teamB: 0 }],
+    });
+
+    const tennisLive = await patchMatchLiveScoring(tennisGameId, tennisMatchId, u1, false, {
+      state: {
+        activeSetIndex: 0,
+        mode: 'classic',
+        sets: [{ teamA: 0, teamB: 0, isTieBreak: false }],
+        classic: {
+          pointState: { kind: 'regular', teamA: 0, teamB: 0 },
+          withinSetTieBreak: false,
+          tieBreakA: 0,
+          tieBreakB: 0,
+          classicPointsPlayedInGame: 0,
+        },
+        firstServerTeam: 'teamA',
+        firstServerDoublesPlayerIndex: 0,
+      },
+      baseRevision: null,
+      clientMessageId: 'tennis-live-1',
+    });
+    assert(tennisLive.revision === 1, 'tennis live scoring first patch revision 1');
+    assert((tennisLive.liveScoring?.state as { mode?: unknown })?.mode === 'classic', 'tennis live scoring state persisted');
+    console.log('ok: tennis live scoring PATCH works');
+
+    const tennisClear = await updateMatch(tennisGameId, tennisMatchId, {
+      teamA: [u1, u2],
+      teamB: [u3, u4],
+      sets: [{ teamA: 6, teamB: 0 }],
+    });
+    assert(tennisClear.liveScoringCleared === true, 'tennis updateMatch diverged grid clears live scoring');
+    console.log('ok: tennis reconcile clears incompatible live grid');
+
+    console.log('\nqa-matchLiveScoring: all checks passed (padel regression + tennis phase 1).');
   } finally {
     delete (globalThis as { socketService?: unknown }).socketService;
-    await prisma.game.delete({ where: { id: gameId } }).catch(() => undefined);
+    for (const id of cleanupGameIds) {
+      await prisma.game.delete({ where: { id } }).catch(() => undefined);
+    }
   }
 }
 

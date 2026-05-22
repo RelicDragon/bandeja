@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { ChatContextType } from '@prisma/client';
+import { ChatContextType, ChatType } from '@prisma/client';
 
 const MAX_PREVIEW_LENGTH = 200;
 
@@ -62,8 +62,18 @@ export async function updateLastMessagePreview(
   chatContextType: ChatContextType,
   contextId: string
 ): Promise<void> {
+  const where: {
+    chatContextType: ChatContextType;
+    contextId: string;
+    deletedAt: null;
+    chatType?: ChatType;
+  } = { chatContextType, contextId, deletedAt: null };
+  if (chatContextType === 'GAME') {
+    where.chatType = ChatType.PUBLIC;
+  }
+
   const lastMessage = await prisma.chatMessage.findFirst({
-    where: { chatContextType, contextId, deletedAt: null },
+    where,
     orderBy: { createdAt: 'desc' },
     select: {
       content: true,

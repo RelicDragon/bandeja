@@ -27,7 +27,7 @@ function formatDatePartInTimezone(
   date: Date | string,
   timezone: string,
   settings: ResolvedDisplaySettings,
-  part: 'weekday' | 'long' | 'shortTime' | 'weekdayAndDate'
+  part: 'weekday' | 'long' | 'shortTime' | 'weekdayAndDate' | 'weekdayShortAndDate'
 ): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   if (part === 'weekday') {
@@ -40,6 +40,13 @@ function formatDatePartInTimezone(
     return new Intl.DateTimeFormat(settings.locale, {
       timeZone: timezone,
       dateStyle: 'long',
+    }).format(d);
+  }
+  if (part === 'weekdayShortAndDate') {
+    return new Intl.DateTimeFormat(settings.locale, {
+      timeZone: timezone,
+      weekday: 'short',
+      day: 'numeric',
     }).format(d);
   }
   if (part === 'weekdayAndDate') {
@@ -66,6 +73,15 @@ function getDateKeyInTimezone(date: Date | string, timezone: string): string {
     month: '2-digit',
     day: '2-digit',
   }).format(d);
+}
+
+/** True when the calendar day of `date` in `timezone` is today or yesterday (local "now"). */
+export function isScheduledDateTodayOrYesterday(date: Date | string, timezone: string): boolean {
+  const now = new Date();
+  const gameKey = getDateKeyInTimezone(date, timezone);
+  const todayKey = getDateKeyInTimezone(now, timezone);
+  const yesterdayKey = getDateKeyInTimezone(new Date(now.getTime() - 86400000), timezone);
+  return gameKey === todayKey || gameKey === yesterdayKey;
 }
 
 export interface GameTimeDisplayResult {
@@ -168,16 +184,22 @@ export function formatGameDateInTimezone(
   date: Date | string,
   timezone: string,
   settings: ResolvedDisplaySettings,
-  part: 'weekday' | 'long' | 'shortTime' | 'weekdayAndDate'
+  part: 'weekday' | 'long' | 'shortTime' | 'weekdayAndDate' | 'weekdayShortAndDate'
 ): string {
   return formatDatePartInTimezone(date, timezone, settings, part);
 }
+
+export type DateLabelInClubTzOptions = {
+  /** Use locale short weekday (2–3 letters) instead of long name + month. */
+  compactWeekday?: boolean;
+};
 
 export function getDateLabelInClubTz(
   date: Date | string,
   clubTz: string | null,
   displaySettings: ResolvedDisplaySettings,
-  t: (key: string) => string
+  t: (key: string) => string,
+  options?: DateLabelInClubTzOptions
 ): string {
   if (!clubTz) {
     return '';
@@ -190,5 +212,6 @@ export function getDateLabelInClubTz(
   if (gameKey === todayKey) return t('createGame.today');
   if (gameKey === tomorrowKey) return t('createGame.tomorrow');
   if (gameKey === yesterdayKey) return t('createGame.yesterday');
-  return formatDatePartInTimezone(date, clubTz, displaySettings, 'weekdayAndDate');
+  const part = options?.compactWeekday ? 'weekdayShortAndDate' : 'weekdayAndDate';
+  return formatDatePartInTimezone(date, clubTz, displaySettings, part);
 }

@@ -6,6 +6,9 @@ import { TimeRangeSlider } from '@/components/TimeRangeSlider';
 import { clubsApi } from '@/api/clubs';
 import { favoritesApi } from '@/api/favorites';
 import type { Club } from '@/types';
+import { DEFAULT_SPORT, type Sport } from '@shared/sport';
+import { getSportConfig } from '@/sport/sportRegistry';
+import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 
 interface FiltersPanelProps {
   cityId?: string;
@@ -20,6 +23,13 @@ interface FiltersPanelProps {
   hour12: boolean;
   onResetFilters?: () => void;
   showResetFooter?: boolean;
+  sportsEnabled?: Sport[];
+  primarySport?: Sport;
+  filterSport?: FindSportFilterValue;
+  onFilterSportChange?: (value: FindSportFilterValue) => void;
+  isAdmin?: boolean;
+  showPrivateGames?: boolean;
+  onShowPrivateGamesChange?: (v: boolean) => void;
 }
 
 export const FiltersPanel = ({
@@ -35,6 +45,13 @@ export const FiltersPanel = ({
   hour12,
   onResetFilters,
   showResetFooter = false,
+  sportsEnabled,
+  primarySport = DEFAULT_SPORT,
+  filterSport = 'primary',
+  onFilterSportChange,
+  isAdmin = false,
+  showPrivateGames = false,
+  onShowPrivateGamesChange,
 }: FiltersPanelProps) => {
   const { t } = useTranslation();
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -143,6 +160,15 @@ export const FiltersPanel = ({
         : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-transparent hover:bg-gray-200 dark:hover:bg-gray-700'
     }`;
 
+  const showSportSection = (sportsEnabled?.length ?? 0) >= 2 && !!onFilterSportChange;
+  const sportChips = sportsEnabled ?? [];
+
+  const sportChipActive = (value: FindSportFilterValue) => {
+    const current = filterSport === undefined || filterSport === 'primary' ? 'primary' : filterSport;
+    if (value === 'primary') return current === 'primary';
+    return current === value;
+  };
+
   return (
     <div className="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-gradient-to-b from-white to-gray-50/80 dark:from-gray-900 dark:to-gray-900/95 shadow-sm p-4 space-y-5">
       <div className="flex items-center justify-between gap-3">
@@ -155,6 +181,55 @@ export const FiltersPanel = ({
         <p className="text-xs text-primary-700/90 dark:text-primary-300/90 -mt-2">
           {t('games.availableForMeHint', { defaultValue: 'Showing games with available slots and suitable level limits' })}
         </p>
+      )}
+
+      {isAdmin && onShowPrivateGamesChange && (
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+              {t('games.showPrivateGames', { defaultValue: 'Show private games' })}
+            </span>
+            <ToggleSwitch checked={showPrivateGames} onChange={onShowPrivateGamesChange} />
+          </div>
+          {showPrivateGames && (
+            <p className="text-xs text-primary-700/90 dark:text-primary-300/90 -mt-2">
+              {t('games.showPrivateGamesHint', { defaultValue: 'Includes non-public games you are not in' })}
+            </p>
+          )}
+        </>
+      )}
+
+      {showSportSection && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            {t('sportFilter.section')}
+          </p>
+          <div className="flex flex-wrap gap-2 py-0.5 pr-0.5">
+            <button
+              type="button"
+              onClick={() => onFilterSportChange!('all')}
+              className={chipClass(sportChipActive('all'))}
+            >
+              {t('sportFilter.allSports')}
+            </button>
+            {sportChips.map((sportId) => {
+              const cfg = getSportConfig(sportId);
+              const isPrimary = sportId === primarySport;
+              const value: FindSportFilterValue = isPrimary ? 'primary' : sportId;
+              return (
+                <button
+                  key={sportId}
+                  type="button"
+                  onClick={() => onFilterSportChange!(value)}
+                  className={chipClass(sportChipActive(value))}
+                >
+                  <span aria-hidden>{cfg.icon}</span>
+                  {t(cfg.labelKey)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       <div className="space-y-2">

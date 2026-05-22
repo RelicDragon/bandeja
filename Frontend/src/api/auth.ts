@@ -1,6 +1,8 @@
 import type { AxiosRequestConfig } from 'axios';
 import api from './axios';
-import type { ApiResponse, AuthSessionRow, LoginResponse } from '@/types';
+import type { ApiResponse, AuthSessionRow, LoginResponse, Sport } from '@/types';
+
+export type RegistrationPrimarySport = Sport;
 
 export type AuthApiRequestConfig = AxiosRequestConfig & {
   skipAuth401Handler?: boolean;
@@ -21,6 +23,7 @@ export const authApi = {
     preferredHandRight?: boolean;
     preferredCourtSideLeft?: boolean;
     preferredCourtSideRight?: boolean;
+    primarySport?: RegistrationPrimarySport;
   }) => {
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/register/phone', data);
     return response.data;
@@ -44,6 +47,7 @@ export const authApi = {
     preferredHandRight?: boolean;
     preferredCourtSideLeft?: boolean;
     preferredCourtSideRight?: boolean;
+    primarySport?: RegistrationPrimarySport;
   }) => {
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/register/telegram', data);
     return response.data;
@@ -54,13 +58,18 @@ export const authApi = {
     return response.data;
   },
 
-  verifyTelegramOtp: async (data: { code: string; telegramId?: string; language?: string }) => {
+  verifyTelegramOtp: async (data: {
+    code: string;
+    telegramId?: string;
+    language?: string;
+    primarySport?: RegistrationPrimarySport;
+  }) => {
     const response = await api.post<ApiResponse<LoginResponse>>('/telegram/verify-otp', data);
     return response.data;
   },
 
   verifyTelegramLinkKey: async (
-    data: { key: string; language?: string },
+    data: { key: string; language?: string; primarySport?: RegistrationPrimarySport },
     opts?: { withAuth?: boolean }
   ) => {
     const config: AuthApiRequestConfig = {
@@ -83,12 +92,13 @@ export const authApi = {
     preferredHandRight?: boolean;
     preferredCourtSideLeft?: boolean;
     preferredCourtSideRight?: boolean;
+    primarySport?: RegistrationPrimarySport;
   }) => {
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/login/apple', data);
     return response.data;
   },
 
-  exchangeGoogleCode: async (data: { code: string }) => {
+  exchangeGoogleCode: async (data: { code: string; primarySport?: RegistrationPrimarySport }) => {
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/google/exchange', data);
     return response.data;
   },
@@ -104,6 +114,7 @@ export const authApi = {
     preferredHandRight?: boolean;
     preferredCourtSideLeft?: boolean;
     preferredCourtSideRight?: boolean;
+    primarySport?: RegistrationPrimarySport;
   }) => {
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/login/google', data);
     return response.data;

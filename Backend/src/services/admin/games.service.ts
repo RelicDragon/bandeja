@@ -3,7 +3,7 @@ import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { InviteService } from '../invite.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
-import { LeagueGameResultsService } from '../league/gameResults.service';
+import { undoGameOutcomes } from '../results/outcomes.service';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { Prisma } from '@prisma/client';
 
@@ -243,24 +243,7 @@ export class AdminGamesService {
 
     await prisma.$transaction(async (tx) => {
       if (game.outcomes.length > 0) {
-        if (game.affectsRating) {
-          await LeagueGameResultsService.unsyncGameResults(gameId, tx);
-        }
-        for (const outcome of game.outcomes) {
-          await tx.user.update({
-            where: { id: outcome.userId },
-            data: game.affectsRating
-              ? {
-                  level: Math.max(1.0, Math.min(7.0, outcome.levelBefore)),
-                  reliability: outcome.reliabilityBefore,
-                  reliabilityDecayPostGraceDaysApplied: 0,
-                  totalPoints: { decrement: outcome.pointsEarned },
-                  gamesPlayed: { decrement: 1 },
-                  gamesWon: outcome.isWinner ? { decrement: 1 } : undefined,
-                }
-              : { reliability: outcome.reliabilityBefore, reliabilityDecayPostGraceDaysApplied: 0 },
-          });
-        }
+        await undoGameOutcomes(gameId, tx);
       }
 
       await tx.roundOutcome.deleteMany({
@@ -312,10 +295,6 @@ export class AdminGamesService {
       });
 
       await tx.round.deleteMany({
-        where: { gameId },
-      });
-
-      await tx.gameOutcome.deleteMany({
         where: { gameId },
       });
 

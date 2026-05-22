@@ -16,7 +16,8 @@ import {
 
 export const googleOAuthRedirect = asyncHandler(async (req: Request, res: Response) => {
   const lang = typeof req.query.lang === 'string' ? req.query.lang : 'en';
-  const url = generateGoogleAuthUrl(lang);
+  const primarySport = req.query.primarySport;
+  const url = generateGoogleAuthUrl(lang, primarySport);
   res.redirect(url);
 });
 
@@ -39,9 +40,9 @@ export const googleOAuthCallback = asyncHandler(async (req: Request, res: Respon
   }
 
   try {
-    const { codeVerifier, language } = consumeState(state);
+    const { codeVerifier, language, primarySport, primarySportIsSet } = consumeState(state);
     const googleToken = await exchangeCodeForGoogleToken(code, codeVerifier);
-    const oneTimeCode = storeOneTimeCode(googleToken, language);
+    const oneTimeCode = storeOneTimeCode(googleToken, language, primarySport, primarySportIsSet);
     res.redirect(`${frontendLogin}?google_code=${encodeURIComponent(oneTimeCode)}`);
   } catch (err: any) {
     const msg = err?.message || 'auth_failed';
@@ -51,10 +52,12 @@ export const googleOAuthCallback = asyncHandler(async (req: Request, res: Respon
 
 export const googleOAuthExchange = asyncHandler(async (req: Request, res: Response) => {
   const { code } = req.body;
-  const { googleToken, language } = consumeOneTimeCode(code);
+  const { googleToken, language, primarySport, primarySportIsSet } = consumeOneTimeCode(code);
 
   const { user, isNewUser } = await loginOrRegisterWithGoogleToken(googleToken, {
     language,
+    primarySport,
+    primarySportIsSet,
   });
   const result = await finalizeGoogleLogin(user.id, isNewUser, req);
 

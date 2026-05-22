@@ -25,7 +25,7 @@ export const PlayerStatsExpandedRow = ({ details }: PlayerStatsExpandedRowProps)
 
   if (details.length === 0) {
     return (
-      <div className="px-4 pb-3 pt-1 text-xs text-gray-500 dark:text-gray-400">
+      <div className="px-3 pb-2 pt-1 text-xs text-gray-500 dark:text-gray-400">
         {t('gameResults.playerStatsNoMatches') || 'No played matches'}
       </div>
     );
@@ -39,7 +39,7 @@ export const PlayerStatsExpandedRow = ({ details }: PlayerStatsExpandedRowProps)
   };
 
   return (
-    <div className="px-4 pb-3 pt-1">
+    <div className="px-3 pb-2 pt-1">
       {showExpandAll ? (
         <div className="mb-2 flex justify-end">
           <button

@@ -17,6 +17,7 @@ import {
   attachFixedTeamIdsToMatch,
   cloneSets,
   type InitialSets,
+  playersPerMatchOf,
 } from './matchUtils';
 
 interface CourtResult {
@@ -30,7 +31,8 @@ export function generateEscaleraRound(
   initialSets: InitialSets
 ): Match[] {
   const participants = getEligibleParticipants(game);
-  if (participants.length < 4) return [];
+  const ppm = playersPerMatchOf(game);
+  if (participants.length < ppm) return [];
 
   const numMatches = getNumMatches(game, participants);
   if (numMatches === 0) return [];
@@ -44,10 +46,10 @@ export function generateEscaleraRound(
   }
 
   if (game.genderTeams === 'MIX_PAIRS') {
-    return generateMixPairsEscaleraRound(previousRounds, initialSets, sortedCourts, numMatches, participants);
+    return generateMixPairsEscaleraRound(game, previousRounds, initialSets, sortedCourts, numMatches, participants);
   }
 
-  return generateStandardEscaleraRound(previousRounds, initialSets, sortedCourts, numMatches, participants);
+  return generateStandardEscaleraRound(game, previousRounds, initialSets, sortedCourts, numMatches, participants);
 }
 
 function isRoundComplete(round: Round): boolean {
@@ -161,13 +163,14 @@ function buildMatchesFromCourts(
   courts: string[][],
   sortedCourts: Array<{ courtId?: string; order: number }>,
   initialSets: InitialSets,
-  numMatches: number
+  numMatches: number,
+  playersPerMatch: number
 ): Match[] {
   const matches: Match[] = [];
 
   for (let i = 0; i < Math.min(courts.length, numMatches); i++) {
     const players = courts[i];
-    if (players.length < 4) continue;
+    if (players.length < playersPerMatch) continue;
 
     matches.push({
       id: createId(),
@@ -231,13 +234,15 @@ function cleanEmptySlots(courts: string[][]): void {
 // ── Standard (no fixed teams, no MIX_PAIRS) ──────────────────────────
 
 function generateStandardEscaleraRound(
+  game: Game,
   previousRounds: Round[],
   initialSets: InitialSets,
   sortedCourts: Array<{ courtId?: string; order: number }>,
   numMatches: number,
   participants: any[]
 ): Match[] {
-  const neededPlayers = numMatches * 4;
+  const ppm = playersPerMatchOf(game);
+  const neededPlayers = numMatches * ppm;
 
   if (previousRounds.length === 0) {
     const sorted = [...participants].sort((a, b) => b.user.level - a.user.level);
@@ -247,7 +252,7 @@ function generateStandardEscaleraRound(
       playerIds = selectPlayersWithRotation(playerIds, neededPlayers, previousRounds);
     }
 
-    return buildFirstRound(playerIds, sortedCourts, initialSets, numMatches);
+    return buildFirstRound(playerIds, sortedCourts, initialSets, numMatches, ppm);
   }
 
   const previousRound = previousRounds[previousRounds.length - 1];
@@ -269,36 +274,51 @@ function generateStandardEscaleraRound(
   if (departedSlots.length > 0 || benchPlayers.length > 0) {
     return handleBenchRotation(
       courts, benchPlayers, departedSlots, previousRounds,
-      sortedCourts, initialSets, numMatches
+      sortedCourts, initialSets, numMatches, ppm
     );
   }
 
-  return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches);
+  return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, ppm);
 }
 
 function buildFirstRound(
   playerIds: string[],
   sortedCourts: Array<{ courtId?: string; order: number }>,
   initialSets: InitialSets,
-  numMatches: number
+  numMatches: number,
+  playersPerMatch: number
 ): Match[] {
   const matches: Match[] = [];
 
   for (let i = 0; i < numMatches; i++) {
-    const base = i * 4;
-    const p1 = playerIds[base];
-    const p2 = playerIds[base + 1];
-    const p3 = playerIds[base + 2];
-    const p4 = playerIds[base + 3];
+    const base = i * playersPerMatch;
+    if (playersPerMatch === 4) {
+      const p1 = playerIds[base];
+      const p2 = playerIds[base + 1];
+      const p3 = playerIds[base + 2];
+      const p4 = playerIds[base + 3];
 
-    if (p1 && p2 && p3 && p4) {
-      matches.push({
-        id: createId(),
-        teamA: [p1, p4],
-        teamB: [p2, p3],
-        sets: cloneSets(initialSets),
-        courtId: sortedCourts[i]?.courtId,
-      });
+      if (p1 && p2 && p3 && p4) {
+        matches.push({
+          id: createId(),
+          teamA: [p1, p4],
+          teamB: [p2, p3],
+          sets: cloneSets(initialSets),
+          courtId: sortedCourts[i]?.courtId,
+        });
+      }
+    } else {
+      const p1 = playerIds[base];
+      const p2 = playerIds[base + 1];
+      if (p1 && p2) {
+        matches.push({
+          id: createId(),
+          teamA: [p1],
+          teamB: [p2],
+          sets: cloneSets(initialSets),
+          courtId: sortedCourts[i]?.courtId,
+        });
+      }
     }
   }
 
@@ -312,7 +332,8 @@ function handleBenchRotation(
   previousRounds: Round[],
   sortedCourts: Array<{ courtId?: string; order: number }>,
   initialSets: InitialSets,
-  numMatches: number
+  numMatches: number,
+  playersPerMatch: number
 ): Match[] {
   const allActive = courts.flat().filter(id => id !== '');
   const matchesPlayed = buildMatchesPlayed(
@@ -364,18 +385,20 @@ function handleBenchRotation(
   }
 
   cleanEmptySlots(courts);
-  return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches);
+  return buildMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, playersPerMatch);
 }
 
 // ── MIX_PAIRS ─────────────────────────────────────────────────────────
 
 function generateMixPairsEscaleraRound(
+  game: Game,
   previousRounds: Round[],
   initialSets: InitialSets,
   sortedCourts: Array<{ courtId?: string; order: number }>,
   numMatches: number,
   participants: any[]
 ): Match[] {
+  const ppm = playersPerMatchOf(game);
   const males = participants.filter((p: any) => p.user.gender === 'MALE');
   const females = participants.filter((p: any) => p.user.gender === 'FEMALE');
 
@@ -461,7 +484,7 @@ function generateMixPairsEscaleraRound(
   }
 
   cleanEmptySlots(courts);
-  return buildMixPairsMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, genderMap);
+  return buildMixPairsMatchesFromCourts(courts, sortedCourts, initialSets, numMatches, genderMap, ppm);
 }
 
 function fillEmptySlotsByGender(
@@ -626,13 +649,14 @@ function buildMixPairsMatchesFromCourts(
   sortedCourts: Array<{ courtId?: string; order: number }>,
   initialSets: InitialSets,
   numMatches: number,
-  genderMap: Map<string, string>
+  genderMap: Map<string, string>,
+  playersPerMatch: number
 ): Match[] {
   const matches: Match[] = [];
 
   for (let i = 0; i < Math.min(courts.length, numMatches); i++) {
     const players = courts[i];
-    if (players.length < 4) continue;
+    if (players.length < playersPerMatch) continue;
 
     const malesOnCourt = players.filter(id => genderMap.get(id) === 'MALE');
     const femalesOnCourt = players.filter(id => genderMap.get(id) === 'FEMALE');

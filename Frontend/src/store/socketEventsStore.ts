@@ -8,6 +8,7 @@ import { useUserTeamsStore } from './userTeamsStore';
 import { Game, Invite } from '@/types';
 import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
 import { logChatSocketQueueTrim } from '@/services/chat/chatDiagnostics';
+import { effectiveSocketUnreadCount } from '@/services/chat/unreadViewingGuard';
 
 interface GameUpdateData {
   gameId: string;
@@ -447,6 +448,17 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       };
 
       const handleChatUnreadCount = (data: ChatUnreadCountData) => {
+        void import('@/store/unreadStore')
+          .then((mod) => {
+            const apply = mod.useUnreadStore?.getState?.()?.applySocketDelta;
+            if (typeof apply !== 'function') return;
+            apply({
+              contextType: data.contextType as import('@/services/chat/unreadSnapshot').SocketContextType,
+              contextId: data.contextId,
+              unreadCount: effectiveSocketUnreadCount(data.contextType, data.contextId, data.unreadCount),
+            });
+          })
+          .catch(() => {});
         set((s) => {
           const listU = capQueue([...s.listChatUnreadQueue, data], CHAT_FIFO_CAP, 'listUnread');
           const groupU =

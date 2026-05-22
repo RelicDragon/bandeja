@@ -8,6 +8,8 @@ import { LeagueGroupManagementService } from '../services/league/groups.service'
 import { LeagueBroadcastService } from '../services/league/broadcast.service';
 import { LeaguePlannerService } from '../services/league/planner.service';
 import { LeagueRecreateRegularSeasonService } from '../services/league/recreateRegularSeason.service';
+import { LeagueStandingsRecalculateService } from '../services/league/leagueStandingsRecalculate.service';
+import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 
 export const createLeague = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -38,6 +40,19 @@ export const getLeagueStandings = asyncHandler(async (req: AuthRequest, res: Res
   res.json({
     success: true,
     data: standings,
+  });
+});
+
+export const recalculateLeagueStandings = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId } = req.params;
+
+  const result = await prisma.$transaction((tx) =>
+    LeagueStandingsRecalculateService.recalculateFromPlayedGames(leagueSeasonId, tx),
+  );
+
+  res.status(200).json({
+    success: true,
+    data: result,
   });
 });
 

@@ -2,6 +2,10 @@ import prisma from '../../../config/database';
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { formatGameInfoForUser, formatUserName } from '../../shared/notification-base';
+import {
+  formatInviteSenderNameWithLevel,
+  withOptionalSportPrefix,
+} from '../../shared/notificationSport';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
@@ -18,6 +22,7 @@ export async function createInvitePushNotification(
       id: true,
       language: true,
       currentCityId: true,
+      primarySport: true,
     }
   });
 
@@ -29,10 +34,21 @@ export async function createInvitePushNotification(
 
   const lang = receiver.language || 'en';
   const senderName = invite.sender ? formatUserName(invite.sender) : 'Unknown';
+  const senderDisplay = formatInviteSenderNameWithLevel(
+    invite.sender,
+    senderName,
+    invite.game.sport,
+    lang,
+  );
   const gameInfo = await formatGameInfoForUser(invite.game, receiver.currentCityId, lang);
 
-  const title = t('telegram.inviteReceived', lang);
-  const body = `${senderName} ${t('telegram.invitedYou', lang)}\n${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+  const title = withOptionalSportPrefix(
+    t('telegram.inviteReceived', lang),
+    invite.game.sport,
+    receiver.primarySport,
+    lang,
+  );
+  const body = `${senderDisplay} ${t('telegram.invitedYou', lang)}\n${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
   return {
     type: NotificationType.INVITE,

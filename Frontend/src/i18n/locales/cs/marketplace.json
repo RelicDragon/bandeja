@@ -5,6 +5,7 @@
     "sell": "Prodat",
     "allCities": "Všechna města",
     "allCategories": "Vše",
+    "categoryWithSport": "{{name}} · {{sport}}",
     "listing": "Inzerát",
     "listingsFromCity": "Zobrazeny inzeráty z {{city}}",
     "allTypes": "Všechny typy",

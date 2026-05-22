@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import type { GenGame, GenMatch, GenRound } from './types';
-import { attachFixedTeamIdsToMatch, cloneSets } from './matchUtils';
+import { attachFixedTeamIdsToMatch, cloneSets, playersPerMatchOf } from './matchUtils';
 import { getRules, isClassicRules } from '../liveScoringEngine/rulebook';
 import { generateFixedRound } from './fixed';
 import { generateRandomRound } from './random';
@@ -115,10 +115,11 @@ export class RoundGenerator {
     const { game } = this.options;
     const playingParticipants = game.participants.filter((p) => p.status === 'PLAYING');
     const numPlayers = playingParticipants.length;
+    const ppm = playersPerMatchOf(game);
     const players = playingParticipants.map((p) => p.user);
     const matches: GenMatch[] = [];
 
-    if (numPlayers === 4) {
+    if (numPlayers === ppm) {
       if (game.hasFixedTeams && game.fixedTeams && game.fixedTeams.length >= 2) {
         const team1 = game.fixedTeams.find((t) => t.teamNumber === 1);
         const team2 = game.fixedTeams.find((t) => t.teamNumber === 2);
@@ -157,7 +158,7 @@ export class RoundGenerator {
           });
         }
       }
-    } else if (numPlayers === 2) {
+    } else if (numPlayers === 2 && ppm === 2) {
       const matchSetups = createOneOnOneMatches(players);
       if (matchSetups.length > 0) {
         matches.push({

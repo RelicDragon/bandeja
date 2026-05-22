@@ -8,6 +8,7 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser, getEntityTypeLabel, getShowEntityButtonText } from '../../shared/notification-base';
+import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { canParticipantSeeGameChatMessage } from '../../chat/gameChatVisibility';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
@@ -55,6 +56,7 @@ export async function sendGameSystemMessageNotification(
           telegramId: true,
           language: true,
           currentCityId: true,
+          primarySport: true,
         }
       }
     }
@@ -80,9 +82,16 @@ export async function sendGameSystemMessageNotification(
         const entityLabel = getEntityTypeLabel(game.entityType, lang);
         const showButtonText = getShowEntityButtonText(game.entityType, lang);
 
+        const scheduleLine = appendTelegramGameScheduleExtras(
+          `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`,
+          game,
+          user.primarySport,
+          lang,
+          escapeMarkdown,
+        );
         const header = entityLabel
-          ? `🏷️ ${escapeMarkdown(entityLabel)}\n📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`
-          : `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+          ? `🏷️ ${escapeMarkdown(entityLabel)}\n${scheduleLine}`
+          : scheduleLine;
         const formattedMessage = `${header}\n🔔 ${escapeMarkdown(translatedContent)}`;
         
         const buttons = [[

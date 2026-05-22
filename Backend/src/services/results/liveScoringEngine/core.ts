@@ -1,5 +1,5 @@
 import type { ScoringRules } from './rulebook';
-import { isClassicRules } from './rulebook';
+import { isClassicRules, isRallyGameRules, isRallyPointsRules } from './rulebook';
 import { splitOfficialSupplementalLiveSets } from './matchWinner';
 import { getStandingsMatchOutcome } from './matchWinnerLive';
 import type {
@@ -34,7 +34,21 @@ const normalizeSets = (sets: SetResult[] | undefined): SetResult[] => {
   return normalized.length ? normalized : [{ teamA: 0, teamB: 0, isTieBreak: false }];
 };
 
+const validateRallyPointGameLive = (a: number, b: number, rules: ScoringRules): { ok: boolean } => {
+  if (a === b) return { ok: a === 0 };
+  const target = rules.totalPointsPerSet;
+  const hi = Math.max(a, b);
+  const lo = Math.min(a, b);
+  if (hi < target) return { ok: false };
+  if (hi === target && lo > target - rules.winBy) return { ok: false };
+  if (hi > target && hi - lo !== rules.winBy) return { ok: false };
+  return { ok: true };
+};
+
 const validatePointsSetLive = (a: number, b: number, rules: ScoringRules): { ok: boolean } => {
+  if (isRallyGameRules(rules) || isRallyPointsRules(rules)) {
+    return validateRallyPointGameLive(a, b, rules);
+  }
   if (rules.totalPointsPerSet > 0 && a + b !== rules.totalPointsPerSet) return { ok: false };
   if (!rules.allowDrawPerSet && a === b && a > 0) return { ok: false };
   return { ok: true };
@@ -100,9 +114,9 @@ export const parseLiveScoringState = (raw: unknown, rules: ScoringRules, fallbac
 };
 
 export const scoreLivePoint = (input: LiveScoringState, side: LiveTeamSide, rules: ScoringRules): LiveScoringActionResult => {
+  if (input.timedClassicSetLocked) return { state: input, changed: false };
   if (input.mode === 'classic') {
     if (optionalDeciderChoicePending(input, rules)) return { state: input, changed: false };
-    if (input.timedClassicSetLocked) return { state: input, changed: false };
   }
   const state = cloneState(input);
   ensureSetExists(state, rules);
@@ -112,12 +126,15 @@ export const scoreLivePoint = (input: LiveScoringState, side: LiveTeamSide, rule
     if (isLivePointsFrozen(active, rules)) return { state: input, changed: false };
     const nextA = side === 'teamA' ? active.teamA + 1 : active.teamA;
     const nextB = side === 'teamB' ? active.teamB + 1 : active.teamB;
-    if (rules.totalPointsPerSet > 0 && nextA + nextB > rules.totalPointsPerSet) return { state: input, changed: false };
+    const rallyCap = isRallyGameRules(rules) || isRallyPointsRules(rules);
+    if (!rallyCap && rules.totalPointsPerSet > 0 && nextA + nextB > rules.totalPointsPerSet) {
+      return { state: input, changed: false };
+    }
     if (rules.maxPointsPerTeam > 0 && (nextA > rules.maxPointsPerTeam || nextB > rules.maxPointsPerTeam)) {
       return { state: input, changed: false };
     }
     active[side] += 1;
-    return { state, changed: true };
+    return { state: autoAdvanceCompletedSets(state, rules), changed: true };
   }
 
   state.classic = state.classic ?? emptyClassic();
@@ -150,7 +167,7 @@ export const unscoreLivePoint = (
   side: LiveTeamSide,
   rules: ScoringRules
 ): LiveScoringActionResult => {
-  if (input.mode === 'classic' && input.timedClassicSetLocked) return { state: input, changed: false };
+  if (input.timedClassicSetLocked) return { state: input, changed: false };
   const state = cloneState(input);
   ensureSetExists(state, rules);
 
@@ -221,7 +238,9 @@ export const canAdvanceLiveSet = (state: LiveScoringState, rules: ScoringRules):
   const { official } = splitOfficialSupplementalLiveSets(state.sets);
 
   if (state.mode !== 'classic') {
-    if (!(set.teamA > 0 || set.teamB > 0)) return false;
+    if (isRallyGameRules(rules)) {
+      if (!pointRaceCompleted(set.teamA, set.teamB, rules.totalPointsPerSet, rules.winBy)) return false;
+    } else if (!(set.teamA > 0 || set.teamB > 0)) return false;
   } else if (set.isTieBreak) {
     if (!pointRaceCompleted(set.teamA, set.teamB, superTieBreakTarget(rules), rules.superTieBreakWinBy)) return false;
   } else if (!classicSetCompleted(set.teamA, set.teamB, rules, Boolean(state.timedClassicSetLocked))) {
@@ -247,7 +266,7 @@ export const advanceLiveSet = (input: LiveScoringState, rules: ScoringRules): Li
 
 function autoAdvanceCompletedSets(state: LiveScoringState, rules: ScoringRules): LiveScoringState {
   let s = state;
-  while (s.mode === 'classic' && canAdvanceLiveSet(s, rules)) {
+  while ((s.mode === 'classic' || isRallyGameRules(rules)) && canAdvanceLiveSet(s, rules)) {
     const next = advanceLiveSet(s, rules);
     if (!next.changed) break;
     s = next.state;
@@ -358,6 +377,10 @@ const normalizeLiveSetsAfterDecision = (state: LiveScoringState, rules: ScoringR
 
 const isLivePointsFrozen = (active: SetResult, rules: ScoringRules): boolean => {
   if (rules.totalPointsPerSet <= 0) return false;
+  const rallyCap = isRallyGameRules(rules) || isRallyPointsRules(rules);
+  if (rallyCap) {
+    return pointRaceCompleted(active.teamA, active.teamB, rules.totalPointsPerSet, rules.winBy);
+  }
   if (active.teamA + active.teamB !== rules.totalPointsPerSet) return false;
   return validatePointsSetLive(active.teamA, active.teamB, rules).ok;
 };
@@ -520,6 +543,29 @@ export const applyOptionalDeciderFormat = (
     state.classic = syncClassicTieBreakForActiveSet(emptyClassic(), state.sets, idx, rules);
   }
   return { state, changed: true };
+};
+
+export const freezeTimedOpenEndedRallyAtPartialScore = (
+  input: LiveScoringState,
+  _rules: ScoringRules
+): LiveScoringActionResult => {
+  if (input.mode !== 'points' || input.timedClassicSetLocked) return { state: input, changed: false };
+  const set = input.sets[input.activeSetIndex];
+  if (!set || (set.teamA === 0 && set.teamB === 0)) return { state: input, changed: false };
+  const state = cloneState(input);
+  state.timedClassicSetLocked = true;
+  return { state, changed: true };
+};
+
+export const freezeTimedSetAtPartialScore = (
+  input: LiveScoringState,
+  rules: ScoringRules,
+  preset?: string | null
+): LiveScoringActionResult => {
+  if (input.mode === 'points' && (preset === 'TIMED' || preset === 'CUSTOM') && rules.totalPointsPerSet <= 0) {
+    return freezeTimedOpenEndedRallyAtPartialScore(input, rules);
+  }
+  return freezeTimedClassicSetAtPartialScore(input, rules);
 };
 
 export const freezeTimedClassicSetAtPartialScore = (

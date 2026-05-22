@@ -8,28 +8,31 @@ function parseType(raw: unknown): MatchGenerationType | null {
 }
 
 /**
- * Legacy clients: omitted or HANDMADE for 2/4 capacity still meant auto-pairing (stored today as AUTOMATIC).
- * New clients send `resultsRoundGenV2: true` (or string `'true'`) so HANDMADE means empty-shell rounds.
+ * Legacy clients: omitted or HANDMADE for small event roster (2/4) still meant auto-pairing.
+ * Match format (1v1 vs 2v2) uses `playersPerMatch`; event capacity uses `maxParticipants`.
+ * New clients send `resultsRoundGenV2: true` so HANDMADE means empty-shell rounds.
  */
 export function resolveMatchGenerationType(params: {
   resultsRoundGenV2: unknown;
   matchGenerationType: unknown;
   maxParticipants: number;
+  playersPerMatch: number;
 }): MatchGenerationType {
   const v2 = params.resultsRoundGenV2 === true || params.resultsRoundGenV2 === 'true';
   const raw = params.matchGenerationType;
-  const maxP = params.maxParticipants;
+  const rosterCap = params.maxParticipants;
+  const ppm = params.playersPerMatch;
 
   if (v2) {
     if (raw === undefined || raw === null || raw === '') {
-      return maxP === 2 ? MatchGenerationType.AUTOMATIC : MatchGenerationType.HANDMADE;
+      return ppm === 2 ? MatchGenerationType.AUTOMATIC : MatchGenerationType.HANDMADE;
     }
     const parsed = parseType(raw);
     if (parsed) return parsed;
-    return maxP === 2 ? MatchGenerationType.AUTOMATIC : MatchGenerationType.HANDMADE;
+    return ppm === 2 ? MatchGenerationType.AUTOMATIC : MatchGenerationType.HANDMADE;
   }
 
-  if (maxP === 2 || maxP === 4) {
+  if (rosterCap === 2 || rosterCap === 4) {
     if (raw === undefined || raw === null || raw === '' || raw === 'HANDMADE') {
       return MatchGenerationType.AUTOMATIC;
     }

@@ -147,7 +147,24 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
                 </button>
               </div>
             )}
-            <div className={`min-w-0 ${!isEmbedded ? 'col-start-2' : 'col-start-1'} row-start-1`}>
+            <div
+              className={`min-w-0 ${!isEmbedded ? 'col-start-2' : 'col-start-1'} row-start-1 ${
+                isTitleClickable ? 'cursor-pointer rounded-lg' : ''
+              }`}
+              onClick={isTitleClickable ? onTitleClick : undefined}
+              onKeyDown={
+                isTitleClickable
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onTitleClick?.();
+                      }
+                    }
+                  : undefined
+              }
+              role={isTitleClickable ? 'button' : undefined}
+              tabIndex={isTitleClickable ? 0 : undefined}
+            >
               <h1 className="min-w-0" aria-label={title}>
                 {titleContent}
               </h1>
@@ -172,7 +189,11 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
             )}
             {titleMetaRow != null && (
               <div
-                className={`min-w-0 ${!isEmbedded ? 'col-start-2 col-span-2' : 'col-span-2'} row-start-3`}
+                className={`min-w-0 ${!isEmbedded ? 'col-start-2 col-span-2' : 'col-span-2'} row-start-3 ${
+                  isTitleClickable ? 'cursor-pointer' : ''
+                }`}
+                onClick={isTitleClickable ? onTitleClick : undefined}
+                role={isTitleClickable ? 'presentation' : undefined}
               >
                 {titleMetaRow}
               </div>
@@ -181,7 +202,11 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
               <p
                 className={`truncate text-[11px] tabular-nums text-gray-500 dark:text-gray-400 ${
                   !isEmbedded ? 'col-start-2 col-span-2' : 'col-span-2'
-                } ${titleMetaRow != null ? 'row-start-4' : 'row-start-3'}`}
+                } ${titleMetaRow != null ? 'row-start-4' : 'row-start-3'} ${
+                  isTitleClickable ? 'cursor-pointer' : ''
+                }`}
+                onClick={isTitleClickable ? onTitleClick : undefined}
+                role={isTitleClickable ? 'presentation' : undefined}
               >
                 {subtitle}
               </p>
@@ -224,7 +249,7 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
                     )}
                     <span
                       className={`truncate ${
-                        contextType === 'GROUP'
+                        isTitleClickable && (contextType === 'GROUP' || contextType === 'GAME')
                           ? 'transition-colors hover:text-primary-600 dark:hover:text-primary-400'
                           : ''
                       }`}

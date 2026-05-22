@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct AmericanoScoringView: View {
+struct RallyPointsScoringView: View {
     @Bindable var vm: MatchScoringViewModel
     let gameId: String
     let matchId: String
@@ -35,6 +35,9 @@ struct AmericanoScoringView: View {
                     gameId: gameId,
                     matchId: matchId
                 )
+            }
+            if vm.game?.resolvedSport == .pickleball, vm.liveScoringUiId == .rallyPointsBoard {
+                WatchPickleballCoachButtons(lang: lang)
             }
             let idx = vm.activeSetIndex
             let aScore = vm.sets[safe: idx]?.teamA ?? 0

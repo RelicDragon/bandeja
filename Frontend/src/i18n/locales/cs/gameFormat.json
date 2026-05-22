@@ -17,6 +17,12 @@
     "stepScoringModeHint": "Jak chcete počítat body v každém zápase?",
     "stepSetStructureHint": "Vyberte strukturu setů pro každý zápas.",
     "stepPointsTotalHint": "Kolik bodů se hraje v jednom setu celkem (součet obou týmů)?",
+    "stepPointsTotalHintBySport": {
+      "TABLE_TENNIS": "Zvolte limit bodů na hru, nebo zápas na 2 vítězné (hry do 11).",
+      "BADMINTON": "Délka zápasu — obvykle na 2 vítězné hry do 21.",
+      "SQUASH": "Zápas na 3 vítězné — hry do 11, výhra o 2.",
+      "PICKLEBALL": "Kolik bodů se hraje v každé hře?"
+    },
     "stepGenerationHint": "Jak se určují dvojice v každém kole?",
     "stepRankingHint": "Nastavte, jak se určuje celkový vítěz.",
     "standingPointsHint": "Body za výsledek zápasu v tabulce (nejsou to body hrané v zápase).",
@@ -32,12 +38,40 @@
       "CLASSIC": {
         "title": "Hry / Sety",
         "subtitle": "Tenisové bodování (15/30/40…), pak hry a sety — klasický padel.",
-        "hint": "např. 15 / 30 / 40 v gamu → skóre setu 6–4"
+        "hint": "např. 15 / 30 / 40 v gamu → skóre setu 6–4",
+        "sport": {
+          "TENNIS": {
+            "subtitle": "Tenisové bodování (15/30/40…), pak hry a sety.",
+            "hint": "např. 15 / 30 / 40 v gamu → skóre setu 6–4"
+          }
+        }
       },
       "POINTS": {
         "title": "Jednoduché body",
         "subtitle": "Set má pevný celkový počet bodů (součet obou stran). Vyhrává tým s víc body na konci — ne hry 15/30/40.",
-        "hint": "např. 11–10 v setu na 21 — součet musí odpovídat limitu"
+        "hint": "např. 11–10 v setu na 21 — součet musí odpovídat limitu",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Rally body",
+            "subtitle": "Hry do bodového limitu s výhrou o 2 — bez tenisového 15/30/40.",
+            "hint": "např. hra 11–9 nebo zápas na 2 vítězné do 11"
+          },
+          "BADMINTON": {
+            "title": "Rally body",
+            "subtitle": "Hry do 21 bodů (výhra o 2) nebo jedna hra do 21.",
+            "hint": "např. 21–19 v hře, nebo 2 ze 3 her"
+          },
+          "SQUASH": {
+            "title": "Rally body",
+            "subtitle": "PAR do 11 (výhra o 2), nebo zápas na 2 / 3 vítězné do 11.",
+            "hint": "např. 11–8 na hru v zápasu na 5 her"
+          },
+          "PICKLEBALL": {
+            "title": "Rally body",
+            "subtitle": "Body do pevného limitu na hru — běžné délky níže.",
+            "hint": "např. 11–9 podle vašich místních pravidel"
+          }
+        }
       }
     },
     "generation": {
@@ -162,10 +196,80 @@
         "subtitle": "16 bodů celkem v setu (obě strany); vyhrává vyšší skóre",
         "hint": "Krátké sety — styl Americano"
       },
+      "POINTS_11": {
+        "title": "11 bodů",
+        "subtitle": "Jedna hra do 11 bodů, výhra o 2",
+        "hint": "Krátká rally hra",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Hra do 11",
+            "subtitle": "Jedna hra do 11 bodů (výhra o 2)",
+            "hint": "např. 11–9 — při shodě výhra o 2"
+          },
+          "PICKLEBALL": {
+            "title": "Hra do 11",
+            "subtitle": "Jedna rally hra do 11 bodů, výhra o 2",
+            "hint": "Běžná rekreační délka"
+          }
+        }
+      },
       "POINTS_21": {
         "title": "21 bodů",
         "subtitle": "21 bodů celkem v setu (obě strany); vyhrává vyšší skóre",
-        "hint": "Běžná délka Americano"
+        "hint": "Běžná délka Americano",
+        "sport": {
+          "BADMINTON": {
+            "title": "Hra do 21",
+            "subtitle": "Jedna hra do 21 bodů, výhra o 2",
+            "hint": "Kratší badmintonový zápas"
+          },
+          "PICKLEBALL": {
+            "title": "Hra do 21",
+            "subtitle": "Jedna hra do 21 bodů",
+            "hint": "Běžná délka pickleballu"
+          }
+        }
+      },
+      "BEST_OF_3_11": {
+        "title": "Na 2 · do 11",
+        "subtitle": "Tři hry do 11 bodů, výhra o 2; kdo vyhraje 2 hry, vyhrává zápas",
+        "hint": "Standardní stolní tenis",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Na 2 hry do 11",
+            "subtitle": "Tři hry do 11 (výhra o 2); první se 2 hrami vyhrává zápas",
+            "hint": "Oficiální délka zápasu"
+          }
+        }
+      },
+      "BEST_OF_5_11": {
+        "title": "Na 3 · do 11",
+        "subtitle": "Pět her do 11; kdo vyhraje 3 hry, vyhrává zápas",
+        "hint": "Delší rally zápas",
+        "sport": {
+          "SQUASH": {
+            "title": "Na 3 hry do 11",
+            "subtitle": "Pět her do 11 (výhra o 2); první se 3 hrami vyhrává",
+            "hint": "Standardní squashový zápas"
+          }
+        }
+      },
+      "PAR_11": {
+        "title": "PAR do 11",
+        "subtitle": "Bod za rally do 11, výhra o 2",
+        "hint": "Squashové PAR skóre",
+        "sport": {
+          "SQUASH": {
+            "title": "PAR do 11",
+            "subtitle": "Oficiální squash PAR — každá rally boduje, hra do 11 (výhra o 2)",
+            "hint": "Standardní soutěžní squash"
+          }
+        }
+      },
+      "BEST_OF_3_21": {
+        "title": "Best of 3 her do 21",
+        "subtitle": "Tři hry do 21 bodů, výhra o 2; kdo vyhraje 2 hry, vyhrává zápas",
+        "hint": "Standardní délka badmintonového zápasu"
       },
       "POINTS_24": {
         "title": "24 bodů",
@@ -196,8 +300,13 @@
       "CLASSIC_SHORT_SET": "Krátké sety",
       "CLASSIC_SUPER_TIEBREAK": "Super tiebreak",
       "CLASSIC_TIMED": "Hry/sety · čas",
+      "POINTS_11": "Do 11",
       "POINTS_16": "Do 16",
       "POINTS_21": "Do 21",
+      "BEST_OF_3_11": "Na 2 · do 11",
+      "BEST_OF_3_21": "Bo3 · do 21",
+      "BEST_OF_5_11": "Na 3 · do 11",
+      "PAR_11": "PAR · 11",
       "POINTS_24": "Do 24",
       "POINTS_32": "Do 32",
       "TIMED": "Na čas",
@@ -218,6 +327,15 @@
       "customDuration": "Vlastní (1–60 min)",
       "minutesLabel": "{{minutes}} min",
       "presetMinutes": "{{minutes}} min"
+    },
+    "bestOfMatch": {
+      "label": "Zápas na 2 vítězné (hry)",
+      "labelBySport": {
+        "TABLE_TENNIS": "Zápas na 2 vítězné",
+        "BADMINTON": "Zápas na 2 vítězné",
+        "SQUASH": "Zápas na 2 / 3 vítězné"
+      },
+      "optionTo": "Na {{sets}} · do {{cap}}"
     },
     "customPoints": {
       "label": "Vlastní počet",

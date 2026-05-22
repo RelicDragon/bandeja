@@ -38,6 +38,8 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     let hasGoldenPoint: Bool?
     let pointsPerTie: Int?
     let maxParticipants: Int?
+    let sport: String?
+    let playersPerMatch: Int?
     let timeIsSet: Bool
     let affectsRating: Bool?
     let hasFixedTeams: Bool?
@@ -73,7 +75,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         case id, name, gameType, entityType, status, resultsStatus
         case startTime, endTime, winnerOfMatch, winnerOfGame
         case fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames, scoringPreset, matchTimedCapMinutes, matchTimerEnabled, hasGoldenPoint, pointsPerTie
-        case maxParticipants, timeIsSet, affectsRating, hasFixedTeams, allowUserInMultipleTeams, participantsReady, teamsReady, matchGenerationType, fixedTeams, resultsByAnyone
+        case maxParticipants, sport, playersPerMatch, timeIsSet, affectsRating, hasFixedTeams, allowUserInMultipleTeams, participantsReady, teamsReady, matchGenerationType, fixedTeams, resultsByAnyone
         case participants, parent, club
     }
 
@@ -103,6 +105,8 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         hasGoldenPoint = try c.decodeIfPresent(Bool.self, forKey: .hasGoldenPoint)
         pointsPerTie = try c.decodeIfPresent(Int.self, forKey: .pointsPerTie)
         maxParticipants = try c.decodeIfPresent(Int.self, forKey: .maxParticipants)
+        sport = try c.decodeIfPresent(String.self, forKey: .sport)
+        playersPerMatch = try c.decodeIfPresent(Int.self, forKey: .playersPerMatch)
         timeIsSet = try c.decodeIfPresent(Bool.self, forKey: .timeIsSet) ?? false
         affectsRating = try c.decodeIfPresent(Bool.self, forKey: .affectsRating)
         hasFixedTeams = try c.decodeIfPresent(Bool.self, forKey: .hasFixedTeams)

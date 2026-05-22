@@ -3,6 +3,11 @@ import { sortChatItems } from '@/utils/chatListSort';
 import { usePlayersStore } from '@/store/playersStore';
 import type { ChatDraft, ChatMessage, GroupChannel } from '@/api/chat';
 import type { ChatItem } from './chatListTypes';
+import type { Game } from '@/types';
+import {
+  chatMessageToGameListPreview,
+  isGamePublicListPreviewMessage,
+} from '@/utils/gameChatListPreview';
 
 function groupChannelMatchesBugContext(data: GroupChannel, bugId: string): boolean {
   return data.bug?.id === bugId || data.bugId === bugId;
@@ -109,6 +114,22 @@ export function updateChatMessageInList(
       return {
         ...chat,
         data: { ...chat.data, lastMessage: message, updatedAt: updatedAtIso },
+        lastMessageDate,
+      };
+    }
+    if (chat.type === 'game' && chatContextType === 'GAME' && chat.data.id === contextId) {
+      if (!isGamePublicListPreviewMessage(message)) return chat;
+      const updatedAtIso = message.updatedAt ?? message.createdAt;
+      const lastMessage = chatMessageToGameListPreview(message);
+      const updatedGame: Game = {
+        ...chat.data,
+        lastMessage,
+        updatedAt: updatedAtIso,
+      };
+      const lastMessageDate = calculateLastMessageDate(lastMessage, null, updatedAtIso);
+      return {
+        ...chat,
+        data: updatedGame,
         lastMessageDate,
       };
     }

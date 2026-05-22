@@ -7,6 +7,7 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport';
 import prisma from '../../../config/database';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
@@ -35,6 +36,7 @@ export async function sendBetResolvedNotification(
           telegramId: true,
           language: true,
           currentCityId: true,
+          primarySport: true,
         },
       },
       acceptedByUser: {
@@ -42,6 +44,7 @@ export async function sendBetResolvedNotification(
           telegramId: true,
           language: true,
           currentCityId: true,
+          primarySport: true,
         },
       },
     },
@@ -70,7 +73,8 @@ export async function sendBetResolvedNotification(
     message += `🎮 ${escapeMarkdown(gameName)}\n`;
     
     if (clubName) {
-      message += `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}\n`;
+      const placeLine = `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}`;
+      message += `${appendTelegramGameScheduleExtras(placeLine, bet.game, user.primarySport, lang, escapeMarkdown)}\n`;
     }
     
     message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
@@ -121,6 +125,7 @@ export async function sendBetNeedsReviewNotification(
           telegramId: true,
           language: true,
           currentCityId: true,
+          primarySport: true,
         },
       },
       acceptedByUser: {
@@ -128,6 +133,7 @@ export async function sendBetNeedsReviewNotification(
           telegramId: true,
           language: true,
           currentCityId: true,
+          primarySport: true,
         },
       },
     },
@@ -153,7 +159,8 @@ export async function sendBetNeedsReviewNotification(
     message += `🎮 ${escapeMarkdown(gameName)}\n`;
     
     if (clubName) {
-      message += `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}\n`;
+      const placeLine = `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}`;
+      message += `${appendTelegramGameScheduleExtras(placeLine, bet.game, user.primarySport, lang, escapeMarkdown)}\n`;
     }
     
     message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
@@ -189,6 +196,7 @@ export async function sendBetCancelledNotification(api: Api, betId: string, user
           telegramId: true,
           language: true,
           currentCityId: true,
+          primarySport: true,
         },
       },
       acceptedByUser: {
@@ -196,6 +204,7 @@ export async function sendBetCancelledNotification(api: Api, betId: string, user
           telegramId: true,
           language: true,
           currentCityId: true,
+          primarySport: true,
         },
       },
     },
@@ -217,7 +226,10 @@ export async function sendBetCancelledNotification(api: Api, betId: string, user
     const title = t('telegram.betCancelled', lang) || '❌ Challenge Cancelled';
     let message = `${title}\n\n`;
     message += `🎮 ${escapeMarkdown(gameName)}\n`;
-    if (clubName) message += `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}\n`;
+    if (clubName) {
+      const placeLine = `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}`;
+      message += `${appendTelegramGameScheduleExtras(placeLine, bet.game, user.primarySport, lang, escapeMarkdown)}\n`;
+    }
     message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
     message += `\n${escapeMarkdown(t('telegram.betCancelledDescription', lang) || 'Bet cancelled because a player in the condition left the game. Money refunded.')}`;
 

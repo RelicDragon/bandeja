@@ -3,7 +3,7 @@ dotenv.config();
 
 import prisma from '../src/config/database';
 import { getMatchScoresForDelta } from '../src/services/results/setScoreDelta';
-import { LeagueGameResultsService } from '../src/services/league/gameResults.service';
+import { LeagueStandingsRecalculateService } from '../src/services/league/leagueStandingsRecalculate.service';
 
 type GameWithRounds = Awaited<
   ReturnType<typeof prisma.game.findFirst<{
@@ -119,10 +119,10 @@ async function backfill(options: { leagueSeasonId?: string; leagueId?: string })
   let processed = 0;
   let updated = 0;
 
+  const seasonsToRebuild = new Set<string>();
+
   for (const game of toProcess) {
     await prisma.$transaction(async (tx) => {
-      await LeagueGameResultsService.unsyncGameResults(game.id, tx);
-
       const corrected = computeCorrectedScores(game as NonNullable<GameWithRounds>);
 
       for (const outcome of game.outcomes) {
@@ -136,14 +136,23 @@ async function backfill(options: { leagueSeasonId?: string; leagueId?: string })
         });
         updated++;
       }
-
-      await LeagueGameResultsService.syncGameResults(game.id, tx);
     });
+
+    if (game.parentId) {
+      seasonsToRebuild.add(game.parentId);
+    }
 
     processed++;
     if (processed % 10 === 0 || processed === toProcess.length) {
       console.log(`Progress: ${processed}/${toProcess.length} games.`);
     }
+  }
+
+  for (const leagueSeasonId of seasonsToRebuild) {
+    await prisma.$transaction((tx) =>
+      LeagueStandingsRecalculateService.recalculateFromPlayedGames(leagueSeasonId, tx),
+    );
+    console.log(`Rebuilt standings for season ${leagueSeasonId}`);
   }
 
   console.log(`Done. Processed ${processed} games, updated ${updated} outcome row(s) (scoresMade/scoresLost only).`);

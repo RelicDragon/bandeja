@@ -6,6 +6,7 @@ import { useLiveMatchBoardState, liveBoardPlayersForTeam } from '@/hooks/useLive
 import { useNetworkStore } from '@/utils/networkStatus';
 import { parseLiveBoardTheme, type LiveTeamSide } from '@/utils/liveScoring';
 import { isLiveMatchCompleteForScoring } from '@/utils/scoring';
+import { resolvePlayersPerMatchForGame } from '@/utils/matchFormat';
 
 const noop = () => {};
 const noopSide = (_side: LiveTeamSide) => {};
@@ -21,12 +22,13 @@ export const GameBroadcastMatchPage = () => {
   const boardTheme = parseLiveBoardTheme(searchParams.get('theme'));
   const { t } = useTranslation();
   const isOnline = useNetworkStore((s) => s.isOnline);
-  const { rawMatch, liveState, revision, loading, error, rules, timerDisplay } = useLiveMatchBoardState(
+  const { game, rawMatch, liveState, revision, loading, error, rules, timerDisplay } = useLiveMatchBoardState(
     gameId,
     matchId,
     { spectatorToken }
   );
 
+  const playersPerMatch = useMemo(() => resolvePlayersPerMatchForGame(game ?? {}), [game]);
   const teamAPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 1) : []), [rawMatch]);
   const teamBPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 2) : []), [rawMatch]);
   const matchDecided = Boolean(liveState && rules && isLiveMatchCompleteForScoring(liveState.sets, rules));
@@ -130,6 +132,9 @@ export const GameBroadcastMatchPage = () => {
                   teamBPlayers={teamBPlayers}
                   revision={revision}
                   rules={rules}
+                  sport={game?.sport}
+                  scoringPreset={game?.scoringPreset ?? null}
+                  playersPerMatch={playersPerMatch}
                   gameId={gameId}
                   boardTheme={boardTheme}
                   broadcast

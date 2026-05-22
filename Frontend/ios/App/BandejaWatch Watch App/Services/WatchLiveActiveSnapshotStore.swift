@@ -11,10 +11,23 @@ enum WatchLiveActiveSnapshotStore {
         var matchId: String
         var titleLine: String
         var scoreLine: String
+        var sport: String?
     }
 
-    static func publish(gameId: String, matchId: String, titleLine: String, scoreLine: String) {
-        let p = Payload(gameId: gameId, matchId: matchId, titleLine: titleLine, scoreLine: scoreLine)
+    static func publish(
+        gameId: String,
+        matchId: String,
+        titleLine: String,
+        scoreLine: String,
+        sport: String? = nil
+    ) {
+        let p = Payload(
+            gameId: gameId,
+            matchId: matchId,
+            titleLine: titleLine,
+            scoreLine: scoreLine,
+            sport: sport
+        )
         guard let data = try? JSONEncoder().encode(p) else { return }
         UserDefaults(suiteName: suiteName)?.set(data, forKey: storageKey)
         WidgetCenter.shared.reloadTimelines(ofKind: widgetKind)

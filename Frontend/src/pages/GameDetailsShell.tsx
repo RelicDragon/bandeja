@@ -53,6 +53,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { Game, Invite, Court, Club, GenderTeam } from '@/types';
+import { parseGameSport } from '@/utils/gameSport';
 import { Round } from '@/types/gameResults';
 import { isUserGameAdminOrOwner, canUserEditResults, canViewTournamentTableByAccess } from '@/utils/gameResults';
 import { isParticipantPlaying } from '@/utils/participantStatus';
@@ -1588,7 +1589,9 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
                       courtId: game.courtId,
                       startTime: game.startTime,
                       endTime: game.endTime,
+                      sport: game.sport,
                       maxParticipants: game.maxParticipants,
+                      playersPerMatch: game.playersPerMatch,
                       minParticipants: game.minParticipants,
                       minLevel: game.minLevel,
                       maxLevel: game.maxLevel,
@@ -1760,6 +1763,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
       {showPlayerList && id && (
         <PlayerListModal
           gameId={id}
+          gameSport={parseGameSport(game?.sport)}
           onClose={() => {
             setShowPlayerList(false);
             setPlayerListMode('players');

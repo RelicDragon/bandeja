@@ -1,11 +1,59 @@
 import prisma from '../../config/database';
+import { Sport } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
 import { getUserGameNote, getUserNotesForGames } from '../userGameNote.service';
 import { InviteService } from '../invite.service';
 import { ReadReceiptService } from '../chat/readReceipt.service';
 import { attachReactionsToGames, fetchReactionsByGameIds } from './gameReaction.service';
 import { GAME_INVITE_OUTCOME_INCLUDE } from '../../utils/gameInviteOutcomeInclude';
+import {
+  projectUserForSportContext,
+  resolvePublicGamesSportFilter,
+} from '../user/userSportProfile.service';
+
+const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
+  ...USER_SELECT_FIELDS,
+  sportProfiles: {
+    select: USER_SPORT_PROFILE_SELECT,
+  },
+} as const;
+
+export function projectGameUsersForSportContext<T extends { sport?: Sport; [key: string]: any }>(game: T): T {
+  const sport = game.sport ?? Sport.PADEL;
+  return {
+    ...game,
+    participants: (game.participants ?? []).map((p: any) => ({
+      ...p,
+      user: projectUserForSportContext(p.user, sport),
+      invitedByUser: projectUserForSportContext(p.invitedByUser, sport),
+    })),
+    outcomes: (game.outcomes ?? []).map((o: any) => ({
+      ...o,
+      user: projectUserForSportContext(o.user, sport),
+    })),
+    fixedTeams: (game.fixedTeams ?? []).map((team: any) => ({
+      ...team,
+      players: (team.players ?? []).map((player: any) => ({
+        ...player,
+        user: projectUserForSportContext(player.user, sport),
+      })),
+    })),
+    rounds: (game.rounds ?? []).map((round: any) => ({
+      ...round,
+      matches: (round.matches ?? []).map((match: any) => ({
+        ...match,
+        teams: (match.teams ?? []).map((team: any) => ({
+          ...team,
+          players: (team.players ?? []).map((player: any) => ({
+            ...player,
+            user: projectUserForSportContext(player.user, sport),
+          })),
+        })),
+      })),
+    })),
+  };
+}
 
 const getLeagueSeasonInclude = () => ({
   league: {
@@ -20,6 +68,7 @@ const getLeagueSeasonInclude = () => ({
       name: true,
       avatar: true,
       originalAvatar: true,
+      sport: true,
     },
   },
 });
@@ -47,10 +96,10 @@ export const getBaseGameInclude = () => ({
   participants: {
     include: {
       user: {
-        select: USER_SELECT_FIELDS,
+        select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
       },
       invitedByUser: {
-        select: USER_SELECT_FIELDS,
+        select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
       },
     },
   },
@@ -62,7 +111,7 @@ export const getBaseGameInclude = () => ({
       players: {
         include: {
           user: {
-            select: USER_SELECT_FIELDS,
+            select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
           },
         },
       },
@@ -160,7 +209,7 @@ const getAvailableGamesInclude = () => ({
   participants: {
     include: {
       user: {
-        select: USER_SELECT_FIELDS,
+        select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
       },
     },
   },
@@ -196,7 +245,7 @@ export const getGameInclude = () => ({
   outcomes: {
     include: {
       user: {
-        select: USER_SELECT_FIELDS,
+        select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
       },
     },
     orderBy: { position: 'asc' as const },
@@ -210,7 +259,7 @@ export const getGameInclude = () => ({
               players: {
                 include: {
                   user: {
-                    select: USER_SELECT_FIELDS,
+                    select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
                   },
                 },
               },
@@ -246,7 +295,7 @@ export const getGameInclude = () => ({
       participants: {
         include: {
           user: {
-            select: USER_SELECT_FIELDS,
+            select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
           },
         },
       },
@@ -308,7 +357,7 @@ export class GameReadService {
       if (cancelled) {
         const cancelledByUser = await prisma.user.findUnique({
           where: { id: cancelled.cancelledByUserId },
-          select: USER_SELECT_FIELDS,
+          select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
         });
         throw new ApiError(410, 'Game cancelled by owner', true, {
           cancelled: true,
@@ -355,11 +404,12 @@ export class GameReadService {
       userNote = note?.content || null;
     }
 
+    const gameWithSportLevels = projectGameUsersForSportContext(game);
     const base = {
-      ...game,
+      ...gameWithSportLevels,
       isClubFavorite,
       userNote,
-      joinQueues: computeJoinQueuesFromParticipants(game),
+      joinQueues: computeJoinQueuesFromParticipants(gameWithSportLevels),
     };
     const reactionsMap = await fetchReactionsByGameIds([id]);
     return attachReactionsToGames([base], reactionsMap)[0];
@@ -428,7 +478,7 @@ export class GameReadService {
     const limit = filters.limit ? parseInt(filters.limit) : undefined;
     const offset = filters.offset ? parseInt(filters.offset) : undefined;
 
-    const games = await prisma.game.findMany({
+    const gamesRaw = await prisma.game.findMany({
       where,
       include: {
         ...getBaseGameInclude(),
@@ -439,6 +489,8 @@ export class GameReadService {
       ...(limit && { take: limit }),
       ...(offset && { skip: offset }),
     });
+
+    const games = gamesRaw.map(projectGameUsersForSportContext);
 
     // Batch fetch user notes
     if (userId && games.length > 0) {
@@ -479,11 +531,12 @@ export class GameReadService {
       ]
     };
 
-    const games = await prisma.game.findMany({
+    const gamesRaw = await prisma.game.findMany({
       where,
       include: getGameInclude() as any,
       orderBy: { startTime: 'desc' },
     });
+    const games = gamesRaw.map(projectGameUsersForSportContext);
 
     // Batch fetch user notes
     if (games.length > 0) {
@@ -556,13 +609,14 @@ export class GameReadService {
       ],
     };
 
-    const games = await prisma.game.findMany({
+    const gamesRaw = await prisma.game.findMany({
       where,
       include: getGameInclude() as any,
       orderBy: { startTime: 'desc' },
       take: limit,
       skip: offset,
     });
+    const games = gamesRaw.map(projectGameUsersForSportContext);
 
     if (games.length > 0) {
       const gameIds = games.map(g => g.id);
@@ -578,25 +632,50 @@ export class GameReadService {
     return games;
   }
 
-  static async getAvailableGames(userId: string, userCityId?: string, startDate?: string, endDate?: string, showArchived?: boolean, includeLeagues?: boolean) {
+  static async getAvailableGames(
+    userId: string,
+    userCityId?: string,
+    startDate?: string,
+    endDate?: string,
+    showArchived?: boolean,
+    includeLeagues?: boolean,
+    sportQuery?: unknown,
+    primarySport?: Sport | string | null,
+    showPrivateGames?: boolean,
+    isAdmin?: boolean,
+  ) {
     if (!userId) {
       throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
     }
 
-    const where: any = {
-      OR: [
-        { isPublic: true },
-        {
-          isPublic: false,
-          participants: {
-            some: { userId: userId }
-          }
+    let viewerPrimarySport = primarySport;
+    if (viewerPrimarySport === undefined) {
+      const viewer = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { primarySport: true },
+      });
+      viewerPrimarySport = viewer?.primarySport;
+    }
+    const sportFilter = resolvePublicGamesSportFilter(sportQuery, viewerPrimarySport);
+
+    const includeAllPrivate = Boolean(showPrivateGames && isAdmin);
+    const visibilityOr: any[] = [{ isPublic: true }];
+    if (includeAllPrivate) {
+      visibilityOr.push({ isPublic: false });
+    } else {
+      visibilityOr.push({
+        isPublic: false,
+        participants: {
+          some: { userId: userId },
         },
-        ...(includeLeagues ? [
-          { entityType: 'LEAGUE' },
-          { entityType: 'LEAGUE_SEASON' }
-        ] : [])
-      ]
+      });
+    }
+    if (includeLeagues) {
+      visibilityOr.push({ entityType: 'LEAGUE' }, { entityType: 'LEAGUE_SEASON' });
+    }
+
+    const where: any = {
+      OR: visibilityOr,
     };
 
     if (!showArchived) {
@@ -636,11 +715,16 @@ export class GameReadService {
       }
     }
 
-    const games = await prisma.game.findMany({
+    if (sportFilter.mode === 'single') {
+      where.sport = sportFilter.sport;
+    }
+
+    const gamesRaw = await prisma.game.findMany({
       where,
       include: getAvailableGamesInclude() as any,
       orderBy: { startTime: 'desc' },
     });
+    const games = gamesRaw.map(projectGameUsersForSportContext);
 
     if (games.length > 0) {
       const gameIds = games.map(g => g.id);

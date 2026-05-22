@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
@@ -13,16 +13,28 @@ import { mediaApi } from '@/api/media';
 import { Club, Court, EntityType, GenderTeam, PriceType, PriceCurrency, Game, BasicUser } from '@/types';
 import { addHours, format, startOfDay } from 'date-fns';
 import { useGameFormat } from '@/hooks/useGameFormat';
+import { useClampGameFormatToSport } from '@/hooks/useSportGameFormatLimits';
 import { resolveUserCurrency } from '@/utils/currency';
 import { useGameTimeDuration, formatTimeInClubTimezone, createDateFromClubTime, getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBack } from '@/utils/backNavigation';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
-import { maxSlotsForUserGameOrLeague, maxSlotsForUserTournament } from '@/utils/userMaxParticipantsInGame';
+import { gameLeagueRosterOptions, maxSlotsForUserGameOrLeague, maxSlotsForUserTournament } from '@/utils/userMaxParticipantsInGame';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { MarkCourtBookedModal } from '@/components/createGame/MarkCourtBookedModal';
+import { CreateFlowSportSelector } from '@/components/createGame/CreateFlowSportSelector';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import toast from 'react-hot-toast';
+import { getSportConfig } from '@/sport/sportRegistry';
+import {
+  getDisplayLevelForSport,
+  listCreateFlowSports,
+  resolveCreateGameDefaultSport,
+} from '@/utils/profileSports';
+import { shouldWarnCreateGameLevelBand } from '@/utils/sportQuestionnaire';
+import { syncPlayersPerMatchOnRosterChange } from '@/utils/matchFormat';
+import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
+import { Sports, type Sport } from '@shared/sport';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -54,12 +66,40 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const [courts, setCourts] = useState<Court[]>([]);
   const [selectedClub, setSelectedClub] = useState<string>(() => initialGameData?.clubId || '');
   const [selectedCourt, setSelectedCourt] = useState<string>(() => initialGameData?.courtId || 'notBooked');
-  const [playerLevelRange, setPlayerLevelRange] = useState<[number, number]>(() => [
-    initialGameData?.minLevel ?? getDefaultLevelRange(user?.level)[0],
-    initialGameData?.maxLevel ?? getDefaultLevelRange(user?.level)[1]
-  ]);
+  const [playerLevelRange, setPlayerLevelRange] = useState<[number, number]>(() => {
+    const sport: Sport =
+      initialGameData?.sport ?? resolveCreateGameDefaultSport(user);
+    const level = user ? getDisplayLevelForSport(user, sport) : undefined;
+    return [
+      initialGameData?.minLevel ?? getDefaultLevelRange(level)[0],
+      initialGameData?.maxLevel ?? getDefaultLevelRange(level)[1],
+    ];
+  });
+  const [selectedSport, setSelectedSport] = useState<Sport>(() => {
+    if (initialGameData?.sport) return initialGameData.sport;
+    return resolveCreateGameDefaultSport(user);
+  });
   const [maxParticipants, setMaxParticipants] = useState<number>(() => {
-    return initialGameData?.maxParticipants ?? (entityType === 'TOURNAMENT' ? 8 : 4);
+    if (initialGameData?.maxParticipants) return initialGameData.maxParticipants;
+    if (entityType === 'TOURNAMENT') return 8;
+    const initialSport = getSportConfig(
+      initialGameData?.sport ?? resolveCreateGameDefaultSport(user),
+    );
+    return initialSport.defaultEventRoster;
+  });
+  const [playersPerMatch, setPlayersPerMatch] = useState<number>(() => {
+    const initialMax =
+      initialGameData?.maxParticipants ??
+      (entityType === 'TOURNAMENT'
+        ? 8
+        : getSportConfig(initialGameData?.sport ?? resolveCreateGameDefaultSport(user))
+            .defaultEventRoster);
+    if (initialMax === 2) return 2;
+    if (initialGameData?.playersPerMatch != null) return initialGameData.playersPerMatch;
+    const initialSport = getSportConfig(
+      initialGameData?.sport ?? resolveCreateGameDefaultSport(user),
+    );
+    return initialSport.defaultPlayersPerMatch;
   });
   const [participants, setParticipants] = useState<Array<string | null>>([user?.id || null]);
   const [anyoneCanInvite, setAnyoneCanInvite] = useState<boolean>(initialGameData?.anyoneCanInvite ?? false);
@@ -70,6 +110,19 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const [allowDirectJoin, setAllowDirectJoin] = useState<boolean>(initialGameData?.allowDirectJoin ?? false);
   const [afterGameGoToBar, setAfterGameGoToBar] = useState<boolean>(initialGameData?.afterGameGoToBar ?? false);
   const gameFormat = useGameFormat({ ...initialGameData, maxParticipants });
+  const sportFormatLimits = useClampGameFormatToSport(
+    selectedSport,
+    gameFormat,
+    entityType !== 'BAR' && entityType !== 'TRAINING',
+  );
+  const { sportConfig, allowedScoringModes, allowedScoringPresets } = sportFormatLimits;
+  const enabledSports = useMemo(() => listCreateFlowSports(user), [user]);
+  const showSportSelector = enabledSports.length > 1;
+  const allowedParticipantOptions = useMemo(() => {
+    if (entityType === 'TRAINING') return undefined;
+    if (entityType !== 'GAME' && entityType !== 'LEAGUE') return undefined;
+    return gameLeagueRosterOptions(user);
+  }, [entityType, user]);
 
   const [genderTeams, setGenderTeams] = useState<GenderTeam>(
     (initialGameData?.genderTeams as GenderTeam) ?? 'ANY',
@@ -128,6 +181,9 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const [pendingAvatarFiles, setPendingAvatarFiles] = useState<{ avatar: File; original: File } | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | undefined>(undefined);
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const levelBandWarnedRef = useRef<string | null>(null);
+  const prevCreateSportRef = useRef<Sport | null>(null);
+  const prevMaxParticipantsRef = useRef(maxParticipants);
   const clubSectionRef = useRef<HTMLDivElement>(null);
   const timeSectionRef = useRef<HTMLDivElement>(null);
   const durationSectionRef = useRef<HTMLDivElement>(null);
@@ -200,14 +256,54 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   }, [selectedCourt]);
 
   useEffect(() => {
+    if (selectedCourt === 'notBooked') return;
+    const court = courts.find((c) => c.id === selectedCourt);
+    if (!court?.sport) return;
+    const config = getSportConfig(court.sport);
+    if (!config.implemented) return;
+    setSelectedSport((prev) => (prev === court.sport ? prev : court.sport!));
+  }, [selectedCourt, courts]);
+
+  useEffect(() => {
+    if (selectedCourt === 'notBooked') return;
+    const court = courts.find((c) => c.id === selectedCourt);
+    if (!court?.sport || court.sport === selectedSport) return;
+    setSelectedCourt('notBooked');
+  }, [selectedSport, selectedCourt, courts]);
+
+  const handleCourtSportTab = (sport: typeof selectedSport) => {
+    const config = getSportConfig(sport);
+    if (config.implemented) {
+      setSelectedSport(sport);
+    }
+  };
+
+  useEffect(() => {
     if (initialGameData?.minLevel !== undefined || initialGameData?.maxLevel !== undefined) {
+      prevCreateSportRef.current = selectedSport;
       return;
     }
+    if (!user) return;
+    const sport = selectedSport;
+    if (prevCreateSportRef.current === sport) return;
+    prevCreateSportRef.current = sport;
+    levelBandWarnedRef.current = null;
+    setPlayerLevelRange(getDefaultLevelRange(getDisplayLevelForSport(user, sport)));
+  }, [initialGameData?.maxLevel, initialGameData?.minLevel, selectedSport, user]);
 
-    if (playerLevelRange[0] === 1.0 && playerLevelRange[1] === 7.0) {
-      setPlayerLevelRange(getDefaultLevelRange(user?.level));
-    }
-  }, [initialGameData?.maxLevel, initialGameData?.minLevel, playerLevelRange, user?.level]);
+  useEffect(() => {
+    if (!user || entityType === 'BAR' || entityType === 'TRAINING') return;
+    const sport = selectedSport;
+    const [minLevel, maxLevel] = playerLevelRange;
+    if (!shouldWarnCreateGameLevelBand(user, sport, minLevel, maxLevel)) return;
+    const warnKey = `${sport}-${minLevel}-${maxLevel}`;
+    if (levelBandWarnedRef.current === warnKey) return;
+    levelBandWarnedRef.current = warnKey;
+    const sportLabel = t(getSportConfig(sport).labelKey);
+    toast(t('sportQuestionnaire.common.createGameLevelBandWarning', { sport: sportLabel }), {
+      duration: 5000,
+    });
+  }, [entityType, playerLevelRange, selectedSport, t, user]);
 
   useEffect(() => {
     // Initialize time and duration from initialGameData
@@ -260,6 +356,52 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
       return cap;
     });
   }, [entityType, user]);
+
+  useEffect(() => {
+    if (!enabledSports.includes(selectedSport)) {
+      setSelectedSport(enabledSports[0] ?? Sports.PADEL);
+    }
+  }, [enabledSports, selectedSport]);
+
+  useEffect(() => {
+    if (entityType !== 'GAME' && entityType !== 'LEAGUE') return;
+    const prev = prevMaxParticipantsRef.current;
+    if (prev !== maxParticipants) {
+      const sync = syncPlayersPerMatchOnRosterChange(
+        prev,
+        maxParticipants,
+        sportConfig.defaultPlayersPerMatch,
+        sportConfig.allowedPlayerCountsPerMatch,
+      );
+      prevMaxParticipantsRef.current = maxParticipants;
+      if (sync) {
+        setPlayersPerMatch(sync.playersPerMatch);
+        if (sync.resetFixedTeams) {
+          setHasFixedTeams(false);
+          setAllowUserInMultipleTeams(false);
+        }
+      }
+    }
+  }, [
+    entityType,
+    maxParticipants,
+    sportConfig.defaultPlayersPerMatch,
+    sportConfig.allowedPlayerCountsPerMatch,
+  ]);
+
+  useEffect(() => {
+    if (entityType !== 'GAME' && entityType !== 'LEAGUE') return;
+    const allowed = sportConfig.allowedPlayerCountsPerMatch;
+    if (allowed.includes(playersPerMatch)) return;
+    const fallback = allowed.includes(sportConfig.defaultPlayersPerMatch)
+      ? sportConfig.defaultPlayersPerMatch
+      : allowed[0] ?? sportConfig.defaultPlayersPerMatch;
+    setPlayersPerMatch(fallback);
+    if (fallback === 2) {
+      setHasFixedTeams(false);
+      setAllowUserInMultipleTeams(false);
+    }
+  }, [entityType, playersPerMatch, sportConfig.allowedPlayerCountsPerMatch, sportConfig.defaultPlayersPerMatch]);
 
   useEffect(() => {
     if (pendingAvatarFiles) {
@@ -375,6 +517,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
       const endTime = addHours(startTime, duration);
 
       const gameData: any = {
+        sport: selectedSport,
         entityType: entityType,
         clubId: selectedClub || undefined,
         courtId: selectedCourt !== 'notBooked' ? selectedCourt : undefined,
@@ -382,6 +525,8 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         endTime: endTime.toISOString(),
         timeIsSet: true,
         maxParticipants,
+        playersPerMatch:
+          entityType === 'GAME' || entityType === 'LEAGUE' ? playersPerMatch : undefined,
         minParticipants: 2,
         minLevel: playerLevelRange[0],
         maxLevel: playerLevelRange[1],
@@ -411,7 +556,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         gameData.resultsByAnyone = entityType === 'TOURNAMENT' ? false : resultsByAnyone;
         gameData.hasFixedTeams = hasFixedTeams;
         gameData.allowUserInMultipleTeams =
-          maxParticipants === 2 || !hasFixedTeams ? false : allowUserInMultipleTeams;
+          playersPerMatch === 2 || !hasFixedTeams ? false : allowUserInMultipleTeams;
         gameData.pointsPerWin = setup.pointsPerWin;
         gameData.pointsPerLoose = setup.pointsPerLoose;
         gameData.pointsPerTie = setup.pointsPerTie;
@@ -528,7 +673,11 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
     if (participants.length > num) {
       setParticipants(participants.slice(0, num));
     }
-    if (num === 2) {
+  };
+
+  const handlePlayersPerMatchChange = (count: number) => {
+    setPlayersPerMatch(count);
+    if (count === 2) {
       setHasFixedTeams(false);
       setAllowUserInMultipleTeams(false);
     }
@@ -572,8 +721,19 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           <GameFormatCard
             entityType={entityType}
             format={gameFormat}
+            sport={selectedSport}
+            playersPerMatch={playersPerMatch}
             generationSlotCount={maxParticipants > 0 ? maxParticipants : undefined}
             onOpenWizard={() => setIsFormatWizardOpen(true)}
+            sportRow={
+              showSportSelector ? (
+                <CreateFlowSportSelector
+                  sports={enabledSports}
+                  value={selectedSport}
+                  onChange={setSelectedSport}
+                />
+              ) : undefined
+            }
             teams={{
               participantCount: maxParticipants,
               genderTeams,
@@ -584,10 +744,13 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
                 if (!v) setAllowUserInMultipleTeams(false);
               },
               allowUserInMultipleTeams:
-                maxParticipants === 2 ? false : allowUserInMultipleTeams,
+                playersPerMatch === 2 ? false : allowUserInMultipleTeams,
               onAllowUserInMultipleTeamsChange: setAllowUserInMultipleTeams,
               genderSwitchLayoutId: 'createGameFormatCardTeams',
             }}
+            questionnaireBanner={
+              <CreateGameQuestionnaireBanner sport={selectedSport} />
+            }
           />
         )}
 
@@ -611,6 +774,8 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
             onCloseClubModal={() => setIsClubModalOpen(false)}
             onOpenCourtModal={() => setIsCourtModalOpen(true)}
             onCloseCourtModal={() => setIsCourtModalOpen(false)}
+            preferredSport={selectedSport}
+            onSportTabChange={handleCourtSportTab}
           />
         </div>
 
@@ -663,6 +828,16 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           entityType={entityType}
           canInvitePlayers={true}
           creatorNonPlaying={creatorNonPlaying}
+          allowedParticipantOptions={allowedParticipantOptions}
+          playersPerMatch={entityType === 'GAME' || entityType === 'LEAGUE' ? playersPerMatch : undefined}
+          allowedPlayerCountsPerMatch={
+            entityType === 'GAME' || entityType === 'LEAGUE'
+              ? sportConfig.allowedPlayerCountsPerMatch
+              : undefined
+          }
+          onPlayersPerMatchChange={
+            entityType === 'GAME' || entityType === 'LEAGUE' ? handlePlayersPerMatchChange : undefined
+          }
           onMaxParticipantsChange={handleMaxParticipantsChange}
           onAddUserToGame={handleAddMeToGame}
           onRemoveParticipant={handleRemoveParticipant}
@@ -776,6 +951,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           <PlayerListModal
             onClose={() => setIsInvitePlayersModalOpen(false)}
             multiSelect={true}
+            gameSport={selectedSport}
             gameTiming={inviteGameTiming}
             onConfirm={async (playerIds, meta) => {
               setInvitedPlayerIds(playerIds);
@@ -803,6 +979,14 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           wizardEntityType={entityType}
           generationSlotCount={maxParticipants > 0 ? maxParticipants : undefined}
           hasFixedTeams={hasFixedTeams}
+          allowedScoringModes={allowedScoringModes}
+          allowedScoringPresets={allowedScoringPresets}
+          matchFormat={{
+            playersPerMatch,
+            allowedCounts: sportConfig.allowedPlayerCountsPerMatch,
+            sport: selectedSport,
+            onChange: handlePlayersPerMatchChange,
+          }}
           onClose={() => setIsFormatWizardOpen(false)}
         />
       )}

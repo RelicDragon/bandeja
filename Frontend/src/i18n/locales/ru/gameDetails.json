@@ -18,7 +18,8 @@
       "general": "Основное",
       "when": "Когда",
       "where": "Где",
-      "price": "Цена"
+      "price": "Цена",
+      "eraseTime": "Убрать время"
     },
     "navigateToClub": "Проложить маршрут к клубу",
     "openLeagueSeason": "Открыть сезон лиги",
@@ -89,7 +90,15 @@
       "viewResults": "Вернуться к результатам",
       "pointsBudgetComplete": "Все мячи учтены",
       "scoringClosedSpecialOutcome": "Счёт закрыт — особый исход матча",
-      "syncConflictRetry": "Устарело — попробуйте ещё раз."
+      "syncConflictRetry": "Устарело — попробуйте ещё раз.",
+      "pickleballKitchenFault": "Ошибка в кухне",
+      "pickleballKitchenFaultHint": "Только на доверии — счёт не меняется. Договоритесь в группе и начислите очко другой команде.",
+      "pickleballUnderhandServe": "Подача снизу",
+      "pickleballUnderhandServeHint": "Подсказка: подача снизу, контакт ниже пояса. По диагонали в противоположный квадрат подачи. На доверии — счёт не меняется.",
+      "pickleballSideOut": "Side-out",
+      "pickleballSideOutHint": "Подсказка: при side-out очко может забить только подающая команда; после проигрыша розыгрыша подаёт соперник. Здесь rally-очки — нажимайте любую команду.",
+      "pickleballTwoBounce": "Правило двух отскоков",
+      "pickleballTwoBounceHint": "Подсказка: приём должен отскочить один раз до удара с лёта; подача — отскок на каждой стороне. На доверии — счёт не меняется."
     },
     "shareGame": "Поделиться игрой",
     "addToCalendar": "Добавить в календарь",

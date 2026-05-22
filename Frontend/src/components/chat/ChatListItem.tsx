@@ -5,6 +5,7 @@ import { GroupChannelCard } from './GroupChannelCard';
 import { UserChat } from '@/api/chat';
 import { ChatItem, ChatSelectNavOptions, ChatType } from './chatListTypes';
 import { usePlayersStore } from '@/store/playersStore';
+import { useChatListItemUnread } from '@/hooks/useUnreadBridge';
 import { useAuthStore } from '@/store/authStore';
 import { MAX_PINNED_CHATS } from '@/utils/chatListConstants';
 import { ChatListGameCard } from './ChatListGameCard';
@@ -12,10 +13,10 @@ import {
   dismissFailedOutboxForContext,
   retryFailedOutboxForContext,
 } from '@/services/chat/chatOutboxContextActions';
+import { prefetchChatThreadFromListHover } from '@/services/chat/chatListHoverPrefetch';
 
 const USER_ROW_STORE_EMPTY = Object.freeze({
   live: undefined as UserChat | undefined,
-  unread: 0,
 });
 
 interface ChatListItemProps {
@@ -62,21 +63,23 @@ const ChatListItemInner = ({
   onMuteGroupChannel,
 }: ChatListItemProps) => {
   const { user } = useAuthStore();
+  const listItemUnread = useChatListItemUnread(item);
   const userChatId = item.type === 'user' ? item.data.id : '';
-  const { live: liveFromStore, unread: unreadFromStore } = usePlayersStore(
+  const { live: liveFromStore } = usePlayersStore(
     useShallow((s) =>
-      userChatId
-        ? { live: s.chats[userChatId], unread: s.unreadCounts[userChatId] ?? 0 }
-        : USER_ROW_STORE_EMPTY
+      userChatId ? { live: s.chats[userChatId] } : USER_ROW_STORE_EMPTY
     )
   );
 
   const clickOpts = isSearchMode && searchQuery ? { searchQuery } : undefined;
   const chat = item;
+  const onRowHover = () => {
+    void prefetchChatThreadFromListHover(chat);
+  };
 
   if (chat.type === 'user') {
     const liveChat = liveFromStore || chat.data;
-    const liveUnreadCount = unreadFromStore;
+    const liveUnreadCount = listItemUnread;
     const isSelected = selectedChatType === 'user' && selectedChatId === chat.data.id;
     const isPinned = !!liveChat.isPinned;
     const isPinning = pinningId === chat.data.id;
@@ -90,6 +93,7 @@ const ChatListItemInner = ({
         listPresenceBatched={listPresenceBatched}
         unreadCount={liveUnreadCount}
         onClick={() => onChatClick(chat.data.id, 'user', { ...clickOpts, userChat: liveChat })}
+        onMouseEnter={onRowHover}
         isSelected={isSelected}
         draft={chat.draft}
         listOutbox={'listOutbox' in chat ? chat.listOutbox ?? undefined : undefined}
@@ -145,13 +149,15 @@ const ChatListItemInner = ({
   if (chat.type === 'game') {
     const isSelected = selectedChatType === 'game' && selectedChatId === chat.data.id;
     return (
-      <ChatListGameCard
-        key={`game-${chat.data.id}`}
-        chat={chat}
-        currentUserId={user?.id}
-        isSelected={isSelected}
-        onClick={() => onChatClick(chat.data.id, 'game', clickOpts)}
-      />
+      <div onMouseEnter={onRowHover}>
+        <ChatListGameCard
+          key={`game-${chat.data.id}`}
+          chat={chat}
+          currentUserId={user?.id}
+          isSelected={isSelected}
+          onClick={() => onChatClick(chat.data.id, 'game', clickOpts)}
+        />
+      </div>
     );
   }
 
@@ -166,12 +172,13 @@ const ChatListItemInner = ({
     return (
       <div
         key={`${chat.type}-${chat.data.id}`}
+        onMouseEnter={onRowHover}
         className={`border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
       >
         <GroupChannelCard
           groupChannel={chat.data}
           listPresenceBatched={listPresenceBatched}
-          unreadCount={chat.unreadCount}
+          unreadCount={listItemUnread}
           onClick={() =>
           onChatClick(chat.data.id, chatTypeForNav, { ...clickOpts, groupChannel: chat.data })
         }

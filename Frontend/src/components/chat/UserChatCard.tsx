@@ -29,6 +29,7 @@ interface UserChatCardProps {
   listPresenceBatched?: boolean;
   unreadCount?: number;
   onClick?: () => void;
+  onMouseEnter?: () => void;
   isSelected?: boolean;
   draft?: ChatDraft | null;
   listOutbox?: ChatListOutbox | null;
@@ -43,7 +44,7 @@ interface UserChatCardProps {
   isTogglingMute?: boolean;
 }
 
-const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0, onClick, isSelected = false, draft, listOutbox, onOutboxRetry, onOutboxDismiss, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: UserChatCardProps) => {
+const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0, onClick, onMouseEnter, isSelected = false, draft, listOutbox, onOutboxRetry, onOutboxDismiss, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: UserChatCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -62,6 +63,7 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
   return (
     <div
       onClick={handleClick}
+      onMouseEnter={onMouseEnter}
       className={`flex items-center gap-3 p-3 cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700 ${isSelected
         ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
         : 'hover:bg-gray-100 dark:hover:bg-gray-800'

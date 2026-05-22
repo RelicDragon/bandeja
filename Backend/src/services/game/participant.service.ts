@@ -10,17 +10,26 @@ import { addOrUpdateParticipant } from '../../utils/participantOperations';
 import { performPostJoinOperations } from '../../utils/postJoinOperations';
 import { InviteService } from '../invite.service';
 import { deleteGameInviteOutcome, findGameInviteOutcome } from '../../utils/gameInviteOutcome';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
 import { createSystemMessageWithNotification } from '../../utils/systemMessageHelper';
 import { ChatType, GameStatus, ParticipantRole, UserTeamMemberStatus } from '@prisma/client';
 import { BetService } from '../bets/bet.service';
 import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
 import { applyUserTeamToFixedTeamsIfReady } from './userTeamFixedTeams.service';
+import { projectUserForSportContext } from '../user/userSportProfile.service';
 
 const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
 const GUEST_STATUS = 'GUEST' as const;
 const INVITED_STATUS = 'INVITED' as const;
+
+const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
+  ...USER_SELECT_FIELDS,
+  sportProfiles: {
+    select: USER_SPORT_PROFILE_SELECT,
+  },
+} as const;
+
 export class ParticipantService {
   static async joinGame(gameId: string, userId: string) {
     const game = await prisma.game.findUnique({
@@ -694,8 +703,8 @@ export class ParticipantService {
           inviteUserTeamId: resolvedInviteUserTeamId,
         },
         include: {
-          user: { select: USER_SELECT_FIELDS },
-          invitedByUser: { select: USER_SELECT_FIELDS },
+          user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+          invitedByUser: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
           game: {
             select: {
               id: true,
@@ -717,6 +726,7 @@ export class ParticipantService {
               status: true,
               resultsStatus: true,
               entityType: true,
+              sport: true,
               court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
               club: { select: { id: true, name: true, avatar: true } },
             },
@@ -725,6 +735,7 @@ export class ParticipantService {
       });
     });
 
+    const sport = participant.game.sport;
     const invite = {
       id: participant.id,
       receiverId: participant.userId,
@@ -734,8 +745,11 @@ export class ParticipantService {
       expiresAt: participant.inviteExpiresAt,
       createdAt: participant.joinedAt,
       updatedAt: participant.joinedAt,
-      receiver: participant.user,
-      sender: participant.invitedByUser,
+      receiver: projectUserForSportContext(participant.user, sport),
+      sender: {
+        ...projectUserForSportContext(participant.invitedByUser, sport),
+        sportProfiles: participant.invitedByUser?.sportProfiles,
+      },
       game: participant.game,
     };
     return { participant, invite };

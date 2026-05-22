@@ -13,6 +13,8 @@ import {
 import { BANDEJA_CHAT_PINS_UPDATED } from '@/utils/chatPinsEvents';
 import { putLocalMessage } from './chatLocalApply';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
+import { onMarkReadBatchFlushSuccess } from '@/services/chat/unreadCoordinator';
+import { contextKey, type SnapshotContextType } from '@/services/chat/unreadSnapshot';
 
 let flushRunning = false;
 let scheduleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -99,11 +101,13 @@ async function executeMutation(row: ChatMutationQueueRow): Promise<void> {
     }
     case 'mark_read_batch': {
       const p = row.payload as { target: string; chatTypes?: ChatType[] };
-      if (p.target === 'group_channel') {
-        await chatApi.markGroupChannelAsRead(row.contextId);
-      } else {
-        await chatApi.markAllMessagesAsReadForContext(row.contextType, row.contextId, p.chatTypes);
-      }
+      const snapshotType = row.contextType as SnapshotContextType;
+      await chatApi.markContextRead({
+        contextType: snapshotType,
+        contextId: row.contextId,
+        gameChatTypes: p.chatTypes,
+      });
+      onMarkReadBatchFlushSuccess(contextKey(snapshotType, row.contextId));
       break;
     }
     default:

@@ -103,6 +103,7 @@ export const WhereTab = ({ game, clubs, courts, state, onChange, isLoadingCourts
           setIsCourtModalOpen(false);
         }}
         entityType={game.entityType}
+        preferredSport={game.sport ?? null}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import type { ApiResponse, LoginResponse } from '@/types';
-import { authApi } from '@/api';
+import { authApi, type RegistrationPrimarySport } from '@/api/auth';
 
 const IN_FLIGHT = new Map<string, Promise<ApiResponse<LoginResponse>>>();
 const REPLAY_TTL_MS = 120_000;
@@ -15,7 +15,7 @@ function pruneReplay() {
 export function verifyTelegramLinkKeySingleflight(
   key: string,
   language: string | undefined,
-  opts?: { withAuth?: boolean }
+  opts?: { withAuth?: boolean; primarySport?: RegistrationPrimarySport }
 ): Promise<ApiResponse<LoginResponse>> {
   pruneReplay();
   const cached = replayByKey.get(key);
@@ -27,7 +27,7 @@ export function verifyTelegramLinkKeySingleflight(
   if (existing) return existing;
 
   const run = authApi
-    .verifyTelegramLinkKey({ key, language }, opts)
+    .verifyTelegramLinkKey({ key, language, primarySport: opts?.primarySport }, opts)
     .then((data) => {
       replayByKey.set(key, { expiresAt: Date.now() + REPLAY_TTL_MS, data });
       return data;

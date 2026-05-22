@@ -1,7 +1,7 @@
 import type { SetResult } from '@/types/gameResults';
 import type { ScoringRules, SetKind } from './rulebook';
 import { getSetKind } from './setKind';
-import { isClassicRules, isClassicTimedRelaxedGameScores } from './rulebook';
+import { isClassicRules, isClassicTimedRelaxedGameScores, isRallyGameRules, isRallyPointsRules } from './rulebook';
 
 export type ValidationReason =
   | 'NEGATIVE_SCORE'
@@ -89,7 +89,24 @@ export const validateSuperTiebreak = (a: number, b: number, rules: ScoringRules)
   return ok('SUPER_TIEBREAK');
 };
 
+export const validateRallyPointGame = (a: number, b: number, rules: ScoringRules): ValidationResult => {
+  if (a === b) return a === 0 ? ok('POINTS') : fail('DRAW_NOT_ALLOWED');
+  const target = rules.totalPointsPerSet;
+  const hi = Math.max(a, b);
+  const lo = Math.min(a, b);
+  if (hi < target) return fail('CLASSIC_SCORE_TOO_LOW_TO_WIN', { target });
+  if (hi === target && lo > target - rules.winBy) return fail('CLASSIC_NEEDS_WIN_BY_2', { diff: hi - lo });
+  if (hi > target && hi - lo !== rules.winBy) {
+    if (hi - lo < rules.winBy) return fail('CLASSIC_NEEDS_WIN_BY_2', { diff: hi - lo });
+    return fail('CLASSIC_SCORE_TOO_HIGH', { target });
+  }
+  return ok('POINTS');
+};
+
 export const validatePointsSet = (a: number, b: number, rules: ScoringRules): ValidationResult => {
+  if (isRallyGameRules(rules) || isRallyPointsRules(rules)) {
+    return validateRallyPointGame(a, b, rules);
+  }
   if (rules.totalPointsPerSet > 0 && a + b !== rules.totalPointsPerSet) {
     return fail('TOTAL_MISMATCH', { total: rules.totalPointsPerSet });
   }

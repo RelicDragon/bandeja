@@ -17,6 +17,7 @@ export async function createNewGamePushNotification(
     includeLink: false,
     escapeMarkdown: false,
     existingGameInfo: gameInfo,
+    primarySport: recipient.primarySport,
   });
 
   const title = t('telegram.newGameCreated', lang) || 'New game created';

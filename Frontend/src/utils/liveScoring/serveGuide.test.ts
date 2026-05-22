@@ -55,7 +55,7 @@ describe('serveGuide points mode', () => {
       firstServerDoublesPlayerIndex: 0,
       matchStartCourtEndsSwapped: true,
     };
-    const snap = computeServeGuideSnapshot(state, pointsRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap = computeServeGuideSnapshot(state, pointsRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap?.courtEndsSwapped).toBe(true);
     expect(effectiveCourtEndsSwapped(state)).toBe(true);
   });
@@ -67,7 +67,7 @@ describe('serveGuide points mode', () => {
       firstServerDoublesPlayerIndex: 0,
       matchStartTeamASidesMirrored: true,
     };
-    const snap = computeServeGuideSnapshot(state, pointsRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap = computeServeGuideSnapshot(state, pointsRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap?.courtTeamASidesMirrored).toBe(true);
     expect(snap?.courtTeamBSidesMirrored).toBe(false);
     expect(effectiveCourtTeamASidesMirrored(state)).toBe(true);
@@ -81,7 +81,7 @@ describe('serveGuide points mode', () => {
       firstServerDoublesPlayerIndex: 0,
     };
     expect(needsServeSetup(state, pointsRules)).toBe(false);
-    const snap = computeServeGuideSnapshot(state, pointsRules, ['Alice', 'Bob'], ['Carol', 'Dan']);
+    const snap = computeServeGuideSnapshot(state, pointsRules, ['Alice', 'Bob'], ['Carol', 'Dan'], true);
     expect(snap?.serverTeam).toBe('teamA');
     expect(snap?.courtSide).toBe('rightDeuce');
   });
@@ -92,7 +92,7 @@ describe('serveGuide points mode', () => {
     for (let i = 0; i < 6; i += 1) {
       state = scoreLivePoint(state, i % 2 === 0 ? 'teamA' : 'teamB', pointsRules).state;
     }
-    const snap = computeServeGuideSnapshot(state, pointsRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap = computeServeGuideSnapshot(state, pointsRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap?.changeEndsBeforeNextPoint).toBe(true);
     expect(snap?.courtEndsSwapped).toBe(true);
   });
@@ -103,7 +103,7 @@ describe('serveGuide points mode', () => {
     for (let i = 0; i < 7; i += 1) {
       state = scoreLivePoint(state, i % 2 === 0 ? 'teamA' : 'teamB', pointsRules).state;
     }
-    const snap = computeServeGuideSnapshot(state, pointsRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap = computeServeGuideSnapshot(state, pointsRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap?.changeEndsBeforeNextPoint).toBe(false);
     expect(snap?.courtEndsSwapped).toBe(true);
   });
@@ -115,7 +115,7 @@ describe('serveGuide points mode', () => {
       firstServerDoublesPlayerIndex: 0,
       pointsServeRotation: 'simple' as const,
     };
-    const snap0 = computeServeGuideSnapshot(state, pointsRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap0 = computeServeGuideSnapshot(state, pointsRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap0?.serverTeam).toBe('teamA');
     expect(snap0?.serverPlayerIndex).toBe(0);
     expect(snap0?.courtSide).toBe('rightDeuce');
@@ -123,13 +123,13 @@ describe('serveGuide points mode', () => {
 
     let s: LiveScoringState = state;
     s = scoreLivePoint(s, 'teamA', pointsRules).state;
-    const snap1 = computeServeGuideSnapshot(s, pointsRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap1 = computeServeGuideSnapshot(s, pointsRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap1?.serverTeam).toBe('teamA');
     expect(snap1?.serverPlayerIndex).toBe(0);
     expect(snap1?.courtSide).toBe('leftAd');
 
     s = scoreLivePoint(s, 'teamB', pointsRules).state;
-    const snap2 = computeServeGuideSnapshot(s, pointsRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap2 = computeServeGuideSnapshot(s, pointsRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap2?.serverTeam).toBe('teamA');
     expect(snap2?.serverPlayerIndex).toBe(1);
     expect(snap2?.courtSide).toBe('rightDeuce');
@@ -150,7 +150,7 @@ describe('serveGuide points mode', () => {
       pointsServeRotation: 'official' as const,
     };
     state = scoreLivePoint(state, 'teamA', pointsRules).state;
-    const snap = computeServeGuideSnapshot(state, pointsRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap = computeServeGuideSnapshot(state, pointsRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap?.serverTeam).toBe('teamB');
     expect(snap?.tieBreakServeSlot).toBe('serveOne');
     expect(snap?.courtSide).toBe('leftAd');
@@ -201,7 +201,7 @@ describe('serveGuide classic games', () => {
       sets: [{ teamA: 1, teamB: 0, isTieBreak: false }],
       classic: emptyClassic(),
     };
-    const snap = computeServeGuideSnapshot(state, classicRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap = computeServeGuideSnapshot(state, classicRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap?.changeEndsBeforeNextPoint).toBe(true);
     expect(snap?.courtEndsSwapped).toBe(true);
   });
@@ -218,7 +218,7 @@ describe('serveGuide classic games', () => {
         pointState: { kind: 'regular' as const, teamA: 30 as const, teamB: 0 as const },
       },
     };
-    const snap = computeServeGuideSnapshot(state, classicRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap = computeServeGuideSnapshot(state, classicRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap?.changeEndsBeforeNextPoint).toBe(false);
     expect(snap?.courtEndsSwapped).toBe(true);
   });
@@ -240,7 +240,7 @@ describe('serveGuide classic games', () => {
       sets,
       classic: emptyClassic(),
     };
-    const snap = computeServeGuideSnapshot(state, classicRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap = computeServeGuideSnapshot(state, classicRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap?.serverTeam).toBe(firstServerTeamForSet(1, sets, matchFirst));
   });
 
@@ -259,7 +259,7 @@ describe('serveGuide classic games', () => {
       sets,
       classic: emptyClassic(),
     };
-    expect(computeServeGuideSnapshot(state, classicRules, ['A1', 'A2'], ['B1', 'B2'])?.serverTeam).toBe('teamB');
+    expect(computeServeGuideSnapshot(state, classicRules, ['A1', 'A2'], ['B1', 'B2'], true)?.serverTeam).toBe('teamB');
   });
 
   it('set 3 first server chains through set 2 (4–6 after 6–4)', () => {
@@ -299,7 +299,7 @@ describe('serveGuide classic games', () => {
       classic: emptyClassic(),
     };
     expect(firstServerTeamForSet(2, sets, matchFirst)).toBe('teamA');
-    expect(computeServeGuideSnapshot(state, superTbRules, ['A1', 'A2'], ['B1', 'B2'])?.serverTeam).toBe('teamA');
+    expect(computeServeGuideSnapshot(state, superTbRules, ['A1', 'A2'], ['B1', 'B2'], true)?.serverTeam).toBe('teamA');
   });
 
   it('shows change ends at start of set 2 when set 1 had an even game count', () => {
@@ -314,7 +314,7 @@ describe('serveGuide classic games', () => {
       ],
       classic: emptyClassic(),
     };
-    const snap = computeServeGuideSnapshot(state, classicRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap = computeServeGuideSnapshot(state, classicRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap?.changeEndsBeforeNextPoint).toBe(true);
     expect(snap?.courtEndsSwapped).toBe(false);
   });
@@ -348,7 +348,7 @@ describe('serveGuide super tie-break', () => {
       firstServerDoublesPlayerIndex: 1,
     };
     expect(needsServeSetup(state, superTbRules)).toBe(false);
-    const snap = computeServeGuideSnapshot(state, superTbRules, ['A1', 'A2'], ['B1', 'B2']);
+    const snap = computeServeGuideSnapshot(state, superTbRules, ['A1', 'A2'], ['B1', 'B2'], true);
     expect(snap?.serverTeam).toBe('teamB');
     expect(snap?.tieBreakServeSlot).toBe('serveOne');
   });

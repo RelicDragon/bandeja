@@ -1,17 +1,27 @@
 import prisma from '../../config/database';
 import { EntityType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS, SUPPORTED_CURRENCIES } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import notificationService from '../notification.service';
 import { goldenPointAllowedForFormat, validateScoringPreset } from '../../utils/validators/gameFormat';
+import { validateGameForSport } from '../../utils/validators/validateGameForSport';
+import { resolvePlayersPerMatch, resolveSport } from '../../sport/sportRegistry';
 import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
 import { normalizeLegacyTimedScoringPreset } from '../../utils/scoring/matchTimerGame';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
+import { projectUserForSportContext, touchLastCreatedSport } from '../user/userSportProfile.service';
+
+const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
+  ...USER_SELECT_FIELDS,
+  sportProfiles: {
+    select: USER_SPORT_PROFILE_SELECT,
+  },
+} as const;
 export class GameCreateService {
   static async createGame(data: any, userId: string, jwtIsAdmin: boolean = false) {
     // Validate currency if provided
@@ -83,9 +93,17 @@ export class GameCreateService {
       throw new ApiError(400, 'City ID is required. Provide cityId directly or through clubId/courtId');
     }
     
-    const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams || false);
-    const allowUserInMultipleTeams =
-      maxParticipants === 2 ? false : Boolean(data.allowUserInMultipleTeams);
+    const isTraining = entityType === EntityType.TRAINING;
+    const sportEarly = resolveSport(data.sport);
+    let playersPerMatchEarly = isTraining
+      ? resolvePlayersPerMatch(sportEarly, undefined)
+      : resolvePlayersPerMatch(sportEarly, data.playersPerMatch);
+    if (!isTraining && data.playersPerMatch == null && maxParticipants === 2) {
+      playersPerMatchEarly = 2;
+    }
+    const singlesEvent = maxParticipants === 2 || playersPerMatchEarly === 2;
+    const hasFixedTeams = singlesEvent ? false : (data.hasFixedTeams || false);
+    const allowUserInMultipleTeams = singlesEvent ? false : Boolean(data.allowUserInMultipleTeams);
     const genderTeams = data.genderTeams || 'ANY';
     
     if (genderTeams === 'MIX_PAIRS' && !(maxParticipants >= 4 && maxParticipants % 2 === 0)) {
@@ -137,9 +155,7 @@ export class GameCreateService {
     
     const cityTimezone = await getUserTimezoneFromCityId(cityId);
     
-    const gameType = entityType === EntityType.TRAINING 
-      ? (data.gameType || 'CLASSIC')
-      : data.gameType;
+    const gameType = isTraining ? 'CLASSIC' : data.gameType;
 
     let trainerId: string | null = null;
     if (entityType === EntityType.TRAINING) {
@@ -155,8 +171,21 @@ export class GameCreateService {
         }
       }
     }
-    
-    let scoringPreset = validateScoringPreset(gameType, data.scoringPreset);
+
+    const minParticipantsCreate = isTraining ? 1 : (data.minParticipants || 2);
+
+    const sport = validateGameForSport({
+      sport: data.sport,
+      entityType,
+      gameType,
+      maxParticipants,
+      minParticipants: minParticipantsCreate,
+      playersPerMatch: isTraining ? undefined : playersPerMatchEarly,
+      scoringPreset: isTraining ? undefined : data.scoringPreset,
+    });
+    const playersPerMatch = playersPerMatchEarly;
+
+    let scoringPreset = isTraining ? null : validateScoringPreset(gameType, data.scoringPreset);
     const winnerOfMatchCreate = data.winnerOfMatch ?? 'BY_SCORES';
     let maxTotalPointsCreate = data.maxTotalPointsPerSet ?? 0;
     const legacyNorm = normalizeLegacyTimedScoringPreset(scoringPreset);
@@ -171,6 +200,7 @@ export class GameCreateService {
       scoringPreset,
       winnerOfMatch: winnerOfMatchCreate,
       maxTotalPointsPerSet: maxTotalPointsCreate,
+      sport,
     });
     let matchTimedCapMinutes =
       typeof data.matchTimedCapMinutes === 'number' && Number.isFinite(data.matchTimedCapMinutes)
@@ -192,6 +222,7 @@ export class GameCreateService {
     const createdGame = await prisma.game.create({
       data: {
         entityType: entityType,
+        sport,
         gameType: gameType,
         name: data.name,
         description: data.description,
@@ -203,7 +234,8 @@ export class GameCreateService {
         startTime: startTime,
         endTime: endTime,
         maxParticipants: maxParticipants,
-        minParticipants: data.minParticipants || 2,
+        playersPerMatch,
+        minParticipants: minParticipantsCreate,
         minLevel: data.minLevel,
         maxLevel: data.maxLevel,
         isPublic: data.isPublic !== undefined ? data.isPublic : true,
@@ -227,6 +259,7 @@ export class GameCreateService {
           resultsRoundGenV2: data.resultsRoundGenV2,
           matchGenerationType: data.matchGenerationType,
           maxParticipants,
+          playersPerMatch,
         }),
         pointsPerWin: data.pointsPerWin ?? 0,
         pointsPerLoose: data.pointsPerLoose ?? 0,
@@ -279,7 +312,7 @@ export class GameCreateService {
         participants: {
           include: {
             user: {
-              select: USER_SELECT_FIELDS,
+              select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
             },
           },
         },
@@ -288,7 +321,7 @@ export class GameCreateService {
             players: {
               include: {
                 user: {
-                  select: USER_SELECT_FIELDS,
+                  select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
                 },
               },
             },
@@ -299,6 +332,7 @@ export class GameCreateService {
     });
 
     await GameReadinessService.updateGameReadiness(createdGame.id);
+    await touchLastCreatedSport(userId, sport);
 
     const finalGame = await prisma.game.findUnique({
       where: { id: createdGame.id },
@@ -323,7 +357,7 @@ export class GameCreateService {
         participants: {
           include: {
             user: {
-              select: USER_SELECT_FIELDS,
+              select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
             },
           },
         },
@@ -332,7 +366,7 @@ export class GameCreateService {
             players: {
               include: {
                 user: {
-                  select: USER_SELECT_FIELDS,
+                  select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
                 },
               },
             },
@@ -364,7 +398,23 @@ export class GameCreateService {
       });
     }
 
-    return finalGame;
+    if (!finalGame) return finalGame;
+
+    const gameSport = finalGame.sport;
+    return {
+      ...finalGame,
+      participants: finalGame.participants.map((participant) => ({
+        ...participant,
+        user: projectUserForSportContext(participant.user, gameSport),
+      })),
+      fixedTeams: finalGame.fixedTeams.map((team) => ({
+        ...team,
+        players: team.players.map((player) => ({
+          ...player,
+          user: projectUserForSportContext(player.user, gameSport),
+        })),
+      })),
+    };
   }
 }
 

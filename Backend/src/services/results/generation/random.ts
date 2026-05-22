@@ -16,6 +16,7 @@ import {
   cloneSets,
   pairKey,
   InitialSets,
+  playersPerMatchOf,
 } from './matchUtils';
 import { solveMixOptimalPairs, solveStandardOptimalPairs } from './teammateOptimalPairs';
 
@@ -448,7 +449,8 @@ export function generateRandomRound(
   initialSets: InitialSets
 ): Match[] {
   const participants = getEligibleParticipants(game);
-  if (participants.length < 4) return [];
+  const ppm = playersPerMatchOf(game);
+  if (participants.length < ppm) return [];
 
   const numMatches = getNumMatches(game, participants);
   if (numMatches === 0) return [];
@@ -488,7 +490,7 @@ export function generateRandomRound(
   }
 
   // ── Dynamic teams path ──
-  const neededPlayers = numMatches * 4;
+  const neededPlayers = numMatches * ppm;
   const selectedParticipants = selectPlayersForRound(
     participants, matchesPlayed, lastRoundPlayed, neededPlayers, game.genderTeams
   );

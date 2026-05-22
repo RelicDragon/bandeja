@@ -3,7 +3,6 @@ import type { NavigateFunction } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { chatApi } from '@/api/chat';
 import { gamesApi } from '@/api/games';
-import { useHeaderStore } from '@/store/headerStore';
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
 import { loadLocalThreadBootstrap, persistChatMessagesFromApi } from '@/services/chat/chatLocalApply';
 import { reconcileChatThreadOpen } from '@/services/chat/chatOpenReconcile';
@@ -12,10 +11,6 @@ import { normalizeChatType } from '@/utils/chatType';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { putChatThreadMemory } from '@/services/chat/chatThreadMemoryCache';
 import { mergeChatMessagesAscending, mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
-import { shouldQueueChatMutation } from '@/services/chat/chatMutationNetwork';
-import { enqueueChatMutationMarkReadBatch } from '@/services/chat/chatMutationEnqueue';
-import { applyOptimisticMarkGameRead } from '@/services/chat/applyOptimisticMarkContextRead';
-import { resyncAfterMarkReadFailure } from '@/services/chat/chatMarkReadResync';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
@@ -23,6 +18,7 @@ import type { GroupChannel } from '@/api/chat';
 import type { ChatMessageWithStatus } from '@/api/chat';
 import type { RefObject } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { useNavigationStore } from '@/store/navigationStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 
@@ -30,7 +26,7 @@ export interface UseGameChatActionsParams {
   currentIdRef: RefObject<string | undefined>;
   id: string | undefined;
   contextType: ChatContextType;
-  loadContext: () => Promise<unknown>;
+  loadContext: (options?: import('./useGameChatContext').LoadContextOptions) => Promise<unknown>;
   navigate: NavigateFunction;
   setChatsFilter: (filter: 'users' | 'bugs' | 'channels' | 'market') => void;
   setGame: (game: Game | null | ((prev: Game | null) => Game | null)) => void;
@@ -134,14 +130,21 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
       setIsJoiningAsGuest(true);
       try {
         await chatApi.joinGroupChannel(id);
-        await loadContext();
-      } catch (error) {
-        console.error('Failed to join group/channel:', error);
+        setGroupChannel((prev) => (prev ? { ...prev, isParticipant: true } : prev));
+        await loadContext({ force: true });
+      } catch (error: unknown) {
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        if (status === 400) {
+          setGroupChannel((prev) => (prev ? { ...prev, isParticipant: true } : prev));
+          await loadContext({ force: true });
+        } else {
+          console.error('Failed to join group/channel:', error);
+        }
       } finally {
         setIsJoiningAsGuest(false);
       }
     }
-  }, [id, contextType, loadContext, setGame, setIsJoiningAsGuest]);
+  }, [id, contextType, loadContext, setGame, setGroupChannel, setIsJoiningAsGuest]);
 
   const handleLeaveChat = useCallback(async () => {
     if (!id || isLeavingChat) return;
@@ -215,19 +218,6 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
       const normalizedChatType = normalizeChatType(newChatType);
       const requestId = id;
 
-      const mergeForTab = (prev: ChatMessageWithStatus[], fresh: import('@/api/chat').ChatMessage[]) => {
-        const pending =
-          contextType === 'GAME'
-            ? prev.filter(
-                (m) =>
-                  Boolean(m._optimisticId) &&
-                  normalizeChatType((m as import('@/api/chat').ChatMessage).chatType as ChatType) ===
-                    normalizedChatType
-              )
-            : prev.filter((m) => Boolean(m._optimisticId));
-        return mergeChatMessagesAscending(pending, fresh);
-      };
-
       const reconcileAfterLocal = () => {
         void reconcileChatThreadOpen({
           contextType,
@@ -236,7 +226,6 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
           currentIdRef,
           messagesRef,
           setMessages,
-          mergeLocalRefresh: mergeForTab,
         });
       };
 
@@ -297,7 +286,6 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
             currentIdRef,
             messagesRef,
             setMessages,
-            mergeLocalRefresh: mergeForTab,
           });
         }
         if (user?.id) {
@@ -314,23 +302,8 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
           });
         }
         scrollToBottom();
-        if (id && user?.id && contextType === 'GAME') {
-          applyOptimisticMarkGameRead(id);
-          if (shouldQueueChatMutation()) {
-            void enqueueChatMutationMarkReadBatch({
-              contextType: 'GAME',
-              contextId: id,
-              payload: { target: 'context', chatTypes: [normalizedChatType] },
-            });
-          } else {
-            chatApi.markAllMessagesAsRead(id, [normalizedChatType]).then((markReadResponse) => {
-              const markedCount = markReadResponse.data.count || 0;
-              const { setUnreadMessages, unreadMessages } = useHeaderStore.getState();
-              setUnreadMessages(Math.max(0, unreadMessages - markedCount));
-            }).catch(() => {
-              resyncAfterMarkReadFailure('GAME', id);
-            });
-          }
+        if (contextType === 'GAME' && id) {
+          useNavigationStore.getState().setViewingGameChat(id, normalizedChatType);
         }
       } catch (error) {
         console.error('Failed to load messages:', error);

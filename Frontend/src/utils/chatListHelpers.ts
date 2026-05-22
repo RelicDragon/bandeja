@@ -9,7 +9,7 @@ import {
 } from '@/api/chat';
 import { matchDraftToChat } from '@/utils/chatListUtils';
 import { sortChatItems, type ChatItem, type ChatListOutbox } from '@/utils/chatListSort';
-import type { BasicUser } from '@/types';
+import type { BasicUser, Game } from '@/types';
 
 export const getChatKey = (c: ChatItem) => `${c.type}-${c.type === 'contact' ? c.userId : c.data.id}`;
 
@@ -154,6 +154,26 @@ export const calculateLastMessageDate = (
   const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;
   const updatedTime = new Date(updatedAt).getTime();
   return new Date(Math.max(lastMessageTime, draftTime, updatedTime));
+};
+
+export const gamesToChatItems = (
+  games: Game[],
+  gameUnreads: Record<string, number>
+): ChatItem[] => {
+  const items: ChatItem[] = games
+    .filter((game) => game.status !== 'ARCHIVED')
+    .map((game) => {
+    const lastMessageDate = game.lastMessage
+      ? calculateLastMessageDate(game.lastMessage, null, game.updatedAt)
+      : new Date(game.updatedAt);
+    return {
+      type: 'game' as const,
+      data: game,
+      lastMessageDate,
+      unreadCount: gameUnreads[game.id] || 0,
+    };
+  });
+  return items;
 };
 
 export const groupsToChatItems = (

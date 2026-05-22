@@ -77,13 +77,13 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
       case 'IN_QUEUE':
         return { text: t('games.statusInQueue'), color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' };
       case 'PLAYING':
-        return { text: t('games.statusPlaying'), color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' };
+        return { text: t('games.participantPlaying', { defaultValue: 'Playing' }), color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' };
       case 'NON_PLAYING':
         return { text: t('games.statusNonPlaying'), color: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' };
       case 'GUEST':
         return { text: t('games.statusGuest'), color: 'bg-slate-100 text-slate-700 dark:bg-slate-600/30 dark:text-slate-300' };
       default:
-        return { text: t('games.statusPlaying'), color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' };
+        return { text: t('games.participantPlaying', { defaultValue: 'Playing' }), color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' };
     }
   };
 

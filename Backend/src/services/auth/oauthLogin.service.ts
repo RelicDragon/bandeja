@@ -17,6 +17,11 @@ import {
   needsDisplayNamePersist,
   resolveDisplayNameData,
 } from '../user/userDisplayName.service';
+import {
+  parseRegistrationPrimarySport,
+  registrationSportExplicitlyChosen,
+  registrationSportUserFields,
+} from './registrationSport.service';
 const SUPPORTED_LANGS = ['en', 'ru', 'sr', 'es', 'auto'];
 
 type GoogleTokenPayload = Awaited<ReturnType<typeof verifyGoogleIdToken>>;
@@ -115,7 +120,13 @@ async function applyGoogleLoginProfileUpdates(
  */
 export async function loginOrRegisterWithGoogleToken(
   googleToken: GoogleTokenPayload,
-  opts: { language?: string; firstName?: string; lastName?: string }
+  opts: {
+    language?: string;
+    firstName?: string;
+    lastName?: string;
+    primarySport?: unknown;
+    primarySportIsSet?: boolean;
+  },
 ): Promise<{ user: ProfileUser; isNewUser: boolean }> {
   const googleId = googleToken.sub;
 
@@ -153,6 +164,7 @@ export async function loginOrRegisterWithGoogleToken(
   );
 
   const validatedLanguage = normalizeRegisterLanguage(opts.language);
+  const primarySport = parseRegistrationPrimarySport(opts.primarySport);
 
   try {
     user = (await prisma.user.create({
@@ -165,6 +177,10 @@ export async function loginOrRegisterWithGoogleToken(
         nameIsSet: nameData.nameIsSet,
         email: emailToUse,
         language: validatedLanguage,
+        ...registrationSportUserFields(primarySport, {
+          primarySportIsSet:
+            opts.primarySportIsSet ?? registrationSportExplicitlyChosen(opts.primarySport),
+        }),
       },
       select: PROFILE_SELECT_FIELDS,
     })) as ProfileUser;
@@ -232,6 +248,7 @@ export async function loginOrRegisterWithGoogle(req: Request): Promise<OAuthResu
     language: typeof body.language === 'string' ? body.language : undefined,
     firstName: typeof body.firstName === 'string' ? body.firstName : undefined,
     lastName: typeof body.lastName === 'string' ? body.lastName : undefined,
+    primarySport: body.primarySport,
   });
   return finalizeGoogleLogin(user.id, isNewUser, req);
 }
@@ -354,6 +371,7 @@ export async function loginOrRegisterWithApple(req: Request): Promise<OAuthResul
   );
 
   const validatedLanguage = normalizeRegisterLanguage(body.language);
+  const primarySport = parseRegistrationPrimarySport(body.primarySport);
 
   const rawGenderApple = typeof body.gender === 'string' ? body.gender : undefined;
   const genderApple = rawGenderApple ? (rawGenderApple as Gender) : undefined;
@@ -380,6 +398,9 @@ export async function loginOrRegisterWithApple(req: Request): Promise<OAuthResul
         preferredHandRight,
         preferredCourtSideLeft,
         preferredCourtSideRight,
+        ...registrationSportUserFields(primarySport, {
+          primarySportIsSet: registrationSportExplicitlyChosen(body.primarySport),
+        }),
       },
       select: PROFILE_SELECT_FIELDS,
     })) as ProfileUser;

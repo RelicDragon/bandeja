@@ -212,15 +212,22 @@ export class ReadReceiptService {
       countByContextAndType[contextId][chatType] = cnt;
     }
     const unreadCounts: Record<string, number> = {};
-    for (const game of games) {
-      const participant = game.participants[0];
-      const chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(participant, game.status);
-      let total = 0;
-      for (const chatType of chatTypeFilter) {
-        total += countByContextAndType[game.id]?.[chatType] ?? 0;
-      }
-      unreadCounts[game.id] = total;
-    }
+    await Promise.all(
+      games.map(async (game) => {
+        const participant = game.participants[0];
+        const chatTypeFilter = await UnreadCountBatchService.resolveGameChatTypeFilterForUser(
+          game.id,
+          userId,
+          participant,
+          game.status
+        );
+        let total = 0;
+        for (const chatType of chatTypeFilter) {
+          total += countByContextAndType[game.id]?.[chatType] ?? 0;
+        }
+        unreadCounts[game.id] = total;
+      })
+    );
     return unreadCounts;
   }
 

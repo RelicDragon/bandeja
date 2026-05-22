@@ -5,6 +5,7 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { collectTelegramGameScheduleExtras } from '../../shared/notificationSport';
 
 export async function sendGameCard(
   api: Api,
@@ -16,6 +17,7 @@ export async function sendGameCard(
     select: {
       currentCityId: true,
       language: true,
+      primarySport: true,
     },
   });
 
@@ -125,6 +127,11 @@ export async function sendGameCard(
   }
 
   const gameInfo = await formatGameInfoForUser(game, user.currentCityId || null, userLang);
+  const scheduleExtras = collectTelegramGameScheduleExtras(game, user.primarySport, userLang);
+  const sportLine =
+    scheduleExtras.length > 0
+      ? `🏅 ${escapeMarkdown(scheduleExtras.join(' · '))}\n`
+      : '';
   const dateTimeLine = `📅 ${escapeMarkdown(gameInfo.shortDayOfWeek)} ${escapeMarkdown(gameInfo.shortDate)} ${escapeMarkdown(gameInfo.startTime)}`;
   
   let timeLine = dateTimeLine;
@@ -196,6 +203,7 @@ export async function sendGameCard(
   let message = [
     divider,
     header,
+    sportLine.trim() || null,
     timeLine,
     locationLine,
     participantsLine,

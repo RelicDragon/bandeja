@@ -11,6 +11,14 @@ import { useChatsFromUrl } from '@/hooks/useChatsFromUrl';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { SplitViewLeftPanel, SplitViewRightPanel } from '@/components/SplitViewPanels';
 import { useDesktop } from '@/hooks/useDesktop';
+import { useAuthStore } from '@/store/authStore';
+import { useUnreadStore } from '@/store/unreadStore';
+import { parseChatSelectionFromPath } from '@/utils/chatSelectionFromPath';
+import {
+  desktopRightPanelTransition,
+  isChatPanelReady,
+  shouldRenderEmbeddedGameChat,
+} from './chatsTabShell';
 
 function locationStateForChatNav(
   options?: ChatSelectNavOptions
@@ -36,6 +44,16 @@ export const ChatsTab = () => {
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const selectedChatIdRef = useRef<string | null>(null);
 
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const timer = setTimeout(() => {
+      void useUnreadStore.getState().refreshAll();
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated]);
+
   useEffect(() => {
     selectedChatIdRef.current = selectedChatId;
   }, [selectedChatId]);
@@ -52,70 +70,28 @@ export const ChatsTab = () => {
   }, []);
 
   useEffect(() => {
-    const path = location.pathname;
-    
-    let newChatId: string | null = null;
-    let newChatType: ChatType | null = null;
-    let shouldUpdate = false;
-    
-    if (path.includes('/user-chat/')) {
-      const chatId = path.split('/user-chat/')[1]?.split('/')[0];
-      if (chatId) {
-        if (chatId !== selectedChatId || selectedChatType !== 'user') {
-          newChatId = chatId;
-          newChatType = 'user';
-          shouldUpdate = true;
-        }
-      }
-    } else if (path.includes('/group-chat/')) {
-      const chatId = path.split('/group-chat/')[1]?.split('/')[0];
-      if (chatId) {
-        if (chatId !== selectedChatId || selectedChatType !== 'group') {
-          newChatId = chatId;
-          newChatType = 'group';
-          shouldUpdate = true;
-        }
-      }
-    } else if (path.match(/^\/bugs\/([^/]+)$/)) {
-      const match = path.match(/^\/bugs\/([^/]+)$/);
-      if (match && match[1]) {
-        if (match[1] !== selectedChatId || selectedChatType !== 'channel') {
-          newChatId = match[1];
-          newChatType = 'channel';
-          shouldUpdate = true;
-        }
-      }
-    } else if (path.includes('/channel-chat/')) {
-      const chatId = path.split('/channel-chat/')[1]?.split('/')[0];
-      if (chatId) {
-        if (chatId !== selectedChatId || selectedChatType !== 'channel') {
-          newChatId = chatId;
-          newChatType = 'channel';
-          shouldUpdate = true;
-        }
-      }
-    } else if (path.match(/^\/games\/[^/]+\/chat$/)) {
-      const match = path.match(/^\/games\/([^/]+)\/chat$/);
-      if (match && match[1]) {
-        if (match[1] !== selectedChatId || selectedChatType !== 'game') {
-          newChatId = match[1];
-          newChatType = 'game';
-          shouldUpdate = true;
-        }
-      }
-    } else if (path === '/chats' || path === '/chats/marketplace' || path === '/bugs') {
-      if (selectedChatId !== null) {
-        newChatId = null;
-        newChatType = null;
-        shouldUpdate = true;
-      }
+    const fromPath = parseChatSelectionFromPath(location.pathname);
+    setSelectedChatId(fromPath.id);
+    setSelectedChatType(fromPath.type);
+  }, [location.pathname]);
+
+  const pathSelection = useMemo(
+    () => parseChatSelectionFromPath(location.pathname),
+    [location.pathname]
+  );
+  const chatPanelReady = isChatPanelReady(
+    isDesktop,
+    selectedChatId,
+    selectedChatType,
+    pathSelection
+  );
+  const rightPanelTransition = desktopRightPanelTransition(isTransitioning, chatPanelReady);
+
+  useEffect(() => {
+    if (isDesktop && chatPanelReady) {
+      setIsTransitioning(false);
     }
-    
-    if (shouldUpdate) {
-      setSelectedChatId(newChatId);
-      setSelectedChatType(newChatType);
-    }
-  }, [location.pathname, selectedChatId, selectedChatType]);
+  }, [isDesktop, chatPanelReady]);
 
   const getChatPath = useCallback((chatId: string, chatType: ChatType) => {
     if (chatsFilter === 'bugs' && chatType === 'channel') return `/bugs/${chatId}`;
@@ -167,15 +143,10 @@ export const ChatsTab = () => {
       if (selectedChatId === chatId && selectedChatType === chatType) return;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setIsTransitioning(true);
-      requestAnimationFrame(() => {
-        setSelectedChatId(chatId);
-        setSelectedChatType(chatType);
-        navigate(path, { replace: true, ...(listNavState ? { state: listNavState } : {}) });
-        timeoutRef.current = setTimeout(() => {
-          setIsTransitioning(false);
-          timeoutRef.current = null;
-        }, 150);
-      });
+      setSelectedChatId(chatId);
+      setSelectedChatType(chatType);
+      navigate(path, { replace: true, state: listNavState ?? {} });
+      timeoutRef.current = setTimeout(() => setIsTransitioning(false), 150);
     } else {
       if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
       setIsAnimating(true);
@@ -210,20 +181,28 @@ export const ChatsTab = () => {
     </SplitViewLeftPanel>
   ), [handleChatSelect, selectedChatId, selectedChatType, bottomTabsVisible]);
 
+  const showEmbeddedGameChat = shouldRenderEmbeddedGameChat(selectedChatId, selectedChatType);
+
   const rightPanel = useMemo(() => (
-    <SplitViewRightPanel 
-      selectedId={selectedChatId && selectedChatType ? `${selectedChatType}-${selectedChatId}` : null}
-      isTransitioning={isTransitioning}
+    <SplitViewRightPanel
+      selectedId={showEmbeddedGameChat ? `${selectedChatType}-${selectedChatId}` : null}
+      showOverlay={rightPanelTransition.showOverlay}
+      hideContent={rightPanelTransition.hideContent}
       emptyState={emptyState}
     >
-      <GameChat
-        key={`${selectedChatType}-${selectedChatId}`}
-        isEmbedded={true}
-        chatId={selectedChatId!}
-        chatType={selectedChatType!}
-      />
+      {showEmbeddedGameChat ? (
+        /* A1.1 stable shell: chatId/chatType props reset thread; no remount key */
+        <GameChat isEmbedded chatId={selectedChatId!} chatType={selectedChatType!} />
+      ) : null}
     </SplitViewRightPanel>
-  ), [selectedChatId, selectedChatType, isTransitioning, emptyState]);
+  ), [
+    selectedChatId,
+    selectedChatType,
+    showEmbeddedGameChat,
+    rightPanelTransition.showOverlay,
+    rightPanelTransition.hideContent,
+    emptyState,
+  ]);
 
   if (isDesktop) {
     return (

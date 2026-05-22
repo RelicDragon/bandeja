@@ -1,19 +1,32 @@
-import { useMemo } from 'react';
+import { useMemo, type ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BasicUser } from '@/types';
-import type { LiveMatchCourtOrientation, LivePointsServeRotation, LiveScoringState, LiveTeamSide } from '@/utils/liveScoring';
+import type { BasicUser, Sport } from '@/types';
+import type {
+  LiveMatchCourtOrientation,
+  LivePointsServeRotation,
+  LiveScoringState,
+  LiveTeamSide,
+  ServeGuideSnapshot,
+} from '@/utils/liveScoring';
 import {
   activeSetScore,
-  computeServeGuideSnapshot,
   liveSetLabelForRow,
 } from '@/utils/liveScoring';
 import type { ScoringRules } from '@/utils/scoring';
 import { LiveServeCoachStrip } from './LiveServeCoachStrip';
+import type { ServeCourtSchemaProps } from './ServeCourtSchema';
+import type { RallyCourtProps } from './rally/RallyCourtProps';
+import { PickleballCoachButtons } from './rally/PickleballCoachButtons';
+import { RallyScoreBoard } from './rally/RallyScoreBoard';
+import { rallyScoreMetaForState } from '@/liveScoring/rallyScoreMeta';
 
 type LiveScoreCenterProps = {
   state: LiveScoringState;
   teamAPlayers: BasicUser[];
   teamBPlayers: BasicUser[];
+  CourtSchemaComponent: ComponentType<ServeCourtSchemaProps>;
+  matchDoubles?: boolean;
+  serveGuideSnapshot?: ServeGuideSnapshot | null;
   pointCenter: string;
   rules: ScoringRules;
   saving?: boolean;
@@ -23,6 +36,7 @@ type LiveScoreCenterProps = {
   isOnline?: boolean;
   /** When true, the serve setup / coach strip is hidden (e.g. match decided). */
   hideServeGuide?: boolean;
+  RallyCourtComponent?: ComponentType<RallyCourtProps> | null;
   onServeSetupComplete: (
     side: LiveTeamSide,
     doublesPlayerIndex: number,
@@ -31,29 +45,31 @@ type LiveScoreCenterProps = {
   ) => void;
   onSkipServeGuide: () => void;
   showPointHeadline?: boolean;
+  sport?: Sport | string | null;
 };
-
-const rosterNames = (players: BasicUser[]) =>
-  players.map((p) => [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.id);
 
 export const LiveScoreCenter = ({
   state,
   teamAPlayers,
   teamBPlayers,
+  CourtSchemaComponent,
+  matchDoubles = false,
+  serveGuideSnapshot,
   pointCenter,
   rules,
   error,
   statusNote,
   isOnline = true,
   hideServeGuide,
+  RallyCourtComponent,
   showPointHeadline = true,
+  sport,
 }: LiveScoreCenterProps) => {
   const { t } = useTranslation();
-  const na = useMemo(() => rosterNames(teamAPlayers), [teamAPlayers]);
-  const nb = useMemo(() => rosterNames(teamBPlayers), [teamBPlayers]);
-  const snapshot = useMemo(() => {
-    return computeServeGuideSnapshot(state, rules, na, nb);
-  }, [state, rules, na, nb]);
+  const snapshot = serveGuideSnapshot ?? null;
+  const setScore = activeSetScore(state);
+  const rallyMeta = useMemo(() => rallyScoreMetaForState(state, rules), [state, rules]);
+
   const setHeader = useMemo(() => {
     const label = liveSetLabelForRow(activeSetScore(state), state.activeSetIndex, rules);
     if (label.kind === 'SUPER_TIE_BREAK') return t('gameDetails.liveScoring.superTieBreakShort');
@@ -91,7 +107,30 @@ export const LiveScoreCenter = ({
 
       {!hideServeGuide && snapshot ? (
         <div className="mt-2 space-y-3">
-          <LiveServeCoachStrip snapshot={snapshot} teamAPlayers={teamAPlayers} teamBPlayers={teamBPlayers} />
+          <LiveServeCoachStrip
+            snapshot={snapshot}
+            teamAPlayers={teamAPlayers}
+            teamBPlayers={teamBPlayers}
+            CourtSchemaComponent={CourtSchemaComponent}
+            matchDoubles={matchDoubles}
+          />
+        </div>
+      ) : null}
+
+      {RallyCourtComponent ? (
+        <div className="mt-4 flex w-full flex-col items-center gap-2">
+          <RallyScoreBoard
+            CourtComponent={RallyCourtComponent}
+            teamAPlayers={teamAPlayers}
+            teamBPlayers={teamBPlayers}
+            teamAScore={setScore.teamA}
+            teamBScore={setScore.teamB}
+            setChips={rallyMeta.setChips}
+            setsWon={rallyMeta.setsWon}
+            gameCap={rallyMeta.gameCap}
+            gameLabel={rallyMeta.gameLabel}
+          />
+          {sport === 'PICKLEBALL' ? <PickleballCoachButtons /> : null}
         </div>
       ) : null}
 

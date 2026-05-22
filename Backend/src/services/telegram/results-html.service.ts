@@ -1,4 +1,6 @@
 import { config } from '../../config/env';
+import { Sport } from '@prisma/client';
+import { projectUserForSportContext } from '../user/userSportProfile.service';
 
 interface GameOutcome {
   id: string;
@@ -29,6 +31,7 @@ interface GameOutcome {
 
 interface Game {
   id: string;
+  sport?: Sport;
   affectsRating: boolean;
   outcomes: GameOutcome[];
   hasFixedTeams?: boolean;
@@ -143,7 +146,13 @@ function getTranslations(language: string): Record<string, string> {
 
 export function generateResultsHTML(game: Game, language: string = 'en-GB'): string {
   const t = getTranslations(language);
-  const outcomes = [...game.outcomes].sort((a, b) => {
+  const sport = game.sport ?? Sport.PADEL;
+  const outcomes = [...game.outcomes]
+    .map((o) => ({
+      ...o,
+      user: projectUserForSportContext(o.user, sport) as GameOutcome['user'],
+    }))
+    .sort((a, b) => {
     if (a.position && b.position) return a.position - b.position;
     if (a.position && !b.position) return -1;
     if (!a.position && b.position) return 1;

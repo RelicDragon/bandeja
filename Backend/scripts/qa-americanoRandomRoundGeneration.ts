@@ -509,6 +509,7 @@ function baseGameFields(
     ballsInGames: false,
     winnerOfGame: 'BY_SCORES_DELTA',
     winnerOfMatch: 'BY_SCORES',
+    playersPerMatch: 4,
   };
 }
 

@@ -71,5 +71,28 @@
     "select": "Select",
     "on": "On",
     "pressBackAgainToExit": "Press back again to exit"
+  },
+  "sport": {
+    "sport": "Sport",
+    "padel": "Padel",
+    "padelInLevel": "padelu",
+    "tennis": "Tenis",
+    "tennisInLevel": "tenise",
+    "pickleball": "Pickleball",
+    "pickleballInLevel": "pickleballu",
+    "badminton": "Badminton",
+    "badmintonInLevel": "badmintonu",
+    "tableTennis": "Stolní tenis",
+    "tableTennisInLevel": "stolním tenise",
+    "squash": "Squash",
+    "squashInLevel": "squashi",
+    "court": "Kurt",
+    "matchFormat": "Formát zápasu",
+    "match1v1": "1v1",
+    "match2v2": "2v2"
+  },
+  "sportFilter": {
+    "section": "Sport",
+    "allSports": "Všechny sporty"
   }
 }

@@ -21,6 +21,7 @@ import {
 } from '@/services/chat/chatOutboxEvents';
 import { revokeChatBlobUrls } from '@/utils/chatBlobUrls';
 import { persistOptimisticOutbox } from '@/services/chat/chatOutboxPersist';
+import { shouldApplyGameChatMessageDespiteTabMismatch } from './chatOptimisticMatch';
 
 export interface UseGameChatOptimisticParams {
   id: string | undefined;
@@ -141,6 +142,35 @@ export function useGameChatOptimistic({
     [setMessages, messagesRef]
   );
 
+  const handleReplaceOptimisticWithServerMessage = useCallback(
+    (optimisticId: string, serverMessage: ChatMessage) => {
+      void putLocalMessage(serverMessage).catch(() => {});
+      setMessages((prev) => {
+        const idx = prev.findIndex((m) => (m as ChatMessageWithStatus)._optimisticId === optimisticId);
+        if (idx < 0) return prev;
+        revokeChatBlobUrls(prev[idx] as ChatMessageWithStatus);
+        const next = [...prev];
+        next[idx] = { ...serverMessage } as ChatMessageWithStatus;
+        next.sort(compareChatMessagesAscending);
+        messagesRef.current = next;
+        return next;
+      });
+      if (id) {
+        messageQueueStorage.remove(optimisticId, contextType, id).catch((err) => console.error('[messageQueue] remove', err));
+      }
+      cancelSend(optimisticId);
+    },
+    [contextType, id, setMessages, messagesRef]
+  );
+
+  const finishQueuedSendSuccess = useCallback(
+    (tempId: string, created: ChatMessage) => {
+      handleReplaceOptimisticWithServerMessage(tempId, created);
+      handleNewMessageRef.current?.(created);
+    },
+    [handleReplaceOptimisticWithServerMessage]
+  );
+
   const handleSendQueued = useCallback(
     (params: {
       tempId: string;
@@ -151,18 +181,19 @@ export function useGameChatOptimistic({
       thumbnailUrls?: string[];
     }) => {
       if (params.contextId !== id) return;
+      const { tempId } = params;
       void (async () => {
-        const row = await messageQueueStorage.getByTempId(params.tempId);
+        const row = await messageQueueStorage.getByTempId(tempId);
         sendWithTimeout(
           { ...params, clientMutationId: row?.clientMutationId },
           {
             onFailed: handleMarkFailed,
-            onSuccess: (created) => handleNewMessageRef.current?.(created),
+            onSuccess: (created) => finishQueuedSendSuccess(tempId, created),
           }
         );
       })();
     },
-    [id, handleMarkFailed]
+    [id, handleMarkFailed, finishQueuedSendSuccess]
   );
 
   const handleResendQueued = useCallback(
@@ -177,10 +208,10 @@ export function useGameChatOptimistic({
       });
       resend(tempId, contextType, id, {
         onFailed: handleMarkFailed,
-        onSuccess: (created) => handleNewMessageRef.current?.(created),
+        onSuccess: (created) => finishQueuedSendSuccess(tempId, created),
       }).catch((err) => console.error('[messageQueue] resend', err));
     },
-    [id, contextType, handleMarkFailed, setMessages, messagesRef]
+    [id, contextType, handleMarkFailed, setMessages, messagesRef, finishQueuedSendSuccess]
   );
 
   const handleRemoveFromQueue = useCallback(
@@ -217,35 +248,24 @@ export function useGameChatOptimistic({
     [contextType, id, setMessages, messagesRef]
   );
 
-  const handleReplaceOptimisticWithServerMessage = useCallback(
-    (optimisticId: string, serverMessage: ChatMessage) => {
-      void putLocalMessage(serverMessage).catch(() => {});
-      setMessages((prev) => {
-        const idx = prev.findIndex((m) => (m as ChatMessageWithStatus)._optimisticId === optimisticId);
-        if (idx < 0) return prev;
-        revokeChatBlobUrls(prev[idx] as ChatMessageWithStatus);
-        const next = [...prev];
-        next[idx] = { ...serverMessage } as ChatMessageWithStatus;
-        next.sort(compareChatMessagesAscending);
-        messagesRef.current = next;
-        return next;
-      });
-      if (id) {
-        messageQueueStorage.remove(optimisticId, contextType, id).catch((err) => console.error('[messageQueue] remove', err));
-      }
-      cancelSend(optimisticId);
-    },
-    [contextType, id, setMessages, messagesRef]
-  );
-
   const handleNewMessage = useCallback(
     (message: ChatMessage): string | void => {
       const normalizedCurrentChatType = normalizeChatType(currentChatType);
       const normalizedMessageChatType = normalizeChatType(message.chatType);
+      const isOwnServerMessage = message.senderId === user?.id;
+      const bypassGameTabFilter =
+        contextType === 'GAME' &&
+        shouldApplyGameChatMessageDespiteTabMismatch(
+          message,
+          user?.id,
+          currentChatType,
+          messagesRef.current
+        );
       const matchesChatType =
         contextType === 'USER' ||
         contextType === 'BUG' ||
-        normalizedMessageChatType === normalizedCurrentChatType;
+        normalizedMessageChatType === normalizedCurrentChatType ||
+        bypassGameTabFilter;
       if (!matchesChatType) return;
 
       if (contextType === 'USER' && id && !message.senderId && message.content) {
@@ -268,7 +288,6 @@ export function useGameChatOptimistic({
           return prev;
         }
 
-        const isOwnServerMessage = message.senderId === user?.id;
         const serverCid = message.clientMutationId ?? null;
 
         if (isOwnServerMessage && serverCid) {

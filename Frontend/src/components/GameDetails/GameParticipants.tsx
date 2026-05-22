@@ -5,6 +5,8 @@ import { Users, UserPlus, Sliders, CheckCircle, XCircle, Edit3, LayoutGrid, List
 import { useTranslation } from 'react-i18next';
 import { PlayersCarousel } from './PlayersCarousel';
 import { getParticipantsViewMode, setParticipantsViewMode } from '@/utils/participantsViewStorage';
+import { SportQuestionnaireInviteNudge } from '@/components/sportQuestionnaire';
+import { parseGameSport } from '@/utils/gameSport';
 
 interface GameParticipantsProps {
   game: Game;
@@ -153,6 +155,7 @@ export const GameParticipants = ({
                     "{invite.message}"
                   </p>
                 )}
+                {game.sport && <SportQuestionnaireInviteNudge gameSport={parseGameSport(game.sport)} />}
                 <div className="flex gap-2">
                   <Button
                     size="sm"
@@ -470,7 +473,7 @@ export const GameParticipants = ({
           if (buttonCount === 0) return null;
           
           return (
-            <div className="mt-4 flex gap-3">
+            <div className="-mt-2 flex gap-3">
               {showInviteButton && (
                 <Button
                   onClick={() => onShowPlayerList()}

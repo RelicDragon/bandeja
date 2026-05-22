@@ -10,6 +10,34 @@ struct CachedNextGame: Codable, Sendable, Identifiable, Hashable {
     let gameType: String
     let participantCount: Int
     let maxParticipants: Int?
+    let sport: String?
+    let playersPerMatch: Int?
+
+    init(
+        id: String,
+        title: String,
+        clubName: String?,
+        startTime: Date,
+        status: String,
+        resultsStatus: String,
+        gameType: String,
+        participantCount: Int,
+        maxParticipants: Int?,
+        sport: String? = nil,
+        playersPerMatch: Int? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.clubName = clubName
+        self.startTime = startTime
+        self.status = status
+        self.resultsStatus = resultsStatus
+        self.gameType = gameType
+        self.participantCount = participantCount
+        self.maxParticipants = maxParticipants
+        self.sport = sport
+        self.playersPerMatch = playersPerMatch
+    }
 }
 
 extension CachedNextGame {

@@ -34,7 +34,22 @@ import {
 } from '@/services/chat/chatSendCoordinator';
 import { recordChatSendMetric } from '@/services/chat/chatSendMetrics';
 import { createMessageWithSocketAck } from '@/services/chat/chatSendMessageCreate';
+import { dispatchChatOutboxSuccess } from '@/services/chat/chatOutboxEvents';
 import { useVideoUploadProgressStore } from '@/store/videoUploadProgressStore';
+
+function completeChatSendSuccess(
+  tempId: string,
+  contextType: ChatContextType,
+  contextId: string,
+  created: ChatMessage,
+  callbacks: SendQueuedCallbacks
+): void {
+  callbacks.onSuccess?.(created);
+  dispatchChatOutboxSuccess({ tempId, contextType, contextId, message: created });
+  void messageQueueStorage.remove(tempId, contextType, contextId).catch((err) => {
+    console.error('[messageQueue] remove after send success', err);
+  });
+}
 
 function imageFileForBlob(blob: Blob, index: number): File {
   const t = (blob.type || '').toLowerCase();
@@ -113,7 +128,7 @@ export function sendWithTimeout(
     thumbnailUrls = [],
     clientMutationId,
   } = params;
-  const { onFailed, onSuccess } = callbacks;
+  const { onFailed } = callbacks;
 
   const gateUser = useAuthStore.getState().user;
   if (gateUser && gateUser.nameIsSet !== true) {
@@ -333,8 +348,8 @@ export function sendWithTimeout(
         signal,
         tempId
       );
-      if (!isActiveSendGeneration(tempId, generation)) return;
-      sealChatSendAttempt(tempId);
+      const generationStale = !isActiveSendGeneration(tempId, generation);
+      if (!generationStale) sealChatSendAttempt(tempId);
       recordChatSendMetric({
         kind: 'chat_send_succeeded',
         tempId,
@@ -346,10 +361,7 @@ export function sendWithTimeout(
         uploadBytes: videoUploadBytes,
         durationMs: Date.now() - startedAt,
       });
-      onSuccess?.(created);
-      void messageQueueStorage.remove(tempId, contextType, contextId).catch((err) => {
-        console.error('[messageQueue] remove after send success', err);
-      });
+      completeChatSendSuccess(tempId, contextType, contextId, created, callbacks);
     } catch (e) {
       if (isAbortError(e) || !isActiveSendGeneration(tempId, generation)) return;
       await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'send_error');

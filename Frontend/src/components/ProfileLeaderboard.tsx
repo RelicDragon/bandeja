@@ -6,10 +6,17 @@ import transliterate from '@sindresorhus/transliterate';
 import { rankingApi, LeaderboardEntry } from '@/api/ranking';
 import { Loading } from './Loading';
 import { PlayerAvatar } from './PlayerAvatar';
+import { LeaderboardSportPicker } from '@/components/leaderboard/LeaderboardSportPicker';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { isAndroid } from '@/utils/capacitor';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
+import {
+  getUserPrimarySport,
+  hasMultipleSportsEnabled,
+  listEnabledSports,
+} from '@/utils/profileSports';
+import type { Sport } from '@/types';
 import toast from 'react-hot-toast';
 
 export const ProfileLeaderboard = () => {
@@ -22,8 +29,17 @@ export const ProfileLeaderboard = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [leaderboardSport, setLeaderboardSport] = useState<Sport>(() => getUserPrimarySport(user));
   const userRowRef = useRef<HTMLTableRowElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
+
+  const enabledSports = useMemo(() => listEnabledSports(user), [user]);
+  const showSportPicker = hasMultipleSportsEnabled(user);
+  const activeLeaderboardSport = showSportPicker ? leaderboardSport : getUserPrimarySport(user);
+
+  useEffect(() => {
+    setLeaderboardSport(getUserPrimarySport(user));
+  }, [user]);
 
   const formatRatingDelta = (change: number) => {
     const s = change.toFixed(2);
@@ -74,7 +90,12 @@ export const ProfileLeaderboard = () => {
         setLoading(true);
         setIsScrolled(false);
         setAreFiltersSticky(false);
-        const response = await rankingApi.getUserLeaderboardContext(leaderboardType, leaderboardScope, leaderboardType === 'games' ? leaderboardTimePeriod : undefined);
+        const response = await rankingApi.getUserLeaderboardContext(
+          leaderboardType,
+          leaderboardScope,
+          leaderboardType === 'games' ? leaderboardTimePeriod : undefined,
+          activeLeaderboardSport,
+        );
         setLeaderboard(response.data.leaderboard);
       } catch (error: any) {
         console.error('Failed to fetch leaderboard:', error);
@@ -85,7 +106,7 @@ export const ProfileLeaderboard = () => {
     };
 
     fetchLeaderboard();
-  }, [t, leaderboardType, leaderboardScope, leaderboardTimePeriod, setAreFiltersSticky]);
+  }, [t, leaderboardType, leaderboardScope, leaderboardTimePeriod, activeLeaderboardSport, setAreFiltersSticky]);
 
   useEffect(() => {
     if (!loading && leaderboard.length > 0 && !isScrolled) {
@@ -337,6 +358,13 @@ export const ProfileLeaderboard = () => {
         </div>
       )}
       <div ref={filtersRef} className={`space-y-4 ${areFiltersSticky ? 'opacity-0 pointer-events-none' : ''}`}>
+        {showSportPicker && (
+          <LeaderboardSportPicker
+            sports={enabledSports}
+            value={leaderboardSport}
+            onChange={setLeaderboardSport}
+          />
+        )}
         {leaderboardType === 'games' && (
           <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
             <button

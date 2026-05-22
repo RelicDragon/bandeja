@@ -5,6 +5,7 @@ import { GameService } from './game/game.service';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 import { LeagueSyncService } from './league/sync.service';
 import { EntityType } from '@prisma/client';
+import { maxFixedTeamSlots } from './results/generation/matchUtils';
 
 interface GameTeamData {
   teamNumber: number;
@@ -52,7 +53,7 @@ export class GameTeamService {
         throw new ApiError(400, 'Cannot set fixed pairs after game has started');
       }
 
-      const slotCount = Math.floor(game.maxParticipants / 2);
+      const slotCount = maxFixedTeamSlots(game);
       if (slotCount < 1) {
         throw new ApiError(400, 'Game must allow at least one fixed pair');
       }

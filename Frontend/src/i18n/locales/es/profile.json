@@ -92,6 +92,21 @@
     "cancel": "Cancelar",
     "saved": "Perfil guardado",
     "preferences": "Preferencias de juego",
+    "sports": {
+      "title": "Deportes",
+      "addSport": "Añadir deporte",
+      "setPrimary": "Establecer principal",
+      "primarySport": "Deporte principal",
+      "primarySportToast": "Este es tu deporte principal. Se usa por defecto al crear partidos y en tu perfil.",
+      "gamesCount": "{{count}} partidos",
+      "levelInvalid": "El nivel debe estar entre 1.0 y 7.0",
+      "updated": "Perfil deportivo actualizado",
+      "allAdded": "Todos los deportes disponibles están activados",
+      "primaryLabel": "Nivel {{sport}}",
+      "removeSport": "Quitar",
+      "removeSportConfirmTitle": "¿Quitar deporte?",
+      "removeSportConfirmMessage": "¿Quitar {{sport}} de tu perfil? Podrás añadirlo de nuevo más tarde."
+    },
     "preferredHand": "Mano",
     "preferredCourtSide": "Lado de la cancha",
     "appIcon": "Icono de la app",
@@ -237,6 +252,9 @@
     "photoPickFailed": "Failed to pick photo",
     "noSharedGames": "No shared finished games yet",
     "noLeaderboardData": "No leaderboard data available",
+    "leaderboard": {
+      "sportLabel": "Deporte del ranking"
+    },
     "verbalStatus": "Status",
     "verbalStatusPlaceholder": "What's on your mind?",
     "characters": "characters",

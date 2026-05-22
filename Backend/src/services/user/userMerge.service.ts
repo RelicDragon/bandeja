@@ -3,6 +3,7 @@ import {
   ChatSyncEventType,
   ParticipantRole,
   Prisma,
+  SportLevelSource,
 } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
@@ -492,6 +493,62 @@ async function dedupeLeagueParticipants(tx: Tx, survivorId: string) {
   }
 }
 
+const LEVEL_SOURCE_RANK: Record<SportLevelSource, number> = {
+  [SportLevelSource.DEFAULT]: 0,
+  [SportLevelSource.QUESTIONNAIRE]: 1,
+  [SportLevelSource.MANUAL]: 2,
+};
+
+function mergeSportLevelSource(a: SportLevelSource, b: SportLevelSource): SportLevelSource {
+  return LEVEL_SOURCE_RANK[a] >= LEVEL_SOURCE_RANK[b] ? a : b;
+}
+
+/** §19: merge profiles by sport; v1 level = max(survivor, source); gamesPlayed = max. */
+async function mergeUserSportProfiles(tx: Tx, survivorId: string, sourceId: string) {
+  const sourceProfiles = await tx.userSportProfile.findMany({ where: { userId: sourceId } });
+  for (const src of sourceProfiles) {
+    const surv = await tx.userSportProfile.findUnique({
+      where: { userId_sport: { userId: survivorId, sport: src.sport } },
+    });
+    if (!surv) {
+      await tx.userSportProfile.update({
+        where: { id: src.id },
+        data: { userId: survivorId },
+      });
+      continue;
+    }
+
+    const completedAt =
+      surv.questionnaireCompletedAt && src.questionnaireCompletedAt
+        ? surv.questionnaireCompletedAt > src.questionnaireCompletedAt
+          ? surv.questionnaireCompletedAt
+          : src.questionnaireCompletedAt
+        : surv.questionnaireCompletedAt ?? src.questionnaireCompletedAt;
+
+    const version =
+      surv.questionnaireVersion && src.questionnaireVersion
+        ? surv.questionnaireVersion >= src.questionnaireVersion
+          ? surv.questionnaireVersion
+          : src.questionnaireVersion
+        : surv.questionnaireVersion ?? src.questionnaireVersion;
+
+    await tx.userSportProfile.update({
+      where: { id: surv.id },
+      data: {
+        level: Math.max(surv.level, src.level),
+        reliability: Math.max(surv.reliability, src.reliability),
+        gamesPlayed: Math.max(surv.gamesPlayed, src.gamesPlayed),
+        gamesWon: Math.max(surv.gamesWon, src.gamesWon),
+        questionnaireCompletedAt: completedAt,
+        questionnaireSkippedAt: surv.questionnaireSkippedAt ?? src.questionnaireSkippedAt,
+        questionnaireVersion: version,
+        levelSource: mergeSportLevelSource(surv.levelSource, src.levelSource),
+      },
+    });
+    await tx.userSportProfile.delete({ where: { id: src.id } });
+  }
+}
+
 async function mergeLundaProfiles(tx: Tx, survivorId: string, sourceId: string) {
   const [a, b] = await Promise.all([
     tx.lundaProfile.findUnique({ where: { userId: survivorId } }),
@@ -698,6 +755,7 @@ export class UserMergeService {
 
         await dedupePairTables(tx, survivorId);
         await dedupeLeagueParticipants(tx, survivorId);
+        await mergeUserSportProfiles(tx, survivorId, sourceId);
         await mergeLundaProfiles(tx, survivorId, sourceId);
 
         await recomputeGameStats(tx, survivorId);

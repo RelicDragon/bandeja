@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { isGroupChannelOwner, isGroupChannelAdminOrOwner } from '@/utils/gameResults';
+import { isUserGroupChannelParticipant } from '@/utils/groupChannelParticipation';
 import { getVisibleGameChatTypes } from '@/utils/chatType';
 import type { GameChatChannelActivity } from '@/utils/gameChatChannelActivity';
 import type { ChatContextType } from '@/api/chat';
@@ -42,7 +43,10 @@ export function useGameChatDerived({
 
   const isChannelOwner = contextType === 'GROUP' && groupChannel && user ? isGroupChannelOwner(groupChannel, user.id) : false;
   const isChannelAdminOrOwner = contextType === 'GROUP' && groupChannel && user ? isGroupChannelAdminOrOwner(groupChannel, user.id) : false;
-  const isChannelParticipant = contextType === 'GROUP' && groupChannel && (groupChannel.isParticipant || isChannelOwner);
+  const isChannelParticipant =
+    contextType === 'GROUP' && groupChannel && user
+      ? isUserGroupChannelParticipant(groupChannel, user.id)
+      : false;
   const isChannel = contextType === 'GROUP' && !!groupChannel?.isChannel;
   const isChannelParticipantOnly = isChannel && isChannelParticipant && !isChannelAdminOrOwner;
   const isItemChat = contextType === 'GROUP' && !!groupChannel?.marketItem;

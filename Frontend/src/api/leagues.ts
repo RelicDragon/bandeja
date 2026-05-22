@@ -1,5 +1,5 @@
 import api from './axios';
-import type { ApiResponse, Game, GameSetupParams, Gender } from '@/types';
+import type { ApiResponse, Game, GameSetupParams, Gender, Sport } from '@/types';
 
 export interface CreateLeagueRequest {
   resultsRoundGenV2?: boolean;
@@ -11,6 +11,7 @@ export interface CreateLeagueRequest {
   allowUserInMultipleTeams?: boolean;
   season: {
     name: string;
+    sport?: Sport;
     minLevel: number;
     maxLevel: number;
     maxParticipants: number;

@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { useNavigationStore } from '@/store/navigationStore';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
@@ -19,6 +19,8 @@ import { CreateMarketItem } from './CreateMarketItem';
 import { UserTeamPage } from './UserTeamPage';
 import { UserProfilePage } from './UserProfilePage';
 import { ClubAdminFab } from '@/components/clubAdmin/ClubAdminFab';
+import { useAuthStore } from '@/store/authStore';
+import { hasEnabledSports } from '@/utils/profileSports';
 
 function MarketplaceContent() {
   const location = useLocation();
@@ -32,6 +34,8 @@ function MarketplaceContent() {
 
 export const MainPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
   const { bottomTabsVisible, initShellAnimationPlayed, activeTab, findViewMode } = useNavigationStore();
   const isDesktop = useDesktop();
   const isLandscape = useIsLandscape();
@@ -43,6 +47,15 @@ export const MainPage = () => {
   );
 
   const currentPage = placeToPageType(parsed.place);
+  const showGameTabs = hasEnabledSports(user);
+
+  useEffect(() => {
+    if (showGameTabs) return;
+    if (currentPage === 'my' || currentPage === 'find') {
+      navigate('/profile', { replace: true });
+    }
+  }, [showGameTabs, currentPage, navigate]);
+
   const isCalendarSplitView = isDesktop && (
     (currentPage === 'my' && activeTab === 'calendar') ||
     (currentPage === 'find' && findViewMode === 'calendar')
@@ -86,6 +99,7 @@ export const MainPage = () => {
   const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') ||
                                  location.pathname.includes('/group-chat/') ||
                                  location.pathname.includes('/channel-chat/') ||
+                                 location.pathname.match(/^\/games\/[^/]+\/chat$/) ||
                                  location.pathname.match(/^\/bugs\/[^/]+$/);
   const shouldShowChatsSplitView = isChatPage && (isDesktop || !isOnSpecificChatRoute);
   const showBottomTabBar = bottomTabsVisible && (!isDesktop || isChatPage);

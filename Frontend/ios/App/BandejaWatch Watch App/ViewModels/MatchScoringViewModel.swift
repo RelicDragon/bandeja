@@ -72,9 +72,12 @@ final class MatchScoringViewModel {
         game?.fixedNumberOfSets ?? 0
     }
 
-    /// `TIMED` open-ended preset: do not PATCH live metadata from Watch (no stable ball budget / parity with web).
-    private var timedOpenEndedPresetBlocksLivePatch: Bool {
-        WatchScoringPreset(rawValue: game?.scoringPreset?.uppercased() ?? "") == .timed
+    /// Open-ended `TIMED` / zero-cap `CUSTOM`: no stable ball budget — skip live PATCH (parity with web).
+    private var openEndedPresetBlocksLivePatch: Bool {
+        let p = WatchScoringPreset(rawValue: game?.scoringPreset?.uppercased() ?? "")
+        if p == .timed { return true }
+        if p == .custom, rules.totalPointsPerSet <= 0 { return true }
+        return false
     }
 
     init(gameId: String, matchId: String) {
@@ -272,15 +275,43 @@ final class MatchScoringViewModel {
     }
 
     var usesBallCapPerSetUI: Bool {
-        isAmericano
+        if isAmericano { return true }
+        guard game?.usesRallySetScoring == true else { return false }
+        return !rules.isClassic
+    }
+
+    /// Rally / points-per-set sports using `pointsCapStrip` (mirrors FE `rally-points` engine).
+    var usesRallyPointsServeGuide: Bool {
+        guard usesBallCapPerSetUI, !isAmericano else { return false }
+        return game?.usesRallySetScoring == true
     }
 
     var usesTennisStyleServeGuide: Bool {
-        usesTennisSetRules || usesBallCapPerSetUI
+        if game?.resolvedSport == .tennis, !isAmericano { return true }
+        if usesRallyPointsServeGuide { return true }
+        return usesTennisSetRules || usesBallCapPerSetUI
+    }
+
+    var liveScoringUiId: WatchLiveScoringUiId {
+        WatchLiveScoringRegistry.resolve(game: game, rules: rules)
     }
 
     func ballCapScoringTitle(lang: String) -> String {
-        WatchCopy.americano(lang)
+        switch liveScoringUiId {
+        case .tableTennisBoard:
+            return WatchCopy.tableTennisScoring(lang)
+        case .rallyPointsBoard:
+            switch game?.resolvedSport {
+            case .badminton: return WatchCopy.badmintonScoring(lang)
+            case .pickleball: return WatchCopy.pickleballScoring(lang)
+            case .squash: return WatchCopy.squashScoring(lang)
+            default: return WatchCopy.americano(lang)
+            }
+        case .americanoPoints:
+            return WatchCopy.americano(lang)
+        case .classicCourt:
+            return WatchCopy.americano(lang)
+        }
     }
 
     var fixedNumberOfSets: Int {
@@ -309,6 +340,10 @@ final class MatchScoringViewModel {
 
     var teamBUsers: [WatchUser] {
         match?.sortedTeams.first { $0.teamNumber == 2 }?.players.map(\.user) ?? []
+    }
+
+    var isDoublesMatch: Bool {
+        game?.isDoublesMatch ?? false
     }
 
     func load() async {
@@ -1133,7 +1168,7 @@ final class MatchScoringViewModel {
 
     private func scheduleLiveScoringSave() {
         guard !isReadOnly else { return }
-        guard !timedOpenEndedPresetBlocksLivePatch else { return }
+        guard !openEndedPresetBlocksLivePatch else { return }
         liveSaveTask?.cancel()
         liveSaveTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 350_000_000)
@@ -1143,7 +1178,7 @@ final class MatchScoringViewModel {
 
     private func saveLiveScoringNow(background: Bool = false) async {
         guard !isReadOnly else { return }
-        guard !timedOpenEndedPresetBlocksLivePatch else { return }
+        guard !openEndedPresetBlocksLivePatch else { return }
         liveSaveTask?.cancel()
         liveSaveTask = nil
         do {

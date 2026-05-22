@@ -10,6 +10,8 @@ struct CachedNextGame: Codable, Sendable, Identifiable, Hashable {
     let gameType: String
     let participantCount: Int
     let maxParticipants: Int?
+    let sport: String?
+    let playersPerMatch: Int?
 
     init(
         id: String,
@@ -20,7 +22,9 @@ struct CachedNextGame: Codable, Sendable, Identifiable, Hashable {
         resultsStatus: String,
         gameType: String,
         participantCount: Int,
-        maxParticipants: Int?
+        maxParticipants: Int?,
+        sport: String? = nil,
+        playersPerMatch: Int? = nil
     ) {
         self.id = id
         self.title = title
@@ -31,6 +35,8 @@ struct CachedNextGame: Codable, Sendable, Identifiable, Hashable {
         self.gameType = gameType
         self.participantCount = participantCount
         self.maxParticipants = maxParticipants
+        self.sport = sport
+        self.playersPerMatch = playersPerMatch
     }
 
     init(from game: WatchGame) {
@@ -43,6 +49,8 @@ struct CachedNextGame: Codable, Sendable, Identifiable, Hashable {
         gameType = game.gameType
         participantCount = game.participantCount
         maxParticipants = game.maxParticipants
+        sport = game.sport
+        playersPerMatch = game.playersPerMatch
     }
 }
 

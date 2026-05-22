@@ -1,6 +1,10 @@
 import { get, set } from 'idb-keyval';
+import type { Sport } from '@/sport/sportRegistry';
 
 const GAME_FILTERS_KEY = 'padelpulse-game-filters';
+
+/** Find discovery sport filter: primary = default (no API param), all = every sport, else a specific sport. */
+export type FindSportFilterValue = 'primary' | 'all' | Sport;
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 export interface GameFilters {
@@ -19,6 +23,9 @@ export interface GameFilters {
   filterTimeEnd?: string;
   filterLevelMin?: number;
   filterLevelMax?: number;
+  filterSport?: FindSportFilterValue;
+  /** Admin Find: include non-public games the viewer is not in. */
+  showPrivateGames?: boolean;
 }
 
 const DEFAULT_FILTERS: GameFilters = {

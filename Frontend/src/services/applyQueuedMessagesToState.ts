@@ -28,7 +28,7 @@ export function queueItemMatchesServerMessage(q: QueuedMessage, m: { id: string;
   return mMentions.length === qMentions.length && !mMentions.some((id, i) => id !== qMentions[i]);
 }
 
-function serverMessageMatchesQueuedItem(
+export function serverMessageMatchesQueuedItem(
   q: QueuedMessage,
   m: {
     id: string;
@@ -57,9 +57,24 @@ export async function applyQueuedMessagesToState(params: {
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   handleMarkFailed: (tempId: string) => void;
+  onOptimisticReplaced?: (tempId: string, message: ChatMessage) => void;
   onMessageCreated?: (message: ChatMessage) => void;
+  /** When false, only start sends — open snapshot already includes optimistics. */
+  paintState?: boolean;
 }): Promise<void> {
-  const { contextType, contextId, currentChatType, userId, user, messagesRef, setMessages, handleMarkFailed, onMessageCreated } = params;
+  const {
+    contextType,
+    contextId,
+    currentChatType,
+    userId,
+    user,
+    messagesRef,
+    setMessages,
+    handleMarkFailed,
+    onOptimisticReplaced,
+    onMessageCreated,
+    paintState = true,
+  } = params;
   const queue = await messageQueueStorage.getByContext(contextType, contextId);
   const normalizedCurrent = normalizeChatType(currentChatType);
   const queueForTab = queue.filter(q => normalizeChatType(q.payload.chatType) === normalizedCurrent);
@@ -188,14 +203,16 @@ export async function applyQueuedMessagesToState(params: {
     _clientMutationId: q.clientMutationId,
   }));
 
-  setMessages((prev) => {
-    const toAdd = optimisticList.filter(
-      (msg) => !prev.some((m) => (m as ChatMessageWithStatus)._optimisticId === msg._optimisticId)
-    );
-    const next = [...prev, ...toAdd].sort(compareChatMessagesAscending);
-    messagesRef.current = next;
-    return next;
-  });
+  if (paintState) {
+    setMessages((prev) => {
+      const toAdd = optimisticList.filter(
+        (msg) => !prev.some((m) => (m as ChatMessageWithStatus)._optimisticId === msg._optimisticId)
+      );
+      const next = [...prev, ...toAdd].sort(compareChatMessagesAscending);
+      messagesRef.current = next;
+      return next;
+    });
+  }
 
   queueMicrotask(() => {
     for (const h of ok) {
@@ -211,7 +228,13 @@ export async function applyQueuedMessagesToState(params: {
           thumbnailUrls: h.q.thumbnailUrls,
           clientMutationId: h.q.clientMutationId,
         },
-        { onFailed: handleMarkFailed, onSuccess: onMessageCreated }
+        {
+          onFailed: handleMarkFailed,
+          onSuccess: (created) => {
+            onOptimisticReplaced?.(h.q.tempId, created);
+            onMessageCreated?.(created);
+          },
+        }
       );
     }
   });

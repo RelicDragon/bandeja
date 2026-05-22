@@ -72,5 +72,28 @@
     "update": "Update",
     "updating": "Updating...",
     "pressBackAgainToExit": "Press back again to exit"
+  },
+  "sport": {
+    "sport": "Sport",
+    "padel": "Padel",
+    "padelInLevel": "padel",
+    "tennis": "Tennis",
+    "tennisInLevel": "tennis",
+    "pickleball": "Pickleball",
+    "pickleballInLevel": "pickleball",
+    "badminton": "Badminton",
+    "badmintonInLevel": "badminton",
+    "tableTennis": "Table tennis",
+    "tableTennisInLevel": "table tennis",
+    "squash": "Squash",
+    "squashInLevel": "squash",
+    "court": "Court",
+    "matchFormat": "Match format",
+    "match1v1": "1v1",
+    "match2v2": "2v2"
+  },
+  "sportFilter": {
+    "section": "Sport",
+    "allSports": "All sports"
   }
 }

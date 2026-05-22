@@ -1,9 +1,72 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PlayerAvatar } from '@/components';
 import { GameParticipant } from '@/types';
-import { usePlayersStore } from '@/store/playersStore';
+import { useUnreadByUserIdBridge } from '@/hooks/useUnreadBridge';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+
+function ParticipantCarouselSlot({
+  participant,
+  propUnread = 0,
+  userId,
+  shouldShowCrowns,
+  draggable,
+  draggedPlayerId,
+  onLeave,
+  onDragStart,
+  onDragEnd,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  showName,
+}: {
+  participant: GameParticipant;
+  propUnread?: number;
+  userId?: string;
+  shouldShowCrowns: boolean;
+  draggable: boolean;
+  draggedPlayerId?: string | null;
+  onLeave?: () => void;
+  onDragStart?: (e: React.DragEvent, playerId: string) => void;
+  onDragEnd?: () => void;
+  onTouchStart?: (e: TouchEvent, playerId: string) => void;
+  onTouchMove?: (e: TouchEvent) => void;
+  onTouchEnd?: (e: TouchEvent) => void;
+  showName?: boolean;
+}) {
+  const unreadCount = useUnreadByUserIdBridge(participant.userId, propUnread);
+  const isDragged = draggedPlayerId === participant.user.id;
+  return (
+    <div
+      className={`flex-shrink-0 w-16 relative transition-all duration-200 ${
+        isDragged ? 'opacity-0' : draggable ? 'hover:scale-105' : ''
+      }`}
+    >
+      <PlayerAvatar
+        player={participant.user}
+        isCurrentUser={participant.user.id === userId}
+        removable={participant.user.id === userId}
+        onRemoveClick={participant.user.id === userId ? onLeave : undefined}
+        role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
+        smallLayout={true}
+        showName={showName}
+        draggable={draggable}
+        onDragStart={draggable && onDragStart ? (e) => onDragStart(e, participant.user.id) : undefined}
+        onDragEnd={draggable ? onDragEnd : undefined}
+        onTouchStart={draggable && onTouchStart ? (e) => onTouchStart(e, participant.user.id) : undefined}
+        onTouchMove={draggable ? onTouchMove : undefined}
+        onTouchEnd={draggable ? onTouchEnd : undefined}
+      />
+      {unreadCount > 0 && (
+        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center border-2 border-white dark:border-gray-900">
+          <span className="text-[10px] font-bold text-white">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface PlayersCarouselProps {
   participants: GameParticipant[];
@@ -57,19 +120,6 @@ export const PlayersCarousel = ({
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { getUnreadCountByUserId } = usePlayersStore();
-  
-  const unreadCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    participants.forEach(participant => {
-      const count = getUnreadCountByUserId(participant.userId);
-      if (count > 0) {
-        counts[participant.userId] = count;
-      }
-    });
-    return counts;
-  }, [participants, getUnreadCountByUserId]);
-
   const checkScrollPosition = () => {
     const container = carouselRef.current;
     if (!container) return;
@@ -197,43 +247,25 @@ export const PlayersCarousel = ({
           onTouchEnd={autoHideNames ? handlePressEnd : undefined}
           onTouchCancel={autoHideNames ? handlePressEnd : undefined}
         >
-          <div className="flex gap-2 pt-1 pb-4">
-            {participants.map((participant) => {
-              const showName = autoHideNames ? ((isMobile && isScrolling) || isPressed) : undefined;
-              const unreadCount = participantUnreadCounts?.[participant.userId] ?? unreadCounts[participant.userId] ?? 0;
-              const isDragged = draggedPlayerId === participant.user.id;
-              return (
-                <div 
-                  key={participant.userId} 
-                  className={`flex-shrink-0 w-16 relative transition-all duration-200 ${
-                    isDragged ? 'opacity-0' : draggable ? 'hover:scale-105' : ''
-                  }`}
-                >
-                  <PlayerAvatar
-                    player={participant.user}
-                    isCurrentUser={participant.user.id === userId}
-                    removable={participant.user.id === userId}
-                    onRemoveClick={participant.user.id === userId ? onLeave : undefined}
-                    role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
-                    smallLayout={true}
-                    showName={showName}
-                    draggable={draggable}
-                    onDragStart={draggable && onDragStart ? (e) => onDragStart(e, participant.user.id) : undefined}
-                    onDragEnd={draggable ? onDragEnd : undefined}
-                    onTouchStart={draggable && onTouchStart ? (e) => onTouchStart(e, participant.user.id) : undefined}
-                    onTouchMove={draggable ? onTouchMove : undefined}
-                    onTouchEnd={draggable ? onTouchEnd : undefined}
-                  />
-                  {unreadCount > 0 && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center border-2 border-white dark:border-gray-900">
-                      <span className="text-[10px] font-bold text-white">
-                        {unreadCount > 9 ? '9+' : unreadCount}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          <div className="flex gap-2 pt-1 pb-1">
+            {participants.map((participant) => (
+              <ParticipantCarouselSlot
+                key={participant.userId}
+                participant={participant}
+                propUnread={participantUnreadCounts?.[participant.userId] ?? 0}
+                userId={userId}
+                shouldShowCrowns={shouldShowCrowns}
+                draggable={draggable}
+                draggedPlayerId={draggedPlayerId}
+                onLeave={onLeave}
+                onDragStart={onDragStart}
+                onDragEnd={onDragEnd}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+                showName={autoHideNames ? ((isMobile && isScrolling) || isPressed) : undefined}
+              />
+            ))}
             {emptySlots > 0 && Array.from({ length: emptySlots }).map((_, i) => (
               <div key={`empty-${i}`} className="flex-shrink-0 w-16">
                 {canInvitePlayers ? (

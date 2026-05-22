@@ -1,0 +1,22 @@
+{
+  "takeTest": "Vyplnit dotazník",
+  "skip": "Přeskočit — začít s 1.0",
+  "later": "Později",
+  "stayAtOne": "Začít s 1.0",
+  "socialUnaffected": "Toto nemění vaše sociální hodnocení.",
+  "addSportTitle": "Odhadnout úroveň v {{sport}}?",
+  "addSportSubtitle": "Asi minuta — pomůže najít zápasy podle vaší úrovně.",
+  "estimateLevel": "Odhadnout úroveň",
+  "estimateLink": "Odhadnout",
+  "createGameBanner": "Odhadněte svou úroveň — {{sport}}",
+  "createGameLevelBandWarning": "Vaše úroveň {{sport}} je odhadnuta na 1.0. Minimum nad 2.5 vás může vyřadit z vlastního zápasu.",
+  "inviteNudge": "Vaše úroveň {{sport}} je {{level}}.",
+  "inviteNudgeCrossSport": "{{primarySport}} {{primaryLevel}} · Úroveň {{gameSport}} {{level}} —",
+  "homeCtaTitle": "Získejte úroveň — {{sport}}",
+  "homeCtaSubtitle": "Krátký dotazník — nastavíme úroveň pro vhodné zápasy.",
+  "homeCtaAction": "Vyplnit dotazník",
+  "homeDismissLink": "Znovu nezobrazovat",
+  "homeDismissTitle": "Skrýt dotazník úrovně?",
+  "homeDismissMessage": "Vaše současná úroveň je {{level}}. Jen skryjeme připomínku — úroveň se nemění.",
+  "homeDismissConfirm": "Ano, skrýt"
+}

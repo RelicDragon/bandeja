@@ -9,6 +9,7 @@ interface YourLeaguesHomeSeasonScheduledGamesExpandableProps {
   gamesUnreadCounts: Record<string, number>;
   expanded: boolean;
   onToggleExpanded: () => void;
+  titleKey: 'home.leagueSeasonScheduledGames' | 'home.leagueSeasonUnscheduledGames';
 }
 
 export function YourLeaguesHomeSeasonScheduledGamesExpandable({
@@ -16,6 +17,7 @@ export function YourLeaguesHomeSeasonScheduledGamesExpandable({
   gamesUnreadCounts,
   expanded,
   onToggleExpanded,
+  titleKey,
 }: YourLeaguesHomeSeasonScheduledGamesExpandableProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -34,7 +36,7 @@ export function YourLeaguesHomeSeasonScheduledGamesExpandable({
           <List size={15} strokeWidth={2} aria-hidden />
         </div>
         <span className="min-w-0 flex-1 text-xs font-medium text-gray-700 dark:text-gray-200">
-          {t('home.leagueSeasonScheduledGames', { defaultValue: 'Scheduled games' })}
+          {t(titleKey)}
         </span>
         <span className="shrink-0 rounded-full bg-gray-200/90 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-gray-700 dark:bg-gray-600/80 dark:text-gray-100">
           {hubGames.length}

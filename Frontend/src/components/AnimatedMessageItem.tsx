@@ -22,6 +22,8 @@ function isRecentMessage(createdAt: string | undefined): boolean {
 interface AnimatedMessageItemProps {
   message: ChatMessage;
   staggerKey: string;
+  /** When true, show immediately (e.g. thread open). */
+  skipStaggerOnOpen?: boolean;
   onAddReaction: (messageId: string, emoji: string) => void;
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
@@ -49,6 +51,7 @@ interface AnimatedMessageItemProps {
 export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   message,
   staggerKey,
+  skipStaggerOnOpen = false,
   onAddReaction,
   onRemoveReaction,
   onDeleteMessage,
@@ -72,7 +75,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   showReply = true,
   onForwardMessage,
 }) => {
-  const skipStagger = !isRecentMessage(message.createdAt);
+  const skipStagger = skipStaggerOnOpen || !isRecentMessage(message.createdAt);
   const [isVisible, setIsVisible] = useState(skipStagger);
 
   useEffect(() => {

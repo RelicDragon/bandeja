@@ -3,6 +3,8 @@ import {
   isClassicRules,
   isClassicTimedRelaxedGameScores,
   isPointsRules,
+  isRallyGameRules,
+  isRallyPointsRules,
   isTimedRules,
 } from './rulebook';
 import type { SetResult } from './types';
@@ -117,7 +119,21 @@ const validateSuperTiebreak = (a: number, b: number, rules: ScoringRules): Valid
   return ok('SUPER_TIEBREAK');
 };
 
+const validateRallyPointGame = (a: number, b: number, rules: ScoringRules): ValidationResult => {
+  if (a === b) return a === 0 ? ok('POINTS') : { ok: false };
+  const target = rules.totalPointsPerSet;
+  const hi = Math.max(a, b);
+  const lo = Math.min(a, b);
+  if (hi < target) return { ok: false };
+  if (hi === target && lo > target - rules.winBy) return { ok: false };
+  if (hi > target && hi - lo !== rules.winBy) return { ok: false };
+  return ok('POINTS');
+};
+
 const validatePointsSet = (a: number, b: number, rules: ScoringRules): ValidationResult => {
+  if (isRallyGameRules(rules) || isRallyPointsRules(rules)) {
+    return validateRallyPointGame(a, b, rules);
+  }
   if (rules.totalPointsPerSet > 0 && a + b !== rules.totalPointsPerSet) {
     return { ok: false };
   }

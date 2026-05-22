@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { chatApi, type ChatMessage } from '@/api/chat';
@@ -31,6 +31,7 @@ import { GameChatAccessDenied } from './GameChat/GameChatAccessDenied';
 import { useGameChatPinned } from './GameChat/useGameChatPinned';
 import { useGameChatContext } from './GameChat/useGameChatContext';
 import { useGameChatMessages } from './GameChat/useGameChatMessages';
+import { logReloadMessagesFirstPage } from '@/services/chat/chatOpenTrace';
 import { useGameChatActions } from './GameChat/useGameChatActions';
 import { useGameChatOptimistic } from './GameChat/useGameChatOptimistic';
 import { useGameChatSocket } from './GameChat/useGameChatSocket';
@@ -153,6 +154,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     loadingIdRef,
     hasLoadedRef,
     isLoadingRef,
+    initialScroll,
     scrollToBottom,
     loadMessages,
     loadMoreMessages,
@@ -170,6 +172,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   const reloadMessagesFirstPage = useCallback(async () => {
     if (!id) return;
+    logReloadMessagesFirstPage(contextType, id);
     await loadMessages(false, contextType === 'GAME' ? effectiveChatType : undefined);
   }, [id, contextType, effectiveChatType, loadMessages]);
 
@@ -241,6 +244,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     isItemChat: derived.isItemChat,
     navigate,
   });
+  const { handleTitleClick: handlePanelTitleClick } = panels;
 
   const {
     handleAddOptimisticMessage,
@@ -450,6 +454,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     bootstrapThread,
     userChat,
     handleMarkFailed,
+    handleReplaceOptimistic: handleReplaceOptimisticWithServerMessage,
     handleNewMessageRef,
     loadingIdRef,
     hasLoadedRef,
@@ -465,7 +470,12 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setIsLoadingContext,
   });
 
-  useEffect(() => {
+  /**
+   * A1.3 reset on chatId change (stable ChatsTab shell): context + UI refs only.
+   * Messages/virtualizer/scroll/socket: useGameChatMessages useLayoutEffect (L1 seed first).
+   * Must not setMessages here — runs after L1 layout seed in the same commit.
+   */
+  useLayoutEffect(() => {
     if (id === previousIdRef.current) return;
     const prevId = previousIdRef.current;
     if (prevId) cancelAllForContext(contextType, prevId);
@@ -476,14 +486,28 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setGroupChannelParticipantsCount(0);
     setPage(1);
     setHasMoreMessages(true);
-    if (!isEmbedded) setIsLoadingContext(true);
+    setIsLoadingContext(true);
     setIsBlockedByUser(false);
     setIsMuted(false);
     setReplyTo(null);
     setEditingMessage(null);
     setCurrentChatType(initialChatType || 'PUBLIC');
     previousIdRef.current = id;
-  }, [id, isEmbedded, contextType, initialChatType, setGame, setBug, setUserChat, setGroupChannel, setGroupChannelParticipantsCount, setIsLoadingContext, setPage, setHasMoreMessages, setReplyTo, setEditingMessage]);
+  }, [
+    id,
+    contextType,
+    initialChatType,
+    setGame,
+    setBug,
+    setUserChat,
+    setGroupChannel,
+    setGroupChannelParticipantsCount,
+    setIsLoadingContext,
+    setPage,
+    setHasMoreMessages,
+    setReplyTo,
+    setEditingMessage,
+  ]);
 
   useEffect(() => {
     if (locationState?.forceReload && threadScrollKey) {
@@ -537,11 +561,56 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     scrollToBottomSmooth,
   });
 
+  const isChatsSplitGameChat = useMemo(
+    () =>
+      isEmbedded &&
+      contextType === 'GAME' &&
+      !!id &&
+      /^\/games\/[^/]+\/chat$/.test(location.pathname),
+    [isEmbedded, contextType, id, location.pathname]
+  );
+
+  const isTitleClickable = useMemo(
+    () =>
+      !!(contextType === 'USER' && userChat && user?.id) ||
+      contextType === 'GROUP' ||
+      isChatsSplitGameChat,
+    [contextType, userChat, user?.id, isChatsSplitGameChat]
+  );
+
+  const handleTitleClick = useCallback(() => {
+    if (isChatsSplitGameChat && id) {
+      navigate(`/games/${id}`);
+      return;
+    }
+    handlePanelTitleClick();
+  }, [isChatsSplitGameChat, id, navigate, handlePanelTitleClick]);
+
+  const hasOpenContextStub = useMemo(
+    () =>
+      (contextType === 'USER' && userChat != null) ||
+      (contextType === 'GROUP' && groupChannel != null) ||
+      (contextType === 'GAME' && game != null),
+    [contextType, userChat, groupChannel, game]
+  );
+  const showLoadingHeader = useMemo(() => {
+    if (!isEmbedded || !isLoadingContext) return false;
+    return !hasOpenContextStub && messages.length === 0;
+  }, [isEmbedded, isLoadingContext, hasOpenContextStub, messages.length]);
+  const pinnedBarSkipAnimationRef = useRef(true);
+  useEffect(() => {
+    pinnedBarSkipAnimationRef.current = true;
+  }, [threadScrollKey]);
+  useEffect(() => {
+    if (pinnedMessagesOrdered.length > 0 && pinnedBarSkipAnimationRef.current) {
+      pinnedBarSkipAnimationRef.current = false;
+    }
+  }, [pinnedMessagesOrdered.length, threadScrollKey]);
+  const pinnedBarAnimate = !pinnedBarSkipAnimationRef.current;
+
   if (!derived.canViewPublicChat) {
     return <GameChatAccessDenied id={id} navigate={navigate} />;
   }
-
-  const showLoadingHeader = isEmbedded && isLoadingContext;
 
   return (
     <>
@@ -562,10 +631,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           onBack={panels.handleHeaderBack}
           showPanelBack={contextType === 'GROUP' && (panels.showParticipantsPage || panels.showItemPage || panels.isParticipantsPageAnimating || panels.isItemPageAnimating)}
           onPanelBack={panels.handlePanelBack}
-          isTitleClickable={
-            !!(contextType === 'USER' && userChat && user?.id) || contextType === 'GROUP'
-          }
-          onTitleClick={panels.handleTitleClick}
+          isTitleClickable={isTitleClickable}
+          onTitleClick={handleTitleClick}
           showHeaderActions={derived.showHeaderActions}
           headerActions={derived.showHeaderActions ? {
             showMute: derived.showMute,
@@ -604,10 +671,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           {!showLoadingHeader && pinnedMessagesOrdered.length > 0 && !panels.showParticipantsPage && !panels.showItemPage && (
             <motion.div
               key="pinned-bar"
-              initial={{ opacity: 0, maxHeight: 0 }}
-              animate={{ opacity: 1, maxHeight: 80 }}
-              exit={{ opacity: 0, maxHeight: 0 }}
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              initial={pinnedBarAnimate ? { opacity: 0, maxHeight: 0 } : false}
+              animate={{ opacity: 1, maxHeight: pinnedBarAnimate ? 80 : undefined }}
+              exit={pinnedBarAnimate ? { opacity: 0, maxHeight: 0 } : undefined}
+              transition={pinnedBarAnimate ? { duration: 0.25, ease: 'easeInOut' } : { duration: 0 }}
               className="overflow-hidden"
             >
               <PinnedMessagesBar
@@ -621,7 +688,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
           )}
         </AnimatePresence>
 
-        <main className="flex-1 flex flex-col min-h-0 overflow-hidden overflow-x-hidden relative transition-all duration-300">
+        <main
+          className="flex-1 flex flex-col min-h-0 overflow-hidden overflow-x-hidden relative transition-opacity duration-150"
+        >
           <AnimatePresence>
             {!showLoadingHeader && pinnedMessagesOrdered.length > 0 && !panels.showParticipantsPage && !panels.showItemPage && (
               <motion.div key="pinned-shadow" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} className="absolute top-0 left-0 right-0 z-[1] pointer-events-none">
@@ -638,7 +707,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               marketItem={groupChannel?.marketItem}
               groupChannel={groupChannel}
               canEditBug={derived.canEditBug}
-              onUpdate={() => id && loadContext().then(() => loadMessages())}
+              onUpdate={() => id && loadContext({ force: true }).then(() => loadMessages())}
               onJoinChannel={handleJoinChannel}
             />
           )}
@@ -653,7 +722,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               <MarketItemPanel
                 item={groupChannel.marketItem}
                 onClose={panels.closeItemPage}
-                onItemUpdate={() => id && loadContext().then(() => loadMessages())}
+                onItemUpdate={() => id && loadContext({ force: true }).then(() => loadMessages())}
               />
             </div>
           )}
@@ -718,13 +787,24 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               showReply={!derived.isChannel || (derived.canWriteChat ?? false)}
               onForwardMessage={handleForwardMessage}
               threadScrollKey={threadScrollKey}
-              threadLayoutSettling={isInitialLoad || isLoadingMessages || isSwitchingChatType}
+              initialScroll={initialScroll}
+              threadLayoutSettling={
+                isSwitchingChatType ||
+                ((isLoadingMessages || isInitialLoad) && messages.length === 0)
+              }
             />
             </ChatAutoTranslateContext.Provider>
           </div>
         </main>
 
-        {((!isInitialLoad || isEmbedded) || footerVariant?.type === 'contextLoading') && !(contextType === 'GROUP' && (panels.showParticipantsPage || panels.showItemPage || panels.isParticipantsPageAnimating || panels.isItemPageAnimating)) && (
+        {((!isInitialLoad || isEmbedded || (isEmbedded && messages.length > 0)) ||
+          footerVariant?.type === 'contextLoading') &&
+          footerVariant != null &&
+          !(contextType === 'GROUP' &&
+            (panels.showParticipantsPage ||
+              panels.showItemPage ||
+              panels.isParticipantsPageAnimating ||
+              panels.isItemPageAnimating)) && (
           <GameChatFooter visible variant={footerVariant} />
         )}
 

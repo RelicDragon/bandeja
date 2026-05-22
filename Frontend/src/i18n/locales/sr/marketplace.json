@@ -5,6 +5,7 @@
     "sell": "Продај",
     "allCities": "Сви градови",
     "allCategories": "Све категорије",
+    "categoryWithSport": "{{name}} · {{sport}}",
     "listing": "Оглас",
     "listingsFromCity": "Приказани огласи из {{city}}",
     "allTypes": "Сви типови",

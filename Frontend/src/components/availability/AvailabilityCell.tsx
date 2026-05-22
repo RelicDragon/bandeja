@@ -14,7 +14,12 @@ interface AvailabilityCellProps {
   hour: number;
   disabled?: boolean;
   ariaLabel: string;
-  onPointerDown: (dayIndex: number, hour: number, currentValue: boolean) => void;
+  onPointerDown: (
+    dayIndex: number,
+    hour: number,
+    currentValue: boolean,
+    e: React.PointerEvent<HTMLButtonElement>
+  ) => void;
   onPointerEnter: (dayIndex: number, hour: number, currentValue: boolean) => void;
 }
 
@@ -38,15 +43,14 @@ const AvailabilityCellImpl = ({
       disabled={disabled}
       onPointerDown={(e) => {
         if (disabled) return;
-        (e.currentTarget as HTMLButtonElement).releasePointerCapture?.(e.pointerId);
-        onPointerDown(dayIndex, hour, on);
+        onPointerDown(dayIndex, hour, on, e);
       }}
       onPointerEnter={() => {
         if (disabled) return;
         onPointerEnter(dayIndex, hour, on);
       }}
       className={[
-        'h-5 w-full max-w-10 md:h-6 rounded-[4px] touch-none select-none transition-all duration-150',
+        'h-5 w-full max-w-10 md:h-6 rounded-[4px] touch-pan-y select-none transition-all duration-150',
         'border',
         on
           ? [

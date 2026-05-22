@@ -4,7 +4,14 @@ import { Game } from '@/types';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { format } from 'date-fns';
 
-export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, includeLeagues?: boolean) => {
+export const useAvailableGames = (
+  user: any,
+  startDate?: Date,
+  endDate?: Date,
+  includeLeagues?: boolean,
+  sport?: string,
+  showPrivateGames?: boolean,
+) => {
   const [availableGames, setAvailableGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
   const hasDataRef = useRef(false);
@@ -22,9 +29,10 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, i
   const fetchData = useCallback(async (force = false) => {
     if (!user?.id) return;
 
+    const privateFlag = user?.isAdmin && showPrivateGames ? '1' : '0';
     const fetchParams = startDate && endDate 
-      ? `available-games-${user.id}-${userCityId ?? 'no-city'}-${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}-${includeLeagues}`
-      : `available-games-${user.id}-${userCityId ?? 'no-city'}-${includeLeagues}`;
+      ? `available-games-${user.id}-${userCityId ?? 'no-city'}-${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}-${includeLeagues}-${sport ?? 'primary'}-${privateFlag}`
+      : `available-games-${user.id}-${userCityId ?? 'no-city'}-${includeLeagues}-${sport ?? 'primary'}-${privateFlag}`;
 
     if (!force && (isLoadingRef.current || lastFetchParamsRef.current === fetchParams)) {
       return;
@@ -42,6 +50,12 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, i
         params.startDate = format(startDate, 'yyyy-MM-dd');
         params.endDate = format(endDate, 'yyyy-MM-dd');
       }
+      if (sport) {
+        params.sport = sport;
+      }
+      if (user?.isAdmin && showPrivateGames) {
+        params.showPrivateGames = true;
+      }
       const response = await gamesApi.getAvailableGames(params);
       const allGames = response.data || [];
 
@@ -54,7 +68,7 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, i
       isLoadingRef.current = false;
       setLoading(false);
     }
-  }, [user?.id, userCityId, startDate, endDate, includeLeagues]);
+  }, [user?.id, user?.isAdmin, userCityId, startDate, endDate, includeLeagues, sport, showPrivateGames]);
 
   useEffect(() => {
     if (user?.id) {
@@ -75,7 +89,10 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, i
       const isPublic = updatedGame.isPublic;
       const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
       const isArchived = updatedGame.status === 'ARCHIVED';
-      const shouldShow = isPublic || (isParticipant && !isArchived);
+      const shouldShow =
+        isPublic ||
+        (isParticipant && !isArchived) ||
+        (user?.isAdmin && showPrivateGames && !isArchived);
 
       if (gameIndex === -1) {
         if (shouldShow) {
@@ -92,7 +109,7 @@ export const useAvailableGames = (user: any, startDate?: Date, endDate?: Date, i
       updatedGames[gameIndex] = updatedGame;
       return sortGames(updatedGames);
     });
-  }, [lastGameUpdate, user?.id]);
+  }, [lastGameUpdate, user?.id, user?.isAdmin, showPrivateGames]);
 
   return {
     availableGames,

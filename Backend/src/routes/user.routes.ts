@@ -94,6 +94,85 @@ router.post(
 );
 
 router.post(
+  '/sports',
+  authenticate,
+  validate([body('sport').notEmpty().withMessage('sport is required')]),
+  userController.addSport
+);
+
+const sportQuestionnaireAnswersValidator = body('answers')
+  .isArray()
+  .withMessage('answers must be an array')
+  .custom((val: unknown) => {
+    if (!Array.isArray(val) || val.length !== 5) {
+      throw new Error('Exactly 5 answers required');
+    }
+    const valid = ['A', 'B', 'C', 'D'];
+    for (let i = 0; i < val.length; i++) {
+      if (typeof val[i] !== 'string' || !valid.includes(val[i] as string)) {
+        throw new Error(`Answer ${i + 1} must be A, B, C, or D`);
+      }
+    }
+    return true;
+  });
+
+router.post(
+  '/me/sports/:sport/questionnaire',
+  authenticate,
+  welcomeScreenLimiter,
+  validate([sportQuestionnaireAnswersValidator]),
+  userController.completeSportQuestionnaireHandler,
+);
+
+router.post(
+  '/me/sports/:sport/questionnaire/skip',
+  authenticate,
+  userController.skipSportQuestionnaireHandler,
+);
+
+router.get(
+  '/me/sports/:sport/questionnaire/status',
+  authenticate,
+  userController.getSportQuestionnaireStatusHandler,
+);
+
+router.post(
+  '/me/sports/:sport/questionnaire/reset',
+  authenticate,
+  welcomeScreenLimiter,
+  userController.resetSportQuestionnaireHandler,
+);
+
+router.delete('/me/sports/:sport', authenticate, userController.removeSport);
+
+router.post(
+  '/primary-sport/confirm',
+  authenticate,
+  validate([
+    body('sports').isArray({ min: 1 }).withMessage('At least one sport is required'),
+    body('sports.*').notEmpty().withMessage('sport is required'),
+    body('primarySport').notEmpty().withMessage('primarySport is required'),
+  ]),
+  userController.confirmPrimarySport,
+);
+
+router.put(
+  '/primary-sport',
+  authenticate,
+  validate([body('sport').notEmpty().withMessage('sport is required')]),
+  userController.setPrimarySport
+);
+
+router.put(
+  '/sport-profiles/:sport/level',
+  authenticate,
+  validate([
+    body('level').isFloat({ min: 1, max: 7 }).withMessage('Level must be between 1.0 and 7.0'),
+  ]),
+  userController.updateSportProfileLevel
+);
+
+router.post(
   '/welcome-screen',
   authenticate,
   welcomeScreenLimiter,

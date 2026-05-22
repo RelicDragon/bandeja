@@ -16,7 +16,8 @@
       "general": "General",
       "when": "When",
       "where": "Where",
-      "price": "Price"
+      "price": "Price",
+      "eraseTime": "Erase time"
     },
     "gameAvatar": "Game Avatar",
     "avatarUpdated": "Game avatar updated successfully",
@@ -97,7 +98,16 @@
       "deciderRegularCta": "Full third set (games)",
       "deciderSuperTbCta": "Match tie-break (points)",
       "timedLockCta": "Lock set at current score (timer stopped)",
-      "timedUnlockCta": "Clear timed lock"
+      "timedScoringFrozen": "Scoring locked at current score (timer stopped)",
+      "timedUnlockCta": "Clear timed lock",
+      "pickleballKitchenFault": "Kitchen fault",
+      "pickleballKitchenFaultHint": "Honor system only — score is unchanged. Agree with your group and tap the other team to award the point.",
+      "pickleballUnderhandServe": "Underhand serve",
+      "pickleballUnderhandServeHint": "Coach hint: serve must be underhand with contact below the waist. Diagonal into the opposite service court only. Honor system — score unchanged.",
+      "pickleballSideOut": "Side-out",
+      "pickleballSideOutHint": "Coach hint: in side-out scoring only the serving team can score; when they lose the rally, serve passes to the opponents. This board uses rally points — tap either team to score.",
+      "pickleballTwoBounce": "Two-bounce rule",
+      "pickleballTwoBounceHint": "Coach hint: return must bounce once before volley; serve must bounce on each side. Honor system — score unchanged."
     },
     "shareGame": "Share Game",
     "addToCalendar": "Add to calendar",

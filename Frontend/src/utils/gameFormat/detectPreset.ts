@@ -10,10 +10,14 @@ export const detectScoringPreset = (game?: Partial<Game> | null): ScoringPreset 
   const winnerOfMatch = game.winnerOfMatch;
 
   if (winnerOfMatch === 'BY_SETS') {
+    if (sets === 3 && pts === 21) return 'BEST_OF_3_21';
+    if (sets === 3 && pts === 11) return 'BEST_OF_3_11';
+    if (sets === 5 && pts === 11) return 'BEST_OF_5_11';
     if (sets === 3) return 'CLASSIC_BEST_OF_3';
     if (sets === 5) return 'CLASSIC_BEST_OF_5';
     if (sets === 1) return 'CLASSIC_PRO_SET';
   }
+  if (pts === 11) return 'POINTS_11';
   if (pts === 16) return 'POINTS_16';
   if (pts === 21) return 'POINTS_21';
   if (pts === 24) return 'POINTS_24';

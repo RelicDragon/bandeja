@@ -5,6 +5,11 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser, formatUserName } from '../../shared/notification-base';
+import {
+  appendTelegramGameScheduleExtras,
+  formatInviteSenderNameWithLevel,
+  withOptionalSportPrefix,
+} from '../../shared/notificationSport';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
@@ -24,6 +29,7 @@ export async function sendInviteNotification(
       telegramId: true,
       language: true,
       currentCityId: true,
+      primarySport: true,
     }
   });
 
@@ -35,11 +41,29 @@ export async function sendInviteNotification(
 
   const lang = await getUserLanguageFromTelegramId(receiver.telegramId, undefined);
   const senderName = invite.sender ? formatUserName(invite.sender) : 'Unknown';
+  const senderDisplay = formatInviteSenderNameWithLevel(
+    invite.sender,
+    senderName,
+    invite.game.sport,
+    lang,
+  );
   const gameInfo = await formatGameInfoForUser(invite.game, receiver.currentCityId, lang);
 
-  let message = `🎯 ${escapeMarkdown(t('telegram.inviteReceived', lang))}\n\n`;
-  message += `👤 *${escapeMarkdown(senderName)}* ${escapeMarkdown(t('telegram.invitedYou', lang))}\n\n`;
-  message += `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+  const inviteTitle = withOptionalSportPrefix(
+    t('telegram.inviteReceived', lang),
+    invite.game.sport,
+    receiver.primarySport,
+    lang,
+  );
+  let message = `🎯 ${escapeMarkdown(inviteTitle)}\n\n`;
+  message += `👤 *${escapeMarkdown(senderDisplay)}* ${escapeMarkdown(t('telegram.invitedYou', lang))}\n\n`;
+  message += appendTelegramGameScheduleExtras(
+    `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`,
+    invite.game,
+    receiver.primarySport,
+    lang,
+    escapeMarkdown,
+  );
 
   if (invite.message) {
     message += `\n\n💬 ${escapeMarkdown(invite.message)}`;

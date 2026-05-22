@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { playersPerTeamOf } from '../results/generation/matchUtils';
 
 export type GameReadinessDb = typeof prisma | Prisma.TransactionClient;
 
@@ -33,13 +34,14 @@ export class GameReadinessService {
 
     const playingParticipantsCount = game.participants.length;
     const maxParticipants = game.maxParticipants;
+    const perTeam = playersPerTeamOf(game);
 
     let teamsReady = false;
     if (game.hasFixedTeams && game.fixedTeams.length > 0) {
       const pairSlotsLayout =
-        maxParticipants > 0 && game.fixedTeams.length * 2 === maxParticipants;
+        maxParticipants > 0 && game.fixedTeams.length * perTeam === maxParticipants;
       const allTeamsHavePlayers = pairSlotsLayout
-        ? game.fixedTeams.every(team => team.players.length === 2)
+        ? game.fixedTeams.every(team => team.players.length === perTeam)
         : game.fixedTeams.every(team => team.players.length > 0);
 
       const allPlayersArePlayingParticipants = game.fixedTeams.every(team =>
@@ -70,7 +72,7 @@ export class GameReadinessService {
       !!game.allowUserInMultipleTeams &&
       game.fixedTeams.length > 0 &&
       maxParticipants > 0 &&
-      game.fixedTeams.length * 2 === maxParticipants;
+      game.fixedTeams.length * perTeam === maxParticipants;
 
     const participantsReady =
       playingParticipantsCount === maxParticipants ||

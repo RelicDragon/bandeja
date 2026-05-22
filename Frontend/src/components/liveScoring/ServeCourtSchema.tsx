@@ -16,6 +16,9 @@ export type ServeCourtSchemaProps = {
   courtTeamBSidesMirrored?: boolean;
   /** Bench placement preview during serve setup (no ball, arrow, or service-box highlight). */
   endsSetup?: boolean;
+  /** Match format from game.playersPerMatch (4 = 2v2 court layout). */
+  matchDoubles?: boolean;
+  variant?: 'padel' | 'tennis';
   className?: string;
   'aria-label': string;
 };
@@ -241,7 +244,8 @@ function baselineAvatarLayout(
   endsSwapped: boolean,
   teamASidesMirrored: boolean,
   teamBSidesMirrored: boolean,
-  baselineOnly = false
+  baselineOnly = false,
+  matchDoubles = false
 ): { left: number; top: number; player: BasicUser | null; idx: number }[] {
   const baselineY = avatarY(end, 'baseline');
   const netY = avatarY(end, 'net');
@@ -255,8 +259,16 @@ function baselineAvatarLayout(
   const pair = players.slice(0, 2);
   const n = pair.length;
   if (n === 0) return [];
-  if (n === 1) {
+  if (n === 1 && !matchDoubles) {
     return [{ left: serving ? serverX : 50, top: baselineY, player: pair[0] ?? null, idx: 0 }];
+  }
+  if (n === 1 && matchDoubles) {
+    const p0Left = teamMirrored ? xL : xR;
+    const p1Left = teamMirrored ? xR : xL;
+    return [
+      { left: p0Left, top: baselineY, player: pair[0] ?? null, idx: 0 },
+      { left: p1Left, top: baselineY, player: null, idx: 1 },
+    ];
   }
   const si = Math.min(Math.max(0, serverPlayerIndex), n - 1);
   const p0Left = teamMirrored ? xL : xR;
@@ -286,6 +298,8 @@ export function ServeCourtSchema({
   courtTeamASidesMirrored = false,
   courtTeamBSidesMirrored = false,
   endsSetup = false,
+  matchDoubles = false,
+  variant = 'padel',
   className,
   'aria-label': ariaLabel,
 }: ServeCourtSchemaProps) {
@@ -310,7 +324,8 @@ export function ServeCourtSchema({
     courtEndsSwapped,
     courtTeamASidesMirrored,
     courtTeamBSidesMirrored,
-    endsSetup
+    endsSetup,
+    matchDoubles
   );
   const bottomSlots = baselineAvatarLayout(
     bottomPlayers,
@@ -322,7 +337,8 @@ export function ServeCourtSchema({
     courtEndsSwapped,
     courtTeamASidesMirrored,
     courtTeamBSidesMirrored,
-    endsSetup
+    endsSetup,
+    matchDoubles
   );
 
   const highlightTop = showServeOverlay && serverEnd === 'top';
@@ -330,7 +346,8 @@ export function ServeCourtSchema({
 
   const rosterServeIdx = (team: LiveTeamSide, n: number) => {
     if (serverTeam !== team || n === 0) return -1;
-    return n <= 1 ? 0 : Math.min(Math.max(0, serverPlayerIndex), n - 1);
+    if (!matchDoubles || n <= 1) return 0;
+    return Math.min(Math.max(0, serverPlayerIndex), n - 1);
   };
   const idxA = rosterServeIdx('teamA', teamAPlayers.length);
   const idxB = rosterServeIdx('teamB', teamBPlayers.length);
@@ -342,6 +359,10 @@ export function ServeCourtSchema({
   const rootClass = endsSetup
     ? `pointer-events-none relative mx-auto shrink-0 overflow-hidden ${className ?? ''}`
     : `relative mx-auto aspect-[1/2] w-full max-w-[min(100%,17rem)] shrink-0 ${className ?? ''}`;
+  const topHalfClass =
+    variant === 'tennis' ? 'fill-emerald-200/30 dark:fill-emerald-900/25' : 'fill-gray-200/25 dark:fill-gray-700/20';
+  const bottomHalfClass =
+    variant === 'tennis' ? 'fill-emerald-200/30 dark:fill-emerald-900/25' : 'fill-gray-200/25 dark:fill-gray-700/20';
 
   return (
     <div className={rootClass}>
@@ -364,8 +385,8 @@ export function ServeCourtSchema({
         <line x1={MID_X} y1={Y_SERVICE_TOP} x2={MID_X} y2={NET_Y0} className="stroke-current stroke-[0.85]" opacity={0.82} />
         <line x1={MID_X} y1={NET_Y1} x2={MID_X} y2={Y_SERVICE_BOTTOM} className="stroke-current stroke-[0.85]" opacity={0.82} />
 
-        <rect x={M} y={M} width={INNER_W} height={NET_Y - M} rx="2" className="fill-gray-200/25 dark:fill-gray-700/20" />
-        <rect x={M} y={NET_Y} width={INNER_W} height={VB.h - NET_Y - M} rx="2" className="fill-gray-200/25 dark:fill-gray-700/20" />
+        <rect x={M} y={M} width={INNER_W} height={NET_Y - M} rx="2" className={topHalfClass} />
+        <rect x={M} y={NET_Y} width={INNER_W} height={VB.h - NET_Y - M} rx="2" className={bottomHalfClass} />
 
         {highlightTop ? (
           <>

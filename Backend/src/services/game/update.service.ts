@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
-import { ParticipantRole, Prisma } from '@prisma/client';
+import { EntityType, ParticipantRole, Prisma, Sport } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS, SUPPORTED_CURRENCIES } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { GameReadService } from './read.service';
@@ -13,12 +13,23 @@ import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId
 import { BarResultsService } from '../barResults.service';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { goldenPointAllowedForFormat, validateScoringPreset } from '../../utils/validators/gameFormat';
+import { validateGameForSport } from '../../utils/validators/validateGameForSport';
+import { assertGameSportMatchesLeagueSeason } from '../../utils/validators/validateLeagueSeasonSport';
 import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
 import { normalizeLegacyTimedScoringPreset } from '../../utils/scoring/matchTimerGame';
 import { ScoringPreset } from '@prisma/client';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 import { cleanupInviteParticipantsForEndedGame } from '../../utils/gameInviteCleanup';
+import { projectUserForSportContext } from '../user/userSportProfile.service';
+import { resolvePlayersPerMatch } from '../../sport/sportRegistry';
+
+const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
+  ...USER_SELECT_FIELDS,
+  sportProfiles: {
+    select: USER_SPORT_PROFILE_SELECT,
+  },
+} as const;
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -34,6 +45,7 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'startTime',
   'endTime',
   'maxParticipants',
+  'playersPerMatch',
   'minParticipants',
   'minLevel',
   'maxLevel',
@@ -82,6 +94,7 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'priceCurrency',
   'metadata',
   'lastMessagePreview',
+  'sport',
 ]);
 
 function pickUncheckedGameScalars(src: Record<string, unknown>): Prisma.GameUncheckedUpdateInput {
@@ -130,11 +143,45 @@ export class GameUpdateService {
         entityType: true,
         genderTeams: true,
         allowUserInMultipleTeams: true,
+        sport: true,
+        playersPerMatch: true,
+        gameType: true,
+        scoringPreset: true,
+        parentId: true,
       },
     });
 
     if (!game) {
       throw new ApiError(404, 'Game not found');
+    }
+
+    if (game.entityType === EntityType.TRAINING) {
+      const trainingFormatKeys = [
+        'gameType',
+        'playersPerMatch',
+        'scoringPreset',
+        'scoringMode',
+        'hasGoldenPoint',
+        'fixedNumberOfSets',
+        'maxTotalPointsPerSet',
+        'matchTimedCapMinutes',
+        'matchTimerEnabled',
+        'maxPointsPerTeam',
+        'winnerOfGame',
+        'winnerOfMatch',
+        'matchGenerationType',
+        'pointsPerWin',
+        'pointsPerLoose',
+        'pointsPerTie',
+        'ballsInGames',
+        'hasFixedTeams',
+        'allowUserInMultipleTeams',
+        'genderTeams',
+        'resultsRoundGenV2',
+      ] as const;
+      for (const key of trainingFormatKeys) {
+        delete data[key];
+      }
     }
 
     const maxParticipants = data.maxParticipants !== undefined ? data.maxParticipants : game.maxParticipants;
@@ -150,10 +197,22 @@ export class GameUpdateService {
         entityType: game.entityType,
       });
     }
-    const hasFixedTeams = maxParticipants === 2 ? false : (data.hasFixedTeams !== undefined ? data.hasFixedTeams : game.hasFixedTeams || false);
+
+    const sportForValidation = (data.sport as Sport | undefined) ?? game.sport;
+    const playersPerMatchForValidation =
+      data.playersPerMatch !== undefined
+        ? resolvePlayersPerMatch(sportForValidation, data.playersPerMatch)
+        : game.playersPerMatch;
+
+    const hasFixedTeams =
+      playersPerMatchForValidation === 2
+        ? false
+        : data.hasFixedTeams !== undefined
+          ? data.hasFixedTeams
+          : game.hasFixedTeams || false;
 
     const updateData: any = { ...data };
-    if (maxParticipants === 2) {
+    if (playersPerMatchForValidation === 2) {
       updateData.hasFixedTeams = false;
       updateData.allowUserInMultipleTeams = false;
     } else if (data.hasFixedTeams !== undefined) {
@@ -167,12 +226,47 @@ export class GameUpdateService {
     if (game.entityType === 'TOURNAMENT') {
       updateData.resultsByAnyone = false;
     }
+    validateGameForSport({
+      sport: sportForValidation,
+      entityType: game.entityType,
+      gameType: data.gameType ?? game.gameType,
+      maxParticipants,
+      minParticipants: data.minParticipants,
+      playersPerMatch: playersPerMatchForValidation,
+      scoringPreset:
+        data.scoringPreset !== undefined ? data.scoringPreset : game.scoringPreset,
+    });
+    if (data.sport !== undefined) {
+      updateData.sport = sportForValidation;
+    }
+
+    if (data.playersPerMatch !== undefined) {
+      updateData.playersPerMatch = playersPerMatchForValidation;
+    }
+
+    if (game.entityType === EntityType.LEAGUE && game.parentId) {
+      const season = await prisma.leagueSeason.findUnique({
+        where: { id: game.parentId },
+        select: { sport: true, game: { select: { sport: true } } },
+      });
+      if (season) {
+        assertGameSportMatchesLeagueSeason(sportForValidation, season);
+      }
+    }
+
+    if (game.entityType === EntityType.LEAGUE_SEASON && data.sport !== undefined) {
+      await prisma.leagueSeason.update({
+        where: { id },
+        data: { sport: sportForValidation },
+      });
+    }
 
     if (data.matchGenerationType !== undefined) {
       updateData.matchGenerationType = resolveMatchGenerationType({
         resultsRoundGenV2: data.resultsRoundGenV2,
         matchGenerationType: data.matchGenerationType,
         maxParticipants,
+        playersPerMatch: playersPerMatchForValidation,
       });
     }
 
@@ -634,7 +728,7 @@ export class GameUpdateService {
           participants: {
             include: {
               user: {
-                select: USER_SELECT_FIELDS,
+                select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
               },
             },
           },
@@ -650,7 +744,7 @@ export class GameUpdateService {
         participants: {
           include: {
             user: {
-              select: USER_SELECT_FIELDS,
+              select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
             },
           },
         },
@@ -747,7 +841,14 @@ export class GameUpdateService {
       }
     }
 
-    return updatedGame;
+    const sport = updatedGame.sport;
+    return {
+      ...updatedGame,
+      participants: updatedGame.participants.map((participant) => ({
+        ...participant,
+        user: projectUserForSportContext(participant.user, sport),
+      })),
+    };
   }
 }
 

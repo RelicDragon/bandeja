@@ -16,6 +16,7 @@ import {
   cloneSets,
   shuffle,
   InitialSets,
+  playersPerMatchOf,
 } from './matchUtils';
 
 export function generateRatingRound(
@@ -24,7 +25,7 @@ export function generateRatingRound(
   initialSets: InitialSets
 ): Match[] {
   const participants = getEligibleParticipants(game);
-  if (participants.length < 4) return [];
+  if (participants.length < playersPerMatchOf(game)) return [];
 
   const numMatches = getNumMatches(game, participants);
   if (numMatches === 0) return [];
@@ -216,7 +217,8 @@ function generateStandardRatingRound(
   numMatches: number,
   participants: any[]
 ): Match[] {
-  const neededPlayers = numMatches * 4;
+  const ppm = playersPerMatchOf(game);
+  const neededPlayers = numMatches * ppm;
 
   let playerIds: string[];
   if (previousRounds.length === 0) {
@@ -234,10 +236,10 @@ function generateStandardRatingRound(
 
   const matches: Match[] = [];
   for (let i = 0; i < numMatches; i++) {
-    const base = i * 4;
-    const group = playerIds.slice(base, base + 4);
+    const base = i * ppm;
+    const group = playerIds.slice(base, base + ppm);
 
-    if (group.length === 4) {
+    if (group.length === ppm) {
       const { teamA, teamB } = chooseBestPairing(group, partnerCounts, opponentCounts);
       matches.push({
         id: createId(),

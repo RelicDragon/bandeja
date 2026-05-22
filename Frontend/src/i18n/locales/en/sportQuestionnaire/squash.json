@@ -1,0 +1,22 @@
+{
+  "q1": "What is your overall experience with squash and other racket sports?",
+  "q1a": "I have never played squash or any other racket sport.",
+  "q1b": "I have tried squash a few times or come from another racket sport but I'm still learning.",
+  "q1c": "I play squash occasionally and know the basics.",
+  "q1d": "I play squash regularly and feel comfortable on court.",
+  "q2": "How well do you use the T-position and move around the court?",
+  "q2a": "I mostly stand where the ball is and chase without recovering to the T.",
+  "q2b": "I know the T exists but often arrive late or leave big gaps.",
+  "q2c": "I return to the T after most shots and cover the court reasonably.",
+  "q2d": "I move through the T efficiently and anticipate my opponent's shots.",
+  "q3": "How comfortable are you with length, width, and boast or lob shots?",
+  "q3a": "I mostly hit straight without much height or width control.",
+  "q3b": "I can hit basic length but struggle with boasts, lobs, or tight rails.",
+  "q3c": "I use length and width to build rallies and occasionally boast or lob.",
+  "q3d": "I mix length, boasts, and lobs deliberately to move my opponent.",
+  "q4": "How would you describe your match play and squash rules knowledge?",
+  "q4a": "I'm still learning scoring, lets, and how to start and replay rallies.",
+  "q4b": "I know basic rules but mostly react without a clear game plan.",
+  "q4c": "I understand scoring, interference basics, and common match tactics.",
+  "q4d": "I'm comfortable with match format, lets/strokes judgment, and in-match adjustments."
+}

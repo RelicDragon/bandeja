@@ -1,5 +1,7 @@
 import Foundation
 
+// Shared 0/15/30/40 classic point labels for padel and tennis on Watch (sport comes from `WatchGame`).
+
 enum TeamSide: String, Sendable, Codable {
     case teamA
     case teamB

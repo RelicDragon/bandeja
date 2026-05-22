@@ -46,7 +46,13 @@ import {
   type GameAvailabilityMatch,
 } from '@/utils/availability/gameMatch';
 import { participantBlocksInvitePlayerPicker } from '@/utils/gameInviteParticipant';
-import type { GameInviteOutcome } from '@/types';
+import type { GameInviteOutcome, Sport } from '@/types';
+import { PlayerInviteSportFilterChips } from '@/components/playerInvite/PlayerInviteSportFilterChips';
+import {
+  isInviteSportFilterActive,
+  type InviteSportFilterValue,
+} from '@/utils/inviteSportFilter';
+import { listEnabledSports } from '@/utils/profileSports';
 
 export interface PlayerListModalConfirmMeta {
   userTeamIdByReceiverId?: Record<string, string>;
@@ -71,6 +77,8 @@ interface PlayerListModalProps {
   title?: string;
   inviteAsTrainerOnly?: boolean;
   gameTiming?: PlayerListModalGameTiming | null;
+  /** When set, list defaults to players with this sport enabled; sport chips shown. */
+  gameSport?: Sport;
 }
 
 type GameAvailabilityContext = PlayerListModalGameTiming;
@@ -87,8 +95,10 @@ export const PlayerListModal = ({
   title,
   inviteAsTrainerOnly = false,
   gameTiming,
+  gameSport,
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
+  const authUser = useAuthStore((s) => s.user);
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
   const invitableMaxSocial = usePlayersStore((s) => s.invitableMaxSocialLevel);
   const { getUserMetadata } = usePlayersStore();
@@ -106,6 +116,7 @@ export const PlayerListModal = ({
   const [filters, setFilters] = useState<PlayerInviteFilters>(() => defaultPlayerInviteFilters(1));
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [inviteListKind, setInviteListKind] = useState<'all' | 'users' | 'teams'>('all');
+  const [inviteSportFilter, setInviteSportFilter] = useState<InviteSportFilterValue>('game');
   const [fetchedGameContext, setFetchedGameContext] = useState<GameAvailabilityContext | null>(null);
   const [invitePickerOutcomes, setInvitePickerOutcomes] = useState<GameInviteOutcome[]>([]);
   const listSegmentUsers = inviteListKind === 'all' || inviteListKind === 'users';
@@ -129,9 +140,18 @@ export const PlayerListModal = ({
   }, [readyTeams]);
 
   const inviteSessionKey = useMemo(
-    () => `${gameId ?? ''}:${inviteAsTrainerOnly}`,
-    [gameId, inviteAsTrainerOnly],
+    () => `${gameId ?? ''}:${gameSport ?? ''}:${inviteAsTrainerOnly}`,
+    [gameId, gameSport, inviteAsTrainerOnly],
   );
+
+  const inviteExtraSports = useMemo(() => {
+    if (!gameSport) return [];
+    return listEnabledSports(authUser).filter((s) => s !== gameSport);
+  }, [authUser, gameSport]);
+
+  useEffect(() => {
+    if (gameSport) setInviteSportFilter('game');
+  }, [gameSport]);
   const inviteFiltersBootstrappedForKeyRef = useRef<string | null>(null);
 
   const socialLevelSliderMax = useMemo(() => {
@@ -189,7 +209,7 @@ export const PlayerListModal = ({
       if (!inviteAsTrainerOnly) setCanInviteAsTrainer(false);
       const filterIds = filterPlayerIdsRef.current;
       try {
-        await usePlayersStore.getState().fetchPlayers();
+        await usePlayersStore.getState().fetchPlayers(gameId, gameSport);
         const [inviteTeams] = await Promise.all([
           userTeamsApi.getForPlayerInvite().catch(() => [] as UserTeam[]),
           useUserTeamsStore.getState().refreshAll(),
@@ -271,7 +291,7 @@ export const PlayerListModal = ({
     };
 
     loadPlayers();
-  }, [gameId, t, inviteAsTrainerOnly, filterPlayerIdsKey]);
+  }, [gameId, gameSport, t, inviteAsTrainerOnly, filterPlayerIdsKey]);
 
   const effectiveGameContext: GameAvailabilityContext | null = gameTiming ?? fetchedGameContext;
   const ctxTimeIsSet = effectiveGameContext?.timeIsSet ?? false;
@@ -334,6 +354,8 @@ export const PlayerListModal = ({
       getUserMetadata,
       showTeams,
       getAvailabilityMatch: gameSlots ? getAvailabilityMatch : undefined,
+      gameSport,
+      inviteSportFilter: gameSport ? inviteSportFilter : undefined,
     });
   }, [
     players,
@@ -347,6 +369,8 @@ export const PlayerListModal = ({
     showTeams,
     gameSlots,
     getAvailabilityMatch,
+    gameSport,
+    inviteSportFilter,
   ]);
 
   useEffect(() => {
@@ -474,8 +498,21 @@ export const PlayerListModal = ({
         filtersGender: filters.gender,
         segmentUsers: listSegmentUsers,
         segmentTeams: listSegmentTeams,
+        gameSport,
+        inviteSportFilter: gameSport ? inviteSportFilter : undefined,
       }),
-    [players, readyTeams, inviteAsTrainerOnly, showTeams, filterGender, filters.gender, listSegmentUsers, listSegmentTeams],
+    [
+      players,
+      readyTeams,
+      inviteAsTrainerOnly,
+      showTeams,
+      filterGender,
+      filters.gender,
+      listSegmentUsers,
+      listSegmentTeams,
+      gameSport,
+      inviteSportFilter,
+    ],
   );
 
   const hasActiveFilters = useMemo(() => {
@@ -483,10 +520,16 @@ export const PlayerListModal = ({
       filters.levelRange[0] <= PLAYER_INVITE_RATING_MIN && filters.levelRange[1] >= PLAYER_INVITE_RATING_MAX;
     const socialWide = filters.socialRange[0] <= 0 && filters.socialRange[1] >= socialLevelSliderMax;
     const genderActive = !filterGender && filters.gender !== 'ALL';
-    return genderActive || !levelWide || !socialWide || filters.minGamesTogether > 0;
-  }, [filters, filterGender, socialLevelSliderMax]);
+    const sportActive = gameSport != null && isInviteSportFilterActive(inviteSportFilter);
+    return genderActive || sportActive || !levelWide || !socialWide || filters.minGamesTogether > 0;
+  }, [filters, filterGender, socialLevelSliderMax, gameSport, inviteSportFilter]);
+
+  const resetSportFilter = () => {
+    if (gameSport) setInviteSportFilter('game');
+  };
 
   const resetFilters = () => {
+    resetSportFilter();
     setFilters({
       ...filters,
       gender: filterGender ?? 'ALL',
@@ -563,6 +606,17 @@ export const PlayerListModal = ({
                 />
               </div>
             </div>
+
+            {listHasSourceRows && gameSport && (
+              <div className="flex-shrink-0 px-2.5 pt-2">
+                <PlayerInviteSportFilterChips
+                  gameSport={gameSport}
+                  extraSports={inviteExtraSports}
+                  filter={inviteSportFilter}
+                  onChange={setInviteSportFilter}
+                />
+              </div>
+            )}
 
             {listHasSourceRows && showTeams && (
               <div className="flex flex-shrink-0 justify-center px-2.5 pt-2">

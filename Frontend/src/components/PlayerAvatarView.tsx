@@ -4,6 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { UserStats } from '@/api/users';
 import { GenderIndicator } from './GenderIndicator';
 import { useFavoritesStore } from '@/store/favoritesStore';
+import {
+  getDisplayLevelForSport,
+  getUserPrimarySport,
+  resolveActivePrimarySport,
+  shouldShowSportLevelBadge,
+} from '@/utils/profileSports';
+import { getSportConfig } from '@/sport/sportRegistry';
 
 const glowNormal = '[box-shadow:0_0_10px_5px_rgba(45,158,245,0.4)]';
 const glowFavorite = '[box-shadow:0_0_14px_7px_rgba(245,158,11,0.4)]';
@@ -16,6 +23,8 @@ interface PlayerAvatarViewProps {
 export const PlayerAvatarView: React.FC<PlayerAvatarViewProps> = ({ stats }) => {
   const { t } = useTranslation();
   const { user } = stats;
+  const levelSport = resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
+  const showCompetitive = shouldShowSportLevelBadge(user, levelSport);
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const glow = isFavorite ? glowFavorite : glowNormal;
@@ -38,26 +47,28 @@ export const PlayerAvatarView: React.FC<PlayerAvatarViewProps> = ({ stats }) => 
       </div>
 
       <div className="text-center flex gap-3 justify-center shrink-0 flex-wrap">
+        {showCompetitive && (
           <div className="inline-block bg-yellow-500 dark:bg-yellow-600 text-white px-4 py-2 rounded-full font-bold text-base shadow-lg">
-            {t('rating.level')} {user.level.toFixed(1)}
+            {t(getSportConfig(levelSport).labelKey)} {getDisplayLevelForSport(user, levelSport).toFixed(1)}
           </div>
-          <div className="inline-block bg-amber-500 dark:bg-amber-600 text-white px-4 py-2 rounded-full font-bold text-base shadow-lg flex items-center gap-2">
-            {t('rating.socialLevel')}
-            <div className="relative flex items-center">
-              <Beer
-                size={16}
-                className="text-amber-600 dark:text-amber-500 absolute"
-                fill="currentColor"
-              />
-              <Beer
-                size={16}
-                className="text-white dark:text-gray-900 relative z-10"
-                strokeWidth={1.5}
-              />
-            </div>
-            {user.socialLevel.toFixed(1)}
+        )}
+        <div className="inline-block bg-amber-500 dark:bg-amber-600 text-white px-4 py-2 rounded-full font-bold text-base shadow-lg flex items-center gap-2">
+          {t('rating.socialLevel')}
+          <div className="relative flex items-center">
+            <Beer
+              size={16}
+              className="text-amber-600 dark:text-amber-500 absolute"
+              fill="currentColor"
+            />
+            <Beer
+              size={16}
+              className="text-white dark:text-gray-900 relative z-10"
+              strokeWidth={1.5}
+            />
           </div>
+          {user.socialLevel.toFixed(1)}
         </div>
+      </div>
     </div>
   );
 };

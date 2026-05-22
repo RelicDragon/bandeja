@@ -107,6 +107,7 @@ export const getClubsByCity = asyncHandler(async (req: Request, res: Response) =
         select: {
           id: true,
           name: true,
+          sport: true,
           courtType: true,
           isIndoor: true,
           pricePerHour: true,

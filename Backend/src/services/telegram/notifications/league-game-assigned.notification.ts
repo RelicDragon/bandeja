@@ -2,6 +2,7 @@ import prisma from '../../../config/database';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown } from '../utils';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { appendTelegramGameScheduleExtras, withOptionalSportPrefix } from '../../shared/notificationSport';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
@@ -20,15 +21,26 @@ export async function sendLeagueGameAssignedNotification(api: any, game: any, us
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, telegramId: true, language: true, currentCityId: true },
+    select: { id: true, telegramId: true, language: true, currentCityId: true, primarySport: true },
   });
   if (!user?.telegramId) return;
 
   const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
   const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
-  const message =
-    `🎯 ${escapeMarkdown(t('notifications.assignedToLeagueGame', lang))}\n\n` +
-    `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+  const assignedTitle = withOptionalSportPrefix(
+    t('notifications.assignedToLeagueGame', lang),
+    game.sport,
+    user.primarySport,
+    lang,
+  );
+  const scheduleLine = appendTelegramGameScheduleExtras(
+    `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`,
+    game,
+    user.primarySport,
+    lang,
+    escapeMarkdown,
+  );
+  const message = `🎯 ${escapeMarkdown(assignedTitle)}\n\n${scheduleLine}`;
 
   const buttons = [
     [{ text: t('telegram.viewGame', lang), url: `${config.frontendUrl}/games/${game.id}` }],

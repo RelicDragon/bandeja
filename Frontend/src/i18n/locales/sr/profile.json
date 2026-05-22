@@ -92,6 +92,21 @@
     "cancel": "Откажи",
     "saved": "Профил сачуван",
     "preferences": "Преференције игре",
+    "sports": {
+      "title": "Спортови",
+      "addSport": "Додај спорт",
+      "setPrimary": "Постави као главни",
+      "primarySport": "Главни спорт",
+      "primarySportToast": "Ово је ваш главни спорт. Користи се подразумевано при креирању игара и на профилу.",
+      "gamesCount": "{{count}} утакмица",
+      "levelInvalid": "Ниво мора бити између 1.0 и 7.0",
+      "updated": "Спортски профил ажуриран",
+      "allAdded": "Сви доступни спортови су омогућени",
+      "primaryLabel": "{{sport}} ниво",
+      "removeSport": "Уклони",
+      "removeSportConfirmTitle": "Уклонити спорт?",
+      "removeSportConfirmMessage": "Уклонити {{sport}} из профила? Можете га поново додати касније."
+    },
     "preferredHand": "Рука",
     "preferredCourtSide": "Страна терена",
     "appIcon": "Икона апликације",
@@ -242,6 +257,9 @@
     "photoPickFailed": "Failed to pick photo",
     "noSharedGames": "No shared finished games yet",
     "noLeaderboardData": "No leaderboard data available",
+    "leaderboard": {
+      "sportLabel": "Спорт на ранг листи"
+    },
     "sessionsTitle": "Уређаји са пријавом",
     "sessionsSubtitle": "Управљајте где остајете пријављени",
     "sessionsPageTitle": "Уређаји и сесије",

@@ -13,7 +13,8 @@ export async function buildGamesMessage(
   games: any[],
   timezone: string,
   lang: string,
-  maxLength?: number
+  maxLength?: number,
+  primarySport?: string | null,
 ): Promise<string | null> {
   const gamesWithEmptySlots = games.filter((game: any) => {
     const playingParticipants = game.participants.filter((p: any) => p.status === 'PLAYING');
@@ -37,7 +38,8 @@ export async function buildGamesMessage(
     const gameText = await formatNewGameText(gameAny, timezone, lang, {
       includeParticipants: true,
       includeLink: false,
-      escapeMarkdown: true
+      escapeMarkdown: true,
+      primarySport,
     });
 
     let gameBlock = '';
@@ -79,6 +81,7 @@ export const handleGamesCommand: Middleware<BotContext> = async (ctx) => {
 
   try {
     let city;
+    let primarySport: string | null | undefined = undefined;
 
     if (isGroupChat) {
       city = await prisma.city.findFirst({
@@ -104,6 +107,7 @@ export const handleGamesCommand: Middleware<BotContext> = async (ctx) => {
           id: true,
           currentCityId: true,
           language: true,
+          primarySport: true,
         },
       });
 
@@ -127,6 +131,8 @@ export const handleGamesCommand: Middleware<BotContext> = async (ctx) => {
         await ctx.reply(t('telegram.noCitySet', userLang));
         return;
       }
+
+      primarySport = user.primarySport;
     }
 
     const timezone = await getUserTimezoneFromCityId(city.id);
@@ -143,7 +149,7 @@ export const handleGamesCommand: Middleware<BotContext> = async (ctx) => {
       },
     });
 
-    const message = await buildGamesMessage(city, games, timezone, userLang);
+    const message = await buildGamesMessage(city, games, timezone, userLang, undefined, primarySport);
 
     if (!message) {
       await ctx.reply(t('telegram.noAvailableGames', userLang));

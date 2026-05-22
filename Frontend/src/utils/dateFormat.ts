@@ -91,10 +91,9 @@ export const formatChatTime = (
   }
   
   if (daysDiff < 7 && daysDiff > 0) {
-    const dayName = new Intl.DateTimeFormat(locale, {
-      weekday: 'long',
+    return new Intl.DateTimeFormat(locale, {
+      weekday: 'short',
     }).format(dateObj);
-    return dayName.slice(0, 3).toUpperCase();
   }
   
   return new Intl.DateTimeFormat(locale, {

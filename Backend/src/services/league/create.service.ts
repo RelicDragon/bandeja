@@ -1,7 +1,19 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { EntityType, GameType, WinnerOfGame, WinnerOfMatch, RoundType, ScoringPreset } from '@prisma/client';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import {
+  EntityType,
+  GameType,
+  WinnerOfGame,
+  WinnerOfMatch,
+  RoundType,
+  ScoringPreset,
+  Sport,
+} from '@prisma/client';
+import { resolvePlayersPerMatch } from '../../sport/sportRegistry';
+import { validateGameForSport } from '../../utils/validators/validateGameForSport';
+import { resolveLeagueSeasonSportFromInput } from '../../utils/validators/validateLeagueSeasonSport';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
+import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
 import { getDistinctLeagueGroupColor } from './groupColors';
 import { createLeagueGame, createLeaguePlayoffGame, PlayoffGameSetupOverrides } from './gameCreation.util';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
@@ -178,9 +190,15 @@ export class LeagueCreateService {
     return { first, second };
   }
 
-  private static getLeagueParticipantSortLevel(participant: any, hasFixedTeams: boolean): number {
+  private static getLeagueParticipantSortLevel(
+    participant: any,
+    hasFixedTeams: boolean,
+    seasonSport: Sport,
+  ): number {
     if (!hasFixedTeams) {
-      return participant.user ? participant.user.level : 0;
+      return participant.user
+        ? resolveUserSportSnapshot(participant.user, seasonSport).level
+        : 0;
     }
 
     const teamPlayers = participant.leagueTeam?.players ?? [];
@@ -188,7 +206,11 @@ export class LeagueCreateService {
       return 0;
     }
 
-    const total = teamPlayers.reduce((sum: number, p: any) => sum + (p.user?.level ?? 0), 0);
+    const total = teamPlayers.reduce(
+      (sum: number, p: any) =>
+        sum + (p.user ? resolveUserSportSnapshot(p.user, seasonSport).level : 0),
+      0,
+    );
     return total / teamPlayers.length;
   }
 
@@ -243,10 +265,22 @@ export class LeagueCreateService {
 
     const gameSeasonData = data.season.gameSeason || {};
     const seasonName = data.season.name?.trim() || '';
+    const seasonSport = validateGameForSport({
+      sport: resolveLeagueSeasonSportFromInput(data.season.sport),
+      entityType: EntityType.LEAGUE_SEASON,
+      gameType: (gameSeasonData.gameType as string) ?? GameType.CLASSIC,
+      maxParticipants,
+      scoringPreset: gameSeasonData.scoringPreset ?? null,
+    });
+    const seasonPlayersPerMatch = resolvePlayersPerMatch(
+      seasonSport,
+      (gameSeasonData as { playersPerMatch?: number }).playersPerMatch,
+    );
 
     const gameSeasonGame = await prisma.game.create({
       data: {
         entityType: 'LEAGUE_SEASON' as EntityType,
+        sport: seasonSport,
         gameType: (gameSeasonData.gameType as GameType) ?? GameType.CLASSIC,
         name: seasonName,
         avatar: data.season?.avatar,
@@ -262,6 +296,7 @@ export class LeagueCreateService {
           resultsRoundGenV2: data.resultsRoundGenV2,
           matchGenerationType: gameSeasonData.matchGenerationType,
           maxParticipants,
+          playersPerMatch: seasonPlayersPerMatch,
         }),
         pointsPerWin: gameSeasonData.pointsPerWin ?? 0,
         pointsPerLoose: gameSeasonData.pointsPerLoose ?? 0,
@@ -279,7 +314,7 @@ export class LeagueCreateService {
               }),
         hasFixedTeams: data.hasFixedTeams ?? false,
         allowUserInMultipleTeams:
-          maxParticipants === 2 || !data.hasFixedTeams
+          seasonPlayersPerMatch === 2 || !data.hasFixedTeams
             ? false
             : Boolean(data.allowUserInMultipleTeams),
         cityId: data.cityId,
@@ -287,6 +322,7 @@ export class LeagueCreateService {
         startTime: startDate,
         endTime: startDate,
         maxParticipants,
+        playersPerMatch: seasonPlayersPerMatch,
         minParticipants: 0,
         minLevel,
         maxLevel,
@@ -312,6 +348,7 @@ export class LeagueCreateService {
           create: {
             id: gameSeasonGame.id,
             orderIndex: 0,
+            sport: seasonSport,
           },
         },
       },
@@ -786,8 +823,6 @@ export class LeagueCreateService {
       team1PlayerIds,
       team2PlayerIds,
       leagueGroupId,
-      maxParticipants: 4,
-      minParticipants: 4,
       isPublic: false,
       affectsRating: seasonGame.affectsRating,
     });
@@ -1240,7 +1275,7 @@ export class LeagueCreateService {
         user: {
           select: {
             ...USER_SELECT_FIELDS,
-            level: true,
+            sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
           },
         },
         leagueTeam: {
@@ -1250,7 +1285,7 @@ export class LeagueCreateService {
                 user: {
                   select: {
                     ...USER_SELECT_FIELDS,
-                    level: true,
+                    sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
                   },
                 },
               },
@@ -1273,9 +1308,10 @@ export class LeagueCreateService {
       throw new ApiError(400, `Number of groups must be between ${minGroups} and ${maxGroups}`);
     }
 
+    const seasonSport = leagueSeason.sport;
     const sortedParticipants = participants.sort((a, b) => {
-      const aLevel = this.getLeagueParticipantSortLevel(a, hasFixedTeams);
-      const bLevel = this.getLeagueParticipantSortLevel(b, hasFixedTeams);
+      const aLevel = this.getLeagueParticipantSortLevel(a, hasFixedTeams, seasonSport);
+      const bLevel = this.getLeagueParticipantSortLevel(b, hasFixedTeams, seasonSport);
       return bLevel - aLevel;
     });
 

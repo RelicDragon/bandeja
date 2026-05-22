@@ -11,9 +11,10 @@ extension ServeGuideInputs {
             matchFirstServerTeam: record.firstServerTeam,
             matchFirstDoublesPlayerIndex: record.firstServerDoublesPlayerIndex,
             seedSkipped: record.skipped,
-            hiddenForMatch: record.hiddenForMatch,
             hintsMode: hintsMode,
-            usesTennisSetRules: vm.game?.ballsInGames == true,
+            resolvedSport: vm.game?.resolvedSport,
+            usesTennisSetRules: vm.game?.serveGuideUsesClassicSetRules ?? false,
+            isDoublesMatch: vm.isDoublesMatch,
             isAmericano: vm.isAmericano,
             isReadOnly: vm.isReadOnly,
             activeSetIndex: vm.activeSetIndex,
@@ -27,7 +28,13 @@ extension ServeGuideInputs {
             teamAPlayerNames: vm.teamAUsers.map(\.displayName),
             teamBPlayerNames: vm.teamBUsers.map(\.displayName),
             pendingSetFormatChoice: vm.pendingSetFormatChoiceIndex != nil,
-            pointsServeRotation: record.pointsServeRotation
+            pointsServeRotation: record.pointsServeRotation,
+            usesRallyPointsServeGuide: vm.usesRallyPointsServeGuide,
+            rallyPointsSport: vm.usesRallyPointsServeGuide ? vm.game?.resolvedSport : nil,
+            rallyPointsPerSet: vm.maxPointsPerSet,
+            matchStartCourtEndsSwapped: record.matchStartCourtEndsSwapped == true,
+            matchStartTeamASidesMirrored: record.matchStartTeamASidesMirrored == true,
+            matchStartTeamBSidesMirrored: record.matchStartTeamBSidesMirrored == true
         )
     }
 }
@@ -42,6 +49,8 @@ struct ServeCoachStrip: View {
 
     @State private var detailSnapshot: ServeGuideSnapshot?
     @State private var lastMotionToken: String = ""
+    @State private var serveAnimPulse = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var hintsMode: WatchServeHintsMode { hintsStore.mode }
 
@@ -58,128 +67,132 @@ struct ServeCoachStrip: View {
     }
 
     private func accessibilityLine(_ s: ServeGuideSnapshot) -> String {
-        WatchCopy.nextServeA11y(lang, team: teamLabel(s.serverTeam), name: s.serverDisplayName, side: sideLabel(s.courtSide))
+        var parts: [String] = []
+        if s.changeEndsBeforeNextPoint {
+            parts.append(WatchCopy.serveCoachChangeEnds(lang))
+        }
+        parts.append(WatchCopy.nextServeA11y(lang, team: teamLabel(s.serverTeam), name: s.serverDisplayName, side: sideLabel(s.courtSide)))
+        return parts.joined(separator: ". ")
     }
 
     var body: some View {
         Group {
             if let s = snapshot {
-                if s.changeEndsBeforeNextPoint {
-                    changeEndsBanner(s)
-                } else {
-                    stripContent(s)
-                }
+                stripContent(s)
             }
         }
         .onChange(of: snapshot?.motionToken) { _, newVal in
             guard let newVal else { return }
             if !lastMotionToken.isEmpty, newVal != lastMotionToken {
                 WatchScoreHaptics.serveGuideChange()
+                serveAnimPulse = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+                    serveAnimPulse = false
+                }
             }
             lastMotionToken = newVal
         }
         .sheet(item: $detailSnapshot) { snap in
             NavigationStack {
-                ServeGuideDetailSheet(snapshot: snap, lang: lang)
+                ServeGuideDetailSheet(
+                    snapshot: snap,
+                    vm: vm,
+                    lang: lang,
+                    matchDoubles: vm.isDoublesMatch
+                )
             }
         }
-    }
-
-    @ViewBuilder
-    private func changeEndsBanner(_ s: ServeGuideSnapshot) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: "arrow.left.arrow.right")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Color.accentColor)
-            Text(WatchCopy.serveCoachChangeEnds(lang))
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.primary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .padding(.horizontal, 10)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(WatchCopy.serveCoachChangeEnds(lang))
     }
 
     @ViewBuilder
     private func stripContent(_ s: ServeGuideSnapshot) -> some View {
         let compact = hintsMode == .compact
+        let changeEndsLabel = WatchCopy.serveCoachChangeEnds(lang)
         Button {
             detailSnapshot = s
         } label: {
-            HStack(spacing: 8) {
-                courtGlyph(s.courtSide, compact: compact)
-                Image(systemName: "tennisball.fill")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Color.accentColor)
-                    .id(s.motionToken)
-                    .transition(.scale.combined(with: .opacity))
-                if !compact {
-                    Text(s.serverDisplayName)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+            HStack(spacing: compact ? 4 : 6) {
+                if s.changeEndsBeforeNextPoint {
+                    WatchChangeEndsSideTag(label: changeEndsLabel, sign: 1)
                 }
-                Text(sideLabel(s.courtSide))
-                    .font(.caption.weight(.bold).monospaced())
-                    .foregroundStyle(.secondary)
-                if let slot = s.tieBreakServeSlot, !compact {
-                    Text(slot == .serveOne ? "S1" : "S2")
-                        .font(.caption2.weight(.bold).monospaced())
-                        .foregroundStyle(.tertiary)
+                WatchServeCourtView.coachCourt(
+                    snapshot: s,
+                    sport: vm.game?.resolvedSport,
+                    uiId: vm.liveScoringUiId,
+                    teamAUsers: vm.teamAUsers,
+                    teamBUsers: vm.teamBUsers,
+                    matchDoubles: vm.isDoublesMatch,
+                    compact: compact,
+                    courtAccessibilityLabel: s.accessibilityLine
+                )
+                .scaleEffect(reduceMotion ? 1 : (serveAnimPulse ? 1.06 : 1))
+                .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.68), value: serveAnimPulse)
+                if s.changeEndsBeforeNextPoint {
+                    WatchChangeEndsSideTag(label: changeEndsLabel, sign: -1)
                 }
-                if compact, let slot = s.tieBreakServeSlot {
-                    Text(slot == .serveOne ? "S1" : "S2")
-                        .font(.caption2.weight(.bold).monospaced())
-                        .foregroundStyle(.tertiary)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    if s.changeEndsBeforeNextPoint {
+                        Text(changeEndsLabel)
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(Color(red: 0.05, green: 0.23, blue: 0.45))
+                            .lineLimit(1)
+                    }
+                    if !compact {
+                        Text(s.serverDisplayName)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                    HStack(spacing: 4) {
+                        Text(sideLabel(s.courtSide))
+                            .font(.caption2.weight(.bold).monospaced())
+                            .foregroundStyle(.secondary)
+                        if let slot = s.tieBreakServeSlot {
+                            Text(slot == .serveOne ? "S1" : "S2")
+                                .font(.caption2.weight(.bold).monospaced())
+                                .foregroundStyle(.tertiary)
+                        }
+                        if compact {
+                            Text(s.serverInitial)
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(.primary.opacity(0.9))
+                        }
+                    }
                 }
-                if compact {
-                    Text(s.serverInitial)
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.primary.opacity(0.9))
-                        .frame(minWidth: 14)
-                } else if let u = serverUser(s) {
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                if !compact, let u = serverUser(s) {
                     WatchPlayerAvatarView(user: u, size: 22, role: nil)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 7)
-            .padding(.horizontal, 10)
-            .background(.ultraThinMaterial, in: Capsule())
+            .padding(.vertical, compact ? 5 : 7)
+            .padding(.horizontal, compact ? 6 : 8)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(.plain)
         .environment(\.layoutDirection, .leftToRight)
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.55)
                 .onEnded { _ in
-                    WatchScoreHaptics.serveGuideChange()
-                    var next = record
-                    next.hiddenForMatch = true
-                    record = next
-                    WatchServeGuideSessionStore.shared.save(gameId: gameId, matchId: matchId, record: next)
+                    hideServeGuideForMatch()
                 }
         )
         .accessibilityLabel(Text(accessibilityLine(s)))
     }
 
+    private func hideServeGuideForMatch() {
+        WatchScoreHaptics.serveGuideChange()
+        var next = record
+        next.skipped = true
+        record = next
+        WatchServeGuideSessionStore.shared.save(gameId: gameId, matchId: matchId, record: next)
+        vm.requestLiveScoringSave()
+    }
+
     private func serverUser(_ s: ServeGuideSnapshot) -> WatchUser? {
         let users = s.serverTeam == .teamA ? vm.teamAUsers : vm.teamBUsers
         return users[safe: s.serverPlayerIndex] ?? users.first
-    }
-
-    @ViewBuilder
-    private func courtGlyph(_ side: CourtServeSide, compact: Bool) -> some View {
-        HStack(spacing: 2) {
-            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                .fill(side.isRight ? Color.accentColor.opacity(0.85) : Color.secondary.opacity(0.28))
-                .frame(width: compact ? 5 : 6, height: 16)
-            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                .fill(!side.isRight ? Color.accentColor.opacity(0.85) : Color.secondary.opacity(0.28))
-                .frame(width: compact ? 5 : 6, height: 16)
-        }
-        .accessibilityHidden(true)
     }
 }

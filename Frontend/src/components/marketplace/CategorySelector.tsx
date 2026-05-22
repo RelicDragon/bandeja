@@ -4,7 +4,7 @@ const BTN_BASE =
 interface CategorySelectorProps {
   value: string;
   onChange: (id: string) => void;
-  categories: Array<{ id: string; name: string }>;
+  categories: ReadonlyArray<{ id: string; name: string }>;
   allLabel?: string;
 }
 

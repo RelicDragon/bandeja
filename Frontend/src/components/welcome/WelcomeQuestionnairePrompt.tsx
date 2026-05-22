@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { usersApi } from '@/api';
-import { WelcomeQuestionnaireContent } from './WelcomeQuestionnaireContent';
 import { Button, ConfirmationModal } from '@/components';
-import { Dialog, DialogContent } from '@/components/ui/Dialog';
+import { Sports } from '@shared/sport';
+import { SportQuestionnaireSheet } from '@/components/sportQuestionnaire/SportQuestionnaireSheet';
 import { Sparkles, X } from 'lucide-react';
 
 export function WelcomeQuestionnairePrompt() {
@@ -139,14 +139,13 @@ export function WelcomeQuestionnairePrompt() {
         />
       )}
 
-      <Dialog open={open} onClose={() => setOpen(false)} modalId="welcome-questionnaire">
-        <DialogContent className="max-w-md border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 dark:from-slate-900 dark:to-slate-950 dark:border-slate-700/90 sm:max-w-lg max-h-[min(90vh,720px)] overflow-y-auto p-6 pt-14 shadow-2xl">
-          <WelcomeQuestionnaireContent
-            key={sessionKey}
-            onRequestClose={() => setOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <SportQuestionnaireSheet
+        sport={Sports.PADEL}
+        open={open}
+        onOpenChange={setOpen}
+        modalId="welcome-questionnaire"
+        contentKey={sessionKey}
+      />
     </>
   );
 }

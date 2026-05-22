@@ -3,6 +3,10 @@ import { Card } from '@/components';
 import { Game, GameParticipant } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { useAuthStore } from '@/store/authStore';
+import { GameSportTagRow } from '@/components/GameSportTag';
+import { resolvePlayersPerMatchForGame } from '@/utils/matchFormat';
+import { getViewerPrimarySport, shouldShowGameCardSportGlyph } from '@/utils/findSportFilter';
+import { parseGameSport } from '@/utils/gameSport';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
 import { GameStatusIcon } from '@/components';
@@ -88,6 +92,9 @@ export const GameInfo = ({
   const { t } = useTranslation();
   const { translateCity } = useTranslatedGeo();
   const { user } = useAuthStore();
+  const viewerPrimarySport = getViewerPrimarySport(user);
+  const gameSport = parseGameSport(game.sport);
+  const showSportTag = shouldShowGameCardSportGlyph(game.sport, viewerPrimarySport, undefined);
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
   const clubTz = getClubTimezone(game);
   const showTags = game.entityType !== 'LEAGUE';
@@ -381,12 +388,12 @@ export const GameInfo = ({
               </>
             )
             : game.name}
-        {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.name && game.gameType !== 'CLASSIC' && (
+        {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.entityType !== 'TRAINING' && game.name && game.gameType !== 'CLASSIC' && (
           <span className={gameTypeClass}>
             ({t(`games.gameTypes.${game.gameType}`)})
           </span>
         )}
-        {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
+        {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.entityType !== 'TRAINING' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
       </TitleTag>
     );
   };
@@ -443,7 +450,7 @@ export const GameInfo = ({
             {t(`games.entityTypes.${game.entityType}`)}
           </span>
         )}
-        {game.gameType !== 'CLASSIC' && (
+        {game.entityType !== 'TRAINING' && game.gameType !== 'CLASSIC' && (
           <button
             onClick={() => !isCollapsed && canEdit && canShowEdit && onOpenEditGameInfo?.('general')}
             className={`${tagPadding} ${tagText} font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 ${
@@ -750,6 +757,12 @@ export const GameInfo = ({
       )}
       {isCollapsed && (
         <div className="mb-3 relative z-10">
+          <GameSportTagRow
+            sport={gameSport}
+            showSport={showSportTag}
+            playersPerMatch={resolvePlayersPerMatchForGame(game)}
+            showMatchFormat={game.entityType !== 'TRAINING'}
+          />
           {isDifferentCity && game.city?.name && (
             <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
               <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
@@ -782,6 +795,13 @@ export const GameInfo = ({
             </div>
           </div>
         )}
+        <GameSportTagRow
+          sport={gameSport}
+          showSport={showSportTag}
+          playersPerMatch={resolvePlayersPerMatchForGame(game)}
+          showMatchFormat={game.entityType !== 'TRAINING'}
+          className="mb-3"
+        />
         {isDifferentCity && game.city?.name && (
           <div className="inline-flex items-center gap-1.5 mb-3 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
             <Plane size={14} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />

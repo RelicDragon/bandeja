@@ -42,6 +42,13 @@ import training from './training.json';
 import userGameNotes from './userGameNotes.json';
 import wallet from './wallet.json';
 import welcome from './welcome.json';
+import sportQuestionnaireCommon from './sportQuestionnaire/common.json';
+import sportQuestionnairePadel from './sportQuestionnaire/padel.json';
+import sportQuestionnaireTennis from './sportQuestionnaire/tennis.json';
+import sportQuestionnairePickleball from './sportQuestionnaire/pickleball.json';
+import sportQuestionnaireBadminton from './sportQuestionnaire/badminton.json';
+import sportQuestionnaireTableTennis from './sportQuestionnaire/tableTennis.json';
+import sportQuestionnaireSquash from './sportQuestionnaire/squash.json';
 
 export default {
     ...app,
@@ -88,4 +95,13 @@ export default {
     ...userGameNotes,
     ...wallet,
     ...welcome,
+    sportQuestionnaire: {
+        common: sportQuestionnaireCommon,
+        padel: sportQuestionnairePadel,
+        tennis: sportQuestionnaireTennis,
+        pickleball: sportQuestionnairePickleball,
+        badminton: sportQuestionnaireBadminton,
+        tableTennis: sportQuestionnaireTableTennis,
+        squash: sportQuestionnaireSquash,
+    },
 };

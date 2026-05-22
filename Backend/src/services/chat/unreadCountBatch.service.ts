@@ -1,5 +1,7 @@
 import { ChatType, Prisma } from '@prisma/client';
+import { ParticipantRole } from '@prisma/client';
 import prisma from '../../config/database';
+import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { sqlMessageNotReadByUser } from './chatReadUnreadSql';
 
 export type UnreadCountMap = Record<string, number>;
@@ -95,5 +97,20 @@ export class UnreadCountBatchService {
     if ((participant?.role === 'OWNER' || participant?.role === 'ADMIN') || isParentGameAdminOrOwner) filter.push('ADMINS');
     if (gameStatus !== 'ANNOUNCED') filter.push('PHOTOS');
     return filter;
+  }
+
+  /** Same filter as snapshot/mark-read — includes league parent-game admin/owner. */
+  static async resolveGameChatTypeFilterForUser(
+    gameId: string,
+    userId: string,
+    participant: { status: string; role: string } | undefined,
+    gameStatus: string
+  ): Promise<ChatType[]> {
+    const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
+      gameId,
+      userId,
+      [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+    );
+    return this.buildGameChatTypeFilter(participant, gameStatus, isParentGameAdminOrOwner);
   }
 }

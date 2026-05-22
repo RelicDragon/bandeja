@@ -146,8 +146,6 @@ export async function ensureFixedTeamPairingsForRegularRound(
       team1PlayerIds: team1.playerIds,
       team2PlayerIds: team2.playerIds,
       leagueGroupId: groupId,
-      maxParticipants: 4,
-      minParticipants: 4,
       isPublic: false,
       affectsRating: true,
       db,

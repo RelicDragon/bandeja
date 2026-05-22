@@ -39,8 +39,9 @@ struct MatchScoringExperience: View {
                         vm.lockTimedClassicSetAtPartialScore()
                     })
                 }
-                if vm.usesBallCapPerSetUI {
-                    AmericanoScoringView(
+                switch vm.liveScoringUiId {
+                case .tableTennisBoard:
+                    TableTennisScoringView(
                         vm: vm,
                         gameId: gameId,
                         matchId: matchId,
@@ -48,7 +49,16 @@ struct MatchScoringExperience: View {
                         onRequestFixStartingServer: requestFixServer,
                         onFinish: onFinish
                     )
-                } else {
+                case .americanoPoints, .rallyPointsBoard:
+                    RallyPointsScoringView(
+                        vm: vm,
+                        gameId: gameId,
+                        matchId: matchId,
+                        serveGuideRecord: $serveRecord,
+                        onRequestFixStartingServer: requestFixServer,
+                        onFinish: onFinish
+                    )
+                case .classicCourt:
                     ClassicScoringView(
                         vm: vm,
                         gameId: gameId,
@@ -110,7 +120,7 @@ struct MatchScoringExperience: View {
         .onChange(of: vm.classicPointState) { _, _ in pushWidgetSnapshot() }
         .onChange(of: vm.match?.id) { _, _ in reloadServeRecord() }
         .onChange(of: vm.classicPointsPlayedInGame) { _, v in
-            guard !vm.usesBallCapPerSetUI, serveRecord.firstServerTeam != nil else { return }
+            guard vm.liveScoringUiId == .classicCourt, serveRecord.firstServerTeam != nil else { return }
             var r = serveRecord
             r.classicPointsPlayedInGame = v
             serveRecord = r
@@ -137,7 +147,8 @@ struct MatchScoringExperience: View {
             gameId: gameId,
             matchId: matchId,
             titleLine: snap.0,
-            scoreLine: snap.1
+            scoreLine: snap.1,
+            sport: vm.game?.sport
         )
     }
 

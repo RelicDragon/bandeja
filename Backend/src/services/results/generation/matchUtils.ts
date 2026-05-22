@@ -1,5 +1,24 @@
 import type { GenGame as Game, GenMatch as Match, GenRound as Round, GenFixedTeam } from './types';
 
+export const DEFAULT_PLAYERS_PER_MATCH = 4;
+
+export function playersPerMatchOf(game: { playersPerMatch?: number | null }): 2 | 4 {
+  const n = game.playersPerMatch;
+  if (n === 2 || n === 4) return n;
+  return DEFAULT_PLAYERS_PER_MATCH;
+}
+
+export function playersPerTeamOf(game: { playersPerMatch?: number | null }): number {
+  return playersPerMatchOf(game) / 2;
+}
+
+/** Fixed-team slots for an event roster (not match size). */
+export function maxFixedTeamSlots(game: { maxParticipants: number; playersPerMatch?: number | null }): number {
+  const perTeam = playersPerTeamOf(game);
+  if (perTeam < 1) return 0;
+  return Math.floor(game.maxParticipants / perTeam);
+}
+
 export function shuffle<T>(arr: T[]): T[] {
   const result = [...arr];
   for (let i = result.length - 1; i > 0; i--) {
@@ -47,14 +66,16 @@ export function getEligibleParticipants(game: Game) {
 
 export function getNumMatches(game: Game, participants: any[]): number {
   const numCourts = game.gameCourts?.length || 1;
+  const ppm = playersPerMatchOf(game);
+  const perTeam = ppm / 2;
 
   if (game.genderTeams === 'MIX_PAIRS') {
     const males = participants.filter((p: any) => p.user.gender === 'MALE').length;
     const females = participants.filter((p: any) => p.user.gender === 'FEMALE').length;
-    return Math.min(numCourts, Math.floor(Math.min(males, females) / 2));
+    return Math.min(numCourts, Math.floor(Math.min(males, females) / perTeam));
   }
 
-  return Math.min(numCourts, Math.floor(participants.length / 4));
+  return Math.min(numCourts, Math.floor(participants.length / ppm));
 }
 
 export type InitialSets = Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>;
@@ -194,7 +215,8 @@ export function buildOpponentCounts(rounds: Round[]): Map<string, number> {
 }
 
 export function getFilteredFixedTeams(game: Game): string[][] {
-  const teams = (game.fixedTeams || []).filter(t => t.players.length >= 2);
+  const minPerTeam = Math.max(1, playersPerTeamOf(game));
+  const teams = (game.fixedTeams || []).filter(t => t.players.length >= minPerTeam);
 
   if (game.genderTeams === 'MEN') {
     return teams

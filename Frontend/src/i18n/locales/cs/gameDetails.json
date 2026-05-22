@@ -15,7 +15,8 @@
       "general": "Obecné",
       "when": "Kdy",
       "where": "Kde",
-      "price": "Cena"
+      "price": "Cena",
+      "eraseTime": "Zrušit čas"
     },
     "gameAvatar": "Avatar zápasu",
     "avatarUpdated": "Avatar zápasu byl aktualizován",
@@ -89,7 +90,15 @@
       "viewResults": "Zpět na výsledky",
       "pointsBudgetComplete": "Všechny míče zapsány",
       "scoringClosedSpecialOutcome": "Skóre uzavřeno — zvláštní výsledek zápasu",
-      "syncConflictRetry": "Zastaralé — zkuste to znovu."
+      "syncConflictRetry": "Zastaralé — zkuste to znovu.",
+      "pickleballKitchenFault": "Chyba v kuchyni",
+      "pickleballKitchenFaultHint": "Jen na čest — skóre se nemění. Domluvte se ve skupině a přiřaďte bod druhému týmu.",
+      "pickleballUnderhandServe": "Podání pod ruku",
+      "pickleballUnderhandServeHint": "Tip: podání musí být pod ruku, kontakt pod pasem. Diagonálně do protějšího podání boxu. Jen na čest — skóre beze změny.",
+      "pickleballSideOut": "Side-out",
+      "pickleballSideOutHint": "Tip: při side-out skóre boduje jen podávající tým; po ztrátě míče podává soupeř. Tabule používá rally body — klepněte na kterýkoli tým.",
+      "pickleballTwoBounce": "Pravidlo dvou odrazů",
+      "pickleballTwoBounceHint": "Tip: return musí jednou odrazit před volejem; podání musí odrazit na obou stranách. Jen na čest — skóre beze změny."
     },
     "shareGame": "Sdílet zápas",
     "addToCalendar": "Přidat do kalendáře",

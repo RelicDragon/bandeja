@@ -1,5 +1,8 @@
 import { EntityType } from '@prisma/client';
-import { ApiError } from '../ApiError';
+import {
+  validateMaxParticipants,
+  validateTrainingMaxParticipants,
+} from '../validators/validateGameForSport';
 
 export type UserMaxParticipantsActor = {
   canCreateTournament: boolean;
@@ -25,8 +28,10 @@ export function assertMaxParticipantsWithinUserCap(params: {
   entityType: EntityType;
 }): void {
   if (params.entityType === EntityType.BAR) return;
+  if (params.entityType === EntityType.TRAINING) {
+    validateTrainingMaxParticipants(params.maxParticipants);
+    return;
+  }
   const limit = maxParticipantsLimitForActor(params.jwtIsAdmin, params.actor);
-  if (params.maxParticipants <= limit) return;
-  const cap = Number.isFinite(limit) ? String(Math.floor(limit)) : '';
-  throw new ApiError(403, cap ? `You cannot set more than ${cap} participants` : 'You cannot set that many participants');
+  validateMaxParticipants(params.maxParticipants, limit);
 }

@@ -2,7 +2,7 @@ import { MapPin, ExternalLink, Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ToggleSwitch } from '../ToggleSwitch';
 import { ClubModal, CourtModal, ClubAvatar } from '@/components';
-import { Club, Court, EntityType } from '@/types';
+import type { Club, Court, EntityType, Sport } from '@/types';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 import { getTelUrl } from '@/utils/telUrl';
 
@@ -22,6 +22,8 @@ interface LocationSectionProps {
   onCloseClubModal: () => void;
   onOpenCourtModal: () => void;
   onCloseCourtModal: () => void;
+  preferredSport?: Sport | null;
+  onSportTabChange?: (sport: Sport) => void;
 }
 
 export const LocationSection = ({
@@ -40,6 +42,8 @@ export const LocationSection = ({
   onCloseClubModal,
   onOpenCourtModal,
   onCloseCourtModal,
+  preferredSport,
+  onSportTabChange,
 }: LocationSectionProps) => {
   const { t } = useTranslation();
 
@@ -60,6 +64,8 @@ export const LocationSection = ({
           selectedId={selectedCourt}
           onSelect={onSelectCourt}
           entityType={entityType}
+          preferredSport={preferredSport}
+          onSportTabChange={onSportTabChange}
         />
       )}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">

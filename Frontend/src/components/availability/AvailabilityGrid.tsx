@@ -54,8 +54,8 @@ export const AvailabilityGrid = ({ editor, weekStartYmd, weekStart }: Availabili
   const { onPointerDown, onPointerEnter } = useDragPaint<DragKey>(onPaint);
 
   const handleDown = useCallback(
-    (dayIndex: number, hour: number, currentValue: boolean) => {
-      onPointerDown(`${dayIndex}:${hour}`, currentValue);
+    (dayIndex: number, hour: number, currentValue: boolean, e: React.PointerEvent<HTMLButtonElement>) => {
+      onPointerDown(`${dayIndex}:${hour}`, currentValue, e);
     },
     [onPointerDown]
   );

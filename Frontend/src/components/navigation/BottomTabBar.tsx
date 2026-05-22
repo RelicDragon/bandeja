@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Home, Calendar, MessageCircle, Trophy, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigationStore } from '@/store/navigationStore';
-import { useChatUnreadCounts } from '@/hooks/useChatUnreadCounts';
+import { useBottomTabUnreadBadges } from '@/hooks/useUnreadBridge';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useMemo, useRef } from 'react';
+import { useAuthStore } from '@/store/authStore';
 import { parseLocation, placeToPageType, type PageType } from '@/utils/urlSchema';
+import { hasEnabledSports } from '@/utils/profileSports';
 
 interface BottomTabBarProps {
   containerPosition?: boolean;
@@ -20,8 +22,9 @@ export const BottomTabBar = ({ containerPosition = false, tabOverride, previousP
   const navigate = useNavigate();
   const location = useLocation();
   const { setRequestFindGoToCurrent } = useNavigationStore();
-  const { counts } = useChatUnreadCounts();
-  const chatsUnread = counts.users + counts.groups + counts.bugs + counts.channels + counts.marketplace;
+  const user = useAuthStore((s) => s.user);
+  const showGameTabs = hasEnabledSports(user);
+  const tabBadges = useBottomTabUnreadBadges();
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const isDesktop = useDesktop();
 
@@ -35,41 +38,47 @@ export const BottomTabBar = ({ containerPosition = false, tabOverride, previousP
   
   const shouldAnimateToLeft = isDesktop && currentPage === 'chats';
 
-  const tabs = useMemo(() => [
-    {
-      id: 'my' as const,
-      label: t('bottomTab.my', { defaultValue: 'My' }),
-      icon: Home,
-      path: '/',
-      badge: counts.games,
-    },
-    {
-      id: 'find' as const,
-      label: t('bottomTab.find', { defaultValue: 'Find' }),
-      icon: Calendar,
-      path: '/find',
-    },
-    {
-      id: 'chats' as const,
-      label: t('bottomTab.chats', { defaultValue: 'Chats' }),
-      icon: MessageCircle,
-      path: '/chats',
-      badge: chatsUnread,
-    },
-    {
-      id: 'marketplace' as const,
-      label: t('bottomTab.marketplace', { defaultValue: 'Market' }),
-      icon: ShoppingBag,
-      path: '/marketplace',
-      badge: counts.marketplace,
-    },
-    {
-      id: 'leaderboard' as const,
-      label: t('bottomTab.leaderboard', { defaultValue: 'Top' }),
-      icon: Trophy,
-      path: '/leaderboard',
-    },
-  ], [t, counts.games, chatsUnread, counts.marketplace]);
+  const tabs = useMemo(() => {
+    const all = [
+      {
+        id: 'my' as const,
+        label: t('bottomTab.my', { defaultValue: 'My' }),
+        icon: Home,
+        path: '/',
+        badge: tabBadges.my,
+      },
+      {
+        id: 'find' as const,
+        label: t('bottomTab.find', { defaultValue: 'Find' }),
+        icon: Calendar,
+        path: '/find',
+      },
+      {
+        id: 'chats' as const,
+        label: t('bottomTab.chats', { defaultValue: 'Chats' }),
+        icon: MessageCircle,
+        path: '/chats',
+        badge: tabBadges.chats,
+      },
+      {
+        id: 'marketplace' as const,
+        label: t('bottomTab.marketplace', { defaultValue: 'Market' }),
+        icon: ShoppingBag,
+        path: '/marketplace',
+        badge: tabBadges.market,
+      },
+      {
+        id: 'leaderboard' as const,
+        label: t('bottomTab.leaderboard', { defaultValue: 'Top' }),
+        icon: Trophy,
+        path: '/leaderboard',
+      },
+    ];
+    if (!showGameTabs) {
+      return all.filter((tab) => tab.id !== 'my' && tab.id !== 'find');
+    }
+    return all;
+  }, [t, tabBadges.my, tabBadges.chats, tabBadges.market, showGameTabs]);
 
 
   const handleTabClick = (tab: PageType, path: string) => {
@@ -97,8 +106,8 @@ export const BottomTabBar = ({ containerPosition = false, tabOverride, previousP
       transition={animateEntry ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : { type: 'spring', stiffness: 300, damping: 30 }}
     >
       <div className="flex justify-center">
-        <div className="relative bg-white/30 dark:bg-gray-900/30 backdrop-blur-2xl border border-gray-300/60 dark:border-gray-600/60 shadow-[0_-12px_48px_rgba(0,0,0,0.22),0_-4px_24px_rgba(0,0,0,0.14),-20px_0_40px_rgba(0,0,0,0.18),20px_0_40px_rgba(0,0,0,0.18)] dark:shadow-[0_0_12px_rgba(218,165,32,0.26),0_0_24px_rgba(255,215,0,0.07),0_-6px_20px_rgba(0,0,0,0.14)] max-w-[300px] w-full rounded-2xl">
-          <div className="relative flex items-center justify-around h-16 overflow-visible">
+        <div className="relative w-fit max-w-[calc(100vw-2rem)] bg-white/30 dark:bg-gray-900/30 backdrop-blur-2xl border border-gray-300/60 dark:border-gray-600/60 shadow-[0_-12px_48px_rgba(0,0,0,0.22),0_-4px_24px_rgba(0,0,0,0.14),-20px_0_40px_rgba(0,0,0,0.18),20px_0_40px_rgba(0,0,0,0.18)] dark:shadow-[0_0_12px_rgba(218,165,32,0.26),0_0_24px_rgba(255,215,0,0.07),0_-6px_20px_rgba(0,0,0,0.14)] rounded-2xl">
+          <div className="relative flex items-center justify-center h-16 overflow-visible">
           {tabs.map((tab, index) => {
             const Icon = tab.icon;
             const isActive = effectivePage === tab.id;
@@ -110,7 +119,7 @@ export const BottomTabBar = ({ containerPosition = false, tabOverride, previousP
                 key={tab.id}
                 ref={(el) => { tabRefs.current[index] = el; }}
                 onClick={() => handleTabClick(tab.id, tab.path)}
-                className="flex flex-col items-center justify-center flex-1 h-full relative group"
+                className="flex flex-col items-center justify-center px-3 h-full relative group"
                 whileTap={{ scale: 0.85 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                 layout="position"

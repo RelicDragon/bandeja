@@ -5,6 +5,7 @@
     "sell": "Продать",
     "allCities": "Все города",
     "allCategories": "Все категории",
+    "categoryWithSport": "{{name}} · {{sport}}",
     "listing": "Объявление",
     "listingsFromCity": "Показаны объявления из {{city}}",
     "allTypes": "Все типы",

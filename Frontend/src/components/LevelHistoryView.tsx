@@ -4,12 +4,17 @@ import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserStats, usersApi, LevelHistoryItem } from '@/api/users';
+import {
+  getDisplayLevelForSport,
+  getUserPrimarySport,
+  listEnabledSports,
+} from '@/utils/profileSports';
 import { buildUrl } from '@/utils/urlSchema';
 import { LevelHistoryTabController } from './LevelHistoryTabController';
+import type { LevelHistorySelection } from './LevelHistoryLevelPanel';
+import { LevelHistoryLevelPanel } from './LevelHistoryLevelPanel';
 import { GamesStatsSection } from './GamesStatsSection';
-import { LevelHistoryAvatarSection } from './LevelHistoryAvatarSection';
 import { LevelHistoryProfileStatsSection } from './LevelHistoryProfileStatsSection';
-import { ConfirmedLevelSection } from './ConfirmedLevelSection';
 import { PlayerItemsToSell } from './PlayerItemsToSell';
 import { MarketItem } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
@@ -29,8 +34,12 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = stats;
-  const [showSocialLevel, setShowSocialLevel] = useState(false);
-  const [isToggleAnimating, setIsToggleAnimating] = useState(false);
+  const primarySport = getUserPrimarySport(user);
+  const selectorSports = useMemo(() => listEnabledSports(user), [user]);
+  const [selection, setSelection] = useState<LevelHistorySelection>({
+    kind: 'competitive',
+    sport: primarySport,
+  });
   const [levelChangeEvents, setLevelChangeEvents] = useState<LevelHistoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<'10' | '30' | 'all'>('10');
   const [gamesStatsTab, setGamesStatsTab] = useState<'30' | '90' | 'all'>('30');
@@ -39,10 +48,28 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
   const [hoveredChartIndex, setHoveredChartIndex] = useState<number | null>(null);
   const itemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
+  const showSocialLevel = selection.kind === 'social';
+  const historySport = selection.kind === 'competitive' ? selection.sport : primarySport;
+  useEffect(() => {
+    if (selectorSports.length === 0) {
+      setSelection({ kind: 'social' });
+      return;
+    }
+    const preferred =
+      selectorSports.find((s) => s === primarySport) ?? selectorSports[0] ?? primarySport;
+    setSelection((prev) => {
+      if (prev.kind === 'social') return prev;
+      const sportInList = selectorSports.includes(prev.sport);
+      return { kind: 'competitive', sport: sportInList ? prev.sport : preferred };
+    });
+  }, [primarySport, selectorSports]);
+
   useEffect(() => {
     const fetchLevelChanges = async () => {
       try {
-        const response = await usersApi.getUserLevelChanges(user.id);
+        const response = await usersApi.getUserLevelChanges(user.id, {
+          sport: showSocialLevel ? undefined : historySport,
+        });
         setLevelChangeEvents(response.data);
       } catch (error) {
         console.error('Failed to fetch level changes:', error);
@@ -50,15 +77,9 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
     };
 
     fetchLevelChanges();
-  }, [user.id]);
+  }, [user.id, historySport, showSocialLevel]);
 
-  const handleToggle = () => {
-    setIsToggleAnimating(true);
-    setShowSocialLevel(!showSocialLevel);
-    setTimeout(() => setIsToggleAnimating(false), 200);
-  };
-
-  const handleRatingChangeClick = (item: { id: string; gameId: string }) => {
+  const handleRatingChangeClick = (item: { id: string; gameId?: string }) => {
     if (!item.gameId) return;
     onOpenGame?.();
     navigate(buildUrl('game', { id: item.gameId }));
@@ -84,7 +105,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
     const limit = activeTab === '10' ? 10 : 30;
     return allMergedHistory.slice(-limit);
   }, [allMergedHistory, activeTab]);
-  const currentValue = showSocialLevel ? user.socialLevel : user.level;
+  const currentValue = showSocialLevel ? user.socialLevel : getDisplayLevelForSport(user, historySport);
 
   const getEventBadgeLabel = (item: LevelHistoryItem) => {
     if (item.eventType === 'GAME' && item.linkEntityType) {
@@ -162,15 +183,13 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
 
   return (
     <div className={`${padding} space-y-3`}>
-      {!hideUserCard && (
-        <LevelHistoryAvatarSection
-          user={user}
-          showSocialLevel={showSocialLevel}
-          onToggle={handleToggle}
-          isToggleAnimating={isToggleAnimating}
-        />
-      )}
-      <ConfirmedLevelSection user={user} />
+      <LevelHistoryLevelPanel
+        user={user}
+        sports={selectorSports}
+        selection={selection}
+        onChange={setSelection}
+        variant={hideUserCard ? 'compact' : 'hero'}
+      />
 
       <LevelHistoryProfileStatsSection
         user={user}

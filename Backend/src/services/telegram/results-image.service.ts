@@ -1,9 +1,11 @@
 import puppeteer from 'puppeteer';
+import { Sport } from '@prisma/client';
 import { generateResultsHTML } from './results-html.service';
 import { config } from '../../config/env';
 
 interface Game {
   id: string;
+  sport?: Sport;
   affectsRating: boolean;
   outcomes: any[];
   hasFixedTeams?: boolean;

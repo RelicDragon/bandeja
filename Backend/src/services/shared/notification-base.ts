@@ -2,6 +2,7 @@ import { formatDateInTimezone, getDateLabelInTimezone, getShortDayOfWeek, getUse
 import { formatDuration, escapeMarkdown } from '../telegram/utils';
 import { t } from '../../utils/translations';
 import { config } from '../../config/env';
+import { appendTelegramGameScheduleExtras } from './notificationSport';
 
 export interface GameInfo {
   id: string;
@@ -110,10 +111,13 @@ export interface GameTextOptions {
   includeLink?: boolean;
   escapeMarkdown?: boolean;
   existingGameInfo?: FormattedGameInfo;
+  primarySport?: string | null;
 }
 
 export interface GameWithParticipants extends GameInfo {
-  participants?: Array<{ 
+  sport?: string | null;
+  playersPerMatch?: number | null;
+  participants?: Array<{
     status?: string;
     role?: string;
     user?: { firstName?: string | null; lastName?: string | null; level?: number | null };
@@ -151,7 +155,13 @@ export async function formatNewGameText(
   lang: string,
   options: GameTextOptions = {}
 ): Promise<string> {
-  const { includeParticipants = true, includeLink = false, escapeMarkdown: shouldEscape = false, existingGameInfo } = options;
+  const {
+    includeParticipants = true,
+    includeLink = false,
+    escapeMarkdown: shouldEscape = false,
+    existingGameInfo,
+    primarySport,
+  } = options;
   
   const gameInfo = existingGameInfo ?? await formatGameInfo(game, timezone, lang);
   const club = game.court?.club || game.club;
@@ -196,7 +206,14 @@ export async function formatNewGameText(
   }
   
   text += `📅 ${escapeFn(gameInfo.shortDayOfWeek)} ${escapeFn(gameInfo.shortDate)} ${escapeFn(gameInfo.startTime)} (${escapeFn(gameInfo.duration)})\n`;
-  text += `📍 ${escapeFn(clubName)}${courtName ? escapeFn(courtName) : ''}\n`;
+  const locationLine = appendTelegramGameScheduleExtras(
+    `📍 ${escapeFn(clubName)}${courtName ? escapeFn(courtName) : ''}`,
+    game,
+    primarySport,
+    lang,
+    escapeFn,
+  );
+  text += `${locationLine}\n`;
   
   if (includeParticipants) {
     text += `👥 ${participantsCount}`;

@@ -7,6 +7,7 @@
     "sell": "Sell",
     "allCities": "All cities",
     "allCategories": "All",
+    "categoryWithSport": "{{name}} · {{sport}}",
     "listing": "Listing",
     "listingsFromCity": "Listings from {{city}} are shown",
     "allTypes": "All types",

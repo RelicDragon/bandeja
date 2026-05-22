@@ -38,7 +38,9 @@ export const TelegramAutoLogin = () => {
           }
         }
 
-        const response = await verifyTelegramLinkKeySingleflight(telegramKey, language, { withAuth });
+        const response = await verifyTelegramLinkKeySingleflight(telegramKey, language, {
+          withAuth,
+        });
 
         await setAuth(response.data.user, response.data.token, {
           refreshToken: response.data.refreshToken,

@@ -5,6 +5,7 @@
     "sell": "Vender",
     "allCities": "Todas las ciudades",
     "allCategories": "Todas las categorías",
+    "categoryWithSport": "{{name}} · {{sport}}",
     "listing": "Anuncio",
     "listingsFromCity": "Se muestran anuncios de {{city}}",
     "allTypes": "Todos los tipos",

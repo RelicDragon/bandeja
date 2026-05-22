@@ -18,7 +18,8 @@
       "general": "General",
       "when": "Cuándo",
       "where": "Dónde",
-      "price": "Precio"
+      "price": "Precio",
+      "eraseTime": "Quitar hora"
     },
     "navigateToClub": "Navegar al club",
     "openLeagueSeason": "Abrir temporada de liga",
@@ -89,7 +90,15 @@
       "viewResults": "Volver a los resultados",
       "pointsBudgetComplete": "Todas las pelotas registradas",
       "scoringClosedSpecialOutcome": "Marcador cerrado — resultado especial",
-      "syncConflictRetry": "Desactualizado — inténtalo de nuevo."
+      "syncConflictRetry": "Desactualizado — inténtalo de nuevo.",
+      "pickleballKitchenFault": "Falta de cocina",
+      "pickleballKitchenFaultHint": "Solo honor — el marcador no cambia. Acordad en el grupo y dad el punto al otro equipo.",
+      "pickleballUnderhandServe": "Saque bajo",
+      "pickleballUnderhandServeHint": "Pista: el saque debe ser bajo, contacto bajo la cintura. Diagonal al cuadro de saque contrario. Solo honor — el marcador no cambia.",
+      "pickleballSideOut": "Side-out",
+      "pickleballSideOutHint": "Pista: en side-out solo el equipo que saca puede sumar; si pierde el rally, saca el rival. Este tablero usa puntos rally — tocá cualquier equipo para sumar.",
+      "pickleballTwoBounce": "Regla de dos rebotes",
+      "pickleballTwoBounceHint": "Pista: el resto debe botar una vez antes del volea; el saque debe botar en cada lado. Solo honor — el marcador no cambia."
     },
     "shareGame": "Compartir juego",
     "addToCalendar": "Añadir al calendario",

@@ -4,6 +4,7 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { appendTelegramGameScheduleExtras, withOptionalSportPrefix } from '../../shared/notificationSport';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
@@ -23,10 +24,24 @@ export async function sendLeagueRoundStartNotification(
   const leagueName = game.leagueSeason?.league?.name || 'League';
   const roundNumber = game.leagueRound?.orderIndex !== undefined ? game.leagueRound.orderIndex + 1 : 1;
 
-  const message = `🎾 ${escapeMarkdown(t('telegram.leagueRoundStartReceived', lang))}\n\n` +
+  const roundTitle = withOptionalSportPrefix(
+    t('telegram.leagueRoundStartReceived', lang),
+    game.sport,
+    user.primarySport,
+    lang,
+  );
+  const scheduleLine = appendTelegramGameScheduleExtras(
+    `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`,
+    game,
+    user.primarySport,
+    lang,
+    escapeMarkdown,
+  );
+  const message =
+    `🎾 ${escapeMarkdown(roundTitle)}\n\n` +
     `🏆 *${escapeMarkdown(leagueName)}*\n` +
     `📅 ${escapeMarkdown(t('telegram.round', lang))} ${roundNumber}\n\n` +
-    `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+    scheduleLine;
 
   const buttons = [[
     {

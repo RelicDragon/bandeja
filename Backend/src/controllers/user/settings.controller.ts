@@ -1,10 +1,16 @@
 import { Response } from 'express';
+import { Sport } from '@prisma/client';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
 import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
 import { completeWelcomeScreen, resetWelcomeScreen, skipWelcomeScreen } from '../../services/welcomeScreen.service';
+import {
+  clampSportLevel,
+  loadProfileUser,
+  upsertPadelSportProfileFromUser,
+} from '../../services/user/userSportProfile.service';
 import { CityGroupService } from '../../services/chat/cityGroup.service';
 
 export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -45,30 +51,27 @@ export const setInitialLevel = asyncHandler(async (req: AuthRequest, res: Respon
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
-    select: { gamesPlayed: true },
+    select: {
+      sportProfiles: {
+        where: { sport: Sport.PADEL },
+        select: { gamesPlayed: true },
+      },
+    },
   });
 
   if (!currentUser) {
     throw new ApiError(404, 'User not found');
   }
 
-  if (currentUser.gamesPlayed > 0) {
+  const padelPlayed = currentUser.sportProfiles[0]?.gamesPlayed ?? 0;
+  if (padelPlayed > 0) {
     throw new ApiError(400, 'Cannot set initial level after playing games');
   }
 
-  const user = await prisma.user.update({
-    where: { id: req.userId },
-    data: { level: Math.max(1.0, Math.min(7.0, level)) },
-      select: {
-      id: true,
-      level: true,
-      socialLevel: true,
-      reliability: true,
-      totalPoints: true,
-      gamesPlayed: true,
-      gamesWon: true,
-    },
-  });
+  const clampedLevel = clampSportLevel(level);
+  await upsertPadelSportProfileFromUser(req.userId!, { level: clampedLevel });
+
+  const user = await loadProfileUser(req.userId!);
 
   res.json({
     success: true,

@@ -1,6 +1,7 @@
 {
   "createGame": {
     "title": "Create Game",
+    "pickSport": "Choose sport",
     "createBar": "Create Bar Event",
     "createTraining": "Create Training Session",
     "createTournament": "Create Tournament",

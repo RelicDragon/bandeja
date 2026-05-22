@@ -6,10 +6,15 @@ export type ScoringPreset =
   | 'CLASSIC_SUPER_TIEBREAK'
   | 'CLASSIC_SINGLE_SET'
   | 'CLASSIC_TIMED'
+  | 'POINTS_11'
   | 'POINTS_16'
   | 'POINTS_21'
   | 'POINTS_24'
   | 'POINTS_32'
+  | 'BEST_OF_3_11'
+  | 'BEST_OF_3_21'
+  | 'BEST_OF_5_11'
+  | 'PAR_11'
   | 'TIMED'
   | 'CUSTOM';
 
@@ -114,13 +119,13 @@ const classicTimedMatch: RuleSkeleton = {
   allowRemoveSet: false,
 };
 
-const pointsRule = (total: number): RuleSkeleton => ({
+const pointsRule = (total: number, winBy = 0): RuleSkeleton => ({
   ballsInGames: false,
   fixedNumberOfSets: 1,
   minSetsToWin: 1,
   maxSetsPlayed: 1,
   gamesPerSet: 0,
-  winBy: 0,
+  winBy,
   tieBreakGameAtGames: null,
   tieBreakGameFirstTo: 0,
   tieBreakGameWinBy: 0,
@@ -129,6 +134,26 @@ const pointsRule = (total: number): RuleSkeleton => ({
   superTieBreakWinBy: 0,
   totalPointsPerSet: total,
   winnerOfMatch: 'BY_SCORES',
+  allowRemoveSet: false,
+});
+
+const rallyPointsRule = (total: number): RuleSkeleton => pointsRule(total, 2);
+
+const rallyBestOf = (sets: number, pointsPerSet: number): RuleSkeleton => ({
+  ballsInGames: false,
+  fixedNumberOfSets: sets,
+  minSetsToWin: Math.ceil(sets / 2),
+  maxSetsPlayed: sets,
+  gamesPerSet: 0,
+  winBy: 2,
+  tieBreakGameAtGames: null,
+  tieBreakGameFirstTo: 0,
+  tieBreakGameWinBy: 0,
+  superTieBreakReplacesDeciderAtIndex: null,
+  superTieBreakFirstTo: 0,
+  superTieBreakWinBy: 0,
+  totalPointsPerSet: pointsPerSet,
+  winnerOfMatch: 'BY_SETS',
   allowRemoveSet: false,
 });
 
@@ -151,10 +176,15 @@ const PRESETS: Record<ScoringPreset, RuleSkeleton> = {
   CLASSIC_SINGLE_SET: classicTimedMatch,
   CLASSIC_SHORT_SET: classicShortSet,
   CLASSIC_TIMED: classicTimedMatch,
+  POINTS_11: rallyPointsRule(11),
   POINTS_16: pointsRule(16),
   POINTS_21: pointsRule(21),
   POINTS_24: pointsRule(24),
   POINTS_32: pointsRule(32),
+  BEST_OF_3_11: rallyBestOf(3, 11),
+  BEST_OF_3_21: rallyBestOf(3, 21),
+  BEST_OF_5_11: rallyBestOf(5, 11),
+  PAR_11: rallyPointsRule(11),
   TIMED: timedRule,
   CUSTOM: customRule,
 };
@@ -243,7 +273,22 @@ const deriveFromGame = (game: RulesSource): RuleSkeleton => {
 };
 
 export const isClassicRules = (rules: ScoringRules): boolean => rules.ballsInGames && rules.winnerOfMatch === 'BY_SETS';
-export const isPointsRules = (rules: ScoringRules): boolean => !rules.ballsInGames && rules.totalPointsPerSet > 0;
+
+export const isRallyGameRules = (rules: ScoringRules): boolean =>
+  !rules.ballsInGames &&
+  rules.winnerOfMatch === 'BY_SETS' &&
+  rules.fixedNumberOfSets > 1 &&
+  rules.totalPointsPerSet > 0 &&
+  rules.winBy >= 2;
+
+export const isRallyPointsRules = (rules: ScoringRules): boolean =>
+  !rules.ballsInGames &&
+  rules.fixedNumberOfSets <= 1 &&
+  rules.totalPointsPerSet > 0 &&
+  rules.winBy >= 2;
+
+export const isPointsRules = (rules: ScoringRules): boolean =>
+  !rules.ballsInGames && rules.totalPointsPerSet > 0 && rules.winBy === 0 && rules.winnerOfMatch === 'BY_SCORES';
 export const isTimedRules = (rules: ScoringRules): boolean => !rules.ballsInGames && rules.totalPointsPerSet === 0 && rules.winnerOfMatch === 'BY_SCORES' && rules.fixedNumberOfSets === 1;
 
 /** Timed one-set classic: any non-negative games score (e.g. at buzzer) except tiebreak rows stay strict. */

@@ -22,7 +22,8 @@ export async function sendNewGameNotification(
     const gameText = await formatNewGameText(game, timezone, lang, {
       includeParticipants: true,
       includeLink: false,
-      escapeMarkdown: true
+      escapeMarkdown: true,
+      primarySport: recipient.primarySport,
     });
     
     const title = t('telegram.newGameCreated', lang) || 'New game created';

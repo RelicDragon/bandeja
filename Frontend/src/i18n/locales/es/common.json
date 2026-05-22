@@ -71,5 +71,28 @@
     "retry": "Retry",
     "on": "On",
     "pressBackAgainToExit": "Press back again to exit"
+  },
+  "sport": {
+    "sport": "Deporte",
+    "padel": "Pádel",
+    "padelInLevel": "pádel",
+    "tennis": "Tenis",
+    "tennisInLevel": "tenis",
+    "pickleball": "Pickleball",
+    "pickleballInLevel": "pickleball",
+    "badminton": "Bádminton",
+    "badmintonInLevel": "bádminton",
+    "tableTennis": "Tenis de mesa",
+    "tableTennisInLevel": "tenis de mesa",
+    "squash": "Squash",
+    "squashInLevel": "squash",
+    "court": "Pista",
+    "matchFormat": "Formato del partido",
+    "match1v1": "1v1",
+    "match2v2": "2v2"
+  },
+  "sportFilter": {
+    "section": "Deporte",
+    "allSports": "Todos los deportes"
   }
 }

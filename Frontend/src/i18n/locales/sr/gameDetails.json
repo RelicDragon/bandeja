@@ -18,7 +18,8 @@
       "general": "Опште",
       "when": "Када",
       "where": "Где",
-      "price": "Цена"
+      "price": "Цена",
+      "eraseTime": "Уклони време"
     },
     "navigateToClub": "Навигација до клуба",
     "openLeagueSeason": "Отвори сезону лиге",
@@ -89,7 +90,15 @@
       "viewResults": "Назад на резултате",
       "pointsBudgetComplete": "Сви поени уписани",
       "scoringClosedSpecialOutcome": "Резултат затворен — посебан исход меча",
-      "syncConflictRetry": "Застарело — покушајте поново."
+      "syncConflictRetry": "Застарело — покушајте поново.",
+      "pickleballKitchenFault": "Грешка у кухињи",
+      "pickleballKitchenFaultHint": "Само на част — резултат се не мења. Договорите се у групи и доделите поен другом тиму.",
+      "pickleballUnderhandServe": "Сервис испод руке",
+      "pickleballUnderhandServeHint": "Савет: сервис испод руке, контакт испод струка. Дијагонално у супротни сервис бокс. На част — резултат се не мења.",
+      "pickleballSideOut": "Side-out",
+      "pickleballSideOutHint": "Савет: при side-out бод подајећи тим; после изгубљеног поена сервира супарник. Табла користи rally поене — додирните било који тим.",
+      "pickleballTwoBounce": "Правило два одбија",
+      "pickleballTwoBounceHint": "Савет: пријем мора једном да одскочи пре волеја; сервис мора да одскочи на обе стране. На част — резултат се не мења."
     },
     "shareGame": "Подели игру",
     "addToCalendar": "Додај у календар",

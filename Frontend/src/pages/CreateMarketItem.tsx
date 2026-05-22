@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -13,6 +13,11 @@ import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { MapPin } from 'lucide-react';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { pickImages } from '@/utils/photoCapture';
+import {
+  filterCategoriesForListing,
+  getMarketplaceCategorySport,
+  toCategorySelectorItems,
+} from '@/utils/marketplaceSport';
 
 const MARKETPLACE_DRAFT_KEY = 'marketplace_create_draft';
 
@@ -76,6 +81,7 @@ export const CreateMarketItem = () => {
   };
 
   const userCityId = user?.currentCity?.id || user?.currentCityId;
+  const categorySport = useMemo(() => getMarketplaceCategorySport(user), [user]);
   const [form, setForm] = useState({
     categoryId: '',
     cityId: userCityId ?? '',
@@ -95,8 +101,19 @@ export const CreateMarketItem = () => {
     hollandIntervalMinutes: '' as '' | number,
   });
 
+  const categoryOptions = useMemo(
+    () =>
+      toCategorySelectorItems(
+        filterCategoriesForListing(categories, categorySport, form.categoryId || undefined),
+        user,
+        categorySport,
+        t,
+      ),
+    [categories, categorySport, form.categoryId, user, t],
+  );
+
   useEffect(() => {
-    Promise.all([marketplaceApi.getCategories(), citiesApi.getAll()]).then(([catRes, cityRes]) => {
+    Promise.all([marketplaceApi.getCategories(categorySport), citiesApi.getAll()]).then(([catRes, cityRes]) => {
       const cats = catRes.data || [];
       setCategories(cats);
       setCities(cityRes.data || []);
@@ -124,7 +141,7 @@ export const CreateMarketItem = () => {
         return next;
       });
     });
-  }, [userCityId, id]);
+  }, [userCityId, id, categorySport]);
 
   useEffect(() => {
     if (id && user) {
@@ -338,7 +355,7 @@ export const CreateMarketItem = () => {
             <CategorySelector
               value={form.categoryId}
               onChange={(v) => setForm((f) => ({ ...f, categoryId: v }))}
-              categories={categories}
+              categories={categoryOptions}
             />
           </div>
 

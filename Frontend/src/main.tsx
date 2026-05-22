@@ -8,6 +8,7 @@ import { initChatSyncMetricsSession } from './services/chat/chatSyncMetricsSessi
 import { initChatLocalDbLifecycle } from './services/chat/chatLocalDbLifecycle';
 import { initChatBackgroundSyncClient } from './services/chat/chatBackgroundSync';
 import { installMarkReadFlushFailureResync } from './services/chat/chatMarkReadResync';
+import { installUnreadThreadIndexSync } from './services/chat/unreadThreadIndexSync';
 
 const CACHE_VERSION = 'v1';
 
@@ -15,6 +16,7 @@ initChatSyncMetricsSession();
 initChatLocalDbLifecycle();
 initChatBackgroundSyncClient();
 installMarkReadFlushFailureResync();
+installUnreadThreadIndexSync();
 
 if (isCapacitor() && isAndroid()) {
   document.body.classList.add('capacitor-android');

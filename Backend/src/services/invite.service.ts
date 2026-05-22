@@ -16,6 +16,15 @@ import { ApiError } from '../utils/ApiError';
 import { createSystemMessageWithNotification } from '../utils/systemMessageHelper';
 import { GameService } from './game/game.service';
 import { ParticipantMessageHelper } from './game/participantMessageHelper';
+import { USER_SPORT_PROFILE_SELECT } from '../utils/constants';
+import { projectUserForSportContext } from './user/userSportProfile.service';
+
+const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
+  ...USER_SELECT_FIELDS,
+  sportProfiles: {
+    select: USER_SPORT_PROFILE_SELECT,
+  },
+} as const;
 
 export interface InviteActionResult {
   success: boolean;
@@ -87,7 +96,7 @@ export class InviteService {
     const participants = await prisma.gameParticipant.findMany({
       where: { userId, status: 'INVITED' },
       include: {
-        invitedByUser: { select: USER_SELECT_FIELDS },
+        invitedByUser: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
         game: {
           select: {
             id: true,
@@ -109,12 +118,13 @@ export class InviteService {
             status: true,
             resultsStatus: true,
             entityType: true,
+            sport: true,
             court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
             club: { select: { id: true, name: true, avatar: true } },
             participants: {
               include: {
-                user: { select: USER_SELECT_FIELDS },
-                invitedByUser: { select: USER_SELECT_FIELDS },
+                user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+                invitedByUser: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
               },
             },
           },
@@ -126,7 +136,9 @@ export class InviteService {
     const filtered = participants.filter(
       (p) => !p.inviteExpiresAt || new Date(p.inviteExpiresAt) > now
     );
-    return filtered.map((p) => ({
+    return filtered.map((p) => {
+      const sport = p.game.sport;
+      return {
       id: p.id,
       receiverId: p.userId,
       gameId: p.gameId,
@@ -136,9 +148,20 @@ export class InviteService {
       createdAt: p.joinedAt,
       updatedAt: p.joinedAt,
       receiver: null,
-      sender: p.invitedByUser,
-      game: p.game,
-    }));
+      sender: {
+        ...projectUserForSportContext(p.invitedByUser, sport),
+        sportProfiles: p.invitedByUser?.sportProfiles,
+      },
+      game: {
+        ...p.game,
+        participants: p.game.participants.map((participant) => ({
+          ...participant,
+          user: projectUserForSportContext(participant.user, sport),
+          invitedByUser: projectUserForSportContext(participant.invitedByUser, sport),
+        })),
+      },
+    };
+    });
   }
 
   static async deleteInvitesForUserInGame(gameId: string, userId: string): Promise<void> {

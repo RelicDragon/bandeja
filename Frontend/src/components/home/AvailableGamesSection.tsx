@@ -18,6 +18,10 @@ import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { FiltersPanel } from './FiltersPanel';
 import { passesAvailableGamePanelFilters } from '@/utils/availableGamePanelFilters';
+import { parseGameSport } from '@/utils/gameSport';
+import { getViewerPrimarySport, isFindSportFilterActive } from '@/utils/findSportFilter';
+import { getDisplayLevelForSport, listEnabledSports } from '@/utils/profileSports';
+import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 
 interface AvailableGamesSectionProps {
   availableGames: Game[];
@@ -82,6 +86,8 @@ export const AvailableGamesSection = ({
   const [filterTimeEnd, setFilterTimeEnd] = useState('24:00');
   const [filterLevelMin, setFilterLevelMin] = useState(1.0);
   const [filterLevelMax, setFilterLevelMax] = useState(7.0);
+  const [filterSport, setFilterSport] = useState<FindSportFilterValue>('primary');
+  const [showPrivateGames, setShowPrivateGames] = useState(false);
 
   const userFilterVal = externalFilters?.userFilter ?? userFilter;
   const gameFilterVal = externalFilters?.gameFilter ?? gameFilter;
@@ -94,8 +100,17 @@ export const AvailableGamesSection = ({
   const filterTimeEndVal = externalFilters?.filterTimeEnd ?? filterTimeEnd;
   const filterLevelMinVal = externalFilters?.filterLevelMin ?? filterLevelMin;
   const filterLevelMaxVal = externalFilters?.filterLevelMax ?? filterLevelMax;
+  const filterSportVal = externalFilters?.filterSport ?? filterSport;
+  const showPrivateGamesVal = externalFilters?.showPrivateGames ?? showPrivateGames;
+  const isAdmin = Boolean(user?.isAdmin);
+  const viewerPrimarySport = useMemo(() => getViewerPrimarySport(user), [user]);
 
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
+
+  const sportFilterActive = useMemo(
+    () => isFindSportFilterActive(filterSportVal, viewerPrimarySport),
+    [filterSportVal, viewerPrimarySport],
+  );
 
   const panelCriteriaActive = useMemo(() => {
     return (
@@ -103,7 +118,9 @@ export const AvailableGamesSection = ({
       filterTimeStartVal !== '00:00' ||
       filterTimeEndVal !== '24:00' ||
       filterLevelMinVal > 1.0 + 1e-6 ||
-      filterLevelMaxVal < 7.0 - 1e-6
+      filterLevelMaxVal < 7.0 - 1e-6 ||
+      sportFilterActive ||
+      (isAdmin && showPrivateGamesVal)
     );
   }, [
     filterClubIdsVal,
@@ -111,12 +128,17 @@ export const AvailableGamesSection = ({
     filterTimeEndVal,
     filterLevelMinVal,
     filterLevelMaxVal,
+    sportFilterActive,
+    isAdmin,
+    showPrivateGamesVal,
   ]);
 
   const filtersControlActive = filtersPanelOpenVal || userFilterVal || panelCriteriaActive;
   const panelFiltersApplied = userFilterVal || panelCriteriaActive;
 
   const setUserFilterVal = (v: boolean) => (onFilterChange ? onFilterChange('userFilter', v) : setUserFilter(v));
+  const setShowPrivateGamesVal = (v: boolean) =>
+    onFilterChange ? onFilterChange('showPrivateGames', v) : setShowPrivateGames(v);
 
   const resetPanelFilters = () => {
     if (onFiltersChange) {
@@ -127,6 +149,8 @@ export const AvailableGamesSection = ({
         filterTimeEnd: '24:00',
         filterLevelMin: 1.0,
         filterLevelMax: 7.0,
+        filterSport: 'primary',
+        showPrivateGames: false,
       });
     } else {
       setUserFilter(false);
@@ -135,6 +159,8 @@ export const AvailableGamesSection = ({
       setFilterTimeEnd('24:00');
       setFilterLevelMin(1.0);
       setFilterLevelMax(7.0);
+      setFilterSport('primary');
+      setShowPrivateGames(false);
     }
     if (onFilterChange && !onFiltersChange) {
       onFilterChange('userFilter', false);
@@ -149,6 +175,7 @@ export const AvailableGamesSection = ({
       if (updates.filterTimeEnd !== undefined) setFilterTimeEnd(updates.filterTimeEnd);
       if (updates.filterLevelMin !== undefined) setFilterLevelMin(updates.filterLevelMin);
       if (updates.filterLevelMax !== undefined) setFilterLevelMax(updates.filterLevelMax);
+      if (updates.filterSport !== undefined) setFilterSport(updates.filterSport);
     }
   };
 
@@ -206,6 +233,8 @@ export const AvailableGamesSection = ({
         setFilterTimeEnd(filters.filterTimeEnd ?? '24:00');
         setFilterLevelMin(filters.filterLevelMin ?? 1.0);
         setFilterLevelMax(filters.filterLevelMax ?? 7.0);
+        setFilterSport(filters.filterSport ?? 'primary');
+        setShowPrivateGames(filters.showPrivateGames ?? false);
       }
       if (!hydratedViewPeriodFromStorageRef.current) {
         hydratedViewPeriodFromStorageRef.current = true;
@@ -251,6 +280,8 @@ export const AvailableGamesSection = ({
         filterTimeEnd: filterTimeEndVal,
         filterLevelMin: filterLevelMinVal,
         filterLevelMax: filterLevelMaxVal,
+        filterSport: filterSportVal,
+        showPrivateGames: showPrivateGamesVal,
       });
     };
     saveFilters();
@@ -271,6 +302,8 @@ export const AvailableGamesSection = ({
     filterTimeEndVal,
     filterLevelMinVal,
     filterLevelMaxVal,
+    filterSportVal,
+    showPrivateGamesVal,
   ]);
 
   const handleCityClick = () => {
@@ -372,7 +405,8 @@ export const AvailableGamesSection = ({
     const isParticipant = user?.id && game.participants.some((p: any) => p.userId === user.id);
     const isLeagueGame = game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON';
 
-    if (!isPublic && !isParticipant && !(leaguesFilterVal && isLeagueGame)) {
+    const showPrivateAsAdmin = isAdmin && showPrivateGamesVal;
+    if (!isPublic && !isParticipant && !(leaguesFilterVal && isLeagueGame) && !showPrivateAsAdmin) {
       return false;
     }
 
@@ -387,11 +421,12 @@ export const AvailableGamesSection = ({
         return false;
       }
 
-      if (user?.level) {
-        const userLevel = user.level;
+      if (user) {
+        const gameSport = parseGameSport(game.sport);
+        const userLevel = getDisplayLevelForSport(user, gameSport);
         const minLevel = game.minLevel || 0;
         const maxLevel = game.maxLevel || 10;
-        
+
         if (userLevel < minLevel || userLevel > maxLevel) {
           return false;
         }
@@ -468,6 +503,7 @@ export const AvailableGamesSection = ({
   };
 
   const filteredGames = getFilteredGames();
+  const findFilterSport = filterSportVal;
 
   const handleSubscriptionsClick = () => {
     setIsAnimating(true);
@@ -493,17 +529,25 @@ export const AvailableGamesSection = ({
         <button
           type="button"
           onClick={toggleFiltersPanel}
-          className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors shrink-0 ${
+          className={`relative flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors shrink-0 ${
             filtersControlActive
               ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
               : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
           }`}
         >
-          <Filter
-            size={16}
-            className={filtersControlActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'}
-            fill={filtersControlActive ? 'currentColor' : 'none'}
-          />
+          <span className="relative inline-flex">
+            <Filter
+              size={16}
+              className={filtersControlActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'}
+              fill={filtersControlActive ? 'currentColor' : 'none'}
+            />
+            {sportFilterActive && (
+              <span
+                className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-primary-500 ring-2 ring-white dark:ring-gray-900"
+                aria-hidden
+              />
+            )}
+          </span>
           <span className="text-xs font-medium">{t('games.filters')}</span>
         </button>
       </div>
@@ -575,6 +619,13 @@ export const AvailableGamesSection = ({
                 hour12={displaySettings.hour12}
                 onResetFilters={resetPanelFilters}
                 showResetFooter={panelFiltersApplied}
+                sportsEnabled={listEnabledSports(user)}
+                primarySport={viewerPrimarySport}
+                filterSport={filterSportVal}
+                onFilterSportChange={(value) => patchPanelFields({ filterSport: value })}
+                isAdmin={isAdmin}
+                showPrivateGames={showPrivateGamesVal}
+                onShowPrivateGamesChange={setShowPrivateGamesVal}
               />
             </div>
           </motion.div>
@@ -657,6 +708,8 @@ export const AvailableGamesSection = ({
                   onMonthChange={onMonthChange}
                   onDateRangeChange={onDateRangeChange}
                   panelFilters={panelFilterState}
+                  showPrivateGames={showPrivateGamesVal}
+                  isAdmin={isAdmin}
                 />
               </div>
             </div>
@@ -687,6 +740,7 @@ export const AvailableGamesSection = ({
                         showJoinButton={true}
                         onJoin={onJoin}
                         onNoteSaved={onNoteSaved}
+                        findFilterSport={findFilterSport}
                       />
                     ))}
                   </div>
@@ -748,6 +802,8 @@ export const AvailableGamesSection = ({
             onMonthChange={onMonthChange}
             onDateRangeChange={onDateRangeChange}
             panelFilters={panelFilterState}
+            showPrivateGames={showPrivateGamesVal}
+            isAdmin={isAdmin}
           />
           
           {filteredGames.length === 0 ? (
@@ -766,6 +822,7 @@ export const AvailableGamesSection = ({
                   showJoinButton={true}
                   onJoin={onJoin}
                   onNoteSaved={onNoteSaved}
+                  findFilterSport={findFilterSport}
                 />
               ))}
             </div>
@@ -807,6 +864,7 @@ export const AvailableGamesSection = ({
                   showJoinButton={true}
                   onJoin={onJoin}
                   onNoteSaved={onNoteSaved}
+                  findFilterSport={findFilterSport}
                 />
               ))}
             </div>

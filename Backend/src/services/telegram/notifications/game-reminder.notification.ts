@@ -8,6 +8,7 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { appendTelegramGameScheduleExtras, buildGameReminderTitle } from '../../shared/notificationSport';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 
 export async function sendGameReminderNotification(
@@ -43,6 +44,7 @@ export async function sendGameReminderNotification(
           telegramId: true,
           language: true,
           currentCityId: true,
+          primarySport: true,
         }
       }
     }
@@ -58,8 +60,13 @@ export async function sendGameReminderNotification(
       const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
       const entityTypeLabel = t(`games.entityTypes.${game.entityType}`, lang);
       
-      const reminderKey = `telegram.gameReminder${hoursBeforeStart === 24 ? '24h' : '2h'}.${game.entityType}`;
-      const reminderText = t(reminderKey, lang) !== reminderKey ? t(reminderKey, lang) : (hoursBeforeStart === 24 ? t('telegram.gameReminder24h', lang) : t('telegram.gameReminder2h', lang));
+      const reminderText = buildGameReminderTitle(
+        game.entityType,
+        hoursBeforeStart,
+        game.sport,
+        user.primarySport,
+        lang,
+      );
       
       let message = `⏰ ${escapeMarkdown(reminderText)}\n\n`;
       if (game.name) {
@@ -67,7 +74,13 @@ export async function sendGameReminderNotification(
       } else {
         message += `🎾 ${escapeMarkdown(entityTypeLabel)}\n`;
       }
-      message += `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+      message += appendTelegramGameScheduleExtras(
+        `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`,
+        game,
+        user.primarySport,
+        lang,
+        escapeMarkdown,
+      );
 
       if (game.description) {
         message += `\n\n${escapeMarkdown(game.description)}`;

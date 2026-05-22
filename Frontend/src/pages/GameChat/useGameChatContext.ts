@@ -13,11 +13,17 @@ import {
   isTrustedGroupChannelOpenContext,
   isTrustedUserChatOpenContext,
 } from '@/services/chat/chatOpenContextValidation';
+import { mergeGroupChannelFromApi } from '@/utils/groupChannelParticipation';
 
 function shouldBounceFromHttpError(error: unknown): boolean {
   const s = (error as { response?: { status?: number } })?.response?.status;
   return s === 404 || s === 403 || s === 410;
 }
+
+export type LoadContextOptions = {
+  /** Bypass in-memory group cache and refetch from API (e.g. after join). */
+  force?: boolean;
+};
 
 export interface UseGameChatContextParams {
   id: string | undefined;
@@ -65,10 +71,11 @@ export function useGameChatContext({
 
   const userChatRef = useRef(userChat);
   const groupChannelRef = useRef(groupChannel);
+  const groupFetchSeqRef = useRef(0);
   userChatRef.current = userChat;
   groupChannelRef.current = groupChannel;
 
-  const loadContext = useCallback(async () => {
+  const loadContext = useCallback(async (options?: LoadContextOptions) => {
     if (!id) {
       if (!isEmbedded) setIsLoadingContext(false);
       return null;
@@ -112,8 +119,10 @@ export function useGameChatContext({
         return null;
       }
       if (contextType === 'GROUP') {
-        if (groupChannelRef.current?.id === id) return groupChannelRef.current;
+        const force = options?.force === true;
+        if (!force && groupChannelRef.current?.id === id) return groupChannelRef.current;
         if (
+          !force &&
           initialGroupChannel?.id === id &&
           isTrustedGroupChannelOpenContext(initialGroupChannel, id, currentUserId)
         ) {
@@ -124,14 +133,16 @@ export function useGameChatContext({
           }
           return initialGroupChannel;
         }
+        const fetchSeq = ++groupFetchSeqRef.current;
         const response = await chatApi.getGroupChannelById(id);
-        if (currentIdRef.current !== requestId) return null;
-        setGroupChannel(response.data);
-        setGroupChannelParticipantsCount(response.data.participantsCount || 0);
-        if (response.data.bug) {
-          setBug(response.data.bug as Bug);
+        if (currentIdRef.current !== requestId || groupFetchSeqRef.current !== fetchSeq) return null;
+        const merged = mergeGroupChannelFromApi(groupChannelRef.current, response.data);
+        setGroupChannel(merged);
+        setGroupChannelParticipantsCount(merged.participantsCount || 0);
+        if (merged.bug) {
+          setBug(merged.bug as Bug);
         }
-        return response.data;
+        return merged;
       }
       return null;
     } catch (error: unknown) {
@@ -165,12 +176,13 @@ export function useGameChatContext({
           currentIdRef.current === requestId &&
           isTrustedGroupChannelOpenContext(stub, id, currentUserId)
         ) {
-          setGroupChannel(stub);
-          setGroupChannelParticipantsCount(stub.participantsCount || 0);
-          if (stub.bug) {
-            setBug(stub.bug as Bug);
+          const mergedStub = mergeGroupChannelFromApi(groupChannelRef.current, stub);
+          setGroupChannel(mergedStub);
+          setGroupChannelParticipantsCount(mergedStub.participantsCount || 0);
+          if (mergedStub.bug) {
+            setBug(mergedStub.bug as Bug);
           }
-          return stub;
+          return mergedStub;
         }
       }
       return null;

@@ -1,13 +1,22 @@
 import { Response } from 'express';
+import { Sport } from '@prisma/client';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { getLevelName } from '../utils/playerLevels';
-import { USER_SELECT_FIELDS } from '../utils/constants';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
 import { ResultsStatus } from '@prisma/client';
 import { calculateRanks } from '../services/ranking.service';
+import {
+  resolveLeaderboardSportMode,
+  resolveUserSportSnapshot,
+} from '../services/user/userSportProfile.service';
 
-const getLastGameRatingChanges = async (userIds: string[], isSocial: boolean): Promise<Record<string, number | null>> => {
+const getLastGameRatingChanges = async (
+  userIds: string[],
+  isSocial: boolean,
+  sport?: Sport,
+): Promise<Record<string, number | null>> => {
   const changes: Record<string, number | null> = {};
   
   if (userIds.length === 0) return changes;
@@ -37,6 +46,7 @@ const getLastGameRatingChanges = async (userIds: string[], isSocial: boolean): P
     const gameOutcomes = await prisma.gameOutcome.findMany({
       where: {
         userId: { in: userIds },
+        ...(sport ? { game: { sport } } : {}),
       },
       orderBy: { createdAt: 'desc' },
       select: {
@@ -57,6 +67,18 @@ const getLastGameRatingChanges = async (userIds: string[], isSocial: boolean): P
   return changes;
 };
 
+const applySportRankingSnapshot = (users: any[], sport: Sport): any[] =>
+  users.map((u) => {
+    const snapshot = resolveUserSportSnapshot(u, sport);
+    return {
+      ...u,
+      level: snapshot.level,
+      reliability: snapshot.reliability,
+      gamesPlayed: snapshot.gamesPlayed,
+      gamesWon: snapshot.gamesWon,
+    };
+  });
+
 const mapToLeaderboard = (users: any[], rankMap: Map<string, number>, lastGameRatingChanges: Record<string, number | null>): any[] => {
   return users.map((u: any) => ({
     rank: rankMap.get(u.id),
@@ -69,10 +91,11 @@ const mapToLeaderboard = (users: any[], rankMap: Map<string, number>, lastGameRa
 
 export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, res: Response) => {
   const currentUser = req.user!;
-  const { type = 'level', scope = 'global', timePeriod = 'all' } = req.query;
+  const { type = 'level', scope = 'global', timePeriod = 'all', sport: sportQuery } = req.query;
   const isSocial = type === 'social';
   const isGames = type === 'games';
   const isCity = scope === 'city';
+  const usePerSportLevel = type === 'level' && !isSocial;
 
   if (isGames && timePeriod !== '10' && timePeriod !== '30' && timePeriod !== 'all') {
     res.status(400).json({
@@ -89,6 +112,7 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       level: true,
       socialLevel: true,
       currentCityId: true,
+      primarySport: true,
     },
   });
 
@@ -108,10 +132,27 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
     return;
   }
 
+  const leaderboardSportMode = resolveLeaderboardSportMode(sportQuery, user.primarySport);
+  const rankingSport =
+    leaderboardSportMode.mode === 'sport' ? leaderboardSportMode.sport : null;
+  const gamesSport: Sport = rankingSport ?? (user.primarySport ?? Sport.PADEL);
+
   const baseWhere: any = { isActive: true };
   if (isCity) {
     baseWhere.currentCityId = user.currentCityId;
   }
+
+  const userSelect = {
+    ...USER_SELECT_FIELDS,
+    reliability: true,
+    totalPoints: true,
+    gamesPlayed: true,
+    gamesWon: true,
+    socialLevel: true,
+    sportProfiles: {
+      select: USER_SPORT_PROFILE_SELECT,
+    },
+  };
 
   let allUsers: any[] = [];
   let rankMap: Map<string, number>;
@@ -123,6 +164,7 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       : undefined;
 
     const gameWhere: any = {
+      sport: gamesSport,
       resultsStatus: ResultsStatus.FINAL,
       participants: {
         some: {
@@ -166,17 +208,10 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
     } else {
       allUsers = await prisma.user.findMany({
         where: { ...baseWhere, id: { in: userIdsWithGamesInPeriod } },
-        select: {
-          ...USER_SELECT_FIELDS,
-          reliability: true,
-          totalPoints: true,
-          gamesPlayed: true,
-          gamesWon: true,
-          socialLevel: true,
-        },
+        select: userSelect,
       });
 
-      const usersWithCounts = allUsers.map((u: any) => ({
+      const usersWithCounts = applySportRankingSnapshot(allUsers, gamesSport).map((u: any) => ({
         ...u,
         gamesCount: userGameCounts[u.id] || 0,
       }));
@@ -197,16 +232,21 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       allUsers = usersWithCounts;
       rankMap = calculateRanks(allUsers, true, false);
     }
-  } else {
-    const orderField = isSocial ? 'socialLevel' : 'level';
-
+  } else if (usePerSportLevel && leaderboardSportMode.mode === 'all') {
     allUsers = await prisma.user.findMany({
       where: { ...baseWhere, gamesPlayed: { gt: 0 } },
       orderBy: [
-        { [orderField]: 'desc' },
+        { level: 'desc' },
         { reliability: 'desc' },
         { totalPoints: 'desc' },
       ],
+      select: userSelect,
+    });
+
+    rankMap = calculateRanks(allUsers, false, false);
+  } else if (usePerSportLevel && rankingSport) {
+    const usersRaw = await prisma.user.findMany({
+      where: baseWhere,
       select: {
         ...USER_SELECT_FIELDS,
         reliability: true,
@@ -214,14 +254,58 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
         gamesPlayed: true,
         gamesWon: true,
         socialLevel: true,
+        sportProfiles: {
+          select: USER_SPORT_PROFILE_SELECT,
+        },
       },
     });
 
-    rankMap = calculateRanks(allUsers, false, isSocial);
+    allUsers = usersRaw
+      .map((u) => {
+        const snap = resolveUserSportSnapshot(u, rankingSport);
+        return {
+          ...u,
+          level: snap.level,
+          reliability: snap.reliability,
+          gamesPlayed: snap.gamesPlayed,
+          gamesWon: snap.gamesWon,
+        };
+      })
+      .filter((u) => u.gamesPlayed > 0)
+      .sort((a, b) => {
+        if (a.level !== b.level) return b.level - a.level;
+        if (a.reliability !== b.reliability) return b.reliability - a.reliability;
+        return b.totalPoints - a.totalPoints;
+      });
+
+    rankMap = calculateRanks(allUsers, false, false);
+  } else if (isSocial) {
+    allUsers = await prisma.user.findMany({
+      where: { ...baseWhere, gamesPlayed: { gt: 0 } },
+      orderBy: [
+        { socialLevel: 'desc' },
+        { reliability: 'desc' },
+        { totalPoints: 'desc' },
+      ],
+      select: userSelect,
+    });
+
+    rankMap = calculateRanks(allUsers, false, true);
+  } else {
+    res.status(400).json({
+      success: false,
+      message: 'Invalid leaderboard type',
+    });
+    return;
   }
 
+  const ratingChangeSport = isSocial ? undefined : (rankingSport ?? gamesSport);
   const userIds = allUsers.map((u: any) => u.id);
-  const lastGameRatingChanges = await getLastGameRatingChanges(userIds, isSocial);
+  const lastGameRatingChanges = await getLastGameRatingChanges(
+    userIds,
+    isSocial,
+    ratingChangeSport,
+  );
   const leaderboard = mapToLeaderboard(allUsers, rankMap, lastGameRatingChanges);
 
   const currentUserIndex = allUsers.findIndex((u: any) => u.id === currentUser.id);

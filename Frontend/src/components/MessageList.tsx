@@ -16,7 +16,6 @@ import { AnimatedMessageItem } from './AnimatedMessageItem';
 import { useContextMenuManager } from '@/hooks/useContextMenuManager';
 import {
   flushThreadScrollSave,
-  getThreadScrollState,
   scheduleThreadScrollSave,
 } from '@/services/chat/chatThreadScroll';
 import {
@@ -30,6 +29,7 @@ import {
   pinMessageListContainerToBottomAfterLayout,
   scrollVirtualizerToIndex,
 } from '@/utils/messageListScroll';
+import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
 
 const END_SPACER_PX = 128;
 const ROW_ESTIMATE_PX = 88;
@@ -75,6 +75,8 @@ interface MessageListProps {
   showReply?: boolean;
   onForwardMessage?: (message: ChatMessage) => void;
   threadScrollKey?: string | null;
+  /** Coordinator scroll decision; replaces async Dexie read on open. */
+  initialScroll?: ThreadInitialScroll | null;
   /** While true, parent signals loading/initial paint; list extends this until tail row heights are preloaded. */
   threadLayoutSettling?: boolean;
   onChatScrollNearBottomChange?: (nearBottom: boolean) => void;
@@ -110,6 +112,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     showReply = true,
     onForwardMessage,
     threadScrollKey = null,
+    initialScroll = undefined,
     threadLayoutSettling = false,
     onChatScrollNearBottomChange,
   },
@@ -173,6 +176,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   const tailIdsForHeightPreload = messages.slice(-140).map((m) => m.id).join('\x1e');
 
   const [tailHeightsPreloaded, setTailHeightsPreloaded] = useState(true);
+  const [hasFirstVirtualMeasure, setHasFirstVirtualMeasure] = useState(false);
 
   useLayoutEffect(() => {
     const ids = tailIdsForHeightPreload.length === 0 ? [] : tailIdsForHeightPreload.split('\x1e');
@@ -198,10 +202,19 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     };
   }, [threadScrollKey, tailIdsForHeightPreload]);
 
-  const layoutSettlingForBottomPin = useMemo(
-    () => threadLayoutSettling || (messages.length > 0 && !tailHeightsPreloaded),
-    [threadLayoutSettling, messages.length, tailHeightsPreloaded]
-  );
+  useLayoutEffect(() => {
+    setHasFirstVirtualMeasure(false);
+  }, [threadScrollKey]);
+
+  useLayoutEffect(() => {
+    if (virtualMeasureKey.length > 0) setHasFirstVirtualMeasure(true);
+  }, [virtualMeasureKey]);
+
+  const layoutSettlingForBottomPin = useMemo(() => {
+    const tailPending = messages.length > 0 && !tailHeightsPreloaded;
+    const measurePending = messages.length > 0 && !hasFirstVirtualMeasure;
+    return threadLayoutSettling || tailPending || measurePending;
+  }, [threadLayoutSettling, messages.length, tailHeightsPreloaded, hasFirstVirtualMeasure]);
 
   useLayoutEffect(() => {
     const items = virtualizerRef.current.getVirtualItems();
@@ -232,6 +245,32 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   const prevThreadScrollKeyRef = useRef<string | null | undefined>(undefined);
   const restoredScrollThreadRef = useRef<string | null>(null);
 
+  const applyOpenScrollFromDecision = useCallback(
+    (decision: ThreadInitialScroll, snapshot: ChatMessage[]) => {
+      if (!messagesContainerRef.current) return;
+      if ('atBottom' in decision && decision.atBottom) {
+        pinMessageListContainerToBottomAfterLayout(() => messagesContainerRef.current, 3);
+        return;
+      }
+      const anchorId = 'anchorMessageId' in decision ? decision.anchorMessageId : undefined;
+      if (!anchorId) return;
+      const idx = snapshot.findIndex((m) => m.id === anchorId);
+      if (idx < 0) return;
+      const anchorEl = messagesContainerRef.current.querySelector(
+        `#message-${anchorId}`
+      ) as HTMLElement | null;
+      if (anchorEl) {
+        anchorEl.scrollIntoView({ block: 'start', behavior: 'auto' });
+        return;
+      }
+      scrollVirtualizerToIndex(virtualizerRef.current, idx, {
+        align: 'start',
+        behavior: 'auto',
+      });
+    },
+    []
+  );
+
   useLayoutEffect(() => {
     if (prevThreadScrollKeyRef.current !== threadScrollKey) {
       prevThreadScrollKeyRef.current = threadScrollKey;
@@ -241,70 +280,17 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     if (isSwitchingChatType || messages.length === 0) return;
     if (!messagesContainerRef.current) return;
     if (restoredScrollThreadRef.current === threadScrollKey) return;
+    if (initialScroll == null) return;
 
-    const snapshot = messages;
-    let cancelled = false;
-
-    const markRestored = () => {
-      if (!cancelled) restoredScrollThreadRef.current = threadScrollKey;
-    };
-
-    void getThreadScrollState(threadScrollKey)
-      .then((st) => {
-        if (cancelled) return;
-        const el = messagesContainerRef.current;
-        if (!el) {
-          markRestored();
-          return;
-        }
-        if (!st) {
-          markRestored();
-          return;
-        }
-        if (st.atBottom) {
-          schedulePinToBottom();
-          requestAnimationFrame(() => {
-            markRestored();
-          });
-          return;
-        }
-        if (st.anchorMessageId) {
-          const idx = snapshot.findIndex((m) => m.id === st.anchorMessageId);
-          if (idx < 0) {
-            markRestored();
-            return;
-          }
-          const runScroll = () => {
-            if (cancelled) return;
-            const anchorEl = messagesContainerRef.current?.querySelector(
-              `#message-${st.anchorMessageId}`
-            ) as HTMLElement | null;
-            if (anchorEl) {
-              anchorEl.scrollIntoView({ block: 'start', behavior: 'auto' });
-              return;
-            }
-            scrollVirtualizerToIndex(virtualizerRef.current, idx, {
-              align: 'start',
-              behavior: 'auto',
-            });
-          };
-          runScroll();
-          requestAnimationFrame(() => {
-            runScroll();
-            markRestored();
-          });
-          return;
-        }
-        markRestored();
-      })
-      .catch(() => {
-        markRestored();
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [threadScrollKey, isSwitchingChatType, messages, schedulePinToBottom]);
+    restoredScrollThreadRef.current = threadScrollKey;
+    applyOpenScrollFromDecision(initialScroll, messages);
+  }, [
+    threadScrollKey,
+    isSwitchingChatType,
+    messages,
+    initialScroll,
+    applyOpenScrollFromDecision,
+  ]);
 
   useLayoutEffect(() => {
     if (!layoutSettlingForBottomPin || messages.length === 0) return;
@@ -340,6 +326,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       const el = messagesContainerRef.current;
       if (!el) return;
       const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+      if (layoutSettlingForBottomPin && nearBottom) return;
       const items = virtualizerRef.current.getVirtualItems();
       let anchorMessageId: string | null = null;
       for (const vi of items) {
@@ -384,7 +371,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       if (overscanRafRef.current != null) cancelAnimationFrame(overscanRafRef.current);
       flushThreadScrollSave(threadScrollKey);
     };
-  }, [threadScrollKey, isSwitchingChatType, messages.length]);
+  }, [threadScrollKey, isSwitchingChatType, messages.length, layoutSettlingForBottomPin]);
 
   const scrollToMessageById = useCallback(
     (messageId: string) => {
@@ -414,11 +401,14 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   const onChatNearBottomRef = useRef(onChatScrollNearBottomChange);
   onChatNearBottomRef.current = onChatScrollNearBottomChange;
   const prevChatNearBottomReportedRef = useRef(true);
+  /** Snapshot from previous effect — survives post-grow ResizeObserver clearing near-bottom. */
+  const wasAtBottomBeforeGrowRef = useRef(true);
 
   useLayoutEffect(() => {
     const cb = onChatNearBottomRef.current;
     if (!threadScrollKey || !cb) return;
     prevChatNearBottomReportedRef.current = true;
+    wasAtBottomBeforeGrowRef.current = true;
     cb(true);
   }, [threadScrollKey]);
 
@@ -483,6 +473,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     const previousMessageCount = previousMessageCountRef.current;
     const isNewMessagesAdded = currentMessageCount > previousMessageCount;
 
+    let pinnedAfterGrow = false;
     if (isNewMessagesAdded) {
       const wasLoadingMore = isLoadingMoreRef.current || isLoadingMore;
       const justLoadedOlder = justLoadedOlderMessagesRef.current;
@@ -502,14 +493,17 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
           });
         });
       } else if (!layoutSettlingForBottomPin) {
-        if (
-          messages.length > 0 &&
-          isMessageListNearBottom(container, 100) &&
-          !isMessageListNearBottom(container, PIN_BOTTOM_SKIP_GAP_PX)
-        ) {
+        if (messages.length > 0 && wasAtBottomBeforeGrowRef.current) {
           pinMessageListContainerToBottom(container);
+          pinnedAfterGrow = true;
         }
       }
+    }
+
+    if (!isNewMessagesAdded || !(isLoadingMoreRef.current || isLoadingMore || justLoadedOlderMessagesRef.current)) {
+      wasAtBottomBeforeGrowRef.current = pinnedAfterGrow
+        ? true
+        : prevChatNearBottomReportedRef.current;
     }
 
     previousMessageCountRef.current = currentMessageCount;
@@ -562,7 +556,11 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     return () => io.disconnect();
   }, [onLoadMore, hasMoreMessages, isInitialLoad, isSwitchingChatType, messages.length]);
 
-  if (messages.length === 0 && (isSwitchingChatType || isLoadingMessages || isInitialLoad)) {
+  if (
+    messages.length === 0 &&
+    isSwitchingChatType &&
+    (isLoadingMessages || isInitialLoad)
+  ) {
     return (
       <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4 space-y-1 min-h-0" />
     );
@@ -661,6 +659,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
               <AnimatedMessageItem
                 message={message}
                 staggerKey={message.id}
+                skipStaggerOnOpen={threadLayoutSettling || isInitialLoad}
                 onAddReaction={onAddReaction}
                 onRemoveReaction={onRemoveReaction}
                 onDeleteMessage={onDeleteMessage}

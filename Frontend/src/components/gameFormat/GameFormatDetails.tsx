@@ -1,12 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { UseGameFormatResult } from '@/hooks/useGameFormat';
-import { automaticGenerationCopyKey } from '@/utils/gameFormat';
+import { automaticGenerationCopyKey, tScoringModeField, tScoringPresetField } from '@/utils/gameFormat';
 
 interface GameFormatDetailsProps {
   format: UseGameFormatResult;
   /** Max participants (or create-game capacity) — refines Automatic generation copy. */
   generationSlotCount?: number;
   hasFixedTeams?: boolean;
+  sport?: string | null;
 }
 
 interface DetailRowProps {
@@ -38,7 +39,7 @@ const DetailRow = ({ label, value, note }: DetailRowProps) => (
 const genKey = (g: string) =>
   g.split('_').map((s) => s.charAt(0) + s.slice(1).toLowerCase()).join('');
 
-export const GameFormatDetails = ({ format, generationSlotCount, hasFixedTeams }: GameFormatDetailsProps) => {
+export const GameFormatDetails = ({ format, generationSlotCount, hasFixedTeams, sport }: GameFormatDetailsProps) => {
   const { t } = useTranslation();
   const {
     scoringMode,
@@ -58,11 +59,9 @@ export const GameFormatDetails = ({ format, generationSlotCount, hasFixedTeams }
   const scoringTitle =
     customPointsTotal != null
       ? t('gameFormat.customPoints.short', { count: customPointsTotal })
-      : t(`gameFormat.scoring.${scoringPreset}.title`);
+      : tScoringPresetField(t, scoringPreset, 'title', sport);
   const scoringSubtitle =
-    customPointsTotal != null
-      ? ''
-      : t(`gameFormat.scoring.${scoringPreset}.subtitle`, { defaultValue: '' });
+    customPointsTotal != null ? '' : tScoringPresetField(t, scoringPreset, 'subtitle', sport);
 
   const genLabel = t(`gameFormat.generation.${genKey(generationType)}.title`);
   const automaticCopyKey = automaticGenerationCopyKey(generationSlotCount, hasFixedTeams);
@@ -89,8 +88,8 @@ export const GameFormatDetails = ({ format, generationSlotCount, hasFixedTeams }
     <div className="mt-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 px-3 py-1 divide-y divide-gray-200/70 dark:divide-gray-700/70">
       <DetailRow
         label={t('gameFormat.steps.scoringMode')}
-        value={t(`gameFormat.scoringMode.${scoringMode}.title`)}
-        note={t(`gameFormat.scoringMode.${scoringMode}.subtitle`, { defaultValue: '' }) || undefined}
+        value={tScoringModeField(t, scoringMode, 'title', sport)}
+        note={tScoringModeField(t, scoringMode, 'subtitle', sport) || undefined}
       />
       <DetailRow
         label={t('gameFormat.steps.setStructure')}

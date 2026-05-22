@@ -2,7 +2,7 @@ import { CategorySelector } from './CategorySelector';
 
 interface MarketplaceFiltersProps {
   categoryId: string;
-  categories: Array<{ id: string; name: string }>;
+  categories: ReadonlyArray<{ id: string; name: string }>;
   onCategoryChange: (v: string) => void;
   labels: {
     allCategories: string;

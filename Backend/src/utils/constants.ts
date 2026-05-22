@@ -158,12 +158,25 @@ export const CURRENCY_NAMES: Record<string, string> = {
   PHP: 'Philippine Peso',
 };
 
+export const USER_SPORT_PROFILE_SELECT = {
+  sport: true,
+  level: true,
+  reliability: true,
+  gamesPlayed: true,
+  gamesWon: true,
+  questionnaireCompletedAt: true,
+  questionnaireSkippedAt: true,
+  questionnaireVersion: true,
+  levelSource: true,
+} as const;
+
 export const USER_SELECT_FIELDS = {
   id: true,
   firstName: true,
   lastName: true,
   avatar: true,
   level: true,
+  primarySport: true,
   socialLevel: true,
   gender: true,
   approvedLevel: true,
@@ -181,6 +194,12 @@ export const USER_SELECT_FIELDS = {
 /** Public-safe fields for GET /users/:userId/stats (no phone, email, wallet, notification prefs, etc.) */
 export const USER_STATS_TARGET_SELECT = {
   ...USER_SELECT_FIELDS,
+  sportsEnabled: true,
+  gamesPlayed: true,
+  gamesWon: true,
+  sportProfiles: {
+    select: USER_SPORT_PROFILE_SELECT,
+  },
   originalAvatar: true,
   telegramId: true,
   telegramUsername: true,
@@ -189,6 +208,11 @@ export const USER_STATS_TARGET_SELECT = {
 
 export const PROFILE_SELECT_FIELDS = {
   ...USER_SELECT_FIELDS,
+  sportsEnabled: true,
+  lastCreatedSport: true,
+  sportProfiles: {
+    select: USER_SPORT_PROFILE_SELECT,
+  },
   approvedById: true,
   approvedWhen: true,
   favoriteTrainerId: true,
@@ -205,6 +229,7 @@ export const PROFILE_SELECT_FIELDS = {
   originalAvatar: true,
   genderIsSet: true,
   nameIsSet: true,
+  primarySportIsSet: true,
   cityIsSet: true,
   welcomeScreenPassed: true,
   isAdmin: true,

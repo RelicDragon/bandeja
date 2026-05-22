@@ -1,5 +1,12 @@
 import api from './axios';
-import { ApiResponse, MarketItem, MarketItemBid, MarketItemCategory, MarketItemBidsResponse } from '@/types';
+import type {
+  ApiResponse,
+  MarketItem,
+  MarketItemBid,
+  MarketItemCategory,
+  MarketItemBidsResponse,
+  Sport,
+} from '@/types';
 
 export interface MarketItemFilters {
   cityId?: string;
@@ -32,8 +39,10 @@ export interface MarketItemCreateData {
 }
 
 export const marketplaceApi = {
-  getCategories: async () => {
-    const response = await api.get<ApiResponse<MarketItemCategory[]>>('/market-items/categories');
+  getCategories: async (sport?: Sport) => {
+    const response = await api.get<ApiResponse<MarketItemCategory[]>>('/market-items/categories', {
+      params: sport ? { sport } : undefined,
+    });
     return response.data;
   },
 

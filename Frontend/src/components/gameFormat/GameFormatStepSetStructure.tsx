@@ -1,12 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { Medal, Award, Flag, Target } from 'lucide-react';
 import { ScoringPreset } from '@/types';
+import { tGameFormatStepHint, tScoringPresetField } from '@/utils/gameFormat';
 import { FormatOptionCard } from './FormatOptionCard';
 import { GameFormatTimedDuration } from './GameFormatTimedDuration';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 
 interface GameFormatStepSetStructureProps {
   scoringPreset: ScoringPreset;
+  allowedPresets?: ScoringPreset[];
+  sport?: string | null;
   hasGoldenPoint: boolean;
   matchTimerEnabled: boolean;
   matchTimedCapMinutes: number;
@@ -28,6 +31,8 @@ const CLASSIC_PRESETS: { value: ScoringPreset; icon: typeof Medal; recommended?:
 
 export const GameFormatStepSetStructure = ({
   scoringPreset,
+  allowedPresets,
+  sport,
   hasGoldenPoint,
   matchTimerEnabled,
   matchTimedCapMinutes,
@@ -38,18 +43,24 @@ export const GameFormatStepSetStructure = ({
   onSelectAdvance,
 }: GameFormatStepSetStructureProps) => {
   const { t } = useTranslation();
+  const visiblePresets =
+    allowedPresets && allowedPresets.length > 0
+      ? CLASSIC_PRESETS.filter((preset) => allowedPresets.includes(preset.value))
+      : CLASSIC_PRESETS;
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-gray-500 dark:text-gray-400 px-1">{t('gameFormat.stepSetStructureHint')}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 px-1">
+        {tGameFormatStepHint(t, 'setStructure', sport)}
+      </p>
       <div className="space-y-2.5">
-        {CLASSIC_PRESETS.map((p) => (
+        {visiblePresets.map((p) => (
           <FormatOptionCard
             key={p.value}
             icon={p.icon}
-            title={t(`gameFormat.scoring.${p.value}.title`)}
-            subtitle={t(`gameFormat.scoring.${p.value}.subtitle`)}
-            hint={t(`gameFormat.scoring.${p.value}.hint`, { defaultValue: '' }) || undefined}
+            title={tScoringPresetField(t, p.value, 'title', sport)}
+            subtitle={tScoringPresetField(t, p.value, 'subtitle', sport)}
+            hint={tScoringPresetField(t, p.value, 'hint', sport) || undefined}
             badge={p.recommended ? t('gameFormat.recommended') : undefined}
             selected={scoringPreset === p.value}
             onClick={() => {

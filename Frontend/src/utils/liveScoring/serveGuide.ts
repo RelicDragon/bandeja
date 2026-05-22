@@ -1,5 +1,8 @@
 import type { ScoringRules } from '@/utils/scoring';
-import { isClassicRules, isPointsRules } from '@/utils/scoring';
+import { isClassicRules, isPointsRules, isRallyGameRules, isRallyPointsRules } from '@/utils/scoring';
+
+const usesRallyCapPointsMode = (rules: ScoringRules): boolean =>
+  isPointsRules(rules) || isRallyPointsRules(rules) || isRallyGameRules(rules);
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import type { LivePointsServeRotation, LiveScoringState, LiveTeamSide } from './types';
 
@@ -184,7 +187,7 @@ export function doublesPlayerIndex(
 }
 
 export function needsPointsServeRotationChoice(state: LiveScoringState, rules: ScoringRules): boolean {
-  if (state.mode === 'points' && isPointsRules(rules)) return true;
+  if (state.mode === 'points' && usesRallyCapPointsMode(rules)) return true;
   if (state.mode === 'classic' && isClassicRules(rules) && activeSetIsSuperTieBreak(state)) return true;
   return false;
 }
@@ -349,7 +352,7 @@ export function firstServerForPointsSet(
 
 export function needsServeSetup(state: LiveScoringState, rules: ScoringRules): boolean {
   if (state.serveGuideSkipped || state.firstServerTeam != null) return false;
-  if (isPointsRules(rules) && state.mode === 'points') {
+  if (usesRallyCapPointsMode(rules) && state.mode === 'points') {
     return isPristinePointsStart(state) || officialSetsHavePlay(state);
   }
   if (isClassicRules(rules) && state.mode === 'classic') {
@@ -367,7 +370,8 @@ export function computeServeGuideSnapshot(
   state: LiveScoringState,
   rules: ScoringRules,
   teamAPlayerNames: string[],
-  teamBPlayerNames: string[]
+  teamBPlayerNames: string[],
+  matchDoubles: boolean
 ): ServeGuideSnapshot | null {
   if (state.serveGuideSkipped) return null;
   const first = state.firstServerTeam;
@@ -376,10 +380,10 @@ export function computeServeGuideSnapshot(
 
   const rotation: LivePointsServeRotation = state.pointsServeRotation ?? 'official';
 
-  if (state.mode === 'points' && isPointsRules(rules)) {
+  if (state.mode === 'points' && usesRallyCapPointsMode(rules)) {
     return rotation === 'simple'
-      ? simplePointsStrip(state, first, teamAPlayerNames, teamBPlayerNames)
-      : pointsCapStrip(state, first, teamAPlayerNames, teamBPlayerNames);
+      ? simplePointsStrip(state, first, teamAPlayerNames, teamBPlayerNames, matchDoubles)
+      : pointsCapStrip(state, first, teamAPlayerNames, teamBPlayerNames, matchDoubles);
   }
 
   if (!isClassicRules(rules) || state.mode !== 'classic') return null;
@@ -389,20 +393,21 @@ export function computeServeGuideSnapshot(
 
   if (activeSetIsSuperTieBreak(state)) {
     return rotation === 'simple'
-      ? simplePointsStrip(state, first, teamAPlayerNames, teamBPlayerNames)
-      : superTieBreakStrip(state, first, teamAPlayerNames, teamBPlayerNames);
+      ? simplePointsStrip(state, first, teamAPlayerNames, teamBPlayerNames, matchDoubles)
+      : superTieBreakStrip(state, first, teamAPlayerNames, teamBPlayerNames, matchDoubles);
   }
   if (c.withinSetTieBreak) {
-    return withinTieBreakStrip(state, first, teamAPlayerNames, teamBPlayerNames);
+    return withinTieBreakStrip(state, first, teamAPlayerNames, teamBPlayerNames, matchDoubles);
   }
-  return classicGameStrip(state, first, teamAPlayerNames, teamBPlayerNames);
+  return classicGameStrip(state, first, teamAPlayerNames, teamBPlayerNames, matchDoubles);
 }
 
 function simplePointsStrip(
   state: LiveScoringState,
   matchFirst: LiveTeamSide,
   teamAPlayerNames: string[],
-  teamBPlayerNames: string[]
+  teamBPlayerNames: string[],
+  matchDoubles: boolean
 ): ServeGuideSnapshot | null {
   const set = activeSetRow(state);
   if (!set) return null;
@@ -411,7 +416,7 @@ function simplePointsStrip(
   const t = ta + tb;
   const namesForTeamA = teamAPlayerNames;
   const namesForTeamB = teamBPlayerNames;
-  const doubles = namesForTeamA.length >= 2 || namesForTeamB.length >= 2;
+  const doubles = matchDoubles;
   const firstForSet =
     state.mode === 'points'
       ? firstServerForPointsSetSimple(state.activeSetIndex, state.sets, matchFirst, doubles)
@@ -439,7 +444,8 @@ function pointsCapStrip(
   state: LiveScoringState,
   matchFirst: LiveTeamSide,
   teamAPlayerNames: string[],
-  teamBPlayerNames: string[]
+  teamBPlayerNames: string[],
+  matchDoubles: boolean
 ): ServeGuideSnapshot | null {
   const set = activeSetRow(state);
   if (!set) return null;
@@ -449,10 +455,11 @@ function pointsCapStrip(
   const firstForSet = firstServerForPointsSet(state.activeSetIndex, state.sets, matchFirst);
   const nextTeam = tbNextServerTeam(firstForSet, t);
   const namesForTeam = nextTeam === 'teamA' ? teamAPlayerNames : teamBPlayerNames;
-  const doubles = namesForTeam.length >= 2;
   const matchFirstPlayerIdx = state.firstServerDoublesPlayerIndex ?? 0;
-  const playerIdx = tbDoublesPlayerIndex(matchFirst, matchFirstPlayerIdx, nextTeam, t, 0);
-  const display = doubles ? playerDisplay(namesForTeam, playerIdx) : namesForTeam[0] ?? '—';
+  const playerIdx = matchDoubles
+    ? tbDoublesPlayerIndex(matchFirst, matchFirstPlayerIdx, nextTeam, t, 0)
+    : 0;
+  const display = matchDoubles ? playerDisplay(namesForTeam, playerIdx) : namesForTeam[0] ?? '—';
   const slot = tieBreakServeSlotAtPoint(t);
   const side = courtSideForTieBreakPoint(t);
   const changeEnds = t > 0 && t % 6 === 0;
@@ -473,7 +480,8 @@ function classicGameStrip(
   state: LiveScoringState,
   matchFirst: LiveTeamSide,
   teamAPlayerNames: string[],
-  teamBPlayerNames: string[]
+  teamBPlayerNames: string[],
+  matchDoubles: boolean
 ): ServeGuideSnapshot | null {
   const set = activeSetRow(state);
   const ga = set?.teamA ?? 0;
@@ -484,9 +492,11 @@ function classicGameStrip(
   const completedGames = ga + gb;
   const servingTeam = servingTeamForGame(firstForSet, completedGames);
   const matchFirstPlayerIdx = state.firstServerDoublesPlayerIndex ?? 0;
-  const playerIdx = doublesPlayerIndex(matchFirst, matchFirstPlayerIdx, servingTeam, completedGames);
+  const playerIdx = matchDoubles
+    ? doublesPlayerIndex(matchFirst, matchFirstPlayerIdx, servingTeam, completedGames)
+    : 0;
   const names = servingTeam === 'teamA' ? teamAPlayerNames : teamBPlayerNames;
-  const display = playerDisplay(names, playerIdx);
+  const display = matchDoubles ? playerDisplay(names, playerIdx) : names[0] ?? '—';
   const side: CourtServeSide = c.classicPointsPlayedInGame % 2 === 0 ? 'rightDeuce' : 'leftAd';
   const token = `${servingTeam}-${playerIdx}-${c.classicPointsPlayedInGame}-${ga}-${gb}`;
   return {
@@ -505,7 +515,8 @@ function withinTieBreakStrip(
   state: LiveScoringState,
   matchFirst: LiveTeamSide,
   teamAPlayerNames: string[],
-  teamBPlayerNames: string[]
+  teamBPlayerNames: string[],
+  matchDoubles: boolean
 ): ServeGuideSnapshot | null {
   const set = activeSetRow(state);
   const ga = set?.teamA ?? 0;
@@ -518,16 +529,17 @@ function withinTieBreakStrip(
   const t = c.tieBreakA + c.tieBreakB;
   const nextTeam = tbNextServerTeam(firstTBTeam, t);
   const namesForTeam = nextTeam === 'teamA' ? teamAPlayerNames : teamBPlayerNames;
-  const doubles = namesForTeam.length >= 2;
   const matchFirstPlayerIdx = state.firstServerDoublesPlayerIndex ?? 0;
-  const playerIdx = tbDoublesPlayerIndex(
-    matchFirst,
-    matchFirstPlayerIdx,
-    nextTeam,
-    t,
-    gaPlusGbAtTieBreakEntry(state)
-  );
-  const display = doubles ? playerDisplay(namesForTeam, playerIdx) : namesForTeam[0] ?? '—';
+  const playerIdx = matchDoubles
+    ? tbDoublesPlayerIndex(
+        matchFirst,
+        matchFirstPlayerIdx,
+        nextTeam,
+        t,
+        gaPlusGbAtTieBreakEntry(state)
+      )
+    : 0;
+  const display = matchDoubles ? playerDisplay(namesForTeam, playerIdx) : namesForTeam[0] ?? '—';
   const slot = tieBreakServeSlotAtPoint(t);
   const side = courtSideForTieBreakPoint(t);
   const token = `wtb-${t}-${nextTeam}-${playerIdx}`;
@@ -547,7 +559,8 @@ function superTieBreakStrip(
   state: LiveScoringState,
   matchFirst: LiveTeamSide,
   teamAPlayerNames: string[],
-  teamBPlayerNames: string[]
+  teamBPlayerNames: string[],
+  matchDoubles: boolean
 ): ServeGuideSnapshot | null {
   const set = activeSetRow(state);
   const ta = set?.teamA ?? 0;
@@ -559,10 +572,11 @@ function superTieBreakStrip(
   const t = ta + tb;
   const nextTeam = tbNextServerTeam(firstTBTeam, t);
   const namesForTeam = nextTeam === 'teamA' ? teamAPlayerNames : teamBPlayerNames;
-  const doubles = namesForTeam.length >= 2;
   const matchFirstPlayerIdx = state.firstServerDoublesPlayerIndex ?? 0;
-  const playerIdx = tbDoublesPlayerIndex(matchFirst, matchFirstPlayerIdx, nextTeam, t, 0);
-  const display = doubles ? playerDisplay(namesForTeam, playerIdx) : namesForTeam[0] ?? '—';
+  const playerIdx = matchDoubles
+    ? tbDoublesPlayerIndex(matchFirst, matchFirstPlayerIdx, nextTeam, t, 0)
+    : 0;
+  const display = matchDoubles ? playerDisplay(namesForTeam, playerIdx) : namesForTeam[0] ?? '—';
   const slot = tieBreakServeSlotAtPoint(t);
   const side = courtSideForTieBreakPoint(t);
   const token = `stb-${t}-${nextTeam}`;
