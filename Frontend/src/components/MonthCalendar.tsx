@@ -13,6 +13,8 @@ import {
 } from '@/utils/availableGamePanelFilters';
 import { getDisplayLevelForSport } from '@/utils/profileSports';
 import { parseGameSport } from '@/utils/gameSport';
+import { useUnreadStore } from '@/store/unreadStore';
+import { gameUnreadCountsMap } from '@/utils/unreadCountsFromStore';
 
 type DisplayEntityType = 'GAME' | 'TOURNAMENT' | 'TRAINING' | 'LEAGUE' | 'BAR';
 
@@ -86,6 +88,11 @@ export const MonthCalendar = ({
   const calendarRef = useRef<HTMLDivElement>(null);
 
   const displaySettings = useMemo(() => user ? resolveDisplaySettings(user) : resolveDisplaySettings(null), [user]);
+  const byContext = useUnreadStore((s) => s.byContext);
+  const gamesUnreadCounts = useMemo(
+    () => gameUnreadCountsMap(availableGames.map((g) => g.id), byContext),
+    [availableGames, byContext],
+  );
   const locale = useMemo(() => {
     return localeMap[i18n.language as keyof typeof localeMap] || enGB;
   }, [i18n.language]);
@@ -109,7 +116,7 @@ export const MonthCalendar = ({
   const noEntityFilter = !gameFilter && !trainingFilter && !tournamentFilter && !leaguesFilter;
 
   const dateCellData = useMemo(() => {
-    const dataMap = new Map<string, { gameCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean; hasTraining: boolean; participantEntityTypes: Set<DisplayEntityType>; entityTypes: Set<DisplayEntityType> }>();
+    const dataMap = new Map<string, { gameCount: number; unreadCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean; hasTraining: boolean; participantEntityTypes: Set<DisplayEntityType>; entityTypes: Set<DisplayEntityType> }>();
 
     availableGames.forEach(game => {
       if (game.timeIsSet === false) return;
@@ -132,7 +139,7 @@ export const MonthCalendar = ({
       }
 
       if (isUserParticipantInGame) {
-        const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
+        const existing = dataMap.get(gameDate) || { gameCount: 0, unreadCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
         existing.participantEntityTypes.add(toDisplayEntityType(game.entityType));
         dataMap.set(gameDate, existing);
       }
@@ -176,9 +183,10 @@ export const MonthCalendar = ({
         return;
       }
 
-      const existing = dataMap.get(gameDate) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
+      const existing = dataMap.get(gameDate) || { gameCount: 0, unreadCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
 
       existing.gameCount++;
+      existing.unreadCount += gamesUnreadCounts[game.id] || 0;
       existing.entityTypes.add(toDisplayEntityType(game.entityType));
 
       if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') {
@@ -197,7 +205,7 @@ export const MonthCalendar = ({
     });
 
     return dataMap;
-  }, [availableGames, userFilter, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user, panelFilters, showPrivateGames, isAdmin]);
+  }, [availableGames, userFilter, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user, panelFilters, showPrivateGames, isAdmin, gamesUnreadCounts]);
 
   const handlePreviousMonth = () => {
     isNavigatingRef.current = true;
@@ -304,8 +312,9 @@ export const MonthCalendar = ({
           const isSelected = selectedDate != null && isSameDay(day, selectedDate);
           const isTodayDate = isToday(day);
           const dateStr = format(startOfDay(day), 'yyyy-MM-dd');
-          const dayData = dateCellData.get(dateStr) || { gameCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
+          const dayData = dateCellData.get(dateStr) || { gameCount: 0, unreadCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
           const gameCount = dayData.gameCount;
+          const unreadCount = dayData.unreadCount;
           const hasGames = gameCount > 0;
           const isParticipant = dayData.isUserParticipant;
           const participantTypes = PILL_ENTITY_ORDER.filter(t => dayData.participantEntityTypes.has(t));
@@ -340,6 +349,16 @@ export const MonthCalendar = ({
               }}
             >
               <span>{format(day, 'd')}</span>
+              {unreadCount > 0 && (
+                <span className={`
+                  absolute -top-1 -left-1 flex items-center justify-center
+                  min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold
+                  bg-red-500 text-white
+                  ${!isCurrentMonth ? 'opacity-60' : ''}
+                `}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
               {gameCount > 0 && (
                 <span className={`
                   absolute -top-1 -right-1 flex items-center justify-center
