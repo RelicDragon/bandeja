@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format, startOfDay } from 'date-fns';
-import { AlertTriangle, Calendar, ChevronDown, MapPin, Users, Plane } from 'lucide-react';
+import { AlertTriangle, Calendar, ChevronDown, MapPin, MessageCircle, Users, Plane } from 'lucide-react';
 import { Card, GameCard } from '@/components';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
+import { useContextUnread } from '@/hooks/useUnreadBridge';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
@@ -95,6 +96,10 @@ export const UpcomingGamesList = ({
 
   const [staleSectionOpen, setStaleSectionOpen] = useState(false);
   const staleCount = staleGames.length;
+  const staleSectionUnread = useMemo(
+    () => staleGames.reduce((sum, g) => sum + (gamesUnreadCounts[g.id] || 0), 0),
+    [staleGames, gamesUnreadCounts],
+  );
 
   if (staleGrouped.length === 0 && upcomingGrouped.length === 0) return null;
 
@@ -108,6 +113,7 @@ export const UpcomingGamesList = ({
           <StaleScheduledGameRow
             key={game.id}
             game={game}
+            unreadCount={gamesUnreadCounts[game.id] || 0}
             userCityId={userCityId}
             displaySettings={displaySettings}
             translateCity={translateCity}
@@ -185,6 +191,12 @@ export const UpcomingGamesList = ({
               <span className="inline-flex shrink-0 items-center rounded-md border border-amber-700/50 dark:border-amber-500/60 bg-amber-200/90 dark:bg-amber-800/80 px-2 py-0.5 text-xs font-bold text-amber-950 dark:text-amber-50">
                 {t('home.staleGamesCount', { count: staleCount })}
               </span>
+              {staleSectionUnread > 0 && (
+                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  <MessageCircle size={10} strokeWidth={2.5} />
+                  {staleSectionUnread > 99 ? '99+' : staleSectionUnread}
+                </span>
+              )}
             </div>
             <ChevronDown
               size={22}
@@ -214,6 +226,7 @@ export const UpcomingGamesList = ({
 
 interface StaleScheduledGameRowProps {
   game: Game;
+  unreadCount?: number;
   userCityId?: string;
   displaySettings: ReturnType<typeof resolveDisplaySettings>;
   translateCity: (cityId: string, cityName: string, country: string) => string;
@@ -222,12 +235,14 @@ interface StaleScheduledGameRowProps {
 
 const StaleScheduledGameRow = ({
   game,
+  unreadCount: unreadProp = 0,
   userCityId,
   displaySettings,
   translateCity,
   onClick,
 }: StaleScheduledGameRowProps) => {
   const { t } = useTranslation();
+  const displayUnread = useContextUnread('GAME', game.id, unreadProp);
   const gameCityId = game.city?.id;
   const isDifferentCity = Boolean(gameCityId && userCityId && gameCityId !== userCityId);
   const clubName = game.court?.club?.name || game.club?.name;
@@ -292,9 +307,17 @@ const StaleScheduledGameRow = ({
           </p>
         )}
       </div>
-      <div className="flex items-center gap-1 text-xs text-amber-900 dark:text-amber-200 flex-shrink-0 font-semibold">
-        <Users size={12} />
-        <span>{game.entityType === 'BAR' ? playingCount : `${playingCount}/${game.maxParticipants}`}</span>
+      <div className="flex items-center gap-1.5 flex-shrink-0 font-semibold">
+        {displayUnread > 0 && (
+          <span className="inline-flex items-center gap-0.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            <MessageCircle size={10} strokeWidth={2.5} />
+            {displayUnread > 99 ? '99+' : displayUnread}
+          </span>
+        )}
+        <div className="flex items-center gap-1 text-xs text-amber-900 dark:text-amber-200">
+          <Users size={12} />
+          <span>{game.entityType === 'BAR' ? playingCount : `${playingCount}/${game.maxParticipants}`}</span>
+        </div>
       </div>
     </div>
   );
