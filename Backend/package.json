@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon src/server.ts",
     "dev:setup": "./dev-setup.sh",
-    "build": "tsc && node scripts/flatten-dist.js && node scripts/assert-dist-layout.js",
+    "build": "tsc",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

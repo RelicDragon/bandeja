@@ -1,6 +1,5 @@
-/** Canonical sport IDs — keep in sync with Backend/src/shared/sport.ts and `enum Sport` in prisma/schema.prisma. */
+/** Canonical sport IDs — keep in sync with Frontend/shared/sport.ts and `enum Sport` in prisma/schema.prisma. */
 
-/** Runtime sport codes (`Sports.PADEL`, …). */
 export const Sports = {
   PADEL: 'PADEL',
   TENNIS: 'TENNIS',

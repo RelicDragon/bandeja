@@ -1,6 +1,6 @@
 import { Sports, ALL_SPORTS, type Sport } from './sport';
 
-/** Canonical default match sizes — keep in sync with Backend/src/shared/sportRegistryDefaults.ts. */
+/** Canonical default match sizes — keep in sync with Frontend/shared/sportRegistryDefaults.ts. */
 export const DEFAULT_PLAYERS_PER_MATCH_BY_SPORT: Record<Sport, 2 | 4> = {
   [Sports.PADEL]: 4,
   [Sports.TENNIS]: 2,

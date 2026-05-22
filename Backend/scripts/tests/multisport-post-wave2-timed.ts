@@ -8,7 +8,7 @@ import {
   registryAllowsOpenEndedPreset,
   supportsTimedOpenEndedRallyFreeze,
   timedCustomCreateAllowed,
-} from '../../../shared/timedCustomPresets';
+} from '../../src/shared/timedCustomPresets';
 import { getSportConfig } from '../../src/sport/sportRegistry';
 import { validateGameForSport } from '../../src/utils/validators/validateGameForSport';
 import { ApiError } from '../../src/utils/ApiError';
