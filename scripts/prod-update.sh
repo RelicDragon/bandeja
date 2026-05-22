@@ -13,6 +13,7 @@ cd "$ROOT/Backend"
 npm ci
 npx prisma generate
 npx prisma migrate deploy
+rm -rf dist
 npm run build
 
 if ! grep -q "primary-sport/confirm" dist/routes/user.routes.js; then

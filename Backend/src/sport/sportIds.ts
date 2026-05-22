@@ -1,7 +1,7 @@
-export * from '../../../Frontend/shared/sport';
+export * from '../../../shared/sport';
 
 import { Sport as PrismaSport } from '@prisma/client';
-import { ALL_SPORTS, isSport, type Sport } from '../../../Frontend/shared/sport';
+import { ALL_SPORTS, isSport, type Sport } from '../../../shared/sport';
 
 /** Prisma client enum — same string values as `shared/sport`. */
 export type PrismaSportType = PrismaSport;
