@@ -1086,7 +1086,6 @@ export function useChatListModel({
     ) as ChatItem[];
   }, [chatsFilter, chats, marketChatRole, user?.id, debouncedSearchQuery, matchesMarketSearch, marketUnreadCounts]);
 
-  const unreadStoreWarm = useUnreadStoreWarm();
   const usersSubtabUnread = useChatsSubtabUnreadBadge('users');
   const bugsSubtabUnread = useChatsSubtabUnreadBadge('bugs');
   const channelsSubtabUnread = useChatsSubtabUnreadBadge('channels');
