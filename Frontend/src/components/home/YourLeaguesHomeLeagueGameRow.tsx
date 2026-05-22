@@ -14,12 +14,15 @@ import { formatDate } from '@/utils/dateFormat';
 interface YourLeaguesHomeLeagueGameRowProps {
   game: Game;
   unreadCount?: number;
+  /** Unscheduled league list — section title already states time is TBD. */
+  omitDatetimeNotSetLabel?: boolean;
   onClick: () => void;
 }
 
 export function YourLeaguesHomeLeagueGameRow({
   game,
   unreadCount: unreadProp = 0,
+  omitDatetimeNotSetLabel = false,
   onClick,
 }: YourLeaguesHomeLeagueGameRowProps) {
   const displayUnread = useContextUnread('GAME', game.id, unreadProp);
@@ -59,11 +62,7 @@ export function YourLeaguesHomeLeagueGameRow({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
-          {timeNotSet ? (
-            <span className="text-xs font-medium italic text-gray-500 dark:text-gray-400">
-              {t('gameDetails.datetimeNotSet')}
-            </span>
-          ) : (
+          {!timeNotSet && (
             <>
               <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
                 {dateLabel}
@@ -74,9 +73,16 @@ export function YourLeaguesHomeLeagueGameRow({
               </span>
             </>
           )}
+          {timeNotSet && !omitDatetimeNotSetLabel && (
+            <span className="text-xs font-medium italic text-gray-500 dark:text-gray-400">
+              {t('gameDetails.datetimeNotSet')}
+            </span>
+          )}
           {clubName && (
             <>
-              <span className="text-xs text-gray-300 dark:text-gray-600">•</span>
+              {!timeNotSet && (
+                <span className="text-xs text-gray-300 dark:text-gray-600">•</span>
+              )}
               <span className="flex min-w-0 items-center gap-1 truncate text-xs text-gray-600 dark:text-gray-400">
                 <MapPin size={11} className="flex-shrink-0" />
                 {clubName}

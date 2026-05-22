@@ -61,6 +61,7 @@ export function YourLeaguesHomeSeasonScheduledGamesExpandable({
                 key={g.id}
                 game={g}
                 unreadCount={gamesUnreadCounts[g.id] ?? 0}
+                omitDatetimeNotSetLabel={titleKey === 'home.leagueSeasonUnscheduledGames'}
                 onClick={() => navigate(`/games/${g.id}`)}
               />
             ))}
