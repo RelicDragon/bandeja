@@ -98,6 +98,12 @@ Desktop.ini
 # Dr5hn geo data (clone via export script)
 shared/dr5hn-data/
 
+# Frontend shared TS sources only (no tsc emit)
+Frontend/shared/*.js
+Frontend/shared/*.d.ts
+Frontend/shared/*.js.map
+Frontend/shared/*.d.ts.map
+
 # Database
 *.db
 *.sqlite
