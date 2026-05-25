@@ -28,6 +28,7 @@
     "backfill:user-name-is-set": "ts-node scripts/backfillUserNameIsSet.ts",
     "backfill:city-is-set": "ts-node scripts/backfillCityIsSet.ts",
     "backfill:padel-questionnaire-from-welcome": "ts-node scripts/backfillPadelQuestionnaireFromWelcome.ts",
+    "reconcile:sport-profile-level-from-events": "ts-node scripts/reconcileSportProfileLevelFromEvents.ts",
     "backfill:user-avatar-tiny": "ts-node scripts/backfillUserAvatarTiny.ts",
     "migrateBugsToGroups": "ts-node scripts/migrateBugsToGroups.ts",
     "migrate:game-photos": "ts-node scripts/migrations/migrate-game-photos.ts",
