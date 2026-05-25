@@ -19,7 +19,7 @@ const AFFECTED_GAMES_PATH = join(__dirname, '.game-photos-affected-games.json');
 async function deleteLegacyPhotosSideTables(
   tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
 ) {
-  const [cursors, drafts, autoTranslate] = await Promise.all([
+  const [cursors, drafts, pinned, autoTranslate] = await Promise.all([
     tx.$executeRaw`
       DELETE FROM "ChatReadCursor" WHERE "chatType"::text = ${LEGACY_PHOTOS_CHAT_TYPE}
     `,
@@ -27,10 +27,13 @@ async function deleteLegacyPhotosSideTables(
       DELETE FROM "ChatDraft" WHERE "chatType"::text = ${LEGACY_PHOTOS_CHAT_TYPE}
     `,
     tx.$executeRaw`
+      DELETE FROM "PinnedMessage" WHERE "chatType"::text = ${LEGACY_PHOTOS_CHAT_TYPE}
+    `,
+    tx.$executeRaw`
       DELETE FROM "ChatAutoTranslateConfig" WHERE "chatTypeKey" = ${LEGACY_PHOTOS_CHAT_TYPE}
     `,
   ]);
-  return { cursors, drafts, autoTranslate };
+  return { cursors, drafts, pinned, autoTranslate };
 }
 
 async function main() {
