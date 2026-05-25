@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, List } from 'lucide-react';
 import type { Game } from '@/types';
+import { buildLeagueHomeGameBracketPath } from '@/utils/leagueHomeBracket.util';
 import { YourLeaguesHomeLeagueGameRow } from './YourLeaguesHomeLeagueGameRow';
 
 interface YourLeaguesHomeSeasonScheduledGamesExpandableProps {
@@ -62,7 +63,10 @@ export function YourLeaguesHomeSeasonScheduledGamesExpandable({
                 game={g}
                 unreadCount={gamesUnreadCounts[g.id] ?? 0}
                 omitDatetimeNotSetLabel={titleKey === 'home.leagueSeasonUnscheduledGames'}
-                onClick={() => navigate(`/games/${g.id}`)}
+                onClick={() => {
+                  const bracketPath = buildLeagueHomeGameBracketPath(g);
+                  navigate(bracketPath ?? `/games/${g.id}`);
+                }}
               />
             ))}
           </div>

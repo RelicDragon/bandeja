@@ -10,9 +10,14 @@ import { STORY_OVERLAY_MAX_CHARS } from '@/api/stories';
 import { lightHaptic } from '@/utils/lightHaptic';
 import { useTranslation } from 'react-i18next';
 import type { TextStoryLayer, Transform2D } from './types/storyEditor.types';
+import { useLayerPinchGesture } from './hooks/useLayerPinchGesture';
 import { useLayerTransformHandles } from './hooks/useLayerTransformHandles';
 import { StoryLayerTransformHandles } from './StoryLayerTransformHandles';
-import { transformToCss } from './utils/storyTransform';
+import {
+  layerOverlayPositionStyle,
+  textFontSizePx,
+  textMaxWidthPx,
+} from './utils/storyCompositionLayout';
 import { getTextStyleRender } from './utils/storyTextStyles';
 
 type StoryTextLayerProps = {
@@ -71,12 +76,18 @@ export function StoryTextLayer({
     if (editing) inputRef.current?.focus();
   }, [editing]);
 
-  const styleRender = getTextStyleRender(layer.style.id, layer.style.align);
-
   const onTransformChange = useCallback(
     (transform: Transform2D) => onUpdate({ transform }),
     [onUpdate]
   );
+
+  const pinchBind = useLayerPinchGesture({
+    transform: layer.transform,
+    onTransformChange,
+    onTransformBegin,
+    onTransformEnd,
+    enabled: selected && !editing,
+  });
 
   const { handlePointerDown, handlePointerMove, handlePointerUp } = useLayerTransformHandles({
     layerRef: rootRef,
@@ -110,17 +121,19 @@ export function StoryTextLayer({
     [editing, selected, layer.text, onDelete, onEditEnd]
   );
 
+  const fontSizePx = textFontSizePx(stageScale);
+  const maxWidthPx = textMaxWidthPx(stageScale);
+  const styleRender = getTextStyleRender(layer.style.id, layer.style.align, fontSizePx);
+
   const layerStyle: CSSProperties = {
-    left: 0,
-    top: 0,
+    ...layerOverlayPositionStyle(layer.transform, undefined, 'auto'),
     zIndex: selected ? 50 : 10,
-    transform: `${transformToCss(layer.transform, stageScale)} translate(-50%, -50%)`,
-    transformOrigin: 'center center',
   };
 
   return (
     <div
       ref={rootRef}
+      {...(selected && !editing ? pinchBind() : {})}
       className={`absolute touch-none ${editing ? 'pointer-events-auto' : ''}`}
       style={layerStyle}
       onClick={handleTap}
@@ -140,15 +153,15 @@ export function StoryTextLayer({
             if (!layer.text.trim()) onDelete();
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className={`min-w-[120px] max-w-[280px] resize-none bg-transparent outline-none border-none ${styleRender.className}`}
-          style={styleRender.style}
+          className={`min-w-[120px] resize-none bg-transparent outline-none border-none ${styleRender.className}`}
+          style={{ ...styleRender.style, maxWidth: maxWidthPx }}
         />
       ) : (
         <div
-          className={`max-w-[280px] whitespace-pre-wrap break-words select-none ${styleRender.className} ${
+          className={`whitespace-pre-wrap break-words select-none ${styleRender.className} ${
             selected ? 'ring-2 ring-white/80 ring-offset-2 ring-offset-transparent rounded-lg' : ''
           }`}
-          style={styleRender.style}
+          style={{ ...styleRender.style, maxWidth: maxWidthPx }}
           onPointerDown={(e) => {
             onSelect();
             handlePointerDown(e, 'move');

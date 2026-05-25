@@ -27,6 +27,9 @@ const GameBroadcastRoute = lazy(() =>
 const LeagueFixtureTableFullscreenPage = lazy(() =>
   import('./pages/LeagueFixtureTableFullscreenPage').then((m) => ({ default: m.LeagueFixtureTableFullscreenPage }))
 );
+const LeagueBracketFullscreenPage = lazy(() =>
+  import('./pages/LeagueBracketFullscreenPage').then((m) => ({ default: m.LeagueBracketFullscreenPage }))
+);
 const MyClubsPage = lazy(() =>
   import('./pages/clubAdmin/MyClubsPage').then((m) => ({ default: m.MyClubsPage }))
 );
@@ -588,6 +591,16 @@ function AppContent() {
             <ProtectedRoute>
               <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
                 <LeagueFixtureTableFullscreenPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/:id/league-bracket"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                <LeagueBracketFullscreenPage />
               </Suspense>
             </ProtectedRoute>
           }

@@ -61,6 +61,13 @@ router.post(
 
 router.use('/:gameId/photos', gamePhotoRoutes);
 
+router.get(
+  '/:id/results-artifacts-status',
+  authenticate,
+  canAccessGame,
+  gameController.getResultsArtifactsStatus
+);
+
 router.get('/:id', optionalAuth, gameController.getGameById);
 
 router.post(

@@ -37,7 +37,11 @@ export type OverlayStyleV1 = {
 export type OverlayStyleV2 = {
   version: 2;
   canvas: { width: 1080; height: 1920 };
+  /** Pixel size of source media when mediaTransform was authored (editor / export). */
+  sourceWidth?: number;
+  sourceHeight?: number;
   mediaTransform?: Transform2D;
+  mediaAdjust?: StoryMediaAdjust;
   layers?: StoryLayer[];
   baked?: boolean;
 };
@@ -109,10 +113,21 @@ export function isStickerLayer(layer: StoryLayer): layer is StickerStoryLayer {
 }
 
 export function buildOverlayStyleV2(slide: StorySlide): OverlayStyleV2 {
+  const hasAdjust =
+    slide.mediaAdjust.brightness !== 100 ||
+    slide.mediaAdjust.contrast !== 100 ||
+    slide.mediaAdjust.saturation !== 100 ||
+    !!slide.mediaAdjust.filterId;
+  const nw = slide.media.naturalWidth;
+  const nh = slide.media.naturalHeight;
   return {
     version: 2,
     canvas: { width: STORY_CANVAS_WIDTH, height: STORY_CANVAS_HEIGHT },
+    ...(nw != null && nh != null && nw > 0 && nh > 0
+      ? { sourceWidth: nw, sourceHeight: nh }
+      : {}),
     mediaTransform: slide.mediaTransform,
+    mediaAdjust: hasAdjust ? slide.mediaAdjust : undefined,
     layers: slide.layers.length > 0 ? slide.layers : undefined,
   };
 }

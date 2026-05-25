@@ -46,7 +46,7 @@ export const TelegramSummaryModal = ({
 
     setIsGeneratingNew(true);
     try {
-      const response = await gamesApi.prepareTelegramSummary(gameId);
+      const response = await gamesApi.prepareTelegramSummary(gameId, { regenerate: true });
       if (response.data?.summary) {
         setSummary(response.data.summary);
         textareaRef.current?.focus();

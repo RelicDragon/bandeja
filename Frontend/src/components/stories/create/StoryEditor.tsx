@@ -7,6 +7,7 @@ import { Redo2, Undo2, X } from 'lucide-react';
 import { StoryCropMode } from './StoryCropMode';
 import { StoryEditorBottomSheet } from './StoryEditorBottomSheet';
 import { StoryEditorialCanvas } from './StoryEditorialCanvas';
+import { StoryCanvasStageEditor } from './StoryCanvasStageEditor';
 import { StoryMediaLayer } from './StoryMediaLayer';
 import { StorySlideThumbnails } from './StorySlideThumbnails';
 import { StoryStickerLayers } from './StoryStickerLayers';
@@ -15,8 +16,9 @@ import { useStoryEditorState } from './hooks/useStoryEditorState';
 import { useStoryExport } from './hooks/useStoryExport';
 import { useStoryVideoDuration } from './hooks/useStoryVideoDuration';
 import { useVisualViewportInset } from './hooks/useVisualViewportInset';
-import type { StoryEditorTool, StoryMediaFile, TextStoryLayer } from './types/storyEditor.types';
+import type { StoryEditorTool, StoryMediaFile, StorySlide, TextStoryLayer } from './types/storyEditor.types';
 import { isTextLayer } from './types/storyEditor.types';
+import { isCanvasStageEnabled } from './utils/canvasStageFlag';
 import { resolveEditorMode } from './utils/resolveEditorMode';
 import { StoryCaptionField } from './StoryCaptionField';
 
@@ -40,6 +42,8 @@ export function StoryEditor({ open, files, onClose, onPublished }: StoryEditorPr
   const [mediaGestureActive, setMediaGestureActive] = useState(false);
   const [caption, setCaption] = useState('');
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const canvasStage = isCanvasStageEnabled();
+  const liveSlideRef = useRef<StorySlide | null>(null);
 
   const editor = useStoryEditorState({
     files,
@@ -57,6 +61,7 @@ export function StoryEditor({ open, files, onClose, onPublished }: StoryEditorPr
     beginTransaction,
     commitTransaction,
     setMediaTransform,
+    commitActiveSlide,
     setMediaAdjust,
     setMediaAdjustWithHistory,
     setVideoTrimLive,
@@ -90,7 +95,12 @@ export function StoryEditor({ open, files, onClose, onPublished }: StoryEditorPr
 
   const editorMode = resolveEditorMode(activeTool, selectedLayerId, editingLayerId);
 
-  const canvasGesturesDisabled = editorMode !== 'IDLE';
+  const stageGesturesBlocked =
+    editorMode === 'CROP' ||
+    editorMode === 'TRIM' ||
+    editorMode === 'EDITING_TEXT' ||
+    editorMode === 'TOOL_ACTIVE';
+  const canvasGesturesDisabled = canvasStage ? stageGesturesBlocked : editorMode !== 'IDLE';
   const mediaGesturesEnabled = editorMode === 'IDLE';
   const showDeselectOverlay =
     editorMode === 'LAYER_SELECTED' || (editorMode === 'TOOL_ACTIVE' && activeTool === 'text');
@@ -265,18 +275,43 @@ export function StoryEditor({ open, files, onClose, onPublished }: StoryEditorPr
           >
             {({ stageScale }) => (
               <>
-                <StoryMediaLayer
-                  slide={activeSlide}
-                  stageScale={stageScale}
-                  defaultTransform={activeDefaultTransform}
-                  gesturesEnabled={mediaGesturesEnabled}
-                  onLoadDimensions={(w, h) => registerMediaDimensions(activeSlide.id, w, h)}
-                  onTransformChange={setMediaTransform}
-                  onResetTransform={resetMediaTransform}
-                  onGestureStart={onTransformBegin}
-                  onGestureEnd={onTransformEnd}
-                  onMediaGestureActiveChange={setMediaGestureActive}
-                />
+                {canvasStage ? (
+                  <StoryCanvasStageEditor
+                    slide={activeSlide}
+                    stageScale={stageScale}
+                    stageWidth={stageSize.w}
+                    stageHeight={stageSize.h}
+                    editorMode={editorMode}
+                    selectedLayerId={selectedLayerId}
+                    gesturesDisabled={stageGesturesBlocked}
+                    liveSlideRef={liveSlideRef}
+                    onLoadDimensions={(w, h) => registerMediaDimensions(activeSlide.id, w, h)}
+                    onCommitSlide={commitActiveSlide}
+                    onSelectLayer={selectLayer}
+                    onLayerEditStart={(id) => {
+                      selectLayer(id);
+                      setEditingLayerId(id);
+                      setActiveTool('text');
+                    }}
+                    onGestureStart={onTransformBegin}
+                    onGestureEnd={onTransformEnd}
+                    onGestureActiveChange={setMediaGestureActive}
+                    gestureActive={mediaGestureActive}
+                  />
+                ) : (
+                  <StoryMediaLayer
+                    slide={activeSlide}
+                    stageScale={stageScale}
+                    defaultTransform={activeDefaultTransform}
+                    gesturesEnabled={mediaGesturesEnabled}
+                    onLoadDimensions={(w, h) => registerMediaDimensions(activeSlide.id, w, h)}
+                    onTransformChange={setMediaTransform}
+                    onResetTransform={resetMediaTransform}
+                    onGestureStart={onTransformBegin}
+                    onGestureEnd={onTransformEnd}
+                    onMediaGestureActiveChange={setMediaGestureActive}
+                  />
+                )}
                 {showDeselectOverlay ? (
                   <div
                     className="absolute inset-0 z-[5]"
@@ -303,18 +338,21 @@ export function StoryEditor({ open, files, onClose, onPublished }: StoryEditorPr
                   onDeleteLayer={deleteLayer}
                   onTransformBegin={onTransformBegin}
                   onTransformEnd={onTransformEnd}
+                  canvasMode={canvasStage}
                 />
-                <StoryStickerLayers
-                  layers={activeSlide.layers}
-                  stageScale={stageScale}
-                  selectedLayerId={selectedLayerId}
-                  reducedMotion={reducedMotion}
-                  onSelectLayer={setSelectedLayerId}
-                  onStickerTransformChange={updateLayerTransform}
-                  onDeleteLayer={deleteLayer}
-                  onTransformBegin={onTransformBegin}
-                  onTransformEnd={onTransformEnd}
-                />
+                {!canvasStage ? (
+                  <StoryStickerLayers
+                    layers={activeSlide.layers}
+                    stageScale={stageScale}
+                    selectedLayerId={selectedLayerId}
+                    reducedMotion={reducedMotion}
+                    onSelectLayer={setSelectedLayerId}
+                    onStickerTransformChange={updateLayerTransform}
+                    onDeleteLayer={deleteLayer}
+                    onTransformBegin={onTransformBegin}
+                    onTransformEnd={onTransformEnd}
+                  />
+                ) : null}
                 {activeTool === 'crop' && activeSlide.media.type === 'IMAGE' ? (
                   <StoryCropMode
                     key={activeSlide.media.previewUrl}

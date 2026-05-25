@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Calendar, MapPin, MessageCircle } from 'lucide-react';
+import { Calendar, MapPin, MessageCircle, Trophy } from 'lucide-react';
 import type { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
@@ -10,6 +10,9 @@ import {
   getGameTimeDisplay,
 } from '@/utils/gameTimeDisplay';
 import { formatDate } from '@/utils/dateFormat';
+import { getLeagueHomeGameMatchup } from '@/utils/leagueHomeGameMatchup';
+import { getLeagueHomeBracketRowContext } from '@/utils/leagueHomeBracket.util';
+import { YourLeaguesHomeLeagueGameMatchup } from './YourLeaguesHomeLeagueGameMatchup';
 
 interface YourLeaguesHomeLeagueGameRowProps {
   game: Game;
@@ -49,14 +52,16 @@ export function YourLeaguesHomeLeagueGameRow({
   const clubName = game.court?.club?.name || game.club?.name;
   const groupName = game.leagueGroup?.name;
   const roundIndex = game.leagueRound?.orderIndex;
+  const matchup = getLeagueHomeGameMatchup(game, user?.id);
+  const bracketCtx = getLeagueHomeBracketRowContext(game);
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-[0.99]"
+      className="flex w-full items-start gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-[0.99]"
     >
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
         <Calendar size={14} />
       </div>
       <div className="min-w-0 flex-1">
@@ -89,20 +94,48 @@ export function YourLeaguesHomeLeagueGameRow({
             </>
           )}
         </div>
-        {(groupName || typeof roundIndex === 'number') && (
-          <p className="mt-0.5 truncate text-[11px] text-gray-500 dark:text-gray-400">
-            {typeof roundIndex === 'number' &&
-              t('league.roundShort', {
-                index: roundIndex + 1,
-                defaultValue: `R${roundIndex + 1}`,
-              })}
-            {typeof roundIndex === 'number' && groupName ? ' · ' : ''}
-            {groupName}
+        {(bracketCtx || groupName || typeof roundIndex === 'number') && (
+          <p className="mt-0.5 flex flex-wrap items-center gap-1 truncate text-[11px] text-gray-500 dark:text-gray-400">
+            {bracketCtx && (
+              <span className="inline-flex shrink-0 items-center gap-0.5 rounded border border-indigo-200 bg-indigo-50 px-1 py-px font-semibold text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-200">
+                <Trophy size={9} aria-hidden />
+                {bracketCtx.isSeasonPlayoff
+                  ? t('home.leagueGameSeasonPlayoffBadge', { defaultValue: 'Season playoff' })
+                  : t('home.leagueGameBracketBadge', { defaultValue: 'Bracket' })}
+              </span>
+            )}
+            {omitDatetimeNotSetLabel && bracketCtx?.urgency === 'PLAY_IN' && (
+              <span className="inline-flex shrink-0 rounded border border-amber-300 bg-amber-50 px-1 py-px font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
+                {t('home.leagueGameBracketPlayInUrgency', { defaultValue: 'Schedule play-in first' })}
+              </span>
+            )}
+            {omitDatetimeNotSetLabel && bracketCtx?.urgency === 'KNOCKOUT' && (
+              <span className="inline-flex shrink-0 rounded border border-slate-300 bg-slate-50 px-1 py-px font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-200">
+                {t('home.leagueGameBracketKnockoutUrgency', { defaultValue: 'Knockout match' })}
+              </span>
+            )}
+            {typeof (bracketCtx?.roundIndex ?? roundIndex) === 'number' && (
+              <span>
+                {t('league.roundShort', {
+                  index: (bracketCtx?.roundIndex ?? roundIndex)! + 1,
+                  defaultValue: `R${(bracketCtx?.roundIndex ?? roundIndex)! + 1}`,
+                })}
+              </span>
+            )}
+            {(bracketCtx?.groupName ?? groupName) && (
+              <>
+                {typeof (bracketCtx?.roundIndex ?? roundIndex) === 'number' ? (
+                  <span aria-hidden>·</span>
+                ) : null}
+                <span className="truncate">{bracketCtx?.groupName ?? groupName}</span>
+              </>
+            )}
           </p>
         )}
+        {matchup && <YourLeaguesHomeLeagueGameMatchup matchup={matchup} />}
       </div>
       {displayUnread > 0 && (
-        <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+        <span className="mt-0.5 inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
           <MessageCircle size={10} strokeWidth={2.5} />
           {displayUnread > 99 ? '99+' : displayUnread}
         </span>

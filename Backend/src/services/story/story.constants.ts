@@ -9,5 +9,6 @@ export const QUERY_ROW_CAP = 200;
 export const SOURCE_PRIORITY: Record<string, number> = {
   GAME_PHOTO: 3,
   GAME_RESULT: 2,
+  BRACKET_CHAMPION: 2,
   GAME_CREATED: 1,
 };

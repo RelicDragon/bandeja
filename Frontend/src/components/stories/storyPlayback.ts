@@ -12,6 +12,8 @@ export function storySegmentSlideVersion(segment: StorySegment): string {
       return `${base}|${segment.game.id}`;
     case 'GAME_RESULT':
       return `${base}|${segment.game.id}`;
+    case 'BRACKET_CHAMPION':
+      return `${base}|${segment.bracket.leagueSeasonId}|${segment.bracket.leagueRoundId}`;
     default:
       return base;
   }

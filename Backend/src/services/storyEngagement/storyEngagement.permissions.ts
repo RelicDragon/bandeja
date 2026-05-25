@@ -6,8 +6,14 @@ import {
   canSeeCreatedGameInStories,
   canSeeManualStory,
   canSeePhotoInStories,
+  canSeeBracketChampionInStories,
   canSeeResultInStories,
 } from '../story/story.permissions';
+import {
+  parseBracketChampionSourceId,
+  resolveChampionTeamLabel,
+} from '../story/bracketChampionStory.service';
+import { BracketAdvancementService } from '../league/bracketAdvancement.service';
 import { isStoryItemMediaInvalid } from '../story/story.validate.service';
 import { STORY_ENGAGEMENT_ERROR } from './storyEngagement.constants';
 import type { CaptionContext } from './storyEngagement.caption';
@@ -69,6 +75,7 @@ const GAME_CAPTION_SELECT = {
   status: true,
   isPublic: true,
   resultsStatus: true,
+  resultsArtifactsReadyAt: true,
   createdAt: true,
   club: { select: { name: true } },
   court: { select: { club: { select: { name: true } } } },
@@ -200,6 +207,77 @@ export async function resolveVisibleSegment(
         },
       };
     }
+    case StorySourceType.BRACKET_CHAMPION: {
+      const { leagueRoundId, leagueGroupId } = parseBracketChampionSourceId(sourceId);
+      const finalSlot = await prisma.leagueBracketSlot.findFirst({
+        where: {
+          leagueRoundId,
+          leagueGroupId,
+          slotKind: 'MAIN',
+          winnerSlotId: null,
+          game: {
+            isPublic: true,
+            resultsStatus: 'FINAL',
+            finishedDate: { gte: activitySince },
+          },
+        },
+        include: {
+          game: { select: { id: true, isPublic: true, finishedDate: true } },
+          leagueRound: {
+            select: {
+              leagueSeason: {
+                include: {
+                  league: { select: { name: true } },
+                  game: { select: { isPublic: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+      if (!finalSlot?.gameId) segmentNotFound();
+      const championParticipantId = await BracketAdvancementService.resolveWinnerParticipantIdFromGame(
+        finalSlot.gameId
+      );
+      if (!championParticipantId) segmentNotFound();
+      const roster = await prisma.leagueParticipant.findUnique({
+        where: { id: championParticipantId },
+        include: { leagueTeam: { include: { players: { select: { userId: true } } } } },
+      });
+      const rosterIds =
+        roster?.leagueTeam?.players
+          .map((p) => p.userId)
+          .filter((id): id is string => !!id) ?? [];
+      if (!rosterIds.includes(ownerUserId)) segmentNotFound();
+      const owner = await prisma.user.findUnique({
+        where: { id: ownerUserId },
+        select: { shareGameResultsToFollowers: true },
+      });
+      if (!owner) segmentNotFound();
+      if (!follows) engagementForbidden();
+      const seasonGame = finalSlot.leagueRound.leagueSeason.game;
+      if (
+        !seasonGame ||
+        !canSeeBracketChampionInStories({
+          viewerFollows: true,
+          game: seasonGame,
+          owner,
+        })
+      ) {
+        segmentNotFound();
+      }
+      const championTeamLabel = await resolveChampionTeamLabel(championParticipantId);
+      return {
+        sourceType,
+        sourceId,
+        ownerUserId,
+        captionContext: {
+          type: 'BRACKET_CHAMPION',
+          leagueName: finalSlot.leagueRound.leagueSeason.league.name,
+          championTeamLabel,
+        },
+      };
+    }
     case StorySourceType.GAME_RESULT: {
       const outcome = await prisma.gameOutcome.findFirst({
         where: {
@@ -208,6 +286,7 @@ export async function resolveVisibleSegment(
           game: {
             isPublic: true,
             resultsStatus: 'FINAL',
+            resultsArtifactsReadyAt: { not: null },
             finishedDate: { gte: activitySince },
           },
         },

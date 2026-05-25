@@ -9,9 +9,13 @@ import { OwnershipService } from '../services/game/ownership.service';
 import { BookedCourtsService } from '../services/game/bookedCourts.service';
 import { LeagueAssignService } from '../services/league/assign.service';
 import { ResultsTelegramService } from '../services/telegram/results-telegram.service';
+import { config } from '../config/env';
+import { isArtifactSummaryGenerating } from '../services/gameResultsArtifact/gameResultsArtifact.jobStatus';
 import { generateResultsImage } from '../services/telegram/results-image.service';
 import telegramBotService from '../services/telegram/bot.service';
 import { getGameInclude, projectGameUsersForSportContext } from '../services/game/read.service';
+import { buildResultsArtifactsDto } from '../services/gameResultsArtifact/gameResultsArtifact.dto';
+import { GameResultsArtifactQueueService } from '../services/gameResultsArtifact/gameResultsArtifactQueue.service';
 import prisma from '../config/database';
 import { GameWorkoutService } from '../services/game/gameWorkout.service';
 import { GameReactionService } from '../services/game/gameReaction.service';
@@ -34,6 +38,35 @@ export const getGameById = asyncHandler(async (req: AuthRequest, res: Response) 
   res.json({
     success: true,
     data: game,
+    serverTime: new Date().toISOString(),
+  });
+});
+
+export const getResultsArtifactsStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+
+  const game = await prisma.game.findUnique({
+    where: { id },
+    select: {
+      resultsArtifactsVersion: true,
+      resultsArtifactsReadyAt: true,
+      resultsArtifactJob: {
+        select: {
+          status: true,
+          summaryStatus: true,
+          photoStatus: true,
+        },
+      },
+    },
+  });
+
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+
+  res.json({
+    success: true,
+    data: buildResultsArtifactsDto(game),
     serverTime: new Date().toISOString(),
   });
 });
@@ -396,14 +429,53 @@ const validateGameForTelegram = async (gameId: string, _userId: string) => {
 
 export const prepareTelegramSummary = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const regenerate = req.query.regenerate === 'true';
 
   if (!req.userId) {
     throw new ApiError(401, 'Unauthorized');
   }
 
   const { game, city } = await validateGameForTelegram(id, req.userId!);
-
   const language = city.telegramPinnedLanguage || 'en-GB';
+
+  const cachedText = (game as { resultsSummaryText?: string | null }).resultsSummaryText;
+  if (cachedText && !regenerate) {
+    res.json({
+      success: true,
+      data: { summary: cachedText },
+    });
+    return;
+  }
+
+  const artifactJob = await prisma.gameResultsArtifactJob.findUnique({
+    where: { gameId: id },
+    select: { status: true, summaryStatus: true, summaryError: true },
+  });
+
+  if (!regenerate && isArtifactSummaryGenerating(artifactJob)) {
+    throw new ApiError(409, 'Summary is still being generated', true, {
+      status: 'generating',
+    });
+  }
+
+  if (
+    !regenerate &&
+    artifactJob?.summaryStatus === 'failed' &&
+    !cachedText
+  ) {
+    try {
+      const summary = await ResultsTelegramService.generateResultsSummary(
+        game,
+        language,
+        req.userId ?? undefined
+      );
+      res.json({ success: true, data: { summary } });
+      return;
+    } catch {
+      throw new ApiError(503, 'Failed to generate summary. Please try again later.');
+    }
+  }
+
   const summary = await ResultsTelegramService.generateResultsSummary(
     game,
     language,
@@ -427,16 +499,27 @@ export const sendResultsToTelegram = asyncHandler(async (req: AuthRequest, res: 
   const { game, city, bot } = await validateGameForTelegram(id, req.userId!);
 
   const language = city.telegramPinnedLanguage || 'en-GB';
-  
+
   let finalSummaryText: string;
   if (summaryText && typeof summaryText === 'string' && summaryText.trim()) {
     finalSummaryText = summaryText.trim();
   } else {
-    finalSummaryText = await ResultsTelegramService.generateResultsSummary(
-      game,
-      language,
-      req.userId ?? undefined
-    );
+    const cachedSummary = (game as { resultsSummaryText?: string | null })
+      .resultsSummaryText;
+    if (cachedSummary?.trim()) {
+      finalSummaryText = cachedSummary.trim();
+    } else if (config.resultsArtifacts.enabled) {
+      throw new ApiError(
+        400,
+        'Summary text is required. Wait for results preparation or provide summaryText.'
+      );
+    } else {
+      finalSummaryText = await ResultsTelegramService.generateResultsSummary(
+        game,
+        language,
+        req.userId ?? undefined
+      );
+    }
   }
 
   const mainPhotoUrl = await ResultsTelegramService.getMainPhotoUrl(game);
@@ -482,11 +565,11 @@ export const resetTelegramResultsSent = asyncHandler(async (req: AuthRequest, re
   }
   await prisma.game.update({
     where: { id },
-    data: {
-      resultsSentToTelegram: false,
-      telegramResultsSummary: null,
-    },
+    data: { resultsSentToTelegram: false },
   });
+
+  await GameResultsArtifactQueueService.enqueue(id);
+
   res.json({ success: true });
 });
 

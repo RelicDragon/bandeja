@@ -7,6 +7,7 @@ import { useStoriesStore } from '@/store/storiesStore';
 import type { StorySlide } from '../types/storyEditor.types';
 import { buildOverlayStyleV2 } from '../types/storyEditor.types';
 import { exportStoryImage } from '../utils/storyCanvasExport';
+import { ensureSlideNaturalDimensions } from '../utils/storySlideNaturalSize';
 
 type PublishStep = 'export' | 'transcode' | 'upload' | 'create';
 
@@ -68,7 +69,7 @@ export function useStoryExport() {
 
       try {
         for (let i = 0; i < slides.length; i++) {
-          const slide = slides[i]!;
+          const slide = await ensureSlideNaturalDimensions(slides[i]!);
           const clientUploadId = `${batchId}-${i}`;
           const overlayText = slide.layers
             .filter((l) => l.type === 'text')

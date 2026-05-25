@@ -11,6 +11,7 @@ import type {
 } from '../types/storyEditor.types';
 import { DEFAULT_MEDIA_ADJUST, DEFAULT_TRANSFORM } from '../types/storyEditor.types';
 import { defaultMediaTransform, defaultTextTransform } from '../utils/storyTransform';
+import { invalidateSlideMediaAsset } from '../utils/storyCompositionAssetCache';
 import { createStickerLayer } from './useStoryEditorStickers';
 import { useEditorTransaction } from './useEditorTransaction';
 
@@ -132,16 +133,28 @@ export function useStoryEditorState({ files, stageWidth, stageHeight }: UseStory
 
   const setMediaTransform = useCallback(
     (transform: Transform2D | ((prev: Transform2D) => Transform2D)) => {
-      setSlides((prev) => {
+      mutateLive((prev) => {
         const idx = activeSlideIndex;
         const slide = prev[idx];
         if (!slide) return prev;
-        const nextTransform = typeof transform === 'function' ? transform(slide.mediaTransform) : transform;
+        const nextTransform =
+          typeof transform === 'function' ? transform(slide.mediaTransform) : transform;
         return prev.map((s, i) => (i === idx ? { ...s, mediaTransform: nextTransform } : s));
+      });
+    },
+    [activeSlideIndex, mutateLive]
+  );
+
+  const commitActiveSlide = useCallback(
+    (slide: StorySlide) => {
+      mutateLive((prev) => {
+        const idx = activeSlideIndex;
+        if (!prev[idx]) return prev;
+        return prev.map((s, i) => (i === idx ? slide : s));
       });
       setIsDirty(true);
     },
-    [activeSlideIndex]
+    [activeSlideIndex, mutateLive]
   );
 
   const setMediaAdjust = useCallback(
@@ -218,6 +231,7 @@ export function useStoryEditorState({ files, stageWidth, stageHeight }: UseStory
       withHistory((prev) =>
         prev.map((s) => {
           if (s.id !== slideId) return s;
+          invalidateSlideMediaAsset(s.media.previewUrl);
           URL.revokeObjectURL(s.media.previewUrl);
           return {
             ...s,
@@ -361,7 +375,11 @@ export function useStoryEditorState({ files, stageWidth, stageHeight }: UseStory
 
   const setTextLayer = useCallback(
     (layerId: string, patch: Partial<Pick<TextStoryLayer, 'text' | 'transform' | 'style'>>) => {
-      setSlides((prev) =>
+      const transformOnly =
+        patch.transform != null && patch.text === undefined && patch.style === undefined;
+      const apply = transformOnly ? mutateLive : withHistory;
+
+      apply((prev) =>
         prev.map((s, i) => {
           if (i !== activeSlideIndex) return s;
           return {
@@ -378,9 +396,9 @@ export function useStoryEditorState({ files, stageWidth, stageHeight }: UseStory
           };
         })
       );
-      setIsDirty(true);
+      if (!transformOnly) setIsDirty(true);
     },
-    [activeSlideIndex]
+    [activeSlideIndex, mutateLive, withHistory]
   );
 
   const updateTextLayerStyle = useCallback(
@@ -418,6 +436,7 @@ export function useStoryEditorState({ files, stageWidth, stageHeight }: UseStory
         ? (defaultTransforms[activeSlide.id] ?? { ...DEFAULT_TRANSFORM })
         : { ...DEFAULT_TRANSFORM },
       setMediaTransform,
+      commitActiveSlide,
       setMediaAdjust,
       setMediaAdjustWithHistory,
       beginTransaction,
@@ -456,6 +475,7 @@ export function useStoryEditorState({ files, stageWidth, stageHeight }: UseStory
       isDirty,
       defaultTransforms,
       setMediaTransform,
+      commitActiveSlide,
       setMediaAdjust,
       setMediaAdjustWithHistory,
       beginTransaction,

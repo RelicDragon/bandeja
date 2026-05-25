@@ -28,11 +28,27 @@ export function canSeeCreatedGameInStories(opts: {
 
 export function canSeeResultInStories(opts: {
   viewerFollows: boolean;
-  game: { resultsStatus: string; isPublic: boolean };
+  game: {
+    resultsStatus: string;
+    isPublic: boolean;
+    resultsArtifactsReadyAt: Date | null;
+  };
   outcomeOwner: { shareGameResultsToFollowers: boolean };
 }): boolean {
   if (!opts.viewerFollows) return false;
   if (!opts.outcomeOwner.shareGameResultsToFollowers) return false;
   if (!opts.game.isPublic) return false;
-  return opts.game.resultsStatus === 'FINAL';
+  return (
+    opts.game.resultsStatus === 'FINAL' && opts.game.resultsArtifactsReadyAt != null
+  );
+}
+
+export function canSeeBracketChampionInStories(opts: {
+  viewerFollows: boolean;
+  game: { isPublic: boolean };
+  owner: { shareGameResultsToFollowers: boolean };
+}): boolean {
+  if (!opts.viewerFollows) return false;
+  if (!opts.owner.shareGameResultsToFollowers) return false;
+  return opts.game.isPublic;
 }

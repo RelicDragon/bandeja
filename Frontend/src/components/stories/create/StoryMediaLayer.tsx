@@ -1,8 +1,9 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef } from 'react';
 import type { StorySlide, Transform2D } from './types/storyEditor.types';
-import { mediaAdjustToCssFilter } from './utils/storyAdjustFilters';
-import { STORY_CANVAS_HEIGHT, STORY_CANVAS_WIDTH, transformToCss } from './utils/storyTransform';
+import { mediaWrapperStyle } from './utils/storyCompositionLayout';
 import { useStoryGestures } from './hooks/useStoryGestures';
+import { computeCoverScale } from './utils/storyTransform';
+import { STORY_COMPOSITION_MEDIA_FILL_CLASS } from '@/components/stories/StoryCompositionMedia';
 
 type StoryMediaLayerProps = {
   slide: StorySlide;
@@ -30,13 +31,15 @@ export function StoryMediaLayer({
   onMediaGestureActiveChange,
 }: StoryMediaLayerProps) {
   const { media, mediaTransform, mediaAdjust } = slide;
-  const mediaW = media.naturalWidth ?? STORY_CANVAS_WIDTH;
-  const mediaH = media.naturalHeight ?? STORY_CANVAS_HEIGHT;
+  const mediaW = media.naturalWidth ?? 0;
+  const mediaH = media.naturalHeight ?? 0;
+  const coverScale = computeCoverScale(mediaW, mediaH);
 
   const { bind: gestureBind, isMediaGestureActive } = useStoryGestures({
     transform: mediaTransform,
     defaultTransform,
     stageScale,
+    coverScale,
     onTransformChange,
     onReset: onResetTransform,
     onGestureStart,
@@ -63,29 +66,23 @@ export function StoryMediaLayer({
     video.src = media.previewUrl;
   }, [media.previewUrl, media.type, onLoadDimensions]);
 
-  const wrapperStyle: CSSProperties = {
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
-    width: mediaW * stageScale,
-    height: mediaH * stageScale,
-    transform: `${transformToCss(mediaTransform, stageScale)} translate(-50%, -50%)`,
-    transformOrigin: 'center center',
-    filter: mediaAdjustToCssFilter(mediaAdjust),
-  };
+  const wrapperStyle = mediaWrapperStyle(
+    mediaTransform,
+    mediaW,
+    mediaH,
+    stageScale,
+    mediaAdjust
+  );
 
   const bindProps = gesturesEnabled ? gestureBind() : {};
 
   return (
-    <div
-      {...bindProps}
-      className="absolute inset-0 overflow-hidden touch-none"
-    >
+    <div {...bindProps} className="absolute inset-0 overflow-hidden touch-none">
       <div style={wrapperStyle}>
         {media.type === 'VIDEO' ? (
           <video
             src={media.previewUrl}
-            className="pointer-events-none h-full w-full object-cover"
+            className={STORY_COMPOSITION_MEDIA_FILL_CLASS}
             muted
             playsInline
             autoPlay
@@ -95,7 +92,7 @@ export function StoryMediaLayer({
           <img
             src={media.previewUrl}
             alt=""
-            className="pointer-events-none h-full w-full select-none object-cover"
+            className={STORY_COMPOSITION_MEDIA_FILL_CLASS}
             draggable={false}
           />
         )}

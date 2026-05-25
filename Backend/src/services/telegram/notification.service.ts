@@ -7,6 +7,8 @@ import { sendInviteNotification } from './notifications/invite.notification';
 import { sendGameCard } from './notifications/game-card.notification';
 import { sendGameSystemMessageNotification } from './notifications/game-system-message.notification';
 import { sendLeagueRoundStartNotification } from './notifications/league-round-start.notification';
+import { sendBracketRoundSummaryNotification } from './notifications/bracket-round-summary.notification';
+import type { BracketRoundSummaryPayload } from './notifications/bracket-round-summary.notification';
 import { sendGameReminderNotification } from './notifications/game-reminder.notification';
 import { sendNewGameNotification } from './notifications/new-game.notification';
 import { sendBetResolvedNotification, sendBetNeedsReviewNotification, sendBetCancelledNotification } from './notifications/bet-resolved.notification';
@@ -77,6 +79,15 @@ class TelegramNotificationService {
   async sendLeagueRoundStartNotification(game: any, user: any) {
     if (!this.bot) return;
     await sendLeagueRoundStartNotification(this.bot.api, game, user);
+  }
+
+  async sendBracketRoundSummaryNotification(
+    user: { id: string; telegramId: string | null; language?: string | null },
+    payload: BracketRoundSummaryPayload,
+    imagePng?: Buffer
+  ) {
+    if (!this.bot) return;
+    await sendBracketRoundSummaryNotification(this.bot.api, user, payload, imagePng);
   }
 
   async sendGameReminderNotification(gameId: string, hoursBeforeStart: number) {

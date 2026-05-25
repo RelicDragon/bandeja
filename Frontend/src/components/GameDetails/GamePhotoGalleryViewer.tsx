@@ -9,17 +9,22 @@ type GamePhotoGalleryViewerProps = {
   onClose: () => void;
 };
 
+function clampGalleryIndex(i: number, length: number): number {
+  if (length <= 0) return 0;
+  return Math.min(Math.max(0, i), length - 1);
+}
+
 export const GamePhotoGalleryViewer = ({
   images,
   initialIndex,
   onClose,
 }: GamePhotoGalleryViewerProps) => {
-  const [index, setIndex] = useState(initialIndex);
+  const [index, setIndex] = useState(() => clampGalleryIndex(initialIndex, images.length));
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
-    setIndex(initialIndex);
-  }, [initialIndex]);
+    setIndex(clampGalleryIndex(initialIndex, images.length));
+  }, [initialIndex, images.length]);
 
   const goPrev = useCallback(() => {
     setIndex((i) => (i > 0 ? i - 1 : i));
@@ -38,8 +43,10 @@ export const GamePhotoGalleryViewer = ({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [goNext, goPrev]);
 
-  const imageUrl = images[index];
-  if (!imageUrl) return null;
+  const imageUrl = images[clampGalleryIndex(index, images.length)];
+  if (!imageUrl) {
+    return null;
+  }
 
   const showNav = images.length > 1;
 

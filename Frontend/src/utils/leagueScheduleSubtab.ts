@@ -1,9 +1,9 @@
-export type LeagueScheduleSubtab = 'my' | 'list' | 'table';
+export type LeagueScheduleSubtab = 'my' | 'list' | 'table' | 'bracket';
 
 function parseScheduleSubtabParam(raw: string | null | undefined): LeagueScheduleSubtab | null {
   const v = (raw ?? '').trim().toLowerCase();
   if (!v) return null;
-  if (v === 'my' || v === 'list' || v === 'table') return v;
+  if (v === 'my' || v === 'list' || v === 'table' || v === 'bracket') return v;
   return null;
 }
 
@@ -11,12 +11,14 @@ function parseScheduleSubtabParam(raw: string | null | undefined): LeagueSchedul
 export function resolveLeagueScheduleMode(
   subtabParam: string | null | undefined,
   showMyTab: boolean,
-  canShowTableTab: boolean
+  canShowTableTab: boolean,
+  canShowBracketTab = false
 ): LeagueScheduleSubtab {
   const parsed = parseScheduleSubtabParam(subtabParam);
-  let mode: LeagueScheduleSubtab = parsed ?? 'my';
-  if (mode === 'my' && !showMyTab) mode = 'list';
-  if (mode === 'table' && !canShowTableTab) mode = 'list';
+  let mode: LeagueScheduleSubtab = parsed ?? (canShowBracketTab ? 'bracket' : showMyTab ? 'my' : 'list');
+  if (mode === 'my' && !showMyTab) mode = canShowBracketTab ? 'bracket' : 'list';
+  if (mode === 'table' && !canShowTableTab) mode = canShowBracketTab ? 'bracket' : 'list';
+  if (mode === 'bracket' && !canShowBracketTab) mode = showMyTab ? 'my' : 'list';
   return mode;
 }
 
@@ -45,7 +47,8 @@ export function canonicalScheduleQuery(
 export function repairLeagueScheduleSearchIfInvalid(
   search: string,
   showMyTab: boolean,
-  canShowTableTab: boolean
+  canShowTableTab: boolean,
+  canShowBracketTab = false
 ): string | null {
   const sp = new URLSearchParams(search);
   if (sp.get('tab') !== 'schedule') return null;
@@ -53,13 +56,24 @@ export function repairLeagueScheduleSearchIfInvalid(
   if (!raw) return null;
 
   if (raw === 'my' && !showMyTab) {
-    return canonicalScheduleQuery(search, 'list', false);
+    return canonicalScheduleQuery(search, canShowBracketTab ? 'bracket' : 'list', false);
   }
   if (raw === 'table' && !canShowTableTab) {
+    return canonicalScheduleQuery(
+      search,
+      canShowBracketTab ? 'bracket' : showMyTab ? 'my' : 'list',
+      showMyTab
+    );
+  }
+  if (raw === 'bracket' && !canShowBracketTab) {
     return canonicalScheduleQuery(search, showMyTab ? 'my' : 'list', showMyTab);
   }
-  if (raw !== 'my' && raw !== 'list' && raw !== 'table') {
-    return canonicalScheduleQuery(search, showMyTab ? 'my' : 'list', showMyTab);
+  if (raw !== 'my' && raw !== 'list' && raw !== 'table' && raw !== 'bracket') {
+    return canonicalScheduleQuery(
+      search,
+      canShowBracketTab ? 'bracket' : showMyTab ? 'my' : 'list',
+      showMyTab
+    );
   }
   return null;
 }

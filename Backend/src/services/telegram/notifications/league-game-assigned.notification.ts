@@ -10,6 +10,7 @@ import { getUserLanguageFromTelegramId } from '../utils';
 import { config } from '../../../config/env';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
+import { buildLeagueBracketScheduleUrl } from '../../league/leagueBracketDeepLink.util';
 
 export async function sendLeagueGameAssignedNotification(api: any, game: any, userId: string) {
   const allowed = await NotificationPreferenceService.doesUserAllow(
@@ -42,9 +43,15 @@ export async function sendLeagueGameAssignedNotification(api: any, game: any, us
   );
   const message = `🎯 ${escapeMarkdown(assignedTitle)}\n\n${scheduleLine}`;
 
-  const buttons = [
-    [{ text: t('telegram.viewGame', lang), url: `${config.frontendUrl}/games/${game.id}` }],
-  ];
+  const bracketViewUrl =
+    game.leagueRound?.playoffFormat === 'BRACKET' && (game.parentId ?? game.leagueSeason?.id)
+      ? buildLeagueBracketScheduleUrl(game.parentId ?? game.leagueSeason!.id!, {
+          bracketScope: game.leagueRound?.bracketScope ?? 'PER_GROUP',
+          leagueGroupId: game.leagueGroupId,
+          roundId: game.leagueRound?.id,
+        })
+      : `${config.frontendUrl}/games/${game.id}`;
+  const buttons = [[{ text: t('telegram.viewGame', lang), url: bracketViewUrl }]];
   const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
   try {
     await api.sendMessage(user.telegramId, finalMessage, options);

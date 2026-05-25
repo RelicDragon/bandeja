@@ -80,15 +80,15 @@ export function ProfileSportCard({
           disabled={disabled}
           aria-label={isPrimary ? t('profile.sports.primarySport') : t('profile.sports.setPrimary')}
           onClick={handleStarClick}
-          className={`absolute -right-0.5 -top-0.5 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 bg-white shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:bg-gray-900 ${
+          className={`absolute -right-0.5 -top-0.5 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 bg-white shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:bg-slate-800 dark:shadow-slate-950/40 ${
             disabled ? 'cursor-wait opacity-60' : 'cursor-pointer hover:border-primary-600 dark:hover:border-primary-400'
           } ${
             isPrimary
               ? 'border-primary-500 text-primary-600 dark:border-primary-400 dark:text-primary-400'
-              : 'border-gray-300 text-transparent dark:border-gray-600'
+              : 'border-gray-300 text-gray-300 dark:border-slate-500 dark:text-slate-500'
           }`}
         >
-          {isPrimary && <Star size={12} fill="currentColor" aria-hidden />}
+          <Star size={12} fill={isPrimary ? 'currentColor' : 'none'} aria-hidden />
         </button>
       )}
       <div
@@ -103,8 +103,8 @@ export function ProfileSportCard({
           disabled ? 'cursor-wait opacity-60' : 'cursor-pointer'
         } ${
           enabled
-            ? 'border-primary-500 bg-primary-50 shadow-md dark:border-primary-400 dark:bg-primary-950/40'
-            : 'border-gray-200 bg-gray-50 opacity-55 grayscale hover:opacity-80 dark:border-gray-700 dark:bg-gray-800/40'
+            ? 'border-primary-500 bg-primary-50 shadow-md dark:border-primary-400 dark:bg-primary-900/35 dark:shadow-primary-950/30'
+            : 'border-gray-200 bg-gray-50 opacity-60 grayscale hover:opacity-85 dark:border-slate-600 dark:bg-slate-800/55 dark:opacity-90 dark:grayscale-0 dark:hover:bg-slate-800/75'
         }`}
       >
         <img
@@ -115,7 +115,7 @@ export function ProfileSportCard({
         />
         <span
           className={`text-center text-[11px] font-semibold leading-tight ${
-            enabled ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
+            enabled ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-slate-400'
           }`}
         >
           {label}

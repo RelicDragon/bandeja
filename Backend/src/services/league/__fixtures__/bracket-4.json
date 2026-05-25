@@ -1,0 +1,65 @@
+{
+  "entrantCount": 4,
+  "bracketSize": 4,
+  "byeCount": 0,
+  "playInGames": 0,
+  "includeThirdPlace": false,
+  "includeConsolationBracket": false,
+  "includeDoubleElimination": false,
+  "slotCounts": {
+    "PLAY_IN": 0,
+    "BYE": 0,
+    "MAIN": 3,
+    "THIRD_PLACE": 0,
+    "CONSOLATION": 0,
+    "LOSERS": 0,
+    "GRAND_FINAL": 0
+  },
+  "slots": [
+    {
+      "slotKey": "MAIN-R0-M0",
+      "slotKind": "MAIN",
+      "phaseIndex": 1,
+      "roundIndex": 0,
+      "matchIndex": 0,
+      "seedRank": null,
+      "seedRankA": 1,
+      "seedRankB": 4,
+      "winnerSlotKey": "MAIN-R1-M0",
+      "feederSlotAKey": null,
+      "feederSlotBKey": null,
+      "roundLabel": "Semifinals",
+      "initialGame": true
+    },
+    {
+      "slotKey": "MAIN-R0-M1",
+      "slotKind": "MAIN",
+      "phaseIndex": 1,
+      "roundIndex": 0,
+      "matchIndex": 1,
+      "seedRank": null,
+      "seedRankA": 2,
+      "seedRankB": 3,
+      "winnerSlotKey": "MAIN-R1-M0",
+      "feederSlotAKey": null,
+      "feederSlotBKey": null,
+      "roundLabel": "Semifinals",
+      "initialGame": true
+    },
+    {
+      "slotKey": "MAIN-R1-M0",
+      "slotKind": "MAIN",
+      "phaseIndex": 1,
+      "roundIndex": 1,
+      "matchIndex": 0,
+      "seedRank": null,
+      "seedRankA": null,
+      "seedRankB": null,
+      "winnerSlotKey": null,
+      "feederSlotAKey": "MAIN-R0-M0",
+      "feederSlotBKey": "MAIN-R0-M1",
+      "roundLabel": "Final",
+      "initialGame": false
+    }
+  ]
+}

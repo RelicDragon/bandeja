@@ -12,7 +12,7 @@
     "test:group-channel": "vitest run src/utils/groupChannelParticipation.test.ts",
     "test:chat-open": "vitest run src/services/chat/__tests__/mergeOpenSnapshot.test.ts src/services/chat/__tests__/gameChatOpenPerformance.test.ts",
     "test:chat-outbox": "vitest run src/services/chat/chatSendCoordinator.test.ts src/services/chat/chatOutboxEnqueue.test.ts src/services/chat/chatOutboxRetry.test.ts src/services/chat/messageSendState.test.ts src/services/chat/chatSendSocketAck.test.ts src/services/chat/chatSendMessageCreate.test.ts src/services/chat/chatHttpRetry.test.ts src/services/chat/chatVideoTranscode.test.ts src/services/chat/chatVideoTranscodeWorkerClient.test.ts src/services/chat/chatVideoUploadRetry.test.ts src/services/chatMessageQueueStorage.video.test.ts && cd ../Backend && npx ts-node scripts/tests/chat-video-message-type.ts",
-    "test:stories": "vitest run src/components/stories/create/utils/storyTransform.test.ts src/components/stories/create/utils/storyCanvasExport.test.ts src/components/stories/slides/MediaStorySlide.v2.test.ts",
+    "test:stories": "vitest run src/components/stories/create/utils/storyTransform.test.ts src/components/stories/create/utils/storyCanvasExport.test.ts src/components/stories/create/utils/layoutCanvasText.test.ts src/components/stories/create/utils/storyCanvasHitTest.test.ts src/components/stories/slides/MediaStorySlide.v2.test.ts",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "increment-sw": "node scripts/increment-sw-version.js"
   },

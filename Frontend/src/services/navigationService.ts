@@ -24,6 +24,22 @@ class NavigationService {
     this.navigate!(buildUrl(place as any, { id: gameId }), { replace: true, state });
   }
 
+  navigateToLeagueSeasonSchedule(
+    leagueSeasonId: string,
+    options?: { subtab?: string; group?: string; roundId?: string }
+  ) {
+    if (!this.ensureInitialized() || !leagueSeasonId) return;
+    const sp = new URLSearchParams();
+    sp.set('tab', 'schedule');
+    if (options?.subtab) sp.set('subtab', options.subtab);
+    if (options?.roundId) {
+      sp.set('roundId', options.roundId);
+      sp.set('round', options.roundId);
+    }
+    if (options?.group) sp.set('group', options.group);
+    this.navigate!(`/games/${leagueSeasonId}?${sp.toString()}`, { replace: true });
+  }
+
   navigateToUserChat(userChatId: string) {
     if (!this.ensureInitialized() || !userChatId) return;
     this.navigate!(buildUrl('userChat', { id: userChatId }), { replace: true });

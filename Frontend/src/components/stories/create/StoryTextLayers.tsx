@@ -15,6 +15,8 @@ type StoryTextLayersProps = {
   onDeleteLayer: (layerId: string) => void;
   onTransformBegin?: () => void;
   onTransformEnd?: () => void;
+  /** Canvas compositor: only render textarea while editing */
+  canvasMode?: boolean;
 };
 
 export function StoryTextLayers({
@@ -29,10 +31,16 @@ export function StoryTextLayers({
   onDeleteLayer,
   onTransformBegin,
   onTransformEnd,
+  canvasMode = false,
 }: StoryTextLayersProps) {
+  const textLayers = layers.filter(isTextLayer);
+  const visibleLayers = canvasMode
+    ? textLayers.filter((l) => editingLayerId === l.id)
+    : textLayers;
+
   return (
     <>
-      {layers.filter(isTextLayer).map((layer) => (
+      {visibleLayers.map((layer) => (
         <StoryTextLayer
           key={layer.id}
           layer={layer}

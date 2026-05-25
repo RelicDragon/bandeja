@@ -418,6 +418,16 @@ export type GameLastMessagePreview = {
   sender?: BasicUser | null;
 };
 
+export type GameResultsArtifactsStatus = 'none' | 'pending' | 'running' | 'done' | 'failed';
+
+export interface GameResultsArtifacts {
+  status: GameResultsArtifactsStatus;
+  version: number;
+  summaryReady: boolean;
+  photoReady: boolean;
+  readyAt: string | null;
+}
+
 export interface Game {
   id: string;
   entityType: EntityType;
@@ -477,6 +487,8 @@ export interface Game {
   } | null;
   reactions?: Array<{ userId: string; emoji: string }>;
   resultsSentToTelegram?: boolean;
+  resultsSummaryText?: string | null;
+  resultsArtifacts?: GameResultsArtifacts;
   isClubFavorite?: boolean;
   priceTotal?: number | null;
   priceType?: PriceType;
@@ -534,6 +546,13 @@ export interface Game {
   leagueRound?: {
     id: string;
     orderIndex: number;
+    roundType?: 'REGULAR' | 'PLAYOFF';
+    playoffFormat?: 'BRACKET' | 'WINNERS_COURT' | 'AMERICANO' | null;
+    bracketScope?: 'PER_GROUP' | 'CROSS_GROUP' | null;
+  } | null;
+  bracketSlot?: {
+    slotKind?: 'PLAY_IN' | 'BYE' | 'MAIN' | 'THIRD_PLACE' | 'CONSOLATION' | 'LOSERS' | 'GRAND_FINAL';
+    roundIndex?: number;
   } | null;
   leagueSeason?: {
     id: string;

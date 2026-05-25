@@ -14,6 +14,10 @@ import toast from 'react-hot-toast';
 import { RoundData } from '@/api/results';
 import { useNavigate } from 'react-router-dom';
 import { getRules, isSuperTieBreakDeciderRow } from '@/utils/scoring';
+import {
+  bracketMatchStatusFromGame,
+  type BracketMatchStatus,
+} from '@/utils/leagueBracketMatchStatus';
 
 interface LeagueGameCardProps {
   game: Game;
@@ -24,6 +28,7 @@ interface LeagueGameCardProps {
   isDesktop?: boolean;
   showGroupTag?: boolean;
   showLeagueGroupSideAccent?: boolean;
+  seasonPlayoffBadge?: boolean;
   allRounds?: RoundData[] | null;
   onDelete?: () => Promise<void> | void;
   onNoteSaved?: () => void;
@@ -38,6 +43,7 @@ export const LeagueGameCard = ({
   isDesktop = false,
   showGroupTag = true,
   showLeagueGroupSideAccent = true,
+  seasonPlayoffBadge = false,
   allRounds,
   onDelete,
   onNoteSaved,
@@ -76,11 +82,17 @@ export const LeagueGameCard = ({
   const teamBPlayerIds = teamBPlayers.map(p => p.id);
 
   const isFinal = game.resultsStatus === 'FINAL';
+  const bracketStatus: BracketMatchStatus | null = isFinal
+    ? bracketMatchStatusFromGame(game)
+    : null;
+  const isWalkoverFinal = bracketStatus === 'WALKOVER';
+  const isForfeitFinal = bracketStatus === 'FORFEIT';
+  const isNonPlayedFinal = isWalkoverFinal || isForfeitFinal;
   const scoreSets = useMemo(
-    () => collectScoreSets(isFinal ? allRounds : null),
-    [allRounds, isFinal],
+    () => collectScoreSets(isFinal && !isNonPlayedFinal ? allRounds : null),
+    [allRounds, isFinal, isNonPlayedFinal],
   );
-  const showScores = isFinal && scoreSets.length > 0;
+  const showScores = isFinal && !isNonPlayedFinal && scoreSets.length > 0;
   const canEdit = game.resultsStatus === 'NONE' && onEdit;
   const canDelete = game.resultsStatus === 'NONE' && onDelete;
   const groupColor = game.leagueGroup ? getLeagueGroupColor(game.leagueGroup.color) : null;
@@ -222,8 +234,13 @@ export const LeagueGameCard = ({
           {game.leagueGroup.name}
         </div>
       )}
+      {!game.leagueGroup && seasonPlayoffBadge && (
+        <div className="absolute top-2 left-2 rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-800 dark:border-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-200">
+          {t('gameDetails.bracketSeasonPlayoff')}
+        </div>
+      )}
 
-      <div className={`w-full ${showGroupTag && game.leagueGroup ? 'mt-5' : ''}`}>
+      <div className={`w-full ${(showGroupTag && game.leagueGroup) || seasonPlayoffBadge ? 'mt-5' : ''}`}>
         <div className="flex w-full min-w-0 items-center justify-center gap-2 sm:gap-3">
           <div className="relative flex justify-start">
             <div
@@ -268,6 +285,20 @@ export const LeagueGameCard = ({
                   ) : null}
                 </div>
               ))}
+            </div>
+          ) : isNonPlayedFinal ? (
+            <div className="flex min-w-0 flex-col items-center justify-center gap-0.5 px-2">
+              <span
+                className={`rounded-md px-2 py-1 text-xs font-bold uppercase tracking-wide ${
+                  isForfeitFinal
+                    ? 'bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-200'
+                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800/80 dark:text-slate-200'
+                }`}
+              >
+                {isForfeitFinal
+                  ? t('gameDetails.bracketMatchForfeitLabel')
+                  : t('gameDetails.bracketMatchWalkoverLabel')}
+              </span>
             </div>
           ) : (
             <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">VS</div>

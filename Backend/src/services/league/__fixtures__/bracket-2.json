@@ -1,0 +1,35 @@
+{
+  "entrantCount": 2,
+  "bracketSize": 2,
+  "byeCount": 0,
+  "playInGames": 0,
+  "includeThirdPlace": false,
+  "includeConsolationBracket": false,
+  "includeDoubleElimination": false,
+  "slotCounts": {
+    "PLAY_IN": 0,
+    "BYE": 0,
+    "MAIN": 1,
+    "THIRD_PLACE": 0,
+    "CONSOLATION": 0,
+    "LOSERS": 0,
+    "GRAND_FINAL": 0
+  },
+  "slots": [
+    {
+      "slotKey": "MAIN-R0-M0",
+      "slotKind": "MAIN",
+      "phaseIndex": 1,
+      "roundIndex": 0,
+      "matchIndex": 0,
+      "seedRank": null,
+      "seedRankA": 1,
+      "seedRankB": 2,
+      "winnerSlotKey": null,
+      "feederSlotAKey": null,
+      "feederSlotBKey": null,
+      "roundLabel": "Final",
+      "initialGame": true
+    }
+  ]
+}

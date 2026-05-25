@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { TFunction } from 'i18next';
 import type { LeagueRound } from '@/api/leagues';
 import type { Game } from '@/types';
@@ -6,6 +7,7 @@ import { resultsApi, type RoundData } from '@/api/results';
 import { LeagueGameCard } from './LeagueGameCard';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
 import { useDesktop } from '@/hooks/useDesktop';
+import { buildLeagueHomeGameBracketPath, isBracketLeagueGame } from '@/utils/leagueHomeBracket.util';
 interface LeagueScheduleMyGamesListProps {
   filteredRounds: LeagueRound[];
   userId: string | undefined;
@@ -32,6 +34,7 @@ export function LeagueScheduleMyGamesList({
   t,
 }: LeagueScheduleMyGamesListProps) {
   const isDesktop = useDesktop();
+  const navigate = useNavigate();
   const [gameResultsMap, setGameResultsMap] = useState<Map<string, RoundData[] | null>>(new Map());
 
   const entries = useMemo(() => {
@@ -97,10 +100,23 @@ export function LeagueScheduleMyGamesList({
       {entries.map(({ round, game }) => {
         const canEditGames = canEdit && game.resultsStatus === 'NONE';
         const roundLabel = `${t('gameDetails.round')} ${round.orderIndex + 1}`;
-        const metaLine = game.leagueGroup?.name ? `${game.leagueGroup.name} · ${roundLabel}` : roundLabel;
+        const bracketPath = buildLeagueHomeGameBracketPath(game);
+        const metaParts = [game.leagueGroup?.name, roundLabel].filter(Boolean);
+        const metaLine = metaParts.join(' · ');
         return (
           <div key={game.id} className="space-y-1">
-            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">{metaLine}</p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">{metaLine}</p>
+              {isBracketLeagueGame(game) && bracketPath && (
+                <button
+                  type="button"
+                  onClick={() => navigate(bracketPath)}
+                  className="text-[11px] font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400"
+                >
+                  {t('gameDetails.scheduleMyGamesViewBracket', { defaultValue: 'View in bracket' })}
+                </button>
+              )}
+            </div>
             <LeagueGameCard
               game={game}
               onEdit={canEditGames ? () => onEditGame(game) : undefined}

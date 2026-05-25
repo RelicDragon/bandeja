@@ -1,5 +1,4 @@
 import { Api } from 'grammy';
-import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
@@ -9,6 +8,12 @@ import { NotificationPreferenceService } from '../../notificationPreference.serv
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
+import { buildLeagueRoundStartViewUrl } from '../../league/leagueBracketDeepLink.util';
+import {
+  leagueRoundStartNotificationLines,
+  leagueRoundStartNotificationTitleKey,
+  leagueRoundStartViewButtonKey,
+} from '../../league/leagueRoundStartNotificationCopy.util';
 
 export async function sendLeagueRoundStartNotification(
   api: Api,
@@ -21,11 +26,8 @@ export async function sendLeagueRoundStartNotification(
   const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
   const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
 
-  const leagueName = game.leagueSeason?.league?.name || 'League';
-  const roundNumber = game.leagueRound?.orderIndex !== undefined ? game.leagueRound.orderIndex + 1 : 1;
-
   const roundTitle = withOptionalSportPrefix(
-    t('telegram.leagueRoundStartReceived', lang),
+    t(leagueRoundStartNotificationTitleKey(game), lang),
     game.sport,
     user.primarySport,
     lang,
@@ -37,16 +39,18 @@ export async function sendLeagueRoundStartNotification(
     lang,
     escapeMarkdown,
   );
+  const { leagueLine, roundLine } = leagueRoundStartNotificationLines(game, lang);
   const message =
     `🎾 ${escapeMarkdown(roundTitle)}\n\n` +
-    `🏆 *${escapeMarkdown(leagueName)}*\n` +
-    `📅 ${escapeMarkdown(t('telegram.round', lang))} ${roundNumber}\n\n` +
+    `🏆 *${escapeMarkdown(leagueLine)}*\n` +
+    `📅 ${escapeMarkdown(roundLine)}\n\n` +
     scheduleLine;
 
+  const viewUrl = buildLeagueRoundStartViewUrl(game);
   const buttons = [[
     {
-      text: t('telegram.viewGame', lang),
-      url: `${config.frontendUrl}/games/${game.id}`
+      text: t(leagueRoundStartViewButtonKey(game), lang),
+      url: viewUrl,
     }
   ]];
 

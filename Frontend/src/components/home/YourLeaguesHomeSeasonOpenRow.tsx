@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
 import {
   AlertTriangle,
+  ChevronDown,
   ChevronRight,
+  LayoutGrid,
   MapPin,
   MessageCircle,
   Plane,
@@ -18,9 +20,21 @@ interface YourLeaguesHomeSeasonOpenRowProps {
   hub: LeagueSeasonHubRow;
   hubGame: Game | undefined;
   unread: number;
+  expanded: boolean;
+  onToggleExpanded: () => void;
+  hasBracketPlayoff?: boolean;
+  bracketShortcutPath?: string | null;
 }
 
-export function YourLeaguesHomeSeasonOpenRow({ hub, hubGame, unread: unreadProp }: YourLeaguesHomeSeasonOpenRowProps) {
+export function YourLeaguesHomeSeasonOpenRow({
+  hub,
+  hubGame,
+  unread: unreadProp,
+  expanded,
+  onToggleExpanded,
+  hasBracketPlayoff = false,
+  bracketShortcutPath = null,
+}: YourLeaguesHomeSeasonOpenRowProps) {
   const displayUnread = useContextUnread('GAME', hub.hubId, unreadProp);
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -33,16 +47,16 @@ export function YourLeaguesHomeSeasonOpenRow({ hub, hubGame, unread: unreadProp 
   const clubName = hubGame?.court?.club?.name || hubGame?.club?.name;
   const playingCount = (hubGame?.participants ?? []).filter((p) => p.status === 'PLAYING').length;
 
-  const rowClass = stale
-    ? 'flex w-full items-center gap-2.5 rounded-lg px-2 py-2.5 text-left transition-all border-2 border-amber-600 dark:border-amber-500 bg-white/80 dark:bg-gray-900/80 shadow-md hover:bg-amber-50/50 dark:hover:bg-amber-950/20 active:scale-[0.99]'
-    : 'flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-[0.99]';
+  const shellClass = stale
+    ? 'flex items-stretch overflow-hidden rounded-xl border border-amber-500/80 bg-amber-50/50 dark:border-amber-600/60 dark:bg-amber-950/20'
+    : 'flex items-stretch overflow-hidden rounded-xl border border-gray-200/80 bg-gray-50/50 dark:border-gray-700/80 dark:bg-gray-800/30';
 
   const seasonLabel = (
     <>
       <p
         className={
           stale
-            ? 'mt-0.5 truncate text-xs font-medium text-amber-900/85 dark:text-amber-200/80'
+            ? 'mt-0.5 truncate text-xs font-medium text-amber-900 dark:text-amber-100'
             : 'truncate text-sm font-semibold text-gray-900 dark:text-white'
         }
       >
@@ -59,45 +73,29 @@ export function YourLeaguesHomeSeasonOpenRow({ hub, hubGame, unread: unreadProp 
   );
 
   return (
-    <button type="button" onClick={() => navigate(`/games/${hub.hubId}`)} className={rowClass}>
-      {stale ? (
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white dark:bg-amber-600">
-          <AlertTriangle size={16} strokeWidth={2.25} />
-        </div>
-      ) : (
-        hub.avatarUrl ? (
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-blue-50 dark:bg-blue-950/50">
-            <img src={hub.avatarUrl} alt="" className="h-10 w-10 object-cover" />
-          </div>
-        ) : null
-      )}
-      <div className="min-w-0 flex-1">
+    <div className={shellClass}>
+      <button
+        type="button"
+        onClick={() => navigate(`/games/${hub.hubId}`)}
+        className="flex min-h-[3.25rem] min-w-0 flex-1 items-center gap-2.5 px-2.5 py-2 text-left transition-colors hover:bg-gray-100/80 active:bg-gray-100 dark:hover:bg-gray-800/60 dark:active:bg-gray-800"
+      >
         {stale ? (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="inline-flex flex-shrink-0 rounded border border-amber-700 bg-amber-200/90 px-1 py-px text-[10px] font-bold uppercase tracking-wide text-amber-950 dark:border-amber-500 dark:bg-amber-800/80 dark:text-amber-100">
-              {t('home.staleGameBadge', { defaultValue: 'Time passed' })}
-            </span>
-            {isDifferentCity && hubGame?.city?.name && (
-              <span className="inline-flex flex-shrink-0 items-center gap-0.5 rounded border border-yellow-300 bg-yellow-50 px-1 py-px text-[10px] font-medium text-yellow-700 dark:border-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
-                <Plane size={8} />
-                {translateCity(hubGame.city.id, hubGame.city.name, hubGame.city.country)}
-              </span>
-            )}
-            {clubName && (
-              <>
-                <span className="text-xs text-gray-300 dark:text-gray-600">•</span>
-                <span className="flex min-w-0 items-center gap-1 truncate text-sm font-medium text-amber-900 dark:text-amber-200/90">
-                  <MapPin size={12} className="flex-shrink-0" />
-                  {clubName}
-                </span>
-              </>
-            )}
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white dark:bg-amber-600">
+            <AlertTriangle size={16} strokeWidth={2.25} />
           </div>
-        ) : (
-          ((isDifferentCity && hubGame?.city?.name) || clubName) && (
-            <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
+        ) : hub.avatarUrl ? (
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
+            <img src={hub.avatarUrl} alt="" className="h-full w-full object-cover" />
+          </div>
+        ) : null}
+        <div className="min-w-0 flex-1">
+          {stale ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="inline-flex shrink-0 rounded border border-amber-700 bg-amber-200/90 px-1 py-px text-[10px] font-bold uppercase tracking-wide text-amber-950 dark:border-amber-500 dark:bg-amber-800/80 dark:text-amber-100">
+                {t('home.staleGameBadge', { defaultValue: 'Time passed' })}
+              </span>
               {isDifferentCity && hubGame?.city?.name && (
-                <span className="inline-flex flex-shrink-0 items-center gap-0.5 rounded border border-yellow-300 bg-yellow-50 px-1 py-px text-[10px] font-medium text-yellow-700 dark:border-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+                <span className="inline-flex shrink-0 items-center gap-0.5 rounded border border-yellow-300 bg-yellow-50 px-1 py-px text-[10px] font-medium text-yellow-700 dark:border-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
                   <Plane size={8} />
                   {translateCity(hubGame.city.id, hubGame.city.name, hubGame.city.country)}
                 </span>
@@ -105,48 +103,89 @@ export function YourLeaguesHomeSeasonOpenRow({ hub, hubGame, unread: unreadProp 
               {clubName && (
                 <>
                   <span className="text-xs text-gray-300 dark:text-gray-600">•</span>
-                  <span className="flex min-w-0 items-center gap-1 truncate text-sm text-gray-600 dark:text-gray-400">
-                    <MapPin size={12} className="flex-shrink-0" />
+                  <span className="flex min-w-0 items-center gap-1 truncate text-sm font-medium text-amber-900 dark:text-amber-200/90">
+                    <MapPin size={12} className="shrink-0" />
                     {clubName}
                   </span>
                 </>
               )}
             </div>
-          )
-        )}
-        {seasonLabel}
-      </div>
-      <div className="flex shrink-0 items-center gap-1.5">
-        {displayUnread > 0 && (
-          <span
-            className={
-              stale
-                ? 'inline-flex items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white'
-                : 'inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white'
-            }
-          >
-            <MessageCircle size={10} strokeWidth={2.5} />
-            {displayUnread > 99 ? '99+' : displayUnread}
-          </span>
-        )}
-        {hubGame && (
-          <div
-            className={
-              stale
-                ? 'flex items-center gap-1 text-xs font-semibold text-amber-900 dark:text-amber-200'
-                : 'flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400'
-            }
-          >
-            <Users size={12} />
-            <span>
+          ) : (
+            ((isDifferentCity && hubGame?.city?.name) || clubName) && (
+              <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
+                {isDifferentCity && hubGame?.city?.name && (
+                  <span className="inline-flex shrink-0 items-center gap-0.5 rounded border border-yellow-300 bg-yellow-50 px-1 py-px text-[10px] font-medium text-yellow-700 dark:border-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+                    <Plane size={8} />
+                    {translateCity(hubGame.city.id, hubGame.city.name, hubGame.city.country)}
+                  </span>
+                )}
+                {clubName && (
+                  <>
+                    <span className="text-xs text-gray-300 dark:text-gray-600">•</span>
+                    <span className="flex min-w-0 items-center gap-1 truncate text-sm text-gray-600 dark:text-gray-400">
+                      <MapPin size={12} className="shrink-0" />
+                      {clubName}
+                    </span>
+                  </>
+                )}
+              </div>
+            )
+          )}
+          {seasonLabel}
+          {hasBracketPlayoff && !stale && (
+            <span className="mt-1 inline-flex shrink-0 rounded border border-indigo-200 bg-indigo-50 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-200">
+              {t('home.leagueSeasonPlayoffBadge', { defaultValue: 'Playoffs' })}
+            </span>
+          )}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {bracketShortcutPath && !stale && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(bracketShortcutPath);
+              }}
+              className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-800 transition-colors hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-200 dark:hover:bg-indigo-900/60"
+              aria-label={t('home.leagueSeasonBracketShortcut', { defaultValue: 'Open bracket' })}
+            >
+              <LayoutGrid size={12} aria-hidden />
+              {t('home.leagueSeasonBracketShortcut', { defaultValue: 'Bracket' })}
+            </button>
+          )}
+          {displayUnread > 0 && (
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+              <MessageCircle size={10} strokeWidth={2.5} />
+              {displayUnread > 99 ? '99+' : displayUnread}
+            </span>
+          )}
+          {hubGame && (
+            <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <Users size={12} />
               {hubGame.entityType === 'BAR'
                 ? playingCount
                 : `${playingCount}/${hubGame.maxParticipants}`}
             </span>
-          </div>
-        )}
-        <ChevronRight size={18} className="shrink-0 text-gray-400 dark:text-gray-500" aria-hidden />
-      </div>
-    </button>
+          )}
+          <ChevronRight size={18} className="shrink-0 text-gray-400 dark:text-gray-500" aria-hidden />
+        </div>
+      </button>
+      <button
+        type="button"
+        onClick={onToggleExpanded}
+        aria-expanded={expanded}
+        aria-label={t('home.toggleLeagueGames', { defaultValue: 'Show or hide games' })}
+        className="flex w-11 shrink-0 items-center justify-center self-stretch border-l border-gray-200/80 text-gray-400 transition-colors hover:bg-gray-100/80 hover:text-gray-600 active:bg-gray-100 dark:border-gray-700/80 dark:text-gray-500 dark:hover:bg-gray-800/60 dark:hover:text-gray-300 dark:active:bg-gray-800"
+      >
+        <ChevronDown
+          size={20}
+          strokeWidth={2}
+          className={`transition-transform duration-200 ease-out motion-reduce:transition-none ${
+            expanded ? '' : '-rotate-90'
+          }`}
+          aria-hidden
+        />
+      </button>
+    </div>
   );
 }

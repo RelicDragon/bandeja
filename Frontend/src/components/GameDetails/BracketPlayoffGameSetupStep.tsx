@@ -1,0 +1,86 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
+import { Button, GameFormatCard, GameFormatWizard } from '@/components';
+import { useGameFormat } from '@/hooks/useGameFormat';
+import type { GameSetupParams } from '@/types';
+
+interface BracketPlayoffGameSetupStepProps {
+  onBack: () => void;
+  onConfirm: (params: GameSetupParams) => void;
+  submitting: boolean;
+}
+
+export const BracketPlayoffGameSetupStep = ({
+  onBack,
+  onConfirm,
+  submitting,
+}: BracketPlayoffGameSetupStepProps) => {
+  const { t } = useTranslation();
+  const gameFormat = useGameFormat(
+    { gameType: 'CLASSIC', matchGenerationType: 'HANDMADE', scoringMode: 'CLASSIC' },
+    { skipGenerationParticipantDefaults: true }
+  );
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [formatReviewed, setFormatReviewed] = useState(false);
+
+  const handleOpenWizard = () => {
+    setFormatReviewed(true);
+    setWizardOpen(true);
+  };
+
+  const handleConfirm = () => {
+    if (!formatReviewed) return;
+    onConfirm({
+      ...gameFormat.setupPayload,
+      scoringMode: gameFormat.scoringMode,
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+        {t('gameDetails.bracketGameSetupHint', {
+          defaultValue: 'Classic match scoring (same as regular season fixtures).',
+        })}
+      </p>
+      {!formatReviewed && (
+        <p className="text-xs text-center text-amber-600 dark:text-amber-400 rounded-lg border border-amber-200/70 dark:border-amber-800/50 bg-amber-50/60 dark:bg-amber-950/30 px-3 py-2">
+          {t('gameDetails.bracketGameSetupBlindAdvanceWarn', {
+            defaultValue: 'Review match format before continuing — defaults apply to every bracket game.',
+          })}
+        </p>
+      )}
+      <GameFormatCard
+        entityType="LEAGUE_SEASON"
+        format={gameFormat}
+        onOpenWizard={handleOpenWizard}
+      />
+      {wizardOpen && (
+        <GameFormatWizard
+          isOpen={wizardOpen}
+          format={gameFormat}
+          hideGenerationStep
+          onClose={() => setWizardOpen(false)}
+        />
+      )}
+      <div className="flex gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
+        <Button variant="outline" onClick={onBack} className="flex-1" disabled={submitting}>
+          {t('common.back', { defaultValue: 'Back' })}
+        </Button>
+        <Button onClick={handleConfirm} disabled={submitting || !formatReviewed} className="flex-1">
+          {submitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              {t('common.loading')}
+            </>
+          ) : formatReviewed ? (
+            t('common.next', { defaultValue: 'Next' })
+          ) : (
+            t('gameDetails.bracketGameSetupReviewFormat', { defaultValue: 'Review format' })
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+};

@@ -9,7 +9,8 @@ export type CaptionContext =
   | { type: 'USER_STORY_ITEM'; caption: string | null }
   | { type: 'GAME_PHOTO'; gameName: string | null; sport: string; clubName: string | null }
   | { type: 'GAME_CREATED'; clubName: string | null; createdAt: Date }
-  | { type: 'GAME_RESULT'; gameName: string | null; isWinner: boolean; wins: number; losses: number };
+  | { type: 'GAME_RESULT'; gameName: string | null; isWinner: boolean; wins: number; losses: number }
+  | { type: 'BRACKET_CHAMPION'; leagueName: string; championTeamLabel: string };
 
 function formatRelativeTime(date: Date, now = new Date()): string {
   const diffMs = Math.max(0, now.getTime() - date.getTime());
@@ -44,6 +45,10 @@ export function resolveSyntheticCaption(context: CaptionContext, now = new Date(
       const raw = `${wl} · ${name} · ${context.wins}-${context.losses}`;
       return normalizeCaption(raw, MAX_SYNTHETIC_CAPTION_LENGTH);
     }
+    case 'BRACKET_CHAMPION': {
+      const raw = `🏆 ${context.leagueName} · ${context.championTeamLabel}`;
+      return normalizeCaption(raw, MAX_SYNTHETIC_CAPTION_LENGTH);
+    }
     default:
       return null;
   }
@@ -56,6 +61,8 @@ export function captionContextFromStorySegment(
     media?: { overlayText?: string };
     game?: GameStorySummary;
     result?: ResultSummary;
+    leagueName?: string;
+    championTeamLabel?: string;
   },
   manualCaption?: string | null,
 ): CaptionContext | null {
@@ -90,6 +97,13 @@ export function captionContextFromStorySegment(
         wins: segment.result.wins,
         losses: segment.result.losses,
       };
+    case StorySourceType.BRACKET_CHAMPION:
+    case 'BRACKET_CHAMPION': {
+      const leagueName = segment.leagueName?.trim();
+      const championTeamLabel = segment.championTeamLabel?.trim();
+      if (!leagueName || !championTeamLabel) return null;
+      return { type: 'BRACKET_CHAMPION', leagueName, championTeamLabel };
+    }
     default:
       return null;
   }

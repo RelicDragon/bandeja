@@ -6,6 +6,7 @@ import { getUserGameNote, getUserNotesForGames } from '../userGameNote.service';
 import { InviteService } from '../invite.service';
 import { ReadReceiptService } from '../chat/readReceipt.service';
 import { attachReactionsToGames, fetchReactionsByGameIds } from './gameReaction.service';
+import { buildResultsArtifactsDto } from '../gameResultsArtifact/gameResultsArtifact.dto';
 import { GAME_INVITE_OUTCOME_INCLUDE } from '../../utils/gameInviteOutcomeInclude';
 import {
   projectUserForSportContext,
@@ -29,9 +30,15 @@ export const MAIN_PHOTO_RELATION_SELECT = {
 
 export function projectGamePhotoPayload(game: any): any {
   const mainPhoto = game.mainPhoto;
-  const { mainPhotoId: _mainPhotoId, photos: _photos, ...rest } = game;
+  const {
+    mainPhotoId: _mainPhotoId,
+    photos: _photos,
+    resultsArtifactJob: _resultsArtifactJob,
+    ...rest
+  } = game;
   void _mainPhotoId;
   void _photos;
+  void _resultsArtifactJob;
   return {
     ...rest,
     photosCount: game.photosCount ?? 0,
@@ -42,6 +49,11 @@ export function projectGamePhotoPayload(game: any): any {
           originalUrl: mainPhoto.originalUrl,
         }
       : null,
+    resultsArtifacts: buildResultsArtifactsDto({
+      resultsArtifactsVersion: game.resultsArtifactsVersion ?? 0,
+      resultsArtifactsReadyAt: game.resultsArtifactsReadyAt ?? null,
+      resultsArtifactJob: game.resultsArtifactJob ?? null,
+    }),
   };
 }
 
@@ -214,9 +226,24 @@ export const getBaseGameInclude = () => ({
       id: true,
       orderIndex: true,
       roundType: true,
+      playoffFormat: true,
+      bracketScope: true,
+    },
+  },
+  bracketSlot: {
+    select: {
+      slotKind: true,
+      roundIndex: true,
     },
   },
   mainPhoto: MAIN_PHOTO_RELATION_SELECT,
+  resultsArtifactJob: {
+    select: {
+      status: true,
+      summaryStatus: true,
+      photoStatus: true,
+    },
+  },
 });
 
 const getGamesCourtInclude = () => ({
@@ -310,6 +337,8 @@ const getAvailableGamesInclude = () => ({
       id: true,
       orderIndex: true,
       roundType: true,
+      playoffFormat: true,
+      bracketScope: true,
     },
   },
   parent: {
@@ -320,6 +349,13 @@ const getAvailableGamesInclude = () => ({
     },
   },
   mainPhoto: MAIN_PHOTO_RELATION_SELECT,
+  resultsArtifactJob: {
+    select: {
+      status: true,
+      summaryStatus: true,
+      photoStatus: true,
+    },
+  },
 });
 
 export const getGameInclude = () => ({

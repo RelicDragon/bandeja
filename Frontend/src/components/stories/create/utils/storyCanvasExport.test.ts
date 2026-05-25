@@ -12,6 +12,8 @@ import {
 } from './storyCanvasExport';
 import { STORY_TEXT_BASE_CANVAS_PX } from './storyTextStyles';
 import { computeCoverScale } from './storyTransform';
+import { ensureSlideNaturalDimensions } from './storySlideNaturalSize';
+import { layoutCanvasText } from './layoutCanvasText';
 
 describe('mediaAdjustToCssFilter / mediaAdjustToCanvasFilter', () => {
   it('returns none for default adjust values', () => {
@@ -254,5 +256,34 @@ describe('exportStoryImage', () => {
     expect(textTranslate?.args).toEqual(expected.translate);
     const textScale = ctxCalls.filter((c) => c.method === 'scale').at(-1);
     expect(textScale?.args).toEqual(expected.scale);
+  });
+});
+
+describe('layoutCanvasText integration', () => {
+  it('multi-line text layout width stays within max', () => {
+    const ctx = { measureText: (t: string) => ({ width: t.length * 8 }) };
+    const layout = layoutCanvasText(ctx, 'Hello\nWorld line two', STORY_TEXT_BASE_CANVAS_PX);
+    expect(layout.lines.length).toBe(2);
+    expect(layout.height).toBeGreaterThan(STORY_TEXT_BASE_CANVAS_PX);
+  });
+});
+
+describe('ensureSlideNaturalDimensions', () => {
+  it('returns slide unchanged when dimensions exist', async () => {
+    const slide = {
+      id: 's1',
+      media: {
+        file: new File(['x'], 'a.jpg', { type: 'image/jpeg' }),
+        type: 'IMAGE' as const,
+        previewUrl: 'blob:x',
+        naturalWidth: 800,
+        naturalHeight: 600,
+      },
+      mediaTransform: { x: 0, y: 0, scale: 1, rotation: 0 },
+      mediaAdjust: DEFAULT_MEDIA_ADJUST,
+      layers: [],
+    };
+    const result = await ensureSlideNaturalDimensions(slide);
+    expect(result.media.naturalWidth).toBe(800);
   });
 });

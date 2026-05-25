@@ -6,7 +6,7 @@
 
 import * as path from 'path';
 import * as dotenv from 'dotenv';
-import { EntityType, GameStatus, ParticipantRole } from '@prisma/client';
+import { EntityType, GamePhotoSource, GameStatus, ParticipantRole } from '@prisma/client';
 import { ApiError } from '../../src/utils/ApiError';
 import { GamePhotoReadService } from '../../src/services/gamePhoto/gamePhoto.read.service';
 import { GamePhotoUpdateService } from '../../src/services/gamePhoto/gamePhoto.update.service';
@@ -227,6 +227,24 @@ async function main() {
     assert(empty?.photosCount === 0, 'photosCount zero after last delete');
     assert(empty?.mainPhotoId === null, 'mainPhotoId null after last delete');
     console.log('ok: delete last photo clears main and count');
+
+    const aiPhoto = await prisma.gamePhoto.create({
+      data: {
+        gameId,
+        source: GamePhotoSource.AI_GENERATED,
+        uploaderId: null,
+        originalUrl: `/uploads/chat/originals/qa-ai-${suffix}.webp`,
+        thumbnailUrl: `/uploads/chat/thumbnails/qa-ai-${suffix}.webp`,
+      },
+    });
+    const aiRow = await prisma.gamePhoto.findUnique({
+      where: { id: aiPhoto.id },
+      select: { source: true, uploaderId: true },
+    });
+    assert(aiRow?.source === 'AI_GENERATED', 'AI_GENERATED source on GamePhoto');
+    assert(aiRow?.uploaderId === null, 'AI photo uploaderId null');
+    await prisma.gamePhoto.delete({ where: { id: aiPhoto.id } });
+    console.log('ok: GamePhoto AI_GENERATED source');
   } finally {
     await prisma.gamePhoto.deleteMany({ where: { gameId: { in: [gameId, announcedGameId] } } });
     await prisma.gameParticipant.deleteMany({ where: { gameId: { in: [gameId, announcedGameId] } } });

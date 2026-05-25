@@ -5,6 +5,11 @@ import { withOptionalSportPrefix } from '../../shared/notificationSport';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
+import { leagueRoundStartPushScheduleExtras } from '../../league/leagueBracketDeepLink.util';
+import {
+  leagueRoundStartNotificationBodyPrefix,
+  leagueRoundStartNotificationTitleKey,
+} from '../../league/leagueRoundStartNotificationCopy.util';
 
 export async function createLeagueRoundStartPushNotification(
   game: any,
@@ -16,16 +21,13 @@ export async function createLeagueRoundStartPushNotification(
   const lang = user.language || 'en';
   const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
 
-  const leagueName = game.leagueSeason?.league?.name || 'League';
-  const roundNumber = game.leagueRound?.orderIndex !== undefined ? game.leagueRound.orderIndex + 1 : 1;
-
   const title = withOptionalSportPrefix(
-    t('telegram.leagueRoundStartReceived', lang),
+    t(leagueRoundStartNotificationTitleKey(game), lang),
     game.sport,
     user.primarySport,
     lang,
   );
-  const body = `${leagueName} - ${t('telegram.round', lang)} ${roundNumber}\n${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+  const body = `${leagueRoundStartNotificationBodyPrefix(game, lang)}\n${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
 
   return {
     type: NotificationType.GAME_REMINDER,
@@ -33,7 +35,8 @@ export async function createLeagueRoundStartPushNotification(
     body,
     data: {
       gameId: game.id,
-      shortDayOfWeek: gameInfo.shortDayOfWeek
+      shortDayOfWeek: gameInfo.shortDayOfWeek,
+      ...leagueRoundStartPushScheduleExtras(game),
     },
     sound: 'default'
   };

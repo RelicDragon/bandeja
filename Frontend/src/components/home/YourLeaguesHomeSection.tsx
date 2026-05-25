@@ -20,6 +20,10 @@ import {
   readYourLeaguesHomeHubExpandedSync,
   type HubExpandedMap,
 } from '@/utils/yourLeaguesHomeHubExpandedStorage';
+import {
+  buildLeagueHomeHubBracketPath,
+  hubHasBracketLeagueGames,
+} from '@/utils/leagueHomeBracket.util';
 import { YourLeaguesHomeSeasonOpenRow } from './YourLeaguesHomeSeasonOpenRow';
 import { YourLeaguesHomeSeasonScheduledGamesExpandable } from './YourLeaguesHomeSeasonScheduledGamesExpandable';
 
@@ -46,9 +50,10 @@ export function YourLeaguesHomeSection({
     [games, user?.id]
   );
   const [expanded, setExpanded] = useState(readYourLeaguesHomeExpandedSync);
-  const [hubExpanded, setHubExpanded] = useState<HubExpandedMap>(
+  const [hubUiExpanded, setHubUiExpanded] = useState<HubExpandedMap>(
     readYourLeaguesHomeHubExpandedSync
   );
+  const [unscheduledExpanded, setUnscheduledExpanded] = useState<HubExpandedMap>({});
 
   useEffect(() => {
     let cancel = false;
@@ -56,19 +61,53 @@ export function YourLeaguesHomeSection({
       if (!cancel) setExpanded(v);
     });
     void hydrateYourLeaguesHomeHubExpandedFromIdb().then((v) => {
-      if (!cancel) setHubExpanded(v);
+      if (!cancel) setHubUiExpanded(v);
     });
     return () => {
       cancel = true;
     };
   }, []);
 
-  const toggleHubExpanded = useCallback((hubId: string) => {
-    setHubExpanded((prev) => {
-      const next: HubExpandedMap = { ...prev, [hubId]: !prev[hubId] };
+  const leagueBodyKey = (hubId: string) => `${hubId}:body`;
+
+  const isLeagueBodyExpanded = useCallback(
+    (hubId: string) => hubUiExpanded[leagueBodyKey(hubId)] !== false,
+    [hubUiExpanded]
+  );
+
+  const isScheduledExpanded = useCallback(
+    (hubId: string) => hubUiExpanded[hubId] !== false,
+    [hubUiExpanded]
+  );
+
+  const toggleLeagueBodyExpanded = useCallback((hubId: string) => {
+    const key = leagueBodyKey(hubId);
+    setHubUiExpanded((prev) => {
+      const next: HubExpandedMap = {
+        ...prev,
+        [key]: prev[key] === false,
+      };
       persistYourLeaguesHomeHubExpanded(next);
       return next;
     });
+  }, []);
+
+  const toggleScheduledExpanded = useCallback((hubId: string) => {
+    setHubUiExpanded((prev) => {
+      const next: HubExpandedMap = {
+        ...prev,
+        [hubId]: prev[hubId] === false,
+      };
+      persistYourLeaguesHomeHubExpanded(next);
+      return next;
+    });
+  }, []);
+
+  const toggleUnscheduledExpanded = useCallback((hubId: string) => {
+    setUnscheduledExpanded((prev) => ({
+      ...prev,
+      [hubId]: !prev[hubId],
+    }));
   }, []);
 
   if (hubs.length === 0) return null;
@@ -128,21 +167,34 @@ export function YourLeaguesHomeSection({
                     hub={hub}
                     hubGame={hubGame}
                     unread={gamesUnreadCounts[hub.hubId] ?? 0}
+                    expanded={isLeagueBodyExpanded(hub.hubId)}
+                    onToggleExpanded={() => toggleLeagueBodyExpanded(hub.hubId)}
+                    hasBracketPlayoff={hubHasBracketLeagueGames(games, hub.hubId)}
+                    bracketShortcutPath={buildLeagueHomeHubBracketPath(games, hub.hubId)}
                   />
-                  <YourLeaguesHomeSeasonScheduledGamesExpandable
-                    hubGames={scheduledGames}
-                    gamesUnreadCounts={gamesUnreadCounts}
-                    expanded={!!hubExpanded[hub.hubId]}
-                    onToggleExpanded={() => toggleHubExpanded(hub.hubId)}
-                    titleKey="home.leagueSeasonScheduledGames"
-                  />
-                  <YourLeaguesHomeSeasonScheduledGamesExpandable
-                    hubGames={unscheduledGames}
-                    gamesUnreadCounts={gamesUnreadCounts}
-                    expanded={!!hubExpanded[`${hub.hubId}:unscheduled`]}
-                    onToggleExpanded={() => toggleHubExpanded(`${hub.hubId}:unscheduled`)}
-                    titleKey="home.leagueSeasonUnscheduledGames"
-                  />
+                  <div
+                    className="grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none"
+                    style={{
+                      gridTemplateRows: isLeagueBodyExpanded(hub.hubId) ? '1fr' : '0fr',
+                    }}
+                  >
+                    <div className="flex min-h-0 flex-col gap-1.5 overflow-hidden">
+                      <YourLeaguesHomeSeasonScheduledGamesExpandable
+                        hubGames={scheduledGames}
+                        gamesUnreadCounts={gamesUnreadCounts}
+                        expanded={isScheduledExpanded(hub.hubId)}
+                        onToggleExpanded={() => toggleScheduledExpanded(hub.hubId)}
+                        titleKey="home.leagueSeasonScheduledGames"
+                      />
+                      <YourLeaguesHomeSeasonScheduledGamesExpandable
+                        hubGames={unscheduledGames}
+                        gamesUnreadCounts={gamesUnreadCounts}
+                        expanded={!!unscheduledExpanded[hub.hubId]}
+                        onToggleExpanded={() => toggleUnscheduledExpanded(hub.hubId)}
+                        titleKey="home.leagueSeasonUnscheduledGames"
+                      />
+                    </div>
+                  </div>
                 </div>
               );
             })}

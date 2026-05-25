@@ -17,6 +17,7 @@ import { AdminMarketCategoryService } from '../services/admin/marketCategory.ser
 import { AdminMassNotificationService } from '../services/admin/massNotification.service';
 import { ClubAdminAssignmentService } from '../services/admin/clubAdminAssignment.service';
 import { AdminTranslationQueueStatsService } from '../services/admin/translationQueueStats.service';
+import { AdminGameResultsArtifactQueueStatsService } from '../services/admin/gameResultsArtifactQueueStats.service';
 import prisma from '../config/database';
 import { issuedRefreshJsonPayload } from '../utils/refreshWebCookie';
 
@@ -452,6 +453,13 @@ export const getTranslationQueueStats = asyncHandler(async (_req: AuthRequest, r
   const stats = await AdminTranslationQueueStatsService.getStats();
   res.json({ success: true, data: stats });
 });
+
+export const getGameResultsArtifactQueueStats = asyncHandler(
+  async (_req: AuthRequest, res: Response) => {
+    const stats = await AdminGameResultsArtifactQueueStatsService.getStats();
+    res.json({ success: true, data: stats });
+  }
+);
 
 export const getOnlineUsers = asyncHandler(async (req: AuthRequest, res: Response) => {
   const socketService = (global as any).socketService;

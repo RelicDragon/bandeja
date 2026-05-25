@@ -1136,9 +1136,9 @@ export const GameInfo = ({
           filename={`game-${game.id}.ics`}
         />
       )}
-      {showFullscreenAvatar && game.originalAvatar && (
+      {showFullscreenAvatar && (game.originalAvatar || game.avatar) && (
         <FullscreenImageViewer
-          imageUrl={game.originalAvatar || ''}
+          imageUrl={game.originalAvatar?.trim() || game.avatar?.trim() || ''}
           onClose={() => setShowFullscreenAvatar(false)}
           isOpen={showFullscreenAvatar}
         />

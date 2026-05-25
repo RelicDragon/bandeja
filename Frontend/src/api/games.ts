@@ -1,6 +1,28 @@
 import api from './axios';
 import { ApiResponse, Game, GameTeam, GameTeamData, BookedCourtSlot } from '@/types';
 import type { ReactionEmojiUsageMutationPayload } from '@/store/reactionEmojiUsageStore';
+import { normalizeGameResultsArtifacts } from '@/utils/gameResultsArtifacts.util';
+
+export function normalizeGameFromApi(game: Game): Game {
+  const artifacts = normalizeGameResultsArtifacts(game.resultsArtifacts);
+  return {
+    ...game,
+    ...(artifacts ? { resultsArtifacts: artifacts } : {}),
+    resultsSummaryText:
+      typeof game.resultsSummaryText === 'string' ? game.resultsSummaryText : game.resultsSummaryText ?? null,
+  };
+}
+
+function mapGamesPayload<T extends Game | Game[] | undefined>(data: T): T {
+  if (!data) return data;
+  if (Array.isArray(data)) return data.map(normalizeGameFromApi) as T;
+  return normalizeGameFromApi(data) as T;
+}
+
+function mapApiGameResponse<T extends { data?: Game | Game[] }>(payload: T): T {
+  if (!payload.data) return payload;
+  return { ...payload, data: mapGamesPayload(payload.data) };
+}
 
 export type WorkoutSessionSource = 'APPLE_WATCH' | 'ANDROID_HEALTH_CONNECT';
 
@@ -65,7 +87,7 @@ export const gamesApi = {
 
   getById: async (id: string) => {
     const response = await api.get<ApiResponse<Game>>(`/games/${id}`);
-    return response.data;
+    return mapApiGameResponse(response.data);
   },
 
   create: async (data: Partial<Game>) => {
@@ -211,9 +233,10 @@ export const gamesApi = {
     return response.data;
   },
 
-  prepareTelegramSummary: async (id: string) => {
+  prepareTelegramSummary: async (id: string, options?: { regenerate?: boolean }) => {
     const response = await api.get<ApiResponse<{ summary: string }>>(`/games/${id}/prepare-telegram-summary`, {
       timeout: 20000,
+      params: options?.regenerate ? { regenerate: 'true' } : undefined,
     });
     return response.data;
   },

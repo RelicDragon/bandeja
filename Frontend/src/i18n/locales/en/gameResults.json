@@ -111,6 +111,7 @@
     "generateTextFailed": "Failed to generate new text",
     "textRequired": "Text cannot be empty",
     "prepareTextFailed": "Failed to prepare text",
+    "preparingResults": "Preparing results…",
     "editTournamentTitle": "Edit Tournament Results?",
     "editBarTitle": "Edit Bar Results?",
     "editTrainingTitle": "Edit Training Results?",

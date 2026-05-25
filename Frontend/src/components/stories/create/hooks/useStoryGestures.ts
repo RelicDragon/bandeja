@@ -1,12 +1,13 @@
 import { useCallback, useRef, useState } from 'react';
 import { useGesture } from '@use-gesture/react';
 import type { Transform2D } from '../types/storyEditor.types';
-import { snapRotation } from '../utils/storyTransform';
+import { clampMediaTransform, snapRotation } from '../utils/storyTransform';
 
 type UseStoryGesturesOptions = {
   transform: Transform2D;
   defaultTransform: Transform2D;
   stageScale: number;
+  coverScale: number;
   onTransformChange: (next: Transform2D) => void;
   onReset: () => void;
   onGestureStart?: () => void;
@@ -18,6 +19,7 @@ export function useStoryGestures({
   transform,
   defaultTransform,
   stageScale,
+  coverScale,
   onTransformChange,
   onReset,
   onGestureStart,
@@ -26,8 +28,15 @@ export function useStoryGestures({
 }: UseStoryGesturesOptions) {
   const transformRef = useRef(transform);
   const defaultRef = useRef(defaultTransform);
+  const coverScaleRef = useRef(coverScale);
   transformRef.current = transform;
   defaultRef.current = defaultTransform;
+  coverScaleRef.current = coverScale;
+
+  const applyTransform = useCallback(
+    (next: Transform2D) => onTransformChange(clampMediaTransform(next, coverScaleRef.current)),
+    [onTransformChange]
+  );
 
   const pinchStartRef = useRef<{ scale: number; rotation: number } | null>(null);
   const gestureActiveRef = useRef(false);
@@ -65,7 +74,7 @@ export function useStoryGestures({
         }
         const start = memo as { x: number; y: number };
         const delta = toCanvasDelta(mx, my);
-        onTransformChange({
+        applyTransform({
           ...transformRef.current,
           x: start.x + delta.x,
           y: start.y + delta.y,
@@ -85,10 +94,10 @@ export function useStoryGestures({
         const start = pinchStartRef.current;
         const baseScale = start?.scale ?? transformRef.current.scale;
         const baseRotation = start?.rotation ?? transformRef.current.rotation;
-        onTransformChange({
+        applyTransform({
           ...transformRef.current,
-          scale: Math.max(0.25, Math.min(baseScale * scaleMul, baseScale * 6)),
-          rotation: snapRotation(baseRotation + angleDelta),
+          scale: baseScale * scaleMul,
+          rotation: last ? snapRotation(baseRotation + angleDelta) : baseRotation + angleDelta,
         });
         if (last) setGestureActive(false);
         return memo;
@@ -104,7 +113,7 @@ export function useStoryGestures({
     },
     {
       drag: { filterTaps: true },
-      pinch: { scaleBounds: { min: 0.25, max: 6 }, rubberband: true },
+      pinch: { rubberband: true },
       enabled: !disabled,
     }
   );

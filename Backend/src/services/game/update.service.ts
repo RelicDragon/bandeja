@@ -23,6 +23,7 @@ import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxPart
 import { cleanupInviteParticipantsForEndedGame } from '../../utils/gameInviteCleanup';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { resolvePlayersPerMatch } from '../../sport/sportRegistry';
+import { BracketAdvancementService } from '../league/bracketAdvancement.service';
 
 const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
   ...USER_SELECT_FIELDS,
@@ -640,6 +641,16 @@ export class GameUpdateService {
       });
       if (!locked) {
         throw new ApiError(404, 'Game not found');
+      }
+
+      const schedulingBracketMain =
+        data.timeIsSet === true &&
+        oldTimeIsSet === false &&
+        currentGame?.resultsStatus !== 'FINAL';
+      const finalizingViaUpdate =
+        data.resultsStatus === 'FINAL' && currentGame?.resultsStatus !== 'FINAL';
+      if (schedulingBracketMain || finalizingViaUpdate) {
+        await BracketAdvancementService.assertPlayInCompleteForMainBracketGame(id, tx);
       }
 
       const nextMax =

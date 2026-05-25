@@ -107,6 +107,7 @@
     "generateTextFailed": "Не удалось сгенерировать новый текст",
     "textRequired": "Текст не может быть пустым",
     "prepareTextFailed": "Не удалось подготовить текст",
+    "preparingResults": "Подготовка результатов…",
     "editTournamentTitle": "Редактировать результаты турнира?",
     "editBarTitle": "Редактировать результаты бара?",
     "editTrainingTitle": "Редактировать результаты тренировки?",

@@ -9,6 +9,7 @@ import { LeagueBroadcastService } from '../services/league/broadcast.service';
 import { LeaguePlannerService } from '../services/league/planner.service';
 import { LeagueRecreateRegularSeasonService } from '../services/league/recreateRegularSeason.service';
 import { LeagueStandingsRecalculateService } from '../services/league/leagueStandingsRecalculate.service';
+import { BracketPlayoffService } from '../services/league/bracketPlayoff.service';
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 
@@ -141,6 +142,77 @@ export const createPlayoff = asyncHandler(async (req: AuthRequest, res: Response
   const result = await LeagueCreateService.createPlayoff(leagueSeasonId, req.userId!, req.body);
 
   res.status(201).json({
+    success: true,
+    data: result,
+  });
+});
+
+export const createBracketPlayoff = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId } = req.params;
+  const result = await BracketPlayoffService.createBracketPlayoff(leagueSeasonId, req.userId!, req.body);
+
+  res.status(201).json({
+    success: true,
+    data: result,
+  });
+});
+
+export const getBracketPlayoff = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId } = req.params;
+  const roundId = typeof req.query.roundId === 'string' ? req.query.roundId : undefined;
+  const leagueGroupId =
+    typeof req.query.leagueGroupId === 'string' ? req.query.leagueGroupId : undefined;
+  const result = await BracketPlayoffService.getBracketPlayoff(leagueSeasonId, req.userId, {
+    roundId,
+    leagueGroupId,
+  });
+
+  res.json({
+    success: true,
+    data: result,
+  });
+});
+
+export const notifyBracketPlayoffSummary = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId } = req.params;
+  const roundId = typeof req.body.roundId === 'string' ? req.body.roundId : undefined;
+  const leagueGroupId =
+    typeof req.body.leagueGroupId === 'string' ? req.body.leagueGroupId : undefined;
+  const result = await BracketPlayoffService.notifyBracketSummary(leagueSeasonId, req.userId!, {
+    roundId,
+    leagueGroupId,
+  });
+
+  res.json({
+    success: true,
+    data: result,
+  });
+});
+
+export const patchBracketPlayoffSlots = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId } = req.params;
+  const result = await BracketPlayoffService.patchBracketSlots(
+    leagueSeasonId,
+    req.userId!,
+    req.body
+  );
+
+  res.json({
+    success: true,
+    data: result,
+  });
+});
+
+export const applyBracketSlotWalkover = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId, slotId } = req.params;
+  const result = await BracketPlayoffService.applySlotWalkover(
+    leagueSeasonId,
+    slotId,
+    req.userId!,
+    req.body
+  );
+
+  res.json({
     success: true,
     data: result,
   });

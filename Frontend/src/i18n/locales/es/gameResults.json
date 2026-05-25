@@ -107,6 +107,7 @@
     "generateTextFailed": "Error al generar nuevo texto",
     "textRequired": "El texto no puede estar vacío",
     "prepareTextFailed": "Error al preparar el texto",
+    "preparingResults": "Preparando resultados…",
     "editTournamentTitle": "¿Editar resultados del torneo?",
     "editBarTitle": "¿Editar resultados del bar?",
     "editTrainingTitle": "¿Editar resultados del entrenamiento?",

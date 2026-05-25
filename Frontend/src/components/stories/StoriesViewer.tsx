@@ -14,6 +14,7 @@ import { StoriesGestureLayer } from './StoriesGestureLayer';
 import { MediaStorySlide } from './slides/MediaStorySlide';
 import { GamePromoStorySlide } from './slides/GamePromoStorySlide';
 import { GameResultStorySlide } from './slides/GameResultStorySlide';
+import { BracketChampionStorySlide } from './slides/BracketChampionStorySlide';
 import { StoryViewerEngagementChrome } from './viewer/StoryViewerEngagementChrome';
 import {
   getStoryViewerEngagementPaused,
@@ -179,6 +180,16 @@ export function StoriesViewer({
     [playback, flushPendingViews, onClose, navigate]
   );
 
+  const openBracket = useCallback(
+    (path: string) => {
+      playback.forceMarkViewed();
+      void flushPendingViews();
+      onClose();
+      navigate(path);
+    },
+    [playback, flushPendingViews, onClose, navigate]
+  );
+
   useEffect(() => {
     if (!open) return;
     if (bubbles.length === 0) {
@@ -239,6 +250,9 @@ export function StoriesViewer({
         />
       );
     }
+    if (segment.sourceType === 'BRACKET_CHAMPION') {
+      return <BracketChampionStorySlide segment={segment} onOpenBracket={openBracket} />;
+    }
     return (
       <MediaStorySlide
         segment={segment}
@@ -252,7 +266,7 @@ export function StoriesViewer({
       />
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- slideVersion omits engagement/pause; avoids remounting media
-  }, [slideVersion, bubble?.user.id, open, goNextSegment, openGame, playback.replayGeneration, playback.paused]);
+  }, [slideVersion, bubble?.user.id, open, goNextSegment, openGame, openBracket, playback.replayGeneration, playback.paused]);
 
   if (!bubble) return null;
 

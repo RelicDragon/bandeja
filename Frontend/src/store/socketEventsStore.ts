@@ -6,6 +6,8 @@ import { useAuthStore } from './authStore';
 import { usePresenceStore } from './presenceStore';
 import { useUserTeamsStore } from './userTeamsStore';
 import { Game, Invite } from '@/types';
+import { normalizeGameFromApi } from '@/api/games';
+import { mergeGameResultsArtifactsFields } from '@/utils/gameResultsArtifacts.util';
 import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
 import { logChatSocketQueueTrim } from '@/services/chat/chatDiagnostics';
 import { effectiveSocketUnreadCount } from '@/services/chat/unreadViewingGuard';
@@ -390,8 +392,15 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       };
 
       const handleGameUpdated = (data: GameUpdateData) => {
-        set({ lastGameUpdate: data });
-        get().gameUpdates.set(data.gameId, data);
+        const normalizedGame = normalizeGameFromApi(data.game);
+        const prev = get().gameUpdates.get(data.gameId)?.game;
+        const game =
+          prev && (prev.resultsArtifacts || prev.resultsSummaryText)
+            ? mergeGameResultsArtifactsFields(prev, normalizedGame)
+            : normalizedGame;
+        const payload: GameUpdateData = { ...data, game };
+        set({ lastGameUpdate: payload });
+        get().gameUpdates.set(data.gameId, payload);
       };
 
       const handleChatMessage = (data: ChatMessageData) => {

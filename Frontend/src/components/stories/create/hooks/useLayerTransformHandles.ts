@@ -1,6 +1,6 @@
 import { useCallback, useRef, type PointerEvent, type RefObject } from 'react';
 import type { Transform2D } from '../types/storyEditor.types';
-import { angleDeg, distance, snapRotation } from '../utils/storyTransform';
+import { angleDeg, clampLayerTransform, distance, snapRotation } from '../utils/storyTransform';
 
 export type LayerDragMode = 'move' | 'scale-br' | 'scale-bl' | 'scale-tr' | 'scale-tl' | 'rotate';
 
@@ -63,6 +63,11 @@ export function useLayerTransformHandles({
     [disabled, layerRef, onTransformBegin, transform]
   );
 
+  const applyTransform = useCallback(
+    (next: Transform2D) => onTransformChange(clampLayerTransform(next)),
+    [onTransformChange]
+  );
+
   const handlePointerMove = useCallback(
     (e: PointerEvent<HTMLElement>) => {
       const drag = dragRef.current;
@@ -75,13 +80,13 @@ export function useLayerTransformHandles({
       const { cx, cy } = drag.pivot;
 
       if (drag.mode === 'move') {
-        onTransformChange({ ...t, x: t.x + dx, y: t.y + dy });
+        applyTransform({ ...t, x: t.x + dx, y: t.y + dy });
         return;
       }
 
       if (drag.mode === 'rotate' && drag.startAngle != null) {
         const currentAngle = angleDeg(cx, cy, e.clientX, e.clientY);
-        onTransformChange({
+        applyTransform({
           ...t,
           rotation: snapRotation(t.rotation + currentAngle - drag.startAngle),
         });
@@ -91,10 +96,10 @@ export function useLayerTransformHandles({
       if (drag.mode.startsWith('scale') && drag.startDist != null && drag.startDist > 0) {
         const currentDist = distance(cx, cy, e.clientX, e.clientY);
         const ratio = currentDist / drag.startDist;
-        onTransformChange({ ...t, scale: Math.max(0.35, Math.min(4, t.scale * ratio)) });
+        applyTransform({ ...t, scale: t.scale * ratio });
       }
     },
-    [onTransformChange, stageScale]
+    [applyTransform, stageScale]
   );
 
   const handlePointerUp = useCallback(

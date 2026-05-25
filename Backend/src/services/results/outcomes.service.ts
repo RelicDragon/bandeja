@@ -1,6 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { WinnerOfGame, Prisma, EntityType } from '@prisma/client';
+import { WinnerOfGame, Prisma, EntityType, ResultsStatus } from '@prisma/client';
 import { getMatchScoresForDelta } from './setScoreDelta';
 import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes } from './calculator.service';
 import { updateGameOutcomes } from './gameWinner.service';
@@ -9,11 +9,15 @@ import { isPrismaMatchCountedForStandingsAndRating } from './matchStandingsPrism
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { LeagueGameResultsService } from '../league/gameResults.service';
+import { BracketAdvancementService } from '../league/bracketAdvancement.service';
+import { BracketGameNotificationService } from '../league/bracketGameNotification.service';
 import { LeagueStandingsRecalculateService } from '../league/leagueStandingsRecalculate.service';
 import { SocialParticipantLevelService } from '../socialParticipantLevel.service';
 import { calculateGameStatus, isResultsBasedEntityType, ARCHIVE_BY_FINISHED_DATE_TYPES } from '../../utils/gameStatus';
 import { resolveGameBets } from '../bets/betResolution.service';
 import resultsSenderService from '../telegram/resultsSender.service';
+import { shouldEnqueueArtifactsOnRecalculate } from '../gameResultsArtifact/gameResultsArtifact.enqueuePolicy';
+import { GameResultsArtifactQueueService } from '../gameResultsArtifact/gameResultsArtifactQueue.service';
 import { resetMatchTimersInGameTx, cancelAllMatchTimersForGame } from './matchTimer.service';
 import { cleanupInviteParticipantsForEndedGame } from '../../utils/gameInviteCleanup';
 import {
@@ -183,13 +187,18 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
       affectsRating: true,
       entityType: true,
       parentId: true,
+      resultsStatus: true,
       outcomes: true,
+      bracketSlot: { select: { id: true } },
     },
   });
 
   if (!game || game.outcomes.length === 0) {
     return;
   }
+
+  const shouldCascadeBracket =
+    game.resultsStatus === ResultsStatus.FINAL && Boolean(game.bracketSlot);
 
   const isLeagueRoundGame =
     game.entityType === EntityType.LEAGUE && Boolean(game.parentId);
@@ -263,6 +272,10 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
   if (isLeagueRoundGame && game.parentId) {
     await LeagueStandingsRecalculateService.recalculateFromPlayedGames(game.parentId, tx);
   }
+
+  if (shouldCascadeBracket) {
+    await BracketAdvancementService.onBracketGameResultsUndone(gameId, tx);
+  }
 }
 
 export async function applyGameOutcomes(
@@ -285,7 +298,7 @@ export async function applyGameOutcomes(
     levelChange: number;
   }>>,
   tx: Prisma.TransactionClient
-): Promise<{ wasEdited: boolean; shouldResolveBets: boolean }> {
+): Promise<{ wasEdited: boolean; shouldResolveBets: boolean; bracketCreatedGameIds: string[] }> {
   const game = await tx.game.findUnique({
     where: { id: gameId },
     select: {
@@ -476,6 +489,10 @@ export async function applyGameOutcomes(
         entityType: updatedGame.entityType,
       }, cityTimezone);
     }
+
+    if (previousResultsStatus !== 'FINAL') {
+      await BracketAdvancementService.assertPlayInCompleteForMainBracketGame(gameId, tx);
+    }
     
     await tx.game.update({
       where: { id: gameId },
@@ -517,14 +534,23 @@ export async function applyGameOutcomes(
 
     await rebuildLeagueSeasonStandingsIfNeeded(gameId, tx);
 
+    let bracketCreatedGameIds: string[] = [];
+    if (previousResultsStatus !== 'FINAL') {
+      bracketCreatedGameIds = await BracketAdvancementService.onGameFinalized(gameId, tx);
+    }
+
     if (previousResultsStatus !== 'FINAL' && game.entityType !== EntityType.BAR && game.entityType !== EntityType.LEAGUE_SEASON) {
       await SocialParticipantLevelService.applySocialParticipantLevelChanges(gameId, tx);
     }
     
-    return { wasEdited: previousResultsStatus === 'FINAL' || previousResultsStatus === 'IN_PROGRESS', shouldResolveBets: previousResultsStatus !== 'FINAL' };
+    return {
+      wasEdited: previousResultsStatus === 'FINAL' || previousResultsStatus === 'IN_PROGRESS',
+      shouldResolveBets: previousResultsStatus !== 'FINAL',
+      bracketCreatedGameIds,
+    };
   }
   
-  return { wasEdited: false, shouldResolveBets: false };
+  return { wasEdited: false, shouldResolveBets: false, bracketCreatedGameIds: [] as string[] };
 }
 
 export async function recalculateGameOutcomes(gameId: string) {
@@ -569,6 +595,7 @@ export async function recalculateGameOutcomes(gameId: string) {
     
     wasEdited = applyResult.wasEdited;
     const shouldResolveBets = applyResult.shouldResolveBets;
+    const bracketCreatedGameIds = applyResult.bracketCreatedGameIds;
 
     const game = await tx.game.findUnique({
       where: { id: gameId },
@@ -615,7 +642,7 @@ export async function recalculateGameOutcomes(gameId: string) {
       },
     });
     
-    return { game, shouldResolveBets };
+    return { game, shouldResolveBets, bracketCreatedGameIds };
   });
   
   console.log(`[RECALCULATE GAME OUTCOMES] Transaction completed, wasEdited: ${wasEdited}`);
@@ -631,6 +658,30 @@ export async function recalculateGameOutcomes(gameId: string) {
       console.error(`[BET RESOLUTION] Failed to resolve bets for game ${gameId}:`, error);
     }
   }
+
+  const bracketCreatedGameIds = result.bracketCreatedGameIds ?? [];
+  if (bracketCreatedGameIds.length > 0) {
+    setImmediate(() => {
+      BracketGameNotificationService.notifyCreatedGames(bracketCreatedGameIds);
+    });
+  }
+
+  const gameAfter = result.game;
+  if (
+    gameAfter &&
+    shouldEnqueueArtifactsOnRecalculate({
+      resultsStatus: gameAfter.resultsStatus,
+      wasEdited,
+      isFirstFinalize: result.shouldResolveBets,
+    })
+  ) {
+    void GameResultsArtifactQueueService.enqueue(gameId).catch((error: unknown) => {
+      console.error(
+        `[GAME RESULTS ARTIFACTS] Failed to enqueue artifacts for game ${gameId}:`,
+        error
+      );
+    });
+  }
   
   console.log(`[TELEGRAM NOTIFICATION] Preparing to send notifications for game ${gameId}`);
   
@@ -640,7 +691,7 @@ export async function recalculateGameOutcomes(gameId: string) {
       console.error(`Failed to send game finished notifications for game ${gameId}:`, error);
     });
   });
-  
+
   return result.game;
 }
 

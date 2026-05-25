@@ -2,10 +2,10 @@ import { useCallback, useRef, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { lightHaptic } from '@/utils/lightHaptic';
 import type { StickerStoryLayer, Transform2D } from './types/storyEditor.types';
-import { STORY_STICKER_BASE_FONT_PX } from './storySticker.constants';
+import { layerOverlayPositionStyle, stickerFontSizePx } from './utils/storyCompositionLayout';
+import { useLayerPinchGesture } from './hooks/useLayerPinchGesture';
 import { useLayerTransformHandles } from './hooks/useLayerTransformHandles';
 import { StoryLayerTransformHandles } from './StoryLayerTransformHandles';
-import { transformToCss } from './utils/storyTransform';
 
 type StoryStickerLayerProps = {
   layer: StickerStoryLayer;
@@ -33,10 +33,20 @@ export function StoryStickerLayer({
   const { t } = useTranslation();
   const rootRef = useRef<HTMLDivElement>(null);
 
+  const { transform } = layer;
+
   const applyTransform = useCallback(
-    (transform: Transform2D) => onTransformChange(layer.id, transform),
+    (next: Transform2D) => onTransformChange(layer.id, next),
     [layer.id, onTransformChange]
   );
+
+  const pinchBind = useLayerPinchGesture({
+    transform,
+    onTransformChange: (next) => applyTransform(next),
+    onTransformBegin,
+    onTransformEnd,
+    enabled: selected,
+  });
 
   const { handlePointerDown, handlePointerMove, handlePointerUp } = useLayerTransformHandles({
     layerRef: rootRef,
@@ -47,22 +57,19 @@ export function StoryStickerLayer({
     onTransformEnd,
   });
 
-  const { transform } = layer;
   const transitionClass = reducedMotion ? '' : 'transition-[transform,box-shadow] duration-150';
 
   const layerStyle: CSSProperties = {
-    left: 0,
-    top: 0,
+    ...layerOverlayPositionStyle(transform, undefined, 'auto'),
     zIndex: selected ? 50 : 10,
-    transform: `${transformToCss(transform, stageScale)} translate(-50%, -50%)`,
-    transformOrigin: 'center center',
-    fontSize: STORY_STICKER_BASE_FONT_PX * stageScale,
+    fontSize: stickerFontSizePx(stageScale),
     lineHeight: 1,
   };
 
   return (
     <div
       ref={rootRef}
+      {...(selected ? pinchBind() : {})}
       className={`absolute touch-none select-none ${transitionClass}`}
       style={layerStyle}
       onPointerDown={(e) => {

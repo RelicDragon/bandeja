@@ -1,7 +1,11 @@
-import { LeagueParticipantType } from '@prisma/client';
+import { LeagueParticipantType, PlayoffFormat } from '@prisma/client';
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { getUserNotesForGames } from '../userGameNote.service';
+import {
+  buildBracketGameSortMetaMap,
+  sortBracketRoundGames,
+} from './bracketScheduleListSort.util';
 
 export class LeagueReadService {
   static async getLeagueRounds(leagueSeasonId: string, userId?: string) {
@@ -118,6 +122,27 @@ export class LeagueReadService {
       },
       orderBy: { orderIndex: 'asc' },
     });
+
+    const bracketRoundIds = rounds
+      .filter((r) => r.playoffFormat === PlayoffFormat.BRACKET)
+      .map((r) => r.id);
+    if (bracketRoundIds.length > 0) {
+      const slots = await prisma.leagueBracketSlot.findMany({
+        where: { leagueRoundId: { in: bracketRoundIds }, gameId: { not: null } },
+        select: { leagueRoundId: true, gameId: true, slotKind: true, roundIndex: true },
+      });
+      const metaByRound = new Map<string, ReturnType<typeof buildBracketGameSortMetaMap>>();
+      for (const roundId of bracketRoundIds) {
+        const roundSlots = slots.filter((s) => s.leagueRoundId === roundId);
+        metaByRound.set(roundId, buildBracketGameSortMetaMap(roundSlots));
+      }
+      for (const round of rounds) {
+        if (round.playoffFormat !== PlayoffFormat.BRACKET) continue;
+        const meta = metaByRound.get(round.id);
+        if (!meta || meta.size === 0) continue;
+        round.games = sortBracketRoundGames(round.games, meta);
+      }
+    }
 
     // Fetch user notes if userId is provided
     if (userId && rounds.length > 0) {

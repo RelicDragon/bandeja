@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import routes from './routes';
+import replicateWebhookRoutes from './routes/replicateWebhook.routes';
 import { rateLimitKeyFromRequest } from './utils/rateLimitClientKey';
 import { errorHandler, notFoundHandler, reflectCorsOrigin } from './middleware/errorHandler';
 import { recordPresenceActivity } from './middleware/recordPresenceActivity';
@@ -84,6 +85,8 @@ app.use('/api', recordPresenceActivity);
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+app.use('/webhooks', replicateWebhookRoutes);
 
 import { getGameMetaTags } from './controllers/metatags.controller';
 app.get('/games/:gameId', getGameMetaTags);

@@ -125,5 +125,38 @@ export const config = {
     maxAttempts: parseInt(process.env.TRANSLATION_QUEUE_MAX_ATTEMPTS || '3', 10),
     staleRunningMs: parseInt(process.env.TRANSLATION_QUEUE_STALE_RUNNING_MS || '120000', 10),
   },
+  resultsArtifacts: {
+    enabled: process.env.RESULTS_ARTIFACTS_ENABLED === 'true',
+    replicateApiToken: process.env.REPLICATE_API_TOKEN || '',
+    replicateModel:
+      process.env.REPLICATE_MODEL || 'black-forest-labs/flux-2-max',
+    replicateWebhookUrl: (process.env.REPLICATE_WEBHOOK_URL || '').trim(),
+    replicatePollDelayMs: parseInt(
+      process.env.RESULTS_ARTIFACTS_REPLICATE_POLL_MS || '5000',
+      10
+    ),
+    queue: {
+      concurrency: parseInt(
+        process.env.RESULTS_ARTIFACTS_QUEUE_CONCURRENCY || '2',
+        10
+      ),
+      minIntervalMs: parseInt(
+        process.env.RESULTS_ARTIFACTS_QUEUE_MIN_INTERVAL_MS || '500',
+        10
+      ),
+      pollIntervalMs: parseInt(
+        process.env.RESULTS_ARTIFACTS_QUEUE_POLL_INTERVAL_MS || '1000',
+        10
+      ),
+      maxAttempts: parseInt(
+        process.env.RESULTS_ARTIFACTS_QUEUE_MAX_ATTEMPTS || '3',
+        10
+      ),
+      staleRunningMs: parseInt(
+        process.env.RESULTS_ARTIFACTS_QUEUE_STALE_RUNNING_MS || '300000',
+        10
+      ),
+    },
+  },
 };
 

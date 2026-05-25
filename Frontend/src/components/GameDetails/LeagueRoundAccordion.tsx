@@ -6,6 +6,8 @@ import { useDesktop } from '@/hooks/useDesktop';
 import { Game } from '@/types';
 import { LeagueGameCard } from './LeagueGameCard';
 import { getLeagueGroupColor } from '@/utils/leagueGroupColors';
+import { isCrossGroupBracketRound } from '@/utils/bracketView.util';
+import { leagueRoundHeaderFormatLabelKey } from '@/utils/leagueRoundAccordionHeader.util';
 import { resultsApi, RoundData } from '@/api/results';
 import { useState, useEffect } from 'react';
 interface LeagueRoundAccordionProps {
@@ -64,8 +66,18 @@ export const LeagueRoundAccordion = ({
 
   const hasGroups = groups.length > 0;
   const showRoundLevelAddButton = showAddGameButton && !hasGroups;
+  const crossGroupPlayoffRound = isCrossGroupBracketRound(round);
+  const seasonPlayoffGames = round.games.filter((game) => !game.leagueGroupId);
+  const roundFormatLabelKey = leagueRoundHeaderFormatLabelKey(round);
+
+  const gameMatchesGroupFilter = (game: Game) => {
+    if (!selectedGroupId) return true;
+    if (game.leagueGroupId === selectedGroupId) return true;
+    return crossGroupPlayoffRound && !game.leagueGroupId;
+  };
+
   const filteredGameCount = selectedGroupId
-    ? round.games.filter((game) => game.leagueGroupId === selectedGroupId).length
+    ? round.games.filter(gameMatchesGroupFilter).length
     : round.games.length;
 
   useEffect(() => {
@@ -78,7 +90,10 @@ export const LeagueRoundAccordion = ({
       const resultsMap = new Map<string, RoundData[] | null>();
       
       const gamesToFetch = selectedGroupId
-        ? round.games.filter((game) => game.leagueGroupId === selectedGroupId)
+        ? round.games.filter((game) => {
+            if (game.leagueGroupId === selectedGroupId) return true;
+            return crossGroupPlayoffRound && !game.leagueGroupId;
+          })
         : round.games;
 
       for (const game of gamesToFetch) {
@@ -105,7 +120,7 @@ export const LeagueRoundAccordion = ({
     };
 
     fetchAllGameResults();
-  }, [shouldRenderContent, round.games, selectedGroupId]);
+  }, [shouldRenderContent, round.games, selectedGroupId, crossGroupPlayoffRound]);
 
   const getAllRounds = (gameId: string): RoundData[] | null => {
     return gameResultsMap.get(gameId) || null;
@@ -122,6 +137,11 @@ export const LeagueRoundAccordion = ({
           <p className="text-lg font-semibold text-gray-900 dark:text-white">
             {t('gameDetails.round')} {round.orderIndex + 1}
           </p>
+          {roundFormatLabelKey && (
+            <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-200">
+              {t(roundFormatLabelKey)}
+            </span>
+          )}
           <span className="inline-flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
             <span className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
               {t('gameDetails.totalGames', { count: filteredGameCount })}
@@ -283,38 +303,72 @@ export const LeagueRoundAccordion = ({
                         </div>
                       );
                     })}
-                    {!selectedGroupId && round.games.filter((game) => !game.leagueGroupId).length > 0 && (
+                    {crossGroupPlayoffRound && seasonPlayoffGames.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="inline-flex w-full items-center justify-center gap-2 rounded-lg border-2 border-indigo-300 bg-indigo-50/80 px-4 py-2 text-center text-sm font-semibold text-indigo-900 shadow-sm dark:border-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-100">
+                          <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                          {t('gameDetails.bracketSeasonPlayoff')}
+                        </div>
+                        <div className="space-y-3 pl-2 border-l-2 border-indigo-300/40 dark:border-indigo-700/40">
+                          {seasonPlayoffGames.map((game) => (
+                            <LeagueGameCard
+                              key={game.id}
+                              game={game}
+                              onEdit={
+                                game.resultsStatus === 'NONE' && canEditGames
+                                  ? () => onEditGame(game)
+                                  : undefined
+                              }
+                              onOpen={() => onOpenGame(game)}
+                              onChat={onChatGameSelect}
+                              selectedForChat={isDesktop && selectedGameChatId === game.id}
+                              isDesktop={isDesktop}
+                              onDelete={
+                                game.resultsStatus === 'NONE' && canEditGames && onDeleteGame
+                                  ? onDeleteGame
+                                  : undefined
+                              }
+                              onNoteSaved={onNoteSaved}
+                              showGroupTag={false}
+                              seasonPlayoffBadge
+                              allRounds={getAllRounds(game.id)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {!crossGroupPlayoffRound &&
+                      !selectedGroupId &&
+                      seasonPlayoffGames.length > 0 && (
                       <div className="space-y-3">
                         <div className="inline-flex w-full items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-100/50 dark:bg-gray-800/50 font-semibold text-sm text-center text-gray-700 dark:text-gray-300 shadow-sm">
                           <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500" />
                           {t('gameDetails.noGroup')}
                         </div>
                         <div className="space-y-3 pl-2 border-l-2 border-gray-300/40 dark:border-gray-600/40">
-                          {round.games
-                            .filter((game) => !game.leagueGroupId)
-                            .map((game) => (
-                              <LeagueGameCard
-                                key={game.id}
-                                game={game}
-                                onEdit={
-                                  game.resultsStatus === 'NONE' && canEditGames
-                                    ? () => onEditGame(game)
-                                    : undefined
-                                }
-                                onOpen={() => onOpenGame(game)}
-                                onChat={onChatGameSelect}
-                                selectedForChat={isDesktop && selectedGameChatId === game.id}
-                                isDesktop={isDesktop}
-                                onDelete={
-                                  game.resultsStatus === 'NONE' && canEditGames && onDeleteGame
-                                    ? onDeleteGame
-                                    : undefined
-                                }
-                                onNoteSaved={onNoteSaved}
-                                showGroupTag={false}
-                                allRounds={getAllRounds(game.id)}
-                              />
-                            ))}
+                          {seasonPlayoffGames.map((game) => (
+                            <LeagueGameCard
+                              key={game.id}
+                              game={game}
+                              onEdit={
+                                game.resultsStatus === 'NONE' && canEditGames
+                                  ? () => onEditGame(game)
+                                  : undefined
+                              }
+                              onOpen={() => onOpenGame(game)}
+                              onChat={onChatGameSelect}
+                              selectedForChat={isDesktop && selectedGameChatId === game.id}
+                              isDesktop={isDesktop}
+                              onDelete={
+                                game.resultsStatus === 'NONE' && canEditGames && onDeleteGame
+                                  ? onDeleteGame
+                                  : undefined
+                              }
+                              onNoteSaved={onNoteSaved}
+                              showGroupTag={false}
+                              allRounds={getAllRounds(game.id)}
+                            />
+                          ))}
                         </div>
                       </div>
                     )}

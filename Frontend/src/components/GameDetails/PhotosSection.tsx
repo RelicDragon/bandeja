@@ -16,6 +16,7 @@ import { isCapacitor } from '@/utils/capacitor';
 import { PhotosSectionGrid } from './PhotosSectionGrid';
 import { GamePhotoGalleryViewer } from './GamePhotoGalleryViewer';
 import { usePhotosSectionUpload } from './usePhotosSectionUpload';
+import { gamePhotoUrl } from '@/utils/gamePhotoUrl';
 
 interface PhotosSectionProps {
   game: Game;
@@ -61,6 +62,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
 
   useEffect(() => {
     hasAttemptedSetMainPhoto.current = false;
+    setGalleryIndex(null);
   }, [game.id]);
 
   useEffect(() => {
@@ -192,9 +194,18 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     }
   };
 
-  const galleryImages = useMemo(
-    () => photos.map((p) => p.originalUrl || p.thumbnailUrl).filter(Boolean),
-    [photos]
+  const visiblePhotos = useMemo(() => photos.filter((p) => gamePhotoUrl(p)), [photos]);
+
+  const galleryImages = useMemo(() => visiblePhotos.map(gamePhotoUrl), [visiblePhotos]);
+
+  const handleImageClick = useCallback(
+    (photoIndex: number) => {
+      const photo = photos[photoIndex];
+      if (!photo) return;
+      const gi = visiblePhotos.findIndex((p) => p.id === photo.id);
+      if (gi >= 0) setGalleryIndex(gi);
+    },
+    [photos, visiblePhotos]
   );
 
   if (game.status === 'ANNOUNCED' || !user) {
@@ -251,7 +262,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
           isUploadingPhoto={isUploadingPhoto}
           isUpdatingMainPhoto={isUpdatingMainPhoto}
           gameId={game.id}
-          onImageClick={setGalleryIndex}
+          onImageClick={handleImageClick}
           onMainPhotoSelect={(photoId) => void handleMainPhotoSelect(photoId)}
           onDeleteClick={setPhotoToDelete}
           onPhotoCapture={handlePhotoCapture}

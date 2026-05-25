@@ -355,6 +355,12 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'game results artifacts',
+    command: 'npm',
+    args: ['run', 'test:game-results-artifacts'],
+    env: { RESULTS_ARTIFACTS_ENABLED: 'true' },
+  },
+  {
     label: 'story-validate',
     command: process.execPath,
     args: [

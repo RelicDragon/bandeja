@@ -27,6 +27,10 @@ import {
 import { batchSegmentEngagementCounts } from '../storyEngagement/storyEngagement.feedCounts';
 import { resolveCaptionForStorySegment } from '../storyEngagement/storyEngagement.caption';
 import { segmentEngagementKey } from '../storyEngagement/storyEngagement.constants';
+import {
+  BracketChampionStoryService,
+  type BracketChampionStoryBracket,
+} from './bracketChampionStory.service';
 
 export type SegmentEngagement = {
   likeCount: number;
@@ -124,6 +128,17 @@ export type StorySegment =
       game: GameStorySummary;
       result: ResultSummary;
       engagement?: SegmentEngagement;
+    }
+  | {
+      key: string;
+      sourceType: 'BRACKET_CHAMPION';
+      viewed: boolean;
+      createdAt: string;
+      leagueName: string;
+      championTeamLabel: string;
+      bracket: BracketChampionStoryBracket;
+      game: GameStorySummary;
+      engagement?: SegmentEngagement;
     };
 
 export type StoryFeed = {
@@ -148,7 +163,7 @@ type RawSegment = {
   manualCaption?: string | null;
 };
 
-function segmentKey(sourceType: StorySourceType | string, sourceId: string): string {
+export function segmentKey(sourceType: StorySourceType | string, sourceId: string): string {
   return `${sourceType}:${sourceId}`;
 }
 
@@ -171,7 +186,9 @@ const GAME_STORY_GAME_SELECT = {
   resultsStatus: true,
   mainPhotoId: true,
   resultsSentToTelegram: true,
+  resultsSummaryText: true,
   telegramResultsSummary: true,
+  resultsArtifactsReadyAt: true,
   city: { select: { name: true } },
   club: { select: { name: true } },
   court: { select: { club: { select: { name: true } } } },
@@ -202,7 +219,9 @@ type GameStoryGameRow = {
   resultsStatus?: string;
   mainPhotoId?: string | null;
   resultsSentToTelegram?: boolean;
+  resultsSummaryText?: string | null;
   telegramResultsSummary?: string | null;
+  resultsArtifactsReadyAt?: Date | null;
   city?: { name: string } | null;
   club?: { name: string } | null;
   court?: { club: { name: string } | null } | null;
@@ -260,12 +279,9 @@ function toBasicUser(u: {
   };
 }
 
-function toGameSummary(game: GameStoryGameRow): GameStorySummary {
+export function toGameSummary(game: GameStoryGameRow): GameStorySummary {
   const clubName = game.club?.name ?? game.court?.club?.name ?? null;
-  const telegramSummary =
-    game.resultsSentToTelegram && game.telegramResultsSummary?.trim()
-      ? game.telegramResultsSummary.trim()
-      : null;
+  const telegramSummary = game.resultsSummaryText?.trim() ?? null;
   return {
     id: game.id,
     name: game.name,
@@ -541,6 +557,7 @@ export class StoryFeedService {
           game: {
             isPublic: true,
             resultsStatus: 'FINAL',
+            resultsArtifactsReadyAt: { not: null },
             finishedDate: { gte: activitySince },
           },
         },
@@ -620,6 +637,14 @@ export class StoryFeedService {
           segment: seg,
         });
       }
+
+      const bracketChampionSegs = await BracketChampionStoryService.loadRawSegments({
+        activityOwnerIds,
+        followedIds,
+        activitySince,
+        viewedSet,
+      });
+      rawSegments.push(...bracketChampionSegs);
     }
 
     const byOwner = new Map<string, RawSegment[]>();

@@ -107,6 +107,7 @@
     "generateTextFailed": "Неуспешно генерисање новог текста",
     "textRequired": "Текст не може бити празан",
     "prepareTextFailed": "Неуспешно припремање текста",
+    "preparingResults": "Припрема резултата…",
     "editTournamentTitle": "Уреди резултате турнира?",
     "editBarTitle": "Уреди резултате бара?",
     "editTrainingTitle": "Уреди резултате тренинга?",

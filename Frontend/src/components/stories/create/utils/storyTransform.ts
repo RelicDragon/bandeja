@@ -101,3 +101,53 @@ export function canvasPointFromClient(
 export function defaultStickerTransform(): Transform2D {
   return { x: STORY_CANVAS_WIDTH / 2, y: STORY_CANVAS_HEIGHT / 2, scale: 1, rotation: 0 };
 }
+
+const LAYER_POSITION_PAD = 48;
+const LAYER_SCALE_MIN = 0.35;
+const LAYER_SCALE_MAX = 4;
+const MEDIA_PAN_LIMIT = 720;
+
+export function clampLayerPosition(x: number, y: number): { x: number; y: number } {
+  return {
+    x: Math.max(LAYER_POSITION_PAD, Math.min(STORY_CANVAS_WIDTH - LAYER_POSITION_PAD, x)),
+    y: Math.max(LAYER_POSITION_PAD, Math.min(STORY_CANVAS_HEIGHT - LAYER_POSITION_PAD, y)),
+  };
+}
+
+export function clampLayerTransform(transform: Transform2D): Transform2D {
+  const { x, y } = clampLayerPosition(transform.x, transform.y);
+  return {
+    x,
+    y,
+    scale: Math.max(LAYER_SCALE_MIN, Math.min(LAYER_SCALE_MAX, transform.scale)),
+    rotation: transform.rotation,
+  };
+}
+
+export function clampMediaPan(x: number, y: number): { x: number; y: number } {
+  return {
+    x: Math.max(-MEDIA_PAN_LIMIT, Math.min(MEDIA_PAN_LIMIT, x)),
+    y: Math.max(-MEDIA_PAN_LIMIT, Math.min(MEDIA_PAN_LIMIT, y)),
+  };
+}
+
+export function mediaScaleBounds(coverScale: number): { min: number; max: number } {
+  return {
+    min: Math.max(0.25, coverScale * 0.85),
+    max: Math.max(coverScale * 1.5, coverScale * 5),
+  };
+}
+
+export function clampMediaTransform(
+  transform: Transform2D,
+  coverScale: number
+): Transform2D {
+  const { x, y } = clampMediaPan(transform.x, transform.y);
+  const { min, max } = mediaScaleBounds(coverScale);
+  return {
+    x,
+    y,
+    scale: Math.max(min, Math.min(max, transform.scale)),
+    rotation: snapRotation(transform.rotation),
+  };
+}

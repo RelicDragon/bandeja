@@ -14,23 +14,33 @@ export type TextStyleRender = {
   style?: CSSProperties;
 };
 
-export function getTextStyleRender(presetId: TextStylePresetId, align: TextAlignment): TextStyleRender {
+export function getTextStyleRender(
+  presetId: TextStylePresetId,
+  align: TextAlignment,
+  fontSizePx?: number
+): TextStyleRender {
   const alignClass =
     align === 'left' ? 'text-left' : align === 'right' ? 'text-right' : 'text-center';
+  const sizeClass = fontSizePx == null ? 'text-xl' : '';
+  const fontStyle: CSSProperties | undefined =
+    fontSizePx != null ? { fontSize: fontSizePx } : undefined;
 
   switch (presetId) {
     case 'blackBox':
       return {
-        className: `${alignClass} text-white font-bold text-xl px-4 py-2 rounded-xl bg-black/55`,
+        className: `${alignClass} ${sizeClass} text-white font-bold px-4 py-2 rounded-xl bg-black/55`,
+        style: fontStyle,
       };
     case 'gradient':
       return {
-        className: `${alignClass} font-bold text-xl px-1 py-0.5 bg-gradient-to-r from-pink-500 via-purple-500 to-sky-400 bg-clip-text text-transparent`,
+        className: `${alignClass} ${sizeClass} font-bold px-1 py-0.5 bg-gradient-to-r from-pink-500 via-purple-500 to-sky-400 bg-clip-text text-transparent`,
+        style: fontStyle,
       };
     case 'outline':
       return {
-        className: `${alignClass} text-white font-bold text-xl`,
+        className: `${alignClass} ${sizeClass} text-white font-bold`,
         style: {
+          ...fontStyle,
           WebkitTextStroke: '1.5px rgba(0,0,0,0.85)',
           paintOrder: 'stroke fill',
           textShadow: '0 2px 8px rgba(0,0,0,0.35)',
@@ -38,8 +48,9 @@ export function getTextStyleRender(presetId: TextStylePresetId, align: TextAlign
       };
     case 'neon':
       return {
-        className: `${alignClass} font-bold text-xl text-cyan-300`,
+        className: `${alignClass} ${sizeClass} font-bold text-cyan-300`,
         style: {
+          ...fontStyle,
           textShadow:
             '0 0 8px rgba(34,211,238,0.95), 0 0 18px rgba(236,72,153,0.75), 0 0 28px rgba(168,85,247,0.55)',
         },
@@ -47,7 +58,8 @@ export function getTextStyleRender(presetId: TextStylePresetId, align: TextAlign
     case 'classic':
     default:
       return {
-        className: `${alignClass} text-white font-bold text-xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]`,
+        className: `${alignClass} ${sizeClass} text-white font-bold drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]`,
+        style: fontStyle,
       };
   }
 }
@@ -73,7 +85,6 @@ export function applyCanvasTextStyle(
     case 'blackBox':
       break;
     case 'gradient':
-      ctx.fillStyle = '#f472b6';
       break;
     case 'outline':
       ctx.fillStyle = '#ffffff';
@@ -131,7 +142,15 @@ export function drawCanvasTextWithPreset(
     return { width: boxW, height: boxH };
   }
 
-  if (presetId === 'outline') {
+  if (presetId === 'gradient') {
+    const halfW = Math.max(width / 2, fontSize);
+    const grad = ctx.createLinearGradient(drawX - halfW, y, drawX + halfW, y);
+    grad.addColorStop(0, '#ec4899');
+    grad.addColorStop(0.5, '#a855f7');
+    grad.addColorStop(1, '#38bdf8');
+    ctx.fillStyle = grad;
+    ctx.fillText(text, drawX, y);
+  } else if (presetId === 'outline') {
     ctx.strokeText(text, drawX, y);
     ctx.fillText(text, drawX, y);
   } else {

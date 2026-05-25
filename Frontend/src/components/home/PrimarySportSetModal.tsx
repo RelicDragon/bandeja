@@ -89,7 +89,7 @@ export function PrimarySportSetModal({ open }: PrimarySportSetModalProps) {
         onEscapeKeyDown={(e) => e.preventDefault()}
         className="max-w-[22rem] border-0 bg-transparent p-0 shadow-none sm:max-w-md"
       >
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl dark:border-slate-700/80 dark:bg-slate-900">
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white text-gray-900 shadow-xl dark:border-slate-700/80 dark:bg-slate-900 dark:text-white">
           <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white px-4 pb-3 pt-5 text-center dark:border-slate-800 dark:from-slate-800/80 dark:to-slate-900">
             <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
               {t('auth.registrationSportTitle')}
@@ -98,7 +98,7 @@ export function PrimarySportSetModal({ open }: PrimarySportSetModalProps) {
               {t('auth.registrationSportHint')}
             </p>
           </div>
-          <div className="px-3 py-3">
+          <div className="px-3 py-3 text-gray-900 dark:text-white">
             <div className="grid grid-cols-3 gap-2">
               {selectableSports.map((sport) => {
                 const enabled = enabledSports.includes(sport);

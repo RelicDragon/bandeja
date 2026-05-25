@@ -6,6 +6,7 @@ import {
   isOverlayStyleV2,
   layerTransformToPercentStyle,
   parseStoryOverlay,
+  shouldUseStoryComposition,
 } from './mediaStoryOverlay';
 
 describe('isOverlayStyleV2', () => {
@@ -66,6 +67,19 @@ describe('parseStoryOverlay', () => {
       expect(parsed.layers).toHaveLength(1);
       expect(parsed.overlayStyle.version).toBe(2);
     }
+  });
+});
+
+describe('shouldUseStoryComposition', () => {
+  it('enables composition for non-baked v2 video', () => {
+    const v2 = {
+      version: 2 as const,
+      canvas: { width: 1080, height: 1920 },
+    };
+    expect(shouldUseStoryComposition(v2, true)).toBe(true);
+    expect(shouldUseStoryComposition(v2, false)).toBe(false);
+    expect(shouldUseStoryComposition({ ...v2, baked: true }, true)).toBe(false);
+    expect(shouldUseStoryComposition(null, true)).toBe(false);
   });
 });
 

@@ -6,6 +6,7 @@ import {
   loginAdmin,
   getStats,
   getTranslationQueueStats,
+  getGameResultsArtifactQueueStats,
   getOnlineUsers,
   getAllUsers,
   toggleUserStatus,
@@ -61,6 +62,11 @@ const router = Router();
 router.post('/login', loginAdmin);
 router.get('/stats', requireAdmin, getStats);
 router.get('/translation-queue/stats', requireAdmin, getTranslationQueueStats);
+router.get(
+  '/game-results-artifacts-queue/stats',
+  requireAdmin,
+  getGameResultsArtifactQueueStats
+);
 router.get('/online-users', requireAdmin, getOnlineUsers);
 
 router.get('/users', requireAdmin, getAllUsers);

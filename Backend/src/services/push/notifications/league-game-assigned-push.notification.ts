@@ -6,6 +6,7 @@ import { withOptionalSportPrefix } from '../../shared/notificationSport';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
+import { leagueBracketPushScheduleExtras } from '../../league/leagueBracketDeepLink.util';
 
 export async function createLeagueGameAssignedPushNotification(
   game: any,
@@ -38,7 +39,11 @@ export async function createLeagueGameAssignedPushNotification(
     type: NotificationType.INVITE,
     title,
     body,
-    data: { gameId: game.id, shortDayOfWeek: gameInfo.shortDayOfWeek },
+    data: {
+      gameId: game.id,
+      shortDayOfWeek: gameInfo.shortDayOfWeek,
+      ...leagueBracketPushScheduleExtras(game),
+    },
     sound: 'default',
   };
 }

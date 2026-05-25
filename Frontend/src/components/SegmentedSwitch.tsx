@@ -10,6 +10,9 @@ export interface SegmentedSwitchTab {
   icon?: SegmentedSwitchIcon;
   badge?: number;
   ariaLabel?: string;
+  disabled?: boolean;
+  /** Shown when tab is disabled (native tooltip). */
+  title?: string;
 }
 
 interface SegmentedSwitchProps {
@@ -20,6 +23,8 @@ interface SegmentedSwitchProps {
   layoutId: string;
   className?: string;
   disabled?: boolean;
+  /** Accessible name for the tab list. */
+  ariaLabel?: string;
 }
 
 export const SegmentedSwitch = ({
@@ -30,8 +35,11 @@ export const SegmentedSwitch = ({
   layoutId,
   className = '',
   disabled = false,
+  ariaLabel,
 }: SegmentedSwitchProps) => (
   <div
+    role="tablist"
+    aria-label={ariaLabel}
     className={`relative mx-auto flex w-fit items-stretch gap-1 overflow-visible rounded-lg bg-gray-100 p-1 dark:bg-gray-700 ${className}`.trim()}
   >
     {tabs.map((tab) => {
@@ -43,18 +51,21 @@ export const SegmentedSwitch = ({
         <motion.button
           key={tab.id}
           type="button"
-          disabled={disabled}
+          role="tab"
+          aria-selected={isActive}
+          disabled={disabled || tab.disabled}
+          title={tab.disabled ? tab.title : undefined}
           onClick={() => {
-            if (!disabled) onChange(tab.id);
+            if (!disabled && !tab.disabled) onChange(tab.id);
           }}
           className={`relative flex min-w-0 items-center justify-center gap-1.5 rounded-md py-1.5 ${pad} text-sm font-medium transition-colors duration-200 ${
-            disabled
+            disabled || tab.disabled
               ? 'cursor-not-allowed opacity-50'
               : isActive
                 ? 'text-gray-900 dark:text-white'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
-          whileTap={disabled ? undefined : { scale: 0.95 }}
+          whileTap={disabled || tab.disabled ? undefined : { scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           layout
           aria-label={tab.ariaLabel ?? tab.label}

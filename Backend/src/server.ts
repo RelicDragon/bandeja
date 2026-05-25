@@ -17,7 +17,7 @@ import { ReliabilityDecayScheduler } from './services/reliabilityDecayScheduler.
 import { reportCriticalError, maybeReportFromConsole } from './services/developerAlert.service';
 import { createServer } from 'http';
 import { resumeMatchTimerSchedulesOnStartup } from './services/results/matchTimer.service';
-import { TranslationQueueService } from './services/chat/translationQueue.service';
+import { startQueueWorkers, stopQueueWorkers } from './workers/startQueueWorkers';
 
 const startServer = async () => {
   process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
@@ -85,8 +85,9 @@ const startServer = async () => {
 
     await resumeMatchTimerSchedulesOnStartup();
 
-    TranslationQueueService.startWorker();
+    startQueueWorkers();
     console.log('🌐 Translation queue worker started');
+    console.log('🎨 Results artifacts queue worker started');
 
     const server = httpServer.listen(config.port, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${config.port} in ${config.nodeEnv} mode`);
@@ -117,7 +118,7 @@ const startServer = async () => {
         bugArchivedScheduler.stop();
         chatSyncStatsScheduler.stop();
         reliabilityDecayScheduler.stop();
-        TranslationQueueService.stopWorker();
+        stopQueueWorkers();
         telegramBotService.stop();
         pushNotificationService.shutdown();
 

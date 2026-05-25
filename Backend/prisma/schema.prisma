@@ -452,6 +452,10 @@ model Game {
   mainPhotoId            String?             @unique
   resultsSentToTelegram  Boolean             @default(false)
   telegramResultsSummary String?             @db.Text
+  resultsSummaryText           String?   @db.Text
+  resultsSummaryGeneratedAt      DateTime?
+  resultsArtifactsReadyAt        DateTime?
+  resultsArtifactsVersion        Int       @default(0)
   parentId               String?
   trainerId              String?
   leagueRoundId          String?
@@ -473,6 +477,7 @@ model Game {
   trainer                User?               @relation("GameTrainer", fields: [trainerId], references: [id], onDelete: SetNull)
   leagueRound            LeagueRound?        @relation(fields: [leagueRoundId], references: [id], onDelete: SetNull)
   leagueGroup            LeagueGroup?        @relation(fields: [leagueGroupId], references: [id], onDelete: SetNull)
+  bracketSlot            LeagueBracketSlot?  @relation("BracketSlotGame")
   participants           GameParticipant[]
   inviteOutcomes         GameInviteOutcome[]
   rounds                 Round[]
@@ -489,6 +494,7 @@ model Game {
   reactions              GameReaction[]       @relation("GameReactions")
   photos                 GamePhoto[]
   mainPhoto              GamePhoto?           @relation("GameMainPhoto", fields: [mainPhotoId], references: [id], onDelete: SetNull)
+  resultsArtifactJob     GameResultsArtifactJob?
 
   @@index([clubId])
   @@index([courtId])
@@ -510,9 +516,10 @@ model Game {
 }
 
 model GamePhoto {
-  id             String    @id @default(cuid())
+  id             String         @id @default(cuid())
   gameId         String
   uploaderId     String?
+  source         GamePhotoSource @default(USER)
   originalUrl    String
   thumbnailUrl   String
   width          Int?
@@ -1215,6 +1222,56 @@ model ChatAutoTranslateConfig {
   @@index([chatContextType, contextId])
 }
 
+enum GameResultsArtifactJobStatus {
+  pending
+  running
+  done
+  failed
+}
+
+enum GameResultsArtifactStepStatus {
+  pending
+  running
+  done
+  skipped
+  failed
+}
+
+enum GamePhotoSource {
+  USER
+  AI_GENERATED
+}
+
+model GameResultsArtifactJob {
+  id        String                        @id @default(cuid())
+  gameId    String                        @unique
+  status    GameResultsArtifactJobStatus  @default(pending)
+  runAfter  DateTime                      @default(now())
+  attempts  Int                           @default(0)
+  lastError String?
+
+  generationVersion Int @default(1)
+
+  summaryStatus GameResultsArtifactStepStatus @default(pending)
+  summaryError  String?
+  photoStatus   GameResultsArtifactStepStatus @default(pending)
+  photoError    String?
+
+  replicatePredictionId String?
+
+  userPhotoCountAtEnqueue Int     @default(0)
+  mainPhotoIdAtEnqueue    String?
+  hadUserPhotosAtEnqueue  Boolean @default(false)
+  languageCode            String  @db.VarChar(10)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([status, runAfter])
+}
+
 enum TranslationJobPriority {
   high
   normal
@@ -1532,6 +1589,7 @@ enum StorySourceType {
   GAME_PHOTO
   GAME_CREATED
   GAME_RESULT
+  BRACKET_CHAMPION
 }
 
 enum ChatContextType {
@@ -2077,6 +2135,7 @@ model LeagueGroup {
   worseGroups    LeagueGroup[]       @relation("LeagueGroupWorse")
   participants   LeagueParticipant[]
   games          Game[]
+  bracketSlots   LeagueBracketSlot[]
 
   @@index([leagueSeasonId])
 }
@@ -2124,6 +2183,7 @@ model LeagueParticipant {
   user            User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   leagueTeam      LeagueTeam?           @relation(fields: [leagueTeamId], references: [id], onDelete: Cascade)
   currentGroup    LeagueGroup?          @relation(fields: [currentGroupId], references: [id], onDelete: SetNull)
+  bracketSlots    LeagueBracketSlot[]
 
   @@index([leagueId])
   @@index([leagueSeasonId])
@@ -2138,19 +2198,81 @@ enum RoundType {
   PLAYOFF
 }
 
+enum PlayoffFormat {
+  SESSION
+  BRACKET
+}
+
+enum BracketSlotKind {
+  PLAY_IN
+  BYE
+  MAIN
+  THIRD_PLACE
+  CONSOLATION
+  LOSERS
+  GRAND_FINAL
+}
+
+enum BracketScope {
+  PER_GROUP
+  CROSS_GROUP
+}
+
 model LeagueRound {
-  id               String       @id @default(cuid())
-  leagueSeasonId   String
-  orderIndex       Int
-  roundType        RoundType    @default(REGULAR)
-  sentStartMessage Boolean      @default(false)
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  leagueSeason     LeagueSeason @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
-  games            Game[]
+  id                     String         @id @default(cuid())
+  leagueSeasonId         String
+  orderIndex             Int
+  roundType              RoundType      @default(REGULAR)
+  playoffFormat          PlayoffFormat?
+  bracketScope           BracketScope   @default(PER_GROUP)
+  entrantCount           Int?
+  bracketSize            Int?
+  byeCount               Int?
+  bracketTemplateVersion Int?
+  bracketConfig          Json?
+  sentStartMessage       Boolean        @default(false)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  leagueSeason           LeagueSeason   @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  games                  Game[]
+  bracketSlots           LeagueBracketSlot[]
 
   @@index([leagueSeasonId])
   @@index([orderIndex])
+}
+
+model LeagueBracketSlot {
+  id                  String            @id @default(cuid())
+  leagueRoundId       String
+  leagueGroupId       String?
+  slotKey             String
+  slotKind            BracketSlotKind
+  phaseIndex          Int
+  roundIndex          Int
+  matchIndex          Int
+  leagueParticipantId String?
+  gameId              String?           @unique
+  winnerSlotId        String?
+  feederSlotAId       String?
+  feederSlotBId       String?
+  seedRank            Int?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  leagueRound         LeagueRound       @relation(fields: [leagueRoundId], references: [id], onDelete: Cascade)
+  leagueGroup         LeagueGroup?      @relation(fields: [leagueGroupId], references: [id], onDelete: Cascade)
+  leagueParticipant   LeagueParticipant? @relation(fields: [leagueParticipantId], references: [id], onDelete: SetNull)
+  game                Game?             @relation("BracketSlotGame", fields: [gameId], references: [id], onDelete: SetNull)
+  winnerSlot          LeagueBracketSlot? @relation("BracketWinnerFeed", fields: [winnerSlotId], references: [id], onDelete: SetNull)
+  slotsFedByWinner    LeagueBracketSlot[] @relation("BracketWinnerFeed")
+  feederSlotA         LeagueBracketSlot? @relation("BracketFeederA", fields: [feederSlotAId], references: [id], onDelete: SetNull)
+  slotsFedByA         LeagueBracketSlot[] @relation("BracketFeederA")
+  feederSlotB         LeagueBracketSlot? @relation("BracketFeederB", fields: [feederSlotBId], references: [id], onDelete: SetNull)
+  slotsFedByB         LeagueBracketSlot[] @relation("BracketFeederB")
+
+  @@unique([leagueRoundId, leagueGroupId, slotKey])
+  @@index([leagueRoundId])
+  @@index([leagueGroupId])
+  @@index([gameId])
 }
 
 enum LeagueParticipantType {

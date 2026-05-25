@@ -1,6 +1,6 @@
 import type { StorySegment } from '@/api/stories';
 
-export type StoryEngagementLayoutVariant = 'media' | 'gamePromo' | 'gameResult';
+export type StoryEngagementLayoutVariant = 'media' | 'gamePromo' | 'gameResult' | 'bracketChampion';
 
 /** Min height of bottom stack (DM row + safe area), without caption */
 export const STORY_VIEWER_BOTTOM_BAR_OFFSET =
@@ -17,6 +17,7 @@ export const STORY_GAME_RESULT_SCROLL_PAD = `calc(4.25rem + ${STORY_VIEWER_CAPTI
 export function storyEngagementLayoutVariant(segment: StorySegment): StoryEngagementLayoutVariant {
   if (segment.sourceType === 'GAME_CREATED') return 'gamePromo';
   if (segment.sourceType === 'GAME_RESULT') return 'gameResult';
+  if (segment.sourceType === 'BRACKET_CHAMPION') return 'bracketChampion';
   return 'media';
 }
 
@@ -27,6 +28,7 @@ export function storyEngagementCaptionClass(variant: StoryEngagementLayoutVarian
     case 'gamePromo':
       return `${base} bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))]`;
     case 'gameResult':
+    case 'bracketChampion':
       return `${base} bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))]`;
     default:
       return `${base} bottom-[max(1rem,env(safe-area-inset-bottom,0px))]`;

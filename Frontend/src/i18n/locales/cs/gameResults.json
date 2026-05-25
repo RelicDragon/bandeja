@@ -107,6 +107,7 @@
     "generateTextFailed": "Nepodařilo se vygenerovat nový text",
     "textRequired": "Text nemůže být prázdný",
     "prepareTextFailed": "Nepodařilo se připravit text",
+    "preparingResults": "Připravují se výsledky…",
     "editTournamentTitle": "Upravit výsledky turnaje?",
     "editBarTitle": "Upravit výsledky baru?",
     "editTrainingTitle": "Upravit výsledky tréninku?",

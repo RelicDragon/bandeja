@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { OutcomesDisplay } from '@/components';
 import { gamesApi } from '@/api';
 import { resultsApi } from '@/api/results';
@@ -52,6 +53,15 @@ import { ConfirmationModal } from '@/components';
 import { Send, Edit } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
+import {
+  isResultsArtifactsPreparing,
+  isResultsArtifactsReadyForTelegram,
+} from '@/utils/gameResultsArtifacts.util';
+import {
+  buildGameBracketReturnPath,
+  resolveGameBracketReturnTarget,
+} from '@/utils/gameBracketReturn.util';
+import { Trophy } from 'lucide-react';
 
 interface GameResultsEntryEmbeddedProps {
   game: Game;
@@ -61,6 +71,7 @@ interface GameResultsEntryEmbeddedProps {
 
 export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: GameResultsEntryEmbeddedProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const [canInitialize, setCanInitialize] = useState<boolean | null>(null);
   
@@ -84,6 +95,11 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const currentGame = useMemo(
     () => resolveCurrentGameForResults(game, engine.game),
     [engine.game, game]
+  );
+
+  const bracketReturnTarget = useMemo(
+    () => resolveGameBracketReturnTarget(currentGame ?? game),
+    [currentGame, game]
   );
 
   const { activeTab, setActiveTab } = useGameResultsTabs(currentGame?.resultsStatus);
@@ -167,12 +183,25 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     return (currentGame.photosCount || 0) > 0 || !!currentGame.mainPhotoId;
   }, [currentGame]);
 
+  const isArtifactsPreparing = useMemo(
+    () => isResultsArtifactsPreparing(currentGame?.resultsArtifacts),
+    [currentGame?.resultsArtifacts]
+  );
+
+  const isArtifactsReady = useMemo(
+    () => isResultsArtifactsReadyForTelegram(currentGame?.resultsArtifacts),
+    [currentGame?.resultsArtifacts]
+  );
+
   const showSendToTelegramButton = useMemo(() => {
     if (!currentGame || !hasResultsEntered) return false;
     if (currentGame.resultsSentToTelegram) return false;
     if (!currentGame.city?.telegramGroupId) return false;
     return true;
   }, [currentGame, hasResultsEntered]);
+
+  const isTelegramSendDisabled =
+    isSendingToTelegram || isArtifactsPreparing || !isArtifactsReady;
 
   const showSentToTelegramHint = useMemo(() => {
     if (!currentGame || !hasResultsEntered) return false;
@@ -212,7 +241,15 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   };
 
   const openTelegramSummaryModal = async () => {
-    if (!currentGame || isSendingToTelegram) return;
+    if (!currentGame || isSendingToTelegram || isArtifactsPreparing || !isArtifactsReady) return;
+
+    const cachedSummary = currentGame.resultsSummaryText?.trim();
+    if (cachedSummary) {
+      setTelegramSummary(cachedSummary);
+      setIsTelegramSummaryModalOpen(true);
+      return;
+    }
+
     setIsSendingToTelegram(true);
     try {
       const response = await gamesApi.prepareTelegramSummary(currentGame.id);
@@ -868,6 +905,18 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
   return (
     <>
+      {bracketReturnTarget ? (
+        <div className="mb-4 flex justify-center">
+          <button
+            type="button"
+            onClick={() => navigate(buildGameBracketReturnPath(bracketReturnTarget))}
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-900 transition hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-100 dark:hover:bg-indigo-950/60"
+          >
+            <Trophy className="h-4 w-4 shrink-0" aria-hidden />
+            {t('gameDetails.returnToBracket')}
+          </button>
+        </div>
+      ) : null}
       <div className="w-full [&>div]:px-0 [&>div]:py-4">
         <OfflineBanner
           serverProblem={serverProblem}
@@ -882,24 +931,32 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         <div className="mb-6 flex justify-center">
           <button
             onClick={handleSendToTelegram}
-            disabled={isSendingToTelegram}
+            disabled={isTelegramSendDisabled}
             className={`group relative px-4 sm:px-6 py-3 rounded-xl text-white font-semibold text-sm sm:text-base shadow-lg transition-all duration-300 ease-in-out flex items-center justify-center gap-2.5 transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 min-w-[200px] min-h-[48px] ${
-              isSendingToTelegram
+              isTelegramSendDisabled
                 ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-blue-600 shadow-blue-500/30 cursor-not-allowed'
                 : 'bg-gradient-to-r from-blue-500 via-blue-600 to-blue-600 hover:from-blue-600 hover:via-blue-700 hover:to-blue-700 shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-600/40 hover:scale-[1.02] active:scale-[0.98]'
             }`}
           >
             <div className="relative flex items-center justify-center w-full h-full">
-              <div className={`flex items-center gap-2.5 transition-opacity duration-300 ease-in-out ${isSendingToTelegram ? 'opacity-0 absolute' : 'opacity-100'}`}>
+              <div className={`flex items-center gap-2.5 transition-opacity duration-300 ease-in-out ${isTelegramSendDisabled ? 'opacity-0 absolute' : 'opacity-100'}`}>
                 <Send size={18} className="transition-transform duration-300 group-hover:translate-x-0.5 flex-shrink-0" />
                 <span className="text-center leading-tight whitespace-normal break-words max-w-[200px]">{t('gameResults.sendResultsToTelegram') || 'Send results to Telegram chat'}</span>
               </div>
-              <div className={`flex items-center gap-1.5 transition-opacity duration-300 ease-in-out ${isSendingToTelegram ? 'opacity-100' : 'opacity-0 absolute'}`}>
-                <span className="w-2 h-2 bg-white rounded-full wavy-dot-1"></span>
-                <span className="w-2 h-2 bg-white rounded-full wavy-dot-2"></span>
-                <span className="w-2 h-2 bg-white rounded-full wavy-dot-3"></span>
-                <span className="w-2 h-2 bg-white rounded-full wavy-dot-4"></span>
-                <span className="w-2 h-2 bg-white rounded-full wavy-dot-5"></span>
+              <div className={`flex items-center gap-1.5 transition-opacity duration-300 ease-in-out ${isTelegramSendDisabled ? 'opacity-100' : 'opacity-0 absolute'}`}>
+                {isArtifactsPreparing && !isSendingToTelegram ? (
+                  <span className="text-center leading-tight whitespace-normal break-words max-w-[200px] px-1">
+                    {t('gameResults.preparingResults')}
+                  </span>
+                ) : isSendingToTelegram ? (
+                  <>
+                    <span className="w-2 h-2 bg-white rounded-full wavy-dot-1"></span>
+                    <span className="w-2 h-2 bg-white rounded-full wavy-dot-2"></span>
+                    <span className="w-2 h-2 bg-white rounded-full wavy-dot-3"></span>
+                    <span className="w-2 h-2 bg-white rounded-full wavy-dot-4"></span>
+                    <span className="w-2 h-2 bg-white rounded-full wavy-dot-5"></span>
+                  </>
+                ) : null}
               </div>
             </div>
           </button>

@@ -2,7 +2,7 @@
 
 Modern, Instagram/CapCut-style story creation: drag/drop media, gesture-based editing (pan, pinch, rotate), interactive text overlays, and clean fullscreen UI.
 
-**Related:** [PLAN_STORIES.md](./PLAN_STORIES.md) (feed, viewer, backend)
+**Related:** [PLAN_STORIES.md](./PLAN_STORIES.md) (feed, viewer, backend) · [PLAN_STORY_EDITOR_CANVAS_COMPOSITOR.md](./PLAN_STORY_EDITOR_CANVAS_COMPOSITOR.md) (canvas stage / WYSIWYG perf)
 
 ---
 

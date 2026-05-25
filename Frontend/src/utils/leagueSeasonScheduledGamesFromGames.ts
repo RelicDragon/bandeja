@@ -43,6 +43,9 @@ function leagueSeasonParticipantGamesFromGames(
         const ra = a.leagueRound?.orderIndex ?? 0;
         const rb = b.leagueRound?.orderIndex ?? 0;
         if (ra !== rb) return ra - rb;
+        const playInA = a.bracketSlot?.slotKind === 'PLAY_IN' ? 0 : 1;
+        const playInB = b.bracketSlot?.slotKind === 'PLAY_IN' ? 0 : 1;
+        if (playInA !== playInB) return playInA - playInB;
         return a.id.localeCompare(b.id);
       });
     }

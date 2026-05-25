@@ -1,14 +1,36 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
-import { leaguesApi, LeagueStanding, LeagueGroup } from '@/api/leagues';
+import {
+  leaguesApi,
+  LeagueStanding,
+  LeagueGroup,
+  LeagueRound,
+  type BracketPlayoffGroupDto,
+  type BracketPlayoffResponse,
+} from '@/api/leagues';
 import { Loader2, Trophy, Medal } from 'lucide-react';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { RoundTypeFilterSwitch } from './RoundTypeFilterSwitch';
 import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
 import { setRoundTypeFilter, type RoundTypeFilterValue } from '@/utils/roundTypeFilterStorage';
+import {
+  findBracketRounds,
+  defaultBracketRoundId,
+  resolveSelectedBracketRound,
+} from '@/utils/leagueBracketRound';
+import { BracketRoundPicker } from './BracketRoundPicker';
+import { enrichBracketGroups } from '@/utils/leagueBracketEnrich';
+import { bracketGroupHasPodium } from '@/utils/leagueBracketOutcome';
+import { LeagueBracketPodiumCard } from './LeagueBracketPodiumCard';
+import { LeagueBracketStandingsCtaCard } from './LeagueBracketStandingsCtaCard';
+import { getActiveBracketGroup, isCrossGroupBracket } from '@/utils/bracketView.util';
+import {
+  playoffRoundTypeFilterLabelKey,
+  resolvePlayoffFilterLabelMode,
+} from '@/utils/roundTypePlayoffFilterLabel.util';
 
 const ALL_GROUP_ID = 'ALL';
 
@@ -25,7 +47,15 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
   const [showAwardIcons, setShowAwardIcons] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string>(ALL_GROUP_ID);
   const [selectedRoundType, setSelectedRoundType] = useState<RoundTypeFilterValue>('REGULAR');
+  const [bracketPayload, setBracketPayload] = useState<BracketPlayoffResponse | null>(null);
+  const [bracketRounds, setBracketRounds] = useState<LeagueRound[]>([]);
+  const [scheduleRounds, setScheduleRounds] = useState<LeagueRound[]>([]);
+  const [selectedBracketRoundId, setSelectedBracketRoundId] = useState<string | null>(null);
   const NO_GROUP_KEY = 'no-group';
+  const playoffFilterLabelKey = useMemo(
+    () => playoffRoundTypeFilterLabelKey(resolvePlayoffFilterLabelMode(scheduleRounds)),
+    [scheduleRounds]
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,7 +68,8 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
         setStandings(standingsResponse.data);
         setGroups(groupsResponse.data.groups);
         const rounds = roundsResponse.data ?? [];
-        setSelectedRoundType(rounds.some((r) => (r.roundType ?? 'REGULAR') === 'PLAYOFF') ? 'PLAYOFF' : 'REGULAR');
+        setScheduleRounds(rounds);
+        setSelectedRoundType(findBracketRounds(rounds).length > 0 ? 'PLAYOFF' : 'REGULAR');
       } catch (error) {
         console.error('Failed to fetch league data:', error);
       } finally {
@@ -48,6 +79,47 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
 
     fetchData();
   }, [leagueSeasonId]);
+
+  const loadBracketPodium = useCallback(async () => {
+    if (selectedRoundType !== 'PLAYOFF') {
+      setBracketPayload(null);
+      setBracketRounds([]);
+      return;
+    }
+    try {
+      const roundsRes = await leaguesApi.getRounds(leagueSeasonId);
+      const playoffs = findBracketRounds(roundsRes.data);
+      setBracketRounds(playoffs);
+      const round = resolveSelectedBracketRound(playoffs, selectedBracketRoundId);
+      if (!round) {
+        setBracketPayload(null);
+        return;
+      }
+      const bracketRes = await leaguesApi.getBracketPlayoff(leagueSeasonId, { roundId: round.id });
+      const games = round.games ?? [];
+      setBracketPayload({
+        ...bracketRes.data,
+        groups: enrichBracketGroups(bracketRes.data.groups, games),
+      });
+    } catch {
+      setBracketPayload(null);
+    }
+  }, [leagueSeasonId, selectedRoundType, selectedBracketRoundId]);
+
+  useEffect(() => {
+    if (bracketRounds.length === 0) {
+      setSelectedBracketRoundId(null);
+      return;
+    }
+    setSelectedBracketRoundId((prev) => {
+      if (prev && bracketRounds.some((r) => r.id === prev)) return prev;
+      return defaultBracketRoundId(bracketRounds);
+    });
+  }, [bracketRounds]);
+
+  useEffect(() => {
+    loadBracketPodium().catch(() => {});
+  }, [loadBracketPodium]);
 
   useEffect(() => {
     const interval = setInterval(() => setShowAwardIcons((prev) => !prev), 1500);
@@ -114,6 +186,33 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
   const ungroupedStandings = groupStandingsMap.get(NO_GROUP_KEY);
   const hasGroups = orderedGroups.length > 0;
   const filteredGroups = selectedGroupId === ALL_GROUP_ID ? orderedGroups : orderedGroups.filter((group) => group.id === selectedGroupId);
+
+  const crossGroupBracket = isCrossGroupBracket(bracketPayload);
+  const seasonBracketGroup = getActiveBracketGroup(bracketPayload);
+
+  const bracketGroupsById = useMemo(() => {
+    const map = new Map<string, BracketPlayoffGroupDto>();
+    for (const g of bracketPayload?.groups ?? []) {
+      if (g.leagueGroupId) map.set(g.leagueGroupId, g);
+    }
+    return map;
+  }, [bracketPayload]);
+
+  const showBracketSection = selectedRoundType === 'PLAYOFF' && bracketPayload != null;
+
+  const anyBracketPodiumVisible = useMemo(() => {
+    if (!bracketPayload) return false;
+    if (crossGroupBracket && seasonBracketGroup) {
+      return bracketGroupHasPodium(seasonBracketGroup);
+    }
+    return filteredGroups.some(({ id }) => {
+      const g = bracketGroupsById.get(id);
+      return g ? bracketGroupHasPodium(g) : false;
+    });
+  }, [bracketPayload, crossGroupBracket, seasonBracketGroup, filteredGroups, bracketGroupsById]);
+
+  const showBracketPodium = showBracketSection && anyBracketPodiumVisible;
+  const showBracketCta = showBracketSection && !anyBracketPodiumVisible;
 
   if (loading) {
     return (
@@ -279,7 +378,7 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
       <RoundTypeFilterSwitch
         value={selectedRoundType}
         regularLabel={t('gameDetails.roundTypeRegular') || 'Regular season'}
-        playoffLabel={t('gameDetails.roundTypePlayoff') || 'Play-off'}
+        playoffLabel={t(playoffFilterLabelKey, { defaultValue: t('gameDetails.roundTypePlayoff') || 'Play-off' })}
         onSelect={setSelectedRoundType}
       />
       {orderedGroups.length > 0 && (
@@ -291,6 +390,52 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
           allGroupId={ALL_GROUP_ID}
         />
       )}
+      {showBracketCta && (
+        <LeagueBracketStandingsCtaCard
+          leagueSeasonId={leagueSeasonId}
+          bracketRoundId={selectedBracketRoundId ?? undefined}
+          bracketScope={bracketPayload?.round.bracketScope}
+          crossGroupBracket={crossGroupBracket}
+          groupId={
+            crossGroupBracket
+              ? undefined
+              : filteredGroups.find(({ id }) => bracketGroupsById.has(id))?.id
+          }
+        />
+      )}
+      {showBracketPodium && bracketRounds.length > 1 && selectedBracketRoundId && (
+        <BracketRoundPicker
+          rounds={bracketRounds}
+          selectedRoundId={selectedBracketRoundId}
+          onSelect={setSelectedBracketRoundId}
+          layoutIdPrefix={`${leagueSeasonId}-standings`}
+        />
+      )}
+      {showBracketPodium && crossGroupBracket && seasonBracketGroup && (
+        <LeagueBracketPodiumCard
+          key="podium-season"
+          leagueSeasonId={leagueSeasonId}
+          group={seasonBracketGroup}
+          crossGroupBracket
+          bracketRoundId={selectedBracketRoundId ?? undefined}
+        />
+      )}
+      {showBracketPodium &&
+        !crossGroupBracket &&
+        filteredGroups.map(({ id }) => {
+          const bracketGroup = bracketGroupsById.get(id);
+          if (!bracketGroup) return null;
+          const groupMeta = groups.find((g) => g.id === id);
+          return (
+            <LeagueBracketPodiumCard
+              key={`podium-${id}`}
+              leagueSeasonId={leagueSeasonId}
+              group={bracketGroup}
+              groupMeta={groupMeta}
+              bracketRoundId={selectedBracketRoundId ?? undefined}
+            />
+          );
+        })}
       {hasGroups ? (
         <>
           {filteredGroups.map(({ id, name, color, standings: groupStandings }) => {

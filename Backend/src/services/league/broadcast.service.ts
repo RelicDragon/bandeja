@@ -77,6 +77,8 @@ export class LeagueBroadcastService {
                 id: true,
                 orderIndex: true,
                 roundType: true,
+                playoffFormat: true,
+                bracketScope: true,
               },
             },
           },
@@ -114,6 +116,8 @@ export class LeagueBroadcastService {
           id: round.id,
           orderIndex: round.orderIndex,
           roundType: round.roundType,
+          playoffFormat: round.playoffFormat,
+          bracketScope: round.bracketScope,
         },
       };
 

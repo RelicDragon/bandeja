@@ -15,11 +15,28 @@ import { leaguesApi, LeagueRound, LeagueGroup, LeagueStanding } from '@/api/leag
 import { Loader2, Calendar, Users, Trophy, LayoutGrid, Maximize2 } from 'lucide-react';
 import { standingsTeamsForGroup, roundsInSingleRoundRobinCycle, type MatrixTeam } from '@/utils/leagueFixtureMatrix';
 import { repairLeagueScheduleSearchIfInvalid, resolveLeagueScheduleMode } from '@/utils/leagueScheduleSubtab';
+import { LeagueBracketView } from './LeagueBracketView';
+import { LeagueBracketListPanel } from './LeagueBracketListPanel';
+import {
+  findBracketRounds,
+  defaultBracketRoundId,
+  resolveSelectedBracketRound,
+} from '@/utils/leagueBracketRound';
+import { BracketRoundPicker } from './BracketRoundPicker';
+import { enrichBracketGroups } from '@/utils/leagueBracketEnrich';
+import { getActiveBracketGroup, isCrossGroupBracket } from '@/utils/bracketView.util';
+import { resolveBracketRoundTitleFromSlots } from '@/utils/bracketRoundDisplay.util';
+import type { BracketPlayoffGroupDto, BracketPlayoffResponse } from '@/api/leagues';
 import { Game } from '@/types';
 import { LeagueRoundAccordion } from './LeagueRoundAccordion';
 import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
 import { getRoundTypeFilter, setRoundTypeFilter, type RoundTypeFilterValue } from '@/utils/roundTypeFilterStorage';
 import { canShowPlayoffRoundTypeFilter } from '@/utils/leagueScheduleRegularSeasonScope';
+import {
+  playoffRoundTypeFilterLabelKey,
+  resolvePlayoffFilterLabelMode,
+} from '@/utils/roundTypePlayoffFilterLabel.util';
+import { buildLeagueHomeGameBracketPath } from '@/utils/leagueHomeBracket.util';
 import { useAuthStore } from '@/store/authStore';
 import { LeagueScheduleMyGamesList } from './LeagueScheduleMyGamesList';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
@@ -34,6 +51,12 @@ interface LeagueScheduleTabProps {
 }
 
 const ALL_GROUP_ID = 'ALL';
+
+function initialRoundTypeFromSearch(search: string): RoundTypeFilterValue {
+  const sp = new URLSearchParams(search);
+  if (sp.get('tab') === 'schedule' && sp.get('subtab') === 'bracket') return 'PLAYOFF';
+  return 'REGULAR';
+}
 
 export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTeams = false, selectedGameChatId, onChatGameSelect }: LeagueScheduleTabProps) => {
   const { t } = useTranslation();
@@ -66,9 +89,15 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const [isClient, setIsClient] = useState(false);
   const [expandedRoundId, setExpandedRoundId] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string>(ALL_GROUP_ID);
-  const [selectedRoundType, setSelectedRoundType] = useState<RoundTypeFilterValue>('REGULAR');
+  const [selectedRoundType, setSelectedRoundType] = useState<RoundTypeFilterValue>(() =>
+    initialRoundTypeFromSearch(location.search)
+  );
   const [groupsInitialized, setGroupsInitialized] = useState(false);
   const [loadedRoundIds, setLoadedRoundIds] = useState<Set<string>>(new Set());
+  const [bracketPayload, setBracketPayload] = useState<BracketPlayoffResponse | null>(null);
+  const [bracketLoading, setBracketLoading] = useState(false);
+  const [bracketError, setBracketError] = useState(false);
+  const [selectedBracketRoundId, setSelectedBracketRoundId] = useState<string | null>(null);
   const canManageGroups = canEdit && hasGroups;
   const canAddRound = canEdit && (rounds.length > 0 || (hasGroups && participantCount > 0));
 
@@ -140,6 +169,10 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     () => canShowPlayoffRoundTypeFilter(rounds, selectedGroupId, ALL_GROUP_ID),
     [rounds, selectedGroupId]
   );
+  const playoffFilterLabelKey = useMemo(
+    () => playoffRoundTypeFilterLabelKey(resolvePlayoffFilterLabelMode(rounds)),
+    [rounds]
+  );
 
   const playoffRoundTypeRestoredRef = useRef<string | null>(null);
   useEffect(() => {
@@ -156,14 +189,26 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     playoffRoundTypeRestoredRef.current = key;
     let cancelled = false;
     void (async () => {
+      const sp = new URLSearchParams(location.search);
+      if (sp.get('tab') === 'schedule' && sp.get('subtab') === 'bracket') {
+        setSelectedRoundType('PLAYOFF');
+        return;
+      }
       const saved = await getRoundTypeFilter(leagueSeasonId);
-      if (cancelled || saved !== 'PLAYOFF') return;
-      setSelectedRoundType('PLAYOFF');
+      if (cancelled) return;
+      if (saved === 'PLAYOFF') {
+        setSelectedRoundType('PLAYOFF');
+        return;
+      }
+      if (saved === 'REGULAR') return;
+      if (findBracketRounds(rounds).length > 0) {
+        setSelectedRoundType('PLAYOFF');
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [showPlayoffRoundTypeSwitch, leagueSeasonId, selectedGroupId]);
+  }, [showPlayoffRoundTypeSwitch, leagueSeasonId, selectedGroupId, location.search, rounds]);
 
   useEffect(() => {
     if (!showPlayoffRoundTypeSwitch && selectedRoundType === 'PLAYOFF') {
@@ -206,6 +251,26 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     [rounds, selectedRoundType]
   );
 
+  const bracketRounds = useMemo(() => findBracketRounds(filteredRounds), [filteredRounds]);
+
+  useEffect(() => {
+    if (bracketRounds.length === 0) {
+      setSelectedBracketRoundId(null);
+      return;
+    }
+    setSelectedBracketRoundId((prev) => {
+      if (prev && bracketRounds.some((r) => r.id === prev)) return prev;
+      return defaultBracketRoundId(bracketRounds);
+    });
+  }, [bracketRounds]);
+
+  const selectedBracketRound = useMemo(
+    () => resolveSelectedBracketRound(bracketRounds, selectedBracketRoundId),
+    [bracketRounds, selectedBracketRoundId]
+  );
+
+  const canShowBracketTab = selectedRoundType === 'PLAYOFF' && bracketRounds.length > 0;
+
   const groupScheduleProgress = useMemo(
     () => leagueGroupGameProgressFromRounds(filteredRounds, groups.map((g) => g.id)),
     [filteredRounds, groups]
@@ -225,17 +290,159 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const resolvedScheduleView = useMemo(() => {
     const sp = new URLSearchParams(location.search);
     if (sp.get('tab') !== 'schedule') return showMyTab ? 'my' : 'list';
-    return resolveLeagueScheduleMode(sp.get('subtab'), showMyTab, canShowTableTab);
-  }, [location.search, showMyTab, canShowTableTab]);
+    return resolveLeagueScheduleMode(sp.get('subtab'), showMyTab, canShowTableTab, canShowBracketTab);
+  }, [location.search, showMyTab, canShowTableTab, canShowBracketTab]);
 
   useEffect(() => {
     if (loading) return;
-    const nextSearch = repairLeagueScheduleSearchIfInvalid(location.search, showMyTab, canShowTableTab);
+    const nextSearch = repairLeagueScheduleSearchIfInvalid(
+      location.search,
+      showMyTab,
+      canShowTableTab,
+      canShowBracketTab
+    );
     if (!nextSearch) return;
     const cur = new URLSearchParams(location.search).toString();
     if (cur === nextSearch) return;
     navigate({ pathname: location.pathname, search: nextSearch }, { replace: true });
-  }, [loading, location.pathname, location.search, navigate, showMyTab, canShowTableTab]);
+  }, [loading, location.pathname, location.search, navigate, showMyTab, canShowTableTab, canShowBracketTab]);
+
+  useEffect(() => {
+    const sp = new URLSearchParams(location.search);
+    if (sp.get('tab') === 'schedule' && sp.get('subtab') === 'bracket') {
+      setSelectedRoundType('PLAYOFF');
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!groupsInitialized || loading) return;
+    const sp = new URLSearchParams(location.search);
+    if (sp.get('tab') !== 'schedule' || sp.get('subtab') !== 'bracket') return;
+    const groupFromUrl = sp.get('group')?.trim();
+    if (!groupFromUrl) return;
+    if (groups.some((g) => g.id === groupFromUrl)) {
+      setSelectedGroupId(groupFromUrl);
+      void setGroupFilter(leagueSeasonId, groupFromUrl);
+    }
+  }, [groupsInitialized, loading, location.search, groups, leagueSeasonId]);
+
+  useEffect(() => {
+    if (loading || bracketRounds.length === 0) return;
+    const sp = new URLSearchParams(location.search);
+    if (sp.get('tab') !== 'schedule' || sp.get('subtab') !== 'bracket') return;
+    const roundFromUrl = sp.get('roundId')?.trim() || sp.get('round')?.trim();
+    if (!roundFromUrl) return;
+    if (bracketRounds.some((r) => r.id === roundFromUrl)) {
+      setSelectedBracketRoundId(roundFromUrl);
+    }
+  }, [loading, location.search, bracketRounds]);
+
+  useEffect(() => {
+    if (!selectedBracketRound?.id) {
+      setBracketPayload(null);
+      setBracketError(false);
+      return;
+    }
+    let cancelled = false;
+    setBracketPayload(null);
+    setBracketLoading(true);
+    setBracketError(false);
+    void leaguesApi
+      .getBracketPlayoff(leagueSeasonId, { roundId: selectedBracketRound.id })
+      .then((res) => {
+        if (cancelled) return;
+        const games = selectedBracketRound.games ?? res.data.round.games ?? [];
+        setBracketPayload({
+          ...res.data,
+          groups: enrichBracketGroups(res.data.groups, games),
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setBracketPayload(null);
+        setBracketError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setBracketLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [leagueSeasonId, selectedBracketRound?.id, selectedBracketRound?.games]);
+
+  const refetchBracket = useCallback(() => {
+    if (!selectedBracketRound?.id) return;
+    setBracketPayload(null);
+    setBracketLoading(true);
+    setBracketError(false);
+    void leaguesApi
+      .getBracketPlayoff(leagueSeasonId, { roundId: selectedBracketRound.id })
+      .then((res) => {
+        const games = selectedBracketRound.games ?? res.data.round.games ?? [];
+        setBracketPayload({
+          ...res.data,
+          groups: enrichBracketGroups(res.data.groups, games),
+        });
+      })
+      .catch(() => {
+        setBracketPayload(null);
+        setBracketError(true);
+      })
+      .finally(() => setBracketLoading(false));
+  }, [leagueSeasonId, selectedBracketRound?.id, selectedBracketRound?.games]);
+
+  const crossGroupBracket = isCrossGroupBracket(bracketPayload);
+
+  const activeBracketGroup: BracketPlayoffGroupDto | null = useMemo(
+    () =>
+      getActiveBracketGroup(bracketPayload, {
+        selectedGroupId,
+        allGroupId: ALL_GROUP_ID,
+      }),
+    [bracketPayload, selectedGroupId]
+  );
+
+  const bracketFullscreenGroupQuery = (() => {
+    const sp = new URLSearchParams();
+    if (selectedBracketRound?.id) {
+      sp.set('roundId', selectedBracketRound.id);
+      sp.set('round', selectedBracketRound.id);
+    }
+    if (!crossGroupBracket && activeBracketGroup?.leagueGroupId) {
+      sp.set('group', activeBracketGroup.leagueGroupId);
+    }
+    const q = sp.toString();
+    return q ? `?${q}` : '';
+  })();
+
+  const showBracketAllGroupsBanner =
+    canShowBracketTab &&
+    !crossGroupBracket &&
+    selectedGroupId === ALL_GROUP_ID &&
+    groups.length > 1 &&
+    (resolvedScheduleView === 'bracket' || resolvedScheduleView === 'list') &&
+    !!activeBracketGroup?.leagueGroupId;
+
+  const bracketAllGroupsBannerName =
+    groups.find((g) => g.id === activeBracketGroup?.leagueGroupId)?.name ?? '';
+
+  const selectedBracketRoundSlotTitle = useMemo(
+    () =>
+      activeBracketGroup?.slots?.length
+        ? resolveBracketRoundTitleFromSlots(activeBracketGroup.slots)
+        : null,
+    [activeBracketGroup?.slots]
+  );
+
+  const navigateBracketSubtab = useCallback(
+    (subtab: 'bracket' | 'list') => {
+      const sp = new URLSearchParams(location.search);
+      sp.set('tab', 'schedule');
+      sp.set('subtab', subtab);
+      navigate({ pathname: location.pathname, search: sp.toString() }, { replace: false });
+    },
+    [location.pathname, location.search, navigate]
+  );
 
   useLayoutEffect(() => {
     if (resolvedScheduleView !== 'table' || selectedGroupId !== ALL_GROUP_ID || groups.length === 0) return;
@@ -317,7 +524,12 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     setEditingGame(game);
   };
 
-  const handleOpenGame = (game: Game) => {
+  const handleOpenGame = (game: Game, opts?: { preferBracketPosition?: boolean }) => {
+    const bracketPath = buildLeagueHomeGameBracketPath(game);
+    if (opts?.preferBracketPosition && bracketPath) {
+      navigate(bracketPath);
+      return;
+    }
     const sp = new URLSearchParams(location.search);
     sp.set('tab', 'schedule');
     navigate(`/games/${leagueSeasonId}?${sp.toString()}`, { replace: true });
@@ -533,7 +745,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
         <RoundTypeFilterSwitch
           value={selectedRoundType}
           regularLabel={t('gameDetails.roundTypeRegular') || 'Regular season'}
-          playoffLabel={t('gameDetails.roundTypePlayoff') || 'Play-off'}
+          playoffLabel={t(playoffFilterLabelKey, { defaultValue: t('gameDetails.roundTypePlayoff') || 'Play-off' })}
           onSelect={setSelectedRoundType}
         />
       )}
@@ -542,12 +754,19 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           <SegmentedSwitch
             tabs={[
               ...(showMyTab ? [{ id: 'my' as const, label: t('gameDetails.fixtureScheduleViewMy') }] : []),
-              { id: 'list', label: t('gameDetails.fixtureMatrixViewList') },
-              ...(canShowTableTab ? [{ id: 'table' as const, label: t('gameDetails.fixtureTableView') }] : []),
+              ...(canShowBracketTab
+                ? [
+                    { id: 'bracket' as const, label: t('gameDetails.bracketViewTab') },
+                    { id: 'list' as const, label: t('gameDetails.fixtureMatrixViewList') },
+                  ]
+                : [
+                    { id: 'list', label: t('gameDetails.fixtureMatrixViewList') },
+                    ...(canShowTableTab ? [{ id: 'table' as const, label: t('gameDetails.fixtureTableView') }] : []),
+                  ]),
             ]}
             activeId={resolvedScheduleView}
             onChange={(id) => {
-              const next = id as 'my' | 'list' | 'table';
+              const next = id as 'my' | 'list' | 'table' | 'bracket';
               const sp = new URLSearchParams(location.search);
               sp.set('tab', 'schedule');
               if (next === 'my' && showMyTab) {
@@ -563,7 +782,10 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           />
         </div>
       )}
-      {groups.length > 0 && (resolvedScheduleView === 'list' || resolvedScheduleView === 'table') && (
+      {groups.length > 0 &&
+        (resolvedScheduleView === 'list' ||
+          resolvedScheduleView === 'table' ||
+          (resolvedScheduleView === 'bracket' && !crossGroupBracket)) && (
         <GroupFilterDropdown
           selectedGroupId={selectedGroupId}
           groups={groups.map((g) => ({ id: g.id, name: g.name, color: g.color ?? undefined }))}
@@ -574,6 +796,11 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           showGroupProgressCounts={canEdit}
           showAllOption={resolvedScheduleView !== 'table'}
         />
+      )}
+      {showBracketAllGroupsBanner && (
+        <p className="rounded-lg border border-gray-200/80 bg-gray-50/90 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-200">
+          {t('gameDetails.bracketAllGroupsNote', { groupName: bracketAllGroupsBannerName })}
+        </p>
       )}
       {resolvedScheduleView === 'table' && hasFixedTeams && fixtureTableEligible && selectedRoundType === 'PLAYOFF' && (
         <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
@@ -608,6 +835,67 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
             />
           </div>
         </div>
+      ) : resolvedScheduleView === 'bracket' && canShowBracketTab ? (
+        <div className="space-y-2">
+          <div className="flex items-start justify-end gap-2">
+            {selectedBracketRound && (selectedBracketRoundId ?? selectedBracketRound.id) ? (
+              <div className="min-w-0 flex-1">
+                <BracketRoundPicker
+                  rounds={bracketRounds}
+                  selectedRoundId={selectedBracketRoundId ?? selectedBracketRound.id}
+                  onSelect={setSelectedBracketRoundId}
+                  layoutIdPrefix={leagueSeasonId}
+                  selectedRoundSlotTitle={selectedBracketRoundSlotTitle}
+                />
+              </div>
+            ) : null}
+            {activeBracketGroup && !bracketLoading && !bracketError ? (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/games/${leagueSeasonId}/league-bracket${bracketFullscreenGroupQuery}`,
+                    { state: { scheduleReturnTo: `${location.pathname}${location.search}` } }
+                  )
+                }
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-md ring-1 ring-gray-200/90 backdrop-blur-sm transition hover:bg-white dark:bg-gray-900/95 dark:text-gray-100 dark:ring-gray-700 dark:hover:bg-gray-900"
+                aria-label={t('gameDetails.openBracketFullscreen')}
+              >
+                <Maximize2 className="h-5 w-5" aria-hidden />
+              </button>
+            ) : null}
+          </div>
+          <p id="bracket-list-fallback-hint" className="sr-only">
+            {t('gameDetails.bracketListFallbackHint')}{' '}
+            <button type="button" className="underline" onClick={() => navigateBracketSubtab('list')}>
+              {t('gameDetails.bracketListFallbackLink')}
+            </button>
+          </p>
+          {(bracketLoading || activeBracketGroup || bracketError) && (
+            <LeagueBracketView
+              group={activeBracketGroup}
+              groups={groups}
+              crossGroupBracket={crossGroupBracket}
+              loading={bracketLoading}
+              error={bracketError}
+              onRetry={refetchBracket}
+              onOpenListView={() => navigateBracketSubtab('list')}
+              onOpenGame={handleOpenGame}
+              onEditGame={canEdit ? handleEditGame : undefined}
+              canEditBracket={canEdit}
+              leagueSeasonId={leagueSeasonId}
+              bracketRoundId={selectedBracketRound?.id}
+              seedingLocked={Boolean(bracketPayload?.round?.bracketConfig?.seedingLocked)}
+              onBracketUpdated={(res) => {
+                const games = selectedBracketRound?.games ?? res.round.games ?? [];
+                setBracketPayload({
+                  ...res,
+                  groups: enrichBracketGroups(res.groups, games),
+                });
+              }}
+            />
+          )}
+        </div>
       ) : filteredRounds.length === 0 ? (
         <Card>
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -634,10 +922,22 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           selectedGameChatId={selectedGameChatId}
           onChatGameSelect={onChatGameSelect}
           onEditGame={handleEditGame}
-          onOpenGame={handleOpenGame}
+          onOpenGame={(game) => handleOpenGame(game, { preferBracketPosition: true })}
           onDeleteGame={handleDeleteGame}
           onNoteSaved={fetchRounds}
           t={t}
+        />
+      ) : canShowBracketTab && resolvedScheduleView === 'list' ? (
+        <LeagueBracketListPanel
+          group={activeBracketGroup}
+          crossGroupBracket={crossGroupBracket}
+          groupFilterActive={selectedGroupId !== ALL_GROUP_ID}
+          loading={bracketLoading}
+          error={bracketError}
+          onRetry={refetchBracket}
+          onOpenTreeView={() => navigateBracketSubtab('bracket')}
+          onOpenGame={handleOpenGame}
+          onEditGame={canEdit ? handleEditGame : undefined}
         />
       ) : (
         <div className="space-y-0">

@@ -22,6 +22,10 @@ interface NotificationData {
     userChatId?: string;
     groupChannelId?: string;
     teamId?: string;
+    leagueSeasonId?: string;
+    scheduleSubtab?: string;
+    scheduleGroup?: string;
+    scheduleRoundId?: string;
   };
 }
 
@@ -192,6 +196,16 @@ class PushNotificationService {
     return null;
   }
 
+  private tryNavigateToBracketSchedule(payload: NotificationData['data']): boolean {
+    if (payload?.scheduleSubtab !== 'bracket' || !payload.leagueSeasonId) return false;
+    navigationService.navigateToLeagueSeasonSchedule(payload.leagueSeasonId, {
+      subtab: 'bracket',
+      group: payload.scheduleGroup,
+      roundId: payload.scheduleRoundId,
+    });
+    return true;
+  }
+
   private async handleNotificationAction(action: ActionPerformed) {
     const { actionId, notification } = action;
     const normalizedData = this.normalizeNotificationData(notification.data);
@@ -228,6 +242,9 @@ class PushNotificationService {
       case 'GAME_REMINDER':
       case 'GAME_RESULTS':
       case 'NEW_GAME':
+        if (this.tryNavigateToBracketSchedule(payload)) {
+          break;
+        }
         if (payload?.gameId) {
           const openChat = type === 'GAME_CHAT';
           const initialChatType = type === 'GAME_CHAT' ? payload?.chatType : undefined;

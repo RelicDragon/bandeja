@@ -99,6 +99,148 @@ router.post(
 );
 
 router.post(
+  '/:leagueSeasonId/playoff/bracket',
+  authenticate,
+  canEditGame,
+  validate([
+    body('bracketScope').optional().isIn(['PER_GROUP', 'CROSS_GROUP']),
+    body('groups').optional().isArray({ min: 1 }),
+    body('groups.*.leagueGroupId').optional().isString(),
+    body('groups.*.participantIds').optional().isArray({ min: 2, max: 16 }),
+    body('groups.*.participantIds.*').optional().isString(),
+    body('includeThirdPlace').optional().isBoolean(),
+    body('includeConsolationBracket').optional().isBoolean(),
+    body('includeDoubleElimination').optional().isBoolean(),
+    body('customByeSeedRanks').optional().isArray(),
+    body('customByeSeedRanks.*').optional().isInt({ min: 1, max: 16 }),
+    body('customPlayInPairings').optional().isArray(),
+    body('customPlayInPairings.*.seedA').optional().isInt({ min: 1, max: 16 }),
+    body('customPlayInPairings.*.seedB').optional().isInt({ min: 1, max: 16 }),
+    body('includeConsolationBracket').optional().isBoolean(),
+    body('groups.*.includeThirdPlace').optional().isBoolean(),
+    body('groups.*.includeConsolationBracket').optional().isBoolean(),
+    body('groups.*.includeDoubleElimination').optional().isBoolean(),
+    body('groups.*.customByeSeedRanks').optional().isArray(),
+    body('groups.*.customByeSeedRanks.*').optional().isInt({ min: 1, max: 16 }),
+    body('crossGroup.includeThirdPlace').optional().isBoolean(),
+    body('crossGroup.includeConsolationBracket').optional().isBoolean(),
+    body('crossGroup.includeDoubleElimination').optional().isBoolean(),
+    body('crossGroup.customByeSeedRanks').optional().isArray(),
+    body('crossGroup.customByeSeedRanks.*').optional().isInt({ min: 1, max: 16 }),
+    body('groups.*.includeThirdPlace').optional().isBoolean(),
+    body('groups.*.includeConsolationBracket').optional().isBoolean(),
+    body('groups.*.includeDoubleElimination').optional().isBoolean(),
+    body('groups.*.customByeSeedRanks').optional().isArray(),
+    body('groups.*.customByeSeedRanks.*').optional().isInt({ min: 1, max: 16 }),
+    body('crossGroup.includeThirdPlace').optional().isBoolean(),
+    body('crossGroup.includeConsolationBracket').optional().isBoolean(),
+    body('crossGroup.includeDoubleElimination').optional().isBoolean(),
+    body('crossGroup.customByeSeedRanks').optional().isArray(),
+    body('crossGroup.customByeSeedRanks.*').optional().isInt({ min: 1, max: 16 }),
+    body('crossGroup.equalTopK').optional().isInt({ min: 1, max: 16 }),
+    body('crossGroup.unequalK').optional().isBoolean(),
+    body('crossGroup.teamsPerGroup').optional().isArray({ min: 1 }),
+    body('crossGroup.teamsPerGroup.*.leagueGroupId').optional().isString(),
+    body('crossGroup.teamsPerGroup.*.k').optional().isInt({ min: 1, max: 16 }),
+    body('crossGroup.customPlayInPairings').optional().isArray(),
+    body('crossGroup.customPlayInPairings.*.seedA').optional().isInt({ min: 1, max: 16 }),
+    body('crossGroup.customPlayInPairings.*.seedB').optional().isInt({ min: 1, max: 16 }),
+    body('crossGroup.includeConsolationBracket').optional().isBoolean(),
+    body('crossGroup.includedGroupIds').optional().isArray({ min: 2 }),
+    body('crossGroup.includedGroupIds.*').optional().isString(),
+    body('crossGroup.seedingPreset')
+      .optional()
+      .isIn(['WINNERS_THEN_RUNNERS_UP', 'GROUP_BLOCK', 'MANUAL']),
+    body('crossGroup.globalParticipantIds').optional().isArray({ min: 2, max: 16 }),
+    body('crossGroup.globalParticipantIds.*').optional().isString(),
+    body('crossGroup.qualifiers').optional().isArray({ min: 1 }),
+    body('crossGroup.qualifiers.*.leagueGroupId').optional().isString(),
+    body('crossGroup.qualifiers.*.participantIds').optional().isArray({ min: 1, max: 16 }),
+    body('crossGroup.qualifiers.*.participantIds.*').optional().isString(),
+    body().custom((value) => {
+      const scope = value.bracketScope ?? 'PER_GROUP';
+      const hasGroups = Array.isArray(value.groups) && value.groups.length > 0;
+      const hasCross = value.crossGroup != null && typeof value.crossGroup === 'object';
+      if (hasGroups && hasCross) {
+        throw new Error('Provide either groups or crossGroup, not both');
+      }
+      if (scope === 'CROSS_GROUP') {
+        if (!hasCross) {
+          throw new Error('crossGroup is required when bracketScope is CROSS_GROUP');
+        }
+        if (hasGroups) {
+          throw new Error('groups must not be sent for CROSS_GROUP bracket');
+        }
+        const cg = value.crossGroup;
+        const useUnequal = cg?.unequalK === true || (cg?.teamsPerGroup?.length ?? 0) > 0;
+        if (!useUnequal) {
+          const k = cg?.equalTopK;
+          if (!Number.isInteger(k) || k < 1) {
+            throw new Error('crossGroup.equalTopK is required for equal-K cross-group bracket');
+          }
+        }
+        return true;
+      }
+      if (hasCross) {
+        throw new Error('crossGroup requires bracketScope CROSS_GROUP');
+      }
+      if (!hasGroups) {
+        throw new Error('groups must be a non-empty array for PER_GROUP bracket');
+      }
+      return true;
+    }),
+  ]),
+  leagueController.createBracketPlayoff
+);
+
+router.get(
+  '/:leagueSeasonId/playoff/bracket',
+  authenticate,
+  leagueController.getBracketPlayoff
+);
+
+router.post(
+  '/:leagueSeasonId/playoff/bracket/notify-summary',
+  authenticate,
+  canEditGame,
+  validate([
+    body('roundId').optional().isString(),
+    body('leagueGroupId').optional().isString(),
+  ]),
+  leagueController.notifyBracketPlayoffSummary
+);
+
+router.patch(
+  '/:leagueSeasonId/playoff/bracket/slots',
+  authenticate,
+  canEditGame,
+  validate([
+    body('slots').optional().isArray(),
+    body('slots.*.slotId').optional().isString(),
+    body('slots.*.leagueParticipantId').optional({ nullable: true }).isString(),
+    body('slots.*.side').optional().isIn(['A', 'B']),
+    body('gameTeamUpdates').optional().isArray(),
+    body('gameTeamUpdates.*.gameId').optional().isString(),
+    body('gameTeamUpdates.*.participantA').optional().isString(),
+    body('gameTeamUpdates.*.participantB').optional().isString(),
+    body('roundId').optional().isString(),
+    body('seedingLocked').optional().isBoolean(),
+  ]),
+  leagueController.patchBracketPlayoffSlots
+);
+
+router.post(
+  '/:leagueSeasonId/playoff/bracket/slots/:slotId/walkover',
+  authenticate,
+  canEditGame,
+  validate([
+    body('leagueParticipantId').isString(),
+    body('skipGameFinal').optional().isBoolean(),
+  ]),
+  leagueController.applyBracketSlotWalkover
+);
+
+router.post(
   '/rounds/:leagueRoundId/games',
   authenticate,
   leagueController.createGameForRound

@@ -49,6 +49,14 @@ export function parseStoryOverlay(
 }
 
 /** Viewer: v2 layers render live; v1 uses overlayText. Never stack legacy text on v2/baked media. */
+/** Replay editor media transform/filters in the viewer (non-baked video stories). */
+export function shouldUseStoryComposition(
+  overlayV2: OverlayStyleV2 | null,
+  isUserVideo: boolean
+): boolean {
+  return overlayV2 != null && !overlayV2.baked && isUserVideo;
+}
+
 export function getMediaStoryOverlayVisibility(
   overlayV2: OverlayStyleV2 | null,
   overlayText?: string
