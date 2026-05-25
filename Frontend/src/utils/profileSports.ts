@@ -93,18 +93,26 @@ export function getReliabilityForSport(user: User | BasicUser, sport: Sport): nu
   return sport === Sports.PADEL ? (user.reliability ?? 0) : 0;
 }
 
+/** Initial reliability in training edit modal when prior value was below this (not a minimum). */
+export const TRAINING_RELIABILITY_DEFAULT = 50;
+
+export function getTrainingDefaultReliability(reliability: number): number {
+  return reliability < TRAINING_RELIABILITY_DEFAULT ? TRAINING_RELIABILITY_DEFAULT : reliability;
+}
+
 /** Training edit modal defaults when no outcome row exists yet. */
 export function resolveTrainingEditDefaults(
   user: User,
   sport: Sport,
   outcome?: { levelBefore: number; reliabilityBefore: number } | null,
 ): { level: number; reliability: number } {
-  if (outcome) {
-    return { level: outcome.levelBefore, reliability: outcome.reliabilityBefore };
-  }
+  const rawReliability = outcome
+    ? outcome.reliabilityBefore
+    : getReliabilityForSport(user, sport);
+  const level = outcome ? outcome.levelBefore : getDisplayLevelForSport(user, sport);
   return {
-    level: getDisplayLevelForSport(user, sport),
-    reliability: getReliabilityForSport(user, sport),
+    level,
+    reliability: getTrainingDefaultReliability(rawReliability),
   };
 }
 

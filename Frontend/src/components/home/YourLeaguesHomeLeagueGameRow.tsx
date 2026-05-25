@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Calendar, MapPin, MessageCircle, Users } from 'lucide-react';
+import { Calendar, MapPin, MessageCircle } from 'lucide-react';
 import type { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
@@ -47,7 +47,6 @@ export function YourLeaguesHomeLeagueGameRow({
         t,
       });
   const clubName = game.court?.club?.name || game.club?.name;
-  const playingCount = (game.participants ?? []).filter((p) => p.status === 'PLAYING').length;
   const groupName = game.leagueGroup?.name;
   const roundIndex = game.leagueRound?.orderIndex;
 
@@ -102,20 +101,12 @@ export function YourLeaguesHomeLeagueGameRow({
           </p>
         )}
       </div>
-      <div className="flex shrink-0 items-center gap-1.5">
-        {displayUnread > 0 && (
-          <span className="inline-flex items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
-            <MessageCircle size={10} strokeWidth={2.5} />
-            {displayUnread > 99 ? '99+' : displayUnread}
-          </span>
-        )}
-        <div className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400">
-          <Users size={11} />
-          <span>
-            {playingCount}/{game.maxParticipants}
-          </span>
-        </div>
-      </div>
+      {displayUnread > 0 && (
+        <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+          <MessageCircle size={10} strokeWidth={2.5} />
+          {displayUnread > 99 ? '99+' : displayUnread}
+        </span>
+      )}
     </button>
   );
 }

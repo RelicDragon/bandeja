@@ -175,7 +175,11 @@ const GAME_STORY_GAME_SELECT = {
   city: { select: { name: true } },
   club: { select: { name: true } },
   court: { select: { club: { select: { name: true } } } },
-  _count: { select: { participants: true } },
+  _count: {
+    select: {
+      participants: { where: { status: 'PLAYING' } },
+    },
+  },
   mainPhoto: MAIN_PHOTO_RELATION_SELECT,
 } as const;
 

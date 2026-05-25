@@ -10,7 +10,11 @@ import { EditLevelModal } from './EditLevelModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { usersApi } from '@/api/users';
 import { trainingApi } from '@/api/training';
-import { getDisplayLevelForSport, resolveTrainingEditDefaults } from '@/utils/profileSports';
+import {
+  getDisplayLevelForSport,
+  getReliabilityForSport,
+  resolveTrainingEditDefaults,
+} from '@/utils/profileSports';
 import { parseGameSport } from '@/utils/gameSport';
 import toast from 'react-hot-toast';
 
@@ -403,13 +407,16 @@ export const TrainingResultsSection = ({
         }
 
         const outcome = getParticipantOutcome(editingUserId);
-        const { level: originalLevel, reliability: originalReliability } = resolveTrainingEditDefaults(
+        const { level: originalLevel } = resolveTrainingEditDefaults(
           fullUserProfile,
           gameSport,
           outcome
             ? { levelBefore: outcome.levelBefore, reliabilityBefore: outcome.reliabilityBefore }
             : null,
         );
+        const reliabilityBefore = outcome
+          ? outcome.reliabilityBefore
+          : getReliabilityForSport(fullUserProfile, gameSport);
 
         return (
           <EditLevelModal
@@ -420,7 +427,7 @@ export const TrainingResultsSection = ({
             }}
             user={fullUserProfile}
             currentLevel={originalLevel}
-            currentReliability={originalReliability}
+            currentReliability={reliabilityBefore}
             onSave={(level, reliability) => handleSaveLevel(editingUserId, level, reliability)}
           />
         );

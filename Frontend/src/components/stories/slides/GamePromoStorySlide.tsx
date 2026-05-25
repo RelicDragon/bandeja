@@ -42,10 +42,12 @@ export function GamePromoStorySlide({ segment, onOpenGame }: GamePromoStorySlide
               {[game.clubName, game.cityName].filter(Boolean).join(', ')}
             </p>
           )}
-          {game.maxParticipants != null && (
+          {(game.entityType === 'BAR' || game.maxParticipants != null) && (
             <p className="flex items-center justify-center gap-2">
               <Users size={16} className="shrink-0 text-white/75" />
-              {game.participantCount ?? 0}/{game.maxParticipants}
+              {game.entityType === 'BAR'
+                ? (game.participantCount ?? 0)
+                : `${game.participantCount ?? 0}/${game.maxParticipants}`}
             </p>
           )}
         </div>

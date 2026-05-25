@@ -201,9 +201,9 @@ describe('profileSports', () => {
       ],
       sportsEnabled: ['PADEL', 'TENNIS'],
     });
-    expect(resolveTrainingEditDefaults(user, 'TENNIS')).toEqual({ level: 2.2, reliability: 18 });
+    expect(resolveTrainingEditDefaults(user, 'TENNIS')).toEqual({ level: 2.2, reliability: 50 });
     expect(
       resolveTrainingEditDefaults(user, 'TENNIS', { levelBefore: 2.0, reliabilityBefore: 10 }),
-    ).toEqual({ level: 2.0, reliability: 10 });
+    ).toEqual({ level: 2.0, reliability: 50 });
   });
 });

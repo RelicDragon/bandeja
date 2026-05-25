@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components';
 import { BasicUser } from '@/types';
+import { getTrainingDefaultReliability } from '@/utils/profileSports';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
@@ -30,14 +31,15 @@ export const EditLevelModal = ({
   const [showConfirmDecrease, setShowConfirmDecrease] = useState(false);
   const [pendingLevel, setPendingLevel] = useState<number | null>(null);
   const [internalIsOpen, setInternalIsOpen] = useState(isOpen);
+  const defaultReliability = getTrainingDefaultReliability(currentReliability);
 
   useEffect(() => {
     if (isOpen) {
       setInternalIsOpen(true);
       setLevel(currentLevel);
-      setReliability(currentReliability);
+      setReliability(defaultReliability);
     }
-  }, [isOpen, currentLevel, currentReliability]);
+  }, [isOpen, currentLevel, defaultReliability]);
 
   const handleClose = () => {
     setInternalIsOpen(false);
@@ -83,7 +85,7 @@ export const EditLevelModal = ({
     }
   };
 
-  const isReliabilityDisabled = currentReliability >= 70;
+  const isReliabilityDisabled = currentReliability >= 100;
   const clampedLevel = Math.min(4.0, Math.max(1.0, level));
 
   return (
@@ -161,7 +163,7 @@ export const EditLevelModal = ({
                         className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-not-allowed opacity-50"
                       />
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                        {t('training.reliabilityTooHigh', { defaultValue: 'Reliability is already above 70 and cannot be increased' })}
+                        {t('training.reliabilityTooHigh', { defaultValue: 'Reliability is already at 100%' })}
                       </p>
                     </>
                   ) : (
@@ -169,17 +171,17 @@ export const EditLevelModal = ({
                       <input
                         type="range"
                         min={currentReliability}
-                        max="70"
+                        max="100"
                         step="0.1"
                         value={reliability}
                         onChange={(e) => setReliability(parseFloat(e.target.value))}
                         className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
                         style={{
-                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((reliability - currentReliability) / (70 - currentReliability)) * 100}%, #e2e8f0 ${((reliability - currentReliability) / (70 - currentReliability)) * 100}%, #e2e8f0 100%)`
+                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((reliability - currentReliability) / (100 - currentReliability)) * 100}%, #e2e8f0 ${((reliability - currentReliability) / (100 - currentReliability)) * 100}%, #e2e8f0 100%)`
                         }}
                       />
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                        {t('training.reliabilityRangeHint', { defaultValue: 'Select reliability between current value and 70' })}
+                        {t('training.reliabilityRangeHint', { defaultValue: 'Select reliability between current value and 100' })}
                       </p>
                     </>
                   )}

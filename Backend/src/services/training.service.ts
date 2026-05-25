@@ -134,7 +134,7 @@ export async function updateParticipantLevel(
   const levelBefore = existingOutcome ? existingOutcome.levelBefore : sportSnapshot.level;
   const reliabilityBefore = existingOutcome ? existingOutcome.reliabilityBefore : sportSnapshot.reliability;
   const levelAfter = Math.max(1.0, Math.min(7.0, level));
-  const reliabilityAfter = Math.max(0.0, Math.min(100.0, reliability));
+  const reliabilityAfter = Math.max(reliabilityBefore, Math.min(100.0, reliability));
   const actualLevelChange = levelAfter - levelBefore;
   const actualReliabilityChange = reliabilityAfter - reliabilityBefore;
 
