@@ -56,7 +56,7 @@ export async function batchSegmentEngagementCounts(
     }),
     prisma.storySegmentComment.findMany({
       where: {
-        userId: viewerId,
+        authorId: viewerId,
         deletedAt: null,
         OR: orFilter,
       },

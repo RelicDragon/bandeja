@@ -58,7 +58,7 @@ export const getSegmentEngagement = asyncHandler(async (req: AuthRequest, res: R
       where: {
         sourceType,
         sourceId,
-        userId: req.userId!,
+        authorId: req.userId!,
         deletedAt: null,
       },
       select: { id: true },
