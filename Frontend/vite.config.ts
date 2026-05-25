@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { defineRollupSwcMinifyOption, viteMinify } from 'rollup-plugin-swc3'
 import path from 'path'
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
 import { join } from 'path'
@@ -35,8 +36,16 @@ const ensureWellKnown = () => {
   }
 }
 
+const swcMinify = defineRollupSwcMinifyOption({
+  module: true,
+  compress: {
+    drop_console: true,
+    drop_debugger: true,
+  },
+})
+
 export default defineConfig(() => ({
-  plugins: [react(), ensureWellKnown()],
+  plugins: [react(), viteMinify(swcMinify), ensureWellKnown()],
   worker: {
     format: 'es',
   },
@@ -86,14 +95,7 @@ export default defineConfig(() => ({
         defaultHandler(warning);
       },
     },
-    // Minify for smaller bundles
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
+    minify: false,
     // Ensure public directory is copied
     copyPublicDir: true,
   },
