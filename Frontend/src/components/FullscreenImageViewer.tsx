@@ -268,10 +268,10 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     <FullScreenDialog
       open={isOpen}
       onClose={onClose}
-      modalId="fullscreen-image-viewer"
+      modalId={modalId}
       closeOnInteractOutside={false}
       overlayClassName="fullscreen-backdrop-overlay"
-      contentClassName="fullscreen-content-animate"
+      contentClassName="fullscreen-content-fade-animate"
     >
       <div 
         ref={containerRef}
@@ -299,30 +299,43 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           }}
         >
           <div className="pointer-events-auto max-w-full max-h-full w-fit h-fit">
-            <TransformWrapper
-              ref={transformRef}
-              initialScale={1}
-              minScale={0.1}
-              maxScale={5}
-              centerOnInit={true}
-              wheel={{ step: 0.1 }}
-              pinch={{ step: 5 }}
-              doubleClick={{ disabled: false, step: 0.7 }}
-              panning={{ disabled: false }}
-            >
-              <TransformComponent>
-                <div
-                  className="relative max-w-full max-h-full"
-                  onClick={(e) => e.stopPropagation()}
-                >
+            {enableTransform && transformReady ? (
+              <TransformWrapper
+                ref={transformRef}
+                initialScale={1}
+                minScale={0.1}
+                maxScale={5}
+                centerOnInit={false}
+                wheel={{ step: 0.1 }}
+                pinch={{ step: 5 }}
+                doubleClick={{ disabled: false, step: 0.7 }}
+                panning={{ disabled: false }}
+              >
+                <TransformComponent>
+                  <div
+                    className="relative max-w-full max-h-full"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <img
+                      src={displayUrl}
+                      alt="Fullscreen view"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                </TransformComponent>
+              </TransformWrapper>
+            ) : (
+              <div
+                className="relative max-w-full max-h-full"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <img
                   src={displayUrl}
                   alt="Fullscreen view"
                   className="max-w-full max-h-full object-contain"
                 />
               </div>
-            </TransformComponent>
-          </TransformWrapper>
+            )}
           </div>
 
           <div 
@@ -370,12 +383,14 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
               bottom: 'max(2rem, env(safe-area-inset-bottom))',
             }}
           >
-            <button
-              onClick={resetView}
-              className={`rounded-xl px-6 py-3 text-sm font-medium ${OVERLAY_CONTROL_GLASS}`}
-            >
-              {t('media.resetView')}
-            </button>
+            {enableTransform && transformReady ? (
+              <button
+                onClick={resetView}
+                className={`rounded-xl px-6 py-3 text-sm font-medium ${OVERLAY_CONTROL_GLASS}`}
+              >
+                {t('media.resetView')}
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
