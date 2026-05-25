@@ -14,6 +14,7 @@ import { StoryViewerDoubleTapHeart } from './StoryViewerDoubleTapHeart';
 import { StoryCommentsSheet } from './StoryCommentsSheet';
 import { StoryViewerLikersSheet } from './StoryViewerLikersSheet';
 import { StoryViewerBottomBar } from './StoryViewerBottomBar';
+import { StoryViewerEngagementBar } from './StoryViewerEngagementBar';
 import { StoryDmSendFlyout } from './StoryDmSendFlyout';
 import { useStoryDmSend } from './useStoryDmSend';
 import {
@@ -80,8 +81,8 @@ export function StoryViewerEngagementChrome({
   }, []);
 
   useEffect(() => {
-    setStoryViewerEngagementPaused(commentsOpen || captionExpanded || dmFocused);
-  }, [commentsOpen, captionExpanded, dmFocused]);
+    setStoryViewerEngagementPaused(commentsOpen || captionExpanded || (!isOwnStory && dmFocused));
+  }, [commentsOpen, captionExpanded, dmFocused, isOwnStory]);
 
   useEffect(() => {
     storyViewerEngagementActions.setOpenCommentsHandler(openComments);
@@ -145,8 +146,12 @@ export function StoryViewerEngagementChrome({
   }, []);
 
   useEffect(() => {
+    if (isOwnStory) {
+      onRegisterDoubleTapLike?.(() => {});
+      return;
+    }
     onRegisterDoubleTapLike?.(() => void toggleLike());
-  }, [onRegisterDoubleTapLike, toggleLike]);
+  }, [onRegisterDoubleTapLike, toggleLike, isOwnStory]);
 
   if (!enabled) return null;
 
@@ -155,17 +160,23 @@ export function StoryViewerEngagementChrome({
       <StoryViewerDoubleTapHeart burst={doubleTapBurst} />
 
       {isOwnStory ? (
-        <StoryViewerCaptionStrip
-          className={storyEngagementCaptionClass(layoutVariant)}
-          owner={owner}
-          caption={engagement.caption}
-          expanded={captionExpanded}
-          onExpandedChange={handleCaptionExpanded}
-          onOwnerClick={() => setOwnerSheetOpen(true)}
-        />
-      ) : null}
-
-      {!isOwnStory ? (
+        <>
+          <StoryViewerCaptionStrip
+            className={storyEngagementCaptionClass(layoutVariant)}
+            owner={owner}
+            caption={engagement.caption}
+            expanded={captionExpanded}
+            onExpandedChange={handleCaptionExpanded}
+            onOwnerClick={() => setOwnerSheetOpen(true)}
+          />
+          <StoryViewerEngagementBar
+            likeCount={engagement.likeCount}
+            commentCount={engagement.commentCount}
+            onOpenLikers={segmentRef ? openLikers : undefined}
+            onOpenComments={openComments}
+          />
+        </>
+      ) : (
         <>
           <StoryDmSendFlyout emoji={dmFlyout} onDone={() => setDmFlyout(null)} />
           <StoryViewerBottomBar
@@ -191,7 +202,7 @@ export function StoryViewerEngagementChrome({
             }
           />
         </>
-      ) : null}
+      )}
 
       <StoryCommentsSheet
         open={commentsOpen}
