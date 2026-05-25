@@ -21,6 +21,7 @@ const DEFAULT_ENGAGEMENT: StorySegmentEngagement = {
   likeCount: 0,
   commentCount: 0,
   viewerHasLiked: false,
+  viewerHasCommented: false,
   caption: null,
 };
 
@@ -29,6 +30,7 @@ function engagementEqual(a: StorySegmentEngagement, b: StorySegmentEngagement): 
     a.likeCount === b.likeCount &&
     a.commentCount === b.commentCount &&
     a.viewerHasLiked === b.viewerHasLiked &&
+    a.viewerHasCommented === b.viewerHasCommented &&
     a.caption === b.caption
   );
 }
@@ -153,10 +155,23 @@ export function useStorySegmentEngagement({
     [ownerUserId, segmentKey, patchSegmentEngagement]
   );
 
+  const setViewerHasCommented = useCallback(
+    (viewerHasCommented: boolean) => {
+      setEngagement((prev) => {
+        if (prev.viewerHasCommented === viewerHasCommented) return prev;
+        const next = { ...prev, viewerHasCommented };
+        patchSegmentEngagement(ownerUserId, segmentKey, next);
+        return next;
+      });
+    },
+    [ownerUserId, segmentKey, patchSegmentEngagement]
+  );
+
   return {
     engagement,
     toggleLike,
     setCommentCount,
+    setViewerHasCommented,
     setEngagement,
   };
 }

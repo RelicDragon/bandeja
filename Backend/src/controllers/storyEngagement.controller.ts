@@ -34,7 +34,7 @@ export const getSegmentEngagement = asyncHandler(async (req: AuthRequest, res: R
   const ownerUserId = requireOwnerUserId(req.query.ownerUserId);
   const resolved = await assertCanEngage(req.userId!, sourceType, sourceId, ownerUserId);
 
-  const [likeCount, commentCount, viewerLike] = await Promise.all([
+  const [likeCount, commentCount, viewerLike, viewerComment] = await Promise.all([
     StoryEngagementLikeService.getLikeCount(sourceType, sourceId),
     prisma.storySegmentComment.count({
       where: {
@@ -54,6 +54,15 @@ export const getSegmentEngagement = asyncHandler(async (req: AuthRequest, res: R
       },
       select: { id: true },
     }),
+    prisma.storySegmentComment.findFirst({
+      where: {
+        sourceType,
+        sourceId,
+        userId: req.userId!,
+        deletedAt: null,
+      },
+      select: { id: true },
+    }),
   ]);
 
   res.json({
@@ -62,6 +71,7 @@ export const getSegmentEngagement = asyncHandler(async (req: AuthRequest, res: R
       likeCount,
       commentCount,
       viewerHasLiked: !!viewerLike,
+      viewerHasCommented: !!viewerComment,
       caption: resolveSyntheticCaption(resolved.captionContext),
     },
   });

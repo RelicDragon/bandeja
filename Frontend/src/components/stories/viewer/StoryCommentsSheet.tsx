@@ -17,6 +17,7 @@ type StoryCommentsSheetProps = {
   segmentKey: string;
   ownerUserId: string;
   onCommentCountChange: (count: number) => void;
+  onViewerHasCommentedChange?: (commented: boolean) => void;
   onPrependComment?: (comment: StoryCommentDto, commentCount: number) => void;
 };
 
@@ -26,6 +27,7 @@ export function StoryCommentsSheet({
   segmentKey,
   ownerUserId,
   onCommentCountChange,
+  onViewerHasCommentedChange,
 }: StoryCommentsSheetProps) {
   const { t } = useTranslation();
   const currentUserId = useAuthStore((s) => s.user?.id);
@@ -37,6 +39,7 @@ export function StoryCommentsSheet({
     ownerUserId,
     enabled: open,
     onCommentCountChange,
+    onViewerHasCommentedChange,
   });
 
   const {

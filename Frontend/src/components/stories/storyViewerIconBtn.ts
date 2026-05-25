@@ -4,3 +4,7 @@ export const STORY_VIEWER_ICON_BTN = [
   'text-white outline-none [-webkit-tap-highlight-color:transparent]',
   'transition-transform active:scale-95',
 ].join(' ');
+
+export function storyViewerCommentIconClass(viewerHasCommented: boolean): string {
+  return viewerHasCommented ? 'fill-sky-400 text-sky-400' : 'text-white';
+}

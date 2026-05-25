@@ -2,7 +2,7 @@ import { memo, type PointerEvent } from 'react';
 import { Heart, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { formatStoryEngagementCount } from './storyEngagementFormat';
-import { STORY_VIEWER_ICON_BTN } from '../storyViewerIconBtn';
+import { STORY_VIEWER_ICON_BTN, storyViewerCommentIconClass } from '../storyViewerIconBtn';
 
 function barButtonPointerDown(e: PointerEvent<HTMLButtonElement>) {
   e.stopPropagation();
@@ -19,6 +19,7 @@ const COUNT_CLASS = 'min-w-[1.25rem] text-sm font-semibold tabular-nums text-whi
 type StoryViewerEngagementBarProps = {
   likeCount: number;
   commentCount: number;
+  viewerHasCommented: boolean;
   onOpenLikers?: () => void;
   onOpenComments: () => void;
 };
@@ -27,6 +28,7 @@ type StoryViewerEngagementBarProps = {
 export const StoryViewerEngagementBar = memo(function StoryViewerEngagementBar({
   likeCount,
   commentCount,
+  viewerHasCommented,
   onOpenLikers,
   onOpenComments,
 }: StoryViewerEngagementBarProps) {
@@ -91,7 +93,11 @@ export const StoryViewerEngagementBar = memo(function StoryViewerEngagementBar({
             onPointerDown={barButtonPointerDown}
             onPointerUp={(e) => e.stopPropagation()}
           >
-            <MessageCircle size={28} className="text-white" strokeWidth={1.75} />
+            <MessageCircle
+              size={28}
+              className={storyViewerCommentIconClass(viewerHasCommented)}
+              strokeWidth={viewerHasCommented ? 0 : 1.75}
+            />
           </button>
           <span className={COUNT_CLASS} aria-hidden>
             {commentLabel}

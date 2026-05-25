@@ -122,6 +122,7 @@ function patchBubbleSegmentEngagement(
       likeCount: seg.engagement?.likeCount ?? 0,
       commentCount: seg.engagement?.commentCount ?? 0,
       viewerHasLiked: seg.engagement?.viewerHasLiked ?? false,
+      viewerHasCommented: seg.engagement?.viewerHasCommented ?? false,
       caption: seg.engagement?.caption ?? null,
       ...patch,
     };
@@ -289,13 +290,18 @@ export const useStoriesStore = create<StoriesState>((set, get) => ({
 
   applyStoryComment: ({ ownerUserId, sourceType, sourceId, commentCount, comment }) => {
     const segmentKey = `${sourceType}:${sourceId}`;
+    const currentUserId = useAuthStore.getState().user?.id;
+    const engagementPatch: Partial<StorySegmentEngagement> = { commentCount };
+    if (comment && currentUserId && comment.author.id === currentUserId) {
+      engagementPatch.viewerHasCommented = true;
+    }
     set((s) => {
       const feed = s.feed
         ? {
             ...s.feed,
             bubbles: s.feed.bubbles.map((bubble) =>
               bubble.user.id === ownerUserId
-                ? patchBubbleSegmentEngagement(bubble, segmentKey, { commentCount })
+                ? patchBubbleSegmentEngagement(bubble, segmentKey, engagementPatch)
                 : bubble
             ),
           }

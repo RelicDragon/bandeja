@@ -14,7 +14,7 @@ import { lightHaptic } from '@/utils/lightHaptic';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { recordStoryDmReactionUse } from './storyDmQuickReactions';
 import { formatStoryEngagementCount } from './storyEngagementFormat';
-import { STORY_VIEWER_ICON_BTN } from '../storyViewerIconBtn';
+import { STORY_VIEWER_ICON_BTN, storyViewerCommentIconClass } from '../storyViewerIconBtn';
 import { StoryViewerQuickReactions } from './StoryViewerQuickReactions';
 
 function barButtonPointerDown(e: PointerEvent<HTMLButtonElement>) {
@@ -38,6 +38,7 @@ type StoryViewerBottomBarProps = {
   likeCount: number;
   commentCount: number;
   viewerHasLiked: boolean;
+  viewerHasCommented: boolean;
   onToggleLike: () => void;
   onOpenLikers?: () => void;
   onOpenComments: () => void;
@@ -53,6 +54,7 @@ export const StoryViewerBottomBar = memo(function StoryViewerBottomBar({
   likeCount,
   commentCount,
   viewerHasLiked,
+  viewerHasCommented,
   onToggleLike,
   onOpenLikers,
   onOpenComments,
@@ -195,7 +197,11 @@ export const StoryViewerBottomBar = memo(function StoryViewerBottomBar({
                 onPointerDown={barButtonPointerDown}
                 onPointerUp={(e) => e.stopPropagation()}
               >
-                <MessageCircle size={28} className="text-white" strokeWidth={1.75} />
+                <MessageCircle
+                  size={28}
+                  className={storyViewerCommentIconClass(viewerHasCommented)}
+                  strokeWidth={viewerHasCommented ? 0 : 1.75}
+                />
               </button>
 
               <button

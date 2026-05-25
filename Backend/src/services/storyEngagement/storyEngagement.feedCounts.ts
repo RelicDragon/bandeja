@@ -6,6 +6,7 @@ export type SegmentEngagementCounts = {
   likeCount: number;
   commentCount: number;
   viewerHasLiked: boolean;
+  viewerHasCommented: boolean;
 };
 
 export type SegmentEngagementDto = SegmentEngagementCounts & {
@@ -35,7 +36,7 @@ export async function batchSegmentEngagementCounts(
     sourceId: s.sourceId,
   }));
 
-  const [likeGroups, commentGroups, viewerLikes] = await Promise.all([
+  const [likeGroups, commentGroups, viewerLikes, viewerComments] = await Promise.all([
     prisma.storySegmentLike.groupBy({
       by: ['sourceType', 'sourceId'],
       where: { OR: orFilter },
@@ -49,6 +50,14 @@ export async function batchSegmentEngagementCounts(
     prisma.storySegmentLike.findMany({
       where: {
         userId: viewerId,
+        OR: orFilter,
+      },
+      select: { sourceType: true, sourceId: true },
+    }),
+    prisma.storySegmentComment.findMany({
+      where: {
+        userId: viewerId,
+        deletedAt: null,
         OR: orFilter,
       },
       select: { sourceType: true, sourceId: true },
@@ -75,11 +84,16 @@ export async function batchSegmentEngagementCounts(
     viewerLikes.map((l) => segmentEngagementKey(l.sourceType, l.sourceId)),
   );
 
+  const viewerCommentedKeys = new Set(
+    viewerComments.map((c) => segmentEngagementKey(c.sourceType, c.sourceId)),
+  );
+
   for (const [key] of uniqueKeys) {
     result.set(key, {
       likeCount: likeCountByKey.get(key) ?? 0,
       commentCount: commentCountByKey.get(key) ?? 0,
       viewerHasLiked: viewerLikedKeys.has(key),
+      viewerHasCommented: viewerCommentedKeys.has(key),
     });
   }
 

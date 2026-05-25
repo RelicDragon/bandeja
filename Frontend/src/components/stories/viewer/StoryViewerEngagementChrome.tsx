@@ -63,7 +63,7 @@ export function StoryViewerEngagementChrome({
   const layoutVariant = storyEngagementLayoutVariant(segment);
   const segmentRef = useMemo(() => parseStorySegmentKey(segment.key), [segment.key]);
 
-  const { engagement, toggleLike, setCommentCount } = useStorySegmentEngagement({
+  const { engagement, toggleLike, setCommentCount, setViewerHasCommented } = useStorySegmentEngagement({
     segmentKey: segment.key,
     ownerUserId,
     enabled,
@@ -172,6 +172,7 @@ export function StoryViewerEngagementChrome({
           <StoryViewerEngagementBar
             likeCount={engagement.likeCount}
             commentCount={engagement.commentCount}
+            viewerHasCommented={engagement.viewerHasCommented}
             onOpenLikers={segmentRef ? openLikers : undefined}
             onOpenComments={openComments}
           />
@@ -183,6 +184,7 @@ export function StoryViewerEngagementChrome({
             likeCount={engagement.likeCount}
             commentCount={engagement.commentCount}
             viewerHasLiked={engagement.viewerHasLiked}
+            viewerHasCommented={engagement.viewerHasCommented}
             onToggleLike={handleToggleLike}
             onOpenLikers={engagement.likeCount > 0 && segmentRef ? openLikers : undefined}
             onOpenComments={openComments}
@@ -210,6 +212,7 @@ export function StoryViewerEngagementChrome({
         segmentKey={segment.key}
         ownerUserId={ownerUserId}
         onCommentCountChange={setCommentCount}
+        onViewerHasCommentedChange={setViewerHasCommented}
       />
 
       {segmentRef ? (

@@ -32,6 +32,7 @@ export type SegmentEngagement = {
   likeCount: number;
   commentCount: number;
   viewerHasLiked: boolean;
+  viewerHasCommented: boolean;
   caption: string | null;
 };
 
@@ -711,6 +712,7 @@ export class StoryFeedService {
           likeCount: counts?.likeCount ?? 0,
           commentCount: counts?.commentCount ?? 0,
           viewerHasLiked: counts?.viewerHasLiked ?? false,
+          viewerHasCommented: counts?.viewerHasCommented ?? false,
           caption: resolveCaptionForStorySegment(seg, manualCaptionByKey.get(seg.key), now),
         };
       }

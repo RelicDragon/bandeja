@@ -57,11 +57,23 @@ function stripPendingFields(comment: StoryCommentDto): StoryCommentDto {
   return rest;
 }
 
+function viewerHasActiveCommentOnSegment(
+  userId: string | undefined,
+  comments: StoryCommentDto[],
+  expandedReplies: Record<string, StoryCommentDto[]>
+): boolean {
+  if (!userId) return false;
+  const isActive = (c: StoryCommentDto) => !c.deletedAt && c.author.id === userId;
+  if (comments.some(isActive)) return true;
+  return Object.values(expandedReplies).some((list) => list.some(isActive));
+}
+
 type UseStoryCommentsParams = {
   segmentKey: string;
   ownerUserId: string;
   enabled: boolean;
   onCommentCountChange: (count: number) => void;
+  onViewerHasCommentedChange?: (commented: boolean) => void;
 };
 
 export function useStoryComments({
@@ -69,6 +81,7 @@ export function useStoryComments({
   ownerUserId,
   enabled,
   onCommentCountChange,
+  onViewerHasCommentedChange,
 }: UseStoryCommentsParams) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -85,6 +98,15 @@ export function useStoryComments({
   const nextCursorRef = useRef<string | null>(null);
   const pendingFailTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const commentCountRef = useRef(0);
+
+  const syncViewerHasCommented = useCallback(
+    (nextComments: StoryCommentDto[], nextReplies: Record<string, StoryCommentDto[]>) => {
+      onViewerHasCommentedChange?.(
+        viewerHasActiveCommentOnSegment(userId, nextComments, nextReplies)
+      );
+    },
+    [onViewerHasCommentedChange, userId]
+  );
 
   const clearPendingFailTimer = useCallback((clientMutationId: string) => {
     const timer = pendingFailTimersRef.current.get(clientMutationId);
@@ -320,6 +342,7 @@ export function useStoryComments({
       applyOptimisticToLists(optimistic, parent);
       commentCountRef.current += 1;
       onCommentCountChange(commentCountRef.current);
+      onViewerHasCommentedChange?.(true);
       schedulePendingFail(clientMutationId);
       void uploadComment(trimmed, clientMutationId, parent);
     },
@@ -330,6 +353,7 @@ export function useStoryComments({
       ownerUserId,
       applyOptimisticToLists,
       onCommentCountChange,
+      onViewerHasCommentedChange,
       schedulePendingFail,
       uploadComment,
     ]
@@ -342,26 +366,27 @@ export function useStoryComments({
       ) as StoryCommentView | undefined;
       if (view?._clientMutationId) clearPendingFailTimer(view._clientMutationId);
 
+      let nextComments = comments;
+      let nextReplies = expandedReplies;
       if (parentId) {
-        setExpandedReplies((s) => ({
-          ...s,
-          [parentId]: removeCommentFromList(s[parentId] ?? [], commentId),
-        }));
-        setComments((prev) =>
-          patchCommentInList(prev, parentId, {
-            replyCount: Math.max(
-              0,
-              (prev.find((c) => c.id === parentId)?.replyCount ?? 1) - 1
-            ),
-          })
-        );
+        nextReplies = {
+          ...expandedReplies,
+          [parentId]: removeCommentFromList(expandedReplies[parentId] ?? [], commentId),
+        };
+        nextComments = patchCommentInList(comments, parentId, {
+          replyCount: Math.max(0, (comments.find((c) => c.id === parentId)?.replyCount ?? 1) - 1),
+        });
+        setExpandedReplies(nextReplies);
+        setComments(nextComments);
       } else {
-        setComments((prev) => removeCommentFromList(prev, commentId));
+        nextComments = removeCommentFromList(comments, commentId);
+        setComments(nextComments);
       }
       commentCountRef.current = Math.max(0, commentCountRef.current - 1);
       onCommentCountChange(commentCountRef.current);
+      syncViewerHasCommented(nextComments, nextReplies);
     },
-    [comments, expandedReplies, clearPendingFailTimer, onCommentCountChange]
+    [comments, expandedReplies, clearPendingFailTimer, onCommentCountChange, syncViewerHasCommented]
   );
 
   const retryPendingComment = useCallback(
@@ -405,32 +430,33 @@ export function useStoryComments({
         commentCountRef.current = res.commentCount;
         onCommentCountChange(res.commentCount);
         if (parentId) {
-          setExpandedReplies((s) => ({
-            ...s,
-            [parentId]: (s[parentId] ?? []).map((c) =>
+          const nextReplies = {
+            ...expandedReplies,
+            [parentId]: (expandedReplies[parentId] ?? []).map((c) =>
               c.id === commentId ? { ...c, deletedAt: new Date().toISOString(), body: '' } : c
             ),
-          }));
-          setComments((prev) =>
-            patchCommentInList(prev, parentId, {
-              replyCount: Math.max(
-                0,
-                (prev.find((c) => c.id === parentId)?.replyCount ?? 1) - 1
-              ),
-            })
-          );
+          };
+          const nextComments = patchCommentInList(comments, parentId, {
+            replyCount: Math.max(
+              0,
+              (comments.find((c) => c.id === parentId)?.replyCount ?? 1) - 1
+            ),
+          });
+          setExpandedReplies(nextReplies);
+          setComments(nextComments);
+          syncViewerHasCommented(nextComments, nextReplies);
         } else {
-          setComments((prev) =>
-            prev.map((c) =>
-              c.id === commentId ? { ...c, deletedAt: new Date().toISOString(), body: '' } : c
-            )
+          const nextComments = comments.map((c) =>
+            c.id === commentId ? { ...c, deletedAt: new Date().toISOString(), body: '' } : c
           );
+          setComments(nextComments);
+          syncViewerHasCommented(nextComments, expandedReplies);
         }
       } catch {
         toast.error(t('stories.viewer.deleteFailed'));
       }
     },
-    [discardPendingComment, onCommentCountChange, t]
+    [comments, expandedReplies, discardPendingComment, onCommentCountChange, syncViewerHasCommented, t]
   );
 
   const toggleCommentLike = useCallback(
@@ -515,11 +541,20 @@ export function useStoryComments({
     if (comment.author.id === userId) {
       commentCountRef.current = commentCount;
       onCommentCountChange(commentCount);
+      onViewerHasCommentedChange?.(true);
     } else {
       prependComment(comment, commentCount);
     }
     useStoriesStore.setState({ segmentCommentEvent: null });
-  }, [enabled, segmentKey, segmentCommentEvent, prependComment, userId, onCommentCountChange]);
+  }, [
+    enabled,
+    segmentKey,
+    segmentCommentEvent,
+    prependComment,
+    userId,
+    onCommentCountChange,
+    onViewerHasCommentedChange,
+  ]);
 
   useEffect(() => {
     if (!enabled) return;

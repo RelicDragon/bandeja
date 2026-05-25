@@ -7,6 +7,7 @@ export type StorySegmentEngagement = {
   likeCount: number;
   commentCount: number;
   viewerHasLiked: boolean;
+  viewerHasCommented: boolean;
 };
 
 export type StoryCommentDto = {
