@@ -50,13 +50,15 @@ import { GameResultsModals } from './GameResultsModals';
 import { GameWorkoutSummaryCard } from './GameWorkoutSummaryCard';
 import { TelegramSummaryModal } from './TelegramSummaryModal';
 import { ConfirmationModal } from '@/components';
-import { Send, Edit } from 'lucide-react';
+import { Edit } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import {
+  canSendResultsToTelegram,
+  hasCachedResultsSummary,
   isResultsArtifactsPreparing,
-  isResultsArtifactsReadyForTelegram,
 } from '@/utils/gameResultsArtifacts.util';
+import { ResultsArtifactsTelegramBlock } from './ResultsArtifactsTelegramBlock';
 import {
   buildGameBracketReturnPath,
   resolveGameBracketReturnTarget,
@@ -183,14 +185,19 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     return (currentGame.photosCount || 0) > 0 || !!currentGame.mainPhotoId;
   }, [currentGame]);
 
-  const isArtifactsPreparing = useMemo(
-    () => isResultsArtifactsPreparing(currentGame?.resultsArtifacts),
-    [currentGame?.resultsArtifacts]
+  const hasCachedSummary = useMemo(
+    () => hasCachedResultsSummary(currentGame?.resultsSummaryText),
+    [currentGame?.resultsSummaryText]
   );
 
-  const isArtifactsReady = useMemo(
-    () => isResultsArtifactsReadyForTelegram(currentGame?.resultsArtifacts),
-    [currentGame?.resultsArtifacts]
+  const isArtifactsPreparing = useMemo(
+    () => isResultsArtifactsPreparing(currentGame?.resultsArtifacts, hasCachedSummary),
+    [currentGame?.resultsArtifacts, hasCachedSummary]
+  );
+
+  const canSendToTelegram = useMemo(
+    () => canSendResultsToTelegram(currentGame?.resultsArtifacts, hasCachedSummary),
+    [currentGame?.resultsArtifacts, hasCachedSummary]
   );
 
   const showSendToTelegramButton = useMemo(() => {
@@ -201,7 +208,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   }, [currentGame, hasResultsEntered]);
 
   const isTelegramSendDisabled =
-    isSendingToTelegram || isArtifactsPreparing || !isArtifactsReady;
+    isSendingToTelegram || isArtifactsPreparing || !canSendToTelegram;
 
   const showSentToTelegramHint = useMemo(() => {
     if (!currentGame || !hasResultsEntered) return false;
@@ -241,7 +248,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   };
 
   const openTelegramSummaryModal = async () => {
-    if (!currentGame || isSendingToTelegram || isArtifactsPreparing || !isArtifactsReady) return;
+    if (!currentGame || isSendingToTelegram || isArtifactsPreparing || !canSendToTelegram) return;
 
     const cachedSummary = currentGame.resultsSummaryText?.trim();
     if (cachedSummary) {
@@ -928,39 +935,13 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       </div>
 
       {showSendToTelegramButton && (
-        <div className="mb-6 flex justify-center">
-          <button
-            onClick={handleSendToTelegram}
-            disabled={isTelegramSendDisabled}
-            className={`group relative px-4 sm:px-6 py-3 rounded-xl text-white font-semibold text-sm sm:text-base shadow-lg transition-all duration-300 ease-in-out flex items-center justify-center gap-2.5 transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 min-w-[200px] min-h-[48px] ${
-              isTelegramSendDisabled
-                ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-blue-600 shadow-blue-500/30 cursor-not-allowed'
-                : 'bg-gradient-to-r from-blue-500 via-blue-600 to-blue-600 hover:from-blue-600 hover:via-blue-700 hover:to-blue-700 shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-600/40 hover:scale-[1.02] active:scale-[0.98]'
-            }`}
-          >
-            <div className="relative flex items-center justify-center w-full h-full">
-              <div className={`flex items-center gap-2.5 transition-opacity duration-300 ease-in-out ${isTelegramSendDisabled ? 'opacity-0 absolute' : 'opacity-100'}`}>
-                <Send size={18} className="transition-transform duration-300 group-hover:translate-x-0.5 flex-shrink-0" />
-                <span className="text-center leading-tight whitespace-normal break-words max-w-[200px]">{t('gameResults.sendResultsToTelegram') || 'Send results to Telegram chat'}</span>
-              </div>
-              <div className={`flex items-center gap-1.5 transition-opacity duration-300 ease-in-out ${isTelegramSendDisabled ? 'opacity-100' : 'opacity-0 absolute'}`}>
-                {isArtifactsPreparing && !isSendingToTelegram ? (
-                  <span className="text-center leading-tight whitespace-normal break-words max-w-[200px] px-1">
-                    {t('gameResults.preparingResults')}
-                  </span>
-                ) : isSendingToTelegram ? (
-                  <>
-                    <span className="w-2 h-2 bg-white rounded-full wavy-dot-1"></span>
-                    <span className="w-2 h-2 bg-white rounded-full wavy-dot-2"></span>
-                    <span className="w-2 h-2 bg-white rounded-full wavy-dot-3"></span>
-                    <span className="w-2 h-2 bg-white rounded-full wavy-dot-4"></span>
-                    <span className="w-2 h-2 bg-white rounded-full wavy-dot-5"></span>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          </button>
-        </div>
+        <ResultsArtifactsTelegramBlock
+          artifacts={currentGame?.resultsArtifacts}
+          hasSummaryText={hasCachedSummary}
+          disabled={isTelegramSendDisabled}
+          isSending={isSendingToTelegram}
+          onSend={handleSendToTelegram}
+        />
       )}
 
       {showSentToTelegramHint && (

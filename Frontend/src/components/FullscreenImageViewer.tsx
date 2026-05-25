@@ -13,12 +13,17 @@ interface FullscreenImageViewerProps {
   imageUrl: string;
   onClose: () => void;
   isOpen?: boolean;
+  /** Pinch-zoom pan; off avoids crashes when nested under CSS transform ancestors. */
+  enableTransform?: boolean;
+  modalId?: string;
 }
 
 export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   imageUrl,
   onClose,
   isOpen = true,
+  enableTransform = true,
+  modalId = 'fullscreen-image-viewer',
 }) => {
   const { t } = useTranslation();
   const transformRef = useRef<any>(null);
@@ -28,7 +33,20 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [displayUrl, setDisplayUrl] = useState(imageUrl);
+  const [transformReady, setTransformReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen || !enableTransform) {
+      setTransformReady(false);
+      return;
+    }
+    const frame = requestAnimationFrame(() => setTransformReady(true));
+    return () => {
+      cancelAnimationFrame(frame);
+      setTransformReady(false);
+    };
+  }, [isOpen, enableTransform, imageUrl]);
 
   useEffect(() => {
     setDisplayUrl(imageUrl);

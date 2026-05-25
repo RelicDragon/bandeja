@@ -590,6 +590,25 @@ body.capacitor-android #root {
   animation: fullscreenContentOut 0.2s ease-in forwards;
 }
 
+/* Opacity-only — safe for react-zoom-pan-pinch (no transform on dialog content). */
+@keyframes fullscreenContentFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fullscreenContentFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.fullscreen-content-fade-animate {
+  opacity: 0;
+}
+.fullscreen-content-fade-animate[data-state='open'] {
+  animation: fullscreenContentFadeIn 0.3s ease-out forwards;
+}
+.fullscreen-content-fade-animate[data-state='closed'] {
+  animation: fullscreenContentFadeOut 0.2s ease-in forwards;
+}
+
 /* Smooth button hover and click animations */
 @keyframes buttonHover {
   0% {

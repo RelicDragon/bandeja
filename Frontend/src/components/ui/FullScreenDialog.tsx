@@ -56,6 +56,7 @@ export const FullScreenDialog = ({
         <DialogPrimitive.Overlay className={overlayClassName ?? FULL_SCREEN_OVERLAY_CLASS} />
         <DialogPrimitive.Content
           className={contentClassName ? `${FULL_SCREEN_CONTENT_CLASS} ${contentClassName}` : FULL_SCREEN_CONTENT_CLASS}
+          aria-describedby={undefined}
           {...preventOutside}
         >
           <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>
