@@ -11,11 +11,17 @@ import {
   swapBracketPreviewPositions,
   type BracketPreviewPosition,
 } from '@/utils/bracketPreviewReorder.util';
+import { qualifierLabelForParticipant } from '@/utils/groupQualifierLabel.util';
+import {
+  feederMatchLabelsForRound,
+  firstMainRoundPairingsForPlan,
+} from '@/utils/bracketPreviewKnockout.util';
 
 interface BracketPlayoffPreviewProps {
   plan: BracketPlan;
   standingsById: Map<string, LeagueStanding>;
   groupColor?: string | null;
+  qualifierLabels?: Map<string, string>;
   reorderable?: boolean;
   onPlanChange?: (plan: BracketPlan) => void;
 }
@@ -39,6 +45,7 @@ function SeedChip({
   participantId,
   standingsById,
   groupAccent,
+  displayLabel,
   ghost,
   reorderable,
   selected,
@@ -48,21 +55,32 @@ function SeedChip({
   participantId?: string;
   standingsById: Map<string, LeagueStanding>;
   groupAccent?: string;
+  displayLabel?: string;
   ghost?: boolean;
   reorderable?: boolean;
   selected?: boolean;
   onSelect?: () => void;
 }) {
   const standing = participantId ? standingsById.get(participantId) : undefined;
+  const teamName = ghost ? '—' : standingLabel(standing);
+  const primary = displayLabel ?? teamName;
+  const showTeamSubtitle = !!displayLabel && !ghost && teamName !== '—';
   const interactive = reorderable && !ghost && !!participantId && !!onSelect;
 
   const body = (
     <>
-      <span className="font-bold text-primary-600 dark:text-primary-400 shrink-0">#{seed}</span>
-      {standing?.leagueTeam?.players?.[0]?.user && (
+      {!displayLabel && !ghost ? (
+        <span className="font-bold text-primary-600 dark:text-primary-400 shrink-0">#{seed}</span>
+      ) : null}
+      {standing?.leagueTeam?.players?.[0]?.user && !ghost && (
         <PlayerAvatar player={standing.leagueTeam.players[0].user} extrasmall showName={false} fullHideName />
       )}
-      <span className="truncate">{ghost ? '—' : standingLabel(standing)}</span>
+      <span className="min-w-0 flex-1">
+        <span className={`block truncate ${displayLabel ? 'font-bold' : ''}`}>{primary}</span>
+        {showTeamSubtitle ? (
+          <span className="block truncate text-[10px] font-normal text-gray-500 dark:text-gray-400">{teamName}</span>
+        ) : null}
+      </span>
     </>
   );
 
@@ -104,6 +122,7 @@ function MatchPair({
   participantBId,
   standingsById,
   groupAccent,
+  qualifierLabels,
   reorderable,
   positionBySeed,
   selectedKey,
@@ -115,6 +134,7 @@ function MatchPair({
   participantBId?: string;
   standingsById: Map<string, LeagueStanding>;
   groupAccent?: string;
+  qualifierLabels?: Map<string, string>;
   reorderable?: boolean;
   positionBySeed: Map<number, BracketPreviewPosition>;
   selectedKey: string | null;
@@ -130,6 +150,7 @@ function MatchPair({
         participantId={participantAId}
         standingsById={standingsById}
         groupAccent={groupAccent}
+        displayLabel={qualifierLabelForParticipant(participantAId, qualifierLabels, seedA)}
         reorderable={reorderable && !!posA}
         selected={posA ? selectedKey === posA.key : false}
         onSelect={posA ? () => onSelectSeed(seedA) : undefined}
@@ -140,6 +161,7 @@ function MatchPair({
         participantId={participantBId}
         standingsById={standingsById}
         groupAccent={groupAccent}
+        displayLabel={qualifierLabelForParticipant(participantBId, qualifierLabels, seedB)}
         reorderable={reorderable && !!posB}
         selected={posB ? selectedKey === posB.key : false}
         onSelect={posB ? () => onSelectSeed(seedB) : undefined}
@@ -148,10 +170,25 @@ function MatchPair({
   );
 }
 
+function FeederMatchPair({ labelA, labelB }: { labelA: string; labelB: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="rounded-md border border-dashed border-gray-200 dark:border-gray-700 px-2 py-2 text-xs text-center font-semibold text-gray-500 dark:text-gray-400 min-w-[7rem]">
+        {labelA}
+      </div>
+      <span className="text-[10px] text-center text-gray-400 font-medium">vs</span>
+      <div className="rounded-md border border-dashed border-gray-200 dark:border-gray-700 px-2 py-2 text-xs text-center font-semibold text-gray-500 dark:text-gray-400 min-w-[7rem]">
+        {labelB}
+      </div>
+    </div>
+  );
+}
+
 export const BracketPlayoffPreview = ({
   plan,
   standingsById,
   groupColor,
+  qualifierLabels,
   reorderable = false,
   onPlanChange,
 }: BracketPlayoffPreviewProps) => {
@@ -181,6 +218,11 @@ export const BracketPlayoffPreview = ({
   );
 
   const positionBySeed = useMemo(() => new Map(positions.map((p) => [p.seed, p])), [positions]);
+
+  const firstMainPairings = useMemo(
+    () => firstMainRoundPairingsForPlan(displayPlan),
+    [displayPlan]
+  );
 
   const emitPlan = useCallback(
     (nextPositions: BracketPreviewPosition[]) => {
@@ -265,6 +307,7 @@ export const BracketPlayoffPreview = ({
                 participantBId={m.participantBId}
                 standingsById={standingsById}
                 groupAccent={accent}
+                qualifierLabels={qualifierLabels}
                 reorderable={reorderable}
                 positionBySeed={positionBySeed}
                 selectedKey={selectedKey}
@@ -281,13 +324,15 @@ export const BracketPlayoffPreview = ({
             </h4>
             {displayPlan.byeSeeds.map((seed) => {
               const pos = positionBySeed.get(seed);
+              const participantId = displayPlan.orderedParticipantIds[seed - 1];
               return (
                 <div key={seed} className="space-y-0.5">
                   <SeedChip
                     seed={seed}
-                    participantId={displayPlan.orderedParticipantIds[seed - 1]}
+                    participantId={participantId}
                     standingsById={standingsById}
                     groupAccent={accent}
+                    displayLabel={qualifierLabelForParticipant(participantId, qualifierLabels, seed)}
                     ghost={!reorderable}
                     reorderable={reorderable && !!pos}
                     selected={pos ? selectedKey === pos.key : false}
@@ -307,14 +352,53 @@ export const BracketPlayoffPreview = ({
             <h4 className="text-xs font-semibold text-center text-gray-600 dark:text-gray-400 uppercase tracking-wide">
               {mainRoundLabel(round.roundIndex)}
             </h4>
-            {Array.from({ length: round.matchCount }, (_, i) => (
-              <div
-                key={i}
-                className="rounded-md border border-dashed border-gray-200 dark:border-gray-700 px-2 py-3 text-xs text-center text-gray-400/80 dark:text-gray-500/80"
-              >
-                {t('gameDetails.bracketSlotTbd', { defaultValue: 'TBD' })}
-              </div>
-            ))}
+            {round.roundIndex === 0
+              ? firstMainPairings.map(([seedA, seedB], i) => {
+                  const participantAId = displayPlan.orderedParticipantIds[seedA - 1];
+                  const participantBId = displayPlan.orderedParticipantIds[seedB - 1];
+                  const validA = seedA >= 1 && seedA <= displayPlan.entrantCount && participantAId;
+                  const validB = seedB >= 1 && seedB <= displayPlan.entrantCount && participantBId;
+                  if (!validA || !validB) {
+                    const tbd = t('gameDetails.bracketSlotTbd', { defaultValue: 'TBD' });
+                    return (
+                      <FeederMatchPair
+                        key={i}
+                        labelA={
+                          validA
+                            ? (qualifierLabelForParticipant(participantAId, qualifierLabels, seedA) ??
+                              `#${seedA}`)
+                            : tbd
+                        }
+                        labelB={
+                          validB
+                            ? (qualifierLabelForParticipant(participantBId, qualifierLabels, seedB) ??
+                              `#${seedB}`)
+                            : tbd
+                        }
+                      />
+                    );
+                  }
+                  return (
+                    <MatchPair
+                      key={i}
+                      seedA={seedA}
+                      seedB={seedB}
+                      participantAId={participantAId}
+                      participantBId={participantBId}
+                      standingsById={standingsById}
+                      groupAccent={accent}
+                      qualifierLabels={qualifierLabels}
+                      reorderable={reorderable}
+                      positionBySeed={positionBySeed}
+                      selectedKey={selectedKey}
+                      onSelectSeed={handleSelectSeed}
+                    />
+                  );
+                })
+              : Array.from({ length: round.matchCount }, (_, i) => {
+                  const [labelA, labelB] = feederMatchLabelsForRound(displayPlan, round.roundIndex, i);
+                  return <FeederMatchPair key={i} labelA={labelA} labelB={labelB} />;
+                })}
           </section>
         ))}
       </div>

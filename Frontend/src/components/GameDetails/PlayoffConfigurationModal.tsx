@@ -46,6 +46,7 @@ import {
   type TeamsPerGroupMap,
 } from '@/utils/crossGroupUnequalK.util';
 import { bracketPlanOptionsFromWizardConfig } from '@/utils/playoffWizardBracketPlan.util';
+import { buildGroupQualifierLabels } from '@/utils/groupQualifierLabel.util';
 import { BracketPlayoffConfirmOptions } from './BracketPlayoffConfirmOptions';
 import {
   getPlayoffWizardStepIndex,
@@ -717,6 +718,11 @@ export const PlayoffConfigurationModal = ({
     }
   };
 
+  const crossQualifierLabels = useMemo(
+    () => buildGroupQualifierLabels(crossDerived.includedList, crossDerived.qualifiers),
+    [crossDerived.includedList, crossDerived.qualifiers]
+  );
+
   const crossPreviewPlan = useMemo(() => {
     if (!isCrossGroupBracket || crossDerived.totalN < BRACKET_MIN_ENTRANTS) return null;
     const ids = crossPreviewOrderedIds ?? crossDerived.globalParticipantIds;
@@ -1239,6 +1245,7 @@ export const PlayoffConfigurationModal = ({
               <BracketPlayoffPreview
                 plan={crossPreviewPlan}
                 standingsById={standingsById}
+                qualifierLabels={crossQualifierLabels}
                 reorderable
                 onPlanChange={(next) => setCrossPreviewOrderedIds(next.orderedParticipantIds)}
               />
