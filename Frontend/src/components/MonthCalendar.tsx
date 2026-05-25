@@ -350,14 +350,15 @@ export const MonthCalendar = ({
             >
               <span>{format(day, 'd')}</span>
               {unreadCount > 0 && (
-                <span className={`
-                  absolute -top-1 -left-1 flex items-center justify-center
-                  min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold
-                  bg-red-500 text-white
-                  ${!isCurrentMonth ? 'opacity-60' : ''}
-                `}>
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
+                <div
+                  className={`
+                    absolute -top-0 left-1/2 z-10 h-2 w-2 -translate-x-1/2 rounded-full
+                    border border-white dark:border-gray-900 calendar-unread-dot
+                    bg-red-500 dark:bg-red-400
+                    ${!isCurrentMonth ? 'opacity-60' : ''}
+                  `}
+                  aria-hidden
+                />
               )}
               {gameCount > 0 && (
                 <span className={`

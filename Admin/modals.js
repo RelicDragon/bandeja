@@ -489,6 +489,44 @@ async function deleteCourt(courtId, courtName) {
     }
 }
 
+function renderUserSportProfilesEditor(profiles) {
+    const container = document.getElementById('userSportProfilesEditor');
+    if (!container) return;
+    const rows = (profiles && profiles.length)
+        ? profiles
+        : [{ sport: 'PADEL', level: 3.5 }];
+    container.innerHTML = rows.map((p) => `
+        <div class="form-row user-sport-profile-row" data-sport="${escapeHtmlAttr(p.sport)}">
+            <div class="form-group" style="flex:1">
+                <label>${escapeHtml(p.sport)}</label>
+                <input type="number" class="user-sport-level-input" data-sport="${escapeHtmlAttr(p.sport)}"
+                    step="any" min="1" max="7" value="${(p.level ?? 3.5).toString().replace(',', '.')}">
+            </div>
+        </div>
+    `).join('');
+}
+
+function collectSportProfileLevelsFromEditor() {
+    const inputs = document.querySelectorAll('#userSportProfilesEditor .user-sport-level-input');
+    const out = [];
+    inputs.forEach((input) => {
+        const sport = input.dataset.sport;
+        const cleaned = (input.value || '').toString().replace(/,/g, '.');
+        const level = parseFloat(cleaned);
+        if (!sport || Number.isNaN(level)) return;
+        out.push({ sport, level });
+    });
+    return out;
+}
+
+function formatUserSportProfilesSummary(user) {
+    const profiles = user?.sportProfiles;
+    if (profiles?.length) {
+        return profiles.map((p) => `${p.sport}: ${(p.level ?? 0).toFixed(1)}`).join(', ');
+    }
+    return (user?.level ?? 0).toFixed(1);
+}
+
 function createUserModal() {
     showModal('userModal');
     document.getElementById('userModalTitle').textContent = 'Create User';
@@ -496,6 +534,7 @@ function createUserModal() {
     document.getElementById('userForm').dataset.mode = 'create';
     document.getElementById('userForm').dataset.userId = '';
     document.getElementById('userPasswordGroup').style.display = '';
+    renderUserSportProfilesEditor([{ sport: 'PADEL', level: 3.5 }]);
     loadUserCityOptions();
 }
 
@@ -508,8 +547,10 @@ async function editUserModal(user) {
     document.getElementById('userLastName').value = user.lastName || '';
     document.getElementById('userEmail').value = user.email || '';
     document.getElementById('userGender').value = user.gender || 'PREFER_NOT_TO_SAY';
-    const levelValue = typeof user.level === 'number' ? user.level : (user.level || 3.5);
-    document.getElementById('userLevel').value = levelValue.toString().replace(',', '.');
+    const profiles = user.sportProfiles?.length
+        ? user.sportProfiles
+        : [{ sport: 'PADEL', level: user.level ?? 3.5 }];
+    renderUserSportProfilesEditor(profiles);
     document.getElementById('userIsActive').checked = user.isActive;
     document.getElementById('userIsAdmin').checked = user.isAdmin;
     document.getElementById('userIsTrainer').checked = user.isTrainer || false;
@@ -552,17 +593,8 @@ async function handleUserSubmit(e) {
         return;
     }
 
-    const levelValue = document.getElementById('userLevel').value;
-    const cityId = document.getElementById('userCityId').value;
-    
-    let parsedLevel = 3.5;
-    if (levelValue) {
-        const cleanedLevel = levelValue.toString().replace(/,/g, '.');
-        parsedLevel = parseFloat(cleanedLevel);
-        if (isNaN(parsedLevel)) {
-            parsedLevel = 3.5;
-        }
-    }
+    const sportProfileLevels = collectSportProfileLevelsFromEditor();
+    const padelLevel = sportProfileLevels.find((p) => p.sport === 'PADEL')?.level ?? 3.5;
 
     const data = {
         phone: document.getElementById('userPhone').value,
@@ -570,8 +602,9 @@ async function handleUserSubmit(e) {
         lastName: lastName || null,
         email: document.getElementById('userEmail').value || null,
         gender: document.getElementById('userGender').value,
-        level: parsedLevel,
-        currentCityId: cityId || null,
+        level: padelLevel,
+        sportProfileLevels: mode === 'edit' ? sportProfileLevels : undefined,
+        currentCityId: document.getElementById('userCityId').value || null,
         isActive: document.getElementById('userIsActive').checked,
         isAdmin: document.getElementById('userIsAdmin').checked,
         isTrainer: document.getElementById('userIsTrainer').checked,

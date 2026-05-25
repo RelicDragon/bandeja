@@ -281,6 +281,13 @@
       "ios": "iOS",
       "android": "Android",
       "unknown": "Unknown device"
-    }
+    },
+    "sharingToFollowers": "Sharing to followers",
+    "shareGamePhotosToFollowers": "Share game photos in followers' stories",
+    "shareGamePhotosToFollowersDescription": "When you upload photos to finished public games, followers may see them in stories",
+    "shareGameCreationsToFollowers": "Share games I create",
+    "shareGameCreationsToFollowersDescription": "Public games you announce appear in followers' stories",
+    "shareGameResultsToFollowers": "Share my results",
+    "shareGameResultsToFollowersDescription": "Your final game results may appear in followers' stories"
   }
 }

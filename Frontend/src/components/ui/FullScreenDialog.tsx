@@ -18,6 +18,7 @@ interface FullScreenDialogProps {
   title?: string;
   overlayClassName?: string;
   contentClassName?: string;
+  bodyClassName?: string;
   children: React.ReactNode;
 }
 
@@ -30,6 +31,7 @@ export const FullScreenDialog = ({
   title = 'Dialog',
   overlayClassName,
   contentClassName,
+  bodyClassName,
   children,
 }: FullScreenDialogProps) => {
   const fallbackIdRef = useRef(`fullscreen-${Math.random()}`);
@@ -66,7 +68,7 @@ export const FullScreenDialog = ({
             />
           )}
           <div
-            className={`cap-fullscreen-dialog-body relative z-10 min-h-0 flex-1 flex flex-col overflow-y-auto ${closeOnInteractOutside ? 'pointer-events-none' : ''}`}
+            className={`cap-fullscreen-dialog-body relative z-10 min-h-0 flex-1 flex flex-col overflow-y-auto ${bodyClassName ?? ''} ${closeOnInteractOutside ? 'pointer-events-none' : ''}`}
           >
             {children}
           </div>

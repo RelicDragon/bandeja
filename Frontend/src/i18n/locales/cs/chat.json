@@ -230,8 +230,7 @@
     "types": {
       "PUBLIC": "Obecný",
       "PRIVATE": "Účastníci",
-      "ADMINS": "Organizátoři",
-      "PHOTOS": "Fotky"
+      "ADMINS": "Organizátoři"
     },
     "create": "Vytvořit",
     "search": "Hledat",

@@ -9,6 +9,8 @@ import type {
 import { getRules } from '../liveScoringEngine/rulebook';
 import { getStandingsMatchOutcome } from '../liveScoringEngine/matchWinnerLive';
 
+/** `user.level` on participants is sport-projected for `game.sport` (mapPrismaForGeneration → projectUserForSportContext), not global User.level. */
+
 function isOfficialGenSet(set: SetResult): boolean {
   return !set.role || set.role === 'OFFICIAL';
 }

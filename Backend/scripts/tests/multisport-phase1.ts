@@ -33,17 +33,25 @@ function testSportSnapshotHelpers(): void {
   assert(!('sportProfiles' in projected), 'projected user strips sportProfiles');
 
   const tennisDefault = resolveUserSportSnapshot(
-    { id: 'u2', level: 3.1, reliability: 12, gamesPlayed: 4, gamesWon: 2 },
+    {
+      id: 'u2',
+      level: 3.1,
+      reliability: 12,
+      gamesPlayed: 4,
+      gamesWon: 2,
+      sportProfiles: [],
+    },
     Sport.TENNIS,
   );
   assert(tennisDefault.level === 1.0, 'non-padel without profile defaults level to 1.0');
   assert(tennisDefault.gamesPlayed === 0, 'non-padel without profile defaults gamesPlayed to 0');
 
   const padelFallback = resolveUserSportSnapshot(
-    { id: 'u2', sportProfiles: [] },
+    { id: 'u2', level: 3.1, reliability: 12, gamesPlayed: 4, gamesWon: 2, sportProfiles: [] },
     Sport.PADEL,
   );
-  assert(padelFallback.level === 1.0, 'padel without profile uses default snapshot');
+  assert(padelFallback.level === 3.1, 'padel without profile falls back to User.level');
+  assert(padelFallback.gamesPlayed === 4, 'padel without profile falls back to User.gamesPlayed');
 
   const projectedDefault = projectUserForSportContext(
     { id: 'u2', level: 3.1, reliability: 12, gamesPlayed: 4, gamesWon: 2 },

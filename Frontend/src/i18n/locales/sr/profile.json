@@ -281,6 +281,13 @@
       "ios": "iOS",
       "android": "Android",
       "unknown": "Непознат уређај"
-    }
+    },
+    "sharingToFollowers": "Deljenje sa pratiocima",
+    "shareGamePhotosToFollowers": "Deli fotografije igara u pričama",
+    "shareGamePhotosToFollowersDescription": "Fotografije iz javnih završenih igara mogu se pojaviti u pričama",
+    "shareGameCreationsToFollowers": "Deli igre koje kreiram",
+    "shareGameCreationsToFollowersDescription": "Javne najavljene igre se pojavljuju u pričama",
+    "shareGameResultsToFollowers": "Deli moje rezultate",
+    "shareGameResultsToFollowersDescription": "Finalni rezultati mogu se pojaviti u pričama"
   }
 }

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { User } from '@/types';
+import type { BasicUser, User } from '@/types';
 import {
   gamesPlayedForSport,
   getDisplayLevelForSport,
+  getReliabilityForSport,
   hasEnabledSports,
   hasMultipleSportsEnabled,
   isSportEnabled,
@@ -12,7 +13,9 @@ import {
   resolveActivePrimarySport,
   resolveCreateGameDefaultSport,
   resolveProfileHeaderLevel,
+  resolveTrainingEditDefaults,
   shouldShowSportLevelBadge,
+  userLevelMatchesGameBand,
 } from './profileSports';
 
 const baseUser = (overrides: Partial<User> = {}): User =>
@@ -121,6 +124,21 @@ describe('profileSports', () => {
     expect(shouldShowSportLevelBadge(played, 'PADEL')).toBe(true);
   });
 
+  it('getDisplayLevelForSport trusts projected level when sportProfiles absent (BasicUser)', () => {
+    const projected: BasicUser = {
+      id: 'p1',
+      level: 3.2,
+      primarySport: 'PADEL',
+      socialLevel: 3,
+      gender: 'MALE',
+      approvedLevel: false,
+      isTrainer: false,
+      reliability: 42,
+    };
+    expect(getDisplayLevelForSport(projected, 'TENNIS')).toBe(3.2);
+    expect(getReliabilityForSport(projected, 'TENNIS')).toBe(42);
+  });
+
   it('getDisplayLevelForSport uses profile or legacy padel level', () => {
     const user = baseUser({
       sportsEnabled: ['PADEL', 'TENNIS'],
@@ -131,5 +149,61 @@ describe('profileSports', () => {
     });
     expect(getDisplayLevelForSport(user, 'TENNIS')).toBe(4.1);
     expect(getDisplayLevelForSport(user, 'PADEL')).toBe(3.4);
+  });
+
+  it('find games filter uses tennis profile level not global padel level', () => {
+    const user = baseUser({
+      level: 4.5,
+      reliability: 70,
+      sportProfiles: [
+        { sport: 'PADEL', level: 4.5, reliability: 70, gamesPlayed: 40, gamesWon: 20 },
+        { sport: 'TENNIS', level: 2.0, reliability: 15, gamesPlayed: 2, gamesWon: 1 },
+      ],
+      sportsEnabled: ['PADEL', 'TENNIS'],
+    });
+    expect(getDisplayLevelForSport(user, 'TENNIS')).toBe(2.0);
+    expect(userLevelMatchesGameBand(user, 'TENNIS', 3.0, 5.0)).toBe(false);
+    expect(userLevelMatchesGameBand(user, 'TENNIS', 1.5, 2.5)).toBe(true);
+    expect(userLevelMatchesGameBand(user, 'PADEL', 4.0, 5.0)).toBe(true);
+  });
+
+  it('full User without sportProfiles on wire uses legacy padel/primary level only', () => {
+    const user = baseUser({
+      level: 4.5,
+      primarySport: 'PADEL',
+      sportsEnabled: ['PADEL', 'TENNIS'],
+      sportProfiles: [],
+    });
+    expect(getDisplayLevelForSport(user, 'PADEL')).toBe(4.5);
+    expect(getDisplayLevelForSport(user, 'TENNIS')).toBe(1.0);
+  });
+
+  it('getReliabilityForSport uses sport profile not global User.reliability', () => {
+    const user = baseUser({
+      reliability: 80,
+      sportProfiles: [
+        { sport: 'PADEL', level: 3.4, reliability: 80, gamesPlayed: 10, gamesWon: 5 },
+        { sport: 'TENNIS', level: 2.5, reliability: 12, gamesPlayed: 1, gamesWon: 0 },
+      ],
+      sportsEnabled: ['PADEL', 'TENNIS'],
+    });
+    expect(getReliabilityForSport(user, 'TENNIS')).toBe(12);
+    expect(getReliabilityForSport(user, 'PADEL')).toBe(80);
+  });
+
+  it('resolveTrainingEditDefaults uses sport profile when no outcome', () => {
+    const user = baseUser({
+      level: 4.0,
+      reliability: 75,
+      sportProfiles: [
+        { sport: 'PADEL', level: 4.0, reliability: 75, gamesPlayed: 10, gamesWon: 5 },
+        { sport: 'TENNIS', level: 2.2, reliability: 18, gamesPlayed: 0, gamesWon: 0 },
+      ],
+      sportsEnabled: ['PADEL', 'TENNIS'],
+    });
+    expect(resolveTrainingEditDefaults(user, 'TENNIS')).toEqual({ level: 2.2, reliability: 18 });
+    expect(
+      resolveTrainingEditDefaults(user, 'TENNIS', { levelBefore: 2.0, reliabilityBefore: 10 }),
+    ).toEqual({ level: 2.0, reliability: 10 });
   });
 });

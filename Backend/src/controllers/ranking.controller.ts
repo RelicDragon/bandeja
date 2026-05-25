@@ -79,6 +79,28 @@ const applySportRankingSnapshot = (users: any[], sport: Sport): any[] =>
     };
   });
 
+/** sport=all: rank each user by their primary sport profile (fallback PADEL), not global User.level. */
+const applyPrimarySportRankingSnapshot = (users: any[]): any[] =>
+  users.map((u) => {
+    const sport = (u.primarySport as Sport) ?? Sport.PADEL;
+    return applySportRankingSnapshot([u], sport)[0];
+  });
+
+const applySocialSportSnapshot = (
+  users: any[],
+  sportMode: ReturnType<typeof resolveLeaderboardSportMode>,
+): any[] =>
+  users.map((u) => {
+    const sport =
+      sportMode.mode === 'sport' ? sportMode.sport : ((u.primarySport as Sport) ?? Sport.PADEL);
+    const snapshot = resolveUserSportSnapshot(u, sport);
+    return {
+      ...u,
+      reliability: snapshot.reliability,
+      gamesPlayed: snapshot.gamesPlayed,
+    };
+  });
+
 const mapToLeaderboard = (users: any[], rankMap: Map<string, number>, lastGameRatingChanges: Record<string, number | null>): any[] => {
   return users.map((u: any) => ({
     rank: rankMap.get(u.id),
@@ -149,6 +171,7 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
     gamesPlayed: true,
     gamesWon: true,
     socialLevel: true,
+    primarySport: true,
     sportProfiles: {
       select: USER_SPORT_PROFILE_SELECT,
     },
@@ -226,24 +249,31 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
         if (a.level !== b.level) {
           return b.level - a.level;
         }
-        return b.totalPoints - a.totalPoints;
+        if (a.gamesWon !== b.gamesWon) {
+          return b.gamesWon - a.gamesWon;
+        }
+        return a.id.localeCompare(b.id);
       });
 
       allUsers = usersWithCounts;
-      rankMap = calculateRanks(allUsers, true, false);
+      rankMap = calculateRanks(allUsers, true, false, 'gamesWon');
     }
   } else if (usePerSportLevel && leaderboardSportMode.mode === 'all') {
-    allUsers = await prisma.user.findMany({
-      where: { ...baseWhere, gamesPlayed: { gt: 0 } },
-      orderBy: [
-        { level: 'desc' },
-        { reliability: 'desc' },
-        { totalPoints: 'desc' },
-      ],
+    const usersRaw = await prisma.user.findMany({
+      where: baseWhere,
       select: userSelect,
     });
 
-    rankMap = calculateRanks(allUsers, false, false);
+    allUsers = applyPrimarySportRankingSnapshot(usersRaw)
+      .filter((u) => u.gamesPlayed > 0)
+      .sort((a, b) => {
+        if (a.level !== b.level) return b.level - a.level;
+        if (a.reliability !== b.reliability) return b.reliability - a.reliability;
+        if (a.gamesWon !== b.gamesWon) return b.gamesWon - a.gamesWon;
+        return a.id.localeCompare(b.id);
+      });
+
+    rankMap = calculateRanks(allUsers, false, false, 'gamesWon');
   } else if (usePerSportLevel && rankingSport) {
     const usersRaw = await prisma.user.findMany({
       where: baseWhere,
@@ -275,20 +305,25 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       .sort((a, b) => {
         if (a.level !== b.level) return b.level - a.level;
         if (a.reliability !== b.reliability) return b.reliability - a.reliability;
-        return b.totalPoints - a.totalPoints;
+        if (a.gamesWon !== b.gamesWon) return b.gamesWon - a.gamesWon;
+        return a.id.localeCompare(b.id);
       });
 
-    rankMap = calculateRanks(allUsers, false, false);
+    rankMap = calculateRanks(allUsers, false, false, 'gamesWon');
   } else if (isSocial) {
-    allUsers = await prisma.user.findMany({
-      where: { ...baseWhere, gamesPlayed: { gt: 0 } },
-      orderBy: [
-        { socialLevel: 'desc' },
-        { reliability: 'desc' },
-        { totalPoints: 'desc' },
-      ],
+    const usersRaw = await prisma.user.findMany({
+      where: baseWhere,
       select: userSelect,
     });
+
+    allUsers = applySocialSportSnapshot(usersRaw, leaderboardSportMode)
+      .filter((u) => u.gamesPlayed > 0)
+      .sort((a, b) => {
+        if (a.socialLevel !== b.socialLevel) return b.socialLevel - a.socialLevel;
+        if (a.reliability !== b.reliability) return b.reliability - a.reliability;
+        if (a.totalPoints !== b.totalPoints) return b.totalPoints - a.totalPoints;
+        return a.id.localeCompare(b.id);
+      });
 
     rankMap = calculateRanks(allUsers, false, true);
   } else {

@@ -22,6 +22,6 @@ export function filterGameChatTypesByChannelActivity(
   return types.filter((t) => {
     if (t === 'PRIVATE') return activity.privateHasUserMessages;
     if (t === 'ADMINS') return activity.adminsHasUserMessages;
-    return t !== 'PHOTOS';
+    return true;
   });
 }

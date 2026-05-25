@@ -5,6 +5,7 @@ import { getSportConfig } from '@/sport/sportRegistry';
 import { SocialLevelIcon } from '@/components/profile/SocialLevelIcon';
 import {
   getDisplayLevelForSport,
+  getReliabilityForSport,
   hasMultipleSportsEnabled,
   shouldShowSportLevelBadge,
 } from '@/utils/profileSports';
@@ -47,7 +48,7 @@ export function CompetitiveSocialLevelBadge({
           <span>{levelText}</span>
           {showReliability && (
             <span className="text-[10px] font-normal opacity-90">
-              {(user.reliability ?? 0).toFixed(0)}%
+              {getReliabilityForSport(user, sport).toFixed(0)}%
             </span>
           )}
           <span>•</span>

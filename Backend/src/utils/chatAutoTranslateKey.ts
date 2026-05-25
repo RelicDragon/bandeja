@@ -7,7 +7,7 @@ export function chatAutoTranslateTypeKey(
 ): string {
   if (chatContextType === 'GAME') {
     const t = (chatType ?? 'PUBLIC').toString().toUpperCase();
-    return t === 'PHOTOS' ? 'PHOTOS' : t;
+    return t;
   }
   return '';
 }

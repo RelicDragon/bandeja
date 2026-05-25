@@ -144,13 +144,28 @@ function getTranslations(language: string): Record<string, string> {
   return translations[langCode] || translations.en;
 }
 
+function outcomeUserForSport(
+  user: GameOutcome['user'],
+  sport: Sport,
+): GameOutcome['user'] {
+  if (!user) return user;
+  const withProfiles = user as GameOutcome['user'] & { sportProfiles?: unknown };
+  if (!withProfiles.sportProfiles) {
+    return user;
+  }
+  return projectUserForSportContext(
+    withProfiles as Parameters<typeof projectUserForSportContext>[0],
+    sport,
+  ) as GameOutcome['user'];
+}
+
 export function generateResultsHTML(game: Game, language: string = 'en-GB'): string {
   const t = getTranslations(language);
   const sport = game.sport ?? Sport.PADEL;
   const outcomes = [...game.outcomes]
     .map((o) => ({
       ...o,
-      user: projectUserForSportContext(o.user, sport) as GameOutcome['user'],
+      user: outcomeUserForSport(o.user, sport),
     }))
     .sort((a, b) => {
     if (a.position && b.position) return a.position - b.position;

@@ -421,7 +421,7 @@ async function loadPageData(page) {
             loadClubs();
             break;
         case 'reports':
-            loadMessageReports();
+            loadReportsForCurrentType();
             break;
         case 'app-versions':
             loadAppVersions();
@@ -457,6 +457,22 @@ function escapeHtmlAttr(s) {
 
 const getUserName = (u) => ((u.firstName || '') + ' ' + (u.lastName || '')).trim() || u.phone || '-';
 
+function formatUserSportProfilesSummary(user) {
+    const profiles = user?.sportProfiles;
+    if (profiles?.length) {
+        return profiles.map((p) => `${p.sport}: ${(p.level ?? 0).toFixed(1)}`).join(', ');
+    }
+    return (user?.level ?? 0).toFixed(1);
+}
+
+function formatUserGamesSummary(user) {
+    const profiles = user?.sportProfiles;
+    if (profiles?.length) {
+        return profiles.map((p) => `${p.sport}: ${p.gamesPlayed ?? 0}`).join(', ');
+    }
+    return String(user?.gamesPlayed ?? 0);
+}
+
 function initUsersDataTable() {
     usersDataTable = new DataTable({
         container: 'usersDataTable',
@@ -466,8 +482,8 @@ function initUsersDataTable() {
             { key: 'phone', label: 'Phone' },
             { key: 'auth', label: 'Auth', accessor: (u) => getAuthMethodBadges(u) },
             { key: 'city', label: 'City', accessor: (u) => u.currentCity?.name },
-            { key: 'level', label: 'Level', accessor: (u) => u.level ?? 0 },
-            { key: 'games', label: 'Games', accessor: (u) => u.gamesPlayed ?? 0 },
+            { key: 'level', label: 'Levels', accessor: (u) => formatUserSportProfilesSummary(u) },
+            { key: 'games', label: 'Games', accessor: (u) => formatUserGamesSummary(u) },
             { key: 'wallet', label: 'Wallet', accessor: (u) => u.wallet ?? 0 },
             { key: 'status', label: 'Status', accessor: (u) => u.isActive ? 'Active' : 'Inactive' },
             { key: 'roles', label: 'Roles', sortable: false },
@@ -509,8 +525,8 @@ function initUsersDataTable() {
                 <td>${escapeHtml(user.phone || '-')}</td>
                 <td><span class="badge badge-secondary">${escapeHtml(authBadge)}</span></td>
                 <td>${escapeHtml(cityName)}</td>
-                <td>${(user.level ?? 0).toFixed(1)}</td>
-                <td>${user.gamesPlayed ?? 0}</td>
+                <td>${escapeHtml(formatUserSportProfilesSummary(user))}</td>
+                <td>${escapeHtml(formatUserGamesSummary(user))}</td>
                 <td>${user.wallet ?? 0}</td>
                 <td><span class="badge ${user.isActive ? 'badge-success' : 'badge-danger'}">${user.isActive ? 'Active' : 'Inactive'}</span></td>
                 <td>${escapeHtml(rolesStr || '')}</td>
@@ -552,8 +568,8 @@ function viewUserDetail(userId) {
             <div class="form-group"><label>Phone</label><div class="form-readonly">${user.phone || '-'}</div></div>
             <div class="form-group"><label>Email</label><div class="form-readonly">${user.email || '-'}</div></div>
             <div class="form-group"><label>City</label><div class="form-readonly">${user.currentCity?.name || '-'}</div></div>
-            <div class="form-group"><label>Level</label><div class="form-readonly">${(user.level ?? 0).toFixed(1)}</div></div>
-            <div class="form-group"><label>Games</label><div class="form-readonly">${user.gamesPlayed ?? 0} played, ${user.gamesWon ?? 0} won</div></div>
+            <div class="form-group"><label>Levels</label><div class="form-readonly">${escapeHtml(formatUserSportProfilesSummary(user))}</div></div>
+            <div class="form-group"><label>Games</label><div class="form-readonly">${escapeHtml(formatUserGamesSummary(user))}</div></div>
             <div class="form-group"><label>Wallet</label><div class="form-readonly">${user.wallet ?? 0}</div></div>
             <div class="form-group"><label>Created</label><div class="form-readonly">${formatDate(user.createdAt)}</div></div>
         </div>
@@ -1349,10 +1365,32 @@ window.acceptAllInvites = acceptAllInvites;
 window.loadUsers = loadUsers;
 
 let reportStatusFilter = '';
+let reportTypeFilter = 'messages';
+
+function handleReportTypeFilter() {
+    reportTypeFilter = document.getElementById('reportTypeFilter').value;
+    if (reportTypeFilter === 'story-comments') {
+        loadStoryCommentReports();
+    } else {
+        loadMessageReports();
+    }
+}
 
 function handleReportStatusFilter() {
     reportStatusFilter = document.getElementById('reportStatusFilter').value;
-    loadMessageReports();
+    if (reportTypeFilter === 'story-comments') {
+        loadStoryCommentReports();
+    } else {
+        loadMessageReports();
+    }
+}
+
+async function loadReportsForCurrentType() {
+    if (reportTypeFilter === 'story-comments') {
+        await loadStoryCommentReports();
+    } else {
+        await loadMessageReports();
+    }
 }
 
 async function loadMessageReports() {
@@ -1360,11 +1398,94 @@ async function loadMessageReports() {
         const queryParams = reportStatusFilter ? `?status=${reportStatusFilter}` : '';
         const response = await apiRequest(`/admin/message-reports${queryParams}`);
         if (response.success) {
+            setReportsTableHeaders(['Reported At', 'Reporter', 'Message Sender', 'Message Content', 'Reason', 'Description', 'Status', 'Actions']);
             renderReportsTable(response.data);
         }
     } catch (error) {
         console.error('Failed to load message reports:', error);
     }
+}
+
+async function loadStoryCommentReports() {
+    try {
+        const queryParams = reportStatusFilter ? `?status=${reportStatusFilter}` : '';
+        const response = await apiRequest(`/admin/story-comment-reports${queryParams}`);
+        if (response.success) {
+            setReportsTableHeaders(['Reported At', 'Reporter', 'Comment Author', 'Comment Body', 'Reason', 'Description', 'Status', 'Actions']);
+            renderStoryCommentReportsTable(response.data);
+        }
+    } catch (error) {
+        console.error('Failed to load story comment reports:', error);
+    }
+}
+
+function setReportsTableHeaders(headers) {
+    const thead = document.querySelector('#reportsTable thead tr');
+    thead.innerHTML = headers.map((h) => `<th>${h}</th>`).join('');
+}
+
+function renderStoryCommentReportsTable(reports) {
+    const tbody = document.getElementById('reportsTableBody');
+    if (reports.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No reported story comments found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = reports.map((report) => {
+        const reporterName = `${report.reporter?.firstName || ''} ${report.reporter?.lastName || ''}`.trim() || report.reporter?.phone || 'Unknown';
+        const authorName = report.comment?.author
+            ? `${report.comment.author.firstName || ''} ${report.comment.author.lastName || ''}`.trim() || report.comment.author.phone || 'Unknown'
+            : 'Unknown';
+        const commentBody = report.comment?.body || '[Removed]';
+        const reasonLabels = {
+            SPAM: 'Spam',
+            HARASSMENT: 'Harassment',
+            INAPPROPRIATE_CONTENT: 'Inappropriate Content',
+            FAKE_INFORMATION: 'Fake Information',
+            OTHER: 'Other',
+        };
+        const statusLabels = {
+            PENDING: 'Pending',
+            REVIEWED: 'Reviewed',
+            RESOLVED: 'Resolved',
+            DISMISSED: 'Dismissed',
+        };
+        const statusBadges = {
+            PENDING: 'badge-warning',
+            REVIEWED: 'badge-info',
+            RESOLVED: 'badge-success',
+            DISMISSED: 'badge-secondary',
+        };
+
+        return `
+            <tr>
+                <td>${formatDate(report.createdAt)}</td>
+                <td>${reporterName}</td>
+                <td>${authorName}</td>
+                <td class="message-cell" style="max-width: 300px; word-wrap: break-word;">${commentBody}</td>
+                <td>${reasonLabels[report.reason] || report.reason}</td>
+                <td class="message-cell" style="max-width: 200px; word-wrap: break-word;">${report.description || '-'}</td>
+                <td>
+                    <span class="badge ${statusBadges[report.status] || 'badge-secondary'}">
+                        ${statusLabels[report.status] || report.status}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        ${report.status === 'PENDING' ? `
+                            <button class="btn-small btn-success" onclick="updateStoryCommentReportStatus('${report.id}', 'REVIEWED')">Review</button>
+                            <button class="btn-small btn-info" onclick="updateStoryCommentReportStatus('${report.id}', 'RESOLVED')">Resolve</button>
+                            <button class="btn-small btn-secondary" onclick="updateStoryCommentReportStatus('${report.id}', 'DISMISSED')">Dismiss</button>
+                        ` : ''}
+                        ${report.status === 'REVIEWED' ? `
+                            <button class="btn-small btn-info" onclick="updateStoryCommentReportStatus('${report.id}', 'RESOLVED')">Resolve</button>
+                            <button class="btn-small btn-secondary" onclick="updateStoryCommentReportStatus('${report.id}', 'DISMISSED')">Dismiss</button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function renderReportsTable(reports) {
@@ -1431,6 +1552,23 @@ function renderReportsTable(reports) {
     }).join('');
 }
 
+async function updateStoryCommentReportStatus(reportId, status) {
+    if (!confirm(`Are you sure you want to update this report status to ${status}?`)) {
+        return;
+    }
+
+    try {
+        await apiRequest(`/admin/story-comment-reports/${reportId}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+        });
+        loadStoryCommentReports();
+    } catch (error) {
+        console.error('Failed to update story comment report status:', error);
+        alert('Failed to update report status: ' + (error.message || 'Unknown error'));
+    }
+}
+
 async function updateReportStatus(reportId, status) {
     if (!confirm(`Are you sure you want to update this report status to ${status}?`)) {
         return;
@@ -1448,9 +1586,13 @@ async function updateReportStatus(reportId, status) {
     }
 }
 
+window.loadReportsForCurrentType = loadReportsForCurrentType;
+window.handleReportTypeFilter = handleReportTypeFilter;
 window.handleReportStatusFilter = handleReportStatusFilter;
 window.loadMessageReports = loadMessageReports;
+window.loadStoryCommentReports = loadStoryCommentReports;
 window.updateReportStatus = updateReportStatus;
+window.updateStoryCommentReportStatus = updateStoryCommentReportStatus;
 
 document.addEventListener('DOMContentLoaded', () => {
     const savedToken = localStorage.getItem('adminToken');

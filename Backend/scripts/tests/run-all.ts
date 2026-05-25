@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 const backendRoot = path.resolve(__dirname, '..', '..');
 dotenv.config({ path: path.join(backendRoot, '.env') });
 
-type Suite = { label: string; command: string; args: string[] };
+type Suite = { label: string; command: string; args: string[]; env?: Record<string, string> };
 
 const suites: Suite[] = [
   {
@@ -96,6 +96,16 @@ const suites: Suite[] = [
       'dotenv/config',
       path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
       path.join(backendRoot, 'scripts', 'tests', 'multisport-questionnaire-audit.ts'),
+    ],
+  },
+  {
+    label: 'outcome explanation',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'outcome-explanation.ts'),
     ],
   },
   {
@@ -335,6 +345,48 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'game photos',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'game-photos.ts'),
+    ],
+  },
+  {
+    label: 'story-validate',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'story-validate.ts'),
+    ],
+  },
+  {
+    label: 'stories',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'stories.ts'),
+    ],
+  },
+  {
+    label: 'story engagement',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'story-engagement.ts'),
+    ],
+    env: {
+      STORY_ENGAGEMENT_TEST_COMMENT_CAP: '3',
+      STORY_ENGAGEMENT_SKIP_RATE_LIMIT: '1',
+    },
+  },
+  {
     label: 'mexicano (escalera) round generation',
     command: process.execPath,
     args: [
@@ -355,7 +407,7 @@ function main() {
     const r = spawnSync(s.command, s.args, {
       cwd: backendRoot,
       stdio: 'inherit',
-      env: process.env,
+      env: { ...process.env, ...s.env },
     });
     const code = r.status ?? 1;
     if (code !== 0) {

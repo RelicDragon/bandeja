@@ -104,7 +104,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, showOnlineStatus, favoriteTrainerId, appIcon, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, showOnlineStatus, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
 
   let normalizedWeeklyAvailability =
     weeklyAvailability === undefined ? undefined : validateWeeklyAvailability(weeklyAvailability);
@@ -167,6 +167,13 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     showOnlineStatus === undefined
       ? undefined
       : showOnlineStatus === true || showOnlineStatus === 'true';
+
+  const normalizeShareFlag = (v: unknown) =>
+    v === undefined ? undefined : v === true || v === 'true';
+
+  const normalizedSharePhotos = normalizeShareFlag(shareGamePhotosToFollowers);
+  const normalizedShareCreations = normalizeShareFlag(shareGameCreationsToFollowers);
+  const normalizedShareResults = normalizeShareFlag(shareGameResultsToFollowers);
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
@@ -274,6 +281,9 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(sendPushWalletNotifications !== undefined && { sendPushWalletNotifications }),
         ...(allowMessagesFromNonContacts !== undefined && { allowMessagesFromNonContacts }),
         ...(normalizedShowOnlineStatus !== undefined && { showOnlineStatus: normalizedShowOnlineStatus }),
+        ...(normalizedSharePhotos !== undefined && { shareGamePhotosToFollowers: normalizedSharePhotos }),
+        ...(normalizedShareCreations !== undefined && { shareGameCreationsToFollowers: normalizedShareCreations }),
+        ...(normalizedShareResults !== undefined && { shareGameResultsToFollowers: normalizedShareResults }),
         ...(favoriteTrainerId !== undefined && { favoriteTrainerId: favoriteTrainerId || null }),
         ...(appIcon !== undefined && { appIcon: appIcon ?? null }),
         ...(verbalStatus !== undefined && { verbalStatus }),

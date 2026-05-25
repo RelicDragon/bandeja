@@ -95,7 +95,6 @@ export class UnreadCountBatchService {
     const filter: ChatType[] = ['PUBLIC'];
     if (participant?.status === 'PLAYING') filter.push('PRIVATE');
     if ((participant?.role === 'OWNER' || participant?.role === 'ADMIN') || isParentGameAdminOrOwner) filter.push('ADMINS');
-    if (gameStatus !== 'ANNOUNCED') filter.push('PHOTOS');
     return filter;
   }
 

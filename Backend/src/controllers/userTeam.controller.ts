@@ -1,9 +1,12 @@
 import { Response } from 'express';
+import { Sport } from '@prisma/client';
 import { body } from 'express-validator';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import { UserTeamService } from '../services/userTeam.service';
+import prisma from '../config/database';
+import { parseSportParam } from '../services/user/userSportProfile.service';
 
 export const createTeamValidators = [
   body('name').optional().trim().isString().isLength({ min: 3, max: 120 }),
@@ -38,7 +41,18 @@ export const getMyMemberships = asyncHandler(async (req: AuthRequest, res: Respo
 });
 
 export const listTeamsForPlayerInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const data = await UserTeamService.listTeamsForPlayerInvite(req.userId!);
+  const { gameId, sport: sportQuery } = req.query;
+  let sport: Sport | undefined;
+  if (typeof gameId === 'string' && gameId.length > 0) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { sport: true },
+    });
+    sport = game?.sport ?? Sport.PADEL;
+  } else if (typeof sportQuery === 'string' && sportQuery.trim().length > 0) {
+    sport = parseSportParam(sportQuery);
+  }
+  const data = await UserTeamService.listTeamsForPlayerInvite(req.userId!, sport);
   res.json({ success: true, data });
 });
 

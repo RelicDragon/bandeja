@@ -8,7 +8,7 @@ import { useChatSyncStore, ChatContextType } from '@/store/chatSyncStore';
 import type { ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 
-const ALL_GAME_CHAT_TYPES: ChatType[] = ['PUBLIC', 'PRIVATE', 'ADMINS', 'PHOTOS'];
+const ALL_GAME_CHAT_TYPES: ChatType[] = ['PUBLIC', 'PRIVATE', 'ADMINS'];
 
 export interface ChatRoomRef {
   contextType: ChatContextType;

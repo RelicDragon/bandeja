@@ -5,6 +5,7 @@ import { validate } from '../middleware/validate';
 import { authenticate, optionalAuth, canEditGame, canAccessGame, requireGamePermission, AuthRequest } from '../middleware/auth';
 import { ParticipantRole } from '@prisma/client';
 import * as gameController from '../controllers/game.controller';
+import gamePhotoRoutes from './gamePhoto.routes';
 
 const gameReactionLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -57,6 +58,8 @@ router.post(
   ]),
   gameController.upsertGameWorkoutSummary
 );
+
+router.use('/:gameId/photos', gamePhotoRoutes);
 
 router.get('/:id', optionalAuth, gameController.getGameById);
 

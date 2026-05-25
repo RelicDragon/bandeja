@@ -1,8 +1,14 @@
 import prisma from '../config/database';
+import { Sport } from '@prisma/client';
 import { cancelAllMatchTimersForGame } from './results/matchTimer.service';
 import { matchTimerCoordinator } from './results/matchTimerCoordinator';
 import { ApiError } from '../utils/ApiError';
-import { USER_SELECT_FIELDS } from '../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
+import {
+  projectGameUsersForSportContext,
+  projectMatchUsersForSportContext,
+  projectRoundUsersForSportContext,
+} from './game/read.service';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
 import { calculateGameStatus } from '../utils/gameStatus';
 import { parseMatchSetRole } from './results/matchSetRole';
@@ -21,7 +27,6 @@ import { undoGameOutcomes } from './results/outcomes.service';
 
 const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
 
-
 export async function getGameResults(gameId: string) {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -35,7 +40,7 @@ export async function getGameResults(gameId: string) {
                   players: {
                     include: {
                       user: {
-                        select: USER_SELECT_FIELDS,
+                        select: USER_SELECT_WITH_SPORT_PROFILES,
                       },
                     },
                   },
@@ -50,7 +55,7 @@ export async function getGameResults(gameId: string) {
           outcomes: {
             include: {
               user: {
-                select: USER_SELECT_FIELDS,
+                select: USER_SELECT_WITH_SPORT_PROFILES,
               },
             },
           },
@@ -60,10 +65,10 @@ export async function getGameResults(gameId: string) {
       outcomes: {
         include: {
           user: {
-                  select: {
-                    ...USER_SELECT_FIELDS,
-                    reliability: true,
-                  },
+            select: {
+              ...USER_SELECT_WITH_SPORT_PROFILES,
+              reliability: true,
+            },
           },
         },
         orderBy: { position: 'asc' },
@@ -75,13 +80,14 @@ export async function getGameResults(gameId: string) {
     throw new ApiError(404, 'Game not found');
   }
 
-  return game;
+  return projectGameUsersForSportContext(game);
 }
 
 export async function getRoundResults(roundId: string) {
   const round = await prisma.round.findUnique({
     where: { id: roundId },
     include: {
+      game: { select: { sport: true } },
       matches: {
         include: {
           teams: {
@@ -89,7 +95,7 @@ export async function getRoundResults(roundId: string) {
               players: {
                 include: {
                   user: {
-                    select: USER_SELECT_FIELDS,
+                    select: USER_SELECT_WITH_SPORT_PROFILES,
                   },
                 },
               },
@@ -104,7 +110,7 @@ export async function getRoundResults(roundId: string) {
       outcomes: {
         include: {
           user: {
-            select: USER_SELECT_FIELDS,
+            select: USER_SELECT_WITH_SPORT_PROFILES,
           },
         },
       },
@@ -115,19 +121,27 @@ export async function getRoundResults(roundId: string) {
     throw new ApiError(404, 'Round not found');
   }
 
-  return round;
+  const sport = round.game?.sport ?? Sport.PADEL;
+  const { game: _game, ...roundData } = round;
+  void _game;
+  return projectRoundUsersForSportContext(roundData, sport);
 }
 
 export async function getMatchResults(matchId: string) {
   const match = await prisma.match.findUnique({
     where: { id: matchId },
     include: {
+      round: {
+        select: {
+          game: { select: { sport: true } },
+        },
+      },
       teams: {
         include: {
           players: {
             include: {
               user: {
-                select: USER_SELECT_FIELDS,
+                select: USER_SELECT_WITH_SPORT_PROFILES,
               },
             },
           },
@@ -143,7 +157,10 @@ export async function getMatchResults(matchId: string) {
     throw new ApiError(404, 'Match not found');
   }
 
-  return match;
+  const sport = match.round?.game?.sport ?? Sport.PADEL;
+  const { round: _round, ...matchData } = match;
+  void _round;
+  return projectMatchUsersForSportContext(matchData, sport);
 }
 
 export async function deleteGameResults(gameId: string) {

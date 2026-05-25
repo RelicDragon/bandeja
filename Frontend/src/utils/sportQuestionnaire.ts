@@ -1,8 +1,7 @@
 import type { Sport, User, UserSportProfile } from '@/types';
 import { getSportQuestionnaireConfig, sportHasQuestionnaire } from '@/sport/sportQuestionnaireRegistry';
-import { findSportProfile } from '@/utils/profileSports';
+import { findSportProfile, gamesPlayedForSport, getDisplayLevelForSport, getUserPrimarySport } from '@/utils/profileSports';
 import type { QuestionnaireStatus } from '@/api/sportQuestionnaire';
-import { getDisplayLevelForSport, getUserPrimarySport } from '@/utils/profileSports';
 
 export function isPadelWelcomeComplete(user: User | null | undefined): boolean {
   return user?.welcomeScreenPassed === true;
@@ -15,7 +14,7 @@ export function isSportQuestionnaireCompleted(
 ): boolean {
   const p = profile ?? findSportProfile(user, sport);
   if (p?.questionnaireCompletedAt) return true;
-  if (sport === 'PADEL' && isPadelWelcomeComplete(user) && (p?.level ?? user?.level ?? 1) !== 1) {
+  if (sport === 'PADEL' && isPadelWelcomeComplete(user) && user && getDisplayLevelForSport(user, sport) !== 1) {
     return true;
   }
   if (sport === 'PADEL' && isPadelWelcomeComplete(user) && p?.levelSource === 'QUESTIONNAIRE') {
@@ -60,8 +59,8 @@ export function shouldShowEstimateLevelLink(
 ): boolean {
   if (!getSportQuestionnaireConfig(sport)) return false;
   const profile = findSportProfile(user, sport);
-  const level = status?.level ?? profile?.level ?? (sport === 'PADEL' ? user?.level : 1) ?? 1;
-  const gamesPlayed = status?.gamesPlayed ?? profile?.gamesPlayed ?? 0;
+  const level = status?.level ?? profile?.level ?? (user ? getDisplayLevelForSport(user, sport) : 1);
+  const gamesPlayed = status?.gamesPlayed ?? profile?.gamesPlayed ?? (user ? gamesPlayedForSport(user, sport) : 0);
   if (gamesPlayed > 0) return false;
   if (level !== 1 && level !== 1.0) return false;
   return shouldSuggestSportQuestionnaire(user, sport, status);
@@ -109,7 +108,7 @@ export function isCreatorUnratedForSport(
   const level = status?.level ?? profile?.level ?? getDisplayLevelForSport(user, sport);
   if (level !== 1 && level !== 1.0) return false;
   const gamesPlayed =
-    status?.gamesPlayed ?? profile?.gamesPlayed ?? (sport === 'PADEL' ? (user.gamesPlayed ?? 0) : 0);
+    status?.gamesPlayed ?? profile?.gamesPlayed ?? gamesPlayedForSport(user, sport);
   if (gamesPlayed > 0) return false;
   const levelSource = profile?.levelSource ?? 'DEFAULT';
   return levelSource === 'DEFAULT' || gamesPlayed === 0;

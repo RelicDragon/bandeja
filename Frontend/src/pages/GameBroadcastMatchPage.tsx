@@ -29,8 +29,8 @@ export const GameBroadcastMatchPage = () => {
   );
 
   const playersPerMatch = useMemo(() => resolvePlayersPerMatchForGame(game ?? {}), [game]);
-  const teamAPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 1) : []), [rawMatch]);
-  const teamBPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 2) : []), [rawMatch]);
+  const teamAPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 1, game) : []), [rawMatch, game]);
+  const teamBPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 2, game) : []), [rawMatch, game]);
   const matchDecided = Boolean(liveState && rules && isLiveMatchCompleteForScoring(liveState.sets, rules));
 
   useEffect(() => {

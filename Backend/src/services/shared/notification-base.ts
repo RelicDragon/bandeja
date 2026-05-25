@@ -2,6 +2,9 @@ import { formatDateInTimezone, getDateLabelInTimezone, getShortDayOfWeek, getUse
 import { formatDuration, escapeMarkdown } from '../telegram/utils';
 import { t } from '../../utils/translations';
 import { config } from '../../config/env';
+import { Sport } from '@prisma/client';
+import { resolveSport } from '../../sport/sportRegistry';
+import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
 import { appendTelegramGameScheduleExtras } from './notificationSport';
 
 export interface GameInfo {
@@ -120,7 +123,15 @@ export interface GameWithParticipants extends GameInfo {
   participants?: Array<{
     status?: string;
     role?: string;
-    user?: { firstName?: string | null; lastName?: string | null; level?: number | null };
+    user?: {
+      firstName?: string | null;
+      lastName?: string | null;
+      level?: number | null;
+      reliability?: number | null;
+      gamesPlayed?: number | null;
+      gamesWon?: number | null;
+      sportProfiles?: Array<{ sport: Sport; level: number; reliability: number; gamesPlayed: number; gamesWon: number }>;
+    };
   }>;
   maxParticipants?: number;
   court?: { name?: string; club?: { name: string } } | null;
@@ -185,8 +196,11 @@ export async function formatNewGameText(
   const organizer = game.entityType === 'TRAINING'
     ? ((game as any).trainerId ? game.participants?.find((p: any) => p.userId === (game as any).trainerId) : null) || game.participants?.find((p: any) => p.role === 'OWNER')
     : game.participants?.find((p: any) => p.role === 'OWNER');
+  const gameSport = resolveSport(game.sport ?? Sport.PADEL);
   const ownerName = organizer?.user ? formatUserName(organizer.user) : null;
-  const ownerLevel = organizer?.user?.level;
+  const ownerLevel = organizer?.user
+    ? resolveUserSportSnapshot(organizer.user as Parameters<typeof resolveUserSportSnapshot>[0], gameSport).level
+    : null;
 
   let text = '';
   
@@ -225,7 +239,14 @@ export async function formatNewGameText(
     
     if (playingParticipants.length > 1) {
       const levels = playingParticipants
-        .map((p: any) => p.user?.level)
+        .map((p: any) =>
+          p.user
+            ? resolveUserSportSnapshot(
+                p.user as Parameters<typeof resolveUserSportSnapshot>[0],
+                gameSport,
+              ).level
+            : null,
+        )
         .filter((level: any): level is number => level !== null && level !== undefined);
       
       if (levels.length > 0) {

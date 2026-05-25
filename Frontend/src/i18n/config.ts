@@ -14,6 +14,10 @@ const getSystemLanguage = () => {
 };
 
 const getUserLanguage = (): string => {
+  if (typeof localStorage === 'undefined') {
+    return typeof navigator !== 'undefined' ? getSystemLanguage() : 'en';
+  }
+
   try {
     const userStr = localStorage.getItem('user');
     if (userStr) {

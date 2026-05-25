@@ -16,8 +16,14 @@ export type ChatVideoTranscodeResult = {
   transcodeMs: number;
 };
 
+export type VideoTrimRangeMs = {
+  startMs: number;
+  endMs: number;
+};
+
 export type PrepareChatVideoOptions = {
   onTranscodeProgress?: TranscodeProgressFn;
+  trim?: VideoTrimRangeMs;
 };
 
 function loadVideoMetadata(file: File): Promise<{ durationMs: number; width: number; height: number }> {
@@ -137,16 +143,29 @@ export async function prepareChatVideoForSend(
     throw new Error('video_too_short');
   }
 
+  const trim = options?.trim;
+  const trimStartMs = Math.max(0, trim?.startMs ?? 0);
+  const trimEndMs =
+    trim && trim.endMs > trimStartMs ? Math.min(trim.endMs, meta.durationMs) : meta.durationMs;
+  const trimmedDurationMs = Math.max(0, trimEndMs - trimStartMs);
+  const wantsTrim = trim != null && (trimStartMs > 0 || trimEndMs < meta.durationMs);
+
   let videoFile = rawFile;
   let wasTranscoded = false;
 
-  if (shouldTranscodeChatVideo(rawFile, meta)) {
+  if (shouldTranscodeChatVideo(rawFile, meta) || wantsTrim) {
     if (!isWebCodecsVideoTranscodeAvailable()) {
       throw new Error('video_transcode_unavailable');
     }
     wasTranscoded = true;
-    videoFile = await transcodeChatVideoToMp4(rawFile, tempId, meta, options?.onTranscodeProgress);
+    videoFile = await transcodeChatVideoToMp4(rawFile, tempId, meta, options?.onTranscodeProgress, {
+      startSec: trimStartMs / 1000,
+      endSec: trimEndMs / 1000,
+    });
     meta = await loadVideoMetadata(videoFile);
+    if (wantsTrim && trimmedDurationMs > 0) {
+      meta = { ...meta, durationMs: trimmedDurationMs };
+    }
   }
 
   const durationMs = effectiveChatVideoDurationMs(meta.durationMs, wasTranscoded);

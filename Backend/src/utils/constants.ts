@@ -191,6 +191,13 @@ export const USER_SELECT_FIELDS = {
   availabilityBucketBoundaries: true,
 } as const;
 
+export const USER_SELECT_WITH_SPORT_PROFILES = {
+  ...USER_SELECT_FIELDS,
+  sportProfiles: {
+    select: USER_SPORT_PROFILE_SELECT,
+  },
+} as const;
+
 /** Public-safe fields for GET /users/:userId/stats (no phone, email, wallet, notification prefs, etc.) */
 export const USER_STATS_TARGET_SELECT = {
   ...USER_SELECT_FIELDS,
@@ -257,6 +264,9 @@ export const PROFILE_SELECT_FIELDS = {
   sendPushReminders: true,
   allowMessagesFromNonContacts: true,
   showOnlineStatus: true,
+  shareGamePhotosToFollowers: true,
+  shareGameCreationsToFollowers: true,
+  shareGameResultsToFollowers: true,
   appIcon: true,
   wallet: true,
   totalPoints: true,

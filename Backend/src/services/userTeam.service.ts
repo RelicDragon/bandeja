@@ -1,17 +1,25 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
-import { USER_SELECT_FIELDS } from '../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import { generateRandomAdjectiveAnimalLabel } from './user/userDisplayName.service';
-import { UserTeamMemberStatus, Prisma } from '@prisma/client';
+import { UserTeamMemberStatus, Prisma, Sport } from '@prisma/client';
 import notificationService from './notification.service';
+import { projectUserTeamForSportContext } from './game/read.service';
 
 const TEAM_INCLUDE = {
-  owner: { select: USER_SELECT_FIELDS },
+  owner: { select: USER_SELECT_WITH_SPORT_PROFILES },
   members: {
-    include: { user: { select: USER_SELECT_FIELDS } },
+    include: { user: { select: USER_SELECT_WITH_SPORT_PROFILES } },
     orderBy: [{ isOwner: 'desc' as const }, { createdAt: 'asc' as const }],
   },
 };
+
+function mapTeamsForSport<
+  T extends { owner?: any; members?: Array<{ user?: any; [key: string]: unknown }> },
+>(teams: T[], sport?: Sport): T[] {
+  if (!sport) return teams;
+  return teams.map((t) => projectUserTeamForSportContext(t, sport));
+}
 
 async function assertNotBlocked(aId: string, bId: string) {
   const block = await prisma.blockedUser.findFirst({
@@ -129,7 +137,7 @@ export class UserTeamService {
   }
 
   /** Ready teams (full accepted roster) visible to viewer: some accepted member shares viewer's city OR has ≥1 interaction with viewer. */
-  static async listTeamsForPlayerInvite(viewerId: string) {
+  static async listTeamsForPlayerInvite(viewerId: string, sport?: Sport) {
     const viewer = await prisma.user.findUnique({
       where: { id: viewerId },
       select: { currentCityId: true },
@@ -166,10 +174,13 @@ export class UserTeamService {
       orderBy: { updatedAt: 'desc' },
     });
 
-    return teams.filter((t) => {
-      const acc = t.members.filter((m) => m.status === UserTeamMemberStatus.ACCEPTED);
-      return acc.length >= t.size;
-    });
+    return mapTeamsForSport(
+      teams.filter((t) => {
+        const acc = t.members.filter((m) => m.status === UserTeamMemberStatus.ACCEPTED);
+        return acc.length >= t.size;
+      }),
+      sport,
+    );
   }
 
   static async getTeamForUser(teamId: string, userId: string) {
@@ -309,12 +320,12 @@ export class UserTeamService {
       membership = await prisma.userTeamMember.update({
         where: { id: existing.id },
         data: { status: UserTeamMemberStatus.PENDING, joinedAt: null },
-        include: { user: { select: USER_SELECT_FIELDS } },
+        include: { user: { select: USER_SELECT_WITH_SPORT_PROFILES } },
       });
     } else if (existing && existing.status === UserTeamMemberStatus.PENDING) {
       membership = await prisma.userTeamMember.findUniqueOrThrow({
         where: { id: existing.id },
-        include: { user: { select: USER_SELECT_FIELDS } },
+        include: { user: { select: USER_SELECT_WITH_SPORT_PROFILES } },
       });
     } else {
       membership = await prisma.userTeamMember.create({
@@ -324,7 +335,7 @@ export class UserTeamService {
           status: UserTeamMemberStatus.PENDING,
           isOwner: false,
         },
-        include: { user: { select: USER_SELECT_FIELDS } },
+        include: { user: { select: USER_SELECT_WITH_SPORT_PROFILES } },
       });
     }
 
@@ -335,7 +346,7 @@ export class UserTeamService {
 
     const ownerUser = await prisma.user.findUnique({
       where: { id: ownerId },
-      select: USER_SELECT_FIELDS,
+      select: USER_SELECT_WITH_SPORT_PROFILES,
     });
 
     socketSvc()?.emitUserTeamInvite(targetUserId, { team: fullTeam, invitedBy: ownerUser });
@@ -386,7 +397,7 @@ export class UserTeamService {
       include: TEAM_INCLUDE,
     });
 
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: USER_SELECT_FIELDS });
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: USER_SELECT_WITH_SPORT_PROFILES });
     socketSvc()?.emitUserTeamInviteAccepted(team.ownerId, { teamId, user });
 
     const notifyIds = await collectNotifyUserIds(teamId);
@@ -418,7 +429,7 @@ export class UserTeamService {
 
     await prisma.userTeamMember.delete({ where: { id: row.id } });
 
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: USER_SELECT_FIELDS });
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: USER_SELECT_WITH_SPORT_PROFILES });
     if (user) {
       void notificationService
         .sendUserTeamInviteDeclinedNotification(
@@ -462,7 +473,7 @@ export class UserTeamService {
 
     const leaverUser = await prisma.user.findUnique({
       where: { id: targetUserId },
-      select: USER_SELECT_FIELDS,
+      select: USER_SELECT_WITH_SPORT_PROFILES,
     });
 
     await prisma.userTeamMember.delete({ where: { id: targetRow.id } });

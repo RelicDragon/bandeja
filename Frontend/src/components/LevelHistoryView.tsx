@@ -43,6 +43,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
   const [levelChangeEvents, setLevelChangeEvents] = useState<LevelHistoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<'10' | '30' | 'all'>('10');
   const [gamesStatsTab, setGamesStatsTab] = useState<'30' | '90' | 'all'>('30');
+  const [gamesStatsForView, setGamesStatsForView] = useState(stats.gamesStats);
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
   const [activeChartIndex, setActiveChartIndex] = useState<number | null>(null);
   const [hoveredChartIndex, setHoveredChartIndex] = useState<number | null>(null);
@@ -78,6 +79,31 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
 
     fetchLevelChanges();
   }, [user.id, historySport, showSocialLevel]);
+
+  useEffect(() => {
+    if (showSocialLevel) {
+      setGamesStatsForView(stats.gamesStatsAllSports ?? stats.gamesStats);
+      return;
+    }
+    let cancelled = false;
+    const fetchGamesStats = async () => {
+      try {
+        const response = await usersApi.getUserStats(user.id, historySport);
+        if (!cancelled) {
+          setGamesStatsForView(response.data.gamesStats);
+        }
+      } catch (error) {
+        console.error('Failed to fetch sport-scoped game stats:', error);
+        if (!cancelled) {
+          setGamesStatsForView(stats.gamesStats);
+        }
+      }
+    };
+    fetchGamesStats();
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id, historySport, showSocialLevel, stats.gamesStats, stats.gamesStatsAllSports]);
 
   const handleRatingChangeClick = (item: { id: string; gameId?: string }) => {
     if (!item.gameId) return;
@@ -202,9 +228,9 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
         <PlayerItemsToSell userId={user.id} onItemClick={onMarketItemClick} />
       )}
 
-      {stats.gamesStats?.length > 0 && (
+      {gamesStatsForView?.length > 0 && (
         <GamesStatsSection
-          stats={stats.gamesStats}
+          stats={gamesStatsForView}
           activeTab={gamesStatsTab}
           onTabChange={setGamesStatsTab}
           darkBgClass={tabDarkBgClass}

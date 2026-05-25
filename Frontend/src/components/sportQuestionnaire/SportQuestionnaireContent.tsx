@@ -10,7 +10,7 @@ import type { Sport, User } from '@/types';
 import { getLevelColor } from '@/utils/levelColor';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { getSportQuestionnaireConfig } from '@/sport/sportQuestionnaireRegistry';
-import { findSportProfile } from '@/utils/profileSports';
+import { getDisplayLevelForSport } from '@/utils/profileSports';
 import { SportQuestionnaireQuestion } from './SportQuestionnaireQuestion';
 
 const SLIDE_DURATION_MS = 300;
@@ -80,12 +80,7 @@ export function SportQuestionnaireContent({
     }
   };
 
-  const resolveLevelFromUser = (user: User): number => {
-    const profile = findSportProfile(user, sport);
-    if (profile) return profile.level;
-    if (sport === 'PADEL') return user.level;
-    return 1;
-  };
+  const resolveLevelFromUser = (user: User): number => getDisplayLevelForSport(user, sport);
 
   const submitWithAnswers = async (list: string[]) => {
     if (list.length !== questions.length || list.some((a) => !a)) return;

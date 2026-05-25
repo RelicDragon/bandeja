@@ -21,6 +21,7 @@ interface GroupFilterDropdownProps {
   allGroupId?: string;
   showAllOption?: boolean;
   groupProgress?: LeagueGroupGameProgressRow[];
+  showGroupProgressCounts?: boolean;
 }
 
 export const GroupFilterDropdown = ({
@@ -31,6 +32,7 @@ export const GroupFilterDropdown = ({
   allGroupId = 'ALL',
   showAllOption = true,
   groupProgress,
+  showGroupProgressCounts = true,
 }: GroupFilterDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLButtonElement>(null);
@@ -252,6 +254,7 @@ export const GroupFilterDropdown = ({
               finished={selectedProgress.finished}
               total={selectedProgress.total}
               color={selectedProgressColor}
+              showCounts={showGroupProgressCounts}
             />
           )}
           <ChevronDown

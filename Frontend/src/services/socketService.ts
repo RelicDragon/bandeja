@@ -121,6 +121,48 @@ export interface SocketEvents {
   'user-team:member-removed': (data: unknown) => void;
   'user-team:updated': (data: unknown) => void;
   'user-team:deleted': (data: unknown) => void;
+  'game_photo:added': (data: { gameId: string; photo: import('@/api/gamePhotos').GamePhoto }) => void;
+  'game_photo:deleted': (data: {
+    gameId: string;
+    photoId: string;
+    mainPhotoId: string | null;
+    photosCount: number;
+  }) => void;
+  'game_photo:main_changed': (data: { gameId: string; mainPhotoId: string | null }) => void;
+  'story:new': (data: {
+    ownerUserId: string;
+    segment: import('@/api/stories').StorySegment;
+    user?: import('@/types').BasicUser;
+  }) => void;
+  'story:deleted': (data: { ownerUserId: string; segmentKey: string }) => void;
+  'story:viewed': (data: { ownerUserId: string; segmentKey: string; viewerId: string }) => void;
+  'story:like': (data: {
+    sourceType: string;
+    sourceId: string;
+    ownerUserId: string;
+    likeCount: number;
+    viewerId?: string;
+    liked?: boolean;
+  }) => void;
+  'story:comment': (data: {
+    sourceType: string;
+    sourceId: string;
+    ownerUserId: string;
+    commentCount: number;
+    comment?: import('@/api/storyEngagement').StoryCommentDto;
+  }) => void;
+  'story:comment:deleted': (data: {
+    sourceType: string;
+    sourceId: string;
+    ownerUserId: string;
+    commentId: string;
+    commentCount: number;
+  }) => void;
+  'story:comment:like': (data: {
+    commentId: string;
+    likeCount: number;
+    segmentOwnerHasLiked: boolean;
+  }) => void;
 }
 
 class SocketService {

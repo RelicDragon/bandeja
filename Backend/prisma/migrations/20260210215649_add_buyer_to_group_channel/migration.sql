@@ -11,7 +11,7 @@ DELETE FROM "GroupChannel"
 WHERE "marketItemId" IS NOT NULL;
 
 -- Step 2: Drop unique constraint on marketItemId
-DROP INDEX "padelpulse"."GroupChannel_marketItemId_key";
+DROP INDEX IF EXISTS "GroupChannel_marketItemId_key";
 
 -- Step 3: Add buyerId column (nullable for backward compatibility)
 ALTER TABLE "GroupChannel" ADD COLUMN "buyerId" TEXT;

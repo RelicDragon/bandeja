@@ -17,7 +17,7 @@ function resolveIsParentGameAdminOrOwner(
  * Do not use getAvailableGameChatTypes for unread / mark-read.
  */
 export function getGameChatTypesForUnreadAndMarkRead(
-  game: { status: string },
+  _game: { status: string },
   participant?: GameChatParticipantForUnread | null,
   parentParticipant?: ParentParticipantForUnread | null,
   isParentGameAdminOrOwner?: boolean
@@ -32,6 +32,5 @@ export function getGameChatTypesForUnreadAndMarkRead(
   ) {
     filter.push('ADMINS');
   }
-  if (game.status !== 'ANNOUNCED') filter.push('PHOTOS');
   return filter;
 }

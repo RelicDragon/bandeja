@@ -42,7 +42,7 @@ function testResolvePublicGamesSportFilter(): void {
 function testResolveLeaderboardSportMode(): void {
   const defaultMode = resolveLeaderboardSportMode(undefined, Sport.PADEL);
   assert(defaultMode.mode === 'sport' && defaultMode.sport === Sport.PADEL, 'leaderboard omit → primary sport profile');
-  assert(resolveLeaderboardSportMode('all', Sport.PADEL).mode === 'all', 'leaderboard all → global level');
+  assert(resolveLeaderboardSportMode('all', Sport.PADEL).mode === 'all', 'leaderboard all → primary sport per user');
   const tennisMode = resolveLeaderboardSportMode('TENNIS', Sport.PADEL);
   assert(tennisMode.mode === 'sport' && tennisMode.sport === Sport.TENNIS, 'leaderboard explicit sport');
   console.log('ok: resolveLeaderboardSportMode (P2-TOP contract)');

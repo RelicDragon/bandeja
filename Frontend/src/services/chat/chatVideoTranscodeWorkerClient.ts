@@ -1,6 +1,7 @@
 import {
   transcodeChatVideoToMp4Core,
   type ChatVideoTranscodeMeta,
+  type ChatVideoTrimSeconds,
   type TranscodeProgressFn,
 } from './chatVideoTranscodeCore';
 
@@ -76,8 +77,13 @@ export async function transcodeChatVideoToMp4InWorker(
   file: File,
   tempId: string,
   meta: ChatVideoTranscodeMeta,
-  onProgress?: TranscodeProgressFn
+  onProgress?: TranscodeProgressFn,
+  trim?: ChatVideoTrimSeconds
 ): Promise<File> {
+  if (trim) {
+    return transcodeChatVideoToMp4Core(file, tempId, meta, onProgress, trim);
+  }
+
   const w = getWorker();
   if (!w) {
     return transcodeChatVideoToMp4Core(file, tempId, meta, onProgress);
@@ -103,7 +109,7 @@ export async function transcodeChatVideoToMp4InWorker(
       );
     } catch (e) {
       pending.delete(id);
-      void transcodeChatVideoToMp4Core(file, tempId, meta, onProgress).then(resolve).catch(reject);
+      void transcodeChatVideoToMp4Core(file, tempId, meta, onProgress, trim).then(resolve).catch(reject);
     }
   });
 }

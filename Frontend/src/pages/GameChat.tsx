@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { chatApi, type ChatMessage } from '@/api/chat';
 import toast from 'react-hot-toast';
@@ -60,8 +60,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   const id = propChatId ?? paramId;
   const locationState = location.state as LocationState | null;
+  const [searchParams, setSearchParams] = useSearchParams();
   const contextType = getContextTypeFromRoute(location.pathname, locationState, isEmbedded, propChatType);
-  const initialChatType = locationState?.initialChatType;
+  const initialChatType = locationState?.initialChatType
+    ? normalizeChatType(locationState.initialChatType)
+    : undefined;
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<MessageListHandle>(null);
@@ -95,7 +98,26 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     currentIdRef,
   });
 
-  const [currentChatType, setCurrentChatType] = useState<ChatType>(initialChatType || 'PUBLIC');
+  const [currentChatType, setCurrentChatType] = useState<ChatType>(initialChatType ?? 'PUBLIC');
+
+  useEffect(() => {
+    if (contextType !== 'GAME' || !id) return;
+    const q = searchParams.get('chatType');
+    if (!q || q.toUpperCase() !== 'PHOTOS') return;
+    if (isEmbedded) {
+      navigate(`/games/${id}`, { replace: true });
+      return;
+    }
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('chatType');
+        return next;
+      },
+      { replace: true }
+    );
+    setCurrentChatType('PUBLIC');
+  }, [contextType, id, isEmbedded, navigate, searchParams, setSearchParams]);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [isLeavingChat, setIsLeavingChat] = useState(false);
   const [isJoiningAsGuest, setIsJoiningAsGuest] = useState(false);

@@ -102,6 +102,9 @@ export const ProfileContent = () => {
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>([]);
   const [allowMessagesFromNonContacts, setAllowMessagesFromNonContacts] = useState(user?.allowMessagesFromNonContacts !== false);
   const [showOnlineStatus, setShowOnlineStatus] = useState(user?.showOnlineStatus !== false);
+  const [shareGamePhotosToFollowers, setShareGamePhotosToFollowers] = useState(user?.shareGamePhotosToFollowers !== false);
+  const [shareGameCreationsToFollowers, setShareGameCreationsToFollowers] = useState(user?.shareGameCreationsToFollowers !== false);
+  const [shareGameResultsToFollowers, setShareGameResultsToFollowers] = useState(user?.shareGameResultsToFollowers !== false);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const updateProfile = useCallback(async (updates: Partial<User>) => {
@@ -194,6 +197,9 @@ export const ProfileContent = () => {
       setPreferredCourtSideRight(user.preferredCourtSideRight || false);
       setAllowMessagesFromNonContacts(user.allowMessagesFromNonContacts !== false);
       setShowOnlineStatus(user.showOnlineStatus !== false);
+      setShareGamePhotosToFollowers(user.shareGamePhotosToFollowers !== false);
+      setShareGameCreationsToFollowers(user.shareGameCreationsToFollowers !== false);
+      setShareGameResultsToFollowers(user.shareGameResultsToFollowers !== false);
       setVerbalStatus(user.verbalStatus || '');
       setBio(user.bio || '');
       if (user.appIcon === 'tiger' || user.appIcon === 'racket') {
@@ -321,6 +327,21 @@ export const ProfileContent = () => {
   const handleShowOnlineStatusChange = (value: boolean) => {
     setShowOnlineStatus(value);
     updateProfile({ showOnlineStatus: value });
+  };
+
+  const handleShareGamePhotosToFollowersChange = (value: boolean) => {
+    setShareGamePhotosToFollowers(value);
+    updateProfile({ shareGamePhotosToFollowers: value });
+  };
+
+  const handleShareGameCreationsToFollowersChange = (value: boolean) => {
+    setShareGameCreationsToFollowers(value);
+    updateProfile({ shareGameCreationsToFollowers: value });
+  };
+
+  const handleShareGameResultsToFollowersChange = (value: boolean) => {
+    setShareGameResultsToFollowers(value);
+    updateProfile({ shareGameResultsToFollowers: value });
   };
 
   const handleLogout = async () => {
@@ -1148,6 +1169,47 @@ export const ProfileContent = () => {
               />
             </div>
 
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            {t('profile.sharingToFollowers')}
+          </h2>
+                    <div className="space-y-4">
+            <div className="flex items-center justify-between gap-4 py-2">
+              <div className="flex-1 min-w-0">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                  {t('profile.shareGamePhotosToFollowers')}
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {t('profile.shareGamePhotosToFollowersDescription')}
+                </p>
+              </div>
+              <ToggleSwitch checked={shareGamePhotosToFollowers} onChange={handleShareGamePhotosToFollowersChange} />
+            </div>
+            <div className="flex items-center justify-between gap-4 py-2">
+              <div className="flex-1 min-w-0">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                  {t('profile.shareGameCreationsToFollowers')}
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {t('profile.shareGameCreationsToFollowersDescription')}
+                </p>
+              </div>
+              <ToggleSwitch checked={shareGameCreationsToFollowers} onChange={handleShareGameCreationsToFollowersChange} />
+            </div>
+            <div className="flex items-center justify-between gap-4 py-2">
+              <div className="flex-1 min-w-0">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                  {t('profile.shareGameResultsToFollowers')}
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {t('profile.shareGameResultsToFollowersDescription')}
+                </p>
+              </div>
+              <ToggleSwitch checked={shareGameResultsToFollowers} onChange={handleShareGameResultsToFollowersChange} />
+            </div>
           </div>
         </Card>
 

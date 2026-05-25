@@ -3,6 +3,7 @@ import {
   ChatSyncEventType,
   ParticipantRole,
   Prisma,
+  Sport,
   SportLevelSource,
 } from '@prisma/client';
 import prisma from '../../config/database';
@@ -361,9 +362,7 @@ function buildMergedUserData(survivor: SurvivorRow, source: SurvivorRow): Prisma
     originalAvatar: pickStr(survivor.originalAvatar, source.originalAvatar),
     passwordHash: nn(survivor.passwordHash, source.passwordHash) ?? null,
     isActive: survivor.isActive || source.isActive,
-    level: Math.max(survivor.level, source.level),
     socialLevel: Math.max(survivor.socialLevel, source.socialLevel),
-    reliability: Math.max(survivor.reliability, source.reliability),
     reliabilityDecayPostGraceDaysApplied: 0,
     wallet: survivor.wallet + source.wallet,
     currentCityId: nn(survivor.currentCityId, source.currentCityId) ?? null,
@@ -420,20 +419,31 @@ function buildMergedUserData(survivor: SurvivorRow, source: SurvivorRow): Prisma
   };
 }
 
-async function recomputeGameStats(tx: Tx, userId: string) {
-  const [gp, goAgg, wins] = await Promise.all([
-    tx.gameParticipant.count({ where: { userId } }),
-    tx.gameOutcome.aggregate({
-      where: { userId },
-      _sum: { pointsEarned: true },
-    }),
-    tx.gameOutcome.count({ where: { userId, isWinner: true } }),
-  ]);
+async function syncUserLegacyPadelFromProfile(tx: Tx, userId: string) {
+  const profile = await tx.userSportProfile.findUnique({
+    where: { userId_sport: { userId, sport: Sport.PADEL } },
+    select: { level: true, reliability: true, gamesPlayed: true, gamesWon: true },
+  });
+  if (!profile) return;
   await tx.user.update({
     where: { id: userId },
     data: {
-      gamesPlayed: gp,
-      gamesWon: wins,
+      level: profile.level,
+      reliability: profile.reliability,
+      gamesPlayed: profile.gamesPlayed,
+      gamesWon: profile.gamesWon,
+    },
+  });
+}
+
+async function recomputeGameStats(tx: Tx, userId: string) {
+  const goAgg = await tx.gameOutcome.aggregate({
+    where: { userId },
+    _sum: { pointsEarned: true },
+  });
+  await tx.user.update({
+    where: { id: userId },
+    data: {
       totalPoints: goAgg._sum.pointsEarned ?? 0,
     },
   });
@@ -759,6 +769,7 @@ export class UserMergeService {
         await mergeLundaProfiles(tx, survivorId, sourceId);
 
         await recomputeGameStats(tx, survivorId);
+        await syncUserLegacyPadelFromProfile(tx, survivorId);
 
         await tx.user.update({
           where: { id: survivorId },

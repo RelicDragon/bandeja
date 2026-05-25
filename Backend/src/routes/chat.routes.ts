@@ -444,7 +444,7 @@ router.get(
   validate([
     query('chatContextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid chat context type'),
     query('contextId').notEmpty().withMessage('Context ID is required'),
-    query('chatType').optional().isIn(['PUBLIC', 'PRIVATE', 'ADMINS', 'PHOTOS']).withMessage('Invalid chat type'),
+    query('chatType').optional().isIn(['PUBLIC', 'PRIVATE', 'ADMINS']).withMessage('Invalid chat type'),
   ]),
   getChatAutoTranslateConfig
 );
@@ -454,7 +454,7 @@ router.put(
   validate([
     body('chatContextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid chat context type'),
     body('contextId').notEmpty().withMessage('Context ID is required'),
-    body('chatType').optional().isIn(['PUBLIC', 'PRIVATE', 'ADMINS', 'PHOTOS']).withMessage('Invalid chat type'),
+    body('chatType').optional().isIn(['PUBLIC', 'PRIVATE', 'ADMINS']).withMessage('Invalid chat type'),
     body('languageCodes').isArray().withMessage('languageCodes must be an array'),
     body('languageCodes.*').optional().isString().isLength({ max: 10 }),
   ]),

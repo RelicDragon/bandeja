@@ -197,7 +197,7 @@ export async function sendGameFinishedNotification(
   
   if (clubName) {
     const placeLine = `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}`;
-    message += `${appendTelegramGameScheduleExtras(placeLine, game, participant.user.primarySport, lang, escapeMarkdown)}\n`;
+    message += `${appendTelegramGameScheduleExtras(placeLine, game, game.sport, lang, escapeMarkdown)}\n`;
   }
   
   message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}\n`;

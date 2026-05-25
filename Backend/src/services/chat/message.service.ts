@@ -12,7 +12,6 @@ import {
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import notificationService from '../notification.service';
-import { GameReadService } from '../game/read.service';
 import { UserChatService } from './userChat.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { TranslationService } from './translation.service';
@@ -277,16 +276,6 @@ export class MessageService {
     if (chatType === ChatType.ADMINS) {
       if (!isAdminOrOwner && !isParentGameAdminOrOwner) {
         throw new ApiError(403, 'Only game owners and admins can access admin chat');
-      }
-      return;
-    }
-
-    if (chatType === ChatType.PHOTOS) {
-      if (game.status === 'ANNOUNCED') {
-        throw new ApiError(403, 'Photos chat is only available when game has started');
-      }
-      if (requireWriteAccess && !isPlaying && !isAdminOrOwner && !isParentGameAdminOrOwner) {
-        throw new ApiError(403, 'Only playing participants, admins, and owners can write in photos chat');
       }
       return;
     }
@@ -774,41 +763,6 @@ export class MessageService {
 
     // Post-creation logic (notifications, counts, etc.)
     if (chatContextType === 'GAME' && game) {
-      if (chatType === ChatType.PHOTOS && mediaUrls.length > 0 && resolvedMessageType === MessageType.IMAGE) {
-        const currentGame = await prisma.game.findUnique({
-          where: { id: contextId },
-          select: { mainPhotoId: true }
-        });
-
-        const updateData: any = {
-          photosCount: {
-            increment: mediaUrls.length
-          }
-        };
-
-        if (!currentGame?.mainPhotoId) {
-          updateData.mainPhotoId = message.id;
-        }
-
-        await prisma.game.update({
-          where: { id: contextId },
-          data: updateData
-        });
-
-        // Emit game update to refresh photosCount
-        try {
-          const socketService = (global as any).socketService;
-          if (socketService) {
-            const fullGame = await GameReadService.getGameById(contextId, senderId);
-            if (fullGame) {
-              await socketService.emitGameUpdate(contextId, senderId, fullGame);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to emit game update after photo upload:', error);
-        }
-      }
-
       const gameWithDetails = await prisma.game.findUnique({
         where: { id: contextId },
         include: {
@@ -1687,39 +1641,6 @@ export class MessageService {
         data: { deletedAt, serverSyncSeq: syncSeq },
       });
 
-      if (message.chatContextType === 'GAME' && message.chatType === ChatType.PHOTOS && message.mediaUrls.length > 0) {
-        const currentGame = await tx.game.findUnique({
-          where: { id: message.contextId },
-          select: { mainPhotoId: true },
-        });
-
-        const updateData: Record<string, unknown> = {
-          photosCount: {
-            decrement: message.mediaUrls.length,
-          },
-        };
-
-        if (currentGame?.mainPhotoId === messageId) {
-          const remainingPhotos = await tx.chatMessage.findFirst({
-            where: {
-              contextId: message.contextId,
-              chatType: ChatType.PHOTOS,
-              mediaUrls: { isEmpty: false },
-              id: { not: messageId },
-              deletedAt: null,
-            },
-            orderBy: { createdAt: 'asc' },
-          });
-
-          updateData.mainPhotoId = remainingPhotos?.id || null;
-        }
-
-        await tx.game.update({
-          where: { id: message.contextId },
-          data: updateData as any,
-        });
-      }
-
       (row as { syncSeq?: number }).syncSeq = syncSeq;
       return row;
     });
@@ -1745,20 +1666,6 @@ export class MessageService {
         } catch (error) {
           console.error(`Error deleting thumbnail file ${thumbnailUrl}:`, error);
         }
-      }
-    }
-
-    if (message.chatContextType === 'GAME' && message.chatType === ChatType.PHOTOS && message.mediaUrls.length > 0) {
-      try {
-        const socketService = (global as any).socketService;
-        if (socketService) {
-          const fullGame = await GameReadService.getGameById(message.contextId, userId);
-          if (fullGame) {
-            await socketService.emitGameUpdate(message.contextId, userId, fullGame);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to emit game update after photo deletion:', error);
       }
     }
 

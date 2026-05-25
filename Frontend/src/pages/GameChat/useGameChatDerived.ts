@@ -90,7 +90,6 @@ export function useGameChatDerived({
   const canAccessChat = contextType === 'USER' ||
     (contextType === 'GAME' && (
       currentChatType === 'PUBLIC' ||
-      currentChatType === 'PHOTOS' ||
       (currentChatType === 'PRIVATE' && hasPrivateAccess) ||
       (currentChatType === 'ADMINS' && hasAdminsAccess) ||
       isParticipant ||
@@ -105,9 +104,8 @@ export function useGameChatDerived({
     if (currentChatType === 'PUBLIC') return isParticipant || isAdminOrOwner || isParentParticipant;
     if (currentChatType === 'ADMINS') return hasAdminsAccess;
     if (currentChatType === 'PRIVATE') return hasPrivateAccess;
-    if (currentChatType === 'PHOTOS') return isPlayingParticipant || isAdminOrOwner;
     return false;
-  }, [contextType, game, user?.id, currentChatType, isParticipant, isAdminOrOwner, isPlayingParticipant, isParentParticipant, hasPrivateAccess, hasAdminsAccess]);
+  }, [contextType, game, user?.id, currentChatType, isParticipant, isAdminOrOwner, isParentParticipant, hasPrivateAccess, hasAdminsAccess]);
 
   const canWriteChat = useMemo(() => {
     if (contextType === 'GAME') return canWriteGameChat;

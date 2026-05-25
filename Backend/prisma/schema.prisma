@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DB_URL")
+  provider          = "postgresql"
+  url               = env("DB_URL")
+  shadowDatabaseUrl = env("SHADOW_DB_URL")
 }
 
 model User {
@@ -119,6 +120,9 @@ model User {
   sendPushWalletNotifications Boolean             @default(true)
   allowMessagesFromNonContacts Boolean            @default(true)
   showOnlineStatus             Boolean            @default(true)
+  shareGamePhotosToFollowers    Boolean           @default(true)
+  shareGameCreationsToFollowers Boolean           @default(true)
+  shareGameResultsToFollowers   Boolean           @default(true)
   appIcon                    String?             @default("tiger")
   trainerRating               Float?
   trainerReviewCount          Int                 @default(0)
@@ -162,6 +166,15 @@ model User {
   clubAdmins              ClubAdmin[]
   courtSlotHoldsCreated   CourtSlotHold[]
   sportProfiles           UserSportProfile[]
+  gamePhotosUploaded      GamePhoto[]          @relation("GamePhotoUploader")
+  stories                 UserStory[]          @relation("UserStoryOwner")
+  storyViewsAsViewer      StoryView[]          @relation("StoryViewViewer")
+  storyViewsAsOwner       StoryView[]          @relation("StoryViewOwner")
+  storySegmentLikes       StorySegmentLike[]   @relation("StorySegmentLikeUser")
+  storySegmentCommentsAuthored StorySegmentComment[] @relation("StorySegmentCommentAuthor")
+  storySegmentCommentsOwned    StorySegmentComment[] @relation("StorySegmentCommentOwner")
+  storyCommentLikes       StoryCommentLike[]   @relation("StoryCommentLikeUser")
+  storyCommentReports     StoryCommentReport[] @relation("StoryCommentReportReporter")
 
   @@index([phone])
   @@index([telegramId])
@@ -436,8 +449,9 @@ model Game {
   hasGoldenPoint         Boolean             @default(false)
   mediaUrls              String[]
   photosCount            Int                 @default(0)
-  mainPhotoId            String?
+  mainPhotoId            String?             @unique
   resultsSentToTelegram  Boolean             @default(false)
+  telegramResultsSummary String?             @db.Text
   parentId               String?
   trainerId              String?
   leagueRoundId          String?
@@ -473,6 +487,8 @@ model Game {
   clubReviews            ClubReview[]
   workoutSummaries       GameWorkoutSummary[]
   reactions              GameReaction[]       @relation("GameReactions")
+  photos                 GamePhoto[]
+  mainPhoto              GamePhoto?           @relation("GameMainPhoto", fields: [mainPhotoId], references: [id], onDelete: SetNull)
 
   @@index([clubId])
   @@index([courtId])
@@ -490,6 +506,33 @@ model Game {
   @@index([timeIsSet, clubId, startTime])
   @@index([endTime])
   @@index([timeIsSet, courtId])
+  @@index([mainPhotoId])
+}
+
+model GamePhoto {
+  id             String    @id @default(cuid())
+  gameId         String
+  uploaderId     String?
+  originalUrl    String
+  thumbnailUrl   String
+  width          Int?
+  height         Int?
+  thumbWidth     Int?
+  thumbHeight    Int?
+  byteSize       Int?
+  order          Int       @default(0)
+  clientUploadId String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  game     Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  uploader User? @relation("GamePhotoUploader", fields: [uploaderId], references: [id], onDelete: SetNull)
+  mainFor  Game? @relation("GameMainPhoto")
+
+  @@unique([uploaderId, clientUploadId])
+  @@index([gameId, deletedAt, createdAt])
+  @@index([uploaderId])
 }
 
 model GameReaction {
@@ -504,6 +547,120 @@ model GameReaction {
   @@unique([gameId, userId])
   @@index([gameId])
   @@index([userId])
+}
+
+model UserStory {
+  id        String          @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime        @default(now())
+  user      User            @relation("UserStoryOwner", fields: [userId], references: [id], onDelete: Cascade)
+  items     UserStoryItem[]
+
+  @@index([userId, expiresAt])
+}
+
+model UserStoryItem {
+  id              String      @id @default(cuid())
+  storyId         String
+  mediaUrl        String
+  thumbnailUrl    String
+  posterUrl       String?
+  messageType     MessageType
+  videoDurationMs Int?
+  width           Int?
+  height          Int?
+  overlayText     String?
+  overlayStyle    Json?
+  caption         String?
+  sortOrder       Int         @default(0)
+  clientUploadId  String?
+  createdAt       DateTime    @default(now())
+  deletedAt       DateTime?
+  story           UserStory   @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, clientUploadId])
+  @@index([storyId, sortOrder])
+}
+
+model StoryView {
+  id          String          @id @default(cuid())
+  viewerId    String
+  ownerUserId String
+  sourceType  StorySourceType
+  sourceId    String
+  viewedAt    DateTime        @default(now())
+  viewer      User            @relation("StoryViewViewer", fields: [viewerId], references: [id], onDelete: Cascade)
+  owner       User            @relation("StoryViewOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  @@unique([viewerId, sourceType, sourceId])
+  @@index([viewerId, ownerUserId])
+  @@index([ownerUserId, sourceId])
+}
+
+model StorySegmentLike {
+  id         String          @id @default(cuid())
+  sourceType StorySourceType
+  sourceId   String
+  userId     String
+  createdAt  DateTime        @default(now())
+  user       User            @relation("StorySegmentLikeUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceType, sourceId, userId])
+  @@index([sourceType, sourceId])
+}
+
+model StorySegmentComment {
+  id               String          @id @default(cuid())
+  sourceType       StorySourceType
+  sourceId         String
+  ownerUserId      String
+  authorId         String
+  parentId         String?
+  body             String
+  clientMutationId String?
+  createdAt        DateTime        @default(now())
+  deletedAt        DateTime?
+  author           User            @relation("StorySegmentCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  owner            User            @relation("StorySegmentCommentOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  parent           StorySegmentComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies          StorySegmentComment[] @relation("CommentReplies")
+  likes            StoryCommentLike[]
+  reports          StoryCommentReport[]
+
+  @@unique([authorId, clientMutationId])
+  @@index([sourceType, sourceId, createdAt])
+  @@index([parentId])
+}
+
+model StoryCommentLike {
+  id        String              @id @default(cuid())
+  commentId String
+  userId    String
+  createdAt DateTime            @default(now())
+  comment   StorySegmentComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User                @relation("StoryCommentLikeUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+}
+
+model StoryCommentReport {
+  id          String              @id @default(cuid())
+  commentId   String
+  reporterId  String
+  reason      MessageReportReason
+  description String?
+  status      MessageReportStatus @default(PENDING)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  comment     StorySegmentComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reporter    User                @relation("StoryCommentReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, reporterId])
+  @@index([commentId])
+  @@index([reporterId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model UserReactionEmojiStat {
@@ -1360,7 +1517,6 @@ enum ChatType {
   PUBLIC
   PRIVATE
   ADMINS
-  PHOTOS
 }
 
 enum MessageType {
@@ -1369,6 +1525,13 @@ enum MessageType {
   VOICE
   VIDEO
   POLL
+}
+
+enum StorySourceType {
+  USER_STORY_ITEM
+  GAME_PHOTO
+  GAME_CREATED
+  GAME_RESULT
 }
 
 enum ChatContextType {

@@ -166,6 +166,71 @@ function capQueue<T>(q: T[], cap: number, label: string): T[] {
   return q.slice(-cap);
 }
 
+interface GamePhotoAddedData {
+  gameId: string;
+  photo: import('@/api/gamePhotos').GamePhoto;
+}
+
+interface GamePhotoDeletedData {
+  gameId: string;
+  photoId: string;
+  mainPhotoId: string | null;
+  photosCount: number;
+}
+
+interface GamePhotoMainChangedData {
+  gameId: string;
+  mainPhotoId: string | null;
+}
+
+interface StoryNewData {
+  ownerUserId: string;
+  segment: import('@/api/stories').StorySegment;
+  user?: import('@/types').BasicUser;
+}
+
+interface StoryDeletedData {
+  ownerUserId: string;
+  segmentKey: string;
+}
+
+interface StoryViewedData {
+  ownerUserId: string;
+  segmentKey: string;
+  viewerId: string;
+}
+
+interface StoryLikeData {
+  sourceType: string;
+  sourceId: string;
+  ownerUserId: string;
+  likeCount: number;
+  viewerId?: string;
+  liked?: boolean;
+}
+
+interface StoryCommentData {
+  sourceType: string;
+  sourceId: string;
+  ownerUserId: string;
+  commentCount: number;
+  comment?: import('@/api/storyEngagement').StoryCommentDto;
+}
+
+interface StoryCommentDeletedData {
+  sourceType: string;
+  sourceId: string;
+  ownerUserId: string;
+  commentId: string;
+  commentCount: number;
+}
+
+interface StoryCommentLikeData {
+  commentId: string;
+  likeCount: number;
+  segmentOwnerHasLiked: boolean;
+}
+
 interface SocketEventsState {
   gameUpdates: Map<string, GameUpdateData>;
   lastGameUpdate: GameUpdateData | null;
@@ -190,6 +255,12 @@ interface SocketEventsState {
   lastGameCancelled: GameCancelledData | null;
   lastPollVote: PollVoteData | null;
   lastNewBug: NewBugData | null;
+  lastGamePhotoAdded: GamePhotoAddedData | null;
+  lastGamePhotoDeleted: GamePhotoDeletedData | null;
+  lastGamePhotoMainChanged: GamePhotoMainChangedData | null;
+  lastStoryNew: StoryNewData | null;
+  lastStoryDeleted: StoryDeletedData | null;
+  lastStoryViewed: StoryViewedData | null;
   chatRoomQueues: Record<string, ChatRoomEvent[]>;
   chatRoomPushSeq: Record<string, number>;
   listChatMessageQueue: ChatMessageData[];
@@ -243,6 +314,12 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     lastGameCancelled: null,
     lastPollVote: null,
     lastNewBug: null,
+    lastGamePhotoAdded: null,
+    lastGamePhotoDeleted: null,
+    lastGamePhotoMainChanged: null,
+    lastStoryNew: null,
+    lastStoryDeleted: null,
+    lastStoryViewed: null,
     chatRoomQueues: {},
     chatRoomPushSeq: {},
     listChatMessageQueue: [],
@@ -551,6 +628,69 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         set({ lastNewBug: data });
       };
 
+      const handleGamePhotoAdded = (data: GamePhotoAddedData) => {
+        set({ lastGamePhotoAdded: data });
+        void import('@/store/gamePhotosStore').then(({ useGamePhotosStore }) => {
+          useGamePhotosStore.getState().applySocketAdded(data.gameId, data.photo);
+        });
+      };
+
+      const handleGamePhotoDeleted = (data: GamePhotoDeletedData) => {
+        set({ lastGamePhotoDeleted: data });
+        void import('@/store/gamePhotosStore').then(({ useGamePhotosStore }) => {
+          useGamePhotosStore.getState().applySocketDeleted(data.gameId, data.photoId);
+        });
+      };
+
+      const handleGamePhotoMainChanged = (data: GamePhotoMainChangedData) => {
+        set({ lastGamePhotoMainChanged: data });
+      };
+
+      const handleStoryNew = (data: StoryNewData) => {
+        set({ lastStoryNew: data });
+        void import('@/store/storiesStore').then(({ useStoriesStore }) => {
+          useStoriesStore.getState().applyStoryNew(data);
+        });
+      };
+
+      const handleStoryDeleted = (data: StoryDeletedData) => {
+        set({ lastStoryDeleted: data });
+        void import('@/store/storiesStore').then(({ useStoriesStore }) => {
+          useStoriesStore.getState().applyStoryDeleted(data);
+        });
+      };
+
+      const handleStoryViewed = (data: StoryViewedData) => {
+        set({ lastStoryViewed: data });
+        void import('@/store/storiesStore').then(({ useStoriesStore }) => {
+          useStoriesStore.getState().applyStoryViewed(data);
+        });
+      };
+
+      const handleStoryLike = (data: StoryLikeData) => {
+        void import('@/store/storiesStore').then(({ useStoriesStore }) => {
+          useStoriesStore.getState().applyStoryLike(data);
+        });
+      };
+
+      const handleStoryComment = (data: StoryCommentData) => {
+        void import('@/store/storiesStore').then(({ useStoriesStore }) => {
+          useStoriesStore.getState().applyStoryComment(data);
+        });
+      };
+
+      const handleStoryCommentDeleted = (data: StoryCommentDeletedData) => {
+        void import('@/store/storiesStore').then(({ useStoriesStore }) => {
+          useStoriesStore.getState().applyStoryCommentDeleted(data);
+        });
+      };
+
+      const handleStoryCommentLike = (data: StoryCommentLikeData) => {
+        void import('@/store/storiesStore').then(({ useStoriesStore }) => {
+          useStoriesStore.getState().applyStoryCommentLike(data);
+        });
+      };
+
       const refreshUserTeams = () => {
         useUserTeamsStore.getState().refreshAll().catch(() => {});
       };
@@ -601,6 +741,16 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('game-cancelled', handleGameCancelled);
       socketService.on('chat:poll-vote', handlePollVote);
       socketService.on('new-bug', handleNewBug);
+      socketService.on('game_photo:added', handleGamePhotoAdded);
+      socketService.on('game_photo:deleted', handleGamePhotoDeleted);
+      socketService.on('game_photo:main_changed', handleGamePhotoMainChanged);
+      socketService.on('story:new', handleStoryNew);
+      socketService.on('story:deleted', handleStoryDeleted);
+      socketService.on('story:viewed', handleStoryViewed);
+      socketService.on('story:like', handleStoryLike);
+      socketService.on('story:comment', handleStoryComment);
+      socketService.on('story:comment:deleted', handleStoryCommentDeleted);
+      socketService.on('story:comment:like', handleStoryCommentLike);
       socketService.on('user-team:invite', handleUserTeamInvite);
       socketService.on('user-team:invite-accepted', handleUserTeamInviteAccepted);
       socketService.on('user-team:invite-declined', handleUserTeamInviteDeclined);
@@ -634,6 +784,16 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         () => socketService.off('game-cancelled', handleGameCancelled),
         () => socketService.off('chat:poll-vote', handlePollVote),
         () => socketService.off('new-bug', handleNewBug),
+        () => socketService.off('game_photo:added', handleGamePhotoAdded),
+        () => socketService.off('game_photo:deleted', handleGamePhotoDeleted),
+        () => socketService.off('game_photo:main_changed', handleGamePhotoMainChanged),
+        () => socketService.off('story:new', handleStoryNew),
+        () => socketService.off('story:deleted', handleStoryDeleted),
+        () => socketService.off('story:viewed', handleStoryViewed),
+        () => socketService.off('story:like', handleStoryLike),
+        () => socketService.off('story:comment', handleStoryComment),
+        () => socketService.off('story:comment:deleted', handleStoryCommentDeleted),
+        () => socketService.off('story:comment:like', handleStoryCommentLike),
         () => socketService.off('user-team:invite', handleUserTeamInvite),
         () => socketService.off('user-team:invite-accepted', handleUserTeamInviteAccepted),
         () => socketService.off('user-team:invite-declined', handleUserTeamInviteDeclined),
@@ -674,6 +834,12 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         lastGameCancelled: null,
         lastPollVote: null,
         lastNewBug: null,
+        lastGamePhotoAdded: null,
+        lastGamePhotoDeleted: null,
+        lastGamePhotoMainChanged: null,
+        lastStoryNew: null,
+        lastStoryDeleted: null,
+        lastStoryViewed: null,
         chatRoomQueues: {},
         chatRoomPushSeq: {},
         listChatMessageQueue: [],

@@ -1,8 +1,20 @@
 import prisma from '../config/database';
-import { USER_SELECT_FIELDS } from '../utils/constants';
-import { ResultsStatus } from '@prisma/client';
+import { Sport, ResultsStatus } from '@prisma/client';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
+import { resolveUserSportSnapshot } from './user/userSportProfile.service';
 
-export const calculateRanks = (users: any[], isGames: boolean, isSocial: boolean): Map<string, number> => {
+export type LeaderboardTieBreak = 'totalPoints' | 'gamesWon';
+
+function tieBreakValue(entry: any, tieBreak: LeaderboardTieBreak): number {
+  return tieBreak === 'gamesWon' ? entry.gamesWon : entry.totalPoints;
+}
+
+export const calculateRanks = (
+  users: any[],
+  isGames: boolean,
+  isSocial: boolean,
+  tieBreak: LeaderboardTieBreak = 'totalPoints',
+): Map<string, number> => {
   const rankMap = new Map<string, number>();
   if (users.length === 0) return rankMap;
 
@@ -22,14 +34,14 @@ export const calculateRanks = (users: any[], isGames: boolean, isSocial: boolean
           currentEntry.gamesCount === nextEntry.gamesCount &&
           currentEntry.reliability === nextEntry.reliability &&
           currentEntry.level === nextEntry.level &&
-          currentEntry.totalPoints === nextEntry.totalPoints;
+          tieBreakValue(currentEntry, tieBreak) === tieBreakValue(nextEntry, tieBreak);
       } else {
         const currentValue = isSocial ? currentEntry.socialLevel : currentEntry.level;
         const nextValue = isSocial ? nextEntry.socialLevel : nextEntry.level;
         isTie = 
           currentValue === nextValue &&
           currentEntry.reliability === nextEntry.reliability &&
-          currentEntry.totalPoints === nextEntry.totalPoints;
+          tieBreakValue(currentEntry, tieBreak) === tieBreakValue(nextEntry, tieBreak);
       }
       
       if (isTie) {
@@ -51,31 +63,47 @@ export const calculateRanks = (users: any[], isGames: boolean, isSocial: boolean
 };
 
 export class RankingService {
-  static async getCityLeaderboardRanks(cityId: string): Promise<Map<string, number>> {
-    const allUsers = await prisma.user.findMany({
+  static async getCityLeaderboardRanks(cityId: string, sport: Sport): Promise<Map<string, number>> {
+    const usersRaw = await prisma.user.findMany({
       where: {
         currentCityId: cityId,
         isActive: true,
       },
-      orderBy: [
-        { level: 'desc' },
-        { reliability: 'desc' },
-        { totalPoints: 'desc' },
-      ],
       select: {
         ...USER_SELECT_FIELDS,
-        reliability: true,
-        totalPoints: true,
-        gamesPlayed: true,
-        gamesWon: true,
-        socialLevel: true,
+        sportProfiles: {
+          select: USER_SPORT_PROFILE_SELECT,
+        },
       },
     });
 
-    return calculateRanks(allUsers, false, false);
+    const allUsers = usersRaw
+      .map((u) => {
+        const snap = resolveUserSportSnapshot(u, sport);
+        return {
+          id: u.id,
+          level: snap.level,
+          reliability: snap.reliability,
+          gamesPlayed: snap.gamesPlayed,
+          gamesWon: snap.gamesWon,
+        };
+      })
+      .filter((u) => u.gamesPlayed > 0)
+      .sort((a, b) => {
+        if (a.level !== b.level) return b.level - a.level;
+        if (a.reliability !== b.reliability) return b.reliability - a.reliability;
+        if (a.gamesWon !== b.gamesWon) return b.gamesWon - a.gamesWon;
+        return a.id.localeCompare(b.id);
+      });
+
+    return calculateRanks(allUsers, false, false, 'gamesWon');
   }
 
-  static async getGamesInLast30Days(userIds: string[], cityId: string): Promise<Map<string, number>> {
+  static async getGamesInLast30Days(
+    userIds: string[],
+    cityId: string,
+    sport: Sport,
+  ): Promise<Map<string, number>> {
     if (userIds.length === 0) return new Map();
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -87,6 +115,7 @@ export class RankingService {
         status: 'PLAYING',
         game: {
           cityId: cityId,
+          sport,
           resultsStatus: ResultsStatus.FINAL,
           startTime: { gte: thirtyDaysAgo },
         },

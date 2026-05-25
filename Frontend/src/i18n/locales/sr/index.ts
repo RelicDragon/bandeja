@@ -41,6 +41,7 @@ import training from './training.json';
 import userGameNotes from './userGameNotes.json';
 import wallet from './wallet.json';
 import welcome from './welcome.json';
+import stories from './stories.json';
 import sportQuestionnaireCommon from './sportQuestionnaire/common.json';
 import sportQuestionnairePadel from './sportQuestionnaire/padel.json';
 import sportQuestionnaireTennis from './sportQuestionnaire/tennis.json';
@@ -93,6 +94,7 @@ export default {
     ...userGameNotes,
     ...wallet,
     ...welcome,
+    ...stories,
     sportQuestionnaire: {
         common: sportQuestionnaireCommon,
         padel: sportQuestionnairePadel,

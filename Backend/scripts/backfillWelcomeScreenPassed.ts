@@ -2,7 +2,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import prisma from '../src/config/database';
-import { ResultsStatus } from '@prisma/client';
+import { ResultsStatus, Sport } from '@prisma/client';
+import { resolveUserSportSnapshot } from '../src/services/user/userSportProfile.service';
+import { USER_SPORT_PROFILE_SELECT } from '../src/utils/constants';
 
 async function backfill() {
   const participantsWithFinalGame = await prisma.gameParticipant.findMany({
@@ -13,13 +15,24 @@ async function backfill() {
   const userIdsWithFinalGame = new Set(participantsWithFinalGame.map((p) => p.userId));
 
   const users = await prisma.user.findMany({
-    select: { id: true, level: true },
+    select: {
+      id: true,
+      level: true,
+      reliability: true,
+      gamesPlayed: true,
+      gamesWon: true,
+      sportProfiles: {
+        where: { sport: Sport.PADEL },
+        select: USER_SPORT_PROFILE_SELECT,
+      },
+    },
   });
 
   const idsPassedTrue: string[] = [];
   const idsPassedFalse: string[] = [];
   for (const user of users) {
-    const passed = user.level !== 1.0 || userIdsWithFinalGame.has(user.id);
+    const padelLevel = resolveUserSportSnapshot(user, Sport.PADEL).level;
+    const passed = padelLevel !== 1.0 || userIdsWithFinalGame.has(user.id);
     if (passed) idsPassedTrue.push(user.id);
     else idsPassedFalse.push(user.id);
   }

@@ -4,6 +4,8 @@ import { isOfficialMatchSet } from '@/utils/matchSetRole';
 import { getRules } from '@/utils/scoring/rulebook';
 import { getStandingsMatchOutcome } from '@/utils/scoring/matchWinnerLive';
 
+/** `user.level` on game participants is sport-projected for `game.sport`, not necessarily global User.level. */
+
 function getSetScoreForDelta(set: SetResult, side: 'A' | 'B'): number {
   if (set.isTieBreak) {
     const aWon = set.teamA > set.teamB;

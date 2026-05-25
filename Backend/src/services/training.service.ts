@@ -147,22 +147,10 @@ export async function updateParticipantLevel(
       },
     });
 
-    const padelLevelSync: {
-      level: number;
-      reliability: number;
-      reliabilityDecayPostGraceDaysApplied: number;
-    } = {
-      level: levelAfter,
-      reliability: reliabilityAfter,
-      reliabilityDecayPostGraceDaysApplied: 0,
-    };
-
     const userPatch: {
       approvedLevel?: boolean;
       approvedById?: string;
       approvedWhen?: Date;
-      level?: number;
-      reliability?: number;
       reliabilityDecayPostGraceDaysApplied?: number;
     } = {};
 
@@ -172,8 +160,9 @@ export async function updateParticipantLevel(
       userPatch.approvedWhen = new Date();
     }
 
+    // UserSportProfile is source of truth; decay grace counter remains on User (padel-only decay).
     if (game.sport === Sport.PADEL) {
-      Object.assign(userPatch, padelLevelSync);
+      userPatch.reliabilityDecayPostGraceDaysApplied = 0;
     }
 
     await tx.userSportProfile.upsert({
@@ -316,11 +305,7 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
         if (game.sport === Sport.PADEL) {
           await tx.user.update({
             where: { id: outcome.userId },
-            data: {
-              level: levelBefore,
-              reliability: outcome.reliabilityBefore,
-              reliabilityDecayPostGraceDaysApplied: 0,
-            },
+            data: { reliabilityDecayPostGraceDaysApplied: 0 },
           });
         }
       }

@@ -5,9 +5,15 @@ interface LeagueGroupProgressIndicatorProps {
   finished: number;
   total: number;
   color: string;
+  showCounts?: boolean;
 }
 
-export function LeagueGroupProgressIndicator({ finished, total, color }: LeagueGroupProgressIndicatorProps) {
+export function LeagueGroupProgressIndicator({
+  finished,
+  total,
+  color,
+  showCounts = true,
+}: LeagueGroupProgressIndicatorProps) {
   const radius = (RING_SIZE - STROKE) / 2;
   const circumference = 2 * Math.PI * radius;
   const ratio = total > 0 ? Math.min(1, finished / total) : 0;
@@ -38,10 +44,12 @@ export function LeagueGroupProgressIndicator({ finished, total, color }: LeagueG
           className="transition-[stroke-dashoffset] duration-300"
         />
       </svg>
-      <span className="text-xs font-medium tabular-nums leading-none text-gray-900 dark:text-white">
-        {finished}
-        <span className="font-normal text-gray-500 dark:text-gray-400">/{total}</span>
-      </span>
+      {showCounts && (
+        <span className="text-xs font-medium tabular-nums leading-none text-gray-900 dark:text-white">
+          {finished}
+          <span className="font-normal text-gray-500 dark:text-gray-400">/{total}</span>
+        </span>
+      )}
     </div>
   );
 }

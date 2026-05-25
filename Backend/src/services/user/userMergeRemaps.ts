@@ -669,6 +669,88 @@ async function remapTrainerReviewsTrainer(tx: MergeTx, survivorId: string, sourc
   }
 }
 
+async function remapStorySegmentLikesForMerge(tx: MergeTx, survivorId: string, sourceId: string) {
+  const rows = await tx.storySegmentLike.findMany({ where: { userId: sourceId } });
+  for (const row of rows) {
+    const twin = await tx.storySegmentLike.findFirst({
+      where: {
+        userId: survivorId,
+        sourceType: row.sourceType,
+        sourceId: row.sourceId,
+      },
+    });
+    if (twin) {
+      await tx.storySegmentLike.delete({ where: { id: row.id } });
+    } else {
+      await tx.storySegmentLike.update({
+        where: { id: row.id },
+        data: { userId: survivorId },
+      });
+    }
+  }
+}
+
+async function remapStorySegmentCommentsForMerge(tx: MergeTx, survivorId: string, sourceId: string) {
+  const asAuthor = await tx.storySegmentComment.findMany({ where: { authorId: sourceId } });
+  for (const row of asAuthor) {
+    if (row.clientMutationId) {
+      const twin = await tx.storySegmentComment.findFirst({
+        where: { authorId: survivorId, clientMutationId: row.clientMutationId },
+      });
+      if (twin) {
+        await tx.storySegmentComment.delete({ where: { id: row.id } });
+        continue;
+      }
+    }
+    await tx.storySegmentComment.update({
+      where: { id: row.id },
+      data: { authorId: survivorId },
+    });
+  }
+
+  const asOwner = await tx.storySegmentComment.findMany({ where: { ownerUserId: sourceId } });
+  for (const row of asOwner) {
+    await tx.storySegmentComment.update({
+      where: { id: row.id },
+      data: { ownerUserId: survivorId },
+    });
+  }
+}
+
+async function remapStoryCommentLikesForMerge(tx: MergeTx, survivorId: string, sourceId: string) {
+  const rows = await tx.storyCommentLike.findMany({ where: { userId: sourceId } });
+  for (const row of rows) {
+    const twin = await tx.storyCommentLike.findFirst({
+      where: { userId: survivorId, commentId: row.commentId },
+    });
+    if (twin) {
+      await tx.storyCommentLike.delete({ where: { id: row.id } });
+    } else {
+      await tx.storyCommentLike.update({
+        where: { id: row.id },
+        data: { userId: survivorId },
+      });
+    }
+  }
+}
+
+async function remapStoryCommentReportsForMerge(tx: MergeTx, survivorId: string, sourceId: string) {
+  const rows = await tx.storyCommentReport.findMany({ where: { reporterId: sourceId } });
+  for (const row of rows) {
+    const twin = await tx.storyCommentReport.findFirst({
+      where: { reporterId: survivorId, commentId: row.commentId },
+    });
+    if (twin) {
+      await tx.storyCommentReport.delete({ where: { id: row.id } });
+    } else {
+      await tx.storyCommentReport.update({
+        where: { id: row.id },
+        data: { reporterId: survivorId },
+      });
+    }
+  }
+}
+
 export async function remapAllUserScopedCompositeRows(
   tx: MergeTx,
   survivorId: string,
@@ -687,6 +769,10 @@ export async function remapAllUserScopedCompositeRows(
   await remapPushTokensForMerge(tx, survivorId, sourceId);
   await remapNotificationPreferencesForMerge(tx, survivorId, sourceId);
   await remapMessageReportsForMerge(tx, survivorId, sourceId);
+  await remapStorySegmentLikesForMerge(tx, survivorId, sourceId);
+  await remapStorySegmentCommentsForMerge(tx, survivorId, sourceId);
+  await remapStoryCommentLikesForMerge(tx, survivorId, sourceId);
+  await remapStoryCommentReportsForMerge(tx, survivorId, sourceId);
   await remapUserFavoriteClubsForMerge(tx, survivorId, sourceId);
   await remapBugParticipantsForMerge(tx, survivorId, sourceId);
   await remapPinnedUserChatsForMerge(tx, survivorId, sourceId);

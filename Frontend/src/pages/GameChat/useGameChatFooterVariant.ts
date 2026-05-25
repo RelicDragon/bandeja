@@ -72,8 +72,6 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
     groupChannel,
     isInJoinQueue,
     isChannelParticipant,
-    isPlayingParticipant,
-    isAdminOrOwner,
     isChannel,
     isJoiningAsGuest,
     currentChatType,
@@ -155,8 +153,7 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
     const showJoin =
       !(contextType === 'GAME' && isInJoinQueue) &&
       !(contextType === 'GAME' && game && (game.status === 'FINISHED' || game.status === 'ARCHIVED')) &&
-      !(contextType === 'GROUP' && isChannelParticipant) &&
-      !(contextType === 'GAME' && currentChatType === 'PHOTOS' && !isPlayingParticipant && !isAdminOrOwner);
+      !(contextType === 'GROUP' && isChannelParticipant);
     if (showJoin) {
       if (contextType === 'GROUP' && !groupChannel) return { type: 'contextLoading' };
       if (contextType === 'GAME' && !game) return { type: 'contextLoading' };
@@ -200,8 +197,6 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
     translateToLanguageForChat,
     isInJoinQueue,
     isChannelParticipant,
-    isPlayingParticipant,
-    isAdminOrOwner,
     isChannel,
     handleJoinAsGuest,
     isJoiningAsGuest,

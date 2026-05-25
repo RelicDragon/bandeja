@@ -1,0 +1,103 @@
+import {
+  STORY_CANVAS_HEIGHT,
+  STORY_CANVAS_WIDTH,
+  type Transform2D,
+} from '../types/storyEditor.types';
+
+export { STORY_CANVAS_WIDTH, STORY_CANVAS_HEIGHT };
+
+export const DEFAULT_TRANSFORM: Transform2D = { x: 0, y: 0, scale: 1, rotation: 0 };
+
+export function canvasToStagePx(x: number, y: number, stageScale: number): { x: number; y: number } {
+  return { x: x * stageScale, y: y * stageScale };
+}
+
+export function stagePxToCanvas(px: number, py: number, stageScale: number): { x: number; y: number } {
+  return { x: px / stageScale, y: py / stageScale };
+}
+
+export function transformToCss(transform: Transform2D, stageScale: number): string {
+  const { x, y } = canvasToStagePx(transform.x, transform.y, stageScale);
+  return `translate(${x}px, ${y}px) rotate(${transform.rotation}deg) scale(${transform.scale})`;
+}
+
+export function computeCoverScale(
+  mediaWidth: number,
+  mediaHeight: number,
+  canvasWidth = STORY_CANVAS_WIDTH,
+  canvasHeight = STORY_CANVAS_HEIGHT
+): number {
+  if (mediaWidth <= 0 || mediaHeight <= 0) return 1;
+  return Math.max(canvasWidth / mediaWidth, canvasHeight / mediaHeight);
+}
+
+export function defaultMediaTransform(
+  mediaWidth: number,
+  mediaHeight: number,
+  canvasWidth = STORY_CANVAS_WIDTH,
+  canvasHeight = STORY_CANVAS_HEIGHT
+): Transform2D {
+  const coverScale = computeCoverScale(mediaWidth, mediaHeight, canvasWidth, canvasHeight);
+  return { x: 0, y: 0, scale: coverScale, rotation: 0 };
+}
+
+/** Cover-fit transform for the on-screen stage (pixel space). */
+export function defaultCoverTransform(
+  mediaWidth: number,
+  mediaHeight: number,
+  stageWidth: number,
+  stageHeight: number
+): Transform2D {
+  if (mediaWidth <= 0 || mediaHeight <= 0 || stageWidth <= 0 || stageHeight <= 0) {
+    return { ...DEFAULT_TRANSFORM };
+  }
+  const scale = Math.max(stageWidth / mediaWidth, stageHeight / mediaHeight);
+  return { x: 0, y: 0, scale, rotation: 0 };
+}
+
+export function defaultTextTransform(): Transform2D {
+  return { x: STORY_CANVAS_WIDTH / 2, y: STORY_CANVAS_HEIGHT / 2, scale: 1, rotation: 0 };
+}
+
+function shortestAngleDelta(a: number, b: number): number {
+  return Math.abs((((a - b + 180) % 360) + 360) % 360 - 180);
+}
+
+export function snapRotation(degrees: number, threshold = 3): number {
+  const snaps = [0, -90, 90, 180, -180, 270, -270];
+  let bestSnap = degrees;
+  let bestDelta = threshold + 1;
+  for (const snap of snaps) {
+    const delta = shortestAngleDelta(degrees, snap);
+    if (delta < bestDelta) {
+      bestDelta = delta;
+      bestSnap = snap;
+    }
+  }
+  return bestDelta <= threshold ? bestSnap : degrees;
+}
+
+export function distance(x1: number, y1: number, x2: number, y2: number): number {
+  return Math.hypot(x2 - x1, y2 - y1);
+}
+
+export function angleDeg(cx: number, cy: number, px: number, py: number): number {
+  return (Math.atan2(py - cy, px - cx) * 180) / Math.PI;
+}
+
+export function stageScaleFromWidth(stageWidth: number): number {
+  return stageWidth / STORY_CANVAS_WIDTH;
+}
+
+export function canvasPointFromClient(
+  clientX: number,
+  clientY: number,
+  stageRect: DOMRect,
+  stageScale: number
+): { x: number; y: number } {
+  return stagePxToCanvas(clientX - stageRect.left, clientY - stageRect.top, stageScale);
+}
+
+export function defaultStickerTransform(): Transform2D {
+  return { x: STORY_CANVAS_WIDTH / 2, y: STORY_CANVAS_HEIGHT / 2, scale: 1, rotation: 0 };
+}

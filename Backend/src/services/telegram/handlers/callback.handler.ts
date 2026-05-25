@@ -267,7 +267,7 @@ export function createCallbackHandler(
           'P': 'PUBLIC',
           'V': 'PRIVATE',
           'A': 'ADMINS',
-          'F': 'PHOTOS'
+          'F': 'PUBLIC'
         };
         const chatType = chatTypeMap[chatTypeChar] || 'PUBLIC';
 

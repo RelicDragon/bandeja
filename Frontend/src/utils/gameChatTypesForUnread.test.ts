@@ -49,9 +49,11 @@ describe('getGameChatTypesForUnreadAndMarkRead', () => {
     ).toContain('ADMINS');
   });
 
-  it('adds PHOTOS when status is not ANNOUNCED', () => {
-    expect(getGameChatTypesForUnreadAndMarkRead({ status: 'SCHEDULED' })).toContain('PHOTOS');
-    expect(getGameChatTypesForUnreadAndMarkRead({ status: 'ANNOUNCED' })).not.toContain('PHOTOS');
-    expect(getAvailableGameChatTypes({ status: 'PLAYING', role: 'PLAYER' })).not.toContain('PHOTOS');
+  it('never includes removed PHOTOS channel', () => {
+    const types = getGameChatTypesForUnreadAndMarkRead({ status: 'SCHEDULED' });
+    expect((types as string[]).includes('PHOTOS')).toBe(false);
+    expect((getAvailableGameChatTypes({ status: 'PLAYING', role: 'PLAYER' }) as string[]).includes('PHOTOS')).toBe(
+      false
+    );
   });
 });

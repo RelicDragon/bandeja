@@ -55,7 +55,12 @@ export function labelForTeam(match: RawMatch, side: 1 | 2): string {
 
 const DEFAULT_GENDER: Gender = 'PREFER_NOT_TO_SAY';
 
-export function liveBoardPlayersForTeam(match: RawMatch, side: 1 | 2): BasicUser[] {
+export function liveBoardPlayersForTeam(match: RawMatch, side: 1 | 2, game?: Game | null): BasicUser[] {
+  const participantLevelById = new Map(
+    (game?.participants ?? [])
+      .filter((p) => p.user?.id)
+      .map((p) => [p.userId, p.user!.level] as const),
+  );
   const team = match.teams?.find((t) => t.teamNumber === side);
   return (team?.players ?? [])
     .map((p) => p.user)
@@ -65,7 +70,9 @@ export function liveBoardPlayersForTeam(match: RawMatch, side: 1 | 2): BasicUser
       firstName: u.firstName ?? undefined,
       lastName: u.lastName ?? undefined,
       avatar: u.avatar ?? null,
-      level: typeof u.level === 'number' ? u.level : Number(u.level) || 0,
+      level:
+        participantLevelById.get(u.id as string) ??
+        (typeof u.level === 'number' ? u.level : Number(u.level) || 0),
       socialLevel: typeof u.socialLevel === 'number' ? u.socialLevel : Number(u.socialLevel) || 0,
       gender: (u.gender as Gender) || DEFAULT_GENDER,
       approvedLevel: Boolean(u.approvedLevel),

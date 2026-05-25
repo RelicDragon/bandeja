@@ -4,8 +4,10 @@ import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { format, addDays, isToday, isTomorrow } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
-import { Game } from '@/types';
+import { Game, User } from '@/types';
 import { CalendarComponent } from '@/components/Calendar';
+import { userLevelMatchesGameBand } from '@/utils/profileSports';
+import { parseGameSport } from '@/utils/gameSport';
 
 interface DateSelectorWithCountProps {
   selectedDate: Date;
@@ -17,7 +19,7 @@ interface DateSelectorWithCountProps {
   showDatePicker: boolean;
   onCloseDatePicker: () => void;
   userFilter?: boolean;
-  user?: any;
+  user?: User;
 }
 
 const localeMap = {
@@ -118,12 +120,8 @@ export const DateSelectorWithCount = ({
           return false;
         }
 
-        if (user?.level) {
-          const userLevel = user.level;
-          const minLevel = game.minLevel || 0;
-          const maxLevel = game.maxLevel || 10;
-          
-          if (userLevel < minLevel || userLevel > maxLevel) {
+        if (user) {
+          if (!userLevelMatchesGameBand(user, parseGameSport(game.sport), game.minLevel, game.maxLevel)) {
             return false;
           }
         }

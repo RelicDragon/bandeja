@@ -10,6 +10,8 @@ import { EditLevelModal } from './EditLevelModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { usersApi } from '@/api/users';
 import { trainingApi } from '@/api/training';
+import { getDisplayLevelForSport, resolveTrainingEditDefaults } from '@/utils/profileSports';
+import { parseGameSport } from '@/utils/gameSport';
 import toast from 'react-hot-toast';
 
 interface TrainingResultsSectionProps {
@@ -112,12 +114,13 @@ export const TrainingResultsSection = ({
 
   const trainingOwner = (game.trainerId ? game.participants.find((p) => p.userId === game.trainerId) : null) || game.participants.find((p) => p.role === 'OWNER');
   const playingParticipants = game.participants.filter((p) => p.status === 'PLAYING' && p.user && p.role !== 'OWNER');
+  const gameSport = parseGameSport(game.sport);
 
   const handleEdit = async (participantUserId: string) => {
     setEditingUserId(participantUserId);
     setLoadingUser(true);
     try {
-      const response = await usersApi.getUserStats(participantUserId);
+      const response = await usersApi.getUserStats(participantUserId, gameSport);
       if (response.data?.user) {
         setFullUserProfile(response.data.user);
       }
@@ -183,7 +186,9 @@ export const TrainingResultsSection = ({
                 if (!participant.user) return null;
 
                 const outcome = getParticipantOutcome(participant.userId);
-                const currentLevel = outcome ? outcome.levelAfter : participant.user.level;
+                const currentLevel = outcome
+                  ? outcome.levelAfter
+                  : getDisplayLevelForSport(participant.user, gameSport);
 
                 return (
                   <tr
@@ -398,8 +403,13 @@ export const TrainingResultsSection = ({
         }
 
         const outcome = getParticipantOutcome(editingUserId);
-        const originalLevel = outcome ? outcome.levelBefore : fullUserProfile.level;
-        const originalReliability = outcome ? outcome.reliabilityBefore : fullUserProfile.reliability;
+        const { level: originalLevel, reliability: originalReliability } = resolveTrainingEditDefaults(
+          fullUserProfile,
+          gameSport,
+          outcome
+            ? { levelBefore: outcome.levelBefore, reliabilityBefore: outcome.reliabilityBefore }
+            : null,
+        );
 
         return (
           <EditLevelModal

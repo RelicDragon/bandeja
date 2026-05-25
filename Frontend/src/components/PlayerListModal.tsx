@@ -211,7 +211,7 @@ export const PlayerListModal = ({
       try {
         await usePlayersStore.getState().fetchPlayers(gameId, gameSport);
         const [inviteTeams] = await Promise.all([
-          userTeamsApi.getForPlayerInvite().catch(() => [] as UserTeam[]),
+          userTeamsApi.getForPlayerInvite({ gameId, sport: gameSport }).catch(() => [] as UserTeam[]),
           useUserTeamsStore.getState().refreshAll(),
         ]);
         const currentUsers = usePlayersStore.getState().users;
@@ -570,6 +570,7 @@ export const PlayerListModal = ({
         gamesTogetherCount={teamGamesTogetherScore(entry.team, getUserMetadata)}
         onSelect={() => handleTeamClick(entry.team.id)}
         availability={gameSlots ? teamAvailabilityById.get(entry.team.id) : undefined}
+        projectedPlayers={players}
       />
     );
   };

@@ -5,7 +5,7 @@
 
 */
 -- DropIndex
-DROP INDEX "padelpulse"."Game_hasResults_idx";
+DROP INDEX IF EXISTS "Game_hasResults_idx";
 
 -- AlterTable
 ALTER TABLE "Game" DROP COLUMN "hasResults";

@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, Sport } from '@prisma/client';
 import prisma from '../config/database';
 import {
   RELIABILITY_DECAY_GRACE_DAYS,
@@ -6,7 +6,10 @@ import {
   RELIABILITY_DECAY_MAX_DELTA_DAYS,
   RELIABILITY_DECAY_MIN_GAMES,
 } from '../config/reliabilityDecay';
-import { lastActivityAtSelect, reliabilityDecayActivityArms } from './reliabilityDecayActivitySql';
+import {
+  lastActivityAtSelect,
+  reliabilityDecayPadelActivityArms,
+} from './reliabilityDecayActivitySql';
 
 const MS_PER_DAY = 86_400_000;
 
@@ -15,6 +18,7 @@ type DecayCandidateRow = {
   reliability: number;
   reliabilityDecayPostGraceDaysApplied: number;
   updatedAt: Date;
+  profileUpdatedAt: Date;
   lastActivityAt: Date | null;
 };
 
@@ -24,20 +28,23 @@ async function fetchDecayCandidates(): Promise<DecayCandidateRow[]> {
       WITH eligible AS (
         SELECT
           u.id,
-          u."reliability",
+          p.reliability,
           u."reliabilityDecayPostGraceDaysApplied",
-          u."updatedAt"
+          u."updatedAt",
+          p."updatedAt" AS "profileUpdatedAt"
         FROM "User" u
+        INNER JOIN "UserSportProfile" p ON p."userId" = u.id AND p.sport = ${Sport.PADEL}::"Sport"
         WHERE u."isActive" = true
-          AND u."gamesPlayed" >= ${RELIABILITY_DECAY_MIN_GAMES}
-          AND u."reliability" > 0
+          AND p."gamesPlayed" >= ${RELIABILITY_DECAY_MIN_GAMES}
+          AND p.reliability > 0
       ),
-      ${reliabilityDecayActivityArms}
+      ${reliabilityDecayPadelActivityArms}
       SELECT
         e.id,
-        e."reliability",
+        e.reliability,
         e."reliabilityDecayPostGraceDaysApplied",
         e."updatedAt",
+        e."profileUpdatedAt",
         ${lastActivityAtSelect}
       FROM eligible e
       LEFT JOIN outcome_times o ON o.uid = e.id
@@ -52,12 +59,13 @@ async function lastReliabilityActivityAtForUser(userId: string): Promise<Date | 
       WITH eligible AS (
         SELECT u.id
         FROM "User" u
+        INNER JOIN "UserSportProfile" p ON p."userId" = u.id AND p.sport = ${Sport.PADEL}::"Sport"
         WHERE u.id = ${userId}
           AND u."isActive" = true
-          AND u."gamesPlayed" >= ${RELIABILITY_DECAY_MIN_GAMES}
-          AND u."reliability" > 0
+          AND p."gamesPlayed" >= ${RELIABILITY_DECAY_MIN_GAMES}
+          AND p.reliability > 0
       ),
-      ${reliabilityDecayActivityArms}
+      ${reliabilityDecayPadelActivityArms}
       SELECT
         ${lastActivityAtSelect}
       FROM eligible e
@@ -89,20 +97,32 @@ function decayPayload(
   return { newRel, newApplied: applied + delta };
 }
 
+/** Dual-write padel profile reliability + legacy User columns during transition. */
 async function tryDecayWrite(
   userId: string,
-  expectedUpdatedAt: Date,
+  expectedUserUpdatedAt: Date,
+  expectedProfileUpdatedAt: Date,
   newRel: number,
   newApplied: number
 ): Promise<boolean> {
-  const result = await prisma.user.updateMany({
-    where: { id: userId, updatedAt: expectedUpdatedAt },
-    data: {
-      reliability: newRel,
-      reliabilityDecayPostGraceDaysApplied: newApplied,
-    },
-  });
-  return result.count > 0;
+  const [userResult, profileResult] = await prisma.$transaction([
+    prisma.user.updateMany({
+      where: { id: userId, updatedAt: expectedUserUpdatedAt },
+      data: {
+        reliability: newRel,
+        reliabilityDecayPostGraceDaysApplied: newApplied,
+      },
+    }),
+    prisma.userSportProfile.updateMany({
+      where: {
+        userId,
+        sport: Sport.PADEL,
+        updatedAt: expectedProfileUpdatedAt,
+      },
+      data: { reliability: newRel },
+    }),
+  ]);
+  return userResult.count > 0 && profileResult.count > 0;
 }
 
 export async function runReliabilityIdleDecay(): Promise<number> {
@@ -122,36 +142,60 @@ export async function runReliabilityIdleDecay(): Promise<number> {
     );
     if (!payload) continue;
 
-    const wrote = await tryDecayWrite(u.id, u.updatedAt, payload.newRel, payload.newApplied);
+    const wrote = await tryDecayWrite(
+      u.id,
+      u.updatedAt,
+      u.profileUpdatedAt,
+      payload.newRel,
+      payload.newApplied,
+    );
     if (wrote) {
       updated += 1;
       continue;
     }
 
-    const row = await prisma.user.findUnique({
-      where: { id: u.id },
-      select: {
-        reliability: true,
-        reliabilityDecayPostGraceDaysApplied: true,
-        updatedAt: true,
-        isActive: true,
-        gamesPlayed: true,
-      },
-    });
-    if (!row?.isActive || row.gamesPlayed < RELIABILITY_DECAY_MIN_GAMES || row.reliability <= 0) {
+    const [row, profile] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: u.id },
+        select: {
+          reliability: true,
+          reliabilityDecayPostGraceDaysApplied: true,
+          updatedAt: true,
+          isActive: true,
+        },
+      }),
+      prisma.userSportProfile.findUnique({
+        where: { userId_sport: { userId: u.id, sport: Sport.PADEL } },
+        select: { reliability: true, gamesPlayed: true, updatedAt: true },
+      }),
+    ]);
+    if (
+      !row?.isActive ||
+      !profile ||
+      profile.gamesPlayed < RELIABILITY_DECAY_MIN_GAMES ||
+      profile.reliability <= 0
+    ) {
       continue;
     }
     const last2 = await lastReliabilityActivityAtForUser(u.id);
     if (!last2) continue;
     const nowRetry = Date.now();
     const payload2 = decayPayload(
-      row.reliability,
+      profile.reliability,
       row.reliabilityDecayPostGraceDaysApplied,
       last2,
       nowRetry
     );
     if (!payload2) continue;
-    if (await tryDecayWrite(u.id, row.updatedAt, payload2.newRel, payload2.newApplied)) {
+    if (
+      await tryDecayWrite(
+        u.id,
+        row.updatedAt,
+        profile.updatedAt,
+        payload2.newRel,
+        payload2.newApplied,
+      )
+    ) {
       updated += 1;
     }
   }

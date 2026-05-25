@@ -1,8 +1,8 @@
 import { Sports, DEFAULT_SPORT, type Sport } from '@shared/sport';
-import type { User, UserSportProfile } from '@/types';
+import type { BasicUser, User, UserSportProfile } from '@/types';
 import { getImplementedSports, getSportConfig } from '@/sport/sportRegistry';
 
-export function getUserPrimarySport(user: User | null | undefined): Sport {
+export function getUserPrimarySport(user: User | BasicUser | null | undefined): Sport {
   return user?.primarySport ?? DEFAULT_SPORT;
 }
 
@@ -45,10 +45,20 @@ export function hasMultipleSportsEnabled(user: User | null | undefined): boolean
 }
 
 export function findSportProfile(
-  user: User | null | undefined,
+  user: User | BasicUser | null | undefined,
   sport: Sport,
 ): UserSportProfile | undefined {
   return user?.sportProfiles?.find((p) => p.sport === sport);
+}
+
+function isFullUserRecord(user: User | BasicUser): user is User {
+  return 'gamesPlayed' in user && typeof (user as User).gamesPlayed === 'number';
+}
+
+/** Sport-projected snippet: BasicUser, or full User after API stripped sportProfiles (undefined). */
+function usesProjectedLevelFields(user: User | BasicUser): boolean {
+  if (!isFullUserRecord(user)) return true;
+  return user.sportProfiles === undefined;
 }
 
 export function gamesPlayedForSport(user: User, sport: Sport): number {
@@ -62,13 +72,53 @@ export function shouldShowSportLevelBadge(user: User, sport: Sport): boolean {
   return getDisplayLevelForSport(user, sport) > 1.0;
 }
 
-export function getDisplayLevelForSport(user: User, sport: Sport): number {
+export function getDisplayLevelForSport(user: User | BasicUser, sport: Sport): number {
   const profile = findSportProfile(user, sport);
   if (profile) return profile.level;
+  if (usesProjectedLevelFields(user)) {
+    return user.level;
+  }
   if (sport === Sports.PADEL || sport === getUserPrimarySport(user)) {
     return user.level;
   }
   return 1.0;
+}
+
+export function getReliabilityForSport(user: User | BasicUser, sport: Sport): number {
+  const profile = findSportProfile(user, sport);
+  if (profile) return profile.reliability;
+  if (usesProjectedLevelFields(user)) {
+    return user.reliability ?? 0;
+  }
+  return sport === Sports.PADEL ? (user.reliability ?? 0) : 0;
+}
+
+/** Training edit modal defaults when no outcome row exists yet. */
+export function resolveTrainingEditDefaults(
+  user: User,
+  sport: Sport,
+  outcome?: { levelBefore: number; reliabilityBefore: number } | null,
+): { level: number; reliability: number } {
+  if (outcome) {
+    return { level: outcome.levelBefore, reliability: outcome.reliabilityBefore };
+  }
+  return {
+    level: getDisplayLevelForSport(user, sport),
+    reliability: getReliabilityForSport(user, sport),
+  };
+}
+
+/** Find-games / calendar user filter: level band for a game sport. */
+export function userLevelMatchesGameBand(
+  user: User,
+  gameSport: Sport,
+  minLevel: number | undefined,
+  maxLevel: number | undefined,
+): boolean {
+  const userLevel = getDisplayLevelForSport(user, gameSport);
+  const min = minLevel ?? 0;
+  const max = maxLevel ?? 10;
+  return userLevel >= min && userLevel <= max;
 }
 
 /** Level for profile header when user may have zero enabled sports. */

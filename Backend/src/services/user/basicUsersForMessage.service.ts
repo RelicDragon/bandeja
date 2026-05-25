@@ -1,24 +1,30 @@
 import prisma from '../../config/database';
+import { Sport } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { MessageService } from '../chat/message.service';
 import {
   getAllowedSetFromCache,
   invalidateBasicUsersAllowedCacheForMessage,
   setAllowedSetCache,
 } from './basicUsersForMessageAllowedCache';
+import {
+  projectUserForSportContext,
+  resolveChatMessageSport,
+} from '../user/userSportProfile.service';
 
 export const MAX_BASIC_USERS_IDS_PER_REQUEST = 300;
 
-async function loadUsersForFilteredIds(filtered: string[]) {
+async function loadUsersForFilteredIds(filtered: string[], sport: Sport) {
   if (filtered.length === 0) {
     return [];
   }
-  return prisma.user.findMany({
+  const users = await prisma.user.findMany({
     where: { id: { in: filtered } },
-    select: USER_SELECT_FIELDS,
+    select: USER_SELECT_WITH_SPORT_PROFILES,
     orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
   });
+  return users.map((u) => projectUserForSportContext(u, sport));
 }
 
 function filterRequestedToAllowed(requestedIds: string[], allowed: Set<string>) {
@@ -38,13 +44,14 @@ export async function getBasicUsersForMessage(params: {
   if (cachedAllowed) {
     const alive = await prisma.chatMessage.findUnique({
       where: { id: messageId },
-      select: { deletedAt: true },
+      select: { deletedAt: true, chatContextType: true, contextId: true },
     });
     if (!alive || alive.deletedAt) {
       invalidateBasicUsersAllowedCacheForMessage(messageId);
     } else {
+      const sport = await resolveChatMessageSport(alive, viewerUserId);
       const filtered = filterRequestedToAllowed(requestedIds, cachedAllowed);
-      return loadUsersForFilteredIds(filtered);
+      return loadUsersForFilteredIds(filtered, sport);
     }
   }
 
@@ -74,6 +81,7 @@ export async function getBasicUsersForMessage(params: {
 
   setAllowedSetCache(messageId, viewerUserId, allowed);
 
+  const sport = await resolveChatMessageSport(message, viewerUserId);
   const filtered = filterRequestedToAllowed(requestedIds, allowed);
-  return loadUsersForFilteredIds(filtered);
+  return loadUsersForFilteredIds(filtered, sport);
 }

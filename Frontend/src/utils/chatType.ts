@@ -4,8 +4,10 @@ import {
   type GameChatChannelActivity,
 } from '@/utils/gameChatChannelActivity';
 
-export const normalizeChatType = (chatType: ChatType): ChatType => {
-  return chatType;
+/** Legacy game gallery tab removed; map old PHOTOS deep links and payloads to PUBLIC. */
+export const normalizeChatType = (chatType: ChatType | string): ChatType => {
+  if (String(chatType).toUpperCase() === 'PHOTOS') return 'PUBLIC';
+  return chatType as ChatType;
 };
 
 export function getAvailableGameChatTypes(

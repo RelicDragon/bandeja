@@ -43,7 +43,7 @@ export interface GameInviteOutcome {
 export type Gender = 'MALE' | 'FEMALE' | 'PREFER_NOT_TO_SAY';
 export type GameStatus = 'ANNOUNCED' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
 export type ResultsStatus = 'NONE' | 'IN_PROGRESS' | 'FINAL';
-export type ChatType = 'PUBLIC' | 'PRIVATE' | 'ADMINS' | 'PHOTOS';
+export type ChatType = 'PUBLIC' | 'PRIVATE' | 'ADMINS';
 export type BugStatus = 'CREATED' | 'CONFIRMED' | 'IN_PROGRESS' | 'TEST' | 'FINISHED' | 'ARCHIVED';
 export type BugType = 'BUG' | 'CRITICAL' | 'SUGGESTION' | 'QUESTION' | 'TASK';
 export type BugPriority = -2 | -1 | 0 | 1 | 2;
@@ -111,10 +111,15 @@ export interface BasicUser {
   firstName?: string;
   lastName?: string;
   avatar?: string | null;
+  /**
+   * Competitive level for the current sport context when API-projected; otherwise legacy global padel column.
+   * @deprecated Prefer `sportProfiles` for the relevant sport, or `getDisplayLevelForSport`.
+   */
   level: number;
   primarySport?: Sport;
   sportsEnabled?: Sport[];
   socialLevel: number;
+  /** @deprecated Prefer `sportProfiles` for the relevant sport. */
   reliability?: number;
   gender: Gender;
   approvedLevel: boolean;
@@ -129,6 +134,7 @@ export interface BasicUser {
   isAdmin?: boolean;
   canCreateTournament?: boolean;
   maxParticipantsInGame?: number;
+  sportProfiles?: UserSportProfile[];
 }
 
 export interface TrainerReview {
@@ -191,9 +197,12 @@ export interface User extends BasicUser {
   originalAvatar?: string | null;
   currentCityId?: string;
   currentCity?: City;
+  /** @deprecated Prefer `sportProfiles` for the relevant sport. */
   reliability: number;
   totalPoints: number;
+  /** @deprecated Prefer `sportProfiles` for the relevant sport. */
   gamesPlayed: number;
+  /** @deprecated Prefer `sportProfiles` for the relevant sport. */
   gamesWon: number;
   approvedById?: string | null;
   approvedWhen?: Date | string | null;
@@ -231,6 +240,9 @@ export interface User extends BasicUser {
   wallet?: number;
   blockedUserIds?: string[];
   showOnlineStatus?: boolean;
+  shareGamePhotosToFollowers?: boolean;
+  shareGameCreationsToFollowers?: boolean;
+  shareGameResultsToFollowers?: boolean;
   appIcon?: string | null;
   weeklyAvailability?: WeeklyAvailabilityDoc | null;
   availabilityBucketBoundaries?: AvailabilityBucketBoundaries | null;
@@ -458,6 +470,11 @@ export interface Game {
   hasGoldenPoint?: boolean;
   photosCount?: number;
   mainPhotoId?: string | null;
+  mainPhoto?: {
+    id: string;
+    thumbnailUrl: string;
+    originalUrl: string;
+  } | null;
   reactions?: Array<{ userId: string; emoji: string }>;
   resultsSentToTelegram?: boolean;
   isClubFavorite?: boolean;

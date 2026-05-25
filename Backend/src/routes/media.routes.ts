@@ -22,10 +22,12 @@ import {
   upload,
   uploadAvatarFiles
 } from '../controllers/media.controller';
+import { storyMediaRouter } from './story.routes';
 
 const router = Router();
 
 router.use(authenticate);
+router.use(storyMediaRouter);
 
 router.post(
   '/upload/avatar',

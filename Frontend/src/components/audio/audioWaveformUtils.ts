@@ -45,9 +45,24 @@ export function resolveChatMediaUrl(pathOrUrl: string): string {
   return `${base.replace(/\/$/, '')}/${pathOrUrl.replace(/^\//, '')}`;
 }
 
-export function formatDurationClock(ms: number): string {
-  const totalSec = Math.floor(ms / 1000);
-  const m = Math.floor(totalSec / 60);
+export function formatDurationClock(ms: number, locale?: string): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  const fmt = (value: number, minDigits: number) => {
+    try {
+      return new Intl.NumberFormat(locale, {
+        minimumIntegerDigits: minDigits,
+        maximumFractionDigits: 0,
+        useGrouping: false,
+      }).format(value);
+    } catch {
+      return String(value).padStart(minDigits, '0');
+    }
+  };
+  if (h > 0) {
+    return `${fmt(h, 1)}:${fmt(m, 2)}:${fmt(s, 2)}`;
+  }
+  return `${fmt(m, 1)}:${fmt(s, 2)}`;
 }

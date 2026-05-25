@@ -42,11 +42,6 @@ function addGameParticipants(
       .forEach((p) => push(p.user));
   } else if (normalizedChatType === 'PRIVATE') {
     game.participants?.filter((p) => p.status === 'PLAYING').forEach((p) => push(p.user));
-  } else if (normalizedChatType === 'PHOTOS') {
-    game.participants?.forEach((p) => push(p.user));
-    game.parent?.participants
-      ?.filter((p) => p.role === 'ADMIN' || p.role === 'OWNER')
-      .forEach((p) => push(p.user));
   }
 }
 

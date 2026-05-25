@@ -1,6 +1,5 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Camera } from 'lucide-react';
 import type { ChatType } from '@/types';
 
 export interface GameChatTabsProps {
@@ -39,11 +38,7 @@ export const GameChatTabs: React.FC<GameChatTabsProps> = ({
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
               } ${isSwitchingChatType ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {chatType === 'PHOTOS' ? (
-                <Camera size={18} />
-              ) : (
-                t(`chat.types.${chatType}`)
-              )}
+              {t(`chat.types.${chatType}`)}
             </button>
           ))}
         </div>

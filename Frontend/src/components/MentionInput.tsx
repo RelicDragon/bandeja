@@ -159,28 +159,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
               });
             }
           });
-      } else if (normalizedChatType === 'PHOTOS') {
-        game.participants?.forEach(p => {
-          if (p.user && !userIds.has(p.user.id)) {
-            userIds.add(p.user.id);
-            users.push({
-              ...p.user,
-              display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-            });
-          }
-        });
-        
-        game.parent?.participants
-          ?.filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
-          .forEach(p => {
-            if (p.user && !userIds.has(p.user.id)) {
-              userIds.add(p.user.id);
-              users.push({
-                ...p.user,
-                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-              });
-            }
-          });
       }
 
       console.log('[MentionInput] GAME mentionableUsers:', users.length, users);

@@ -281,6 +281,13 @@
       "ios": "iOS",
       "android": "Android",
       "unknown": "Неизвестное устройство"
-    }
+    },
+    "sharingToFollowers": "Делиться с подписчиками",
+    "shareGamePhotosToFollowers": "Фото игр в stories подписчиков",
+    "shareGamePhotosToFollowersDescription": "Фото из публичных завершённых игр могут появляться в stories",
+    "shareGameCreationsToFollowers": "Делиться созданными играми",
+    "shareGameCreationsToFollowersDescription": "Публичные анонсированные игры появляются в stories",
+    "shareGameResultsToFollowers": "Делиться результатами",
+    "shareGameResultsToFollowersDescription": "Финальные результаты могут появляться в stories"
   }
 }

@@ -35,6 +35,7 @@ import userGameNoteRoutes from './userGameNoteRoutes';
 import currencyRoutes from './currency.routes';
 import userTeamRoutes from './userTeam.routes';
 import clubAdminRoutes from './clubAdmin.routes';
+import storyRoutes from './story.routes';
 
 const router = Router();
 
@@ -78,6 +79,7 @@ router.use('/user-game-notes', userGameNoteRoutes);
 router.use('/currency', currencyRoutes);
 router.use('/user-teams', userTeamRoutes);
 router.use('/club-admin', clubAdminRoutes);
+router.use('/stories', storyRoutes);
 
 export default router;
 

@@ -12,8 +12,12 @@ export const userTeamsApi = {
     return res.data.data;
   },
 
-  getForPlayerInvite: async (): Promise<UserTeam[]> => {
-    const res = await api.get<ApiResponse<UserTeam[]>>('/user-teams/for-player-invite');
+  getForPlayerInvite: async (opts?: { gameId?: string; sport?: string }): Promise<UserTeam[]> => {
+    const params = new URLSearchParams();
+    if (opts?.gameId) params.set('gameId', opts.gameId);
+    if (opts?.sport) params.set('sport', opts.sport);
+    const qs = params.toString();
+    const res = await api.get<ApiResponse<UserTeam[]>>(`/user-teams/for-player-invite${qs ? `?${qs}` : ''}`);
     return res.data.data;
   },
 

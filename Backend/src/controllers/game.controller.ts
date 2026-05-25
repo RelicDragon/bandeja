@@ -482,7 +482,10 @@ export const resetTelegramResultsSent = asyncHandler(async (req: AuthRequest, re
   }
   await prisma.game.update({
     where: { id },
-    data: { resultsSentToTelegram: false },
+    data: {
+      resultsSentToTelegram: false,
+      telegramResultsSummary: null,
+    },
   });
   res.json({ success: true });
 });

@@ -3,10 +3,26 @@ import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
-import { USER_SELECT_FIELDS, USER_STATS_TARGET_SELECT } from '../../utils/constants';
+import {
+  USER_SELECT_FIELDS,
+  USER_SPORT_PROFILE_SELECT,
+  USER_STATS_TARGET_SELECT,
+} from '../../utils/constants';
 import { getUserGameOutcomeAggregates } from '../../services/user/userGameOutcomeStats.service';
-import { EntityType, ParticipantRole } from '@prisma/client';
-import { BasicUser } from '../../types/user.types';
+import {
+  parseSportParam,
+  projectUserForSportContext,
+} from '../../services/user/userSportProfile.service';
+import { EntityType, ParticipantRole, Sport } from '@prisma/client';
+import { resolveSport } from '../../sport/sportRegistry';
+import type { Prisma } from '@prisma/client';
+
+const COMPARISON_USER_SELECT = {
+  ...USER_SELECT_FIELDS,
+  sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
+} as const;
+
+type ComparisonUser = Prisma.UserGetPayload<{ select: typeof COMPARISON_USER_SELECT }>;
 
 type ParticipantWithUser = {
   id: string;
@@ -16,13 +32,21 @@ type ParticipantWithUser = {
   isPlaying?: boolean;
   joinedAt: Date;
   stats: any;
-  user: BasicUser;
+  user: ComparisonUser;
 };
+
+function resolveStatsSport(sportQuery: unknown, primarySport: Sport | string | null | undefined): Sport {
+  if (typeof sportQuery === 'string' && sportQuery.trim().length > 0) {
+    return parseSportParam(sportQuery);
+  }
+  return resolveSport(primarySport ?? Sport.PADEL);
+}
 
 function serializeComparisonGame(
   game: {
     id: string;
     name: string | null;
+    sport: Sport;
     gameType: string;
     startTime: Date;
     endTime: Date;
@@ -56,8 +80,9 @@ function serializeComparisonGame(
     updatedAt: Date;
   },
   currentUserId: string,
-  otherUserId: string
+  otherUserId: string,
 ) {
+  const sport = game.sport ?? Sport.PADEL;
   const currentUserParticipant = game.participants.find(
     (p: ParticipantWithUser) => p.userId === currentUserId && p.status === 'PLAYING'
   );
@@ -69,6 +94,7 @@ function serializeComparisonGame(
   return {
     id: game.id,
     name: game.name,
+    sport,
     gameType: game.gameType,
     startTime: game.startTime,
     endTime: game.endTime,
@@ -90,7 +116,7 @@ function serializeComparisonGame(
       isPlaying: p.status === 'PLAYING',
       joinedAt: p.joinedAt,
       stats: p.stats,
-      user: p.user,
+      user: projectUserForSportContext(p.user, sport),
     })),
     club: game.club
       ? {
@@ -129,7 +155,9 @@ function serializeComparisonGame(
 
 export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { userId } = req.params;
-  
+  const explicitSport =
+    typeof req.query.sport === 'string' && req.query.sport.trim().length > 0;
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: USER_STATS_TARGET_SELECT,
@@ -138,6 +166,8 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
+
+  const sport = resolveStatsSport(req.query.sport, user.primarySport);
 
   let approvedByUser = null;
   if (req.userId && user.approvedById) {
@@ -148,7 +178,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
   }
 
   const levelHistory = await prisma.gameOutcome.findMany({
-    where: { userId },
+    where: { userId, game: { sport } },
     orderBy: { createdAt: 'desc' },
     take: 10,
     select: {
@@ -161,7 +191,10 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     },
   });
 
-  const { gamesLast30Days, gamesStats } = await getUserGameOutcomeAggregates(userId);
+  const [{ gamesLast30Days, gamesStats }, allSportsAggregates] = await Promise.all([
+    getUserGameOutcomeAggregates(userId, sport),
+    explicitSport ? null : getUserGameOutcomeAggregates(userId),
+  ]);
 
   const isFavorite = req.userId ? await prisma.userFavoriteUser.findUnique({
     where: {
@@ -184,21 +217,32 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     },
   });
 
-  const baseUser = { ...user, isFavorite: !!isFavorite, approvedBy: approvedByUser };
+  const projectedUser = {
+    ...projectUserForSportContext(user, sport),
+    isFavorite: !!isFavorite,
+    approvedBy: approvedByUser,
+  };
   if (!req.userId) {
-    delete (baseUser as { telegramId?: unknown }).telegramId;
-    delete (baseUser as { telegramUsername?: unknown }).telegramUsername;
+    delete (projectedUser as { telegramId?: unknown }).telegramId;
+    delete (projectedUser as { telegramUsername?: unknown }).telegramUsername;
   }
 
   res.json({
     success: true,
     data: {
-      user: baseUser,
+      sport,
+      user: projectedUser,
       levelHistory: levelHistory.reverse(),
       gamesLast30Days,
       followersCount,
       followingCount,
       gamesStats,
+      ...(allSportsAggregates
+        ? {
+            gamesStatsAllSports: allSportsAggregates.gamesStats,
+            gamesLast30DaysAllSports: allSportsAggregates.gamesLast30Days,
+          }
+        : {}),
     },
   });
 });
@@ -215,20 +259,31 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
     throw new ApiError(400, 'Cannot compare with yourself');
   }
 
-  const otherUser = await prisma.user.findUnique({
+  const currentUser = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: { primarySport: true },
+  });
+  if (!currentUser) {
+    throw new ApiError(401, 'User not found');
+  }
+  const sport = resolveStatsSport(req.query.sport, currentUser.primarySport);
+
+  const otherUserRow = await prisma.user.findUnique({
     where: { id: otherUserId },
-    select: USER_SELECT_FIELDS,
+    select: COMPARISON_USER_SELECT,
   });
 
-  if (!otherUser) {
+  if (!otherUserRow) {
     throw new ApiError(404, 'Other user not found');
   }
+  const otherUser = projectUserForSportContext(otherUserRow, sport);
 
   const gamesTogether = await prisma.gameParticipant.findMany({
     where: {
       userId: currentUserId,
       status: 'PLAYING',
       game: {
+        sport,
         resultsStatus: 'FINAL',
         entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON] },
         participants: {
@@ -245,7 +300,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
           participants: {
             include: {
               user: {
-                select: USER_SELECT_FIELDS,
+                select: COMPARISON_USER_SELECT,
               },
             },
           },
@@ -432,13 +487,14 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
   const coplayedGamesCount = gamesAgainstEachOther.length;
 
   const [currentUserStats, otherUserStats] = await Promise.all([
-    getUserGameOutcomeAggregates(currentUserId),
-    getUserGameOutcomeAggregates(otherUserId),
+    getUserGameOutcomeAggregates(currentUserId, sport),
+    getUserGameOutcomeAggregates(otherUserId, sport),
   ]);
 
   res.json({
     success: true,
     data: {
+      sport,
       otherUser,
       gamesTogether: {
         total: matchesTogetherCount,

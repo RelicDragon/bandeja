@@ -98,6 +98,29 @@ export function formatGameTime(
   }
 }
 
+const APP_LANGUAGE_TO_LOCALE: Record<string, string> = {
+  en: 'en-GB',
+  ru: 'ru-RU',
+  sr: 'sr-RS',
+  es: 'es-ES',
+  cs: 'cs-CZ',
+};
+
+/** BCP-47 locale for Intl formatting from i18n language or profile language. */
+export function resolveAppLocale(language: string | null | undefined): string {
+  if (!language || language === 'auto') {
+    return navigator.language || 'en-GB';
+  }
+  const base = language.split('-')[0]?.toLowerCase() ?? 'en';
+  if (APP_LANGUAGE_TO_LOCALE[base]) {
+    return APP_LANGUAGE_TO_LOCALE[base];
+  }
+  if (language.includes('-')) {
+    return language;
+  }
+  return navigator.language || 'en-GB';
+}
+
 export function normalizeLanguageForProfile(locale: string | null | undefined): string {
   if (!locale || locale === 'auto') {
     return 'auto';

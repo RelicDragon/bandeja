@@ -25,7 +25,7 @@ export const LevelHistoryAvatarSection = ({
   const competitiveLevel = getDisplayLevelForSport(user, levelSport);
   const showCompetitive = shouldShowSportLevelBadge(user, levelSport);
   const sportProfile = findSportProfile(user, levelSport);
-  const reliability = sportProfile?.reliability ?? user.reliability ?? 0;
+  const reliability = sportProfile?.reliability ?? 0;
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
 
   return (

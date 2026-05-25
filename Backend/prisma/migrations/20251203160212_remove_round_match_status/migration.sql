@@ -6,10 +6,10 @@
 
 */
 -- DropIndex
-DROP INDEX "padelpulse"."Match_status_idx";
+DROP INDEX IF EXISTS "Match_status_idx";
 
 -- DropIndex
-DROP INDEX "padelpulse"."Round_status_idx";
+DROP INDEX IF EXISTS "Round_status_idx";
 
 -- AlterTable
 ALTER TABLE "Match" DROP COLUMN "status";

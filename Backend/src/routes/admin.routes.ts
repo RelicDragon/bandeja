@@ -41,6 +41,8 @@ import {
   dropCoins,
   getAllMessageReports,
   updateMessageReportStatus,
+  getAllStoryCommentReports,
+  updateStoryCommentReportStatus,
   getAllAppVersions,
   createOrUpdateAppVersion,
   deleteAppVersion,
@@ -112,6 +114,9 @@ router.post('/coins/drop', requireAdmin, dropCoins);
 
 router.get('/message-reports', requireAdmin, getAllMessageReports);
 router.patch('/message-reports/:reportId/status', requireAdmin, updateMessageReportStatus);
+
+router.get('/story-comment-reports', requireAdmin, getAllStoryCommentReports);
+router.patch('/story-comment-reports/:reportId/status', requireAdmin, updateStoryCommentReportStatus);
 
 router.get('/app-versions', requireAdmin, getAllAppVersions);
 router.post(

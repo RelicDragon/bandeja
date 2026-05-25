@@ -571,6 +571,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           onSelect={setSelectedGroupId}
           allGroupId={ALL_GROUP_ID}
           groupProgress={groupScheduleProgress}
+          showGroupProgressCounts={canEdit}
           showAllOption={resolvedScheduleView !== 'table'}
         />
       )}

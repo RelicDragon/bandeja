@@ -1,0 +1,3 @@
+export const MAX_PHOTOS_PER_GAME = 50;
+export const MAX_GAME_PHOTO_FILE_BYTES = 10 * 1024 * 1024;
+export const DEFAULT_PHOTOS_PAGE_LIMIT = 50;

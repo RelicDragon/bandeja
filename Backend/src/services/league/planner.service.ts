@@ -3,9 +3,10 @@ import { enUS } from 'date-fns/locale';
 import { formatInTimeZone } from 'date-fns-tz';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
-import { GameStatus, RoundType } from '@prisma/client';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
+import { GameStatus, RoundType, Sport } from '@prisma/client';
 import { getUserTimezone } from '../user-timezone.service';
+import { projectUserForSportContext } from '../user/userSportProfile.service';
 import {
   type WeekdayKey,
   type WeeklyAvailabilityLike,
@@ -15,6 +16,11 @@ import {
   WEEKDAY_FROM_SHORT,
 } from './plannerAvailability.util';
 import { resolveEffectiveWeeklyV1ForDate } from '../../utils/weeklyAvailabilityRolling';
+
+const PLANNER_USER_SELECT = {
+  ...USER_SELECT_FIELDS,
+  sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
+} as const;
 
 type PlannerUser = {
   id: string;
@@ -193,6 +199,7 @@ export class LeaguePlannerService {
       where: { id: leagueSeasonId },
       select: {
         id: true,
+        sport: true,
         game: {
           select: { hasFixedTeams: true },
         },
@@ -200,6 +207,7 @@ export class LeaguePlannerService {
     });
     if (!season?.game) throw new ApiError(404, 'League season not found');
 
+    const seasonSport = season.sport ?? Sport.PADEL;
     const hasFixedTeams = season.game.hasFixedTeams ?? false;
 
     const groups = await prisma.leagueGroup.findMany({
@@ -211,10 +219,10 @@ export class LeaguePlannerService {
     const standings = await prisma.leagueParticipant.findMany({
       where: { leagueSeasonId },
       include: {
-        user: { select: USER_SELECT_FIELDS },
+        user: { select: PLANNER_USER_SELECT },
         leagueTeam: {
           include: {
-            players: { include: { user: { select: USER_SELECT_FIELDS } } },
+            players: { include: { user: { select: PLANNER_USER_SELECT } } },
           },
         },
         currentGroup: { select: { id: true, name: true } },
@@ -236,16 +244,16 @@ export class LeaguePlannerService {
     for (const row of inScope) {
       if (hasFixedTeams && row.leagueTeam?.players) {
         for (const pl of row.leagueTeam.players) {
-          const u = pl.user as PlannerUser | null;
+          const u = pl.user;
           if (u?.id && !userById.has(u.id)) {
-            userById.set(u.id, u as PlannerUser);
+            userById.set(u.id, projectUserForSportContext(u, seasonSport) as PlannerUser);
             aggregateUserIds.push(u.id);
           }
         }
       } else if (!hasFixedTeams && row.user) {
-        const u = row.user as PlannerUser;
+        const u = row.user;
         if (!userById.has(u.id)) {
-          userById.set(u.id, u as PlannerUser);
+          userById.set(u.id, projectUserForSportContext(u, seasonSport) as PlannerUser);
           aggregateUserIds.push(u.id);
         }
       }

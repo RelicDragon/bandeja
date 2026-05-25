@@ -325,7 +325,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     !message.trim() &&
     selectedImages.length === 0 &&
     !editingMessage &&
-    resolvedChatType !== 'PHOTOS' &&
     !isDisabled;
 
   useEffect(() => {

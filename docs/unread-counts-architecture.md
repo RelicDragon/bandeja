@@ -33,7 +33,7 @@ type ContextKey = `${ChatContextType}:${contextId}`;
 
 | Context | `contextId` | Unread count scope | Mark-read scope on enter |
 |---------|-------------|--------------------|---------------------------|
-| **GAME** | `gameId` | Sum of unread across **all accessible `ChatType`s** (PUBLIC, PRIVATE, ADMINS, PHOTOS per participant + game status) | Mark **all accessible types** in one operation |
+| **GAME** | `gameId` | Sum of unread across **all accessible `ChatType`s** (PUBLIC, PRIVATE, ADMINS per participant + game status) | Mark **all accessible types** in one operation |
 | **USER** | `userChatId` | All messages in DM | Entire DM |
 | **GROUP** | `groupChannelId` | All messages in channel (bugs, market, social groups) | Entire channel |
 | **BUG** | `groupChannelId` (not bug id) | Same as GROUP | Same as GROUP |
@@ -58,7 +58,8 @@ Until a new message arrives (and P6 does not apply).
 | PUBLIC | yes | yes |
 | PRIVATE | PLAYING, **NON_PLAYING**, admin/parent | **PLAYING** only (+ admin/parent paths via role) |
 | ADMINS | admin/parent | admin/parent |
-| PHOTOS | **no** | yes when `game.status !== 'ANNOUNCED'` |
+
+Game gallery photos use `GamePhoto` / `/games/:id/photos` — **not** a `ChatType` and not included in unread totals (see `PLAN_GAME_PHOTOS_SEPARATE_TABLE.md`).
 
 Add one shared helper (frontend + document backend mirror):
 
@@ -524,7 +525,7 @@ After Phase 5: remove bridges and batch unread fetches from list loaders.
 | Mark all on My tab | All tabs 0 including market |
 | Mark-read API fails | Badge restores to server count |
 | Muted channel | Never in totals; enter still marks if opened |
-| PHOTOS unread, open game on PUBLIC tab | Enter marks PHOTOS + PUBLIC; badge 0 |
+| Open game on PUBLIC tab with unread in PRIVATE | Enter marks all §2.4 types; badge 0 |
 | NON_PLAYING participant PRIVATE | Count/mark match server (PLAYING-only PRIVATE) |
 | Socket `BUG` unread event | Maps to `GROUP:channelId`; totals correct |
 | Chats tab focus after cold start | `refreshAll`; list rows match tab badge |
@@ -781,7 +782,7 @@ R = responsible, A = accountable, C = consulted, V = verifies.
 | A1 slow (per-game counts) | Ship sparse `byContext` first; SQL optimization in A1.1 |
 | FE/BE drift | Shared types PR 0; weekly sync |
 | Tab 0, list row N | §8.0 `refreshAll` on Chats focus until D4 |
-| Tab-change partial mark regression | C2 + QA PHOTOS/PRIVATE rows |
+| Tab-change partial mark regression | C2 + QA PRIVATE rows |
 | Big-bang merge | §8.0 bridge max ~1 week; flag only if Gate 1 fails |
 
 ### 13.13 Epic definition of done

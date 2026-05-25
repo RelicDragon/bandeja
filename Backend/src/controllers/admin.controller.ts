@@ -11,6 +11,7 @@ import { UserMergeService } from '../services/user/userMerge.service';
 import { TransactionService } from '../services/transaction.service';
 import { TransactionType, MessageReportStatus } from '@prisma/client';
 import { AdminMessageReportsService } from '../services/admin/messageReports.service';
+import { AdminStoryCommentReportsService } from '../services/admin/storyCommentReports.service';
 import { AdminAppVersionService } from '../services/admin/appVersion.service';
 import { AdminMarketCategoryService } from '../services/admin/marketCategory.service';
 import { AdminMassNotificationService } from '../services/admin/massNotification.service';
@@ -545,6 +546,7 @@ export const updateUser = asyncHandler(async (req: AuthRequest, res: Response) =
     lastName,
     gender,
     level,
+    sportProfileLevels,
     currentCityId,
     isActive,
     isAdmin,
@@ -561,6 +563,7 @@ export const updateUser = asyncHandler(async (req: AuthRequest, res: Response) =
     lastName,
     gender,
     level,
+    sportProfileLevels,
     currentCityId,
     isActive,
     isAdmin,
@@ -705,6 +708,29 @@ export const updateMessageReportStatus = asyncHandler(async (req: AuthRequest, r
     success: true,
     data: report,
   });
+});
+
+export const getAllStoryCommentReports = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { status } = req.query;
+  const reports = await AdminStoryCommentReportsService.getAllReports(
+    status ? (status as MessageReportStatus) : undefined
+  );
+  res.json({ success: true, data: reports });
+});
+
+export const updateStoryCommentReportStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { reportId } = req.params;
+  const { status } = req.body;
+
+  if (!status || !Object.values(MessageReportStatus).includes(status)) {
+    return res.status(400).json({ success: false, message: 'Valid status is required' });
+  }
+
+  const report = await AdminStoryCommentReportsService.updateReportStatus(
+    reportId,
+    status as MessageReportStatus
+  );
+  res.json({ success: true, data: report });
 });
 
 export const getAllAppVersions = asyncHandler(async (req: AuthRequest, res: Response) => {

@@ -38,12 +38,15 @@ export interface GamesStat {
 
 export interface UserStats {
   user: User & { isFavorite?: boolean };
+  sport?: Sport;
   levelHistory: LevelHistoryItem[];
   socialLevelHistory?: LevelHistoryItem[];
   gamesLast30Days: number;
+  gamesLast30DaysAllSports?: number;
   followersCount: number;
   followingCount: number;
   gamesStats: GamesStat[];
+  gamesStatsAllSports?: GamesStat[];
 }
 
 export interface PlayerComparison {
@@ -279,8 +282,10 @@ export const usersApi = {
     return response.data;
   },
 
-  getUserStats: async (userId: string) => {
-    const response = await api.get<ApiResponse<UserStats>>(`/users/${userId}/stats`);
+  getUserStats: async (userId: string, sport?: Sport) => {
+    const params: Record<string, string> = {};
+    if (sport) params.sport = sport;
+    const response = await api.get<ApiResponse<UserStats>>(`/users/${userId}/stats`, { params });
     return response.data;
   },
 

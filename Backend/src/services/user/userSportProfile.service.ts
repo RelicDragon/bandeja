@@ -93,7 +93,7 @@ export type LeaderboardSportMode =
   | { mode: 'all' }
   | { mode: 'sport'; sport: Sport };
 
-/** Leaderboard level ranking: omit or primary → per-sport profile; `all` → global User.level. */
+/** Leaderboard level ranking: omit or primary → per-sport profile; `all` → each user's primary sport snapshot. */
 export function resolveLeaderboardSportMode(
   sportQuery: unknown,
   primarySport: Sport | string | null | undefined,
@@ -155,6 +155,24 @@ export function resolveUserSportSnapshot(user: UserWithSportProfiles, sport: Spo
   gamesPlayed: number;
   gamesWon: number;
 } {
+  if (!('sportProfiles' in user)) {
+    const u = user as {
+      level?: number;
+      reliability?: number;
+      gamesPlayed?: number;
+      gamesWon?: number;
+    };
+    if (sport === Sport.PADEL) {
+      return {
+        level: u.level ?? EMPTY_SPORT_SNAPSHOT.level,
+        reliability: u.reliability ?? EMPTY_SPORT_SNAPSHOT.reliability,
+        gamesPlayed: u.gamesPlayed ?? EMPTY_SPORT_SNAPSHOT.gamesPlayed,
+        gamesWon: u.gamesWon ?? EMPTY_SPORT_SNAPSHOT.gamesWon,
+      };
+    }
+    return { ...EMPTY_SPORT_SNAPSHOT };
+  }
+
   const profile = user.sportProfiles?.find((p) => p.sport === sport);
   if (profile) {
     return {
@@ -164,7 +182,49 @@ export function resolveUserSportSnapshot(user: UserWithSportProfiles, sport: Spo
       gamesWon: profile.gamesWon,
     };
   }
+
+  if (sport === Sport.PADEL) {
+    const u = user as {
+      level?: number;
+      reliability?: number;
+      gamesPlayed?: number;
+      gamesWon?: number;
+    };
+    return {
+      level: u.level ?? EMPTY_SPORT_SNAPSHOT.level,
+      reliability: u.reliability ?? EMPTY_SPORT_SNAPSHOT.reliability,
+      gamesPlayed: u.gamesPlayed ?? EMPTY_SPORT_SNAPSHOT.gamesPlayed,
+      gamesWon: u.gamesWon ?? EMPTY_SPORT_SNAPSHOT.gamesWon,
+    };
+  }
+
   return { ...EMPTY_SPORT_SNAPSHOT };
+}
+
+/** Project `BasicUser` fields using the user's own primary sport (DM / non-game surfaces). */
+export function projectUserByPrimarySport<T extends UserWithSportProfiles & { primarySport?: Sport | string | null }>(
+  user: T,
+): T {
+  const sport = resolveSport(user.primarySport ?? Sport.PADEL);
+  return projectUserForSportContext(user, sport);
+}
+
+export async function resolveChatMessageSport(
+  message: { chatContextType: string; contextId: string },
+  viewerUserId: string,
+): Promise<Sport> {
+  if (message.chatContextType === 'GAME') {
+    const game = await prisma.game.findUnique({
+      where: { id: message.contextId },
+      select: { sport: true },
+    });
+    return game?.sport ?? Sport.PADEL;
+  }
+  const viewer = await prisma.user.findUnique({
+    where: { id: viewerUserId },
+    select: { primarySport: true },
+  });
+  return resolveSport(viewer?.primarySport ?? Sport.PADEL);
 }
 
 export async function countRatedSportOutcomes(
@@ -206,7 +266,11 @@ export function projectUserForSportContext<T extends UserWithSportProfiles | nul
   sport: Sport,
 ): T {
   if (!user) return user;
-  const snapshot = resolveUserSportSnapshot(user, sport);
+  const userForSnapshot =
+    'sportProfiles' in (user as object)
+      ? user
+      : ({ ...(user as UserWithSportProfiles), sportProfiles: [] } as UserWithSportProfiles);
+  const snapshot = resolveUserSportSnapshot(userForSnapshot, sport);
   const rest = { ...(user as UserWithSportProfiles) };
   delete (rest as Record<string, unknown>).sportProfiles;
   return {

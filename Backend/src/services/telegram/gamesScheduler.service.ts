@@ -6,9 +6,13 @@ import { getGameInclude } from '../game/read.service';
 import { buildGamesMessage } from './commands/games.command';
 import { getUserLanguage } from './utils';
 import telegramBotService from './bot.service';
+import { expireStories } from '../story/story.expire.service';
+import { pruneInvalidStoryItems } from '../story/story.prune.service';
 
 export class TelegramGamesScheduler {
   private cronJob: cron.ScheduledTask | null = null;
+  private storyCronJob: cron.ScheduledTask | null = null;
+  private storyRunning = false;
 
   start() {
     console.log('🔄 Telegram games scheduler started (runs every 5 minutes)');
@@ -17,7 +21,31 @@ export class TelegramGamesScheduler {
       await this.updateCityPinnedMessages();
     });
 
+    console.log('📖 Story maintenance scheduler started (runs every 10 minutes)');
+    this.storyCronJob = cron.schedule('*/10 * * * *', () => this.runStoryMaintenance());
+
     this.updateCityPinnedMessages();
+  }
+
+  private async runStoryMaintenance() {
+    if (this.storyRunning) return;
+    this.storyRunning = true;
+    try {
+      const count = await expireStories();
+      if (count > 0) {
+        console.log(`📖 Expired ${count} user stories`);
+      }
+      const pruned = await pruneInvalidStoryItems();
+      if (pruned.itemsPruned > 0) {
+        console.log(
+          `📖 Pruned ${pruned.itemsPruned} invalid story items (${pruned.storiesRemoved} empty stories removed)`
+        );
+      }
+    } catch (error) {
+      console.error('Story maintenance scheduler error:', error);
+    } finally {
+      this.storyRunning = false;
+    }
   }
 
   private async updateCityPinnedMessages() {
@@ -177,6 +205,11 @@ export class TelegramGamesScheduler {
       this.cronJob.stop();
       this.cronJob = null;
       console.log('🛑 Telegram games scheduler stopped');
+    }
+    if (this.storyCronJob) {
+      this.storyCronJob.stop();
+      this.storyCronJob = null;
+      console.log('🛑 Story expiry scheduler stopped');
     }
   }
 }

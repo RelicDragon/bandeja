@@ -1,7 +1,8 @@
 import prisma from '../../config/database';
 import { ChatContextType, ChatSyncEventType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { projectUserByPrimarySport } from '../user/userSportProfile.service';
 import { SystemMessageType, createSystemMessageContent, getUserDisplayName } from '../../utils/systemMessages';
 import { computeContentSearchable } from '../../utils/messageSearchContent';
 import { SystemMessageService } from './systemMessage.service';
@@ -9,6 +10,21 @@ import { updateLastMessagePreview } from './lastMessagePreview.service';
 import { ChatMuteService } from './chatMute.service';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { chatSyncMessageUpdatedCompactPayload } from '../../utils/chatSyncMessageUpdatePayload';
+
+const USER_CHAT_USER_SELECT = {
+  ...USER_SELECT_WITH_SPORT_PROFILES,
+  allowMessagesFromNonContacts: true,
+} as const;
+
+function projectUserChatUsers<T extends { user1: Parameters<typeof projectUserByPrimarySport>[0]; user2: Parameters<typeof projectUserByPrimarySport>[0] }>(
+  chat: T,
+): T {
+  return {
+    ...chat,
+    user1: projectUserByPrimarySport(chat.user1),
+    user2: projectUserByPrimarySport(chat.user2),
+  };
+}
 
 export class UserChatService {
   static async getUserChats(userId: string) {
@@ -20,12 +36,8 @@ export class UserChatService {
         ]
       },
       include: {
-        user1: {
-          select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true }
-        },
-        user2: {
-          select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true }
-        },
+        user1: { select: USER_CHAT_USER_SELECT },
+        user2: { select: USER_CHAT_USER_SELECT },
         pinnedByUsers: {
           where: {
             userId
@@ -37,14 +49,16 @@ export class UserChatService {
       }
     });
 
-    const rows = chats.map((chat) => ({
-      ...chat,
-      lastMessage: chat.lastMessagePreview
-        ? { preview: chat.lastMessagePreview, updatedAt: chat.updatedAt }
-        : null,
-      isPinned: chat.pinnedByUsers.length > 0,
-      pinnedAt: chat.pinnedByUsers[0]?.pinnedAt?.toISOString() ?? null
-    }));
+    const rows = chats.map((chat) =>
+      projectUserChatUsers({
+        ...chat,
+        lastMessage: chat.lastMessagePreview
+          ? { preview: chat.lastMessagePreview, updatedAt: chat.updatedAt }
+          : null,
+        isPinned: chat.pinnedByUsers.length > 0,
+        pinnedAt: chat.pinnedByUsers[0]?.pinnedAt?.toISOString() ?? null,
+      }),
+    );
     const muted = await ChatMuteService.getMutedContextIdSet(
       userId,
       ChatContextType.USER,
@@ -69,8 +83,8 @@ export class UserChatService {
         }
       },
       include: {
-        user1: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } },
-        user2: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } }
+        user1: { select: USER_CHAT_USER_SELECT },
+        user2: { select: USER_CHAT_USER_SELECT },
       }
     });
 
@@ -87,8 +101,8 @@ export class UserChatService {
           user2allowed: user2?.allowMessagesFromNonContacts ?? true
         },
         include: {
-          user1: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } },
-          user2: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } }
+          user1: { select: USER_CHAT_USER_SELECT },
+          user2: { select: USER_CHAT_USER_SELECT },
         }
       });
     }
@@ -98,15 +112,15 @@ export class UserChatService {
       ChatContextType.USER,
       userChat.id
     );
-    return { ...userChat, isMuted };
+    return { ...projectUserChatUsers(userChat), isMuted };
   }
 
   static async getChatById(chatId: string, userId: string) {
     const chat = await prisma.userChat.findUnique({
       where: { id: chatId },
       include: {
-        user1: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } },
-        user2: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } }
+        user1: { select: USER_CHAT_USER_SELECT },
+        user2: { select: USER_CHAT_USER_SELECT },
       }
     });
 
@@ -118,7 +132,7 @@ export class UserChatService {
       throw new ApiError(403, 'Access denied');
     }
 
-    return chat;
+    return projectUserChatUsers(chat);
   }
 
   static async updateChatTimestamp(chatId: string) {
@@ -353,7 +367,18 @@ export class UserChatService {
         [chat.user1Id, chat.user2Id]
       );
     }
-    return { message: responseMessage, userChat: await prisma.userChat.findUnique({ where: { id: chatId }, include: { user1: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } }, user2: { select: { ...USER_SELECT_FIELDS, allowMessagesFromNonContacts: true } } } }) };
+    return {
+      message: responseMessage,
+      userChat: projectUserChatUsers(
+        await prisma.userChat.findUniqueOrThrow({
+          where: { id: chatId },
+          include: {
+            user1: { select: USER_CHAT_USER_SELECT },
+            user2: { select: USER_CHAT_USER_SELECT },
+          },
+        }),
+      ),
+    };
   }
 }
 

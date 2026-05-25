@@ -23,7 +23,6 @@ import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 
 import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
-import { chatApi } from '@/api/chat';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { GameCardReactions } from '@/components/GameCardReactions';
@@ -61,7 +60,6 @@ export const GameCard = ({
   const authUser = useAuthStore((state) => state.user);
   const effectiveUser = user || authUser;
   const expandedContentRef = useRef<HTMLDivElement>(null);
-  const [mainPhotoUrl, setMainPhotoUrl] = useState<string | null>(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showJoinConfirm, setShowJoinConfirm] = useState(false);
   const [joinAction, setJoinAction] = useState<'game' | 'queue' | null>(null);
@@ -77,36 +75,10 @@ export const GameCard = ({
     setReactions((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
   }, [game.id, game.reactions]);
 
-  useEffect(() => {
-    const loadMainPhoto = async () => {
-      if (!game.mainPhotoId || !game.id || game.status === 'ANNOUNCED' || !user) {
-        setMainPhotoUrl(null);
-        return;
-      }
-
-      try {
-        const messages = await chatApi.getGameMessages(game.id, 1, 50, 'PHOTOS');
-        const mainPhotoMessage = messages.find(msg => msg.id === game.mainPhotoId);
-
-        if (mainPhotoMessage && mainPhotoMessage.mediaUrls && mainPhotoMessage.mediaUrls.length > 0) {
-          const thumbnailUrl = mainPhotoMessage.thumbnailUrls && mainPhotoMessage.thumbnailUrls[0]
-            ? mainPhotoMessage.thumbnailUrls[0]
-            : mainPhotoMessage.mediaUrls[0];
-          setMainPhotoUrl(thumbnailUrl || '');
-        } else {
-          setMainPhotoUrl(null);
-        }
-      } catch (error: any) {
-        // Silently handle 401 errors (unauthorized) - expected when user is not authenticated
-        if (error?.response?.status !== 401) {
-          console.error('Failed to load main photo:', error);
-        }
-        setMainPhotoUrl(null);
-      }
-    };
-
-    loadMainPhoto();
-  }, [game.mainPhotoId, game.id, game.status, user]);
+  const mainPhotoUrl =
+    game.status !== 'ANNOUNCED' && effectiveUser && game.mainPhoto?.thumbnailUrl
+      ? game.mainPhoto.thumbnailUrl
+      : null;
 
   const participants = game.participants ?? [];
   const participation = getGameParticipationState(participants, effectiveUser?.id, game);

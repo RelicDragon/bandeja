@@ -18,18 +18,19 @@ interface TeamListItemProps {
   gamesTogetherCount: number;
   onSelect: () => void;
   availability?: GameAvailabilityMatch;
+  projectedPlayers?: BasicUser[];
 }
 
-export function TeamListItem({ team, members, isSelected, gamesTogetherCount, onSelect, availability }: TeamListItemProps) {
+export function TeamListItem({ team, members, isSelected, gamesTogetherCount, onSelect, availability, projectedPlayers }: TeamListItemProps) {
   const { t } = useTranslation();
   const label = members.map((m) => m.firstName || '').filter(Boolean).join(' · ') || team.name;
   const teamVerbal = team.verbalStatus?.trim() || '';
   const { levelRow, socialRow } = useMemo(() => {
-    const lvl = teamAverageLevel(team);
+    const lvl = teamAverageLevel(team, projectedPlayers);
     const soc = teamAverageSocial(team);
-    const rel = teamAverageReliability(team);
+    const rel = teamAverageReliability(team, projectedPlayers);
     return formatInviteStatsRows(t, lvl, soc, rel);
-  }, [team, t]);
+  }, [team, t, projectedPlayers]);
 
   const dim = availability === 'none' || availability === 'partial';
   const availabilityLabel =

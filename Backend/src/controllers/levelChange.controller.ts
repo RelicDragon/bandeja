@@ -3,7 +3,14 @@ import { LevelChangeEventType, Sport } from '@prisma/client';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
-import { USER_SELECT_FIELDS } from '../utils/constants';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
+import { projectGameUsersForSportContext } from '../services/game/read.service';
+import { projectUserForSportContext } from '../services/user/userSportProfile.service';
+
+const LEVEL_CHANGE_USER_SELECT = {
+  ...USER_SELECT_FIELDS,
+  sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
+} as const;
 
 const getGameInclude = () => ({
   club: {
@@ -24,14 +31,14 @@ const getGameInclude = () => ({
   participants: {
     include: {
       user: {
-        select: USER_SELECT_FIELDS,
+        select: LEVEL_CHANGE_USER_SELECT,
       },
     },
   },
   outcomes: {
     include: {
       user: {
-        select: USER_SELECT_FIELDS,
+        select: LEVEL_CHANGE_USER_SELECT,
       },
     },
     orderBy: { position: 'asc' },
@@ -45,7 +52,7 @@ const getGameInclude = () => ({
               players: {
                 include: {
                   user: {
-                    select: USER_SELECT_FIELDS,
+                    select: LEVEL_CHANGE_USER_SELECT,
                   },
                 },
               },
@@ -65,7 +72,7 @@ const getGameInclude = () => ({
       players: {
         include: {
           user: {
-            select: USER_SELECT_FIELDS,
+            select: LEVEL_CHANGE_USER_SELECT,
           },
         },
       },
@@ -144,7 +151,7 @@ export const getUserLevelChanges = asyncHandler(async (req: AuthRequest, res: Re
       return {
         ...baseData,
         gameId: event.gameId,
-        game: event.game,
+        game: projectGameUsersForSportContext(event.game),
       };
     }
 
@@ -199,11 +206,17 @@ export const getUserLevelChangesByUserId = asyncHandler(async (req: AuthRequest,
 export const getGameLevelChanges = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
 
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: { sport: true },
+  });
+  const sport = game?.sport ?? Sport.PADEL;
+
   const levelChanges = await prisma.levelChangeEvent.findMany({
     where: { gameId },
     include: {
       user: {
-        select: USER_SELECT_FIELDS,
+        select: LEVEL_CHANGE_USER_SELECT,
       },
     },
     orderBy: { createdAt: 'asc' },
@@ -217,7 +230,7 @@ export const getGameLevelChanges = asyncHandler(async (req: AuthRequest, res: Re
     levelChange: event.levelAfter - event.levelBefore,
     eventType: event.eventType,
     sport: event.sport,
-    user: event.user,
+    user: projectUserForSportContext(event.user, sport),
     createdAt: event.createdAt,
   }));
 

@@ -62,3 +62,17 @@ describe('sportQuestionnaire cross-sport invite', () => {
     expect(getInviteNudgeCopyMode(user, 'PADEL')).toBe('same-sport');
   });
 });
+
+describe('sportQuestionnaire level source', () => {
+  it('isCreatorUnratedForSport uses tennis profile not padel gamesPlayed', () => {
+    const user = baseUser({
+      gamesPlayed: 40,
+      sportProfiles: [
+        { sport: 'PADEL', level: 3.8, reliability: 0, gamesPlayed: 40, gamesWon: 20, levelSource: 'QUESTIONNAIRE' },
+        { sport: 'TENNIS', level: 1, reliability: 0, gamesPlayed: 0, gamesWon: 0, levelSource: 'DEFAULT' },
+      ],
+    });
+    expect(isCreatorUnratedForSport(user, 'TENNIS')).toBe(true);
+    expect(isCreatorUnratedForSport(user, 'PADEL')).toBe(false);
+  });
+});

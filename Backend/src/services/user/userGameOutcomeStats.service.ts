@@ -1,3 +1,4 @@
+import { Sport } from '@prisma/client';
 import prisma from '../../config/database';
 
 export type GamesStatBucket = {
@@ -8,7 +9,18 @@ export type GamesStatBucket = {
   totalMatches: number;
 };
 
-export async function getUserGameOutcomeAggregates(userId: string): Promise<{
+function outcomeWhere(userId: string, sport?: Sport, createdAtGte?: Date) {
+  return {
+    userId,
+    ...(createdAtGte ? { createdAt: { gte: createdAtGte } } : {}),
+    ...(sport ? { game: { sport } } : {}),
+  };
+}
+
+export async function getUserGameOutcomeAggregates(
+  userId: string,
+  sport?: Sport,
+): Promise<{
   gamesLast30Days: number;
   gamesStats: GamesStatBucket[];
 }> {
@@ -19,18 +31,18 @@ export async function getUserGameOutcomeAggregates(userId: string): Promise<{
 
   const [gamesLast30Days, agg30, agg90, aggAll] = await Promise.all([
     prisma.gameOutcome.count({
-      where: { userId, createdAt: { gte: thirtyDaysAgo } },
+      where: outcomeWhere(userId, sport, thirtyDaysAgo),
     }),
     prisma.gameOutcome.aggregate({
-      where: { userId, createdAt: { gte: thirtyDaysAgo } },
+      where: outcomeWhere(userId, sport, thirtyDaysAgo),
       _sum: { wins: true, ties: true, losses: true },
     }),
     prisma.gameOutcome.aggregate({
-      where: { userId, createdAt: { gte: ninetyDaysAgo } },
+      where: outcomeWhere(userId, sport, ninetyDaysAgo),
       _sum: { wins: true, ties: true, losses: true },
     }),
     prisma.gameOutcome.aggregate({
-      where: { userId },
+      where: outcomeWhere(userId, sport),
       _sum: { wins: true, ties: true, losses: true },
     }),
   ]);

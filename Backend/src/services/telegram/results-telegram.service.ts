@@ -9,6 +9,7 @@ import { TranslationService } from '../chat/translation.service';
 import { escapeHTML, trimTextForTelegram } from './utils';
 import { RankingService } from '../ranking.service';
 import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
+import { formatSportLabel } from '../shared/notificationSport';
 import { Sport } from '@prisma/client';
 import { getUserTimezoneFromCityId, formatDateInTimezone, convertToUserTimezone } from '../user-timezone.service';
 import { format } from 'date-fns';
@@ -86,8 +87,12 @@ export class ResultsTelegramService {
     let gamesInLast30DaysMap = new Map<string, number>();
 
     if (cityId && participantUserIds.length > 0) {
-      cityRankMap = await RankingService.getCityLeaderboardRanks(cityId);
-      gamesInLast30DaysMap = await RankingService.getGamesInLast30Days(participantUserIds, cityId);
+      cityRankMap = await RankingService.getCityLeaderboardRanks(cityId, gameSport);
+      gamesInLast30DaysMap = await RankingService.getGamesInLast30Days(
+        participantUserIds,
+        cityId,
+        gameSport,
+      );
     }
 
     const participants = playingParticipants
@@ -95,16 +100,22 @@ export class ResultsTelegramService {
         const firstName = p.user?.firstName || '';
         const lastName = p.user?.lastName || '';
         const name = `${firstName} ${lastName}`.trim();
-        const sportLevel = p.user
-          ? resolveUserSportSnapshot(p.user, gameSport).level
+        const sportSnapshot = p.user
+          ? resolveUserSportSnapshot(p.user, gameSport)
           : null;
-        const level = sportLevel != null ? sportLevel.toFixed(2) : 'N/A';
+        const level = sportSnapshot != null ? sportSnapshot.level.toFixed(2) : 'N/A';
+        const reliability =
+          sportSnapshot != null ? sportSnapshot.reliability.toFixed(2) : 'N/A';
+        const sportRecord =
+          sportSnapshot != null
+            ? `${sportSnapshot.gamesWon}-${sportSnapshot.gamesPlayed - sportSnapshot.gamesWon} in ${sportSnapshot.gamesPlayed} rated games`
+            : 'N/A';
         const socialLevel = p.user?.socialLevel ? p.user.socialLevel.toFixed(2) : 'N/A';
         const cityRank = cityRankMap.get(p.userId);
         const gamesLast30Days = gamesInLast30DaysMap.get(p.userId) || 0;
         const gender = p.user?.gender;
         
-        let info = `<${name}> (level: ${level}, social level: ${socialLevel}`;
+        let info = `<${name}> (level: ${level}, reliability: ${reliability}, sport record W-L: ${sportRecord}, social level: ${socialLevel}`;
         if (gender === 'MALE' || gender === 'FEMALE') {
           info += `, gender: ${gender}`;
         }
@@ -254,7 +265,8 @@ export class ResultsTelegramService {
       genderInfo = 'This was a mixed pairs game (men and women). ';
     }
     
-    const prompt = `Give me a summary of match in informal manner for a group of friends. Start your summary with "Hello, ${cityName}!" or similar greeting and proceed with the summary starting from newline. ${timeInfo}${locationInfo}${contextInfo}${genderInfo}They played Padel game. Game participants are: ${participants}. This game results are: ${resultsText}. Return strictly only the summary. Make it a little funny but still informative. Use if you want additional information about users.`;
+    const sportLabel = formatSportLabel(gameSport, languageCode);
+    const prompt = `Give me a summary of match in informal manner for a group of friends. Start your summary with "Hello, ${cityName}!" or similar greeting and proceed with the summary starting from newline. ${timeInfo}${locationInfo}${contextInfo}${genderInfo}They played a ${sportLabel} game. Game participants are: ${participants}. This game results are: ${resultsText}. Return strictly only the summary. Make it a little funny but still informative. Use if you want additional information about users.`;
 
     try {
       const summary = await ai.createCompletion({
@@ -277,27 +289,9 @@ export class ResultsTelegramService {
     }
   }
 
-  static async getMainPhotoUrl(game: any): Promise<string | null> {
-    if (!game.mainPhotoId) {
-      return null;
-    }
-
-    const photoMessage = await prisma.chatMessage.findUnique({
-      where: { id: game.mainPhotoId },
-      select: { mediaUrls: true },
-    });
-
-    if (!photoMessage || !photoMessage.mediaUrls || photoMessage.mediaUrls.length === 0) {
-      return null;
-    }
-
-    const url = photoMessage.mediaUrls[0];
-    // Validate URL format
-    if (!url || (!url.startsWith('http') && !url.startsWith('/'))) {
-      return null;
-    }
-
-    return url;
+  static async getMainPhotoUrl(game: { mainPhotoId?: string | null }): Promise<string | null> {
+    const { GamePhotoReadService } = await import('../gamePhoto/gamePhoto.read.service');
+    return GamePhotoReadService.getMainPhotoUrl(game);
   }
 
   static async downloadImageAsBuffer(imageUrl: string): Promise<Buffer> {
@@ -442,7 +436,10 @@ export class ResultsTelegramService {
 
       await prisma.game.update({
         where: { id: gameId },
-        data: { resultsSentToTelegram: true },
+        data: {
+          resultsSentToTelegram: true,
+          telegramResultsSummary: summaryText,
+        },
       });
     } catch (error: any) {
       console.error('Failed to send results to Telegram:', error);

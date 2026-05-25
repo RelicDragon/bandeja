@@ -26,7 +26,7 @@ WHERE gc."ownerId" IS NOT NULL
 ALTER TABLE "padelpulse"."GroupChannel" DROP CONSTRAINT "GroupChannel_ownerId_fkey";
 
 -- DropIndex
-DROP INDEX "padelpulse"."GroupChannel_ownerId_idx";
+DROP INDEX IF EXISTS "GroupChannel_ownerId_idx";
 
 -- AlterTable
 ALTER TABLE "GroupChannel" DROP COLUMN "ownerId";

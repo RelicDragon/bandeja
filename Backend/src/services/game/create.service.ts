@@ -29,6 +29,10 @@ export class GameCreateService {
       throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
     }
 
+    if (data.mainPhotoId !== undefined && data.mainPhotoId !== null) {
+      throw new ApiError(400, 'mainPhotoId cannot be set when creating a game');
+    }
+
     let entityType = data.entityType || EntityType.GAME;
     let maxParticipants = entityType === EntityType.BAR ? 999 : (data.maxParticipants || 4);
     if (entityType === EntityType.GAME && maxParticipants >= 8) {
@@ -274,7 +278,6 @@ export class GameCreateService {
         priceCurrency: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : data.priceCurrency,
         metadata: data.metadata,
         timeIsSet: data.timeIsSet ?? false,
-        mainPhotoId: data.mainPhotoId,
         status: calculateGameStatus({
           startTime,
           endTime,

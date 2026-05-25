@@ -25,6 +25,8 @@ import {
   playersPerMatchOf,
 } from './matchUtils';
 
+/** `participant.user.level` is sport-projected for `game.sport` (mapPrismaForGeneration → projectUserForSportContext), not global User.level. */
+
 interface CourtResult {
   winners: string[];
   losers: string[];

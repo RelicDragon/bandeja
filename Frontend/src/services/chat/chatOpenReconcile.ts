@@ -29,7 +29,7 @@ export type ChatOpenReconcileParams = {
 
 /** Merge missed buffers for all game tab heads (pre-paint flush). */
 export function takeAllGameTabMissedMessages(contextId: string): ChatMessage[] {
-  const tabs: ChatType[] = ['PUBLIC', 'PRIVATE', 'ADMINS', 'PHOTOS'];
+  const tabs: ChatType[] = ['PUBLIC', 'PRIVATE', 'ADMINS'];
   const store = useChatSyncStore.getState();
   const collected: ChatMessage[] = [];
   for (const tab of tabs) {

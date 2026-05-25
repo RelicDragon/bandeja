@@ -82,7 +82,7 @@ export async function sendGameChatNotification(
           : scheduleLine;
         const formattedMessage = `${header}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
         
-        const chatTypeChar = { [ChatType.PUBLIC]: 'P', [ChatType.PRIVATE]: 'V', [ChatType.ADMINS]: 'A', [ChatType.PHOTOS]: 'F' }[chatType] ?? 'P';
+        const chatTypeChar = { [ChatType.PUBLIC]: 'P', [ChatType.PRIVATE]: 'V', [ChatType.ADMINS]: 'A' }[chatType] ?? 'P';
         
         const buttons = [[
           {
@@ -164,7 +164,7 @@ export async function sendGameChatNotification(
           : scheduleLine;
         const formattedMessage = `${header}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
         
-        const chatTypeChar = { [ChatType.PUBLIC]: 'P', [ChatType.PRIVATE]: 'V', [ChatType.ADMINS]: 'A', [ChatType.PHOTOS]: 'F' }[chatType] ?? 'P';
+        const chatTypeChar = { [ChatType.PUBLIC]: 'P', [ChatType.PRIVATE]: 'V', [ChatType.ADMINS]: 'A' }[chatType] ?? 'P';
         
         const buttons = [[
           {

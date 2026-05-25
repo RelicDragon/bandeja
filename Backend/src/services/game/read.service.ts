@@ -19,6 +19,32 @@ const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
   },
 } as const;
 
+export const MAIN_PHOTO_RELATION_SELECT = {
+  select: {
+    id: true,
+    thumbnailUrl: true,
+    originalUrl: true,
+  },
+} as const;
+
+export function projectGamePhotoPayload(game: any): any {
+  const mainPhoto = game.mainPhoto;
+  const { mainPhotoId: _mainPhotoId, photos: _photos, ...rest } = game;
+  void _mainPhotoId;
+  void _photos;
+  return {
+    ...rest,
+    photosCount: game.photosCount ?? 0,
+    mainPhoto: mainPhoto
+      ? {
+          id: mainPhoto.id,
+          thumbnailUrl: mainPhoto.thumbnailUrl,
+          originalUrl: mainPhoto.originalUrl,
+        }
+      : null,
+  };
+}
+
 export function projectGameUsersForSportContext<T extends { sport?: Sport; [key: string]: any }>(game: T): T {
   const sport = game.sport ?? Sport.PADEL;
   return {
@@ -51,6 +77,61 @@ export function projectGameUsersForSportContext<T extends { sport?: Sport; [key:
           })),
         })),
       })),
+      outcomes: (round.outcomes ?? []).map((o: any) => ({
+        ...o,
+        user: projectUserForSportContext(o.user, sport),
+      })),
+    })),
+  };
+}
+
+export function projectRoundUsersForSportContext<
+  T extends { matches?: any[]; outcomes?: any[] },
+>(round: T, sport: Sport): T {
+  return {
+    ...round,
+    matches: (round.matches ?? []).map((match: any) => ({
+      ...match,
+      teams: (match.teams ?? []).map((team: any) => ({
+        ...team,
+        players: (team.players ?? []).map((player: any) => ({
+          ...player,
+          user: projectUserForSportContext(player.user, sport),
+        })),
+      })),
+    })),
+    outcomes: (round.outcomes ?? []).map((o: any) => ({
+      ...o,
+      user: projectUserForSportContext(o.user, sport),
+    })),
+  };
+}
+
+export function projectMatchUsersForSportContext<T extends { teams?: any[] }>(
+  match: T,
+  sport: Sport,
+): T {
+  return {
+    ...match,
+    teams: (match.teams ?? []).map((team: any) => ({
+      ...team,
+      players: (team.players ?? []).map((player: any) => ({
+        ...player,
+        user: projectUserForSportContext(player.user, sport),
+      })),
+    })),
+  };
+}
+
+export function projectUserTeamForSportContext<
+  T extends { owner?: any; members?: Array<{ user?: any; [key: string]: unknown }> },
+>(team: T, sport: Sport): T {
+  return {
+    ...team,
+    owner: team.owner ? projectUserForSportContext(team.owner, sport) : team.owner,
+    members: (team.members ?? []).map((m) => ({
+      ...m,
+      user: m.user ? projectUserForSportContext(m.user, sport) : m.user,
     })),
   };
 }
@@ -135,6 +216,7 @@ export const getBaseGameInclude = () => ({
       roundType: true,
     },
   },
+  mainPhoto: MAIN_PHOTO_RELATION_SELECT,
 });
 
 const getGamesCourtInclude = () => ({
@@ -237,6 +319,7 @@ const getAvailableGamesInclude = () => ({
       },
     },
   },
+  mainPhoto: MAIN_PHOTO_RELATION_SELECT,
 });
 
 export const getGameInclude = () => ({
@@ -404,7 +487,7 @@ export class GameReadService {
       userNote = note?.content || null;
     }
 
-    const gameWithSportLevels = projectGameUsersForSportContext(game);
+    const gameWithSportLevels = projectGamePhotoPayload(projectGameUsersForSportContext(game));
     const base = {
       ...gameWithSportLevels,
       isClubFavorite,
@@ -490,7 +573,7 @@ export class GameReadService {
       ...(offset && { skip: offset }),
     });
 
-    const games = gamesRaw.map(projectGameUsersForSportContext);
+    const games = gamesRaw.map((g) => projectGamePhotoPayload(projectGameUsersForSportContext(g)));
 
     // Batch fetch user notes
     if (userId && games.length > 0) {
@@ -536,7 +619,7 @@ export class GameReadService {
       include: getGameInclude() as any,
       orderBy: { startTime: 'desc' },
     });
-    const games = gamesRaw.map(projectGameUsersForSportContext);
+    const games = gamesRaw.map((g) => projectGamePhotoPayload(projectGameUsersForSportContext(g)));
 
     // Batch fetch user notes
     if (games.length > 0) {
@@ -616,7 +699,7 @@ export class GameReadService {
       take: limit,
       skip: offset,
     });
-    const games = gamesRaw.map(projectGameUsersForSportContext);
+    const games = gamesRaw.map((g) => projectGamePhotoPayload(projectGameUsersForSportContext(g)));
 
     if (games.length > 0) {
       const gameIds = games.map(g => g.id);
@@ -724,7 +807,7 @@ export class GameReadService {
       include: getAvailableGamesInclude() as any,
       orderBy: { startTime: 'desc' },
     });
-    const games = gamesRaw.map(projectGameUsersForSportContext);
+    const games = gamesRaw.map((g) => projectGamePhotoPayload(projectGameUsersForSportContext(g)));
 
     if (games.length > 0) {
       const gameIds = games.map(g => g.id);

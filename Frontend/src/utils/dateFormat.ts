@@ -26,6 +26,23 @@ export const formatDate = (date: Date | string, formatStr: string): string => {
   return dateFnsFormat(dateObj, formatStr, { locale: currentLocale });
 };
 
+/** Compact relative time for social feeds (e.g. 5m, 15h, 3d). */
+export const formatShortRelativeTime = (date: Date | string): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const seconds = Math.floor((Date.now() - dateObj.getTime()) / 1000);
+  if (seconds < 60) return i18n.t('common.now');
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}${i18n.t('common.m')}`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}${i18n.t('common.h')}`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}${i18n.t('common.d')}`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 52) return `${weeks}${i18n.t('common.w')}`;
+  const years = Math.floor(days / 365);
+  return years < 1 ? `52${i18n.t('common.w')}` : `${years}${i18n.t('common.y')}`;
+};
+
 export const formatRelativeTime = (date: Date | string): string => {
   const currentLocale = localeMap[extractLanguageCode(i18n.language)] || enGB;
   const dateObj = typeof date === 'string' ? new Date(date) : date;

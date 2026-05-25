@@ -80,8 +80,6 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'scoringMode',
   'hasGoldenPoint',
   'mediaUrls',
-  'photosCount',
-  'mainPhotoId',
   'resultsSentToTelegram',
   'parentId',
   'trainerId',
@@ -585,50 +583,8 @@ export class GameUpdateService {
       }
     }
 
-    if (data.mainPhotoId !== undefined) {
-      if (data.mainPhotoId === null) {
-        const photoCount = await prisma.chatMessage.count({
-          where: {
-            gameId: id,
-            chatType: 'PHOTOS',
-            mediaUrls: { isEmpty: false },
-            deletedAt: null,
-          }
-        });
-
-        if (photoCount > 0) {
-          const firstPhoto = await prisma.chatMessage.findFirst({
-            where: {
-              gameId: id,
-              chatType: 'PHOTOS',
-              mediaUrls: { isEmpty: false },
-              deletedAt: null,
-            },
-            orderBy: { createdAt: 'asc' }
-          });
-
-          if (firstPhoto) {
-            updateData.mainPhotoId = firstPhoto.id;
-          }
-        } else {
-          updateData.mainPhotoId = null;
-        }
-      } else {
-        const photoMessage = await prisma.chatMessage.findFirst({
-          where: {
-            id: data.mainPhotoId,
-            gameId: id,
-            chatType: 'PHOTOS',
-            mediaUrls: { isEmpty: false },
-            deletedAt: null,
-          }
-        });
-
-        if (!photoMessage) {
-          throw new ApiError(400, 'Main photo must be a valid photo message from this game');
-        }
-        updateData.mainPhotoId = data.mainPhotoId;
-      }
+    if (data.mainPhotoId !== undefined || data.photosCount !== undefined) {
+      throw new ApiError(400, 'Game photos must be managed via /games/:gameId/photos endpoints');
     }
 
     if (

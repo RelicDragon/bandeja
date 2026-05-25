@@ -14,6 +14,11 @@ export type ChatVideoTranscodeMeta = {
   height: number;
 };
 
+export type ChatVideoTrimSeconds = {
+  startSec: number;
+  endSec: number;
+};
+
 function fitWithinMax(width: number, height: number): { width: number; height: number } {
   if (width <= 0 || height <= 0) {
     return { width: MAX_VIDEO_WIDTH, height: MAX_VIDEO_HEIGHT };
@@ -33,7 +38,8 @@ export async function transcodeChatVideoToMp4Core(
   file: File,
   tempId: string,
   meta: ChatVideoTranscodeMeta,
-  onProgress?: TranscodeProgressFn
+  onProgress?: TranscodeProgressFn,
+  trim?: ChatVideoTrimSeconds
 ): Promise<File> {
   const {
     Input,
@@ -67,8 +73,16 @@ export async function transcodeChatVideoToMp4Core(
   });
 
   const { width, height } = fitWithinMax(meta.width, meta.height);
-  const trimEndSec = meta.durationMs / 1000;
   const maxSec = MAX_VIDEO_DURATION_MS / 1000;
+  const sourceEndSec = meta.durationMs / 1000;
+  const userStart = trim?.startSec ?? 0;
+  const userEnd = trim?.endSec ?? sourceEndSec;
+  const startSec = Math.max(0, Math.min(userStart, sourceEndSec));
+  const endSec = Math.min(Math.max(userEnd, startSec + 0.5), sourceEndSec, maxSec);
+  const conversionTrim =
+    startSec > 0 || endSec < sourceEndSec || sourceEndSec > maxSec
+      ? { start: startSec, end: Math.min(endSec, maxSec) }
+      : undefined;
 
   const audioCodec = await getFirstEncodableAudioCodec(['aac']);
 
@@ -76,7 +90,7 @@ export async function transcodeChatVideoToMp4Core(
     input,
     output,
     tracks: 'primary',
-    trim: trimEndSec > maxSec ? { start: 0, end: maxSec } : undefined,
+    trim: conversionTrim,
     video: {
       codec: videoCodec,
       bitrate: TARGET_VIDEO_BITRATE,

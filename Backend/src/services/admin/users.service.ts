@@ -2,13 +2,50 @@ import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
 import { MediaCleanupService } from '../mediaCleanup.service';
 import { hashPassword } from '../../utils/hash';
-import { Gender } from '@prisma/client';
+import { Gender, Sport, SportLevelSource } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { PROFILE_SELECT_FIELDS, USER_SELECT_FIELDS } from '../../utils/constants';
 import { resolveDisplayNameData } from '../user/userDisplayName.service';
 import { revokeAllRefreshSessionsForUser } from '../auth/userRefreshSession.service';
+import {
+  clampSportLevel,
+  loadProfileUser,
+  parseSportParam,
+  upsertPadelSportProfileFromUser,
+} from '../user/userSportProfile.service';
 
 const USERS_PAGE_SIZE = 50;
+
+type SportProfileLevelInput = { sport: string; level: number };
+
+async function applySportProfileLevelUpdates(
+  userId: string,
+  sportProfileLevels: SportProfileLevelInput[],
+): Promise<void> {
+  for (const entry of sportProfileLevels) {
+    const sport = parseSportParam(entry.sport);
+    const level = clampSportLevel(entry.level);
+    await prisma.userSportProfile.upsert({
+      where: { userId_sport: { userId, sport } },
+      create: {
+        userId,
+        sport,
+        level,
+        levelSource: SportLevelSource.MANUAL,
+      },
+      update: {
+        level,
+        levelSource: SportLevelSource.MANUAL,
+      },
+    });
+    if (sport === Sport.PADEL) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { level },
+      });
+    }
+  }
+}
 
 export class AdminUsersService {
   static async getAllUsers(params: { cityId?: string; search?: string; page?: number }) {
@@ -156,7 +193,7 @@ export class AdminUsersService {
         lastName: nameResolved.lastName ?? null,
         nameIsSet: nameResolved.nameIsSet,
         gender,
-        level: level !== undefined ? level : 3.5,
+        level: level !== undefined ? clampSportLevel(level) : 3.5,
         currentCityId,
         isActive: isActive !== undefined ? isActive : true,
         isAdmin: isAdmin !== undefined ? isAdmin : false,
@@ -170,7 +207,11 @@ export class AdminUsersService {
       select: PROFILE_SELECT_FIELDS,
     });
 
-    return user;
+    await upsertPadelSportProfileFromUser(user.id, {
+      level: level !== undefined ? clampSportLevel(level) : 3.5,
+    });
+
+    return loadProfileUser(user.id);
   }
 
   static async updateUser(userId: string, data: {
@@ -180,6 +221,7 @@ export class AdminUsersService {
     lastName?: string;
     gender?: Gender;
     level?: number;
+    sportProfileLevels?: SportProfileLevelInput[];
     currentCityId?: string;
     isActive?: boolean;
     isAdmin?: boolean;
@@ -195,6 +237,7 @@ export class AdminUsersService {
       lastName,
       gender,
       level,
+      sportProfileLevels,
       currentCityId,
       isActive,
       isAdmin,
@@ -246,7 +289,7 @@ export class AdminUsersService {
       }
     }
 
-    const user = await prisma.user.update({
+    await prisma.user.update({
       where: { id: userId },
       data: {
         ...(phone !== undefined && { phone }),
@@ -257,7 +300,6 @@ export class AdminUsersService {
           nameIsSet: nameResolvedForUpdate.nameIsSet,
         }),
         ...(gender !== undefined && { gender }),
-        ...(level !== undefined && { level: Math.max(1.0, Math.min(7.0, level)) }),
         ...(currentCityId !== undefined && { currentCityId }),
         ...(isActive !== undefined && { isActive }),
         ...(isAdmin !== undefined && { isAdmin }),
@@ -268,10 +310,16 @@ export class AdminUsersService {
           maxParticipantsInGame: Math.max(2, Math.min(999, Math.floor(maxParticipantsInGame))),
         }),
       },
-      select: PROFILE_SELECT_FIELDS,
     });
 
-    return user;
+    const levelUpdates =
+      sportProfileLevels ??
+      (level !== undefined ? [{ sport: Sport.PADEL, level }] : undefined);
+    if (levelUpdates?.length) {
+      await applySportProfileLevelUpdates(userId, levelUpdates);
+    }
+
+    return loadProfileUser(userId);
   }
 
   static async resetUserPassword(userId: string, newPassword: string) {

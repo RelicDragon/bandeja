@@ -11,6 +11,7 @@ import {
   YourLeaguesHomeSection,
 } from '@/components/home';
 import { SportQuestionnairePrompt } from '@/components/sportQuestionnaire';
+import { StoriesRail } from '@/components/stories/StoriesRail';
 import { getUserPrimarySport } from '@/utils/profileSports';
 import { Button, MainTabFooter, MonthCalendar } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -357,6 +358,7 @@ export const MyTab = () => {
   const calendarContentPanel = (
     <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
       <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
+        {user && <StoriesRail />}
         {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
         <CityPromptBanner />
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!loading ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
@@ -439,6 +441,7 @@ export const MyTab = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
+        {user && <StoriesRail />}
         {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
         <CityPromptBanner />
         <div

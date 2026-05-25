@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 import { usersApi } from '@/api';
 import { Button, ConfirmationModal } from '@/components';
 import { Sports } from '@shared/sport';
+import { findSportProfile, getDisplayLevelForSport } from '@/utils/profileSports';
 import { SportQuestionnaireSheet } from '@/components/sportQuestionnaire/SportQuestionnaireSheet';
 import { Sparkles, X } from 'lucide-react';
 
@@ -19,8 +20,8 @@ export function WelcomeQuestionnairePrompt() {
 
   if (user == null || user.welcomeScreenPassed === true || user.cityIsSet !== true) return null;
 
-  const levelLabel =
-    typeof user.level === 'number' && Number.isFinite(user.level) ? user.level.toFixed(1) : '—';
+  const padelLevel = findSportProfile(user, Sports.PADEL)?.level ?? getDisplayLevelForSport(user, Sports.PADEL);
+  const levelLabel = Number.isFinite(padelLevel) ? padelLevel.toFixed(1) : '—';
 
   const handleDismissForever = async () => {
     setSkipLoading(true);

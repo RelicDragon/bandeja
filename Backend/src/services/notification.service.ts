@@ -98,9 +98,10 @@ class NotificationService {
   }
 
   async sendGameChatNotification(message: any, game: any, sender: any, _recipients: any[]) {
+    const chatType = message.chatType as ChatType;
+
     const mentionIds = message.mentionIds || [];
     const hasMentions = mentionIds.length > 0;
-    const chatType = message.chatType as ChatType;
 
     const currentGameParticipants = await prisma.gameParticipant.findMany({
       where: { gameId: game.id },

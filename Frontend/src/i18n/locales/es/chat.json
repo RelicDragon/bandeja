@@ -230,8 +230,7 @@
     "types": {
       "PUBLIC": "General",
       "PRIVATE": "Participantes",
-      "ADMINS": "Organizadores",
-      "PHOTOS": "Foto"
+      "ADMINS": "Organizadores"
     },
     "create": "Crear",
     "search": "Buscar",

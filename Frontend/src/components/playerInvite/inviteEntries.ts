@@ -23,6 +23,23 @@ function acceptedMemberUsers(team: UserTeam): BasicUser[] {
   return members.filter((m) => m.status === 'ACCEPTED').map((m) => m.user).filter(Boolean) as BasicUser[];
 }
 
+function projectedUserLookup(projectedUsers?: BasicUser[]): Map<string, BasicUser> | undefined {
+  if (!projectedUsers?.length) return undefined;
+  return new Map(projectedUsers.map((u) => [u.id, u]));
+}
+
+function memberLevel(u: BasicUser, lookup?: Map<string, BasicUser>): number {
+  const projected = lookup?.get(u.id);
+  if (projected) return typeof projected.level === 'number' ? projected.level : 0;
+  return typeof u.level === 'number' ? u.level : 0;
+}
+
+function memberReliability(u: BasicUser, lookup?: Map<string, BasicUser>): number | undefined {
+  const projected = lookup?.get(u.id);
+  const rel = projected?.reliability ?? u.reliability;
+  return typeof rel === 'number' && Number.isFinite(rel) ? rel : undefined;
+}
+
 export function teamInteractionScore(
   team: UserTeam,
   getUserMetadata: (userId: string) => UserMetadata | undefined
@@ -37,10 +54,11 @@ export function teamGamesTogetherScore(
   return acceptedMemberUsers(team).reduce((sum, u) => sum + (getUserMetadata(u.id)?.gamesTogetherCount ?? 0), 0);
 }
 
-export function teamAverageLevel(team: UserTeam): number {
+export function teamAverageLevel(team: UserTeam, projectedUsers?: BasicUser[]): number {
+  const lookup = projectedUserLookup(projectedUsers);
   const users = acceptedMemberUsers(team);
   if (users.length === 0) return 0;
-  const sum = users.reduce((s, u) => s + (typeof u.level === 'number' ? u.level : 0), 0);
+  const sum = users.reduce((s, u) => s + memberLevel(u, lookup), 0);
   return sum / users.length;
 }
 
@@ -51,12 +69,11 @@ export function teamAverageSocial(team: UserTeam): number {
   return sum / users.length;
 }
 
-export function teamAverageReliability(team: UserTeam): number | undefined {
+export function teamAverageReliability(team: UserTeam, projectedUsers?: BasicUser[]): number | undefined {
+  const lookup = projectedUserLookup(projectedUsers);
   const users = acceptedMemberUsers(team);
   if (users.length === 0) return undefined;
-  const rels = users
-    .map((u) => u.reliability)
-    .filter((r): r is number => typeof r === 'number' && Number.isFinite(r));
+  const rels = users.map((u) => memberReliability(u, lookup)).filter((r): r is number => r !== undefined);
   if (rels.length === 0) return undefined;
   return rels.reduce((a, b) => a + b, 0) / rels.length;
 }
@@ -186,7 +203,7 @@ export function filterAndSortInviteEntries(
       tList = tList.filter((t) => teamMatchesSearch(t, opts.searchQuery));
     }
     tList = tList.filter((t) => {
-      const lv = teamAverageLevel(t);
+      const lv = teamAverageLevel(t, users);
       const sv = teamAverageSocial(t);
       return lv >= lMin && lv <= lMax && sv >= sMin && sv <= sMax;
     });
