@@ -11,6 +11,7 @@ export type ReplicatePredictionStatus =
 
 export type Flux2MaxInput = {
   prompt: string;
+  /** HTTPS URLs or `data:image/...;base64,...` data URIs (Replicate file inputs). */
   input_images?: string[];
   aspect_ratio?: string;
   resolution?: string;

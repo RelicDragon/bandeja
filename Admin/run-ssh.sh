@@ -6,6 +6,8 @@ SSH_OPTS=(
   -o ExitOnForwardFailure=yes
   -o ServerAliveInterval=60
   -o ServerAliveCountMax=3
+  -o IdentitiesOnly=yes
+  -o IdentityFile="${SSH_KEY}"
 )
 
 cleanup() {
@@ -21,13 +23,37 @@ fi
 if [[ -z "${SSH_AUTH_SOCK:-}" ]]; then
   echo "Starting ssh-agent..."
   eval "$(ssh-agent -s)"
+  export SSH_AUTH_SOCK SSH_AGENT_PID
   trap 'kill "${DB_PID:-}" "${ADMIN_PID:-}" 2>/dev/null; kill "${SSH_AGENT_PID:-}" 2>/dev/null' EXIT INT TERM
 else
+  export SSH_AUTH_SOCK
   trap cleanup EXIT INT TERM
 fi
 
-echo "Add SSH key (enter passphrase once):"
-ssh-add "${SSH_KEY}" 2>&1 | grep -v "already in the agent" || true
+key_fingerprint() {
+  ssh-keygen -lf "${SSH_KEY}" -E sha256 2>/dev/null | awk '{print $2}'
+}
+
+key_in_agent() {
+  local fp
+  fp=$(key_fingerprint) || return 1
+  ssh-add -l 2>/dev/null | grep -qF "${fp}"
+}
+
+ensure_key_loaded() {
+  if key_in_agent; then
+    return 0
+  fi
+  echo "Unlock SSH key (once):"
+  if [[ "$(uname -s)" == Darwin ]]; then
+    ssh-add --apple-use-keychain "${SSH_KEY}" 2>/dev/null \
+      || ssh-add -K "${SSH_KEY}"
+  else
+    ssh-add "${SSH_KEY}"
+  fi
+}
+
+ensure_key_loaded
 
 wait_for_port() {
   local port=$1 name=$2 pid=$3
@@ -47,12 +73,12 @@ wait_for_port() {
 }
 
 echo "DB:       localhost:15432 -> 188.245.101.10:5432"
-ssh -N "${SSH_OPTS[@]}" -L 127.0.0.1:15432:127.0.0.1:5432 -i "${SSH_KEY}" relic@188.245.101.10 &
+ssh -N "${SSH_OPTS[@]}" -L 127.0.0.1:15432:127.0.0.1:5432 relic@188.245.101.10 &
 DB_PID=$!
 wait_for_port 15432 "DB" "${DB_PID}"
 
 echo "Admin UI: localhost:9000 -> back.bandeja.com:8080"
-ssh -N "${SSH_OPTS[@]}" -L 127.0.0.1:9000:127.0.0.1:8080 -i "${SSH_KEY}" root@back.bandeja.com &
+ssh -N "${SSH_OPTS[@]}" -L 127.0.0.1:9000:127.0.0.1:8080 root@back.bandeja.com &
 ADMIN_PID=$!
 wait_for_port 9000 "Admin" "${ADMIN_PID}"
 

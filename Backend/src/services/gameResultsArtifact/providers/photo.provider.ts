@@ -5,8 +5,12 @@ import {
 } from '../../replicate/replicateImage.service';
 import { ResultsTelegramService } from '../../telegram/results-telegram.service';
 import {
+  downloadAvatarAsDataUri,
+  type ParticipantAvatarSources,
+} from '../gameResultsArtifact.avatarInput';
+import {
   buildResultsPhotoPrompt,
-  collectParticipantAvatarUrls,
+  collectParticipantAvatarSources,
   loadGameForResultsPhoto,
 } from '../gameResultsArtifact.photoContext';
 
@@ -15,10 +19,37 @@ export class PhotoProvider {
     return ReplicateImageService.isConfigured();
   }
 
+  private static async avatarSourcesToDataUris(
+    sources: ParticipantAvatarSources[]
+  ): Promise<string[]> {
+    const results = await Promise.all(
+      sources.map((entry) =>
+        downloadAvatarAsDataUri(entry, (url) =>
+          ResultsTelegramService.downloadImageAsBuffer(url)
+        )
+      )
+    );
+    const uris = results.filter((uri): uri is string => uri !== null);
+    if (sources.length > 0 && uris.length < sources.length) {
+      console.warn(
+        JSON.stringify({
+          scope: 'results-artifacts',
+          at: new Date().toISOString(),
+          step: 'photo-avatars',
+          status: 'partial',
+          requested: sources.length,
+          loaded: uris.length,
+        })
+      );
+    }
+    return uris;
+  }
+
   static async buildFluxInput(gameId: string): Promise<Flux2MaxInput | null> {
     const game = await loadGameForResultsPhoto(gameId);
     if (!game) return null;
-    const input_images = collectParticipantAvatarUrls(game);
+    const sources = collectParticipantAvatarSources(game);
+    const input_images = await this.avatarSourcesToDataUris(sources);
     return {
       prompt: buildResultsPhotoPrompt(game),
       input_images,

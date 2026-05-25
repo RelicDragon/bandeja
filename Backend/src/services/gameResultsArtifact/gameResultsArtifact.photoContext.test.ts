@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { Sport } from '@prisma/client';
-import { buildResultsPhotoPrompt } from './gameResultsArtifact.photoContext';
+import {
+  buildResultsPhotoPrompt,
+  collectParticipantAvatarSources,
+} from './gameResultsArtifact.photoContext';
 
 const game = {
   id: 'g1',
@@ -18,11 +21,11 @@ const game = {
   participants: [
     {
       userId: 'u1',
-      user: { id: 'u1', firstName: 'Alex', lastName: 'K', avatar: null, originalAvatar: null },
+      user: { id: 'u1', firstName: 'Alex', lastName: 'K', avatar: null },
     },
     {
       userId: 'u2',
-      user: { id: 'u2', firstName: 'Sam', lastName: 'R', avatar: null, originalAvatar: null },
+      user: { id: 'u2', firstName: 'Sam', lastName: 'R', avatar: null },
     },
   ],
 };
@@ -35,5 +38,37 @@ assert.match(prompt, /Padel Club/);
 assert.match(prompt, /Alex K/);
 assert.doesNotMatch(prompt, /Hello,/i);
 assert.doesNotMatch(prompt, /summary/i);
+
+const standardAvatar =
+  'https://cdn.example.com/uploads/avatars/circular/abc_avatar.jpg';
+const withAvatars = {
+  ...game,
+  participants: [
+    {
+      userId: 'u1',
+      user: {
+        id: 'u1',
+        firstName: 'Alex',
+        lastName: 'K',
+        avatar: standardAvatar,
+      },
+    },
+    {
+      userId: 'u2',
+      user: { id: 'u2', firstName: 'Sam', lastName: 'R', avatar: null },
+    },
+  ],
+};
+assert.deepEqual(
+  collectParticipantAvatarSources(
+    withAvatars as Parameters<typeof collectParticipantAvatarSources>[0]
+  ),
+  [
+    {
+      primary: 'https://cdn.example.com/uploads/avatars/circular/abc_avatar.tiny.jpg',
+      fallback: standardAvatar,
+    },
+  ]
+);
 
 console.log('gameResultsArtifact.photoContext.test.ts: ok');

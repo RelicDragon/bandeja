@@ -1,7 +1,13 @@
 import { Sport } from '@prisma/client';
 import prisma from '../../config/database';
-import { config } from '../../config/env';
 import { formatSportLabel } from '../shared/notificationSport';
+import {
+  resolveParticipantAvatarSources,
+  toPublicAvatarUrl,
+  type ParticipantAvatarSources,
+} from './gameResultsArtifact.avatarInput';
+
+export { toPublicAvatarUrl };
 import { getUserDisplayName } from '../../utils/systemMessages';
 
 const GAME_FOR_PHOTO_SELECT = {
@@ -30,7 +36,6 @@ const GAME_FOR_PHOTO_SELECT = {
           firstName: true,
           lastName: true,
           avatar: true,
-          originalAvatar: true,
         },
       },
     },
@@ -48,26 +53,19 @@ export async function loadGameForResultsPhoto(gameId: string) {
   });
 }
 
-function toPublicAvatarUrl(path: string | null | undefined): string | null {
-  if (!path?.trim()) return null;
-  const trimmed = path.trim();
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    return trimmed;
-  }
-  const key = trimmed.startsWith('/') ? trimmed.slice(1) : trimmed;
-  const domain = config.aws.cloudFrontDomain.replace(/^https?:\/\//, '');
-  return `https://${domain}/${key}`;
-}
+export type { ParticipantAvatarSources };
 
-export function collectParticipantAvatarUrls(game: NonNullable<GamePhotoArtifactContext>): string[] {
-  const urls: string[] = [];
+export function collectParticipantAvatarSources(
+  game: NonNullable<GamePhotoArtifactContext>
+): ParticipantAvatarSources[] {
+  const sources: ParticipantAvatarSources[] = [];
   for (const p of game.participants) {
-    const path = p.user?.originalAvatar || p.user?.avatar;
-    const url = toPublicAvatarUrl(path);
-    if (url) urls.push(url);
-    if (urls.length >= 8) break;
+    if (!p.user) continue;
+    const entry = resolveParticipantAvatarSources(p.user);
+    if (entry) sources.push(entry);
+    if (sources.length >= 8) break;
   }
-  return urls;
+  return sources;
 }
 
 export function buildResultsPhotoPrompt(game: NonNullable<GamePhotoArtifactContext>): string {
