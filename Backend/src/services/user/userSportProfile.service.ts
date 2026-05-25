@@ -63,6 +63,18 @@ export function assertSportImplemented(sport: Sport): void {
   }
 }
 
+/** Keep `primarySport` ∈ `sportsEnabled` when at least one sport is enabled. */
+export function reconcilePrimarySport(
+  primarySport: Sport | null | undefined,
+  sportsEnabled: Sport[],
+): Sport {
+  if (sportsEnabled.length === 0) {
+    return primarySport ?? Sport.PADEL;
+  }
+  const current = primarySport ?? Sport.PADEL;
+  return sportsEnabled.includes(current) ? current : sportsEnabled[0]!;
+}
+
 export function parseSportParam(input: unknown): Sport {
   const sport = resolveSport(input);
   assertSportImplemented(sport);
@@ -290,6 +302,17 @@ export async function loadProfileUser(userId: string) {
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
+  const enabled = user.sportsEnabled ?? [];
+  if (enabled.length > 0) {
+    const primarySport = reconcilePrimarySport(user.primarySport, enabled);
+    if (primarySport !== user.primarySport) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { primarySport },
+      });
+      user.primarySport = primarySport;
+    }
+  }
   return enrichProfileUser(user);
 }
 
@@ -319,7 +342,7 @@ export async function addUserSport(userId: string, sport: Sport) {
 
   const existing = await prisma.user.findUnique({
     where: { id: userId },
-    select: { sportsEnabled: true, sportProfiles: { select: { sport: true } } },
+    select: { sportsEnabled: true, primarySport: true, sportProfiles: { select: { sport: true } } },
   });
   if (!existing) {
     throw new ApiError(404, 'User not found');
@@ -327,11 +350,13 @@ export async function addUserSport(userId: string, sport: Sport) {
 
   const enabled = new Set(existing.sportsEnabled ?? [Sport.PADEL]);
   enabled.add(sport);
+  const sportsEnabled = Array.from(enabled);
+  const primarySport = reconcilePrimarySport(existing.primarySport, sportsEnabled);
 
   await prisma.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: userId },
-      data: { sportsEnabled: Array.from(enabled) },
+      data: { sportsEnabled, primarySport },
     });
 
     const ratedOutcomes = await countRatedSportOutcomes(userId, sport, tx);
@@ -504,11 +529,11 @@ export async function removeUserSport(userId: string, sport: Sport) {
   if (!enabled.includes(sport)) {
     throw new ApiError(400, 'Sport is not enabled');
   }
-  const sportsEnabled = enabled.filter((s) => s !== sport);
-  let primarySport = user.primarySport ?? Sport.PADEL;
-  if (primarySport === sport) {
-    primarySport = sportsEnabled[0] ?? primarySport;
+  if (enabled.length <= 1) {
+    throw new ApiError(400, 'At least one sport must remain enabled');
   }
+  const sportsEnabled = enabled.filter((s) => s !== sport);
+  const primarySport = reconcilePrimarySport(user.primarySport, sportsEnabled);
 
   await prisma.$transaction(async (tx) => {
     await tx.user.update({

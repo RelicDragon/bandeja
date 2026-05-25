@@ -13,6 +13,7 @@ import {
   gamesPlayedForSport,
   getDisplayLevelForSport,
   isSportEnabled,
+  listEnabledSports,
   listSelectableSports,
   resolveActivePrimarySport,
   shouldShowSportLevelBadge,
@@ -70,6 +71,10 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
   const handleSportCardClick = (sport: Sport) => {
     if (busySport === sport) return;
     if (isSportEnabled(user, sport)) {
+      if (listEnabledSports(user).length <= 1) {
+        toast.error(t('auth.atLeastOneSport'));
+        return;
+      }
       void run(sport, () => usersApi.removeSport(sport));
       return;
     }
