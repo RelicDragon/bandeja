@@ -51,12 +51,13 @@ export const BRACKET_EXPORT_COLUMN_ATTR = 'data-bracket-export-column';
 export const BRACKET_EXPORT_SLOTS_ATTR = 'data-bracket-export-slots';
 
 function saveInlineStyles(el: HTMLElement, patch: Partial<CSSStyleDeclaration>): () => void {
-  const keys = Object.keys(patch) as (keyof CSSStyleDeclaration)[];
-  const saved = keys.map((key) => [key, el.style[key]] as const);
+  const style = el.style as CSSStyleDeclaration & Record<string, string>;
+  const keys = Object.keys(patch);
+  const saved = keys.map((key) => [key, style[key]] as const);
   Object.assign(el.style, patch);
   return () => {
     for (const [key, value] of saved) {
-      el.style[key] = value;
+      style[key] = value ?? '';
     }
   };
 }

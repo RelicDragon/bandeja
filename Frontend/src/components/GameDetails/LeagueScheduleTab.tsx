@@ -1051,7 +1051,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           cancelText={t('common.cancel')}
           confirmVariant="danger"
           onConfirm={handleRestartBracketPlayoff}
-          onCancel={() => setBracketRestartConfirmOpen(false)}
+          onClose={() => setBracketRestartConfirmOpen(false)}
         />
       )}
       {isClient && roundPendingDeletion && (

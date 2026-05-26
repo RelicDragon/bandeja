@@ -291,7 +291,7 @@ export const LeagueBracketFullscreenPage = () => {
         cancelText={t('common.cancel')}
         confirmVariant="danger"
         onConfirm={handleRestartBracketPlayoff}
-        onCancel={() => setBracketRestartConfirmOpen(false)}
+        onClose={() => setBracketRestartConfirmOpen(false)}
       />
     </div>
   );

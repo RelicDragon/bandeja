@@ -40,7 +40,7 @@ export const detectScoringMode = (game?: Partial<Game> | null): ScoringMode => {
 
 /** Custom points target when stored only as maxTotalPointsPerSet (no matching preset). */
 export function detectInitialCustomPointsTotal(game?: Partial<Game> | null): number | null {
-  if (!game?.scoringPreset && detectScoringMode(game) === 'POINTS') {
+  if (game && !game.scoringPreset && detectScoringMode(game) === 'POINTS') {
     const pts = game.maxTotalPointsPerSet ?? 0;
     if (pts > 0) {
       const detected = detectScoringPreset(game);
