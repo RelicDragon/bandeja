@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { Loader2, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { GameResultsArtifacts } from '@/types';
@@ -16,7 +17,7 @@ type ResultsArtifactsTelegramBlockProps = {
 
 function stepLabel(
   ready: boolean,
-  t: (key: string) => string
+  t: TFunction
 ): string {
   return ready ? t('gameResults.artifactsStepDone') : t('gameResults.artifactsStepPending');
 }
@@ -62,7 +63,7 @@ function ArtifactsStatusBanner({
 }: {
   uiState: ResultsArtifactsTelegramUiState;
   artifacts?: GameResultsArtifacts | null;
-  t: (key: string) => string;
+  t: TFunction;
 }) {
   if (uiState === 'ready' || !artifacts) return null;
 
@@ -131,7 +132,7 @@ function TelegramButtonContent({
 }: {
   uiState: ResultsArtifactsTelegramUiState;
   isSending: boolean;
-  t: (key: string) => string;
+  t: TFunction;
 }) {
   if (isSending) {
     return (
