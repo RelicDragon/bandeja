@@ -42,7 +42,13 @@ export function StoryCanvasStage({
   const videoWrapperRef = useRef<HTMLDivElement>(null);
   const previewUrlRef = useRef(slide.media.previewUrl);
   const stageScaleRef = useRef(stageScale);
+  const onMediaLoadRef = useRef(onMediaLoad);
+  const slideRef = useRef(slide);
+  const selectedLayerIdRef = useRef(selectedLayerId);
   stageScaleRef.current = stageScale;
+  onMediaLoadRef.current = onMediaLoad;
+  slideRef.current = slide;
+  selectedLayerIdRef.current = selectedLayerId;
 
   const applyVideoWrapperStyle = useCallback((current: StorySlide) => {
     const wrapper = videoWrapperRef.current;
@@ -65,7 +71,7 @@ export function StoryCanvasStage({
       rafRef.current = null;
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d', { desynchronized: true });
-      const current = liveSlideRef.current ?? slide;
+      const current = liveSlideRef.current ?? slideRef.current;
       if (!canvas || !ctx || stageWidth <= 0 || stageHeight <= 0) return;
 
       const dpr = window.devicePixelRatio || 1;
@@ -82,14 +88,20 @@ export function StoryCanvasStage({
       ctx.setTransform(previewScale * dpr, 0, 0, previewScale * dpr, 0, 0);
 
       const mediaImage = getCachedSlideMediaAsset(current.media.previewUrl);
-      drawComposition(ctx, current, {
-        mediaImage: layersOnly ? null : mediaImage,
-        skipMedia: layersOnly || current.media.type === 'VIDEO',
-      }, { selectedLayerId });
+      const skipMedia = layersOnly || current.media.type === 'VIDEO';
+      drawComposition(
+        ctx,
+        current,
+        { mediaImage: skipMedia ? null : mediaImage, skipMedia },
+        {
+          selectedLayerId: selectedLayerIdRef.current,
+          transparentBackground: skipMedia,
+        }
+      );
 
       applyVideoWrapperStyle(current);
     });
-  }, [applyVideoWrapperStyle, liveSlideRef, layersOnly, selectedLayerId, slide, stageHeight, stageWidth]);
+  }, [applyVideoWrapperStyle, liveSlideRef, layersOnly, stageHeight, stageWidth]);
 
   useEffect(() => {
     onRegisterRedraw?.(scheduleDraw);
@@ -112,7 +124,9 @@ export function StoryCanvasStage({
         if (cancelled) return;
         const w = img instanceof ImageBitmap ? img.width : img.naturalWidth;
         const h = img instanceof ImageBitmap ? img.height : img.naturalHeight;
-        onMediaLoad?.(w, h);
+        if (slide.media.naturalWidth == null) {
+          onMediaLoadRef.current?.(w, h);
+        }
         scheduleDraw();
       })
       .catch(() => scheduleDraw());
@@ -120,11 +134,11 @@ export function StoryCanvasStage({
     return () => {
       cancelled = true;
     };
-  }, [onMediaLoad, scheduleDraw, slide.media.previewUrl, slide.media.type]);
+  }, [scheduleDraw, slide.media.naturalWidth, slide.media.previewUrl, slide.media.type]);
 
   useEffect(() => {
     scheduleDraw();
-  }, [slide, stageWidth, stageHeight, stageScale, scheduleDraw]);
+  }, [slide.id, slide.layers, slide.mediaTransform, slide.mediaAdjust, slide.media.previewUrl, stageWidth, stageHeight, stageScale, scheduleDraw]);
 
   useEffect(() => () => clearSlideMediaAssetCache(), []);
 
@@ -151,7 +165,7 @@ export function StoryCanvasStage({
       ) : null}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full touch-none"
+        className="absolute inset-0 z-[2] w-full h-full touch-none"
         style={{ pointerEvents: 'none' }}
       />
     </>

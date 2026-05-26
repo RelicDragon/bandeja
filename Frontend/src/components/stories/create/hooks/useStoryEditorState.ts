@@ -285,18 +285,20 @@ export function useStoryEditorState({ files, stageWidth, stageHeight }: UseStory
     (slideId: string, naturalW: number, naturalH: number) => {
       if (stageWidth <= 0 || stageHeight <= 0) return;
       const fit = defaultMediaTransform(naturalW, naturalH);
-      setDefaultTransforms((prev) => ({ ...prev, [slideId]: fit }));
-      setSlides((prev) =>
-        prev.map((s) => {
-          if (s.id !== slideId) return s;
-          if (s.media.naturalWidth != null) return s;
-          return {
-            ...s,
-            media: { ...s.media, naturalWidth: naturalW, naturalHeight: naturalH },
-            mediaTransform: fit,
-          };
-        })
-      );
+      setDefaultTransforms((prev) => (prev[slideId] ? prev : { ...prev, [slideId]: fit }));
+      setSlides((prev) => {
+        const idx = prev.findIndex((s) => s.id === slideId);
+        if (idx < 0 || prev[idx]!.media.naturalWidth != null) return prev;
+        return prev.map((s, i) =>
+          i === idx
+            ? {
+                ...s,
+                media: { ...s.media, naturalWidth: naturalW, naturalHeight: naturalH },
+                mediaTransform: fit,
+              }
+            : s
+        );
+      });
     },
     [stageWidth, stageHeight]
   );

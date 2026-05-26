@@ -94,10 +94,13 @@ export function useCanvasStageGestures({
 
   const pinchStartRef = useRef<{ scale: number; rotation: number } | null>(null);
   const layerPinchStartRef = useRef<{ scale: number; rotation: number } | null>(null);
+  const dragTargetRef = useRef<'media' | string | null>(null);
+  const pinchTargetRef = useRef<'media' | string | null>(null);
 
   const handleTapSelect = useCallback(
     (event: Event) => {
-      if (editorModeRef.current !== 'IDLE') return;
+      const mode = editorModeRef.current;
+      if (mode !== 'IDLE' && mode !== 'LAYER_SELECTED') return;
       const target = event.currentTarget as HTMLElement | null;
       if (!target) return;
       const rect = target.getBoundingClientRect();
@@ -125,7 +128,7 @@ export function useCanvasStageGestures({
 
   return useGesture(
     {
-      onDrag: ({ movement: [mx, my], pinching, cancel, first, last, memo }) => {
+      onDrag: ({ movement: [mx, my], pinching, cancel, first, last, memo, event }) => {
         if (disabled || pinching) {
           cancel();
           return memo;
@@ -134,83 +137,135 @@ export function useCanvasStageGestures({
         if (!slide) return memo;
 
         const mode = editorModeRef.current;
-        const layerId = selectedLayerIdRef.current;
+        const selectedId = selectedLayerIdRef.current;
 
-        if (mode === 'LAYER_SELECTED' && layerId) {
-          const layer = slide.layers.find((l) => l.id === layerId);
-          if (!layer) return memo;
-          if (first) {
-            setActive(true);
-            return { x: layer.transform.x, y: layer.transform.y };
+        if (first) {
+          let target: 'media' | string = 'media';
+          if (mode === 'LAYER_SELECTED' && selectedId) {
+            target = selectedId;
+          } else if (mode === 'IDLE' && event) {
+            const el = event.currentTarget as HTMLElement | null;
+            if (el) {
+              const rect = el.getBoundingClientRect();
+              const pe = event as PointerEvent;
+              const { x, y } = screenPointToCanvas(pe.clientX, pe.clientY, rect);
+              const hit = hitTestLayerAtPoint(slide.layers, x, y);
+              if (hit) {
+                target = hit.id;
+                onSelectLayer(hit.id);
+              }
+            }
           }
-          const start = memo as { x: number; y: number };
-          const delta = toCanvasDelta(mx, my);
-          applyLayerTransform(layerId, {
-            ...layer.transform,
-            x: start.x + delta.x,
-            y: start.y + delta.y,
-          });
-          if (last) setActive(false);
-          return memo;
+          dragTargetRef.current = target;
+          setActive(true);
+          if (target === 'media') {
+            return { x: slide.mediaTransform.x, y: slide.mediaTransform.y };
+          }
+          const layer = slide.layers.find((l) => l.id === target);
+          if (!layer) {
+            dragTargetRef.current = 'media';
+            return { x: slide.mediaTransform.x, y: slide.mediaTransform.y };
+          }
+          return { x: layer.transform.x, y: layer.transform.y };
         }
 
-        if (mode !== 'IDLE') {
+        if (mode !== 'IDLE' && mode !== 'LAYER_SELECTED') {
           cancel();
           return memo;
         }
 
-        if (first) {
-          setActive(true);
-          return { x: slide.mediaTransform.x, y: slide.mediaTransform.y };
+        const target = dragTargetRef.current;
+        if (last) {
+          dragTargetRef.current = null;
+          setActive(false);
         }
+
         const start = memo as { x: number; y: number };
         const delta = toCanvasDelta(mx, my);
+
+        if (target && target !== 'media') {
+          const layer = slide.layers.find((l) => l.id === target);
+          if (!layer) return memo;
+          applyLayerTransform(target, {
+            ...layer.transform,
+            x: start.x + delta.x,
+            y: start.y + delta.y,
+          });
+          return memo;
+        }
+
         applyMedia({ ...slide.mediaTransform, x: start.x + delta.x, y: start.y + delta.y });
-        if (last) setActive(false);
         return memo;
       },
-      onPinch: ({ offset: [scaleMul, angleDelta], first, last, memo }) => {
+      onPinch: ({ offset: [scaleMul, angleDelta], first, last, memo, origin }) => {
         if (disabled) return memo;
         const slide = liveSlideRef.current;
         if (!slide) return memo;
 
         const mode = editorModeRef.current;
-        const layerId = selectedLayerIdRef.current;
+        const selectedId = selectedLayerIdRef.current;
 
-        if (mode === 'LAYER_SELECTED' && layerId) {
-          const layer = slide.layers.find((l) => l.id === layerId);
-          if (!layer) return memo;
-          if (first || !layerPinchStartRef.current) {
-            setActive(true);
-            layerPinchStartRef.current = {
-              scale: layer.transform.scale,
-              rotation: layer.transform.rotation,
+        if (first) {
+          let target: 'media' | string = 'media';
+          if (mode === 'LAYER_SELECTED' && selectedId) {
+            target = selectedId;
+          } else if (mode === 'IDLE') {
+            const el = document.querySelector('[data-story-stage]');
+            if (el) {
+              const rect = el.getBoundingClientRect();
+              const { x, y } = screenPointToCanvas(origin[0], origin[1], rect);
+              const hit = hitTestLayerAtPoint(slide.layers, x, y);
+              if (hit) {
+                target = hit.id;
+                onSelectLayer(hit.id);
+              }
+            }
+          }
+          pinchTargetRef.current = target;
+          setActive(true);
+          if (target !== 'media') {
+            const layer = slide.layers.find((l) => l.id === target);
+            layerPinchStartRef.current = layer
+              ? { scale: layer.transform.scale, rotation: layer.transform.rotation }
+              : null;
+            pinchStartRef.current = null;
+          } else {
+            layerPinchStartRef.current = null;
+            pinchStartRef.current = {
+              scale: slide.mediaTransform.scale,
+              rotation: slide.mediaTransform.rotation,
             };
           }
-          const start = layerPinchStartRef.current!;
+        }
+
+        if (mode !== 'IDLE' && mode !== 'LAYER_SELECTED') return memo;
+
+        const target = pinchTargetRef.current;
+        if (target && target !== 'media') {
+          const layer = slide.layers.find((l) => l.id === target);
+          if (!layer || !layerPinchStartRef.current) return memo;
+          const start = layerPinchStartRef.current;
           const rotation = start.rotation + angleDelta;
-          applyLayerTransform(layerId, {
+          applyLayerTransform(target, {
             ...layer.transform,
             scale: start.scale * scaleMul,
             rotation: last ? snapRotation(rotation) : rotation,
           });
           if (last) {
             layerPinchStartRef.current = null;
+            pinchTargetRef.current = null;
             setActive(false);
           }
           return memo;
         }
 
-        if (mode !== 'IDLE') return memo;
-
-        if (first || !pinchStartRef.current) {
-          setActive(true);
+        if (!pinchStartRef.current) {
           pinchStartRef.current = {
             scale: slide.mediaTransform.scale,
             rotation: slide.mediaTransform.rotation,
           };
         }
-        const start = pinchStartRef.current!;
+        const start = pinchStartRef.current;
         const rotation = start.rotation + angleDelta;
         applyMedia({
           ...slide.mediaTransform,
@@ -219,6 +274,7 @@ export function useCanvasStageGestures({
         });
         if (last) {
           pinchStartRef.current = null;
+          pinchTargetRef.current = null;
           setActive(false);
         }
         return memo;

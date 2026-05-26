@@ -104,6 +104,21 @@ export type StoryEditorMode =
 
 export type EditorTool = 'none' | 'text' | 'adjust' | 'crop' | 'trim';
 
+/** Shallow clone for gesture live ref (keeps File on media; copies transforms/layers). */
+export function cloneSlideForLive(slide: StorySlide): StorySlide {
+  return {
+    ...slide,
+    mediaTransform: { ...slide.mediaTransform },
+    mediaAdjust: { ...slide.mediaAdjust },
+    layers: slide.layers.map((layer) =>
+      layer.type === 'text'
+        ? { ...layer, transform: { ...layer.transform }, style: { ...layer.style } }
+        : { ...layer, transform: { ...layer.transform } }
+    ),
+    ...(slide.videoTrim != null ? { videoTrim: { ...slide.videoTrim } } : {}),
+  };
+}
+
 export function isTextLayer(layer: StoryLayer): layer is TextStoryLayer {
   return layer.type === 'text';
 }

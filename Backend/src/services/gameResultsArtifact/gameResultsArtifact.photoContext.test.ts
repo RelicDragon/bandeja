@@ -63,12 +63,7 @@ assert.deepEqual(
   collectParticipantAvatarSources(
     withAvatars as Parameters<typeof collectParticipantAvatarSources>[0]
   ),
-  [
-    {
-      primary: 'https://cdn.example.com/uploads/avatars/circular/abc_avatar.tiny.jpg',
-      fallback: standardAvatar,
-    },
-  ]
+  [{ primary: standardAvatar, fallback: null }]
 );
 
 console.log('gameResultsArtifact.photoContext.test.ts: ok');

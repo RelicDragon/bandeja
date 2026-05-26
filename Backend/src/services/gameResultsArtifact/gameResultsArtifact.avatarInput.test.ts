@@ -13,8 +13,8 @@ const standardAvatar =
   'https://cdn.example.com/uploads/avatars/circular/abc_avatar.jpg';
 
 assert.deepEqual(resolveParticipantAvatarSources({ avatar: standardAvatar }), {
-  primary: 'https://cdn.example.com/uploads/avatars/circular/abc_avatar.tiny.jpg',
-  fallback: standardAvatar,
+  primary: standardAvatar,
+  fallback: null,
 });
 assert.deepEqual(
   resolveParticipantAvatarSources({ avatar: 'https://lh3.googleusercontent.com/x' }),
@@ -43,25 +43,17 @@ assert.match(
 assert.equal(toPublicAvatarUrl(''), null);
 assert.equal(toPublicAvatarUrl('https://already.example/a.png'), 'https://already.example/a.png');
 
-const tinyUrl =
-  'https://cdn.example.com/uploads/avatars/circular/abc_avatar.tiny.jpg';
-const standardUrl =
-  'https://cdn.example.com/uploads/avatars/circular/abc_avatar.jpg';
 const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0x00]);
 
 (async () => {
-  const fromFallback = await downloadAvatarAsDataUri(
-    { primary: tinyUrl, fallback: standardUrl },
-    async (url) => {
-      if (url === tinyUrl) throw new Error('404');
-      if (url === standardUrl) return jpeg;
-      throw new Error(`unexpected url ${url}`);
-    }
+  const ok = await downloadAvatarAsDataUri(
+    { primary: standardAvatar, fallback: null },
+    async () => jpeg
   );
-  assert.match(fromFallback ?? '', /^data:image\/jpeg;base64,/);
+  assert.match(ok ?? '', /^data:image\/jpeg;base64,/);
 
   const none = await downloadAvatarAsDataUri(
-    { primary: tinyUrl, fallback: standardUrl },
+    { primary: standardAvatar, fallback: null },
     async () => {
       throw new Error('fail');
     }

@@ -99,11 +99,12 @@ export function StoryEditor({ open, files, onClose, onPublished }: StoryEditorPr
     editorMode === 'CROP' ||
     editorMode === 'TRIM' ||
     editorMode === 'EDITING_TEXT' ||
-    editorMode === 'TOOL_ACTIVE';
+    (editorMode === 'TOOL_ACTIVE' && activeTool !== 'text');
   const canvasGesturesDisabled = canvasStage ? stageGesturesBlocked : editorMode !== 'IDLE';
   const mediaGesturesEnabled = editorMode === 'IDLE';
   const showDeselectOverlay =
-    editorMode === 'LAYER_SELECTED' || (editorMode === 'TOOL_ACTIVE' && activeTool === 'text');
+    !canvasStage &&
+    (editorMode === 'LAYER_SELECTED' || (editorMode === 'TOOL_ACTIVE' && activeTool === 'text'));
 
   useEffect(() => {
     if (!open) setCaption('');
@@ -136,6 +137,18 @@ export function StoryEditor({ open, files, onClose, onPublished }: StoryEditorPr
     setEditingLayerId(null);
     if (activeTool === 'text') setActiveTool(null);
   }, [activeSlide?.layers, activeTool, deleteLayer, selectedLayerId, setSelectedLayerId]);
+
+  const handleCanvasSelectLayer = useCallback(
+    (layerId: string | null) => {
+      if (layerId === null) {
+        handleDeselect();
+        return;
+      }
+      lightHaptic();
+      selectLayer(layerId);
+    },
+    [handleDeselect, selectLayer]
+  );
 
   const handleTextTool = useCallback(() => {
     if (activeTool === 'text') {
@@ -233,6 +246,15 @@ export function StoryEditor({ open, files, onClose, onPublished }: StoryEditorPr
     [activeSlide?.layers, selectedLayerId]
   );
 
+  const activeSlideId = activeSlide?.id;
+  const handleLoadDimensions = useCallback(
+    (w: number, h: number) => {
+      if (!activeSlideId) return;
+      registerMediaDimensions(activeSlideId, w, h);
+    },
+    [activeSlideId, registerMediaDimensions]
+  );
+
   if (!activeSlide) return null;
 
   const trimRange = activeSlide.videoTrim ?? { startMs: 0, endMs: videoDurationMs };
@@ -285,9 +307,9 @@ export function StoryEditor({ open, files, onClose, onPublished }: StoryEditorPr
                     selectedLayerId={selectedLayerId}
                     gesturesDisabled={stageGesturesBlocked}
                     liveSlideRef={liveSlideRef}
-                    onLoadDimensions={(w, h) => registerMediaDimensions(activeSlide.id, w, h)}
+                    onLoadDimensions={handleLoadDimensions}
                     onCommitSlide={commitActiveSlide}
-                    onSelectLayer={selectLayer}
+                    onSelectLayer={handleCanvasSelectLayer}
                     onLayerEditStart={(id) => {
                       selectLayer(id);
                       setEditingLayerId(id);
@@ -304,7 +326,7 @@ export function StoryEditor({ open, files, onClose, onPublished }: StoryEditorPr
                     stageScale={stageScale}
                     defaultTransform={activeDefaultTransform}
                     gesturesEnabled={mediaGesturesEnabled}
-                    onLoadDimensions={(w, h) => registerMediaDimensions(activeSlide.id, w, h)}
+                    onLoadDimensions={handleLoadDimensions}
                     onTransformChange={setMediaTransform}
                     onResetTransform={resetMediaTransform}
                     onGestureStart={onTransformBegin}

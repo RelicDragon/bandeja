@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, type RefObject } from 'react';
-import type { StoryEditorMode, StorySlide } from './types/storyEditor.types';
+import { useCallback, useEffect, useLayoutEffect, useRef, type RefObject } from 'react';
+import { cloneSlideForLive, type StoryEditorMode, type StorySlide } from './types/storyEditor.types';
 import { STORY_CANVAS_HEIGHT, STORY_CANVAS_WIDTH } from './types/storyEditor.types';
 import { StoryCanvasStage } from './StoryCanvasStage';
 import { useCanvasStageGestures } from './hooks/useCanvasStageGestures';
@@ -44,6 +44,9 @@ export function StoryCanvasStageEditor({
 }: StoryCanvasStageEditorProps) {
   const redrawRef = useRef<(() => void) | null>(null);
   const requestRedraw = useCallback(() => redrawRef.current?.(), []);
+  const registerRedraw = useCallback((draw: () => void) => {
+    redrawRef.current = draw;
+  }, []);
 
   const mediaW = slide.media.naturalWidth ?? STORY_CANVAS_WIDTH;
   const mediaH = slide.media.naturalHeight ?? STORY_CANVAS_HEIGHT;
@@ -65,9 +68,9 @@ export function StoryCanvasStageEditor({
     requestRedraw,
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (gestureActive) return;
-    liveSlideRef.current = structuredClone(slide);
+    liveSlideRef.current = cloneSlideForLive(slide);
     requestRedraw();
   }, [gestureActive, liveSlideRef, requestRedraw, slide]);
 
@@ -88,9 +91,7 @@ export function StoryCanvasStageEditor({
         selectedLayerId={selectedLayerId}
         layersOnly={slide.media.type === 'VIDEO'}
         onMediaLoad={onLoadDimensions}
-        onRegisterRedraw={(draw) => {
-          redrawRef.current = draw;
-        }}
+        onRegisterRedraw={registerRedraw}
       />
     </div>
   );

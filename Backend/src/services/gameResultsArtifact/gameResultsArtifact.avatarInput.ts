@@ -1,6 +1,5 @@
 import sharp from 'sharp';
 import { config } from '../../config/env';
-import { userAvatarTinyUrlFromStandard } from '../../utils/userAvatarTiny';
 
 export function toPublicAvatarUrl(path: string | null | undefined): string | null {
   if (!path?.trim()) return null;
@@ -26,12 +25,7 @@ export function resolveParticipantAvatarSources(user: {
   avatar: string | null;
 }): ParticipantAvatarSources | null {
   if (!user.avatar?.trim()) return null;
-  const avatar = user.avatar.trim();
-  const tiny = userAvatarTinyUrlFromStandard(avatar);
-  if (tiny && tiny !== avatar) {
-    return { primary: tiny, fallback: avatar };
-  }
-  return { primary: avatar, fallback: null };
+  return { primary: user.avatar.trim(), fallback: null };
 }
 
 export function mimeTypeFromImageBuffer(buffer: Buffer): string {
