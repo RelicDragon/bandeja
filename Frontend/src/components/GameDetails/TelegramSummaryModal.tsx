@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { RefreshCw, Send } from 'lucide-react';
+import { RefreshCw, Send, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 import { gamesApi } from '@/api/games';
+import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 
 interface TelegramSummaryModalProps {
   isOpen: boolean;
@@ -12,6 +13,10 @@ interface TelegramSummaryModalProps {
   initialSummary: string;
   onSend: (summaryText: string) => Promise<void>;
 }
+
+const OVERLAY_CLASS = 'fixed inset-0 z-[100] bg-black/80';
+const PANEL_CLASS =
+  'cap-keyboard-aware-dialog fixed left-[50%] top-[50%] z-[101] w-[90vw] max-w-[420px] max-h-[85vh] translate-x-[-50%] translate-y-[-50%] flex flex-col overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white text-gray-900 dark:bg-gray-900 dark:text-white shadow-2xl focus:outline-none';
 
 export const TelegramSummaryModal = ({
   isOpen,
@@ -27,10 +32,17 @@ export const TelegramSummaryModal = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prevIsOpenRef = useRef(false);
 
+  useBackButtonModal(isOpen, onClose, 'telegram-summary-modal');
+
+  const handleCancel = useCallback(() => {
+    if (isSending || isGeneratingNew) return;
+    onClose();
+  }, [isSending, isGeneratingNew, onClose]);
+
   useEffect(() => {
     const wasClosed = !prevIsOpenRef.current && isOpen;
     prevIsOpenRef.current = isOpen;
-    
+
     if (wasClosed) {
       setSummary(initialSummary);
       setIsGeneratingNew(false);
@@ -40,6 +52,15 @@ export const TelegramSummaryModal = ({
       }, 250);
     }
   }, [isOpen, initialSummary]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleCancel();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, handleCancel]);
 
   const handleGenerateNew = async () => {
     if (isGeneratingNew || isSending || !gameId) return;
@@ -55,7 +76,7 @@ export const TelegramSummaryModal = ({
       }
     } catch (error: any) {
       console.error('Failed to generate new summary:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 
+      const errorMessage = error?.response?.data?.message || error?.message ||
         t('gameResults.generateTextFailed') || 'Failed to generate new text';
       toast.error(errorMessage);
     } finally {
@@ -77,7 +98,7 @@ export const TelegramSummaryModal = ({
       onClose();
     } catch (error: any) {
       console.error('Failed to send results to Telegram:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 
+      const errorMessage = error?.response?.data?.message || error?.message ||
         t('gameResults.sendToTelegramFailed') || 'Failed to send results to Telegram';
       toast.error(errorMessage);
     } finally {
@@ -85,97 +106,113 @@ export const TelegramSummaryModal = ({
     }
   };
 
-  const handleCancel = () => {
-    if (isSending || isGeneratingNew) return;
-    onClose();
-  };
-
   const isLoading = isGeneratingNew || isSending;
   const isDisabled = isLoading;
 
-  return (
-    <Dialog open={isOpen} onClose={handleCancel} modalId="telegram-summary-modal">
-      <DialogContent>
-      <div className="flex flex-col h-full max-h-[85vh]">
-        <DialogHeader className="mb-4 flex-col items-start">
-          <DialogTitle>{t('gameResults.editTelegramText') || 'Edit Telegram Text'}</DialogTitle>
-          <DialogDescription className="mt-1">
-            {t('gameResults.editTelegramTextDescription') || 'Review and edit the text before sending to Telegram'}
-          </DialogDescription>
-        </DialogHeader>
+  if (!isOpen) return null;
 
-        <div className="flex-1 flex flex-col min-h-0 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t('gameResults.text') || 'Text'}
-            </label>
+  const modal = (
+    <div className={OVERLAY_CLASS} role="dialog" aria-modal="true" onClick={handleCancel}>
+      <div
+        className={PANEL_CLASS}
+        onClick={(e) => e.stopPropagation()}
+        aria-labelledby="telegram-summary-title"
+      >
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={isDisabled}
+          tabIndex={-1}
+          className="absolute right-4 top-4 z-10 rounded-md text-gray-900 opacity-70 transition-opacity hover:opacity-100 hover:bg-gray-100 focus:outline-none disabled:pointer-events-none dark:text-gray-200 dark:hover:bg-gray-800"
+          aria-label={t('common.close') || 'Close'}
+        >
+          <X className="size-5" />
+        </button>
+
+        <div className="flex flex-col h-full max-h-[85vh] p-6">
+          <header className="mb-4 flex flex-col items-start pr-8">
+            <h2 id="telegram-summary-title" className="text-lg font-semibold leading-none tracking-tight text-gray-900 dark:text-white">
+              {t('gameResults.editTelegramText') || 'Edit Telegram Text'}
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {t('gameResults.editTelegramTextDescription') || 'Review and edit the text before sending to Telegram'}
+            </p>
+          </header>
+
+          <div className="flex-1 flex flex-col min-h-0 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('gameResults.text') || 'Text'}
+              </label>
+              <button
+                type="button"
+                onClick={handleGenerateNew}
+                disabled={isDisabled || !gameId}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 ease-in-out rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <RefreshCw
+                  size={16}
+                  className={isGeneratingNew ? 'animate-spin' : ''}
+                />
+                <span>{t('gameResults.writeNewVersion') || 'Write new version'}</span>
+              </button>
+            </div>
+
+            <div className="flex-1 relative min-h-[300px]">
+              <textarea
+                ref={textareaRef}
+                value={summary}
+                onChange={(e) => !isDisabled && setSummary(e.target.value)}
+                disabled={isDisabled}
+                placeholder={t('gameResults.textPlaceholder') || 'Enter text...'}
+                className="w-full h-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+                style={{ minHeight: '300px' }}
+              />
+              {isSending && (
+                <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10 animate-fadeIn">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t('gameResults.sendingToTelegram') || 'Sending to Telegram...'}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <footer className="flex-shrink-0 flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
             <button
               type="button"
-              onClick={handleGenerateNew}
-              disabled={isDisabled || !gameId}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 ease-in-out rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
-            >
-              <RefreshCw 
-                size={16} 
-                className={isGeneratingNew ? 'animate-spin' : ''}
-              />
-              <span>{t('gameResults.writeNewVersion') || 'Write new version'}</span>
-            </button>
-          </div>
-
-          <div className="flex-1 relative min-h-[300px]">
-            <textarea
-              ref={textareaRef}
-              value={summary}
-              onChange={(e) => !isDisabled && setSummary(e.target.value)}
+              onClick={handleCancel}
               disabled={isDisabled}
-              placeholder={t('gameResults.textPlaceholder') || 'Enter text...'}
-              className="w-full h-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
-              style={{ minHeight: '300px' }}
-            />
-            {isSending && (
-              <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10 animate-fadeIn">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t('gameResults.sendingToTelegram') || 'Sending to Telegram...'}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+              className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+            >
+              {t('common.cancel') || 'Cancel'}
+            </button>
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={isDisabled || !summary.trim()}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
+            >
+              {isSending ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>{t('gameResults.sending') || 'Sending...'}</span>
+                </>
+              ) : (
+                <>
+                  <Send size={16} />
+                  <span>{t('gameResults.send') || 'Send'}</span>
+                </>
+              )}
+            </button>
+          </footer>
         </div>
-
-        <DialogFooter className="flex-shrink-0 flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
-          <button
-            type="button"
-            onClick={handleCancel}
-            disabled={isDisabled}
-            className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
-          >
-            {t('common.cancel') || 'Cancel'}
-          </button>
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={isDisabled || !summary.trim()}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
-          >
-            {isSending ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>{t('gameResults.sending') || 'Sending...'}</span>
-              </>
-            ) : (
-              <>
-                <Send size={16} />
-                <span>{t('gameResults.send') || 'Send'}</span>
-              </>
-            )}
-          </button>
-        </DialogFooter>
       </div>
-      </DialogContent>
-    </Dialog>
+    </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modal, document.body) : modal;
 };

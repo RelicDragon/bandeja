@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { createPortal } from 'react-dom';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useRef } from 'react';
 import { X } from 'lucide-react';
@@ -15,30 +14,21 @@ interface DialogProps {
   onOpenChange?: (open: boolean) => void;
   onClose?: () => void;
   modalId?: string;
-  /**
-   * Mount dialog root on document.body so Radix is not under pull-to-refresh transform
-   * ancestors on game details (avoids ref update loop / navigation error boundary).
-   */
-  portaled?: boolean;
   children: React.ReactNode;
 }
 
-const Dialog = ({ open, onOpenChange, onClose, modalId, portaled = false, children }: DialogProps) => {
+const Dialog = ({ open, onOpenChange, onClose, modalId, children }: DialogProps) => {
   const fallbackIdRef = useRef(`modal-${Math.random()}`);
   const handleOpenChange = (o: boolean) => {
     if (!o) onClose?.();
     onOpenChange?.(o);
   };
   useBackButtonModal(open, () => (onClose?.(), onOpenChange?.(false)), modalId ?? fallbackIdRef.current);
-  const root = (
+  return (
     <DialogPrimitive.Root open={open} onOpenChange={(o) => handleOpenChange(!!o)}>
       {children}
     </DialogPrimitive.Root>
   );
-  if (portaled && typeof document !== 'undefined') {
-    return createPortal(root, document.body);
-  }
-  return root;
 };
 
 const DialogRoot = DialogPrimitive.Root;
