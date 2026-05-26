@@ -27,6 +27,7 @@ const warmDrainQueue: WarmDrainItem[] = [];
 let warmDrainTimer: ReturnType<typeof setTimeout> | null = null;
 
 let warmSerialTail: Promise<void> = Promise.resolve();
+let implicitWarmInFlight: Promise<void> | null = null;
 
 function enqueueWarmSerial(fn: () => Promise<void>): Promise<void> {
   const run = warmSerialTail.then(fn);
@@ -206,7 +207,7 @@ export function warmChatSyncHeadsWithUnreadInner(inner: UnreadObjectsWarmInner |
 export function ensureChatSyncWarmBootstrap(): Promise<void> {
   if (!useAuthStore.getState().token || sessionWarmBootstrapDone) return Promise.resolve();
   sessionWarmBootstrapDone = true;
-  return enqueueWarmSerial(async () => {
+  const run = enqueueWarmSerial(async () => {
     try {
       const { hydrateAllChatSyncTailsFromDexie } = await import('@/services/chat/chatTailHydrate');
       await hydrateAllChatSyncTailsFromDexie();
@@ -224,6 +225,10 @@ export function ensureChatSyncWarmBootstrap(): Promise<void> {
       scheduleChatHotThreadPrefetchFromIdle();
     }
   });
+  implicitWarmInFlight = run.finally(() => {
+    if (implicitWarmInFlight === run) implicitWarmInFlight = null;
+  });
+  return run;
 }
 
 function pullPriorityForWarmItem(
@@ -309,9 +314,10 @@ export function warmChatSyncHeads(
   items?: Array<{ contextType: ChatContextType; contextId: string }>,
   options?: WarmChatSyncHeadsOptions
 ): Promise<void> {
-  return enqueueWarmSerial(async () => {
+  const explicit = !!(items && items.length > 0);
+  if (!explicit && implicitWarmInFlight) return implicitWarmInFlight;
+  const run = enqueueWarmSerial(async () => {
     if (!useAuthStore.getState().token) return;
-    const explicit = !!(items && items.length > 0);
     const now = Date.now();
     if (!explicit && !options?.skipCooldown && now < implicitWarmCooldownUntil) return;
     let list: Array<{ contextType: ChatContextType; contextId: string }>;
@@ -334,6 +340,12 @@ export function warmChatSyncHeads(
       /* offline — do not advance implicit cooldown */
     }
   });
+  if (!explicit) {
+    implicitWarmInFlight = run.finally(() => {
+      if (implicitWarmInFlight === run) implicitWarmInFlight = null;
+    });
+  }
+  return run;
 }
 
 export function runChatSyncBatchWarmOnConnect(): void {
