@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { OutcomesDisplay } from '@/components';
@@ -54,9 +54,10 @@ import { Edit } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import {
-  canSendResultsToTelegram,
   hasCachedResultsSummary,
-  isResultsArtifactsPreparing,
+  hasGamePhotoForTelegram,
+  mergeGameResultsArtifactsFields,
+  resolveTelegramResultsCta,
 } from '@/utils/gameResultsArtifacts.util';
 import { ResultsArtifactsTelegramBlock } from './ResultsArtifactsTelegramBlock';
 import {
@@ -87,6 +88,8 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const { showOfflineMessage, toggleMessage } = useOfflineMessage(engine.serverProblem);
   const mountedRef = useRef(false);
   const [isSendingToTelegram, setIsSendingToTelegram] = useState(false);
+  const [isPreparingArtifacts, setIsPreparingArtifacts] = useState(false);
+  const [pollArtifactsActive, setPollArtifactsActive] = useState(false);
   const [isTelegramSummaryModalOpen, setIsTelegramSummaryModalOpen] = useState(false);
   const [telegramSummary, setTelegramSummary] = useState('');
   const [showResendTelegramConfirm, setShowResendTelegramConfirm] = useState(false);
@@ -98,6 +101,9 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     () => resolveCurrentGameForResults(game, engine.game),
     [engine.game, game]
   );
+
+  const currentGameRef = useRef(currentGame);
+  currentGameRef.current = currentGame;
 
   const bracketReturnTarget = useMemo(
     () => resolveGameBracketReturnTarget(currentGame ?? game),
@@ -180,24 +186,33 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     );
   }, [rounds]);
 
-  const hasPhotosForTelegramPost = useMemo(() => {
-    if (!currentGame) return false;
-    return (currentGame.photosCount || 0) > 0 || !!currentGame.mainPhotoId;
-  }, [currentGame]);
+  const hasPhotosForTelegramPost = useMemo(
+    () => (currentGame ? hasGamePhotoForTelegram(currentGame) : false),
+    [currentGame]
+  );
 
   const hasCachedSummary = useMemo(
     () => hasCachedResultsSummary(currentGame?.resultsSummaryText),
     [currentGame?.resultsSummaryText]
   );
 
+  const telegramResultsCta = useMemo(
+    () =>
+      resolveTelegramResultsCta(currentGame?.resultsArtifacts, {
+        hasSummaryText: hasCachedSummary,
+        hasGamePhoto: hasPhotosForTelegramPost,
+      }),
+    [currentGame?.resultsArtifacts, hasCachedSummary, hasPhotosForTelegramPost]
+  );
+
   const isArtifactsPreparing = useMemo(
-    () => isResultsArtifactsPreparing(currentGame?.resultsArtifacts, hasCachedSummary),
-    [currentGame?.resultsArtifacts, hasCachedSummary]
+    () => telegramResultsCta === 'preparing',
+    [telegramResultsCta]
   );
 
   const canSendToTelegram = useMemo(
-    () => canSendResultsToTelegram(currentGame?.resultsArtifacts, hasCachedSummary),
-    [currentGame?.resultsArtifacts, hasCachedSummary]
+    () => telegramResultsCta === 'send',
+    [telegramResultsCta]
   );
 
   const showSendToTelegramButton = useMemo(() => {
@@ -207,8 +222,83 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     return true;
   }, [currentGame, hasResultsEntered]);
 
-  const isTelegramSendDisabled =
-    isSendingToTelegram || isArtifactsPreparing || !canSendToTelegram;
+  const applyArtifactsPollPayload = useCallback(
+    (artifacts: NonNullable<Game['resultsArtifacts']>, summaryText?: string | null) => {
+      const game = currentGameRef.current;
+      if (!game) return;
+      onGameUpdate(
+        mergeGameResultsArtifactsFields(game, {
+          ...game,
+          resultsArtifacts: artifacts,
+          ...(summaryText !== undefined ? { resultsSummaryText: summaryText } : {}),
+        })
+      );
+    },
+    [onGameUpdate]
+  );
+
+  const handlePrepareResultsArtifacts = async () => {
+    if (!currentGame || isPreparingArtifacts || telegramResultsCta === 'preparing') return;
+
+    setIsPreparingArtifacts(true);
+    setPollArtifactsActive(true);
+    try {
+      const response = await gamesApi.prepareResultsArtifacts(currentGame.id);
+      const payload = response.data;
+      if (payload?.resultsArtifacts) {
+        applyArtifactsPollPayload(payload.resultsArtifacts, payload.resultsSummaryText);
+      }
+      try {
+        const status = await gamesApi.getResultsArtifactsStatus(currentGame.id);
+        if (status.data) {
+          applyArtifactsPollPayload(status.data);
+        }
+      } catch {
+        // follow-up poll will retry
+      }
+    } catch (error: unknown) {
+      setPollArtifactsActive(false);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        t('gameResults.prepareResultsFailed');
+      toast.error(errorMessage);
+    } finally {
+      setIsPreparingArtifacts(false);
+    }
+  };
+
+  useEffect(() => {
+    if (telegramResultsCta === 'send') {
+      setPollArtifactsActive(false);
+    }
+  }, [telegramResultsCta]);
+
+  useEffect(() => {
+    const shouldPoll =
+      pollArtifactsActive || telegramResultsCta === 'preparing';
+    if (!currentGame?.id || !shouldPoll) return;
+
+    const gameId = currentGame.id;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const response = await gamesApi.getResultsArtifactsStatus(gameId);
+        if (cancelled || !response.data) return;
+        applyArtifactsPollPayload(response.data);
+      } catch {
+        // ignore polling errors
+      }
+    };
+
+    void poll();
+    const timer = window.setInterval(() => void poll(), 2000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [currentGame?.id, pollArtifactsActive, telegramResultsCta, applyArtifactsPollPayload]);
 
   const showSentToTelegramHint = useMemo(() => {
     if (!currentGame || !hasResultsEntered) return false;
@@ -938,9 +1028,11 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         <ResultsArtifactsTelegramBlock
           artifacts={currentGame?.resultsArtifacts}
           hasSummaryText={hasCachedSummary}
-          disabled={isTelegramSendDisabled}
+          hasGamePhoto={hasPhotosForTelegramPost}
           isSending={isSendingToTelegram}
+          isPreparingArtifacts={isPreparingArtifacts}
           onSend={handleSendToTelegram}
+          onPrepare={handlePrepareResultsArtifacts}
         />
       )}
 

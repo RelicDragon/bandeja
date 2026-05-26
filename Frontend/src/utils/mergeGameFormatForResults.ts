@@ -1,4 +1,5 @@
 import type { Game } from '@/types';
+import { mergeGameResultsArtifactsFields } from '@/utils/gameResultsArtifacts.util';
 
 /** Fields that affect scoring rules and must stay in sync between shell game and results engine store. */
 export const GAME_FORMAT_SYNC_KEYS = [
@@ -39,14 +40,18 @@ export function mergeShellFieldsIntoEngineGame(shell: Game, engine: Game): Game 
   for (const k of GAME_FORMAT_SYNC_KEYS) {
     if (shell[k] !== undefined) formatPatch[k] = shell[k] as never;
   }
-  return {
+  const merged: Game = {
     ...engine,
     ...formatPatch,
     photosCount: shell.photosCount,
     mainPhotoId: shell.mainPhotoId,
+    mainPhoto: shell.mainPhoto ?? engine.mainPhoto,
     resultsSentToTelegram: shell.resultsSentToTelegram,
+    resultsSummaryText: shell.resultsSummaryText ?? engine.resultsSummaryText,
+    resultsArtifacts: shell.resultsArtifacts ?? engine.resultsArtifacts,
     city: shell.city,
   };
+  return mergeGameResultsArtifactsFields(engine, merged);
 }
 
 export function resolveCurrentGameForResults(

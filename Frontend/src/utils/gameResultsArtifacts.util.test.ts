@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import {
   canSendResultsToTelegram,
+  isPhotoReadyForTelegram,
   isResultsArtifactsPreparing,
-  resolveResultsArtifactsTelegramUiState,
+  resolveTelegramResultsCta,
 } from './gameResultsArtifacts.util';
 import type { GameResultsArtifacts } from '@/types';
 
@@ -19,57 +20,62 @@ function artifacts(
 }
 
 function run() {
-  assert.equal(resolveResultsArtifactsTelegramUiState(undefined), 'ready');
-  assert.equal(canSendResultsToTelegram(undefined), true);
+  assert.equal(resolveTelegramResultsCta(undefined, { hasSummaryText: false, hasGamePhoto: true }), 'prepare');
+  assert.equal(
+    resolveTelegramResultsCta(undefined, { hasSummaryText: true, hasGamePhoto: true }),
+    'send'
+  );
 
   assert.equal(
-    resolveResultsArtifactsTelegramUiState(
-      artifacts({ status: 'running', summaryReady: false })
-    ),
+    resolveTelegramResultsCta(artifacts({ status: 'running', summaryReady: true, photoReady: false }), {
+      hasSummaryText: false,
+      hasGamePhoto: true,
+    }),
+    'send'
+  );
+  assert.equal(isPhotoReadyForTelegram(artifacts({ status: 'running', photoReady: false }), true), true);
+
+  assert.equal(
+    resolveTelegramResultsCta(artifacts({ status: 'running', summaryReady: false, photoReady: false }), {
+      hasSummaryText: false,
+      hasGamePhoto: true,
+    }),
     'preparing'
   );
-  assert.equal(isResultsArtifactsPreparing(artifacts({ status: 'running' })), true);
+  assert.equal(isResultsArtifactsPreparing(artifacts({ status: 'running' }), false, true), true);
 
   assert.equal(
-    resolveResultsArtifactsTelegramUiState(
-      artifacts({ status: 'done', readyAt: '2026-01-01T00:00:00.000Z' })
-    ),
-    'ready'
-  );
-  assert.equal(canSendResultsToTelegram(artifacts({ status: 'done', readyAt: '2026-01-01T00:00:00.000Z' })), true);
-
-  assert.equal(
-    resolveResultsArtifactsTelegramUiState(
-      artifacts({ status: 'failed', summaryReady: true, photoReady: false })
-    ),
-    'failed_degraded'
-  );
-  assert.equal(
-    canSendResultsToTelegram(
-      artifacts({ status: 'failed', summaryReady: true }),
-      false
-    ),
-    true
-  );
-  assert.equal(
-    canSendResultsToTelegram(
-      artifacts({ status: 'failed', summaryReady: false }),
-      true
-    ),
-    true
+    resolveTelegramResultsCta(artifacts({ status: 'done', readyAt: '2026-01-01T00:00:00.000Z' }), {
+      hasSummaryText: false,
+      hasGamePhoto: false,
+    }),
+    'send'
   );
 
   assert.equal(
-    resolveResultsArtifactsTelegramUiState(
-      artifacts({ status: 'failed', summaryReady: false, photoReady: false })
-    ),
-    'failed'
+    resolveTelegramResultsCta(artifacts({ status: 'none' }), { hasSummaryText: true, hasGamePhoto: true }),
+    'send'
   );
-  assert.equal(canSendResultsToTelegram(artifacts({ status: 'failed' })), false);
+  assert.equal(
+    resolveTelegramResultsCta(artifacts({ status: 'none' }), { hasSummaryText: false, hasGamePhoto: true }),
+    'prepare'
+  );
 
-  assert.equal(resolveResultsArtifactsTelegramUiState(artifacts({ status: 'none' })), 'ready');
-  assert.equal(canSendResultsToTelegram(artifacts({ status: 'none' })), true);
-  assert.equal(isResultsArtifactsPreparing(artifacts({ status: 'none' })), false);
+  assert.equal(
+    resolveTelegramResultsCta(
+      artifacts({ status: 'failed', summaryReady: true, photoReady: false }),
+      { hasSummaryText: false, hasGamePhoto: true }
+    ),
+    'send'
+  );
+  assert.equal(canSendResultsToTelegram(artifacts({ status: 'failed' }), false, false), false);
+  assert.equal(
+    resolveTelegramResultsCta(artifacts({ status: 'failed', summaryReady: false }), {
+      hasSummaryText: false,
+      hasGamePhoto: false,
+    }),
+    'prepare'
+  );
 
   console.log('gameResultsArtifacts.util.test.ts: ok');
 }

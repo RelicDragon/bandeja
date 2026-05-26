@@ -13,8 +13,8 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { pickImages } from '@/utils/photoCapture';
 import { isCapacitor } from '@/utils/capacitor';
+import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { PhotosSectionGrid } from './PhotosSectionGrid';
-import { GamePhotoGalleryViewer } from './GamePhotoGalleryViewer';
 import { usePhotosSectionUpload } from './usePhotosSectionUpload';
 import { gamePhotoUrl } from '@/utils/gamePhotoUrl';
 
@@ -35,6 +35,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   const loadGamePhotos = useGamePhotosStore((s) => s.loadGamePhotos);
   const removePhotoLocal = useGamePhotosStore((s) => s.removePhotoLocal);
 
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
   const [isUpdatingMainPhoto, setIsUpdatingMainPhoto] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
@@ -63,6 +64,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   useEffect(() => {
     hasAttemptedSetMainPhoto.current = false;
     setGalleryIndex(null);
+    setFullscreenImage(null);
   }, [game.id]);
 
   useEffect(() => {
@@ -203,10 +205,37 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
       const photo = photos[photoIndex];
       if (!photo) return;
       const gi = visiblePhotos.findIndex((p) => p.id === photo.id);
-      if (gi >= 0) setGalleryIndex(gi);
+      if (gi < 0) return;
+      const url = galleryImages[gi];
+      if (!url) return;
+      setGalleryIndex(gi);
+      setFullscreenImage(url);
     },
-    [photos, visiblePhotos]
+    [photos, visiblePhotos, galleryImages]
   );
+
+  const closeFullscreen = useCallback(() => {
+    setFullscreenImage(null);
+    setGalleryIndex(null);
+  }, []);
+
+  useEffect(() => {
+    if (galleryIndex == null || !fullscreenImage) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' && galleryIndex > 0) {
+        const next = galleryIndex - 1;
+        setGalleryIndex(next);
+        setFullscreenImage(galleryImages[next] ?? null);
+      }
+      if (e.key === 'ArrowRight' && galleryIndex < galleryImages.length - 1) {
+        const next = galleryIndex + 1;
+        setGalleryIndex(next);
+        setFullscreenImage(galleryImages[next] ?? null);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [fullscreenImage, galleryIndex, galleryImages]);
 
   if (game.status === 'ANNOUNCED' || !user) {
     return null;
@@ -269,11 +298,14 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
         />
       )}
 
-      {galleryIndex != null && galleryImages.length > 0 && (
-        <GamePhotoGalleryViewer
-          images={galleryImages}
-          initialIndex={galleryIndex}
-          onClose={() => setGalleryIndex(null)}
+      {fullscreenImage && (
+        <FullscreenImageViewer
+          imageUrl={fullscreenImage}
+          onClose={closeFullscreen}
+          isOpen
+          enableTransform={false}
+          usePortaledOverlay
+          modalId="fullscreen-game-photo-viewer"
         />
       )}
 

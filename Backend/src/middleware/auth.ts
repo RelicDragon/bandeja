@@ -266,6 +266,12 @@ export const requireGamePermission = (
  */
 export const canEditGame = requireGamePermission([ParticipantRole.OWNER, ParticipantRole.ADMIN]);
 
+/** Same as canEditGame but allows owner/admin actions when the game is ARCHIVED (e.g. Telegram results). */
+export const canEditGameIncludingArchived = requireGamePermission(
+  [ParticipantRole.OWNER, ParticipantRole.ADMIN],
+  { allowArchived: true }
+);
+
 /**
  * Middleware to check if user can access a game (admin/owner/participant of game or parent game)
  * Requires authenticate middleware to be called first

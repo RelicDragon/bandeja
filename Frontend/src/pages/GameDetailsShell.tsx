@@ -44,7 +44,7 @@ import { TrainingResultsSection } from '@/components/GameDetails/TrainingResults
 import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { BetSection } from '@/components/GameDetails/BetSection';
 import { UserGameNotes } from '@/components/GameDetails/UserGameNotes';
-import { gamesApi, invitesApi, courtsApi, clubsApi } from '@/api';
+import { gamesApi, invitesApi, courtsApi, clubsApi, normalizeGameFromApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { resultsApi } from '@/api/results';
 import { trainingApi } from '@/api/training';
@@ -64,6 +64,7 @@ import { mergeGameWithInviteDeletedPayload, isPendingGameInvite } from '@/utils/
 import { socketService } from '@/services/socketService';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { shouldSyncEngineGameFromShell } from '@/utils/mergeGameFormatForResults';
+import { mergeGameResultsArtifactsFields } from '@/utils/gameResultsArtifacts.util';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
 
 type GameWithResults = Game & {
@@ -333,35 +334,60 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   }, [lastInviteDeleted, id]);
 
   useEffect(() => {
-    if (!lastGameUpdate || lastGameUpdate.gameId !== id || lastGameUpdate.senderId === user?.id) return;
-    const updatedGame = lastGameUpdate.game;
+    if (!lastGameUpdate || lastGameUpdate.gameId !== id) return;
+    const updatedGame = normalizeGameFromApi(lastGameUpdate.game);
+    const fromSelf = lastGameUpdate.senderId === user?.id;
+
     setGame((prevGame) => {
       if (!prevGame) return updatedGame;
-      
+
+      const mergeArtifactsOnSelf = () =>
+        mergeGameResultsArtifactsFields(prevGame, {
+          ...prevGame,
+          resultsArtifacts: updatedGame.resultsArtifacts ?? prevGame.resultsArtifacts,
+          resultsSummaryText: updatedGame.resultsSummaryText ?? prevGame.resultsSummaryText,
+          photosCount: updatedGame.photosCount ?? prevGame.photosCount,
+          mainPhotoId: updatedGame.mainPhotoId ?? prevGame.mainPhotoId,
+          mainPhoto: updatedGame.mainPhoto ?? prevGame.mainPhoto,
+        });
+
+      if (fromSelf) {
+        const nextVersion = updatedGame.resultsArtifacts?.version ?? 0;
+        const prevVersion = prevGame.resultsArtifacts?.version ?? 0;
+        if (nextVersion > prevVersion || updatedGame.resultsArtifacts?.readyAt) {
+          return mergeArtifactsOnSelf();
+        }
+        return prevGame;
+      }
+
+      let merged: Game = updatedGame;
+
       if (prevGame.resultsStatus === 'FINAL' && updatedGame.resultsStatus === 'FINAL') {
         const prevGameWithResults = prevGame as GameWithResults;
         const updatedGameWithResults = updatedGame as GameWithResults;
-        return {
+        merged = {
           ...updatedGame,
-          rounds: (updatedGameWithResults.rounds && updatedGameWithResults.rounds.length > 0) 
-            ? updatedGameWithResults.rounds 
-            : (prevGameWithResults.rounds || updatedGameWithResults.rounds),
-          outcomes: (updatedGame.outcomes && updatedGame.outcomes.length > 0)
-            ? updatedGame.outcomes
-            : (prevGame.outcomes || updatedGame.outcomes),
+          rounds:
+            updatedGameWithResults.rounds && updatedGameWithResults.rounds.length > 0
+              ? updatedGameWithResults.rounds
+              : prevGameWithResults.rounds || updatedGameWithResults.rounds,
+          outcomes:
+            updatedGame.outcomes && updatedGame.outcomes.length > 0
+              ? updatedGame.outcomes
+              : prevGame.outcomes || updatedGame.outcomes,
         };
       }
-      
+
       if (prevGame.hasFixedTeams && prevGame.fixedTeams && prevGame.fixedTeams.length > 0) {
         if (!updatedGame.fixedTeams || updatedGame.fixedTeams.length === 0) {
-          return {
-            ...updatedGame,
+          merged = {
+            ...merged,
             fixedTeams: prevGame.fixedTeams,
           };
         }
       }
-      
-      return updatedGame;
+
+      return mergeGameResultsArtifactsFields(prevGame, merged);
     });
   }, [lastGameUpdate, id, user?.id]);
 

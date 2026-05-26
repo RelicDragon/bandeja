@@ -42,6 +42,79 @@ export const getGameById = asyncHandler(async (req: AuthRequest, res: Response) 
   });
 });
 
+export const prepareResultsArtifacts = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!config.resultsArtifacts.enabled) {
+    throw new ApiError(503, 'Results artifacts are not enabled');
+  }
+
+  const game = await prisma.game.findUnique({
+    where: { id },
+    select: {
+      resultsStatus: true,
+      resultsSentToTelegram: true,
+      resultsArtifactsVersion: true,
+      resultsArtifactsReadyAt: true,
+      resultsSummaryText: true,
+      resultsArtifactJob: {
+        select: {
+          status: true,
+          summaryStatus: true,
+          photoStatus: true,
+        },
+      },
+    },
+  });
+
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+
+  if (game.resultsStatus !== 'FINAL') {
+    throw new ApiError(400, 'Game results must be finalized before preparing artifacts');
+  }
+
+  if (game.resultsSentToTelegram) {
+    throw new ApiError(400, 'Results have already been sent to Telegram');
+  }
+
+  await GameResultsArtifactQueueService.enqueue(id);
+
+  const updated = await prisma.game.findUnique({
+    where: { id },
+    select: {
+      resultsArtifactsVersion: true,
+      resultsArtifactsReadyAt: true,
+      resultsSummaryText: true,
+      resultsArtifactJob: {
+        select: {
+          status: true,
+          summaryStatus: true,
+          photoStatus: true,
+        },
+      },
+    },
+  });
+
+  if (!updated) {
+    throw new ApiError(404, 'Game not found');
+  }
+
+  res.json({
+    success: true,
+    data: {
+      resultsArtifacts: buildResultsArtifactsDto(updated),
+      resultsSummaryText: updated.resultsSummaryText,
+    },
+    serverTime: new Date().toISOString(),
+  });
+});
+
 export const getResultsArtifactsStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 

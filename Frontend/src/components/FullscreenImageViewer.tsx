@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Copy, Download, Loader2, X } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +8,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { isCapacitor, isAndroid } from '@/utils/capacitor';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 import { OVERLAY_CONTROL_GLASS } from '@/components/ui/overlayControlGlass';
+import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { mediaCacheKeyForSrc, readCachedMediaResponse, writeCachedMediaResponse } from '@/services/chat/chatMediaCache';
 
 interface FullscreenImageViewerProps {
@@ -16,6 +18,8 @@ interface FullscreenImageViewerProps {
   /** Pinch-zoom pan; off avoids crashes when nested under CSS transform ancestors. */
   enableTransform?: boolean;
   modalId?: string;
+  /** Game details: Radix dialog breaks under pull-to-refresh transform; use portaled overlay instead. */
+  usePortaledOverlay?: boolean;
 }
 
 export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
@@ -24,8 +28,10 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   isOpen = true,
   enableTransform = true,
   modalId = 'fullscreen-image-viewer',
+  usePortaledOverlay = false,
 }) => {
   const { t } = useTranslation();
+  useBackButtonModal(usePortaledOverlay && isOpen, onClose, modalId);
   const transformRef = useRef<any>(null);
   const touchStartY = useRef<number | null>(null);
   const touchStartX = useRef<number | null>(null);
@@ -264,18 +270,14 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     touchStartX.current = null;
   }, [onClose]);
 
-  return (
-    <FullScreenDialog
-      open={isOpen}
-      onClose={onClose}
-      modalId={modalId}
-      closeOnInteractOutside={false}
-      overlayClassName="fullscreen-backdrop-overlay"
-      contentClassName="fullscreen-content-fade-animate"
-    >
+  if (!isOpen) {
+    return null;
+  }
+
+  const viewerBody = (
       <div 
         ref={containerRef}
-        className="fixed inset-0 flex items-center justify-center bg-transparent"
+        className="fixed inset-0 z-[1] flex items-center justify-center bg-transparent"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -394,6 +396,32 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           </div>
         </div>
       </div>
+  );
+
+  if (usePortaledOverlay) {
+    const overlay = (
+      <div
+        className="fullscreen-backdrop-overlay fixed inset-0 z-[100] bg-black/80"
+        data-state="open"
+        role="dialog"
+        aria-modal="true"
+      >
+        {viewerBody}
+      </div>
+    );
+    return typeof document !== 'undefined' ? createPortal(overlay, document.body) : overlay;
+  }
+
+  return (
+    <FullScreenDialog
+      open={isOpen}
+      onClose={onClose}
+      modalId={modalId}
+      closeOnInteractOutside={false}
+      overlayClassName="fullscreen-backdrop-overlay"
+      contentClassName="fullscreen-content-fade-animate"
+    >
+      {viewerBody}
     </FullScreenDialog>
   );
 };

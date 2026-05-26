@@ -233,6 +233,23 @@ export const gamesApi = {
     return response.data;
   },
 
+  prepareResultsArtifacts: async (id: string) => {
+    const response = await api.post<
+      ApiResponse<{
+        resultsArtifacts: Game['resultsArtifacts'];
+        resultsSummaryText: string | null;
+      }>
+    >(`/games/${id}/prepare-results-artifacts`);
+    return response.data;
+  },
+
+  getResultsArtifactsStatus: async (id: string) => {
+    const response = await api.get<ApiResponse<NonNullable<Game['resultsArtifacts']>>>(
+      `/games/${id}/results-artifacts-status`
+    );
+    return response.data;
+  },
+
   prepareTelegramSummary: async (id: string, options?: { regenerate?: boolean }) => {
     const response = await api.get<ApiResponse<{ summary: string }>>(`/games/${id}/prepare-telegram-summary`, {
       timeout: 20000,

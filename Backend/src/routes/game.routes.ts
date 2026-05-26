@@ -2,7 +2,16 @@ import { Router } from 'express';
 import { body } from 'express-validator';
 import rateLimit from 'express-rate-limit';
 import { validate } from '../middleware/validate';
-import { authenticate, optionalAuth, canEditGame, canAccessGame, requireGamePermission, AuthRequest } from '../middleware/auth';
+import {
+  authenticate,
+  optionalAuth,
+  canEditGame,
+  canEditGameIncludingArchived,
+  canAccessGame,
+  canAccessGameIncludingArchived,
+  requireGamePermission,
+  AuthRequest,
+} from '../middleware/auth';
 import { ParticipantRole } from '@prisma/client';
 import * as gameController from '../controllers/game.controller';
 import gamePhotoRoutes from './gamePhoto.routes';
@@ -66,6 +75,13 @@ router.get(
   authenticate,
   canAccessGame,
   gameController.getResultsArtifactsStatus
+);
+
+router.post(
+  '/:id/prepare-results-artifacts',
+  authenticate,
+  canAccessGameIncludingArchived,
+  gameController.prepareResultsArtifacts
 );
 
 router.get('/:id', optionalAuth, gameController.getGameById);
@@ -207,21 +223,21 @@ router.post(
 router.get(
   '/:id/prepare-telegram-summary',
   authenticate,
-  canAccessGame,
+  canAccessGameIncludingArchived,
   gameController.prepareTelegramSummary
 );
 
 router.post(
   '/:id/send-results-to-telegram',
   authenticate,
-  canAccessGame,
+  canAccessGameIncludingArchived,
   gameController.sendResultsToTelegram
 );
 
 router.patch(
   '/:id/reset-telegram-results-sent',
   authenticate,
-  canEditGame,
+  canEditGameIncludingArchived,
   gameController.resetTelegramResultsSent
 );
 
