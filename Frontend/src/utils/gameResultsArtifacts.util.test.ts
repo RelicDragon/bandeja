@@ -67,7 +67,9 @@ function run() {
   );
   assert.equal(canSendResultsToTelegram(artifacts({ status: 'failed' })), false);
 
-  assert.equal(resolveResultsArtifactsTelegramUiState(artifacts({ status: 'none' })), 'preparing');
+  assert.equal(resolveResultsArtifactsTelegramUiState(artifacts({ status: 'none' })), 'ready');
+  assert.equal(canSendResultsToTelegram(artifacts({ status: 'none' })), true);
+  assert.equal(isResultsArtifactsPreparing(artifacts({ status: 'none' })), false);
 
   console.log('gameResultsArtifacts.util.test.ts: ok');
 }

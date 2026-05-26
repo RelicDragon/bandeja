@@ -56,9 +56,11 @@ export function resolveResultsArtifactsTelegramUiState(
 
   if (artifacts.status === 'done') return 'ready';
 
-  if (hasSummaryText) return 'ready';
+  // status 'none': no GameResultsArtifactJob — pipeline not active for this game.
+  // Do not block Telegram; openTelegramSummaryModal can prepare text on demand.
+  if (artifacts.status === 'none') return 'ready';
 
-  return 'preparing';
+  return 'waiting';
 }
 
 export function isResultsArtifactsPreparing(
