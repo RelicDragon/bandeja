@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { OVERLAY_CONTROL_GLASS } from '@/components/ui/overlayControlGlass';
@@ -44,15 +43,14 @@ export const GamePhotoGalleryViewer = ({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [goNext, goPrev]);
 
-  const safeIndex = clampGalleryIndex(index, images.length);
-  const imageUrl = images[safeIndex];
+  const imageUrl = images[clampGalleryIndex(index, images.length)];
   if (!imageUrl) {
     return null;
   }
 
   const showNav = images.length > 1;
 
-  const content = (
+  return (
     <div
       onTouchStart={(e) => {
         touchStartX.current = e.touches[0]?.clientX ?? null;
@@ -68,16 +66,10 @@ export const GamePhotoGalleryViewer = ({
         touchStartX.current = null;
       }}
     >
-      <FullscreenImageViewer
-        imageUrl={imageUrl}
-        isOpen
-        onClose={onClose}
-        enableTransform={false}
-        modalId="fullscreen-game-photo-viewer"
-      />
+      <FullscreenImageViewer imageUrl={imageUrl} isOpen onClose={onClose} />
       {showNav && (
         <>
-          {safeIndex > 0 && (
+          {index > 0 && (
             <button
               type="button"
               onClick={goPrev}
@@ -87,7 +79,7 @@ export const GamePhotoGalleryViewer = ({
               <ChevronLeft size={28} />
             </button>
           )}
-          {safeIndex < images.length - 1 && (
+          {index < images.length - 1 && (
             <button
               type="button"
               onClick={goNext}
@@ -101,12 +93,10 @@ export const GamePhotoGalleryViewer = ({
             className={`fixed left-1/2 -translate-x-1/2 z-[60] rounded-full px-3 py-1 text-sm ${OVERLAY_CONTROL_GLASS}`}
             style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
           >
-            {safeIndex + 1} / {images.length}
+            {index + 1} / {images.length}
           </div>
         </>
       )}
     </div>
   );
-
-  return typeof document !== 'undefined' ? createPortal(content, document.body) : content;
 };
