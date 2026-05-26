@@ -41,8 +41,12 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
   const [photoToDelete, setPhotoToDelete] = useState<GamePhoto | null>(null);
   const [mainPhotoId, setMainPhotoId] = useState<string | null | undefined>(game.mainPhotoId);
-  const hasAttemptedSetMainPhoto = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const displayMainPhotoId = useMemo(() => {
+    if (!mainPhotoId) return null;
+    return photos.some((p) => p.id === mainPhotoId) ? mainPhotoId : null;
+  }, [mainPhotoId, photos]);
 
   const { isUploadingPhoto, handlePhotoSelect } = usePhotosSectionUpload(game, onGameUpdate);
 
@@ -62,7 +66,6 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   }, [game.mainPhotoId]);
 
   useEffect(() => {
-    hasAttemptedSetMainPhoto.current = false;
     setGalleryIndex(null);
     setFullscreenImage(null);
   }, [game.id]);
@@ -136,9 +139,10 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   };
 
   const handleMainPhotoSelect = useCallback(
-    async (photoId: string, silent = false) => {
+    async (photoId: string) => {
       if (!game.id || isUpdatingMainPhoto || !canEditMainPhoto) return;
-      if (mainPhotoId === photoId) return;
+      if (!photos.some((p) => p.id === photoId)) return;
+      if (displayMainPhotoId === photoId) return;
 
       setIsUpdatingMainPhoto(true);
       try {
@@ -150,36 +154,16 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
             onGameUpdate(updatedGameResponse.data);
           }
         }
-        if (!silent) {
-          toast.success(t('gameDetails.mainPhotoUpdated'));
-        }
+        toast.success(t('gameDetails.mainPhotoUpdated'));
       } catch (error) {
         console.error('Failed to update main photo:', error);
-        if (!silent) {
-          toast.error(t('gameDetails.mainPhotoUpdateFailed'));
-        }
+        toast.error(t('gameDetails.mainPhotoUpdateFailed'));
       } finally {
         setIsUpdatingMainPhoto(false);
       }
     },
-    [canEditMainPhoto, game.id, isUpdatingMainPhoto, mainPhotoId, onGameUpdate, t]
+    [canEditMainPhoto, displayMainPhotoId, game.id, isUpdatingMainPhoto, onGameUpdate, photos, t]
   );
-
-  useEffect(() => {
-    if (
-      photos.length > 0 &&
-      !mainPhotoId &&
-      canEditMainPhoto &&
-      !isUpdatingMainPhoto &&
-      !hasAttemptedSetMainPhoto.current
-    ) {
-      const firstPhoto = photos[0];
-      if (firstPhoto) {
-        hasAttemptedSetMainPhoto.current = true;
-        handleMainPhotoSelect(firstPhoto.id, true);
-      }
-    }
-  }, [photos, mainPhotoId, canEditMainPhoto, isUpdatingMainPhoto, handleMainPhotoSelect]);
 
   const handleDeleteConfirm = async () => {
     if (!photoToDelete || !game.id || isDeletingPhoto) return;
@@ -187,16 +171,15 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     try {
       await gamePhotosApi.delete(game.id, photoToDelete.id);
       removePhotoLocal(game.id, photoToDelete.id);
-      if (mainPhotoId === photoToDelete.id) {
-        setMainPhotoId(null);
-      }
       toast.success(t('gameDetails.photoDeleted'));
-      if (onGameUpdate) {
+      try {
         const updatedGameResponse = await gamesApi.getById(game.id);
         if (updatedGameResponse.data) {
           setMainPhotoId(updatedGameResponse.data.mainPhotoId);
-          onGameUpdate(updatedGameResponse.data);
+          onGameUpdate?.(updatedGameResponse.data);
         }
+      } catch (refreshError) {
+        console.error('Failed to refresh game after photo delete:', refreshError);
       }
     } catch (error) {
       console.error('Failed to delete photo:', error);
@@ -296,7 +279,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
       ) : (
         <PhotosSectionGrid
           photos={photos}
-          mainPhotoId={mainPhotoId}
+          mainPhotoId={displayMainPhotoId}
           canEditMainPhoto={canEditMainPhoto}
           canDeletePhoto={canDeletePhoto}
           isUploadingPhoto={isUploadingPhoto}

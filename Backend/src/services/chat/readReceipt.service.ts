@@ -474,6 +474,9 @@ export class ReadReceiptService {
         `
       );
       return Number(rows[0]?.n ?? 0);
+    } else if (contextType === 'BUG') {
+      const map = await UnreadCountBatchService.getUnreadCountsByContext('BUG', [contextId], userId);
+      return map[contextId] ?? 0;
     }
     return 0;
   }
@@ -688,6 +691,59 @@ export class ReadReceiptService {
         },
         { timeout: 120_000 }
       );
+    } else if (contextType === 'BUG') {
+      await MessageService.validateBugAccess(contextId, userId);
+
+      const unreadMessages = await prisma.chatMessage.findMany({
+        where: {
+          chatContextType: 'BUG',
+          contextId,
+          deletedAt: null,
+          senderId: { not: userId },
+          readReceipts: {
+            none: { userId },
+          },
+        },
+        select: {
+          id: true,
+          chatContextType: true,
+          contextId: true,
+          chatType: true,
+          serverSyncSeq: true,
+          createdAt: true,
+        },
+      });
+
+      if (unreadMessages.length === 0) {
+        return { count: 0, syncSeq: undefined as number | undefined };
+      }
+
+      const readAt = new Date();
+      const readAtIso = readAt.toISOString();
+      const readReceipts = unreadMessages.map((message) => ({
+        messageId: message.id,
+        userId,
+        readAt,
+      }));
+      return prisma.$transaction(async (tx) => {
+        await tx.messageReadReceipt.createMany({
+          data: readReceipts,
+          skipDuplicates: true,
+        });
+        await ChatReadCursorService.mergeFromMessages(tx, userId, unreadMessages);
+        const ids = unreadMessages.map((m) => m.id);
+        let syncSeq: number | undefined;
+        for (let i = 0; i < ids.length; i += READ_SYNC_CHUNK) {
+          syncSeq = await ChatSyncEventService.appendEventInTransaction(
+            tx,
+            'BUG',
+            contextId,
+            ChatSyncEventType.MESSAGES_READ_BATCH,
+            { userId, readAt: readAtIso, messageIds: ids.slice(i, i + READ_SYNC_CHUNK) }
+          );
+        }
+        return { count: unreadMessages.length, syncSeq };
+      });
     }
     return { count: 0, syncSeq: undefined as number | undefined };
   }

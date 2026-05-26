@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { getHorizontalScrollFadeMaskStyle } from '@/components/HorizontalScrollFadeEdges';
 import { useAuthStore } from '@/store/authStore';
 import { useHorizontalScrollFade } from '@/hooks/useHorizontalScrollFade';
@@ -8,8 +9,11 @@ import { StoriesRailBubble } from './StoriesRailBubble';
 import { StoriesRailSkeleton } from './StoriesRailSkeleton';
 import { StoriesViewer } from './StoriesViewer';
 import { StoryCreateSheet } from './create/StoryCreateSheet';
-import { StoryEditor } from './create/StoryEditor';
+import { StoryPhotoEditor } from './create/photo/StoryPhotoEditor';
+import { downscaleStoryImageFile } from './create/photo/utils/downscaleStoryImageFile';
+import { StoryVideoPublishModal } from './create/video/StoryVideoPublishModal';
 import type { StoryMediaFile } from './create/types/storyEditor.types';
+import type { StoryMediaFile as PhotoMediaFile } from './create/photo/types';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 
 export function StoriesRail() {
@@ -18,7 +22,8 @@ export function StoriesRail() {
   const { feed, isLoading, refresh, enabled } = useStoriesFeed();
   const carouselRef = useRef<HTMLDivElement>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [editorFiles, setEditorFiles] = useState<StoryMediaFile[] | null>(null);
+  const [photoFiles, setPhotoFiles] = useState<PhotoMediaFile[] | null>(null);
+  const [videoFile, setVideoFile] = useState<StoryMediaFile | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerBubbleIndex, setViewerBubbleIndex] = useState(0);
   const [viewerSegmentKey, setViewerSegmentKey] = useState<string | null>(null);
@@ -55,6 +60,37 @@ export function StoriesRail() {
       if (idx >= 0) openViewerAt(idx);
     },
     [viewerBubbles, openViewerAt]
+  );
+
+  const handleFilesSelected = useCallback(
+    (files: StoryMediaFile[]) => {
+      const images = files.filter((f) => f.mediaType === 'IMAGE');
+      const videos = files.filter((f) => f.mediaType === 'VIDEO');
+      if (images.length > 0 && videos.length > 0) {
+        toast.error(t('stories.mixedMediaBlocked'));
+        return;
+      }
+      if (videos.length > 1) {
+        toast.error(t('stories.oneVideoOnly'));
+        return;
+      }
+      if (videos.length === 1) {
+        setVideoFile(videos[0]!);
+        return;
+      }
+      if (images.length > 0) {
+        void (async () => {
+          const prepared = await Promise.all(
+            images.map(async (f) => ({
+              file: await downscaleStoryImageFile(f.file),
+              mediaType: 'IMAGE' as const,
+            }))
+          );
+          setPhotoFiles(prepared);
+        })();
+      }
+    },
+    [t]
   );
 
   const initialSegmentIndex = useMemo(() => {
@@ -112,14 +148,26 @@ export function StoriesRail() {
       <StoryCreateSheet
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        onFilesSelected={(files) => setEditorFiles(files)}
+        onFilesSelected={handleFilesSelected}
         disabled={offline}
       />
-      {editorFiles ? (
-        <StoryEditor
+      {photoFiles ? (
+        <StoryPhotoEditor
           open
-          files={editorFiles}
-          onClose={() => setEditorFiles(null)}
+          files={photoFiles}
+          onClose={() => setPhotoFiles(null)}
+          onPublished={(segmentKey) => {
+            void refresh(true).then(() => {
+              openViewerAt(0, segmentKey);
+            });
+          }}
+        />
+      ) : null}
+      {videoFile ? (
+        <StoryVideoPublishModal
+          open
+          file={videoFile}
+          onClose={() => setVideoFile(null)}
           onPublished={(segmentKey) => {
             void refresh(true).then(() => {
               openViewerAt(0, segmentKey);

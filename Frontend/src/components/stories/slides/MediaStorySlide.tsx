@@ -3,26 +3,9 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { resolveChatMediaUrl } from '@/components/audio/audioWaveformUtils';
 import { ensureChatMediaDownloaded } from '@/services/chat/chatMediaDownloadManager';
 import { OVERLAY_CONTROL_GLASS } from '@/components/ui/overlayControlGlass';
-import { isOverlayStyleV1, isOverlayStyleV2 } from '@/components/stories/create/types/storyEditor.types';
-import {
-  getMediaStoryOverlayVisibility,
-  getV1PositionClass,
-  getV1TextThemeClass,
-  shouldUseStoryComposition,
-} from './mediaStoryOverlay';
 import { STORY_VIDEO_STALL_MS } from '@/components/stories/storyPlayback';
 import { useStoryViewerEngagementPaused } from '@/components/stories/viewer/storyViewerEngagementPause';
 import type { StorySegment } from '@/api/stories';
-import { StoryCompositionFrame } from '@/components/stories/StoryCompositionFrame';
-import { StoryCompositionMedia, STORY_COMPOSITION_MEDIA_FILL_CLASS } from '@/components/stories/StoryCompositionMedia';
-import { StoryCompositionCanvasOverlays } from '@/components/stories/StoryCompositionCanvasOverlays';
-import { MediaStoryOverlayV2 } from './MediaStoryOverlayV2';
-import {
-  resolveCompositionMediaAdjust,
-  resolveCompositionMediaTransform,
-  resolveCompositionNaturalSize,
-  STORY_COMPOSITION_FRAME_CLASS,
-} from '@/components/stories/create/utils/storyCompositionLayout';
 
 const MEDIA_CLASS = 'h-full w-full object-cover';
 
@@ -60,29 +43,6 @@ export function MediaStorySlide({
     segment.sourceType === 'USER_STORY_ITEM' && segment.media.type === 'VIDEO'
       ? segment.media.thumbnailUrl
       : undefined;
-  const overlayText =
-    segment.sourceType === 'USER_STORY_ITEM' ? segment.media.overlayText : undefined;
-  const rawOverlayStyle =
-    segment.sourceType === 'USER_STORY_ITEM' ? segment.media.overlayStyle : undefined;
-
-  const overlayV2 = isOverlayStyleV2(rawOverlayStyle) ? rawOverlayStyle : null;
-  const overlayV1 = isOverlayStyleV1(rawOverlayStyle) ? rawOverlayStyle : null;
-  const { showV2Overlay, showLegacyOverlayText } = getMediaStoryOverlayVisibility(overlayV2, overlayText);
-  const useComposition = shouldUseStoryComposition(overlayV2, isVideo);
-
-  const displayWidth = segment.media.width ?? 1080;
-  const displayHeight = segment.media.height ?? 1920;
-  const { width: naturalWidth, height: naturalHeight } = resolveCompositionNaturalSize(
-    overlayV2,
-    displayWidth,
-    displayHeight
-  );
-  const mediaTransform = resolveCompositionMediaTransform(
-    overlayV2?.mediaTransform,
-    naturalWidth,
-    naturalHeight
-  );
-  const mediaAdjust = resolveCompositionMediaAdjust(overlayV2?.mediaAdjust);
 
   const handleMediaError = useCallback(() => {
     if (retryCount < 2) setRetryCount((c) => c + 1);
@@ -176,9 +136,6 @@ export function MediaStorySlide({
     return () => cancelAnimationFrame(rafId);
   }, [isActive, isVideo, paused, mediaUrl, retryCount, reportVideoProgress]);
 
-  const positionClass = getV1PositionClass(overlayV1?.position);
-  const textTheme = getV1TextThemeClass(overlayV1?.theme);
-
   const muteButton = isVideo ? (
     <button
       type="button"
@@ -195,87 +152,35 @@ export function MediaStorySlide({
     </button>
   ) : null;
 
-  const simpleMediaNode = isVideo ? (
-    <>
-      <video
-        ref={videoRef}
-        key={`${mediaUrl}-${retryCount}`}
-        src={mediaUrl}
-        poster={posterUrl ? resolveChatMediaUrl(posterUrl) : undefined}
-        className={MEDIA_CLASS}
-        playsInline
-        preload="auto"
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={onVideoEnded}
-        onError={handleMediaError}
-        onTimeUpdate={reportVideoProgress}
-      />
-      {muteButton}
-    </>
-  ) : (
-    <img
-      key={`${mediaUrl}-${retryCount}`}
-      src={mediaUrl}
-      alt=""
-      className={MEDIA_CLASS}
-      draggable={false}
-      onError={handleMediaError}
-    />
-  );
-
-  const compositionVideo = (
-    <video
-      ref={videoRef}
-      key={`${mediaUrl}-${retryCount}`}
-      src={mediaUrl}
-      poster={posterUrl ? resolveChatMediaUrl(posterUrl) : undefined}
-      className={STORY_COMPOSITION_MEDIA_FILL_CLASS}
-      playsInline
-      preload="auto"
-      onLoadedMetadata={handleLoadedMetadata}
-      onEnded={onVideoEnded}
-      onError={handleMediaError}
-      onTimeUpdate={reportVideoProgress}
-    />
-  );
-
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black">
-      {useComposition && overlayV2 ? (
-        <StoryCompositionFrame className={STORY_COMPOSITION_FRAME_CLASS}>
-          {({ frameScale }) => (
-            <>
-              <StoryCompositionMedia
-                frameScale={frameScale}
-                mediaTransform={mediaTransform}
-                mediaAdjust={mediaAdjust}
-                naturalWidth={naturalWidth}
-                naturalHeight={naturalHeight}
-              >
-                {compositionVideo}
-              </StoryCompositionMedia>
-              {showV2Overlay ? (
-                <div className="pointer-events-none absolute inset-0 z-10">
-                  <StoryCompositionCanvasOverlays overlayStyle={overlayV2} frameScale={frameScale} />
-                </div>
-              ) : null}
-              {muteButton}
-            </>
-          )}
-        </StoryCompositionFrame>
+      {isVideo ? (
+        <>
+          <video
+            ref={videoRef}
+            key={`${mediaUrl}-${retryCount}`}
+            src={mediaUrl}
+            poster={posterUrl ? resolveChatMediaUrl(posterUrl) : undefined}
+            className={MEDIA_CLASS}
+            playsInline
+            preload="auto"
+            onLoadedMetadata={handleLoadedMetadata}
+            onEnded={onVideoEnded}
+            onError={handleMediaError}
+            onTimeUpdate={reportVideoProgress}
+          />
+          {muteButton}
+        </>
       ) : (
-        <div className={STORY_COMPOSITION_FRAME_CLASS}>{simpleMediaNode}</div>
+        <img
+          key={`${mediaUrl}-${retryCount}`}
+          src={mediaUrl}
+          alt=""
+          className={MEDIA_CLASS}
+          draggable={false}
+          onError={handleMediaError}
+        />
       )}
-
-      {showV2Overlay && overlayV2 && !useComposition ? (
-        <MediaStoryOverlayV2 overlayStyle={overlayV2} />
-      ) : null}
-
-      {showLegacyOverlayText ? (
-        <div className={`absolute inset-x-6 z-10 text-center ${positionClass}`}>
-          <p className={`inline-block rounded-xl px-4 py-2 text-lg font-semibold ${textTheme}`}>{overlayText}</p>
-        </div>
-      ) : null}
     </div>
   );
 }

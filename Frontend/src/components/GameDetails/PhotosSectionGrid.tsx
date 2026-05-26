@@ -65,7 +65,7 @@ export const PhotosSectionGrid = ({
                           e.stopPropagation();
                           onDeleteClick(photo);
                         }}
-                        className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                        className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
                         aria-label={t('gameDetails.deletePhoto')}
                       >
                         <X size={14} />

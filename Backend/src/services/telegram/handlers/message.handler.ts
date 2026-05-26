@@ -3,6 +3,7 @@ import { BotContext, PendingReply } from '../types';
 import { getUserLanguageFromTelegramId } from '../utils';
 import { t } from '../../../utils/translations';
 import { MessageService } from '../../chat/message.service';
+import { markReplyContextAsRead } from '../markReplyContextAsRead';
 import { scheduleMessageDeletion } from '../messageDeletion.service';
 import { Bot } from 'grammy';
 
@@ -52,6 +53,13 @@ export function createMessageHandler(
           mediaUrls: [],
           replyToId: pendingReply.messageId,
           chatType: pendingReply.chatType
+        });
+
+        await markReplyContextAsRead({
+          userId: pendingReply.userId,
+          chatContextType: pendingReply.chatContextType,
+          contextId,
+          chatType: pendingReply.chatType,
         });
         
         pendingReplies.delete(telegramId);

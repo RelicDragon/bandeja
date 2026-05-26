@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Crop, Loader2, Plus, Scissors, SlidersHorizontal, Smile, Type } from 'lucide-react';
+import { Crop, Loader2, SlidersHorizontal, Smile, Type } from 'lucide-react';
 import { lightHaptic } from '@/utils/lightHaptic';
 import type { StoryEditorTool } from './types/storyEditor.types';
 
@@ -9,11 +9,9 @@ type StoryToolRailProps = {
   onActiveToolChange: (tool: StoryEditorTool) => void;
   onTextTool?: () => void;
   onShare?: () => void;
-  onAddSlide?: () => void;
   isPublishing?: boolean;
   controlsDisabled?: boolean;
   showCrop?: boolean;
-  showTrim?: boolean;
 };
 
 function ToolIcon({
@@ -53,11 +51,9 @@ export function StoryToolRail({
   onActiveToolChange,
   onTextTool,
   onShare,
-  onAddSlide,
   isPublishing = false,
   controlsDisabled = false,
   showCrop = false,
-  showTrim = false,
 }: StoryToolRailProps) {
   const { t } = useTranslation();
   const disabled = isPublishing || controlsDisabled;
@@ -98,16 +94,6 @@ export function StoryToolRail({
           {showCrop ? (
             <ToolIcon active={activeTool === 'crop'} label={t('stories.editor.toolCrop')} disabled={disabled} onClick={() => toggle('crop')}>
               <Crop size={22} strokeWidth={2} />
-            </ToolIcon>
-          ) : null}
-          {showTrim ? (
-            <ToolIcon active={activeTool === 'trim'} label={t('stories.editor.toolTrim')} disabled={disabled} onClick={() => toggle('trim')}>
-              <Scissors size={22} strokeWidth={2} />
-            </ToolIcon>
-          ) : null}
-          {onAddSlide ? (
-            <ToolIcon active={false} label={t('stories.editor.addSlide')} disabled={disabled} onClick={() => !disabled && onAddSlide()}>
-              <Plus size={22} strokeWidth={2} />
             </ToolIcon>
           ) : null}
         </div>

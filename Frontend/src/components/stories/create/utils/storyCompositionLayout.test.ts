@@ -39,18 +39,15 @@ describe('layer overlay sizing', () => {
 });
 
 describe('resolveCompositionNaturalSize', () => {
-  it('prefers overlay source dimensions over display size', () => {
-    expect(
-      resolveCompositionNaturalSize(
-        { version: 2, canvas: { width: 1080, height: 1920 }, sourceWidth: 4032, sourceHeight: 3024 },
-        720,
-        1280
-      )
-    ).toEqual({ width: 4032, height: 3024 });
+  it('prefers source dimensions over display size', () => {
+    expect(resolveCompositionNaturalSize(4032, 3024, 720, 1280)).toEqual({ width: 4032, height: 3024 });
   });
 
   it('falls back to display dimensions', () => {
-    expect(resolveCompositionNaturalSize(null, 720, 1280)).toEqual({ width: 720, height: 1280 });
+    expect(resolveCompositionNaturalSize(undefined, undefined, 720, 1280)).toEqual({
+      width: 720,
+      height: 1280,
+    });
   });
 });
 

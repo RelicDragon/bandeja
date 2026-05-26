@@ -3,7 +3,6 @@ import {
   DEFAULT_MEDIA_ADJUST,
   STORY_CANVAS_HEIGHT,
   STORY_CANVAS_WIDTH,
-  type OverlayStyleV2,
   type StoryMediaAdjust,
   type Transform2D,
 } from '../types/storyEditor.types';
@@ -11,7 +10,18 @@ import { STORY_STICKER_BASE_FONT_PX } from '../storySticker.constants';
 import { mediaAdjustToCssFilter } from './storyAdjustFilters';
 import { STORY_TEXT_BASE_CANVAS_PX } from './storyTextStyles';
 import { defaultMediaTransform, transformToCss } from './storyTransform';
-import { layerTransformToPercentStyle } from '@/components/stories/slides/mediaStoryOverlay';
+function layerTransformToPercentStyle(
+  transform: Transform2D,
+  canvas: { width: number; height: number }
+): { left: string; top: string; transform: string } {
+  const leftPct = (transform.x / canvas.width) * 100;
+  const topPct = (transform.y / canvas.height) * 100;
+  return {
+    left: `${leftPct}%`,
+    top: `${topPct}%`,
+    transform: `translate(-50%, -50%) rotate(${transform.rotation}deg) scale(${transform.scale})`,
+  };
+}
 
 export const STORY_COMPOSITION_FRAME_CLASS =
   'relative aspect-[9/16] h-full max-h-full w-auto max-w-full overflow-hidden bg-black';
@@ -90,16 +100,15 @@ export function resolveCompositionMediaAdjust(
   return mediaAdjust ?? DEFAULT_MEDIA_ADJUST;
 }
 
-/** Use editor source dimensions for layout; fall back to stored display size. */
+/** Natural size for layout; fall back to stored display size. */
 export function resolveCompositionNaturalSize(
-  overlay: OverlayStyleV2 | null | undefined,
+  sourceWidth: number | undefined,
+  sourceHeight: number | undefined,
   displayWidth: number,
   displayHeight: number
 ): { width: number; height: number } {
-  const sw = overlay?.sourceWidth;
-  const sh = overlay?.sourceHeight;
-  if (sw != null && sh != null && sw > 0 && sh > 0) {
-    return { width: sw, height: sh };
+  if (sourceWidth != null && sourceHeight != null && sourceWidth > 0 && sourceHeight > 0) {
+    return { width: sourceWidth, height: sourceHeight };
   }
   return {
     width: displayWidth > 0 ? displayWidth : STORY_CANVAS_WIDTH,

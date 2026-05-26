@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components';
 import { AlertTriangle, ImageOff } from 'lucide-react';
@@ -38,14 +38,25 @@ export const ConfirmationModal = ({
 }: ConfirmationModalProps) => {
   const { t } = useTranslation();
   const [internalIsOpen, setInternalIsOpen] = useState(isOpen);
+  const isClosingRef = useRef(false);
 
   useEffect(() => {
-    setInternalIsOpen(isOpen);
+    if (isOpen) {
+      if (!isClosingRef.current) {
+        setInternalIsOpen(true);
+      }
+    } else {
+      isClosingRef.current = false;
+      setInternalIsOpen(false);
+    }
   }, [isOpen]);
 
   const handleClose = () => {
+    if (!internalIsOpen) return;
+    isClosingRef.current = true;
     setInternalIsOpen(false);
     setTimeout(() => {
+      isClosingRef.current = false;
       onClose();
     }, 300);
   };
