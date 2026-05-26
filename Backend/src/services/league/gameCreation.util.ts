@@ -66,7 +66,76 @@ interface CreateLeagueGameParams {
   minParticipants?: number;
   isPublic?: boolean;
   affectsRating?: boolean;
+  gameSetup?: PlayoffGameSetupOverrides;
   db?: GameReadinessDb;
+}
+
+export function resolveLeagueFixtureFormatFields(
+  seasonGame: {
+    fixedNumberOfSets?: number | null;
+    maxTotalPointsPerSet?: number | null;
+    matchTimerEnabled?: boolean | null;
+    matchTimedCapMinutes?: number | null;
+    maxPointsPerTeam?: number | null;
+    winnerOfGame?: WinnerOfGame | null;
+    winnerOfMatch?: WinnerOfMatch | null;
+    matchGenerationType?: MatchGenerationType | null;
+    pointsPerWin?: number | null;
+    pointsPerLoose?: number | null;
+    pointsPerTie?: number | null;
+    scoringPreset?: string | null;
+    scoringMode?: string | null;
+    hasGoldenPoint?: boolean | null;
+    ballsInGames?: boolean | null;
+  },
+  gameSetup?: PlayoffGameSetupOverrides
+) {
+  const winnerOfMatch =
+    (gameSetup?.winnerOfMatch as WinnerOfMatch | undefined) ??
+    (seasonGame.winnerOfMatch as WinnerOfMatch | undefined) ??
+    WinnerOfMatch.BY_SCORES;
+  const scoringPreset =
+    (gameSetup?.scoringPreset as ScoringPreset | null | undefined) ??
+    (seasonGame.scoringPreset as ScoringPreset | null) ??
+    null;
+  const maxTotalPointsPerSet =
+    gameSetup?.maxTotalPointsPerSet ?? seasonGame.maxTotalPointsPerSet ?? 0;
+
+  return {
+    fixedNumberOfSets: gameSetup?.fixedNumberOfSets ?? seasonGame.fixedNumberOfSets ?? 0,
+    maxTotalPointsPerSet,
+    matchTimedCapMinutes: gameSetup?.matchTimedCapMinutes ?? seasonGame.matchTimedCapMinutes ?? 0,
+    matchTimerEnabled: gameSetup?.matchTimerEnabled ?? seasonGame.matchTimerEnabled ?? false,
+    maxPointsPerTeam: gameSetup?.maxPointsPerTeam ?? seasonGame.maxPointsPerTeam ?? 0,
+    winnerOfGame:
+      (gameSetup?.winnerOfGame as WinnerOfGame | undefined) ??
+      (seasonGame.winnerOfGame as WinnerOfGame | undefined) ??
+      WinnerOfGame.BY_MATCHES_WON,
+    winnerOfMatch,
+    matchGenerationType:
+      (gameSetup?.matchGenerationType as MatchGenerationType | undefined) ??
+      (seasonGame.matchGenerationType as MatchGenerationType | undefined) ??
+      MatchGenerationType.HANDMADE,
+    pointsPerWin: gameSetup?.pointsPerWin ?? seasonGame.pointsPerWin ?? 0,
+    pointsPerLoose: gameSetup?.pointsPerLoose ?? seasonGame.pointsPerLoose ?? 0,
+    pointsPerTie: gameSetup?.pointsPerTie ?? seasonGame.pointsPerTie ?? 0,
+    scoringPreset,
+    scoringMode:
+      gameSetup?.scoringMode != null
+        ? String(gameSetup.scoringMode)
+        : seasonGame.scoringMode != null
+          ? String(seasonGame.scoringMode)
+          : null,
+    hasGoldenPoint: gameSetup?.hasGoldenPoint ?? seasonGame.hasGoldenPoint ?? false,
+    ballsInGames:
+      typeof gameSetup?.ballsInGames === 'boolean'
+        ? gameSetup.ballsInGames
+        : deriveBallsInGamesFromScoring({
+            scoringPreset,
+            winnerOfMatch,
+            maxTotalPointsPerSet,
+          }),
+  };
 }
 
 export interface PlayoffGameSetupOverrides {
@@ -112,6 +181,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
     minParticipants = 4,
     isPublic = false,
     affectsRating = true,
+    gameSetup,
     db: dbClient = prisma,
   } = params;
 
@@ -160,6 +230,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
   const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
   const startTime = new Date();
   const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000);
+  const format = resolveLeagueFixtureFormatFields(seasonGame, gameSetup);
 
   const game = await dbClient.game.create({
     data: {
@@ -186,25 +257,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       hasFixedTeams: true,
       allowUserInMultipleTeams,
       genderTeams: seasonGame.genderTeams || 'ANY',
-      fixedNumberOfSets: seasonGame.fixedNumberOfSets ?? 0,
-      maxTotalPointsPerSet: seasonGame.maxTotalPointsPerSet ?? 0,
-      matchTimedCapMinutes: seasonGame.matchTimedCapMinutes ?? 0,
-      matchTimerEnabled: seasonGame.matchTimerEnabled ?? false,
-      maxPointsPerTeam: seasonGame.maxPointsPerTeam ?? 0,
-      winnerOfGame: seasonGame.winnerOfGame ?? WinnerOfGame.BY_MATCHES_WON,
-      winnerOfMatch: seasonGame.winnerOfMatch ?? WinnerOfMatch.BY_SCORES,
-      matchGenerationType: seasonGame.matchGenerationType ?? MatchGenerationType.HANDMADE,
-      pointsPerWin: seasonGame.pointsPerWin ?? 0,
-      pointsPerLoose: seasonGame.pointsPerLoose ?? 0,
-      pointsPerTie: seasonGame.pointsPerTie ?? 0,
-      scoringPreset: (seasonGame.scoringPreset as ScoringPreset | null) ?? null,
-      scoringMode: seasonGame.scoringMode != null ? String(seasonGame.scoringMode) : null,
-      hasGoldenPoint: seasonGame.hasGoldenPoint ?? false,
-      ballsInGames: deriveBallsInGamesFromScoring({
-        scoringPreset: seasonGame.scoringPreset ?? null,
-        winnerOfMatch: seasonGame.winnerOfMatch ?? WinnerOfMatch.BY_SCORES,
-        maxTotalPointsPerSet: seasonGame.maxTotalPointsPerSet ?? 0,
-      }),
+      ...format,
       parentId: leagueSeasonId,
       leagueRoundId: leagueRoundId,
       leagueGroupId,

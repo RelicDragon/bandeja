@@ -4,6 +4,7 @@ import {
   buildSetupFromFormat,
   detectScoringPreset,
   detectScoringMode,
+  detectInitialCustomPointsTotal,
   deriveGameType,
   DEFAULT_PRESET_BY_MODE,
   DEFAULT_GENERATION_BY_MODE,
@@ -84,7 +85,9 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
   const [hasGoldenPoint, setHasGoldenPoint] = useState<boolean>(() =>
     initialMode === 'POINTS' ? false : Boolean(initial?.hasGoldenPoint),
   );
-  const [customPointsTotal, setCustomPointsTotalState] = useState<number | null>(null);
+  const [customPointsTotal, setCustomPointsTotalState] = useState<number | null>(() =>
+    detectInitialCustomPointsTotal(initial)
+  );
 
   useEffect(() => {
     if (skipGenerationParticipantDefaults || maxParticipants == null) return;
@@ -119,6 +122,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
 
   const setScoringMode = useCallback(
     (mode: ScoringMode) => {
+      if (scoringMode === mode) return;
       setScoringModeState(mode);
       if (mode === 'POINTS') setHasGoldenPoint(false);
       setScoringPresetState(DEFAULT_PRESET_BY_MODE[mode]);
@@ -144,7 +148,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
       });
       setOverridesState({});
     },
-    [maxParticipants, skipGenerationParticipantDefaults],
+    [scoringMode, maxParticipants, skipGenerationParticipantDefaults],
   );
 
   const setScoringPreset = useCallback((preset: ScoringPreset) => {

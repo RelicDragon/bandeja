@@ -119,10 +119,7 @@ export function CrossGroupBracketSeedList({
                             style={{ backgroundColor: accent }}
                           />
                         )}
-                        {t('gameDetails.bracketOriginGroup', {
-                          defaultValue: 'Group {{name}}',
-                          name: group.name,
-                        })}
+                        {group.name}
                       </span>
                     )}
                   </div>

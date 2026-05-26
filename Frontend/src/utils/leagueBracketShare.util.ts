@@ -1,4 +1,5 @@
 import html2canvas from 'html2canvas';
+import { BRACKET_EXPORT_COLUMN_WIDTH } from '@/utils/bracketTreeCard.util';
 
 export function buildLeagueBracketScheduleQuery(params: {
   roundId?: string;
@@ -45,55 +46,157 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
 }
 
 export const BRACKET_EXPORT_SCROLL_ATTR = 'data-bracket-export-scroll';
+export const BRACKET_EXPORT_CAPTURE_ATTR = 'data-bracket-export-capture';
+export const BRACKET_EXPORT_COLUMN_ATTR = 'data-bracket-export-column';
+export const BRACKET_EXPORT_SLOTS_ATTR = 'data-bracket-export-slots';
 
-/** Expand horizontal scroll so html2canvas captures all columns (UX-A14). */
+function saveInlineStyles(el: HTMLElement, patch: Partial<CSSStyleDeclaration>): () => void {
+  const keys = Object.keys(patch) as (keyof CSSStyleDeclaration)[];
+  const saved = keys.map((key) => [key, el.style[key]] as const);
+  Object.assign(el.style, patch);
+  return () => {
+    for (const [key, value] of saved) {
+      el.style[key] = value;
+    }
+  };
+}
+
 export function findBracketExportScrollRoot(element: HTMLElement): HTMLElement | null {
   return element.querySelector<HTMLElement>(`[${BRACKET_EXPORT_SCROLL_ATTR}]`);
 }
 
-export function applyBracketExportScrollExpand(scrollRoot: HTMLElement): () => void {
-  const saved = {
-    overflow: scrollRoot.style.overflow,
-    overflowX: scrollRoot.style.overflowX,
-    width: scrollRoot.style.width,
-    maxWidth: scrollRoot.style.maxWidth,
-    flexWrap: scrollRoot.style.flexWrap,
-  };
-  const fullWidth = scrollRoot.scrollWidth;
-  scrollRoot.style.overflow = 'visible';
-  scrollRoot.style.overflowX = 'visible';
-  scrollRoot.style.flexWrap = 'nowrap';
-  scrollRoot.style.width = `${fullWidth}px`;
-  scrollRoot.style.maxWidth = 'none';
+/** Widen columns, drop flex stretch, and mark capture mode before html2canvas. */
+export function applyBracketExportCapture(exportRoot: HTMLElement): () => void {
+  const scrollRoot = findBracketExportScrollRoot(exportRoot);
+  const restores: Array<() => void> = [];
+
+  exportRoot.setAttribute(BRACKET_EXPORT_CAPTURE_ATTR, '');
+
+  if (exportRoot !== scrollRoot) {
+    restores.push(
+      saveInlineStyles(exportRoot, {
+        flex: 'none',
+        flexGrow: '0',
+        height: 'auto',
+        minHeight: '0',
+        width: 'max-content',
+        minWidth: 'max-content',
+        overflow: 'visible',
+      })
+    );
+  }
+
+  if (scrollRoot) {
+    restores.push(
+      saveInlineStyles(scrollRoot, {
+        flex: 'none',
+        flexGrow: '0',
+        flexShrink: '0',
+        height: 'auto',
+        minHeight: '0',
+        maxHeight: 'none',
+        alignItems: 'flex-start',
+        overflow: 'visible',
+        overflowX: 'visible',
+        flexWrap: 'nowrap',
+        maxWidth: 'none',
+      })
+    );
+    void scrollRoot.offsetHeight;
+    const fullWidth = scrollRoot.scrollWidth;
+    restores.push(saveInlineStyles(scrollRoot, { width: `${fullWidth}px` }));
+  }
+
+  const columnWidth = BRACKET_EXPORT_COLUMN_WIDTH;
+  exportRoot.querySelectorAll<HTMLElement>(`[${BRACKET_EXPORT_COLUMN_ATTR}]`).forEach((col) => {
+    restores.push(
+      saveInlineStyles(col, {
+        width: columnWidth,
+        minWidth: columnWidth,
+        maxWidth: columnWidth,
+        flexShrink: '0',
+        alignSelf: 'flex-start',
+        height: 'auto',
+      })
+    );
+    const slotsCol = col.querySelector<HTMLElement>(`[${BRACKET_EXPORT_SLOTS_ATTR}]`);
+    if (slotsCol) {
+      restores.push(
+        saveInlineStyles(slotsCol, {
+          flex: 'none',
+          height: 'auto',
+          justifyContent: 'flex-start',
+        })
+      );
+    }
+  });
+
+  void exportRoot.offsetHeight;
+
   return () => {
-    scrollRoot.style.overflow = saved.overflow;
-    scrollRoot.style.overflowX = saved.overflowX;
-    scrollRoot.style.width = saved.width;
-    scrollRoot.style.maxWidth = saved.maxWidth;
-    scrollRoot.style.flexWrap = saved.flexWrap;
+    exportRoot.removeAttribute(BRACKET_EXPORT_CAPTURE_ATTR);
+    for (let i = restores.length - 1; i >= 0; i -= 1) {
+      restores[i]();
+    }
   };
+}
+
+/** Hide chrome on cloned game cards only — live LeagueGameCard stays unchanged. */
+function prepareClonedBracketGameCards(root: ParentNode): void {
+  root.querySelectorAll<HTMLElement>('.bracket-tree-game-wrap > div').forEach((card) => {
+    card.style.overflow = 'visible';
+    card.querySelectorAll<HTMLElement>(':scope > div').forEach((row) => {
+      if (row.querySelector('button')) {
+        row.style.display = 'none';
+        return;
+      }
+      const cls = row.className;
+      if (typeof cls === 'string' && cls.includes('uppercase') && cls.includes('tracking-wide')) {
+        row.style.display = 'none';
+      }
+      if (row.querySelector('[class*="yellow-50"], [class*="yellow-900"]')) {
+        row.style.display = 'none';
+      }
+    });
+  });
+}
+
+function resolveExportBackground(element: HTMLElement): string {
+  const bg = getComputedStyle(element).backgroundColor;
+  if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg;
+  const dark = document.documentElement.classList.contains('dark');
+  return dark ? '#030712' : '#f9fafb';
 }
 
 export async function exportBracketContainerPng(
   element: HTMLElement,
   filename = 'bracket.png'
 ): Promise<void> {
-  const scrollRoot = findBracketExportScrollRoot(element);
-  const restore = scrollRoot ? applyBracketExportScrollExpand(scrollRoot) : null;
+  const restoreCapture = applyBracketExportCapture(element);
   try {
-    const width = scrollRoot ? scrollRoot.scrollWidth : element.scrollWidth;
-    const height = scrollRoot ? scrollRoot.scrollHeight : element.scrollHeight;
-    const canvas = await html2canvas(element, {
-      backgroundColor: null,
-      scale: Math.min(2, window.devicePixelRatio || 1),
+    const target = findBracketExportScrollRoot(element) ?? element;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const canvas = await html2canvas(target, {
+      backgroundColor: resolveExportBackground(target),
+      scale: 2,
       useCORS: true,
       logging: false,
-      width,
-      height,
-      windowWidth: width,
-      windowHeight: height,
       scrollX: 0,
       scrollY: 0,
+      onclone: (_doc, cloned) => {
+        const clonedScroll =
+          cloned.querySelector<HTMLElement>(`[${BRACKET_EXPORT_SCROLL_ATTR}]`) ?? cloned;
+        clonedScroll.style.overflow = 'visible';
+        clonedScroll.style.overflowX = 'visible';
+        clonedScroll.style.flex = 'none';
+        clonedScroll.style.height = 'auto';
+        clonedScroll.style.alignItems = 'flex-start';
+        cloned.querySelectorAll<HTMLElement>(`[${BRACKET_EXPORT_COLUMN_ATTR}]`).forEach((col) => {
+          col.style.alignSelf = 'flex-start';
+          col.style.height = 'auto';
+        });
+        prepareClonedBracketGameCards(cloned);
+      },
     });
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob((b) => resolve(b), 'image/png')
@@ -106,6 +209,6 @@ export async function exportBracketContainerPng(
     a.click();
     URL.revokeObjectURL(url);
   } finally {
-    restore?.();
+    restoreCapture();
   }
 }

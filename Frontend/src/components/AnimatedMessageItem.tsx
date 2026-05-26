@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChatMessage } from '@/api/chat';
 import { MessageItem, ContextMenuState } from './MessageItem';
 
@@ -77,15 +77,22 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
 }) => {
   const skipStagger = skipStaggerOnOpen || !isRecentMessage(message.createdAt);
   const [isVisible, setIsVisible] = useState(skipStagger);
+  const revealedRef = useRef(skipStagger);
 
   useEffect(() => {
     if (skipStagger || !isRecentMessage(message.createdAt)) {
+      revealedRef.current = true;
+      setIsVisible(true);
+      return;
+    }
+    if (revealedRef.current) {
       setIsVisible(true);
       return;
     }
     setIsVisible(false);
     const totalDelay = staggerMsForId(staggerKey);
     const timer = setTimeout(() => {
+      revealedRef.current = true;
       setIsVisible(true);
     }, totalDelay);
 

@@ -19,6 +19,10 @@ import {
 const PLAY_IN_GATE_MESSAGE =
   'Complete all play-in games before scheduling or finishing knockout matches';
 
+type BracketRoundConfigShape = {
+  gameSetup?: PlayoffGameSetupOverrides;
+};
+
 export class BracketAdvancementService {
   static async assertPlayInCompleteForMainBracketGame(
     gameId: string,
@@ -126,6 +130,7 @@ export class BracketAdvancementService {
     if (!round?.leagueSeason?.game) return [];
 
     const seasonGame = round.leagueSeason.game;
+    const gameSetup = (round.bracketConfig as BracketRoundConfigShape | null)?.gameSetup;
     const createdGameIds: string[] = [];
     const slots = await tx.leagueBracketSlot.findMany({
       where: { leagueRoundId, leagueGroupId, gameId: null, slotKind: { not: BracketSlotKind.BYE } },
@@ -148,6 +153,7 @@ export class BracketAdvancementService {
         participantA: teamA,
         participantB: teamB,
         seasonGame,
+        gameSetup,
       });
       if (gameId) createdGameIds.push(gameId);
     }
@@ -167,7 +173,7 @@ export class BracketAdvancementService {
       gameSetup?: PlayoffGameSetupOverrides;
     }
   ): Promise<string | null> {
-    const { slotId, planned, orderedParticipantIds, leagueSeasonId, leagueGroupId, roundId, seasonGame } =
+    const { slotId, planned, orderedParticipantIds, leagueSeasonId, leagueGroupId, roundId, seasonGame, gameSetup } =
       params;
 
     let participantA: string;
@@ -213,6 +219,7 @@ export class BracketAdvancementService {
       participantA,
       participantB,
       seasonGame,
+      gameSetup,
     });
   }
 
@@ -226,9 +233,10 @@ export class BracketAdvancementService {
       participantA: string;
       participantB: string;
       seasonGame: Parameters<typeof createLeagueGame>[0]['seasonGame'];
+      gameSetup?: PlayoffGameSetupOverrides;
     }
   ): Promise<string> {
-    const { slotId, leagueRoundId, leagueSeasonId, leagueGroupId, participantA, participantB, seasonGame } =
+    const { slotId, leagueRoundId, leagueSeasonId, leagueGroupId, participantA, participantB, seasonGame, gameSetup } =
       params;
 
     const [team1, team2] = await Promise.all([
@@ -244,6 +252,7 @@ export class BracketAdvancementService {
       team2PlayerIds: team2,
       leagueGroupId: leagueGroupId ?? undefined,
       affectsRating: false,
+      gameSetup,
       db: tx,
     });
 

@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { buildPerGroupBracketCreateGroup } from './playoffWizardCreatePayload.util';
 import { bracketPlanOptionsFromWizardConfig } from './playoffWizardBracketPlan.util';
 import { buildBracketPlan } from './bracketStructure';
+import {
+  applyPreviewReorderToPlan,
+  buildBracketPreviewPositions,
+  swapBracketPreviewPositions,
+} from './bracketPreviewReorder.util';
 
 describe('playoffWizardCreatePayload.util (UX-B2)', () => {
   it('POST group matches preview plan order and custom options', () => {
@@ -29,6 +34,27 @@ describe('playoffWizardCreatePayload.util (UX-B2)', () => {
     expect(payload.customPlayInPairings).toEqual([{ seedA: 5, seedB: 6 }]);
     expect(payload.includeThirdPlace).toBe(true);
     expect(payload.leagueGroupId).toBe('g1');
+  });
+
+  it('POST group uses participant order after bracket preview swap', () => {
+    const baseline = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'];
+    const plan = buildBracketPlan(8, baseline);
+    const positions = buildBracketPreviewPositions(plan);
+    const swapped = swapBracketPreviewPositions(positions, positions[0].key, positions[1].key);
+    const previewPlan = applyPreviewReorderToPlan(plan, swapped);
+
+    const payload = buildPerGroupBracketCreateGroup({
+      leagueGroupId: 'g1',
+      participantIds: previewPlan.orderedParticipantIds,
+      customByeEnabled: false,
+      customByeSeedRanks: [],
+      customPlayInEnabled: false,
+      playInSeedPairs: [],
+    });
+
+    expect(payload.participantIds).toEqual(previewPlan.orderedParticipantIds);
+    expect(payload.participantIds[0]).toBe('p2');
+    expect(payload.participantIds[1]).toBe('p1');
   });
 
   it('per-group phase-4 flags are independent in payload (UX-B4)', () => {

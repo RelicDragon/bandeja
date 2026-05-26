@@ -42,12 +42,6 @@ describe('bracketWalkoverErrorMessage', () => {
 });
 
 describe('bracketEditErrorMessage', () => {
-  it('maps seeding locked', () => {
-    expect(bracketEditErrorMessage(axiosError(409, 'Bracket seeding is locked'), t)).toBe(
-      'gameDetails.bracketEditErrorSeedingLocked'
-    );
-  });
-
   it('maps forbidden', () => {
     expect(
       bracketEditErrorMessage(axiosError(403, 'Only owners and admins can edit bracket slots'), t)

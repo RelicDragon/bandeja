@@ -44,7 +44,7 @@ export const GameFormatStepScoringMode = ({
             badge={m.recommended ? t('gameFormat.recommended') : undefined}
             selected={scoringMode === m.value}
             onClick={() => {
-              onChange(m.value);
+              if (scoringMode !== m.value) onChange(m.value);
               queueMicrotask(() => onSelectAdvance?.());
             }}
           />

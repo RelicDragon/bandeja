@@ -393,7 +393,6 @@
     },
     "bracketViewTab": "Cuadro",
     "bracketRoundPickerLabel": "Ronda del cuadro",
-    "bracketColumnPickerLabel": "Columna del cuadro",
     "bracketColumnPlayIn": "Play-in",
     "bracketColumnByes": "Exentos",
     "bracketColumnMainRound": "Ronda {{round}}",

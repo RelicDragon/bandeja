@@ -1,5 +1,6 @@
 import { Game, ScoringMode, ScoringPreset } from '@/types';
 import { scoringModeFromPreset } from './scoringCompatibility';
+import { getScoringPresetConfig } from './mergeGameFormat';
 
 export const detectScoringPreset = (game?: Partial<Game> | null): ScoringPreset | null => {
   if (!game) return null;
@@ -36,3 +37,17 @@ export const detectScoringMode = (game?: Partial<Game> | null): ScoringMode => {
   if ((game.maxTotalPointsPerSet ?? 0) > 0) return 'POINTS';
   return 'CLASSIC';
 };
+
+/** Custom points target when stored only as maxTotalPointsPerSet (no matching preset). */
+export function detectInitialCustomPointsTotal(game?: Partial<Game> | null): number | null {
+  if (!game?.scoringPreset && detectScoringMode(game) === 'POINTS') {
+    const pts = game.maxTotalPointsPerSet ?? 0;
+    if (pts > 0) {
+      const detected = detectScoringPreset(game);
+      if (!detected || (getScoringPresetConfig(detected).maxTotalPointsPerSet ?? 0) !== pts) {
+        return pts;
+      }
+    }
+  }
+  return null;
+}

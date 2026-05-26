@@ -38,13 +38,12 @@ function resolveOriginGroup(
 }
 
 function OriginGroupBadge({ origin }: { origin: BracketOriginGroupDto }) {
-  const { t } = useTranslation();
   const color = getLeagueGroupColor(origin.color);
   return (
     <span
       className="inline-flex max-w-full truncate rounded px-1.5 py-0.5 text-[9px] font-semibold"
       style={{ backgroundColor: `${color}22`, color, border: `1px solid ${color}55` }}
-      title={t('gameDetails.bracketOriginGroup', { name: origin.name })}
+      title={origin.name}
     >
       {origin.name}
     </span>
@@ -213,7 +212,7 @@ export function LeagueBracketSlotCard({
 
   return (
     <div
-      className={`relative ${BRACKET_TREE_CARD_CLASS} rounded-lg border bg-white text-left shadow-sm transition dark:bg-gray-900 ${
+      className={`bracket-tree-card relative ${BRACKET_TREE_CARD_CLASS} rounded-lg border bg-white text-left shadow-sm transition dark:bg-gray-900 ${
         onChampionPath && !deEmphasize
           ? 'border-amber-400/90 ring-1 ring-amber-300/70 dark:border-amber-600/70 dark:ring-amber-600/50'
           : 'border-gray-200 dark:border-gray-700'
@@ -252,7 +251,7 @@ export function LeagueBracketSlotCard({
         />
       </button>
       {canWalkover && (
-        <div className="mt-1.5 border-t border-gray-100 pt-1.5 dark:border-gray-800">
+        <div className="bracket-export-hide mt-1.5 border-t border-gray-100 pt-1.5 dark:border-gray-800">
           {!walkoverOpen ? (
             <button
               type="button"

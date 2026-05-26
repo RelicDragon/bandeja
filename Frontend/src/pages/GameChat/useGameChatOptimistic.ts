@@ -148,9 +148,13 @@ export function useGameChatOptimistic({
       setMessages((prev) => {
         const idx = prev.findIndex((m) => (m as ChatMessageWithStatus)._optimisticId === optimisticId);
         if (idx < 0) return prev;
-        revokeChatBlobUrls(prev[idx] as ChatMessageWithStatus);
+        const prevRow = prev[idx] as ChatMessageWithStatus;
+        revokeChatBlobUrls(prevRow);
         const next = [...prev];
-        next[idx] = { ...serverMessage } as ChatMessageWithStatus;
+        next[idx] = {
+          ...serverMessage,
+          _clientMutationId: serverMessage.clientMutationId ?? prevRow._clientMutationId,
+        } as ChatMessageWithStatus;
         next.sort(compareChatMessagesAscending);
         messagesRef.current = next;
         return next;
@@ -297,10 +301,14 @@ export function useGameChatOptimistic({
             return sm._clientMutationId === serverCid;
           });
           if (idx >= 0) {
-            const replacedOptimisticId = (prev[idx] as ChatMessageWithStatus)._optimisticId;
-            revokeChatBlobUrls(prev[idx] as ChatMessageWithStatus);
+            const prevRow = prev[idx] as ChatMessageWithStatus;
+            const replacedOptimisticId = prevRow._optimisticId;
+            revokeChatBlobUrls(prevRow);
             const next = [...prev];
-            next[idx] = { ...message } as ChatMessageWithStatus;
+            next[idx] = {
+              ...message,
+              _clientMutationId: message.clientMutationId ?? prevRow._clientMutationId,
+            } as ChatMessageWithStatus;
             next.sort(compareChatMessagesAscending);
             messagesRef.current = next;
             effectPack = { replacedOptimisticId, lastMessageId: message.id };
@@ -329,10 +337,14 @@ export function useGameChatOptimistic({
             return true;
           });
           if (idx >= 0) {
-            const replacedOptimisticId = (prev[idx] as ChatMessageWithStatus)._optimisticId;
-            revokeChatBlobUrls(prev[idx] as ChatMessageWithStatus);
+            const prevRow = prev[idx] as ChatMessageWithStatus;
+            const replacedOptimisticId = prevRow._optimisticId;
+            revokeChatBlobUrls(prevRow);
             const next = [...prev];
-            next[idx] = { ...message } as ChatMessageWithStatus;
+            next[idx] = {
+              ...message,
+              _clientMutationId: message.clientMutationId ?? prevRow._clientMutationId,
+            } as ChatMessageWithStatus;
             next.sort(compareChatMessagesAscending);
             messagesRef.current = next;
             effectPack = { replacedOptimisticId, lastMessageId: message.id };

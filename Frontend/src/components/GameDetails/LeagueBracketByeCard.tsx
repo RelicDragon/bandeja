@@ -29,7 +29,7 @@ export function LeagueBracketByeCard({
 
   return (
     <div
-      className={`relative ${BRACKET_TREE_CARD_CLASS} rounded-lg border border-dashed px-2 py-2 ${
+      className={`bracket-tree-card relative ${BRACKET_TREE_CARD_CLASS} rounded-lg border border-dashed px-2 py-2 ${
         onChampionPath
           ? 'border-amber-400/90 bg-amber-50/90 dark:border-amber-600/70 dark:bg-amber-950/30'
           : 'border-gray-300/90 bg-gray-50/80 dark:border-gray-600 dark:bg-gray-900/40'

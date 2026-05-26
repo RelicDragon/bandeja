@@ -29,6 +29,8 @@ interface LeagueGameCardProps {
   showGroupTag?: boolean;
   showLeagueGroupSideAccent?: boolean;
   seasonPlayoffBadge?: boolean;
+  /** Bracket round label (e.g. Quarterfinals) — shown instead of season playoff when set. */
+  bracketRoundBadge?: string | null;
   allRounds?: RoundData[] | null;
   onDelete?: () => Promise<void> | void;
   onNoteSaved?: () => void;
@@ -44,6 +46,7 @@ export const LeagueGameCard = ({
   showGroupTag = true,
   showLeagueGroupSideAccent = true,
   seasonPlayoffBadge = false,
+  bracketRoundBadge,
   allRounds,
   onDelete,
   onNoteSaved,
@@ -234,13 +237,21 @@ export const LeagueGameCard = ({
           {game.leagueGroup.name}
         </div>
       )}
-      {!game.leagueGroup && seasonPlayoffBadge && (
+      {bracketRoundBadge?.trim() ? (
+        <div className="absolute top-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-xs font-semibold capitalize text-indigo-800 dark:border-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-200">
+          {bracketRoundBadge.trim()}
+        </div>
+      ) : !game.leagueGroup && seasonPlayoffBadge ? (
         <div className="absolute top-2 left-2 rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-800 dark:border-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-200">
           {t('gameDetails.bracketSeasonPlayoff')}
         </div>
-      )}
+      ) : null}
 
-      <div className={`w-full ${(showGroupTag && game.leagueGroup) || seasonPlayoffBadge ? 'mt-5' : ''}`}>
+      <div
+        className={`w-full ${
+          (showGroupTag && game.leagueGroup) || bracketRoundBadge?.trim() || seasonPlayoffBadge ? 'mt-5' : ''
+        }`}
+      >
         <div className="flex w-full min-w-0 items-center justify-center gap-2 sm:gap-3">
           <div className="relative flex justify-start">
             <div

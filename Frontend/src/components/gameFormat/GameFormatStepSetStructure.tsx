@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Medal, Award, Flag, Target } from 'lucide-react';
+import { Medal, Award, Flag, Target, Clock } from 'lucide-react';
 import { ScoringPreset } from '@/types';
 import { tGameFormatStepHint, tScoringPresetField } from '@/utils/gameFormat';
 import { FormatOptionCard } from './FormatOptionCard';
@@ -27,6 +27,7 @@ const CLASSIC_PRESETS: { value: ScoringPreset; icon: typeof Medal; recommended?:
   { value: 'CLASSIC_SHORT_SET', icon: Target },
   { value: 'CLASSIC_PRO_SET', icon: Target },
   { value: 'CLASSIC_SINGLE_SET', icon: Target },
+  { value: 'CLASSIC_TIMED', icon: Clock },
 ];
 
 export const GameFormatStepSetStructure = ({

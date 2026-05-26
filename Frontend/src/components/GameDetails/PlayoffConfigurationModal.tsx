@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
-import { BasicUser, GameSetupParams } from '@/types';
+import { BasicUser, Game, GameSetupParams } from '@/types';
+import { gamesApi } from '@/api/games';
 import {
   leaguesApi,
   LeagueStanding,
@@ -62,6 +63,7 @@ import {
   getPhase4FlagForGroup,
   setPhase4FlagForGroup,
 } from '@/utils/playoffWizardPhase4ByGroup.util';
+import { buildPerGroupBracketCreateGroup } from '@/utils/playoffWizardCreatePayload.util';
 import {
   customByeErrorI18nKey,
   customPlayInErrorI18nKey,
@@ -113,6 +115,7 @@ export const PlayoffConfigurationModal = ({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [bracketGameSetup, setBracketGameSetup] = useState<GameSetupParams | null>(null);
+  const [seasonGame, setSeasonGame] = useState<Game | null>(null);
   const [bracketScope, setBracketScope] = useState<BracketScope>('PER_GROUP');
   const [crossTeamsPerGroup, setCrossTeamsPerGroup] = useState<TeamsPerGroupMap>({});
   const [crossIncludedGroupIds, setCrossIncludedGroupIds] = useState<Set<string>>(new Set());
@@ -152,12 +155,14 @@ export const PlayoffConfigurationModal = ({
     if (!leagueSeasonId) return;
     setLoading(true);
     try {
-      const [standingsRes, groupsRes] = await Promise.all([
+      const [standingsRes, groupsRes, seasonGameRes] = await Promise.all([
         leaguesApi.getStandings(leagueSeasonId),
         leaguesApi.getGroups(leagueSeasonId).catch(() => ({ data: { groups: [], unassignedParticipants: [] } })),
+        gamesApi.getById(leagueSeasonId).catch(() => null),
       ]);
       setStandings(standingsRes.data ?? []);
       setGroups(groupsRes.data?.groups ?? []);
+      setSeasonGame(seasonGameRes?.data ?? null);
     } catch {
       toast.error(t('errors.generic', { defaultValue: 'Something went wrong' }));
     } finally {
@@ -171,6 +176,7 @@ export const PlayoffConfigurationModal = ({
       setStep('config');
       setSelectedIdsByGroup({});
       setBracketGameSetup(null);
+      setSeasonGame(null);
       setBracketScope('PER_GROUP');
       setCrossTeamsPerGroup({});
       setCrossIncludedGroupIds(new Set());
@@ -260,6 +266,8 @@ export const PlayoffConfigurationModal = ({
   const selectedCount = selectedIds.size;
   const selectedGroup = groups.find((g) => g.id === selectedGroupId);
 
+  const crossGlobalOrderOverride = crossPreviewOrderedIds ?? crossManualGlobalIds;
+
   const crossDerived = useMemo(
     () =>
       computeCrossGroupBracketDerived(
@@ -268,7 +276,7 @@ export const PlayoffConfigurationModal = ({
         crossTeamsPerGroup,
         crossIncludedGroupIds,
         crossSeedingPreset,
-        crossManualGlobalIds
+        crossGlobalOrderOverride
       ),
     [
       groups,
@@ -276,7 +284,7 @@ export const PlayoffConfigurationModal = ({
       crossTeamsPerGroup,
       crossIncludedGroupIds,
       crossSeedingPreset,
-      crossManualGlobalIds,
+      crossGlobalOrderOverride,
     ]
   );
 
@@ -397,19 +405,47 @@ export const PlayoffConfigurationModal = ({
     });
   };
 
-  const initPreviewOrders = useCallback(() => {
-    if (isCrossGroupBracket) {
-      setCrossPreviewOrderedIds([...crossDerived.globalParticipantIds]);
-      setPreviewOrderedByGroup({});
-    } else {
-      const next: Record<string, string[]> = {};
-      for (const g of groups) {
-        if (groupMeetsMin(g.id)) next[g.id] = getOrderedParticipantIds(g.id);
+  const initPreviewOrders = useCallback(
+    (options?: { preserveExisting?: boolean }) => {
+      const preserve = options?.preserveExisting ?? false;
+      if (isCrossGroupBracket) {
+        if (preserve && crossPreviewOrderedIds != null && crossPreviewOrderedIds.length > 0) {
+          return;
+        }
+        setCrossPreviewOrderedIds([...crossDerived.globalParticipantIds]);
+        setPreviewOrderedByGroup({});
+      } else {
+        if (preserve) {
+          setPreviewOrderedByGroup((prev) => {
+            const next = { ...prev };
+            let changed = false;
+            for (const g of groups) {
+              if (!groupMeetsMin(g.id)) continue;
+              if (next[g.id]?.length) continue;
+              next[g.id] = getOrderedParticipantIds(g.id);
+              changed = true;
+            }
+            return changed ? next : prev;
+          });
+          return;
+        }
+        const next: Record<string, string[]> = {};
+        for (const g of groups) {
+          if (groupMeetsMin(g.id)) next[g.id] = getOrderedParticipantIds(g.id);
+        }
+        setPreviewOrderedByGroup(next);
+        setCrossPreviewOrderedIds(null);
       }
-      setPreviewOrderedByGroup(next);
-      setCrossPreviewOrderedIds(null);
-    }
-  }, [isCrossGroupBracket, crossDerived.globalParticipantIds, groups, groupMeetsMin, getOrderedParticipantIds]);
+    },
+    [
+      isCrossGroupBracket,
+      crossDerived.globalParticipantIds,
+      crossPreviewOrderedIds,
+      groups,
+      groupMeetsMin,
+      getOrderedParticipantIds,
+    ]
+  );
 
   const validateBracketAdvancedOptions = useCallback((): boolean => {
     if (!isBracket) return true;
@@ -654,22 +690,23 @@ export const PlayoffConfigurationModal = ({
               playInPairsByGroup[g.id] ?? [],
               customByeSeedRanks
             );
-            const entry: CreateBracketPlayoffGroupEntry = {
+            return buildPerGroupBracketCreateGroup({
               leagueGroupId: g.id,
               participantIds,
-              customByeSeedRanks,
-              customPlayInPairings: toCustomPlayInPairings(playInPairs),
-            };
-            if (getPhase4FlagForGroup(includeThirdPlaceByGroup, g.id)) {
-              entry.includeThirdPlace = true;
-            }
-            if (getPhase4FlagForGroup(includeConsolationBracketByGroup, g.id)) {
-              entry.includeConsolationBracket = true;
-            }
-            if (getPhase4FlagForGroup(includeDoubleEliminationByGroup, g.id)) {
-              entry.includeDoubleElimination = true;
-            }
-            return entry;
+              customByeEnabled: customByeEnabledByGroup[g.id] ?? false,
+              customByeSeedRanks: customByeEnabledByGroup[g.id] ? customByeRanksByGroup[g.id] ?? [] : [],
+              customPlayInEnabled: customPlayInEnabledByGroup[g.id] ?? false,
+              playInSeedPairs: playInPairs ?? [],
+              includeThirdPlace: getPhase4FlagForGroup(includeThirdPlaceByGroup, g.id),
+              includeConsolationBracket: getPhase4FlagForGroup(
+                includeConsolationBracketByGroup,
+                g.id
+              ),
+              includeDoubleElimination: getPhase4FlagForGroup(
+                includeDoubleEliminationByGroup,
+                g.id
+              ),
+            });
           })
           .filter((x): x is CreateBracketPlayoffGroupEntry => x !== null);
         await leaguesApi.createBracketPlayoff(leagueSeasonId, {
@@ -825,6 +862,7 @@ export const PlayoffConfigurationModal = ({
                   onChange={(id) => setFormatChoice(id as PlayoffFormatChoice)}
                   showOnlyActiveTabText={false}
                   layoutId="playoff-format"
+                  orientation="vertical"
                 />
               </div>
 
@@ -863,6 +901,7 @@ export const PlayoffConfigurationModal = ({
                     }}
                     showOnlyActiveTabText={false}
                     layoutId="bracket-scope"
+                    orientation="vertical"
                   />
                 </div>
               )}
@@ -1307,7 +1346,7 @@ export const PlayoffConfigurationModal = ({
                   type="button"
                   className="w-full"
                   onClick={() => {
-                    initPreviewOrders();
+                    initPreviewOrders({ preserveExisting: true });
                     setPreviewReturnStep('summary');
                     setStep('preview');
                   }}
@@ -1453,17 +1492,27 @@ export const PlayoffConfigurationModal = ({
             </div>
           )}
 
-          {step === 'gameSetup' && !isBracket && (
+          {step === 'gameSetup' && !seasonGame && (
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+            </div>
+          )}
+
+          {step === 'gameSetup' && seasonGame && !isBracket && (
             <PlayoffGameSetupStep
+              key={`session-${formatChoice}-${seasonGame.id}`}
               gameType={formatChoice}
+              seasonGame={seasonGame}
               onBack={() => setStep('summary')}
               onConfirm={handleSessionGameSetupConfirm}
               submitting={submitting}
             />
           )}
 
-          {step === 'gameSetup' && isBracket && (
+          {step === 'gameSetup' && seasonGame && isBracket && (
             <BracketPlayoffGameSetupStep
+              key={`bracket-${seasonGame.id}`}
+              seasonGame={seasonGame}
               onBack={() => setStep('preview')}
               onConfirm={handleBracketGameSetupConfirm}
               submitting={submitting}

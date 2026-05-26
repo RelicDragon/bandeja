@@ -405,7 +405,6 @@
     },
     "bracketViewTab": "Pavouk",
     "bracketRoundPickerLabel": "Kolo pavouka",
-    "bracketColumnPickerLabel": "Sloupec pavouka",
     "bracketColumnPlayIn": "Play-in",
     "bracketColumnByes": "Volna",
     "bracketColumnMainRound": "Kolo {{round}}",

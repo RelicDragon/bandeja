@@ -87,6 +87,13 @@ describe('mergeGlobalParticipantIds', () => {
       mergeGlobalParticipantIds(qualifiers, order, 'MANUAL', ['d2', 'a1', 'b1'])
     ).toEqual(['d2', 'a1', 'b1']);
   });
+
+  it('honors preview reorder when client order matches preset participant set', () => {
+    const previewOrder = ['d2', 'c2', 'b2', 'a2', 'd1', 'c1', 'b1', 'a1'];
+    expect(
+      mergeGlobalParticipantIds(qualifiers, order, 'WINNERS_THEN_RUNNERS_UP', previewOrder)
+    ).toEqual(previewOrder);
+  });
 });
 
 describe('validateCrossGroupPool', () => {

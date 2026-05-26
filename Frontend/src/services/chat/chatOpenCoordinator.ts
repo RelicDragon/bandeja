@@ -47,6 +47,8 @@ export type OpenThreadPlan = {
   threadKey: string;
   messages: ChatMessageWithStatus[];
   scroll: OpenThreadScroll;
+  /** Dexie scroll row from the single open-window read (for shouldPinOnOpen). */
+  scrollRow: ThreadScrollRow | undefined;
   paintSource: OpenThreadPaintSource;
   deferSync: boolean;
 };
@@ -105,6 +107,7 @@ export async function openThreadBootstrap(
       threadKey: input.threadKey,
       messages: snapshot,
       scroll: scrollRowToOpenScroll(scrollState),
+      scrollRow: scrollState,
       paintSource,
       deferSync: true,
     },

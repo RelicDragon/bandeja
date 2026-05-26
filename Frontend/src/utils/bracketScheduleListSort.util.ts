@@ -6,6 +6,7 @@ export type BracketScheduleListEntry = {
   game: Game;
   kind: 'PLAY_IN' | 'MAIN';
   roundIndex: number;
+  roundLabel: string | null;
 };
 
 export function collectBracketScheduleGames(slots: BracketSlotDto[]): BracketScheduleListEntry[] {
@@ -20,6 +21,7 @@ export function collectBracketScheduleGames(slots: BracketSlotDto[]): BracketSch
       game: slot.game as Game,
       kind: slot.slotKind,
       roundIndex: slot.roundIndex,
+      roundLabel: slot.roundLabel?.trim() ?? null,
     });
   }
 

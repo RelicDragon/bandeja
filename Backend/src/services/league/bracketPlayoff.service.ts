@@ -127,6 +127,7 @@ type BracketConfigShape = {
   includeConsolationBracket?: boolean;
   includeDoubleElimination?: boolean;
   customByeSeedRanks?: number[];
+  gameSetup?: PlayoffGameSetupOverrides;
   groups?: Record<string, BracketGroupConfigEntry>;
   scope?: 'CROSS_GROUP';
   bracketSummarySent?: Record<string, boolean>;
@@ -137,7 +138,6 @@ type BracketConfigShape = {
   qualifiers?: Record<string, { participantIds: string[] }>;
   globalParticipantIds?: string[];
   seedingPreset?: CrossGroupSeedingPreset;
-  seedingLocked?: boolean;
   audit?: BracketAuditEntry[];
 };
 
@@ -157,7 +157,6 @@ export interface PatchBracketSlotsPayload {
   slots?: PatchBracketSlotUpdate[];
   gameTeamUpdates?: BracketGameTeamUpdate[];
   roundId?: string;
-  seedingLocked?: boolean;
 }
 
 type SlotRow = {
@@ -359,6 +358,16 @@ export class BracketPlayoffService {
     });
     const multiGroup = groups.length > 1;
     const singlePlan = groupPlans[0].plan;
+    const roundBracketConfig: BracketConfigShape = {
+      groups: bracketConfig,
+      gameSetup: gameSetup ?? undefined,
+      includeThirdPlace:
+        groupPlans.some((gp) => gp.plan.includeThirdPlace) || includeThirdPlace,
+      includeConsolationBracket:
+        groupPlans.some((gp) => gp.plan.includeConsolationBracket) || includeConsolationBracket,
+      includeDoubleElimination:
+        groupPlans.some((gp) => gp.plan.includeDoubleElimination) || includeDoubleElimination,
+    };
 
     await prisma.$transaction(async (tx) => {
       const existingRounds = await tx.leagueRound.findMany({
@@ -378,18 +387,7 @@ export class BracketPlayoffService {
           bracketSize: multiGroup ? null : singlePlan.bracketSize,
           byeCount: multiGroup ? null : singlePlan.byeCount,
           bracketTemplateVersion: singlePlan.bracketTemplateVersion,
-          bracketConfig: {
-            groups: bracketConfig,
-            seedingLocked: false,
-            includeThirdPlace:
-              groupPlans.some((gp) => gp.plan.includeThirdPlace) || includeThirdPlace,
-            includeConsolationBracket:
-              groupPlans.some((gp) => gp.plan.includeConsolationBracket) ||
-              includeConsolationBracket,
-            includeDoubleElimination:
-              groupPlans.some((gp) => gp.plan.includeDoubleElimination) ||
-              includeDoubleElimination,
-          },
+          bracketConfig: roundBracketConfig as Prisma.InputJsonValue,
         },
       });
 
@@ -618,7 +616,7 @@ export class BracketPlayoffService {
       ),
       globalParticipantIds,
       seedingPreset: crossGroup.seedingPreset,
-      seedingLocked: false,
+      gameSetup: gameSetup ?? undefined,
       includeThirdPlace: plan.includeThirdPlace,
       includeConsolationBracket: plan.includeConsolationBracket,
       includeDoubleElimination: plan.includeDoubleElimination,
@@ -932,12 +930,8 @@ export class BracketPlayoffService {
   ) {
     const updates = payload.slots ?? [];
     const gameTeamUpdates = payload.gameTeamUpdates ?? [];
-    const seedingLockedOnly =
-      payload.seedingLocked !== undefined &&
-      updates.length === 0 &&
-      gameTeamUpdates.length === 0;
-    if (updates.length === 0 && gameTeamUpdates.length === 0 && !seedingLockedOnly) {
-      throw new ApiError(400, 'slots, gameTeamUpdates, or seedingLocked must be provided');
+    if (updates.length === 0 && gameTeamUpdates.length === 0) {
+      throw new ApiError(400, 'slots or gameTeamUpdates must be provided');
     }
 
     const leagueSeason = await prisma.leagueSeason.findUnique({
@@ -999,22 +993,6 @@ export class BracketPlayoffService {
 
     const config = round.bracketConfig as BracketConfigShape | null;
     const isCross = round.bracketScope === BracketScope.CROSS_GROUP;
-
-    if (seedingLockedOnly) {
-      const nextConfig: BracketConfigShape = {
-        ...(config ?? {}),
-        seedingLocked: payload.seedingLocked,
-      };
-      await prisma.leagueRound.update({
-        where: { id: round.id },
-        data: { bracketConfig: nextConfig as Prisma.InputJsonValue },
-      });
-      return this.getBracketPlayoff(leagueSeasonId, userId, { roundId: round.id });
-    }
-
-    if (updates.length > 0 && config?.seedingLocked === true) {
-      throw new ApiError(409, 'Bracket seeding is locked');
-    }
 
     const auditChanges: BracketAuditEntry['changes'] = [];
     const configGroups: Record<string, BracketGroupConfigEntry> = {

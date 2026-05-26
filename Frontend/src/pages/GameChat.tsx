@@ -170,6 +170,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setIsLoadingMessages,
     isInitialLoad,
     setIsInitialLoad,
+    isThreadOpenSettling,
     isLoadingMore,
     isSwitchingChatType,
     setIsSwitchingChatType,
@@ -811,8 +812,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               threadScrollKey={threadScrollKey}
               initialScroll={initialScroll}
               threadLayoutSettling={
+                isThreadOpenSettling ||
                 isSwitchingChatType ||
-                ((isLoadingMessages || isInitialLoad) && messages.length === 0)
+                isLoadingMessages ||
+                isInitialLoad
               }
             />
             </ChatAutoTranslateContext.Provider>

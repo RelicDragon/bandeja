@@ -30,6 +30,7 @@ import {
   scrollVirtualizerToIndex,
 } from '@/utils/messageListScroll';
 import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
+import { getMessageRowKey } from '@/services/chat/messageRowKey';
 
 const END_SPACER_PX = 128;
 const ROW_ESTIMATE_PX = 88;
@@ -124,8 +125,11 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   const innerListRef = useRef<HTMLDivElement>(null);
   const topLoadSentinelRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
+  const previousFirstMessageIdRef = useRef<string | undefined>(undefined);
   const previousScrollHeightRef = useRef(0);
   const previousScrollTopRef = useRef(0);
+  /** Open intent from `initialScroll` — aggressive bottom pin only when true. */
+  const openScrollAtBottomRef = useRef(true);
   const isLoadingMoreRef = useRef(false);
   const justLoadedOlderMessagesRef = useRef(false);
   const loadMoreCooldownRef = useRef(0);
@@ -148,7 +152,8 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       return ROW_ESTIMATE_PX;
     },
     overscan: virtualOverscan,
-    getItemKey: (index) => (index === rowCount - 1 ? '__end__' : messages[index]?.id ?? `i-${index}`),
+    getItemKey: (index) =>
+      index === rowCount - 1 ? '__end__' : (messages[index] ? getMessageRowKey(messages[index]) : `i-${index}`),
   });
 
   const virtualizerRef = useRef(virtualizer);
@@ -216,6 +221,15 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     return threadLayoutSettling || tailPending || measurePending;
   }, [threadLayoutSettling, messages.length, tailHeightsPreloaded, hasFirstVirtualMeasure]);
 
+  const layoutSettlingForBottomPinRef = useRef(layoutSettlingForBottomPin);
+  layoutSettlingForBottomPinRef.current = layoutSettlingForBottomPin;
+
+  useLayoutEffect(() => {
+    if (initialScroll != null) {
+      openScrollAtBottomRef.current = 'atBottom' in initialScroll && initialScroll.atBottom;
+    }
+  }, [threadScrollKey, initialScroll]);
+
   useLayoutEffect(() => {
     const items = virtualizerRef.current.getVirtualItems();
     const msgs = messagesMeasureRef.current;
@@ -237,7 +251,10 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       if (len === 0) return;
       const el = messagesContainerRef.current;
       if (!el) return;
-      if (isMessageListNearBottom(el, PIN_BOTTOM_SKIP_GAP_PX)) return;
+      if (!openScrollAtBottomRef.current) return;
+      const aggressiveSettlePin =
+        layoutSettlingForBottomPinRef.current && openScrollAtBottomRef.current;
+      if (!aggressiveSettlePin && isMessageListNearBottom(el, PIN_BOTTOM_SKIP_GAP_PX)) return;
       pinMessageListContainerToBottom(el);
     });
   }, []);
@@ -293,7 +310,8 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   ]);
 
   useLayoutEffect(() => {
-    if (!layoutSettlingForBottomPin || messages.length === 0) return;
+    if (!layoutSettlingForBottomPin || messages.length === 0 || !openScrollAtBottomRef.current)
+      return;
     const inner = innerListRef.current;
     schedulePinToBottom();
     if (!inner) {
@@ -472,13 +490,22 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     const currentMessageCount = messages.length;
     const previousMessageCount = previousMessageCountRef.current;
     const isNewMessagesAdded = currentMessageCount > previousMessageCount;
+    const previousFirstId = previousFirstMessageIdRef.current;
+    const currentFirstId = messages[0]?.id;
 
     let pinnedAfterGrow = false;
     if (isNewMessagesAdded) {
       const wasLoadingMore = isLoadingMoreRef.current || isLoadingMore;
       const justLoadedOlder = justLoadedOlderMessagesRef.current;
+      const isPrependReconcile =
+        previousMessageCount > 0 &&
+        !wasLoadingMore &&
+        !justLoadedOlder &&
+        previousFirstId != null &&
+        currentFirstId != null &&
+        previousFirstId !== currentFirstId;
 
-      if (wasLoadingMore || justLoadedOlder) {
+      if (wasLoadingMore || justLoadedOlder || isPrependReconcile) {
         const previousScrollHeight = previousScrollHeightRef.current;
         const previousScrollTop = previousScrollTopRef.current;
 
@@ -507,11 +534,13 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     }
 
     previousMessageCountRef.current = currentMessageCount;
+    previousFirstMessageIdRef.current = currentFirstId;
     if (!isLoadingMore) {
       requestAnimationFrame(() => {
         const c = messagesContainerRef.current;
         if (c) {
           previousScrollHeightRef.current = c.scrollHeight;
+          previousScrollTopRef.current = c.scrollTop;
         }
       });
     }
@@ -658,7 +687,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
             >
               <AnimatedMessageItem
                 message={message}
-                staggerKey={message.id}
+                staggerKey={getMessageRowKey(message)}
                 skipStaggerOnOpen={threadLayoutSettling || isInitialLoad}
                 onAddReaction={onAddReaction}
                 onRemoveReaction={onRemoveReaction}

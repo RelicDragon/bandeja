@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { BracketCustomByePicker } from './BracketCustomByePicker';
 import { byeCountForEntrants, supportsThirdPlaceMatch } from '@/utils/customByeSeedRanks.util';
 import { supportsConsolationBracket } from '@/utils/consolationBracket.util';
@@ -31,17 +32,16 @@ function Phase4Toggle({
   hint: string;
 }) {
   return (
-    <div className="space-y-1">
-      <label className="flex items-center justify-center gap-2 text-sm text-gray-800 dark:text-gray-200">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-        />
-        <span>{label}</span>
-      </label>
-      <p className="text-center text-xs text-gray-500 dark:text-gray-400">{hint}</p>
+    <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+          {label}
+        </span>
+        <div className="flex-shrink-0">
+          <ToggleSwitch checked={checked} onChange={onChange} />
+        </div>
+      </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400">{hint}</p>
     </div>
   );
 }

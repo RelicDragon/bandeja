@@ -5,7 +5,9 @@ export type BracketPreviewPosition = {
   key: string;
   seed: number;
   phase: 'play-in' | `main-${number}`;
-  participantId: string;
+  participantId: string | null;
+  /** Qualifier label (e.g. A1) kept when slot is cleared. */
+  slotLabel?: string;
 };
 
 export function previewPhaseForSeed(plan: BracketPlan, seed: number): BracketPreviewPosition['phase'] | null {
@@ -22,15 +24,61 @@ export function previewPhaseForSeed(plan: BracketPlan, seed: number): BracketPre
   return inFirstMain ? 'main-0' : null;
 }
 
-export function buildBracketPreviewPositions(plan: BracketPlan): BracketPreviewPosition[] {
+export function buildBracketPreviewPositions(
+  plan: BracketPlan,
+  slotLabels?: Map<number, string>
+): BracketPreviewPosition[] {
   const out: BracketPreviewPosition[] = [];
   for (let seed = 1; seed <= plan.entrantCount; seed += 1) {
     const phase = previewPhaseForSeed(plan, seed);
     const participantId = plan.orderedParticipantIds[seed - 1];
-    if (!phase || !participantId) continue;
-    out.push({ key: `seed:${seed}`, seed, phase, participantId });
+    if (!phase) continue;
+    out.push({
+      key: `seed:${seed}`,
+      seed,
+      phase,
+      participantId: participantId || null,
+      slotLabel: slotLabels?.get(seed),
+    });
   }
   return out;
+}
+
+export function unassignedParticipantIdsFromPreview(
+  baseline: string[],
+  positions: BracketPreviewPosition[]
+): string[] {
+  const assigned = new Set(
+    positions.map((p) => p.participantId).filter((id): id is string => !!id)
+  );
+  return baseline.filter((id) => id && !assigned.has(id));
+}
+
+export function clearBracketPreviewPosition(
+  positions: BracketPreviewPosition[],
+  key: string
+): BracketPreviewPosition[] {
+  const i = positions.findIndex((p) => p.key === key);
+  if (i < 0) return positions;
+  const pos = positions[i];
+  if (!pos.participantId) return positions;
+  const next = [...positions];
+  next[i] = { ...pos, participantId: null };
+  return next;
+}
+
+export function assignBracketPreviewPosition(
+  positions: BracketPreviewPosition[],
+  key: string,
+  participantId: string
+): BracketPreviewPosition[] {
+  const i = positions.findIndex((p) => p.key === key);
+  if (i < 0) return positions;
+  const pos = positions[i];
+  if (pos.participantId) return positions;
+  const next = [...positions];
+  next[i] = { ...pos, participantId };
+  return next;
 }
 
 export function canSwapBracketPreviewPositions(
@@ -67,7 +115,8 @@ export function orderedParticipantIdsFromPreview(
 ): string[] {
   const order = [...baseline];
   for (const pos of positions) {
-    order[pos.seed - 1] = pos.participantId;
+    if (pos.participantId) order[pos.seed - 1] = pos.participantId;
+    else order[pos.seed - 1] = '';
   }
   return order;
 }

@@ -9,10 +9,10 @@ import {
 describe('sortBracketScheduleGames', () => {
   it('orders play-in before main by roundIndex then startTime', () => {
     const entries: BracketScheduleListEntry[] = [
-      { kind: 'MAIN', roundIndex: 1, game: { id: 'm1', startTime: '2026-01-03' } as never },
-      { kind: 'PLAY_IN', roundIndex: 0, game: { id: 'p2', startTime: '2026-01-02' } as never },
-      { kind: 'MAIN', roundIndex: 0, game: { id: 'm0', startTime: '2026-01-04' } as never },
-      { kind: 'PLAY_IN', roundIndex: 0, game: { id: 'p1', startTime: '2026-01-01' } as never },
+      { kind: 'MAIN', roundIndex: 1, roundLabel: null, game: { id: 'm1', startTime: '2026-01-03' } as never },
+      { kind: 'PLAY_IN', roundIndex: 0, roundLabel: null, game: { id: 'p2', startTime: '2026-01-02' } as never },
+      { kind: 'MAIN', roundIndex: 0, roundLabel: null, game: { id: 'm0', startTime: '2026-01-04' } as never },
+      { kind: 'PLAY_IN', roundIndex: 0, roundLabel: null, game: { id: 'p1', startTime: '2026-01-01' } as never },
     ];
     const sorted = sortBracketScheduleGames(entries).map((e) => e.game.id);
     expect(sorted).toEqual(['p1', 'p2', 'm0', 'm1']);

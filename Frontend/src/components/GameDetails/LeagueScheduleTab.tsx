@@ -16,11 +16,11 @@ import { Loader2, Calendar, Users, Trophy, LayoutGrid, Maximize2 } from 'lucide-
 import { standingsTeamsForGroup, roundsInSingleRoundRobinCycle, type MatrixTeam } from '@/utils/leagueFixtureMatrix';
 import { repairLeagueScheduleSearchIfInvalid, resolveLeagueScheduleMode } from '@/utils/leagueScheduleSubtab';
 import { LeagueBracketView } from './LeagueBracketView';
-import { LeagueBracketListPanel } from './LeagueBracketListPanel';
 import {
   findBracketRounds,
   defaultBracketRoundId,
   resolveSelectedBracketRound,
+  canRestartBracketPlayoff,
 } from '@/utils/leagueBracketRound';
 import { BracketRoundPicker } from './BracketRoundPicker';
 import { enrichBracketGroups } from '@/utils/leagueBracketEnrich';
@@ -83,6 +83,8 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const [showPlayoffModal, setShowPlayoffModal] = useState(false);
   const [groups, setGroups] = useState<LeagueGroup[]>([]);
   const [roundPendingDeletion, setRoundPendingDeletion] = useState<LeagueRound | null>(null);
+  const [bracketRestartConfirmOpen, setBracketRestartConfirmOpen] = useState(false);
+  const [bracketRestartPending, setBracketRestartPending] = useState(false);
   const [roundIdBeingDeleted, setRoundIdBeingDeleted] = useState<string | null>(null);
   const [roundIdSendingMessage, setRoundIdSendingMessage] = useState<string | null>(null);
   const [roundPendingStartMessage, setRoundPendingStartMessage] = useState<LeagueRound | null>(null);
@@ -420,11 +422,21 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     !crossGroupBracket &&
     selectedGroupId === ALL_GROUP_ID &&
     groups.length > 1 &&
-    (resolvedScheduleView === 'bracket' || resolvedScheduleView === 'list') &&
+    resolvedScheduleView === 'bracket' &&
     !!activeBracketGroup?.leagueGroupId;
 
   const bracketAllGroupsBannerName =
     groups.find((g) => g.id === activeBracketGroup?.leagueGroupId)?.name ?? '';
+
+  const canRestartSelectedBracket = useMemo(
+    () =>
+      Boolean(
+        selectedBracketRound &&
+          canEdit &&
+          canRestartBracketPlayoff(selectedBracketRound, rounds)
+      ),
+    [selectedBracketRound, canEdit, rounds]
+  );
 
   const selectedBracketRoundSlotTitle = useMemo(
     () =>
@@ -434,15 +446,19 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     [activeBracketGroup?.slots]
   );
 
-  const navigateBracketSubtab = useCallback(
-    (subtab: 'bracket' | 'list') => {
-      const sp = new URLSearchParams(location.search);
-      sp.set('tab', 'schedule');
-      sp.set('subtab', subtab);
-      navigate({ pathname: location.pathname, search: sp.toString() }, { replace: false });
-    },
-    [location.pathname, location.search, navigate]
-  );
+  const scheduleViewTabs = useMemo(() => {
+    if (canShowBracketTab) {
+      return [
+        ...(showMyTab ? [{ id: 'my' as const, label: t('gameDetails.fixtureScheduleViewMy') }] : []),
+        { id: 'bracket' as const, label: t('gameDetails.bracketViewTab') },
+      ];
+    }
+    return [
+      ...(showMyTab ? [{ id: 'my' as const, label: t('gameDetails.fixtureScheduleViewMy') }] : []),
+      { id: 'list' as const, label: t('gameDetails.fixtureMatrixViewList') },
+      ...(canShowTableTab ? [{ id: 'table' as const, label: t('gameDetails.fixtureTableView') }] : []),
+    ];
+  }, [canShowBracketTab, showMyTab, canShowTableTab, t]);
 
   useLayoutEffect(() => {
     if (resolvedScheduleView !== 'table' || selectedGroupId !== ALL_GROUP_ID || groups.length === 0) return;
@@ -599,6 +615,26 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     }
   };
 
+  const handleRestartBracketPlayoff = async () => {
+    if (!selectedBracketRound) return;
+    setBracketRestartPending(true);
+    try {
+      await leaguesApi.deleteRound(selectedBracketRound.id);
+      toast.success(
+        t('gameDetails.playoffRestarted', { defaultValue: 'Playoff bracket removed' })
+      );
+      setBracketPayload(null);
+      setSelectedBracketRoundId(null);
+      await fetchRounds();
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setBracketRestartPending(false);
+      setBracketRestartConfirmOpen(false);
+    }
+  };
+
   const handleSendStartMessage = async (leagueRoundId: string) => {
     const round = rounds.find((r) => r.id === leagueRoundId);
     if (round) {
@@ -749,21 +785,10 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           onSelect={setSelectedRoundType}
         />
       )}
-      {filteredRounds.length > 0 && (
+      {filteredRounds.length > 0 && scheduleViewTabs.length > 1 && (
         <div className="flex justify-center w-full">
           <SegmentedSwitch
-            tabs={[
-              ...(showMyTab ? [{ id: 'my' as const, label: t('gameDetails.fixtureScheduleViewMy') }] : []),
-              ...(canShowBracketTab
-                ? [
-                    { id: 'bracket' as const, label: t('gameDetails.bracketViewTab') },
-                    { id: 'list' as const, label: t('gameDetails.fixtureMatrixViewList') },
-                  ]
-                : [
-                    { id: 'list', label: t('gameDetails.fixtureMatrixViewList') },
-                    ...(canShowTableTab ? [{ id: 'table' as const, label: t('gameDetails.fixtureTableView') }] : []),
-                  ]),
-            ]}
+            tabs={scheduleViewTabs}
             activeId={resolvedScheduleView}
             onChange={(id) => {
               const next = id as 'my' | 'list' | 'table' | 'bracket';
@@ -865,12 +890,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
               </button>
             ) : null}
           </div>
-          <p id="bracket-list-fallback-hint" className="sr-only">
-            {t('gameDetails.bracketListFallbackHint')}{' '}
-            <button type="button" className="underline" onClick={() => navigateBracketSubtab('list')}>
-              {t('gameDetails.bracketListFallbackLink')}
-            </button>
-          </p>
           {(bracketLoading || activeBracketGroup || bracketError) && (
             <LeagueBracketView
               group={activeBracketGroup}
@@ -879,13 +898,11 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
               loading={bracketLoading}
               error={bracketError}
               onRetry={refetchBracket}
-              onOpenListView={() => navigateBracketSubtab('list')}
               onOpenGame={handleOpenGame}
               onEditGame={canEdit ? handleEditGame : undefined}
               canEditBracket={canEdit}
               leagueSeasonId={leagueSeasonId}
               bracketRoundId={selectedBracketRound?.id}
-              seedingLocked={Boolean(bracketPayload?.round?.bracketConfig?.seedingLocked)}
               onBracketUpdated={(res) => {
                 const games = selectedBracketRound?.games ?? res.round.games ?? [];
                 setBracketPayload({
@@ -893,6 +910,9 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
                   groups: enrichBracketGroups(res.groups, games),
                 });
               }}
+              canRestartPlayoff={canRestartSelectedBracket}
+              restartingPlayoff={bracketRestartPending}
+              onRestartPlayoff={() => setBracketRestartConfirmOpen(true)}
             />
           )}
         </div>
@@ -926,18 +946,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           onDeleteGame={handleDeleteGame}
           onNoteSaved={fetchRounds}
           t={t}
-        />
-      ) : canShowBracketTab && resolvedScheduleView === 'list' ? (
-        <LeagueBracketListPanel
-          group={activeBracketGroup}
-          crossGroupBracket={crossGroupBracket}
-          groupFilterActive={selectedGroupId !== ALL_GROUP_ID}
-          loading={bracketLoading}
-          error={bracketError}
-          onRetry={refetchBracket}
-          onOpenTreeView={() => navigateBracketSubtab('bracket')}
-          onOpenGame={handleOpenGame}
-          onEditGame={canEdit ? handleEditGame : undefined}
         />
       ) : (
         <div className="space-y-0">
@@ -1029,6 +1037,21 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           leagueSeasonId={leagueSeasonId}
           hasFixedTeams={hasFixedTeams ?? false}
           onCreated={fetchRounds}
+        />
+      )}
+      {isClient && bracketRestartConfirmOpen && (
+        <ConfirmationModal
+          isOpen={bracketRestartConfirmOpen}
+          title={t('gameDetails.restartPlayoff', { defaultValue: 'Restart Playoff' })}
+          message={t('gameDetails.restartPlayoffConfirmation', {
+            defaultValue:
+              'This will delete the entire bracket and all scheduled matchup games. You can create a new playoff from scratch.',
+          })}
+          confirmText={t('gameDetails.restartPlayoff', { defaultValue: 'Restart Playoff' })}
+          cancelText={t('common.cancel')}
+          confirmVariant="danger"
+          onConfirm={handleRestartBracketPlayoff}
+          onCancel={() => setBracketRestartConfirmOpen(false)}
         />
       )}
       {isClient && roundPendingDeletion && (

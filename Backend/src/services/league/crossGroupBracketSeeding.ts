@@ -43,6 +43,51 @@ export function buildEqualTopKQualifiers(
   return out;
 }
 
+function sameParticipantMultiset(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const counts = new Map<string, number>();
+  for (const id of a) {
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  for (const id of b) {
+    const n = counts.get(id);
+    if (!n) return false;
+    if (n === 1) counts.delete(id);
+    else counts.set(id, n - 1);
+  }
+  return counts.size === 0;
+}
+
+function defaultGlobalParticipantIds(
+  qualifiers: Record<string, string[]>,
+  groupOrder: string[],
+  preset: CrossGroupSeedingPreset
+): string[] {
+  if (preset === 'WINNERS_THEN_RUNNERS_UP') {
+    const k = Math.max(0, ...groupOrder.map((gid) => qualifiers[gid]?.length ?? 0));
+    const ids: string[] = [];
+    for (let r = 0; r < k; r++) {
+      for (const gid of groupOrder) {
+        const row = qualifiers[gid];
+        if (row && row[r]) ids.push(row[r]);
+      }
+    }
+    return ids;
+  }
+
+  if (preset === 'GROUP_BLOCK') {
+    const ids: string[] = [];
+    for (const gid of groupOrder) {
+      const row = qualifiers[gid] ?? [];
+      for (const pid of row) ids.push(pid);
+    }
+    return ids;
+  }
+
+  throw new Error(`UNKNOWN_PRESET:${preset}`);
+}
+
+/** Global seed order: preset default, or client order when it is the same participant set (preview swaps). */
 export function mergeGlobalParticipantIds(
   qualifiers: Record<string, string[]>,
   groupOrder: string[],
@@ -56,27 +101,11 @@ export function mergeGlobalParticipantIds(
     return [...manualOrder];
   }
 
-  const ids: string[] = [];
-  if (preset === 'WINNERS_THEN_RUNNERS_UP') {
-    const k = Math.max(0, ...groupOrder.map((gid) => qualifiers[gid]?.length ?? 0));
-    for (let r = 0; r < k; r++) {
-      for (const gid of groupOrder) {
-        const row = qualifiers[gid];
-        if (row && row[r]) ids.push(row[r]);
-      }
-    }
-    return ids;
+  const defaultOrder = defaultGlobalParticipantIds(qualifiers, groupOrder, preset);
+  if (manualOrder?.length && sameParticipantMultiset(manualOrder, defaultOrder)) {
+    return [...manualOrder];
   }
-
-  if (preset === 'GROUP_BLOCK') {
-    for (const gid of groupOrder) {
-      const row = qualifiers[gid] ?? [];
-      for (const pid of row) ids.push(pid);
-    }
-    return ids;
-  }
-
-  throw new Error(`UNKNOWN_PRESET:${preset}`);
+  return defaultOrder;
 }
 
 export function buildUnequalTopKQualifiers(

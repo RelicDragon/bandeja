@@ -25,6 +25,8 @@ interface SegmentedSwitchProps {
   disabled?: boolean;
   /** Accessible name for the tab list. */
   ariaLabel?: string;
+  /** Stack options vertically (full-width rows). Default horizontal. */
+  orientation?: 'horizontal' | 'vertical';
 }
 
 export const SegmentedSwitch = ({
@@ -36,11 +38,17 @@ export const SegmentedSwitch = ({
   className = '',
   disabled = false,
   ariaLabel,
-}: SegmentedSwitchProps) => (
+  orientation = 'horizontal',
+}: SegmentedSwitchProps) => {
+  const isVertical = orientation === 'vertical';
+  return (
   <div
     role="tablist"
     aria-label={ariaLabel}
-    className={`relative mx-auto flex w-fit items-stretch gap-1 overflow-visible rounded-lg bg-gray-100 p-1 dark:bg-gray-700 ${className}`.trim()}
+    aria-orientation={isVertical ? 'vertical' : 'horizontal'}
+    className={`relative mx-auto flex items-stretch gap-1 overflow-visible rounded-lg bg-gray-100 p-1 dark:bg-gray-700 ${
+      isVertical ? 'w-full flex-col' : 'w-fit'
+    } ${className}`.trim()}
   >
     {tabs.map((tab) => {
       const isActive = activeId === tab.id;
@@ -58,7 +66,9 @@ export const SegmentedSwitch = ({
           onClick={() => {
             if (!disabled && !tab.disabled) onChange(tab.id);
           }}
-          className={`relative flex min-w-0 items-center justify-center gap-1.5 rounded-md py-1.5 ${pad} text-sm font-medium transition-colors duration-200 ${
+          className={`relative flex min-w-0 items-center rounded-md py-2.5 text-sm font-medium transition-colors duration-200 ${
+            isVertical ? 'w-full justify-start gap-2.5 text-left' : 'justify-center gap-1.5'
+          } ${pad} ${
             disabled || tab.disabled
               ? 'cursor-not-allowed opacity-50'
               : isActive
@@ -78,24 +88,42 @@ export const SegmentedSwitch = ({
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             />
           )}
-          <span className="relative flex min-w-0 items-center justify-center gap-1.5">
+          {isVertical && (
+            <span
+              className={`relative z-[1] flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                isActive
+                  ? 'border-primary-500 dark:border-primary-400'
+                  : 'border-gray-400 dark:border-gray-500'
+              }`}
+              aria-hidden
+            >
+              {isActive && (
+                <span className="h-2 w-2 rounded-full bg-primary-500 dark:bg-primary-400" />
+              )}
+            </span>
+          )}
+          <span
+            className={`relative flex min-w-0 items-center gap-1.5 ${
+              isVertical ? 'justify-start' : 'justify-center'
+            }`}
+          >
             {Icon && <Icon size={18} className="shrink-0" />}
             {showOnlyActiveTabText ? (
               <AnimatePresence initial={false}>
                 {showLabel && (
                   <motion.span
-                    initial={{ maxWidth: 0, opacity: 0 }}
-                    animate={{ maxWidth: 96, opacity: 1 }}
-                    exit={{ maxWidth: 0, opacity: 0 }}
+                    initial={isVertical ? { opacity: 0 } : { maxWidth: 0, opacity: 0 }}
+                    animate={isVertical ? { opacity: 1 } : { maxWidth: 96, opacity: 1 }}
+                    exit={isVertical ? { opacity: 0 } : { maxWidth: 0, opacity: 0 }}
                     transition={{ type: 'tween', duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-                    className="overflow-hidden truncate whitespace-nowrap"
+                    className={isVertical ? '' : 'overflow-hidden truncate whitespace-nowrap'}
                   >
                     {tab.label}
                   </motion.span>
                 )}
               </AnimatePresence>
             ) : (
-              <span className="truncate whitespace-nowrap">{tab.label}</span>
+              <span className={isVertical ? '' : 'truncate whitespace-nowrap'}>{tab.label}</span>
             )}
           </span>
           {tab.badge !== undefined && tab.badge > 0 && (
@@ -107,4 +135,5 @@ export const SegmentedSwitch = ({
       );
     })}
   </div>
-);
+  );
+};

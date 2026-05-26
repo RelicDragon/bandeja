@@ -3,8 +3,10 @@ import { buildBracketPlan } from '@/utils/bracketStructure';
 import {
   buildBracketPreviewPositions,
   canSwapBracketPreviewPositions,
+  clearBracketPreviewPosition,
   orderedParticipantIdsFromPreview,
   swapBracketPreviewPositions,
+  unassignedParticipantIdsFromPreview,
 } from '@/utils/bracketPreviewReorder.util';
 
 describe('bracketPreviewReorder.util', () => {
@@ -35,5 +37,15 @@ describe('bracketPreviewReorder.util', () => {
     const positions = buildBracketPreviewPositions(plan);
     expect(positions.every((p) => p.phase === 'main-0')).toBe(true);
     expect(canSwapBracketPreviewPositions(positions[0], positions[1])).toBe(true);
+  });
+
+  it('clear moves participant to unassigned pool', () => {
+    const plan = buildBracketPlan(8, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
+    const positions = buildBracketPreviewPositions(plan);
+    const cleared = clearBracketPreviewPosition(positions, positions[0].key);
+    expect(cleared[0].participantId).toBeNull();
+    expect(unassignedParticipantIdsFromPreview(plan.orderedParticipantIds, cleared)).toEqual(['a']);
+    const order = orderedParticipantIdsFromPreview(plan.orderedParticipantIds, cleared);
+    expect(order[0]).toBe('');
   });
 });

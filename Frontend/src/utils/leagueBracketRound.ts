@@ -47,3 +47,13 @@ export function resolveBracketRoundFromSearch(
 export function findLatestBracketRound(rounds: LeagueRound[]): LeagueRound | null {
   return resolveSelectedBracketRound(listBracketRounds(rounds), null);
 }
+
+/** Bracket playoff can be erased when it is the season's last round and no matchup has results yet. */
+export function canRestartBracketPlayoff(round: LeagueRound, allRounds: LeagueRound[]): boolean {
+  if (!isBracketPlayoffRound(round)) return false;
+  const lastRound = allRounds[allRounds.length - 1];
+  if (!lastRound || lastRound.id !== round.id) return false;
+  return (
+    round.games.length === 0 || round.games.every((game) => game.resultsStatus === 'NONE')
+  );
+}

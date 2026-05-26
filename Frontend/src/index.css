@@ -1595,3 +1595,34 @@ html.broadcast-transparent-root body,
 html.broadcast-transparent-root #root {
   background: transparent !important;
 }
+
+/* Bracket PNG export: content-sized flex, hide chrome */
+[data-bracket-export-capture] [data-bracket-export-scroll] {
+  flex: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  align-items: flex-start !important;
+  overflow: visible !important;
+  overflow-x: visible !important;
+}
+
+[data-bracket-export-capture] [data-bracket-export-column] {
+  align-self: flex-start !important;
+  height: auto !important;
+}
+
+[data-bracket-export-capture] [data-bracket-export-slots] {
+  flex: none !important;
+  height: auto !important;
+  justify-content: flex-start !important;
+}
+
+[data-bracket-export-capture] .bracket-export-hide {
+  display: none !important;
+}
+
+[data-bracket-export-capture] .bracket-tree-card {
+  min-width: 16rem !important;
+  max-width: 17rem !important;
+}

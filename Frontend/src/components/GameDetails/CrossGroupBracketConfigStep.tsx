@@ -288,6 +288,7 @@ export function CrossGroupBracketConfigStep({
               }}
               showOnlyActiveTabText={false}
               layoutId="cross-group-seeding"
+              orientation="vertical"
             />
           </div>
 

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Loader2 } from 'lucide-react';
-import { Card } from '@/components';
+import { Card, ConfirmationModal } from '@/components';
+import toast from 'react-hot-toast';
 import { LeagueBracketView } from '@/components/GameDetails/LeagueBracketView';
 import { BracketRoundPicker } from '@/components/GameDetails/BracketRoundPicker';
 import { gamesApi } from '@/api';
@@ -17,6 +18,7 @@ import {
   findBracketRounds,
   defaultBracketRoundId,
   resolveSelectedBracketRound,
+  canRestartBracketPlayoff,
 } from '@/utils/leagueBracketRound';
 import { isCrossGroupBracket, resolveBracketGroupFromQuery } from '@/utils/bracketView.util';
 
@@ -34,6 +36,9 @@ export const LeagueBracketFullscreenPage = () => {
   const [loading, setLoading] = useState(true);
   const [bracketRounds, setBracketRounds] = useState<LeagueRound[]>([]);
   const [selectedBracketRoundId, setSelectedBracketRoundId] = useState<string | null>(null);
+  const [allRounds, setAllRounds] = useState<LeagueRound[]>([]);
+  const [bracketRestartConfirmOpen, setBracketRestartConfirmOpen] = useState(false);
+  const [bracketRestartPending, setBracketRestartPending] = useState(false);
   const user = useAuthStore((s) => s.user);
 
   const goBack = useCallback(() => {
@@ -69,6 +74,7 @@ export const LeagueBracketFullscreenPage = () => {
     setBracketPayload(null);
     try {
       const roundsRes = await leaguesApi.getRounds(leagueSeasonId);
+      setAllRounds(roundsRes.data);
       const playoffs = findBracketRounds(roundsRes.data);
       setBracketRounds(playoffs);
       const round = resolveSelectedBracketRound(playoffs, selectedBracketRoundId);
@@ -163,6 +169,40 @@ export const LeagueBracketFullscreenPage = () => {
     [navigate]
   );
 
+  const selectedBracketRound = useMemo(
+    () => resolveSelectedBracketRound(bracketRounds, selectedBracketRoundId),
+    [bracketRounds, selectedBracketRoundId]
+  );
+
+  const canRestartBracket = useMemo(
+    () =>
+      Boolean(
+        selectedBracketRound &&
+          canEdit &&
+          canRestartBracketPlayoff(selectedBracketRound, allRounds)
+      ),
+    [selectedBracketRound, canEdit, allRounds]
+  );
+
+  const handleRestartBracketPlayoff = useCallback(async () => {
+    if (!selectedBracketRound) return;
+    setBracketRestartPending(true);
+    try {
+      await leaguesApi.deleteRound(selectedBracketRound.id);
+      toast.success(
+        t('gameDetails.playoffRestarted', { defaultValue: 'Playoff bracket removed' })
+      );
+      goBack();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage = err.response?.data?.message || 'errors.generic';
+      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setBracketRestartPending(false);
+      setBracketRestartConfirmOpen(false);
+    }
+  }, [selectedBracketRound, goBack, t]);
+
   if (!leagueSeasonId) return null;
 
   const activeRoundId = selectedBracketRoundId ?? bracketPayload?.round.id ?? '';
@@ -225,7 +265,6 @@ export const LeagueBracketFullscreenPage = () => {
                 canEditBracket={canEdit}
                 leagueSeasonId={leagueSeasonId}
                 bracketRoundId={activeRoundId || undefined}
-                seedingLocked={Boolean(bracketPayload?.round?.bracketConfig?.seedingLocked)}
                 onBracketUpdated={(res) => {
                   const games = res.round.games ?? [];
                   setBracketPayload({
@@ -233,11 +272,27 @@ export const LeagueBracketFullscreenPage = () => {
                     groups: enrichBracketGroups(res.groups, games),
                   });
                 }}
+                canRestartPlayoff={canRestartBracket}
+                restartingPlayoff={bracketRestartPending}
+                onRestartPlayoff={() => setBracketRestartConfirmOpen(true)}
               />
             </div>
           </div>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={bracketRestartConfirmOpen}
+        title={t('gameDetails.restartPlayoff', { defaultValue: 'Restart Playoff' })}
+        message={t('gameDetails.restartPlayoffConfirmation', {
+          defaultValue:
+            'This will delete the entire bracket and all scheduled matchup games. You can create a new playoff from scratch.',
+        })}
+        confirmText={t('gameDetails.restartPlayoff', { defaultValue: 'Restart Playoff' })}
+        cancelText={t('common.cancel')}
+        confirmVariant="danger"
+        onConfirm={handleRestartBracketPlayoff}
+        onCancel={() => setBracketRestartConfirmOpen(false)}
+      />
     </div>
   );
 };

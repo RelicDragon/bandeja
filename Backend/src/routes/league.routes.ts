@@ -224,7 +224,6 @@ router.patch(
     body('gameTeamUpdates.*.participantA').optional().isString(),
     body('gameTeamUpdates.*.participantB').optional().isString(),
     body('roundId').optional().isString(),
-    body('seedingLocked').optional().isBoolean(),
   ]),
   leagueController.patchBracketPlayoffSlots
 );

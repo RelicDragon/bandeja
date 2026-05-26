@@ -59,6 +59,7 @@ const CLASSIC_STRUCTURE_PRESETS: ScoringPreset[] = [
   'CLASSIC_SHORT_SET',
   'CLASSIC_PRO_SET',
   'CLASSIC_SINGLE_SET',
+  'CLASSIC_TIMED',
 ];
 
 const POINTS_TARGET_PRESETS: ScoringPreset[] = [

@@ -47,6 +47,21 @@ assert(
   'WINNERS_THEN_RUNNERS_UP 4x2'
 );
 
+const previewSwapped = mergeGlobalParticipantIds(qualifiers, order, 'WINNERS_THEN_RUNNERS_UP', [
+  'D2',
+  'C2',
+  'B2',
+  'A2',
+  'D1',
+  'C1',
+  'B1',
+  'A1',
+]);
+assert(
+  JSON.stringify(previewSwapped) === '["D2","C2","B2","A2","D1","C1","B1","A1"]',
+  'WINNERS_THEN_RUNNERS_UP honors bracket preview reorder'
+);
+
 const block = mergeGlobalParticipantIds(qualifiers, order, 'GROUP_BLOCK');
 assert(
   JSON.stringify(block) === '["A1","A2","B1","B2","C1","C2","D1","D2"]',

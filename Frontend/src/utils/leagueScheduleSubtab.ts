@@ -19,6 +19,7 @@ export function resolveLeagueScheduleMode(
   if (mode === 'my' && !showMyTab) mode = canShowBracketTab ? 'bracket' : 'list';
   if (mode === 'table' && !canShowTableTab) mode = canShowBracketTab ? 'bracket' : 'list';
   if (mode === 'bracket' && !canShowBracketTab) mode = showMyTab ? 'my' : 'list';
+  if (mode === 'list' && canShowBracketTab) mode = 'bracket';
   return mode;
 }
 
@@ -67,6 +68,9 @@ export function repairLeagueScheduleSearchIfInvalid(
   }
   if (raw === 'bracket' && !canShowBracketTab) {
     return canonicalScheduleQuery(search, showMyTab ? 'my' : 'list', showMyTab);
+  }
+  if (raw === 'list' && canShowBracketTab) {
+    return canonicalScheduleQuery(search, 'bracket', showMyTab);
   }
   if (raw !== 'my' && raw !== 'list' && raw !== 'table' && raw !== 'bracket') {
     return canonicalScheduleQuery(

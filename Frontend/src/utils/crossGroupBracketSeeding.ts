@@ -51,16 +51,26 @@ export function buildEqualTopKQualifiers(
   return out;
 }
 
-export function mergeGlobalParticipantIds(
+function sameParticipantMultiset(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const counts = new Map<string, number>();
+  for (const id of a) {
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  for (const id of b) {
+    const n = counts.get(id);
+    if (!n) return false;
+    if (n === 1) counts.delete(id);
+    else counts.set(id, n - 1);
+  }
+  return counts.size === 0;
+}
+
+function defaultGlobalParticipantIds(
   qualifiers: Record<string, string[]>,
   groupOrder: string[],
-  preset: CrossGroupSeedingPreset,
-  manualOrder?: string[]
+  preset: CrossGroupSeedingPreset
 ): string[] {
-  if (preset === 'MANUAL' && manualOrder?.length) {
-    return [...manualOrder];
-  }
-
   const k = Math.max(0, ...groupOrder.map((gid) => qualifiers[gid]?.length ?? 0));
   const ids: string[] = [];
 
@@ -74,7 +84,6 @@ export function mergeGlobalParticipantIds(
     return ids;
   }
 
-  // WINNERS_THEN_RUNNERS_UP (default)
   for (let r = 0; r < k; r++) {
     for (const groupId of groupOrder) {
       const row = qualifiers[groupId] ?? [];
@@ -82,6 +91,23 @@ export function mergeGlobalParticipantIds(
     }
   }
   return ids;
+}
+
+export function mergeGlobalParticipantIds(
+  qualifiers: Record<string, string[]>,
+  groupOrder: string[],
+  preset: CrossGroupSeedingPreset,
+  manualOrder?: string[]
+): string[] {
+  if (preset === 'MANUAL' && manualOrder?.length) {
+    return [...manualOrder];
+  }
+
+  const defaultOrder = defaultGlobalParticipantIds(qualifiers, groupOrder, preset);
+  if (manualOrder?.length && sameParticipantMultiset(manualOrder, defaultOrder)) {
+    return [...manualOrder];
+  }
+  return defaultOrder;
 }
 
 export class CrossGroupPoolValidationError extends Error {

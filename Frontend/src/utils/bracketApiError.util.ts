@@ -37,7 +37,6 @@ const WALKOVER_MESSAGE_KEYS: Array<{ test: RegExp; key: string }> = [
 
 const EDIT_MESSAGE_KEYS: Array<{ test: RegExp; key: string }> = [
   { test: /only owners and admins can edit bracket slots/i, key: 'gameDetails.bracketEditErrorForbidden' },
-  { test: /bracket seeding is locked/i, key: 'gameDetails.bracketEditErrorSeedingLocked' },
   { test: /play-in results are final; bracket seeding is locked/i, key: 'gameDetails.bracketEditErrorPlayInLocked' },
   {
     test: /this knockout round has final results; seeding is locked/i,

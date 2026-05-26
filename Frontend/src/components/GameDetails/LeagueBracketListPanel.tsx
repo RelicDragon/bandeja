@@ -161,13 +161,19 @@ export function LeagueBracketListPanel({
         </p>
       ) : (
         <div className="space-y-3">
-          {filtered.map(({ game }) => (
+          {filtered.map(({ game, kind, roundIndex, roundLabel }) => (
             <LeagueGameCard
               key={game.id}
               game={game}
               onOpen={onOpenGame ? () => onOpenGame(game) : undefined}
               onEdit={onEditGame ? () => onEditGame(game) : undefined}
               showGroupTag={false}
+              bracketRoundBadge={
+                roundLabel ??
+                (kind === 'PLAY_IN'
+                  ? t('gameDetails.bracketColumnPlayIn')
+                  : t('gameDetails.bracketColumnMainRound', { round: roundIndex + 1 }))
+              }
               seasonPlayoffBadge={crossGroupBracket}
             />
           ))}

@@ -35,6 +35,7 @@ import {
   openThreadBootstrap,
   shouldPinOnOpen,
   toInitialScrollProp,
+  type OpenThreadPlan,
   type ThreadInitialScroll,
 } from '@/services/chat/chatOpenCoordinator';
 import { buildOutboxOptimisticsForOpen } from '@/services/chat/chatOutboxOpenSnapshot';
@@ -87,7 +88,33 @@ export function useGameChatMessages({
   const seededThreadKeyRef = useRef<string | null>(null);
   const openScrollRef = useRef<ThreadScrollRow | undefined>(undefined);
   const openScrollThreadKeyRef = useRef<string | null>(null);
+  const openScrollReadyKeyRef = useRef<string | null>(null);
+  const openScrollLoadGenRef = useRef(0);
+  const threadOpenSettlingRef = useRef(true);
+  const [isThreadOpenSettling, setIsThreadOpenSettling] = useState(true);
   const [initialScroll, setInitialScroll] = useState<ThreadInitialScroll | null | undefined>(undefined);
+
+  const beginThreadOpenSettling = useCallback(() => {
+    threadOpenSettlingRef.current = true;
+    setIsThreadOpenSettling(true);
+  }, []);
+
+  const endThreadOpenSettling = useCallback(() => {
+    threadOpenSettlingRef.current = false;
+    setIsThreadOpenSettling(false);
+  }, []);
+
+  const applyOpenScrollFromPlan = useCallback((plan: Pick<OpenThreadPlan, 'scroll' | 'scrollRow'>, threadKey: string) => {
+    openScrollLoadGenRef.current += 1;
+    openScrollThreadKeyRef.current = threadKey;
+    openScrollReadyKeyRef.current = threadKey;
+    openScrollRef.current = plan.scrollRow;
+    setInitialScroll(
+      'anchorMessageId' in plan.scroll
+        ? { anchorMessageId: plan.scroll.anchorMessageId }
+        : { atBottom: true }
+    );
+  }, []);
 
   const tracedSetMessages = useMemo(
     () => createTracedSetMessages(setMessages, messagesRef),
@@ -113,6 +140,7 @@ export function useGameChatMessages({
       messagesRef.current = [];
       setIsLoadingMessages(true);
       setIsInitialLoad(true);
+      beginThreadOpenSettling();
       setPage(1);
       setHasMoreMessages(true);
       return () => {};
@@ -126,6 +154,8 @@ export function useGameChatMessages({
     }
 
     seededThreadKeyRef.current = key;
+    beginThreadOpenSettling();
+    openScrollReadyKeyRef.current = null;
 
     let cached = peekChatThreadMemory(key);
     if (contextType === 'GAME' && id) {
@@ -142,7 +172,6 @@ export function useGameChatMessages({
       setMessagesTagged('l1-seed', cached);
       messagesRef.current = cached;
       setIsLoadingMessages(false);
-      setIsInitialLoad(false);
     } else {
       setMessagesTagged('thread-reset', []);
       messagesRef.current = [];
@@ -156,7 +185,7 @@ export function useGameChatMessages({
       flushChatThreadL1DebouncedPut(key, () => messagesRef.current, () => true);
       seededThreadKeyRef.current = null;
     };
-  }, [id, contextType, effectiveChatType, setMessagesTagged, setHasMoreMessages, setPage, setIsLoadingMessages, setIsInitialLoad]);
+  }, [id, contextType, effectiveChatType, setMessagesTagged, setHasMoreMessages, setPage, setIsLoadingMessages, setIsInitialLoad, beginThreadOpenSettling]);
 
   const threadScrollKeyForOpen = useCallback(() => {
     if (!id) return null;
@@ -173,16 +202,27 @@ export function useGameChatMessages({
       setInitialScroll(undefined);
       openScrollRef.current = undefined;
       openScrollThreadKeyRef.current = null;
+      openScrollReadyKeyRef.current = null;
       return;
     }
-    if (openScrollThreadKeyRef.current === key) return;
+    if (openScrollReadyKeyRef.current === key) {
+      return;
+    }
     openScrollThreadKeyRef.current = key;
+    openScrollRef.current = undefined;
     setInitialScroll(null);
+    const gen = ++openScrollLoadGenRef.current;
     let cancelled = false;
     void loadOpenScrollState(key).then((st) => {
       if (cancelled || currentIdRef.current !== id) return;
+      if (openScrollLoadGenRef.current !== gen) return;
+      if (openScrollReadyKeyRef.current === key) return;
+      openScrollReadyKeyRef.current = key;
       openScrollRef.current = st;
       setInitialScroll(toInitialScrollProp(st));
+      if (messagesRef.current.length > 0) {
+        setIsInitialLoad(false);
+      }
     });
     return () => {
       cancelled = true;
@@ -219,6 +259,7 @@ export function useGameChatMessages({
         messagesRef.current[0]?.id
       );
       const mayPin = shouldPinOnOpen(savedScroll, delta);
+      endThreadOpenSettling();
       if (mayPin) {
         requestAnimationFrame(() => {
           if (currentIdRef.current !== requestId) return;
@@ -226,10 +267,11 @@ export function useGameChatMessages({
         });
       }
     },
-    [contextType, currentIdRef, scrollToBottom]
+    [contextType, currentIdRef, scrollToBottom, endThreadOpenSettling]
   );
 
   const pinAfterSocketMergeIfAllowed = useCallback(() => {
+    if (threadOpenSettlingRef.current) return;
     if (shouldPinOnOpen(openScrollRef.current, 'append')) {
       scrollToBottom();
     }
@@ -361,11 +403,12 @@ export function useGameChatMessages({
           pendingHistoryBackfillRef.current = false;
           setIsLoadingMessages(false);
           setIsInitialLoad(false);
+          endThreadOpenSettling();
         }
         return false;
       }
     },
-    [id, contextType, currentChatType, currentIdRef, fetchMessagesPage, reconcileThreadOpenAndPinIfAtBottom, setMessagesTagged]
+    [id, contextType, currentChatType, currentIdRef, fetchMessagesPage, reconcileThreadOpenAndPinIfAtBottom, setMessagesTagged, endThreadOpenSettling]
   );
 
   const bootstrapThread = useCallback(
@@ -378,10 +421,6 @@ export function useGameChatMessages({
         requestId,
         contextType === 'GAME' ? effectiveType : undefined
       );
-      const runBackgroundReconcile = () => {
-        void reconcileThreadOpenAndPinIfAtBottom(requestId, effectiveType);
-      };
-
       const paintOpenSnapshot = (
         localMsgs: ChatMessageWithStatus[],
         source: ChatOpenSetMessagesSource = 'bootstrap-snapshot'
@@ -390,7 +429,9 @@ export function useGameChatMessages({
         setHasMoreMessages(true);
         setPage(1);
         setIsLoadingMessages(false);
-        if (currentIdRef.current === requestId) setIsInitialLoad(false);
+        if (currentIdRef.current === requestId && openScrollReadyKeyRef.current === memKey) {
+          setIsInitialLoad(false);
+        }
         const lid = tailMessageId(localMsgs);
         if (lid) {
           useChatSyncStore
@@ -460,8 +501,9 @@ export function useGameChatMessages({
         });
         if (currentIdRef.current !== requestId) return false;
         if (result.kind === 'painted') {
+          applyOpenScrollFromPlan(result.plan, memKey);
           paintOpenSnapshot(result.plan.messages);
-          runBackgroundReconcile();
+          await reconcileThreadOpenAndPinIfAtBottom(requestId, effectiveType);
           return true;
         }
         return bootstrapEmptyFallback();
@@ -471,7 +513,7 @@ export function useGameChatMessages({
         return loadMessages(false, gameChatType);
       }
     },
-    [id, contextType, currentChatType, currentIdRef, loadMessages, reconcileThreadOpenAndPinIfAtBottom]
+    [id, contextType, currentChatType, currentIdRef, loadMessages, reconcileThreadOpenAndPinIfAtBottom, applyOpenScrollFromPlan]
   );
 
   const loadMoreMessages = useCallback(async () => {
@@ -605,6 +647,7 @@ export function useGameChatMessages({
     setIsLoadingMessages,
     isInitialLoad,
     setIsInitialLoad,
+    isThreadOpenSettling,
     isLoadingMore,
     isSwitchingChatType,
     setIsSwitchingChatType,

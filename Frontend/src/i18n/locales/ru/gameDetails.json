@@ -413,7 +413,6 @@
     },
     "bracketViewTab": "Сетка",
     "bracketRoundPickerLabel": "Раунд сетки",
-    "bracketColumnPickerLabel": "Колонка сетки",
     "bracketColumnPlayIn": "Плей-ин",
     "bracketColumnByes": "Автопроход",
     "bracketColumnMainRound": "Раунд {{round}}",

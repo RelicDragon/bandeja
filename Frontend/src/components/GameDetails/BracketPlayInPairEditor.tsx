@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ToggleSwitch } from '@/components/ToggleSwitch';
 import type { PlayInSeedPair } from '@/utils/bracketCustomPlayIn.util';
 import { getBracketStructureMetrics } from '@/utils/bracketStructure';
 import { formatSeedOptionLabel } from '@/utils/playoffWizardSeedLabels.util';
@@ -61,21 +62,22 @@ export function BracketPlayInPairEditor({
 
   return (
     <div className="space-y-2 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-      <label className="flex items-center justify-center gap-2 text-sm text-gray-800 dark:text-gray-200">
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => {
-            const on = e.target.checked;
-            onEnabledChange(on);
-            if (on && pairs.length !== metrics.playInGameCount) {
-              onPairsChange(defaultPairs);
-            }
-          }}
-          className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-        />
-        <span>{t('gameDetails.bracketCustomPlayInLabel')}</span>
-      </label>
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+          {t('gameDetails.bracketCustomPlayInLabel')}
+        </span>
+        <div className="flex-shrink-0">
+          <ToggleSwitch
+            checked={enabled}
+            onChange={(on) => {
+              onEnabledChange(on);
+              if (on && pairs.length !== metrics.playInGameCount) {
+                onPairsChange(defaultPairs);
+              }
+            }}
+          />
+        </div>
+      </div>
       {enabled && (
         <>
           <p className="text-xs text-center text-gray-500 dark:text-gray-400">

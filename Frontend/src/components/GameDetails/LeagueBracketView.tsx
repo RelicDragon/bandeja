@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Lock, Pencil } from 'lucide-react';
 import { Card } from '@/components';
-import { leaguesApi, type BracketPlayoffGroupDto, type BracketPlayoffResponse } from '@/api/leagues';
+import type { BracketPlayoffGroupDto, BracketPlayoffResponse } from '@/api/leagues';
 import type { Game } from '@/types';
 import type { LeagueGroup } from '@/api/leagues';
 import {
@@ -28,11 +27,17 @@ import { LeagueBracketSlotCard } from './LeagueBracketSlotCard';
 import { LeagueGameCard } from './LeagueGameCard';
 import { BracketEditOverlay } from './BracketEditOverlay';
 import { BracketShareToolbar } from './BracketShareToolbar';
-import { BracketColumnPicker } from './BracketColumnPicker';
 import { LeagueBracketPodiumCard } from './LeagueBracketPodiumCard';
 import { isFullGame } from '@/utils/leagueBracketEnrich';
-import { BRACKET_TREE_CARD_CLASS } from '@/utils/bracketTreeCard.util';
-import { BRACKET_EXPORT_SCROLL_ATTR } from '@/utils/leagueBracketShare.util';
+import {
+  BRACKET_TREE_CARD_CLASS,
+  BRACKET_TREE_COLUMN_CLASS,
+} from '@/utils/bracketTreeCard.util';
+import {
+  BRACKET_EXPORT_COLUMN_ATTR,
+  BRACKET_EXPORT_SCROLL_ATTR,
+  BRACKET_EXPORT_SLOTS_ATTR,
+} from '@/utils/leagueBracketShare.util';
 
 function BracketTreeLoadingSkeleton() {
   return (
@@ -60,9 +65,10 @@ interface LeagueBracketViewProps {
   canEditBracket?: boolean;
   leagueSeasonId?: string;
   bracketRoundId?: string;
-  seedingLocked?: boolean;
   onBracketUpdated?: (data: BracketPlayoffResponse) => void;
-  onOpenListView?: () => void;
+  canRestartPlayoff?: boolean;
+  restartingPlayoff?: boolean;
+  onRestartPlayoff?: () => void;
 }
 
 export function LeagueBracketView({
@@ -78,16 +84,15 @@ export function LeagueBracketView({
   canEditBracket = false,
   leagueSeasonId,
   bracketRoundId,
-  seedingLocked = false,
   onBracketUpdated,
-  onOpenListView,
+  canRestartPlayoff = false,
+  restartingPlayoff = false,
+  onRestartPlayoff,
 }: LeagueBracketViewProps) {
   const { t } = useTranslation();
   const offline = useIsAppOffline();
   const [editOpen, setEditOpen] = useState(false);
   const [treeTab, setTreeTab] = useState<'main' | 'consolation' | 'losers' | 'grand'>('main');
-  const [lockingSeeding, setLockingSeeding] = useState(false);
-  const [selectedColumnId, setSelectedColumnId] = useState('');
   const bracketExportRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const columnRefs = useRef<Map<string, HTMLElement>>(new Map());
@@ -150,18 +155,7 @@ export function LeagueBracketView({
     [columns]
   );
 
-  useEffect(() => {
-    if (columns.length === 0) {
-      setSelectedColumnId('');
-      return;
-    }
-    setSelectedColumnId((prev) =>
-      columns.some((col) => col.id === prev) ? prev : columns[0].id
-    );
-  }, [columns, treeTab]);
-
   const scrollToColumn = useCallback((columnId: string) => {
-    setSelectedColumnId(columnId);
     const section = columnRefs.current.get(columnId);
     const container = scrollContainerRef.current;
     if (!section || !container) return;
@@ -169,62 +163,11 @@ export function LeagueBracketView({
     container.scrollTo({ left, behavior: 'smooth' });
   }, []);
 
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container || columns.length < 2) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible?.target instanceof HTMLElement) {
-          const id = visible.target.dataset.columnId;
-          if (id) setSelectedColumnId(id);
-        }
-      },
-      { root: container, threshold: [0.35, 0.5, 0.65] }
-    );
-
-    for (const col of columns) {
-      const node = columnRefs.current.get(col.id);
-      if (node) observer.observe(node);
-    }
-
-    return () => observer.disconnect();
-  }, [columns]);
-
   const canOpenEdit =
     canEditBracket &&
-    !seedingLocked &&
     !!leagueSeasonId &&
     !!group?.slots?.length &&
     buildBracketEditPositions(group.slots).some((p) => !p.locked && p.participantId);
-
-  const handleToggleSeedingLock = async () => {
-    if (!leagueSeasonId || !bracketRoundId || !onBracketUpdated) return;
-    if (offline) {
-      toast.error(t('gameDetails.bracketOfflineAction'));
-      return;
-    }
-    setLockingSeeding(true);
-    try {
-      const res = await leaguesApi.patchBracketSlots(leagueSeasonId, {
-        roundId: bracketRoundId,
-        seedingLocked: !seedingLocked,
-      });
-      if (res.data) onBracketUpdated(res.data);
-      toast.success(
-        seedingLocked
-          ? t('gameDetails.bracketSeedingUnlocked')
-          : t('gameDetails.bracketSeedingLocked')
-      );
-    } catch {
-      toast.error(t('errors.generic'));
-    } finally {
-      setLockingSeeding(false);
-    }
-  };
 
   if (loading) {
     return <BracketTreeLoadingSkeleton />;
@@ -252,15 +195,6 @@ export function LeagueBracketView({
     return (
       <Card className="space-y-2 py-8 text-center">
         <p className="text-sm text-gray-600 dark:text-gray-400">{t('gameDetails.bracketEmpty')}</p>
-        {onOpenListView ? (
-          <button
-            type="button"
-            onClick={onOpenListView}
-            className="text-xs font-semibold text-primary-700 underline-offset-2 hover:underline dark:text-primary-300"
-          >
-            {t('gameDetails.bracketListFallbackLink')}
-          </button>
-        ) : null}
       </Card>
     );
   }
@@ -269,89 +203,36 @@ export function LeagueBracketView({
     return (
       <Card className="space-y-2 py-8 text-center">
         <p className="text-sm text-gray-600 dark:text-gray-400">{t('gameDetails.bracketEmptyNoSlots')}</p>
-        {onOpenListView ? (
-          <button
-            type="button"
-            onClick={onOpenListView}
-            className="text-xs font-semibold text-primary-700 underline-offset-2 hover:underline dark:text-primary-300"
-          >
-            {t('gameDetails.bracketListFallbackLink')}
-          </button>
-        ) : null}
       </Card>
     );
   }
 
   return (
     <div className={compact ? 'flex min-h-0 flex-1 flex-col gap-3' : 'space-y-3'}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {onOpenListView ? (
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {t('gameDetails.bracketListFallbackHint')}{' '}
-            <button
-              type="button"
-              onClick={onOpenListView}
-              className="font-semibold text-primary-700 underline-offset-2 hover:underline dark:text-primary-300"
-            >
-              {t('gameDetails.bracketListFallbackLink')}
-            </button>
-          </p>
-        ) : (
-          <span />
-        )}
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {leagueSeasonId && (
+      {leagueSeasonId ? (
+        <div className="space-y-2">
+          <div className="rounded-xl border border-gray-200/80 bg-gray-50/60 p-2 dark:border-gray-700/80 dark:bg-gray-900/50">
             <BracketShareToolbar
-              leagueSeasonId={leagueSeasonId}
-              bracketRoundId={bracketRoundId}
-              groupId={crossGroupBracket ? null : group.leagueGroupId}
-              exportTargetRef={bracketExportRef}
-              canNotifySummary={canEditBracket}
-            />
-          )}
-          {canEditBracket && leagueSeasonId && bracketRoundId && onBracketUpdated && (
-            <button
-              type="button"
-              disabled={lockingSeeding || offline}
-              title={offline ? t('gameDetails.bracketOfflineAction') : undefined}
-              onClick={handleToggleSeedingLock}
-              className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
-                seedingLocked
-                  ? 'border border-amber-400/80 bg-amber-50 text-amber-900 dark:border-amber-600/70 dark:bg-amber-950/50 dark:text-amber-100'
-                  : 'border-0 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              <Lock className="h-3.5 w-3.5" aria-hidden />
-              {seedingLocked
-                ? t('gameDetails.bracketSeedingUnlockButton')
-                : t('gameDetails.bracketSeedingLockButton')}
-            </button>
-          )}
-          {canOpenEdit && (
-            <button
-              type="button"
-              disabled={offline}
-              title={offline ? t('gameDetails.bracketOfflineAction') : undefined}
-              onClick={() => {
-                if (offline) {
-                  toast.error(t('gameDetails.bracketOfflineAction'));
-                  return;
-                }
-                setEditOpen(true);
-              }}
-              className="inline-flex items-center gap-1 rounded-lg border border-dashed border-primary-400/80 px-2.5 py-1.5 text-xs font-semibold text-primary-800 transition hover:bg-primary-50 dark:border-primary-600/60 dark:text-primary-200 dark:hover:bg-primary-950/40"
-            >
-              <Pencil className="h-3.5 w-3.5" aria-hidden />
-              {t('gameDetails.bracketEditButton')}
-            </button>
-          )}
+                leagueSeasonId={leagueSeasonId}
+                bracketRoundId={bracketRoundId}
+                groupId={crossGroupBracket ? null : group.leagueGroupId}
+                exportTargetRef={bracketExportRef}
+                canNotifySummary={canEditBracket}
+                canEditBracket={canOpenEdit}
+                onEditBracket={() => {
+                  if (offline) {
+                    toast.error(t('gameDetails.bracketOfflineAction'));
+                    return;
+                  }
+                  setEditOpen(true);
+                }}
+                canRestartPlayoff={canRestartPlayoff}
+                restartingPlayoff={restartingPlayoff}
+                onRestartPlayoff={onRestartPlayoff}
+              />
+          </div>
         </div>
-      </div>
-      {seedingLocked && (
-        <p className="text-center text-xs text-amber-700 dark:text-amber-300">
-          {t('gameDetails.bracketSeedingLockedHint')}
-        </p>
-      )}
+      ) : null}
       {showDoubleElimTabs && (
         <div className="flex justify-center">
           <SegmentedSwitch
@@ -389,14 +270,6 @@ export function LeagueBracketView({
           crossGroupBracket={crossGroupBracket}
           bracketRoundId={bracketRoundId}
           showViewLink={!compact}
-        />
-      )}
-      {columns.length >= 2 && selectedColumnId && (
-        <BracketColumnPicker
-          columns={columns}
-          selectedColumnId={selectedColumnId}
-          onSelect={scrollToColumn}
-          layoutIdPrefix={leagueSeasonId ?? 'bracket'}
         />
       )}
       {showPlayInGate && treeTab === 'main' ? (
@@ -443,14 +316,15 @@ export function LeagueBracketView({
               else columnRefs.current.delete(col.id);
             }}
             data-column-id={col.id}
-            className={`flex w-[min(88vw,14rem)] shrink-0 snap-start flex-col gap-2${
+            {...{ [BRACKET_EXPORT_COLUMN_ATTR]: '' }}
+            className={`flex ${BRACKET_TREE_COLUMN_CLASS} shrink-0 snap-start flex-col gap-2${
               fadeMainColumn ? ' opacity-45 saturate-50 transition-opacity' : ''
             }`}
           >
             <h3 className="sticky top-0 z-10 rounded-md bg-gray-50/95 px-2 py-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-700 backdrop-blur-sm dark:bg-gray-900/95 dark:text-gray-200">
               {col.label}
             </h3>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2" {...{ [BRACKET_EXPORT_SLOTS_ATTR]: '' }}>
               {col.slots.map((slot) => {
                 const highlight = slotHighlights.get(slot.id);
                 if (slot.slotKind === 'BYE') {
@@ -473,7 +347,7 @@ export function LeagueBracketView({
                 if (slot.game && isFullGame(slot.game)) {
                   const matchGame = slot.game;
                   const gameWrapClass = [
-                    `min-w-0 ${BRACKET_TREE_CARD_CLASS} rounded-lg`,
+                    `bracket-tree-game-wrap bracket-tree-card ${BRACKET_TREE_CARD_CLASS} rounded-lg`,
                     highlight?.deEmphasize ? 'pointer-events-none opacity-45 saturate-50' : '',
                     highlight?.onChampionPath && !highlight.deEmphasize
                       ? 'ring-1 ring-amber-300/80 dark:ring-amber-600/50'
@@ -489,7 +363,7 @@ export function LeagueBracketView({
                         onEdit={onEditGame ? () => onEditGame(matchGame) : undefined}
                         showGroupTag={false}
                         showLeagueGroupSideAccent={!crossGroupBracket}
-                        seasonPlayoffBadge={crossGroupBracket}
+                        bracketRoundBadge={col.label}
                       />
                     </div>
                   );

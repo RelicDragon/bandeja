@@ -197,7 +197,6 @@ export type CreateBracketPlayoffRequest =
   | CreateBracketPlayoffCrossGroupRequest;
 
 export interface BracketRoundConfigDto {
-  seedingLocked?: boolean;
   scope?: 'CROSS_GROUP';
   equalTopK?: number;
   teamsPerGroup?: Record<string, number>;
@@ -210,7 +209,6 @@ export interface NotifyBracketSummaryRequest {
 
 export interface PatchBracketSlotsRequest {
   roundId?: string;
-  seedingLocked?: boolean;
   slots?: Array<{
     slotId: string;
     leagueParticipantId?: string | null;

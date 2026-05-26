@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { toggleCustomByeSeedRank } from '@/utils/customByeSeedRanks.util';
 import { formatSeedOptionLabel } from '@/utils/playoffWizardSeedLabels.util';
 import {
@@ -35,18 +36,20 @@ export function BracketCustomByePicker({
 
   return (
     <div className="space-y-2 rounded-lg border border-gray-200 bg-gray-50/80 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/40">
-      <label className="flex items-center justify-center gap-2 text-sm text-gray-800 dark:text-gray-200">
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => {
-            onEnabledChange(e.target.checked);
-            if (!e.target.checked) onSelectedRanksChange([]);
-          }}
-          className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-        />
-        <span>{t('gameDetails.bracketCustomByesLabel')}</span>
-      </label>
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+          {t('gameDetails.bracketCustomByesLabel')}
+        </span>
+        <div className="flex-shrink-0">
+          <ToggleSwitch
+            checked={enabled}
+            onChange={(on) => {
+              onEnabledChange(on);
+              if (!on) onSelectedRanksChange([]);
+            }}
+          />
+        </div>
+      </div>
       {enabled && (
         <>
           <p className="text-center text-xs text-gray-600 dark:text-gray-400">

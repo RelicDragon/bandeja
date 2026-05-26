@@ -1,26 +1,40 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
-import { Button, GameFormatCard, GameFormatWizard } from '@/components';
+import { Button, GameFormatCard } from '@/components';
 import { useGameFormat } from '@/hooks/useGameFormat';
-import type { GameSetupParams } from '@/types';
+import type { Game, GameSetupParams } from '@/types';
+import { playoffFormatInitialFromSeason } from './playoffTemplates';
+import { PlayoffGameFormatWizard } from './PlayoffGameFormatWizard';
 
 interface BracketPlayoffGameSetupStepProps {
+  seasonGame?: Partial<Game> | null;
   onBack: () => void;
   onConfirm: (params: GameSetupParams) => void;
   submitting: boolean;
 }
 
 export const BracketPlayoffGameSetupStep = ({
+  seasonGame,
   onBack,
   onConfirm,
   submitting,
 }: BracketPlayoffGameSetupStepProps) => {
   const { t } = useTranslation();
-  const gameFormat = useGameFormat(
-    { gameType: 'CLASSIC', matchGenerationType: 'HANDMADE', scoringMode: 'CLASSIC' },
-    { skipGenerationParticipantDefaults: true }
+  const formatInitial = useMemo(
+    () =>
+      seasonGame
+        ? playoffFormatInitialFromSeason(seasonGame)
+        : playoffFormatInitialFromSeason(null, {
+            gameType: 'CLASSIC',
+            matchGenerationType: 'HANDMADE',
+            scoringMode: 'CLASSIC',
+          }),
+    [seasonGame]
   );
+  const gameFormat = useGameFormat(formatInitial, {
+    skipGenerationParticipantDefaults: true,
+  });
   const [wizardOpen, setWizardOpen] = useState(false);
   const [formatReviewed, setFormatReviewed] = useState(false);
 
@@ -54,16 +68,15 @@ export const BracketPlayoffGameSetupStep = ({
       <GameFormatCard
         entityType="LEAGUE_SEASON"
         format={gameFormat}
+        sport={seasonGame?.sport}
         onOpenWizard={handleOpenWizard}
       />
-      {wizardOpen && (
-        <GameFormatWizard
-          isOpen={wizardOpen}
-          format={gameFormat}
-          hideGenerationStep
-          onClose={() => setWizardOpen(false)}
-        />
-      )}
+      <PlayoffGameFormatWizard
+        isOpen={wizardOpen}
+        format={gameFormat}
+        sport={seasonGame?.sport}
+        onClose={() => setWizardOpen(false)}
+      />
       <div className="flex gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
         <Button variant="outline" onClick={onBack} className="flex-1" disabled={submitting}>
           {t('common.back', { defaultValue: 'Back' })}
