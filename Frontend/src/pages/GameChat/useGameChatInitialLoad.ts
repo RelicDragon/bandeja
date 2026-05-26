@@ -10,10 +10,9 @@ import { blockedUsersApi } from '@/api/blockedUsers';
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
 import { scheduleRetryStuckChatOutbox } from '@/services/chat/chatOutboxRetry';
 import { reconcileOutboxForContext } from '@/services/chat/chatOutboxReconcile';
-import { isParticipantPlaying } from '@/utils/participantStatus';
-import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { normalizeChatType } from '@/utils/chatType';
 import { enterContextAndMarkRead } from '@/services/chat/unreadCoordinator';
+import { buildGameChatMarkReadParams } from '@/services/chat/gameChatMarkReadParams';
 import { scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
 import type { BootstrapOutboxContext } from './useGameChatMessages';
 import type { ChatType } from '@/types';
@@ -25,6 +24,8 @@ export interface UseGameChatInitialLoadParams {
   contextType: ChatContextType;
   initialChatType: ChatType | undefined;
   currentChatType: ChatType;
+  game: Game | null;
+  groupChannelId?: string;
   loadContext: (options?: import('./useGameChatContext').LoadContextOptions) => Promise<unknown>;
   bootstrapThread: (gameChatType?: ChatType, outbox?: BootstrapOutboxContext) => Promise<boolean>;
   userChat: UserChatType | null;
@@ -52,6 +53,8 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     contextType,
     initialChatType,
     currentChatType,
+    game,
+    groupChannelId,
     loadContext,
     bootstrapThread,
     userChat,
@@ -102,6 +105,20 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
       try {
         const loadedContext = await loadContext();
         if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
+
+        const loadedGame =
+          contextType === 'GAME' ? ((loadedContext as Game | null) ?? game) : null;
+        const markReadParams = buildGameChatMarkReadParams({
+          id,
+          contextType,
+          game: loadedGame,
+          userId: user?.id,
+          gameChatType: currentChatTypeRef.current,
+          groupChannelId,
+        });
+        if (markReadParams) {
+          void enterContextAndMarkRead(markReadParams);
+        }
 
         if (contextType === 'USER' && user?.id) {
           const uc = (loadedContext || userChat) as UserChatType | null;
@@ -202,42 +219,6 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
         if (!signal.aborted) hasLoadedRef.current = true;
 
         if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
-
-        if (contextType === 'GAME' && loadedContext) {
-          const loadedGame = loadedContext as Game;
-          const loadedUserParticipant = loadedGame.participants.find((p) => p.userId === user.id);
-          const loadedIsParticipant = !!loadedUserParticipant;
-          const loadedHasPendingInvite =
-            loadedGame.participants?.some((p) => p.userId === user.id && isPendingGameInvite(p)) ?? false;
-          const loadedIsGuest =
-            loadedGame.participants.some(
-              (p) => p.userId === user.id && (p.status === 'GUEST' || !isParticipantPlaying(p))
-            ) ?? false;
-          if (loadedIsParticipant || loadedHasPendingInvite || loadedIsGuest || loadedGame.isPublic) {
-            const loadedParentParticipant = loadedGame.parent?.participants?.find((p) => p.userId === user.id);
-            void enterContextAndMarkRead({
-              contextType: 'GAME',
-              contextId: id,
-              rawContextType: contextType,
-              game: { id, status: loadedGame.status },
-              participant: loadedUserParticipant ?? null,
-              parentParticipant: loadedParentParticipant ?? null,
-              gameChatType: effectiveChatType,
-            });
-          }
-        } else if (contextType === 'USER' && id) {
-          void enterContextAndMarkRead({
-            contextType: 'USER',
-            contextId: id,
-            rawContextType: contextType,
-          });
-        } else if (contextType === 'GROUP' && id) {
-          void enterContextAndMarkRead({
-            contextType: 'GROUP',
-            contextId: id,
-            rawContextType: contextType,
-          });
-        }
       } finally {
         if (!signal.aborted) isLoadingRef.current = false;
       }
@@ -254,6 +235,8 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     user,
     contextType,
     initialChatType,
+    game,
+    groupChannelId,
     loadContext,
     bootstrapThread,
     userChat,

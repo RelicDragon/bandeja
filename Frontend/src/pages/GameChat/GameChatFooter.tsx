@@ -42,6 +42,7 @@ export type GameChatFooterVariant =
       autoTranslate?: TranslationModalAutoTranslateProps | null;
       chatNearBottom: boolean;
       onScrollToBottomSmooth: () => void;
+      onMessageSent: () => void;
     }
   | {
       type: 'join';
@@ -119,6 +120,7 @@ export const GameChatFooter: React.FC<GameChatFooterProps> = ({
             autoTranslate={variant.autoTranslate}
             chatNearBottom={variant.chatNearBottom}
             onScrollToBottomSmooth={variant.onScrollToBottomSmooth}
+            onMessageSent={variant.onMessageSent}
           />
         </div>
       )}

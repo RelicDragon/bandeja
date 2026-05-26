@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { chatApi } from '@/api/chat';
 import { usePlayersStore } from '@/store/playersStore';
+import { markReadAfterSend } from '@/services/chat/markReadAfterSend';
 function isOfflineError(err: unknown): boolean {
   const e = err as { message?: string; code?: string };
   return e?.message === 'Network Error' || e?.code === 'ERR_NETWORK';
@@ -38,6 +39,7 @@ export function useStoryDmSend(recipientUserId: string) {
           content: trimmed,
           chatType: 'PUBLIC',
         });
+        markReadAfterSend('USER', chatId);
         return true;
       } catch (err) {
         if (isOfflineError(err)) toast.error(t('stories.viewer.offline'));

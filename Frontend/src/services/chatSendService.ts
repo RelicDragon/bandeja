@@ -36,7 +36,6 @@ import { recordChatSendMetric } from '@/services/chat/chatSendMetrics';
 import { createMessageWithSocketAck } from '@/services/chat/chatSendMessageCreate';
 import { dispatchChatOutboxSuccess } from '@/services/chat/chatOutboxEvents';
 import { useVideoUploadProgressStore } from '@/store/videoUploadProgressStore';
-
 function completeChatSendSuccess(
   tempId: string,
   contextType: ChatContextType,

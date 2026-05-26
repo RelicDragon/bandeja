@@ -458,6 +458,74 @@ export class MessageService {
     });
   }
 
+  /** Sender composing in a thread implies read — keeps DB in sync when client mark-read is delayed. */
+  static async markSenderContextReadAfterSend(
+    chatContextType: ChatContextType,
+    contextId: string,
+    senderId: string,
+    groupChannelId?: string | null
+  ): Promise<void> {
+    const { UnreadSnapshotService } = await import('./unreadSnapshot.service');
+    let markContextType: 'GAME' | 'USER' | 'GROUP';
+    let markContextId = contextId;
+    let socketContextType: ChatContextType = chatContextType;
+
+    if (chatContextType === 'GAME') {
+      markContextType = 'GAME';
+    } else if (chatContextType === 'USER') {
+      markContextType = 'USER';
+    } else if (chatContextType === 'GROUP') {
+      markContextType = 'GROUP';
+    } else if (chatContextType === 'BUG') {
+      const channelId =
+        groupChannelId ??
+        (
+          await prisma.bug.findUnique({
+            where: { id: contextId },
+            select: { groupChannel: { select: { id: true } } },
+          })
+        )?.groupChannel?.id;
+      if (!channelId) return;
+      markContextType = 'GROUP';
+      markContextId = channelId;
+      socketContextType = 'GROUP';
+    } else {
+      return;
+    }
+
+    await UnreadSnapshotService.markContextRead(senderId, {
+      contextType: markContextType,
+      contextId: markContextId,
+    });
+
+    const socketService = (global as { socketService?: { emitUnreadCountUpdate: (...args: unknown[]) => Promise<void> } })
+      .socketService;
+    if (socketService) {
+      await socketService.emitUnreadCountUpdate(
+        socketContextType,
+        markContextId,
+        senderId,
+        0
+      );
+    }
+  }
+
+  private static scheduleSenderContextReadAfterSend(
+    chatContextType: ChatContextType,
+    contextId: string,
+    senderId: string,
+    groupChannelId?: string | null
+  ): void {
+    void MessageService.markSenderContextReadAfterSend(
+      chatContextType,
+      contextId,
+      senderId,
+      groupChannelId
+    ).catch((err) => {
+      console.error('[MessageService] markSenderContextReadAfterSend failed', err);
+    });
+  }
+
   static async createMessage(data: {
     chatContextType: ChatContextType;
     contextId: string;
@@ -653,6 +721,7 @@ export class MessageService {
           (existing as { serverSyncSeq?: number | null }).serverSyncSeq ?? headSeq;
         (existing as { syncSeq?: number; _deduped?: boolean }).syncSeq = orderingSeq;
         (existing as { _deduped?: boolean })._deduped = true;
+        MessageService.scheduleSenderContextReadAfterSend(chatContextType, contextId, senderId);
         return existing as any;
       }
     }
@@ -752,6 +821,7 @@ export class MessageService {
           const orderingSeq = recovered.serverSyncSeq ?? headSeq;
           (recovered as { syncSeq?: number; _deduped?: boolean }).syncSeq = orderingSeq;
           (recovered as { _deduped?: boolean })._deduped = true;
+          MessageService.scheduleSenderContextReadAfterSend(chatContextType, contextId, senderId);
           return recovered as any;
         }
       }
@@ -836,6 +906,13 @@ export class MessageService {
     }
 
     await updateLastMessagePreview(chatContextType, contextId);
+
+    MessageService.scheduleSenderContextReadAfterSend(
+      chatContextType,
+      contextId,
+      senderId,
+      groupChannel?.id
+    );
 
     if (!(message as { _deduped?: boolean })._deduped) {
       const { ChatAutoTranslateEnqueueService } = await import('./chatAutoTranslateEnqueue.service');

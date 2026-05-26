@@ -24,6 +24,22 @@ export type CoordinatorEnterParams = EnterContextParams & {
 };
 
 const pendingRestoreByKey = new Map<ContextKey, number>();
+const activityNetworkTimers = new Map<ContextKey, ReturnType<typeof setTimeout>>();
+const ACTIVITY_MARK_DEBOUNCE_MS = 280;
+
+/** Skip enter optimistic UI when already in context with no local unread (still schedule server sync). */
+function shouldSkipEnterOptimistic(key: ContextKey, state: ReturnType<typeof useUnreadStore.getState>): boolean {
+  if (state.lastEnteredContextKey !== key || !isViewingContextKey(key)) return false;
+  return (state.byContext[key] ?? 0) === 0;
+}
+
+function ensureMarkInFlight(key: ContextKey): void {
+  const state = useUnreadStore.getState();
+  if (state.markInFlight.has(key)) return;
+  const markInFlight = new Set(state.markInFlight);
+  markInFlight.add(key);
+  useUnreadStore.setState({ markInFlight });
+}
 
 function resolveSnapshotContext(
   params: CoordinatorEnterParams
@@ -228,19 +244,54 @@ async function flushEnterContextMarkReadNetwork(
   }
 }
 
+function scheduleMarkReadNetwork(
+  params: CoordinatorEnterParams,
+  resolved: NonNullable<ReturnType<typeof resolveSnapshotContext>>,
+  key: ContextKey
+): void {
+  const existing = activityNetworkTimers.get(key);
+  if (existing) clearTimeout(existing);
+  activityNetworkTimers.set(
+    key,
+    setTimeout(() => {
+      activityNetworkTimers.delete(key);
+      scheduleChatOpenIdle(() => {
+        void flushEnterContextMarkReadNetwork(params, resolved, key);
+      });
+    }, ACTIVITY_MARK_DEBOUNCE_MS)
+  );
+}
+
+/** Mark-read on send / activity: debounced server sync; optimistic clear when badge > 0. */
+export function markContextReadOnUserActivity(params: CoordinatorEnterParams): void {
+  const resolved = resolveSnapshotContext(params);
+  if (!resolved) return;
+  const { key } = resolved;
+  const state = useUnreadStore.getState();
+  if ((state.byContext[key] ?? 0) > 0) {
+    optimisticClear(key);
+  } else {
+    ensureMarkInFlight(key);
+  }
+  scheduleMarkReadNetwork(params, resolved, key);
+}
+
 export async function enterContextAndMarkRead(params: CoordinatorEnterParams): Promise<void> {
   const resolved = resolveSnapshotContext(params);
   if (!resolved) return;
   const { key } = resolved;
 
   const state = useUnreadStore.getState();
-  if (state.markInFlight.has(key)) return;
-  if (state.lastEnteredContextKey === key && isViewingContextKey(key)) return;
+  if (shouldSkipEnterOptimistic(key, state)) {
+    scheduleMarkReadNetwork(params, resolved, key);
+    return;
+  }
 
   setViewingBeforeMark(params, resolved);
-  optimisticClear(key);
-
-  scheduleChatOpenIdle(() => {
-    void flushEnterContextMarkReadNetwork(params, resolved, key);
-  });
+  if ((state.byContext[key] ?? 0) > 0) {
+    optimisticClear(key);
+  } else {
+    ensureMarkInFlight(key);
+  }
+  scheduleMarkReadNetwork(params, resolved, key);
 }

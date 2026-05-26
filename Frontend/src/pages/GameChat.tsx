@@ -49,6 +49,8 @@ import { ChatAutoTranslateContext } from '@/contexts/ChatAutoTranslateContext';
 import { useGameChatAutoTranslate } from './GameChat/useGameChatAutoTranslate';
 import { useGameChatTranslationLive } from './GameChat/useGameChatTranslationLive';
 import { useGameChatChannelActivity } from './GameChat/useGameChatChannelActivity';
+import { markContextReadOnUserActivity } from '@/services/chat/unreadCoordinator';
+import { buildGameChatMarkReadParams } from '@/services/chat/gameChatMarkReadParams';
 
 export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: propChatId, chatType: propChatType }) => {
   const { t } = useTranslation();
@@ -467,12 +469,26 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
 
   useBackButtonHandler(panels.handleBackButton);
 
+  const handleMessageSent = useCallback(() => {
+    const params = buildGameChatMarkReadParams({
+      id,
+      contextType,
+      game,
+      userId: user?.id,
+      gameChatType: effectiveChatType,
+      groupChannelId: groupChannel?.id,
+    });
+    if (params) markContextReadOnUserActivity(params);
+  }, [id, contextType, game, user?.id, effectiveChatType, groupChannel?.id]);
+
   useGameChatInitialLoad({
     id,
     user,
     contextType,
     initialChatType,
     currentChatType,
+    game,
+    groupChannelId: groupChannel?.id,
     loadContext,
     bootstrapThread,
     userChat,
@@ -582,6 +598,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     handleJoinAsGuest,
     chatNearBottom,
     scrollToBottomSmooth,
+    onMessageSent: handleMessageSent,
   });
 
   const isChatsSplitGameChat = useMemo(

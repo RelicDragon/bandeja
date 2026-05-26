@@ -54,6 +54,7 @@ export interface UseGameChatFooterVariantParams {
   handleJoinAsGuest: () => void;
   chatNearBottom: boolean;
   scrollToBottomSmooth: () => void;
+  onMessageSent: () => void;
 }
 
 export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams): GameChatFooterVariant | null {
@@ -95,6 +96,7 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
     handleJoinAsGuest,
     chatNearBottom,
     scrollToBottomSmooth,
+    onMessageSent,
   } = params;
 
   return useMemo((): GameChatFooterVariant | null => {
@@ -148,6 +150,7 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
         autoTranslate: autoTranslateForModal,
         chatNearBottom,
         onScrollToBottomSmooth: scrollToBottomSmooth,
+        onMessageSent,
       };
     }
     const showJoin =
@@ -205,5 +208,6 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
     autoTranslateForModal,
     chatNearBottom,
     scrollToBottomSmooth,
+    onMessageSent,
   ]);
 }
