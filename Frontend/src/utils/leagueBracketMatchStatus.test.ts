@@ -94,4 +94,27 @@ describe('leagueBracketMatchStatus.util (UX-D2)', () => {
     });
     expect(bracketMatchStatusFromGame(game)).toBe('FINAL');
   });
+
+  it('uses resultsRounds when game.rounds are absent (league schedule list)', () => {
+    const game = leagueGame({ rounds: undefined });
+    expect(
+      bracketMatchStatusFromGame(game, {
+        resultsRounds: [
+          {
+            roundNumber: 1,
+            matches: [
+              {
+                matchNumber: 1,
+                teams: [],
+                sets: [
+                  { setNumber: 1, teamAScore: 4, teamBScore: 6 },
+                  { setNumber: 2, teamAScore: 4, teamBScore: 6 },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+    ).toBe('FINAL');
+  });
 });

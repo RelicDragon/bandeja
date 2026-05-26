@@ -83,7 +83,7 @@ export const LeagueGameCard = ({
 
   const isFinal = game.resultsStatus === 'FINAL';
   const bracketStatus: BracketMatchStatus | null = isFinal
-    ? bracketMatchStatusFromGame(game)
+    ? bracketMatchStatusFromGame(game, { resultsRounds: allRounds })
     : null;
   const isWalkoverFinal = bracketStatus === 'WALKOVER';
   const isForfeitFinal = bracketStatus === 'FORFEIT';

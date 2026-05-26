@@ -1,4 +1,5 @@
 import type { BracketSlotGameSummary } from '@/api/leagues';
+import type { RoundData } from '@/api/results';
 import type { Game } from '@/types';
 import type { Round } from '@/types/gameResults';
 import { matchSetsHaveAnyNonZeroScore } from '@/utils/scoring/matchWinner';
@@ -48,6 +49,15 @@ export function extractNonRallyOutcome(
   return null;
 }
 
+function resultsRoundsHavePlayedSetScores(resultsRounds?: RoundData[] | null): boolean {
+  if (!resultsRounds?.length) return false;
+  return resultsRounds.some((round) =>
+    round.matches?.some((match) =>
+      match.sets?.some((set) => set.teamAScore > 0 || set.teamBScore > 0)
+    )
+  );
+}
+
 function gameHasPlayedSetScores(game: Game, rounds?: Round[] | null): boolean {
   const gameRounds = rounds ?? game.rounds;
   if (!gameRounds?.length) return false;
@@ -56,22 +66,30 @@ function gameHasPlayedSetScores(game: Game, rounds?: Round[] | null): boolean {
   );
 }
 
-function resolveFinalBracketStatus(game: Game, rounds?: Round[] | null): BracketMatchStatus {
-  const nonRally = extractNonRallyOutcome(game, rounds);
+function resolveFinalBracketStatus(
+  game: Game,
+  opts?: { rounds?: Round[] | null; resultsRounds?: RoundData[] | null }
+): BracketMatchStatus {
+  const nonRally = extractNonRallyOutcome(game, opts?.rounds);
   if (nonRally === 'WALKOVER') return 'WALKOVER';
   if (nonRally === 'DEFAULT' || nonRally === 'RETIRED') return 'FORFEIT';
-  if (!gameHasPlayedSetScores(game, rounds)) return 'WALKOVER';
+  if (
+    !gameHasPlayedSetScores(game, opts?.rounds) &&
+    !resultsRoundsHavePlayedSetScores(opts?.resultsRounds)
+  ) {
+    return 'WALKOVER';
+  }
   return 'FINAL';
 }
 
 export function bracketMatchStatusFromGame(
   game: GameLike | null | undefined,
-  opts?: { rounds?: Round[] | null }
+  opts?: { rounds?: Round[] | null; resultsRounds?: RoundData[] | null }
 ): BracketMatchStatus {
   if (!game) return 'TBD';
   if (game.resultsStatus === 'FINAL') {
     if ('fixedTeams' in game || 'rounds' in game || 'metadata' in game) {
-      return resolveFinalBracketStatus(game as Game, opts?.rounds);
+      return resolveFinalBracketStatus(game as Game, opts);
     }
     return 'FINAL';
   }
