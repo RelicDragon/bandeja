@@ -73,7 +73,13 @@ function SeedChip({
         <span className="font-bold text-primary-600 dark:text-primary-400 shrink-0">#{seed}</span>
       ) : null}
       {standing?.leagueTeam?.players?.[0]?.user && !ghost && (
-        <PlayerAvatar player={standing.leagueTeam.players[0].user} extrasmall showName={false} fullHideName />
+        <PlayerAvatar
+          player={standing.leagueTeam.players[0].user}
+          extrasmall
+          showName={false}
+          fullHideName
+          asDiv={interactive}
+        />
       )}
       <span className="min-w-0 flex-1">
         <span className={`block truncate ${displayLabel ? 'font-bold' : ''}`}>{primary}</span>
