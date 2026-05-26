@@ -81,23 +81,34 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     if (!game.id || game.status === 'ANNOUNCED') return;
     if (!lastGamePhotoDeleted || lastGamePhotoDeleted.gameId !== game.id) return;
     setMainPhotoId(lastGamePhotoDeleted.mainPhotoId);
-    if (onGameUpdate) {
+    if (
+      onGameUpdate &&
+      (game.mainPhotoId !== lastGamePhotoDeleted.mainPhotoId || game.photosCount !== lastGamePhotoDeleted.photosCount)
+    ) {
       onGameUpdate({
         ...game,
         mainPhotoId: lastGamePhotoDeleted.mainPhotoId,
         photosCount: lastGamePhotoDeleted.photosCount,
       });
     }
-  }, [game, lastGamePhotoDeleted, onGameUpdate]);
+  }, [
+    game,
+    game.id,
+    game.mainPhotoId,
+    game.photosCount,
+    game.status,
+    lastGamePhotoDeleted,
+    onGameUpdate,
+  ]);
 
   useEffect(() => {
     if (!game.id || game.status === 'ANNOUNCED') return;
     if (!lastGamePhotoMainChanged || lastGamePhotoMainChanged.gameId !== game.id) return;
     setMainPhotoId(lastGamePhotoMainChanged.mainPhotoId);
-    if (onGameUpdate) {
+    if (onGameUpdate && game.mainPhotoId !== lastGamePhotoMainChanged.mainPhotoId) {
       onGameUpdate({ ...game, mainPhotoId: lastGamePhotoMainChanged.mainPhotoId });
     }
-  }, [game, lastGamePhotoMainChanged, onGameUpdate]);
+  }, [game, game.id, game.mainPhotoId, game.status, lastGamePhotoMainChanged, onGameUpdate]);
 
   const handlePhotoCapture = async (e: React.MouseEvent) => {
     e.preventDefault();
