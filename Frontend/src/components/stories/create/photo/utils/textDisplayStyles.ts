@@ -26,5 +26,37 @@ export function textPresetStyle(fontSizePx: number): CSSProperties {
     fontSize: fontSizePx,
     lineHeight: 1.25,
     fontFamily: 'system-ui, -apple-system, sans-serif',
+    caretColor: '#ffffff',
   };
+}
+
+/** WYSIWYG classes in contentEditable (same presets as canvas DOM preview). */
+export function textEditPresetClassName(id: TextStylePresetId, align: TextAlignment): string {
+  return `${textPresetClassName(id, align)} caret-white`;
+}
+
+/** Inline overrides — Tailwind stroke/gradient often fail on contentEditable. */
+export function textEditPresetStyle(id: TextStylePresetId, fontSizePx: number): CSSProperties {
+  const stroke = Math.max(1.5, fontSizePx * 0.04);
+
+  switch (id) {
+    case 'gradient':
+      return {
+        backgroundImage: 'linear-gradient(90deg, #ec4899, #a855f7, #38bdf8)',
+        WebkitBackgroundClip: 'text',
+        backgroundClip: 'text',
+        color: 'transparent',
+        WebkitTextFillColor: 'transparent',
+        caretColor: '#ffffff',
+      };
+    case 'outline':
+      return {
+        color: '#ffffff',
+        WebkitTextStroke: `${stroke}px rgba(0,0,0,0.85)`,
+        WebkitTextFillColor: '#ffffff',
+        paintOrder: 'stroke fill',
+      };
+    default:
+      return {};
+  }
 }

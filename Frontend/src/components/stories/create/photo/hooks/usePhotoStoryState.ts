@@ -264,6 +264,7 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
 
   const addSticker = useCallback(
     (emoji: string) => {
+      if (!emoji.trim()) return;
       const layer = createStickerLayer(emoji);
       withHistory((prev) =>
         prev.map((doc, i) => (i === activeIndex ? { ...doc, nodes: [...doc.nodes, layer] } : doc))

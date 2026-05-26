@@ -1,16 +1,5 @@
-import { PHOTO_TEXT_FONT_PX, PHOTO_TEXT_MAX_WIDTH_PX } from '../constants';
 import type { TextNode } from '../types';
-import { drawTextNode, layoutCanvasText } from './canvasText';
-
-const BITMAP_PAD = 40;
-
-function bitmapPadding(node: TextNode, fontSize: number): number {
-  let pad = BITMAP_PAD;
-  if (node.style.id === 'blackBox') pad += fontSize * 0.5;
-  if (node.style.id === 'neon') pad += fontSize * 0.4;
-  if (node.style.id === 'classic') pad += fontSize * 0.2;
-  return pad;
-}
+import { drawTextNode, measureTextNodeLayout, textNodeLocalBounds } from './canvasText';
 
 export type TextNodeBitmap = {
   image: HTMLCanvasElement;
@@ -18,36 +7,12 @@ export type TextNodeBitmap = {
   height: number;
 };
 
-export function renderTextNodeBitmap(
-  text: string,
-  style: TextNode['style'],
-  scale: number
-): TextNodeBitmap {
-  const node: TextNode = {
-    id: 'preview',
-    type: 'text',
-    text,
-    style,
-    transform: { x: 0, y: 0, scale, rotation: 0 },
-  };
-  const fontSize = PHOTO_TEXT_FONT_PX;
-  const scale = Math.max(0.15, node.transform.scale);
-  const measureCanvas = document.createElement('canvas');
-  const mctx = measureCanvas.getContext('2d');
-  if (!mctx) {
-    const empty = document.createElement('canvas');
-    empty.width = 4;
-    empty.height = 4;
-    return { image: empty, width: 4, height: 4 };
-  }
-
-  mctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
-  const layout = layoutCanvasText(mctx, node.text.trim() ? node.text : ' ', fontSize, PHOTO_TEXT_MAX_WIDTH_PX);
-  const pad = bitmapPadding(node, fontSize);
-  const contentW = layout.width + pad * 2;
-  const contentH = layout.height + pad * 2;
-  const width = Math.max(4, Math.ceil(contentW * scale));
-  const height = Math.max(4, Math.ceil(contentH * scale));
+/** Base-resolution bitmap (scale 1). Apply `node.transform.scale` on the Konva group. */
+export function renderTextNodeBitmap(text: string, style: TextNode['style']): TextNodeBitmap {
+  const layout = measureTextNodeLayout(text);
+  const local = textNodeLocalBounds(layout, style.id);
+  const width = Math.max(4, Math.ceil(local.width));
+  const height = Math.max(4, Math.ceil(local.height));
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -56,12 +21,14 @@ export function renderTextNodeBitmap(
   if (!ctx) return { image: canvas, width, height };
 
   drawTextNode(ctx, {
-    ...node,
-    text: node.text.trim() ? node.text : ' ',
+    id: 'preview',
+    type: 'text',
+    text: text.trim() ? text : ' ',
+    style,
     transform: {
-      x: width / (2 * scale),
-      y: height / (2 * scale),
-      scale,
+      x: local.width / 2,
+      y: local.height / 2,
+      scale: 1,
       rotation: 0,
     },
   });

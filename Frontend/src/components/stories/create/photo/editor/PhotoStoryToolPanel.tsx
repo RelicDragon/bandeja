@@ -30,10 +30,7 @@ export function PhotoStoryToolPanel({
 
   if (!tool || tool === 'crop') return null;
 
-  const title =
-    tool === 'sticker'
-      ? t('stories.editor.toolSticker')
-      : t('stories.editor.toolAdjust');
+  const title = t('stories.editor.toolAdjust');
 
   if (tool === 'text') {
     if (!selectedText) return null;
@@ -46,8 +43,16 @@ export function PhotoStoryToolPanel({
     );
   }
 
+  if (tool === 'sticker') {
+    return (
+      <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 flex max-h-[52dvh] w-full min-w-0 flex-col overflow-hidden rounded-t-3xl bg-zinc-900/98 shadow-[0_-12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <PhotoStoryStickerSheet embedded onPick={onStickerPick} />
+      </div>
+    );
+  }
+
   return (
-    <div className="absolute inset-x-0 bottom-0 z-40 max-h-[52dvh] rounded-t-3xl bg-zinc-900/98 shadow-[0_-12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+    <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 max-h-[52dvh] rounded-t-3xl bg-zinc-900/98 shadow-[0_-12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <span className="text-sm font-semibold">{title}</span>
         <button
@@ -60,10 +65,7 @@ export function PhotoStoryToolPanel({
         </button>
       </div>
       <div className="overflow-y-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        {tool === 'sticker' ? <PhotoStoryStickerSheet embedded onPick={onStickerPick} /> : null}
-        {tool === 'adjust' ? (
-          <PhotoStoryAdjustSheet adjust={adjust} onCommit={onAdjustCommit} disabled={disabled} embedded />
-        ) : null}
+        <PhotoStoryAdjustSheet adjust={adjust} onCommit={onAdjustCommit} disabled={disabled} embedded />
       </div>
     </div>
   );

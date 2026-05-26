@@ -2,7 +2,11 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useTranslation } from 'react-i18next';
 import type { TextNode } from '../types';
 import { computeTextEditGeometry, textEditTransform } from '../utils/textEditGeometry';
-import { textPresetClassName, textPresetStyle } from '../utils/textDisplayStyles';
+import {
+  textEditPresetClassName,
+  textEditPresetStyle,
+  textPresetStyle,
+} from '../utils/textDisplayStyles';
 import { PhotoStoryTextSheet } from './PhotoStoryTextSheet';
 
 const ANIM_MS = 340;
@@ -32,24 +36,42 @@ export function PhotoStoryTextEditOverlay({
 }: PhotoStoryTextEditOverlayProps) {
   const { t } = useTranslation();
   const editorRef = useRef<HTMLDivElement>(null);
-  const closingRef = useRef(false);
+  const sessionFontRef = useRef<{ nodeId: string; fontSizePx: number } | null>(null);
+  const closingRef = useRef<'commit' | 'cancel' | false>(false);
   const [atCenter, setAtCenter] = useState(false);
   const [backdropOn, setBackdropOn] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const geo = useMemo(
     () => computeTextEditGeometry(node, stageRect, stageScale),
     [node, stageRect, stageScale]
   );
 
-  const styleNode = useMemo(
-    () => ({ ...node, text: draft }),
-    [node, draft]
+  if (!sessionFontRef.current || sessionFontRef.current.nodeId !== node.id) {
+    sessionFontRef.current = { nodeId: node.id, fontSizePx: geo.fontSizePx };
+  }
+  const editFontSize = sessionFontRef.current.fontSizePx;
+
+  const styleNode = useMemo(() => ({ ...node, text: draft }), [node, draft]);
+
+  const editClassName = textEditPresetClassName(styleNode.style.id, styleNode.style.align);
+  const editStyle = useMemo(
+    () => ({
+      ...textPresetStyle(editFontSize),
+      ...textEditPresetStyle(styleNode.style.id, editFontSize),
+    }),
+    [editFontSize, styleNode.style.id]
   );
+
+  const flyTransform = atCenter
+    ? textEditTransform(geo.centerX, geo.centerY, 0, 1)
+    : textEditTransform(geo.originX, geo.originY, geo.rotation, 1);
 
   useLayoutEffect(() => {
     closingRef.current = false;
     setAtCenter(false);
     setBackdropOn(false);
+    setEditing(false);
     const el = editorRef.current;
     if (el) el.textContent = initialDraft;
     const id = requestAnimationFrame(() => {
@@ -59,8 +81,7 @@ export function PhotoStoryTextEditOverlay({
     return () => cancelAnimationFrame(id);
   }, [initialDraft, node.id]);
 
-  useEffect(() => {
-    if (!atCenter) return;
+  const focusEditor = useCallback(() => {
     const el = editorRef.current;
     if (!el) return;
     el.focus();
@@ -70,17 +91,40 @@ export function PhotoStoryTextEditOverlay({
     const sel = window.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(range);
-  }, [atCenter, node.id]);
+  }, []);
+
+  const handleFlyTransitionEnd = useCallback(
+    (e: React.TransitionEvent<HTMLDivElement>) => {
+      if (e.propertyName !== 'transform' || closingRef.current) return;
+      if (atCenter && !editing) {
+        setEditing(true);
+        focusEditor();
+      }
+    },
+    [atCenter, editing, focusEditor]
+  );
+
+  useEffect(() => {
+    if (!atCenter || editing || closingRef.current) return;
+    const id = window.setTimeout(() => {
+      if (closingRef.current) return;
+      setEditing(true);
+      focusEditor();
+    }, ANIM_MS + 40);
+    return () => clearTimeout(id);
+  }, [atCenter, editing, focusEditor]);
 
   const finish = useCallback(
     (commit: boolean) => {
       if (closingRef.current) return;
-      closingRef.current = true;
+      closingRef.current = commit ? 'commit' : 'cancel';
+      setEditing(false);
       setAtCenter(false);
       setBackdropOn(false);
       window.setTimeout(() => {
-        if (commit) onCommit();
-        else onCancel();
+        if (closingRef.current === 'commit') onCommit();
+        else if (closingRef.current === 'cancel') onCancel();
+        closingRef.current = false;
       }, ANIM_MS);
     },
     [onCancel, onCommit]
@@ -100,11 +144,12 @@ export function PhotoStoryTextEditOverlay({
     return () => window.removeEventListener('keydown', onKey);
   }, [finish]);
 
-  const transform = atCenter
-    ? textEditTransform(geo.centerX, geo.centerY, 0, 1)
-    : textEditTransform(geo.originX, geo.originY, geo.rotation, 1);
-
-  const editFontSize = atCenter ? Math.max(geo.fontSizePx, 22) : geo.fontSizePx;
+  const blockInput = useCallback(
+    (e: React.SyntheticEvent) => {
+      if (!editing) e.preventDefault();
+    },
+    [editing]
+  );
 
   return (
     <div className="fixed inset-0 z-[60] pointer-events-auto" aria-modal role="dialog">
@@ -118,23 +163,35 @@ export function PhotoStoryTextEditOverlay({
       />
 
       <div
-        className="absolute left-0 top-0 will-change-transform"
+        className={`absolute left-0 top-0 z-[61] will-change-transform ${editing ? 'pointer-events-auto' : 'pointer-events-none'}`}
         style={{
-          transform,
+          transform: flyTransform,
           transition: `transform ${ANIM_MS}ms cubic-bezier(0.32, 0.72, 0, 1)`,
         }}
-        onPointerDown={(e) => e.stopPropagation()}
+        onTransitionEnd={handleFlyTransitionEnd}
       >
         <div
           ref={editorRef}
           role="textbox"
           contentEditable
           suppressContentEditableWarning
-          spellCheck
-          className={`min-w-[3rem] max-w-[min(88vw,360px)] empty:before:content-[attr(data-placeholder)] empty:before:text-white/40 ${textPresetClassName(styleNode.style.id, styleNode.style.align)}`}
-          style={textPresetStyle(editFontSize)}
-          onInput={(e) => onDraftChange(e.currentTarget.textContent ?? '')}
-          onBlur={() => finish(true)}
+          spellCheck={editing}
+          tabIndex={-1}
+          className={`min-w-[3rem] max-w-[min(88vw,360px)] empty:before:content-[attr(data-placeholder)] empty:before:text-white/40 ${editClassName}`}
+          style={{
+            ...editStyle,
+            userSelect: editing ? 'text' : 'none',
+          }}
+          onBeforeInput={blockInput}
+          onKeyDown={blockInput}
+          onPaste={blockInput}
+          onInput={(e) => {
+            if (!editing) return;
+            onDraftChange(e.currentTarget.textContent ?? '');
+          }}
+          onBlur={() => {
+            if (editing) finish(true);
+          }}
           data-placeholder={t('stories.overlayPlaceholder')}
         />
       </div>

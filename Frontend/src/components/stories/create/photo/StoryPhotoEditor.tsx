@@ -135,15 +135,17 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
         setActiveTool(null);
       } else {
         setMediaSelected(false);
-        setSelectedNodeId(id);
         const node = activeDoc?.nodes.find((n) => n.id === id);
+        const wasSelected = selectedNodeId === id;
+        setSelectedNodeId(id);
         if (node && isTextNode(node)) {
           setActiveTool('text');
-          beginTextEdit(id, node.text);
+          if (wasSelected) beginTextEdit(id, node.text);
+          else exitTextEdit();
         }
       }
     },
-    [activeDoc?.nodes, beginTextEdit, exitTextEdit, handleDeselect, setSelectedNodeId]
+    [activeDoc?.nodes, beginTextEdit, exitTextEdit, handleDeselect, selectedNodeId, setSelectedNodeId]
   );
 
   const handleTextTool = useCallback(() => {
@@ -220,6 +222,7 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
     <FullScreenDialog open={open} onClose={handleClose} title="" closeOnInteractOutside={false}>
       <div className="relative h-full min-h-[100dvh] w-full overflow-hidden bg-black text-white">
         <PhotoStoryStage
+          className="pointer-events-auto"
           gesturesDisabled={activeTool === 'crop'}
           onMeasure={handleMeasure}
           overlay={
@@ -258,6 +261,7 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
           )}
         </PhotoStoryStage>
 
+        <div className="pointer-events-none absolute inset-0 z-[30]">
         <PhotoStoryTopChrome
           segmentCount={segmentCount}
           activeIndex={activeIndex}
@@ -328,6 +332,7 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
           onTextStyleChange={(p) => selectedText && updateTextStyle(selectedText.id, p)}
           onStickerPick={(emoji) => {
             addSticker(emoji);
+            setMediaSelected(false);
             closeTool();
           }}
           disabled={isPublishing}
@@ -342,10 +347,11 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
         />
 
         {isPublishing ? (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/75">
+          <div className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-black/75">
             <Loader2 className="animate-spin text-white" size={36} />
           </div>
         ) : null}
+        </div>
       </div>
     </FullScreenDialog>
   );

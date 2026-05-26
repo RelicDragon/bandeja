@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { Stage, Layer, Image as KonvaImage, Text, Transformer } from 'react-konva';
+import { Stage, Layer, Image as KonvaImage, Transformer } from 'react-konva';
 import type Konva from 'konva';
-import { PHOTO_STICKER_FONT_PX } from '../constants';
+import { PhotoStoryKonvaSticker } from './PhotoStoryKonvaSticker';
 import { PhotoStoryKonvaText } from './PhotoStoryKonvaText';
 import type { StoryDocument, Transform2D } from '../types';
 import { isStickerNode, isTextNode } from '../types';
@@ -11,6 +11,9 @@ import { STORY_CANVAS_HEIGHT, STORY_CANVAS_WIDTH } from '../types';
 import { buildPreviewFilteredImage } from '../utils/previewFilteredImage';
 
 export const PHOTO_MEDIA_NODE_KEY = '__media__';
+
+const TRANSFORMER_ANCHOR_PX = 12;
+const TRANSFORMER_ROTATE_OFFSET_PX = 28;
 
 type PhotoStoryKonvaCanvasProps = {
   doc: StoryDocument;
@@ -124,14 +127,15 @@ function PhotoStoryKonvaCanvasInner({
     if (mediaSelected && mediaRef.current) {
       tr.nodes([mediaRef.current]);
     } else {
-    const node =
-      selectedNodeId && selectedNodeId !== editingTextId
-        ? layerRefs.current.get(selectedNodeId)
-        : null;
-    tr.nodes(node ? [node] : []);
+      const node =
+        selectedNodeId && selectedNodeId !== editingTextId
+          ? layerRefs.current.get(selectedNodeId)
+          : null;
+      tr.nodes(node ? [node] : []);
     }
+    tr.forceUpdate();
     tr.getLayer()?.batchDraw();
-  }, [editingTextId, mediaSelected, selectedNodeId, mediaImg, overlays.length]);
+  }, [editingTextId, mediaSelected, selectedNodeId, mediaImg, overlays]);
 
   const handleTransformEnd = useCallback(
     (target: Konva.Node, isMedia: boolean, layerId?: string) => {
@@ -162,6 +166,20 @@ function PhotoStoryKonvaCanvasInner({
     [mediaW, mediaH, onGestureEnd, onLayerTransformChange, onMediaTransformChange]
   );
 
+  const handleTransformerEnd = useCallback(() => {
+    const target = transformerRef.current?.nodes()[0];
+    if (!target) return;
+    if (mediaSelected && target === mediaRef.current) {
+      handleTransformEnd(target, true);
+      return;
+    }
+    if (selectedNodeId) handleTransformEnd(target, false, selectedNodeId);
+  }, [handleTransformEnd, mediaSelected, selectedNodeId]);
+
+  const styleTransformerAnchor = useCallback((anchor: Konva.Rect) => {
+    anchor.hitStrokeWidth(24);
+  }, []);
+
   if (!media || !mediaImg || mediaW <= 0 || mediaH <= 0) return null;
 
   return (
@@ -179,9 +197,10 @@ function PhotoStoryKonvaCanvasInner({
         if (e.target === e.target.getStage()) onSelectNode(null, 'layer');
       }}
     >
-      <Layer listening={gesturesEnabled}>
+      <Layer listening={gesturesEnabled} name="photo-media-layer">
         <KonvaImage
           ref={mediaRef}
+          name="photo-media"
           image={mediaImg}
           x={STORY_CANVAS_WIDTH / 2 + mtx}
           y={STORY_CANVAS_HEIGHT / 2 + mty}
@@ -208,54 +227,16 @@ function PhotoStoryKonvaCanvasInner({
             });
             onGestureEnd();
           }}
-          onTransformStart={() => {
-            onGestureStart();
-            onSelectNode(PHOTO_MEDIA_NODE_KEY, 'media');
-          }}
-          onTransformEnd={(e) => handleTransformEnd(e.target, true)}
         />
       </Layer>
 
-      <Layer listening={gesturesEnabled}>
+      <Layer listening={gesturesEnabled} name="photo-overlay-layer">
         {overlays.map((node) => {
           if (isStickerNode(node)) {
             return (
-              <Text
-                key={node.id}
-                ref={(el) => {
-                  if (el) layerRefs.current.set(node.id, el);
-                  else layerRefs.current.delete(node.id);
-                }}
-                text={node.emoji}
-                fontSize={PHOTO_STICKER_FONT_PX}
-                x={node.transform.x}
-                y={node.transform.y}
-                offsetX={PHOTO_STICKER_FONT_PX / 2}
-                offsetY={PHOTO_STICKER_FONT_PX / 2}
-                scaleX={node.transform.scale}
-                scaleY={node.transform.scale}
-                rotation={node.transform.rotation}
-                draggable={gesturesEnabled}
-                perfectDrawEnabled={false}
-                onClick={() => onSelectNode(node.id, 'layer')}
-                onTap={() => onSelectNode(node.id, 'layer')}
-                onDragStart={onGestureStart}
-                onDragEnd={(e) => {
-                  onLayerTransformChange(node.id, { x: e.target.x(), y: e.target.y() });
-                  onGestureEnd();
-                }}
-                onTransformStart={onGestureStart}
-                onTransformEnd={(e) => handleTransformEnd(e.target, false, node.id)}
-              />
-            );
-          }
-          if (isTextNode(node)) {
-            const isEditing = node.id === editingTextId;
-            return (
-              <PhotoStoryKonvaText
+              <PhotoStoryKonvaSticker
                 key={node.id}
                 node={node}
-                isEditing={isEditing}
                 gesturesEnabled={gesturesEnabled}
                 setLayerRef={(id, el) => {
                   if (el) layerRefs.current.set(id, el);
@@ -265,7 +246,27 @@ function PhotoStoryKonvaCanvasInner({
                 onGestureStart={onGestureStart}
                 onGestureEnd={onGestureEnd}
                 onDragEnd={(x, y) => onLayerTransformChange(node.id, { x, y })}
-                onTransformEnd={(target) => handleTransformEnd(target, false, node.id)}
+              />
+            );
+          }
+          if (isTextNode(node)) {
+            const isEditing = node.id === editingTextId;
+            const isSelected = selectedNodeId === node.id && !isEditing;
+            return (
+              <PhotoStoryKonvaText
+                key={node.id}
+                node={node}
+                isEditing={isEditing}
+                isSelected={isSelected}
+                gesturesEnabled={gesturesEnabled}
+                setLayerRef={(id, el) => {
+                  if (el) layerRefs.current.set(id, el);
+                  else layerRefs.current.delete(id);
+                }}
+                onSelect={() => onSelectNode(node.id, 'layer')}
+                onGestureStart={onGestureStart}
+                onGestureEnd={onGestureEnd}
+                onDragEnd={(x, y) => onLayerTransformChange(node.id, { x, y })}
               />
             );
           }
@@ -275,13 +276,20 @@ function PhotoStoryKonvaCanvasInner({
         <Transformer
           ref={transformerRef}
           rotateEnabled
-          anchorSize={14}
+          anchorSize={TRANSFORMER_ANCHOR_PX}
+          anchorCornerRadius={3}
+          rotateAnchorOffset={TRANSFORMER_ROTATE_OFFSET_PX}
           borderStrokeWidth={2}
+          padding={2}
+          listening
+          anchorStyleFunc={styleTransformerAnchor}
           enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
           boundBoxFunc={(oldBox, newBox) => {
             if (newBox.width < 16 || newBox.height < 16) return oldBox;
             return newBox;
           }}
+          onTransformStart={onGestureStart}
+          onTransformEnd={handleTransformerEnd}
         />
       </Layer>
     </Stage>

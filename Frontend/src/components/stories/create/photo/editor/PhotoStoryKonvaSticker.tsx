@@ -1,15 +1,13 @@
 import { useMemo } from 'react';
 import { Group, Image as KonvaImage, Rect } from 'react-konva';
 import type Konva from 'konva';
-import type { TextNode } from '../types';
-import { renderTextNodeBitmap } from '../utils/renderTextNodeBitmap';
+import type { StickerNode } from '../types';
+import { renderStickerBitmap } from '../utils/renderStickerBitmap';
 
-const MIN_HIT_PX = 48;
+const MIN_HIT_PX = 56;
 
-type PhotoStoryKonvaTextProps = {
-  node: TextNode;
-  isEditing: boolean;
-  isSelected: boolean;
+type PhotoStoryKonvaStickerProps = {
+  node: StickerNode;
   gesturesEnabled: boolean;
   setLayerRef: (id: string, el: Konva.Group | null) => void;
   onSelect: () => void;
@@ -18,30 +16,24 @@ type PhotoStoryKonvaTextProps = {
   onDragEnd: (x: number, y: number) => void;
 };
 
-export function PhotoStoryKonvaText({
+export function PhotoStoryKonvaSticker({
   node,
-  isEditing,
-  isSelected,
   gesturesEnabled,
   setLayerRef,
   onSelect,
   onGestureStart,
   onGestureEnd,
   onDragEnd,
-}: PhotoStoryKonvaTextProps) {
-  const bitmap = useMemo(
-    () => renderTextNodeBitmap(node.text, node.style),
-    [node.text, node.style]
-  );
+}: PhotoStoryKonvaStickerProps) {
+  const bitmap = useMemo(() => renderStickerBitmap(node.emoji), [node.emoji]);
 
-  const interactive = !isEditing && gesturesEnabled;
   const hitW = Math.max(bitmap.width, MIN_HIT_PX);
   const hitH = Math.max(bitmap.height, MIN_HIT_PX);
   const halfW = bitmap.width / 2;
   const halfH = bitmap.height / 2;
 
   const handleSelect = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-    if (!interactive) return;
+    if (!gesturesEnabled) return;
     e.cancelBubble = true;
     onSelect();
   };
@@ -54,9 +46,8 @@ export function PhotoStoryKonvaText({
       rotation={node.transform.rotation}
       scaleX={node.transform.scale}
       scaleY={node.transform.scale}
-      visible={!isEditing}
-      listening={interactive}
-      draggable={interactive && isSelected}
+      listening={gesturesEnabled}
+      draggable={gesturesEnabled}
       onDragStart={() => onGestureStart()}
       onDragEnd={(e) => {
         onDragEnd(e.target.x(), e.target.y());
@@ -78,7 +69,7 @@ export function PhotoStoryKonvaText({
         width={hitW}
         height={hitH}
         fill="rgba(0,0,0,0.01)"
-        listening={interactive}
+        listening={gesturesEnabled}
         onClick={handleSelect}
         onTap={handleSelect}
         perfectDrawEnabled={false}

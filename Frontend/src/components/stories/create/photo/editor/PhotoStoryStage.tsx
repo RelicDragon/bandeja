@@ -3,6 +3,7 @@ import { stageScaleFromWidth } from '../utils/transform';
 
 type PhotoStoryStageProps = {
   children: (ctx: { stageScale: number }) => ReactNode;
+  className?: string;
   gesturesDisabled?: boolean;
   overlay?: ReactNode;
   onMeasure?: (size: { w: number; h: number }, frameRect: DOMRect) => void;
@@ -11,6 +12,7 @@ type PhotoStoryStageProps = {
 /** Edge-to-edge 9:16 canvas — no legacy “card in the middle” chrome. */
 export function PhotoStoryStage({
   children,
+  className,
   gesturesDisabled,
   overlay,
   onMeasure,
@@ -38,7 +40,7 @@ export function PhotoStoryStage({
   return (
     <div
       ref={frameRef}
-      className="absolute inset-0 z-0 bg-black"
+      className={`absolute inset-0 z-[10] bg-black ${className ?? ''}`}
       style={{ touchAction: gesturesDisabled ? 'auto' : 'none' }}
     >
       {children({ stageScale })}

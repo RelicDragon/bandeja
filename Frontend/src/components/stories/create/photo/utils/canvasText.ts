@@ -35,6 +35,50 @@ function wrapParagraph(ctx: TextMeasureCtx, paragraph: string, maxWidth: number)
   return lines.length > 0 ? lines : [{ text: '', width: 0 }];
 }
 
+export function measureTextNodeLayout(
+  text: string,
+  maxWidth = PHOTO_TEXT_MAX_WIDTH_PX
+): CanvasTextLayout {
+  const measureCanvas = document.createElement('canvas');
+  const ctx = measureCanvas.getContext('2d');
+  const displayText = text.trim() ? text : ' ';
+  if (!ctx) {
+    const lineHeight = PHOTO_TEXT_FONT_PX * 1.25;
+    return { lines: [{ text: '', width: 0 }], width: 0, height: lineHeight, lineHeight };
+  }
+  ctx.font = `bold ${PHOTO_TEXT_FONT_PX}px system-ui, -apple-system, sans-serif`;
+  return layoutCanvasText(ctx, displayText, PHOTO_TEXT_FONT_PX, maxWidth);
+}
+
+/** Local bounds (pre-transform scale) matching drawTextNode padding. */
+export function textNodeLocalBounds(
+  layout: CanvasTextLayout,
+  presetId: TextStylePresetId,
+  fontSize = PHOTO_TEXT_FONT_PX
+): { width: number; height: number } {
+  if (presetId === 'blackBox') {
+    const padX = fontSize * 0.45;
+    const padY = fontSize * 0.35;
+    return { width: layout.width + padX * 2, height: layout.height + padY * 2 };
+  }
+  if (presetId === 'neon') {
+    const pad = Math.ceil(fontSize * 0.35) + 6;
+    return { width: layout.width + pad * 2, height: layout.height + pad * 2 };
+  }
+  if (presetId === 'outline') {
+    const stroke = Math.max(2, fontSize * 0.04);
+    const pad = stroke + 4;
+    return { width: layout.width + pad * 2, height: layout.height + pad * 2 };
+  }
+  if (presetId === 'gradient') {
+    const pad = 8;
+    return { width: layout.width + pad * 2, height: layout.height + pad * 2 };
+  }
+  const padX = 10;
+  const padY = Math.ceil(fontSize * 0.06) + Math.ceil(fontSize * 0.15) + 6;
+  return { width: layout.width + padX * 2, height: layout.height + padY * 2 };
+}
+
 export function layoutCanvasText(
   ctx: TextMeasureCtx,
   text: string,
