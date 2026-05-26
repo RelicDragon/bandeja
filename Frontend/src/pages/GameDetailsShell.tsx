@@ -1761,10 +1761,14 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
         pullProgress={pullProgress}
       />
       <div
-        style={{
-          transform: `translateY(${pullDistance}px)`,
-          transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
-        }}
+        style={
+          pullDistance > 0 || isRefreshing
+            ? {
+                transform: `translateY(${pullDistance}px)`,
+                transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
+              }
+            : undefined
+        }
       >
       <div className="max-w-2xl mx-auto space-y-4 overflow-visible">
         {user && isLeagueSeason && leagueSeasonTabs.length > 0 && (
