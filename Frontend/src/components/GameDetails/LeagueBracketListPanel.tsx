@@ -7,6 +7,7 @@ import { LeagueGameCard } from './LeagueGameCard';
 import { collectBracketScheduleGames } from '@/utils/bracketScheduleListSort.util';
 import { translateBracketRoundLabel } from '@/utils/bracketRoundDisplay.util';
 import { isPlayInPhaseComplete } from '@/utils/leagueBracketOutcome';
+import { useLeagueGameResultsMap } from '@/hooks/useLeagueGameResultsMap';
 
 export type BracketListFilter = 'ALL' | 'PLAY_IN' | 'KNOCKOUT';
 
@@ -66,6 +67,9 @@ export function LeagueBracketListPanel({
     if (!group?.slots) return [];
     return collectBracketScheduleGames(group.slots);
   }, [group?.slots]);
+
+  const scheduleGames = useMemo(() => games.map((entry) => entry.game), [games]);
+  const gameResultsMap = useLeagueGameResultsMap(scheduleGames);
 
   const filtered = useMemo(() => {
     if (filter === 'PLAY_IN') return games.filter((g) => g.kind === 'PLAY_IN');
@@ -169,6 +173,7 @@ export function LeagueBracketListPanel({
               onOpen={onOpenGame ? () => onOpenGame(game) : undefined}
               onEdit={onEditGame ? () => onEditGame(game) : undefined}
               showGroupTag={false}
+              allRounds={gameResultsMap.get(game.id) ?? null}
               bracketRoundBadge={
                 roundLabel
                   ? translateBracketRoundLabel(roundLabel, t)

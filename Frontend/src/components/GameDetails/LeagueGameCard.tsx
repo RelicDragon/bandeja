@@ -1,4 +1,4 @@
-import { Award, Edit2, ExternalLink, MapPin, Calendar, Trash2, Plane, MessageCircle, BookmarkPlus, Bookmark } from 'lucide-react';
+import { Edit2, ExternalLink, MapPin, Calendar, Trash2, Plane, MessageCircle, BookmarkPlus, Bookmark } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useMemo, useState } from 'react';
 import { ConfirmationModal, PlayerAvatar } from '@/components';
@@ -18,6 +18,7 @@ import {
   bracketMatchStatusFromGame,
   type BracketMatchStatus,
 } from '@/utils/leagueBracketMatchStatus';
+import { resolveLeagueGameCardWinner } from '@/utils/leagueGameCardWinner.util';
 
 interface LeagueGameCardProps {
   game: Game;
@@ -81,9 +82,6 @@ export const LeagueGameCard = ({
   const teamAPlayers = getTeamPlayers(0);
   const teamBPlayers = getTeamPlayers(1);
 
-  const teamAPlayerIds = teamAPlayers.map(p => p.id);
-  const teamBPlayerIds = teamBPlayers.map(p => p.id);
-
   const isFinal = game.resultsStatus === 'FINAL';
   const bracketStatus: BracketMatchStatus | null = isFinal
     ? bracketMatchStatusFromGame(game, { resultsRounds: allRounds })
@@ -101,25 +99,10 @@ export const LeagueGameCard = ({
   const groupColor = game.leagueGroup ? getLeagueGroupColor(game.leagueGroup.color) : null;
   const groupSoftColor = game.leagueGroup ? getLeagueGroupSoftColor(game.leagueGroup.color) : null;
 
-  let winner: 'teamA' | 'teamB' | null = null;
-  let isTie = false;
-  
-  if (isFinal && game.outcomes && game.outcomes.length > 0) {
-    const teamAOutcomes = game.outcomes.filter(o => teamAPlayerIds.includes(o.user?.id));
-    const teamBOutcomes = game.outcomes.filter(o => teamBPlayerIds.includes(o.user?.id));
-    
-    // For fixed teams, all players have identical stats, so just take the first player's wins
-    const teamAWins = teamAOutcomes.length > 0 ? (teamAOutcomes[0].wins || 0) : 0;
-    const teamBWins = teamBOutcomes.length > 0 ? (teamBOutcomes[0].wins || 0) : 0;
-    
-    if (teamAWins > teamBWins) {
-      winner = 'teamA';
-    } else if (teamBWins > teamAWins) {
-      winner = 'teamB';
-    } else {
-      isTie = true;
-    }
-  }
+  const { winner, isTie } = useMemo(
+    () => resolveLeagueGameCardWinner(game, allRounds),
+    [game, allRounds]
+  );
 
   const getDurationLabel = () => {
     if (!game.startTime || !game.endTime) return '';
@@ -253,7 +236,7 @@ export const LeagueGameCard = ({
         }`}
       >
         <div className="flex w-full min-w-0 items-center justify-center gap-2 sm:gap-3">
-          <div className="relative flex justify-start">
+          <div className="flex justify-start">
             <div
               className={`min-h-[20px] p-2 flex items-center justify-center ${teamHighlightClass('teamA', winner, isTie)}`}
             >
@@ -270,8 +253,6 @@ export const LeagueGameCard = ({
                 ))}
               </div>
             </div>
-            {awardBadge(isFinal && winner === 'teamA')}
-            {awardBadge(isFinal && isTie, 'blue')}
           </div>
 
           {showScores ? (
@@ -315,7 +296,7 @@ export const LeagueGameCard = ({
             <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">VS</div>
           )}
 
-          <div className="relative flex justify-start">
+          <div className="flex justify-start">
             <div
               className={`min-h-[20px] p-2 flex items-center justify-center ${teamHighlightClass('teamB', winner, isTie)}`}
             >
@@ -332,8 +313,6 @@ export const LeagueGameCard = ({
                 ))}
               </div>
             </div>
-            {awardBadge(isFinal && winner === 'teamB')}
-            {awardBadge(isFinal && isTie, 'blue')}
           </div>
         </div>
       </div>
@@ -516,24 +495,11 @@ function teamHighlightClass(
   isTie: boolean,
 ) {
   if (winner === team) {
-    return 'rounded-lg border-2 border-yellow-400 dark:border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20';
+    return 'rounded-lg border-2 border-emerald-400 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/40';
   }
   if (isTie) {
     return 'rounded-lg border-2 border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20';
   }
   return '';
-}
-
-function awardBadge(show: boolean, color: 'yellow' | 'blue' = 'yellow') {
-  if (!show) return null;
-  const colorClass =
-    color === 'yellow' ? 'bg-yellow-400 dark:bg-yellow-500' : 'bg-blue-400 dark:bg-blue-500';
-  return (
-    <div
-      className={`absolute -top-1.5 -right-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white shadow-lg dark:border-gray-800 ${colorClass}`}
-    >
-      <Award size={14} className="text-white" fill="white" />
-    </div>
-  );
 }
 

@@ -66,6 +66,15 @@ function gameHasPlayedSetScores(game: Game, rounds?: Round[] | null): boolean {
   );
 }
 
+function hasLoadedScoreRounds(
+  game: Game,
+  opts?: { rounds?: Round[] | null; resultsRounds?: RoundData[] | null }
+): boolean {
+  const gameRounds = opts?.rounds ?? game.rounds;
+  if (gameRounds?.length) return true;
+  return (opts?.resultsRounds?.length ?? 0) > 0;
+}
+
 function resolveFinalBracketStatus(
   game: Game,
   opts?: { rounds?: Round[] | null; resultsRounds?: RoundData[] | null }
@@ -73,6 +82,9 @@ function resolveFinalBracketStatus(
   const nonRally = extractNonRallyOutcome(game, opts?.rounds);
   if (nonRally === 'WALKOVER') return 'WALKOVER';
   if (nonRally === 'DEFAULT' || nonRally === 'RETIRED') return 'FORFEIT';
+  if (!hasLoadedScoreRounds(game, opts)) {
+    return 'FINAL';
+  }
   if (
     !gameHasPlayedSetScores(game, opts?.rounds) &&
     !resultsRoundsHavePlayedSetScores(opts?.resultsRounds)

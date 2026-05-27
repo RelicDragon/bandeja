@@ -13,6 +13,7 @@ import {
   buildGroupMentionableUsers,
   type MentionableUser,
 } from '@/utils/mentionableUsers';
+import { getClipboardTextForPaste } from '@/utils/clipboardText';
 
 interface MentionInputProps {
   value: string;
@@ -92,6 +93,39 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     const id = requestAnimationFrame(() => syncInputHeight());
     return () => cancelAnimationFrame(id);
   }, [value]);
+
+  useEffect(() => {
+    const handlePasteCapture = (e: ClipboardEvent) => {
+      const textarea = inputRef.current;
+      if (!textarea || e.target !== textarea) return;
+
+      const data = e.clipboardData;
+      if (!data) return;
+
+      if (data.getData('text/plain').trim()) return;
+
+      const fallback = getClipboardTextForPaste(data);
+      if (!fallback) return;
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      const start = textarea.selectionStart ?? 0;
+      const end = textarea.selectionEnd ?? 0;
+      textarea.setRangeText(fallback, start, end, 'end');
+      textarea.dispatchEvent(
+        new InputEvent('input', {
+          bubbles: true,
+          cancelable: true,
+          inputType: 'insertFromPaste',
+          data: fallback,
+        })
+      );
+    };
+
+    document.addEventListener('paste', handlePasteCapture, true);
+    return () => document.removeEventListener('paste', handlePasteCapture, true);
+  }, []);
 
   const gameId = game?.id;
   useEffect(() => {

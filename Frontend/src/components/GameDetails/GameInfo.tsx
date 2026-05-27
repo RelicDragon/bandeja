@@ -218,6 +218,7 @@ export const GameInfo = ({
       try {
         await Share.share({
           url: shareUrl,
+          text: shareUrl,
         });
         return;
       } catch (error) {
@@ -232,6 +233,7 @@ export const GameInfo = ({
       try {
         await navigator.share({
           url: shareUrl,
+          text: shareUrl,
         });
         return;
       } catch (error) {

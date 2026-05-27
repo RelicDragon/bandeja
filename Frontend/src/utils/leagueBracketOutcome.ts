@@ -65,8 +65,8 @@ export function winningTeamFromFinalGame(game: Game): 'teamA' | 'teamB' | null {
     game.fixedTeams?.[1]?.players?.map((p) => p.user?.id).filter(Boolean) as string[] | undefined;
   if (!teamAIds?.length || !teamBIds?.length) return null;
 
-  const teamAOutcomes = game.outcomes.filter((o) => teamAIds.includes(o.user?.id ?? ''));
-  const teamBOutcomes = game.outcomes.filter((o) => teamBIds.includes(o.user?.id ?? ''));
+  const teamAOutcomes = game.outcomes.filter((o) => teamAIds.includes(o.user?.id ?? o.userId ?? ''));
+  const teamBOutcomes = game.outcomes.filter((o) => teamBIds.includes(o.user?.id ?? o.userId ?? ''));
   const teamAWins = teamAOutcomes[0]?.wins ?? 0;
   const teamBWins = teamBOutcomes[0]?.wins ?? 0;
   if (teamAWins > teamBWins) return 'teamA';

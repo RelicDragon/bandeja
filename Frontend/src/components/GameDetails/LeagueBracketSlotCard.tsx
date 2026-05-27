@@ -188,6 +188,7 @@ export function LeagueBracketSlotCard({
     resolveBracketSideDisplayLabel(sideB, slot.feederSlotBId, lookup) ?? t('gameDetails.bracketTbd');
   const usersA = teamUsersFromParticipant(sideA);
   const usersB = teamUsersFromParticipant(sideB);
+  const bothSidesUnknown = usersA.length === 0 && usersB.length === 0;
 
   const clickable = !!fullGame && onOpenGame;
 
@@ -235,25 +236,41 @@ export function LeagueBracketSlotCard({
             </span>
           ) : null}
         </div>
-        <SideRow
-          label={nameA}
-          users={usersA}
-          seed={sideA?.seedRank}
-          highlight={winnerSide === 'A'}
-          loser={loserSide === 'A'}
-          originGroup={showOriginGroupBadge ? resolveOriginGroup(sideA, groups) : null}
-        />
-        <p className="py-0.5 text-center text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
-          {t('gameDetails.fixtureVsShort')}
-        </p>
-        <SideRow
-          label={nameB}
-          users={usersB}
-          seed={sideB?.seedRank}
-          highlight={winnerSide === 'B'}
-          loser={loserSide === 'B'}
-          originGroup={showOriginGroupBadge ? resolveOriginGroup(sideB, groups) : null}
-        />
+        {bothSidesUnknown ? (
+          <div className="flex min-w-0 items-center justify-center gap-2 py-1">
+            <span className="min-w-0 truncate text-xs font-medium text-gray-800 dark:text-gray-100">
+              {nameA}
+            </span>
+            <span className="shrink-0 text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
+              {t('gameDetails.fixtureVsShort')}
+            </span>
+            <span className="min-w-0 truncate text-xs font-medium text-gray-800 dark:text-gray-100">
+              {nameB}
+            </span>
+          </div>
+        ) : (
+          <>
+            <SideRow
+              label={nameA}
+              users={usersA}
+              seed={sideA?.seedRank}
+              highlight={winnerSide === 'A'}
+              loser={loserSide === 'A'}
+              originGroup={showOriginGroupBadge ? resolveOriginGroup(sideA, groups) : null}
+            />
+            <p className="py-0.5 text-center text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
+              {t('gameDetails.fixtureVsShort')}
+            </p>
+            <SideRow
+              label={nameB}
+              users={usersB}
+              seed={sideB?.seedRank}
+              highlight={winnerSide === 'B'}
+              loser={loserSide === 'B'}
+              originGroup={showOriginGroupBadge ? resolveOriginGroup(sideB, groups) : null}
+            />
+          </>
+        )}
       </button>
       {canWalkover && (
         <div className="bracket-export-hide mt-1.5 border-t border-gray-100 pt-1.5 dark:border-gray-800">

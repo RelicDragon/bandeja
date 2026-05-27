@@ -13,7 +13,7 @@ function slot(partial: Partial<BracketSlotDto> & Pick<BracketSlotDto, 'id' | 'sl
   };
 }
 
-function finalGame(winner: 'teamA' | 'teamB', participantAId: string, participantBId: string): Game {
+function finalGame(winner: 'teamA' | 'teamB', _participantAId: string, _participantBId: string): Game {
   const teamAUser = winner === 'teamA' ? 'u-win' : 'u-lose';
   const teamBUser = winner === 'teamB' ? 'u-win' : 'u-lose';
   return {

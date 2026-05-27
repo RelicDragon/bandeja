@@ -95,6 +95,14 @@ describe('leagueBracketMatchStatus.util (UX-D2)', () => {
     expect(bracketMatchStatusFromGame(game)).toBe('FINAL');
   });
 
+  it('does not infer walkover when score rounds were not loaded', () => {
+    const game = leagueGame({
+      outcomes: [{ userId: 'u1', wins: 1, losses: 0 } as Game['outcomes'][0]],
+      rounds: undefined,
+    });
+    expect(bracketMatchStatusFromGame(game)).toBe('FINAL');
+  });
+
   it('uses resultsRounds when game.rounds are absent (league schedule list)', () => {
     const game = leagueGame({ rounds: undefined });
     expect(

@@ -14,9 +14,9 @@ export function enrichBracketGroups(
     ...group,
     slots: group.slots.map((slot) => {
       if (!slot.gameId) return slot;
-      if (isFullGame(slot.game)) return slot;
       const full = byId.get(slot.gameId);
-      return full ? { ...slot, game: full } : slot;
+      if (full) return { ...slot, game: full };
+      return slot;
     }),
   }));
 }

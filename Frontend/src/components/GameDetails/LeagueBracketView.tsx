@@ -30,6 +30,7 @@ import { BracketEditOverlay } from './BracketEditOverlay';
 import { BracketShareToolbar } from './BracketShareToolbar';
 import { LeagueBracketPodiumCard } from './LeagueBracketPodiumCard';
 import { isFullGame } from '@/utils/leagueBracketEnrich';
+import { useLeagueGameResultsMap } from '@/hooks/useLeagueGameResultsMap';
 import {
   BRACKET_TREE_CARD_CLASS,
   BRACKET_TREE_COLUMN_CLASS,
@@ -102,6 +103,20 @@ export function LeagueBracketView({
     () => groups.find((g) => g.id === group?.leagueGroupId),
     [groups, group?.leagueGroupId]
   );
+
+  const bracketGames = useMemo(() => {
+    if (!group?.slots?.length) return [];
+    const seen = new Set<string>();
+    const list: Game[] = [];
+    for (const slot of group.slots) {
+      if (!slot.game || !isFullGame(slot.game) || seen.has(slot.game.id)) continue;
+      seen.add(slot.game.id);
+      list.push(slot.game);
+    }
+    return list;
+  }, [group?.slots]);
+
+  const gameResultsMap = useLeagueGameResultsMap(bracketGames);
 
   const showConsolationTab = useMemo(
     () => (group?.slots?.length ? hasConsolationSlots(group.slots) : false),
@@ -368,6 +383,7 @@ export function LeagueBracketView({
                         showGroupTag={false}
                         showLeagueGroupSideAccent={!crossGroupBracket}
                         bracketRoundBadge={translateBracketRoundLabel(col.label, t)}
+                        allRounds={gameResultsMap.get(matchGame.id) ?? null}
                       />
                     </div>
                   );
