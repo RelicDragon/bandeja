@@ -9,6 +9,7 @@ const MIN_HIT_PX = 56;
 type PhotoStoryKonvaStickerProps = {
   node: StickerNode;
   isSelected: boolean;
+  interactionOnly?: boolean;
   gesturesEnabled: boolean;
   setLayerRef: (id: string, el: Konva.Group | null) => void;
   onSelect: () => void;
@@ -20,6 +21,7 @@ type PhotoStoryKonvaStickerProps = {
 export function PhotoStoryKonvaSticker({
   node,
   isSelected,
+  interactionOnly = false,
   gesturesEnabled,
   setLayerRef,
   onSelect,
@@ -56,15 +58,17 @@ export function PhotoStoryKonvaSticker({
         onGestureEnd();
       }}
     >
-      <KonvaImage
-        image={bitmap.image}
-        x={-halfW}
-        y={-halfH}
-        width={bitmap.width}
-        height={bitmap.height}
-        listening={false}
-        perfectDrawEnabled={false}
-      />
+      {!interactionOnly ? (
+        <KonvaImage
+          image={bitmap.image}
+          x={-halfW}
+          y={-halfH}
+          width={bitmap.width}
+          height={bitmap.height}
+          listening={false}
+          perfectDrawEnabled={false}
+        />
+      ) : null}
       <Rect
         x={-hitW / 2}
         y={-hitH / 2}

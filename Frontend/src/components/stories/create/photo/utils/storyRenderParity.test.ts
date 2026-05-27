@@ -162,6 +162,21 @@ describe('story editor → export render parity', () => {
     ]);
   });
 
+  it('media transform scale is absolute (matches renderDocument ctx.scale, not cover²)', () => {
+    const doc = makeDocument();
+    const media = doc.nodes[0];
+    if (media?.type !== 'media') throw new Error('expected media');
+    const cover = computeCoverScale(2000, 1500);
+    media.transform.scale = cover * 1.25;
+    const img = { naturalWidth: 2000, naturalHeight: 1500, width: 2000, height: 1500 };
+    const ctx = document.createElement('canvas').getContext('2d') as CanvasRenderingContext2D;
+    ctxCalls = [];
+    renderDocument(ctx, doc, img as HTMLImageElement);
+    const scaleCall = ctxCalls.find((c) => c.method === 'scale');
+    expect(scaleCall?.args[0]).toBeCloseTo(cover * 1.25, 5);
+    expect(scaleCall?.args[0]).not.toBeCloseTo(cover * cover * 1.25, 2);
+  });
+
   it('drawScene exports at story canvas dimensions (viewer displays this asset)', async () => {
     const blob = await drawScene(makeDocument());
     expect(exportCanvasSizes).toContainEqual({ w: STORY_CANVAS_WIDTH, h: STORY_CANVAS_HEIGHT });

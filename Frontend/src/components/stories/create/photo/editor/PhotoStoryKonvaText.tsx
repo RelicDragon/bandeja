@@ -10,6 +10,8 @@ type PhotoStoryKonvaTextProps = {
   node: TextNode;
   isEditing: boolean;
   isSelected: boolean;
+  /** When true, only hit targets + transformer anchors render (WYSIWYG canvas preview underneath). */
+  interactionOnly?: boolean;
   gesturesEnabled: boolean;
   setLayerRef: (id: string, el: Konva.Group | null) => void;
   onSelect: () => void;
@@ -22,6 +24,7 @@ export function PhotoStoryKonvaText({
   node,
   isEditing,
   isSelected,
+  interactionOnly = false,
   gesturesEnabled,
   setLayerRef,
   onSelect,
@@ -63,15 +66,17 @@ export function PhotoStoryKonvaText({
         onGestureEnd();
       }}
     >
-      <KonvaImage
-        image={bitmap.image}
-        x={-halfW}
-        y={-halfH}
-        width={bitmap.width}
-        height={bitmap.height}
-        listening={false}
-        perfectDrawEnabled={false}
-      />
+      {!interactionOnly ? (
+        <KonvaImage
+          image={bitmap.image}
+          x={-halfW}
+          y={-halfH}
+          width={bitmap.width}
+          height={bitmap.height}
+          listening={false}
+          perfectDrawEnabled={false}
+        />
+      ) : null}
       <Rect
         x={-hitW / 2}
         y={-hitH / 2}

@@ -1,7 +1,5 @@
 import type { StoryDocument } from '../types';
 import { getMediaNode, patchMediaDimensions } from './document';
-import { defaultMediaTransform } from './transform';
-
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -20,5 +18,5 @@ export async function ensureDocumentMediaDimensions(doc: StoryDocument): Promise
   const img = await loadImage(media.source.previewUrl);
   const w = img.naturalWidth > 0 ? img.naturalWidth : 1080;
   const h = img.naturalHeight > 0 ? img.naturalHeight : 1920;
-  return patchMediaDimensions(doc, w, h, defaultMediaTransform(w, h));
+  return patchMediaDimensions(doc, w, h, media.transform);
 }
