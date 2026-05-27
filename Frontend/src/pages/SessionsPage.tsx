@@ -86,7 +86,7 @@ export function SessionsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-safe">
-      <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-900/90 backdrop-blur px-4 py-3">
+      <header className="safe-area-top sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-900/90 backdrop-blur px-4 py-3">
         <button
           type="button"
           onClick={() => navigate('/profile')}
