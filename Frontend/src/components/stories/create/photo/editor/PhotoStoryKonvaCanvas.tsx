@@ -10,8 +10,8 @@ import { getMediaNode, getOverlayNodes } from '../utils/document';
 import { clampLayerTransform, clampMediaTransform, computeCoverScale } from '../utils/transform';
 import { STORY_CANVAS_HEIGHT, STORY_CANVAS_WIDTH } from '../types';
 import {
-  konvaNodeScale,
   screenFixedTransformerMetrics,
+  stageVisualScale,
 } from '../utils/storyTransformerMetrics';
 
 export const PHOTO_MEDIA_NODE_KEY = '__media__';
@@ -74,7 +74,7 @@ function PhotoStoryKonvaCanvasInner({
   editingTextId = null,
 }: PhotoStoryKonvaCanvasProps) {
   const stageScale = stageWidth / STORY_CANVAS_WIDTH;
-  const [transformingNodeScale, setTransformingNodeScale] = useState<number | null>(null);
+  const stageRef = useRef<Konva.Stage>(null);
   const { canvasRef, ready: previewReady } = useCompositorPreview(doc, stageWidth, stageHeight);
   const media = getMediaNode(doc);
   const overlays = getOverlayNodes(doc);
@@ -99,17 +99,9 @@ function PhotoStoryKonvaCanvasInner({
     onLoadDimensions(sourceImg.naturalWidth, sourceImg.naturalHeight);
   }, [sourceImg, onLoadDimensions]);
 
-  const selectionNodeScale = useMemo(() => {
-    if (mediaSelected) return media?.transform.scale ?? 1;
-    if (!selectedNodeId) return 1;
-    const node = overlays.find((n) => n.id === selectedNodeId);
-    return node?.transform.scale ?? 1;
-  }, [mediaSelected, media?.transform.scale, overlays, selectedNodeId]);
-
   const transformerMetrics = useMemo(
-    () =>
-      screenFixedTransformerMetrics(stageScale, transformingNodeScale ?? selectionNodeScale),
-    [stageScale, selectionNodeScale, transformingNodeScale]
+    () => screenFixedTransformerMetrics(stageVisualScale(stageRef.current, stageScale)),
+    [stageScale, stageWidth, stageHeight, selectedNodeId, mediaSelected, overlays]
   );
 
   const mtx = media?.transform.x ?? 0;
@@ -163,7 +155,6 @@ function PhotoStoryKonvaCanvasInner({
   );
 
   const handleTransformerEnd = useCallback(() => {
-    setTransformingNodeScale(null);
     const target = transformerRef.current?.nodes()[0];
     if (!target) return;
     if (mediaSelected && target === mediaRef.current) {
@@ -173,18 +164,23 @@ function PhotoStoryKonvaCanvasInner({
     if (selectedNodeId) handleTransformEnd(target, false, selectedNodeId);
   }, [handleTransformEnd, mediaSelected, selectedNodeId]);
 
-  const handleTransforming = useCallback(() => {
-    const target = transformerRef.current?.nodes()[0];
-    if (!target) return;
-    const nextScale = konvaNodeScale(target);
-    setTransformingNodeScale((prev) => (prev != null && Math.abs(prev - nextScale) < 0.01 ? prev : nextScale));
-    transformerRef.current?.forceUpdate();
-  }, []);
+  const applyTransformerChrome = useCallback(() => {
+    const tr = transformerRef.current;
+    if (!tr) return;
+    const metrics = screenFixedTransformerMetrics(stageVisualScale(stageRef.current, stageScale));
+    tr.anchorSize(metrics.anchorSize);
+    tr.rotateAnchorOffset(metrics.rotateOffset);
+    tr.borderStrokeWidth(metrics.borderStrokeWidth);
+    tr.forceUpdate();
+  }, [stageScale]);
+
+  useEffect(() => {
+    applyTransformerChrome();
+  }, [applyTransformerChrome, transformerMetrics]);
 
   const styleTransformerAnchor = useCallback(
     (anchor: Konva.Rect) => {
-      const target = transformerRef.current?.nodes()[0];
-      const metrics = screenFixedTransformerMetrics(stageScale, konvaNodeScale(target));
+      const metrics = screenFixedTransformerMetrics(stageVisualScale(stageRef.current, stageScale));
       anchor.width(metrics.anchorSize);
       anchor.height(metrics.anchorSize);
       anchor.cornerRadius(metrics.cornerRadius);
@@ -203,6 +199,7 @@ function PhotoStoryKonvaCanvasInner({
         aria-hidden
       />
       <Stage
+        ref={stageRef}
         width={stageWidth}
         height={stageHeight}
         scaleX={stageScale}
@@ -300,9 +297,9 @@ function PhotoStoryKonvaCanvasInner({
               if (newBox.width < 16 || newBox.height < 16) return oldBox;
               return newBox;
             }}
-            onTransformStart={onGestureStart}
-            onTransform={handleTransforming}
-            onTransformEnd={handleTransformerEnd}
+          onTransformStart={onGestureStart}
+          onTransform={applyTransformerChrome}
+          onTransformEnd={handleTransformerEnd}
           />
         </Layer>
       </Stage>
