@@ -1,22 +1,20 @@
 import type { Dispatch, RefObject, SetStateAction } from 'react';
-import type { ChatContextType, ChatMessage, ChatMessageWithStatus } from '@/api/chat';
+import type { ChatContextType, ChatMessageWithStatus } from '@/api/chat';
 import type { ChatType } from '@/types';
 import {
   loadLocalThreadBootstrap,
   pullAndApplyChatSyncEvents,
 } from '@/services/chat/chatLocalApply';
-import { hydrateLastMessageIdFromDexieIfMissing } from '@/services/chat/messageContextHead';
+import {
+  hydrateLastMessageIdFromDexieIfMissing,
+  syncLastMessageIdsToStoreFromLocalHeadsForContext,
+} from '@/services/chat/messageContextHead';
 import { pullMissedAndPersistToDexie } from '@/services/chat/chatThreadNetworkSync';
+import { takeMissedMessagesForOpen } from '@/services/chat/chatOpenMissedFlush';
 import { useChatSyncStore } from '@/store/chatSyncStore';
-import { mergeChatMessagesAscending } from '@/utils/chatMessageSort';
 import { enqueueChatSyncPull, SYNC_PRIORITY_FOREGROUND } from '@/services/chat/chatSyncScheduler';
 import { chatOpenMessagesSnapshotEqual, mergeOpenSnapshot } from './chatOpenSnapshot';
 import { commitChatOpenMessages, traceChatOpenLength } from './chatOpenTrace';
-
-function tailMessageId(messages: ChatMessage[]): string | null {
-  if (messages.length === 0) return null;
-  return messages[messages.length - 1]!.id;
-}
 
 /** Latest `reconcileChatThreadOpen` call; stale runs must not clear `isOpenSyncing` or commit. */
 let openReconcileGeneration = 0;
@@ -34,17 +32,7 @@ export type ChatOpenReconcileParams = {
   setMessages: Dispatch<SetStateAction<ChatMessageWithStatus[]>>;
 };
 
-/** Merge missed buffers for all game tab heads (pre-paint flush). */
-export function takeAllGameTabMissedMessages(contextId: string): ChatMessage[] {
-  const tabs: ChatType[] = ['PUBLIC', 'PRIVATE', 'ADMINS'];
-  const store = useChatSyncStore.getState();
-  const collected: ChatMessage[] = [];
-  for (const tab of tabs) {
-    collected.push(...store.getAndClearMissed('GAME', contextId, tab));
-  }
-  if (collected.length === 0) return [];
-  return mergeChatMessagesAscending([], collected);
-}
+export { takeAllGameTabMissedMessages } from '@/services/chat/chatOpenMissedFlush';
 
 /** Tail-only open reconcile — no full-thread `loadLocalMessagesForThread`. */
 export async function reconcileChatThreadOpen(params: ChatOpenReconcileParams): Promise<void> {
@@ -64,7 +52,12 @@ export async function reconcileChatThreadOpen(params: ChatOpenReconcileParams): 
   try {
     if (currentIdRef.current !== contextId) return;
 
-    const missed = await pullMissedAndPersistToDexie({
+    const missedBuffer = takeMissedMessagesForOpen(
+      contextType,
+      contextId,
+      contextType === 'GAME' ? gameChatType : undefined
+    );
+    const missedNetwork = await pullMissedAndPersistToDexie({
       contextType,
       contextId,
       gameChatType: contextType === 'GAME' ? gameChatType : undefined,
@@ -74,13 +67,17 @@ export async function reconcileChatThreadOpen(params: ChatOpenReconcileParams): 
     await pullAndApplyChatSyncEvents(contextType, contextId);
     if (currentIdRef.current !== contextId) return;
 
+    await syncLastMessageIdsToStoreFromLocalHeadsForContext(contextType, contextId);
+
     const { messages: dexieTail } = await loadLocalThreadBootstrap(contextType, contextId, gameChatType);
     if (currentIdRef.current !== contextId) return;
 
-    const hadMergeInput = missed.length > 0 || dexieTail.length > 0;
     let next = messagesRef.current;
-    if (missed.length > 0) {
-      next = mergeOpenSnapshot(next, missed, []);
+    if (missedBuffer.length > 0) {
+      next = mergeOpenSnapshot(next, missedBuffer, []);
+    }
+    if (missedNetwork.length > 0) {
+      next = mergeOpenSnapshot(next, missedNetwork, []);
     }
     if (dexieTail.length > 0) {
       next = mergeOpenSnapshot(next, dexieTail, []);
@@ -89,17 +86,11 @@ export async function reconcileChatThreadOpen(params: ChatOpenReconcileParams): 
     if (
       currentIdRef.current === contextId &&
       isActiveOpenReconcile(generation) &&
-      hadMergeInput &&
       !chatOpenMessagesSnapshotEqual(messagesRef.current, next)
     ) {
       commitChatOpenMessages(messagesRef, (v) => setMessages(v), next, 'reconcile-batched');
       traceChatOpenLength('afterReconcile', next.length);
-      const tail = tailMessageId(next);
-      if (tail) {
-        useChatSyncStore
-          .getState()
-          .setLastMessageId(contextType, contextId, tail, contextType === 'GAME' ? gameChatType : undefined);
-      }
+      await syncLastMessageIdsToStoreFromLocalHeadsForContext(contextType, contextId);
     }
   } catch {
     void enqueueChatSyncPull(contextType, contextId, SYNC_PRIORITY_FOREGROUND);

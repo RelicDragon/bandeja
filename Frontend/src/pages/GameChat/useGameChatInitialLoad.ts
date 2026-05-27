@@ -37,6 +37,8 @@ export interface UseGameChatInitialLoadParams {
   isLoadingRef: React.MutableRefObject<boolean>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
   openPaintCommittedRef: React.MutableRefObject<boolean>;
+  /** When set, re-run bootstrap even if this thread was already opened. */
+  freshOpenSignal?: number;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   setCurrentChatType: (t: ChatType) => void;
   setIsBlockedByUser: (v: boolean) => void;
@@ -67,6 +69,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     isLoadingRef,
     messagesRef,
     openPaintCommittedRef,
+    freshOpenSignal = 0,
     setMessages,
     setCurrentChatType,
     setIsBlockedByUser,
@@ -106,13 +109,10 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
       }
 
       const currentLoadId = `${id}-${contextType}`;
-      if (hasLoadedRef.current && loadingIdRef.current === currentLoadId) {
+      if (!freshOpenSignal && hasLoadedRef.current && loadingIdRef.current === currentLoadId) {
         return;
       }
-      if (openPaintCommittedRef.current && loadingIdRef.current === currentLoadId) {
-        return;
-      }
-      if (isLoadingRef.current && loadingIdRef.current === currentLoadId) {
+      if (isLoadingRef.current && loadingIdRef.current === currentLoadId && !freshOpenSignal) {
         return;
       }
 
@@ -261,5 +261,5 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     };
     // Intentionally narrow deps: unstable callbacks/refs must not re-trigger full open (bootstrap + reconcile).
     // eslint-disable-next-line react-hooks/exhaustive-deps -- open once per id+contextType via refs + hasLoadedRef
-  }, [id, user?.id, contextType, initialChatType]);
+  }, [id, user?.id, contextType, initialChatType, freshOpenSignal]);
 }

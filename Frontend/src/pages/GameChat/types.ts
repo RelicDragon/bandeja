@@ -6,9 +6,17 @@ export interface LocationState {
   contextType?: ChatContextType;
   chat?: UserChatType;
   groupChannel?: GroupChannel;
+  /** Monotonic nonce — forces thread reset + bootstrap (push tap). */
   forceReload?: number;
+  anchorMessageId?: string;
   fromExpressInterest?: boolean;
 }
+
+export type ChatNavigateOptions = {
+  forceReload?: boolean;
+  anchorMessageId?: string;
+  initialChatType?: string;
+};
 
 export interface GameChatProps {
   isEmbedded?: boolean;

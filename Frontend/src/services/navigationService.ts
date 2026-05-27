@@ -1,6 +1,20 @@
 import { NavigateFunction } from 'react-router-dom';
 import { buildUrl, type PlaceParams } from '@/utils/urlSchema';
 import { useNavigationStore } from '@/store/navigationStore';
+import type { ChatNavigateOptions } from '@/pages/GameChat/types';
+import { bumpChatFreshOpenNonce } from '@/services/chat/chatOpenEntry';
+
+function chatNavigationState(opts?: ChatNavigateOptions) {
+  if (!opts?.forceReload && !opts?.anchorMessageId && !opts?.initialChatType) {
+    return undefined;
+  }
+  if (opts.forceReload) bumpChatFreshOpenNonce();
+  return {
+    ...(opts.initialChatType ? { initialChatType: opts.initialChatType } : {}),
+    ...(opts.forceReload ? { forceReload: Date.now() } : {}),
+    ...(opts.anchorMessageId ? { anchorMessageId: opts.anchorMessageId } : {}),
+  };
+}
 
 class NavigationService {
   private navigate: NavigateFunction | null = null;
@@ -17,10 +31,12 @@ class NavigationService {
     return true;
   }
 
-  navigateToGame(gameId: string, openChat: boolean = false, initialChatType?: string) {
+  navigateToGame(gameId: string, openChat: boolean = false, opts?: ChatNavigateOptions | string) {
     if (!this.ensureInitialized() || !gameId) return;
     const place = openChat ? 'gameChat' : 'game';
-    const state = openChat && initialChatType ? { initialChatType } : undefined;
+    const navOpts: ChatNavigateOptions | undefined =
+      typeof opts === 'string' ? { initialChatType: opts } : opts;
+    const state = openChat ? chatNavigationState(navOpts) : undefined;
     this.navigate!(buildUrl(place as any, { id: gameId }), { replace: true, state });
   }
 
@@ -40,9 +56,12 @@ class NavigationService {
     this.navigate!(`/games/${leagueSeasonId}?${sp.toString()}`, { replace: true });
   }
 
-  navigateToUserChat(userChatId: string) {
+  navigateToUserChat(userChatId: string, opts?: ChatNavigateOptions) {
     if (!this.ensureInitialized() || !userChatId) return;
-    this.navigate!(buildUrl('userChat', { id: userChatId }), { replace: true });
+    this.navigate!(buildUrl('userChat', { id: userChatId }), {
+      replace: true,
+      state: chatNavigationState({ forceReload: true, ...opts }),
+    });
   }
 
   navigateToUserTeam(teamId: string) {
@@ -66,14 +85,20 @@ class NavigationService {
     }
   }
 
-  navigateToGroupChat(groupChannelId: string) {
+  navigateToGroupChat(groupChannelId: string, opts?: ChatNavigateOptions) {
     if (!this.ensureInitialized() || !groupChannelId) return;
-    this.navigate!(buildUrl('groupChat', { id: groupChannelId }), { replace: true });
+    this.navigate!(buildUrl('groupChat', { id: groupChannelId }), {
+      replace: true,
+      state: chatNavigationState({ forceReload: true, ...opts }),
+    });
   }
 
-  navigateToChannelChat(channelId: string) {
+  navigateToChannelChat(channelId: string, opts?: ChatNavigateOptions) {
     if (!this.ensureInitialized() || !channelId) return;
-    this.navigate!(buildUrl('channelChat', { id: channelId }), { replace: true });
+    this.navigate!(buildUrl('channelChat', { id: channelId }), {
+      replace: true,
+      state: chatNavigationState({ forceReload: true, ...opts }),
+    });
   }
 
   navigateToBugsList() {

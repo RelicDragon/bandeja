@@ -71,7 +71,7 @@ export function useMessageLongPress({
         if (isOffline) return;
         menuWasOpened = true;
         onOpenContextMenu(messageId, { x: clientX, y: clientY });
-      }, 500);
+      }, 300);
     };
 
     const handleMouseUp = (e: MouseEvent) => {
@@ -101,7 +101,7 @@ export function useMessageLongPress({
         if (isOffline) return;
         menuWasOpened = true;
         onOpenContextMenu(messageId, { x: clientX, y: clientY });
-      }, 500);
+      }, 300);
     };
 
     const handleTouchMove = (e: TouchEvent) => {

@@ -247,15 +247,26 @@ class PushNotificationService {
         }
         if (payload?.gameId) {
           const openChat = type === 'GAME_CHAT';
-          const initialChatType = type === 'GAME_CHAT' ? payload?.chatType : undefined;
-          navigationService.navigateToGame(payload.gameId, openChat, initialChatType);
+          navigationService.navigateToGame(
+            payload.gameId,
+            openChat,
+            openChat
+              ? {
+                  forceReload: true,
+                  initialChatType: payload?.chatType,
+                  anchorMessageId: payload?.messageId,
+                }
+              : undefined
+          );
         }
         break;
 
       case 'BUG_CHAT':
       case 'NEW_BUG':
         if (payload?.groupChannelId) {
-          navigationService.navigateToChannelChat(payload.groupChannelId);
+          navigationService.navigateToChannelChat(payload.groupChannelId, {
+            anchorMessageId: payload?.messageId,
+          });
         } else if (payload?.bugId) {
           navigationService.navigateToBugChat(payload.bugId);
         } else {
@@ -265,7 +276,9 @@ class PushNotificationService {
 
       case 'USER_CHAT':
         if (payload?.userChatId) {
-          navigationService.navigateToUserChat(payload.userChatId);
+          navigationService.navigateToUserChat(payload.userChatId, {
+            anchorMessageId: payload?.messageId,
+          });
         }
         break;
 
@@ -276,7 +289,9 @@ class PushNotificationService {
           } else if (payload.marketItemId) {
             navigationService.navigateToMarketplace({ item: payload.marketItemId });
           } else {
-            navigationService.navigateToGroupChat(payload.groupChannelId);
+            navigationService.navigateToGroupChat(payload.groupChannelId, {
+              anchorMessageId: payload?.messageId,
+            });
           }
         }
         break;

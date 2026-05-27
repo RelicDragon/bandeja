@@ -568,6 +568,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         onRemoveLanguage={translation.handleRemoveTranslateLanguage}
         autoTranslate={autoTranslate}
       />
+      <TypingIndicator
+        typingUserIds={typingUserIds}
+        contextType={contextType}
+        chatType={resolvedChatType}
+        game={game}
+        bug={bug}
+        groupChannel={groupChannel}
+        userChat={userChat}
+        currentUserId={user?.id}
+      />
       {editingMessage && <EditPreview message={editingMessage} onCancel={onCancelEdit!} className="mb-3" />}
       {replyTo && !editingMessage && (
         <ReplyPreview
@@ -588,16 +598,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         failedSlotIndices={imageUploadFailedSlots}
         retryingSlotIndex={retryingImageSlot}
         onRetrySlot={handleRetryImageSlot}
-      />
-      <TypingIndicator
-        typingUserIds={typingUserIds}
-        contextType={contextType}
-        chatType={resolvedChatType}
-        game={game}
-        bug={bug}
-        groupChannel={groupChannel}
-        userChat={userChat}
-        currentUserId={user?.id}
       />
       <form onSubmit={handleSubmit} className="relative overflow-visible">
         <div className="flex min-w-0 flex-1 flex-col">

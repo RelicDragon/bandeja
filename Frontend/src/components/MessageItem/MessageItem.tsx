@@ -473,7 +473,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     )}
                   </div>
 
-                  {!isOffline && <div className={MESSAGE_REACTION_GUTTER_CLASS} aria-hidden />}
+                  <div className={MESSAGE_REACTION_GUTTER_CLASS} aria-hidden />
                 </div>
               </div>
             </div>

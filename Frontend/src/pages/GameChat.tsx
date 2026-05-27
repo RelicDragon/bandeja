@@ -182,6 +182,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     initialScroll,
     openPaintGeneration,
     openPaintCommittedRef,
+    invalidateThreadOpen,
     scrollToBottom,
     loadMessages,
     loadMoreMessages,
@@ -195,6 +196,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     chatContainerRef,
     messageListRef,
     currentIdRef,
+    freshOpenSignal: locationState?.forceReload ?? 0,
+    openAnchorMessageId: locationState?.anchorMessageId,
   });
 
   const reloadMessagesFirstPage = useCallback(async () => {
@@ -502,6 +505,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     isLoadingRef,
     messagesRef,
     openPaintCommittedRef,
+    freshOpenSignal: locationState?.forceReload ?? 0,
     setMessages,
     setCurrentChatType,
     setIsBlockedByUser,
@@ -556,10 +560,9 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
       deleteChatThreadMemory(threadScrollKey);
     }
     if (locationState?.forceReload) {
-      hasLoadedRef.current = false;
-      loadingIdRef.current = undefined;
+      invalidateThreadOpen();
     }
-  }, [locationState?.forceReload, threadScrollKey, hasLoadedRef, loadingIdRef]);
+  }, [locationState?.forceReload, threadScrollKey, invalidateThreadOpen]);
 
   const footerVariant = useGameChatFooterVariant({
     id,
