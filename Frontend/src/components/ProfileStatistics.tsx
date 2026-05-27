@@ -5,6 +5,7 @@ import { Loading } from './Loading';
 import { LevelHistoryView } from './LevelHistoryView';
 import { ProfileWorkoutHealthSection } from './ProfileWorkoutHealthSection';
 import { useAuthStore } from '@/store/authStore';
+import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
 
 export const ProfileStatistics = () => {
   const user = useAuthStore((state) => state.user);
@@ -17,7 +18,8 @@ export const ProfileStatistics = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const response = await usersApi.getUserStats(user.id);
+        const sport = resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
+        const response = await usersApi.getUserStats(user.id, sport);
         setStats(response.data);
       } catch (error) {
         console.error('Failed to fetch user stats:', error);
@@ -48,7 +50,7 @@ export const ProfileStatistics = () => {
       transition={{ delay: 0.1, duration: 0.3 }}
       className="space-y-6"
     >
-      <LevelHistoryView stats={stats} padding="p-0" />
+      <LevelHistoryView stats={stats} padding="p-0" onStatsRefresh={setStats} />
       <ProfileWorkoutHealthSection />
     </motion.div>
   );

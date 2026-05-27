@@ -128,6 +128,7 @@ interface GameCancelledData {
   gameId: string;
   entityType: string;
   name?: string;
+  sport?: import('@/types').Sport;
   cancelledAt: string;
   cancelledByUser?: import('@/types').BasicUser;
 }

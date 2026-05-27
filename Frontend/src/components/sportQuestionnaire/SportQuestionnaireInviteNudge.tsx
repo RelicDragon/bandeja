@@ -5,7 +5,7 @@ import { getSportConfig } from '@/sport/sportRegistry';
 import { useAuthStore } from '@/store/authStore';
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { getInviteNudgeCopyMode } from '@/utils/sportQuestionnaire';
-import { findSportProfile, getDisplayLevelForSport, getUserPrimarySport } from '@/utils/profileSports';
+import { getDisplayLevelForSport, getUserPrimarySport } from '@/utils/profileSports';
 import { SportQuestionnaireSheet } from './SportQuestionnaireSheet';
 
 type SportQuestionnaireInviteNudgeProps = {
@@ -22,8 +22,7 @@ export function SportQuestionnaireInviteNudge({ gameSport }: SportQuestionnaireI
   if (!user || copyMode === 'none') return null;
 
   const sportLabel = t(getSportConfig(gameSport).labelKey);
-  const profile = findSportProfile(user, gameSport);
-  const level = (status?.level ?? profile?.level ?? 1).toFixed(1);
+  const level = getDisplayLevelForSport(user, gameSport).toFixed(1);
   const nudgeText =
     copyMode === 'cross-sport'
       ? t('sportQuestionnaire.common.inviteNudgeCrossSport', {

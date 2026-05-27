@@ -35,6 +35,7 @@ import { shouldWarnCreateGameLevelBand } from '@/utils/sportQuestionnaire';
 import { syncPlayersPerMatchOnRosterChange } from '@/utils/matchFormat';
 import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
 import { Sports, type Sport } from '@shared/sport';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -304,6 +305,11 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
       duration: 5000,
     });
   }, [entityType, playerLevelRange, selectedSport, t, user]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void usePlayersStore.getState().fetchPlayers(undefined, selectedSport);
+  }, [user?.id, selectedSport]);
 
   useEffect(() => {
     // Initialize time and duration from initialGameData
@@ -702,6 +708,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   };
 
   return (
+    <SportLevelProvider sport={selectedSport}>
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <CreateGameHeader onBack={() => handleBack(navigate)} entityType={entityType} />
 
@@ -958,7 +965,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
               setInviteUserTeamByReceiverId(meta?.userTeamIdByReceiverId ?? {});
               try {
                 const { fetchPlayers, users } = usePlayersStore.getState();
-                await fetchPlayers();
+                await fetchPlayers(undefined, selectedSport);
                 const selectedPlayers = playerIds
                   .map(id => users[id])
                   .filter((p): p is BasicUser => p !== undefined);
@@ -1011,6 +1018,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
         onSkip={handleSkipMarkCourt}
       />
     </div>
+    </SportLevelProvider>
   );
 };
 

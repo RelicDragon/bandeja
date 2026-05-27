@@ -28,9 +28,11 @@ interface LevelHistoryViewProps {
   onOpenGame?: () => void;
   showItemsToSell?: boolean;
   onMarketItemClick?: (item: MarketItem) => void;
+  /** When competitive sport changes, refresh projected user + games stats. */
+  onStatsRefresh?: (stats: UserStats) => void;
 }
 
-export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false, onOpenGame, showItemsToSell = false, onMarketItemClick }: LevelHistoryViewProps) => {
+export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false, onOpenGame, showItemsToSell = false, onMarketItemClick, onStatsRefresh }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = stats;
@@ -91,6 +93,9 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
         const response = await usersApi.getUserStats(user.id, historySport);
         if (!cancelled) {
           setGamesStatsForView(response.data.gamesStats);
+          if (response.data.sport !== stats.sport || response.data.user.level !== stats.user.level) {
+            onStatsRefresh?.(response.data);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch sport-scoped game stats:', error);
@@ -103,7 +108,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
     return () => {
       cancelled = true;
     };
-  }, [user.id, historySport, showSocialLevel, stats.gamesStats, stats.gamesStatsAllSports]);
+  }, [user.id, historySport, showSocialLevel, stats.gamesStats, stats.gamesStatsAllSports, stats.sport, stats.user.level, onStatsRefresh]);
 
   const handleRatingChangeClick = (item: { id: string; gameId?: string }) => {
     if (!item.gameId) return;

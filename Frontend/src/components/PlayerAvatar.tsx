@@ -12,6 +12,9 @@ import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { PublicGamePrompt } from './GameDetails/PublicGamePrompt';
 import { getLevelColor } from '@/utils/levelColor';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
+import { useSportLevelContext } from '@/contexts/SportLevelContext';
+import { getDisplayLevelForSport, getUserPrimarySport } from '@/utils/profileSports';
+import type { Sport } from '@shared/sport';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function parseLevelForBadge(levelRaw: unknown): number | null {
@@ -53,9 +56,11 @@ interface PlayerAvatarProps {
   onTouchStart?: (e: TouchEvent) => void;
   onTouchMove?: (e: TouchEvent) => void;
   onTouchEnd?: (e: TouchEvent) => void;
+  /** Sport for competitive level badge; defaults to the player's primary sport. */
+  levelSport?: Sport;
 }
 
-export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable = false, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, inlineFace = false, inlineFacePlain = false, inlineFaceSize = 'sm', inlineFaceFlatStack = false, role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd }: PlayerAvatarProps) => {
+export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable = false, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, inlineFace = false, inlineFacePlain = false, inlineFaceSize = 'sm', inlineFaceFlatStack = false, role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd, levelSport }: PlayerAvatarProps) => {
   const avatarPresenceKey = `avatar:${useId()}`;
   usePresenceSubscription(
     avatarPresenceKey,
@@ -63,6 +68,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   );
   const { t } = useTranslation();
   const { openPlayerCard } = usePlayerCardModal();
+  const contextLevelSport = useSportLevelContext();
   const isFavorite = useFavoritesStore((state) => player ? state.isFavorite(player.id) : false);
   const user = useAuthStore((state) => state.user);
   const isOnline = usePresenceStore((s) => player ? s.isOnline(player.id) : false);
@@ -193,7 +199,10 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
 
   const faceOnlyLayout = superTiny || inlineFace;
 
-  const levelForBadge = parseLevelForBadge(player.level as unknown);
+  const resolvedLevelSport = levelSport ?? contextLevelSport ?? getUserPrimarySport(player);
+  const levelForBadge = parseLevelForBadge(
+    getDisplayLevelForSport(player, resolvedLevelSport) as unknown,
+  );
 
   const renderAvatarContent = () => {
     if (faceOnlyLayout) {
@@ -368,7 +377,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
               e.preventDefault();
               e.stopPropagation();
               if (!user) setShowAuthModal(true);
-              else openPlayerCard(player.id);
+              else openPlayerCard(player.id, levelSport ?? contextLevelSport);
             }}
             aria-label={superTiny ? (`${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Player') : undefined}
             className={wrapperClassName}

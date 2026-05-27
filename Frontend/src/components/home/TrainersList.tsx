@@ -6,17 +6,18 @@ import { PlayerAvatar } from '@/components';
 import { TrainerRatingBadge } from '@/components/TrainerRatingBadge';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { usersApi } from '@/api';
-import { BasicUser } from '@/types';
-import { Game } from '@/types';
+import { BasicUser, Game } from '@/types';
+import type { Sport } from '@shared/sport';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 interface TrainersListProps {
   show: boolean;
   availableGames?: Game[];
+  levelSport: Sport;
 }
 
-export const TrainersList = ({ show, availableGames = [] }: TrainersListProps) => {
+export const TrainersList = ({ show, availableGames = [], levelSport }: TrainersListProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const updateUser = useAuthStore((state) => state.updateUser);
@@ -29,9 +30,9 @@ export const TrainersList = ({ show, availableGames = [] }: TrainersListProps) =
 
   useEffect(() => {
     if (show && user?.id) {
-      fetchPlayers();
+      fetchPlayers(undefined, levelSport);
     }
-  }, [show, user?.id, fetchPlayers]);
+  }, [show, user?.id, fetchPlayers, levelSport]);
 
   const trainingCountByTrainerId = useMemo(() => {
     return availableGames.reduce<Record<string, number>>((acc, game) => {
@@ -161,6 +162,7 @@ export const TrainersList = ({ show, availableGames = [] }: TrainersListProps) =
                       asDiv
                       smallLayout
                       showName={false}
+                      levelSport={levelSport}
                     />
                   </span>
                   {trainingCount > 0 && (
@@ -223,7 +225,7 @@ export const TrainersList = ({ show, availableGames = [] }: TrainersListProps) =
               <X size={14} />
             </button>
             <span className="[&>div]:pointer-events-none">
-              <PlayerAvatar player={displayedTrainer} asDiv extrasmall fullHideName />
+              <PlayerAvatar player={displayedTrainer} asDiv extrasmall fullHideName levelSport={levelSport} />
             </span>
             <div className="flex flex-col items-start">
               <span className="text-xs text-primary-600 dark:text-primary-400 leading-tight">

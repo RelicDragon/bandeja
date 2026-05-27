@@ -18,6 +18,7 @@ import {
 } from '@/utils/profileSports';
 import type { Sport } from '@/types';
 import toast from 'react-hot-toast';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
 
 export const ProfileLeaderboard = () => {
   const { t } = useTranslation();
@@ -296,6 +297,7 @@ export const ProfileLeaderboard = () => {
   };
 
   return (
+    <SportLevelProvider sport={activeLeaderboardSport}>
     <div className="min-w-0 space-y-4">
       {userRank && (
         <div className="flex min-w-0 items-center gap-2">
@@ -428,6 +430,7 @@ export const ProfileLeaderboard = () => {
         {renderTable()}
       </div>
     </div>
+    </SportLevelProvider>
   );
 };
 

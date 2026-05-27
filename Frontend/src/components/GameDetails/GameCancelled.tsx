@@ -4,19 +4,23 @@ import { XCircle } from 'lucide-react';
 import { Card } from '@/components';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { formatDate } from '@/utils/dateFormat';
-import type { EntityType, BasicUser } from '@/types';
+import type { EntityType, BasicUser, Sport } from '@/types';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
+import { getDisplayLevelForSport, getUserPrimarySport } from '@/utils/profileSports';
 
 export interface GameCancelledProps {
   entityType: EntityType;
   name?: string | null;
   cancelledAt: string;
   cancelledByUser?: BasicUser | null;
+  levelSport?: Sport;
 }
 
-export function GameCancelled({ name, cancelledAt, cancelledByUser }: GameCancelledProps) {
+export function GameCancelled({ name, cancelledAt, cancelledByUser, levelSport }: GameCancelledProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
+  const resolvedSport = levelSport ?? (cancelledByUser ? getUserPrimarySport(cancelledByUser) : undefined);
   const cancellerPlayer = cancelledByUser
     ? {
         ...cancelledByUser,
@@ -24,7 +28,9 @@ export function GameCancelled({ name, cancelledAt, cancelledByUser }: GameCancel
         firstName: cancelledByUser.firstName,
         lastName: cancelledByUser.lastName,
         avatar: cancelledByUser.avatar,
-        level: cancelledByUser.level ?? 0,
+        level: resolvedSport
+          ? getDisplayLevelForSport(cancelledByUser, resolvedSport)
+          : (cancelledByUser.level ?? 0),
         socialLevel: cancelledByUser.socialLevel ?? 0,
         gender: cancelledByUser.gender,
         approvedLevel: cancelledByUser.approvedLevel ?? false,
@@ -33,6 +39,7 @@ export function GameCancelled({ name, cancelledAt, cancelledByUser }: GameCancel
     : null;
 
   return (
+    <SportLevelProvider sport={resolvedSport}>
     <div className="flex items-center justify-center min-h-[calc(100vh-60px)] p-4">
       <Card className="text-center py-12 max-w-md">
         <XCircle className="mx-auto h-14 w-14 text-amber-500 dark:text-amber-400" aria-hidden />
@@ -69,5 +76,6 @@ export function GameCancelled({ name, cancelledAt, cancelledByUser }: GameCancel
         </button>
       </Card>
     </div>
+    </SportLevelProvider>
   );
 }

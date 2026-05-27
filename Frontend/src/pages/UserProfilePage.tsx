@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams, Navigate } from 'react-router-dom';
+import { useNavigate, useParams, Navigate, useSearchParams } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
 import { blockedUsersApi } from '@/api/blockedUsers';
@@ -25,6 +25,8 @@ import toast from 'react-hot-toast';
 import { sharePlayerProfile } from '@/utils/sharePlayerProfile';
 import { PlayerCardProfileBody } from '@/components/player/PlayerCardProfileBody';
 import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionBar';
+import { SportLevelProvider, useSportLevelContext } from '@/contexts/SportLevelContext';
+import { parseLevelSportQuery } from '@/utils/levelSportQuery';
 
 export const UserProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -46,6 +48,9 @@ export const UserProfilePage = () => {
   const [avatarViewerUrl, setAvatarViewerUrl] = useState<string | null>(null);
   const isCurrentUser = !!(user && userId && user.id === userId);
   const showTelegram = !!user;
+  const [searchParams] = useSearchParams();
+  const contextLevelSport =
+    useSportLevelContext() ?? parseLevelSportQuery(searchParams.get('sport'));
 
   useBackButtonHandler();
 
@@ -66,7 +71,7 @@ export const UserProfilePage = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const statsResponse = await usersApi.getUserStats(userId);
+        const statsResponse = await usersApi.getUserStats(userId, contextLevelSport);
         setStats(statsResponse.data);
         if (user && user.id !== userId) {
           const blocked = await blockedUsersApi.checkIfUserBlocked(userId);
@@ -83,7 +88,7 @@ export const UserProfilePage = () => {
     };
 
     void fetchStats();
-  }, [userId, user]);
+  }, [userId, user, contextLevelSport, isCurrentUser]);
 
   usePresenceSubscription('user-profile-page', user && userId && !isCurrentUser ? [userId] : []);
 
@@ -250,6 +255,7 @@ export const UserProfilePage = () => {
   ) : null;
 
   return (
+    <SportLevelProvider sport={contextLevelSport}>
     <div className={user ? 'w-full min-h-0' : 'max-w-2xl mx-auto min-h-0'}>
       {publicNav}
 
@@ -318,6 +324,7 @@ export const UserProfilePage = () => {
                   isBlocked={isBlocked}
                   showTelegram={showTelegram}
                   edgeToEdge={!!user}
+                  onStatsRefresh={setStats}
                   prependBeforeLevelHistory={!user ? <PublicGamePrompt variant="profile" /> : undefined}
                   onAvatarClick={() => {
                     if (!stats.user.originalAvatar) return;
@@ -378,5 +385,6 @@ export const UserProfilePage = () => {
         />
       )}
     </div>
+    </SportLevelProvider>
   );
 };

@@ -23,7 +23,7 @@ interface PlayerAvatarViewProps {
 export const PlayerAvatarView: React.FC<PlayerAvatarViewProps> = ({ stats }) => {
   const { t } = useTranslation();
   const { user } = stats;
-  const levelSport = resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
+  const levelSport = stats.sport ?? resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
   const showCompetitive = shouldShowSportLevelBadge(user, levelSport);
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();

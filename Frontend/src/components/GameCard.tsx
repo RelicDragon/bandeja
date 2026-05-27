@@ -19,6 +19,7 @@ import { GameSportTagRow } from '@/components/GameSportTag';
 import { resolvePlayersPerMatchForGame } from '@/utils/matchFormat';
 import { shouldShowGameCardSportGlyph, getViewerPrimarySport } from '@/utils/findSportFilter';
 import { parseGameSport } from '@/utils/gameSport';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 
 import { useAuthStore } from '@/store/authStore';
@@ -273,6 +274,7 @@ export const GameCard = ({
   const gameSport = parseGameSport(game.sport);
 
   return (
+    <SportLevelProvider sport={gameSport}>
     <>
     <Card
       className={`hover:shadow-md hover:scale-[1.02] 
@@ -798,5 +800,6 @@ export const GameCard = ({
         />
       )}
     </>
+    </SportLevelProvider>
   );
 };

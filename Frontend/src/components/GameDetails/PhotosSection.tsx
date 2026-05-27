@@ -16,7 +16,7 @@ import { isCapacitor } from '@/utils/capacitor';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { PhotosSectionGrid } from './PhotosSectionGrid';
 import { usePhotosSectionUpload } from './usePhotosSectionUpload';
-import { gamePhotoUrl } from '@/utils/gamePhotoUrl';
+import { gamePhotoOriginalUrl, hasGamePhotoUrl } from '@/utils/gamePhotoUrl';
 
 interface PhotosSectionProps {
   game: Game;
@@ -190,9 +190,9 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     }
   };
 
-  const visiblePhotos = useMemo(() => photos.filter((p) => gamePhotoUrl(p)), [photos]);
+  const visiblePhotos = useMemo(() => photos.filter(hasGamePhotoUrl), [photos]);
 
-  const galleryImages = useMemo(() => visiblePhotos.map(gamePhotoUrl), [visiblePhotos]);
+  const galleryImages = useMemo(() => visiblePhotos.map(gamePhotoOriginalUrl), [visiblePhotos]);
 
   const handleImageClick = useCallback(
     (photoIndex: number) => {

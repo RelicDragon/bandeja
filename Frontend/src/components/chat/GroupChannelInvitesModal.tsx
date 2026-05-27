@@ -15,6 +15,8 @@ import {
   INVITE_FRIEND_CTA_MAX_RESULTS,
 } from '@/components/InviteFriendToBandejaButton';
 import { BasicUser } from '@/types';
+import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
 
 const buttonTransitionStyle = `
   @keyframes fadeInSlide {
@@ -64,6 +66,7 @@ export const GroupChannelInvitesModal = ({
 }: GroupChannelInvitesModalProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const inviteListSport = resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
   const [invites, setInvites] = useState<GroupChannelInvite[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [allUsers, setAllUsers] = useState<BasicUser[]>([]);
@@ -88,7 +91,7 @@ export const GroupChannelInvitesModal = ({
     try {
       const [invitesData, usersData] = await Promise.all([
         chatApi.getGroupChannelInvites(groupChannelId),
-        usersApi.getInvitablePlayers()
+        usersApi.getInvitablePlayers(undefined, inviteListSport)
       ]);
       
       setInvites(invitesData.data || []);
@@ -107,7 +110,7 @@ export const GroupChannelInvitesModal = ({
     } finally {
       setLoadingUsers(false);
     }
-  }, [groupChannelId, t]);
+  }, [groupChannelId, t, inviteListSport]);
 
   useEffect(() => {
     loadData();
@@ -220,6 +223,7 @@ export const GroupChannelInvitesModal = ({
     searchQuery.trim().length > 0 && filteredAllUsers.length < INVITE_FRIEND_CTA_MAX_RESULTS;
 
   return (
+    <SportLevelProvider sport={inviteListSport}>
     <>
       <style>{buttonTransitionStyle}</style>
       <Dialog open={true} onClose={onClose} modalId="group-channel-invites-modal">
@@ -362,5 +366,6 @@ export const GroupChannelInvitesModal = ({
         </DialogContent>
       </Dialog>
     </>
+    </SportLevelProvider>
   );
 };

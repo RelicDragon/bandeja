@@ -5,6 +5,7 @@ import { useAuthStore } from './authStore';
 import { isUnreadStoreWarm, selectContextUnread, useUnreadStore } from '@/store/unreadStore';
 import { useSocketEventsStore } from './socketEventsStore';
 import { BasicUser } from '@/types';
+import { mergeInvitablePlayer } from '@/utils/mergeInvitablePlayer';
 import type { NewUserChatMessage, UserChatReadReceipt } from '@/services/socketService';
 import { warmChatSyncHeads } from '@/services/chat/chatSyncBatchWarm';
 import {
@@ -465,7 +466,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         const newMetadata: Record<string, UserMetadata> = {};
 
         players.forEach((player: InvitablePlayer) => {
-          newUsers[player.id] = player;
+          newUsers[player.id] = mergeInvitablePlayer(currentState.users[player.id], player);
           newMetadata[player.id] = createDefaultMetadata({
             ...currentState.metadata[player.id],
             interactionCount: player.interactionCount,
@@ -474,10 +475,12 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
           });
         });
 
+        const isGlobalCacheFetch = !gameId && !sport;
+
         return {
           users: { ...currentState.users, ...newUsers },
           metadata: { ...currentState.metadata, ...newMetadata },
-          lastPlayersFetchTime: now,
+          lastPlayersFetchTime: isGlobalCacheFetch ? now : currentState.lastPlayersFetchTime,
           loading: false,
           isFetching: false,
           invitableMaxSocialLevel: maxSocialLevel,

@@ -10,6 +10,8 @@ import { ComparisonTabController } from './ComparisonTabController';
 import { ComparisonPlayerStatsPanel } from './ComparisonPlayerStatsPanel';
 import { GameCard } from './GameCard';
 import { useAuthStore } from '@/store/authStore';
+import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import toast from 'react-hot-toast';
 
 export const ProfileComparison = () => {
@@ -20,6 +22,7 @@ export const ProfileComparison = () => {
   const [comparison, setComparison] = useState<PlayerComparison | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'stats' | 'games' | 'more'>('stats');
+  const comparisonSport = resolveActivePrimarySport(currentUser) ?? getUserPrimarySport(currentUser);
 
   const handlePlayerSelect = async (playerIds: string[]) => {
     if (playerIds.length === 0) return;
@@ -30,7 +33,7 @@ export const ProfileComparison = () => {
     
     try {
       setLoading(true);
-      const response = await usersApi.getPlayerComparison(playerId);
+      const response = await usersApi.getPlayerComparison(playerId, comparisonSport);
       setComparison(response.data);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
@@ -44,6 +47,7 @@ export const ProfileComparison = () => {
   const selectedPlayer = comparison?.otherUser;
 
   return (
+    <SportLevelProvider sport={comparisonSport}>
     <div className="space-y-6">
       {!selectedPlayer && (
         <div className="flex items-center gap-3">
@@ -255,9 +259,11 @@ export const ProfileComparison = () => {
           multiSelect={false}
           onConfirm={handlePlayerSelect}
           filterPlayerIds={currentUser?.id ? [currentUser.id] : []}
+          gameSport={comparisonSport}
         />
       )}
     </div>
+    </SportLevelProvider>
   );
 };
 

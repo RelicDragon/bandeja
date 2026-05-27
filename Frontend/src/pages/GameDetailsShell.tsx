@@ -54,6 +54,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { Game, Invite, Court, Club, GenderTeam } from '@/types';
 import { parseGameSport } from '@/utils/gameSport';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { Round } from '@/types/gameResults';
 import { shouldShowRoundAddedModal } from '@/utils/fivePlayerMatchCombinations';
 import { isUserGameAdminOrOwner, canUserEditResults, canViewTournamentTableByAccess } from '@/utils/gameResults';
@@ -86,7 +87,7 @@ export interface GameDetailsShellProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
   selectedGameChatId?: string | null;
   onChatGameSelect?: (gameId: string) => void;
-  layoutCancelledInfo?: { entityType: string; name: string | null; cancelledAt: string; cancelledByUser?: import('@/types').BasicUser | null } | null;
+  layoutCancelledInfo?: { entityType: string; name: string | null; sport?: import('@/types').Sport; cancelledAt: string; cancelledByUser?: import('@/types').BasicUser | null } | null;
 }
 
 export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, selectedGameChatId, onChatGameSelect, layoutCancelledInfo }: GameDetailsShellProps) => {
@@ -116,6 +117,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   const [cancelledGameInfo, setCancelledGameInfo] = useState<{
     entityType: string;
     name: string | null;
+    sport?: import('@/types').Sport;
     cancelledAt: string;
     cancelledByUser?: import('@/types').BasicUser | null;
   } | null>(null);
@@ -265,6 +267,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
           setCancelledGameInfo({
             entityType: d.entityType ?? 'GAME',
             name: d.name ?? null,
+            sport: d.sport,
             cancelledAt: d.cancelledAt ?? new Date().toISOString(),
             cancelledByUser: d.cancelledByUser ?? null,
           });
@@ -397,6 +400,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     setCancelledGameInfo({
       entityType: lastGameCancelled.entityType,
       name: lastGameCancelled.name ?? null,
+      sport: lastGameCancelled.sport,
       cancelledAt: lastGameCancelled.cancelledAt,
       cancelledByUser: lastGameCancelled.cancelledByUser ?? null,
     });
@@ -918,6 +922,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
         setCancelledGameInfo({
           entityType: d.entityType ?? 'GAME',
           name: d.name ?? null,
+          sport: d.sport,
           cancelledAt: d.cancelledAt ?? new Date().toISOString(),
           cancelledByUser: d.cancelledByUser ?? null,
         });
@@ -1233,6 +1238,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
           name={cancelledGameInfo.name}
           cancelledAt={cancelledGameInfo.cancelledAt}
           cancelledByUser={cancelledGameInfo.cancelledByUser ?? undefined}
+          levelSport={cancelledGameInfo.sport ? parseGameSport(cancelledGameInfo.sport) : undefined}
         />
       );
     }
@@ -1720,8 +1726,11 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     return null;
   };
 
+  const shellLevelSport = parseGameSport(game.sport);
+
   if (effectiveTableView && canViewTournamentTableByAccess(game, user)) {
     return (
+      <SportLevelProvider sport={shellLevelSport}>
       <>
           <ResultsTableView
             game={game}
@@ -1752,10 +1761,12 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
           <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
         </div>
       </>
+      </SportLevelProvider>
     );
   }
 
   return (
+    <SportLevelProvider sport={shellLevelSport}>
     <>
       <RefreshIndicator
         isRefreshing={isRefreshing}
@@ -1951,5 +1962,6 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
       </div>
       </div>
     </>
+    </SportLevelProvider>
   );
 };

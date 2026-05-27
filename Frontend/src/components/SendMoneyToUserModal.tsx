@@ -7,6 +7,7 @@ import { usersApi } from '@/api/users';
 import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
+import { useSportLevelContext } from '@/contexts/SportLevelContext';
 
 interface SendMoneyToUserModalProps {
   toUserId: string;
@@ -20,6 +21,7 @@ export const SendMoneyToUserModal = ({
   onTransferComplete,
 }: SendMoneyToUserModalProps) => {
   const { t } = useTranslation();
+  const contextLevelSport = useSportLevelContext();
   const [toUser, setToUser] = useState<any>(null);
   const [amount, setAmount] = useState(1);
   const [message, setMessage] = useState('');
@@ -43,7 +45,7 @@ export const SendMoneyToUserModal = ({
         setLoading(true);
         const [walletResponse, statsResponse] = await Promise.all([
           transactionsApi.getWallet(),
-          usersApi.getUserStats(toUserId),
+          usersApi.getUserStats(toUserId, contextLevelSport),
         ]);
         setWallet(walletResponse.data.wallet);
         setToUser(statsResponse.data.user);
@@ -56,7 +58,7 @@ export const SendMoneyToUserModal = ({
     };
 
     fetchData();
-  }, [toUserId, t]);
+  }, [toUserId, t, contextLevelSport]);
 
   const handleAmountSelect = (selectedAmount: number) => {
     const clampedAmount = Math.max(1, Math.min(selectedAmount, wallet));

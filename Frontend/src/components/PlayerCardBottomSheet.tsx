@@ -28,6 +28,8 @@ import { removeOverlay } from '@/utils/urlSchema';
 import { sharePlayerProfile } from '@/utils/sharePlayerProfile';
 import { PlayerCardProfileBody } from '@/components/player/PlayerCardProfileBody';
 import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionBar';
+import { useSportLevelContext } from '@/contexts/SportLevelContext';
+import { appendLevelSportQuery } from '@/utils/levelSportQuery';
 
 interface PlayerCardBottomSheetProps {
   playerId: string | null;
@@ -52,6 +54,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareModalUrl, setShareModalUrl] = useState('');
   const isCurrentUser = playerId === user?.id;
+  const contextLevelSport = useSportLevelContext();
   const navigatingToChatRef = useRef(false);
   const navigatingToFullProfileRef = useRef(false);
 
@@ -66,7 +69,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const statsResponse = await usersApi.getUserStats(playerId);
+        const statsResponse = await usersApi.getUserStats(playerId, contextLevelSport);
         setStats(statsResponse.data);
         if (user && !isCurrentUser) {
           const blocked = await blockedUsersApi.checkIfUserBlocked(playerId);
@@ -82,7 +85,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     };
 
     fetchStats();
-  }, [playerId, isCurrentUser, user]);
+  }, [playerId, isCurrentUser, user, contextLevelSport, t]);
 
   usePresenceSubscription('player-card', user && playerId && !isCurrentUser ? [playerId] : []);
 
@@ -123,13 +126,13 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const handleOpenFullProfile = useCallback(() => {
     if (!playerId || isCurrentUser) return;
     navigatingToFullProfileRef.current = true;
-    navigate(`/user-profile/${playerId}`);
+    navigate(appendLevelSportQuery(`/user-profile/${playerId}`, contextLevelSport));
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         onClose();
       });
     });
-  }, [playerId, isCurrentUser, navigate, onClose]);
+  }, [playerId, isCurrentUser, navigate, onClose, contextLevelSport]);
 
   const handleToggleFavorite = async () => {
     if (!playerId || !stats || isBlocked) return;
@@ -366,6 +369,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                             }}
                             onOpenGame={() => { markReopenOnBack(); handleClose(); }}
                             onMarketItemClick={(item) => { markReopenOnBack(); handleClose(); navigate(`/marketplace/${item.id}`); }}
+                            onStatsRefresh={setStats}
                           />
                         </motion.div>
                       )}

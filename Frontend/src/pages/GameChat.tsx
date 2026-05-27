@@ -51,6 +51,8 @@ import { useGameChatTranslationLive } from './GameChat/useGameChatTranslationLiv
 import { useGameChatChannelActivity } from './GameChat/useGameChatChannelActivity';
 import { markContextReadOnUserActivity } from '@/services/chat/unreadCoordinator';
 import { buildGameChatMarkReadParams } from '@/services/chat/gameChatMarkReadParams';
+import { parseGameSport } from '@/utils/gameSport';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
 
 export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: propChatId, chatType: propChatType }) => {
   const { t } = useTranslation();
@@ -658,7 +660,10 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     return <GameChatAccessDenied id={id} navigate={navigate} />;
   }
 
+  const chatLevelSport = contextType === 'GAME' && game ? parseGameSport(game.sport) : undefined;
+
   return (
+    <SportLevelProvider sport={chatLevelSport}>
     <>
       <div
         ref={chatContainerRef}
@@ -877,5 +882,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
         )}
       </div>
     </>
+    </SportLevelProvider>
   );
 };

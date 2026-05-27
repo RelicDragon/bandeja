@@ -8,6 +8,7 @@ import {
   passesInviteSportFilter,
   type InviteSportFilterValue,
 } from '@/utils/inviteSportFilter';
+import { getDisplayLevelForSport, getReliabilityForSport, getUserPrimarySport } from '@/utils/profileSports';
 
 export type InviteListEntry =
   | { kind: 'user'; id: string; user: BasicUser }
@@ -28,16 +29,17 @@ function projectedUserLookup(projectedUsers?: BasicUser[]): Map<string, BasicUse
   return new Map(projectedUsers.map((u) => [u.id, u]));
 }
 
-function memberLevel(u: BasicUser, lookup?: Map<string, BasicUser>): number {
-  const projected = lookup?.get(u.id);
-  if (projected) return typeof projected.level === 'number' ? projected.level : 0;
-  return typeof u.level === 'number' ? u.level : 0;
+function memberLevel(u: BasicUser, lookup?: Map<string, BasicUser>, sport?: Sport): number {
+  const src = lookup?.get(u.id) ?? u;
+  const resolvedSport = sport ?? getUserPrimarySport(src);
+  return getDisplayLevelForSport(src, resolvedSport);
 }
 
-function memberReliability(u: BasicUser, lookup?: Map<string, BasicUser>): number | undefined {
-  const projected = lookup?.get(u.id);
-  const rel = projected?.reliability ?? u.reliability;
-  return typeof rel === 'number' && Number.isFinite(rel) ? rel : undefined;
+function memberReliability(u: BasicUser, lookup?: Map<string, BasicUser>, sport?: Sport): number | undefined {
+  const src = lookup?.get(u.id) ?? u;
+  const resolvedSport = sport ?? getUserPrimarySport(src);
+  const rel = getReliabilityForSport(src, resolvedSport);
+  return Number.isFinite(rel) ? rel : undefined;
 }
 
 export function teamInteractionScore(
@@ -54,11 +56,11 @@ export function teamGamesTogetherScore(
   return acceptedMemberUsers(team).reduce((sum, u) => sum + (getUserMetadata(u.id)?.gamesTogetherCount ?? 0), 0);
 }
 
-export function teamAverageLevel(team: UserTeam, projectedUsers?: BasicUser[]): number {
+export function teamAverageLevel(team: UserTeam, projectedUsers?: BasicUser[], sport?: Sport): number {
   const lookup = projectedUserLookup(projectedUsers);
   const users = acceptedMemberUsers(team);
   if (users.length === 0) return 0;
-  const sum = users.reduce((s, u) => s + memberLevel(u, lookup), 0);
+  const sum = users.reduce((s, u) => s + memberLevel(u, lookup, sport), 0);
   return sum / users.length;
 }
 
@@ -69,11 +71,11 @@ export function teamAverageSocial(team: UserTeam): number {
   return sum / users.length;
 }
 
-export function teamAverageReliability(team: UserTeam, projectedUsers?: BasicUser[]): number | undefined {
+export function teamAverageReliability(team: UserTeam, projectedUsers?: BasicUser[], sport?: Sport): number | undefined {
   const lookup = projectedUserLookup(projectedUsers);
   const users = acceptedMemberUsers(team);
   if (users.length === 0) return undefined;
-  const rels = users.map((u) => memberReliability(u, lookup)).filter((r): r is number => r !== undefined);
+  const rels = users.map((u) => memberReliability(u, lookup, sport)).filter((r): r is number => r !== undefined);
   if (rels.length === 0) return undefined;
   return rels.reduce((a, b) => a + b, 0) / rels.length;
 }
@@ -173,7 +175,8 @@ export function filterAndSortInviteEntries(
   const [lMin, lMax] = opts.filters.levelRange;
   const [sMin, sMax] = opts.filters.socialRange;
   uList = uList.filter((p) => {
-    const lv = typeof p.level === 'number' ? p.level : 0;
+    const sport = opts.gameSport ?? getUserPrimarySport(p);
+    const lv = getDisplayLevelForSport(p, sport);
     const sv = typeof p.socialLevel === 'number' ? p.socialLevel : 0;
     return lv >= lMin && lv <= lMax && sv >= sMin && sv <= sMax;
   });
@@ -203,7 +206,7 @@ export function filterAndSortInviteEntries(
       tList = tList.filter((t) => teamMatchesSearch(t, opts.searchQuery));
     }
     tList = tList.filter((t) => {
-      const lv = teamAverageLevel(t, users);
+      const lv = teamAverageLevel(t, users, opts.gameSport);
       const sv = teamAverageSocial(t);
       return lv >= lMin && lv <= lMax && sv >= sMin && sv <= sMax;
     });

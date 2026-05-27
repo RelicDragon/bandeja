@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { PlayerAvatar } from '@/components';
 import { GameParticipant } from '@/types';
+import type { Sport } from '@shared/sport';
 import { useUnreadByUserIdBridge } from '@/hooks/useUnreadBridge';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -19,6 +20,7 @@ function ParticipantCarouselSlot({
   onTouchMove,
   onTouchEnd,
   showName,
+  levelSport,
 }: {
   participant: GameParticipant;
   propUnread?: number;
@@ -33,6 +35,7 @@ function ParticipantCarouselSlot({
   onTouchMove?: (e: TouchEvent) => void;
   onTouchEnd?: (e: TouchEvent) => void;
   showName?: boolean;
+  levelSport?: Sport;
 }) {
   const unreadCount = useUnreadByUserIdBridge(participant.userId, propUnread);
   const isDragged = draggedPlayerId === participant.user.id;
@@ -56,6 +59,7 @@ function ParticipantCarouselSlot({
         onTouchStart={draggable && onTouchStart ? (e) => onTouchStart(e, participant.user.id) : undefined}
         onTouchMove={draggable ? onTouchMove : undefined}
         onTouchEnd={draggable ? onTouchEnd : undefined}
+        levelSport={levelSport}
       />
       {unreadCount > 0 && (
         <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center border-2 border-white dark:border-gray-900">
@@ -88,6 +92,7 @@ interface PlayersCarouselProps {
   onTouchStart?: (e: TouchEvent, playerId: string) => void;
   onTouchMove?: (e: TouchEvent) => void;
   onTouchEnd?: (e: TouchEvent) => void;
+  levelSport?: Sport;
 }
 
 export const PlayersCarousel = ({
@@ -110,6 +115,7 @@ export const PlayersCarousel = ({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
+  levelSport,
 }: PlayersCarouselProps) => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
@@ -264,6 +270,7 @@ export const PlayersCarousel = ({
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
                 showName={autoHideNames ? ((isMobile && isScrolling) || isPressed) : undefined}
+                levelSport={levelSport}
               />
             ))}
             {emptySlots > 0 && Array.from({ length: emptySlots }).map((_, i) => (

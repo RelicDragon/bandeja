@@ -40,6 +40,7 @@ export const GameDetailsPage = () => {
   const [layoutCancelledInfo, setLayoutCancelledInfo] = useState<{
     entityType: string;
     name: string | null;
+    sport?: import('@/types').Sport;
     cancelledAt: string;
     cancelledByUser?: import('@/types').BasicUser | null;
   } | null>(null);
@@ -94,13 +95,14 @@ export const GameDetailsPage = () => {
         const variant = et === 'LEAGUE' || et === 'LEAGUE_SEASON' ? 'league' : 'game';
         setEntityRoute({ status: 'ready', variant, initialGame: data });
       })
-      .catch((err: { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } }) => {
+      .catch((err: { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; sport?: import('@/types').Sport; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } }) => {
         if (cancelled) return;
         if (err.response?.status === 410 && err.response?.data?.cancelled) {
           const d = err.response.data;
           setLayoutCancelledInfo({
             entityType: d?.entityType ?? 'GAME',
             name: d?.name ?? null,
+            sport: d?.sport,
             cancelledAt: d?.cancelledAt ?? new Date().toISOString(),
             cancelledByUser: d?.cancelledByUser ?? null,
           });

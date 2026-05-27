@@ -53,6 +53,7 @@ import {
   type InviteSportFilterValue,
 } from '@/utils/inviteSportFilter';
 import { listEnabledSports } from '@/utils/profileSports';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
 
 export interface PlayerListModalConfirmMeta {
   userTeamIdByReceiverId?: Record<string, string>;
@@ -559,6 +560,7 @@ export const PlayerListModal = ({
           availability={gameSlots ? userAvailabilityById.get(entry.user.id) : undefined}
           inviteTerminalMain={term?.main}
           inviteTerminalSub={term?.sub}
+          levelSport={gameSport}
         />
       );
     }
@@ -576,6 +578,7 @@ export const PlayerListModal = ({
   };
 
   return (
+    <SportLevelProvider sport={gameSport}>
     <Dialog open={isOpen} onClose={handleClose} modalId="player-list-modal">
       <DialogContent className="h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0">
         <DialogHeader className="flex-shrink-0 border-b border-gray-100/80 px-2.5 py-3 dark:border-gray-800/80">
@@ -779,5 +782,6 @@ export const PlayerListModal = ({
         )}
       </DialogContent>
     </Dialog>
+    </SportLevelProvider>
   );
 };

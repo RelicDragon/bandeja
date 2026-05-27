@@ -1,7 +1,9 @@
 import { Check, CalendarClock, CalendarX2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BasicUser } from '@/types';
+import type { Sport } from '@shared/sport';
 import { PlayerAvatar } from './PlayerAvatar';
+import { getDisplayLevelForSport, getReliabilityForSport, getUserPrimarySport } from '@/utils/profileSports';
 import { formatInviteStatsRows } from '@/components/playerInvite/formatInviteStatsLine';
 import type { GameAvailabilityMatch } from '@/utils/availability/gameMatch';
 
@@ -13,6 +15,7 @@ interface PlayerListItemProps {
   availability?: GameAvailabilityMatch;
   inviteTerminalMain?: string;
   inviteTerminalSub?: string;
+  levelSport?: Sport;
 }
 
 export function PlayerListItem({
@@ -23,9 +26,16 @@ export function PlayerListItem({
   availability,
   inviteTerminalMain,
   inviteTerminalSub,
+  levelSport,
 }: PlayerListItemProps) {
   const { t } = useTranslation();
-  const { levelRow, socialRow } = formatInviteStatsRows(t, player.level, player.socialLevel, player.reliability);
+  const sport = levelSport ?? getUserPrimarySport(player);
+  const { levelRow, socialRow } = formatInviteStatsRows(
+    t,
+    getDisplayLevelForSport(player, sport),
+    player.socialLevel,
+    getReliabilityForSport(player, sport),
+  );
 
   const dim = availability === 'none' || availability === 'partial';
   const availabilityLabel =
@@ -54,7 +64,7 @@ export function PlayerListItem({
           : 'hover:bg-gray-100 dark:hover:bg-white/5'
       } ${dim && !isSelected ? 'opacity-60' : ''}`}
     >
-      <PlayerAvatar player={player} showName={false} fullHideName smallLayout={false} extrasmall />
+      <PlayerAvatar player={player} showName={false} fullHideName smallLayout={false} extrasmall levelSport={sport} />
 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">

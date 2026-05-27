@@ -9,6 +9,8 @@ import { PlayerListModal } from './PlayerListModal';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { PlayerCardBottomSheet } from './PlayerCardBottomSheet';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
+import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
 
 interface WalletModalProps {
   onClose: () => void;
@@ -16,7 +18,9 @@ interface WalletModalProps {
 
 export const WalletModal = ({ onClose }: WalletModalProps) => {
   const { t, i18n } = useTranslation();
-  const userId = useAuthStore((state) => state.user?.id);
+  const authUser = useAuthStore((state) => state.user);
+  const userId = authUser?.id;
+  const walletLevelSport = resolveActivePrimarySport(authUser) ?? getUserPrimarySport(authUser);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,6 +128,7 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
   const walletOpen = !showPlayerList && !selectedPlayerId && !viewPlayerId;
 
   return (
+    <SportLevelProvider sport={walletLevelSport}>
     <>
       <Dialog open={walletOpen} onClose={onClose} modalId="wallet-modal">
         <DialogContent>
@@ -234,6 +239,7 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
           onConfirm={handlePlayerSelected}
           multiSelect={false}
           title={t('wallet.selectPlayer') || 'Select Player'}
+          gameSport={walletLevelSport}
         />
       )}
 
@@ -252,6 +258,7 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
         />
       )}
     </>
+    </SportLevelProvider>
   );
 };
 

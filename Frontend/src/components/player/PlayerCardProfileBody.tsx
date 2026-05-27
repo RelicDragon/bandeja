@@ -22,6 +22,7 @@ export interface PlayerCardProfileBodyProps {
   onTelegramClick: () => void;
   onOpenGame: () => void;
   onMarketItemClick?: (item: MarketItem) => void;
+  onStatsRefresh?: (stats: UserStats) => void;
 }
 
 export const PlayerCardProfileBody = ({
@@ -36,6 +37,7 @@ export const PlayerCardProfileBody = ({
   onTelegramClick,
   onOpenGame,
   onMarketItemClick,
+  onStatsRefresh,
 }: PlayerCardProfileBodyProps) => {
   const { user } = stats;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
@@ -97,8 +99,8 @@ export const PlayerCardProfileBody = ({
               </div>
             )}
             {user.isTrainer && (
-              <div className="flex items-center gap-1 mt-1 text-amber-300">
-                <TrainerRatingBadge trainer={user} size="sm" showReviewCount={true} onClick={onRatingClick} />
+              <div className="flex items-center gap-1 mt-1">
+                <TrainerRatingBadge trainer={user} size="sm" showReviewCount={true} onClick={onRatingClick} variant="onPrimary" />
               </div>
             )}
           </div>
@@ -130,7 +132,7 @@ export const PlayerCardProfileBody = ({
       {prependBeforeLevelHistory}
 
       <motion.div variants={itemVariants}>
-        <LevelHistoryView stats={stats} padding="p-0 -mt-2" tabDarkBgClass="dark:bg-gray-700/50" hideUserCard onOpenGame={onOpenGame} showItemsToSell onMarketItemClick={onMarketItemClick} />
+        <LevelHistoryView stats={stats} padding="p-0 -mt-2" tabDarkBgClass="dark:bg-gray-700/50" hideUserCard onOpenGame={onOpenGame} showItemsToSell onMarketItemClick={onMarketItemClick} onStatsRefresh={onStatsRefresh} />
       </motion.div>
     </motion.div>
   );

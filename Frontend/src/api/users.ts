@@ -316,8 +316,10 @@ export const usersApi = {
     return response.data;
   },
 
-  getPlayerComparison: async (otherUserId: string) => {
-    const response = await api.get<ApiResponse<PlayerComparison>>(`/users/compare/${otherUserId}`);
+  getPlayerComparison: async (otherUserId: string, sport?: Sport) => {
+    const params: Record<string, string> = {};
+    if (sport) params.sport = sport;
+    const response = await api.get<ApiResponse<PlayerComparison>>(`/users/compare/${otherUserId}`, { params });
     return response.data;
   },
 

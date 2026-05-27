@@ -688,6 +688,7 @@ model CancelledGame {
   id                 String     @id
   entityType         EntityType
   name               String?
+  sport              Sport      @default(PADEL)
   cancelledByUserId  String
   cancelledAt        DateTime   @default(now())
   cityId             String

@@ -1,9 +1,10 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { ImageProcessor } from '../../utils/imageProcessor';
-import { ParticipantRole } from '@prisma/client';
+import { ParticipantRole, Sport } from '@prisma/client';
 import notificationService from '../notification.service';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
+import { projectUserForSportContext } from '../user/userSportProfile.service';
 
 export class GameDeleteService {
   static async deleteGame(id: string, cancelledByUserId: string) {
@@ -13,6 +14,7 @@ export class GameDeleteService {
         id: true,
         entityType: true,
         name: true,
+        sport: true,
         cityId: true,
         startTime: true,
         mediaUrls: true,
@@ -60,6 +62,7 @@ export class GameDeleteService {
           id: game.id,
           entityType: game.entityType,
           name: game.name,
+          sport: game.sport ?? Sport.PADEL,
           cancelledByUserId,
           cityId: game.cityId,
           startTime: game.startTime,
@@ -70,16 +73,24 @@ export class GameDeleteService {
       }),
     ]);
 
-    const cancelledByUser = await prisma.user.findUnique({
+    const cancelledSport = game.sport ?? Sport.PADEL;
+    const cancelledByUserRaw = await prisma.user.findUnique({
       where: { id: cancelledByUserId },
-      select: USER_SELECT_FIELDS,
+      select: {
+        ...USER_SELECT_FIELDS,
+        sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
+      },
     });
+    const cancelledByUser = cancelledByUserRaw
+      ? projectUserForSportContext(cancelledByUserRaw, cancelledSport)
+      : undefined;
     const cancelledMeta = {
       gameId: id,
       entityType: game.entityType,
       name: game.name ?? undefined,
+      sport: cancelledSport,
       cancelledAt: new Date().toISOString(),
-      cancelledByUser: cancelledByUser ?? undefined,
+      cancelledByUser,
     };
     try {
       await notificationService.sendGameCancelledNotification(cancelledMeta, uniqueRecipientIds);

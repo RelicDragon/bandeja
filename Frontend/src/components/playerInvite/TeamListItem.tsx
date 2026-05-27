@@ -10,6 +10,7 @@ import {
 } from '@/components/playerInvite/inviteEntries';
 import { formatInviteStatsRows } from '@/components/playerInvite/formatInviteStatsLine';
 import type { GameAvailabilityMatch } from '@/utils/availability/gameMatch';
+import { useSportLevelContext } from '@/contexts/SportLevelContext';
 
 interface TeamListItemProps {
   team: UserTeam;
@@ -23,14 +24,15 @@ interface TeamListItemProps {
 
 export function TeamListItem({ team, members, isSelected, gamesTogetherCount, onSelect, availability, projectedPlayers }: TeamListItemProps) {
   const { t } = useTranslation();
+  const levelSport = useSportLevelContext();
   const label = members.map((m) => m.firstName || '').filter(Boolean).join(' · ') || team.name;
   const teamVerbal = team.verbalStatus?.trim() || '';
   const { levelRow, socialRow } = useMemo(() => {
-    const lvl = teamAverageLevel(team, projectedPlayers);
+    const lvl = teamAverageLevel(team, projectedPlayers, levelSport);
     const soc = teamAverageSocial(team);
-    const rel = teamAverageReliability(team, projectedPlayers);
+    const rel = teamAverageReliability(team, projectedPlayers, levelSport);
     return formatInviteStatsRows(t, lvl, soc, rel);
-  }, [team, t, projectedPlayers]);
+  }, [team, t, projectedPlayers, levelSport]);
 
   const dim = availability === 'none' || availability === 'partial';
   const availabilityLabel =

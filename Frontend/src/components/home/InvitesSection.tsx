@@ -8,6 +8,7 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { useAuthStore } from '@/store/authStore';
 import { SportQuestionnaireInviteNudge } from '@/components/sportQuestionnaire';
 import { parseGameSport } from '@/utils/gameSport';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
 
 interface InvitesSectionProps {
   invites: Invite[];
@@ -63,9 +64,11 @@ export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: In
         {invites.map((invite) => {
           const gameId = invite.gameId;
 
+          const inviteLevelSport = invite.game?.sport ? parseGameSport(invite.game.sport) : undefined;
+
           return (
+            <SportLevelProvider key={invite.id} sport={inviteLevelSport}>
             <Card
-              key={invite.id}
               className={`p-4 cursor-pointer hover:shadow-lg transition-all duration-300 ${bounceNotifications ? 'animate-[pulse_0.4s_ease-in-out_3] bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700' : ''} ${hidingInvites.has(invite.id) ? 'animate-[fadeOutUp_0.3s_ease-out_forwards] opacity-0 transform -translate-y-4' : 'opacity-100'}`}
               onClick={() => gameId && navigate(`/games/${gameId}`)}
               onAnimationEnd={() => hidingInvites.has(invite.id) && handleHideAnimationEnd(invite.id)}
@@ -148,6 +151,7 @@ export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: In
                 </div>
               </div>
             </Card>
+            </SportLevelProvider>
           );
         })}
       </div>

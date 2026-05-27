@@ -3,7 +3,7 @@ import { PlayerCardModalContext } from '@/contexts/PlayerCardModalContext';
 
 interface PlayerCardModalProviderProps {
   children: ReactNode;
-  openPlayerCard: (playerId: string) => void;
+  openPlayerCard: (playerId: string, levelSport?: import('@shared/sport').Sport) => void;
   closePlayerCard: () => void;
 }
 

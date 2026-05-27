@@ -7,10 +7,16 @@ import { verifyToken } from '../utils/jwt';
 type RedisPubSubClient = ReturnType<typeof createClient>;
 import prisma from '../config/database';
 import { MessageService } from './chat/message.service';
-import { USER_SELECT_FIELDS } from '../utils/constants';
 import { GameReadService } from './game/read.service';
-import { ChatContextType, ChatType } from '@prisma/client';
+import { ChatContextType, ChatType, Sport } from '@prisma/client';
 import { presenceService } from './presence.service';
+import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
+import { projectUserForSportContext } from './user/userSportProfile.service';
+
+const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
+  ...USER_SELECT_FIELDS,
+  sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
+} as const;
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -180,19 +186,30 @@ class SocketService {
         if (!game) {
           const cancelled = await prisma.cancelledGame.findUnique({
             where: { id: gameId },
-            select: { entityType: true, name: true, cancelledAt: true, cancelledByUserId: true },
+            select: {
+              entityType: true,
+              name: true,
+              sport: true,
+              cancelledAt: true,
+              cancelledByUserId: true,
+            },
           });
           if (cancelled) {
-            const cancelledByUser = await prisma.user.findUnique({
+            const cancelledSport = cancelled.sport ?? Sport.PADEL;
+            const cancelledByUserRaw = await prisma.user.findUnique({
               where: { id: cancelled.cancelledByUserId },
-              select: USER_SELECT_FIELDS,
+              select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
             });
+            const cancelledByUser = cancelledByUserRaw
+              ? projectUserForSportContext(cancelledByUserRaw, cancelledSport)
+              : undefined;
             socket.emit('game-cancelled', {
               gameId,
               entityType: cancelled.entityType,
               name: cancelled.name ?? undefined,
+              sport: cancelledSport,
               cancelledAt: cancelled.cancelledAt.toISOString(),
-              cancelledByUser: cancelledByUser ?? undefined,
+              cancelledByUser,
             });
             return;
           }

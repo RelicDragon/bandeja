@@ -473,19 +473,30 @@ export class GameReadService {
     if (!game) {
       const cancelled = await prisma.cancelledGame.findUnique({
         where: { id },
-        select: { entityType: true, name: true, cancelledAt: true, cancelledByUserId: true },
+        select: {
+          entityType: true,
+          name: true,
+          sport: true,
+          cancelledAt: true,
+          cancelledByUserId: true,
+        },
       });
       if (cancelled) {
-        const cancelledByUser = await prisma.user.findUnique({
+        const cancelledSport = cancelled.sport ?? Sport.PADEL;
+        const cancelledByUserRaw = await prisma.user.findUnique({
           where: { id: cancelled.cancelledByUserId },
           select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
         });
+        const cancelledByUser = cancelledByUserRaw
+          ? projectUserForSportContext(cancelledByUserRaw, cancelledSport)
+          : undefined;
         throw new ApiError(410, 'Game cancelled by owner', true, {
           cancelled: true,
           entityType: cancelled.entityType,
           name: cancelled.name,
+          sport: cancelledSport,
           cancelledAt: cancelled.cancelledAt.toISOString(),
-          cancelledByUser: cancelledByUser ?? undefined,
+          cancelledByUser,
         });
       }
       throw new ApiError(404, 'Game not found');

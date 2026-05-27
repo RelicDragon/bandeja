@@ -2,7 +2,7 @@ import { Camera, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components';
 import type { GamePhoto } from '@/api/gamePhotos';
-import { gamePhotoUrl } from '@/utils/gamePhotoUrl';
+import { gamePhotoThumbnailUrl } from '@/utils/gamePhotoUrl';
 
 type PhotosSectionGridProps = {
   photos: GamePhoto[];
@@ -53,7 +53,7 @@ export const PhotosSectionGrid = ({
                     onClick={() => onImageClick(index)}
                   >
                     <img
-                      src={gamePhotoUrl(photo)}
+                      src={gamePhotoThumbnailUrl(photo)}
                       alt={`Photo ${index + 1}`}
                       className="w-full h-full object-cover"
                       loading="lazy"

@@ -13,6 +13,8 @@ import { useNetworkStore } from '@/utils/networkStatus';
 import { useWakeScreenForLiveScoring } from '@/hooks/useWakeScreenForLiveScoring';
 import { parseMatchLiveEnvelope } from '@/types/matchLiveScoring';
 import { resolvePlayersPerMatchForGame } from '@/utils/matchFormat';
+import { parseGameSport } from '@/utils/gameSport';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import {
   applyOptionalDeciderFormat,
   clearTimedClassicSetLock,
@@ -406,7 +408,10 @@ export const GameLiveMatchPage = () => {
     );
   }
 
+  const liveLevelSport = game ? parseGameSport(game.sport) : undefined;
+
   return (
+    <SportLevelProvider sport={liveLevelSport}>
     <div
       className={shellClass}
       onPointerDown={tv ? bumpTvChrome : undefined}
@@ -575,5 +580,6 @@ export const GameLiveMatchPage = () => {
         </div>
       ) : null}
     </div>
+    </SportLevelProvider>
   );
 };

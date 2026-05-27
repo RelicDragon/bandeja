@@ -19,7 +19,8 @@ import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { FiltersPanel } from './FiltersPanel';
 import { passesAvailableGamePanelFilters } from '@/utils/availableGamePanelFilters';
 import { parseGameSport } from '@/utils/gameSport';
-import { getViewerPrimarySport, isFindSportFilterActive } from '@/utils/findSportFilter';
+import { getViewerPrimarySport, isFindSportFilterActive, resolveFindLevelFilterSport } from '@/utils/findSportFilter';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { getDisplayLevelForSport, listEnabledSports } from '@/utils/profileSports';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 
@@ -104,6 +105,10 @@ export const AvailableGamesSection = ({
   const showPrivateGamesVal = externalFilters?.showPrivateGames ?? showPrivateGames;
   const isAdmin = Boolean(user?.isAdmin);
   const viewerPrimarySport = useMemo(() => getViewerPrimarySport(user), [user]);
+  const findLevelSport = useMemo(
+    () => resolveFindLevelFilterSport(filterSportVal, viewerPrimarySport),
+    [filterSportVal, viewerPrimarySport],
+  );
 
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
@@ -685,6 +690,7 @@ export const AvailableGamesSection = ({
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
   if (splitView && findViewMode === 'calendar') {
     return (
+      <SportLevelProvider sport={findLevelSport}>
       <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
         <ResizableSplitter
           defaultLeftWidth={35}
@@ -694,7 +700,7 @@ export const AvailableGamesSection = ({
             <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
               <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
                 {filterBlock}
-                <TrainersList show={trainingFilterVal} availableGames={availableGames} />
+                <TrainersList show={trainingFilterVal} availableGames={availableGames} levelSport={findLevelSport} />
                 <MonthCalendar
                   selectedDate={selectedDate}
                   onDateSelect={handleDateSelect}
@@ -772,13 +778,15 @@ export const AvailableGamesSection = ({
           selectedId={user?.currentCity?.id}
         />
       </div>
+      </SportLevelProvider>
     );
   }
 
   return (
+    <SportLevelProvider sport={findLevelSport}>
     <div className="mt-2">
       {filterBlock}
-      <TrainersList show={trainingFilterVal} availableGames={availableGames} />
+      <TrainersList show={trainingFilterVal} availableGames={availableGames} levelSport={findLevelSport} />
 
       {loading && availableGames.length === 0 ? (
         <Card className="flex items-center justify-center py-12">
@@ -895,5 +903,6 @@ export const AvailableGamesSection = ({
         selectedId={user?.currentCity?.id}
       />
     </div>
+    </SportLevelProvider>
   );
 };
