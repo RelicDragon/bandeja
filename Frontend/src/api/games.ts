@@ -233,20 +233,37 @@ export const gamesApi = {
     return response.data;
   },
 
-  prepareResultsArtifacts: async (id: string) => {
+  prepareResultsArtifactSummary: async (id: string) => {
     const response = await api.post<
       ApiResponse<{
         resultsArtifacts: Game['resultsArtifacts'];
         resultsSummaryText: string | null;
+        photosCount?: number;
+        mainPhotoId?: string | null;
       }>
-    >(`/games/${id}/prepare-results-artifacts`);
+    >(`/games/${id}/prepare-results-artifacts/summary`);
+    return response.data;
+  },
+
+  prepareResultsArtifactPhoto: async (id: string) => {
+    const response = await api.post<
+      ApiResponse<{
+        resultsArtifacts: Game['resultsArtifacts'];
+        resultsSummaryText: string | null;
+        photosCount?: number;
+        mainPhotoId?: string | null;
+      }>
+    >(`/games/${id}/prepare-results-artifacts/photo`);
     return response.data;
   },
 
   getResultsArtifactsStatus: async (id: string) => {
-    const response = await api.get<ApiResponse<NonNullable<Game['resultsArtifacts']>>>(
-      `/games/${id}/results-artifacts-status`
-    );
+    const response = await api.get<
+      ApiResponse<{
+        artifacts: NonNullable<Game['resultsArtifacts']>;
+        resultsSummaryText: string | null;
+      }>
+    >(`/games/${id}/results-artifacts-status`);
     return response.data;
   },
 

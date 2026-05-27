@@ -12,6 +12,7 @@ import { logResultsArtifact } from './gameResultsArtifact.log';
 import { isResultsArtifactsReady } from './gameResultsArtifact.readiness';
 import { loadGameForResultsSummary } from './gameResultsArtifact.loadGame';
 import { GameResultsArtifactQueueService } from './gameResultsArtifactQueue.service';
+import { MAX_ARTIFACT_PHOTO_GENERATIONS } from './gameResultsArtifact.photoLimit';
 import { PhotoProvider } from './providers/photo.provider';
 import { SummaryProvider } from './providers/summary.provider';
 
@@ -115,6 +116,7 @@ export class GameResultsArtifactService {
         durationMs: Date.now() - startedAt,
         status: 'done',
       });
+      void emitGameUpdateAfterArtifactsChange(job.gameId);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       await prisma.gameResultsArtifactJob.update({
@@ -173,6 +175,17 @@ export class GameResultsArtifactService {
       return;
     }
 
+    if (job.photoGenerationsUsed >= MAX_ARTIFACT_PHOTO_GENERATIONS) {
+      await prisma.gameResultsArtifactJob.update({
+        where: { id: jobId },
+        data: {
+          photoStatus: 'failed',
+          photoError: `Photo generation limit reached (${MAX_ARTIFACT_PHOTO_GENERATIONS} per game)`,
+        },
+      });
+      return;
+    }
+
     try {
       if (job.replicatePredictionId) {
         const prediction = await PhotoProvider.getPrediction(job.replicatePredictionId);
@@ -180,7 +193,10 @@ export class GameResultsArtifactService {
         return;
       }
 
-      const prediction = await PhotoProvider.startPrediction(job.gameId);
+      const prediction = await PhotoProvider.startPrediction(
+        job.gameId,
+        job.generationVersion
+      );
       await prisma.gameResultsArtifactJob.update({
         where: { id: jobId },
         data: {
@@ -274,6 +290,17 @@ export class GameResultsArtifactService {
     const job = await prisma.gameResultsArtifactJob.findUnique({ where: { id: jobId } });
     if (!job || terminalPhoto(job.photoStatus)) return;
 
+    if (job.photoGenerationsUsed >= MAX_ARTIFACT_PHOTO_GENERATIONS) {
+      await prisma.gameResultsArtifactJob.update({
+        where: { id: jobId },
+        data: {
+          photoStatus: 'failed',
+          photoError: `Photo generation limit reached (${MAX_ARTIFACT_PHOTO_GENERATIONS} per game)`,
+        },
+      });
+      return;
+    }
+
     const buffer = await PhotoProvider.downloadOutputBuffer(prediction);
     const dto = await GamePhotoCreateService.createFromGeneratedBuffer(
       gameId,
@@ -287,11 +314,16 @@ export class GameResultsArtifactService {
 
     await prisma.gameResultsArtifactJob.update({
       where: { id: jobId },
-      data: { photoStatus: 'done', photoError: null },
+      data: {
+        photoStatus: 'done',
+        photoError: null,
+        photoGenerationsUsed: { increment: 1 },
+      },
     });
 
     const actorUserId = await this.resolvePhotoActorUserId(gameId);
     await emitGamePhotoAdded(gameId, dto, actorUserId);
+    void emitGameUpdateAfterArtifactsChange(gameId);
   }
 
   private static async resolvePhotoActorUserId(gameId: string): Promise<string> {

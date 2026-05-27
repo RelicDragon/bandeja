@@ -1,4 +1,5 @@
 import type { Game, GameResultsArtifacts, GameResultsArtifactsStatus } from '@/types';
+import { isUserGameAdminOrOwner, isUserGameParticipant } from '@/utils/gameResults';
 
 const ARTIFACT_STATUSES: GameResultsArtifactsStatus[] = [
   'none',
@@ -15,27 +16,33 @@ function normalizeArtifactsStatus(raw: unknown): GameResultsArtifactsStatus {
   return 'none';
 }
 
+const DEFAULT_PHOTO_GENERATIONS_MAX = 3;
+
 export function normalizeGameResultsArtifacts(raw: unknown): GameResultsArtifacts | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const o = raw as Record<string, unknown>;
+  const used =
+    typeof o.photoGenerationsUsed === 'number' ? o.photoGenerationsUsed : 0;
+  const max =
+    typeof o.photoGenerationsMax === 'number'
+      ? o.photoGenerationsMax
+      : DEFAULT_PHOTO_GENERATIONS_MAX;
+  const remaining =
+    typeof o.photoGenerationsRemaining === 'number'
+      ? o.photoGenerationsRemaining
+      : Math.max(0, max - used);
   return {
     status: normalizeArtifactsStatus(o.status),
     version: typeof o.version === 'number' ? o.version : 0,
     summaryReady: o.summaryReady === true,
     photoReady: o.photoReady === true,
+    photoInFlight: o.photoInFlight === true,
+    photoGenerationsUsed: used,
+    photoGenerationsRemaining: remaining,
+    photoGenerationsMax: max,
     readyAt: typeof o.readyAt === 'string' ? o.readyAt : null,
   };
 }
-
-export type TelegramResultsCta = 'send' | 'prepare' | 'preparing';
-
-/** @deprecated Use resolveTelegramResultsCta */
-export type ResultsArtifactsTelegramUiState =
-  | 'ready'
-  | 'preparing'
-  | 'failed_degraded'
-  | 'failed'
-  | 'waiting';
 
 export function hasCachedResultsSummary(resultsSummaryText?: string | null): boolean {
   return Boolean(resultsSummaryText?.trim());
@@ -48,8 +55,28 @@ export function hasGamePhotoForTelegram(game: {
   return (game.photosCount || 0) > 0 || Boolean(game.mainPhotoId);
 }
 
-export function areArtifactsPipelineComplete(artifacts?: GameResultsArtifacts | null): boolean {
-  return Boolean(artifacts?.readyAt);
+/** True when the game has finalized results suitable for Telegram delivery. */
+export function hasEnteredResultsForTelegram(game: {
+  resultsStatus?: string;
+  outcomes?: unknown[] | null;
+}): boolean {
+  if (game.resultsStatus === 'FINAL') return true;
+  return Boolean(game.outcomes && game.outcomes.length > 0);
+}
+
+/** Matches backend canAccessGameIncludingArchived for artifact/Telegram actions. */
+export function canAccessResultsTelegramActions(
+  game: Game | null | undefined,
+  user: { id: string; isAdmin?: boolean } | null | undefined
+): boolean {
+  if (!game || !user) return false;
+  if (game.resultsStatus !== 'FINAL') return false;
+  if (!game.city?.telegramGroupId) return false;
+  return (
+    user.isAdmin === true ||
+    isUserGameAdminOrOwner(game, user.id) ||
+    isUserGameParticipant(game, user.id)
+  );
 }
 
 export function isSummaryReadyForTelegram(
@@ -59,110 +86,47 @@ export function isSummaryReadyForTelegram(
   return hasSummaryText || artifacts?.summaryReady === true;
 }
 
-/** Job photo step done, or a photo is already on the game (e.g. AI photo before job finalizes). */
 export function isPhotoReadyForTelegram(
-  artifacts?: GameResultsArtifacts | null,
+  _artifacts?: GameResultsArtifacts | null,
   hasGamePhoto = false
 ): boolean {
-  return hasGamePhoto || artifacts?.photoReady === true;
+  return hasGamePhoto;
+}
+
+export function canShowPhotoGenerationAction(
+  artifacts?: GameResultsArtifacts | null
+): boolean {
+  const remaining = artifacts?.photoGenerationsRemaining ?? DEFAULT_PHOTO_GENERATIONS_MAX;
+  const inFlight = artifacts?.photoInFlight === true;
+  return remaining > 0 && !inFlight;
 }
 
 export function isArtifactJobActive(artifacts?: GameResultsArtifacts | null): boolean {
   return artifacts?.status === 'pending' || artifacts?.status === 'running';
 }
 
-/**
- * Send: pipeline ready, or summary+photo satisfied (incl. photo on game while job runs),
- * or no job but game already has photo + summary.
- * Prepare: (re)start artifact generation.
- * Preparing: job running and summary or photo still missing from UI perspective.
- */
-export function resolveTelegramResultsCta(
-  artifacts?: GameResultsArtifacts | null,
-  opts: { hasSummaryText: boolean; hasGamePhoto: boolean } = {
-    hasSummaryText: false,
-    hasGamePhoto: false,
-  }
-): TelegramResultsCta {
-  const summaryReady = isSummaryReadyForTelegram(artifacts, opts.hasSummaryText);
-  const photoReady = isPhotoReadyForTelegram(artifacts, opts.hasGamePhoto);
-
-  if (areArtifactsPipelineComplete(artifacts)) {
-    return 'send';
-  }
-
-  if (summaryReady && photoReady) {
-    return 'send';
-  }
-
-  if ((!artifacts || artifacts.status === 'none') && opts.hasGamePhoto && summaryReady) {
-    return 'send';
-  }
-
-  if (artifacts?.status === 'failed') {
-    return summaryReady && photoReady ? 'send' : 'prepare';
-  }
-
-  if (isArtifactJobActive(artifacts)) {
-    if (!summaryReady || !photoReady) {
-      return 'preparing';
-    }
-    return 'send';
-  }
-
-  return 'prepare';
-}
-
-/** @deprecated Use resolveTelegramResultsCta */
-export function resolveResultsArtifactsTelegramUiState(
-  artifacts?: GameResultsArtifacts | null,
-  hasSummaryText = false,
-  hasGamePhoto = false
-): ResultsArtifactsTelegramUiState {
-  const cta = resolveTelegramResultsCta(artifacts, {
-    hasSummaryText,
-    hasGamePhoto,
-  });
-  if (cta === 'send') return 'ready';
-  if (cta === 'preparing') return 'preparing';
-  if (artifacts?.status === 'failed' && isSummaryReadyForTelegram(artifacts, hasSummaryText)) {
-    return 'failed_degraded';
-  }
-  if (artifacts?.status === 'failed') return 'failed';
-  return 'waiting';
-}
-
-export function isResultsArtifactsPreparing(
-  artifacts?: GameResultsArtifacts | null,
-  hasSummaryText = false,
-  hasGamePhoto = false
-): boolean {
-  return (
-    resolveTelegramResultsCta(artifacts, { hasSummaryText, hasGamePhoto }) === 'preparing'
-  );
-}
-
-export function canSendResultsToTelegram(
-  artifacts?: GameResultsArtifacts | null,
-  hasSummaryText = false,
-  hasGamePhoto = false
-): boolean {
-  return resolveTelegramResultsCta(artifacts, { hasSummaryText, hasGamePhoto }) === 'send';
-}
-
-export function isResultsArtifactsReadyForTelegram(
-  artifacts?: GameResultsArtifacts | null,
-  hasSummaryText = false,
-  hasGamePhoto = false
-): boolean {
-  return canSendResultsToTelegram(artifacts, hasSummaryText, hasGamePhoto);
-}
-
-export function isResultsArtifactsFailed(
+export function isSummaryArtifactGenerating(
   artifacts?: GameResultsArtifacts | null,
   hasSummaryText = false
 ): boolean {
-  return artifacts?.status === 'failed' && !isSummaryReadyForTelegram(artifacts, hasSummaryText);
+  if (!isArtifactJobActive(artifacts)) return false;
+  return !isSummaryReadyForTelegram(artifacts, hasSummaryText);
+}
+
+export function isPhotoArtifactGenerating(
+  artifacts?: GameResultsArtifacts | null
+): boolean {
+  return artifacts?.photoInFlight === true;
+}
+
+export function isAnyArtifactGenerating(
+  artifacts?: GameResultsArtifacts | null,
+  opts: { hasSummaryText?: boolean; hasGamePhoto?: boolean } = {}
+): boolean {
+  return (
+    isSummaryArtifactGenerating(artifacts, opts.hasSummaryText) ||
+    isPhotoArtifactGenerating(artifacts)
+  );
 }
 
 export function mergeGameResultsArtifactsFields(prev: Game, next: Game): Game {

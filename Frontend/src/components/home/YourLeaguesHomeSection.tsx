@@ -161,8 +161,12 @@ export function YourLeaguesHomeSection({
               );
               const scheduledGames = scheduledGamesByHub[hub.hubId] ?? [];
               const unscheduledGames = unscheduledGamesByHub[hub.hubId] ?? [];
+              const hubShellClass = hub.stalePastSchedule
+                ? 'overflow-hidden rounded-xl border border-amber-500/80 bg-amber-50/50 dark:border-amber-600/60 dark:bg-amber-950/20'
+                : 'overflow-hidden rounded-xl border border-gray-200/80 bg-gray-50/50 dark:border-gray-700/80 dark:bg-gray-800/30';
+
               return (
-                <div key={hub.hubId} className="flex flex-col gap-1.5">
+                <div key={hub.hubId} className={hubShellClass}>
                   <YourLeaguesHomeSeasonOpenRow
                     hub={hub}
                     hubGame={hubGame}
@@ -178,7 +182,7 @@ export function YourLeaguesHomeSection({
                       gridTemplateRows: isLeagueBodyExpanded(hub.hubId) ? '1fr' : '0fr',
                     }}
                   >
-                    <div className="flex min-h-0 flex-col gap-1.5 overflow-hidden">
+                    <div className="flex min-h-0 flex-col overflow-hidden">
                       <YourLeaguesHomeSeasonScheduledGamesExpandable
                         hubGames={scheduledGames}
                         gamesUnreadCounts={gamesUnreadCounts}

@@ -26,20 +26,23 @@ export function YourLeaguesHomeSeasonScheduledGamesExpandable({
   if (hubGames.length === 0) return null;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50/90 dark:border-gray-700 dark:bg-gray-800/50">
+    <div className="border-t border-gray-200/80 dark:border-gray-700/80">
       <button
         type="button"
         onClick={onToggleExpanded}
         aria-expanded={expanded}
-        className="flex w-full items-center gap-2 px-2 py-2 text-left transition-colors hover:bg-gray-100/90 active:bg-gray-200/80 dark:hover:bg-gray-700/60 dark:active:bg-gray-700"
+        className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-gray-100/80 active:bg-gray-100 dark:hover:bg-gray-800/60 dark:active:bg-gray-800"
       >
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white text-gray-600 shadow-sm dark:bg-gray-900 dark:text-gray-300">
-          <List size={15} strokeWidth={2} aria-hidden />
-        </div>
-        <span className="min-w-0 flex-1 text-xs font-medium text-gray-700 dark:text-gray-200">
+        <List
+          size={14}
+          strokeWidth={2}
+          className="shrink-0 text-gray-500 dark:text-gray-400"
+          aria-hidden
+        />
+        <span className="min-w-0 flex-1 text-xs font-medium text-gray-600 dark:text-gray-300">
           {t(titleKey)}
         </span>
-        <span className="shrink-0 rounded-full bg-gray-200/90 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-gray-700 dark:bg-gray-600/80 dark:text-gray-100">
+        <span className="inline-flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full bg-gray-900/5 px-1.5 text-[10px] font-semibold tabular-nums text-gray-600 dark:bg-white/10 dark:text-gray-300">
           {hubGames.length}
         </span>
         <ChevronDown
@@ -52,11 +55,11 @@ export function YourLeaguesHomeSeasonScheduledGamesExpandable({
         />
       </button>
       <div
-        className="grid border-t border-gray-200 transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none dark:border-gray-700"
+        className="grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none"
         style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className="flex flex-col gap-0.5 px-1.5 pb-2 pt-1">
+          <div className="flex flex-col gap-0.5 border-t border-gray-200/60 px-1 pb-1.5 pt-0.5 dark:border-gray-700/60">
             {hubGames.map((g) => (
               <YourLeaguesHomeLeagueGameRow
                 key={g.id}

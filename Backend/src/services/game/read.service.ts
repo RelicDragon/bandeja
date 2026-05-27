@@ -242,6 +242,7 @@ export const getBaseGameInclude = () => ({
       status: true,
       summaryStatus: true,
       photoStatus: true,
+      photoGenerationsUsed: true,
     },
   },
 });
@@ -354,6 +355,7 @@ const getAvailableGamesInclude = () => ({
       status: true,
       summaryStatus: true,
       photoStatus: true,
+      photoGenerationsUsed: true,
     },
   },
 });

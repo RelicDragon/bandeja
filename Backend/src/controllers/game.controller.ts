@@ -10,12 +10,17 @@ import { BookedCourtsService } from '../services/game/bookedCourts.service';
 import { LeagueAssignService } from '../services/league/assign.service';
 import { ResultsTelegramService } from '../services/telegram/results-telegram.service';
 import { config } from '../config/env';
-import { isArtifactSummaryGenerating } from '../services/gameResultsArtifact/gameResultsArtifact.jobStatus';
+import {
+  isArtifactPhotoGenerating,
+  isArtifactSummaryGenerating,
+} from '../services/gameResultsArtifact/gameResultsArtifact.jobStatus';
 import { generateResultsImage } from '../services/telegram/results-image.service';
 import telegramBotService from '../services/telegram/bot.service';
 import { getGameInclude, projectGameUsersForSportContext } from '../services/game/read.service';
 import { buildResultsArtifactsDto } from '../services/gameResultsArtifact/gameResultsArtifact.dto';
 import { GameResultsArtifactQueueService } from '../services/gameResultsArtifact/gameResultsArtifactQueue.service';
+import { assertPhotoGenerationsAvailable } from '../services/gameResultsArtifact/gameResultsArtifact.photoLimit';
+import { clearAiGeneratedPhotosForRegeneration } from '../services/gamePhoto/gamePhoto.clearAiForRegeneration.service';
 import prisma from '../config/database';
 import { GameWorkoutService } from '../services/game/gameWorkout.service';
 import { GameReactionService } from '../services/game/gameReaction.service';
@@ -42,22 +47,14 @@ export const getGameById = asyncHandler(async (req: AuthRequest, res: Response) 
   });
 });
 
-export const prepareResultsArtifacts = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { id } = req.params;
-
-  if (!req.userId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
-
-  if (!config.resultsArtifacts.enabled) {
-    throw new ApiError(503, 'Results artifacts are not enabled');
-  }
-
-  const game = await prisma.game.findUnique({
-    where: { id },
+async function loadGameForArtifactPrepare(gameId: string) {
+  return prisma.game.findUnique({
+    where: { id: gameId },
     select: {
+      status: true,
       resultsStatus: true,
       resultsSentToTelegram: true,
+      photosCount: true,
       resultsArtifactsVersion: true,
       resultsArtifactsReadyAt: true,
       resultsSummaryText: true,
@@ -66,36 +63,28 @@ export const prepareResultsArtifacts = asyncHandler(async (req: AuthRequest, res
           status: true,
           summaryStatus: true,
           photoStatus: true,
+          photoGenerationsUsed: true,
         },
       },
     },
   });
+}
 
-  if (!game) {
-    throw new ApiError(404, 'Game not found');
-  }
-
-  if (game.resultsStatus !== 'FINAL') {
-    throw new ApiError(400, 'Game results must be finalized before preparing artifacts');
-  }
-
-  if (game.resultsSentToTelegram) {
-    throw new ApiError(400, 'Results have already been sent to Telegram');
-  }
-
-  await GameResultsArtifactQueueService.enqueue(id);
-
+async function respondAfterArtifactPrepare(gameId: string, res: Response) {
   const updated = await prisma.game.findUnique({
-    where: { id },
+    where: { id: gameId },
     select: {
       resultsArtifactsVersion: true,
       resultsArtifactsReadyAt: true,
       resultsSummaryText: true,
+      photosCount: true,
+      mainPhotoId: true,
       resultsArtifactJob: {
         select: {
           status: true,
           summaryStatus: true,
           photoStatus: true,
+          photoGenerationsUsed: true,
         },
       },
     },
@@ -110,9 +99,84 @@ export const prepareResultsArtifacts = asyncHandler(async (req: AuthRequest, res
     data: {
       resultsArtifacts: buildResultsArtifactsDto(updated),
       resultsSummaryText: updated.resultsSummaryText,
+      photosCount: updated.photosCount,
+      mainPhotoId: updated.mainPhotoId,
     },
     serverTime: new Date().toISOString(),
   });
+}
+
+export const prepareResultsArtifactSummary = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!config.resultsArtifacts.enabled) {
+    throw new ApiError(503, 'Results artifacts are not enabled');
+  }
+
+  const game = await loadGameForArtifactPrepare(id);
+
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+
+  if (game.resultsStatus !== 'FINAL') {
+    throw new ApiError(400, 'Game results must be finalized before preparing artifacts');
+  }
+
+  if (game.resultsSentToTelegram) {
+    throw new ApiError(400, 'Results have already been sent to Telegram');
+  }
+
+  if (isArtifactSummaryGenerating(game.resultsArtifactJob)) {
+    throw new ApiError(409, 'Summary generation is already in progress');
+  }
+
+  await GameResultsArtifactQueueService.enqueueStep(id, 'summary');
+  await respondAfterArtifactPrepare(id, res);
+});
+
+export const prepareResultsArtifactPhoto = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  if (!config.resultsArtifacts.enabled) {
+    throw new ApiError(503, 'Results artifacts are not enabled');
+  }
+
+  const game = await loadGameForArtifactPrepare(id);
+
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+
+  if (game.resultsStatus !== 'FINAL') {
+    throw new ApiError(400, 'Game results must be finalized before preparing artifacts');
+  }
+
+  if (game.resultsSentToTelegram) {
+    throw new ApiError(400, 'Results have already been sent to Telegram');
+  }
+
+  const generationsUsed = game.resultsArtifactJob?.photoGenerationsUsed ?? 0;
+  assertPhotoGenerationsAvailable(generationsUsed);
+
+  if (game.photosCount > 0) {
+    await clearAiGeneratedPhotosForRegeneration(id);
+  }
+
+  if (isArtifactPhotoGenerating(game.resultsArtifactJob)) {
+    throw new ApiError(409, 'Photo generation is already in progress');
+  }
+
+  await GameResultsArtifactQueueService.enqueueStep(id, 'photo', { manualPhoto: true });
+  await respondAfterArtifactPrepare(id, res);
 });
 
 export const getResultsArtifactsStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -123,11 +187,13 @@ export const getResultsArtifactsStatus = asyncHandler(async (req: AuthRequest, r
     select: {
       resultsArtifactsVersion: true,
       resultsArtifactsReadyAt: true,
+      resultsSummaryText: true,
       resultsArtifactJob: {
         select: {
           status: true,
           summaryStatus: true,
           photoStatus: true,
+          photoGenerationsUsed: true,
         },
       },
     },
@@ -139,7 +205,10 @@ export const getResultsArtifactsStatus = asyncHandler(async (req: AuthRequest, r
 
   res.json({
     success: true,
-    data: buildResultsArtifactsDto(game),
+    data: {
+      artifacts: buildResultsArtifactsDto(game),
+      resultsSummaryText: game.resultsSummaryText,
+    },
     serverTime: new Date().toISOString(),
   });
 });
@@ -479,10 +548,6 @@ const validateGameForTelegram = async (gameId: string, _userId: string) => {
     throw new ApiError(400, 'City does not have a Telegram group configured');
   }
 
-  if (game.photosCount === 0 && !game.mainPhotoId) {
-    throw new ApiError(400, 'Game must have at least one photo');
-  }
-
   const hasResults = ResultsTelegramService.checkResultsEntered(game);
   if (!hasResults) {
     throw new ApiError(400, 'Game must have at least one round with one match with non-zero scores');
@@ -640,8 +705,6 @@ export const resetTelegramResultsSent = asyncHandler(async (req: AuthRequest, re
     where: { id },
     data: { resultsSentToTelegram: false },
   });
-
-  await GameResultsArtifactQueueService.enqueue(id);
 
   res.json({ success: true });
 });

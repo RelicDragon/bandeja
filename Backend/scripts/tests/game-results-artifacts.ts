@@ -95,7 +95,7 @@ async function main() {
       summaryGenerate: async () => 'Script QA summary',
     });
 
-    await GameResultsArtifactQueueService.enqueue(gameId);
+    await GameResultsArtifactQueueService.enqueueStep(gameId, 'summary');
     const job = await prisma.gameResultsArtifactJob.findUnique({
       where: { gameId },
     });

@@ -73,15 +73,22 @@ router.use('/:gameId/photos', gamePhotoRoutes);
 router.get(
   '/:id/results-artifacts-status',
   authenticate,
-  canAccessGame,
+  canAccessGameIncludingArchived,
   gameController.getResultsArtifactsStatus
 );
 
 router.post(
-  '/:id/prepare-results-artifacts',
+  '/:id/prepare-results-artifacts/summary',
   authenticate,
   canAccessGameIncludingArchived,
-  gameController.prepareResultsArtifacts
+  gameController.prepareResultsArtifactSummary
+);
+
+router.post(
+  '/:id/prepare-results-artifacts/photo',
+  authenticate,
+  canAccessGameIncludingArchived,
+  gameController.prepareResultsArtifactPhoto
 );
 
 router.get('/:id', optionalAuth, gameController.getGameById);

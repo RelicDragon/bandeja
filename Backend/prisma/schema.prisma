@@ -1262,6 +1262,7 @@ model GameResultsArtifactJob {
   userPhotoCountAtEnqueue Int     @default(0)
   mainPhotoIdAtEnqueue    String?
   hadUserPhotosAtEnqueue  Boolean @default(false)
+  photoGenerationsUsed    Int     @default(0)
   languageCode            String  @db.VarChar(10)
 
   createdAt DateTime @default(now())

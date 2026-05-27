@@ -102,22 +102,11 @@ async function runDbIntegration() {
       false
     );
 
-    let photoStartedDuringSummary = false;
     setGameResultsArtifactTestDeps({
-      onStepEnter(step) {
-        if (step === 'photo') photoStartedDuringSummary = true;
-      },
-      summaryGenerate: async () => {
-        await new Promise((r) => setTimeout(r, 80));
-        assert.ok(
-          photoStartedDuringSummary,
-          'photo step should run in parallel with summary'
-        );
-        return 'QA artifacts summary';
-      },
+      summaryGenerate: async () => 'QA artifacts summary',
     });
 
-    await GameResultsArtifactQueueService.enqueue(gameId);
+    await GameResultsArtifactQueueService.enqueueStep(gameId, 'summary');
 
     const job = await prisma.gameResultsArtifactJob.findUnique({
       where: { gameId },
@@ -176,7 +165,7 @@ async function runDbIntegration() {
       })
     )?.resultsArtifactsVersion;
 
-    await GameResultsArtifactQueueService.enqueue(sentGameId);
+    await GameResultsArtifactQueueService.enqueueStep(sentGameId, 'summary');
 
     const sentAfter = await prisma.game.findUnique({
       where: { id: sentGameId },

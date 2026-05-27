@@ -19,6 +19,10 @@ function run() {
       version: 2,
       summaryReady: true,
       photoReady: false,
+      photoInFlight: true,
+      photoGenerationsUsed: 0,
+      photoGenerationsRemaining: 3,
+      photoGenerationsMax: 3,
       readyAt: readyAt.toISOString(),
     }
   );
@@ -34,6 +38,10 @@ function run() {
       version: 0,
       summaryReady: false,
       photoReady: false,
+      photoInFlight: false,
+      photoGenerationsUsed: 0,
+      photoGenerationsRemaining: 3,
+      photoGenerationsMax: 3,
       readyAt: null,
     }
   );

@@ -47,10 +47,6 @@ export function YourLeaguesHomeSeasonOpenRow({
   const clubName = hubGame?.court?.club?.name || hubGame?.club?.name;
   const playingCount = (hubGame?.participants ?? []).filter((p) => p.status === 'PLAYING').length;
 
-  const shellClass = stale
-    ? 'flex items-stretch overflow-hidden rounded-xl border border-amber-500/80 bg-amber-50/50 dark:border-amber-600/60 dark:bg-amber-950/20'
-    : 'flex items-stretch overflow-hidden rounded-xl border border-gray-200/80 bg-gray-50/50 dark:border-gray-700/80 dark:bg-gray-800/30';
-
   const seasonLabel = (
     <>
       <p
@@ -73,7 +69,7 @@ export function YourLeaguesHomeSeasonOpenRow({
   );
 
   return (
-    <div className={shellClass}>
+    <div className="flex items-stretch">
       <button
         type="button"
         onClick={() => navigate(`/games/${hub.hubId}`)}

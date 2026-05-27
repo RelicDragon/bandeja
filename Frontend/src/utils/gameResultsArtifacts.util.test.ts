@@ -1,80 +1,110 @@
 import assert from 'node:assert/strict';
 import {
-  canSendResultsToTelegram,
+  canAccessResultsTelegramActions,
+  canShowPhotoGenerationAction,
+  hasEnteredResultsForTelegram,
+  isAnyArtifactGenerating,
+  isPhotoArtifactGenerating,
   isPhotoReadyForTelegram,
-  isResultsArtifactsPreparing,
-  resolveTelegramResultsCta,
+  isSummaryArtifactGenerating,
+  isSummaryReadyForTelegram,
 } from './gameResultsArtifacts.util';
+import type { Game } from '@/types';
 import type { GameResultsArtifacts } from '@/types';
 
-function artifacts(
-  partial: Partial<GameResultsArtifacts> & Pick<GameResultsArtifacts, 'status'>
-): GameResultsArtifacts {
+function artifacts(partial: Partial<GameResultsArtifacts>): GameResultsArtifacts {
   return {
-    version: 1,
+    status: 'none',
+    version: 0,
     summaryReady: false,
     photoReady: false,
+    photoInFlight: false,
+    photoGenerationsUsed: 0,
+    photoGenerationsRemaining: 3,
+    photoGenerationsMax: 3,
     readyAt: null,
     ...partial,
   };
 }
 
 function run() {
-  assert.equal(resolveTelegramResultsCta(undefined, { hasSummaryText: false, hasGamePhoto: true }), 'prepare');
+  assert.equal(isSummaryReadyForTelegram(undefined, true), true);
   assert.equal(
-    resolveTelegramResultsCta(undefined, { hasSummaryText: true, hasGamePhoto: true }),
-    'send'
+    isSummaryReadyForTelegram(artifacts({ status: 'running', summaryReady: false }), false),
+    false
+  );
+  assert.equal(
+    isSummaryReadyForTelegram(artifacts({ status: 'running', summaryReady: true }), false),
+    true
   );
 
   assert.equal(
-    resolveTelegramResultsCta(artifacts({ status: 'running', summaryReady: true, photoReady: false }), {
-      hasSummaryText: false,
-      hasGamePhoto: true,
-    }),
-    'send'
-  );
-  assert.equal(isPhotoReadyForTelegram(artifacts({ status: 'running', photoReady: false }), true), true);
-
-  assert.equal(
-    resolveTelegramResultsCta(artifacts({ status: 'running', summaryReady: false, photoReady: false }), {
-      hasSummaryText: false,
-      hasGamePhoto: true,
-    }),
-    'preparing'
-  );
-  assert.equal(isResultsArtifactsPreparing(artifacts({ status: 'running' }), false, true), true);
-
-  assert.equal(
-    resolveTelegramResultsCta(artifacts({ status: 'done', readyAt: '2026-01-01T00:00:00.000Z' }), {
-      hasSummaryText: false,
-      hasGamePhoto: false,
-    }),
-    'send'
-  );
-
-  assert.equal(
-    resolveTelegramResultsCta(artifacts({ status: 'none' }), { hasSummaryText: true, hasGamePhoto: true }),
-    'send'
+    isSummaryArtifactGenerating(artifacts({ status: 'running', summaryReady: false }), false),
+    true
   );
   assert.equal(
-    resolveTelegramResultsCta(artifacts({ status: 'none' }), { hasSummaryText: false, hasGamePhoto: true }),
-    'prepare'
+    isSummaryArtifactGenerating(artifacts({ status: 'running', summaryReady: true }), false),
+    false
   );
-
   assert.equal(
-    resolveTelegramResultsCta(
-      artifacts({ status: 'failed', summaryReady: true, photoReady: false }),
-      { hasSummaryText: false, hasGamePhoto: true }
+    isPhotoArtifactGenerating(artifacts({ status: 'pending', photoInFlight: true })),
+    true
+  );
+  assert.equal(isPhotoReadyForTelegram(artifacts({ photoReady: true }), false), false);
+  assert.equal(
+    canShowPhotoGenerationAction(
+      artifacts({
+        photoGenerationsRemaining: 1,
+        photoInFlight: false,
+      })
     ),
-    'send'
+    true
   );
-  assert.equal(canSendResultsToTelegram(artifacts({ status: 'failed' }), false, false), false);
   assert.equal(
-    resolveTelegramResultsCta(artifacts({ status: 'failed', summaryReady: false }), {
-      hasSummaryText: false,
-      hasGamePhoto: false,
-    }),
-    'prepare'
+    canShowPhotoGenerationAction(
+      artifacts({
+        photoGenerationsRemaining: 0,
+        photoInFlight: false,
+      })
+    ),
+    false
+  );
+  assert.equal(
+    isAnyArtifactGenerating(
+      artifacts({ status: 'running', summaryReady: false, photoInFlight: true }),
+      { hasSummaryText: false, hasGamePhoto: false }
+    ),
+    true
+  );
+  assert.equal(
+    isAnyArtifactGenerating(
+      artifacts({ status: 'done', summaryReady: true, photoReady: true }),
+      { hasSummaryText: true, hasGamePhoto: true }
+    ),
+    false
+  );
+
+  assert.equal(hasEnteredResultsForTelegram({ resultsStatus: 'FINAL' }), true);
+  assert.equal(
+    hasEnteredResultsForTelegram({ resultsStatus: 'NONE', outcomes: [{ userId: 'u1' }] }),
+    true
+  );
+  assert.equal(hasEnteredResultsForTelegram({ resultsStatus: 'NONE' }), false);
+
+  const archivedGame = {
+    id: 'g1',
+    status: 'ARCHIVED',
+    resultsStatus: 'FINAL',
+    city: { telegramGroupId: '-1001' },
+    participants: [{ userId: 'u1', status: 'PLAYING', role: 'OWNER' }],
+  } as unknown as Game;
+  assert.equal(
+    canAccessResultsTelegramActions(archivedGame, { id: 'u1', isAdmin: false }),
+    true
+  );
+  assert.equal(
+    canAccessResultsTelegramActions(archivedGame, { id: 'other', isAdmin: false }),
+    false
   );
 
   console.log('gameResultsArtifacts.util.test.ts: ok');

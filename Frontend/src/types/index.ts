@@ -425,6 +425,10 @@ export interface GameResultsArtifacts {
   version: number;
   summaryReady: boolean;
   photoReady: boolean;
+  photoInFlight: boolean;
+  photoGenerationsUsed: number;
+  photoGenerationsRemaining: number;
+  photoGenerationsMax: number;
   readyAt: string | null;
 }
 

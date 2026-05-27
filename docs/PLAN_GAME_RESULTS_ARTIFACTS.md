@@ -280,6 +280,8 @@ Optional upgrade: outbox table written in same tx as FINAL — only if enqueue t
 
 ## Phase 4 — Photo step (Replicate)
 
+**Stylized prompts:** See [`PLAN_GAME_RESULTS_PHOTO_STYLES.md`](./PLAN_GAME_RESULTS_PHOTO_STYLES.md) — 20 illustration/cinematic styles, picked per `gameId:generationVersion`.
+
 **Model:** [FLUX.2 max](https://replicate.com/black-forest-labs/flux-2-max) via official `replicate` npm package.
 
 **Async-by-nature (do not block worker 60s on poll in one tick):**

@@ -1,3 +1,7 @@
+import {
+  GameResultsArtifactStepStatus,
+  Prisma,
+} from '@prisma/client';
 import prisma from '../../config/database';
 import { config } from '../../config/env';
 import { isRedisConfigured } from '../redis/redisClient';
@@ -6,6 +10,17 @@ import { GameResultsArtifactRedis } from './gameResultsArtifactRedis.service';
 import { shouldSkipArtifactReenqueue } from './gameResultsArtifact.enqueuePolicy';
 import { logResultsArtifact } from './gameResultsArtifact.log';
 import { GameResultsArtifactService } from './gameResultsArtifact.service';
+
+export type GameResultsArtifactStep = 'summary' | 'photo';
+
+export type EnqueueArtifactStepOptions = {
+  /** User-triggered photo regen: bypass auto-skip when game had user photos. */
+  manualPhoto?: boolean;
+};
+
+function stepTerminal(status: GameResultsArtifactStepStatus): boolean {
+  return status === 'done' || status === 'skipped' || status === 'failed';
+}
 
 let workerTimer: ReturnType<typeof setInterval> | null = null;
 let sweeperTimer: ReturnType<typeof setInterval> | null = null;
@@ -88,15 +103,22 @@ export class GameResultsArtifactQueueService {
     }
     return result.count;
   }
-  static async enqueue(gameId: string): Promise<void> {
+  static async enqueueStep(
+    gameId: string,
+    step: GameResultsArtifactStep,
+    options: EnqueueArtifactStepOptions = {}
+  ): Promise<void> {
     if (!config.resultsArtifacts.enabled) return;
 
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       select: {
+        status: true,
         resultsSentToTelegram: true,
+        resultsSummaryText: true,
         photosCount: true,
         mainPhotoId: true,
+        resultsArtifactJob: true,
         city: { select: { telegramPinnedLanguage: true } },
       },
     });
@@ -111,6 +133,71 @@ export class GameResultsArtifactQueueService {
       game.city.telegramPinnedLanguage || 'en-GB'
     );
     const hadUserPhotos = game.photosCount > 0;
+    const hasSummary = Boolean(game.resultsSummaryText?.trim());
+    const job = game.resultsArtifactJob;
+
+    if (
+      step === 'photo' &&
+      !options.manualPhoto &&
+      hadUserPhotos &&
+      game.status !== 'ARCHIVED'
+    ) {
+      return;
+    }
+
+    if (
+      step === 'summary' &&
+      job &&
+      (job.summaryStatus === 'pending' || job.summaryStatus === 'running')
+    ) {
+      return;
+    }
+    if (
+      step === 'photo' &&
+      job &&
+      (job.photoStatus === 'pending' || job.photoStatus === 'running')
+    ) {
+      return;
+    }
+
+    let summaryStatus: GameResultsArtifactStepStatus;
+    let photoStatus: GameResultsArtifactStepStatus;
+    let replicatePredictionId: string | null = job?.replicatePredictionId ?? null;
+
+    if (step === 'summary') {
+      summaryStatus = 'pending';
+      if (job) {
+        photoStatus = stepTerminal(job.photoStatus)
+          ? job.photoStatus
+          : hadUserPhotos
+            ? 'skipped'
+            : job.photoStatus;
+      } else {
+        photoStatus = hadUserPhotos ? 'skipped' : 'skipped';
+      }
+      replicatePredictionId = job?.replicatePredictionId ?? null;
+    } else {
+      photoStatus = 'pending';
+      replicatePredictionId = null;
+      if (job) {
+        summaryStatus = stepTerminal(job.summaryStatus)
+          ? job.summaryStatus
+          : hasSummary
+            ? 'done'
+            : job.summaryStatus;
+      } else {
+        summaryStatus = hasSummary ? 'done' : 'skipped';
+      }
+    }
+
+    const gameData: Prisma.GameUpdateInput = {
+      resultsArtifactsReadyAt: null,
+      resultsArtifactsVersion: { increment: 1 },
+    };
+    if (step === 'summary') {
+      gameData.resultsSummaryText = null;
+      gameData.resultsSummaryGeneratedAt = null;
+    }
 
     await prisma.$transaction([
       prisma.gameResultsArtifactJob.upsert({
@@ -123,8 +210,9 @@ export class GameResultsArtifactQueueService {
           hadUserPhotosAtEnqueue: hadUserPhotos,
           status: 'pending',
           runAfter: new Date(),
-          summaryStatus: 'pending',
-          photoStatus: 'pending',
+          summaryStatus,
+          photoStatus,
+          replicatePredictionId,
         },
         update: {
           languageCode,
@@ -135,28 +223,23 @@ export class GameResultsArtifactQueueService {
           runAfter: new Date(),
           attempts: 0,
           lastError: null,
-          summaryStatus: 'pending',
-          summaryError: null,
-          photoStatus: 'pending',
-          photoError: null,
-          replicatePredictionId: null,
+          summaryStatus,
+          ...(step === 'summary' ? { summaryError: null } : {}),
+          photoStatus,
+          ...(step === 'photo' ? { photoError: null } : {}),
+          replicatePredictionId,
           generationVersion: { increment: 1 },
         },
       }),
       prisma.game.update({
         where: { id: gameId },
-        data: {
-          resultsArtifactsReadyAt: null,
-          resultsSummaryText: null,
-          resultsSummaryGeneratedAt: null,
-          resultsArtifactsVersion: { increment: 1 },
-        },
+        data: gameData,
       }),
     ]);
 
     logResultsArtifact({
       gameId,
-      step: 'enqueue',
+      step: `enqueue_${step}`,
       status: 'pending',
     });
 

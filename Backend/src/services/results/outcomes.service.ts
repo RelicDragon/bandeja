@@ -16,8 +16,6 @@ import { SocialParticipantLevelService } from '../socialParticipantLevel.service
 import { calculateGameStatus, isResultsBasedEntityType, ARCHIVE_BY_FINISHED_DATE_TYPES } from '../../utils/gameStatus';
 import { resolveGameBets } from '../bets/betResolution.service';
 import resultsSenderService from '../telegram/resultsSender.service';
-import { shouldEnqueueArtifactsOnRecalculate } from '../gameResultsArtifact/gameResultsArtifact.enqueuePolicy';
-import { GameResultsArtifactQueueService } from '../gameResultsArtifact/gameResultsArtifactQueue.service';
 import { resetMatchTimersInGameTx, cancelAllMatchTimersForGame } from './matchTimer.service';
 import { cleanupInviteParticipantsForEndedGame } from '../../utils/gameInviteCleanup';
 import {
@@ -666,23 +664,6 @@ export async function recalculateGameOutcomes(gameId: string) {
     });
   }
 
-  const gameAfter = result.game;
-  if (
-    gameAfter &&
-    shouldEnqueueArtifactsOnRecalculate({
-      resultsStatus: gameAfter.resultsStatus,
-      wasEdited,
-      isFirstFinalize: result.shouldResolveBets,
-    })
-  ) {
-    void GameResultsArtifactQueueService.enqueue(gameId).catch((error: unknown) => {
-      console.error(
-        `[GAME RESULTS ARTIFACTS] Failed to enqueue artifacts for game ${gameId}:`,
-        error
-      );
-    });
-  }
-  
   console.log(`[TELEGRAM NOTIFICATION] Preparing to send notifications for game ${gameId}`);
   
   setImmediate(() => {

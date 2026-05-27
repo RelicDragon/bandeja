@@ -4,67 +4,108 @@ import {
   type ReplicatePredictionRecord,
 } from '../../replicate/replicateImage.service';
 import { ResultsTelegramService } from '../../telegram/results-telegram.service';
-import {
-  downloadAvatarAsDataUri,
-  type ParticipantAvatarSources,
-} from '../gameResultsArtifact.avatarInput';
+import { downloadAvatarAsDataUri } from '../gameResultsArtifact.avatarInput';
 import {
   buildResultsPhotoPrompt,
-  collectParticipantAvatarSources,
+  getRankedPhotoParticipants,
   loadGameForResultsPhoto,
+  type PhotoParticipantSlot,
 } from '../gameResultsArtifact.photoContext';
+import { pickResultsPhotoStyle } from '../gameResultsArtifact.photoStyles';
+import { logResultsArtifact } from '../gameResultsArtifact.log';
+
+export type PhotoFluxBuildResult = {
+  input: Flux2MaxInput;
+  styleId: string;
+  family: string;
+};
 
 export class PhotoProvider {
   static isConfigured(): boolean {
     return ReplicateImageService.isConfigured();
   }
 
-  private static async avatarSourcesToDataUris(
-    sources: ParticipantAvatarSources[]
-  ): Promise<string[]> {
-    const results = await Promise.all(
-      sources.map((entry) =>
-        downloadAvatarAsDataUri(entry, (url) =>
-          ResultsTelegramService.downloadImageAsBuffer(url)
-        )
-      )
-    );
-    const uris = results.filter((uri): uri is string => uri !== null);
-    if (sources.length > 0 && uris.length < sources.length) {
+  private static async avatarSlotsToDataUris(
+    slots: PhotoParticipantSlot[]
+  ): Promise<{ uris: string[]; loadedBySlotIndex: boolean[] }> {
+    const uris: string[] = [];
+    const loadedBySlotIndex: boolean[] = [];
+    let requestedWithAvatar = 0;
+
+    for (const slot of slots) {
+      if (!slot.avatarSources) {
+        loadedBySlotIndex.push(false);
+        continue;
+      }
+      requestedWithAvatar += 1;
+      const uri = await downloadAvatarAsDataUri(slot.avatarSources, (url) =>
+        ResultsTelegramService.downloadImageAsBuffer(url)
+      );
+      if (uri) {
+        uris.push(uri);
+        loadedBySlotIndex.push(true);
+      } else {
+        loadedBySlotIndex.push(false);
+      }
+    }
+
+    if (requestedWithAvatar > 0 && uris.length < requestedWithAvatar) {
       console.warn(
         JSON.stringify({
           scope: 'results-artifacts',
           at: new Date().toISOString(),
           step: 'photo-avatars',
           status: 'partial',
-          requested: sources.length,
+          requested: requestedWithAvatar,
           loaded: uris.length,
         })
       );
     }
-    return uris;
+
+    return { uris, loadedBySlotIndex };
   }
 
-  static async buildFluxInput(gameId: string): Promise<Flux2MaxInput | null> {
+  static async buildFluxInput(
+    gameId: string,
+    generationVersion: number
+  ): Promise<PhotoFluxBuildResult | null> {
     const game = await loadGameForResultsPhoto(gameId);
     if (!game) return null;
-    const sources = collectParticipantAvatarSources(game);
-    const input_images = await this.avatarSourcesToDataUris(sources);
+    const style = pickResultsPhotoStyle(`${gameId}:${generationVersion}`);
+    const slots = getRankedPhotoParticipants(game);
+    const { uris: input_images, loadedBySlotIndex } =
+      await this.avatarSlotsToDataUris(slots);
+    logResultsArtifact({
+      gameId,
+      generationVersion,
+      step: 'photo-style',
+      provider: 'replicate',
+      status: 'picked',
+      styleId: style.id,
+      family: style.family,
+    });
     return {
-      prompt: buildResultsPhotoPrompt(game),
-      input_images,
-      aspect_ratio: '4:5',
-      resolution: '1 MP',
-      output_format: 'webp',
+      input: {
+        prompt: buildResultsPhotoPrompt(game, style, slots, loadedBySlotIndex),
+        input_images,
+        aspect_ratio: '4:5',
+        resolution: '1 MP',
+        output_format: 'webp',
+      },
+      styleId: style.id,
+      family: style.family,
     };
   }
 
-  static async startPrediction(gameId: string): Promise<ReplicatePredictionRecord> {
-    const input = await this.buildFluxInput(gameId);
-    if (!input) {
+  static async startPrediction(
+    gameId: string,
+    generationVersion: number
+  ): Promise<ReplicatePredictionRecord> {
+    const built = await this.buildFluxInput(gameId, generationVersion);
+    if (!built) {
       throw new Error('Game not found');
     }
-    return ReplicateImageService.createFlux2MaxPrediction(input);
+    return ReplicateImageService.createFlux2MaxPrediction(built.input);
   }
 
   static async getPrediction(predictionId: string): Promise<ReplicatePredictionRecord> {

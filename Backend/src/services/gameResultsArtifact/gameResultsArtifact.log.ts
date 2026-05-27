@@ -7,6 +7,8 @@ export type ResultsArtifactLogFields = {
   status?: string;
   error?: string;
   replicatePredictionId?: string;
+  styleId?: string;
+  family?: string;
 };
 
 export function logResultsArtifact(fields: ResultsArtifactLogFields): void {

@@ -54,10 +54,12 @@ import { Edit } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import {
+  canAccessResultsTelegramActions,
   hasCachedResultsSummary,
+  hasEnteredResultsForTelegram,
   hasGamePhotoForTelegram,
+  isAnyArtifactGenerating,
   mergeGameResultsArtifactsFields,
-  resolveTelegramResultsCta,
 } from '@/utils/gameResultsArtifacts.util';
 import { ResultsArtifactsTelegramBlock } from './ResultsArtifactsTelegramBlock';
 import {
@@ -88,7 +90,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const { showOfflineMessage, toggleMessage } = useOfflineMessage(engine.serverProblem);
   const mountedRef = useRef(false);
   const [isSendingToTelegram, setIsSendingToTelegram] = useState(false);
-  const [isPreparingArtifacts, setIsPreparingArtifacts] = useState(false);
+  const [isStartingArtifactGeneration, setIsStartingArtifactGeneration] = useState(false);
   const [pollArtifactsActive, setPollArtifactsActive] = useState(false);
   const [isTelegramSummaryModalOpen, setIsTelegramSummaryModalOpen] = useState(false);
   const [telegramSummary, setTelegramSummary] = useState('');
@@ -176,15 +178,19 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     isResultsEntryMode && currentGame?.status !== 'ARCHIVED';
 
   const hasResultsEntered = useMemo(() => {
+    if (currentGame && hasEnteredResultsForTelegram(currentGame)) return true;
     if (!rounds || rounds.length === 0) return false;
-    return rounds.some(round =>
-      round.matches && round.matches.some(match =>
-        match.sets && match.sets.some(set =>
-          set.teamA > 0 || set.teamB > 0
-        )
+    return rounds.some((round) =>
+      round.matches?.some((match) =>
+        match.sets?.some((set) => set.teamA > 0 || set.teamB > 0)
       )
     );
-  }, [rounds]);
+  }, [currentGame, rounds]);
+
+  const canUseResultsTelegram = useMemo(
+    () => canAccessResultsTelegramActions(currentGame, user),
+    [currentGame, user]
+  );
 
   const hasPhotosForTelegramPost = useMemo(
     () => (currentGame ? hasGamePhotoForTelegram(currentGame) : false),
@@ -196,34 +202,27 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     [currentGame?.resultsSummaryText]
   );
 
-  const telegramResultsCta = useMemo(
+  const isArtifactsGenerating = useMemo(
     () =>
-      resolveTelegramResultsCta(currentGame?.resultsArtifacts, {
+      isAnyArtifactGenerating(currentGame?.resultsArtifacts, {
         hasSummaryText: hasCachedSummary,
         hasGamePhoto: hasPhotosForTelegramPost,
       }),
     [currentGame?.resultsArtifacts, hasCachedSummary, hasPhotosForTelegramPost]
   );
 
-  const isArtifactsPreparing = useMemo(
-    () => telegramResultsCta === 'preparing',
-    [telegramResultsCta]
-  );
-
-  const canSendToTelegram = useMemo(
-    () => telegramResultsCta === 'send',
-    [telegramResultsCta]
-  );
-
   const showSendToTelegramButton = useMemo(() => {
-    if (!currentGame || !hasResultsEntered) return false;
+    if (!currentGame || !hasResultsEntered || !canUseResultsTelegram) return false;
     if (currentGame.resultsSentToTelegram) return false;
-    if (!currentGame.city?.telegramGroupId) return false;
     return true;
-  }, [currentGame, hasResultsEntered]);
+  }, [currentGame, hasResultsEntered, canUseResultsTelegram]);
 
   const applyArtifactsPollPayload = useCallback(
-    (artifacts: NonNullable<Game['resultsArtifacts']>, summaryText?: string | null) => {
+    (
+      artifacts: NonNullable<Game['resultsArtifacts']>,
+      summaryText?: string | null,
+      photoFields?: { photosCount?: number; mainPhotoId?: string | null }
+    ) => {
       const game = currentGameRef.current;
       if (!game) return;
       onGameUpdate(
@@ -231,27 +230,48 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
           ...game,
           resultsArtifacts: artifacts,
           ...(summaryText !== undefined ? { resultsSummaryText: summaryText } : {}),
+          ...(photoFields?.photosCount !== undefined
+            ? { photosCount: photoFields.photosCount }
+            : {}),
+          ...(photoFields?.mainPhotoId !== undefined
+            ? { mainPhotoId: photoFields.mainPhotoId }
+            : {}),
         })
       );
     },
     [onGameUpdate]
   );
 
-  const handlePrepareResultsArtifacts = async () => {
-    if (!currentGame || isPreparingArtifacts || telegramResultsCta === 'preparing') return;
+  const applyArtifactsStatusPayload = useCallback(
+    (payload: {
+      artifacts: NonNullable<Game['resultsArtifacts']>;
+      resultsSummaryText?: string | null;
+    }) => {
+      applyArtifactsPollPayload(payload.artifacts, payload.resultsSummaryText);
+    },
+    [applyArtifactsPollPayload]
+  );
 
-    setIsPreparingArtifacts(true);
+  const startArtifactGeneration = async (
+    request: (gameId: string) => ReturnType<typeof gamesApi.prepareResultsArtifactPhoto>
+  ) => {
+    if (!currentGame || isStartingArtifactGeneration || isArtifactsGenerating) return;
+
+    setIsStartingArtifactGeneration(true);
     setPollArtifactsActive(true);
     try {
-      const response = await gamesApi.prepareResultsArtifacts(currentGame.id);
+      const response = await request(currentGame.id);
       const payload = response.data;
       if (payload?.resultsArtifacts) {
-        applyArtifactsPollPayload(payload.resultsArtifacts, payload.resultsSummaryText);
+        applyArtifactsPollPayload(payload.resultsArtifacts, payload.resultsSummaryText, {
+          photosCount: payload.photosCount,
+          mainPhotoId: payload.mainPhotoId,
+        });
       }
       try {
         const status = await gamesApi.getResultsArtifactsStatus(currentGame.id);
         if (status.data) {
-          applyArtifactsPollPayload(status.data);
+          applyArtifactsStatusPayload(status.data);
         }
       } catch {
         // follow-up poll will retry
@@ -265,19 +285,24 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         t('gameResults.prepareResultsFailed');
       toast.error(errorMessage);
     } finally {
-      setIsPreparingArtifacts(false);
+      setIsStartingArtifactGeneration(false);
     }
   };
 
+  const handleGenerateResultsPhoto = () => void startArtifactGeneration(gamesApi.prepareResultsArtifactPhoto);
+
+  const handleGenerateResultsSummary = () =>
+    void startArtifactGeneration(gamesApi.prepareResultsArtifactSummary);
+
   useEffect(() => {
-    if (telegramResultsCta === 'send') {
+    if (!isArtifactsGenerating && !isStartingArtifactGeneration) {
       setPollArtifactsActive(false);
     }
-  }, [telegramResultsCta]);
+  }, [isArtifactsGenerating, isStartingArtifactGeneration]);
 
   useEffect(() => {
     const shouldPoll =
-      pollArtifactsActive || telegramResultsCta === 'preparing';
+      pollArtifactsActive || isArtifactsGenerating || isStartingArtifactGeneration;
     if (!currentGame?.id || !shouldPoll) return;
 
     const gameId = currentGame.id;
@@ -286,7 +311,18 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       try {
         const response = await gamesApi.getResultsArtifactsStatus(gameId);
         if (cancelled || !response.data) return;
-        applyArtifactsPollPayload(response.data);
+        applyArtifactsStatusPayload(response.data);
+
+        const game = currentGameRef.current;
+        if (
+          game &&
+          !isAnyArtifactGenerating(response.data.artifacts, {
+            hasSummaryText: hasCachedResultsSummary(response.data.resultsSummaryText),
+            hasGamePhoto: hasGamePhotoForTelegram(game),
+          })
+        ) {
+          setPollArtifactsActive(false);
+        }
       } catch {
         // ignore polling errors
       }
@@ -298,14 +334,19 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [currentGame?.id, pollArtifactsActive, telegramResultsCta, applyArtifactsPollPayload]);
+  }, [
+    currentGame?.id,
+    pollArtifactsActive,
+    isArtifactsGenerating,
+    isStartingArtifactGeneration,
+    applyArtifactsStatusPayload,
+  ]);
 
   const showSentToTelegramHint = useMemo(() => {
-    if (!currentGame || !hasResultsEntered) return false;
+    if (!currentGame || !hasResultsEntered || !canUseResultsTelegram) return false;
     if (!currentGame.resultsSentToTelegram) return false;
-    if (!currentGame.city?.telegramGroupId) return false;
     return true;
-  }, [currentGame, hasResultsEntered]);
+  }, [currentGame, hasResultsEntered, canUseResultsTelegram]);
 
   const handleSendToTelegram = () => {
     if (!currentGame || isSendingToTelegram) return;
@@ -338,7 +379,9 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   };
 
   const openTelegramSummaryModal = async () => {
-    if (!currentGame || isSendingToTelegram || isArtifactsPreparing || !canSendToTelegram) return;
+    if (!currentGame || isSendingToTelegram || isArtifactsGenerating || isStartingArtifactGeneration) {
+      return;
+    }
 
     const cachedSummary = currentGame.resultsSummaryText?.trim();
     if (cachedSummary) {
@@ -1030,9 +1073,10 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
           hasSummaryText={hasCachedSummary}
           hasGamePhoto={hasPhotosForTelegramPost}
           isSending={isSendingToTelegram}
-          isPreparingArtifacts={isPreparingArtifacts}
+          isStartingGeneration={isStartingArtifactGeneration}
           onSend={handleSendToTelegram}
-          onPrepare={handlePrepareResultsArtifacts}
+          onGeneratePhoto={handleGenerateResultsPhoto}
+          onGenerateSummary={handleGenerateResultsSummary}
         />
       )}
 
