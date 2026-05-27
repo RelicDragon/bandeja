@@ -224,10 +224,12 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
     }
     const w = media.source.naturalWidth;
     const h = media.source.naturalHeight;
+    const coverScale =
+      w != null && h != null && w > 0 && h > 0 ? computeCoverScale(w, h) : 1;
     return {
       kind: 'media' as const,
       transform: media.transform,
-      coverScale: computeCoverScale(w, h),
+      coverScale,
     };
   }, [gesturesEnabled, media, selectedLayer]);
 

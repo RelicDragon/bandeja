@@ -135,10 +135,10 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
         if (i !== activeIndex) return doc;
         const media = getMediaNode(doc);
         if (!media) return doc;
-        const fit = defaultMediaTransform(
-          media.source.naturalWidth,
-          media.source.naturalHeight
-        );
+        const w = media.source.naturalWidth;
+        const h = media.source.naturalHeight;
+        if (w == null || h == null) return doc;
+        const fit = defaultMediaTransform(w, h);
         return {
           ...doc,
           nodes: doc.nodes.map((n) =>

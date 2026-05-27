@@ -45,7 +45,6 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
   const [selectedRoundType, setSelectedRoundType] = useState<RoundTypeFilterValue>('REGULAR');
   const [bracketPayload, setBracketPayload] = useState<BracketPlayoffResponse | null>(null);
   const [bracketRounds, setBracketRounds] = useState<LeagueRound[]>([]);
-  const [scheduleRounds, setScheduleRounds] = useState<LeagueRound[]>([]);
   const [selectedBracketRoundId, setSelectedBracketRoundId] = useState<string | null>(null);
   const NO_GROUP_KEY = 'no-group';
   useEffect(() => {
@@ -59,7 +58,6 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
         setStandings(standingsResponse.data);
         setGroups(groupsResponse.data.groups);
         const rounds = roundsResponse.data ?? [];
-        setScheduleRounds(rounds);
         setSelectedRoundType(findBracketRounds(rounds).length > 0 ? 'PLAYOFF' : 'REGULAR');
       } catch (error) {
         console.error('Failed to fetch league data:', error);

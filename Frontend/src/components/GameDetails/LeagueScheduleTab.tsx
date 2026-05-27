@@ -167,6 +167,21 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     () => canShowPlayoffRoundTypeFilter(rounds, selectedGroupId, ALL_GROUP_ID),
     [rounds, selectedGroupId]
   );
+  const hasBracketPlayoff = useMemo(() => findBracketRounds(rounds).length > 0, [rounds]);
+  const hasPlayoffRounds = useMemo(
+    () => rounds.some((r) => (r.roundType ?? 'REGULAR') === 'PLAYOFF'),
+    [rounds]
+  );
+
+  useLayoutEffect(() => {
+    const sp = new URLSearchParams(location.search);
+    if (sp.get('tab') !== 'schedule') return;
+    const subtab = (sp.get('subtab') ?? '').trim().toLowerCase();
+    if (subtab === 'bracket' || (!subtab && hasPlayoffRounds)) {
+      setSelectedRoundType('PLAYOFF');
+    }
+  }, [location.search, hasPlayoffRounds]);
+
   const playoffRoundTypeRestoredRef = useRef<string | null>(null);
   useEffect(() => {
     playoffRoundTypeRestoredRef.current = null;
@@ -183,9 +198,12 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     let cancelled = false;
     void (async () => {
       const sp = new URLSearchParams(location.search);
-      if (sp.get('tab') === 'schedule' && sp.get('subtab') === 'bracket') {
-        setSelectedRoundType('PLAYOFF');
-        return;
+      const subtab = (sp.get('subtab') ?? '').trim().toLowerCase();
+      if (sp.get('tab') === 'schedule') {
+        if (subtab === 'bracket' || (!subtab && hasPlayoffRounds)) {
+          setSelectedRoundType('PLAYOFF');
+          return;
+        }
       }
       const saved = await getRoundTypeFilter(leagueSeasonId);
       if (cancelled) return;
@@ -194,14 +212,22 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
         return;
       }
       if (saved === 'REGULAR') return;
-      if (findBracketRounds(rounds).length > 0) {
+      if (hasBracketPlayoff) {
         setSelectedRoundType('PLAYOFF');
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [showPlayoffRoundTypeSwitch, leagueSeasonId, selectedGroupId, location.search, rounds]);
+  }, [
+    showPlayoffRoundTypeSwitch,
+    leagueSeasonId,
+    selectedGroupId,
+    location.search,
+    rounds,
+    hasPlayoffRounds,
+    hasBracketPlayoff,
+  ]);
 
   useEffect(() => {
     if (!showPlayoffRoundTypeSwitch && selectedRoundType === 'PLAYOFF') {
@@ -283,8 +309,8 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const resolvedScheduleView = useMemo(() => {
     const sp = new URLSearchParams(location.search);
     if (sp.get('tab') !== 'schedule') return showMyTab ? 'my' : 'list';
-    return resolveLeagueScheduleMode(sp.get('subtab'), showMyTab, canShowTableTab, canShowBracketTab);
-  }, [location.search, showMyTab, canShowTableTab, canShowBracketTab]);
+    return resolveLeagueScheduleMode(sp.get('subtab'), showMyTab, canShowTableTab, hasBracketPlayoff);
+  }, [location.search, showMyTab, canShowTableTab, hasBracketPlayoff]);
 
   useEffect(() => {
     if (loading) return;
@@ -292,13 +318,13 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
       location.search,
       showMyTab,
       canShowTableTab,
-      canShowBracketTab
+      hasBracketPlayoff
     );
     if (!nextSearch) return;
     const cur = new URLSearchParams(location.search).toString();
     if (cur === nextSearch) return;
     navigate({ pathname: location.pathname, search: nextSearch }, { replace: true });
-  }, [loading, location.pathname, location.search, navigate, showMyTab, canShowTableTab, canShowBracketTab]);
+  }, [loading, location.pathname, location.search, navigate, showMyTab, canShowTableTab, hasBracketPlayoff]);
 
   useEffect(() => {
     const sp = new URLSearchParams(location.search);

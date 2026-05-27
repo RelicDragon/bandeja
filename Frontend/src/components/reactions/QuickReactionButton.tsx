@@ -68,16 +68,12 @@ export function QuickReactionButton({
               className="absolute inset-0 flex items-center justify-center"
               variants={{
                 hidden: popIn.initial,
-                show: popIn.animate,
-                exit: popOut.exit,
+                show: { ...popIn.animate, transition: popIn.transition },
+                exit: { ...popOut.exit, transition: popOut.transition },
               }}
               initial={suppressOpenMotion ? false : 'hidden'}
               animate="show"
               exit="exit"
-              transition={{
-                show: popIn.transition,
-                exit: popOut.transition,
-              }}
               style={{ transformOrigin: 'center center' }}
             >
               <Heart
@@ -95,16 +91,12 @@ export function QuickReactionButton({
               className="absolute inset-0 flex items-center justify-center text-[17px] leading-none"
               variants={{
                 hidden: popIn.initial,
-                show: popIn.animate,
-                exit: popOut.exit,
+                show: { ...popIn.animate, transition: popIn.transition },
+                exit: { ...popOut.exit, transition: popOut.transition },
               }}
               initial={suppressOpenMotion ? false : 'hidden'}
               animate="show"
               exit="exit"
-              transition={{
-                show: popIn.transition,
-                exit: popOut.transition,
-              }}
               style={{ transformOrigin: 'center center' }}
             >
               {activeEmoji}

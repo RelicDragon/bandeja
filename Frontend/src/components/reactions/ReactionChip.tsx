@@ -23,16 +23,12 @@ export function ReactionChip({ emoji, count, suppressOpenMotion = false }: React
       layout={!suppressOpenMotion}
       variants={{
         hidden: popIn.initial,
-        show: popIn.animate,
-        exit: popOut.exit,
+        show: { ...popIn.animate, transition: popIn.transition },
+        exit: { ...popOut.exit, transition: popOut.transition },
       }}
       initial={suppressOpenMotion ? false : 'hidden'}
       animate="show"
       exit="exit"
-      transition={{
-        show: popIn.transition,
-        exit: popOut.transition,
-      }}
       className="flex h-8 w-6 flex-col items-center justify-end"
     >
       <span className="flex h-[18px] w-full items-center justify-center">

@@ -1288,7 +1288,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
                       await engine.addRound();
                       const rounds = useGameResultsStore.getState().rounds;
                       const newRound = rounds.length > 0 ? rounds[rounds.length - 1] : undefined;
-                      if (shouldShowRoundAddedModal(newRound)) onRoundAdded?.(newRound);
+                      if (newRound && shouldShowRoundAddedModal(newRound)) onRoundAdded?.(newRound);
                     }}
                     className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors shadow-lg flex items-center gap-2"
                   >

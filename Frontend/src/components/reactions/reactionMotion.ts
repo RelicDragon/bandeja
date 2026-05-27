@@ -8,8 +8,8 @@ const POP_IN: TargetAndTransition = {
 const POP_IN_TRANSITION: Transition = {
   duration: 0.72,
   times: [0, 0.34, 0.52, 0.72, 1],
-  ease: [0.22, 1.45, 0.42, 1],
-  opacity: { duration: 0.58, ease: [0.4, 0, 0.2, 1] },
+  ease: [0.22, 1.45, 0.42, 1] as const,
+  opacity: { duration: 0.58, ease: [0.4, 0, 0.2, 1] as const },
 };
 
 const POP_OUT: TargetAndTransition = {
@@ -20,8 +20,8 @@ const POP_OUT: TargetAndTransition = {
 const POP_OUT_TRANSITION: Transition = {
   duration: 0.42,
   times: [0, 0.3, 1],
-  ease: [0.4, 0, 0.7, 1],
-  opacity: { duration: 0.4, ease: [0.4, 0, 1, 1] },
+  ease: [0.4, 0, 0.7, 1] as const,
+  opacity: { duration: 0.4, ease: [0.4, 0, 1, 1] as const },
 };
 
 /** Fade for placeholder heart when swapping to a reaction. */
@@ -58,7 +58,7 @@ export function reactionPopOut(reduceMotion: boolean | null) {
   if (reduceMotion) {
     return {
       exit: { scale: 1, opacity: 0 },
-      transition: { duration: 0.15, ease: [0.4, 0, 1, 1] },
+      transition: { duration: 0.15, ease: [0.4, 0, 1, 1] as const },
     };
   }
   return {

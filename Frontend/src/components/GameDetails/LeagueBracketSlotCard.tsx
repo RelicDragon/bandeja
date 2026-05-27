@@ -16,8 +16,8 @@ import {
   bracketMatchStatusI18nKey,
   type BracketMatchStatus,
 } from '@/utils/leagueBracketMatchStatus';
+import { resolveBracketSideDisplayLabel } from '@/utils/bracketFeederSlotLabel.util';
 import {
-  participantDisplayName,
   resolveFeederParticipant,
   resolveSlotSideParticipants,
   slotsById,
@@ -182,8 +182,10 @@ export function LeagueBracketSlotCard({
     !!participantBId &&
     participantAId !== participantBId;
 
-  const nameA = participantDisplayName(sideA) || t('gameDetails.bracketTbd');
-  const nameB = participantDisplayName(sideB) || t('gameDetails.bracketTbd');
+  const nameA =
+    resolveBracketSideDisplayLabel(sideA, slot.feederSlotAId, lookup) ?? t('gameDetails.bracketTbd');
+  const nameB =
+    resolveBracketSideDisplayLabel(sideB, slot.feederSlotBId, lookup) ?? t('gameDetails.bracketTbd');
   const usersA = teamUsersFromParticipant(sideA);
   const usersB = teamUsersFromParticipant(sideB);
 

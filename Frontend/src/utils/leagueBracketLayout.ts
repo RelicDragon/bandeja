@@ -1,7 +1,9 @@
 import type { BracketSlotDto, BracketSlotKind } from '@/api/leagues';
 import { isThirdPlaceSlot } from '@/utils/bracketThirdPlace.util';
 import type { BasicUser } from '@/types';
+import type { Game } from '@/types';
 import { formatFixtureMatrixPlayerName } from '@/utils/leagueFixtureMatrix';
+import { isFullGame } from '@/utils/leagueBracketEnrich';
 
 export type BracketColumn = {
   id: string;
@@ -178,6 +180,85 @@ export function slotsById(slots: BracketSlotDto[]): Map<string, BracketSlotDto> 
   return new Map(slots.map((s) => [s.id, s]));
 }
 
+function winningTeamFromFinalGame(game: Game): 'teamA' | 'teamB' | null {
+  if (game.resultsStatus !== 'FINAL' || !game.outcomes?.length) return null;
+  const teamAIds =
+    game.fixedTeams?.[0]?.players?.map((p) => p.user?.id).filter(Boolean) as string[] | undefined;
+  const teamBIds =
+    game.fixedTeams?.[1]?.players?.map((p) => p.user?.id).filter(Boolean) as string[] | undefined;
+  if (!teamAIds?.length || !teamBIds?.length) return null;
+
+  const teamAOutcomes = game.outcomes.filter((o) => teamAIds.includes(o.user?.id ?? ''));
+  const teamBOutcomes = game.outcomes.filter((o) => teamBIds.includes(o.user?.id ?? ''));
+  const teamAWins = teamAOutcomes[0]?.wins ?? 0;
+  const teamBWins = teamBOutcomes[0]?.wins ?? 0;
+  if (teamAWins > teamBWins) return 'teamA';
+  if (teamBWins > teamAWins) return 'teamB';
+  return null;
+}
+
+function findParticipantInLookup(
+  participantId: string,
+  lookup: Map<string, BracketSlotDto>
+): BracketSlotDto['participant'] | null {
+  for (const s of lookup.values()) {
+    if (s.participant?.id === participantId) return s.participant;
+  }
+  return null;
+}
+
+function participantFromGameWinner(
+  slot: BracketSlotDto,
+  lookup: Map<string, BracketSlotDto>
+): BracketSlotDto['participant'] | null {
+  const game = slot.game;
+  if (!game || !isFullGame(game) || game.resultsStatus !== 'FINAL') return null;
+  const winnerTeam = winningTeamFromFinalGame(game);
+  if (!winnerTeam) return null;
+  const teamIdx = winnerTeam === 'teamA' ? 0 : 1;
+  const winnerUserIds = new Set(
+    game.fixedTeams?.[teamIdx]?.players?.map((p) => p.user?.id).filter(Boolean) ?? []
+  );
+  if (winnerUserIds.size === 0) return slot.participant ?? null;
+  for (const s of lookup.values()) {
+    const p = s.participant;
+    const players = p?.leagueTeam?.players ?? [];
+    if (players.length === 0) continue;
+    const roster = players.map((pl) => pl.user?.id).filter(Boolean);
+    if (roster.length > 0 && roster.every((id) => winnerUserIds.has(id!))) return p;
+  }
+  return slot.participant ?? null;
+}
+
+/** Winner from a completed feeder match; null while the feeder knockout is still open. */
+function winnerParticipantFromFinalSlot(
+  slot: BracketSlotDto,
+  lookup: Map<string, BracketSlotDto>
+): BracketSlotDto['participant'] | null {
+  const game = slot.game;
+  if (!game || !isFullGame(game) || game.resultsStatus !== 'FINAL') return null;
+
+  const winnerTeam = winningTeamFromFinalGame(game);
+  if (!winnerTeam) {
+    if (slot.leagueParticipantId) {
+      return findParticipantInLookup(slot.leagueParticipantId, lookup) ?? slot.participant ?? null;
+    }
+    return null;
+  }
+
+  const sideA =
+    resolveFeederParticipant(slot.feederSlotAId, lookup) ??
+    (slot.slotKind === 'PLAY_IN' ? slot.participant ?? null : null);
+  const sideB = resolveFeederParticipant(slot.feederSlotBId, lookup);
+  const winnerParticipant = winnerTeam === 'teamA' ? sideA : sideB;
+  if (winnerParticipant) return winnerParticipant;
+
+  if (slot.leagueParticipantId) {
+    return findParticipantInLookup(slot.leagueParticipantId, lookup) ?? slot.participant ?? null;
+  }
+  return participantFromGameWinner(slot, lookup);
+}
+
 export function resolveFeederParticipant(
   feederId: string | null | undefined,
   lookup: Map<string, BracketSlotDto>
@@ -185,6 +266,21 @@ export function resolveFeederParticipant(
   if (!feederId) return null;
   const feeder = lookup.get(feederId);
   if (!feeder) return null;
+
+  if (feeder.slotKind === 'BYE') {
+    return feeder.participant ?? null;
+  }
+
+  const isKnockoutFeeder = !!(feeder.feederSlotAId || feeder.feederSlotBId);
+  if (isKnockoutFeeder) {
+    return winnerParticipantFromFinalSlot(feeder, lookup);
+  }
+
+  const game = feeder.game;
+  if (game && isFullGame(game) && game.resultsStatus === 'FINAL') {
+    return winnerParticipantFromFinalSlot(feeder, lookup);
+  }
+
   return feeder.participant ?? null;
 }
 

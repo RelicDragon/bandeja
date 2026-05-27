@@ -21,7 +21,7 @@ export function estimateMessageRowHeightPx(msg: ChatMessage | undefined): number
     if (mediaCount <= 1 && !textBelow) return ROW_ESTIMATE_IMAGE_PX;
     return ROW_ESTIMATE_IMAGE_PX + (textBelow ? 56 : mediaCount > 1 ? 96 : 0);
   }
-  if (msg.replyToMessageId) return ROW_ESTIMATE_PX + 40;
+  if (msg.replyToId) return ROW_ESTIMATE_PX + 40;
   return ROW_ESTIMATE_PX;
 }
 

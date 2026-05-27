@@ -7,19 +7,19 @@ function parseScheduleSubtabParam(raw: string | null | undefined): LeagueSchedul
   return null;
 }
 
-/** Empty/missing `subtab` → My, then coerce if that segment is unavailable. */
+/** Empty/missing `subtab` → bracket when playoff exists, else My, then coerce if unavailable. */
 export function resolveLeagueScheduleMode(
   subtabParam: string | null | undefined,
   showMyTab: boolean,
   canShowTableTab: boolean,
-  canShowBracketTab = false
+  hasBracketPlayoff = false
 ): LeagueScheduleSubtab {
   const parsed = parseScheduleSubtabParam(subtabParam);
-  let mode: LeagueScheduleSubtab = parsed ?? (canShowBracketTab ? 'bracket' : showMyTab ? 'my' : 'list');
-  if (mode === 'my' && !showMyTab) mode = canShowBracketTab ? 'bracket' : 'list';
-  if (mode === 'table' && !canShowTableTab) mode = canShowBracketTab ? 'bracket' : 'list';
-  if (mode === 'bracket' && !canShowBracketTab) mode = showMyTab ? 'my' : 'list';
-  if (mode === 'list' && canShowBracketTab) mode = 'bracket';
+  let mode: LeagueScheduleSubtab = parsed ?? (hasBracketPlayoff ? 'bracket' : showMyTab ? 'my' : 'list');
+  if (mode === 'my' && !showMyTab) mode = hasBracketPlayoff ? 'bracket' : 'list';
+  if (mode === 'table' && !canShowTableTab) mode = hasBracketPlayoff ? 'bracket' : 'list';
+  if (mode === 'bracket' && !hasBracketPlayoff) mode = showMyTab ? 'my' : 'list';
+  if (mode === 'list' && hasBracketPlayoff) mode = 'bracket';
   return mode;
 }
 
@@ -49,33 +49,38 @@ export function repairLeagueScheduleSearchIfInvalid(
   search: string,
   showMyTab: boolean,
   canShowTableTab: boolean,
-  canShowBracketTab = false
+  hasBracketPlayoff = false
 ): string | null {
   const sp = new URLSearchParams(search);
   if (sp.get('tab') !== 'schedule') return null;
   const raw = (sp.get('subtab') ?? '').trim().toLowerCase();
-  if (!raw) return null;
+  if (!raw) {
+    if (hasBracketPlayoff) {
+      return canonicalScheduleQuery(search, 'bracket', showMyTab);
+    }
+    return null;
+  }
 
   if (raw === 'my' && !showMyTab) {
-    return canonicalScheduleQuery(search, canShowBracketTab ? 'bracket' : 'list', false);
+    return canonicalScheduleQuery(search, hasBracketPlayoff ? 'bracket' : 'list', false);
   }
   if (raw === 'table' && !canShowTableTab) {
     return canonicalScheduleQuery(
       search,
-      canShowBracketTab ? 'bracket' : showMyTab ? 'my' : 'list',
+      hasBracketPlayoff ? 'bracket' : showMyTab ? 'my' : 'list',
       showMyTab
     );
   }
-  if (raw === 'bracket' && !canShowBracketTab) {
+  if (raw === 'bracket' && !hasBracketPlayoff) {
     return canonicalScheduleQuery(search, showMyTab ? 'my' : 'list', showMyTab);
   }
-  if (raw === 'list' && canShowBracketTab) {
+  if (raw === 'list' && hasBracketPlayoff) {
     return canonicalScheduleQuery(search, 'bracket', showMyTab);
   }
   if (raw !== 'my' && raw !== 'list' && raw !== 'table' && raw !== 'bracket') {
     return canonicalScheduleQuery(
       search,
-      canShowBracketTab ? 'bracket' : showMyTab ? 'my' : 'list',
+      hasBracketPlayoff ? 'bracket' : showMyTab ? 'my' : 'list',
       showMyTab
     );
   }
