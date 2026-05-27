@@ -5,6 +5,7 @@ import { isCapacitor } from '@/utils/capacitor';
 import { navigateWithTracking } from '@/utils/navigation';
 import { useDeepLinkStore } from '@/store/deepLinkStore';
 import { shouldHandleTelegramLoginDeepLink } from '@/utils/telegramDeepLinkDedupe';
+import { appendLevelSportQuery, parseLevelSportQuery } from '@/utils/levelSportQuery';
 
 const isTelegramAutoLoginPath = (pathname: string) =>
   pathname.startsWith('/login/') && pathname !== '/login/phone' && pathname !== '/login/telegram';
@@ -51,7 +52,12 @@ export const useDeepLink = () => {
         if (pathname.startsWith('/user-profile/')) {
           const id = pathname.split('/user-profile/')[1]?.split('/')[0];
           if (id) {
-            navigateWithTracking(navigate, `/user-profile/${id}`, { replace: true });
+            const sport = parseLevelSportQuery(url.searchParams.get('sport'));
+            navigateWithTracking(
+              navigate,
+              appendLevelSportQuery(`/user-profile/${id}`, sport),
+              { replace: true },
+            );
             return;
           }
         }

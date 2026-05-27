@@ -7,6 +7,7 @@ import { rankingApi, LeaderboardEntry } from '@/api/ranking';
 import { Loading } from './Loading';
 import { PlayerAvatar } from './PlayerAvatar';
 import { LeaderboardSportPicker } from '@/components/leaderboard/LeaderboardSportPicker';
+import { LeaderboardScrollToTopFab } from '@/components/leaderboard/LeaderboardScrollToTopFab';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { isAndroid } from '@/utils/capacitor';
@@ -161,13 +162,7 @@ export const ProfileLeaderboard = () => {
     );
   }
 
-  if (leaderboard.length === 0) {
-    return (
-      <div className="text-center py-8 text-gray-600 dark:text-gray-400">
-        {t('profile.noLeaderboardData') || 'No leaderboard data available'}
-      </div>
-    );
-  }
+  const hasLeaderboardData = leaderboard.length > 0;
 
   const renderTable = () => (
     <div className="-ml-1 w-[calc(100%+1rem)] min-w-0 max-w-[calc(100%+1rem)] overflow-x-hidden">
@@ -299,7 +294,7 @@ export const ProfileLeaderboard = () => {
   return (
     <SportLevelProvider sport={activeLeaderboardSport}>
     <div className="min-w-0 space-y-4">
-      {userRank && (
+      {hasLeaderboardData && userRank && (
         <div className="flex min-w-0 items-center gap-2">
           <motion.button
             onClick={scrollToUser}
@@ -426,9 +421,17 @@ export const ProfileLeaderboard = () => {
         </div>
       </div>
 
-      <div style={{ opacity: isScrolled || loading ? 1 : 0 }}>
-        {renderTable()}
-      </div>
+      {hasLeaderboardData ? (
+        <div style={{ opacity: isScrolled || loading ? 1 : 0 }}>
+          {renderTable()}
+        </div>
+      ) : (
+        <div className="py-8 text-center text-gray-600 dark:text-gray-400">
+          {t('profile.noLeaderboardData') || 'No leaderboard data available'}
+        </div>
+      )}
+
+      <LeaderboardScrollToTopFab />
     </div>
     </SportLevelProvider>
   );

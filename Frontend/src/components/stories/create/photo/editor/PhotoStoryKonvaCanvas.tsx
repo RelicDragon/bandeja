@@ -101,7 +101,7 @@ function PhotoStoryKonvaCanvasInner({
 
   const transformerMetrics = useMemo(
     () => screenFixedTransformerMetrics(stageVisualScale(stageRef.current, stageScale)),
-    [stageScale, stageWidth, stageHeight, selectedNodeId, mediaSelected, overlays]
+    [stageScale]
   );
 
   const mtx = media?.transform.x ?? 0;

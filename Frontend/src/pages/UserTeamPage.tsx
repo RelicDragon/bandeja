@@ -20,6 +20,7 @@ import { useUserTeamsStore } from '@/store/userTeamsStore';
 import type { UserTeam } from '@/types';
 import { toastApiError } from '@/utils/toastApiError';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
 
 export function UserTeamPage() {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +28,7 @@ export function UserTeamPage() {
   const navigate = useNavigate();
   const leaveTeam = () => navigate('/', { replace: true });
   const user = useAuthStore((s) => s.user);
+  const teamInviteLevelSport = resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
   const refreshAll = useUserTeamsStore((s) => s.refreshAll);
   const setTeam = useUserTeamsStore((s) => s.setTeam);
   const removeTeamLocal = useUserTeamsStore((s) => s.removeTeamLocal);
@@ -552,6 +554,7 @@ export function UserTeamPage() {
           <PlayerListModal
             onClose={() => setShowInvite(false)}
             title={t('teams.inviteTeammate')}
+            gameSport={teamInviteLevelSport}
             filterPlayerIds={memberUserIds}
             onConfirm={async (ids) => {
               const run = async () => {

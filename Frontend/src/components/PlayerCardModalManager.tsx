@@ -17,6 +17,7 @@ export const PlayerCardModalManager = ({ children }: PlayerCardModalManagerProps
   const [cardLevelSport, setCardLevelSport] = useState<Sport | undefined>();
   const location = useLocation();
   const pendingReopen = useNavigationStore((s) => s.pendingPlayerCardReopen);
+  const activeLevelSport = useNavigationStore((s) => s.activeLevelSport);
   const sportFromUrl = useMemo(
     () => parseLevelSportQuery(new URLSearchParams(location.search).get('sport')),
     [location.search],
@@ -38,6 +39,7 @@ export const PlayerCardModalManager = ({ children }: PlayerCardModalManagerProps
     if (currentIdx <= pendingReopen.sourceIdx) {
       useNavigationStore.getState().setPendingPlayerCardReopen(null);
       setPlayerId(pendingReopen.playerId);
+      setCardLevelSport(useNavigationStore.getState().activeLevelSport);
     } else if (currentIdx > pendingReopen.sourceIdx + 1) {
       useNavigationStore.getState().setPendingPlayerCardReopen(null);
     }
@@ -45,7 +47,9 @@ export const PlayerCardModalManager = ({ children }: PlayerCardModalManagerProps
 
   const openPlayerCard = (id: string, levelSport?: Sport) => {
     setPlayerId(id);
-    setCardLevelSport(levelSport);
+    setCardLevelSport(
+      levelSport ?? useNavigationStore.getState().activeLevelSport,
+    );
   };
 
   const closePlayerCard = () => {
@@ -53,14 +57,22 @@ export const PlayerCardModalManager = ({ children }: PlayerCardModalManagerProps
     setCardLevelSport(undefined);
   };
 
-  const effectiveLevelSport = cardLevelSport ?? sportFromUrl;
+  const sheetLevelSport = playerId
+    ? (cardLevelSport ?? sportFromUrl ?? activeLevelSport)
+    : undefined;
+
+  const sheet = (
+    <PlayerCardBottomSheet playerId={playerId} onClose={closePlayerCard} />
+  );
 
   return (
     <PlayerCardModalProvider openPlayerCard={openPlayerCard} closePlayerCard={closePlayerCard}>
       {children}
-      <SportLevelProvider sport={effectiveLevelSport}>
-        <PlayerCardBottomSheet playerId={playerId} onClose={closePlayerCard} />
-      </SportLevelProvider>
+      {sheetLevelSport ? (
+        <SportLevelProvider sport={sheetLevelSport}>{sheet}</SportLevelProvider>
+      ) : (
+        sheet
+      )}
     </PlayerCardModalProvider>
   );
 };

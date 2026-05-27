@@ -64,6 +64,7 @@ interface UsersState {
   invalidateUserChatsCache: () => void;
   fetchUnreadCounts: () => Promise<void>;
   refresh: () => Promise<void>;
+  invalidatePlayersCache: () => void;
   clear: () => void;
 }
 
@@ -75,6 +76,11 @@ let readReceiptHandler: ((readReceipt: UserChatReadReceipt) => void) | null = nu
 let unifiedMessageHandler: (() => void) | null = null;
 let unifiedReadReceiptHandler: (() => void) | null = null;
 let cleanupPromise: Promise<void> | null = null;
+const fetchPlayersInflight = new Map<string, Promise<BasicUser[]>>();
+
+function fetchPlayersCacheKey(gameId?: string, sport?: string): string {
+  return `${gameId ?? ''}:${sport ?? ''}`;
+}
 
 const createDefaultMetadata = (existing?: Partial<UserMetadata>): UserMetadata => ({
   interactionCount: 0,
@@ -438,12 +444,13 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
   },
 
   fetchPlayers: async (gameId?: string, sport?: string): Promise<BasicUser[]> => {
+    const cacheKey = fetchPlayersCacheKey(gameId, sport);
+    const inflight = fetchPlayersInflight.get(cacheKey);
+    if (inflight) return inflight;
+
+    const run = async (): Promise<BasicUser[]> => {
     const state = get();
     const now = Date.now();
-
-    if (state.isFetching) {
-      return Object.values(state.users);
-    }
 
     const cacheValid =
       !gameId &&
@@ -486,12 +493,22 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
           invitableMaxSocialLevel: maxSocialLevel,
         };
       });
-      return players;
+      const { users: mergedUsers } = get();
+      return players.map((p) => mergedUsers[p.id] ?? p);
     } catch (error) {
       console.error('Failed to fetch players:', error);
       set({ loading: false, isFetching: false });
       return [];
     }
+    };
+
+    const promise = run().finally(() => {
+      if (fetchPlayersInflight.get(cacheKey) === promise) {
+        fetchPlayersInflight.delete(cacheKey);
+      }
+    });
+    fetchPlayersInflight.set(cacheKey, promise);
+    return promise;
   },
 
   fetchUserChats: async () => {
@@ -598,8 +615,13 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     }
   },
 
+  invalidatePlayersCache: () => {
+    set({ lastPlayersFetchTime: 0 });
+  },
+
   refresh: async () => {
     const state = get();
+    state.invalidatePlayersCache();
     await Promise.all([state.fetchUserChats(), state.fetchPlayers()]);
   },
 

@@ -12,7 +12,7 @@ import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { PublicGamePrompt } from './GameDetails/PublicGamePrompt';
 import { getLevelColor } from '@/utils/levelColor';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
-import { useSportLevelContext } from '@/contexts/SportLevelContext';
+import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 import { getDisplayLevelForSport, getUserPrimarySport } from '@/utils/profileSports';
 import type { Sport } from '@shared/sport';
 import 'bootstrap-icons/font/bootstrap-icons.css';

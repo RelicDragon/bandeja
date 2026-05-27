@@ -25,7 +25,8 @@ import toast from 'react-hot-toast';
 import { sharePlayerProfile } from '@/utils/sharePlayerProfile';
 import { PlayerCardProfileBody } from '@/components/player/PlayerCardProfileBody';
 import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionBar';
-import { SportLevelProvider, useSportLevelContext } from '@/contexts/SportLevelContext';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
+import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 import { parseLevelSportQuery } from '@/utils/levelSportQuery';
 
 export const UserProfilePage = () => {
@@ -143,13 +144,14 @@ export const UserProfilePage = () => {
     if (!userId || !stats || isBlocked) return;
     await sharePlayerProfile({
       playerId: userId,
+      sport: contextLevelSport,
       t,
       onFallbackModal: (url) => {
         setShareModalUrl(url);
         setShowShareModal(true);
       },
     });
-  }, [userId, stats, isBlocked, t]);
+  }, [userId, stats, isBlocked, contextLevelSport, t]);
 
   const handleBlockUser = useCallback(async () => {
     if (!userId || blockingUser) return;

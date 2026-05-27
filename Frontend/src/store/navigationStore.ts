@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { ReactNode } from 'react';
 import type { BugStatus, BugType, ChatType } from '@/types';
 import type { PageType } from '@/utils/urlSchema';
+import type { Sport } from '@shared/sport';
 
 interface BugsFilterState {
   status: BugStatus | null;
@@ -73,6 +74,11 @@ interface NavigationState {
   setMyGamesSelectedDay: (day: string | null) => void;
   setFindSelectedDay: (day: string | null) => void;
   setFindListWeekStartDay: (day: string | null) => void;
+  /** Innermost `SportLevelProvider` sport — used by global player card when no explicit sport is passed. */
+  activeLevelSport: Sport | undefined;
+  levelSportStack: Sport[];
+  pushActiveLevelSport: (sport: Sport) => void;
+  popActiveLevelSport: (sport: Sport) => void;
 }
 
 export const useNavigationStore = create<NavigationState>((set) => ({
@@ -108,6 +114,8 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   myGamesSelectedDay: null,
   findSelectedDay: null,
   findListWeekStartDay: null,
+  activeLevelSport: undefined,
+  levelSportStack: [] as Sport[],
   userProfileHeaderActions: null,
   setUserProfileHeaderActions: (actions) => set({ userProfileHeaderActions: actions }),
   setCurrentPage: (page) => set({ currentPage: page }),
@@ -143,4 +151,19 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setMyGamesSelectedDay: (day) => set({ myGamesSelectedDay: day }),
   setFindSelectedDay: (day) => set({ findSelectedDay: day }),
   setFindListWeekStartDay: (day) => set({ findListWeekStartDay: day }),
+  pushActiveLevelSport: (sport) =>
+    set((s) => {
+      const levelSportStack = [...s.levelSportStack, sport];
+      return { levelSportStack, activeLevelSport: sport };
+    }),
+  popActiveLevelSport: (sport) =>
+    set((s) => {
+      const stack = [...s.levelSportStack];
+      const i = stack.lastIndexOf(sport);
+      if (i >= 0) stack.splice(i, 1);
+      return {
+        levelSportStack: stack,
+        activeLevelSport: stack.length > 0 ? stack[stack.length - 1] : undefined,
+      };
+    }),
 }));

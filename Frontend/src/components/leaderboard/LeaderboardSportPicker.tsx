@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { Sport } from '@/types';
 import { getSportConfig } from '@/sport/sportRegistry';
+import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
 
 type LeaderboardSportPickerProps = {
   sports: Sport[];
@@ -29,12 +30,13 @@ export const LeaderboardSportPicker = ({ sports, value, onChange }: LeaderboardS
             key={sport}
             type="button"
             onClick={() => onChange(sport)}
-            className={`flex-1 min-w-[4.5rem] px-3 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out ${
+            className={`flex min-w-[4.5rem] flex-1 items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out ${
               active
                 ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
+            <SportPublicIcon sport={sport} className="h-5 w-5 shrink-0 object-contain" />
             {t(config.labelKey)}
           </button>
         );

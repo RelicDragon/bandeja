@@ -7,7 +7,7 @@ import { usersApi } from '@/api/users';
 import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
-import { useSportLevelContext } from '@/contexts/SportLevelContext';
+import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 
 interface SendMoneyToUserModalProps {
   toUserId: string;

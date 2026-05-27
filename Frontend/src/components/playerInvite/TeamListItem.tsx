@@ -10,7 +10,7 @@ import {
 } from '@/components/playerInvite/inviteEntries';
 import { formatInviteStatsRows } from '@/components/playerInvite/formatInviteStatsLine';
 import type { GameAvailabilityMatch } from '@/utils/availability/gameMatch';
-import { useSportLevelContext } from '@/contexts/SportLevelContext';
+import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 
 interface TeamListItemProps {
   team: UserTeam;

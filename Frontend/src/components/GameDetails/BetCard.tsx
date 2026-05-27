@@ -10,6 +10,7 @@ import { CircleDollarSign } from 'lucide-react';
 import { CreateBetModal } from './CreateBetModal';
 import { BetParticipantCard } from './BetParticipantCard';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
+import { parseGameSport } from '@/utils/gameSport';
 
 interface BetCardProps {
   bet: Bet;
@@ -21,6 +22,7 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const { openPlayerCard } = usePlayerCardModal();
+  const gameLevelSport = parseGameSport(game.sport);
   const [wallet, setWallet] = useState<number>(0);
   const [isLoadingWallet, setIsLoadingWallet] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -200,7 +202,7 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
                   player={betCreator}
                   isWinner={isPool ? (bet.status === 'RESOLVED' && bet.metadata?.resolution?.winnerIds?.includes(betCreator.id)) : (bet.winnerId === bet.creatorId)}
                   showBadge={bet.status === 'RESOLVED' && (isPool ? !!bet.metadata?.resolution?.winnerIds : !!bet.winnerId)}
-                  onClick={() => openPlayerCard(betCreator.id)}
+                  onClick={() => openPlayerCard(betCreator.id, gameLevelSport)}
                 />
                 <span className="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
                   {t('bets.betsThat', { defaultValue: 'bets that' })}
@@ -214,7 +216,7 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
                     player={betTargetUser}
                     isWinner={false}
                     showBadge={false}
-                    onClick={() => openPlayerCard(betTargetUser.id)}
+                    onClick={() => openPlayerCard(betTargetUser.id, gameLevelSport)}
                   />
                 )}
                 {betTargetTeam && (
@@ -318,7 +320,7 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
                     player={p.user}
                     isWinner={false}
                     showBadge={false}
-                    onClick={() => openPlayerCard(p.user.id)}
+                    onClick={() => openPlayerCard(p.user.id, gameLevelSport)}
                   />
                 ))}
               </div>
@@ -338,7 +340,7 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
                     player={p.user}
                     isWinner={false}
                     showBadge={false}
-                    onClick={() => openPlayerCard(p.user.id)}
+                    onClick={() => openPlayerCard(p.user.id, gameLevelSport)}
                   />
                 ))}
               </div>
@@ -372,7 +374,7 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
                 player={betCreator}
                 isWinner={bet.winnerId === bet.creatorId}
                 showBadge={bet.status === 'RESOLVED' && !!bet.winnerId}
-                onClick={() => openPlayerCard(betCreator.id)}
+                onClick={() => openPlayerCard(betCreator.id, gameLevelSport)}
               />
             </div>
             <div className="flex flex-col items-center gap-2">
@@ -383,7 +385,7 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
                 player={bet.acceptedByUser}
                 isWinner={bet.winnerId === bet.acceptedBy}
                 showBadge={bet.status === 'RESOLVED' && !!bet.winnerId}
-                onClick={() => bet.acceptedByUser && openPlayerCard(bet.acceptedByUser.id)}
+                onClick={() => bet.acceptedByUser && openPlayerCard(bet.acceptedByUser.id, gameLevelSport)}
               />
             </div>
           </div>
@@ -398,7 +400,7 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
                   player={bet.acceptedByUser}
                   isWinner={bet.winnerId === bet.acceptedBy}
                   showBadge={bet.status === 'RESOLVED' && !!bet.winnerId}
-                  onClick={() => bet.acceptedByUser && openPlayerCard(bet.acceptedByUser.id)}
+                  onClick={() => bet.acceptedByUser && openPlayerCard(bet.acceptedByUser.id, gameLevelSport)}
                 />
               </div>
             )}

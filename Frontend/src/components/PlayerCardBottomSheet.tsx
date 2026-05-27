@@ -28,7 +28,7 @@ import { removeOverlay } from '@/utils/urlSchema';
 import { sharePlayerProfile } from '@/utils/sharePlayerProfile';
 import { PlayerCardProfileBody } from '@/components/player/PlayerCardProfileBody';
 import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionBar';
-import { useSportLevelContext } from '@/contexts/SportLevelContext';
+import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 import { appendLevelSportQuery } from '@/utils/levelSportQuery';
 
 interface PlayerCardBottomSheetProps {
@@ -185,13 +185,14 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     if (!playerId || !stats || isBlocked) return;
     await sharePlayerProfile({
       playerId,
+      sport: contextLevelSport,
       t,
       onFallbackModal: (url) => {
         setShareModalUrl(url);
         setShowShareModal(true);
       },
     });
-  }, [playerId, stats, isBlocked, t]);
+  }, [playerId, stats, isBlocked, contextLevelSport, t]);
 
   const handleBlockUser = async () => {
     if (!playerId || blockingUser) return;

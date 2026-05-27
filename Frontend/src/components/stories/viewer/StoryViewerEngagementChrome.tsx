@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { ShareModal } from '@/components/ShareModal';
 import { sharePlayerProfile } from '@/utils/sharePlayerProfile';
+import { getUserPrimarySport } from '@/utils/profileSports';
 import { StoryViewerCaptionStrip } from './StoryViewerCaptionStrip';
 import { StoryViewerDoubleTapHeart } from './StoryViewerDoubleTapHeart';
 import { StoryCommentsSheet } from './StoryCommentsSheet';
@@ -131,13 +132,14 @@ export function StoryViewerEngagementChrome({
   const handleShare = useCallback(async () => {
     await sharePlayerProfile({
       playerId: owner.id,
+      sport: getUserPrimarySport(owner),
       t,
       onFallbackModal: (url) => {
         setShareUrl(url);
         setShareOpen(true);
       },
     });
-  }, [owner.id, t]);
+  }, [owner, t]);
 
   const handleDmSent = useCallback((payload: string) => {
     if (payload.length <= 4 && /\p{Extended_Pictographic}/u.test(payload)) {

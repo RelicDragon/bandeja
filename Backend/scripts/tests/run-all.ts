@@ -231,6 +231,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'cancelled game sport',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'cancelled-game-sport.ts'),
+    ],
+  },
+  {
     label: 'multisport deferred',
     command: process.execPath,
     args: [

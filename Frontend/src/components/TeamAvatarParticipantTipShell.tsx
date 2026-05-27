@@ -16,6 +16,7 @@ import type { UserTeam } from '@/types';
 import { getTeamParticipantUsers } from '@/utils/teamAvatarPair';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
+import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 
 function displayName(u: { firstName?: string | null; lastName?: string | null }) {
   return [u.firstName, u.lastName].filter(Boolean).join(' ').trim() || '—';
@@ -194,15 +195,16 @@ export function TeamAvatarParticipantTipShell({ team, children }: { team: UserTe
   const tipId = useId();
   const participants = getTeamParticipantUsers(team);
   const { openPlayerCard } = usePlayerCardModal();
+  const levelSport = useSportLevelContext();
 
   const close = useCallback(() => setOpen(false), []);
 
   const handleActivatePlayer = useCallback(
     (playerId: string) => {
-      openPlayerCard(playerId);
+      openPlayerCard(playerId, levelSport);
       setOpen(false);
     },
-    [openPlayerCard],
+    [openPlayerCard, levelSport],
   );
 
   const updatePosition = useCallback(() => {

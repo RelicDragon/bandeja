@@ -1,9 +1,12 @@
 import type { TFunction } from 'i18next';
 import toast from 'react-hot-toast';
+import type { Sport } from '@shared/sport';
 import { getPublicWebBaseUrl } from '@/utils/shareUrl';
+import { appendLevelSportQuery } from '@/utils/levelSportQuery';
 
-export function getPlayerProfileShareUrl(playerId: string): string {
-  return `${getPublicWebBaseUrl()}/user-profile/${encodeURIComponent(playerId)}`;
+export function getPlayerProfileShareUrl(playerId: string, sport?: Sport): string {
+  const base = `${getPublicWebBaseUrl()}/user-profile/${encodeURIComponent(playerId)}`;
+  return appendLevelSportQuery(base, sport);
 }
 
 async function copyUrlToClipboard(url: string): Promise<boolean> {
@@ -32,11 +35,12 @@ async function copyUrlToClipboard(url: string): Promise<boolean> {
 
 export async function sharePlayerProfile(options: {
   playerId: string;
+  sport?: Sport;
   t: TFunction;
   onFallbackModal: (url: string) => void;
 }): Promise<void> {
-  const { playerId, t, onFallbackModal } = options;
-  const shareUrl = getPlayerProfileShareUrl(playerId);
+  const { playerId, sport, t, onFallbackModal } = options;
+  const shareUrl = getPlayerProfileShareUrl(playerId, sport);
 
   if (await copyUrlToClipboard(shareUrl)) {
     toast.success(t('gameDetails.linkCopied'));

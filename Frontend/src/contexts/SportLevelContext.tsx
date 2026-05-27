@@ -1,7 +1,7 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import type { Sport } from '@shared/sport';
-
-const SportLevelContext = createContext<Sport | undefined>(undefined);
+import { useNavigationStore } from '@/store/navigationStore';
+import { SportLevelContext } from './useSportLevelContext';
 
 export function SportLevelProvider({
   sport,
@@ -10,9 +10,14 @@ export function SportLevelProvider({
   sport: Sport | undefined;
   children: ReactNode;
 }) {
-  return <SportLevelContext.Provider value={sport}>{children}</SportLevelContext.Provider>;
-}
+  const pushActiveLevelSport = useNavigationStore((s) => s.pushActiveLevelSport);
+  const popActiveLevelSport = useNavigationStore((s) => s.popActiveLevelSport);
 
-export function useSportLevelContext(): Sport | undefined {
-  return useContext(SportLevelContext);
+  useEffect(() => {
+    if (!sport) return;
+    pushActiveLevelSport(sport);
+    return () => popActiveLevelSport(sport);
+  }, [sport, pushActiveLevelSport, popActiveLevelSport]);
+
+  return <SportLevelContext.Provider value={sport}>{children}</SportLevelContext.Provider>;
 }

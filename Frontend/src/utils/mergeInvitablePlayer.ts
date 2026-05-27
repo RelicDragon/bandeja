@@ -5,7 +5,7 @@ import type { InvitablePlayer } from '@/api/users';
 export function mergeInvitablePlayer(
   existing: BasicUser | undefined,
   incoming: InvitablePlayer,
-): BasicUser {
+): InvitablePlayer {
   if (!existing) return incoming;
 
   const incomingProfiles = incoming.sportProfiles;
@@ -17,8 +17,7 @@ export function mergeInvitablePlayer(
     return incoming;
   }
 
-  const { level: _level, reliability: _reliability, gamesPlayed: _gp, gamesWon: _gw, ...incomingRest } =
-    incoming;
+  const { level: _level, reliability: _reliability, ...incomingRest } = incoming;
   return {
     ...existing,
     ...incomingRest,

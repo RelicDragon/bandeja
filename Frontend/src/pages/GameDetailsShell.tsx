@@ -261,7 +261,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
         }
 
       } catch (error: unknown) {
-        const err = error as { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } };
+        const err = error as { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; sport?: import('@/types').Sport; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } };
         if (err.response?.status === 410 && err.response?.data?.cancelled) {
           const d = err.response.data;
           setCancelledGameInfo({
@@ -916,7 +916,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
         }
       }
     } catch (error: unknown) {
-      const err = error as { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } };
+      const err = error as { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; sport?: import('@/types').Sport; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } };
       if (err.response?.status === 410 && err.response?.data?.cancelled) {
         const d = err.response.data;
         setCancelledGameInfo({

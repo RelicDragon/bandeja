@@ -17,10 +17,10 @@ import {
   createLoadMore,
   type FilterCache
 } from '@/utils/chatListHelpers';
-import { usersApi } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
 import { useAuthStore } from '@/store/authStore';
 import { useNetworkStore } from '@/utils/networkStatus';
+import { loadGlobalInvitablePlayers } from '@/utils/loadGlobalInvitablePlayers';
 import { usePlayersStore } from '@/store/playersStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -158,9 +158,9 @@ export function useChatListModel({
 
   const fetchUsersSearchData = useCallback(async (): Promise<{ activeChats: ChatItem[]; cityUsers: BasicUser[]; usersHasMore: boolean }> => {
     if (!user) return { activeChats: [], cityUsers: [], usersHasMore: false };
-    const { fetchPlayers, fetchUserChats } = usePlayersStore.getState();
+    const { fetchUserChats } = usePlayersStore.getState();
     await fetchUserChats();
-    const cityUsersData = await fetchPlayers();
+    const cityUsersData = await loadGlobalInvitablePlayers();
     const allDrafts = await getMergedDrafts();
     const { chats: userChats, unreadCounts } = usePlayersStore.getState();
     const blockedUserIds = user.blockedUserIds || [];
@@ -287,8 +287,9 @@ export function useChatListModel({
         : undefined;
 
       if (filter === 'users') {
-        await usePlayersStore.getState().fetchUserChats();
-        const cityUsersData = await usePlayersStore.getState().fetchPlayers();
+        const playersStore = usePlayersStore.getState();
+        await playersStore.fetchUserChats();
+        const cityUsersData = await loadGlobalInvitablePlayers();
         const allDrafts = await getMergedDrafts();
         const [usersGroupsRes, games] = await Promise.all([
           chatApi.getGroupChannels('users', 1),
@@ -708,8 +709,8 @@ export function useChatListModel({
     if (!user?.currentCity?.id) return;
     setCityUsersLoading(true);
     try {
-      const response = await usersApi.getInvitablePlayers();
-      setCityUsers(response.data?.players ?? []);
+      const players = await loadGlobalInvitablePlayers();
+      setCityUsers(players);
     } catch {
       setCityUsers([]);
     } finally {
@@ -722,9 +723,9 @@ export function useChatListModel({
     setCityUsersLoading(true);
     try {
       const [usersRes, following, followers] = await Promise.all([
-        usersApi.getInvitablePlayers().then((r) => r.data?.players ?? []).catch(() => []),
+        loadGlobalInvitablePlayers(),
         favoritesApi.getFollowing().catch(() => []),
-        favoritesApi.getFollowers().catch(() => [])
+        favoritesApi.getFollowers().catch(() => []),
       ]);
       setCityUsers(usersRes);
       setFollowingUsers(following);

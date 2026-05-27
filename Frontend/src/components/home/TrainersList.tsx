@@ -141,7 +141,7 @@ export const TrainersList = ({ show, availableGames = [], levelSport }: Trainers
                 <button
                   key={trainer.id}
                   type="button"
-                  onClick={() => (hasTrainings ? handleSelectTrainer(trainer.id) : openPlayerCard(trainer.id))}
+                  onClick={() => (hasTrainings ? handleSelectTrainer(trainer.id) : openPlayerCard(trainer.id, levelSport))}
                   className={`relative flex-shrink-0 flex flex-col items-center min-w-[5rem] w-max p-2 rounded-xl border-2 transition-all ${
                     !hasTrainings
                       ? 'opacity-60 border-gray-200 dark:border-gray-600 hover:opacity-100'
@@ -153,7 +153,7 @@ export const TrainersList = ({ show, availableGames = [], levelSport }: Trainers
                   <span
                     onClick={(e) => {
                       e.stopPropagation();
-                      openPlayerCard(trainer.id);
+                      openPlayerCard(trainer.id, levelSport);
                     }}
                     className="cursor-pointer [&>div]:pointer-events-none"
                   >

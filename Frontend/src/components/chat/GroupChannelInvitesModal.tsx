@@ -5,8 +5,8 @@ import { Search, User } from 'lucide-react';
 import { PlayerAvatar } from '@/components';
 import { GroupChannelInvite } from '@/api/chat';
 import { chatApi } from '@/api/chat';
-import { usersApi } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
+import { usePlayersStore } from '@/store/playersStore';
 import { matchesSearch } from '@/utils/transliteration';
 import { formatRelativeTime } from '@/utils/dateFormat';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
@@ -91,12 +91,12 @@ export const GroupChannelInvitesModal = ({
     try {
       const [invitesData, usersData] = await Promise.all([
         chatApi.getGroupChannelInvites(groupChannelId),
-        usersApi.getInvitablePlayers(undefined, inviteListSport)
+        usePlayersStore.getState().fetchPlayers(undefined, inviteListSport),
       ]);
       
       setInvites(invitesData.data || []);
       
-      const allPlayers = usersData.data?.players ?? [];
+      const allPlayers = usersData;
       const participantIds = new Set(participantsIdsRef.current);
       const filtered = allPlayers.filter((player) => !participantIds.has(player.id));
       setAllUsers(filtered);

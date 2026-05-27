@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Search, Users, Swords } from 'lucide-react';
@@ -10,8 +10,15 @@ import { ComparisonTabController } from './ComparisonTabController';
 import { ComparisonPlayerStatsPanel } from './ComparisonPlayerStatsPanel';
 import { GameCard } from './GameCard';
 import { useAuthStore } from '@/store/authStore';
-import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
+import {
+  getUserPrimarySport,
+  hasMultipleSportsEnabled,
+  listEnabledSports,
+  resolveActivePrimarySport,
+} from '@/utils/profileSports';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
+import { LeaderboardSportPicker } from '@/components/leaderboard/LeaderboardSportPicker';
+import type { Sport } from '@/types';
 import toast from 'react-hot-toast';
 
 export const ProfileComparison = () => {
@@ -22,26 +29,45 @@ export const ProfileComparison = () => {
   const [comparison, setComparison] = useState<PlayerComparison | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'stats' | 'games' | 'more'>('stats');
-  const comparisonSport = resolveActivePrimarySport(currentUser) ?? getUserPrimarySport(currentUser);
+  const enabledSports = listEnabledSports(currentUser);
+  const showSportPicker = hasMultipleSportsEnabled(currentUser);
+  const [comparisonSport, setComparisonSport] = useState<Sport>(
+    () => resolveActivePrimarySport(currentUser) ?? getUserPrimarySport(currentUser),
+  );
 
-  const handlePlayerSelect = async (playerIds: string[]) => {
+  useEffect(() => {
+    setComparisonSport(resolveActivePrimarySport(currentUser) ?? getUserPrimarySport(currentUser));
+  }, [currentUser]);
+
+  const loadComparison = useCallback(
+    async (playerId: string, sport: Sport) => {
+      try {
+        setLoading(true);
+        const response = await usersApi.getPlayerComparison(playerId, sport);
+        setComparison(response.data);
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string } } };
+        const errorMessage = err.response?.data?.message || 'errors.generic';
+        toast.error(t(errorMessage, { defaultValue: errorMessage }));
+        setComparison(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [t],
+  );
+
+  useEffect(() => {
+    if (!selectedPlayerId) return;
+    void loadComparison(selectedPlayerId, comparisonSport);
+  }, [selectedPlayerId, comparisonSport, loadComparison]);
+
+  const handlePlayerSelect = (playerIds: string[]) => {
     if (playerIds.length === 0) return;
-    
+
     const playerId = playerIds[0];
     setSelectedPlayerId(playerId);
     setShowPlayerModal(false);
-    
-    try {
-      setLoading(true);
-      const response = await usersApi.getPlayerComparison(playerId, comparisonSport);
-      setComparison(response.data);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-      setComparison(null);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const selectedPlayer = comparison?.otherUser;
@@ -49,6 +75,15 @@ export const ProfileComparison = () => {
   return (
     <SportLevelProvider sport={comparisonSport}>
     <div className="space-y-6">
+      {showSportPicker && (
+        <LeaderboardSportPicker
+          sports={enabledSports}
+          value={comparisonSport}
+          onChange={(sport) => {
+            setComparisonSport(sport);
+          }}
+        />
+      )}
       {!selectedPlayer && (
         <div className="flex items-center gap-3">
           <button

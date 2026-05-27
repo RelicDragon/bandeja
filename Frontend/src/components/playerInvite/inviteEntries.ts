@@ -289,6 +289,8 @@ export function invitePreFilterCount(
     showTeams: boolean;
     filterGender?: 'MALE' | 'FEMALE';
     filtersGender?: PlayerInviteFilters['gender'];
+    filters?: PlayerInviteFilters;
+    getUserMetadata?: (id: string) => UserMetadata | undefined;
     /** When false, user rows are excluded from the pre-filter total (list segment off). Default true. */
     segmentUsers?: boolean;
     /** When false, team rows are excluded. Default true. Ignored when showTeams is false. */
@@ -310,6 +312,23 @@ export function invitePreFilterCount(
   if (opts.gameSport) {
     u = u.filter((p) => passesInviteSportFilter(p, opts.inviteSportFilter, opts.gameSport!));
   }
+
+  if (opts.filters) {
+    const [lMin, lMax] = opts.filters.levelRange;
+    const [sMin, sMax] = opts.filters.socialRange;
+    u = u.filter((p) => {
+      const sport = opts.gameSport ?? getUserPrimarySport(p);
+      const lv = getDisplayLevelForSport(p, sport);
+      const sv = typeof p.socialLevel === 'number' ? p.socialLevel : 0;
+      return lv >= lMin && lv <= lMax && sv >= sMin && sv <= sMax;
+    });
+    if (opts.filters.minGamesTogether > 0 && opts.getUserMetadata) {
+      u = u.filter(
+        (p) => (opts.getUserMetadata!(p.id)?.gamesTogetherCount ?? 0) >= opts.filters!.minGamesTogether,
+      );
+    }
+  }
+
   let c = segUsers ? u.length : 0;
   if (opts.showTeams && segTeams) {
     let teams = readyTeams.filter((t) => isUserTeamReady(t));
@@ -321,6 +340,20 @@ export function invitePreFilterCount(
     }
     if (opts.gameSport) {
       teams = teams.filter((t) => teamPassesInviteSportFilter(t, opts.inviteSportFilter, opts.gameSport));
+    }
+    if (opts.filters) {
+      const [lMin, lMax] = opts.filters.levelRange;
+      const [sMin, sMax] = opts.filters.socialRange;
+      teams = teams.filter((t) => {
+        const lv = teamAverageLevel(t, players, opts.gameSport);
+        const sv = teamAverageSocial(t);
+        return lv >= lMin && lv <= lMax && sv >= sMin && sv <= sMax;
+      });
+      if (opts.filters.minGamesTogether > 0 && opts.getUserMetadata) {
+        teams = teams.filter(
+          (t) => teamGamesTogetherScore(t, opts.getUserMetadata!) >= opts.filters!.minGamesTogether,
+        );
+      }
     }
     c += teams.length;
   }
