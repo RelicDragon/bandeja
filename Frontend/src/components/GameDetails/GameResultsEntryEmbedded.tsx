@@ -6,6 +6,7 @@ import { gamesApi } from '@/api';
 import { resultsApi } from '@/api/results';
 import { BasicUser, Game } from '@/types';
 import type { Round } from '@/types/gameResults';
+import { shouldShowRoundAddedModal } from '@/utils/fivePlayerMatchCombinations';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
@@ -66,6 +67,7 @@ import {
   buildGameBracketReturnPath,
   resolveGameBracketReturnTarget,
 } from '@/utils/gameBracketReturn.util';
+import { canCreateAllFivePlayerCombinations } from '@/utils/fivePlayerMatchCombinations';
 import { Trophy } from 'lucide-react';
 
 interface GameResultsEntryEmbeddedProps {
@@ -97,6 +99,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const [showResendTelegramConfirm, setShowResendTelegramConfirm] = useState(false);
   const [showNoPhotosTelegramConfirm, setShowNoPhotosTelegramConfirm] = useState(false);
   const [isResettingTelegram, setIsResettingTelegram] = useState(false);
+  const [isCreatingAllCombinations, setIsCreatingAllCombinations] = useState(false);
   const resultsContainerRef = useRef<HTMLDivElement>(null);
 
   const currentGame = useMemo(
@@ -140,6 +143,26 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     const hasResults = currentGame?.resultsStatus !== 'NONE';
     return hasResults && !isFinalStatus && canEdit;
   }, [engine.initialized, currentGame?.resultsStatus, isFinalStatus, canEdit]);
+
+  const showCreateAllCombinationsButton = useMemo(
+    () =>
+      canEdit &&
+      isEditingResults &&
+      !isSendingToTelegram &&
+      canCreateAllFivePlayerCombinations(
+        players.length,
+        Boolean(currentGame?.hasFixedTeams),
+        rounds,
+      ),
+    [
+      canEdit,
+      isEditingResults,
+      isSendingToTelegram,
+      players.length,
+      currentGame?.hasFixedTeams,
+      rounds,
+    ],
+  );
 
   const canEditResultsForRounds = useMemo(
     () => canEdit && isEditingResults && isResultsEntryMode && !isSendingToTelegram,
@@ -797,6 +820,21 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     dragAndDrop.handleTouchEnd(e, handleMatchDrop);
   };
 
+  const handleCreateAllCombinations = async () => {
+    if (isCreatingAllCombinations || !showCreateAllCombinationsButton) return;
+
+    setIsCreatingAllCombinations(true);
+    try {
+      await engine.createAllFivePlayerCombinations(players.map((player) => player.id));
+      toast.success(t('gameResults.createAllCombinationsDone'));
+    } catch (error: any) {
+      console.error('Failed to create all combinations:', error);
+      toast.error(error?.response?.data?.message || error?.message || t('errors.generic'));
+    } finally {
+      setIsCreatingAllCombinations(false);
+    }
+  };
+
   const initializeRoundsIfNeeded = async () => {
     const shouldInitialize = engine.initialized && rounds.length === 0 && canEdit && 
       currentGame?.resultsStatus !== 'NONE' && currentGame?.resultsStatus !== 'FINAL';
@@ -1165,6 +1203,20 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
               {canEdit && isEditingResults && !isSendingToTelegram && currentGame?.scoringPreset && (
                 <ScoringRulebookBanner game={currentGame} />
               )}
+              {showCreateAllCombinationsButton && (
+                <div className="flex justify-center pb-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleCreateAllCombinations()}
+                    disabled={isCreatingAllCombinations}
+                    className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white font-medium transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCreatingAllCombinations
+                      ? t('common.loading')
+                      : t('gameResults.createAllCombinations')}
+                  </button>
+                </div>
+              )}
               {displayRounds.map((round) => (
                 <RoundCard
                   key={round.id}
@@ -1236,7 +1288,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
                       await engine.addRound();
                       const rounds = useGameResultsStore.getState().rounds;
                       const newRound = rounds.length > 0 ? rounds[rounds.length - 1] : undefined;
-                      if (newRound) onRoundAdded?.(newRound);
+                      if (shouldShowRoundAddedModal(newRound)) onRoundAdded?.(newRound);
                     }}
                     className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors shadow-lg flex items-center gap-2"
                   >

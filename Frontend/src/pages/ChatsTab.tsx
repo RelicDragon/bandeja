@@ -11,8 +11,6 @@ import { useChatsFromUrl } from '@/hooks/useChatsFromUrl';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { SplitViewLeftPanel, SplitViewRightPanel } from '@/components/SplitViewPanels';
 import { useDesktop } from '@/hooks/useDesktop';
-import { useAuthStore } from '@/store/authStore';
-import { useUnreadStore } from '@/store/unreadStore';
 import { parseChatSelectionFromPath } from '@/utils/chatSelectionFromPath';
 import {
   desktopRightPanelTransition,
@@ -43,16 +41,6 @@ export const ChatsTab = () => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const selectedChatIdRef = useRef<string | null>(null);
-
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const timer = setTimeout(() => {
-      void useUnreadStore.getState().refreshAll();
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [isAuthenticated]);
 
   useEffect(() => {
     selectedChatIdRef.current = selectedChatId;

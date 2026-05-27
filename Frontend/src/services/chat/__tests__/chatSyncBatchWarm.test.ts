@@ -1,0 +1,85 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { UnreadObjectsApiPayload } from '../chatUnreadPayload';
+
+const { postChatSyncBatchHeadMock } = vi.hoisted(() => ({
+  postChatSyncBatchHeadMock: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock('@/api/chat', () => ({
+  chatApi: {
+    postChatSyncBatchHead: postChatSyncBatchHeadMock,
+    getUnreadObjects: vi.fn().mockResolvedValue({ data: null }),
+  },
+}));
+
+vi.mock('@/store/authStore', () => ({
+  useAuthStore: {
+    getState: () => ({ token: 'test-token' }),
+  },
+}));
+
+vi.mock('@/store/playersStore', () => ({
+  usePlayersStore: {
+    getState: () => ({ chats: {} }),
+  },
+}));
+
+vi.mock('../chatLocalDb', () => ({
+  chatCursorKey: (t: string, id: string) => `${t}:${id}`,
+  chatLocalDb: {
+    threadIndex: {
+      toArray: vi.fn().mockResolvedValue([{ contextType: 'GAME', contextId: 'game-1' }]),
+    },
+    chatThreads: { get: vi.fn().mockResolvedValue(undefined), put: vi.fn().mockResolvedValue(undefined) },
+    messageContextHead: {
+      get: vi.fn().mockResolvedValue(undefined),
+      where: vi.fn().mockReturnValue({
+        between: vi.fn().mockReturnValue({ toArray: vi.fn().mockResolvedValue([]) }),
+      }),
+    },
+    messages: { get: vi.fn().mockResolvedValue(undefined) },
+  },
+}));
+
+vi.mock('../chatLocalApply', () => ({
+  getLocalCursorSeq: vi.fn().mockResolvedValue(0),
+}));
+
+vi.mock('../chatSyncScheduler', () => ({
+  enqueueChatSyncPull: vi.fn(),
+  SYNC_PRIORITY_UNREAD: 1,
+  SYNC_PRIORITY_WARM: 2,
+}));
+
+const minimalPayload: UnreadObjectsApiPayload = {
+  games: [],
+  bugs: [],
+  userChats: [],
+  groupChannels: [],
+  marketItems: [],
+};
+
+describe('chatSyncBatchWarm dedupe', () => {
+  beforeEach(async () => {
+    vi.resetModules();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    postChatSyncBatchHeadMock.mockClear();
+    postChatSyncBatchHeadMock.mockResolvedValue({ 'GAME:game-1': 0 });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('scheduleWarmFromUnreadApiPayload skips batch-head during implicit warm cooldown', async () => {
+    const warm = await import('../chatSyncBatchWarm');
+    warm.resetChatSyncWarmSession();
+    await warm.warmChatSyncHeads();
+    postChatSyncBatchHeadMock.mockClear();
+
+    warm.scheduleWarmFromUnreadApiPayload(minimalPayload);
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(postChatSyncBatchHeadMock).not.toHaveBeenCalled();
+  });
+});

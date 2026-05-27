@@ -32,10 +32,6 @@ import { LeagueRoundAccordion } from './LeagueRoundAccordion';
 import { getGroupFilter, setGroupFilter } from '@/utils/groupFilterStorage';
 import { getRoundTypeFilter, setRoundTypeFilter, type RoundTypeFilterValue } from '@/utils/roundTypeFilterStorage';
 import { canShowPlayoffRoundTypeFilter } from '@/utils/leagueScheduleRegularSeasonScope';
-import {
-  playoffRoundTypeFilterLabelKey,
-  resolvePlayoffFilterLabelMode,
-} from '@/utils/roundTypePlayoffFilterLabel.util';
 import { buildLeagueHomeGameBracketPath } from '@/utils/leagueHomeBracket.util';
 import { useAuthStore } from '@/store/authStore';
 import { LeagueScheduleMyGamesList } from './LeagueScheduleMyGamesList';
@@ -171,11 +167,6 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     () => canShowPlayoffRoundTypeFilter(rounds, selectedGroupId, ALL_GROUP_ID),
     [rounds, selectedGroupId]
   );
-  const playoffFilterLabelKey = useMemo(
-    () => playoffRoundTypeFilterLabelKey(resolvePlayoffFilterLabelMode(rounds)),
-    [rounds]
-  );
-
   const playoffRoundTypeRestoredRef = useRef<string | null>(null);
   useEffect(() => {
     playoffRoundTypeRestoredRef.current = null;
@@ -781,7 +772,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
         <RoundTypeFilterSwitch
           value={selectedRoundType}
           regularLabel={t('gameDetails.roundTypeRegular') || 'Regular season'}
-          playoffLabel={t(playoffFilterLabelKey, { defaultValue: t('gameDetails.roundTypePlayoff') || 'Play-off' })}
+          playoffLabel={t('gameDetails.roundTypePlayoff') || 'Play-off'}
           onSelect={setSelectedRoundType}
         />
       )}

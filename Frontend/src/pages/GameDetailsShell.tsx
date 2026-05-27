@@ -55,6 +55,7 @@ import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { Game, Invite, Court, Club, GenderTeam } from '@/types';
 import { parseGameSport } from '@/utils/gameSport';
 import { Round } from '@/types/gameResults';
+import { shouldShowRoundAddedModal } from '@/utils/fivePlayerMatchCombinations';
 import { isUserGameAdminOrOwner, canUserEditResults, canViewTournamentTableByAccess } from '@/utils/gameResults';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { BasicUser } from '@/types';
@@ -1195,7 +1196,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     await GameResultsEngine.addRound();
     const rounds = useGameResultsStore.getState().rounds;
     const newRound = rounds[rounds.length - 1] ?? null;
-    if (newRound) {
+    if (shouldShowRoundAddedModal(newRound)) {
       setRoundAddedForModal(newRound);
       setRoundAddedModalRoundNumber(undefined);
     }
@@ -1394,7 +1395,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
           )}
 
           {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
-            <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); }} />
+            <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
           )}
 
           {!isLeague && game.resultsStatus === 'NONE' && (
@@ -1731,6 +1732,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
             onCellClick={handleTableCellClick}
             onDeleteRound={handleTableDeleteRound}
             onRoundHeaderClick={(round, roundNumber) => {
+              if (!shouldShowRoundAddedModal(round)) return;
               setRoundAddedForModal(round);
               setRoundAddedModalRoundNumber(roundNumber);
             }}
@@ -1747,7 +1749,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
           roundNumber={roundAddedModalRoundNumber}
         />
         <div className="hidden" aria-hidden="true">
-          <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); }} />
+          <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
         </div>
       </>
     );

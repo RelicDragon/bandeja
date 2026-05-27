@@ -4,6 +4,7 @@ import { Swords } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { PlayerAvatar } from '@/components';
 import { Round } from '@/types/gameResults';
+import { shouldShowRoundAddedModal } from '@/utils/fivePlayerMatchCombinations';
 import { Game, BasicUser } from '@/types';
 
 interface RoundAddedModalProps {
@@ -83,7 +84,7 @@ export function RoundAddedModal({ isOpen, onClose, round, game, roundNumber }: R
     return result;
   }, [round, game?.gameCourts, courtIdToName, t]);
 
-  if (!round) return null;
+  if (!shouldShowRoundAddedModal(round)) return null;
 
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="round-added-modal">

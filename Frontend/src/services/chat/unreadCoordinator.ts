@@ -25,7 +25,25 @@ export type CoordinatorEnterParams = EnterContextParams & {
 
 const pendingRestoreByKey = new Map<ContextKey, number>();
 const activityNetworkTimers = new Map<ContextKey, ReturnType<typeof setTimeout>>();
+const markReadConfirmedKeys = new Set<ContextKey>();
 const ACTIVITY_MARK_DEBOUNCE_MS = 280;
+
+/** Cleared when socket reports unread > 0 for this context (see unreadStore.applySocketDelta). */
+export function invalidateMarkReadConfirmed(key: ContextKey): void {
+  markReadConfirmedKeys.delete(key);
+}
+
+function confirmMarkRead(key: ContextKey): void {
+  markReadConfirmedKeys.add(key);
+}
+
+/** Phase 4.6 / Bug L: skip redundant mark-context-read when already read locally. */
+function shouldSkipMarkReadNetwork(key: ContextKey): boolean {
+  const state = useUnreadStore.getState();
+  if ((state.byContext[key] ?? 0) > 0) return false;
+  if (pendingRestoreByKey.has(key)) return false;
+  return markReadConfirmedKeys.has(key);
+}
 
 /** Skip enter optimistic UI when already in context with no local unread (still schedule server sync). */
 function shouldSkipEnterOptimistic(key: ContextKey, state: ReturnType<typeof useUnreadStore.getState>): boolean {
@@ -121,6 +139,7 @@ function setViewingBeforeMark(params: CoordinatorEnterParams, resolved: ReturnTy
 }
 
 function optimisticClear(key: ContextKey): number {
+  invalidateMarkReadConfirmed(key);
   const state = useUnreadStore.getState();
   const prev = state.byContext[key] ?? 0;
 
@@ -177,6 +196,7 @@ export async function refreshContext(key: ContextKey): Promise<void> {
 }
 
 export function onMarkReadBatchFlushSuccess(key: ContextKey): void {
+  confirmMarkRead(key);
   pendingRestoreByKey.delete(key);
   const parsed = parseContextKey(key);
   if (!parsed) return;
@@ -225,6 +245,7 @@ async function flushEnterContextMarkReadNetwork(
 
   try {
     await chatApi.markContextRead(body);
+    confirmMarkRead(key);
     pendingRestoreByKey.delete(key);
     useUnreadStore.getState().applySocketDelta({
       contextType: resolved.snapshotType,
@@ -249,6 +270,7 @@ function scheduleMarkReadNetwork(
   resolved: NonNullable<ReturnType<typeof resolveSnapshotContext>>,
   key: ContextKey
 ): void {
+  if (shouldSkipMarkReadNetwork(key)) return;
   const existing = activityNetworkTimers.get(key);
   if (existing) clearTimeout(existing);
   activityNetworkTimers.set(
@@ -267,6 +289,7 @@ export function markContextReadOnUserActivity(params: CoordinatorEnterParams): v
   const resolved = resolveSnapshotContext(params);
   if (!resolved) return;
   const { key } = resolved;
+  if (shouldSkipMarkReadNetwork(key)) return;
   const state = useUnreadStore.getState();
   if ((state.byContext[key] ?? 0) > 0) {
     optimisticClear(key);

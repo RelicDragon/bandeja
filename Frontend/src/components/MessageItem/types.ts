@@ -30,6 +30,8 @@ export interface MessageItemProps {
   onUnpin?: (messageId: string) => void;
   showReply?: boolean;
   onForwardMessage?: (message: ChatMessage) => void;
+  suppressOpenReactionMotion?: boolean;
+  loadMediaEager?: boolean;
 }
 
 export type ParsedContentPart =

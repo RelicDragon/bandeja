@@ -86,14 +86,20 @@ export function mediaScaleBounds(coverScale: number): { min: number; max: number
   };
 }
 
-export function clampMediaTransform(transform: Transform2D, coverScale: number): Transform2D {
+export function clampMediaTransform(
+  transform: Transform2D,
+  coverScale: number,
+  options?: { snapRotation?: boolean }
+): Transform2D {
   const { x, y } = clampMediaPan(transform.x, transform.y);
   const { min, max } = mediaScaleBounds(coverScale);
+  const rotation =
+    options?.snapRotation === false ? transform.rotation : snapRotation(transform.rotation);
   return {
     x,
     y,
     scale: Math.max(min, Math.min(max, transform.scale)),
-    rotation: snapRotation(transform.rotation),
+    rotation,
   };
 }
 

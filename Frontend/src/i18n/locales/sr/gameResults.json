@@ -3,6 +3,8 @@
     "title": "Унети Резултате Игре",
     "round": "Рунда",
     "addRound": "Додај Рунду",
+    "createAllCombinations": "Направи све комбинације",
+    "createAllCombinationsDone": "Све комбинације направљене",
     "roundAdded": "Рунда додата",
     "vs": "против",
     "match": "Меч {{number}}",

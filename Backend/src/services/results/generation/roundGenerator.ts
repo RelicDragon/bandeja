@@ -77,6 +77,8 @@ export class RoundGenerator {
     const initialSets = initialSetRowsForMatch(this.options.game, fixedNumberOfSets);
 
     if (!matchGenerationType || matchGenerationType === 'HANDMADE') {
+      const fixedTeamsMatch = this.tryGenerateHeadToHeadFixedTeamsMatch(initialSets);
+      if (fixedTeamsMatch) return fixedTeamsMatch;
       return [
         {
           id: randomUUID(),
@@ -109,6 +111,49 @@ export class RoundGenerator {
     }
   }
 
+  /** League fixture / bracket head-to-head: one match with rosters from game.fixedTeams. */
+  private tryGenerateHeadToHeadFixedTeamsMatch(
+    initialSets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>
+  ): GenMatch[] | null {
+    const { game } = this.options;
+    const playingParticipants = game.participants.filter((p) => p.status === 'PLAYING');
+    const numPlayers = playingParticipants.length;
+    const ppm = playersPerMatchOf(game);
+    const headToHead = numPlayers === ppm || (numPlayers === 2 && ppm === 2);
+    if (!headToHead || !game.hasFixedTeams || !game.fixedTeams || game.fixedTeams.length < 2) {
+      return null;
+    }
+
+    const team1 = game.fixedTeams.find((t) => t.teamNumber === 1);
+    const team2 = game.fixedTeams.find((t) => t.teamNumber === 2);
+    if (!team1 || !team2 || team1.players.length === 0 || team2.players.length === 0) {
+      return null;
+    }
+
+    const teamAIds = team1.players.map((p) => p.userId);
+    const teamBIds = team2.players.map((p) => p.userId);
+    if (game.allowUserInMultipleTeams) {
+      const sideA = new Set(teamAIds);
+      if (teamBIds.some((id) => sideA.has(id))) {
+        throw new Error(
+          'Automatic first round cannot pair fixed teams that share a player when overlap across teams is allowed'
+        );
+      }
+    }
+
+    return [
+      attachFixedTeamIdsToMatch(
+        {
+          id: randomUUID(),
+          teamA: teamAIds,
+          teamB: teamBIds,
+          sets: cloneSets(initialSets),
+        },
+        game
+      ),
+    ];
+  }
+
   private generateAutomaticRound(
     initialSets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean }>
   ): GenMatch[] {
@@ -120,45 +165,24 @@ export class RoundGenerator {
     const matches: GenMatch[] = [];
 
     if (numPlayers === ppm) {
-      if (game.hasFixedTeams && game.fixedTeams && game.fixedTeams.length >= 2) {
-        const team1 = game.fixedTeams.find((t) => t.teamNumber === 1);
-        const team2 = game.fixedTeams.find((t) => t.teamNumber === 2);
-
-        if (team1 && team2 && team1.players.length > 0 && team2.players.length > 0) {
-          const teamAIds = team1.players.map((p) => p.userId);
-          const teamBIds = team2.players.map((p) => p.userId);
-          if (game.allowUserInMultipleTeams) {
-            const sideA = new Set(teamAIds);
-            if (teamBIds.some((id) => sideA.has(id))) {
-              throw new Error(
-                'Automatic first round cannot pair fixed teams that share a player when overlap across teams is allowed'
-              );
-            }
-          }
-          matches.push(
-            attachFixedTeamIdsToMatch(
-              {
-                id: randomUUID(),
-                teamA: teamAIds,
-                teamB: teamBIds,
-                sets: cloneSets(initialSets),
-              },
-              game
-            )
-          );
-        }
-      } else {
-        const matchSetups = createTwoOnTwoMatches(players);
-        for (const setup of matchSetups) {
-          matches.push({
-            id: randomUUID(),
-            teamA: setup.teamA,
-            teamB: setup.teamB,
-            sets: cloneSets(initialSets),
-          });
-        }
+      const fixedTeamsMatch = this.tryGenerateHeadToHeadFixedTeamsMatch(initialSets);
+      if (fixedTeamsMatch) {
+        return fixedTeamsMatch;
+      }
+      const matchSetups = createTwoOnTwoMatches(players);
+      for (const setup of matchSetups) {
+        matches.push({
+          id: randomUUID(),
+          teamA: setup.teamA,
+          teamB: setup.teamB,
+          sets: cloneSets(initialSets),
+        });
       }
     } else if (numPlayers === 2 && ppm === 2) {
+      const fixedTeamsMatch = this.tryGenerateHeadToHeadFixedTeamsMatch(initialSets);
+      if (fixedTeamsMatch) {
+        return fixedTeamsMatch;
+      }
       const matchSetups = createOneOnOneMatches(players);
       if (matchSetups.length > 0) {
         matches.push({

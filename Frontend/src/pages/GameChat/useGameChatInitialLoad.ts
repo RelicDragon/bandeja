@@ -36,6 +36,7 @@ export interface UseGameChatInitialLoadParams {
   hasLoadedRef: React.MutableRefObject<boolean>;
   isLoadingRef: React.MutableRefObject<boolean>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
+  openPaintCommittedRef: React.MutableRefObject<boolean>;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   setCurrentChatType: (t: ChatType) => void;
   setIsBlockedByUser: (v: boolean) => void;
@@ -65,6 +66,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     hasLoadedRef,
     isLoadingRef,
     messagesRef,
+    openPaintCommittedRef,
     setMessages,
     setCurrentChatType,
     setIsBlockedByUser,
@@ -77,7 +79,21 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
 
   const currentChatTypeRef = useRef(currentChatType);
   currentChatTypeRef.current = currentChatType;
+  const userChatRef = useRef(userChat);
+  userChatRef.current = userChat;
   const gameDefaultsAppliedKeyRef = useRef<string | null>(null);
+  const bootstrapThreadRef = useRef(bootstrapThread);
+  bootstrapThreadRef.current = bootstrapThread;
+  const loadContextRef = useRef(loadContext);
+  loadContextRef.current = loadContext;
+  const gameRef = useRef(game);
+  gameRef.current = game;
+  const handleMarkFailedRef = useRef(handleMarkFailed);
+  handleMarkFailedRef.current = handleMarkFailed;
+  const handleReplaceOptimisticRef = useRef(handleReplaceOptimistic);
+  handleReplaceOptimisticRef.current = handleReplaceOptimistic;
+  const groupChannelIdRef = useRef(groupChannelId);
+  groupChannelIdRef.current = groupChannelId;
 
   useEffect(() => {
     const ac = new AbortController();
@@ -90,38 +106,48 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
       }
 
       const currentLoadId = `${id}-${contextType}`;
-      if (isLoadingRef.current && loadingIdRef.current === currentLoadId) return;
+      if (hasLoadedRef.current && loadingIdRef.current === currentLoadId) {
+        return;
+      }
+      if (openPaintCommittedRef.current && loadingIdRef.current === currentLoadId) {
+        return;
+      }
+      if (isLoadingRef.current && loadingIdRef.current === currentLoadId) {
+        return;
+      }
 
+      const prevLoadId = loadingIdRef.current;
       loadingIdRef.current = currentLoadId;
       isLoadingRef.current = true;
-      hasLoadedRef.current = false;
+      if (prevLoadId !== currentLoadId) {
+        hasLoadedRef.current = false;
+      }
       setIsLoadingContext(true);
-      const hasCachedThread = messagesRef.current.length > 0;
-      if (!hasCachedThread) {
+      if (!openPaintCommittedRef.current) {
         setIsInitialLoad(true);
         setIsLoadingMessages(true);
       }
 
       try {
-        const loadedContext = await loadContext();
+        const loadedContext = await loadContextRef.current();
         if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
 
         const loadedGame =
-          contextType === 'GAME' ? ((loadedContext as Game | null) ?? game) : null;
+          contextType === 'GAME' ? ((loadedContext as Game | null) ?? gameRef.current) : null;
         const markReadParams = buildGameChatMarkReadParams({
           id,
           contextType,
           game: loadedGame,
           userId: user?.id,
           gameChatType: currentChatTypeRef.current,
-          groupChannelId,
+          groupChannelId: groupChannelIdRef.current,
         });
         if (markReadParams) {
           void enterContextAndMarkRead(markReadParams);
         }
 
         if (contextType === 'USER' && user?.id) {
-          const uc = (loadedContext || userChat) as UserChatType | null;
+          const uc = (loadedContext || userChatRef.current) as UserChatType | null;
           const otherUserId = uc ? (uc.user1Id === user.id ? uc.user2Id : uc.user1Id) : null;
           if (otherUserId) {
             try {
@@ -136,7 +162,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
 
         let muteFromContext: boolean | undefined;
         if (contextType === 'USER') {
-          const uc = (loadedContext || userChat) as UserChatType | null;
+          const uc = (loadedContext || userChatRef.current) as UserChatType | null;
           if (uc && typeof uc.isMuted === 'boolean') muteFromContext = uc.isMuted;
         } else if (contextType === 'GROUP') {
           const gc = loadedContext as GroupChannel | null;
@@ -193,7 +219,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
         const outboxCtx: BootstrapOutboxContext | undefined = user?.id
           ? { userId: user.id, user: user as import('@/types').BasicUser }
           : undefined;
-        await bootstrapThread(
+        await bootstrapThreadRef.current(
           contextType === 'GAME' ? effectiveChatType : undefined,
           outboxCtx
         );
@@ -208,8 +234,8 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
             user: user as import('@/types').BasicUser,
             messagesRef,
             setMessages,
-            handleMarkFailed,
-            onOptimisticReplaced: handleReplaceOptimistic,
+            handleMarkFailed: handleMarkFailedRef.current,
+            onOptimisticReplaced: handleReplaceOptimisticRef.current,
             onMessageCreated: (created) => handleNewMessageRef.current?.(created),
             paintState: !outboxCtx,
           });
@@ -220,7 +246,10 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
 
         if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
       } finally {
-        if (!signal.aborted) isLoadingRef.current = false;
+        if (loadingIdRef.current === currentLoadId) {
+          setIsLoadingContext(false);
+          isLoadingRef.current = false;
+        }
       }
     };
 
@@ -230,30 +259,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
       ac.abort();
       if (loadingIdRef.current === `${id}-${contextType}`) isLoadingRef.current = false;
     };
-  }, [
-    id,
-    user,
-    contextType,
-    initialChatType,
-    game,
-    groupChannelId,
-    loadContext,
-    bootstrapThread,
-    userChat,
-    handleMarkFailed,
-    handleReplaceOptimistic,
-    handleNewMessageRef,
-    loadingIdRef,
-    hasLoadedRef,
-    isLoadingRef,
-    messagesRef,
-    setMessages,
-    setCurrentChatType,
-    setIsBlockedByUser,
-    setIsMuted,
-    setTranslateToLanguageForChat,
-    setIsInitialLoad,
-    setIsLoadingMessages,
-    setIsLoadingContext,
-  ]);
+    // Intentionally narrow deps: unstable callbacks/refs must not re-trigger full open (bootstrap + reconcile).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open once per id+contextType via refs + hasLoadedRef
+  }, [id, user?.id, contextType, initialChatType]);
 }

@@ -20,6 +20,7 @@ import {
 } from '@/utils/bracketSlotEdit.util';
 import { buildBracketEditTreeColumns } from '@/utils/bracketEditTreeLayout.util';
 import { teamUsersFromParticipant } from '@/utils/leagueBracketLayout';
+import { translateBracketRoundLabel } from '@/utils/bracketRoundDisplay.util';
 
 export interface BracketEditOverlayProps {
   open: boolean;
@@ -206,7 +207,10 @@ export function BracketEditOverlay({
   const columnTitle = (column: ReturnType<typeof buildBracketEditTreeColumns>[number]) => {
     if (column.kind === 'play-in') return t('gameDetails.bracketColumnPlayIn');
     if (column.kind === 'byes') return t('gameDetails.bracketColumnByes');
-    return column.roundLabel ?? t('gameDetails.bracketColumnMainRound', { round: column.roundIndex + 1 });
+    return translateBracketRoundLabel(
+      column.roundLabel ?? t('gameDetails.bracketColumnMainRound', { round: column.roundIndex + 1 }),
+      t
+    );
   };
 
   if (!open) return null;

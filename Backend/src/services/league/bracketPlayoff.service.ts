@@ -763,6 +763,15 @@ export class BracketPlayoffService {
                 status: true,
                 startTime: true,
                 endTime: true,
+                hasFixedTeams: true,
+                fixedTeams: {
+                  include: {
+                    players: {
+                      include: { user: { select: USER_SELECT_FIELDS } },
+                    },
+                  },
+                  orderBy: { teamNumber: 'asc' },
+                },
               },
             },
             leagueParticipant: {

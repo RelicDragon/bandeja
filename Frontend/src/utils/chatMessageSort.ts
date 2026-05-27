@@ -1,4 +1,16 @@
-import type { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
+import type { ChatMessage, ChatMessageWithStatus, MessageReadReceipt } from '@/api/chat';
+import { mergeReadReceiptSync } from '@/services/chat/chatSyncEventsToPatches';
+
+function mergeMessageReadReceipts(
+  base: MessageReadReceipt[],
+  overlay: MessageReadReceipt[]
+): MessageReadReceipt[] {
+  let merged = base;
+  for (const receipt of overlay) {
+    merged = mergeReadReceiptSync(merged, receipt.userId, receipt);
+  }
+  return merged;
+}
 
 function conversationSeq(m: ChatMessage): number | null {
   const ss = m.serverSyncSeq;
@@ -38,7 +50,7 @@ function shouldPreferIncomingMessage(
   existing: ChatMessageWithStatus,
   incoming: ChatMessage
 ): boolean {
-  return compareChatMessagesAscending(existing, incoming) <= 0;
+  return compareChatMessagesAscending(existing, incoming) < 0;
 }
 
 export function mergeChatMessagesAscending(
@@ -50,7 +62,10 @@ export function mergeChatMessagesAscending(
   for (const m of incoming) {
     const cur = map.get(m.id);
     if (!cur) map.set(m.id, m as ChatMessageWithStatus);
-    else if (shouldPreferIncomingMessage(cur, m)) map.set(m.id, { ...cur, ...m } as ChatMessageWithStatus);
+    else if (shouldPreferIncomingMessage(cur, m)) {
+      const readReceipts = mergeMessageReadReceipts(cur.readReceipts ?? [], m.readReceipts ?? []);
+      map.set(m.id, { ...cur, ...m, readReceipts } as ChatMessageWithStatus);
+    }
   }
   return Array.from(map.values()).sort(compareChatMessagesAscending);
 }

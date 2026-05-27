@@ -180,6 +180,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     hasLoadedRef,
     isLoadingRef,
     initialScroll,
+    openPaintGeneration,
+    openPaintCommittedRef,
     scrollToBottom,
     loadMessages,
     loadMoreMessages,
@@ -499,6 +501,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     hasLoadedRef,
     isLoadingRef,
     messagesRef,
+    openPaintCommittedRef,
     setMessages,
     setCurrentChatType,
     setIsBlockedByUser,
@@ -828,12 +831,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
               onForwardMessage={handleForwardMessage}
               threadScrollKey={threadScrollKey}
               initialScroll={initialScroll}
-              threadLayoutSettling={
-                isThreadOpenSettling ||
-                isSwitchingChatType ||
-                isLoadingMessages ||
-                isInitialLoad
-              }
+              openPaintGeneration={openPaintGeneration}
+              threadLayoutSettling={isThreadOpenSettling || isSwitchingChatType || initialScroll === undefined}
             />
             </ChatAutoTranslateContext.Provider>
           </div>

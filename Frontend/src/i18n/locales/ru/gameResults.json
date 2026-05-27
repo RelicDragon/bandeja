@@ -3,6 +3,8 @@
     "title": "Ввести Результаты Игры",
     "round": "Раунд",
     "addRound": "Добавить Раунд",
+    "createAllCombinations": "Создать все комбинации",
+    "createAllCombinationsDone": "Все комбинации созданы",
     "roundAdded": "Раунд добавлен",
     "vs": "против",
     "match": "Матч {{number}}",

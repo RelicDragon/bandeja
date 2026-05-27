@@ -1,15 +1,18 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { MentionsInput, Mention, SuggestionDataItem, MentionData } from 'react-mentions';
-import { ChatContextType, GroupChannel } from '@/api/chat';
-import { Game, Bug, BasicUser } from '@/types';
-import { normalizeChatType } from '@/utils/chatType';
-import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
+import { MentionSuggestionsContainer } from './MentionSuggestionsContainer';
+import { chatApi, ChatContextType, GroupChannel } from '@/api/chat';
+import { Game, Bug } from '@/types';
+import type { GameParticipant } from '@/types';
+import type { GroupChannelParticipant } from '@/api/chat';
 import { PlayerAvatar } from './PlayerAvatar';
 import { matchesSearch } from '@/utils/transliteration';
-
-interface MentionableUser extends BasicUser {
-  display: string;
-}
+import {
+  buildBugMentionableUsers,
+  buildGameMentionableUsers,
+  buildGroupMentionableUsers,
+  type MentionableUser,
+} from '@/utils/mentionableUsers';
 
 interface MentionInputProps {
   value: string;
@@ -45,6 +48,9 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const [suggestionsWidth, setSuggestionsWidth] = useState(300);
+  const [suggestionsPortalHost, setSuggestionsPortalHost] = useState<HTMLElement | null>(null);
+  const [gameParticipants, setGameParticipants] = useState<GameParticipant[] | null>(null);
+  const [groupParticipants, setGroupParticipants] = useState<GroupChannelParticipant[] | null>(null);
 
   const syncInputHeight = () => {
     const textarea = inputRef.current;
@@ -59,6 +65,10 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       (control as HTMLElement).style.height = `${h}px`;
     }
   };
+
+  useEffect(() => {
+    setSuggestionsPortalHost(document.body);
+  }, []);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -83,178 +93,119 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     return () => cancelAnimationFrame(id);
   }, [value]);
 
+  const gameId = game?.id;
+  useEffect(() => {
+    if (contextType !== 'GAME' || !gameId) {
+      setGameParticipants(null);
+      return;
+    }
+    let cancelled = false;
+    chatApi
+      .getGameParticipants(gameId)
+      .then((list) => {
+        if (!cancelled) setGameParticipants(list);
+      })
+      .catch(() => {
+        if (!cancelled) setGameParticipants(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [contextType, gameId]);
+
+  const groupChannelId = groupChannel?.id;
+  useEffect(() => {
+    if (contextType !== 'GROUP' || !groupChannelId) {
+      setGroupParticipants(null);
+      return;
+    }
+    let cancelled = false;
+    chatApi
+      .getGroupChannelParticipants(groupChannelId)
+      .then((list) => {
+        if (!cancelled) setGroupParticipants(list);
+      })
+      .catch(() => {
+        if (!cancelled) setGroupParticipants(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [contextType, groupChannelId]);
 
   const mentionableUsers = useMemo((): MentionableUser[] => {
     if (contextType === 'GAME' && game) {
-      const users: MentionableUser[] = [];
-      const userIds = new Set<string>();
-      const normalizedChatType = chatType ? normalizeChatType(chatType as any) : 'PUBLIC';
-
-      if (normalizedChatType === 'PUBLIC') {
-        game.participants?.forEach(p => {
-          if (p.user && !userIds.has(p.user.id)) {
-            userIds.add(p.user.id);
-            users.push({
-              ...p.user,
-              display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-            });
-          }
-        });
-        game.participants
-          ?.filter((p) => isPendingGameInvite(p))
-          .forEach(p => {
-            if (p.user && !userIds.has(p.user.id)) {
-              userIds.add(p.user.id);
-              users.push({
-                ...p.user,
-                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-              });
-            }
-          });
-        
-        game.parent?.participants
-          ?.filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
-          .forEach(p => {
-            if (p.user && !userIds.has(p.user.id)) {
-              userIds.add(p.user.id);
-              users.push({
-                ...p.user,
-                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-              });
-            }
-          });
-      } else if (normalizedChatType === 'ADMINS') {
-        game.participants
-          ?.filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
-          .forEach(p => {
-            if (p.user && !userIds.has(p.user.id)) {
-              userIds.add(p.user.id);
-              users.push({
-                ...p.user,
-                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-              });
-            }
-          });
-        
-        game.parent?.participants
-          ?.filter(p => p.role === 'ADMIN' || p.role === 'OWNER')
-          .forEach(p => {
-            if (p.user && !userIds.has(p.user.id)) {
-              userIds.add(p.user.id);
-              users.push({
-                ...p.user,
-                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-              });
-            }
-          });
-      } else if (normalizedChatType === 'PRIVATE') {
-        game.participants
-          ?.filter(p => p.status === 'PLAYING')
-          .forEach(p => {
-            if (p.user && !userIds.has(p.user.id)) {
-              userIds.add(p.user.id);
-              users.push({
-                ...p.user,
-                display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-              });
-            }
-          });
-      }
-
-      console.log('[MentionInput] GAME mentionableUsers:', users.length, users);
-      return users;
-    } else if (contextType === 'BUG' && bug) {
-      const users: MentionableUser[] = [];
-      const userIds = new Set<string>();
-
-      if (bug.sender && !userIds.has(bug.sender.id)) {
-        userIds.add(bug.sender.id);
-        users.push({
-          ...bug.sender,
-          display: `${bug.sender.firstName || ''} ${bug.sender.lastName || ''}`.trim() || 'Unknown',
-        });
-      }
-
-      bug.participants?.forEach(p => {
-        if (p.user && !userIds.has(p.user.id)) {
-          userIds.add(p.user.id);
-          users.push({
-            ...p.user,
-            display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-          });
-        }
-      });
-
-      return users;
-    } else if (contextType === 'GROUP' && groupChannel) {
-      const users: MentionableUser[] = [];
-      const userIds = new Set<string>();
-
-      groupChannel.participants?.forEach(p => {
-        if (p.user && !userIds.has(p.user.id)) {
-          userIds.add(p.user.id);
-          users.push({
-            ...p.user,
-            display: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'Unknown',
-          });
-        }
-      });
-
-      return users;
-    } else if (contextType === 'USER') {
-      return [];
+      const participants = gameParticipants ?? game.participants ?? [];
+      return buildGameMentionableUsers(
+        participants,
+        game.parent?.participants,
+        chatType
+      );
     }
-
+    if (contextType === 'BUG' && bug) {
+      return buildBugMentionableUsers(bug);
+    }
+    if (contextType === 'GROUP' && groupChannel) {
+      const participants = groupParticipants ?? groupChannel.participants ?? [];
+      return buildGroupMentionableUsers(participants);
+    }
     return [];
-  }, [contextType, game, bug, groupChannel, chatType]);
+  }, [
+    contextType,
+    game,
+    bug,
+    groupChannel,
+    chatType,
+    gameParticipants,
+    groupParticipants,
+  ]);
 
-  const handleChange = (_e: any, newValue: string, _newPlainTextValue: string, mentions: MentionData[]) => {
-    const ids = mentions.map(m => m.id);
+  const handleChange = (_e: unknown, newValue: string, _newPlainTextValue: string, mentions: MentionData[]) => {
+    const ids = mentions.map((m) => m.id);
     onChange(newValue, ids);
   };
 
-  const searchUsers = (query: string, callback: (items: SuggestionDataItem[]) => void) => {
-    console.log('[MentionInput] searchUsers called with query:', query, 'mentionableUsers count:', mentionableUsers.length);
-    
-    if (!query || query.trim() === '') {
-      const suggestions: SuggestionDataItem[] = mentionableUsers.map(user => ({
-        id: user.id,
-        display: user.display,
-        user: user,
-      }));
-      console.log('[MentionInput] Returning all suggestions:', suggestions.length);
-      callback(suggestions);
-      return;
-    }
+  const searchUsers = useCallback(
+    (query: string, callback: (items: SuggestionDataItem[]) => void) => {
+      const trimmed = query?.trim() ?? '';
+      const filtered = trimmed
+        ? mentionableUsers.filter((user) => {
+            const display = user.display;
+            const firstName = user.firstName || '';
+            const lastName = user.lastName || '';
+            return (
+              matchesSearch(trimmed, display) ||
+              matchesSearch(trimmed, firstName) ||
+              matchesSearch(trimmed, lastName)
+            );
+          })
+        : mentionableUsers;
 
-    const filtered = mentionableUsers.filter(user => {
-      const display = user.display;
-      const firstName = user.firstName || '';
-      const lastName = user.lastName || '';
-      return matchesSearch(query, display) || matchesSearch(query, firstName) || matchesSearch(query, lastName);
-    });
+      callback(
+        filtered.map((user) => ({
+          id: user.id,
+          display: user.display,
+          user,
+        }))
+      );
+    },
+    [mentionableUsers]
+  );
 
-    const suggestions: SuggestionDataItem[] = filtered.map(user => ({
-      id: user.id,
-      display: user.display,
-      user: user,
-    }));
-
-    console.log('[MentionInput] Returning filtered suggestions:', suggestions.length);
-    callback(suggestions);
-  };
+  const customSuggestionsContainer = useCallback(
+    (children: React.ReactNode) => <MentionSuggestionsContainer>{children}</MentionSuggestionsContainer>,
+    []
+  );
 
   const renderSuggestion = (entry: SuggestionDataItem) => {
-    const user = (entry as any).user || mentionableUsers.find(u => u.id === entry.id);
+    const user =
+      (entry as SuggestionDataItem & { user?: MentionableUser }).user ||
+      mentionableUsers.find((u) => u.id === entry.id);
     if (!user) return <span>{entry.display}</span>;
-    
+
     return (
       <div className="flex items-center gap-2">
-        <PlayerAvatar
-          player={user}
-          extrasmall={true}
-          fullHideName={true}
-        />
+        <PlayerAvatar player={user} extrasmall={true} fullHideName={true} />
         <span>{entry.display}</span>
       </div>
     );
@@ -314,15 +265,16 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         zIndex: 99999,
       },
       list: {
-        backgroundColor: 'white',
-        border: '1px solid rgba(0,0,0,0.15)',
+        backgroundColor: 'transparent',
+        border: 'none',
         fontSize: 14,
-        maxHeight: '200px',
+        maxHeight: 'min(200px, calc(var(--vv-height, 100dvh) - var(--keyboard-height, 0px) - 120px))',
         overflowY: 'auto' as const,
-        borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        borderRadius: '12px',
+        boxShadow: 'none',
         width: `${suggestionsWidth}px`,
-        position: 'relative' as const,
+        margin: 0,
+        padding: 0,
       },
       item: {
         padding: '8px 12px',
@@ -352,11 +304,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       },
       list: {
         ...customStyle.suggestions.list,
-        backgroundColor: '#374151',
-        borderColor: '#4b5563',
         color: '#f3f4f6',
         width: `${suggestionsWidth}px`,
-        position: 'relative' as const,
       },
       item: {
         ...customStyle.suggestions.item,
@@ -386,18 +335,20 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         disabled={disabled}
         style={finalStyle}
         allowSuggestionsAboveCursor
+        forceSuggestionsAboveCursor
+        suggestionsPortalHost={suggestionsPortalHost ?? undefined}
+        customSuggestionsContainer={customSuggestionsContainer}
         inputRef={setInputRef}
       >
-      <Mention
-        trigger="@"
-        data={searchUsers}
-        displayTransform={(_id: string, display: string) => `@${display}`}
-        markup="@[__display__](__id__)"
-        regex={/@\[([^\]]+)\]\(([^)]+)\)/}
-        renderSuggestion={renderSuggestion}
-      />
-    </MentionsInput>
+        <Mention
+          trigger="@"
+          data={searchUsers}
+          displayTransform={(_id: string, display: string) => `@${display}`}
+          markup="@[__display__](__id__)"
+          regex={/@\[([^\]]+)\]\(([^)]+)\)/}
+          renderSuggestion={renderSuggestion}
+        />
+      </MentionsInput>
     </div>
   );
 };
-

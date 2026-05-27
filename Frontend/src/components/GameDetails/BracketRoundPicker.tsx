@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import type { LeagueRound } from '@/api/leagues';
-import { resolveBracketRoundPickerLabel } from '@/utils/bracketRoundDisplay.util';
+import { resolveBracketRoundPickerLabel, translateBracketRoundLabel } from '@/utils/bracketRoundDisplay.util';
 
 interface BracketRoundPickerProps {
   rounds: LeagueRound[];
@@ -27,7 +27,8 @@ function roundLabel(
 ): string {
   const generic = roundGenericLabel(round, t);
   if (round.id !== selectedRoundId) return generic;
-  return resolveBracketRoundPickerLabel(round, selectedRoundSlotTitle, generic);
+  const resolved = resolveBracketRoundPickerLabel(round, selectedRoundSlotTitle, generic);
+  return translateBracketRoundLabel(resolved, t) || generic;
 }
 
 export function BracketRoundPicker({

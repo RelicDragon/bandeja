@@ -4,6 +4,7 @@ import { useChatOfflineStore } from '@/store/chatOfflineStore';
 import { isCapacitor } from '@/utils/capacitor';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { chatSyncService } from '@/services/chatSyncService';
+import { useChatSyncStore } from '@/store/chatSyncStore';
 import { runChatSyncBatchWarmOnConnect } from '@/services/chat/chatSyncBatchWarm';
 import { refreshChatOfflineBanner, setChatBannerSocketConnected } from '@/services/chat/chatOfflineBanner';
 import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
@@ -524,9 +525,13 @@ class SocketService {
         }
       }
       if (rooms.length > 0) {
-        chatSyncService.syncAllContexts(rooms).catch((err) => {
-          console.error('[SocketService] Post-rejoin sync failed:', err);
-        });
+        if (useChatSyncStore.getState().syncInProgress) {
+          console.log('[SocketService] Skipping post-rejoin sync — sync already in progress');
+        } else {
+          chatSyncService.syncAllContexts(rooms).catch((err) => {
+            console.error('[SocketService] Post-rejoin sync failed:', err);
+          });
+        }
       } else {
         chatSyncService.refreshUnreadAndList().catch((err) => {
           console.error('[SocketService] Post-rejoin refresh failed:', err);

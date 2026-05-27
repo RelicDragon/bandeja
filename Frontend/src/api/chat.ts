@@ -762,7 +762,7 @@ export const chatApi = {
 
   getGroupChannelParticipants: async (id: string) => {
     const response = await api.get<ApiResponse<GroupChannelParticipant[]>>(`/group-channels/${id}/participants`);
-    return response.data;
+    return response.data.data ?? [];
   },
 
   getGroupChannelInvites: async (id: string) => {

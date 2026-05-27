@@ -24,6 +24,10 @@ import {
   validateSupplementalSetOrder,
 } from '@/utils/matchSetRole';
 import { mergeRoundsPreservingIdentity } from './gameResultsMerge';
+import {
+  buildFivePlayerAllMatchCombinations,
+  canCreateAllFivePlayerCombinations,
+} from '@/utils/fivePlayerMatchCombinations';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 
@@ -376,6 +380,45 @@ class GameResultsEngineClass {
     if (playingParticipants.length !== 2 && playingParticipants.length !== 4) return;
 
     await this.addRound();
+  }
+
+  async createAllFivePlayerCombinations(playerIds: string[]): Promise<void> {
+    const state = this.getState();
+    if (!state.gameId || !state.userId || !state.canEdit || !state.game) return;
+    if (
+      !canCreateAllFivePlayerCombinations(
+        playerIds.length,
+        Boolean(state.game.hasFixedTeams),
+        state.rounds,
+      )
+    ) {
+      return;
+    }
+
+    const combinations = buildFivePlayerAllMatchCombinations(playerIds);
+    if (combinations.length === 0) return;
+
+    const rules = getRules(state.game);
+    const initialSets = initialSetsForRules(rules);
+    const sortedCourts = [...(state.game.gameCourts ?? [])].sort((a, b) => a.order - b.order);
+    const roundId = state.rounds.length === 1 ? state.rounds[0].id : createId();
+
+    const matches: Match[] = combinations.map((combo, index) => ({
+      id: createId(),
+      teamA: [...combo.teamA],
+      teamB: [...combo.teamB],
+      sets: initialSets.map((set) => ({ ...set })),
+      courtId: sortedCourts[index % sortedCourts.length]?.courtId,
+    }));
+
+    useGameResultsStore.setState({
+      rounds: [{ id: roundId, matches }],
+      expandedRoundIds: [roundId],
+      editingMatchId: null,
+    });
+
+    await this.saveLocal();
+    await this.syncToServer();
   }
 
   async cleanup() {

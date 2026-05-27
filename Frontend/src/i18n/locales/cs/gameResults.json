@@ -3,6 +3,8 @@
     "title": "Zadat výsledky zápasu",
     "round": "Kolo",
     "addRound": "Přidat kolo",
+    "createAllCombinations": "Vytvořit všechny kombinace",
+    "createAllCombinationsDone": "Všechny kombinace vytvořeny",
     "roundAdded": "Kolo přidáno",
     "vs": "proti",
     "match": "Zápas {{number}}",

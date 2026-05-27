@@ -128,6 +128,35 @@ export function planOpenBootstrapPaints(input: OpenBootstrapInput): OpenBootstra
   return { paintCount, snapshot: messages };
 }
 
+/** Ordered id equality — skip redundant open paints when snapshot unchanged. */
+export function chatOpenMessageIdsEqual(
+  a: readonly { id: string }[],
+  b: readonly { id: string }[]
+): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i]!.id !== b[i]!.id) return false;
+  }
+  return true;
+}
+
+/** Id + updatedAt — reconcile may refresh bodies without changing row count. */
+export function chatOpenMessagesSnapshotEqual(
+  a: readonly ChatMessageWithStatus[],
+  b: readonly ChatMessageWithStatus[]
+): boolean {
+  if (!chatOpenMessageIdsEqual(a, b)) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i]!.updatedAt !== b[i]!.updatedAt) return false;
+  }
+  return true;
+}
+
+/** Full local tail loaded — unlikely older pages exist unless backfill says otherwise. */
+export function chatOpenLikelyHasOlderMessages(paintedCount: number, pageSize: number): boolean {
+  return paintedCount >= pageSize;
+}
+
 export function reconcileOpenDelta(
   prev: readonly ChatMessageWithStatus[],
   next: readonly ChatMessageWithStatus[]

@@ -1,5 +1,9 @@
 import type { ChatContextType } from '@/api/chat';
-import { chatSyncPullStarted, chatSyncPullEnded } from '@/services/chat/chatOfflineBanner';
+import {
+  chatSyncPullStarted,
+  chatSyncPullEnded,
+  resetChatSyncPullDepth,
+} from '@/services/chat/chatOfflineBanner';
 import { recordChatSyncPullFailure, resetChatSyncMetrics } from '@/services/chat/chatSyncMetrics';
 import { shouldDeferLowPriorityChatSyncPull } from '@/services/chat/chatSyncAppVisibility';
 import { chatCursorKey, chatLocalDb } from './chatLocalDb';
@@ -159,4 +163,5 @@ export function clearChatSyncScheduler(): void {
   pending.clear();
   resetLowPriorityChatSyncPullBudget();
   resetChatSyncMetrics();
+  resetChatSyncPullDepth();
 }

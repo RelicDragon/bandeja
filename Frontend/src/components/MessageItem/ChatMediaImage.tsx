@@ -7,9 +7,17 @@ type ChatMediaImageProps = {
   className?: string;
   style?: React.CSSProperties;
   onClick?: () => void;
+  loading?: 'lazy' | 'eager';
 };
 
-export const ChatMediaImage: React.FC<ChatMediaImageProps> = ({ src, alt, className, style, onClick }) => {
+export const ChatMediaImage: React.FC<ChatMediaImageProps> = ({
+  src,
+  alt,
+  className,
+  style,
+  onClick,
+  loading = 'lazy',
+}) => {
   const [displaySrc, setDisplaySrc] = useState(src);
 
   useEffect(() => {
@@ -48,6 +56,6 @@ export const ChatMediaImage: React.FC<ChatMediaImageProps> = ({ src, alt, classN
   }, [src]);
 
   return (
-    <img src={displaySrc || src} alt={alt} className={className} style={style} onClick={onClick} loading="lazy" />
+    <img src={displaySrc || src} alt={alt} className={className} style={style} onClick={onClick} loading={loading} />
   );
 };

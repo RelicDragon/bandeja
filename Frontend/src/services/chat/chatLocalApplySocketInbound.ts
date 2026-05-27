@@ -24,27 +24,26 @@ async function onSocketSyncSeqUnqueued(
   const last = await getLocalCursorSeq(contextType, contextId);
   if (syncSeq <= last) return;
 
-  if (syncSeq > last + 1) {
-    chatSyncPullStarted();
-    try {
-      const { repairedStaleCursor, threadInvalidated } = await pullEventsLoop(contextType, contextId);
-      markChatPullCompleted(contextType, contextId);
-      await reconcileCursorWithServerHead(contextType, contextId);
-      if (repairedStaleCursor || threadInvalidated) {
-        const { persistLatestTailPagesAfterStaleCursor } = await import('./chatTailRecover');
-        await persistLatestTailPagesAfterStaleCursor(contextType, contextId).catch(() => {});
-        await syncLastMessageIdsToStoreFromLocalHeadsForContext(contextType, contextId);
-      }
-      clearPendingSocketSeqReconcileTimer(contextType, contextId);
-    } catch {
-      /* keep cursor unchanged so a later reconnect can retry gap fill */
-    } finally {
-      chatSyncPullEnded();
+  chatSyncPullStarted();
+  try {
+    const { repairedStaleCursor, threadInvalidated } = await pullEventsLoop(contextType, contextId);
+    markChatPullCompleted(contextType, contextId);
+    await reconcileCursorWithServerHead(contextType, contextId);
+    if (repairedStaleCursor || threadInvalidated) {
+      const { persistLatestTailPagesAfterStaleCursor } = await import('./chatTailRecover');
+      await persistLatestTailPagesAfterStaleCursor(contextType, contextId).catch(() => {});
+      await syncLastMessageIdsToStoreFromLocalHeadsForContext(contextType, contextId);
     }
-    return;
+    clearPendingSocketSeqReconcileTimer(contextType, contextId);
+    const after = await getLocalCursorSeq(contextType, contextId);
+    if (after < syncSeq) {
+      await bumpCursor(contextType, contextId, syncSeq);
+    }
+  } catch {
+    /* keep cursor unchanged so a later reconnect can retry gap fill */
+  } finally {
+    chatSyncPullEnded();
   }
-
-  await bumpCursor(contextType, contextId, syncSeq);
 }
 
 export async function onSocketSyncSeq(

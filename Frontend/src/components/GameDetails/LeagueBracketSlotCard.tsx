@@ -24,6 +24,7 @@ import {
   teamUsersFromParticipant,
 } from '@/utils/leagueBracketLayout';
 import { BRACKET_TREE_CARD_CLASS } from '@/utils/bracketTreeCard.util';
+import { translateBracketRoundLabel } from '@/utils/bracketRoundDisplay.util';
 
 function resolveOriginGroup(
   participant: BracketSlotDto['participant'],
@@ -227,7 +228,9 @@ export function LeagueBracketSlotCard({
         <div className="mb-1.5 flex items-center justify-between gap-1">
           <StatusBadge status={status} />
           {slot.roundLabel && !compact ? (
-            <span className="truncate text-[10px] text-gray-500 dark:text-gray-400">{slot.roundLabel}</span>
+            <span className="truncate text-[10px] text-gray-500 dark:text-gray-400">
+              {translateBracketRoundLabel(slot.roundLabel, t)}
+            </span>
           ) : null}
         </div>
         <SideRow

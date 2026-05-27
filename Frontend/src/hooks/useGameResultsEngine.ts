@@ -90,6 +90,10 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
   const getGameResults = useCallback(() => GameResultsEngine.getGameResults(), []);
   const initializePresetMatches = useCallback(() => GameResultsEngine.initializePresetMatches(), []);
   const initializeDefaultRound = useCallback(() => GameResultsEngine.initializeDefaultRound(), []);
+  const createAllFivePlayerCombinations = useCallback(
+    (playerIds: string[]) => GameResultsEngine.createAllFivePlayerCombinations(playerIds),
+    [],
+  );
   const resetGame = useCallback(() => GameResultsEngine.resetGame(), []);
   const updateGame = useCallback((game: any) => GameResultsEngine.updateGame(game), []);
   const transitionMatchTimer = useCallback(
@@ -124,6 +128,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     getGameResults,
     initializePresetMatches,
     initializeDefaultRound,
+    createAllFivePlayerCombinations,
     resetGame,
     updateGame,
     transitionMatchTimer,
@@ -153,6 +158,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     getGameResults,
     initializePresetMatches,
     initializeDefaultRound,
+    createAllFivePlayerCombinations,
     resetGame,
     updateGame,
     transitionMatchTimer,

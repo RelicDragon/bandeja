@@ -21,6 +21,15 @@ export function chatSyncPullEnded(): void {
   refreshChatOfflineBanner();
 }
 
+/** Clears orphaned pull depth (e.g. on logout when scheduler is cleared). */
+export function resetChatSyncPullDepth(): void {
+  if (import.meta.env.DEV && activeChatSyncPullDepth > 0) {
+    console.warn('[chatSync] reset activeChatSyncPullDepth', activeChatSyncPullDepth);
+  }
+  activeChatSyncPullDepth = 0;
+  refreshChatOfflineBanner();
+}
+
 function computeDesiredChatConnectionState(): 'OFFLINE' | 'SYNCING' | 'ONLINE' {
   const navOnline = typeof navigator !== 'undefined' && navigator.onLine;
   const net = useNetworkStore.getState().isOnline;
@@ -65,3 +74,10 @@ export function refreshChatOfflineBanner(): void {
     /* ignore */
   }
 }
+
+let prevSyncInProgress = useChatSyncStore.getState().syncInProgress;
+useChatSyncStore.subscribe((state) => {
+  if (state.syncInProgress === prevSyncInProgress) return;
+  prevSyncInProgress = state.syncInProgress;
+  refreshChatOfflineBanner();
+});

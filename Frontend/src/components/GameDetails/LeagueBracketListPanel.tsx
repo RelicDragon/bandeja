@@ -5,6 +5,7 @@ import type { BracketPlayoffGroupDto } from '@/api/leagues';
 import type { Game } from '@/types';
 import { LeagueGameCard } from './LeagueGameCard';
 import { collectBracketScheduleGames } from '@/utils/bracketScheduleListSort.util';
+import { translateBracketRoundLabel } from '@/utils/bracketRoundDisplay.util';
 import { isPlayInPhaseComplete } from '@/utils/leagueBracketOutcome';
 
 export type BracketListFilter = 'ALL' | 'PLAY_IN' | 'KNOCKOUT';
@@ -169,10 +170,11 @@ export function LeagueBracketListPanel({
               onEdit={onEditGame ? () => onEditGame(game) : undefined}
               showGroupTag={false}
               bracketRoundBadge={
-                roundLabel ??
-                (kind === 'PLAY_IN'
-                  ? t('gameDetails.bracketColumnPlayIn')
-                  : t('gameDetails.bracketColumnMainRound', { round: roundIndex + 1 }))
+                roundLabel
+                  ? translateBracketRoundLabel(roundLabel, t)
+                  : kind === 'PLAY_IN'
+                    ? t('gameDetails.bracketColumnPlayIn')
+                    : t('gameDetails.bracketColumnMainRound', { round: roundIndex + 1 })
               }
               seasonPlayoffBadge={crossGroupBracket}
             />

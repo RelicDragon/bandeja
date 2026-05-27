@@ -1,7 +1,7 @@
-import { PHOTO_STICKER_FONT_PX } from '../constants';
 import type { MediaNode, StickerNode, StoryDocument } from '../types';
 import { drawTextNode } from './canvasText';
 import { getMediaNode, getOverlayNodes } from './document';
+import { renderStickerBitmap } from './renderStickerBitmap';
 import { STORY_CANVAS_HEIGHT, STORY_CANVAS_WIDTH } from './transform';
 import { mediaAdjustToCanvasFilter } from './storyPhotoFilters';
 
@@ -24,16 +24,17 @@ function drawMedia(
   ctx.filter = 'none';
 }
 
+/** Same center-anchored bitmap path as PhotoStoryKonvaSticker. */
 function drawSticker(ctx: CanvasRenderingContext2D, node: StickerNode): void {
   const { transform: t } = node;
+  const bitmap = renderStickerBitmap(node.emoji);
+  const halfW = bitmap.width / 2;
+  const halfH = bitmap.height / 2;
   ctx.save();
   ctx.translate(t.x, t.y);
   ctx.rotate((t.rotation * Math.PI) / 180);
   ctx.scale(t.scale, t.scale);
-  ctx.font = `${PHOTO_STICKER_FONT_PX}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(node.emoji, 0, 0);
+  ctx.drawImage(bitmap.image, -halfW, -halfH, bitmap.width, bitmap.height);
   ctx.restore();
 }
 

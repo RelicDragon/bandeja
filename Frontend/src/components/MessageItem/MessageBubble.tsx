@@ -45,6 +45,7 @@ interface MessageBubbleProps {
   voiceTranscriptionNoSpeech?: boolean;
   onVideoOpen?: (videoUrl: string, posterUrl: string) => void;
   inlineVideoPlaybackPaused?: boolean;
+  loadMediaEager?: boolean;
   t: TFunction;
 }
 
@@ -80,6 +81,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   voiceTranscriptionNoSpeech,
   onVideoOpen,
   inlineVideoPlaybackPaused = false,
+  loadMediaEager = false,
   t,
 }) => {
   const isVoice = message.messageType === 'VOICE';
@@ -148,6 +150,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           getThumbnailUrl={getThumbnailUrl}
           onImageClick={onImageClick}
           hasContentBelow={!!message.content}
+          loadEager={loadMediaEager}
         />
       )}
 

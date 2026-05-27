@@ -3,6 +3,7 @@ import type { BracketSlotDto } from '@/api/leagues';
 import {
   resolveBracketRoundPickerLabel,
   resolveBracketRoundTitleFromSlots,
+  translateBracketRoundLabel,
 } from './bracketRoundDisplay.util';
 
 function slot(partial: Partial<BracketSlotDto> & Pick<BracketSlotDto, 'id' | 'slotKind'>): BracketSlotDto {
@@ -60,5 +61,43 @@ describe('resolveBracketRoundPickerLabel', () => {
       games: [],
     };
     expect(resolveBracketRoundPickerLabel(round, null, 'Round 1')).toBe('Round 1');
+  });
+});
+
+const mockT = (key: string, opts?: { round?: number }) => {
+  const map: Record<string, string> = {
+    'gameDetails.bracketRoundFinal': 'finále',
+    'gameDetails.bracketRoundSemifinals': 'semifinále',
+    'gameDetails.bracketRoundQuarterfinals': 'čtvrtfinále',
+    'gameDetails.bracketRoundOf16': 'osmifinále',
+    'gameDetails.bracketColumnPlayIn': 'Play-in',
+    'gameDetails.bracketColumnThirdPlace': 'O 3. místo',
+    'gameDetails.bracketTabGrandFinal': 'Velké finále',
+    'gameDetails.bracketColumnMainRound': `Kolo ${opts?.round ?? ''}`,
+    'gameDetails.bracketColumnByes': 'Volno',
+  };
+  return map[key] ?? key;
+};
+
+describe('translateBracketRoundLabel', () => {
+  it('translates known knockout round labels', () => {
+    expect(translateBracketRoundLabel('Quarterfinals', mockT)).toBe('čtvrtfinále');
+    expect(translateBracketRoundLabel('Semifinals', mockT)).toBe('semifinále');
+    expect(translateBracketRoundLabel('Final', mockT)).toBe('finále');
+    expect(translateBracketRoundLabel('Round of 16', mockT)).toBe('osmifinále');
+  });
+
+  it('translates special round labels', () => {
+    expect(translateBracketRoundLabel('Play-in', mockT)).toBe('Play-in');
+    expect(translateBracketRoundLabel('Third place', mockT)).toBe('O 3. místo');
+    expect(translateBracketRoundLabel('Grand final', mockT)).toBe('Velké finále');
+  });
+
+  it('translates Round N pattern', () => {
+    expect(translateBracketRoundLabel('Round 2', mockT)).toBe('Kolo 2');
+  });
+
+  it('returns unknown labels unchanged', () => {
+    expect(translateBracketRoundLabel('Custom round', mockT)).toBe('Custom round');
   });
 });

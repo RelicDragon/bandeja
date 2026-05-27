@@ -27,10 +27,6 @@ import { bracketGroupHasPodium } from '@/utils/leagueBracketOutcome';
 import { LeagueBracketPodiumCard } from './LeagueBracketPodiumCard';
 import { LeagueBracketStandingsCtaCard } from './LeagueBracketStandingsCtaCard';
 import { getActiveBracketGroup, isCrossGroupBracket } from '@/utils/bracketView.util';
-import {
-  playoffRoundTypeFilterLabelKey,
-  resolvePlayoffFilterLabelMode,
-} from '@/utils/roundTypePlayoffFilterLabel.util';
 
 const ALL_GROUP_ID = 'ALL';
 
@@ -52,11 +48,6 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
   const [scheduleRounds, setScheduleRounds] = useState<LeagueRound[]>([]);
   const [selectedBracketRoundId, setSelectedBracketRoundId] = useState<string | null>(null);
   const NO_GROUP_KEY = 'no-group';
-  const playoffFilterLabelKey = useMemo(
-    () => playoffRoundTypeFilterLabelKey(resolvePlayoffFilterLabelMode(scheduleRounds)),
-    [scheduleRounds]
-  );
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -378,7 +369,7 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
       <RoundTypeFilterSwitch
         value={selectedRoundType}
         regularLabel={t('gameDetails.roundTypeRegular') || 'Regular season'}
-        playoffLabel={t(playoffFilterLabelKey, { defaultValue: t('gameDetails.roundTypePlayoff') || 'Play-off' })}
+        playoffLabel={t('gameDetails.roundTypePlayoff') || 'Play-off'}
         onSelect={setSelectedRoundType}
       />
       {orderedGroups.length > 0 && (

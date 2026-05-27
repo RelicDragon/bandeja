@@ -3,6 +3,8 @@
     "title": "Enter Game Results",
     "round": "Round",
     "addRound": "Add Round",
+    "createAllCombinations": "Create all combinations",
+    "createAllCombinationsDone": "All combinations created",
     "roundAdded": "Round added",
     "vs": "vs",
     "match": "Match {{number}}",

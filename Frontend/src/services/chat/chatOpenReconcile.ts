@@ -10,12 +10,19 @@ import { pullMissedAndPersistToDexie } from '@/services/chat/chatThreadNetworkSy
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { mergeChatMessagesAscending } from '@/utils/chatMessageSort';
 import { enqueueChatSyncPull, SYNC_PRIORITY_FOREGROUND } from '@/services/chat/chatSyncScheduler';
-import { mergeOpenSnapshot } from './chatOpenSnapshot';
+import { chatOpenMessagesSnapshotEqual, mergeOpenSnapshot } from './chatOpenSnapshot';
 import { commitChatOpenMessages, traceChatOpenLength } from './chatOpenTrace';
 
 function tailMessageId(messages: ChatMessage[]): string | null {
   if (messages.length === 0) return null;
   return messages[messages.length - 1]!.id;
+}
+
+/** Latest `reconcileChatThreadOpen` call; stale runs must not clear `isOpenSyncing` or commit. */
+let openReconcileGeneration = 0;
+
+function isActiveOpenReconcile(generation: number): boolean {
+  return generation === openReconcileGeneration;
 }
 
 export type ChatOpenReconcileParams = {
@@ -45,6 +52,7 @@ export async function reconcileChatThreadOpen(params: ChatOpenReconcileParams): 
 
   if (currentIdRef.current !== contextId) return;
 
+  const generation = ++openReconcileGeneration;
   useChatSyncStore.getState().setOpenSyncing(true);
 
   await hydrateLastMessageIdFromDexieIfMissing(
@@ -69,6 +77,7 @@ export async function reconcileChatThreadOpen(params: ChatOpenReconcileParams): 
     const { messages: dexieTail } = await loadLocalThreadBootstrap(contextType, contextId, gameChatType);
     if (currentIdRef.current !== contextId) return;
 
+    const hadMergeInput = missed.length > 0 || dexieTail.length > 0;
     let next = messagesRef.current;
     if (missed.length > 0) {
       next = mergeOpenSnapshot(next, missed, []);
@@ -77,7 +86,12 @@ export async function reconcileChatThreadOpen(params: ChatOpenReconcileParams): 
       next = mergeOpenSnapshot(next, dexieTail, []);
     }
 
-    if (missed.length > 0 || dexieTail.length > 0) {
+    if (
+      currentIdRef.current === contextId &&
+      isActiveOpenReconcile(generation) &&
+      hadMergeInput &&
+      !chatOpenMessagesSnapshotEqual(messagesRef.current, next)
+    ) {
       commitChatOpenMessages(messagesRef, (v) => setMessages(v), next, 'reconcile-batched');
       traceChatOpenLength('afterReconcile', next.length);
       const tail = tailMessageId(next);
@@ -90,7 +104,7 @@ export async function reconcileChatThreadOpen(params: ChatOpenReconcileParams): 
   } catch {
     void enqueueChatSyncPull(contextType, contextId, SYNC_PRIORITY_FOREGROUND);
   } finally {
-    if (currentIdRef.current === contextId) {
+    if (isActiveOpenReconcile(generation)) {
       useChatSyncStore.getState().setOpenSyncing(false);
     }
   }

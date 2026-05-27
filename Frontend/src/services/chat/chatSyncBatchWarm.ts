@@ -29,6 +29,15 @@ let warmDrainTimer: ReturnType<typeof setTimeout> | null = null;
 let warmSerialTail: Promise<void> = Promise.resolve();
 let implicitWarmInFlight: Promise<void> | null = null;
 
+function isImplicitWarmCooldownActive(): boolean {
+  return Date.now() < implicitWarmCooldownUntil;
+}
+
+/** Skip duplicate full-thread warms right after bootstrap / implicit warm. */
+function shouldSkipRedundantImplicitWarm(): boolean {
+  return implicitWarmInFlight != null || isImplicitWarmCooldownActive();
+}
+
 function enqueueWarmSerial(fn: () => Promise<void>): Promise<void> {
   const run = warmSerialTail.then(fn);
   warmSerialTail = run.catch(() => {});
@@ -176,6 +185,7 @@ export function scheduleWarmFromUnreadApiPayload(payload: UnreadObjectsApiPayloa
     warmFromPayloadPendingInner = undefined;
     const full = warmFromPayloadPendingFull;
     warmFromPayloadPendingFull = undefined;
+    if (shouldSkipRedundantImplicitWarm()) return;
     const unreadKeys = unreadContextKeysFromPayload(full ?? undefined);
     void enqueueWarmSerial(() => warmChatSyncHeadsWithUnreadInnerRun(inner, unreadKeys));
   }, 450);
@@ -186,6 +196,7 @@ async function warmChatSyncHeadsWithUnreadInnerRun(
   unreadKeys: Set<string>
 ): Promise<void> {
   if (!useAuthStore.getState().token) return;
+  if (shouldSkipRedundantImplicitWarm()) return;
   const map = new Map<string, { contextType: ChatContextType; contextId: string }>();
   for (const it of await collectContextsForWarm()) {
     map.set(`${it.contextType}:${it.contextId}`, it);
@@ -350,4 +361,9 @@ export function warmChatSyncHeads(
 
 export function runChatSyncBatchWarmOnConnect(): void {
   void warmChatSyncHeads();
+}
+
+/** Awaits in-flight / queued implicit warm work (for tests). */
+export function awaitChatSyncWarmIdle(): Promise<void> {
+  return warmSerialTail;
 }

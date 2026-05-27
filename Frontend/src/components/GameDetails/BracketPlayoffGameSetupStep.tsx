@@ -44,7 +44,6 @@ export const BracketPlayoffGameSetupStep = ({
   };
 
   const handleConfirm = () => {
-    if (!formatReviewed) return;
     onConfirm({
       ...gameFormat.setupPayload,
       scoringMode: gameFormat.scoringMode,
@@ -81,16 +80,14 @@ export const BracketPlayoffGameSetupStep = ({
         <Button variant="outline" onClick={onBack} className="flex-1" disabled={submitting}>
           {t('common.back', { defaultValue: 'Back' })}
         </Button>
-        <Button onClick={handleConfirm} disabled={submitting || !formatReviewed} className="flex-1">
+        <Button onClick={handleConfirm} disabled={submitting} className="flex-1">
           {submitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
               {t('common.loading')}
             </>
-          ) : formatReviewed ? (
-            t('common.next', { defaultValue: 'Next' })
           ) : (
-            t('gameDetails.bracketGameSetupReviewFormat', { defaultValue: 'Review format' })
+            t('common.next', { defaultValue: 'Next' })
           )}
         </Button>
       </div>

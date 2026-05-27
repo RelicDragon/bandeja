@@ -20,6 +20,11 @@ import { scrollChatToBottomIfNearBottom } from '@/utils/chatScrollHelpers';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { scheduleChatThreadL1DebouncedPut } from '@/services/chat/chatThreadMemoryCache';
 import { BANDEJA_CHAT_SYNC_STALE, type ChatSyncStaleDetail } from '@/utils/chatSyncStaleEvents';
+import {
+  BANDEJA_CHAT_READ_BATCH_APPLIED,
+  type ChatReadBatchAppliedDetail,
+} from '@/utils/chatReadBatchEvents';
+import { applySyncReadBatchToMessages } from '@/services/chat/chatSyncReadBatchReact';
 import type { ChatType } from '@/types';
 import {
   appendChatRoomPending,
@@ -28,6 +33,7 @@ import {
 } from '@/services/chat/chatOpenSocketPending';
 import { scheduleAfterThreadPaint, scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
 import { logChatSyncStale } from '@/services/chat/chatOpenTrace';
+import { reconcileChatThreadOpen } from '@/services/chat/chatOpenReconcile';
 
 export interface UseGameChatSocketParams {
   id: string | undefined;
@@ -387,16 +393,61 @@ export function useGameChatSocket({
       const d = (ev as CustomEvent<ChatSyncStaleDetail>).detail;
       if (!d || d.contextType !== contextType || d.contextId !== id) return;
       logChatSyncStale(contextType, id);
+
+      const applyStaleRefresh = () => {
+        const painted =
+          currentIdRef.current === id &&
+          messagesRef.current.length > 0 &&
+          useChatSyncStore.getState().lastThreadPaintAt != null;
+        if (d.reason === 'threadInvalidated' || !painted) {
+          void reloadMessagesFirstPage();
+          return;
+        }
+        void reconcileChatThreadOpen({
+          contextType,
+          contextId: id,
+          gameChatType: effectiveChatType,
+          currentIdRef,
+          messagesRef,
+          setMessages,
+        });
+      };
+
       if (useChatSyncStore.getState().isOpenSyncing) {
         scheduleChatOpenIdle(() => {
           if (useChatSyncStore.getState().isOpenSyncing) return;
-          void reloadMessagesFirstPage();
+          applyStaleRefresh();
         });
         return;
       }
-      void reloadMessagesFirstPage();
+      applyStaleRefresh();
     };
     window.addEventListener(BANDEJA_CHAT_SYNC_STALE, onStale);
     return () => window.removeEventListener(BANDEJA_CHAT_SYNC_STALE, onStale);
-  }, [id, contextType, reloadMessagesFirstPage]);
+  }, [
+    id,
+    contextType,
+    effectiveChatType,
+    reloadMessagesFirstPage,
+    currentIdRef,
+    messagesRef,
+    setMessages,
+  ]);
+
+  useEffect(() => {
+    if (!id) return;
+    const onReadBatch = (ev: Event) => {
+      const d = (ev as CustomEvent<ChatReadBatchAppliedDetail>).detail;
+      if (!d || d.contextType !== contextType || d.contextId !== id) return;
+      if (currentIdRef.current !== id) return;
+      setMessages((prev) => {
+        const { next, changed } = applySyncReadBatchToMessages(prev, d.userId, d.readAt, d.messageIds);
+        if (!changed) return prev;
+        messagesRef.current = next;
+        return next;
+      });
+    };
+    window.addEventListener(BANDEJA_CHAT_READ_BATCH_APPLIED, onReadBatch);
+    return () => window.removeEventListener(BANDEJA_CHAT_READ_BATCH_APPLIED, onReadBatch);
+  }, [id, contextType, setMessages, messagesRef, currentIdRef]);
 }

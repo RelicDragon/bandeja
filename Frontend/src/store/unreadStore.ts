@@ -143,6 +143,10 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
     const key = normalizeSocketContextToKey(contextType, contextId, groupChannelMeta);
     if (!key) return;
 
+    if (unreadCount > 0) {
+      void import('@/services/chat/unreadCoordinator').then((m) => m.invalidateMarkReadConfirmed(key));
+    }
+
     const parsed = key.split(':')[0] as SnapshotContextType;
     const id = key.slice(key.indexOf(':') + 1);
     const next = effectiveSocketUnreadCount(parsed, id, unreadCount);

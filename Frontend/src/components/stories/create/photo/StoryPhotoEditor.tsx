@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Send } from 'lucide-react';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
@@ -11,12 +11,13 @@ import { PhotoStoryTextEditOverlay } from './editor/PhotoStoryTextEditOverlay';
 import { PhotoStoryToolPanel } from './editor/PhotoStoryToolPanel';
 import { PhotoStoryToolRail } from './editor/PhotoStoryToolRail';
 import { PhotoStoryTopChrome } from './editor/PhotoStoryTopChrome';
+import { usePhotoStoryGestures } from './hooks/usePhotoStoryGestures';
 import { usePhotoStoryState } from './hooks/usePhotoStoryState';
 import { useStoryPhotoPublish } from './hooks/useStoryPhotoPublish';
-import type { StoryMediaFile, StoryPhotoTool, TextNode } from './types';
-import { isTextNode } from './types';
+import type { StoryMediaFile, StoryPhotoTool, TextNode, Transform2D } from './types';
+import { isStickerNode, isTextNode } from './types';
 import { getMediaNode } from './utils/document';
-import { stageScaleFromWidth } from './utils/transform';
+import { computeCoverScale, stageScaleFromWidth } from './utils/transform';
 
 type StoryPhotoEditorProps = {
   open: boolean;
@@ -51,6 +52,7 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
     beginTransaction,
     commitTransaction,
     setMediaTransform,
+    resetMediaTransform,
     setMediaAdjustWithHistory,
     replaceActiveMedia,
     goToSegment,
@@ -200,6 +202,56 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
     onClose();
   }, [isDirty, isPublishing, onClose, t]);
 
+  const canvasGesturesBlocked =
+    activeTool === 'crop' ||
+    activeTool === 'adjust' ||
+    activeTool === 'sticker' ||
+    editingTextId != null ||
+    captionOpen;
+  const gesturesEnabled = !canvasGesturesBlocked;
+
+  const selectedLayer =
+    activeDoc && selectedNodeId
+      ? activeDoc.nodes.find(
+          (n) => n.id === selectedNodeId && (isTextNode(n) || isStickerNode(n))
+        )
+      : undefined;
+
+  const gestureTarget = useMemo(() => {
+    if (!gesturesEnabled || !media) return { kind: 'off' as const };
+    if (selectedLayer) {
+      return { kind: 'layer' as const, transform: selectedLayer.transform };
+    }
+    const w = media.source.naturalWidth;
+    const h = media.source.naturalHeight;
+    return {
+      kind: 'media' as const,
+      transform: media.transform,
+      coverScale: computeCoverScale(w, h),
+    };
+  }, [gesturesEnabled, media, selectedLayer]);
+
+  const handleMediaReset = useCallback(() => {
+    resetMediaTransform();
+  }, [resetMediaTransform]);
+
+  const handleLayerGestureTransform = useCallback(
+    (next: Transform2D) => {
+      if (selectedNodeId) updateNodeTransform(selectedNodeId, next);
+    },
+    [selectedNodeId, updateNodeTransform]
+  );
+
+  const { bind: stageGestureBind } = usePhotoStoryGestures({
+    target: gestureTarget,
+    stageScale,
+    onMediaTransformChange: setMediaTransform,
+    onLayerTransformChange: handleLayerGestureTransform,
+    onMediaReset: handleMediaReset,
+    onGestureStart: beginTransaction,
+    onGestureEnd: commitTransaction,
+  });
+
   const handleShare = useCallback(async () => {
     lightHaptic();
     const key = await publishSession({ ...session, caption });
@@ -212,7 +264,6 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
 
   if (!activeDoc || !media) return null;
 
-  const gesturesEnabled = activeTool !== 'crop' && editingTextId == null;
   const panelOpen =
     activeTool != null && activeTool !== 'crop' && editingTextId == null;
   const showPublish =
@@ -223,7 +274,8 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
       <div className="relative h-full min-h-[100dvh] w-full overflow-hidden bg-black text-white">
         <PhotoStoryStage
           className="pointer-events-auto"
-          gesturesDisabled={activeTool === 'crop'}
+          gesturesDisabled={!gesturesEnabled}
+          stageGestureBind={gesturesEnabled ? stageGestureBind : undefined}
           onMeasure={handleMeasure}
           overlay={
             activeTool === 'crop' ? (

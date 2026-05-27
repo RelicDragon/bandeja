@@ -2,6 +2,7 @@ import type { ChatContextType, ChatMessage, MessageReadReceipt } from '@/api/cha
 import { translationEqualsSource } from '@/utils/translationOutputNormalize';
 import { isTranslationPending } from '@/constants/messageTranslationPending';
 import { BANDEJA_CHAT_PINS_UPDATED } from '@/utils/chatPinsEvents';
+import { dispatchChatReadBatchApplied } from '@/utils/chatReadBatchEvents';
 import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';
 import type { ChatSyncPatch } from './chatSyncEventsToPatches';
 import { mergeReactionListSync, mergeReadReceiptSync } from './chatSyncEventsToPatches';
@@ -126,6 +127,13 @@ export async function applyChatSyncPatchesInSlice(
             payload: { ...r.payload, readReceipts: merged },
           });
         }
+        dispatchChatReadBatchApplied({
+          contextType,
+          contextId,
+          userId: p.userId,
+          readAt: p.readAt,
+          messageIds: p.messageIds,
+        });
         break;
       }
       case 'readReceipt': {

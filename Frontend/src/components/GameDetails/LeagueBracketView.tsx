@@ -14,6 +14,7 @@ import {
   hasDoubleEliminationSlots,
   resolveByeAdvanceRoundLabel,
 } from '@/utils/leagueBracketLayout';
+import { translateBracketRoundLabel } from '@/utils/bracketRoundDisplay.util';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import {
   buildBracketSlotHighlights,
@@ -322,16 +323,19 @@ export function LeagueBracketView({
             }`}
           >
             <h3 className="sticky top-0 z-10 rounded-md bg-gray-50/95 px-2 py-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-700 backdrop-blur-sm dark:bg-gray-900/95 dark:text-gray-200">
-              {col.label}
+              {translateBracketRoundLabel(col.label, t)}
             </h3>
             <div className="flex flex-col gap-2" {...{ [BRACKET_EXPORT_SLOTS_ATTR]: '' }}>
               {col.slots.map((slot) => {
                 const highlight = slotHighlights.get(slot.id);
                 if (slot.slotKind === 'BYE') {
-                  const advanceRoundLabel = resolveByeAdvanceRoundLabel(
-                    slot,
-                    group.slots,
-                    (roundIndex) => t('gameDetails.bracketColumnMainRound', { round: roundIndex + 1 })
+                  const advanceRoundLabel = translateBracketRoundLabel(
+                    resolveByeAdvanceRoundLabel(
+                      slot,
+                      group.slots,
+                      (roundIndex) => t('gameDetails.bracketColumnMainRound', { round: roundIndex + 1 })
+                    ),
+                    t
                   );
                   return (
                     <LeagueBracketByeCard
@@ -363,7 +367,7 @@ export function LeagueBracketView({
                         onEdit={onEditGame ? () => onEditGame(matchGame) : undefined}
                         showGroupTag={false}
                         showLeagueGroupSideAccent={!crossGroupBracket}
-                        bracketRoundBadge={col.label}
+                        bracketRoundBadge={translateBracketRoundLabel(col.label, t)}
                       />
                     </div>
                   );

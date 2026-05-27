@@ -10,6 +10,17 @@ import { normalizeChatType } from '@/utils/chatType';
 
 const ALL_GAME_CHAT_TYPES: ChatType[] = ['PUBLIC', 'PRIVATE', 'ADMINS'];
 
+/** Wall-clock cap for foreground / post-rejoin bulk sync (GAME = up to 3 pulls per room). */
+const SYNC_ALL_CONTEXTS_WAVE_MS = 28_000;
+
+let syncAllContextsGeneration = 0;
+
+function formatChatRoomRef(r: ChatRoomRef): string {
+  return r.gameChatType
+    ? `${r.contextType}:${r.contextId}:${r.gameChatType}`
+    : `${r.contextType}:${r.contextId}`;
+}
+
 export interface ChatRoomRef {
   contextType: ChatContextType;
   contextId: string;
@@ -57,27 +68,47 @@ export const chatSyncService = {
 
   async syncAllContexts(rooms: ChatRoomRef[]): Promise<void> {
     if (rooms.length === 0) return;
+    const generation = ++syncAllContextsGeneration;
     const { setSyncInProgress, setLastSyncCompletedAt } = useChatSyncStore.getState();
     setSyncInProgress(true);
     refreshChatOfflineBanner();
+
     try {
       for (const r of rooms) {
         enqueueChatSyncPull(r.contextType, r.contextId, SYNC_PRIORITY_FOREGROUND);
       }
-      await Promise.all(
+
+      const syncWave = Promise.all(
         rooms.map((r) => this.syncContext(r.contextType, r.contextId, r.gameChatType))
       );
-      chatApi.invalidateUnreadCache();
-      try {
-        const res = await chatApi.getUnreadObjects();
-        scheduleWarmFromUnreadApiPayload(unreadApiEnvelopeData(res));
-      } catch {
-        // list will refetch when opened
+      const timeoutSignal = new Promise<'timeout'>((resolve) => {
+        setTimeout(() => resolve('timeout'), SYNC_ALL_CONTEXTS_WAVE_MS);
+      });
+
+      const outcome = await Promise.race([
+        syncWave.then(() => 'completed' as const),
+        timeoutSignal,
+      ]);
+
+      if (outcome === 'timeout') {
+        console.warn(
+          `[chatSync] syncAllContexts wave timed out after ${SYNC_ALL_CONTEXTS_WAVE_MS}ms; rooms=${rooms.map(formatChatRoomRef).join(', ')}`
+        );
+      } else {
+        chatApi.invalidateUnreadCache();
+        try {
+          const res = await chatApi.getUnreadObjects();
+          scheduleWarmFromUnreadApiPayload(unreadApiEnvelopeData(res));
+        } catch {
+          // list will refetch when opened
+        }
       }
     } finally {
-      setSyncInProgress(false);
-      setLastSyncCompletedAt(Date.now());
-      refreshChatOfflineBanner();
+      if (generation === syncAllContextsGeneration) {
+        setSyncInProgress(false);
+        setLastSyncCompletedAt(Date.now());
+        refreshChatOfflineBanner();
+      }
     }
   },
 

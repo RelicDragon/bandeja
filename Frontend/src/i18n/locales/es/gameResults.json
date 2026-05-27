@@ -3,6 +3,8 @@
     "title": "Ingresar Resultados del Juego",
     "round": "Ronda",
     "addRound": "Agregar Ronda",
+    "createAllCombinations": "Crear todas las combinaciones",
+    "createAllCombinationsDone": "Todas las combinaciones creadas",
     "roundAdded": "Ronda añadida",
     "vs": "vs",
     "match": "Partido {{number}}",

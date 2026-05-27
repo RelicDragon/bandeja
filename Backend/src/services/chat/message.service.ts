@@ -493,6 +493,13 @@ export class MessageService {
       return;
     }
 
+    const unread = await ReadReceiptService.getUnreadCountForContext(
+      markContextType,
+      markContextId,
+      senderId
+    );
+    if (unread === 0) return;
+
     await UnreadSnapshotService.markContextRead(senderId, {
       contextType: markContextType,
       contextId: markContextId,

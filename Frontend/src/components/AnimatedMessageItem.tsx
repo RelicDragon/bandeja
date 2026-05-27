@@ -24,6 +24,8 @@ interface AnimatedMessageItemProps {
   staggerKey: string;
   /** When true, show immediately (e.g. thread open). */
   skipStaggerOnOpen?: boolean;
+  suppressOpenReactionMotion?: boolean;
+  loadMediaEager?: boolean;
   onAddReaction: (messageId: string, emoji: string) => void;
   onRemoveReaction: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
@@ -52,6 +54,8 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   message,
   staggerKey,
   skipStaggerOnOpen = false,
+  suppressOpenReactionMotion = false,
+  loadMediaEager = false,
   onAddReaction,
   onRemoveReaction,
   onDeleteMessage,
@@ -131,6 +135,8 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
         onUnpin={onUnpin}
         showReply={showReply}
         onForwardMessage={onForwardMessage}
+        suppressOpenReactionMotion={suppressOpenReactionMotion}
+        loadMediaEager={loadMediaEager}
       />
     </div>
   );

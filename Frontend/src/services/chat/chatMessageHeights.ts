@@ -54,6 +54,27 @@ export function getCachedMessageRowHeight(messageId: string | undefined): number
   return mem.get(messageId);
 }
 
+/** In-memory only (Dexie flush on next measure) — for open tail placeholders. */
+export function seedEphemeralMessageRowHeight(messageId: string | undefined, heightPx: number): void {
+  if (!messageId) return;
+  const rounded = Math.round(heightPx);
+  if (rounded < MIN_PX || rounded > MAX_PX) return;
+  if (mem.get(messageId) != null) return;
+  memSet(messageId, rounded);
+}
+
+/** Restore heights captured in L1; does not overwrite fresher in-memory measures. */
+export function seedMessageRowHeights(heights: Record<string, number> | undefined): void {
+  if (!heights) return;
+  for (const [messageId, heightPx] of Object.entries(heights)) {
+    if (!messageId) continue;
+    const rounded = Math.round(heightPx);
+    if (rounded < MIN_PX || rounded > MAX_PX) continue;
+    if (mem.get(messageId) != null) continue;
+    memSet(messageId, rounded);
+  }
+}
+
 export async function preloadMessageRowHeights(messageIds: string[]): Promise<void> {
   const ids = [...new Set(messageIds)].filter(Boolean);
   if (ids.length === 0) return;

@@ -86,7 +86,7 @@ export async function pullEventsLoop(
       if (!staleDispatched) {
         staleDispatched = true;
         recordChatSyncStaleDispatch();
-        dispatchChatSyncStale(contextType, contextId);
+        dispatchChatSyncStale(contextType, contextId, 'cursorStale');
       }
       after = reset;
       clearPendingSocketSeqReconcileTimer(contextType, contextId);
@@ -100,7 +100,7 @@ export async function pullEventsLoop(
         if (ev.eventType === 'THREAD_LOCAL_INVALIDATE') {
           await purgeLocalDexieThread(contextType, contextId);
           recordChatSyncStaleDispatch();
-          dispatchChatSyncStale(contextType, contextId);
+          dispatchChatSyncStale(contextType, contextId, 'threadInvalidated');
           threadInvalidated = true;
           const rowInv = await chatLocalDb.chatSyncCursor.get(key);
           await chatLocalDb.chatSyncCursor.put({

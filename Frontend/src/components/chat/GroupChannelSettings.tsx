@@ -71,7 +71,7 @@ export const GroupChannelSettings = ({
         chatApi.getGroupChannelParticipants(groupChannel.id),
         chatApi.getGroupChannelById(groupChannel.id)
       ]);
-      const participantsList = participantsData.data || [];
+      const participantsList = participantsData || [];
       setParticipants(participantsList);
       setGroupChannelData(groupChannelData.data);
       onParticipantsCountChangeRef.current?.(groupChannelData.data.participantsCount || 0);

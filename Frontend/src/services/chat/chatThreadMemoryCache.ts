@@ -1,10 +1,32 @@
 import type { ChatMessageWithStatus } from '@/api/chat';
+import {
+  getCachedMessageRowHeight,
+  seedEphemeralMessageRowHeight,
+  seedMessageRowHeights,
+} from '@/services/chat/chatMessageHeights';
+import { estimateMessageRowHeightPx } from '@/services/chat/chatMessageRowEstimate';
 
 const MAX_THREADS = 120;
 const MAX_MESSAGES_PER_THREAD = 400;
 const TTL_MS = 5 * 60 * 1000;
 
-type Snapshot = { messages: ChatMessageWithStatus[]; savedAt: number };
+type Snapshot = {
+  messages: ChatMessageWithStatus[];
+  /** Per-message virtual row heights for stable open layout (esp. images). */
+  rowHeights: Record<string, number>;
+  savedAt: number;
+};
+
+function collectRowHeightsForStorage(rows: readonly ChatMessageWithStatus[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const m of rows) {
+    const id = m.id;
+    if (!id) continue;
+    const measured = getCachedMessageRowHeight(id);
+    out[id] = measured ?? estimateMessageRowHeightPx(m);
+  }
+  return out;
+}
 
 const map = new Map<string, Snapshot>();
 const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -44,6 +66,12 @@ export function peekChatThreadMemory(key: string): ChatMessageWithStatus[] {
     map.delete(key);
     return [];
   }
+  seedMessageRowHeights(entry.rowHeights ?? {});
+  for (const m of entry.messages) {
+    if (m.id) {
+      seedEphemeralMessageRowHeight(m.id, entry.rowHeights?.[m.id] ?? estimateMessageRowHeightPx(m));
+    }
+  }
   return entry.messages.map((m) => ({ ...m }));
 }
 
@@ -59,7 +87,7 @@ export function putChatThreadMemory(
     return;
   }
   if (map.has(key)) map.delete(key);
-  map.set(key, { messages, savedAt: Date.now() });
+  map.set(key, { messages, rowHeights: collectRowHeightsForStorage(messages), savedAt: Date.now() });
   evictIfNeeded();
 }
 

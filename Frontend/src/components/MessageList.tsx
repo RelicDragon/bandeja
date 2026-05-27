@@ -19,9 +19,15 @@ import {
   scheduleThreadScrollSave,
 } from '@/services/chat/chatThreadScroll';
 import {
+  estimateMessageRowHeightPx,
+  END_SPACER_PX,
+  resolveMessageRowEstimatePx,
+} from '@/services/chat/chatMessageRowEstimate';
+import {
   getCachedMessageRowHeight,
   preloadMessageRowHeights,
   rememberMeasuredMessageHeight,
+  seedEphemeralMessageRowHeight,
 } from '@/services/chat/chatMessageHeights';
 import {
   isMessageListNearBottom,
@@ -32,10 +38,7 @@ import {
 import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
 import { getMessageRowKey } from '@/services/chat/messageRowKey';
 
-const END_SPACER_PX = 128;
-const ROW_ESTIMATE_PX = 88;
-/** Chat video bubble max height + row chrome (reduces virtualizer remeasure after send). */
-const ROW_ESTIMATE_VIDEO_PX = 360;
+const OPEN_TAIL_EAGER_MEDIA = 60;
 const VIRTUAL_OVERSCAN_BASE = 10;
 const VIRTUAL_OVERSCAN_FAST = 22;
 /** Skip redundant scrollToIndex(end) when already visually pinned (subpixel / end spacer). */
@@ -76,8 +79,10 @@ interface MessageListProps {
   showReply?: boolean;
   onForwardMessage?: (message: ChatMessage) => void;
   threadScrollKey?: string | null;
-  /** Coordinator scroll decision; replaces async Dexie read on open. */
-  initialScroll?: ThreadInitialScroll | null;
+  /** Coordinator scroll decision; set with first open paint (undefined until committed). */
+  initialScroll?: ThreadInitialScroll;
+  /** Bumped on each atomic open paint so scroll restore re-runs for the new snapshot. */
+  openPaintGeneration?: number;
   /** While true, parent signals loading/initial paint; list extends this until tail row heights are preloaded. */
   threadLayoutSettling?: boolean;
   onChatScrollNearBottomChange?: (nearBottom: boolean) => void;
@@ -114,6 +119,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     onForwardMessage,
     threadScrollKey = null,
     initialScroll = undefined,
+    openPaintGeneration = 0,
     threadLayoutSettling = false,
     onChatScrollNearBottomChange,
   },
@@ -128,8 +134,8 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   const previousFirstMessageIdRef = useRef<string | undefined>(undefined);
   const previousScrollHeightRef = useRef(0);
   const previousScrollTopRef = useRef(0);
-  /** Open intent from `initialScroll` — aggressive bottom pin only when true. */
-  const openScrollAtBottomRef = useRef(true);
+  /** Open intent from `initialScroll` — no bottom pin until scroll plan is committed. */
+  const openScrollAtBottomRef = useRef(false);
   const isLoadingMoreRef = useRef(false);
   const justLoadedOlderMessagesRef = useRef(false);
   const loadMoreCooldownRef = useRef(0);
@@ -145,11 +151,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     getScrollElement: () => messagesContainerRef.current,
     estimateSize: (index) => {
       if (index === rowCount - 1) return END_SPACER_PX;
-      const msg = messages[index];
-      const cached = getCachedMessageRowHeight(msg?.id);
-      if (cached != null) return cached;
-      if (msg?.messageType === 'VIDEO') return ROW_ESTIMATE_VIDEO_PX;
-      return ROW_ESTIMATE_PX;
+      return resolveMessageRowEstimatePx(messages[index]);
     },
     overscan: virtualOverscan,
     getItemKey: (index) =>
@@ -180,12 +182,34 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
 
   const tailIdsForHeightPreload = messages.slice(-140).map((m) => m.id).join('\x1e');
 
-  const [tailHeightsPreloaded, setTailHeightsPreloaded] = useState(true);
-  const [hasFirstVirtualMeasure, setHasFirstVirtualMeasure] = useState(false);
+  const eagerMediaMessageIds = useMemo(() => {
+    const tail = messages.slice(-OPEN_TAIL_EAGER_MEDIA);
+    return new Set(
+      tail.filter((m) => (m.mediaUrls?.length ?? 0) > 0 && m.messageType !== 'VIDEO').map((m) => m.id)
+    );
+  }, [messages]);
+
+  const suppressOpenReactionMotion = threadLayoutSettling;
+
+  const lastSeededTailKeyRef = useRef('');
 
   useLayoutEffect(() => {
-    const ids = tailIdsForHeightPreload.length === 0 ? [] : tailIdsForHeightPreload.split('\x1e');
-    setTailHeightsPreloaded(ids.length === 0);
+    if (threadScrollKey) lastSeededTailKeyRef.current = '';
+  }, [threadScrollKey]);
+
+  useLayoutEffect(() => {
+    if (tailIdsForHeightPreload.length === 0 || tailIdsForHeightPreload === lastSeededTailKeyRef.current) {
+      return;
+    }
+    lastSeededTailKeyRef.current = tailIdsForHeightPreload;
+    let seeded = false;
+    for (const m of messagesMeasureRef.current.slice(-140)) {
+      if (m.id && getCachedMessageRowHeight(m.id) == null) {
+        seedEphemeralMessageRowHeight(m.id, estimateMessageRowHeightPx(m));
+        seeded = true;
+      }
+    }
+    if (seeded) bumpHeightEstimates();
   }, [threadScrollKey, tailIdsForHeightPreload]);
 
   useEffect(() => {
@@ -197,37 +221,32 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       };
     }
     void preloadMessageRowHeights(ids).then(() => {
-      if (alive) {
-        bumpHeightEstimates();
-        setTailHeightsPreloaded(true);
+      if (!alive) return;
+      let seeded = false;
+      for (const m of messagesMeasureRef.current.slice(-140)) {
+        if (m.id && getCachedMessageRowHeight(m.id) == null) {
+          seedEphemeralMessageRowHeight(m.id, estimateMessageRowHeightPx(m));
+          seeded = true;
+        }
       }
+      if (seeded) bumpHeightEstimates();
     });
     return () => {
       alive = false;
     };
   }, [threadScrollKey, tailIdsForHeightPreload]);
 
-  useLayoutEffect(() => {
-    setHasFirstVirtualMeasure(false);
-  }, [threadScrollKey]);
-
-  useLayoutEffect(() => {
-    if (virtualMeasureKey.length > 0) setHasFirstVirtualMeasure(true);
-  }, [virtualMeasureKey]);
-
-  const layoutSettlingForBottomPin = useMemo(() => {
-    const tailPending = messages.length > 0 && !tailHeightsPreloaded;
-    const measurePending = messages.length > 0 && !hasFirstVirtualMeasure;
-    return threadLayoutSettling || tailPending || measurePending;
-  }, [threadLayoutSettling, messages.length, tailHeightsPreloaded, hasFirstVirtualMeasure]);
+  const layoutSettlingForBottomPin = threadLayoutSettling;
 
   const layoutSettlingForBottomPinRef = useRef(layoutSettlingForBottomPin);
   layoutSettlingForBottomPinRef.current = layoutSettlingForBottomPin;
 
   useLayoutEffect(() => {
-    if (initialScroll != null) {
-      openScrollAtBottomRef.current = 'atBottom' in initialScroll && initialScroll.atBottom;
+    if (initialScroll === undefined) {
+      openScrollAtBottomRef.current = false;
+      return;
     }
+    openScrollAtBottomRef.current = 'atBottom' in initialScroll && initialScroll.atBottom;
   }, [threadScrollKey, initialScroll]);
 
   useLayoutEffect(() => {
@@ -252,14 +271,14 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       const el = messagesContainerRef.current;
       if (!el) return;
       if (!openScrollAtBottomRef.current) return;
-      const aggressiveSettlePin =
-        layoutSettlingForBottomPinRef.current && openScrollAtBottomRef.current;
-      if (!aggressiveSettlePin && isMessageListNearBottom(el, PIN_BOTTOM_SKIP_GAP_PX)) return;
+      const gapPx = layoutSettlingForBottomPinRef.current ? 56 : PIN_BOTTOM_SKIP_GAP_PX;
+      if (isMessageListNearBottom(el, gapPx)) return;
       pinMessageListContainerToBottom(el);
     });
   }, []);
 
   const prevThreadScrollKeyRef = useRef<string | null | undefined>(undefined);
+  const lastOpenPaintGenerationRef = useRef(0);
   const restoredScrollThreadRef = useRef<string | null>(null);
 
   const applyOpenScrollFromDecision = useCallback(
@@ -292,12 +311,17 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     if (prevThreadScrollKeyRef.current !== threadScrollKey) {
       prevThreadScrollKeyRef.current = threadScrollKey;
       restoredScrollThreadRef.current = null;
+      lastOpenPaintGenerationRef.current = 0;
+    }
+    if (openPaintGeneration !== lastOpenPaintGenerationRef.current) {
+      lastOpenPaintGenerationRef.current = openPaintGeneration;
+      restoredScrollThreadRef.current = null;
     }
     if (!threadScrollKey) return;
     if (isSwitchingChatType || messages.length === 0) return;
     if (!messagesContainerRef.current) return;
     if (restoredScrollThreadRef.current === threadScrollKey) return;
-    if (initialScroll == null) return;
+    if (initialScroll === undefined) return;
 
     restoredScrollThreadRef.current = threadScrollKey;
     applyOpenScrollFromDecision(initialScroll, messages);
@@ -306,11 +330,17 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     isSwitchingChatType,
     messages,
     initialScroll,
+    openPaintGeneration,
     applyOpenScrollFromDecision,
   ]);
 
   useLayoutEffect(() => {
-    if (!layoutSettlingForBottomPin || messages.length === 0 || !openScrollAtBottomRef.current)
+    if (
+      !layoutSettlingForBottomPin ||
+      messages.length === 0 ||
+      initialScroll === undefined ||
+      !openScrollAtBottomRef.current
+    )
       return;
     const inner = innerListRef.current;
     schedulePinToBottom();
@@ -333,7 +363,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
         pinBottomRafRef.current = null;
       }
     };
-  }, [layoutSettlingForBottomPin, messages.length, threadScrollKey, schedulePinToBottom]);
+  }, [layoutSettlingForBottomPin, messages.length, threadScrollKey, initialScroll, schedulePinToBottom]);
 
   useEffect(() => {
     if (!threadScrollKey) return;
@@ -562,13 +592,13 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   }, [handleScrollStart]);
 
   const loadMoreBlockedRef = useRef(false);
-  loadMoreBlockedRef.current = isLoading || isLoadingMore;
+  loadMoreBlockedRef.current =
+    isLoading || isLoadingMore || threadLayoutSettling || isInitialLoad;
 
   useEffect(() => {
     const root = messagesContainerRef.current;
     const target = topLoadSentinelRef.current;
-    if (!root || !target || !onLoadMore || !hasMoreMessages || (isInitialLoad && messages.length === 0))
-      return;
+    if (!root || !target || !onLoadMore || !hasMoreMessages || messages.length === 0) return;
 
     const io = new IntersectionObserver(
       (entries) => {
@@ -689,6 +719,8 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
                 message={message}
                 staggerKey={getMessageRowKey(message)}
                 skipStaggerOnOpen={threadLayoutSettling || isInitialLoad}
+                suppressOpenReactionMotion={suppressOpenReactionMotion}
+                loadMediaEager={eagerMediaMessageIds.has(message.id)}
                 onAddReaction={onAddReaction}
                 onRemoveReaction={onRemoveReaction}
                 onDeleteMessage={onDeleteMessage}

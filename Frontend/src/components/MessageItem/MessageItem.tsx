@@ -26,6 +26,7 @@ import { getMessageSendState } from '@/services/chat/messageSendState';
 import { PlayerAvatar } from '../PlayerAvatar';
 import { useMessageLongPress } from './useMessageLongPress';
 import { useMessageReactions } from './useMessageReactions';
+import { MessageItemReactionStrip, MESSAGE_REACTION_GUTTER_CLASS } from './MessageItemReactionStrip';
 
 export const MessageItem: React.FC<MessageItemProps> = ({
   message,
@@ -51,6 +52,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onUnpin,
   showReply = true,
   onForwardMessage,
+  suppressOpenReactionMotion = false,
+  loadMediaEager = false,
 }) => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -393,122 +396,84 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 <div
                   className={`flex items-start select-none ${isChannel ? 'flex-row' : isOwnMessage ? 'flex-row-reverse' : 'flex-row'} ${currentMessage.poll ? 'w-full' : ''} overflow-visible`}
                 >
-                  <MessageBubble
-                    message={currentMessage}
-                    isOwnMessage={isOwnMessage}
-                    isChannel={isChannel}
-                    parsedContent={parsedContent}
-                    translationContent={translationContent}
-                    displayContent={displayContent}
-                    hasTranslation={hasTranslation}
-                    isTranslationLoading={isTranslationLoading}
-                    translationRevealKey={translationRevealKey}
-                    voiceTranscriptionNoSpeech={
-                      currentMessage.messageType === 'VOICE' && isVoiceTranscriptionNoSpeech(voiceTxRaw)
-                    }
-                    onTranscribe={!isOffline ? () => void runTranscribe() : undefined}
-                    isTranscribing={isTranscribing}
-                    formatMessageTime={formatMessageTime}
-                    getThumbnailUrl={getThumbnailUrl}
-                    onImageClick={handleImageClick}
-                    onVideoOpen={handleVideoOpen}
-                    inlineVideoPlaybackPaused={!!fullscreenVideo}
-                    onMentionClick={(userId) => setSelectedMentionUserId(userId)}
-                    onUrlClick={handleUrlClick}
-                    mentionIds={currentMessage.mentionIds || []}
-                    currentUserId={user?.id}
-                    onPollUpdated={onPollUpdated}
-                    isSending={isSending}
-                    isSendingSlow={isSendingSlow}
-                    isFailed={isFailed}
-                    showFailedMenu={showFailedMenu}
-                    setShowFailedMenu={setShowFailedMenu}
-                    optimisticId={optimisticId}
-                    onResendQueued={onResendQueued}
-                    onRemoveFromQueue={onRemoveFromQueue}
-                    firstExternalHttpUrl={!isOffline ? firstExternalHttpUrl : null}
-                    t={t}
-                  />
+                  <div className={`relative min-w-0 ${currentMessage.poll ? 'w-full' : ''}`}>
+                    <MessageBubble
+                      message={currentMessage}
+                      isOwnMessage={isOwnMessage}
+                      isChannel={isChannel}
+                      parsedContent={parsedContent}
+                      translationContent={translationContent}
+                      displayContent={displayContent}
+                      hasTranslation={hasTranslation}
+                      isTranslationLoading={isTranslationLoading}
+                      translationRevealKey={translationRevealKey}
+                      voiceTranscriptionNoSpeech={
+                        currentMessage.messageType === 'VOICE' && isVoiceTranscriptionNoSpeech(voiceTxRaw)
+                      }
+                      onTranscribe={!isOffline ? () => void runTranscribe() : undefined}
+                      isTranscribing={isTranscribing}
+                      formatMessageTime={formatMessageTime}
+                      getThumbnailUrl={getThumbnailUrl}
+                      onImageClick={handleImageClick}
+                      onVideoOpen={handleVideoOpen}
+                      inlineVideoPlaybackPaused={!!fullscreenVideo}
+                      onMentionClick={(userId) => setSelectedMentionUserId(userId)}
+                      onUrlClick={handleUrlClick}
+                      mentionIds={currentMessage.mentionIds || []}
+                      currentUserId={user?.id}
+                      onPollUpdated={onPollUpdated}
+                      isSending={isSending}
+                      isSendingSlow={isSendingSlow}
+                      isFailed={isFailed}
+                      showFailedMenu={showFailedMenu}
+                      setShowFailedMenu={setShowFailedMenu}
+                      optimisticId={optimisticId}
+                      onResendQueued={onResendQueued}
+                      onRemoveFromQueue={onRemoveFromQueue}
+                      firstExternalHttpUrl={!isOffline ? firstExternalHttpUrl : null}
+                      loadMediaEager={loadMediaEager}
+                      t={t}
+                    />
 
-                  {!isOffline && hasReplies() && (
-                    <div
-                      className={`absolute top-[calc(100%-2px)] ${isOwnMessage ? 'right-1' : 'left-2'} z-10 overflow-visible`}
-                    >
-                      <button
-                        onClick={handleScrollToReplies}
-                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[9px] transition-colors ${isOwnMessage ? 'text-blue-500 bg-blue-50 hover:text-blue-600 hover:bg-blue-100' : 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-                        title={`${getReplyCount()} ${getReplyCount() === 1 ? 'reply' : 'replies'}`}
+                    {!isOffline && hasReplies() && (
+                      <div
+                        className={`absolute top-[calc(100%-2px)] ${isOwnMessage ? 'right-1' : 'left-2'} z-10 overflow-visible`}
                       >
-                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                        </svg>
-                        <span>{getReplyCount()}</span>
-                      </button>
-                    </div>
-                  )}
+                        <button
+                          onClick={handleScrollToReplies}
+                          className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[9px] transition-colors ${isOwnMessage ? 'text-blue-500 bg-blue-50 hover:text-blue-600 hover:bg-blue-100' : 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                          title={`${getReplyCount()} ${getReplyCount() === 1 ? 'reply' : 'replies'}`}
+                        >
+                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                          </svg>
+                          <span>{getReplyCount()}</span>
+                        </button>
+                      </div>
+                    )}
 
-                  {!isOffline && (
-                    <div
-                      className={`flex items-center gap-1 ${isOwnMessage ? 'flex-row-reverse mr-1' : 'flex-row ml-1'} self-center`}
-                    >
-                      <button
-                        data-reaction-button="true"
-                        onClick={handleQuickReaction}
-                        disabled={isReactionPending()}
-                        className="relative flex flex-col items-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-1 transition-colors disabled:opacity-70 disabled:cursor-wait"
+                    {!isOffline && (
+                      <div
+                        className={`pointer-events-none absolute top-1/2 z-10 flex -translate-y-1/2 items-center ${
+                          isOwnMessage && !isChannel ? 'right-full flex-row-reverse pr-2' : 'left-full flex-row pl-2'
+                        }`}
                       >
-                        {isReactionPending() ? (
-                          <div className="flex flex-col items-center">
-                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                              {getCurrentUserReaction() || '…'}
-                            </span>
-                          </div>
-                        ) : (
-                          <>
-                            <span className="text-lg">
-                              {getCurrentUserReaction() || (
-                                <span className="text-gray-600 dark:text-white">♡</span>
-                              )}
-                            </span>
-                            <span
-                              className={`text-xs text-gray-500 dark:text-gray-400 -mt-1 ${getCurrentUserReaction() && getReactionCounts()[getCurrentUserReaction()!] > 1 ? 'visible' : 'invisible'}`}
-                            >
-                              {getCurrentUserReaction() ? getReactionCounts()[getCurrentUserReaction()!] || '1' : '1'}
-                            </span>
-                          </>
-                        )}
-                      </button>
-
-                      {currentMessage.reactions.length > 0 && (
-                        <div className="flex gap-1">
-                          {Object.entries(getReactionCounts()).map(([emoji, count]) => {
-                            const isUserReaction = getCurrentUserReaction() === emoji;
-                            if (isUserReaction) return null;
-                            return (
-                              <div
-                                key={emoji}
-                                className="relative flex flex-col items-center"
-                                onMouseDown={(e) => e.stopPropagation()}
-                                onMouseUp={(e) => e.stopPropagation()}
-                                onMouseLeave={(e) => e.stopPropagation()}
-                                onTouchStart={(e) => e.stopPropagation()}
-                                onTouchEnd={(e) => e.stopPropagation()}
-                                onTouchCancel={(e) => e.stopPropagation()}
-                              >
-                                <span className="text-sm">{emoji}</span>
-                                <span
-                                  className={`text-xs text-gray-500 dark:text-gray-400 -mt-1 ${count > 1 ? 'visible' : 'invisible'}`}
-                                >
-                                  {count}
-                                </span>
-                              </div>
-                            );
-                          })}
+                        <div className="pointer-events-auto">
+                          <MessageItemReactionStrip
+                            isOwnMessage={isOwnMessage}
+                            isChannel={isChannel}
+                            activeEmoji={getCurrentUserReaction()}
+                            reactionCounts={getReactionCounts()}
+                            pending={isReactionPending()}
+                            onQuickReaction={handleQuickReaction}
+                            suppressOpenReactionMotion={suppressOpenReactionMotion}
+                          />
                         </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
+
+                  {!isOffline && <div className={MESSAGE_REACTION_GUTTER_CLASS} aria-hidden />}
                 </div>
               </div>
             </div>

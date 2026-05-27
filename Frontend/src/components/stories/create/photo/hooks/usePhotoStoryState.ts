@@ -94,15 +94,16 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
   );
 
   const beginTransaction = useCallback(() => {
+    if (inTransactionRef.current) return;
+    pushHistory(segmentsRef.current, activeIndexRef.current);
     inTransactionRef.current = true;
-  }, []);
+  }, [pushHistory]);
 
   const commitTransaction = useCallback(() => {
     if (!inTransactionRef.current) return;
     inTransactionRef.current = false;
-    pushHistory(segmentsRef.current, activeIndexRef.current);
     setIsDirty(true);
-  }, [pushHistory]);
+  }, []);
 
   const activeDoc = segments[activeIndex] ?? segments[0] ?? null;
 
@@ -127,6 +128,26 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
     },
     [patchActiveDoc]
   );
+
+  const resetMediaTransform = useCallback(() => {
+    withHistory((prev) =>
+      prev.map((doc, i) => {
+        if (i !== activeIndex) return doc;
+        const media = getMediaNode(doc);
+        if (!media) return doc;
+        const fit = defaultMediaTransform(
+          media.source.naturalWidth,
+          media.source.naturalHeight
+        );
+        return {
+          ...doc,
+          nodes: doc.nodes.map((n) =>
+            n.id === media.id ? { ...media, transform: fit } : n
+          ),
+        };
+      })
+    );
+  }, [activeIndex, withHistory]);
 
   const setMediaAdjust = useCallback(
     (adjust: StoryMediaAdjust) => {
@@ -355,6 +376,7 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
     beginTransaction,
     commitTransaction,
     setMediaTransform,
+    resetMediaTransform,
     setMediaAdjust,
     setMediaAdjustWithHistory,
     replaceActiveMedia,

@@ -177,8 +177,8 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
     team1PlayerIds,
     team2PlayerIds,
     leagueGroupId,
-    maxParticipants = 4,
-    minParticipants = 4,
+    maxParticipants: maxParticipantsParam,
+    minParticipants: minParticipantsParam,
     isPublic = false,
     affectsRating = true,
     gameSetup,
@@ -216,7 +216,10 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
   if (seasonGame.sport) {
     assertGameSportMatchesLeagueSeason(seasonGame.sport, { sport: seasonSport });
   }
-  const playersPerMatch = resolvePlayersPerMatch(seasonSport, seasonGame.playersPerMatch);
+  const capacity = resolveLeagueMatchCapacity(seasonSport, seasonGame, participantUserIds);
+  const playersPerMatch = capacity.playersPerMatch;
+  const maxParticipants = maxParticipantsParam ?? capacity.maxParticipants;
+  const minParticipants = minParticipantsParam ?? capacity.minParticipants;
 
   const allowUserInMultipleTeams =
     maxParticipants === 2 ? false : Boolean(seasonGame.allowUserInMultipleTeams);

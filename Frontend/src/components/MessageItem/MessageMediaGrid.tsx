@@ -7,6 +7,7 @@ interface MessageMediaGridProps {
   getThumbnailUrl: (index: number) => string;
   onImageClick: (url: string) => void;
   hasContentBelow?: boolean;
+  loadEager?: boolean;
 }
 
 export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
@@ -14,6 +15,7 @@ export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
   getThumbnailUrl,
   onImageClick,
   hasContentBelow = false,
+  loadEager = false,
 }) => {
   const layout = getImageGridLayout(mediaUrls.length);
 
@@ -47,6 +49,7 @@ export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
               alt={`Media ${index + 1}`}
               className={isSingleImage ? 'w-full h-auto object-cover' : 'w-full h-full object-cover'}
               style={{ display: 'block', maxHeight: isSingleImage ? '400px' : undefined }}
+              loading={loadEager ? 'eager' : 'lazy'}
             />
           </div>
         );
