@@ -563,6 +563,8 @@ Social level: **parallel state machine on `User`**, no transitions from sport Q.
 
 ## 19. Admin, merge & versioning
 
+Full Admin dashboard plan: [`PLAN_ADMIN_MULTISPORT.md`](./PLAN_ADMIN_MULTISPORT.md).
+
 ### Support / admin
 
 - Reset sport questionnaire: clear `questionnaireCompletedAt`, optional reset level to 1.0 if `gamesPlayed === 0`.

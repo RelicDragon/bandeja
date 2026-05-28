@@ -13,6 +13,7 @@
 | [PLAN_SPORT_SCORING_FORMATS.md](./PLAN_SPORT_SCORING_FORMATS.md) | New presets, rotation, leagues, preset checklist, engagement research |
 | [PLAN_CASUAL_MULTISPORT_UX.md](./PLAN_CASUAL_MULTISPORT_UX.md) | Social vs match, templates, `PresetTier`, phases D0–C8 |
 | [PLAN_MULTISPORT_QUESTIONNAIRES.md](./PLAN_MULTISPORT_QUESTIONNAIRES.md) | Per-sport questionnaires, level model, phases Q0–Q6 |
+| [PLAN_ADMIN_MULTISPORT.md](./PLAN_ADMIN_MULTISPORT.md) | Internal Admin dashboard (`Admin/`) — games, users, marketplace sport UX |
 | [PLAN_MULTISPORT_DEFERRED.md](./PLAN_MULTISPORT_DEFERRED.md) | Officiating, kitchen, TIMED/CUSTOM, Watch depth |
 | [PLAN_USER_LEVEL_RELIABILITY_MIGRATION.md](./PLAN_USER_LEVEL_RELIABILITY_MIGRATION.md) | `User.level` sunset, projection audit (R2a) |
 | [PLAN_WATCH_SERVE_GUIDE_UX.md](./PLAN_WATCH_SERVE_GUIDE_UX.md) | Watch serve coach, first-server flow |
