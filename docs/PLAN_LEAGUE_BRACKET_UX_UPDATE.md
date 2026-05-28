@@ -1,7 +1,7 @@
 # League Bracket Playoff — Plan Compliance & UX Update
 
 **Date:** 2026-05-25 (revised)  
-**Related:** [PLAN_LEAGUE_BRACKET_PLAYOFF.md](./PLAN_LEAGUE_BRACKET_PLAYOFF.md)
+**Related:** [PLAN_LEAGUE_BRACKET_PLAYOFF.md](./PLAN_LEAGUE_BRACKET_PLAYOFF.md). **Unified execution hub** → [PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md](./PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md) (league track L3).
 
 ---
 

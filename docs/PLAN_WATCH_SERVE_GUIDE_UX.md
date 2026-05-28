@@ -1,5 +1,7 @@
 # Apple Watch — Serve & court guide (UX + technical plan)
 
+**Related:** Multisport execution hub → [PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md](./PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md) (track W*, `officiatingLevel`).
+
 ## Context
 
 BandejaWatch already scores classic sets in `MatchScoringViewModel` + `ClassicScoringView` (deuce/advantage, within-set tie-break, super tie-break). There is **no** serve or court-side model today; `ScoreHintBanner` only shows set label and games. Match start is immediate in `ActiveSessionManager.startMatch`.

@@ -39,7 +39,8 @@ struct ClassicScoringView: View {
                             action: { vm.scorePoint(.teamA) },
                             decrementAction: { vm.unscorePoint(.teamA) },
                             disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
-                            decrementDisabled: !vm.canUnscore(.teamA)
+                            decrementDisabled: !vm.canUnscore(.teamA),
+                            levelSport: vm.game?.resolvedSport
                         )
                         WatchScoringTeamColumn(
                             users: vm.teamBUsers,
@@ -47,7 +48,8 @@ struct ClassicScoringView: View {
                             action: { vm.scorePoint(.teamB) },
                             decrementAction: { vm.unscorePoint(.teamB) },
                             disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
-                            decrementDisabled: !vm.canUnscore(.teamB)
+                            decrementDisabled: !vm.canUnscore(.teamB),
+                            levelSport: vm.game?.resolvedSport
                         )
                     }
                 } else if vm.activeSetIsSuperTieBreak {
@@ -61,7 +63,8 @@ struct ClassicScoringView: View {
                             action: { vm.scorePoint(.teamA) },
                             decrementAction: { vm.unscorePoint(.teamA) },
                             disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
-                            decrementDisabled: !vm.canUnscore(.teamA)
+                            decrementDisabled: !vm.canUnscore(.teamA),
+                            levelSport: vm.game?.resolvedSport
                         )
                         WatchScoringTeamColumn(
                             users: vm.teamBUsers,
@@ -69,7 +72,8 @@ struct ClassicScoringView: View {
                             action: { vm.scorePoint(.teamB) },
                             decrementAction: { vm.unscorePoint(.teamB) },
                             disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
-                            decrementDisabled: !vm.canUnscore(.teamB)
+                            decrementDisabled: !vm.canUnscore(.teamB),
+                            levelSport: vm.game?.resolvedSport
                         )
                     }
                 } else if vm.withinSetTieBreakMode {
@@ -83,7 +87,8 @@ struct ClassicScoringView: View {
                             action: { vm.scorePoint(.teamA) },
                             decrementAction: { vm.unscorePoint(.teamA) },
                             disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
-                            decrementDisabled: !vm.canUnscore(.teamA)
+                            decrementDisabled: !vm.canUnscore(.teamA),
+                            levelSport: vm.game?.resolvedSport
                         )
                         WatchScoringTeamColumn(
                             users: vm.teamBUsers,
@@ -91,7 +96,8 @@ struct ClassicScoringView: View {
                             action: { vm.scorePoint(.teamB) },
                             decrementAction: { vm.unscorePoint(.teamB) },
                             disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
-                            decrementDisabled: !vm.canUnscore(.teamB)
+                            decrementDisabled: !vm.canUnscore(.teamB),
+                            levelSport: vm.game?.resolvedSport
                         )
                     }
                 } else {
@@ -113,7 +119,8 @@ struct ClassicScoringView: View {
                             action: { vm.scorePoint(.teamA) },
                             decrementAction: { vm.unscorePoint(.teamA) },
                             disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
-                            decrementDisabled: !vm.canUnscore(.teamA)
+                            decrementDisabled: !vm.canUnscore(.teamA),
+                            levelSport: vm.game?.resolvedSport
                         )
                         WatchScoringTeamColumn(
                             users: vm.teamBUsers,
@@ -121,7 +128,8 @@ struct ClassicScoringView: View {
                             action: { vm.scorePoint(.teamB) },
                             decrementAction: { vm.unscorePoint(.teamB) },
                             disabled: vm.isReadOnly || vm.classicOfficialScoringLocked,
-                            decrementDisabled: !vm.canUnscore(.teamB)
+                            decrementDisabled: !vm.canUnscore(.teamB),
+                            levelSport: vm.game?.resolvedSport
                         )
                     }
                 }

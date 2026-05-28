@@ -13,7 +13,7 @@ import { PublicGamePrompt } from './GameDetails/PublicGamePrompt';
 import { getLevelColor } from '@/utils/levelColor';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import { useSportLevelContext } from '@/contexts/useSportLevelContext';
-import { getDisplayLevelForSport, getUserPrimarySport } from '@/utils/profileSports';
+import { getDisplayLevelForSport, getUserPrimarySport, formatSportLevelBadgeDisplay } from '@/utils/profileSports';
 import type { Sport } from '@shared/sport';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -200,9 +200,11 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   const faceOnlyLayout = superTiny || inlineFace;
 
   const resolvedLevelSport = levelSport ?? contextLevelSport ?? getUserPrimarySport(player);
-  const levelForBadge = parseLevelForBadge(
-    getDisplayLevelForSport(player, resolvedLevelSport) as unknown,
-  );
+  const levelBadgeText = formatSportLevelBadgeDisplay(player, resolvedLevelSport);
+  const levelBadgeIsUnavailable = levelBadgeText === '-';
+  const levelForBadge = levelBadgeIsUnavailable
+    ? null
+    : parseLevelForBadge(getDisplayLevelForSport(player, resolvedLevelSport) as unknown);
 
   const renderAvatarContent = () => {
     if (faceOnlyLayout) {
@@ -286,10 +288,20 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
           <Dumbbell size={smallLayout ? 10 : 12} className="text-white" />
         </div>
       )}
-      {levelForBadge !== null && (
+      {(levelForBadge !== null || levelBadgeIsUnavailable) && (
         <div className={`absolute -bottom-1 ${levelRightClass}`}>
           {(() => {
-            const lvl = levelForBadge;
+            if (levelBadgeIsUnavailable) {
+              return (
+                <div
+                  className={`relative ${levelBadgeClass} bg-gray-500 dark:bg-gray-600`}
+                  style={levelBadgeStyle}
+                >
+                  -
+                </div>
+              );
+            }
+            const lvl = levelForBadge!;
             const levelColor = getLevelColor(lvl, isDark);
             return player.approvedLevel ? (
               <div

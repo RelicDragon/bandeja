@@ -150,7 +150,7 @@ struct FirstServePickFlow: View {
             HStack(spacing: 10) {
                 HStack(spacing: -6) {
                     ForEach(Array(users.prefix(vm.isDoublesMatch ? 2 : 1)), id: \.id) { u in
-                        WatchPlayerAvatarView(user: u, size: 36, role: nil)
+                        WatchPlayerAvatarView(user: u, size: 36, role: nil, levelSport: vm.game?.resolvedSport)
                     }
                 }
                 Text(title)
@@ -188,7 +188,7 @@ struct FirstServePickFlow: View {
                         pickedPlayerIndex = idx
                     } label: {
                         VStack(spacing: 4) {
-                            WatchPlayerAvatarView(user: u, size: 40, role: nil)
+                            WatchPlayerAvatarView(user: u, size: 40, role: nil, levelSport: vm.game?.resolvedSport)
                             Text(u.displayName)
                                 .font(.caption2.weight(.semibold))
                                 .lineLimit(1)

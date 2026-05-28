@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
 import { EntityType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT, SUPPORTED_CURRENCIES } from '../../utils/constants';
+import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
@@ -16,12 +16,6 @@ import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerat
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 import { projectUserForSportContext, touchLastCreatedSport } from '../user/userSportProfile.service';
 
-const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
-  ...USER_SELECT_FIELDS,
-  sportProfiles: {
-    select: USER_SPORT_PROFILE_SELECT,
-  },
-} as const;
 export class GameCreateService {
   static async createGame(data: any, userId: string, jwtIsAdmin: boolean = false) {
     // Validate currency if provided

@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { BasicUser, User } from '@/types';
 import {
   gamesPlayedForSport,
+  formatSportLevelBadgeDisplay,
   getDisplayLevelForSport,
   getReliabilityForSport,
   hasEnabledSports,
   hasMultipleSportsEnabled,
   isSportEnabled,
+  isSportLevelAvailableForDisplay,
   listCreateFlowSports,
   listEnabledSports,
   listSelectableSports,
@@ -122,6 +124,31 @@ describe('profileSports', () => {
       gamesPlayed: 3,
     });
     expect(shouldShowSportLevelBadge(played, 'PADEL')).toBe(true);
+  });
+
+  it('formatSportLevelBadgeDisplay shows dash when sport not enabled', () => {
+    const padelOnly = baseUser({
+      sportsEnabled: ['PADEL'],
+      sportProfiles: [
+        { sport: 'PADEL', level: 3.4, reliability: 0, gamesPlayed: 10, gamesWon: 5 },
+      ],
+    });
+    expect(isSportLevelAvailableForDisplay(padelOnly, 'TENNIS')).toBe(false);
+    expect(formatSportLevelBadgeDisplay(padelOnly, 'TENNIS')).toBe('-');
+    expect(formatSportLevelBadgeDisplay(padelOnly, 'PADEL')).toBe('3.4');
+  });
+
+  it('formatSportLevelBadgeDisplay trusts projected BasicUser without sportsEnabled', () => {
+    const projected: BasicUser = {
+      id: 'p1',
+      level: 3.2,
+      primarySport: 'PADEL',
+      socialLevel: 3,
+      gender: 'MALE',
+      approvedLevel: false,
+      isTrainer: false,
+    };
+    expect(formatSportLevelBadgeDisplay(projected, 'TENNIS')).toBe('3.2');
   });
 
   it('getDisplayLevelForSport trusts projected level when sportProfiles absent (BasicUser)', () => {

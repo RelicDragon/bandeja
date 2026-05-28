@@ -10,13 +10,8 @@ import { MessageService } from './chat/message.service';
 import { GameReadService } from './game/read.service';
 import { ChatContextType, ChatType, Sport } from '@prisma/client';
 import { presenceService } from './presence.service';
-import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
+import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES } from '../utils/constants';
 import { projectUserForSportContext } from './user/userSportProfile.service';
-
-const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
-  ...USER_SELECT_FIELDS,
-  sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
-} as const;
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;

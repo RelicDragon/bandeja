@@ -1,6 +1,6 @@
 # Multisport — deferred work (post–v1)
 
-Companion to [PLAN_MULTISPORT.md](./PLAN_MULTISPORT.md). The multisport **v1 contract** ships six sports as **creatable, discoverable, rateable metadata** with **good-enough live scoring**, not full tournament-officiating fidelity on every sport.
+Companion to [PLAN_MULTISPORT.md](./PLAN_MULTISPORT.md). Rating display bridges (DUPR, UTR, SquashLevels) → [PLAN_SPORT_RATING_MODELS.md](./PLAN_SPORT_RATING_MODELS.md). The multisport **v1 contract** ships six sports as **creatable, discoverable, rateable metadata** with **good-enough live scoring**, not full tournament-officiating fidelity on every sport. **Unified execution hub** → [PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md](./PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md).
 
 Everything below is either named **deferred** in the multisport plan, marked **out of scope v1** (officiating), or listed as open QA/ops work.
 

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { BasicUser } from '@/types';
 import type { Sport } from '@shared/sport';
 import { PlayerAvatar } from './PlayerAvatar';
-import { getDisplayLevelForSport, getReliabilityForSport, getUserPrimarySport } from '@/utils/profileSports';
+import { formatSportLevelBadgeDisplay, getReliabilityForSport, getUserPrimarySport } from '@/utils/profileSports';
 import { formatInviteStatsRows } from '@/components/playerInvite/formatInviteStatsLine';
 import type { GameAvailabilityMatch } from '@/utils/availability/gameMatch';
 
@@ -32,7 +32,7 @@ export function PlayerListItem({
   const sport = levelSport ?? getUserPrimarySport(player);
   const { levelRow, socialRow } = formatInviteStatsRows(
     t,
-    getDisplayLevelForSport(player, sport),
+    formatSportLevelBadgeDisplay(player, sport),
     player.socialLevel,
     getReliabilityForSport(player, sport),
   );

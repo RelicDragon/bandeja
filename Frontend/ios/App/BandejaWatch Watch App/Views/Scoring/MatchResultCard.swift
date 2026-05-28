@@ -5,6 +5,7 @@ struct MatchResultCard: View {
     let match: WatchMatch
     let isCurrent: Bool
     let isFinal: Bool
+    var levelSport: WatchSport?
     let onOpen: () -> Void
     @Environment(WatchPreferencesStore.self) private var prefs
 
@@ -42,7 +43,7 @@ struct MatchResultCard: View {
             if let team = match.teams.first(where: { $0.teamNumber == teamNumber }), !team.players.isEmpty {
                 HStack(spacing: 3) {
                     ForEach(team.players, id: \.userId) { p in
-                        WatchPlayerAvatarView(user: p.user, size: 20, role: nil)
+                        WatchPlayerAvatarView(user: p.user, size: 20, role: nil, levelSport: levelSport)
                     }
                 }
                 VStack(alignment: .leading, spacing: 2) {

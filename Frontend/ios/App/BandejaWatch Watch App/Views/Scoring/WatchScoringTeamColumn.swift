@@ -7,6 +7,7 @@ struct WatchScoringTeamColumn: View {
     let decrementAction: () -> Void
     var disabled: Bool = false
     var decrementDisabled: Bool = false
+    var levelSport: WatchSport?
 
     var body: some View {
         VStack(spacing: 8) {
@@ -23,7 +24,7 @@ struct WatchScoringTeamColumn: View {
                     } else {
                         HStack(spacing: 4) {
                             ForEach(users) { user in
-                                WatchPlayerAvatarView(user: user, size: 24, role: nil)
+                                WatchPlayerAvatarView(user: user, size: 24, role: nil, levelSport: levelSport)
                             }
                         }
 

@@ -188,6 +188,9 @@ struct WatchUser: Decodable, Sendable {
     let lastName: String?
     let avatar: String?
     let level: Double?
+    let primarySport: String?
+    let sportsEnabled: [String]?
+    let sportProfiles: [WatchSportProfile]?
 
     var displayName: String {
         let first = firstName ?? ""
@@ -196,7 +199,7 @@ struct WatchUser: Decodable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, firstName, lastName, level, avatar
+        case id, firstName, lastName, level, avatar, primarySport, sportsEnabled, sportProfiles
     }
 
     var resolvedAvatarURL: URL? {
@@ -257,6 +260,9 @@ struct WatchUser: Decodable, Sendable {
         firstName = try c.decodeIfPresent(String.self, forKey: .firstName)
         lastName = try c.decodeIfPresent(String.self, forKey: .lastName)
         avatar = try c.decodeIfPresent(String.self, forKey: .avatar)
+        primarySport = try c.decodeIfPresent(String.self, forKey: .primarySport)
+        sportsEnabled = try c.decodeIfPresent([String].self, forKey: .sportsEnabled)
+        sportProfiles = try c.decodeIfPresent([WatchSportProfile].self, forKey: .sportProfiles)
         if let d = try? c.decode(Double.self, forKey: .level) {
             level = d
         } else if let s = try? c.decode(String.self, forKey: .level), let d = Double(s) {

@@ -66,7 +66,7 @@ struct MatchScoringView: View {
                         HStack(alignment: .top, spacing: 6) {
                             HStack(spacing: 3) {
                                 ForEach(team.players, id: \.userId) { p in
-                                    WatchPlayerAvatarView(user: p.user, size: 20, role: nil)
+                                    WatchPlayerAvatarView(user: p.user, size: 20, role: nil, levelSport: vm.game?.resolvedSport)
                                 }
                             }
                             VStack(alignment: .leading, spacing: 2) {

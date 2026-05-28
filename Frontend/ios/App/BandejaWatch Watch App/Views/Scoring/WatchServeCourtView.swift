@@ -77,6 +77,7 @@ enum WatchServeCourtView {
                 matchDoubles: matchDoubles,
                 variant: sport == .tennis ? .tennis : .padel,
                 compact: compact,
+                levelSport: sport,
                 endsSetup: endsSetup
             )
         }

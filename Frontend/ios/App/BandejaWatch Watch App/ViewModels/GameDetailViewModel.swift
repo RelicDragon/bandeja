@@ -70,7 +70,7 @@ final class GameDetailViewModel {
 
     @discardableResult
     func startResultsEntry() async -> Bool {
-        guard let game else { return false }
+        guard game != nil else { return false }
         isStartingResultsEntry = true
         error = nil
         defer { isStartingResultsEntry = false }

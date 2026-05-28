@@ -6,7 +6,7 @@ import prisma from '../config/database';
 import { ParticipantRole } from '@prisma/client';
 import { createSystemMessage } from './chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
-import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
+import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES } from '../utils/constants';
 import notificationService from '../services/notification.service';
 import { InviteService } from '../services/invite.service';
 import { hasParentGamePermission, hasRealParticipantStatus } from '../utils/parentGamePermissions';
@@ -14,13 +14,6 @@ import { ParticipantService } from '../services/game/participant.service';
 import { ParticipantMessageHelper } from '../services/game/participantMessageHelper';
 import { GameReadService, participantsToInviteShape } from '../services/game/read.service';
 import { projectUserForSportContext } from '../services/user/userSportProfile.service';
-
-const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
-  ...USER_SELECT_FIELDS,
-  sportProfiles: {
-    select: USER_SPORT_PROFILE_SELECT,
-  },
-} as const;
 
 export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { receiverId, gameId, message, expiresAt, asTrainer, inviteUserTeamId } = req.body;

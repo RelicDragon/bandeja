@@ -10,6 +10,7 @@ struct WatchServeCourtSchema: View {
     var matchDoubles: Bool = false
     var variant: Variant = .padel
     var compact: Bool = false
+    var levelSport: WatchSport?
     /// Bench preview during serve setup (no ball or serve arrow).
     var endsSetup: Bool = false
 
@@ -221,7 +222,7 @@ struct WatchServeCourtSchema: View {
         let ring = !baselineOnly && snapshot.serverTeam == servingTeam && slot.idx == snapshot.serverPlayerIndex
         Group {
             if let user = slot.player {
-                WatchPlayerAvatarView(user: user, size: size, role: nil)
+                WatchPlayerAvatarView(user: user, size: size, role: nil, levelSport: levelSport)
             } else {
                 Circle().fill(Color.secondary.opacity(0.2)).frame(width: size, height: size)
             }

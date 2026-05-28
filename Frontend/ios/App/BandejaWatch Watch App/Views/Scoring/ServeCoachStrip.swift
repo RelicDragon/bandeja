@@ -164,7 +164,7 @@ struct ServeCoachStrip: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 if !compact, let u = serverUser(s) {
-                    WatchPlayerAvatarView(user: u, size: 22, role: nil)
+                    WatchPlayerAvatarView(user: u, size: 22, role: nil, levelSport: vm.game?.resolvedSport)
                 }
             }
             .padding(.vertical, compact ? 5 : 7)

@@ -239,6 +239,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'watch level display',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'watch-level-display.ts'),
+    ],
+  },
+  {
     label: 'multisport deferred',
     command: process.execPath,
     args: [

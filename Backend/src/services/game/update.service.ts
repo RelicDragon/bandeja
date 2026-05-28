@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
 import { EntityType, ParticipantRole, Prisma, Sport } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT, SUPPORTED_CURRENCIES } from '../../utils/constants';
+import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { GameReadService } from './read.service';
@@ -24,13 +24,6 @@ import { cleanupInviteParticipantsForEndedGame } from '../../utils/gameInviteCle
 import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { resolvePlayersPerMatch } from '../../sport/sportRegistry';
 import { BracketAdvancementService } from '../league/bracketAdvancement.service';
-
-const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
-  ...USER_SELECT_FIELDS,
-  sportProfiles: {
-    select: USER_SPORT_PROFILE_SELECT,
-  },
-} as const;
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([

@@ -2,6 +2,8 @@
 
 Grounded in the current league model: playoffs are a `LeagueRound` with `roundType: PLAYOFF`, created via `PlayoffConfigurationModal` → `leaguesApi.createPlayoff`, and each group gets **one** `WINNER_COURT` or `AMERICANO` game with **all** selected teams inside it (`createLeaguePlayoffGame`). Regular fixed-team season games are **CLASSIC**, two fixed teams per game (`createLeagueGame`). Bracket playoffs should follow the **regular-season game shape**, not the session-style playoff shape.
 
+**Related:** League track **L3** in [PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md](./PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md); session playoffs (Americano/WC) in [PLAN_SPORT_SCORING_FORMATS.md](./PLAN_SPORT_SCORING_FORMATS.md).
+
 ---
 
 ## 1. Product definition

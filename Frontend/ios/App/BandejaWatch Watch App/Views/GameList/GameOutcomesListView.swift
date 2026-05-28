@@ -87,7 +87,8 @@ struct GameOutcomesListView: View {
                             roundNumber: group.round.roundNumber,
                             match: match,
                             isCurrent: vm.latestActiveMatchId == match.id,
-                            isFinal: vm.isFinal
+                            isFinal: vm.isFinal,
+                            levelSport: vm.game?.resolvedSport
                         ) {
                             router.navigate(to: .gameOutcomeMatch(gameId: gameId, matchId: match.id))
                         }
@@ -111,7 +112,7 @@ struct GameOutcomesListView: View {
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                             if let u = outcome.user {
-                                WatchPlayerAvatarView(user: u, size: 22, role: nil)
+                                WatchPlayerAvatarView(user: u, size: 22, role: nil, levelSport: vm.game?.resolvedSport)
                                 Text(u.displayName)
                                     .font(.caption2)
                                     .lineLimit(1)

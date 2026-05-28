@@ -5,7 +5,7 @@ import {
   upsertGameInviteOutcome,
 } from '../utils/gameInviteOutcome';
 import { createSystemMessage } from '../controllers/chat.controller';
-import { USER_SELECT_FIELDS } from '../utils/constants';
+import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES } from '../utils/constants';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { validatePlayerCanJoinGame, validateGameCanAcceptParticipants } from '../utils/participantValidation';
@@ -16,15 +16,7 @@ import { ApiError } from '../utils/ApiError';
 import { createSystemMessageWithNotification } from '../utils/systemMessageHelper';
 import { GameService } from './game/game.service';
 import { ParticipantMessageHelper } from './game/participantMessageHelper';
-import { USER_SPORT_PROFILE_SELECT } from '../utils/constants';
 import { projectUserForSportContext } from './user/userSportProfile.service';
-
-const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
-  ...USER_SELECT_FIELDS,
-  sportProfiles: {
-    select: USER_SPORT_PROFILE_SELECT,
-  },
-} as const;
 
 export interface InviteActionResult {
   success: boolean;

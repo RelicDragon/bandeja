@@ -4,20 +4,12 @@ import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
-import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import {
   parseSportParam,
   projectUserForSportContext,
 } from '../../services/user/userSportProfile.service';
 import { BasicUser } from '../../types/user.types';
-
-const USER_SELECT_WITH_SPORT_PROFILES = {
-  ...USER_SELECT_FIELDS,
-  sportsEnabled: true,
-  sportProfiles: {
-    select: USER_SPORT_PROFILE_SELECT,
-  },
-} as const;
 
 export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, sport: sportQuery } = req.query;

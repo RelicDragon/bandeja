@@ -49,7 +49,8 @@ struct RallyPointsScoringView: View {
                     action: { vm.incrementAmericanoTeamA() },
                     decrementAction: { vm.decrementAmericanoTeamA() },
                     disabled: vm.pointsOfficialIncrementDisabled,
-                    decrementDisabled: aScore <= 0 || vm.pointsOfficialDecrementDisabled
+                    decrementDisabled: aScore <= 0 || vm.pointsOfficialDecrementDisabled,
+                    levelSport: vm.game?.resolvedSport
                 )
                 WatchScoringTeamColumn(
                     users: vm.teamBUsers,
@@ -57,7 +58,8 @@ struct RallyPointsScoringView: View {
                     action: { vm.incrementAmericanoTeamB() },
                     decrementAction: { vm.decrementAmericanoTeamB() },
                     disabled: vm.pointsOfficialIncrementDisabled,
-                    decrementDisabled: bScore <= 0 || vm.pointsOfficialDecrementDisabled
+                    decrementDisabled: bScore <= 0 || vm.pointsOfficialDecrementDisabled,
+                    levelSport: vm.game?.resolvedSport
                 )
             }
             if vm.canAdvanceToNextSet() {

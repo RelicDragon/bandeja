@@ -1,6 +1,6 @@
 # Multisport — per-sport questionnaires & level model
 
-Companion to [`PLAN_MULTISPORT.md`](./PLAN_MULTISPORT.md). Covers **main sport at registration**, **add-sport** users, **questionnaires per sport**, and hard rules on **social vs competitive level**.
+Companion to [`PLAN_MULTISPORT.md`](./PLAN_MULTISPORT.md). Covers **main sport at registration**, **add-sport** users, **questionnaires per sport**, and hard rules on **social vs competitive level**. Market rating systems (Playtomic, DUPR, UTR, …) → [`PLAN_SPORT_RATING_MODELS.md`](./PLAN_SPORT_RATING_MODELS.md). Avatar level badge (one sport per context) → [same doc § Avatar](./PLAN_SPORT_RATING_MODELS.md#avatar--list-ui-per-sport-level-display). **Unified execution hub** → [`PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md`](./PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md).
 
 **Contents:** [Principles](#1-principles-non-negotiable) · [Gaps](#2-current-state-gap-analysis) · [Data](#3-data-model) · [API](#4-api) · [Content v1](#5-questionnaire-content-v1-scope) · [UX](#6-ux-flows) · [Phases Q0–Q6](#8-implementation-phases) · [ADRs §15](#15-open-decisions-adr) · [Reliability §16](#16-reliability--first-match-rating) · [History §17](#17-level-history--public-profile) · [Discovery §18](#18-discovery-invites--hosts) · [Admin §19](#19-admin-merge-versioning) · [Question bank §20](#20-question-bank-appendix) · [Rollout §21](#21-rollout--flags) · [QA extended §22](#22-extended-qa)
 

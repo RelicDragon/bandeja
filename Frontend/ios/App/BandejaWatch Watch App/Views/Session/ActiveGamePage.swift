@@ -113,7 +113,7 @@ struct ActiveGamePage: View {
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                             if let u = outcome.user {
-                                WatchPlayerAvatarView(user: u, size: 22, role: nil)
+                                WatchPlayerAvatarView(user: u, size: 22, role: nil, levelSport: vm.game?.resolvedSport)
                                 Text(u.displayName)
                                     .font(.caption2)
                                     .lineLimit(1)
@@ -183,7 +183,8 @@ struct ActiveGamePage: View {
                 roundNumber: roundNumber,
                 match: match,
                 isCurrent: vm.latestActiveMatchId == match.id,
-                isFinal: vm.isFinal
+                isFinal: vm.isFinal,
+                levelSport: vm.game?.resolvedSport
             ) {
                 if showStart {
                     Task { await session.startMatch(matchId: match.id) }

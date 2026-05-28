@@ -193,10 +193,14 @@ export const USER_SELECT_FIELDS = {
 
 export const USER_SELECT_WITH_SPORT_PROFILES = {
   ...USER_SELECT_FIELDS,
+  sportsEnabled: true,
   sportProfiles: {
     select: USER_SPORT_PROFILE_SELECT,
   },
 } as const;
+
+/** Game / invite / socket embeds — same as {@link USER_SELECT_WITH_SPORT_PROFILES}. */
+export const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = USER_SELECT_WITH_SPORT_PROFILES;
 
 /** Public-safe fields for GET /users/:userId/stats (no phone, email, wallet, notification prefs, etc.) */
 export const USER_STATS_TARGET_SELECT = {

@@ -4,7 +4,7 @@ Plan for evolving Bandeja from a padel-first app into a multisport platform: pad
 
 **North star:** Sport is **metadata**, not a **mode**. Padel-only users should barely notice multisport exists.
 
-**Related:** Per-sport questionnaires & level model → [`PLAN_MULTISPORT_QUESTIONNAIRES.md`](./PLAN_MULTISPORT_QUESTIONNAIRES.md). Deferred live/officiating → [`PLAN_MULTISPORT_DEFERRED.md`](./PLAN_MULTISPORT_DEFERRED.md).
+**Related:** Per-sport questionnaires & level model → [`PLAN_MULTISPORT_QUESTIONNAIRES.md`](./PLAN_MULTISPORT_QUESTIONNAIRES.md). Per-sport rating models (Playtomic, DUPR, UTR, …) → [`PLAN_SPORT_RATING_MODELS.md`](./PLAN_SPORT_RATING_MODELS.md). Scoring presets + social vs match tracks → [`PLAN_SPORT_SCORING_FORMATS.md`](./PLAN_SPORT_SCORING_FORMATS.md), [`PLAN_CASUAL_MULTISPORT_UX.md`](./PLAN_CASUAL_MULTISPORT_UX.md). Deferred live/officiating → [`PLAN_MULTISPORT_DEFERRED.md`](./PLAN_MULTISPORT_DEFERRED.md). **Unified execution hub** → [`PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md`](./PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md).
 
 ---
 
@@ -131,6 +131,8 @@ After sport is set: filter **match format** (1v1 / 2v2), game types, and scoring
 ---
 
 ## Ratings (data split, quiet UI)
+
+Per-sport famous systems vs canonical 1–7 engine: [`PLAN_SPORT_RATING_MODELS.md`](./PLAN_SPORT_RATING_MODELS.md). Avatar badge rules (one sport per context): same doc, [Avatar & list UI](./PLAN_SPORT_RATING_MODELS.md#avatar--list-ui-per-sport-level-display).
 
 Mirror `level` vs `socialLevel`: **split in data, not in chrome.**
 
@@ -711,7 +713,7 @@ Padel  3.4  (primary, visible)
 
 ## Risks & decisions
 
-1. **Level scale** — 1–7 per sport for v1; same UX, separate numbers.
+1. **Level scale** — 1–7 per sport for v1; same UX, separate numbers. External display (DUPR, UTR, SquashLevels hints) → [`PLAN_SPORT_RATING_MODELS.md`](./PLAN_SPORT_RATING_MODELS.md).
 2. **Singles vs doubles** — **Decided (P5):** `Game.playersPerMatch` (2 = 1v1, 4 = 2v2), not `maxParticipants`. Registry: `allowedPlayerCountsPerMatch` + `defaultPlayersPerMatch`. See **ADR-002**.
 3. **Cross-sport tournaments** — out of scope v1.
 4. **Branding** — Bandeja benefits from generic positioning.

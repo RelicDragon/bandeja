@@ -10,7 +10,7 @@ import { addOrUpdateParticipant } from '../../utils/participantOperations';
 import { performPostJoinOperations } from '../../utils/postJoinOperations';
 import { InviteService } from '../invite.service';
 import { deleteGameInviteOutcome, findGameInviteOutcome } from '../../utils/gameInviteOutcome';
-import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
+import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { createSystemMessageWithNotification } from '../../utils/systemMessageHelper';
 import { ChatType, GameStatus, ParticipantRole, UserTeamMemberStatus } from '@prisma/client';
 import { BetService } from '../bets/bet.service';
@@ -22,13 +22,6 @@ const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
 const GUEST_STATUS = 'GUEST' as const;
 const INVITED_STATUS = 'INVITED' as const;
-
-const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = {
-  ...USER_SELECT_FIELDS,
-  sportProfiles: {
-    select: USER_SPORT_PROFILE_SELECT,
-  },
-} as const;
 
 export class ParticipantService {
   static async joinGame(gameId: string, userId: string) {

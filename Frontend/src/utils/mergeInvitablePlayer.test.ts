@@ -32,6 +32,23 @@ describe('mergeInvitablePlayer', () => {
     expect(merged.interactionCount).toBe(3);
   });
 
+  it('keeps sportsEnabled when incoming omits it', () => {
+    const withSports: BasicUser = {
+      ...existing,
+      sportsEnabled: [Sports.PADEL],
+    };
+    const incoming = {
+      ...withSports,
+      level: 3.0,
+      sportProfiles: undefined,
+      sportsEnabled: undefined,
+      interactionCount: 1,
+      gamesTogetherCount: 0,
+    };
+    const merged = mergeInvitablePlayer(withSports, incoming);
+    expect(merged.sportsEnabled).toEqual([Sports.PADEL]);
+  });
+
   it('replaces user when incoming has full sportProfiles', () => {
     const incoming = {
       ...existing,

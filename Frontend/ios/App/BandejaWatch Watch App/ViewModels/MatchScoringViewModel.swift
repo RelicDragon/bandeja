@@ -522,7 +522,7 @@ final class MatchScoringViewModel {
         guard maxTotal > 0 else { return }
         if blocksFurtherOfficialTaps() { return }
         var a = sets[activeSetIndex].teamA
-        var b = sets[activeSetIndex].teamB
+        let b = sets[activeSetIndex].teamB
         let prevA = a
         let na = a + 1
         if na + b > maxTotal { return }
@@ -573,7 +573,7 @@ final class MatchScoringViewModel {
         let maxTotal = maxPointsPerSet
         guard maxTotal > 0 else { return }
         if blocksFurtherOfficialTaps() { return }
-        var a = sets[activeSetIndex].teamA
+        let a = sets[activeSetIndex].teamA
         var b = sets[activeSetIndex].teamB
         let prevB = b
         let nb = b + 1

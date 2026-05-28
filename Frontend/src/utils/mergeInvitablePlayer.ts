@@ -18,10 +18,13 @@ export function mergeInvitablePlayer(
   }
 
   const { level: _level, reliability: _reliability, ...incomingRest } = incoming;
+  const sportsEnabled =
+    incoming.sportsEnabled !== undefined ? incoming.sportsEnabled : existing.sportsEnabled;
   return {
     ...existing,
     ...incomingRest,
     sportProfiles: existingProfiles,
+    ...(sportsEnabled !== undefined ? { sportsEnabled } : {}),
     interactionCount: incoming.interactionCount,
     gamesTogetherCount: incoming.gamesTogetherCount,
   };

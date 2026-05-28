@@ -8,7 +8,7 @@ Helpers already in place:
 
 Global `User` columns remain for padel transition / dual-write / legacy API shape (`USER_SELECT_FIELDS`).
 
-Related: `docs/PLAN_MULTISPORT_QUESTIONNAIRES.md` (ADR-Q5 reliability fallback, ADR-Q13 `User.level` sunset, level history §17).
+Related: `docs/PLAN_MULTISPORT_QUESTIONNAIRES.md` (ADR-Q5 reliability fallback, ADR-Q13 `User.level` sunset, level history §17), `docs/PLAN_SPORT_RATING_MODELS.md` (canonical Elo + per-sport display bridges). **Unified execution hub** → [`PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md`](./PLAN_MULTISPORT_RATINGS_FORMATS_IMPLEMENTATION.md) (track R2a).
 
 ---
 

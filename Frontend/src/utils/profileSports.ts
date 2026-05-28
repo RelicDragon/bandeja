@@ -84,6 +84,25 @@ export function getDisplayLevelForSport(user: User | BasicUser, sport: Sport): n
   return 1.0;
 }
 
+/** When `sportsEnabled` is known, false means show "-" instead of a placeholder 1.0 for that sport. */
+export function isSportLevelAvailableForDisplay(
+  user: User | BasicUser | null | undefined,
+  sport: Sport,
+): boolean {
+  if (!user) return false;
+  if (user.sportsEnabled === undefined || user.sportsEnabled === null) return true;
+  return isSportEnabled(user, sport);
+}
+
+export function formatSportLevelBadgeDisplay(
+  user: User | BasicUser | null | undefined,
+  sport: Sport,
+  decimals = 1,
+): string {
+  if (!user || !isSportLevelAvailableForDisplay(user, sport)) return '-';
+  return getDisplayLevelForSport(user, sport).toFixed(decimals);
+}
+
 export function getReliabilityForSport(user: User | BasicUser, sport: Sport): number {
   const profile = findSportProfile(user, sport);
   if (profile) return profile.reliability;

@@ -39,9 +39,10 @@ enum WatchLiveScoringRegistry {
 
         if rules.isPoints { return .americanoPoints }
         switch sport {
-        case .badminton, .pickleball, .squash
-            where game?.usesRallySetScoring == true && !rules.isClassic:
-            return .rallyPointsBoard
+        case .badminton, .pickleball, .squash:
+            if game?.usesRallySetScoring == true, !rules.isClassic {
+                return .rallyPointsBoard
+            }
         default:
             break
         }
