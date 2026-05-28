@@ -200,8 +200,8 @@ export class InviteService {
     const participant = await prisma.gameParticipant.findUnique({
       where: { id: participantId },
       include: {
-        user: { select: USER_SELECT_FIELDS },
-        invitedByUser: { select: USER_SELECT_FIELDS },
+        user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+        invitedByUser: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
         game: { include: { participants: true } },
       },
     });
@@ -408,7 +408,7 @@ export class InviteService {
   ): Promise<InviteActionResult> {
     const participant = await prisma.gameParticipant.findUnique({
       where: { id: participantId },
-      include: { user: { select: USER_SELECT_FIELDS } },
+      include: { user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES } },
     });
     if (!participant || participant.status !== 'INVITED') {
       return { success: false, message: 'errors.invites.notFound' };

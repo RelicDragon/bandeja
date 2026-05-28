@@ -14,14 +14,14 @@ export function resolveActivePrimarySport(user: User | null | undefined): Sport 
   return enabled.includes(stored) ? stored : enabled[0]!;
 }
 
-export function listEnabledSports(user: User | null | undefined): Sport[] {
+export function listEnabledSports(user: User | BasicUser | null | undefined): Sport[] {
   const raw = user?.sportsEnabled;
   const enabled =
     raw === undefined || raw === null ? ([Sports.PADEL] as Sport[]) : [...raw];
   return enabled.filter((s) => getSportConfig(s).implemented);
 }
 
-export function isSportEnabled(user: User | null | undefined, sport: Sport): boolean {
+export function isSportEnabled(user: User | BasicUser | null | undefined, sport: Sport): boolean {
   return listEnabledSports(user).includes(sport);
 }
 

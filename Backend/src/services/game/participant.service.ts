@@ -122,7 +122,7 @@ export class ParticipantService {
       },
       include: {
         user: {
-          select: USER_SELECT_FIELDS,
+          select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
         },
       },
     });
@@ -241,7 +241,7 @@ export class ParticipantService {
     const participant = await prisma.gameParticipant.findFirst({
       where: { gameId, userId, status: GUEST_STATUS },
       include: {
-        user: { select: USER_SELECT_FIELDS },
+        user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
       },
     });
 
@@ -273,7 +273,7 @@ export class ParticipantService {
       },
       include: {
         user: {
-          select: USER_SELECT_FIELDS,
+          select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
         },
       },
     });
