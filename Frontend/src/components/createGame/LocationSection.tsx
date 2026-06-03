@@ -65,6 +65,7 @@ export const LocationSection = ({
           onSelect={onSelectCourt}
           entityType={entityType}
           preferredSport={preferredSport}
+          clubSports={clubs.find((c) => c.id === selectedClub)?.sports}
           onSportTabChange={onSportTabChange}
         />
       )}

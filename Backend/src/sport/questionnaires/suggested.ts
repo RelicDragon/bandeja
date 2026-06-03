@@ -8,6 +8,7 @@ export function isQuestionnaireSuggestedForProfile(
     | {
         questionnaireCompletedAt?: Date | null;
         questionnaireSkippedAt?: Date | null;
+        gamesPlayed?: number;
       }
     | null
     | undefined,
@@ -17,5 +18,6 @@ export function isQuestionnaireSuggestedForProfile(
   if (!profile) return true;
   if (profile.questionnaireCompletedAt) return false;
   if (profile.questionnaireSkippedAt) return false;
+  if ((profile.gamesPlayed ?? 0) > 0) return false;
   return true;
 }

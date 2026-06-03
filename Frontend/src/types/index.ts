@@ -2,7 +2,7 @@ import type { Sport } from '@shared/sport';
 
 export type { Sport };
 
-export type SportLevelSource = 'DEFAULT' | 'QUESTIONNAIRE' | 'MANUAL';
+export type SportLevelSource = 'DEFAULT' | 'QUESTIONNAIRE' | 'MANUAL' | 'PLAYTOMIC';
 
 export interface UserSportProfile {
   sport: Sport;
@@ -14,10 +14,20 @@ export interface UserSportProfile {
   questionnaireSkippedAt?: string | null;
   questionnaireVersion?: string | null;
   levelSource?: SportLevelSource;
+  /** Manual or imported external scale (DUPR, NTRP, Playtomic, etc.) — profile only. */
+  externalRatingHint?: string | null;
 }
 
 export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
-export type GameType = 'CLASSIC' | 'AMERICANO' | 'MEXICANO' | 'ROUND_ROBIN' | 'WINNER_COURT' | 'LADDER' | 'CUSTOM';
+export type GameType =
+  | 'CLASSIC'
+  | 'AMERICANO'
+  | 'MEXICANO'
+  | 'ROUND_ROBIN'
+  | 'WINNER_COURT'
+  | 'LADDER'
+  | 'KOTC'
+  | 'CUSTOM';
 export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON' | 'BAR' | 'TRAINING';
 export type GenderTeam = 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
 export type ParticipantRole = 'OWNER' | 'ADMIN' | 'PARTICIPANT' | 'GUEST';
@@ -57,25 +67,31 @@ export type MatchGenerationType =
   | 'ROUND_ROBIN'
   | 'ESCALERA'
   | 'RATING'
-  | 'WINNERS_COURT';
+  | 'WINNERS_COURT'
+  | 'KING_OF_COURT';
 export type ScoringMode = 'CLASSIC' | 'POINTS';
 export type ScoringPreset =
   | 'CLASSIC_BEST_OF_3'
   | 'CLASSIC_BEST_OF_5'
   | 'CLASSIC_PRO_SET'
   | 'CLASSIC_SHORT_SET'
+  | 'CLASSIC_FAST4'
   | 'CLASSIC_SUPER_TIEBREAK'
   | 'CLASSIC_SINGLE_SET'
   | 'CLASSIC_TIMED'
   | 'POINTS_11'
+  | 'POINTS_12'
+  | 'POINTS_15'
   | 'POINTS_16'
   | 'POINTS_21'
   | 'POINTS_24'
   | 'POINTS_32'
   | 'BEST_OF_3_11'
+  | 'BEST_OF_3_15'
   | 'BEST_OF_3_21'
   | 'BEST_OF_5_11'
   | 'PAR_11'
+  | 'SINGLE_GAME_21'
   | 'TIMED'
   | 'CUSTOM';
 export interface GameSetupParams {
@@ -312,6 +328,7 @@ export interface Club {
   amenities?: Record<string, any>;
   isBar?: boolean;
   isForPlaying?: boolean;
+  sports?: Sport[];
   courts?: Court[];
   city?: City;
 }

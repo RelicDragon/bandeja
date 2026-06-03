@@ -34,16 +34,19 @@ function testSourcePatches(): void {
     'league createGroups uses sport-scoped sort level',
   );
 
-  const telegram = readSrc('services/telegram/results-telegram.service.ts');
+  const resultsSummaryPrompt = readSrc('services/gameResultsArtifact/resultsSummaryPrompt.util.ts');
   assert(
-    telegram.includes('resolveUserSportSnapshot'),
-    'results-telegram uses sport snapshot for participant level',
+    resultsSummaryPrompt.includes('resolveUserSportSnapshot'),
+    'results summary prompt uses sport snapshot for participant level',
   );
   assert(
-    telegram.includes('getCityLeaderboardRanks(cityId, gameSport)'),
-    'results-telegram uses sport-scoped city ranks',
+    resultsSummaryPrompt.includes('getCityLeaderboardRanks(cityId, gameSport)'),
+    'results summary prompt uses sport-scoped city ranks',
   );
-  assert(!telegram.includes('They played Padel game'), 'results-telegram prompt uses game sport label');
+  assert(
+    !resultsSummaryPrompt.includes('They played Padel game'),
+    'results summary prompt uses game sport label',
+  );
 
   const notifBase = readSrc('services/shared/notification-base.ts');
   assert(

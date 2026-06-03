@@ -129,8 +129,6 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   const plannerFetchSerialRef = useRef(0);
   const deferredPlanner = useDeferredValue(planner);
 
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
-
   const weekStartStr = useMemo(() => {
     const base = startOfWeek(new Date(), { weekStartsOn });
     const shifted = addWeeks(base, weekOffset);
@@ -572,7 +570,6 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
             >
               <LeaguePlannerGrid
                 planner={deferredPlanner}
-                todayStr={todayStr}
                 dateFnsLocale={dateFnsLocale}
                 timeFormat={user?.timeFormat}
                 onCellActivate={activatePlannerCell}

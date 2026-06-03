@@ -35,10 +35,15 @@ struct ServeGuideInputs: Sendable, Equatable {
     /// Set when `usesRallyPointsServeGuide` (sport-specific court / change-ends hints).
     var rallyPointsSport: WatchSport?
     var rallyPointsPerSet: Int
+    var rallyFixedNumberOfSets: Int
+    var rallyWinBy: Int
 
     var matchStartCourtEndsSwapped: Bool
     var matchStartTeamASidesMirrored: Bool
     var matchStartTeamBSidesMirrored: Bool
+
+    /// Rally-cap point winners (serve rotation); mirrors FE `pointWinnerLog`.
+    var pointWinnerLog: [TeamSide]
 }
 
 enum ServeGuideEngine {
@@ -104,8 +109,8 @@ enum ServeGuideEngine {
         let tb = set?.teamB ?? 0
         let t = ta + tb
         let firstForSet = firstServerForPointsSet(setIndex: i.activeSetIndex, sets: i.sets, matchFirstServer: matchFirst)
-        let nextTeam = tbNextServerTeam(firstTBTeam: firstForSet, pointIndex: t)
-        let playerIdx = i.isDoublesMatch
+        var nextTeam = tbNextServerTeam(firstTBTeam: firstForSet, pointIndex: t)
+        var playerIdx = i.isDoublesMatch
             ? tbDoublesPlayerIndex(
                 matchFirst: matchFirst,
                 matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
@@ -114,17 +119,37 @@ enum ServeGuideEngine {
                 gamesCompletedBeforeTB: 0
             )
             : 0
-        let names = nextTeam == .teamA ? i.teamAPlayerNames : i.teamBPlayerNames
-        let display = i.isDoublesMatch ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
         let slot: TieBreakServeSlot?
         let side: CourtServeSide
         let changeEnds: Bool
+        var ttCourtEnds: Bool?
         var motionPrefix = "pts"
         switch i.rallyPointsSport {
         case .tableTennis:
             slot = nil
             side = courtSideForTieBreakPoint(t)
-            changeEnds = t > 0 && t % 5 == 0
+            let won = ServeGuideSportRules.tableTennisGamesWonBeforeActive(
+                activeSetIndex: i.activeSetIndex,
+                sets: i.sets,
+                pointsPerGame: max(i.rallyPointsPerSet, 1),
+                winBy: max(i.rallyWinBy, 2)
+            )
+            let deciding = ServeGuideSportRules.tableTennisIsDecidingGame(
+                fixedNumberOfSets: i.rallyFixedNumberOfSets,
+                gamesWonA: won.teamA,
+                gamesWonB: won.teamB
+            )
+            changeEnds = ServeGuideSportRules.tableTennisChangeEnds(
+                pointIndex: t,
+                activeSetIndex: i.activeSetIndex,
+                isDecidingGame: deciding
+            )
+            ttCourtEnds = ServeGuideSportRules.tableTennisCourtEndsSwapped(
+                matchStartCourtEndsSwapped: i.matchStartCourtEndsSwapped,
+                activeSetIndex: i.activeSetIndex,
+                pointIndex: t,
+                isDecidingGame: deciding
+            )
             motionPrefix = "tt"
         case .badminton:
             slot = nil
@@ -137,25 +162,70 @@ enum ServeGuideEngine {
             )
             motionPrefix = "bd"
         case .pickleball:
+            nextTeam = ServeGuideSportRules.pickleballNextServerTeam(
+                pointWinnerLog: i.pointWinnerLog,
+                firstForSet: firstForSet
+            )
+            playerIdx = i.isDoublesMatch
+                ? ServeGuideSportRules.pickleballDoublesPlayerIndex(
+                    pointWinnerLog: i.pointWinnerLog,
+                    firstForSet: firstForSet,
+                    matchFirst: matchFirst,
+                    matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0,
+                    teamA: ta,
+                    teamB: tb
+                )
+                : 0
             let serverScore = nextTeam == .teamA ? ta : tb
             side = ServeGuideSportRules.pickleballCourtSide(serverScore: serverScore)
-            slot = i.isDoublesMatch ? ServeGuideSportRules.pickleballDoublesSlot(serverPlayerIndex: playerIdx) : nil
+            slot = nil
+            let won = ServeGuideSportRules.tableTennisGamesWonBeforeActive(
+                activeSetIndex: i.activeSetIndex,
+                sets: i.sets,
+                pointsPerGame: max(i.rallyPointsPerSet, 1),
+                winBy: max(i.rallyWinBy, 2)
+            )
+            let deciding = ServeGuideSportRules.tableTennisIsDecidingGame(
+                fixedNumberOfSets: i.rallyFixedNumberOfSets,
+                gamesWonA: won.teamA,
+                gamesWonB: won.teamB
+            )
             changeEnds = ServeGuideSportRules.pickleballChangeEnds(
                 teamA: ta,
                 teamB: tb,
-                pointsPerGame: max(i.rallyPointsPerSet, 1)
+                pointsPerGame: max(i.rallyPointsPerSet, 1),
+                isDecidingGame: deciding,
+                activeSetIndex: i.activeSetIndex,
+                totalPointsInGame: t
+            )
+            ttCourtEnds = ServeGuideSportRules.pickleballCourtEndsSwapped(
+                matchStartCourtEndsSwapped: i.matchStartCourtEndsSwapped,
+                activeSetIndex: i.activeSetIndex,
+                teamA: ta,
+                teamB: tb,
+                pointsPerGame: max(i.rallyPointsPerSet, 1),
+                isDecidingGame: deciding
             )
             motionPrefix = "pb"
         case .squash:
             slot = nil
-            side = courtSideForTieBreakPoint(t)
+            let serverScore = nextTeam == .teamA ? ta : tb
+            side = ServeGuideSportRules.squashCourtSide(serverScore: serverScore)
             changeEnds = ServeGuideSportRules.squashChangeEnds(teamA: ta, teamB: tb)
+            ttCourtEnds = ServeGuideSportRules.squashCourtEndsSwapped(
+                matchStartCourtEndsSwapped: i.matchStartCourtEndsSwapped,
+                activeSetIndex: i.activeSetIndex,
+                teamA: ta,
+                teamB: tb
+            )
             motionPrefix = "sq"
         default:
             slot = tieBreakServeSlotAtPoint(t)
             side = courtSideForTieBreakPoint(t)
             changeEnds = t > 0 && t % 6 == 0
         }
+        let names = nextTeam == .teamA ? i.teamAPlayerNames : i.teamBPlayerNames
+        let display = i.isDoublesMatch ? playerDisplay(names: names, index: playerIdx) : (names.first ?? "—")
         let sideWord = side == .rightDeuce ? "right" : "left"
         let accessibilityLine: String
         if let slot {
@@ -174,7 +244,7 @@ enum ServeGuideEngine {
             courtSide: side,
             tieBreakServeSlot: slot,
             changeEndsBeforeNextPoint: changeEnds,
-            courtEndsSwapped: orient.ends,
+            courtEndsSwapped: ttCourtEnds ?? orient.ends,
             courtTeamASidesMirrored: orient.teamA,
             courtTeamBSidesMirrored: orient.teamB,
             accessibilityLine: accessibilityLine,

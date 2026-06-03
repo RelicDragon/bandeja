@@ -1,4 +1,6 @@
 import { Game, ScoringPreset, WinnerOfMatch } from '@/types';
+import { getOfficiatingLevelForGame, getStrictValidationForPreset, type StrictValidationId } from '@/sport/createFlow';
+import type { OfficiatingLevel } from '@shared/officiatingLevel';
 
 export type SetKind = 'REGULAR' | 'TIEBREAK_GAME' | 'SUPER_TIEBREAK' | 'POINTS' | 'TIMED' | 'CUSTOM';
 
@@ -28,11 +30,19 @@ export interface ScoringRules {
   allowRemoveSet: boolean;
   /** Incomplete regular set games (e.g. at buzzer) when match timer is on or legacy timed preset. */
   allowIncompleteRegularSetGames: boolean;
+  strictValidation: StrictValidationId;
+  officiatingLevel: OfficiatingLevel;
 }
 
 type RuleSkeleton = Omit<
   ScoringRules,
-  'preset' | 'hasGoldenPoint' | 'allowDrawPerSet' | 'maxPointsPerTeam' | 'allowIncompleteRegularSetGames'
+  | 'preset'
+  | 'hasGoldenPoint'
+  | 'allowDrawPerSet'
+  | 'maxPointsPerTeam'
+  | 'allowIncompleteRegularSetGames'
+  | 'strictValidation'
+  | 'officiatingLevel'
 >;
 
 const classicBo3: RuleSkeleton = {
@@ -78,6 +88,13 @@ const classicShortSet: RuleSkeleton = {
   ...classicBo3,
   gamesPerSet: 4,
   tieBreakGameAtGames: 3,
+};
+
+const classicFast4: RuleSkeleton = {
+  ...classicBo3,
+  gamesPerSet: 4,
+  tieBreakGameAtGames: 3,
+  tieBreakGameFirstTo: 5,
 };
 
 /** One standard set (6 games, TB at 6–6); used for timer-capped tennis matches. */
@@ -155,16 +172,21 @@ const PRESETS: Record<ScoringPreset, RuleSkeleton> = {
   CLASSIC_PRO_SET: classicProSet,
   CLASSIC_SINGLE_SET: classicTimedMatch,
   CLASSIC_SHORT_SET: classicShortSet,
+  CLASSIC_FAST4: classicFast4,
   CLASSIC_TIMED: classicTimedMatch,
   POINTS_11: rallyPointsRule(11),
+  POINTS_12: pointsRule(12),
+  POINTS_15: pointsRule(15),
   POINTS_16: pointsRule(16),
   POINTS_21: pointsRule(21),
   POINTS_24: pointsRule(24),
   POINTS_32: pointsRule(32),
   BEST_OF_3_11: rallyBestOf(3, 11),
+  BEST_OF_3_15: rallyBestOf(3, 15),
   BEST_OF_3_21: rallyBestOf(3, 21),
   BEST_OF_5_11: rallyBestOf(5, 11),
   PAR_11: rallyPointsRule(11),
+  SINGLE_GAME_21: rallyPointsRule(21),
   TIMED: timedRule,
   CUSTOM: customRule,
 };
@@ -172,6 +194,7 @@ const PRESETS: Record<ScoringPreset, RuleSkeleton> = {
 type RulesSource = Pick<
   Game,
   | 'scoringPreset'
+  | 'sport'
   | 'fixedNumberOfSets'
   | 'maxTotalPointsPerSet'
   | 'maxPointsPerTeam'
@@ -180,6 +203,7 @@ type RulesSource = Pick<
   | 'hasGoldenPoint'
   | 'pointsPerTie'
   | 'matchTimerEnabled'
+  | 'metadata'
 > | null | undefined;
 
 export const getRulesFromPreset = (preset: ScoringPreset): RuleSkeleton => PRESETS[preset];
@@ -195,15 +219,23 @@ export const getRules = (game: RulesSource): ScoringRules => {
   const goldenApplies = base.ballsInGames && base.winnerOfMatch === 'BY_SETS';
 
   const allowIncompleteRegularSetGames =
-    Boolean(game?.matchTimerEnabled) || preset === 'CLASSIC_TIMED';
+    Boolean(game?.matchTimerEnabled) ||
+    preset === 'CLASSIC_TIMED' ||
+    getStrictValidationForPreset(game?.sport, preset) === 'CLASSIC_TIMED_RELAXED';
+
+  const strictValidation = getStrictValidationForPreset(game?.sport, preset);
 
   return {
     ...base,
     preset: preset ?? 'DERIVED',
     allowDrawPerSet,
-    hasGoldenPoint: goldenApplies && !!game?.hasGoldenPoint,
+    hasGoldenPoint:
+      goldenApplies &&
+      (game?.hasGoldenPoint ?? (preset === 'CLASSIC_FAST4' ? true : false)),
     maxPointsPerTeam: game?.maxPointsPerTeam ?? 0,
     allowIncompleteRegularSetGames,
+    strictValidation,
+    officiatingLevel: getOfficiatingLevelForGame(game?.sport ?? null, preset, game?.metadata),
   };
 };
 

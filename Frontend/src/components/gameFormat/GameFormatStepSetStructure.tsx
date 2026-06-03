@@ -5,6 +5,7 @@ import { tGameFormatStepHint, tScoringPresetField } from '@/utils/gameFormat';
 import { FormatOptionCard } from './FormatOptionCard';
 import { GameFormatTimedDuration } from './GameFormatTimedDuration';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
+import { presetTierBadgeClass, presetTierBadgeLabel, resolvePresetTierForSport } from '@/utils/presetTierUi';
 
 interface GameFormatStepSetStructureProps {
   scoringPreset: ScoringPreset;
@@ -56,19 +57,39 @@ export const GameFormatStepSetStructure = ({
       </p>
       <div className="space-y-2.5">
         {visiblePresets.map((p) => (
-          <FormatOptionCard
-            key={p.value}
-            icon={p.icon}
-            title={tScoringPresetField(t, p.value, 'title', sport)}
-            subtitle={tScoringPresetField(t, p.value, 'subtitle', sport)}
-            hint={tScoringPresetField(t, p.value, 'hint', sport) || undefined}
-            badge={p.recommended ? t('gameFormat.recommended') : undefined}
-            selected={scoringPreset === p.value}
-            onClick={() => {
-              onPresetChange(p.value);
-              onSelectAdvance?.();
-            }}
-          />
+          (() => {
+            const tier = resolvePresetTierForSport(sport, p.value);
+            const tierLabel = tier ? presetTierBadgeLabel(tier, t) : null;
+            const badgeLabel =
+              p.recommended && tierLabel
+                ? `${t('gameFormat.recommended')} · ${tierLabel}`
+                : p.recommended
+                  ? t('gameFormat.recommended')
+                  : tierLabel ?? undefined;
+            return (
+              <div key={p.value} className="relative">
+                {tier && tierLabel ? (
+                  <span
+                    className={`pointer-events-none absolute right-2 top-2 z-10 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${presetTierBadgeClass(tier)}`}
+                  >
+                    {tierLabel}
+                  </span>
+                ) : null}
+                <FormatOptionCard
+                  icon={p.icon}
+                  title={tScoringPresetField(t, p.value, 'title', sport)}
+                  subtitle={tScoringPresetField(t, p.value, 'subtitle', sport)}
+                  hint={tScoringPresetField(t, p.value, 'hint', sport) || undefined}
+                  badge={badgeLabel}
+                  selected={scoringPreset === p.value}
+                  onClick={() => {
+                    onPresetChange(p.value);
+                    onSelectAdvance?.();
+                  }}
+                />
+              </div>
+            );
+          })()
         ))}
       </div>
 

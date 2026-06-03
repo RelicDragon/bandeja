@@ -111,11 +111,12 @@ export function getGameChatListDateTimeBlock(
   return { dateLabel, timeLabel };
 }
 
-export function getGameChatListLocationLine(game: Game): string {
+export function getGameChatListLocationLine(game: Game, t: TFunction): string {
   const clubName = game.court?.club?.name || game.club?.name;
   const courtSuffix = game.court?.name && clubName ? ` · ${game.court.name}` : '';
   if (clubName) return `${clubName}${courtSuffix}`;
-  return game.city?.name ?? '';
+  if (game.city?.name) return game.city.name;
+  return t('gameDetails.clubNotSet');
 }
 
 export function getGameChatListMetaLine(
@@ -123,9 +124,14 @@ export function getGameChatListMetaLine(
   displaySettings: ResolvedDisplaySettings,
   t: TFunction
 ): string {
-  const location = getGameChatListLocationLine(game);
+  const location = getGameChatListLocationLine(game, t);
   const dt = getGameChatListDateTimeBlock(game, displaySettings, t);
-  if (!dt) return location;
+  if (!dt) {
+    if (game.timeIsSet !== true) {
+      return [t('gameDetails.datetimeNotSet'), location].filter(Boolean).join(' · ');
+    }
+    return location;
+  }
   const parts = [dt.dateLabel, dt.timeLabel, location].filter(Boolean);
   return parts.join(' · ');
 }

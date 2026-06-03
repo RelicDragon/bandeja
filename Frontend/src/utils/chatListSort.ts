@@ -39,6 +39,7 @@ export type ChatItem =
       data: Game;
       lastMessageDate: Date | null;
       unreadCount: number;
+      draft?: ChatDraft | null;
       listOutbox?: ChatListOutbox | null;
     };
 

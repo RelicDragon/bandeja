@@ -1,20 +1,30 @@
+import { getOfficiatingLevelForGame } from '../../../sport/sportRegistryCasual';
+import type { Sport } from '../../../sport/sportIds';
+import type { OfficiatingLevel } from '../../../shared/officiatingLevel';
+import { getStrictValidationForPreset, type StrictValidationId } from '../../../shared/sportPresetMeta';
+
 export type ScoringPreset =
   | 'CLASSIC_BEST_OF_3'
   | 'CLASSIC_BEST_OF_5'
   | 'CLASSIC_PRO_SET'
   | 'CLASSIC_SHORT_SET'
+  | 'CLASSIC_FAST4'
   | 'CLASSIC_SUPER_TIEBREAK'
   | 'CLASSIC_SINGLE_SET'
   | 'CLASSIC_TIMED'
   | 'POINTS_11'
+  | 'POINTS_12'
+  | 'POINTS_15'
   | 'POINTS_16'
   | 'POINTS_21'
   | 'POINTS_24'
   | 'POINTS_32'
   | 'BEST_OF_3_11'
+  | 'BEST_OF_3_15'
   | 'BEST_OF_3_21'
   | 'BEST_OF_5_11'
   | 'PAR_11'
+  | 'SINGLE_GAME_21'
   | 'TIMED'
   | 'CUSTOM';
 
@@ -48,11 +58,19 @@ export interface ScoringRules {
   allowRemoveSet: boolean;
   /** Incomplete regular set games (e.g. at buzzer) when match timer is on or legacy timed preset. */
   allowIncompleteRegularSetGames: boolean;
+  strictValidation: StrictValidationId;
+  officiatingLevel: OfficiatingLevel;
 }
 
 type RuleSkeleton = Omit<
   ScoringRules,
-  'preset' | 'hasGoldenPoint' | 'allowDrawPerSet' | 'maxPointsPerTeam' | 'allowIncompleteRegularSetGames'
+  | 'preset'
+  | 'hasGoldenPoint'
+  | 'allowDrawPerSet'
+  | 'maxPointsPerTeam'
+  | 'allowIncompleteRegularSetGames'
+  | 'strictValidation'
+  | 'officiatingLevel'
 >;
 
 const classicBo3: RuleSkeleton = {
@@ -98,6 +116,13 @@ const classicShortSet: RuleSkeleton = {
   ...classicBo3,
   gamesPerSet: 4,
   tieBreakGameAtGames: 3,
+};
+
+const classicFast4: RuleSkeleton = {
+  ...classicBo3,
+  gamesPerSet: 4,
+  tieBreakGameAtGames: 3,
+  tieBreakGameFirstTo: 5,
 };
 
 /** One standard set (6 games, TB at 6–6); used for timer-capped tennis matches. */
@@ -175,16 +200,21 @@ const PRESETS: Record<ScoringPreset, RuleSkeleton> = {
   CLASSIC_PRO_SET: classicProSet,
   CLASSIC_SINGLE_SET: classicTimedMatch,
   CLASSIC_SHORT_SET: classicShortSet,
+  CLASSIC_FAST4: classicFast4,
   CLASSIC_TIMED: classicTimedMatch,
   POINTS_11: rallyPointsRule(11),
+  POINTS_12: pointsRule(12),
+  POINTS_15: pointsRule(15),
   POINTS_16: pointsRule(16),
   POINTS_21: pointsRule(21),
   POINTS_24: pointsRule(24),
   POINTS_32: pointsRule(32),
   BEST_OF_3_11: rallyBestOf(3, 11),
+  BEST_OF_3_15: rallyBestOf(3, 15),
   BEST_OF_3_21: rallyBestOf(3, 21),
   BEST_OF_5_11: rallyBestOf(5, 11),
   PAR_11: rallyPointsRule(11),
+  SINGLE_GAME_21: rallyPointsRule(21),
   TIMED: timedRule,
   CUSTOM: customRule,
 };
@@ -194,6 +224,7 @@ type RulesSource =
       Pick<
         {
           scoringPreset: ScoringPreset | null;
+          sport: string | null;
           fixedNumberOfSets: number | null;
           maxTotalPointsPerSet: number | null;
           maxPointsPerTeam: number | null;
@@ -202,8 +233,10 @@ type RulesSource =
           hasGoldenPoint: boolean | null;
           pointsPerTie: number | null;
           matchTimerEnabled: boolean | null;
+          metadata?: unknown;
         },
         | 'scoringPreset'
+        | 'sport'
         | 'fixedNumberOfSets'
         | 'maxTotalPointsPerSet'
         | 'maxPointsPerTeam'
@@ -212,6 +245,7 @@ type RulesSource =
         | 'hasGoldenPoint'
         | 'pointsPerTie'
         | 'matchTimerEnabled'
+        | 'metadata'
       >
     >
   | null
@@ -229,16 +263,25 @@ export const getRules = (game: RulesSource): ScoringRules => {
 
   const goldenApplies = base.ballsInGames && base.winnerOfMatch === 'BY_SETS';
 
+  const strictValidation = getStrictValidationForPreset(game?.sport, preset);
   const allowIncompleteRegularSetGames =
-    Boolean(game?.matchTimerEnabled) || preset === 'CLASSIC_TIMED';
+    Boolean(game?.matchTimerEnabled) ||
+    preset === 'CLASSIC_TIMED' ||
+    strictValidation === 'CLASSIC_TIMED_RELAXED';
 
   return {
     ...base,
     preset: preset ?? 'DERIVED',
     allowDrawPerSet,
-    hasGoldenPoint: goldenApplies && !!game?.hasGoldenPoint,
+    hasGoldenPoint:
+      goldenApplies &&
+      (game?.hasGoldenPoint ?? (preset === 'CLASSIC_FAST4' ? true : false)),
     maxPointsPerTeam: game?.maxPointsPerTeam ?? 0,
     allowIncompleteRegularSetGames,
+    strictValidation,
+    officiatingLevel: game?.sport
+      ? getOfficiatingLevelForGame(game.sport as Sport, preset, game.metadata)
+      : 'none',
   };
 };
 

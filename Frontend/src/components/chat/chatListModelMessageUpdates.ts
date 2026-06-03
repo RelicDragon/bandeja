@@ -52,6 +52,12 @@ export function updateChatDraftInList(
         : chat.lastMessageDate;
       return { ...chat, draft: draft ?? null, lastMessageDate };
     }
+    if (chat.type === 'game' && chatContextType === 'GAME' && chat.data.id === contextId) {
+      const lastMessageDate = (chat.data.lastMessage || draft)
+        ? calculateLastMessageDate(chat.data.lastMessage, draft, chat.data.updatedAt)
+        : null;
+      return { ...chat, draft, lastMessageDate };
+    }
     return chat;
   });
   if (chatsFilter === 'users') return sortChatItems(updatedChats, 'users', userId);
@@ -126,7 +132,8 @@ export function updateChatMessageInList(
         lastMessage,
         updatedAt: updatedAtIso,
       };
-      const lastMessageDate = calculateLastMessageDate(lastMessage, null, updatedAtIso);
+      const d = chat.draft ?? null;
+      const lastMessageDate = calculateLastMessageDate(lastMessage, d, updatedAtIso);
       return {
         ...chat,
         data: updatedGame,

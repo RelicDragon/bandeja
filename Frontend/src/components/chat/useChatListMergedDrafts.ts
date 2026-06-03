@@ -42,12 +42,12 @@ export function useChatListMergedDrafts(userId: string | undefined) {
 
   const applyDraftToCache = useCallback(
     (draft: ChatDraft | null, chatContextType: string, contextId: string, chatType?: string) => {
-      if (draftsCacheRef.current === null) return;
       const sameSlot = (d: ChatDraft) =>
         d.chatContextType === chatContextType &&
         d.contextId === contextId &&
         (draft == null || d.chatType === (chatType ?? draft.chatType));
       if (draft === null) {
+        if (draftsCacheRef.current === null) return;
         draftsCacheRef.current = draftsCacheRef.current.filter(
           (d) =>
             !(
@@ -57,8 +57,12 @@ export function useChatListMergedDrafts(userId: string | undefined) {
             )
         );
       } else {
-        draftsCacheRef.current = draftsCacheRef.current.filter((d) => !sameSlot(d));
-        draftsCacheRef.current = [...draftsCacheRef.current, draft];
+        if (draftsCacheRef.current === null) {
+          draftsCacheRef.current = [draft];
+        } else {
+          draftsCacheRef.current = draftsCacheRef.current.filter((d) => !sameSlot(d));
+          draftsCacheRef.current = [...draftsCacheRef.current, draft];
+        }
       }
       if (chatListModuleCache.userId === useAuthStore.getState().user?.id) {
         chatListModuleCache.drafts = draftsCacheRef.current;

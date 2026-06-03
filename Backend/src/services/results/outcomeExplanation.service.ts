@@ -1,4 +1,5 @@
 import prisma from '../../config/database';
+import { resolveRatingEngine } from './ratingEngine';
 import { calculateRatingUpdate, calculateReliabilityChange } from './rating.service';
 import {
   LevelChangeEventType,
@@ -251,6 +252,8 @@ export function buildOutcomeRatingExplanation(
   }
 
   const ballsInGames = game.ballsInGames || false;
+  const ratingEngine = resolveRatingEngine(game.sport);
+  const ratingBallsInGames = ballsInGames && ratingEngine.ballsInGamesMargin;
   const trackReliabilitySets = trackReliabilitySetsForGame(game.winnerOfGame);
 
   const baseLevels = new Map<string, number>();
@@ -444,7 +447,8 @@ export function buildOutcomeRatingExplanation(
               opponentsLevel: opponentsAvg,
               setScores,
             },
-            ballsInGames,
+            ratingBallsInGames,
+            ratingEngine,
           );
 
           if (p.userId === userId && userMatchSnapshot) {
@@ -566,7 +570,7 @@ export function buildOutcomeRatingExplanation(
 
     const finalLevel = Math.max(1.0, Math.min(7.0, startingLevel + aggregatedLevelChange));
     levelChange = finalLevel - startingLevel;
-    reliabilityChange = calculateReliabilityChange(userState?.allSets ?? [], ballsInGames);
+    reliabilityChange = calculateReliabilityChange(userState?.allSets ?? [], ratingBallsInGames);
     summaryWins = userState?.wins ?? 0;
     summaryLosses = userState?.losses ?? 0;
     summaryDraws = userState?.ties ?? 0;

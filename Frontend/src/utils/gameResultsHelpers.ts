@@ -74,3 +74,8 @@ export const canEnterResults = (match: { teamA: string[]; teamB: string[] }): bo
   return match.teamA.length > 0 && match.teamB.length > 0;
 };
 
+/** Playing roster is exactly 2 or 4 — single-round preset results init. */
+export function isPresetResultsRoster(playingParticipantCount: number): boolean {
+  return playingParticipantCount === 2 || playingParticipantCount === 4;
+}
+

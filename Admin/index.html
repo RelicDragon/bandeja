@@ -196,7 +196,7 @@
                                 <th>Name</th>
                                 <th>Phone</th>
                                 <th>City</th>
-                                <th>Level</th>
+                                <th>Sport level</th>
                                 <th>Auth</th>
                             </tr>
                         </thead>
@@ -393,6 +393,7 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Sport</th>
                                 <th>Order</th>
                                 <th>Items</th>
                                 <th>Status</th>
@@ -644,8 +645,8 @@
             </div>
             <form id="userForm" onsubmit="handleUserSubmit(event)">
                 <div class="form-group">
-                    <label for="userPhone">Phone Number *</label>
-                    <input type="tel" id="userPhone" placeholder="+1234567890" required>
+                    <label for="userPhone">Phone Number</label>
+                    <input type="tel" id="userPhone" placeholder="+1234567890">
                 </div>
                 <div class="form-group" id="userPasswordGroup">
                     <label for="userPassword">Password (optional, for phone auth)</label>
@@ -675,9 +676,26 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-group" id="userSportSettingsGroup">
+                    <label>Sports enabled</label>
+                    <div id="userSportsEnabledEditor" class="user-sports-enabled-editor"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userPrimarySport">Primary sport</label>
+                        <select id="userPrimarySport"></select>
+                    </div>
+                </div>
                 <div class="form-group" id="userSportProfilesGroup">
                     <label>Sport levels</label>
                     <div id="userSportProfilesEditor"></div>
+                    <div class="form-row" style="margin-top:0.5rem;align-items:flex-end">
+                        <div class="form-group" style="flex:1;margin-bottom:0">
+                            <label for="userAddSportSelect">Add sport</label>
+                            <select id="userAddSportSelect"></select>
+                        </div>
+                        <button type="button" class="btn-secondary" onclick="adminAddSportProfileRow()">Add</button>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -875,6 +893,44 @@
                     </div>
                 </div>
 
+                <div class="game-format-section">
+                    <h3>Format</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Sport</label>
+                            <div class="form-readonly" id="gameSport"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Tier</label>
+                            <div class="form-readonly" id="gamePresetTier"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Scoring preset</label>
+                            <div class="form-readonly" id="gameScoringPreset"></div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Scoring mode</label>
+                            <div class="form-readonly" id="gameScoringMode"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Players / match</label>
+                            <div class="form-readonly" id="gamePlayersPerMatch"></div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Match generation</label>
+                            <div class="form-readonly" id="gameMatchGenerationType"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Format summary</label>
+                            <div class="form-readonly" id="gameFormatSummary"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="game-settings-section">
                     <h3>Game Settings</h3>
                     <div class="form-row">
@@ -946,6 +1002,12 @@
                 <div class="form-group">
                     <label for="marketCategoryName">Name *</label>
                     <input type="text" id="marketCategoryName" required>
+                </div>
+                <div class="form-group">
+                    <label for="marketCategorySport">Sport</label>
+                    <select id="marketCategorySport">
+                        <option value="">All sports</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="marketCategoryOrder">Order</label>
@@ -1038,6 +1100,7 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <script src="data-table.js"></script>
+    <script src="sportLabels.js"></script>
     <script src="app.js"></script>
     <script src="modals.js"></script>
     <script src="market-categories.js"></script>

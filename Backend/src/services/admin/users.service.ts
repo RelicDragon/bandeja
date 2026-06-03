@@ -8,10 +8,13 @@ import { PROFILE_SELECT_FIELDS, USER_SELECT_FIELDS } from '../../utils/constants
 import { resolveDisplayNameData } from '../user/userDisplayName.service';
 import { revokeAllRefreshSessionsForUser } from '../auth/userRefreshSession.service';
 import {
+  addUserSport,
   clampSportLevel,
   loadProfileUser,
   parseSportParam,
-  upsertPadelSportProfileFromUser,
+  reconcilePrimarySport,
+  removeUserSport,
+  setUserPrimarySport,
 } from '../user/userSportProfile.service';
 
 const USERS_PAGE_SIZE = 50;
@@ -48,12 +51,24 @@ async function applySportProfileLevelUpdates(
 }
 
 export class AdminUsersService {
-  static async getAllUsers(params: { cityId?: string; search?: string; page?: number }) {
-    const { cityId, search, page = 1 } = params;
+  static async getAllUsers(params: {
+    cityId?: string;
+    search?: string;
+    page?: number;
+    primarySport?: string;
+    hasSport?: string;
+  }) {
+    const { cityId, search, page = 1, primarySport, hasSport } = params;
     const skip = (page - 1) * USERS_PAGE_SIZE;
 
     const where: Prisma.UserWhereInput = {};
     if (cityId) where.currentCityId = cityId;
+    if (primarySport) {
+      where.primarySport = parseSportParam(primarySport);
+    }
+    if (hasSport) {
+      where.sportsEnabled = { has: parseSportParam(hasSport) };
+    }
     if (search && search.trim()) {
       where.OR = [
         { firstName: { contains: search.trim(), mode: 'insensitive' } },
@@ -117,6 +132,9 @@ export class AdminUsersService {
     lastName?: string;
     gender: Gender;
     level?: number;
+    primarySport?: string;
+    sportsEnabled?: string[];
+    sportProfileLevels?: SportProfileLevelInput[];
     currentCityId?: string;
     isActive?: boolean;
     isAdmin?: boolean;
@@ -133,6 +151,9 @@ export class AdminUsersService {
       lastName,
       gender,
       level,
+      primarySport: primarySportRaw,
+      sportsEnabled: sportsEnabledRaw,
+      sportProfileLevels,
       currentCityId,
       isActive,
       isAdmin,
@@ -207,9 +228,32 @@ export class AdminUsersService {
       select: PROFILE_SELECT_FIELDS,
     });
 
-    await upsertPadelSportProfileFromUser(user.id, {
-      level: level !== undefined ? clampSportLevel(level) : 3.5,
+    const enabledSports = sportsEnabledRaw?.length
+      ? sportsEnabledRaw.map((s) => parseSportParam(s))
+      : [parseSportParam(primarySportRaw ?? Sport.PADEL)];
+    const primarySport = reconcilePrimarySport(
+      parseSportParam(primarySportRaw ?? enabledSports[0]!),
+      enabledSports,
+    );
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        primarySport,
+        sportsEnabled: enabledSports,
+        primarySportIsSet: true,
+      },
     });
+
+    const levelBySport = new Map(
+      (sportProfileLevels ?? []).map((e) => [parseSportParam(e.sport), clampSportLevel(e.level)]),
+    );
+    for (const sport of enabledSports) {
+      const sportLevel =
+        levelBySport.get(sport) ??
+        (sport === Sport.PADEL && level !== undefined ? clampSportLevel(level) : 1.0);
+      await applySportProfileLevelUpdates(user.id, [{ sport, level: sportLevel }]);
+    }
 
     return loadProfileUser(user.id);
   }
@@ -221,6 +265,10 @@ export class AdminUsersService {
     lastName?: string;
     gender?: Gender;
     level?: number;
+    primarySport?: string;
+    sportsEnabled?: string[];
+    addSport?: string;
+    removeSport?: string;
     sportProfileLevels?: SportProfileLevelInput[];
     currentCityId?: string;
     isActive?: boolean;
@@ -237,6 +285,10 @@ export class AdminUsersService {
       lastName,
       gender,
       level,
+      primarySport: primarySportRaw,
+      sportsEnabled: sportsEnabledRaw,
+      addSport,
+      removeSport,
       sportProfileLevels,
       currentCityId,
       isActive,
@@ -249,6 +301,14 @@ export class AdminUsersService {
 
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
+      select: {
+        firstName: true,
+        lastName: true,
+        phone: true,
+        email: true,
+        sportsEnabled: true,
+        primarySport: true,
+      },
     });
 
     if (!existingUser) {
@@ -292,8 +352,8 @@ export class AdminUsersService {
     await prisma.user.update({
       where: { id: userId },
       data: {
-        ...(phone !== undefined && { phone }),
-        ...(email !== undefined && { email }),
+        ...(phone !== undefined && { phone: phone || null }),
+        ...(email !== undefined && { email: email || null }),
         ...(nameResolvedForUpdate && {
           firstName: nameResolvedForUpdate.firstName ?? null,
           lastName: nameResolvedForUpdate.lastName ?? null,
@@ -311,6 +371,44 @@ export class AdminUsersService {
         }),
       },
     });
+
+    if (removeSport) {
+      await removeUserSport(userId, parseSportParam(removeSport));
+    }
+    if (addSport) {
+      await addUserSport(userId, parseSportParam(addSport));
+    }
+
+    if (sportsEnabledRaw !== undefined) {
+      const newEnabled = sportsEnabledRaw.map((s) => parseSportParam(s));
+      if (newEnabled.length === 0) {
+        throw new ApiError(400, 'At least one sport must be enabled');
+      }
+      const currentEnabled = existingUser?.sportsEnabled ?? [Sport.PADEL];
+      for (const sport of currentEnabled) {
+        if (!newEnabled.includes(sport)) {
+          await removeUserSport(userId, sport);
+        }
+      }
+      for (const sport of newEnabled) {
+        if (!currentEnabled.includes(sport)) {
+          await addUserSport(userId, sport);
+        }
+      }
+      const primarySport = reconcilePrimarySport(
+        primarySportRaw !== undefined ? parseSportParam(primarySportRaw) : existingUser?.primarySport,
+        newEnabled,
+      );
+      if (!newEnabled.includes(primarySport)) {
+        throw new ApiError(400, 'Primary sport must be in sports enabled');
+      }
+      await prisma.user.update({
+        where: { id: userId },
+        data: { sportsEnabled: newEnabled, primarySport },
+      });
+    } else if (primarySportRaw !== undefined) {
+      await setUserPrimarySport(userId, parseSportParam(primarySportRaw));
+    }
 
     const levelUpdates =
       sportProfileLevels ??

@@ -17,6 +17,7 @@ import {
   getScoreEntryExampleList,
   isClassicTimedRelaxedGameScores,
 } from '@/utils/scoring';
+import { capPlayerIds, maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { isSupplementalMatchSet, EXTRA_BALLS_SCORE_MAX, type MatchSetRole } from '@/utils/matchSetRole';
 
 interface HorizontalScoreEntryModalProps {
@@ -38,6 +39,8 @@ interface HorizontalScoreEntryModalProps {
     | 'hasGoldenPoint'
     | 'pointsPerTie'
     | 'matchTimedCapMinutes'
+    | 'playersPerMatch'
+    | 'sport'
   > | null;
   onSave: (
     matchId: string,
@@ -173,8 +176,13 @@ export const HorizontalScoreEntryModal = ({
     prevIsTieBreakRef.current = isTieBreak;
   }, [isTieBreak, teamAScore, teamBScore]);
 
-  const teamAPlayers = match.teamA.map(id => players.find(p => p.id === id)).filter(Boolean) as BasicUser[];
-  const teamBPlayers = match.teamB.map(id => players.find(p => p.id === id)).filter(Boolean) as BasicUser[];
+  const maxPlayersPerTeam = maxPlayersPerTeamForGame(game ?? null, players.length);
+  const teamAPlayers = capPlayerIds(match.teamA, maxPlayersPerTeam)
+    .map((id) => players.find((p) => p.id === id))
+    .filter(Boolean) as BasicUser[];
+  const teamBPlayers = capPlayerIds(match.teamB, maxPlayersPerTeam)
+    .map((id) => players.find((p) => p.id === id))
+    .filter(Boolean) as BasicUser[];
 
   const validation = isSupplementalRow
     ? { ok: true, reason: undefined, detail: undefined }

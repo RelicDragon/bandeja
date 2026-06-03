@@ -8,26 +8,27 @@ import type {
   LiveTeamSide,
   ServeGuideSnapshot,
 } from '@/utils/liveScoring';
-import {
-  activeSetScore,
-  liveSetLabelForRow,
-} from '@/utils/liveScoring';
+import { activeSetScore } from '@/utils/liveScoring';
 import type { ScoringRules } from '@/utils/scoring';
 import { LiveServeCoachStrip } from './LiveServeCoachStrip';
-import type { ServeCourtSchemaProps } from './ServeCourtSchema';
+import type { ServeCourtProps } from './ServeCourtProps';
 import type { RallyCourtProps } from './rally/RallyCourtProps';
 import { PickleballCoachButtons } from './rally/PickleballCoachButtons';
+import { PickleballStrictFaultButtons } from './rally/PickleballStrictFaultButtons';
+import { RallyOfficiatingButtons } from './rally/RallyOfficiatingButtons';
 import { RallyScoreBoard } from './rally/RallyScoreBoard';
+import type { OfficiatingLevel } from '@shared/officiatingLevel';
+import { officiatingIsStrict } from '@shared/officiatingLevel';
 import { rallyScoreMetaForState } from '@/liveScoring/rallyScoreMeta';
+import { LiveCourtViewport } from './LiveCourtViewport';
 
 type LiveScoreCenterProps = {
   state: LiveScoringState;
   teamAPlayers: BasicUser[];
   teamBPlayers: BasicUser[];
-  CourtSchemaComponent: ComponentType<ServeCourtSchemaProps>;
+  CourtSchemaComponent?: ComponentType<ServeCourtProps> | null;
   matchDoubles?: boolean;
   serveGuideSnapshot?: ServeGuideSnapshot | null;
-  pointCenter: string;
   rules: ScoringRules;
   saving?: boolean;
   error?: string | null;
@@ -37,6 +38,7 @@ type LiveScoreCenterProps = {
   /** When true, the serve setup / coach strip is hidden (e.g. match decided). */
   hideServeGuide?: boolean;
   RallyCourtComponent?: ComponentType<RallyCourtProps> | null;
+  courtAspect?: readonly [number, number] | null;
   onServeSetupComplete: (
     side: LiveTeamSide,
     doublesPlayerIndex: number,
@@ -44,8 +46,14 @@ type LiveScoreCenterProps = {
     courtOrientation: LiveMatchCourtOrientation
   ) => void;
   onSkipServeGuide: () => void;
-  showPointHeadline?: boolean;
   sport?: Sport | string | null;
+  officiatingLevel?: OfficiatingLevel;
+  officiatingHintsEnabled?: boolean;
+  letPending?: boolean;
+  onKitchenFault?: (faultingTeam: LiveTeamSide) => void;
+  onLet?: () => void;
+  onLetReplay?: () => void;
+  onServiceFault?: () => void;
 };
 
 export const LiveScoreCenter = ({
@@ -55,34 +63,62 @@ export const LiveScoreCenter = ({
   CourtSchemaComponent,
   matchDoubles = false,
   serveGuideSnapshot,
-  pointCenter,
   rules,
   error,
   statusNote,
   isOnline = true,
   hideServeGuide,
   RallyCourtComponent,
-  showPointHeadline = true,
+  courtAspect = null,
   sport,
+  officiatingLevel = 'none',
+  officiatingHintsEnabled = false,
+  letPending,
+  onKitchenFault,
+  onLet,
+  onLetReplay,
+  onServiceFault,
 }: LiveScoreCenterProps) => {
   const { t } = useTranslation();
   const snapshot = serveGuideSnapshot ?? null;
   const setScore = activeSetScore(state);
   const rallyMeta = useMemo(() => rallyScoreMetaForState(state, rules), [state, rules]);
 
-  const setHeader = useMemo(() => {
-    const label = liveSetLabelForRow(activeSetScore(state), state.activeSetIndex, rules);
-    if (label.kind === 'SUPER_TIE_BREAK') return t('gameDetails.liveScoring.superTieBreakShort');
-    if (label.kind === 'TIE_BREAK') {
-      return `${t('gameDetails.liveScoring.setN', { n: label.setOneBased })} · ${t('gameDetails.liveScoring.tieBreakShort')}`;
-    }
-    return t('gameDetails.liveScoring.setN', { n: label.setOneBased });
-  }, [state, rules, t]);
+  const changeEndsLabel = t('gameDetails.liveScoring.changeEnds');
+  const showServeCoachStrip = !hideServeGuide && snapshot && !RallyCourtComponent && CourtSchemaComponent;
 
-  const showSetPointBlock = showPointHeadline;
+  const courtViewport = courtAspect ? (
+    <LiveCourtViewport
+      aspect={courtAspect}
+      className="min-h-[11rem] flex-1"
+      changeEndsBeforeNextPoint={snapshot?.changeEndsBeforeNextPoint}
+      changeEndsLabel={changeEndsLabel}
+    >
+      <RallyScoreBoard
+        CourtComponent={RallyCourtComponent!}
+        teamAPlayers={teamAPlayers}
+        teamBPlayers={teamBPlayers}
+        teamAScore={setScore.teamA}
+        teamBScore={setScore.teamB}
+        matchDoubles={matchDoubles}
+        serverTeam={snapshot?.serverTeam}
+        serverPlayerIndex={snapshot?.serverPlayerIndex}
+        courtSide={snapshot?.courtSide}
+        courtEndsSwapped={snapshot?.courtEndsSwapped}
+        courtTeamASidesMirrored={snapshot?.courtTeamASidesMirrored}
+        courtTeamBSidesMirrored={snapshot?.courtTeamBSidesMirrored}
+        motionToken={snapshot?.motionToken}
+        setChips={rallyMeta.setChips}
+        setsWon={rallyMeta.setsWon}
+        gameCap={rallyMeta.gameCap}
+        gameLabel={rallyMeta.gameLabel}
+        courtOnly
+      />
+    </LiveCourtViewport>
+  ) : null;
 
   return (
-    <section className="w-fit max-w-full min-w-0">
+    <section className="flex min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden self-stretch">
       {!isOnline ? (
         <div className="flex w-full min-w-0 text-xs">
           <div className="min-w-0">
@@ -92,20 +128,8 @@ export const LiveScoreCenter = ({
           </div>
         </div>
       ) : null}
-      {showSetPointBlock ? (
-        <div className="mt-5 text-center">
-          {!hideServeGuide ? (
-            <div className="text-sm uppercase tracking-wide opacity-60">{setHeader}</div>
-          ) : null}
-          {showPointHeadline ? (
-            <div className={`text-3xl font-black ${!hideServeGuide ? 'mt-1' : ''}`}>
-              {state.mode === 'classic' ? pointCenter || t('gameDetails.liveScoring.game') : t('gameDetails.liveScoring.points')}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
 
-      {!hideServeGuide && snapshot ? (
+      {showServeCoachStrip ? (
         <div className="mt-2 space-y-3">
           <LiveServeCoachStrip
             snapshot={snapshot}
@@ -117,20 +141,24 @@ export const LiveScoreCenter = ({
         </div>
       ) : null}
 
-      {RallyCourtComponent ? (
-        <div className="mt-4 flex w-full flex-col items-center gap-2">
-          <RallyScoreBoard
-            CourtComponent={RallyCourtComponent}
-            teamAPlayers={teamAPlayers}
-            teamBPlayers={teamBPlayers}
-            teamAScore={setScore.teamA}
-            teamBScore={setScore.teamB}
-            setChips={rallyMeta.setChips}
-            setsWon={rallyMeta.setsWon}
-            gameCap={rallyMeta.gameCap}
-            gameLabel={rallyMeta.gameLabel}
-          />
-          {sport === 'PICKLEBALL' ? <PickleballCoachButtons /> : null}
+      {RallyCourtComponent && courtAspect ? (
+        <div className="mt-1 flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2 overflow-hidden">
+          {courtViewport}
+          <div className="flex shrink-0 flex-col items-center gap-2">
+            {sport === 'PICKLEBALL' && officiatingHintsEnabled ? <PickleballCoachButtons /> : null}
+            {sport === 'PICKLEBALL' && officiatingIsStrict(officiatingLevel) && onKitchenFault ? (
+              <PickleballStrictFaultButtons onKitchenFault={onKitchenFault} />
+            ) : null}
+            {sport === 'BADMINTON' && (officiatingHintsEnabled || officiatingIsStrict(officiatingLevel)) ? (
+              <RallyOfficiatingButtons
+                level={officiatingLevel}
+                letPending={letPending}
+                onLet={onLet}
+                onLetReplay={onLetReplay}
+                onServiceFault={onServiceFault}
+              />
+            ) : null}
+          </div>
         </div>
       ) : null}
 

@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { getRulesFromPreset } from '@/utils/scoring';
 import { scoreLivePoint } from '@/utils/liveScoring';
-import { isDoublesMatch } from '@/utils/matchFormat';
 import { computeServeGuideSnapshot, createInitialLiveScoringState } from '@/utils/liveScoring';
 import {
   computeServeGuideSnapshotByPlugin,
   isRallyLiveScoringPlugin,
+  liveScoringServeGuideEnabled,
   resolveLiveScoringPlugin,
+  usesOpenEndedPointsUi,
 } from './registry';
+import { getRules } from '@/utils/scoring';
 
 const classicRules = {
   ...getRulesFromPreset('CLASSIC_BEST_OF_3'),
@@ -24,6 +26,15 @@ describe('live scoring registry', () => {
     expect(plugin.engineId).toBe('tennis-phase2');
     expect(plugin.uiId).toBe('tennis-court');
     expect(plugin.serveGuideEnabled).toBe(true);
+  });
+
+  it('routes tennis CLASSIC_FAST4 to tennis phase2 plugin', () => {
+    const plugin = resolveLiveScoringPlugin('TENNIS', 'CLASSIC_FAST4');
+    expect(plugin.engineId).toBe('tennis-phase2');
+    expect(plugin.uiId).toBe('tennis-court');
+    const rules = getRulesFromPreset('CLASSIC_FAST4');
+    expect(rules.gamesPerSet).toBe(4);
+    expect(rules.tieBreakGameFirstTo).toBe(5);
   });
 
   it('keeps padel on default plugin', () => {
@@ -43,17 +54,36 @@ describe('live scoring registry', () => {
     expect(plugin.engineId).toBe('rally-points');
     expect(plugin.uiId).toBe('pickleball-board');
     expect(plugin.serveGuideEnabled).toBe(true);
+    expect(plugin.officiatingLevel).toBe('hints');
     expect(isRallyLiveScoringPlugin(plugin)).toBe(true);
+    const rules = {
+      ...getRulesFromPreset('POINTS_11'),
+      preset: 'POINTS_11' as const,
+      hasGoldenPoint: false,
+      allowDrawPerSet: false,
+      maxPointsPerTeam: 0,
+      allowIncompleteRegularSetGames: false,
+    };
+    expect(liveScoringServeGuideEnabled('PICKLEBALL', plugin, rules)).toBe(true);
   });
 
-  it('routes squash with opt-in serve guide', () => {
+  it('turns off serve guide for padel americano points', () => {
+    const plugin = resolveLiveScoringPlugin('PADEL', 'POINTS_24');
+    const rules = {
+      ...getRulesFromPreset('POINTS_24'),
+      preset: 'POINTS_24' as const,
+      hasGoldenPoint: false,
+      allowDrawPerSet: true,
+      maxPointsPerTeam: 0,
+      allowIncompleteRegularSetGames: false,
+    };
+    expect(liveScoringServeGuideEnabled('PADEL', plugin, rules)).toBe(false);
+  });
+
+  it('squash serve guide: winner serves, box alternates with server score', () => {
     const plugin = resolveLiveScoringPlugin('SQUASH', 'BEST_OF_5_11');
     expect(plugin.uiId).toBe('squash-board');
     expect(plugin.serveGuideEnabled).toBe(true);
-  });
-
-  it('squash serve guide uses 2-point rotation and PAR change ends at 11', () => {
-    const plugin = resolveLiveScoringPlugin('SQUASH', 'BEST_OF_5_11');
     const rules = {
       ...getRulesFromPreset('BEST_OF_5_11'),
       preset: 'BEST_OF_5_11' as const,
@@ -71,7 +101,9 @@ describe('live scoring registry', () => {
     const afterTwo = scoreLivePoint(scoreLivePoint(state, 'teamA', rules).state, 'teamA', rules).state;
     const snap2 = computeServeGuideSnapshotByPlugin(plugin, afterTwo, rules, ['A1'], ['B1'], 2);
     expect(snap0?.serverTeam).toBe('teamA');
-    expect(snap2?.serverTeam).toBe('teamB');
+    expect(snap0?.courtSide).toBe('rightDeuce');
+    expect(snap2?.serverTeam).toBe('teamA');
+    expect(snap2?.courtSide).toBe('rightDeuce');
     expect(snap2?.motionToken.startsWith('sq-')).toBe(true);
     const atElevenNine = {
       ...state,
@@ -160,7 +192,7 @@ describe('live scoring registry', () => {
     expect(state.activeSetIndex).toBe(1);
   });
 
-  it('pickleball serve guide uses service court, doubles slot, and side switch at 6', () => {
+  it('pickleball serve guide uses service court, rally server, and side switch at 6 in decider', () => {
     const plugin = resolveLiveScoringPlugin('PICKLEBALL', 'POINTS_11');
     const pointsRules = {
       ...getRulesFromPreset('POINTS_11'),
@@ -179,18 +211,36 @@ describe('live scoring registry', () => {
     const snap = computeServeGuideSnapshotByPlugin(plugin, state, pointsRules, ['A1', 'A2'], ['B1', 'B2'], 4);
     expect(snap?.serverTeam).toBe('teamA');
     expect(snap?.courtSide).toBe('rightDeuce');
-    expect(snap?.tieBreakServeSlot).toBe('serveOne');
+    expect(snap?.tieBreakServeSlot).toBeNull();
     expect(snap?.motionToken.startsWith('pb-')).toBe(true);
-    const afterOne = scoreLivePoint(state, 'teamB', pointsRules).state;
-    const snapOdd = computeServeGuideSnapshotByPlugin(plugin, afterOne, pointsRules, ['A1', 'A2'], ['B1', 'B2'], 4);
+    const afterSideOut = scoreLivePoint(state, 'teamB', pointsRules).state;
+    const snapOdd = computeServeGuideSnapshotByPlugin(plugin, afterSideOut, pointsRules, ['A1', 'A2'], ['B1', 'B2'], 4);
     expect(snapOdd?.serverTeam).toBe('teamB');
     expect(snapOdd?.courtSide).toBe('leftAd');
+    const afterHold = scoreLivePoint(scoreLivePoint(state, 'teamA', pointsRules).state, 'teamA', pointsRules).state;
+    const snapHold = computeServeGuideSnapshotByPlugin(plugin, afterHold, pointsRules, ['A1', 'A2'], ['B1', 'B2'], 4);
+    expect(snapHold?.serverTeam).toBe('teamA');
     const atSixFour = {
       ...state,
       sets: [{ teamA: 6, teamB: 4, isTieBreak: false }],
     };
     const endsSnap = computeServeGuideSnapshotByPlugin(plugin, atSixFour, pointsRules, ['A1', 'A2'], ['B1', 'B2'], 4);
     expect(endsSnap?.changeEndsBeforeNextPoint).toBe(true);
+    const bo3Rules = {
+      ...getRulesFromPreset('BEST_OF_3_11'),
+      preset: 'BEST_OF_3_11' as const,
+      hasGoldenPoint: false,
+      allowDrawPerSet: false,
+      maxPointsPerTeam: 0,
+      allowIncompleteRegularSetGames: false,
+    };
+    const game1SixFour = {
+      ...createInitialLiveScoringState(bo3Rules),
+      firstServerTeam: 'teamA' as const,
+      sets: [{ teamA: 6, teamB: 4, isTieBreak: false }],
+    };
+    const noMidGame1 = computeServeGuideSnapshotByPlugin(plugin, game1SixFour, bo3Rules, ['A1'], ['B1'], 2);
+    expect(noMidGame1?.changeEndsBeforeNextPoint).toBe(false);
   });
 
   it('uses playersPerMatch=4 for doubles serve guide when roster has one name per team', () => {
@@ -209,12 +259,31 @@ describe('live scoring registry', () => {
       firstServerDoublesPlayerIndex: 0,
       pointsServeRotation: 'simple' as const,
     };
-    expect(isDoublesMatch(4)).toBe(true);
     const snap = computeServeGuideSnapshot(state, pointsRules, ['A1'], ['B1'], true);
     expect(snap?.serverTeam).toBe('teamA');
     expect(snap?.serverPlayerIndex).toBe(0);
     const viaPlugin = computeServeGuideSnapshotByPlugin(plugin, state, pointsRules, ['A1'], ['B1'], 4);
     expect(viaPlugin?.serverPlayerIndex).toBe(0);
+  });
+
+  it('routes open-ended TIMED/CUSTOM for all rally sports to americano UI', () => {
+    for (const sport of ['PICKLEBALL', 'BADMINTON', 'TABLE_TENNIS', 'SQUASH'] as const) {
+      const timed = resolveLiveScoringPlugin(sport, 'TIMED');
+      expect(timed.uiId).toBe('americano-points');
+      expect(isRallyLiveScoringPlugin(timed)).toBe(false);
+      const custom = resolveLiveScoringPlugin(sport, 'CUSTOM');
+      expect(custom.uiId).toBe('americano-points');
+      expect(custom.serveGuideEnabled).toBe(false);
+    }
+    expect(usesOpenEndedPointsUi('TIMED')).toBe(true);
+    const customRules = getRules({ sport: 'PICKLEBALL', scoringPreset: 'CUSTOM' } as never);
+    expect(usesOpenEndedPointsUi('CUSTOM', customRules)).toBe(true);
+  });
+
+  it('keeps padel/tennis TIMED on court plugins', () => {
+    expect(resolveLiveScoringPlugin('PADEL', 'TIMED').uiId).toBe('padel-court');
+    expect(resolveLiveScoringPlugin('TENNIS', 'TIMED').uiId).toBe('tennis-court');
+    expect(resolveLiveScoringPlugin('PADEL', 'CLASSIC_TIMED').uiId).toBe('padel-court');
   });
 
   it('keeps tennis tie-break serve slot in phase2', () => {

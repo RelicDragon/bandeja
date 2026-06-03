@@ -13,6 +13,7 @@ import {
   type LiveTeamSide,
 } from '@/utils/liveScoring';
 import type { ScoringRules } from '@/utils/scoring';
+import type { Sport } from '@/types';
 import { AnimatedLiveBoardValue } from './AnimatedLiveBoardValue';
 import { LiveServeBallIndicator } from './LiveServeBallIndicator';
 import type { LiveServeIndicator } from './LiveTeamPanel';
@@ -36,11 +37,13 @@ const BroadcastTeamRoster = memo(function BroadcastTeamRoster({
   players,
   serveIndicator,
   nameClass,
+  sport,
 }: {
   side: LiveTeamSide;
   players: BasicUser[];
   serveIndicator?: LiveServeIndicator | null;
   nameClass: string;
+  sport?: Sport | string | null;
 }) {
   const roster = players.length ? players : [null as BasicUser | null];
   const rowIsServing = (rowIndex: number) => {
@@ -65,13 +68,13 @@ const BroadcastTeamRoster = memo(function BroadcastTeamRoster({
           <span className={servingPlayerNameClassName(rowIsServing(i), 'broadcast')}>
             {p ? lineName(p) : '—'}
           </span>
-          {rowIsServing(i) ? <LiveServeBallIndicator inline /> : null}
+          {rowIsServing(i) ? <LiveServeBallIndicator inline sport={sport} /> : null}
         </span>
       ))}
     </div>
   );
 }, (prev, next) => {
-  if (prev.side !== next.side || prev.nameClass !== next.nameClass) return false;
+  if (prev.side !== next.side || prev.nameClass !== next.nameClass || prev.sport !== next.sport) return false;
   if (!samePlayerLineup(prev.players, next.players)) return false;
   const ps = prev.serveIndicator;
   const ns = next.serveIndicator;
@@ -88,8 +91,13 @@ type LiveBroadcastBoardProps = {
   revision: number;
   boardTheme?: LiveBoardTheme;
   serveIndicator?: LiveServeIndicator | null;
+  sport?: Sport | string | null;
   interactive?: boolean;
   disabled?: boolean;
+  /** Serve guide strip sits flush below — square off bottom corners and border. */
+  attachedFooter?: boolean;
+  /** Outer border/rounding handled by parent shell (serve footer attached). */
+  embedded?: boolean;
   onScore?: (side: LiveTeamSide) => void;
   onUndo?: (side: LiveTeamSide) => void;
 };
@@ -115,8 +123,11 @@ export function LiveBroadcastBoard({
   revision,
   boardTheme = 'dark',
   serveIndicator,
+  sport,
   interactive,
   disabled,
+  attachedFooter,
+  embedded,
   onScore,
   onUndo,
 }: LiveBroadcastBoardProps) {
@@ -165,13 +176,16 @@ export function LiveBroadcastBoard({
 
   const isLight = boardTheme === 'light';
   const embedSolid = Boolean(interactive);
+  const panelShape = embedded ? '' : attachedFooter ? 'rounded-t-xl rounded-b-none border-b-0' : 'rounded-xl';
+  const panelBorder = embedded ? '' : 'border';
+  const panelPad = attachedFooter ? 'px-3 pt-2.5 pb-0 sm:px-4 sm:pt-3 sm:pb-0' : 'px-3 py-2.5 sm:px-4 sm:py-3';
   const panel = isLight
     ? embedSolid
-      ? 'rounded-xl border border-zinc-200 bg-white px-3 py-2.5 shadow-sm sm:px-4 sm:py-3'
-      : 'rounded-xl border border-zinc-200/75 bg-gradient-to-br from-white/52 via-primary-50/10 to-white/44 px-3 py-2.5 shadow-sm backdrop-blur-xl backdrop-saturate-150 sm:px-4 sm:py-3'
+      ? `${panelShape} ${panelBorder} border-zinc-200 bg-white ${panelPad} ${embedded ? '' : 'shadow-sm'}`
+      : `${panelShape} ${panelBorder} border-zinc-200/75 bg-gradient-to-br from-white/52 via-primary-50/10 to-white/44 ${panelPad} ${embedded ? '' : 'shadow-sm backdrop-blur-xl backdrop-saturate-150'}`
     : embedSolid
-      ? 'rounded-xl border border-zinc-700/90 bg-zinc-900 px-3 py-2.5 shadow-md sm:px-4 sm:py-3'
-      : 'rounded-xl border border-white/10 bg-gradient-to-br from-zinc-950/44 via-primary-950/8 to-zinc-900/44 px-3 py-2.5 shadow-[0_4px_24px_rgba(0,0,0,0.28)] backdrop-blur-xl backdrop-saturate-150 sm:px-4 sm:py-3';
+      ? `${panelShape} ${panelBorder} border-zinc-700/90 bg-zinc-900 ${panelPad} ${embedded ? '' : 'shadow-md'}`
+      : `${panelShape} ${panelBorder} border-white/10 bg-gradient-to-br from-zinc-950/44 via-primary-950/8 to-zinc-900/44 ${panelPad} ${embedded ? '' : 'shadow-[0_4px_24px_rgba(0,0,0,0.28)] backdrop-blur-xl backdrop-saturate-150'}`;
   const rowDivider = isLight ? 'border-b border-zinc-200/70' : 'border-b border-white/10';
   const nameClass = isLight ? 'text-zinc-800' : 'text-zinc-100';
   const cellBase = isLight
@@ -203,6 +217,7 @@ export function LiveBroadcastBoard({
       players={side === 'teamA' ? teamAPlayers : teamBPlayers}
       serveIndicator={serveIndicator}
       nameClass={nameClass}
+      sport={sport}
     />
   );
 
@@ -257,7 +272,7 @@ export function LiveBroadcastBoard({
 
   const row1Bottom = 'pb-1.5';
   const row2Pad = `pb-2.5 ${rowDivider}`;
-  const row3Pad = 'pt-2.5';
+  const row3Pad = attachedFooter ? 'pt-2.5 pb-2.5' : 'pt-2.5';
 
   return (
     <div className={`w-fit max-w-full min-w-0 shrink-0 ${panel}`}>
@@ -276,7 +291,7 @@ export function LiveBroadcastBoard({
         ))}
         {showUndo ? <div className={`min-h-[1.25rem] min-w-0 ${row1Bottom}`} aria-hidden /> : null}
 
-        <div className={`min-w-0 self-center ${row2Pad}`}>
+        <div className={`flex min-w-0 items-center ${row2Pad}`}>
           {interactive && onScore ? (
             <button
               type="button"
@@ -309,7 +324,7 @@ export function LiveBroadcastBoard({
           </div>
         ) : null}
 
-        <div className={`min-w-0 self-center ${row3Pad}`}>
+        <div className={`flex min-w-0 items-center ${row3Pad}`}>
           {interactive && onScore ? (
             <button
               type="button"

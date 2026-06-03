@@ -4,7 +4,7 @@ import { Game, GameParticipant } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { useAuthStore } from '@/store/authStore';
 import { GameSportTagRow } from '@/components/GameSportTag';
-import { resolvePlayersPerMatchForGame } from '@/utils/matchFormat';
+import { playersPerMatchOf } from '@/utils/matchFormat';
 import { getViewerPrimarySport, shouldShowGameCardSportGlyph } from '@/utils/findSportFilter';
 import { parseGameSport } from '@/utils/gameSport';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
@@ -218,7 +218,6 @@ export const GameInfo = ({
       try {
         await Share.share({
           url: shareUrl,
-          text: shareUrl,
         });
         return;
       } catch (error) {
@@ -233,7 +232,6 @@ export const GameInfo = ({
       try {
         await navigator.share({
           url: shareUrl,
-          text: shareUrl,
         });
         return;
       } catch (error) {
@@ -762,7 +760,7 @@ export const GameInfo = ({
           <GameSportTagRow
             sport={gameSport}
             showSport={showSportTag}
-            playersPerMatch={resolvePlayersPerMatchForGame(game)}
+            playersPerMatch={playersPerMatchOf(game)}
             showMatchFormat={game.entityType !== 'TRAINING'}
           />
           {isDifferentCity && game.city?.name && (
@@ -800,7 +798,7 @@ export const GameInfo = ({
         <GameSportTagRow
           sport={gameSport}
           showSport={showSportTag}
-          playersPerMatch={resolvePlayersPerMatchForGame(game)}
+          playersPerMatch={playersPerMatchOf(game)}
           showMatchFormat={game.entityType !== 'TRAINING'}
           className="mb-3"
         />

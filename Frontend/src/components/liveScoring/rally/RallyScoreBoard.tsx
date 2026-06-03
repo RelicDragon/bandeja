@@ -1,6 +1,8 @@
 import type { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ChangeEndsSideTag } from '../ChangeEndsSideMarkers';
 import type { RallyCourtProps } from './RallyCourtProps';
+import { LIVE_COURT_FIT_CLASS } from '../LiveCourtViewport';
 
 export type RallySetChip = {
   teamA: number;
@@ -14,6 +16,9 @@ type RallyScoreBoardProps = RallyCourtProps & {
   setsWon?: { teamA: number; teamB: number };
   gameCap?: number;
   gameLabel?: string;
+  /** Hide set chips / match score — court only (scores shown elsewhere). */
+  courtOnly?: boolean;
+  changeEndsBeforeNextPoint?: boolean;
 };
 
 export function RallyScoreBoard({
@@ -22,14 +27,55 @@ export function RallyScoreBoard({
   teamBPlayers,
   teamAScore,
   teamBScore,
+  matchDoubles,
+  serverTeam,
+  serverPlayerIndex,
+  courtSide,
+  courtEndsSwapped,
+  courtTeamASidesMirrored,
+  courtTeamBSidesMirrored,
+  motionToken,
   setChips,
   setsWon,
   gameCap,
   gameLabel,
+  courtOnly = false,
+  changeEndsBeforeNextPoint = false,
   className,
 }: RallyScoreBoardProps) {
   const { t } = useTranslation();
-  const multiGame = (setChips?.length ?? 0) > 1;
+  const multiGame = !courtOnly && (setChips?.length ?? 0) > 1;
+  const changeEndsLabel = t('gameDetails.liveScoring.changeEnds');
+
+  const court = (
+    <CourtComponent
+      teamAPlayers={teamAPlayers}
+      teamBPlayers={teamBPlayers}
+      teamAScore={teamAScore}
+      teamBScore={teamBScore}
+      matchDoubles={matchDoubles}
+      serverTeam={serverTeam}
+      serverPlayerIndex={serverPlayerIndex}
+      courtSide={courtSide}
+      courtEndsSwapped={courtEndsSwapped}
+      courtTeamASidesMirrored={courtTeamASidesMirrored}
+      courtTeamBSidesMirrored={courtTeamBSidesMirrored}
+      motionToken={motionToken}
+      className={
+        courtOnly
+          ? LIVE_COURT_FIT_CLASS
+          : changeEndsBeforeNextPoint
+            ? 'w-full max-w-[13rem] shrink-0'
+            : 'w-full'
+      }
+    />
+  );
+
+  if (courtOnly) {
+    return (
+      <div className={`size-full min-h-0 min-w-0 overflow-hidden ${className ?? ''}`}>{court}</div>
+    );
+  }
 
   return (
     <div className={`flex w-full max-w-md flex-col items-center gap-4 ${className ?? ''}`}>
@@ -58,13 +104,16 @@ export function RallyScoreBoard({
           ))}
         </div>
       ) : null}
-      <CourtComponent
-        teamAPlayers={teamAPlayers}
-        teamBPlayers={teamBPlayers}
-        teamAScore={teamAScore}
-        teamBScore={teamBScore}
-        className="w-full"
-      />
+      {changeEndsBeforeNextPoint ? (
+        <div className="flex w-full items-stretch justify-center gap-1.5">
+          <ChangeEndsSideTag side="left" label={changeEndsLabel} />
+          {court}
+          <ChangeEndsSideTag side="right" label={changeEndsLabel} />
+        </div>
+      ) : (
+        court
+      )}
+      {!courtOnly ? (
       <div className="flex w-full flex-col items-center gap-1">
         {gameLabel || gameCap ? (
           <p className="m-0 text-xs font-medium uppercase tracking-wide opacity-50">
@@ -81,6 +130,7 @@ export function RallyScoreBoard({
           <div className="text-4xl font-black leading-none">{teamBScore}</div>
         </div>
       </div>
+      ) : null}
     </div>
   );
 }

@@ -148,7 +148,8 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
       game.pointsPerWin || 0,
       game.pointsPerTie || 0,
       game.pointsPerLoose || 0,
-      ballsInGames
+      ballsInGames,
+      game.sport,
     );
   } else if (game.winnerOfGame === WinnerOfGame.BY_POINTS) {
     result = calculateByPointsOutcomes(
@@ -157,7 +158,8 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
       game.pointsPerWin || 0,
       game.pointsPerTie || 0,
       game.pointsPerLoose || 0,
-      ballsInGames
+      ballsInGames,
+      game.sport,
     );
   } else {
     result = calculateByMatchesWonOutcomes(
@@ -166,7 +168,8 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
       game.pointsPerWin || 0,
       game.pointsPerTie || 0,
       game.pointsPerLoose || 0,
-      ballsInGames
+      ballsInGames,
+      game.sport,
     );
   }
 

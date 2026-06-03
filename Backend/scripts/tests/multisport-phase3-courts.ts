@@ -18,6 +18,7 @@ function testCourtApiSourceGuards(): void {
   assert(courtSrc.includes('sport: null'), 'sport filter includes null-sport courts');
   assert(courtSrc.includes('Invalid sport'), 'invalid sport query rejected');
   assert(clubSrc.includes('sport: true'), 'club list includes court sport');
+  assert(clubSrc.includes('sports'), 'club responses include sports field');
 }
 
 function main(): void {

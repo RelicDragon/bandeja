@@ -11,6 +11,7 @@ import { getLevelColor } from '@/utils/levelColor';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { getSportQuestionnaireConfig } from '@/sport/sportQuestionnaireRegistry';
 import { getDisplayLevelForSport } from '@/utils/profileSports';
+import { SportProfileLevelMeta } from '@/components/profile/SportProfileLevelMeta';
 import { SportQuestionnaireQuestion } from './SportQuestionnaireQuestion';
 
 const SLIDE_DURATION_MS = 300;
@@ -196,6 +197,14 @@ export function SportQuestionnaireContent({
                 />
                 <LevelResultBadge level={assignedLevel ?? 1} isDark={isDark} />
               </div>
+              {completedUser && assignedLevel != null && (
+                <SportProfileLevelMeta
+                  user={completedUser}
+                  sport={sport}
+                  level={assignedLevel}
+                  className="mb-4 max-w-xs"
+                />
+              )}
               <Button onClick={handleGoToApp} className="w-full">
                 {t('sportQuestionnaire.common.goToApp')}
               </Button>

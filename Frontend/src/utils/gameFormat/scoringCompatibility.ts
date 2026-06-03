@@ -1,4 +1,9 @@
 import { GameType, MatchGenerationType, ScoringMode, ScoringPreset } from '@/types';
+import type { Sport } from '@shared/sport';
+import { getSportConfig } from '@/sport/sportRegistry';
+import { isMatchGenerationAllowedForSport } from '@/sport/rotationFormats';
+import type { CreateFlowIntent, PresetTier, SportPresetMeta } from '@/sport/createFlow';
+import { inferPresetTier, presetTierMap } from '@/sport/createFlow';
 
 // --- Preset groups ---
 
@@ -9,9 +14,17 @@ const CLASSIC_PRESETS: ScoringPreset[] = [
   'CLASSIC_PRO_SET',
   'CLASSIC_SINGLE_SET',
   'CLASSIC_SHORT_SET',
+  'CLASSIC_FAST4',
 ];
 
-const POINTS_PRESETS: ScoringPreset[] = ['POINTS_16', 'POINTS_21', 'POINTS_24', 'POINTS_32'];
+const POINTS_PRESETS: ScoringPreset[] = [
+  'POINTS_12',
+  'POINTS_15',
+  'POINTS_16',
+  'POINTS_21',
+  'POINTS_24',
+  'POINTS_32',
+];
 
 const ALL_PRESETS: ScoringPreset[] = [
   ...CLASSIC_PRESETS,
@@ -41,6 +54,7 @@ const ROTATION_GENERATIONS: MatchGenerationType[] = [
   'ROUND_ROBIN',
   'WINNERS_COURT',
   'ESCALERA',
+  'KING_OF_COURT',
 ];
 
 const ALL_GENERATIONS: MatchGenerationType[] = [
@@ -68,6 +82,17 @@ export const allowedGenerationsForMaxParticipants = (
   if (maxParticipants === 3) return ['HANDMADE', 'FIXED'];
   if (maxParticipants === 4) return ['AUTOMATIC', 'FIXED', 'HANDMADE'];
   return ['HANDMADE', 'FIXED', ...ROTATION_GENERATIONS];
+};
+
+export const allowedGenerationsForSport = (
+  sport: Sport,
+  maxParticipants: number | undefined,
+  playersPerMatch?: number,
+): MatchGenerationType[] => {
+  const rot = getSportConfig(sport).rotationFormats;
+  return allowedGenerationsForMaxParticipants(maxParticipants).filter(gen =>
+    isMatchGenerationAllowedForSport(rot, gen, playersPerMatch),
+  );
 };
 
 export const clampMatchGenerationType = (
@@ -125,6 +150,7 @@ export const deriveGameType = (mode: ScoringMode, gen: MatchGenerationType): Gam
   if (gen === 'ROUND_ROBIN') return 'ROUND_ROBIN';
   if (gen === 'WINNERS_COURT') return 'WINNER_COURT';
   if (gen === 'ESCALERA') return 'LADDER';
+  if (gen === 'KING_OF_COURT') return 'KOTC';
   if (gen === 'HANDMADE' || gen === 'AUTOMATIC' || gen === 'FIXED') return mode === 'CLASSIC' ? 'CLASSIC' : 'CUSTOM';
   return 'CUSTOM';
 };
@@ -151,8 +177,37 @@ export const DEFAULT_SCORING_BY_FORMAT: Record<GameType, ScoringPreset> = {
   ROUND_ROBIN: 'POINTS_16',
   WINNER_COURT: 'POINTS_16',
   LADDER: 'POINTS_16',
+  KOTC: 'POINTS_11',
   CUSTOM: 'CUSTOM',
 };
 
 export const isScoringCompatible = (gameType: GameType, preset: ScoringPreset): boolean =>
   getCompatibleScorings(gameType).includes(preset);
+
+// --- Casual create flow (D1): preset tier filtering ---
+
+export function filterScoringPresetsForCreateIntent(
+  allowedPresets: ScoringPreset[],
+  presetMeta: SportPresetMeta[],
+  intent: Exclude<CreateFlowIntent, 'advanced'>,
+): ScoringPreset[] {
+  const tiers = presetTierMap(presetMeta);
+  return allowedPresets.filter((preset) => {
+    const tier: PresetTier = tiers.get(preset) ?? inferPresetTier(preset);
+    if (intent === 'social') {
+      return tier === 'social' || tier === 'both';
+    }
+    if (tier === 'social') return false;
+    if (preset.startsWith('POINTS_') && tier !== 'both') return false;
+    return tier === 'match' || tier === 'both';
+  });
+}
+
+export function resolveWizardAllowedPresets(
+  sportAllowed: ScoringPreset[],
+  presetMeta: SportPresetMeta[],
+  createIntent: CreateFlowIntent | null,
+): ScoringPreset[] {
+  if (!createIntent || createIntent === 'advanced') return sportAllowed;
+  return filterScoringPresetsForCreateIntent(sportAllowed, presetMeta, createIntent);
+}

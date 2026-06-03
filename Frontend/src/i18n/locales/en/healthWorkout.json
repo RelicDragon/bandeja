@@ -7,9 +7,13 @@
     "avgBpm": "avg bpm",
     "maxBpm": "max bpm",
     "loading": "Loading…",
-    "loadError": "Couldn’t load workout.",
-    "retry": "Retry",
-    "emptyProfile": "No workouts synced yet. Record on your Apple Watch while scoring.",
-    "loadErrorProfile": "Couldn’t load workouts."
+    "loadError": "Couldn't load workout",
+    "loadErrorHint": "Something went wrong. Check your connection and try again.",
+    "loadErrorProfile": "Couldn't load workouts",
+    "loadErrorProfileHint": "Something went wrong. Check your connection and try again.",
+    "emptyGameTitle": "No workout recorded",
+    "emptyGameHint": "Next time, start a workout on your Apple Watch while you score in Bandeja — calories and heart rate will show up here.",
+    "emptyProfileTitle": "No workouts yet",
+    "emptyProfileHint": "Record a workout on your Apple Watch while you score a game in Bandeja to track calories and heart rate."
   }
 }

@@ -168,6 +168,7 @@ export const USER_SPORT_PROFILE_SELECT = {
   questionnaireSkippedAt: true,
   questionnaireVersion: true,
   levelSource: true,
+  externalRatingHint: true,
 } as const;
 
 export const USER_SELECT_FIELDS = {
@@ -296,4 +297,13 @@ export const PROFILE_SELECT_FIELDS = {
     },
   },
 } as const;
+
+export {
+  getCreatableSports,
+  isCasualCreateFlowGloballyEnabled,
+  isMultisport6SportsEnabled,
+  isMultisportPolishEnabled,
+  isMultisportTennisEnabled,
+  isSportCreatable,
+} from './multisportFlags';
 

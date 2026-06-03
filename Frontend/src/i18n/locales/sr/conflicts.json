@@ -1,16 +1,16 @@
 {
   "conflicts": {
-    "title": "Откривен конфликт",
-    "subtitle": "Промене је направио други корисник",
-    "description": "Резултате игре је изменио други корисник док сте ви правили промене. Молимо изаберите како решити овај конфликт.",
-    "conflictCount": "{{count}} конфликт(а) откривено",
-    "yourChanges": "Ваше промене",
-    "serverChanges": "Промене на серверу",
-    "acceptServer": "Користи верзију са сервера",
-    "forceClient": "Користи моје промене",
-    "warning": "Упозорење",
-    "warningMessage": "Ова акција се не може опозвати. Уверите се да разумете које промене задржавате.",
-    "serverAccepted": "Промене са сервера су успешно прихваћене",
-    "clientForced": "Ваше промене су успешно примењене"
+    "title": "Otkriven konflikt",
+    "subtitle": "Promene je napravio drugi korisnik",
+    "description": "Rezultate igre je izmenio drugi korisnik dok ste vi pravili promene. Molimo izaberite kako rešiti ovaj konflikt.",
+    "conflictCount": "{{count}} konflikt(a) otkriveno",
+    "yourChanges": "Vaše promene",
+    "serverChanges": "Promene na serveru",
+    "acceptServer": "Koristi verziju sa servera",
+    "forceClient": "Koristi moje promene",
+    "warning": "Upozorenje",
+    "warningMessage": "Ova akcija se ne može opozvati. Uverite se da razumete koje promene zadržavate.",
+    "serverAccepted": "Promene sa servera su uspešno prihvaćene",
+    "clientForced": "Vaše promene su uspešno primenjene"
   }
 }

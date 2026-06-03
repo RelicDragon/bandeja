@@ -3,8 +3,10 @@ interface MatchFormatControlProps {
   allowedCounts: number[];
   onChange: (count: number) => void;
   label: string;
-  label1v1: string;
-  label2v2: string;
+  labelSingles: string;
+  labelDoubles: string;
+  hintSingles: string;
+  hintDoubles: string;
   /** Roster has 2 slots — show format but lock to singles (1v1). */
   disabled?: boolean;
 }
@@ -14,8 +16,10 @@ export const MatchFormatControl = ({
   allowedCounts,
   onChange,
   label,
-  label1v1,
-  label2v2,
+  labelSingles,
+  labelDoubles,
+  hintSingles,
+  hintDoubles,
   disabled = false,
 }: MatchFormatControlProps) => {
   if (allowedCounts.length <= 1) return null;
@@ -30,20 +34,34 @@ export const MatchFormatControl = ({
       >
         {allowedCounts.map((count) => {
           const selected = playersPerMatch === count;
-          const optionLabel = count === 2 ? label1v1 : count === 4 ? label2v2 : String(count);
+          const isSingles = count === 2;
+          const isDoubles = count === 4;
+          const mainLabel = isSingles ? labelSingles : isDoubles ? labelDoubles : String(count);
+          const hintLabel = isSingles ? hintSingles : isDoubles ? hintDoubles : null;
           return (
             <button
               key={count}
               type="button"
               disabled={disabled}
               onClick={() => onChange(count)}
-              className={`flex-1 h-10 rounded-md font-semibold text-sm transition-all disabled:cursor-not-allowed ${
+              className={`flex-1 min-h-10 py-1.5 rounded-md transition-all disabled:cursor-not-allowed ${
                 selected
                   ? 'bg-primary-500 text-white shadow-sm'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent'
               }`}
             >
-              {optionLabel}
+              <span className="flex flex-col items-center justify-center leading-tight">
+                <span className="text-sm font-semibold">{mainLabel}</span>
+                {hintLabel ? (
+                  <span
+                    className={`text-[10px] font-normal ${
+                      selected ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
+                    }`}
+                  >
+                    {hintLabel}
+                  </span>
+                ) : null}
+              </span>
             </button>
           );
         })}

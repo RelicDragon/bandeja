@@ -6,7 +6,8 @@
     "leagueSeasonScheduledGames": "Partidos con fecha",
     "leagueSeasonUnscheduledGames": "Sin fecha aún",
     "toggleLeagueGames": "Mostrar u ocultar partidos",
-    "leagueGameWithLabel": "Con",
+    "leagueGameYouLabel": "Tú",
+    "leagueGameWithLabel": "con",
     "leagueGameBracketBadge": "Cuadro",
     "leagueGameSeasonPlayoffBadge": "Playoff de temporada",
     "leagueGameBracketPlayInUrgency": "Programa el play-in primero",
@@ -42,6 +43,10 @@
     "questionnaireDismissLink": "No volver a mostrar",
     "questionnaireDismissTitle": "¿Ocultar el cuestionario de nivel?",
     "questionnaireDismissMessage": "Tu nivel actual es {{level}}. Solo ocultamos el aviso; tu nivel no cambia. Este banner no volverá a aparecer.",
-    "questionnaireDismissConfirm": "Sí, ocultar"
+    "questionnaireDismissConfirm": "Sí, ocultar",
+    "noNamePromptDismissLink": "Don't show again",
+    "noNamePromptDismissTitle": "Don't show this reminder?",
+    "noNamePromptDismissMessage": "You can still set your name later in Profile.",
+    "noNamePromptDismissConfirm": "Don't show again"
   }
 }

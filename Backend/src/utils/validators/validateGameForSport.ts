@@ -8,12 +8,20 @@ import {
 } from '../../shared/timedCustomPresets';
 import { ApiError } from '../ApiError';
 import { getSportConfig, resolveSport } from '../../sport/sportRegistry';
+import { isSportCreatable } from '../multisportFlags';
+import {
+  GAME_TYPE_TO_ROTATION,
+  MATCH_GENERATION_TO_ROTATION,
+  gameTypeMatchGenerationMismatch,
+  isRotationFormatAllowed,
+} from '../../sport/rotationFormats';
 import type { GameTypeStr, ScoringPreset } from './gameFormat';
 
 export type GameSportValidationInput = {
   sport?: unknown;
   entityType?: EntityType | string;
   gameType?: string;
+  matchGenerationType?: string;
   maxParticipants?: number;
   minParticipants?: number;
   playersPerMatch?: number;
@@ -54,7 +62,7 @@ export function validateGameForSport(input: GameSportValidationInput): Sport {
   const sport = resolveSport(input.sport);
   const config = getSportConfig(sport);
 
-  if (!config.implemented) {
+  if (!config.implemented || !isSportCreatable(sport)) {
     throw new ApiError(400, `Sport ${sport} is not available yet`);
   }
 
@@ -91,6 +99,32 @@ export function validateGameForSport(input: GameSportValidationInput): Sport {
   const gameType = input.gameType;
   if (gameType && !config.allowedGameTypes.includes(gameType as GameTypeStr)) {
     throw new ApiError(400, `gameType ${gameType} is not allowed for ${sport}`);
+  }
+
+  const rot = config.rotationFormats;
+  const ppm = playersPerMatch;
+
+  const matchGenerationType = input.matchGenerationType;
+  if (matchGenerationType) {
+    const rotKey = MATCH_GENERATION_TO_ROTATION[matchGenerationType];
+    if (rotKey && !isRotationFormatAllowed(rot, rotKey, ppm)) {
+      throw new ApiError(
+        400,
+        `matchGenerationType ${matchGenerationType} is not allowed for ${sport}`,
+      );
+    }
+  }
+
+  if (gameType) {
+    const rotKey = GAME_TYPE_TO_ROTATION[gameType as GameTypeStr];
+    if (rotKey && !isRotationFormatAllowed(rot, rotKey, ppm)) {
+      throw new ApiError(400, `gameType ${gameType} is not allowed for ${sport}`);
+    }
+  }
+
+  const pairingErr = gameTypeMatchGenerationMismatch(gameType, matchGenerationType);
+  if (pairingErr) {
+    throw new ApiError(400, pairingErr);
   }
 
   const scoringPreset = input.scoringPreset;

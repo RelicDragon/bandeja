@@ -184,7 +184,8 @@ struct ActiveGamePage: View {
                 match: match,
                 isCurrent: vm.latestActiveMatchId == match.id,
                 isFinal: vm.isFinal,
-                levelSport: vm.game?.resolvedSport
+                levelSport: vm.game?.resolvedSport,
+                maxPlayersPerTeam: WatchMatchFormat.maxPlayersPerTeam(for: vm.game)
             ) {
                 if showStart {
                     Task { await session.startMatch(matchId: match.id) }

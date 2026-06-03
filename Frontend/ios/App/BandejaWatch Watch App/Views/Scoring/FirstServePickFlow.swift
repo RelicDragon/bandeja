@@ -27,6 +27,10 @@ struct FirstServePickFlow: View {
         vm.isAmericano || vm.activeSetIsSuperTieBreak
     }
 
+    private var isSquashServeSetup: Bool {
+        vm.game?.resolvedSport == .squash
+    }
+
     var body: some View {
         ZStack {
             Color.black.opacity(0.5).ignoresSafeArea()
@@ -60,7 +64,9 @@ struct FirstServePickFlow: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .padding(.horizontal, 6)
         }
@@ -139,6 +145,9 @@ struct FirstServePickFlow: View {
     private func teamBigButton(_ side: TeamSide, title: String, users: [WatchUser]) -> some View {
         Button {
             pickedTeam = side
+            if isSquashServeSetup {
+                courtEndsSwapped = side == .teamA
+            }
             let count = side == .teamA ? vm.teamAUsers.count : vm.teamBUsers.count
             if vm.isDoublesMatch, count >= 2 {
                 pickedPlayerIndex = 0
@@ -185,6 +194,13 @@ struct FirstServePickFlow: View {
             HStack(spacing: 8) {
                 ForEach(Array(users.enumerated()), id: \.element.id) { idx, u in
                     Button {
+                        if idx != pickedPlayerIndex {
+                            if side == .teamA {
+                                teamASidesMirrored.toggle()
+                            } else {
+                                teamBSidesMirrored.toggle()
+                            }
+                        }
                         pickedPlayerIndex = idx
                     } label: {
                         VStack(spacing: 4) {
@@ -236,59 +252,74 @@ struct FirstServePickFlow: View {
 
     private var courtEndsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(WatchCopy.courtEndsTitle(lang))
-                .font(.caption.weight(.semibold))
-            Text(WatchCopy.courtEndsBody(lang))
-                .font(.caption2)
-                .foregroundStyle(.secondary)
             if let snap = courtEndsSetupSnapshot {
-                VStack(spacing: 4) {
-                    Text(courtEndsSwapped ? WatchCopy.teamAShort(lang) : WatchCopy.teamBShort(lang))
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.secondary)
-                    WatchServeCourtView.coachCourt(
-                        snapshot: snap,
-                        sport: vm.game?.resolvedSport,
-                        uiId: vm.liveScoringUiId,
-                        teamAUsers: vm.teamAUsers,
-                        teamBUsers: vm.teamBUsers,
-                        matchDoubles: vm.isDoublesMatch,
-                        compact: false,
-                        endsSetup: true,
-                        courtAccessibilityLabel: WatchCopy.courtEndsTitle(lang)
-                    )
-                    .frame(width: 72, height: 120)
-                    Text(courtEndsSwapped ? WatchCopy.teamBShort(lang) : WatchCopy.teamAShort(lang))
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.secondary)
+                Group {
+                    if isSquashServeSetup {
+                        WatchServeCourtView.coachCourt(
+                            snapshot: snap,
+                            sport: vm.game?.resolvedSport,
+                            uiId: vm.liveScoringUiId,
+                            teamAUsers: vm.teamAUsers,
+                            teamBUsers: vm.teamBUsers,
+                            matchDoubles: vm.isDoublesMatch,
+                            compact: false,
+                            endsSetup: true,
+                            courtAccessibilityLabel: WatchCopy.courtEndsTitle(lang)
+                        )
+                    } else {
+                        VStack(spacing: 4) {
+                            Text(courtEndsSwapped ? WatchCopy.teamAShort(lang) : WatchCopy.teamBShort(lang))
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(.secondary)
+                            WatchServeCourtView.coachCourt(
+                                snapshot: snap,
+                                sport: vm.game?.resolvedSport,
+                                uiId: vm.liveScoringUiId,
+                                teamAUsers: vm.teamAUsers,
+                                teamBUsers: vm.teamBUsers,
+                                matchDoubles: vm.isDoublesMatch,
+                                compact: false,
+                                endsSetup: true,
+                                courtAccessibilityLabel: WatchCopy.courtEndsTitle(lang)
+                            )
+                            Text(courtEndsSwapped ? WatchCopy.teamBShort(lang) : WatchCopy.teamAShort(lang))
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
+                .frame(width: 72, height: 120)
                 .frame(maxWidth: .infinity)
             }
-            Button {
-                courtEndsSwapped.toggle()
-            } label: {
-                Label(WatchCopy.flipCourtVertical(lang), systemImage: "arrow.up.arrow.down")
-                    .font(.caption2.weight(.semibold))
-                    .frame(maxWidth: .infinity)
+            if !isSquashServeSetup {
+                Button {
+                    courtEndsSwapped.toggle()
+                } label: {
+                    Label(WatchCopy.flipCourtVertical(lang), systemImage: "arrow.up.arrow.down")
+                        .font(.caption2.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
-            HStack(spacing: 8) {
-                Button {
-                    teamASidesMirrored.toggle()
-                } label: {
-                    Label(WatchCopy.flipTeamASides(lang), systemImage: "arrow.left.arrow.right")
-                        .font(.caption2.weight(.semibold))
-                        .frame(maxWidth: .infinity)
+            if vm.isDoublesMatch {
+                HStack(spacing: 8) {
+                    Button {
+                        flipTeamSides(.teamA)
+                    } label: {
+                        Label(WatchCopy.flipTeamASides(lang), systemImage: "arrow.left.arrow.right")
+                            .font(.caption2.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    Button {
+                        flipTeamSides(.teamB)
+                    } label: {
+                        Label(WatchCopy.flipTeamBSides(lang), systemImage: "arrow.left.arrow.right")
+                            .font(.caption2.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.bordered)
-                Button {
-                    teamBSidesMirrored.toggle()
-                } label: {
-                    Label(WatchCopy.flipTeamBSides(lang), systemImage: "arrow.left.arrow.right")
-                        .font(.caption2.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
             }
             Button(WatchCopy.continueAction(lang)) {
                 if let t = pickedTeam {
@@ -300,14 +331,25 @@ struct FirstServePickFlow: View {
         }
     }
 
+    private func flipTeamSides(_ team: TeamSide) {
+        if team == .teamA {
+            teamASidesMirrored.toggle()
+        } else {
+            teamBSidesMirrored.toggle()
+        }
+        if pickedTeam == team {
+            pickedPlayerIndex = pickedPlayerIndex == 0 ? 1 : 0
+        }
+    }
+
     private func commitTeam(_ side: TeamSide, playerIndex: Int) {
         var r = record
         r.firstServerTeam = side
         r.firstServerDoublesPlayerIndex = playerIndex
         r.pointsServeRotation = showRotationStep ? pickedRotation : nil
         r.matchStartCourtEndsSwapped = courtEndsSwapped ? true : nil
-        r.matchStartTeamASidesMirrored = teamASidesMirrored ? true : nil
-        r.matchStartTeamBSidesMirrored = teamBSidesMirrored ? true : nil
+        r.matchStartTeamASidesMirrored = vm.isDoublesMatch && teamASidesMirrored ? true : nil
+        r.matchStartTeamBSidesMirrored = vm.isDoublesMatch && teamBSidesMirrored ? true : nil
         r.skipped = false
         r.classicPointsPlayedInGame = vm.classicPointsPlayedInGame
         record = r

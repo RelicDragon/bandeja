@@ -29,6 +29,12 @@
     "maxTotalPointsPerSet": 0,
     "ballsInGames": true
   },
+  "CLASSIC_FAST4": {
+    "winnerOfMatch": "BY_SETS",
+    "fixedNumberOfSets": 3,
+    "maxTotalPointsPerSet": 0,
+    "ballsInGames": true
+  },
   "CLASSIC_SUPER_TIEBREAK": {
     "winnerOfMatch": "BY_SETS",
     "fixedNumberOfSets": 3,
@@ -45,6 +51,18 @@
     "winnerOfMatch": "BY_SCORES",
     "fixedNumberOfSets": 1,
     "maxTotalPointsPerSet": 11,
+    "ballsInGames": false
+  },
+  "POINTS_12": {
+    "winnerOfMatch": "BY_SCORES",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 12,
+    "ballsInGames": false
+  },
+  "POINTS_15": {
+    "winnerOfMatch": "BY_SCORES",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 15,
     "ballsInGames": false
   },
   "POINTS_16": {
@@ -77,6 +95,12 @@
     "maxTotalPointsPerSet": 11,
     "ballsInGames": false
   },
+  "BEST_OF_3_15": {
+    "winnerOfMatch": "BY_SETS",
+    "fixedNumberOfSets": 3,
+    "maxTotalPointsPerSet": 15,
+    "ballsInGames": false
+  },
   "BEST_OF_3_21": {
     "winnerOfMatch": "BY_SETS",
     "fixedNumberOfSets": 3,
@@ -93,6 +117,12 @@
     "winnerOfMatch": "BY_SCORES",
     "fixedNumberOfSets": 1,
     "maxTotalPointsPerSet": 11,
+    "ballsInGames": false
+  },
+  "SINGLE_GAME_21": {
+    "winnerOfMatch": "BY_SCORES",
+    "fixedNumberOfSets": 1,
+    "maxTotalPointsPerSet": 21,
     "ballsInGames": false
   },
   "TIMED": {

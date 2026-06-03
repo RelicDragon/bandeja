@@ -16,9 +16,8 @@ import { ChatType, Game, Bug } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { isUserGroupChannelParticipant } from '@/utils/groupChannelParticipation';
-import { ReplyPreview } from './ReplyPreview';
-import { EditPreview } from './EditPreview';
 import { MentionInput } from './MentionInput';
+import { MessageInputComposerContextStrip } from '@/components/chat/MessageInputComposerContextStrip';
 import { JoinGroupChannelButton } from './JoinGroupChannelButton';
 import { PollCreationModal } from './chat/PollCreationModal';
 import {
@@ -578,20 +577,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         userChat={userChat}
         currentUserId={user?.id}
       />
-      {editingMessage && <EditPreview message={editingMessage} onCancel={onCancelEdit!} className="mb-3" />}
-      {replyTo && !editingMessage && (
-        <ReplyPreview
-          replyTo={{
-            id: replyTo.id,
-            content: replyTo.content,
-            messageType: replyTo.messageType,
-            sender: replyTo.sender || { id: 'system', firstName: 'System' },
-          }}
-          onCancel={onCancelReply}
-          onScrollToMessage={onScrollToMessage}
-          className="mb-3"
-        />
-      )}
       <MessageInputImagePreviewStrip
         imagePreviewUrls={imagePreviewUrls}
         onRemove={removeImage}
@@ -677,6 +662,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               ) : null}
             </AnimatePresence>
           </div>
+          <MessageInputComposerContextStrip
+            editingMessage={editingMessage ?? null}
+            replyTo={replyTo ?? null}
+            onCancelEdit={onCancelEdit}
+            onCancelReply={onCancelReply}
+            onScrollToMessage={onScrollToMessage}
+          />
           <div
             ref={inputContainerRef}
             className={`message-input-panel relative min-w-0 w-full max-w-full overflow-visible rounded-[24px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.14),0_8px_28px_rgba(0,0,0,0.18)] transition-all dark:bg-gray-800 dark:shadow-[0_2px_10px_rgba(0,0,0,0.45),0_10px_32px_rgba(0,0,0,0.42)] ${

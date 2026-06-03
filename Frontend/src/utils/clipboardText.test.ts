@@ -28,4 +28,11 @@ describe('getClipboardTextForPaste', () => {
     });
     expect(getClipboardTextForPaste(data)).toBe('https://bandeja.me/games/1');
   });
+
+  it('deduplicates repeated urls in plain text', () => {
+    const data = mockDataTransfer({
+      'text/plain': 'https://bandeja.me/games/1\nhttps://bandeja.me/games/1',
+    });
+    expect(getClipboardTextForPaste(data)).toBe('https://bandeja.me/games/1');
+  });
 });

@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Copy, Download, Loader2, X } from 'lucide-react';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { useTranslation } from 'react-i18next';
+import {
+  FullscreenImageZoom,
+  type FullscreenImageZoomHandle,
+} from '@/components/fullscreenImageViewer/FullscreenImageZoom';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { isCapacitor, isAndroid } from '@/utils/capacitor';
@@ -32,27 +35,20 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
 }) => {
   const { t } = useTranslation();
   useBackButtonModal(usePortaledOverlay && isOpen, onClose, modalId);
-  const transformRef = useRef<any>(null);
   const touchStartY = useRef<number | null>(null);
   const touchStartX = useRef<number | null>(null);
+  const zoomRef = useRef<FullscreenImageZoomHandle>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [displayUrl, setDisplayUrl] = useState(imageUrl);
-  const [transformReady, setTransformReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const zoomActive = enableTransform && isOpen;
+
   useEffect(() => {
-    if (!isOpen || !enableTransform) {
-      setTransformReady(false);
-      return;
-    }
-    const frame = requestAnimationFrame(() => setTransformReady(true));
-    return () => {
-      cancelAnimationFrame(frame);
-      setTransformReady(false);
-    };
-  }, [isOpen, enableTransform, imageUrl]);
+    if (isOpen) zoomRef.current?.resetTransform();
+  }, [displayUrl, isOpen]);
 
   useEffect(() => {
     setDisplayUrl(imageUrl);
@@ -114,6 +110,18 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [onClose, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !usePortaledOverlay) return;
+    const prevOverflow = document.body.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.touchAction = prevTouchAction;
+    };
+  }, [isOpen, usePortaledOverlay]);
 
   const handleDownload = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -222,10 +230,13 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     [displayUrl],
   );
 
-  const resetView = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    transformRef.current?.resetTransform();
-  }, []);
+  const resetView = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      zoomRef.current?.resetTransform();
+    },
+    [],
+  );
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
@@ -236,15 +247,13 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (touchStartY.current === null || touchStartX.current === null) return;
-    
+    if (e.touches.length > 1) return;
+
     const touch = e.touches[0];
     const deltaY = touch.clientY - touchStartY.current;
     const deltaX = Math.abs(touch.clientX - touchStartX.current);
-    
-    const transform = transformRef.current?.instance?.state?.scale;
-    const isZoomed = transform && transform > 1;
-    
-    if (!isZoomed && deltaY > 0 && deltaY > deltaX) {
+
+    if (!zoomRef.current?.isZoomed() && deltaY > 0 && deltaY > deltaX) {
       e.preventDefault();
       setSwipeOffset(deltaY);
     }
@@ -252,20 +261,18 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (touchStartY.current === null) return;
-    
+    if (e.touches.length > 0) return;
+
     const touch = e.changedTouches[0];
     const deltaY = touch.clientY - touchStartY.current;
     const deltaX = Math.abs(touch.clientX - (touchStartX.current || 0));
-    
-    const transform = transformRef.current?.instance?.state?.scale;
-    const isZoomed = transform && transform > 1;
-    
-    if (!isZoomed && deltaY > 100 && deltaY > deltaX) {
+
+    if (!zoomRef.current?.isZoomed() && deltaY > 100 && deltaY > deltaX) {
       onClose();
     } else {
       setSwipeOffset(0);
     }
-    
+
     touchStartY.current = null;
     touchStartX.current = null;
   }, [onClose]);
@@ -274,10 +281,14 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     return null;
   }
 
+  const captureGestures = enableTransform || usePortaledOverlay;
+
   const viewerBody = (
       <div 
         ref={containerRef}
-        className="fixed inset-0 z-[1] flex items-center justify-center bg-transparent"
+        className={`fixed inset-0 z-[1] flex items-center justify-center bg-transparent ${
+          captureGestures ? 'touch-none overscroll-none' : ''
+        }`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -288,57 +299,31 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           paddingLeft: 'env(safe-area-inset-left)',
         }}
       >
-        <div
-          className="absolute inset-0 z-0"
-          onClick={onClose}
-          aria-hidden
-        />
         <div 
-          className="relative z-10 w-full h-full flex items-center justify-center pointer-events-none"
+          className="relative z-10 flex h-full w-full items-center justify-center"
           style={{
             transform: swipeOffset > 0 ? `translateY(${swipeOffset}px)` : 'none',
             transition: swipeOffset === 0 ? 'transform 0.2s' : 'none',
           }}
         >
-          <div className="pointer-events-auto max-w-full max-h-full w-fit h-fit">
-            {enableTransform && transformReady ? (
-              <TransformWrapper
-                ref={transformRef}
-                initialScale={1}
-                minScale={0.1}
-                maxScale={5}
-                centerOnInit={false}
-                wheel={{ step: 0.1 }}
-                pinch={{ step: 5 }}
-                doubleClick={{ disabled: false, step: 0.7 }}
-                panning={{ disabled: false }}
-              >
-                <TransformComponent>
-                  <div
-                    className="relative max-w-full max-h-full"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <img
-                      src={displayUrl}
-                      alt="Fullscreen view"
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  </div>
-                </TransformComponent>
-              </TransformWrapper>
-            ) : (
+          {enableTransform ? (
+            <FullscreenImageZoom ref={zoomRef} src={displayUrl} active={zoomActive} />
+          ) : (
+            <>
+              <div className="absolute inset-0 z-0" onClick={onClose} aria-hidden />
               <div
-                className="relative max-w-full max-h-full"
+                className="relative z-10 max-h-full max-w-full"
                 onClick={(e) => e.stopPropagation()}
               >
                 <img
                   src={displayUrl}
                   alt="Fullscreen view"
-                  className="max-w-full max-h-full object-contain"
+                  draggable={false}
+                  className="max-h-full max-w-full object-contain"
                 />
               </div>
-            )}
-          </div>
+            </>
+          )}
 
           <div 
             className="absolute top-4 right-4 z-50 flex gap-3 pointer-events-auto"
@@ -385,7 +370,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
               bottom: 'max(2rem, env(safe-area-inset-bottom))',
             }}
           >
-            {enableTransform && transformReady ? (
+            {enableTransform ? (
               <button
                 onClick={resetView}
                 className={`rounded-xl px-6 py-3 text-sm font-medium ${OVERLAY_CONTROL_GLASS}`}
@@ -401,7 +386,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   if (usePortaledOverlay) {
     const overlay = (
       <div
-        className="fullscreen-backdrop-overlay fixed inset-0 z-[100] bg-black/80"
+        className="fullscreen-backdrop-overlay fixed inset-0 z-[100] touch-none overscroll-none bg-black/80"
         data-state="open"
         role="dialog"
         aria-modal="true"

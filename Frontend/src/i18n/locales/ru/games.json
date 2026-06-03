@@ -33,7 +33,8 @@
       "ROUND_ROBIN": "Круговая (каждый с каждым)",
       "WINNER_COURT": "Король корта",
       "LADDER": "Эскалера",
-      "CUSTOM": "Пользовательская"
+      "CUSTOM": "Пользовательская",
+      "KOTC": "King of the Court"
     },
     "entityTypes": {
       "GAME": "Игра",
@@ -58,6 +59,11 @@
     "resetFilters": "Сбросить фильтры",
     "changeFilters": "Изменить фильтры",
     "filtersActiveCollapsedHint": "Включены пользовательские фильтры. В списке показываются только игры, которые им соответствуют.",
+    "findDiscovery": {
+      "tierSection": "Формат",
+      "noRatingOnly": "Только без рейтинга",
+      "noRatingHint": "Скрыть игры, которые влияют на рейтинг игроков"
+    },
     "bars": "Бары",
     "availableForMe": "Доступные мне",
     "availableForMeHint": "Показываются игры с доступными местами и подходящими ограничениями по уровню",
@@ -217,6 +223,9 @@
     "setAsTrainer": "Set as trainer",
     "trainerSet": "Trainer set successfully",
     "trainerRemoved": "Trainer removed successfully",
-    "ownershipTransferred": "Ownership transferred successfully"
+    "ownershipTransferred": "Ownership transferred successfully",
+    "showPrivateGames": "Show private games",
+    "showPrivateGamesHint": "Includes non-public games you are not in",
+    "gamesCount_other": "{{count}} games"
   }
 }

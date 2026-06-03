@@ -7,9 +7,13 @@
     "avgBpm": "ppm media",
     "maxBpm": "ppm máx",
     "loading": "Cargando…",
-    "loadError": "No se pudo cargar el entrenamiento.",
-    "retry": "Reintentar",
-    "emptyProfile": "Aún no hay entrenamientos. Grábalos con el Apple Watch al anotar.",
-    "loadErrorProfile": "No se pudieron cargar los entrenamientos."
+    "loadError": "No se pudo cargar el entrenamiento",
+    "loadErrorHint": "Algo salió mal. Comprueba tu conexión e inténtalo de nuevo.",
+    "loadErrorProfile": "No se pudieron cargar los entrenamientos",
+    "loadErrorProfileHint": "Algo salió mal. Comprueba tu conexión e inténtalo de nuevo.",
+    "emptyGameTitle": "No se registró ningún entrenamiento",
+    "emptyGameHint": "La próxima vez, inicia un entrenamiento en tu Apple Watch mientras anotas en Bandeja — las calorías y el pulso aparecerán aquí.",
+    "emptyProfileTitle": "Aún no hay entrenamientos",
+    "emptyProfileHint": "Graba un entrenamiento en tu Apple Watch mientras anotas un partido en Bandeja para ver calorías y pulso."
   }
 }

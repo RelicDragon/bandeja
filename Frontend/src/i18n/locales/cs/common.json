@@ -74,7 +74,8 @@
     "collapse": "Collapse",
     "select": "Select",
     "on": "On",
-    "pressBackAgainToExit": "Press back again to exit"
+    "pressBackAgainToExit": "Press back again to exit",
+    "off": "Off"
   },
   "sport": {
     "sport": "Sport",
@@ -92,6 +93,8 @@
     "squashInLevel": "squashi",
     "court": "Kurt",
     "matchFormat": "Formát zápasu",
+    "matchSingles": "Dvouhra",
+    "matchDoubles": "Čtyřhra",
     "match1v1": "1v1",
     "match2v2": "2v2"
   },

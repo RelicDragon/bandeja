@@ -1,11 +1,11 @@
 {
   "favorites": {
-    "addToFavorites": "Додај у омиљене",
-    "removeFromFavorites": "Уклони из омиљених",
-    "addedToFavorites": "Додато у омиљене",
-    "removedFromFavorites": "Уклоњено из омиљених",
-    "userAddedToFavorites": "Играч додат у омиљене",
-    "userRemovedFromFavorites": "Играч уклоњен из омиљених",
-    "isFavorite": "Омиљено"
+    "addToFavorites": "Dodaj u omiljene",
+    "removeFromFavorites": "Ukloni iz omiljenih",
+    "addedToFavorites": "Dodato u omiljene",
+    "removedFromFavorites": "Uklonjeno iz omiljenih",
+    "userAddedToFavorites": "Igrač dodat u omiljene",
+    "userRemovedFromFavorites": "Igrač uklonjen iz omiljenih",
+    "isFavorite": "Omiljeno"
   }
 }

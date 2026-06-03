@@ -16,7 +16,8 @@ function newClientUploadId(): string {
 
 export function usePhotosSectionUpload(
   game: Game,
-  onGameUpdate?: (game: Game) => void
+  onGameUpdate?: (game: Game) => void,
+  onMainPhotoIdChange?: (photoId: string) => void
 ) {
   const { t } = useTranslation();
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -63,6 +64,7 @@ export function usePhotosSectionUpload(
           try {
             const photo = await gamePhotosApi.upload(game.id, file, { clientUploadId: tempId });
             addPhotoLocal(game.id, photo);
+            onMainPhotoIdChange?.(photo.id);
             successCount++;
           } catch (error) {
             console.error(`Failed to upload photo ${file.name}:`, error);
@@ -95,7 +97,7 @@ export function usePhotosSectionUpload(
         setIsUploadingPhoto(false);
       }
     },
-    [addPhotoLocal, game.id, isUploadingPhoto, refreshGame, t]
+    [addPhotoLocal, game.id, isUploadingPhoto, onMainPhotoIdChange, refreshGame, t]
   );
 
   return { isUploadingPhoto, handlePhotoSelect };

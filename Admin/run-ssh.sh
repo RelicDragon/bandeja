@@ -20,7 +20,18 @@ if [[ ! -f "${SSH_KEY}" ]]; then
   exit 1
 fi
 
-if [[ -z "${SSH_AUTH_SOCK:-}" ]]; then
+has_working_agent() {
+  if [[ -z "${SSH_AUTH_SOCK:-}" ]]; then
+    return 1
+  fi
+  ssh-add -l >/dev/null 2>&1
+  local rc=$?
+  # ssh-add -l:
+  # 0 => keys loaded, 1 => no keys loaded, 2 => no reachable agent.
+  [[ "${rc}" -ne 2 ]]
+}
+
+if ! has_working_agent; then
   echo "Starting ssh-agent..."
   eval "$(ssh-agent -s)"
   export SSH_AUTH_SOCK SSH_AGENT_PID

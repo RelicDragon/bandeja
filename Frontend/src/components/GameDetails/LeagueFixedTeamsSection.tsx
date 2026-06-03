@@ -1,23 +1,14 @@
 import { Award } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { Game } from '@/types';
+import { resolveLeagueGameCardTeams } from '@/utils/leagueGameCardTeams.util';
 
 interface LeagueFixedTeamsSectionProps {
   game: Game;
 }
 
 export const LeagueFixedTeamsSection = ({ game }: LeagueFixedTeamsSectionProps) => {
-  const getTeamPlayers = (teamIndex: number) => {
-    if (game.fixedTeams && game.fixedTeams.length > teamIndex) {
-      return game.fixedTeams[teamIndex].players
-        .filter((tp) => tp.user)
-        .map((tp) => tp.user!);
-    }
-    return [];
-  };
-
-  const teamAPlayers = getTeamPlayers(0);
-  const teamBPlayers = getTeamPlayers(1);
+  const { teamA: teamAPlayers, teamB: teamBPlayers } = resolveLeagueGameCardTeams(game);
   const teamAPlayerIds = teamAPlayers.map((p) => p.id);
   const teamBPlayerIds = teamBPlayers.map((p) => p.id);
   const isFinal = game.resultsStatus === 'FINAL';
@@ -29,7 +20,6 @@ export const LeagueFixedTeamsSection = ({ game }: LeagueFixedTeamsSectionProps) 
     const teamAOutcomes = game.outcomes.filter((o) => teamAPlayerIds.includes(o.user?.id || ''));
     const teamBOutcomes = game.outcomes.filter((o) => teamBPlayerIds.includes(o.user?.id || ''));
     
-    // For fixed teams, all players have identical stats, so just take the first player's wins
     const teamAWins = teamAOutcomes.length > 0 ? (teamAOutcomes[0].wins || 0) : 0;
     const teamBWins = teamBOutcomes.length > 0 ? (teamBOutcomes[0].wins || 0) : 0;
 
@@ -97,4 +87,3 @@ export const LeagueFixedTeamsSection = ({ game }: LeagueFixedTeamsSectionProps) 
     </div>
   );
 };
-

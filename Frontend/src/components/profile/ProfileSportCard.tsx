@@ -1,11 +1,14 @@
-import type { KeyboardEvent, MouseEvent } from 'react';
-import { Star } from 'lucide-react';
+import { useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { ChevronDown, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input } from '@/components';
 import type { Sport, User } from '@/types';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { getSportPublicIcon } from '@/sport/sportPublicIcon';
 import { SportQuestionnaireEstimateLink } from '@/components/sportQuestionnaire/SportQuestionnaireEstimateLink';
+import { SportProfileLevelMeta } from '@/components/profile/SportProfileLevelMeta';
+import { ProfileSportActivityHint } from '@/components/profile/ProfileSportActivityHint';
+import { SportProfileExternalRating } from '@/components/profile/SportProfileExternalRating';
 
 type ProfileSportCardProps = {
   sport: Sport;
@@ -19,6 +22,7 @@ type ProfileSportCardProps = {
   editing: boolean;
   draftLevel: string;
   disabled?: boolean;
+  accordionMode?: boolean;
   onDraftLevelChange: (value: string) => void;
   onCardClick: () => void;
   onStartEditLevel: () => void;
@@ -27,6 +31,8 @@ type ProfileSportCardProps = {
   onSetPrimary: () => void;
   onPrimaryStarClick: () => void;
   onUserUpdated: (user: User) => void;
+  activityRow?: { gamesLast7Days: number; gamesLast30Days: number } | null;
+  removeHint?: string;
 };
 
 export function ProfileSportCard({
@@ -41,6 +47,7 @@ export function ProfileSportCard({
   editing,
   draftLevel,
   disabled = false,
+  accordionMode = false,
   onDraftLevelChange,
   onCardClick,
   onStartEditLevel,
@@ -49,10 +56,14 @@ export function ProfileSportCard({
   onSetPrimary,
   onPrimaryStarClick,
   onUserUpdated,
+  activityRow,
+  removeHint,
 }: ProfileSportCardProps) {
   const { t } = useTranslation();
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const config = getSportConfig(sport);
   const label = t(config.labelKey);
+  const showDetails = enabled && showStats && (!accordionMode || detailsOpen || editing);
 
   const handleStarClick = (e: MouseEvent) => {
     e.stopPropagation();
@@ -70,6 +81,11 @@ export function ProfileSportCard({
       e.preventDefault();
       onCardClick();
     }
+  };
+
+  const toggleDetails = (e: MouseEvent) => {
+    e.stopPropagation();
+    setDetailsOpen((v) => !v);
   };
 
   return (
@@ -95,6 +111,7 @@ export function ProfileSportCard({
         role="button"
         tabIndex={disabled ? -1 : 0}
         aria-pressed={enabled}
+        aria-expanded={accordionMode && enabled ? detailsOpen : undefined}
         aria-label={label}
         aria-disabled={disabled}
         onClick={disabled ? undefined : onCardClick}
@@ -107,12 +124,7 @@ export function ProfileSportCard({
             : 'border-gray-200 bg-gray-50 opacity-60 grayscale hover:opacity-85 dark:border-slate-600 dark:bg-slate-800/55 dark:opacity-90 dark:grayscale-0 dark:hover:bg-slate-800/75'
         }`}
       >
-        <img
-          src={getSportPublicIcon(sport)}
-          alt=""
-          className="h-10 w-10 object-contain"
-          draggable={false}
-        />
+        <img src={getSportPublicIcon(sport)} alt="" className="h-10 w-10 object-contain" draggable={false} />
         <span
           className={`text-center text-[11px] font-semibold leading-tight ${
             enabled ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-slate-400'
@@ -120,12 +132,40 @@ export function ProfileSportCard({
         >
           {label}
         </span>
-        {showStats &&
+        {enabled && activityRow ? <ProfileSportActivityHint row={activityRow} /> : null}
+        {enabled && removeHint ? (
+          <span className="text-[9px] text-gray-400 dark:text-slate-500">{removeHint}</span>
+        ) : null}
+
+        {enabled && showStats && !editing && (
+          <div className="mt-0.5 flex items-baseline gap-1.5">
+            <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">
+              {displayLevel.toFixed(1)}
+            </span>
+            <span className="text-[10px] text-gray-500 dark:text-gray-400">
+              {t('profile.sports.gamesCount', { count: gamesPlayed })}
+            </span>
+          </div>
+        )}
+
+        {accordionMode && enabled && showStats && !editing ? (
+          <button
+            type="button"
+            className="mt-0.5 inline-flex items-center gap-0.5 text-[10px] font-medium text-primary-600 dark:text-primary-400"
+            onClick={toggleDetails}
+          >
+            {detailsOpen ? t('profile.sports.hideDetails') : t('profile.sports.showDetails')}
+            <ChevronDown
+              size={12}
+              className={`transition-transform ${detailsOpen ? 'rotate-180' : ''}`}
+              aria-hidden
+            />
+          </button>
+        ) : null}
+
+        {showDetails &&
           (editing ? (
-            <div
-              className="mt-0.5 flex w-full flex-col items-stretch gap-1"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="mt-0.5 flex w-full flex-col items-stretch gap-1" onClick={(e) => e.stopPropagation()}>
               <Input
                 type="number"
                 step="0.1"
@@ -136,13 +176,13 @@ export function ProfileSportCard({
                 className="h-7 px-1.5 text-center text-xs"
               />
               <div className="flex gap-1">
-                <Button size="sm" className="flex-1 text-[10px] px-1" onClick={onSaveLevel} disabled={disabled}>
+                <Button size="sm" className="flex-1 px-1 text-[10px]" onClick={onSaveLevel} disabled={disabled}>
                   {t('profile.save')}
                 </Button>
                 <Button
                   size="sm"
                   variant="secondary"
-                  className="flex-1 text-[10px] px-1"
+                  className="flex-1 px-1 text-[10px]"
                   onClick={onCancelEdit}
                 >
                   {t('profile.cancel')}
@@ -150,25 +190,27 @@ export function ProfileSportCard({
               </div>
             </div>
           ) : (
-            <div className="mt-0.5 flex flex-col items-center gap-0.5">
-              <div className="flex items-baseline gap-1.5">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (levelEditable) onStartEditLevel();
-                  }}
-                  className={`text-xs font-semibold text-yellow-600 dark:text-yellow-400 ${
-                    levelEditable ? 'underline-offset-2 hover:underline' : ''
-                  }`}
-                  disabled={!levelEditable}
-                >
-                  {displayLevel.toFixed(1)}
-                </button>
-                <span className="text-[10px] text-gray-500 dark:text-gray-400">
-                  {t('profile.sports.gamesCount', { count: gamesPlayed })}
-                </span>
-              </div>
+            <div className="mt-1 flex w-full flex-col items-center gap-1 border-t border-primary-200/60 pt-1.5 dark:border-primary-700/40">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (levelEditable) onStartEditLevel();
+                }}
+                className={`text-xs font-semibold text-yellow-600 dark:text-yellow-400 ${
+                  levelEditable ? 'underline-offset-2 hover:underline' : ''
+                }`}
+                disabled={!levelEditable}
+              >
+                {t('profile.sports.editLevel')}
+              </button>
+              <SportProfileLevelMeta user={user} sport={sport} level={displayLevel} className="max-w-full px-0.5" />
+              <SportProfileExternalRating
+                user={user}
+                sport={sport}
+                disabled={disabled}
+                onUserUpdated={onUserUpdated}
+              />
               <SportQuestionnaireEstimateLink
                 user={user}
                 sport={sport}

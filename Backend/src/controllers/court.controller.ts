@@ -6,6 +6,7 @@ import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { refreshClubCourtsCount } from '../utils/refreshClubCourtsCount';
 import { ClubAdminService } from '../services/clubAdmin/clubAdmin.service';
+import { assertCourtSportInClub } from '../shared/clubSports';
 
 async function assertCourtMutationAllowed(req: AuthRequest, clubId: string) {
   if (req.user?.isAdmin) return;
@@ -17,12 +18,19 @@ export const getCourtsByClub = asyncHandler(async (req: AuthRequest, res: Respon
   const { clubId } = req.params;
   const sportParam = typeof req.query.sport === 'string' ? req.query.sport : undefined;
 
+  const club = await prisma.club.findUnique({
+    where: { id: clubId },
+    select: { sports: true },
+  });
+  if (!club) throw new ApiError(404, 'Club not found');
+
   let sportFilter: Sport | undefined;
   if (sportParam) {
     if (!Object.values(Sport).includes(sportParam as Sport)) {
       throw new ApiError(400, 'Invalid sport');
     }
     sportFilter = sportParam as Sport;
+    assertCourtSportInClub(club.sports, sportFilter);
   }
 
   const courts = await prisma.court.findMany({
@@ -71,10 +79,11 @@ export const getCourtById = asyncHandler(async (req: AuthRequest, res: Response)
 });
 
 export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { name, clubId, courtType, isIndoor, surfaceType, pricePerHour } = req.body;
+  const { name, clubId, courtType, isIndoor, surfaceType, pricePerHour, sport } = req.body;
 
   const club = await prisma.club.findUnique({
     where: { id: clubId },
+    select: { id: true, sports: true },
   });
 
   if (!club) {
@@ -82,6 +91,17 @@ export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) 
   }
 
   await assertCourtMutationAllowed(req, clubId);
+
+  const courtSport =
+    sport != null && sport !== ''
+      ? Object.values(Sport).includes(sport as Sport)
+        ? (sport as Sport)
+        : null
+      : null;
+  if (sport != null && sport !== '' && courtSport === null) {
+    throw new ApiError(400, 'Invalid sport');
+  }
+  assertCourtSportInClub(club.sports, courtSport);
 
   const court = await prisma.court.create({
     data: {
@@ -91,6 +111,7 @@ export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) 
       isIndoor,
       surfaceType,
       pricePerHour,
+      sport: courtSport,
     },
   });
   await refreshClubCourtsCount(clubId);
@@ -103,13 +124,34 @@ export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) 
 
 export const updateCourt = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const updateData = req.body;
+  const updateData = { ...req.body };
 
   const existing = await prisma.court.findUnique({ where: { id }, select: { clubId: true } });
   if (!existing) throw new ApiError(404, 'Court not found');
 
   const targetClubId = (updateData.clubId as string | undefined) ?? existing.clubId;
   await assertCourtMutationAllowed(req, targetClubId);
+
+  const club = await prisma.club.findUnique({
+    where: { id: targetClubId },
+    select: { sports: true },
+  });
+  if (!club) throw new ApiError(404, 'Club not found');
+
+  if (updateData.sport !== undefined) {
+    const raw = updateData.sport;
+    const courtSport =
+      raw == null || raw === ''
+        ? null
+        : Object.values(Sport).includes(raw as Sport)
+          ? (raw as Sport)
+          : null;
+    if (raw != null && raw !== '' && courtSport == null) {
+      throw new ApiError(400, 'Invalid sport');
+    }
+    assertCourtSportInClub(club.sports, courtSport);
+    updateData.sport = courtSport;
+  }
 
   const court = await prisma.court.update({
     where: { id },

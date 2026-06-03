@@ -15,7 +15,13 @@ import { resolveLeagueSeasonSportFromInput } from '../../utils/validators/valida
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
 import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
 import { getDistinctLeagueGroupColor } from './groupColors';
-import { createLeagueGame, createLeaguePlayoffGame, PlayoffGameSetupOverrides } from './gameCreation.util';
+import {
+  createLeagueGame,
+  createLeaguePlayoffGame,
+  PlayoffGameSetupOverrides,
+  validatePlayoffGameSetupForSeason,
+} from './gameCreation.util';
+import { resolveLeagueSeasonSport } from '../../utils/validators/validateLeagueSeasonSport';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
 import { TeamForRoundGeneration } from './generation/TeamForRoundGeneration';
@@ -27,6 +33,7 @@ import {
   ensureUserLeagueParticipant,
   findTeamParticipantByRoster,
 } from './leagueParticipantResolve';
+import { playersPerTeamOf } from '../results/generation/matchUtils';
 
 export class LeagueCreateService {
   private static getSeasonParticipantType(hasFixedTeams: boolean) {
@@ -43,8 +50,10 @@ export class LeagueCreateService {
     leagueGroupId?: string;
     standings: any[];
     allowUserInMultipleTeams: boolean;
+    seasonGame: { playersPerMatch?: number | null };
   }): Promise<{ first: any; second: any }> {
-    const { leagueSeasonId, leagueRoundId, leagueGroupId, standings, allowUserInMultipleTeams } = params;
+    const { leagueSeasonId, leagueRoundId, leagueGroupId, standings, allowUserInMultipleTeams, seasonGame } = params;
+    const playersPerTeam = playersPerTeamOf(seasonGame);
 
     const teamRows = standings.filter(
       (s: any) =>
@@ -52,7 +61,7 @@ export class LeagueCreateService {
         s.leagueTeamId &&
         s.leagueTeam &&
         Array.isArray(s.leagueTeam.players) &&
-        s.leagueTeam.players.length === 2
+        s.leagueTeam.players.length === playersPerTeam
     );
 
     if (teamRows.length < 2) {
@@ -66,7 +75,7 @@ export class LeagueCreateService {
       const ids = row.leagueTeam.players
         .map((p: { userId: string | null }) => p.userId)
         .filter((id: string | null | undefined): id is string => typeof id === 'string' && id.trim().length > 0);
-      if (ids.length !== 2) continue;
+      if (ids.length !== playersPerTeam) continue;
       const sig = teamPlayerSig(ids);
       sigToTid.set(sig, row.leagueTeamId as string);
       tidToUserSet.set(row.leagueTeamId as string, new Set(ids));
@@ -114,7 +123,7 @@ export class LeagueCreateService {
       if (game.fixedTeams.length < 2) return [null, null];
       const a = game.fixedTeams[0].players.map((p) => p.userId).filter(Boolean) as string[];
       const b = game.fixedTeams[1].players.map((p) => p.userId).filter(Boolean) as string[];
-      if (a.length !== 2 || b.length !== 2) return [null, null];
+      if (a.length !== playersPerTeam || b.length !== playersPerTeam) return [null, null];
       const tA = sigToTid.get(teamPlayerSig(a)) ?? null;
       const tB = sigToTid.get(teamPlayerSig(b)) ?? null;
       return [tA, tB];
@@ -671,10 +680,12 @@ export class LeagueCreateService {
       },
     });
 
+    const playersPerTeam = playersPerTeamOf(seasonGame);
+
     if (hasFixedTeams) {
       for (const fixedTeam of seasonGame.fixedTeams) {
         const teamPlayerIds = fixedTeam.players.map((p) => p.userId);
-        if (teamPlayerIds.length !== 2) continue;
+        if (teamPlayerIds.length !== playersPerTeam) continue;
 
         const existingTeam = await findTeamParticipantByRoster(
           prisma,
@@ -765,6 +776,7 @@ export class LeagueCreateService {
         leagueGroupId,
         standings: updatedStandings,
         allowUserInMultipleTeams: Boolean(seasonGame.allowUserInMultipleTeams),
+        seasonGame,
       });
       team1Standing = picked.first;
       team2Standing = picked.second;
@@ -950,6 +962,9 @@ export class LeagueCreateService {
       throw new ApiError(403, 'Only owners and admins can create playoff');
     }
 
+    const seasonSport = resolveLeagueSeasonSport(leagueSeason);
+    validatePlayoffGameSetupForSeason(seasonSport, leagueSeason.game, gameSetup, { gameType });
+
     const participants = await prisma.leagueParticipant.findMany({
       where: {
         id: { in: participantIds },
@@ -1102,6 +1117,9 @@ export class LeagueCreateService {
     if (leagueSeason.game.participants.length === 0 && !user.isAdmin) {
       throw new ApiError(403, 'Only owners and admins can create playoff');
     }
+
+    const seasonSport = resolveLeagueSeasonSport(leagueSeason);
+    validatePlayoffGameSetupForSeason(seasonSport, leagueSeason.game, gameSetup, { gameType });
 
     const seasonGroupIds = new Set(
       (await prisma.leagueGroup.findMany({ where: { leagueSeasonId }, select: { id: true } })).map((x) => x.id)

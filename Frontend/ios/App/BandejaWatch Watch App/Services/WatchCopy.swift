@@ -780,12 +780,16 @@ enum WatchCopy {
         }
     }
 
-    nonisolated static func readinessParticipantsWaiting(_ lang: String) -> String {
+    nonisolated static func readinessParticipantsWaiting(_ lang: String, requiredPlaying: Int? = nil) -> String {
+        let suffix: String = {
+            guard let requiredPlaying else { return "" }
+            return " (\(requiredPlaying))"
+        }()
         switch lang {
-        case "es": return "Jugadores: faltan"
-        case "ru": return "Игроки: ждём"
-        case "sr": return "Играчи: чека се"
-        default: return "Players: waiting"
+        case "es": return "Jugadores: faltan\(suffix)"
+        case "ru": return "Игроки: ждём\(suffix)"
+        case "sr": return "Играчи: чека се\(suffix)"
+        default: return "Players: waiting\(suffix)"
         }
     }
 

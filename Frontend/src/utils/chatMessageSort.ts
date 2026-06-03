@@ -1,5 +1,6 @@
 import type { ChatMessage, ChatMessageWithStatus, MessageReadReceipt } from '@/api/chat';
 import { mergeReadReceiptSync } from '@/services/chat/chatSyncEventsToPatches';
+import { stripPendingOptimisticsMatchedByServer } from '@/utils/chatOptimisticDedupe';
 
 function mergeMessageReadReceipts(
   base: MessageReadReceipt[],
@@ -67,7 +68,8 @@ export function mergeChatMessagesAscending(
       map.set(m.id, { ...cur, ...m, readReceipts } as ChatMessageWithStatus);
     }
   }
-  return Array.from(map.values()).sort(compareChatMessagesAscending);
+  const merged = Array.from(map.values()).sort(compareChatMessagesAscending);
+  return stripPendingOptimisticsMatchedByServer(merged, incoming);
 }
 
 export function mergeServerPageWithPendingOptimistics(

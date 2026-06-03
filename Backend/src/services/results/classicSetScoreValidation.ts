@@ -33,6 +33,12 @@ const PRESET_RULES: Partial<Record<ScoringPreset, ClassicGameRules>> = {
     superTieBreakReplacesDeciderAtIndex: null,
   },
   CLASSIC_SHORT_SET: { ...classicBo3, gamesPerSet: 4, tieBreakGameAtGames: 3 },
+  CLASSIC_FAST4: {
+    ...classicBo3,
+    gamesPerSet: 4,
+    tieBreakGameAtGames: 3,
+    tieBreakGameFirstTo: 5,
+  },
   CLASSIC_SINGLE_SET: { ...classicBo3 },
   CLASSIC_TIMED: { ...classicBo3 },
 };

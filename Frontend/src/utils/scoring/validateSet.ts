@@ -1,4 +1,9 @@
 import type { SetResult } from '@/types/gameResults';
+import {
+  isBwfStrictValidation,
+  validateBwfRallyGameScore,
+  validatePickleballRally11Score,
+} from '@shared/strictValidation';
 import type { ScoringRules, SetKind } from './rulebook';
 import { getSetKind } from './setKind';
 import { isClassicRules, isClassicTimedRelaxedGameScores, isRallyGameRules, isRallyPointsRules } from './rulebook';
@@ -89,6 +94,23 @@ export const validateSuperTiebreak = (a: number, b: number, rules: ScoringRules)
   return ok('SUPER_TIEBREAK');
 };
 
+const rallyFail = (
+  outcome: { ok: false; reason: ValidationReason },
+  kind: SetKind = 'POINTS'
+): ValidationResult => fail(outcome.reason, undefined, kind);
+
+export const validateBwfRallyGame = (a: number, b: number, rules: ScoringRules): ValidationResult => {
+  const outcome = validateBwfRallyGameScore(a, b, rules.totalPointsPerSet, rules.winBy);
+  if (outcome.ok) return ok('POINTS');
+  return rallyFail(outcome, 'POINTS');
+};
+
+export const validatePickleballRally11 = (a: number, b: number): ValidationResult => {
+  const outcome = validatePickleballRally11Score(a, b);
+  if (outcome.ok) return ok('POINTS');
+  return rallyFail(outcome, 'POINTS');
+};
+
 export const validateRallyPointGame = (a: number, b: number, rules: ScoringRules): ValidationResult => {
   if (a === b) return a === 0 ? ok('POINTS') : fail('DRAW_NOT_ALLOWED');
   const target = rules.totalPointsPerSet;
@@ -104,6 +126,12 @@ export const validateRallyPointGame = (a: number, b: number, rules: ScoringRules
 };
 
 export const validatePointsSet = (a: number, b: number, rules: ScoringRules): ValidationResult => {
+  if (isBwfStrictValidation(rules.strictValidation)) {
+    return validateBwfRallyGame(a, b, rules);
+  }
+  if (rules.strictValidation === 'PICKLEBALL_RALLY_11') {
+    return validatePickleballRally11(a, b);
+  }
   if (isRallyGameRules(rules) || isRallyPointsRules(rules)) {
     return validateRallyPointGame(a, b, rules);
   }
@@ -149,7 +177,12 @@ export const isLegalSetScore = (
   if (kind === 'TIEBREAK_GAME') return validateClassicTiebreakGame(a, b, rules);
 
   if (isClassicRules(rules)) {
-    if (isClassicTimedRelaxedGameScores(rules) && kind === 'REGULAR') return validateTimedSet(a, b);
+    if (
+      (rules.strictValidation === 'CLASSIC_TIMED_RELAXED' || isClassicTimedRelaxedGameScores(rules)) &&
+      kind === 'REGULAR'
+    ) {
+      return validateTimedSet(a, b);
+    }
     return validateClassicRegularSet(a, b, rules);
   }
   return ok(kind);

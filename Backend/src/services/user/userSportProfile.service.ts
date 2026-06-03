@@ -253,6 +253,47 @@ export async function countRatedSportOutcomes(
   });
 }
 
+export async function countSportGamesParticipated(
+  userId: string,
+  sport: Sport,
+  tx?: Prisma.TransactionClient,
+): Promise<number> {
+  const client = tx ?? prisma;
+  return client.gameParticipant.count({
+    where: {
+      userId,
+      status: 'PLAYING',
+      game: { sport },
+    },
+  });
+}
+
+type SportProfileForRemoval = {
+  level: number;
+  reliability: number;
+  gamesPlayed: number;
+  gamesWon: number;
+  levelSource: SportLevelSource;
+  questionnaireCompletedAt: Date | null;
+  questionnaireSkippedAt: Date | null;
+  externalRatingHint: string | null;
+};
+
+/** True when the sport was only enabled in profile — safe to delete `UserSportProfile`. */
+export function isUnusedSportProfile(
+  profile: SportProfileForRemoval | null,
+  sportGamesParticipated: number,
+): boolean {
+  if (!profile) return true;
+  if (sportGamesParticipated > 0) return false;
+  if (profile.gamesPlayed > 0 || profile.gamesWon > 0) return false;
+  if (profile.questionnaireCompletedAt || profile.questionnaireSkippedAt) return false;
+  if (profile.externalRatingHint) return false;
+  if (profile.levelSource !== SportLevelSource.DEFAULT) return false;
+  if (profile.level !== DEFAULT_NEW_SPORT_LEVEL || profile.reliability !== 0) return false;
+  return true;
+}
+
 /** Keep `sportsEnabled` aligned when a sport profile is written (e.g. rated game). */
 export async function ensureSportInEnabled(
   userId: string,
@@ -359,7 +400,6 @@ export async function addUserSport(userId: string, sport: Sport) {
       data: { sportsEnabled, primarySport },
     });
 
-    const ratedOutcomes = await countRatedSportOutcomes(userId, sport, tx);
     const freshProfile = {
       level: DEFAULT_NEW_SPORT_LEVEL,
       reliability: 0,
@@ -375,7 +415,7 @@ export async function addUserSport(userId: string, sport: Sport) {
         sport,
         ...freshProfile,
       },
-      update: ratedOutcomes === 0 ? freshProfile : {},
+      update: {},
     });
   });
 
@@ -532,14 +572,38 @@ export async function removeUserSport(userId: string, sport: Sport) {
   if (enabled.length <= 1) {
     throw new ApiError(400, 'At least one sport must remain enabled');
   }
+
+  const profile = await prisma.userSportProfile.findUnique({
+    where: { userId_sport: { userId, sport } },
+    select: {
+      level: true,
+      reliability: true,
+      gamesPlayed: true,
+      gamesWon: true,
+      levelSource: true,
+      questionnaireCompletedAt: true,
+      questionnaireSkippedAt: true,
+      externalRatingHint: true,
+    },
+  });
+
   const sportsEnabled = enabled.filter((s) => s !== sport);
   const primarySport = reconcilePrimarySport(user.primarySport, sportsEnabled);
 
   await prisma.$transaction(async (tx) => {
+    const sportGamesParticipated = await countSportGamesParticipated(userId, sport, tx);
+    const deleteProfile = isUnusedSportProfile(profile, sportGamesParticipated);
+
     await tx.user.update({
       where: { id: userId },
       data: { sportsEnabled, primarySport },
     });
+
+    if (deleteProfile) {
+      await tx.userSportProfile.deleteMany({
+        where: { userId, sport },
+      });
+    }
   });
 
   return loadProfileUser(userId);

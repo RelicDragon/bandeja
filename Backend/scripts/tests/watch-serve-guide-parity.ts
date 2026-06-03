@@ -27,6 +27,7 @@ function main(): void {
 
   assert(rules.includes('squashChangeEnds'), 'squash PAR change ends');
   assert(rules.includes('pickleballChangeEnds'), 'pickleball interval change ends');
+  assert(rules.includes('pickleballMidpointScore'), 'pickleball midpoint helper');
 
   const store = read('Services/WatchServeGuideSessionStore.swift');
   assert(store.includes('hiddenForMatch'), 'decode migrates legacy hiddenForMatch');
@@ -34,10 +35,12 @@ function main(): void {
 
   const fePb = readFileSync(join(feRules, 'pickleballServe.ts'), 'utf8');
   const feSq = readFileSync(join(feRules, 'squashServe.ts'), 'utf8');
-  assert(fePb.includes('pointsPerGame >= 15 ? 8 : 6'), 'FE pickleball interval');
-  assert(rules.includes('pointsPerGame >= 15 ? 8 : 6'), 'watch pickleball interval matches');
+  assert(fePb.includes('pickleballMidpointScore'), 'FE pickleball midpoint');
+  assert(rules.includes('pickleballMidpointScore'), 'watch pickleball midpoint matches');
   assert(feSq.includes('max === 11 && min < 10'), 'FE squash change ends');
   assert(rules.includes('maxScore == 11 && minScore < 10'), 'watch squash change ends matches');
+  assert(feSq.includes('squashCourtSideForServerScore'), 'FE squash court side');
+  assert(rules.includes('squashCourtSide'), 'watch squash court side');
 
   console.log('watch-serve-guide-parity: all passed');
 }

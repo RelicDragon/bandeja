@@ -131,7 +131,7 @@ final class GameDetailViewModel {
             guard game.teamsReady else { return false }
         }
         let playingCount = game.participants.filter(\.isPlaying).count
-        guard playingCount == 4 else { return false }
+        guard WatchMatchFormat.isPresetResultsRoster(playingCount: playingCount) else { return false }
         return WatchResultsRoundBuilder.canBuildFirstRound(for: game)
     }
 

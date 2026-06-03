@@ -1,7 +1,7 @@
 import type { SetResult } from '@/types/gameResults';
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import type { ScoringRules, SetKind } from './rulebook';
-import { isClassicRules, isPointsRules, isTimedRules } from './rulebook';
+import { isClassicRules, isPointsRules, isRallyGameRules, isRallyPointsRules, isTimedRules } from './rulebook';
 import { countSetsWon } from './matchWinner';
 
 export const getSetKind = (
@@ -12,7 +12,7 @@ export const getSetKind = (
 ): SetKind => {
   const row = sets[setIndex];
   if (row && isSupplementalMatchSet(row)) return 'CUSTOM';
-  if (isPointsRules(rules)) return 'POINTS';
+  if (isPointsRules(rules) || isRallyGameRules(rules) || isRallyPointsRules(rules)) return 'POINTS';
   if (isTimedRules(rules)) return 'TIMED';
   if (!isClassicRules(rules)) return 'CUSTOM';
 

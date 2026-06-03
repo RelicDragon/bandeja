@@ -1,6 +1,7 @@
 {
   "stories": {
     "yourStory": "Váš příběh",
+    "story": "Příběh",
     "addStory": "Přidat příběh",
     "addStoryHint": "Sdílejte okamžik s ostatními — zmizí za 24 hodin.",
     "createStory": "Vytvořit příběh",
@@ -128,6 +129,9 @@
       "dmFailed": "Zprávu se nepodařilo odeslat",
       "share": "Sdílet",
       "shareTitle": "Sdílet profil"
-    }
+    },
+    "mixedMediaBlocked": "Share photos and videos separately",
+    "oneVideoOnly": "Add one video at a time",
+    "videoPublishHint": "Video is shared as captured — no trim or overlays"
   }
 }

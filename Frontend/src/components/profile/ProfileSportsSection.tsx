@@ -1,22 +1,23 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Card } from '@/components';
 import type { Sport, User } from '@/types';
-import { sportHasQuestionnaire } from '@/sport/sportQuestionnaireRegistry';
 import { usersApi } from '@/api';
 import { AddSportQuestionnairePrompt } from '@/components/sportQuestionnaire/AddSportQuestionnairePrompt';
 import { ProfileSportCard } from '@/components/profile/ProfileSportCard';
 import {
   canEditSportLevel,
+  canRemoveSport,
   findSportProfile,
   gamesPlayedForSport,
   getDisplayLevelForSport,
   isSportEnabled,
-  listEnabledSports,
+  hasMultipleSportsEnabled,
   listSelectableSports,
   resolveActivePrimarySport,
   shouldShowSportLevelBadge,
+  shouldSuggestAddSportQuestionnaire,
 } from '@/utils/profileSports';
 
 type ProfileSportsSectionProps = {
@@ -30,6 +31,33 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
   const [editingSport, setEditingSport] = useState<Sport | null>(null);
   const [draftLevel, setDraftLevel] = useState('');
   const [questionnairePromptSport, setQuestionnairePromptSport] = useState<Sport | null>(null);
+  const sportsEnabledKey = (user.sportsEnabled ?? []).join(',');
+  const [activityBySport, setActivityBySport] = useState<
+    Record<string, { gamesLast7Days: number; gamesLast30Days: number }>
+  >({});
+
+  useEffect(() => {
+    let cancelled = false;
+    void usersApi
+      .getMySportActivity()
+      .then((response) => {
+        if (cancelled) return;
+        const map: Record<string, { gamesLast7Days: number; gamesLast30Days: number }> = {};
+        for (const row of response.data) {
+          map[row.sport] = {
+            gamesLast7Days: row.gamesLast7Days,
+            gamesLast30Days: row.gamesLast30Days,
+          };
+        }
+        setActivityBySport(map);
+      })
+      .catch(() => {
+        if (!cancelled) setActivityBySport({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id, sportsEnabledKey]);
 
   const primary = resolveActivePrimarySport(user);
   const selectableSports = listSelectableSports();
@@ -42,13 +70,13 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
     />
   );
 
-  const run = async (sport: Sport, fn: () => Promise<{ data: User }>) => {
+  const run = async <T extends { data: User }>(sport: Sport, fn: () => Promise<T>) => {
     setBusySport(sport);
     try {
       const res = await fn();
       onUserUpdated(res.data);
       toast.success(t('profile.sports.updated'));
-      return res.data;
+      return res;
     } catch (error: unknown) {
       const msg =
         (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
@@ -61,8 +89,11 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
   };
 
   const handleAddSport = (sport: Sport) => {
-    void run(sport, () => usersApi.addSport(sport)).then((updated) => {
-      if (updated && sportHasQuestionnaire(sport)) {
+    void run(sport, () => usersApi.addSport(sport)).then((res) => {
+      if (
+        res &&
+        shouldSuggestAddSportQuestionnaire(res.data, sport, res.suggestedQuestionnaire)
+      ) {
         setQuestionnairePromptSport(sport);
       }
     });
@@ -71,7 +102,7 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
   const handleSportCardClick = (sport: Sport) => {
     if (busySport === sport) return;
     if (isSportEnabled(user, sport)) {
-      if (listEnabledSports(user).length <= 1) {
+      if (!canRemoveSport(user, sport)) {
         toast.error(t('auth.atLeastOneSport'));
         return;
       }
@@ -114,6 +145,11 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
           {t('profile.sports.title')}
         </h3>
+        {hasMultipleSportsEnabled(user) && (
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {t('profile.sports.otherSportsDescription')}
+          </p>
+        )}
         <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-3">
           {selectableSports.map((sport) => {
             const enabled = isSportEnabled(user, sport);
@@ -142,7 +178,14 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
                 onCancelEdit={() => setEditingSport(null)}
                 onSetPrimary={() => handleSetPrimary(sport)}
                 onPrimaryStarClick={handlePrimaryStarClick}
+                activityRow={enabled ? activityBySport[sport] : undefined}
+                removeHint={
+                  enabled && canRemoveSport(user, sport)
+                    ? t('profile.sports.tapToRemove')
+                    : undefined
+                }
                 onUserUpdated={onUserUpdated}
+                accordionMode={hasMultipleSportsEnabled(user)}
               />
             );
           })}

@@ -14,12 +14,13 @@ import { GameService } from '../game/game.service';
 import type { GameReadinessDb } from '../game/readiness.service';
 import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
-import { resolvePlayersPerMatch } from '../../sport/sportRegistry';
+import { getSportConfig, resolvePlayersPerMatch } from '../../sport/sportRegistry';
 import {
   assertGameSportMatchesLeagueSeason,
   loadLeagueSeasonSportOrThrow,
 } from '../../utils/validators/validateLeagueSeasonSport';
 import type { Sport } from '@prisma/client';
+import { validateGameForSport } from '../../utils/validators/validateGameForSport';
 
 export function resolveLeagueMatchCapacity(
   seasonSport: Sport,
@@ -136,6 +137,29 @@ export function resolveLeagueFixtureFormatFields(
             maxTotalPointsPerSet,
           }),
   };
+}
+
+/** Validates bracket/session playoff format overrides against `LeagueSeason.sport`. */
+export function validatePlayoffGameSetupForSeason(
+  seasonSport: Sport,
+  seasonGame: {
+    gameType?: string | null;
+    playersPerMatch?: number | null;
+    maxParticipants?: number | null;
+    scoringPreset?: string | null;
+  },
+  gameSetup?: PlayoffGameSetupOverrides,
+  options?: { gameType?: string },
+): void {
+  const gameType = options?.gameType ?? seasonGame.gameType ?? 'CLASSIC';
+  validateGameForSport({
+    sport: seasonSport,
+    entityType: EntityType.LEAGUE,
+    gameType,
+    playersPerMatch: seasonGame.playersPerMatch ?? undefined,
+    maxParticipants: seasonGame.maxParticipants ?? 4,
+    scoringPreset: gameSetup?.scoringPreset ?? seasonGame.scoringPreset ?? null,
+  });
 }
 
 export interface PlayoffGameSetupOverrides {
@@ -346,6 +370,9 @@ export async function createLeaguePlayoffGame(
   const seasonSport = await loadLeagueSeasonSportOrThrow(leagueSeasonId, db);
   if (seasonGame.sport) {
     assertGameSportMatchesLeagueSeason(seasonGame.sport, { sport: seasonSport });
+  }
+  if (gameType === 'AMERICANO' && !getSportConfig(seasonSport).rotationFormats.americano) {
+    throw new ApiError(400, 'Americano session playoffs are not available for this sport');
   }
   const playersPerMatch = resolvePlayersPerMatch(seasonSport, seasonGame.playersPerMatch);
   const participantCount = Math.max(userIds.length, playersPerMatch);

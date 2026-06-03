@@ -38,7 +38,8 @@ function testPickleballRegistry(): void {
   assert(cfg.allowedScoringPresets.includes('POINTS_24'), 'POINTS_24 preset');
   assert(!cfg.allowedScoringPresets.includes('POINTS_11'), 'POINTS_11 reserved for table tennis');
   assert(!cfg.allowedScoringPresets.includes('CLASSIC_BEST_OF_3'), 'no classic preset');
-  assert(cfg.allowedGameTypes.includes('CLASSIC') && !cfg.allowedGameTypes.includes('AMERICANO'), 'CLASSIC only');
+  assert(cfg.allowedGameTypes.includes('CLASSIC') && cfg.allowedGameTypes.includes('AMERICANO'), 'rotation game types');
+  assert(cfg.rotationFormats.americanoDoublesOnly === true, 'americano doubles only');
 }
 
 function testPickleballValidation(): void {
@@ -70,15 +71,25 @@ function testPickleballValidation(): void {
       }),
     'pickleball rejects classic preset',
   );
+  validateGameForSport({
+    sport: 'PICKLEBALL',
+    maxParticipants: 8,
+    playersPerMatch: 4,
+    gameType: 'AMERICANO',
+    matchGenerationType: 'RANDOM',
+    scoringPreset: 'POINTS_21',
+  });
+
   assertThrows(
     () =>
       validateGameForSport({
         sport: 'PICKLEBALL',
-        maxParticipants: 4,
-        gameType: 'AMERICANO',
+        maxParticipants: 6,
+        playersPerMatch: 2,
+        matchGenerationType: 'RANDOM',
         scoringPreset: 'POINTS_21',
       }),
-    'pickleball rejects AMERICANO',
+    'pickleball rejects singles americano',
   );
   assert(
     validateGameForSport({

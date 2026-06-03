@@ -1,17 +1,18 @@
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ChatMessage } from '@/api/chat';
-import { isLastMessagePreview } from '@/api/chat';
+import { getLastMessageTime, isLastMessagePreview } from '@/api/chat';
 import type { Game, GameLastMessagePreview } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { useChatListItemUnread } from '@/hooks/useUnreadBridge';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { formatChatTime } from '@/utils/dateFormat';
-import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import type { ChatItem } from './chatListTypes';
 import { ChatListOutboxAnimated } from './ChatListOutboxAnimated';
 import { ChatListPreviewContent } from './ChatListPreviewContent';
+import { ChatListPreviewText } from './ChatListPreviewText';
+import { ChatListDraftPreview } from './ChatListDraftPreview';
 import {
   dismissFailedOutboxForContext,
   retryFailedOutboxForContext,
@@ -52,18 +53,25 @@ function ChatListGameCardInner({ chat, isSelected, onClick }: ChatListGameCardPr
   const { Icon } = visual;
   const title = getGameChatListTitle(game, t);
   const dateTimeBlock = getGameChatListDateTimeBlock(game, displaySettings, t);
-  const locationLine = getGameChatListLocationLine(game);
+  const locationLine = getGameChatListLocationLine(game, t);
   const showLeagueTags = gameChatListShowsLeagueTags(game);
   const lastMessage = game.lastMessage as GameListLastMessage | null | undefined;
+  const draft = chat.draft ?? null;
   const listOutbox = chat.listOutbox ?? undefined;
   const showOutboxOnly =
     listOutbox?.state === 'queued' || listOutbox?.state === 'sending' || listOutbox?.state === 'failed';
+  const lastMessageTime = getLastMessageTime(lastMessage);
+  const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;
+  const showDraft = !!(draft && (draftTime > lastMessageTime || !lastMessage));
 
-  const lastActivityIso = lastMessage
-    ? isLastMessagePreview(lastMessage)
-      ? lastMessage.updatedAt
-      : (lastMessage as ChatMessage).updatedAt ?? (lastMessage as ChatMessage).createdAt
-    : chat.lastMessageDate?.toISOString();
+  const lastActivityIso =
+    draftTime > lastMessageTime && draft
+      ? draft.updatedAt
+      : lastMessage
+        ? isLastMessagePreview(lastMessage)
+          ? lastMessage.updatedAt
+          : (lastMessage as ChatMessage).updatedAt ?? (lastMessage as ChatMessage).createdAt
+        : chat.lastMessageDate?.toISOString();
 
   return (
     <div
@@ -96,6 +104,12 @@ function ChatListGameCardInner({ chat, isSelected, onClick }: ChatListGameCardPr
                 {dateTimeBlock.timeLabel}
               </div>
             ) : null}
+          </div>
+        ) : game.timeIsSet !== true ? (
+          <div className="w-full text-center leading-tight px-0.5">
+            <div className="text-[10px] text-gray-500 dark:text-gray-400 italic line-clamp-3">
+              {t('gameDetails.datetimeNotSet')}
+            </div>
           </div>
         ) : null}
       </div>
@@ -131,9 +145,13 @@ function ChatListGameCardInner({ chat, isSelected, onClick }: ChatListGameCardPr
             ) : null}
           </div>
           <div className="flex flex-col items-end gap-1 shrink-0">
-            {lastActivityIso ? (
+            {lastActivityIso || draft ? (
               <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                {formatChatTime(lastActivityIso, displaySettings.locale, displaySettings.hour12)}
+                {formatChatTime(
+                  lastActivityIso ?? draft?.updatedAt ?? new Date().toISOString(),
+                  displaySettings.locale,
+                  displaySettings.hour12
+                )}
               </span>
             ) : null}
             {displayUnread > 0 ? (
@@ -164,7 +182,11 @@ function ChatListGameCardInner({ chat, isSelected, onClick }: ChatListGameCardPr
 
         {!showOutboxOnly && (
           <>
-            {!lastMessage ? (
+            {showDraft ? (
+              <p className="text-sm line-clamp-2 mt-0.5 min-w-0">
+                <ChatListDraftPreview content={draft?.content || ''} />
+              </p>
+            ) : !lastMessage ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 italic mt-0.5">
                 {t('chat.noMessages', { defaultValue: 'No messages yet' })}
               </p>
@@ -181,9 +203,13 @@ function ChatListGameCardInner({ chat, isSelected, onClick }: ChatListGameCardPr
                     (() => {
                       const full = lastMessage as ChatMessage;
                       const text = full.senderId
-                        ? convertMentionsToPlaintext(full.content || '')
-                        : convertMentionsToPlaintext(formatSystemMessageForDisplay(full.content || '', t));
-                      return text?.trim() ? text : t('chat.noMessage', { defaultValue: 'No message' });
+                        ? full.content || ''
+                        : formatSystemMessageForDisplay(full.content || '', t);
+                      return text?.trim() ? (
+                        <ChatListPreviewText text={text} />
+                      ) : (
+                        t('chat.noMessage', { defaultValue: 'No message' })
+                      );
                     })()
                   )}
                 </p>
@@ -205,6 +231,12 @@ function gameCardPropsEqual(a: ChatListGameCardProps, b: ChatListGameCardProps) 
   const bd = b.chat.lastMessageDate?.getTime() ?? null;
   if (ad !== bd) return false;
   if (lastMessageSig(a.chat.data.lastMessage) !== lastMessageSig(b.chat.data.lastMessage)) return false;
+  const adraft = a.chat.draft?.updatedAt ?? '';
+  const bdraft = b.chat.draft?.updatedAt ?? '';
+  if (adraft !== bdraft) return false;
+  const adraftContent = a.chat.draft?.content ?? '';
+  const bdraftContent = b.chat.draft?.content ?? '';
+  if (adraftContent !== bdraftContent) return false;
   const ao = a.chat.listOutbox?.state;
   const bo = b.chat.listOutbox?.state;
   if (ao !== bo) return false;

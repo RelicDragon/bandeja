@@ -8,7 +8,7 @@ import { Game, GameTeam, type BasicUser } from '@/types';
 import { Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
-import { getFixedTeamSlotCount } from '@/utils/fixedTeamSlotCount';
+import { maxFixedTeamSlots, playersPerTeamOf } from '@/utils/matchFormat';
 function playerDisplayName(user: BasicUser): string {
   return [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
 }
@@ -104,16 +104,18 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
   const areTeamsReady = useCallback(
     (teamsToCheck = teams, g = gameRef.current) => {
       if (!g || !teamsToCheck || teamsToCheck.length === 0) return false;
-      const n = getFixedTeamSlotCount(g);
-      return teamsToCheck.slice(0, n).every((team) => team.players.length === 2);
+      const n = maxFixedTeamSlots(g);
+      const perTeam = playersPerTeamOf(g);
+      return teamsToCheck.slice(0, n).every((team) => team.players.length === perTeam);
     },
     [teams],
   );
 
   const isTeamsReady = useCallback((teamsToCheck: GameTeam[], g: Game) => {
     if (!teamsToCheck || teamsToCheck.length === 0) return false;
-    const n = getFixedTeamSlotCount(g);
-    return teamsToCheck.slice(0, n).every((team) => team.players.length === 2);
+    const n = maxFixedTeamSlots(g);
+    const perTeam = playersPerTeamOf(g);
+    return teamsToCheck.slice(0, n).every((team) => team.players.length === perTeam);
   }, []);
 
   const fetchTeams = useCallback(async () => {
@@ -125,7 +127,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
 
     try {
       setLoading(true);
-      const slotCount = getFixedTeamSlotCount(g);
+      const slotCount = maxFixedTeamSlots(g);
       const localTeams: GameTeam[] = [];
 
       for (let i = 1; i <= slotCount; i++) {
@@ -187,6 +189,11 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
     if (selectedTeamIndex === null || !game?.id) return;
 
     const currentTeam = teams[selectedTeamIndex];
+    const perTeam = playersPerTeamOf(game);
+    if (currentTeam && currentTeam.players.length >= perTeam) {
+      toast.error(t('games.teamFull'));
+      return;
+    }
     if (currentTeam && currentTeam.players.some(p => p.userId === playerId)) {
       toast.error(t('games.playerAlreadyInTeam'));
       return;
@@ -282,7 +289,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
       return;
     }
 
-    const slotCount = getFixedTeamSlotCount(game);
+    const slotCount = maxFixedTeamSlots(game);
     const teamsData = [];
     for (let i = 1; i <= slotCount; i++) {
       const team = updatedTeams.find((t) => t.teamNumber === i);
@@ -296,7 +303,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
     try {
       const response = await gamesApi.setFixedTeams(game.id, teamsData);
 
-      const slotCount = getFixedTeamSlotCount(game);
+      const slotCount = maxFixedTeamSlots(game);
       const updatedLocalTeams: GameTeam[] = [];
 
       for (let i = 1; i <= slotCount; i++) {
@@ -330,9 +337,10 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
 
   const hasEmptySlots = () => {
     if (!teams || teams.length === 0 || !game) return false;
-    const n = getFixedTeamSlotCount(game);
+    const n = maxFixedTeamSlots(game);
+    const perTeam = playersPerTeamOf(game);
     const visible = teams.slice(0, n);
-    const totalSlots = visible.length * 2;
+    const totalSlots = visible.length * perTeam;
     const filledSlots = visible.reduce((total, team) => total + team.players.length, 0);
     return filledSlots < totalSlots;
   };
@@ -403,7 +411,8 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
     );
   }
 
-  const slotCount = getFixedTeamSlotCount(game);
+  const slotCount = maxFixedTeamSlots(game);
+  const playersPerTeam = playersPerTeamOf(game);
   const main = (
     <>
       {teams?.slice(0, slotCount).map((team, index) => {
@@ -424,22 +433,19 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
               </span>
             </div>
             <div className="flex min-w-0 flex-1 divide-x divide-gray-200/90 dark:divide-gray-700/70">
-              <div className="min-w-0 flex-1 p-2.5">
-                <FixedTeamPlayerSlot
-                  player={team.players[0]}
-                  canEdit={canEdit}
-                  onRemove={() => handleRemovePlayer(index, team.players[0]!.userId)}
-                  onAdd={openSelector}
-                />
-              </div>
-              <div className="min-w-0 flex-1 p-2.5">
-                <FixedTeamPlayerSlot
-                  player={team.players[1]}
-                  canEdit={canEdit}
-                  onRemove={() => handleRemovePlayer(index, team.players[1]!.userId)}
-                  onAdd={openSelector}
-                />
-              </div>
+              {Array.from({ length: playersPerTeam }, (_, slotIndex) => {
+                const player = team.players[slotIndex];
+                return (
+                  <div key={slotIndex} className="min-w-0 flex-1 p-2.5">
+                    <FixedTeamPlayerSlot
+                      player={player}
+                      canEdit={canEdit}
+                      onRemove={() => player && handleRemovePlayer(index, player.userId)}
+                      onAdd={openSelector}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         );

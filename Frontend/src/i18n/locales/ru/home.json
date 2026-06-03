@@ -6,7 +6,8 @@
     "leagueSeasonScheduledGames": "Запланированные игры",
     "leagueSeasonUnscheduledGames": "Время ещё не назначено",
     "toggleLeagueGames": "Показать или скрыть игры",
-    "leagueGameWithLabel": "С",
+    "leagueGameYouLabel": "Вы",
+    "leagueGameWithLabel": "с",
     "leagueGameBracketBadge": "Сетка",
     "leagueGameSeasonPlayoffBadge": "Сезонный плей-офф",
     "leagueGameBracketPlayInUrgency": "Сначала назначьте play-in",
@@ -44,6 +45,10 @@
     "questionnaireDismissLink": "Больше не показывать",
     "questionnaireDismissTitle": "Скрыть опрос об уровне?",
     "questionnaireDismissMessage": "Ваш текущий уровень — {{level}}. Только скрываем напоминание, уровень не меняется. Баннер больше не покажется.",
-    "questionnaireDismissConfirm": "Да, скрыть"
+    "questionnaireDismissConfirm": "Да, скрыть",
+    "noNamePromptDismissLink": "Don't show again",
+    "noNamePromptDismissTitle": "Don't show this reminder?",
+    "noNamePromptDismissMessage": "You can still set your name later in Profile.",
+    "noNamePromptDismissConfirm": "Don't show again"
   }
 }

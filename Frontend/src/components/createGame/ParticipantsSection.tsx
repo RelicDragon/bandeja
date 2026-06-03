@@ -1,6 +1,7 @@
-import { Users as UsersIcon, UserPlus, Users2, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { UserPlus, Users2, Plus, Trophy, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, PlayerAvatar } from '@/components';
+import { Button, PlayerAvatar, RangeSlider } from '@/components';
 import { BasicUser } from '@/types';
 import { EntityType } from '@/types';
 import {
@@ -29,6 +30,9 @@ interface ParticipantsSectionProps {
   onRemoveInvitedPlayer?: (playerId: string) => void;
   onOpenInviteModal: () => void;
   onToggleCreatorNonPlaying?: (nonPlaying: boolean) => void;
+  showSetupControls?: boolean;
+  playerLevelRange?: [number, number];
+  onPlayerLevelRangeChange?: (range: [number, number]) => void;
 }
 
 export const ParticipantsSection = ({
@@ -50,8 +54,12 @@ export const ParticipantsSection = ({
   onRemoveInvitedPlayer,
   onOpenInviteModal,
   onToggleCreatorNonPlaying,
+  showSetupControls = true,
+  playerLevelRange,
+  onPlayerLevelRangeChange,
 }: ParticipantsSectionProps) => {
   const { t } = useTranslation();
+  const [isLevelExpanded, setIsLevelExpanded] = useState(false);
   const tournamentSlots = tournamentParticipantOptions(user);
   const gameLeagueSlots = gameLeagueRosterOptions(user);
   const trainingSlots = trainingParticipantOptions();
@@ -126,16 +134,52 @@ export const ParticipantsSection = ({
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <UsersIcon size={18} className="text-gray-500 dark:text-gray-400" />
-        <h2 className="section-title">
-          {entityType === 'TOURNAMENT' ? t('createGame.participantsTournament') :
-           entityType === 'LEAGUE' ? t('createGame.participantsLeague') :
-           t('createGame.participants')}
-        </h2>
-      </div>
       <div className="space-y-4">
-        {entityType !== 'BAR' && (
+        {entityType !== 'BAR' &&
+          entityType !== 'TRAINING' &&
+          playerLevelRange &&
+          onPlayerLevelRangeChange && (
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-900/50 p-3">
+              <button
+                type="button"
+                onClick={() => setIsLevelExpanded((prev) => !prev)}
+                className="w-full flex items-center justify-between gap-3"
+                aria-expanded={isLevelExpanded}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Trophy size={16} className="text-gray-500 dark:text-gray-400" />
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                    {entityType === 'TOURNAMENT'
+                      ? t('createGame.playerLevelTournament')
+                      : entityType === 'LEAGUE'
+                        ? t('createGame.playerLevelLeague')
+                        : t('createGame.playerLevel')}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold px-2 py-1 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                    {playerLevelRange[0].toFixed(1)} - {playerLevelRange[1].toFixed(1)}
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={`text-gray-500 transition-transform ${isLevelExpanded ? 'rotate-180' : ''}`}
+                  />
+                </div>
+              </button>
+              {isLevelExpanded && (
+                <div className="mt-3">
+                  <RangeSlider
+                    min={1.0}
+                    max={7.0}
+                    value={playerLevelRange}
+                    onChange={onPlayerLevelRangeChange}
+                    step={0.1}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        {showSetupControls && entityType !== 'BAR' && (
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
               {entityType === 'TOURNAMENT' ? t('createGame.numberOfParticipantsTournament') :
@@ -183,15 +227,17 @@ export const ParticipantsSection = ({
             </div>
           </div>
         )}
-        {showMatchFormat && (
+        {showSetupControls && showMatchFormat && (
           <MatchFormatControl
             playersPerMatch={playersPerMatch}
             allowedCounts={allowedPlayerCountsPerMatch}
             onChange={onPlayersPerMatchChange}
             disabled={maxParticipants === 2}
             label={t('sport.matchFormat')}
-            label1v1={t('sport.match1v1')}
-            label2v2={t('sport.match2v2')}
+            labelSingles={t('sport.matchSingles')}
+            labelDoubles={t('sport.matchDoubles')}
+            hintSingles={t('sport.match1v1')}
+            hintDoubles={t('sport.match2v2')}
           />
         )}
         {entityType === 'TRAINING' && onToggleCreatorNonPlaying && (

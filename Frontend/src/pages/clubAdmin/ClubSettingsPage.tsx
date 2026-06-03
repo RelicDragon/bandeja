@@ -6,7 +6,9 @@ import { mediaApi } from '@/api/media';
 import { ClubAdminLayout } from '@/components/clubAdmin/ClubAdminLayout';
 import { ClubAdminCoachMark } from '@/components/clubAdmin/ClubAdminCoachMark';
 import { ClubAvatar } from '@/components/ClubAvatar';
-import { Club, ClubPhoto } from '@/types';
+import { Club, ClubPhoto, Sport } from '@/types';
+import { getSportConfig } from '@/sport/sportRegistry';
+import { listSelectableSports } from '@/utils/profileSports';
 import { useClubAdminForbidden } from '@/hooks/useClubAdminForbidden';
 import { CLUB_AMENITY_KEYS, ClubAmenityKey } from '@/utils/clubAdmin/constants';
 import { normalizeClubPhotos } from '@/utils/clubPhotos';
@@ -40,6 +42,20 @@ export function ClubSettingsPage() {
 
   const amenities = (club?.amenities as Record<string, boolean> | undefined) ?? {};
   const photos = normalizeClubPhotos(club?.photos);
+  const selectableSports = listSelectableSports();
+  const clubSports = club?.sports?.length ? club.sports : (['PADEL'] as Sport[]);
+
+  const toggleClubSport = (sport: Sport) => {
+    if (!club) return;
+    const current = new Set(clubSports);
+    if (current.has(sport)) {
+      if (current.size <= 1) return;
+      current.delete(sport);
+    } else {
+      current.add(sport);
+    }
+    setClub({ ...club, sports: [...current] });
+  };
 
   const toggleAmenity = (key: ClubAmenityKey) => {
     if (!club) return;
@@ -66,6 +82,7 @@ export function ClubSettingsPage() {
         defaultSlotMinutes: club.defaultSlotMinutes ?? undefined,
         cancellationNoticeHours: club.cancellationNoticeHours ?? undefined,
         amenities,
+        sports: clubSports,
       });
       setClub(updated as ClubAdminClub);
     } catch (e) {
@@ -254,6 +271,29 @@ export function ClubSettingsPage() {
                 }
               />
             </label>
+          </div>
+
+          <div>
+            <p className="mb-1 text-sm text-muted-foreground">{t('clubAdmin.sports')}</p>
+            <p className="mb-2 text-xs text-muted-foreground">{t('clubAdmin.sportsHint')}</p>
+            <div className="flex flex-wrap gap-2">
+              {selectableSports.map((sport) => {
+                const enabled = clubSports.includes(sport);
+                const config = getSportConfig(sport);
+                return (
+                  <button
+                    key={sport}
+                    type="button"
+                    className={`rounded-full border px-3 py-1 text-xs ${
+                      enabled ? 'border-primary bg-primary/10 text-primary' : 'border-border'
+                    }`}
+                    onClick={() => toggleClubSport(sport)}
+                  >
+                    {config.icon} {t(config.labelKey)}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div>

@@ -16,6 +16,7 @@ export const useAvailableGames = (
   const [loading, setLoading] = useState(false);
   const hasDataRef = useRef(false);
   const userCityId = user?.currentCity?.id || user?.currentCityId;
+  const lastSportRef = useRef<string | undefined>(undefined);
 
   const isLoadingRef = useRef(false);
   const lastFetchParamsRef = useRef<string | null>(null);
@@ -40,7 +41,9 @@ export const useAvailableGames = (
 
     isLoadingRef.current = true;
     lastFetchParamsRef.current = fetchParams;
-    if (!hasDataRef.current) setLoading(true);
+    const sportChanged = hasDataRef.current && lastSportRef.current !== sport;
+    lastSportRef.current = sport;
+    if (!hasDataRef.current || sportChanged) setLoading(true);
     try {
       const params: any = {
         showArchived: true,

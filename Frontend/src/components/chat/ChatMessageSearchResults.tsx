@@ -61,15 +61,17 @@ function getContextLabel(result: SearchMessageResult, t: (key: string, opts?: an
 }
 
 function getGameLocationAndTime(
-  context: { club?: { name?: string }; court?: { name?: string; club?: { name?: string } }; city?: { name?: string }; startTime?: string; timeIsSet?: boolean }
+  context: { club?: { name?: string }; court?: { name?: string; club?: { name?: string } }; city?: { name?: string }; startTime?: string; timeIsSet?: boolean },
+  t: TFunction,
 ): string | null {
   if (!context) return null;
-  const location = context.court?.club?.name || context.club?.name || context.city?.name;
-  const locationStr = location
-    ? (context.court?.name ? `${location} • ${context.court.name}` : location)
-    : null;
-  if (!locationStr) return null;
-  if (context.timeIsSet === false) return locationStr;
+  const clubName = context.court?.club?.name || context.club?.name;
+  const locationStr = clubName
+    ? (context.court?.name ? `${clubName} • ${context.court.name}` : clubName)
+    : context.city?.name || t('gameDetails.clubNotSet');
+  if (context.timeIsSet === false) {
+    return `${locationStr} • ${t('gameDetails.datetimeNotSet')}`;
+  }
   if (!context.startTime) return locationStr;
   return `${locationStr} • ${formatDate(context.startTime, 'PPp')}`;
 }
@@ -134,7 +136,7 @@ function ResultItem({ r, onResultClick, t }: { r: SearchMessageResult; onResultC
           })()}
           <span className="break-words min-w-0">
             {r.message.chatContextType === 'GAME' && r.context && ('club' in r.context || 'city' in r.context)
-              ? [ctxLabel, getGameLocationAndTime(r.context as Parameters<typeof getGameLocationAndTime>[0])].filter(Boolean).join(' · ') + ' · '
+              ? [ctxLabel, getGameLocationAndTime(r.context as Parameters<typeof getGameLocationAndTime>[0], t)].filter(Boolean).join(' · ') + ' · '
               : ctxLabel + ' · '}
             {formatRelativeTime(r.message.createdAt)}
           </span>

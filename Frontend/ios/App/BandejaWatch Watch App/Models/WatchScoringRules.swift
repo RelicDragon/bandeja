@@ -7,16 +7,21 @@ enum WatchScoringPreset: String, Sendable {
     case classicProSet = "CLASSIC_PRO_SET"
     case classicSingleSet = "CLASSIC_SINGLE_SET"
     case classicShortSet = "CLASSIC_SHORT_SET"
+    case classicFast4 = "CLASSIC_FAST4"
     case classicTimed = "CLASSIC_TIMED"
+    case points12 = "POINTS_12"
+    case points15 = "POINTS_15"
     case points16 = "POINTS_16"
     case points21 = "POINTS_21"
     case points24 = "POINTS_24"
     case points32 = "POINTS_32"
     case points11 = "POINTS_11"
     case bestOf3_11 = "BEST_OF_3_11"
+    case bestOf3_15 = "BEST_OF_3_15"
     case bestOf5_11 = "BEST_OF_5_11"
     case bestOf3_21 = "BEST_OF_3_21"
     case par11 = "PAR_11"
+    case singleGame21 = "SINGLE_GAME_21"
     case timed = "TIMED"
     case custom = "CUSTOM"
 }
@@ -54,9 +59,42 @@ struct WatchScoringRules: Sendable, Equatable {
     var allowIncompleteRegularSetGames: Bool
 
     var isClassic: Bool { ballsInGames && winnerOfMatch == .bySets }
-    var isPoints: Bool { !ballsInGames && totalPointsPerSet > 0 }
+
+    /// Ball-budget Americano (`isPointsRules` in FE `rulebook.ts`).
+    var isBallBudgetPoints: Bool {
+        !ballsInGames && totalPointsPerSet > 0 && winBy == 0 && winnerOfMatch == .byScores
+    }
+
+    /// Best-of-N games to a point cap with win-by-2 (`isRallyGameRules`).
+    var isRallyGame: Bool {
+        !ballsInGames && winnerOfMatch == .bySets && fixedNumberOfSets > 1
+            && totalPointsPerSet > 0 && winBy >= 2
+    }
+
+    /// Single game to a point cap with win-by-2 (`isRallyPointsRules`).
+    var isRallyPoints: Bool {
+        !ballsInGames && fixedNumberOfSets <= 1 && totalPointsPerSet > 0 && winBy >= 2
+    }
+
+    var usesRallyPointCap: Bool { isRallyGame || isRallyPoints }
+
+    /// Legacy alias: ball-budget only (not rally best-of).
+    var isPoints: Bool { isBallBudgetPoints }
+
+    /// Open-ended `TIMED` / zero-cap `CUSTOM` (parity with web `timedCustomPresets`).
+    var isOpenEndedPointsPreset: Bool {
+        !ballsInGames && totalPointsPerSet <= 0 && winnerOfMatch == .byScores && fixedNumberOfSets <= 1
+    }
 
     var gamesScoreForTieBreak: Int { tieBreakGameAtGames ?? max(gamesPerSet, 1) }
+
+    func pointRaceCompleted(teamA: Int, teamB: Int) -> Bool {
+        let winner = max(teamA, teamB)
+        let loser = min(teamA, teamB)
+        let target = max(totalPointsPerSet, 1)
+        let winBy = max(winBy, 1)
+        return winner >= target && (winner - loser) >= winBy
+    }
 }
 
 enum WatchScoringRulebook {
@@ -145,6 +183,12 @@ enum WatchScoringRulebook {
             r.gamesPerSet = 4
             r.tieBreakGameAtGames = 3
             return r
+        case .classicFast4:
+            var r = classicBo3
+            r.gamesPerSet = 4
+            r.tieBreakGameAtGames = 3
+            r.tieBreakGameFirstTo = 5
+            return r
         case .classicSingleSet, .classicTimed:
             return base(
                 ballsInGames: true,
@@ -163,6 +207,10 @@ enum WatchScoringRulebook {
                 winnerOfMatch: .bySets,
                 allowRemoveSet: false
             )
+        case .points12:
+            return pointsRule(total: 12)
+        case .points15:
+            return pointsRule(total: 15)
         case .points16:
             return pointsRule(total: 16)
         case .points21:
@@ -175,12 +223,18 @@ enum WatchScoringRulebook {
             return pointsRule(total: 11)
         case .bestOf3_11:
             return rallyBestOf(sets: 3, pointsPerSet: 11)
+        case .bestOf3_15:
+            return rallyBestOf(sets: 3, pointsPerSet: 15)
         case .bestOf5_11:
             return rallyBestOf(sets: 5, pointsPerSet: 11)
         case .bestOf3_21:
             return rallyBestOf(sets: 3, pointsPerSet: 21)
         case .par11:
             return pointsRule(total: 11)
+        case .singleGame21:
+            var r = pointsRule(total: 21)
+            r.winBy = 2
+            return r
         case .timed:
             return pointsRule(total: 0)
         case .custom:

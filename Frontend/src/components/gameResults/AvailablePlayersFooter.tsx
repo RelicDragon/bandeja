@@ -3,12 +3,15 @@ import { useMemo } from 'react';
 import { BasicUser, GameParticipant } from '@/types';
 import { Match } from '@/types/gameResults';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
+import { maxPlayersPerTeamForGame, teamSideSlotsFull } from '@/utils/matchFormat';
 
 interface AvailablePlayersFooterProps {
   players: BasicUser[];
   editingMatch: Match | undefined;
   roundMatches?: Match[];
   draggedPlayer: string | null;
+  playersPerMatch?: number;
+  sport?: string | null;
   onDragStart: (e: React.DragEvent, playerId: string) => void;
   onDragEnd: () => void;
   onTouchStart: (e: TouchEvent, playerId: string) => void;
@@ -21,6 +24,8 @@ export const AvailablePlayersFooter = ({
   editingMatch,
   roundMatches = [],
   draggedPlayer,
+  playersPerMatch,
+  sport,
   onDragStart,
   onDragEnd,
   onTouchStart,
@@ -39,10 +44,11 @@ export const AvailablePlayersFooter = ({
     return !editingMatch.teamA.includes(player.id) && !editingMatch.teamB.includes(player.id);
   });
 
-  const maxPlayersPerTeam = players.length === 2 ? 1 : 2;
-  const teamsAreFull = editingMatch &&
-    editingMatch.teamA.length >= maxPlayersPerTeam &&
-    editingMatch.teamB.length >= maxPlayersPerTeam;
+  const maxPlayersPerTeam = maxPlayersPerTeamForGame({ playersPerMatch, sport }, players.length);
+  const teamsAreFull =
+    editingMatch &&
+    teamSideSlotsFull(editingMatch, 'teamA', maxPlayersPerTeam) &&
+    teamSideSlotsFull(editingMatch, 'teamB', maxPlayersPerTeam);
 
   const shouldShow = availablePlayers.length > 0 && !teamsAreFull;
 

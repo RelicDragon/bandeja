@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import api from './axios';
 import { ApiResponse, Game, GameTeam, GameTeamData, BookedCourtSlot } from '@/types';
 import type { ReactionEmojiUsageMutationPayload } from '@/store/reactionEmojiUsageStore';
@@ -305,8 +306,23 @@ export const gamesApi = {
   },
 
   getMyWorkoutForGame: async (gameId: string) => {
-    const response = await api.get<ApiResponse<GameWorkoutSummary | null>>(`/games/${gameId}/workout/me`);
-    return response.data;
+    try {
+      const response = await api.get<ApiResponse<GameWorkoutSummary | null>>(`/games/${gameId}/workout/me`);
+      return response.data;
+    } catch (err) {
+      if (isAxiosError(err)) {
+        const status = err.response?.status;
+        // No row / not a workout participant / route missing on old backends → treat as empty
+        if (status === 404 || status === 403) {
+          return { success: true, data: null };
+        }
+        // Archived games were blocked by canAccessGame (400) before canAccessGameIncludingArchived
+        if (status === 400) {
+          return { success: true, data: null };
+        }
+      }
+      throw err;
+    }
   },
 };
 

@@ -13,7 +13,7 @@ export const LanguageSelector = () => {
   const languages = [
     { value: 'en', label: 'EN', fullLabel: 'English', flag: '🇬🇧' },
     { value: 'ru', label: 'RU', fullLabel: 'Русский', flag: '🇷🇺' },
-    { value: 'sr', label: 'SR', fullLabel: 'Српски', flag: '🇷🇸' },
+    { value: 'sr', label: 'SR', fullLabel: 'Srpski', flag: '🇷🇸' },
     { value: 'es', label: 'ES', fullLabel: 'Español', flag: '🇪🇸' },
     { value: 'cs', label: 'CS', fullLabel: 'Čeština', flag: '🇨🇿' },
   ];

@@ -15,6 +15,7 @@ import {
   resetUserPassword,
   deleteUser,
   mergeUsers,
+  adminResetSportQuestionnaire,
   getAllCities,
   createCity,
   updateCity,
@@ -76,6 +77,11 @@ router.patch('/users/:userId/toggle-status', requireAdmin, toggleUserStatus);
 router.post('/users/:userId/reset-password', requireAdmin, resetUserPassword);
 router.delete('/users/:userId', requireAdmin, deleteUser);
 router.post('/users/merge', requireAdmin, mergeUsers);
+router.post(
+  '/users/:userId/sports/:sport/questionnaire/reset',
+  requireAdmin,
+  adminResetSportQuestionnaire,
+);
 
 router.get('/games', requireAdmin, getAllGames);
 router.get('/games/:gameId', requireAdmin, getGameById);

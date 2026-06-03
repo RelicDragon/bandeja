@@ -1,3 +1,4 @@
+/** Ladder (ESCALERA) rounds — also used as Swiss/box pairing via {@link ./swissPairing.ts}. */
 import { randomUUID } from 'crypto';
 import type {
   GenMatch as Match,

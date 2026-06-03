@@ -7,6 +7,8 @@ import { generateRandomRound } from './random';
 import { generateRatingRound } from './rating';
 import { generateEscaleraRound } from './escalera';
 import { generateWinnersCourtRound } from './winnersCourt';
+import { generateRoundRobinRound } from './roundRobin';
+import { generateKingOfTheCourtRound } from './kingOfTheCourt';
 
 export interface RoundGeneratorOptions {
   rounds: GenRound[];
@@ -104,8 +106,10 @@ export class RoundGenerator {
         return generateWinnersCourtRound(this.options.game, this.options.rounds, initialSets);
       case 'ESCALERA':
         return generateEscaleraRound(this.options.game, this.options.rounds, initialSets);
+      case 'KING_OF_COURT':
+        return generateKingOfTheCourtRound(this.options.game, this.options.rounds, initialSets);
       case 'ROUND_ROBIN':
-        throw new Error('ROUND_ROBIN is not supported');
+        return generateRoundRobinRound(this.options.game, this.options.rounds, initialSets);
       default:
         throw new Error(`Unsupported match generation type: ${String(matchGenerationType)}`);
     }
@@ -169,14 +173,26 @@ export class RoundGenerator {
       if (fixedTeamsMatch) {
         return fixedTeamsMatch;
       }
-      const matchSetups = createTwoOnTwoMatches(players);
-      for (const setup of matchSetups) {
-        matches.push({
-          id: randomUUID(),
-          teamA: setup.teamA,
-          teamB: setup.teamB,
-          sets: cloneSets(initialSets),
-        });
+      if (ppm === 2) {
+        const matchSetups = createOneOnOneMatches(players);
+        if (matchSetups.length > 0) {
+          matches.push({
+            id: randomUUID(),
+            teamA: matchSetups[0].teamA,
+            teamB: matchSetups[0].teamB,
+            sets: cloneSets(initialSets),
+          });
+        }
+      } else {
+        const matchSetups = createTwoOnTwoMatches(players);
+        for (const setup of matchSetups) {
+          matches.push({
+            id: randomUUID(),
+            teamA: setup.teamA,
+            teamB: setup.teamB,
+            sets: cloneSets(initialSets),
+          });
+        }
       }
     } else if (numPlayers === 2 && ppm === 2) {
       const fixedTeamsMatch = this.tryGenerateHeadToHeadFixedTeamsMatch(initialSets);

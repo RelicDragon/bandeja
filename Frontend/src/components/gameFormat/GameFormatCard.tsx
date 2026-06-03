@@ -33,10 +33,13 @@ interface GameFormatCardProps {
   showWizardButton?: boolean;
   /** When true, omit allow-multi row (e.g. draft lives in Game Settings). */
   suppressAllowMultiToggle?: boolean;
+  showFixedTeamsToggle?: boolean;
   sportRow?: ReactNode;
   questionnaireBanner?: ReactNode;
   playersPerMatch?: number;
   sport?: string | null;
+  /** Overrides pencil button aria-label (e.g. casual flow “Customize”). */
+  wizardButtonLabel?: string;
 }
 
 export const GameFormatCard = ({
@@ -49,10 +52,12 @@ export const GameFormatCard = ({
   fixedTeamsPanelOpen,
   showWizardButton = true,
   suppressAllowMultiToggle = false,
+  showFixedTeamsToggle = true,
   sportRow,
   questionnaireBanner,
   playersPerMatch,
   sport,
+  wizardButtonLabel,
 }: GameFormatCardProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
@@ -67,7 +72,8 @@ export const GameFormatCard = ({
   };
 
   const showGender = teams && gameFormatGenderVisible(entityType);
-  const showFixedToggle = teams && gameFormatFixedTeamsToggleVisible(entityType, teams.participantCount);
+  const showFixedToggle =
+    showFixedTeamsToggle && teams && gameFormatFixedTeamsToggleVisible(entityType, teams.participantCount);
   const readOnly = !!teams?.readOnly;
 
   const showFixedTeamsPanel =
@@ -134,7 +140,7 @@ export const GameFormatCard = ({
           <motion.button
             type="button"
             onClick={onOpenWizard}
-            aria-label={t('gameFormat.title')}
+            aria-label={wizardButtonLabel ?? t('gameFormat.title')}
             whileTap={{ scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 520, damping: 28 }}
             className="flex-shrink-0 self-center p-2 rounded-lg bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-500/20 active:bg-primary-200 dark:active:bg-primary-500/30 transition-colors"

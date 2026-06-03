@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RotateCcw, Star } from 'lucide-react';
+import { RotateCcw, Sparkles, Star, Users } from 'lucide-react';
 import { ToggleSwitch, RangeSlider } from '@/components';
 import { TimeRangeSlider } from '@/components/TimeRangeSlider';
 import { clubsApi } from '@/api/clubs';
 import { favoritesApi } from '@/api/favorites';
 import type { Club } from '@/types';
-import { DEFAULT_SPORT, type Sport } from '@shared/sport';
-import { getSportConfig } from '@/sport/sportRegistry';
-import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
+import type { FindTierFilter } from '@/utils/findDiscovery';
 
 interface FiltersPanelProps {
   cityId?: string;
@@ -23,13 +21,14 @@ interface FiltersPanelProps {
   hour12: boolean;
   onResetFilters?: () => void;
   showResetFooter?: boolean;
-  sportsEnabled?: Sport[];
-  primarySport?: Sport;
-  filterSport?: FindSportFilterValue;
-  onFilterSportChange?: (value: FindSportFilterValue) => void;
   isAdmin?: boolean;
   showPrivateGames?: boolean;
   onShowPrivateGamesChange?: (v: boolean) => void;
+  showDiscoveryFilters?: boolean;
+  filterTier?: FindTierFilter;
+  onFilterTierChange?: (value: FindTierFilter | undefined) => void;
+  filterNoRating?: boolean;
+  onFilterNoRatingChange?: (v: boolean) => void;
 }
 
 export const FiltersPanel = ({
@@ -45,13 +44,14 @@ export const FiltersPanel = ({
   hour12,
   onResetFilters,
   showResetFooter = false,
-  sportsEnabled,
-  primarySport = DEFAULT_SPORT,
-  filterSport = 'primary',
-  onFilterSportChange,
   isAdmin = false,
   showPrivateGames = false,
   onShowPrivateGamesChange,
+  showDiscoveryFilters = false,
+  filterTier,
+  onFilterTierChange,
+  filterNoRating = false,
+  onFilterNoRatingChange,
 }: FiltersPanelProps) => {
   const { t } = useTranslation();
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -160,15 +160,6 @@ export const FiltersPanel = ({
         : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-transparent hover:bg-gray-200 dark:hover:bg-gray-700'
     }`;
 
-  const showSportSection = (sportsEnabled?.length ?? 0) >= 2 && !!onFilterSportChange;
-  const sportChips = sportsEnabled ?? [];
-
-  const sportChipActive = (value: FindSportFilterValue) => {
-    const current = filterSport === undefined || filterSport === 'primary' ? 'primary' : filterSport;
-    if (value === 'primary') return current === 'primary';
-    return current === value;
-  };
-
   return (
     <div className="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-gradient-to-b from-white to-gray-50/80 dark:from-gray-900 dark:to-gray-900/95 shadow-sm p-4 space-y-5">
       <div className="flex items-center justify-between gap-3">
@@ -199,35 +190,51 @@ export const FiltersPanel = ({
         </>
       )}
 
-      {showSportSection && (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {t('sportFilter.section')}
+      {showDiscoveryFilters && onFilterTierChange && (
+        <div className="space-y-2 rounded-xl border border-gray-200/80 bg-white/70 p-3 dark:border-gray-700/80 dark:bg-gray-950/30">
+          <p className="m-0 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            {t('games.findDiscovery.tierSection')}
           </p>
           <div className="flex flex-wrap gap-2 py-0.5 pr-0.5">
             <button
               type="button"
-              onClick={() => onFilterSportChange!('all')}
-              className={chipClass(sportChipActive('all'))}
+              onClick={() => onFilterTierChange(undefined)}
+              className={chipClass(!filterTier)}
             >
-              {t('sportFilter.allSports')}
+              {t('common.all')}
             </button>
-            {sportChips.map((sportId) => {
-              const cfg = getSportConfig(sportId);
-              const isPrimary = sportId === primarySport;
-              const value: FindSportFilterValue = isPrimary ? 'primary' : sportId;
-              return (
-                <button
-                  key={sportId}
-                  type="button"
-                  onClick={() => onFilterSportChange!(value)}
-                  className={chipClass(sportChipActive(value))}
-                >
-                  <span aria-hidden>{cfg.icon}</span>
-                  {t(cfg.labelKey)}
-                </button>
-              );
-            })}
+            <button
+              type="button"
+              onClick={() => onFilterTierChange('social')}
+              className={chipClass(filterTier === 'social')}
+            >
+              <Users size={12} aria-hidden />
+              {t('createGame.intent.social.title')}
+            </button>
+            <button
+              type="button"
+              onClick={() => onFilterTierChange('match')}
+              className={chipClass(filterTier === 'match')}
+            >
+              <Sparkles size={12} aria-hidden />
+              {t('createGame.intent.match.title')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showDiscoveryFilters && onFilterNoRatingChange && (
+        <div className="rounded-xl border border-gray-200/80 bg-white/70 p-3 dark:border-gray-700/80 dark:bg-gray-950/30">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                {t('games.findDiscovery.noRatingOnly')}
+              </span>
+              <p className="m-0 mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
+                {t('games.findDiscovery.noRatingHint')}
+              </p>
+            </div>
+            <ToggleSwitch checked={filterNoRating} onChange={onFilterNoRatingChange} />
           </div>
         </div>
       )}

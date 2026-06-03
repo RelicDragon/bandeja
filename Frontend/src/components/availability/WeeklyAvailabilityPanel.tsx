@@ -70,8 +70,7 @@ export function WeeklyAvailabilityPanel({
 
   useEffect(() => {
     setRollingDoc(ensureNormalizedRollingDoc(value, startsOn));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  }, [value, startsOn]);
 
   const parsedBoundaries = useMemo(
     () => parseAvailabilityBucketBoundaries(savedBucketBoundaries),
@@ -102,8 +101,7 @@ export function WeeklyAvailabilityPanel({
 
   const currentSlotInitial: WeeklyAvailability = useMemo(
     () => effectiveSlotMask(rollingDoc, selectedSlot),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rollingDoc.anchor, selectedSlot]
+    [rollingDoc, selectedSlot]
   );
 
   const editor = useAvailabilityEditor({
@@ -114,8 +112,7 @@ export function WeeklyAvailabilityPanel({
         setRollingDoc(next);
         await onChange(next);
       },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [rollingDoc.anchor, rollingDoc.baseline, selectedSlot, onChange]
+      [rollingDoc, selectedSlot, onChange]
     ),
     bucketBoundaries,
   });

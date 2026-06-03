@@ -36,6 +36,22 @@ function main(): void {
   assert(cfg.allowedScoringPresets.includes('POINTS_11'), 'POINTS_11 allowed');
   assert(cfg.allowedScoringPresets.includes('BEST_OF_5_11'), 'BEST_OF_5_11 allowed');
   assert(!cfg.allowedScoringPresets.includes('CLASSIC_BEST_OF_3'), 'no tennis classic preset');
+  assert(cfg.allowedGameTypes.includes('ROUND_ROBIN'), 'ROUND_ROBIN allowed');
+  assert(cfg.allowedGameTypes.includes('LADDER'), 'LADDER allowed for box');
+  assert(!cfg.allowedGameTypes.includes('AMERICANO'), 'no padel-style Americano on TT');
+  assert(!cfg.rotationFormats.americano, 'rotation policy: no americano');
+
+  assert(
+    validateGameForSport({
+      sport: 'TABLE_TENNIS',
+      maxParticipants: 8,
+      playersPerMatch: 2,
+      gameType: 'ROUND_ROBIN',
+      matchGenerationType: 'ROUND_ROBIN',
+      scoringPreset: 'POINTS_11',
+    }) === Sport.TABLE_TENNIS,
+    'club RR singles POINTS_11',
+  );
 
   assert(
     validateGameForSport({

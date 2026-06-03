@@ -23,15 +23,18 @@ import { LiveTeamPanel } from './LiveTeamPanel';
 import {
   computeServeGuideSnapshotByPlugin,
   isRallyLiveScoringPlugin,
+  liveScoringOfficiatingHintsEnabled,
+  liveScoringOfficiatingStrictEnabled,
   liveScoringServeGuideEnabled,
   needsServeSetupForPlugin,
   resolveLiveScoringPlugin,
 } from '@/liveScoring/registry';
+import type { OfficiatingLevel } from '@shared/officiatingLevel';
 import type { ScoringPreset, Sport } from '@/types';
-import { resolveCourtSchemaComponent, resolveRallyCourtForPlugin } from './courtRegistry';
+import { RallyOfficiatingButtons } from './rally/RallyOfficiatingButtons';
+import { liveCourtAspectForUiId, resolveCourtSchemaComponent, resolveRallyCourtForPlugin } from './courtRegistry';
 import { RallyScoreBoard } from './rally/RallyScoreBoard';
 import { rallyScoreMetaForState } from '@/liveScoring/rallyScoreMeta';
-import { isDoublesMatch } from '@/utils/matchFormat';
 
 type LiveScoreShellProps = {
   state: LiveScoringState;
@@ -62,6 +65,12 @@ type LiveScoreShellProps = {
   sport?: Sport | string | null;
   scoringPreset?: ScoringPreset | null;
   playersPerMatch?: number;
+  gameMetadata?: unknown;
+  officiatingLetPending?: boolean;
+  onKitchenFault?: (faultingTeam: LiveTeamSide) => void;
+  onLet?: () => void;
+  onLetReplay?: () => void;
+  onServiceFault?: () => void;
 };
 
 export const LiveScoreShell = ({
@@ -88,17 +97,27 @@ export const LiveScoreShell = ({
   sport,
   scoringPreset,
   playersPerMatch = 4,
+  gameMetadata,
+  officiatingLetPending,
+  onKitchenFault,
+  onLet,
+  onLetReplay,
+  onServiceFault,
 }: LiveScoreShellProps) => {
   const { t } = useTranslation();
   const set = activeSetScore(state);
   const points = getClassicPointLabels(state.classic, rules);
   const liveScoringPlugin = useMemo(
-    () => resolveLiveScoringPlugin(sport, (scoringPreset ?? rules.preset) as ScoringPreset | 'DERIVED'),
-    [sport, scoringPreset, rules.preset]
+    () =>
+      resolveLiveScoringPlugin(sport, (scoringPreset ?? rules.preset) as ScoringPreset | 'DERIVED', gameMetadata),
+    [sport, scoringPreset, rules.preset, gameMetadata],
   );
+  const officiatingLevel: OfficiatingLevel = liveScoringPlugin.officiatingLevel;
   const isRally = isRallyLiveScoringPlugin(liveScoringPlugin);
-  const matchDoubles = isDoublesMatch(playersPerMatch);
-  const serveGuideEnabled = liveScoringServeGuideEnabled(sport, liveScoringPlugin);
+  const matchDoubles = playersPerMatch === 4;
+  const serveGuideEnabled = liveScoringServeGuideEnabled(sport, liveScoringPlugin, rules);
+  const officiatingHintsEnabled = liveScoringOfficiatingHintsEnabled(liveScoringPlugin);
+  const officiatingStrictEnabled = liveScoringOfficiatingStrictEnabled(liveScoringPlugin);
   const setupBlocks = needsServeSetupForPlugin(liveScoringPlugin, state, rules);
   const showServeRotationRules =
     needsPointsServeRotationChoice(state, rules) &&
@@ -165,6 +184,7 @@ export const LiveScoreShell = ({
         revision={revision}
         boardTheme={boardTheme}
         serveIndicator={serveIndicator}
+        sport={sport}
       />
     );
   }
@@ -179,10 +199,17 @@ export const LiveScoreShell = ({
           teamBPlayers={teamBPlayers}
           teamAScore={set.teamA}
           teamBScore={set.teamB}
+          matchDoubles={matchDoubles}
+          serverTeam={serveGuideSnapshot?.serverTeam}
+          serverPlayerIndex={serveGuideSnapshot?.serverPlayerIndex}
+          courtSide={serveGuideSnapshot?.courtSide}
+          courtEndsSwapped={serveGuideSnapshot?.courtEndsSwapped}
+          motionToken={serveGuideSnapshot?.motionToken}
           setChips={rallyMeta.setChips}
           setsWon={rallyMeta.setsWon}
           gameCap={rallyMeta.gameCap}
           gameLabel={rallyMeta.gameLabel}
+          changeEndsBeforeNextPoint={serveGuideSnapshot?.changeEndsBeforeNextPoint}
         />
       ) : null;
     return (
@@ -195,6 +222,7 @@ export const LiveScoreShell = ({
           tv
           boardTheme={boardTheme}
           serveIndicator={serveIndicator}
+          sport={sport}
         />
         <div className="flex min-h-0 h-full min-w-0 flex-col items-center px-4 text-center md:min-h-[12rem]">
           {rallyCenter ?? (
@@ -235,23 +263,36 @@ export const LiveScoreShell = ({
           tv
           boardTheme={boardTheme}
           serveIndicator={serveIndicator}
+          sport={sport}
         />
       </div>
     );
   }
 
   const showShareUrls = shareTvUrl !== undefined || shareBroadcastUrl !== undefined;
+  const showServeLine = Boolean(serveGuideSnapshot && !matchDecided);
+  const scorePanelShellClass = showServeLine
+    ? boardTheme === 'light'
+      ? 'overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm'
+      : 'overflow-hidden rounded-xl border border-zinc-700/90 bg-zinc-900 shadow-md'
+    : '';
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col items-stretch">
-      <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-3 overflow-auto p-3 pb-3">
+      <div
+        className={`flex min-h-0 w-full min-w-0 flex-1 flex-col items-center gap-2 px-3 pb-2 pt-3 ${
+          setupBlocks && !matchDecided ? 'overflow-y-auto overscroll-contain' : 'overflow-hidden'
+        }`}
+      >
         {setupBlocks && !matchDecided ? (
-          <div className="relative z-40 w-full max-w-lg shrink-0 touch-manipulation">
+          <div className="relative z-40 w-full max-w-lg touch-manipulation">
             <LiveServeSetupCard
               teamAPlayers={teamAPlayers}
               teamBPlayers={teamBPlayers}
               CourtSchemaComponent={CourtSchemaComponent}
+              courtAspect={liveCourtAspectForUiId(liveScoringPlugin.uiId)}
               matchDoubles={matchDoubles}
+              courtSetupLayout={sport === 'SQUASH' ? 'sides' : 'ends'}
               showServeRotationRules={showServeRotationRules}
               saving={saving}
               onComplete={onServeSetupComplete}
@@ -263,19 +304,32 @@ export const LiveScoreShell = ({
           className={`flex w-full shrink-0 justify-center ${setupBlocks ? 'hidden' : ''}`}
           aria-hidden={setupBlocks || undefined}
         >
-          <LiveBroadcastBoard
-            state={state}
-            rules={rules}
-            teamAPlayers={teamAPlayers}
-            teamBPlayers={teamBPlayers}
-            revision={revision}
-            boardTheme={boardTheme}
-            serveIndicator={serveIndicator}
-            interactive={!setupBlocks}
-            disabled={panelDisabled}
-            onScore={onScore}
-            onUndo={onUndo}
-          />
+          <div className={`flex w-fit max-w-full min-w-0 flex-col ${scorePanelShellClass}`}>
+            <LiveBroadcastBoard
+              state={state}
+              rules={rules}
+              teamAPlayers={teamAPlayers}
+              teamBPlayers={teamBPlayers}
+              revision={revision}
+              boardTheme={boardTheme}
+              serveIndicator={serveIndicator}
+              sport={sport}
+              interactive={!setupBlocks}
+              disabled={panelDisabled}
+              attachedFooter={showServeLine}
+              embedded={showServeLine}
+              onScore={onScore}
+              onUndo={onUndo}
+            />
+            {showServeLine && serveGuideSnapshot ? (
+              <LiveServeServerLine
+                attached
+                snapshot={serveGuideSnapshot}
+                teamAPlayers={teamAPlayers}
+                teamBPlayers={teamBPlayers}
+              />
+            ) : null}
+          </div>
         </div>
         {matchDecided ? (
           <LiveMatchCompleteBanner
@@ -286,14 +340,8 @@ export const LiveScoreShell = ({
             gameId={gameId}
           />
         ) : null}
-        {serveGuideSnapshot && !matchDecided ? (
-          <LiveServeServerLine
-            snapshot={serveGuideSnapshot}
-            teamAPlayers={teamAPlayers}
-            teamBPlayers={teamBPlayers}
-          />
-        ) : null}
         {!setupBlocks ? (
+          <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
           <LiveScoreCenter
             state={state}
             teamAPlayers={teamAPlayers}
@@ -301,7 +349,6 @@ export const LiveScoreShell = ({
             CourtSchemaComponent={CourtSchemaComponent}
             matchDoubles={matchDoubles}
             serveGuideSnapshot={serveGuideSnapshot}
-            pointCenter={points.center}
             rules={rules}
             saving={saving}
             error={error}
@@ -309,11 +356,30 @@ export const LiveScoreShell = ({
             isOnline={isOnline ?? true}
             hideServeGuide={matchDecided || !serveGuideEnabled}
             RallyCourtComponent={RallyCourtComponent}
+            courtAspect={liveCourtAspectForUiId(liveScoringPlugin.uiId)}
             onServeSetupComplete={onServeSetupComplete}
             onSkipServeGuide={onSkipServeGuide}
-            showPointHeadline={!isRally}
             sport={sport}
+            officiatingLevel={officiatingLevel}
+            officiatingHintsEnabled={officiatingHintsEnabled}
+            letPending={officiatingLetPending}
+            onKitchenFault={onKitchenFault}
+            onLet={onLet}
+            onLetReplay={onLetReplay}
+            onServiceFault={onServiceFault}
           />
+          </div>
+        ) : null}
+        {!setupBlocks && !isRally && sport === 'TENNIS' && (officiatingHintsEnabled || officiatingStrictEnabled) ? (
+          <div className="mt-2 flex justify-center">
+            <RallyOfficiatingButtons
+              level={officiatingLevel}
+              letPending={officiatingLetPending}
+              onLet={onLet}
+              onLetReplay={onLetReplay}
+              onServiceFault={onServiceFault}
+            />
+          </div>
         ) : null}
       </div>
       {showShareUrls ? (

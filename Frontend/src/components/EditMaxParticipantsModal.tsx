@@ -529,8 +529,10 @@ export const EditMaxParticipantsModal = ({
               onChange={setPlayersPerMatch}
               disabled={newMaxParticipants === 2}
               label={t('sport.matchFormat')}
-              label1v1={t('sport.match1v1')}
-              label2v2={t('sport.match2v2')}
+              labelSingles={t('sport.matchSingles')}
+              labelDoubles={t('sport.matchDoubles')}
+              hintSingles={t('sport.match1v1')}
+              hintDoubles={t('sport.match2v2')}
             />
           )}
 

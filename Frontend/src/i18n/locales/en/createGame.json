@@ -134,8 +134,18 @@
       }
     },
     "fixedTeams": {
-      "descriptionOn": "Partners stay the same for the whole event.",
-      "descriptionOff": "Pairs may change from round to round."
+      "GAME": {
+        "descriptionOn": "Keep the same partner for every match in this game.",
+        "descriptionOff": "Partners can change from round to round."
+      },
+      "TOURNAMENT": {
+        "descriptionOn": "Partners stay together for the entire tournament.",
+        "descriptionOff": "Pairs may change between tournament rounds."
+      },
+      "LEAGUE": {
+        "descriptionOn": "Fixed pairs for the whole league.",
+        "descriptionOff": "Pairs may change from round to round in the league."
+      }
     },
     "allowUserInMultipleTeams": {
       "title": "Same player on multiple fixed teams",
@@ -218,6 +228,144 @@
     "markCourtBookedTitle": "Mark court as booked?",
     "markCourtBookedMessage": "You selected a court but have not marked it as booked. Confirm when you have reserved it with the club.",
     "markCourtBookedYes": "Yes, I've booked it",
-    "markCourtBookedSkip": "Not yet"
+    "markCourtBookedSkip": "Not yet",
+    "intent": {
+      "title": "What kind of game?",
+      "subtitle": "Presets match your roster size and match format above.",
+      "noTemplatesForSetup": "No preset fits this setup — use Advanced to pick a format manually.",
+      "customizeFormat": "Customize format",
+      "social": {
+        "title": "Social",
+        "description": "Club night, rotation, no rating pressure"
+      },
+      "match": {
+        "title": "Match",
+        "description": "Standard rules, counts toward your level"
+      },
+      "advanced": {
+        "title": "Advanced",
+        "description": "Full format wizard, all presets"
+      }
+    },
+    "templates": {
+      "title": "Quick templates",
+      "empty": "No templates for this sport yet — use Customize format.",
+      "durationApprox2h": "~2h",
+      "durationApprox90m": "~90 min",
+      "PADEL_AMERICANO_10": {
+        "title": "Americano · 10 min",
+        "description": "Timed rounds (10 min), 24-ball games, random pairs"
+      },
+      "PADEL_AMERICANO_24": {
+        "title": "Americano (24 pts)",
+        "description": "Random pairs, play to 24 points · 15 min rounds"
+      },
+      "PADEL_AMERICANO_20": {
+        "title": "Americano · 20 min",
+        "description": "Timed rounds (20 min), 24-ball games, random pairs"
+      },
+      "PADEL_MEXICANO_24": {
+        "title": "Mexicano (24 pts)",
+        "description": "Level-balanced pairs, 24-point games"
+      },
+      "PADEL_CHALLENGER_POOL": {
+        "title": "Challenger pool",
+        "description": "King court + queue: court 1 winners defend, others rotate from the pool"
+      },
+      "PADEL_KOTC_11": {
+        "title": "King of the Court",
+        "description": "Short games to 11; kings on court 1, challenger pool for the rest"
+      },
+      "PICKLEBALL_SOCIAL_21": {
+        "title": "Open play (21 pts)",
+        "description": "Doubles Americano, 21-ball games"
+      },
+      "PICKLEBALL_MATCH_BO3_11": {
+        "title": "Best of 3 to 11",
+        "description": "Rally scoring, official style"
+      },
+      "PICKLEBALL_KOTC_11": {
+        "title": "King of the Court",
+        "description": "Short 11-ball games; king court + challenger pool"
+      },
+      "BADMINTON_AMERICANO_21": {
+        "title": "Club night (21 balls)",
+        "description": "Doubles Americano, 21-ball social games"
+      },
+      "BADMINTON_CLUB_3X15": {
+        "title": "Club 3×15",
+        "description": "Best of 3 games to 15"
+      },
+      "BADMINTON_MATCH_3X21": {
+        "title": "3×21 official",
+        "description": "Best of 3 games to 21"
+      },
+      "TT_OPEN_PLAY_11": {
+        "title": "Quick game to 11",
+        "description": "Singles or doubles — one short match (2–4 players)"
+      },
+      "TT_CLUB_RR_11": {
+        "title": "Club round robin",
+        "description": "6–8 players, singles — everyone plays everyone, game to 11"
+      },
+      "TT_LEGACY_SINGLE_21": {
+        "title": "Old-school 21-point single game",
+        "description": "One game to 21 points, win by 2 (pre-2001 style)"
+      },
+      "TT_SWISS_BOX": {
+        "title": "Swiss box",
+        "description": "Skill-pairing box league (ladder engine), Bo3 to 11"
+      },
+      "TT_BOX_BO3_11": {
+        "title": "Box league Bo3×11",
+        "description": "8–12 players, box groups — climb courts between rounds"
+      },
+      "TT_MATCH_BO3_11": {
+        "title": "Match Bo3×11",
+        "description": "Rated singles/doubles, best of 3 games to 11"
+      },
+      "TT_MATCH_BO5_11": {
+        "title": "Match Bo5×11",
+        "description": "Rated match, best of 5 games to 11"
+      },
+      "TENNIS_FAST4_SOCIAL": {
+        "title": "FAST4 social",
+        "description": "Short sets, no-ad scoring"
+      },
+      "TENNIS_CLASSIC_BO3": {
+        "title": "Best of 3 sets",
+        "description": "Classic tennis match"
+      },
+      "SQUASH_QUICK_BO3_11": {
+        "title": "Quick Bo3×11",
+        "description": "Best of 3 games to 11"
+      }
+    },
+    "presetTier": {
+      "social": "Social",
+      "match": "Match"
+    },
+    "presetMeta": {
+      "POINTS_11": "Play to 11 (rotation)",
+      "SINGLE_GAME_21": "Old-school game to 21",
+      "POINTS_16": "Play to 16 (rotation)",
+      "POINTS_21": "21-ball budget",
+      "POINTS_24": "24-ball Americano",
+      "POINTS_32": "Play to 32 (rotation)",
+      "CLASSIC_BEST_OF_3": "Best of 3 sets",
+      "CLASSIC_BEST_OF_5": "Best of 5 sets",
+      "CLASSIC_PRO_SET": "Pro set",
+      "CLASSIC_SHORT_SET": "Short sets",
+      "CLASSIC_SINGLE_SET": "Single set",
+      "CLASSIC_SUPER_TIEBREAK": "Super tie-break",
+      "CLASSIC_TIMED": "Timed sets",
+      "BEST_OF_3_11": "Best of 3 to 11",
+      "BEST_OF_3_15": "Best of 3 to 15",
+      "BEST_OF_3_21": "Official 3×21",
+      "BEST_OF_5_11": "Best of 5 to 11",
+      "POINTS_15": "15-ball budget",
+      "TIMED": "Timed",
+      "CUSTOM": "Custom"
+    }
   }
 }

@@ -1,6 +1,7 @@
 {
   "stories": {
     "yourStory": "Ваша история",
+    "story": "История",
     "addStory": "Добавить историю",
     "addStoryHint": "Поделитесь моментом с подписчиками — исчезнет через 24 часа.",
     "createStory": "Создать историю",
@@ -129,6 +130,9 @@
       "dmFailed": "Не удалось отправить сообщение",
       "share": "Поделиться",
       "shareTitle": "Поделиться профилем"
-    }
+    },
+    "mixedMediaBlocked": "Share photos and videos separately",
+    "oneVideoOnly": "Add one video at a time",
+    "videoPublishHint": "Video is shared as captured — no trim or overlays"
   }
 }

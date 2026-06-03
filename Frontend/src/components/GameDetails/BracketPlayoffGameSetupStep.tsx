@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { Button, GameFormatCard } from '@/components';
 import { useGameFormat } from '@/hooks/useGameFormat';
 import type { Game, GameSetupParams } from '@/types';
+import { parseGameSport } from '@/utils/gameSport';
 import { playoffFormatInitialFromSeason } from './playoffTemplates';
 import { PlayoffGameFormatWizard } from './PlayoffGameFormatWizard';
 
@@ -21,6 +22,7 @@ export const BracketPlayoffGameSetupStep = ({
   submitting,
 }: BracketPlayoffGameSetupStepProps) => {
   const { t } = useTranslation();
+  const seasonSport = seasonGame?.sport != null ? parseGameSport(seasonGame.sport) : null;
   const formatInitial = useMemo(
     () =>
       seasonGame
@@ -30,7 +32,7 @@ export const BracketPlayoffGameSetupStep = ({
             matchGenerationType: 'HANDMADE',
             scoringMode: 'CLASSIC',
           }),
-    [seasonGame]
+    [seasonGame],
   );
   const gameFormat = useGameFormat(formatInitial, {
     skipGenerationParticipantDefaults: true,
@@ -67,13 +69,13 @@ export const BracketPlayoffGameSetupStep = ({
       <GameFormatCard
         entityType="LEAGUE_SEASON"
         format={gameFormat}
-        sport={seasonGame?.sport}
+        sport={seasonSport ?? seasonGame?.sport}
         onOpenWizard={handleOpenWizard}
       />
       <PlayoffGameFormatWizard
         isOpen={wizardOpen}
         format={gameFormat}
-        sport={seasonGame?.sport}
+        sport={seasonSport ?? seasonGame?.sport}
         onClose={() => setWizardOpen(false)}
       />
       <div className="flex gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">

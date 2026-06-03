@@ -6,6 +6,7 @@ struct MatchResultCard: View {
     let isCurrent: Bool
     let isFinal: Bool
     var levelSport: WatchSport?
+    var maxPlayersPerTeam: Int = 2
     let onOpen: () -> Void
     @Environment(WatchPreferencesStore.self) private var prefs
 
@@ -40,19 +41,26 @@ struct MatchResultCard: View {
 
     private func teamRow(teamNumber: Int) -> some View {
         HStack(alignment: .top, spacing: 6) {
-            if let team = match.teams.first(where: { $0.teamNumber == teamNumber }), !team.players.isEmpty {
-                HStack(spacing: 3) {
-                    ForEach(team.players, id: \.userId) { p in
-                        WatchPlayerAvatarView(user: p.user, size: 20, role: nil, levelSport: levelSport)
+            if let team = match.teams.first(where: { $0.teamNumber == teamNumber }) {
+                let players = WatchMatchFormat.capUsers(team.players, max: maxPlayersPerTeam)
+                if !players.isEmpty {
+                    HStack(spacing: 3) {
+                        ForEach(players, id: \.userId) { p in
+                            WatchPlayerAvatarView(user: p.user, size: 20, role: nil, levelSport: levelSport)
+                        }
                     }
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(team.players, id: \.userId) { p in
-                        Text(p.user.displayName)
-                            .font(.caption)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
+                    VStack(alignment: .leading, spacing: 2) {
+                        ForEach(players, id: \.userId) { p in
+                            Text(p.user.displayName)
+                                .font(.caption)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                        }
                     }
+                } else {
+                    Text("—")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
             } else {
                 Text("—")

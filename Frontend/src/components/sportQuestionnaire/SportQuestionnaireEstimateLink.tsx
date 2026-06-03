@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Sport, User } from '@/types';
+import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { shouldShowEstimateLevelLink } from '@/utils/sportQuestionnaire';
 import { SportQuestionnaireSheet } from './SportQuestionnaireSheet';
 
@@ -18,9 +19,10 @@ export function SportQuestionnaireEstimateLink({
   className = '',
 }: SportQuestionnaireEstimateLinkProps) {
   const { t } = useTranslation();
+  const { status, loading, refresh } = useQuestionnaireStatus(sport);
   const [open, setOpen] = useState(false);
 
-  if (!shouldShowEstimateLevelLink(user, sport)) {
+  if (loading || !shouldShowEstimateLevelLink(user, sport, status)) {
     return null;
   }
 
@@ -37,7 +39,10 @@ export function SportQuestionnaireEstimateLink({
         sport={sport}
         open={open}
         onOpenChange={setOpen}
-        onCompleted={(updated) => onUserUpdated?.(updated)}
+        onCompleted={(updated) => {
+          onUserUpdated?.(updated);
+          void refresh();
+        }}
       />
     </>
   );

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -17,6 +17,7 @@ import { useTranslation as useI18nTranslation } from 'react-i18next';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { FindHeaderActions } from '@/components/headerContent/FindHeaderActions';
 
 const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string }>(list: T[] = []): T[] => {
   const getStatusPriority = (status?: string): number => {
@@ -51,6 +52,7 @@ export const FindTab = () => {
   const user = useAuthStore((state) => state.user);
   const isDesktop = useDesktop();
   const findViewMode = useNavigationStore((s) => s.findViewMode);
+  const setFindHeaderActions = useNavigationStore((s) => s.setFindHeaderActions);
 
   const { i18n } = useI18nTranslation();
   const localeMap = { en: enGB, ru: ru, es: es, sr: sr, cs: cs };
@@ -125,6 +127,17 @@ export const FindTab = () => {
   });
 
   const splitView = isDesktop && findViewMode === 'calendar';
+
+  useEffect(() => {
+    setFindHeaderActions(
+      <FindHeaderActions
+        user={user}
+        filters={filters}
+        onFiltersChange={updateFilters}
+      />,
+    );
+    return () => setFindHeaderActions(null);
+  }, [filters, setFindHeaderActions, updateFilters, user]);
 
   if (splitView) {
     return (

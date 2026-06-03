@@ -48,7 +48,7 @@ const PHASE3: Record<
     allowedPlayerCountsPerMatch: [2, 4],
     defaultPlayersPerMatch: 2,
     defaultPreset: 'BEST_OF_3_11',
-    validPresets: ['POINTS_11', 'BEST_OF_3_11', 'BEST_OF_5_11'],
+    validPresets: ['POINTS_11', 'SINGLE_GAME_21', 'BEST_OF_3_11', 'BEST_OF_5_11'],
     invalidPreset: 'CLASSIC_BEST_OF_3',
     invalidPlayersPerMatch: 3,
     liveScoring: 'rally_points',

@@ -1,6 +1,7 @@
 {
   "stories": {
     "yourStory": "Tu historia",
+    "story": "Historia",
     "addStory": "Añadir historia",
     "addStoryHint": "Comparte un momento con tus seguidores — desaparece en 24 horas.",
     "createStory": "Crear historia",
@@ -127,6 +128,9 @@
       "dmFailed": "No se pudo enviar el mensaje",
       "share": "Compartir",
       "shareTitle": "Compartir perfil"
-    }
+    },
+    "mixedMediaBlocked": "Share photos and videos separately",
+    "oneVideoOnly": "Add one video at a time",
+    "videoPublishHint": "Video is shared as captured — no trim or overlays"
   }
 }

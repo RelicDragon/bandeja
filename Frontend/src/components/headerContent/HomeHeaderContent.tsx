@@ -91,6 +91,26 @@ export const HomeHeaderContent = () => {
     }
   };
 
+  const handleSelectStory = () => {
+    const openStoryCreate = () => {
+      window.dispatchEvent(new CustomEvent('open-story-create'));
+    };
+
+    setShowCreateMenu(false);
+    if (currentPage !== 'my') {
+      setIsAnimating(true);
+      setCurrentPage('my');
+      navigate('/', { replace: true });
+      setTimeout(() => {
+        openStoryCreate();
+        setIsAnimating(false);
+      }, 300);
+      return;
+    }
+
+    openStoryCreate();
+  };
+
   const handleCreateClick = () => {
     setShowCreateMenu(true);
   };
@@ -136,6 +156,7 @@ export const HomeHeaderContent = () => {
         }}
         onSelectGameType={handleSelectGameType}
         onSelectChatType={handleSelectChatType}
+        onSelectStory={handleSelectStory}
         buttonRef={buttonContainerRef}
         showChatForm={showChatForm}
         chatFormType={activeChatType}

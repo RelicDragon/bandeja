@@ -141,6 +141,10 @@ function chooseBestPairing(
   partnerCounts: Map<string, number>,
   opponentCounts: Map<string, number>
 ): { teamA: string[]; teamB: string[] } {
+  if (players.length === 2) {
+    return { teamA: [players[0]], teamB: [players[1]] };
+  }
+
   const [p1, p2, p3, p4] = players;
   const options = [
     { teamA: [p1, p4], teamB: [p2, p3] },

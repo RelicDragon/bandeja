@@ -6,9 +6,16 @@ import { Button, Input, Select } from '@/components';
 import { authApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import pushNotificationService from '@/services/pushNotificationService';
-import { Gender } from '@/types';
+import { Gender, Sport } from '@/types';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { openEula } from '@/utils/openEula';
+import { listSelectableSports } from '@/utils/profileSports';
+import { getSportConfig } from '@/sport/sportRegistry';
+import {
+  DEFAULT_REGISTRATION_SPORT,
+  readRegistrationPrimarySport,
+  writeRegistrationPrimarySport,
+} from '@/utils/registrationPrimarySport';
 
 export const Register = () => {
   const { t, i18n } = useTranslation();
@@ -23,6 +30,7 @@ export const Register = () => {
   const [gender, setGender] = useState<Gender>('PREFER_NOT_TO_SAY');
   const [genderAcknowledged, setGenderAcknowledged] = useState(false);
   const [acceptedEula, setAcceptedEula] = useState(false);
+  const [primarySport, setPrimarySport] = useState<Sport>(() => readRegistrationPrimarySport());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showAllErrors, setShowAllErrors] = useState(false);
@@ -131,6 +139,7 @@ export const Register = () => {
     try {
       const genderIsSet = gender === 'MALE' || gender === 'FEMALE' || (gender === 'PREFER_NOT_TO_SAY' && genderAcknowledged);
       const normalizedLanguage = normalizeLanguageForProfile(i18n.language);
+      writeRegistrationPrimarySport(primarySport);
       const response = await authApi.registerPhone({
         phone,
         password,
@@ -140,6 +149,7 @@ export const Register = () => {
         gender,
         genderIsSet,
         language: normalizedLanguage,
+        ...(primarySport !== DEFAULT_REGISTRATION_SPORT ? { primarySport } : {}),
       });
       await setAuth(response.data.user, response.data.token, {
         refreshToken: response.data.refreshToken,
@@ -214,6 +224,22 @@ export const Register = () => {
             onBlur={() => setTouched(prev => ({ ...prev, lastName: true }))}
             error={showAllErrors || touched.lastName ? getVisibleErrors().firstName : undefined}
             required
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t('profile.sports.primarySport')}
+            <span className="ml-1 font-normal text-gray-500 dark:text-gray-400">
+              ({t('common.optional', { defaultValue: 'optional' })})
+            </span>
+          </label>
+          <Select
+            options={listSelectableSports().map((sport) => ({
+              value: sport,
+              label: t(getSportConfig(sport).labelKey),
+            }))}
+            value={primarySport}
+            onChange={(value) => setPrimarySport(value as Sport)}
           />
         </div>
         <div ref={genderRef}>

@@ -1,6 +1,8 @@
 import { Sports, DEFAULT_SPORT, type Sport } from '@shared/sport';
 import type { BasicUser, User, UserSportProfile } from '@/types';
+import { isSportCreatable } from '@/config/multisportFlags';
 import { getImplementedSports, getSportConfig } from '@/sport/sportRegistry';
+import { sportHasQuestionnaire } from '@/sport/sportQuestionnaireRegistry';
 
 export function getUserPrimarySport(user: User | BasicUser | null | undefined): Sport {
   return user?.primarySport ?? DEFAULT_SPORT;
@@ -18,7 +20,7 @@ export function listEnabledSports(user: User | BasicUser | null | undefined): Sp
   const raw = user?.sportsEnabled;
   const enabled =
     raw === undefined || raw === null ? ([Sports.PADEL] as Sport[]) : [...raw];
-  return enabled.filter((s) => getSportConfig(s).implemented);
+  return enabled.filter((s) => getSportConfig(s).implemented && isSportCreatable(s));
 }
 
 export function isSportEnabled(user: User | BasicUser | null | undefined, sport: Sport): boolean {
@@ -168,4 +170,22 @@ export function listCreateFlowSports(user: User | null | undefined): Sport[] {
 
 export function canEditSportLevel(profile: UserSportProfile | undefined): boolean {
   return !!profile && profile.gamesPlayed === 0;
+}
+
+export function canRemoveSport(user: User, sport: Sport): boolean {
+  if (!isSportEnabled(user, sport)) return false;
+  return listEnabledSports(user).length > 1;
+}
+
+/** After re-adding a sport — only prompt when API says so and profile has no Q/history. */
+export function shouldSuggestAddSportQuestionnaire(
+  user: User,
+  sport: Sport,
+  apiSuggested: boolean,
+): boolean {
+  if (!sportHasQuestionnaire(sport) || !apiSuggested) return false;
+  const profile = findSportProfile(user, sport);
+  if (profile?.questionnaireCompletedAt || profile?.questionnaireSkippedAt) return false;
+  if (gamesPlayedForSport(user, sport) > 0) return false;
+  return true;
 }

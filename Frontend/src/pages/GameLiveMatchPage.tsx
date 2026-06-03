@@ -8,15 +8,19 @@ import { useLiveMatchBoardState, liveBoardPlayersForTeam } from '@/hooks/useLive
 import { useAuthStore } from '@/store/authStore';
 import { useResolvedAppAppearance } from '@/store/themeStore';
 import { isGameMatchTimerEnabled } from '@/utils/matchTimer';
-import { supportsTimedOpenEndedRallyFreeze } from '@shared/timedCustomPresets';
+import {
+  supportsMatchTimerPointsRallyFreeze,
+  supportsTimedOpenEndedRallyFreeze,
+} from '@shared/timedCustomPresets';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { useWakeScreenForLiveScoring } from '@/hooks/useWakeScreenForLiveScoring';
 import { parseMatchLiveEnvelope } from '@/types/matchLiveScoring';
-import { resolvePlayersPerMatchForGame } from '@/utils/matchFormat';
+import { playersPerMatchOf } from '@/utils/matchFormat';
 import { parseGameSport } from '@/utils/gameSport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import {
   applyOptionalDeciderFormat,
+  activeSetScore,
   clearTimedClassicSetLock,
   freezeTimedSetAtPartialScore,
   liveBoardThemeSearchParam,
@@ -33,6 +37,18 @@ import {
   type LiveScoringState,
   type LiveTeamSide,
 } from '@/utils/liveScoring';
+import {
+  clearLetPending,
+  isLetReplayBlockingScore,
+  opponentTeam,
+  validateStrictBadmintonServeBeforePoint,
+  withLetPending,
+} from '@shared/officiatingEnforcement';
+import { officiatingIsStrict } from '@shared/officiatingLevel';
+import {
+  computeServeGuideSnapshotByPlugin,
+  resolveLiveScoringPlugin,
+} from '@/liveScoring/registry';
 
 function liveScoringClosedByMatchMetadata(metadata: unknown): boolean {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return false;
@@ -112,12 +128,18 @@ export const GameLiveMatchPage = () => {
     if (!isGameMatchTimerEnabled(game) || timerSnap?.status !== 'STOPPED') return false;
     if (!tv && !isAuthenticated) return false;
     if (liveState.mode === 'classic' && rules.allowIncompleteRegularSetGames) return true;
-    if (
-      liveState.mode === 'points' &&
-      supportsTimedOpenEndedRallyFreeze(game.scoringPreset, rules.totalPointsPerSet)
-    ) {
-      const row = liveState.sets[liveState.activeSetIndex];
-      return Boolean(row && (row.teamA > 0 || row.teamB > 0));
+    if (liveState.mode === 'points') {
+      const rallyFreeze =
+        supportsTimedOpenEndedRallyFreeze(game.scoringPreset, rules.totalPointsPerSet) ||
+        supportsMatchTimerPointsRallyFreeze(
+          game.matchTimerEnabled,
+          game.scoringPreset,
+          rules.totalPointsPerSet,
+        );
+      if (rallyFreeze) {
+        const row = liveState.sets[liveState.activeSetIndex];
+        return Boolean(row && (row.teamA > 0 || row.teamB > 0));
+      }
     }
     return false;
   }, [liveState, rules, game, timerSnap, tv, isAuthenticated]);
@@ -306,17 +328,121 @@ export const GameLiveMatchPage = () => {
     [persistLiveState, setLiveState]
   );
 
+  useEffect(() => {
+    if (!liveState || !rules || !game || liveState.timedClassicSetLocked) return;
+    if (!timerSnap?.capJustNotified || timerSnap.status !== 'RUNNING') return;
+    const rallyFreeze =
+      supportsTimedOpenEndedRallyFreeze(game.scoringPreset, rules.totalPointsPerSet) ||
+      supportsMatchTimerPointsRallyFreeze(
+        game.matchTimerEnabled,
+        game.scoringPreset,
+        rules.totalPointsPerSet,
+      );
+    if (!rallyFreeze || liveState.mode !== 'points') return;
+    const row = liveState.sets[liveState.activeSetIndex];
+    if (!row || (row.teamA === 0 && row.teamB === 0)) return;
+    applyLiveAction(
+      freezeTimedSetAtPartialScore(liveState, rules, game.scoringPreset, game.matchTimerEnabled),
+    );
+  }, [
+    timerSnap?.capJustNotified,
+    timerSnap?.status,
+    liveState,
+    rules,
+    game,
+    applyLiveAction,
+  ]);
+
+  const playersPerMatch = useMemo(() => playersPerMatchOf(game ?? {}), [game]);
+  const teamAPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 1, game) : []), [rawMatch, game]);
+  const teamBPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 2, game) : []), [rawMatch, game]);
+
   const handleScore = useCallback(
     (side: LiveTeamSide) => {
       const s = liveStateRef.current;
       const r = rulesRef.current;
+      const g = game;
       if (!s || savingRef.current || !isAuthenticated || !r) return;
       if (optionalDeciderChoicePending(s, r)) return;
       if (isLiveScoringInputLocked(s.sets, s.activeSetIndex, r)) return;
-      applyLiveAction(scoreLivePoint(s, side, r));
+      if (isLetReplayBlockingScore(s, r.officiatingLevel)) {
+        setError(t('gameDetails.liveScoring.strictLetPending'));
+        return;
+      }
+      if (officiatingIsStrict(r.officiatingLevel) && g?.sport === 'BADMINTON') {
+        const plugin = resolveLiveScoringPlugin(g.sport, g.scoringPreset ?? r.preset, g.metadata);
+        const snap = computeServeGuideSnapshotByPlugin(
+          plugin,
+          s,
+          r,
+          teamAPlayers.map((p) => [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.id),
+          teamBPlayers.map((p) => [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.id),
+          playersPerMatch,
+        );
+        if (snap?.courtSide) {
+          const set = activeSetScore(s);
+          const serverScore = snap.serverTeam === 'teamA' ? set.teamA : set.teamB;
+          const check = validateStrictBadmintonServeBeforePoint({
+            level: r.officiatingLevel,
+            sport: g.sport,
+            serverScore,
+            courtSide: snap.courtSide,
+          });
+          if (!check.ok) {
+            setError(t('gameDetails.liveScoring.strictServeSideMismatch'));
+            return;
+          }
+        }
+      }
+      const result = scoreLivePoint(s, side, r);
+      applyLiveAction(result.changed ? { ...result, state: clearLetPending(result.state) } : result);
+    },
+    [isAuthenticated, applyLiveAction, game, playersPerMatch, teamAPlayers, teamBPlayers, t, setError]
+  );
+
+  const handleKitchenFault = useCallback(
+    (faultingTeam: LiveTeamSide) => {
+      const s = liveStateRef.current;
+      const r = rulesRef.current;
+      if (!s || savingRef.current || !isAuthenticated || !r) return;
+      if (isLiveScoringInputLocked(s.sets, s.activeSetIndex, r)) return;
+      applyLiveAction(scoreLivePoint(s, opponentTeam(faultingTeam), r));
     },
     [isAuthenticated, applyLiveAction]
   );
+
+  const handleLet = useCallback(() => {
+    const s = liveStateRef.current;
+    const r = rulesRef.current;
+    if (!s || savingRef.current || !isAuthenticated || !r) return;
+    if (!officiatingIsStrict(r.officiatingLevel)) return;
+    applyLiveAction({ state: withLetPending(s), changed: true });
+  }, [isAuthenticated, applyLiveAction]);
+
+  const handleLetReplay = useCallback(() => {
+    const s = liveStateRef.current;
+    if (!s || savingRef.current || !isAuthenticated) return;
+    applyLiveAction({ state: clearLetPending(s), changed: true });
+  }, [isAuthenticated, applyLiveAction]);
+
+  const handleServiceFault = useCallback(() => {
+    const s = liveStateRef.current;
+    const r = rulesRef.current;
+    const g = game;
+    if (!s || savingRef.current || !isAuthenticated || !r || !g) return;
+    if (isLiveScoringInputLocked(s.sets, s.activeSetIndex, r)) return;
+    const plugin = resolveLiveScoringPlugin(g.sport, g.scoringPreset ?? r.preset, g.metadata);
+    const snap = computeServeGuideSnapshotByPlugin(
+      plugin,
+      s,
+      r,
+      teamAPlayers.map((p) => [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.id),
+      teamBPlayers.map((p) => [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.id),
+      playersPerMatch,
+    );
+    const server = snap?.serverTeam ?? s.firstServerTeam ?? 'teamA';
+    applyLiveAction(scoreLivePoint(s, opponentTeam(server), r));
+  }, [isAuthenticated, applyLiveAction, game, playersPerMatch, teamAPlayers, teamBPlayers]);
 
   const handleUndo = useCallback(
     (side: LiveTeamSide) => {
@@ -370,8 +496,10 @@ export const GameLiveMatchPage = () => {
     const s = liveStateRef.current;
     const r = rulesRef.current;
     if (!s || !r || savingRef.current || !isAuthenticated) return;
-    applyLiveAction(freezeTimedSetAtPartialScore(s, r, game?.scoringPreset));
-  }, [game?.scoringPreset, isAuthenticated, applyLiveAction]);
+    applyLiveAction(
+      freezeTimedSetAtPartialScore(s, r, game?.scoringPreset, game?.matchTimerEnabled),
+    );
+  }, [game?.scoringPreset, game?.matchTimerEnabled, isAuthenticated, applyLiveAction]);
 
   const handleTimedUnlock = useCallback(() => {
     const s = liveStateRef.current;
@@ -387,15 +515,11 @@ export const GameLiveMatchPage = () => {
     applyLiveAction({ state: { ...s, serveGuideSkipped: true }, changed: true });
   }, [isAuthenticated, applyLiveAction]);
 
-  const playersPerMatch = useMemo(() => resolvePlayersPerMatchForGame(game ?? {}), [game]);
-  const teamAPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 1, game) : []), [rawMatch, game]);
-  const teamBPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 2, game) : []), [rawMatch, game]);
-
   const shellClass = tv
     ? boardTheme === 'light'
       ? 'relative flex min-h-[100dvh] flex-col bg-white text-gray-900'
       : 'relative flex min-h-[100dvh] flex-col bg-black text-white'
-    : 'min-h-[100dvh] bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col';
+    : 'flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100';
 
   if (!matchId) {
     return (
@@ -421,26 +545,26 @@ export const GameLiveMatchPage = () => {
       }}
     >
       {!tv ? (
-        <header className="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-800">
-          <button type="button" className="text-sm opacity-80 hover:opacity-100" onClick={() => navigate(-1)}>
+        <header className="relative flex shrink-0 items-center border-b border-gray-200 px-3 py-2 dark:border-gray-800">
+          <button
+            type="button"
+            className="relative z-10 shrink-0 text-sm opacity-80 hover:opacity-100"
+            onClick={() => navigate(-1)}
+          >
             ←
           </button>
-          <div className="flex-1 truncate text-center text-sm font-medium">
-            {gameTitle.trim() ? gameTitle : null}
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            {saving ? (
-              <span className="inline-flex h-6 max-w-full shrink-0 items-center justify-center rounded-full border border-primary-400/35 bg-primary-500/12 px-2 text-xs leading-none text-primary-900 dark:border-primary-500/30 dark:bg-primary-500/15 dark:text-primary-100">
-                {t('gameDetails.liveScoring.syncing')}
-              </span>
-            ) : null}
-            <div
-              className={`inline-flex h-6 shrink-0 items-center justify-center rounded-full border border-transparent px-2 text-xs leading-none ${
-                isOnline ? 'bg-emerald-600/15 text-emerald-800 dark:text-emerald-200' : 'bg-amber-600/15 text-amber-900 dark:text-amber-100'
-              }`}
-            >
-              {isOnline ? t('gameDetails.liveTvPillLive') : t('gameDetails.liveTvPillOffline')}
+          <div className="pointer-events-none absolute inset-x-0 flex justify-center px-10">
+            <div className="max-w-full truncate text-center text-sm font-medium">
+              {gameTitle.trim() ? gameTitle : null}
             </div>
+          </div>
+          <div
+            className={`absolute right-3 top-1/2 z-10 inline-flex h-6 -translate-y-1/2 items-center justify-center rounded-full border border-transparent px-2 text-xs leading-none ${
+              isOnline ? 'bg-emerald-600/15 text-emerald-800 dark:text-emerald-200' : 'bg-amber-600/15 text-amber-900 dark:text-amber-100'
+            }`}
+            aria-live="polite"
+          >
+            {isOnline ? t('gameDetails.liveTvPillLive') : t('gameDetails.liveTvPillOffline')}
           </div>
         </header>
       ) : showTvChrome ? (
@@ -492,8 +616,8 @@ export const GameLiveMatchPage = () => {
       ) : null}
 
       <main
-        className={`flex-1 flex flex-col overflow-auto px-3 ${
-          tv && !showTvChrome && gameTitle.trim() ? 'pb-4 pt-10 sm:pt-11' : 'py-4'
+        className={`flex min-h-0 flex-1 flex-col overflow-hidden px-3 ${
+          tv && !showTvChrome && gameTitle.trim() ? 'pb-4 pt-10 sm:pt-11' : 'pb-2 pt-2'
         }`}
       >
         {loading ? (
@@ -529,6 +653,7 @@ export const GameLiveMatchPage = () => {
                 ) : null}
               </div>
             ) : null}
+            <div className="flex min-h-0 flex-1 flex-col">
             <LiveScoreShell
               state={liveState}
               teamAPlayers={teamAPlayers}
@@ -538,6 +663,12 @@ export const GameLiveMatchPage = () => {
               sport={game?.sport}
               scoringPreset={game?.scoringPreset ?? null}
               playersPerMatch={playersPerMatch}
+              gameMetadata={game?.metadata}
+              officiatingLetPending={liveState.officiatingLetPending}
+              onKitchenFault={handleKitchenFault}
+              onLet={handleLet}
+              onLetReplay={handleLetReplay}
+              onServiceFault={handleServiceFault}
               gameId={gameId}
               boardTheme={boardTheme}
               tv={tv}
@@ -554,6 +685,7 @@ export const GameLiveMatchPage = () => {
                 ? { shareTvUrl: spectatorTvUrl, shareBroadcastUrl: broadcastShareUrl }
                 : {})}
             />
+            </div>
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-sm opacity-70">No live state</div>
@@ -573,10 +705,21 @@ export const GameLiveMatchPage = () => {
           }`}
           style={{
             bottom: 'max(0.5rem, env(safe-area-inset-bottom))',
-            right: 'max(0.5rem, env(safe-area-inset-right))',
+            ...(tv
+              ? { right: 'max(0.5rem, env(safe-area-inset-right))' }
+              : { left: 'max(0.5rem, env(safe-area-inset-left))' }),
           }}
         >
-          {t('gameDetails.liveScoring.rev')} {revision}
+          <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            <span>
+              {t('gameDetails.liveScoring.rev')} {revision}
+            </span>
+            {saving ? (
+              <span className="inline-flex max-w-[min(100vw-5rem,10rem)] items-center justify-center truncate rounded-full border border-primary-400/35 bg-primary-500/12 px-1.5 py-px text-[10px] leading-none text-primary-900 dark:border-primary-500/30 dark:bg-primary-500/15 dark:text-primary-100 sm:px-2 sm:text-xs">
+                {t('gameDetails.liveScoring.syncing')}
+              </span>
+            ) : null}
+          </span>
         </div>
       ) : null}
     </div>

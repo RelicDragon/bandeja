@@ -88,7 +88,8 @@ struct GameOutcomesListView: View {
                             match: match,
                             isCurrent: vm.latestActiveMatchId == match.id,
                             isFinal: vm.isFinal,
-                            levelSport: vm.game?.resolvedSport
+                            levelSport: vm.game?.resolvedSport,
+                            maxPlayersPerTeam: WatchMatchFormat.maxPlayersPerTeam(for: vm.game)
                         ) {
                             router.navigate(to: .gameOutcomeMatch(gameId: gameId, matchId: match.id))
                         }

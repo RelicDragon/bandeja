@@ -121,6 +121,7 @@ export function shouldWarnCreateGameLevelBand(
   _maxLevel: number,
   status?: QuestionnaireStatus | null,
 ): boolean {
+  if (status?.skipped || isSportQuestionnaireSkipped(user, sport)) return false;
   if (!isCreatorUnratedForSport(user, sport, status)) return false;
   return minLevel > CREATE_GAME_HIGH_BAND_THRESHOLD;
 }

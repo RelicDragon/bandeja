@@ -190,6 +190,14 @@ export const GameParticipants = ({
             </p>
           </div>
         )}
+        {!isUnauthorized &&
+          !isUserPlaying &&
+          myInvites.length === 0 &&
+          game.status !== 'FINISHED' &&
+          game.status !== 'ARCHIVED' &&
+          game.sport && (
+            <SportQuestionnaireInviteNudge gameSport={parseGameSport(game.sport)} />
+          )}
         {!isUnauthorized && !isNonPlaying && !isUserPlaying && !isInJoinQueue && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && game.allowDirectJoin && (hasUnoccupiedSlots || game.entityType === 'BAR') && (
           <Button
             onClick={onJoin}

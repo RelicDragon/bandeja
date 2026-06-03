@@ -1,21 +1,39 @@
-import type { ServeCourtSchemaProps } from './ServeCourtSchema';
+import type { ServeCourtProps } from './ServeCourtProps';
 import { PickleballCourt } from './rally/PickleballCourt';
 
 export function PickleballServeCourtSchema({
   courtSide,
   serverTeam,
+  serverPlayerIndex,
+  teamAPlayers,
+  teamBPlayers,
+  matchDoubles = false,
+  courtEndsSwapped,
+  courtTeamASidesMirrored,
+  courtTeamBSidesMirrored,
+  endsSetup,
+  motionToken,
   className,
+  frameStyle,
   'aria-label': ariaLabel,
-}: ServeCourtSchemaProps) {
+}: ServeCourtProps) {
   return (
     <PickleballCourt
-      teamAPlayers={[]}
-      teamBPlayers={[]}
+      teamAPlayers={teamAPlayers}
+      teamBPlayers={teamBPlayers}
       teamAScore={0}
       teamBScore={0}
       serverTeam={serverTeam}
+      serverPlayerIndex={serverPlayerIndex}
       courtSide={courtSide}
-      className={className ?? 'h-36 w-full max-w-[9rem]'}
+      matchDoubles={matchDoubles}
+      courtEndsSwapped={courtEndsSwapped}
+      courtTeamASidesMirrored={courtTeamASidesMirrored}
+      courtTeamBSidesMirrored={courtTeamBSidesMirrored}
+      endsSetup={endsSetup}
+      motionToken={motionToken}
+      className={className}
+      frameStyle={frameStyle}
       aria-label={ariaLabel}
     />
   );

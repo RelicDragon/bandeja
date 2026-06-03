@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Gamepad2, Trophy, Swords, Dumbbell, Beer, Users, Hash, Bug, X, ShoppingBag, UsersRound, Loader2 } from 'lucide-react';
+import { Gamepad2, Trophy, Swords, Dumbbell, Beer, Users, Hash, Bug, X, ShoppingBag, UsersRound, Loader2, CirclePlay } from 'lucide-react';
 import type { EntityType, Sport } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { CreateGameSportPicker } from '@/components/createGame/CreateGameSportPicker';
@@ -21,6 +21,7 @@ interface CreateMenuModalProps {
   onClose: () => void;
   onSelectGameType: (type: EntityType, sport?: Sport) => void;
   onSelectChatType: (type: 'group' | 'channel') => void;
+  onSelectStory: () => void;
   buttonRef?: React.RefObject<HTMLElement | null>;
   showChatForm?: boolean;
   chatFormType?: 'group' | 'channel' | null;
@@ -32,6 +33,7 @@ export const CreateMenuModal = ({
   onClose, 
   onSelectGameType, 
   onSelectChatType,
+  onSelectStory,
   buttonRef,
   showChatForm = false,
   chatFormType = null,
@@ -247,7 +249,7 @@ export const CreateMenuModal = ({
     }
   };
 
-  const totalItems = entityTypes.length + 9;
+  const totalItems = entityTypes.length + 10;
   let currentIndex = 0;
 
   const overlay = (
@@ -335,6 +337,20 @@ export const CreateMenuModal = ({
             }}
           />
           
+          <button
+            onClick={(e) => { e.stopPropagation(); onSelectStory(); }}
+            className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
+              isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
+            }`}
+            style={{
+              animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+            }}
+          >
+            <CirclePlay size={18} />
+            {t('stories.story', { defaultValue: 'Story' })}
+          </button>
+
           <button
             onClick={(e) => { e.stopPropagation(); handleSelectChatType('group'); }}
             className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${

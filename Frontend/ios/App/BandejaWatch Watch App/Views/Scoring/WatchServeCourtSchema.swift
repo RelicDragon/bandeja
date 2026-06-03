@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Bird's-eye padel/tennis court diagram — geometry mirrors web `ServeCourtSchema.tsx`.
+/// Bird's-eye padel/tennis court diagram — geometry mirrors web `PadelCourt` / `TennisCourt`.
 struct WatchServeCourtSchema: View {
     enum Variant { case padel, tennis }
 
@@ -20,9 +20,22 @@ struct WatchServeCourtSchema: View {
         static let w: CGFloat = 100
         static let h: CGFloat = 200
         static let netY: CGFloat = 100
-        static let serviceFromNet: CGFloat = 69.5
         static let netHalfH: CGFloat = 5
         static let m: CGFloat = 2
+
+        static func serviceFromNet(variant: Variant) -> CGFloat {
+            variant == .tennis ? 64 : 69.5
+        }
+
+        static func playXLeft(variant: Variant, matchDoubles: Bool) -> CGFloat {
+            if variant == .tennis, !matchDoubles { return 38 }
+            return 26
+        }
+
+        static func playXRight(variant: Variant, matchDoubles: Bool) -> CGFloat {
+            if variant == .tennis, !matchDoubles { return 62 }
+            return 74
+        }
     }
 
     private var westServe: Bool {
@@ -38,8 +51,8 @@ struct WatchServeCourtSchema: View {
     }
 
     var body: some View {
-        let outerW = compact ? 40.0 : 54.0
-        let outerH = compact ? 80.0 : 108.0
+        let outerW = compact ? 44.0 : 58.0
+        let outerH = compact ? 88.0 : 116.0
         courtDiagram
             .frame(width: VB.w, height: VB.h)
             .scaleEffect(x: outerW / VB.w, y: outerH / VB.h, anchor: .topLeading)
@@ -53,7 +66,12 @@ struct WatchServeCourtSchema: View {
             if !endsSetup { serviceHighlights }
             if !endsSetup {
                 WatchServeArrowTrace(
-                    path: WatchServeCourtLayout.serveDiagonalArrow(serverEnd: serverEnd, westServe: westServe),
+                    path: WatchServeCourtLayout.serveDiagonalArrow(
+                        serverEnd: serverEnd,
+                        westServe: westServe,
+                        variant: variant,
+                        matchDoubles: matchDoubles
+                    ),
                     motionKey: snapshot.motionToken
                 )
                 ballMarker
@@ -66,8 +84,9 @@ struct WatchServeCourtSchema: View {
         let x1 = VB.m
         let x2 = VB.w - VB.m
         let midX = VB.w / 2
-        let yServiceTop = VB.netY - VB.serviceFromNet
-        let yServiceBottom = VB.netY + VB.serviceFromNet
+        let serviceFromNet = VB.serviceFromNet(variant: variant)
+        let yServiceTop = VB.netY - serviceFromNet
+        let yServiceBottom = VB.netY + serviceFromNet
         let netY0 = VB.netY - VB.netHalfH
         let netY1 = VB.netY + VB.netHalfH
 
@@ -123,7 +142,7 @@ struct WatchServeCourtSchema: View {
         let colW = (VB.w - 2 * VB.m) / 2
         let colLX = VB.m
         let colRX = VB.w / 2
-        let bandH = VB.serviceFromNet
+        let bandH = VB.serviceFromNet(variant: variant)
         let yTop = VB.netY - VB.serviceFromNet
         let yBottom = VB.netY
         let highlight = Color.accentColor.opacity(0.32)
@@ -151,9 +170,24 @@ struct WatchServeCourtSchema: View {
         let pt = WatchServeCourtLayout.ballPoint(
             serverTeam: snapshot.serverTeam,
             courtSide: snapshot.courtSide,
-            endsSwapped: snapshot.courtEndsSwapped
+            endsSwapped: snapshot.courtEndsSwapped,
+            variant: variant,
+            matchDoubles: matchDoubles
         )
-        return Circle()
+        return Group {
+            if variant == .tennis {
+                tennisBallMarker
+            } else {
+                padelBallMarker
+            }
+        }
+        .frame(width: compact ? 7 : 9, height: compact ? 7 : 9)
+        .position(x: pt.x, y: pt.y)
+        .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.72), value: snapshot.motionToken)
+    }
+
+    private var padelBallMarker: some View {
+        Circle()
             .fill(
                 LinearGradient(
                     colors: [
@@ -166,10 +200,24 @@ struct WatchServeCourtSchema: View {
                 )
             )
             .overlay(Circle().stroke(Color(red: 0.2, green: 0.3, blue: 0.05).opacity(0.35), lineWidth: 0.5))
-            .frame(width: compact ? 7 : 9, height: compact ? 7 : 9)
             .shadow(color: Color(red: 0.86, green: 0.99, blue: 0.31).opacity(0.55), radius: 2)
-            .position(x: pt.x, y: pt.y)
-            .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.72), value: snapshot.motionToken)
+    }
+
+    private var tennisBallMarker: some View {
+        Circle()
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Color(red: 1, green: 0.98, blue: 0.76),
+                        Color(red: 0.99, green: 0.88, blue: 0.28),
+                        Color(red: 0.79, green: 0.54, blue: 0.02)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(Circle().stroke(Color(red: 0.63, green: 0.38, blue: 0.03).opacity(0.4), lineWidth: 0.5))
+            .shadow(color: Color(red: 0.99, green: 0.88, blue: 0.28).opacity(0.45), radius: 2)
     }
 
     @ViewBuilder
@@ -191,6 +239,7 @@ struct WatchServeCourtSchema: View {
             teamASidesMirrored: snapshot.courtTeamASidesMirrored,
             teamBSidesMirrored: snapshot.courtTeamBSidesMirrored,
             matchDoubles: matchDoubles,
+            variant: variant,
             baselineOnly: baselineOnly
         ), id: \.idx) { slot in
             avatarAt(slot: slot, size: size, servingTeam: topTeam, baselineOnly: baselineOnly)
@@ -206,6 +255,7 @@ struct WatchServeCourtSchema: View {
             teamASidesMirrored: snapshot.courtTeamASidesMirrored,
             teamBSidesMirrored: snapshot.courtTeamBSidesMirrored,
             matchDoubles: matchDoubles,
+            variant: variant,
             baselineOnly: baselineOnly
         ), id: \.idx) { slot in
             avatarAt(slot: slot, size: size, servingTeam: bottomTeam, baselineOnly: baselineOnly)
@@ -220,16 +270,22 @@ struct WatchServeCourtSchema: View {
         baselineOnly: Bool
     ) -> some View {
         let ring = !baselineOnly && snapshot.serverTeam == servingTeam && slot.idx == snapshot.serverPlayerIndex
-        Group {
-            if let user = slot.player {
-                WatchPlayerAvatarView(user: user, size: size, role: nil, levelSport: levelSport)
-            } else {
-                Circle().fill(Color.secondary.opacity(0.2)).frame(width: size, height: size)
+        ZStack {
+            Ellipse()
+                .fill(Color(red: 2 / 255, green: 6 / 255, blue: 23 / 255).opacity(0.14))
+                .frame(width: size * 0.72, height: max(1.5, size * 0.15))
+                .offset(y: size * 0.46)
+            Group {
+                if let user = slot.player {
+                    WatchPlayerAvatarView(user: user, size: size, role: nil, levelSport: levelSport)
+                } else {
+                    Circle().fill(Color.secondary.opacity(0.2)).frame(width: size, height: size)
+                }
             }
-        }
-        .overlay {
-            if ring {
-                Circle().stroke(Color.accentColor, lineWidth: 1.5)
+            .overlay {
+                if ring {
+                    Circle().stroke(Color.accentColor, lineWidth: 1.5)
+                }
             }
         }
         .position(x: slot.x, y: slot.y)
@@ -288,32 +344,45 @@ private enum WatchServeCourtLayout {
         return visualEnd(team: serverTeam, endsSwapped: endsSwapped) == .top ? isRight : !isRight
     }
 
-    static func ballPoint(serverTeam: TeamSide, courtSide: CourtServeSide, endsSwapped: Bool) -> CGPoint {
+    static func ballPoint(
+        serverTeam: TeamSide,
+        courtSide: CourtServeSide,
+        endsSwapped: Bool,
+        variant: WatchServeCourtSchema.Variant,
+        matchDoubles: Bool
+    ) -> CGPoint {
         let west = serveTargetIsWest(serverTeam: serverTeam, courtSide: courtSide, endsSwapped: endsSwapped)
-        let x: CGFloat = west ? 26 : 74
+        let x: CGFloat = west ? VB.playXLeft(variant: variant, matchDoubles: matchDoubles) : VB.playXRight(variant: variant, matchDoubles: matchDoubles)
         let y: CGFloat = visualEnd(team: serverTeam, endsSwapped: endsSwapped) == .bottom ? 156 : 44
         return CGPoint(x: x, y: y)
     }
 
-    static func serveDiagonalArrow(serverEnd: VisualEnd, westServe: Bool) -> Path {
+    static func serveDiagonalArrow(
+        serverEnd: VisualEnd,
+        westServe: Bool,
+        variant: WatchServeCourtSchema.Variant,
+        matchDoubles: Bool
+    ) -> Path {
         let midX: CGFloat = 50
+        let xL = VB.playXLeft(variant: variant, matchDoubles: matchDoubles)
+        let xR = VB.playXRight(variant: variant, matchDoubles: matchDoubles)
         return Path { p in
             if serverEnd == .bottom {
                 let cy: CGFloat = 78
                 if westServe {
-                    p.move(to: CGPoint(x: 26, y: 156))
+                    p.move(to: CGPoint(x: xL, y: 156))
                     p.addQuadCurve(to: CGPoint(x: 70, y: 56), control: CGPoint(x: midX, y: cy))
                 } else {
-                    p.move(to: CGPoint(x: 74, y: 156))
+                    p.move(to: CGPoint(x: xR, y: 156))
                     p.addQuadCurve(to: CGPoint(x: 30, y: 56), control: CGPoint(x: midX, y: cy))
                 }
             } else {
                 let cy: CGFloat = 128
                 if westServe {
-                    p.move(to: CGPoint(x: 26, y: 44))
+                    p.move(to: CGPoint(x: xL, y: 44))
                     p.addQuadCurve(to: CGPoint(x: 70, y: 144), control: CGPoint(x: midX, y: cy))
                 } else {
-                    p.move(to: CGPoint(x: 74, y: 44))
+                    p.move(to: CGPoint(x: xR, y: 44))
                     p.addQuadCurve(to: CGPoint(x: 30, y: 144), control: CGPoint(x: midX, y: cy))
                 }
             }
@@ -331,18 +400,19 @@ private enum WatchServeCourtLayout {
         teamASidesMirrored: Bool,
         teamBSidesMirrored: Bool,
         matchDoubles: Bool,
+        variant: WatchServeCourtSchema.Variant,
         baselineOnly: Bool = false
     ) -> [AvatarSlot] {
         let baselineY: CGFloat = end == .top ? 14 : 186
         let netY: CGFloat = end == .top ? 72 : 128
-        let xR: CGFloat = 74
-        let xL: CGFloat = 26
+        let xR: CGFloat = VB.playXRight(variant: variant, matchDoubles: matchDoubles)
+        let xL: CGFloat = VB.playXLeft(variant: variant, matchDoubles: matchDoubles)
         let teamMirrored = team == .teamA ? teamASidesMirrored : teamBSidesMirrored
         let west = serveTargetIsWest(serverTeam: serverTeam, courtSide: courtSide, endsSwapped: endsSwapped)
         let serverX = west ? xL : xR
         let partnerX = west ? xR : xL
         let serving = !baselineOnly && serverTeam == team
-        let pair = Array(players.prefix(2))
+        let pair = Array(players.prefix(matchDoubles ? 2 : 1))
         let n = pair.count
         if n == 0 { return [] }
         if n == 1, !matchDoubles {

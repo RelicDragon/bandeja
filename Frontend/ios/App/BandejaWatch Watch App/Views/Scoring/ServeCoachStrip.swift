@@ -32,9 +32,12 @@ extension ServeGuideInputs {
             usesRallyPointsServeGuide: vm.usesRallyPointsServeGuide,
             rallyPointsSport: vm.usesRallyPointsServeGuide ? vm.game?.resolvedSport : nil,
             rallyPointsPerSet: vm.maxPointsPerSet,
+            rallyFixedNumberOfSets: vm.rules.fixedNumberOfSets,
+            rallyWinBy: vm.rules.winBy,
             matchStartCourtEndsSwapped: record.matchStartCourtEndsSwapped == true,
             matchStartTeamASidesMirrored: record.matchStartTeamASidesMirrored == true,
-            matchStartTeamBSidesMirrored: record.matchStartTeamBSidesMirrored == true
+            matchStartTeamBSidesMirrored: record.matchStartTeamBSidesMirrored == true,
+            pointWinnerLog: vm.pointWinnerLog
         )
     }
 }
@@ -146,9 +149,7 @@ struct ServeCoachStrip: View {
                             .minimumScaleFactor(0.7)
                     }
                     HStack(spacing: 4) {
-                        Text(sideLabel(s.courtSide))
-                            .font(.caption2.weight(.bold).monospaced())
-                            .foregroundStyle(.secondary)
+                        WatchServeSideArrow(courtSide: s.courtSide)
                         if let slot = s.tieBreakServeSlot {
                             Text(slot == .serveOne ? "S1" : "S2")
                                 .font(.caption2.weight(.bold).monospaced())

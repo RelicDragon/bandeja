@@ -13,6 +13,7 @@ import {
 } from '@/utils/matchTimer';
 import type { BasicUser, Game, Gender } from '@/types';
 import type { SetResult } from '@/types/gameResults';
+import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { getRules } from '@/utils/scoring';
 import { createInitialLiveScoringState, parseLiveScoringState, type LiveScoringState } from '@/utils/liveScoring';
 
@@ -56,6 +57,8 @@ export function labelForTeam(match: RawMatch, side: 1 | 2): string {
 const DEFAULT_GENDER: Gender = 'PREFER_NOT_TO_SAY';
 
 export function liveBoardPlayersForTeam(match: RawMatch, side: 1 | 2, game?: Game | null): BasicUser[] {
+  const participantCount = (game?.participants ?? []).filter((p) => p.status === 'PLAYING').length;
+  const maxPerTeam = maxPlayersPerTeamForGame(game, participantCount || undefined);
   const participantLevelById = new Map(
     (game?.participants ?? [])
       .filter((p) => p.user?.id)
@@ -65,6 +68,7 @@ export function liveBoardPlayersForTeam(match: RawMatch, side: 1 | 2, game?: Gam
   return (team?.players ?? [])
     .map((p) => p.user)
     .filter((u): u is NonNullable<typeof u> => Boolean(u?.id))
+    .slice(0, maxPerTeam)
     .map((u) => ({
       id: u.id as string,
       firstName: u.firstName ?? undefined,

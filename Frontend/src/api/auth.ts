@@ -123,9 +123,10 @@ export const authApi = {
   linkApple: async (data: {
     identityToken: string;
     nonce: string;
+    confirmMerge?: boolean;
   }) => {
     console.log('[APPLE_API] linkApple called', { hasIdentityToken: !!data.identityToken, hasNonce: !!data.nonce });
-    const response = await api.post<ApiResponse<{ user: any }>>('/auth/link/apple', data);
+    const response = await api.post<ApiResponse<LoginResponse>>('/auth/link/apple', data);
     console.log('[APPLE_API] linkApple response received');
     return response.data;
   },
@@ -139,8 +140,9 @@ export const authApi = {
 
   linkGoogle: async (data: {
     idToken: string;
+    confirmMerge?: boolean;
   }) => {
-    const response = await api.post<ApiResponse<{ user: any }>>('/auth/link/google', data);
+    const response = await api.post<ApiResponse<LoginResponse>>('/auth/link/google', data);
     return response.data;
   },
 

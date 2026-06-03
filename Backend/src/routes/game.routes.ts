@@ -39,7 +39,7 @@ router.get('/available', authenticate, gameController.getAvailableGames);
 
 router.get('/booked-courts', authenticate, gameController.getBookedCourts);
 
-router.get('/:id/workout/me', authenticate, canAccessGame, gameController.getMyGameWorkoutSummary);
+router.get('/:id/workout/me', authenticate, canAccessGameIncludingArchived, gameController.getMyGameWorkoutSummary);
 
 router.post(
   '/:id/reactions',

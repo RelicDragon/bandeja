@@ -1,58 +1,58 @@
 {
   "createGame": {
-    "title": "Креирај игру",
-    "createBar": "Креирај бар догађај",
-    "createTraining": "Креирај тренинг",
-    "createTournament": "Креирај Турнир",
-    "createLeague": "Креирај Лигу",
-    "selectType": "Изаберите тип",
-    "location": "Локација",
-    "locationTournament": "Локација турнира",
-    "locationLeague": "Локација лиге",
-    "club": "Клуб",
-    "selectClub": "Изаберите клуб",
-    "court": "Терен",
-    "hall": "Сала",
-    "notBookedYet": "Још није резервисан",
-    "hasBookedCourt": "Резервисао сам овај терен",
-    "hasBookedHall": "Резервисао сам сто",
-    "selectCourt": "Изаберите терен",
-    "selectHall": "Изаберите салу",
-    "selectClubFirst": "Прво изаберите клуб",
-    "clubCancellationNotice": "Обавештење о отказивању: најмање {{hours}} сати пре термина.",
-    "clubPolicyTitle": "Правила клуба",
-    "noClubsAvailable": "Нема доступних клубова",
-    "clubDetailsBack": "Назад на клубове",
-    "clubInfo": "Детаљи клуба",
-    "clubPhotos": "Фотографије",
-    "noCourtsAvailable": "Нема доступних терена",
-    "noHallsAvailable": "Нема доступних сала",
-    "playerLevel": "Ниво играча",
-    "playerLevelTournament": "Ниво играча турнира",
-    "playerLevelLeague": "Ниво играча лиге",
-    "minLevel": "Минимални ниво",
-    "maxLevel": "Максимални ниво",
-    "participants": "Учесници",
-    "participantsTournament": "Учесници турнира",
-    "participantsLeague": "Учесници лиге",
-    "numberOfParticipants": "Број учесника",
-    "numberOfParticipantsTournament": "Број учесника турнира",
-    "numberOfParticipantsLeague": "Број учесника лиге",
-    "addMeToGame": "Придружити се игри",
-    "iWantToPlay": "Желим да играм",
-    "iWillPlay": "Ја ћу играти",
-    "settings": "Подешавања",
-    "settingsTournament": "Подешавања турнира",
-    "settingsLeague": "Подешавања лиге",
-    "gameType": "Тип игре",
-    "gameTypeLeague": "Тип лиге",
-    "gameTypeNote": "Можете променити детаљна подешавања игре у секцији Подешавање Игре.",
-    "gameTypeNoteLeague": "Можете променити детаљна подешавања лиге у секцији Подешавање лиге.",
+    "title": "Kreiraj igru",
+    "createBar": "Kreiraj bar događaj",
+    "createTraining": "Kreiraj trening",
+    "createTournament": "Kreiraj Turnir",
+    "createLeague": "Kreiraj Ligu",
+    "selectType": "Izaberite tip",
+    "location": "Lokacija",
+    "locationTournament": "Lokacija turnira",
+    "locationLeague": "Lokacija lige",
+    "club": "Klub",
+    "selectClub": "Izaberite klub",
+    "court": "Teren",
+    "hall": "Sala",
+    "notBookedYet": "Još nije rezervisan",
+    "hasBookedCourt": "Rezervisao sam ovaj teren",
+    "hasBookedHall": "Rezervisao sam sto",
+    "selectCourt": "Izaberite teren",
+    "selectHall": "Izaberite salu",
+    "selectClubFirst": "Prvo izaberite klub",
+    "clubCancellationNotice": "Obaveštenje o otkazivanju: najmanje {{hours}} sati pre termina.",
+    "clubPolicyTitle": "Pravila kluba",
+    "noClubsAvailable": "Nema dostupnih klubova",
+    "clubDetailsBack": "Nazad na klubove",
+    "clubInfo": "Detalji kluba",
+    "clubPhotos": "Fotografije",
+    "noCourtsAvailable": "Nema dostupnih terena",
+    "noHallsAvailable": "Nema dostupnih sala",
+    "playerLevel": "Nivo igrača",
+    "playerLevelTournament": "Nivo igrača turnira",
+    "playerLevelLeague": "Nivo igrača lige",
+    "minLevel": "Minimalni nivo",
+    "maxLevel": "Maksimalni nivo",
+    "participants": "Učesnici",
+    "participantsTournament": "Učesnici turnira",
+    "participantsLeague": "Učesnici lige",
+    "numberOfParticipants": "Broj učesnika",
+    "numberOfParticipantsTournament": "Broj učesnika turnira",
+    "numberOfParticipantsLeague": "Broj učesnika lige",
+    "addMeToGame": "Pridružiti se igri",
+    "iWantToPlay": "Želim da igram",
+    "iWillPlay": "Ja ću igrati",
+    "settings": "Podešavanja",
+    "settingsTournament": "Podešavanja turnira",
+    "settingsLeague": "Podešavanja lige",
+    "gameType": "Tip igre",
+    "gameTypeLeague": "Tip lige",
+    "gameTypeNote": "Možete promeniti detaljna podešavanja igre u sekciji Podešavanje Igre.",
+    "gameTypeNoteLeague": "Možete promeniti detaljna podešavanja lige u sekciji Podešavanje lige.",
     "anyoneCanInvite": {
-      "title": "Свако може позвати друге играче",
+      "title": "Svako može pozvati druge igrače",
       "note": {
-        "false": "Само организатори могу позвати играче.",
-        "true": "Било који учесник може позвати друге играче."
+        "false": "Samo organizatori mogu pozvati igrače.",
+        "true": "Bilo koji učesnik može pozvati druge igrače."
       },
       "titleTraining": "Anyone can invite other participants",
       "noteTraining": {
@@ -61,10 +61,10 @@
       }
     },
     "publicGame": {
-      "title": "Јавна игра",
+      "title": "Javna igra",
       "note": {
-        "false": "Биће приватан и видљив само позваним учесницима.",
-        "true": "Биће видљив свим играчима и може се наћи у претрази."
+        "false": "Biće privatan i vidljiv samo pozvanim učesnicima.",
+        "true": "Biće vidljiv svim igračima i može se naći u pretrazi."
       },
       "titleTraining": "Public training",
       "noteTraining": {
@@ -73,17 +73,17 @@
       }
     },
     "resultsByAnyone": {
-      "title": "Резултате може унети било ко",
+      "title": "Rezultate može uneti bilo ko",
       "note": {
-        "false": "Само организатори могу уносити и мењати резултате.",
-        "true": "Било који учесник може уносити и мењати резултате."
+        "false": "Samo organizatori mogu unositi i menjati rezultate.",
+        "true": "Bilo koji učesnik može unositi i menjati rezultate."
       }
     },
     "allowDirectJoin": {
-      "title": "Улаз без потврде",
+      "title": "Ulaz bez potvrde",
       "note": {
-        "false": "Играчима је потребна одобрење организатора пре придруживања.",
-        "true": "Играчи могу се директно придружити без чекања одобрења."
+        "false": "Igračima je potrebna odobrenje organizatora pre pridruživanja.",
+        "true": "Igrači mogu se direktno pridružiti bez čekanja odobrenja."
       },
       "titleTraining": "Join without confirmation",
       "noteTraining": {
@@ -92,10 +92,10 @@
       }
     },
     "afterGameGoToBar": {
-      "title": "Остати у бару после игре",
+      "title": "Ostati u baru posle igre",
       "note": {
-        "false": "Не укључује друштвени окуп након меча.",
-        "true": "Укључује друштвени окуп након меча."
+        "false": "Ne uključuje društveni okup nakon meča.",
+        "true": "Uključuje društveni okup nakon meča."
       },
       "titleTraining": "Stay at the bar after the training",
       "noteTraining": {
@@ -105,110 +105,267 @@
     },
     "hasFixedTeams": {
       "note": {
-        "false": "Табела резултата је индивидуална. Играчи ће играти са било ким према правилима.",
-        "true": "Табела је по паровима. Моћи ћете да закључате играче у паровима који се такмиче једни против других. Састав парова се не може мењати након почетка."
+        "false": "Tabela rezultata je individualna. Igrači će igrati sa bilo kim prema pravilima.",
+        "true": "Tabela je po parovima. Moći ćete da zaključate igrače u parovima koji se takmiče jedni protiv drugih. Sastav parova se ne može menjati nakon početka."
       }
     },
     "ratingGame": {
-      "title": "Рејтинг игра",
+      "title": "Rejting igra",
       "note": {
-        "false": "Резултати неће променити нивое учесника.",
-        "true": "Резултати ће утицати на нивое учесника."
+        "false": "Rezultati neće promeniti nivoe učesnika.",
+        "true": "Rezultati će uticati na nivoe učesnika."
       }
     },
-    "tournament": "Турнир",
+    "tournament": "Turnir",
     "genderTeams": {
-      "label": "Учесници по полу",
-      "any": "Било који",
-      "men": "Мушкарци",
-      "women": "Жене",
-      "mixPairs": "Микс",
+      "label": "Učesnici po polu",
+      "any": "Bilo koji",
+      "men": "Muškarci",
+      "women": "Žene",
+      "mixPairs": "Miks",
       "note": {
-        "any": "Било који пол је добродошао",
-        "men": "Дозвољени су само мушкарци",
-        "women": "Дозвољене су само жене",
-        "mixPairs": "Само за тимску игру, сваки тим ће се састојати од 1 мушкарца и 1 жене,једнак број мушкараца/жена ће моћи да се придружи."
+        "any": "Bilo koji pol je dobrodošao",
+        "men": "Dozvoljeni su samo muškarci",
+        "women": "Dozvoljene su samo žene",
+        "mixPairs": "Samo za timsku igru, svaki tim će se sastojati od 1 muškarca i 1 žene,jednak broj muškaraca/žena će moći da se pridruži."
       }
     },
     "fixedTeams": {
-      "descriptionOn": "Партнери остају исти током целог догађаја.",
-      "descriptionOff": "Парови се могу мењати из кола у коло."
-    },
-    "allowUserInMultipleTeams": {
-      "title": "Исти играч у више фиксних тимова",
-      "helper": "Дозвољава једној особи да буде у више парова. Ротација и део лиге или пласмана може то необично рачунати; искључите фиксне парове за ресет.",
-      "editInSettingsHint": "Уређујете Подешавања у картици испод. Користите прекидач тамо за ову опцију, па сачувајте. Након изласка из уређивања поново је мењате у подешавању формата игре изнад.",
-      "tapEditHint": "Додирните Уреди на овој картици, укључите или искључите прекидач и сачувајте.",
-      "saveAfterChangeHint": "Промените прекидач и сачувајте (горе или доле на картици). Формат игре поново приказује ову опцију када завршите уређивање.",
-      "note": {
-        "false": "Сваки играч може бити само у једном фиксном пару.",
-        "true": "Играч може бити у више фиксних парова одједном."
+      "GAME": {
+        "descriptionOn": "Isti par u svim mečevima ove igre.",
+        "descriptionOff": "Parovi se mogu menjati iz kola u kolo."
+      },
+      "TOURNAMENT": {
+        "descriptionOn": "Partneri ostaju zajedno tokom celog turnira.",
+        "descriptionOff": "Parovi se mogu menjati između rundi turnira."
+      },
+      "LEAGUE": {
+        "descriptionOn": "Fiksni parovi za celu ligu.",
+        "descriptionOff": "Parovi se mogu menjati od kola do kola u ligi."
       }
     },
-    "gameName": "Назив игре",
-    "gameNameTournament": "Назив турнира",
-    "gameNameLeague": "Назив лиге",
-    "gameNamePlaceholder": "Унесите назив игре (опционално)",
-    "gameNamePlaceholderTournament": "Унесите назив турнира (опционално)",
-    "gameNamePlaceholderLeague": "Унесите назив лиге (опционално)",
-    "comments": "Коментари",
-    "commentsTournament": "Коментари турнира",
-    "commentsLeague": "Коментари лиге",
-    "commentsPlaceholder": "Додајте додатне информације о игри...",
-    "commentsPlaceholderTournament": "Додајте додатне информације о турниру...",
-    "commentsPlaceholderLeague": "Додајте додатне информације о лиги...",
-    "price": "Цена",
-    "priceType": "Тип цене",
-    "priceTypeNotKnown": "Непознато",
-    "priceTypePerPerson": "По особи",
-    "priceTypePerTeam": "По тиму",
-    "priceTypeTotal": "Укупно",
-    "priceTypeFree": "Бесплатно",
-    "priceTotal": "Износ",
-    "priceTotalPlaceholder": "Унесите износ",
-    "priceCurrency": "Валута",
-    "priceNotSet": "Цена није постављена",
-    "gameStart": "Почетак игре",
-    "gameStartTournament": "Почетак турнира",
-    "gameStartLeague": "Почетак лиге",
-    "selectDate": "Изаберите датум",
-    "date": "Датум",
-    "startTime": "Време почетка",
-    "endTime": "Време краја",
-    "duration": "Трајање",
-    "selectTime": "Изаберите време",
-    "clubTime": "време клуба",
-    "showPastTimes": "Прикажи прошла времена",
-    "timeSlot": "Изабрани слот",
-    "loadingExternalSlots": "Учитавање спољних слотова",
-    "bookedWithoutCourt": "Без терена",
-    "notConfirmed": "није потврђено",
-    "multipleCourts": "Више терена",
-    "noCourtsSelected": "Нема изабраних терена",
-    "addCourt": "Додај терен",
-    "createButton": "Креирај игру",
-    "createButtonTournament": "Креирај Турнир",
-    "createButtonLeague": "Креирај Лигу",
-    "createButtonBar": "Креирај бар догађај",
-    "createButtonTraining": "Креирај тренинг",
-    "today": "Данас",
-    "tomorrow": "Сутра",
-    "yesterday": "Јуче",
-    "selectFromCalendar": "Изаберите из календара",
-    "hours": "{{count}}ч",
-    "hoursMinutes": "{{hours}}ч {{minutes}}м",
-    "you": "Ви",
-    "invite": "Позови",
-    "remove": "Уклони",
-    "manageInvites": "Управљај позивима ({{count}})",
-    "invitesWillBeSent_one": "Играч ће бити позван након креирања игре",
-    "invitesWillBeSent_few": "{{count}} играча ће бити позвани након креирања игре",
-    "invitesWillBeSent_other": "{{count}} играча ће бити позвани након креирања игре",
+    "allowUserInMultipleTeams": {
+      "title": "Isti igrač u više fiksnih timova",
+      "helper": "Dozvoljava jednoj osobi da bude u više parova. Rotacija i deo lige ili plasmana može to neobično računati; isključite fiksne parove za reset.",
+      "editInSettingsHint": "Uređujete Podešavanja u kartici ispod. Koristite prekidač tamo za ovu opciju, pa sačuvajte. Nakon izlaska iz uređivanja ponovo je menjate u podešavanju formata igre iznad.",
+      "tapEditHint": "Dodirnite Uredi na ovoj kartici, uključite ili isključite prekidač i sačuvajte.",
+      "saveAfterChangeHint": "Promenite prekidač i sačuvajte (gore ili dole na kartici). Format igre ponovo prikazuje ovu opciju kada završite uređivanje.",
+      "note": {
+        "false": "Svaki igrač može biti samo u jednom fiksnom paru.",
+        "true": "Igrač može biti u više fiksnih parova odjednom."
+      }
+    },
+    "gameName": "Naziv igre",
+    "gameNameTournament": "Naziv turnira",
+    "gameNameLeague": "Naziv lige",
+    "gameNamePlaceholder": "Unesite naziv igre (opcionalno)",
+    "gameNamePlaceholderTournament": "Unesite naziv turnira (opcionalno)",
+    "gameNamePlaceholderLeague": "Unesite naziv lige (opcionalno)",
+    "comments": "Komentari",
+    "commentsTournament": "Komentari turnira",
+    "commentsLeague": "Komentari lige",
+    "commentsPlaceholder": "Dodajte dodatne informacije o igri...",
+    "commentsPlaceholderTournament": "Dodajte dodatne informacije o turniru...",
+    "commentsPlaceholderLeague": "Dodajte dodatne informacije o ligi...",
+    "price": "Cena",
+    "priceType": "Tip cene",
+    "priceTypeNotKnown": "Nepoznato",
+    "priceTypePerPerson": "Po osobi",
+    "priceTypePerTeam": "Po timu",
+    "priceTypeTotal": "Ukupno",
+    "priceTypeFree": "Besplatno",
+    "priceTotal": "Iznos",
+    "priceTotalPlaceholder": "Unesite iznos",
+    "priceCurrency": "Valuta",
+    "priceNotSet": "Cena nije postavljena",
+    "gameStart": "Početak igre",
+    "gameStartTournament": "Početak turnira",
+    "gameStartLeague": "Početak lige",
+    "selectDate": "Izaberite datum",
+    "date": "Datum",
+    "startTime": "Vreme početka",
+    "endTime": "Vreme kraja",
+    "duration": "Trajanje",
+    "selectTime": "Izaberite vreme",
+    "clubTime": "vreme kluba",
+    "showPastTimes": "Prikaži prošla vremena",
+    "timeSlot": "Izabrani slot",
+    "loadingExternalSlots": "Učitavanje spoljnih slotova",
+    "bookedWithoutCourt": "Bez terena",
+    "notConfirmed": "nije potvrđeno",
+    "multipleCourts": "Više terena",
+    "noCourtsSelected": "Nema izabranih terena",
+    "addCourt": "Dodaj teren",
+    "createButton": "Kreiraj igru",
+    "createButtonTournament": "Kreiraj Turnir",
+    "createButtonLeague": "Kreiraj Ligu",
+    "createButtonBar": "Kreiraj bar događaj",
+    "createButtonTraining": "Kreiraj trening",
+    "today": "Danas",
+    "tomorrow": "Sutra",
+    "yesterday": "Juče",
+    "selectFromCalendar": "Izaberite iz kalendara",
+    "hours": "{{count}}č",
+    "hoursMinutes": "{{hours}}č {{minutes}}m",
+    "you": "Vi",
+    "invite": "Pozovi",
+    "remove": "Ukloni",
+    "manageInvites": "Upravljaj pozivima ({{count}})",
+    "invitesWillBeSent_one": "Igrač će biti pozvan nakon kreiranja igre",
+    "invitesWillBeSent_few": "{{count}} igrača će biti pozvani nakon kreiranja igre",
+    "invitesWillBeSent_other": "{{count}} igrača će biti pozvani nakon kreiranja igre",
     "priceRequired": "Price must be greater than 0 for this price type",
     "commentsTraining": "Training Comments",
     "commentsPlaceholderTraining": "Add any additional information about the training...",
     "gameNameTraining": "Name of training",
     "gameNamePlaceholderTraining": "Enter training name (optional)",
-    "gameStartTraining": "Start of training"
+    "gameStartTraining": "Start of training",
+    "intent": {
+      "title": "Kakva igra?",
+      "subtitle": "Izaberite stil — detalje možete promeniti ispod.",
+      "customizeFormat": "Prilagodi format",
+      "social": {
+        "title": "Druženje",
+        "description": "Klubska noć, rotacija, bez rejtinga"
+      },
+      "match": {
+        "title": "Meč",
+        "description": "Zvanična pravila, utiče na nivo"
+      },
+      "advanced": {
+        "title": "Napredno",
+        "description": "Pun čarobnjak formata"
+      }
+    },
+    "templates": {
+      "title": "Šabloni",
+      "empty": "Nema šablona — prilagodite format.",
+      "durationApprox2h": "~2 č",
+      "PADEL_AMERICANO_24": {
+        "title": "Amerikano (24)",
+        "description": "Nasumični parovi, do 24"
+      },
+      "PADEL_MEXICANO_24": {
+        "title": "Meksikano (24)",
+        "description": "Parovi po nivou"
+      },
+      "durationApprox90m": "~90 min",
+      "PICKLEBALL_SOCIAL_21": {
+        "title": "Otvorena (21)",
+        "description": "Amerikano 4 igrača"
+      },
+      "PICKLEBALL_MATCH_BO3_11": {
+        "title": "3×11",
+        "description": "Zvanični stil"
+      },
+      "BADMINTON_CLUB_3X15": {
+        "title": "Klub 3×15",
+        "description": "3 gema do 15"
+      },
+      "BADMINTON_MATCH_3X21": {
+        "title": "3×21",
+        "description": "Zvanični meč"
+      },
+      "TT_OPEN_PLAY_11": {
+        "title": "Brzi gem do 11",
+        "description": "Singl ili dubl — jedan kratak meč (2–4 igrača)"
+      },
+      "TT_CLUB_RR_11": {
+        "title": "Klubski round robin",
+        "description": "6–8 igrača, singl — svi protiv svih, gem do 11"
+      },
+      "TT_LEGACY_SINGLE_21": {
+        "title": "Old-school 21 poen",
+        "description": "Jedan gem do 21, prednost 2 (pre 2001.)"
+      },
+      "TT_BOX_BO3_11": {
+        "title": "Boks Bo3×11",
+        "description": "Lestvica, 3×11"
+      },
+      "TT_MATCH_BO3_11": {
+        "title": "Meč Bo3×11",
+        "description": "Rangirani meč, do 3 gema do 11"
+      },
+      "TT_MATCH_BO5_11": {
+        "title": "Meč Bo5×11",
+        "description": "Rangirani meč, do 5 gemova do 11"
+      },
+      "TENNIS_FAST4_SOCIAL": {
+        "title": "FAST4",
+        "description": "Kratki setovi"
+      },
+      "TENNIS_CLASSIC_BO3": {
+        "title": "Do 3 seta",
+        "description": "Klasičan tenis"
+      },
+      "SQUASH_QUICK_BO3_11": {
+        "title": "Brzo 3×11",
+        "description": "3 gema do 11"
+      },
+      "PADEL_KOTC_11": {
+        "title": "King of the Court",
+        "description": "Short games to 11; kings on court 1, challenger pool for the rest"
+      },
+      "PADEL_AMERICANO_10": {
+        "title": "Americano · 10 min",
+        "description": "Timed rounds (10 min), 24-ball games, random pairs"
+      },
+      "PADEL_AMERICANO_20": {
+        "title": "Americano · 20 min",
+        "description": "Timed rounds (20 min), 24-ball games, random pairs"
+      },
+      "PADEL_CHALLENGER_POOL": {
+        "title": "Challenger pool",
+        "description": "King court + queue: court 1 winners defend, others rotate from the pool"
+      },
+      "PICKLEBALL_KOTC_11": {
+        "title": "King of the Court",
+        "description": "Short 11-ball games; king court + challenger pool"
+      },
+      "BADMINTON_AMERICANO_21": {
+        "title": "Club night (21 balls)",
+        "description": "Doubles Americano, 21-ball social games"
+      },
+      "TT_SWISS_BOX": {
+        "title": "Swiss box",
+        "description": "Skill-pairing box league (ladder engine), Bo3 to 11"
+      }
+    },
+    "presetTier": {
+      "social": "Društveno",
+      "match": "Meč"
+    },
+    "presetMeta": {
+      "POINTS_11": "Do 11",
+      "SINGLE_GAME_21": "Gem do 21 (old-school)",
+      "POINTS_16": "Do 16",
+      "POINTS_21": "21 loptica",
+      "POINTS_24": "Amerikano 24",
+      "POINTS_32": "Do 32",
+      "CLASSIC_BEST_OF_3": "Do 3 seta",
+      "CLASSIC_BEST_OF_5": "Do 5 setova",
+      "CLASSIC_PRO_SET": "Pro set",
+      "CLASSIC_SHORT_SET": "Kratki setovi",
+      "CLASSIC_SINGLE_SET": "Jedan set",
+      "CLASSIC_SUPER_TIEBREAK": "Super taj-brek",
+      "CLASSIC_TIMED": "Na vreme",
+      "BEST_OF_3_11": "3×11",
+      "BEST_OF_5_11": "5×11",
+      "TIMED": "Na vreme",
+      "CUSTOM": "Prilagođeno",
+      "BEST_OF_3_15": "Best of 3 to 15",
+      "BEST_OF_3_21": "Official 3×21",
+      "POINTS_15": "15-ball budget"
+    },
+    "pickSport": "Choose sport",
+    "settingsTraining": "Training Settings",
+    "overlapHardSave": "This time overlaps a court that is unavailable (club system or blocked). Choose another slot.",
+    "overlapSoftTitle": "Another game is planned here",
+    "overlapSoftMessage": "Another player has a game on this court at this time but has not confirmed the booking yet. You can still continue.",
+    "overlapSoftProceed": "Continue anyway",
+    "markCourtBookedTitle": "Mark court as booked?",
+    "markCourtBookedMessage": "You selected a court but have not marked it as booked. Confirm when you have reserved it with the club.",
+    "markCourtBookedYes": "Yes, I've booked it",
+    "markCourtBookedSkip": "Not yet"
   }
 }

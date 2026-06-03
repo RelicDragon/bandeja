@@ -284,6 +284,7 @@ model Club {
   integrationConfig    Json?
   ptMeta               Json?    @map("pt_meta")
   courtsNumber         Int                @default(0)
+  sports               Sport[]            @default([PADEL])
   clubRating           Float?
   clubReviewCount      Int                @default(0)
   defaultSlotMinutes   Int?
@@ -318,6 +319,8 @@ model UserSportProfile {
   questionnaireSkippedAt   DateTime?
   questionnaireVersion     String?
   levelSource              SportLevelSource  @default(DEFAULT)
+  /** Manual or imported display bridge (DUPR, NTRP, Playtomic, etc.) — not used on avatar badge. */
+  externalRatingHint       String?           @db.VarChar(32)
   createdAt                DateTime          @default(now())
   updatedAt                DateTime          @updatedAt
   user                     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1524,6 +1527,7 @@ enum GameType {
   ROUND_ROBIN
   WINNER_COURT
   LADDER
+  KOTC
   CUSTOM
 }
 
@@ -1940,6 +1944,7 @@ enum MatchGenerationType {
   ESCALERA
   RATING
   WINNERS_COURT
+  KING_OF_COURT
 }
 
 enum ScoringPreset {
@@ -1947,18 +1952,23 @@ enum ScoringPreset {
   CLASSIC_BEST_OF_5
   CLASSIC_PRO_SET
   CLASSIC_SHORT_SET
+  CLASSIC_FAST4
   CLASSIC_SUPER_TIEBREAK
   CLASSIC_SINGLE_SET
   CLASSIC_TIMED
   POINTS_11
+  POINTS_12
+  POINTS_15
   POINTS_16
   POINTS_21
   POINTS_24
   POINTS_32
   BEST_OF_3_11
+  BEST_OF_3_15
   BEST_OF_3_21
   BEST_OF_5_11
   PAR_11
+  SINGLE_GAME_21
   TIMED
   CUSTOM
 }
@@ -2073,6 +2083,7 @@ enum SportLevelSource {
   DEFAULT
   QUESTIONNAIRE
   MANUAL
+  PLAYTOMIC
 }
 
 enum LevelChangeEventType {

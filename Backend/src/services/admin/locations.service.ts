@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, Sport } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
 import { ImageProcessor } from '../../utils/imageProcessor';
@@ -10,6 +10,11 @@ import {
 } from '../../utils/clubPhotosJson';
 import { COUNTRIES, TIMEZONES, DEFAULT_TIMEZONE } from '../../utils/constants';
 import { normalizeClubName } from '../../utils/normalizeClubName';
+import {
+  parseClubSportsInput,
+  assertClubSportsCoverCourtSports,
+  assertCourtSportInClub,
+} from '../../shared/clubSports';
 import { refreshCityFromClubs, refreshAllCitiesFromClubs } from '../../utils/updateCityCenter';
 import { refreshClubCourtsCount } from '../../utils/refreshClubCourtsCount';
 import { CityGroupService } from '../chat/cityGroup.service';
@@ -221,6 +226,7 @@ export class AdminLocationsService {
     isActive?: boolean;
     isBar?: boolean;
     isForPlaying?: boolean;
+    sports?: Sport[];
   }) {
     const {
       name,
@@ -238,9 +244,12 @@ export class AdminLocationsService {
       isActive,
       isBar,
       isForPlaying,
+      sports: sportsRaw,
     } = data;
 
     const active = isActive !== undefined ? isActive : true;
+    const sports =
+      sportsRaw !== undefined ? parseClubSportsInput(sportsRaw) : [Sport.PADEL];
     const center = await prisma.club.create({
       data: {
         name,
@@ -259,6 +268,7 @@ export class AdminLocationsService {
         isActive: active,
         isBar: isBar || false,
         isForPlaying: isForPlaying !== undefined ? isForPlaying : true,
+        sports,
       },
       include: {
         city: {
@@ -292,6 +302,7 @@ export class AdminLocationsService {
     photos?: ClubPhotoStored[];
     avatar?: string | null;
     originalAvatar?: string | null;
+    sports?: Sport[];
   }) {
     const {
       name,
@@ -312,6 +323,7 @@ export class AdminLocationsService {
       photos,
       avatar,
       originalAvatar,
+      sports: sportsRaw,
     } = data;
 
     const oldClub = await prisma.club.findUnique({
@@ -319,6 +331,20 @@ export class AdminLocationsService {
       select: { cityId: true, isActive: true, avatar: true, originalAvatar: true, photos: true },
     });
     if (!oldClub) throw new ApiError(404, 'Club not found');
+
+    let sports: Sport[] | undefined;
+    if (sportsRaw !== undefined) {
+      sports = parseClubSportsInput(sportsRaw);
+      const courts = await prisma.court.findMany({
+        where: { clubId: centerId },
+        select: { sport: true },
+      });
+      assertClubSportsCoverCourtSports(
+        sports,
+        courts.map((c) => c.sport),
+      );
+    }
+
     const dataPayload: Parameters<typeof prisma.club.update>[0]['data'] = {
       ...(name != null && { name, normalizedName: normalizeClubName(name) }),
       ...(description !== undefined && { description }),
@@ -335,6 +361,7 @@ export class AdminLocationsService {
       ...(isActive !== undefined && { isActive }),
       ...(isBar !== undefined && { isBar }),
       ...(isForPlaying !== undefined && { isForPlaying }),
+      ...(sports !== undefined && { sports }),
     };
 
     if (photos !== undefined) {
@@ -435,6 +462,7 @@ export class AdminLocationsService {
     surfaceType?: string;
     pricePerHour?: number;
     isActive?: boolean;
+    sport?: Sport | null;
   }) {
     const {
       name,
@@ -444,7 +472,19 @@ export class AdminLocationsService {
       surfaceType,
       pricePerHour,
       isActive,
+      sport,
     } = data;
+
+    const club = await prisma.club.findUnique({
+      where: { id: clubId },
+      select: { sports: true },
+    });
+    if (!club) throw new ApiError(404, 'Club not found');
+    if (sport != null && !Object.values(Sport).includes(sport)) {
+      throw new ApiError(400, 'Invalid sport');
+    }
+    const courtSport = sport ?? null;
+    assertCourtSportInClub(club.sports, courtSport);
 
     const court = await prisma.court.create({
       data: {
@@ -455,6 +495,7 @@ export class AdminLocationsService {
         surfaceType,
         pricePerHour,
         isActive: isActive !== undefined ? isActive : true,
+        sport: courtSport,
       },
       include: {
         club: {
@@ -482,6 +523,7 @@ export class AdminLocationsService {
     surfaceType?: string;
     pricePerHour?: number;
     isActive?: boolean;
+    sport?: Sport | null;
   }) {
     const {
       name,
@@ -491,6 +533,7 @@ export class AdminLocationsService {
       surfaceType,
       pricePerHour,
       isActive,
+      sport,
     } = data;
 
     const existing = await prisma.court.findUnique({
@@ -498,6 +541,22 @@ export class AdminLocationsService {
       select: { clubId: true },
     });
     if (!existing) throw new ApiError(404, 'Court not found');
+
+    const targetClubId = clubId ?? existing.clubId;
+    const club = await prisma.club.findUnique({
+      where: { id: targetClubId },
+      select: { sports: true },
+    });
+    if (!club) throw new ApiError(404, 'Club not found');
+
+    let courtSport: Sport | null | undefined;
+    if (sport !== undefined) {
+      if (sport != null && !Object.values(Sport).includes(sport)) {
+        throw new ApiError(400, 'Invalid sport');
+      }
+      courtSport = sport ?? null;
+      assertCourtSportInClub(club.sports, courtSport);
+    }
 
     const court = await prisma.court.update({
       where: { id: courtId },
@@ -509,6 +568,7 @@ export class AdminLocationsService {
         surfaceType,
         pricePerHour,
         isActive,
+        ...(courtSport !== undefined && { sport: courtSport }),
       },
       include: {
         club: {

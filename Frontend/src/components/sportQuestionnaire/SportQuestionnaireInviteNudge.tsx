@@ -15,11 +15,12 @@ type SportQuestionnaireInviteNudgeProps = {
 export function SportQuestionnaireInviteNudge({ gameSport }: SportQuestionnaireInviteNudgeProps) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const { status, refresh } = useQuestionnaireStatus(gameSport);
+  const updateUser = useAuthStore((s) => s.updateUser);
+  const { status, loading, refresh } = useQuestionnaireStatus(gameSport);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const copyMode = getInviteNudgeCopyMode(user, gameSport, status);
-  if (!user || copyMode === 'none') return null;
+  if (!user || loading || copyMode === 'none') return null;
 
   const sportLabel = t(getSportConfig(gameSport).labelKey);
   const level = getDisplayLevelForSport(user, gameSport).toFixed(1);
@@ -49,7 +50,10 @@ export function SportQuestionnaireInviteNudge({ gameSport }: SportQuestionnaireI
         sport={gameSport}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
-        onCompleted={() => void refresh()}
+        onCompleted={(updated) => {
+          updateUser(updated);
+          void refresh();
+        }}
       />
     </>
   );

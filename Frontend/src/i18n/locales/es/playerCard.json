@@ -58,6 +58,9 @@
     "levelNotConfirmed": "El nivel no está confirmado",
     "openFullProfile": "Pantalla completa",
     "shareProfileTitle": "Share profile",
-    "inviteAsTrainer": "Invite as trainer"
+    "inviteAsTrainer": "Invite as trainer",
+    "shareProfile": "Share",
+    "shareProfileMessage": "Check out {{name}} on Bandeja",
+    "shareProfileFallbackName": "Player"
   }
 }

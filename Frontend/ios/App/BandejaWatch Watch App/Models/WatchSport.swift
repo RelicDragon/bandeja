@@ -8,7 +8,7 @@ enum WatchSport: String, Sendable, Codable, CaseIterable {
     case tableTennis = "TABLE_TENNIS"
     case squash = "SQUASH"
 
-    var defaultPlayersPerMatch: Int {
+    nonisolated var defaultPlayersPerMatch: Int {
         switch self {
         case .padel:
             return 4
@@ -17,21 +17,21 @@ enum WatchSport: String, Sendable, Codable, CaseIterable {
         }
     }
 
-    static func resolved(from raw: String?) -> WatchSport {
+    nonisolated static func resolved(from raw: String?) -> WatchSport {
         guard let raw, let s = WatchSport(rawValue: raw.uppercased()) else { return .padel }
         return s
     }
 }
 
 extension WatchGame {
-    var resolvedSport: WatchSport { WatchSport.resolved(from: sport) }
+    nonisolated var resolvedSport: WatchSport { WatchSport.resolved(from: sport) }
 
-    var resolvedPlayersPerMatch: Int {
+    nonisolated var resolvedPlayersPerMatch: Int {
         if playersPerMatch == 2 || playersPerMatch == 4 { return playersPerMatch! }
         return resolvedSport.defaultPlayersPerMatch
     }
 
-    var isDoublesMatch: Bool { resolvedPlayersPerMatch == 4 }
+    nonisolated var isDoublesMatch: Bool { resolvedPlayersPerMatch == 4 }
 
     /// Classic set serve guide: padel uses `ballsInGames`; tennis uses sport (API may omit legacy flags).
     var serveGuideUsesClassicSetRules: Bool {

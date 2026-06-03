@@ -145,6 +145,22 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'multisport rotation c3',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'multisport-rotation-c3.ts'),
+    ],
+  },
+  {
+    label: 'multisport kotc c6',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'multisport-kotc-c6.ts'),
+    ],
+  },
+  {
     label: 'multisport phase 3',
     command: process.execPath,
     args: [
@@ -158,6 +174,78 @@ const suites: Suite[] = [
     args: [
       path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
       path.join(backendRoot, 'scripts', 'tests', 'multisport-phase3-presets.ts'),
+    ],
+  },
+  {
+    label: 'multisport gates',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'multisport-gates.ts'),
+    ],
+  },
+  {
+    label: 'multisport e2e smoke',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'multisport-e2e-smoke.ts'),
+    ],
+  },
+  {
+    label: 'multisport formats tier B/C',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'multisport-formats-tier-bc.ts'),
+    ],
+  },
+  {
+    label: 'multisport strict validation unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'shared', 'strictValidation.test.ts'),
+    ],
+  },
+  {
+    label: 'club sports validation unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'shared', 'clubSports.test.ts'),
+    ],
+  },
+  {
+    label: 'multisport classic set validation unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'results', 'classicSetScoreValidation.test.ts'),
+    ],
+  },
+  {
+    label: 'multisport rating engine unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'results', 'ratingEngine.test.ts'),
+    ],
+  },
+  {
+    label: 'round robin generation unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'results', 'generation', 'roundRobin.test.ts'),
+    ],
+  },
+  {
+    label: 'multisport validators unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'utils', 'validators', 'multisportValidation.test.ts'),
     ],
   },
   {
@@ -181,6 +269,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'oauth account link',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'oauth-account-link.ts'),
+    ],
+  },
+  {
     label: 'multisport phase 4 notifications',
     command: process.execPath,
     args: [
@@ -194,6 +290,24 @@ const suites: Suite[] = [
     args: [
       path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
       path.join(backendRoot, 'scripts', 'tests', 'multisport-phase4-playtomic.ts'),
+    ],
+  },
+  {
+    label: 'multisport ratings r5 r6',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'multisport-ratings-r5-r6.ts'),
+    ],
+  },
+  {
+    label: 'sport rating unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'utils', 'sportRating.test.ts'),
     ],
   },
   {

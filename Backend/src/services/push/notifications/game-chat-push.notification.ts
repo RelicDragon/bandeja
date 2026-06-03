@@ -1,5 +1,11 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
-import { formatChatNotificationMessageBody, formatGameInfoForUser, formatUserName, getEntityTypeLabel } from '../../shared/notification-base';
+import {
+  formatChatNotificationMessageBody,
+  formatGameContextHeader,
+  formatGameInfoForUser,
+  formatUserName,
+  getEntityTypeLabel,
+} from '../../shared/notification-base';
 
 export async function createGameChatPushNotification(
   message: any,
@@ -13,7 +19,7 @@ export async function createGameChatPushNotification(
   const gameInfo = await formatGameInfoForUser(game, recipient.currentCityId, lang);
   const entityLabel = getEntityTypeLabel(game.entityType, lang);
 
-  const baseTitle = `${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}`;
+  const baseTitle = formatGameContextHeader(gameInfo, { includeDuration: false });
   const title = entityLabel ? `${entityLabel}: ${baseTitle}` : baseTitle;
   const body = `${senderName}: ${messageContent}`;
 

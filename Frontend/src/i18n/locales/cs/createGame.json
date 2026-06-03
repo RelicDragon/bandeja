@@ -132,8 +132,18 @@
       }
     },
     "fixedTeams": {
-      "descriptionOn": "Partneři zůstávají stejní po celou dobu akce.",
-      "descriptionOff": "Páry se mohou mezi koly měnit."
+      "GAME": {
+        "descriptionOn": "Stejný par ve všech zápasech této hry.",
+        "descriptionOff": "Páry se mohou měnit z kola do kola."
+      },
+      "TOURNAMENT": {
+        "descriptionOn": "Partneři zůstávají spolu po celý turnaj.",
+        "descriptionOff": "Páry se mohou měnit mezi koly turnaje."
+      },
+      "LEAGUE": {
+        "descriptionOn": "Pevné páry na celou ligu.",
+        "descriptionOff": "Páry se mohou měnit z kola do kola ligy."
+      }
     },
     "allowUserInMultipleTeams": {
       "title": "Stejný hráč ve více fixních týmech",
@@ -209,6 +219,152 @@
     "manageInvites": "Spravovat pozvánky ({{count}})",
     "invitesWillBeSent_one": "Hráč bude pozván po vytvoření zápasu",
     "invitesWillBeSent_other": "{{count}} hráčů bude pozváno po vytvoření zápasu",
-    "priceRequired": "Price must be greater than 0 for this price type"
+    "priceRequired": "Price must be greater than 0 for this price type",
+    "intent": {
+      "title": "Jaký typ zápasu?",
+      "subtitle": "Vyberte styl — detaily upravíte níže.",
+      "customizeFormat": "Upravit formát",
+      "social": {
+        "title": "Sociální",
+        "description": "Klubová noc, rotace, bez ratingu"
+      },
+      "match": {
+        "title": "Zápas",
+        "description": "Standardní pravidla, počítá se do úrovně"
+      },
+      "advanced": {
+        "title": "Pokročilé",
+        "description": "Plný průvodce formátem"
+      }
+    },
+    "templates": {
+      "title": "Šablony",
+      "empty": "Žádné šablony — upravte formát ručně.",
+      "durationApprox2h": "~2 h",
+      "PADEL_AMERICANO_24": {
+        "title": "Americano (24)",
+        "description": "Náhodné páry, do 24 bodů"
+      },
+      "PADEL_MEXICANO_24": {
+        "title": "Mexicano (24)",
+        "description": "Páry podle úrovně"
+      },
+      "durationApprox90m": "~90 min",
+      "PICKLEBALL_SOCIAL_21": {
+        "title": "Volná hra (21)",
+        "description": "Americano 4 hráči"
+      },
+      "PICKLEBALL_MATCH_BO3_11": {
+        "title": "3×11",
+        "description": "Oficiální styl"
+      },
+      "BADMINTON_CLUB_3X15": {
+        "title": "Klub 3×15",
+        "description": "3 hry do 15"
+      },
+      "BADMINTON_MATCH_3X21": {
+        "title": "3×21",
+        "description": "Oficiální zápas"
+      },
+      "TT_OPEN_PLAY_11": {
+        "title": "Rychlá hra do 11",
+        "description": "Dvouhry nebo čtyřhry — jeden krátký zápas (2–4 hráči)"
+      },
+      "TT_CLUB_RR_11": {
+        "title": "Klubový round robin",
+        "description": "6–8 hráčů, dvouhry — každý s každým, hra do 11"
+      },
+      "TT_LEGACY_SINGLE_21": {
+        "title": "Old-school 21 bodů",
+        "description": "Jedna hra do 21, o 2 body"
+      },
+      "TT_BOX_BO3_11": {
+        "title": "Box Bo3×11",
+        "description": "Žebříček, 3×11"
+      },
+      "TT_MATCH_BO3_11": {
+        "title": "Zápas Bo3×11",
+        "description": "Hodnocený zápas, 3 hry do 11"
+      },
+      "TT_MATCH_BO5_11": {
+        "title": "Zápas Bo5×11",
+        "description": "Hodnocený zápas, 5 her do 11"
+      },
+      "TENNIS_FAST4_SOCIAL": {
+        "title": "FAST4",
+        "description": "Krátké sety"
+      },
+      "TENNIS_CLASSIC_BO3": {
+        "title": "Na 3 sety",
+        "description": "Klasický tenis"
+      },
+      "SQUASH_QUICK_BO3_11": {
+        "title": "Rychle 3×11",
+        "description": "3 hry do 11"
+      },
+      "PADEL_KOTC_11": {
+        "title": "King of the Court",
+        "description": "Short games to 11; kings on court 1, challenger pool for the rest"
+      },
+      "PADEL_AMERICANO_10": {
+        "title": "Americano · 10 min",
+        "description": "Timed rounds (10 min), 24-ball games, random pairs"
+      },
+      "PADEL_AMERICANO_20": {
+        "title": "Americano · 20 min",
+        "description": "Timed rounds (20 min), 24-ball games, random pairs"
+      },
+      "PADEL_CHALLENGER_POOL": {
+        "title": "Challenger pool",
+        "description": "King court + queue: court 1 winners defend, others rotate from the pool"
+      },
+      "PICKLEBALL_KOTC_11": {
+        "title": "King of the Court",
+        "description": "Short 11-ball games; king court + challenger pool"
+      },
+      "BADMINTON_AMERICANO_21": {
+        "title": "Club night (21 balls)",
+        "description": "Doubles Americano, 21-ball social games"
+      },
+      "TT_SWISS_BOX": {
+        "title": "Swiss box",
+        "description": "Skill-pairing box league (ladder engine), Bo3 to 11"
+      }
+    },
+    "presetTier": {
+      "social": "Sociální",
+      "match": "Zápas"
+    },
+    "presetMeta": {
+      "POINTS_11": "Do 11",
+      "SINGLE_GAME_21": "Hra do 21 (old-school)",
+      "POINTS_16": "Do 16",
+      "POINTS_21": "21 míčků",
+      "POINTS_24": "Americano 24",
+      "POINTS_32": "Do 32",
+      "CLASSIC_BEST_OF_3": "Na 3 sety",
+      "CLASSIC_BEST_OF_5": "Na 5 setů",
+      "CLASSIC_PRO_SET": "Pro set",
+      "CLASSIC_SHORT_SET": "Krátké sety",
+      "CLASSIC_SINGLE_SET": "Jeden set",
+      "CLASSIC_SUPER_TIEBREAK": "Super tie-break",
+      "CLASSIC_TIMED": "Na čas",
+      "BEST_OF_3_11": "3×11",
+      "BEST_OF_5_11": "5×11",
+      "TIMED": "Na čas",
+      "CUSTOM": "Vlastní",
+      "BEST_OF_3_15": "Best of 3 to 15",
+      "BEST_OF_3_21": "Official 3×21",
+      "POINTS_15": "15-ball budget"
+    },
+    "pickSport": "Choose sport",
+    "overlapHardSave": "This time overlaps a court that is unavailable (club system or blocked). Choose another slot.",
+    "overlapSoftTitle": "Another game is planned here",
+    "overlapSoftMessage": "Another player has a game on this court at this time but has not confirmed the booking yet. You can still continue.",
+    "overlapSoftProceed": "Continue anyway",
+    "markCourtBookedTitle": "Mark court as booked?",
+    "markCourtBookedMessage": "You selected a court but have not marked it as booked. Confirm when you have reserved it with the club.",
+    "markCourtBookedYes": "Yes, I've booked it",
+    "markCourtBookedSkip": "Not yet"
   }
 }

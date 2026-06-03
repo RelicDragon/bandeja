@@ -5,7 +5,7 @@ import prisma from '../../../config/database';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { GameReadService } from '../../game/read.service';
-import { formatGameInfoForUser } from '../../shared/notification-base';
+import { formatGameInfoForUser, formatGameScheduleLine, resolveGameClubPlace } from '../../shared/notification-base';
 import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport';
 
 export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
@@ -70,8 +70,7 @@ export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
       const statusText = t(`games.status.${statusKey}`, userLang);
       const statusDisplay = `${statusEmoji[game.status] || '📅'} ${escapeMarkdown(statusText)}`;
 
-      const club = game.court?.club || game.club;
-      const clubName = escapeMarkdown(club?.name || 'Unknown location');
+      const clubName = escapeMarkdown(resolveGameClubPlace(game, userLang));
       const courtName = game.court?.name ? ` • ${escapeMarkdown(game.court.name)}` : '';
 
       const playingParticipants = game.participants.filter((p: any) => p.status === 'PLAYING');
@@ -80,7 +79,7 @@ export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
         : `${playingParticipants.length}/${game.maxParticipants}`;
 
       message += `${statusDisplay}\n`;
-      message += `📅 ${escapeMarkdown(gameInfo.shortDayOfWeek)} ${escapeMarkdown(gameInfo.shortDate)} ${escapeMarkdown(gameInfo.startTime)}\n`;
+      message += `📅 ${escapeMarkdown(formatGameScheduleLine(gameInfo, { includeDuration: false }))}\n`;
       const locationLine = appendTelegramGameScheduleExtras(
         `📍 ${clubName}${courtName}`,
         game,

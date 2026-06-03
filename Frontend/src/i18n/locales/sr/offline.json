@@ -1,7 +1,7 @@
 {
   "offline": {
-    "working_offline": "Рад ван мреже - Неке функције могу бити ограничене",
-    "noInternetConnection": "Нема интернет везе",
-    "offlineEditingMessage": "Можете наставити да уређујете резултате ван мреже, а када се вратите на мрежу, притисните дугме Синхронизуј са сервером да синхронизујете резултате са сервером"
+    "working_offline": "Rad van mreže - Neke funkcije mogu biti ograničene",
+    "noInternetConnection": "Nema internet veze",
+    "offlineEditingMessage": "Možete nastaviti da uređujete rezultate van mreže, a kada se vratite na mrežu, pritisnite dugme Sinhronizuj sa serverom da sinhronizujete rezultate sa serverom"
   }
 }

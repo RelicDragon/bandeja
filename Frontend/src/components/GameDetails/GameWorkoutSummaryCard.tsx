@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flame, Heart, Timer } from 'lucide-react';
 import { gamesApi, type GameWorkoutSummary } from '@/api/games';
+import { WorkoutHealthPlaceholder } from '@/components/healthWorkout/WorkoutHealthPlaceholder';
 import { formatWorkoutDuration } from '@/utils/workoutFormat';
 
 interface GameWorkoutSummaryCardProps {
@@ -51,20 +52,18 @@ export const GameWorkoutSummaryCard = ({ gameId }: GameWorkoutSummaryCardProps) 
 
   if (phase === 'error') {
     return (
-      <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-sm dark:border-amber-900/50 dark:bg-amber-950/30">
-        <p className="text-gray-700 dark:text-gray-300">{t('healthWorkout.loadError')}</p>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="mt-2 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
-        >
-          {t('healthWorkout.retry')}
-        </button>
-      </div>
+      <WorkoutHealthPlaceholder
+        variant="error"
+        context="game"
+        className="mt-4"
+        onRetry={() => void load()}
+      />
     );
   }
 
-  if (phase === 'empty' || !row) return null;
+  if (phase === 'empty' || !row) {
+    return <WorkoutHealthPlaceholder variant="empty" context="game" className="mt-4" />;
+  }
 
   return (
     <div className="mt-4 rounded-xl border border-gray-200 bg-gradient-to-br from-orange-50/80 to-rose-50/60 p-4 dark:border-gray-600 dark:from-orange-950/30 dark:to-rose-950/20">

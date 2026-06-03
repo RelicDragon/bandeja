@@ -8,7 +8,7 @@
   "addSportSubtitle": "Oko minut — pomaže da nađete igre po vašem nivou.",
   "estimateLevel": "Proceni nivo",
   "estimateLink": "Proceni",
-  "createGameBanner": "Proceni nivo — {{sport}}",
+  "createGameBanner": "Vaš nivo za {{sport}} je 1.0. Dodirnite da procenite pre prve igre.",
   "createGameLevelBandWarning": "Vaš nivo za {{sport}} je procenjen na 1.0. Minimum iznad 2.5 može vas isključiti iz sopstvene igre.",
   "inviteNudge": "Vaš nivo za {{sport}} je {{level}}.",
   "inviteNudgeCrossSport": "{{primarySport}} {{primaryLevel}} · Nivo {{gameSport}} {{level}} —",
@@ -18,5 +18,15 @@
   "homeDismissLink": "Ne prikazuj ponovo",
   "homeDismissTitle": "Sakriti upitnik za nivo?",
   "homeDismissMessage": "Vaš trenutni nivo je {{level}}. Samo sakrivamo podsetnik — nivo se ne menja.",
-  "homeDismissConfirm": "Da, sakrij"
+  "homeDismissConfirm": "Da, sakrij",
+  "title": "Estimate your {{sport}} level",
+  "description": "Answer a few quick questions so we can set your starting level for {{sport}}.",
+  "back": "Back",
+  "next": "Next",
+  "submit": "Continue",
+  "congratulationsTitle": "Level set",
+  "congratulationsSubtitle": "Your {{sport}} rating is",
+  "goToApp": "Done",
+  "fillItLater": "I'll fill it in later",
+  "disclaimer": "Self-assessment only — your level may adjust after rated matches."
 }

@@ -51,7 +51,8 @@ function mergeGameLatestMessageIntoChats(
   const preview = chatMessageToGameListPreview(latest);
   return prev.map((chat) => {
     if (chat.type !== 'game' || chat.data.id !== gameId) return chat;
-    const lastMessageDate = calculateLastMessageDate(preview, null, updatedAt);
+    const draft = chat.draft ?? null;
+    const lastMessageDate = calculateLastMessageDate(preview, draft, updatedAt);
     return {
       ...chat,
       data: { ...chat.data, lastMessage: preview, updatedAt },
@@ -318,6 +319,23 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
       }
     };
 
+    const syncListCache = (next: ChatItem[]) => {
+      if (
+        chatsFilter !== 'users' &&
+        chatsFilter !== 'bugs' &&
+        chatsFilter !== 'channels' &&
+        chatsFilter !== 'market'
+      ) {
+        return;
+      }
+      const cached = chatsCacheRef.current[chatsFilter];
+      if (!cached) return;
+      chatsCacheRef.current[chatsFilter] = { ...cached, chats: next };
+      if (chatListModuleCache.userId === userId) {
+        chatListModuleCache.chats[chatsFilter] = chatsCacheRef.current[chatsFilter];
+      }
+    };
+
     const handleDraftUpdate = (event: Event) => {
       const customEvent = event as CustomEvent<{
         draft: ChatDraft;
@@ -325,10 +343,25 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
         contextId: string;
       }>;
       const { draft, chatContextType, contextId } = customEvent.detail;
-      if (draftsCacheRef.current !== null) applyDraftToCache(draft, chatContextType, contextId);
-      setChats((prev) =>
-        deduplicateChats(updateChatDraftInList(prev, chatContextType, contextId, draft, chatsFilter, userId))
-      );
+      applyDraftToCache(draft, chatContextType, contextId);
+      const draftForList =
+        draftsCacheRef.current != null
+          ? matchDraftToChat(draftsCacheRef.current, chatContextType as ChatContextType, contextId) ?? draft
+          : draft;
+      setChats((prev) => {
+        const next = deduplicateChats(
+          updateChatDraftInList(prev, chatContextType, contextId, draftForList, chatsFilter, userId)
+        );
+        syncListCache(next);
+        if (
+          chatContextType === 'GAME' &&
+          chatsFilter === 'users' &&
+          !next.some((c) => c.type === 'game' && c.data.id === contextId)
+        ) {
+          void fetchChatsForFilter('users');
+        }
+        return next;
+      });
     };
 
     const handleDraftDelete = (event: Event) => {
@@ -338,13 +371,17 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
         chatType?: string;
       }>;
       const { chatContextType, contextId, chatType } = customEvent.detail;
-      if (draftsCacheRef.current !== null) applyDraftToCache(null, chatContextType, contextId, chatType);
+      applyDraftToCache(null, chatContextType, contextId, chatType);
       const remainingDraft = draftsCacheRef.current
         ? matchDraftToChat(draftsCacheRef.current, chatContextType as ChatContextType, contextId)
         : null;
-      setChats((prev) =>
-        deduplicateChats(updateChatDraftInList(prev, chatContextType, contextId, remainingDraft, chatsFilter, userId))
-      );
+      setChats((prev) => {
+        const next = deduplicateChats(
+          updateChatDraftInList(prev, chatContextType, contextId, remainingDraft, chatsFilter, userId)
+        );
+        syncListCache(next);
+        return next;
+      });
     };
 
     const handleViewingClearUnread = (event: Event) => {
@@ -385,7 +422,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
       window.removeEventListener('chat-viewing-clear-unread', handleViewingClearUnread);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [fetchChatsForFilter, chatsFilter, userId, applyDraftToCache, setChats, draftsCacheRef]);
+  }, [fetchChatsForFilter, chatsFilter, userId, applyDraftToCache, setChats, draftsCacheRef, chatsCacheRef]);
 
   useEffect(() => {
     const batch = useSocketEventsStore.getState().takeListChatMessages();
@@ -612,10 +649,11 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
               const preview = { preview: previewStr, updatedAt };
               next = next.map((chat) => {
                 if (chat.type !== 'game' || chat.data.id !== contextId) return chat;
+                const draft = chat.draft ?? null;
                 return {
                   ...chat,
                   data: { ...chat.data, lastMessage: preview, updatedAt },
-                  lastMessageDate: calculateLastMessageDate(preview, null, updatedAt),
+                  lastMessageDate: calculateLastMessageDate(preview, draft, updatedAt),
                 };
               });
             } else {

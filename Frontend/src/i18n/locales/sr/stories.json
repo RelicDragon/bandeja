@@ -1,6 +1,7 @@
 {
   "stories": {
     "yourStory": "Vaša priča",
+    "story": "Priča",
     "addStory": "Dodaj priču",
     "addStoryHint": "Podelite trenutak sa pratiocima — nestaje za 24 sata.",
     "createStory": "Kreiraj priču",
@@ -29,9 +30,9 @@
     "place": "#{{position}}",
     "pointsEarned": "+{{points}} poena",
     "viewResults": "Pogledaj rezultate",
-    "bracketChampion": "Шампион плеј-офа",
-    "bracketChampionSubtitle": "Победник жреба",
-    "viewBracket": "Погледај жреб",
+    "bracketChampion": "Šampion plej-ofa",
+    "bracketChampionSubtitle": "Pobednik žreba",
+    "viewBracket": "Pogledaj žreb",
     "roundMatch": "R{{round}} · M{{match}}",
     "matchBreakdown": "Mečevi",
     "statsRecord": "Bilans",
@@ -128,6 +129,9 @@
       "dmFailed": "Poruka nije poslata",
       "share": "Podeli",
       "shareTitle": "Podeli profil"
-    }
+    },
+    "mixedMediaBlocked": "Share photos and videos separately",
+    "oneVideoOnly": "Add one video at a time",
+    "videoPublishHint": "Video is shared as captured — no trim or overlays"
   }
 }

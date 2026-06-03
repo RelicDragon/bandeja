@@ -13,7 +13,6 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { normalizeChatType } from '@/utils/chatType';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
-import { deleteChatThreadMemory } from '@/services/chat/chatThreadMemoryCache';
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
 import { ChatContextPanel } from '@/components/chat/contextPanels';
 import { PinnedMessagesBar } from '@/components/chat/PinnedMessagesBar';
@@ -184,7 +183,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     initialScroll,
     openPaintGeneration,
     openPaintCommittedRef,
-    invalidateThreadOpen,
     scrollToBottom,
     loadMessages,
     loadMoreMessages,
@@ -557,15 +555,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setEditingMessage,
   ]);
 
-  useEffect(() => {
-    if (locationState?.forceReload && threadScrollKey) {
-      deleteChatThreadMemory(threadScrollKey);
-    }
-    if (locationState?.forceReload) {
-      invalidateThreadOpen();
-    }
-  }, [locationState?.forceReload, threadScrollKey, invalidateThreadOpen]);
-
   const footerVariant = useGameChatFooterVariant({
     id,
     contextType,
@@ -609,30 +598,41 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     onMessageSent: handleMessageSent,
   });
 
-  const isChatsSplitGameChat = useMemo(
+  const routeGameId = useMemo(() => {
+    const m = location.pathname.match(/^\/games\/([^/]+)/);
+    return m?.[1];
+  }, [location.pathname]);
+
+  const isGameDetailsSideChat = useMemo(
     () =>
       isEmbedded &&
       contextType === 'GAME' &&
       !!id &&
-      /^\/games\/[^/]+\/chat$/.test(location.pathname),
-    [isEmbedded, contextType, id, location.pathname]
+      routeGameId === id &&
+      !location.pathname.includes('/chat'),
+    [isEmbedded, contextType, id, routeGameId, location.pathname]
+  );
+
+  const isGameTitleNavToGame = useMemo(
+    () => contextType === 'GAME' && !!id && !isGameDetailsSideChat,
+    [contextType, id, isGameDetailsSideChat]
   );
 
   const isTitleClickable = useMemo(
     () =>
       !!(contextType === 'USER' && userChat && user?.id) ||
       contextType === 'GROUP' ||
-      isChatsSplitGameChat,
-    [contextType, userChat, user?.id, isChatsSplitGameChat]
+      isGameTitleNavToGame,
+    [contextType, userChat, user?.id, isGameTitleNavToGame]
   );
 
   const handleTitleClick = useCallback(() => {
-    if (isChatsSplitGameChat && id) {
+    if (isGameTitleNavToGame && id) {
       navigate(`/games/${id}`);
       return;
     }
     handlePanelTitleClick();
-  }, [isChatsSplitGameChat, id, navigate, handlePanelTitleClick]);
+  }, [isGameTitleNavToGame, id, navigate, handlePanelTitleClick]);
 
   const hasOpenContextStub = useMemo(
     () =>

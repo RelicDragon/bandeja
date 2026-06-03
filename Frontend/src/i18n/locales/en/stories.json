@@ -1,6 +1,7 @@
 {
   "stories": {
     "yourStory": "Your story",
+    "story": "Story",
     "addStory": "Add story",
     "addStoryHint": "Share a moment with your followers — it disappears after 24 hours.",
     "createStory": "Create story",

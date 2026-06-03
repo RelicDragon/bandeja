@@ -31,6 +31,9 @@ final class MatchScoringViewModel {
     /// Points completed in the current classic game (drives serve L/R); persisted for deuce accuracy.
     var classicPointsPlayedInGame = 0
 
+    /// Rally-cap sports: winner of each point (mirrors FE `pointWinnerLog`).
+    var pointWinnerLog: [TeamSide] = []
+
     private let api = APIClient()
     private var liveScoringRevision = 0
     private var liveSaveTask: Task<Void, Never>?
@@ -72,11 +75,12 @@ final class MatchScoringViewModel {
         game?.fixedNumberOfSets ?? 0
     }
 
-    /// Open-ended `TIMED` / zero-cap `CUSTOM`: no stable ball budget — skip live PATCH (parity with web).
+    /// Pickleball open-ended CUSTOM: weak live — local scoring only (parity with `TIMED_CUSTOM_WEAK_LIVE_SPORTS`).
     private var openEndedPresetBlocksLivePatch: Bool {
+        guard game?.resolvedSport == .pickleball else { return false }
         let p = WatchScoringPreset(rawValue: game?.scoringPreset?.uppercased() ?? "")
         if p == .timed { return true }
-        if p == .custom, rules.totalPointsPerSet <= 0 { return true }
+        if p == .custom, rules.isOpenEndedPointsPreset { return true }
         return false
     }
 
@@ -181,7 +185,7 @@ final class MatchScoringViewModel {
     }
 
     var isAmericano: Bool {
-        rules.isPoints
+        rules.isBallBudgetPoints
     }
 
     private var nonRallyOutcomeBlocksScoring: Bool {
@@ -194,10 +198,15 @@ final class MatchScoringViewModel {
         if activeSetIsSupplemental { return false }
         if nonRallyOutcomeBlocksScoring { return true }
         if optionalDeciderChoicePending() { return true }
-        if usesTennisSetRules, timedClassicSetLocked { return true }
+        if timedClassicSetLocked { return true }
         if WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules) { return true }
-        if usesBallCapPerSetUI,
+        if isAmericano,
            WatchComputeMatchWinner.isPointsOfficialBudgetExhausted(activeSet: sets[safe: activeSetIndex], rules: rules) {
+            return true
+        }
+        if rules.usesRallyPointCap,
+           let row = sets[safe: activeSetIndex],
+           rules.pointRaceCompleted(teamA: row.teamA, teamB: row.teamB) {
             return true
         }
         return false
@@ -282,14 +291,20 @@ final class MatchScoringViewModel {
 
     /// Rally / points-per-set sports using `pointsCapStrip` (mirrors FE `rally-points` engine).
     var usesRallyPointsServeGuide: Bool {
-        guard usesBallCapPerSetUI, !isAmericano else { return false }
-        return game?.usesRallySetScoring == true
+        guard !rules.isBallBudgetPoints else { return false }
+        guard rules.usesRallyPointCap, game?.usesRallySetScoring == true else { return false }
+        return true
     }
 
     var usesTennisStyleServeGuide: Bool {
+        if rules.isBallBudgetPoints { return false }
         if game?.resolvedSport == .tennis, !isAmericano { return true }
         if usesRallyPointsServeGuide { return true }
-        return usesTennisSetRules || usesBallCapPerSetUI
+        return usesTennisSetRules
+    }
+
+    var officiatingHintsEnabled: Bool {
+        game?.resolvedOfficiatingLevel.showsHonorHints ?? false
     }
 
     var liveScoringUiId: WatchLiveScoringUiId {
@@ -335,11 +350,13 @@ final class MatchScoringViewModel {
     }
 
     var teamAUsers: [WatchUser] {
-        match?.sortedTeams.first { $0.teamNumber == 1 }?.players.map(\.user) ?? []
+        let users = match?.sortedTeams.first { $0.teamNumber == 1 }?.players.map(\.user) ?? []
+        return WatchMatchFormat.capUsers(users, max: WatchMatchFormat.maxPlayersPerTeam(for: game))
     }
 
     var teamBUsers: [WatchUser] {
-        match?.sortedTeams.first { $0.teamNumber == 2 }?.players.map(\.user) ?? []
+        let users = match?.sortedTeams.first { $0.teamNumber == 2 }?.players.map(\.user) ?? []
+        return WatchMatchFormat.capUsers(users, max: WatchMatchFormat.maxPlayersPerTeam(for: game))
     }
 
     var isDoublesMatch: Bool {
@@ -461,8 +478,15 @@ final class MatchScoringViewModel {
         guard let match else { return }
         await saveLiveScoringNow()
         let sortedTeams = match.sortedTeams
-        let teamAIds = sortedTeams.first(where: { $0.teamNumber == 1 })?.players.map(\.userId) ?? []
-        let teamBIds = sortedTeams.first(where: { $0.teamNumber == 2 })?.players.map(\.userId) ?? []
+        let maxPerTeam = WatchMatchFormat.maxPlayersPerTeam(for: game)
+        let teamAIds = WatchMatchFormat.capUserIds(
+            sortedTeams.first(where: { $0.teamNumber == 1 })?.players.map(\.userId) ?? [],
+            max: maxPerTeam
+        )
+        let teamBIds = WatchMatchFormat.capUserIds(
+            sortedTeams.first(where: { $0.teamNumber == 2 })?.players.map(\.userId) ?? [],
+            max: maxPerTeam
+        )
         isSaving = true
         defer { isSaving = false }
         do {
@@ -519,18 +543,31 @@ final class MatchScoringViewModel {
             return
         }
         let maxTotal = maxPointsPerSet
+        if maxTotal <= 0, rules.isOpenEndedPointsPreset {
+            if blocksFurtherOfficialTaps() { return }
+            ensureSetExists(activeSetIndex)
+            let prev = sets[activeSetIndex].teamA
+            sets[activeSetIndex].teamA = min(99, sets[activeSetIndex].teamA + 1)
+            if sets[activeSetIndex].teamA != prev {
+                WatchScoreHaptics.point()
+                scheduleLiveScoringSave()
+            }
+            return
+        }
         guard maxTotal > 0 else { return }
         if blocksFurtherOfficialTaps() { return }
         var a = sets[activeSetIndex].teamA
         let b = sets[activeSetIndex].teamB
         let prevA = a
         let na = a + 1
-        if na + b > maxTotal { return }
+        if !rules.usesRallyPointCap, na + b > maxTotal { return }
+        if rules.usesRallyPointCap, rules.pointRaceCompleted(teamA: na, teamB: b) { return }
         if rules.maxPointsPerTeam > 0, na > rules.maxPointsPerTeam { return }
         a = na
         if a != prevA {
             sets[activeSetIndex].teamA = a
             sets[activeSetIndex].teamB = b
+            appendRallyPointWinner(.teamA)
             WatchScoreHaptics.point()
             scheduleLiveScoringSave()
         }
@@ -539,6 +576,7 @@ final class MatchScoringViewModel {
     func decrementAmericanoTeamA() {
         guard !isReadOnly else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
+        if timedClassicSetLocked, !activeSetIsSupplemental { return }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
             let prev = sets[activeSetIndex].teamA
@@ -553,6 +591,7 @@ final class MatchScoringViewModel {
         let prev = sets[activeSetIndex].teamA
         guard prev > 0 else { return }
         sets[activeSetIndex].teamA = prev - 1
+        undoRallyPointWinner(.teamA)
         WatchScoreHaptics.undo()
         scheduleLiveScoringSave()
     }
@@ -571,18 +610,31 @@ final class MatchScoringViewModel {
             return
         }
         let maxTotal = maxPointsPerSet
+        if maxTotal <= 0, rules.isOpenEndedPointsPreset {
+            if blocksFurtherOfficialTaps() { return }
+            ensureSetExists(activeSetIndex)
+            let prev = sets[activeSetIndex].teamB
+            sets[activeSetIndex].teamB = min(99, sets[activeSetIndex].teamB + 1)
+            if sets[activeSetIndex].teamB != prev {
+                WatchScoreHaptics.point()
+                scheduleLiveScoringSave()
+            }
+            return
+        }
         guard maxTotal > 0 else { return }
         if blocksFurtherOfficialTaps() { return }
         let a = sets[activeSetIndex].teamA
         var b = sets[activeSetIndex].teamB
         let prevB = b
         let nb = b + 1
-        if a + nb > maxTotal { return }
+        if !rules.usesRallyPointCap, a + nb > maxTotal { return }
+        if rules.usesRallyPointCap, rules.pointRaceCompleted(teamA: a, teamB: nb) { return }
         if rules.maxPointsPerTeam > 0, nb > rules.maxPointsPerTeam { return }
         b = nb
         if b != prevB {
             sets[activeSetIndex].teamA = a
             sets[activeSetIndex].teamB = b
+            appendRallyPointWinner(.teamB)
             WatchScoreHaptics.point()
             scheduleLiveScoringSave()
         }
@@ -591,6 +643,7 @@ final class MatchScoringViewModel {
     func decrementAmericanoTeamB() {
         guard !isReadOnly else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
+        if timedClassicSetLocked, !activeSetIsSupplemental { return }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
             let prev = sets[activeSetIndex].teamB
@@ -605,6 +658,7 @@ final class MatchScoringViewModel {
         let prev = sets[activeSetIndex].teamB
         guard prev > 0 else { return }
         sets[activeSetIndex].teamB = prev - 1
+        undoRallyPointWinner(.teamB)
         WatchScoreHaptics.undo()
         scheduleLiveScoringSave()
     }
@@ -798,7 +852,37 @@ final class MatchScoringViewModel {
         tieBreakB = 0
         syncWithinSetTieBreakForActiveSet()
         classicPointsPlayedInGame = 0
+        pointWinnerLog = []
         scheduleLiveScoringSave()
+    }
+
+    private func appendRallyPointWinner(_ side: TeamSide) {
+        guard usesRallyPointsServeGuide else { return }
+        pointWinnerLog.append(side)
+    }
+
+    private func undoRallyPointWinner(_ side: TeamSide) {
+        guard usesRallyPointsServeGuide else { return }
+        if let last = pointWinnerLog.last, last == side {
+            pointWinnerLog.removeLast()
+        } else {
+            pointWinnerLog = []
+        }
+    }
+
+    /// Timer **STOPPED**: freeze partial classic set or open-ended points row (parity with web `freezeTimedSetAtPartialScore`).
+    func lockTimedSetAtPartialScore() {
+        guard !isReadOnly else { return }
+        guard !activeSetIsSupplemental else { return }
+        if usesBallCapPerSetUI, rules.isOpenEndedPointsPreset {
+            ensureSetExists(activeSetIndex)
+            let row = sets[activeSetIndex]
+            guard row.teamA > 0 || row.teamB > 0 else { return }
+            timedClassicSetLocked = true
+            scheduleLiveScoringSave()
+            return
+        }
+        lockTimedClassicSetAtPartialScore()
     }
 
     func lockTimedClassicSetAtPartialScore() {
@@ -1030,6 +1114,9 @@ final class MatchScoringViewModel {
         if r.isClassic {
             return classicSetCompleted(teamA: teamA, teamB: teamB, timedLocked: timedClassicSetLocked)
         }
+        if r.usesRallyPointCap {
+            return r.pointRaceCompleted(teamA: teamA, teamB: teamB)
+        }
         let winner = max(teamA, teamB)
         let loser = min(teamA, teamB)
         let need = max(r.maxPointsPerTeam, 1)
@@ -1058,7 +1145,15 @@ final class MatchScoringViewModel {
     /// Mirrors `canAdvanceLiveSet` from `core.ts`. Validates the active set is actually finished.
     private func activeSetIsCompleted() -> Bool {
         guard let set = sets[safe: activeSetIndex] else { return false }
-        if usesBallCapPerSetUI { return true }
+        if isAmericano {
+            return WatchComputeMatchWinner.isPointsOfficialBudgetExhausted(activeSet: set, rules: rules)
+        }
+        if usesBallCapPerSetUI, rules.isOpenEndedPointsPreset {
+            return timedClassicSetLocked && (set.teamA > 0 || set.teamB > 0)
+        }
+        if rules.usesRallyPointCap {
+            return setCompleted(teamA: set.teamA, teamB: set.teamB)
+        }
         if set.isTieBreak {
             return superTieBreakPointRaceCompleted(teamA: set.teamA, teamB: set.teamB)
         }
@@ -1161,6 +1256,7 @@ final class MatchScoringViewModel {
         if state.matchStartTeamASidesMirrored == true { serveRecord.matchStartTeamASidesMirrored = true }
         if state.matchStartTeamBSidesMirrored == true { serveRecord.matchStartTeamBSidesMirrored = true }
         if let skipped = state.serveGuideSkipped { serveRecord.skipped = skipped }
+        pointWinnerLog = state.pointWinnerLog ?? []
         serveRecord.classicPointsPlayedInGame = classicPointsPlayedInGame
         WatchServeGuideSessionStore.shared.save(gameId: gameId, matchId: matchId, record: serveRecord)
         normalizeLiveSetsAfterDecisionIfNeeded()
@@ -1247,7 +1343,8 @@ final class MatchScoringViewModel {
             matchStartTeamBSidesMirrored: record?.matchStartTeamBSidesMirrored == true ? true : nil,
             serveGuideSkipped: record?.skipped,
             optionalDeciderFormat: optionalDeciderFormat,
-            timedClassicSetLocked: timedClassicSetLocked ? true : nil
+            timedClassicSetLocked: timedClassicSetLocked ? true : nil,
+            pointWinnerLog: pointWinnerLog.isEmpty ? nil : pointWinnerLog
         )
     }
 

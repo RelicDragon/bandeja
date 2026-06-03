@@ -14,10 +14,11 @@ type CreateGameQuestionnaireBannerProps = {
 export function CreateGameQuestionnaireBanner({ sport }: CreateGameQuestionnaireBannerProps) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const { status, refresh } = useQuestionnaireStatus(sport);
+  const updateUser = useAuthStore((s) => s.updateUser);
+  const { status, loading, refresh } = useQuestionnaireStatus(sport);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  if (!user || !shouldShowEstimateLevelLink(user, sport, status)) return null;
+  if (!user || loading || !shouldShowEstimateLevelLink(user, sport, status)) return null;
 
   const sportLabel = t(getSportConfig(sport).labelKey);
 
@@ -36,7 +37,10 @@ export function CreateGameQuestionnaireBanner({ sport }: CreateGameQuestionnaire
         sport={sport}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
-        onCompleted={() => void refresh()}
+        onCompleted={(updated) => {
+          updateUser(updated);
+          void refresh();
+        }}
       />
     </>
   );

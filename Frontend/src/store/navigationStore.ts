@@ -68,7 +68,9 @@ interface NavigationState {
   findSelectedDay: string | null;
   findListWeekStartDay: string | null;
   userProfileHeaderActions: ReactNode | null;
+  findHeaderActions: ReactNode | null;
   setUserProfileHeaderActions: (actions: ReactNode | null) => void;
+  setFindHeaderActions: (actions: ReactNode | null) => void;
   setMyGamesSubtabBeforeCreate: (tab: 'list' | null) => void;
   setMyGamesCalendarDateAfterCreate: (date: string | null) => void;
   setMyGamesSelectedDay: (day: string | null) => void;
@@ -117,7 +119,9 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   activeLevelSport: undefined,
   levelSportStack: [] as Sport[],
   userProfileHeaderActions: null,
+  findHeaderActions: null,
   setUserProfileHeaderActions: (actions) => set({ userProfileHeaderActions: actions }),
+  setFindHeaderActions: (actions) => set({ findHeaderActions: actions }),
   setCurrentPage: (page) => set({ currentPage: page }),
   setViewingGroupChannelId: (id) => set({ viewingGroupChannelId: id }),
   setViewingUserChatId: (id) => set({ viewingUserChatId: id }),

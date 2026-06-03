@@ -4,7 +4,7 @@ import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
-import { formatGameInfoForUser } from '../../shared/notification-base';
+import { formatGameInfoForUser, formatGameScheduleLine, resolveGameClubPlace } from '../../shared/notification-base';
 import { collectTelegramGameScheduleExtras } from '../../shared/notificationSport';
 
 export async function sendGameCard(
@@ -132,15 +132,13 @@ export async function sendGameCard(
     scheduleExtras.length > 0
       ? `🏅 ${escapeMarkdown(scheduleExtras.join(' · '))}\n`
       : '';
-  const dateTimeLine = `📅 ${escapeMarkdown(gameInfo.shortDayOfWeek)} ${escapeMarkdown(gameInfo.shortDate)} ${escapeMarkdown(gameInfo.startTime)}`;
-  
-  let timeLine = dateTimeLine;
-  if (game.entityType !== 'BAR') {
-    timeLine += ` (${escapeMarkdown(gameInfo.duration)})`;
-  }
+  const scheduleText = formatGameScheduleLine(gameInfo, {
+    includeDuration: game.entityType !== 'BAR',
+  });
+  const timeLine = `📅 ${escapeMarkdown(scheduleText)}`;
 
   const club = game.court?.club || game.club;
-  const clubName = club?.name || 'Unknown location';
+  const clubName = resolveGameClubPlace(game, userLang);
   let locationLine = `📍 ${escapeMarkdown(clubName)}`;
   
   if (game.court && !(game.entityType === 'BAR')) {

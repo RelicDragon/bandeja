@@ -40,6 +40,18 @@ export function supportsTimedOpenEndedRallyFreeze(
   return isOpenEndedScoringPreset(preset) && totalPointsPerSet <= 0;
 }
 
+/** Capped POINTS_* social presets: lock rally at buzzer when per-match timer is enabled. */
+export function supportsMatchTimerPointsRallyFreeze(
+  matchTimerEnabled: boolean | null | undefined,
+  preset: string | null | undefined,
+  totalPointsPerSet: number,
+): boolean {
+  if (!matchTimerEnabled) return false;
+  if (isOpenEndedScoringPreset(preset)) return supportsTimedOpenEndedRallyFreeze(preset, totalPointsPerSet);
+  if (!preset?.startsWith('POINTS_')) return false;
+  return totalPointsPerSet > 0;
+}
+
 export function registryAllowsOpenEndedPreset(
   allowedScoringPresets: readonly string[],
   sport: Sport,

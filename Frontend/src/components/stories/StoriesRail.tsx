@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { getHorizontalScrollFadeMaskStyle } from '@/components/HorizontalScrollFadeEdges';
@@ -52,6 +52,17 @@ export function StoriesRail() {
   const handleCreateClick = useCallback(() => {
     if (offline) return;
     runWithProfileName(() => setCreateOpen(true));
+  }, [offline]);
+
+  useEffect(() => {
+    const onOpenStoryCreate = () => {
+      if (offline) return;
+      runWithProfileName(() => setCreateOpen(true));
+    };
+    window.addEventListener('open-story-create', onOpenStoryCreate);
+    return () => {
+      window.removeEventListener('open-story-create', onOpenStoryCreate);
+    };
   }, [offline]);
 
   const handleBubbleClick = useCallback(

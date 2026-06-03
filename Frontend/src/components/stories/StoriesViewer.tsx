@@ -79,6 +79,10 @@ export function StoriesViewer({
     segments.length > 0 ? Math.min(segmentIndex, segments.length - 1) : 0;
   const segment = segments[safeSegmentIndex];
   const slideVersion = segment ? storySegmentSlideVersion(segment) : null;
+  const segmentRef = useRef(segment);
+  segmentRef.current = segment;
+  const bubbleRef = useRef(bubble);
+  bubbleRef.current = bubble;
 
   const goNextSegment = useCallback(() => {
     setVideoEnded(false);
@@ -237,25 +241,28 @@ export function StoriesViewer({
   }, [open, goNextSegment, goPrevSegment, playback]);
 
   const slide = useMemo(() => {
-    if (!segment || !bubble) return null;
-    if (segment.sourceType === 'GAME_CREATED') {
-      return <GamePromoStorySlide segment={segment} onOpenGame={openGame} />;
+    if (slideVersion == null) return null;
+    const activeSegment = segmentRef.current;
+    const activeBubble = bubbleRef.current;
+    if (!activeSegment || !activeBubble) return null;
+    if (activeSegment.sourceType === 'GAME_CREATED') {
+      return <GamePromoStorySlide segment={activeSegment} onOpenGame={openGame} />;
     }
-    if (segment.sourceType === 'GAME_RESULT') {
+    if (activeSegment.sourceType === 'GAME_RESULT') {
       return (
         <GameResultStorySlide
-          segment={segment}
-          highlightPlayerId={bubble.user.id}
+          segment={activeSegment}
+          highlightPlayerId={activeBubble.user.id}
           onOpenGame={openGame}
         />
       );
     }
-    if (segment.sourceType === 'BRACKET_CHAMPION') {
-      return <BracketChampionStorySlide segment={segment} onOpenBracket={openBracket} />;
+    if (activeSegment.sourceType === 'BRACKET_CHAMPION') {
+      return <BracketChampionStorySlide segment={activeSegment} onOpenBracket={openBracket} />;
     }
     return (
       <MediaStorySlide
-        segment={segment}
+        segment={activeSegment}
         isActive={open}
         paused={playback.paused}
         replayNonce={playback.replayGeneration}
@@ -265,8 +272,7 @@ export function StoriesViewer({
         onVideoDurationMs={setVideoDurationMs}
       />
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- slideVersion omits engagement/pause; avoids remounting media
-  }, [slideVersion, bubble?.user.id, open, goNextSegment, openGame, openBracket, playback.replayGeneration, playback.paused]);
+  }, [slideVersion, open, goNextSegment, openGame, openBracket, playback.replayGeneration, playback.paused]);
 
   if (!bubble) return null;
 

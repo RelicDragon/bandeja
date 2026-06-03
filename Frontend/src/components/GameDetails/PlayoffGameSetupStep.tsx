@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { Button, GameFormatCard } from '@/components';
 import { useGameFormat } from '@/hooks/useGameFormat';
 import type { Game, GameSetupParams } from '@/types';
-import { PLAYOFF_GAME_TYPE_SEEDS, playoffFormatInitialFromSeason } from './playoffTemplates';
+import { leagueSessionPlayoffFormatInitial } from './playoffTemplates';
 import { PlayoffGameFormatWizard } from './PlayoffGameFormatWizard';
 
 type PlayoffGameType = 'WINNER_COURT' | 'AMERICANO';
@@ -26,8 +26,8 @@ export const PlayoffGameSetupStep = ({
 }: PlayoffGameSetupStepProps) => {
   const { t } = useTranslation();
   const formatInitial = useMemo(
-    () => playoffFormatInitialFromSeason(seasonGame, PLAYOFF_GAME_TYPE_SEEDS[gameType]),
-    [seasonGame, gameType]
+    () => leagueSessionPlayoffFormatInitial(seasonGame, gameType),
+    [seasonGame, gameType],
   );
   const gameFormat = useGameFormat(formatInitial, {
     skipGenerationParticipantDefaults: true,

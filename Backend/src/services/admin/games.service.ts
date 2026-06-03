@@ -1,6 +1,7 @@
 import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { Sport } from '@prisma/client';
 import { InviteService } from '../invite.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { undoGameOutcomes } from '../results/outcomes.service';
@@ -18,15 +19,39 @@ export class AdminGamesService {
     hasResults?: boolean;
     startDate?: string;
     endDate?: string;
+    sport?: string;
+    affectsRating?: boolean;
+    scoringPreset?: string;
+    gameType?: string;
     page?: number;
   }) {
-    const { cityId, search, status, entityType, hasResults, startDate, endDate, page = 1 } = params;
+    const {
+      cityId,
+      search,
+      status,
+      entityType,
+      hasResults,
+      startDate,
+      endDate,
+      sport,
+      affectsRating,
+      scoringPreset,
+      gameType,
+      page = 1,
+    } = params;
     const skip = (page - 1) * GAMES_PAGE_SIZE;
 
     const where: Prisma.GameWhereInput = {};
     if (cityId) where.cityId = cityId;
     if (status) where.status = status as any;
     if (entityType) where.entityType = entityType as any;
+    if (sport && Object.values(Sport).includes(sport as Sport)) {
+      where.sport = sport as Sport;
+    }
+    if (affectsRating === true) where.affectsRating = true;
+    if (affectsRating === false) where.affectsRating = false;
+    if (scoringPreset) where.scoringPreset = scoringPreset as any;
+    if (gameType) where.gameType = gameType as any;
     if (hasResults === true) where.resultsStatus = { not: 'NONE' };
     if (hasResults === false) where.resultsStatus = 'NONE';
     if (startDate || endDate) {
@@ -115,7 +140,7 @@ export class AdminGamesService {
           include: {
             user: {
               select: {
-                ...USER_SELECT_FIELDS,
+                ...USER_SELECT_WITH_SPORT_PROFILES,
                 phone: true,
               },
             },
@@ -147,7 +172,12 @@ export class AdminGamesService {
           select: {
             id: true,
             name: true,
+            sport: true,
             gameType: true,
+            scoringPreset: true,
+            scoringMode: true,
+            affectsRating: true,
+            playersPerMatch: true,
             startTime: true,
             endTime: true,
             status: true,

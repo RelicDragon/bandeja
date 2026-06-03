@@ -44,7 +44,7 @@ enum WatchValidateSet {
         guard setIndex >= 0, setIndex < sets.count else { return .custom }
         let row = sets[setIndex]
         if isSupplemental(row) { return .custom }
-        if rules.isPoints { return .points }
+        if rules.isBallBudgetPoints || rules.isRallyGame || rules.isRallyPoints { return .points }
         if !rules.ballsInGames, rules.totalPointsPerSet == 0, rules.winnerOfMatch == .byScores, rules.fixedNumberOfSets == 1 {
             return .timed
         }
@@ -134,7 +134,24 @@ enum WatchValidateSet {
         return true
     }
 
+    private static func validateRallyPointGame(a: Int, b: Int, rules: WatchScoringRules) -> Bool {
+        if a == b { return a == 0 }
+        let target = rules.totalPointsPerSet
+        let hi = max(a, b)
+        let lo = min(a, b)
+        if hi < target { return true }
+        if hi == target, lo > target - rules.winBy { return false }
+        if hi > target, hi - lo != rules.winBy {
+            if hi - lo < rules.winBy { return false }
+            return false
+        }
+        return true
+    }
+
     private static func validatePointsSet(a: Int, b: Int, rules: WatchScoringRules) -> Bool {
+        if rules.usesRallyPointCap {
+            return validateRallyPointGame(a: a, b: b, rules: rules)
+        }
         if rules.totalPointsPerSet > 0, a + b != rules.totalPointsPerSet {
             return false
         }

@@ -7,6 +7,7 @@ import { MatchCard } from './MatchCard';
 import { HorizontalMatchCard } from './HorizontalMatchCard';
 import { ConfirmationModal } from '@/components';
 import { getRules, getRoundResultsHeaderTone, type RoundResultsHeaderTone } from '@/utils/scoring';
+import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 
 interface RoundCardProps {
   round: Round;
@@ -35,7 +36,7 @@ interface RoundCardProps {
   courts?: Court[];
   onCourtClick?: (matchId: string) => void;
   fixedNumberOfSets?: number;
-  game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie' | 'resultsStatus'> | null;
+  game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'matchTimerEnabled' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie' | 'resultsStatus' | 'playersPerMatch' | 'sport'> | null;
   gameId?: string;
   onMatchTimerTransition?: (roundId: string, matchId: string, action: import('@/utils/matchTimer').MatchTimerAction) => void | Promise<void>;
 }
@@ -128,8 +129,13 @@ export const RoundCard = ({
 
   const matchesContent = (
     <div className={hideFrame ? '' : 'py-2'}>
-              {round.matches.map((match, matchIndex) => (
-                fixedNumberOfSets === 1 && windowWidth >= 390 ? (
+              {round.matches.map((match, matchIndex) => {
+                const useHorizontalMatchCard =
+                  fixedNumberOfSets === 1 &&
+                  windowWidth >= 390 &&
+                  !match.sets.some(isSupplementalMatchSet);
+
+                return useHorizontalMatchCard ? (
                   <HorizontalMatchCard
                     key={match.id}
                     match={match}
@@ -158,6 +164,7 @@ export const RoundCard = ({
                     roundId={round.id}
                     gameId={gameId}
                     onMatchTimerTransition={onMatchTimerTransition}
+                    onAddSupplementalSet={onAddSupplementalSet ? () => onAddSupplementalSet(match.id) : undefined}
                   />
                 ) : (
                   <MatchCard
@@ -190,8 +197,8 @@ export const RoundCard = ({
                     gameId={gameId}
                     onMatchTimerTransition={onMatchTimerTransition}
                   />
-                )
-              ))}
+                );
+              })}
 
       {editingMatchId && canEditResults && (
         <div className="flex justify-center mt-4">

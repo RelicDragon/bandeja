@@ -17,6 +17,8 @@ const DEFAULT_FILTERS: GameFilters = {
   filterLevelMin: 1.0,
   filterLevelMax: 7.0,
   filterSport: 'primary',
+  filterTier: undefined,
+  filterNoRating: false,
   showPrivateGames: false,
 };
 

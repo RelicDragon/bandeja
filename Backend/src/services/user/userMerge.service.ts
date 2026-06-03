@@ -506,7 +506,8 @@ async function dedupeLeagueParticipants(tx: Tx, survivorId: string) {
 const LEVEL_SOURCE_RANK: Record<SportLevelSource, number> = {
   [SportLevelSource.DEFAULT]: 0,
   [SportLevelSource.QUESTIONNAIRE]: 1,
-  [SportLevelSource.MANUAL]: 2,
+  [SportLevelSource.PLAYTOMIC]: 2,
+  [SportLevelSource.MANUAL]: 3,
 };
 
 function mergeSportLevelSource(a: SportLevelSource, b: SportLevelSource): SportLevelSource {
@@ -553,6 +554,7 @@ async function mergeUserSportProfiles(tx: Tx, survivorId: string, sourceId: stri
         questionnaireSkippedAt: surv.questionnaireSkippedAt ?? src.questionnaireSkippedAt,
         questionnaireVersion: version,
         levelSource: mergeSportLevelSource(surv.levelSource, src.levelSource),
+        externalRatingHint: surv.externalRatingHint ?? src.externalRatingHint,
       },
     });
     await tx.userSportProfile.delete({ where: { id: src.id } });

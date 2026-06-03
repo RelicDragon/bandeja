@@ -48,6 +48,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const pasteCleanupRef = useRef<(() => void) | null>(null);
   const [suggestionsWidth, setSuggestionsWidth] = useState(300);
   const [suggestionsPortalHost, setSuggestionsPortalHost] = useState<HTMLElement | null>(null);
   const [gameParticipants, setGameParticipants] = useState<GameParticipant[] | null>(null);
@@ -94,38 +95,30 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     return () => cancelAnimationFrame(id);
   }, [value]);
 
-  useEffect(() => {
-    const handlePasteCapture = (e: ClipboardEvent) => {
-      const textarea = inputRef.current;
-      if (!textarea || e.target !== textarea) return;
+  const attachPasteHandler = useCallback((textarea: HTMLTextAreaElement) => {
+    pasteCleanupRef.current?.();
 
+    const handlePasteCapture = (e: ClipboardEvent) => {
       const data = e.clipboardData;
       if (!data) return;
 
-      if (data.getData('text/plain').trim()) return;
+      if (data.getData('text/react-mentions')) return;
 
-      const fallback = getClipboardTextForPaste(data);
-      if (!fallback) return;
+      const text = getClipboardTextForPaste(data);
+      if (!text) return;
 
       e.preventDefault();
-      e.stopImmediatePropagation();
+      e.stopPropagation();
 
-      const start = textarea.selectionStart ?? 0;
-      const end = textarea.selectionEnd ?? 0;
-      textarea.setRangeText(fallback, start, end, 'end');
-      textarea.dispatchEvent(
-        new InputEvent('input', {
-          bubbles: true,
-          cancelable: true,
-          inputType: 'insertFromPaste',
-          data: fallback,
-        })
-      );
+      textarea.focus();
+      document.execCommand('insertText', false, text);
     };
 
-    document.addEventListener('paste', handlePasteCapture, true);
-    return () => document.removeEventListener('paste', handlePasteCapture, true);
+    textarea.addEventListener('paste', handlePasteCapture, true);
+    pasteCleanupRef.current = () => textarea.removeEventListener('paste', handlePasteCapture, true);
   }, []);
+
+  useEffect(() => () => pasteCleanupRef.current?.(), []);
 
   const gameId = game?.id;
   useEffect(() => {
@@ -356,7 +349,12 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
   const setInputRef = (el: HTMLTextAreaElement | null) => {
     (inputRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
-    if (el) syncInputHeight();
+    pasteCleanupRef.current?.();
+    pasteCleanupRef.current = null;
+    if (el) {
+      syncInputHeight();
+      attachPasteHandler(el);
+    }
   };
 
   return (

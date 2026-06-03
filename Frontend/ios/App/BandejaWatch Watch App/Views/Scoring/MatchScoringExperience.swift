@@ -36,7 +36,7 @@ struct MatchScoringExperience: View {
             VStack(spacing: 6) {
                 if showMatchTimerBar, let g = vm.game, g.isMatchTimerEnabled {
                     MatchTimerBarView(gameId: gameId, matchId: matchId, game: g, onTimerStopped: {
-                        vm.lockTimedClassicSetAtPartialScore()
+                        vm.lockTimedSetAtPartialScore()
                     })
                 }
                 switch vm.liveScoringUiId {

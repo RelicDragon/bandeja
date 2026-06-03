@@ -7,6 +7,7 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { buildDuplicateGameInitialData } from '@/utils/buildDuplicateGameInitialData';
 import {
   Card,
   PlayerListModal,
@@ -68,6 +69,8 @@ import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEn
 import { shouldSyncEngineGameFromShell } from '@/utils/mergeGameFormatForResults';
 import { mergeGameResultsArtifactsFields } from '@/utils/gameResultsArtifacts.util';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
+import { AnimatedPresencePanel } from '@/components/motion/AnimatedPresencePanel';
+import { AnimatedChildrenStagger } from '@/components/motion/AnimatedChildrenStagger';
 
 type GameWithResults = Game & {
   rounds?: Round[];
@@ -153,6 +156,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   const [tableSetModal, setTableSetModal] = useState<{ roundId: string; matchId: string } | null>(null);
   const [roundAddedForModal, setRoundAddedForModal] = useState<Round | null>(null);
   const [roundAddedModalRoundNumber, setRoundAddedModalRoundNumber] = useState<number | undefined>(undefined);
+  const hasRenderedContentRef = useRef(false);
 
   const engineRounds = useGameResultsStore((s) => s.rounds);
   const engineCanEdit = useGameResultsStore((s) => s.canEdit);
@@ -240,7 +244,6 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
         setGame(seed);
         setLoading(false);
       } else {
-        setGame(null);
         setLoading(true);
       }
 
@@ -248,12 +251,12 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
         const response = await gamesApi.getById(id);
         setGame(response.data);
 
-        if (user) {
+        if (user?.id) {
           const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
           const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
           setMyInvites(gameMyInvites);
 
-          const isParticipant = response.data.participants.some((p) => p.userId === user?.id);
+          const isParticipant = response.data.participants.some((p) => p.userId === user.id);
           if (isParticipant) {
             const gameInvitesResponse = await invitesApi.getGameInvites(id);
             setGameInvites(gameInvitesResponse.data);
@@ -280,7 +283,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     };
 
     fetchGame();
-  }, [id, user, initialGame]);
+  }, [id, user?.id, initialGame]);
 
   useEffect(() => {
     if (game?.entityType !== 'LEAGUE_SEASON') return;
@@ -1219,35 +1222,41 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     return () => setGameDetailsTableAddRound(null, false);
   }, [isTableViewActive, tableIsEditing, handleTableAddRound, setGameDetailsTableAddRound]);
 
-  if (loading) {
+  if (loading && !game) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-60px)]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">{t('app.loading')}</p>
+      <AnimatedPresencePanel panelKey="game-details-loading">
+        <div className="flex items-center justify-center min-h-[calc(100vh-60px)]">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">{t('app.loading')}</p>
+          </div>
         </div>
-      </div>
+      </AnimatedPresencePanel>
     );
   }
 
   if (!game) {
     if (cancelledGameInfo) {
       return (
-        <GameCancelled
-          entityType={cancelledGameInfo.entityType as import('@/types').EntityType}
-          name={cancelledGameInfo.name}
-          cancelledAt={cancelledGameInfo.cancelledAt}
-          cancelledByUser={cancelledGameInfo.cancelledByUser ?? undefined}
-          levelSport={cancelledGameInfo.sport ? parseGameSport(cancelledGameInfo.sport) : undefined}
-        />
+        <AnimatedPresencePanel panelKey="game-details-cancelled">
+          <GameCancelled
+            entityType={cancelledGameInfo.entityType as import('@/types').EntityType}
+            name={cancelledGameInfo.name}
+            cancelledAt={cancelledGameInfo.cancelledAt}
+            cancelledByUser={cancelledGameInfo.cancelledByUser ?? undefined}
+            levelSport={cancelledGameInfo.sport ? parseGameSport(cancelledGameInfo.sport) : undefined}
+          />
+        </AnimatedPresencePanel>
       );
     }
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-60px)] p-4">
-        <Card className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400">{t('errors.notFound')}</p>
-        </Card>
-      </div>
+      <AnimatedPresencePanel panelKey="game-details-not-found">
+        <div className="flex items-center justify-center min-h-[calc(100vh-60px)] p-4">
+          <Card className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400">{t('errors.notFound')}</p>
+          </Card>
+        </div>
+      </AnimatedPresencePanel>
     );
   }
 
@@ -1613,54 +1622,8 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
                 <button
                   onClick={() => {
                     const doDuplicate = () => {
-                    const gameData: Partial<Game> = {
-                      entityType: game.entityType,
-                      gameType: game.gameType,
-                      name: game.name,
-                      description: game.description,
-                      clubId: game.clubId,
-                      courtId: game.courtId,
-                      startTime: game.startTime,
-                      endTime: game.endTime,
-                      sport: game.sport,
-                      maxParticipants: game.maxParticipants,
-                      playersPerMatch: game.playersPerMatch,
-                      minParticipants: game.minParticipants,
-                      minLevel: game.minLevel,
-                      maxLevel: game.maxLevel,
-                      isPublic: game.isPublic,
-                      affectsRating: game.affectsRating,
-                      anyoneCanInvite: game.anyoneCanInvite,
-                      resultsByAnyone: game.resultsByAnyone,
-                      allowDirectJoin: game.allowDirectJoin,
-                      hasBookedCourt: game.hasBookedCourt,
-                      afterGameGoToBar: game.afterGameGoToBar,
-                      hasFixedTeams: game.hasFixedTeams,
-                      genderTeams: game.genderTeams,
-                      priceTotal: game.priceTotal,
-                      priceType: game.priceType,
-                      priceCurrency: game.priceCurrency,
-                      fixedNumberOfSets: game.fixedNumberOfSets,
-                      maxTotalPointsPerSet: game.maxTotalPointsPerSet,
-                      maxPointsPerTeam: game.maxPointsPerTeam,
-                      winnerOfGame: game.winnerOfGame,
-                      winnerOfMatch: game.winnerOfMatch,
-                      matchGenerationType: game.matchGenerationType,
-                      pointsPerWin: game.pointsPerWin,
-                      pointsPerLoose: game.pointsPerLoose,
-                      pointsPerTie: game.pointsPerTie,
-                      ballsInGames: game.ballsInGames,
-                      gameCourts: game.gameCourts,
-                    };
-                    
-                    if (game.entityType === 'LEAGUE_SEASON') {
-                      if (game.parentId) {
-                        gameData.parentId = game.parentId;
-                      } else if (game.leagueSeason?.league?.id) {
-                        gameData.parentId = game.leagueSeason?.league?.id;
-                      }
-                    }
-                    
+                    const gameData = buildDuplicateGameInitialData(game);
+
                     navigate('/create-game', {
                       state: {
                         entityType: game.entityType,
@@ -1728,9 +1691,17 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
 
   const shellLevelSport = parseGameSport(game.sport);
 
+  const tabViewKey = isLeagueSeason ? `tab-${activeTab}` : 'tab-general';
+  const shellViewKey = effectiveTableView && canViewTournamentTableByAccess(game, user) ? 'table-view' : `content-view-${tabViewKey}`;
+  const shouldAnimateStagger = !hasRenderedContentRef.current;
+  if (!hasRenderedContentRef.current) {
+    hasRenderedContentRef.current = true;
+  }
+
   if (effectiveTableView && canViewTournamentTableByAccess(game, user)) {
     return (
       <SportLevelProvider sport={shellLevelSport}>
+      <AnimatedPresencePanel panelKey={shellViewKey}>
       <>
           <ResultsTableView
             game={game}
@@ -1761,6 +1732,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
           <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
         </div>
       </>
+      </AnimatedPresencePanel>
       </SportLevelProvider>
     );
   }
@@ -1801,7 +1773,15 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
           </div>
         )}
 
-      {renderTabContent()}
+      <AnimatedPresencePanel panelKey={shellViewKey}>
+        {shouldAnimateStagger ? (
+          <AnimatedChildrenStagger contentKey={tabViewKey}>
+            {renderTabContent()}
+          </AnimatedChildrenStagger>
+        ) : (
+          <>{renderTabContent()}</>
+        )}
+      </AnimatedPresencePanel>
 
       {showPlayerList && id && (
         <PlayerListModal

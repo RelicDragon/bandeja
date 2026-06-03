@@ -145,7 +145,7 @@ struct WatchParticipant: Decodable, Sendable {
     let user: WatchUser
     let activeMatchId: String?
 
-    var isPlaying: Bool { status == "PLAYING" }
+    nonisolated var isPlaying: Bool { status == "PLAYING" }
 
     private enum CodingKeys: String, CodingKey {
         case userId, role, status, user, activeMatchId

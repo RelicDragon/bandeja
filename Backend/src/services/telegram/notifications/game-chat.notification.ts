@@ -4,7 +4,14 @@ import { ChatType, ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
-import { formatChatNotificationMessageBody, formatGameInfoForUser, formatUserName, getEntityTypeLabel, getShowEntityButtonText } from '../../shared/notification-base';
+import {
+  formatChatNotificationMessageBody,
+  formatGameContextHeader,
+  formatGameInfoForUser,
+  formatUserName,
+  getEntityTypeLabel,
+  getShowEntityButtonText,
+} from '../../shared/notification-base';
 import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { canParticipantSeeGameChatMessage, shouldNotifyParentGameAdminForMessage } from '../../chat/gameChatVisibility';
@@ -71,7 +78,7 @@ export async function sendGameChatNotification(
         const showButtonText = getShowEntityButtonText(game.entityType, lang);
 
         const scheduleLine = appendTelegramGameScheduleExtras(
-          `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`,
+          `📍 ${escapeMarkdown(formatGameContextHeader(gameInfo))}`,
           game,
           user.primarySport,
           lang,
@@ -153,7 +160,7 @@ export async function sendGameChatNotification(
         const showButtonText = getShowEntityButtonText(game.entityType, lang);
 
         const scheduleLine = appendTelegramGameScheduleExtras(
-          `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`,
+          `📍 ${escapeMarkdown(formatGameContextHeader(gameInfo))}`,
           game,
           user.primarySport,
           lang,

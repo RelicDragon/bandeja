@@ -13,6 +13,9 @@
   }
 
   function mergeLevelParen(u) {
+    if (typeof formatUserSportLevelsSummary === 'function') {
+      return `(${formatUserSportLevelsSummary(u)})`;
+    }
     const lv = u.level != null ? Number(u.level).toFixed(1) : '—';
     return `(${lv})`;
   }

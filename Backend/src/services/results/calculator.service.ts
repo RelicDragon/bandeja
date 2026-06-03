@@ -1,4 +1,7 @@
+import type { Sport } from '../../sport/sportIds';
+import { Sports } from '../../sport/sportIds';
 import { getMatchScoresForDelta } from './setScoreDelta';
+import { resolveRatingEngine } from './ratingEngine';
 import { calculateRatingUpdate, calculateReliabilityChange } from './rating.service';
 
 interface PlayerData {
@@ -157,11 +160,14 @@ export function calculateByMatchesWonOutcomes(
   pointsPerWin: number = 0,
   pointsPerTie: number = 0,
   pointsPerLoose: number = 0,
-  ballsInGames: boolean = false
+  ballsInGames: boolean = false,
+  sport: Sport = Sports.PADEL,
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
 } {
+  const engine = resolveRatingEngine(sport);
+  const ratingBallsInGames = ballsInGames && engine.ballsInGamesMargin;
   const roundOutcomes: Record<number, RoundOutcomeResult[]> = {};
   const playerTotalChanges = initializePlayerChanges(players);
 
@@ -210,7 +216,8 @@ export function calculateByMatchesWonOutcomes(
             opponentsLevel: teamBOwnAvgStart,
             setScores: validSets,
           },
-          ballsInGames
+          ratingBallsInGames,
+          engine,
         );
 
         roundPlayerOutcomes[player.userId] += update.levelChange;
@@ -241,7 +248,8 @@ export function calculateByMatchesWonOutcomes(
             opponentsLevel: teamAOwnAvgStart,
             setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore, isTieBreak: s.isTieBreak })),
           },
-          ballsInGames
+          ratingBallsInGames,
+          engine,
         );
 
         roundPlayerOutcomes[player.userId] += update.levelChange;
@@ -278,7 +286,7 @@ export function calculateByMatchesWonOutcomes(
     });
 
   const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) => 
-    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose, ballsInGames)
+    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose, ratingBallsInGames)
   );
 
   return { gameOutcomes, roundOutcomes };
@@ -290,11 +298,14 @@ export function calculateByPointsOutcomes(
   pointsPerWin: number = 0,
   pointsPerTie: number = 0,
   pointsPerLoose: number = 0,
-  ballsInGames: boolean = false
+  ballsInGames: boolean = false,
+  sport: Sport = Sports.PADEL,
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
 } {
+  const engine = resolveRatingEngine(sport);
+  const ratingBallsInGames = ballsInGames && engine.ballsInGamesMargin;
   const roundOutcomes: Record<number, RoundOutcomeResult[]> = {};
   const playerTotalChanges = initializePlayerChanges(players, true);
 
@@ -349,7 +360,8 @@ export function calculateByPointsOutcomes(
             opponentsLevel: teamBOwnAvgStart,
             setScores: validSets,
           },
-          ballsInGames
+          ratingBallsInGames,
+          engine,
         );
 
         roundPlayerOutcomes[playerId] += update.levelChange;
@@ -383,7 +395,8 @@ export function calculateByPointsOutcomes(
             opponentsLevel: teamAOwnAvgStart,
             setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore, isTieBreak: s.isTieBreak })),
           },
-          ballsInGames
+          ratingBallsInGames,
+          engine,
         );
 
         roundPlayerOutcomes[playerId] += update.levelChange;
@@ -420,7 +433,7 @@ export function calculateByPointsOutcomes(
     });
 
   const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) =>
-    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose, ballsInGames)
+    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose, ratingBallsInGames)
   );
 
   return { gameOutcomes, roundOutcomes };
@@ -432,11 +445,14 @@ export function calculateByScoresDeltaOutcomes(
   pointsPerWin: number = 0,
   pointsPerTie: number = 0,
   pointsPerLoose: number = 0,
-  ballsInGames: boolean = false
+  ballsInGames: boolean = false,
+  sport: Sport = Sports.PADEL,
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
 } {
+  const engine = resolveRatingEngine(sport);
+  const ratingBallsInGames = ballsInGames && engine.ballsInGamesMargin;
   const roundOutcomes: Record<number, RoundOutcomeResult[]> = {};
   const playerTotalChanges = initializePlayerChanges(players, true);
 
@@ -491,7 +507,8 @@ export function calculateByScoresDeltaOutcomes(
             opponentsLevel: teamBOwnAvgStart,
             setScores: validSets,
           },
-          ballsInGames
+          ratingBallsInGames,
+          engine,
         );
 
         roundPlayerOutcomes[playerId] += update.levelChange;
@@ -526,7 +543,8 @@ export function calculateByScoresDeltaOutcomes(
             opponentsLevel: teamAOwnAvgStart,
             setScores: validSets.map(s => ({ teamAScore: s.teamBScore, teamBScore: s.teamAScore, isTieBreak: s.isTieBreak })),
           },
-          ballsInGames
+          ratingBallsInGames,
+          engine,
         );
 
         roundPlayerOutcomes[playerId] += update.levelChange;
@@ -564,7 +582,7 @@ export function calculateByScoresDeltaOutcomes(
     });
 
   const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) =>
-    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose, ballsInGames)
+    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose, ratingBallsInGames)
   );
 
   return { gameOutcomes, roundOutcomes };

@@ -122,7 +122,7 @@ enum WatchComputeMatchWinner {
 
     /// Official points row: exact total and draw rules (mirrors `validatePointsSet` + live freeze).
     static func isPointsOfficialBudgetExhausted(activeSet: WatchSetWrite?, rules: WatchScoringRules) -> Bool {
-        guard rules.isPoints, rules.totalPointsPerSet > 0 else { return false }
+        guard rules.isBallBudgetPoints, rules.totalPointsPerSet > 0 else { return false }
         guard let s = activeSet, s.resolvedRole == .official else { return false }
         guard s.teamA + s.teamB == rules.totalPointsPerSet else { return false }
         if !rules.allowDrawPerSet, s.teamA == s.teamB { return false }

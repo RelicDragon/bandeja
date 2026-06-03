@@ -6,6 +6,7 @@ import { draftStorage } from '@/services/draftStorage';
 import {
   DRAFT_MAX_CONTENT_LENGTH,
   draftLoadingCache,
+  emitDraftUpdatedEvent,
   withDraftRetry,
 } from '@/components/chat/messageInputDraftUtils';
 
@@ -89,6 +90,7 @@ export function useMessageInputDraftSync({
       }
 
       await draftStorage.set(userId, contextType, finalContextId, resolvedChatType, trimmedContent, safeMentionIds);
+      emitDraftUpdatedEvent(userId, contextType, finalContextId, resolvedChatType, trimmedContent, safeMentionIds);
       const payload = {
         chatContextType: contextType,
         contextId: finalContextId,
@@ -285,10 +287,18 @@ export function useMessageInputDraftSync({
       }
       if (editingMessageRef.current) return;
       if (finalContextId && userId) {
-        const currentMessage = messageRef.current?.trim();
+        const currentMessage = messageRef.current?.trim() ?? '';
         const currentMentionIds = mentionIdsRef.current || [];
         if (currentMessage || currentMentionIds.length > 0) {
-          saveDraft(currentMessage || '', currentMentionIds).catch((error) => {
+          emitDraftUpdatedEvent(
+            userId,
+            contextType,
+            finalContextId,
+            resolvedChatType,
+            currentMessage,
+            currentMentionIds
+          );
+          void saveDraft(currentMessage, currentMentionIds).catch((error) => {
             console.error('Failed to save draft:', error);
           });
         }
@@ -306,7 +316,7 @@ export function useMessageInputDraftSync({
       window.removeEventListener('pagehide', flush);
       flush();
     };
-  }, [finalContextId, userId, saveDraft, editingMessageRef, messageRef, mentionIdsRef]);
+  }, [finalContextId, userId, saveDraft, editingMessageRef, messageRef, mentionIdsRef, contextType, resolvedChatType]);
 
   return {
     saveDraft,

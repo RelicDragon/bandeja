@@ -65,8 +65,7 @@ export function useStorySegmentEngagement({
   useEffect(() => {
     fetchedForKeyRef.current = null;
     setEngagement(feedEngagement ?? initialEngagement ?? DEFAULT_ENGAGEMENT);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only on segmentKey; feed sync below
-  }, [segmentKey]);
+  }, [segmentKey, feedEngagement, initialEngagement]);
 
   useEffect(() => {
     const next = feedEngagement ?? initialEngagement;

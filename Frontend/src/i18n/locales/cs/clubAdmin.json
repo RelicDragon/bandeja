@@ -75,6 +75,8 @@
   "clubAdmin.policyText": "Policies",
   "clubAdmin.defaultSlotMinutes": "Default slot (minutes)",
   "clubAdmin.cancellationNoticeHours": "Cancellation notice (hours)",
+  "clubAdmin.sports": "Sports at this club",
+  "clubAdmin.sportsHint": "Only these sports can be assigned to courts.",
   "clubAdmin.amenities": "Amenities",
   "clubAdmin.amenity.parking": "Parking",
   "clubAdmin.amenity.showers": "Showers",

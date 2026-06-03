@@ -74,7 +74,8 @@
     "select": "Select",
     "retry": "Retry",
     "on": "On",
-    "pressBackAgainToExit": "Press back again to exit"
+    "pressBackAgainToExit": "Press back again to exit",
+    "off": "Off"
   },
   "sport": {
     "sport": "Deporte",
@@ -92,6 +93,8 @@
     "squashInLevel": "squash",
     "court": "Pista",
     "matchFormat": "Formato del partido",
+    "matchSingles": "Individual",
+    "matchDoubles": "Dobles",
     "match1v1": "1v1",
     "match2v2": "2v2"
   },

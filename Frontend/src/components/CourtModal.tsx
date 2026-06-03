@@ -7,8 +7,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { getSportConfig } from '@/sport/sportRegistry';
 import {
+  effectiveCourtSportFilter,
+  filterCourtsByClubSports,
   filterCourtsBySport,
-  getDistinctCourtSports,
+  resolveClubSportsList,
   resolveDefaultCourtSportTab,
   shouldShowCourtSportTabs,
   sportLabelKey,
@@ -23,6 +25,7 @@ interface CourtModalProps {
   entityType?: EntityType;
   showNotBookedOption?: boolean;
   preferredSport?: Sport | null;
+  clubSports?: Sport[] | null;
   onSportTabChange?: (sport: Sport) => void;
 }
 
@@ -35,16 +38,25 @@ export const CourtModal = ({
   entityType,
   showNotBookedOption = true,
   preferredSport,
+  clubSports: clubSportsProp,
   onSportTabChange,
 }: CourtModalProps) => {
   const { t } = useTranslation();
   const [internalIsOpen, setInternalIsOpen] = useState(isOpen);
 
-  const clubSports = useMemo(() => getDistinctCourtSports(courts), [courts]);
-  const showSportTabs = shouldShowCourtSportTabs(courts);
+  const clubSports = useMemo(
+    () => resolveClubSportsList(clubSportsProp, courts),
+    [clubSportsProp, courts],
+  );
+  const showSportTabs = shouldShowCourtSportTabs(clubSportsProp, courts);
+  const sportFilter = effectiveCourtSportFilter(clubSportsProp, preferredSport ?? undefined);
+  const courtsInClub = useMemo(
+    () => filterCourtsByClubSports(courts, clubSportsProp),
+    [courts, clubSportsProp],
+  );
 
   const [activeSportTab, setActiveSportTab] = useState<Sport | undefined>(() =>
-    resolveDefaultCourtSportTab(clubSports, preferredSport),
+    resolveDefaultCourtSportTab(clubSports, sportFilter),
   );
 
   useEffect(() => {
@@ -55,18 +67,18 @@ export const CourtModal = ({
 
   useEffect(() => {
     if (!isOpen) return;
-    setActiveSportTab(resolveDefaultCourtSportTab(clubSports, preferredSport));
-  }, [isOpen, clubSports, preferredSport]);
+    setActiveSportTab(resolveDefaultCourtSportTab(clubSports, sportFilter));
+  }, [isOpen, clubSports, sportFilter]);
 
   const visibleCourts = useMemo(() => {
     if (showSportTabs && activeSportTab) {
-      return filterCourtsBySport(courts, activeSportTab);
+      return filterCourtsBySport(courtsInClub, activeSportTab);
     }
-    if (!showSportTabs && preferredSport) {
-      return filterCourtsBySport(courts, preferredSport);
+    if (!showSportTabs && sportFilter) {
+      return filterCourtsBySport(courtsInClub, sportFilter);
     }
-    return courts;
-  }, [courts, showSportTabs, activeSportTab, preferredSport]);
+    return courtsInClub;
+  }, [courtsInClub, showSportTabs, activeSportTab, sportFilter]);
 
   const handleClose = () => {
     setInternalIsOpen(false);

@@ -26,6 +26,7 @@ interface PhotosSectionProps {
 export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const lastGamePhotoAdded = useSocketEventsStore((state) => state.lastGamePhotoAdded);
   const lastGamePhotoDeleted = useSocketEventsStore((state) => state.lastGamePhotoDeleted);
   const lastGamePhotoMainChanged = useSocketEventsStore((state) => state.lastGamePhotoMainChanged);
 
@@ -48,7 +49,11 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     return photos.some((p) => p.id === mainPhotoId) ? mainPhotoId : null;
   }, [mainPhotoId, photos]);
 
-  const { isUploadingPhoto, handlePhotoSelect } = usePhotosSectionUpload(game, onGameUpdate);
+  const { isUploadingPhoto, handlePhotoSelect } = usePhotosSectionUpload(
+    game,
+    onGameUpdate,
+    setMainPhotoId
+  );
 
   const canEditMainPhoto = user ? isUserGameAdminOrOwner(game, user.id) : false;
 
@@ -79,6 +84,12 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
       }
     });
   }, [game.id, game.status, isLoading, loadGamePhotos, loaded, user]);
+
+  useEffect(() => {
+    if (!game.id || game.status === 'ANNOUNCED') return;
+    if (!lastGamePhotoAdded || lastGamePhotoAdded.gameId !== game.id) return;
+    setMainPhotoId(lastGamePhotoAdded.photo.id);
+  }, [game.id, game.status, lastGamePhotoAdded]);
 
   useEffect(() => {
     if (!game.id || game.status === 'ANNOUNCED') return;
@@ -297,7 +308,6 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
           imageUrl={fullscreenImage}
           onClose={closeFullscreen}
           isOpen
-          enableTransform={false}
           usePortaledOverlay
           modalId="fullscreen-game-photo-viewer"
         />

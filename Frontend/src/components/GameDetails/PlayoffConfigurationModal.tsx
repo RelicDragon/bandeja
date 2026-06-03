@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { BasicUser, Game, GameSetupParams } from '@/types';
 import { gamesApi } from '@/api/games';
 import {
@@ -70,6 +71,8 @@ import {
   getCustomByeValidation,
   getCustomPlayInValidation,
 } from '@/utils/playoffWizardValidation.util';
+import { getSportConfig } from '@/sport/sportRegistry';
+import { parseSport } from '@shared/sport';
 
 const ALL_GROUP_ID = 'ALL';
 const SESSION_MIN_PARTICIPANTS = 4;
@@ -150,6 +153,17 @@ export const PlayoffConfigurationModal = ({
   const isCrossGroupBracket = isBracket && bracketScope === 'CROSS_GROUP';
   const minParticipants = isBracket ? BRACKET_MIN_ENTRANTS : SESSION_MIN_PARTICIPANTS;
   const maxParticipants = isBracket ? BRACKET_MAX_ENTRANTS : undefined;
+
+  const seasonSport = seasonGame?.sport != null ? parseSport(seasonGame.sport) : null;
+  const americanoPlayoffAllowed = seasonSport
+    ? getSportConfig(seasonSport).rotationFormats.americano
+    : true;
+
+  useEffect(() => {
+    if (!americanoPlayoffAllowed && formatChoice === 'AMERICANO') {
+      setFormatChoice('WINNER_COURT');
+    }
+  }, [americanoPlayoffAllowed, formatChoice]);
 
   const fetchData = useCallback(async () => {
     if (!leagueSeasonId) return;
@@ -816,7 +830,7 @@ export const PlayoffConfigurationModal = ({
     }
   };
 
-  return (
+  const modalBody = (
     <Dialog open={isOpen} onClose={onClose} modalId="playoff-configuration-modal">
       <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-col items-center gap-1">
@@ -843,10 +857,14 @@ export const PlayoffConfigurationModal = ({
                       id: 'WINNER_COURT',
                       label: t('games.gameTypes.WINNER_COURT', { defaultValue: "Winner's Court" }),
                     },
-                    {
-                      id: 'AMERICANO',
-                      label: t('games.gameTypes.AMERICANO', { defaultValue: 'Americano' }),
-                    },
+                    ...(americanoPlayoffAllowed
+                      ? [
+                          {
+                            id: 'AMERICANO' as const,
+                            label: t('games.gameTypes.AMERICANO', { defaultValue: 'Americano' }),
+                          },
+                        ]
+                      : []),
                     {
                       id: 'BRACKET',
                       label: t('gameDetails.bracketPlayoffFormat', { defaultValue: 'Bracket' }),
@@ -1137,6 +1155,7 @@ export const PlayoffConfigurationModal = ({
                                           extrasmall
                                           showName={false}
                                           fullHideName
+                                          levelSport={seasonSport ?? undefined}
                                         />
                                       ))}
                                     </div>
@@ -1157,6 +1176,7 @@ export const PlayoffConfigurationModal = ({
                                       extrasmall
                                       showName={false}
                                       fullHideName
+                                      levelSport={seasonSport ?? undefined}
                                     />
                                     <span className="text-gray-900 dark:text-white">
                                       {[standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ')}
@@ -1285,6 +1305,7 @@ export const PlayoffConfigurationModal = ({
                 plan={crossPreviewPlan}
                 standingsById={standingsById}
                 qualifierLabels={crossQualifierLabels}
+                playersPerMatch={seasonGame?.playersPerMatch}
                 reorderable
                 onPlanChange={(next) => setCrossPreviewOrderedIds(next.orderedParticipantIds)}
               />
@@ -1324,6 +1345,7 @@ export const PlayoffConfigurationModal = ({
                       plan={plan}
                       standingsById={standingsById}
                       groupColor={g.color}
+                      playersPerMatch={seasonGame?.playersPerMatch}
                       reorderable
                       onPlanChange={(next) =>
                         setPreviewOrderedByGroup((prev) => ({
@@ -1584,4 +1606,7 @@ export const PlayoffConfigurationModal = ({
       </DialogContent>
     </Dialog>
   );
+
+  if (!seasonSport) return modalBody;
+  return <SportLevelProvider sport={seasonSport}>{modalBody}</SportLevelProvider>;
 };

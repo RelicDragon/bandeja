@@ -50,25 +50,26 @@ enum WatchServeCourtView {
                 serverTeam: endsSetup ? nil : snapshot.serverTeam,
                 serverOnRightHalf: snapshot.courtSide.isRight
             )
-            .frame(width: compact ? 44 : 52, height: compact ? 22 : 26)
+            .frame(width: compact ? 52 : 62, height: compact ? 40 : 48)
         case .badminton:
             BadmintonCourtStrip(
                 serverTeam: endsSetup ? nil : snapshot.serverTeam,
                 serveRight: snapshot.courtSide.isRight
             )
-            .frame(width: compact ? 36 : 44, height: compact ? 52 : 64)
+            .frame(width: compact ? 44 : 52, height: compact ? 58 : 68)
         case .pickleball:
             PickleballCourtStrip(
                 serverTeam: endsSetup ? nil : snapshot.serverTeam,
                 serveRight: snapshot.courtSide.isRight
             )
-            .frame(width: compact ? 36 : 44, height: compact ? 52 : 64)
+            .frame(width: compact ? 44 : 52, height: compact ? 58 : 68)
         case .squash:
             SquashCourtStrip(
-                serverTeam: endsSetup ? nil : snapshot.serverTeam,
-                serverOnRightHalf: snapshot.courtSide.isRight
+                serverTeam: snapshot.serverTeam,
+                serveRight: snapshot.courtSide.isRight,
+                courtEndsSwapped: snapshot.courtEndsSwapped
             )
-            .frame(width: compact ? 36 : 44, height: compact ? 22 : 28)
+            .frame(width: compact ? 50 : 58, height: compact ? 26 : 30)
         default:
             WatchServeCourtSchema(
                 snapshot: snapshot,

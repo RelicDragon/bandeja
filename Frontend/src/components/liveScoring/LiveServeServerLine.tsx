@@ -1,13 +1,15 @@
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { PlayerAvatar } from '@/components';
 import type { BasicUser } from '@/types';
 import type { ServeGuideSnapshot } from '@/utils/liveScoring';
-import { LiveServeBallIndicator } from './LiveServeBallIndicator';
+import { LiveServeSideArrow } from './LiveServeSideArrow';
 
 type LiveServeServerLineProps = {
   snapshot: ServeGuideSnapshot;
   teamAPlayers: BasicUser[];
   teamBPlayers: BasicUser[];
+  /** Flush footer on the score panel above. */
+  attached?: boolean;
 };
 
 function serverPlayer(
@@ -22,13 +24,16 @@ function serverPlayer(
   return players[idx] ?? players[0] ?? null;
 }
 
-export function LiveServeServerLine({ snapshot, teamAPlayers, teamBPlayers }: LiveServeServerLineProps) {
+export function LiveServeServerLine({ snapshot, teamAPlayers, teamBPlayers, attached }: LiveServeServerLineProps) {
   const { t } = useTranslation();
   const player = serverPlayer(snapshot, teamAPlayers, teamBPlayers);
-  const sideLabel =
-    snapshot.courtSide === 'rightDeuce'
-      ? t('gameDetails.liveScoring.serveFromRight')
-      : t('gameDetails.liveScoring.serveFromLeft');
+  const fromRight = snapshot.courtSide === 'rightDeuce';
+  const lineKey = fromRight
+    ? 'gameDetails.liveScoring.serverServesFromRightLine'
+    : 'gameDetails.liveScoring.serverServesFromLeftLine';
+  const a11yKey = fromRight
+    ? 'gameDetails.liveScoring.serverServesFromRightA11y'
+    : 'gameDetails.liveScoring.serverServesFromLeftA11y';
   const slot =
     snapshot.tieBreakServeSlot === 'serveOne'
       ? t('gameDetails.liveScoring.serveSlotOne')
@@ -36,10 +41,7 @@ export function LiveServeServerLine({ snapshot, teamAPlayers, teamBPlayers }: Li
         ? t('gameDetails.liveScoring.serveSlotTwo')
         : null;
 
-  const a11y = t('gameDetails.liveScoring.serverServesFromA11y', {
-    name: snapshot.serverDisplayName,
-    side: sideLabel,
-  });
+  const a11y = t(a11yKey, { name: snapshot.serverDisplayName });
 
   return (
     <div
@@ -47,30 +49,43 @@ export function LiveServeServerLine({ snapshot, teamAPlayers, teamBPlayers }: Li
       aria-live="polite"
       aria-atomic="true"
       aria-label={a11y}
-      className="mx-auto flex w-full max-w-md items-center gap-3 rounded-2xl border border-zinc-200/90 bg-gradient-to-br from-zinc-50 to-white px-4 py-3 shadow-sm ring-1 ring-black/[0.03] dark:border-zinc-700/90 dark:from-zinc-900/80 dark:to-zinc-900/40 dark:ring-white/[0.04]"
+      className={
+        attached
+          ? 'flex w-full justify-center border-t border-zinc-200/80 bg-zinc-50 px-2 py-1 dark:border-zinc-700/80 dark:bg-zinc-900 sm:px-3'
+          : 'mx-auto flex w-fit max-w-full justify-center'
+      }
     >
-      <PlayerAvatar
-        player={player}
-        showName={false}
-        inlineFace
-        inlineFacePlain
-        inlineFaceSize="sm"
-        asDiv
-        subscribePresence={false}
-      />
-      <p className="min-w-0 flex-1 text-sm leading-snug sm:text-[0.9375rem]">
-        <span className="font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          {snapshot.serverDisplayName}
-        </span>
-        <span className="font-normal text-zinc-500 dark:text-zinc-400"> {t('gameDetails.liveScoring.servesFrom')} </span>
-        <span className="font-semibold text-primary-700 dark:text-primary-300">{sideLabel}</span>
-        {slot ? (
-          <span className="ml-2 inline-flex align-middle rounded-md bg-zinc-200/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
-            {slot}
-          </span>
-        ) : null}
-      </p>
-      <LiveServeBallIndicator inline />
+      <div
+        className={
+          attached
+            ? 'flex max-w-full items-center gap-1.5'
+            : 'flex max-w-full items-center gap-1.5 rounded-lg border border-zinc-200/70 bg-zinc-50/90 px-2 py-1 dark:border-zinc-700/70 dark:bg-zinc-900/50'
+        }
+      >
+        <PlayerAvatar
+          player={player}
+          showName={false}
+          superTiny
+          asDiv
+          subscribePresence={false}
+        />
+        <p className="min-w-0 text-center text-[11px] leading-tight sm:text-xs">
+          <Trans
+            i18nKey={lineKey}
+            values={{ name: snapshot.serverDisplayName }}
+            components={{
+              name: <span key="name" className="font-semibold text-zinc-900 dark:text-zinc-50" />,
+              side: <span key="side" className="font-semibold text-primary-700 dark:text-primary-300" />,
+            }}
+          />
+          {slot ? (
+            <span className="ml-1 inline-flex align-middle rounded bg-zinc-200/90 px-1 py-px text-[9px] font-bold uppercase tracking-wide text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+              {slot}
+            </span>
+          ) : null}
+        </p>
+        <LiveServeSideArrow courtSide={snapshot.courtSide} />
+      </div>
     </div>
   );
 }

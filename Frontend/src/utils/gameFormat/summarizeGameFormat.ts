@@ -34,7 +34,7 @@ export function matchFormatSummaryPart(
   if (sport != null && playersPerMatch === getSportConfig(sport).defaultPlayersPerMatch) {
     return null;
   }
-  return playersPerMatch === 2 ? t('sport.match1v1') : t('sport.match2v2');
+  return playersPerMatch === 2 ? t('sport.matchSingles') : t('sport.matchDoubles');
 }
 
 export const summarizeGameFormat = (

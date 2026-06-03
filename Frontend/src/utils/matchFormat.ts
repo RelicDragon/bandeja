@@ -1,21 +1,6 @@
-import { getSportConfig } from '@/sport/sportRegistry';
-import type { Sport } from '@/types';
+import type { Match } from '@/types/gameResults';
 
-export type PlayersPerMatch = 2 | 4;
-
-export function isDoublesMatch(playersPerMatch: number): boolean {
-  return playersPerMatch === 4;
-}
-
-export function resolvePlayersPerMatchForGame(game: {
-  playersPerMatch?: number | null;
-  sport?: Sport | string | null;
-}): PlayersPerMatch {
-  if (game.playersPerMatch === 2 || game.playersPerMatch === 4) {
-    return game.playersPerMatch;
-  }
-  return getSportConfig(game.sport).defaultPlayersPerMatch;
-}
+export * from '@shared/matchFormat';
 
 export type RosterMatchFormatSync = {
   playersPerMatch: number;
@@ -39,4 +24,21 @@ export function syncPlayersPerMatchOnRosterChange(
     return { playersPerMatch, resetFixedTeams: false };
   }
   return null;
+}
+
+export function teamSideSlotsFull(
+  match: Pick<Match, 'teamA' | 'teamB'>,
+  team: 'teamA' | 'teamB',
+  maxPerTeam: number,
+): boolean {
+  const side = match[team];
+  for (let i = 0; i < maxPerTeam; i++) {
+    const id = side[i];
+    if (typeof id !== 'string' || !id.trim()) return false;
+  }
+  return true;
+}
+
+export function capPlayerIds(ids: string[], maxPerTeam: number): string[] {
+  return ids.slice(0, maxPerTeam);
 }

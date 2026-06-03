@@ -2,7 +2,7 @@ import prisma from '../../config/database';
 import { GameResultsArtifactStepStatus } from '@prisma/client';
 import { config } from '../../config/env';
 import { GamePhotoCreateService } from '../gamePhoto/gamePhoto.create.service';
-import { emitGamePhotoAdded } from '../gamePhoto/gamePhoto.events';
+import { emitGamePhotoAdded, emitGamePhotoMainChanged } from '../gamePhoto/gamePhoto.events';
 import {
   ReplicateImageService,
   type ReplicatePredictionRecord,
@@ -305,11 +305,7 @@ export class GameResultsArtifactService {
     const dto = await GamePhotoCreateService.createFromGeneratedBuffer(
       gameId,
       buffer,
-      'ai-results.webp',
-      {
-        userPhotoCountAtEnqueue: job.userPhotoCountAtEnqueue,
-        mainPhotoIdAtEnqueue: job.mainPhotoIdAtEnqueue,
-      }
+      'ai-results.webp'
     );
 
     await prisma.gameResultsArtifactJob.update({
@@ -323,6 +319,7 @@ export class GameResultsArtifactService {
 
     const actorUserId = await this.resolvePhotoActorUserId(gameId);
     await emitGamePhotoAdded(gameId, dto, actorUserId);
+    await emitGamePhotoMainChanged(gameId, dto.id, actorUserId);
     void emitGameUpdateAfterArtifactsChange(gameId);
   }
 

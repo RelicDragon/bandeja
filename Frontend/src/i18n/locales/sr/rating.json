@@ -1,12 +1,12 @@
 {
   "rating": {
-    "title": "Мој рејтинг",
-    "level": "Ниво",
-    "socialLevel": "Социјални",
-    "points": "Укупно поена",
-    "gamesPlayed": "Одиграних игара",
-    "gamesWon": "Побеђених игара",
-    "winRate": "Проценат победа",
-    "reliability": "Поузданост"
+    "title": "Moj rejting",
+    "level": "Nivo",
+    "socialLevel": "Socijalni",
+    "points": "Ukupno poena",
+    "gamesPlayed": "Odigranih igara",
+    "gamesWon": "Pobeđenih igara",
+    "winRate": "Procenat pobeda",
+    "reliability": "Pouzdanost"
   }
 }

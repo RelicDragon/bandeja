@@ -7,6 +7,11 @@ import {
   isRallyPointsRules,
   isTimedRules,
 } from './rulebook';
+import {
+  isBwfStrictValidation,
+  validateBwfRallyGameScore,
+  validatePickleballRally11Score,
+} from '../../../shared/strictValidation';
 import type { SetResult } from './types';
 
 export type MatchWinnerSide = 'A' | 'B' | null;
@@ -45,7 +50,7 @@ const getSetKind = (
 ): SetKind => {
   const row = sets[setIndex];
   if (row && isSupplementalLiveSet(row)) return 'CUSTOM';
-  if (isPointsRules(rules)) return 'POINTS';
+  if (isPointsRules(rules) || isRallyGameRules(rules) || isRallyPointsRules(rules)) return 'POINTS';
   if (isTimedRules(rules)) return 'TIMED';
   if (!isClassicRules(rules)) return 'CUSTOM';
 
@@ -130,7 +135,17 @@ const validateRallyPointGame = (a: number, b: number, rules: ScoringRules): Vali
   return ok('POINTS');
 };
 
+const strictRallyFail = (_outcome: { ok: false }): ValidationResult => ({ ok: false });
+
 const validatePointsSet = (a: number, b: number, rules: ScoringRules): ValidationResult => {
+  if (isBwfStrictValidation(rules.strictValidation)) {
+    const outcome = validateBwfRallyGameScore(a, b, rules.totalPointsPerSet, rules.winBy);
+    return outcome.ok ? ok('POINTS') : strictRallyFail(outcome);
+  }
+  if (rules.strictValidation === 'PICKLEBALL_RALLY_11') {
+    const outcome = validatePickleballRally11Score(a, b);
+    return outcome.ok ? ok('POINTS') : strictRallyFail(outcome);
+  }
   if (isRallyGameRules(rules) || isRallyPointsRules(rules)) {
     return validateRallyPointGame(a, b, rules);
   }
@@ -176,7 +191,12 @@ const isLegalSetScore = (
   if (kind === 'TIEBREAK_GAME') return validateClassicTiebreakGame(a, b, rules);
 
   if (isClassicRules(rules)) {
-    if (isClassicTimedRelaxedGameScores(rules) && kind === 'REGULAR') return validateTimedSet();
+    if (
+      (rules.strictValidation === 'CLASSIC_TIMED_RELAXED' || isClassicTimedRelaxedGameScores(rules)) &&
+      kind === 'REGULAR'
+    ) {
+      return validateTimedSet();
+    }
     return validateClassicRegularSet(a, b, rules);
   }
   return ok(kind);

@@ -31,6 +31,7 @@ function runSuite(label: string, scriptName: string, dotenv = false): void {
 }
 
 function main(): void {
+  runSuite('deferred officiating', 'multisport-deferred-officiating.ts');
   runSuite('deferred registry', 'multisport-deferred-registry.ts');
   runSuite('deferred watch', 'multisport-deferred-watch.ts');
   runSuite('deferred pickleball', 'multisport-deferred-pickleball.ts');

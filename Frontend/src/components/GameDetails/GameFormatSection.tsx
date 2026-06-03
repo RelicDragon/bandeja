@@ -12,7 +12,7 @@ import { useGameFormat } from '@/hooks/useGameFormat';
 import { gamesApi } from '@/api';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
 import { useClampGameFormatToSport } from '@/hooks/useSportGameFormatLimits';
-import { resolvePlayersPerMatchForGame } from '@/utils/matchFormat';
+import { playersPerMatchOf } from '@/utils/matchFormat';
 import { Game, GenderTeam } from '@/types';
 import type { GameFormatWizardMatchFormat } from '@/components/gameFormat/GameFormatWizard';
 
@@ -34,7 +34,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const sportFormatLimits = useClampGameFormatToSport(game.sport, gameFormat, canEdit);
   const [wizardPlayersPerMatch, setWizardPlayersPerMatch] = useState<number>(() =>
-    resolvePlayersPerMatchForGame(game),
+    playersPerMatchOf(game),
   );
 
   const maxParticipants = formatMaxParticipants ?? 0;
@@ -153,7 +153,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
 
   const handleOpenWizard = () => {
     if (!canEdit) return;
-    setWizardPlayersPerMatch(resolvePlayersPerMatchForGame(game));
+    setWizardPlayersPerMatch(playersPerMatchOf(game));
     setIsWizardOpen(true);
   };
 
@@ -181,7 +181,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
 
   const summaryPlayersPerMatch =
     game.entityType === 'GAME' || game.entityType === 'LEAGUE'
-      ? resolvePlayersPerMatchForGame(game)
+      ? playersPerMatchOf(game)
       : undefined;
 
   return (

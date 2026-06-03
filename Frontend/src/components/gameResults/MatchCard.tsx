@@ -17,6 +17,7 @@ import {
   matchSetsHaveAnyNonZeroScore,
 } from '@/utils/scoring';
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
+import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { MatchHeaderEditToggleButton } from '@/components/gameResults/MatchHeaderEditToggleButton';
 import { MatchResultsHeaderBadges } from '@/components/gameResults/MatchResultsHeaderBadges';
 import { MatchTimerPanel } from '@/components/gameResults/matchTimer/MatchTimerPanel';
@@ -46,7 +47,7 @@ interface MatchCardProps {
   courts?: Court[];
   onCourtClick?: () => void;
   fixedNumberOfSets?: number;
-  game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie' | 'resultsStatus'> | null;
+  game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'matchTimerEnabled' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie' | 'resultsStatus' | 'playersPerMatch' | 'sport'> | null;
   roundId?: string;
   gameId?: string;
   onMatchTimerTransition?: (roundId: string, matchId: string, action: MatchTimerAction) => void | Promise<void>;
@@ -98,7 +99,7 @@ export const MatchCard = ({
     return null;
   }
 
-  const maxPlayersPerTeam = players.length === 2 ? 1 : 2;
+  const maxPlayersPerTeam = maxPlayersPerTeamForGame(game, players.length);
   const teamSlotsFull = (team: 'teamA' | 'teamB') =>
     Array.from({ length: maxPlayersPerTeam }, (_, i) => Boolean(match[team][i])).every(Boolean);
   const teamsFull = teamSlotsFull('teamA') && teamSlotsFull('teamB');

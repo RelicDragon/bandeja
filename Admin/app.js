@@ -384,7 +384,7 @@ async function loadOnlineUsers() {
                 <td>${escapeHtmlAttr(getUserName(u))}</td>
                 <td>${escapeHtmlAttr(u.phone || '-')}</td>
                 <td>${escapeHtmlAttr(u.currentCity?.name || '-')}</td>
-                <td>${u.level ?? '-'}</td>
+                <td>${escapeHtml(formatOnlineUserLevel(u))}</td>
                 <td>${escapeHtmlAttr(getAuthMethodBadges(u))}</td>
             </tr>
         `).join('');
@@ -458,6 +458,9 @@ function escapeHtmlAttr(s) {
 const getUserName = (u) => ((u.firstName || '') + ' ' + (u.lastName || '')).trim() || u.phone || '-';
 
 function formatUserSportProfilesSummary(user) {
+    if (typeof formatUserSportLevelsSummary === 'function') {
+        return formatUserSportLevelsSummary(user);
+    }
     const profiles = user?.sportProfiles;
     if (profiles?.length) {
         return profiles.map((p) => `${p.sport}: ${(p.level ?? 0).toFixed(1)}`).join(', ');
@@ -482,7 +485,9 @@ function initUsersDataTable() {
             { key: 'phone', label: 'Phone' },
             { key: 'auth', label: 'Auth', accessor: (u) => getAuthMethodBadges(u) },
             { key: 'city', label: 'City', accessor: (u) => u.currentCity?.name },
-            { key: 'level', label: 'Levels', accessor: (u) => formatUserSportProfilesSummary(u) },
+            { key: 'primarySport', label: 'Primary', accessor: (u) => u.primarySport || 'PADEL' },
+            { key: 'level', label: 'Sport levels', accessor: (u) => formatUserSportProfilesSummary(u) },
+            { key: 'questionnaire', label: 'Questionnaire', accessor: (u) => formatQuestionnaireSummary(u) },
             { key: 'games', label: 'Games', accessor: (u) => formatUserGamesSummary(u) },
             { key: 'wallet', label: 'Wallet', accessor: (u) => u.wallet ?? 0 },
             { key: 'status', label: 'Status', accessor: (u) => u.isActive ? 'Active' : 'Inactive' },
@@ -491,6 +496,10 @@ function initUsersDataTable() {
         ],
         filters: [
             { id: 'usersSearch', type: 'search', param: 'search', placeholder: 'Search name, phone, email...' },
+            { id: 'usersPrimarySportFilter', type: 'select', param: 'primarySport', placeholder: 'Primary sport', options:
+                ALL_SPORTS.map((s) => ({ value: s, label: sportLabel(s) })) },
+            { id: 'usersHasSportFilter', type: 'select', param: 'hasSport', placeholder: 'Has sport enabled', options:
+                ALL_SPORTS.map((s) => ({ value: s, label: sportLabel(s) })) },
         ],
         getExtraParams: () => (selectedCityId ? { cityId: selectedCityId } : {}),
         extraButtons: [
@@ -525,7 +534,9 @@ function initUsersDataTable() {
                 <td>${escapeHtml(user.phone || '-')}</td>
                 <td><span class="badge badge-secondary">${escapeHtml(authBadge)}</span></td>
                 <td>${escapeHtml(cityName)}</td>
+                <td>${escapeHtml(sportLabel(user.primarySport || 'PADEL'))}</td>
                 <td>${escapeHtml(formatUserSportProfilesSummary(user))}</td>
+                <td>${escapeHtml(formatQuestionnaireSummary(user))}</td>
                 <td>${escapeHtml(formatUserGamesSummary(user))}</td>
                 <td>${user.wallet ?? 0}</td>
                 <td><span class="badge ${user.isActive ? 'badge-success' : 'badge-danger'}">${user.isActive ? 'Active' : 'Inactive'}</span></td>
@@ -562,19 +573,69 @@ function viewUserDetail(userId) {
     const user = window.__pageUsers?.find(u => u.id === userId);
     if (!user) return;
     document.getElementById('userDetailModalTitle').textContent = `User: ${(user.firstName || '') + ' ' + (user.lastName || '')}`.trim() || user.phone;
-    document.getElementById('userDetailContent').innerHTML = `
+    document.getElementById('userDetailContent').innerHTML = renderUserDetailHtml(user);
+    openModal('userDetailModal');
+}
+
+function renderUserDetailHtml(user) {
+    const profiles = user.sportProfiles?.length
+        ? user.sportProfiles
+        : [{ sport: 'PADEL', level: user.level ?? 3.5, gamesPlayed: user.gamesPlayed ?? 0 }];
+    const profileRows = profiles.map((p) => {
+        const resetBtn = p.gamesPlayed > 0
+            ? '<span class="text-muted">Reset blocked (rated games)</span>'
+            : `<button type="button" class="btn-small btn-warning" onclick="adminResetQuestionnaire('${user.id}', '${p.sport}')">Reset questionnaire</button>`;
+        return `<tr>
+            <td>${escapeHtml(sportLabel(p.sport))}</td>
+            <td>${(p.level ?? 0).toFixed(1)}</td>
+            <td>${p.gamesPlayed ?? 0} / ${p.gamesWon ?? 0}</td>
+            <td>${escapeHtml(p.levelSource || '—')}</td>
+            <td>${escapeHtml(questionnaireStatusLabel(p))}${p.questionnaireCompletedAt ? `<div class="text-muted" style="font-size:0.75rem">${formatDate(p.questionnaireCompletedAt)}</div>` : ''}${p.questionnaireSkippedAt && !p.questionnaireCompletedAt ? `<div class="text-muted" style="font-size:0.75rem">Skipped ${formatDate(p.questionnaireSkippedAt)}</div>` : ''}</td>
+            <td>${escapeHtml(p.questionnaireVersion || '—')}</td>
+            <td>${resetBtn}</td>
+        </tr>`;
+    }).join('');
+    const legacyPadel = user.level != null
+        ? `<p class="text-muted" style="font-size:0.85rem;margin-top:0.5rem">Legacy User.level (padel mirror): ${user.level.toFixed(1)}</p>`
+        : '';
+    return `
         <div class="user-detail-grid">
             <div class="form-group"><label>Auth</label><div class="form-readonly">${escapeHtml(getAuthMethodBadges(user, false))}</div></div>
             <div class="form-group"><label>Phone</label><div class="form-readonly">${user.phone || '-'}</div></div>
             <div class="form-group"><label>Email</label><div class="form-readonly">${user.email || '-'}</div></div>
             <div class="form-group"><label>City</label><div class="form-readonly">${user.currentCity?.name || '-'}</div></div>
-            <div class="form-group"><label>Levels</label><div class="form-readonly">${escapeHtml(formatUserSportProfilesSummary(user))}</div></div>
-            <div class="form-group"><label>Games</label><div class="form-readonly">${escapeHtml(formatUserGamesSummary(user))}</div></div>
+            <div class="form-group"><label>Primary sport</label><div class="form-readonly">${sportLabel(user.primarySport || 'PADEL')}</div></div>
+            <div class="form-group"><label>Sports enabled</label><div class="form-readonly">${(user.sportsEnabled || ['PADEL']).map(sportLabel).join(', ')}</div></div>
+            ${user.lastCreatedSport ? `<div class="form-group"><label>Last created sport</label><div class="form-readonly">${sportLabel(user.lastCreatedSport)}</div></div>` : ''}
             <div class="form-group"><label>Wallet</label><div class="form-readonly">${user.wallet ?? 0}</div></div>
             <div class="form-group"><label>Created</label><div class="form-readonly">${formatDate(user.createdAt)}</div></div>
         </div>
+        <h3 style="margin-top:1rem">Sport profiles</h3>
+        <div class="table-container">
+            <table class="admin-sport-profiles-table">
+                <thead><tr>
+                    <th>Sport</th><th>Level</th><th>Games (W)</th><th>Source</th><th>Questionnaire</th><th>Version</th><th></th>
+                </tr></thead>
+                <tbody>${profileRows}</tbody>
+            </table>
+        </div>
+        ${legacyPadel}
+        <div class="modal-actions" style="margin-top:1rem;padding:0">
+            <button type="button" class="btn-small btn-edit" onclick="closeModal('userDetailModal');editUserById('${user.id}')">Edit sport settings</button>
+        </div>
     `;
-    openModal('userDetailModal');
+}
+
+async function adminResetQuestionnaire(userId, sport) {
+    if (!confirm(`Reset ${sportLabel(sport)} questionnaire for this user? Level resets to 1.0 only if they have no rated games in that sport.`)) return;
+    try {
+        await apiRequest(`/admin/users/${userId}/sports/${sport}/questionnaire/reset`, { method: 'POST', body: '{}' });
+        toast('Questionnaire reset', 'success');
+        loadUsers(usersDataTable?.currentPage ?? 1);
+        closeModal('userDetailModal');
+    } catch (error) {
+        toast('Reset failed: ' + (error.message || 'Unknown'), 'error');
+    }
 }
 
 async function deleteUser(userId, userName) {
@@ -612,7 +673,10 @@ function initGamesDataTable() {
         columns: [
             { key: 'name', label: 'Name' },
             { key: 'organizer', label: 'Organizer' },
+            { key: 'sport', label: 'Sport', accessor: (g) => g.sport || '' },
+            { key: 'format', label: 'Format', accessor: (g) => formatGameSummary(g) },
             { key: 'type', label: 'Type' },
+            { key: 'rated', label: 'Rated', accessor: (g) => (g.affectsRating ? 1 : 0) },
             { key: 'location', label: 'Location' },
             { key: 'startTime', label: 'Start Time', accessor: (g) => new Date(g.startTime).getTime() },
             { key: 'participants', label: 'Participants' },
@@ -622,6 +686,12 @@ function initGamesDataTable() {
         ],
         filters: [
             { id: 'gamesSearch', type: 'search', param: 'search', placeholder: 'Search name, club, organizer...' },
+            { id: 'gamesSportFilter', type: 'select', param: 'sport', placeholder: 'All sports', options:
+                ALL_SPORTS.map((s) => ({ value: s, label: sportLabel(s) })) },
+            { id: 'gamesRatedFilter', type: 'select', param: 'affectsRating', placeholder: 'Rated', options: [
+                { value: 'true', label: 'Rated yes' },
+                { value: 'false', label: 'Rated no' },
+            ]},
             { id: 'gamesStatusFilter', type: 'select', param: 'status', placeholder: 'All Status', options: [
                 { value: 'ANNOUNCED', label: 'Announced' },
                 { value: 'STARTED', label: 'Started' },
@@ -659,11 +729,17 @@ function initGamesDataTable() {
             const partsStr = invited || inQueue ? `${playing}/${invited}/${inQueue}` : parts.length;
             const name = game.name || `Game ${game.gameType}`;
             const organizer = getGameOrganizer(game);
+            const typeLabel = game.entityType === 'GAME'
+                ? (game.gameType || 'GAME')
+                : getEntityLabel(game.entityType, game.gameType);
             const getStatusBadgeClass = (s) => ({ ANNOUNCED: 'badge-announced', READY: 'badge-ready', STARTED: 'badge-started', FINISHED: 'badge-finished', ARCHIVED: 'badge-archived' }[s] || 'badge-info');
             return `<tr>
                 <td title="${escapeHtmlAttr(game.description || '')}">${escapeHtml(name)}</td>
                 <td>${escapeHtml(organizer)}</td>
-                <td><span class="badge ${game.entityType === 'BAR' ? 'badge-warning' : 'badge-info'}">${escapeHtml(getEntityLabel(game.entityType, game.gameType))}</span></td>
+                <td>${escapeHtml(sportLabel(game.sport))}</td>
+                <td title="${escapeHtmlAttr(formatGameSummary(game))}">${presetTierBadgeHtml(gamePresetTier(game))} ${escapeHtml(formatGameFormatDisplay(game))}</td>
+                <td><span class="badge ${game.entityType === 'BAR' ? 'badge-warning' : 'badge-info'}">${escapeHtml(typeLabel)}</span></td>
+                <td><span class="badge ${game.affectsRating ? 'badge-success' : 'badge-secondary'}">${game.affectsRating ? 'Yes' : 'No'}</span></td>
                 <td>${escapeHtml(location)}</td>
                 <td>${formatDate(game.startTime)}</td>
                 <td title="${invited || inQueue ? 'playing/invited/queue' : 'participants'}">${partsStr}</td>
@@ -1144,6 +1220,23 @@ function populateGameModal(game) {
     document.getElementById('gameStatus').textContent = game.status || '-';
     document.getElementById('gameHasResults').textContent = game.resultsStatus !== 'NONE' ? 'Yes' : 'No';
     document.getElementById('gameIsPublic').textContent = game.isPublic ? 'Yes' : 'No';
+    const sportEl = document.getElementById('gameSport');
+    if (sportEl) sportEl.textContent = sportLabel(game.sport);
+    const tierEl = document.getElementById('gamePresetTier');
+    if (tierEl) {
+        const tier = gamePresetTier(game);
+        tierEl.innerHTML = tier ? presetTierBadgeHtml(tier) : '—';
+    }
+    const presetEl = document.getElementById('gameScoringPreset');
+    if (presetEl) presetEl.textContent = game.scoringPreset || '—';
+    const modeEl = document.getElementById('gameScoringMode');
+    if (modeEl) modeEl.textContent = game.scoringMode || '—';
+    const ppmEl = document.getElementById('gamePlayersPerMatch');
+    if (ppmEl) ppmEl.textContent = game.playersPerMatch != null ? String(game.playersPerMatch) : '—';
+    const genEl = document.getElementById('gameMatchGenerationType');
+    if (genEl) genEl.textContent = game.matchGenerationType || '—';
+    const summaryEl = document.getElementById('gameFormatSummary');
+    if (summaryEl) summaryEl.textContent = formatGameSummary(game);
     document.getElementById('gameAffectsRating').textContent = game.affectsRating ? 'Yes' : 'No';
     document.getElementById('gameAnyoneCanInvite').textContent = game.anyoneCanInvite ? 'Yes' : 'No';
     document.getElementById('gameResultsByAnyone').textContent = game.resultsByAnyone ? 'Yes' : 'No';
@@ -1164,8 +1257,11 @@ function populateGameModal(game) {
             const c = { PLAYING: 'badge-success', INVITED: 'badge-warning', IN_QUEUE: 'badge-info', GUEST: 'badge-secondary' }[s] || 'badge-secondary';
             return `<span class="badge ${c}">${(s || '-').replace('_', ' ')}</span>`;
         };
+        const gameSport = game.sport || 'PADEL';
         participantsList.innerHTML = game.participants.map(p => {
             const name = `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || p.user.phone || '-';
+            const sportLv = levelForSport(p.user, gameSport);
+            const levelStr = sportLv != null ? sportLv.toFixed(1) : '—';
             return `
             <div class="participant-item">
                 <div class="participant-info">
@@ -1174,7 +1270,7 @@ function populateGameModal(game) {
                     ${statusBadge(p.status)}
                 </div>
                 <div class="participant-details">
-                    <span class="participant-level">Level: ${(p.user.level ?? 0).toFixed(1)}</span>
+                    <span class="participant-level">${escapeHtml(sportLabel(gameSport))} level: ${levelStr}</span>
                     <span class="participant-joined">Joined: ${formatDate(p.joinedAt)}</span>
                 </div>
             </div>
@@ -1203,13 +1299,15 @@ async function loadInvites() {
 function renderInvitesTable(invites) {
     const tbody = document.getElementById('invitesTableBody');
     if (invites.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No pending invites found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem;">No pending invites found.</td></tr>';
         return;
     }
     
     tbody.innerHTML = invites.map(invite => {
         const gameName = invite.game?.name || 'Unknown Game';
         const gameType = invite.game?.gameType || '-';
+        const gameSport = invite.game?.sport ? sportLabel(invite.game.sport) : '—';
+        const gameFormat = invite.game ? formatGameSummary(invite.game) : '—';
         const senderName = invite.sender
             ? `${invite.sender.firstName || ''} ${invite.sender.lastName || ''}`.trim() || invite.sender.phone || 'Unknown'
             : '-';
@@ -1228,7 +1326,9 @@ function renderInvitesTable(invites) {
                 <td>
                     <div class="game-info">
                         <strong>${gameName}</strong>
-                        <span class="badge badge-info">${gameType}</span>
+                        <span class="badge badge-info">${escapeHtml(gameSport)}</span>
+                        <span class="badge badge-secondary">${escapeHtml(gameType)}</span>
+                        <div class="text-muted" style="font-size:0.8rem">${escapeHtml(gameFormat)}</div>
                     </div>
                 </td>
                 <td>
@@ -1345,6 +1445,8 @@ async function acceptAllInvites() {
 window.toggleUserStatus = toggleUserStatus;
 window.editUserById = editUserById;
 window.viewUserDetail = viewUserDetail;
+window.adminResetQuestionnaire = adminResetQuestionnaire;
+window.renderUserDetailHtml = renderUserDetailHtml;
 window.deleteUser = deleteUser;
 window.loadCities = loadCities;
 window.openEditCityModal = openEditCityModal;

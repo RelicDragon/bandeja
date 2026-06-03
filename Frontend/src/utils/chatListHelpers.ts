@@ -158,23 +158,72 @@ export const calculateLastMessageDate = (
 
 export const gamesToChatItems = (
   games: Game[],
-  gameUnreads: Record<string, number>
+  gameUnreads: Record<string, number>,
+  allDrafts: ChatDraft[] = []
 ): ChatItem[] => {
   const items: ChatItem[] = games
     .filter((game) => game.status !== 'ARCHIVED')
     .map((game) => {
-    const lastMessageDate = game.lastMessage
-      ? calculateLastMessageDate(game.lastMessage, null, game.updatedAt)
-      : new Date(game.updatedAt);
+    const draft = matchDraftToChat(allDrafts, 'GAME', game.id);
+    const lastMessageDate =
+      game.lastMessage || draft
+        ? calculateLastMessageDate(game.lastMessage, draft, game.updatedAt)
+        : new Date(game.updatedAt);
     return {
       type: 'game' as const,
       data: game,
       lastMessageDate,
       unreadCount: gameUnreads[game.id] || 0,
+      draft: draft || null,
     };
   });
   return items;
 };
+
+function chatItemWithDraft(
+  chat: ChatItem,
+  draft: ChatDraft | null,
+  updatedAt: string
+): ChatItem {
+  if (chat.type === 'contact') return chat;
+  const lastMessage =
+    chat.type === 'user' || chat.type === 'group' || chat.type === 'channel' || chat.type === 'game'
+      ? chat.data.lastMessage
+      : undefined;
+  const lastMessageDate =
+    lastMessage || draft ? calculateLastMessageDate(lastMessage, draft, updatedAt) : chat.lastMessageDate;
+  return { ...chat, draft, lastMessageDate };
+}
+
+/** Re-attach merged local/server drafts to list rows (cache/dexie paths omit these). */
+export function applyDraftsToChatItems(
+  chats: ChatItem[],
+  allDrafts: ChatDraft[],
+  listFilter: 'users' | 'bugs' | 'channels' | 'market',
+  userId?: string
+): ChatItem[] {
+  if (!allDrafts.length) return chats;
+  const updated = chats.map((chat) => {
+    if (chat.type === 'user') {
+      const draft = matchDraftToChat(allDrafts, 'USER', chat.data.id);
+      return chatItemWithDraft(chat, draft, chat.data.updatedAt);
+    }
+    if (chat.type === 'group' || chat.type === 'channel') {
+      const draft = matchDraftToChat(allDrafts, 'GROUP', chat.data.id);
+      return chatItemWithDraft(chat, draft, chat.data.updatedAt);
+    }
+    if (chat.type === 'game') {
+      const draft = matchDraftToChat(allDrafts, 'GAME', chat.data.id);
+      return chatItemWithDraft(chat, draft, chat.data.updatedAt);
+    }
+    return chat;
+  });
+  if (listFilter === 'users') return sortChatItems(updated, 'users', userId);
+  if (listFilter === 'bugs' || listFilter === 'channels' || listFilter === 'market') {
+    return sortChatItems(updated, listFilter);
+  }
+  return updated;
+}
 
 export const groupsToChatItems = (
   groups: GroupChannel[],

@@ -6,7 +6,8 @@
     "leagueSeasonScheduledGames": "Naplánované zápasy",
     "leagueSeasonUnscheduledGames": "Zatím bez termínu",
     "toggleLeagueGames": "Zobrazit nebo skrýt zápasy",
-    "leagueGameWithLabel": "S",
+    "leagueGameYouLabel": "Vy",
+    "leagueGameWithLabel": "s",
     "leagueGameBracketBadge": "Pavouk",
     "leagueGameSeasonPlayoffBadge": "Sezónní play-off",
     "leagueGameBracketPlayInUrgency": "Nejdřív naplánujte play-in",
@@ -44,6 +45,10 @@
     "questionnaireDismissLink": "Znovu nezobrazovat",
     "questionnaireDismissTitle": "Skrýt dotazník úrovně?",
     "questionnaireDismissMessage": "Vaše současná úroveň je {{level}}. Jen skryjeme připomínku — úroveň se nemění. Tento banner se už nezobrazí.",
-    "questionnaireDismissConfirm": "Ano, skrýt"
+    "questionnaireDismissConfirm": "Ano, skrýt",
+    "noNamePromptDismissLink": "Don't show again",
+    "noNamePromptDismissTitle": "Don't show this reminder?",
+    "noNamePromptDismissMessage": "You can still set your name later in Profile.",
+    "noNamePromptDismissConfirm": "Don't show again"
   }
 }

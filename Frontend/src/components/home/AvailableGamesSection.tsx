@@ -2,9 +2,9 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Card, GameCard, Button, CityModal } from '@/components';
+import { Card, GameCard, Button } from '@/components';
 import { Game } from '@/types';
-import { MapPin, Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy, Users, RotateCcw } from 'lucide-react';
+import { Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy, Users, RotateCcw, Grid3X3, Star } from 'lucide-react';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { format, parse, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
@@ -14,15 +14,22 @@ import { TrainersList } from './TrainersList';
 import { GenderPromptBanner } from './GenderPromptBanner';
 import { CityPromptBanner } from './CityPromptBanner';
 import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
-import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { FiltersPanel } from './FiltersPanel';
 import { passesAvailableGamePanelFilters } from '@/utils/availableGamePanelFilters';
 import { parseGameSport } from '@/utils/gameSport';
-import { getViewerPrimarySport, isFindSportFilterActive, resolveFindLevelFilterSport } from '@/utils/findSportFilter';
+import { getViewerPrimarySport, resolveFindLevelFilterSport } from '@/utils/findSportFilter';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { getDisplayLevelForSport, listEnabledSports } from '@/utils/profileSports';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
+import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
+import { getSportConfig } from '@/sport/sportRegistry';
+import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
+import {
+  isFindDiscoveryEnabled,
+  passesFindNoRatingFilter,
+  passesFindTierFilter,
+} from '@/utils/findDiscovery';
 
 interface AvailableGamesSectionProps {
   availableGames: Game[];
@@ -52,7 +59,6 @@ export const AvailableGamesSection = ({
   splitView = false,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
-  const { translateCity } = useTranslatedGeo();
   const navigate = useNavigate();
   const { setCurrentPage, setIsAnimating, findViewMode, setFindViewMode, requestFindGoToCurrent, setRequestFindGoToCurrent } = useNavigationStore();
   const findSelectedDay = useNavigationStore((s) => s.findSelectedDay);
@@ -80,7 +86,6 @@ export const AvailableGamesSection = ({
   const [tournamentFilter, setTournamentFilter] = useState(false);
   const [leaguesFilter, setLeaguesFilter] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [showCityModal, setShowCityModal] = useState(false);
   const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
   const [filterClubIds, setFilterClubIds] = useState<string[]>([]);
   const [filterTimeStart, setFilterTimeStart] = useState('00:00');
@@ -88,6 +93,8 @@ export const AvailableGamesSection = ({
   const [filterLevelMin, setFilterLevelMin] = useState(1.0);
   const [filterLevelMax, setFilterLevelMax] = useState(7.0);
   const [filterSport, setFilterSport] = useState<FindSportFilterValue>('primary');
+  const [filterTier, setFilterTier] = useState<'social' | 'match' | undefined>(undefined);
+  const [filterNoRating, setFilterNoRating] = useState(false);
   const [showPrivateGames, setShowPrivateGames] = useState(false);
 
   const userFilterVal = externalFilters?.userFilter ?? userFilter;
@@ -102,7 +109,10 @@ export const AvailableGamesSection = ({
   const filterLevelMinVal = externalFilters?.filterLevelMin ?? filterLevelMin;
   const filterLevelMaxVal = externalFilters?.filterLevelMax ?? filterLevelMax;
   const filterSportVal = externalFilters?.filterSport ?? filterSport;
+  const filterTierVal = externalFilters?.filterTier ?? filterTier;
+  const filterNoRatingVal = externalFilters?.filterNoRating ?? filterNoRating;
   const showPrivateGamesVal = externalFilters?.showPrivateGames ?? showPrivateGames;
+  const findDiscoveryEnabled = useMemo(() => isFindDiscoveryEnabled(user), [user]);
   const isAdmin = Boolean(user?.isAdmin);
   const viewerPrimarySport = useMemo(() => getViewerPrimarySport(user), [user]);
   const findLevelSport = useMemo(
@@ -112,11 +122,6 @@ export const AvailableGamesSection = ({
 
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
-  const sportFilterActive = useMemo(
-    () => isFindSportFilterActive(filterSportVal, viewerPrimarySport),
-    [filterSportVal, viewerPrimarySport],
-  );
-
   const panelCriteriaActive = useMemo(() => {
     return (
       filterClubIdsVal.length > 0 ||
@@ -124,7 +129,8 @@ export const AvailableGamesSection = ({
       filterTimeEndVal !== '24:00' ||
       filterLevelMinVal > 1.0 + 1e-6 ||
       filterLevelMaxVal < 7.0 - 1e-6 ||
-      sportFilterActive ||
+      (findDiscoveryEnabled && filterTierVal != null) ||
+      (findDiscoveryEnabled && filterNoRatingVal) ||
       (isAdmin && showPrivateGamesVal)
     );
   }, [
@@ -133,12 +139,13 @@ export const AvailableGamesSection = ({
     filterTimeEndVal,
     filterLevelMinVal,
     filterLevelMaxVal,
-    sportFilterActive,
+    findDiscoveryEnabled,
+    filterTierVal,
+    filterNoRatingVal,
     isAdmin,
     showPrivateGamesVal,
   ]);
 
-  const filtersControlActive = filtersPanelOpenVal || userFilterVal || panelCriteriaActive;
   const panelFiltersApplied = userFilterVal || panelCriteriaActive;
 
   const setUserFilterVal = (v: boolean) => (onFilterChange ? onFilterChange('userFilter', v) : setUserFilter(v));
@@ -154,7 +161,8 @@ export const AvailableGamesSection = ({
         filterTimeEnd: '24:00',
         filterLevelMin: 1.0,
         filterLevelMax: 7.0,
-        filterSport: 'primary',
+        filterTier: undefined,
+        filterNoRating: false,
         showPrivateGames: false,
       });
     } else {
@@ -164,7 +172,8 @@ export const AvailableGamesSection = ({
       setFilterTimeEnd('24:00');
       setFilterLevelMin(1.0);
       setFilterLevelMax(7.0);
-      setFilterSport('primary');
+      setFilterTier(undefined);
+      setFilterNoRating(false);
       setShowPrivateGames(false);
     }
     if (onFilterChange && !onFiltersChange) {
@@ -181,6 +190,8 @@ export const AvailableGamesSection = ({
       if (updates.filterLevelMin !== undefined) setFilterLevelMin(updates.filterLevelMin);
       if (updates.filterLevelMax !== undefined) setFilterLevelMax(updates.filterLevelMax);
       if (updates.filterSport !== undefined) setFilterSport(updates.filterSport);
+      if ('filterTier' in updates) setFilterTier(updates.filterTier);
+      if (updates.filterNoRating !== undefined) setFilterNoRating(updates.filterNoRating);
     }
   };
 
@@ -239,6 +250,8 @@ export const AvailableGamesSection = ({
         setFilterLevelMin(filters.filterLevelMin ?? 1.0);
         setFilterLevelMax(filters.filterLevelMax ?? 7.0);
         setFilterSport(filters.filterSport ?? 'primary');
+        setFilterTier(filters.filterTier);
+        setFilterNoRating(filters.filterNoRating ?? false);
         setShowPrivateGames(filters.showPrivateGames ?? false);
       }
       if (!hydratedViewPeriodFromStorageRef.current) {
@@ -286,6 +299,8 @@ export const AvailableGamesSection = ({
         filterLevelMin: filterLevelMinVal,
         filterLevelMax: filterLevelMaxVal,
         filterSport: filterSportVal,
+        filterTier: filterTierVal,
+        filterNoRating: filterNoRatingVal,
         showPrivateGames: showPrivateGamesVal,
       });
     };
@@ -308,12 +323,10 @@ export const AvailableGamesSection = ({
     filterLevelMinVal,
     filterLevelMaxVal,
     filterSportVal,
+    filterTierVal,
+    filterNoRatingVal,
     showPrivateGamesVal,
   ]);
-
-  const handleCityClick = () => {
-    setShowCityModal(true);
-  };
 
   useEffect(() => {
     if (findViewMode === 'calendar') {
@@ -397,6 +410,15 @@ export const AvailableGamesSection = ({
 
     if (!passesAvailableGamePanelFilters(game, panelFilterState)) {
       return false;
+    }
+
+    if (findDiscoveryEnabled) {
+      if (!passesFindTierFilter(game, filterTierVal)) {
+        return false;
+      }
+      if (!passesFindNoRatingFilter(game, filterNoRatingVal)) {
+        return false;
+      }
     }
 
     const organizer = game.entityType === 'TRAINING'
@@ -509,6 +531,41 @@ export const AvailableGamesSection = ({
 
   const filteredGames = getFilteredGames();
   const findFilterSport = filterSportVal;
+  const showDiscoveryFormatBadge = findDiscoveryEnabled;
+  const findSportTabs = useMemo<SegmentedSwitchTab[]>(() => {
+    const enabledSports = listEnabledSports(user);
+    if (enabledSports.length <= 1) return [];
+    const sortedSports = [...enabledSports].sort((a, b) => {
+      if (a === viewerPrimarySport) return -1;
+      if (b === viewerPrimarySport) return 1;
+      return 0;
+    });
+    const tabs: SegmentedSwitchTab[] = sortedSports.map((sport) => {
+      const isPrimary = sport === viewerPrimarySport;
+      return {
+        id: isPrimary ? 'primary' : sport,
+        label: t(getSportConfig(sport).labelKey),
+        icon: () =>
+          isPrimary ? (
+            <span className="relative inline-flex h-5 w-5 shrink-0 items-center justify-center">
+              <SportPublicIcon sport={sport} className="h-5 w-5 object-contain" />
+              <Star
+                size={10}
+                className="absolute -left-1 -top-1 text-amber-500 fill-amber-500"
+              />
+            </span>
+          ) : (
+            <SportPublicIcon sport={sport} className="h-5 w-5 shrink-0 object-contain" />
+          ),
+      };
+    });
+    tabs.push({
+      id: 'all',
+      label: t('common.all', { defaultValue: 'All' }),
+      icon: Grid3X3,
+    });
+    return tabs;
+  }, [t, user, viewerPrimarySport]);
 
   const handleSubscriptionsClick = () => {
     setIsAnimating(true);
@@ -521,41 +578,18 @@ export const AvailableGamesSection = ({
     <div className="mb-4">
       <GenderPromptBanner />
       <CityPromptBanner />
-      <div className="flex items-center justify-between gap-2 mb-3 max-w-md mx-auto">
-        <button
-          onClick={handleCityClick}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0 min-w-0"
-        >
-          <MapPin size={16} className="text-primary-600 dark:text-primary-400 shrink-0" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-            {user?.currentCity ? translateCity(user.currentCity.id, user.currentCity.name, user.currentCity.country) : t('auth.selectCity')}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={toggleFiltersPanel}
-          className={`relative flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors shrink-0 ${
-            filtersControlActive
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          <span className="relative inline-flex">
-            <Filter
-              size={16}
-              className={filtersControlActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'}
-              fill={filtersControlActive ? 'currentColor' : 'none'}
-            />
-            {sportFilterActive && (
-              <span
-                className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-primary-500 ring-2 ring-white dark:ring-gray-900"
-                aria-hidden
-              />
-            )}
-          </span>
-          <span className="text-xs font-medium">{t('games.filters')}</span>
-        </button>
-      </div>
+      {findSportTabs.length > 0 && (
+        <div className="mb-3 flex justify-center">
+          <SegmentedSwitch
+            tabs={findSportTabs}
+            activeId={filterSportVal}
+            onChange={(id) => patchPanelFields({ filterSport: id as FindSportFilterValue })}
+            showOnlyActiveTabText={true}
+            layoutId="find-sport-selector"
+            ariaLabel={t('sport.sport', { defaultValue: 'Sport' })}
+          />
+        </div>
+      )}
       <AnimatePresence initial={false}>
         {!filtersPanelOpenVal && panelFiltersApplied && (
           <motion.div
@@ -624,10 +658,11 @@ export const AvailableGamesSection = ({
                 hour12={displaySettings.hour12}
                 onResetFilters={resetPanelFilters}
                 showResetFooter={panelFiltersApplied}
-                sportsEnabled={listEnabledSports(user)}
-                primarySport={viewerPrimarySport}
-                filterSport={filterSportVal}
-                onFilterSportChange={(value) => patchPanelFields({ filterSport: value })}
+                showDiscoveryFilters={findDiscoveryEnabled}
+                filterTier={filterTierVal}
+                onFilterTierChange={(value) => patchPanelFields({ filterTier: value })}
+                filterNoRating={filterNoRatingVal}
+                onFilterNoRatingChange={(v) => patchPanelFields({ filterNoRating: v })}
                 isAdmin={isAdmin}
                 showPrivateGames={showPrivateGamesVal}
                 onShowPrivateGamesChange={setShowPrivateGamesVal}
@@ -747,6 +782,7 @@ export const AvailableGamesSection = ({
                         onJoin={onJoin}
                         onNoteSaved={onNoteSaved}
                         findFilterSport={findFilterSport}
+                        showDiscoveryFormatBadge={showDiscoveryFormatBadge}
                       />
                     ))}
                   </div>
@@ -771,11 +807,6 @@ export const AvailableGamesSection = ({
               </div>
             </div>
           }
-        />
-        <CityModal
-          isOpen={showCityModal}
-          onClose={() => setShowCityModal(false)}
-          selectedId={user?.currentCity?.id}
         />
       </div>
       </SportLevelProvider>
@@ -831,6 +862,7 @@ export const AvailableGamesSection = ({
                   onJoin={onJoin}
                   onNoteSaved={onNoteSaved}
                   findFilterSport={findFilterSport}
+                  showDiscoveryFormatBadge={showDiscoveryFormatBadge}
                 />
               ))}
             </div>
@@ -873,6 +905,7 @@ export const AvailableGamesSection = ({
                   onJoin={onJoin}
                   onNoteSaved={onNoteSaved}
                   findFilterSport={findFilterSport}
+                  showDiscoveryFormatBadge={showDiscoveryFormatBadge}
                 />
               ))}
             </div>
@@ -897,11 +930,6 @@ export const AvailableGamesSection = ({
           {t('gameSubscriptions.wantToBeNotified', { defaultValue: 'Want to be notified when new games are created?' })}
         </Button>
       </div>
-      <CityModal
-        isOpen={showCityModal}
-        onClose={() => setShowCityModal(false)}
-        selectedId={user?.currentCity?.id}
-      />
     </div>
     </SportLevelProvider>
   );

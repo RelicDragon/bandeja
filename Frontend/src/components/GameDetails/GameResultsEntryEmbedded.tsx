@@ -44,7 +44,13 @@ import {
   PlayerStatsPanel,
 } from '@/components/gameResults';
 import { ResultsStorage } from '@/services/resultsStorage';
-import { getRestartText, getFinishText, getAvailablePlayers, canEnterResults } from '@/utils/gameResultsHelpers';
+import {
+  getRestartText,
+  getFinishText,
+  getAvailablePlayers,
+  canEnterResults,
+  isPresetResultsRoster,
+} from '@/utils/gameResultsHelpers';
 import { GameResultsTabs } from './GameResultsTabs';
 import { OfflineBanner } from './OfflineBanner';
 import { GameResultsModals } from './GameResultsModals';
@@ -63,6 +69,8 @@ import {
   mergeGameResultsArtifactsFields,
 } from '@/utils/gameResultsArtifacts.util';
 import { ResultsArtifactsTelegramBlock } from './ResultsArtifactsTelegramBlock';
+import { GameResultsShareCard } from './GameResultsShareCard';
+import { useGamePhotosStore } from '@/store/gamePhotosStore';
 import {
   buildGameBracketReturnPath,
   resolveGameBracketReturnTarget,
@@ -134,7 +142,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     [currentGame, user?.id]
   );
 
-  const isPresetGame = players.length === 2 || players.length === 4;
+  const isPresetGame = isPresetResultsRoster(players.length);
   const isResultsEntryMode = currentGame?.resultsStatus !== 'NONE' || rounds.length > 0;
   const isFinalStatus = currentGame?.resultsStatus === 'FINAL';
 
@@ -322,6 +330,12 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       setPollArtifactsActive(false);
     }
   }, [isArtifactsGenerating, isStartingArtifactGeneration]);
+
+  const loadGamePhotos = useGamePhotosStore((s) => s.loadGamePhotos);
+  useEffect(() => {
+    if (!currentGame?.id || currentGame.resultsStatus !== 'FINAL') return;
+    void loadGamePhotos(currentGame.id).catch(() => {});
+  }, [currentGame?.id, currentGame?.resultsStatus, loadGamePhotos]);
 
   useEffect(() => {
     const shouldPoll =
@@ -1170,6 +1184,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       <div>
         {currentGame?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
           <div className="w-full">
+            <GameResultsShareCard game={currentGame} />
             <div className="[&>div]:mx-0 [&>div]:max-w-none [&>div]:px-0">
               <OutcomesDisplay 
                 outcomes={currentGame.outcomes || []} 
@@ -1310,6 +1325,8 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
                     editingMatch={editingMatch}
                     roundMatches={roundMatches}
                     draggedPlayer={dragAndDrop.draggedPlayer}
+                    playersPerMatch={currentGame?.playersPerMatch}
+                    sport={currentGame?.sport}
                     onDragStart={dragAndDrop.handleDragStart}
                     onDragEnd={dragAndDrop.handleDragEnd}
                     onTouchStart={dragAndDrop.handleTouchStart}

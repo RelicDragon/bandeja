@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Flame, Heart, Timer } from 'lucide-react';
 import { usersApi, type GameWorkoutSessionListItem } from '@/api/users';
+import { WorkoutHealthPlaceholder } from '@/components/healthWorkout/WorkoutHealthPlaceholder';
 import { buildUrl } from '@/utils/urlSchema';
 import { formatWorkoutDuration } from '@/utils/workoutFormat';
 
@@ -44,26 +45,11 @@ export const ProfileWorkoutHealthSection = () => {
   }
 
   if (phase === 'error') {
-    return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50/90 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
-        <p className="text-sm text-gray-700 dark:text-gray-300">{t('healthWorkout.loadErrorProfile')}</p>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="mt-2 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
-        >
-          {t('healthWorkout.retry')}
-        </button>
-      </div>
-    );
+    return <WorkoutHealthPlaceholder variant="error" context="profile" onRetry={() => void load()} />;
   }
 
   if (phase === 'empty') {
-    return (
-      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/80 p-4 text-sm text-gray-600 dark:border-gray-600 dark:bg-gray-800/40 dark:text-gray-400">
-        {t('healthWorkout.emptyProfile')}
-      </div>
-    );
+    return <WorkoutHealthPlaceholder variant="empty" context="profile" />;
   }
 
   const totalKcal = rows.reduce((acc, r) => acc + (r.totalEnergyKcal ?? 0), 0);

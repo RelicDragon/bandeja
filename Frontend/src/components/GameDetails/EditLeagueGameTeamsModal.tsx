@@ -13,6 +13,7 @@ import { createDateFromClubTime, formatTimeInClubTimezone } from '@/hooks/useGam
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
 import { isParticipantPlaying } from '@/utils/participantStatus';
+import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 
 interface EditLeagueGameTeamsModalProps {
@@ -41,13 +42,18 @@ export const EditLeagueGameTeamsModal = ({
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [team1Players, setTeam1Players] = useState<(BasicUser | null)[]>([null, null]);
-  const [team2Players, setTeam2Players] = useState<(BasicUser | null)[]>([null, null]);
+  const [team1Players, setTeam1Players] = useState<(BasicUser | null)[]>([]);
+  const [team2Players, setTeam2Players] = useState<(BasicUser | null)[]>([]);
   
   const [selectingPlayerFor, setSelectingPlayerFor] = useState<{
     team: 1 | 2;
-    slot: 0 | 1;
+    slot: number;
   } | null>(null);
+
+  const maxPlayersPerTeam = useMemo(() => {
+    const playingCount = game.participants.filter(isParticipantPlaying).length;
+    return maxPlayersPerTeamForGame(game, playingCount || undefined);
+  }, [game]);
 
   const [clubs, setClubs] = useState<Club[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
@@ -122,18 +128,16 @@ export const EditLeagueGameTeamsModal = ({
       return participant.user || null;
     };
 
-    const t1 = [
-      team1Participants[0] ? mapToTeamPlayer(team1Participants[0]) : null,
-      team1Participants[1] ? mapToTeamPlayer(team1Participants[1]) : null,
-    ];
-    const t2 = [
-      team2Participants[0] ? mapToTeamPlayer(team2Participants[0]) : null,
-      team2Participants[1] ? mapToTeamPlayer(team2Participants[1]) : null,
-    ];
+    const t1 = Array.from({ length: maxPlayersPerTeam }, (_, i) =>
+      team1Participants[i] ? mapToTeamPlayer(team1Participants[i]) : null,
+    );
+    const t2 = Array.from({ length: maxPlayersPerTeam }, (_, i) =>
+      team2Participants[i] ? mapToTeamPlayer(team2Participants[i]) : null,
+    );
 
     setTeam1Players(t1);
     setTeam2Players(t2);
-  }, [game.fixedTeams, game.participants, hasFixedTeams]);
+  }, [game.fixedTeams, game.participants, hasFixedTeams, maxPlayersPerTeam]);
 
   const fetchClubs = useCallback(async () => {
     try {
@@ -243,10 +247,10 @@ export const EditLeagueGameTeamsModal = ({
   }, [courts, selectedCourtId]);
 
   const areTeamsFull = useMemo(() => {
-    const team1Valid = team1Players.filter(p => p !== null);
-    const team2Valid = team2Players.filter(p => p !== null);
-    return team1Valid.length === 2 && team2Valid.length === 2;
-  }, [team1Players, team2Players]);
+    const isFull = (team: (BasicUser | null)[]) =>
+      team.length === maxPlayersPerTeam && team.every((p) => p !== null);
+    return isFull(team1Players) && isFull(team2Players);
+  }, [team1Players, team2Players, maxPlayersPerTeam]);
 
   useEffect(() => {
     if (!selectedClubId && activeTab === 'time') {
@@ -355,7 +359,7 @@ export const EditLeagueGameTeamsModal = ({
     setSelectingPlayerFor(null);
   };
 
-  const handleRemovePlayer = (team: 1 | 2, slot: 0 | 1) => {
+  const handleRemovePlayer = (team: 1 | 2, slot: number) => {
     if (team === 1) {
       const newTeam = [...team1Players];
       newTeam[slot] = null;
@@ -377,7 +381,7 @@ export const EditLeagueGameTeamsModal = ({
     const team1Valid = team1Players.filter(p => p !== null);
     const team2Valid = team2Players.filter(p => p !== null);
 
-    if (team1Valid.length !== 2 || team2Valid.length !== 2) {
+    if (team1Valid.length !== maxPlayersPerTeam || team2Valid.length !== maxPlayersPerTeam) {
       toast.error(t('gameDetails.bothTeamsNeedTwoPlayers'));
       return;
     }
@@ -532,7 +536,7 @@ export const EditLeagueGameTeamsModal = ({
     return [...team1Players, ...team2Players].some(p => p?.id === playerId);
   };
 
-  const renderPlayerSlot = (player: BasicUser | null, team: 1 | 2, slot: 0 | 1) => {
+  const renderPlayerSlot = (player: BasicUser | null, team: 1 | 2, slot: number) => {
     return (
       <div className="flex flex-col items-center">
         <div className="h-[72px] flex items-center justify-center">
@@ -715,8 +719,9 @@ export const EditLeagueGameTeamsModal = ({
                         {t('gameDetails.team1')}
                       </div>
                       <div className="flex gap-4">
-                        {renderPlayerSlot(team1Players[0], 1, 0)}
-                        {renderPlayerSlot(team1Players[1], 1, 1)}
+                        {Array.from({ length: maxPlayersPerTeam }, (_, slot) =>
+                          renderPlayerSlot(team1Players[slot] ?? null, 1, slot),
+                        )}
                       </div>
                     </div>
 
@@ -729,8 +734,9 @@ export const EditLeagueGameTeamsModal = ({
                         {t('gameDetails.team2')}
                       </div>
                       <div className="flex gap-4">
-                        {renderPlayerSlot(team2Players[0], 2, 0)}
-                        {renderPlayerSlot(team2Players[1], 2, 1)}
+                        {Array.from({ length: maxPlayersPerTeam }, (_, slot) =>
+                          renderPlayerSlot(team2Players[slot] ?? null, 2, slot),
+                        )}
                       </div>
                     </div>
                   </div>

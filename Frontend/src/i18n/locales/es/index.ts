@@ -34,6 +34,7 @@ import playerInvite from './playerInvite.json';
 import playerProfile from './playerProfile.json';
 import profile from './profile.json';
 import rating from './rating.json';
+import sportRating from './sportRating.json';
 import teams from './teams.json';
 import telegram from './telegram.json';
 import trainers from './trainers.json';
@@ -87,6 +88,7 @@ export default {
     ...playerProfile,
     ...profile,
     ...rating,
+    ...sportRating,
     ...teams,
     ...telegram,
     ...trainers,

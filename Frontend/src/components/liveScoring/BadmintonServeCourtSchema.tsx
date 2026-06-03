@@ -1,4 +1,4 @@
-import type { ServeCourtSchemaProps } from './ServeCourtSchema';
+import type { ServeCourtProps } from './ServeCourtProps';
 import { BadmintonCourt } from './rally/BadmintonCourt';
 
 export function BadmintonServeCourtSchema({
@@ -7,9 +7,15 @@ export function BadmintonServeCourtSchema({
   serverPlayerIndex,
   teamAPlayers,
   teamBPlayers,
+  matchDoubles = false,
+  courtEndsSwapped,
+  endsSetup,
+  motionToken,
   className,
+  frameStyle,
   'aria-label': ariaLabel,
-}: ServeCourtSchemaProps) {
+}: ServeCourtProps) {
+  void ariaLabel;
   return (
     <BadmintonCourt
       teamAPlayers={teamAPlayers}
@@ -19,8 +25,12 @@ export function BadmintonServeCourtSchema({
       serverTeam={serverTeam}
       serverPlayerIndex={serverPlayerIndex}
       courtSide={courtSide}
-      className={className ?? 'h-36 w-full max-w-[9rem]'}
-      aria-label={ariaLabel}
+      matchDoubles={matchDoubles}
+      courtEndsSwapped={courtEndsSwapped}
+      endsSetup={endsSetup}
+      motionToken={motionToken}
+      className={className}
+      frameStyle={frameStyle}
     />
   );
 }

@@ -3,6 +3,7 @@ import { ScoringPreset } from '@/types';
 import { tBestOfMatchLabel, tGameFormatStepHint, tScoringPresetField } from '@/utils/gameFormat';
 import { GameFormatTimedDuration } from './GameFormatTimedDuration';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
+import { presetTierBadgeClass, presetTierBadgeLabel, resolvePresetTierForSport } from '@/utils/presetTierUi';
 
 interface GameFormatStepPointsTotalProps {
   scoringPreset: ScoringPreset;
@@ -98,6 +99,18 @@ export const GameFormatStepPointsTotal = ({
                 }`}
               >
                 {cap}
+                {(() => {
+                  const tier = resolvePresetTierForSport(sport, preset);
+                  const tierLabel = tier ? presetTierBadgeLabel(tier, t) : null;
+                  if (!tier || !tierLabel) return null;
+                  return (
+                    <span
+                      className={`absolute bottom-1 left-1 rounded px-1 py-0.5 text-[8px] font-bold uppercase tracking-wide ${presetTierBadgeClass(tier)}`}
+                    >
+                      {tierLabel}
+                    </span>
+                  );
+                })()}
                 {recommended && (
                   <span
                     className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full ${
@@ -136,6 +149,18 @@ export const GameFormatStepPointsTotal = ({
                   >
                     {t('gameFormat.bestOfMatch.optionTo', { sets, cap: pointsCap })}
                     {recommended ? ` · ${t('gameFormat.recommended')}` : ''}
+                    {(() => {
+                      const tier = resolvePresetTierForSport(sport, preset);
+                      const tierLabel = tier ? presetTierBadgeLabel(tier, t) : null;
+                      if (!tier || !tierLabel) return null;
+                      return (
+                        <span
+                          className={`ml-1 rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide ${presetTierBadgeClass(tier)}`}
+                        >
+                          {tierLabel}
+                        </span>
+                      );
+                    })()}
                   </button>
                 );
               })}

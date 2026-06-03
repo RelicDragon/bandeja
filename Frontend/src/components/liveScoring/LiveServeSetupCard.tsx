@@ -1,17 +1,24 @@
-import { useState, type ComponentType } from 'react';
+import { useCallback, useState, type ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BasicUser } from '@/types';
 import type { LiveMatchCourtOrientation, LivePointsServeRotation, LiveTeamSide } from '@/utils/liveScoring';
+import { squashSetupCourtEndsSwappedForFirstServer } from '@/utils/liveScoring/squashServe';
 import { LiveCourtEndsSetup } from './LiveCourtEndsSetup';
+import { LiveCourtSidesSetup } from './LiveCourtSidesSetup';
 import { LiveServeSetupPlayerOption } from './LiveServeSetupPlayerOption';
 import { LiveServeSetupTeamCard } from './LiveServeSetupTeamCard';
-import type { ServeCourtSchemaProps } from './ServeCourtSchema';
+import { randomizeServeSetupState } from './randomizeServeSetup';
+import type { ServeCourtProps } from './ServeCourtProps';
+import { ServeSetupDiceButton } from './ServeSetupDiceButton';
 
 type LiveServeSetupCardProps = {
   teamAPlayers: BasicUser[];
   teamBPlayers: BasicUser[];
-  CourtSchemaComponent?: ComponentType<ServeCourtSchemaProps>;
+  CourtSchemaComponent?: ComponentType<ServeCourtProps> | null;
+  courtAspect?: readonly [number, number] | null;
   matchDoubles?: boolean;
+  /** Squash: left/right sides; default top/bottom ends. */
+  courtSetupLayout?: 'ends' | 'sides';
   showServeRotationRules?: boolean;
   saving?: boolean;
   onComplete: (
@@ -27,7 +34,9 @@ export const LiveServeSetupCard = ({
   teamAPlayers,
   teamBPlayers,
   CourtSchemaComponent,
+  courtAspect = null,
   matchDoubles = false,
+  courtSetupLayout = 'ends',
   showServeRotationRules,
   saving,
   onComplete,
@@ -45,10 +54,64 @@ export const LiveServeSetupCard = ({
 
   const roster = side === 'teamA' ? teamAPlayers : side === 'teamB' ? teamBPlayers : [];
   const doubles = matchDoubles;
+  const singles = !matchDoubles;
+  const squashSidesSetup = courtSetupLayout === 'sides';
+
+  const selectServingTeam = (which: LiveTeamSide) => {
+    setSide(which);
+    setDoublesIdx(0);
+    if (squashSidesSetup) {
+      setCourtOrientation((prev) => ({
+        ...prev,
+        endsSwapped: squashSetupCourtEndsSwappedForFirstServer(which),
+      }));
+    }
+  };
+
+  const toggleServingTeamMirror = () => {
+    if (!side) return;
+    setCourtOrientation((prev) =>
+      side === 'teamA'
+        ? { ...prev, teamASidesMirrored: !prev.teamASidesMirrored }
+        : { ...prev, teamBSidesMirrored: !prev.teamBSidesMirrored }
+    );
+  };
+
+  const handleTeamSidesFlipped = (team: LiveTeamSide) => {
+    if (doubles && side === team) {
+      setDoublesIdx((i) => (i === 0 ? 1 : 0));
+    }
+  };
+
+  const selectDoublesServer = (idx: number) => {
+    if (side && doubles && idx !== doublesIdx) {
+      toggleServingTeamMirror();
+    }
+    setDoublesIdx(idx);
+  };
+
+  const randomizeAll = useCallback(() => {
+    const next = randomizeServeSetupState({
+      matchDoubles: doubles,
+      showServeRotationRules: Boolean(showServeRotationRules),
+      squashSidesSetup,
+    });
+    setSide(next.side);
+    setDoublesIdx(next.doublesIdx);
+    setRotation(next.rotation);
+    setCourtOrientation(next.courtOrientation);
+  }, [doubles, showServeRotationRules, squashSidesSetup]);
 
   const submit = () => {
     if (!side) return;
-    onComplete(side, doubles ? doublesIdx : 0, rotation, courtOrientation);
+    onComplete(
+      side,
+      doubles ? doublesIdx : 0,
+      rotation,
+      singles
+        ? { ...courtOrientation, teamASidesMirrored: false, teamBSidesMirrored: false }
+        : courtOrientation
+    );
   };
 
   const rotationOption = (value: LivePointsServeRotation, titleKey: string, descKey: string) => {
@@ -73,19 +136,19 @@ export const LiveServeSetupCard = ({
       label={which === 'teamA' ? t('gameDetails.liveScoring.teamBenchA') : t('gameDetails.liveScoring.teamBenchB')}
       players={players}
       selected={side === which}
-      onSelect={() => {
-        setSide(which);
-        setDoublesIdx(0);
-      }}
+      singlesMode={singles}
+      onSelect={() => selectServingTeam(which)}
     />
   );
 
   return (
     <div className="relative touch-manipulation rounded-3xl border border-primary-200 bg-primary-50/40 p-4 dark:border-primary-900 dark:bg-primary-950/30">
+      <div className="absolute left-4 top-4 z-10">
+        <ServeSetupDiceButton onRoll={randomizeAll} disabled={saving} />
+      </div>
       <div className="text-center text-sm font-bold text-gray-900 dark:text-gray-100">
         {t('gameDetails.liveScoring.serveSetupTitle')}
       </div>
-      <p className="mt-1 text-center text-xs text-gray-600 dark:text-gray-400">{t('gameDetails.liveScoring.serveSetupSubtitle')}</p>
       <div className="mt-4 flex flex-col gap-2">
         {teamBlock('teamA', teamAPlayers)}
         {teamBlock('teamB', teamBPlayers)}
@@ -101,7 +164,7 @@ export const LiveServeSetupCard = ({
                 key={p.id}
                 player={p}
                 selected={doublesIdx === idx}
-                onSelect={() => setDoublesIdx(idx)}
+                onSelect={() => selectDoublesServer(idx)}
               />
             ))}
           </div>
@@ -125,14 +188,33 @@ export const LiveServeSetupCard = ({
         </div>
       ) : null}
       {side ? (
-        <LiveCourtEndsSetup
-          teamAPlayers={teamAPlayers}
-          teamBPlayers={teamBPlayers}
-          CourtSchemaComponent={CourtSchemaComponent}
-          matchDoubles={matchDoubles}
-          orientation={courtOrientation}
-          onOrientationChange={setCourtOrientation}
-        />
+        courtSetupLayout === 'sides' ? (
+          <LiveCourtSidesSetup
+            teamAPlayers={teamAPlayers}
+            teamBPlayers={teamBPlayers}
+            CourtSchemaComponent={CourtSchemaComponent}
+            courtAspect={courtAspect}
+            serverTeam={side}
+            serverPlayerIndex={doubles ? doublesIdx : 0}
+            orientation={courtOrientation}
+            onOrientationChange={setCourtOrientation}
+            showFlipRails={!squashSidesSetup}
+          />
+        ) : (
+          <LiveCourtEndsSetup
+            teamAPlayers={teamAPlayers}
+            teamBPlayers={teamBPlayers}
+            CourtSchemaComponent={CourtSchemaComponent}
+            courtAspect={courtAspect}
+            matchDoubles={matchDoubles}
+            showTeamSideFlip={matchDoubles}
+            serverTeam={side}
+            serverPlayerIndex={doubles ? doublesIdx : 0}
+            orientation={courtOrientation}
+            onOrientationChange={setCourtOrientation}
+            onTeamSidesFlipped={handleTeamSidesFlipped}
+          />
+        )
       ) : null}
       <button
         type="button"

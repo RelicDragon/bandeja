@@ -126,6 +126,7 @@ router.post(
   validate([
     body('identityToken').notEmpty().isString().withMessage('Identity token is required'),
     body('nonce').notEmpty().isString().isLength({ min: 1 }).withMessage('Nonce is required'),
+    body('confirmMerge').optional().isBoolean().withMessage('confirmMerge must be a boolean'),
   ]),
   authController.linkApple
 );
@@ -141,6 +142,7 @@ router.post(
   authenticate,
   validate([
     body('idToken').notEmpty().isString().withMessage('Google ID token is required'),
+    body('confirmMerge').optional().isBoolean().withMessage('confirmMerge must be a boolean'),
   ]),
   authController.linkGoogle
 );

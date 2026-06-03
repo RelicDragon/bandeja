@@ -28,32 +28,31 @@ class LogManager {
     const originalError = console.error;
     const originalWarn = console.warn;
     const originalInfo = console.info;
-    const self = this; // eslint-disable-line @typescript-eslint/no-this-alias
 
     console.log = (...args: any[]) => {
       originalLog.apply(console, args);
-      self.addLog('info', args.map(arg => 
+      this.addLog('info', args.map(arg => 
         typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
       ).join(' '));
     };
 
     console.error = (...args: any[]) => {
       originalError.apply(console, args);
-      self.addLog('error', args.map(arg => 
+      this.addLog('error', args.map(arg => 
         typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
       ).join(' '));
     };
 
     console.warn = (...args: any[]) => {
       originalWarn.apply(console, args);
-      self.addLog('warn', args.map(arg => 
+      this.addLog('warn', args.map(arg => 
         typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
       ).join(' '));
     };
 
     console.info = (...args: any[]) => {
       originalInfo.apply(console, args);
-      self.addLog('info', args.map(arg => 
+      this.addLog('info', args.map(arg => 
         typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
       ).join(' '));
     };

@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { ClubAdminService } from './clubAdmin.service';
+import { parseClubSportsInput, assertClubSportsCoverCourtSports } from '../../shared/clubSports';
 
 const CLUB_ADMIN_PATCH_KEYS = [
   'name',
@@ -18,6 +19,7 @@ const CLUB_ADMIN_PATCH_KEYS = [
   'cancellationNoticeHours',
   'policyText',
   'photos',
+  'sports',
 ] as const;
 
 export class ClubAdminClubService {
@@ -90,6 +92,20 @@ export class ClubAdminClubService {
     if (Object.keys(data).length === 0) {
       throw new ApiError(400, 'No valid fields to update');
     }
+
+    if (data.sports !== undefined) {
+      const sports = parseClubSportsInput(data.sports);
+      const courts = await prisma.court.findMany({
+        where: { clubId },
+        select: { sport: true },
+      });
+      assertClubSportsCoverCourtSports(
+        sports,
+        courts.map((c) => c.sport),
+      );
+      data.sports = sports;
+    }
+
     return prisma.club.update({
       where: { id: clubId },
       data,

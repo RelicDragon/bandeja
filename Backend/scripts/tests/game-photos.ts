@@ -65,15 +65,11 @@ async function seedPhoto(
       clientUploadId: clientUploadId ?? null,
     },
   });
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    select: { mainPhotoId: true },
-  });
   await prisma.game.update({
     where: { id: gameId },
     data: {
       photosCount: { increment: 1 },
-      ...(game?.mainPhotoId ? {} : { mainPhotoId: photo.id }),
+      mainPhotoId: photo.id,
     },
   });
   return photo;
@@ -179,7 +175,7 @@ async function main() {
       select: { photosCount: true, mainPhotoId: true },
     });
     assert(gameRow?.photosCount === 2, `photosCount is 2, got ${gameRow?.photosCount}`);
-    assert(gameRow?.mainPhotoId === p1.id, 'first photo is main');
+    assert(gameRow?.mainPhotoId === p2.id, 'latest upload is main');
     console.log('ok: photosCount and auto main');
 
     await GamePhotoUpdateService.setMainPhoto(gameId, ownerId, false, p2.id);

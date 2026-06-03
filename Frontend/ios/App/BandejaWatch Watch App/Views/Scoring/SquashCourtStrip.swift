@@ -1,51 +1,105 @@
 import SwiftUI
 
-/// Compact squash court outline for serve coach strip.
+/// Vertical squash court — WSF floor lines, no front wall (matches phone serve guide).
 struct SquashCourtStrip: View {
     var serverTeam: TeamSide?
-    var serverOnRightHalf: Bool
+    var serveRight: Bool
+    var courtEndsSwapped: Bool = false
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(Color(red: 0.15, green: 0.42, blue: 0.72).opacity(0.88))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(Color.white.opacity(0.22), lineWidth: 1)
-                )
-            Rectangle()
-                .fill(Color.white.opacity(0.45))
-                .frame(height: 1.5)
-            Rectangle()
-                .fill(Color.white.opacity(0.28))
-                .frame(width: 1.5)
-            if let serverTeam {
-                HStack(spacing: 0) {
-                    halfGlow(team: .teamA, serverTeam: serverTeam, isRight: false)
-                    halfGlow(team: .teamB, serverTeam: serverTeam, isRight: true)
-                }
-                .padding(3)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .accessibilityHidden(true)
-    }
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            let cx = w / 2
+            let frontY = h * 0.33
+            let backY = h * 0.9
+            let frontHW = w * 0.31
+            let backHW = w * 0.44
+            let courtL: CGFloat = 9.75
+            let courtW: CGFloat = 8.42
+            let shortLineY: CGFloat = 5.44
+            let lineM: CGFloat = 0.05
+            let boxFrontY = shortLineY + lineM
+            let boxM: CGFloat = 1.6
 
-    @ViewBuilder
-    private func halfGlow(team: TeamSide, serverTeam: TeamSide, isRight: Bool) -> some View {
-        let serving = serverTeam == team
-        let deuceEdge = serverOnRightHalf == isRight
-        ZStack(alignment: deuceEdge ? .trailing : .leading) {
-            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                .fill(serving ? Color.orange.opacity(0.42) : Color.clear)
-            if serving {
-                RoundedRectangle(cornerRadius: 1, style: .continuous)
-                    .fill(Color.orange.opacity(0.9))
-                    .frame(width: 3)
-                    .padding(.vertical, 3)
-                    .padding(deuceEdge ? .trailing : .leading, 2)
+            func proj(_ cxCourt: CGFloat, _ depth: CGFloat) -> CGPoint {
+                let t = depth / courtL
+                let y = frontY + t * (backY - frontY)
+                let hw = frontHW + t * (backHW - frontHW)
+                let x = cx + (cxCourt / courtW - 0.5) * 2 * hw
+                return CGPoint(x: x, y: y)
+            }
+
+            let fl = proj(0, 0)
+            let fr = proj(courtW, 0)
+            let bl = proj(0, courtL)
+            let br = proj(courtW, courtL)
+            let shortL = proj(0, shortLineY)
+            let shortR = proj(courtW, shortLineY)
+            let midShort = proj(courtW / 2, shortLineY)
+            let midBack = proj(courtW / 2, courtL)
+
+            ZStack {
+                Path { p in
+                    p.move(to: fl)
+                    p.addLine(to: fr)
+                    p.addLine(to: br)
+                    p.addLine(to: bl)
+                    p.closeSubpath()
+                }
+                .fill(
+                    LinearGradient(
+                        colors: [Color(red: 0.93, green: 0.95, blue: 0.97), Color(red: 0.72, green: 0.77, blue: 0.83)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+
+                Path { p in
+                    p.move(to: shortL)
+                    p.addLine(to: shortR)
+                    p.move(to: midShort)
+                    p.addLine(to: midBack)
+                }
+                .stroke(Color(white: 0.25), lineWidth: 0.75)
+
+                Path { p in
+                    let blBox = proj(0, boxFrontY + boxM)
+                    let brInner = proj(boxM, boxFrontY + boxM)
+                    p.move(to: bl)
+                    p.addLine(to: blBox)
+                    p.addLine(to: brInner)
+                    p.addLine(to: proj(boxM, boxFrontY))
+                    p.addLine(to: midShort)
+                }
+                .stroke(Color(white: 0.25), lineWidth: 0.55)
+
+                Path { p in
+                    let brBox = proj(courtW, boxFrontY + boxM)
+                    let blInner = proj(courtW - boxM, boxFrontY + boxM)
+                    p.move(to: br)
+                    p.addLine(to: brBox)
+                    p.addLine(to: blInner)
+                    p.addLine(to: proj(courtW - boxM, boxFrontY))
+                    p.addLine(to: midShort)
+                }
+                .stroke(Color(white: 0.25), lineWidth: 0.55)
+
+                if serverTeam != nil {
+                    let sideLeft = !serveRight
+                    let x0: CGFloat = sideLeft ? 0 : courtW - boxM
+                    let x1: CGFloat = sideLeft ? boxM : courtW
+                    let p0 = proj(x0, boxFrontY)
+                    let p1 = proj(x1, boxFrontY + boxM)
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(Color.orange.opacity(0.45))
+                        .overlay(RoundedRectangle(cornerRadius: 1).stroke(Color.orange, lineWidth: 0.75))
+                        .frame(width: max(abs(p1.x - p0.x), 4), height: max(abs(p1.y - p0.y), 4))
+                        .position(x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2)
+                }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .aspectRatio(180 / 172, contentMode: .fit)
+        .accessibilityHidden(true)
     }
 }

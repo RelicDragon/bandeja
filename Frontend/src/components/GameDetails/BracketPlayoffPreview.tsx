@@ -19,12 +19,14 @@ import {
   feederMatchLabelsForRound,
   firstMainRoundPairingsForPlan,
 } from '@/utils/bracketPreviewKnockout.util';
+import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 
 interface BracketPlayoffPreviewProps {
   plan: BracketPlan;
   standingsById: Map<string, LeagueStanding>;
   groupColor?: string | null;
   qualifierLabels?: Map<string, string>;
+  playersPerMatch?: number;
   reorderable?: boolean;
   onPlanChange?: (plan: BracketPlan) => void;
 }
@@ -88,6 +90,7 @@ function SeedChip({
   inMatch,
   matchRow,
   onRemove,
+  maxPlayersPerTeam,
 }: {
   seed: number;
   participantId?: string;
@@ -100,6 +103,7 @@ function SeedChip({
   inMatch?: boolean;
   matchRow?: 'first' | 'last' | 'only';
   onRemove?: () => void;
+  maxPlayersPerTeam: number;
 }) {
   const { t } = useTranslation();
   const emptySlot = !participantId;
@@ -135,7 +139,9 @@ function SeedChip({
         </span>
       ) : null}
       {!emptySlot && standing?.leagueTeam?.players?.length ? (() => {
-        const teamPlayers = standing.leagueTeam.players.filter((p) => p.user).slice(0, 2);
+        const teamPlayers = standing.leagueTeam.players
+          .filter((p) => p.user)
+          .slice(0, maxPlayersPerTeam);
         const first = teamPlayers[0];
         const second = teamPlayers[1];
         return (
@@ -285,6 +291,7 @@ function MatchPair({
   selectedKey,
   onSelectSeed,
   onRemoveSelected,
+  maxPlayersPerTeam,
 }: {
   seedA: number;
   seedB: number;
@@ -296,6 +303,7 @@ function MatchPair({
   selectedKey: string | null;
   onSelectSeed: (seed: number) => void;
   onRemoveSelected: () => void;
+  maxPlayersPerTeam: number;
 }) {
   const posA = positionBySeed.get(seedA);
   const posB = positionBySeed.get(seedB);
@@ -323,6 +331,7 @@ function MatchPair({
         inMatch
         matchRow="first"
         onRemove={removeA}
+        maxPlayersPerTeam={maxPlayersPerTeam}
       />
       <SeedChip
         seed={seedB}
@@ -336,6 +345,7 @@ function MatchPair({
         inMatch
         matchRow="last"
         onRemove={removeB}
+        maxPlayersPerTeam={maxPlayersPerTeam}
       />
     </PreviewMatchFrame>
   );
@@ -359,11 +369,13 @@ export const BracketPlayoffPreview = ({
   standingsById,
   groupColor,
   qualifierLabels,
+  playersPerMatch,
   reorderable = false,
   onPlanChange,
 }: BracketPlayoffPreviewProps) => {
   const { t } = useTranslation();
   const accent = groupColor ? getLeagueGroupColor(groupColor) : undefined;
+  const maxPlayersPerTeam = maxPlayersPerTeamForGame({ playersPerMatch });
 
   const slotLabels = useMemo(
     () => buildSlotLabelsForPlan(plan, qualifierLabels),
@@ -529,6 +541,7 @@ export const BracketPlayoffPreview = ({
                 selectedKey={selectedKey}
                 onSelectSeed={handleSelectSeed}
                 onRemoveSelected={handleClearSelected}
+                maxPlayersPerTeam={maxPlayersPerTeam}
               />
             ))}
           </section>
@@ -557,6 +570,7 @@ export const BracketPlayoffPreview = ({
                     selected={pos ? selectedKey === pos.key : false}
                     onSelect={pos ? () => handleSelectSeed(seed) : undefined}
                     onRemove={pos && selectedKey === pos.key ? handleClearSelected : undefined}
+                    maxPlayersPerTeam={maxPlayersPerTeam}
                   />
                   <p className="text-[10px] text-center text-gray-400">
                     {t('gameDetails.bracketByeAdvance', { defaultValue: '→ {{round}}', round: mainRoundLabel(0) })}
@@ -611,6 +625,7 @@ export const BracketPlayoffPreview = ({
                       selectedKey={selectedKey}
                       onSelectSeed={handleSelectSeed}
                       onRemoveSelected={handleClearSelected}
+                      maxPlayersPerTeam={maxPlayersPerTeam}
                     />
                   );
                 })

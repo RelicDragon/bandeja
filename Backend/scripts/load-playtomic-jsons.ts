@@ -16,6 +16,7 @@ import {
   mapPlaytomicSportToSport,
   SUPPORTED_PLAYTOMIC_SPORT_IDS,
 } from '../src/sport/playtomicSport';
+import { mergeClubSports } from '../src/shared/clubSports';
 
 const JSON_DIR = path.join(__dirname, '..', 'additions', 'playtomic', 'jsons');
 const DEFAULT_TIMEZONE = 'Europe/Paris';
@@ -155,6 +156,17 @@ async function getOrCreateClub(
   return { id: club.id, created: true };
 }
 
+async function syncClubSportsForCourt(clubId: string, sport: Sport): Promise<void> {
+  const club = await prisma.club.findUnique({
+    where: { id: clubId },
+    select: { sports: true },
+  });
+  if (!club) return;
+  const sports = mergeClubSports(club.sports, sport);
+  if (sports.length === club.sports.length) return;
+  await prisma.club.update({ where: { id: clubId }, data: { sports } });
+}
+
 async function getOrCreateCourt(
   clubId: string,
   res: PtResource,
@@ -171,9 +183,12 @@ async function getOrCreateCourt(
         where: { id: existing.id },
         data: { sport },
       });
+      await syncClubSportsForCourt(clubId, sport);
     }
     return false;
   }
+
+  await syncClubSportsForCourt(clubId, sport);
 
   const isIndoor = (res.features || []).some((f) => f.toLowerCase() === 'indoor');
   const surfaceType = (res.features || []).find(

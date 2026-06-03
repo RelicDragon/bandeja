@@ -22,6 +22,12 @@ import {
 import { revokeChatBlobUrls } from '@/utils/chatBlobUrls';
 import { persistOptimisticOutbox } from '@/services/chat/chatOutboxPersist';
 import { shouldApplyGameChatMessageDespiteTabMismatch } from './chatOptimisticMatch';
+import {
+  findPendingOptimisticIndex,
+  normalizeClientMutationId,
+  removePendingOptimisticAt,
+  replacePendingOptimisticWithServer,
+} from '@/utils/chatOptimisticDedupe';
 
 export interface UseGameChatOptimisticParams {
   id: string | undefined;
@@ -146,15 +152,28 @@ export function useGameChatOptimistic({
     (optimisticId: string, serverMessage: ChatMessage) => {
       void putLocalMessage(serverMessage).catch(() => {});
       setMessages((prev) => {
-        const idx = prev.findIndex((m) => (m as ChatMessageWithStatus)._optimisticId === optimisticId);
-        if (idx < 0) return prev;
+        let idx = prev.findIndex((m) => (m as ChatMessageWithStatus)._optimisticId === optimisticId);
+        if (idx < 0) {
+          const cid = normalizeClientMutationId(serverMessage.clientMutationId);
+          if (cid) idx = findPendingOptimisticIndex(prev, cid);
+        }
+        if (idx < 0) {
+          const cid = normalizeClientMutationId(serverMessage.clientMutationId);
+          if (cid && prev.some((m) => m.id === serverMessage.id)) {
+            const pendingIdx = findPendingOptimisticIndex(prev, cid);
+            if (pendingIdx >= 0) {
+              const prevRow = prev[pendingIdx] as ChatMessageWithStatus;
+              revokeChatBlobUrls(prevRow);
+              const { next } = removePendingOptimisticAt(prev, pendingIdx);
+              messagesRef.current = next;
+              return next;
+            }
+          }
+          return prev;
+        }
         const prevRow = prev[idx] as ChatMessageWithStatus;
         revokeChatBlobUrls(prevRow);
-        const next = [...prev];
-        next[idx] = {
-          ...serverMessage,
-          _clientMutationId: serverMessage.clientMutationId ?? prevRow._clientMutationId,
-        } as ChatMessageWithStatus;
+        const { next } = replacePendingOptimisticWithServer(prev, idx, serverMessage);
         next.sort(compareChatMessagesAscending);
         messagesRef.current = next;
         return next;
@@ -287,28 +306,30 @@ export function useGameChatOptimistic({
       let shortCircuitDuplicateId = false;
 
       setMessages((prev) => {
+        const serverCid = normalizeClientMutationId(message.clientMutationId);
+
         if (prev.some((msg) => msg.id === message.id)) {
           shortCircuitDuplicateId = true;
+          if (isOwnServerMessage && serverCid) {
+            const pendingIdx = findPendingOptimisticIndex(prev, serverCid);
+            if (pendingIdx >= 0) {
+              const prevRow = prev[pendingIdx] as ChatMessageWithStatus;
+              revokeChatBlobUrls(prevRow);
+              const { next, replacedOptimisticId } = removePendingOptimisticAt(prev, pendingIdx);
+              messagesRef.current = next;
+              effectPack = { replacedOptimisticId, lastMessageId: message.id };
+              return next;
+            }
+          }
           return prev;
         }
 
-        const serverCid = message.clientMutationId ?? null;
-
         if (isOwnServerMessage && serverCid) {
-          const idx = prev.findIndex((m) => {
-            const sm = m as ChatMessageWithStatus;
-            if (sm._status !== 'SENDING' && sm._status !== 'FAILED') return false;
-            return sm._clientMutationId === serverCid;
-          });
+          const idx = findPendingOptimisticIndex(prev, serverCid);
           if (idx >= 0) {
             const prevRow = prev[idx] as ChatMessageWithStatus;
-            const replacedOptimisticId = prevRow._optimisticId;
             revokeChatBlobUrls(prevRow);
-            const next = [...prev];
-            next[idx] = {
-              ...message,
-              _clientMutationId: message.clientMutationId ?? prevRow._clientMutationId,
-            } as ChatMessageWithStatus;
+            const { next, replacedOptimisticId } = replacePendingOptimisticWithServer(prev, idx, message);
             next.sort(compareChatMessagesAscending);
             messagesRef.current = next;
             effectPack = { replacedOptimisticId, lastMessageId: message.id };
@@ -338,13 +359,8 @@ export function useGameChatOptimistic({
           });
           if (idx >= 0) {
             const prevRow = prev[idx] as ChatMessageWithStatus;
-            const replacedOptimisticId = prevRow._optimisticId;
             revokeChatBlobUrls(prevRow);
-            const next = [...prev];
-            next[idx] = {
-              ...message,
-              _clientMutationId: message.clientMutationId ?? prevRow._clientMutationId,
-            } as ChatMessageWithStatus;
+            const { next, replacedOptimisticId } = replacePendingOptimisticWithServer(prev, idx, message);
             next.sort(compareChatMessagesAscending);
             messagesRef.current = next;
             effectPack = { replacedOptimisticId, lastMessageId: message.id };

@@ -2,6 +2,7 @@ import { TFunction } from 'i18next';
 import { BarChart2, Images, Mic, Video } from 'lucide-react';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
+import { ChatListPreviewText } from './ChatListPreviewText';
 
 type Props = { preview: string; t: TFunction };
 
@@ -91,5 +92,5 @@ export function ChatListPreviewContent({ preview, t }: Props) {
     return <>{preview}</>;
   }
 
-  return <>{preview}</>;
+  return <ChatListPreviewText text={preview} />;
 }

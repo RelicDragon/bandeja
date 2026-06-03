@@ -8,7 +8,7 @@
   "addSportSubtitle": "Asi minuta — pomůže najít zápasy podle vaší úrovně.",
   "estimateLevel": "Odhadnout úroveň",
   "estimateLink": "Odhadnout",
-  "createGameBanner": "Odhadněte svou úroveň — {{sport}}",
+  "createGameBanner": "Vaše úroveň {{sport}} je 1.0. Klepněte a odhadněte ji před prvním zápasem.",
   "createGameLevelBandWarning": "Vaše úroveň {{sport}} je odhadnuta na 1.0. Minimum nad 2.5 vás může vyřadit z vlastního zápasu.",
   "inviteNudge": "Vaše úroveň {{sport}} je {{level}}.",
   "inviteNudgeCrossSport": "{{primarySport}} {{primaryLevel}} · Úroveň {{gameSport}} {{level}} —",
@@ -18,5 +18,15 @@
   "homeDismissLink": "Znovu nezobrazovat",
   "homeDismissTitle": "Skrýt dotazník úrovně?",
   "homeDismissMessage": "Vaše současná úroveň je {{level}}. Jen skryjeme připomínku — úroveň se nemění.",
-  "homeDismissConfirm": "Ano, skrýt"
+  "homeDismissConfirm": "Ano, skrýt",
+  "title": "Estimate your {{sport}} level",
+  "description": "Answer a few quick questions so we can set your starting level for {{sport}}.",
+  "back": "Back",
+  "next": "Next",
+  "submit": "Continue",
+  "congratulationsTitle": "Level set",
+  "congratulationsSubtitle": "Your {{sport}} rating is",
+  "goToApp": "Done",
+  "fillItLater": "I'll fill it in later",
+  "disclaimer": "Self-assessment only — your level may adjust after rated matches."
 }

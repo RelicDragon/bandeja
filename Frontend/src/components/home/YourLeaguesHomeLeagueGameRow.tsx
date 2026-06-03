@@ -59,12 +59,13 @@ export function YourLeaguesHomeLeagueGameRow({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-start gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-[0.99]"
+      className="flex w-full flex-col gap-1 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-[0.99]"
     >
-      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
-        <Calendar size={14} />
-      </div>
-      <div className="min-w-0 flex-1">
+      <div className="flex w-full min-w-0 items-start gap-2.5">
+        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+          <Calendar size={14} />
+        </div>
+        <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           {!timeNotSet && (
             <>
@@ -132,13 +133,18 @@ export function YourLeaguesHomeLeagueGameRow({
             )}
           </p>
         )}
-        {matchup && <YourLeaguesHomeLeagueGameMatchup matchup={matchup} />}
+        </div>
+        {displayUnread > 0 && (
+          <span className="mt-0.5 inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            <MessageCircle size={10} strokeWidth={2.5} />
+            {displayUnread > 99 ? '99+' : displayUnread}
+          </span>
+        )}
       </div>
-      {displayUnread > 0 && (
-        <span className="mt-0.5 inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
-          <MessageCircle size={10} strokeWidth={2.5} />
-          {displayUnread > 99 ? '99+' : displayUnread}
-        </span>
+      {matchup && (
+        <div className="w-full min-w-0">
+          <YourLeaguesHomeLeagueGameMatchup matchup={matchup} />
+        </div>
       )}
     </button>
   );

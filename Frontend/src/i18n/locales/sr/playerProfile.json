@@ -1,7 +1,7 @@
 {
   "playerProfile": {
-    "pageTitle": "Профил играча",
-    "publicPromptTitle": "Пријавите се да видите више",
-    "publicPromptBody": "Пријавите се или региструјте се да видите целу статистику, омиљене и да ћаскате са овим играчем."
+    "pageTitle": "Profil igrača",
+    "publicPromptTitle": "Prijavite se da vidite više",
+    "publicPromptBody": "Prijavite se ili registrujte se da vidite celu statistiku, omiljene i da ćaskate sa ovim igračem."
   }
 }

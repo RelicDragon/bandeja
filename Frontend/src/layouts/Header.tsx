@@ -35,7 +35,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const { pendingInvites, isNewInviteAnimating } = useHeaderStore();
-  const { gameDetailsCanAccessChat, setBounceNotifications, profileActiveTab, setProfileActiveTab, userProfileHeaderActions, gameDetailsOccludesSideChat } = useNavigationStore();
+  const { gameDetailsCanAccessChat, setBounceNotifications, profileActiveTab, setProfileActiveTab, userProfileHeaderActions, findHeaderActions, gameDetailsOccludesSideChat } = useNavigationStore();
   const isDesktop = useDesktop();
 
   const parsed = useMemo(
@@ -134,7 +134,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
             )}
 
             {currentPage === 'my' && <MyGamesTabController />}
-            {currentPage === 'find' && <FindTabController />}
+            {currentPage === 'find' && (findHeaderActions ?? <FindTabController />)}
             {currentPage === 'chats' && <ChatsTabController />}
             {currentPage === 'profile' && (
               <SegmentedSwitch

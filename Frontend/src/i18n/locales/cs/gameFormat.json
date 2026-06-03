@@ -111,6 +111,10 @@
       "Escalera": {
         "title": "Žebříček",
         "subtitle": "Poziční žebříček — vítězové postupují"
+      },
+      "KingOfCourt": {
+        "title": "King of the Court",
+        "subtitle": "Court 1 kings stay; losers join challenger queue"
       }
     },
     "generationHint": {
@@ -126,7 +130,8 @@
       "Rating": "",
       "RoundRobin": "",
       "WinnersCourt": "Vyžaduje alespoň 2 kurty",
-      "Escalera": "Vyžaduje alespoň 2 kurty"
+      "Escalera": "Vyžaduje alespoň 2 kurty",
+      "KingOfCourt": "Multi-court rotation with a challenger pool when players overflow courts"
     },
     "formatDescription": {
       "CLASSIC": "Jeden zápas, pevné páry",
@@ -135,7 +140,8 @@
       "ROUND_ROBIN": "Každý hraje s každým",
       "WINNER_COURT": "Vítězové postupují na vyšší kurt",
       "LADDER": "Postupujte v žebříčku kurtů",
-      "CUSTOM": "Plná ruční kontrola"
+      "CUSTOM": "Plná ruční kontrola",
+      "KOTC": "King court + challenger pool"
     },
     "formatHint": {
       "CLASSIC": "Klasický padelový zápas — 2 na 2.",
@@ -144,7 +150,8 @@
       "ROUND_ROBIN": "Každá dvojice hraje proti všem ostatním.",
       "WINNER_COURT": "Vítězové postupují na vyšší kurt, poražení sestupují.",
       "LADDER": "Hráči seřazeni dle úrovně; vítězové postupují, poražení sestupují.",
-      "CUSTOM": "Navrhněte si vlastní pravidla od nuly."
+      "CUSTOM": "Navrhněte si vlastní pravidla od nuly.",
+      "KOTC": "Winners stay on court 1; other courts refill from the challenger queue."
     },
     "formatDetail": {
       "CLASSIC": "Jeden zápas mezi dvěma pevnými páry. Ideální pro klasický padel 2 na 2 s přáteli.",
@@ -153,7 +160,8 @@
       "ROUND_ROBIN": "Každá dvojice hraje proti všem. Nejspravedlivější způsob, jak určit vítěze, pokud máte čas.",
       "WINNER_COURT": "Král kurtu: vítězové postupují, poražení sestupují. Dvojice se v každém kole mění. Potřeba alespoň dva kurty.",
       "LADDER": "Escalera: hráči jsou rozmístěni podle úrovně. Vítězové jdou na vyšší kurt, poražení na nižší. V každém kole vznikají nové dvojice — ideální pro smíšené skupiny.",
-      "CUSTOM": "Začněte na čisté ploše a nastavte každé pravidlo v pokročilých možnostech."
+      "CUSTOM": "Začněte na čisté ploše a nastavte každé pravidlo v pokročilých možnostech.",
+      "KOTC": "King of the Court with a challenger pool: court 1 winners defend against the next pair from the queue; other courts rotate four players from the pool. Extra players wait their turn."
     },
     "scoring": {
       "CLASSIC_BEST_OF_3": {
@@ -181,6 +189,18 @@
         "subtitle": "Sety do 4 her, na 2 vítězné",
         "hint": "Rychlejší klasický formát"
       },
+      "CLASSIC_FAST4": {
+        "title": "FAST4",
+        "subtitle": "Sety do 4 her, bez výhody, TB při 3:3 do 5",
+        "hint": "Formát FAST4 (Tennis Australia)",
+        "sport": {
+          "TENNIS": {
+            "title": "FAST4 tenis",
+            "subtitle": "Na 2 sety · 4 hry · bez výhody · TB 3:3 do 5",
+            "hint": "Krátký sociální a ligový tenis"
+          }
+        }
+      },
       "CLASSIC_SUPER_TIEBREAK": {
         "title": "Super tiebreak",
         "subtitle": "2 sety + super tiebreak při 1-1",
@@ -191,10 +211,41 @@
         "subtitle": "Jeden set s hrami a 15/30/40…; zápas končí po uplynutí času",
         "hint": "Rotace typu Americano může mít v každém zápase tenisové body"
       },
+      "POINTS_12": {
+        "title": "12 bodů",
+        "subtitle": "12 bodů celkem v setu (oba týmy); vyhrává vyšší skóre",
+        "hint": "Bleskové Americano",
+        "sport": {
+          "PADEL": {
+            "title": "12 míčů",
+            "subtitle": "12 míčů celkem v setu; vyhrává vyšší skóre",
+            "hint": "Krátká padel rotace"
+          }
+        }
+      },
+      "POINTS_15": {
+        "title": "15 bodů",
+        "subtitle": "15 bodů celkem v setu (oba týmy); vyhrává vyšší skóre",
+        "hint": "Rychlá rotace",
+        "sport": {
+          "BADMINTON": {
+            "title": "15 míčů",
+            "subtitle": "15 míčů celkem v setu; nejsou to tři hry do 15",
+            "hint": "Sociální badminton rotace"
+          }
+        }
+      },
       "POINTS_16": {
         "title": "16 bodů",
         "subtitle": "16 bodů celkem v setu (obě strany); vyhrává vyšší skóre",
-        "hint": "Krátké sety — styl Americano"
+        "hint": "Krátké sety — styl Americano",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "16-ball budget",
+            "subtitle": "16 balls total per match (both teams); most points wins",
+            "hint": "Social rotation — not a game to 16 win-by-2"
+          }
+        }
       },
       "POINTS_11": {
         "title": "11 bodů",
@@ -239,6 +290,28 @@
             "title": "Na 2 hry do 11",
             "subtitle": "Tři hry do 11 (výhra o 2); první se 2 hrami vyhrává zápas",
             "hint": "Oficiální délka zápasu"
+          },
+          "SQUASH": {
+            "title": "Na 2 hry do 11",
+            "subtitle": "Tři hry do 11 (výhra o 2); první se 2 hrami vyhrává",
+            "hint": "Kratší squash zápas"
+          },
+          "PICKLEBALL": {
+            "title": "Na 2 hry do 11",
+            "subtitle": "Tři rally hry do 11 (výhra o 2); první se 2 hrami vyhrává",
+            "hint": "Oficiální styl pickleball zápasu"
+          }
+        }
+      },
+      "BEST_OF_3_15": {
+        "title": "Na 2 · do 15",
+        "subtitle": "Tři hry do 15, výhra o 2; kdo vyhraje 2 hry, vyhrává zápas",
+        "hint": "Klubový badminton",
+        "sport": {
+          "BADMINTON": {
+            "title": "Na 2 hry do 15",
+            "subtitle": "Tři hry do 15 (výhra o 2); není to limit míčů",
+            "hint": "Klubový formát BWF 2027"
           }
         }
       },
@@ -274,12 +347,26 @@
       "POINTS_24": {
         "title": "24 bodů",
         "subtitle": "24 bodů celkem v setu (obě strany); vyhrává vyšší skóre",
-        "hint": "Delší sety"
+        "hint": "Delší sety",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "24-ball budget",
+            "subtitle": "24 balls total per match (both teams); most points wins",
+            "hint": "Social rotation cap"
+          }
+        }
       },
       "POINTS_32": {
         "title": "32 bodů",
         "subtitle": "32 bodů celkem v setu (obě strany); vyhrává vyšší skóre",
-        "hint": "Nejdelší sety v kole"
+        "hint": "Nejdelší sety v kole",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "32-ball budget",
+            "subtitle": "32 balls total per match (both teams); most points wins",
+            "hint": "Longer social rotation"
+          }
+        }
       },
       "TIMED": {
         "title": "Na čas",
@@ -298,19 +385,35 @@
       "CLASSIC_PRO_SET": "Pro set",
       "CLASSIC_SINGLE_SET": "Jeden set",
       "CLASSIC_SHORT_SET": "Krátké sety",
+      "CLASSIC_FAST4": "FAST4",
       "CLASSIC_SUPER_TIEBREAK": "Super tiebreak",
       "CLASSIC_TIMED": "Hry/sety · čas",
       "POINTS_11": "Do 11",
+      "POINTS_12": "Do 12",
+      "POINTS_15": "Do 15",
       "POINTS_16": "Do 16",
       "POINTS_21": "Do 21",
       "BEST_OF_3_11": "Na 2 · do 11",
+      "BEST_OF_3_15": "Na 2 · do 15",
       "BEST_OF_3_21": "Bo3 · do 21",
       "BEST_OF_5_11": "Na 3 · do 11",
       "PAR_11": "PAR · 11",
       "POINTS_24": "Do 24",
       "POINTS_32": "Do 32",
       "TIMED": "Na čas",
-      "CUSTOM": "Vlastní"
+      "CUSTOM": "Vlastní",
+      "POINTS_21BySport": {
+        "PICKLEBALL": "21 balls"
+      },
+      "POINTS_16BySport": {
+        "PICKLEBALL": "16 balls"
+      },
+      "POINTS_24BySport": {
+        "PICKLEBALL": "24 balls"
+      },
+      "POINTS_32BySport": {
+        "PICKLEBALL": "32 balls"
+      }
     },
     "goldenPointShort": "Zlatý míč",
     "goldenPoint": {

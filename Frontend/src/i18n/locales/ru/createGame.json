@@ -132,8 +132,18 @@
       }
     },
     "fixedTeams": {
-      "descriptionOn": "Партнёры остаются одинаковыми на протяжении всего мероприятия.",
-      "descriptionOff": "Пары могут меняться между раундами."
+      "GAME": {
+        "descriptionOn": "Один напарник на все матчи этой игры.",
+        "descriptionOff": "Пары могут меняться от раунда к раунду."
+      },
+      "TOURNAMENT": {
+        "descriptionOn": "Партнёры не меняются на всём турнире.",
+        "descriptionOff": "Пары можно переставлять между раундами турнира."
+      },
+      "LEAGUE": {
+        "descriptionOn": "Фиксированные пары на всю лигу.",
+        "descriptionOff": "Составы пар могут меняться от тура к туру."
+      }
     },
     "allowUserInMultipleTeams": {
       "title": "Один игрок в нескольких фиксированных парах",
@@ -211,6 +221,152 @@
     "invitesWillBeSent_few": "{{count}} игрока будут приглашены после создания игры",
     "invitesWillBeSent_many": "{{count}} игроков будут приглашены после создания игры",
     "invitesWillBeSent_other": "{{count}} игроков будут приглашены после создания игры",
-    "priceRequired": "Price must be greater than 0 for this price type"
+    "priceRequired": "Price must be greater than 0 for this price type",
+    "intent": {
+      "title": "Какая игра?",
+      "subtitle": "Выберите формат — детали можно изменить ниже.",
+      "customizeFormat": "Настроить формат",
+      "social": {
+        "title": "Социальная",
+        "description": "Клубная ночь, ротация, без рейтинга"
+      },
+      "match": {
+        "title": "Матч",
+        "description": "Официальные правила, влияет на уровень"
+      },
+      "advanced": {
+        "title": "Расширенный",
+        "description": "Полный мастер формата"
+      }
+    },
+    "templates": {
+      "title": "Шаблоны",
+      "empty": "Нет шаблонов — настройте формат вручную.",
+      "durationApprox2h": "~2 ч",
+      "PADEL_AMERICANO_24": {
+        "title": "Американо (24)",
+        "description": "Случайные пары, до 24 очков"
+      },
+      "PADEL_MEXICANO_24": {
+        "title": "Мексикано (24)",
+        "description": "Пары по уровню, 24 очка"
+      },
+      "durationApprox90m": "~90 мин",
+      "PICKLEBALL_SOCIAL_21": {
+        "title": "Открытая игра (21)",
+        "description": "Американо 2×2, 21 мяч"
+      },
+      "PICKLEBALL_MATCH_BO3_11": {
+        "title": "3×11",
+        "description": "Официальный стиль"
+      },
+      "BADMINTON_CLUB_3X15": {
+        "title": "Клуб 3×15",
+        "description": "До 3 партий до 15"
+      },
+      "BADMINTON_MATCH_3X21": {
+        "title": "3×21",
+        "description": "Официальный матч"
+      },
+      "TT_OPEN_PLAY_11": {
+        "title": "Быстрая партия до 11",
+        "description": "Одиночный или парный — один короткий матч (2–4 игрока)"
+      },
+      "TT_CLUB_RR_11": {
+        "title": "Клубный круговой турнир",
+        "description": "6–8 игроков, одиночный — все со всеми, партия до 11"
+      },
+      "TT_LEGACY_SINGLE_21": {
+        "title": "Old-school 21 очко",
+        "description": "Одна партия до 21, разница 2 (до 2001 г.)"
+      },
+      "TT_BOX_BO3_11": {
+        "title": "Бокс Bo3×11",
+        "description": "Лестница, до 3×11"
+      },
+      "TT_MATCH_BO3_11": {
+        "title": "Матч Bo3×11",
+        "description": "Рейтинговый матч, до 3 партий до 11"
+      },
+      "TT_MATCH_BO5_11": {
+        "title": "Матч Bo5×11",
+        "description": "Рейтинговый матч, до 5 партий до 11"
+      },
+      "TENNIS_FAST4_SOCIAL": {
+        "title": "FAST4",
+        "description": "Короткие сеты"
+      },
+      "TENNIS_CLASSIC_BO3": {
+        "title": "До 3 сетов",
+        "description": "Классический матч"
+      },
+      "SQUASH_QUICK_BO3_11": {
+        "title": "Быстро 3×11",
+        "description": "До 3 партий до 11"
+      },
+      "PADEL_KOTC_11": {
+        "title": "King of the Court",
+        "description": "Short games to 11; kings on court 1, challenger pool for the rest"
+      },
+      "PADEL_AMERICANO_10": {
+        "title": "Americano · 10 min",
+        "description": "Timed rounds (10 min), 24-ball games, random pairs"
+      },
+      "PADEL_AMERICANO_20": {
+        "title": "Americano · 20 min",
+        "description": "Timed rounds (20 min), 24-ball games, random pairs"
+      },
+      "PADEL_CHALLENGER_POOL": {
+        "title": "Challenger pool",
+        "description": "King court + queue: court 1 winners defend, others rotate from the pool"
+      },
+      "PICKLEBALL_KOTC_11": {
+        "title": "King of the Court",
+        "description": "Short 11-ball games; king court + challenger pool"
+      },
+      "BADMINTON_AMERICANO_21": {
+        "title": "Club night (21 balls)",
+        "description": "Doubles Americano, 21-ball social games"
+      },
+      "TT_SWISS_BOX": {
+        "title": "Swiss box",
+        "description": "Skill-pairing box league (ladder engine), Bo3 to 11"
+      }
+    },
+    "presetTier": {
+      "social": "Социальный",
+      "match": "Матч"
+    },
+    "presetMeta": {
+      "POINTS_11": "До 11 (ротация)",
+      "SINGLE_GAME_21": "Партия до 21 (old-school)",
+      "POINTS_16": "До 16 (ротация)",
+      "POINTS_21": "21 мяч",
+      "POINTS_24": "Американо 24",
+      "POINTS_32": "До 32 (ротация)",
+      "CLASSIC_BEST_OF_3": "До 3 сетов",
+      "CLASSIC_BEST_OF_5": "До 5 сетов",
+      "CLASSIC_PRO_SET": "Про-сет",
+      "CLASSIC_SHORT_SET": "Короткие сеты",
+      "CLASSIC_SINGLE_SET": "Один сет",
+      "CLASSIC_SUPER_TIEBREAK": "Супер тай-брейк",
+      "CLASSIC_TIMED": "По времени",
+      "BEST_OF_3_11": "3×11",
+      "BEST_OF_5_11": "5×11",
+      "TIMED": "По времени",
+      "CUSTOM": "Свой",
+      "BEST_OF_3_15": "Best of 3 to 15",
+      "BEST_OF_3_21": "Official 3×21",
+      "POINTS_15": "15-ball budget"
+    },
+    "pickSport": "Choose sport",
+    "overlapHardSave": "This time overlaps a court that is unavailable (club system or blocked). Choose another slot.",
+    "overlapSoftTitle": "Another game is planned here",
+    "overlapSoftMessage": "Another player has a game on this court at this time but has not confirmed the booking yet. You can still continue.",
+    "overlapSoftProceed": "Continue anyway",
+    "markCourtBookedTitle": "Mark court as booked?",
+    "markCourtBookedMessage": "You selected a court but have not marked it as booked. Confirm when you have reserved it with the club.",
+    "markCourtBookedYes": "Yes, I've booked it",
+    "markCourtBookedSkip": "Not yet"
   }
 }

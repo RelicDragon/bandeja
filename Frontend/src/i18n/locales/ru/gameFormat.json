@@ -113,6 +113,10 @@
       "Escalera": {
         "title": "Лестница",
         "subtitle": "Позиционная лестница — победители поднимаются"
+      },
+      "KingOfCourt": {
+        "title": "King of the Court",
+        "subtitle": "Court 1 kings stay; losers join challenger queue"
       }
     },
     "generationHint": {
@@ -128,7 +132,8 @@
       "Rating": "Первый раунд случайный, затем по таблице",
       "RoundRobin": "Самый честный — все играют со всеми",
       "WinnersCourt": "Нужно минимум 2 корта",
-      "Escalera": "Нужно минимум 2 корта"
+      "Escalera": "Нужно минимум 2 корта",
+      "KingOfCourt": "Multi-court rotation with a challenger pool when players overflow courts"
     },
     "formatDescription": {
       "CLASSIC": "Один матч, фиксированные пары",
@@ -137,7 +142,8 @@
       "ROUND_ROBIN": "Каждый играет с каждым",
       "WINNER_COURT": "Победители поднимаются на корт выше",
       "LADDER": "Поднимайтесь в иерархии кортов",
-      "CUSTOM": "Полный ручной контроль"
+      "CUSTOM": "Полный ручной контроль",
+      "KOTC": "King court + challenger pool"
     },
     "formatHint": {
       "CLASSIC": "Классический матч по паделу — 2 на 2.",
@@ -146,7 +152,8 @@
       "ROUND_ROBIN": "Каждая пара играет со всеми другими.",
       "WINNER_COURT": "Король корта: победители поднимаются, проигравшие опускаются.",
       "LADDER": "Игроки расставлены по уровню; победители поднимаются, проигравшие опускаются.",
-      "CUSTOM": "Создайте свои правила с нуля."
+      "CUSTOM": "Создайте свои правила с нуля.",
+      "KOTC": "Winners stay on court 1; other courts refill from the challenger queue."
     },
     "formatDetail": {
       "CLASSIC": "Один матч между двумя фиксированными парами. Идеально для обычной игры 2 на 2.",
@@ -155,7 +162,8 @@
       "ROUND_ROBIN": "Каждая пара играет со всеми. Самый честный способ определить победителя, если есть время.",
       "WINNER_COURT": "Король корта: победители поднимаются, проигравшие опускаются. Партнёры меняются каждый раунд. Нужно минимум два корта.",
       "LADDER": "Эскалера: игроки расставлены по уровню по кортам. Победители переходят на корт выше, проигравшие — ниже. Идеально для групп смешанного уровня.",
-      "CUSTOM": "Начните с чистого листа и настройте все правила через расширенные опции."
+      "CUSTOM": "Начните с чистого листа и настройте все правила через расширенные опции.",
+      "KOTC": "King of the Court with a challenger pool: court 1 winners defend against the next pair from the queue; other courts rotate four players from the pool. Extra players wait their turn."
     },
     "scoring": {
       "CLASSIC_BEST_OF_3": {
@@ -183,6 +191,18 @@
         "subtitle": "Сеты до 4 геймов, до 2 выигранных",
         "hint": "Быстрый классический формат"
       },
+      "CLASSIC_FAST4": {
+        "title": "FAST4",
+        "subtitle": "Сеты до 4 геймов, без преимущества, ТБ при 3:3 до 5",
+        "hint": "Формат FAST4 (Tennis Australia)",
+        "sport": {
+          "TENNIS": {
+            "title": "FAST4 теннис",
+            "subtitle": "До 2 сетов · 4 гейма · без преимущества · ТБ 3:3 до 5",
+            "hint": "Короткий социальный и лиговый теннис"
+          }
+        }
+      },
       "CLASSIC_SUPER_TIEBREAK": {
         "title": "Супер тай-брейк",
         "subtitle": "2 сета + супер тай-брейк при 1-1",
@@ -193,10 +213,41 @@
         "subtitle": "Один сет с геймами и 15/30/40…; матч заканчивается по времени",
         "hint": "Ротация как в Американо с теннисным счётом в каждом матче"
       },
+      "POINTS_12": {
+        "title": "12 очков",
+        "subtitle": "12 очков всего в сете (обе команды); побеждает больший счёт",
+        "hint": "Молниеносное Американо",
+        "sport": {
+          "PADEL": {
+            "title": "12 мячей",
+            "subtitle": "12 мячей всего в сете; побеждает больший счёт",
+            "hint": "Короткая ротация в падел"
+          }
+        }
+      },
+      "POINTS_15": {
+        "title": "15 очков",
+        "subtitle": "15 очков всего в сете (обе команды); побеждает больший счёт",
+        "hint": "Быстрая ротация",
+        "sport": {
+          "BADMINTON": {
+            "title": "15 мячей",
+            "subtitle": "15 мячей всего в сете; это не три гейма до 15",
+            "hint": "Социальный бадминтон по ротации"
+          }
+        }
+      },
       "POINTS_16": {
         "title": "16 очков",
         "subtitle": "16 очков всего в сете (обе команды); побеждает больший счёт",
-        "hint": "Короткие сеты — стиль Американо"
+        "hint": "Короткие сеты — стиль Американо",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "16-ball budget",
+            "subtitle": "16 balls total per match (both teams); most points wins",
+            "hint": "Social rotation — not a game to 16 win-by-2"
+          }
+        }
       },
       "POINTS_11": {
         "title": "11 очков",
@@ -241,6 +292,28 @@
             "title": "До 2 геймов до 11",
             "subtitle": "Три гейма до 11 (победа в 2); первый с 2 геймами выигрывает матч",
             "hint": "Официальная длина матча"
+          },
+          "SQUASH": {
+            "title": "До 2 геймов до 11",
+            "subtitle": "Три гейма до 11 (победа в 2); первый с 2 геймами выигрывает",
+            "hint": "Короткий матч в сквош"
+          },
+          "PICKLEBALL": {
+            "title": "До 2 игр до 11",
+            "subtitle": "Три rally-игры до 11 (победа в 2); первый с 2 играми выигрывает",
+            "hint": "Матч pickleball в официальном стиле"
+          }
+        }
+      },
+      "BEST_OF_3_15": {
+        "title": "До 2 · до 15",
+        "subtitle": "Три гейма до 15, победа в 2; кто выиграет 2 гейма — побеждает",
+        "hint": "Клубный бадминтон",
+        "sport": {
+          "BADMINTON": {
+            "title": "До 2 геймов до 15",
+            "subtitle": "Три гейма до 15 (победа в 2); это не лимит мячей",
+            "hint": "Клубный формат BWF 2027"
           }
         }
       },
@@ -276,12 +349,26 @@
       "POINTS_24": {
         "title": "24 очка",
         "subtitle": "24 очка всего в сете (обе команды); побеждает больший счёт",
-        "hint": "Чуть длиннее сеты"
+        "hint": "Чуть длиннее сеты",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "24-ball budget",
+            "subtitle": "24 balls total per match (both teams); most points wins",
+            "hint": "Social rotation cap"
+          }
+        }
       },
       "POINTS_32": {
         "title": "32 очка",
         "subtitle": "32 очка всего в сете (обе команды); побеждает больший счёт",
-        "hint": "Самые длинные сеты в раунде"
+        "hint": "Самые длинные сеты в раунде",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "32-ball budget",
+            "subtitle": "32 balls total per match (both teams); most points wins",
+            "hint": "Longer social rotation"
+          }
+        }
       },
       "TIMED": {
         "title": "На время",
@@ -300,19 +387,35 @@
       "CLASSIC_PRO_SET": "Про-сет",
       "CLASSIC_SINGLE_SET": "Один сет",
       "CLASSIC_SHORT_SET": "Короткие сеты",
+      "CLASSIC_FAST4": "FAST4",
       "CLASSIC_SUPER_TIEBREAK": "Супер тай-брейк",
       "CLASSIC_TIMED": "Геймы/сеты · время",
       "POINTS_11": "До 11",
+      "POINTS_12": "До 12",
+      "POINTS_15": "До 15",
       "POINTS_16": "До 16",
       "POINTS_21": "До 21",
       "BEST_OF_3_11": "До 2 · до 11",
+      "BEST_OF_3_15": "До 2 · до 15",
       "BEST_OF_3_21": "Bo3 · до 21",
       "BEST_OF_5_11": "До 3 · до 11",
       "PAR_11": "PAR · 11",
       "POINTS_24": "До 24",
       "POINTS_32": "До 32",
       "TIMED": "На время",
-      "CUSTOM": "Свой"
+      "CUSTOM": "Свой",
+      "POINTS_21BySport": {
+        "PICKLEBALL": "21 balls"
+      },
+      "POINTS_16BySport": {
+        "PICKLEBALL": "16 balls"
+      },
+      "POINTS_24BySport": {
+        "PICKLEBALL": "24 balls"
+      },
+      "POINTS_32BySport": {
+        "PICKLEBALL": "32 balls"
+      }
     },
     "goldenPointShort": "Золотой мяч",
     "goldenPoint": {

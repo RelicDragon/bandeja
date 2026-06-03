@@ -97,6 +97,12 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
   handleReplaceOptimisticRef.current = handleReplaceOptimistic;
   const groupChannelIdRef = useRef(groupChannelId);
   groupChannelIdRef.current = groupChannelId;
+  const userRef = useRef(user);
+  userRef.current = user;
+  const initialChatTypeRef = useRef(initialChatType);
+  initialChatTypeRef.current = initialChatType;
+  const freshOpenSignalRef = useRef(freshOpenSignal);
+  freshOpenSignalRef.current = freshOpenSignal;
 
   useEffect(() => {
     const ac = new AbortController();
@@ -105,14 +111,23 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
     const loadData = async () => {
       if (!id || !user?.id) {
         setIsLoadingContext(false);
+        setIsLoadingMessages(false);
+        setIsInitialLoad(false);
         return;
       }
 
+      if (freshOpenSignalRef.current) {
+        hasLoadedRef.current = false;
+        openPaintCommittedRef.current = false;
+        loadingIdRef.current = undefined;
+        isLoadingRef.current = false;
+      }
+
       const currentLoadId = `${id}-${contextType}`;
-      if (!freshOpenSignal && hasLoadedRef.current && loadingIdRef.current === currentLoadId) {
+      if (!freshOpenSignalRef.current && hasLoadedRef.current && loadingIdRef.current === currentLoadId) {
         return;
       }
-      if (isLoadingRef.current && loadingIdRef.current === currentLoadId && !freshOpenSignal) {
+      if (isLoadingRef.current && loadingIdRef.current === currentLoadId && !freshOpenSignalRef.current) {
         return;
       }
 
@@ -199,15 +214,15 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
           void applyTranslationPref();
         });
 
-        const contextKey = `${id}-${contextType}-${initialChatType ?? ''}`;
+        const contextKey = `${id}-${contextType}-${initialChatTypeRef.current ?? ''}`;
         let effectiveChatType: ChatType = currentChatTypeRef.current;
         let committedGameDefaultsKey: string | null = null;
         if (contextType === 'GAME' && gameDefaultsAppliedKeyRef.current !== contextKey) {
           let resolved = currentChatTypeRef.current;
           if (loadedContext) {
-            resolved = initialChatType ?? 'PUBLIC';
-          } else if (initialChatType) {
-            resolved = initialChatType;
+            resolved = initialChatTypeRef.current ?? 'PUBLIC';
+          } else if (initialChatTypeRef.current) {
+            resolved = initialChatTypeRef.current;
           }
           effectiveChatType = resolved;
           if (resolved !== currentChatTypeRef.current) setCurrentChatType(resolved);
@@ -216,8 +231,9 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
         if (signal.aborted) return;
         if (committedGameDefaultsKey) gameDefaultsAppliedKeyRef.current = committedGameDefaultsKey;
 
-        const outboxCtx: BootstrapOutboxContext | undefined = user?.id
-          ? { userId: user.id, user: user as import('@/types').BasicUser }
+        const activeUser = userRef.current;
+        const outboxCtx: BootstrapOutboxContext | undefined = activeUser?.id
+          ? { userId: activeUser.id, user: activeUser as import('@/types').BasicUser }
           : undefined;
         await bootstrapThreadRef.current(
           contextType === 'GAME' ? effectiveChatType : undefined,
@@ -225,13 +241,13 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
         );
         if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
 
-        if (user?.id) {
+        if (activeUser?.id) {
           await applyQueuedMessagesToState({
             contextType,
             contextId: id,
             currentChatType: normalizeChatType(effectiveChatType),
-            userId: user.id,
-            user: user as import('@/types').BasicUser,
+            userId: activeUser.id,
+            user: activeUser as import('@/types').BasicUser,
             messagesRef,
             setMessages,
             handleMarkFailed: handleMarkFailedRef.current,
@@ -259,7 +275,24 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
       ac.abort();
       if (loadingIdRef.current === `${id}-${contextType}`) isLoadingRef.current = false;
     };
-    // Intentionally narrow deps: unstable callbacks/refs must not re-trigger full open (bootstrap + reconcile).
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- open once per id+contextType via refs + hasLoadedRef
-  }, [id, user?.id, contextType, initialChatType, freshOpenSignal]);
+  }, [
+    id,
+    user?.id,
+    contextType,
+    freshOpenSignal,
+    hasLoadedRef,
+    loadingIdRef,
+    isLoadingRef,
+    messagesRef,
+    openPaintCommittedRef,
+    handleNewMessageRef,
+    setMessages,
+    setCurrentChatType,
+    setIsBlockedByUser,
+    setIsMuted,
+    setTranslateToLanguageForChat,
+    setIsInitialLoad,
+    setIsLoadingMessages,
+    setIsLoadingContext,
+  ]);
 }

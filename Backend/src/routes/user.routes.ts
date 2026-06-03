@@ -48,6 +48,21 @@ router.get(
 );
 router.get('/workout-sessions', authenticate, userController.getMyWorkoutSessions);
 router.post('/profile/sync-telegram', authenticate, userController.syncTelegramProfile);
+router.post(
+  '/profile/sync-playtomic',
+  authenticate,
+  welcomeScreenLimiter,
+  validate([
+    body('levels').isArray({ min: 1 }).withMessage('levels must be a non-empty array'),
+    body('levels.*.playtomicSportId').notEmpty().withMessage('playtomicSportId is required'),
+    body('levels.*.level').isFloat({ min: 0, max: 7 }).withMessage('level must be between 0 and 7'),
+    body('levels.*.reliability')
+      .optional()
+      .isFloat({ min: 0, max: 100 })
+      .withMessage('reliability must be between 0 and 100'),
+  ]),
+  userController.syncPlaytomicProfile,
+);
 router.post('/profile/telegram-link-intent', authenticate, userController.createTelegramLinkIntent);
 router.get('/notification-preferences', authenticate, userController.getNotificationPreferences);
 router.put(
@@ -144,6 +159,7 @@ router.post(
 );
 
 router.delete('/me/sports/:sport', authenticate, userController.removeSport);
+router.get('/me/sport-activity', authenticate, userController.getMySportActivity);
 
 router.post(
   '/primary-sport/confirm',
@@ -170,6 +186,18 @@ router.put(
     body('level').isFloat({ min: 1, max: 7 }).withMessage('Level must be between 1.0 and 7.0'),
   ]),
   userController.updateSportProfileLevel
+);
+
+router.put(
+  '/sport-profiles/:sport/external-rating',
+  authenticate,
+  validate([
+    body('externalRatingHint')
+      .optional({ values: 'null' })
+      .custom((v) => v == null || (typeof v === 'string' && v.length <= 32))
+      .withMessage('externalRatingHint must be a string of at most 32 characters or null'),
+  ]),
+  userController.updateSportExternalRating,
 );
 
 router.post(

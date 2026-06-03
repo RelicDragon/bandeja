@@ -41,6 +41,10 @@ export type LiveScoringState = {
   serveGuideSkipped?: boolean;
   optionalDeciderFormat?: LiveOptionalDeciderFormat;
   timedClassicSetLocked?: boolean;
+  /** Strict officiating: let called — block scoring until replay confirmed. */
+  officiatingLetPending?: boolean;
+  /** Rally-cap sports: winner of each point (serve rotation / squash PAR). */
+  pointWinnerLog?: LiveTeamSide[];
 };
 
 export type LiveScoringActionResult = {

@@ -33,6 +33,7 @@
       "ROUND_ROBIN": "Round Robin",
       "WINNER_COURT": "King of the Court",
       "LADDER": "Ladder (Escalera)",
+      "KOTC": "King of the Court",
       "CUSTOM": "Custom"
     },
     "entityTypes": {
@@ -63,6 +64,11 @@
     "availableForMeHint": "Showing games with available slots and suitable level limits",
     "showPrivateGames": "Show private games",
     "showPrivateGamesHint": "Includes non-public games you are not in",
+    "findDiscovery": {
+      "tierSection": "Format",
+      "noRatingOnly": "No rating only",
+      "noRatingHint": "Hide games that affect player ratings"
+    },
     "genderPromptTitle": "Set your gender for better game matching",
     "genderPromptSubtitle": "To better fit games and participate in mixed-gender games, please set your gender.",
     "genderPromptAction": "Set gender",

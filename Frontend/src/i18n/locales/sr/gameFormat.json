@@ -1,349 +1,452 @@
 {
   "gameFormat": {
-    "title": "Формат меча",
-    "trainingTitle": "Тренинг",
-    "recommended": "Препоручено",
-    "popular": "Популарно",
-    "popularFormats": "Популарни формати",
-    "moreFormats": "Више формата",
-    "moreOptions": "Више опција",
-    "lessOptions": "Мање опција",
-    "minPlayers_one": "{{count}}+ играч",
-    "minPlayers_few": "{{count}}+ играча",
-    "minPlayers_other": "{{count}}+ играча",
-    "minCourts_one": "{{count}}+ терен",
-    "minCourts_few": "{{count}}+ терена",
-    "minCourts_other": "{{count}}+ терена",
-    "stepScoringModeHint": "Како желите да бројите бодове у сваком мечу?",
-    "stepSetStructureHint": "Изаберите структуру сетова за сваки меч.",
-    "stepPointsTotalHint": "Колико бодова у сету укупно (збир оба тима)?",
+    "title": "Format meča",
+    "trainingTitle": "Trening",
+    "recommended": "Preporučeno",
+    "popular": "Popularno",
+    "popularFormats": "Popularni formati",
+    "moreFormats": "Više formata",
+    "moreOptions": "Više opcija",
+    "lessOptions": "Manje opcija",
+    "minPlayers_one": "{{count}}+ igrač",
+    "minPlayers_few": "{{count}}+ igrača",
+    "minPlayers_other": "{{count}}+ igrača",
+    "minCourts_one": "{{count}}+ teren",
+    "minCourts_few": "{{count}}+ terena",
+    "minCourts_other": "{{count}}+ terena",
+    "stepScoringModeHint": "Kako želite da brojite bodove u svakom meču?",
+    "stepSetStructureHint": "Izaberite strukturu setova za svaki meč.",
+    "stepPointsTotalHint": "Koliko bodova u setu ukupno (zbir oba tima)?",
     "stepPointsTotalHintBySport": {
-      "TABLE_TENNIS": "Лимит поена по гему или меч до 2 победа (гемови до 11).",
-      "BADMINTON": "Дужина меча — обично до 2 победе у гемовима до 21.",
-      "SQUASH": "Меч до 3 победе — гемови до 11, победа у 2.",
-      "PICKLEBALL": "Колико поена у свакој игри?"
+      "TABLE_TENNIS": "Limit poena po gemu ili meč do 2 pobeda (gemovi do 11).",
+      "BADMINTON": "Dužina meča — obično do 2 pobede u gemovima do 21.",
+      "SQUASH": "Meč do 3 pobede — gemovi do 11, pobeda u 2.",
+      "PICKLEBALL": "Koliko poena u svakoj igri?"
     },
-    "stepGenerationHint": "Како се одређују парови у сваком кругу?",
-    "stepRankingHint": "Подесите како се одређује укупни победник.",
-    "standingPointsHint": "Поени по исходу меча за табелу (није број поена у самом мечу).",
-    "classicWithRotationWarning": "Класично бодовање гемовима и сетовима са форматима ротације функционише, али кругови трају дуже него бодовно рачунање.",
+    "stepGenerationHint": "Kako se određuju parovi u svakom krugu?",
+    "stepRankingHint": "Podesite kako se određuje ukupni pobednik.",
+    "standingPointsHint": "Poeni po ishodu meča za tabelu (nije broj poena u samom meču).",
+    "classicWithRotationWarning": "Klasično bodovanje gemovima i setovima sa formatima rotacije funkcioniše, ali krugovi traju duže nego bodovno računanje.",
     "steps": {
-      "scoringMode": "Бодовање",
-      "setStructure": "Сетови",
-      "pointsTotal": "Бодови",
-      "generation": "Парови",
-      "ranking": "Рангирање"
+      "scoringMode": "Bodovanje",
+      "setStructure": "Setovi",
+      "pointsTotal": "Bodovi",
+      "generation": "Parovi",
+      "ranking": "Rangiranje"
     },
     "scoringMode": {
       "CLASSIC": {
-        "title": "Гемови / Сетови",
-        "subtitle": "Бодовање у стилу тениса (15/30/40…), затим гемови и сетови — класични падел.",
-        "hint": "нпр. 15 / 30 / 40 у гему → сет 6–4",
+        "title": "Gemovi / Setovi",
+        "subtitle": "Bodovanje u stilu tenisa (15/30/40…), zatim gemovi i setovi — klasični padel.",
+        "hint": "npr. 15 / 30 / 40 u gemu → set 6–4",
         "sport": {
           "TENNIS": {
-            "subtitle": "Тениско бодовање (15/30/40…), затим гемови и сетови.",
-            "hint": "нпр. 15 / 30 / 40 у гему → сет 6–4"
+            "subtitle": "Tenisko bodovanje (15/30/40…), zatim gemovi i setovi.",
+            "hint": "npr. 15 / 30 / 40 u gemu → set 6–4"
           }
         }
       },
       "POINTS": {
-        "title": "Прости бодови",
-        "subtitle": "Сет има фиксан укупан број бодова (оба тима заједно). Побједник је већи резултат на крају — није 15/30/40.",
-        "hint": "нпр. 11–10 у сету на 21 — збир мора одговарати лимиту",
+        "title": "Prosti bodovi",
+        "subtitle": "Set ima fiksan ukupan broj bodova (oba tima zajedno). Pobjednik je veći rezultat na kraju — nije 15/30/40.",
+        "hint": "npr. 11–10 u setu na 21 — zbir mora odgovarati limitu",
         "sport": {
           "TABLE_TENNIS": {
-            "title": "Rally бодови",
-            "subtitle": "Гемови до лимита са победом у 2 — без 15/30/40.",
-            "hint": "нпр. гем 11–9 или меч до 2 победе до 11"
+            "title": "Rally bodovi",
+            "subtitle": "Gemovi do limita sa pobedom u 2 — bez 15/30/40.",
+            "hint": "npr. gem 11–9 ili meč do 2 pobede do 11"
           },
           "BADMINTON": {
-            "title": "Rally бодови",
-            "subtitle": "Гемови до 21 (победа у 2) или један гем до 21.",
-            "hint": "нпр. 21–19 у гему или 2 од 3 гема"
+            "title": "Rally bodovi",
+            "subtitle": "Gemovi do 21 (pobeda u 2) ili jedan gem do 21.",
+            "hint": "npr. 21–19 u gemu ili 2 od 3 gema"
           },
           "SQUASH": {
-            "title": "Rally бодови",
-            "subtitle": "PAR до 11 (победа у 2) или меч до 2 / 3 победе до 11.",
-            "hint": "нпр. 11–8 по гему у мечу до 5 гемова"
+            "title": "Rally bodovi",
+            "subtitle": "PAR do 11 (pobeda u 2) ili meč do 2 / 3 pobede do 11.",
+            "hint": "npr. 11–8 po gemu u meču do 5 gemova"
           },
           "PICKLEBALL": {
-            "title": "Rally бодови",
-            "subtitle": "Лимит поена по игри — уобичајене дужине испод.",
-            "hint": "нпр. 11–9 по вашим локалним правилима"
+            "title": "Rally bodovi",
+            "subtitle": "Limit poena po igri — uobičajene dužine ispod.",
+            "hint": "npr. 11–9 po vašim lokalnim pravilima"
           }
         }
       }
     },
     "generation": {
       "Handmade": {
-        "title": "Ручно",
-        "subtitle": "Празни мечеви — играче постављате у свакој рунди"
+        "title": "Ručno",
+        "subtitle": "Prazni mečevi — igrače postavljate u svakoj rundi"
       },
       "Automatic": {
-        "title": "Аутоматски",
+        "title": "Automatski",
         "subtitle": {
-          "two": "Један меч 1 на 1 по рунди између два играча.",
-          "four": "Три меча 2 на 2 по рунди — свако могуће спаривање једном.",
-          "fourFixedTeams": "Један меч 2 на 2 по рунди између два фиксна пара.",
-          "fallback": "Један меч по рунди са 2 играча, или сва спаривања са 4."
+          "two": "Jedan meč 1 na 1 po rundi između dva igrača.",
+          "four": "Tri meča 2 na 2 po rundi — svako moguće sparivanje jednom.",
+          "fourFixedTeams": "Jedan meč 2 na 2 po rundi između dva fiksna para.",
+          "fallback": "Jedan meč po rundi sa 2 igrača, ili sva sparivanja sa 4."
         }
       },
       "Fixed": {
-        "title": "Фиксно",
-        "subtitle": "Остале рунде понављају парове из прве"
+        "title": "Fiksno",
+        "subtitle": "Ostale runde ponavljaju parove iz prve"
       },
       "Random": {
-        "title": "Американо",
-        "subtitle": "Насумични партнери сваке рунде"
+        "title": "Amerikano",
+        "subtitle": "Nasumični partneri svake runde"
       },
       "Rating": {
-        "title": "Мексикано",
-        "subtitle": "Парови према тренутном рангу"
+        "title": "Meksikano",
+        "subtitle": "Parovi prema trenutnom rangu"
       },
       "RoundRobin": {
-        "title": "Кружни систем",
-        "subtitle": "Свако игра са сваким"
+        "title": "Kružni sistem",
+        "subtitle": "Svako igra sa svakim"
       },
       "WinnersCourt": {
-        "title": "Краљ терена",
-        "subtitle": "Победници се пењу, губитници ротирају"
+        "title": "Kralj terena",
+        "subtitle": "Pobednici se penju, gubitnici rotiraju"
       },
       "Escalera": {
-        "title": "Лествица",
-        "subtitle": "Позициона лествица — победници се пењу"
+        "title": "Lestvica",
+        "subtitle": "Poziciona lestvica — pobednici se penju"
+      },
+      "KingOfCourt": {
+        "title": "King of the Court",
+        "subtitle": "Court 1 kings stay; losers join challenger queue"
       }
     },
     "generationHint": {
-      "Handmade": "Без унапред постављених тимова — превлачите играче у мечеве",
+      "Handmade": "Bez unapred postavljenih timova — prevlačite igrače u mečeve",
       "Automatic": {
-        "two": "Један директан дуел сваку рунду.",
-        "four": "Три меча по рунди тако да се сваки пар састане са сваким једном.",
-        "fourFixedTeams": "Један меч по рунди између ваша два закључана пара.",
-        "fallback": "Поставите макс. 2 или 4 играча за тачан распоред."
+        "two": "Jedan direktan duel svaku rundu.",
+        "four": "Tri meča po rundi tako da se svaki par sastane sa svakim jednom.",
+        "fourFixedTeams": "Jedan meč po rundi između vaša dva zaključana para.",
+        "fallback": "Postavite maks. 2 ili 4 igrača za tačan raspored."
       },
-      "Fixed": "Након што подесите прву рунду, остале рунде ће бити копија прве.",
+      "Fixed": "Nakon što podesite prvu rundu, ostale runde će biti kopija prve.",
       "Random": "",
       "Rating": "",
       "RoundRobin": "",
-      "WinnersCourt": "Потребна су најмање 2 терена",
-      "Escalera": "Потребна су најмање 2 терена"
+      "WinnersCourt": "Potrebna su najmanje 2 terena",
+      "Escalera": "Potrebna su najmanje 2 terena",
+      "KingOfCourt": "Multi-court rotation with a challenger pool when players overflow courts"
     },
     "formatDescription": {
-      "CLASSIC": "Један меч, фиксни парови",
-      "AMERICANO": "Насумични партнери сваке рунде",
-      "MEXICANO": "Парови према рангу",
-      "ROUND_ROBIN": "Свако игра са сваким",
-      "WINNER_COURT": "Победници се пењу на виши терен",
-      "LADDER": "Пењите се на лествици терена",
-      "CUSTOM": "Потпуна ручна контрола"
+      "CLASSIC": "Jedan meč, fiksni parovi",
+      "AMERICANO": "Nasumični partneri svake runde",
+      "MEXICANO": "Parovi prema rangu",
+      "ROUND_ROBIN": "Svako igra sa svakim",
+      "WINNER_COURT": "Pobednici se penju na viši teren",
+      "LADDER": "Penjite se na lestvici terena",
+      "CUSTOM": "Potpuna ručna kontrola",
+      "KOTC": "King court + challenger pool"
     },
     "formatHint": {
-      "CLASSIC": "Традиционални падел меч — 2 на 2.",
-      "AMERICANO": "Турнир са ротацијом и насумичним паровима сваке рунде.",
-      "MEXICANO": "Парови се формирају према тренутном пласману.",
-      "ROUND_ROBIN": "Сваки пар игра против свих осталих.",
-      "WINNER_COURT": "Победници се пењу, поражени силазе. Партнери се мењају.",
-      "LADDER": "Играчи су поређани по нивоу; победници горе, поражени доле.",
-      "CUSTOM": "Дизајнирајте своја правила од нуле."
+      "CLASSIC": "Tradicionalni padel meč — 2 na 2.",
+      "AMERICANO": "Turnir sa rotacijom i nasumičnim parovima svake runde.",
+      "MEXICANO": "Parovi se formiraju prema trenutnom plasmanu.",
+      "ROUND_ROBIN": "Svaki par igra protiv svih ostalih.",
+      "WINNER_COURT": "Pobednici se penju, poraženi silaze. Partneri se menjaju.",
+      "LADDER": "Igrači su poređani po nivou; pobednici gore, poraženi dole.",
+      "CUSTOM": "Dizajnirajte svoja pravila od nule.",
+      "KOTC": "Winners stay on court 1; other courts refill from the challenger queue."
     },
     "formatDetail": {
-      "CLASSIC": "Један меч између два фиксна пара. Савршено за обичан падел 2 на 2 са пријатељима.",
-      "AMERICANO": "Друштвени турнир — у свакој рунди партнери се бирају насумично, тако да свако игра са свима. Индивидуални поени се сабирају.",
-      "MEXICANO": "Прва рунда је насумична; даље парови зависе од тренутне табеле (#1 са #3 против #2 са #4). Јаки играју против јаких — сјајно за такмичарске сесије.",
-      "ROUND_ROBIN": "Сваки пар игра против свих. Најфер начин да се одреди победник када има времена.",
-      "WINNER_COURT": "Краљ терена: победници иду на виши терен, поражени на нижи. Партнери се мењају сваке рунде. Потребна су најмање два терена.",
-      "LADDER": "Ескалера: играчи су распоређени по нивоу на теренима. Победници се пењу, поражени силазе. Нови тимови сваке рунде — идеално за мешовите групе.",
-      "CUSTOM": "Почните од нуле и подесите свако правило у напредним опцијама."
+      "CLASSIC": "Jedan meč između dva fiksna para. Savršeno za običan padel 2 na 2 sa prijateljima.",
+      "AMERICANO": "Društveni turnir — u svakoj rundi partneri se biraju nasumično, tako da svako igra sa svima. Individualni poeni se sabiraju.",
+      "MEXICANO": "Prva runda je nasumična; dalje parovi zavise od trenutne tabele (#1 sa #3 protiv #2 sa #4). Jaki igraju protiv jakih — sjajno za takmičarske sesije.",
+      "ROUND_ROBIN": "Svaki par igra protiv svih. Najfer način da se odredi pobednik kada ima vremena.",
+      "WINNER_COURT": "Kralj terena: pobednici idu na viši teren, poraženi na niži. Partneri se menjaju svake runde. Potrebna su najmanje dva terena.",
+      "LADDER": "Eskalera: igrači su raspoređeni po nivou na terenima. Pobednici se penju, poraženi silaze. Novi timovi svake runde — idealno za mešovite grupe.",
+      "CUSTOM": "Počnite od nule i podesite svako pravilo u naprednim opcijama.",
+      "KOTC": "King of the Court with a challenger pool: court 1 winners defend against the next pair from the queue; other courts rotate four players from the pool. Extra players wait their turn."
     },
     "scoring": {
       "CLASSIC_BEST_OF_3": {
-        "title": "На 2 добијена сета",
-        "subtitle": "Победник је онај ко први освоји 2 сета",
-        "hint": "Тениски сетови са гемовима"
+        "title": "Na 2 dobijena seta",
+        "subtitle": "Pobednik je onaj ko prvi osvoji 2 seta",
+        "hint": "Teniski setovi sa gemovima"
       },
       "CLASSIC_BEST_OF_5": {
-        "title": "На 3 добијена сета",
-        "subtitle": "Победник је онај ко први освоји 3 сета",
-        "hint": "Дуг формат, идеално за финала"
+        "title": "Na 3 dobijena seta",
+        "subtitle": "Pobednik je onaj ko prvi osvoji 3 seta",
+        "hint": "Dug format, idealno za finala"
       },
       "CLASSIC_PRO_SET": {
-        "title": "Про сет",
-        "subtitle": "Један дуг сет одлучује меч",
-        "hint": "Један сет са гемовима"
+        "title": "Pro set",
+        "subtitle": "Jedan dug set odlučuje meč",
+        "hint": "Jedan set sa gemovima"
       },
       "CLASSIC_SINGLE_SET": {
-        "title": "Један сет",
-        "subtitle": "Стандардни сет до 6 гемова (ТБ при 6:6)",
-        "hint": "Један сет са гемовима; опционални тајмер у следећем кораку"
+        "title": "Jedan set",
+        "subtitle": "Standardni set do 6 gemova (TB pri 6:6)",
+        "hint": "Jedan set sa gemovima; opcionalni tajmer u sledećem koraku"
       },
       "CLASSIC_SHORT_SET": {
-        "title": "Кратки сетови",
-        "subtitle": "Сетови до 4 гема, на 2 добијена",
-        "hint": "Бржи класични формат"
+        "title": "Kratki setovi",
+        "subtitle": "Setovi do 4 gema, na 2 dobijena",
+        "hint": "Brži klasični format"
+      },
+      "CLASSIC_FAST4": {
+        "title": "FAST4",
+        "subtitle": "Setovi do 4 gema, bez prednosti, TB pri 3:3 do 5",
+        "hint": "FAST4 format (Tennis Australia)",
+        "sport": {
+          "TENNIS": {
+            "title": "FAST4 tenis",
+            "subtitle": "Na 2 seta · 4 gema · bez prednosti · TB 3:3 do 5",
+            "hint": "Kratki društveni i ligaški tenis"
+          }
+        }
       },
       "CLASSIC_SUPER_TIEBREAK": {
-        "title": "Супер тај-брејк",
-        "subtitle": "2 сета + супер тај-брејк при 1-1",
-        "hint": "Сажет меч у класичном стилу"
+        "title": "Super taj-brejk",
+        "subtitle": "2 seta + super taj-brejk pri 1-1",
+        "hint": "Sažet meč u klasičnom stilu"
       },
       "CLASSIC_TIMED": {
-        "title": "Гемови/сетови · на вријеме",
-        "subtitle": "Један сет са гемовима и 15/30/40…; меч се завршава кад истекне вријеме",
-        "hint": "Ротација као Americano са тенис бодовањем по мечу"
+        "title": "Gemovi/setovi · na vrijeme",
+        "subtitle": "Jedan set sa gemovima i 15/30/40…; meč se završava kad istekne vrijeme",
+        "hint": "Rotacija kao Americano sa tenis bodovanjem po meču"
+      },
+      "POINTS_12": {
+        "title": "12 poena",
+        "subtitle": "12 poena ukupno u setu (oba tima); pobjeđuje veći rezultat",
+        "hint": "Munjevito Americano",
+        "sport": {
+          "PADEL": {
+            "title": "12 lopti",
+            "subtitle": "12 lopti ukupno u setu; pobjeđuje veći rezultat",
+            "hint": "Kratka padel rotacija"
+          }
+        }
+      },
+      "POINTS_15": {
+        "title": "15 poena",
+        "subtitle": "15 poena ukupno u setu (oba tima); pobjeđuje veći rezultat",
+        "hint": "Brza rotacija",
+        "sport": {
+          "BADMINTON": {
+            "title": "15 lopti",
+            "subtitle": "15 lopti ukupno u setu; nije tri gema do 15",
+            "hint": "Društveni badminton po rotaciji"
+          }
+        }
       },
       "POINTS_16": {
-        "title": "16 поена",
-        "subtitle": "16 поена укупно у сету (оба тима); побјеђује већи резултат",
-        "hint": "Кратки сетови — стил Американо"
+        "title": "16 poena",
+        "subtitle": "16 poena ukupno u setu (oba tima); pobjeđuje veći rezultat",
+        "hint": "Kratki setovi — stil Amerikano",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "16-ball budget",
+            "subtitle": "16 balls total per match (both teams); most points wins",
+            "hint": "Social rotation — not a game to 16 win-by-2"
+          }
+        }
       },
       "POINTS_11": {
-        "title": "11 поена",
-        "subtitle": "Једна игра до 11 поена, победа у 2",
-        "hint": "Кратка rally игра",
+        "title": "11 poena",
+        "subtitle": "Jedna igra do 11 poena, pobeda u 2",
+        "hint": "Kratka rally igra",
         "sport": {
           "TABLE_TENNIS": {
-            "title": "Гем до 11",
-            "subtitle": "Један гем до 11 поена (победа у 2)",
-            "hint": "нпр. 11–9 — при изједначењу победа у 2"
+            "title": "Gem do 11",
+            "subtitle": "Jedan gem do 11 poena (pobeda u 2)",
+            "hint": "npr. 11–9 — pri izjednačenju pobeda u 2"
           },
           "PICKLEBALL": {
-            "title": "Игра до 11",
-            "subtitle": "Једна rally игра до 11, победа у 2",
-            "hint": "Честа рекреативна дужина"
+            "title": "Igra do 11",
+            "subtitle": "Jedna rally igra do 11, pobeda u 2",
+            "hint": "Česta rekreativna dužina"
           }
         }
       },
       "POINTS_21": {
-        "title": "21 поен",
-        "subtitle": "21 поен укупно у сету (оба тима); побјеђује већи резултат",
-        "hint": "Уобичајена дужина Американо",
+        "title": "21 poen",
+        "subtitle": "21 poen ukupno u setu (oba tima); pobjeđuje veći rezultat",
+        "hint": "Uobičajena dužina Amerikano",
         "sport": {
           "BADMINTON": {
-            "title": "Гем до 21",
-            "subtitle": "Један гем до 21, победа у 2",
-            "hint": "Краћи бадминтон меч"
+            "title": "Gem do 21",
+            "subtitle": "Jedan gem do 21, pobeda u 2",
+            "hint": "Kraći badminton meč"
           },
           "PICKLEBALL": {
-            "title": "Игра до 21",
-            "subtitle": "Једна игра до 21 поена",
-            "hint": "Уобичајена дужина pickleball-а"
+            "title": "Igra do 21",
+            "subtitle": "Jedna igra do 21 poena",
+            "hint": "Uobičajena dužina pickleball-a"
           }
         }
       },
       "BEST_OF_3_11": {
-        "title": "До 2 · до 11",
-        "subtitle": "Три гема до 11, победа у 2; ко освоји 2 гема — побеђује",
-        "hint": "Стандардни стони тенис",
+        "title": "Do 2 · do 11",
+        "subtitle": "Tri gema do 11, pobeda u 2; ko osvoji 2 gema — pobeđuje",
+        "hint": "Standardni stoni tenis",
         "sport": {
           "TABLE_TENNIS": {
-            "title": "До 2 гема до 11",
-            "subtitle": "Три гема до 11 (победа у 2); први са 2 гема побеђује",
-            "hint": "Званична дужина меча"
+            "title": "Do 2 gema do 11",
+            "subtitle": "Tri gema do 11 (pobeda u 2); prvi sa 2 gema pobeđuje",
+            "hint": "Zvanična dužina meča"
+          },
+          "SQUASH": {
+            "title": "Do 2 gema do 11",
+            "subtitle": "Tri gema do 11 (pobeda u 2); prvi sa 2 gema pobeđuje",
+            "hint": "Kraći squash meč"
+          },
+          "PICKLEBALL": {
+            "title": "Do 2 igre do 11",
+            "subtitle": "Tri rally igre do 11 (pobeda u 2); prvi sa 2 igre pobeđuje",
+            "hint": "Pickleball meč u zvaničnom stilu"
+          }
+        }
+      },
+      "BEST_OF_3_15": {
+        "title": "Do 2 · do 15",
+        "subtitle": "Tri gema do 15, pobeda u 2; ko osvoji 2 gema — pobeđuje",
+        "hint": "Klubski badminton",
+        "sport": {
+          "BADMINTON": {
+            "title": "Do 2 gema do 15",
+            "subtitle": "Tri gema do 15 (pobeda u 2); nije limit lopti",
+            "hint": "Klubski BWF 2027 format"
           }
         }
       },
       "BEST_OF_5_11": {
-        "title": "До 3 · до 11",
-        "subtitle": "Пет гемова до 11; ко освоји 3 — побеђује",
-        "hint": "Дужи rally меч",
+        "title": "Do 3 · do 11",
+        "subtitle": "Pet gemova do 11; ko osvoji 3 — pobeđuje",
+        "hint": "Duži rally meč",
         "sport": {
           "SQUASH": {
-            "title": "До 3 гема до 11",
-            "subtitle": "Пет гемова до 11 (победа у 2); први са 3 гема побеђује",
-            "hint": "Стандардни сквош меч"
+            "title": "Do 3 gema do 11",
+            "subtitle": "Pet gemova do 11 (pobeda u 2); prvi sa 3 gema pobeđuje",
+            "hint": "Standardni skvoš meč"
           }
         }
       },
       "PAR_11": {
-        "title": "PAR до 11",
-        "subtitle": "Поен по размени до 11, победа у 2",
-        "hint": "Сквош PAR",
+        "title": "PAR do 11",
+        "subtitle": "Poen po razmeni do 11, pobeda u 2",
+        "hint": "Skvoš PAR",
         "sport": {
           "SQUASH": {
-            "title": "PAR до 11",
-            "subtitle": "Званични PAR — свака размена бодова, гем до 11 (победа у 2)",
-            "hint": "Стандардни такмичарски сквош"
+            "title": "PAR do 11",
+            "subtitle": "Zvanični PAR — svaka razmena bodova, gem do 11 (pobeda u 2)",
+            "hint": "Standardni takmičarski skvoš"
           }
         }
       },
       "BEST_OF_3_21": {
-        "title": "Best of 3 гема до 21",
-        "subtitle": "Три гема до 21 поена, побједа са 2 разлике; ко освоји 2 гема — побјеђује меч",
-        "hint": "Стандардна дужина бадминтон меча"
+        "title": "Best of 3 gema do 21",
+        "subtitle": "Tri gema do 21 poena, pobjeda sa 2 razlike; ko osvoji 2 gema — pobjeđuje meč",
+        "hint": "Standardna dužina badminton meča"
       },
       "POINTS_24": {
-        "title": "24 поена",
-        "subtitle": "24 поена укупно у сету (оба тима); побјеђује већи резултат",
-        "hint": "Мало дужи сетови"
+        "title": "24 poena",
+        "subtitle": "24 poena ukupno u setu (oba tima); pobjeđuje veći rezultat",
+        "hint": "Malo duži setovi",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "24-ball budget",
+            "subtitle": "24 balls total per match (both teams); most points wins",
+            "hint": "Social rotation cap"
+          }
+        }
       },
       "POINTS_32": {
-        "title": "32 поена",
-        "subtitle": "32 поена укупно у сету (оба тима); побјеђује већи резултат",
-        "hint": "Најдужи сетови у рунди"
+        "title": "32 poena",
+        "subtitle": "32 poena ukupno u setu (oba tima); pobjeđuje veći rezultat",
+        "hint": "Najduži setovi u rundi",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "32-ball budget",
+            "subtitle": "32 balls total per match (both teams); most points wins",
+            "hint": "Longer social rotation"
+          }
+        }
       },
       "TIMED": {
-        "title": "Временски меч",
-        "subtitle": "Играјте док тече време",
-        "hint": "Без ограничења поена"
+        "title": "Vremenski meč",
+        "subtitle": "Igrajte dok teče vreme",
+        "hint": "Bez ograničenja poena"
       },
       "CUSTOM": {
-        "title": "Прилагођено",
-        "subtitle": "Подесите свако правило",
-        "hint": "Користите напредне опције"
+        "title": "Prilagođeno",
+        "subtitle": "Podesite svako pravilo",
+        "hint": "Koristite napredne opcije"
       }
     },
     "scoringShort": {
-      "CLASSIC_BEST_OF_3": "На 2 сета",
-      "CLASSIC_BEST_OF_5": "На 3 сета",
-      "CLASSIC_PRO_SET": "Про сет",
-      "CLASSIC_SINGLE_SET": "Један сет",
-      "CLASSIC_SHORT_SET": "Кратки сетови",
-      "CLASSIC_SUPER_TIEBREAK": "Супер тај-брејк",
-      "CLASSIC_TIMED": "Гемови/сетови · вријеме",
-      "POINTS_11": "До 11",
-      "POINTS_16": "До 16",
-      "POINTS_21": "До 21",
-      "BEST_OF_3_11": "До 2 · до 11",
-      "BEST_OF_3_21": "Bo3 · до 21",
-      "BEST_OF_5_11": "До 3 · до 11",
+      "CLASSIC_BEST_OF_3": "Na 2 seta",
+      "CLASSIC_BEST_OF_5": "Na 3 seta",
+      "CLASSIC_PRO_SET": "Pro set",
+      "CLASSIC_SINGLE_SET": "Jedan set",
+      "CLASSIC_SHORT_SET": "Kratki setovi",
+      "CLASSIC_FAST4": "FAST4",
+      "CLASSIC_SUPER_TIEBREAK": "Super taj-brejk",
+      "CLASSIC_TIMED": "Gemovi/setovi · vrijeme",
+      "POINTS_11": "Do 11",
+      "POINTS_12": "Do 12",
+      "POINTS_15": "Do 15",
+      "POINTS_16": "Do 16",
+      "POINTS_21": "Do 21",
+      "BEST_OF_3_11": "Do 2 · do 11",
+      "BEST_OF_3_15": "Do 2 · do 15",
+      "BEST_OF_3_21": "Bo3 · do 21",
+      "BEST_OF_5_11": "Do 3 · do 11",
       "PAR_11": "PAR · 11",
-      "POINTS_24": "До 24",
-      "POINTS_32": "До 32",
-      "TIMED": "Временски",
-      "CUSTOM": "Прилагођено"
+      "POINTS_24": "Do 24",
+      "POINTS_32": "Do 32",
+      "TIMED": "Vremenski",
+      "CUSTOM": "Prilagođeno",
+      "POINTS_21BySport": {
+        "PICKLEBALL": "21 balls"
+      },
+      "POINTS_16BySport": {
+        "PICKLEBALL": "16 balls"
+      },
+      "POINTS_24BySport": {
+        "PICKLEBALL": "24 balls"
+      },
+      "POINTS_32BySport": {
+        "PICKLEBALL": "32 balls"
+      }
     },
-    "goldenPointShort": "Златни поен",
+    "goldenPointShort": "Zlatni poen",
     "goldenPoint": {
-      "title": "Златни поен",
-      "titleAdvantage": "Предност после изједначења",
-      "description": "При 40:40 следећи поен одлучује гем, без играња на предност.",
-      "descriptionOff": "При изједначењу 40:40 следећи поен доноси предност; са предношћу следећи поен осваја гем, у супротном је поново изједначење—док неко не поведе са два поена заредом (предност сервера или примаоца)."
+      "title": "Zlatni poen",
+      "titleAdvantage": "Prednost posle izjednačenja",
+      "description": "Pri 40:40 sledeći poen odlučuje gem, bez igranja na prednost.",
+      "descriptionOff": "Pri izjednačenju 40:40 sledeći poen donosi prednost; sa prednošću sledeći poen osvaja gem, u suprotnom je ponovo izjednačenje—dok neko ne povede sa dva poena zaredom (prednost servera ili primaoca)."
     },
     "timedMatch": {
-      "title": "Меч на вријеме",
-      "description": "Играјте до краја тајмера. Побјеђује онај с највише поена.",
-      "descriptionClassic": "Један сет са тенис бодовањем (гемови, 15/30/40…). Меч се завршава кад истекне вријеме.",
-      "durationTitle": "Вријеме по мечу",
-      "customDuration": "Прилагођено (1–60 мин)",
-      "minutesLabel": "{{minutes}} мин",
-      "presetMinutes": "{{minutes}} мин"
+      "title": "Meč na vrijeme",
+      "description": "Igrajte do kraja tajmera. Pobjeđuje onaj s najviše poena.",
+      "descriptionClassic": "Jedan set sa tenis bodovanjem (gemovi, 15/30/40…). Meč se završava kad istekne vrijeme.",
+      "durationTitle": "Vrijeme po meču",
+      "customDuration": "Prilagođeno (1–60 min)",
+      "minutesLabel": "{{minutes}} min",
+      "presetMinutes": "{{minutes}} min"
     },
     "bestOfMatch": {
-      "label": "Меч до 2 победе (гемови)",
+      "label": "Meč do 2 pobede (gemovi)",
       "labelBySport": {
-        "TABLE_TENNIS": "Меч до 2 победе",
-        "BADMINTON": "Меч до 2 победе",
-        "SQUASH": "Меч до 2 / 3 победе"
+        "TABLE_TENNIS": "Meč do 2 pobede",
+        "BADMINTON": "Meč do 2 pobede",
+        "SQUASH": "Meč do 2 / 3 pobede"
       },
-      "optionTo": "До {{sets}} · до {{cap}}"
+      "optionTo": "Do {{sets}} · do {{cap}}"
     },
     "customPoints": {
-      "label": "Произвољан број",
-      "placeholder": "нпр. 27",
-      "short": "До {{count}}"
+      "label": "Proizvoljan broj",
+      "placeholder": "npr. 27",
+      "short": "Do {{count}}"
     },
     "points": {
-      "title": "Поени по резултату"
+      "title": "Poeni po rezultatu"
     }
   }
 }

@@ -13,6 +13,7 @@ import {
   groupsToChatItems,
   gamesToChatItems,
   channelsToChatItems,
+  applyDraftsToChatItems,
   applyPaginationState,
   createLoadMore,
   type FilterCache
@@ -79,7 +80,7 @@ export function useChatListModel({
   const { user } = useAuthStore();
   const { draftsCacheRef, getMergedDrafts, applyDraftToCache } = useChatListMergedDrafts(user?.id);
   const isOnline = useNetworkStore((s) => s.isOnline);
-  const { chatsFilter, bugsFilter, openBugModal, setOpenBugModal } = useNavigationStore();
+  const { chatsFilter, bugsFilter, openBugModal, setOpenBugModal, viewingGameChatId } = useNavigationStore();
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
   const listChatMessageSeq = useSocketEventsStore((state) => state.listChatMessageSeq);
   const listChatUnreadSeq = useSocketEventsStore((state) => state.listChatUnreadSeq);
@@ -90,6 +91,40 @@ export function useChatListModel({
   const [chats, setChats] = useState<ChatItem[]>([]);
   const chatsRef = useRef(chats);
   chatsRef.current = chats;
+  const prevViewingGameChatIdRef = useRef<string | null>(null);
+
+  const reapplyDraftsToList = useCallback(() => {
+    if (!user?.id) return;
+    if (
+      chatsFilter !== 'users' &&
+      chatsFilter !== 'bugs' &&
+      chatsFilter !== 'channels' &&
+      chatsFilter !== 'market'
+    ) {
+      return;
+    }
+    chatListModuleCache.drafts = null;
+    draftsCacheRef.current = null;
+    void (async () => {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      const allDrafts = await getMergedDrafts(true);
+      setChats((prev) => {
+        if (prev.length === 0 && allDrafts.length === 0) return prev;
+        const next = applyDraftsToChatItems(prev, allDrafts, chatsFilter, user.id);
+        const cached = chatsCacheRef.current[chatsFilter];
+        if (cached) {
+          const entry = { ...cached, chats: next };
+          chatsCacheRef.current[chatsFilter] = entry;
+          chatListModuleCache.chats[chatsFilter] = entry;
+          chatListModuleCache.userId = user.id;
+        }
+        return next;
+      });
+    })();
+  }, [user?.id, chatsFilter, getMergedDrafts, draftsCacheRef]);
+
   useChatListPrefetch(user?.id, isOnline, chatsRef);
   const [loading, setLoading] = useState(true);
   const urlQuery = searchParams.get('q') ?? '';
@@ -193,7 +228,7 @@ export function useChatListModel({
       const games = await chatApi.getUserChatGames();
       const gameIds = games.map((g) => g.id);
       const gameUnreads = await resolveGameUnreadCounts(gameIds);
-      activeChats.push(...gamesToChatItems(games, gameUnreads));
+      activeChats.push(...gamesToChatItems(games, gameUnreads, allDrafts));
       sortChatItems(activeChats, 'users', user?.id);
       const cityUsersArray = Array.isArray(cityUsersData) ? cityUsersData : [];
       return { activeChats, cityUsers: cityUsersArray, usersHasMore: pagination?.hasMore ?? false };
@@ -325,7 +360,7 @@ export function useChatListModel({
         });
         const usersGroupItems = groupsToChatItems(usersGroupList, groupUnreads, allDrafts, 'users', user?.id);
         activeChats.push(...usersGroupItems);
-        activeChats.push(...gamesToChatItems(games, gameUnreads));
+        activeChats.push(...gamesToChatItems(games, gameUnreads, allDrafts));
         const usersChatItems = deduplicateChats(sortChatItems(activeChats, 'users', user?.id));
         const cityUsersArray = Array.isArray(cityUsersData) ? cityUsersData : [];
         const cacheEntry: FilterCache = {
@@ -468,25 +503,41 @@ export function useChatListModel({
     if (chatsFilter !== 'users' && chatsFilter !== 'bugs' && chatsFilter !== 'channels' && chatsFilter !== 'market') return;
     if (!user?.id) return;
     clearChatListModuleCacheWhenUserMismatch(user.id);
-    const applyCacheToState = (cached: FilterCache) => {
-      chatsCacheRef.current[chatsFilter] = cached;
-      setChats(deduplicateChats(cached.chats));
+    const applyCacheToState = (cached: FilterCache, chatsWithDrafts?: ChatItem[]) => {
+      const chatsToApply = chatsWithDrafts ?? cached.chats;
+      const entry: FilterCache = { ...cached, chats: chatsToApply };
+      chatsCacheRef.current[chatsFilter] = entry;
+      chatListModuleCache.chats[chatsFilter] = entry;
+      chatListModuleCache.userId = user.id;
+      setChats(deduplicateChats(chatsToApply));
       if (chatsFilter === 'users') setMutedChats({});
       if (cached.cityUsers) {
         setCityUsers(cached.cityUsers);
-        setSearchableUsersData({ activeChats: cached.chats, cityUsers: cached.cityUsers });
+        setSearchableUsersData({ activeChats: chatsToApply, cityUsers: cached.cityUsers });
       }
-      applyPaginationState(chatsFilter, cached, paginationSetters);
+      applyPaginationState(chatsFilter, entry, paginationSetters);
+    };
+    const applyCacheWithDrafts = async (cached: FilterCache) => {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      const allDrafts = await getMergedDrafts(true);
+      const withDrafts = applyDraftsToChatItems(
+        deduplicateChats(cached.chats),
+        allDrafts,
+        chatsFilter,
+        user.id
+      );
+      applyCacheToState(cached, withDrafts);
+      setLoading(false);
     };
     const cached = chatListModuleCache.chats[chatsFilter];
     if (cached && chatListModuleCache.userId === user.id) {
-      applyCacheToState(cached);
-      setLoading(false);
+      void applyCacheWithDrafts(cached);
       return;
     }
     if (chatsCacheRef.current[chatsFilter]) {
-      applyCacheToState(chatsCacheRef.current[chatsFilter]!);
-      setLoading(false);
+      void applyCacheWithDrafts(chatsCacheRef.current[chatsFilter]!);
       return;
     }
     let cancelled = false;
@@ -500,7 +551,17 @@ export function useChatListModel({
           const fromDex = deduplicateChats([...fromUsersDex, ...fromGamesDex]);
           if (!cancelled && fromDex.length > 0) {
             showedDisk = true;
-            const dexOnly: FilterCache = { chats: deduplicateChats(fromDex) };
+            await new Promise<void>((resolve) => {
+              setTimeout(resolve, 0);
+            });
+            const allDrafts = await getMergedDrafts(true);
+            const dexChats = applyDraftsToChatItems(
+              deduplicateChats(fromDex),
+              allDrafts,
+              chatsFilter,
+              user.id
+            );
+            const dexOnly: FilterCache = { chats: dexChats };
             if (chatsFilter === 'users') {
               dexOnly.cityUsers = [];
               dexOnly.usersHasMore = false;
@@ -577,7 +638,38 @@ export function useChatListModel({
     };
     run();
     return () => { cancelled = true; };
-  }, [fetchFilter, chatsFilter, paginationSetters, user?.id, runCoalescedFilterFetch]);
+  }, [fetchFilter, chatsFilter, paginationSetters, user?.id, runCoalescedFilterFetch, getMergedDrafts]);
+
+  useEffect(() => {
+    const prev = prevViewingGameChatIdRef.current;
+    prevViewingGameChatIdRef.current = viewingGameChatId;
+    if (prev && !viewingGameChatId) {
+      reapplyDraftsToList();
+    }
+  }, [viewingGameChatId, reapplyDraftsToList]);
+
+  useEffect(() => {
+    if (loading || !user?.id) return;
+    if (chatsFilter !== 'users' && chatsFilter !== 'bugs' && chatsFilter !== 'channels' && chatsFilter !== 'market') {
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      if (cancelled) return;
+      const allDrafts = await getMergedDrafts(true);
+      if (cancelled || allDrafts.length === 0) return;
+      setChats((prev) => {
+        if (prev.length === 0) return prev;
+        return applyDraftsToChatItems(prev, allDrafts, chatsFilter, user.id);
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, user?.id, chatsFilter, getMergedDrafts]);
 
   const prevBugsFilterRef = useRef(bugsFilter);
   useEffect(() => {

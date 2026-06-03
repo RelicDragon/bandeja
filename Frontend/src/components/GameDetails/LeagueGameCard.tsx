@@ -18,6 +18,7 @@ import {
   bracketMatchStatusFromGame,
   type BracketMatchStatus,
 } from '@/utils/leagueBracketMatchStatus';
+import { resolveLeagueGameCardTeams } from '@/utils/leagueGameCardTeams.util';
 import { resolveLeagueGameCardWinner } from '@/utils/leagueGameCardWinner.util';
 
 interface LeagueGameCardProps {
@@ -70,17 +71,10 @@ export const LeagueGameCard = ({
     t,
   });
 
-  const getTeamPlayers = (teamIndex: number) => {
-    if (game.fixedTeams && game.fixedTeams.length > teamIndex) {
-      return game.fixedTeams[teamIndex].players
-        .filter(tp => tp.user)
-        .map(tp => tp.user!);
-    }
-    return [];
-  };
-
-  const teamAPlayers = getTeamPlayers(0);
-  const teamBPlayers = getTeamPlayers(1);
+  const { teamA: teamAPlayers, teamB: teamBPlayers } = useMemo(
+    () => resolveLeagueGameCardTeams(game),
+    [game],
+  );
 
   const isFinal = game.resultsStatus === 'FINAL';
   const bracketStatus: BracketMatchStatus | null = isFinal

@@ -27,7 +27,7 @@ struct WatchSyncSetBody: Encodable, Sendable {
     let isTieBreak: Bool
     let role: WatchMatchSetRole
 
-    init(teamA: Int, teamB: Int, isTieBreak: Bool, role: WatchMatchSetRole = .official) {
+    nonisolated init(teamA: Int, teamB: Int, isTieBreak: Bool, role: WatchMatchSetRole = .official) {
         self.teamA = teamA
         self.teamB = teamB
         self.isTieBreak = isTieBreak
@@ -36,11 +36,11 @@ struct WatchSyncSetBody: Encodable, Sendable {
 }
 
 enum WatchResultsRoundBuilder {
-    static func canBuildFirstRound(for game: WatchGame) -> Bool {
+    nonisolated static func canBuildFirstRound(for game: WatchGame) -> Bool {
         (try? firstRound(for: game)) != nil
     }
 
-    static func firstRound(for game: WatchGame) throws -> WatchSyncRoundBody {
+    nonisolated static func firstRound(for game: WatchGame) throws -> WatchSyncRoundBody {
         guard game.participantsReady else {
             throw WatchResultsStartError.notReady
         }
@@ -48,8 +48,14 @@ enum WatchResultsRoundBuilder {
             guard game.teamsReady else { throw WatchResultsStartError.notReady }
         }
         let playing = game.participants.filter(\.isPlaying)
-        guard playing.count == 4 else {
+        let playingCount = playing.count
+        guard WatchMatchFormat.isPresetResultsRoster(playingCount: playingCount) else {
             throw WatchResultsStartError.invalidPlayerCount
+        }
+        let ppm = WatchMatchFormat.playersPerMatch(of: game)
+        let ppt = WatchMatchFormat.playersPerTeam(of: game)
+        if playingCount == 4 && ppm == 2 {
+            throw WatchResultsStartError.unsupportedMatchGeneration
         }
         let ids = playing.map(\.userId)
         let sets = initialSets(for: game)
@@ -58,9 +64,9 @@ enum WatchResultsRoundBuilder {
         if game.hasFixedTeams == true, let teams = game.fixedTeams {
             let t1 = teams.first { $0.teamNumber == 1 }
             let t2 = teams.first { $0.teamNumber == 2 }
-            let a = t1?.players.map(\.userId) ?? []
-            let b = t2?.players.map(\.userId) ?? []
-            if !a.isEmpty, !b.isEmpty {
+            let a = WatchMatchFormat.capUserIds(t1?.players.map(\.userId) ?? [], max: ppt)
+            let b = WatchMatchFormat.capUserIds(t2?.players.map(\.userId) ?? [], max: ppt)
+            if a.count == ppt, b.count == ppt {
                 let match = WatchSyncMatchBody(
                     id: UUID().uuidString,
                     teamA: a,
@@ -87,6 +93,21 @@ enum WatchResultsRoundBuilder {
             throw WatchResultsStartError.unsupportedMatchGeneration
         }
 
+        if playingCount == 2 && ppm == 2 {
+            let match = WatchSyncMatchBody(
+                id: UUID().uuidString,
+                teamA: [ids[0]],
+                teamB: [ids[1]],
+                sets: sets,
+                courtId: nil
+            )
+            return WatchSyncRoundBody(id: roundId, matches: [match])
+        }
+
+        guard playingCount == 4 && ppm == 4 else {
+            throw WatchResultsStartError.invalidPlayerCount
+        }
+
         let triples: [(Int, Int, Int, Int)] = [(0, 1, 2, 3), (0, 2, 1, 3), (0, 3, 1, 2)]
         let matches = triples.map { i, j, k, l in
             WatchSyncMatchBody(
@@ -100,7 +121,7 @@ enum WatchResultsRoundBuilder {
         return WatchSyncRoundBody(id: roundId, matches: matches)
     }
 
-    private static func initialSets(for game: WatchGame) -> [WatchSyncSetBody] {
+    nonisolated private static func initialSets(for game: WatchGame) -> [WatchSyncSetBody] {
         let n = game.fixedNumberOfSets ?? 0
         if n <= 0 {
             return [WatchSyncSetBody(teamA: 0, teamB: 0, isTieBreak: false)]
@@ -112,7 +133,7 @@ enum WatchResultsRoundBuilder {
     }
 }
 
-enum WatchResultsStartError: Error {
+enum WatchResultsStartError: Error, Equatable {
     case notReady
     case invalidPlayerCount
     case unsupportedMatchGeneration

@@ -7,7 +7,13 @@ import { PreferenceKey } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
-import { formatGameInfoForUser, getEntityTypeLabel, getShowEntityButtonText } from '../../shared/notification-base';
+import {
+  formatGameContextHeader,
+  formatGameInfoForUser,
+  getEntityTypeLabel,
+  getShowEntityButtonText,
+  resolveGameClubPlace,
+} from '../../shared/notification-base';
 import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { canParticipantSeeGameChatMessage } from '../../chat/gameChatVisibility';
@@ -26,11 +32,20 @@ function translateSystemMessage(message: any, lang: string): string {
   if (messageData && messageData.type && messageData.variables) {
     const translationKey = `chat.systemMessages.${messageData.type}`;
     let template = t(translationKey, lang);
-    
+
     if (template === translationKey) {
       template = messageData.text || messageContent;
     } else {
-      for (const [key, value] of Object.entries(messageData.variables)) {
+      const variables = { ...messageData.variables } as Record<string, string>;
+      if (messageData.type === 'GAME_CLUB_CHANGED' && !variables.clubName?.trim()) {
+        variables.clubName = resolveGameClubPlace({}, lang);
+      }
+      if (messageData.type === 'GAME_DATE_TIME_CHANGED' && !variables.dateTime?.trim()) {
+        const datetimeKey = 'games.datetimeNotSet';
+        variables.dateTime =
+          t(datetimeKey, lang) !== datetimeKey ? t(datetimeKey, lang) : 'Time is not set yet';
+      }
+      for (const [key, value] of Object.entries(variables)) {
         template = template.replace(new RegExp(`{{${key}}}`, 'g'), String(value || ''));
       }
       messageContent = template;
@@ -83,7 +98,7 @@ export async function sendGameSystemMessageNotification(
         const showButtonText = getShowEntityButtonText(game.entityType, lang);
 
         const scheduleLine = appendTelegramGameScheduleExtras(
-          `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`,
+          `📍 ${escapeMarkdown(formatGameContextHeader(gameInfo))}`,
           game,
           user.primarySport,
           lang,

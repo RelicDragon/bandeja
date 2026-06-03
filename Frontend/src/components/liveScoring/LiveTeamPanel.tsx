@@ -2,6 +2,7 @@ import type { BasicUser } from '@/types';
 import { PlayerAvatar } from '@/components';
 import type { LiveBoardTheme, LiveTeamSide } from '@/utils/liveScoring';
 import { AnimatedLiveBoardValue } from './AnimatedLiveBoardValue';
+import type { Sport } from '@/types';
 import { LiveServeBallIndicator } from './LiveServeBallIndicator';
 import { servingPlayerNameClassName } from './servingRosterStyles';
 
@@ -18,6 +19,7 @@ type LiveTeamPanelProps = {
   tv?: boolean;
   boardTheme?: LiveBoardTheme;
   serveIndicator?: LiveServeIndicator | null;
+  sport?: Sport | string | null;
   disabled?: boolean;
   onScore?: (side: LiveTeamSide) => void;
   onUndo?: (side: LiveTeamSide) => void;
@@ -35,6 +37,7 @@ export const LiveTeamPanel = ({
   tv,
   boardTheme = 'dark',
   serveIndicator,
+  sport,
   disabled,
   onScore,
   onUndo,
@@ -83,7 +86,7 @@ export const LiveTeamPanel = ({
                   >
                     {p ? lineName(p) : '—'}
                   </span>
-                  {rowIsServing(i) ? <LiveServeBallIndicator inline /> : null}
+                  {rowIsServing(i) ? <LiveServeBallIndicator inline sport={sport} /> : null}
                 </div>
               </>
             ) : (
@@ -99,7 +102,7 @@ export const LiveTeamPanel = ({
                   <span className={servingPlayerNameClassName(rowIsServing(i), 'panel')}>
                     {p ? lineName(p) : '—'}
                   </span>
-                  {rowIsServing(i) ? <LiveServeBallIndicator inline /> : null}
+                  {rowIsServing(i) ? <LiveServeBallIndicator inline sport={sport} /> : null}
                 </div>
               </>
             )}

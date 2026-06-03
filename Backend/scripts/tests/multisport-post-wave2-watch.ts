@@ -36,6 +36,8 @@ function testWatchRegistryAndViews(): void {
   assert(registry.includes('case rallyPointsBoard'), 'WatchLiveScoringUiId.rallyPointsBoard');
   assert(registry.includes('.tableTennis'), 'registry branches on table tennis sport');
   assert(registry.includes('usesRallySetScoring'), 'registry uses rally flag');
+  assert(registry.includes('usesOpenEndedPointsUi'), 'TIMED/CUSTOM open-ended UI parity');
+  assert(readWatch('Models/WatchOfficiatingLevel.swift').includes('WatchOfficiatingResolver'), 'officiating resolver');
 
   const sport = readWatch('Models/WatchSport.swift');
   assert(sport.includes('case tableTennis = "TABLE_TENNIS"'), 'WatchSport.tableTennis');
@@ -80,6 +82,8 @@ function testWatchRegistryAndViews(): void {
   assert(readWatch('Views/Scoring/WatchServeCourtView.swift').includes('WatchServeCourtView'), 'court router');
 
   const vmSrc = readWatch('ViewModels/MatchScoringViewModel.swift');
+  assert(vmSrc.includes('officiatingHintsEnabled'), 'VM officiating gate');
+  assert(vmSrc.includes('rules.isBallBudgetPoints'), 'serve guide off for americano ball budget');
   assert(vmSrc.includes('game?.usesRallySetScoring == true'), 'all rally sports use points-cap serve guide');
 
   const strip = readWatch('Views/Scoring/ServeCoachStrip.swift');

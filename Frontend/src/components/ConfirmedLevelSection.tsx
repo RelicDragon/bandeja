@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { PlayerAvatar } from './PlayerAvatar';
 import { CompetitiveSocialLevelBadge } from '@/components/profile/CompetitiveSocialLevelBadge';
 import { formatSmartRelativeTime } from '@/utils/dateFormat';
-import { getUserPrimarySport } from '@/utils/profileSports';
+import { findSportProfile, getDisplayLevelForSport, getUserPrimarySport } from '@/utils/profileSports';
+import { formatRatingHint } from '@/utils/sportRating';
 import type { Sport, User } from '@/types';
 
 export interface ConfirmedLevelSectionProps {
@@ -22,9 +23,19 @@ export const ConfirmedLevelSection = ({
   const { t } = useTranslation();
   const levelSport = sport ?? getUserPrimarySport(user);
   const confirmed = Boolean(user.approvedLevel && user.approvedBy);
+  const profile = findSportProfile(user, levelSport);
+  const ratingHint = formatRatingHint(
+    levelSport,
+    getDisplayLevelForSport(user, levelSport),
+    t,
+    profile?.externalRatingHint,
+  );
 
   const content = (
     <>
+      {ratingHint && (
+        <p className="text-center text-xs text-gray-500 dark:text-gray-400 mb-2">{ratingHint}</p>
+      )}
       {showBadge && (
         <div className={`flex justify-center ${confirmed || !embedded ? 'mb-2' : ''}`}>
           <CompetitiveSocialLevelBadge

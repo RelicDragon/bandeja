@@ -24,6 +24,7 @@ import type { RefObject } from 'react';
 import type React from 'react';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import {
+  deleteChatThreadMemory,
   flushChatThreadL1DebouncedPut,
   peekChatThreadMemory,
   putChatThreadMemory,
@@ -142,6 +143,7 @@ export function useGameChatMessages({
         openScrollThreadKeyRef.current === threadKey &&
         chatOpenMessageIdsEqual(messagesRef.current, plan.messages);
       if (duplicatePaint) {
+        commitChatOpenMessages(messagesRef, setMessages, plan.messages, source);
         setHasMoreMessages(chatOpenLikelyHasOlderMessages(plan.messages.length, PAGE_SIZE));
         setIsLoadingMessages(false);
         setIsInitialLoad(false);
@@ -233,6 +235,10 @@ export function useGameChatMessages({
     openScrollReadyKeyRef.current = null;
     openPaintCommittedRef.current = false;
     setInitialScroll(undefined);
+
+    if (forceFreshOpen) {
+      deleteChatThreadMemory(key);
+    }
 
     let cached = peekChatThreadMemory(key);
     if (id) {

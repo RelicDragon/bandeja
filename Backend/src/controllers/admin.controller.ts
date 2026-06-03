@@ -18,6 +18,8 @@ import { AdminMassNotificationService } from '../services/admin/massNotification
 import { ClubAdminAssignmentService } from '../services/admin/clubAdminAssignment.service';
 import { AdminTranslationQueueStatsService } from '../services/admin/translationQueueStats.service';
 import { AdminGameResultsArtifactQueueStatsService } from '../services/admin/gameResultsArtifactQueueStats.service';
+import { resetSportQuestionnaire } from '../services/user/sportQuestionnaire.service';
+import { parseSportParam } from '../services/user/userSportProfile.service';
 import prisma from '../config/database';
 import { issuedRefreshJsonPayload } from '../utils/refreshWebCookie';
 
@@ -44,7 +46,20 @@ export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
 
 // Game Management endpoints
 export const getAllGames = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { cityId, search, status, entityType, hasResults, startDate, endDate, page } = req.query;
+  const {
+    cityId,
+    search,
+    status,
+    entityType,
+    hasResults,
+    startDate,
+    endDate,
+    sport,
+    affectsRating,
+    scoringPreset,
+    gameType,
+    page,
+  } = req.query;
 
   const result = await AdminGamesService.getAllGames({
     cityId: cityId as string,
@@ -54,6 +69,11 @@ export const getAllGames = asyncHandler(async (req: AuthRequest, res: Response) 
     hasResults: hasResults === 'true' ? true : hasResults === 'false' ? false : undefined,
     startDate: startDate as string,
     endDate: endDate as string,
+    sport: sport as string,
+    affectsRating:
+      affectsRating === 'true' ? true : affectsRating === 'false' ? false : undefined,
+    scoringPreset: scoringPreset as string,
+    gameType: gameType as string,
     page: page ? parseInt(String(page), 10) : undefined,
   });
 
@@ -252,6 +272,7 @@ export const createClub = asyncHandler(async (req: AuthRequest, res: Response) =
     isActive,
     isBar,
     isForPlaying,
+    sports,
   } = req.body;
 
   const center = await AdminLocationsService.createClub({
@@ -270,6 +291,7 @@ export const createClub = asyncHandler(async (req: AuthRequest, res: Response) =
     isActive,
     isBar,
     isForPlaying,
+    sports,
   });
 
   res.status(201).json({
@@ -299,6 +321,7 @@ export const updateClub = asyncHandler(async (req: AuthRequest, res: Response) =
     photos,
     avatar,
     originalAvatar,
+    sports,
   } = req.body;
 
   const center = await AdminLocationsService.updateClub(centerId, {
@@ -320,6 +343,7 @@ export const updateClub = asyncHandler(async (req: AuthRequest, res: Response) =
     photos,
     avatar,
     originalAvatar,
+    sports,
   });
 
   res.json({
@@ -478,12 +502,14 @@ export const getOnlineUsers = asyncHandler(async (req: AuthRequest, res: Respons
 
 // User Management endpoints
 export const getAllUsers = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { cityId, search, page } = req.query;
+  const { cityId, search, page, primarySport, hasSport } = req.query;
 
   const result = await AdminUsersService.getAllUsers({
     cityId: cityId as string,
     search: search as string,
     page: page ? parseInt(String(page), 10) : undefined,
+    primarySport: primarySport as string | undefined,
+    hasSport: hasSport as string | undefined,
   });
 
   res.json({
@@ -504,6 +530,13 @@ export const toggleUserStatus = asyncHandler(async (req: AuthRequest, res: Respo
   });
 });
 
+export const adminResetSportQuestionnaire = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { userId, sport: sportParam } = req.params;
+  parseSportParam(sportParam);
+  const user = await resetSportQuestionnaire(userId, sportParam);
+  res.json({ success: true, data: user });
+});
+
 export const createUser = asyncHandler(async (req: AuthRequest, res: Response) => {
   const {
     phone,
@@ -513,6 +546,9 @@ export const createUser = asyncHandler(async (req: AuthRequest, res: Response) =
     lastName,
     gender,
     level,
+    primarySport,
+    sportsEnabled,
+    sportProfileLevels,
     currentCityId,
     isActive,
     isAdmin,
@@ -530,6 +566,9 @@ export const createUser = asyncHandler(async (req: AuthRequest, res: Response) =
     lastName,
     gender,
     level,
+    primarySport,
+    sportsEnabled,
+    sportProfileLevels,
     currentCityId,
     isActive,
     isAdmin,
@@ -554,6 +593,10 @@ export const updateUser = asyncHandler(async (req: AuthRequest, res: Response) =
     lastName,
     gender,
     level,
+    primarySport,
+    sportsEnabled,
+    addSport,
+    removeSport,
     sportProfileLevels,
     currentCityId,
     isActive,
@@ -571,6 +614,10 @@ export const updateUser = asyncHandler(async (req: AuthRequest, res: Response) =
     lastName,
     gender,
     level,
+    primarySport,
+    sportsEnabled,
+    addSport,
+    removeSport,
     sportProfileLevels,
     currentCityId,
     isActive,

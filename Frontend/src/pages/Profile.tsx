@@ -20,7 +20,14 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { usersApi, mediaApi, authApi, NotificationPreference } from '@/api';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
+import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
+import {
+  getOAuthLinkMergeRequired,
+  isOAuthLinkLoginResponse,
+  type OAuthLinkMergePending,
+} from '@/utils/oauthAccountLink';
 import { Gender, User } from '@/types';
+import type { OAuthLinkResponseData } from '@/utils/oauthAccountLink';
 import {
   Moon,
   Sun,
@@ -51,11 +58,17 @@ import { setNativeAppIcon } from '@/services/appIcon.service';
 import type { AppIconId } from '@/config/appIcons';
 import { config as appConfig } from '@/config/media';
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isValidEmail(value: string): boolean {
+  return EMAIL_REGEX.test(value);
+}
+
 export const ProfileContent = () => {
   const { t, i18n } = useTranslation();
   const { translateCity } = useTranslatedGeo();
   const navigate = useNavigate();
-  const { user, updateUser, logout } = useAuthStore();
+  const { user, updateUser, setAuth, logout } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
   const { profileActiveTab, setProfileActiveTab } = useNavigationStore();
 
@@ -90,6 +103,7 @@ export const ProfileContent = () => {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
   const [nameError, setNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [nameValidationStatus, setNameValidationStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [isLinkingApple, setIsLinkingApple] = useState(false);
   const [isLinkingGoogle, setIsLinkingGoogle] = useState(false);
@@ -97,6 +111,9 @@ export const ProfileContent = () => {
   const [isUnlinkingGoogle, setIsUnlinkingGoogle] = useState(false);
   const [showUnlinkAppleModal, setShowUnlinkAppleModal] = useState(false);
   const [showUnlinkGoogleModal, setShowUnlinkGoogleModal] = useState(false);
+  const [oauthMergePending, setOauthMergePending] = useState<OAuthLinkMergePending | null>(null);
+  const [showOAuthMergeModal, setShowOAuthMergeModal] = useState(false);
+  const [isConfirmingOAuthMerge, setIsConfirmingOAuthMerge] = useState(false);
   const [isSyncingTelegram, setIsSyncingTelegram] = useState(false);
   const [isOpeningTelegramLink, setIsOpeningTelegramLink] = useState(false);
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>([]);
@@ -228,7 +245,36 @@ export const ProfileContent = () => {
 
   const handleEmailChange = (value: string) => {
     setEmail(value);
-    debouncedUpdate({ email: value || undefined });
+    if (emailError) {
+      setEmailError('');
+    }
+  };
+
+  const handleEmailBlur = async () => {
+    const trimmed = email.trim();
+    const saved = (user?.email || '').trim();
+    if (trimmed === saved) {
+      return;
+    }
+
+    if (trimmed && !isValidEmail(trimmed)) {
+      setEmailError(t('auth.emailInvalid') || 'Invalid email format');
+      return;
+    }
+
+    setEmailError('');
+    try {
+      const response = await usersApi.updateProfile({ email: trimmed || undefined });
+      updateUser(response.data);
+    } catch (error: any) {
+      const msg = error.response?.data?.message as string | undefined;
+      if (msg?.toLowerCase().includes('email')) {
+        setEmailError(t('auth.emailInvalid') || 'Invalid email format');
+      } else {
+        toast.error(msg || t('errors.generic'));
+      }
+      setEmail(user?.email || '');
+    }
   };
 
   const handleVerbalStatusChange = (value: string) => {
@@ -396,35 +442,88 @@ export const ProfileContent = () => {
     }
   };
 
+  const applyOAuthLinkSuccess = useCallback(
+    async (data: OAuthLinkResponseData) => {
+      if (isOAuthLinkLoginResponse(data)) {
+        await setAuth(data.user, data.token, {
+          refreshToken: data.refreshToken,
+          currentSessionId: data.currentSessionId,
+        });
+      } else {
+        updateUser(data.user);
+      }
+    },
+    [setAuth, updateUser]
+  );
+
+  const completeOAuthLink = useCallback(
+    async (pending: OAuthLinkMergePending, confirmMerge: boolean) => {
+      if (pending.provider === 'google') {
+        const response = await authApi.linkGoogle({ idToken: pending.idToken, confirmMerge });
+        await applyOAuthLinkSuccess(response.data);
+        toast.success(t('profile.googleLinked') || 'Google account linked successfully');
+        return;
+      }
+      const response = await authApi.linkApple({
+        identityToken: pending.identityToken,
+        nonce: pending.nonce,
+        confirmMerge,
+      });
+      await applyOAuthLinkSuccess(response.data);
+      toast.success(t('profile.appleLinked') || 'Apple account linked successfully');
+    },
+    [applyOAuthLinkSuccess, t]
+  );
+
+  const handleOAuthLinkError = useCallback(
+    (error: unknown) => {
+      toast.error(extractApiErrorMessage(error, t));
+    },
+    [t]
+  );
+
   const handleLinkApple = async () => {
-    console.log('[APPLE_LINK] handleLinkApple called');
     try {
       setIsLinkingApple(true);
-      console.log('[APPLE_LINK] Calling signInWithApple');
       const result = await signInWithApple();
-      
       if (!result) {
-        console.log('[APPLE_LINK] signInWithApple returned null (user cancelled)');
-        setIsLinkingApple(false);
         return;
       }
 
-      console.log('[APPLE_LINK] Apple sign-in successful, calling linkApple API');
-      const response = await authApi.linkApple({
+      const pending: OAuthLinkMergePending = {
+        provider: 'apple',
         identityToken: result.result.identityToken,
         nonce: result.nonce,
-      });
+      };
 
-      console.log('[APPLE_LINK] Apple account linked successfully');
-      updateUser(response.data.user);
-      toast.success(t('profile.appleLinked') || 'Apple account linked successfully');
-    } catch (error: any) {
-      console.error('[APPLE_LINK] Error linking Apple account:', error);
-      const errorMessage = error.response?.data?.message || error.message || t('errors.generic');
-      toast.error(t(errorMessage) !== errorMessage ? t(errorMessage) : errorMessage);
+      try {
+        await completeOAuthLink(pending, false);
+      } catch (error: unknown) {
+        if (getOAuthLinkMergeRequired(error)) {
+          setOauthMergePending(pending);
+          setShowOAuthMergeModal(true);
+          return;
+        }
+        handleOAuthLinkError(error);
+      }
+    } catch (error: unknown) {
+      handleOAuthLinkError(error);
     } finally {
       setIsLinkingApple(false);
-      console.log('[APPLE_LINK] handleLinkApple completed');
+    }
+  };
+
+  const handleConfirmOAuthMerge = async () => {
+    if (!oauthMergePending) return;
+    try {
+      setIsConfirmingOAuthMerge(true);
+      await completeOAuthLink(oauthMergePending, true);
+      setShowOAuthMergeModal(false);
+      setOauthMergePending(null);
+    } catch (error: unknown) {
+      handleOAuthLinkError(error);
+    } finally {
+      setIsConfirmingOAuthMerge(false);
     }
   };
 
@@ -458,23 +557,30 @@ export const ProfileContent = () => {
           setIsLinkingGoogle(false);
         },
       });
-      
-      if (!result || !result.idToken) {
+
+      if (!result?.idToken) {
         return;
       }
       clearTimeout(clearLoadingTimer);
       setIsLinkingGoogle(true);
 
-      const response = await authApi.linkGoogle({
+      const pending: OAuthLinkMergePending = {
+        provider: 'google',
         idToken: result.idToken,
-      });
+      };
 
-      updateUser(response.data.user);
-      toast.success(t('profile.googleLinked') || 'Google account linked successfully');
-    } catch (error: any) {
-      clearTimeout(clearLoadingTimer);
-      const errorMessage = error.response?.data?.message || error.message || t('errors.generic');
-      toast.error(t(errorMessage) !== errorMessage ? t(errorMessage) : errorMessage);
+      try {
+        await completeOAuthLink(pending, false);
+      } catch (error: unknown) {
+        if (getOAuthLinkMergeRequired(error)) {
+          setOauthMergePending(pending);
+          setShowOAuthMergeModal(true);
+          return;
+        }
+        handleOAuthLinkError(error);
+      }
+    } catch (error: unknown) {
+      handleOAuthLinkError(error);
     } finally {
       clearTimeout(clearLoadingTimer);
       setIsLinkingGoogle(false);
@@ -708,6 +814,8 @@ export const ProfileContent = () => {
               type="email"
               value={email}
               onChange={(e) => handleEmailChange(e.target.value)}
+              onBlur={handleEmailBlur}
+              error={emailError}
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1113,7 +1221,7 @@ export const ProfileContent = () => {
                   { value: 'en-GB', label: 'English (UK)', icon: <span className="text-sm leading-none">{getCountryFlag('United Kingdom')}</span> },
                   { value: 'en-US', label: 'English (US)', icon: <span className="text-sm leading-none">{getCountryFlag('United States')}</span> },
                   { value: 'ru-RU', label: 'Русский', icon: <span className="text-sm leading-none">{getLanguageFlag('ru')}</span> },
-                  { value: 'sr-RS', label: 'Српски', icon: <span className="text-sm leading-none">{getLanguageFlag('sr')}</span> },
+                  { value: 'sr-RS', label: 'Srpski', icon: <span className="text-sm leading-none">{getLanguageFlag('sr')}</span> },
                   { value: 'es-ES', label: 'Español', icon: <span className="text-sm leading-none">{getLanguageFlag('es')}</span> },
                   { value: 'cs-CZ', label: 'Čeština', icon: <span className="text-sm leading-none">{getLanguageFlag('cs')}</span> },
                 ]}
@@ -1422,6 +1530,29 @@ export const ProfileContent = () => {
         title={t('profile.unlinkGoogle') || 'Unlink Google Account'}
         message={t('profile.unlinkGoogleConfirmation') || 'Are you sure you want to unlink your Google account? You will no longer be able to sign in with Google.'}
         confirmText={isUnlinkingGoogle ? (t('profile.unlinking') || 'Unlinking...') : (t('profile.unlink') || 'Unlink')}
+        cancelText={t('common.cancel')}
+        confirmVariant="primary"
+      />
+
+      <ConfirmationModal
+        isOpen={showOAuthMergeModal}
+        onClose={() => {
+          if (isConfirmingOAuthMerge) return;
+          setShowOAuthMergeModal(false);
+          setOauthMergePending(null);
+        }}
+        onConfirm={handleConfirmOAuthMerge}
+        title={t('profile.oauthMergeTitle')}
+        message={
+          oauthMergePending?.provider === 'apple'
+            ? t('profile.oauthMergeMessageApple')
+            : t('profile.oauthMergeMessageGoogle')
+        }
+        confirmText={
+          isConfirmingOAuthMerge
+            ? t('profile.oauthMergeMerging')
+            : t('profile.oauthMergeConfirm')
+        }
         cancelText={t('common.cancel')}
         confirmVariant="primary"
       />

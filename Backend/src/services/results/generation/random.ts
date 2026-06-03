@@ -108,7 +108,7 @@ interface ConfigScore {
   totalOpponentFrequency: number;
 }
 
-type MatchConfig = { teamA: [string, string]; teamB: [string, string] };
+type MatchConfig = { teamA: string[]; teamB: string[] };
 
 function pairStaleness(a: string, b: string, lastRound: Map<string, number>, currentRound: number): number {
   const key = pairKey(a, b);
@@ -285,6 +285,149 @@ function optimizeOpponentsForPairs(
     genBudget
   );
   return bestConfig.value ?? [];
+}
+
+// ── Singles (1v1) matchups ─────────────────────────────────────────────
+
+function scoreSinglesConfig(
+  matches: { teamA: string[]; teamB: string[] }[],
+  opponentCounts: Map<string, number>,
+  lastOpponentRound: Map<string, number>,
+  currentRound: number
+): Pick<ConfigScore, 'minOpponentStaleness' | 'maxOpponentFrequency' | 'totalOpponentFrequency' | 'totalOpponentStaleness'> {
+  let minOpp = Infinity;
+  let maxOpponentFrequency = 0;
+  let totalOpponentFrequency = 0;
+  let totalOpponentStaleness = 0;
+
+  for (const match of matches) {
+    const a = match.teamA[0];
+    const b = match.teamB[0];
+    if (!a || !b || a === b) continue;
+    const frequency = opponentCounts.get(pairKey(a, b)) || 0;
+    const s = pairStaleness(a, b, lastOpponentRound, currentRound);
+    if (s < minOpp) minOpp = s;
+    totalOpponentStaleness += s;
+    if (frequency > maxOpponentFrequency) maxOpponentFrequency = frequency;
+    totalOpponentFrequency += frequency;
+  }
+
+  return {
+    minOpponentStaleness: minOpp,
+    maxOpponentFrequency,
+    totalOpponentFrequency,
+    totalOpponentStaleness,
+  };
+}
+
+function isBetterSinglesScore(
+  a: ReturnType<typeof scoreSinglesConfig>,
+  b: ReturnType<typeof scoreSinglesConfig>
+): boolean {
+  if (a.minOpponentStaleness !== b.minOpponentStaleness) {
+    return a.minOpponentStaleness > b.minOpponentStaleness;
+  }
+  if (a.maxOpponentFrequency !== b.maxOpponentFrequency) {
+    return a.maxOpponentFrequency < b.maxOpponentFrequency;
+  }
+  if (a.totalOpponentFrequency !== b.totalOpponentFrequency) {
+    return a.totalOpponentFrequency < b.totalOpponentFrequency;
+  }
+  return a.totalOpponentStaleness > b.totalOpponentStaleness;
+}
+
+function tryAllSinglesMatchings(
+  players: string[],
+  opponentCounts: Map<string, number>,
+  lastOpponentRound: Map<string, number>,
+  currentRound: number,
+  bestScore: { value: ReturnType<typeof scoreSinglesConfig> | null },
+  bestConfig: { value: { teamA: string[]; teamB: string[] }[] | null },
+  genBudget: GenBudget
+): void {
+  const current: { teamA: string[]; teamB: string[] }[] = [];
+
+  function recurse(remaining: string[], runningMinOpp: number) {
+    if (!consumeGenOp(genBudget)) return;
+
+    if (remaining.length === 0) {
+      const score = scoreSinglesConfig(current, opponentCounts, lastOpponentRound, currentRound);
+      if (bestScore.value === null || isBetterSinglesScore(score, bestScore.value)) {
+        bestScore.value = score;
+        bestConfig.value = current.map(m => ({
+          teamA: [...m.teamA],
+          teamB: [...m.teamB],
+        }));
+      }
+      return;
+    }
+
+    if (
+      bestScore.value !== null &&
+      bestScore.value.minOpponentStaleness === currentRound + 1 &&
+      bestScore.value.maxOpponentFrequency === 0
+    ) {
+      return;
+    }
+    if (bestScore.value !== null && runningMinOpp < bestScore.value.minOpponentStaleness) return;
+
+    const first = remaining[0];
+    const candidates: { idx: number; staleness: number }[] = [];
+    for (let i = 1; i < remaining.length; i++) {
+      const opp = remaining[i];
+      candidates.push({
+        idx: i,
+        staleness: pairStaleness(first, opp, lastOpponentRound, currentRound),
+      });
+    }
+    candidates.sort((a, b) => b.staleness - a.staleness);
+
+    for (const { idx, staleness } of candidates) {
+      const newMinOpp = Math.min(runningMinOpp, staleness);
+      if (bestScore.value !== null && newMinOpp < bestScore.value.minOpponentStaleness) break;
+      current.push({ teamA: [first], teamB: [remaining[idx]] });
+      const next = remaining.filter((_, j) => j !== 0 && j !== idx);
+      recurse(next, newMinOpp);
+      current.pop();
+    }
+  }
+
+  recurse(players, Infinity);
+}
+
+function optimizeSinglesMatchups(
+  playerIds: string[],
+  opponentCounts: Map<string, number>,
+  lastOpponentRound: Map<string, number>,
+  currentRound: number,
+  genBudget: GenBudget
+): MatchConfig[] {
+  if (playerIds.length < 2) return [];
+  if (playerIds.length === 2) {
+    return [{ teamA: [playerIds[0]], teamB: [playerIds[1]] } as MatchConfig];
+  }
+
+  const bestScore: { value: ReturnType<typeof scoreSinglesConfig> | null } = { value: null };
+  const bestConfig: { value: { teamA: string[]; teamB: string[] }[] | null } = { value: null };
+  tryAllSinglesMatchings(
+    playerIds,
+    opponentCounts,
+    lastOpponentRound,
+    currentRound,
+    bestScore,
+    bestConfig,
+    genBudget
+  );
+
+  if (bestConfig.value?.length) {
+    return bestConfig.value as MatchConfig[];
+  }
+
+  const matches: MatchConfig[] = [];
+  for (let i = 0; i + 1 < playerIds.length; i += 2) {
+    matches.push({ teamA: [playerIds[i]], teamB: [playerIds[i + 1]] } as MatchConfig);
+  }
+  return matches;
 }
 
 // ── Fixed teams ────────────────────────────────────────────────────────
@@ -499,7 +642,16 @@ export function generateRandomRound(
 
   const genBudget: GenBudget = { remaining: MAX_GEN_BUDGET };
 
-  if (game.genderTeams === 'MIX_PAIRS') {
+  if (ppm === 2) {
+    const playerIds = shuffle(selectedParticipants.map((p: any) => p.userId));
+    matchups = optimizeSinglesMatchups(
+      playerIds,
+      opponentCounts,
+      lastOpponentRound,
+      currentRound,
+      genBudget
+    );
+  } else if (game.genderTeams === 'MIX_PAIRS') {
     const maleIds = selectedParticipants
       .filter((p: any) => p.user.gender === 'MALE')
       .map((p: any) => p.userId);

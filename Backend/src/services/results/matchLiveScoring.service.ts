@@ -244,6 +244,8 @@ export async function patchMatchLiveScoring(
     where: { id: gameId },
     select: {
       scoringPreset: true,
+      sport: true,
+      metadata: true,
       fixedNumberOfSets: true,
       maxTotalPointsPerSet: true,
       maxPointsPerTeam: true,

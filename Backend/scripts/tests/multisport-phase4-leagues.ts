@@ -46,6 +46,12 @@ function testServiceSource(): void {
   assert(createSrc.includes('sport: seasonSport'), 'league create sets season sport on game and season');
   assert(gameCreationSrc.includes('loadLeagueSeasonSportOrThrow'), 'league game creation loads season sport');
   assert(gameCreationSrc.includes('sport: seasonSport'), 'league child games inherit season sport');
+  assert(gameCreationSrc.includes('validatePlayoffGameSetupForSeason'), 'playoff gameSetup validated per season sport');
+  const bracketSrc = readFileSync(
+    join(__dirname, '../../src/services/league/bracketPlayoff.service.ts'),
+    'utf8',
+  );
+  assert(bracketSrc.includes('validatePlayoffGameSetupForSeason'), 'bracket create validates gameSetup');
   assert(updateSrc.includes('assertGameSportMatchesLeagueSeason'), 'game update enforces league season sport');
 }
 

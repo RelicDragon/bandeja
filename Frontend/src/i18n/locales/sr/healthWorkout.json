@@ -1,15 +1,19 @@
 {
   "healthWorkout": {
-    "title": "Падел тренинзи",
-    "subtitle": "Сачувано са Apple Watch-а при уносу резултата",
-    "yourSession": "Ваш тренинг",
+    "title": "Padel treninzi",
+    "subtitle": "Sačuvano sa Apple Watch-a pri unosu rezultata",
+    "yourSession": "Vaš trening",
     "kcal": "kcal",
-    "avgBpm": "прос. отк/мин",
-    "maxBpm": "макс. отк/мин",
-    "loading": "Учитавање…",
-    "loadError": "Није могло учитати тренинг.",
-    "retry": "Покушај поново",
-    "emptyProfile": "Још нема тренинга. Снимај Apple Watch-ом при уносу резултата.",
-    "loadErrorProfile": "Није могло учитати тренинге."
+    "avgBpm": "pros. otk/min",
+    "maxBpm": "maks. otk/min",
+    "loading": "Učitavanje…",
+    "loadError": "Nije moglo učitati trening",
+    "loadErrorHint": "Nešto nije u redu. Proverite vezu i pokušajte ponovo.",
+    "loadErrorProfile": "Nije moglo učitati treninge",
+    "loadErrorProfileHint": "Nešto nije u redu. Proverite vezu i pokušajte ponovo.",
+    "emptyGameTitle": "Trening nije snimljen",
+    "emptyGameHint": "Sledeći put pokrenite trening na Apple Watch-u dok unosite rezultat u Bandeja — kalorije i puls će se pojaviti ovde.",
+    "emptyProfileTitle": "Još nema treninga",
+    "emptyProfileHint": "Snimajte trening na Apple Watch-u dok unosite rezultat u Bandeja da biste pratili kalorije i puls."
   }
 }

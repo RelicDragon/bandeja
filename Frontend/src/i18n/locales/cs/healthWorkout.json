@@ -7,9 +7,13 @@
     "avgBpm": "prům. tep",
     "maxBpm": "max. tep",
     "loading": "Načítání…",
-    "loadError": "Trénink se nepodařilo načíst.",
-    "retry": "Zkusit znovu",
-    "emptyProfile": "Zatím žádné tréninky. Nahrávej je Apple Watch při zadávání výsledků.",
-    "loadErrorProfile": "Tréninky se nepodařilo načíst."
+    "loadError": "Trénink se nepodařilo načíst",
+    "loadErrorHint": "Zkuste to znovu. Zkontrolujte připojení k internetu.",
+    "loadErrorProfile": "Tréninky se nepodařilo načíst",
+    "loadErrorProfileHint": "Zkuste to znovu. Zkontrolujte připojení k internetu.",
+    "emptyGameTitle": "Pro tento zápas nebyl zaznamenán trénink",
+    "emptyGameHint": "Při příštím zápase spusťte trénink na Apple Watch při zadávání výsledků v Bandeja — kalorie a tep se zobrazí zde.",
+    "emptyProfileTitle": "Zatím žádné tréninky",
+    "emptyProfileHint": "Nahrávejte trénink na Apple Watch při zadávání výsledků v Bandeja a sledujte kalorie i tep."
   }
 }

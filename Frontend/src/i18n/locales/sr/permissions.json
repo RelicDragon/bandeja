@@ -1,15 +1,15 @@
 {
   "permissions": {
-    "openSettings": "Отвори Подешавања",
+    "openSettings": "Otvori Podešavanja",
     "photos": {
-      "title": "Потребан приступ фотографијама",
-      "description": "Да бисмо приложили фотографије, потребан нам је приступ вашој библиотеци фотографија.",
-      "denied": "Приступ фотографијама је тренутно одбијен. Молимо омогућите га у подешавањима уређаја да бисте приложили фотографије."
+      "title": "Potreban pristup fotografijama",
+      "description": "Da bismo priložili fotografije, potreban nam je pristup vašoj biblioteci fotografija.",
+      "denied": "Pristup fotografijama je trenutno odbijen. Molimo omogućite ga u podešavanjima uređaja da biste priložili fotografije."
     },
     "camera": {
-      "title": "Потребан приступ камери",
-      "description": "Да бисмо правили фотографије, потребан нам је приступ вашој камери.",
-      "denied": "Приступ камери је тренутно одбијен. Молимо омогућите га у подешавањима уређаја да бисте правили фотографије."
+      "title": "Potreban pristup kameri",
+      "description": "Da bismo pravili fotografije, potreban nam je pristup vašoj kameri.",
+      "denied": "Pristup kameri je trenutno odbijen. Molimo omogućite ga u podešavanjima uređaja da biste pravili fotografije."
     }
   }
 }

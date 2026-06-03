@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { parseSport } from '@shared/sport';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -318,8 +319,10 @@ export const GameFormatWizard = ({
                         onChange={matchFormat.onChange}
                         disabled={matchFormat.disabled}
                         label={t('sport.matchFormat')}
-                        label1v1={t('sport.match1v1')}
-                        label2v2={t('sport.match2v2')}
+                        labelSingles={t('sport.matchSingles')}
+                        labelDoubles={t('sport.matchDoubles')}
+                        hintSingles={t('sport.match1v1')}
+                        hintDoubles={t('sport.match2v2')}
                       />
                     </motion.div>
                   )}
@@ -361,6 +364,8 @@ export const GameFormatWizard = ({
                     generationType={format.generationType}
                     scoringMode={format.scoringMode}
                     entityType={wizardEntityType}
+                    sport={sport ? parseSport(sport) : undefined}
+                    playersPerMatch={matchFormat?.playersPerMatch}
                     maxParticipants={generationSlotCount}
                     hasFixedTeams={hasFixedTeams}
                     onChange={(gen) => {

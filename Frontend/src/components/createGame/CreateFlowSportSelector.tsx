@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Star } from 'lucide-react';
 import type { Sport } from '@/types';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
@@ -8,6 +9,7 @@ type CreateFlowSportSelectorProps = {
   value: Sport;
   onChange: (sport: Sport) => void;
   showLabel?: boolean;
+  defaultSport?: Sport;
 };
 
 export function CreateFlowSportSelector({
@@ -15,6 +17,7 @@ export function CreateFlowSportSelector({
   value,
   onChange,
   showLabel = true,
+  defaultSport,
 }: CreateFlowSportSelectorProps) {
   const { t } = useTranslation();
   const title = t('sport.sport', { defaultValue: 'Sport' });
@@ -22,6 +25,14 @@ export function CreateFlowSportSelector({
   if (sports.length <= 1) {
     return null;
   }
+
+  const sortedSports = defaultSport
+    ? [...sports].sort((a, b) => {
+        if (a === defaultSport) return -1;
+        if (b === defaultSport) return 1;
+        return 0;
+      })
+    : sports;
 
   return (
     <div>
@@ -33,9 +44,10 @@ export function CreateFlowSportSelector({
         role="radiogroup"
         aria-label={title}
       >
-        {sports.map((sport) => {
+        {sortedSports.map((sport) => {
           const active = sport === value;
           const config = getSportConfig(sport);
+          const isDefaultSport = sport === defaultSport;
           return (
             <button
               key={sport}
@@ -51,6 +63,7 @@ export function CreateFlowSportSelector({
             >
               <SportPublicIcon sport={sport} className="h-5 w-5 shrink-0 object-contain" />
               {t(config.labelKey)}
+              {isDefaultSport && <Star className="h-3 w-3 shrink-0 fill-amber-500 text-amber-500" />}
             </button>
           );
         })}

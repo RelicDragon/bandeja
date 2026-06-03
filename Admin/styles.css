@@ -645,6 +645,16 @@ tbody tr:hover {
     font-weight: 500;
 }
 
+.user-sports-enabled-editor {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+}
+
+.user-sports-enabled-editor .user-sport-enabled-check {
+    margin: 0;
+}
+
 .modal-actions {
     display: flex;
     gap: 1rem;

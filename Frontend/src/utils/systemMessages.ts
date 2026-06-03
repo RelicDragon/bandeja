@@ -103,6 +103,18 @@ const translateSystemMessageData = (
     const p = parsePriorityVariable(safeVariables.priority);
     safeVariables = { ...safeVariables, priority: translateFn(`bug.priorityLabels.${p}`, { defaultValue: safeVariables.priority }) };
   }
+  if (type === SystemMessageType.GAME_CLUB_CHANGED && !safeVariables.clubName?.trim()) {
+    safeVariables = {
+      ...safeVariables,
+      clubName: translateFn('gameDetails.clubNotSet', { defaultValue: 'Club is not set' }),
+    };
+  }
+  if (type === SystemMessageType.GAME_DATE_TIME_CHANGED && !safeVariables.dateTime?.trim()) {
+    safeVariables = {
+      ...safeVariables,
+      dateTime: translateFn('gameDetails.datetimeNotSet', { defaultValue: 'Time is not set yet' }),
+    };
+  }
 
   const template = translateFn(`chat.systemMessages.${type}`, { defaultValue: '' });
   

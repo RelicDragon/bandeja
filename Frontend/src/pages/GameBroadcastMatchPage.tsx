@@ -6,7 +6,7 @@ import { useLiveMatchBoardState, liveBoardPlayersForTeam } from '@/hooks/useLive
 import { useNetworkStore } from '@/utils/networkStatus';
 import { parseLiveBoardTheme, type LiveTeamSide } from '@/utils/liveScoring';
 import { isLiveMatchCompleteForScoring } from '@/utils/scoring';
-import { resolvePlayersPerMatchForGame } from '@/utils/matchFormat';
+import { playersPerMatchOf } from '@/utils/matchFormat';
 
 const noop = () => {};
 const noopSide = (_side: LiveTeamSide) => {};
@@ -28,7 +28,7 @@ export const GameBroadcastMatchPage = () => {
     { spectatorToken }
   );
 
-  const playersPerMatch = useMemo(() => resolvePlayersPerMatchForGame(game ?? {}), [game]);
+  const playersPerMatch = useMemo(() => playersPerMatchOf(game ?? {}), [game]);
   const teamAPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 1, game) : []), [rawMatch, game]);
   const teamBPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 2, game) : []), [rawMatch, game]);
   const matchDecided = Boolean(liveState && rules && isLiveMatchCompleteForScoring(liveState.sets, rules));

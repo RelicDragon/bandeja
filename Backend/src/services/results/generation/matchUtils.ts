@@ -1,23 +1,14 @@
 import type { GenGame as Game, GenMatch as Match, GenRound as Round, GenFixedTeam } from './types';
+import { playersPerMatchOf, playersPerTeamOf } from '../../../shared/matchFormat';
+
+export {
+  maxFixedTeamSlots,
+  maxPlayersPerTeamForGame,
+  playersPerMatchOf,
+  playersPerTeamOf,
+} from '../../../shared/matchFormat';
 
 export const DEFAULT_PLAYERS_PER_MATCH = 4;
-
-export function playersPerMatchOf(game: { playersPerMatch?: number | null }): 2 | 4 {
-  const n = game.playersPerMatch;
-  if (n === 2 || n === 4) return n;
-  return DEFAULT_PLAYERS_PER_MATCH;
-}
-
-export function playersPerTeamOf(game: { playersPerMatch?: number | null }): number {
-  return playersPerMatchOf(game) / 2;
-}
-
-/** Fixed-team slots for an event roster (not match size). */
-export function maxFixedTeamSlots(game: { maxParticipants: number; playersPerMatch?: number | null }): number {
-  const perTeam = playersPerTeamOf(game);
-  if (perTeam < 1) return 0;
-  return Math.floor(game.maxParticipants / perTeam);
-}
 
 export function shuffle<T>(arr: T[]): T[] {
   const result = [...arr];

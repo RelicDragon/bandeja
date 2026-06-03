@@ -44,6 +44,7 @@ struct WatchLiveScoringState: Codable, Sendable {
     /// `REGULAR_SET` | `SUPER_TIEBREAK` — mirrors web live metadata optional Bo3 decider.
     var optionalDeciderFormat: String?
     var timedClassicSetLocked: Bool?
+    var pointWinnerLog: [TeamSide]?
 }
 
 enum WatchLiveScoringMode: String, Codable, Sendable {

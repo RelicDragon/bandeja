@@ -3,17 +3,12 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { MAX_PHOTOS_PER_GAME } from './gamePhoto.constants';
-import { emitGamePhotoAdded } from './gamePhoto.events';
+import { emitGamePhotoAdded, emitGamePhotoMainChanged } from './gamePhoto.events';
 import {
   assertCanUpload,
   loadGamePhotoAccessContext,
 } from './gamePhoto.permissions';
 import { formatGamePhotoDto, type GamePhotoDto } from './gamePhoto.read.service';
-import {
-  shouldSetAiAsMainPhoto,
-  type MainPhotoEnqueueSnapshot,
-} from '../gameResultsArtifact/gameResultsArtifact.mainPhotoSnapshot';
-
 const UPLOADER_SELECT = {
   id: true,
   firstName: true,
@@ -112,7 +107,7 @@ export class GamePhotoCreateService {
           where: { id: gameId },
           data: {
             photosCount: { increment: 1 },
-            ...(current.mainPhotoId ? {} : { mainPhotoId: created.id }),
+            mainPhotoId: created.id,
           },
         });
 
@@ -122,6 +117,7 @@ export class GamePhotoCreateService {
       const dto = formatGamePhotoDto(photo);
       if (isNew) {
         await emitGamePhotoAdded(gameId, dto, userId);
+        await emitGamePhotoMainChanged(gameId, photo.id, userId);
       }
       return dto;
     } catch (e) {
@@ -148,8 +144,7 @@ export class GamePhotoCreateService {
   static async createFromGeneratedBuffer(
     gameId: string,
     buffer: Buffer,
-    filename: string,
-    mainPhotoSnapshot?: MainPhotoEnqueueSnapshot
+    filename: string
   ): Promise<GamePhotoDto> {
     const processed = await ImageProcessor.processChatImage(buffer, filename);
 
@@ -181,18 +176,11 @@ export class GamePhotoCreateService {
           },
         });
 
-        const setMain =
-          mainPhotoSnapshot &&
-          shouldSetAiAsMainPhoto(mainPhotoSnapshot, {
-            photosCount: current.photosCount,
-            mainPhotoId: current.mainPhotoId,
-          });
-
         await tx.game.update({
           where: { id: gameId },
           data: {
             photosCount: { increment: 1 },
-            ...(setMain ? { mainPhotoId: created.id } : {}),
+            mainPhotoId: created.id,
           },
         });
 

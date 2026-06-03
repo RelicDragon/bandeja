@@ -263,8 +263,6 @@ export function useGameChatSocket({
     [contextType, id]
   );
   const roomPushSeq = useSocketEventsStore((s) => (roomKey ? s.chatRoomPushSeq[roomKey] ?? 0 : 0));
-  const threadPaintAt = useChatSyncStore((s) => s.lastThreadPaintAt);
-
   const syncRequiredEpoch = useSocketEventsStore((s) => s.syncRequiredEpoch);
   const lastSyncRequired = useSocketEventsStore((s) => s.lastSyncRequired);
   const syncEpochBaselineRef = useRef<number | null>(null);
@@ -343,10 +341,8 @@ export function useGameChatSocket({
       if (batch.length === 0) return;
       processChatRoomBatch(batch, roomProcessorCtx);
     };
-    if (messagesRef.current.length > 0 || threadPaintAt != null) {
-      scheduleAfterThreadPaint(flush);
-    }
-  }, [roomKey, id, roomPushSeq, threadPaintAt, roomProcessorCtx, currentIdRef, messagesRef]);
+    scheduleAfterThreadPaint(flush);
+  }, [roomKey, id, roomPushSeq, roomProcessorCtx, currentIdRef]);
 
   useEffect(() => {
     syncEpochBaselineRef.current = null;

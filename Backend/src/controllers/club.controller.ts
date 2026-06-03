@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
+import { Sport } from '@prisma/client';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
+import { parseClubSportsInput, assertClubSportsCoverCourtSports } from '../shared/clubSports';
 import { normalizeClubName } from '../utils/normalizeClubName';
 import { refreshCityFromClubs } from '../utils/updateCityCenter';
 import { parseClubPhotosJson } from '../utils/clubPhotosJson';
@@ -174,6 +176,7 @@ export const createClub = asyncHandler(async (req: Request, res: Response) => {
     amenities,
     isBar,
     isForPlaying,
+    sports: sportsRaw,
   } = req.body;
 
   const city = await prisma.city.findUnique({
@@ -183,6 +186,9 @@ export const createClub = asyncHandler(async (req: Request, res: Response) => {
   if (!city) {
     throw new ApiError(404, 'City not found');
   }
+
+  const sports =
+    sportsRaw !== undefined ? parseClubSportsInput(sportsRaw) : [Sport.PADEL];
 
   const club = await prisma.club.create({
     data: {
@@ -201,6 +207,7 @@ export const createClub = asyncHandler(async (req: Request, res: Response) => {
       amenities,
       isBar: isBar || false,
       isForPlaying: isForPlaying !== undefined ? isForPlaying : true,
+      sports,
     },
   });
   await refreshCityFromClubs(cityId);
@@ -224,6 +231,20 @@ export const updateClub = asyncHandler(async (req: Request, res: Response) => {
     select: { cityId: true, isActive: true },
   });
   if (!oldClub) throw new ApiError(404, 'Club not found');
+
+  if (updateData.sports !== undefined) {
+    const sports = parseClubSportsInput(updateData.sports);
+    const courts = await prisma.court.findMany({
+      where: { clubId: id },
+      select: { sport: true },
+    });
+    assertClubSportsCoverCourtSports(
+      sports,
+      courts.map((c) => c.sport),
+    );
+    updateData.sports = sports;
+  }
+
   const club = await prisma.club.update({
     where: { id },
     data: updateData,

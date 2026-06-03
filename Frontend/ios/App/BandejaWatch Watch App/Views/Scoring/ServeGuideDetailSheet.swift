@@ -56,6 +56,7 @@ struct ServeGuideDetailSheet: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 4)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .navigationTitle(WatchCopy.serveHintsMenu(lang))
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {

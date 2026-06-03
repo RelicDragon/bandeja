@@ -93,6 +93,8 @@
     "squashInLevel": "squash",
     "court": "Court",
     "matchFormat": "Match format",
+    "matchSingles": "Singles",
+    "matchDoubles": "Doubles",
     "match1v1": "1v1",
     "match2v2": "2v2"
   },

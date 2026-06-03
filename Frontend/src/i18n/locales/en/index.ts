@@ -13,6 +13,7 @@ import common from './common.json';
 import conflicts from './conflicts.json';
 import contacts from './contacts.json';
 import createGame from './createGame.json';
+import sportRating from './sportRating.json';
 import createLeague from './createLeague.json';
 import errors from './errors.json';
 import faq from './faq.json';
@@ -67,6 +68,7 @@ export default {
     ...conflicts,
     ...contacts,
     ...createGame,
+    ...sportRating,
     ...createLeague,
     ...errors,
     ...faq,
@@ -89,6 +91,7 @@ export default {
     ...playerProfile,
     ...profile,
     ...rating,
+    ...sportRating,
     ...teams,
     ...telegram,
     ...trainers,

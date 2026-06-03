@@ -338,6 +338,8 @@
     "muteFailed": "Failed to update mute",
     "translateTextTooLong": "Text is too long to translate (max {{max}} characters).",
     "forwardCopied": "Copied — paste in another chat",
-    "forwardFailed": "Could not forward"
+    "forwardFailed": "Could not forward",
+    "sending": "Sending…",
+    "sendingSlow": "Taking longer than usual…"
   }
 }

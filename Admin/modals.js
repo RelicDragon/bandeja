@@ -489,21 +489,110 @@ async function deleteCourt(courtId, courtName) {
     }
 }
 
+function renderUserSportsEnabledEditor(enabledSports) {
+    const container = document.getElementById('userSportsEnabledEditor');
+    if (!container) return;
+    const enabled = new Set(enabledSports?.length ? enabledSports : ['PADEL']);
+    container.innerHTML = ALL_SPORTS.map((sport) => `
+        <label class="form-group-checkbox user-sport-enabled-check">
+            <input type="checkbox" class="user-sport-enabled-input" value="${sport}" ${enabled.has(sport) ? 'checked' : ''}>
+            <span>${escapeHtml(sportLabel(sport))}</span>
+        </label>
+    `).join('');
+    container.querySelectorAll('.user-sport-enabled-input').forEach((el) => {
+        el.addEventListener('change', syncUserPrimarySportOptions);
+    });
+    syncUserPrimarySportOptions();
+}
+
+function syncUserPrimarySportOptions() {
+    const select = document.getElementById('userPrimarySport');
+    if (!select) return;
+    const enabled = collectSportsEnabledFromEditor();
+    const current = select.value;
+    select.innerHTML = enabled.map((s) =>
+        `<option value="${s}">${escapeHtml(sportLabel(s))}</option>`,
+    ).join('');
+    if (enabled.includes(current)) {
+        select.value = current;
+    } else if (enabled.length) {
+        select.value = enabled[0];
+    }
+    populateUserAddSportSelect();
+}
+
+function collectSportsEnabledFromEditor() {
+    const checked = [];
+    document.querySelectorAll('#userSportsEnabledEditor .user-sport-enabled-input:checked').forEach((el) => {
+        checked.push(el.value);
+    });
+    return checked.length ? checked : ['PADEL'];
+}
+
+function populateUserAddSportSelect() {
+    const select = document.getElementById('userAddSportSelect');
+    if (!select) return;
+    const enabled = new Set(collectSportsEnabledFromEditor());
+    const existing = new Set();
+    document.querySelectorAll('#userSportProfilesEditor .user-sport-profile-row').forEach((row) => {
+        existing.add(row.dataset.sport);
+    });
+    const available = ALL_SPORTS.filter((s) => enabled.has(s) && !existing.has(s));
+    select.innerHTML = available.length
+        ? available.map((s) => `<option value="${s}">${escapeHtml(sportLabel(s))}</option>`).join('')
+        : '<option value="">—</option>';
+}
+
 function renderUserSportProfilesEditor(profiles) {
     const container = document.getElementById('userSportProfilesEditor');
     if (!container) return;
+    const enabled = collectSportsEnabledFromEditor();
     const rows = (profiles && profiles.length)
-        ? profiles
+        ? profiles.filter((p) => enabled.includes(p.sport))
         : [{ sport: 'PADEL', level: 3.5 }];
-    container.innerHTML = rows.map((p) => `
+    const displayRows = rows.length ? rows : [{ sport: enabled[0] || 'PADEL', level: 3.5 }];
+    container.innerHTML = displayRows.map((p) => `
         <div class="form-row user-sport-profile-row" data-sport="${escapeHtmlAttr(p.sport)}">
             <div class="form-group" style="flex:1">
-                <label>${escapeHtml(p.sport)}</label>
+                <label>${escapeHtml(sportLabel(p.sport))}</label>
                 <input type="number" class="user-sport-level-input" data-sport="${escapeHtmlAttr(p.sport)}"
                     step="any" min="1" max="7" value="${(p.level ?? 3.5).toString().replace(',', '.')}">
             </div>
+            ${displayRows.length > 1 ? `<button type="button" class="btn-small btn-delete" onclick="adminRemoveSportProfileRow('${escapeHtmlAttr(p.sport)}')">Remove</button>` : ''}
         </div>
     `).join('');
+    populateUserAddSportSelect();
+}
+
+function adminAddSportProfileRow() {
+    const select = document.getElementById('userAddSportSelect');
+    const sport = select?.value;
+    if (!sport) return;
+    const enabled = collectSportsEnabledFromEditor();
+    if (!enabled.includes(sport)) {
+        const box = document.querySelector(`#userSportsEnabledEditor input[value="${sport}"]`);
+        if (box) box.checked = true;
+        syncUserPrimarySportOptions();
+    }
+    const profiles = collectSportProfileLevelsFromEditor();
+    if (!profiles.find((p) => p.sport === sport)) {
+        profiles.push({ sport, level: 1.0 });
+    }
+    renderUserSportProfilesEditor(profiles);
+}
+
+function adminRemoveSportProfileRow(sport) {
+    const enabled = collectSportsEnabledFromEditor().filter((s) => s !== sport);
+    if (!enabled.length) {
+        alert('At least one sport must remain enabled');
+        return;
+    }
+    document.querySelectorAll('#userSportsEnabledEditor .user-sport-enabled-input').forEach((el) => {
+        if (el.value === sport) el.checked = false;
+    });
+    syncUserPrimarySportOptions();
+    const profiles = collectSportProfileLevelsFromEditor().filter((p) => p.sport !== sport);
+    renderUserSportProfilesEditor(profiles);
 }
 
 function collectSportProfileLevelsFromEditor() {
@@ -527,6 +616,13 @@ function formatUserSportProfilesSummary(user) {
     return (user?.level ?? 0).toFixed(1);
 }
 
+function setUserPhoneFieldRequired(required) {
+    const input = document.getElementById('userPhone');
+    const label = document.querySelector('label[for="userPhone"]');
+    if (input) input.required = required;
+    if (label) label.textContent = required ? 'Phone Number *' : 'Phone Number';
+}
+
 function createUserModal() {
     showModal('userModal');
     document.getElementById('userModalTitle').textContent = 'Create User';
@@ -534,6 +630,9 @@ function createUserModal() {
     document.getElementById('userForm').dataset.mode = 'create';
     document.getElementById('userForm').dataset.userId = '';
     document.getElementById('userPasswordGroup').style.display = '';
+    setUserPhoneFieldRequired(true);
+    renderUserSportsEnabledEditor(['PADEL']);
+    document.getElementById('userPrimarySport').value = 'PADEL';
     renderUserSportProfilesEditor([{ sport: 'PADEL', level: 3.5 }]);
     loadUserCityOptions();
 }
@@ -542,11 +641,16 @@ async function editUserModal(user) {
     showModal('userModal');
     document.getElementById('userModalTitle').textContent = 'Edit User';
     document.getElementById('userPasswordGroup').style.display = 'none';
+    setUserPhoneFieldRequired(false);
     document.getElementById('userPhone').value = user.phone || '';
     document.getElementById('userFirstName').value = user.firstName || '';
     document.getElementById('userLastName').value = user.lastName || '';
     document.getElementById('userEmail').value = user.email || '';
     document.getElementById('userGender').value = user.gender || 'PREFER_NOT_TO_SAY';
+    const enabled = user.sportsEnabled?.length ? user.sportsEnabled : ['PADEL'];
+    renderUserSportsEnabledEditor(enabled);
+    const primarySelect = document.getElementById('userPrimarySport');
+    if (primarySelect) primarySelect.value = user.primarySport || enabled[0] || 'PADEL';
     const profiles = user.sportProfiles?.length
         ? user.sportProfiles
         : [{ sport: 'PADEL', level: user.level ?? 3.5 }];
@@ -593,17 +697,31 @@ async function handleUserSubmit(e) {
         return;
     }
 
-    const sportProfileLevels = collectSportProfileLevelsFromEditor();
+    const sportsEnabled = collectSportsEnabledFromEditor();
+    if (!sportsEnabled.length) {
+        alert('At least one sport must be enabled');
+        return;
+    }
+    const primarySport = document.getElementById('userPrimarySport')?.value || sportsEnabled[0];
+    if (!sportsEnabled.includes(primarySport)) {
+        alert('Primary sport must be one of the enabled sports');
+        return;
+    }
+    const sportProfileLevels = collectSportProfileLevelsFromEditor()
+        .filter((p) => sportsEnabled.includes(p.sport));
     const padelLevel = sportProfileLevels.find((p) => p.sport === 'PADEL')?.level ?? 3.5;
 
+    const phoneRaw = (document.getElementById('userPhone').value || '').trim();
     const data = {
-        phone: document.getElementById('userPhone').value,
+        phone: mode === 'create' ? phoneRaw : phoneRaw || null,
         firstName: firstName || null,
         lastName: lastName || null,
         email: document.getElementById('userEmail').value || null,
         gender: document.getElementById('userGender').value,
         level: padelLevel,
-        sportProfileLevels: mode === 'edit' ? sportProfileLevels : undefined,
+        primarySport,
+        sportsEnabled,
+        sportProfileLevels,
         currentCityId: document.getElementById('userCityId').value || null,
         isActive: document.getElementById('userIsActive').checked,
         isAdmin: document.getElementById('userIsAdmin').checked,
@@ -767,6 +885,8 @@ window.handleCourtSubmit = handleCourtSubmit;
 window.deleteCourt = deleteCourt;
 window.createUserModal = createUserModal;
 window.editUserModal = editUserModal;
+window.adminAddSportProfileRow = adminAddSportProfileRow;
+window.adminRemoveSportProfileRow = adminRemoveSportProfileRow;
 window.handleUserSubmit = handleUserSubmit;
 window.resetPasswordModal = resetPasswordModal;
 window.handleResetPasswordSubmit = handleResetPasswordSubmit;

@@ -1,3 +1,12 @@
+function populateMarketCategorySportSelect(selected) {
+    const select = document.getElementById('marketCategorySport');
+    if (!select) return;
+    select.innerHTML =
+        '<option value="">All sports</option>' +
+        ALL_SPORTS.map((s) => `<option value="${s}">${sportLabel(s)}</option>`).join('');
+    select.value = selected || '';
+}
+
 async function loadMarketCategories() {
     try {
         const response = await apiRequest('/admin/market-categories');
@@ -12,12 +21,13 @@ async function loadMarketCategories() {
 function renderMarketCategoriesTable(categories) {
     const tbody = document.getElementById('marketCategoriesTableBody');
     if (categories.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No categories. Add one to get started.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No categories. Add one to get started.</td></tr>';
         return;
     }
     tbody.innerHTML = categories.map(cat => `
         <tr>
-            <td>${cat.name}</td>
+            <td>${escapeHtml(cat.name)}</td>
+            <td>${cat.sport ? escapeHtml(sportLabel(cat.sport)) : 'All sports'}</td>
             <td>${cat.order}</td>
             <td>${cat._count?.items ?? 0}</td>
             <td>
@@ -41,6 +51,7 @@ function createMarketCategoryModal() {
     document.getElementById('marketCategoryOrder').value = '0';
     document.getElementById('marketCategoryForm').dataset.mode = 'create';
     document.getElementById('marketCategoryForm').dataset.categoryId = '';
+    populateMarketCategorySportSelect('');
     openModal('marketCategoryModal');
 }
 
@@ -51,6 +62,7 @@ function editMarketCategoryModal(cat) {
     document.getElementById('marketCategoryIsActive').checked = cat.isActive;
     document.getElementById('marketCategoryForm').dataset.mode = 'edit';
     document.getElementById('marketCategoryForm').dataset.categoryId = cat.id;
+    populateMarketCategorySportSelect(cat.sport || '');
     openModal('marketCategoryModal');
 }
 
@@ -59,10 +71,12 @@ async function handleMarketCategorySubmit(e) {
     const form = e.target;
     const mode = form.dataset.mode;
     const categoryId = form.dataset.categoryId;
+    const sportVal = document.getElementById('marketCategorySport').value;
     const data = {
         name: document.getElementById('marketCategoryName').value.trim(),
         order: parseInt(document.getElementById('marketCategoryOrder').value) || 0,
         isActive: document.getElementById('marketCategoryIsActive').checked,
+        sport: sportVal || null,
     };
     try {
         if (mode === 'create') {

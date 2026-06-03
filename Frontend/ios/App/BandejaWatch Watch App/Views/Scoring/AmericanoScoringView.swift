@@ -36,7 +36,9 @@ struct RallyPointsScoringView: View {
                     matchId: matchId
                 )
             }
-            if vm.game?.resolvedSport == .pickleball, vm.liveScoringUiId == .rallyPointsBoard {
+            if vm.game?.resolvedSport == .pickleball,
+               vm.liveScoringUiId == .rallyPointsBoard,
+               vm.officiatingHintsEnabled {
                 WatchPickleballCoachButtons(lang: lang)
             }
             let idx = vm.activeSetIndex

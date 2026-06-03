@@ -75,6 +75,8 @@
   "clubAdmin.policyText": "Правила",
   "clubAdmin.defaultSlotMinutes": "Слот по умолчанию (мин)",
   "clubAdmin.cancellationNoticeHours": "Уведомление об отмене (ч)",
+  "clubAdmin.sports": "Виды спорта в клубе",
+  "clubAdmin.sportsHint": "Кортам можно назначить только выбранные виды спорта.",
   "clubAdmin.amenities": "Удобства",
   "clubAdmin.amenity.parking": "Парковка",
   "clubAdmin.amenity.showers": "Душ",

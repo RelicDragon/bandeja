@@ -8,7 +8,7 @@
   "addSportSubtitle": "Около минуты — поможет подобрать игры по силе.",
   "estimateLevel": "Оценить уровень",
   "estimateLink": "Оценить",
-  "createGameBanner": "Оцените уровень — {{sport}}",
+  "createGameBanner": "Ваш уровень {{sport}} — 1.0. Нажмите, чтобы оценить его перед первой игрой.",
   "createGameLevelBandWarning": "Ваш уровень {{sport}} оценён как 1.0. Минимум выше 2.5 может не позволить вам попасть в свою игру.",
   "inviteNudge": "Ваш уровень {{sport}} — {{level}}.",
   "inviteNudgeCrossSport": "{{primarySport}} {{primaryLevel}} · Уровень {{gameSport}} {{level}} —",
@@ -18,5 +18,15 @@
   "homeDismissLink": "Больше не показывать",
   "homeDismissTitle": "Скрыть опрос об уровне?",
   "homeDismissMessage": "Ваш текущий уровень — {{level}}. Только скрываем напоминание, уровень не меняется.",
-  "homeDismissConfirm": "Да, скрыть"
+  "homeDismissConfirm": "Да, скрыть",
+  "title": "Estimate your {{sport}} level",
+  "description": "Answer a few quick questions so we can set your starting level for {{sport}}.",
+  "back": "Back",
+  "next": "Next",
+  "submit": "Continue",
+  "congratulationsTitle": "Level set",
+  "congratulationsSubtitle": "Your {{sport}} rating is",
+  "goToApp": "Done",
+  "fillItLater": "I'll fill it in later",
+  "disclaimer": "Self-assessment only — your level may adjust after rated matches."
 }

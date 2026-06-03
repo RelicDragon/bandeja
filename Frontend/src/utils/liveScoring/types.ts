@@ -42,6 +42,10 @@ export type LiveScoringState = {
   optionalDeciderFormat?: LiveOptionalDeciderFormat;
   /** True when the operator locked the current classic set at a partial games score (timed / buzzer). */
   timedClassicSetLocked?: boolean;
+  /** Strict officiating: let called — block scoring until replay confirmed. */
+  officiatingLetPending?: boolean;
+  /** Rally sports (squash/badminton): winner of each completed point, in order within the active set. */
+  pointWinnerLog?: LiveTeamSide[];
 };
 
 export type LiveScoringActionResult = {

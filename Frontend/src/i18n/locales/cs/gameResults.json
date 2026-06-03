@@ -285,6 +285,12 @@
     "socialLevel": "Social Level",
     "roundMatches": "Round {{number}} matches",
     "courtNumber": "Court {{number}}",
-    "roundNumber": "Round {{number}}"
+    "roundNumber": "Round {{number}}",
+    "shareCardBadge": "Výsledky zápasu",
+    "shareCardCta": "Sdílet kartu výsledků",
+    "shareCardDone": "Sdíleno",
+    "shareCardFailed": "Sdílení se nepodařilo",
+    "shareCardNoSummary": "Skvělá session!",
+    "playAgainCta": "Hrát znovu"
   }
 }

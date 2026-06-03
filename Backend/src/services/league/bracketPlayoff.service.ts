@@ -18,7 +18,12 @@ import {
   mainRoundLabel,
   validateByeSeedRanks,
 } from './bracketStructure';
-import { createLeagueGame, PlayoffGameSetupOverrides } from './gameCreation.util';
+import {
+  createLeagueGame,
+  PlayoffGameSetupOverrides,
+  validatePlayoffGameSetupForSeason,
+} from './gameCreation.util';
+import { resolveLeagueSeasonSport } from '../../utils/validators/validateLeagueSeasonSport';
 import { BracketAdvancementService } from './bracketAdvancement.service';
 import { BracketGameNotificationService } from './bracketGameNotification.service';
 import {
@@ -258,6 +263,11 @@ export class BracketPlayoffService {
       throw new ApiError(403, 'Only owners and admins can create playoff');
     }
 
+    const seasonSport = resolveLeagueSeasonSport(leagueSeason);
+    validatePlayoffGameSetupForSeason(seasonSport, leagueSeason.game, gameSetup, {
+      gameType: 'CLASSIC',
+    });
+
     for (const g of groups) {
       const n = g.participantIds?.length ?? 0;
       if (n < 2 || n > 16) {
@@ -480,6 +490,11 @@ export class BracketPlayoffService {
     if (leagueSeason.game.participants.length === 0 && !user.isAdmin) {
       throw new ApiError(403, 'Only owners and admins can create playoff');
     }
+
+    const seasonSport = resolveLeagueSeasonSport(leagueSeason);
+    validatePlayoffGameSetupForSeason(seasonSport, leagueSeason.game, gameSetup, {
+      gameType: 'CLASSIC',
+    });
 
     const seasonGroupIds = new Set(leagueSeason.groups.map((g) => g.id));
     const includedGroupIds =

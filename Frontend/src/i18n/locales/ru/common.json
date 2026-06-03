@@ -74,7 +74,8 @@
     "select": "Select",
     "retry": "Retry",
     "on": "On",
-    "pressBackAgainToExit": "Press back again to exit"
+    "pressBackAgainToExit": "Press back again to exit",
+    "off": "Off"
   },
   "sport": {
     "sport": "Вид спорта",
@@ -92,6 +93,8 @@
     "squashInLevel": "сквоше",
     "court": "Корт",
     "matchFormat": "Формат матча",
+    "matchSingles": "Одиночный",
+    "matchDoubles": "Парный",
     "match1v1": "1v1",
     "match2v2": "2v2"
   },

@@ -9,7 +9,6 @@ import * as dotenv from 'dotenv';
 import { EntityType, GamePhotoSource, GameStatus, ParticipantRole } from '@prisma/client';
 import { buildResultsArtifactsDto } from '../../src/services/gameResultsArtifact/gameResultsArtifact.dto';
 import { isGameResultStoryEligible } from '../../src/services/gameResultsArtifact/gameResultsArtifactStory.eligibility';
-import { shouldSetAiAsMainPhoto } from '../../src/services/gameResultsArtifact/gameResultsArtifact.mainPhotoSnapshot';
 
 function assert(cond: boolean, msg: string) {
   if (!cond) {
@@ -159,42 +158,38 @@ async function main() {
     assert(aiRow?.uploaderId === null, 'AI photo has no uploader');
     console.log('ok: GamePhoto AI_GENERATED source');
 
-    const jobSnap = await prisma.gameResultsArtifactJob.findUnique({
-      where: { id: job!.id },
-      select: { userPhotoCountAtEnqueue: true, mainPhotoIdAtEnqueue: true },
-    });
-    assert(
-      !shouldSetAiAsMainPhoto(
-        {
-          userPhotoCountAtEnqueue: jobSnap!.userPhotoCountAtEnqueue,
-          mainPhotoIdAtEnqueue: jobSnap!.mainPhotoIdAtEnqueue,
-        },
-        { photosCount: 1, mainPhotoId: null }
-      ),
-      'main not set when count drift'
-    );
-
+    await prisma.gamePhoto.deleteMany({ where: { gameId } });
     await prisma.game.update({
       where: { id: gameId },
       data: { photosCount: 0, mainPhotoId: null },
     });
-    assert(
-      shouldSetAiAsMainPhoto(
-        { userPhotoCountAtEnqueue: 0, mainPhotoIdAtEnqueue: null },
-        { photosCount: 0, mainPhotoId: null }
-      ),
-      'snapshot guard allows main'
-    );
+
+    const userPhoto = await prisma.gamePhoto.create({
+      data: {
+        gameId,
+        uploaderId: ownerId,
+        originalUrl: `/uploads/chat/originals/qa-user-${suffix}.jpg`,
+        thumbnailUrl: `/uploads/chat/thumbnails/qa-user-${suffix}.jpg`,
+      },
+    });
     await prisma.game.update({
       where: { id: gameId },
-      data: { mainPhotoId: aiPhoto.id },
+      data: { photosCount: 1, mainPhotoId: userPhoto.id },
     });
-    const allowedMain = await prisma.game.findUnique({
+
+    const { GamePhotoCreateService } = await import('../../src/services/gamePhoto/gamePhoto.create.service');
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64'
+    );
+    const aiDto = await GamePhotoCreateService.createFromGeneratedBuffer(gameId, png, 'ai-test.png');
+    const afterAiMain = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { mainPhotoId: true },
+      select: { mainPhotoId: true, photosCount: true },
     });
-    assert(allowedMain?.mainPhotoId === aiPhoto.id, 'main set when snapshot matches');
-    console.log('ok: main-photo snapshot guard');
+    assert(afterAiMain?.mainPhotoId === aiDto.id, 'AI photo becomes main');
+    assert(afterAiMain?.photosCount === 2, 'photosCount includes AI photo');
+    console.log('ok: AI photo sets mainPhotoId');
   } finally {
     setGameResultsArtifactTestDeps(null);
     await prisma.gamePhoto.deleteMany({ where: { gameId } });

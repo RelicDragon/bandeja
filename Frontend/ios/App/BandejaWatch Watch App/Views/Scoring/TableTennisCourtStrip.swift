@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// Watch-friendly table outline (mirrors web `TableTennisCourt` proportions, no SVG).
+/// Watch-friendly table outline (mirrors web `TableTennisCourt` proportions).
 struct TableTennisCourtStrip: View {
     var serverTeam: TeamSide?
     var serverOnRightHalf: Bool
+    var matchDoubles: Bool = false
 
     var body: some View {
         ZStack {
@@ -26,42 +27,40 @@ struct TableTennisCourtStrip: View {
 
             if let serverTeam {
                 HStack(spacing: 0) {
-                    halfServeGlow(team: .teamA, serverTeam: serverTeam, isRightHalf: false)
-                    halfServeGlow(team: .teamB, serverTeam: serverTeam, isRightHalf: true)
+                    halfServeGlow(team: .teamA, serverTeam: serverTeam)
+                    halfServeGlow(team: .teamB, serverTeam: serverTeam)
                 }
                 .padding(3)
             }
-
-            HStack {
-                Text("TT")
-                    .font(.system(size: 8, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.75))
-                    .padding(.leading, 5)
-                    .padding(.top, 2)
-                Spacer()
-            }
-            .frame(maxHeight: .infinity, alignment: .topLeading)
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 30)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityHidden(true)
     }
 
     @ViewBuilder
-    private func halfServeGlow(team: TeamSide, serverTeam: TeamSide, isRightHalf: Bool) -> some View {
+    private func halfServeGlow(team: TeamSide, serverTeam: TeamSide) -> some View {
         let serving = serverTeam == team
-        let deuceEdge = serverOnRightHalf == isRightHalf
-        ZStack(alignment: deuceEdge ? .trailing : .leading) {
+        ZStack {
             RoundedRectangle(cornerRadius: 4, style: .continuous)
                 .fill(serving ? Color.orange.opacity(0.42) : Color.clear)
             if serving {
-                RoundedRectangle(cornerRadius: 1, style: .continuous)
-                    .fill(Color.orange.opacity(0.9))
-                    .frame(width: 3)
-                    .padding(.vertical, 4)
-                    .padding(deuceEdge ? .trailing : .leading, 2)
+                GeometryReader { geo in
+                    let markerX = serveMarkerX(in: geo.size.width, serveRight: serverOnRightHalf, doubles: matchDoubles)
+                    RoundedRectangle(cornerRadius: 1, style: .continuous)
+                        .fill(Color.orange.opacity(0.9))
+                        .frame(width: matchDoubles ? 3 : 4, height: 14)
+                        .position(x: markerX, y: geo.size.height / 2)
+                }
+                .padding(.vertical, 4)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func serveMarkerX(in width: CGFloat, serveRight: Bool, doubles: Bool) -> CGFloat {
+        if doubles {
+            return serveRight ? width - 4 : 4
+        }
+        return serveRight ? width * 0.68 : width * 0.32
     }
 }

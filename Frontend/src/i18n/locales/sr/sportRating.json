@@ -1,0 +1,43 @@
+{
+  "sportRating": {
+    "band": {
+      "beginner": "Beginner",
+      "improver": "Improver",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "expert": "Expert",
+      "elite": "Elite"
+    },
+    "display": {
+      "playtomic": "≈ {{value}} Playtomic",
+      "ntrp": "≈ {{value}} NTRP",
+      "dupr": "≈ {{value}} DUPR",
+      "utr": "≈ {{value}} UTR",
+      "usatt": "≈ {{value}} USATT",
+      "squashlevels": "≈ {{value}} SquashLevels"
+    },
+    "padel": {
+      "band1": "Learning rallies and basic court position",
+      "band2": "Consistent rallies; starting net play",
+      "band3": "Solid doubles basics; competitive social play",
+      "band4": "Strong club player; good tactics",
+      "band5": "Advanced club / regional level",
+      "band6": "High performance / tournament level"
+    },
+    "tennis": {
+      "bandHint": "Rough NTRP-style club level"
+    },
+    "pickleball": {
+      "bandHint": "Rough DUPR-style recreational tier"
+    },
+    "badminton": {
+      "bandHint": "Club skill band (not BWF ranking)"
+    },
+    "tableTennis": {
+      "bandHint": "Club level; USATT-style hint optional"
+    },
+    "squash": {
+      "bandHint": "Illustrative SquashLevels-style level"
+    }
+  }
+}

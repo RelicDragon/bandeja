@@ -2,6 +2,9 @@ import { Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
+import type { PlaytomicSportLevelInput } from '../../integrations/playtomicSport';
+import { syncPlaytomicLevelsToUser } from '../../services/integrations/playtomicProfileSync.service';
+import { updateSportExternalRatingHint } from '../../services/user/sportExternalRating.service';
 import {
   addUserSport,
   confirmInitialSportsSetup,
@@ -45,5 +48,22 @@ export const updateSportProfileLevel = asyncHandler(async (req: AuthRequest, res
 export const removeSport = asyncHandler(async (req: AuthRequest, res: Response) => {
   const sport = parseSportParam(req.params.sport);
   const user = await removeUserSport(req.userId!, sport);
+  res.json({ success: true, data: user });
+});
+
+export const syncPlaytomicProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const body = req.body as { levels?: unknown };
+  const levels = body.levels;
+  if (!Array.isArray(levels)) {
+    throw new ApiError(400, 'levels must be an array');
+  }
+  const user = await syncPlaytomicLevelsToUser(req.userId!, levels as PlaytomicSportLevelInput[]);
+  res.json({ success: true, data: user });
+});
+
+export const updateSportExternalRating = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const sport = parseSportParam(req.params.sport);
+  const { externalRatingHint } = req.body as { externalRatingHint?: unknown };
+  const user = await updateSportExternalRatingHint(req.userId!, sport, externalRatingHint ?? null);
   res.json({ success: true, data: user });
 });

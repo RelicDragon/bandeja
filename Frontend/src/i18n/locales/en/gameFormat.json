@@ -109,6 +109,10 @@
       "Escalera": {
         "title": "Ladder",
         "subtitle": "Positional ladder — winners climb courts"
+      },
+      "KingOfCourt": {
+        "title": "King of the Court",
+        "subtitle": "Court 1 kings stay; losers join challenger queue"
       }
     },
     "generationHint": {
@@ -124,7 +128,8 @@
       "Rating": "First round random, then by leaderboard",
       "RoundRobin": "Most fair — everyone plays everyone",
       "WinnersCourt": "Needs at least 2 courts",
-      "Escalera": "Needs at least 2 courts"
+      "Escalera": "Needs at least 2 courts",
+      "KingOfCourt": "Multi-court rotation with a challenger pool when players overflow courts"
     },
     "formatDescription": {
       "CLASSIC": "One match, fixed pairs",
@@ -133,6 +138,7 @@
       "ROUND_ROBIN": "Everyone plays everyone",
       "WINNER_COURT": "Winners move up courts",
       "LADDER": "Climb the court ranking",
+      "KOTC": "King court + challenger pool",
       "CUSTOM": "Full manual control"
     },
     "formatHint": {
@@ -142,6 +148,7 @@
       "ROUND_ROBIN": "Every pair plays against every other pair.",
       "WINNER_COURT": "Winners climb to a higher court, losers drop.",
       "LADDER": "Players sorted by level; winners climb, losers drop.",
+      "KOTC": "Winners stay on court 1; other courts refill from the challenger queue.",
       "CUSTOM": "Design your own rules from scratch."
     },
     "formatDetail": {
@@ -151,6 +158,7 @@
       "ROUND_ROBIN": "Every team plays every other team. The most fair way to decide a winner when you have time for all matchups.",
       "WINNER_COURT": "King of the Court: winners move up a court, losers drop down. Partners switch each round. Needs at least two courts.",
       "LADDER": "Escalera: players are initially seeded by level across courts. Winners climb to the next court, losers drop. New teams form every round — ideal for mixed-level groups.",
+      "KOTC": "King of the Court with a challenger pool: court 1 winners defend against the next pair from the queue; other courts rotate four players from the pool. Extra players wait their turn.",
       "CUSTOM": "Start from a blank slate and control every rule using the advanced options."
     },
     "scoring": {
@@ -179,6 +187,18 @@
         "subtitle": "Short 4-game sets, best of 3",
         "hint": "Faster classic format"
       },
+      "CLASSIC_FAST4": {
+        "title": "FAST4",
+        "subtitle": "4-game sets, no-ad, tie-break at 3–3 to 5",
+        "hint": "Tennis Australia FAST4 format",
+        "sport": {
+          "TENNIS": {
+            "title": "FAST4 tennis",
+            "subtitle": "Best of 3 sets · 4 games · no-ad · TB at 3–3 to 5",
+            "hint": "Social and league-friendly short tennis"
+          }
+        }
+      },
       "CLASSIC_SUPER_TIEBREAK": {
         "title": "Super tie-break",
         "subtitle": "2 sets + super tie-break at 1-1",
@@ -189,10 +209,53 @@
         "subtitle": "One set with games and 15/30/40…; match stops when the clock ends",
         "hint": "Americano-style rotation can still use tennis points per match"
       },
+      "POINTS_12": {
+        "title": "12 points",
+        "subtitle": "12 points total in the set (both teams); most points wins",
+        "hint": "Lightning Americano — quick rotation",
+        "sport": {
+          "PADEL": {
+            "title": "12 balls",
+            "subtitle": "12 balls total in the set (both teams); most points wins",
+            "hint": "Short padel Americano rotation"
+          }
+        }
+      },
+      "POINTS_15": {
+        "title": "15 points",
+        "subtitle": "15 points total in the set (both teams); most points wins",
+        "hint": "Quick rotation format",
+        "sport": {
+          "BADMINTON": {
+            "title": "15 balls",
+            "subtitle": "15 balls total in the set (both teams); most points wins",
+            "hint": "Social badminton rotation — not three games to 15"
+          }
+        }
+      },
       "POINTS_16": {
         "title": "16 points",
         "subtitle": "16 points total in the set (both teams); most points wins",
-        "hint": "Quick sets — Americano style"
+        "hint": "Quick sets — Americano style",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "16-ball budget",
+            "subtitle": "16 balls total per match (both teams); most points wins",
+            "hint": "Social rotation — not a game to 16 win-by-2"
+          }
+        }
+      },
+      "SINGLE_GAME_21": {
+        "title": "21 points",
+        "subtitle": "Single game to 21 points, win by 2",
+        "hint": "Pre-2001 casual table tennis",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Old-school game to 21",
+            "subtitle": "One game to 21 points (win by 2)",
+            "hint": "Legacy 21-point format before 11-point games"
+          }
+        }
       },
       "POINTS_11": {
         "title": "11 points",
@@ -222,9 +285,9 @@
             "hint": "Shorter badminton game"
           },
           "PICKLEBALL": {
-            "title": "Game to 21",
-            "subtitle": "One game to 21 points",
-            "hint": "Common pickleball game length"
+            "title": "21-ball budget",
+            "subtitle": "21 balls total per match (both teams); most points wins",
+            "hint": "Americano / open play — not a rally match to 21"
           }
         }
       },
@@ -237,6 +300,28 @@
             "title": "Best of 3 games to 11",
             "subtitle": "Three games to 11 (win by 2); first to 2 games wins the match",
             "hint": "Official table tennis match length"
+          },
+          "SQUASH": {
+            "title": "Best of 3 games to 11",
+            "subtitle": "Three games to 11 (win by 2); first to 2 games wins",
+            "hint": "Shorter squash match"
+          },
+          "PICKLEBALL": {
+            "title": "Best of 3 games to 11",
+            "subtitle": "Three rally games to 11 (win by 2); first to 2 games wins",
+            "hint": "Official-style pickleball match"
+          }
+        }
+      },
+      "BEST_OF_3_15": {
+        "title": "Best of 3 · to 15",
+        "subtitle": "Three games to 15 points each, win by 2; first to 2 games wins",
+        "hint": "Club badminton match",
+        "sport": {
+          "BADMINTON": {
+            "title": "Best of 3 games to 15",
+            "subtitle": "Three games to 15 (win by 2); first to 2 games wins the match",
+            "hint": "BWF 2027 club format — not a ball budget"
           }
         }
       },
@@ -272,12 +357,26 @@
       "POINTS_24": {
         "title": "24 points",
         "subtitle": "24 points total in the set (both teams); most points wins",
-        "hint": "Slightly longer sets"
+        "hint": "Slightly longer sets",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "24-ball budget",
+            "subtitle": "24 balls total per match (both teams); most points wins",
+            "hint": "Social rotation cap"
+          }
+        }
       },
       "POINTS_32": {
         "title": "32 points",
         "subtitle": "32 points total in the set (both teams); most points wins",
-        "hint": "Longer sets per round"
+        "hint": "Longer sets per round",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "32-ball budget",
+            "subtitle": "32 balls total per match (both teams); most points wins",
+            "hint": "Longer social rotation"
+          }
+        }
       },
       "TIMED": {
         "title": "Timed match",
@@ -296,12 +395,29 @@
       "CLASSIC_PRO_SET": "Pro set",
       "CLASSIC_SINGLE_SET": "Single set",
       "CLASSIC_SHORT_SET": "Short sets",
+      "CLASSIC_FAST4": "FAST4",
       "CLASSIC_SUPER_TIEBREAK": "Super tie-break",
       "CLASSIC_TIMED": "Games/sets · timed",
       "POINTS_11": "To 11",
+      "POINTS_12": "To 12",
+      "POINTS_15": "To 15",
       "POINTS_16": "To 16",
       "POINTS_21": "To 21",
+      "POINTS_21BySport": {
+        "PICKLEBALL": "21 balls"
+      },
+      "POINTS_16BySport": {
+        "PICKLEBALL": "16 balls"
+      },
+      "POINTS_24BySport": {
+        "PICKLEBALL": "24 balls"
+      },
+      "POINTS_32BySport": {
+        "PICKLEBALL": "32 balls"
+      },
+      "SINGLE_GAME_21": "To 21",
       "BEST_OF_3_11": "Bo3 · to 11",
+      "BEST_OF_3_15": "Bo3 · to 15",
       "BEST_OF_3_21": "Bo3 · to 21",
       "BEST_OF_5_11": "Bo5 · to 11",
       "PAR_11": "PAR · 11",

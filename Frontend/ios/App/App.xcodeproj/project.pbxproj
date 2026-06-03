@@ -21,6 +21,7 @@
 		99AF71D42F744E2000B32563 /* AuthBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71CF2F744E2000B32563 /* AuthBridgePlugin.swift */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 		B79A10042F7443E0002D7100 /* BandejaWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C1A2B3C4D5E6F708192A3B57 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,6 +38,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = B79A10032F7443E0002D7100;
 			remoteInfo = BandejaWatchWidgets;
+		};
+		C1A2B3C4D5E6F708192A3B53 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 99414BE02F7443DE002D7100;
+			remoteInfo = "BandejaWatch Watch App";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -85,12 +93,15 @@
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BandejaWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C1A2B3C4D5E6F708192A3B4C /* BandejaWatchWatchTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BandejaWatchWatchTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/WatchOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		99414BE22F7443DE002D7100 /* BandejaWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "BandejaWatch Watch App"; sourceTree = "<group>"; };
 		B79A10022F7443E0002D7100 /* BandejaWatchWidgets */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BandejaWatchWidgets; sourceTree = "<group>"; };
+		C1A2B3C4D5E6F708192A3B4D /* BandejaWatchWatchTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BandejaWatchWatchTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,12 +127,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C1A2B3C4D5E6F708192A3B4F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C1A2B3C4D5E6F708192A3B57 /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		27E2DDA53C4D2A4D1A88CE4A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */,
 				AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */,
 			);
 			name = Frameworks;
@@ -133,6 +153,7 @@
 				504EC3061FED79650016851F /* App */,
 				99414BE22F7443DE002D7100 /* BandejaWatch Watch App */,
 				B79A10022F7443E0002D7100 /* BandejaWatchWidgets */,
+				C1A2B3C4D5E6F708192A3B4D /* BandejaWatchWatchTests */,
 				504EC3051FED79650016851F /* Products */,
 				7F8756D8B27F46E3366F6CEA /* Pods */,
 				27E2DDA53C4D2A4D1A88CE4A /* Frameworks */,
@@ -145,6 +166,7 @@
 				504EC3041FED79650016851F /* App.app */,
 				99414BE12F7443DE002D7100 /* BandejaWatch Watch App.app */,
 				B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */,
+				C1A2B3C4D5E6F708192A3B4C /* BandejaWatchWatchTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -245,6 +267,27 @@
 			productReference = B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		C1A2B3C4D5E6F708192A3B4E /* BandejaWatchWatchTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C1A2B3C4D5E6F708192A3B54 /* Build configuration list for PBXNativeTarget "BandejaWatchWatchTests" */;
+			buildPhases = (
+				C1A2B3C4D5E6F708192A3B50 /* Sources */,
+				C1A2B3C4D5E6F708192A3B4F /* Frameworks */,
+				C1A2B3C4D5E6F708192A3B51 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C1A2B3C4D5E6F708192A3B52 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C1A2B3C4D5E6F708192A3B4D /* BandejaWatchWatchTests */,
+			);
+			name = BandejaWatchWatchTests;
+			productName = BandejaWatchWatchTests;
+			productReference = C1A2B3C4D5E6F708192A3B4C /* BandejaWatchWatchTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -264,6 +307,10 @@
 					B79A10032F7443E0002D7100 = {
 						CreatedOnToolsVersion = 26.3;
 					};
+					C1A2B3C4D5E6F708192A3B4E = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 99414BE02F7443DE002D7100;
+					};
 				};
 			};
 			buildConfigurationList = 504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */;
@@ -282,6 +329,7 @@
 				504EC3031FED79650016851F /* App */,
 				99414BE02F7443DE002D7100 /* BandejaWatch Watch App */,
 				B79A10032F7443E0002D7100 /* BandejaWatchWidgets */,
+				C1A2B3C4D5E6F708192A3B4E /* BandejaWatchWatchTests */,
 			);
 		};
 /* End PBXProject section */
@@ -308,6 +356,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B79A100B2F7443E0002D7100 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C1A2B3C4D5E6F708192A3B51 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -383,6 +438,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C1A2B3C4D5E6F708192A3B50 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -395,6 +457,11 @@
 			isa = PBXTargetDependency;
 			target = B79A10032F7443E0002D7100 /* BandejaWatchWidgets */;
 			targetProxy = B79A100F2F7443E0002D7100 /* PBXContainerItemProxy */;
+		};
+		C1A2B3C4D5E6F708192A3B52 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 99414BE02F7443DE002D7100 /* BandejaWatch Watch App */;
+			targetProxy = C1A2B3C4D5E6F708192A3B53 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -620,6 +687,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N9634A623Q;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -784,6 +852,56 @@
 			};
 			name = Release;
 		};
+		C1A2B3C4D5E6F708192A3B55 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N9634A623Q;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja.watchkitapp.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BandejaWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BandejaWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 10.6;
+			};
+			name = Debug;
+		};
+		C1A2B3C4D5E6F708192A3B56 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N9634A623Q;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja.watchkitapp.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BandejaWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BandejaWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 10.6;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -819,6 +937,15 @@
 			buildConfigurations = (
 				B79A100D2F7443E0002D7100 /* Debug */,
 				B79A100E2F7443E0002D7100 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C1A2B3C4D5E6F708192A3B54 /* Build configuration list for PBXNativeTarget "BandejaWatchWatchTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C1A2B3C4D5E6F708192A3B55 /* Debug */,
+				C1A2B3C4D5E6F708192A3B56 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

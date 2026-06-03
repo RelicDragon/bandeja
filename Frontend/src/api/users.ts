@@ -207,8 +207,14 @@ export const usersApi = {
   },
 
   addSport: async (sport: string) => {
-    const response = await api.post<ApiResponse<User>>('/users/sports', { sport });
-    return response.data;
+    const response = await api.post<ApiResponse<User> & { suggestedQuestionnaire?: boolean }>(
+      '/users/sports',
+      { sport },
+    );
+    return {
+      data: response.data.data,
+      suggestedQuestionnaire: response.data.suggestedQuestionnaire === true,
+    };
   },
 
   setPrimarySport: async (sport: string) => {
@@ -229,8 +235,29 @@ export const usersApi = {
     return response.data;
   },
 
+  updateSportExternalRating: async (sport: string, externalRatingHint: string | null) => {
+    const response = await api.put<ApiResponse<User>>(`/users/sport-profiles/${sport}/external-rating`, {
+      externalRatingHint,
+    });
+    return response.data;
+  },
+
+  syncPlaytomicProfile: async (
+    levels: Array<{ playtomicSportId: string; level: number; reliability?: number }>,
+  ) => {
+    const response = await api.post<ApiResponse<User>>('/users/profile/sync-playtomic', { levels });
+    return response.data;
+  },
+
   removeSport: async (sport: string) => {
     const response = await api.delete<ApiResponse<User>>(`/users/me/sports/${sport}`);
+    return response.data;
+  },
+
+  getMySportActivity: async () => {
+    const response = await api.get<
+      ApiResponse<Array<{ sport: Sport; gamesLast7Days: number; gamesLast30Days: number }>>
+    >('/users/me/sport-activity');
     return response.data;
   },
 

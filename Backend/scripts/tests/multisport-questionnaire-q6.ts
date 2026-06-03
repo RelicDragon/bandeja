@@ -1,5 +1,5 @@
 /**
- * Q6 — removeSport: can disable sports regardless of games; primary stays in sportsEnabled.
+ * Q6 — removeSport: only when gamesPlayed === 0; primary stays valid.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -8,6 +8,7 @@ import prisma from '../../src/config/database';
 import { ApiError } from '../../src/utils/ApiError';
 import {
   addUserSport,
+  isUnusedSportProfile,
   reconcilePrimarySport,
   removeUserSport,
   setUserPrimarySport,
@@ -30,7 +31,8 @@ function testRoutesWired(): void {
   assert(serviceSrc.includes('removeUserSport'), 'removeUserSport service');
   assert(serviceSrc.includes('reconcilePrimarySport'), 'reconcilePrimarySport helper');
   assert(serviceSrc.includes('At least one sport must remain enabled'), 'last-sport guard');
-  assert(!serviceSrc.includes('Cannot remove sport after playing rated games'), 'no games guard');
+  assert(serviceSrc.includes('isUnusedSportProfile'), 'unused profile helper');
+  assert(serviceSrc.includes('userSportProfile.deleteMany'), 'hard-delete unused profile');
 }
 
 async function findUserPadelZeroGames(): Promise<{ id: string } | null> {
@@ -43,13 +45,6 @@ async function findUserPadelZeroGames(): Promise<{ id: string } | null> {
   return prisma.user.findFirst({
     where: { isActive: true, gamesPlayed: 0 },
     select: { id: true },
-  });
-}
-
-async function setSportsEnabled(userId: string, sports: Sport[]): Promise<void> {
-  await prisma.user.update({
-    where: { id: userId },
-    data: { sportsEnabled: sports },
   });
 }
 
@@ -100,7 +95,6 @@ async function restorePadel(userId: string, padelLevel: number): Promise<void> {
   });
 }
 
-/** Add tennis, primary tennis, remove padel. */
 async function testRemovePadelWhenTennisPrimary(): Promise<void> {
   const user = await findUserPadelZeroGames();
   if (!user) {
@@ -123,32 +117,29 @@ async function testRemovePadelWhenTennisPrimary(): Promise<void> {
   const afterRemove = await removeUserSport(user.id, Sport.PADEL);
   assert(!afterRemove.sportsEnabled.includes(Sport.PADEL), 'padel removed from sportsEnabled');
   assert(afterRemove.primarySport === Sport.TENNIS, 'primary stays tennis');
-  assert(
-    afterRemove.sportProfiles?.some((p) => p.sport === Sport.PADEL),
-    'padel profile row kept for re-enable',
-  );
 
   await restorePadel(user.id, before.level);
-  console.log('ok: add tennis, remove padel');
+  console.log('ok: add tennis, remove padel when gamesPlayed 0');
 }
 
-async function testRemovePadelWithGames(): Promise<void> {
+async function testDisablePadelWithGamesKeepsProfile(): Promise<void> {
   const profile = await prisma.userSportProfile.findFirst({
     where: { sport: Sport.PADEL, gamesPlayed: { gt: 0 } },
-    select: { userId: true },
+    select: { userId: true, gamesPlayed: true },
   });
   if (!profile) {
-    console.log('skip: remove padel with games (no profile)');
+    console.log('skip: disable padel with games (no profile)');
     return;
   }
 
   const user = await prisma.user.findUnique({
     where: { id: profile.userId },
-    select: { sportsEnabled: true, primarySport: true },
+    select: { sportsEnabled: true },
   });
   if (!user) return;
 
-  const enabled = new Set<Sport>(user.sportsEnabled ?? []);
+  const beforeEnabled = [...(user.sportsEnabled ?? [])];
+  const enabled = new Set<Sport>(beforeEnabled);
   enabled.add(Sport.PADEL);
   enabled.add(Sport.TENNIS);
   await prisma.user.update({
@@ -156,9 +147,57 @@ async function testRemovePadelWithGames(): Promise<void> {
     data: { sportsEnabled: Array.from(enabled), primarySport: Sport.TENNIS },
   });
 
-  const after = await removeUserSport(profile.userId, Sport.PADEL);
-  assert(!after.sportsEnabled.includes(Sport.PADEL), 'padel removed despite games');
-  console.log('ok: remove padel when gamesPlayed > 0');
+  const afterRemove = await removeUserSport(profile.userId, Sport.PADEL);
+  assert(!afterRemove.sportsEnabled.includes(Sport.PADEL), 'padel disabled');
+  const kept = await prisma.userSportProfile.findUnique({
+    where: { userId_sport: { userId: profile.userId, sport: Sport.PADEL } },
+  });
+  assert(kept != null, 'padel profile kept when gamesPlayed > 0');
+  if (kept) {
+    assert(kept.gamesPlayed === profile.gamesPlayed, 'gamesPlayed unchanged');
+  }
+
+  await prisma.user.update({
+    where: { id: profile.userId },
+    data: { sportsEnabled: beforeEnabled },
+  });
+  console.log('ok: disable padel when gamesPlayed > 0 keeps profile');
+}
+
+function testIsUnusedSportProfile(): void {
+  assert(
+    isUnusedSportProfile(
+      {
+        level: 1,
+        reliability: 0,
+        gamesPlayed: 0,
+        gamesWon: 0,
+        levelSource: 'DEFAULT' as const,
+        questionnaireCompletedAt: null,
+        questionnaireSkippedAt: null,
+        externalRatingHint: null,
+      },
+      0,
+    ),
+    'fresh profile is unused',
+  );
+  assert(
+    !isUnusedSportProfile(
+      {
+        level: 1,
+        reliability: 0,
+        gamesPlayed: 3,
+        gamesWon: 1,
+        levelSource: 'DEFAULT' as const,
+        questionnaireCompletedAt: null,
+        questionnaireSkippedAt: null,
+        externalRatingHint: null,
+      },
+      0,
+    ),
+    'rated history is used',
+  );
+  console.log('ok: isUnusedSportProfile');
 }
 
 function testReconcilePrimarySport(): void {
@@ -186,7 +225,10 @@ async function testCannotRemoveLastSport(): Promise<void> {
   const beforeEnabled = [...(user.sportsEnabled ?? [])];
   const beforePrimary = user.primarySport ?? Sport.PADEL;
 
-  await setSportsEnabled(user.id, [Sport.PADEL]);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { sportsEnabled: [Sport.PADEL] },
+  });
 
   let threw = false;
   try {
@@ -195,12 +237,6 @@ async function testCannotRemoveLastSport(): Promise<void> {
     threw = e instanceof ApiError && e.statusCode === 400;
   }
   assert(threw, 'cannot remove last enabled sport');
-
-  const after = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { sportsEnabled: true, primarySport: true },
-  });
-  assert((after?.sportsEnabled ?? []).includes(after!.primarySport), 'primary in sportsEnabled');
 
   await prisma.user.update({
     where: { id: user.id },
@@ -211,9 +247,10 @@ async function testCannotRemoveLastSport(): Promise<void> {
 
 async function main(): Promise<void> {
   testRoutesWired();
+  testIsUnusedSportProfile();
   testReconcilePrimarySport();
   await testRemovePadelWhenTennisPrimary();
-  await testRemovePadelWithGames();
+  await testDisablePadelWithGamesKeepsProfile();
   await testCannotRemoveLastSport();
   console.log('multisport-questionnaire-q6: all passed');
 }

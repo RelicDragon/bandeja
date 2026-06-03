@@ -13,6 +13,8 @@ export {
   confirmPrimarySport,
   removeSport,
   setPrimarySport,
+  syncPlaytomicProfile,
+  updateSportExternalRating,
   updateSportProfileLevel,
 } from './user/sportProfile.controller';
 export {
@@ -22,6 +24,7 @@ export {
   resetSportQuestionnaireHandler,
 } from './user/sportQuestionnaire.controller';
 export { getUserStats, getPlayerComparison } from './user/stats.controller';
+export { getMySportActivity } from './user/sportActivity.controller';
 export { getInvitablePlayers, trackUserInteraction } from './user/social.controller';
 export { setFavoriteTrainer } from './user/favoriteTrainer.controller';
 export { getPresence } from './user/presence.controller';

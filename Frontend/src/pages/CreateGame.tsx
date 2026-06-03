@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
-import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, PlayerLevelSection, ParticipantsSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, MultipleCourtsSelector, AvatarUpload, PriceSection } from '@/components';
+import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, ParticipantsSection, ParticipantsSetupSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, MultipleCourtsSelector, AvatarUpload, PriceSection, CreateGameIntentPicker } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { usePlayersStore } from '@/store/playersStore';
@@ -28,18 +28,33 @@ import toast from 'react-hot-toast';
 import { getSportConfig } from '@/sport/sportRegistry';
 import {
   getDisplayLevelForSport,
+  getUserPrimarySport,
   listCreateFlowSports,
-  resolveCreateGameDefaultSport,
+  resolveActivePrimarySport,
 } from '@/utils/profileSports';
+import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { shouldWarnCreateGameLevelBand } from '@/utils/sportQuestionnaire';
 import { syncPlayersPerMatchOnRosterChange } from '@/utils/matchFormat';
 import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
 import { Sports, type Sport } from '@shared/sport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
+import {
+  getTemplate,
+  isCasualCreateFlowEnabled,
+  pickDefaultTemplateId,
+  SOCIAL_LEVEL_BAND,
+  type CreateFlowIntent,
+  type CreateTemplateId,
+} from '@/sport/createFlow';
+import type { CreateTemplateParticipantContext } from '@/sport/createTemplateParticipantFit';
+import { applyCreateTemplate } from '@/utils/gameFormat/applyCreateTemplate';
+import { resolveWizardAllowedPresets } from '@/utils/gameFormat/scoringCompatibility';
 
 interface CreateGameProps {
   entityType: EntityType;
   initialGameData?: Partial<Game>;
+  initialCreateIntent?: CreateFlowIntent;
+  initialTemplateId?: CreateTemplateId;
 }
 
 const getDefaultLevelRange = (level?: number): [number, number] => {
@@ -52,7 +67,12 @@ const getDefaultLevelRange = (level?: number): [number, number] => {
   return [minLevel, maxLevel];
 };
 
-export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => {
+export const CreateGame = ({
+  entityType,
+  initialGameData,
+  initialCreateIntent,
+  initialTemplateId,
+}: CreateGameProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
@@ -69,7 +89,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const [selectedCourt, setSelectedCourt] = useState<string>(() => initialGameData?.courtId || 'notBooked');
   const [playerLevelRange, setPlayerLevelRange] = useState<[number, number]>(() => {
     const sport: Sport =
-      initialGameData?.sport ?? resolveCreateGameDefaultSport(user);
+      initialGameData?.sport ?? (resolveActivePrimarySport(user) ?? getUserPrimarySport(user));
     const level = user ? getDisplayLevelForSport(user, sport) : undefined;
     return [
       initialGameData?.minLevel ?? getDefaultLevelRange(level)[0],
@@ -78,14 +98,18 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   });
   const [selectedSport, setSelectedSport] = useState<Sport>(() => {
     if (initialGameData?.sport) return initialGameData.sport;
-    return resolveCreateGameDefaultSport(user);
+    return resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
   });
   const [maxParticipants, setMaxParticipants] = useState<number>(() => {
     if (initialGameData?.maxParticipants) return initialGameData.maxParticipants;
     if (entityType === 'TOURNAMENT') return 8;
     const initialSport = getSportConfig(
-      initialGameData?.sport ?? resolveCreateGameDefaultSport(user),
+      initialGameData?.sport ?? (resolveActivePrimarySport(user) ?? getUserPrimarySport(user)),
     );
+    if (entityType === 'GAME' || entityType === 'LEAGUE') {
+      if (initialSport.defaultPlayersPerMatch === 2) return 2;
+      if (initialSport.defaultPlayersPerMatch === 4) return 4;
+    }
     return initialSport.defaultEventRoster;
   });
   const [playersPerMatch, setPlayersPerMatch] = useState<number>(() => {
@@ -93,15 +117,20 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
       initialGameData?.maxParticipants ??
       (entityType === 'TOURNAMENT'
         ? 8
-        : getSportConfig(initialGameData?.sport ?? resolveCreateGameDefaultSport(user))
+        : getSportConfig(
+            initialGameData?.sport ??
+              (resolveActivePrimarySport(user) ?? getUserPrimarySport(user)),
+          )
             .defaultEventRoster);
     if (initialMax === 2) return 2;
     if (initialGameData?.playersPerMatch != null) return initialGameData.playersPerMatch;
     const initialSport = getSportConfig(
-      initialGameData?.sport ?? resolveCreateGameDefaultSport(user),
+      initialGameData?.sport ?? (resolveActivePrimarySport(user) ?? getUserPrimarySport(user)),
     );
     return initialSport.defaultPlayersPerMatch;
   });
+  const userDefaultSportAppliedRef = useRef(false);
+  const initialRosterByDefaultSportAppliedRef = useRef(false);
   const [participants, setParticipants] = useState<Array<string | null>>([user?.id || null]);
   const [anyoneCanInvite, setAnyoneCanInvite] = useState<boolean>(initialGameData?.anyoneCanInvite ?? false);
   const [hasBookedCourt, setHasBookedCourt] = useState<boolean>(initialGameData?.hasBookedCourt ?? false);
@@ -118,7 +147,35 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   );
   const { sportConfig, allowedScoringModes, allowedScoringPresets } = sportFormatLimits;
   const enabledSports = useMemo(() => listCreateFlowSports(user), [user]);
+  const userDefaultSport = useMemo(
+    () => resolveActivePrimarySport(user) ?? getUserPrimarySport(user),
+    [user],
+  );
+  const { status: questionnaireStatus } = useQuestionnaireStatus(selectedSport);
   const showSportSelector = enabledSports.length > 1;
+  const casualCreateFlow = isCasualCreateFlowEnabled(entityType, enabledSports);
+  const [createIntent, setCreateIntent] = useState<CreateFlowIntent | null>(
+    () => initialCreateIntent ?? null,
+  );
+  const [selectedTemplateId, setSelectedTemplateId] = useState<CreateTemplateId | null>(
+    () => initialTemplateId ?? null,
+  );
+  const createFlowBootstrapRef = useRef(false);
+  const skipCreateFlowAutoSelectRef = useRef(!!initialCreateIntent || !!initialTemplateId);
+  const gameFormatRef = useRef(gameFormat);
+  gameFormatRef.current = gameFormat;
+  const selectedTemplateIdRef = useRef(selectedTemplateId);
+  selectedTemplateIdRef.current = selectedTemplateId;
+
+  const wizardAllowedPresets = useMemo(
+    () =>
+      resolveWizardAllowedPresets(
+        allowedScoringPresets,
+        sportConfig.presetMeta,
+        casualCreateFlow ? createIntent : null,
+      ),
+    [allowedScoringPresets, sportConfig.presetMeta, casualCreateFlow, createIntent],
+  );
   const allowedParticipantOptions = useMemo(() => {
     if (entityType === 'TRAINING') return undefined;
     if (entityType !== 'GAME' && entityType !== 'LEAGUE') return undefined;
@@ -132,6 +189,17 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
   const [allowUserInMultipleTeams, setAllowUserInMultipleTeams] = useState<boolean>(
     initialGameData?.allowUserInMultipleTeams ?? false,
   );
+
+  const templateParticipantContext = useMemo(
+    (): CreateTemplateParticipantContext => ({
+      maxParticipants,
+      playersPerMatch: playersPerMatch === 4 ? 4 : 2,
+      hasFixedTeams,
+      genderTeams,
+    }),
+    [maxParticipants, playersPerMatch, hasFixedTeams, genderTeams],
+  );
+
   const [gameName, setGameName] = useState<string>(initialGameData?.name || '');
   const [comments, setComments] = useState<string>(initialGameData?.description || '');
   const [priceTotal, setPriceTotal] = useState<number | undefined>(initialGameData?.priceTotal ?? undefined);
@@ -296,7 +364,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
     if (!user || entityType === 'BAR' || entityType === 'TRAINING') return;
     const sport = selectedSport;
     const [minLevel, maxLevel] = playerLevelRange;
-    if (!shouldWarnCreateGameLevelBand(user, sport, minLevel, maxLevel)) return;
+    if (!shouldWarnCreateGameLevelBand(user, sport, minLevel, maxLevel, questionnaireStatus)) return;
     const warnKey = `${sport}-${minLevel}-${maxLevel}`;
     if (levelBandWarnedRef.current === warnKey) return;
     levelBandWarnedRef.current = warnKey;
@@ -304,7 +372,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
     toast(t('sportQuestionnaire.common.createGameLevelBandWarning', { sport: sportLabel }), {
       duration: 5000,
     });
-  }, [entityType, playerLevelRange, selectedSport, t, user]);
+  }, [entityType, playerLevelRange, questionnaireStatus, selectedSport, t, user]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -368,6 +436,112 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
       setSelectedSport(enabledSports[0] ?? Sports.PADEL);
     }
   }, [enabledSports, selectedSport]);
+
+  useEffect(() => {
+    if (initialGameData?.sport) return;
+    if (userDefaultSportAppliedRef.current) return;
+    if (!user) return;
+    const preferredSport = resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
+    if (enabledSports.includes(preferredSport)) {
+      setSelectedSport(preferredSport);
+    }
+    userDefaultSportAppliedRef.current = true;
+  }, [enabledSports, initialGameData?.sport, user]);
+
+  useEffect(() => {
+    if (initialRosterByDefaultSportAppliedRef.current) return;
+    if (initialGameData?.maxParticipants != null) return;
+    if (entityType !== 'GAME' && entityType !== 'LEAGUE') return;
+    const config = getSportConfig(selectedSport);
+    if (config.defaultPlayersPerMatch === 2) {
+      setMaxParticipants(2);
+      initialRosterByDefaultSportAppliedRef.current = true;
+      return;
+    }
+    if (config.defaultPlayersPerMatch === 4) {
+      setMaxParticipants(4);
+      initialRosterByDefaultSportAppliedRef.current = true;
+      return;
+    }
+  }, [entityType, initialGameData?.maxParticipants, selectedSport]);
+
+  const applyIntentDefaults = useCallback((intent: CreateFlowIntent) => {
+    if (intent === 'social') {
+      setIsRatingGame(false);
+      setPlayerLevelRange(SOCIAL_LEVEL_BAND);
+      return;
+    }
+    if (intent === 'match') {
+      setIsRatingGame(true);
+      if (user) {
+        setPlayerLevelRange(getDefaultLevelRange(getDisplayLevelForSport(user, selectedSport)));
+      }
+      return;
+    }
+    setIsRatingGame(true);
+  }, [user, selectedSport]);
+
+  const handleTemplateSelect = (template: Parameters<typeof applyCreateTemplate>[0]) => {
+    setCreateIntent(template.tier);
+    setSelectedTemplateId(template.id);
+    applyIntentDefaults(template.tier);
+    setIsRatingGame(template.affectsRating);
+    applyCreateTemplate(template, gameFormat);
+  };
+
+  const handleCustomSelect = () => {
+    setCreateIntent('advanced');
+    setSelectedTemplateId(null);
+    applyIntentDefaults('advanced');
+  };
+
+  useEffect(() => {
+    if (!casualCreateFlow) return;
+    if (skipCreateFlowAutoSelectRef.current) {
+      skipCreateFlowAutoSelectRef.current = false;
+      return;
+    }
+    const currentTemplateId = selectedTemplateIdRef.current;
+    const stillValid =
+      currentTemplateId != null &&
+      pickDefaultTemplateId(
+        selectedSport,
+        allowedScoringPresets,
+        templateParticipantContext,
+        currentTemplateId,
+      ) === currentTemplateId;
+    if (stillValid) return;
+
+    const nextId = pickDefaultTemplateId(
+      selectedSport,
+      allowedScoringPresets,
+      templateParticipantContext,
+      currentTemplateId,
+    );
+    if (nextId) {
+      const tpl = getTemplate(nextId);
+      setCreateIntent(tpl.tier);
+      setSelectedTemplateId(tpl.id);
+      applyIntentDefaults(tpl.tier);
+      setIsRatingGame(tpl.affectsRating);
+      applyCreateTemplate(tpl, gameFormatRef.current);
+    } else {
+      setCreateIntent('advanced');
+      setSelectedTemplateId(null);
+    }
+  }, [
+    casualCreateFlow,
+    selectedSport,
+    allowedScoringPresets,
+    templateParticipantContext,
+    applyIntentDefaults,
+  ]);
+
+  const showFormatSection = !casualCreateFlow || createIntent != null;
+  const formatWizardCustomizeLabel =
+    casualCreateFlow && createIntent !== 'advanced'
+      ? t('createGame.intent.customizeFormat')
+      : undefined;
 
   useEffect(() => {
     if (entityType !== 'GAME' && entityType !== 'LEAGUE') return;
@@ -681,6 +855,18 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
     }
   };
 
+  useEffect(() => {
+    if (createFlowBootstrapRef.current) return;
+    if (!casualCreateFlow || !initialCreateIntent) return;
+    createFlowBootstrapRef.current = true;
+    applyIntentDefaults(initialCreateIntent);
+    if (initialTemplateId) {
+      const tpl = getTemplate(initialTemplateId);
+      setIsRatingGame(tpl.affectsRating);
+      applyCreateTemplate(tpl, gameFormatRef.current);
+    }
+  }, [casualCreateFlow, initialCreateIntent, initialTemplateId, applyIntentDefaults]);
+
   const handlePlayersPerMatchChange = (count: number) => {
     setPlayersPerMatch(count);
     if (count === 2) {
@@ -724,7 +910,53 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           />
         </div>
 
-        {entityType !== 'BAR' && entityType !== 'TRAINING' && (
+        {showSportSelector && (
+          <CreateFlowSportSelector
+            sports={enabledSports}
+            value={selectedSport}
+            onChange={setSelectedSport}
+            showLabel={false}
+            defaultSport={userDefaultSport}
+          />
+        )}
+
+        <ParticipantsSetupSection
+          entityType={entityType}
+          user={user}
+          maxParticipants={maxParticipants}
+          allowedParticipantOptions={allowedParticipantOptions}
+          playersPerMatch={entityType === 'GAME' || entityType === 'LEAGUE' ? playersPerMatch : undefined}
+          allowedPlayerCountsPerMatch={
+            entityType === 'GAME' || entityType === 'LEAGUE'
+              ? sportConfig.allowedPlayerCountsPerMatch
+              : undefined
+          }
+          onPlayersPerMatchChange={
+            entityType === 'GAME' || entityType === 'LEAGUE' ? handlePlayersPerMatchChange : undefined
+          }
+          hasFixedTeams={hasFixedTeams}
+          onHasFixedTeamsChange={(v) => {
+            setHasFixedTeams(v);
+            if (!v) setAllowUserInMultipleTeams(false);
+          }}
+          onMaxParticipantsChange={handleMaxParticipantsChange}
+        />
+
+        {entityType !== 'BAR' && entityType !== 'TRAINING' && casualCreateFlow && (
+          <CreateGameIntentPicker
+            sport={selectedSport}
+            allowedScoringPresets={allowedScoringPresets}
+            participantContext={templateParticipantContext}
+            selectedTemplateId={selectedTemplateId}
+            isCustom={createIntent === 'advanced'}
+            onSelectTemplate={handleTemplateSelect}
+            onSelectCustom={handleCustomSelect}
+            isRatingGame={isRatingGame}
+            onRatingGameChange={setIsRatingGame}
+          />
+        )}
+
+        {entityType !== 'BAR' && entityType !== 'TRAINING' && showFormatSection && (
           <GameFormatCard
             entityType={entityType}
             format={gameFormat}
@@ -732,24 +964,14 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
             playersPerMatch={playersPerMatch}
             generationSlotCount={maxParticipants > 0 ? maxParticipants : undefined}
             onOpenWizard={() => setIsFormatWizardOpen(true)}
-            sportRow={
-              showSportSelector ? (
-                <CreateFlowSportSelector
-                  sports={enabledSports}
-                  value={selectedSport}
-                  onChange={setSelectedSport}
-                />
-              ) : undefined
-            }
+            wizardButtonLabel={formatWizardCustomizeLabel}
+            showFixedTeamsToggle={false}
             teams={{
               participantCount: maxParticipants,
               genderTeams,
               hasFixedTeams,
               onGenderTeamsChange: setGenderTeams,
-              onHasFixedTeamsChange: (v) => {
-                setHasFixedTeams(v);
-                if (!v) setAllowUserInMultipleTeams(false);
-              },
+              onHasFixedTeamsChange: setHasFixedTeams,
               allowUserInMultipleTeams:
                 playersPerMatch === 2 ? false : allowUserInMultipleTeams,
               onAllowUserInMultipleTeamsChange: setAllowUserInMultipleTeams,
@@ -818,14 +1040,6 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           </div>
         </div>
 
-        {entityType !== 'BAR' && entityType !== 'TRAINING' && (
-          <PlayerLevelSection
-            playerLevelRange={playerLevelRange}
-            onPlayerLevelRangeChange={setPlayerLevelRange}
-            entityType={entityType}
-          />
-        )}
-
         <ParticipantsSection
           participants={participants}
           maxParticipants={maxParticipants}
@@ -858,6 +1072,9 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
               setParticipants(prev => [...prev, user.id]);
             }
           }}
+          showSetupControls={false}
+          playerLevelRange={playerLevelRange}
+          onPlayerLevelRangeChange={setPlayerLevelRange}
         />
 
         <GameSettingsSection
@@ -874,6 +1091,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           onResultsByAnyoneChange={setResultsByAnyone}
           onAllowDirectJoinChange={setAllowDirectJoin}
           onAfterGameGoToBarChange={setAfterGameGoToBar}
+          hideRatingGame={casualCreateFlow}
         />
 
         {maxParticipants > 4 && entityType !== 'BAR' && (
@@ -987,7 +1205,7 @@ export const CreateGame = ({ entityType, initialGameData }: CreateGameProps) => 
           generationSlotCount={maxParticipants > 0 ? maxParticipants : undefined}
           hasFixedTeams={hasFixedTeams}
           allowedScoringModes={allowedScoringModes}
-          allowedScoringPresets={allowedScoringPresets}
+          allowedScoringPresets={wizardAllowedPresets}
           matchFormat={{
             playersPerMatch,
             allowedCounts: sportConfig.allowedPlayerCountsPerMatch,

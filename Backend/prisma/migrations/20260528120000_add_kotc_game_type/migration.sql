@@ -1,0 +1,2 @@
+ALTER TYPE "GameType" ADD VALUE 'KOTC';
+ALTER TYPE "MatchGenerationType" ADD VALUE 'KING_OF_COURT';

@@ -66,7 +66,7 @@ function testGameUserSelectIncludesSportsEnabled(): void {
   assert(
     constants.includes('export const USER_SELECT_WITH_SPORT_PROFILES') &&
       constants.includes('sportsEnabled: true') &&
-      constants.match(/USER_SELECT_WITH_SPORT_PROFILES[\s\S]*?sportProfiles/),
+      /USER_SELECT_WITH_SPORT_PROFILES[\s\S]*?sportProfiles/.test(constants),
     'USER_SELECT_WITH_SPORT_PROFILES includes sportsEnabled + sportProfiles',
   );
 

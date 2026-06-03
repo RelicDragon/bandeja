@@ -7,6 +7,20 @@ import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/Segmented
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { gameFormatFixedTeamsToggleVisible, gameFormatGenderVisible, gameFormatTeamsFieldsVisible } from './gameFormatTeamsVisibility';
 
+type FixedTeamsHintEntity = 'GAME' | 'TOURNAMENT' | 'LEAGUE';
+
+function fixedTeamsHintEntity(entityType: EntityType): FixedTeamsHintEntity {
+  switch (entityType) {
+    case 'TOURNAMENT':
+      return 'TOURNAMENT';
+    case 'LEAGUE':
+    case 'LEAGUE_SEASON':
+      return 'LEAGUE';
+    default:
+      return 'GAME';
+  }
+}
+
 const GENDER_TAB_META: { value: GenderTeam; labelKey: string; icon: LucideIcon }[] = [
   { value: 'ANY', labelKey: 'any', icon: UsersRound },
   { value: 'MEN', labelKey: 'men', icon: Mars },
@@ -48,7 +62,7 @@ export const GameFormatGenderFields = ({
 
   return (
     <div className={className.trim()}>
-      <div className="flex w-full justify-start">
+      <div className="flex w-full justify-center">
         <SegmentedSwitch
           className="!mx-0"
           tabs={genderTabs}
@@ -84,7 +98,12 @@ export const GameFormatFixedTeamsToggle = ({
 
   if (!gameFormatFixedTeamsToggleVisible(entityType, participantCount)) return null;
 
-  const description = t(hasFixedTeams ? 'createGame.fixedTeams.descriptionOn' : 'createGame.fixedTeams.descriptionOff');
+  const hintEntity = fixedTeamsHintEntity(entityType);
+  const description = t(
+    hasFixedTeams
+      ? `createGame.fixedTeams.${hintEntity}.descriptionOn`
+      : `createGame.fixedTeams.${hintEntity}.descriptionOff`,
+  );
 
   return (
     <div className={className.trim()}>

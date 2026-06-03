@@ -36,10 +36,9 @@ function assertMatchGenerationSupported(matchGenerationType: string | null | und
     'RATING',
     'WINNERS_COURT',
     'ESCALERA',
+    'KING_OF_COURT',
+    'ROUND_ROBIN',
   ]);
-  if (matchGenerationType === 'ROUND_ROBIN') {
-    throw new ApiError(400, 'Round generation type ROUND_ROBIN is not supported');
-  }
   if (!supported.has(matchGenerationType)) {
     throw new ApiError(400, `Unsupported match generation type: ${matchGenerationType}`);
   }

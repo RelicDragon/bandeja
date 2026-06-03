@@ -139,6 +139,7 @@ export class GameUpdateService {
         playersPerMatch: true,
         gameType: true,
         scoringPreset: true,
+        matchGenerationType: true,
         parentId: true,
       },
     });
@@ -222,6 +223,10 @@ export class GameUpdateService {
       sport: sportForValidation,
       entityType: game.entityType,
       gameType: data.gameType ?? game.gameType,
+      matchGenerationType:
+        data.matchGenerationType !== undefined
+          ? data.matchGenerationType
+          : game.matchGenerationType,
       maxParticipants,
       minParticipants: data.minParticipants,
       playersPerMatch: playersPerMatchForValidation,
@@ -262,8 +267,10 @@ export class GameUpdateService {
       });
     }
 
+    const effectiveGameType = data.gameType ?? game.gameType;
+
     if (data.scoringPreset !== undefined) {
-      let p = validateScoringPreset(data.gameType, data.scoringPreset);
+      let p = validateScoringPreset(effectiveGameType, data.scoringPreset);
       const leg = normalizeLegacyTimedScoringPreset(p);
       updateData.scoringPreset = leg.scoringPreset;
       if (leg.matchTimerEnabled) updateData.matchTimerEnabled = true;
@@ -277,6 +284,8 @@ export class GameUpdateService {
           updateData.maxTotalPointsPerSet = 21;
         }
       }
+    } else if (data.gameType !== undefined) {
+      validateScoringPreset(effectiveGameType, game.scoringPreset);
     }
 
     if (data.scoringMode !== undefined) {
@@ -756,7 +765,7 @@ export class GameUpdateService {
     const newEndTime = updatedGame.endTime;
 
     if (oldClubId !== newClubId && data.clubId !== undefined) {
-      const clubName = updatedGame.club?.name || updatedGame.court?.club?.name || 'Unknown location';
+      const clubName = updatedGame.club?.name || updatedGame.court?.club?.name || '';
       
       try {
         const systemMessage = await createSystemMessage(id, {

@@ -112,9 +112,42 @@ function getCourtResults(previousRound: Round): CourtResult[] {
  *
  * After movement the 4 players on each court form cross-teams (1&4 vs 2&3).
  */
-function distributePlayersAcrossCourts(courtResults: CourtResult[]): string[][] {
+function distributePlayersAcrossCourts(
+  courtResults: CourtResult[],
+  playersPerMatch: number
+): string[][] {
   const n = courtResults.length;
   if (n === 0) return [];
+
+  if (playersPerMatch === 2) {
+    if (n === 1) {
+      const cr = courtResults[0];
+      const w = cr.winners[0];
+      const l = cr.losers[0];
+      return w && l ? [[w, l]] : [];
+    }
+
+    const courts: string[][] = [];
+    for (let i = 0; i < n; i++) {
+      if (i === 0) {
+        courts.push([
+          courtResults[0].winners[0] ?? '',
+          courtResults[1]?.winners[0] ?? '',
+        ].filter(Boolean));
+      } else if (i === n - 1) {
+        courts.push([
+          courtResults[i - 1].losers[0] ?? '',
+          courtResults[i].losers[0] ?? '',
+        ].filter(Boolean));
+      } else {
+        courts.push([
+          courtResults[i - 1].losers[0] ?? '',
+          courtResults[i + 1].winners[0] ?? '',
+        ].filter(Boolean));
+      }
+    }
+    return courts;
+  }
 
   if (n === 1) {
     const cr = courtResults[0];
@@ -155,7 +188,11 @@ function pickCrossPairing(
   players: string[],
   partnerCounts: Map<string, number>,
   opponentCounts: Map<string, number>
-): { teamA: [string, string]; teamB: [string, string] } {
+): { teamA: string[]; teamB: string[] } {
+  if (players.length === 2) {
+    return { teamA: [players[0]], teamB: [players[1]] };
+  }
+
   const [A, B, C, D] = players;
 
   const costX =
@@ -356,7 +393,7 @@ async function generateStandardRound(
   const courtResults = getCourtResults(previousRound);
   if (courtResults.length === 0) return [];
 
-  const courts = distributePlayersAcrossCourts(courtResults);
+  const courts = distributePlayersAcrossCourts(courtResults, ppm);
   const eligibleIds = new Set(participants.map((p: any) => p.userId));
   const departedSlots = removeDepartedPlayers(courts, eligibleIds);
 
@@ -506,7 +543,7 @@ function generateMixPairsRound(
     genderMap.set(p.userId, p.user.gender);
   }
 
-  const courts = distributePlayersAcrossCourts(courtResults);
+  const courts = distributePlayersAcrossCourts(courtResults, 4);
   const eligibleIds = new Set(participants.map((p: any) => p.userId));
   removeDepartedPlayers(courts, eligibleIds);
 

@@ -282,6 +282,15 @@
     "edit": "Edit",
     "roundMatches": "Round {{number}} matches",
     "courtNumber": "Court {{number}}",
-    "roundNumber": "Round {{number}}"
+    "roundNumber": "Round {{number}}",
+    "shareCardBadge": "Resultados del partido",
+    "shareCardCta": "Compartir tarjeta de resultados",
+    "shareCardDone": "Compartido",
+    "shareCardFailed": "No se pudo compartir",
+    "shareCardNoSummary": "¡Gran sesión!",
+    "playAgainCta": "Jugar de nuevo",
+    "configureGameRules": "Configure game rules",
+    "viewGameRules": "View game rules",
+    "setupConfigured": "Game setup configured"
   }
 }

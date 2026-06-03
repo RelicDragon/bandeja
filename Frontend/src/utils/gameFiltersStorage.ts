@@ -24,6 +24,10 @@ export interface GameFilters {
   filterLevelMin?: number;
   filterLevelMax?: number;
   filterSport?: FindSportFilterValue;
+  /** Social vs match discovery (multisport Find only). */
+  filterTier?: 'social' | 'match';
+  /** When true, only games with affectsRating === false. */
+  filterNoRating?: boolean;
   /** Admin Find: include non-public games the viewer is not in. */
   showPrivateGames?: boolean;
 }

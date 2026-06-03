@@ -19,6 +19,7 @@ interface GameSettingsSectionProps {
   onResultsByAnyoneChange: (checked: boolean) => void;
   onAllowDirectJoinChange: (checked: boolean) => void;
   onAfterGameGoToBarChange: (checked: boolean) => void;
+  hideRatingGame?: boolean;
 }
 
 export const GameSettingsSection = ({
@@ -35,6 +36,7 @@ export const GameSettingsSection = ({
   onResultsByAnyoneChange,
   onAllowDirectJoinChange,
   onAfterGameGoToBarChange,
+  hideRatingGame = false,
 }: GameSettingsSectionProps) => {
   const { t } = useTranslation();
   const { showNotes, toggleShowNotes } = useShowSettingsNotes();
@@ -60,7 +62,7 @@ export const GameSettingsSection = ({
         </button>
       </div>
       <div className="space-y-2">
-        {entityType !== 'BAR' && entityType !== 'TRAINING' && (
+        {entityType !== 'BAR' && entityType !== 'TRAINING' && !hideRatingGame && (
           <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
@@ -83,7 +85,7 @@ export const GameSettingsSection = ({
           </div>
         )}
         
-        {entityType !== 'BAR' && entityType !== 'TRAINING' && <Divider />}
+        {entityType !== 'BAR' && entityType !== 'TRAINING' && !hideRatingGame && <Divider />}
         
         <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">

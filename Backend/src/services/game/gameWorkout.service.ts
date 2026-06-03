@@ -105,7 +105,7 @@ export class GameWorkoutService {
   static async getMineForGame(gameId: string, userId: string) {
     const allowed = await hasRealParticipantStatus(gameId, userId);
     if (!allowed) {
-      throw new ApiError(403, 'Access denied');
+      return null;
     }
     return prisma.gameWorkoutSummary.findUnique({
       where: {

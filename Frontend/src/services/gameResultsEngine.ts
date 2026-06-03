@@ -28,6 +28,8 @@ import {
   buildFivePlayerAllMatchCombinations,
   canCreateAllFivePlayerCombinations,
 } from '@/utils/fivePlayerMatchCombinations';
+import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
+import { isPresetResultsRoster } from '@/utils/gameResultsHelpers';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 
@@ -377,7 +379,7 @@ class GameResultsEngineClass {
     if (state.rounds.length > 0) return;
 
     const playingParticipants = state.game.participants.filter(p => p.status === 'PLAYING');
-    if (playingParticipants.length !== 2 && playingParticipants.length !== 4) return;
+    if (!isPresetResultsRoster(playingParticipants.length)) return;
 
     await this.addRound();
   }
@@ -569,9 +571,11 @@ class GameResultsEngineClass {
     if (!round) return;
 
     const match = round.matches.find(m => m.id === matchId);
-    if (!match) return;
+    if (!match || !state.game) return;
 
-    if (match[team].length >= 2) return;
+    const participantCount = state.game.participants.filter(p => p.status === 'PLAYING').length;
+    const maxPerTeam = maxPlayersPerTeamForGame(state.game, participantCount);
+    if (match[team].length >= maxPerTeam) return;
 
     const otherTeam = team === 'teamA' ? 'teamB' : 'teamA';
     if (match[otherTeam].includes(playerId) || match[team].includes(playerId)) return;

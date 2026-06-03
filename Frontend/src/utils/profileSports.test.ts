@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { BasicUser, User } from '@/types';
 import {
+  canRemoveSport,
   gamesPlayedForSport,
   formatSportLevelBadgeDisplay,
   getDisplayLevelForSport,
@@ -104,6 +105,24 @@ describe('profileSports', () => {
     expect(resolveProfileHeaderLevel(baseUser({ sportsEnabled: [], level: 4.2 }))).toBe(4.2);
   });
 
+  it('canRemoveSport only when enabled, multiple sports, zero games', () => {
+    const padelOnly = baseUser({
+      sportsEnabled: ['PADEL'],
+      sportProfiles: [{ sport: 'PADEL', level: 1, reliability: 0, gamesPlayed: 0, gamesWon: 0 }],
+    });
+    expect(canRemoveSport(padelOnly, 'PADEL')).toBe(false);
+
+    const multi = baseUser({
+      sportsEnabled: ['PADEL', 'TENNIS'],
+      sportProfiles: [
+        { sport: 'PADEL', level: 1, reliability: 0, gamesPlayed: 0, gamesWon: 0 },
+        { sport: 'TENNIS', level: 2, reliability: 0, gamesPlayed: 5, gamesWon: 2 },
+      ],
+    });
+    expect(canRemoveSport(multi, 'PADEL')).toBe(true);
+    expect(canRemoveSport(multi, 'TENNIS')).toBe(false);
+  });
+
   it('shouldShowSportLevelBadge when games played or level above 1.0', () => {
     const fresh = baseUser({
       sportProfiles: [{ sport: 'PADEL', level: 1.0, reliability: 0, gamesPlayed: 0, gamesWon: 0 }],
@@ -164,6 +183,20 @@ describe('profileSports', () => {
     };
     expect(getDisplayLevelForSport(projected, 'TENNIS')).toBe(3.2);
     expect(getReliabilityForSport(projected, 'TENNIS')).toBe(42);
+  });
+
+  it('formatSportLevelBadgeDisplay shows padel 3.0 and tennis 5.0 for same user', () => {
+    const user = baseUser({
+      level: 3.0,
+      primarySport: 'PADEL',
+      sportsEnabled: ['PADEL', 'TENNIS'],
+      sportProfiles: [
+        { sport: 'PADEL', level: 3.0, reliability: 50, gamesPlayed: 5, gamesWon: 2 },
+        { sport: 'TENNIS', level: 5.0, reliability: 60, gamesPlayed: 8, gamesWon: 4 },
+      ],
+    });
+    expect(formatSportLevelBadgeDisplay(user, 'PADEL')).toBe('3.0');
+    expect(formatSportLevelBadgeDisplay(user, 'TENNIS')).toBe('5.0');
   });
 
   it('getDisplayLevelForSport uses profile or legacy padel level', () => {

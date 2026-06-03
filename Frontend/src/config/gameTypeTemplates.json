@@ -58,6 +58,16 @@
     "ballsInGames": false,
     "fixedNumberOfSets": 1
   },
+  "KOTC": {
+    "winnerOfMatch": "BY_SCORES",
+    "winnerOfGame": "BY_MATCHES_WON",
+    "matchGenerationType": "KING_OF_COURT",
+    "pointsPerWin": 1,
+    "pointsPerLoose": 0,
+    "pointsPerTie": 0,
+    "ballsInGames": false,
+    "fixedNumberOfSets": 1
+  },
   "CUSTOM": {
     "winnerOfMatch": "BY_SCORES",
     "winnerOfGame": "BY_MATCHES_WON",

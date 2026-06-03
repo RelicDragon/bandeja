@@ -7,14 +7,20 @@ import {
   Grid3x3,
   Crown,
   ArrowUpDown,
+  Trophy,
   Sliders,
   Wand2,
   LucideIcon,
   AlertCircle,
 } from 'lucide-react';
 import { EntityType, MatchGenerationType, ScoringMode } from '@/types';
+import type { Sport } from '@shared/sport';
 import { FormatOptionCard } from './FormatOptionCard';
-import { allowedGenerationsForMaxParticipants, automaticGenerationCopyKey } from '@/utils/gameFormat';
+import {
+  allowedGenerationsForMaxParticipants,
+  allowedGenerationsForSport,
+  automaticGenerationCopyKey,
+} from '@/utils/gameFormat';
 
 interface GenerationDef {
   value: MatchGenerationType;
@@ -30,9 +36,10 @@ const GENERATION_DEFS: GenerationDef[] = [
   { value: 'AUTOMATIC', icon: Wand2 },
   { value: 'RANDOM', icon: Shuffle, popular: true },
   { value: 'RATING', icon: TrendingUp },
-  { value: 'ROUND_ROBIN', icon: Grid3x3, minPlayers: 4, entityTypes: ['TOURNAMENT', 'LEAGUE', 'LEAGUE_SEASON'] },
+  { value: 'ROUND_ROBIN', icon: Grid3x3, minPlayers: 4 },
   { value: 'WINNERS_COURT', icon: Crown, minPlayers: 8, minCourts: 2, entityTypes: ['TOURNAMENT', 'LEAGUE', 'LEAGUE_SEASON'] },
   { value: 'ESCALERA', icon: ArrowUpDown, minPlayers: 8, minCourts: 2, entityTypes: ['TOURNAMENT', 'LEAGUE', 'LEAGUE_SEASON'] },
+  { value: 'KING_OF_COURT', icon: Trophy, minPlayers: 8, minCourts: 2 },
   { value: 'FIXED', icon: Sliders },
 ];
 
@@ -42,6 +49,8 @@ interface GameFormatStepGenerationProps {
   generationType: MatchGenerationType;
   scoringMode: ScoringMode;
   entityType: EntityType;
+  sport?: Sport;
+  playersPerMatch?: number;
   participantCount?: number;
   maxParticipants?: number;
   hasFixedTeams?: boolean;
@@ -56,6 +65,8 @@ export const GameFormatStepGeneration = ({
   generationType,
   scoringMode,
   entityType,
+  sport,
+  playersPerMatch,
   participantCount,
   maxParticipants,
   hasFixedTeams,
@@ -65,7 +76,10 @@ export const GameFormatStepGeneration = ({
   const { t } = useTranslation();
 
   const slotCount = maxParticipants ?? participantCount ?? 0;
-  const allowedOrder = allowedGenerationsForMaxParticipants(slotCount > 0 ? slotCount : undefined);
+  const allowedOrder =
+    sport != null
+      ? allowedGenerationsForSport(sport, slotCount > 0 ? slotCount : undefined, playersPerMatch)
+      : allowedGenerationsForMaxParticipants(slotCount > 0 ? slotCount : undefined);
 
   const effectiveEntityType: EntityType =
     entityType === 'GAME' && slotCount > 4 ? 'TOURNAMENT' : entityType;
@@ -88,6 +102,7 @@ export const GameFormatStepGeneration = ({
       generationType === 'RATING' ||
       generationType === 'WINNERS_COURT' ||
       generationType === 'ESCALERA' ||
+      generationType === 'KING_OF_COURT' ||
       generationType === 'ROUND_ROBIN');
 
   return (

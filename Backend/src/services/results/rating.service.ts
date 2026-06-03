@@ -1,3 +1,5 @@
+import type { RatingEngineConfig } from './ratingEngine';
+
 interface PlayerStats {
   level: number;
   reliability: number;
@@ -23,7 +25,7 @@ interface RatingUpdate {
 }
 
 const BASE_LEVEL_CHANGE = 0.05;
-const MAX_LEVEL_CHANGE = 0.2;
+const DEFAULT_MAX_LEVEL_CHANGE = 0.2;
 export const RELIABILITY_INCREMENT = 0.1;
 const POINTS_PER_WIN = 10;
 
@@ -115,8 +117,15 @@ function calculateDifferentialMultiplier(setScores: Array<{ teamAScore: number; 
 export function calculateRatingUpdate(
   playerStats: PlayerStats,
   matchResult: MatchResult,
-  ballsInGames: boolean = false
+  ballsInGames: boolean = false,
+  engine: RatingEngineConfig = {
+    maxDeltaPerEvent: DEFAULT_MAX_LEVEL_CHANGE,
+    useScoreMargin: true,
+    ballsInGamesMargin: false,
+  },
 ): RatingUpdate {
+  const maxLevelChange = engine.maxDeltaPerEvent;
+  const marginBallsInGames = ballsInGames && engine.ballsInGamesMargin;
   const expectedWinProbability = calculateExpectedWinProbability(
     matchResult.ownTeamLevel,
     matchResult.opponentsLevel
@@ -139,7 +148,11 @@ export function calculateRatingUpdate(
   let multiplier = 1.0;
   let totalPointDifferential: number | undefined = undefined;
 
-  if (matchResult.setScores && matchResult.setScores.length > 0) {
+  if (
+    engine.useScoreMargin &&
+    matchResult.setScores &&
+    matchResult.setScores.length > 0
+  ) {
     const result = calculateDifferentialMultiplier(matchResult.setScores);
     totalPointDifferential = result.totalPointDifferential;
 
@@ -150,7 +163,10 @@ export function calculateRatingUpdate(
 
   let levelChange = baseLevelChange * multiplier;
 
-  const enduranceCoefficient = calculateEnduranceCoefficient(matchResult.setScores, ballsInGames);
+  const enduranceCoefficient = calculateEnduranceCoefficient(
+    matchResult.setScores,
+    marginBallsInGames,
+  );
   levelChange = levelChange * enduranceCoefficient;
 
   const clampedReliability = Math.max(0.0, Math.min(100.0, playerStats.reliability));
@@ -160,7 +176,7 @@ export function calculateRatingUpdate(
   const highLevelDampening = calculateHighLevelDampening(playerStats.level, levelChange > 0);
   levelChange = levelChange * highLevelDampening;
 
-  levelChange = Math.max(-MAX_LEVEL_CHANGE, Math.min(MAX_LEVEL_CHANGE, levelChange));
+  levelChange = Math.max(-maxLevelChange, Math.min(maxLevelChange, levelChange));
 
   const pointsEarned = matchResult.isWinner ? POINTS_PER_WIN : 0;
 

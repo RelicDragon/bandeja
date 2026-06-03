@@ -82,8 +82,7 @@ export const Login = () => {
     } else if (googleError && googleError !== 'access_denied') {
       setError(t('auth.googleSignInFailed') || 'Google sign-in failed');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams, setAuth, navigate, t]);
 
   const goToTab = (next: LoginTab) => setTab(next);
 

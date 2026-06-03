@@ -13,6 +13,7 @@ import { GameDetailsContent } from './GameDetails';
 import { LeagueDetailsContent } from './LeagueDetails';
 import { GameChat } from './GameChat';
 import { useTranslation } from 'react-i18next';
+import { AnimatedPresencePanel } from '@/components/motion/AnimatedPresencePanel';
 
 type EntityRouteState =
   | { status: 'loading' }
@@ -138,21 +139,25 @@ export const GameDetailsPage = () => {
   const renderEntityDetails = () => {
     if (entityRoute.status === 'loading') {
       return (
-        <div className="flex items-center justify-center min-h-[calc(100vh-60px)]">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">{t('app.loading')}</p>
+        <AnimatedPresencePanel panelKey="game-details-page-loading">
+          <div className="flex items-center justify-center min-h-[calc(100vh-60px)]">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+              <p className="mt-4 text-gray-600 dark:text-gray-400">{t('app.loading')}</p>
+            </div>
           </div>
-        </div>
+        </AnimatedPresencePanel>
       );
     }
     if (entityRoute.status === 'error') {
       return (
-        <div className="flex items-center justify-center min-h-[calc(100vh-60px)] p-4">
-          <Card className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400">{t('errors.notFound')}</p>
-          </Card>
-        </div>
+        <AnimatedPresencePanel panelKey="game-details-page-error">
+          <div className="flex items-center justify-center min-h-[calc(100vh-60px)] p-4">
+            <Card className="text-center py-12">
+              <p className="text-gray-600 dark:text-gray-400">{t('errors.notFound')}</p>
+            </Card>
+          </div>
+        </AnimatedPresencePanel>
       );
     }
     if (entityRoute.status === 'cancelled') {

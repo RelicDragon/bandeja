@@ -176,6 +176,7 @@ export class GameCreateService {
       sport: data.sport,
       entityType,
       gameType,
+      matchGenerationType: data.matchGenerationType,
       maxParticipants,
       minParticipants: minParticipantsCreate,
       playersPerMatch: isTraining ? undefined : playersPerMatchEarly,

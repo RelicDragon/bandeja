@@ -3,6 +3,7 @@ import { SPORT_IDS } from '@/sport/sportRegistry';
 
 const SPORT_ORDER: Sport[] = [...SPORT_IDS];
 
+/** Distinct sports from courts (fallback when club.sports is empty). */
 export function getDistinctCourtSports(courts: Court[]): Sport[] {
   const set = new Set<Sport>();
   for (const court of courts) {
@@ -11,8 +12,21 @@ export function getDistinctCourtSports(courts: Court[]): Sport[] {
   return SPORT_ORDER.filter((s) => set.has(s));
 }
 
-export function shouldShowCourtSportTabs(courts: Court[]): boolean {
-  return getDistinctCourtSports(courts).length >= 2;
+export function resolveClubSportsList(
+  clubSports: Sport[] | undefined | null,
+  courts: Court[],
+): Sport[] {
+  if (clubSports && clubSports.length > 0) {
+    return SPORT_ORDER.filter((s) => clubSports.includes(s));
+  }
+  return getDistinctCourtSports(courts);
+}
+
+export function shouldShowCourtSportTabs(
+  clubSports: Sport[] | undefined | null,
+  courts: Court[],
+): boolean {
+  return resolveClubSportsList(clubSports, courts).length >= 2;
 }
 
 export function courtMatchesSportFilter(court: Court, sport: Sport | undefined): boolean {
@@ -23,6 +37,22 @@ export function courtMatchesSportFilter(court: Court, sport: Sport | undefined):
 export function filterCourtsBySport(courts: Court[], sport: Sport | undefined): Court[] {
   if (!sport) return courts;
   return courts.filter((c) => courtMatchesSportFilter(c, sport));
+}
+
+export function filterCourtsByClubSports(courts: Court[], clubSports: Sport[] | undefined | null): Court[] {
+  if (!clubSports || clubSports.length === 0) return courts;
+  return courts.filter((c) => c.sport == null || clubSports.includes(c.sport));
+}
+
+export function effectiveCourtSportFilter(
+  clubSports: Sport[] | undefined | null,
+  sport: Sport | undefined,
+): Sport | undefined {
+  if (!sport) return undefined;
+  if (clubSports && clubSports.length > 0 && !clubSports.includes(sport)) {
+    return undefined;
+  }
+  return sport;
 }
 
 export function resolveDefaultCourtSportTab(

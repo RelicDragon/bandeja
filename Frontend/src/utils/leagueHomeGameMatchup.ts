@@ -1,6 +1,12 @@
 import type { BasicUser, Game, GameTeam } from '@/types';
+import { formatFixtureMatrixPlayerName } from '@/utils/leagueFixtureMatrix';
+
+export type LeagueHomeOpponentRowDisplay =
+  | { kind: 'teamName'; label: string }
+  | { kind: 'players'; primary: string; partners: string[] };
 
 export type LeagueHomeGameMatchup = {
+  self: BasicUser;
   teammates: BasicUser[];
   opponents: BasicUser[];
   opponentTeamName?: string;
@@ -17,6 +23,9 @@ function matchupFromFixedTeams(
   const opponentTeam = sorted.find((t) => t !== myTeam);
   if (!myTeam || !opponentTeam) return null;
 
+  const self = (myTeam.players ?? []).find((p) => p.userId === userId)?.user;
+  if (!self) return null;
+
   const teammates = (myTeam.players ?? [])
     .filter((p) => p.userId !== userId && p.user)
     .map((p) => p.user!);
@@ -26,7 +35,7 @@ function matchupFromFixedTeams(
   const opponentTeamName = opponentTeam.name?.trim() || undefined;
 
   if (teammates.length === 0 && opponents.length === 0 && !opponentTeamName) return null;
-  return { teammates, opponents, opponentTeamName };
+  return { self, teammates, opponents, opponentTeamName };
 }
 
 function matchupFromParticipants(game: Game, userId: string): LeagueHomeGameMatchup | null {
@@ -38,6 +47,7 @@ function matchupFromParticipants(game: Game, userId: string): LeagueHomeGameMatc
   const userIndex = playing.findIndex((p) => p.userId === userId);
   if (userIndex < 0) return null;
 
+  const self = playing[userIndex].user!;
   const mid = Math.floor(playing.length / 2);
   const onFirstSide = userIndex < mid;
   const mySide = onFirstSide ? playing.slice(0, mid) : playing.slice(mid);
@@ -46,7 +56,21 @@ function matchupFromParticipants(game: Game, userId: string): LeagueHomeGameMatc
   const teammates = mySide.filter((p) => p.userId !== userId).map((p) => p.user!);
   const opponents = oppSide.map((p) => p.user!);
   if (teammates.length === 0 && opponents.length === 0) return null;
-  return { teammates, opponents };
+  return { self, teammates, opponents };
+}
+
+/** Row 2 label: one name for singles; `pl1 with pl2` for doubles+. */
+export function getLeagueHomeOpponentRowDisplay(
+  opponents: BasicUser[],
+  opponentTeamName: string | undefined
+): LeagueHomeOpponentRowDisplay {
+  if (opponentTeamName) return { kind: 'teamName', label: opponentTeamName };
+  const names = opponents.map((u) => formatFixtureMatrixPlayerName(u)).filter(Boolean);
+  if (names.length <= 1) {
+    return { kind: 'players', primary: names[0] ?? '', partners: [] };
+  }
+  const [primary, ...partners] = names;
+  return { kind: 'players', primary, partners };
 }
 
 export function getLeagueHomeGameMatchup(

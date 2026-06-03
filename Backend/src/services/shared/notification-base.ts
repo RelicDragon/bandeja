@@ -11,6 +11,7 @@ export interface GameInfo {
   id: string;
   startTime: Date | string;
   endTime: Date | string;
+  timeIsSet?: boolean | null;
   court?: { club?: { name: string } } | null;
   club?: { name: string } | null;
   name?: string | null;
@@ -24,9 +25,44 @@ export interface FormattedGameInfo {
   shortDayOfWeek: string;
   startTime: string;
   duration: string;
+  timeIsSet: boolean;
   gameName?: string;
   description?: string;
   entityType?: string;
+}
+
+export function resolveGameClubPlace(
+  game: Pick<GameInfo, 'court' | 'club'>,
+  lang: string,
+): string {
+  const name = game.court?.club?.name || game.club?.name;
+  if (name) return name;
+  const key = 'games.clubNotSet';
+  const label = t(key, lang);
+  return label !== key ? label : 'Club is not set';
+}
+
+export function formatGameScheduleLine(
+  gameInfo: FormattedGameInfo,
+  options: { includeDuration?: boolean } = {},
+): string {
+  if (gameInfo.timeIsSet === false) {
+    return gameInfo.shortDate;
+  }
+  const parts = [gameInfo.shortDayOfWeek, gameInfo.shortDate, gameInfo.startTime].filter(Boolean);
+  let line = parts.join(' ').trim();
+  if (options.includeDuration !== false && gameInfo.duration) {
+    line = line ? `${line} (${gameInfo.duration})` : `(${gameInfo.duration})`;
+  }
+  return line;
+}
+
+export function formatGameContextHeader(
+  gameInfo: FormattedGameInfo,
+  options: { includeDuration?: boolean } = {},
+): string {
+  const schedule = formatGameScheduleLine(gameInfo, options);
+  return [gameInfo.place, schedule].filter(Boolean).join(' ').trim();
 }
 
 export function getEntityTypeLabel(entityType: string | undefined, lang: string): string {
@@ -56,11 +92,30 @@ export async function formatGameInfo(
   if (!game) {
     throw new Error('Game is required for formatting');
   }
+  const timeIsSet = game.timeIsSet !== false;
+  const place = resolveGameClubPlace(game, lang);
+
+  if (!timeIsSet) {
+    const datetimeNotSetKey = 'games.datetimeNotSet';
+    const datetimeNotSet =
+      t(datetimeNotSetKey, lang) !== datetimeNotSetKey ? t(datetimeNotSetKey, lang) : 'Time is not set yet';
+    return {
+      place,
+      shortDate: datetimeNotSet,
+      shortDayOfWeek: '',
+      startTime: '',
+      duration: '',
+      timeIsSet: false,
+      gameName: game.name || undefined,
+      description: game.description || undefined,
+      entityType: game.entityType,
+    };
+  }
+
   if (!game.startTime || !game.endTime) {
     throw new Error('Game startTime and endTime are required');
   }
-  
-  const place = game.court?.club?.name || game.club?.name || 'Unknown location';
+
   const [shortDate, shortDayOfWeek, startTime] = await Promise.all([
     getDateLabelInTimezone(game.startTime, timezone, lang, false),
     getShortDayOfWeek(game.startTime, timezone, lang),
@@ -74,6 +129,7 @@ export async function formatGameInfo(
     shortDayOfWeek,
     startTime,
     duration,
+    timeIsSet: true,
     gameName: game.name || undefined,
     description: game.description || undefined,
     entityType: game.entityType,
@@ -175,8 +231,7 @@ export async function formatNewGameText(
   } = options;
   
   const gameInfo = existingGameInfo ?? await formatGameInfo(game, timezone, lang);
-  const club = game.court?.club || game.club;
-  const clubName = club?.name || 'Unknown location';
+  const clubName = resolveGameClubPlace(game, lang);
   const courtName = game.court?.name ? ` • ${game.court.name}` : '';
   
   const playingParticipants = game.participants?.filter((p: any) => p.status === 'PLAYING') || [];
@@ -219,7 +274,8 @@ export async function formatNewGameText(
     text += `👑 ${escapeFn(t('games.organizer', lang))}: ${ownerDisplay}\n`;
   }
   
-  text += `📅 ${escapeFn(gameInfo.shortDayOfWeek)} ${escapeFn(gameInfo.shortDate)} ${escapeFn(gameInfo.startTime)} (${escapeFn(gameInfo.duration)})\n`;
+  const scheduleLine = formatGameScheduleLine(gameInfo);
+  text += `📅 ${escapeFn(scheduleLine)}\n`;
   const locationLine = appendTelegramGameScheduleExtras(
     `📍 ${escapeFn(clubName)}${courtName ? escapeFn(courtName) : ''}`,
     game,

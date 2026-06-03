@@ -3,6 +3,8 @@ import type { User } from '@/types';
 import {
   getInviteNudgeCopyMode,
   isCreatorUnratedForSport,
+  shouldShowEstimateLevelLink,
+  shouldSuggestSportQuestionnaire,
   shouldWarnCreateGameLevelBand,
 } from './sportQuestionnaire';
 
@@ -60,6 +62,35 @@ describe('sportQuestionnaire cross-sport invite', () => {
       welcomeScreenPassed: false,
     });
     expect(getInviteNudgeCopyMode(user, 'PADEL')).toBe('same-sport');
+  });
+});
+
+describe('sportQuestionnaire skip gating', () => {
+  it('does not suggest when API status is skipped', () => {
+    const user = baseUser();
+    expect(
+      shouldSuggestSportQuestionnaire(user, 'TENNIS', {
+        completed: false,
+        skipped: true,
+        suggested: false,
+        level: 1,
+        gamesPlayed: 0,
+      }),
+    ).toBe(false);
+    expect(shouldShowEstimateLevelLink(user, 'TENNIS', { completed: false, skipped: true, suggested: false, level: 1, gamesPlayed: 0 })).toBe(false);
+  });
+
+  it('does not warn level band when questionnaire skipped', () => {
+    const user = baseUser();
+    expect(
+      shouldWarnCreateGameLevelBand(user, 'TENNIS', 3.0, 4.5, {
+        completed: false,
+        skipped: true,
+        suggested: false,
+        level: 1,
+        gamesPlayed: 0,
+      }),
+    ).toBe(false);
   });
 });
 

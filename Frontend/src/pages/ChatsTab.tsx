@@ -67,6 +67,16 @@ export const ChatsTab = () => {
     () => parseChatSelectionFromPath(location.pathname),
     [location.pathname]
   );
+  /** Path wins over list selection so push/deep-link opens the correct thread on first paint. */
+  const activeChatSelection = useMemo((): { id: string; type: ChatType } | null => {
+    if (pathSelection.id && pathSelection.type) {
+      return { id: pathSelection.id, type: pathSelection.type };
+    }
+    if (selectedChatId && selectedChatType) {
+      return { id: selectedChatId, type: selectedChatType };
+    }
+    return null;
+  }, [pathSelection.id, pathSelection.type, selectedChatId, selectedChatType]);
   const chatPanelReady = isChatPanelReady(
     isDesktop,
     selectedChatId,
@@ -206,12 +216,12 @@ export const ChatsTab = () => {
     );
   }
 
-  if (selectedChatId && selectedChatType) {
+  if (activeChatSelection) {
     return (
       <GameChat
         isEmbedded={false}
-        chatId={selectedChatId}
-        chatType={selectedChatType}
+        chatId={activeChatSelection.id}
+        chatType={activeChatSelection.type}
       />
     );
   }

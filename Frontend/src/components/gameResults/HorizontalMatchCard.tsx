@@ -14,6 +14,7 @@ import {
   matchSetsHaveAnyNonZeroScore,
 } from '@/utils/scoring';
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
+import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { MatchHeaderEditToggleButton } from '@/components/gameResults/MatchHeaderEditToggleButton';
 import { MatchResultsHeaderBadges } from '@/components/gameResults/MatchResultsHeaderBadges';
 import { MatchTimerPanel } from '@/components/gameResults/matchTimer/MatchTimerPanel';
@@ -42,10 +43,11 @@ interface HorizontalMatchCardProps {
   courts?: Court[];
   onCourtClick?: () => void;
   fixedNumberOfSets?: number;
-  game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie' | 'resultsStatus'> | null;
+  game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'matchTimerEnabled' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie' | 'resultsStatus' | 'playersPerMatch' | 'sport'> | null;
   roundId?: string;
   gameId?: string;
   onMatchTimerTransition?: (roundId: string, matchId: string, action: MatchTimerAction) => void | Promise<void>;
+  onAddSupplementalSet?: () => void;
 }
 
 export const HorizontalMatchCard = ({
@@ -74,6 +76,7 @@ export const HorizontalMatchCard = ({
   roundId,
   gameId,
   onMatchTimerTransition,
+  onAddSupplementalSet,
 }: HorizontalMatchCardProps) => {
   const { t } = useTranslation();
   const rules = getRules(game ?? { fixedNumberOfSets, maxTotalPointsPerSet: 0, maxPointsPerTeam: 0, winnerOfMatch: 'BY_SCORES', ballsInGames: false, hasGoldenPoint: false, pointsPerTie: 0, scoringPreset: null } as any);
@@ -92,7 +95,7 @@ export const HorizontalMatchCard = ({
     return null;
   }
 
-  const maxPlayersPerTeam = players.length === 2 ? 1 : 2;
+  const maxPlayersPerTeam = maxPlayersPerTeamForGame(game, players.length);
   const teamSlotsFull = (team: 'teamA' | 'teamB') =>
     Array.from({ length: maxPlayersPerTeam }, (_, i) => Boolean(match[team][i])).every(Boolean);
   const teamsFull = teamSlotsFull('teamA') && teamSlotsFull('teamB');
@@ -127,7 +130,14 @@ export const HorizontalMatchCard = ({
   ) : null;
 
   const showScores = canEnterResults && !isEditing && teamsFull;
-  const showCenterColumn = showScores || Boolean(livePlayLink);
+  const showAddSupplementalSet =
+    !isEditing &&
+    canEditResults &&
+    Boolean(onAddSupplementalSet) &&
+    canEnterResults &&
+    teamsFull &&
+    matchFinished;
+  const showCenterColumn = showScores || Boolean(livePlayLink) || showAddSupplementalSet;
 
   const headerEditButton = showHeaderEditButton ? (
     <MatchHeaderEditToggleButton
@@ -140,7 +150,7 @@ export const HorizontalMatchCard = ({
   ) : null;
 
   const renderTeam = (team: 'teamA' | 'teamB') => {
-    const teamPlayers = match[team];
+    const teamPlayers = match[team].slice(0, maxPlayersPerTeam);
     const isWinner = resolvedWinnerTeam === team;
 
     return (
@@ -427,6 +437,31 @@ export const HorizontalMatchCard = ({
               })}
             </div>
             ) : null}
+            <AnimatePresence initial={false} mode="popLayout">
+              {showAddSupplementalSet ? (
+                <motion.div
+                  key="add-supp"
+                  layout
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+                  className="flex justify-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAddSupplementalSet?.();
+                    }}
+                    className="rounded-lg border border-dashed border-violet-400/70 px-2.5 py-1 text-[11px] font-semibold text-violet-700 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-950/40"
+                  >
+                    {t('gameResults.addExtraSet')}
+                  </button>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
             {livePlayLink ? (
               <motion.div layout className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                 {livePlayLink}

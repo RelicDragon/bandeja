@@ -12,6 +12,7 @@ export const detectScoringPreset = (game?: Partial<Game> | null): ScoringPreset 
 
   if (winnerOfMatch === 'BY_SETS') {
     if (sets === 3 && pts === 21) return 'BEST_OF_3_21';
+    if (sets === 3 && pts === 15) return 'BEST_OF_3_15';
     if (sets === 3 && pts === 11) return 'BEST_OF_3_11';
     if (sets === 5 && pts === 11) return 'BEST_OF_5_11';
     if (sets === 3) return 'CLASSIC_BEST_OF_3';
@@ -19,8 +20,13 @@ export const detectScoringPreset = (game?: Partial<Game> | null): ScoringPreset 
     if (sets === 1) return 'CLASSIC_PRO_SET';
   }
   if (pts === 11) return 'POINTS_11';
+  if (pts === 12) return 'POINTS_12';
+  if (pts === 15) return 'POINTS_15';
   if (pts === 16) return 'POINTS_16';
-  if (pts === 21) return 'POINTS_21';
+  if (pts === 21) {
+    if (game.sport === 'TABLE_TENNIS' && winnerOfMatch !== 'BY_SETS') return 'SINGLE_GAME_21';
+    return 'POINTS_21';
+  }
   if (pts === 24) return 'POINTS_24';
   if (pts === 32) return 'POINTS_32';
   if (winnerOfMatch === 'BY_SCORES' && sets === 1 && pts === 0) return 'POINTS_21';

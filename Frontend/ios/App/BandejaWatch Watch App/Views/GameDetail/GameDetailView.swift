@@ -116,7 +116,10 @@ struct GameDetailView: View {
             readinessRow(
                 ok: game.participantsReady,
                 okLabel: WatchCopy.readinessParticipantsOk(lang),
-                waitingLabel: WatchCopy.readinessParticipantsWaiting(lang)
+                waitingLabel: WatchCopy.readinessParticipantsWaiting(
+                    lang,
+                    requiredPlaying: WatchMatchFormat.playersPerMatch(of: game)
+                )
             )
             if game.hasFixedTeams == true {
                 readinessRow(

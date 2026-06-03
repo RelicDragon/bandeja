@@ -75,7 +75,7 @@ export function formatMatchFormatLabel(
       ? playersPerMatch
       : resolvePlayersPerMatch(sportId, playersPerMatch);
   if (getSportConfig(sportId).defaultPlayersPerMatch === ppm) return null;
-  const key = ppm === 2 ? 'sport.match1v1' : 'sport.match2v2';
+  const key = ppm === 2 ? 'sport.matchSingles' : 'sport.matchDoubles';
   const label = t(key, lang);
   return label !== key ? label : ppm === 2 ? '1v1' : '2v2';
 }
