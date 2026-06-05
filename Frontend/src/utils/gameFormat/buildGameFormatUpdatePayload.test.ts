@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GAME_FORMAT_UPDATE_KEYS } from '@backend/utils/gameFormatUpdateKeys';
+import { GAME_FORMAT_UPDATE_KEYS } from '@shared/gameFormatUpdateKeys';
 import { buildGameFormatUpdatePayload } from './buildGameFormatUpdatePayload';
 import type { UseGameFormatResult } from '@/hooks/useGameFormat';
 

@@ -1,4 +1,4 @@
-import { GAME_FORMAT_UPDATE_KEYS } from '@backend/utils/gameFormatUpdateKeys';
+import { GAME_FORMAT_UPDATE_KEYS } from '@shared/gameFormatUpdateKeys';
 import type { UseGameFormatResult } from '@/hooks/useGameFormat';
 import type { EntityType } from '@/types';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';

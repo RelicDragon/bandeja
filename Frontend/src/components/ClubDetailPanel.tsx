@@ -7,6 +7,7 @@ import { openExternalUrl } from '@/utils/openExternalUrl';
 import { getTelUrl } from '@/utils/telUrl';
 import { normalizeClubPhotos } from '@/utils/clubPhotos';
 import { ClubReviewsSection } from '@/components/ClubReviewsSection';
+import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { getClubMapsSearchUrl } from '@/utils/clubMapsUrl';
 import { websiteDisplayHost } from '@/utils/websiteHostname';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
@@ -161,12 +162,23 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh }: 
                 className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm flex flex-wrap items-baseline justify-between gap-2"
               >
                 <span className="font-medium text-gray-900 dark:text-white">{court.name}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {court.isIndoor ? t('club.indoor') : t('club.outdoor')}
-                  {court.courtType ? ` · ${court.courtType}` : ''}
-                  {court.pricePerHour != null && Number.isFinite(Number(court.pricePerHour))
-                    ? ` · ${t('club.perHour', { price: court.pricePerHour })}`
-                    : ''}
+                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <span>
+                    {court.isIndoor ? t('club.indoor') : t('club.outdoor')}
+                    {court.courtType ? ` · ${court.courtType}` : ''}
+                    {court.pricePerHour != null && Number.isFinite(Number(court.pricePerHour))
+                      ? ` · ${t('club.perHour', { price: court.pricePerHour })}`
+                      : ''}
+                  </span>
+                  {court.webCameraUrl?.trim() ? (
+                    <CourtLocationLinks
+                      court={court}
+                      className="inline-flex"
+                      linkClassName="inline-flex items-center text-primary-600 dark:text-primary-400 hover:opacity-80"
+                      iconSize={14}
+                      showWebCameraLabel={false}
+                    />
+                  ) : null}
                 </span>
               </li>
             ))}

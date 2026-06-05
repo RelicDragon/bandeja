@@ -383,6 +383,7 @@ export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) 
     surfaceType,
     pricePerHour,
     isActive,
+    webCameraUrl,
   } = req.body;
 
   const court = await AdminLocationsService.createCourt({
@@ -393,6 +394,7 @@ export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) 
     surfaceType,
     pricePerHour,
     isActive,
+    webCameraUrl,
   });
 
   res.status(201).json({
@@ -411,6 +413,7 @@ export const updateCourt = asyncHandler(async (req: AuthRequest, res: Response) 
     surfaceType,
     pricePerHour,
     isActive,
+    webCameraUrl,
   } = req.body;
 
   const court = await AdminLocationsService.updateCourt(courtId, {
@@ -421,6 +424,7 @@ export const updateCourt = asyncHandler(async (req: AuthRequest, res: Response) 
     surfaceType,
     pricePerHour,
     isActive,
+    webCameraUrl,
   });
 
   res.json({

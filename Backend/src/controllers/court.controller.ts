@@ -7,6 +7,7 @@ import prisma from '../config/database';
 import { refreshClubCourtsCount } from '../utils/refreshClubCourtsCount';
 import { ClubAdminService } from '../services/clubAdmin/clubAdmin.service';
 import { assertCourtSportInClub } from '../shared/clubSports';
+import { normalizeWebCameraUrl } from '../utils/normalizeWebCameraUrl';
 
 async function assertCourtMutationAllowed(req: AuthRequest, clubId: string) {
   if (req.user?.isAdmin) return;
@@ -79,7 +80,7 @@ export const getCourtById = asyncHandler(async (req: AuthRequest, res: Response)
 });
 
 export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { name, clubId, courtType, isIndoor, surfaceType, pricePerHour, sport } = req.body;
+  const { name, clubId, courtType, isIndoor, surfaceType, pricePerHour, sport, webCameraUrl } = req.body;
 
   const club = await prisma.club.findUnique({
     where: { id: clubId },
@@ -103,6 +104,8 @@ export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) 
   }
   assertCourtSportInClub(club.sports, courtSport);
 
+  const normalizedWebCameraUrl = normalizeWebCameraUrl(webCameraUrl) ?? null;
+
   const court = await prisma.court.create({
     data: {
       name,
@@ -112,6 +115,7 @@ export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) 
       surfaceType,
       pricePerHour,
       sport: courtSport,
+      webCameraUrl: normalizedWebCameraUrl,
     },
   });
   await refreshClubCourtsCount(clubId);

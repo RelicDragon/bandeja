@@ -96,5 +96,6 @@
   "clubAdmin.surfaceType": "Покрытие",
   "clubAdmin.pricePerHour": "Цена за час",
   "clubAdmin.indoor": "Крытый",
-  "clubAdmin.externalCourtId": "Внешний ID"
+  "clubAdmin.externalCourtId": "Внешний ID",
+  "clubAdmin.webCameraUrl": "URL веб-камеры"
 }

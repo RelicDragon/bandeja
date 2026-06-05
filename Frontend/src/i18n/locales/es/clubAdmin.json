@@ -96,5 +96,6 @@
   "clubAdmin.surfaceType": "Surface",
   "clubAdmin.pricePerHour": "Price per hour",
   "clubAdmin.indoor": "Indoor",
-  "clubAdmin.externalCourtId": "External ID"
+  "clubAdmin.externalCourtId": "External ID",
+  "clubAdmin.webCameraUrl": "URL de cámara web"
 }

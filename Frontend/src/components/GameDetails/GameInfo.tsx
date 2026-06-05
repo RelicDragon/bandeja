@@ -21,8 +21,7 @@ import { resolveUserCurrency } from '@/utils/currency';
 import type { EditGameInfoTabId } from './EditGameInfoModal';
 import { isCapacitor } from '@/utils/capacitor';
 import { addToNativeCalendar } from '@/utils/calendar';
-import { openExternalUrl } from '@/utils/openExternalUrl';
-import { getTelUrl } from '@/utils/telUrl';
+import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { Share } from '@capacitor/share';
 import {
   Calendar,
@@ -46,7 +45,6 @@ import {
   CalendarPlus,
   Plane,
   UserPlus,
-  Phone,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
@@ -949,27 +947,11 @@ export const GameInfo = ({
                     }
                   </p>
                 )}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
-                  {(game.court?.club || game.club)?.website && (
-                    <button
-                      type="button"
-                      onClick={() => openExternalUrl((game.court?.club || game.club)!.website!)}
-                      className="flex items-center gap-1.5 text-xs text-primary-600 dark:text-primary-400 hover:underline"
-                    >
-                      <ExternalLink size={14} />
-                      {t('common.openWebsite')}
-                    </button>
-                  )}
-                  {(game.court?.club || game.club)?.phone && getTelUrl((game.court?.club || game.club)!.phone) && (
-                    <a
-                      href={getTelUrl((game.court?.club || game.club)!.phone)}
-                      className="flex items-center gap-1.5 text-xs text-primary-600 dark:text-primary-400 hover:underline"
-                    >
-                      <Phone size={14} />
-                      {t('common.call')}
-                    </a>
-                  )}
-                </div>
+                <CourtLocationLinks
+                  club={game.court?.club || game.club}
+                  court={game.court && game.court.id ? game.court : undefined}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2"
+                />
               </div>
               <div className="flex items-center gap-2">
                 {game.entityType === 'BAR' && isOwner && courts.length > 1 && (

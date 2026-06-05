@@ -4,7 +4,7 @@ import { normalizeGameFormatPatch } from './normalizeGameFormatPatch';
 import {
   GAME_FORMAT_UPDATE_KEYS,
   isGameFormatOnlyUpdate,
-} from '../gameFormatUpdateKeys';
+} from '../../shared/gameFormatUpdateKeys';
 
 const EMPTY_EXISTING = {
   gameType: 'CLASSIC',

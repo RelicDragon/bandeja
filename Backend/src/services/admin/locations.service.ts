@@ -17,6 +17,7 @@ import {
 } from '../../shared/clubSports';
 import { refreshCityFromClubs, refreshAllCitiesFromClubs } from '../../utils/updateCityCenter';
 import { refreshClubCourtsCount } from '../../utils/refreshClubCourtsCount';
+import { normalizeWebCameraUrl } from '../../utils/normalizeWebCameraUrl';
 import { CityGroupService } from '../chat/cityGroup.service';
 
 export class AdminLocationsService {
@@ -463,6 +464,7 @@ export class AdminLocationsService {
     pricePerHour?: number;
     isActive?: boolean;
     sport?: Sport | null;
+    webCameraUrl?: string | null;
   }) {
     const {
       name,
@@ -473,6 +475,7 @@ export class AdminLocationsService {
       pricePerHour,
       isActive,
       sport,
+      webCameraUrl,
     } = data;
 
     const club = await prisma.club.findUnique({
@@ -496,6 +499,7 @@ export class AdminLocationsService {
         pricePerHour,
         isActive: isActive !== undefined ? isActive : true,
         sport: courtSport,
+        webCameraUrl: normalizeWebCameraUrl(webCameraUrl) ?? null,
       },
       include: {
         club: {
@@ -524,6 +528,7 @@ export class AdminLocationsService {
     pricePerHour?: number;
     isActive?: boolean;
     sport?: Sport | null;
+    webCameraUrl?: string | null;
   }) {
     const {
       name,
@@ -534,6 +539,7 @@ export class AdminLocationsService {
       pricePerHour,
       isActive,
       sport,
+      webCameraUrl,
     } = data;
 
     const existing = await prisma.court.findUnique({
@@ -569,6 +575,7 @@ export class AdminLocationsService {
         pricePerHour,
         isActive,
         ...(courtSport !== undefined && { sport: courtSport }),
+        ...(webCameraUrl !== undefined && { webCameraUrl: normalizeWebCameraUrl(webCameraUrl) ?? null }),
       },
       include: {
         club: {

@@ -4,6 +4,7 @@ import { ApiError } from '../../utils/ApiError';
 import { refreshClubCourtsCount } from '../../utils/refreshClubCourtsCount';
 import { ClubAdminService } from './clubAdmin.service';
 import { assertCourtSportInClub } from '../../shared/clubSports';
+import { normalizeWebCameraUrl } from '../../utils/normalizeWebCameraUrl';
 
 export class ClubAdminCourtService {
   static async listCourts(userId: string, clubId: string) {
@@ -24,6 +25,7 @@ export class ClubAdminCourtService {
       surfaceType?: string;
       pricePerHour?: number;
       sport?: Sport | null;
+      webCameraUrl?: string;
     }
   ) {
     await ClubAdminService.assertClubAdmin(userId, clubId);
@@ -43,6 +45,7 @@ export class ClubAdminCourtService {
         surfaceType: data.surfaceType,
         pricePerHour: data.pricePerHour,
         sport: data.sport ?? null,
+        webCameraUrl: normalizeWebCameraUrl(data.webCameraUrl) ?? null,
       },
     });
     await refreshClubCourtsCount(clubId);
@@ -60,10 +63,13 @@ export class ClubAdminCourtService {
     });
     if (!club) throw new ApiError(404, 'Club not found');
 
-    const allowed = ['name', 'courtType', 'isIndoor', 'surfaceType', 'pricePerHour', 'isActive', 'sport'];
+    const allowed = ['name', 'courtType', 'isIndoor', 'surfaceType', 'pricePerHour', 'isActive', 'sport', 'webCameraUrl'];
     const update: Record<string, unknown> = {};
     for (const key of allowed) {
       if (data[key] !== undefined) update[key] = data[key];
+    }
+    if (update.webCameraUrl !== undefined) {
+      update.webCameraUrl = normalizeWebCameraUrl(update.webCameraUrl) ?? null;
     }
     if (update.sport !== undefined) {
       const raw = update.sport;

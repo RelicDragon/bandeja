@@ -12,6 +12,7 @@ interface ClubAdminCourtFormProps {
     isIndoor?: boolean;
     surfaceType?: string;
     pricePerHour?: number;
+    webCameraUrl?: string | null;
     isActive?: boolean;
   }) => Promise<void>;
 }
@@ -22,6 +23,7 @@ export function ClubAdminCourtForm({ open, onClose, court, onSubmit }: ClubAdmin
   const [courtType, setCourtType] = useState('');
   const [surfaceType, setSurfaceType] = useState('');
   const [pricePerHour, setPricePerHour] = useState('');
+  const [webCameraUrl, setWebCameraUrl] = useState('');
   const [isIndoor, setIsIndoor] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -32,6 +34,7 @@ export function ClubAdminCourtForm({ open, onClose, court, onSubmit }: ClubAdmin
     setCourtType(court?.courtType ?? '');
     setSurfaceType(court?.surfaceType ?? '');
     setPricePerHour(court?.pricePerHour != null ? String(court.pricePerHour) : '');
+    setWebCameraUrl(court?.webCameraUrl ?? '');
     setIsIndoor(court?.isIndoor ?? false);
     setIsActive(court?.isActive !== false);
   }, [open, court]);
@@ -48,6 +51,7 @@ export function ClubAdminCourtForm({ open, onClose, court, onSubmit }: ClubAdmin
         surfaceType: surfaceType.trim() || undefined,
         isIndoor,
         pricePerHour: pricePerHour ? Number(pricePerHour) : undefined,
+        webCameraUrl: court ? (webCameraUrl.trim() || null) : (webCameraUrl.trim() || undefined),
         ...(court ? { isActive } : {}),
       });
       onClose();
@@ -96,6 +100,16 @@ export function ClubAdminCourtForm({ open, onClose, court, onSubmit }: ClubAdmin
               className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
               value={pricePerHour}
               onChange={(e) => setPricePerHour(e.target.value)}
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="text-muted-foreground">{t('clubAdmin.webCameraUrl')}</span>
+            <input
+              type="url"
+              className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
+              value={webCameraUrl}
+              onChange={(e) => setWebCameraUrl(e.target.value)}
+              placeholder="https://"
             />
           </label>
           <label className="flex items-center gap-2 text-sm">

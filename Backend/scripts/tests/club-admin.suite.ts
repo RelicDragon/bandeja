@@ -12,6 +12,8 @@ import { buildClubAdminDmMessage } from '../../src/utils/clubAdminDmMessage';
 import { ClubAdminService } from '../../src/services/clubAdmin/clubAdmin.service';
 import { ClubAdminHoldService } from '../../src/services/clubAdmin/clubAdminHold.service';
 import { ClubAdminGameService } from '../../src/services/clubAdmin/clubAdminGame.service';
+import { ClubAdminCourtService } from '../../src/services/clubAdmin/clubAdminCourt.service';
+import { normalizeWebCameraUrl } from '../../src/utils/normalizeWebCameraUrl';
 
 function assert(cond: boolean, msg: string) {
   if (!cond) {
@@ -67,6 +69,14 @@ function runDmTemplateTests() {
   assert(clearRu.includes('Иван'), 'clear RU host');
   assert(clearRu.includes('снята'), 'clear RU wording');
   console.log('ok: DM templates');
+}
+
+function runNormalizeWebCameraUrlTests() {
+  assert(normalizeWebCameraUrl(undefined) === undefined, 'undefined passthrough');
+  assert(normalizeWebCameraUrl('') === null, 'empty -> null');
+  assert(normalizeWebCameraUrl('  ') === null, 'whitespace -> null');
+  assert(normalizeWebCameraUrl('  https://cam.example  ') === 'https://cam.example', 'trim url');
+  console.log('ok: normalizeWebCameraUrl');
 }
 
 async function runDbTests() {
@@ -125,6 +135,18 @@ async function runDbTests() {
     await expectApiError(ClubAdminService.assertClubAdmin(strangerId, clubId), 403);
     console.log('ok: stranger not club admin -> 403');
 
+    const testUrl = 'https://example.com/camera-qa';
+    const patched = await ClubAdminCourtService.patchCourt(adminId, courtId, { webCameraUrl: testUrl });
+    assert(patched.webCameraUrl === testUrl, 'webCameraUrl patch');
+    const cleared = await ClubAdminCourtService.patchCourt(adminId, courtId, { webCameraUrl: null });
+    assert(cleared.webCameraUrl === null, 'webCameraUrl clear');
+    const created = await ClubAdminCourtService.createCourt(adminId, clubId, {
+      name: 'Cam court',
+      webCameraUrl: 'https://example.com/cam-create',
+    });
+    assert(created.webCameraUrl === 'https://example.com/cam-create', 'webCameraUrl create');
+    console.log('ok: court webCameraUrl patch, clear, create');
+
     await expectApiError(
       ClubAdminHoldService.createHold(strangerId, clubId, {
         courtId,
@@ -162,7 +184,7 @@ async function runDbTests() {
     await prisma.gameParticipant.deleteMany({ where: { gameId } });
     await prisma.game.deleteMany({ where: { id: gameId } });
     await prisma.clubAdmin.deleteMany({ where: { clubId } });
-    await prisma.court.deleteMany({ where: { id: courtId } });
+    await prisma.court.deleteMany({ where: { clubId } });
     await prisma.club.deleteMany({ where: { id: clubId } });
   }
 }
@@ -170,6 +192,7 @@ async function runDbTests() {
 async function main() {
   dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
   runDmTemplateTests();
+  runNormalizeWebCameraUrlTests();
 
   if (!ensureDbUrl()) {
     console.log('club-admin.suite: skipped DB tests (set DB_URL)');

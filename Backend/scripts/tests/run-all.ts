@@ -277,7 +277,7 @@ const suites: Suite[] = [
     command: process.execPath,
     args: [
       path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
-      path.join(backendRoot, 'src', 'utils', 'gameFormatUpdateKeys.test.ts'),
+      path.join(backendRoot, 'src', 'shared', 'gameFormatUpdateKeys.test.ts'),
     ],
   },
   {

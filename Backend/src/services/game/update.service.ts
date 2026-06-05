@@ -6,7 +6,7 @@ import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { GameReadService } from './read.service';
 import { hasParentGamePermission, canModifyResults } from '../../utils/parentGamePermissions';
-import { isGameFormatOnlyUpdate, TRAINING_STRIPPED_FORMAT_KEYS } from '../../utils/gameFormatUpdateKeys';
+import { isGameFormatOnlyUpdate, TRAINING_STRIPPED_FORMAT_KEYS } from '../../shared/gameFormatUpdateKeys';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType } from '../../utils/systemMessages';
 import telegramNotificationService from '../telegram/notification.service';

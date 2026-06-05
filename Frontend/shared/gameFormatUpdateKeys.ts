@@ -1,3 +1,5 @@
+/** Keep in sync with Backend/src/shared/gameFormatUpdateKeys.ts */
+
 /** Scalar game fields changed by the format wizard / teams UI (not general game settings). */
 export const GAME_FORMAT_UPDATE_KEYS = new Set([
   'gameType',
