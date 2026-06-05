@@ -15,10 +15,7 @@ vi.mock('@/components/audio/audioWaveformUtils', () => ({
   resolveChatMediaUrl: (url: string) => url,
 }));
 
-type MediaSlideSegment = Extract<
-  StorySegment,
-  { sourceType: 'USER_STORY_ITEM' | 'GAME_PHOTO' }
->;
+type MediaSlideSegment = Extract<StorySegment, { sourceType: 'USER_STORY_ITEM' }>;
 
 function imageSegment(overrides?: Partial<MediaSlideSegment>): MediaSlideSegment {
   return {

@@ -5,7 +5,7 @@ import { ApiError } from '../../utils/ApiError';
 import {
   COMMENTS_PAGE_SIZE,
   MAX_COMMENT_BODY_LENGTH,
-  MAX_COMMENTS_PER_SEGMENT,
+  maxCommentsPerSegment,
   REPLY_PAGE_SIZE,
   REPLY_PREVIEW_COUNT,
   STORY_ENGAGEMENT_ERROR,
@@ -110,7 +110,7 @@ export class StoryEngagementCommentService {
     }
 
     const commentCount = await countActiveComments(sourceType, sourceId);
-    if (commentCount >= MAX_COMMENTS_PER_SEGMENT) {
+    if (commentCount >= maxCommentsPerSegment()) {
       throw new ApiError(429, 'Comment cap reached', true, {
         code: STORY_ENGAGEMENT_ERROR.COMMENT_CAP_REACHED,
       });

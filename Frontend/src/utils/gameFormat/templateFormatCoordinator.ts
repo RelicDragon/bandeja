@@ -148,7 +148,7 @@ export function inferTemplateFromFormat(
       ? gameFormatSnapshotFromFormat(format)
       : 'maxParticipants' in format || 'matchGenerationType' in format
         ? gameFormatSnapshotFromGame(format as Partial<Game>)
-        : toFormatSnapshot(format));
+        : toFormatSnapshot(format as UseGameFormatResult | FormatSnapshot));
   const matchingId = findMatchingTemplateId(ctx, snapshot);
   if (matchingId != null) {
     const tpl = getTemplate(matchingId);

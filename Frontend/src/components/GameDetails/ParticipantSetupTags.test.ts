@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Sports } from '@shared/sport';
-import { buildParticipantSetupTags } from './ParticipantSetupTags';
+import { buildParticipantSetupTags } from './buildParticipantSetupTags';
 import type { Game } from '@/types';
 
 const t = (key: string) => key;

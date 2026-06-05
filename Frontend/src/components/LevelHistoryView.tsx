@@ -325,7 +325,12 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                     fill={showSocialLevel ? "url(#socialLevelGradient)" : "url(#levelGradient)"}
                     dot={({ cx, cy, payload }) => {
                       if (cx == null || cy == null || !payload) return null;
-                      const data = payload as { itemId: string; index: number; eventType?: string };
+                      const data = payload as {
+                        itemId: string;
+                        index: number;
+                        eventType?: string;
+                        affectsRating?: boolean;
+                      };
                       if (!data?.itemId) return null;
                       const isQuestionnaireOrSet = data.eventType === 'SET' || data.eventType === 'QUESTIONNAIRE';
                       const isQuestionnaire = data.eventType === 'QUESTIONNAIRE';
@@ -373,7 +378,12 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                     }}
                     activeDot={({ cx, cy, payload }) => {
                       if (cx == null || cy == null || !payload) return null;
-                      const data = payload as { itemId: string; index: number; eventType?: string };
+                      const data = payload as {
+                        itemId: string;
+                        index: number;
+                        eventType?: string;
+                        affectsRating?: boolean;
+                      };
                       if (!data?.itemId) return null;
                       const isQuestionnaireOrSet = data.eventType === 'SET' || data.eventType === 'QUESTIONNAIRE';
                       const isQuestionnaire = data.eventType === 'QUESTIONNAIRE';

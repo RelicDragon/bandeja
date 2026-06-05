@@ -29,17 +29,15 @@ import { GameChatFooter } from './GameChat/GameChatFooter';
 import { GameChatAccessDenied } from './GameChat/GameChatAccessDenied';
 import { useGameChatPinned } from './GameChat/useGameChatPinned';
 import { useGameChatContext } from './GameChat/useGameChatContext';
-import { useThreadSession } from './GameChat/useThreadSession';
+import { useThreadSession, useThreadSessionEffects } from './GameChat/useThreadSession';
 import { logReloadMessagesFirstPage } from '@/services/chat/chatOpenTrace';
 import { useGameChatActions } from './GameChat/useGameChatActions';
 import { useGameChatOptimistic } from './GameChat/useGameChatOptimistic';
-import { useGameChatSocket } from './GameChat/useGameChatSocket';
 import { useGameChatDisplay } from './GameChat/useGameChatDisplay';
 import { useGameChatReactions } from './GameChat/useGameChatReactions';
 import { useGameChatMutationRetry } from './GameChat/useGameChatMutationRetry';
 import { useGameChatDerived } from './GameChat/useGameChatDerived';
 import { useGameChatPanels } from './GameChat/useGameChatPanels';
-import { useGameChatInitialLoad } from './GameChat/useGameChatInitialLoad';
 import { useGameChatFooterVariant } from './GameChat/useGameChatFooterVariant';
 import { recordChatThreadOpened } from '@/services/chat/chatThreadOpenStats';
 import { reconcileThreadIndexOutboxForContext } from '@/services/chat/chatThreadIndex';
@@ -416,24 +414,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     isMuted,
   });
 
-  useGameChatSocket({
-    id,
-    contextType,
-    effectiveChatType,
-    currentIdRef,
-    userId: user?.id,
-    setMessages,
-    messagesRef,
-    chatContainerRef,
-    handleNewMessage,
-    handleMessageReaction,
-    handleReadReceipt,
-    handleMessageDeleted,
-    fetchPinnedMessages,
-    handleMessageUpdated,
-    reloadMessagesFirstPage,
-  });
-
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
   const { title, titleContent, titleMetaRow, subtitle: baseSubtitle, icon } = useGameChatDisplay({
     contextType,
@@ -488,12 +468,13 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     if (params) markContextReadOnUserActivity(params);
   }, [id, contextType, game, user?.id, effectiveChatType, groupChannel?.id]);
 
-  useGameChatInitialLoad({
+  useThreadSessionEffects({
     id,
     user,
     contextType,
     initialChatType,
     currentChatType,
+    effectiveChatType,
     game,
     groupChannelId: groupChannel?.id,
     loadContext,
@@ -516,6 +497,16 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setIsInitialLoad,
     setIsLoadingMessages,
     setIsLoadingContext,
+    currentIdRef,
+    userId: user?.id,
+    chatContainerRef,
+    handleNewMessage,
+    handleMessageReaction,
+    handleReadReceipt,
+    handleMessageDeleted,
+    fetchPinnedMessages,
+    handleMessageUpdated,
+    reloadMessagesFirstPage,
   });
 
   /**

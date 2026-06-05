@@ -1,9 +1,15 @@
 export const MAX_CAPTION_LENGTH = 220;
 export const MAX_SYNTHETIC_CAPTION_LENGTH = 120;
 export const MAX_COMMENT_BODY_LENGTH = 500;
-export const MAX_COMMENTS_PER_SEGMENT = process.env.STORY_ENGAGEMENT_TEST_COMMENT_CAP
-  ? parseInt(process.env.STORY_ENGAGEMENT_TEST_COMMENT_CAP, 10)
-  : 500;
+/** Read at call time so QA scripts can set STORY_ENGAGEMENT_TEST_COMMENT_CAP before service import. */
+export function maxCommentsPerSegment(): number {
+  const raw = process.env.STORY_ENGAGEMENT_TEST_COMMENT_CAP;
+  if (raw) {
+    const n = parseInt(raw, 10);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return 500;
+}
 export const COMMENTS_PAGE_SIZE = 30;
 export const TOP_LEVEL_COMMENT_PAGE_SIZE = COMMENTS_PAGE_SIZE;
 export const REPLY_PAGE_SIZE = 30;

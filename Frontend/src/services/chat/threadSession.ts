@@ -146,7 +146,7 @@ export function resolveSessionScroll(input: {
 export function resolveSessionScrollFromSnapshot(
   messages: readonly ChatMessageWithStatus[],
   openAnchorMessageId: string | undefined
-): Pick<ThreadSessionScroll, 'anchorMessageId'> | undefined {
+): { anchorMessageId: string } | undefined {
   if (!openAnchorMessageId || !messages.some((m) => m.id === openAnchorMessageId)) {
     return undefined;
   }
@@ -177,7 +177,7 @@ export function mergeChatTypeSwitchPaint(
   targetChatType: ChatType
 ): ChatMessageWithStatus[] {
   const pending = pendingOptimisticsForChatTypeSwitch(prev, contextType, targetChatType);
-  return mergeChatMessagesAscending(pending, local) as ChatMessageWithStatus[];
+  return mergeChatMessagesAscending(pending, [...local]) as ChatMessageWithStatus[];
 }
 
 export function messagesBelongToThreadKey(

@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { Sports } from '@shared/sport';
 import { CREATE_TEMPLATES } from '@/sport/createFlow';
 import { formatMatchesCreateTemplate } from '@/utils/gameFormat/createTemplateFormatMatch';
 import { gameFormatSnapshotFromGame } from '@/utils/gameFormat/gameFormatSnapshot';
