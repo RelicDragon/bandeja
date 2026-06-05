@@ -44,11 +44,6 @@ export type TemplateFormatCoordinatorFlags = {
   initialParticipantContextKey: string | null;
 };
 
-export type WizardSession = {
-  snapshotAtOpen: FormatSnapshot | null;
-  usesFullPresets: boolean;
-};
-
 export function participantContextKey(ctx: CreateTemplateParticipantContext): string {
   return `${ctx.maxParticipants}:${ctx.playersPerMatch}:${ctx.hasFixedTeams}:${ctx.genderTeams}`;
 }
@@ -231,20 +226,11 @@ export function syncSelectionFromFormat(
   return { type: 'unchanged' };
 }
 
-export type WizardOpenSession = {
-  usesFullPresets: boolean;
-  snapshotAtOpen: FormatSnapshot | null;
-};
-
 export function beginWizardSession(
   selection: TemplateFormatSelection,
-  format: UseGameFormatResult,
-): WizardOpenSession {
+): { usesFullPresets: boolean } {
   const fromTemplate = selection.templateId != null && selection.intent !== 'advanced';
-  return {
-    usesFullPresets: fromTemplate,
-    snapshotAtOpen: fromTemplate ? gameFormatSnapshotFromFormat(format) : null,
-  };
+  return { usesFullPresets: fromTemplate };
 }
 
 export type WizardCloseResult =
@@ -256,7 +242,6 @@ export function evaluateWizardClose(
   ctx: TemplateFormatCoordinatorContext,
   format: UseGameFormatResult,
   selection: TemplateFormatSelection,
-  session: WizardOpenSession,
   flags: Pick<TemplateFormatCoordinatorFlags, 'userChoseManual'>,
 ): WizardCloseResult {
   if (selection.templateId != null && selection.intent !== 'advanced') {

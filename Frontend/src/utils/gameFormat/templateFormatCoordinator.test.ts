@@ -3,7 +3,6 @@ import { CREATE_TEMPLATES } from '@/sport/createFlow';
 import type { UseGameFormatResult } from '@/hooks/useGameFormat';
 import { Sports } from '@shared/sport';
 import {
-  beginWizardSession,
   buildCreateBootstrap,
   evaluateParticipantRepick,
   evaluateSportChange,
@@ -105,13 +104,11 @@ describe('templateFormatCoordinator', () => {
   describe('wizard drift', () => {
     it('demotes to custom when wizard changed preset away from selected template', () => {
       const selection = { intent: 'match' as const, templateId: 'PADEL_BEST_OF_3' as const };
-      const atOpen = mockFormat({ scoringPreset: 'CLASSIC_BEST_OF_3', generationType: 'AUTOMATIC' });
-      const session = beginWizardSession(selection, atOpen);
       const afterWizard = mockFormat({
         scoringPreset: 'CLASSIC_SINGLE_SET',
         generationType: 'AUTOMATIC',
       });
-      const result = evaluateWizardClose(PADEL_CTX, afterWizard, selection, session, {
+      const result = evaluateWizardClose(PADEL_CTX, afterWizard, selection, {
         userChoseManual: false,
       });
       expect(result.type).toBe('demote');
@@ -119,10 +116,8 @@ describe('templateFormatCoordinator', () => {
 
     it('restores template match when wizard edits are reverted', () => {
       const selection = { intent: 'match' as const, templateId: 'PADEL_BEST_OF_3' as const };
-      const atOpen = mockFormat({ scoringPreset: 'CLASSIC_BEST_OF_3', generationType: 'AUTOMATIC' });
-      const session = beginWizardSession(selection, atOpen);
       const reverted = mockFormat({ scoringPreset: 'CLASSIC_BEST_OF_3', generationType: 'AUTOMATIC' });
-      const result = evaluateWizardClose(PADEL_CTX, reverted, selection, session, {
+      const result = evaluateWizardClose(PADEL_CTX, reverted, selection, {
         userChoseManual: false,
       });
       expect(result.type).toBe('unchanged');
@@ -137,20 +132,13 @@ describe('templateFormatCoordinator', () => {
 
     it('keeps americano template when wizard changes points within inlineConfig', () => {
       const selection = { intent: 'social' as const, templateId: 'PADEL_AMERICANO' as const };
-      const atOpen = mockFormat({
-        scoringMode: 'POINTS',
-        scoringPreset: 'POINTS_32',
-        generationType: 'AUTOMATIC',
-        winnerOfGame: 'BY_SCORES_DELTA',
-      });
-      const session = beginWizardSession(selection, atOpen);
       const afterWizard = mockFormat({
         scoringMode: 'POINTS',
         scoringPreset: 'POINTS_21',
         generationType: 'AUTOMATIC',
         winnerOfGame: 'BY_SCORES_DELTA',
       });
-      const result = evaluateWizardClose(PADEL_CTX, afterWizard, selection, session, {
+      const result = evaluateWizardClose(PADEL_CTX, afterWizard, selection, {
         userChoseManual: false,
       });
       expect(result.type).toBe('unchanged');
@@ -158,18 +146,12 @@ describe('templateFormatCoordinator', () => {
 
     it('keeps timed template when wizard changes duration within inlineConfig options', () => {
       const selection = { intent: 'social' as const, templateId: 'PADEL_TIMED' as const };
-      const atOpen = mockFormat({
-        scoringPreset: 'CLASSIC_TIMED',
-        matchTimerEnabled: true,
-        matchTimedCapMinutes: 15,
-      });
-      const session = beginWizardSession(selection, atOpen);
       const afterWizard = mockFormat({
         scoringPreset: 'CLASSIC_TIMED',
         matchTimerEnabled: true,
         matchTimedCapMinutes: 10,
       });
-      const result = evaluateWizardClose(PADEL_CTX, afterWizard, selection, session, {
+      const result = evaluateWizardClose(PADEL_CTX, afterWizard, selection, {
         userChoseManual: false,
       });
       expect(result.type).toBe('unchanged');

@@ -78,7 +78,6 @@ export function useGameFormatTemplateFlow({
   const lastAppliedTemplateKeyRef = useRef<string | null>(null);
   const explicitTemplatePickRef = useRef(false);
   const userChoseManualRef = useRef(false);
-  const wizardSessionRef = useRef(beginWizardSession({ intent: 'advanced', templateId: null }, gameFormat));
   const [wizardUsesFullPresets, setWizardUsesFullPresets] = useState(false);
   const prevSportRef = useRef<Sport | null>(null);
 
@@ -196,8 +195,7 @@ export function useGameFormatTemplateFlow({
   }, [applySelection]);
 
   const notifyFormatWizardOpen = useCallback(() => {
-    const session = beginWizardSession(selection, gameFormatRef.current);
-    wizardSessionRef.current = session;
+    const session = beginWizardSession(selection);
     setWizardUsesFullPresets(session.usesFullPresets);
   }, [selection]);
 
@@ -207,10 +205,8 @@ export function useGameFormatTemplateFlow({
       coordinatorCtx,
       gameFormatRef.current,
       selection,
-      wizardSessionRef.current,
       { userChoseManual: userChoseManualRef.current },
     );
-    wizardSessionRef.current = beginWizardSession({ intent: 'advanced', templateId: null }, gameFormatRef.current);
 
     if (result.type === 'demote') {
       demoteToManualFormat();
