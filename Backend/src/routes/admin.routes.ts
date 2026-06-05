@@ -57,6 +57,7 @@ import {
   assignClubAdmin,
   removeClubAdmin,
 } from '../controllers/admin.controller';
+import * as adminAdController from '../controllers/adminAd.controller';
 
 const router = Router();
 
@@ -159,5 +160,50 @@ router.put('/market-categories/:categoryId', requireAdmin, updateMarketCategory)
 router.delete('/market-categories/:categoryId', requireAdmin, deleteMarketCategory);
 
 router.post('/mass-notification', requireAdmin, sendMassNotification);
+
+router.get('/ads/sponsors', requireAdmin, adminAdController.listAdSponsors);
+router.post('/ads/sponsors', requireAdmin, adminAdController.createAdSponsor);
+router.get('/ads/sponsors/:id', requireAdmin, adminAdController.getAdSponsor);
+router.put('/ads/sponsors/:id', requireAdmin, adminAdController.updateAdSponsor);
+router.patch('/ads/sponsors/:id', requireAdmin, adminAdController.updateAdSponsor);
+router.delete('/ads/sponsors/:id', requireAdmin, adminAdController.deleteAdSponsor);
+router.get('/ads/sponsors/:id/stats', requireAdmin, adminAdController.getAdSponsorStats);
+router.get('/ads/sponsors/:id/export', requireAdmin, adminAdController.exportAdSponsor);
+
+router.get('/ads/targeting-presets', requireAdmin, adminAdController.listAdTargetingPresets);
+router.post('/ads/targeting-presets', requireAdmin, adminAdController.createAdTargetingPreset);
+router.delete('/ads/targeting-presets/:id', requireAdmin, adminAdController.deleteAdTargetingPreset);
+router.post(
+  '/ads/targeting-presets/:id/apply',
+  requireAdmin,
+  adminAdController.applyAdTargetingPreset
+);
+router.post(
+  '/ads/campaigns/:id/apply-preset/:presetId',
+  requireAdmin,
+  adminAdController.applyAdTargetingPresetToCampaign
+);
+
+router.get('/ads/campaigns', requireAdmin, adminAdController.listAdCampaigns);
+router.post('/ads/campaigns', requireAdmin, adminAdController.createAdCampaign);
+router.get('/ads/campaigns/:id', requireAdmin, adminAdController.getAdCampaign);
+router.patch('/ads/campaigns/:id', requireAdmin, adminAdController.updateAdCampaign);
+router.delete('/ads/campaigns/:id', requireAdmin, adminAdController.deleteAdCampaign);
+router.get('/ads/campaigns/:id/stats', requireAdmin, adminAdController.getAdCampaignStats);
+router.get('/ads/campaigns/:id/export', requireAdmin, adminAdController.exportAdCampaign);
+router.post(
+  '/ads/campaigns/:id/creatives/upload',
+  requireAdmin,
+  adminAdController.adCreativeUpload,
+  adminAdController.uploadAdCreative
+);
+router.delete(
+  '/ads/campaigns/:id/creatives/:creativeId',
+  requireAdmin,
+  adminAdController.deleteAdCreative
+);
+
+router.get('/ads/preview', requireAdmin, adminAdController.previewAd);
+router.get('/ads/stats', requireAdmin, adminAdController.getAdOverviewStats);
 
 export default router;

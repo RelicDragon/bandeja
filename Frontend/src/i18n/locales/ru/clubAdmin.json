@@ -97,5 +97,7 @@
   "clubAdmin.pricePerHour": "Цена за час",
   "clubAdmin.indoor": "Крытый",
   "clubAdmin.externalCourtId": "Внешний ID",
-  "clubAdmin.webCameraUrl": "URL веб-камеры"
+  "clubAdmin.webCameraUrl": "URL веб-камеры",
+  "clubAdmin.noClubs": "Вам пока не назначены клубы.",
+  "clubAdmin.scheduleLoadFailed": "Не удалось загрузить расписание. Обновите страницу или попробуйте снова."
 }

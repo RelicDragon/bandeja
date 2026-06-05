@@ -26,16 +26,19 @@ export function ClubAdminHomePage() {
   } | null>(null);
   const [viewAsPlayerOpen, setViewAsPlayerOpen] = useState(false);
   const [coachMarks, setCoachMarks] = useState(readClubAdminCoachMarks);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!clubId) return;
+    setLoading(true);
     const today = format(new Date(), 'yyyy-MM-dd');
     clubAdminApi
       .getClub(clubId)
       .then(setClub)
       .catch((e) => {
         if (!handleForbidden(e)) navigate('/my-clubs');
-      });
+      })
+      .finally(() => setLoading(false));
     clubAdminApi
       .getSchedule(clubId, today)
       .then((s) =>
@@ -48,7 +51,15 @@ export function ClubAdminHomePage() {
       .catch(() => setTodaySummary(null));
   }, [clubId, navigate, handleForbidden]);
 
-  if (!club || !clubId) return null;
+  if (!clubId) return null;
+
+  if (loading || !club) {
+    return (
+      <ClubAdminLayout title={t('clubAdmin.myClubs')} backTo="/my-clubs">
+        <p className="text-muted-foreground">{t('common.loading')}</p>
+      </ClubAdminLayout>
+    );
+  }
 
   const today = format(new Date(), 'yyyy-MM-dd');
 

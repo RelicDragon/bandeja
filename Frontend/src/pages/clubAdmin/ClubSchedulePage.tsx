@@ -34,6 +34,7 @@ export function ClubSchedulePage() {
   const date = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
   const [club, setClub] = useState<{
     name: string;
+    city?: { timezone?: string };
     openingTime?: string | null;
     closingTime?: string | null;
     defaultSlotMinutes?: number | null;
@@ -50,7 +51,7 @@ export function ClubSchedulePage() {
   const [cancelMode, setCancelMode] = useState<'cancel' | 'clear'>('cancel');
   const [coachMarks, setCoachMarks] = useState(readClubAdminCoachMarks);
 
-  const { data, loading, refetch } = useClubAdminSchedule(clubId!, date);
+  const { data, loading, error, refetch } = useClubAdminSchedule(clubId!, date);
 
   const handleRefresh = useCallback(async () => {
     await refetch();
@@ -58,6 +59,7 @@ export function ClubSchedulePage() {
       const c = await clubAdminApi.getClub(clubId);
       setClub({
         name: c.name,
+        city: c.city,
         openingTime: c.openingTime,
         closingTime: c.closingTime,
         defaultSlotMinutes: (c as { defaultSlotMinutes?: number | null }).defaultSlotMinutes,
@@ -78,6 +80,7 @@ export function ClubSchedulePage() {
       .then((c) =>
         setClub({
           name: c.name,
+          city: c.city,
           openingTime: c.openingTime,
           closingTime: c.closingTime,
           defaultSlotMinutes: (c as { defaultSlotMinutes?: number | null }).defaultSlotMinutes,
@@ -153,6 +156,11 @@ export function ClubSchedulePage() {
         </button>
       </div>
       <ScheduleLegend />
+      {error && (
+        <p className="mb-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {t('clubAdmin.scheduleLoadFailed')}
+        </p>
+      )}
       {data?.externalSlotsFailed && (
         <p className="mb-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
           {t('clubAdmin.integrationDown')}
@@ -182,6 +190,7 @@ export function ClubSchedulePage() {
                 courts={courts}
                 slots={slots}
                 scheduleDate={date}
+                club={club}
                 openingTime={club?.openingTime}
                 closingTime={club?.closingTime}
                 slotMinutes={club?.defaultSlotMinutes}
@@ -229,9 +238,13 @@ export function ClubSchedulePage() {
           onReleaseHold={
             selectedSlot?.type === 'hold' && !slotPast
               ? async () => {
-                  await clubAdminApi.deleteHold(selectedSlot.holdId);
-                  refetch();
-                  setSheetOpen(false);
+                  try {
+                    await clubAdminApi.deleteHold(selectedSlot.holdId);
+                    refetch();
+                    setSheetOpen(false);
+                  } catch (e) {
+                    handleForbidden(e);
+                  }
                 }
               : undefined
           }
@@ -290,9 +303,14 @@ export function ClubSchedulePage() {
           courtId={freeSlot.courtId}
           date={date}
           startTime={freeSlot.time}
+          club={club}
           onSubmit={async (body) => {
-            await clubAdminApi.createHold(clubId, body);
-            refetch();
+            try {
+              await clubAdminApi.createHold(clubId, body);
+              refetch();
+            } catch (e) {
+              handleForbidden(e);
+            }
           }}
         />
       )}
@@ -301,8 +319,12 @@ export function ClubSchedulePage() {
         hold={editHold}
         onClose={() => setEditHoldOpen(false)}
         onSubmit={async (holdId, body) => {
-          await clubAdminApi.patchHold(holdId, body);
-          refetch();
+          try {
+            await clubAdminApi.patchHold(holdId, body);
+            refetch();
+          } catch (e) {
+            handleForbidden(e);
+          }
         }}
       />
       {selectedSlot && (selectedSlot.type === 'game' || selectedSlot.type === 'game_court') && (
@@ -312,12 +334,16 @@ export function ClubSchedulePage() {
           mode={cancelMode}
           previewParams={cancelPreview}
           onSubmit={async (body) => {
-            if (cancelMode === 'cancel') {
-              await clubAdminApi.cancelGame(clubId, selectedSlot.gameId, body);
-            } else {
-              await clubAdminApi.clearCourt(clubId, selectedSlot.gameId, body);
+            try {
+              if (cancelMode === 'cancel') {
+                await clubAdminApi.cancelGame(clubId, selectedSlot.gameId, body);
+              } else {
+                await clubAdminApi.clearCourt(clubId, selectedSlot.gameId, body);
+              }
+              refetch();
+            } catch (e) {
+              handleForbidden(e);
             }
-            refetch();
           }}
         />
       )}

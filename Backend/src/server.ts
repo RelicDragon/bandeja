@@ -14,6 +14,8 @@ import { UnreadAutoReadScheduler } from './services/unreadAutoReadScheduler.serv
 import { BugArchivedScheduler } from './services/bugArchivedScheduler.service';
 import { ChatSyncStatsScheduler } from './services/chatSyncStatsScheduler.service';
 import { ReliabilityDecayScheduler } from './services/reliabilityDecayScheduler.service';
+import { AdCampaignScheduleScheduler } from './services/adCampaignScheduleScheduler.service';
+import { AdAnalyticsScheduler } from './services/adAnalyticsScheduler.service';
 import { reportCriticalError, maybeReportFromConsole } from './services/developerAlert.service';
 import { createServer } from 'http';
 import { resumeMatchTimerSchedulesOnStartup } from './services/results/matchTimer.service';
@@ -72,6 +74,12 @@ const startServer = async () => {
     const reliabilityDecayScheduler = new ReliabilityDecayScheduler();
     reliabilityDecayScheduler.start();
 
+    const adCampaignScheduleScheduler = new AdCampaignScheduleScheduler();
+    adCampaignScheduleScheduler.start();
+
+    const adAnalyticsScheduler = new AdAnalyticsScheduler();
+    adAnalyticsScheduler.start();
+
     // Create HTTP server
     const httpServer = createServer(app);
     
@@ -118,6 +126,8 @@ const startServer = async () => {
         bugArchivedScheduler.stop();
         chatSyncStatsScheduler.stop();
         reliabilityDecayScheduler.stop();
+        adCampaignScheduleScheduler.stop();
+        adAnalyticsScheduler.stop();
         stopQueueWorkers();
         telegramBotService.stop();
         pushNotificationService.shutdown();

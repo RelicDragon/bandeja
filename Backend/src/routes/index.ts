@@ -36,6 +36,7 @@ import currencyRoutes from './currency.routes';
 import userTeamRoutes from './userTeam.routes';
 import clubAdminRoutes from './clubAdmin.routes';
 import storyRoutes from './story.routes';
+import adRoutes from './ad.routes';
 
 const router = Router();
 
@@ -80,6 +81,7 @@ router.use('/currency', currencyRoutes);
 router.use('/user-teams', userTeamRoutes);
 router.use('/club-admin', clubAdminRoutes);
 router.use('/stories', storyRoutes);
+router.use('/ads', adRoutes);
 
 export default router;
 

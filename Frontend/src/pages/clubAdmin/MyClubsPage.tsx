@@ -43,6 +43,8 @@ export function MyClubsPage() {
       )}
       {loading ? (
         <p className="text-muted-foreground">{t('common.loading')}</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-muted-foreground">{t('clubAdmin.noClubs')}</p>
       ) : (
         <div className="space-y-2">
           {filtered.map((c) => {

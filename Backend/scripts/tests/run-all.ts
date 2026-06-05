@@ -531,6 +531,16 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'ads suite',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'ads.suite.ts'),
+    ],
+  },
+  {
     label: 'stories',
     command: process.execPath,
     args: [

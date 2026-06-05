@@ -54,6 +54,7 @@
                 <li><a href="#" data-page="app-versions" class="nav-link">📱 App Versions</a></li>
                 <li><a href="#" data-page="market-categories" class="nav-link">🛒 Market Categories</a></li>
                 <li><a href="#" data-page="mass-notifications" class="nav-link">📢 Mass Notifications</a></li>
+                <li><a href="#" data-page="sponsor-ads" class="nav-link">📣 Sponsor Ads</a></li>
                 <li><a href="#" data-page="translation-queue" class="nav-link">🌐 Translation Queue</a></li>
                 <li><a href="#" data-page="logs" class="nav-link">📋 Logs</a></li>
             </ul>
@@ -453,6 +454,400 @@
                         <tbody id="appVersionsTableBody">
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div id="sponsorAdsPage" class="content-page">
+                <div class="page-header">
+                    <h1>Sponsor Ads</h1>
+                </div>
+                <div class="ads-main-tabs">
+                    <button type="button" class="ads-main-tab active" data-ads-tab="sponsors">Sponsors</button>
+                    <button type="button" class="ads-main-tab" data-ads-tab="campaigns">Campaigns</button>
+                    <button type="button" class="ads-main-tab" data-ads-tab="analytics">Analytics</button>
+                </div>
+
+                <div id="adsMainPanelSponsors" class="ads-main-panel active">
+                    <div class="page-header">
+                        <h2>Sponsors</h2>
+                        <button type="button" class="btn-primary" onclick="openAdSponsorModal()">+ Add Sponsor</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Contact</th>
+                                    <th>Club ID</th>
+                                    <th>Campaigns</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adsSponsorsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="adsMainPanelCampaigns" class="ads-main-panel">
+                    <div id="adsCampaignsListView">
+                        <div class="page-header">
+                            <h2>Campaigns</h2>
+                            <button type="button" class="btn-primary" onclick="openAdsCampaignEditor()">+ New Campaign</button>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Sponsor</th>
+                                        <th>Status</th>
+                                        <th>Priority / Weight</th>
+                                        <th>Cities</th>
+                                        <th>Placements</th>
+                                        <th>Schedule</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adsCampaignsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="adsCampaignEditorView" style="display:none">
+                        <div class="page-header">
+                            <div>
+                                <button type="button" class="btn-secondary btn-small" onclick="showAdsCampaignList()">← Back</button>
+                                <h2 id="adsCampaignEditorTitle" style="display:inline;margin-left:0.5rem">Campaign</h2>
+                            </div>
+                        </div>
+                        <div class="ads-editor-tabs">
+                            <button type="button" class="ads-editor-tab active" data-ads-editor-tab="settings">Settings</button>
+                            <button type="button" class="ads-editor-tab" data-ads-editor-tab="creatives">Creatives</button>
+                            <button type="button" class="ads-editor-tab" data-ads-editor-tab="placements">Placements</button>
+                            <button type="button" class="ads-editor-tab" data-ads-editor-tab="preview">Preview</button>
+                        </div>
+
+                        <div id="adsEditorPanelSettings" class="ads-editor-panel active">
+                            <form id="adCampaignForm" class="ads-campaign-form" onsubmit="saveAdsCampaignSettings(event)">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="adCampaignSponsorId">Sponsor *</label>
+                                        <select id="adCampaignSponsorId" required></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adCampaignName">Campaign name *</label>
+                                        <input type="text" id="adCampaignName" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adCampaignStatus">Status</label>
+                                        <select id="adCampaignStatus">
+                                            <option value="DRAFT">DRAFT</option>
+                                            <option value="SCHEDULED">SCHEDULED</option>
+                                            <option value="ACTIVE">ACTIVE</option>
+                                            <option value="PAUSED">PAUSED</option>
+                                            <option value="ENDED">ENDED</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="adCampaignPriority">Priority</label>
+                                        <input type="number" id="adCampaignPriority" min="0" step="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adCampaignWeight">Weight</label>
+                                        <input type="number" id="adCampaignWeight" min="1" step="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adCampaignDefaultLocale">Default locale</label>
+                                        <select id="adCampaignDefaultLocale">
+                                            <option value="en">English</option>
+                                            <option value="ru">Russian</option>
+                                            <option value="es">Spanish</option>
+                                            <option value="sr">Serbian</option>
+                                            <option value="cs">Czech</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="adCampaignStartsAt">Starts at</label>
+                                        <input type="datetime-local" id="adCampaignStartsAt">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adCampaignEndsAt">Ends at</label>
+                                        <input type="datetime-local" id="adCampaignEndsAt">
+                                    </div>
+                                </div>
+                                <fieldset class="ads-fieldset">
+                                    <legend>Targeting</legend>
+                                    <div class="ads-preset-row form-row">
+                                        <div class="form-group ads-preset-picker">
+                                            <label for="adCampaignPresetPicker">Segment preset</label>
+                                            <select id="adCampaignPresetPicker">
+                                                <option value="">— Select preset —</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group ads-preset-actions">
+                                            <label>&nbsp;</label>
+                                            <div class="ads-preset-buttons">
+                                                <button type="button" class="btn-secondary btn-small" onclick="applyAdsSegmentPreset()">Apply preset</button>
+                                                <button type="button" class="btn-secondary btn-small" onclick="openAdsPresetsModal()">Manage</button>
+                                                <button type="button" class="btn-secondary btn-small" onclick="openAdsPresetSaveModal()">Save as preset</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Cities *</label>
+                                        <div id="adCampaignCityIds" class="ads-check-grid"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Sports <span id="adCampaignSportsHint" class="text-muted"></span></label>
+                                        <div id="adCampaignSports" class="ads-check-grid"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Languages <span id="adCampaignLanguagesHint" class="text-muted"></span></label>
+                                        <div id="adCampaignLanguages" class="ads-check-grid"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Level bands <span id="adCampaignLevelBandsHint" class="text-muted"></span></label>
+                                        <div class="form-row ads-level-band-sport-row">
+                                            <div class="form-group">
+                                                <label for="adCampaignLevelBandSport">Sport for bands</label>
+                                                <select id="adCampaignLevelBandSport" onchange="onAdsLevelBandSportChange()"></select>
+                                            </div>
+                                        </div>
+                                        <div id="adCampaignLevelBands" class="ads-check-grid"></div>
+                                    </div>
+                                    <div class="form-group ads-rollout-group">
+                                        <label for="adCampaignRolloutPercent">Rollout %</label>
+                                        <div class="ads-rollout-controls">
+                                            <input type="range" id="adCampaignRolloutPercent" min="0" max="100" step="1" value="100" oninput="onAdsRolloutSliderInput()">
+                                            <input type="number" id="adCampaignRolloutPercentInput" min="0" max="100" step="1" value="100" onchange="onAdsRolloutInputChange()">
+                                        </div>
+                                        <span class="text-muted">Percentage of eligible users who may see this campaign (0–100).</span>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="adCampaignIncludeUserIds">Include user IDs (force delivery)</label>
+                                            <textarea id="adCampaignIncludeUserIds" rows="3" placeholder="One user ID per line"></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="adCampaignExcludeUserIds">Exclude user IDs</label>
+                                            <textarea id="adCampaignExcludeUserIds" rows="3" placeholder="One user ID per line"></textarea>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                                <fieldset class="ads-fieldset">
+                                    <legend>Frequency cap</legend>
+                                    <label class="ads-check-item">
+                                        <input type="checkbox" id="adCampaignFreqCapEnabled" checked>
+                                        Enable frequency cap
+                                    </label>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="adCampaignFreqMax">Max impressions</label>
+                                            <input type="number" id="adCampaignFreqMax" min="1">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="adCampaignFreqDays">Window (days)</label>
+                                            <input type="number" id="adCampaignFreqDays" min="1">
+                                        </div>
+                                    </div>
+                                </fieldset>
+                                <fieldset class="ads-fieldset">
+                                    <legend>Dismiss &amp; disclosure</legend>
+                                    <label class="ads-check-item">
+                                        <input type="checkbox" id="adCampaignDismissible" checked>
+                                        Dismissible
+                                    </label>
+                                    <div class="form-group">
+                                        <label for="adCampaignDismissSnoozeDays">Snooze days after dismiss</label>
+                                        <input type="number" id="adCampaignDismissSnoozeDays" min="1" placeholder="e.g. 7">
+                                    </div>
+                                    <label class="ads-check-item">
+                                        <input type="checkbox" id="adCampaignClickUrlTrusted" checked>
+                                        Trusted external URL (skip interstitial)
+                                    </label>
+                                    <div class="form-group">
+                                        <label for="adCampaignDisclosureLabel">Disclosure label override</label>
+                                        <input type="text" id="adCampaignDisclosureLabel" placeholder="Sponsored">
+                                    </div>
+                                    <label class="ads-check-item">
+                                        <input type="checkbox" id="adCampaignHideDisclosure">
+                                        Hide disclosure tag
+                                    </label>
+                                </fieldset>
+                                <div class="form-group">
+                                    <label for="adCampaignTestUserIds">Test user IDs (DRAFT QA, one per line)</label>
+                                    <textarea id="adCampaignTestUserIds" rows="3" placeholder="user cuid…"></textarea>
+                                </div>
+                                <button type="submit" class="btn-primary">Save campaign</button>
+                            </form>
+                        </div>
+
+                        <div id="adsEditorPanelCreatives" class="ads-editor-panel">
+                            <fieldset class="ads-fieldset">
+                                <legend>Campaign variant weights (fallback)</legend>
+                                <p class="text-muted">Used when a creative has no per-variant weight. Per-creative weight overrides these.</p>
+                                <div class="form-row ads-variant-weight-row">
+                                    <div class="form-group">
+                                        <label for="adCampaignVariantWeight_A">Variant A</label>
+                                        <input type="number" id="adCampaignVariantWeight_A" min="1" step="1" placeholder="100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adCampaignVariantWeight_B">Variant B</label>
+                                        <input type="number" id="adCampaignVariantWeight_B" min="1" step="1" placeholder="100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adCampaignVariantWeight_C">Variant C</label>
+                                        <input type="number" id="adCampaignVariantWeight_C" min="1" step="1" placeholder="100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adCampaignVariantWeight_D">Variant D</label>
+                                        <input type="number" id="adCampaignVariantWeight_D" min="1" step="1" placeholder="100">
+                                    </div>
+                                </div>
+                            </fieldset>
+                            <div class="ads-variant-matrix-wrap">
+                                <h4>A/B variant matrix</h4>
+                                <div id="adsVariantMatrix"></div>
+                            </div>
+                            <div id="adsCreativeLocaleTabs" class="ads-locale-tabs"></div>
+                            <div id="adsCreativeVariantTabs" class="ads-variant-tabs"></div>
+                            <div id="adsCreativeFormBody"></div>
+                        </div>
+
+                        <div id="adsEditorPanelPlacements" class="ads-editor-panel">
+                            <p class="text-muted">Enable placements where this campaign may appear.</p>
+                            <div id="adCampaignPlacements" class="ads-check-grid ads-placements-grid"></div>
+                            <button type="button" class="btn-primary" onclick="saveAdsPlacementsOnly()">Save placements</button>
+                        </div>
+
+                        <div id="adsEditorPanelPreview" class="ads-editor-panel">
+                            <div class="ads-preview-controls form-row">
+                                <div class="form-group">
+                                    <label for="adPreviewUserId">User ID (optional)</label>
+                                    <input type="text" id="adPreviewUserId" placeholder="Simulate user context">
+                                </div>
+                                <div class="form-group">
+                                    <label for="adPreviewPlacement">Placement</label>
+                                    <select id="adPreviewPlacement">
+                                        <option value="home_hero">Home Hero</option>
+                                        <option value="find_top">Find Top</option>
+                                        <option value="leaderboard_banner">Leaderboard Banner</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adPreviewLocale">Locale</label>
+                                    <select id="adPreviewLocale">
+                                        <option value="en">English</option>
+                                        <option value="ru">Russian</option>
+                                        <option value="es">Spanish</option>
+                                        <option value="sr">Serbian</option>
+                                        <option value="cs">Czech</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adPreviewVariant">Variant</label>
+                                    <select id="adPreviewVariant">
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                        <option value="C">C</option>
+                                        <option value="D">D</option>
+                                    </select>
+                                </div>
+                                <div class="form-group ads-preview-run">
+                                    <label>&nbsp;</label>
+                                    <button type="button" class="btn-primary" onclick="runAdsPreview()">Run preview</button>
+                                </div>
+                            </div>
+                            <div id="adPreviewResult" class="ads-preview-result"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="adsMainPanelAnalytics" class="ads-main-panel">
+                    <div class="ads-analytics-filters">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adsAnalyticsView">View</label>
+                                <select id="adsAnalyticsView" onchange="handleAdsAnalyticsViewChange()">
+                                    <option value="campaign">By campaign</option>
+                                    <option value="sponsor">By sponsor</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="adsAnalyticsEntityId">Entity</label>
+                                <select id="adsAnalyticsEntityId"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="adsAnalyticsPlacement">Placement</label>
+                                <select id="adsAnalyticsPlacement">
+                                    <option value="">All</option>
+                                    <option value="home_hero">Home Hero</option>
+                                    <option value="find_top">Find Top</option>
+                                    <option value="leaderboard_banner">Leaderboard Banner</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="adsAnalyticsCity">City</label>
+                                <select id="adsAnalyticsCity"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="adsAnalyticsLocale">Locale</label>
+                                <select id="adsAnalyticsLocale">
+                                    <option value="">All</option>
+                                    <option value="en">English</option>
+                                    <option value="ru">Russian</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="sr">Serbian</option>
+                                    <option value="cs">Czech</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="adsAnalyticsStartDate">From</label>
+                                <input type="date" id="adsAnalyticsStartDate" class="filter-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="adsAnalyticsEndDate">To</label>
+                                <input type="date" id="adsAnalyticsEndDate" class="filter-date">
+                            </div>
+                        </div>
+                        <div class="ads-analytics-actions">
+                            <button type="button" class="btn-primary" onclick="loadAdsAnalyticsStats()">Load stats</button>
+                            <button type="button" class="btn-secondary" onclick="exportAdsAnalytics('csv')">Export CSV</button>
+                            <button type="button" class="btn-secondary" onclick="exportAdsAnalytics('pdf')">Export PDF</button>
+                            <span id="adsAnalyticsSummary" class="text-muted"></span>
+                        </div>
+                    </div>
+                    <div class="ads-stats-grid">
+                        <div class="stat-card"><p class="stat-label">Impressions</p><p class="stat-value" id="adsStatImpressions">—</p></div>
+                        <div class="stat-card"><p class="stat-label">Unique reach</p><p class="stat-value" id="adsStatUniqueUsers">—</p></div>
+                        <div class="stat-card"><p class="stat-label">Clicks</p><p class="stat-value" id="adsStatClicks">—</p></div>
+                        <div class="stat-card"><p class="stat-label">Dismisses</p><p class="stat-value" id="adsStatDismisses">—</p></div>
+                        <div class="stat-card"><p class="stat-label">CTR</p><p class="stat-value" id="adsStatCtr">—</p></div>
+                        <div class="stat-card"><p class="stat-label">Dismiss rate</p><p class="stat-value" id="adsStatDismissRate">—</p></div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Placement</th>
+                                    <th>City</th>
+                                    <th>Locale</th>
+                                    <th>Impressions</th>
+                                    <th>Unique</th>
+                                    <th>Clicks</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adsAnalyticsBreakdownBody">
+                                <tr><td colspan="7" style="text-align:center">Load stats to see breakdown.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </main>
@@ -1097,6 +1492,78 @@
         </div>
     </div>
 
+    <div id="adSegmentPresetsModal" class="modal">
+        <div class="modal-content modal-content-wide">
+            <div class="modal-header">
+                <h2>Segment presets</h2>
+                <button type="button" class="modal-close" onclick="closeModal('adSegmentPresetsModal')">&times;</button>
+            </div>
+            <p class="text-muted">Built-in presets ship with Admin. Custom presets sync from the API when available.</p>
+            <div id="adsPresetsList" class="ads-presets-list"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeModal('adSegmentPresetsModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="adPresetSaveModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="adPresetModalTitle">Save current targeting as preset</h2>
+                <button type="button" class="modal-close" onclick="closeModal('adPresetSaveModal')">&times;</button>
+            </div>
+            <form id="adPresetForm" onsubmit="handleAdPresetSaveSubmit(event)">
+                <div class="form-group">
+                    <label for="adPresetName">Name *</label>
+                    <input type="text" id="adPresetName" required>
+                </div>
+                <div class="form-group">
+                    <label for="adPresetDescription">Description</label>
+                    <input type="text" id="adPresetDescription">
+                </div>
+                <div class="form-group">
+                    <label for="adPresetTargetingJson">Targeting JSON</label>
+                    <textarea id="adPresetTargetingJson" rows="10" class="ads-preset-json-input"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('adPresetSaveModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save preset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="adSponsorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="adSponsorModalTitle">Add Sponsor</h2>
+                <button type="button" class="modal-close" onclick="closeModal('adSponsorModal')">&times;</button>
+            </div>
+            <form id="adSponsorForm" onsubmit="handleAdSponsorSubmit(event)">
+                <div class="form-group">
+                    <label for="adSponsorName">Name *</label>
+                    <input type="text" id="adSponsorName" required>
+                </div>
+                <div class="form-group">
+                    <label for="adSponsorEmail">Contact email</label>
+                    <input type="email" id="adSponsorEmail">
+                </div>
+                <div class="form-group">
+                    <label for="adSponsorClubId">Club ID (optional)</label>
+                    <input type="text" id="adSponsorClubId" placeholder="Link to club sponsor">
+                </div>
+                <div class="form-group">
+                    <label for="adSponsorNotes">Notes</label>
+                    <textarea id="adSponsorNotes" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('adSponsorModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="toastContainer" class="toast-container"></div>
 
     <script src="data-table.js"></script>
@@ -1105,6 +1572,13 @@
     <script src="modals.js"></script>
     <script src="market-categories.js"></script>
     <script src="mass-notifications.js"></script>
+    <script src="ads-constants.js"></script>
+    <script src="ads-api.js"></script>
+    <script src="ads-sponsors.js"></script>
+    <script src="ads-campaigns.js"></script>
+    <script src="ads-presets.js"></script>
+    <script src="ads-analytics.js"></script>
+    <script src="ads.js"></script>
     <script src="merge-users.js"></script>
 </body>
 </html>

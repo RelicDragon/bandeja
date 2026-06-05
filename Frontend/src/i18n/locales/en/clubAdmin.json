@@ -97,5 +97,7 @@
   "clubAdmin.pricePerHour": "Price per hour",
   "clubAdmin.indoor": "Indoor",
   "clubAdmin.externalCourtId": "External ID",
-  "clubAdmin.webCameraUrl": "Web camera URL"
+  "clubAdmin.webCameraUrl": "Web camera URL",
+  "clubAdmin.noClubs": "No clubs assigned to you yet.",
+  "clubAdmin.scheduleLoadFailed": "Could not load schedule. Pull to refresh or try again."
 }

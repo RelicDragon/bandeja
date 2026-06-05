@@ -12,6 +12,11 @@ import {
 } from '@/components/home';
 import { SportQuestionnairePrompt } from '@/components/sportQuestionnaire';
 import { StoriesRail } from '@/components/stories/StoriesRail';
+import { AdSlot } from '@/components/ads';
+import { AD_PLACEMENTS } from '@/shared/adPlacements';
+import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
+import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
+import { isHomeHeroAdBlocked } from '@/utils/adHomeHeroVisibility';
 import { getUserPrimarySport } from '@/utils/profileSports';
 import { Button, MainTabFooter, MonthCalendar } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
@@ -122,6 +127,10 @@ export const MyTab = () => {
   const setMyGamesCalendarDateAfterCreate = useNavigationStore((s) => s.setMyGamesCalendarDateAfterCreate);
   const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
   const byContext = useUnreadStore((s) => s.byContext);
+  const primarySport = getUserPrimarySport(user);
+  const { status: questionnaireStatus } = useQuestionnaireStatus(primarySport);
+  useRegisterAdSportContext(AD_PLACEMENTS.HOME_HERO, primarySport);
+  const hideHomeHeroAd = isHomeHeroAdBlocked(user, primarySport, questionnaireStatus);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -359,6 +368,7 @@ export const MyTab = () => {
     <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
       <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
         {user && <StoriesRail />}
+        {!hideHomeHeroAd && user && <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />}
         {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
         <CityPromptBanner />
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!loading ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
@@ -442,6 +452,7 @@ export const MyTab = () => {
         }}
       >
         {user && <StoriesRail />}
+        {!hideHomeHeroAd && user && <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />}
         {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
         <CityPromptBanner />
         <div

@@ -9,15 +9,18 @@ import { CourtScheduleGrid } from '@/components/clubAdmin/CourtScheduleGrid';
 import { useClubAdminSchedule } from '@/hooks/useClubAdminSchedule';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
+import { useClubAdminForbidden } from '@/hooks/useClubAdminForbidden';
 import { Court } from '@/types';
 
 export function ClubCourtDetailPage() {
   const { clubId, courtId } = useParams<{ clubId: string; courtId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
+  const handleForbidden = useClubAdminForbidden();
   const date = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
   const [court, setCourt] = useState<Court | null>(null);
   const [clubMeta, setClubMeta] = useState<{
+    city?: { timezone?: string };
     openingTime?: string | null;
     closingTime?: string | null;
     defaultSlotMinutes?: number | null;
@@ -32,15 +35,18 @@ export function ClubCourtDetailPage() {
 
   useEffect(() => {
     if (!clubId || !courtId) return;
-    Promise.all([clubAdminApi.listCourts(clubId), clubAdminApi.getClub(clubId)]).then(([courts, club]) => {
-      setCourt(courts.find((c) => c.id === courtId) ?? null);
-      setClubMeta({
-        openingTime: club.openingTime,
-        closingTime: club.closingTime,
-        defaultSlotMinutes: (club as { defaultSlotMinutes?: number | null }).defaultSlotMinutes,
-      });
-    });
-  }, [clubId, courtId]);
+    Promise.all([clubAdminApi.listCourts(clubId), clubAdminApi.getClub(clubId)])
+      .then(([courts, club]) => {
+        setCourt(courts.find((c) => c.id === courtId) ?? null);
+        setClubMeta({
+          city: club.city,
+          openingTime: club.openingTime,
+          closingTime: club.closingTime,
+          defaultSlotMinutes: (club as { defaultSlotMinutes?: number | null }).defaultSlotMinutes,
+        });
+      })
+      .catch(handleForbidden);
+  }, [clubId, courtId, handleForbidden]);
 
   const slots = (data?.slots ?? []).filter((s: ScheduleSlot) => s.courtId === courtId);
 
@@ -63,6 +69,7 @@ export function ClubCourtDetailPage() {
           courts={[court]}
           slots={slots}
           scheduleDate={date}
+          club={clubMeta}
           openingTime={clubMeta.openingTime}
           closingTime={clubMeta.closingTime}
           slotMinutes={clubMeta.defaultSlotMinutes}

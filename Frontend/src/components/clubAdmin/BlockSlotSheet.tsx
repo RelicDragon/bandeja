@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CourtSlotHoldLabel } from '@/api/clubAdmin';
+import { holdRangeFromClubSlot } from '@/utils/clubAdmin/scheduleTime';
 const LABELS: CourtSlotHoldLabel[] = ['WALK_IN', 'PHONE', 'ACADEMY', 'MAINTENANCE', 'OTHER'];
 
 interface BlockSlotSheetProps {
@@ -9,6 +10,7 @@ interface BlockSlotSheetProps {
   courtId: string;
   date: string;
   startTime: string;
+  club?: { city?: { timezone?: string } | null } | null;
   onSubmit: (data: {
     courtId: string;
     startTime: string;
@@ -18,7 +20,7 @@ interface BlockSlotSheetProps {
   }) => Promise<void>;
 }
 
-export function BlockSlotSheet({ open, onClose, courtId, date, startTime, onSubmit }: BlockSlotSheetProps) {
+export function BlockSlotSheet({ open, onClose, courtId, date, startTime, club, onSubmit }: BlockSlotSheetProps) {
   const { t } = useTranslation();
   const [durationHours, setDurationHours] = useState(1);
   const [label, setLabel] = useState<CourtSlotHoldLabel>('WALK_IN');
@@ -28,15 +30,13 @@ export function BlockSlotSheet({ open, onClose, courtId, date, startTime, onSubm
   if (!open) return null;
 
   const handleSubmit = async () => {
-    const [h, m] = startTime.split(':').map(Number);
-    const start = new Date(`${date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`);
-    const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+    const { startTime: startIso, endTime } = holdRangeFromClubSlot(date, startTime, durationHours, club);
     setSaving(true);
     try {
       await onSubmit({
         courtId,
-        startTime: start.toISOString(),
-        endTime: end.toISOString(),
+        startTime: startIso,
+        endTime,
         label,
         note: note || undefined,
       });

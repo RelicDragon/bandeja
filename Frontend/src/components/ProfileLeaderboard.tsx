@@ -20,6 +20,9 @@ import {
 import type { Sport } from '@/types';
 import toast from 'react-hot-toast';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
+import { AdSlot } from '@/components/ads';
+import { AD_PLACEMENTS } from '@/shared/adPlacements';
+import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 
 export const ProfileLeaderboard = () => {
   const { t } = useTranslation();
@@ -38,6 +41,7 @@ export const ProfileLeaderboard = () => {
   const enabledSports = useMemo(() => listEnabledSports(user), [user]);
   const showSportPicker = hasMultipleSportsEnabled(user);
   const activeLeaderboardSport = showSportPicker ? leaderboardSport : getUserPrimarySport(user);
+  useRegisterAdSportContext(AD_PLACEMENTS.LEADERBOARD_BANNER, activeLeaderboardSport);
 
   useEffect(() => {
     setLeaderboardSport(getUserPrimarySport(user));
@@ -294,6 +298,7 @@ export const ProfileLeaderboard = () => {
   return (
     <SportLevelProvider sport={activeLeaderboardSport}>
     <div className="min-w-0 space-y-4">
+      <AdSlot placement={AD_PLACEMENTS.LEADERBOARD_BANNER} className="w-full min-w-0" />
       {hasLeaderboardData && userRank && (
         <div className="flex min-w-0 items-center gap-2">
           <motion.button

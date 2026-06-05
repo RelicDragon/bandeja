@@ -344,7 +344,7 @@ export interface Court {
   surfaceType?: string;
   pricePerHour?: number;
   externalCourtId?: string;
-  webCameraUrl?: string;
+  webCameraUrl?: string | null;
   club?: Club;
 }
 

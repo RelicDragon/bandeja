@@ -97,5 +97,7 @@
   "clubAdmin.pricePerHour": "Price per hour",
   "clubAdmin.indoor": "Indoor",
   "clubAdmin.externalCourtId": "External ID",
-  "clubAdmin.webCameraUrl": "URL veb kamere"
+  "clubAdmin.webCameraUrl": "URL veb kamere",
+  "clubAdmin.noClubs": "Još vam nisu dodeljeni klubovi.",
+  "clubAdmin.scheduleLoadFailed": "Raspored nije učitan. Osvežite ili pokušajte ponovo."
 }

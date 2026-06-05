@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Court } from '@/types';
 import { ScheduleSlot } from '@/api/clubAdmin';
 import { UNASSIGNED_COURT_ID } from '@/utils/clubAdmin/constants';
+import { clubLocalDateString, clubLocalNowMinutes, clubLocalTimeMinutes } from '@/utils/clubAdmin/scheduleTime';
 import { generateTimeSlots, resolveSlotMinutes } from '@/utils/clubSchedule/timeSlots';
 import { adminSlotKind, slotClassName } from '@/utils/clubSchedule/slotStyle';
 
@@ -13,6 +14,7 @@ interface CourtScheduleGridProps {
   openingTime?: string | null;
   closingTime?: string | null;
   slotMinutes?: number | null;
+  club?: { city?: { timezone?: string } | null } | null;
   readOnly?: boolean;
   onSlotClick?: (courtId: string, time: string, slot?: ScheduleSlot, isPast?: boolean) => void;
 }
@@ -26,10 +28,10 @@ function slotAt(
   slots: ScheduleSlot[],
   courtId: string,
   time: string,
-  stepMinutes: number
+  stepMinutes: number,
+  club?: { city?: { timezone?: string } | null } | null
 ): ScheduleSlot | undefined {
-  const [h, m] = time.split(':').map(Number);
-  const startMin = h * 60 + m;
+  const startMin = parseMinutes(time);
   const endMin = startMin + stepMinutes;
   return slots.find((s) => {
     if (courtId === UNASSIGNED_COURT_ID) {
@@ -39,10 +41,8 @@ function slotAt(
     } else if (s.courtId !== courtId) {
       return false;
     }
-    const st = new Date(s.startTime);
-    const en = new Date(s.endTime);
-    const sh = st.getHours() * 60 + st.getMinutes();
-    const eh = en.getHours() * 60 + en.getMinutes();
+    const sh = clubLocalTimeMinutes(s.startTime, club);
+    const eh = clubLocalTimeMinutes(s.endTime, club);
     return sh < endMin && eh > startMin;
   });
 }
@@ -54,6 +54,7 @@ export function CourtScheduleGrid({
   openingTime,
   closingTime,
   slotMinutes: slotMinutesProp,
+  club,
   readOnly,
   onSlotClick,
 }: CourtScheduleGridProps) {
@@ -84,13 +85,12 @@ export function CourtScheduleGrid({
     return cols;
   }, [activeCourts, hasUnassigned, t]);
 
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const todayStr = useMemo(() => clubLocalDateString(club), [club]);
   const isToday = scheduleDate === todayStr;
   const nowMinutes = useMemo(() => {
     if (!isToday) return null;
-    const n = new Date();
-    return n.getHours() * 60 + n.getMinutes();
-  }, [isToday]);
+    return clubLocalNowMinutes(club);
+  }, [isToday, club]);
 
   const nowRowIndex = useMemo(() => {
     if (nowMinutes == null) return -1;
@@ -147,7 +147,7 @@ export function CourtScheduleGrid({
               )}
             </div>
             {columns.map((court) => {
-              const slot = slotAt(slots, court.id, time, stepMinutes);
+              const slot = slotAt(slots, court.id, time, stepMinutes, club);
               const past = isSlotPast(time);
               const kind = slot
                 ? adminSlotKind(slot)

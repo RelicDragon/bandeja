@@ -300,6 +300,7 @@ model Club {
   clubReviews          ClubReview[]
   clubAdmins           ClubAdmin[]
   courtSlotHolds       CourtSlotHold[]
+  adSponsors           AdSponsor[]
 
   @@index([cityId])
   @@index([isActive])
@@ -2570,4 +2571,186 @@ model LlmUsageLog {
   @@index([userId])
   @@index([reason])
   @@index([createdAt])
+}
+
+enum AdCampaignStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  PAUSED
+  ENDED
+}
+
+enum AdPlacementKey {
+  home_hero
+  find_top
+  leaderboard_banner
+}
+
+enum AdClickAction {
+  OPEN_URL
+  IN_APP_ROUTE
+  CLUB_PAGE
+  MARKET_ITEM
+}
+
+enum AdEventType {
+  IMPRESSION
+  CLICK
+  DISMISS
+}
+
+model AdSponsor {
+  id           String       @id @default(cuid())
+  name         String
+  contactEmail String?
+  notes        String?
+  clubId       String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  club         Club?        @relation(fields: [clubId], references: [id], onDelete: SetNull)
+  campaigns    AdCampaign[]
+
+  @@index([clubId])
+}
+
+model AdCampaign {
+  id                String                @id @default(cuid())
+  sponsorId         String
+  name              String
+  status            AdCampaignStatus      @default(DRAFT)
+  priority          Int                   @default(0)
+  weight            Int                   @default(100)
+  startsAt          DateTime?
+  endsAt            DateTime?
+  defaultLocale     String                @default("en")
+  frequencyCap      Json?
+  dismissible       Boolean               @default(true)
+  dismissSnoozeDays Int?
+  clickUrlTrusted   Boolean               @default(true)
+  disclosureLabel   String?
+  hideDisclosure    Boolean               @default(false)
+  targeting         Json
+  testUserIds       String[]              @default([])
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  sponsor           AdSponsor             @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  creatives         AdCreative[]
+  placements        AdCampaignPlacement[]
+  events            AdEvent[]
+  userStates        AdUserState[]
+  sessionPicks      AdSessionPick[]
+  dailyStats        AdCampaignDailyStats[]
+
+  @@index([sponsorId])
+  @@index([status])
+  @@index([startsAt])
+  @@index([endsAt])
+}
+
+model AdCreative {
+  id           String          @id @default(cuid())
+  campaignId   String
+  placement    AdPlacementKey?
+  locale       String
+  variantKey   String          @default("A")
+  imageUrl     String
+  imageUrlDark String?
+  title        String?
+  subtitle     String?
+  ctaLabel     String?
+  clickUrl     String
+  clickAction  AdClickAction   @default(OPEN_URL)
+  metadata     Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  campaign     AdCampaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, placement, locale, variantKey])
+  @@index([campaignId])
+}
+
+model AdCampaignPlacement {
+  campaignId String
+  placement  AdPlacementKey
+  campaign   AdCampaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, placement])
+}
+
+model AdEvent {
+  id          String         @id @default(cuid())
+  eventId     String         @unique
+  type        AdEventType
+  campaignId  String
+  creativeId  String
+  placement   AdPlacementKey
+  userId      String?
+  adSessionId String?
+  platform    String?
+  cityId      String?
+  sport       Sport?
+  locale      String?
+  createdAt   DateTime       @default(now())
+  campaign    AdCampaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, type, createdAt])
+  @@index([placement, createdAt])
+  @@index([createdAt])
+}
+
+model AdUserState {
+  userId         String
+  campaignId     String
+  impressions    Int       @default(0)
+  capWindowStart DateTime?
+  lastSeenAt     DateTime?
+  snoozedUntil   DateTime?
+  updatedAt      DateTime  @updatedAt
+  campaign       AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@id([userId, campaignId])
+  @@index([campaignId])
+}
+
+model AdSessionPick {
+  adSessionId String
+  userId      String
+  placement   AdPlacementKey
+  contextKey  String
+  campaignId  String
+  creativeId  String
+  createdAt   DateTime       @default(now())
+  campaign    AdCampaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([adSessionId, userId, placement, contextKey])
+  @@index([userId])
+}
+
+model AdCampaignDailyStats {
+  id          String         @id @default(cuid())
+  campaignId  String
+  sponsorId   String
+  date        DateTime       @db.Date
+  placement   AdPlacementKey
+  cityId      String?
+  locale      String?
+  impressions Int            @default(0)
+  uniqueUsers Int            @default(0)
+  clicks      Int            @default(0)
+  dismisses   Int            @default(0)
+  campaign    AdCampaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, date, placement, cityId, locale])
+  @@index([sponsorId, date])
+  @@index([campaignId, date])
+}
+
+model AdTargetingPreset {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  targeting   Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

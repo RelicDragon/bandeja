@@ -1,0 +1,9 @@
+{
+  "ads": {
+    "sponsored": "Patrocinado",
+    "dismiss": "Ocultar anuncio",
+    "leavingBandejaTitle": "Saliendo de Bandeja",
+    "leavingBandejaMessage": "Estás a punto de abrir un sitio web externo. ¿Continuar?",
+    "leavingBandejaConfirm": "Continuar"
+  }
+}

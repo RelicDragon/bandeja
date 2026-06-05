@@ -97,5 +97,7 @@
   "clubAdmin.pricePerHour": "Price per hour",
   "clubAdmin.indoor": "Indoor",
   "clubAdmin.externalCourtId": "External ID",
-  "clubAdmin.webCameraUrl": "Web camera URL"
+  "clubAdmin.webCameraUrl": "Web camera URL",
+  "clubAdmin.noClubs": "Zatím vám nejsou přiřazeny žádné kluby.",
+  "clubAdmin.scheduleLoadFailed": "Nepodařilo se načíst rozvrh. Obnovte stránku nebo to zkuste znovu."
 }

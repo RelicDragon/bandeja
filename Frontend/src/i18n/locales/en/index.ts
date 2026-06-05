@@ -1,3 +1,4 @@
+import ads from './ads.json';
 import app from './app.json';
 import auth from './auth.json';
 import bets from './bets.json';
@@ -53,6 +54,7 @@ import sportQuestionnaireTableTennis from './sportQuestionnaire/tableTennis.json
 import sportQuestionnaireSquash from './sportQuestionnaire/squash.json';
 
 export default {
+    ...ads,
     ...app,
     ...auth,
     ...bets,

@@ -1,0 +1,9 @@
+{
+  "ads": {
+    "sponsored": "Sponsored",
+    "dismiss": "Dismiss ad",
+    "leavingBandejaTitle": "Leaving Bandeja",
+    "leavingBandejaMessage": "You are about to open an external website. Continue?",
+    "leavingBandejaConfirm": "Continue"
+  }
+}

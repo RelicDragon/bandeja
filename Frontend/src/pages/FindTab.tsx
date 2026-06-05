@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AvailableGamesSection } from '@/components/home';
+import { AdSlot } from '@/components/ads';
+import { AD_PLACEMENTS } from '@/shared/adPlacements';
+import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { MainTabFooter } from '@/components';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { useAuthStore } from '@/store/authStore';
@@ -11,6 +14,7 @@ import { useDesktop } from '@/hooks/useDesktop';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
 import { findSportFilterToApiParam, getViewerPrimarySport } from '@/utils/findSportFilter';
+import type { Sport } from '@/types';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation as useI18nTranslation } from 'react-i18next';
@@ -72,6 +76,7 @@ export const FindTab = () => {
     () => findSportFilterToApiParam(filters.filterSport, getViewerPrimarySport(user)),
     [filters.filterSport, user],
   );
+  useRegisterAdSportContext(AD_PLACEMENTS.FIND_TOP, findSportApiParam as Sport | undefined);
   const {
     availableGames,
     loading: loadingAvailableGames,
@@ -141,7 +146,9 @@ export const FindTab = () => {
 
   if (splitView) {
     return (
-      <AvailableGamesSection
+      <>
+        <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0 px-4" />
+        <AvailableGamesSection
         availableGames={filteredAvailableGames}
         user={user}
         loading={loadingAvailableGames}
@@ -154,6 +161,7 @@ export const FindTab = () => {
         onNoteSaved={() => fetchAvailableGames(true)}
         splitView={true}
       />
+      </>
     );
   }
 
@@ -170,6 +178,7 @@ export const FindTab = () => {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
         }}
       >
+        <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0" />
         <AvailableGamesSection
           availableGames={filteredAvailableGames}
           user={user}

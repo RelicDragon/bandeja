@@ -432,6 +432,9 @@ async function loadPageData(page) {
         case 'mass-notifications':
             loadMassNotificationsPage();
             break;
+        case 'sponsor-ads':
+            loadSponsorAdsPage();
+            break;
         case 'translation-queue':
             loadTranslationQueueStats();
             startTranslationQueuePoll();
