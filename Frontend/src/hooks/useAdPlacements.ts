@@ -7,7 +7,7 @@ import {
   type AdEventInput,
   type AdPlacementPayload,
   type AdSportsByPlacement,
-} from '@/api/ads';
+} from '@/api/sponsorPlacements';
 import { AD_PLACEMENT_KEYS, type AdPlacementKey } from '@/shared/adPlacements';
 import { useAuthStore } from '@/store/authStore';
 import { useNetworkStore } from '@/utils/networkStatus';

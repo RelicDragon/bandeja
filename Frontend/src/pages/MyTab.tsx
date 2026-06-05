@@ -12,7 +12,7 @@ import {
 } from '@/components/home';
 import { SportQuestionnairePrompt } from '@/components/sportQuestionnaire';
 import { StoriesRail } from '@/components/stories/StoriesRail';
-import { AdSlot } from '@/components/ads';
+import { AdSlot } from '@/components/sponsorSlots';
 import { AD_PLACEMENTS } from '@/shared/adPlacements';
 import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AvailableGamesSection } from '@/components/home';
-import { AdSlot } from '@/components/ads';
+import { AdSlot } from '@/components/sponsorSlots';
 import { AD_PLACEMENTS } from '@/shared/adPlacements';
 import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { MainTabFooter } from '@/components';

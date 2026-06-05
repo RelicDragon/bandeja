@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { useResolvedAppAppearance } from '@/store/themeStore';
-import type { AdPlacementPayload } from '@/api/ads';
+import type { AdPlacementPayload } from '@/api/sponsorPlacements';
 
 type AdCardProps = {
   payload: AdPlacementPayload;

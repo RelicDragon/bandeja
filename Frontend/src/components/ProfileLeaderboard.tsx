@@ -20,7 +20,7 @@ import {
 import type { Sport } from '@/types';
 import toast from 'react-hot-toast';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
-import { AdSlot } from '@/components/ads';
+import { AdSlot } from '@/components/sponsorSlots';
 import { AD_PLACEMENTS } from '@/shared/adPlacements';
 import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 

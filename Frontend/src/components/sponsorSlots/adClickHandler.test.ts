@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { adClickNeedsLeavingConfirm } from './adClickHandler';
-import type { AdPlacementPayload } from '@/api/ads';
+import type { AdPlacementPayload } from '@/api/sponsorPlacements';
 
 function payload(overrides: Partial<AdPlacementPayload>): AdPlacementPayload {
   return {

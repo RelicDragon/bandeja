@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 import { buildUrl } from '@/utils/urlSchema';
-import type { AdClickAction, AdPlacementPayload } from '@/api/ads';
+import type { AdClickAction, AdPlacementPayload } from '@/api/sponsorPlacements';
 
 function readMetadataString(metadata: Record<string, unknown> | null | undefined, key: string): string | undefined {
   const value = metadata?.[key];

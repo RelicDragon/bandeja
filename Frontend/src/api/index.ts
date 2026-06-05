@@ -23,6 +23,6 @@ export * from './ranking';
 export * from './userGameNotes';
 export * from './currency';
 export * from './userTeams';
-export * from './ads';
+export * from './sponsorPlacements';
 export { default as api } from './axios';
 
