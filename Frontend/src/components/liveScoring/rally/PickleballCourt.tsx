@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ServeCourtPlayerAvatar } from '../ServeCourtPlayerAvatar';
-import { SERVE_COURT_HIGHLIGHT_PICKLEBALL } from '../serveCourtHighlight';
+import { SERVE_COURT_HIGHLIGHT, courtPlayerIsServing } from '../serveCourtHighlight';
 import type { BasicUser } from '@/types';
 import type { LiveTeamSide } from '@/utils/liveScoring';
 import type { CourtServeSide } from '@/utils/liveScoring/serveGuide';
@@ -228,7 +228,14 @@ export function PickleballCourt({
       <div className="pointer-events-none absolute inset-0 z-[3]" aria-hidden>
         {projectedSlots.map(({ p, px, py, team, idx, avatarScale }) => {
           if (!p) return null;
-          const serving = showServeOverlay && serverTeam === team && serverPlayerIndex === idx;
+          const serving = courtPlayerIsServing({
+            endsSetup,
+            showServeOverlay,
+            serverTeam,
+            team,
+            serverPlayerIndex,
+            playerIndex: idx,
+          });
           return (
             <motion.div
               key={`${p.id}-${idx}`}
@@ -241,7 +248,7 @@ export function PickleballCourt({
               <ServeCourtPlayerAvatar
                 player={p}
                 scale={avatarScale}
-                servingHighlightClassName={serving ? SERVE_COURT_HIGHLIGHT_PICKLEBALL : undefined}
+                servingHighlightClassName={serving ? SERVE_COURT_HIGHLIGHT : undefined}
               />
             </motion.div>
           );

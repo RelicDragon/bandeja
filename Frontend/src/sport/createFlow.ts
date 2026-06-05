@@ -32,7 +32,15 @@ export type SportPresetMeta = {
   officiatingLevel?: OfficiatingLevel;
 };
 
+export type CreateTemplateInlineConfig =
+  | { type: 'points_total' }
+  | { type: 'timed_duration'; options: readonly number[] };
+
 export type CreateTemplateId =
+  | 'PADEL_BEST_OF_3'
+  | 'PADEL_SINGLE_SET'
+  | 'PADEL_AMERICANO'
+  | 'PADEL_TIMED'
   | 'PADEL_AMERICANO_10'
   | 'PADEL_AMERICANO_24'
   | 'PADEL_AMERICANO_20'
@@ -73,8 +81,12 @@ export type CreateTemplate = {
   affectsRating: boolean;
   matchTimerEnabled?: boolean;
   matchTimedCapMinutes?: number;
-  expectedDurationLabelKey?: string;
+  /** Rotation sessions: target rounds at suggestedMaxParticipants × suggestedCourts. */
+  baselineRounds?: number;
   hasGoldenPoint?: boolean;
+  inlineConfig?: CreateTemplateInlineConfig;
+  badgeLabelKey?: string;
+  badgeVariant?: 'social' | 'match' | 'official';
 };
 
 export type SportCreateFlowConfig = {
@@ -85,6 +97,72 @@ export type SportCreateFlowConfig = {
 export const SOCIAL_LEVEL_BAND: [number, number] = [2.0, 5.0];
 
 export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
+  PADEL_BEST_OF_3: {
+    id: 'PADEL_BEST_OF_3',
+    sport: Sports.PADEL,
+    tier: 'match',
+    labelKey: 'createGame.templates.PADEL_BEST_OF_3.title',
+    descriptionKey: 'createGame.templates.PADEL_BEST_OF_3.description',
+    badgeLabelKey: 'createGame.templates.PADEL_BEST_OF_3.badge',
+    badgeVariant: 'official',
+    scoringPreset: 'CLASSIC_BEST_OF_3',
+    gameType: 'CLASSIC',
+    matchGenerationType: 'AUTOMATIC',
+    playersPerMatch: 4,
+    suggestedMaxParticipants: 16,
+    suggestedCourts: 4,
+    affectsRating: true,
+    baselineRounds: 1,
+  },
+  PADEL_SINGLE_SET: {
+    id: 'PADEL_SINGLE_SET',
+    sport: Sports.PADEL,
+    tier: 'match',
+    labelKey: 'createGame.templates.PADEL_SINGLE_SET.title',
+    descriptionKey: 'createGame.templates.PADEL_SINGLE_SET.description',
+    scoringPreset: 'CLASSIC_SINGLE_SET',
+    gameType: 'CLASSIC',
+    matchGenerationType: 'AUTOMATIC',
+    playersPerMatch: 4,
+    suggestedMaxParticipants: 16,
+    suggestedCourts: 4,
+    affectsRating: true,
+    baselineRounds: 1,
+  },
+  PADEL_AMERICANO: {
+    id: 'PADEL_AMERICANO',
+    sport: Sports.PADEL,
+    tier: 'social',
+    labelKey: 'createGame.templates.PADEL_AMERICANO.title',
+    descriptionKey: 'createGame.templates.PADEL_AMERICANO.description',
+    scoringPreset: 'POINTS_24',
+    gameType: 'AMERICANO',
+    matchGenerationType: 'RANDOM',
+    playersPerMatch: 4,
+    suggestedMaxParticipants: 16,
+    suggestedCourts: 4,
+    affectsRating: false,
+    baselineRounds: 6,
+    inlineConfig: { type: 'points_total' },
+  },
+  PADEL_TIMED: {
+    id: 'PADEL_TIMED',
+    sport: Sports.PADEL,
+    tier: 'social',
+    labelKey: 'createGame.templates.PADEL_TIMED.title',
+    descriptionKey: 'createGame.templates.PADEL_TIMED.description',
+    scoringPreset: 'CLASSIC_TIMED',
+    gameType: 'CLASSIC',
+    matchGenerationType: 'AUTOMATIC',
+    playersPerMatch: 4,
+    suggestedMaxParticipants: 16,
+    suggestedCourts: 4,
+    affectsRating: false,
+    matchTimerEnabled: true,
+    matchTimedCapMinutes: 15,
+    baselineRounds: 1,
+    inlineConfig: { type: 'timed_duration', options: [10, 15, 20] },
+  },
   PADEL_AMERICANO_10: {
     id: 'PADEL_AMERICANO_10',
     sport: Sports.PADEL,
@@ -100,7 +178,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 10,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 6,
   },
   PADEL_AMERICANO_24: {
     id: 'PADEL_AMERICANO_24',
@@ -117,7 +195,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 6,
   },
   PADEL_AMERICANO_20: {
     id: 'PADEL_AMERICANO_20',
@@ -134,7 +212,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 20,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 6,
   },
   PADEL_MEXICANO_24: {
     id: 'PADEL_MEXICANO_24',
@@ -151,7 +229,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 6,
   },
   PADEL_CHALLENGER_POOL: {
     id: 'PADEL_CHALLENGER_POOL',
@@ -168,7 +246,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 12,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 8,
   },
   PADEL_KOTC_11: {
     id: 'PADEL_KOTC_11',
@@ -185,7 +263,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 12,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 8,
   },
   PICKLEBALL_SOCIAL_21: {
     id: 'PICKLEBALL_SOCIAL_21',
@@ -202,7 +280,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 6,
   },
   PICKLEBALL_MATCH_BO3_11: {
     id: 'PICKLEBALL_MATCH_BO3_11',
@@ -217,6 +295,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     suggestedMaxParticipants: 4,
     suggestedCourts: 1,
     affectsRating: true,
+    baselineRounds: 1,
   },
   PICKLEBALL_KOTC_11: {
     id: 'PICKLEBALL_KOTC_11',
@@ -233,7 +312,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 12,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 8,
   },
   BADMINTON_CLUB_3X15: {
     id: 'BADMINTON_CLUB_3X15',
@@ -248,6 +327,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     suggestedMaxParticipants: 8,
     suggestedCourts: 2,
     affectsRating: false,
+    baselineRounds: 1,
   },
   BADMINTON_AMERICANO_21: {
     id: 'BADMINTON_AMERICANO_21',
@@ -264,7 +344,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 6,
   },
   BADMINTON_MATCH_3X21: {
     id: 'BADMINTON_MATCH_3X21',
@@ -279,6 +359,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     suggestedMaxParticipants: 4,
     suggestedCourts: 1,
     affectsRating: true,
+    baselineRounds: 1,
   },
   TT_OPEN_PLAY_11: {
     id: 'TT_OPEN_PLAY_11',
@@ -295,7 +376,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox90m',
+    baselineRounds: 1,
   },
   TT_CLUB_RR_11: {
     id: 'TT_CLUB_RR_11',
@@ -312,7 +393,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 12,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 7,
   },
   TT_LEGACY_SINGLE_21: {
     id: 'TT_LEGACY_SINGLE_21',
@@ -327,6 +408,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     suggestedMaxParticipants: 4,
     suggestedCourts: 1,
     affectsRating: false,
+    baselineRounds: 1,
   },
   TT_BOX_BO3_11: {
     id: 'TT_BOX_BO3_11',
@@ -343,7 +425,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 7,
   },
   TT_MATCH_BO3_11: {
     id: 'TT_MATCH_BO3_11',
@@ -358,6 +440,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     suggestedMaxParticipants: 4,
     suggestedCourts: 1,
     affectsRating: true,
+    baselineRounds: 1,
   },
   TT_MATCH_BO5_11: {
     id: 'TT_MATCH_BO5_11',
@@ -372,6 +455,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     suggestedMaxParticipants: 4,
     suggestedCourts: 1,
     affectsRating: true,
+    baselineRounds: 1,
   },
   /** Legacy templates — hidden from create UI; kept for stored templateId on older games. */
   TT_AMERICANO_11: {
@@ -389,7 +473,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 6,
   },
   TT_MEXICANO_11: {
     id: 'TT_MEXICANO_11',
@@ -406,7 +490,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 6,
   },
   TT_SWISS_BOX: {
     id: 'TT_SWISS_BOX',
@@ -423,7 +507,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox2h',
+    baselineRounds: 7,
   },
   TENNIS_FAST4_SOCIAL: {
     id: 'TENNIS_FAST4_SOCIAL',
@@ -441,7 +525,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     hasGoldenPoint: true,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
-    expectedDurationLabelKey: 'createGame.templates.durationApprox90m',
+    baselineRounds: 1,
   },
   TENNIS_CLASSIC_BO3: {
     id: 'TENNIS_CLASSIC_BO3',
@@ -456,6 +540,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     suggestedMaxParticipants: 4,
     suggestedCourts: 1,
     affectsRating: true,
+    baselineRounds: 1,
   },
   SQUASH_QUICK_BO3_11: {
     id: 'SQUASH_QUICK_BO3_11',
@@ -470,6 +555,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     suggestedMaxParticipants: 4,
     suggestedCourts: 1,
     affectsRating: true,
+    baselineRounds: 1,
   },
 };
 
@@ -499,16 +585,14 @@ export const CREATE_FLOW_BY_SPORT: Record<Sport, SportCreateFlowConfig> = {
       meta('CLASSIC_SINGLE_SET', 'match', 'createGame.presetMeta.CLASSIC_SINGLE_SET'),
       meta('CLASSIC_SUPER_TIEBREAK', 'match', 'createGame.presetMeta.CLASSIC_SUPER_TIEBREAK'),
       meta('CLASSIC_TIMED', 'both', 'createGame.presetMeta.CLASSIC_TIMED', undefined, 'CLASSIC_TIMED_RELAXED'),
-      meta('BEST_OF_3_11', 'both', 'createGame.presetMeta.BEST_OF_3_11'),
       meta('TIMED', 'social', 'createGame.presetMeta.TIMED'),
       meta('CUSTOM', 'both', 'createGame.presetMeta.CUSTOM'),
     ],
     createTemplates: [
-      'PADEL_AMERICANO_10',
-      'PADEL_AMERICANO_24',
-      'PADEL_AMERICANO_20',
-      'PADEL_MEXICANO_24',
-      'PADEL_CHALLENGER_POOL',
+      'PADEL_BEST_OF_3',
+      'PADEL_SINGLE_SET',
+      'PADEL_AMERICANO',
+      'PADEL_TIMED',
     ],
   },
   [Sports.TENNIS]: {

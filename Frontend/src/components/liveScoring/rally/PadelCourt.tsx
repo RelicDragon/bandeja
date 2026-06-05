@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import type { CourtServeSide } from '@/utils/liveScoring';
 import type { RallyCourtProps } from './RallyCourtProps';
 import { ServeCourtPlayerAvatar } from '../ServeCourtPlayerAvatar';
-import { SERVE_COURT_HIGHLIGHT_CLASSIC } from '../serveCourtHighlight';
+import { SERVE_COURT_HIGHLIGHT, courtPlayerIsServing } from '../serveCourtHighlight';
 import { serveSpringSettleMs, serveSpringTransition } from '../serveArrowMotion';
 import { serveGuideFrameForUiId } from '../serveGuideCourtFrame';
 import { LIVE_COURT_FIT_CLASS } from '../LiveCourtViewport';
@@ -203,7 +203,14 @@ export function PadelCourt({
       <div className="pointer-events-none absolute inset-0 z-[3]" aria-hidden>
         {projectedSlots.map(({ player, px, py, team, idx, avatarScale }) => {
           if (!player) return null;
-          const serving = showServeOverlay && serverTeam === team && serverPlayerIndex === idx;
+          const serving = courtPlayerIsServing({
+            endsSetup,
+            showServeOverlay,
+            serverTeam,
+            team,
+            serverPlayerIndex,
+            playerIndex: idx,
+          });
           return (
             <motion.div
               key={`${player.id}-${idx}`}
@@ -216,7 +223,7 @@ export function PadelCourt({
               <ServeCourtPlayerAvatar
                 player={player}
                 scale={avatarScale}
-                servingHighlightClassName={serving ? SERVE_COURT_HIGHLIGHT_CLASSIC : undefined}
+                servingHighlightClassName={serving ? SERVE_COURT_HIGHLIGHT : undefined}
               />
             </motion.div>
           );

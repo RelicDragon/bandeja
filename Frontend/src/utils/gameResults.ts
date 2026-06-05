@@ -64,6 +64,30 @@ export const isGroupChannelAdminOrOwner = (groupChannel: GroupChannel, userId: s
  * @param userId - The user ID to check
  * @returns boolean indicating if the user is a participant or has parent access
  */
+export const isUserPlayingParticipant = (game: Game, userId: string): boolean => {
+  const isPlaying = game.participants?.some(
+    (p) => p.userId === userId && p.status === 'PLAYING',
+  );
+  if (isPlaying) return true;
+  return (
+    game.parent?.participants?.some(
+      (p) => p.userId === userId && p.status === 'PLAYING',
+    ) ?? false
+  );
+};
+
+/**
+ * Whether the user may change game format (wizard, teams toggles, fixed teams).
+ * Mirrors backend canModifyResults for format-only game updates.
+ */
+export const canUserEditGameFormat = (game: Game, user: User | null): boolean => {
+  if (!game || !user || game.status === 'ARCHIVED') return false;
+  if (!canUserSeeGame(game, user)) return false;
+  if (user.isAdmin || isUserGameAdminOrOwner(game, user.id)) return true;
+  if (game.resultsByAnyone && isUserPlayingParticipant(game, user.id)) return true;
+  return false;
+};
+
 export const isUserGameParticipant = (game: Game, userId: string): boolean => {
   // Check if user is a participant in current game
   const isCurrentParticipant = game.participants?.some((p) => p.userId === userId);
@@ -98,11 +122,7 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
   if (user.isAdmin || isUserGameAdminOrOwner(game, user.id)) {
     hasEditPermission = true;
   } else if (game.resultsByAnyone) {
-    // Check if user is a playing participant and resultsByAnyone is true
-    const isPlayingParticipant = game.participants.some(
-      (p) => p.userId === user.id && p.status === 'PLAYING'
-    );
-    hasEditPermission = isPlayingParticipant;
+    hasEditPermission = isUserPlayingParticipant(game, user.id);
   }
 
   // Check if game is archived

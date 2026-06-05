@@ -38,3 +38,17 @@ Set `FALLBACK_CITY_ID` in `Backend/.env` and seed at least one City row for regi
 - Frontend lint: `cd Frontend && npm run lint`
 - Frontend tests: `cd Frontend && npm run test:live-scoring`
 - Backend automated tests: `cd Backend && npm run test:automated`
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on `RelicDragon/bandeja`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical triage labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context — `CONTEXT-MAP.md` at repo root points to per-area `CONTEXT.md` files. See `docs/agents/domain.md`.

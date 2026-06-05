@@ -5,6 +5,7 @@ import { Sport } from '@prisma/client';
 import { InviteService } from '../invite.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { undoGameOutcomes } from '../results/outcomes.service';
+import { revertForGame } from '../levelChange';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { Prisma } from '@prisma/client';
 
@@ -274,6 +275,8 @@ export class AdminGamesService {
     await prisma.$transaction(async (tx) => {
       if (game.outcomes.length > 0) {
         await undoGameOutcomes(gameId, tx);
+      } else {
+        await revertForGame(gameId, 'all', tx);
       }
 
       await tx.roundOutcome.deleteMany({
@@ -326,12 +329,6 @@ export class AdminGamesService {
 
       await tx.round.deleteMany({
         where: { gameId },
-      });
-
-      await tx.levelChangeEvent.deleteMany({
-        where: {
-          gameId: gameId,
-        },
       });
 
       const updatedGame = await tx.game.findUnique({

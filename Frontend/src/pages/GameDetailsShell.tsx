@@ -58,7 +58,12 @@ import { parseGameSport } from '@/utils/gameSport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { Round } from '@/types/gameResults';
 import { shouldShowRoundAddedModal } from '@/utils/fivePlayerMatchCombinations';
-import { isUserGameAdminOrOwner, canUserEditResults, canViewTournamentTableByAccess } from '@/utils/gameResults';
+import {
+  isUserGameAdminOrOwner,
+  canUserEditResults,
+  canUserEditGameFormat,
+  canViewTournamentTableByAccess,
+} from '@/utils/gameResults';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { BasicUser } from '@/types';
 import { createPortal } from 'react-dom';
@@ -635,6 +640,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   const { isGuest, isParticipantNonGuest: isParticipant, isRealParticipant, isPlaying: isUserPlaying, isOwner: isUserOwner, isInJoinQueue, hasPendingInvite, isAdminOrOwner: isOwner, isFull } = participation;
   const canAccessChat = true;
   const canEdit = isOwner || user?.isAdmin || false;
+  const canEditGameFormat = game ? canUserEditGameFormat(game, user) : false;
   const canViewSettings = game?.resultsStatus === 'NONE' && canEdit && game.status !== 'ARCHIVED';
 
   useEffect(() => {
@@ -1455,7 +1461,7 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
             <GameFormatSection
               key={game.id}
               game={game}
-              canEdit={canEdit}
+              canEdit={canEditGameFormat}
               onGameUpdate={setGame}
               suppressAllowMultiToggle={isEditMode && canViewSettings}
             />
@@ -1773,13 +1779,13 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
           </div>
         )}
 
-      <AnimatedPresencePanel panelKey={shellViewKey}>
+      <AnimatedPresencePanel panelKey={shellViewKey} className="space-y-4">
         {shouldAnimateStagger ? (
-          <AnimatedChildrenStagger contentKey={tabViewKey}>
+          <AnimatedChildrenStagger contentKey={tabViewKey} className="space-y-4">
             {renderTabContent()}
           </AnimatedChildrenStagger>
         ) : (
-          <>{renderTabContent()}</>
+          <div className="space-y-4">{renderTabContent()}</div>
         )}
       </AnimatedPresencePanel>
 

@@ -43,6 +43,13 @@ import {
   type ThreadInitialScroll,
 } from '@/services/chat/chatOpenCoordinator';
 import {
+  planLayoutSeed,
+  planThreadTeardown,
+  resolveSessionScrollFromSnapshot,
+  resolveThreadKey,
+  shouldForceFreshOpen,
+} from '@/services/chat/threadSession';
+import {
   chatOpenLikelyHasOlderMessages,
   chatOpenMessageIdsEqual,
 } from '@/services/chat/chatOpenSnapshot';
@@ -174,10 +181,9 @@ export function useGameChatMessages({
 
   const scrollPlanForAnchor = useCallback(
     (messages: ChatMessageWithStatus[]): Pick<OpenThreadPlan, 'scroll' | 'scrollRow'> | undefined => {
-      if (!openAnchorMessageId || !messages.some((m) => m.id === openAnchorMessageId)) {
-        return undefined;
-      }
-      return { scroll: { anchorMessageId: openAnchorMessageId }, scrollRow: undefined };
+      const anchor = resolveSessionScrollFromSnapshot(messages, openAnchorMessageId);
+      if (!anchor) return undefined;
+      return { scroll: anchor, scrollRow: undefined };
     },
     [openAnchorMessageId]
   );
@@ -193,28 +199,55 @@ export function useGameChatMessages({
     [tracedSetMessages]
   );
 
-  const invalidateThreadOpen = useCallback(() => {
-    seededThreadKeyRef.current = null;
-    hasLoadedRef.current = false;
-    openPaintCommittedRef.current = false;
-    openScrollReadyKeyRef.current = null;
-    loadingIdRef.current = undefined;
-    isLoadingRef.current = false;
+  const applyThreadTeardown = useCallback(() => {
+    const plan = planThreadTeardown();
+    seededThreadKeyRef.current = plan.seededThreadKey;
+    hasLoadedRef.current = plan.hasLoaded;
+    openPaintCommittedRef.current = plan.openPaintCommitted;
+    openScrollReadyKeyRef.current = plan.openScrollReadyKey;
+    loadingIdRef.current = plan.loadingId;
+    isLoadingRef.current = plan.isLoading;
+    setInitialScroll(undefined);
   }, []);
 
-  /** A1.3 thread reset: warm L1 in messagesRef only; first visible paint is bootstrap commit. */
+  const invalidateThreadOpen = useCallback(() => {
+    applyThreadTeardown();
+  }, [applyThreadTeardown]);
+
+  const teardownForChatTypeSwitch = useCallback(() => {
+    applyThreadTeardown();
+    setMessagesTagged('thread-reset', []);
+    messagesRef.current = [];
+    beginThreadOpenSettling();
+    setIsLoadingMessages(true);
+    setIsInitialLoad(true);
+    setPage(1);
+    setHasMoreMessages(false);
+  }, [
+    applyThreadTeardown,
+    setMessagesTagged,
+    beginThreadOpenSettling,
+    setIsLoadingMessages,
+    setIsInitialLoad,
+    setPage,
+    setHasMoreMessages,
+  ]);
+
+  /** ThreadSession layout seed: warm L1 in messagesRef; first visible paint is bootstrap commit. */
   useLayoutEffect(() => {
     const pushFreshNonce = peekChatFreshOpenNonce();
-    const forceFreshOpen = freshOpenSignal > 0 || pushFreshNonce > 0;
+    const forceFreshOpen = shouldForceFreshOpen(freshOpenSignal, pushFreshNonce);
     if (pushFreshNonce > 0) consumeChatFreshOpenNonce(pushFreshNonce);
 
-    const key =
-      id != null && id !== ''
-        ? chatSyncTailKey(contextType, id, contextType === 'GAME' ? effectiveChatType : undefined)
-        : null;
+    const key = resolveThreadKey(
+      contextType,
+      id,
+      contextType === 'GAME' ? effectiveChatType : undefined
+    );
+    const previousKey = seededThreadKeyRef.current;
 
     if (!key) {
-      seededThreadKeyRef.current = null;
+      applyThreadTeardown();
       setMessagesTagged('thread-reset', []);
       messagesRef.current = [];
       setIsLoadingMessages(true);
@@ -225,22 +258,7 @@ export function useGameChatMessages({
       return () => {};
     }
 
-    if (key === seededThreadKeyRef.current && !forceFreshOpen) {
-      return;
-    }
-
-    seededThreadKeyRef.current = key;
-    hasLoadedRef.current = false;
-    beginThreadOpenSettling();
-    openScrollReadyKeyRef.current = null;
-    openPaintCommittedRef.current = false;
-    setInitialScroll(undefined);
-
-    if (forceFreshOpen) {
-      deleteChatThreadMemory(key);
-    }
-
-    let cached = peekChatThreadMemory(key);
+    let warmCache = peekChatThreadMemory(key);
     if (id) {
       const tabMissed = takeMissedMessagesForOpen(
         contextType,
@@ -249,23 +267,60 @@ export function useGameChatMessages({
       );
       if (tabMissed.length > 0) {
         void persistChatMessagesFromApi(tabMissed).catch(() => {});
-        cached = mergeMissedIntoWarmRef(cached, tabMissed) as ChatMessageWithStatus[];
+        warmCache = mergeMissedIntoWarmRef(warmCache, tabMissed) as ChatMessageWithStatus[];
       }
     }
-    messagesRef.current = cached;
+
+    const seedPlan = planLayoutSeed({
+      threadKey: key,
+      previousThreadKey: previousKey,
+      seededThreadKey: seededThreadKeyRef.current,
+      forceFreshOpen,
+      warmCache,
+    });
+
+    if (!seedPlan.clearVisible) {
+      return;
+    }
+
+    let warmRef = seedPlan.warmRefMessages;
+    if (seedPlan.deleteWarmCache) {
+      deleteChatThreadMemory(key);
+      warmRef = [];
+    }
+
+    seededThreadKeyRef.current = key;
+    hasLoadedRef.current = false;
+    beginThreadOpenSettling();
+    openScrollReadyKeyRef.current = null;
+    openPaintCommittedRef.current = false;
+    setInitialScroll(undefined);
+    messagesRef.current = warmRef;
     setMessagesTagged('thread-reset', []);
     setIsLoadingMessages(true);
     setIsInitialLoad(true);
     setPage(1);
     setHasMoreMessages(false);
 
+    const flushKey = seedPlan.flushOnUnmountKey ?? key;
     return () => {
       if (seededThreadKeyRef.current === key) {
-        flushChatThreadL1DebouncedPut(key, () => messagesRef.current, () => true);
+        flushChatThreadL1DebouncedPut(flushKey, () => messagesRef.current, () => true);
         seededThreadKeyRef.current = null;
       }
     };
-  }, [id, contextType, effectiveChatType, freshOpenSignal, setMessagesTagged, setHasMoreMessages, setPage, setIsLoadingMessages, setIsInitialLoad, beginThreadOpenSettling]);
+  }, [
+    id,
+    contextType,
+    effectiveChatType,
+    freshOpenSignal,
+    setMessagesTagged,
+    setPage,
+    setIsLoadingMessages,
+    setIsInitialLoad,
+    beginThreadOpenSettling,
+    applyThreadTeardown,
+  ]);
 
   const scrollToBottom = useCallback(() => {
     try {
@@ -660,6 +715,7 @@ export function useGameChatMessages({
     openPaintGeneration,
     openPaintCommittedRef,
     invalidateThreadOpen,
+    teardownForChatTypeSwitch,
     pinAfterSocketMergeIfAllowed,
     setMessages,
     messagesRef,

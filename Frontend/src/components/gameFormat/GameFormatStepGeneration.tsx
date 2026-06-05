@@ -1,14 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Pencil,
   Shuffle,
   TrendingUp,
   Grid3x3,
   Crown,
   ArrowUpDown,
   Trophy,
-  Sliders,
   Wand2,
   LucideIcon,
   AlertCircle,
@@ -17,33 +15,21 @@ import { EntityType, MatchGenerationType, ScoringMode } from '@/types';
 import type { Sport } from '@shared/sport';
 import { FormatOptionCard } from './FormatOptionCard';
 import {
-  allowedGenerationsForMaxParticipants,
-  allowedGenerationsForSport,
   automaticGenerationCopyKey,
+  listWizardSelectableGenerations,
 } from '@/utils/gameFormat';
 
-interface GenerationDef {
-  value: MatchGenerationType;
-  icon: LucideIcon;
-  entityTypes?: EntityType[];
-  minPlayers?: number;
-  minCourts?: number;
-  popular?: boolean;
-}
+const GENERATION_ICONS: Partial<Record<MatchGenerationType, LucideIcon>> = {
+  AUTOMATIC: Wand2,
+  RANDOM: Shuffle,
+  RATING: TrendingUp,
+  ROUND_ROBIN: Grid3x3,
+  WINNERS_COURT: Crown,
+  ESCALERA: ArrowUpDown,
+  KING_OF_COURT: Trophy,
+};
 
-const GENERATION_DEFS: GenerationDef[] = [
-  { value: 'HANDMADE', icon: Pencil },
-  { value: 'AUTOMATIC', icon: Wand2 },
-  { value: 'RANDOM', icon: Shuffle, popular: true },
-  { value: 'RATING', icon: TrendingUp },
-  { value: 'ROUND_ROBIN', icon: Grid3x3, minPlayers: 4 },
-  { value: 'WINNERS_COURT', icon: Crown, minPlayers: 8, minCourts: 2, entityTypes: ['TOURNAMENT', 'LEAGUE', 'LEAGUE_SEASON'] },
-  { value: 'ESCALERA', icon: ArrowUpDown, minPlayers: 8, minCourts: 2, entityTypes: ['TOURNAMENT', 'LEAGUE', 'LEAGUE_SEASON'] },
-  { value: 'KING_OF_COURT', icon: Trophy, minPlayers: 8, minCourts: 2 },
-  { value: 'FIXED', icon: Sliders },
-];
-
-const DEF_BY_VALUE = new Map(GENERATION_DEFS.map((d) => [d.value, d]));
+const POPULAR_GENERATIONS = new Set<MatchGenerationType>(['RANDOM']);
 
 interface GameFormatStepGenerationProps {
   generationType: MatchGenerationType;
@@ -76,25 +62,14 @@ export const GameFormatStepGeneration = ({
   const { t } = useTranslation();
 
   const slotCount = maxParticipants ?? participantCount ?? 0;
-  const allowedOrder =
-    sport != null
-      ? allowedGenerationsForSport(sport, slotCount > 0 ? slotCount : undefined, playersPerMatch)
-      : allowedGenerationsForMaxParticipants(slotCount > 0 ? slotCount : undefined);
-
-  const effectiveEntityType: EntityType =
-    entityType === 'GAME' && slotCount > 4 ? 'TOURNAMENT' : entityType;
-
-  const countForRules = slotCount > 0 ? slotCount : (participantCount ?? 0);
+  const available = listWizardSelectableGenerations({
+    entityType,
+    sport,
+    playersPerMatch,
+    maxParticipants,
+    participantCount,
+  });
   const automaticCopyKey = automaticGenerationCopyKey(slotCount > 0 ? slotCount : undefined, hasFixedTeams);
-
-  const available: GenerationDef[] = allowedOrder
-    .map((v) => DEF_BY_VALUE.get(v))
-    .filter((g): g is GenerationDef => {
-      if (!g) return false;
-      if (g.entityTypes && !g.entityTypes.includes(effectiveEntityType)) return false;
-      if (g.minPlayers && countForRules < g.minPlayers) return false;
-      return true;
-    });
 
   const showClassicWarning =
     scoringMode === 'CLASSIC' &&
@@ -109,30 +84,40 @@ export const GameFormatStepGeneration = ({
     <div className="space-y-3">
       <p className="text-xs text-gray-500 dark:text-gray-400 px-1">{t('gameFormat.stepGenerationHint')}</p>
       <div className="space-y-2.5">
-        {available.map((g) => {
+        {available.map((value) => {
+          const icon = GENERATION_ICONS[value];
+          if (!icon) return null;
+          const minPlayers =
+            value === 'ROUND_ROBIN'
+              ? 4
+              : value === 'WINNERS_COURT' || value === 'ESCALERA' || value === 'KING_OF_COURT'
+                ? 8
+                : undefined;
+          const minCourts =
+            value === 'WINNERS_COURT' || value === 'ESCALERA' || value === 'KING_OF_COURT' ? 2 : undefined;
           const metaParts: string[] = [];
-          if (g.minPlayers) metaParts.push(t('gameFormat.minPlayers', { count: g.minPlayers }));
-          if (g.minCourts && g.minCourts > 1) metaParts.push(t('gameFormat.minCourts', { count: g.minCourts }));
+          if (minPlayers) metaParts.push(t('gameFormat.minPlayers', { count: minPlayers }));
+          if (minCourts && minCourts > 1) metaParts.push(t('gameFormat.minCourts', { count: minCourts }));
           const hint =
-            g.value === 'AUTOMATIC'
+            value === 'AUTOMATIC'
               ? t(`gameFormat.generationHint.Automatic.${automaticCopyKey}`, { defaultValue: '' })
-              : t(`gameFormat.generationHint.${genKey(g.value)}`, { defaultValue: '' });
+              : t(`gameFormat.generationHint.${genKey(value)}`, { defaultValue: '' });
           const combinedHint = [metaParts.join(' · '), hint].filter(Boolean).join(' — ');
           const subtitle =
-            g.value === 'AUTOMATIC'
+            value === 'AUTOMATIC'
               ? t(`gameFormat.generation.Automatic.subtitle.${automaticCopyKey}`)
-              : t(`gameFormat.generation.${genKey(g.value)}.subtitle`);
+              : t(`gameFormat.generation.${genKey(value)}.subtitle`);
           return (
             <FormatOptionCard
-              key={g.value}
-              icon={g.icon}
-              title={t(`gameFormat.generation.${genKey(g.value)}.title`)}
+              key={value}
+              icon={icon}
+              title={t(`gameFormat.generation.${genKey(value)}.title`)}
               subtitle={subtitle}
               hint={combinedHint || undefined}
-              badge={g.popular && scoringMode !== 'CLASSIC' ? t('gameFormat.popular') : undefined}
-              selected={generationType === g.value}
+              badge={POPULAR_GENERATIONS.has(value) && scoringMode !== 'CLASSIC' ? t('gameFormat.popular') : undefined}
+              selected={generationType === value}
               onClick={() => {
-                onChange(g.value);
+                onChange(value);
                 onSelectAdvance?.();
               }}
             />

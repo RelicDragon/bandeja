@@ -12,7 +12,7 @@ export function LiveServeSideArrow({ courtSide }: LiveServeSideArrowProps) {
       size={16}
       strokeWidth={2.5}
       aria-hidden
-      className="shrink-0 text-primary-700 dark:text-primary-300"
+      className="shrink-0 text-amber-700 dark:text-amber-300"
     />
   );
 }

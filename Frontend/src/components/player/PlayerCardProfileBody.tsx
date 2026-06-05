@@ -60,23 +60,23 @@ export const PlayerCardProfileBody = ({
             {t('playerCard.online')}
           </span>
         )}
-        <div className="absolute inset-0 flex items-center justify-center gap-6">
-          <div className="relative">
+        <div className="absolute inset-0 flex items-center justify-center gap-6 px-4 overflow-hidden">
+          <div className="relative shrink-0">
             {user.originalAvatar ? (
               <button type="button" onClick={onAvatarClick} className="cursor-pointer hover:opacity-90 transition-opacity">
                 {user.avatar ? (
-                  <img src={user.avatar || ''} alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'} className={`w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`} />
+                  <img src={user.avatar || ''} alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'} className={`w-32 h-32 shrink-0 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`} />
                 ) : (
-                  <div className={`w-32 h-32 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>{initials}</div>
+                  <div className={`w-32 h-32 shrink-0 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>{initials}</div>
                 )}
               </button>
             ) : user.avatar ? (
-              <img src={user.avatar || ''} alt={`${user.firstName} ${user.lastName}`} className={`w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`} />
+              <img src={user.avatar || ''} alt={`${user.firstName} ${user.lastName}`} className={`w-32 h-32 shrink-0 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`} />
             ) : (
-              <div className={`w-32 h-32 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>{initials}</div>
+              <div className={`w-32 h-32 shrink-0 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>{initials}</div>
             )}
           </div>
-          <div className="text-left text-white">
+          <div className="min-w-0 flex-1 text-left text-white">
             {(user.isTrainer || user.gender) && (
               <div className="mb-2 flex items-center gap-2">
                 {user.isTrainer && (
@@ -88,11 +88,11 @@ export const PlayerCardProfileBody = ({
                 <GenderIndicator gender={user.gender} layout="big" position="bottom-left" />
               </div>
             )}
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-2xl font-bold break-words">
               {user.firstName}
               {isBlocked && <span className="ml-2 text-lg font-semibold opacity-90">({t('playerCard.blocked') || 'Blocked'})</span>}
             </h2>
-            {user.lastName && <h3 className="text-xl font-semibold">{user.lastName}</h3>}
+            {user.lastName && <h3 className="text-xl font-semibold break-words">{user.lastName}</h3>}
             {user.verbalStatus && (
               <div className="mt-0 text-white/90 text-[9px] font-medium">
                 {user.verbalStatus}

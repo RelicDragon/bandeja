@@ -62,16 +62,24 @@ export const GameFormatGenderFields = ({
 
   return (
     <div className={className.trim()}>
-      <div className="flex w-full justify-center">
-        <SegmentedSwitch
-          className="!mx-0"
-          tabs={genderTabs}
-          activeId={genderTeams}
-          onChange={(id) => onGenderTeamsChange(id as GenderTeam)}
-          showOnlyActiveTabText
-          layoutId={genderSwitchLayoutId}
-          disabled={readOnly}
-        />
+      <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/70">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="min-w-0 grow text-sm font-medium text-gray-800 dark:text-gray-200">
+            {t('createGame.genderTeams.label')}
+          </span>
+          <div className="flex min-w-0 grow-[1000] basis-0 justify-end">
+            <SegmentedSwitch
+              className="!mx-0 max-w-full"
+              tabs={genderTabs}
+              activeId={genderTeams}
+              onChange={(id) => onGenderTeamsChange(id as GenderTeam)}
+              showOnlyActiveTabText
+              layoutId={genderSwitchLayoutId}
+              disabled={readOnly}
+              ariaLabel={t('createGame.genderTeams.label')}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -233,6 +233,22 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'player aggregates placement unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'results', 'playerAggregates.test.ts'),
+    ],
+  },
+  {
+    label: 'outcome stats snapshot unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'results', 'outcomeStatsSnapshot.test.ts'),
+    ],
+  },
+  {
     label: 'round robin generation unit',
     command: process.execPath,
     args: [

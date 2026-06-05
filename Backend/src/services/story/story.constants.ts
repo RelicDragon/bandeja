@@ -1,5 +1,5 @@
 export const STORY_TTL_MS = 24 * 60 * 60 * 1000;
-export const ACTIVITY_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+export const ACTIVITY_WINDOW_MS = STORY_TTL_MS;
 export const MAX_SEGMENTS_PER_USER = 20;
 export const MAX_BUBBLES = 100;
 export const MAX_OVERLAY_TEXT_LENGTH = 80;

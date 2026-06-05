@@ -1,4 +1,4 @@
-import type { RatingEngineConfig } from './ratingEngine';
+import type { SportRatingModel } from '../../sport/sportRegistryCasual';
 
 interface PlayerStats {
   level: number;
@@ -118,14 +118,14 @@ export function calculateRatingUpdate(
   playerStats: PlayerStats,
   matchResult: MatchResult,
   ballsInGames: boolean = false,
-  engine: RatingEngineConfig = {
+  engine: SportRatingModel['engine'] = {
     maxDeltaPerEvent: DEFAULT_MAX_LEVEL_CHANGE,
     useScoreMargin: true,
     ballsInGamesMargin: false,
   },
 ): RatingUpdate {
-  const maxLevelChange = engine.maxDeltaPerEvent;
-  const marginBallsInGames = ballsInGames && engine.ballsInGamesMargin;
+  const maxLevelChange = engine.maxDeltaPerEvent ?? DEFAULT_MAX_LEVEL_CHANGE;
+  const marginBallsInGames = ballsInGames && (engine.ballsInGamesMargin ?? false);
   const expectedWinProbability = calculateExpectedWinProbability(
     matchResult.ownTeamLevel,
     matchResult.opponentsLevel

@@ -84,7 +84,16 @@ export function StoriesViewer({
   const bubbleRef = useRef(bubble);
   bubbleRef.current = bubble;
 
+  const markCurrentSegmentViewed = useCallback(() => {
+    const b = bubbleRef.current;
+    const s = segmentRef.current;
+    if (!b || !s || s.viewed) return;
+    const entry = storyViewEntryFromSegment(s, b.user.id);
+    if (entry) markViewed(entry);
+  }, [markViewed]);
+
   const goNextSegment = useCallback(() => {
+    markCurrentSegmentViewed();
     setVideoEnded(false);
     if (segmentIndex < segments.length - 1) {
       lightHaptic();
@@ -102,13 +111,20 @@ export function StoriesViewer({
     void flushPendingViews();
     lightHaptic();
     onClose();
-  }, [segmentIndex, segments.length, bubbleIndex, bubbles.length, onBubbleChange, flushPendingViews, onClose]);
+  }, [
+    markCurrentSegmentViewed,
+    segmentIndex,
+    segments.length,
+    bubbleIndex,
+    bubbles.length,
+    onBubbleChange,
+    flushPendingViews,
+    onClose,
+  ]);
 
   const handleMarkViewed = useCallback(() => {
-    if (!bubble || !segment || segment.viewed) return;
-    const entry = storyViewEntryFromSegment(segment, bubble.user.id);
-    if (entry) markViewed(entry);
-  }, [bubble, segment, markViewed]);
+    markCurrentSegmentViewed();
+  }, [markCurrentSegmentViewed]);
 
   const engagementEnabled = featureFlags.stories;
 
@@ -169,29 +185,29 @@ export function StoriesViewer({
 
   const handleClose = useCallback(() => {
     lightHaptic();
-    playback.forceMarkViewed();
+    markCurrentSegmentViewed();
     void flushPendingViews();
     onClose();
-  }, [playback, flushPendingViews, onClose]);
+  }, [markCurrentSegmentViewed, flushPendingViews, onClose]);
 
   const openGame = useCallback(
     (gameId: string) => {
-      playback.forceMarkViewed();
+      markCurrentSegmentViewed();
       void flushPendingViews();
       onClose();
       navigate(`/games/${gameId}`);
     },
-    [playback, flushPendingViews, onClose, navigate]
+    [markCurrentSegmentViewed, flushPendingViews, onClose, navigate]
   );
 
   const openBracket = useCallback(
     (path: string) => {
-      playback.forceMarkViewed();
+      markCurrentSegmentViewed();
       void flushPendingViews();
       onClose();
       navigate(path);
     },
-    [playback, flushPendingViews, onClose, navigate]
+    [markCurrentSegmentViewed, flushPendingViews, onClose, navigate]
   );
 
   useEffect(() => {

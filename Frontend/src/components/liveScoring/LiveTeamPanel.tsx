@@ -4,7 +4,7 @@ import type { LiveBoardTheme, LiveTeamSide } from '@/utils/liveScoring';
 import { AnimatedLiveBoardValue } from './AnimatedLiveBoardValue';
 import type { Sport } from '@/types';
 import { LiveServeBallIndicator } from './LiveServeBallIndicator';
-import { servingPlayerNameClassName } from './servingRosterStyles';
+import { servingPlayerNameClassName, servingRosterAvatarWrapClassName } from './servingRosterStyles';
 
 export type LiveServeIndicator = {
   serverTeam: LiveTeamSide;
@@ -68,15 +68,17 @@ export const LiveTeamPanel = ({
           <div key={p?.id ?? `empty-${i}`} className="flex min-w-0 items-center gap-3">
             {tv ? (
               <>
-                <PlayerAvatar
-                  player={p}
-                  showName={false}
-                  inlineFace
-                  inlineFacePlain
-                  inlineFaceSize="md"
-                  asDiv={nonInteractive}
-                  subscribePresence={false}
-                />
+                <div className={servingRosterAvatarWrapClassName(rowIsServing(i))}>
+                  <PlayerAvatar
+                    player={p}
+                    showName={false}
+                    inlineFace
+                    inlineFacePlain
+                    inlineFaceSize="md"
+                    asDiv={nonInteractive}
+                    subscribePresence={false}
+                  />
+                </div>
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <span
                     className={servingPlayerNameClassName(
@@ -91,13 +93,15 @@ export const LiveTeamPanel = ({
               </>
             ) : (
               <>
-                <PlayerAvatar
-                  player={p}
-                  showName={false}
-                  extrasmall
-                  asDiv={nonInteractive}
-                  subscribePresence={false}
-                />
+                <div className={servingRosterAvatarWrapClassName(rowIsServing(i))}>
+                  <PlayerAvatar
+                    player={p}
+                    showName={false}
+                    extrasmall
+                    asDiv={nonInteractive}
+                    subscribePresence={false}
+                  />
+                </div>
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <span className={servingPlayerNameClassName(rowIsServing(i), 'panel')}>
                     {p ? lineName(p) : '—'}

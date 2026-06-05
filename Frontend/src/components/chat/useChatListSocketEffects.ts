@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { matchDraftToChat } from '@/utils/chatListUtils';
-import { calculateLastMessageDate, deduplicateChats, type FilterCache } from '@/utils/chatListHelpers';
+import { calculateLastMessageDate, deduplicateChats } from '@/utils/chatListHelpers';
 import {
   patchThreadIndexClearUnread,
   patchThreadIndexFromMessage,
@@ -21,7 +21,7 @@ import {
   chatMessageToGameListPreview,
   isGamePublicListPreviewMessage,
 } from '@/utils/gameChatListPreview';
-import { chatListModuleCache } from './chatListModuleCache';
+import { useChatListFeedStore } from './chatListFeedStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 
 function mergeGroupChannelSnapshotIntoChats(prev: ChatItem[], channelId: string, fresh: GroupChannel): ChatItem[] {
@@ -80,10 +80,9 @@ function mergeGroupChannelLatestMessageIntoChats(
   });
 }
 
-/** When fromUnreadSocket, skip in-list check — chatsRef can lag right after setChats. */
+/** When fromUnreadSocket, skip in-list check — rows can lag right after patchRows. */
 function refreshGroupChannelRowFromApi(
   channelId: string,
-  setChats: React.Dispatch<React.SetStateAction<ChatItem[]>>,
   chatsRef: React.MutableRefObject<ChatItem[]>,
   fromUnreadSocket = false
 ): void {
@@ -99,20 +98,26 @@ function refreshGroupChannelRowFromApi(
       if (msgs?.length) {
         const latest = msgs[msgs.length - 1]!;
         const updatedAt = latest.updatedAt ?? latest.createdAt;
-        setChats((prev) => mergeGroupChannelLatestMessageIntoChats(prev, channelId, latest, updatedAt));
+        useChatListFeedStore.getState().patchRows((prev) =>
+          mergeGroupChannelLatestMessageIntoChats(prev, channelId, latest, updatedAt)
+        );
         return;
       }
       void chatApi.getGroupChannelById(channelId).then((res) => {
         const fresh = res.data;
         if (!fresh) return;
-        setChats((prev) => mergeGroupChannelSnapshotIntoChats(prev, channelId, fresh));
+        useChatListFeedStore.getState().patchRows((prev) =>
+          mergeGroupChannelSnapshotIntoChats(prev, channelId, fresh)
+        );
       });
     })
     .catch(() => {
       void chatApi.getGroupChannelById(channelId).then((res) => {
         const fresh = res.data;
         if (!fresh) return;
-        setChats((prev) => mergeGroupChannelSnapshotIntoChats(prev, channelId, fresh));
+        useChatListFeedStore.getState().patchRows((prev) =>
+          mergeGroupChannelSnapshotIntoChats(prev, channelId, fresh)
+        );
       });
     });
 }
@@ -138,7 +143,6 @@ function mergeUserChatLastMessageIntoChats(
 
 function refreshUserChatRowFromApi(
   chatId: string,
-  setChats: React.Dispatch<React.SetStateAction<ChatItem[]>>,
   chatsRef: React.MutableRefObject<ChatItem[]>
 ): void {
   const inList = chatsRef.current.some((c) => c.type === 'user' && c.data.id === chatId);
@@ -148,7 +152,9 @@ function refreshUserChatRowFromApi(
     const latest = msgs[msgs.length - 1]!;
     const updatedAt = latest.updatedAt ?? latest.createdAt;
     usePlayersStore.getState().patchUserChatPreview(chatId, latest, updatedAt);
-    setChats((prev) => mergeUserChatLastMessageIntoChats(prev, chatId, latest, updatedAt));
+    useChatListFeedStore.getState().patchRows((prev) =>
+      mergeUserChatLastMessageIntoChats(prev, chatId, latest, updatedAt)
+    );
   }).catch(() => {});
 }
 
@@ -164,8 +170,6 @@ type SocketEventsParams = {
   lastNewBug: unknown;
   fetchChatsForFilter: (filter?: 'users' | 'bugs' | 'channels' | 'market') => Promise<void>;
   fetchBugs: (page?: number) => Promise<{ chats: ChatItem[]; hasMore: boolean }>;
-  setChats: React.Dispatch<React.SetStateAction<ChatItem[]>>;
-  chatsCacheRef: React.MutableRefObject<Partial<Record<'users' | 'bugs' | 'channels' | 'market', FilterCache>>>;
   draftsCacheRef: React.MutableRefObject<ChatDraft[] | null>;
   applyDraftToCache: (
     draft: ChatDraft | null,
@@ -173,8 +177,6 @@ type SocketEventsParams = {
     contextId: string,
     chatType?: string
   ) => void;
-  bugsPageRef: React.MutableRefObject<number>;
-  setBugsHasMore: (v: boolean) => void;
   chatsRef: React.MutableRefObject<ChatItem[]>;
 };
 
@@ -191,12 +193,8 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
     lastNewBug,
     fetchChatsForFilter,
     fetchBugs,
-    setChats,
-    chatsCacheRef,
     draftsCacheRef,
     applyDraftToCache,
-    bugsPageRef,
-    setBugsHasMore,
     chatsRef,
   } = p;
 
@@ -213,9 +211,9 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
     if (groupIds.length === 0 && userIds.length === 0) return;
     if (groupIds.length + userIds.length === 1) {
       if (groupIds.length === 1) {
-        refreshGroupChannelRowFromApi(groupIds[0]!, setChats, chatsRef, true);
+        refreshGroupChannelRowFromApi(groupIds[0]!, chatsRef, true);
       } else {
-        refreshUserChatRowFromApi(userIds[0]!, setChats, chatsRef);
+        refreshUserChatRowFromApi(userIds[0]!, chatsRef);
       }
       return;
     }
@@ -226,7 +224,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
       let gIdx = 0;
       let uIdx = 0;
       const applyPreviewPayload = (data: Awaited<ReturnType<typeof chatApi.postChatListRowPreviews>>) => {
-        setChats((prev) => {
+        useChatListFeedStore.getState().patchRows((prev) => {
           let next = prev;
           for (const id of Object.keys(data.groupChannels)) {
             const msg = data.groupChannels[id];
@@ -261,21 +259,21 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
         }
       } catch {
         for (const id of groupIds) {
-          refreshGroupChannelRowFromApi(id, setChats, chatsRef, true);
+          refreshGroupChannelRowFromApi(id, chatsRef, true);
         }
         for (const id of userIds) {
-          refreshUserChatRowFromApi(id, setChats, chatsRef);
+          refreshUserChatRowFromApi(id, chatsRef);
         }
         return;
       }
       for (const id of groupIds) {
-        if (!gotGroup.has(id)) refreshGroupChannelRowFromApi(id, setChats, chatsRef, true);
+        if (!gotGroup.has(id)) refreshGroupChannelRowFromApi(id, chatsRef, true);
       }
       for (const id of userIds) {
-        if (!gotUser.has(id)) refreshUserChatRowFromApi(id, setChats, chatsRef);
+        if (!gotUser.has(id)) refreshUserChatRowFromApi(id, chatsRef);
       }
     })();
-  }, [setChats, chatsRef]);
+  }, [chatsRef]);
 
   const scheduleCoalescedListRowRefreshes = useCallback(() => {
     if (rowRefreshMicroFlushScheduledRef.current) return;
@@ -313,26 +311,9 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
   useEffect(() => {
     const handleRefresh = () => {
       draftsCacheRef.current = null;
-      chatListModuleCache.drafts = null;
+      useChatListFeedStore.getState().invalidateDrafts();
       if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels' || chatsFilter === 'market') {
         void fetchChatsForFilter(chatsFilter as 'users' | 'bugs' | 'channels' | 'market');
-      }
-    };
-
-    const syncListCache = (next: ChatItem[]) => {
-      if (
-        chatsFilter !== 'users' &&
-        chatsFilter !== 'bugs' &&
-        chatsFilter !== 'channels' &&
-        chatsFilter !== 'market'
-      ) {
-        return;
-      }
-      const cached = chatsCacheRef.current[chatsFilter];
-      if (!cached) return;
-      chatsCacheRef.current[chatsFilter] = { ...cached, chats: next };
-      if (chatListModuleCache.userId === userId) {
-        chatListModuleCache.chats[chatsFilter] = chatsCacheRef.current[chatsFilter];
       }
     };
 
@@ -348,11 +329,10 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
         draftsCacheRef.current != null
           ? matchDraftToChat(draftsCacheRef.current, chatContextType as ChatContextType, contextId) ?? draft
           : draft;
-      setChats((prev) => {
+      useChatListFeedStore.getState().patchRows((prev) => {
         const next = deduplicateChats(
           updateChatDraftInList(prev, chatContextType, contextId, draftForList, chatsFilter, userId)
         );
-        syncListCache(next);
         if (
           chatContextType === 'GAME' &&
           chatsFilter === 'users' &&
@@ -375,20 +355,18 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
       const remainingDraft = draftsCacheRef.current
         ? matchDraftToChat(draftsCacheRef.current, chatContextType as ChatContextType, contextId)
         : null;
-      setChats((prev) => {
-        const next = deduplicateChats(
+      useChatListFeedStore.getState().patchRows((prev) =>
+        deduplicateChats(
           updateChatDraftInList(prev, chatContextType, contextId, remainingDraft, chatsFilter, userId)
-        );
-        syncListCache(next);
-        return next;
-      });
+        )
+      );
     };
 
     const handleViewingClearUnread = (event: Event) => {
       const customEvent = event as CustomEvent<{ contextType: string; contextId: string }>;
       const { contextType, contextId } = customEvent.detail;
       void patchThreadIndexClearUnread(contextType as ChatContextType, contextId);
-      setChats((prev) =>
+      useChatListFeedStore.getState().patchRows((prev) =>
         prev.map((chat) => {
           if (contextType === 'GAME' && chat.type === 'game' && chat.data.id === contextId) {
             return { ...chat, unreadCount: 0 };
@@ -422,7 +400,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
       window.removeEventListener('chat-viewing-clear-unread', handleViewingClearUnread);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [fetchChatsForFilter, chatsFilter, userId, applyDraftToCache, setChats, draftsCacheRef, chatsCacheRef]);
+  }, [fetchChatsForFilter, chatsFilter, userId, applyDraftToCache, draftsCacheRef]);
 
   useEffect(() => {
     const batch = useSocketEventsStore.getState().takeListChatMessages();
@@ -479,7 +457,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
     }
 
     let needsUserListRefetch = false;
-    setChats((prevChats) => {
+    useChatListFeedStore.getState().patchRows((prevChats) => {
       let next = prevChats;
       for (const { contextType, contextId, message, normalized } of work) {
         if (contextType === 'BUG' && chatsFilter === 'bugs') {
@@ -551,7 +529,6 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
     selectedChatId,
     selectedChatType,
     fetchChatsForFilter,
-    setChats,
     chatsRef,
   ]);
 
@@ -571,7 +548,7 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
     }
 
     let userListRefetchFromUnread = false;
-    setChats((prev) => {
+    useChatListFeedStore.getState().patchRows((prev) => {
       let next = prev;
       for (const lastChatUnreadCount of unreadBatch) {
         const { contextType, contextId, unreadCount, lastMessage: lmRaw } = lastChatUnreadCount as {
@@ -705,7 +682,6 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
     selectedChatType,
     chatsFilter,
     fetchChatsForFilter,
-    setChats,
     chatsRef,
     enqueueGroupChannelRowRefresh,
     enqueueUserChatRowRefresh,
@@ -725,15 +701,16 @@ export function useChatListSocketEffects(p: SocketEventsParams) {
       .then(({ chats, hasMore }) => {
         if (cancelled) return;
         const deduped = deduplicateChats(chats);
-        chatsCacheRef.current.bugs = { chats: deduped, bugsHasMore: hasMore };
         void persistThreadIndexReplace('bugs', deduped);
-        setChats(deduped);
-        setBugsHasMore(hasMore);
-        bugsPageRef.current = 1;
+        useChatListFeedStore.getState().commitFilterCache(
+          'bugs',
+          { chats: deduped, bugsHasMore: hasMore },
+          { userId, applyToVisible: true }
+        );
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [lastNewBug, chatsFilter, fetchBugs, chatsCacheRef, setChats, setBugsHasMore, bugsPageRef]);
+  }, [lastNewBug, chatsFilter, fetchBugs, userId]);
 }

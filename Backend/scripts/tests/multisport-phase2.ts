@@ -114,9 +114,9 @@ function testFeFindContract(): void {
   const storage = readFe('utils/gameFiltersStorage.ts');
   assert(storage.includes('filterSport'), 'gameFiltersStorage.filterSport');
 
-  const panel = readFe('components/home/FiltersPanel.tsx');
-  assert(panel.includes('onFilterSportChange'), 'FiltersPanel sport control');
-  assert(panel.includes('filterSport'), 'FiltersPanel filterSport prop');
+  const findSection = readFe('components/home/AvailableGamesSection.tsx');
+  assert(findSection.includes('filterSport'), 'Find section filterSport state');
+  assert(findSection.includes('patchPanelFields'), 'Find section sport filter control');
 
   const gamesApi = readFe('api/games.ts');
   assert(gamesApi.includes('sport?:'), 'games API accepts sport query param');

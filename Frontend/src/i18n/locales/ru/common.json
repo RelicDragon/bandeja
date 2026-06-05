@@ -95,8 +95,8 @@
     "matchFormat": "Формат матча",
     "matchSingles": "Одиночный",
     "matchDoubles": "Парный",
-    "match1v1": "1v1",
-    "match2v2": "2v2"
+    "match1v1": "1 на 1",
+    "match2v2": "2 на 2"
   },
   "sportFilter": {
     "section": "Вид спорта",

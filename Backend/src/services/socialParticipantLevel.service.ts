@@ -1,8 +1,9 @@
-import { Prisma, LevelChangeEventType, EntityType, ParticipantRole } from '@prisma/client';
+import { Prisma, EntityType, ParticipantRole } from '@prisma/client';
 import {
   SOCIAL_PARTICIPANT_LEVEL,
   ROLE_MULTIPLIERS,
 } from './socialLevelConstants';
+import { createSocialEvent, revertForGame } from './levelChange';
 
 export class SocialParticipantLevelService {
   static async applySocialParticipantLevelChanges(
@@ -121,15 +122,12 @@ export class SocialParticipantLevelService {
           },
         });
 
-        await tx.levelChangeEvent.create({
-          data: {
-            userId: participant.userId,
-            levelBefore,
-            levelAfter,
-            eventType: LevelChangeEventType.SOCIAL_PARTICIPANT,
-            linkEntityType: game.entityType,
-            gameId: gameId,
-          },
+        await createSocialEvent(tx, {
+          userId: participant.userId,
+          gameId,
+          linkEntityType: game.entityType,
+          levelBefore,
+          levelAfter,
         });
       }
     }
@@ -173,28 +171,7 @@ export class SocialParticipantLevelService {
     gameId: string,
     tx: Prisma.TransactionClient
   ): Promise<void> {
-    const events = await tx.levelChangeEvent.findMany({
-      where: {
-        gameId: gameId,
-        eventType: LevelChangeEventType.SOCIAL_PARTICIPANT,
-      },
-    });
-
-    for (const event of events) {
-      await tx.user.update({
-        where: { id: event.userId },
-        data: {
-          socialLevel: event.levelBefore,
-        },
-      });
-    }
-
-    await tx.levelChangeEvent.deleteMany({
-      where: {
-        gameId: gameId,
-        eventType: LevelChangeEventType.SOCIAL_PARTICIPANT,
-      },
-    });
+    await revertForGame(gameId, 'social', tx);
   }
 
   private static async countCoPlayedGames(

@@ -1,9 +1,10 @@
 import prisma from '../config/database';
-import { Prisma, LevelChangeEventType, EntityType, ParticipantRole } from '@prisma/client';
+import { Prisma, EntityType, ParticipantRole } from '@prisma/client';
 import {
   SOCIAL_PARTICIPANT_LEVEL,
   ROLE_MULTIPLIERS,
 } from './socialLevelConstants';
+import { createBarEvent } from './levelChange';
 
 export class BarResultsService {
   static async setBarResults(gameId: string, tx?: Prisma.TransactionClient): Promise<void> {
@@ -142,15 +143,12 @@ export class BarResultsService {
             },
           });
 
-          await client.levelChangeEvent.create({
-            data: {
-              userId: participant.userId,
-              levelBefore,
-              levelAfter,
-              eventType: LevelChangeEventType.SOCIAL_BAR,
-              linkEntityType: game.entityType,
-              gameId: gameId,
-            },
+          await createBarEvent(client, {
+            userId: participant.userId,
+            gameId,
+            linkEntityType: game.entityType,
+            levelBefore,
+            levelAfter,
           });
         }
       }

@@ -6,6 +6,7 @@ import {
   playersPerMatchOf,
   playersPerTeamOf,
   syncPlayersPerMatchOnRosterChange,
+  syncRosterOnSportChange,
   teamSideSlotsFull,
 } from './matchFormat';
 
@@ -64,6 +65,46 @@ describe('maxPlayersPerTeamForGame', () => {
   it('uses playersPerMatch when set', () => {
     expect(maxPlayersPerTeamForGame({ playersPerMatch: 2 }, 4)).toBe(1);
     expect(maxPlayersPerTeamForGame({ playersPerMatch: 4 }, 2)).toBe(2);
+  });
+});
+
+describe('syncRosterOnSportChange', () => {
+  it('forces padel doubles when switching from singles 2-roster', () => {
+    expect(syncRosterOnSportChange(2, 2, 4, 4)).toEqual({
+      maxParticipants: 4,
+      playersPerMatch: 4,
+      resetFixedTeams: true,
+    });
+  });
+
+  it('forces tennis singles when switching from doubles 4-roster', () => {
+    expect(syncRosterOnSportChange(4, 4, 2, 4)).toEqual({
+      maxParticipants: 2,
+      playersPerMatch: 2,
+      resetFixedTeams: true,
+    });
+  });
+
+  it('promotes singles roster to doubles when target sport defaults to doubles', () => {
+    expect(syncRosterOnSportChange(4, 2, 4, 4)).toEqual({
+      maxParticipants: 4,
+      playersPerMatch: 4,
+      resetFixedTeams: true,
+    });
+    expect(syncRosterOnSportChange(8, 2, 4, 4)).toEqual({
+      maxParticipants: 8,
+      playersPerMatch: 4,
+      resetFixedTeams: true,
+    });
+  });
+
+  it('does not change roster when already on target match format', () => {
+    expect(syncRosterOnSportChange(4, 4, 4, 4)).toBeNull();
+    expect(syncRosterOnSportChange(8, 4, 2, 4)).toBeNull();
+  });
+
+  it('does not change roster when target sport defaults to singles and roster is already singles', () => {
+    expect(syncRosterOnSportChange(2, 2, 2, 4)).toBeNull();
   });
 });
 

@@ -167,7 +167,7 @@ async function main() {
     const userPhoto = await prisma.gamePhoto.create({
       data: {
         gameId,
-        uploaderId: ownerId,
+        uploaderId: user.id,
         originalUrl: `/uploads/chat/originals/qa-user-${suffix}.jpg`,
         thumbnailUrl: `/uploads/chat/thumbnails/qa-user-${suffix}.jpg`,
       },

@@ -492,11 +492,6 @@ export const PADEL_PRESET_META: SportPresetMeta[] = [
     labelKey: 'gameFormat.scoring.CLASSIC_BEST_OF_5.sport.PADEL',
   },
   {
-    preset: 'BEST_OF_3_11',
-    tier: 'match',
-    labelKey: 'gameFormat.scoring.BEST_OF_3_11.sport.PADEL',
-  },
-  {
     preset: 'TIMED',
     tier: 'both',
     labelKey: 'gameFormat.scoring.TIMED.sport.PADEL',

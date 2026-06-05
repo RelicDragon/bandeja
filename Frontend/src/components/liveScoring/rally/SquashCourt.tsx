@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { BasicUser } from '@/types';
 import { ServeCourtPlayerAvatar } from '../ServeCourtPlayerAvatar';
-import { SERVE_COURT_HIGHLIGHT_SQUASH } from '../serveCourtHighlight';
+import { SERVE_COURT_HIGHLIGHT, courtPlayerIsServing } from '../serveCourtHighlight';
 import type { LiveTeamSide } from '@/utils/liveScoring';
 import type { CourtServeSide } from '@/utils/liveScoring/serveGuide';
 import { serveSpringSettleMs, serveSpringTransition } from '../serveArrowMotion';
@@ -76,7 +76,21 @@ export function SquashCourt({
     for (const team of ['teamA', 'teamB'] as const) {
       const pos = sqSetupPlacement(team, courtEndsSwapped);
       const p = team === 'teamA' ? a0 : b0;
-      if (p) players.push({ team, p, x: pos.x, y: pos.y, serving: serverTeam === team });
+      if (p)
+        players.push({
+          team,
+          p,
+          x: pos.x,
+          y: pos.y,
+          serving: courtPlayerIsServing({
+            endsSetup,
+            showServeOverlay: hasServe,
+            serverTeam,
+            team,
+            serverPlayerIndex: 0,
+            playerIndex: 0,
+          }),
+        });
     }
   }
 
@@ -153,7 +167,7 @@ export function SquashCourt({
             <ServeCourtPlayerAvatar
               player={p}
               scale={sqAvatarScaleFromScreenY(y)}
-              servingHighlightClassName={serving ? SERVE_COURT_HIGHLIGHT_SQUASH : undefined}
+              servingHighlightClassName={serving ? SERVE_COURT_HIGHLIGHT : undefined}
             />
           </motion.div>
         ))}

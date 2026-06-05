@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } f
 import { motion } from 'framer-motion';
 import type { BasicUser } from '@/types';
 import { ServeCourtPlayerAvatar } from '../ServeCourtPlayerAvatar';
-import { SERVE_COURT_HIGHLIGHT_CLASSIC } from '../serveCourtHighlight';
+import { SERVE_COURT_HIGHLIGHT, courtPlayerIsServing } from '../serveCourtHighlight';
 import type { CourtServeSide } from '@/utils/liveScoring';
 import { ServeArcTrace } from './ServeArcTrace';
 import { TennisBallMarker } from './TennisBallMarker';
@@ -151,8 +151,7 @@ export function TennisCourt({
   const settleGenRef = useRef(0);
   const playerTargetRef = useRef(0);
 
-  const showSetupAvatars = endsSetup && matchDoubles;
-  const projectedSlots = (showSetupAvatars || !endsSetup ? slots : [])
+  const projectedSlots = slots
     .filter((s) => s.p)
     .map((s) => {
       const pos = tnProjectFlat(s.x, s.y);
@@ -225,7 +224,14 @@ export function TennisCourt({
       <div className="pointer-events-none absolute inset-0 z-[3]" aria-hidden>
         {projectedSlots.map(({ p, px, py, team, idx, avatarScale }) => {
           if (!p) return null;
-          const serving = showServeOverlay && serverTeam === team && serverPlayerIndex === idx;
+          const serving = courtPlayerIsServing({
+            endsSetup,
+            showServeOverlay,
+            serverTeam,
+            team,
+            serverPlayerIndex,
+            playerIndex: idx,
+          });
           return (
             <motion.div
               key={`${p.id}-${idx}`}
@@ -238,7 +244,7 @@ export function TennisCourt({
               <ServeCourtPlayerAvatar
                 player={p}
                 scale={avatarScale}
-                servingHighlightClassName={serving ? SERVE_COURT_HIGHLIGHT_CLASSIC : undefined}
+                servingHighlightClassName={serving ? SERVE_COURT_HIGHLIGHT : undefined}
               />
             </motion.div>
           );

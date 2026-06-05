@@ -1,6 +1,7 @@
 {
   "gameFormat": {
     "title": "Formát hry",
+    "resultsByAnyoneEditHint": "Výsledky může zadat kdokoli — každý hrající účastník může měnit formát i zadávat výsledky.",
     "trainingTitle": "Trénink",
     "recommended": "Doporučeno",
     "popular": "Populární",

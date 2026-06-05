@@ -130,13 +130,14 @@ export const ParticipantsSetupSection = ({
               animate={{ opacity: 1, height: 'auto', y: 0 }}
               exit={{ opacity: 0, height: 0, y: -6 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
-              className="overflow-hidden"
+              className="overflow-hidden border-t border-gray-200 dark:border-gray-800 pt-4"
             >
               <MatchFormatControl
                 playersPerMatch={playersPerMatch}
                 allowedCounts={allowedPlayerCountsPerMatch}
                 onChange={onPlayersPerMatchChange}
-                label={t('sport.matchFormat')}
+                emphasized
+                label={t('createGame.teamFormat')}
                 labelSingles={t('sport.matchSingles')}
                 labelDoubles={t('sport.matchDoubles')}
                 hintSingles={t('sport.match1v1')}

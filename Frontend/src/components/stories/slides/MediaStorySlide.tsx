@@ -3,9 +3,14 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { resolveChatMediaUrl } from '@/components/audio/audioWaveformUtils';
 import { ensureChatMediaDownloaded } from '@/services/chat/chatMediaDownloadManager';
 import { OVERLAY_CONTROL_GLASS } from '@/components/ui/overlayControlGlass';
+import { STORY_COMPOSITION_FRAME_CLASS } from '@/components/stories/create/utils/storyCompositionLayout';
+import { resolveStoryViewerPresentation } from '@/components/stories/create/utils/storyCompositionViewport';
 import { STORY_VIDEO_STALL_MS } from '@/components/stories/storyPlayback';
+import { StoryCompositionViewport } from '@/components/stories/StoryCompositionViewport';
+import { STORY_COMPOSITION_MEDIA_FILL_CLASS } from '@/components/stories/StoryCompositionMedia';
 import { useStoryViewerEngagementPaused } from '@/components/stories/viewer/storyViewerEngagementPause';
 import type { StorySegment } from '@/api/stories';
+import { MediaStoryOverlayV2 } from './MediaStoryOverlayV2';
 
 const MEDIA_CLASS = 'h-full w-full object-cover';
 
@@ -43,6 +48,20 @@ export function MediaStorySlide({
     segment.sourceType === 'USER_STORY_ITEM' && segment.media.type === 'VIDEO'
       ? segment.media.thumbnailUrl
       : undefined;
+  const overlayText =
+    segment.sourceType === 'USER_STORY_ITEM' ? segment.media.overlayText : undefined;
+  const rawOverlayStyle =
+    segment.sourceType === 'USER_STORY_ITEM' ? segment.media.overlayStyle : undefined;
+
+  const displayWidth = segment.media.width ?? 1080;
+  const displayHeight = segment.media.height ?? 1920;
+  const presentation = resolveStoryViewerPresentation({
+    overlayStyle: rawOverlayStyle,
+    overlayText,
+    isVideo,
+    displayWidth,
+    displayHeight,
+  });
 
   const handleMediaError = useCallback(() => {
     if (retryCount < 2) setRetryCount((c) => c + 1);
@@ -152,35 +171,89 @@ export function MediaStorySlide({
     </button>
   ) : null;
 
+  const simpleVideo = (
+    <video
+      ref={videoRef}
+      key={`${mediaUrl}-${retryCount}`}
+      src={mediaUrl}
+      poster={posterUrl ? resolveChatMediaUrl(posterUrl) : undefined}
+      className={MEDIA_CLASS}
+      playsInline
+      preload="auto"
+      onLoadedMetadata={handleLoadedMetadata}
+      onEnded={onVideoEnded}
+      onError={handleMediaError}
+      onTimeUpdate={reportVideoProgress}
+    />
+  );
+
+  const simpleImage = (
+    <img
+      key={`${mediaUrl}-${retryCount}`}
+      src={mediaUrl}
+      alt=""
+      className={MEDIA_CLASS}
+      draggable={false}
+      onError={handleMediaError}
+    />
+  );
+
+  const compositionVideo = (
+    <video
+      ref={videoRef}
+      key={`${mediaUrl}-${retryCount}`}
+      src={mediaUrl}
+      poster={posterUrl ? resolveChatMediaUrl(posterUrl) : undefined}
+      className={STORY_COMPOSITION_MEDIA_FILL_CLASS}
+      playsInline
+      preload="auto"
+      onLoadedMetadata={handleLoadedMetadata}
+      onEnded={onVideoEnded}
+      onError={handleMediaError}
+      onTimeUpdate={reportVideoProgress}
+    />
+  );
+
+  const simpleMediaNode = isVideo ? (
+    <>
+      {simpleVideo}
+      {muteButton}
+    </>
+  ) : (
+    simpleImage
+  );
+
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black">
-      {isVideo ? (
-        <>
-          <video
-            ref={videoRef}
-            key={`${mediaUrl}-${retryCount}`}
-            src={mediaUrl}
-            poster={posterUrl ? resolveChatMediaUrl(posterUrl) : undefined}
-            className={MEDIA_CLASS}
-            playsInline
-            preload="auto"
-            onLoadedMetadata={handleLoadedMetadata}
-            onEnded={onVideoEnded}
-            onError={handleMediaError}
-            onTimeUpdate={reportVideoProgress}
-          />
-          {muteButton}
-        </>
+      {presentation.useCompositionMedia && presentation.overlayV2 ? (
+        <StoryCompositionViewport
+          className={STORY_COMPOSITION_FRAME_CLASS}
+          media={{
+            transform: presentation.mediaTransform,
+            adjust: presentation.mediaAdjust,
+            naturalWidth: presentation.naturalWidth,
+            naturalHeight: presentation.naturalHeight,
+            children: compositionVideo,
+          }}
+          overlayStyle={presentation.showCanvasOverlay ? presentation.overlayV2 : null}
+        >
+          {() => muteButton}
+        </StoryCompositionViewport>
       ) : (
-        <img
-          key={`${mediaUrl}-${retryCount}`}
-          src={mediaUrl}
-          alt=""
-          className={MEDIA_CLASS}
-          draggable={false}
-          onError={handleMediaError}
-        />
+        <div className={STORY_COMPOSITION_FRAME_CLASS}>{simpleMediaNode}</div>
       )}
+
+      {presentation.showDetachedOverlay && presentation.overlayV2 ? (
+        <MediaStoryOverlayV2 overlayStyle={presentation.overlayV2} />
+      ) : null}
+
+      {presentation.showLegacyOverlayText ? (
+        <div className={`absolute inset-x-6 z-10 text-center ${presentation.v1PositionClass}`}>
+          <p className={`inline-block rounded-xl px-4 py-2 text-lg font-semibold ${presentation.v1TextThemeClass}`}>
+            {presentation.legacyOverlayText}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }

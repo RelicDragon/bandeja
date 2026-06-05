@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { ChatMessage } from '@/api/chat';
+import { CHAT_DATE_SEPARATOR_ESTIMATE_PX } from '@/utils/chatDateSeparator';
 import {
   ROW_ESTIMATE_IMAGE_PX,
   ROW_ESTIMATE_PX,
   ROW_ESTIMATE_VIDEO_PX,
   estimateMessageRowHeightPx,
+  resolveMessageRowEstimateWithDateSeparator,
 } from '../chatMessageRowEstimate';
 
 function msg(partial: Partial<ChatMessage> & Pick<ChatMessage, 'id'>): ChatMessage {
@@ -43,5 +45,22 @@ describe('estimateMessageRowHeightPx', () => {
 
   it('uses default for plain text', () => {
     expect(estimateMessageRowHeightPx(msg({ id: 't1', content: 'hi', messageType: 'TEXT' }))).toBe(ROW_ESTIMATE_PX);
+  });
+});
+
+describe('resolveMessageRowEstimateWithDateSeparator', () => {
+  it('adds separator height on first row', () => {
+    const messages = [msg({ id: 't1', content: 'hi', createdAt: '2026-06-01T10:00:00' })];
+    expect(resolveMessageRowEstimateWithDateSeparator(messages, 0)).toBe(
+      ROW_ESTIMATE_PX + CHAT_DATE_SEPARATOR_ESTIMATE_PX,
+    );
+  });
+
+  it('skips separator height on same-day follow-up', () => {
+    const messages = [
+      msg({ id: 't1', content: 'a', createdAt: '2026-06-01T10:00:00' }),
+      msg({ id: 't2', content: 'b', createdAt: '2026-06-01T11:00:00' }),
+    ];
+    expect(resolveMessageRowEstimateWithDateSeparator(messages, 1)).toBe(ROW_ESTIMATE_PX);
   });
 });

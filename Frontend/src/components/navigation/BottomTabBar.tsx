@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useBottomTabUnreadBadges } from '@/hooks/useUnreadBridge';
 import { useDesktop } from '@/hooks/useDesktop';
-import { useMemo, useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { parseLocation, placeToPageType, type PageType } from '@/utils/urlSchema';
 import { hasEnabledSports } from '@/utils/profileSports';
@@ -17,7 +17,7 @@ interface BottomTabBarProps {
   animateEntry?: boolean;
 }
 
-export const BottomTabBar = ({ containerPosition = false, tabOverride, previousPath, animateEntry = false }: BottomTabBarProps) => {
+const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPath, animateEntry = false }: BottomTabBarProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -122,7 +122,6 @@ export const BottomTabBar = ({ containerPosition = false, tabOverride, previousP
                 className="flex flex-col items-center justify-center px-3 h-full relative group"
                 whileTap={{ scale: 0.85 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                layout="position"
               >
                 <motion.div
                   className="relative"
@@ -213,3 +212,5 @@ export const BottomTabBar = ({ containerPosition = false, tabOverride, previousP
     </motion.div>
   );
 };
+
+export const BottomTabBar = memo(BottomTabBarInner);

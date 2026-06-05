@@ -17,7 +17,7 @@ import type { Sport } from '@/types';
 import { AnimatedLiveBoardValue } from './AnimatedLiveBoardValue';
 import { LiveServeBallIndicator } from './LiveServeBallIndicator';
 import type { LiveServeIndicator } from './LiveTeamPanel';
-import { servingPlayerNameClassName } from './servingRosterStyles';
+import { servingPlayerNameClassName, servingRosterAvatarWrapClassName } from './servingRosterStyles';
 
 function lineName(p: BasicUser): string {
   return [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.id;
@@ -57,14 +57,16 @@ const BroadcastTeamRoster = memo(function BroadcastTeamRoster({
     <div className={`flex min-w-0 flex-col items-stretch gap-1.5 text-left sm:gap-2 ${nameClass}`}>
       {roster.map((p, i) => (
         <span key={p?.id ?? `slot-${i}`} className="flex min-w-0 items-center gap-2">
-          <PlayerAvatar
-            player={p}
-            showName={false}
-            inlineFace
-            inlineFacePlain
-            asDiv
-            subscribePresence={false}
-          />
+          <div className={servingRosterAvatarWrapClassName(rowIsServing(i))}>
+            <PlayerAvatar
+              player={p}
+              showName={false}
+              inlineFace
+              inlineFacePlain
+              asDiv
+              subscribePresence={false}
+            />
+          </div>
           <span className={servingPlayerNameClassName(rowIsServing(i), 'broadcast')}>
             {p ? lineName(p) : '—'}
           </span>

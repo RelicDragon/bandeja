@@ -131,7 +131,10 @@ function testGCasual(): void {
         (tmpl.matchTimedCapMinutes ?? 0) >= 1,
         `${tmpl.id} timer template has per-match cap`,
       );
-      assert(Boolean(tmpl.expectedDurationLabelKey), `${tmpl.id} has expected duration label`);
+      assert(
+        Boolean(tmpl.expectedDurationLabelKey),
+        `${tmpl.id} has duration hint`,
+      );
     }
   }
   console.log('ok: G-CASUAL');

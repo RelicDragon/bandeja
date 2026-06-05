@@ -24,6 +24,8 @@ export interface LevelHistoryItem {
   sport?: Sport | null;
   eventType?: 'GAME' | 'LUNDA' | 'SET' | 'QUESTIONNAIRE' | 'OTHER' | 'SOCIAL_BAR' | 'SOCIAL_PARTICIPANT';
   linkEntityType?: EntityType | null;
+  /** False when the linked game does not affect competitive level. */
+  affectsRating?: boolean;
 }
 
 export type GamesStatType = '30' | '90' | 'all';

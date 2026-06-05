@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Trash2, RotateCw } from 'lucide-react';
 import Slider from 'rc-slider';
@@ -9,8 +10,14 @@ import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
 import { RangeSlider } from './RangeSlider';
 import { ConfirmationModal } from './ConfirmationModal';
-import { GameFormatGenderFields } from '@/components/gameFormat/GameFormatTeamsFields';
-import { gameFormatGenderVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
+import {
+  GameFormatFixedTeamsToggle,
+  GameFormatGenderFields,
+} from '@/components/gameFormat/GameFormatTeamsFields';
+import {
+  gameFormatFixedTeamsToggleVisible,
+  gameFormatGenderVisible,
+} from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { Game, GenderTeam } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { useSportConfig } from '@/hooks/useSportConfig';
@@ -47,6 +54,9 @@ export const EditMaxParticipantsModal = ({
     game.maxLevel ?? 7.0,
   ]);
   const [genderTeams, setGenderTeams] = useState<GenderTeam>(game.genderTeams ?? 'ANY');
+  const [hasFixedTeams, setHasFixedTeams] = useState(() =>
+    game.maxParticipants === 2 ? false : (game.hasFixedTeams ?? false),
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [removedPlayerIds, setRemovedPlayerIds] = useState<Set<string>>(new Set());
   const [originalParticipants, setOriginalParticipants] = useState<typeof game.participants>([]);
@@ -66,6 +76,9 @@ export const EditMaxParticipantsModal = ({
       setPlayersPerMatch(game.playersPerMatch ?? sportConfig.defaultPlayersPerMatch);
       setLevelRange([game.minLevel ?? 1.0, game.maxLevel ?? 7.0]);
       setGenderTeams(game.genderTeams ?? 'ANY');
+      setHasFixedTeams(
+        game.maxParticipants === 2 ? false : (game.hasFixedTeams ?? false),
+      );
       setRemovedPlayerIds(new Set());
       setOriginalParticipants(game.participants.filter(p => p.status === 'PLAYING'));
       setIsEditingMaxParticipants(false);
@@ -101,6 +114,13 @@ export const EditMaxParticipantsModal = ({
     sportConfig.defaultPlayersPerMatch,
     sportConfig.allowedPlayerCountsPerMatch,
   ]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (newMaxParticipants === 2 || playersPerMatch !== 4) {
+      setHasFixedTeams(false);
+    }
+  }, [isOpen, newMaxParticipants, playersPerMatch]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -242,6 +262,17 @@ export const EditMaxParticipantsModal = ({
 
   const minParticipants = game.entityType === 'TRAINING' ? 1 : 2;
 
+  const showTeamFormat =
+    (game.entityType === 'GAME' || game.entityType === 'LEAGUE') &&
+    sportConfig.allowedPlayerCountsPerMatch.length > 1;
+
+  const shouldShowTeamFormat = showTeamFormat && newMaxParticipants > 2;
+
+  const showFixedTeamsToggle =
+    shouldShowTeamFormat &&
+    playersPerMatch === 4 &&
+    gameFormatFixedTeamsToggleVisible(game.entityType, newMaxParticipants);
+
   const validOptions = useMemo(() => {
     if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE_SEASON') {
       const maxAllowed =
@@ -297,6 +328,8 @@ export const EditMaxParticipantsModal = ({
         minLevel: number;
         maxLevel: number;
         playersPerMatch?: number;
+        hasFixedTeams?: boolean;
+        allowUserInMultipleTeams?: boolean;
         genderTeams?: GenderTeam;
       } = {
         maxParticipants: newMaxParticipants,
@@ -305,6 +338,13 @@ export const EditMaxParticipantsModal = ({
       };
       if (game.entityType === 'GAME' || game.entityType === 'LEAGUE') {
         updatePayload.playersPerMatch = playersPerMatch;
+        const fixedTeamsApplicable =
+          gameFormatFixedTeamsToggleVisible(game.entityType, newMaxParticipants) &&
+          playersPerMatch === 4;
+        updatePayload.hasFixedTeams = fixedTeamsApplicable ? hasFixedTeams : false;
+        if (!updatePayload.hasFixedTeams) {
+          updatePayload.allowUserInMultipleTeams = false;
+        }
       }
       if (game.entityType === 'GAME' || game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') {
         updatePayload.genderTeams = genderTeams;
@@ -320,7 +360,23 @@ export const EditMaxParticipantsModal = ({
     } finally {
       setIsSaving(false);
     }
-  }, [canSave, isSaving, validRemovedPlayerIds, newMaxParticipants, playersPerMatch, levelRange, genderTeams, game.id, game.entityType, user?.id, onKickUser, onUpdate, t, handleClose]);
+  }, [
+    canSave,
+    isSaving,
+    validRemovedPlayerIds,
+    newMaxParticipants,
+    playersPerMatch,
+    hasFixedTeams,
+    levelRange,
+    genderTeams,
+    game.id,
+    game.entityType,
+    user?.id,
+    onKickUser,
+    onUpdate,
+    t,
+    handleClose,
+  ]);
 
   const handleMarkForRemoval = useCallback((userId: string) => {
     setRemovedPlayerIds(prev => {
@@ -522,19 +578,51 @@ export const EditMaxParticipantsModal = ({
             )}
           </div>
 
-          {(game.entityType === 'GAME' || game.entityType === 'LEAGUE') && (
-            <MatchFormatControl
-              playersPerMatch={playersPerMatch}
-              allowedCounts={sportConfig.allowedPlayerCountsPerMatch}
-              onChange={setPlayersPerMatch}
-              disabled={newMaxParticipants === 2}
-              label={t('sport.matchFormat')}
-              labelSingles={t('sport.matchSingles')}
-              labelDoubles={t('sport.matchDoubles')}
-              hintSingles={t('sport.match1v1')}
-              hintDoubles={t('sport.match2v2')}
-            />
-          )}
+          <AnimatePresence initial={false}>
+            {shouldShowTeamFormat ? (
+              <motion.div
+                key="edit-max-team-format"
+                initial={{ opacity: 0, height: 0, y: -6 }}
+                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                exit={{ opacity: 0, height: 0, y: -6 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                className="overflow-hidden border-t border-gray-200 pt-4 dark:border-gray-800"
+              >
+                <MatchFormatControl
+                  playersPerMatch={playersPerMatch}
+                  allowedCounts={sportConfig.allowedPlayerCountsPerMatch}
+                  onChange={setPlayersPerMatch}
+                  emphasized
+                  label={t('createGame.teamFormat')}
+                  labelSingles={t('sport.matchSingles')}
+                  labelDoubles={t('sport.matchDoubles')}
+                  hintSingles={t('sport.match1v1')}
+                  hintDoubles={t('sport.match2v2')}
+                />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+
+          <AnimatePresence initial={false}>
+            {showFixedTeamsToggle ? (
+              <motion.div
+                key="edit-max-fixed-teams"
+                initial={{ opacity: 0, height: 0, y: -6 }}
+                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                exit={{ opacity: 0, height: 0, y: -6 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                className="overflow-hidden"
+              >
+                <GameFormatFixedTeamsToggle
+                  entityType={game.entityType}
+                  participantCount={newMaxParticipants}
+                  hasFixedTeams={hasFixedTeams}
+                  onHasFixedTeamsChange={setHasFixedTeams}
+                  readOnly={isSaving}
+                />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
 
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">

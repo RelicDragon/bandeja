@@ -10,7 +10,8 @@ import { useChatSyncStore } from '@/store/chatSyncStore';
 import { normalizeChatType } from '@/utils/chatType';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { putChatThreadMemory } from '@/services/chat/chatThreadMemoryCache';
-import { mergeChatMessagesAscending, mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
+import { mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
+import { mergeChatTypeSwitchPaint, planChatTypeSwitch } from '@/services/chat/threadSession';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
@@ -42,6 +43,7 @@ export interface UseGameChatActionsParams {
   setIsSwitchingChatType: (v: boolean) => void;
   setIsLoadingMessages: (v: boolean) => void;
   setIsInitialLoad: (v: boolean) => void;
+  teardownForChatTypeSwitch: () => void;
   handleMarkFailed: (tempId: string) => void;
   handleNewMessageRef: React.MutableRefObject<(message: import('@/api/chat').ChatMessage) => string | void>;
   scrollToBottom: () => void;
@@ -77,6 +79,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
     setIsSwitchingChatType,
     setIsLoadingMessages,
     setIsInitialLoad,
+    teardownForChatTypeSwitch,
     handleMarkFailed,
     handleNewMessageRef,
     scrollToBottom,
@@ -210,6 +213,12 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
   const handleChatTypeChange = useCallback(
     async (newChatType: ChatType) => {
       if (!id || newChatType === currentChatType || contextType === 'USER') return;
+      planChatTypeSwitch({
+        contextType,
+        contextId: id,
+        toChatType: newChatType,
+      });
+      teardownForChatTypeSwitch();
       setIsSwitchingChatType(true);
       setIsLoadingMessages(true);
       setCurrentChatType(newChatType);
@@ -233,16 +242,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
         const { messages: local } = await loadLocalThreadBootstrap(contextType, id, normalizedChatType);
         if (local.length > 0) {
           setMessages((prev) => {
-            const pending =
-              contextType === 'GAME'
-                ? prev.filter(
-                    (m) =>
-                      Boolean(m._optimisticId) &&
-                      normalizeChatType((m as import('@/api/chat').ChatMessage).chatType as ChatType) ===
-                        normalizedChatType
-                  )
-                : prev.filter((m) => Boolean(m._optimisticId));
-            const merged = mergeChatMessagesAscending(pending, local);
+            const merged = mergeChatTypeSwitchPaint(prev, local, contextType, normalizedChatType);
             messagesRef.current = merged;
             return merged;
           });
@@ -334,6 +334,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
       setIsInitialLoad,
       setCurrentChatType,
       handleNewMessageRef,
+      teardownForChatTypeSwitch,
     ]
   );
 

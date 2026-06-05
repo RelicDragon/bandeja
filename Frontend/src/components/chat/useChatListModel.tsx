@@ -14,8 +14,6 @@ import {
   gamesToChatItems,
   channelsToChatItems,
   applyDraftsToChatItems,
-  applyPaginationState,
-  createLoadMore,
   type FilterCache
 } from '@/utils/chatListHelpers';
 import { favoritesApi } from '@/api/favorites';
@@ -32,7 +30,7 @@ import {
   useMarketBuyerSellerUnreadBadges,
   useUnreadStoreWarm,
 } from '@/hooks/useUnreadBridge';
-import { selectContextUnreadForListItem, useUnreadStore } from '@/store/unreadStore';
+import { chatListUnreadFilterCount } from '@/components/chat/chatListUnreadFilter';
 import { resolveGameUnreadCounts, resolveGroupUnreadCounts, userChatUnreadCount } from '@/utils/unreadCountsFromStore';
 import { useDebounce } from '@/components/CityMap/useDebounce';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -56,10 +54,11 @@ import {
   persistThreadIndexUpsert,
 } from '@/services/chat/chatThreadIndex';
 import {
-  chatListModuleCache,
   clearChatListModuleCacheWhenUserMismatch,
   type ChatsFilterType,
 } from '@/components/chat/chatListModuleCache';
+import { useChatListFeedStore } from '@/components/chat/chatListFeedStore';
+import type { ChatListViewModel } from '@/components/chat/chatListViewModel.types';
 import { useChatListSocketEffects } from './useChatListSocketEffects';
 import { useChatListMergedDrafts } from '@/components/chat/useChatListMergedDrafts';
 import { useChatListPrefetch } from '@/components/chat/useChatListPrefetch';
@@ -67,20 +66,25 @@ import { useChatListDexieSyncEffects } from '@/components/chat/useChatListDexieS
 import { useChatListSearchUrlSync } from '@/components/chat/useChatListSearchUrlSync';
 import { useChatListMarketUnread } from '@/components/chat/useChatListMarketUnread';
 import { useChatListContactSections } from '@/components/chat/useChatListContactSections';
+import { shouldEnterChatListLoadingState } from '@/components/chat/chatListLoadingGate';
 
 export function useChatListModel({
   onChatSelect,
   isDesktop = false,
   selectedChatId,
   selectedChatType,
-}: ChatListProps) {
+}: ChatListProps): ChatListViewModel {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const { draftsCacheRef, getMergedDrafts, applyDraftToCache } = useChatListMergedDrafts(user?.id);
   const isOnline = useNetworkStore((s) => s.isOnline);
-  const { chatsFilter, bugsFilter, openBugModal, setOpenBugModal, viewingGameChatId } = useNavigationStore();
+  const chatsFilter = useNavigationStore((s) => s.chatsFilter);
+  const bugsFilter = useNavigationStore((s) => s.bugsFilter);
+  const openBugModal = useNavigationStore((s) => s.openBugModal);
+  const setOpenBugModal = useNavigationStore((s) => s.setOpenBugModal);
+  const viewingGameChatId = useNavigationStore((s) => s.viewingGameChatId);
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
   const listChatMessageSeq = useSocketEventsStore((state) => state.listChatMessageSeq);
   const listChatUnreadSeq = useSocketEventsStore((state) => state.listChatUnreadSeq);
@@ -88,10 +92,20 @@ export function useChatListModel({
   const lastNewBug = useSocketEventsStore((state) => state.lastNewBug);
   const lastSyncCompletedAt = useChatSyncStore((state) => state.lastSyncCompletedAt);
   const chatListDexieBump = useChatSyncStore((state) => state.chatListDexieBump);
-  const [chats, setChats] = useState<ChatItem[]>([]);
+  const chats = useChatListFeedStore((s) => s.rows);
+  const loading = useChatListFeedStore((s) => s.loading);
+  const bugsHasMore = useChatListFeedStore((s) => s.pagination.bugs.hasMore);
+  const bugsLoadingMore = useChatListFeedStore((s) => s.pagination.bugs.loadingMore);
+  const usersHasMore = useChatListFeedStore((s) => s.pagination.users.hasMore);
+  const usersLoadingMore = useChatListFeedStore((s) => s.pagination.users.loadingMore);
+  const channelsHasMore = useChatListFeedStore((s) => s.pagination.channels.hasMore);
+  const channelsLoadingMore = useChatListFeedStore((s) => s.pagination.channels.loadingMore);
+  const marketHasMore = useChatListFeedStore((s) => s.pagination.market.hasMore);
+  const marketLoadingMore = useChatListFeedStore((s) => s.pagination.market.loadingMore);
   const chatsRef = useRef(chats);
   chatsRef.current = chats;
   const prevViewingGameChatIdRef = useRef<string | null>(null);
+  const feed = useChatListFeedStore.getState;
 
   const reapplyDraftsToList = useCallback(() => {
     if (!user?.id) return;
@@ -103,30 +117,18 @@ export function useChatListModel({
     ) {
       return;
     }
-    chatListModuleCache.drafts = null;
+    feed().invalidateDrafts();
     draftsCacheRef.current = null;
     void (async () => {
       await new Promise<void>((resolve) => {
         setTimeout(resolve, 0);
       });
       const allDrafts = await getMergedDrafts(true);
-      setChats((prev) => {
-        if (prev.length === 0 && allDrafts.length === 0) return prev;
-        const next = applyDraftsToChatItems(prev, allDrafts, chatsFilter, user.id);
-        const cached = chatsCacheRef.current[chatsFilter];
-        if (cached) {
-          const entry = { ...cached, chats: next };
-          chatsCacheRef.current[chatsFilter] = entry;
-          chatListModuleCache.chats[chatsFilter] = entry;
-          chatListModuleCache.userId = user.id;
-        }
-        return next;
-      });
+      feed().reapplyDrafts(allDrafts, chatsFilter, user.id);
     })();
-  }, [user?.id, chatsFilter, getMergedDrafts, draftsCacheRef]);
+  }, [user?.id, chatsFilter, getMergedDrafts, draftsCacheRef, feed]);
 
   useChatListPrefetch(user?.id, isOnline, chatsRef);
-  const [loading, setLoading] = useState(true);
   const urlQuery = searchParams.get('q') ?? '';
   const [searchInput, setSearchInput] = useState(urlQuery);
   const debouncedSearchQuery = useDebounce(searchInput, 500);
@@ -139,18 +141,6 @@ export function useChatListModel({
   const [followersUsers, setFollowersUsers] = useState<BasicUser[]>([]);
   const [searchableUsersData, setSearchableUsersData] = useState<{ activeChats: ChatItem[]; cityUsers: BasicUser[] } | null>(null);
   const [listTransition, setListTransition] = useState<'idle' | 'out' | 'in'>('idle');
-  const [bugsHasMore, setBugsHasMore] = useState(false);
-  const [bugsLoadingMore, setBugsLoadingMore] = useState(false);
-  const bugsPageRef = useRef(1);
-  const [usersHasMore, setUsersHasMore] = useState(false);
-  const [usersLoadingMore, setUsersLoadingMore] = useState(false);
-  const usersPageRef = useRef(1);
-  const [channelsHasMore, setChannelsHasMore] = useState(false);
-  const [channelsLoadingMore, setChannelsLoadingMore] = useState(false);
-  const channelsPageRef = useRef(1);
-  const [marketHasMore, setMarketHasMore] = useState(false);
-  const [marketLoadingMore, setMarketLoadingMore] = useState(false);
-  const marketPageRef = useRef(1);
   const marketChatRole = (searchParams.get('role') === 'seller' ? 'seller' : 'buyer') as 'buyer' | 'seller';
   const itemIdFromUrl = searchParams.get('item');
   const [selectedMarketItemForDrawer, setSelectedMarketItemForDrawer] = useState<MarketItem | null>(null);
@@ -171,16 +161,12 @@ export function useChatListModel({
     [setSearchParams]
   );
 
-  const chatsCacheRef = useRef<Partial<Record<'users' | 'bugs' | 'channels' | 'market', FilterCache>>>({});
-
   useChatListDexieSyncEffects({
     userId: user?.id,
-    chatsFilter,
+    chatsFilter: chatsFilter as ChatsFilterType,
     contactsMode,
     debouncedSearchQuery,
     chatListDexieBump,
-    setChats,
-    chatsCacheRef,
   });
 
   const { marketChannelIdsKey, marketUnreadCounts } = useChatListMarketUnread(chatsFilter, chats);
@@ -315,6 +301,7 @@ export function useChatListModel({
 
   const fetchFilter = useCallback(
     async (filter: 'users' | 'bugs' | 'channels' | 'market') => {
+      const user = useAuthStore.getState().user;
       if (!user) return;
       const bf = useNavigationStore.getState().bugsFilter;
       const bugsFilterParams = (bf.status || bf.type || bf.createdByMe)
@@ -368,10 +355,8 @@ export function useChatListModel({
           cityUsers: cityUsersArray,
           usersHasMore: usersGroupsRes.pagination?.hasMore ?? false
         };
-        chatsCacheRef.current.users = cacheEntry;
-        chatListModuleCache.chats.users = cacheEntry;
-        chatListModuleCache.userId = user.id;
-        chatListModuleCache.lastFetchTime = Date.now();
+        useChatListFeedStore.getState().commitFilterCache('users', cacheEntry, { userId: user.id, applyToVisible: false });
+        useChatListFeedStore.getState().setLastFetchTime(Date.now());
         void persistThreadIndexReplace('users', usersChatItems);
         return;
       }
@@ -391,10 +376,8 @@ export function useChatListModel({
           chats: deduplicateChats(bugsChatItems),
           bugsHasMore: bugsRes.pagination?.hasMore ?? false
         };
-        chatsCacheRef.current.bugs = cacheEntry;
-        chatListModuleCache.chats.bugs = cacheEntry;
-        chatListModuleCache.userId = user.id;
-        chatListModuleCache.lastFetchTime = Date.now();
+        useChatListFeedStore.getState().commitFilterCache('bugs', cacheEntry, { userId: user.id, applyToVisible: false });
+        useChatListFeedStore.getState().setLastFetchTime(Date.now());
         void persistThreadIndexReplace('bugs', cacheEntry.chats);
         return;
       }
@@ -411,10 +394,8 @@ export function useChatListModel({
           chats: deduplicateChats(channelsChatItems),
           channelsHasMore: channelsRes.pagination?.hasMore ?? false
         };
-        chatsCacheRef.current.channels = cacheEntry;
-        chatListModuleCache.chats.channels = cacheEntry;
-        chatListModuleCache.userId = user.id;
-        chatListModuleCache.lastFetchTime = Date.now();
+        useChatListFeedStore.getState().commitFilterCache('channels', cacheEntry, { userId: user.id, applyToVisible: false });
+        useChatListFeedStore.getState().setLastFetchTime(Date.now());
         void persistThreadIndexReplace('channels', cacheEntry.chats);
         return;
       }
@@ -432,46 +413,31 @@ export function useChatListModel({
           chats: deduplicateChats(marketChatItems),
           marketHasMore: marketRes.pagination?.hasMore ?? false
         };
-        chatsCacheRef.current.market = cacheEntry;
-        chatListModuleCache.chats.market = cacheEntry;
-        chatListModuleCache.userId = user.id;
-        chatListModuleCache.lastFetchTime = Date.now();
+        useChatListFeedStore.getState().commitFilterCache('market', cacheEntry, { userId: user.id, applyToVisible: false });
+        useChatListFeedStore.getState().setLastFetchTime(Date.now());
         void persistThreadIndexReplace('market', cacheEntry.chats);
       }
     },
-    [user, getMergedDrafts]
+    [getMergedDrafts]
   );
 
   const runCoalescedFilterFetch = useCallback(
     async (filter: ChatsFilterType) => {
-      let p = chatListModuleCache.inFlightByFilter[filter];
+      const store = useChatListFeedStore.getState();
+      let p = store.getInFlight(filter);
       if (!p) {
         p = (async () => {
           try {
             await fetchFilter(filter);
           } finally {
-            delete chatListModuleCache.inFlightByFilter[filter];
+            useChatListFeedStore.getState().clearInFlight(filter);
           }
         })();
-        chatListModuleCache.inFlightByFilter[filter] = p;
+        store.registerInFlight(filter, p);
       }
       await p;
     },
     [fetchFilter]
-  );
-
-  const paginationSetters = useMemo(
-    () => ({
-      setBugsHasMore,
-      setUsersHasMore,
-      setChannelsHasMore,
-      setMarketHasMore,
-      bugsPageRef,
-      usersPageRef,
-      channelsPageRef,
-      marketPageRef
-    }),
-    []
   );
 
   const fetchChatsForFilter = useCallback(
@@ -485,37 +451,35 @@ export function useChatListModel({
         return;
       }
       if (filter !== useNavigationStore.getState().chatsFilter) return;
-      const cached = chatListModuleCache.chats[filter];
+      const cached = useChatListFeedStore.getState().getFilterCache(filter);
       if (!cached) return;
-      chatsCacheRef.current[filter] = cached;
-      setChats(deduplicateChats(cached.chats));
+      useChatListFeedStore.getState().commitFilterCache(filter, cached, {
+        userId: useAuthStore.getState().user?.id,
+        applyToVisible: true,
+      });
       if (filter === 'users') setMutedChats({});
       if (cached.cityUsers) {
         setCityUsers(cached.cityUsers);
         setSearchableUsersData({ activeChats: cached.chats, cityUsers: cached.cityUsers });
       }
-      applyPaginationState(filter, cached, paginationSetters);
     },
-    [paginationSetters, runCoalescedFilterFetch]
+    [runCoalescedFilterFetch]
   );
 
   useEffect(() => {
     if (chatsFilter !== 'users' && chatsFilter !== 'bugs' && chatsFilter !== 'channels' && chatsFilter !== 'market') return;
     if (!user?.id) return;
     clearChatListModuleCacheWhenUserMismatch(user.id);
+    useChatListFeedStore.getState().setActiveFilter(chatsFilter);
     const applyCacheToState = (cached: FilterCache, chatsWithDrafts?: ChatItem[]) => {
       const chatsToApply = chatsWithDrafts ?? cached.chats;
       const entry: FilterCache = { ...cached, chats: chatsToApply };
-      chatsCacheRef.current[chatsFilter] = entry;
-      chatListModuleCache.chats[chatsFilter] = entry;
-      chatListModuleCache.userId = user.id;
-      setChats(deduplicateChats(chatsToApply));
+      useChatListFeedStore.getState().commitFilterCache(chatsFilter, entry, { userId: user.id, applyToVisible: true });
       if (chatsFilter === 'users') setMutedChats({});
       if (cached.cityUsers) {
         setCityUsers(cached.cityUsers);
         setSearchableUsersData({ activeChats: chatsToApply, cityUsers: cached.cityUsers });
       }
-      applyPaginationState(chatsFilter, entry, paginationSetters);
     };
     const applyCacheWithDrafts = async (cached: FilterCache) => {
       await new Promise<void>((resolve) => {
@@ -529,15 +493,12 @@ export function useChatListModel({
         user.id
       );
       applyCacheToState(cached, withDrafts);
-      setLoading(false);
+      useChatListFeedStore.getState().setLoading(false);
     };
-    const cached = chatListModuleCache.chats[chatsFilter];
-    if (cached && chatListModuleCache.userId === user.id) {
+    const feedState = useChatListFeedStore.getState();
+    const cached = feedState.getFilterCache(chatsFilter);
+    if (cached && feedState.userId === user.id) {
       void applyCacheWithDrafts(cached);
-      return;
-    }
-    if (chatsCacheRef.current[chatsFilter]) {
-      void applyCacheWithDrafts(chatsCacheRef.current[chatsFilter]!);
       return;
     }
     let cancelled = false;
@@ -570,7 +531,7 @@ export function useChatListModel({
             if (chatsFilter === 'channels') dexOnly.channelsHasMore = false;
             if (chatsFilter === 'market') dexOnly.marketHasMore = false;
             applyCacheToState(dexOnly);
-            setLoading(false);
+            useChatListFeedStore.getState().setLoading(false);
           } else if (!cancelled && fromDex.length === 0 && !useNetworkStore.getState().isOnline) {
             showedDisk = true;
             const empty: FilterCache = { chats: [] };
@@ -582,7 +543,7 @@ export function useChatListModel({
             if (chatsFilter === 'channels') empty.channelsHasMore = false;
             if (chatsFilter === 'market') empty.marketHasMore = false;
             applyCacheToState(empty);
-            setLoading(false);
+            useChatListFeedStore.getState().setLoading(false);
             return;
           }
         } catch {
@@ -598,47 +559,47 @@ export function useChatListModel({
               console.error('Failed to fetch chats:', err);
             }
             if (cancelled) return;
-            const c = chatListModuleCache.chats[currentFilter];
-            if (c && chatListModuleCache.userId === user.id) {
-              chatsCacheRef.current[currentFilter] = c;
+            const c = useChatListFeedStore.getState().getFilterCache(currentFilter);
+            if (c && useChatListFeedStore.getState().userId === user.id) {
               if (useNavigationStore.getState().chatsFilter !== currentFilter) return;
-              setChats(deduplicateChats(c.chats));
+              useChatListFeedStore.getState().commitFilterCache(currentFilter, c, { userId: user.id, applyToVisible: true });
               if (currentFilter === 'users') setMutedChats({});
               if (c.cityUsers) {
                 setCityUsers(c.cityUsers);
                 setSearchableUsersData({ activeChats: c.chats, cityUsers: c.cityUsers });
               }
-              applyPaginationState(currentFilter, c, paginationSetters);
             }
           })();
           return;
         }
-        const inflight = chatListModuleCache.inFlightByFilter[chatsFilter];
+        const inflight = useChatListFeedStore.getState().getInFlight(chatsFilter);
         if (inflight) {
           await inflight;
           if (cancelled) return;
-          const after = chatListModuleCache.chats[chatsFilter];
-          if (after && chatListModuleCache.userId === user.id) {
+          const after = useChatListFeedStore.getState().getFilterCache(chatsFilter);
+          if (after && useChatListFeedStore.getState().userId === user.id) {
             applyCacheToState(after);
-            setLoading(false);
+            useChatListFeedStore.getState().setLoading(false);
             return;
           }
         }
-        if (!showedDisk) setLoading(true);
+        if (shouldEnterChatListLoadingState(showedDisk, chatsRef.current.length)) {
+          useChatListFeedStore.getState().setLoading(true);
+        }
         const currentFilter = chatsFilter;
         await runCoalescedFilterFetch(currentFilter);
         if (cancelled) return;
-        const c = chatListModuleCache.chats[chatsFilter];
+        const c = useChatListFeedStore.getState().getFilterCache(chatsFilter);
         if (c) applyCacheToState(c);
       } catch (err) {
         if (!cancelled) console.error('Failed to fetch chats:', err);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) useChatListFeedStore.getState().setLoading(false);
       }
     };
     run();
     return () => { cancelled = true; };
-  }, [fetchFilter, chatsFilter, paginationSetters, user?.id, runCoalescedFilterFetch, getMergedDrafts]);
+  }, [fetchFilter, chatsFilter, user?.id, runCoalescedFilterFetch, getMergedDrafts]);
 
   useEffect(() => {
     const prev = prevViewingGameChatIdRef.current;
@@ -661,10 +622,7 @@ export function useChatListModel({
       if (cancelled) return;
       const allDrafts = await getMergedDrafts(true);
       if (cancelled || allDrafts.length === 0) return;
-      setChats((prev) => {
-        if (prev.length === 0) return prev;
-        return applyDraftsToChatItems(prev, allDrafts, chatsFilter, user.id);
-      });
+      useChatListFeedStore.getState().reapplyDrafts(allDrafts, chatsFilter, user.id);
     })();
     return () => {
       cancelled = true;
@@ -676,97 +634,80 @@ export function useChatListModel({
     if (chatsFilter !== 'bugs') return;
     if (prevBugsFilterRef.current === bugsFilter) return;
     prevBugsFilterRef.current = bugsFilter;
-    chatsCacheRef.current.bugs = undefined;
-    chatListModuleCache.chats.bugs = undefined;
+    useChatListFeedStore.getState().invalidateFilterCache('bugs');
     let cancelled = false;
     fetchBugs(1).then(({ chats, hasMore }) => {
       if (cancelled) return;
       const deduped = deduplicateChats(chats);
-      chatsCacheRef.current.bugs = { chats: deduped, bugsHasMore: hasMore };
-      setChats(deduped);
-      setBugsHasMore(hasMore);
-      bugsPageRef.current = 1;
+      useChatListFeedStore.getState().commitFilterCache(
+        'bugs',
+        { chats: deduped, bugsHasMore: hasMore },
+        { userId: user?.id, applyToVisible: chatsFilter === 'bugs' }
+      );
       void persistThreadIndexReplace('bugs', deduped);
     }).catch(async () => {
       if (cancelled) return;
       const d = await loadThreadIndexForList('bugs');
-      if (d.length) setChats(deduplicateChats(d));
-      else setChats([]);
+      if (d.length) {
+        useChatListFeedStore.getState().commitFilterCache(
+          'bugs',
+          { chats: deduplicateChats(d) },
+          { userId: user?.id, applyToVisible: chatsFilter === 'bugs' }
+        );
+      } else {
+        useChatListFeedStore.getState().commitFilterCache('bugs', { chats: [] }, { userId: user?.id, applyToVisible: chatsFilter === 'bugs' });
+      }
     });
     return () => { cancelled = true; };
-  }, [chatsFilter, bugsFilter, fetchBugs]);
+  }, [chatsFilter, bugsFilter, fetchBugs, user?.id]);
+
+  const runFeedLoadMore = useCallback(
+    async (
+      filter: ChatsFilterType,
+      isActive: boolean,
+      loadingMore: boolean,
+      hasMore: boolean,
+      fetcher: (page: number) => Promise<{ chats: ChatItem[]; hasMore: boolean }>,
+      afterMore?: (more: ChatItem[]) => void
+    ) => {
+      if (!isActive || loadingMore || !hasMore) return;
+      const store = useChatListFeedStore.getState();
+      store.setPagination(filter, { loadingMore: true });
+      try {
+        const nextPage = store.pagination[filter].page + 1;
+        const { chats: moreChats, hasMore: nextHasMore } = await fetcher(nextPage);
+        afterMore?.(moreChats);
+        store.mergeLoadMoreRows(filter, moreChats, nextHasMore);
+      } finally {
+        useChatListFeedStore.getState().setPagination(filter, { loadingMore: false });
+      }
+    },
+    []
+  );
 
   const loadMoreBugs = useCallback(async () => {
-    const fn = createLoadMore({
-      isActive: chatsFilter === 'bugs',
-      loadingMore: bugsLoadingMore,
-      hasMore: bugsHasMore,
-      pageRef: bugsPageRef,
-      fetcher: fetchBugs,
-      setChats,
-      setLoadingMore: setBugsLoadingMore,
-      setHasMore: setBugsHasMore,
-      cacheKey: 'bugs',
-      cacheRef: chatsCacheRef,
-      deduplicate: deduplicateChats,
-      afterMore: (more) => void persistThreadIndexUpsert('bugs', more),
-    });
-    await fn();
-  }, [chatsFilter, bugsLoadingMore, bugsHasMore, fetchBugs]);
+    await runFeedLoadMore('bugs', chatsFilter === 'bugs', bugsLoadingMore, bugsHasMore, fetchBugs, (more) =>
+      void persistThreadIndexUpsert('bugs', more)
+    );
+  }, [chatsFilter, bugsLoadingMore, bugsHasMore, fetchBugs, runFeedLoadMore]);
 
   const loadMoreUsers = useCallback(async () => {
-    const fn = createLoadMore({
-      isActive: chatsFilter === 'users',
-      loadingMore: usersLoadingMore,
-      hasMore: usersHasMore,
-      pageRef: usersPageRef,
-      fetcher: fetchUsersGroups,
-      setChats,
-      setLoadingMore: setUsersLoadingMore,
-      setHasMore: setUsersHasMore,
-      cacheKey: 'users',
-      cacheRef: chatsCacheRef,
-      deduplicate: deduplicateChats,
-      afterMore: (more) => void persistThreadIndexUpsert('users', more),
-    });
-    await fn();
-  }, [chatsFilter, usersLoadingMore, usersHasMore, fetchUsersGroups]);
+    await runFeedLoadMore('users', chatsFilter === 'users', usersLoadingMore, usersHasMore, fetchUsersGroups, (more) =>
+      void persistThreadIndexUpsert('users', more)
+    );
+  }, [chatsFilter, usersLoadingMore, usersHasMore, fetchUsersGroups, runFeedLoadMore]);
 
   const loadMoreChannels = useCallback(async () => {
-    const fn = createLoadMore({
-      isActive: chatsFilter === 'channels',
-      loadingMore: channelsLoadingMore,
-      hasMore: channelsHasMore,
-      pageRef: channelsPageRef,
-      fetcher: fetchChannels,
-      setChats,
-      setLoadingMore: setChannelsLoadingMore,
-      setHasMore: setChannelsHasMore,
-      cacheKey: 'channels',
-      cacheRef: chatsCacheRef,
-      deduplicate: deduplicateChats,
-      afterMore: (more) => void persistThreadIndexUpsert('channels', more),
-    });
-    await fn();
-  }, [chatsFilter, channelsLoadingMore, channelsHasMore, fetchChannels]);
+    await runFeedLoadMore('channels', chatsFilter === 'channels', channelsLoadingMore, channelsHasMore, fetchChannels, (more) =>
+      void persistThreadIndexUpsert('channels', more)
+    );
+  }, [chatsFilter, channelsLoadingMore, channelsHasMore, fetchChannels, runFeedLoadMore]);
 
   const loadMoreMarket = useCallback(async () => {
-    const fn = createLoadMore({
-      isActive: chatsFilter === 'market',
-      loadingMore: marketLoadingMore,
-      hasMore: marketHasMore,
-      pageRef: marketPageRef,
-      fetcher: fetchMarket,
-      setChats,
-      setLoadingMore: setMarketLoadingMore,
-      setHasMore: setMarketHasMore,
-      cacheKey: 'market',
-      cacheRef: chatsCacheRef,
-      deduplicate: deduplicateChats,
-      afterMore: (more) => void persistThreadIndexUpsert('market', more),
-    });
-    await fn();
-  }, [chatsFilter, marketLoadingMore, marketHasMore, fetchMarket]);
+    await runFeedLoadMore('market', chatsFilter === 'market', marketLoadingMore, marketHasMore, fetchMarket, (more) =>
+      void persistThreadIndexUpsert('market', more)
+    );
+  }, [chatsFilter, marketLoadingMore, marketHasMore, fetchMarket, runFeedLoadMore]);
 
   const shouldLoadMore = (chatsFilter === 'bugs' && bugsHasMore && !bugsLoadingMore) ||
     (chatsFilter === 'users' && usersHasMore && !usersLoadingMore) ||
@@ -786,16 +727,15 @@ export function useChatListModel({
     fetchMarket(1).then(({ chats, hasMore }) => {
       if (cancelled) return;
       const deduped = deduplicateChats(chats);
-      chatsCacheRef.current.market = { chats: deduped, marketHasMore: hasMore };
       void persistThreadIndexReplace('market', deduped);
-      if (chatsFilter === 'market') {
-        setChats(deduped);
-        setMarketHasMore(hasMore);
-        marketPageRef.current = 1;
-      }
+      useChatListFeedStore.getState().commitFilterCache(
+        'market',
+        { chats: deduped, marketHasMore: hasMore },
+        { userId: user?.id, applyToVisible: chatsFilter === 'market' }
+      );
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, [lastChatUnreadCount, marketChannelIdsKey, chatsFilter, fetchMarket]);
+  }, [lastChatUnreadCount, marketChannelIdsKey, chatsFilter, fetchMarket, user?.id]);
 
   const fetchCityUsers = useCallback(async () => {
     if (!user?.currentCity?.id) return;
@@ -873,7 +813,7 @@ export function useChatListModel({
 
   useEffect(() => {
     if (chatsFilter !== 'users' || !debouncedSearchQuery.trim() || contactsMode) return;
-    const cached = chatsCacheRef.current.users?.cityUsers;
+    const cached = useChatListFeedStore.getState().getFilterCache('users')?.cityUsers;
     if (cached?.length) return;
     fetchCityUsers();
   }, [chatsFilter, debouncedSearchQuery, contactsMode, fetchCityUsers]);
@@ -897,12 +837,8 @@ export function useChatListModel({
     lastNewBug,
     fetchChatsForFilter,
     fetchBugs,
-    setChats,
-    chatsCacheRef,
     draftsCacheRef,
     applyDraftToCache,
-    bugsPageRef,
-    setBugsHasMore,
     chatsRef,
   });
 
@@ -983,8 +919,7 @@ export function useChatListModel({
         if (isPinned) await chatApi.unpinUserChat(chatId);
         else await chatApi.pinUserChat(chatId);
         usePlayersStore.getState().invalidateUserChatsCache();
-        chatsCacheRef.current.users = undefined;
-        chatListModuleCache.chats.users = undefined;
+        useChatListFeedStore.getState().invalidateFilterCache('users');
         await fetchChatsForFilter('users');
       } catch (e) {
         const msg = (e as AxiosError<{ message?: string }>)?.response?.data?.message;
@@ -1007,8 +942,7 @@ export function useChatListModel({
         if (isPinned) await chatApi.unpinGroupChannel(channelId);
         else await chatApi.pinGroupChannel(channelId);
         usePlayersStore.getState().invalidateUserChatsCache();
-        chatsCacheRef.current.users = undefined;
-        chatListModuleCache.chats.users = undefined;
+        useChatListFeedStore.getState().invalidateFilterCache('users');
         await fetchChatsForFilter('users');
       } catch (e) {
         const msg = (e as AxiosError<{ message?: string }>)?.response?.data?.message;
@@ -1103,7 +1037,7 @@ export function useChatListModel({
     const otherUser = chat.user1Id === user.id ? chat.user2 : chat.user1;
 
     if (chatsFilter === 'users' && otherUser) {
-      setChats((prevChats) => {
+      useChatListFeedStore.getState().patchRows((prevChats) => {
         const filteredChats = prevChats.filter(
           (item) => !(item.type === 'contact' && item.userId === userId)
         );
@@ -1184,48 +1118,26 @@ export function useChatListModel({
   const channelsSubtabUnread = useChatsSubtabUnreadBadge('channels');
   const marketSubtabUnread = useChatsSubtabUnreadBadge('market');
 
-  const unreadChatsCount = useMemo(() => {
-    if (unreadStoreWarm) {
-      if (chatsFilter === 'users') return usersSubtabUnread;
-      if (chatsFilter === 'bugs') return bugsSubtabUnread;
-      if (chatsFilter === 'channels') return channelsSubtabUnread;
-      if (chatsFilter === 'market') return marketSubtabUnread;
-    }
-    const itemUnread = (c: ChatItem) =>
-      unreadStoreWarm
-        ? selectContextUnreadForListItem(c, useUnreadStore.getState())
-        : 'unreadCount' in c
-          ? (c.unreadCount ?? 0)
-          : 0;
-    if (chatsFilter === 'market') {
-      return marketFilteredByRoleAndSearch.reduce((sum, c) => sum + itemUnread(c), 0);
-    }
-    if (chatsFilter === 'users') {
-      return chats
-        .filter((c) => c.type === 'user' || c.type === 'group' || c.type === 'game')
-        .reduce((sum, c) => sum + itemUnread(c), 0);
-    }
-    if (chatsFilter === 'bugs' || chatsFilter === 'channels') {
-      return chats
-        .filter((c) => c.type === 'channel' || c.type === 'group')
-        .reduce((sum, c) => sum + itemUnread(c), 0);
-    }
-    return 0;
-  }, [
-    chatsFilter,
-    chats,
-    marketFilteredByRoleAndSearch,
-    unreadStoreWarm,
-    usersSubtabUnread,
-    bugsSubtabUnread,
-    channelsSubtabUnread,
-    marketSubtabUnread,
-  ]);
-  const hasUnreadChats = unreadChatsCount > 0;
-
+  const unreadChatsCount = useMemo(
+    () =>
+      chatListUnreadFilterCount(unreadStoreWarm, chatsFilter, {
+        users: usersSubtabUnread,
+        bugs: bugsSubtabUnread,
+        channels: channelsSubtabUnread,
+        market: marketSubtabUnread,
+      }),
+    [
+      chatsFilter,
+      unreadStoreWarm,
+      usersSubtabUnread,
+      bugsSubtabUnread,
+      channelsSubtabUnread,
+      marketSubtabUnread,
+    ]
+  );
   useEffect(() => {
-    if (!hasUnreadChats) setUnreadFilterActive(false);
-  }, [hasUnreadChats]);
+    if (unreadChatsCount <= 0) setUnreadFilterActive(false);
+  }, [unreadChatsCount]);
 
   const displayedChats = useMemo(() => {
     if (chatsFilter === 'market') {
@@ -1404,82 +1316,100 @@ export function useChatListModel({
   const showChatsEmpty = !contactsMode && !isSearchMode && (chatsFilter === 'market' ? displayedChats.length === 0 : chats.length === 0) && !loading;
 
   return {
-    loading,
     t,
     isDesktop,
-    isRefreshing,
-    pullDistance,
-    pullProgress,
-    setSearchParams,
-    skipUrlSyncRef,
-    setSearchInput,
-    chatsFilter,
-    contactsMode,
-    searchInput,
-    hasUnreadChats,
-    unreadChatsCount,
-    unreadFilterActive,
-    setUnreadFilterActive,
-    handleContactsToggle,
-    setShowBugModal,
-    handleCreateListing,
-    user,
-    bugsFilterPanelOpen,
-    setBugsFilterPanelOpen,
-    marketBuyerSellerUnread,
-    marketChatRole,
-    setMarketChatRole,
-    listTransition,
-    isSearchMode,
-    cityUsersLoading,
-    displayChats,
-    debouncedSearchQuery,
-    activeChatsExpanded,
-    setActiveChatsExpanded,
-    usersExpanded,
-    setUsersExpanded,
-    handleChatClick,
-    messagesExpanded,
-    setMessagesExpanded,
-    gamesExpanded,
-    setGamesExpanded,
-    channelsExpanded,
-    setChannelsExpanded,
-    bugsExpanded,
-    setBugsExpanded,
-    marketListingsExpanded,
-    setMarketListingsExpanded,
-    contactSections,
-    handleContactClick,
-    showContactsEmpty,
-    showChatsEmpty,
-    marketGroupedByItem,
-    handleMarketItemGroupClick,
-    displayedChats,
-    getChatKey,
-    selectedChatId,
-    selectedChatType,
-    pinnedCountUsers,
-    pinningId,
-    handlePinUserChat,
-    handlePinGroupChannel,
-    mutedChats,
-    togglingMuteId,
-    handleMuteUserChat,
-    handleMuteGroupChannel,
-    bugsHasMore,
-    usersHasMore,
-    channelsHasMore,
-    marketHasMore,
-    loadMoreSentinelRef,
-    listBodyScrollRef,
-    bugsLoadingMore,
-    usersLoadingMore,
-    channelsLoadingMore,
-    marketLoadingMore,
-    showBugModal,
-    handleBugCreated,
-    selectedMarketItemForDrawer,
-    closeMarketItemDrawer,
+    user: user ?? null,
+    feed: {
+      loading,
+      chatsFilter: chatsFilter as ChatsFilterType,
+      displayedChats,
+      chats,
+      bugsHasMore,
+      usersHasMore,
+      channelsHasMore,
+      marketHasMore,
+      bugsLoadingMore,
+      usersLoadingMore,
+      channelsLoadingMore,
+      marketLoadingMore,
+      loadMoreSentinelRef,
+      listBodyScrollRef,
+      showChatsEmpty,
+      pinnedCountUsers,
+      getChatKey,
+    },
+    pullRefresh: {
+      isRefreshing,
+      pullDistance,
+      pullProgress,
+    },
+    search: {
+      searchInput,
+      setSearchInput,
+      debouncedSearchQuery,
+      isSearchMode,
+      displayChats,
+      contactsMode,
+      cityUsersLoading,
+      showContactsEmpty,
+      unreadChatsCount,
+      unreadFilterActive,
+      setUnreadFilterActive,
+      skipUrlSyncRef,
+      setSearchParams,
+    },
+    market: {
+      marketChatRole,
+      setMarketChatRole,
+      marketBuyerSellerUnread,
+      marketGroupedByItem,
+      selectedMarketItemForDrawer,
+      closeMarketItemDrawer,
+      handleMarketItemGroupClick,
+      handleCreateListing,
+    },
+    contacts: {
+      contactSections,
+      handleContactsToggle,
+      handleContactClick,
+      listTransition,
+    },
+    sections: {
+      activeChatsExpanded,
+      setActiveChatsExpanded,
+      usersExpanded,
+      setUsersExpanded,
+      messagesExpanded,
+      setMessagesExpanded,
+      gamesExpanded,
+      setGamesExpanded,
+      channelsExpanded,
+      setChannelsExpanded,
+      bugsExpanded,
+      setBugsExpanded,
+      marketListingsExpanded,
+      setMarketListingsExpanded,
+    },
+    actions: {
+      handleChatClick,
+      handlePinUserChat,
+      handlePinGroupChannel,
+      handleMuteUserChat,
+      handleMuteGroupChannel,
+      pinningId,
+      mutedChats,
+      togglingMuteId,
+    },
+    modals: {
+      showBugModal,
+      setShowBugModal,
+      handleBugCreated,
+      bugsFilterPanelOpen,
+      setBugsFilterPanelOpen,
+    },
+    selection: {
+      selectedChatId,
+      selectedChatType,
+    },
   };
 }

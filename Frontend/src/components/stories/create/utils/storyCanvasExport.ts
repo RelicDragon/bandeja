@@ -1,6 +1,7 @@
 import { STORY_CANVAS_HEIGHT, STORY_CANVAS_WIDTH, type StorySlide } from '../types/storyEditor.types';
 import {
   drawComposition,
+  drawCompositionOverlays,
   drawMediaLayer,
   drawStickerOnCanvas,
   drawTextLayer,
@@ -12,6 +13,7 @@ import {
 
 export {
   drawComposition,
+  drawCompositionOverlays,
   drawMediaLayer,
   drawStickerOnCanvas,
   drawTextLayer,

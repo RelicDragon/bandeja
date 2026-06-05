@@ -9,7 +9,7 @@ import {
 import { useStoriesStore } from '@/store/storiesStore';
 import type { StoryDocument, StorySession } from '../types';
 import { drawScene } from '../utils/drawScene';
-import { ensureDocumentMediaDimensions } from '../utils/ensureMediaDimensions';
+import { prepareDocumentForExport } from '../utils/prepareDocumentForExport';
 
 type PublishStep = 'export' | 'upload' | 'create';
 
@@ -59,7 +59,7 @@ export async function publishStoryPhotoDocument(
 
   let blob: Blob;
   try {
-    const resolved = await ensureDocumentMediaDimensions(doc);
+    const resolved = await prepareDocumentForExport(doc);
     blob = await drawScene(resolved);
   } catch {
     throw new StoryPhotoPublishError('export');

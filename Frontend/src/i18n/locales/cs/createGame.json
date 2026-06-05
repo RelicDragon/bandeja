@@ -35,6 +35,7 @@
     "participants": "Účastníci",
     "participantsTournament": "Účastníci turnaje",
     "participantsLeague": "Účastníci ligy",
+    "teamFormat": "Formát týmů",
     "numberOfParticipants": "Počet účastníků",
     "numberOfParticipantsTournament": "Počet účastníků turnaje",
     "numberOfParticipantsLeague": "Počet účastníků ligy",
@@ -76,8 +77,8 @@
     "resultsByAnyone": {
       "title": "Výsledky může zadat kdokoli",
       "note": {
-        "false": "Zadávat a měnit výsledky mohou jen organizátoři.",
-        "true": "Jakýkoli účastník může zadávat a měnit výsledky."
+        "false": "Výsledky a formát hry mohou měnit jen organizátoři.",
+        "true": "Každý hrající účastník může zadávat výsledky a měnit formát hry."
       }
     },
     "allowDirectJoin": {
@@ -119,7 +120,7 @@
     },
     "tournament": "Turnaj",
     "genderTeams": {
-      "label": "Účastníci podle pohlaví",
+      "label": "Pohlaví",
       "any": "Libovolné",
       "men": "Muži",
       "women": "Ženy",
@@ -222,7 +223,6 @@
     "priceRequired": "Price must be greater than 0 for this price type",
     "intent": {
       "title": "Jaký typ zápasu?",
-      "subtitle": "Vyberte styl — detaily upravíte níže.",
       "customizeFormat": "Upravit formát",
       "social": {
         "title": "Sociální",
@@ -241,6 +241,23 @@
       "title": "Šablony",
       "empty": "Žádné šablony — upravte formát ručně.",
       "durationApprox2h": "~2 h",
+      "PADEL_BEST_OF_3": {
+        "title": "Best-of-3",
+        "description": "Standardní třísetový zápas",
+        "badge": "Oficiální"
+      },
+      "PADEL_SINGLE_SET": {
+        "title": "Jeden set",
+        "description": "Zápas v jednom setu"
+      },
+      "PADEL_AMERICANO": {
+        "title": "Americano skórování",
+        "description": "Rotace — hra do zadaného počtu bodů"
+      },
+      "PADEL_TIMED": {
+        "title": "Na čas",
+        "description": "Jeden set s časovačem"
+      },
       "PADEL_AMERICANO_24": {
         "title": "Americano (24)",
         "description": "Náhodné páry, do 24 bodů"

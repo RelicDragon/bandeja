@@ -37,7 +37,7 @@ interface ChatMessageSearchResultsProps {
   onMarketListingsToggle?: () => void;
 }
 
-function getContextLabel(result: SearchMessageResult, t: (key: string, opts?: any) => string): string {
+function getContextLabel(result: SearchMessageResult, t: TFunction): string {
   const { context, message } = result;
   if (result.fromLocalCache) {
     return t('chat.localSearchCached', { defaultValue: 'On this device' });
@@ -108,7 +108,7 @@ function getMessagePreview(message: ChatMessage): string {
   return getLastMessageText(message) || '';
 }
 
-function ResultItem({ r, onResultClick, t }: { r: SearchMessageResult; onResultClick: ChatMessageSearchResultsProps['onResultClick']; t: (k: string, o?: any) => string }) {
+function ResultItem({ r, onResultClick, t }: { r: SearchMessageResult; onResultClick: ChatMessageSearchResultsProps['onResultClick']; t: TFunction }) {
   const gc = r.message.chatContextType === 'GROUP' ? (r.context as { isChannel?: boolean; marketItemId?: string | null }) : null;
   const chatType =
     r.message.chatContextType === 'GROUP' && (gc?.isChannel || gc?.marketItemId)

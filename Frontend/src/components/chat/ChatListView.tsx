@@ -13,88 +13,69 @@ import { ChatListMarketGroupChannels } from './ChatListMarketGroupChannels';
 import { ChatListLoadingSkeleton } from '@/components/chat/ChatListLoadingSkeleton';
 import { ChatListEmptyPanel } from '@/components/chat/ChatListEmptyPanel';
 import { ChatListSearchSections, type ChatListSearchSectionsSharedProps } from './ChatListSearchSections';
-import { useChatListModel } from './useChatListModel';
-export type ChatListViewModel = ReturnType<typeof useChatListModel>;
+import type { ChatListViewModel } from './chatListViewModel.types';
+
+export type { ChatListViewModel };
 
 export function ChatListView({ model }: { model: ChatListViewModel }) {
+  const { t, isDesktop, user, feed, pullRefresh, search, market, contacts, sections, actions, modals, selection } =
+    model;
+  const { loading, chatsFilter, displayedChats, showChatsEmpty, pinnedCountUsers, loadMoreSentinelRef, listBodyScrollRef, bugsHasMore, usersHasMore, channelsHasMore, marketHasMore, bugsLoadingMore, usersLoadingMore, channelsLoadingMore, marketLoadingMore } = feed;
+  const { isRefreshing, pullDistance, pullProgress } = pullRefresh;
   const {
-    loading,
-    activeChatsExpanded,
-    bugsExpanded,
-    bugsFilterPanelOpen,
-    bugsHasMore,
-    bugsLoadingMore,
-    channelsExpanded,
-    channelsHasMore,
-    channelsLoadingMore,
-    chatsFilter,
-    cityUsersLoading,
-    closeMarketItemDrawer,
-    contactSections,
-    contactsMode,
-    debouncedSearchQuery,
-    displayChats,
-    displayedChats,
-    gamesExpanded,
-    handleBugCreated,
-    handleChatClick,
-    handleContactClick,
-    handleContactsToggle,
-    handleCreateListing,
-    handleMarketItemGroupClick,
-    handleMuteGroupChannel,
-    handleMuteUserChat,
-    handlePinGroupChannel,
-    handlePinUserChat,
-    hasUnreadChats,
-    isDesktop,
-    isRefreshing,
-    isSearchMode,
-    listTransition,
-    loadMoreSentinelRef,
-    listBodyScrollRef,
-    marketBuyerSellerUnread,
-    marketChatRole,
-    marketGroupedByItem,
-    marketHasMore,
-    marketListingsExpanded,
-    marketLoadingMore,
-    messagesExpanded,
-    mutedChats,
-    pinningId,
-    pinnedCountUsers,
-    pullDistance,
-    pullProgress,
     searchInput,
-    selectedChatId,
-    selectedChatType,
-    selectedMarketItemForDrawer,
-    setActiveChatsExpanded,
-    setBugsExpanded,
-    setBugsFilterPanelOpen,
-    setChannelsExpanded,
-    setGamesExpanded,
-    setMarketChatRole,
-    setMarketListingsExpanded,
-    setMessagesExpanded,
     setSearchInput,
-    setSearchParams,
-    setShowBugModal,
-    setUnreadFilterActive,
-    showBugModal,
-    showChatsEmpty,
+    debouncedSearchQuery,
+    isSearchMode,
+    displayChats,
+    contactsMode,
+    cityUsersLoading,
     showContactsEmpty,
-    skipUrlSyncRef,
-    t,
-    togglingMuteId,
     unreadChatsCount,
     unreadFilterActive,
-    user,
+    setUnreadFilterActive,
+    skipUrlSyncRef,
+    setSearchParams,
+  } = search;
+  const {
+    marketChatRole,
+    setMarketChatRole,
+    marketBuyerSellerUnread,
+    marketGroupedByItem,
+    selectedMarketItemForDrawer,
+    closeMarketItemDrawer,
+    handleMarketItemGroupClick,
+    handleCreateListing,
+  } = market;
+  const { contactSections, handleContactsToggle, handleContactClick, listTransition } = contacts;
+  const {
+    activeChatsExpanded,
+    setActiveChatsExpanded,
     usersExpanded,
-    usersHasMore,
-    usersLoadingMore,
-    setUsersExpanded
-  } = model;
+    setUsersExpanded,
+    messagesExpanded,
+    setMessagesExpanded,
+    gamesExpanded,
+    setGamesExpanded,
+    channelsExpanded,
+    setChannelsExpanded,
+    bugsExpanded,
+    setBugsExpanded,
+    marketListingsExpanded,
+    setMarketListingsExpanded,
+  } = sections;
+  const {
+    handleChatClick,
+    handlePinUserChat,
+    handlePinGroupChannel,
+    handleMuteUserChat,
+    handleMuteGroupChannel,
+    pinningId,
+    mutedChats,
+    togglingMuteId,
+  } = actions;
+  const { showBugModal, setShowBugModal, handleBugCreated, bugsFilterPanelOpen, setBugsFilterPanelOpen } = modals;
+  const { selectedChatId, selectedChatType } = selection;
 
   if (loading) {
     return (
@@ -154,7 +135,6 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             chatsFilter={chatsFilter}
             contactsMode={contactsMode}
             searchInput={searchInput}
-            hasUnreadChats={hasUnreadChats}
             unreadChatsCount={unreadChatsCount}
             unreadFilterActive={unreadFilterActive}
             onUnreadFilterToggle={() => setUnreadFilterActive((a) => !a)}

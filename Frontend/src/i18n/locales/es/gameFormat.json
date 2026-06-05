@@ -1,6 +1,7 @@
 {
   "gameFormat": {
     "title": "Formato de partido",
+    "resultsByAnyoneEditHint": "Resultados por cualquiera activado: cada participante en juego puede cambiar el formato e ingresar resultados.",
     "trainingTitle": "Entrenamiento",
     "recommended": "Recomendado",
     "popular": "Popular",

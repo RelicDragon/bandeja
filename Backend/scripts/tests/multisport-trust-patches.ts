@@ -132,9 +132,9 @@ function testSourcePatches(): void {
     'league planner projects sample users by season sport',
   );
 
-  const levelChange = readSrc('controllers/levelChange.controller.ts');
+  const levelChangeProjection = readSrc('services/levelChange/projection.service.ts');
   assert(
-    levelChange.includes('projectGameUsersForSportContext'),
+    levelChangeProjection.includes('projectGameUsersForSportContext'),
     'level history game embeds project nested users by game sport',
   );
 

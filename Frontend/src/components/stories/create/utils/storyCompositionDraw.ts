@@ -1,6 +1,7 @@
 import {
   STORY_CANVAS_HEIGHT,
   STORY_CANVAS_WIDTH,
+  type OverlayStyleV2,
   type StickerStoryLayer,
   type StoryLayer,
   type StorySlide,
@@ -203,6 +204,31 @@ export function drawStickerOnCanvas(ctx: CanvasRenderingContext2D, layer: Sticke
   ctx.restore();
 }
 
+/** Overlay layers only — shared by viewer canvas, editor preview, and export. */
+export function drawCompositionOverlays(
+  ctx: CanvasRenderingContext2D,
+  overlay: Pick<OverlayStyleV2, 'layers'>
+): void {
+  for (const layer of overlay.layers ?? []) {
+    if (layer.type === 'text') drawTextLayer(ctx, layer);
+    else if (layer.type === 'sticker') drawStickerOnCanvas(ctx, layer);
+  }
+}
+
+export function clearCompositionCanvas(
+  ctx: CanvasRenderingContext2D,
+  options: { transparentBackground?: boolean; width?: number; height?: number } = {}
+): void {
+  const w = options.width ?? STORY_CANVAS_WIDTH;
+  const h = options.height ?? STORY_CANVAS_HEIGHT;
+  if (options.transparentBackground) {
+    ctx.clearRect(0, 0, w, h);
+  } else {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, w, h);
+  }
+}
+
 export function drawComposition(
   ctx: CanvasRenderingContext2D,
   slide: StorySlide,
@@ -214,21 +240,13 @@ export function drawComposition(
   const skipMedia = options.skipMedia ?? assets.skipMedia ?? false;
   const transparent = options.transparentBackground ?? false;
 
-  if (!transparent) {
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, w, h);
-  } else {
-    ctx.clearRect(0, 0, w, h);
-  }
+  clearCompositionCanvas(ctx, { transparentBackground: transparent, width: w, height: h });
 
   if (!skipMedia && assets.mediaImage) {
     drawMediaLayer(ctx, assets.mediaImage, slide);
   }
 
-  for (const layer of slide.layers) {
-    if (layer.type === 'text') drawTextLayer(ctx, layer);
-    else if (layer.type === 'sticker') drawStickerOnCanvas(ctx, layer);
-  }
+  drawCompositionOverlays(ctx, { layers: slide.layers });
 
   if (options.selectedLayerId) {
     const selected = slide.layers.find((l) => l.id === options.selectedLayerId);

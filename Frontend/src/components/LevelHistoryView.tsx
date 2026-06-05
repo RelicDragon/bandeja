@@ -138,6 +138,8 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
   }, [allMergedHistory, activeTab]);
   const currentValue = showSocialLevel ? user.socialLevel : getDisplayLevelForSport(user, historySport);
 
+  const isNonRatingEvent = (item: LevelHistoryItem) => item.affectsRating === false;
+
   const getEventBadgeLabel = (item: LevelHistoryItem) => {
     if (item.eventType === 'GAME' && item.linkEntityType) {
       return t(`games.entityTypes.${item.linkEntityType}`);
@@ -161,6 +163,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
       fullDate: item.createdAt,
       itemId: item.id,
       eventType: item.eventType,
+      affectsRating: item.affectsRating,
     }));
   }, [currentHistory]);
 
@@ -326,7 +329,14 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                       if (!data?.itemId) return null;
                       const isQuestionnaireOrSet = data.eventType === 'SET' || data.eventType === 'QUESTIONNAIRE';
                       const isQuestionnaire = data.eventType === 'QUESTIONNAIRE';
-                      const fill = isQuestionnaireOrSet ? (isQuestionnaire ? 'rgb(34, 197, 94)' : 'rgb(251, 191, 36)') : (showSocialLevel ? 'rgb(251, 191, 36)' : 'rgb(59, 130, 246)');
+                      const isNonRating = data.affectsRating === false;
+                      const fill = isQuestionnaireOrSet
+                        ? (isQuestionnaire ? 'rgb(34, 197, 94)' : 'rgb(251, 191, 36)')
+                        : isNonRating
+                          ? 'rgb(156, 163, 175)'
+                          : showSocialLevel
+                            ? 'rgb(251, 191, 36)'
+                            : 'rgb(59, 130, 246)';
                       const handleClick = createDotClickHandler(data);
 
                       if (isQuestionnaireOrSet) {
@@ -367,7 +377,14 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                       if (!data?.itemId) return null;
                       const isQuestionnaireOrSet = data.eventType === 'SET' || data.eventType === 'QUESTIONNAIRE';
                       const isQuestionnaire = data.eventType === 'QUESTIONNAIRE';
-                      const fill = isQuestionnaireOrSet ? (isQuestionnaire ? 'rgb(34, 197, 94)' : 'rgb(251, 191, 36)') : (showSocialLevel ? 'rgb(251, 191, 36)' : 'rgb(59, 130, 246)');
+                      const isNonRating = data.affectsRating === false;
+                      const fill = isQuestionnaireOrSet
+                        ? (isQuestionnaire ? 'rgb(34, 197, 94)' : 'rgb(251, 191, 36)')
+                        : isNonRating
+                          ? 'rgb(156, 163, 175)'
+                          : showSocialLevel
+                            ? 'rgb(251, 191, 36)'
+                            : 'rgb(59, 130, 246)';
                       const handleClick = createDotClickHandler(data);
 
                       if (isQuestionnaireOrSet) {
@@ -458,7 +475,9 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                activeTab === '30' ? t('playerCard.last30EventsTitle') : 
                t('playerCard.allEventsTitle')}
             </h3>
-            {currentHistory.slice().reverse().map((item) => (
+            {currentHistory.slice().reverse().map((item) => {
+              const nonRating = isNonRatingEvent(item);
+              return (
               <motion.div
                 key={item.id}
                 ref={(el) => {
@@ -487,18 +506,22 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                 className={`rounded-lg p-2.5 cursor-pointer transition-colors relative overflow-hidden ${
                   highlightedItemId === item.id 
                     ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500 dark:ring-primary-400 shadow-lg' 
-                    : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    : nonRating
+                      ? 'bg-gray-50/80 dark:bg-gray-800/40 hover:bg-gray-100/80 dark:hover:bg-gray-800/60 opacity-70'
+                      : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
                 onClick={() => handleRatingChangeClick(item)}
               >
-                <div className="flex items-center justify-between gap-3 min-w-0">
-                  <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
-                    <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                <div className="flex items-start justify-between gap-3 min-w-0">
+                  <div className="flex flex-col items-start gap-0.5 min-w-0 flex-shrink-0">
+                    <span className={`text-xs whitespace-nowrap ${nonRating ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400'}`}>
                       {formatDate(item.createdAt, 'PP')}
                     </span>
                     {item.eventType && (
                       <span className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap flex-shrink-0 ${
-                        item.eventType === 'QUESTIONNAIRE'
+                        nonRating
+                          ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                          : item.eventType === 'QUESTIONNAIRE'
                           ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
                           : item.eventType === 'SET'
                             ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
@@ -508,20 +531,27 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-0.5 flex-shrink-0">
-                    <span className="text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
+                  <div className="flex flex-col items-end gap-0.5 flex-shrink-0 min-w-0">
+                    <span className={`text-sm font-medium whitespace-nowrap ${nonRating ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>
                       {item.levelBefore.toFixed(2)} → {item.levelAfter.toFixed(2)}
                     </span>
-                    <div className={`flex items-center whitespace-nowrap ${item.levelChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                      {item.levelChange >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                      <span className="font-semibold text-xs">
-                        {item.levelChange >= 0 ? '+' : ''}{item.levelChange.toFixed(2)}
+                    {nonRating ? (
+                      <span className="px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                        {t('playerCard.nonRatingEvent')}
                       </span>
-                    </div>
+                    ) : (
+                      <div className={`flex items-center whitespace-nowrap ${item.levelChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {item.levelChange >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                        <span className="font-semibold text-[10px] leading-4">
+                          {item.levelChange >= 0 ? '+' : ''}{item.levelChange.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>
-            ))}
+            );
+            })}
           </div>
         </>
       ) : (

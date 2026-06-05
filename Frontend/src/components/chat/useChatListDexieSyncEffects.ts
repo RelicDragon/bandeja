@@ -1,17 +1,13 @@
-import { useEffect, useRef, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   mergeChatListOutboxFromDexieSlice,
   mergeChatListFromThreadIndexDexie,
   threadIndexLiveMergeSig,
-  type FilterCache,
 } from '@/utils/chatListHelpers';
 import { loadThreadIndexForList } from '@/services/chat/chatThreadIndex';
-import { chatListModuleCache, type ChatsFilterType } from '@/components/chat/chatListModuleCache';
-import type { ChatItem } from './chatListTypes';
+import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 import { useChatListThreadIndexLive } from '@/components/chat/useChatListThreadIndexLive';
 import { CHAT_LIST_THREAD_INDEX_LIVE_MERGE_MS } from '@/utils/chatListConstants';
-
-type ChatsCacheRef = MutableRefObject<Partial<Record<ChatsFilterType, FilterCache>>>;
 
 export function useChatListDexieSyncEffects(opts: {
   userId: string | undefined;
@@ -19,44 +15,28 @@ export function useChatListDexieSyncEffects(opts: {
   contactsMode: boolean;
   debouncedSearchQuery: string;
   chatListDexieBump: number;
-  setChats: Dispatch<SetStateAction<ChatItem[]>>;
-  chatsCacheRef: ChatsCacheRef;
 }) {
-  const {
-    userId,
-    chatsFilter,
-    contactsMode,
-    debouncedSearchQuery,
-    chatListDexieBump,
-    setChats,
-    chatsCacheRef,
-  } = opts;
+  const { userId, chatsFilter, contactsMode, debouncedSearchQuery, chatListDexieBump } = opts;
 
   useEffect(() => {
     if (!userId || chatListDexieBump === 0) return;
     let cancelled = false;
     void loadThreadIndexForList(chatsFilter).then((fromDex) => {
       if (cancelled || fromDex.length === 0) return;
-      setChats((prev) => mergeChatListOutboxFromDexieSlice(prev, fromDex));
-      const cur = chatsCacheRef.current[chatsFilter];
-      if (cur) {
-        chatsCacheRef.current[chatsFilter] = {
-          ...cur,
-          chats: mergeChatListOutboxFromDexieSlice(cur.chats, fromDex),
-        };
-      }
-      const mc = chatListModuleCache.chats[chatsFilter];
-      if (mc && chatListModuleCache.userId === userId) {
-        chatListModuleCache.chats[chatsFilter] = {
-          ...mc,
-          chats: mergeChatListOutboxFromDexieSlice(mc.chats, fromDex),
-        };
+      const feed = useChatListFeedStore.getState();
+      feed.patchRows((prev) => mergeChatListOutboxFromDexieSlice(prev, fromDex));
+      const cached = feed.getFilterCache(chatsFilter);
+      if (cached) {
+        feed.setFilterCache(chatsFilter, {
+          ...cached,
+          chats: mergeChatListOutboxFromDexieSlice(cached.chats, fromDex),
+        });
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [chatListDexieBump, chatsFilter, userId, setChats, chatsCacheRef]);
+  }, [chatListDexieBump, chatsFilter, userId]);
 
   const threadIndexLiveEnabled =
     !!userId &&
@@ -90,20 +70,14 @@ export function useChatListDexieSyncEffects(opts: {
     if (threadIndexLiveDebounceRef.current) clearTimeout(threadIndexLiveDebounceRef.current);
     threadIndexLiveDebounceRef.current = setTimeout(() => {
       threadIndexLiveDebounceRef.current = null;
-      setChats((prev) => mergeChatListFromThreadIndexDexie(prev, slice, chatsFilter, uid));
-      const cur = chatsCacheRef.current[chatsFilter];
-      if (cur) {
-        chatsCacheRef.current[chatsFilter] = {
-          ...cur,
-          chats: mergeChatListFromThreadIndexDexie(cur.chats, slice, chatsFilter, uid),
-        };
-      }
-      const mc = chatListModuleCache.chats[chatsFilter];
-      if (mc && chatListModuleCache.userId === uid) {
-        chatListModuleCache.chats[chatsFilter] = {
-          ...mc,
-          chats: mergeChatListFromThreadIndexDexie(mc.chats, slice, chatsFilter, uid),
-        };
+      const feed = useChatListFeedStore.getState();
+      feed.patchRows((prev) => mergeChatListFromThreadIndexDexie(prev, slice, chatsFilter, uid));
+      const cached = feed.getFilterCache(chatsFilter);
+      if (cached) {
+        feed.setFilterCache(chatsFilter, {
+          ...cached,
+          chats: mergeChatListFromThreadIndexDexie(cached.chats, slice, chatsFilter, uid),
+        });
       }
     }, CHAT_LIST_THREAD_INDEX_LIVE_MERGE_MS);
     return () => {
@@ -119,7 +93,5 @@ export function useChatListDexieSyncEffects(opts: {
     userId,
     contactsMode,
     debouncedSearchQuery,
-    setChats,
-    chatsCacheRef,
   ]);
 }

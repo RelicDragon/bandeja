@@ -11,6 +11,7 @@ import {
   type ChatContextUserLookupParams,
 } from '@/utils/chatContextUserLookup';
 import type { BasicUser } from '@/types';
+import { PANEL_ENTER_Y, PANEL_EXIT_Y, PANEL_TRANSITION } from '@/components/motion/motionTokens';
 
 export interface TypingIndicatorProps extends ChatContextUserLookupParams {
   typingUserIds: string[];
@@ -82,6 +83,9 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     [resolvedUsers]
   );
 
+  const panelClassName =
+    'flex min-h-[28px] items-center gap-1.5 rounded-2xl border border-white/50 bg-white/85 px-2.5 py-1.5 text-xs text-gray-600 shadow-[0_4px_20px_rgba(0,0,0,0.08),inset_0_1px_0_0_rgba(255,255,255,0.9)] backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-gray-900/80 dark:text-gray-300 dark:shadow-[0_4px_20px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.06)]';
+
   return (
     <AnimatePresence initial={false}>
       {typingUserIds.length > 0 && (
@@ -90,13 +94,13 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
           role="status"
           aria-live="polite"
           aria-relevant="additions text"
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.2 }}
-          className="overflow-hidden px-1"
+          initial={{ opacity: 0, y: PANEL_ENTER_Y }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: PANEL_EXIT_Y }}
+          transition={PANEL_TRANSITION}
+          className="mb-2 overflow-visible px-0.5 pt-1"
         >
-          <div className="flex items-center gap-1.5 min-h-[22px] text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+          <div className={panelClassName}>
             {avatarUsers.length > 0 && (
               <span className="flex shrink-0 items-center -space-x-1" aria-hidden>
                 {avatarUsers.map((u) => (
@@ -114,12 +118,12 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
                 ))}
               </span>
             )}
-            <span className="flex gap-0.5 items-center shrink-0" aria-hidden>
-              <span className="inline-block w-1 h-1 rounded-full bg-current typing-dot" />
-              <span className="inline-block w-1 h-1 rounded-full bg-current typing-dot typing-dot-delay-1" />
-              <span className="inline-block w-1 h-1 rounded-full bg-current typing-dot typing-dot-delay-2" />
+            <span className="flex shrink-0 items-center gap-0.5 text-gray-500 dark:text-gray-400" aria-hidden>
+              <span className="inline-block h-1 w-1 rounded-full bg-current typing-dot" />
+              <span className="inline-block h-1 w-1 rounded-full bg-current typing-dot typing-dot-delay-1" />
+              <span className="inline-block h-1 w-1 rounded-full bg-current typing-dot typing-dot-delay-2" />
             </span>
-            <span className="truncate">{label}</span>
+            <span className="min-w-0 truncate">{label}</span>
           </div>
         </motion.div>
       )}

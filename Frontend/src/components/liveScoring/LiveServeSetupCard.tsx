@@ -137,6 +137,7 @@ export const LiveServeSetupCard = ({
       players={players}
       selected={side === which}
       singlesMode={singles}
+      servingPlayerIndex={side === which ? (doubles ? doublesIdx : 0) : null}
       onSelect={() => selectServingTeam(which)}
     />
   );

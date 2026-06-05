@@ -182,4 +182,20 @@ describe('story editor → export render parity', () => {
     expect(exportCanvasSizes).toContainEqual({ w: STORY_CANVAS_WIDTH, h: STORY_CANVAS_HEIGHT });
     expect(blob.type).toBe('image/jpeg');
   });
+
+  it('renderDocument draws text overlays (baked into published JPEG)', () => {
+    const doc = makeDocument();
+    doc.nodes.push({
+      id: 'text-1',
+      type: 'text',
+      text: 'Match viewer',
+      transform: { x: 540, y: 400, scale: 1, rotation: 0 },
+      style: { id: 'classic', align: 'center' },
+    });
+    const img = { naturalWidth: 2000, naturalHeight: 1500, width: 2000, height: 1500 };
+    const ctx = document.createElement('canvas').getContext('2d') as CanvasRenderingContext2D;
+    ctxCalls = [];
+    renderDocument(ctx, doc, img as HTMLImageElement);
+    expect(ctxCalls.some((c) => c.method === 'fillText')).toBe(true);
+  });
 });

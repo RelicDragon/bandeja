@@ -79,9 +79,10 @@ export const allowedGenerationsForMaxParticipants = (
 ): MatchGenerationType[] => {
   if (maxParticipants == null) return [...ALL_GENERATIONS];
   if (maxParticipants === 2) return ['AUTOMATIC'];
-  if (maxParticipants === 3) return ['HANDMADE', 'FIXED'];
-  if (maxParticipants === 4) return ['AUTOMATIC', 'FIXED', 'HANDMADE'];
-  return ['HANDMADE', 'FIXED', ...ROTATION_GENERATIONS];
+  if (maxParticipants === 3) return ['AUTOMATIC'];
+  if (maxParticipants === 4) return ['AUTOMATIC'];
+  if (maxParticipants === 5) return ['AUTOMATIC', ...ROTATION_GENERATIONS];
+  return [...ROTATION_GENERATIONS];
 };
 
 export const allowedGenerationsForSport = (
@@ -104,19 +105,22 @@ export const clampMatchGenerationType = (
   return allowed[0]!;
 };
 
-/** 2 or 4 players: automatic; 3: manual. Otherwise preserve clamped effective choice. */
+/** <= 5 players: automatic matches; otherwise Americano (random rotation). */
 export const defaultMatchGenerationForParticipants = (
   mode: ScoringMode,
   maxParticipants: number | undefined,
-  preferredGen: MatchGenerationType,
+  _preferredGen: MatchGenerationType,
 ): MatchGenerationType => {
-  if (maxParticipants === 2 || maxParticipants === 4) {
-    return effectiveMatchGeneration(mode, 'AUTOMATIC', maxParticipants);
+  if (maxParticipants != null && maxParticipants <= 5) {
+    return clampMatchGenerationType(
+      effectiveMatchGeneration(mode, 'AUTOMATIC', maxParticipants),
+      maxParticipants,
+    );
   }
-  if (maxParticipants === 3) {
-    return effectiveMatchGeneration(mode, 'HANDMADE', maxParticipants);
-  }
-  return clampMatchGenerationType(effectiveMatchGeneration(mode, preferredGen, maxParticipants), maxParticipants);
+  return clampMatchGenerationType(
+    effectiveMatchGeneration(mode, 'RANDOM', maxParticipants),
+    maxParticipants,
+  );
 };
 
 /** POINTS + manual/fixed → Americano when player count is above small-game presets. */

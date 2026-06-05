@@ -7,11 +7,9 @@ import { GameReadinessService } from './readiness.service';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import notificationService from '../notification.service';
-import { goldenPointAllowedForFormat, validateScoringPreset } from '../../utils/validators/gameFormat';
 import { validateGameForSport } from '../../utils/validators/validateGameForSport';
 import { resolvePlayersPerMatch, resolveSport } from '../../sport/sportRegistry';
-import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
-import { normalizeLegacyTimedScoringPreset } from '../../utils/scoring/matchTimerGame';
+import { normalizeGameFormatPatch } from '../../utils/gameFormat/normalizeGameFormatPatch';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 import { projectUserForSportContext, touchLastCreatedSport } from '../user/userSportProfile.service';
@@ -184,33 +182,27 @@ export class GameCreateService {
     });
     const playersPerMatch = playersPerMatchEarly;
 
-    let scoringPreset = isTraining ? null : validateScoringPreset(gameType, data.scoringPreset);
-    const winnerOfMatchCreate = data.winnerOfMatch ?? 'BY_SCORES';
-    let maxTotalPointsCreate = data.maxTotalPointsPerSet ?? 0;
-    const legacyNorm = normalizeLegacyTimedScoringPreset(scoringPreset);
-    if (legacyNorm.scoringPreset !== scoringPreset) {
-      scoringPreset = legacyNorm.scoringPreset;
-    }
-    if (legacyNorm.bumpPointsCapTo21 && maxTotalPointsCreate < 1) {
-      maxTotalPointsCreate = 21;
-    }
-    const matchTimerEnabled = legacyNorm.matchTimerEnabled || Boolean(data.matchTimerEnabled);
-    const ballsInGames = deriveBallsInGamesFromScoring({
-      scoringPreset,
-      winnerOfMatch: winnerOfMatchCreate,
-      maxTotalPointsPerSet: maxTotalPointsCreate,
-      sport,
-    });
-    let matchTimedCapMinutes =
-      typeof data.matchTimedCapMinutes === 'number' && Number.isFinite(data.matchTimedCapMinutes)
-        ? Math.min(60, Math.max(0, Math.round(data.matchTimedCapMinutes)))
-        : 0;
-    if (matchTimerEnabled) {
-      if (matchTimedCapMinutes < 1) matchTimedCapMinutes = 15;
-    } else {
-      matchTimedCapMinutes = 0;
-    }
-
+    const formatNorm = isTraining
+      ? {}
+      : normalizeGameFormatPatch({
+          existingGame: {
+            gameType,
+            sport,
+            playersPerMatch,
+            hasFixedTeams,
+            allowUserInMultipleTeams,
+            maxParticipants,
+          },
+          patch: data,
+          entityType,
+        });
+    const scoringPreset = isTraining ? null : (formatNorm.scoringPreset as typeof data.scoringPreset) ?? null;
+    const winnerOfMatchCreate = (formatNorm.winnerOfMatch as string | undefined) ?? data.winnerOfMatch ?? 'BY_SCORES';
+    const maxTotalPointsCreate =
+      (formatNorm.maxTotalPointsPerSet as number | undefined) ?? data.maxTotalPointsPerSet ?? 0;
+    const matchTimerEnabled = Boolean(formatNorm.matchTimerEnabled ?? data.matchTimerEnabled);
+    const matchTimedCapMinutes = (formatNorm.matchTimedCapMinutes as number | undefined) ?? 0;
+    const ballsInGames = Boolean(formatNorm.ballsInGames);
     const fixedSetsCreate = data.fixedNumberOfSets ?? 0;
 
     const affectsRatingCreate =
@@ -244,8 +236,9 @@ export class GameCreateService {
         allowDirectJoin: data.allowDirectJoin || false,
         hasBookedCourt: data.hasBookedCourt || false,
         afterGameGoToBar: data.afterGameGoToBar || false,
-        hasFixedTeams: hasFixedTeams,
-        allowUserInMultipleTeams,
+        hasFixedTeams: (formatNorm.hasFixedTeams as boolean | undefined) ?? hasFixedTeams,
+        allowUserInMultipleTeams:
+          (formatNorm.allowUserInMultipleTeams as boolean | undefined) ?? allowUserInMultipleTeams,
         genderTeams: data.genderTeams || 'ANY',
         fixedNumberOfSets: fixedSetsCreate,
         maxTotalPointsPerSet: maxTotalPointsCreate,
@@ -254,20 +247,21 @@ export class GameCreateService {
         maxPointsPerTeam: data.maxPointsPerTeam ?? 0,
         winnerOfGame: data.winnerOfGame ?? 'BY_MATCHES_WON',
         winnerOfMatch: winnerOfMatchCreate,
-        matchGenerationType: resolveMatchGenerationType({
-          resultsRoundGenV2: data.resultsRoundGenV2,
-          matchGenerationType: data.matchGenerationType,
-          maxParticipants,
-          playersPerMatch,
-        }),
+        matchGenerationType:
+          (formatNorm.matchGenerationType as typeof data.matchGenerationType | undefined) ??
+          resolveMatchGenerationType({
+            resultsRoundGenV2: data.resultsRoundGenV2,
+            matchGenerationType: data.matchGenerationType,
+            maxParticipants,
+            playersPerMatch,
+          }),
         pointsPerWin: data.pointsPerWin ?? 0,
         pointsPerLoose: data.pointsPerLoose ?? 0,
         pointsPerTie: data.pointsPerTie ?? 0,
         ballsInGames,
         scoringPreset,
-        scoringMode: data.scoringMode ?? null,
-        hasGoldenPoint:
-          goldenPointAllowedForFormat(data.scoringMode ?? null, scoringPreset) && Boolean(data.hasGoldenPoint),
+        scoringMode: (formatNorm.scoringMode as string | null | undefined) ?? data.scoringMode ?? null,
+        hasGoldenPoint: Boolean(formatNorm.hasGoldenPoint ?? data.hasGoldenPoint),
         priceTotal: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : priceTotal,
         priceType: priceType,
         priceCurrency: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : data.priceCurrency,

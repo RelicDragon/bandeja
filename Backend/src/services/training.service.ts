@@ -1,11 +1,12 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
-import { EntityType, LevelChangeEventType, Sport } from '@prisma/client';
+import { EntityType, Sport } from '@prisma/client';
 import { cleanupInviteParticipantsForEndedGame } from '../utils/gameInviteCleanup';
 import {
   ensureSportInEnabled,
   resolveUserSportSnapshot,
 } from './user/userSportProfile.service';
+import { createSetEvent, revertForGame, clearSetEventsForUserInGame } from './levelChange';
 
 export async function finishTraining(gameId: string, _userId: string): Promise<void> {
   const game = await prisma.game.findUnique({
@@ -139,13 +140,7 @@ export async function updateParticipantLevel(
   const actualReliabilityChange = reliabilityAfter - reliabilityBefore;
 
   await prisma.$transaction(async (tx) => {
-    await tx.levelChangeEvent.deleteMany({
-      where: {
-        userId: participantUserId,
-        gameId: gameId,
-        eventType: LevelChangeEventType.SET,
-      },
-    });
+    await clearSetEventsForUserInGame(gameId, participantUserId, tx);
 
     const userPatch: {
       approvedLevel?: boolean;
@@ -223,16 +218,14 @@ export async function updateParticipantLevel(
     });
 
     if (actualLevelChange !== 0) {
-      await tx.levelChangeEvent.create({
-        data: {
-          userId: participantUserId,
-          levelBefore,
-          levelAfter,
-          eventType: LevelChangeEventType.SET,
-          linkEntityType: EntityType.TRAINING,
-          gameId: gameId,
-          sport: game.sport,
-        },
+      await createSetEvent(tx, {
+        userId: participantUserId,
+        gameId,
+        sport: game.sport,
+        linkEntityType: EntityType.TRAINING,
+        levelBefore,
+        levelAfter,
+        levelChange: actualLevelChange,
       });
     }
   });
@@ -315,11 +308,6 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
       where: { gameId },
     });
 
-    await tx.levelChangeEvent.deleteMany({
-      where: {
-        gameId: gameId,
-        eventType: LevelChangeEventType.SET,
-      },
-    });
+    await revertForGame(gameId, 'outcomes', tx);
   });
 }

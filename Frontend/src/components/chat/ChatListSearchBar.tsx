@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Search, X, BookUser, Plus, Mail, SlidersHorizontal } from 'lucide-react';
+import { shouldShowChatListUnreadFilter } from '@/components/chat/chatListUnreadFilter';
 
 type ChatsFilter = 'users' | 'bugs' | 'channels' | 'market';
 
@@ -15,7 +16,6 @@ interface ChatListSearchBarProps {
   onCreateListing?: () => void;
   isDesktop?: boolean;
   hasCity?: boolean;
-  hasUnreadChats?: boolean;
   unreadChatsCount?: number;
   unreadFilterActive?: boolean;
   onUnreadFilterToggle?: () => void;
@@ -34,7 +34,6 @@ export const ChatListSearchBar = ({
   onCreateListing,
   isDesktop = false,
   hasCity = false,
-  hasUnreadChats = false,
   unreadChatsCount = 0,
   unreadFilterActive = false,
   onUnreadFilterToggle,
@@ -55,38 +54,30 @@ export const ChatListSearchBar = ({
             : t('chat.search', { defaultValue: 'Search' });
 
   const showActionButtons = chatsFilter === 'bugs' || chatsFilter === 'users' || chatsFilter === 'market';
+  const showUnreadFilter = shouldShowChatListUnreadFilter(unreadChatsCount);
 
   return (
     <div className={`px-2 pb-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 ${isDesktop ? 'pt-4' : ''}`}>
       <motion.div layout className="flex items-center">
-        <motion.div
-          layout
-          animate={{
-            width: hasUnreadChats ? 40 : 0,
-            minWidth: hasUnreadChats ? 40 : 0,
-            opacity: hasUnreadChats ? 1 : 0,
-            marginRight: hasUnreadChats ? 8 : 0,
-          }}
-          transition={{ duration: 0.25, ease: 'easeInOut' }}
-          className="shrink-0 overflow-visible"
-          style={{ pointerEvents: hasUnreadChats ? 'auto' : 'none' }}
-        >
-          <button
-            type="button"
-            onClick={onUnreadFilterToggle}
-            className={`relative w-10 h-10 rounded-full flex items-center justify-center border transition-all ${
-              unreadFilterActive
-                ? 'border-blue-500 bg-blue-500 text-white dark:border-blue-400 dark:bg-blue-500'
-                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-            aria-label={t('chat.filterUnread', { defaultValue: 'Filter unread' })}
-          >
-            <Mail size={20} className={unreadFilterActive ? 'text-white' : 'text-gray-600 dark:text-gray-400'} />
-            <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-semibold min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
-              {unreadChatsCount > 99 ? '99+' : unreadChatsCount}
-            </span>
-          </button>
-        </motion.div>
+        {showUnreadFilter && (
+          <motion.div layout className="shrink-0 overflow-hidden mr-2">
+            <button
+              type="button"
+              onClick={onUnreadFilterToggle}
+              className={`relative w-10 h-10 rounded-full flex items-center justify-center border transition-all ${
+                unreadFilterActive
+                  ? 'border-blue-500 bg-blue-500 text-white dark:border-blue-400 dark:bg-blue-500'
+                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+              aria-label={t('chat.filterUnread', { defaultValue: 'Filter unread' })}
+            >
+              <Mail size={20} className={unreadFilterActive ? 'text-white' : 'text-gray-600 dark:text-gray-400'} />
+              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-semibold min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
+                {unreadChatsCount > 99 ? '99+' : unreadChatsCount}
+              </span>
+            </button>
+          </motion.div>
+        )}
         <motion.div
           layout
           animate={{

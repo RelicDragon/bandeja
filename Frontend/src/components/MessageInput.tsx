@@ -567,16 +567,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         onRemoveLanguage={translation.handleRemoveTranslateLanguage}
         autoTranslate={autoTranslate}
       />
-      <TypingIndicator
-        typingUserIds={typingUserIds}
-        contextType={contextType}
-        chatType={resolvedChatType}
-        game={game}
-        bug={bug}
-        groupChannel={groupChannel}
-        userChat={userChat}
-        currentUserId={user?.id}
-      />
       <MessageInputImagePreviewStrip
         imagePreviewUrls={imagePreviewUrls}
         onRemove={removeImage}
@@ -662,6 +652,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               ) : null}
             </AnimatePresence>
           </div>
+          <TypingIndicator
+            typingUserIds={typingUserIds}
+            contextType={contextType}
+            chatType={resolvedChatType}
+            game={game}
+            bug={bug}
+            groupChannel={groupChannel}
+            userChat={userChat}
+            currentUserId={user?.id}
+          />
           <MessageInputComposerContextStrip
             editingMessage={editingMessage ?? null}
             replyTo={replyTo ?? null}

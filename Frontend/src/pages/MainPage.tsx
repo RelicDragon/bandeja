@@ -108,7 +108,14 @@ export const MainPage = () => {
     return (
       <MainLayout>
         <ChatsTab />
-        {showBottomTabBar && !isDesktop && <BottomTabBar animateEntry={animateShellEntry} />}
+        {!isDesktop && (
+          <div
+            className={showBottomTabBar ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+            aria-hidden={!showBottomTabBar}
+          >
+            <BottomTabBar animateEntry={animateShellEntry} />
+          </div>
+        )}
         <ClubAdminFab />
       </MainLayout>
     );

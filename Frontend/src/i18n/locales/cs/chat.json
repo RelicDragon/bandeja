@@ -113,6 +113,10 @@
       "uniqueVoters_one": "1 uživatel hlasoval",
       "uniqueVoters_other": "{{count}} uživatelů hlasovalo"
     },
+    "dateSeparator": {
+      "today": "Dnes",
+      "yesterday": "Včera"
+    },
     "messages": {
       "loading": "Načítání zpráv...",
       "loadMore": "Načíst starší zprávy",

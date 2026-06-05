@@ -3,7 +3,11 @@ import type { ChatMessage } from '@/api/chat';
 import { EditPreview } from '../EditPreview';
 import { ReplyPreview } from '../ReplyPreview';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { COMPOSER_ELEVATED_PANEL_SHADOW } from '@/components/chat/composerElevatedPanel';
 import { PANEL_ENTER_Y, PANEL_EXIT_Y, PANEL_TRANSITION } from '../motion/motionTokens';
+
+const elevatedPreviewClassName = COMPOSER_ELEVATED_PANEL_SHADOW;
+const stripMotionClassName = 'mb-2 overflow-visible px-0.5 pt-1';
 
 interface MessageInputComposerContextStripProps {
   editingMessage: ChatMessage | null;
@@ -29,9 +33,9 @@ export function MessageInputComposerContextStrip({
   if (reduceMotion) {
     if (!visible) return null;
     return (
-      <div className="mb-2">
+      <div className={stripMotionClassName}>
         {showEdit ? (
-          <EditPreview message={editingMessage!} onCancel={onCancelEdit!} />
+          <EditPreview message={editingMessage!} onCancel={onCancelEdit!} className={elevatedPreviewClassName} />
         ) : (
           <ReplyPreview
             replyTo={{
@@ -42,6 +46,7 @@ export function MessageInputComposerContextStrip({
             }}
             onCancel={onCancelReply}
             onScrollToMessage={onScrollToMessage}
+            className={elevatedPreviewClassName}
           />
         )}
       </div>
@@ -53,14 +58,14 @@ export function MessageInputComposerContextStrip({
       {visible ? (
         <motion.div
           key={panelKey}
-          initial={{ opacity: 0, height: 0, y: PANEL_ENTER_Y }}
-          animate={{ opacity: 1, height: 'auto', y: 0 }}
-          exit={{ opacity: 0, height: 0, y: PANEL_EXIT_Y }}
+          initial={{ opacity: 0, y: PANEL_ENTER_Y }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: PANEL_EXIT_Y }}
           transition={PANEL_TRANSITION}
-          className="overflow-hidden mb-2"
+          className={stripMotionClassName}
         >
           {showEdit ? (
-            <EditPreview message={editingMessage!} onCancel={onCancelEdit!} />
+            <EditPreview message={editingMessage!} onCancel={onCancelEdit!} className={elevatedPreviewClassName} />
           ) : (
             <ReplyPreview
               replyTo={{
@@ -71,6 +76,7 @@ export function MessageInputComposerContextStrip({
               }}
               onCancel={onCancelReply}
               onScrollToMessage={onScrollToMessage}
+              className={elevatedPreviewClassName}
             />
           )}
         </motion.div>

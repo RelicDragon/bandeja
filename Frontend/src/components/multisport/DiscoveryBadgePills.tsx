@@ -1,10 +1,6 @@
-import { Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '@/types';
-import {
-  buildGameDiscoveryBadgeParts,
-  resolveGameExpectedDurationLabelKey,
-} from '@/utils/findDiscovery';
+import { buildGameDiscoveryBadgeParts } from '@/utils/findDiscovery';
 
 type DiscoveryBadgePillsProps = {
   game: Game;
@@ -20,10 +16,8 @@ const TIER_PILL_CLASS = {
 export function DiscoveryBadgePills({ game }: DiscoveryBadgePillsProps) {
   const { t } = useTranslation();
   const parts = buildGameDiscoveryBadgeParts(game, t);
-  const durationKey = resolveGameExpectedDurationLabelKey(game);
-  const durationLabel = durationKey ? t(durationKey) : null;
 
-  if (!parts && !durationLabel) return null;
+  if (!parts) return null;
 
   return (
     <div className="mb-2 flex flex-wrap items-center gap-1.5">
@@ -45,12 +39,6 @@ export function DiscoveryBadgePills({ game }: DiscoveryBadgePillsProps) {
             </span>
           ) : null}
         </>
-      ) : null}
-      {durationLabel ? (
-        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-          <Clock size={10} className="shrink-0 opacity-80" aria-hidden />
-          {durationLabel}
-        </span>
       ) : null}
     </div>
   );

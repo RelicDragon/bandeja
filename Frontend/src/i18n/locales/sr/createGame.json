@@ -35,6 +35,7 @@
     "participants": "Učesnici",
     "participantsTournament": "Učesnici turnira",
     "participantsLeague": "Učesnici lige",
+    "teamFormat": "Format timova",
     "numberOfParticipants": "Broj učesnika",
     "numberOfParticipantsTournament": "Broj učesnika turnira",
     "numberOfParticipantsLeague": "Broj učesnika lige",
@@ -75,8 +76,8 @@
     "resultsByAnyone": {
       "title": "Rezultate može uneti bilo ko",
       "note": {
-        "false": "Samo organizatori mogu unositi i menjati rezultate.",
-        "true": "Bilo koji učesnik može unositi i menjati rezultate."
+        "false": "Samo organizatori mogu unositi rezultate i menjati format igre.",
+        "true": "Svaki igrajući učesnik može unositi rezultate i menjati format igre."
       }
     },
     "allowDirectJoin": {
@@ -118,7 +119,7 @@
     },
     "tournament": "Turnir",
     "genderTeams": {
-      "label": "Učesnici po polu",
+      "label": "Pol",
       "any": "Bilo koji",
       "men": "Muškarci",
       "women": "Žene",
@@ -222,7 +223,6 @@
     "gameStartTraining": "Start of training",
     "intent": {
       "title": "Kakva igra?",
-      "subtitle": "Izaberite stil — detalje možete promeniti ispod.",
       "customizeFormat": "Prilagodi format",
       "social": {
         "title": "Druženje",
@@ -241,6 +241,23 @@
       "title": "Šabloni",
       "empty": "Nema šablona — prilagodite format.",
       "durationApprox2h": "~2 č",
+      "PADEL_BEST_OF_3": {
+        "title": "Best-of-3",
+        "description": "Standardni meč do tri seta",
+        "badge": "Zvanični"
+      },
+      "PADEL_SINGLE_SET": {
+        "title": "Jedan set",
+        "description": "Meč u jednom setu"
+      },
+      "PADEL_AMERICANO": {
+        "title": "Amerikano skor",
+        "description": "Rotacija — igra do ukupnog broja poena"
+      },
+      "PADEL_TIMED": {
+        "title": "Na vreme",
+        "description": "Jedan set sa tajmerom"
+      },
       "PADEL_AMERICANO_24": {
         "title": "Amerikano (24)",
         "description": "Nasumični parovi, do 24"

@@ -37,7 +37,8 @@ export const ChatsTab = () => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [selectedChatType, setSelectedChatType] = useState<ChatType | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const { setIsAnimating, bottomTabsVisible } = useNavigationStore();
+  const setIsAnimating = useNavigationStore((s) => s.setIsAnimating);
+  const bottomTabsVisible = useNavigationStore((s) => s.bottomTabsVisible);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const selectedChatIdRef = useRef<string | null>(null);
@@ -173,12 +174,6 @@ export const ChatsTab = () => {
     </div>
   ), [t]);
 
-  const leftPanel = useMemo(() => (
-    <SplitViewLeftPanel bottomTabsVisible={bottomTabsVisible}>
-      <ChatList onChatSelect={handleChatSelect} isDesktop={true} selectedChatId={selectedChatId} selectedChatType={selectedChatType} />
-    </SplitViewLeftPanel>
-  ), [handleChatSelect, selectedChatId, selectedChatType, bottomTabsVisible]);
-
   const showEmbeddedGameChat = shouldRenderEmbeddedGameChat(selectedChatId, selectedChatType);
 
   const rightPanel = useMemo(() => (
@@ -209,7 +204,16 @@ export const ChatsTab = () => {
           defaultLeftWidth={40}
           minLeftWidth={250}
           maxLeftWidth={600}
-          leftPanel={leftPanel}
+          leftPanel={
+            <SplitViewLeftPanel bottomTabsVisible={bottomTabsVisible}>
+              <ChatList
+                onChatSelect={handleChatSelect}
+                isDesktop={true}
+                selectedChatId={selectedChatId}
+                selectedChatType={selectedChatType}
+              />
+            </SplitViewLeftPanel>
+          }
           rightPanel={rightPanel}
         />
       </div>

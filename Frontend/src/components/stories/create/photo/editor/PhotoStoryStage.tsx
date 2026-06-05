@@ -1,5 +1,5 @@
-import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { stageScaleFromWidth } from '../utils/transform';
+import type { ReactNode } from 'react';
+import { StoryCompositionViewport } from '@/components/stories/StoryCompositionViewport';
 
 type PhotoStoryStageProps = {
   children: (ctx: { stageScale: number }) => ReactNode;
@@ -19,37 +19,18 @@ export function PhotoStoryStage({
   overlay,
   onMeasure,
 }: PhotoStoryStageProps) {
-  const frameRef = useRef<HTMLDivElement>(null);
-  const [stageScale, setStageScale] = useState(0.33);
-
-  const measure = useCallback(() => {
-    const el = frameRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    setStageScale(stageScaleFromWidth(rect.width));
-    onMeasure?.({ w: rect.width, h: rect.height }, rect);
-  }, [onMeasure]);
-
-  useLayoutEffect(() => {
-    measure();
-    const el = frameRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [measure]);
-
   const gestureProps = stageGestureBind?.() ?? {};
 
   return (
     <div
-      ref={frameRef}
       className={`absolute inset-0 z-[10] bg-black ${className ?? ''}`}
       style={{ touchAction: gesturesDisabled ? 'auto' : 'none' }}
       {...gestureProps}
     >
-      {children({ stageScale })}
       {overlay}
+      <StoryCompositionViewport centerInStage onMeasure={onMeasure}>
+        {({ frameScale }) => children({ stageScale: frameScale })}
+      </StoryCompositionViewport>
     </div>
   );
 }

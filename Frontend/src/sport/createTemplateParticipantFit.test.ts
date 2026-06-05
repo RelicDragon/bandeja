@@ -71,14 +71,14 @@ describe('createTemplateParticipantFit', () => {
       playersPerMatch: 2,
       hasFixedTeams: false,
     });
-    expect(list.some((t) => t.id === 'PADEL_AMERICANO_24')).toBe(false);
+    expect(list.some((t) => t.id === 'PADEL_AMERICANO')).toBe(false);
   });
 
   it('MIX_PAIRS requires doubles per match', () => {
     expect(
       isCreateTemplateCompatible(
         Sports.PADEL,
-        CREATE_TEMPLATES.PADEL_AMERICANO_24,
+        CREATE_TEMPLATES.PADEL_AMERICANO,
         ['POINTS_24', 'CUSTOM'],
         {
           maxParticipants: 12,

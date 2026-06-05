@@ -6,18 +6,16 @@ import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { GameReadService } from './read.service';
 import { hasParentGamePermission, canModifyResults } from '../../utils/parentGamePermissions';
+import { isGameFormatOnlyUpdate } from '../../utils/gameFormatUpdateKeys';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType } from '../../utils/systemMessages';
 import telegramNotificationService from '../telegram/notification.service';
 import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../user-timezone.service';
 import { BarResultsService } from '../barResults.service';
 import { ImageProcessor } from '../../utils/imageProcessor';
-import { goldenPointAllowedForFormat, validateScoringPreset } from '../../utils/validators/gameFormat';
 import { validateGameForSport } from '../../utils/validators/validateGameForSport';
 import { assertGameSportMatchesLeagueSeason } from '../../utils/validators/validateLeagueSeasonSport';
-import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
-import { normalizeLegacyTimedScoringPreset } from '../../utils/scoring/matchTimerGame';
-import { ScoringPreset } from '@prisma/client';
+import { normalizeGameFormatPatch } from '../../utils/gameFormat/normalizeGameFormatPatch';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 import { cleanupInviteParticipantsForEndedGame } from '../../utils/gameInviteCleanup';
@@ -107,8 +105,9 @@ export class GameUpdateService {
     }
 
     const isOnlyResultsStatusUpdate = Object.keys(data).length === 1 && data.resultsStatus !== undefined;
+    const formatOnlyUpdate = isGameFormatOnlyUpdate(data);
 
-    if (isOnlyResultsStatusUpdate) {
+    if (isOnlyResultsStatusUpdate || formatOnlyUpdate) {
       await canModifyResults(id, userId, isAdmin);
     } else {
       // For non-resultsStatus updates, check game exists and OWNER/ADMIN permission
@@ -139,7 +138,15 @@ export class GameUpdateService {
         playersPerMatch: true,
         gameType: true,
         scoringPreset: true,
+        scoringMode: true,
         matchGenerationType: true,
+        matchTimerEnabled: true,
+        matchTimedCapMinutes: true,
+        maxTotalPointsPerSet: true,
+        winnerOfMatch: true,
+        winnerOfGame: true,
+        hasGoldenPoint: true,
+        ballsInGames: true,
         parentId: true,
       },
     });
@@ -197,24 +204,17 @@ export class GameUpdateService {
         ? resolvePlayersPerMatch(sportForValidation, data.playersPerMatch)
         : game.playersPerMatch;
 
-    const hasFixedTeams =
-      playersPerMatchForValidation === 2
-        ? false
-        : data.hasFixedTeams !== undefined
-          ? data.hasFixedTeams
-          : game.hasFixedTeams || false;
+    const formatNormalized = normalizeGameFormatPatch({
+      existingGame: {
+        ...game,
+        sport: sportForValidation,
+        maxParticipants,
+      },
+      patch: data,
+      entityType: game.entityType,
+    });
 
-    const updateData: any = { ...data };
-    if (playersPerMatchForValidation === 2) {
-      updateData.hasFixedTeams = false;
-      updateData.allowUserInMultipleTeams = false;
-    } else if (data.hasFixedTeams !== undefined) {
-      updateData.hasFixedTeams = hasFixedTeams;
-    }
-
-    if (!hasFixedTeams) {
-      updateData.allowUserInMultipleTeams = false;
-    }
+    const updateData: any = { ...data, ...formatNormalized };
 
     if (game.entityType === 'TOURNAMENT') {
       updateData.resultsByAnyone = false;
@@ -258,74 +258,13 @@ export class GameUpdateService {
       });
     }
 
-    if (data.matchGenerationType !== undefined) {
+    if (data.matchGenerationType !== undefined && formatNormalized.matchGenerationType === undefined) {
       updateData.matchGenerationType = resolveMatchGenerationType({
         resultsRoundGenV2: data.resultsRoundGenV2,
         matchGenerationType: data.matchGenerationType,
         maxParticipants,
         playersPerMatch: playersPerMatchForValidation,
       });
-    }
-
-    const effectiveGameType = data.gameType ?? game.gameType;
-
-    if (data.scoringPreset !== undefined) {
-      let p = validateScoringPreset(effectiveGameType, data.scoringPreset);
-      const leg = normalizeLegacyTimedScoringPreset(p);
-      updateData.scoringPreset = leg.scoringPreset;
-      if (leg.matchTimerEnabled) updateData.matchTimerEnabled = true;
-      if (leg.bumpPointsCapTo21) {
-        const nextPts =
-          data.maxTotalPointsPerSet !== undefined ? data.maxTotalPointsPerSet : undefined;
-        if (nextPts === undefined) {
-          const r = await prisma.game.findUnique({ where: { id }, select: { maxTotalPointsPerSet: true } });
-          if ((r?.maxTotalPointsPerSet ?? 0) < 1) updateData.maxTotalPointsPerSet = 21;
-        } else if (typeof nextPts === 'number' && nextPts < 1) {
-          updateData.maxTotalPointsPerSet = 21;
-        }
-      }
-    } else if (data.gameType !== undefined) {
-      validateScoringPreset(effectiveGameType, game.scoringPreset);
-    }
-
-    if (data.scoringMode !== undefined) {
-      updateData.scoringMode = data.scoringMode ?? null;
-    }
-
-    if (data.matchTimerEnabled !== undefined) {
-      updateData.matchTimerEnabled = Boolean(data.matchTimerEnabled);
-    }
-
-    const timerRow = async () =>
-      prisma.game.findUnique({
-        where: { id },
-        select: { scoringPreset: true, matchTimerEnabled: true },
-      });
-
-    if (data.matchTimedCapMinutes !== undefined) {
-      let m =
-        typeof data.matchTimedCapMinutes === 'number' && Number.isFinite(data.matchTimedCapMinutes)
-          ? Math.min(60, Math.max(0, Math.round(data.matchTimedCapMinutes)))
-          : 0;
-      const row = await timerRow();
-      const preset =
-        (updateData.scoringPreset as ScoringPreset | null | undefined) ?? row?.scoringPreset ?? null;
-      const timerOn =
-        (updateData.matchTimerEnabled ?? row?.matchTimerEnabled) === true ||
-        preset === ScoringPreset.TIMED ||
-        preset === ScoringPreset.CLASSIC_TIMED;
-      if (!timerOn) m = 0;
-      else if (m < 1) m = 15;
-      updateData.matchTimedCapMinutes = m;
-    } else if (data.scoringPreset !== undefined || data.matchTimerEnabled !== undefined) {
-      const row = await timerRow();
-      const preset =
-        (updateData.scoringPreset as ScoringPreset | null | undefined) ?? row?.scoringPreset ?? null;
-      const timerOn =
-        (updateData.matchTimerEnabled ?? row?.matchTimerEnabled) === true ||
-        preset === ScoringPreset.TIMED ||
-        preset === ScoringPreset.CLASSIC_TIMED;
-      if (!timerOn) updateData.matchTimedCapMinutes = 0;
     }
 
     // Handle avatar deletion
@@ -357,7 +296,19 @@ export class GameUpdateService {
 
     const currentGame = await prisma.game.findUnique({
       where: { id },
-      select: { startTime: true, endTime: true, resultsStatus: true, clubId: true, courtId: true, cityId: true, status: true, entityType: true, timeIsSet: true, finishedDate: true },
+      select: {
+        startTime: true,
+        endTime: true,
+        resultsStatus: true,
+        affectsRating: true,
+        clubId: true,
+        courtId: true,
+        cityId: true,
+        status: true,
+        entityType: true,
+        timeIsSet: true,
+        finishedDate: true,
+      },
     });
 
     const oldClubId = currentGame?.clubId;
@@ -590,44 +541,6 @@ export class GameUpdateService {
       throw new ApiError(400, 'Game photos must be managed via /games/:gameId/photos endpoints');
     }
 
-    if (
-      updateData.scoringMode !== undefined ||
-      updateData.scoringPreset !== undefined ||
-      updateData.hasGoldenPoint !== undefined
-    ) {
-      const fmtRow = await prisma.game.findUnique({
-        where: { id },
-        select: { scoringMode: true, scoringPreset: true },
-      });
-      const mode = updateData.scoringMode !== undefined ? updateData.scoringMode : fmtRow?.scoringMode;
-      const preset =
-        updateData.scoringPreset !== undefined ? updateData.scoringPreset : fmtRow?.scoringPreset;
-      if (!goldenPointAllowedForFormat(mode, preset)) {
-        updateData.hasGoldenPoint = false;
-      }
-    }
-
-    const scoringRow = await prisma.game.findUnique({
-      where: { id },
-      select: { scoringPreset: true, winnerOfMatch: true, maxTotalPointsPerSet: true },
-    });
-    if (scoringRow) {
-      const preset =
-        updateData.scoringPreset !== undefined ? updateData.scoringPreset : scoringRow.scoringPreset;
-      const winnerOfMatch =
-        updateData.winnerOfMatch !== undefined ? updateData.winnerOfMatch : scoringRow.winnerOfMatch;
-      const maxTotalPointsPerSet =
-        updateData.maxTotalPointsPerSet !== undefined
-          ? updateData.maxTotalPointsPerSet
-          : scoringRow.maxTotalPointsPerSet;
-      updateData.ballsInGames = deriveBallsInGamesFromScoring({
-        scoringPreset: preset ?? null,
-        winnerOfMatch,
-        maxTotalPointsPerSet,
-      });
-
-    }
-
     delete updateData.resultsRoundGenV2;
 
     await prisma.$transaction(async (tx) => {
@@ -706,6 +619,18 @@ export class GameUpdateService {
     });
 
     await GameReadinessService.updateGameReadiness(id);
+
+    if (
+      data.affectsRating !== undefined &&
+      currentGame?.resultsStatus === 'FINAL' &&
+      currentGame.affectsRating !== data.affectsRating
+    ) {
+      const outcomeCount = await prisma.gameOutcome.count({ where: { gameId: id } });
+      if (outcomeCount > 0) {
+        const { recalculateGameOutcomes } = await import('../results/outcomes.service');
+        await recalculateGameOutcomes(id);
+      }
+    }
 
     const updatedGame = await prisma.game.findUnique({
       where: { id },

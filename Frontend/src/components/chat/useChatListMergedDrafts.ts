@@ -3,9 +3,9 @@ import { chatApi, ChatDraft } from '@/api/chat';
 import { draftStorage, mergeServerAndLocalDrafts } from '@/services/draftStorage';
 import { useAuthStore } from '@/store/authStore';
 import {
-  chatListModuleCache,
   clearChatListModuleCacheWhenUserMismatch,
-} from '@/components/chat/chatListModuleCache';
+  useChatListFeedStore,
+} from '@/components/chat/chatListFeedStore';
 
 export function useChatListMergedDrafts(userId: string | undefined) {
   const draftsCacheRef = useRef<ChatDraft[] | null>(null);
@@ -14,10 +14,11 @@ export function useChatListMergedDrafts(userId: string | undefined) {
     async (forceRefetch = false): Promise<ChatDraft[]> => {
       if (!userId) return [];
       clearChatListModuleCacheWhenUserMismatch(userId);
-      if (chatListModuleCache.userId !== userId) draftsCacheRef.current = null;
-      if (!forceRefetch && chatListModuleCache.drafts !== null && chatListModuleCache.userId === userId) {
-        draftsCacheRef.current = chatListModuleCache.drafts;
-        return chatListModuleCache.drafts;
+      const feed = useChatListFeedStore.getState();
+      if (feed.userId !== userId) draftsCacheRef.current = null;
+      if (!forceRefetch && feed.drafts !== null && feed.userId === userId) {
+        draftsCacheRef.current = feed.drafts;
+        return feed.drafts;
       }
       if (!forceRefetch && draftsCacheRef.current !== null) return draftsCacheRef.current;
       const [res, local] = await Promise.all([
@@ -26,8 +27,8 @@ export function useChatListMergedDrafts(userId: string | undefined) {
       ]);
       const merged = mergeServerAndLocalDrafts(res?.drafts ?? [], local);
       draftsCacheRef.current = merged;
-      chatListModuleCache.drafts = merged;
-      chatListModuleCache.userId = userId;
+      feed.setDrafts(merged);
+      feed.setUserId(userId);
       return merged;
     },
     [userId]
@@ -64,8 +65,8 @@ export function useChatListMergedDrafts(userId: string | undefined) {
           draftsCacheRef.current = [...draftsCacheRef.current, draft];
         }
       }
-      if (chatListModuleCache.userId === useAuthStore.getState().user?.id) {
-        chatListModuleCache.drafts = draftsCacheRef.current;
+      if (useChatListFeedStore.getState().userId === useAuthStore.getState().user?.id) {
+        useChatListFeedStore.getState().setDrafts(draftsCacheRef.current);
       }
     },
     []

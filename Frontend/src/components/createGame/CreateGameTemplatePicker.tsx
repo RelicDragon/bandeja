@@ -1,12 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { Clock } from 'lucide-react';
 import type { CreateFlowIntent, CreateTemplate, CreateTemplateId } from '@/sport/createFlow';
 import { listTemplatesForIntent } from '@/sport/createFlow';
 import type { ScoringPreset } from '@/types';
 import type { Sport } from '@shared/sport';
 import { getSportPublicIcon } from '@/sport/sportPublicIcon';
 import { SelectionTile } from '@/components/multisport/SelectionTile';
-import { getCreateTemplateAccentClass, getCreateTemplateIcon } from '@/utils/createTemplateVisuals';
+import { getCreateTemplateIcon } from '@/utils/createTemplateVisuals';
+import { CreateTemplateCardTrailing } from './CreateTemplateCardTrailing';
+import type { CreateTemplateDurationContext } from './createTemplateDurationLabels';
 
 type Props = {
   sport: Sport;
@@ -15,6 +16,7 @@ type Props = {
   selectedId: CreateTemplateId | null;
   onSelect: (template: CreateTemplate) => void;
   embedded?: boolean;
+  durationContext: CreateTemplateDurationContext;
 };
 
 function TierPill({ tier }: { tier: 'social' | 'match' }) {
@@ -38,6 +40,7 @@ export const CreateGameTemplatePicker = ({
   selectedId,
   onSelect,
   embedded = false,
+  durationContext,
 }: Props) => {
   const { t } = useTranslation();
   const templates = listTemplatesForIntent(sport, intent, allowedScoringPresets);
@@ -70,7 +73,6 @@ export const CreateGameTemplatePicker = ({
       <div className="space-y-2">
         {templates.map((tpl) => {
           const Icon = getCreateTemplateIcon(tpl.id);
-          const accent = getCreateTemplateAccentClass(tpl.id);
           return (
             <SelectionTile
               key={tpl.id}
@@ -80,15 +82,8 @@ export const CreateGameTemplatePicker = ({
               title={t(tpl.labelKey)}
               description={tpl.descriptionKey ? t(tpl.descriptionKey) : undefined}
               badges={<TierPill tier={tpl.tier} />}
-              trailing={
-                tpl.expectedDurationLabelKey ? (
-                  <span
-                    className={`inline-flex items-center gap-1 text-[10px] font-medium ${accent}`}
-                  >
-                    <Clock size={12} aria-hidden />
-                    {t(tpl.expectedDurationLabelKey)}
-                  </span>
-                ) : undefined
+              topTrailing={
+                <CreateTemplateCardTrailing tpl={tpl} durationContext={durationContext} />
               }
             />
           );

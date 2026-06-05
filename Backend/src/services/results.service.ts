@@ -24,6 +24,7 @@ import {
 import { appendMatchLiveScoringAudit } from './results/matchLiveScoringAudit.service';
 import { updateMatchWinners } from './results/matchWinner.service';
 import { undoGameOutcomes } from './results/outcomes.service';
+import { revertForGame } from './levelChange';
 
 const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
 
@@ -179,16 +180,12 @@ export async function deleteGameResults(gameId: string) {
   await prisma.$transaction(async (tx) => {
     if (game.outcomes.length > 0) {
       await undoGameOutcomes(gameId, tx);
+    } else {
+      await revertForGame(gameId, 'all', tx);
     }
 
     await tx.round.deleteMany({
       where: { gameId },
-    });
-
-    await tx.levelChangeEvent.deleteMany({
-      where: {
-        gameId: gameId,
-      },
     });
 
     const updatedGame = await tx.game.findUnique({
@@ -236,6 +233,8 @@ export async function resetGameResults(gameId: string) {
   await prisma.$transaction(async (tx) => {
     if (game.outcomes.length > 0) {
       await undoGameOutcomes(gameId, tx);
+    } else {
+      await revertForGame(gameId, 'all', tx);
     }
 
     await tx.roundOutcome.deleteMany({
@@ -290,12 +289,6 @@ export async function resetGameResults(gameId: string) {
       where: { gameId },
     });
 
-    await tx.levelChangeEvent.deleteMany({
-      where: {
-        gameId: gameId,
-      },
-    });
-
     const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
       select: { startTime: true, endTime: true, cityId: true, timeIsSet: true, entityType: true },
@@ -345,6 +338,8 @@ export async function editGameResults(gameId: string) {
   await prisma.$transaction(async (tx) => {
     if (game.outcomes.length > 0) {
       await undoGameOutcomes(gameId, tx);
+    } else {
+      await revertForGame(gameId, 'all', tx);
     }
 
     await tx.roundOutcome.deleteMany({
@@ -352,12 +347,6 @@ export async function editGameResults(gameId: string) {
         round: {
           gameId,
         },
-      },
-    });
-
-    await tx.levelChangeEvent.deleteMany({
-      where: {
-        gameId: gameId,
       },
     });
 

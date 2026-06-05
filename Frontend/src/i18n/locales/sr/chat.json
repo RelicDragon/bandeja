@@ -117,6 +117,10 @@
       "uniqueVoters_many": "{{count}} korisnika su glasala",
       "uniqueVoters_other": "{{count}} korisnika su glasala"
     },
+    "dateSeparator": {
+      "today": "Danas",
+      "yesterday": "Juče"
+    },
     "messages": {
       "loading": "Učitavanje poruka...",
       "loadMore": "Učitaj starije poruke",

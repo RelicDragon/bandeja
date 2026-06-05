@@ -1,4 +1,4 @@
-import { LevelChangeEventType, Sport, SportLevelSource } from '@prisma/client';
+import { Sport, SportLevelSource } from '@prisma/client';
 import prisma from '../../config/database';
 import { validatePadelQuestionnaireAnswers } from '../../sport/questionnaires/padel';
 import { sumAnswerScores, validateAnswers } from '../../sport/questionnaires/scoring';
@@ -14,6 +14,10 @@ import {
   parseSportParam,
   resolveUserSportSnapshot,
 } from './userSportProfile.service';
+import {
+  createQuestionnaireEvent,
+  revertQuestionnaireEventsForUserSport,
+} from '../levelChange';
 
 export type SportQuestionnaireStatus = {
   completed: boolean;
@@ -180,16 +184,11 @@ export async function completeSportQuestionnaire(
       },
     });
 
-    await tx.levelChangeEvent.create({
-      data: {
-        userId,
-        levelBefore,
-        levelAfter: newLevel,
-        eventType: LevelChangeEventType.QUESTIONNAIRE,
-        sport,
-        gameId: null,
-        linkEntityType: null,
-      },
+    await createQuestionnaireEvent(tx, {
+      userId,
+      sport,
+      levelBefore,
+      levelAfter: newLevel,
     });
 
     if (sport === Sport.PADEL) {
@@ -276,14 +275,7 @@ export async function resetSportQuestionnaire(userId: string, sportInput: unknow
   }
 
   const user = await prisma.$transaction(async (tx) => {
-    await tx.levelChangeEvent.deleteMany({
-      where: {
-        userId,
-        sport,
-        eventType: LevelChangeEventType.QUESTIONNAIRE,
-        gameId: null,
-      },
-    });
+    await revertQuestionnaireEventsForUserSport(userId, sport, tx);
     await tx.userSportProfile.upsert({
       where: { userId_sport: { userId, sport } },
       create: {

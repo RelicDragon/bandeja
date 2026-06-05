@@ -1,4 +1,8 @@
 import type { ChatMessage } from '@/api/chat';
+import {
+  CHAT_DATE_SEPARATOR_ESTIMATE_PX,
+  getChatDateSeparatorLabel,
+} from '@/utils/chatDateSeparator';
 import { getCachedMessageRowHeight } from './chatMessageHeights';
 
 export const ROW_ESTIMATE_PX = 88;
@@ -25,10 +29,22 @@ export function estimateMessageRowHeightPx(msg: ChatMessage | undefined): number
   return ROW_ESTIMATE_PX;
 }
 
-/** Virtualizer / open: measured cache first, then heuristic. */
+/** Virtualizer / open: measured cache first, then heuristic (body height only). */
 export function resolveMessageRowEstimatePx(msg: ChatMessage | undefined): number {
   if (!msg) return ROW_ESTIMATE_PX;
   const cached = getCachedMessageRowHeight(msg.id);
   if (cached != null) return cached;
   return estimateMessageRowHeightPx(msg);
+}
+
+/** Row estimate for virtualizer: cached/heuristic body + optional date separator. */
+export function resolveMessageRowEstimateWithDateSeparator(
+  messages: ChatMessage[],
+  index: number,
+): number {
+  const msg = messages[index];
+  const body = resolveMessageRowEstimatePx(msg);
+  return getChatDateSeparatorLabel(messages, index) != null
+    ? body + CHAT_DATE_SEPARATOR_ESTIMATE_PX
+    : body;
 }

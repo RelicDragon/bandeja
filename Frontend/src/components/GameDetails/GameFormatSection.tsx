@@ -1,20 +1,31 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
   GameFormatCard,
+  GameFormatGenderFields,
   GameFormatWizard,
   gameFormatTeamsFieldsVisible,
   type GameFormatTeamsBinding,
 } from '@/components/gameFormat';
+import { gameFormatGenderVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
+import { CreateGameIntentPicker } from '@/components/createGame/CreateGameIntentPicker';
 import { useGameFormat } from '@/hooks/useGameFormat';
+import { useGameFormatTemplateFlow } from '@/hooks/useGameFormatTemplateFlow';
 import { gamesApi } from '@/api';
-import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
 import { useClampGameFormatToSport } from '@/hooks/useSportGameFormatLimits';
 import { playersPerMatchOf } from '@/utils/matchFormat';
 import { Game, GenderTeam } from '@/types';
-import type { GameFormatWizardMatchFormat } from '@/components/gameFormat/GameFormatWizard';
+import { useAuthStore } from '@/store/authStore';
+import { listCreateFlowSports } from '@/utils/profileSports';
+import type { CreateTemplateParticipantContext } from '@/sport/createTemplateParticipantFit';
+import { showGameFormatTemplatePicker } from '@/utils/gameFormat/showGameFormatTemplatePicker';
+import { inferCreateTemplateFromGame } from '@/utils/gameFormat/inferCreateTemplateFromGame';
+import { buildGameFormatUpdatePayload } from '@/utils/gameFormat/buildGameFormatUpdatePayload';
+import { buildEditTemplateDurationContext } from '@/utils/gameFormat/buildEditTemplateDurationContext';
+import { parseGameSport } from '@/utils/gameSport';
+import type { CreateTemplate } from '@/sport/createFlow';
 
 interface GameFormatSectionProps {
   game: Game;
@@ -26,20 +37,122 @@ interface GameFormatSectionProps {
 
 export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMultiToggle }: GameFormatSectionProps) => {
   const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
+  const sport = parseGameSport(game.sport);
   const formatMaxParticipants = game.entityType === 'LEAGUE_SEASON' ? 4 : game.maxParticipants;
-  const gameFormat = useGameFormat({
-    ...game,
-    maxParticipants: formatMaxParticipants,
-  });
+  const enabledSports = useMemo(() => listCreateFlowSports(user), [user]);
+  const showTemplatePicker = showGameFormatTemplatePicker(game.entityType, sport, enabledSports);
+  const gameFormat = useGameFormat(
+    {
+      ...game,
+      maxParticipants: formatMaxParticipants,
+    },
+    { skipGenerationParticipantDefaults: showTemplatePicker },
+  );
+  const gameFormatRef = useRef(gameFormat);
+  gameFormatRef.current = gameFormat;
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const sportFormatLimits = useClampGameFormatToSport(game.sport, gameFormat, canEdit);
-  const [wizardPlayersPerMatch, setWizardPlayersPerMatch] = useState<number>(() =>
-    playersPerMatchOf(game),
-  );
+  const { sportConfig, allowedScoringModes, allowedScoringPresets } = sportFormatLimits;
 
   const maxParticipants = formatMaxParticipants ?? 0;
   const genderTeams = (game.genderTeams || 'ANY') as GenderTeam;
   const hasFixedTeams = maxParticipants === 2 ? false : (game.hasFixedTeams || false);
+  const playersPerMatch = (playersPerMatchOf(game) === 4 ? 4 : 2) as 2 | 4;
+
+  const templateParticipantContext = useMemo(
+    (): CreateTemplateParticipantContext => ({
+      maxParticipants,
+      playersPerMatch,
+      hasFixedTeams,
+      genderTeams,
+    }),
+    [maxParticipants, playersPerMatch, hasFixedTeams, genderTeams],
+  );
+
+  const templateInitial = useMemo(
+    () =>
+      inferCreateTemplateFromGame(sport, allowedScoringPresets, templateParticipantContext, game),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap when game identity / roster shape changes
+    [game.id, sport, maxParticipants, playersPerMatch, hasFixedTeams, genderTeams],
+  );
+
+  const persistFormat = useCallback(
+    async (playersPerMatchOverride?: number, affectsRating?: boolean) => {
+      if (!canEdit) return;
+      try {
+        const body = buildGameFormatUpdatePayload({
+          entityType: game.entityType,
+          gameFormat: gameFormatRef.current,
+          playersPerMatch: playersPerMatchOverride ?? playersPerMatchOf(game),
+          affectsRating,
+        });
+        await gamesApi.update(game.id, body);
+        const response = await gamesApi.getById(game.id);
+        onGameUpdate(response.data);
+        toast.success(t('gameResults.setupUpdated'));
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string } } };
+        const errorMessage = err.response?.data?.message || 'errors.generic';
+        toast.error(t(errorMessage, { defaultValue: errorMessage }));
+      }
+    },
+    [canEdit, game, onGameUpdate, t],
+  );
+
+  const onAfterTemplateApply = useCallback(
+    async (template: CreateTemplate) => {
+      await persistFormat(undefined, template.affectsRating);
+    },
+    [persistFormat],
+  );
+
+  const templateFlow = useGameFormatTemplateFlow({
+    enabled: showTemplatePicker,
+    sport,
+    maxParticipants,
+    gameFormat,
+    allowedScoringPresets,
+    presetMeta: sportConfig.presetMeta,
+    participantContext: templateParticipantContext,
+    initial: templateInitial,
+    skipInitialAutoSelect: true,
+    formatWizardOpen: isWizardOpen,
+    onAfterTemplateApply: canEdit ? onAfterTemplateApply : undefined,
+  });
+  const { handleWizardClose, notifyFormatWizardOpen, runInitialBootstrap } = templateFlow;
+
+  useLayoutEffect(() => {
+    if (!showTemplatePicker) return;
+    runInitialBootstrap(templateInitial.intent, templateInitial.templateId);
+  }, [showTemplatePicker, templateInitial.intent, templateInitial.templateId, runInitialBootstrap]);
+
+  const closeFormatWizard = useCallback(() => {
+    handleWizardClose();
+    setIsWizardOpen(false);
+  }, [handleWizardClose]);
+
+  const templateDurationContext = useMemo(
+    () =>
+      buildEditTemplateDurationContext(
+        game,
+        sport,
+        maxParticipants,
+        playersPerMatch,
+        gameFormat,
+        templateFlow.selectedTemplateId,
+        user,
+      ),
+    [
+      game,
+      sport,
+      maxParticipants,
+      playersPerMatch,
+      gameFormat,
+      templateFlow.selectedTemplateId,
+      user,
+    ],
+  );
 
   const persistTeams = useCallback(
     async (patch: { genderTeams?: GenderTeam; hasFixedTeams?: boolean; allowUserInMultipleTeams?: boolean }) => {
@@ -65,12 +178,29 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
         await gamesApi.update(game.id, body);
         const response = await gamesApi.getById(game.id);
         onGameUpdate(response.data);
-      } catch (error: any) {
-        const errorMessage = error.response?.data?.message || 'errors.generic';
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string } } };
+        const errorMessage = err.response?.data?.message || 'errors.generic';
         toast.error(t(errorMessage, { defaultValue: errorMessage }));
       }
     },
     [canEdit, game.id, game.maxParticipants, game.hasFixedTeams, onGameUpdate, t],
+  );
+
+  const handleRatingGameChange = useCallback(
+    async (checked: boolean) => {
+      if (!canEdit) return;
+      try {
+        await gamesApi.update(game.id, { affectsRating: checked });
+        const response = await gamesApi.getById(game.id);
+        onGameUpdate(response.data);
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string } } };
+        const errorMessage = err.response?.data?.message || 'errors.generic';
+        toast.error(t(errorMessage, { defaultValue: errorMessage }));
+      }
+    },
+    [canEdit, game.id, onGameUpdate, t],
   );
 
   const teamsForCard: GameFormatTeamsBinding | undefined = gameFormatTeamsFieldsVisible(
@@ -97,111 +227,94 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
       }
     : undefined;
 
-  const handleDone = async () => {
+  const handleWizardDone = async () => {
+    handleWizardClose();
+    setIsWizardOpen(false);
     if (!canEdit) return;
-    const setup = gameFormat.setupPayload;
-    try {
-      const winnerOfGame =
-        game.entityType === 'LEAGUE_SEASON' && setup.winnerOfGame === 'BY_POINTS'
-          ? gameFormat.scoringMode === 'POINTS'
-            ? 'BY_SCORES_DELTA'
-            : 'BY_MATCHES_WON'
-          : setup.winnerOfGame;
-      const rankingPointsPayload =
-        game.entityType === 'LEAGUE_SEASON'
-          ? {}
-          : {
-              pointsPerWin: setup.pointsPerWin,
-              pointsPerLoose: setup.pointsPerLoose,
-              pointsPerTie: setup.pointsPerTie,
-            };
-      const matchFormatPatch =
-        game.entityType === 'GAME' || game.entityType === 'LEAGUE'
-          ? {
-              playersPerMatch: wizardPlayersPerMatch,
-              ...(wizardPlayersPerMatch === 2
-                ? { hasFixedTeams: false, allowUserInMultipleTeams: false }
-                : {}),
-            }
-          : {};
-      await gamesApi.update(game.id, {
-        ...resultsRoundGenV2Payload,
-        gameType: gameFormat.gameType,
-        scoringMode: gameFormat.scoringMode,
-        ...rankingPointsPayload,
-        fixedNumberOfSets: setup.fixedNumberOfSets,
-        maxTotalPointsPerSet: setup.maxTotalPointsPerSet,
-        matchTimedCapMinutes: setup.matchTimedCapMinutes,
-        matchTimerEnabled: setup.matchTimerEnabled ?? false,
-        maxPointsPerTeam: setup.maxPointsPerTeam,
-        winnerOfGame,
-        winnerOfMatch: setup.winnerOfMatch,
-        matchGenerationType: setup.matchGenerationType,
-        ballsInGames: setup.ballsInGames,
-        scoringPreset: setup.scoringPreset,
-        hasGoldenPoint: setup.hasGoldenPoint,
-        ...matchFormatPatch,
-      });
-      const response = await gamesApi.getById(game.id);
-      onGameUpdate(response.data);
-      toast.success(t('gameResults.setupUpdated'));
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    }
+    await persistFormat();
   };
 
   const handleOpenWizard = () => {
     if (!canEdit) return;
-    setWizardPlayersPerMatch(playersPerMatchOf(game));
+    notifyFormatWizardOpen();
     setIsWizardOpen(true);
   };
 
-  const wizardMatchFormat = useMemo((): GameFormatWizardMatchFormat | undefined => {
-    if (game.entityType !== 'GAME' && game.entityType !== 'LEAGUE') return undefined;
-    if (sportFormatLimits.sportConfig.allowedPlayerCountsPerMatch.length <= 1) return undefined;
-    return {
-      playersPerMatch: wizardPlayersPerMatch,
-      allowedCounts: sportFormatLimits.sportConfig.allowedPlayerCountsPerMatch,
-      disabled: maxParticipants === 2,
-      sport: game.sport,
-      onChange: setWizardPlayersPerMatch,
-    };
-  }, [
-    game.entityType,
-    game.sport,
-    sportFormatLimits.sportConfig.allowedPlayerCountsPerMatch,
-    wizardPlayersPerMatch,
-    maxParticipants,
-  ]);
-
-  const fixedTeamsPanel = (
-    <FixedTeamsManagement embedded game={game} onGameUpdate={onGameUpdate} />
-  );
+  const fixedTeamsPanel = <FixedTeamsManagement embedded game={game} onGameUpdate={onGameUpdate} />;
 
   const summaryPlayersPerMatch =
-    game.entityType === 'GAME' || game.entityType === 'LEAGUE'
-      ? playersPerMatchOf(game)
-      : undefined;
+    game.entityType === 'GAME' || game.entityType === 'LEAGUE' ? playersPerMatchOf(game) : undefined;
+
+  const genderSection =
+    teamsForCard && gameFormatGenderVisible(game.entityType) ? (
+      <GameFormatGenderFields
+        entityType={game.entityType}
+        genderTeams={teamsForCard.genderTeams}
+        onGenderTeamsChange={teamsForCard.onGenderTeamsChange}
+        genderSwitchLayoutId={teamsForCard.genderSwitchLayoutId}
+        readOnly={teamsForCard.readOnly}
+      />
+    ) : undefined;
+
+  const renderFormatCard = (embedded?: boolean) => (
+    <GameFormatCard
+      embedded={embedded}
+      omitGender={embedded}
+      entityType={game.entityType}
+      format={gameFormat}
+      playersPerMatch={summaryPlayersPerMatch}
+      sport={game.sport}
+      generationSlotCount={
+        formatMaxParticipants != null && formatMaxParticipants > 0 ? formatMaxParticipants : undefined
+      }
+      onOpenWizard={handleOpenWizard}
+      showWizardButton={canEdit}
+      wizardButtonLabel={templateFlow.formatWizardCustomizeLabel}
+      participantFormatEditHint={
+        game.resultsByAnyone && canEdit ? t('gameFormat.resultsByAnyoneEditHint') : undefined
+      }
+      teams={teamsForCard}
+      fixedTeamsPanel={embedded ? undefined : fixedTeamsPanel}
+      fixedTeamsPanelOpen={embedded ? undefined : hasFixedTeams}
+      showFixedTeamsToggle={!embedded}
+      suppressAllowMultiToggle={suppressAllowMultiToggle}
+    />
+  );
 
   return (
-    <>
-      <GameFormatCard
-        entityType={game.entityType}
-        format={gameFormat}
-        playersPerMatch={summaryPlayersPerMatch}
-        sport={game.sport}
-        generationSlotCount={
-          formatMaxParticipants != null && formatMaxParticipants > 0 ? formatMaxParticipants : undefined
-        }
-        onOpenWizard={handleOpenWizard}
-        showWizardButton={canEdit}
-        teams={teamsForCard}
-        fixedTeamsPanel={fixedTeamsPanel}
-        fixedTeamsPanelOpen={hasFixedTeams}
-        suppressAllowMultiToggle={suppressAllowMultiToggle}
-      />
-      {isWizardOpen && (
+    <div className="space-y-4">
+      {showTemplatePicker ? (
+        <CreateGameIntentPicker
+          sport={sport}
+          allowedScoringPresets={allowedScoringPresets}
+          participantContext={templateParticipantContext}
+          selectedTemplateId={templateFlow.activeTemplateId}
+          isCustom={templateFlow.isCustom}
+          showManualCard={templateFlow.showManualCard}
+          onSelectTemplate={templateFlow.handleTemplateSelect}
+          onSelectCustom={templateFlow.handleCustomSelect}
+          isRatingGame={game.affectsRating ?? false}
+          onRatingGameChange={(checked) => void handleRatingGameChange(checked)}
+          scoringPreset={gameFormat.scoringPreset}
+          matchTimedCapMinutes={gameFormat.matchTimedCapMinutes}
+          onAmericanoPointsChange={templateFlow.handleAmericanoPointsChange}
+          onTimedMinutesChange={templateFlow.handleTimedMinutesChange}
+          durationContext={templateDurationContext}
+          customMatchGenerationType={gameFormat.generationType}
+          customGameType={gameFormat.gameType}
+          customMatchTimerEnabled={gameFormat.matchTimerEnabled}
+          customCustomPointsTotal={gameFormat.customPointsTotal}
+          readOnly={!canEdit}
+          formatSection={templateFlow.isCustom ? renderFormatCard(true) : undefined}
+          genderSection={genderSection}
+          onOpenFormatWizard={handleOpenWizard}
+          formatWizardCustomizeLabel={templateFlow.formatWizardCustomizeLabel}
+        />
+      ) : templateFlow.showFormatSection ? (
+        renderFormatCard()
+      ) : null}
+
+      {isWizardOpen ? (
         <GameFormatWizard
           isOpen={isWizardOpen}
           format={gameFormat}
@@ -211,13 +324,14 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
           }
           hasFixedTeams={hasFixedTeams}
           allowByPointsInRanking={game.entityType !== 'LEAGUE_SEASON'}
-          onClose={() => setIsWizardOpen(false)}
-          onDone={handleDone}
-          matchFormat={wizardMatchFormat}
-          allowedScoringModes={sportFormatLimits.allowedScoringModes}
-          allowedScoringPresets={sportFormatLimits.allowedScoringPresets}
+          onClose={closeFormatWizard}
+          onDone={handleWizardDone}
+          playersPerMatch={summaryPlayersPerMatch}
+          sport={game.sport}
+          allowedScoringModes={allowedScoringModes}
+          allowedScoringPresets={templateFlow.wizardAllowedPresets}
         />
-      )}
-    </>
+      ) : null}
+    </div>
   );
 };

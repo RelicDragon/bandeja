@@ -2,6 +2,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { PlayerAvatar } from '@/components';
 import type { BasicUser } from '@/types';
 import type { ServeGuideSnapshot } from '@/utils/liveScoring';
+import { SERVE_GOLDEN_HIGHLIGHT } from './serveCourtHighlight';
 import { LiveServeSideArrow } from './LiveServeSideArrow';
 
 type LiveServeServerLineProps = {
@@ -62,20 +63,22 @@ export function LiveServeServerLine({ snapshot, teamAPlayers, teamBPlayers, atta
             : 'flex max-w-full items-center gap-1.5 rounded-lg border border-zinc-200/70 bg-zinc-50/90 px-2 py-1 dark:border-zinc-700/70 dark:bg-zinc-900/50'
         }
       >
-        <PlayerAvatar
-          player={player}
-          showName={false}
-          superTiny
-          asDiv
-          subscribePresence={false}
-        />
+        <div className={`shrink-0 rounded-full ${SERVE_GOLDEN_HIGHLIGHT}`}>
+          <PlayerAvatar
+            player={player}
+            showName={false}
+            superTiny
+            asDiv
+            subscribePresence={false}
+          />
+        </div>
         <p className="min-w-0 text-center text-[11px] leading-tight sm:text-xs">
           <Trans
             i18nKey={lineKey}
             values={{ name: snapshot.serverDisplayName }}
             components={{
-              name: <span key="name" className="font-semibold text-zinc-900 dark:text-zinc-50" />,
-              side: <span key="side" className="font-semibold text-primary-700 dark:text-primary-300" />,
+              name: <span key="name" className="font-semibold text-amber-800 dark:text-amber-200" />,
+              side: <span key="side" className="font-semibold text-amber-700 dark:text-amber-300" />,
             }}
           />
           {slot ? (

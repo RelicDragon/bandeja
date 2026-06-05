@@ -75,7 +75,45 @@ function videoSegment(): MediaSlideSegment {
 const noop = () => {};
 
 describe('MediaStorySlide viewer contract', () => {
-  it('renders img from mediaUrl only for IMAGE stories', () => {
+  it('renders baked IMAGE from mediaUrl without live overlay DOM', () => {
+    const html = renderToStaticMarkup(
+      <MediaStorySlide
+        segment={imageSegment({
+          media: {
+            url: 'https://cdn.example/story.jpg',
+            thumbnailUrl: 'https://cdn.example/story-thumb.jpg',
+            type: 'IMAGE',
+            width: 1080,
+            height: 1920,
+            overlayStyle: {
+              version: 2,
+              canvas: { width: 1080, height: 1920 },
+              baked: true,
+              layers: [
+                {
+                  id: 't1',
+                  type: 'text',
+                  text: 'Baked — no DOM overlay',
+                  transform: { x: 540, y: 960, scale: 1, rotation: 0 },
+                  style: { id: 'classic', align: 'center' },
+                },
+              ],
+            },
+          },
+        })}
+        isActive
+        paused={false}
+        onVideoEnded={noop}
+        onVideoError={noop}
+      />
+    );
+
+    expect(html).toContain('https://cdn.example/story.jpg');
+    expect(html).toMatch(/<img[^>]+src="https:\/\/cdn\.example\/story\.jpg"/);
+    expect(html).not.toContain('Baked — no DOM overlay');
+  });
+
+  it('renders canvas overlay frame for non-baked v2 IMAGE layers', () => {
     const html = renderToStaticMarkup(
       <MediaStorySlide
         segment={imageSegment()}
@@ -87,9 +125,45 @@ describe('MediaStorySlide viewer contract', () => {
     );
 
     expect(html).toContain('https://cdn.example/story.jpg');
-    expect(html).toMatch(/<img[^>]+src="https:\/\/cdn\.example\/story\.jpg"/);
-    expect(html).not.toContain('Should not render');
-    expect(html).not.toContain('legacy text');
+    expect(html).toMatch(/<canvas/);
+  });
+
+  it('uses composition viewport with media transform for non-baked VIDEO v2 overlay', () => {
+    const html = renderToStaticMarkup(
+      <MediaStorySlide
+        segment={{
+          ...videoSegment(),
+          media: {
+            ...videoSegment().media,
+            overlayStyle: {
+              version: 2,
+              canvas: { width: 1080, height: 1920 },
+              sourceWidth: 1920,
+              sourceHeight: 1080,
+              mediaTransform: { x: 12, y: -8, scale: 1.4, rotation: 5 },
+              layers: [
+                {
+                  id: 't1',
+                  type: 'text',
+                  text: 'Live overlay',
+                  transform: { x: 540, y: 960, scale: 1, rotation: 0 },
+                  style: { id: 'classic', align: 'center' },
+                },
+              ],
+            },
+          },
+        }}
+        isActive
+        paused={false}
+        onVideoEnded={noop}
+        onVideoError={noop}
+      />
+    );
+
+    expect(html).toContain('https://cdn.example/story.mp4');
+    expect(html).toMatch(/<canvas/);
+    expect(html).toMatch(/scale\(1\.4\)/);
+    expect(html).not.toContain('Live overlay');
   });
 
   it('renders video from mediaUrl without overlays for VIDEO stories', () => {

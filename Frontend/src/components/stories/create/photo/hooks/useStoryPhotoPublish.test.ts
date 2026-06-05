@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_MEDIA_ADJUST, STORY_CANVAS_HEIGHT, STORY_CANVAS_WIDTH } from '../types';
 import type { CreateStoryItemPayload, StoryDocument } from '../types';
 
-const { createItem, uploadImage, drawScene, ensureDocumentMediaDimensions } = vi.hoisted(() => ({
+const { createItem, uploadImage, drawScene, prepareDocumentForExport } = vi.hoisted(() => ({
   createItem: vi.fn(),
   uploadImage: vi.fn(),
   drawScene: vi.fn(),
-  ensureDocumentMediaDimensions: vi.fn(),
+  prepareDocumentForExport: vi.fn(),
 }));
 
 vi.mock('@/api/stories', async (importOriginal) => {
@@ -26,8 +26,8 @@ vi.mock('../utils/drawScene', () => ({
   drawScene: (...args: unknown[]) => drawScene(...args),
 }));
 
-vi.mock('../utils/ensureMediaDimensions', () => ({
-  ensureDocumentMediaDimensions: (...args: unknown[]) => ensureDocumentMediaDimensions(...args),
+vi.mock('../utils/prepareDocumentForExport', () => ({
+  prepareDocumentForExport: (...args: unknown[]) => prepareDocumentForExport(...args),
 }));
 
 import { buildPhotoCreateItemPayload, publishStoryPhotoDocument } from './useStoryPhotoPublish';
@@ -79,9 +79,9 @@ describe('publishStoryPhotoDocument', () => {
     createItem.mockReset();
     uploadImage.mockReset();
     drawScene.mockReset();
-    ensureDocumentMediaDimensions.mockReset();
+    prepareDocumentForExport.mockReset();
 
-    ensureDocumentMediaDimensions.mockImplementation(async (d: StoryDocument) => d);
+    prepareDocumentForExport.mockImplementation(async (d: StoryDocument) => d);
     drawScene.mockResolvedValue(new Blob(['jpeg'], { type: 'image/jpeg' }));
     uploadImage.mockResolvedValue(uploadedImage());
     createItem.mockResolvedValue({

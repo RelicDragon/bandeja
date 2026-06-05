@@ -35,6 +35,7 @@
     "participants": "Участники",
     "participantsTournament": "Участники турнира",
     "participantsLeague": "Участники лиги",
+    "teamFormat": "Формат команд",
     "numberOfParticipants": "Количество участников",
     "numberOfParticipantsTournament": "Количество участников турнира",
     "numberOfParticipantsLeague": "Количество участников лиги",
@@ -76,8 +77,8 @@
     "resultsByAnyone": {
       "title": "Выставить результаты может любой игрок",
       "note": {
-        "false": "Только организаторы могут вводить и изменять результаты.",
-        "true": "Любой участник может вводить и изменять результаты."
+        "false": "Только организаторы могут вводить результаты и менять формат игры.",
+        "true": "Любой играющий участник может вводить результаты и менять формат игры."
       }
     },
     "allowDirectJoin": {
@@ -119,7 +120,7 @@
     },
     "tournament": "Турнир",
     "genderTeams": {
-      "label": "Участники по полу",
+      "label": "Пол",
       "any": "Любые",
       "men": "Мужчины",
       "women": "Женщины",
@@ -224,7 +225,6 @@
     "priceRequired": "Price must be greater than 0 for this price type",
     "intent": {
       "title": "Какая игра?",
-      "subtitle": "Выберите формат — детали можно изменить ниже.",
       "customizeFormat": "Настроить формат",
       "social": {
         "title": "Социальная",
@@ -243,6 +243,23 @@
       "title": "Шаблоны",
       "empty": "Нет шаблонов — настройте формат вручную.",
       "durationApprox2h": "~2 ч",
+      "PADEL_BEST_OF_3": {
+        "title": "До 3 сетов",
+        "description": "Стандартный матч из трёх сетов",
+        "badge": "Официальный"
+      },
+      "PADEL_SINGLE_SET": {
+        "title": "Один сет",
+        "description": "Матч в одном сете"
+      },
+      "PADEL_AMERICANO": {
+        "title": "Американо",
+        "description": "Ротация — игра до заданного числа очков"
+      },
+      "PADEL_TIMED": {
+        "title": "На время",
+        "description": "Один сет с таймером"
+      },
       "PADEL_AMERICANO_24": {
         "title": "Американо (24)",
         "description": "Случайные пары, до 24 очков"

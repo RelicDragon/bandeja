@@ -113,6 +113,10 @@
       "uniqueVoters_one": "1 usuario votó",
       "uniqueVoters_other": "{{count}} usuarios votaron"
     },
+    "dateSeparator": {
+      "today": "Hoy",
+      "yesterday": "Ayer"
+    },
     "messages": {
       "loading": "Cargando mensajes...",
       "loadMore": "Cargar mensajes anteriores",

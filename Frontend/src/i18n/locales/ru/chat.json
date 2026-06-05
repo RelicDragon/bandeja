@@ -117,6 +117,10 @@
       "uniqueVoters_many": "{{count}} пользователей проголосовали",
       "uniqueVoters_other": "{{count}} пользователей проголосовали"
     },
+    "dateSeparator": {
+      "today": "Сегодня",
+      "yesterday": "Вчера"
+    },
     "messages": {
       "loading": "Загрузка сообщений...",
       "loadMore": "Загрузить старые сообщения",

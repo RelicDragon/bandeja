@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { ScoringPreset } from '@/types';
-import { tBestOfMatchLabel, tGameFormatStepHint, tScoringPresetField } from '@/utils/gameFormat';
+import { tGameFormatStepHint, tScoringPresetField } from '@/utils/gameFormat';
+import { isPointsPreset } from '@/utils/gameFormat/scoringCompatibility';
 import { GameFormatTimedDuration } from './GameFormatTimedDuration';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
-import { presetTierBadgeClass, presetTierBadgeLabel, resolvePresetTierForSport } from '@/utils/presetTierUi';
 
 interface GameFormatStepPointsTotalProps {
   scoringPreset: ScoringPreset;
@@ -27,12 +27,6 @@ const POINT_CAP_PRESETS: { cap: number; preset: ScoringPreset; recommended?: boo
   { cap: 32, preset: 'POINTS_32' },
 ];
 
-const MATCH_BEST_OF_PRESETS: { preset: ScoringPreset; sets: number; pointsCap: number; recommended?: boolean }[] = [
-  { preset: 'BEST_OF_3_11', sets: 3, pointsCap: 11, recommended: true },
-  { preset: 'BEST_OF_5_11', sets: 5, pointsCap: 11 },
-  { preset: 'BEST_OF_3_21', sets: 3, pointsCap: 21, recommended: true },
-];
-
 export const GameFormatStepPointsTotal = ({
   scoringPreset,
   allowedPresets,
@@ -46,14 +40,11 @@ export const GameFormatStepPointsTotal = ({
   onCustomPointsChange,
 }: GameFormatStepPointsTotalProps) => {
   const { t } = useTranslation();
-  const visiblePointCaps =
+  const visiblePointCaps = (
     allowedPresets && allowedPresets.length > 0
       ? POINT_CAP_PRESETS.filter((item) => allowedPresets.includes(item.preset))
-      : POINT_CAP_PRESETS;
-  const visibleBestOf =
-    allowedPresets && allowedPresets.length > 0
-      ? MATCH_BEST_OF_PRESETS.filter((item) => allowedPresets.includes(item.preset))
-      : MATCH_BEST_OF_PRESETS;
+      : POINT_CAP_PRESETS
+  ).filter((item) => isPointsPreset(item.preset));
 
   const handleCustomInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
@@ -99,18 +90,6 @@ export const GameFormatStepPointsTotal = ({
                 }`}
               >
                 {cap}
-                {(() => {
-                  const tier = resolvePresetTierForSport(sport, preset);
-                  const tierLabel = tier ? presetTierBadgeLabel(tier, t) : null;
-                  if (!tier || !tierLabel) return null;
-                  return (
-                    <span
-                      className={`absolute bottom-1 left-1 rounded px-1 py-0.5 text-[8px] font-bold uppercase tracking-wide ${presetTierBadgeClass(tier)}`}
-                    >
-                      {tierLabel}
-                    </span>
-                  );
-                })()}
                 {recommended && (
                   <span
                     className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full ${
@@ -123,50 +102,6 @@ export const GameFormatStepPointsTotal = ({
             );
           })}
         </div>
-
-        {visibleBestOf.length > 0 ? (
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 m-0">
-              {tBestOfMatchLabel(t, sport)}
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {visibleBestOf.map(({ preset, sets, pointsCap, recommended }) => {
-                const selected = !customActive && scoringPreset === preset;
-                return (
-                  <button
-                    key={preset}
-                    type="button"
-                    aria-label={tScoringPresetField(t, preset, 'title', sport)}
-                    onClick={() => {
-                      onCustomPointsChange(null);
-                      onPresetChange(preset);
-                    }}
-                    className={`rounded-lg py-2.5 text-sm font-semibold transition-all ${
-                      selected
-                        ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-md shadow-primary-500/25'
-                        : 'bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-600 hover:border-primary-400'
-                    }`}
-                  >
-                    {t('gameFormat.bestOfMatch.optionTo', { sets, cap: pointsCap })}
-                    {recommended ? ` · ${t('gameFormat.recommended')}` : ''}
-                    {(() => {
-                      const tier = resolvePresetTierForSport(sport, preset);
-                      const tierLabel = tier ? presetTierBadgeLabel(tier, t) : null;
-                      if (!tier || !tierLabel) return null;
-                      return (
-                        <span
-                          className={`ml-1 rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide ${presetTierBadgeClass(tier)}`}
-                        >
-                          {tierLabel}
-                        </span>
-                      );
-                    })()}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
 
         <div
           className={`rounded-lg border-2 border-dashed p-2.5 transition-colors ${

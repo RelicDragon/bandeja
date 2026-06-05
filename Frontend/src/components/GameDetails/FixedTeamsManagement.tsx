@@ -8,6 +8,7 @@ import { Game, GameTeam, type BasicUser } from '@/types';
 import { Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
+import { canUserEditGameFormat } from '@/utils/gameResults';
 import { maxFixedTeamSlots, playersPerTeamOf } from '@/utils/matchFormat';
 function playerDisplayName(user: BasicUser): string {
   return [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
@@ -87,10 +88,7 @@ interface FixedTeamsManagementProps {
 export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: FixedTeamsManagementProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const isOwner = game?.participants.some(
-    (p) => p.userId === user?.id && ['OWNER', 'ADMIN'].includes(p.role)
-  ) || false;
-  const canEdit = isOwner || user?.isAdmin || false;
+  const canEdit = game && user ? canUserEditGameFormat(game, user) : false;
   const [teams, setTeams] = useState<GameTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTeamIndex, setSelectedTeamIndex] = useState<number | null>(null);

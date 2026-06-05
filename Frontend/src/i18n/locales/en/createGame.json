@@ -36,6 +36,7 @@
     "participants": "Participants",
     "participantsTournament": "Tournament Participants",
     "participantsLeague": "League Participants",
+    "teamFormat": "Teams format",
     "numberOfParticipants": "Number of Participants",
     "numberOfParticipantsTournament": "Number of Tournament Participants",
     "numberOfParticipantsLeague": "Number of League Participants",
@@ -78,8 +79,8 @@
     "resultsByAnyone": {
       "title": "Results by anyone",
       "note": {
-        "false": "Only organizers can enter and modify results.",
-        "true": "Any participant can enter and modify results."
+        "false": "Only organizers can enter and modify results and game format.",
+        "true": "Any playing participant can enter results and change the game format."
       }
     },
     "allowDirectJoin": {
@@ -121,7 +122,7 @@
     },
     "tournament": "Tournament",
     "genderTeams": {
-      "label": "Participants by gender",
+      "label": "Gender",
       "any": "Any",
       "men": "Men",
       "women": "Women",
@@ -231,7 +232,6 @@
     "markCourtBookedSkip": "Not yet",
     "intent": {
       "title": "What kind of game?",
-      "subtitle": "Presets match your roster size and match format above.",
       "noTemplatesForSetup": "No preset fits this setup — use Advanced to pick a format manually.",
       "customizeFormat": "Customize format",
       "social": {
@@ -252,6 +252,23 @@
       "empty": "No templates for this sport yet — use Customize format.",
       "durationApprox2h": "~2h",
       "durationApprox90m": "~90 min",
+      "PADEL_BEST_OF_3": {
+        "title": "Best-of-3",
+        "description": "Standard three-set match",
+        "badge": "Official"
+      },
+      "PADEL_SINGLE_SET": {
+        "title": "Single set",
+        "description": "One set to decide the match"
+      },
+      "PADEL_AMERICANO": {
+        "title": "Americano scoring",
+        "description": "Rotation format — play to total points"
+      },
+      "PADEL_TIMED": {
+        "title": "Timed",
+        "description": "One set with a match timer"
+      },
       "PADEL_AMERICANO_10": {
         "title": "Americano · 10 min",
         "description": "Timed rounds (10 min), 24-ball games, random pairs"

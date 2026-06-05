@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { resolveRatingEngine } from './ratingEngine';
+import { getSportConfig } from '../../sport/sportRegistry';
 import { calculateRatingUpdate, calculateReliabilityChange } from './rating.service';
 import {
   LevelChangeEventType,
@@ -252,8 +252,8 @@ export function buildOutcomeRatingExplanation(
   }
 
   const ballsInGames = game.ballsInGames || false;
-  const ratingEngine = resolveRatingEngine(game.sport);
-  const ratingBallsInGames = ballsInGames && ratingEngine.ballsInGamesMargin;
+  const ratingEngine = getSportConfig(game.sport).ratingModel.engine;
+  const ratingBallsInGames = ballsInGames && (ratingEngine.ballsInGamesMargin ?? false);
   const trackReliabilitySets = trackReliabilitySetsForGame(game.winnerOfGame);
 
   const baseLevels = new Map<string, number>();

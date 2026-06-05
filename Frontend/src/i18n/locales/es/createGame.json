@@ -35,6 +35,7 @@
     "participants": "Participantes",
     "participantsTournament": "Participantes del Torneo",
     "participantsLeague": "Participantes de la Liga",
+    "teamFormat": "Formato por equipos",
     "numberOfParticipants": "Número de participantes",
     "numberOfParticipantsTournament": "Número de participantes del torneo",
     "numberOfParticipantsLeague": "Número de participantes de la liga",
@@ -75,8 +76,8 @@
     "resultsByAnyone": {
       "title": "Resultados por cualquiera",
       "note": {
-        "false": "Solo los organizadores pueden ingresar y modificar los resultados.",
-        "true": "Cualquier participante puede ingresar y modificar los resultados."
+        "false": "Solo los organizadores pueden ingresar resultados y cambiar el formato.",
+        "true": "Cualquier participante en juego puede ingresar resultados y cambiar el formato."
       }
     },
     "allowDirectJoin": {
@@ -118,7 +119,7 @@
     },
     "tournament": "Torneo",
     "genderTeams": {
-      "label": "Participantes por género",
+      "label": "Género",
       "any": "Cualquiera",
       "men": "Hombres",
       "women": "Mujeres",
@@ -221,7 +222,6 @@
     "gameStartTraining": "Start of training",
     "intent": {
       "title": "¿Qué tipo de partido?",
-      "subtitle": "Elige el estilo — puedes ajustar los detalles abajo.",
       "customizeFormat": "Personalizar formato",
       "social": {
         "title": "Social",
@@ -240,6 +240,23 @@
       "title": "Plantillas rápidas",
       "empty": "Sin plantillas — usa Personalizar formato.",
       "durationApprox2h": "~2 h",
+      "PADEL_BEST_OF_3": {
+        "title": "Best-of-3",
+        "description": "Partido estándar a tres sets",
+        "badge": "Oficial"
+      },
+      "PADEL_SINGLE_SET": {
+        "title": "Un set",
+        "description": "Partido en un solo set"
+      },
+      "PADEL_AMERICANO": {
+        "title": "Puntuación Americano",
+        "description": "Rotación — juego a puntos totales"
+      },
+      "PADEL_TIMED": {
+        "title": "A tiempo",
+        "description": "Un set con temporizador"
+      },
       "PADEL_AMERICANO_24": {
         "title": "Americano (24)",
         "description": "Parejas al azar, a 24 puntos"

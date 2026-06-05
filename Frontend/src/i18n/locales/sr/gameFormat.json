@@ -1,6 +1,7 @@
 {
   "gameFormat": {
     "title": "Format meča",
+    "resultsByAnyoneEditHint": "Uključeno „rezultate može bilo ko“ — svaki igrajući učesnik može menjati format i unositi rezultate.",
     "trainingTitle": "Trening",
     "recommended": "Preporučeno",
     "popular": "Popularno",

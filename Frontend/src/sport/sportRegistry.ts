@@ -87,9 +87,6 @@ const PADEL_SCORING: ScoringPreset[] = [
   'POINTS_21',
   'POINTS_24',
   'POINTS_32',
-  'BEST_OF_3_11',
-  'BEST_OF_5_11',
-  'PAR_11',
   'TIMED',
   'CUSTOM',
 ];

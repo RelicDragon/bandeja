@@ -1,5 +1,6 @@
 import type { GenderTeam, ScoringPreset } from '@/types';
 import type { Sport } from '@shared/sport';
+import { Sports } from '@shared/sport';
 import {
   GAME_TYPE_TO_ROTATION,
   ROTATION_BY_SPORT,
@@ -96,5 +97,10 @@ export function pickDefaultTemplateId(
 ): CreateTemplateId | null {
   const list = listTemplatesForParticipantSetup(sport, allowedScoringPresets, ctx);
   if (preferredId && list.some((t) => t.id === preferredId)) return preferredId;
+  if (sport === Sports.PADEL) {
+    const padelDefault: CreateTemplateId =
+      ctx.maxParticipants <= 5 ? 'PADEL_BEST_OF_3' : 'PADEL_AMERICANO';
+    if (list.some((t) => t.id === padelDefault)) return padelDefault;
+  }
   return list[0]?.id ?? null;
 }

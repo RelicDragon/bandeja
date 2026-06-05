@@ -21,7 +21,7 @@ import {
 import {
   estimateMessageRowHeightPx,
   END_SPACER_PX,
-  resolveMessageRowEstimatePx,
+  resolveMessageRowEstimateWithDateSeparator,
 } from '@/services/chat/chatMessageRowEstimate';
 import {
   getCachedMessageRowHeight,
@@ -37,6 +37,11 @@ import {
 } from '@/utils/messageListScroll';
 import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
 import { getMessageRowKey } from '@/services/chat/messageRowKey';
+import { ChatDateSeparator } from '@/components/chat/ChatDateSeparator';
+import {
+  getChatDateSeparatorLabel,
+  stripDateSeparatorFromMeasuredRowHeight,
+} from '@/utils/chatDateSeparator';
 
 const OPEN_TAIL_EAGER_MEDIA = 60;
 const VIRTUAL_OVERSCAN_BASE = 10;
@@ -151,7 +156,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     getScrollElement: () => messagesContainerRef.current,
     estimateSize: (index) => {
       if (index === rowCount - 1) return END_SPACER_PX;
-      return resolveMessageRowEstimatePx(messages[index]);
+      return resolveMessageRowEstimateWithDateSeparator(messages, index);
     },
     overscan: virtualOverscan,
     getItemKey: (index) =>
@@ -255,7 +260,13 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     for (const vi of items) {
       if (vi.index === rowCount - 1) continue;
       const m = msgs[vi.index];
-      if (m?.id && vi.size > 2) rememberMeasuredMessageHeight(m.id, vi.size);
+      if (m?.id && vi.size > 2) {
+        const hadDateSeparator = getChatDateSeparatorLabel(msgs, vi.index) != null;
+        rememberMeasuredMessageHeight(
+          m.id,
+          stripDateSeparatorFromMeasuredRowHeight(vi.size, hadDateSeparator),
+        );
+      }
     }
   }, [virtualMeasureKey, rowCount]);
 
@@ -703,6 +714,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
             );
           }
           const message = messages[row.index]!;
+          const dateSeparatorLabel = getChatDateSeparatorLabel(messages, row.index);
           return (
             <div
               key={row.key}
@@ -715,6 +727,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
                 transform: `translateY(${row.start}px)`,
               }}
             >
+              {dateSeparatorLabel ? <ChatDateSeparator label={dateSeparatorLabel} /> : null}
               <AnimatedMessageItem
                 message={message}
                 staggerKey={getMessageRowKey(message)}

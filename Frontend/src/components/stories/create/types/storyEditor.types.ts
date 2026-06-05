@@ -29,6 +29,22 @@ export type StickerStoryLayer = {
 
 export type StoryLayer = TextStoryLayer | StickerStoryLayer;
 
+export type OverlayStyleV1 = {
+  position?: 'top' | 'center' | 'bottom';
+  theme?: 'light' | 'dark';
+};
+
+export type OverlayStyleV2 = {
+  version: 2;
+  canvas: { width: 1080; height: 1920 };
+  sourceWidth?: number;
+  sourceHeight?: number;
+  mediaTransform?: Transform2D;
+  mediaAdjust?: StoryMediaAdjust;
+  layers?: StoryLayer[];
+  baked?: boolean;
+};
+
 export type StoryMediaAdjust = {
   brightness: number;
   contrast: number;
@@ -100,5 +116,19 @@ export function isTextLayer(layer: StoryLayer): layer is TextStoryLayer {
 
 export function isStickerLayer(layer: StoryLayer): layer is StickerStoryLayer {
   return layer.type === 'sticker';
+}
+
+export function isOverlayStyleV2(style: unknown): style is OverlayStyleV2 {
+  return (
+    typeof style === 'object' &&
+    style !== null &&
+    (style as OverlayStyleV2).version === 2 &&
+    typeof (style as OverlayStyleV2).canvas?.width === 'number' &&
+    typeof (style as OverlayStyleV2).canvas?.height === 'number'
+  );
+}
+
+export function isOverlayStyleV1(style: unknown): style is OverlayStyleV1 {
+  return typeof style === 'object' && style !== null && !('version' in style);
 }
 

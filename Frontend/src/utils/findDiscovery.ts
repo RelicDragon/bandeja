@@ -69,11 +69,6 @@ export function passesFindNoRatingFilter(game: Game, filterNoRating: boolean | u
   return game.affectsRating === false;
 }
 
-export function resolveGameExpectedDurationLabelKey(game: Game): string | null {
-  if (game.entityType !== 'GAME') return null;
-  return matchCreateTemplateForGame(game)?.expectedDurationLabelKey ?? null;
-}
-
 export type GameDiscoveryBadgeParts = {
   tier: FindTierFilter;
   tierLabel: string;

@@ -29,7 +29,7 @@ import { GameChatFooter } from './GameChat/GameChatFooter';
 import { GameChatAccessDenied } from './GameChat/GameChatAccessDenied';
 import { useGameChatPinned } from './GameChat/useGameChatPinned';
 import { useGameChatContext } from './GameChat/useGameChatContext';
-import { useGameChatMessages } from './GameChat/useGameChatMessages';
+import { useThreadSession } from './GameChat/useThreadSession';
 import { logReloadMessagesFirstPage } from '@/services/chat/chatOpenTrace';
 import { useGameChatActions } from './GameChat/useGameChatActions';
 import { useGameChatOptimistic } from './GameChat/useGameChatOptimistic';
@@ -188,7 +188,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     loadMoreMessages,
     loadMessagesBeforeMessageId,
     bootstrapThread,
-  } = useGameChatMessages({
+    teardownForChatTypeSwitch,
+  } = useThreadSession({
     id,
     contextType,
     currentChatType,
@@ -401,6 +402,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setIsSwitchingChatType,
     setIsLoadingMessages,
     setIsInitialLoad,
+    teardownForChatTypeSwitch,
     handleMarkFailed,
     handleNewMessageRef,
     scrollToBottom,

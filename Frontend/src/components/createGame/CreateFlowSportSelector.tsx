@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Star } from 'lucide-react';
 import type { Sport } from '@/types';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
+import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 
 type CreateFlowSportSelectorProps = {
   sports: Sport[];
@@ -22,51 +24,55 @@ export function CreateFlowSportSelector({
   const { t } = useTranslation();
   const title = t('sport.sport', { defaultValue: 'Sport' });
 
+  const sortedSports = useMemo(() => {
+    if (sports.length <= 1) return sports;
+    if (!defaultSport) return sports;
+    return [...sports].sort((a, b) => {
+      if (a === defaultSport) return -1;
+      if (b === defaultSport) return 1;
+      return 0;
+    });
+  }, [sports, defaultSport]);
+
+  const sportTabs = useMemo<SegmentedSwitchTab[]>(
+    () =>
+      sortedSports.map((sport) => {
+        const isDefaultSport = sport === defaultSport;
+        return {
+          id: sport,
+          label: t(getSportConfig(sport).labelKey),
+          icon: () =>
+            isDefaultSport ? (
+              <span className="relative inline-flex h-5 w-5 shrink-0 items-center justify-center">
+                <SportPublicIcon sport={sport} className="h-5 w-5 object-contain" />
+                <Star size={10} className="absolute -left-1 -top-1 fill-amber-500 text-amber-500" />
+              </span>
+            ) : (
+              <SportPublicIcon sport={sport} className="h-5 w-5 shrink-0 object-contain" />
+            ),
+        };
+      }),
+    [sortedSports, defaultSport, t],
+  );
+
   if (sports.length <= 1) {
     return null;
   }
-
-  const sortedSports = defaultSport
-    ? [...sports].sort((a, b) => {
-        if (a === defaultSport) return -1;
-        if (b === defaultSport) return 1;
-        return 0;
-      })
-    : sports;
 
   return (
     <div>
       {showLabel && (
         <p className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">{title}</p>
       )}
-      <div
-        className="flex flex-wrap gap-2 rounded-xl bg-gray-100 p-1 dark:bg-gray-800"
-        role="radiogroup"
-        aria-label={title}
-      >
-        {sortedSports.map((sport) => {
-          const active = sport === value;
-          const config = getSportConfig(sport);
-          const isDefaultSport = sport === defaultSport;
-          return (
-            <button
-              key={sport}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => onChange(sport)}
-              className={`flex min-w-[4.5rem] flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition-all sm:text-sm ${
-                active
-                  ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white'
-                  : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-              }`}
-            >
-              <SportPublicIcon sport={sport} className="h-5 w-5 shrink-0 object-contain" />
-              {t(config.labelKey)}
-              {isDefaultSport && <Star className="h-3 w-3 shrink-0 fill-amber-500 text-amber-500" />}
-            </button>
-          );
-        })}
+      <div className="flex justify-center">
+        <SegmentedSwitch
+          tabs={sportTabs}
+          activeId={value}
+          onChange={(id) => onChange(id as Sport)}
+          showOnlyActiveTabText={sortedSports.length > 2}
+          layoutId="create-flow-sport-selector"
+          ariaLabel={title}
+        />
       </div>
     </div>
   );

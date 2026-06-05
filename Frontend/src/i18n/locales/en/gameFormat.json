@@ -1,6 +1,7 @@
 {
   "gameFormat": {
     "title": "Game Format",
+    "resultsByAnyoneEditHint": "Results by anyone is on — every playing participant can edit the format and enter results.",
     "trainingTitle": "Training",
     "recommended": "Recommended",
     "popular": "Popular",

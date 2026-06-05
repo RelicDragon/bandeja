@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { UserPlus, Users2, Plus, Trophy, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, PlayerAvatar, RangeSlider } from '@/components';
@@ -75,6 +76,7 @@ export const ParticipantsSection = ({
     allowedPlayerCountsPerMatch != null &&
     allowedPlayerCountsPerMatch.length > 1 &&
     onPlayersPerMatchChange != null;
+  const shouldShowMatchFormat = showMatchFormat && maxParticipants > 2;
 
   const renderParticipants = () => {
     const result = [];
@@ -227,19 +229,30 @@ export const ParticipantsSection = ({
             </div>
           </div>
         )}
-        {showSetupControls && showMatchFormat && (
-          <MatchFormatControl
-            playersPerMatch={playersPerMatch}
-            allowedCounts={allowedPlayerCountsPerMatch}
-            onChange={onPlayersPerMatchChange}
-            disabled={maxParticipants === 2}
-            label={t('sport.matchFormat')}
-            labelSingles={t('sport.matchSingles')}
-            labelDoubles={t('sport.matchDoubles')}
-            hintSingles={t('sport.match1v1')}
-            hintDoubles={t('sport.match2v2')}
-          />
-        )}
+        <AnimatePresence initial={false}>
+          {showSetupControls && shouldShowMatchFormat && (
+            <motion.div
+              key="participants-section-team-format"
+              initial={{ opacity: 0, height: 0, y: -6 }}
+              animate={{ opacity: 1, height: 'auto', y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -6 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="overflow-hidden border-t border-gray-200 pt-4 dark:border-gray-800"
+            >
+              <MatchFormatControl
+                playersPerMatch={playersPerMatch}
+                allowedCounts={allowedPlayerCountsPerMatch}
+                onChange={onPlayersPerMatchChange}
+                emphasized
+                label={t('createGame.teamFormat')}
+                labelSingles={t('sport.matchSingles')}
+                labelDoubles={t('sport.matchDoubles')}
+                hintSingles={t('sport.match1v1')}
+                hintDoubles={t('sport.match2v2')}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
         {entityType === 'TRAINING' && onToggleCreatorNonPlaying && (
           <div className="flex items-center justify-between py-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">

@@ -55,9 +55,9 @@ assert(
 );
 
 assert(formatMatchFormatLabel(4, Sport.PADEL, 'en') === null, 'padel default 2v2 hidden');
-assert(formatMatchFormatLabel(2, Sport.PADEL, 'en') === '1v1', 'padel singles shown');
+assert(formatMatchFormatLabel(2, Sport.PADEL, 'en') === 'Singles', 'padel singles shown');
 assert(formatMatchFormatLabel(2, Sport.TENNIS, 'en') === null, 'tennis default 1v1 hidden');
-assert(formatMatchFormatLabel(4, Sport.TENNIS, 'en') === '2v2', 'tennis doubles shown');
+assert(formatMatchFormatLabel(4, Sport.TENNIS, 'en') === 'Doubles', 'tennis doubles shown');
 
 const padelExtras = collectTelegramGameScheduleExtras(
   { sport: Sport.PADEL, playersPerMatch: 4 },
@@ -82,7 +82,7 @@ const padelSinglesLine = appendTelegramGameScheduleExtras(
   Sport.PADEL,
   'en',
 );
-assert(padelSinglesLine === '📍 Club · 1v1', `padel singles line (${padelSinglesLine})`);
+assert(padelSinglesLine === '📍 Club · Singles', `padel singles line (${padelSinglesLine})`);
 
 (async () => {
   const wedEn = await getShortDayOfWeek('2026-05-20T12:00:00Z', 'UTC', 'en');

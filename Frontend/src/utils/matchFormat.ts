@@ -7,6 +7,47 @@ export type RosterMatchFormatSync = {
   resetFixedTeams: boolean;
 };
 
+export type SportRosterFormatSync = {
+  maxParticipants: number;
+  playersPerMatch: number;
+  resetFixedTeams: boolean;
+};
+
+/** When sport changes: apply sport default roster + match format when on the opposite default. */
+export function syncRosterOnSportChange(
+  maxParticipants: number,
+  playersPerMatch: number,
+  defaultPlayersPerMatch: number,
+  defaultEventRoster: number,
+): SportRosterFormatSync | null {
+  if (maxParticipants === 2 && playersPerMatch === 2 && defaultPlayersPerMatch === 4) {
+    return {
+      maxParticipants: Math.max(defaultEventRoster, 4),
+      playersPerMatch: 4,
+      resetFixedTeams: true,
+    };
+  }
+  if (maxParticipants === 4 && playersPerMatch === 4 && defaultPlayersPerMatch === 2) {
+    return {
+      maxParticipants: 2,
+      playersPerMatch: 2,
+      resetFixedTeams: true,
+    };
+  }
+  if (
+    defaultPlayersPerMatch === 4 &&
+    playersPerMatch === 2 &&
+    maxParticipants >= 4
+  ) {
+    return {
+      maxParticipants,
+      playersPerMatch: 4,
+      resetFixedTeams: true,
+    };
+  }
+  return null;
+}
+
 /** When roster size changes: 2 slots → 1v1; 2 → 4+ slots → sport default match format. */
 export function syncPlayersPerMatchOnRosterChange(
   prevMaxParticipants: number,

@@ -7,6 +7,7 @@ import { PlayersCarousel } from './PlayersCarousel';
 import { getParticipantsViewMode, setParticipantsViewMode } from '@/utils/participantsViewStorage';
 import { SportQuestionnaireInviteNudge } from '@/components/sportQuestionnaire';
 import { parseGameSport } from '@/utils/gameSport';
+import { ParticipantSetupTags } from './ParticipantSetupTags';
 
 interface GameParticipantsProps {
   game: Game;
@@ -99,15 +100,24 @@ export const GameParticipants = ({
   const shouldShowCrowns = playingOwnersAndAdmins.length > 1;
   
   const hasUnoccupiedSlots = game.entityType === 'BAR' || !isFull;
+  const canEditParticipantsSetup =
+    canViewSettings && game.entityType !== 'BAR' && !!onEditMaxParticipants;
 
   return (
     <Card>
-      <div className="flex items-center gap-2 mb-4">
-        <Users size={18} className="text-gray-500 dark:text-gray-400" />
-        <h2 className="section-title">
-          {typeof game.minLevel === 'number' && typeof game.maxLevel === 'number' && game.entityType !== 'BAR' ? `${t('games.level')} ${game.minLevel.toFixed(1)}-${game.maxLevel.toFixed(1)}` : t('games.participants')}
-        </h2>
-        <div className="ml-auto flex items-center gap-2">
+      <div className="flex items-start gap-2 mb-4">
+        <Users size={18} className="text-gray-500 dark:text-gray-400 mt-0.5 shrink-0" />
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
+          <h2 className="section-title">
+            {typeof game.minLevel === 'number' && typeof game.maxLevel === 'number' && game.entityType !== 'BAR' ? `${t('games.level')} ${game.minLevel.toFixed(1)}-${game.maxLevel.toFixed(1)}` : t('games.participants')}
+          </h2>
+          <ParticipantSetupTags
+            game={game}
+            canEdit={canEditParticipantsSetup}
+            onEditMaxParticipants={onEditMaxParticipants}
+          />
+        </div>
+        <div className="ml-auto shrink-0 flex items-center gap-2">
           <button
             onClick={toggleViewMode}
             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

@@ -1,7 +1,8 @@
 import type { Sport } from '../../sport/sportIds';
 import { Sports } from '../../sport/sportIds';
+import { getSportConfig } from '../../sport/sportRegistry';
+import type { SportRatingModel } from '../../sport/sportRegistryCasual';
 import { getMatchScoresForDelta } from './setScoreDelta';
-import { resolveRatingEngine } from './ratingEngine';
 import { calculateRatingUpdate, calculateReliabilityChange } from './rating.service';
 
 interface PlayerData {
@@ -131,27 +132,29 @@ function calculatePointsEarned(
 function buildGameOutcome(
   userId: string,
   changes: PlayerChanges,
-  index: number,
   pointsPerWin: number,
   pointsPerTie: number,
   pointsPerLoose: number,
-  ballsInGames: boolean
+  ballsInGames: boolean,
 ): GameOutcomeResult {
   const reliabilityChange = calculateReliabilityChange(changes.allSets, ballsInGames);
-  
+
   return {
     userId,
     levelChange: changes.levelChange,
     reliabilityChange,
     pointsEarned: calculatePointsEarned(changes, pointsPerWin, pointsPerTie, pointsPerLoose),
-    isWinner: index === 0,
-    position: index + 1,
+    isWinner: false,
     wins: changes.wins,
     ties: changes.ties,
     losses: changes.losses,
     scoresMade: changes.scoresMade,
     scoresLost: changes.scoresLost,
   };
+}
+
+function ratingEngineForSport(sport: Sport): SportRatingModel['engine'] {
+  return getSportConfig(sport).ratingModel.engine;
 }
 
 export function calculateByMatchesWonOutcomes(
@@ -166,8 +169,8 @@ export function calculateByMatchesWonOutcomes(
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
 } {
-  const engine = resolveRatingEngine(sport);
-  const ratingBallsInGames = ballsInGames && engine.ballsInGamesMargin;
+  const engine = ratingEngineForSport(sport);
+  const ratingBallsInGames = ballsInGames && (engine.ballsInGamesMargin ?? false);
   const roundOutcomes: Record<number, RoundOutcomeResult[]> = {};
   const playerTotalChanges = initializePlayerChanges(players);
 
@@ -273,20 +276,15 @@ export function calculateByMatchesWonOutcomes(
     }));
   });
 
-  const sortedPlayers = players
-    .map(p => ({
-      ...p,
-      matchesWon: playerTotalChanges[p.userId].wins,
-      scoresDelta: playerTotalChanges[p.userId].scoresMade - playerTotalChanges[p.userId].scoresLost,
-    }))
-    .sort((a, b) => {
-      const matchesDiff = b.matchesWon - a.matchesWon;
-      if (matchesDiff !== 0) return matchesDiff;
-      return b.scoresDelta - a.scoresDelta;
-    });
-
-  const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) => 
-    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose, ratingBallsInGames)
+  const gameOutcomes: GameOutcomeResult[] = players.map((player) =>
+    buildGameOutcome(
+      player.userId,
+      playerTotalChanges[player.userId],
+      pointsPerWin,
+      pointsPerTie,
+      pointsPerLoose,
+      ratingBallsInGames,
+    ),
   );
 
   return { gameOutcomes, roundOutcomes };
@@ -304,8 +302,8 @@ export function calculateByPointsOutcomes(
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
 } {
-  const engine = resolveRatingEngine(sport);
-  const ratingBallsInGames = ballsInGames && engine.ballsInGamesMargin;
+  const engine = ratingEngineForSport(sport);
+  const ratingBallsInGames = ballsInGames && (engine.ballsInGamesMargin ?? false);
   const roundOutcomes: Record<number, RoundOutcomeResult[]> = {};
   const playerTotalChanges = initializePlayerChanges(players, true);
 
@@ -420,20 +418,15 @@ export function calculateByPointsOutcomes(
     }));
   });
 
-  const sortedPlayers = players
-    .map(p => ({
-      ...p,
-      pointsEarned: calculatePointsEarned(playerTotalChanges[p.userId], pointsPerWin, pointsPerTie, pointsPerLoose),
-      scoresDelta: playerTotalChanges[p.userId].scoresMade - playerTotalChanges[p.userId].scoresLost,
-    }))
-    .sort((a, b) => {
-      const pointsDiff = b.pointsEarned - a.pointsEarned;
-      if (pointsDiff !== 0) return pointsDiff;
-      return b.scoresDelta - a.scoresDelta;
-    });
-
-  const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) =>
-    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose, ratingBallsInGames)
+  const gameOutcomes: GameOutcomeResult[] = players.map((player) =>
+    buildGameOutcome(
+      player.userId,
+      playerTotalChanges[player.userId],
+      pointsPerWin,
+      pointsPerTie,
+      pointsPerLoose,
+      ratingBallsInGames,
+    ),
   );
 
   return { gameOutcomes, roundOutcomes };
@@ -451,8 +444,8 @@ export function calculateByScoresDeltaOutcomes(
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
 } {
-  const engine = resolveRatingEngine(sport);
-  const ratingBallsInGames = ballsInGames && engine.ballsInGamesMargin;
+  const engine = ratingEngineForSport(sport);
+  const ratingBallsInGames = ballsInGames && (engine.ballsInGamesMargin ?? false);
   const roundOutcomes: Record<number, RoundOutcomeResult[]> = {};
   const playerTotalChanges = initializePlayerChanges(players, true);
 
@@ -569,20 +562,15 @@ export function calculateByScoresDeltaOutcomes(
     }));
   });
 
-  const sortedPlayers = players
-    .map(p => ({
-      ...p,
-      matchesWon: playerTotalChanges[p.userId].wins,
-      scoresDelta: playerTotalChanges[p.userId].scoresMade - playerTotalChanges[p.userId].scoresLost,
-    }))
-    .sort((a, b) => {
-      const deltasDiff = b.scoresDelta - a.scoresDelta;
-      if (deltasDiff !== 0) return deltasDiff;
-      return b.matchesWon - a.matchesWon;
-    });
-
-  const gameOutcomes: GameOutcomeResult[] = sortedPlayers.map((player, index) =>
-    buildGameOutcome(player.userId, playerTotalChanges[player.userId], index, pointsPerWin, pointsPerTie, pointsPerLoose, ratingBallsInGames)
+  const gameOutcomes: GameOutcomeResult[] = players.map((player) =>
+    buildGameOutcome(
+      player.userId,
+      playerTotalChanges[player.userId],
+      pointsPerWin,
+      pointsPerTie,
+      pointsPerLoose,
+      ratingBallsInGames,
+    ),
   );
 
   return { gameOutcomes, roundOutcomes };

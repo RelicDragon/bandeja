@@ -3,10 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Pencil, HelpCircle, Users, Info } from 'lucide-react';
 import { EntityType } from '@/types';
-import { useAuthStore } from '@/store/authStore';
-import { GameSportTag } from '@/components/GameSportTag';
-import { getViewerPrimarySport, shouldShowGameCardSportGlyph } from '@/utils/findSportFilter';
-import { parseGameSport } from '@/utils/gameSport';
 import { GameFormatSummary } from './GameFormatSummary';
 import { GameFormatDetails } from './GameFormatDetails';
 import { UseGameFormatResult } from '@/hooks/useGameFormat';
@@ -40,6 +36,12 @@ interface GameFormatCardProps {
   sport?: string | null;
   /** Overrides pencil button aria-label (e.g. casual flow “Customize”). */
   wizardButtonLabel?: string;
+  /** Shown when resultsByAnyone lets participants edit format. */
+  participantFormatEditHint?: string;
+  /** Inside CreateGameIntentPicker — no outer card chrome. */
+  embedded?: boolean;
+  /** Gender is rendered outside the manual card in template picker flows. */
+  omitGender?: boolean;
 }
 
 export const GameFormatCard = ({
@@ -58,20 +60,20 @@ export const GameFormatCard = ({
   playersPerMatch,
   sport,
   wizardButtonLabel,
+  participantFormatEditHint,
+  embedded = false,
+  omitGender = false,
 }: GameFormatCardProps) => {
   const { t } = useTranslation();
-  const { user } = useAuthStore();
   const [expanded, setExpanded] = useState(false);
   const isTraining = entityType === 'TRAINING';
-  const gameSport = parseGameSport(sport);
-  const showSportTag = shouldShowGameCardSportGlyph(gameSport, getViewerPrimarySport(user), undefined);
 
   const toggleExpanded = () => {
     if (isTraining) return;
     setExpanded((v) => !v);
   };
 
-  const showGender = teams && gameFormatGenderVisible(entityType);
+  const showGender = !omitGender && teams && gameFormatGenderVisible(entityType);
   const showFixedToggle =
     showFixedTeamsToggle && teams && gameFormatFixedTeamsToggleVisible(entityType, teams.participantCount);
   const readOnly = !!teams?.readOnly;
@@ -81,8 +83,14 @@ export const GameFormatCard = ({
     (fixedTeamsPanelOpen !== undefined ? fixedTeamsPanelOpen : !!teams?.hasFixedTeams);
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-      <div className="flex items-start gap-3 p-4">
+    <div
+      className={
+        embedded
+          ? 'overflow-hidden'
+          : 'overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900'
+      }
+    >
+      <div className={`flex items-start gap-3 ${embedded ? 'pt-0.5' : 'p-4'}`}>
         <motion.button
           type="button"
           onClick={toggleExpanded}
@@ -115,11 +123,6 @@ export const GameFormatCard = ({
           </div>
           {!isTraining && (
             <div className="col-span-2 row-start-2 min-w-0 text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
-              {showSportTag && (
-                <div className="mb-1">
-                  <GameSportTag sport={gameSport} />
-                </div>
-              )}
               <GameFormatSummary
                 scoringMode={format.scoringMode}
                 scoringPreset={format.scoringPreset}
@@ -150,6 +153,14 @@ export const GameFormatCard = ({
         )}
       </div>
 
+      {participantFormatEditHint ? (
+        <p
+          className={`${embedded ? 'px-3' : 'px-4'} pb-3 -mt-1 text-xs leading-relaxed text-primary-700 dark:text-primary-300 bg-primary-50/80 dark:bg-primary-500/10 border-b border-gray-100 dark:border-gray-800`}
+        >
+          {participantFormatEditHint}
+        </p>
+      ) : null}
+
       <AnimatePresence initial={false}>
         {expanded && !isTraining && (
           <motion.div
@@ -159,7 +170,9 @@ export const GameFormatCard = ({
             transition={{ duration: 0.25, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-800 pt-3">
+            <div
+              className={`${embedded ? 'px-3 pb-3' : 'px-4 pb-4'} border-t border-gray-100 dark:border-gray-800 pt-3`}
+            >
               <GameFormatDetails
                 format={format}
                 generationSlotCount={generationSlotCount}
