@@ -7,6 +7,7 @@ import {
   planChatTypeSwitch,
   planLayoutSeed,
   planThreadTeardown,
+  resolvePaintScrollPlan,
   resolveSessionScroll,
   resolveThreadKey,
   shouldForceFreshOpen,
@@ -118,6 +119,18 @@ describe('planChatTypeSwitch — explicit teardown', () => {
       'opt-private',
     ]);
   });
+
+  it('preserves target-type pending optimistics after teardown clear (capture-before-teardown)', () => {
+    const beforeTeardown = [
+      msg('p1', 'PUBLIC'),
+      msg('opt-private', 'PRIVATE', { _optimisticId: 'o1', _status: 'SENDING' }),
+    ];
+    const clearedVisible: ChatMessageWithStatus[] = [];
+    const local = [msg('pr1', 'PRIVATE')];
+    const merged = mergeChatTypeSwitchPaint(beforeTeardown, local, 'GAME', 'PRIVATE');
+    expect(clearedVisible).toEqual([]);
+    expect(merged.map((m) => m.id)).toEqual(['opt-private', 'pr1']);
+  });
 });
 
 describe('resolveSessionScroll', () => {
@@ -139,5 +152,39 @@ describe('resolveSessionScroll', () => {
         forceFreshOpen: true,
       })
     ).toEqual({ atBottom: true });
+  });
+});
+
+describe('resolvePaintScrollPlan', () => {
+  it('ignores stored scroll on force reload', () => {
+    expect(
+      resolvePaintScrollPlan({
+        messages: [msg('m1')],
+        storedScroll: { anchorMessageId: 'mid' },
+        forceFreshOpen: true,
+      })
+    ).toEqual({ atBottom: true });
+  });
+
+  it('uses deep-link anchor when message is in snapshot', () => {
+    expect(
+      resolvePaintScrollPlan({
+        messages: [msg('m1'), msg('target')],
+        storedScroll: { anchorMessageId: 'stored' },
+        forceFreshOpen: false,
+        openAnchorMessageId: 'target',
+      })
+    ).toEqual({ anchorMessageId: 'target' });
+  });
+
+  it('falls back to stored scroll when no open anchor in snapshot', () => {
+    expect(
+      resolvePaintScrollPlan({
+        messages: [msg('m1')],
+        storedScroll: { anchorMessageId: 'stored' },
+        forceFreshOpen: false,
+        openAnchorMessageId: 'missing',
+      })
+    ).toEqual({ anchorMessageId: 'stored' });
   });
 });

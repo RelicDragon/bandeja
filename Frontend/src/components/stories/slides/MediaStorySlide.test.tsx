@@ -123,6 +123,48 @@ describe('MediaStorySlide viewer contract', () => {
 
     expect(html).toContain('https://cdn.example/story.jpg');
     expect(html).toMatch(/<canvas/);
+    expect(html).toMatch(/scale\(1\)/);
+  });
+
+  it('uses composition viewport with media transform for non-baked IMAGE v2 overlay', () => {
+    const html = renderToStaticMarkup(
+      <MediaStorySlide
+        segment={imageSegment({
+          media: {
+            url: 'https://cdn.example/story.jpg',
+            thumbnailUrl: 'https://cdn.example/story-thumb.jpg',
+            type: 'IMAGE',
+            width: 1080,
+            height: 1920,
+            overlayStyle: {
+              version: 2,
+              canvas: { width: 1080, height: 1920 },
+              sourceWidth: 1920,
+              sourceHeight: 1080,
+              mediaTransform: { x: 12, y: -8, scale: 1.4, rotation: 5 },
+              layers: [
+                {
+                  id: 't1',
+                  type: 'text',
+                  text: 'Live overlay',
+                  transform: { x: 540, y: 960, scale: 1, rotation: 0 },
+                  style: { id: 'classic', align: 'center' },
+                },
+              ],
+            },
+          },
+        })}
+        isActive
+        paused={false}
+        onVideoEnded={noop}
+        onVideoError={noop}
+      />
+    );
+
+    expect(html).toContain('https://cdn.example/story.jpg');
+    expect(html).toMatch(/<canvas/);
+    expect(html).toMatch(/scale\(1\.4\)/);
+    expect(html).not.toContain('Live overlay');
   });
 
   it('uses composition viewport with media transform for non-baked VIDEO v2 overlay', () => {

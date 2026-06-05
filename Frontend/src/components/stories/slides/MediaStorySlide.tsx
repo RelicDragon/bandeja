@@ -10,7 +10,6 @@ import { StoryCompositionViewport } from '@/components/stories/StoryCompositionV
 import { STORY_COMPOSITION_MEDIA_FILL_CLASS } from '@/components/stories/StoryCompositionMedia';
 import { useStoryViewerEngagementPaused } from '@/components/stories/viewer/storyViewerEngagementPause';
 import type { StorySegment } from '@/api/stories';
-import { MediaStoryOverlayV2 } from './MediaStoryOverlayV2';
 
 const MEDIA_CLASS = 'h-full w-full object-cover';
 
@@ -214,6 +213,19 @@ export function MediaStorySlide({
     />
   );
 
+  const compositionImage = (
+    <img
+      key={`${mediaUrl}-${retryCount}`}
+      src={mediaUrl}
+      alt=""
+      className={STORY_COMPOSITION_MEDIA_FILL_CLASS}
+      draggable={false}
+      onError={handleMediaError}
+    />
+  );
+
+  const compositionMediaNode = isVideo ? compositionVideo : compositionImage;
+
   const simpleMediaNode = isVideo ? (
     <>
       {simpleVideo}
@@ -233,19 +245,15 @@ export function MediaStorySlide({
             adjust: presentation.mediaAdjust,
             naturalWidth: presentation.naturalWidth,
             naturalHeight: presentation.naturalHeight,
-            children: compositionVideo,
+            children: compositionMediaNode,
           }}
           overlayStyle={presentation.showCanvasOverlay ? presentation.overlayV2 : null}
         >
-          {() => muteButton}
+          {() => (isVideo ? muteButton : null)}
         </StoryCompositionViewport>
       ) : (
         <div className={STORY_COMPOSITION_FRAME_CLASS}>{simpleMediaNode}</div>
       )}
-
-      {presentation.showDetachedOverlay && presentation.overlayV2 ? (
-        <MediaStoryOverlayV2 overlayStyle={presentation.overlayV2} />
-      ) : null}
 
       {presentation.showLegacyOverlayText ? (
         <div className={`absolute inset-x-6 z-10 text-center ${presentation.v1PositionClass}`}>

@@ -23,15 +23,9 @@ export function useChatListDexieSyncEffects(opts: {
     let cancelled = false;
     void loadThreadIndexForList(chatsFilter).then((fromDex) => {
       if (cancelled || fromDex.length === 0) return;
-      const feed = useChatListFeedStore.getState();
-      feed.patchRows((prev) => mergeChatListOutboxFromDexieSlice(prev, fromDex));
-      const cached = feed.getFilterCache(chatsFilter);
-      if (cached) {
-        feed.setFilterCache(chatsFilter, {
-          ...cached,
-          chats: mergeChatListOutboxFromDexieSlice(cached.chats, fromDex),
-        });
-      }
+      useChatListFeedStore.getState().patchRowsForFilter(chatsFilter, (prev) =>
+        mergeChatListOutboxFromDexieSlice(prev, fromDex)
+      );
     });
     return () => {
       cancelled = true;
@@ -70,15 +64,9 @@ export function useChatListDexieSyncEffects(opts: {
     if (threadIndexLiveDebounceRef.current) clearTimeout(threadIndexLiveDebounceRef.current);
     threadIndexLiveDebounceRef.current = setTimeout(() => {
       threadIndexLiveDebounceRef.current = null;
-      const feed = useChatListFeedStore.getState();
-      feed.patchRows((prev) => mergeChatListFromThreadIndexDexie(prev, slice, chatsFilter, uid));
-      const cached = feed.getFilterCache(chatsFilter);
-      if (cached) {
-        feed.setFilterCache(chatsFilter, {
-          ...cached,
-          chats: mergeChatListFromThreadIndexDexie(cached.chats, slice, chatsFilter, uid),
-        });
-      }
+      useChatListFeedStore.getState().patchRowsForFilter(chatsFilter, (prev) =>
+        mergeChatListFromThreadIndexDexie(prev, slice, chatsFilter, uid)
+      );
     }, CHAT_LIST_THREAD_INDEX_LIVE_MERGE_MS);
     return () => {
       if (threadIndexLiveDebounceRef.current) {

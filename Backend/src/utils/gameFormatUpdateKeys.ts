@@ -29,3 +29,8 @@ export function isGameFormatOnlyUpdate(data: Record<string, unknown>): boolean {
   if (keys.length === 0) return false;
   return keys.every((k) => GAME_FORMAT_UPDATE_KEYS.has(k));
 }
+
+/** Format keys stripped from TRAINING game updates (all wizard fields except rating toggle). */
+export const TRAINING_STRIPPED_FORMAT_KEYS = [...GAME_FORMAT_UPDATE_KEYS].filter(
+  (k) => k !== 'affectsRating',
+);

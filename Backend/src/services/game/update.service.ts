@@ -6,7 +6,7 @@ import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { GameReadService } from './read.service';
 import { hasParentGamePermission, canModifyResults } from '../../utils/parentGamePermissions';
-import { isGameFormatOnlyUpdate } from '../../utils/gameFormatUpdateKeys';
+import { isGameFormatOnlyUpdate, TRAINING_STRIPPED_FORMAT_KEYS } from '../../utils/gameFormatUpdateKeys';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType } from '../../utils/systemMessages';
 import telegramNotificationService from '../telegram/notification.service';
@@ -156,30 +156,7 @@ export class GameUpdateService {
     }
 
     if (game.entityType === EntityType.TRAINING) {
-      const trainingFormatKeys = [
-        'gameType',
-        'playersPerMatch',
-        'scoringPreset',
-        'scoringMode',
-        'hasGoldenPoint',
-        'fixedNumberOfSets',
-        'maxTotalPointsPerSet',
-        'matchTimedCapMinutes',
-        'matchTimerEnabled',
-        'maxPointsPerTeam',
-        'winnerOfGame',
-        'winnerOfMatch',
-        'matchGenerationType',
-        'pointsPerWin',
-        'pointsPerLoose',
-        'pointsPerTie',
-        'ballsInGames',
-        'hasFixedTeams',
-        'allowUserInMultipleTeams',
-        'genderTeams',
-        'resultsRoundGenV2',
-      ] as const;
-      for (const key of trainingFormatKeys) {
+      for (const key of TRAINING_STRIPPED_FORMAT_KEYS) {
         delete data[key];
       }
     }

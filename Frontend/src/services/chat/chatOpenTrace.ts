@@ -18,7 +18,8 @@ export type ChatOpenSetMessagesSource =
   | 'load-more-network'
   | 'anchor-load'
   | 'missed-flush'
-  | 'thread-reset';
+  | 'thread-reset'
+  | 'chat-type-switch';
 
 export type ChatOpenDebugCounters = {
   afterL1: number | null;

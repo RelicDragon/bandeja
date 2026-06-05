@@ -45,7 +45,7 @@ import {
 import {
   planLayoutSeed,
   planThreadTeardown,
-  resolveSessionScrollFromSnapshot,
+  resolvePaintScrollPlan,
   resolveThreadKey,
   shouldForceFreshOpen,
 } from '@/services/chat/threadSession';
@@ -111,6 +111,7 @@ export function useGameChatMessages({
   const openScrollThreadKeyRef = useRef<string | null>(null);
   const openScrollReadyKeyRef = useRef<string | null>(null);
   const openPaintCommittedRef = useRef(false);
+  const forceFreshOpenRef = useRef(false);
   const threadOpenSettlingRef = useRef(true);
   const [isThreadOpenSettling, setIsThreadOpenSettling] = useState(true);
   const [initialScroll, setInitialScroll] = useState<ThreadInitialScroll | undefined>(undefined);
@@ -179,11 +180,22 @@ export function useGameChatMessages({
     [applyOpenScrollFromPlan, contextType, id, currentIdRef, setHasMoreMessages, setPage, setIsLoadingMessages, setIsInitialLoad]
   );
 
-  const scrollPlanForAnchor = useCallback(
-    (messages: ChatMessageWithStatus[]): Pick<OpenThreadPlan, 'scroll' | 'scrollRow'> | undefined => {
-      const anchor = resolveSessionScrollFromSnapshot(messages, openAnchorMessageId);
-      if (!anchor) return undefined;
-      return { scroll: anchor, scrollRow: undefined };
+  const paintScrollFor = useCallback(
+    (
+      messages: readonly ChatMessageWithStatus[],
+      scrollRow?: ThreadScrollRow
+    ): Pick<OpenThreadPlan, 'scroll' | 'scrollRow'> => {
+      const scroll = resolvePaintScrollPlan({
+        messages,
+        storedScroll: scrollRow,
+        forceFreshOpen: forceFreshOpenRef.current,
+        openAnchorMessageId,
+      });
+      const clearedRow = forceFreshOpenRef.current ? undefined : scrollRow;
+      return {
+        scroll: 'anchorMessageId' in scroll ? { anchorMessageId: scroll.anchorMessageId } : { atBottom: true },
+        scrollRow: clearedRow,
+      };
     },
     [openAnchorMessageId]
   );
@@ -210,10 +222,6 @@ export function useGameChatMessages({
     setInitialScroll(undefined);
   }, []);
 
-  const invalidateThreadOpen = useCallback(() => {
-    applyThreadTeardown();
-  }, [applyThreadTeardown]);
-
   const teardownForChatTypeSwitch = useCallback(() => {
     applyThreadTeardown();
     setMessagesTagged('thread-reset', []);
@@ -233,10 +241,31 @@ export function useGameChatMessages({
     setHasMoreMessages,
   ]);
 
+  const commitChatTypeSwitchPaint = useCallback(
+    (merged: ChatMessageWithStatus[], targetChatType: ChatType) => {
+      if (!id) return;
+      const threadKey = resolveThreadKey(
+        contextType,
+        id,
+        contextType === 'GAME' ? targetChatType : undefined
+      );
+      if (!threadKey) return;
+      const scrollPlan = paintScrollFor(merged, undefined);
+      commitOpenThreadPaint(
+        { messages: merged, scroll: scrollPlan.scroll, scrollRow: scrollPlan.scrollRow },
+        threadKey,
+        'chat-type-switch',
+        scrollPlan
+      );
+    },
+    [id, contextType, paintScrollFor, commitOpenThreadPaint]
+  );
+
   /** ThreadSession layout seed: warm L1 in messagesRef; first visible paint is bootstrap commit. */
   useLayoutEffect(() => {
     const pushFreshNonce = peekChatFreshOpenNonce();
     const forceFreshOpen = shouldForceFreshOpen(freshOpenSignal, pushFreshNonce);
+    forceFreshOpenRef.current = forceFreshOpen;
     if (pushFreshNonce > 0) consumeChatFreshOpenNonce(pushFreshNonce);
 
     const key = resolveThreadKey(
@@ -330,6 +359,15 @@ export function useGameChatMessages({
     }
   }, [messageListRef]);
 
+  const pinAfterSocketMergeIfAllowed = useCallback(() => {
+    if (threadOpenSettlingRef.current) return;
+    if (!openPaintCommittedRef.current) return;
+    const scroll = openScrollRef.current;
+    if (scroll?.anchorMessageId) return;
+    if (scroll && scroll.atBottom === false) return;
+    scrollToBottom();
+  }, [scrollToBottom]);
+
   const reconcileThreadOpenAndPinIfAtBottom = useCallback(
     async (requestId: string, effectiveType: ChatType) => {
       if (currentIdRef.current !== requestId) return;
@@ -343,18 +381,10 @@ export function useGameChatMessages({
       });
       if (currentIdRef.current !== requestId) return;
       endThreadOpenSettling();
+      pinAfterSocketMergeIfAllowed();
     },
-    [contextType, currentIdRef, endThreadOpenSettling]
+    [contextType, currentIdRef, endThreadOpenSettling, pinAfterSocketMergeIfAllowed]
   );
-
-  const pinAfterSocketMergeIfAllowed = useCallback(() => {
-    if (threadOpenSettlingRef.current) return;
-    if (!openPaintCommittedRef.current) return;
-    const scroll = openScrollRef.current;
-    if (scroll?.anchorMessageId) return;
-    if (scroll && scroll.atBottom === false) return;
-    scrollToBottom();
-  }, [scrollToBottom]);
 
   const fetchMessagesPage = useCallback(
     async (
@@ -457,13 +487,12 @@ export function useGameChatMessages({
           const merged = mergeServerPageWithPendingOptimistics(messagesRef.current, response);
           const scrollRow = await loadOpenScrollState(memKeyNet);
           if (currentIdRef.current !== requestId) return false;
+          const scrollPlan = paintScrollFor(merged, scrollRow);
           commitOpenThreadPaint(
             {
               messages: merged,
-              scroll: scrollRow?.anchorMessageId
-                ? { anchorMessageId: scrollRow.anchorMessageId }
-                : { atBottom: true },
-              scrollRow,
+              scroll: scrollPlan.scroll,
+              scrollRow: scrollPlan.scrollRow,
             },
             memKeyNet,
             'network-page'
@@ -491,7 +520,7 @@ export function useGameChatMessages({
         return false;
       }
     },
-    [id, contextType, currentChatType, currentIdRef, fetchMessagesPage, reconcileThreadOpenAndPinIfAtBottom, setMessagesTagged, commitOpenThreadPaint, endThreadOpenSettling]
+    [id, contextType, currentChatType, currentIdRef, fetchMessagesPage, reconcileThreadOpenAndPinIfAtBottom, setMessagesTagged, commitOpenThreadPaint, endThreadOpenSettling, paintScrollFor]
   );
 
   const bootstrapThread = useCallback(
@@ -526,13 +555,12 @@ export function useGameChatMessages({
             const scrollRow = await loadOpenScrollState(memKey);
             if (currentIdRef.current !== requestId) return false;
             const merged = mergeServerPageWithPendingOptimistics(messagesRef.current, dexieTail);
+            const scrollPlan = paintScrollFor(merged, scrollRow);
             commitOpenThreadPaint(
               {
                 messages: merged,
-                scroll: scrollRow?.anchorMessageId
-                  ? { anchorMessageId: scrollRow.anchorMessageId }
-                  : { atBottom: true },
-                scrollRow,
+                scroll: scrollPlan.scroll,
+                scrollRow: scrollPlan.scrollRow,
               },
               memKey
             );
@@ -572,7 +600,8 @@ export function useGameChatMessages({
         });
         if (currentIdRef.current !== requestId) return false;
         if (result.kind === 'painted') {
-          commitOpenThreadPaint(result.plan, memKey, 'bootstrap-snapshot', scrollPlanForAnchor(result.plan.messages));
+          const scrollPlan = paintScrollFor(result.plan.messages, result.plan.scrollRow);
+          commitOpenThreadPaint(result.plan, memKey, 'bootstrap-snapshot', scrollPlan);
           await reconcileThreadOpenAndPinIfAtBottom(requestId, effectiveType);
           return true;
         }
@@ -583,7 +612,7 @@ export function useGameChatMessages({
         return loadMessages(false, gameChatType);
       }
     },
-    [id, contextType, currentChatType, currentIdRef, loadMessages, reconcileThreadOpenAndPinIfAtBottom, commitOpenThreadPaint, scrollPlanForAnchor]
+    [id, contextType, currentChatType, currentIdRef, loadMessages, reconcileThreadOpenAndPinIfAtBottom, commitOpenThreadPaint, paintScrollFor]
   );
 
   const loadMoreMessages = useCallback(async () => {
@@ -714,8 +743,8 @@ export function useGameChatMessages({
     initialScroll,
     openPaintGeneration,
     openPaintCommittedRef,
-    invalidateThreadOpen,
     teardownForChatTypeSwitch,
+    commitChatTypeSwitchPaint,
     pinAfterSocketMergeIfAllowed,
     setMessages,
     messagesRef,

@@ -41,9 +41,8 @@ export interface UseGameChatActionsParams {
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
   setIsSwitchingChatType: (v: boolean) => void;
-  setIsLoadingMessages: (v: boolean) => void;
-  setIsInitialLoad: (v: boolean) => void;
   teardownForChatTypeSwitch: () => void;
+  commitChatTypeSwitchPaint: (merged: ChatMessageWithStatus[], targetChatType: ChatType) => void;
   handleMarkFailed: (tempId: string) => void;
   handleNewMessageRef: React.MutableRefObject<(message: import('@/api/chat').ChatMessage) => string | void>;
   scrollToBottom: () => void;
@@ -77,9 +76,8 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
     setMessages,
     messagesRef,
     setIsSwitchingChatType,
-    setIsLoadingMessages,
-    setIsInitialLoad,
     teardownForChatTypeSwitch,
+    commitChatTypeSwitchPaint,
     handleMarkFailed,
     handleNewMessageRef,
     scrollToBottom,
@@ -213,19 +211,30 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
   const handleChatTypeChange = useCallback(
     async (newChatType: ChatType) => {
       if (!id || newChatType === currentChatType || contextType === 'USER') return;
-      planChatTypeSwitch({
+      const switchPlan = planChatTypeSwitch({
         contextType,
         contextId: id,
         toChatType: newChatType,
       });
+      const pendingBeforeTeardown = messagesRef.current;
       teardownForChatTypeSwitch();
       setIsSwitchingChatType(true);
-      setIsLoadingMessages(true);
       setCurrentChatType(newChatType);
       setPage(1);
       setHasMoreMessages(true);
       const normalizedChatType = normalizeChatType(newChatType);
       const requestId = id;
+
+      const paintSwitch = (local: ChatMessageWithStatus[]) => {
+        const merged = mergeChatTypeSwitchPaint(
+          pendingBeforeTeardown,
+          local,
+          contextType,
+          normalizedChatType
+        );
+        commitChatTypeSwitchPaint(merged, normalizedChatType);
+        return merged;
+      };
 
       const reconcileAfterLocal = () => {
         void reconcileChatThreadOpen({
@@ -240,13 +249,9 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
 
       try {
         const { messages: local } = await loadLocalThreadBootstrap(contextType, id, normalizedChatType);
+        if (currentIdRef.current !== requestId) return;
         if (local.length > 0) {
-          setMessages((prev) => {
-            const merged = mergeChatTypeSwitchPaint(prev, local, contextType, normalizedChatType);
-            messagesRef.current = merged;
-            return merged;
-          });
-          setHasMoreMessages(true);
+          paintSwitch(local);
           const last = local[local.length - 1];
           if (last) {
             useChatSyncStore
@@ -261,12 +266,13 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
           reconcileAfterLocal();
         } else {
           const response = await chatApi.getMessages(contextType, id, 1, 50, normalizedChatType);
+          if (currentIdRef.current !== requestId) return;
           void persistChatMessagesFromApi(response).catch(() => {});
-          setMessages((prev) => {
-            const merged = mergeServerPageWithPendingOptimistics(prev, response);
-            messagesRef.current = merged;
-            return merged;
-          });
+          const merged = mergeServerPageWithPendingOptimistics(
+            mergeChatTypeSwitchPaint(pendingBeforeTeardown, [], contextType, normalizedChatType),
+            response
+          );
+          commitChatTypeSwitchPaint(merged, normalizedChatType);
           setHasMoreMessages(response.length === 50);
           const tail = response[response.length - 1];
           if (tail) {
@@ -302,7 +308,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
           });
         }
         scrollToBottom();
-        if (contextType === 'GAME' && id) {
+        if (contextType === 'GAME' && id && switchPlan.nextThreadKey) {
           useNavigationStore.getState().setViewingGameChat(id, normalizedChatType);
         }
       } catch (error) {
@@ -313,8 +319,6 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
           putChatThreadMemory(memKey, messagesRef.current, () => currentIdRef.current === id);
         }
         setIsSwitchingChatType(false);
-        setIsLoadingMessages(false);
-        setIsInitialLoad(false);
       }
     },
     [
@@ -330,11 +334,10 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
       setPage,
       setHasMoreMessages,
       setIsSwitchingChatType,
-      setIsLoadingMessages,
-      setIsInitialLoad,
       setCurrentChatType,
       handleNewMessageRef,
       teardownForChatTypeSwitch,
+      commitChatTypeSwitchPaint,
     ]
   );
 

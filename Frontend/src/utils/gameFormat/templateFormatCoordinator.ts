@@ -261,16 +261,13 @@ export function evaluateWizardClose(
 ): WizardCloseResult {
   if (selection.templateId != null && selection.intent !== 'advanced') {
     const tpl = getTemplate(selection.templateId);
-    const current = gameFormatSnapshotFromFormat(format);
-    const formatDrifted =
-      session.snapshotAtOpen != null && !snapshotsEqual(session.snapshotAtOpen, current);
     const mismatchesSelectedTemplate = !formatMatchesCreateTemplateFromFormat(
       tpl,
       format,
       ctx.maxParticipants,
     );
 
-    if (formatDrifted || mismatchesSelectedTemplate) {
+    if (mismatchesSelectedTemplate) {
       return { type: 'demote' };
     }
   }

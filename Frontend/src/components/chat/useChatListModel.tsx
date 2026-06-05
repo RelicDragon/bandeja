@@ -78,7 +78,7 @@ export function useChatListModel({
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const { draftsCacheRef, getMergedDrafts, applyDraftToCache } = useChatListMergedDrafts(user?.id);
+  const { getMergedDrafts, applyDraftToCache } = useChatListMergedDrafts(user?.id);
   const isOnline = useNetworkStore((s) => s.isOnline);
   const chatsFilter = useNavigationStore((s) => s.chatsFilter);
   const bugsFilter = useNavigationStore((s) => s.bugsFilter);
@@ -118,7 +118,6 @@ export function useChatListModel({
       return;
     }
     feed().invalidateDrafts();
-    draftsCacheRef.current = null;
     void (async () => {
       await new Promise<void>((resolve) => {
         setTimeout(resolve, 0);
@@ -126,7 +125,7 @@ export function useChatListModel({
       const allDrafts = await getMergedDrafts(true);
       feed().reapplyDrafts(allDrafts, chatsFilter, user.id);
     })();
-  }, [user?.id, chatsFilter, getMergedDrafts, draftsCacheRef, feed]);
+  }, [user?.id, chatsFilter, getMergedDrafts, feed]);
 
   useChatListPrefetch(user?.id, isOnline, chatsRef);
   const urlQuery = searchParams.get('q') ?? '';
@@ -837,7 +836,6 @@ export function useChatListModel({
     lastNewBug,
     fetchChatsForFilter,
     fetchBugs,
-    draftsCacheRef,
     applyDraftToCache,
     chatsRef,
   });
@@ -1037,7 +1035,7 @@ export function useChatListModel({
     const otherUser = chat.user1Id === user.id ? chat.user2 : chat.user1;
 
     if (chatsFilter === 'users' && otherUser) {
-      useChatListFeedStore.getState().patchRows((prevChats) => {
+      useChatListFeedStore.getState().patchRowsForFilter('users', (prevChats) => {
         const filteredChats = prevChats.filter(
           (item) => !(item.type === 'contact' && item.userId === userId)
         );

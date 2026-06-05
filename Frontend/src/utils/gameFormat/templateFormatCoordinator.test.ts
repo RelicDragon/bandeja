@@ -6,6 +6,7 @@ import {
   beginWizardSession,
   buildCreateBootstrap,
   evaluateParticipantRepick,
+  evaluateSportChange,
   evaluateWizardClose,
   findMatchingTemplateId,
   formatMatchesCreateTemplate,
@@ -132,6 +133,72 @@ describe('templateFormatCoordinator', () => {
           4,
         ),
       ).toBe(true);
+    });
+
+    it('keeps americano template when wizard changes points within inlineConfig', () => {
+      const selection = { intent: 'social' as const, templateId: 'PADEL_AMERICANO' as const };
+      const atOpen = mockFormat({
+        scoringMode: 'POINTS',
+        scoringPreset: 'POINTS_32',
+        generationType: 'AUTOMATIC',
+        winnerOfGame: 'BY_SCORES_DELTA',
+      });
+      const session = beginWizardSession(selection, atOpen);
+      const afterWizard = mockFormat({
+        scoringMode: 'POINTS',
+        scoringPreset: 'POINTS_21',
+        generationType: 'AUTOMATIC',
+        winnerOfGame: 'BY_SCORES_DELTA',
+      });
+      const result = evaluateWizardClose(PADEL_CTX, afterWizard, selection, session, {
+        userChoseManual: false,
+      });
+      expect(result.type).toBe('unchanged');
+    });
+
+    it('keeps timed template when wizard changes duration within inlineConfig options', () => {
+      const selection = { intent: 'social' as const, templateId: 'PADEL_TIMED' as const };
+      const atOpen = mockFormat({
+        scoringPreset: 'CLASSIC_TIMED',
+        matchTimerEnabled: true,
+        matchTimedCapMinutes: 15,
+      });
+      const session = beginWizardSession(selection, atOpen);
+      const afterWizard = mockFormat({
+        scoringPreset: 'CLASSIC_TIMED',
+        matchTimerEnabled: true,
+        matchTimedCapMinutes: 10,
+      });
+      const result = evaluateWizardClose(PADEL_CTX, afterWizard, selection, session, {
+        userChoseManual: false,
+      });
+      expect(result.type).toBe('unchanged');
+    });
+  });
+
+  describe('sport change', () => {
+    it('repicks default template for new sport when not skipping auto-select', () => {
+      const tennisCtx: TemplateFormatCoordinatorContext = {
+        sport: Sports.TENNIS,
+        maxParticipants: 4,
+        allowedScoringPresets: ['CLASSIC_BEST_OF_3', 'CLASSIC_FAST4', 'CLASSIC_TIMED'],
+        participantContext: {
+          maxParticipants: 4,
+          playersPerMatch: 2,
+          hasFixedTeams: false,
+          genderTeams: 'ANY',
+        },
+      };
+      const result = evaluateSportChange(tennisCtx, { skipInitialAutoSelect: false });
+      expect(result.type).toBe('repick');
+      if (result.type === 'repick') {
+        expect(result.selection.templateId).toBe('TENNIS_FAST4_SOCIAL');
+      }
+    });
+
+    it('demotes when skipInitialAutoSelect is set (edit reload)', () => {
+      const result = evaluateSportChange(PADEL_CTX, { skipInitialAutoSelect: true });
+      expect(result.type).toBe('demote');
     });
   });
 

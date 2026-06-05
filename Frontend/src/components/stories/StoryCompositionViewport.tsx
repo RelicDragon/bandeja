@@ -4,7 +4,7 @@ import {
   STORY_COMPOSITION_FRAME_CLASS,
   viewportScaleFromFrameWidth,
 } from '@/components/stories/create/utils/storyCompositionLayout';
-import { paintCompositionOverlaysToCanvas } from '@/components/stories/create/utils/storyCompositionViewport';
+import { StoryCompositionCanvasOverlays } from '@/components/stories/StoryCompositionCanvasOverlays';
 import { StoryCompositionMedia } from '@/components/stories/StoryCompositionMedia';
 
 export type StoryCompositionViewportContext = {
@@ -26,34 +26,6 @@ type StoryCompositionViewportProps = {
   onMeasure?: (size: { w: number; h: number }, frameRect: DOMRect) => void;
   children?: (ctx: StoryCompositionViewportContext) => ReactNode;
 };
-
-function StoryCompositionOverlayCanvas({
-  overlayStyle,
-  frameScale,
-}: {
-  overlayStyle: OverlayStyleV2;
-  frameScale: number;
-}) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    paintCompositionOverlaysToCanvas(canvas, overlayStyle, frameScale);
-  }, [frameScale, overlayStyle]);
-
-  useLayoutEffect(() => {
-    draw();
-  }, [draw]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="pointer-events-none absolute inset-0 h-full w-full"
-      aria-hidden
-    />
-  );
-}
 
 export function StoryCompositionViewport({
   className,
@@ -101,7 +73,7 @@ export function StoryCompositionViewport({
       ) : null}
       {overlayStyle && (overlayStyle.layers?.length ?? 0) > 0 ? (
         <div className="pointer-events-none absolute inset-0 z-10">
-          <StoryCompositionOverlayCanvas overlayStyle={overlayStyle} frameScale={frameScale} />
+          <StoryCompositionCanvasOverlays overlayStyle={overlayStyle} frameScale={frameScale} />
         </div>
       ) : null}
       {children?.({ frameScale, frameRect })}

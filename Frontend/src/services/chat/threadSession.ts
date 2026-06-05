@@ -153,6 +153,31 @@ export function resolveSessionScrollFromSnapshot(
   return { anchorMessageId: openAnchorMessageId };
 }
 
+export type StoredThreadScroll = {
+  anchorMessageId?: string | null;
+  atBottom?: boolean | null;
+};
+
+/** Scroll policy for open paint — force-reload pins bottom; deep-link anchor wins when in snapshot. */
+export function resolvePaintScrollPlan(input: {
+  messages: readonly ChatMessageWithStatus[];
+  storedScroll?: StoredThreadScroll;
+  forceFreshOpen: boolean;
+  openAnchorMessageId?: string;
+}): ThreadSessionScroll {
+  const openAnchorInSnapshot =
+    !input.forceFreshOpen && input.openAnchorMessageId
+      ? resolveSessionScrollFromSnapshot(input.messages, input.openAnchorMessageId)?.anchorMessageId
+      : undefined;
+  return (
+    resolveSessionScroll({
+      storedAnchorMessageId: input.storedScroll?.anchorMessageId ?? undefined,
+      openAnchorMessageId: openAnchorInSnapshot,
+      forceFreshOpen: input.forceFreshOpen,
+    }) ?? { atBottom: true }
+  );
+}
+
 /** Pending optimistics for target chat type only — sent rows from prior thread are dropped. */
 export function pendingOptimisticsForChatTypeSwitch(
   prev: readonly ChatMessageWithStatus[],

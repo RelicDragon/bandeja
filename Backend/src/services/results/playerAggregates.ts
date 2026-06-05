@@ -1,5 +1,4 @@
 import { WinnerOfGame } from '@prisma/client';
-import { getMatchScoresForDelta } from './setScoreDelta';
 
 export interface PlayerAggregate {
   userId: string;
@@ -354,27 +353,4 @@ export function determineWinnerUserIds(
   });
 
   return new Set(winners.map((w) => w.userId));
-}
-
-/** Recompute aggregate scores from raw set rows (gameWinner DB path). */
-export function applyMatchToAggregatesFromSets(
-  aggregates: Map<string, PlayerAggregate>,
-  teamAPlayerIds: string[],
-  teamBPlayerIds: string[],
-  sets: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean | null }>,
-  teamAWon: boolean,
-  teamBWon: boolean,
-): void {
-  const { teamAScore, teamBScore } = getMatchScoresForDelta(
-    sets.map((s) => ({ teamAScore: s.teamAScore, teamBScore: s.teamBScore, isTieBreak: s.isTieBreak ?? false })),
-  );
-  const isTie = !teamAWon && !teamBWon;
-  for (const playerId of teamAPlayerIds) {
-    const agg = aggregates.get(playerId);
-    if (agg) updateAggregateFromMatch(agg, teamAScore, teamBScore, teamAWon, isTie);
-  }
-  for (const playerId of teamBPlayerIds) {
-    const agg = aggregates.get(playerId);
-    if (agg) updateAggregateFromMatch(agg, teamBScore, teamAScore, teamBWon, isTie);
-  }
 }

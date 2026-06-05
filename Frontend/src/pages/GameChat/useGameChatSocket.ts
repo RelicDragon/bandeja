@@ -51,6 +51,7 @@ export interface UseGameChatSocketParams {
   fetchPinnedMessages: () => void;
   handleMessageUpdated: (updated: import('@/api/chat').ChatMessage) => void;
   reloadMessagesFirstPage: () => void | Promise<void>;
+  onAfterSocketBatch?: () => void;
 }
 
 type RoomProcessorCtx = Pick<
@@ -257,6 +258,7 @@ export function useGameChatSocket({
   fetchPinnedMessages,
   handleMessageUpdated,
   reloadMessagesFirstPage,
+  onAfterSocketBatch,
 }: UseGameChatSocketParams) {
   const roomKey = useMemo(
     () => (id ? `${contextType}:${id}` : ''),
@@ -340,9 +342,10 @@ export function useGameChatSocket({
       const batch = takeChatRoomPending(roomKey);
       if (batch.length === 0) return;
       processChatRoomBatch(batch, roomProcessorCtx);
+      onAfterSocketBatch?.();
     };
     scheduleAfterThreadPaint(flush);
-  }, [roomKey, id, roomPushSeq, roomProcessorCtx, currentIdRef]);
+  }, [roomKey, id, roomPushSeq, roomProcessorCtx, currentIdRef, onAfterSocketBatch]);
 
   useEffect(() => {
     syncEpochBaselineRef.current = null;

@@ -265,6 +265,22 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'game format normalization unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'utils', 'gameFormat', 'normalizeGameFormatPatch.test.ts'),
+    ],
+  },
+  {
+    label: 'game format update keys unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'utils', 'gameFormatUpdateKeys.test.ts'),
+    ],
+  },
+  {
     label: 'multisport deferred product',
     command: process.execPath,
     args: [

@@ -16,7 +16,6 @@ import {
   normalizeGameFormatPatch,
   type GameFormatExistingGame,
 } from '../../utils/gameFormat/normalizeGameFormatPatch';
-import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { getSportConfig, resolvePlayersPerMatch } from '../../sport/sportRegistry';
 import {
@@ -75,6 +74,15 @@ interface CreateLeagueGameParams {
   db?: GameReadinessDb;
 }
 
+export type ResolveLeagueFormatOptions = {
+  entityType?: EntityType;
+  hasFixedTeams?: boolean;
+  maxParticipants?: number;
+  playersPerMatch?: number;
+  gameType?: string;
+  resultsRoundGenV2?: unknown;
+};
+
 export function resolveLeagueFixtureFormatFields(
   seasonGame: {
     gameType?: string | null;
@@ -97,8 +105,10 @@ export function resolveLeagueFixtureFormatFields(
     hasGoldenPoint?: boolean | null;
     ballsInGames?: boolean | null;
   },
-  gameSetup?: PlayoffGameSetupOverrides
+  gameSetup?: PlayoffGameSetupOverrides,
+  options?: ResolveLeagueFormatOptions,
 ) {
+  const entityType = options?.entityType ?? EntityType.LEAGUE;
   const patch = {
     fixedNumberOfSets: gameSetup?.fixedNumberOfSets ?? seasonGame.fixedNumberOfSets ?? 0,
     maxTotalPointsPerSet: gameSetup?.maxTotalPointsPerSet ?? seasonGame.maxTotalPointsPerSet ?? 0,
@@ -132,17 +142,18 @@ export function resolveLeagueFixtureFormatFields(
           : null,
     hasGoldenPoint: gameSetup?.hasGoldenPoint ?? seasonGame.hasGoldenPoint ?? false,
     ballsInGames: gameSetup?.ballsInGames,
-    gameType: seasonGame.gameType ?? 'CLASSIC',
-    playersPerMatch: seasonGame.playersPerMatch ?? 4,
-    hasFixedTeams: true,
+    gameType: options?.gameType ?? seasonGame.gameType ?? 'CLASSIC',
+    playersPerMatch: options?.playersPerMatch ?? seasonGame.playersPerMatch ?? 4,
+    hasFixedTeams: options?.hasFixedTeams ?? true,
     allowUserInMultipleTeams: seasonGame.allowUserInMultipleTeams ?? false,
-    maxParticipants: seasonGame.maxParticipants ?? 4,
+    maxParticipants: options?.maxParticipants ?? seasonGame.maxParticipants ?? 4,
+    resultsRoundGenV2: options?.resultsRoundGenV2,
   };
 
   const normalized = normalizeGameFormatPatch({
     existingGame: seasonGame as GameFormatExistingGame,
     patch,
-    entityType: EntityType.LEAGUE,
+    entityType,
   });
 
   return {
@@ -157,7 +168,14 @@ export function resolveLeagueFixtureFormatFields(
     winnerOfGame: (normalized.winnerOfGame as WinnerOfGame | undefined) ?? patch.winnerOfGame,
     winnerOfMatch: (normalized.winnerOfMatch as WinnerOfMatch | undefined) ?? patch.winnerOfMatch,
     matchGenerationType:
-      (normalized.matchGenerationType as MatchGenerationType | undefined) ?? patch.matchGenerationType,
+      (normalized.matchGenerationType as MatchGenerationType | undefined) ??
+      resolveMatchGenerationType({
+        resultsRoundGenV2: options?.resultsRoundGenV2,
+        matchGenerationType: patch.matchGenerationType,
+        maxParticipants: patch.maxParticipants,
+        playersPerMatch: patch.playersPerMatch,
+      }) ??
+      patch.matchGenerationType,
     pointsPerWin: (normalized.pointsPerWin as number | undefined) ?? patch.pointsPerWin,
     pointsPerLoose: (normalized.pointsPerLoose as number | undefined) ?? patch.pointsPerLoose,
     pointsPerTie: (normalized.pointsPerTie as number | undefined) ?? patch.pointsPerTie,
@@ -431,6 +449,25 @@ export async function createLeaguePlayoffGame(
     }
   }
 
+  const format = resolveLeagueFixtureFormatFields(
+    seasonGame,
+    {
+      ...gameSetup,
+      fixedNumberOfSets: gameSetup?.fixedNumberOfSets ?? template.fixedNumberOfSets,
+      winnerOfGame: (gameSetup?.winnerOfGame ?? template.winnerOfGame) as WinnerOfGame,
+      winnerOfMatch: (gameSetup?.winnerOfMatch ?? template.winnerOfMatch) as WinnerOfMatch,
+      matchGenerationType: (gameSetup?.matchGenerationType ??
+        template.matchGenerationType) as MatchGenerationType,
+    },
+    {
+      hasFixedTeams,
+      maxParticipants: participantCount,
+      playersPerMatch,
+      gameType,
+      resultsRoundGenV2,
+    },
+  );
+
   const game = await db.game.create({
     data: {
       entityType: EntityType.LEAGUE,
@@ -456,39 +493,7 @@ export async function createLeaguePlayoffGame(
       hasFixedTeams,
       allowUserInMultipleTeams,
       genderTeams: seasonGame.genderTeams || 'ANY',
-      fixedNumberOfSets: gameSetup?.fixedNumberOfSets ?? template.fixedNumberOfSets,
-      maxTotalPointsPerSet: gameSetup?.maxTotalPointsPerSet ?? seasonGame.maxTotalPointsPerSet ?? 0,
-      matchTimedCapMinutes: gameSetup?.matchTimedCapMinutes ?? seasonGame.matchTimedCapMinutes ?? 0,
-      matchTimerEnabled: gameSetup?.matchTimerEnabled ?? seasonGame.matchTimerEnabled ?? false,
-      maxPointsPerTeam: gameSetup?.maxPointsPerTeam ?? seasonGame.maxPointsPerTeam ?? 0,
-      winnerOfGame: gameSetup?.winnerOfGame ?? template.winnerOfGame,
-      winnerOfMatch: gameSetup?.winnerOfMatch ?? template.winnerOfMatch,
-      matchGenerationType: resolveMatchGenerationType({
-        resultsRoundGenV2,
-        matchGenerationType: gameSetup?.matchGenerationType ?? template.matchGenerationType,
-        maxParticipants: participantCount,
-        playersPerMatch,
-      }),
-      pointsPerWin: gameSetup?.pointsPerWin ?? seasonGame.pointsPerWin ?? 0,
-      pointsPerLoose: gameSetup?.pointsPerLoose ?? seasonGame.pointsPerLoose ?? 0,
-      pointsPerTie: gameSetup?.pointsPerTie ?? seasonGame.pointsPerTie ?? 0,
-      scoringPreset:
-        (gameSetup?.scoringPreset as ScoringPreset | null) ?? seasonGame.scoringPreset ?? null,
-      scoringMode:
-        gameSetup?.scoringMode != null
-          ? String(gameSetup.scoringMode)
-          : seasonGame.scoringMode != null
-            ? String(seasonGame.scoringMode)
-            : null,
-      hasGoldenPoint: gameSetup?.hasGoldenPoint ?? seasonGame.hasGoldenPoint ?? false,
-      ballsInGames:
-        typeof gameSetup?.ballsInGames === 'boolean'
-          ? gameSetup.ballsInGames
-          : deriveBallsInGamesFromScoring({
-              scoringPreset: gameSetup?.scoringPreset ?? seasonGame.scoringPreset ?? null,
-              winnerOfMatch: gameSetup?.winnerOfMatch ?? template.winnerOfMatch,
-              maxTotalPointsPerSet: gameSetup?.maxTotalPointsPerSet ?? seasonGame.maxTotalPointsPerSet ?? 0,
-            }),
+      ...format,
       parentId: leagueSeasonId,
       leagueRoundId,
       leagueGroupId,

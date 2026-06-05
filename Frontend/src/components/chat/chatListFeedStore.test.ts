@@ -62,6 +62,23 @@ describe('chatListFeedStore filter transitions', () => {
     expect(useChatListFeedStore.getState().getFilterCache('users')?.chats).toHaveLength(2);
     expect(useChatListFeedStore.getState().getFilterCache('bugs')?.chats).toHaveLength(1);
   });
+
+  it('patchRowsForFilter updates target filter cache without touching inactive filter rows', () => {
+    const store = useChatListFeedStore.getState();
+    store.setUserId('user-1');
+    store.setActiveFilter('users');
+    store.commitFilterCache('users', { chats: [userRow('u1')] }, { userId: 'user-1' });
+    store.commitFilterCache('bugs', { chats: [groupRow('b1')] }, { userId: 'user-1', applyToVisible: false });
+
+    store.setActiveFilter('bugs');
+    store.commitFilterCache('bugs', { chats: [groupRow('b1')] }, { userId: 'user-1' });
+    store.patchRowsForFilter('users', (prev) => [...prev, userRow('u2')]);
+
+    expect(useChatListFeedStore.getState().rows).toHaveLength(1);
+    expect(useChatListFeedStore.getState().rows[0]?.type).toBe('group');
+    expect(useChatListFeedStore.getState().getFilterCache('users')?.chats).toHaveLength(2);
+    expect(useChatListFeedStore.getState().getFilterCache('bugs')?.chats).toHaveLength(1);
+  });
 });
 
 describe('chatListFeedStore socket row patch', () => {
@@ -127,5 +144,54 @@ describe('chatListFeedStore draft reapply', () => {
     expect(row && 'draft' in row && row.draft?.content).toBe('draft text');
     const cached = useChatListFeedStore.getState().getFilterCache('users')?.chats[0];
     expect(cached && 'draft' in cached && cached.draft?.content).toBe('draft text');
+  });
+
+  it('reapplies drafts from filter cache when visible rows are stale after tab switch', () => {
+    const store = useChatListFeedStore.getState();
+    store.setUserId('user-1');
+    store.commitFilterCache('users', { chats: [userRow('chat-1')] }, { userId: 'user-1', applyToVisible: false });
+    store.commitFilterCache('bugs', { chats: [groupRow('b1')] }, { userId: 'user-1', applyToVisible: false });
+
+    store.setActiveFilter('bugs');
+    store.commitFilterCache('bugs', { chats: [groupRow('b1')] }, { userId: 'user-1' });
+
+    store.reapplyDrafts(
+      [
+        {
+          id: 'd1',
+          chatContextType: 'USER',
+          contextId: 'chat-1',
+          chatType: 'TEXT',
+          content: 'draft on users tab',
+          updatedAt: '2026-06-01T13:00:00.000Z',
+        },
+      ],
+      'users',
+      'user-1'
+    );
+
+    expect(useChatListFeedStore.getState().rows[0]?.type).toBe('group');
+    const usersCached = useChatListFeedStore.getState().getFilterCache('users')?.chats[0];
+    expect(usersCached && 'draft' in usersCached && usersCached.draft?.content).toBe('draft on users tab');
+  });
+});
+
+describe('chatListFeedStore load more', () => {
+  beforeEach(() => {
+    useChatListFeedStore.getState().resetForTests();
+  });
+
+  it('merges into target filter cache without using visible rows from another filter', () => {
+    const store = useChatListFeedStore.getState();
+    store.setUserId('user-1');
+    store.setActiveFilter('bugs');
+    store.commitFilterCache('bugs', { chats: [groupRow('b1')] }, { userId: 'user-1' });
+    store.commitFilterCache('users', { chats: [userRow('u1'), userRow('u2')], usersHasMore: true }, { userId: 'user-1', applyToVisible: false });
+
+    store.mergeLoadMoreRows('users', [userRow('u3')], false);
+
+    expect(useChatListFeedStore.getState().rows).toHaveLength(1);
+    expect(useChatListFeedStore.getState().getFilterCache('users')?.chats).toHaveLength(3);
+    expect(useChatListFeedStore.getState().getFilterCache('bugs')?.chats).toHaveLength(1);
   });
 });

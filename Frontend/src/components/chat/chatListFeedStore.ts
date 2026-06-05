@@ -49,6 +49,7 @@ export type ChatListFeedState = typeof INITIAL & {
     opts?: { applyToVisible?: boolean; userId?: string }
   ) => void;
   patchRows: (updater: (prev: ChatItem[]) => ChatItem[]) => void;
+  patchRowsForFilter: (filter: ChatsFilterType, updater: (prev: ChatItem[]) => ChatItem[]) => void;
   setRows: (rows: ChatItem[]) => void;
   mergeLoadMoreRows: (filter: ChatsFilterType, moreChats: ChatItem[], hasMore: boolean) => void;
   setPagination: (filter: ChatsFilterType, patch: Partial<FilterPagination>) => void;
@@ -66,6 +67,13 @@ export type ChatListFeedState = typeof INITIAL & {
   ) => void;
   resetForTests: () => void;
 };
+
+function rowsForFilter(
+  s: Pick<ChatListFeedState, 'activeFilter' | 'rows' | 'filterCache'>,
+  filter: ChatsFilterType
+): ChatItem[] {
+  return s.filterCache[filter]?.chats ?? (s.activeFilter === filter ? s.rows : []);
+}
 
 function paginationFromCache(filter: ChatsFilterType, cached: FilterCache): Partial<FilterPagination> {
   if (filter === 'bugs') return { hasMore: cached.bugsHasMore ?? false, page: 1 };
@@ -127,27 +135,32 @@ export const useChatListFeedStore = create<ChatListFeedState>((set, get) => ({
     });
   },
 
-  patchRows: (updater) => {
+  patchRowsForFilter: (filter, updater) => {
     set((s) => {
-      const next = deduplicateChats(updater(s.rows));
-      const filter = s.activeFilter;
+      const prev = rowsForFilter(s, filter);
+      const next = deduplicateChats(updater(prev));
       const cached = s.filterCache[filter];
       const entry: FilterCache = cached ? { ...cached, chats: next } : { chats: next };
       return {
-        rows: next,
+        ...(s.activeFilter === filter ? { rows: next } : {}),
         filterCache: { ...s.filterCache, [filter]: entry },
       };
     });
   },
 
+  patchRows: (updater) => {
+    get().patchRowsForFilter(get().activeFilter, updater);
+  },
+
   setRows: (rows) => {
-    get().patchRows(() => rows);
+    get().patchRowsForFilter(get().activeFilter, () => rows);
   },
 
   mergeLoadMoreRows: (filter, moreChats, hasMore) => {
     set((s) => {
       const cached = s.filterCache[filter];
-      const merged = deduplicateChats([...(cached?.chats ?? s.rows), ...moreChats]);
+      const base = cached?.chats ?? rowsForFilter(s, filter);
+      const merged = deduplicateChats([...base, ...moreChats]);
       const entry: FilterCache = cached
         ? {
             ...cached,
@@ -214,12 +227,13 @@ export const useChatListFeedStore = create<ChatListFeedState>((set, get) => ({
 
   reapplyDrafts: (allDrafts, filter, userId) => {
     set((s) => {
-      if (s.rows.length === 0 && allDrafts.length === 0) return s;
-      const next = applyDraftsToChatItems(s.rows, allDrafts, filter, userId);
+      const sourceRows = rowsForFilter(s, filter);
+      if (sourceRows.length === 0 && allDrafts.length === 0) return s;
+      const next = applyDraftsToChatItems(sourceRows, allDrafts, filter, userId);
       const cached = s.filterCache[filter];
       const entry: FilterCache = cached ? { ...cached, chats: next } : { chats: next };
       return {
-        rows: s.activeFilter === filter ? next : s.rows,
+        ...(s.activeFilter === filter ? { rows: next } : {}),
         filterCache: { ...s.filterCache, [filter]: entry },
         userId,
       };

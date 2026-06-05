@@ -1,4 +1,5 @@
 import { STORY_CANVAS_HEIGHT, STORY_CANVAS_WIDTH, type Transform2D } from '../types';
+import { viewportScaleFromFrameWidth } from '@/components/stories/create/utils/storyCompositionLayout';
 
 export { STORY_CANVAS_WIDTH, STORY_CANVAS_HEIGHT };
 
@@ -104,5 +105,5 @@ export function clampMediaTransform(
 }
 
 export function stageScaleFromWidth(stageWidth: number): number {
-  return stageWidth / STORY_CANVAS_WIDTH;
+  return viewportScaleFromFrameWidth(stageWidth);
 }

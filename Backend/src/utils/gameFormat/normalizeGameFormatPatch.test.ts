@@ -126,6 +126,21 @@ function testBallsInGamesClassicPreset(): void {
   assert.equal(norm.hasGoldenPoint, true);
 }
 
+function testLeagueSeasonWinnerOfGameRemap(): void {
+  const norm = normalizeGameFormatPatch({
+    existingGame: {
+      ...EMPTY_EXISTING,
+      scoringMode: 'POINTS',
+    },
+    patch: {
+      winnerOfGame: 'BY_POINTS',
+      scoringMode: 'POINTS',
+    },
+    entityType: EntityType.LEAGUE_SEASON,
+  });
+  assert.equal(norm.winnerOfGame, 'BY_SCORES_DELTA');
+}
+
 function run(): void {
   testLegacyTimedCreateUpdateParity();
   testSinglesClearsFixedTeams();
@@ -133,6 +148,7 @@ function run(): void {
   testTimerOffZerosCap();
   testAffectsRatingFormatOnlyGate();
   testBallsInGamesClassicPreset();
+  testLeagueSeasonWinnerOfGameRemap();
   console.log('normalizeGameFormatPatch.test.ts: all passed');
 }
 

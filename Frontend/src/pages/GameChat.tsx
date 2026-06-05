@@ -29,10 +29,8 @@ import { GameChatFooter } from './GameChat/GameChatFooter';
 import { GameChatAccessDenied } from './GameChat/GameChatAccessDenied';
 import { useGameChatPinned } from './GameChat/useGameChatPinned';
 import { useGameChatContext } from './GameChat/useGameChatContext';
-import { useThreadSession, useThreadSessionEffects } from './GameChat/useThreadSession';
-import { logReloadMessagesFirstPage } from '@/services/chat/chatOpenTrace';
+import { useGameChatSession, useThreadSessionEffects } from './GameChat/useThreadSession';
 import { useGameChatActions } from './GameChat/useGameChatActions';
-import { useGameChatOptimistic } from './GameChat/useGameChatOptimistic';
 import { useGameChatDisplay } from './GameChat/useGameChatDisplay';
 import { useGameChatReactions } from './GameChat/useGameChatReactions';
 import { useGameChatMutationRetry } from './GameChat/useGameChatMutationRetry';
@@ -160,6 +158,11 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     );
   }, [id, contextType, effectiveChatType]);
 
+  const { channelActivity, channelActivityResolved, noteUserMessage } = useGameChatChannelActivity(
+    contextType === 'GAME' ? game : null,
+    user?.id
+  );
+
   const {
     messages,
     setMessages,
@@ -187,7 +190,19 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     loadMessagesBeforeMessageId,
     bootstrapThread,
     teardownForChatTypeSwitch,
-  } = useThreadSession({
+    commitChatTypeSwitchPaint,
+    pinAfterSocketMergeIfAllowed,
+    handleAddOptimisticMessage,
+    handleMarkFailed,
+    handleSendQueued,
+    handleResendQueued,
+    handleRemoveFromQueue,
+    handleSendFailed,
+    handleReplaceOptimisticWithServerMessage,
+    handleNewMessage,
+    handleNewMessageRef,
+    reloadMessagesFirstPage,
+  } = useGameChatSession({
     id,
     contextType,
     currentChatType,
@@ -197,22 +212,14 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     currentIdRef,
     freshOpenSignal: locationState?.forceReload ?? 0,
     openAnchorMessageId: locationState?.anchorMessageId,
+    user,
+    setUserChat,
+    onInboundMessage: contextType === 'GAME' ? noteUserMessage : undefined,
   });
-
-  const reloadMessagesFirstPage = useCallback(async () => {
-    if (!id) return;
-    logReloadMessagesFirstPage(contextType, id);
-    await loadMessages(false, contextType === 'GAME' ? effectiveChatType : undefined);
-  }, [id, contextType, effectiveChatType, loadMessages]);
 
   const scrollToBottomSmooth = useCallback(() => {
     messageListRef.current?.scrollToBottomSmooth();
   }, []);
-
-  const { channelActivity, channelActivityResolved, noteUserMessage } = useGameChatChannelActivity(
-    contextType === 'GAME' ? game : null,
-    user?.id
-  );
 
   const derived = useGameChatDerived({
     game,
@@ -274,39 +281,6 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     navigate,
   });
   const { handleTitleClick: handlePanelTitleClick } = panels;
-
-  const {
-    handleAddOptimisticMessage,
-    handleMarkFailed,
-    handleSendQueued,
-    handleResendQueued,
-    handleRemoveFromQueue,
-    handleSendFailed,
-    handleReplaceOptimisticWithServerMessage,
-    handleNewMessage: handleNewMessageBase,
-    handleNewMessageRef,
-  } = useGameChatOptimistic({
-    id,
-    contextType,
-    currentChatType,
-    user,
-    setMessages,
-    messagesRef,
-    scrollToBottom,
-    setUserChat,
-  });
-
-  const handleNewMessage = useCallback(
-    (message: import('@/api/chat').ChatMessage) => {
-      if (contextType === 'GAME') noteUserMessage(message);
-      return handleNewMessageBase(message);
-    },
-    [contextType, noteUserMessage, handleNewMessageBase]
-  );
-
-  useEffect(() => {
-    handleNewMessageRef.current = handleNewMessage;
-  }, [handleNewMessage, handleNewMessageRef]);
 
   const {
     replyTo,
@@ -398,9 +372,8 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     setMessages,
     messagesRef,
     setIsSwitchingChatType,
-    setIsLoadingMessages,
-    setIsInitialLoad,
     teardownForChatTypeSwitch,
+    commitChatTypeSwitchPaint,
     handleMarkFailed,
     handleNewMessageRef,
     scrollToBottom,
@@ -507,6 +480,7 @@ export const GameChat: React.FC<GameChatProps> = ({ isEmbedded = false, chatId: 
     fetchPinnedMessages,
     handleMessageUpdated,
     reloadMessagesFirstPage,
+    pinAfterSocketMergeIfAllowed,
   });
 
   /**

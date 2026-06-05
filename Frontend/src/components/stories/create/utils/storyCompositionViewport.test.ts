@@ -45,15 +45,16 @@ describe('resolveStoryViewerPresentation', () => {
     expect(p.showDetachedOverlay).toBe(false);
   });
 
-  it('detaches overlay canvas for non-baked image stories', () => {
+  it('uses composition viewport for non-baked image stories', () => {
     const p = resolveStoryViewerPresentation({
       overlayStyle: overlayV2,
       isVideo: false,
       displayWidth: 1080,
       displayHeight: 1920,
     });
-    expect(p.useCompositionMedia).toBe(false);
-    expect(p.showDetachedOverlay).toBe(true);
+    expect(p.useCompositionMedia).toBe(true);
+    expect(p.showDetachedOverlay).toBe(false);
+    expect(p.showCanvasOverlay).toBe(true);
   });
 
   it('hides live overlay when baked', () => {

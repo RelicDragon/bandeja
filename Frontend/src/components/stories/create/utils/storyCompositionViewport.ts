@@ -83,8 +83,8 @@ export function resolveStoryViewerPresentation(input: {
   const overlayV1 = isOverlayStyleV1(input.overlayStyle) ? input.overlayStyle : null;
   const hasV2Layers = (overlayV2?.layers?.length ?? 0) > 0;
   const showCanvasOverlay = overlayV2 != null && !overlayV2.baked && hasV2Layers;
-  const useCompositionMedia = overlayV2 != null && !overlayV2.baked && input.isVideo;
-  const showDetachedOverlay = showCanvasOverlay && !useCompositionMedia;
+  const useCompositionMedia = overlayV2 != null && !overlayV2.baked;
+  const showDetachedOverlay = false;
   const showLegacyOverlayText = !!input.overlayText?.trim() && overlayV2 == null;
 
   const { width: naturalWidth, height: naturalHeight } = resolveCompositionNaturalSize(

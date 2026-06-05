@@ -3,6 +3,7 @@ import { ApiError } from '../../utils/ApiError';
 import {
   EntityType,
   GameType,
+  MatchGenerationType,
   WinnerOfGame,
   WinnerOfMatch,
   RoundType,
@@ -23,7 +24,7 @@ import {
 } from './gameCreation.util';
 import { resolveLeagueSeasonSport } from '../../utils/validators/validateLeagueSeasonSport';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
-import { deriveBallsInGamesFromScoring } from '../../utils/scoring/deriveBallsInGames';
+import { normalizeGameFormatPatch } from '../../utils/gameFormat/normalizeGameFormatPatch';
 import { TeamForRoundGeneration } from './generation/TeamForRoundGeneration';
 import { roundsInSingleRoundRobinCycle } from './generation/fixedTeamsRoundRobin';
 import { teamPlayerSig } from './generation/fixedTeamsRoundMatching';
@@ -286,46 +287,110 @@ export class LeagueCreateService {
       (gameSeasonData as { playersPerMatch?: number }).playersPerMatch,
     );
 
-    const gameSeasonGame = await prisma.game.create({
-      data: {
-        entityType: 'LEAGUE_SEASON' as EntityType,
+    const seasonFormatNorm = normalizeGameFormatPatch({
+      existingGame: {
+        gameType: GameType.CLASSIC,
         sport: seasonSport,
+        playersPerMatch: seasonPlayersPerMatch,
+        hasFixedTeams: false,
+        allowUserInMultipleTeams: false,
+        maxParticipants,
+      },
+      patch: {
         gameType: (gameSeasonData.gameType as GameType) ?? GameType.CLASSIC,
-        name: seasonName,
-        avatar: data.season?.avatar,
-        originalAvatar: data.season?.originalAvatar,
         fixedNumberOfSets: gameSeasonData.fixedNumberOfSets ?? 0,
         maxTotalPointsPerSet: gameSeasonData.maxTotalPointsPerSet ?? 0,
         maxPointsPerTeam: gameSeasonData.maxPointsPerTeam ?? 0,
         matchTimedCapMinutes: gameSeasonData.matchTimedCapMinutes ?? 0,
         matchTimerEnabled: Boolean(gameSeasonData.matchTimerEnabled),
-        winnerOfGame: (gameSeasonData.winnerOfGame as WinnerOfGame) ?? WinnerOfGame.BY_MATCHES_WON,
-        winnerOfMatch: (gameSeasonData.winnerOfMatch as WinnerOfMatch) ?? WinnerOfMatch.BY_SCORES,
-        matchGenerationType: resolveMatchGenerationType({
-          resultsRoundGenV2: data.resultsRoundGenV2,
-          matchGenerationType: gameSeasonData.matchGenerationType,
-          maxParticipants,
-          playersPerMatch: seasonPlayersPerMatch,
-        }),
+        winnerOfGame: gameSeasonData.winnerOfGame ?? WinnerOfGame.BY_MATCHES_WON,
+        winnerOfMatch: gameSeasonData.winnerOfMatch ?? WinnerOfMatch.BY_SCORES,
+        matchGenerationType: gameSeasonData.matchGenerationType,
+        resultsRoundGenV2: data.resultsRoundGenV2,
         pointsPerWin: gameSeasonData.pointsPerWin ?? 0,
         pointsPerLoose: gameSeasonData.pointsPerLoose ?? 0,
         pointsPerTie: gameSeasonData.pointsPerTie ?? 0,
-        scoringPreset: (gameSeasonData.scoringPreset as ScoringPreset | null) ?? null,
+        scoringPreset: gameSeasonData.scoringPreset ?? null,
         scoringMode: gameSeasonData.scoringMode != null ? String(gameSeasonData.scoringMode) : null,
         hasGoldenPoint: gameSeasonData.hasGoldenPoint ?? false,
-        ballsInGames:
-          typeof gameSeasonData.ballsInGames === 'boolean'
-            ? gameSeasonData.ballsInGames
-            : deriveBallsInGamesFromScoring({
-                scoringPreset: gameSeasonData.scoringPreset ?? null,
-                winnerOfMatch: (gameSeasonData.winnerOfMatch as WinnerOfMatch) ?? WinnerOfMatch.BY_SCORES,
-                maxTotalPointsPerSet: gameSeasonData.maxTotalPointsPerSet ?? 0,
-              }),
+        ballsInGames: gameSeasonData.ballsInGames,
+        playersPerMatch: seasonPlayersPerMatch,
         hasFixedTeams: data.hasFixedTeams ?? false,
+        allowUserInMultipleTeams: data.allowUserInMultipleTeams,
+        maxParticipants,
+      },
+      entityType: EntityType.LEAGUE_SEASON,
+    });
+
+    const gameSeasonGame = await prisma.game.create({
+      data: {
+        entityType: 'LEAGUE_SEASON' as EntityType,
+        sport: seasonSport,
+        gameType: (seasonFormatNorm.gameType as GameType | undefined) ?? GameType.CLASSIC,
+        name: seasonName,
+        avatar: data.season?.avatar,
+        originalAvatar: data.season?.originalAvatar,
+        fixedNumberOfSets:
+          (seasonFormatNorm.fixedNumberOfSets as number | undefined) ??
+          gameSeasonData.fixedNumberOfSets ??
+          0,
+        maxTotalPointsPerSet:
+          (seasonFormatNorm.maxTotalPointsPerSet as number | undefined) ??
+          gameSeasonData.maxTotalPointsPerSet ??
+          0,
+        maxPointsPerTeam:
+          (seasonFormatNorm.maxPointsPerTeam as number | undefined) ??
+          gameSeasonData.maxPointsPerTeam ??
+          0,
+        matchTimedCapMinutes:
+          (seasonFormatNorm.matchTimedCapMinutes as number | undefined) ??
+          gameSeasonData.matchTimedCapMinutes ??
+          0,
+        matchTimerEnabled: Boolean(
+          seasonFormatNorm.matchTimerEnabled ?? gameSeasonData.matchTimerEnabled,
+        ),
+        winnerOfGame:
+          (seasonFormatNorm.winnerOfGame as WinnerOfGame | undefined) ??
+          (gameSeasonData.winnerOfGame as WinnerOfGame) ??
+          WinnerOfGame.BY_MATCHES_WON,
+        winnerOfMatch:
+          (seasonFormatNorm.winnerOfMatch as WinnerOfMatch | undefined) ??
+          (gameSeasonData.winnerOfMatch as WinnerOfMatch) ??
+          WinnerOfMatch.BY_SCORES,
+        matchGenerationType:
+          (seasonFormatNorm.matchGenerationType as MatchGenerationType | undefined) ??
+          resolveMatchGenerationType({
+            resultsRoundGenV2: data.resultsRoundGenV2,
+            matchGenerationType: gameSeasonData.matchGenerationType,
+            maxParticipants,
+            playersPerMatch: seasonPlayersPerMatch,
+          }),
+        pointsPerWin:
+          (seasonFormatNorm.pointsPerWin as number | undefined) ?? gameSeasonData.pointsPerWin ?? 0,
+        pointsPerLoose:
+          (seasonFormatNorm.pointsPerLoose as number | undefined) ??
+          gameSeasonData.pointsPerLoose ??
+          0,
+        pointsPerTie:
+          (seasonFormatNorm.pointsPerTie as number | undefined) ?? gameSeasonData.pointsPerTie ?? 0,
+        scoringPreset:
+          (seasonFormatNorm.scoringPreset as ScoringPreset | null | undefined) ??
+          (gameSeasonData.scoringPreset as ScoringPreset | null) ??
+          null,
+        scoringMode:
+          (seasonFormatNorm.scoringMode as string | null | undefined) ??
+          (gameSeasonData.scoringMode != null ? String(gameSeasonData.scoringMode) : null),
+        hasGoldenPoint: Boolean(
+          seasonFormatNorm.hasGoldenPoint ?? gameSeasonData.hasGoldenPoint ?? false,
+        ),
+        ballsInGames: Boolean(seasonFormatNorm.ballsInGames),
+        hasFixedTeams:
+          (seasonFormatNorm.hasFixedTeams as boolean | undefined) ?? data.hasFixedTeams ?? false,
         allowUserInMultipleTeams:
-          seasonPlayersPerMatch === 2 || !data.hasFixedTeams
+          (seasonFormatNorm.allowUserInMultipleTeams as boolean | undefined) ??
+          (seasonPlayersPerMatch === 2 || !data.hasFixedTeams
             ? false
-            : Boolean(data.allowUserInMultipleTeams),
+            : Boolean(data.allowUserInMultipleTeams)),
         cityId: data.cityId,
         clubId: data.clubId || null,
         startTime: startDate,

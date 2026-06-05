@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2, Send } from 'lucide-react';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 import { lightHaptic } from '@/utils/lightHaptic';
+import { viewportScaleFromFrameWidth } from '@/components/stories/create/utils/storyCompositionLayout';
 import { PhotoStoryCaptionDrawer } from './editor/PhotoStoryCaptionDrawer';
 import { PhotoStoryCropScreen } from './editor/PhotoStoryCropScreen';
 import { PHOTO_MEDIA_NODE_KEY, PhotoStoryKonvaCanvas } from './editor/PhotoStoryKonvaCanvas';
@@ -17,7 +18,7 @@ import { useStoryPhotoPublish } from './hooks/useStoryPhotoPublish';
 import type { StoryMediaFile, StoryPhotoTool, TextNode, Transform2D } from './types';
 import { isStickerNode, isTextNode } from './types';
 import { getMediaNode } from './utils/document';
-import { computeCoverScale, stageScaleFromWidth } from './utils/transform';
+import { computeCoverScale } from './utils/transform';
 
 type StoryPhotoEditorProps = {
   open: boolean;
@@ -31,7 +32,7 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
   const textEditSnapshotRef = useRef('');
   const [stageSize, setStageSize] = useState({ w: 360, h: 640 });
   const [stageRect, setStageRect] = useState<DOMRect | null>(null);
-  const [stageScale, setStageScale] = useState(0.33);
+  const stageScale = useMemo(() => viewportScaleFromFrameWidth(stageSize.w), [stageSize.w]);
   const [activeTool, setActiveTool] = useState<StoryPhotoTool>(null);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [textEditInitial, setTextEditInitial] = useState('');
@@ -81,7 +82,6 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
   const handleMeasure = useCallback((size: { w: number; h: number }, rect: DOMRect) => {
     setStageSize(size);
     setStageRect(rect);
-    setStageScale(stageScaleFromWidth(rect.width));
   }, []);
 
   useEffect(() => {

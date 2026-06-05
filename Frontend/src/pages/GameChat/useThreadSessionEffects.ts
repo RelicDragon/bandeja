@@ -44,8 +44,9 @@ export type UseThreadSessionEffectsParams = {
   handleReadReceipt: UseGameChatSocketParams['handleReadReceipt'];
   handleMessageDeleted: UseGameChatSocketParams['handleMessageDeleted'];
   fetchPinnedMessages: () => void;
-  handleMessageUpdated: (updated: ChatMessage) => void;
+  handleMessageUpdated: UseGameChatSocketParams['handleMessageUpdated'];
   reloadMessagesFirstPage: () => void | Promise<void>;
+  pinAfterSocketMergeIfAllowed?: () => void;
 };
 
 /** ThreadSession-owned socket tail + bootstrap/outbox hydrate after optimistic handlers exist. */
@@ -96,5 +97,6 @@ export function useThreadSessionEffects(params: UseThreadSessionEffectsParams): 
     fetchPinnedMessages: params.fetchPinnedMessages,
     handleMessageUpdated: params.handleMessageUpdated,
     reloadMessagesFirstPage: params.reloadMessagesFirstPage,
+    onAfterSocketBatch: params.pinAfterSocketMergeIfAllowed,
   });
 }
