@@ -1,5 +1,5 @@
 import React from 'react';
-import { Beer } from 'lucide-react';
+import { Beer, Maximize2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserStats } from '@/api/users';
 import { GenderIndicator } from './GenderIndicator';
@@ -18,9 +18,10 @@ const glowFavorite = '[box-shadow:0_0_14px_7px_rgba(245,158,11,0.4)]';
 interface PlayerAvatarViewProps {
   stats: UserStats;
   onBack?: () => void;
+  onAvatarClick?: () => void;
 }
 
-export const PlayerAvatarView: React.FC<PlayerAvatarViewProps> = ({ stats }) => {
+export const PlayerAvatarView: React.FC<PlayerAvatarViewProps> = ({ stats, onAvatarClick }) => {
   const { t } = useTranslation();
   const { user } = stats;
   const levelSport = stats.sport ?? resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
@@ -33,11 +34,33 @@ export const PlayerAvatarView: React.FC<PlayerAvatarViewProps> = ({ stats }) => 
     <div className="flex flex-col items-center p-6 pt-0 gap-4">
       <div className="pt-4 relative shrink-0 w-full flex items-center justify-center">
         {user.originalAvatar ? (
-          <img
-            src={user.originalAvatar || ''}
-            alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'}
-            className={`max-w-full max-h-[50vh] w-auto h-auto object-contain rounded-2xl p-1 ${glow}`}
-          />
+          onAvatarClick ? (
+            <button
+              type="button"
+              onClick={onAvatarClick}
+              className="relative inline-block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              aria-label={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'}
+            >
+              <img
+                src={user.originalAvatar}
+                alt=""
+                aria-hidden
+                className={`max-w-full max-h-[50vh] w-auto h-auto object-contain rounded-2xl p-1 cursor-pointer ${glow}`}
+              />
+              <span
+                className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-white/90 backdrop-blur-sm pointer-events-none"
+                aria-hidden
+              >
+                <Maximize2 size={16} strokeWidth={2.25} />
+              </span>
+            </button>
+          ) : (
+            <img
+              src={user.originalAvatar}
+              alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'}
+              className={`max-w-full max-h-[50vh] w-auto h-auto object-contain rounded-2xl p-1 ${glow}`}
+            />
+          )
         ) : (
           <div className={`w-64 h-64 max-w-full aspect-square bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800 flex items-center justify-center text-white font-bold text-6xl border-8 border-white dark:border-gray-800 rounded-2xl ${glow}`}>
             {initials}

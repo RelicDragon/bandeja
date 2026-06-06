@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { Sports } from '@shared/sport';
 import {
@@ -8,6 +6,7 @@ import {
   getOfficiatingLevelForGame,
   getStrictValidationForPreset,
 } from '@/sport/createFlow';
+import { CREATE_TEMPLATES as SHARED_CREATE_TEMPLATES } from '@shared/createTemplates';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { getRulesFromPreset } from '@/utils/scoring';
 import {
@@ -29,36 +28,17 @@ const BADMINTON_TEMPLATE_IDS = [
   'BADMINTON_MATCH_3X21',
 ] as const;
 
-const BE_CASUAL_PATH = join(
-  process.cwd(),
-  '../Backend/src/sport/sportRegistryCasual.ts',
-);
-
-function parseBeTemplateFields(id: string): Record<string, string | number | boolean> {
-  const src = readFileSync(BE_CASUAL_PATH, 'utf8');
-  const block = src.slice(src.indexOf(`${id}:`));
-  const end = block.indexOf('\n  },');
-  const slice = block.slice(0, end < 0 ? 600 : end);
-  const fields: Record<string, string | number | boolean> = {};
-  for (const key of [
-    'scoringPreset',
-    'gameType',
-    'matchGenerationType',
-    'playersPerMatch',
-    'suggestedMaxParticipants',
-    'suggestedCourts',
-    'affectsRating',
-    'matchTimerEnabled',
-    'matchTimedCapMinutes',
-  ] as const) {
-    const m = slice.match(new RegExp(`${key}:\\s*('([^']+)'|(\\d+)|(true|false))`));
-    if (!m) continue;
-    if (m[2] != null) fields[key] = m[2];
-    else if (m[3] != null) fields[key] = Number(m[3]);
-    else fields[key] = m[4] === 'true';
-  }
-  return fields;
-}
+const CORE_FIELDS = [
+  'scoringPreset',
+  'gameType',
+  'matchGenerationType',
+  'playersPerMatch',
+  'suggestedMaxParticipants',
+  'suggestedCourts',
+  'affectsRating',
+  'matchTimerEnabled',
+  'matchTimedCapMinutes',
+] as const;
 
 describe('badminton create flow', () => {
   it('lists three templates wired in FE and BE registry', () => {
@@ -67,19 +47,14 @@ describe('badminton create flow', () => {
     expect(getSportConfig(Sports.BADMINTON).createTemplates).toEqual([...BADMINTON_TEMPLATE_IDS]);
   });
 
-  it.each(BADMINTON_TEMPLATE_IDS)('FE template %s matches BE casual definition', (id) => {
+  it.each(BADMINTON_TEMPLATE_IDS)('FE template %s matches shared registry', (id) => {
     const fe = CREATE_TEMPLATES[id];
-    const be = parseBeTemplateFields(id);
-    expect(fe.scoringPreset).toBe(be.scoringPreset);
-    expect(fe.gameType).toBe(be.gameType);
-    expect(fe.matchGenerationType).toBe(be.matchGenerationType);
-    expect(fe.playersPerMatch).toBe(be.playersPerMatch);
-    expect(fe.suggestedMaxParticipants).toBe(be.suggestedMaxParticipants);
-    expect(fe.suggestedCourts).toBe(be.suggestedCourts);
-    expect(fe.affectsRating).toBe(be.affectsRating);
-    if (be.matchTimerEnabled) {
-      expect(fe.matchTimerEnabled).toBe(true);
-      expect(fe.matchTimedCapMinutes).toBe(be.matchTimedCapMinutes);
+    const shared = SHARED_CREATE_TEMPLATES[id];
+    for (const key of CORE_FIELDS) {
+      const feVal = fe[key as keyof typeof fe];
+      const sharedVal = shared[key as keyof typeof shared];
+      if (sharedVal === undefined && feVal === undefined) continue;
+      expect(feVal).toBe(sharedVal);
     }
   });
 

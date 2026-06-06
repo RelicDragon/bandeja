@@ -1,11 +1,14 @@
-import type { MatchGenerationType } from '@prisma/client';
-import type { Sport } from './sportIds';
-import type { GameTypeStr, ScoringPreset } from '../utils/validators/gameFormat';
+/** Canonical create templates — keep in sync with Backend/src/shared/createTemplates.ts */
+import { Sports, type Sport } from './sport';
 import {
   parseGameOfficiatingLevel,
   resolveOfficiatingLevel,
   type OfficiatingLevel,
-} from '../shared/officiatingLevel';
+} from './officiatingLevel';
+
+type ScoringPreset = string;
+type GameTypeStr = string;
+type MatchGenerationType = string;
 
 export type PresetTier = 'social' | 'match' | 'both';
 
@@ -73,8 +76,6 @@ export type CreateTemplate = {
   hasGoldenPoint?: boolean;
 };
 
-export type { RotationPolicy } from './rotationFormats';
-
 export type SportRatingDisplaySystem =
   | 'PLAYTOMIC'
   | 'NTRP'
@@ -114,7 +115,7 @@ const LEVEL_BANDS_6: SportRatingModel['levelBands'] = [
 export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   PADEL_AMERICANO_10: {
     id: 'PADEL_AMERICANO_10',
-    sport: 'PADEL',
+    sport: Sports.PADEL,
     tier: 'social',
     scoringPreset: 'POINTS_24',
     gameType: 'AMERICANO',
@@ -129,14 +130,14 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   PADEL_AMERICANO_24: {
     id: 'PADEL_AMERICANO_24',
-    sport: 'PADEL',
+    sport: Sports.PADEL,
     tier: 'social',
     scoringPreset: 'POINTS_24',
     gameType: 'AMERICANO',
     matchGenerationType: 'RANDOM',
     playersPerMatch: 4,
-    suggestedMaxParticipants: 16,
-    suggestedCourts: 4,
+    suggestedMaxParticipants: 8,
+    suggestedCourts: 2,
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
@@ -144,7 +145,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   PADEL_AMERICANO_20: {
     id: 'PADEL_AMERICANO_20',
-    sport: 'PADEL',
+    sport: Sports.PADEL,
     tier: 'social',
     scoringPreset: 'POINTS_24',
     gameType: 'AMERICANO',
@@ -159,14 +160,14 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   PADEL_MEXICANO_24: {
     id: 'PADEL_MEXICANO_24',
-    sport: 'PADEL',
+    sport: Sports.PADEL,
     tier: 'social',
     scoringPreset: 'POINTS_24',
     gameType: 'MEXICANO',
     matchGenerationType: 'RATING',
     playersPerMatch: 4,
-    suggestedMaxParticipants: 16,
-    suggestedCourts: 4,
+    suggestedMaxParticipants: 8,
+    suggestedCourts: 2,
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
@@ -174,7 +175,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   PADEL_CHALLENGER_POOL: {
     id: 'PADEL_CHALLENGER_POOL',
-    sport: 'PADEL',
+    sport: Sports.PADEL,
     tier: 'social',
     scoringPreset: 'POINTS_11',
     gameType: 'KOTC',
@@ -189,7 +190,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   PADEL_KOTC_11: {
     id: 'PADEL_KOTC_11',
-    sport: 'PADEL',
+    sport: Sports.PADEL,
     tier: 'social',
     scoringPreset: 'POINTS_11',
     gameType: 'KOTC',
@@ -204,7 +205,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   PICKLEBALL_SOCIAL_21: {
     id: 'PICKLEBALL_SOCIAL_21',
-    sport: 'PICKLEBALL',
+    sport: Sports.PICKLEBALL,
     tier: 'social',
     scoringPreset: 'POINTS_21',
     gameType: 'AMERICANO',
@@ -219,7 +220,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   PICKLEBALL_MATCH_BO3_11: {
     id: 'PICKLEBALL_MATCH_BO3_11',
-    sport: 'PICKLEBALL',
+    sport: Sports.PICKLEBALL,
     tier: 'match',
     scoringPreset: 'BEST_OF_3_11',
     gameType: 'CLASSIC',
@@ -231,7 +232,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   PICKLEBALL_KOTC_11: {
     id: 'PICKLEBALL_KOTC_11',
-    sport: 'PICKLEBALL',
+    sport: Sports.PICKLEBALL,
     tier: 'social',
     scoringPreset: 'POINTS_11',
     gameType: 'KOTC',
@@ -246,7 +247,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   BADMINTON_CLUB_3X21: {
     id: 'BADMINTON_CLUB_3X21',
-    sport: 'BADMINTON',
+    sport: Sports.BADMINTON,
     tier: 'social',
     scoringPreset: 'BEST_OF_3_21',
     gameType: 'CLASSIC',
@@ -258,7 +259,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   BADMINTON_CLUB_3X15: {
     id: 'BADMINTON_CLUB_3X15',
-    sport: 'BADMINTON',
+    sport: Sports.BADMINTON,
     tier: 'social',
     scoringPreset: 'BEST_OF_3_15',
     gameType: 'CLASSIC',
@@ -270,7 +271,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   BADMINTON_AMERICANO_21: {
     id: 'BADMINTON_AMERICANO_21',
-    sport: 'BADMINTON',
+    sport: Sports.BADMINTON,
     tier: 'social',
     scoringPreset: 'POINTS_21',
     gameType: 'AMERICANO',
@@ -285,7 +286,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   BADMINTON_MATCH_3X21: {
     id: 'BADMINTON_MATCH_3X21',
-    sport: 'BADMINTON',
+    sport: Sports.BADMINTON,
     tier: 'match',
     scoringPreset: 'BEST_OF_3_21',
     gameType: 'CLASSIC',
@@ -297,7 +298,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   TT_OPEN_PLAY_11: {
     id: 'TT_OPEN_PLAY_11',
-    sport: 'TABLE_TENNIS',
+    sport: Sports.TABLE_TENNIS,
     tier: 'social',
     scoringPreset: 'POINTS_11',
     gameType: 'CLASSIC',
@@ -312,7 +313,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   TT_CLUB_RR_11: {
     id: 'TT_CLUB_RR_11',
-    sport: 'TABLE_TENNIS',
+    sport: Sports.TABLE_TENNIS,
     tier: 'social',
     scoringPreset: 'POINTS_11',
     gameType: 'ROUND_ROBIN',
@@ -327,7 +328,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   TT_LEGACY_SINGLE_21: {
     id: 'TT_LEGACY_SINGLE_21',
-    sport: 'TABLE_TENNIS',
+    sport: Sports.TABLE_TENNIS,
     tier: 'social',
     scoringPreset: 'SINGLE_GAME_21',
     gameType: 'CLASSIC',
@@ -339,7 +340,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   TT_BOX_BO3_11: {
     id: 'TT_BOX_BO3_11',
-    sport: 'TABLE_TENNIS',
+    sport: Sports.TABLE_TENNIS,
     tier: 'social',
     scoringPreset: 'BEST_OF_3_11',
     gameType: 'LADDER',
@@ -354,7 +355,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   TT_MATCH_BO3_11: {
     id: 'TT_MATCH_BO3_11',
-    sport: 'TABLE_TENNIS',
+    sport: Sports.TABLE_TENNIS,
     tier: 'match',
     scoringPreset: 'BEST_OF_3_11',
     gameType: 'CLASSIC',
@@ -366,7 +367,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   TT_MATCH_BO5_11: {
     id: 'TT_MATCH_BO5_11',
-    sport: 'TABLE_TENNIS',
+    sport: Sports.TABLE_TENNIS,
     tier: 'match',
     scoringPreset: 'BEST_OF_5_11',
     gameType: 'CLASSIC',
@@ -378,7 +379,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   TT_AMERICANO_11: {
     id: 'TT_AMERICANO_11',
-    sport: 'TABLE_TENNIS',
+    sport: Sports.TABLE_TENNIS,
     tier: 'social',
     scoringPreset: 'POINTS_11',
     gameType: 'AMERICANO',
@@ -393,7 +394,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   TT_MEXICANO_11: {
     id: 'TT_MEXICANO_11',
-    sport: 'TABLE_TENNIS',
+    sport: Sports.TABLE_TENNIS,
     tier: 'social',
     scoringPreset: 'POINTS_11',
     gameType: 'MEXICANO',
@@ -408,7 +409,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   TT_SWISS_BOX: {
     id: 'TT_SWISS_BOX',
-    sport: 'TABLE_TENNIS',
+    sport: Sports.TABLE_TENNIS,
     tier: 'social',
     scoringPreset: 'BEST_OF_3_11',
     gameType: 'LADDER',
@@ -423,7 +424,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   TENNIS_FAST4_SOCIAL: {
     id: 'TENNIS_FAST4_SOCIAL',
-    sport: 'TENNIS',
+    sport: Sports.TENNIS,
     tier: 'social',
     scoringPreset: 'CLASSIC_FAST4',
     gameType: 'CLASSIC',
@@ -439,7 +440,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   TENNIS_CLASSIC_BO3: {
     id: 'TENNIS_CLASSIC_BO3',
-    sport: 'TENNIS',
+    sport: Sports.TENNIS,
     tier: 'match',
     scoringPreset: 'CLASSIC_BEST_OF_3',
     gameType: 'CLASSIC',
@@ -451,7 +452,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
   },
   SQUASH_QUICK_BO3_11: {
     id: 'SQUASH_QUICK_BO3_11',
-    sport: 'SQUASH',
+    sport: Sports.SQUASH,
     tier: 'match',
     scoringPreset: 'BEST_OF_3_11',
     gameType: 'CLASSIC',
@@ -753,7 +754,7 @@ export function getOfficiatingLevelForGame(
   });
 }
 
-export type { OfficiatingLevel } from '../shared/officiatingLevel';
+export type { OfficiatingLevel } from './officiatingLevel';
 
 export const SQUASH_RATING_MODEL: SportRatingModel = {
   id: 'bandeja_elo_v1',

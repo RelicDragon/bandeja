@@ -1,6 +1,6 @@
 import type { Sport } from '../sport/sportIds';
 import { getSportConfig } from '../sport/sportRegistry';
-import type { SportRatingDisplaySystem } from '../sport/sportRegistryCasual';
+import type { SportRatingDisplaySystem } from '../shared/createTemplates';
 
 function linearMapLevel(level: number, outMin: number, outMax: number): number {
   const t = (Math.max(1, Math.min(7, level)) - 1) / 6;

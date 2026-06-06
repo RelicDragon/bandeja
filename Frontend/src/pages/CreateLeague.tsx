@@ -68,7 +68,12 @@ export const CreateLeague = () => {
 
   const showSportSelector = enabledSports.length > 1;
 
-  const sportFormatLimits = useClampGameFormatToSport(selectedSport, leagueGameFormat);
+  const sportFormatLimits = useClampGameFormatToSport(
+    selectedSport,
+    leagueGameFormat,
+    true,
+    maxParticipants,
+  );
 
   useEffect(() => {
     if (!enabledSports.includes(selectedSport)) {

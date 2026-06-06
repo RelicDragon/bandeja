@@ -115,6 +115,17 @@ assertThrows(
   () => validateScoringPreset('CLASSIC', 'POINTS_24'),
   'ball-budget preset blocked on CLASSIC gameType',
 );
+assertThrows(
+  () =>
+    validateGameForSport({
+      sport: 'PADEL',
+      gameType: 'CLASSIC',
+      matchGenerationType: 'AUTOMATIC',
+      playersPerMatch: 4,
+      scoringPreset: 'POINTS_24',
+    }),
+  'padel CLASSIC rejects POINTS_24 via isPresetLegal',
+);
 assertThrows(() => validateScoringPreset('CLASSIC', 'NOT_A_PRESET'), 'unknown preset');
 
 for (const preset of ['BEST_OF_3_15', 'BEST_OF_3_21', 'BEST_OF_5_11', 'CLASSIC_FAST4'] as const) {

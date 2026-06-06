@@ -1,4 +1,4 @@
-/** Keep in sync with Frontend/shared/gameFormatUpdateKeys.ts */
+/** Keep in sync with Frontend/shared/gameFormatUpdateKeys.ts — enforced by sharedModuleParity.test.ts */
 
 /** Scalar game fields changed by the format wizard / teams UI (not general game settings). */
 export const GAME_FORMAT_UPDATE_KEYS = new Set([

@@ -1,3 +1,7 @@
+/**
+ * Single source for persisted `ballsInGames`: classic tennis-style presets vs points/timed/custom.
+ * When `scoringPreset` is null (custom points / legacy), uses winner + points cap heuristics.
+ */
 export function deriveBallsInGamesFromScoring(input: {
   scoringPreset?: string | null;
   winnerOfMatch?: string | null;

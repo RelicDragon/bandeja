@@ -226,6 +226,79 @@ describe('templateFormatCoordinator', () => {
     });
   });
 
+  describe('explicit template pick', () => {
+    it('marks explicit pick and applied key for template bootstrap', () => {
+      const bootstrap = buildCreateBootstrap('social', 'PADEL_AMERICANO', 8);
+      expect(bootstrap.selection).toEqual({ intent: 'social', templateId: 'PADEL_AMERICANO' });
+      expect(bootstrap.flags.explicitTemplatePick).toBe(true);
+      expect(bootstrap.appliedKey).toBe('PADEL_AMERICANO:8');
+    });
+  });
+
+  describe('manual edit promote', () => {
+    it('promotes back to matching template after manual advanced drift', () => {
+      const format = mockFormat({
+        scoringMode: 'POINTS',
+        scoringPreset: 'POINTS_32',
+        generationType: 'RANDOM',
+        winnerOfGame: 'BY_SCORES_DELTA',
+      });
+      const ctx8: TemplateFormatCoordinatorContext = {
+        ...PADEL_CTX,
+        maxParticipants: 8,
+        participantContext: { ...PADEL_CTX.participantContext, maxParticipants: 8 },
+      };
+      const sync = syncSelectionFromFormat(
+        ctx8,
+        format,
+        { intent: 'advanced', templateId: null },
+        { userChoseManual: false },
+      );
+      expect(sync.type).toBe('promote');
+      if (sync.type === 'promote') {
+        expect(sync.selection.templateId).toBe('PADEL_AMERICANO');
+        expect(sync.selection.intent).toBe('social');
+      }
+    });
+
+    it('keeps locked manual selection when user explicitly chose custom', () => {
+      const format = mockFormat({ scoringPreset: 'CLASSIC_SUPER_TIEBREAK' });
+      const sync = syncSelectionFromFormat(
+        PADEL_CTX,
+        format,
+        { intent: 'advanced', templateId: null },
+        { userChoseManual: true },
+      );
+      expect(sync.type).toBe('unchanged');
+    });
+  });
+
+  describe('participant context change', () => {
+    it('demotes when roster shape no longer fits selected template', () => {
+      const selection = { intent: 'match' as const, templateId: 'PADEL_BEST_OF_3' as const };
+      const ctx2: TemplateFormatCoordinatorContext = {
+        sport: Sports.PADEL,
+        maxParticipants: 2,
+        allowedScoringPresets: PADEL_CTX.allowedScoringPresets,
+        participantContext: {
+          maxParticipants: 2,
+          playersPerMatch: 2,
+          hasFixedTeams: false,
+          genderTeams: 'ANY',
+        },
+      };
+      const repick = evaluateParticipantRepick(ctx2, selection, {
+        userChoseManual: false,
+        explicitTemplatePick: false,
+        bootstrapped: true,
+        skipInitialAutoSelect: false,
+        formatWizardOpen: false,
+        initialParticipantContextKey: null,
+      });
+      expect(repick.type).toBe('demote');
+    });
+  });
+
   describe('format match uses registry metadata not template id switches', () => {
     it('americano accepts any POINTS_ preset via inlineConfig', () => {
       const tpl = CREATE_TEMPLATES.PADEL_AMERICANO;

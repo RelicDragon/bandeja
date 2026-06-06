@@ -56,7 +56,7 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
     if (!active) return null;
 
     return (
-      <div className="absolute inset-0 touch-none select-none">
+      <div className="relative max-h-full max-w-full touch-none select-none">
         <TransformWrapper
           key={src}
           ref={zoomRef}
@@ -78,8 +78,8 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
           }
         >
           <TransformComponent
-            wrapperClass="!h-full !w-full"
-            contentClass="!flex !h-full !w-full items-center justify-center"
+            wrapperClass="!max-h-full !max-w-full"
+            contentClass="!flex items-center justify-center"
           >
             <img
               src={src}

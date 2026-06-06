@@ -1,45 +1,22 @@
 import { GameType, MatchGenerationType, ScoringMode, ScoringPreset } from '@/types';
 import type { Sport } from '@shared/sport';
 import { getSportConfig } from '@/sport/sportRegistry';
-import { isMatchGenerationAllowedForSport } from '@/sport/rotationFormats';
-import type { CreateFlowIntent, PresetTier, SportPresetMeta } from '@/sport/createFlow';
-import { inferPresetTier, presetTierMap } from '@/sport/createFlow';
+import {
+  gameTypeMatchGenerationMismatch,
+  isMatchGenerationAllowedForSport,
+  resolvePairedMatchGeneration,
+} from '@/sport/rotationFormats';
+import type { CreateFlowIntent, SportPresetMeta } from '@/sport/createFlow';
+import {
+  deriveGameType as sharedDeriveGameType,
+  filterPresetsForCreateIntent,
+  isPresetLegal,
+  isPresetLegalForGameType,
+  listPresetsForGameType,
+  scoringModeFromPreset as sharedScoringModeFromPreset,
+} from '@shared/isPresetLegal';
 
-// --- Preset groups ---
-
-const CLASSIC_PRESETS: ScoringPreset[] = [
-  'CLASSIC_BEST_OF_3',
-  'CLASSIC_BEST_OF_5',
-  'CLASSIC_SUPER_TIEBREAK',
-  'CLASSIC_PRO_SET',
-  'CLASSIC_SINGLE_SET',
-  'CLASSIC_SHORT_SET',
-  'CLASSIC_FAST4',
-];
-
-const POINTS_PRESETS: ScoringPreset[] = [
-  'POINTS_12',
-  'POINTS_15',
-  'POINTS_16',
-  'POINTS_21',
-  'POINTS_24',
-  'POINTS_32',
-];
-
-const ALL_PRESETS: ScoringPreset[] = [
-  ...CLASSIC_PRESETS,
-  ...POINTS_PRESETS,
-  'TIMED',
-  'CLASSIC_TIMED',
-  'CUSTOM',
-];
-
-// --- ScoringMode → compatible presets ---
-
-export const PRESETS_BY_MODE: Record<ScoringMode, ScoringPreset[]> = {
-  CLASSIC: CLASSIC_PRESETS,
-  POINTS: POINTS_PRESETS,
-};
+export { PRESETS_BY_MODE, inferPresetTier, presetTierMap } from '@shared/isPresetLegal';
 
 export const DEFAULT_PRESET_BY_MODE: Record<ScoringMode, ScoringPreset> = {
   CLASSIC: 'CLASSIC_BEST_OF_3',
@@ -105,6 +82,15 @@ export const clampMatchGenerationType = (
   return allowed[0]!;
 };
 
+export const clampGenerationGameTypePair = (
+  gameType: GameType,
+  generationType: MatchGenerationType,
+): MatchGenerationType => {
+  return resolvePairedMatchGeneration(gameType, generationType) as MatchGenerationType;
+};
+
+export { gameTypeMatchGenerationMismatch };
+
 /** <= 5 players: automatic matches; otherwise Americano (random rotation). */
 export const defaultMatchGenerationForParticipants = (
   mode: ScoringMode,
@@ -139,32 +125,11 @@ export const effectiveMatchGeneration = (
   return gen;
 };
 
-// --- Derive ScoringMode from a preset ---
-
-export const scoringModeFromPreset = (preset: ScoringPreset): ScoringMode => {
-  if (preset.startsWith('CLASSIC_')) return 'CLASSIC';
-  return 'POINTS';
-};
-
-// --- Derive GameType from ScoringMode + MatchGenerationType ---
-
-export const deriveGameType = (mode: ScoringMode, gen: MatchGenerationType): GameType => {
-  if (gen === 'RANDOM') return 'AMERICANO';
-  if (gen === 'RATING') return 'MEXICANO';
-  if (gen === 'ROUND_ROBIN') return 'ROUND_ROBIN';
-  if (gen === 'WINNERS_COURT') return 'WINNER_COURT';
-  if (gen === 'ESCALERA') return 'LADDER';
-  if (gen === 'KING_OF_COURT') return 'KOTC';
-  if (gen === 'HANDMADE' || gen === 'AUTOMATIC' || gen === 'FIXED') return mode === 'CLASSIC' ? 'CLASSIC' : 'CUSTOM';
-  return 'CUSTOM';
-};
-
-// --- Legacy helpers (kept for backward compat with display code) ---
+export const scoringModeFromPreset = sharedScoringModeFromPreset;
+export const deriveGameType = sharedDeriveGameType;
 
 export const isClassicScoring = (preset: ScoringPreset): boolean => preset.startsWith('CLASSIC_');
-
 export const isClassicPreset = isClassicScoring;
-
 export const isPointsPreset = (preset: ScoringPreset): boolean => preset.startsWith('POINTS_');
 
 const RALLY_MATCH_PRESET_ORDER: ScoringPreset[] = [
@@ -187,12 +152,9 @@ export function listRallyMatchPresets(allowed?: ScoringPreset[]): ScoringPreset[
   return RALLY_MATCH_PRESET_ORDER.filter((preset) => pool.includes(preset));
 }
 
-// Legacy: GameType-based compatibility (kept for rulebook / validation paths)
-export const getCompatibleScorings = (gameType: GameType): ScoringPreset[] => {
-  if (gameType === 'CLASSIC') return [...CLASSIC_PRESETS, 'CUSTOM'];
-  if (gameType === 'CUSTOM') return ALL_PRESETS;
-  return [...CLASSIC_PRESETS, ...POINTS_PRESETS, 'CUSTOM'];
-};
+/** @deprecated Use `listPresetsForGameType` from `@shared/isPresetLegal`. */
+export const getCompatibleScorings = (gameType: GameType): ScoringPreset[] =>
+  listPresetsForGameType(gameType);
 
 export const DEFAULT_SCORING_BY_FORMAT: Record<GameType, ScoringPreset> = {
   CLASSIC: 'CLASSIC_BEST_OF_3',
@@ -205,33 +167,46 @@ export const DEFAULT_SCORING_BY_FORMAT: Record<GameType, ScoringPreset> = {
   CUSTOM: 'CUSTOM',
 };
 
+/** @deprecated Use `isPresetLegal`. */
 export const isScoringCompatible = (gameType: GameType, preset: ScoringPreset): boolean =>
-  getCompatibleScorings(gameType).includes(preset);
-
-// --- Casual create flow (D1): preset tier filtering ---
+  isPresetLegalForGameType(preset, gameType);
 
 export function filterScoringPresetsForCreateIntent(
   allowedPresets: ScoringPreset[],
   presetMeta: SportPresetMeta[],
   intent: Exclude<CreateFlowIntent, 'advanced'>,
 ): ScoringPreset[] {
-  const tiers = presetTierMap(presetMeta);
-  return allowedPresets.filter((preset) => {
-    const tier: PresetTier = tiers.get(preset) ?? inferPresetTier(preset);
-    if (intent === 'social') {
-      return tier === 'social' || tier === 'both';
-    }
-    if (tier === 'social') return false;
-    if (preset.startsWith('POINTS_') && tier !== 'both') return false;
-    return tier === 'match' || tier === 'both';
-  });
+  return filterPresetsForCreateIntent(allowedPresets, intent, presetMeta);
 }
 
 export function resolveWizardAllowedPresets(
+  sport: Sport,
   sportAllowed: ScoringPreset[],
   presetMeta: SportPresetMeta[],
   createIntent: CreateFlowIntent | null,
+  scoringMode?: ScoringMode | null,
+  matchGenerationType?: MatchGenerationType | null,
 ): ScoringPreset[] {
-  if (!createIntent || createIntent === 'advanced') return sportAllowed;
-  return filterScoringPresetsForCreateIntent(sportAllowed, presetMeta, createIntent);
+  if (!createIntent || createIntent === 'advanced') {
+    return sportAllowed.filter((preset) =>
+      isPresetLegal({
+        sport,
+        preset,
+        allowedScoringPresets: sportAllowed,
+        scoringMode,
+        matchGenerationType,
+      }),
+    );
+  }
+  return sportAllowed.filter((preset) =>
+    isPresetLegal({
+      sport,
+      preset,
+      allowedScoringPresets: sportAllowed,
+      scoringMode,
+      matchGenerationType,
+      createIntent,
+      presetMeta,
+    }),
+  );
 }

@@ -1,124 +1,36 @@
 import { ApiError } from '../ApiError';
+import {
+  GAME_TYPES,
+  SCORING_PRESETS,
+  isKnownScoringPreset,
+  isPresetLegalForGameType,
+  type GameType,
+  type ScoringPreset,
+} from '../../shared/isPresetLegal';
+import { goldenPointAllowedForFormat } from '../../shared/gameFormat/goldenPointAllowed';
 
-export const SCORING_PRESETS = [
-  'CLASSIC_BEST_OF_3',
-  'CLASSIC_BEST_OF_5',
-  'CLASSIC_PRO_SET',
-  'CLASSIC_SHORT_SET',
-  'CLASSIC_FAST4',
-  'CLASSIC_SUPER_TIEBREAK',
-  'CLASSIC_SINGLE_SET',
-  'CLASSIC_TIMED',
-  'POINTS_11',
-  'POINTS_12',
-  'POINTS_15',
-  'POINTS_16',
-  'POINTS_21',
-  'POINTS_24',
-  'POINTS_32',
-  'BEST_OF_3_11',
-  'BEST_OF_3_15',
-  'BEST_OF_3_21',
-  'BEST_OF_5_11',
-  'PAR_11',
-  'SINGLE_GAME_21',
-  'TIMED',
-  'CUSTOM',
-] as const;
+export {
+  GAME_TYPES,
+  SCORING_COMPATIBILITY,
+  SCORING_PRESETS,
+  type GameType as GameTypeStr,
+  type ScoringPreset,
+} from '../../shared/isPresetLegal';
 
-export type ScoringPreset = (typeof SCORING_PRESETS)[number];
-
-export const GAME_TYPES = [
-  'CLASSIC',
-  'AMERICANO',
-  'MEXICANO',
-  'ROUND_ROBIN',
-  'WINNER_COURT',
-  'LADDER',
-  'KOTC',
-  'CUSTOM',
-] as const;
-export type GameTypeStr = (typeof GAME_TYPES)[number];
-
-const RALLY_SCORINGS: ScoringPreset[] = [
-  'POINTS_11',
-  'SINGLE_GAME_21',
-  'BEST_OF_3_11',
-  'BEST_OF_3_15',
-  'BEST_OF_3_21',
-  'BEST_OF_5_11',
-  'PAR_11',
-];
-
-const CLASSIC_SCORINGS: ScoringPreset[] = [
-  'CLASSIC_BEST_OF_3',
-  'CLASSIC_BEST_OF_5',
-  'CLASSIC_PRO_SET',
-  'CLASSIC_SHORT_SET',
-  'CLASSIC_FAST4',
-  'CLASSIC_SUPER_TIEBREAK',
-  'CLASSIC_SINGLE_SET',
-  'CLASSIC_TIMED',
-  'TIMED',
-  'CUSTOM',
-  ...RALLY_SCORINGS,
-];
-
-const POINTS_SCORINGS: ScoringPreset[] = [
-  'POINTS_11',
-  'POINTS_12',
-  'POINTS_15',
-  'POINTS_16',
-  'POINTS_21',
-  'POINTS_24',
-  'POINTS_32',
-  'PAR_11',
-  'TIMED',
-  'CUSTOM',
-  'CLASSIC_BEST_OF_3',
-  'CLASSIC_BEST_OF_5',
-  'CLASSIC_PRO_SET',
-  'CLASSIC_SHORT_SET',
-  'CLASSIC_FAST4',
-  'CLASSIC_SUPER_TIEBREAK',
-  'CLASSIC_SINGLE_SET',
-  'CLASSIC_TIMED',
-];
-
-export const SCORING_COMPATIBILITY: Record<GameTypeStr, ScoringPreset[]> = {
-  CLASSIC: CLASSIC_SCORINGS,
-  AMERICANO: POINTS_SCORINGS,
-  MEXICANO: POINTS_SCORINGS,
-  ROUND_ROBIN: POINTS_SCORINGS,
-  WINNER_COURT: POINTS_SCORINGS,
-  LADDER: POINTS_SCORINGS,
-  KOTC: POINTS_SCORINGS,
-  CUSTOM: [...SCORING_PRESETS],
-};
-
-/** Golden point / deuce only applies to tennis-style (CLASSIC) formats, not simple points. */
-export const goldenPointAllowedForFormat = (
-  scoringMode: string | null | undefined,
-  scoringPreset: string | null | undefined,
-): boolean => {
-  if (scoringMode === 'POINTS') return false;
-  if (scoringMode === 'CLASSIC') return true;
-  return typeof scoringPreset === 'string' && scoringPreset.startsWith('CLASSIC_');
-};
+export { goldenPointAllowedForFormat };
 
 export const validateScoringPreset = (
   gameType: string | undefined,
-  scoringPreset: unknown
+  scoringPreset: unknown,
 ): ScoringPreset | null => {
   if (scoringPreset === null || scoringPreset === undefined) return null;
-  if (typeof scoringPreset !== 'string' || !SCORING_PRESETS.includes(scoringPreset as ScoringPreset)) {
+  if (typeof scoringPreset !== 'string' || !isKnownScoringPreset(scoringPreset)) {
     throw new ApiError(400, `Invalid scoringPreset. Supported: ${SCORING_PRESETS.join(', ')}`);
   }
-  const preset = scoringPreset as ScoringPreset;
+  const preset = scoringPreset;
   if (!gameType) return preset;
-  if (!GAME_TYPES.includes(gameType as GameTypeStr)) return preset;
-  const allowed = SCORING_COMPATIBILITY[gameType as GameTypeStr];
-  if (!allowed.includes(preset)) {
+  if (!GAME_TYPES.includes(gameType as GameType)) return preset;
+  if (!isPresetLegalForGameType(preset, gameType as GameType)) {
     throw new ApiError(400, `scoringPreset ${preset} is not compatible with gameType ${gameType}`);
   }
   return preset;

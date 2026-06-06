@@ -2,10 +2,7 @@ import { EntityType, Sport } from '@prisma/client';
 
 export const TRAINING_MAX_PARTICIPANTS_MIN = 1;
 export const TRAINING_MAX_PARTICIPANTS_MAX = 24;
-import {
-  isOpenEndedScoringPreset,
-  timedCustomCreateAllowed,
-} from '../../shared/timedCustomPresets';
+import { isPresetLegal } from '../../shared/isPresetLegal';
 import { ApiError } from '../ApiError';
 import { getSportConfig, resolveSport } from '../../sport/sportRegistry';
 import { isSportCreatable } from '../multisportFlags';
@@ -15,7 +12,7 @@ import {
   gameTypeMatchGenerationMismatch,
   isRotationFormatAllowed,
 } from '../../sport/rotationFormats';
-import type { GameTypeStr, ScoringPreset } from './gameFormat';
+import type { GameTypeStr } from './gameFormat';
 
 export type GameSportValidationInput = {
   sport?: unknown;
@@ -129,10 +126,15 @@ export function validateGameForSport(input: GameSportValidationInput): Sport {
 
   const scoringPreset = input.scoringPreset;
   if (scoringPreset != null && scoringPreset !== '') {
-    if (!config.allowedScoringPresets.includes(scoringPreset as ScoringPreset)) {
-      throw new ApiError(400, `scoringPreset ${scoringPreset} is not allowed for ${sport}`);
-    }
-    if (isOpenEndedScoringPreset(scoringPreset) && !timedCustomCreateAllowed(sport, scoringPreset)) {
+    if (
+      !isPresetLegal({
+        sport,
+        preset: scoringPreset,
+        allowedScoringPresets: config.allowedScoringPresets,
+        gameType,
+        matchGenerationType,
+      })
+    ) {
       throw new ApiError(400, `scoringPreset ${scoringPreset} is not allowed for ${sport}`);
     }
   }

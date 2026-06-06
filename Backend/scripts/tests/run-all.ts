@@ -257,6 +257,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'isPresetLegal unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'shared', 'isPresetLegal.test.ts'),
+    ],
+  },
+  {
     label: 'multisport validators unit',
     command: process.execPath,
     args: [
@@ -278,6 +286,14 @@ const suites: Suite[] = [
     args: [
       path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
       path.join(backendRoot, 'src', 'shared', 'gameFormatUpdateKeys.test.ts'),
+    ],
+  },
+  {
+    label: 'shared module FE/BE parity',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'shared', 'sharedModuleParity.test.ts'),
     ],
   },
   {

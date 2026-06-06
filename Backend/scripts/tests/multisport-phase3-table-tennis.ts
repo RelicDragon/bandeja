@@ -4,7 +4,7 @@ import {
   validateGameForSport,
   validateMaxParticipants,
 } from '../../src/utils/validators/validateGameForSport';
-import { deriveBallsInGamesFromScoring } from '../../src/utils/scoring/deriveBallsInGames';
+import { deriveBallsInGamesFromScoring } from '../../src/shared/deriveBallsInGames';
 import { ApiError } from '../../src/utils/ApiError';
 
 function assert(cond: boolean, msg: string): void {

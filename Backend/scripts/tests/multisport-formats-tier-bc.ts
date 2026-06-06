@@ -1,4 +1,4 @@
-import { CREATE_TEMPLATES } from '../../src/sport/sportRegistryCasual';
+import { CREATE_TEMPLATES } from '../../src/shared/createTemplates';
 import { getSportConfig } from '../../src/sport/sportRegistry';
 import { getStrictValidationForPreset } from '../../src/shared/sportPresetMeta';
 import { getRules } from '../../src/services/results/liveScoringEngine/rulebook';

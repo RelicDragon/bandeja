@@ -21,7 +21,7 @@ import { useAuthStore } from '@/store/authStore';
 import { listCreateFlowSports } from '@/utils/profileSports';
 import type { CreateTemplateParticipantContext } from '@/sport/createTemplateParticipantFit';
 import { showGameFormatTemplatePicker } from '@/utils/gameFormat/showGameFormatTemplatePicker';
-import { inferCreateTemplateFromGame } from '@/utils/gameFormat/inferCreateTemplateFromGame';
+import { inferTemplateFromFormat } from '@/utils/gameFormat/templateFormatCoordinator';
 import { buildGameFormatUpdatePayload } from '@/utils/gameFormat/buildGameFormatUpdatePayload';
 import { buildEditTemplateDurationContext } from '@/utils/gameFormat/buildEditTemplateDurationContext';
 import { parseGameSport } from '@/utils/gameSport';
@@ -52,13 +52,18 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
   const gameFormatRef = useRef(gameFormat);
   gameFormatRef.current = gameFormat;
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const sportFormatLimits = useClampGameFormatToSport(game.sport, gameFormat, canEdit);
-  const { sportConfig, allowedScoringModes, allowedScoringPresets } = sportFormatLimits;
-
   const maxParticipants = formatMaxParticipants ?? 0;
   const genderTeams = (game.genderTeams || 'ANY') as GenderTeam;
   const hasFixedTeams = maxParticipants === 2 ? false : (game.hasFixedTeams || false);
   const playersPerMatch = (playersPerMatchOf(game) === 4 ? 4 : 2) as 2 | 4;
+  const sportFormatLimits = useClampGameFormatToSport(
+    game.sport,
+    gameFormat,
+    canEdit,
+    maxParticipants,
+    playersPerMatch,
+  );
+  const { sportConfig, allowedScoringModes, allowedScoringPresets } = sportFormatLimits;
 
   const templateParticipantContext = useMemo(
     (): CreateTemplateParticipantContext => ({
@@ -72,7 +77,15 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
 
   const templateInitial = useMemo(
     () =>
-      inferCreateTemplateFromGame(sport, allowedScoringPresets, templateParticipantContext, game),
+      inferTemplateFromFormat(
+        {
+          sport,
+          maxParticipants,
+          allowedScoringPresets,
+          participantContext: templateParticipantContext,
+        },
+        game,
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap when game identity / roster shape changes
     [game.id, sport, maxParticipants, playersPerMatch, hasFixedTeams, genderTeams],
   );

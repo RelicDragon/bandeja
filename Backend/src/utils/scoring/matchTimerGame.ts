@@ -1,4 +1,5 @@
 import { ScoringPreset } from '@prisma/client';
+import { normalizeLegacyTimedScoringPreset as normalizeLegacyTimedScoringPresetCore } from '../../shared/gameFormat/legacyTimedPreset';
 
 export function isGameMatchTimerEnabled(game: {
   matchTimerEnabled?: boolean | null;
@@ -18,11 +19,10 @@ export function normalizeLegacyTimedScoringPreset(preset: ScoringPreset | null):
   matchTimerEnabled: boolean;
   bumpPointsCapTo21: boolean;
 } {
-  if (preset === ScoringPreset.CLASSIC_TIMED) {
-    return { scoringPreset: ScoringPreset.CLASSIC_SINGLE_SET, matchTimerEnabled: true, bumpPointsCapTo21: false };
-  }
-  if (preset === ScoringPreset.TIMED) {
-    return { scoringPreset: ScoringPreset.POINTS_21, matchTimerEnabled: true, bumpPointsCapTo21: true };
-  }
-  return { scoringPreset: preset, matchTimerEnabled: false, bumpPointsCapTo21: false };
+  const result = normalizeLegacyTimedScoringPresetCore(preset);
+  return {
+    scoringPreset: result.scoringPreset as ScoringPreset | null,
+    matchTimerEnabled: result.matchTimerEnabled,
+    bumpPointsCapTo21: result.bumpPointsCapTo21,
+  };
 }

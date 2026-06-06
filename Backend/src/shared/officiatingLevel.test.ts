@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { Sport } from '@prisma/client';
-import { getOfficiatingLevelForGame } from '../sport/sportRegistryCasual';
+import { getOfficiatingLevelForGame } from '../shared/createTemplates';
 import {
   defaultOfficiatingForTier,
   officiatingIsStrict,

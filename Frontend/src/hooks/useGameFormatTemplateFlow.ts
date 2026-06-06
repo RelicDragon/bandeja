@@ -231,11 +231,23 @@ export function useGameFormatTemplateFlow({
       wizardUsesFullPresets
         ? allowedScoringPresets
         : resolveWizardAllowedPresets(
+            sport,
             allowedScoringPresets,
             presetMeta,
             enabled ? createIntent : null,
+            gameFormat.scoringMode,
+            gameFormat.generationType,
           ),
-    [wizardUsesFullPresets, allowedScoringPresets, presetMeta, enabled, createIntent],
+    [
+      wizardUsesFullPresets,
+      sport,
+      allowedScoringPresets,
+      presetMeta,
+      enabled,
+      createIntent,
+      gameFormat.scoringMode,
+      gameFormat.generationType,
+    ],
   );
 
   const { isCustom, activeTemplateId } = computeDisplayState(

@@ -21,7 +21,7 @@ import {
   gameTypesFromRotation,
   type RotationPolicy,
 } from './rotationFormats';
-import type { CreateTemplateId, SportPresetMeta, SportRatingModel } from './sportRegistryCasual';
+import type { CreateTemplateId, SportPresetMeta, SportRatingModel } from '../shared/createTemplates';
 import {
   BADMINTON_PRESET_META,
   BADMINTON_RATING_MODEL,
@@ -35,7 +35,7 @@ import {
   TABLE_TENNIS_RATING_MODEL,
   TENNIS_PRESET_META,
   TENNIS_RATING_MODEL,
-} from './sportRegistryCasual';
+} from '../shared/createTemplates';
 
 export type PlayersPerMatch = 2 | 4;
 
@@ -298,13 +298,13 @@ export type {
   SportRatingModel,
   StrictValidationId,
   TemplateScoringPreset,
-} from './sportRegistryCasual';
+} from '../shared/createTemplates';
 
 export {
   CREATE_TEMPLATES,
   getCreateTemplate,
   getCreateTemplatesForSport,
-} from './sportRegistryCasual';
+} from '../shared/createTemplates';
 
 export function assertRegistryMatchesPrismaEnum(): void {
   assertSharedSportMatchesPrisma();

@@ -1,7 +1,7 @@
 import type { Sport } from '../../sport/sportIds';
 import { Sports } from '../../sport/sportIds';
 import { getSportConfig } from '../../sport/sportRegistry';
-import type { SportRatingModel } from '../../sport/sportRegistryCasual';
+import type { SportRatingModel } from '../../shared/createTemplates';
 import { getMatchScoresForDelta } from './setScoreDelta';
 import { calculateRatingUpdate, calculateReliabilityChange } from './rating.service';
 

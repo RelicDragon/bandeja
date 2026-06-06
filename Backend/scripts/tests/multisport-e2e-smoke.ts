@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { EntityType, MatchGenerationType, Sport } from '@prisma/client';
-import { getOfficiatingLevelForGame } from '../../src/sport/sportRegistryCasual';
+import { getOfficiatingLevelForGame } from '../../src/shared/createTemplates';
 import { getSportConfig } from '../../src/sport/sportRegistry';
 import { MATCH_GENERATION_TO_ROTATION, isRotationFormatAllowed } from '../../src/sport/rotationFormats';
 import { assertClubSportsCoverCourtSports, assertCourtSportInClub, parseClubSportsInput } from '../../src/shared/clubSports';

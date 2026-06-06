@@ -238,6 +238,12 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     [],
   );
 
+  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+  }, [onClose]);
+
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     touchStartY.current = touch.clientY;
@@ -299,30 +305,31 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           paddingLeft: 'env(safe-area-inset-left)',
         }}
       >
+        <div className="absolute inset-0 z-0" onClick={handleBackdropClick} aria-hidden />
+
         <div 
-          className="relative z-10 flex h-full w-full items-center justify-center"
+          className="relative z-10 flex h-full w-full items-center justify-center pointer-events-none"
           style={{
             transform: swipeOffset > 0 ? `translateY(${swipeOffset}px)` : 'none',
             transition: swipeOffset === 0 ? 'transform 0.2s' : 'none',
           }}
         >
           {enableTransform ? (
-            <FullscreenImageZoom ref={zoomRef} src={displayUrl} active={zoomActive} />
+            <div className="pointer-events-auto max-h-full max-w-full w-fit h-fit">
+              <FullscreenImageZoom ref={zoomRef} src={displayUrl} active={zoomActive} />
+            </div>
           ) : (
-            <>
-              <div className="absolute inset-0 z-0" onClick={onClose} aria-hidden />
-              <div
-                className="relative z-10 max-h-full max-w-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <img
-                  src={displayUrl}
-                  alt="Fullscreen view"
-                  draggable={false}
-                  className="max-h-full max-w-full object-contain"
-                />
-              </div>
-            </>
+            <div
+              className="pointer-events-auto max-h-full max-w-full w-fit h-fit"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={displayUrl}
+                alt="Fullscreen view"
+                draggable={false}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
           )}
 
           <div 
@@ -356,7 +363,11 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClose();
+              }}
               className={`flex h-12 w-12 items-center justify-center rounded-full ${OVERLAY_CONTROL_GLASS}`}
               aria-label={t('common.close')}
             >

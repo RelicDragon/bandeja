@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CREATE_TEMPLATES } from '@/sport/createFlow';
-import { formatMatchesCreateTemplate } from '@/utils/gameFormat/createTemplateFormatMatch';
+import { formatMatchesCreateTemplate } from '@/utils/gameFormat/templateFormatCoordinator';
 import { gameFormatSnapshotFromGame } from '@/utils/gameFormat/gameFormatSnapshot';
 
 describe('gameFormatSnapshotFromGame', () => {

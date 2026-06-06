@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { Sports } from '@shared/sport';
 import { CREATE_TEMPLATES, pickDefaultTemplateId } from '@/sport/createFlow';
 import type { CreateTemplateParticipantContext } from '@/sport/createTemplateParticipantFit';
-import { formatMatchesCreateTemplate } from '@/utils/gameFormat/createTemplateFormatMatch';
+import {
+  formatMatchesCreateTemplate,
+  inferTemplateFromFormat,
+} from '@/utils/gameFormat/templateFormatCoordinator';
 import { gameFormatSnapshotFromGame } from '@/utils/gameFormat/gameFormatSnapshot';
-import { inferCreateTemplateFromGame } from '@/utils/gameFormat/inferCreateTemplateFromGame';
 
 const PADEL_PRESETS = [
   'CLASSIC_BEST_OF_3',
@@ -49,6 +51,21 @@ function editFlowSkipsAutoPickOnReload(ctx: CreateTemplateParticipantContext): b
   return participantContextKey(ctx) === initialKey;
 }
 
+function inferFromGame(
+  participantContext: CreateTemplateParticipantContext,
+  game: Parameters<typeof inferTemplateFromFormat>[1],
+) {
+  return inferTemplateFromFormat(
+    {
+      sport: Sports.PADEL,
+      maxParticipants: participantContext.maxParticipants,
+      allowedScoringPresets: [...PADEL_PRESETS],
+      participantContext,
+    },
+    game,
+  );
+}
+
 describe('edit flow reload — template inference', () => {
   it('recognizes saved americano for large roster', () => {
     const game = {
@@ -59,12 +76,7 @@ describe('edit flow reload — template inference', () => {
       winnerOfGame: 'BY_SCORES_DELTA' as const,
       maxParticipants: 8,
     };
-    const inferred = inferCreateTemplateFromGame(
-      Sports.PADEL,
-      [...PADEL_PRESETS],
-      ROSTER_8,
-      game,
-    );
+    const inferred = inferFromGame(ROSTER_8, game);
     expect(inferred.templateId).toBe('PADEL_AMERICANO');
     const snapshot = gameFormatSnapshotFromGame(game);
     expect(
@@ -81,12 +93,7 @@ describe('edit flow reload — template inference', () => {
       winnerOfGame: 'BY_MATCHES_WON' as const,
       maxParticipants: 4,
     };
-    const inferred = inferCreateTemplateFromGame(
-      Sports.PADEL,
-      [...PADEL_PRESETS],
-      ROSTER_4,
-      game,
-    );
+    const inferred = inferFromGame(ROSTER_4, game);
     expect(inferred.templateId).toBe('PADEL_BEST_OF_3');
   });
 
@@ -100,21 +107,12 @@ describe('edit flow reload — template inference', () => {
       winnerOfGame: 'BY_MATCHES_WON' as const,
       maxParticipants: 4,
     };
-    const inferred = inferCreateTemplateFromGame(
-      Sports.PADEL,
-      [...PADEL_PRESETS],
-      ROSTER_4,
-      game,
-    );
+    const inferred = inferFromGame(ROSTER_4, game);
     expect(inferred.templateId).toBe('PADEL_TIMED');
   });
 
   it('returns advanced for custom points preset', () => {
-    const inferred = inferCreateTemplateFromGame(
-      Sports.PADEL,
-      [...PADEL_PRESETS],
-      ROSTER_4,
-      {
+    const inferred = inferFromGame(ROSTER_4, {
         scoringPreset: 'CUSTOM',
         scoringMode: 'SETS',
         maxTotalPointsPerSet: 25,
@@ -126,11 +124,7 @@ describe('edit flow reload — template inference', () => {
   });
 
   it('returns advanced for wizard-only preset not matching a template card', () => {
-    const inferred = inferCreateTemplateFromGame(
-      Sports.PADEL,
-      [...PADEL_PRESETS],
-      ROSTER_4,
-      {
+    const inferred = inferFromGame(ROSTER_4, {
         scoringPreset: 'CLASSIC_SUPER_TIEBREAK',
         scoringMode: 'SETS',
         matchGenerationType: 'AUTOMATIC',
@@ -150,11 +144,7 @@ describe('edit flow reload — auto-pick guard', () => {
   });
 
   it('does not reset saved americano to default best-of-3 on reload', () => {
-    const inferred = inferCreateTemplateFromGame(
-      Sports.PADEL,
-      [...PADEL_PRESETS],
-      ROSTER_8,
-      {
+    const inferred = inferFromGame(ROSTER_8, {
         scoringMode: 'POINTS',
         scoringPreset: 'POINTS_21',
         matchGenerationType: 'RANDOM',

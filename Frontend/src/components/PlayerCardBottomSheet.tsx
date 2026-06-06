@@ -7,7 +7,6 @@ import { usersApi, UserStats } from '@/api/users';
 import { favoritesApi } from '@/api/favorites';
 import { blockedUsersApi } from '@/api/blockedUsers';
 import { Loading } from './Loading';
-import { PlayerAvatarView } from './PlayerAvatarView';
 import { ReviewsList } from './ReviewsList';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { ConfirmationModal } from './ConfirmationModal';
@@ -26,6 +25,7 @@ import {
 import toast from 'react-hot-toast';
 import { removeOverlay } from '@/utils/urlSchema';
 import { sharePlayerProfile } from '@/utils/sharePlayerProfile';
+import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { PlayerCardProfileBody } from '@/components/player/PlayerCardProfileBody';
 import { PlayerProfileSocialActions } from '@/components/player/PlayerProfileSocialActions';
 import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionBar';
@@ -45,7 +45,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const { addFavorite, removeFavorite } = useFavoritesStore();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showAvatarView, setShowAvatarView] = useState(false);
+  const [avatarViewerUrl, setAvatarViewerUrl] = useState<string | null>(null);
   const [showReviewsView, setShowReviewsView] = useState(false);
   const [showSendMoneyModal, setShowSendMoneyModal] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
@@ -58,10 +58,11 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const contextLevelSport = useSportLevelContext();
   const navigatingToChatRef = useRef(false);
   const navigatingToFullProfileRef = useRef(false);
+  const suppressDrawerDismissUntilRef = useRef(0);
 
   useEffect(() => {
     if (!playerId) return;
-    setShowAvatarView(false);
+    setAvatarViewerUrl(null);
     setShowReviewsView(false);
     setShowSendMoneyModal(false);
     setShowShareModal(false);
@@ -123,6 +124,21 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     }
     onClose();
   }, [onClose, navigate]);
+
+  const handleAvatarViewerClose = useCallback(() => {
+    suppressDrawerDismissUntilRef.current = Date.now() + 400;
+    setAvatarViewerUrl(null);
+  }, []);
+
+  const handleDrawerOpenChange = useCallback((open: boolean) => {
+    if (open) return;
+    if (avatarViewerUrl) {
+      handleAvatarViewerClose();
+      return;
+    }
+    if (Date.now() < suppressDrawerDismissUntilRef.current) return;
+    handleClose();
+  }, [avatarViewerUrl, handleAvatarViewerClose, handleClose]);
 
   const handleOpenFullProfile = useCallback(() => {
     if (!playerId || isCurrentUser) return;
@@ -227,7 +243,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   return (
     <>
       {!showSendMoneyModal && (
-      <Drawer open={!!playerId} onOpenChange={(open) => !open && handleClose()}>
+      <Drawer open={!!playerId} dismissible={!avatarViewerUrl} onOpenChange={handleDrawerOpenChange}>
           <DrawerContent>
             {showReviewsView && playerId ? (
               <div className="flex shrink-0 items-center justify-between w-full p-2 pl-6">
@@ -236,20 +252,6 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                     <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
                   </button>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">{t('profile.review') || 'Reviews'}</h2>
-                </div>
-                <DrawerClose asChild>
-                  <button type="button" className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                    <X size={20} className="text-gray-600 dark:text-gray-300" />
-                  </button>
-                </DrawerClose>
-              </div>
-            ) : showAvatarView && stats ? (
-              <div className="flex shrink-0 items-center justify-between w-full p-2 pl-6">
-                <div className="flex items-center gap-4">
-                  <button type="button" onClick={() => setShowAvatarView(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
-                  </button>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">{`${stats.user.firstName || ''} ${stats.user.lastName || ''}`.trim()}</h2>
                 </div>
                 <DrawerClose asChild>
                   <button type="button" className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
@@ -346,48 +348,42 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                       />
                     </motion.div>
                   ) : stats ? (
-                    <>
-                      {showAvatarView && stats.user.originalAvatar ? (
-                        <motion.div key="avatar" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3, ease: 'easeInOut' }}>
-                          <PlayerAvatarView stats={stats} />
-                        </motion.div>
-                      ) : (
-                        <motion.div key="content" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
-                          <PlayerCardProfileBody
-                            stats={stats}
-                            t={t}
-                            isBlocked={isBlocked}
-                            showTelegram={!!user}
-                            prependBeforeLevelHistory={
-                              !isCurrentUser ? (
-                                <PlayerProfileSocialActions
-                                  isFavorite={!!stats.user.isFavorite}
-                                  isBlocked={isBlocked}
-                                  startingChat={startingChat}
-                                  onToggleFavorite={handleToggleFavorite}
-                                  onStartChat={handleStartChat}
-                                  t={t}
-                                />
-                              ) : undefined
-                            }
-                            onAvatarClick={() => { if (stats.user.originalAvatar) setShowAvatarView(true); }}
-                            onRatingClick={stats.user.isTrainer && (stats.user.trainerReviewCount ?? 0) > 0 ? () => setShowReviewsView(true) : undefined}
-                            onTelegramClick={() => {
-                              const getTelegramUrl = () => {
-                                if (stats.user.telegramUsername) return `https://t.me/${stats.user.telegramUsername.replace('@', '')}`;
-                                if (stats.user.telegramId) return `tg://user?id=${stats.user.telegramId}`;
-                                return null;
-                              };
-                              const telegramUrl = getTelegramUrl();
-                              if (telegramUrl && !isBlocked) window.open(telegramUrl, '_blank');
-                            }}
-                            onOpenGame={() => { markReopenOnBack(); handleClose(); }}
-                            onMarketItemClick={(item) => { markReopenOnBack(); handleClose(); navigate(`/marketplace/${item.id}`); }}
-                            onStatsRefresh={setStats}
-                          />
-                        </motion.div>
-                      )}
-                    </>
+                    <motion.div key="content" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
+                      <PlayerCardProfileBody
+                        stats={stats}
+                        t={t}
+                        isBlocked={isBlocked}
+                        showTelegram={!!user}
+                        prependBeforeLevelHistory={
+                          !isCurrentUser ? (
+                            <PlayerProfileSocialActions
+                              isFavorite={!!stats.user.isFavorite}
+                              isBlocked={isBlocked}
+                              startingChat={startingChat}
+                              onToggleFavorite={handleToggleFavorite}
+                              onStartChat={handleStartChat}
+                              t={t}
+                            />
+                          ) : undefined
+                        }
+                        onAvatarClick={() => {
+                          if (stats.user.originalAvatar) setAvatarViewerUrl(stats.user.originalAvatar);
+                        }}
+                        onRatingClick={stats.user.isTrainer && (stats.user.trainerReviewCount ?? 0) > 0 ? () => setShowReviewsView(true) : undefined}
+                        onTelegramClick={() => {
+                          const getTelegramUrl = () => {
+                            if (stats.user.telegramUsername) return `https://t.me/${stats.user.telegramUsername.replace('@', '')}`;
+                            if (stats.user.telegramId) return `tg://user?id=${stats.user.telegramId}`;
+                            return null;
+                          };
+                          const telegramUrl = getTelegramUrl();
+                          if (telegramUrl && !isBlocked) window.open(telegramUrl, '_blank');
+                        }}
+                        onOpenGame={() => { markReopenOnBack(); handleClose(); }}
+                        onMarketItemClick={(item) => { markReopenOnBack(); handleClose(); navigate(`/marketplace/${item.id}`); }}
+                        onStatsRefresh={setStats}
+                      />
+                    </motion.div>
                   ) : null}
                 </AnimatePresence>
               </div>
@@ -407,6 +403,16 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
         dialogTitle={t('playerCard.shareProfileTitle')}
         modalId="share-modal-profile"
       />
+
+      {avatarViewerUrl && (
+        <FullscreenImageViewer
+          imageUrl={avatarViewerUrl}
+          isOpen
+          onClose={handleAvatarViewerClose}
+          usePortaledOverlay
+          modalId="fullscreen-player-avatar-viewer"
+        />
+      )}
 
       {showBlockConfirmation && stats && !isBlocked && (
         <ConfirmationModal

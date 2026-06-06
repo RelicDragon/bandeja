@@ -2,7 +2,7 @@ import UIKit
 import WebKit
 import Capacitor
 
-final class MainViewController: CAPBridgeViewController {
+final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDelegate {
     override public func capacitorDidLoad() {
         bridge?.registerPluginInstance(AuthBridgePlugin())
     }
@@ -24,6 +24,9 @@ final class MainViewController: CAPBridgeViewController {
     private var swipeBackInstalled = false
     private var swipeBackRetryCount = 0
     private let swipeBackMaxRetries = 50
+    private var swipeBackPanRecognizer: UIPanGestureRecognizer?
+    private let swipeBackEdgeWidth: CGFloat = 24
+    private let swipeBackMinTranslationX: CGFloat = 60
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -166,13 +169,24 @@ final class MainViewController: CAPBridgeViewController {
         }
         swipeBackInstalled = true
         webView.allowsBackForwardNavigationGestures = false
-        let recognizer = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeBack(_:)))
-        recognizer.direction = .right
+        let recognizer = UIPanGestureRecognizer(target: self, action: #selector(handleSwipeBackPan(_:)))
+        recognizer.delegate = self
+        recognizer.cancelsTouchesInView = false
         webView.addGestureRecognizer(recognizer)
+        swipeBackPanRecognizer = recognizer
     }
 
-    @objc private func handleSwipeBack(_ recognizer: UISwipeGestureRecognizer) {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        guard gestureRecognizer === swipeBackPanRecognizer,
+              let webView = self.webView else { return true }
+        return touch.location(in: webView).x <= swipeBackEdgeWidth
+    }
+
+    @objc private func handleSwipeBackPan(_ recognizer: UIPanGestureRecognizer) {
         guard recognizer.state == .ended, let webView = self.webView else { return }
+        let translation = recognizer.translation(in: webView)
+        guard translation.x >= swipeBackMinTranslationX,
+              abs(translation.x) > abs(translation.y) else { return }
         let script = "window.dispatchEvent(new CustomEvent('capacitorBackButton'))"
         webView.evaluateJavaScript(script) { _, error in
             if let error = error {

@@ -33,11 +33,19 @@ export function useSportGameFormatLimits(sport: Sport | string | null | undefine
 /** Keep wizard state within sport registry (e.g. no tennis sets for table tennis). */
 export function useClampGameFormatToSport(
   sport: Sport | string | null | undefined,
-  format: Pick<UseGameFormatResult, 'scoringMode' | 'scoringPreset' | 'setScoringMode' | 'setScoringPreset'>,
+  format: Pick<
+    UseGameFormatResult,
+    | 'scoringMode'
+    | 'scoringPreset'
+    | 'generationType'
+    | 'gameType'
+    | 'setScoringMode'
+    | 'setScoringPreset'
+  >,
   enabled = true,
 ) {
   const limits = useSportGameFormatLimits(sport);
-  const { scoringMode, scoringPreset, setScoringMode, setScoringPreset } = format;
+  const { scoringMode, scoringPreset, generationType, gameType, setScoringMode, setScoringPreset } = format;
 
   useEffect(() => {
     if (!enabled) return;
@@ -45,7 +53,13 @@ export function useClampGameFormatToSport(
       setScoringMode(limits.defaultScoringMode);
       return;
     }
-    if (!isScoringPresetAllowedForSport(limits.sportConfig, scoringPreset)) {
+    if (
+      !isScoringPresetAllowedForSport(limits.sportConfig, scoringPreset, {
+        gameType,
+        matchGenerationType: generationType,
+        scoringMode,
+      })
+    ) {
       setScoringPreset(limits.defaultScoringPreset);
     }
   }, [
@@ -56,6 +70,8 @@ export function useClampGameFormatToSport(
     limits.sportConfig,
     scoringMode,
     scoringPreset,
+    generationType,
+    gameType,
     setScoringMode,
     setScoringPreset,
   ]);

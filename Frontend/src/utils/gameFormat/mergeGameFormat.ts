@@ -2,7 +2,7 @@ import { GameType, GameSetupParams, MatchGenerationType, ScoringMode, ScoringPre
 import scoringPresetsData from '@/config/scoringPresets.json';
 import { deriveGameType, DEFAULT_GENERATION_BY_MODE, DEFAULT_PRESET_BY_MODE } from './scoringCompatibility';
 import { getGameTypeTemplate } from '@/utils/gameTypeTemplates';
-import { deriveBallsInGamesFromScoring } from './deriveBallsInGames';
+import { deriveBallsInGamesFromScoring, goldenPointAllowedForFormat } from '@shared/gameFormat';
 
 export interface GameFormatState {
   scoringMode: ScoringMode;
@@ -38,7 +38,7 @@ export const buildSetupFromFormat = (state: GameFormatState): GameSetupParams =>
     ? Math.min(60, Math.max(1, state.matchTimedCapMinutes || 15))
     : 0;
 
-  const goldenAllowed = state.scoringMode === 'CLASSIC';
+  const goldenAllowed = goldenPointAllowedForFormat(state.scoringMode, state.scoringPreset);
   const effectiveGolden =
     goldenAllowed && ((state.overrides?.hasGoldenPoint ?? state.hasGoldenPoint) ?? false);
 

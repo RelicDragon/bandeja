@@ -1,4 +1,4 @@
-import { getOfficiatingLevelForGame } from '../../../sport/sportRegistryCasual';
+import { getOfficiatingLevelForGame } from '../../../shared/createTemplates';
 import type { Sport } from '../../../sport/sportIds';
 import type { OfficiatingLevel } from '../../../shared/officiatingLevel';
 import { getStrictValidationForPreset, type StrictValidationId } from '../../../shared/sportPresetMeta';

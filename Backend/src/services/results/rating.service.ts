@@ -1,4 +1,4 @@
-import type { SportRatingModel } from '../../sport/sportRegistryCasual';
+import type { SportRatingModel } from '../../shared/createTemplates';
 
 interface PlayerStats {
   level: number;

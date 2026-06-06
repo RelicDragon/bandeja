@@ -144,6 +144,8 @@ export const CreateGame = ({
     selectedSport,
     gameFormat,
     entityType !== 'BAR' && entityType !== 'TRAINING',
+    maxParticipants,
+    playersPerMatch === 4 ? 4 : 2,
   );
   const { sportConfig, allowedScoringModes, allowedScoringPresets } = sportFormatLimits;
   const userDefaultSport = useMemo(

@@ -2,7 +2,7 @@ export * from './automaticGenerationCopy';
 export * from './generationWizardOptions';
 export * from './scoringCompatibility';
 export * from './sportScoringLimits';
-export * from './deriveBallsInGames';
+export { deriveBallsInGamesFromScoring } from '@shared/gameFormat';
 export * from './mergeGameFormat';
 export * from './summarizeGameFormat';
 export * from './detectPreset';

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Sport } from '@prisma/client';
-import { CREATE_TEMPLATES } from '../../src/sport/sportRegistryCasual';
+import { CREATE_TEMPLATES } from '../../src/shared/createTemplates';
 import { getStrictValidationForPreset } from '../../src/shared/sportPresetMeta';
 import { validateBwfRallyGameScore } from '../../src/shared/strictValidation';
 import {

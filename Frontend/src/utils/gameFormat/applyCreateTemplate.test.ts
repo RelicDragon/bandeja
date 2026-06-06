@@ -37,7 +37,7 @@ describe('applyCreateTemplate', () => {
   it('keeps matches-won ranking for classic templates with large rosters', () => {
     const format = mockFormat();
     applyCreateTemplate(CREATE_TEMPLATES.PADEL_BEST_OF_3, format, 8);
-    expect(format.setGenerationType).toHaveBeenCalledWith('RANDOM');
+    expect(format.setGenerationType).toHaveBeenCalledWith('AUTOMATIC');
     expect(format.setRanking).toHaveBeenCalledWith(
       expect.objectContaining({ winnerOfGame: 'BY_MATCHES_WON' }),
     );
