@@ -51,6 +51,7 @@ export type CreateTemplateId =
   | 'PICKLEBALL_MATCH_BO3_11'
   | 'PICKLEBALL_KOTC_11'
   | 'BADMINTON_CLUB_3X15'
+  | 'BADMINTON_CLUB_3X21'
   | 'BADMINTON_AMERICANO_21'
   | 'BADMINTON_MATCH_3X21'
   | 'TT_OPEN_PLAY_11'
@@ -313,6 +314,21 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     matchTimerEnabled: true,
     matchTimedCapMinutes: 12,
     baselineRounds: 8,
+  },
+  BADMINTON_CLUB_3X21: {
+    id: 'BADMINTON_CLUB_3X21',
+    sport: Sports.BADMINTON,
+    tier: 'social',
+    labelKey: 'createGame.templates.BADMINTON_CLUB_3X21.title',
+    descriptionKey: 'createGame.templates.BADMINTON_CLUB_3X21.description',
+    scoringPreset: 'BEST_OF_3_21',
+    gameType: 'CLASSIC',
+    matchGenerationType: 'AUTOMATIC',
+    playersPerMatch: 2,
+    suggestedMaxParticipants: 8,
+    suggestedCourts: 2,
+    affectsRating: false,
+    baselineRounds: 1,
   },
   BADMINTON_CLUB_3X15: {
     id: 'BADMINTON_CLUB_3X15',
@@ -623,11 +639,17 @@ export const CREATE_FLOW_BY_SPORT: Record<Sport, SportCreateFlowConfig> = {
   [Sports.BADMINTON]: {
     presetMeta: [
       meta('POINTS_21', 'social', 'createGame.presetMeta.POINTS_21', 'social'),
+      meta('POINTS_15', 'social', 'createGame.presetMeta.POINTS_15', 'social'),
       meta('BEST_OF_3_21', 'match', 'createGame.presetMeta.BEST_OF_3_21', 'match', 'BWF_21', 'strict'),
       meta('BEST_OF_3_15', 'both', 'createGame.presetMeta.BEST_OF_3_15', undefined, 'BWF_15'),
       meta('CUSTOM', 'both', 'createGame.presetMeta.CUSTOM'),
     ],
-    createTemplates: ['BADMINTON_AMERICANO_21', 'BADMINTON_CLUB_3X15', 'BADMINTON_MATCH_3X21'],
+    createTemplates: [
+      'BADMINTON_AMERICANO_21',
+      'BADMINTON_CLUB_3X21',
+      'BADMINTON_CLUB_3X15',
+      'BADMINTON_MATCH_3X21',
+    ],
   },
   [Sports.TABLE_TENNIS]: {
     presetMeta: [

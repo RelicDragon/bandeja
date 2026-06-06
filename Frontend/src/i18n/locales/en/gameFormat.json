@@ -26,6 +26,12 @@
     "stepRankingHint": "Configure how the overall winner is determined.",
     "standingPointsHint": "Points per match outcome for the standings table (separate from points scored inside a match).",
     "classicWithRotationWarning": "Games/sets scoring with rotation formats works, but rounds take longer than points-based scoring.",
+    "rallyMatch": {
+      "sectionTitle": "Best-of match"
+    },
+    "ballBudget": {
+      "sectionTitle": "Ball budget (rotation)"
+    },
     "steps": {
       "scoringMode": "Scoring",
       "setStructure": "Sets",

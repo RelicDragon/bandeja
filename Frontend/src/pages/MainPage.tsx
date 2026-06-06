@@ -18,7 +18,6 @@ import { MarketplaceItemRedirect } from './MarketplaceItemRedirect';
 import { CreateMarketItem } from './CreateMarketItem';
 import { UserTeamPage } from './UserTeamPage';
 import { UserProfilePage } from './UserProfilePage';
-import { ClubAdminFab } from '@/components/clubAdmin/ClubAdminFab';
 import { useAuthStore } from '@/store/authStore';
 import { hasEnabledSports } from '@/utils/profileSports';
 
@@ -116,7 +115,6 @@ export const MainPage = () => {
             <BottomTabBar animateEntry={animateShellEntry} />
           </div>
         )}
-        <ClubAdminFab />
       </MainLayout>
     );
   }
@@ -130,7 +128,6 @@ export const MainPage = () => {
       <MainLayout>
         <GameDetailsPage />
         {bottomTabsVisible && <BottomTabBar animateEntry={animateShellEntry} />}
-        <ClubAdminFab />
       </MainLayout>
     );
   }
@@ -144,7 +141,6 @@ export const MainPage = () => {
       <MainLayout>
         {renderContent}
         {bottomTabsVisible && <BottomTabBar animateEntry={animateShellEntry} />}
-        <ClubAdminFab />
       </MainLayout>
     );
   }
@@ -166,7 +162,6 @@ export const MainPage = () => {
         </div>
       </div>
       {bottomTabsVisible && <BottomTabBar animateEntry={animateShellEntry} />}
-      <ClubAdminFab />
     </MainLayout>
   );
 };

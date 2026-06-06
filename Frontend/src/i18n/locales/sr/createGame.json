@@ -275,13 +275,17 @@
         "title": "3×11",
         "description": "Zvanični stil"
       },
+      "BADMINTON_CLUB_3X21": {
+        "title": "Klub Bo3 × 21",
+        "description": "Do 2 gemova do 21 — neformalni singl/dubl"
+      },
       "BADMINTON_CLUB_3X15": {
-        "title": "Klub 3×15",
-        "description": "3 gema do 15"
+        "title": "Klub Bo3 × 15",
+        "description": "Do 2 gemova do 15 — BWF klubski format"
       },
       "BADMINTON_MATCH_3X21": {
-        "title": "3×21",
-        "description": "Zvanični meč"
+        "title": "Meč Bo3 × 21",
+        "description": "Zvanični rangirani meč — do 2 gemova do 21"
       },
       "TT_OPEN_PLAY_11": {
         "title": "Brzi gem do 11",

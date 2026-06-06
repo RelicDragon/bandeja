@@ -25,12 +25,13 @@ export function useClubAdminClubs(onForbidden: (e: unknown) => boolean, search?:
         offset: offsetRef.current,
         q: searchRef.current.trim() || undefined,
       });
+      const pageItems = Array.isArray(data.items) ? data.items : [];
       setItems((prev) => {
         const seen = new Set(prev.map((c) => c.id));
-        const unique = data.items.filter((c) => !seen.has(c.id));
+        const unique = pageItems.filter((c) => !seen.has(c.id));
         return [...prev, ...unique];
       });
-      offsetRef.current += data.items.length;
+      offsetRef.current += pageItems.length;
       setHasMore(data.hasMore);
       setTotal(data.total);
     } catch (e) {

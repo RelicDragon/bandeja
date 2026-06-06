@@ -167,6 +167,26 @@ export const isClassicPreset = isClassicScoring;
 
 export const isPointsPreset = (preset: ScoringPreset): boolean => preset.startsWith('POINTS_');
 
+const RALLY_MATCH_PRESET_ORDER: ScoringPreset[] = [
+  'BEST_OF_3_21',
+  'BEST_OF_3_15',
+  'BEST_OF_3_11',
+  'BEST_OF_5_11',
+  'SINGLE_GAME_21',
+  'PAR_11',
+];
+
+export function isRallyMatchPreset(preset: ScoringPreset): boolean {
+  return (
+    preset.startsWith('BEST_OF_') || preset === 'SINGLE_GAME_21' || preset === 'PAR_11'
+  );
+}
+
+export function listRallyMatchPresets(allowed?: ScoringPreset[]): ScoringPreset[] {
+  const pool = allowed && allowed.length > 0 ? allowed : RALLY_MATCH_PRESET_ORDER;
+  return RALLY_MATCH_PRESET_ORDER.filter((preset) => pool.includes(preset));
+}
+
 // Legacy: GameType-based compatibility (kept for rulebook / validation paths)
 export const getCompatibleScorings = (gameType: GameType): ScoringPreset[] => {
   if (gameType === 'CLASSIC') return [...CLASSIC_PRESETS, 'CUSTOM'];

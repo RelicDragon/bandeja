@@ -24,6 +24,24 @@ describe('formatMatchesCreateTemplate', () => {
     ).toBe(false);
   });
 
+  it('badminton Bo3 club template matches after apply-style snapshot', () => {
+    const tpl = CREATE_TEMPLATES.BADMINTON_CLUB_3X21;
+    const snapshot = {
+      scoringMode: 'POINTS' as const,
+      scoringPreset: 'BEST_OF_3_21' as const,
+      generationType: 'AUTOMATIC' as const,
+      matchTimerEnabled: false,
+      matchTimedCapMinutes: 15,
+      customPointsTotal: null,
+      winnerOfGame: 'BY_MATCHES_WON' as const,
+      hasGoldenPoint: false,
+    };
+    expect(formatMatchesCreateTemplate(tpl, snapshot, 4)).toBe(true);
+    expect(
+      formatMatchesCreateTemplate(tpl, { ...snapshot, winnerOfGame: 'BY_SCORES_DELTA' }, 4),
+    ).toBe(false);
+  });
+
   it('padel americano accepts any POINTS_ preset', () => {
     const tpl = CREATE_TEMPLATES.PADEL_AMERICANO;
     const base = {

@@ -48,7 +48,11 @@ export function applyCreateTemplate(
   format.setGenerationType(generation);
 
   const tmpl = getGameTypeTemplate(template.gameType);
-  if (mode === 'POINTS') {
+  const expectsScoresDeltaWinner =
+    template.inlineConfig?.type === 'points_total' ||
+    template.gameType === 'AMERICANO' ||
+    template.gameType === 'MEXICANO';
+  if (expectsScoresDeltaWinner) {
     format.setRanking(POINTS_MODE_RANKING_DEFAULTS);
   } else {
     format.setRanking({

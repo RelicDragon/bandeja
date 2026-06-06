@@ -8,8 +8,19 @@ import {
   isRotationGameType,
   type RotationFormatKey,
 } from '@/sport/rotationFormats';
+import type { Sport } from '@shared/sport';
+import { Sports } from '@shared/sport';
 import type { CreateTemplate, CreateTemplateId } from '@/sport/createFlow';
 import { CREATE_TEMPLATES, getCreateFlowConfig } from '@/sport/createFlow';
+
+/** Rally / tennis sports where singles and doubles templates can coexist in the picker. */
+const FLEXIBLE_MATCH_SIZE_SPORTS = new Set<Sport>([
+  Sports.TENNIS,
+  Sports.PICKLEBALL,
+  Sports.BADMINTON,
+  Sports.TABLE_TENNIS,
+  Sports.SQUASH,
+]);
 
 export type CreateTemplateParticipantContext = {
   maxParticipants: number;
@@ -55,7 +66,7 @@ export function isCreateTemplateCompatible(
   ctx: CreateTemplateParticipantContext,
 ): boolean {
   if (!allowedScoringPresets.includes(tpl.scoringPreset)) return false;
-  if (tpl.playersPerMatch !== ctx.playersPerMatch) return false;
+  if (!FLEXIBLE_MATCH_SIZE_SPORTS.has(sport) && tpl.playersPerMatch !== ctx.playersPerMatch) return false;
 
   if (ctx.genderTeams === 'MIX_PAIRS' && ctx.playersPerMatch === 2) return false;
 

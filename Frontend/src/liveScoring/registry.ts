@@ -29,7 +29,10 @@ import {
 } from '@/utils/liveScoring/tableTennisServeGuide';
 import {
   badmintonChangeEndsBeforeNextPoint,
+  badmintonCourtEndsSwapped,
   badmintonCourtSideForServerScore,
+  badmintonDoublesPlayerIndex,
+  badmintonNextServerTeam,
 } from '@/utils/liveScoring/badmintonServe';
 import {
   squashChangeEndsBeforeNextPoint,
@@ -285,13 +288,27 @@ export function computeServeGuideSnapshotByPlugin(
     const set = state.sets[state.activeSetIndex];
     const ta = set?.teamA ?? 0;
     const tb = set?.teamB ?? 0;
-    const serverScore = snapshot.serverTeam === 'teamA' ? ta : tb;
+    const first = state.firstServerTeam ?? snapshot.serverTeam;
+    const firstForSet = firstServerForPointsSet(state.activeSetIndex, state.sets, first);
+    const serverTeam = badmintonNextServerTeam(state, firstForSet);
+    const serverScore = serverTeam === 'teamA' ? ta : tb;
+    const matchFirstPlayerIdx = state.firstServerDoublesPlayerIndex ?? 0;
+    const playerIdx = matchDoubles
+      ? badmintonDoublesPlayerIndex(state, firstForSet, first, matchFirstPlayerIdx, ta, tb)
+      : 0;
+    const namesForTeam = serverTeam === 'teamA' ? teamAPlayerNames : teamBPlayerNames;
+    const display = matchDoubles ? playerDisplay(namesForTeam, playerIdx) : namesForTeam[0] ?? '—';
+    const t = ta + tb;
     return {
       ...snapshot,
+      serverTeam,
+      serverPlayerIndex: playerIdx,
+      serverDisplayName: display,
       courtSide: badmintonCourtSideForServerScore(serverScore),
       tieBreakServeSlot: null,
       changeEndsBeforeNextPoint: badmintonChangeEndsBeforeNextPoint(ta, tb, rules.totalPointsPerSet),
-      motionToken: `bd-${snapshot.motionToken}`,
+      courtEndsSwapped: badmintonCourtEndsSwapped(state, ta, tb, rules.totalPointsPerSet),
+      motionToken: `bd-${t}-${serverTeam}-${playerIdx}-${state.activeSetIndex}`,
     };
   }
   if (plugin.uiId === 'squash-board') {

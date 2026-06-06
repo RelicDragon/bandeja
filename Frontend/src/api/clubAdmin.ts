@@ -117,8 +117,19 @@ export interface ClubAdminClubsListResponse {
 
 export const clubAdminApi = {
   listClubs: async (params?: { limit?: number; offset?: number; q?: string }) => {
-    const res = await api.get<ApiResponse<ClubAdminClubsListResponse>>('/club-admin/clubs', { params });
-    return res.data.data ?? { items: [], hasMore: false, total: 0 };
+    const res = await api.get<ApiResponse<ClubAdminClubsListResponse | ClubAdminClubListItem[]>>(
+      '/club-admin/clubs',
+      { params }
+    );
+    const raw = res.data.data;
+    if (Array.isArray(raw)) {
+      return { items: raw, hasMore: false, total: raw.length };
+    }
+    return {
+      items: Array.isArray(raw?.items) ? raw.items : [],
+      hasMore: raw?.hasMore ?? false,
+      total: raw?.total ?? 0,
+    };
   },
 
   getClub: async (clubId: string) => {

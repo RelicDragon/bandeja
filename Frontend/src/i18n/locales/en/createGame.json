@@ -307,15 +307,19 @@
       },
       "BADMINTON_AMERICANO_21": {
         "title": "Club night (21 balls)",
-        "description": "Doubles Americano, 21-ball social games"
+        "description": "Doubles Americano — 21-ball rotation games, not Bo3"
+      },
+      "BADMINTON_CLUB_3X21": {
+        "title": "Club Bo3 × 21",
+        "description": "Best of 3 games to 21 — casual singles/doubles"
       },
       "BADMINTON_CLUB_3X15": {
-        "title": "Club 3×15",
-        "description": "Best of 3 games to 15"
+        "title": "Club Bo3 × 15",
+        "description": "Best of 3 games to 15 — BWF club format"
       },
       "BADMINTON_MATCH_3X21": {
-        "title": "3×21 official",
-        "description": "Best of 3 games to 21"
+        "title": "Match Bo3 × 21",
+        "description": "Rated official match — best of 3 games to 21"
       },
       "TT_OPEN_PLAY_11": {
         "title": "Quick game to 11",
@@ -377,8 +381,8 @@
       "CLASSIC_SUPER_TIEBREAK": "Super tie-break",
       "CLASSIC_TIMED": "Timed sets",
       "BEST_OF_3_11": "Best of 3 to 11",
-      "BEST_OF_3_15": "Best of 3 to 15",
-      "BEST_OF_3_21": "Official 3×21",
+      "BEST_OF_3_15": "Bo3 · games to 15",
+      "BEST_OF_3_21": "Bo3 · games to 21",
       "BEST_OF_5_11": "Best of 5 to 11",
       "POINTS_15": "15-ball budget",
       "TIMED": "Timed",

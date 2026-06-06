@@ -206,7 +206,12 @@ export const SPORT_REGISTRY: Record<Sport, SportConfig> = {
       playtomicSportId: 'BADMINTON',
       questionnaire: BADMINTON_QUESTIONNAIRE_V1,
       presetMeta: BADMINTON_PRESET_META,
-      createTemplates: ['BADMINTON_AMERICANO_21', 'BADMINTON_CLUB_3X15', 'BADMINTON_MATCH_3X21'],
+      createTemplates: [
+        'BADMINTON_AMERICANO_21',
+        'BADMINTON_CLUB_3X21',
+        'BADMINTON_CLUB_3X15',
+        'BADMINTON_MATCH_3X21',
+      ],
       ratingModel: BADMINTON_RATING_MODEL,
     },
   ),

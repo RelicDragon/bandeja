@@ -133,7 +133,104 @@ enum ServeGuideSportRules {
         let intervalAt = pointsPerGame >= 21 ? 11 : pointsPerGame >= 15 ? 8 : 6
         let maxScore = max(teamA, teamB)
         let minScore = min(teamA, teamB)
-        return maxScore == intervalAt && minScore < intervalAt
+        return maxScore == intervalAt && minScore < intervalAt - 1
+    }
+
+    static func badmintonMidGameEndsSwapped(teamA: Int, teamB: Int, pointsPerGame: Int) -> Bool {
+        let intervalAt = pointsPerGame >= 21 ? 11 : pointsPerGame >= 15 ? 8 : 6
+        let maxScore = max(teamA, teamB)
+        let minScore = min(teamA, teamB)
+        if maxScore < intervalAt { return false }
+        if maxScore == intervalAt && minScore >= intervalAt - 1 { return false }
+        return true
+    }
+
+    static func badmintonCourtEndsSwapped(
+        matchStartCourtEndsSwapped: Bool,
+        activeSetIndex: Int,
+        teamA: Int,
+        teamB: Int,
+        pointsPerGame: Int
+    ) -> Bool {
+        let betweenGameFlips = activeSetIndex % 2 == 1
+        let midGameFlip = badmintonMidGameEndsSwapped(teamA: teamA, teamB: teamB, pointsPerGame: pointsPerGame)
+        let flips = betweenGameFlips != midGameFlip
+        return matchStartCourtEndsSwapped != flips
+    }
+
+    static func badmintonNextServerTeam(
+        pointWinnerLog: [TeamSide],
+        firstForSet: TeamSide
+    ) -> TeamSide {
+        pointWinnerLog.last ?? firstForSet
+    }
+
+    private enum BdServiceCourt { case left, right }
+
+    private struct BdTeamCourts {
+        var p0: BdServiceCourt
+        var p1: BdServiceCourt
+    }
+
+    private static func badmintonInitialTeamCourts(isFirstServerTeam: Bool, firstPlayerIdx: Int) -> BdTeamCourts {
+        if isFirstServerTeam {
+            return BdTeamCourts(
+                p0: firstPlayerIdx == 0 ? .right : .left,
+                p1: firstPlayerIdx == 1 ? .right : .left
+            )
+        }
+        return BdTeamCourts(p0: .right, p1: .left)
+    }
+
+    private static func badmintonSwapTeamCourts(_ c: BdTeamCourts) -> BdTeamCourts {
+        BdTeamCourts(p0: c.p1, p1: c.p0)
+    }
+
+    private static func badmintonServerIdxForScore(_ c: BdTeamCourts, teamScore: Int) -> Int {
+        let need: BdServiceCourt = teamScore % 2 == 0 ? .right : .left
+        if c.p0 == need { return 0 }
+        if c.p1 == need { return 1 }
+        return 0
+    }
+
+    static func badmintonDoublesPlayerIndex(
+        pointWinnerLog: [TeamSide],
+        firstForSet: TeamSide,
+        matchFirst: TeamSide,
+        matchFirstPlayerIdx: Int
+    ) -> Int {
+        var teamACourts = badmintonInitialTeamCourts(
+            isFirstServerTeam: matchFirst == .teamA,
+            firstPlayerIdx: matchFirst == .teamA ? matchFirstPlayerIdx : 0
+        )
+        var teamBCourts = badmintonInitialTeamCourts(
+            isFirstServerTeam: matchFirst == .teamB,
+            firstPlayerIdx: matchFirst == .teamB ? matchFirstPlayerIdx : 0
+        )
+
+        func courts(_ team: TeamSide) -> BdTeamCourts {
+            team == .teamA ? teamACourts : teamBCourts
+        }
+        func setCourts(_ team: TeamSide, _ c: BdTeamCourts) {
+            if team == .teamA { teamACourts = c } else { teamBCourts = c }
+        }
+
+        var a = 0
+        var b = 0
+        var serverTeam = firstForSet
+        var serverIdx = badmintonServerIdxForScore(courts(serverTeam), 0)
+
+        for winner in pointWinnerLog {
+            if winner == .teamA { a += 1 } else { b += 1 }
+            if winner == serverTeam {
+                setCourts(serverTeam, badmintonSwapTeamCourts(courts(serverTeam)))
+            } else {
+                serverTeam = winner
+                let score = serverTeam == .teamA ? a : b
+                serverIdx = badmintonServerIdxForScore(courts(serverTeam), score)
+            }
+        }
+        return serverIdx
     }
 
     /// WSF PAR: even server score → right service box, odd → left.

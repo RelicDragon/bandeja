@@ -28,6 +28,12 @@
     "stepRankingHint": "Podesite kako se određuje ukupni pobednik.",
     "standingPointsHint": "Poeni po ishodu meča za tabelu (nije broj poena u samom meču).",
     "classicWithRotationWarning": "Klasično bodovanje gemovima i setovima sa formatima rotacije funkcioniše, ali krugovi traju duže nego bodovno računanje.",
+    "rallyMatch": {
+      "sectionTitle": "Do 2 pobede"
+    },
+    "ballBudget": {
+      "sectionTitle": "Limit loptica (rotacija)"
+    },
     "steps": {
       "scoringMode": "Bodovanje",
       "setStructure": "Setovi",

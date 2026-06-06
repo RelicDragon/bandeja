@@ -28,6 +28,12 @@
     "stepRankingHint": "Nastavte, jak se určuje celkový vítěz.",
     "standingPointsHint": "Body za výsledek zápasu v tabulce (nejsou to body hrané v zápase).",
     "classicWithRotationWarning": "Klasické skóre (hry a sety) s rotačními formáty funguje, ale kola trvají déle než bodové skóre.",
+    "rallyMatch": {
+      "sectionTitle": "Zápas na 2 vítězné"
+    },
+    "ballBudget": {
+      "sectionTitle": "Limit míčků (rotace)"
+    },
     "steps": {
       "scoringMode": "Skóre",
       "setStructure": "Sety",

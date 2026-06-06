@@ -7,7 +7,7 @@
     "build": "tsc && vite build",
     "postbuild": "node scripts/force-sw-update.js",
     "preview": "vite preview",
-    "test:live-scoring": "vitest run src/utils/liveScoring/core.test.ts src/utils/liveScoring/badmintonServe.test.ts src/utils/liveScoring/squashServe.test.ts src/utils/liveScoring/pickleballServe.test.ts src/liveScoring/registry.test.ts src/liveScoring/rallyScoreMeta.test.ts src/sport/sportRegistry.test.ts src/utils/profileSports.test.ts src/utils/findSportFilter.test.ts src/components/liveScoring/rally/pickleballCourt.test.ts src/components/liveScoring/rally/squashCourtLayout.test.ts",
+    "test:live-scoring": "vitest run src/utils/liveScoring/core.test.ts src/utils/liveScoring/badmintonServe.test.ts src/utils/liveScoring/squashServe.test.ts src/utils/liveScoring/pickleballServe.test.ts src/liveScoring/registry.test.ts src/liveScoring/rallyScoreMeta.test.ts src/sport/sportRegistry.test.ts src/sport/badmintonFlow.verify.test.ts src/utils/profileSports.test.ts src/utils/findSportFilter.test.ts src/components/liveScoring/rally/pickleballCourt.test.ts src/components/liveScoring/rally/squashCourtLayout.test.ts",
     "test:game-invite": "vitest run src/utils/gameInviteParticipant.test.ts",
     "test:group-channel": "vitest run src/utils/groupChannelParticipation.test.ts",
     "test:chat-open": "vitest run src/services/chat/__tests__/mergeOpenSnapshot.test.ts src/services/chat/__tests__/threadSession.test.ts src/services/chat/__tests__/gameChatOpenPerformance.test.ts",

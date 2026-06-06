@@ -210,6 +210,15 @@ export const CreateGame = ({
       applyIntentDefaults(intent);
       if (template) setIsRatingGame(template.affectsRating);
     },
+    onAfterTemplateApply: (template) => {
+      if (template.playersPerMatch !== playersPerMatch) {
+        setPlayersPerMatch(template.playersPerMatch);
+        if (template.playersPerMatch === 2) {
+          setHasFixedTeams(false);
+          setAllowUserInMultipleTeams(false);
+        }
+      }
+    },
   });
   const { notifyFormatWizardOpen, handleWizardClose } = templateFlow;
   const allowedParticipantOptions = useMemo(() => {

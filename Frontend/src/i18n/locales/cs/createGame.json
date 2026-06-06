@@ -275,13 +275,17 @@
         "title": "3×11",
         "description": "Oficiální styl"
       },
+      "BADMINTON_CLUB_3X21": {
+        "title": "Klub Bo3 × 21",
+        "description": "Na 2 vítězné hry do 21 — neformální dvouhry/čtyřhry"
+      },
       "BADMINTON_CLUB_3X15": {
-        "title": "Klub 3×15",
-        "description": "3 hry do 15"
+        "title": "Klub Bo3 × 15",
+        "description": "Na 2 vítězné hry do 15 — klubový formát BWF"
       },
       "BADMINTON_MATCH_3X21": {
-        "title": "3×21",
-        "description": "Oficiální zápas"
+        "title": "Zápas Bo3 × 21",
+        "description": "Hodnocený oficiální zápas — na 2 vítězné hry do 21"
       },
       "TT_OPEN_PLAY_11": {
         "title": "Rychlá hra do 11",

@@ -9,6 +9,7 @@ import { memo, useMemo, useRef } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { parseLocation, placeToPageType, type PageType } from '@/utils/urlSchema';
 import { hasEnabledSports } from '@/utils/profileSports';
+import { ClubAdminFab } from '@/components/clubAdmin/ClubAdminFab';
 
 interface BottomTabBarProps {
   containerPosition?: boolean;
@@ -105,6 +106,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
       animate={animateEntry ? { y: 0 } : undefined}
       transition={animateEntry ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : { type: 'spring', stiffness: 300, damping: 30 }}
     >
+      <ClubAdminFab />
       <div className="flex justify-center">
         <div className="relative w-fit max-w-[calc(100vw-2rem)] bg-white/30 dark:bg-gray-900/30 backdrop-blur-2xl border border-gray-300/60 dark:border-gray-600/60 shadow-[0_-12px_48px_rgba(0,0,0,0.22),0_-4px_24px_rgba(0,0,0,0.14),-20px_0_40px_rgba(0,0,0,0.18),20px_0_40px_rgba(0,0,0,0.18)] dark:shadow-[0_0_12px_rgba(218,165,32,0.26),0_0_24px_rgba(255,215,0,0.07),0_-6px_20px_rgba(0,0,0,0.14)] rounded-2xl">
           <div className="px-1 relative flex items-center justify-center h-16 overflow-visible">

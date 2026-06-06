@@ -36,6 +36,7 @@ export type CreateTemplateId =
   | 'PICKLEBALL_MATCH_BO3_11'
   | 'PICKLEBALL_KOTC_11'
   | 'BADMINTON_CLUB_3X15'
+  | 'BADMINTON_CLUB_3X21'
   | 'BADMINTON_AMERICANO_21'
   | 'BADMINTON_MATCH_3X21'
   | 'TT_OPEN_PLAY_11'
@@ -242,6 +243,18 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     matchTimerEnabled: true,
     matchTimedCapMinutes: 12,
     expectedDurationLabelKey: 'sportRegistry.duration.approx2h',
+  },
+  BADMINTON_CLUB_3X21: {
+    id: 'BADMINTON_CLUB_3X21',
+    sport: 'BADMINTON',
+    tier: 'social',
+    scoringPreset: 'BEST_OF_3_21',
+    gameType: 'CLASSIC',
+    matchGenerationType: 'AUTOMATIC',
+    playersPerMatch: 2,
+    suggestedMaxParticipants: 8,
+    suggestedCourts: 2,
+    affectsRating: false,
   },
   BADMINTON_CLUB_3X15: {
     id: 'BADMINTON_CLUB_3X15',

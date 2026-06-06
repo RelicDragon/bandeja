@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/Dialog';
 import { OVERLAY_CONTROL_GLASS_STABLE } from '@/components/ui/overlayControlGlass';
 import { EntityType, ScoringMode, ScoringPreset } from '@/types';
-import { isPointsPreset } from '@/utils/gameFormat/scoringCompatibility';
+import { isPointsPreset, isRallyMatchPreset } from '@/utils/gameFormat/scoringCompatibility';
 import {
   defaultMatchGenerationForParticipants,
   listWizardSelectableGenerations,
@@ -76,7 +76,7 @@ function isPointsTotalStepValid(f: UseGameFormatResult): boolean {
   const targetOk =
     f.customPointsTotal != null
       ? f.customPointsTotal > 0 && f.customPointsTotal <= 999
-      : isPointsPreset(f.scoringPreset);
+      : isPointsPreset(f.scoringPreset) || isRallyMatchPreset(f.scoringPreset);
   if (f.matchTimerEnabled) {
     return targetOk && f.matchTimedCapMinutes >= 1 && f.matchTimedCapMinutes <= 60;
   }

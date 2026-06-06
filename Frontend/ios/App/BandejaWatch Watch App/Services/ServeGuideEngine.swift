@@ -152,10 +152,29 @@ enum ServeGuideEngine {
             )
             motionPrefix = "tt"
         case .badminton:
+            nextTeam = ServeGuideSportRules.badmintonNextServerTeam(
+                pointWinnerLog: i.pointWinnerLog,
+                firstForSet: firstForSet
+            )
+            playerIdx = i.isDoublesMatch
+                ? ServeGuideSportRules.badmintonDoublesPlayerIndex(
+                    pointWinnerLog: i.pointWinnerLog,
+                    firstForSet: firstForSet,
+                    matchFirst: matchFirst,
+                    matchFirstPlayerIdx: i.matchFirstDoublesPlayerIndex ?? 0
+                )
+                : 0
             slot = nil
             let serverScore = nextTeam == .teamA ? ta : tb
             side = ServeGuideSportRules.badmintonCourtSide(serverScore: serverScore)
             changeEnds = ServeGuideSportRules.badmintonChangeEnds(
+                teamA: ta,
+                teamB: tb,
+                pointsPerGame: max(i.rallyPointsPerSet, 1)
+            )
+            ttCourtEnds = ServeGuideSportRules.badmintonCourtEndsSwapped(
+                matchStartCourtEndsSwapped: i.matchStartCourtEndsSwapped,
+                activeSetIndex: i.activeSetIndex,
                 teamA: ta,
                 teamB: tb,
                 pointsPerGame: max(i.rallyPointsPerSet, 1)

@@ -277,13 +277,17 @@
         "title": "3×11",
         "description": "Официальный стиль"
       },
+      "BADMINTON_CLUB_3X21": {
+        "title": "Клуб Bo3 × 21",
+        "description": "До 2 побед в партиях до 21 — неофициальный одиночный/парный"
+      },
       "BADMINTON_CLUB_3X15": {
-        "title": "Клуб 3×15",
-        "description": "До 3 партий до 15"
+        "title": "Клуб Bo3 × 15",
+        "description": "До 2 побед в партиях до 15 — клубный формат BWF"
       },
       "BADMINTON_MATCH_3X21": {
-        "title": "3×21",
-        "description": "Официальный матч"
+        "title": "Матч Bo3 × 21",
+        "description": "Рейтинговый официальный матч — до 2 побед до 21"
       },
       "TT_OPEN_PLAY_11": {
         "title": "Быстрая партия до 11",

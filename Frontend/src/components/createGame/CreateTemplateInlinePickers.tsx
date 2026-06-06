@@ -5,6 +5,7 @@ import { CreateTemplateInlinePanel } from './CreateTemplateInlinePanel';
 
 const POINT_CAP_PRESETS: { cap: number; preset: ScoringPreset }[] = [
   { cap: 11, preset: 'POINTS_11' },
+  { cap: 15, preset: 'POINTS_15' },
   { cap: 16, preset: 'POINTS_16' },
   { cap: 21, preset: 'POINTS_21' },
   { cap: 24, preset: 'POINTS_24' },

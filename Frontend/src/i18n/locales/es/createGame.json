@@ -274,13 +274,17 @@
         "title": "3×11",
         "description": "Estilo oficial"
       },
+      "BADMINTON_CLUB_3X21": {
+        "title": "Club Bo3 × 21",
+        "description": "Al mejor de 3 juegos a 21 — singles/dobles informal"
+      },
       "BADMINTON_CLUB_3X15": {
-        "title": "Club 3×15",
-        "description": "3 juegos a 15"
+        "title": "Club Bo3 × 15",
+        "description": "Al mejor de 3 juegos a 15 — formato club BWF"
       },
       "BADMINTON_MATCH_3X21": {
-        "title": "3×21",
-        "description": "Partido oficial"
+        "title": "Partido Bo3 × 21",
+        "description": "Partido oficial con rating — al mejor de 3 a 21"
       },
       "TT_OPEN_PLAY_11": {
         "title": "Partido rápido a 11",

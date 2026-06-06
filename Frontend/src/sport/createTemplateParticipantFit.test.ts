@@ -74,6 +74,26 @@ describe('createTemplateParticipantFit', () => {
     expect(list.some((t) => t.id === 'PADEL_AMERICANO')).toBe(false);
   });
 
+  it('badminton Bo3 templates stay visible when doubles per match is selected', () => {
+    const presets = [
+      'POINTS_21',
+      'POINTS_15',
+      'BEST_OF_3_21',
+      'BEST_OF_3_15',
+      'CUSTOM',
+    ] as const;
+    const list = listTemplatesForParticipantSetup(Sports.BADMINTON, [...presets], {
+      maxParticipants: 8,
+      playersPerMatch: 4,
+      hasFixedTeams: false,
+    });
+    expect(list.map((t) => t.id)).toEqual([
+      'BADMINTON_AMERICANO_21',
+      'BADMINTON_CLUB_3X21',
+      'BADMINTON_CLUB_3X15',
+    ]);
+  });
+
   it('MIX_PAIRS requires doubles per match', () => {
     expect(
       isCreateTemplateCompatible(

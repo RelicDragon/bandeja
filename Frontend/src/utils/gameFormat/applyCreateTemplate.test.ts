@@ -61,6 +61,15 @@ describe('applyCreateTemplate', () => {
     expect(format.setScoringPreset).not.toHaveBeenCalled();
   });
 
+  it('uses matches-won ranking for rally Bo3 classic templates', () => {
+    const format = mockFormat();
+    applyCreateTemplate(CREATE_TEMPLATES.BADMINTON_CLUB_3X21, format, 4);
+    expect(format.setScoringPreset).toHaveBeenCalledWith('BEST_OF_3_21');
+    expect(format.setRanking).toHaveBeenCalledWith(
+      expect.objectContaining({ winnerOfGame: 'BY_MATCHES_WON' }),
+    );
+  });
+
   it('uses timed cap override instead of stale format state', () => {
     const format = mockFormat({
       matchTimerEnabled: true,
