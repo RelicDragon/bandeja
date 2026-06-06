@@ -49,7 +49,7 @@ export const PlayerCardProfileBody = ({
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const } } };
 
   return (
-    <motion.div className="p-6 space-y-6 pt-2" variants={containerVariants} initial="hidden" animate="visible">
+    <motion.div className={`flex flex-col p-6 pt-2 ${prependBeforeLevelHistory ? 'gap-2' : 'gap-3'}`} variants={containerVariants} initial="hidden" animate="visible">
       <motion.div
         className={`relative h-48 rounded-2xl ${isBlocked ? 'bg-gradient-to-br from-red-500 to-red-700 dark:from-red-600 dark:to-red-800' : 'bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800'}`}
         variants={itemVariants}
@@ -122,18 +122,24 @@ export const PlayerCardProfileBody = ({
       </motion.div>
 
       {stats.user.bio && (
-        <motion.div variants={itemVariants} className={`${edgeToEdge ? 'px-0' : 'px-6'} -mt-2`}>
+        <motion.div variants={itemVariants} className={edgeToEdge ? 'px-0' : 'px-6'}>
           <p className="text-sm text-gray-600 dark:text-gray-400 italic">
             {`"${stats.user.bio}"`}
           </p>
         </motion.div>
       )}
 
-      {prependBeforeLevelHistory}
+      <div className="flex flex-col gap-2">
+        {prependBeforeLevelHistory && (
+          <motion.div variants={itemVariants}>
+            {prependBeforeLevelHistory}
+          </motion.div>
+        )}
 
-      <motion.div variants={itemVariants}>
-        <LevelHistoryView stats={stats} padding="p-0 -mt-2" tabDarkBgClass="dark:bg-gray-700/50" hideUserCard onOpenGame={onOpenGame} showItemsToSell onMarketItemClick={onMarketItemClick} onStatsRefresh={onStatsRefresh} />
-      </motion.div>
+        <motion.div variants={itemVariants}>
+          <LevelHistoryView stats={stats} padding="p-0" tabDarkBgClass="dark:bg-gray-700/50" hideUserCard onOpenGame={onOpenGame} showItemsToSell onMarketItemClick={onMarketItemClick} onStatsRefresh={onStatsRefresh} />
+        </motion.div>
+      </div>
     </motion.div>
   );
 };

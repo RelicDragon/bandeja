@@ -1,20 +1,23 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, RefObject } from 'react';
 
 interface UsePullToRefreshOptions {
   onRefresh: () => Promise<void>;
   threshold?: number;
   disabled?: boolean;
+  scrollContainerRef?: RefObject<HTMLElement | null>;
 }
 
 export const usePullToRefresh = ({
   onRefresh,
   threshold = 60,
   disabled = false,
+  scrollContainerRef,
 }: UsePullToRefreshOptions) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
 
   const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
   const touchStartScrollTop = useRef(0);
   const isDraggingRef = useRef(false);
   const canPullRef = useRef(false);
@@ -30,10 +33,17 @@ export const usePullToRefresh = ({
     isRefreshingRef.current = isRefreshing;
   }, [isRefreshing]);
 
+  const scrollContainerRefRef = useRef(scrollContainerRef);
+  useEffect(() => {
+    scrollContainerRefRef.current = scrollContainerRef;
+  }, [scrollContainerRef]);
+
   useEffect(() => {
     if (disabled) return;
 
     const getScrollTop = () => {
+      const container = scrollContainerRefRef.current?.current;
+      if (container) return container.scrollTop;
       return Math.max(
         window.scrollY,
         window.pageYOffset,
@@ -50,23 +60,31 @@ export const usePullToRefresh = ({
       return (overflowY === 'auto' || overflowY === 'scroll') && hasScroll;
     };
 
+    const findScrollableAncestor = (target: HTMLElement): HTMLElement | null => {
+      let node: HTMLElement | null = target;
+      const preferred = scrollContainerRefRef.current?.current ?? null;
+      while (node && node !== document.body) {
+        if (isScrollableElement(node)) return node;
+        node = node.parentElement;
+      }
+      return preferred;
+    };
+
     const handleTouchStart = (e: TouchEvent) => {
       if (isRefreshingRef.current) return;
 
-      let target = e.target as HTMLElement;
-      while (target && target !== document.body) {
-        if (isScrollableElement(target) && target.scrollTop > 0) {
-          canPullRef.current = false;
-          isDraggingRef.current = false;
-          return;
-        }
-        target = target.parentElement as HTMLElement;
+      const scrollable = findScrollableAncestor(e.target as HTMLElement);
+      if (scrollable && scrollable.scrollTop > 0) {
+        canPullRef.current = false;
+        isDraggingRef.current = false;
+        return;
       }
 
       const scrollTop = getScrollTop();
       const isAtTop = scrollTop === 0;
-      
+
       touchStartY.current = e.touches[0].clientY;
+      touchStartX.current = e.touches[0].clientX;
       touchStartScrollTop.current = scrollTop;
       canPullRef.current = isAtTop;
       isDraggingRef.current = isAtTop;
@@ -86,7 +104,16 @@ export const usePullToRefresh = ({
       }
 
       const touchY = e.touches[0].clientY;
+      const touchX = e.touches[0].clientX;
       const diff = touchY - touchStartY.current;
+      const diffX = Math.abs(touchX - touchStartX.current);
+
+      if (diffX > Math.abs(diff) && diffX > 8) {
+        isDraggingRef.current = false;
+        pullDistanceRef.current = 0;
+        setPullDistance(0);
+        return;
+      }
 
       if (diff > 5) {
         const resistance = 0.5;
@@ -98,7 +125,7 @@ export const usePullToRefresh = ({
           e.preventDefault();
         }
       } else if (diff < 0) {
-        canPullRef.current = false;
+        // Finger moving up — allow normal scroll, don't intercept.
         isDraggingRef.current = false;
         pullDistanceRef.current = 0;
         setPullDistance(0);

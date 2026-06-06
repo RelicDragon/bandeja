@@ -1,70 +1,84 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { clubAdminApi, ClubAdminClubListItem } from '@/api/clubAdmin';
-import { ClubAdminLayout } from '@/components/clubAdmin/ClubAdminLayout';
+import { Loader2 } from 'lucide-react';
 import { ClubAvatar } from '@/components/ClubAvatar';
+import { useClubAdminScrollContainer } from '@/components/clubAdmin/ClubAdminScrollContext';
+import { useDebounce } from '@/components/CityMap/useDebounce';
 import { useClubAdminForbidden } from '@/hooks/useClubAdminForbidden';
+import { useClubAdminClubs } from '@/hooks/useClubAdminClubs';
+import { useClubAdminScreen } from '@/clubAdmin/useClubAdminShell';
 import { isClubOpenNow } from '@/utils/clubAdmin/openNow';
 
 export function MyClubsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const handleForbidden = useClubAdminForbidden();
-  const [clubs, setClubs] = useState<ClubAdminClubListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const scrollRef = useClubAdminScrollContainer();
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 300);
+  const { items, total, loading, initialLoading, hasMore, error, loadMore } = useClubAdminClubs(
+    handleForbidden,
+    debouncedQuery
+  );
+
+  useClubAdminScreen({ title: t('clubAdmin.myClubs'), backTo: '/' });
 
   useEffect(() => {
-    clubAdminApi
-      .listClubs()
-      .then(setClubs)
-      .catch((e) => {
-        handleForbidden(e);
-      })
-      .finally(() => setLoading(false));
-  }, [handleForbidden]);
-
-  const filtered =
-    query.trim().length > 0 && clubs.length > 5
-      ? clubs.filter((c) => c.name.toLowerCase().includes(query.trim().toLowerCase()))
-      : clubs;
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+    const root = scrollRef?.current ?? null;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !loading) void loadMore();
+      },
+      { root, rootMargin: '120px', threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [scrollRef, hasMore, loading, loadMore, items.length]);
 
   return (
-    <ClubAdminLayout title={t('clubAdmin.myClubs')} backTo="/">
-      {clubs.length > 5 && (
+    <>
+      {(total > 5 || query.trim().length > 0) && (
         <input
           type="search"
-          className="mb-3 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          className="mb-3 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
           placeholder={t('clubAdmin.searchClubs')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       )}
-      {loading ? (
-        <p className="text-muted-foreground">{t('common.loading')}</p>
-      ) : filtered.length === 0 ? (
-        <p className="text-muted-foreground">{t('clubAdmin.noClubs')}</p>
+      {initialLoading ? (
+        <div className="flex flex-col items-center justify-center gap-3 py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
+        </div>
+      ) : error && items.length === 0 ? (
+        <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">{t('clubAdmin.clubsLoadFailed')}</p>
+      ) : items.length === 0 ? (
+        <p className="text-gray-500 dark:text-gray-400">{t('clubAdmin.noClubs')}</p>
       ) : (
         <div className="space-y-2">
-          {filtered.map((c) => {
+          {items.map((c) => {
             const open = isClubOpenNow(c.openingTime, c.closingTime);
             return (
               <button
                 key={c.id}
                 type="button"
-                className="flex w-full items-center gap-3 rounded-xl border border-border p-3 text-left hover:bg-muted"
-                onClick={() => navigate(`/my-clubs/${c.id}`)}
+                className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
+                onClick={() => navigate(`${c.id}`)}
               >
                 <ClubAvatar club={{ id: c.id, name: c.name, avatar: c.avatar }} variant="card" className="h-12 w-12 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">{c.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="font-medium truncate text-gray-900 dark:text-white">{c.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {c.city.name} · {t('clubAdmin.courtsCount', { count: c.courtsCount })}
                     {c.bookingsToday > 0 && ` · ${t('clubAdmin.bookingsToday', { count: c.bookingsToday })}`}
                   </p>
                   {open !== null && (
-                    <p className={`text-xs ${open ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    <p className={`text-xs ${open ? 'text-green-600' : 'text-gray-500 dark:text-gray-400'}`}>
                       {open ? t('clubAdmin.openNow') : t('clubAdmin.closedNow')}
                     </p>
                   )}
@@ -74,6 +88,11 @@ export function MyClubsPage() {
           })}
         </div>
       )}
-    </ClubAdminLayout>
+      {hasMore && (
+        <div ref={sentinelRef} className="flex justify-center py-4">
+          {loading && <Loader2 className="h-6 w-6 animate-spin text-primary-600" />}
+        </div>
+      )}
+    </>
   );
 }

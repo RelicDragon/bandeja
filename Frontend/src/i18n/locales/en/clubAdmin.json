@@ -1,9 +1,8 @@
 {
   "clubAdmin.myClubs": "My clubs",
-  "clubAdmin.todaysSchedule": "Today's schedule",
+  "clubAdmin.todaysSchedule": "Calendar",
   "clubAdmin.allCourts": "All courts",
   "clubAdmin.settings": "Settings",
-  "clubAdmin.viewToday": "View today",
   "clubAdmin.schedule": "Schedule",
   "clubAdmin.integrationLinked": "Club system connected",
   "clubAdmin.updatingAvailability": "Updating availability…",
@@ -99,5 +98,13 @@
   "clubAdmin.externalCourtId": "External ID",
   "clubAdmin.webCameraUrl": "Web camera URL",
   "clubAdmin.noClubs": "No clubs assigned to you yet.",
-  "clubAdmin.scheduleLoadFailed": "Could not load schedule. Pull to refresh or try again."
+  "clubAdmin.quickActions": "Quick actions",
+  "clubAdmin.statsScheduledToday": "Scheduled today",
+  "clubAdmin.statsConflictsLabel": "Conflicts",
+  "clubAdmin.statsNoConflicts": "All clear",
+  "clubAdmin.scheduleLoadFailed": "Could not load schedule. Pull to refresh or try again.",
+  "clubAdmin.reservations": "Reservations",
+  "clubAdmin.noReservations": "No upcoming reservations.",
+  "clubAdmin.reservationsLoadFailed": "Could not load reservations. Try again.",
+  "clubAdmin.clubsLoadFailed": "Could not load clubs. Try again."
 }

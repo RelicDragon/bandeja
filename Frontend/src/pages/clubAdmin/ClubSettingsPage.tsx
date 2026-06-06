@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { clubAdminApi } from '@/api/clubAdmin';
 import { mediaApi } from '@/api/media';
-import { ClubAdminLayout } from '@/components/clubAdmin/ClubAdminLayout';
 import { ClubAdminCoachMark } from '@/components/clubAdmin/ClubAdminCoachMark';
+import { useClubAdminScreen } from '@/clubAdmin/useClubAdminShell';
 import { ClubAvatar } from '@/components/ClubAvatar';
 import { Club, ClubPhoto, Sport } from '@/types';
 import { getSportConfig } from '@/sport/sportRegistry';
@@ -34,6 +34,11 @@ export function ClubSettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [coachMarks, setCoachMarks] = useState(readClubAdminCoachMarks);
+
+  useClubAdminScreen({
+    title: t('clubAdmin.settings'),
+    backTo: `/my-clubs/${clubId}`,
+  });
 
   useEffect(() => {
     if (!clubId) return;
@@ -155,8 +160,7 @@ export function ClubSettingsPage() {
   );
 
   return (
-    <ClubAdminLayout title={t('clubAdmin.settings')} backTo={`/my-clubs/${clubId}`}>
-      <ClubAdminCoachMark
+    <ClubAdminCoachMark
         show={coachMarks.schedule && coachMarks.tapSlot && !coachMarks.settings}
         stepLabel={t('clubAdmin.coachStep', { current: 3, total: 3 })}
         message={t('clubAdmin.coachSettings')}
@@ -319,6 +323,5 @@ export function ClubSettingsPage() {
           </button>
         </div>
       </ClubAdminCoachMark>
-    </ClubAdminLayout>
   );
 }

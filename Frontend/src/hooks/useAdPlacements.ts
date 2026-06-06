@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { create } from 'zustand';
 import {
@@ -102,6 +102,60 @@ function sportsContextKey(sports: AdSportsByPlacement, cityId: string | undefine
   return JSON.stringify({ cityId: cityId ?? null, sports });
 }
 
+let lastFetchKey: string | null = null;
+
+/** Fetches placements once auth/city/sport context is ready — mount at app shell, not only inside AdSlot. */
+export function useAdPlacementsFetcher() {
+  const user = useAuthStore((s) => s.user);
+  const isOnline = useNetworkStore((s) => s.isOnline);
+  const sportsByPlacement = useAdPlacementsStore((s) => s.sportsByPlacement);
+  const setCityId = useAdPlacementsStore((s) => s.setCityId);
+  const setPlacements = useAdPlacementsStore((s) => s.setPlacements);
+  const setLoading = useAdPlacementsStore((s) => s.setLoading);
+
+  const userCityId = user?.currentCity?.id ?? user?.currentCityId;
+
+  useEffect(() => {
+    setCityId(userCityId);
+  }, [setCityId, userCityId]);
+
+  useEffect(() => {
+    if (!user?.id || !isOnline) {
+      setPlacements({});
+      lastFetchKey = null;
+      return;
+    }
+
+    const fetchKey = sportsContextKey(sportsByPlacement, userCityId);
+    if (lastFetchKey === fetchKey) return;
+
+    let cancelled = false;
+    const run = async () => {
+      setLoading(true);
+      try {
+        const response = await adsApi.getPlacements(AD_PLACEMENT_KEYS, adSessionId, {
+          cityId: userCityId,
+          sportsByPlacement,
+        });
+        if (cancelled) return;
+        setPlacements(response.placements ?? {});
+        lastFetchKey = fetchKey;
+      } catch {
+        if (!cancelled) {
+          setPlacements({});
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, isOnline, sportsByPlacement, userCityId, setLoading, setPlacements]);
+}
+
 export function useRegisterAdSportContext(placement: AdPlacementKey, sport: Sport | undefined) {
   const setSportForPlacement = useAdPlacementsStore((s) => s.setSportForPlacement);
   useEffect(() => {
@@ -129,54 +183,7 @@ export function useAdPlacements() {
   const isOnline = useNetworkStore((s) => s.isOnline);
   const placements = useAdPlacementsStore((s) => s.placements);
   const isLoading = useAdPlacementsStore((s) => s.isLoading);
-  const sportsByPlacement = useAdPlacementsStore((s) => s.sportsByPlacement);
-  const setCityId = useAdPlacementsStore((s) => s.setCityId);
-  const setPlacements = useAdPlacementsStore((s) => s.setPlacements);
   const removePlacement = useAdPlacementsStore((s) => s.removePlacement);
-  const setLoading = useAdPlacementsStore((s) => s.setLoading);
-
-  const userCityId = user?.currentCity?.id ?? user?.currentCityId;
-  const lastFetchKeyRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    setCityId(userCityId);
-  }, [setCityId, userCityId]);
-
-  useEffect(() => {
-    if (!user?.id || !isOnline) {
-      setPlacements({});
-      lastFetchKeyRef.current = null;
-      return;
-    }
-
-    const fetchKey = sportsContextKey(sportsByPlacement, userCityId);
-    if (lastFetchKeyRef.current === fetchKey) return;
-
-    let cancelled = false;
-    const run = async () => {
-      setLoading(true);
-      try {
-        const response = await adsApi.getPlacements(AD_PLACEMENT_KEYS, adSessionId, {
-          cityId: userCityId,
-          sportsByPlacement,
-        });
-        if (cancelled) return;
-        setPlacements(response.placements ?? {});
-        lastFetchKeyRef.current = fetchKey;
-      } catch {
-        if (!cancelled) {
-          setPlacements({});
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id, isOnline, sportsByPlacement, userCityId, setLoading, setPlacements]);
 
   const dismissPlacement = useCallback(
     (

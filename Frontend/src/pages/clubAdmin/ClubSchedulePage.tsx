@@ -5,13 +5,14 @@ import { format } from 'date-fns';
 import { RefreshCw } from 'lucide-react';
 import { clubAdminApi, CourtSlotHold, ScheduleSlot } from '@/api/clubAdmin';
 import { chatApi } from '@/api/chat';
-import { ClubAdminLayout } from '@/components/clubAdmin/ClubAdminLayout';
+import { useClubAdminScrollContainer } from '@/components/clubAdmin/ClubAdminScrollContext';
 import { CourtScheduleGrid } from '@/components/clubAdmin/CourtScheduleGrid';
 import { SlotDetailSheet } from '@/components/clubAdmin/SlotDetailSheet';
 import { BlockSlotSheet } from '@/components/clubAdmin/BlockSlotSheet';
 import { EditHoldSheet } from '@/components/clubAdmin/EditHoldSheet';
 import { CancelGameSheet, CancelPreviewParams } from '@/components/clubAdmin/CancelGameSheet';
 import { ClubAdminCoachMark } from '@/components/clubAdmin/ClubAdminCoachMark';
+import { ScheduleDatePicker } from '@/components/clubAdmin/ScheduleDatePicker';
 import { ScheduleLegend } from '@/components/clubAdmin/ScheduleLegend';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { useClubAdminSchedule } from '@/hooks/useClubAdminSchedule';
@@ -24,6 +25,7 @@ import {
   markClubAdminCoachStep,
   readClubAdminCoachMarks,
 } from '@/utils/clubAdminCoachMarksStorage';
+import { useClubAdminScreen } from '@/clubAdmin/useClubAdminShell';
 
 export function ClubSchedulePage() {
   const { clubId } = useParams<{ clubId: string }>();
@@ -51,6 +53,11 @@ export function ClubSchedulePage() {
   const [cancelMode, setCancelMode] = useState<'cancel' | 'clear'>('cancel');
   const [coachMarks, setCoachMarks] = useState(readClubAdminCoachMarks);
 
+  useClubAdminScreen({
+    title: club?.name ?? t('clubAdmin.schedule'),
+    backTo: `/my-clubs/${clubId}`,
+  });
+
   const { data, loading, error, refetch } = useClubAdminSchedule(clubId!, date);
 
   const handleRefresh = useCallback(async () => {
@@ -68,9 +75,12 @@ export function ClubSchedulePage() {
     }
   }, [clubId, refetch]);
 
+  const scrollContainerRef = useClubAdminScrollContainer();
+
   const { isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
     onRefresh: handleRefresh,
     disabled: loading,
+    scrollContainerRef: scrollContainerRef ?? undefined,
   });
 
   useEffect(() => {
@@ -136,15 +146,10 @@ export function ClubSchedulePage() {
   if (!clubId) return null;
 
   return (
-    <ClubAdminLayout title={club?.name ?? t('clubAdmin.schedule')} backTo={`/my-clubs/${clubId}`}>
+    <>
       <RefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} pullProgress={pullProgress} />
       <div className="mb-3 flex gap-2">
-        <input
-          type="date"
-          className="flex-1 rounded-lg border border-border bg-background px-3 py-2"
-          value={date}
-          onChange={(e) => setSearchParams({ date: e.target.value })}
-        />
+        <ScheduleDatePicker date={date} onDateChange={(d) => setSearchParams({ date: d })} />
         <button
           type="button"
           className="rounded-lg border border-border px-3 py-2 hover:bg-muted"
@@ -155,7 +160,6 @@ export function ClubSchedulePage() {
           <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
-      <ScheduleLegend />
       {error && (
         <p className="mb-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
           {t('clubAdmin.scheduleLoadFailed')}
@@ -172,7 +176,7 @@ export function ClubSchedulePage() {
       {data?.conflicts && data.conflicts.length > 0 && (
         <p className="mb-2 text-xs text-amber-600">{t('clubAdmin.conflicts', { count: data.conflicts.length })}</p>
       )}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row lg:items-start">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1">
           {loading ? (
             <p>{t('common.loading')}</p>
@@ -198,6 +202,7 @@ export function ClubSchedulePage() {
               />
             </ClubAdminCoachMark>
           )}
+          {!loading && <ScheduleLegend className="mt-3" />}
         </div>
         <SlotDetailSheet
           layout="rail"
@@ -347,6 +352,6 @@ export function ClubSchedulePage() {
           }}
         />
       )}
-    </ClubAdminLayout>
+    </>
   );
 }

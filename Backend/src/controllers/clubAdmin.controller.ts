@@ -6,6 +6,7 @@ import { AuthRequest } from '../middleware/auth';
 import { ClubAdminService } from '../services/clubAdmin/clubAdmin.service';
 import { ClubAdminClubService } from '../services/clubAdmin/clubAdminClub.service';
 import { ClubAdminScheduleService } from '../services/clubAdmin/clubAdminSchedule.service';
+import { ClubAdminReservationsService } from '../services/clubAdmin/clubAdminReservations.service';
 import { ClubAdminCourtService } from '../services/clubAdmin/clubAdminCourt.service';
 import { ClubAdminHoldService } from '../services/clubAdmin/clubAdminHold.service';
 import { ClubAdminGameService } from '../services/clubAdmin/clubAdminGame.service';
@@ -32,7 +33,10 @@ async function assertCourtClubAdmin(userId: string, courtId: string): Promise<st
 }
 
 export const listClubAdminClubs = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const data = await ClubAdminClubService.listClubs(req.userId!);
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
+  const q = (req.query.q as string) || undefined;
+  const data = await ClubAdminClubService.listClubs(req.userId!, limit, offset, q);
   res.json({ success: true, data });
 });
 
@@ -43,6 +47,17 @@ export const getClubAdminClub = asyncHandler(async (req: AuthRequest, res: Respo
 
 export const patchClubAdminClub = asyncHandler(async (req: AuthRequest, res: Response) => {
   const data = await ClubAdminClubService.patchClub(req.userId!, req.params.clubId, req.body);
+  res.json({ success: true, data });
+});
+
+export const listClubAdminReservations = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+  const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
+  const data = await ClubAdminReservationsService.listReservations(
+    req.params.clubId,
+    limit,
+    offset
+  );
   res.json({ success: true, data });
 });
 

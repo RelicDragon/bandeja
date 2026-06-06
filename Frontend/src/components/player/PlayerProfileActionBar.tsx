@@ -55,23 +55,6 @@ export const PlayerProfileActionBar = ({
 
   const mainButtons = (
     <>
-      {!isCurrentUser && (
-        <button
-          type="button"
-          onClick={onToggleFavorite}
-          disabled={isBlocked}
-          className={`${iconClass} border backdrop-blur-sm ${
-            isBlocked
-              ? 'opacity-50 cursor-not-allowed bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50'
-              : stats.user.isFavorite
-                ? 'bg-yellow-500 dark:bg-yellow-600 border-yellow-400 dark:border-yellow-500 hover:bg-yellow-600 dark:hover:bg-yellow-700'
-                : 'bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800'
-          }`}
-          title={isBlocked ? t('playerCard.userBlockedCannotFavorite') : (stats.user.isFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites'))}
-        >
-          <Star size={16} className={stats.user.isFavorite ? 'text-white fill-white' : 'text-gray-400 hover:text-yellow-500 transition-colors'} />
-        </button>
-      )}
       {!isBlocked && (
         <button
           type="button"
@@ -83,21 +66,39 @@ export const PlayerProfileActionBar = ({
           <Share2 size={16} className="text-white" />
         </button>
       )}
-      {!isCurrentUser && (
+      {variant === 'header' && !isCurrentUser && (() => {
+        const followLabel = stats.user.isFavorite ? t('playerCard.unfollow') : t('playerCard.follow');
+        const followTitle = isBlocked ? t('playerCard.userBlockedCannotFavorite') : followLabel;
+
+        return (
+          <button
+            type="button"
+            onClick={onToggleFavorite}
+            disabled={isBlocked}
+            className={`${iconClass} border backdrop-blur-sm ${
+              isBlocked
+                ? 'opacity-50 cursor-not-allowed bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50'
+                : stats.user.isFavorite
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 border-amber-400/80 hover:from-amber-600 hover:to-amber-700'
+                  : 'bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800'
+            }`}
+            title={followTitle}
+            aria-label={followTitle}
+          >
+            <Star size={16} className={stats.user.isFavorite ? 'text-white fill-white' : 'text-amber-500'} />
+          </button>
+        );
+      })()}
+      {variant === 'header' && !isCurrentUser && (
         <button
           type="button"
           onClick={() => onStartChat()}
           disabled={startingChat || isBlocked}
-          className={
-            variant === 'header'
-              ? `${iconClass} text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed`
-              : 'px-4 py-2 rounded-xl text-white flex items-center gap-2 shadow-md bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
-          }
-          title={t('nav.chat')}
-          aria-label={t('nav.chat')}
+          className={`${iconClass} text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed`}
+          title={t('playerCard.message')}
+          aria-label={t('playerCard.message')}
         >
-          <MessageCircle size={variant === 'header' ? 16 : 18} />
-          {variant === 'default' ? <span className="text-sm">{t('nav.chat')}</span> : null}
+          <MessageCircle size={16} />
         </button>
       )}
       {!isCurrentUser && (

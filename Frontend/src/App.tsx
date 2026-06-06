@@ -30,24 +30,7 @@ const LeagueFixtureTableFullscreenPage = lazy(() =>
 const LeagueBracketFullscreenPage = lazy(() =>
   import('./pages/LeagueBracketFullscreenPage').then((m) => ({ default: m.LeagueBracketFullscreenPage }))
 );
-const MyClubsPage = lazy(() =>
-  import('./pages/clubAdmin/MyClubsPage').then((m) => ({ default: m.MyClubsPage }))
-);
-const ClubAdminHomePage = lazy(() =>
-  import('./pages/clubAdmin/ClubAdminHomePage').then((m) => ({ default: m.ClubAdminHomePage }))
-);
-const ClubSchedulePage = lazy(() =>
-  import('./pages/clubAdmin/ClubSchedulePage').then((m) => ({ default: m.ClubSchedulePage }))
-);
-const ClubCourtsPage = lazy(() =>
-  import('./pages/clubAdmin/ClubCourtsPage').then((m) => ({ default: m.ClubCourtsPage }))
-);
-const ClubCourtDetailPage = lazy(() =>
-  import('./pages/clubAdmin/ClubCourtDetailPage').then((m) => ({ default: m.ClubCourtDetailPage }))
-);
-const ClubSettingsPage = lazy(() =>
-  import('./pages/clubAdmin/ClubSettingsPage').then((m) => ({ default: m.ClubSettingsPage }))
-);
+const ClubManagementApp = lazy(() => import('./clubAdmin/ClubManagementApp'));
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
 import { usersApi } from './api';
@@ -84,6 +67,7 @@ import { ensureAuthBroadcastListener, scheduleProactiveAccessRefresh } from '@/a
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
 import { usePresenceSubscriptionManager } from './hooks/usePresenceSubscriptionManager';
 import { ReactionEmojiUsageBootstrap } from './components/ReactionEmojiUsageBootstrap';
+import { AdPlacementsBootstrap } from './components/sponsorSlots/AdPlacementsBootstrap';
 import { ProfileNameGateHost } from './components/home/ProfileNameGateHost';
 import { PrimarySportGateHost } from './components/home/PrimarySportGateHost';
 import i18n from './i18n/config';
@@ -420,6 +404,7 @@ function AppContent() {
           <PrimarySportGateHost />
           <PermissionModalProvider />
           <ReactionEmojiUsageBootstrap />
+          {isAuthenticated && <AdPlacementsBootstrap />}
           <PlayerCardModalManager>
             <Routes>
         <Route
@@ -763,61 +748,11 @@ function AppContent() {
           }
         />
         <Route
-          path="/my-clubs"
+          path="/my-clubs/*"
           element={
             <ProtectedRoute>
               <Suspense fallback={<AppLoadingScreen isInitializing />}>
-                <MyClubsPage />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-clubs/:clubId/schedule"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing />}>
-                <ClubSchedulePage />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-clubs/:clubId/courts/:courtId"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing />}>
-                <ClubCourtDetailPage />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-clubs/:clubId/courts"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing />}>
-                <ClubCourtsPage />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-clubs/:clubId/settings"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing />}>
-                <ClubSettingsPage />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-clubs/:clubId"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing />}>
-                <ClubAdminHomePage />
+                <ClubManagementApp />
               </Suspense>
             </ProtectedRoute>
           }

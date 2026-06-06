@@ -27,6 +27,7 @@ import toast from 'react-hot-toast';
 import { removeOverlay } from '@/utils/urlSchema';
 import { sharePlayerProfile } from '@/utils/sharePlayerProfile';
 import { PlayerCardProfileBody } from '@/components/player/PlayerCardProfileBody';
+import { PlayerProfileSocialActions } from '@/components/player/PlayerProfileSocialActions';
 import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionBar';
 import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 import { appendLevelSportQuery } from '@/utils/levelSportQuery';
@@ -357,6 +358,18 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                             t={t}
                             isBlocked={isBlocked}
                             showTelegram={!!user}
+                            prependBeforeLevelHistory={
+                              !isCurrentUser ? (
+                                <PlayerProfileSocialActions
+                                  isFavorite={!!stats.user.isFavorite}
+                                  isBlocked={isBlocked}
+                                  startingChat={startingChat}
+                                  onToggleFavorite={handleToggleFavorite}
+                                  onStartChat={handleStartChat}
+                                  t={t}
+                                />
+                              ) : undefined
+                            }
                             onAvatarClick={() => { if (stats.user.originalAvatar) setShowAvatarView(true); }}
                             onRatingClick={stats.user.isTrainer && (stats.user.trainerReviewCount ?? 0) > 0 ? () => setShowReviewsView(true) : undefined}
                             onTelegramClick={() => {

@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
+import { AlertTriangle, CalendarDays, ClipboardList, Eye, LayoutGrid, Loader2, Settings } from 'lucide-react';
 import { clubAdminApi } from '@/api/clubAdmin';
-import { ClubAdminLayout } from '@/components/clubAdmin/ClubAdminLayout';
 import { ClubAdminCoachMark } from '@/components/clubAdmin/ClubAdminCoachMark';
-import { ClubAvatar } from '@/components/ClubAvatar';
+import { ClubAdminActionCard } from '@/components/clubAdmin/ClubAdminActionCard';
+import { ClubAdminHomeHero } from '@/components/clubAdmin/ClubAdminHomeHero';
+import { ClubAdminTodayStats } from '@/components/clubAdmin/ClubAdminTodayStats';
 import { useClubAdminForbidden } from '@/hooks/useClubAdminForbidden';
 import { ClubViewAsPlayerModal } from '@/components/clubAdmin/ClubViewAsPlayerModal';
+import { useClubAdminScreen } from '@/clubAdmin/useClubAdminShell';
 import {
   markClubAdminCoachStep,
   readClubAdminCoachMarks,
@@ -27,6 +30,11 @@ export function ClubAdminHomePage() {
   const [viewAsPlayerOpen, setViewAsPlayerOpen] = useState(false);
   const [coachMarks, setCoachMarks] = useState(readClubAdminCoachMarks);
   const [loading, setLoading] = useState(true);
+
+  useClubAdminScreen({
+    title: club?.name ?? t('clubAdmin.myClubs'),
+    backTo: '/my-clubs',
+  });
 
   useEffect(() => {
     if (!clubId) return;
@@ -55,83 +63,88 @@ export function ClubAdminHomePage() {
 
   if (loading || !club) {
     return (
-      <ClubAdminLayout title={t('clubAdmin.myClubs')} backTo="/my-clubs">
-        <p className="text-muted-foreground">{t('common.loading')}</p>
-      </ClubAdminLayout>
+      <div className="flex flex-col items-center justify-center gap-3 py-16">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
+      </div>
     );
   }
 
-  const today = format(new Date(), 'yyyy-MM-dd');
-
   return (
-    <ClubAdminLayout title={club.name} backTo="/my-clubs">
-      <div className="mb-4 flex items-center gap-3">
-        <ClubAvatar club={club} variant="card" className="h-14 w-14" />
-        <div>
-          <p className="text-sm text-muted-foreground">{club.city?.name}</p>
-          {club.integrationActive ? (
-            <p className="text-xs text-amber-600">{t('clubAdmin.integrationLinked')}</p>
-          ) : (
-            <p className="text-xs text-muted-foreground">{t('clubAdmin.integrationNone')}</p>
-          )}
+    <>
+      <div className="mx-auto max-w-lg space-y-5 pb-4">
+        <ClubAdminHomeHero club={club} />
+
+        {todaySummary && (
+          <ClubAdminTodayStats slots={todaySummary.slots} conflicts={todaySummary.conflicts} />
+        )}
+
+        {todaySummary?.externalSlotsFailed && (
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <p className="text-sm text-amber-800 dark:text-amber-300">{t('clubAdmin.integrationDown')}</p>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <p className="px-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            {t('clubAdmin.quickActions')}
+          </p>
+          <ClubAdminCoachMark
+            show={!coachMarks.schedule}
+            stepLabel={t('clubAdmin.coachStep', { current: 1, total: 3 })}
+            message={t('clubAdmin.coachSchedule')}
+            onDismiss={() => {
+              markClubAdminCoachStep('schedule');
+              setCoachMarks(readClubAdminCoachMarks());
+            }}
+          >
+            <ClubAdminActionCard
+              icon={CalendarDays}
+              label={t('clubAdmin.todaysSchedule')}
+              onClick={() => navigate(`schedule`)}
+            />
+          </ClubAdminCoachMark>
+          <ClubAdminActionCard
+            icon={ClipboardList}
+            label={t('clubAdmin.reservations')}
+            onClick={() => navigate(`reservations`)}
+          />
+          <ClubAdminActionCard
+            icon={LayoutGrid}
+            label={t('clubAdmin.allCourts')}
+            onClick={() => navigate(`courts`)}
+          />
+          <ClubAdminCoachMark
+            show={coachMarks.schedule && coachMarks.tapSlot && !coachMarks.settings}
+            stepLabel={t('clubAdmin.coachStep', { current: 3, total: 3 })}
+            message={t('clubAdmin.coachSettings')}
+            onDismiss={() => {
+              markClubAdminCoachStep('settings');
+              setCoachMarks(readClubAdminCoachMarks());
+            }}
+          >
+            <ClubAdminActionCard
+              icon={Settings}
+              label={t('clubAdmin.settings')}
+              onClick={() => navigate(`settings`)}
+            />
+          </ClubAdminCoachMark>
+        </div>
+
+        <div className="flex items-center justify-center pt-2">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 transition-colors hover:text-primary-700"
+            onClick={() => setViewAsPlayerOpen(true)}
+          >
+            <Eye className="h-3.5 w-3.5" />
+            {t('clubAdmin.viewAsPlayer')}
+          </button>
         </div>
       </div>
 
-      {todaySummary && (
-        <p className="mb-3 text-sm text-muted-foreground">
-          {t('clubAdmin.todaySummary', {
-            slots: todaySummary.slots,
-            conflicts: todaySummary.conflicts,
-          })}
-        </p>
-      )}
-      {todaySummary && todaySummary.conflicts > 0 && (
-        <p className="mb-3 text-xs text-amber-600">{t('clubAdmin.conflicts', { count: todaySummary.conflicts })}</p>
-      )}
-      {todaySummary?.externalSlotsFailed && (
-        <p className="mb-3 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
-          {t('clubAdmin.integrationDown')}
-        </p>
-      )}
-
-      <div className="grid gap-2">
-        <ClubAdminCoachMark
-          show={!coachMarks.schedule}
-          stepLabel={t('clubAdmin.coachStep', { current: 1, total: 3 })}
-          message={t('clubAdmin.coachSchedule')}
-          onDismiss={() => {
-            markClubAdminCoachStep('schedule');
-            setCoachMarks(readClubAdminCoachMarks());
-          }}
-        >
-          <button type="button" className="btn-primary w-full" onClick={() => navigate(`/my-clubs/${clubId}/schedule`)}>
-            {t('clubAdmin.todaysSchedule')}
-          </button>
-        </ClubAdminCoachMark>
-        <button type="button" className="btn-secondary w-full" onClick={() => navigate(`/my-clubs/${clubId}/courts`)}>
-          {t('clubAdmin.allCourts')}
-        </button>
-        <ClubAdminCoachMark
-          show={coachMarks.schedule && coachMarks.tapSlot && !coachMarks.settings}
-          stepLabel={t('clubAdmin.coachStep', { current: 3, total: 3 })}
-          message={t('clubAdmin.coachSettings')}
-          onDismiss={() => {
-            markClubAdminCoachStep('settings');
-            setCoachMarks(readClubAdminCoachMarks());
-          }}
-        >
-          <button type="button" className="btn-secondary w-full" onClick={() => navigate(`/my-clubs/${clubId}/settings`)}>
-            {t('clubAdmin.settings')}
-          </button>
-        </ClubAdminCoachMark>
-        <button type="button" className="text-sm text-muted-foreground underline" onClick={() => navigate(`/my-clubs/${clubId}/schedule?date=${today}`)}>
-          {t('clubAdmin.viewToday')}
-        </button>
-        <button type="button" className="text-sm text-primary underline" onClick={() => setViewAsPlayerOpen(true)}>
-          {t('clubAdmin.viewAsPlayer')}
-        </button>
-      </div>
       <ClubViewAsPlayerModal clubId={clubId} open={viewAsPlayerOpen} onClose={() => setViewAsPlayerOpen(false)} />
-    </ClubAdminLayout>
+    </>
   );
 }

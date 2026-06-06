@@ -39,6 +39,12 @@ router.get(
 );
 
 router.get(
+  '/clubs/:clubId/reservations',
+  requireClubAdmin('clubId'),
+  clubAdminController.listClubAdminReservations
+);
+
+router.get(
   '/clubs/:clubId/courts',
   requireClubAdmin('clubId'),
   clubAdminController.listClubAdminCourts

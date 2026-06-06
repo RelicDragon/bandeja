@@ -24,7 +24,7 @@ const LABEL_KEYS: Record<SlotVisualKind, string> = {
   inactive: 'clubAdmin.legend.inactive',
 };
 
-export function ScheduleLegend() {
+export function ScheduleLegend({ className }: { className?: string }) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(readLegendCollapsed);
 
@@ -35,7 +35,7 @@ export function ScheduleLegend() {
   };
 
   return (
-    <div className="mb-2 rounded-lg border border-border bg-muted/30">
+    <div className={`rounded-lg border border-border bg-muted/30 ${className ?? ''}`}>
       <button
         type="button"
         className="flex w-full items-center justify-between px-3 py-2 text-sm font-medium"

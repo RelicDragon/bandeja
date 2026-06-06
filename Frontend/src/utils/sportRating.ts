@@ -43,6 +43,17 @@ function mapLevelToExternalValue(system: SportRatingDisplaySystem, level: number
   }
 }
 
+function parseHintNumericValue(raw: string): number | null {
+  const num = parseFloat(raw.replace(/[^\d.-]/g, ''));
+  return Number.isFinite(num) ? num : null;
+}
+
+function hintValueMatchesLevel(hintValue: string, level: number): boolean {
+  const hintNum = parseHintNumericValue(hintValue);
+  if (hintNum === null || hintNum > 20) return false;
+  return Math.abs(hintNum - level) < 0.06;
+}
+
 /** Profile / player card only — not for avatar badges. */
 export function formatRatingHint(
   sport: Sport,
@@ -52,6 +63,7 @@ export function formatRatingHint(
 ): string | null {
   const trimmed = externalHint?.trim();
   if (trimmed) {
+    if (hintValueMatchesLevel(trimmed, level)) return null;
     const model = getSportRatingModel(sport);
     const system = model.display?.system;
     if (system && system !== 'NONE') {
@@ -73,7 +85,7 @@ export function formatRatingHint(
   }
 
   const value = mapLevelToExternalValue(display.system, level);
-  if (!value) return null;
+  if (!value || hintValueMatchesLevel(value, level)) return null;
 
   const systemKey = display.system.toLowerCase();
   return t(`sportRating.display.${systemKey}`, { value, defaultValue: `≈ ${value} ${display.system}` });

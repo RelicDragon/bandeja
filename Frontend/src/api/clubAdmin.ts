@@ -77,10 +77,48 @@ export interface CourtSlotHold {
   note: string | null;
 }
 
+export type ClubAdminReservationItem =
+  | {
+      kind: 'game';
+      id: string;
+      gameId: string;
+      courtId: string | null;
+      courtName: string | null;
+      startTime: string;
+      endTime: string;
+      hasBookedCourt: boolean;
+      status: string;
+      name: string | null;
+      host: { id: string; firstName: string | null; lastName: string | null; avatar: string | null };
+      participantCount: number;
+    }
+  | {
+      kind: 'hold';
+      id: string;
+      holdId: string;
+      courtId: string;
+      courtName: string | null;
+      startTime: string;
+      endTime: string;
+      label: CourtSlotHoldLabel;
+      note: string | null;
+    };
+
+export interface ClubAdminReservationsResponse {
+  items: ClubAdminReservationItem[];
+  hasMore: boolean;
+}
+
+export interface ClubAdminClubsListResponse {
+  items: ClubAdminClubListItem[];
+  hasMore: boolean;
+  total: number;
+}
+
 export const clubAdminApi = {
-  listClubs: async () => {
-    const res = await api.get<ApiResponse<ClubAdminClubListItem[]>>('/club-admin/clubs');
-    return res.data.data ?? [];
+  listClubs: async (params?: { limit?: number; offset?: number; q?: string }) => {
+    const res = await api.get<ApiResponse<ClubAdminClubsListResponse>>('/club-admin/clubs', { params });
+    return res.data.data ?? { items: [], hasMore: false, total: 0 };
   },
 
   getClub: async (clubId: string) => {
@@ -99,6 +137,14 @@ export const clubAdminApi = {
     const res = await api.get<ApiResponse<ClubAdminScheduleResponse>>(
       `/club-admin/clubs/${clubId}/schedule`,
       { params: { date, courtId } }
+    );
+    return res.data.data!;
+  },
+
+  listReservations: async (clubId: string, params?: { limit?: number; offset?: number }) => {
+    const res = await api.get<ApiResponse<ClubAdminReservationsResponse>>(
+      `/club-admin/clubs/${clubId}/reservations`,
+      { params }
     );
     return res.data.data!;
   },
