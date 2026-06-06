@@ -70,7 +70,7 @@ struct PickleballCourtStrip: View {
 
             let scaleX = w / 112
             let scaleY = h / 218
-            func map(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * scaleX, y: p.y * scaleY) }
+            let map: (CGPoint) -> CGPoint = { p in CGPoint(x: p.x * scaleX, y: p.y * scaleY) }
 
             let floor = [CGPoint(x: sx, y: sy), CGPoint(x: sx + sw, y: sy), CGPoint(x: sx + sw, y: sy + sh), CGPoint(x: sx, y: sy + sh)]
             let surround = [
@@ -147,27 +147,39 @@ struct PickleballCourtStrip: View {
         return path
     }
 
+    private func courtLinePath(
+        from a: CGPoint, to b: CGPoint,
+        sx: CGFloat, sy: CGFloat, sw: CGFloat, sh: CGFloat,
+        map: (CGPoint) -> CGPoint
+    ) -> Path {
+        var p = Path()
+        p.move(to: map(projectFlat(fx: a.x, fy: a.y, sx: sx, sy: sy, sw: sw, sh: sh)))
+        p.addLine(to: map(projectFlat(fx: b.x, fy: b.y, sx: sx, sy: sy, sw: sw, sh: sh)))
+        return p
+    }
+
     @ViewBuilder
     private func courtLines(
         sx: CGFloat, sy: CGFloat, sw: CGFloat, sh: CGFloat,
         midX: CGFloat, nvzTop: CGFloat, nvzBottom: CGFloat,
         map: (CGPoint) -> CGPoint
     ) -> some View {
-        func line(_ a: CGPoint, _ b: CGPoint) -> Path {
-            var p = Path()
-            p.move(to: map(projectFlat(fx: a.x, fy: a.y, sx: sx, sy: sy, sw: sw, sh: sh)))
-            p.addLine(to: map(projectFlat(fx: b.x, fy: b.y, sx: sx, sy: sy, sw: sw, sh: sh)))
-            return p
-        }
-
-        line(CGPoint(x: sx, y: sy), CGPoint(x: sx + sw, y: sy)).stroke(Color.white.opacity(0.88), lineWidth: 0.85)
-        line(CGPoint(x: sx + sw, y: sy), CGPoint(x: sx + sw, y: sy + sh)).stroke(Color.white.opacity(0.88), lineWidth: 0.85)
-        line(CGPoint(x: sx + sw, y: sy + sh), CGPoint(x: sx, y: sy + sh)).stroke(Color.white.opacity(0.88), lineWidth: 0.85)
-        line(CGPoint(x: sx, y: sy + sh), CGPoint(x: sx, y: sy)).stroke(Color.white.opacity(0.88), lineWidth: 0.85)
-        line(CGPoint(x: sx, y: nvzTop), CGPoint(x: sx + sw, y: nvzTop)).stroke(Color.white.opacity(0.82), lineWidth: 0.75)
-        line(CGPoint(x: sx, y: nvzBottom), CGPoint(x: sx + sw, y: nvzBottom)).stroke(Color.white.opacity(0.82), lineWidth: 0.75)
-        line(CGPoint(x: midX, y: sy), CGPoint(x: midX, y: nvzTop)).stroke(Color.white.opacity(0.82), lineWidth: 0.7)
-        line(CGPoint(x: midX, y: nvzBottom), CGPoint(x: midX, y: sy + sh)).stroke(Color.white.opacity(0.82), lineWidth: 0.7)
+        courtLinePath(from: CGPoint(x: sx, y: sy), to: CGPoint(x: sx + sw, y: sy), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.88), lineWidth: 0.85)
+        courtLinePath(from: CGPoint(x: sx + sw, y: sy), to: CGPoint(x: sx + sw, y: sy + sh), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.88), lineWidth: 0.85)
+        courtLinePath(from: CGPoint(x: sx + sw, y: sy + sh), to: CGPoint(x: sx, y: sy + sh), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.88), lineWidth: 0.85)
+        courtLinePath(from: CGPoint(x: sx, y: sy + sh), to: CGPoint(x: sx, y: sy), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.88), lineWidth: 0.85)
+        courtLinePath(from: CGPoint(x: sx, y: nvzTop), to: CGPoint(x: sx + sw, y: nvzTop), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.82), lineWidth: 0.75)
+        courtLinePath(from: CGPoint(x: sx, y: nvzBottom), to: CGPoint(x: sx + sw, y: nvzBottom), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.82), lineWidth: 0.75)
+        courtLinePath(from: CGPoint(x: midX, y: sy), to: CGPoint(x: midX, y: nvzTop), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.82), lineWidth: 0.7)
+        courtLinePath(from: CGPoint(x: midX, y: nvzBottom), to: CGPoint(x: midX, y: sy + sh), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.82), lineWidth: 0.7)
     }
 
     @ViewBuilder

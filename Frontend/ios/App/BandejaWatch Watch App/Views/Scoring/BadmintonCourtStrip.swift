@@ -72,7 +72,7 @@ struct BadmintonCourtStrip: View {
 
             let scaleX = w / 112
             let scaleY = h / 218
-            func map(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * scaleX, y: p.y * scaleY) }
+            let map: (CGPoint) -> CGPoint = { p in CGPoint(x: p.x * scaleX, y: p.y * scaleY) }
 
             let floor = [CGPoint(x: sx, y: sy), CGPoint(x: sx + sw, y: sy), CGPoint(x: sx + sw, y: sy + sh), CGPoint(x: sx, y: sy + sh)]
             let surround = [
@@ -153,6 +153,27 @@ struct BadmintonCourtStrip: View {
         return path
     }
 
+    private func courtLinePath(
+        from a: CGPoint, to b: CGPoint,
+        sx: CGFloat, sy: CGFloat, sw: CGFloat, sh: CGFloat,
+        map: (CGPoint) -> CGPoint
+    ) -> Path {
+        var p = Path()
+        p.move(to: map(projectFlat(fx: a.x, fy: a.y, sx: sx, sy: sy, sw: sw, sh: sh)))
+        p.addLine(to: map(projectFlat(fx: b.x, fy: b.y, sx: sx, sy: sy, sw: sw, sh: sh)))
+        return p
+    }
+
+    private func serveBoxMinX(
+        topEnd: Bool, rightServiceCourt: Bool,
+        singlesL: CGFloat, midX: CGFloat
+    ) -> CGFloat {
+        if topEnd {
+            return rightServiceCourt ? singlesL : midX
+        }
+        return rightServiceCourt ? midX : singlesL
+    }
+
     @ViewBuilder
     private func courtLines(
         sx: CGFloat, sy: CGFloat, sw: CGFloat, sh: CGFloat,
@@ -161,25 +182,30 @@ struct BadmintonCourtStrip: View {
         dblLongTop: CGFloat, dblLongBottom: CGFloat,
         map: (CGPoint) -> CGPoint
     ) -> some View {
-        func line(_ a: CGPoint, _ b: CGPoint) -> Path {
-            var p = Path()
-            p.move(to: map(projectFlat(fx: a.x, fy: a.y, sx: sx, sy: sy, sw: sw, sh: sh)))
-            p.addLine(to: map(projectFlat(fx: b.x, fy: b.y, sx: sx, sy: sy, sw: sw, sh: sh)))
-            return p
-        }
-
-        line(CGPoint(x: sx, y: sy), CGPoint(x: sx + sw, y: sy)).stroke(Color.white.opacity(0.88), lineWidth: 0.85)
-        line(CGPoint(x: sx + sw, y: sy), CGPoint(x: sx + sw, y: sy + sh)).stroke(Color.white.opacity(0.88), lineWidth: 0.85)
-        line(CGPoint(x: sx + sw, y: sy + sh), CGPoint(x: sx, y: sy + sh)).stroke(Color.white.opacity(0.88), lineWidth: 0.85)
-        line(CGPoint(x: sx, y: sy + sh), CGPoint(x: sx, y: sy)).stroke(Color.white.opacity(0.88), lineWidth: 0.85)
-        line(CGPoint(x: sx, y: shortTop), CGPoint(x: sx + sw, y: shortTop)).stroke(Color.white.opacity(0.82), lineWidth: 0.75)
-        line(CGPoint(x: sx, y: shortBottom), CGPoint(x: sx + sw, y: shortBottom)).stroke(Color.white.opacity(0.82), lineWidth: 0.75)
-        line(CGPoint(x: sx, y: dblLongTop), CGPoint(x: sx + sw, y: dblLongTop)).stroke(Color.white.opacity(0.78), lineWidth: 0.7)
-        line(CGPoint(x: sx, y: dblLongBottom), CGPoint(x: sx + sw, y: dblLongBottom)).stroke(Color.white.opacity(0.78), lineWidth: 0.7)
-        line(CGPoint(x: singlesL, y: sy), CGPoint(x: singlesL, y: sy + sh)).stroke(Color.white.opacity(0.82), lineWidth: 0.7)
-        line(CGPoint(x: singlesR, y: sy), CGPoint(x: singlesR, y: sy + sh)).stroke(Color.white.opacity(0.82), lineWidth: 0.7)
-        line(CGPoint(x: midX, y: sy), CGPoint(x: midX, y: shortTop)).stroke(Color.white.opacity(0.78), lineWidth: 0.65)
-        line(CGPoint(x: midX, y: shortBottom), CGPoint(x: midX, y: sy + sh)).stroke(Color.white.opacity(0.78), lineWidth: 0.65)
+        courtLinePath(from: CGPoint(x: sx, y: sy), to: CGPoint(x: sx + sw, y: sy), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.88), lineWidth: 0.85)
+        courtLinePath(from: CGPoint(x: sx + sw, y: sy), to: CGPoint(x: sx + sw, y: sy + sh), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.88), lineWidth: 0.85)
+        courtLinePath(from: CGPoint(x: sx + sw, y: sy + sh), to: CGPoint(x: sx, y: sy + sh), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.88), lineWidth: 0.85)
+        courtLinePath(from: CGPoint(x: sx, y: sy + sh), to: CGPoint(x: sx, y: sy), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.88), lineWidth: 0.85)
+        courtLinePath(from: CGPoint(x: sx, y: shortTop), to: CGPoint(x: sx + sw, y: shortTop), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.82), lineWidth: 0.75)
+        courtLinePath(from: CGPoint(x: sx, y: shortBottom), to: CGPoint(x: sx + sw, y: shortBottom), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.82), lineWidth: 0.75)
+        courtLinePath(from: CGPoint(x: sx, y: dblLongTop), to: CGPoint(x: sx + sw, y: dblLongTop), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.78), lineWidth: 0.7)
+        courtLinePath(from: CGPoint(x: sx, y: dblLongBottom), to: CGPoint(x: sx + sw, y: dblLongBottom), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.78), lineWidth: 0.7)
+        courtLinePath(from: CGPoint(x: singlesL, y: sy), to: CGPoint(x: singlesL, y: sy + sh), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.82), lineWidth: 0.7)
+        courtLinePath(from: CGPoint(x: singlesR, y: sy), to: CGPoint(x: singlesR, y: sy + sh), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.82), lineWidth: 0.7)
+        courtLinePath(from: CGPoint(x: midX, y: sy), to: CGPoint(x: midX, y: shortTop), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.78), lineWidth: 0.65)
+        courtLinePath(from: CGPoint(x: midX, y: shortBottom), to: CGPoint(x: midX, y: sy + sh), sx: sx, sy: sy, sw: sw, sh: sh, map: map)
+            .stroke(Color.white.opacity(0.78), lineWidth: 0.65)
     }
 
     @ViewBuilder
@@ -193,15 +219,12 @@ struct BadmintonCourtStrip: View {
         let boxW = (singlesR - singlesL) / 2 - 1
         let backTopH = shortTop - dblLongTop - 1
         let backBottomH = dblLongBottom - shortBottom - 1
-
-        func boxMinX(topEnd: Bool, rightServiceCourt: Bool) -> CGFloat {
-            if topEnd {
-                return rightServiceCourt ? singlesL : midX
-            }
-            return rightServiceCourt ? midX : singlesL
-        }
-
-        let serverMinX = boxMinX(topEnd: servingTop, rightServiceCourt: serveRight)
+        let serverMinX = serveBoxMinX(
+            topEnd: servingTop,
+            rightServiceCourt: serveRight,
+            singlesL: singlesL,
+            midX: midX
+        )
 
         if servingTop {
             servicePoly(

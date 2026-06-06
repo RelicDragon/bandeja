@@ -1,5 +1,27 @@
 import SwiftUI
 
+private enum WatchServeCourtVB {
+    static let w: CGFloat = 100
+    static let h: CGFloat = 200
+    static let netY: CGFloat = 100
+    static let netHalfH: CGFloat = 5
+    static let m: CGFloat = 2
+
+    static func serviceFromNet(variant: WatchServeCourtSchema.Variant) -> CGFloat {
+        variant == .tennis ? 64 : 69.5
+    }
+
+    static func playXLeft(variant: WatchServeCourtSchema.Variant, matchDoubles: Bool) -> CGFloat {
+        if variant == .tennis, !matchDoubles { return 38 }
+        return 26
+    }
+
+    static func playXRight(variant: WatchServeCourtSchema.Variant, matchDoubles: Bool) -> CGFloat {
+        if variant == .tennis, !matchDoubles { return 62 }
+        return 74
+    }
+}
+
 /// Bird's-eye padel/tennis court diagram — geometry mirrors web `PadelCourt` / `TennisCourt`.
 struct WatchServeCourtSchema: View {
     enum Variant { case padel, tennis }
@@ -16,27 +38,7 @@ struct WatchServeCourtSchema: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private enum VB {
-        static let w: CGFloat = 100
-        static let h: CGFloat = 200
-        static let netY: CGFloat = 100
-        static let netHalfH: CGFloat = 5
-        static let m: CGFloat = 2
-
-        static func serviceFromNet(variant: Variant) -> CGFloat {
-            variant == .tennis ? 64 : 69.5
-        }
-
-        static func playXLeft(variant: Variant, matchDoubles: Bool) -> CGFloat {
-            if variant == .tennis, !matchDoubles { return 38 }
-            return 26
-        }
-
-        static func playXRight(variant: Variant, matchDoubles: Bool) -> CGFloat {
-            if variant == .tennis, !matchDoubles { return 62 }
-            return 74
-        }
-    }
+    private typealias VB = WatchServeCourtVB
 
     private var westServe: Bool {
         WatchServeCourtLayout.serveTargetIsWest(
@@ -143,7 +145,7 @@ struct WatchServeCourtSchema: View {
         let colLX = VB.m
         let colRX = VB.w / 2
         let bandH = VB.serviceFromNet(variant: variant)
-        let yTop = VB.netY - VB.serviceFromNet
+        let yTop = VB.netY - VB.serviceFromNet(variant: variant)
         let yBottom = VB.netY
         let highlight = Color.accentColor.opacity(0.32)
         let dim = Color.secondary.opacity(0.14)
@@ -323,6 +325,8 @@ private struct WatchServeArrowTrace: View {
 }
 
 private enum WatchServeCourtLayout {
+    private typealias VB = WatchServeCourtVB
+
     enum VisualEnd { case top, bottom }
 
     struct AvatarSlot: Identifiable {
