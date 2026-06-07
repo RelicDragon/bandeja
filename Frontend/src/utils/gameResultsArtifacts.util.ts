@@ -62,11 +62,9 @@ export function hasCachedResultsSummary(resultsSummaryText?: string | null): boo
   return Boolean(resultsSummaryText?.trim());
 }
 
-export function hasGamePhotoForTelegram(game: {
-  photosCount?: number;
-  mainPhotoId?: string | null;
-  mainPhoto?: { id: string } | null;
-}): boolean {
+export function hasGamePhotoForTelegram(
+  game: Pick<Game, 'photosCount' | 'mainPhotoId' | 'mainPhoto'>
+): boolean {
   return (game.photosCount || 0) > 0 || Boolean(getGameMainPhotoId(game));
 }
 

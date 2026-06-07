@@ -8,6 +8,7 @@ import { getSportConfig } from '@/sport/sportRegistry';
 import { gamePhotoOriginalUrl } from '@/utils/gamePhotoUrl';
 import { useGamePhotosStore } from '@/store/gamePhotosStore';
 import { shareGameResultsCard } from '@/utils/gameResultsShare.util';
+import { hasCachedResultsSummary } from '@/utils/gameResultsArtifacts.util';
 import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 import { buildDuplicateGameInitialData } from '@/utils/buildDuplicateGameInitialData';
 import { runWithProfileName } from '@/utils/runWithProfileName';
