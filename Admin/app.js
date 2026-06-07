@@ -1,46 +1,4 @@
-function isAdminTunnelPage() {
-    return (
-        window.location.protocol !== 'file:' &&
-        window.location.hostname === 'localhost' &&
-        window.location.port === '9000'
-    );
-}
-
-function resolveAdminApiUrl() {
-    if (isAdminTunnelPage()) {
-        return '/api';
-    }
-    const stored = localStorage.getItem('apiUrl');
-    if (stored) return stored;
-    if (window.location.protocol === 'file:') {
-        return 'http://localhost:9000/api';
-    }
-    return '/api';
-}
-
-let API_URL = resolveAdminApiUrl();
-
-function syncAdminApiUrlUi() {
-    const select = document.getElementById('apiUrl');
-    if (select) {
-        const hasOption = Array.from(select.options).some((o) => o.value === API_URL);
-        select.value = hasOption ? API_URL : select.options[0]?.value || API_URL;
-    }
-}
-
-function showFileProtocolAdminBanner() {
-    if (window.location.protocol !== 'file:') return;
-    if (document.getElementById('fileProtocolAdminBanner')) return;
-    const banner = document.createElement('div');
-    banner.id = 'fileProtocolAdminBanner';
-    banner.className = 'admin-file-protocol-banner';
-    banner.innerHTML =
-        '<strong>Open Admin via the SSH tunnel.</strong> ' +
-        'Local <code>index.html</code> cannot call <code>localhost:9000</code> (browser blocks it). ' +
-        'After <code>Admin/run-ssh.sh</code>, use <a href="http://localhost:9000/">http://localhost:9000/</a> ' +
-        'and API URL <code>/api</code>.';
-    document.body.prepend(banner);
-}
+let API_URL = localStorage.getItem('apiUrl') || 'http://localhost:9000/api';
 let authToken = null;
 /** Refresh token for admin session (short access JWT after legacy sunset). */
 let adminRefreshToken = null;
@@ -182,14 +140,8 @@ async function apiRequest(endpoint, options = {}, isRetry = false) {
         return data;
     } catch (error) {
         if (error instanceof TypeError && String(error.message).includes('fetch')) {
-            const hint =
-                window.location.protocol === 'file:'
-                    ? ' Open http://localhost:9000/ (not a local index.html file) after Admin/run-ssh.sh.'
-                    : isAdminTunnelPage()
-                      ? ' Use API URL "/api" on the login screen.'
-                      : ' Check the API URL on login and that the backend/tunnel is running.';
             const networkError = new Error(
-                `Cannot reach API at ${API_URL}${endpoint}.${hint}`
+                `Cannot reach API at ${API_URL}${endpoint}. Check the API URL on login, ensure the backend is running, and deploy the latest backend if this route is new.`
             );
             console.error('API Error:', networkError);
             throw networkError;
@@ -1764,15 +1716,13 @@ window.updateReportStatus = updateReportStatus;
 window.updateStoryCommentReportStatus = updateStoryCommentReportStatus;
 
 document.addEventListener('DOMContentLoaded', () => {
-    API_URL = resolveAdminApiUrl();
-    if (isAdminTunnelPage()) {
-        localStorage.setItem('apiUrl', '/api');
-    }
-    syncAdminApiUrlUi();
-    showFileProtocolAdminBanner();
-
     const savedToken = localStorage.getItem('adminToken');
     const savedAdmin = localStorage.getItem('adminData');
+    const savedApiUrl = localStorage.getItem('apiUrl');
+
+    if (savedApiUrl) {
+        document.getElementById('apiUrl').value = savedApiUrl;
+    }
 
     if (savedToken && savedAdmin) {
         authToken = savedToken;

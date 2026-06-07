@@ -71,9 +71,9 @@ router.get(
   requireAdmin,
   getGameResultsArtifactQueueStats
 );
-router.get('/results-artifacts/replicate-model', requireAdmin, getReplicatePhotoModel);
+router.get('/results-artifacts/photo-model', requireAdmin, getReplicatePhotoModel);
 router.patch(
-  '/results-artifacts/replicate-model',
+  '/results-artifacts/photo-model',
   requireAdmin,
   body('modelId').isString().trim().notEmpty(),
   validate,

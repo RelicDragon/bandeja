@@ -48,7 +48,7 @@ async function loadReplicatePhotoModelSetting() {
     setReplicateModelStatus('Loading…', 'loading');
 
     try {
-        const response = await apiRequest('/admin/results-artifacts/replicate-model');
+        const response = await apiRequest('/admin/results-artifacts/photo-model');
         if (!response.success) throw new Error('Failed to load settings');
 
         const { activeModelId, models, envFallbackModelId } = response.data;
@@ -78,7 +78,11 @@ async function loadReplicatePhotoModelSetting() {
 }
 
 function formatPlatformSettingsApiError(error) {
-    return error?.message || 'Request failed';
+    const msg = error?.message || 'Request failed';
+    if (msg.includes('Cannot reach API at')) {
+        return `${msg} For local dev use "Development (localhost:3000)" on the login screen.`;
+    }
+    return msg;
 }
 
 async function saveReplicatePhotoModel() {
@@ -94,7 +98,7 @@ async function saveReplicatePhotoModel() {
     setReplicateModelStatus('Saving…', 'loading');
 
     try {
-        const response = await apiRequest('/admin/results-artifacts/replicate-model', {
+        const response = await apiRequest('/admin/results-artifacts/photo-model', {
             method: 'PATCH',
             body: JSON.stringify({ modelId }),
         });

@@ -94,5 +94,4 @@ ADMIN_PID=$!
 wait_for_port 9000 "Admin" "${ADMIN_PID}"
 
 echo "Tunnels up (Ctrl+C to stop)"
-echo "Open Admin at http://localhost:9000/ (not a local index.html file). API URL: /api"
 wait
