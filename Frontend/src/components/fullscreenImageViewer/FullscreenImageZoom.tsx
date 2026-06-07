@@ -34,12 +34,12 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
     const [panningDisabled, setPanningDisabled] = useState(true);
     const tapStartRef = useRef<{ x: number; y: number } | null>(null);
     const tapSuppressedRef = useRef(false);
-    const tapCloseTimerRef = useRef<ReturnType<typeof setTimeout>>();
+    const tapCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const clearTapCloseTimer = useCallback(() => {
       if (tapCloseTimerRef.current) {
         clearTimeout(tapCloseTimerRef.current);
-        tapCloseTimerRef.current = undefined;
+        tapCloseTimerRef.current = null;
       }
     }, []);
 
@@ -47,7 +47,7 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
       if (!onTap) return;
       clearTapCloseTimer();
       tapCloseTimerRef.current = setTimeout(() => {
-        tapCloseTimerRef.current = undefined;
+        tapCloseTimerRef.current = null;
         if (!tapSuppressedRef.current) onTap();
       }, TAP_CLOSE_DELAY_MS);
     }, [clearTapCloseTimer, onTap]);
