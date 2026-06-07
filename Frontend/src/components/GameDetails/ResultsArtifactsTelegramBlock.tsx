@@ -6,7 +6,6 @@ import {
   DEFAULT_PHOTO_GENERATIONS_MAX,
   isAnyArtifactGenerating,
   isPhotoReadyForTelegram,
-  isSummaryReadyForTelegram,
 } from '@/utils/gameResultsArtifacts.util';
 
 type ResultsArtifactsTelegramBlockProps = {
@@ -18,7 +17,6 @@ type ResultsArtifactsTelegramBlockProps = {
   photoGenerationsMaxFallback?: number;
   onSend: () => void;
   onGeneratePhoto: () => void;
-  onGenerateSummary: () => void;
 };
 
 export function ResultsArtifactsTelegramBlock({
@@ -30,11 +28,9 @@ export function ResultsArtifactsTelegramBlock({
   photoGenerationsMaxFallback,
   onSend,
   onGeneratePhoto,
-  onGenerateSummary,
 }: ResultsArtifactsTelegramBlockProps) {
   const { t } = useTranslation();
 
-  const summaryReady = isSummaryReadyForTelegram(artifacts, hasSummaryText);
   const photoReady = isPhotoReadyForTelegram(artifacts, hasGamePhoto);
   const canGeneratePhoto = canShowPhotoGenerationAction(artifacts);
   const isGenerating =
@@ -43,7 +39,6 @@ export function ResultsArtifactsTelegramBlock({
   const isBusy = isSending || isGenerating;
 
   const showPhotoBtn = canGeneratePhoto;
-  const showSummaryBtn = !summaryReady;
   const photoBtnLabel = photoReady
     ? t('gameResults.regeneratePhoto')
     : t('gameResults.generatePhoto');
@@ -51,8 +46,6 @@ export function ResultsArtifactsTelegramBlock({
   const photoGenerationsMax =
     artifacts?.photoGenerationsMax ?? photoGenerationsMaxFallback ?? DEFAULT_PHOTO_GENERATIONS_MAX;
   const photoGenerationsProgress = `${photoGenerationsUsed}/${photoGenerationsMax}`;
-  const showGenerateRow = showPhotoBtn || showSummaryBtn;
-
   return (
     <div className="mb-6 w-full max-w-md mx-auto flex flex-col gap-2 px-2">
       {isGenerating ? <ArtifactsGeneratingAnimation t={t} /> : null}
@@ -67,38 +60,19 @@ export function ResultsArtifactsTelegramBlock({
         <SendButtonContent isSending={isSending} t={t} />
       </button>
 
-      {showGenerateRow ? (
-        <div
-          className={
-            showPhotoBtn && showSummaryBtn ? 'grid grid-cols-2 gap-2' : 'grid grid-cols-1'
-          }
+      {showPhotoBtn ? (
+        <button
+          type="button"
+          onClick={onGeneratePhoto}
+          disabled={isBusy}
+          className={telegramSecondaryButtonClass(isBusy)}
         >
-          {showPhotoBtn ? (
-            <button
-              type="button"
-              onClick={onGeneratePhoto}
-              disabled={isBusy}
-              className={telegramSecondaryButtonClass(isBusy)}
-            >
-              <Wand2 size={16} className="shrink-0" aria-hidden />
-              <span className="flex flex-col items-center gap-0 leading-tight">
-                <span>{photoBtnLabel}</span>
-                <span className="text-[10px] font-normal opacity-70">{photoGenerationsProgress}</span>
-              </span>
-            </button>
-          ) : null}
-          {showSummaryBtn ? (
-            <button
-              type="button"
-              onClick={onGenerateSummary}
-              disabled={isBusy}
-              className={telegramSecondaryButtonClass(isBusy)}
-            >
-              <Wand2 size={16} className="shrink-0" aria-hidden />
-              <span>{t('gameResults.generateSummary')}</span>
-            </button>
-          ) : null}
-        </div>
+          <Wand2 size={16} className="shrink-0" aria-hidden />
+          <span className="flex flex-col items-center gap-0 leading-tight">
+            <span>{photoBtnLabel}</span>
+            <span className="text-[10px] font-normal opacity-70">{photoGenerationsProgress}</span>
+          </span>
+        </button>
       ) : null}
     </div>
   );

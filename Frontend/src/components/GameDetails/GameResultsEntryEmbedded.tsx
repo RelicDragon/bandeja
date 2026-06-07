@@ -340,9 +340,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
   const handleGenerateResultsPhoto = () => void startArtifactGeneration(gamesApi.prepareResultsArtifactPhoto);
 
-  const handleGenerateResultsSummary = () =>
-    void startArtifactGeneration(gamesApi.prepareResultsArtifactSummary);
-
   const loadGamePhotos = useGamePhotosStore((s) => s.loadGamePhotos);
 
   const refreshGamePhotosFromServer = useCallback(
@@ -1175,7 +1172,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
           photoGenerationsMaxFallback={photoGenerationsMaxFallback}
           onSend={handleSendToTelegram}
           onGeneratePhoto={handleGenerateResultsPhoto}
-          onGenerateSummary={handleGenerateResultsSummary}
         />
       )}
 
