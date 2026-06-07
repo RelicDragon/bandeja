@@ -72,7 +72,10 @@ import { mergeGameWithInviteDeletedPayload, isPendingGameInvite } from '@/utils/
 import { socketService } from '@/services/socketService';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { shouldSyncEngineGameFromShell } from '@/utils/mergeGameFormatForResults';
-import { mergeGameResultsArtifactsFields } from '@/utils/gameResultsArtifacts.util';
+import {
+  mergeGameResultsArtifactsFields,
+  shouldMergeSelfGameSocketUpdate,
+} from '@/utils/gameResultsArtifacts.util';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
 import { AnimatedPresencePanel } from '@/components/motion/AnimatedPresencePanel';
 import { AnimatedChildrenStagger } from '@/components/motion/AnimatedChildrenStagger';
@@ -364,9 +367,10 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
         });
 
       if (fromSelf) {
-        const nextVersion = updatedGame.resultsArtifacts?.version ?? 0;
-        const prevVersion = prevGame.resultsArtifacts?.version ?? 0;
-        if (nextVersion > prevVersion || updatedGame.resultsArtifacts?.readyAt) {
+        if (
+          lastGameUpdate.forceUpdate ||
+          shouldMergeSelfGameSocketUpdate(prevGame, updatedGame)
+        ) {
           return mergeArtifactsOnSelf();
         }
         return prevGame;

@@ -38,12 +38,15 @@ export async function emitGamePhotoMainChanged(
 
 async function emitGameUpdateForPhotos(gameId: string, actorUserId: string) {
   try {
-    const socketService = (global as { socketService?: { emitGameUpdate: (a: string, b: string, c?: unknown) => Promise<void> } })
-      .socketService;
+    const socketService = (global as {
+      socketService?: {
+        emitGameUpdate: (a: string, b: string, c?: unknown, d?: boolean) => Promise<void>;
+      };
+    }).socketService;
     if (!socketService) return;
     const fullGame = await GameReadService.getGameById(gameId, actorUserId);
     if (fullGame) {
-      await socketService.emitGameUpdate(gameId, actorUserId, fullGame);
+      await socketService.emitGameUpdate(gameId, actorUserId, fullGame, true);
     }
   } catch (error) {
     console.error('Failed to emit game update after photo change:', error);

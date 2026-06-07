@@ -129,6 +129,29 @@ export function isAnyArtifactGenerating(
   );
 }
 
+export function gamePhotoFieldsChanged(
+  prev: Pick<Game, 'photosCount' | 'mainPhotoId' | 'mainPhoto'>,
+  next: Pick<Game, 'photosCount' | 'mainPhotoId' | 'mainPhoto'>
+): boolean {
+  if ((next.photosCount ?? 0) !== (prev.photosCount ?? 0)) return true;
+  if (next.mainPhotoId !== prev.mainPhotoId) return true;
+  if ((next.mainPhoto?.id ?? null) !== (prev.mainPhoto?.id ?? null)) return true;
+  return false;
+}
+
+export function shouldMergeSelfGameSocketUpdate(
+  prev: Pick<Game, 'resultsArtifacts' | 'photosCount' | 'mainPhotoId' | 'mainPhoto'>,
+  updated: Pick<Game, 'resultsArtifacts' | 'photosCount' | 'mainPhotoId' | 'mainPhoto'>,
+  forceUpdate?: boolean
+): boolean {
+  if (forceUpdate) return true;
+  const nextVersion = updated.resultsArtifacts?.version ?? 0;
+  const prevVersion = prev.resultsArtifacts?.version ?? 0;
+  if (nextVersion > prevVersion) return true;
+  if (updated.resultsArtifacts?.readyAt) return true;
+  return gamePhotoFieldsChanged(prev, updated);
+}
+
 export function mergeGameResultsArtifactsFields(prev: Game, next: Game): Game {
   const nextArtifacts = next.resultsArtifacts;
   const prevArtifacts = prev.resultsArtifacts;

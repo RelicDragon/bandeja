@@ -9,6 +9,7 @@ import type { Round } from '@/types/gameResults';
 import { shouldShowRoundAddedModal } from '@/utils/fivePlayerMatchCombinations';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import { useGameResultsEngine } from '@/hooks/useGameResultsEngine';
 import { useModalManager } from '@/hooks/useModalManager';
@@ -103,6 +104,9 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const [isStartingArtifactGeneration, setIsStartingArtifactGeneration] = useState(false);
   const artifactGenerationInFlightRef = useRef(false);
   const [pollArtifactsActive, setPollArtifactsActive] = useState(false);
+  const wasArtifactGeneratingRef = useRef(false);
+  const lastGamePhotoAdded = useSocketEventsStore((s) => s.lastGamePhotoAdded);
+  const lastGameUpdate = useSocketEventsStore((s) => s.lastGameUpdate);
   const [isTelegramSummaryModalOpen, setIsTelegramSummaryModalOpen] = useState(false);
   const [telegramSummary, setTelegramSummary] = useState('');
   const [showResendTelegramConfirm, setShowResendTelegramConfirm] = useState(false);
@@ -342,10 +346,48 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   }, [isArtifactsGenerating, isStartingArtifactGeneration]);
 
   const loadGamePhotos = useGamePhotosStore((s) => s.loadGamePhotos);
+
+  const refreshGamePhotosFromServer = useCallback(
+    async (gameId: string) => {
+      await loadGamePhotos(gameId).catch(() => {});
+      try {
+        const response = await gamesApi.getById(gameId);
+        const game = currentGameRef.current;
+        if (response.data && game?.id === gameId) {
+          onGameUpdate(mergeGameResultsArtifactsFields(game, response.data));
+        }
+      } catch {
+        // ignore refresh errors
+      }
+    },
+    [loadGamePhotos, onGameUpdate]
+  );
+
   useEffect(() => {
     if (!currentGame?.id || currentGame.resultsStatus !== 'FINAL') return;
     void loadGamePhotos(currentGame.id).catch(() => {});
   }, [currentGame?.id, currentGame?.resultsStatus, loadGamePhotos]);
+
+  useEffect(() => {
+    if (!currentGame?.id || !lastGamePhotoAdded || lastGamePhotoAdded.gameId !== currentGame.id) {
+      return;
+    }
+    void refreshGamePhotosFromServer(currentGame.id);
+  }, [currentGame?.id, lastGamePhotoAdded, refreshGamePhotosFromServer]);
+
+  useEffect(() => {
+    if (!currentGame?.id || !lastGameUpdate || lastGameUpdate.gameId !== currentGame.id) return;
+    const updated = lastGameUpdate.game;
+    const prev = currentGameRef.current;
+    if (!prev) return;
+    const photosChanged =
+      (updated.photosCount ?? 0) !== (prev.photosCount ?? 0) ||
+      updated.mainPhotoId !== prev.mainPhotoId ||
+      (updated.mainPhoto?.id ?? null) !== (prev.mainPhoto?.id ?? null);
+    if (photosChanged) {
+      void refreshGamePhotosFromServer(currentGame.id);
+    }
+  }, [currentGame?.id, lastGameUpdate, refreshGamePhotosFromServer]);
 
   useEffect(() => {
     const shouldPoll =
@@ -361,13 +403,17 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         applyArtifactsStatusPayload(response.data);
 
         const game = currentGameRef.current;
-        if (
+        const stillGenerating =
           game &&
-          !isAnyArtifactGenerating(response.data.artifacts, {
+          isAnyArtifactGenerating(response.data.artifacts, {
             hasSummaryText: hasCachedResultsSummary(response.data.resultsSummaryText),
             hasGamePhoto: hasGamePhotoForTelegram(game),
-          })
-        ) {
+          });
+        if (wasArtifactGeneratingRef.current && !stillGenerating) {
+          void refreshGamePhotosFromServer(gameId);
+        }
+        wasArtifactGeneratingRef.current = !!stillGenerating;
+        if (game && !stillGenerating) {
           setPollArtifactsActive(false);
         }
       } catch {
@@ -387,6 +433,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     isArtifactsGenerating,
     isStartingArtifactGeneration,
     applyArtifactsStatusPayload,
+    refreshGamePhotosFromServer,
   ]);
 
   const showSentToTelegramHint = useMemo(() => {

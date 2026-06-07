@@ -2,12 +2,14 @@ import assert from 'node:assert/strict';
 import {
   canAccessResultsTelegramActions,
   canShowPhotoGenerationAction,
+  gamePhotoFieldsChanged,
   hasEnteredResultsForTelegram,
   isAnyArtifactGenerating,
   isPhotoArtifactGenerating,
   isPhotoReadyForTelegram,
   isSummaryArtifactGenerating,
   isSummaryReadyForTelegram,
+  shouldMergeSelfGameSocketUpdate,
 } from './gameResultsArtifacts.util';
 import type { Game } from '@/types';
 import type { GameResultsArtifacts } from '@/types';
@@ -106,6 +108,30 @@ function run() {
     canAccessResultsTelegramActions(archivedGame, { id: 'other', isAdmin: false }),
     false
   );
+
+  const baseGame = {
+    photosCount: 1,
+    mainPhotoId: 'photo-1',
+    mainPhoto: { id: 'photo-1', thumbnailUrl: '/t1.jpg', originalUrl: '/o1.jpg' },
+    resultsArtifacts: artifacts({ version: 2, readyAt: '2026-01-01T00:00:00.000Z' }),
+  };
+  assert.equal(
+    gamePhotoFieldsChanged(baseGame, { ...baseGame, mainPhotoId: 'photo-2' }),
+    true
+  );
+  assert.equal(
+    shouldMergeSelfGameSocketUpdate(baseGame, {
+      ...baseGame,
+      mainPhotoId: 'photo-2',
+      photosCount: 2,
+    }),
+    true
+  );
+  assert.equal(
+    shouldMergeSelfGameSocketUpdate(baseGame, baseGame),
+    true
+  );
+  assert.equal(shouldMergeSelfGameSocketUpdate(baseGame, baseGame, true), true);
 
   console.log('gameResultsArtifacts.util.test.ts: ok');
 }

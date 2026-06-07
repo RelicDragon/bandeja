@@ -17,12 +17,20 @@ async function resolveGameUpdateActorId(gameId: string): Promise<string | null> 
   return participant?.userId ?? null;
 }
 
-export async function emitGameUpdateAfterArtifactsChange(gameId: string): Promise<void> {
+export async function emitGameUpdateAfterArtifactsChange(
+  gameId: string,
+  forceUpdate = false
+): Promise<void> {
   try {
     const socketService = (
       global as {
         socketService?: {
-          emitGameUpdate: (gameId: string, senderId: string, game?: unknown) => Promise<void>;
+          emitGameUpdate: (
+            gameId: string,
+            senderId: string,
+            game?: unknown,
+            forceUpdate?: boolean
+          ) => Promise<void>;
         };
       }
     ).socketService;
@@ -33,7 +41,7 @@ export async function emitGameUpdateAfterArtifactsChange(gameId: string): Promis
 
     const fullGame = await GameReadService.getGameById(gameId, actorUserId);
     if (fullGame) {
-      await socketService.emitGameUpdate(gameId, actorUserId, fullGame);
+      await socketService.emitGameUpdate(gameId, actorUserId, fullGame, forceUpdate);
     }
   } catch (error) {
     console.error('Failed to emit game update after artifacts change:', error);

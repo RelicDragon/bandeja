@@ -326,7 +326,7 @@ export class GameResultsArtifactService {
       const actorUserId = await this.resolvePhotoActorUserId(gameId);
       await emitGamePhotoAdded(gameId, dto, actorUserId);
       await emitGamePhotoMainChanged(gameId, dto.id, actorUserId);
-      void emitGameUpdateAfterArtifactsChange(gameId);
+      void emitGameUpdateAfterArtifactsChange(gameId, true);
     } catch (err: unknown) {
       if (isPrismaDeadlockError(err)) {
         await revertArtifactPhotoApplyClaim(jobId);
