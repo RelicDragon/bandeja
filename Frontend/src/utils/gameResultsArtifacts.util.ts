@@ -35,6 +35,7 @@ export function normalizeGameResultsArtifacts(raw: unknown): GameResultsArtifact
     status: normalizeArtifactsStatus(o.status),
     version: typeof o.version === 'number' ? o.version : 0,
     summaryReady: o.summaryReady === true,
+    summaryInFlight: o.summaryInFlight === true,
     photoReady: o.photoReady === true,
     photoInFlight: o.photoInFlight === true,
     photoGenerationsUsed: used,
@@ -109,7 +110,7 @@ export function isSummaryArtifactGenerating(
   artifacts?: GameResultsArtifacts | null,
   hasSummaryText = false
 ): boolean {
-  if (!isArtifactJobActive(artifacts)) return false;
+  if (!artifacts?.summaryInFlight) return false;
   return !isSummaryReadyForTelegram(artifacts, hasSummaryText);
 }
 

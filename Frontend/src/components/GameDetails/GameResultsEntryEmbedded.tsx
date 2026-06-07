@@ -103,7 +103,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const [isSendingToTelegram, setIsSendingToTelegram] = useState(false);
   const [isStartingArtifactGeneration, setIsStartingArtifactGeneration] = useState(false);
   const artifactGenerationInFlightRef = useRef(false);
-  const [pollArtifactsActive, setPollArtifactsActive] = useState(false);
   const wasArtifactGeneratingRef = useRef(false);
   const lastGamePhotoAdded = useSocketEventsStore((s) => s.lastGamePhotoAdded);
   const lastGameUpdate = useSocketEventsStore((s) => s.lastGameUpdate);
@@ -302,7 +301,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
     artifactGenerationInFlightRef.current = true;
     setIsStartingArtifactGeneration(true);
-    setPollArtifactsActive(true);
     try {
       const response = await request(currentGame.id);
       const payload = response.data;
@@ -321,7 +319,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         // follow-up poll will retry
       }
     } catch (error: unknown) {
-      setPollArtifactsActive(false);
       const err = error as { response?: { data?: { message?: string } }; message?: string };
       const errorMessage =
         err?.response?.data?.message ||
@@ -338,12 +335,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
   const handleGenerateResultsSummary = () =>
     void startArtifactGeneration(gamesApi.prepareResultsArtifactSummary);
-
-  useEffect(() => {
-    if (!isArtifactsGenerating && !isStartingArtifactGeneration) {
-      setPollArtifactsActive(false);
-    }
-  }, [isArtifactsGenerating, isStartingArtifactGeneration]);
 
   const loadGamePhotos = useGamePhotosStore((s) => s.loadGamePhotos);
 
@@ -390,8 +381,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   }, [currentGame?.id, lastGameUpdate, refreshGamePhotosFromServer]);
 
   useEffect(() => {
-    const shouldPoll =
-      pollArtifactsActive || isArtifactsGenerating || isStartingArtifactGeneration;
+    const shouldPoll = isArtifactsGenerating || isStartingArtifactGeneration;
     if (!currentGame?.id || !shouldPoll) return;
 
     const gameId = currentGame.id;
@@ -402,20 +392,13 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         if (cancelled || !response.data) return;
         applyArtifactsStatusPayload(response.data);
 
-        const game = currentGameRef.current;
-        const stillGenerating =
-          game &&
-          isAnyArtifactGenerating(response.data.artifacts, {
-            hasSummaryText: hasCachedResultsSummary(response.data.resultsSummaryText),
-            hasGamePhoto: hasGamePhotoForTelegram(game),
-          });
+        const stillGenerating = isAnyArtifactGenerating(response.data.artifacts, {
+          hasSummaryText: hasCachedResultsSummary(response.data.resultsSummaryText),
+        });
         if (wasArtifactGeneratingRef.current && !stillGenerating) {
           void refreshGamePhotosFromServer(gameId);
         }
-        wasArtifactGeneratingRef.current = !!stillGenerating;
-        if (game && !stillGenerating) {
-          setPollArtifactsActive(false);
-        }
+        wasArtifactGeneratingRef.current = stillGenerating;
       } catch {
         // ignore polling errors
       }
@@ -429,7 +412,6 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     };
   }, [
     currentGame?.id,
-    pollArtifactsActive,
     isArtifactsGenerating,
     isStartingArtifactGeneration,
     applyArtifactsStatusPayload,

@@ -19,6 +19,7 @@ function artifacts(partial: Partial<GameResultsArtifacts>): GameResultsArtifacts
     status: 'none',
     version: 0,
     summaryReady: false,
+    summaryInFlight: false,
     photoReady: false,
     photoInFlight: false,
     photoGenerationsUsed: 0,
@@ -41,11 +42,24 @@ function run() {
   );
 
   assert.equal(
-    isSummaryArtifactGenerating(artifacts({ status: 'running', summaryReady: false }), false),
+    isSummaryArtifactGenerating(
+      artifacts({ status: 'running', summaryReady: false, summaryInFlight: true }),
+      false
+    ),
     true
   );
   assert.equal(
-    isSummaryArtifactGenerating(artifacts({ status: 'running', summaryReady: true }), false),
+    isSummaryArtifactGenerating(
+      artifacts({ status: 'running', summaryReady: true, summaryInFlight: true }),
+      false
+    ),
+    false
+  );
+  assert.equal(
+    isAnyArtifactGenerating(
+      artifacts({ status: 'running', summaryReady: false, photoInFlight: false }),
+      { hasSummaryText: false }
+    ),
     false
   );
   assert.equal(

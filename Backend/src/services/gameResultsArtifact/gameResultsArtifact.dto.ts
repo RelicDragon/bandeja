@@ -18,6 +18,7 @@ export type ResultsArtifactsDto = {
   status: ResultsArtifactsStatus;
   version: number;
   summaryReady: boolean;
+  summaryInFlight: boolean;
   photoReady: boolean;
   photoInFlight: boolean;
   photoGenerationsUsed: number;
@@ -65,6 +66,7 @@ export function buildResultsArtifactsDto(game: {
     }),
     version: game.resultsArtifactsVersion,
     summaryReady: job ? stepReady(job.summaryStatus) : false,
+    summaryInFlight: job ? stepInFlight(job.summaryStatus) : false,
     photoReady: job ? stepReady(job.photoStatus) : false,
     photoInFlight: job ? stepInFlight(job.photoStatus) : false,
     photoGenerationsUsed: used,

@@ -442,6 +442,7 @@ export interface GameResultsArtifacts {
   status: GameResultsArtifactsStatus;
   version: number;
   summaryReady: boolean;
+  summaryInFlight: boolean;
   photoReady: boolean;
   photoInFlight: boolean;
   photoGenerationsUsed: number;
