@@ -75,8 +75,7 @@ router.get('/results-artifacts/photo-model', requireAdmin, getReplicatePhotoMode
 router.patch(
   '/results-artifacts/photo-model',
   requireAdmin,
-  body('modelId').isString().trim().notEmpty(),
-  validate,
+  validate([body('modelId').isString().trim().notEmpty()]),
   setReplicatePhotoModel
 );
 router.get('/online-users', requireAdmin, getOnlineUsers);
