@@ -113,7 +113,13 @@ async function apiRequest(endpoint, options = {}, isRetry = false) {
             headers,
         });
 
-        const data = await response.json();
+        let data = {};
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            data = await response.json();
+        } else if (!response.ok) {
+            throw new Error(`Request failed (${response.status})`);
+        }
 
         if (!response.ok) {
             if (data.code === 'auth.clientUpgradeRequired') {
@@ -128,11 +134,18 @@ async function apiRequest(endpoint, options = {}, isRetry = false) {
                 const refreshed = await refreshAdminAccess();
                 if (refreshed) return apiRequest(endpoint, options, true);
             }
-            throw new Error(data.message || 'Request failed');
+            throw new Error(data.message || data.error || `Request failed (${response.status})`);
         }
 
         return data;
     } catch (error) {
+        if (error instanceof TypeError && String(error.message).includes('fetch')) {
+            const networkError = new Error(
+                `Cannot reach API at ${API_URL}${endpoint}. Check the API URL on login, ensure the backend is running, and deploy the latest backend if this route is new.`
+            );
+            console.error('API Error:', networkError);
+            throw networkError;
+        }
         console.error('API Error:', error);
         throw error;
     }

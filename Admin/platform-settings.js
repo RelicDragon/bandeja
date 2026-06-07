@@ -73,8 +73,16 @@ async function loadReplicatePhotoModelSetting() {
         select.disabled = true;
         activeEl.textContent = '—';
         fallbackEl.textContent = '—';
-        setReplicateModelStatus(error.message || 'Failed to load', 'error');
+        setReplicateModelStatus(formatPlatformSettingsApiError(error) || 'Failed to load', 'error');
     }
+}
+
+function formatPlatformSettingsApiError(error) {
+    const msg = error?.message || 'Request failed';
+    if (msg.includes('Cannot reach API at')) {
+        return `${msg} For local dev use "Development (localhost:3000)" on the login screen.`;
+    }
+    return msg;
 }
 
 async function saveReplicatePhotoModel() {
@@ -107,10 +115,15 @@ async function saveReplicatePhotoModel() {
         toast('Replicate photo model updated', 'success');
     } catch (error) {
         console.error('Failed to save replicate photo model:', error);
-        setReplicateModelStatus(error.message || 'Failed to save', 'error');
-        toast(error.message || 'Failed to save', 'error');
+        const msg = formatPlatformSettingsApiError(error) || 'Failed to save';
+        setReplicateModelStatus(msg, 'error');
+        toast(msg, 'error');
     } finally {
         select.disabled = false;
         updateReplicateModelSaveButton();
     }
 }
+
+window.loadPlatformSettingsPage = loadPlatformSettingsPage;
+window.saveReplicatePhotoModel = saveReplicatePhotoModel;
+window.updateReplicateModelSaveButton = updateReplicateModelSaveButton;

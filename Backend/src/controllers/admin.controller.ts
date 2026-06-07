@@ -18,6 +18,7 @@ import { AdminMassNotificationService } from '../services/admin/massNotification
 import { ClubAdminAssignmentService } from '../services/admin/clubAdminAssignment.service';
 import { AdminTranslationQueueStatsService } from '../services/admin/translationQueueStats.service';
 import { AdminGameResultsArtifactQueueStatsService } from '../services/admin/gameResultsArtifactQueueStats.service';
+import { ReplicatePhotoModelSettingService } from '../services/replicate/replicatePhotoModelSetting.service';
 import { resetSportQuestionnaire } from '../services/user/sportQuestionnaire.service';
 import { parseSportParam } from '../services/user/userSportProfile.service';
 import prisma from '../config/database';
@@ -486,6 +487,45 @@ export const getGameResultsArtifactQueueStats = asyncHandler(
   async (_req: AuthRequest, res: Response) => {
     const stats = await AdminGameResultsArtifactQueueStatsService.getStats();
     res.json({ success: true, data: stats });
+  }
+);
+
+export const getReplicatePhotoModel = asyncHandler(
+  async (_req: AuthRequest, res: Response) => {
+    const activeModelId = await ReplicatePhotoModelSettingService.getActiveModelId();
+    res.json({
+      success: true,
+      data: {
+        activeModelId,
+        models: ReplicatePhotoModelSettingService.listModels(),
+        envFallbackModelId: ReplicatePhotoModelSettingService.envFallbackModelId(),
+      },
+    });
+  }
+);
+
+export const setReplicatePhotoModel = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { modelId } = req.body as { modelId?: string };
+    if (!modelId?.trim()) {
+      res.status(400).json({ success: false, message: 'modelId is required' });
+      return;
+    }
+    try {
+      const activeModelId = await ReplicatePhotoModelSettingService.setActiveModelId(
+        modelId.trim()
+      );
+      res.json({
+        success: true,
+        data: {
+          activeModelId,
+          models: ReplicatePhotoModelSettingService.listModels(),
+        },
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(400).json({ success: false, message: msg });
+    }
   }
 );
 

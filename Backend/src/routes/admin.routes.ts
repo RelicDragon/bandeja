@@ -56,12 +56,10 @@ import {
   getClubAdmins,
   assignClubAdmin,
   removeClubAdmin,
-} from '../controllers/admin.controller';
-import * as adminAdController from '../controllers/adminAd.controller';
-import {
   getReplicatePhotoModel,
   setReplicatePhotoModel,
-} from '../controllers/adminReplicatePhotoModel.controller';
+} from '../controllers/admin.controller';
+import * as adminAdController from '../controllers/adminAd.controller';
 
 const router = Router();
 
