@@ -315,12 +315,12 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           }}
         >
           {enableTransform ? (
-            <div className="pointer-events-auto max-h-full max-w-full w-fit h-fit">
+            <div className="pointer-events-auto flex h-full w-full min-h-0 min-w-0 max-h-full max-w-full items-center justify-center">
               <FullscreenImageZoom ref={zoomRef} src={displayUrl} active={zoomActive} />
             </div>
           ) : (
             <div
-              className="pointer-events-auto max-h-full max-w-full w-fit h-fit"
+              className="pointer-events-auto flex h-full w-full min-h-0 min-w-0 max-h-full max-w-full items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
               <img
@@ -328,6 +328,10 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
                 alt="Fullscreen view"
                 draggable={false}
                 className="max-h-full max-w-full object-contain"
+                style={{
+                  maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 8rem)',
+                  maxWidth: 'calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))',
+                }}
               />
             </div>
           )}

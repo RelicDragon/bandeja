@@ -56,7 +56,7 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
     if (!active) return null;
 
     return (
-      <div className="relative max-h-full max-w-full touch-none select-none">
+      <div className="relative flex h-full w-full min-h-0 min-w-0 max-h-full max-w-full touch-none select-none items-center justify-center">
         <TransformWrapper
           key={src}
           ref={zoomRef}
@@ -78,14 +78,18 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
           }
         >
           <TransformComponent
-            wrapperClass="!max-h-full !max-w-full"
-            contentClass="!flex items-center justify-center"
+            wrapperClass="!h-full !w-full !max-h-full !max-w-full"
+            contentClass="!flex !h-full !w-full !items-center !justify-center"
           >
             <img
               src={src}
               alt=""
               draggable={false}
               className="max-h-full max-w-full object-contain"
+              style={{
+                maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 8rem)',
+                maxWidth: 'calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))',
+              }}
               onClick={(e) => e.stopPropagation()}
             />
           </TransformComponent>
