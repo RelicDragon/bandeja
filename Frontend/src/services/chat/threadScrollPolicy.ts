@@ -1,6 +1,6 @@
-import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
-import type { ReconcileScrollDelta } from '@/services/chat/chatOpenScrollPolicy';
+import type { ThreadInitialScroll, ReconcileScrollDelta } from '@/services/chat/chatOpenScrollPolicy';
 import { shouldPinOnOpen } from '@/services/chat/chatOpenScrollPolicy';
+import type { ThreadScrollRow } from '@/services/chat/chatThreadScroll';
 
 export type ScrollApplyKind =
   | 'none'
@@ -31,7 +31,7 @@ export interface DecideNewMessagesScrollParams {
 }
 
 export interface DecideReconcilePinParams {
-  savedScroll: { atBottom?: boolean; anchorMessageId?: string | null } | undefined;
+  savedScroll: Pick<ThreadScrollRow, 'atBottom' | 'anchorMessageId'> | undefined;
   reconcileDelta: ReconcileScrollDelta;
 }
 
