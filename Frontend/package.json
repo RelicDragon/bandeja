@@ -1,6 +1,10 @@
 {
   "name": "padelpulse-frontend",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

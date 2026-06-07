@@ -1,6 +1,10 @@
 {
   "name": "padelpulse",
   "private": true,
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11"
+  },
   "workspaces": [
     "packages/*"
   ],

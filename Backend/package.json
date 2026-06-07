@@ -1,6 +1,10 @@
 {
   "name": "padelpulse-backend",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11"
+  },
   "description": "Backend for Bandeja - Padel game scheduling app",
   "main": "dist/server.js",
   "scripts": {
