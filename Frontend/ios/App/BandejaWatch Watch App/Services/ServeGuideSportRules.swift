@@ -218,7 +218,7 @@ enum ServeGuideSportRules {
         var a = 0
         var b = 0
         var serverTeam = firstForSet
-        var serverIdx = badmintonServerIdxForScore(courts(serverTeam), 0)
+        var serverIdx = badmintonServerIdxForScore(courts(serverTeam), teamScore: 0)
 
         for winner in pointWinnerLog {
             if winner == .teamA { a += 1 } else { b += 1 }
@@ -227,7 +227,7 @@ enum ServeGuideSportRules {
             } else {
                 serverTeam = winner
                 let score = serverTeam == .teamA ? a : b
-                serverIdx = badmintonServerIdxForScore(courts(serverTeam), score)
+                serverIdx = badmintonServerIdxForScore(courts(serverTeam), teamScore: score)
             }
         }
         return serverIdx
