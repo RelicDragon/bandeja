@@ -34,6 +34,7 @@ declare module 'react-mentions' {
     displayTransform?: (id: string, display: string) => string;
     markup?: string;
     regex?: RegExp | string;
+    appendSpaceOnAdd?: boolean;
     renderSuggestion?: (entry: SuggestionDataItem) => ReactNode;
   }
 
