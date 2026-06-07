@@ -55,7 +55,11 @@ function schedulePullPageIndexHooks(events: ChatSyncEventDTO[]): void {
   })().catch(() => {});
 }
 
-type PullEventsLoopResult = { repairedStaleCursor: boolean; threadInvalidated: boolean };
+export type PullEventsLoopResult = {
+  repairedStaleCursor: boolean;
+  threadInvalidated: boolean;
+  eventsApplied: number;
+};
 
 export async function pullEventsLoop(
   contextType: ChatContextType,
@@ -66,6 +70,7 @@ export async function pullEventsLoop(
   let staleDispatched = false;
   let repairedStaleCursor = false;
   let threadInvalidated = false;
+  let eventsApplied = 0;
   for (;;) {
     const pack = await withChatSyncRetry('events', () =>
       fetchChatSyncEventsPackOffMainThread(contextType, contextId, after, 300)
@@ -88,6 +93,7 @@ export async function pullEventsLoop(
       continue;
     }
     if (!pack.events.length) break;
+    eventsApplied += pack.events.length;
     await withChatLocalBulkApply(async () => {
       let i = 0;
       while (i < pack.events.length) {
@@ -152,14 +158,15 @@ export async function pullEventsLoop(
     broadcastChatPullHint(key);
     if (!pack.hasMore) break;
   }
-  return { repairedStaleCursor, threadInvalidated };
+  return { repairedStaleCursor, threadInvalidated, eventsApplied };
 }
 
 export async function pullAndApplyChatSyncEventsDirect(
   contextType: ChatContextType,
   contextId: string
-): Promise<void> {
-  const { repairedStaleCursor, threadInvalidated } = await pullEventsLoop(contextType, contextId);
+): Promise<PullEventsLoopResult> {
+  const result = await pullEventsLoop(contextType, contextId);
+  const { repairedStaleCursor, threadInvalidated } = result;
   markChatPullCompleted(contextType, contextId);
   await reconcileCursorWithServerHead(contextType, contextId);
   clearPendingSocketSeqReconcileTimer(contextType, contextId);
@@ -167,6 +174,7 @@ export async function pullAndApplyChatSyncEventsDirect(
     const { persistLatestTailPagesAfterStaleCursor } = await import('./chatTailRecover');
     await persistLatestTailPagesAfterStaleCursor(contextType, contextId).catch(() => {});
   }
+  return result;
 }
 
 export async function pullAndApplyChatSyncEvents(

@@ -194,9 +194,16 @@ async function applyThreadEventUnqueued(event: ThreadApplyEvent): Promise<number
       return finishApply(event.contextType, event.contextId);
     }
     case 'syncPull': {
-      await pullAndApplyChatSyncEventsDirect(event.contextType, event.contextId);
+      const pullResult = await pullAndApplyChatSyncEventsDirect(event.contextType, event.contextId);
       await syncLastMessageIdsToStoreFromLocalHeadsForContext(event.contextType, event.contextId);
-      return finishApply(event.contextType, event.contextId);
+      if (
+        pullResult.eventsApplied > 0 ||
+        pullResult.repairedStaleCursor ||
+        pullResult.threadInvalidated
+      ) {
+        return finishApply(event.contextType, event.contextId);
+      }
+      return getThreadSnapshotRevision(event.contextType, event.contextId);
     }
     case 'httpMessages': {
       if (event.messages.length === 0) return 0;

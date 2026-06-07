@@ -19,7 +19,11 @@ vi.mock('../chatLocalDb', () => ({
 }));
 
 vi.mock('../chatLocalApplyPull', () => ({
-  pullEventsLoop: vi.fn(async () => ({ repairedStaleCursor: false, threadInvalidated: false })),
+  pullEventsLoop: vi.fn(async () => ({
+    repairedStaleCursor: false,
+    threadInvalidated: false,
+    eventsApplied: 0,
+  })),
 }));
 
 vi.mock('../chatLocalApplySyncTimers', () => ({

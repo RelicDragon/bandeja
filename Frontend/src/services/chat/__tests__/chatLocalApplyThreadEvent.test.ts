@@ -49,7 +49,11 @@ vi.mock('../chatLocalApplyWrite', () => ({
 }));
 
 vi.mock('../chatLocalApplyPull', () => ({
-  pullAndApplyChatSyncEventsDirect: vi.fn(async () => {}),
+  pullAndApplyChatSyncEventsDirect: vi.fn(async () => ({
+    eventsApplied: 1,
+    repairedStaleCursor: false,
+    threadInvalidated: false,
+  })),
 }));
 
 vi.mock('../chatLocalApplySocketInbound', () => ({
@@ -150,11 +154,23 @@ describe('applyThreadEvent', () => {
     expect(rev).toBe(1);
   });
 
-  it('syncPull delegates to pull path and bumps revision', async () => {
+  it('syncPull delegates to pull path and bumps revision when events applied', async () => {
     const { pullAndApplyChatSyncEventsDirect } = await import('../chatLocalApplyPull');
     const rev = await applyThreadEvent({ kind: 'syncPull', contextType: 'USER', contextId: 'u1' });
     expect(pullAndApplyChatSyncEventsDirect).toHaveBeenCalled();
     expect(rev).toBe(1);
+  });
+
+  it('syncPull does not bump revision when pull is a no-op', async () => {
+    const { pullAndApplyChatSyncEventsDirect } = await import('../chatLocalApplyPull');
+    vi.mocked(pullAndApplyChatSyncEventsDirect).mockResolvedValueOnce({
+      eventsApplied: 0,
+      repairedStaleCursor: false,
+      threadInvalidated: false,
+    });
+    const rev0 = getThreadSnapshotRevision('USER', 'u1');
+    const rev = await applyThreadEvent({ kind: 'syncPull', contextType: 'USER', contextId: 'u1' });
+    expect(rev).toBe(rev0);
   });
 
   it('socketMessage persists via write path and bumps revision', async () => {
