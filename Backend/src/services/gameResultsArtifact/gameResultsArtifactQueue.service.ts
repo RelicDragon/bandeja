@@ -1,4 +1,5 @@
 import {
+  GamePhotoSource,
   GameResultsArtifactStepStatus,
   Prisma,
 } from '@prisma/client';
@@ -133,7 +134,10 @@ export class GameResultsArtifactQueueService {
     const languageCode = TranslationService.extractLanguageCode(
       game.city.telegramPinnedLanguage || 'en-GB'
     );
-    const hadUserPhotos = game.photosCount > 0;
+    const hadUserPhotos =
+      (await prisma.gamePhoto.count({
+        where: { gameId, deletedAt: null, source: GamePhotoSource.USER },
+      })) > 0;
     const hasSummary = Boolean(game.resultsSummaryText?.trim());
     const job = game.resultsArtifactJob;
 
@@ -233,7 +237,7 @@ export class GameResultsArtifactQueueService {
           languageCode,
           userPhotoCountAtEnqueue: game.photosCount,
           mainPhotoIdAtEnqueue: game.mainPhotoId,
-          hadUserPhotosAtEnqueue: hadUserPhotos,
+          hadUserPhotosAtEnqueue: options.manualPhoto ? false : hadUserPhotos,
           status: 'pending',
           runAfter: new Date(),
           summaryStatus,
@@ -245,7 +249,7 @@ export class GameResultsArtifactQueueService {
           languageCode,
           userPhotoCountAtEnqueue: game.photosCount,
           mainPhotoIdAtEnqueue: game.mainPhotoId,
-          hadUserPhotosAtEnqueue: hadUserPhotos,
+          hadUserPhotosAtEnqueue: options.manualPhoto ? false : hadUserPhotos,
           status: 'pending',
           runAfter: new Date(),
           attempts: 0,

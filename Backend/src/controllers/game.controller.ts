@@ -20,7 +20,6 @@ import { getGameInclude, projectGameUsersForSportContext } from '../services/gam
 import { buildResultsArtifactsDto } from '../services/gameResultsArtifact/gameResultsArtifact.dto';
 import { GameResultsArtifactQueueService } from '../services/gameResultsArtifact/gameResultsArtifactQueue.service';
 import { assertPhotoGenerationsAvailable } from '../services/gameResultsArtifact/gameResultsArtifact.photoLimit';
-import { clearAiGeneratedPhotosForRegeneration } from '../services/gamePhoto/gamePhoto.clearAiForRegeneration.service';
 import prisma from '../config/database';
 import { GameWorkoutService } from '../services/game/gameWorkout.service';
 import { GameReactionService } from '../services/game/gameReaction.service';
@@ -166,10 +165,6 @@ export const prepareResultsArtifactPhoto = asyncHandler(async (req: AuthRequest,
 
   const generationsUsed = game.resultsArtifactJob?.photoGenerationsUsed ?? 0;
   assertPhotoGenerationsAvailable(generationsUsed);
-
-  if (game.photosCount > 0) {
-    await clearAiGeneratedPhotosForRegeneration(id);
-  }
 
   if (isArtifactPhotoGenerating(game.resultsArtifactJob)) {
     throw new ApiError(409, 'Photo generation is already in progress');
