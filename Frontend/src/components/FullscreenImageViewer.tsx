@@ -265,6 +265,10 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     }
   }, []);
 
+  const handleImageTapClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (touchStartY.current === null) return;
     if (e.touches.length > 0) return;
@@ -316,22 +320,22 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         >
           {enableTransform ? (
             <div className="pointer-events-auto flex h-full w-full min-h-0 min-w-0 max-h-full max-w-full items-center justify-center">
-              <FullscreenImageZoom ref={zoomRef} src={displayUrl} active={zoomActive} />
+              <FullscreenImageZoom ref={zoomRef} src={displayUrl} active={zoomActive} onTap={handleImageTapClose} />
             </div>
           ) : (
             <div
               className="pointer-events-auto flex h-full w-full min-h-0 min-w-0 max-h-full max-w-full items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
             >
               <img
                 src={displayUrl}
                 alt="Fullscreen view"
                 draggable={false}
-                className="max-h-full max-w-full object-contain"
+                className="max-h-full max-w-full object-contain cursor-pointer"
                 style={{
                   maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 8rem)',
                   maxWidth: 'calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))',
                 }}
+                onClick={handleImageTapClose}
               />
             </div>
           )}
