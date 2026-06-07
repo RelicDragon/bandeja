@@ -135,3 +135,22 @@ export function getGameChatListMetaLine(
   const parts = [dt.dateLabel, dt.timeLabel, location].filter(Boolean);
   return parts.join(' · ');
 }
+
+export function getGameChatListSetMetaSubtitle(
+  game: Game,
+  displaySettings: ResolvedDisplaySettings,
+  t: TFunction
+): string {
+  const parts: string[] = [];
+  const dt = getGameChatListDateTimeBlock(game, displaySettings, t);
+  if (dt) {
+    const dateTime = [dt.dateLabel, dt.timeLabel].filter(Boolean).join(' ');
+    if (dateTime) parts.push(dateTime);
+  }
+  const clubName = game.court?.club?.name || game.club?.name;
+  if (clubName) {
+    const courtSuffix = game.court?.name ? ` · ${game.court.name}` : '';
+    parts.push(`${clubName}${courtSuffix}`);
+  }
+  return parts.join(' · ');
+}

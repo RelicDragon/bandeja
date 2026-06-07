@@ -10,6 +10,13 @@ import {
   shouldPinOnOpen,
 } from '../chatOpenSnapshot';
 import { openThreadBootstrap } from '../chatOpenCoordinator';
+import {
+  decideNewMessagesScrollApply,
+  decideOpenScrollApply,
+  decideReconcilePinApply,
+  decideScrollApply,
+  decideSettlingPinApply,
+} from '../threadScrollPolicy';
 
 function msg(id: string, createdAt: string, extra?: Partial<ChatMessageWithStatus>): ChatMessageWithStatus {
   return {
@@ -172,5 +179,137 @@ describe('planOpenBootstrapPaints', () => {
       coalesceBootstrap: false,
     });
     expect(plan.paintCount).toBe(3);
+  });
+});
+
+describe('threadScrollPolicy', () => {
+  it('open-restore at bottom when initialScroll committed and not yet restored', () => {
+    expect(
+      decideOpenScrollApply({ initialScroll: { atBottom: true }, openPaintGeneration: 1, alreadyRestored: false })
+    ).toEqual({ kind: 'open-restore' });
+  });
+
+  it('open-restore anchor when anchorMessageId present', () => {
+    expect(
+      decideOpenScrollApply({
+        initialScroll: { anchorMessageId: 'm1' },
+        openPaintGeneration: 1,
+        alreadyRestored: false,
+      })
+    ).toEqual({ kind: 'open-restore', anchorMessageId: 'm1' });
+  });
+
+  it('skips open restore when already restored', () => {
+    expect(
+      decideOpenScrollApply({ initialScroll: { atBottom: true }, openPaintGeneration: 2, alreadyRestored: true })
+    ).toEqual({ kind: 'none' });
+  });
+
+  it('settling pin only when at-bottom open intent', () => {
+    expect(decideSettlingPinApply(true, true)).toEqual({ kind: 'pin-bottom-settling' });
+    expect(decideSettlingPinApply(true, false)).toEqual({ kind: 'none' });
+    expect(decideSettlingPinApply(false, true)).toEqual({ kind: 'none' });
+  });
+
+  it('reconcile pin respects shouldPinOnOpen', () => {
+    expect(decideReconcilePinApply({ savedScroll: { atBottom: true }, reconcileDelta: 'append' })).toEqual({
+      kind: 'pin-bottom',
+    });
+    expect(decideReconcilePinApply({ savedScroll: { anchorMessageId: 'x' }, reconcileDelta: 'none' })).toEqual({
+      kind: 'none',
+    });
+    expect(decideReconcilePinApply({ savedScroll: { atBottom: true }, reconcileDelta: 'prepend' })).toEqual({
+      kind: 'none',
+    });
+  });
+
+  it('socket append while anchored away does not pin', () => {
+    expect(
+      decideReconcilePinApply({ savedScroll: { anchorMessageId: 'mid' }, reconcileDelta: 'append' })
+    ).toEqual({ kind: 'none' });
+    expect(decideReconcilePinApply({ savedScroll: { atBottom: false }, reconcileDelta: 'append' })).toEqual({
+      kind: 'none',
+    });
+  });
+
+  it('new messages prepend compensates scroll', () => {
+    expect(
+      decideNewMessagesScrollApply({
+        isNewMessagesAdded: true,
+        wasLoadingMore: true,
+        justLoadedOlder: false,
+        isPrependReconcile: false,
+        layoutSettlingForBottomPin: false,
+        wasAtBottom: false,
+      })
+    ).toEqual({ kind: 'prepend-compensate' });
+  });
+
+  it('append at bottom pins when not settling', () => {
+    expect(
+      decideNewMessagesScrollApply({
+        isNewMessagesAdded: true,
+        wasLoadingMore: false,
+        justLoadedOlder: false,
+        isPrependReconcile: false,
+        layoutSettlingForBottomPin: false,
+        wasAtBottom: true,
+      })
+    ).toEqual({ kind: 'append-pin-if-at-bottom' });
+  });
+
+  it('decideScrollApply dispatches by scenario', () => {
+    expect(decideScrollApply('settling', { layoutSettlingForBottomPin: true, openScrollAtBottom: true })).toEqual({
+      kind: 'pin-bottom-settling',
+    });
+  });
+});
+
+describe('rowHeightCache', () => {
+  it('cache hit returns stored height', async () => {
+    const { rowHeightCacheRecordMeasured, rowHeightCacheGet, rowHeightCacheStripSeparator } = await import(
+      '../rowHeightCache'
+    );
+    const id = `hit-${Math.random()}`;
+    rowHeightCacheRecordMeasured({ messageId: id, rawHeightPx: 120, hasDateSeparator: false });
+    expect(rowHeightCacheGet(id)).toBe(120);
+    expect(rowHeightCacheStripSeparator(148, true)).toBeLessThan(148);
+  });
+
+  it('seed ephemeral fills miss from heuristic', async () => {
+    const { rowHeightCacheSeedEphemeral, rowHeightCacheGet } = await import('../rowHeightCache');
+    const id = `miss-${Math.random()}`;
+    expect(rowHeightCacheGet(id)).toBeUndefined();
+    const seeded = rowHeightCacheSeedEphemeral(id, 96);
+    expect(seeded).toBe(true);
+    expect(rowHeightCacheGet(id)).toBe(96);
+  });
+
+  it('estimate includes date separator when label present', async () => {
+    const { rowHeightCacheEstimate } = await import('../rowHeightCache');
+    const { CHAT_DATE_SEPARATOR_ESTIMATE_PX } = await import('@/utils/chatDateSeparator');
+    const suffix = Math.random().toString(36).slice(2);
+    const messages = [
+      msg(`sep-first-${suffix}`, '2026-01-02T10:00:00Z'),
+      msg(`sep-same-${suffix}`, '2026-01-02T11:00:00Z'),
+    ];
+    const firstRowWithSep = rowHeightCacheEstimate({ message: messages[0], index: 0, messages });
+    const sameDaySecondRow = rowHeightCacheEstimate({ message: messages[1], index: 1, messages });
+    expect(firstRowWithSep - sameDaySecondRow).toBeGreaterThanOrEqual(CHAT_DATE_SEPARATOR_ESTIMATE_PX - 1);
+  });
+
+  it('L1 cached height preferred over heuristic in estimate', async () => {
+    const { rowHeightCacheSeedFromL1, rowHeightCacheEstimate } = await import('../rowHeightCache');
+    const { ROW_ESTIMATE_IMAGE_PX } = await import('../chatMessageRowEstimate');
+    const id = `l1-${Math.random()}`;
+    const l1Height = 512;
+    rowHeightCacheSeedFromL1({ [id]: l1Height });
+    const messages = [
+      msg(`pad-${id}`, '2026-01-02T09:00:00Z'),
+      msg(id, '2026-01-02T10:01:00Z', { messageType: 'IMAGE', mediaUrls: ['https://x/y.jpg'] }),
+    ];
+    const cachedEstimate = rowHeightCacheEstimate({ message: messages[1], index: 1, messages });
+    expect(cachedEstimate).toBe(l1Height);
+    expect(cachedEstimate).not.toBe(ROW_ESTIMATE_IMAGE_PX);
   });
 });

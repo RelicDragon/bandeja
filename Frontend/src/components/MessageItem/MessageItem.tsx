@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useLayoutEffect, useState, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useLayoutEffect, useState, useCallback, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -27,8 +27,9 @@ import { PlayerAvatar } from '../PlayerAvatar';
 import { useMessageLongPress } from './useMessageLongPress';
 import { useMessageReactions } from './useMessageReactions';
 import { MessageItemReactionStrip, MESSAGE_REACTION_GUTTER_CLASS } from './MessageItemReactionStrip';
+import { messageRowPropsEqual } from './messageRowPropsEqual';
 
-export const MessageItem: React.FC<MessageItemProps> = ({
+export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem({
   message,
   onAddReaction,
   onRemoveReaction,
@@ -41,7 +42,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   contextMenuState,
   onOpenContextMenu,
   onCloseContextMenu,
-  allMessages = [],
+  replyCount = 0,
+  onScrollToFirstReply,
   onScrollToMessage,
   isChannel = false,
   userChatUser1Id,
@@ -54,7 +56,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onForwardMessage,
   suppressOpenReactionMotion = false,
   loadMediaEager = false,
-}) => {
+}) {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -102,9 +104,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   } = useMessageReactions({
     message: currentMessage,
     currentUserId: user?.id,
-    allMessages,
+    replyCount,
     isOffline,
-    onScrollToMessage,
+    onScrollToFirstReply,
   });
 
   useLayoutEffect(() => {
@@ -538,4 +540,27 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       )}
     </>
   );
-};
+}, (prev, next) =>
+  messageRowPropsEqual(
+    {
+      message: prev.message,
+      replyCount: prev.replyCount ?? 0,
+      activeContextMenuMessageId: prev.contextMenuState.isOpen ? prev.contextMenuState.messageId : null,
+      isPinned: prev.isPinned ?? false,
+      loadMediaEager: prev.loadMediaEager ?? false,
+      suppressOpenReactionMotion: prev.suppressOpenReactionMotion ?? false,
+      showReply: prev.showReply ?? true,
+      isChannel: prev.isChannel ?? false,
+    },
+    {
+      message: next.message,
+      replyCount: next.replyCount ?? 0,
+      activeContextMenuMessageId: next.contextMenuState.isOpen ? next.contextMenuState.messageId : null,
+      isPinned: next.isPinned ?? false,
+      loadMediaEager: next.loadMediaEager ?? false,
+      suppressOpenReactionMotion: next.suppressOpenReactionMotion ?? false,
+      showReply: next.showReply ?? true,
+      isChannel: next.isChannel ?? false,
+    }
+  )
+);

@@ -12,38 +12,10 @@ import type { LoadContextOptions } from './useGameChatContext';
 import type { GameChatFooterVariant } from './GameChatFooter';
 import type { ThreadSessionScroll } from '@/services/chat/threadSession';
 
-/** Thread UI surface: messages, send, reactions, scroll, pinned, permissions, footer. */
-export interface ThreadViewValue {
-  id: string | undefined;
-  contextType: ChatContextType;
-  effectiveChatType: ChatType;
-  currentChatType: ChatType;
-  isEmbedded: boolean;
-
-  game: Game | null;
-  bug: Bug | null;
-  userChat: UserChat | null;
-  groupChannel: GroupChannel | null;
-  setGroupChannel: React.Dispatch<React.SetStateAction<GroupChannel | null>>;
-  groupChannelParticipantsCount: number;
-  setGroupChannelParticipantsCount: React.Dispatch<React.SetStateAction<number>>;
-  isLoadingContext: boolean;
-  loadContext: (options?: LoadContextOptions) => Promise<unknown>;
-
-  messages: ChatMessageWithStatus[];
-  hasMoreMessages: boolean;
-  isLoadingMessages: boolean;
-  isInitialLoad: boolean;
-  isThreadOpenSettling: boolean;
-  isLoadingMore: boolean;
-  isSwitchingChatType: boolean;
+/** Stable handlers — omit message array so composer does not re-render on row patches. */
+export interface ThreadMessageActionsValue {
   loadMessages: (append?: boolean, chatTypeOverride?: ChatType) => Promise<boolean>;
   loadMoreMessages: () => void;
-  messageListRef: RefObject<MessageListHandle | null>;
-  initialScroll: ThreadSessionScroll | undefined;
-  openPaintGeneration: number;
-  threadScrollKey: string | null;
-
   handleAddOptimisticMessage: (
     payload: OptimisticMessagePayload,
     pendingImageBlobs?: Blob[],
@@ -57,59 +29,101 @@ export interface ThreadViewValue {
   handleReplaceOptimisticWithServerMessage: (optimisticId: string, serverMessage: ChatMessage) => void;
   handleResendQueued: (messageId: string) => void;
   handleRemoveFromQueue: (messageId: string) => void;
-
-  replyTo: ChatMessage | null;
-  editingMessage: ChatMessage | null;
-  handleCancelReply: () => void;
-  handleCancelEdit: () => void;
-  handleMessageUpdated: (updated: ChatMessage) => void;
-  handleEditMessage: (message: ChatMessage) => void;
   handleAddReaction: (messageId: string, emoji: string) => void;
   handleRemoveReaction: (messageId: string) => void;
   handleDeleteMessage: (messageId: string) => void;
   handleReplyMessage: (message: ChatMessage) => void;
+  handleEditMessage: (message: ChatMessage) => void;
   handlePollUpdated: (messageId: string, poll: import('@/api/chat').Poll) => void;
   handleForwardMessage: (message: ChatMessage) => Promise<void>;
   handleChatRequestRespond: (userChatId: string, allowed: boolean) => void;
+  handleMessageUpdated: (updated: ChatMessage) => void;
+  handlePinMessage: (message: ChatMessage) => Promise<void>;
+  handleUnpinMessage: (messageId: string) => Promise<void>;
+}
 
+export interface ThreadMessagesDataValue {
+  messages: ChatMessageWithStatus[];
+  hasMoreMessages: boolean;
+  isLoadingMessages: boolean;
+  isInitialLoad: boolean;
+  isThreadOpenSettling: boolean;
+  isLoadingMore: boolean;
+  isSwitchingChatType: boolean;
+}
+
+export interface ThreadMessagesValue extends ThreadMessageActionsValue, ThreadMessagesDataValue {}
+
+export interface ThreadScrollValue {
   chatNearBottom: boolean;
   setChatNearBottom: (near: boolean) => void;
   scrollToBottomSmooth: () => void;
   handleScrollToMessage: (messageId: string) => void;
+  messageListRef: RefObject<MessageListHandle | null>;
+  initialScroll: ThreadSessionScroll | undefined;
+  openPaintGeneration: number;
+  threadScrollKey: string | null;
+}
 
+export interface ThreadComposerValue {
+  id: string | undefined;
+  contextType: ChatContextType;
+  currentChatType: ChatType;
+  game: Game | null;
+  bug: Bug | null;
+  userChat: UserChat | null;
+  groupChannel: GroupChannel | null;
+  replyTo: ChatMessage | null;
+  editingMessage: ChatMessage | null;
+  handleCancelReply: () => void;
+  handleCancelEdit: () => void;
+  handleMessageSent: () => void;
+  handleGroupChannelUpdate: (() => void | Promise<void>) | undefined;
+  translateToLanguageForChat: string | null;
+  handleTranslateToLanguageChange: (value: string | null) => Promise<void>;
+  autoTranslateForModal: TranslationModalAutoTranslateProps | null;
+  lastOwnMessage: ChatMessage | null | undefined;
+  footerVariant: GameChatFooterVariant | null;
+  isJoiningAsGuest: boolean;
+  handleJoinAsGuest: () => void;
+  setUserChat: React.Dispatch<React.SetStateAction<UserChat | null>>;
+  hasMessages: boolean;
+  isChannel: boolean;
+}
+
+export interface ThreadChromeValue {
+  id: string | undefined;
+  contextType: ChatContextType;
+  effectiveChatType: ChatType;
+  currentChatType: ChatType;
+  isEmbedded: boolean;
+  game: Game | null;
+  bug: Bug | null;
+  userChat: UserChat | null;
+  groupChannel: GroupChannel | null;
+  setGroupChannel: React.Dispatch<React.SetStateAction<GroupChannel | null>>;
+  groupChannelParticipantsCount: number;
+  setGroupChannelParticipantsCount: React.Dispatch<React.SetStateAction<number>>;
+  isLoadingContext: boolean;
+  loadContext: (options?: LoadContextOptions) => Promise<unknown>;
   pinnedMessages: ChatMessage[];
   pinnedMessagesOrdered: ChatMessage[];
   pinnedBarTopIndex: number;
   loadingScrollTargetId: string | null;
   handlePinnedBarClick: (messageId: string) => void;
-  handlePinMessage: (message: ChatMessage) => Promise<void>;
-  handleUnpinMessage: (messageId: string) => Promise<void>;
-
   derived: ReturnType<typeof useGameChatDerived>;
   footerVariant: GameChatFooterVariant | null;
-
   isBlockedByUser: boolean;
   isJoiningAsGuest: boolean;
-  translateToLanguageForChat: string | null;
-  setTranslateToLanguageForChat: (value: string | null) => void;
-  autoTranslateForModal: TranslationModalAutoTranslateProps | null;
-  handleJoinAsGuest: () => void;
-  handleMessageSent: () => void;
-  setUserChat: React.Dispatch<React.SetStateAction<UserChat | null>>;
-  handleTranslateToLanguageChange: (value: string | null) => Promise<void>;
-  handleGroupChannelUpdate: (() => void | Promise<void>) | undefined;
-
   title: string;
   titleContent: React.ReactNode;
   titleMetaRow: React.ReactNode;
   subtitle: string | null;
   icon: React.ReactNode;
-
   panels: ReturnType<typeof useGameChatPanels>;
   failedMutationCount: number;
   retryMutations: () => void;
   autoTranslateLanguageCodes: string[];
-
   handleToggleMute: () => void;
   handleLeaveChat: () => void;
   handleJoinChannel: () => void;
@@ -119,10 +133,27 @@ export interface ThreadViewValue {
   isTogglingMute: boolean;
   showLeaveConfirmation: boolean;
   setShowLeaveConfirmation: (open: boolean) => void;
-
   chatContainerRef: RefObject<HTMLDivElement | null>;
   showLoadingHeader: boolean;
   navigate: ReturnType<typeof import('react-router-dom').useNavigate>;
+  isThreadOpenSettling: boolean;
+  isInitialLoad: boolean;
+  isSwitchingChatType: boolean;
 }
 
+/** Combined value — prefer seam hooks for consumers. */
+export interface ThreadViewValue
+  extends ThreadMessagesValue,
+    ThreadScrollValue,
+    ThreadComposerValue,
+    ThreadChromeValue {}
+
+export const ThreadMessageActionsContext = createContext<ThreadMessageActionsValue | null>(null);
+export const ThreadMessagesDataContext = createContext<ThreadMessagesDataValue | null>(null);
+export const ThreadMessagesContext = createContext<ThreadMessagesValue | null>(null);
+export const ThreadScrollContext = createContext<ThreadScrollValue | null>(null);
+export const ThreadComposerContext = createContext<ThreadComposerValue | null>(null);
+export const ThreadChromeContext = createContext<ThreadChromeValue | null>(null);
+
+/** @deprecated Prefer seam hooks. Kept for gradual migration. */
 export const ThreadViewContext = createContext<ThreadViewValue | null>(null);

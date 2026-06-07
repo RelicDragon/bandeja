@@ -141,19 +141,6 @@ export const PlayerCardProfileBody = ({
         )}
       </motion.div>
 
-      {showProfileTabs && onProfileTabChange && (
-        <motion.div variants={itemVariants} className="flex justify-center">
-          <SegmentedSwitch
-            tabs={profileTabs}
-            activeId={activeProfileTab}
-            onChange={(id) => onProfileTabChange(id as PlayerCardProfileTab)}
-            showOnlyActiveTabText
-            layoutId="player-card-profile-tabs"
-            className="w-full max-w-xs"
-          />
-        </motion.div>
-      )}
-
       {(!showProfileTabs || activeProfileTab === 'statistics') && stats.user.bio && (
         <motion.div variants={itemVariants} className={edgeToEdge ? 'px-0' : 'px-6'}>
           <p className="text-sm text-gray-600 dark:text-gray-400 italic">
@@ -162,22 +149,33 @@ export const PlayerCardProfileBody = ({
         </motion.div>
       )}
 
+      {prependBeforeLevelHistory && (
+        <motion.div variants={itemVariants}>
+          {prependBeforeLevelHistory}
+        </motion.div>
+      )}
+
+      {showProfileTabs && onProfileTabChange && (
+        <motion.div variants={itemVariants} className="flex justify-center">
+          <SegmentedSwitch
+            tabs={profileTabs}
+            activeId={activeProfileTab}
+            onChange={(id) => onProfileTabChange(id as PlayerCardProfileTab)}
+            showOnlyActiveTabText={false}
+            layoutId="player-card-profile-tabs"
+            className="w-fit"
+          />
+        </motion.div>
+      )}
+
       {showProfileTabs && activeProfileTab === 'groups' ? (
         <motion.div variants={itemVariants}>
           {groupsContent}
         </motion.div>
       ) : (
-      <div className="flex flex-col gap-2">
-        {prependBeforeLevelHistory && (
-          <motion.div variants={itemVariants}>
-            {prependBeforeLevelHistory}
-          </motion.div>
-        )}
-
         <motion.div variants={itemVariants}>
           <LevelHistoryView stats={stats} padding="p-0" tabDarkBgClass="dark:bg-gray-700/50" hideUserCard onOpenGame={onOpenGame} showItemsToSell onMarketItemClick={onMarketItemClick} onStatsRefresh={onStatsRefresh} />
         </motion.div>
-      </div>
       )}
     </motion.div>
   );

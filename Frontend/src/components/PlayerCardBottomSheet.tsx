@@ -4,7 +4,7 @@ import { X, ArrowLeft, Share2, Maximize2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
-import type { GroupChannel } from '@/api/chat';
+import type { CommonChatItem } from '@/api/commonChats';
 import { favoritesApi } from '@/api/favorites';
 import { blockedUsersApi } from '@/api/blockedUsers';
 import { Loading } from './Loading';
@@ -57,10 +57,11 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareModalUrl, setShareModalUrl] = useState('');
   const [profileTab, setProfileTab] = useState<PlayerCardProfileTab>('statistics');
-  const [commonGroups, setCommonGroups] = useState<GroupChannel[]>([]);
-  const [commonGroupsLoading, setCommonGroupsLoading] = useState(false);
+  const [commonChats, setCommonChats] = useState<CommonChatItem[]>([]);
+  const [commonChatsLoading, setCommonChatsLoading] = useState(false);
   const isCurrentUser = playerId === user?.id;
-  const showProfileTabs = !!user && !!playerId && !isCurrentUser && !isBlocked;
+  const canFetchCommonChats = !!user && !!playerId && !isCurrentUser && !isBlocked;
+  const showProfileTabs = canFetchCommonChats && !commonChatsLoading && commonChats.length > 0;
   const contextLevelSport = useSportLevelContext();
   const navigatingToChatRef = useRef(false);
   const navigatingToFullProfileRef = useRef(false);
@@ -74,7 +75,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     setShowShareModal(false);
     setShareModalUrl('');
     setProfileTab('statistics');
-    setCommonGroups([]);
+    setCommonChats([]);
 
     const fetchStats = async () => {
       try {
@@ -98,28 +99,36 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   }, [playerId, isCurrentUser, user, contextLevelSport, t]);
 
   useEffect(() => {
-    if (!showProfileTabs || !playerId) {
-      setCommonGroups([]);
+    if (!canFetchCommonChats || !playerId) {
+      setCommonChats([]);
       return;
     }
 
     let cancelled = false;
-    const fetchCommonGroups = async () => {
+    const fetchCommonChats = async () => {
       try {
-        setCommonGroupsLoading(true);
-        const response = await usersApi.getCommonGroupChannels(playerId);
-        if (!cancelled) setCommonGroups(response.data);
+        setCommonChatsLoading(true);
+        const response = await usersApi.getCommonChats(playerId);
+        if (!cancelled) {
+          setCommonChats(response.data.filter((chat) => !chat.groupChannel?.isCityGroup));
+        }
       } catch (error) {
-        console.error('Failed to fetch common groups:', error);
-        if (!cancelled) setCommonGroups([]);
+        console.error('Failed to fetch common chats:', error);
+        if (!cancelled) setCommonChats([]);
       } finally {
-        if (!cancelled) setCommonGroupsLoading(false);
+        if (!cancelled) setCommonChatsLoading(false);
       }
     };
 
-    void fetchCommonGroups();
+    void fetchCommonChats();
     return () => { cancelled = true; };
-  }, [showProfileTabs, playerId]);
+  }, [canFetchCommonChats, playerId]);
+
+  useEffect(() => {
+    if (!showProfileTabs && profileTab === 'groups') {
+      setProfileTab('statistics');
+    }
+  }, [showProfileTabs, profileTab]);
 
   usePresenceSubscription('player-card', user && playerId && !isCurrentUser ? [playerId] : []);
 
@@ -230,12 +239,26 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     }
   };
 
-  const handleOpenGroupChat = useCallback((group: GroupChannel) => {
+  const handleOpenCommonChat = useCallback((chat: CommonChatItem) => {
     markReopenOnBack();
     navigatingToChatRef.current = true;
-    navigate(`/group-chat/${group.id}`, {
-      state: { groupChannel: group, contextType: 'GROUP' },
-    });
+
+    if (chat.kind === 'game') {
+      navigate(`/games/${chat.id}/chat`, { state: { contextType: 'GAME' } });
+    } else if (chat.kind === 'bug') {
+      navigate(`/bugs/${chat.id}`, {
+        state: { groupChannel: chat.groupChannel, contextType: 'GROUP' },
+      });
+    } else if (chat.kind === 'channel' || chat.kind === 'market') {
+      navigate(`/channel-chat/${chat.id}`, {
+        state: { groupChannel: chat.groupChannel, contextType: 'GROUP' },
+      });
+    } else {
+      navigate(`/group-chat/${chat.id}`, {
+        state: { groupChannel: chat.groupChannel, contextType: 'GROUP' },
+      });
+    }
+
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         onClose();
@@ -404,10 +427,10 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                         onProfileTabChange={setProfileTab}
                         groupsContent={(
                           <PlayerCardCommonGroups
-                            groups={commonGroups}
-                            loading={commonGroupsLoading}
+                            chats={commonChats}
+                            loading={commonChatsLoading}
                             t={t}
-                            onGroupClick={handleOpenGroupChat}
+                            onChatClick={handleOpenCommonChat}
                           />
                         )}
                         prependBeforeLevelHistory={

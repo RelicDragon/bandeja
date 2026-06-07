@@ -15,9 +15,9 @@ import { enqueueChatSyncPull, SYNC_PRIORITY_FOREGROUND } from '@/services/chat/c
 import { chatOpenMessagesSnapshotEqual, mergeOpenSnapshot } from '@/services/chat/chatOpenSnapshot';
 import {
   detectReconcileScrollDelta,
-  shouldPinOnOpen,
   type ReconcileScrollDelta,
 } from '@/services/chat/chatOpenScrollPolicy';
+import { decideReconcilePinApply } from '@/services/chat/threadScrollPolicy';
 import { commitChatOpenMessages, traceChatOpenLength } from '@/services/chat/chatOpenTrace';
 
 /** Socket backlog + open reload guard after first paint commit. */
@@ -134,7 +134,7 @@ function resolvePinAfterReconcile(
     after.length,
     after[0]?.id
   );
-  return shouldPinOnOpen(scrollRow, scrollDelta);
+  return decideReconcilePinApply({ savedScroll: scrollRow, reconcileDelta: scrollDelta }).kind === 'pin-bottom';
 }
 
 /** Post-open reconcile — missed pull, sync events, tail merge; single commit. */

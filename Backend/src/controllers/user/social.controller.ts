@@ -10,7 +10,7 @@ import {
   projectUserForSportContext,
 } from '../../services/user/userSportProfile.service';
 import { BasicUser } from '../../types/user.types';
-import { GroupChannelService } from '../../services/chat/groupChannel.service';
+import { CommonChatsService } from '../../services/user/commonChats.service';
 
 export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, sport: sportQuery } = req.query;
@@ -192,7 +192,7 @@ export const getCommonGroupChannels = asyncHandler(async (req: AuthRequest, res:
     throw new ApiError(404, 'User not found');
   }
 
-  const groups = await GroupChannelService.getCommonGroupChannels(req.userId!, otherUserId);
-  res.json({ success: true, data: groups });
+  const chats = await CommonChatsService.getCommonChats(req.userId!, otherUserId);
+  res.json({ success: true, data: chats });
 });
 

@@ -57,6 +57,7 @@ import {
   chatOpenMessageIdsEqual,
   mergeOpenPaintWithLivePending,
 } from '@/services/chat/chatOpenSnapshot';
+import { decideReconcilePinApply } from '@/services/chat/threadScrollPolicy';
 const PAGE_SIZE = 50;
 
 export interface UseGameChatMessagesParams {
@@ -370,9 +371,11 @@ export function useGameChatMessages({
   const pinAfterSocketMergeIfAllowed = useCallback(() => {
     if (threadOpenSettlingRef.current) return;
     if (!openPaintCommittedRef.current) return;
-    const scroll = openScrollRef.current;
-    if (scroll?.anchorMessageId) return;
-    if (scroll && scroll.atBottom === false) return;
+    const decision = decideReconcilePinApply({
+      savedScroll: openScrollRef.current,
+      reconcileDelta: 'append',
+    });
+    if (decision.kind !== 'pin-bottom') return;
     scrollToBottom();
   }, [scrollToBottom]);
 

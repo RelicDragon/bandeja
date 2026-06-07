@@ -19,16 +19,20 @@ import {
   scheduleThreadScrollSave,
 } from '@/services/chat/chatThreadScroll';
 import {
-  estimateMessageRowHeightPx,
   END_SPACER_PX,
-  resolveMessageRowEstimateWithDateSeparator,
-} from '@/services/chat/chatMessageRowEstimate';
+  registerRowHeightBump,
+  rowHeightCacheEstimate,
+  rowHeightCacheHasDateSeparator,
+  rowHeightCachePreloadTail,
+  rowHeightCacheRecordMeasured,
+  rowHeightCacheSeedTailHeuristics,
+} from '@/services/chat/rowHeightCache';
+import { buildReplyCountMap, findFirstReplyId } from '@/services/chat/replyCountMap';
 import {
-  getCachedMessageRowHeight,
-  preloadMessageRowHeights,
-  rememberMeasuredMessageHeight,
-  seedEphemeralMessageRowHeight,
-} from '@/services/chat/chatMessageHeights';
+  decideNewMessagesScrollApply,
+  decideOpenScrollApply,
+  decideSettlingPinApply,
+} from '@/services/chat/threadScrollPolicy';
 import {
   isMessageListNearBottom,
   pinMessageListContainerToBottom,
@@ -38,10 +42,7 @@ import {
 import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
 import { getMessageRowKey } from '@/services/chat/messageRowKey';
 import { ChatDateSeparator } from '@/components/chat/ChatDateSeparator';
-import {
-  getChatDateSeparatorLabel,
-  stripDateSeparatorFromMeasuredRowHeight,
-} from '@/utils/chatDateSeparator';
+import { getChatDateSeparatorLabel } from '@/utils/chatDateSeparator';
 
 const OPEN_TAIL_EAGER_MEDIA = 60;
 const VIRTUAL_OVERSCAN_BASE = 10;
@@ -145,18 +146,33 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   const justLoadedOlderMessagesRef = useRef(false);
   const loadMoreCooldownRef = useRef(0);
   const { contextMenuState, openContextMenu, closeContextMenu, handleScrollStart } = useContextMenuManager();
+  const activeContextMenuMessageId = contextMenuState.isOpen ? contextMenuState.messageId : null;
+
+  const replyCountMap = useMemo(() => buildReplyCountMap(messages), [messages]);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+
+  const onScrollToFirstReply = useCallback((parentMessageId: string) => {
+    const firstId = findFirstReplyId(messagesRef.current, parentMessageId);
+    if (firstId) onScrollToMessage?.(firstId);
+  }, [onScrollToMessage]);
 
   const rowCount = messages.length + 1;
   const [virtualOverscan, setVirtualOverscan] = useState(VIRTUAL_OVERSCAN_BASE);
   const scrollVelRef = useRef({ top: 0, t: 0 });
   const [, bumpHeightEstimates] = useReducer((n: number) => n + 1, 0);
 
+  useEffect(() => {
+    registerRowHeightBump(bumpHeightEstimates);
+    return () => registerRowHeightBump(null);
+  }, []);
+
   const virtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => messagesContainerRef.current,
     estimateSize: (index) => {
       if (index === rowCount - 1) return END_SPACER_PX;
-      return resolveMessageRowEstimateWithDateSeparator(messages, index);
+      return rowHeightCacheEstimate({ message: messages[index], index, messages });
     },
     overscan: virtualOverscan,
     getItemKey: (index) =>
@@ -207,38 +223,18 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       return;
     }
     lastSeededTailKeyRef.current = tailIdsForHeightPreload;
-    let seeded = false;
-    for (const m of messagesMeasureRef.current.slice(-140)) {
-      if (m.id && getCachedMessageRowHeight(m.id) == null) {
-        seedEphemeralMessageRowHeight(m.id, estimateMessageRowHeightPx(m));
-        seeded = true;
-      }
+    if (rowHeightCacheSeedTailHeuristics(messagesMeasureRef.current.slice(-140))) {
+      bumpHeightEstimates();
     }
-    if (seeded) bumpHeightEstimates();
   }, [threadScrollKey, tailIdsForHeightPreload]);
 
   useEffect(() => {
-    let alive = true;
-    const ids = tailIdsForHeightPreload.length === 0 ? [] : tailIdsForHeightPreload.split('\x1e');
-    if (ids.length === 0) {
-      return () => {
-        alive = false;
-      };
-    }
-    void preloadMessageRowHeights(ids).then(() => {
-      if (!alive) return;
-      let seeded = false;
-      for (const m of messagesMeasureRef.current.slice(-140)) {
-        if (m.id && getCachedMessageRowHeight(m.id) == null) {
-          seedEphemeralMessageRowHeight(m.id, estimateMessageRowHeightPx(m));
-          seeded = true;
-        }
-      }
-      if (seeded) bumpHeightEstimates();
+    if (tailIdsForHeightPreload.length === 0) return;
+    void rowHeightCachePreloadTail({
+      messages: messagesMeasureRef.current,
+      threadKey: threadScrollKey,
+      limit: 140,
     });
-    return () => {
-      alive = false;
-    };
   }, [threadScrollKey, tailIdsForHeightPreload]);
 
   const layoutSettlingForBottomPin = threadLayoutSettling;
@@ -261,11 +257,11 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       if (vi.index === rowCount - 1) continue;
       const m = msgs[vi.index];
       if (m?.id && vi.size > 2) {
-        const hadDateSeparator = getChatDateSeparatorLabel(msgs, vi.index) != null;
-        rememberMeasuredMessageHeight(
-          m.id,
-          stripDateSeparatorFromMeasuredRowHeight(vi.size, hadDateSeparator),
-        );
+        rowHeightCacheRecordMeasured({
+          messageId: m.id,
+          rawHeightPx: vi.size,
+          hasDateSeparator: rowHeightCacheHasDateSeparator(msgs, vi.index),
+        });
       }
     }
   }, [virtualMeasureKey, rowCount]);
@@ -282,6 +278,11 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       const el = messagesContainerRef.current;
       if (!el) return;
       if (!openScrollAtBottomRef.current) return;
+      const settlingDecision = decideSettlingPinApply(
+        layoutSettlingForBottomPinRef.current,
+        openScrollAtBottomRef.current
+      );
+      if (settlingDecision.kind === 'none') return;
       const gapPx = layoutSettlingForBottomPinRef.current ? 56 : PIN_BOTTOM_SKIP_GAP_PX;
       if (isMessageListNearBottom(el, gapPx)) return;
       pinMessageListContainerToBottom(el);
@@ -333,6 +334,13 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     if (!messagesContainerRef.current) return;
     if (restoredScrollThreadRef.current === threadScrollKey) return;
     if (initialScroll === undefined) return;
+
+    const openDecision = decideOpenScrollApply({
+      initialScroll,
+      openPaintGeneration,
+      alreadyRestored: restoredScrollThreadRef.current === threadScrollKey,
+    });
+    if (openDecision.kind === 'none') return;
 
     restoredScrollThreadRef.current = threadScrollKey;
     applyOpenScrollFromDecision(initialScroll, messages);
@@ -547,6 +555,15 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
         previousFirstId !== currentFirstId;
 
       if (wasLoadingMore || justLoadedOlder || isPrependReconcile) {
+        const scrollDecision = decideNewMessagesScrollApply({
+          isNewMessagesAdded: true,
+          wasLoadingMore: wasLoadingMore || isLoadingMoreRef.current,
+          justLoadedOlder,
+          isPrependReconcile,
+          layoutSettlingForBottomPin,
+          wasAtBottom: wasAtBottomBeforeGrowRef.current,
+        });
+        if (scrollDecision.kind !== 'prepend-compensate') return;
         const previousScrollHeight = previousScrollHeightRef.current;
         const previousScrollTop = previousScrollTopRef.current;
 
@@ -560,8 +577,16 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
             }
           });
         });
-      } else if (!layoutSettlingForBottomPin) {
-        if (messages.length > 0 && wasAtBottomBeforeGrowRef.current) {
+      } else {
+        const scrollDecision = decideNewMessagesScrollApply({
+          isNewMessagesAdded: true,
+          wasLoadingMore: false,
+          justLoadedOlder: false,
+          isPrependReconcile: false,
+          layoutSettlingForBottomPin,
+          wasAtBottom: wasAtBottomBeforeGrowRef.current,
+        });
+        if (scrollDecision.kind === 'append-pin-if-at-bottom' && messages.length > 0) {
           pinMessageListContainerToBottom(container);
           pinnedAfterGrow = true;
         }
@@ -742,10 +767,12 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
                 onPollUpdated={onPollUpdated}
                 onResendQueued={onResendQueued}
                 onRemoveFromQueue={onRemoveFromQueue}
+                activeContextMenuMessageId={activeContextMenuMessageId}
                 contextMenuState={contextMenuState}
                 onOpenContextMenu={openContextMenu}
                 onCloseContextMenu={closeContextMenu}
-                allMessages={messages}
+                replyCount={replyCountMap.get(message.id) ?? 0}
+                onScrollToFirstReply={onScrollToFirstReply}
                 onScrollToMessage={onScrollToMessage}
                 isChannel={isChannel}
                 userChatUser1Id={userChatUser1Id}

@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { ChatMessage } from '@/api/chat';
 import { MessageItem, ContextMenuState } from './MessageItem';
+import { messageRowPropsEqual } from './MessageItem/messageRowPropsEqual';
 
 function staggerMsForId(id: string): number {
   let h = 0;
@@ -22,7 +23,6 @@ function isRecentMessage(createdAt: string | undefined): boolean {
 interface AnimatedMessageItemProps {
   message: ChatMessage;
   staggerKey: string;
-  /** When true, show immediately (e.g. thread open). */
   skipStaggerOnOpen?: boolean;
   suppressOpenReactionMotion?: boolean;
   loadMediaEager?: boolean;
@@ -34,10 +34,12 @@ interface AnimatedMessageItemProps {
   onPollUpdated?: (messageId: string, updatedPoll: import('@/api/chat').Poll) => void;
   onResendQueued?: (tempId: string) => void;
   onRemoveFromQueue?: (tempId: string) => void;
+  activeContextMenuMessageId: string | null;
   contextMenuState: ContextMenuState;
   onOpenContextMenu: (messageId: string, position: { x: number; y: number }) => void;
   onCloseContextMenu: () => void;
-  allMessages: ChatMessage[];
+  replyCount: number;
+  onScrollToFirstReply?: (parentMessageId: string) => void;
   onScrollToMessage?: (messageId: string) => void;
   isChannel?: boolean;
   userChatUser1Id?: string;
@@ -50,7 +52,7 @@ interface AnimatedMessageItemProps {
   onForwardMessage?: (message: ChatMessage) => void;
 }
 
-export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
+export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(function AnimatedMessageItem({
   message,
   staggerKey,
   skipStaggerOnOpen = false,
@@ -64,10 +66,12 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   onPollUpdated,
   onResendQueued,
   onRemoveFromQueue,
+  activeContextMenuMessageId,
   contextMenuState,
   onOpenContextMenu,
   onCloseContextMenu,
-  allMessages,
+  replyCount,
+  onScrollToFirstReply,
   onScrollToMessage,
   isChannel = false,
   userChatUser1Id,
@@ -78,7 +82,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
   onUnpin,
   showReply = true,
   onForwardMessage,
-}) => {
+}) {
   const skipStagger = skipStaggerOnOpen || !isRecentMessage(message.createdAt);
   const [isVisible, setIsVisible] = useState(skipStagger);
   const revealedRef = useRef(skipStagger);
@@ -105,6 +109,11 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
     };
   }, [staggerKey, message.createdAt, skipStagger]);
 
+  const rowContextMenuState: ContextMenuState =
+    activeContextMenuMessageId === message.id
+      ? contextMenuState
+      : { isOpen: false, messageId: null, position: { x: 0, y: 0 } };
+
   return (
     <div
       className={`transition-opacity duration-500 ease-out ${
@@ -121,10 +130,11 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
         onPollUpdated={onPollUpdated}
         onResendQueued={onResendQueued}
         onRemoveFromQueue={onRemoveFromQueue}
-        contextMenuState={contextMenuState}
+        contextMenuState={rowContextMenuState}
         onOpenContextMenu={onOpenContextMenu}
         onCloseContextMenu={onCloseContextMenu}
-        allMessages={allMessages}
+        replyCount={replyCount}
+        onScrollToFirstReply={onScrollToFirstReply}
         onScrollToMessage={onScrollToMessage}
         isChannel={isChannel}
         userChatUser1Id={userChatUser1Id}
@@ -140,4 +150,28 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = ({
       />
     </div>
   );
-};
+}, (prev, next) =>
+  messageRowPropsEqual(
+    {
+      message: prev.message,
+      replyCount: prev.replyCount,
+      activeContextMenuMessageId: prev.activeContextMenuMessageId,
+      isPinned: prev.isPinned ?? false,
+      loadMediaEager: prev.loadMediaEager ?? false,
+      suppressOpenReactionMotion: prev.suppressOpenReactionMotion ?? false,
+      skipStaggerOnOpen: prev.skipStaggerOnOpen,
+      showReply: prev.showReply ?? true,
+      isChannel: prev.isChannel ?? false,
+    },
+    {
+      message: next.message,
+      replyCount: next.replyCount,
+      activeContextMenuMessageId: next.activeContextMenuMessageId,
+      isPinned: next.isPinned ?? false,
+      loadMediaEager: next.loadMediaEager ?? false,
+      suppressOpenReactionMotion: next.suppressOpenReactionMotion ?? false,
+      skipStaggerOnOpen: next.skipStaggerOnOpen,
+      showReply: next.showReply ?? true,
+      isChannel: next.isChannel ?? false,
+    }
+  ));

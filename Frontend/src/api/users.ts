@@ -1,7 +1,7 @@
 import api from './axios';
 import { isAxiosError } from 'axios';
 import { MAX_BASIC_USERS_BY_IDS } from '@/services/users/basicUsersBatchLimits';
-import type { GroupChannel } from './chat';
+import type { CommonChatItem } from './commonChats';
 import {
   ApiResponse,
   User,
@@ -394,8 +394,8 @@ export const usersApi = {
     return response.data;
   },
 
-  getCommonGroupChannels: async (userId: string) => {
-    const response = await api.get<ApiResponse<GroupChannel[]>>(`/users/${userId}/common-groups`);
+  getCommonChats: async (userId: string) => {
+    const response = await api.get<ApiResponse<CommonChatItem[]>>(`/users/${userId}/common-groups`);
     return response.data;
   },
 };

@@ -3,6 +3,7 @@ import type { ChatMessage } from '@/api/chat';
 import { EditPreview } from '../EditPreview';
 import { ReplyPreview } from '../ReplyPreview';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useThreadScroll } from '@/pages/GameChat/useThreadView';
 import { COMPOSER_ELEVATED_PANEL_SHADOW } from '@/components/chat/composerElevatedPanel';
 import { PANEL_ENTER_Y, PANEL_EXIT_Y, PANEL_TRANSITION } from '../motion/motionTokens';
 
@@ -14,7 +15,6 @@ interface MessageInputComposerContextStripProps {
   replyTo: ChatMessage | null;
   onCancelEdit?: () => void;
   onCancelReply?: () => void;
-  onScrollToMessage?: (messageId: string) => void;
 }
 
 export function MessageInputComposerContextStrip({
@@ -22,8 +22,8 @@ export function MessageInputComposerContextStrip({
   replyTo,
   onCancelEdit,
   onCancelReply,
-  onScrollToMessage,
 }: MessageInputComposerContextStripProps) {
+  const { handleScrollToMessage: onScrollToMessage } = useThreadScroll();
   const reduceMotion = usePrefersReducedMotion();
   const showEdit = !!editingMessage;
   const showReply = !!replyTo && !editingMessage;

@@ -6,7 +6,7 @@ import {
   chatApi,
   CreateMessageRequest,
 } from '@/api/chat';
-import { ChevronDown, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { normalizeChatType } from '@/utils/chatType';
 import { isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { isUserGroupChannelParticipant } from '@/utils/groupChannelParticipation';
@@ -17,7 +17,7 @@ import { PollCreationModal } from './chat/PollCreationModal';
 import {
   TranslationLanguageModal,
 } from './chat/TranslationLanguageModal';
-import { TranslateToButton, composerFabButtonClass } from './chat/TranslateToButton';
+import { TranslateToButton } from './chat/TranslateToButton';
 import { UndoTranslateButton } from './chat/UndoTranslateButton';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
@@ -38,34 +38,19 @@ import { useMessageInputSubmit, type SendQueuedParams } from '@/components/chat/
 import { uploadChatImageSlotWithRetry } from '@/components/chat/messageInputImageUpload';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useThreadView } from '@/pages/GameChat/useThreadView';
-
-const scrollToBottomFabMotion = {
-  initial: { opacity: 0, y: 40, scale: 0.72 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      type: 'spring' as const,
-      stiffness: 380,
-      damping: 22,
-      mass: 0.75,
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] as const },
-  },
-};
+import { MessageInputScrollFab } from '@/components/chat/MessageInputScrollFab';
+import { useThreadComposer, useThreadMessageActions } from '@/pages/GameChat/useThreadView';
+import { motion } from 'framer-motion';
 
 export type { SendQueuedParams };
 
-export const MessageInput: React.FC = () => {
-  const thread = useThreadView();
+export interface MessageInputProps {
+  disabled?: boolean;
+}
+
+export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledProp = false }) => {
+  const composer = useThreadComposer();
+  const actions = useThreadMessageActions();
   const {
     id,
     contextType,
@@ -75,25 +60,24 @@ export const MessageInput: React.FC = () => {
     groupChannel,
     userChat,
     handleMessageSent: onMessageSent,
+    handleGroupChannelUpdate: onGroupChannelUpdate,
+    replyTo,
+    handleCancelReply: onCancelReply,
+    editingMessage,
+    handleCancelEdit: onCancelEdit,
+    handleTranslateToLanguageChange: onTranslateToLanguageChange,
+    translateToLanguageForChat,
+    autoTranslateForModal: autoTranslate,
+    lastOwnMessage,
+  } = composer;
+  const {
     handleAddOptimisticMessage: onOptimisticMessage,
     handleSendQueued: onSendQueued,
     handleSendFailed: onSendFailed,
     handleReplaceOptimisticWithServerMessage: onMessageCreated,
-    replyTo,
-    handleCancelReply: onCancelReply,
-    handleScrollToMessage: onScrollToMessage,
-    handleGroupChannelUpdate: onGroupChannelUpdate,
-    editingMessage,
-    handleCancelEdit: onCancelEdit,
-    handleMessageUpdated: onEditMessage,
     handleEditMessage: onStartEditMessage,
-    translateToLanguageForChat,
-    handleTranslateToLanguageChange: onTranslateToLanguageChange,
-    autoTranslateForModal: autoTranslate,
-    chatNearBottom,
-    scrollToBottomSmooth: onScrollToBottomSmooth,
-    derived: { lastOwnMessage },
-  } = thread;
+    handleMessageUpdated: onEditMessage,
+  } = actions;
 
   const gameId = contextType === 'GAME' ? id : undefined;
   const bugId = contextType === 'BUG' ? id : undefined;
@@ -102,7 +86,7 @@ export const MessageInput: React.FC = () => {
   const chatType = currentChatType;
   const propContextType = contextType;
   const propContextId = id;
-  const disabled = false;
+  const disabled = disabledProp;
   const translateToLanguage = translateToLanguageForChat ?? null;
   const userChatResolved = userChat ?? null;
   const { t } = useTranslation();
@@ -579,37 +563,7 @@ export const MessageInput: React.FC = () => {
                 ) : null}
               </motion.div>
             </div>
-            <AnimatePresence>
-              {!chatNearBottom && onScrollToBottomSmooth ? (
-                <motion.div
-                  key="chat-scroll-to-bottom"
-                  className="flex flex-shrink-0"
-                  initial={scrollToBottomFabMotion.initial}
-                  animate={scrollToBottomFabMotion.animate}
-                  exit={scrollToBottomFabMotion.exit}
-                >
-                  <motion.button
-                    type="button"
-                    onClick={onScrollToBottomSmooth}
-                    className={`${composerFabButtonClass} origin-bottom-right`}
-                    title={t('chat.scrollToBottom', { defaultValue: 'Scroll to latest' })}
-                    aria-label={t('chat.scrollToBottom', { defaultValue: 'Scroll to latest' })}
-                    whileHover={{ scale: 1.08 }}
-                    whileTap={{ scale: 0.92 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 28 }}
-                  >
-                    <motion.span
-                      className="flex items-center justify-center"
-                      initial={{ y: -4, opacity: 0.6 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ type: 'spring', stiffness: 420, damping: 18, delay: 0.08 }}
-                    >
-                      <ChevronDown size={24} strokeWidth={2.25} className="text-gray-700 dark:text-gray-300" aria-hidden />
-                    </motion.span>
-                  </motion.button>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
+            <MessageInputScrollFab />
           </div>
           <TypingIndicator
             typingUserIds={typingUserIds}
@@ -626,7 +580,6 @@ export const MessageInput: React.FC = () => {
             replyTo={replyTo ?? null}
             onCancelEdit={onCancelEdit}
             onCancelReply={onCancelReply}
-            onScrollToMessage={onScrollToMessage}
           />
           <div
             ref={inputContainerRef}

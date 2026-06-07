@@ -1,21 +1,21 @@
 import { Users } from 'lucide-react';
 import type { TFunction } from 'i18next';
-import type { GroupChannel } from '@/api/chat';
-import { GroupChannelCard } from '@/components/chat/GroupChannelCard';
+import type { CommonChatItem } from '@/api/commonChats';
 import { Loading } from '@/components/Loading';
+import { PlayerCardCommonChatListItem } from '@/components/player/PlayerCardCommonChatListItem';
 
 interface PlayerCardCommonGroupsProps {
-  groups: GroupChannel[];
+  chats: CommonChatItem[];
   loading: boolean;
   t: TFunction;
-  onGroupClick: (group: GroupChannel) => void;
+  onChatClick: (chat: CommonChatItem) => void;
 }
 
 export const PlayerCardCommonGroups = ({
-  groups,
+  chats,
   loading,
   t,
-  onGroupClick,
+  onChatClick,
 }: PlayerCardCommonGroupsProps) => {
   if (loading) {
     return (
@@ -25,7 +25,7 @@ export const PlayerCardCommonGroups = ({
     );
   }
 
-  if (groups.length === 0) {
+  if (chats.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-center text-gray-500 dark:text-gray-400">
         <Users size={32} className="opacity-50" />
@@ -35,13 +35,12 @@ export const PlayerCardCommonGroups = ({
   }
 
   return (
-    <div className="-mx-3 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-      {groups.map((group) => (
-        <GroupChannelCard
-          key={group.id}
-          groupChannel={group}
-          listPresenceBatched
-          onClick={() => onGroupClick(group)}
+    <div className="overflow-hidden">
+      {chats.map((chat) => (
+        <PlayerCardCommonChatListItem
+          key={`${chat.kind}-${chat.id}`}
+          item={chat}
+          onClick={() => onChatClick(chat)}
         />
       ))}
     </div>

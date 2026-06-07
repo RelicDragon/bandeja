@@ -19,7 +19,8 @@ export interface MessageItemProps {
   contextMenuState: ContextMenuState;
   onOpenContextMenu: (messageId: string, position: { x: number; y: number }) => void;
   onCloseContextMenu: () => void;
-  allMessages?: ChatMessage[];
+  replyCount?: number;
+  onScrollToFirstReply?: (parentMessageId: string) => void;
   onScrollToMessage?: (messageId: string) => void;
   isChannel?: boolean;
   userChatUser1Id?: string;

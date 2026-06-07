@@ -4,17 +4,17 @@ import { ChatMessage } from '@/api/chat';
 interface UseMessageReactionsArgs {
   message: ChatMessage;
   currentUserId: string | undefined;
-  allMessages: ChatMessage[];
+  replyCount: number;
   isOffline: boolean;
-  onScrollToMessage?: (messageId: string) => void;
+  onScrollToFirstReply?: (parentMessageId: string) => void;
 }
 
 export function useMessageReactions({
   message,
   currentUserId,
-  allMessages,
+  replyCount,
   isOffline,
-  onScrollToMessage,
+  onScrollToFirstReply,
 }: UseMessageReactionsArgs) {
   const getCurrentUserReaction = useCallback(() => {
     return message.reactions.find(r => r.userId === currentUserId)?.emoji;
@@ -33,23 +33,18 @@ export function useMessageReactions({
     return counts;
   }, [message.reactions]);
 
-  const getReplyCount = useCallback(() => {
-    return allMessages.filter(msg => msg.replyToId === message.id).length;
-  }, [allMessages, message.id]);
+  const getReplyCount = useCallback(() => replyCount, [replyCount]);
 
   const hasReplies = useCallback(() => {
     if (isOffline) return false;
-    return allMessages.filter(msg => msg.replyToId === message.id).length > 0;
-  }, [allMessages, message.id, isOffline]);
+    return replyCount > 0;
+  }, [replyCount, isOffline]);
 
   const handleScrollToReplies = useCallback(() => {
-    if (onScrollToMessage && !isOffline) {
-      const replies = allMessages.filter(msg => msg.replyToId === message.id);
-      if (replies.length > 0) {
-        onScrollToMessage(replies[0].id);
-      }
+    if (onScrollToFirstReply && !isOffline && replyCount > 0) {
+      onScrollToFirstReply(message.id);
     }
-  }, [allMessages, message.id, isOffline, onScrollToMessage]);
+  }, [message.id, replyCount, isOffline, onScrollToFirstReply]);
 
   return {
     getCurrentUserReaction,
