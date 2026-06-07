@@ -203,8 +203,30 @@ export class GameResultsArtifactQueueService {
     const replicatePhotoModel =
       step === 'photo' ? await ReplicatePhotoModelSettingService.getActiveModelId() : undefined;
 
-    await prisma.$transaction([
-      prisma.gameResultsArtifactJob.upsert({
+    const enqueued = await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`
+        SELECT id FROM "Game" WHERE id = ${gameId} FOR UPDATE
+      `;
+
+      const lockedJob = await tx.gameResultsArtifactJob.findUnique({
+        where: { gameId },
+      });
+      if (
+        step === 'summary' &&
+        lockedJob &&
+        (lockedJob.summaryStatus === 'pending' || lockedJob.summaryStatus === 'running')
+      ) {
+        return false;
+      }
+      if (
+        step === 'photo' &&
+        lockedJob &&
+        (lockedJob.photoStatus === 'pending' || lockedJob.photoStatus === 'running')
+      ) {
+        return false;
+      }
+
+      await tx.gameResultsArtifactJob.upsert({
         where: { gameId },
         create: {
           gameId,
@@ -236,12 +258,15 @@ export class GameResultsArtifactQueueService {
           ...(replicatePhotoModel ? { replicatePhotoModel } : {}),
           generationVersion: { increment: 1 },
         },
-      }),
-      prisma.game.update({
+      });
+      await tx.game.update({
         where: { id: gameId },
         data: gameData,
-      }),
-    ]);
+      });
+      return true;
+    });
+
+    if (!enqueued) return;
 
     logResultsArtifact({
       gameId,

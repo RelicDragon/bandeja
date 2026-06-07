@@ -13,6 +13,10 @@ import { isResultsArtifactsReady } from './gameResultsArtifact.readiness';
 import { loadGameForResultsSummary } from './gameResultsArtifact.loadGame';
 import { GameResultsArtifactQueueService } from './gameResultsArtifactQueue.service';
 import { MAX_ARTIFACT_PHOTO_GENERATIONS } from './gameResultsArtifact.photoLimit';
+import {
+  failArtifactPhotoApplyClaim,
+  tryClaimArtifactPhotoApply,
+} from './gameResultsArtifact.photoApplyClaim';
 import { PhotoProvider } from './providers/photo.provider';
 import { SummaryProvider } from './providers/summary.provider';
 
@@ -303,29 +307,29 @@ export class GameResultsArtifactService {
       return;
     }
 
-    const buffer = await PhotoProvider.downloadOutputBuffer(
-      prediction,
-      job.replicatePhotoModel
-    );
-    const dto = await GamePhotoCreateService.createFromGeneratedBuffer(
-      gameId,
-      buffer,
-      'ai-results.webp'
-    );
+    const claimed = await tryClaimArtifactPhotoApply(jobId);
+    if (!claimed) return;
 
-    await prisma.gameResultsArtifactJob.update({
-      where: { id: jobId },
-      data: {
-        photoStatus: 'done',
-        photoError: null,
-        photoGenerationsUsed: { increment: 1 },
-      },
-    });
+    try {
+      const buffer = await PhotoProvider.downloadOutputBuffer(
+        prediction,
+        job.replicatePhotoModel
+      );
+      const dto = await GamePhotoCreateService.createFromGeneratedBuffer(
+        gameId,
+        buffer,
+        'ai-results.webp'
+      );
 
-    const actorUserId = await this.resolvePhotoActorUserId(gameId);
-    await emitGamePhotoAdded(gameId, dto, actorUserId);
-    await emitGamePhotoMainChanged(gameId, dto.id, actorUserId);
-    void emitGameUpdateAfterArtifactsChange(gameId);
+      const actorUserId = await this.resolvePhotoActorUserId(gameId);
+      await emitGamePhotoAdded(gameId, dto, actorUserId);
+      await emitGamePhotoMainChanged(gameId, dto.id, actorUserId);
+      void emitGameUpdateAfterArtifactsChange(gameId);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      await failArtifactPhotoApplyClaim(jobId, msg);
+      throw err;
+    }
   }
 
   private static async resolvePhotoActorUserId(gameId: string): Promise<string> {

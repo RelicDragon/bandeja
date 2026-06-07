@@ -101,6 +101,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const mountedRef = useRef(false);
   const [isSendingToTelegram, setIsSendingToTelegram] = useState(false);
   const [isStartingArtifactGeneration, setIsStartingArtifactGeneration] = useState(false);
+  const artifactGenerationInFlightRef = useRef(false);
   const [pollArtifactsActive, setPollArtifactsActive] = useState(false);
   const [isTelegramSummaryModalOpen, setIsTelegramSummaryModalOpen] = useState(false);
   const [telegramSummary, setTelegramSummary] = useState('');
@@ -286,8 +287,16 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const startArtifactGeneration = async (
     request: (gameId: string) => ReturnType<typeof gamesApi.prepareResultsArtifactPhoto>
   ) => {
-    if (!currentGame || isStartingArtifactGeneration || isArtifactsGenerating) return;
+    if (
+      !currentGame ||
+      artifactGenerationInFlightRef.current ||
+      isStartingArtifactGeneration ||
+      isArtifactsGenerating
+    ) {
+      return;
+    }
 
+    artifactGenerationInFlightRef.current = true;
     setIsStartingArtifactGeneration(true);
     setPollArtifactsActive(true);
     try {
@@ -316,6 +325,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         t('gameResults.prepareResultsFailed');
       toast.error(errorMessage);
     } finally {
+      artifactGenerationInFlightRef.current = false;
       setIsStartingArtifactGeneration(false);
     }
   };
