@@ -9,7 +9,9 @@ import {
   assertCanUpload,
   loadGamePhotoAccessContext,
 } from './gamePhoto.permissions';
-import { formatGamePhotoDto, type GamePhotoDto } from './gamePhoto.read.service';
+import { assignMainPhotoForUpload } from './gamePhoto.mainPhotoAssign';
+import { formatGamePhotoDto, type GamePhotoDto, type PhotoWithUploader } from './gamePhoto.read.service';
+
 const UPLOADER_SELECT = {
   id: true,
   firstName: true,
@@ -18,6 +20,23 @@ const UPLOADER_SELECT = {
 } as const;
 
 export class GamePhotoCreateService {
+  private static async finishUpload(
+    gameId: string,
+    photo: PhotoWithUploader,
+    userId: string,
+    options: { isNew: boolean; emitAdded: boolean }
+  ): Promise<GamePhotoDto> {
+    const mainChanged = await assignMainPhotoForUpload(gameId, photo.id);
+    const dto = formatGamePhotoDto(photo);
+    if (options.emitAdded) {
+      await emitGamePhotoAdded(gameId, dto, userId);
+    }
+    if (options.isNew || mainChanged) {
+      await emitGamePhotoMainChanged(gameId, photo.id, userId);
+    }
+    return dto;
+  }
+
   static async uploadGamePhoto(
     gameId: string,
     userId: string,
@@ -40,7 +59,7 @@ export class GamePhotoCreateService {
         include: { uploader: { select: UPLOADER_SELECT } },
       });
       if (existing) {
-        return formatGamePhotoDto(existing);
+        return this.finishUpload(gameId, existing, userId, { isNew: false, emitAdded: false });
       }
     }
 
@@ -73,6 +92,7 @@ export class GamePhotoCreateService {
             include: { uploader: { select: UPLOADER_SELECT } },
           });
           if (dup) {
+            await assignMainPhotoForUpload(gameId, dup.id, tx);
             return { photo: dup, isNew: false };
           }
         }
@@ -117,12 +137,10 @@ export class GamePhotoCreateService {
         return { photo: created, isNew: true };
       });
 
-      const dto = formatGamePhotoDto(photo);
-      if (isNew) {
-        await emitGamePhotoAdded(gameId, dto, userId);
-        await emitGamePhotoMainChanged(gameId, photo.id, userId);
-      }
-      return dto;
+      return this.finishUpload(gameId, photo, userId, {
+        isNew,
+        emitAdded: isNew,
+      });
     } catch (e) {
       await ImageProcessor.deleteFilePair(processed.originalPath, processed.thumbnailPath);
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
@@ -136,7 +154,7 @@ export class GamePhotoCreateService {
           include: { uploader: { select: UPLOADER_SELECT } },
         });
         if (existing) {
-          return formatGamePhotoDto(existing);
+          return this.finishUpload(gameId, existing, userId, { isNew: false, emitAdded: false });
         }
       }
       throw e;

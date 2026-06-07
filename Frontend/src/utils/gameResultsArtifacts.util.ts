@@ -1,4 +1,5 @@
 import type { Game, GameResultsArtifacts, GameResultsArtifactsStatus } from '@/types';
+import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 import { isUserGameAdminOrOwner, isUserGameParticipant } from '@/utils/gameResults';
 
 const ARTIFACT_STATUSES: GameResultsArtifactsStatus[] = [
@@ -52,8 +53,9 @@ export function hasCachedResultsSummary(resultsSummaryText?: string | null): boo
 export function hasGamePhotoForTelegram(game: {
   photosCount?: number;
   mainPhotoId?: string | null;
+  mainPhoto?: { id: string } | null;
 }): boolean {
-  return (game.photosCount || 0) > 0 || Boolean(game.mainPhotoId);
+  return (game.photosCount || 0) > 0 || Boolean(getGameMainPhotoId(game));
 }
 
 /** True when the game has finalized results suitable for Telegram delivery. */

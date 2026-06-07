@@ -17,6 +17,7 @@ import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { PhotosSectionGrid } from './PhotosSectionGrid';
 import { usePhotosSectionUpload } from './usePhotosSectionUpload';
 import { gamePhotoOriginalUrl, hasGamePhotoUrl } from '@/utils/gamePhotoUrl';
+import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 
 interface PhotosSectionProps {
   game: Game;
@@ -41,8 +42,12 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   const [isUpdatingMainPhoto, setIsUpdatingMainPhoto] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
   const [photoToDelete, setPhotoToDelete] = useState<GamePhoto | null>(null);
-  const [mainPhotoId, setMainPhotoId] = useState<string | null | undefined>(game.mainPhotoId);
+  const [mainPhotoId, setMainPhotoId] = useState<string | null | undefined>(
+    getGameMainPhotoId(game)
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const resolvedMainPhotoId = getGameMainPhotoId(game);
 
   const displayMainPhotoId = useMemo(() => {
     if (!mainPhotoId) return null;
@@ -67,8 +72,8 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   );
 
   useEffect(() => {
-    setMainPhotoId(game.mainPhotoId);
-  }, [game.mainPhotoId]);
+    setMainPhotoId(resolvedMainPhotoId);
+  }, [resolvedMainPhotoId]);
 
   useEffect(() => {
     setGalleryIndex(null);

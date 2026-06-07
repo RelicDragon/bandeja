@@ -3,11 +3,14 @@ import api from './axios';
 import { ApiResponse, Game, GameTeam, GameTeamData, BookedCourtSlot } from '@/types';
 import type { ReactionEmojiUsageMutationPayload } from '@/store/reactionEmojiUsageStore';
 import { normalizeGameResultsArtifacts } from '@/utils/gameResultsArtifacts.util';
+import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 
 export function normalizeGameFromApi(game: Game): Game {
   const artifacts = normalizeGameResultsArtifacts(game.resultsArtifacts);
+  const mainPhotoId = getGameMainPhotoId(game);
   return {
     ...game,
+    ...(mainPhotoId !== undefined ? { mainPhotoId } : {}),
     ...(artifacts ? { resultsArtifacts: artifacts } : {}),
     resultsSummaryText:
       typeof game.resultsSummaryText === 'string' ? game.resultsSummaryText : game.resultsSummaryText ?? null,

@@ -15,6 +15,8 @@ type PhotoWithUploader = Prisma.GamePhotoGetPayload<{
   include: { uploader: { select: typeof UPLOADER_SELECT } };
 }>;
 
+export type { PhotoWithUploader };
+
 export type GamePhotoDto = {
   id: string;
   gameId: string;

@@ -8,7 +8,7 @@ import { getSportConfig } from '@/sport/sportRegistry';
 import { gamePhotoOriginalUrl } from '@/utils/gamePhotoUrl';
 import { useGamePhotosStore } from '@/store/gamePhotosStore';
 import { shareGameResultsCard } from '@/utils/gameResultsShare.util';
-import { hasCachedResultsSummary } from '@/utils/gameResultsArtifacts.util';
+import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 import { buildDuplicateGameInitialData } from '@/utils/buildDuplicateGameInitialData';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { useAuthStore } from '@/store/authStore';
@@ -23,7 +23,8 @@ export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   const photos = useGamePhotosStore((s) => s.byGameId[game.id]?.photos ?? []);
-  const mainPhoto = photos.find((p) => p.id === game.mainPhotoId) ?? photos[0];
+  const mainPhoto =
+    photos.find((p) => p.id === getGameMainPhotoId(game)) ?? photos[0];
   const photoUrl = mainPhoto ? gamePhotoOriginalUrl(mainPhoto) : null;
   const summary = hasCachedResultsSummary(game.resultsSummaryText)
     ? game.resultsSummaryText!.trim()
