@@ -37,6 +37,18 @@ export async function failArtifactPhotoApplyClaim(
   });
 }
 
+/** Release a successful claim after a transient save failure so webhook/poll can retry. */
+export async function revertArtifactPhotoApplyClaim(jobId: string): Promise<void> {
+  await prisma.gameResultsArtifactJob.update({
+    where: { id: jobId },
+    data: {
+      photoStatus: 'running',
+      photoError: null,
+      photoGenerationsUsed: { decrement: 1 },
+    },
+  });
+}
+
 export async function isArtifactPhotoApplyClaimable(jobId: string): Promise<boolean> {
   const job = await prisma.gameResultsArtifactJob.findUnique({
     where: { id: jobId },

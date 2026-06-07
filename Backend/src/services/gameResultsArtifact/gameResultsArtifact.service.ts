@@ -15,8 +15,10 @@ import { GameResultsArtifactQueueService } from './gameResultsArtifactQueue.serv
 import { MAX_ARTIFACT_PHOTO_GENERATIONS } from './gameResultsArtifact.photoLimit';
 import {
   failArtifactPhotoApplyClaim,
+  revertArtifactPhotoApplyClaim,
   tryClaimArtifactPhotoApply,
 } from './gameResultsArtifact.photoApplyClaim';
+import { isPrismaDeadlockError } from '../../utils/prismaDeadlock';
 import { PhotoProvider } from './providers/photo.provider';
 import { SummaryProvider } from './providers/summary.provider';
 
@@ -326,8 +328,12 @@ export class GameResultsArtifactService {
       await emitGamePhotoMainChanged(gameId, dto.id, actorUserId);
       void emitGameUpdateAfterArtifactsChange(gameId);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      await failArtifactPhotoApplyClaim(jobId, msg);
+      if (isPrismaDeadlockError(err)) {
+        await revertArtifactPhotoApplyClaim(jobId);
+      } else {
+        const msg = err instanceof Error ? err.message : String(err);
+        await failArtifactPhotoApplyClaim(jobId, msg);
+      }
       throw err;
     }
   }

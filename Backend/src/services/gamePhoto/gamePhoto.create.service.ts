@@ -2,6 +2,7 @@ import { GamePhotoSource, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { ImageProcessor } from '../../utils/imageProcessor';
+import { deadlockRetryDelayMs, isPrismaDeadlockError } from '../../utils/prismaDeadlock';
 import { MAX_PHOTOS_PER_GAME } from './gamePhoto.constants';
 import { emitGamePhotoAdded, emitGamePhotoMainChanged } from './gamePhoto.events';
 import {
@@ -76,6 +77,8 @@ export class GamePhotoCreateService {
           }
         }
 
+        await tx.$executeRaw(Prisma.sql`SELECT id FROM "Game" WHERE id = ${gameId} FOR UPDATE`);
+
         const current = await tx.game.findUnique({
           where: { id: gameId },
           select: { photosCount: true, mainPhotoId: true },
@@ -147,47 +150,64 @@ export class GamePhotoCreateService {
     filename: string
   ): Promise<GamePhotoDto> {
     const processed = await ImageProcessor.processChatImage(buffer, filename);
+    const maxAttempts = 3;
 
     try {
-      const photo = await prisma.$transaction(async (tx) => {
-        const current = await tx.game.findUnique({
-          where: { id: gameId },
-          select: { photosCount: true, mainPhotoId: true, status: true },
-        });
-        if (!current) {
-          throw new ApiError(404, 'Game not found');
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const photo = await prisma.$transaction(async (tx) => {
+            await tx.$executeRaw(
+              Prisma.sql`SELECT id FROM "Game" WHERE id = ${gameId} FOR UPDATE`
+            );
+
+            const current = await tx.game.findUnique({
+              where: { id: gameId },
+              select: { photosCount: true, mainPhotoId: true, status: true },
+            });
+            if (!current) {
+              throw new ApiError(404, 'Game not found');
+            }
+            if (current.photosCount >= MAX_PHOTOS_PER_GAME) {
+              throw new ApiError(400, `Maximum ${MAX_PHOTOS_PER_GAME} photos per game`);
+            }
+
+            const created = await tx.gamePhoto.create({
+              data: {
+                gameId,
+                uploaderId: null,
+                source: GamePhotoSource.AI_GENERATED,
+                originalUrl: processed.originalPath,
+                thumbnailUrl: processed.thumbnailPath ?? processed.originalPath,
+                width: processed.originalSize.width || null,
+                height: processed.originalSize.height || null,
+                thumbWidth: processed.thumbnailSize?.width ?? null,
+                thumbHeight: processed.thumbnailSize?.height ?? null,
+                byteSize: buffer.length,
+              },
+            });
+
+            await tx.game.update({
+              where: { id: gameId },
+              data: {
+                photosCount: { increment: 1 },
+                mainPhotoId: created.id,
+              },
+            });
+
+            return created;
+          });
+
+          return formatGamePhotoDto({ ...photo, uploader: null });
+        } catch (e) {
+          if (isPrismaDeadlockError(e) && attempt + 1 < maxAttempts) {
+            await new Promise((r) => setTimeout(r, deadlockRetryDelayMs(attempt)));
+            continue;
+          }
+          throw e;
         }
-        if (current.photosCount >= MAX_PHOTOS_PER_GAME) {
-          throw new ApiError(400, `Maximum ${MAX_PHOTOS_PER_GAME} photos per game`);
-        }
+      }
 
-        const created = await tx.gamePhoto.create({
-          data: {
-            gameId,
-            uploaderId: null,
-            source: GamePhotoSource.AI_GENERATED,
-            originalUrl: processed.originalPath,
-            thumbnailUrl: processed.thumbnailPath ?? processed.originalPath,
-            width: processed.originalSize.width || null,
-            height: processed.originalSize.height || null,
-            thumbWidth: processed.thumbnailSize?.width ?? null,
-            thumbHeight: processed.thumbnailSize?.height ?? null,
-            byteSize: buffer.length,
-          },
-        });
-
-        await tx.game.update({
-          where: { id: gameId },
-          data: {
-            photosCount: { increment: 1 },
-            mainPhotoId: created.id,
-          },
-        });
-
-        return created;
-      });
-
-      return formatGamePhotoDto({ ...photo, uploader: null });
+      throw new Error('createFromGeneratedBuffer: unreachable');
     } catch (e) {
       await ImageProcessor.deleteFilePair(processed.originalPath, processed.thumbnailPath);
       throw e;
