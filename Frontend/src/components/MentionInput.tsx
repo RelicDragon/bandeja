@@ -378,6 +378,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           displayTransform={(_id: string, display: string) => `@${display}`}
           markup="@[__display__](__id__)"
           regex={/@\[([^\]]+)\]\(([^)]+)\)/}
+          appendSpaceOnAdd
           renderSuggestion={renderSuggestion}
         />
       </MentionsInput>

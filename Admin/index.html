@@ -52,6 +52,7 @@
                 <li><a href="#" data-page="clubs" class="nav-link">🏢 Clubs</a></li>
                 <li><a href="#" data-page="reports" class="nav-link">🚨 Reports</a></li>
                 <li><a href="#" data-page="app-versions" class="nav-link">📱 App Versions</a></li>
+                <li><a href="#" data-page="platform-settings" class="nav-link">⚙️ Platform Settings</a></li>
                 <li><a href="#" data-page="market-categories" class="nav-link">🛒 Market Categories</a></li>
                 <li><a href="#" data-page="mass-notifications" class="nav-link">📢 Mass Notifications</a></li>
                 <li><a href="#" data-page="sponsor-ads" class="nav-link">📣 Sponsor Ads</a></li>
@@ -431,6 +432,42 @@
                     </div>
                     <div id="massNotificationResult" class="mass-notification-result" style="display: none;"></div>
                 </form>
+            </div>
+
+            <div id="platformSettingsPage" class="content-page">
+                <div class="page-header">
+                    <h1>Platform Settings</h1>
+                    <button type="button" class="btn-secondary" onclick="loadPlatformSettingsPage()">Refresh</button>
+                </div>
+                <p class="text-muted platform-settings-intro">Database-backed platform parameters. Additional sections can be added here over time.</p>
+
+                <section class="platform-settings-section" aria-labelledby="platformSettingsResultsArtifactsHeading">
+                    <div class="platform-settings-card">
+                        <h2 id="platformSettingsResultsArtifactsHeading">Game Results Artifacts</h2>
+                        <p class="text-muted">Replicate model used when generating post-game photo artifacts.</p>
+
+                        <div class="platform-settings-meta">
+                            <div class="platform-settings-meta-row">
+                                <span class="platform-settings-meta-label">Active model</span>
+                                <code id="replicateModelActive" class="platform-settings-meta-value">—</code>
+                            </div>
+                            <div class="platform-settings-meta-row">
+                                <span class="platform-settings-meta-label">Env fallback</span>
+                                <code id="replicateModelEnvFallback" class="platform-settings-meta-value text-muted">—</code>
+                            </div>
+                        </div>
+
+                        <div class="form-group platform-settings-field">
+                            <label for="replicateModelSelect">Photo model</label>
+                            <select id="replicateModelSelect" class="filter-select platform-settings-select" onchange="updateReplicateModelSaveButton()"></select>
+                        </div>
+
+                        <div class="platform-settings-actions">
+                            <button type="button" class="btn-primary" id="replicateModelSaveBtn" onclick="saveReplicatePhotoModel()">Save</button>
+                            <span id="replicateModelStatus" class="platform-settings-status" aria-live="polite"></span>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <div id="appVersionsPage" class="content-page">
@@ -1572,6 +1609,7 @@
     <script src="modals.js"></script>
     <script src="market-categories.js"></script>
     <script src="mass-notifications.js"></script>
+    <script src="platform-settings.js"></script>
     <script src="ads-constants.js"></script>
     <script src="ads-api.js"></script>
     <script src="ads-sponsors.js"></script>

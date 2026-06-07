@@ -1,5 +1,9 @@
 import Replicate from 'replicate';
 import { config } from '../../config/env';
+import type { InternalPhotoInput } from './models/replicateImageModel.types';
+import { getReplicateImageModel } from './models/replicateImageModel.selector';
+import { getReplicateClientOrNull } from './models/replicatePredictionClient';
+import { extractReplicateImageUrl } from './models/extractReplicateImageOutput';
 
 export type ReplicatePredictionStatus =
   | 'starting'
@@ -9,15 +13,8 @@ export type ReplicatePredictionStatus =
   | 'canceled'
   | 'aborted';
 
-export type Flux2MaxInput = {
-  prompt: string;
-  /** HTTPS URLs or `data:image/...;base64,...` data URIs (Replicate file inputs). */
-  input_images?: string[];
-  aspect_ratio?: string;
-  resolution?: string;
-  output_format?: string;
-  output_quality?: number;
-};
+/** @deprecated Use InternalPhotoInput from models/replicateImageModel.types */
+export type Flux2MaxInput = InternalPhotoInput;
 
 export type ReplicatePredictionRecord = {
   id: string;
@@ -27,9 +24,7 @@ export type ReplicatePredictionRecord = {
 };
 
 function getClient(): Replicate | null {
-  const token = config.resultsArtifacts.replicateApiToken.trim();
-  if (!token) return null;
-  return new Replicate({ auth: token });
+  return getReplicateClientOrNull();
 }
 
 export class ReplicateImageService {
@@ -37,42 +32,19 @@ export class ReplicateImageService {
     return Boolean(config.resultsArtifacts.replicateApiToken.trim());
   }
 
+  static async createPhotoPrediction(
+    modelId: string,
+    internal: InternalPhotoInput
+  ): Promise<ReplicatePredictionRecord> {
+    const adapter = getReplicateImageModel(modelId);
+    const input = adapter.buildInput(internal);
+    return adapter.createPrediction(input);
+  }
+
+  /** @deprecated Use createPhotoPrediction with explicit model id */
   static async createFlux2MaxPrediction(input: Flux2MaxInput): Promise<ReplicatePredictionRecord> {
-    const client = getClient();
-    if (!client) {
-      throw new Error('Replicate is not configured');
-    }
-
-    const webhook = config.resultsArtifacts.replicateWebhookUrl;
-    const prediction = await client.predictions.create({
-      model: config.resultsArtifacts.replicateModel,
-      input: {
-        prompt: input.prompt,
-        input_images: input.input_images ?? [],
-        aspect_ratio: input.aspect_ratio ?? '4:5',
-        resolution: input.resolution ?? '1 MP',
-        output_format: input.output_format ?? 'webp',
-        output_quality: input.output_quality ?? 80,
-      },
-      ...(webhook
-        ? {
-            webhook,
-            webhook_events_filter: ['completed'] as const,
-          }
-        : {}),
-    });
-
-    return {
-      id: prediction.id,
-      status: prediction.status as ReplicatePredictionStatus,
-      output: prediction.output,
-      error:
-        typeof prediction.error === 'string'
-          ? prediction.error
-          : prediction.error != null
-            ? String(prediction.error)
-            : null,
-    };
+    const modelId = config.resultsArtifacts.replicateModel.trim() || 'black-forest-labs/flux-2-max';
+    return this.createPhotoPrediction(modelId, input);
   }
 
   static async getPrediction(predictionId: string): Promise<ReplicatePredictionRecord> {
@@ -95,17 +67,7 @@ export class ReplicateImageService {
   }
 
   static extractOutputImageUrl(output: unknown): string | null {
-    if (!output) return null;
-    if (typeof output === 'string') return output;
-    if (Array.isArray(output)) {
-      const first = output[0];
-      if (typeof first === 'string') return first;
-      if (first && typeof first === 'object' && 'url' in first) {
-        const u = (first as { url?: () => string }).url;
-        if (typeof u === 'function') return u();
-      }
-    }
-    return null;
+    return extractReplicateImageUrl(output);
   }
 
   static isTerminalStatus(status: ReplicatePredictionStatus): boolean {

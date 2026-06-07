@@ -58,6 +58,10 @@ import {
   removeClubAdmin,
 } from '../controllers/admin.controller';
 import * as adminAdController from '../controllers/adminAd.controller';
+import {
+  getReplicatePhotoModel,
+  setReplicatePhotoModel,
+} from '../controllers/adminReplicatePhotoModel.controller';
 
 const router = Router();
 
@@ -68,6 +72,14 @@ router.get(
   '/game-results-artifacts-queue/stats',
   requireAdmin,
   getGameResultsArtifactQueueStats
+);
+router.get('/results-artifacts/replicate-model', requireAdmin, getReplicatePhotoModel);
+router.patch(
+  '/results-artifacts/replicate-model',
+  requireAdmin,
+  body('modelId').isString().trim().notEmpty(),
+  validate,
+  setReplicatePhotoModel
 );
 router.get('/online-users', requireAdmin, getOnlineUsers);
 

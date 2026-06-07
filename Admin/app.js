@@ -426,6 +426,9 @@ async function loadPageData(page) {
         case 'app-versions':
             loadAppVersions();
             break;
+        case 'platform-settings':
+            loadPlatformSettingsPage();
+            break;
         case 'market-categories':
             loadMarketCategories();
             break;

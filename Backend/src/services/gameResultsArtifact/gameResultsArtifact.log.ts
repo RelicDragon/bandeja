@@ -7,6 +7,7 @@ export type ResultsArtifactLogFields = {
   status?: string;
   error?: string;
   replicatePredictionId?: string;
+  replicateModel?: string;
   styleId?: string;
   family?: string;
 };

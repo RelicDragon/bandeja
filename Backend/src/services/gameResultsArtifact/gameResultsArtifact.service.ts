@@ -195,12 +195,14 @@ export class GameResultsArtifactService {
 
       const prediction = await PhotoProvider.startPrediction(
         job.gameId,
-        job.generationVersion
+        job.generationVersion,
+        job.replicatePhotoModel
       );
       await prisma.gameResultsArtifactJob.update({
         where: { id: jobId },
         data: {
           replicatePredictionId: prediction.id,
+          replicatePhotoModel: prediction.modelId,
           photoStatus: 'running',
           photoError: null,
         },
@@ -301,7 +303,10 @@ export class GameResultsArtifactService {
       return;
     }
 
-    const buffer = await PhotoProvider.downloadOutputBuffer(prediction);
+    const buffer = await PhotoProvider.downloadOutputBuffer(
+      prediction,
+      job.replicatePhotoModel
+    );
     const dto = await GamePhotoCreateService.createFromGeneratedBuffer(
       gameId,
       buffer,

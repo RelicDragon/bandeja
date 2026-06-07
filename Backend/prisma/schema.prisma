@@ -1248,6 +1248,12 @@ enum GamePhotoSource {
   AI_GENERATED
 }
 
+model ResultsArtifactSetting {
+  id                  String   @id @default("default")
+  replicatePhotoModel String   @default("black-forest-labs/flux-2-max")
+  updatedAt           DateTime @updatedAt
+}
+
 model GameResultsArtifactJob {
   id        String                        @id @default(cuid())
   gameId    String                        @unique
@@ -1264,6 +1270,7 @@ model GameResultsArtifactJob {
   photoError    String?
 
   replicatePredictionId String?
+  replicatePhotoModel   String?
 
   userPhotoCountAtEnqueue Int     @default(0)
   mainPhotoIdAtEnqueue    String?

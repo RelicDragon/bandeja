@@ -8,6 +8,7 @@ import { isRedisConfigured } from '../redis/redisClient';
 import { TranslationService } from '../chat/translation.service';
 import { GameResultsArtifactRedis } from './gameResultsArtifactRedis.service';
 import { shouldSkipArtifactReenqueue } from './gameResultsArtifact.enqueuePolicy';
+import { ReplicatePhotoModelSettingService } from '../replicate/replicatePhotoModelSetting.service';
 import { logResultsArtifact } from './gameResultsArtifact.log';
 import { GameResultsArtifactService } from './gameResultsArtifact.service';
 
@@ -199,6 +200,9 @@ export class GameResultsArtifactQueueService {
       gameData.resultsSummaryGeneratedAt = null;
     }
 
+    const replicatePhotoModel =
+      step === 'photo' ? await ReplicatePhotoModelSettingService.getActiveModelId() : undefined;
+
     await prisma.$transaction([
       prisma.gameResultsArtifactJob.upsert({
         where: { gameId },
@@ -213,6 +217,7 @@ export class GameResultsArtifactQueueService {
           summaryStatus,
           photoStatus,
           replicatePredictionId,
+          ...(replicatePhotoModel ? { replicatePhotoModel } : {}),
         },
         update: {
           languageCode,
@@ -228,6 +233,7 @@ export class GameResultsArtifactQueueService {
           photoStatus,
           ...(step === 'photo' ? { photoError: null } : {}),
           replicatePredictionId,
+          ...(replicatePhotoModel ? { replicatePhotoModel } : {}),
           generationVersion: { increment: 1 },
         },
       }),
