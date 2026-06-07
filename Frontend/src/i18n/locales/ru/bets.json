@@ -9,6 +9,7 @@
     "won": "Выиграно",
     "lost": "Проиграно",
     "resolved": "Разрешено",
+    "needsReview": "Требует проверки",
     "open": "Открыто",
     "team": "Команда",
     "userOrTeam": "Игрок или команда",
@@ -63,7 +64,7 @@
     "coinsCount_many": "{{count}} монет",
     "coinsCount_other": "{{count}} монеты",
     "stakePlaceholder": "На что вы ставите...",
-    "rewardPlaceholder": "Что вы получите...",
+    "rewardPlaceholder": "Что должен поставить принимающий...",
     "noBets": "Пока нет вызовов. Будьте первым, кто создаст!",
     "condition": {
       "winGame": "Выиграть игру",

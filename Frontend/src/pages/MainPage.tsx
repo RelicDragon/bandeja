@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useShallow } from 'zustand/react/shallow';
 import { MainLayout } from '@/layouts/MainLayout';
 import { useNavigationStore } from '@/store/navigationStore';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
@@ -35,7 +36,14 @@ export const MainPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const { bottomTabsVisible, initShellAnimationPlayed, activeTab, findViewMode } = useNavigationStore();
+  const { bottomTabsVisible, initShellAnimationPlayed, activeTab, findViewMode } = useNavigationStore(
+    useShallow((s) => ({
+      bottomTabsVisible: s.bottomTabsVisible,
+      initShellAnimationPlayed: s.initShellAnimationPlayed,
+      activeTab: s.activeTab,
+      findViewMode: s.findViewMode,
+    }))
+  );
   const isDesktop = useDesktop();
   const isLandscape = useIsLandscape();
   const animateShellEntry = location.pathname === '/' && !initShellAnimationPlayed;

@@ -66,6 +66,19 @@ export function buildOpenSnapshot(sources: OpenSnapshotSources): ChatMessageWith
   return mergeServerPageWithPendingOptimistics(withPrev, sources.outbox as ChatMessage[]);
 }
 
+/** Keep in-flight optimistics when an open paint commits over a live thread. */
+export function mergeOpenPaintWithLivePending(
+  live: readonly ChatMessageWithStatus[],
+  snapshot: readonly ChatMessageWithStatus[]
+): ChatMessageWithStatus[] {
+  const pending = live.filter((m) => {
+    if (!m._optimisticId) return false;
+    return m._status === 'SENDING' || m._status === 'FAILED';
+  });
+  if (pending.length === 0) return [...snapshot];
+  return mergeServerPageWithPendingOptimistics(pending, [...snapshot]);
+}
+
 /** Reconcile / expand path: merge tail + outbox onto prev without full-thread replace. */
 export function mergeOpenSnapshot(
   prev: readonly ChatMessageWithStatus[],

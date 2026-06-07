@@ -14,7 +14,7 @@ import { BracketGameNotificationService } from '../league/bracketGameNotificatio
 import { LeagueStandingsRecalculateService } from '../league/leagueStandingsRecalculate.service';
 import { SocialParticipantLevelService } from '../socialParticipantLevel.service';
 import { calculateGameStatus, isResultsBasedEntityType, ARCHIVE_BY_FINISHED_DATE_TYPES } from '../../utils/gameStatus';
-import { resolveGameBets } from '../bets/betResolution.service';
+import { attemptBetResolutionAfterOutcomesRecalc } from '../bets/betResolution.service';
 import resultsSenderService from '../telegram/resultsSender.service';
 import { resetMatchTimersInGameTx, cancelAllMatchTimersForGame } from './matchTimer.service';
 import { cleanupInviteParticipantsForEndedGame } from '../../utils/gameInviteCleanup';
@@ -694,15 +694,7 @@ export async function recalculateGameOutcomes(gameId: string) {
 
   await cancelAllMatchTimersForGame(gameId);
 
-  if (result.shouldResolveBets) {
-    console.log(`[BET RESOLUTION] Triggering bet resolution for game ${gameId} (results finalizing)`);
-    try {
-      await resolveGameBets(gameId);
-      console.log(`[BET RESOLUTION] Bet resolution completed for game ${gameId}`);
-    } catch (error) {
-      console.error(`[BET RESOLUTION] Failed to resolve bets for game ${gameId}:`, error);
-    }
-  }
+  await attemptBetResolutionAfterOutcomesRecalc(gameId, result.shouldResolveBets);
 
   const bracketCreatedGameIds = result.bracketCreatedGameIds ?? [];
   if (bracketCreatedGameIds.length > 0) {

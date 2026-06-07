@@ -1,4 +1,5 @@
-import { ChatContextType, ChatSyncEventType, Prisma } from '@prisma/client';
+import { type ChatSyncEventTypeValue } from '@bandeja/chat-contract';
+import { ChatContextType, Prisma } from '@prisma/client';
 import type { PrismaClient } from '@prisma/client';
 import prisma from '../../config/database';
 import { chatSyncJsonValue } from './chatSyncJson';
@@ -15,7 +16,7 @@ export class ChatSyncEventService {
     tx: SyncTransactionClient,
     contextType: ChatContextType,
     contextId: string,
-    eventType: ChatSyncEventType,
+    eventType: ChatSyncEventTypeValue,
     payload: unknown
   ): Promise<number> {
     const json = chatSyncJsonValue(payload);
@@ -47,7 +48,7 @@ export class ChatSyncEventService {
   static async appendEvent(
     contextType: ChatContextType,
     contextId: string,
-    eventType: ChatSyncEventType,
+    eventType: ChatSyncEventTypeValue,
     payload: unknown
   ): Promise<number> {
     return prisma.$transaction((tx) =>

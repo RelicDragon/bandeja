@@ -9,6 +9,7 @@
     "won": "Vyhráno",
     "lost": "Prohráno",
     "resolved": "Vyřešeno",
+    "needsReview": "Vyžaduje kontrolu",
     "open": "Otevřené",
     "team": "Tým",
     "userOrTeam": "Uživatel nebo tým",
@@ -61,7 +62,7 @@
     "coinsCount_one": "{{count}} mince",
     "coinsCount_other": "{{count}} mincí",
     "stakePlaceholder": "Na co sázíte...",
-    "rewardPlaceholder": "Co získáte...",
+    "rewardPlaceholder": "Co musí přijímající vsadit...",
     "noBets": "Zatím žádné výzvy. Buďte první!",
     "condition": {
       "winGame": "Vyhrát zápas",

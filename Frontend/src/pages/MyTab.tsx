@@ -19,18 +19,16 @@ import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { isHomeHeroAdBlocked } from '@/utils/adHomeHeroVisibility';
 import { getUserPrimarySport } from '@/utils/profileSports';
 import { Button, MainTabFooter, MonthCalendar } from '@/components';
-import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { gamesApi } from '@/api';
-import { useTotalUnreadForMarkAllBanner } from '@/hooks/useUnreadBridge';
+import { useTotalUnreadForMarkAllBanner, useGameUnreadCountsForIds } from '@/hooks/useUnreadBridge';
 import { useUnreadStore } from '@/store/unreadStore';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
-import { gameUnreadCountsMap } from '@/utils/unreadCountsFromStore';
 import { useMyGames } from '@/hooks/useMyGames';
 import { usePastGames } from '@/hooks/usePastGames';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshShell } from '@/components/PullToRefreshShell';
 import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
@@ -126,7 +124,6 @@ export const MyTab = () => {
   const myGamesCalendarDateAfterCreate = useNavigationStore((s) => s.myGamesCalendarDateAfterCreate);
   const setMyGamesCalendarDateAfterCreate = useNavigationStore((s) => s.setMyGamesCalendarDateAfterCreate);
   const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
-  const byContext = useUnreadStore((s) => s.byContext);
   const primarySport = getUserPrimarySport(user);
   const { status: questionnaireStatus } = useQuestionnaireStatus(primarySport);
   useRegisterAdSportContext(AD_PLACEMENTS.HOME_HERO, primarySport);
@@ -160,13 +157,15 @@ export const MyTab = () => {
 
   const [pastGamesInRange, setPastGamesInRange] = useState<any[]>([]);
 
-  const gameUnreadForSort = useMemo(() => {
+  const gameIdsForUnread = useMemo(() => {
     const ids = new Set<string>();
     for (const g of games) ids.add(g.id);
     for (const g of pastGames) ids.add(g.id);
     for (const g of pastGamesInRange) ids.add(g.id);
-    return gameUnreadCountsMap([...ids], byContext);
-  }, [games, pastGames, pastGamesInRange, byContext]);
+    return [...ids];
+  }, [games, pastGames, pastGamesInRange]);
+
+  const gameUnreadForSort = useGameUnreadCountsForIds(gameIdsForUnread);
 
   const mergedUnreadCounts = gameUnreadForSort;
 
@@ -358,11 +357,6 @@ export const MyTab = () => {
     ]);
   }, [fetchData, loadPastGames]);
 
-  const { isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
-    onRefresh: handleRefresh,
-    disabled: loading || loadingPastGames,
-  });
-
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
   const calendarContentPanel = (
     <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
@@ -405,7 +399,7 @@ export const MyTab = () => {
             </Button>
           </div>
         </div>
-        <MainTabFooter isLoading={loading || loadingPastGames || isRefreshing} />
+        <MainTabFooter isLoading={loading || loadingPastGames} />
       </div>
     </div>
   );
@@ -439,18 +433,9 @@ export const MyTab = () => {
   }
 
   return (
-    <>
-      <RefreshIndicator
-        isRefreshing={isRefreshing}
-        pullDistance={pullDistance}
-        pullProgress={pullProgress}
-      />
-      <div
-        style={{
-          transform: `translateY(${pullDistance}px)`,
-          transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
-        }}
-      >
+    <PullToRefreshShell onRefresh={handleRefresh} disabled={loading || loadingPastGames}>
+      {({ isRefreshing }) => (
+        <>
         {user && <StoriesRail />}
         {!hideHomeHeroAd && user && <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />}
         {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
@@ -479,42 +464,32 @@ export const MyTab = () => {
           />
         )}
 
-        <div className="relative min-h-[100px] overflow-hidden">
-          <div
-            className={`transition-all duration-300 ease-in-out ${
-              activeTab === 'calendar'
-                ? 'opacity-100 translate-x-0'
-                : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
-            }`}
-          >
-            {hasUpcomingGames && (
-              <MonthCalendar
-                selectedDate={myGamesSelectedDate}
-                onDateSelect={setMyGamesSelectedDate}
-                availableGames={calendarMergedGames}
-                onDateRangeChange={handleCalendarDateRangeChange}
+        <div className="min-h-[100px]">
+          {activeTab === 'calendar' && (
+            <>
+              {hasUpcomingGames && (
+                <MonthCalendar
+                  selectedDate={myGamesSelectedDate}
+                  onDateSelect={setMyGamesSelectedDate}
+                  availableGames={calendarMergedGames}
+                  onDateRangeChange={handleCalendarDateRangeChange}
+                />
+              )}
+              <MyGamesSection
+                games={myGamesForSelectedDate}
+                user={user}
+                loading={loading || loadingPastInRange}
+                showSkeleton={skeletonAnimation.showSkeleton}
+                skeletonStates={skeletonAnimation.skeletonStates}
+                gamesUnreadCounts={calendarMergedUnreadCounts}
+                onNoteSaved={() => fetchData(false, true)}
+                upcomingGames={upcomingGamesForCalendar}
+                onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
               />
-            )}
-            <MyGamesSection
-              games={myGamesForSelectedDate}
-              user={user}
-              loading={loading || loadingPastInRange}
-              showSkeleton={skeletonAnimation.showSkeleton}
-              skeletonStates={skeletonAnimation.skeletonStates}
-              gamesUnreadCounts={activeTab === 'calendar' ? calendarMergedUnreadCounts : mergedUnreadCounts}
-              onNoteSaved={() => fetchData(false, true)}
-              upcomingGames={upcomingGamesForCalendar}
-              onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
-            />
-          </div>
+            </>
+          )}
 
-          <div
-            className={`transition-all duration-300 ease-in-out ${
-              activeTab === 'list'
-                ? 'opacity-100 translate-x-0'
-                : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
-            }`}
-          >
+          {activeTab === 'list' && (
             <MyGamesSection
               games={filteredMyGames}
               user={user}
@@ -525,15 +500,9 @@ export const MyTab = () => {
               onNoteSaved={() => fetchData(false, true)}
               onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
             />
-          </div>
+          )}
 
-          <div
-            className={`transition-all duration-300 ease-in-out ${
-              activeTab === 'past-games'
-                ? 'opacity-100 translate-x-0'
-                : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none overflow-hidden'
-            }`}
-          >
+          {activeTab === 'past-games' && (
             <PastGamesSection
               pastGames={filteredPastGames}
               loadingPastGames={loadingPastGames}
@@ -543,7 +512,7 @@ export const MyTab = () => {
               onLoadMore={loadPastGames}
               onNoteSaved={(gameId) => refetchGame(gameId)}
             />
-          </div>
+          )}
         </div>
 
         <div
@@ -566,7 +535,8 @@ export const MyTab = () => {
           </div>
         </div>
         <MainTabFooter isLoading={loading || loadingPastGames || isRefreshing} />
-      </div>
-    </>
+        </>
+      )}
+    </PullToRefreshShell>
   );
 };

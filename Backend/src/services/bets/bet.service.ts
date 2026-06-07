@@ -219,6 +219,14 @@ export class BetService {
       throw new ApiError(400, 'Cannot accept bets for finished games');
     }
 
+    const participant = await prisma.gameParticipant.findFirst({
+      where: { gameId: bet.gameId, userId, status: 'PLAYING' },
+      select: { userId: true }
+    });
+    if (!participant) {
+      throw new ApiError(400, 'You are not a playing participant in this game');
+    }
+
     if (bet.type === 'POOL') {
       if (!side || (side !== 'WITH_CREATOR' && side !== 'AGAINST_CREATOR')) {
         throw new ApiError(400, 'Pool bet requires side: WITH_CREATOR or AGAINST_CREATOR');
@@ -393,8 +401,7 @@ export class BetService {
           }]
         }).catch(err => console.error(`Refund participant ${p.userId} failed:`, err));
       }
-    }
-    if (stakeCoins > 0) {
+    } else if (stakeCoins > 0) {
       await TransactionService.createTransaction({
         type: TransactionType.REFUND,
         toUserId: bet.creatorId,
@@ -476,8 +483,7 @@ export class BetService {
             console.error(`Failed to refund pool participant ${p.userId} for bet ${bet.id}:`, err);
           }
         }
-      }
-      if (coins > 0) {
+      } else if (coins > 0) {
         try {
           await TransactionService.createTransaction({
             type: TransactionType.REFUND,

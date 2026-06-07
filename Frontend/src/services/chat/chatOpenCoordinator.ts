@@ -4,13 +4,15 @@
  * **Placement (A0.3):** Pure async / pure functions here (no React). `useGameChatMessages` is the
  * hook wrapper: L1 layout seed, bootstrap, reconcile, traced `setMessages`.
  *
+ * Bootstrap merge lives in `threadOpen/planThreadOpen`; this module re-exports contracts and
+ * thin-delegates `openThreadBootstrap`.
+ *
  * **Window alignment (A0.4):**
  * - First paint row count = Dexie bootstrap tail (`CHAT_LOCAL_THREAD_WINDOW_SIZE`, ~50).
  * - L1: up to ~400 rows, excludes SENDING/FAILED unless `includeL1Optimistics`; use when TTL-fresh.
  * - Full `loadLocalMessagesForThread` is not default open (scroll-up / explicit only).
  * - `paintSource`: `l1` | `dexie-tail` | `network`.
  */
-import type { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
 import type { ThreadScrollRow } from '@/services/chat/chatThreadScroll';
 import { getThreadScrollState } from '@/services/chat/chatThreadScroll';
 import {
@@ -21,6 +23,8 @@ import {
   type OpenBootstrapInput,
 } from '@/services/chat/chatOpenSnapshot';
 import type { ChatOpenSetMessagesSource } from '@/services/chat/chatOpenTrace';
+import { planThreadOpen } from '@/services/chat/threadOpen/planThreadOpen';
+import type { OpenThreadPlan, ThreadOpenInputs } from '@/services/chat/threadOpen/types';
 
 export type { ReconcileScrollDelta, ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
 export {
@@ -37,38 +41,19 @@ export {
   type OpenBootstrapInput,
 };
 
-export type OpenThreadPaintSource = 'l1' | 'dexie-tail' | 'network';
-
-export type OpenThreadScroll =
-  | { atBottom: true }
-  | { anchorMessageId: string };
-
-export type OpenThreadPlan = {
-  threadKey: string;
-  messages: ChatMessageWithStatus[];
-  scroll: OpenThreadScroll;
-  /** Dexie scroll row from the single open-window read (for shouldPinOnOpen). */
-  scrollRow: ThreadScrollRow | undefined;
-  paintSource: OpenThreadPaintSource;
-  deferSync: boolean;
-};
+export type {
+  OpenThreadPaintSource,
+  OpenThreadPlan,
+  OpenThreadScroll,
+} from '@/services/chat/threadOpen/types';
 
 /** Single Dexie read per open — coordinator owns scroll for the open window. */
 export async function loadOpenScrollState(key: string): Promise<ThreadScrollRow | undefined> {
   return getThreadScrollState(key);
 }
 
-function scrollRowToOpenScroll(row: ThreadScrollRow | undefined): OpenThreadScroll {
-  if (row?.anchorMessageId) return { anchorMessageId: row.anchorMessageId };
-  return { atBottom: true };
-}
-
-export type OpenThreadBootstrapInput = {
+export type OpenThreadBootstrapInput = ThreadOpenInputs & {
   threadKey: string;
-  peekL1: () => readonly ChatMessageWithStatus[];
-  prev: readonly ChatMessageWithStatus[];
-  loadBootstrap: () => Promise<{ messages: ChatMessage[] }>;
-  loadOutboxOptimistics?: () => Promise<readonly ChatMessageWithStatus[]>;
 };
 
 export type OpenThreadBootstrapResult =
@@ -83,34 +68,13 @@ export type OpenThreadBootstrapResult =
 export async function openThreadBootstrap(
   input: OpenThreadBootstrapInput
 ): Promise<OpenThreadBootstrapResult> {
-  const l1 = [...input.peekL1()];
-  const { messages: dexieTail } = await input.loadBootstrap();
-  const outbox = input.loadOutboxOptimistics ? [...(await input.loadOutboxOptimistics())] : [];
-  const l1Fresh = l1.length > 0;
-  const { snapshot, paintCount } = planOpenBootstrapPaints({
-    l1,
-    dexieTail,
-    outbox,
-    l1Fresh,
-    prev: input.prev,
-    coalesceBootstrap: true,
-    includeL1Optimistics: false,
-  });
-  if (paintCount === 0 && snapshot.length === 0) {
+  const result = await planThreadOpen(input.threadKey, input);
+  if (result.kind === 'empty') {
     return { kind: 'empty' };
   }
-  const scrollState = await loadOpenScrollState(input.threadKey);
-  const paintSource: OpenThreadPaintSource = l1Fresh ? 'l1' : dexieTail.length > 0 ? 'dexie-tail' : 'network';
   return {
     kind: 'painted',
-    plan: {
-      threadKey: input.threadKey,
-      messages: snapshot,
-      scroll: scrollRowToOpenScroll(scrollState),
-      scrollRow: scrollState,
-      paintSource,
-      deferSync: true,
-    },
-    setMessagesSource: 'bootstrap-snapshot',
+    plan: result.plan,
+    setMessagesSource: result.setMessagesSource,
   };
 }

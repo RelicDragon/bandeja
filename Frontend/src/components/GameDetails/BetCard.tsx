@@ -122,7 +122,12 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
     return conditionMap[pre] || pre;
   };
   
+  const isBetParticipant = isPool
+    ? (bet.participants?.some(p => p.userId === user?.id) ?? bet.creatorId === user?.id)
+    : (bet.creatorId === user?.id || bet.acceptedBy === user?.id);
+
   const getUserBetStatus = () => {
+    if (bet.status === 'NEEDS_REVIEW' && isBetParticipant) return 'needsReview';
     if (bet.status !== 'RESOLVED') return null;
     if (isPool) {
       const meta = bet.metadata?.resolution;
@@ -155,6 +160,8 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
       }
       case 'CANCELLED':
         return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+      case 'NEEDS_REVIEW':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
     }
@@ -169,6 +176,8 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
       return 'border-green-500 dark:border-green-400';
     } else if (userStatus === 'lost') {
       return 'border-red-500 dark:border-red-400';
+    } else if (userStatus === 'needsReview') {
+      return 'border-orange-400 dark:border-orange-500';
     }
     return '';
   };
@@ -184,9 +193,10 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
         {bet.status === 'RESOLVED' && getUserBetStatus() === 'lost' && 'L'}
         {bet.status === 'RESOLVED' && getUserBetStatus() === null && !isPool && t('bets.resolved', { defaultValue: 'Resolved' })}
         {bet.status === 'RESOLVED' && getUserBetStatus() === null && isPool && t('bets.resolved', { defaultValue: 'Resolved' })}
-        {bet.status === 'OPEN' && !isPool && t('bets.open', { defaultValue: 'Open' })}
+        {bet.status === 'OPEN' && !isPool && t('bets.typeSocial', { defaultValue: 'Challenge (1v1)' })}
         {bet.status === 'ACCEPTED' && t('bets.accepted', { defaultValue: 'Accepted' })}
         {bet.status === 'CANCELLED' && t('bets.cancelled', { defaultValue: 'Cancelled' })}
+        {bet.status === 'NEEDS_REVIEW' && t('bets.needsReview', { defaultValue: 'Needs review' })}
       </div>
 
       <div className="pt-0 sm:p-3 space-y-2">
@@ -353,7 +363,7 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
           </div>
         )}
 
-        {bet.status === 'RESOLVED' && bet.resolutionReason && (
+        {(bet.status === 'RESOLVED' || bet.status === 'NEEDS_REVIEW') && bet.resolutionReason && (
           <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900/60 dark:to-gray-900/30 shadow-sm px-2 py-2">
             <div className="text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1 font-medium">
               {t('bets.resolution', { defaultValue: 'Resolution' })}

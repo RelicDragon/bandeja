@@ -19,7 +19,8 @@
     "paths": {
       "@/*": ["src/*"],
       "@shared/*": ["./shared/*"],
-      "@backend/*": ["../Backend/src/*"]
+      "@backend/*": ["../Backend/src/*"],
+      "@bandeja/chat-contract": ["../packages/chat-contract/src/index.ts"]
     }
   },
   "include": ["src", "shared"],

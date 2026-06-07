@@ -13,7 +13,7 @@ import {
   pruneThreadIndexUserChatsNotIn,
   syncUserThreadIndexFromUnreadMap,
 } from '@/services/chat/chatThreadIndex';
-import { useChatSyncStore } from '@/store/chatSyncStore';
+import { bridgeBumpChatListDexie } from '@/services/chat/chatLocalApplyStoreBridge';
 
 export interface UserMetadata {
   chatId?: string;
@@ -568,7 +568,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       });
 
       void pruneThreadIndexUserChatsNotIn(new Set(Object.keys(chatsMap))).then(() => {
-        useChatSyncStore.getState().bumpChatListDexieBump();
+        bridgeBumpChatListDexie();
       });
 
       if (chats.length > 0) {

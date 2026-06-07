@@ -19,7 +19,7 @@ import { ChatMuteService } from '../services/chat/chatMute.service';
 import { ChatTranslationPreferenceService } from '../services/chat/chatTranslationPreference.service';
 import { TranslationService, TRANSLATE_TO_LANGUAGE_CODES } from '../services/chat/translation.service';
 import { TranscriptionService } from '../services/chat/transcription.service';
-import { MESSAGE_TRANSCRIPTION_PENDING } from '../services/chat/transcriptionPending';
+import { MESSAGE_TRANSCRIPTION_PENDING } from '@bandeja/chat-contract';
 import { DraftService } from '../services/chat/draft.service';
 import { GameReadService } from '../services/game/read.service';
 import { PollService } from '../services/chat/poll.service';
@@ -30,6 +30,7 @@ import { ChatSyncEventService } from '../services/chat/chatSyncEvent.service';
 import { ChatMutationIdempotencyService } from '../services/chat/chatMutationIdempotency.service';
 import { hashChatMutationPayload } from '../utils/chatClientMutationId';
 import { ChatListRowPreviewService } from '../services/chat/chatListRowPreview.service';
+import { getChatNotifier } from '../services/chat/chatNotifier';
 
 async function notifyUserIdsForUserChat(contextId: string): Promise<string[] | undefined> {
   const peers = await prisma.userChat.findUnique({
@@ -226,35 +227,32 @@ export const votePoll = asyncHandler(async (req: AuthRequest, res: Response) => 
     throw new ApiError(500, 'Poll vote failed');
   }
 
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    const message = await prisma.chatMessage.findUnique({
-      where: { id: updatedPoll.messageId },
-      select: { chatContextType: true, contextId: true }
-    });
+  const message = await prisma.chatMessage.findUnique({
+    where: { id: updatedPoll.messageId },
+    select: { chatContextType: true, contextId: true }
+  });
 
-    if (message) {
-      const sanitized = updatedPoll.isAnonymous
-        ? { ...updatedPoll, options: updatedPoll.options.map(o => ({ ...o, votes: o.votes.map(v => ({ ...v, user: undefined })) })), votes: updatedPoll.votes.map(v => ({ ...v, user: undefined })) }
-        : updatedPoll;
-      const notifyUserIdsPoll =
-        message.chatContextType === ChatContextType.USER
-          ? await notifyUserIdsForUserChat(message.contextId)
-          : undefined;
-      socketService.emitChatEvent(
-        message.chatContextType,
-        message.contextId,
-        'poll-vote',
-        {
-          pollId: updatedPoll.id,
-          messageId: updatedPoll.messageId,
-          updatedPoll: sanitized
-        },
-        updatedPoll.messageId,
-        syncSeq,
-        notifyUserIdsPoll
-      );
-    }
+  if (message) {
+    const sanitized = updatedPoll.isAnonymous
+      ? { ...updatedPoll, options: updatedPoll.options.map(o => ({ ...o, votes: o.votes.map(v => ({ ...v, user: undefined })) })), votes: updatedPoll.votes.map(v => ({ ...v, user: undefined })) }
+      : updatedPoll;
+    const notifyUserIdsPoll =
+      message.chatContextType === ChatContextType.USER
+        ? await notifyUserIdsForUserChat(message.contextId)
+        : undefined;
+    getChatNotifier().emitChatEvent(
+      message.chatContextType,
+      message.contextId,
+      'poll-vote',
+      {
+        pollId: updatedPoll.id,
+        messageId: updatedPoll.messageId,
+        updatedPoll: sanitized
+      },
+      updatedPoll.messageId,
+      syncSeq,
+      notifyUserIdsPoll
+    );
   }
 
   const responsePoll = updatedPoll.isAnonymous
@@ -442,22 +440,19 @@ export const updateMessage = asyncHandler(async (req: AuthRequest, res: Response
       await ChatMutationIdempotencyService.complete(userId, leaseCid, body);
     }
 
-    const socketService = (global as any).socketService;
-    if (socketService) {
-      const notifyUserIds =
-        updatedMessage.chatContextType === ChatContextType.USER
-          ? await notifyUserIdsForUserChat(updatedMessage.contextId)
-          : undefined;
-      socketService.emitChatEvent(
-        updatedMessage.chatContextType,
-        updatedMessage.contextId,
-        'message-updated',
-        { message: updatedMessage },
-        updatedMessage.id,
-        (updatedMessage as { syncSeq?: number }).syncSeq,
-        notifyUserIds
-      );
-    }
+    const notifyUserIds =
+      updatedMessage.chatContextType === ChatContextType.USER
+        ? await notifyUserIdsForUserChat(updatedMessage.contextId)
+        : undefined;
+    getChatNotifier().emitChatEvent(
+      updatedMessage.chatContextType,
+      updatedMessage.contextId,
+      'message-updated',
+      { message: updatedMessage },
+      updatedMessage.id,
+      (updatedMessage as { syncSeq?: number }).syncSeq,
+      notifyUserIds
+    );
 
     res.json(body);
   } catch (e) {
@@ -480,22 +475,19 @@ export const updateMessageState = asyncHandler(async (req: AuthRequest, res: Res
   const updatedMessage = await MessageService.updateMessageState(messageId, userId, state);
   const syncSeq = (updatedMessage as { syncSeq?: number }).syncSeq;
 
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    const notifyUserIds =
-      updatedMessage.chatContextType === ChatContextType.USER
-        ? await notifyUserIdsForUserChat(updatedMessage.contextId)
-        : undefined;
-    socketService.emitChatEvent(
-      updatedMessage.chatContextType,
-      updatedMessage.contextId,
-      'message-updated',
-      { message: updatedMessage },
-      messageId,
-      syncSeq,
-      notifyUserIds
-    );
-  }
+  const notifyUserIds =
+    updatedMessage.chatContextType === ChatContextType.USER
+      ? await notifyUserIdsForUserChat(updatedMessage.contextId)
+      : undefined;
+  getChatNotifier().emitChatEvent(
+    updatedMessage.chatContextType,
+    updatedMessage.contextId,
+    'message-updated',
+    { message: updatedMessage },
+    messageId,
+    syncSeq,
+    notifyUserIds
+  );
 
   res.json({
     success: true,
@@ -514,41 +506,37 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
   const marked = await ReadReceiptService.markMessageAsRead(messageId, userId);
   const { syncSeq, ...readReceipt } = marked;
 
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    const message = await prisma.chatMessage.findUnique({
-      where: { id: messageId },
-      select: { chatContextType: true, contextId: true }
-    });
+  const message = await prisma.chatMessage.findUnique({
+    where: { id: messageId },
+    select: { chatContextType: true, contextId: true }
+  });
 
-    if (message) {
-      const notifyUserIds =
-        message.chatContextType === ChatContextType.USER
-          ? await notifyUserIdsForUserChat(message.contextId)
-          : undefined;
-      socketService.emitChatEvent(
-        message.chatContextType,
-        message.contextId,
-        'read-receipt',
-        { readReceipt },
-        messageId,
-        syncSeq,
-        notifyUserIds
-      );
+  if (message) {
+    const notifyUserIds =
+      message.chatContextType === ChatContextType.USER
+        ? await notifyUserIdsForUserChat(message.contextId)
+        : undefined;
+    getChatNotifier().emitChatEvent(
+      message.chatContextType,
+      message.contextId,
+      'read-receipt',
+      { readReceipt },
+      messageId,
+      syncSeq,
+      notifyUserIds
+    );
 
-      // Emit unread count update
-      const unreadCount = await ReadReceiptService.getUnreadCountForContext(
-        message.chatContextType,
-        message.contextId,
-        userId
-      );
-      await socketService.emitUnreadCountUpdate(
-        message.chatContextType,
-        message.contextId,
-        userId,
-        unreadCount
-      );
-    }
+    const unreadCount = await ReadReceiptService.getUnreadCountForContext(
+      message.chatContextType,
+      message.contextId,
+      userId
+    );
+    await getChatNotifier().emitUnreadCountUpdate(
+      message.chatContextType,
+      message.contextId,
+      userId,
+      unreadCount
+    );
   }
 
   res.json({ success: true });
@@ -601,8 +589,7 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
     const body = { success: true, data: { ...reaction, emojiUsage } };
     if (leaseCid) await ChatMutationIdempotencyService.complete(userId, leaseCid, body);
 
-    const socketService = (global as any).socketService;
-    if (socketService && reaction) {
+    if (reaction) {
       const message = await prisma.chatMessage.findUnique({
         where: { id: messageId },
         select: { chatContextType: true, contextId: true }
@@ -613,7 +600,7 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
           message.chatContextType === ChatContextType.USER
             ? await notifyUserIdsForUserChat(message.contextId)
             : undefined;
-        socketService.emitChatEvent(
+        getChatNotifier().emitChatEvent(
           message.chatContextType,
           message.contextId,
           'reaction',
@@ -657,28 +644,25 @@ export const removeReaction = asyncHandler(async (req: AuthRequest, res: Respons
     const body = { success: true };
     if (leaseCid) await ChatMutationIdempotencyService.complete(userId, leaseCid, body);
 
-    const socketService = (global as any).socketService;
-    if (socketService) {
-      const message = await prisma.chatMessage.findUnique({
-        where: { id: messageId },
-        select: { chatContextType: true, contextId: true }
-      });
+    const message = await prisma.chatMessage.findUnique({
+      where: { id: messageId },
+      select: { chatContextType: true, contextId: true }
+    });
 
-      if (message) {
-        const notifyUserIds =
-          message.chatContextType === ChatContextType.USER
-            ? await notifyUserIdsForUserChat(message.contextId)
-            : undefined;
-        socketService.emitChatEvent(
-          message.chatContextType,
-          message.contextId,
-          'reaction',
-          { reaction: result },
-          messageId,
-          result.syncSeq,
-          notifyUserIds
-        );
-      }
+    if (message) {
+      const notifyUserIds =
+        message.chatContextType === ChatContextType.USER
+          ? await notifyUserIdsForUserChat(message.contextId)
+          : undefined;
+      getChatNotifier().emitChatEvent(
+        message.chatContextType,
+        message.contextId,
+        'reaction',
+        { reaction: result },
+        messageId,
+        result.syncSeq,
+        notifyUserIds
+      );
     }
 
     res.json(body);
@@ -809,32 +793,28 @@ export const markAllMessagesAsRead = asyncHandler(async (req: AuthRequest, res: 
 
   const result = await ReadReceiptService.markAllMessagesAsRead(gameId, userId, chatTypes);
 
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    if (result.count > 0 && result.syncSeq != null) {
-      socketService.emitChatEvent(
-        'GAME',
-        gameId,
-        'read-receipt',
-        { readReceipt: { userId, readAt: new Date().toISOString(), allRead: true } },
-        undefined,
-        result.syncSeq
-      );
-    }
-
-    // Emit unread count update
-    const unreadCount = await ReadReceiptService.getUnreadCountForContext(
+  if (result.count > 0 && result.syncSeq != null) {
+    getChatNotifier().emitChatEvent(
       'GAME',
       gameId,
-      userId
-    );
-    await socketService.emitUnreadCountUpdate(
-      'GAME',
-      gameId,
-      userId,
-      unreadCount
+      'read-receipt',
+      { readReceipt: { userId, readAt: new Date().toISOString(), allRead: true } },
+      undefined,
+      result.syncSeq
     );
   }
+
+  const unreadCount = await ReadReceiptService.getUnreadCountForContext(
+    'GAME',
+    gameId,
+    userId
+  );
+  await getChatNotifier().emitUnreadCountUpdate(
+    'GAME',
+    gameId,
+    userId,
+    unreadCount
+  );
 
   res.json({
     success: true,
@@ -867,22 +847,19 @@ export const deleteMessage = asyncHandler(async (req: AuthRequest, res: Response
     const body = { success: true };
     if (leaseCid) await ChatMutationIdempotencyService.complete(userId, leaseCid, body);
 
-    const socketService = (global as any).socketService;
-    if (socketService) {
-      const notifyUserIds =
-        message.chatContextType === ChatContextType.USER
-          ? await notifyUserIdsForUserChat(message.contextId)
-          : undefined;
-      socketService.emitChatEvent(
-        message.chatContextType,
-        message.contextId,
-        'deleted',
-        { messageId: message.id },
-        message.id,
-        (message as { syncSeq?: number }).syncSeq,
-        notifyUserIds
-      );
-    }
+    const notifyUserIds =
+      message.chatContextType === ChatContextType.USER
+        ? await notifyUserIdsForUserChat(message.contextId)
+        : undefined;
+    getChatNotifier().emitChatEvent(
+      message.chatContextType,
+      message.contextId,
+      'deleted',
+      { messageId: message.id },
+      message.id,
+      (message as { syncSeq?: number }).syncSeq,
+      notifyUserIds
+    );
 
     res.json(body);
   } catch (e) {
@@ -991,39 +968,35 @@ export const markUserChatAsRead = asyncHandler(async (req: AuthRequest, res: Res
 
   const result = await ReadReceiptService.markUserChatAsRead(chatId, userId);
 
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    if (result.count > 0 && result.syncSeq != null) {
-      const peers = await prisma.userChat.findUnique({
-        where: { id: chatId },
-        select: { user1Id: true, user2Id: true },
-      });
-      const notifyUserIds = peers
-        ? [peers.user1Id, peers.user2Id].filter((id): id is string => typeof id === 'string' && id.length > 0)
-        : undefined;
-      socketService.emitChatEvent(
-        'USER',
-        chatId,
-        'read-receipt',
-        { readReceipt: { userId, readAt: new Date().toISOString(), allRead: true } },
-        undefined,
-        result.syncSeq,
-        notifyUserIds
-      );
-    }
-    // Emit unread count update
-    const unreadCount = await ReadReceiptService.getUnreadCountForContext(
+  if (result.count > 0 && result.syncSeq != null) {
+    const peers = await prisma.userChat.findUnique({
+      where: { id: chatId },
+      select: { user1Id: true, user2Id: true },
+    });
+    const notifyUserIds = peers
+      ? [peers.user1Id, peers.user2Id].filter((id): id is string => typeof id === 'string' && id.length > 0)
+      : undefined;
+    getChatNotifier().emitChatEvent(
       'USER',
       chatId,
-      userId
-    );
-    await socketService.emitUnreadCountUpdate(
-      'USER',
-      chatId,
-      userId,
-      unreadCount
+      'read-receipt',
+      { readReceipt: { userId, readAt: new Date().toISOString(), allRead: true } },
+      undefined,
+      result.syncSeq,
+      notifyUserIds
     );
   }
+  const unreadCount = await ReadReceiptService.getUnreadCountForContext(
+    'USER',
+    chatId,
+    userId
+  );
+  await getChatNotifier().emitUnreadCountUpdate(
+    'USER',
+    chatId,
+    userId,
+    unreadCount
+  );
 
   res.json({
     success: true,
@@ -1252,16 +1225,13 @@ export const transcribeMessage = asyncHandler(async (req: AuthRequest, res: Resp
       message.audioDurationMs
     );
 
-    const socketService = (global as any).socketService;
-    if (socketService?.emitMessageTranscription) {
-      socketService.emitMessageTranscription(
-        message.chatContextType,
-        message.contextId,
-        messageId,
-        { transcription: data.transcription, languageCode: data.languageCode },
-        data.syncSeq
-      );
-    }
+    getChatNotifier().emitMessageTranscription(
+      message.chatContextType,
+      message.contextId,
+      messageId,
+      { transcription: data.transcription, languageCode: data.languageCode },
+      data.syncSeq
+    );
 
     res.json({
       success: true,
@@ -1465,13 +1435,10 @@ export const confirmMessageReceipt = asyncHandler(async (req: AuthRequest, res: 
     throw new ApiError(404, 'Message not found');
   }
 
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    if (deliveryMethod === 'socket') {
-      socketService.markSocketDelivered(messageId, userId);
-    } else if (deliveryMethod === 'push') {
-      socketService.markPushDelivered(messageId, userId);
-    }
+  if (deliveryMethod === 'socket') {
+    getChatNotifier().markSocketDelivered(messageId, userId);
+  } else if (deliveryMethod === 'push') {
+    getChatNotifier().markPushDelivered(messageId, userId);
   }
 
   res.json({ success: true });
@@ -1502,14 +1469,11 @@ export const confirmMessageReceiptBatch = asyncHandler(async (req: AuthRequest, 
     throw new ApiError(400, 'messageIds must contain valid string ids');
   }
 
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    for (const messageId of ids) {
-      if (deliveryMethod === 'socket') {
-        socketService.markSocketDelivered(messageId, userId);
-      } else {
-        socketService.markPushDelivered(messageId, userId);
-      }
+  for (const messageId of ids) {
+    if (deliveryMethod === 'socket') {
+      getChatNotifier().markSocketDelivered(messageId, userId);
+    } else {
+      getChatNotifier().markPushDelivered(messageId, userId);
     }
   }
 
@@ -1665,46 +1629,43 @@ export const markContextRead = asyncHandler(async (req: AuthRequest, res: Respon
     gameChatTypes,
   });
 
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    if (result.markedCount > 0 && result.syncSeq != null) {
-      let notifyUserIds: string[] | undefined;
-      if (contextType === 'USER') {
-        const peers = await prisma.userChat.findUnique({
-          where: { id: contextId },
-          select: { user1Id: true, user2Id: true },
-        });
-        if (peers) {
-          notifyUserIds = [peers.user1Id, peers.user2Id].filter(
-            (id): id is string => typeof id === 'string' && id.length > 0
-          );
-        }
+  if (result.markedCount > 0 && result.syncSeq != null) {
+    let notifyUserIds: string[] | undefined;
+    if (contextType === 'USER') {
+      const peers = await prisma.userChat.findUnique({
+        where: { id: contextId },
+        select: { user1Id: true, user2Id: true },
+      });
+      if (peers) {
+        notifyUserIds = [peers.user1Id, peers.user2Id].filter(
+          (id): id is string => typeof id === 'string' && id.length > 0
+        );
       }
-      const socketContextType =
-        contextType === 'GROUP' ? 'GROUP' : (contextType as ChatContextType);
-      socketService.emitChatEvent(
-        socketContextType,
-        contextId,
-        'read-receipt',
-        {
-          readReceipt: {
-            userId,
-            readAt: new Date().toISOString(),
-            allRead: true,
-          },
-        },
-        undefined,
-        result.syncSeq,
-        notifyUserIds
-      );
     }
-    await socketService.emitUnreadCountUpdate(
-      contextType === 'GROUP' ? 'GROUP' : (contextType as ChatContextType),
+    const socketContextType =
+      contextType === 'GROUP' ? 'GROUP' : (contextType as ChatContextType);
+    getChatNotifier().emitChatEvent(
+      socketContextType,
       contextId,
-      userId,
-      0
+      'read-receipt',
+      {
+        readReceipt: {
+          userId,
+          readAt: new Date().toISOString(),
+          allRead: true,
+        },
+      },
+      undefined,
+      result.syncSeq,
+      notifyUserIds
     );
   }
+  await getChatNotifier().emitUnreadCountUpdate(
+    contextType === 'GROUP' ? 'GROUP' : (contextType as ChatContextType),
+    contextId,
+    userId,
+    0
+  );
 
   res.json({
     success: true,
@@ -1754,15 +1715,12 @@ export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequ
       contextId,
       gameChatTypes: chatTypes,
     });
-    const socketService = (global as any).socketService;
-    if (socketService) {
-      await socketService.emitUnreadCountUpdate(
-        normalizedType === 'GROUP' ? 'GROUP' : (normalizedType as ChatContextType),
-        contextId,
-        userId,
-        0
-      );
-    }
+    await getChatNotifier().emitUnreadCountUpdate(
+      normalizedType === 'GROUP' ? 'GROUP' : (normalizedType as ChatContextType),
+      contextId,
+      userId,
+      0
+    );
     res.json({ success: true, data: result });
     return;
   }
@@ -1774,15 +1732,12 @@ export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequ
     chatTypes
   );
 
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    await socketService.emitUnreadCountUpdate(
-      contextType as ChatContextType,
-      contextId,
-      userId,
-      0
-    );
-  }
+  await getChatNotifier().emitUnreadCountUpdate(
+    contextType as ChatContextType,
+    contextId,
+    userId,
+    0
+  );
 
   res.json({
     success: true,

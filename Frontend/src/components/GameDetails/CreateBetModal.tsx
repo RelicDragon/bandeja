@@ -1,9 +1,9 @@
 import { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CircleDollarSign, Target } from 'lucide-react';
+import { CircleDollarSign, Target, Users, Layers } from 'lucide-react';
 import { FaPersonRunning } from 'react-icons/fa6';
-import { Game, BetCondition, PredefinedCondition, Bet } from '@/types';
+import { Game, BetCondition, PredefinedCondition, Bet, BetType } from '@/types';
 import { betsApi } from '@/api/bets';
 import { transactionsApi } from '@/api/transactions';
 import toast from 'react-hot-toast';
@@ -67,6 +67,7 @@ const getPredefinedConditionOptions = (
 const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated, bet }: CreateBetModalProps) => {
   const { t } = useTranslation();
   const isEditMode = !!bet;
+  const [betType, setBetType] = useState<BetType>(bet?.type || 'POOL');
   const [activeTab, setActiveTab] = useState<'condition' | 'stake'>('condition');
   const [conditionType, setConditionType] = useState<BetCondition['type']>(bet?.condition.type || 'PREDEFINED');
   const [predefinedCondition, setPredefinedCondition] = useState<PredefinedCondition>(
@@ -83,9 +84,20 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
   const [stakeText, setStakeText] = useState(bet?.stakeText || '');
   const [rewardType, setRewardType] = useState<'COINS' | 'TEXT'>(bet?.rewardType || 'COINS');
   const [rewardCoins, setRewardCoins] = useState<number>(bet?.rewardCoins || 1);
+  const [rewardCoinsInput, setRewardCoinsInput] = useState<string>(String(bet?.rewardCoins || 1));
   const [rewardText, setRewardText] = useState(bet?.rewardText || '');
   const [wallet, setWallet] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isSocial = isEditMode ? bet?.type === 'SOCIAL' : betType === 'SOCIAL';
+
+  const betTypeTabs = useMemo(
+    () => [
+      { id: 'POOL', label: t('bets.typePool', { defaultValue: 'Pool' }), icon: <Layers size={14} /> },
+      { id: 'SOCIAL', label: t('bets.typeSocial', { defaultValue: 'Challenge (1v1)' }), icon: <Users size={14} /> },
+    ],
+    [t]
+  );
 
   const mainTabs = useMemo(
     () => [
@@ -102,7 +114,9 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
     [t]
   );
   const onMainTabChange = useCallback((tab: string) => setActiveTab(tab as 'condition' | 'stake'), []);
+  const onBetTypeChange = useCallback((id: string) => setBetType(id as BetType), []);
   const onStakeTypeChange = useCallback((id: string) => setStakeType(id as 'COINS' | 'TEXT'), []);
+  const onRewardTypeChange = useCallback((id: string) => setRewardType(id as 'COINS' | 'TEXT'), []);
 
   const hasFixedTeamsSet = Boolean(
     game.hasFixedTeams && game.fixedTeams && game.fixedTeams.length >= 2
@@ -207,6 +221,7 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
     const t = setTimeout(loadWallet, enterMs);
 
     if (bet) {
+      setBetType(bet.type);
       setConditionType(bet.condition.type);
       setPredefinedCondition((bet.condition.predefined as PredefinedCondition) || 'WIN_GAME');
       setTakePlaceNumber(bet.condition.metadata?.place != null ? Number(bet.condition.metadata.place) : 2);
@@ -218,8 +233,10 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
       setStakeText(bet.stakeText || '');
       setRewardType(bet.rewardType);
       setRewardCoins(bet.rewardCoins || 1);
+      setRewardCoinsInput(String(bet.rewardCoins || 1));
       setRewardText(bet.rewardText || '');
     } else {
+      setBetType('POOL');
       setEntityId('');
       setTakePlaceNumber(2);
     }
@@ -256,6 +273,17 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
       return;
     }
 
+    if (isSocial) {
+      if (rewardType === 'COINS' && (!rewardCoins || rewardCoins <= 0)) {
+        toast.error(t('bets.invalidRewardCoins', { defaultValue: 'Reward coins must be greater than 0' }));
+        return;
+      }
+      if (rewardType === 'TEXT' && !rewardText.trim()) {
+        toast.error(t('bets.fillAllFields', { defaultValue: 'Please fill all fields' }));
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       const condition: BetCondition = {
@@ -284,19 +312,26 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
         const response = await betsApi.create({
           gameId: game.id,
           condition,
-          type: 'POOL',
+          type: betType,
           stakeType,
           stakeCoins: stakeType === 'COINS' ? stakeCoins : null,
           stakeText: stakeType === 'TEXT' ? stakeText.trim() : null,
+          ...(betType === 'SOCIAL' ? {
+            rewardType,
+            rewardCoins: rewardType === 'COINS' ? rewardCoins : null,
+            rewardText: rewardType === 'TEXT' ? rewardText.trim() : null,
+          } : {}),
         });
 
         onBetCreated?.(response.data);
         toast.success(t('bets.created', { defaultValue: 'Challenge created!' }));
 
+        setBetType('POOL');
         setStakeCoins(1);
         setStakeCoinsInput('1');
         setStakeText('');
         setRewardCoins(1);
+        setRewardCoinsInput('1');
         setRewardText('');
         setCustomCondition('');
         setEntityId('');
@@ -318,6 +353,18 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
             {isEditMode ? t('bets.edit', { defaultValue: 'Edit Challenge' }) : t('bets.create', { defaultValue: 'Create Challenge' })}
           </DialogTitle>
         </DialogHeader>
+
+        {!isEditMode && (
+          <div className="flex-shrink-0 px-3 pt-1">
+            <label className={`${labelClass} mb-1.5`}>{t('bets.betType', { defaultValue: 'Type' })}</label>
+            <AnimatedTabs
+              tabs={betTypeTabs}
+              activeTab={betType}
+              onTabChange={onBetTypeChange}
+              variant="pills"
+            />
+          </div>
+        )}
 
         <div className="flex-shrink-0 px-3 pt-1 pb-1">
           <div className="relative flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
@@ -487,6 +534,55 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
                       />
                     )}
                   </div>
+
+                  {isSocial && (
+                    <div className={`${sectionClass} mt-3`}>
+                      <label className={labelClass}>{t('bets.reward', { defaultValue: 'Reward' })}</label>
+                      <AnimatedTabs
+                        tabs={stakeRewardTabs}
+                        activeTab={rewardType}
+                        onTabChange={onRewardTypeChange}
+                        variant="pills"
+                        className="mb-3"
+                      />
+                      {rewardType === 'COINS' ? (
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={rewardCoinsInput}
+                          onChange={(e) => {
+                            const inputValue = e.target.value;
+                            if (inputValue === '' || /^\d*$/.test(inputValue)) {
+                              setRewardCoinsInput(inputValue);
+                              const val = parseInt(inputValue, 10);
+                              if (!isNaN(val) && val > 0) {
+                                setRewardCoins(val);
+                              }
+                            }
+                          }}
+                          onBlur={() => {
+                            const val = parseInt(rewardCoinsInput, 10);
+                            if (isNaN(val) || val < 1) {
+                              setRewardCoinsInput('1');
+                              setRewardCoins(1);
+                            } else {
+                              setRewardCoinsInput(String(val));
+                              setRewardCoins(val);
+                            }
+                          }}
+                          className={inputClass}
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={rewardText}
+                          onChange={(e) => setRewardText(e.target.value)}
+                          placeholder={t('bets.rewardPlaceholder', { defaultValue: 'What the acceptor will put up…' })}
+                          className={inputClass}
+                        />
+                      )}
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

@@ -1,9 +1,11 @@
 import prisma from '../../config/database';
-import { ChatContextType, ChatSyncEventType, ChatType } from '@prisma/client';
+import { ChatSyncEventType } from '@bandeja/chat-contract';
+import { ChatContextType, ChatType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
 import { TranslationService } from './translation.service';
 import { ChatSyncEventService } from './chatSyncEvent.service';
+import { getChatNotifier } from './chatNotifier';
 
 export class PinnedMessageService {
   static async getPinnedMessages(
@@ -162,10 +164,7 @@ export class PinnedMessageService {
     syncSeq?: number
   ) {
     try {
-      const socketService = (global as any).socketService;
-      if (socketService) {
-        socketService.emitPinnedMessagesUpdated(contextType, contextId, chatType, syncSeq);
-      }
+      getChatNotifier().emitPinnedMessagesUpdated(contextType, contextId, chatType, syncSeq);
     } catch { /* ignore */ }
   }
 }

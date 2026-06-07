@@ -4,11 +4,7 @@ import toast from 'react-hot-toast';
 import { chatApi, type ChatMessage, type ChatMessageWithStatus, type ChatContextType, type Poll } from '@/api/chat';
 import { usePlayersStore } from '@/store/playersStore';
 import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
-import {
-  enqueueChatMutationReactionAdd,
-  enqueueChatMutationReactionRemove,
-  enqueueChatMutationDelete,
-} from '@/services/chat/chatMutationEnqueue';
+import { OfflineIntent } from '@/services/chat/offlineIntent';
 import { putLocalMessage } from '@/services/chat/chatLocalApply';
 import { compareChatMessagesAscending } from '@/utils/chatMessageSort';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
@@ -64,7 +60,8 @@ export function useGameChatReactions({
       });
       if (shouldQueueChatMutation() && id) {
         try {
-          await enqueueChatMutationReactionAdd({
+          await OfflineIntent.enqueue({
+            kind: 'reaction_add',
             contextType,
             contextId: id,
             messageId,
@@ -109,7 +106,8 @@ export function useGameChatReactions({
         }
         if (id && isRetryableMutationError(error)) {
           try {
-            await enqueueChatMutationReactionAdd({
+            await OfflineIntent.enqueue({
+              kind: 'reaction_add',
               contextType,
               contextId: id,
               messageId,
@@ -162,7 +160,8 @@ export function useGameChatReactions({
       });
       if (shouldQueueChatMutation() && id) {
         try {
-          await enqueueChatMutationReactionRemove({
+          await OfflineIntent.enqueue({
+            kind: 'reaction_remove',
             contextType,
             contextId: id,
             messageId,
@@ -187,7 +186,8 @@ export function useGameChatReactions({
         console.error('Failed to remove reaction:', error);
         if (id && isRetryableMutationError(error)) {
           try {
-            await enqueueChatMutationReactionRemove({
+            await OfflineIntent.enqueue({
+              kind: 'reaction_remove',
               contextType,
               contextId: id,
               messageId,
@@ -254,7 +254,7 @@ export function useGameChatReactions({
       });
       if (shouldQueueChatMutation() && id) {
         try {
-          await enqueueChatMutationDelete({ contextType, contextId: id, messageId });
+          await OfflineIntent.enqueue({ kind: 'delete', contextType, contextId: id, messageId });
         } catch (e) {
           console.error('enqueue delete', e);
           restoreRemoved();
@@ -269,7 +269,7 @@ export function useGameChatReactions({
         if (status === 404) return;
         if (id && isRetryableMutationError(error)) {
           try {
-            await enqueueChatMutationDelete({ contextType, contextId: id, messageId });
+            await OfflineIntent.enqueue({ kind: 'delete', contextType, contextId: id, messageId });
           } catch (e) {
             console.error('enqueue delete', e);
             restoreRemoved();

@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { ChatSyncEventType } from '@prisma/client';
+import { ChatSyncEventType } from '@bandeja/chat-contract';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';

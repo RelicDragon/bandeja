@@ -1,11 +1,6 @@
 import { useMemo } from 'react';
-import { chatApi } from '@/api/chat';
 import type { ChatContextType } from '@/api/chat';
-import type { ChatMessageWithStatus } from '@/api/chat';
-import type { Game, Bug } from '@/types';
-import type { GroupChannel } from '@/api/chat';
 import type { GameChatFooterVariant } from './GameChatFooter';
-import type { TranslationModalAutoTranslateProps } from '@/components/chat/TranslationLanguageModal';
 
 export interface UseGameChatFooterVariantParams {
   id: string | undefined;
@@ -13,90 +8,31 @@ export interface UseGameChatFooterVariantParams {
   isBlockedByUser: boolean;
   userChat: { id?: string; user1Id: string; user2Id: string; user1?: { allowMessagesFromNonContacts?: boolean }; user2?: { allowMessagesFromNonContacts?: boolean }; user1allowed?: boolean; user2allowed?: boolean } | null;
   userId: string | undefined;
-  messagesLength: number;
   canAccessChat: boolean;
   canWriteChat: boolean;
   isChannelParticipantOnly: boolean;
-  game: Game | null;
-  bug: Bug | null;
-  groupChannel: GroupChannel | null;
+  game: import('@/types').Game | null;
+  groupChannel: import('@/api/chat').GroupChannel | null;
   isInJoinQueue: boolean;
   isChannelParticipant: boolean;
-  isPlayingParticipant: boolean;
-  isAdminOrOwner: boolean;
   isChannel: boolean;
   isJoiningAsGuest: boolean;
-  currentChatType: string;
-  translateToLanguageForChat: string | null;
-  setUserChat: React.Dispatch<React.SetStateAction<import('@/api/chat').UserChat | null>>;
-  setTranslateToLanguageForChat: (v: string | null) => void;
-  autoTranslateForModal: TranslationModalAutoTranslateProps | null;
-  loadContext: (options?: import('./useGameChatContext').LoadContextOptions) => Promise<unknown>;
-  handleAddOptimisticMessage: (
-    payload: import('@/api/chat').OptimisticMessagePayload,
-    pendingImageBlobs?: Blob[],
-    pendingVoiceBlob?: Blob,
-    pendingVideoBlob?: Blob,
-    pendingVideoPosterBlob?: Blob,
-    videoTranscodeMs?: number
-  ) => string;
-  handleSendQueued: (params: any) => void;
-  handleSendFailed: (optimisticId: string) => void;
-  handleReplaceOptimisticWithServerMessage: (optimisticId: string, serverMessage: import('@/api/chat').ChatMessage) => void;
-  replyTo: ChatMessageWithStatus | null;
-  handleCancelReply: () => void;
-  editingMessage: ChatMessageWithStatus | null;
-  handleCancelEdit: () => void;
-  handleMessageUpdated: (updated: ChatMessageWithStatus) => void;
-  lastOwnMessage: ChatMessageWithStatus | null;
-  handleEditMessage: (message: ChatMessageWithStatus) => void;
-  handleScrollToMessage: (messageId: string) => void;
-  handleJoinAsGuest: () => void;
-  chatNearBottom: boolean;
-  scrollToBottomSmooth: () => void;
-  onMessageSent: () => void;
 }
 
 export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams): GameChatFooterVariant | null {
   const {
-    id,
     contextType,
     isBlockedByUser,
     userChat,
     userId,
-    messagesLength,
+    id,
     canAccessChat,
     canWriteChat,
     isChannelParticipantOnly,
     game,
-    bug,
     groupChannel,
     isInJoinQueue,
     isChannelParticipant,
-    isChannel,
-    isJoiningAsGuest,
-    currentChatType,
-    translateToLanguageForChat,
-    setUserChat,
-    setTranslateToLanguageForChat,
-    autoTranslateForModal,
-    loadContext,
-    handleAddOptimisticMessage,
-    handleSendQueued,
-    handleSendFailed,
-    handleReplaceOptimisticWithServerMessage,
-    replyTo,
-    handleCancelReply,
-    editingMessage,
-    handleCancelEdit,
-    handleMessageUpdated,
-    lastOwnMessage,
-    handleEditMessage,
-    handleScrollToMessage,
-    handleJoinAsGuest,
-    chatNearBottom,
-    scrollToBottomSmooth,
-    onMessageSent,
   } = params;
 
   return useMemo((): GameChatFooterVariant | null => {
@@ -107,51 +43,11 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
       const otherSideAllowed = userId === userChat.user1Id ? userChat.user2allowed : userChat.user1allowed;
       const otherAllowsNonContacts = otherUser?.allowMessagesFromNonContacts !== false;
       if (chatId && !otherSideAllowed && !otherAllowsNonContacts) {
-        return {
-          type: 'request',
-          userChatId: chatId,
-          disabled: messagesLength > 0,
-          onUserChatUpdate: (uc) => setUserChat((prev) => (prev ? { ...prev, ...uc } : null)),
-        };
+        return { type: 'request' };
       }
     }
     if (canAccessChat && canWriteChat && !isChannelParticipantOnly) {
-      return {
-        type: 'input',
-        gameId: contextType === 'GAME' ? id : undefined,
-        userChatId: contextType === 'USER' ? (id || userChat?.id) : undefined,
-        groupChannelId: contextType === 'GROUP' ? id : undefined,
-        game: game ?? null,
-        bug: bug ?? null,
-        groupChannel: groupChannel ?? null,
-        userChat: contextType === 'USER' ? (userChat as import('@/api/chat').UserChat | null) : null,
-        onOptimisticMessage: handleAddOptimisticMessage,
-        onSendQueued: handleSendQueued,
-        onSendFailed: handleSendFailed,
-        onMessageCreated: handleReplaceOptimisticWithServerMessage,
-        replyTo,
-        onCancelReply: handleCancelReply,
-        editingMessage,
-        onCancelEdit: handleCancelEdit,
-        onEditMessage: handleMessageUpdated,
-        lastOwnMessage,
-        onStartEditMessage: handleEditMessage,
-        onScrollToMessage: handleScrollToMessage,
-        chatType: currentChatType,
-        onGroupChannelUpdate: contextType === 'GROUP' ? () => { void loadContext({ force: true }); } : undefined,
-        contextType,
-        contextId: id ?? '',
-        translateToLanguage: translateToLanguageForChat,
-        onTranslateToLanguageChange: async (value) => {
-          if (!id) return;
-          await chatApi.setChatTranslationPreference(contextType, id, value);
-          setTranslateToLanguageForChat(value);
-        },
-        autoTranslate: autoTranslateForModal,
-        chatNearBottom,
-        onScrollToBottomSmooth: scrollToBottomSmooth,
-        onMessageSent,
-      };
+      return { type: 'input' };
     }
     const showJoin =
       !(contextType === 'GAME' && isInJoinQueue) &&
@@ -160,14 +56,7 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
     if (showJoin) {
       if (contextType === 'GROUP' && !groupChannel) return { type: 'contextLoading' };
       if (contextType === 'GAME' && !game) return { type: 'contextLoading' };
-      return {
-        type: 'join',
-        contextType,
-        groupChannel: groupChannel ?? null,
-        isChannel: !!isChannel,
-        onJoin: handleJoinAsGuest,
-        isLoading: isJoiningAsGuest,
-      };
+      return { type: 'join' };
     }
     return null;
   }, [
@@ -176,38 +65,12 @@ export function useGameChatFooterVariant(params: UseGameChatFooterVariantParams)
     userChat,
     userId,
     id,
-    messagesLength,
     canAccessChat,
     canWriteChat,
     isChannelParticipantOnly,
     game,
-    bug,
     groupChannel,
-    handleAddOptimisticMessage,
-    handleSendQueued,
-    handleSendFailed,
-    handleReplaceOptimisticWithServerMessage,
-    replyTo,
-    handleCancelReply,
-    editingMessage,
-    handleCancelEdit,
-    handleMessageUpdated,
-    lastOwnMessage,
-    handleEditMessage,
-    handleScrollToMessage,
-    currentChatType,
-    loadContext,
-    translateToLanguageForChat,
     isInJoinQueue,
     isChannelParticipant,
-    isChannel,
-    handleJoinAsGuest,
-    isJoiningAsGuest,
-    setUserChat,
-    setTranslateToLanguageForChat,
-    autoTranslateForModal,
-    chatNearBottom,
-    scrollToBottomSmooth,
-    onMessageSent,
   ]);
 }

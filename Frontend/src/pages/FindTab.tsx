@@ -7,7 +7,7 @@ import { AdSlot } from '@/components/sponsorSlots';
 import { AD_PLACEMENTS } from '@/shared/adPlacements';
 import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { MainTabFooter } from '@/components';
-import { RefreshIndicator } from '@/components/RefreshIndicator';
+import { PullToRefreshShell } from '@/components/PullToRefreshShell';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useDesktop } from '@/hooks/useDesktop';
@@ -18,7 +18,6 @@ import type { Sport } from '@/types';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation as useI18nTranslation } from 'react-i18next';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { FindHeaderActions } from '@/components/headerContent/FindHeaderActions';
@@ -126,11 +125,6 @@ export const FindTab = () => {
     await fetchAvailableGames(true);
   }, [fetchAvailableGames]);
 
-  const { isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
-    onRefresh: handleRefresh,
-    disabled: loadingAvailableGames,
-  });
-
   const splitView = isDesktop && findViewMode === 'calendar';
 
   useEffect(() => {
@@ -166,33 +160,25 @@ export const FindTab = () => {
   }
 
   return (
-    <>
-      <RefreshIndicator
-        isRefreshing={isRefreshing}
-        pullDistance={pullDistance}
-        pullProgress={pullProgress}
-      />
-      <div
-        style={{
-          transform: `translateY(${pullDistance}px)`,
-          transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
-        }}
-      >
-        <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0" />
-        <AvailableGamesSection
-          availableGames={filteredAvailableGames}
-          user={user}
-          loading={loadingAvailableGames}
-          onJoin={handleJoinGame}
-          onMonthChange={undefined}
-          onDateRangeChange={handleDateRangeChange}
-          filters={filters}
-          onFilterChange={(key, value) => updateFilter(key, value)}
-          onFiltersChange={(updates) => updateFilters(updates)}
-          onNoteSaved={() => fetchAvailableGames(true)}
-        />
-        <MainTabFooter isLoading={loadingAvailableGames || isRefreshing} />
-      </div>
-    </>
+    <PullToRefreshShell onRefresh={handleRefresh} disabled={loadingAvailableGames}>
+      {({ isRefreshing }) => (
+        <>
+          <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0" />
+          <AvailableGamesSection
+            availableGames={filteredAvailableGames}
+            user={user}
+            loading={loadingAvailableGames}
+            onJoin={handleJoinGame}
+            onMonthChange={undefined}
+            onDateRangeChange={handleDateRangeChange}
+            filters={filters}
+            onFilterChange={(key, value) => updateFilter(key, value)}
+            onFiltersChange={(updates) => updateFilters(updates)}
+            onNoteSaved={() => fetchAvailableGames(true)}
+          />
+          <MainTabFooter isLoading={loadingAvailableGames || isRefreshing} />
+        </>
+      )}
+    </PullToRefreshShell>
   );
 };

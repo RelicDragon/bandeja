@@ -1,4 +1,4 @@
-import { useChatSyncStore } from '@/store/chatSyncStore';
+import { bridgeBumpChatListDexie } from './chatLocalApplyStoreBridge';
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -7,6 +7,6 @@ export function scheduleChatListOutboxBump(): void {
   if (timer != null) return;
   timer = setTimeout(() => {
     timer = null;
-    useChatSyncStore.getState().bumpChatListDexieBump();
+    bridgeBumpChatListDexie();
   }, 120);
 }

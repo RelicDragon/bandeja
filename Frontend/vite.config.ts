@@ -54,12 +54,13 @@ export default defineConfig(() => ({
       '@': path.resolve(__dirname, './src'),
       '@shared': path.resolve(__dirname, './shared'),
       '@backend': path.resolve(__dirname, '../Backend/src'),
+      '@bandeja/chat-contract': path.resolve(__dirname, '../packages/chat-contract/src/index.ts'),
     },
   },
   test: {
     server: {
       deps: {
-        inline: ['@backend/sport/sportRegistry'],
+        inline: ['@backend/sport/sportRegistry', '@bandeja/chat-contract'],
       },
     },
   },

@@ -1,5 +1,6 @@
 import { chatApi } from '@/api/chat';
 import { pullMissedAndPersistToDexie } from '@/services/chat/chatThreadNetworkSync';
+import { applyThreadEvent } from '@/services/chat/chatLocalApplyThreadEvent';
 import { scheduleWarmFromUnreadApiPayload } from '@/services/chat/chatSyncBatchWarm';
 import { refreshChatOfflineBanner } from '@/services/chat/chatOfflineBanner';
 import { enqueueChatSyncPull, SYNC_PRIORITY_FOREGROUND } from '@/services/chat/chatSyncScheduler';
@@ -43,7 +44,13 @@ export const chatSyncService = {
             gameChatType: normalized,
           });
           if (messages.length > 0) {
-            useChatSyncStore.getState().addMissedMessages(contextType, contextId, messages, normalized);
+            void applyThreadEvent({
+              kind: 'missedBuffer',
+              contextType,
+              contextId,
+              messages,
+              gameChatType: normalized,
+            });
           }
         } catch (err) {
           console.error(`[chatSync] syncContext ${contextType}:${contextId}:${normalized} failed:`, err);
@@ -59,7 +66,13 @@ export const chatSyncService = {
         gameChatType,
       });
       if (messages.length > 0) {
-        useChatSyncStore.getState().addMissedMessages(contextType, contextId, messages, gameChatType);
+        void applyThreadEvent({
+          kind: 'missedBuffer',
+          contextType,
+          contextId,
+          messages,
+          gameChatType,
+        });
       }
     } catch (err) {
       console.error(`[chatSync] syncContext ${contextType}:${contextId} failed:`, err);

@@ -557,6 +557,16 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'bets suite',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'bets.suite.ts'),
+    ],
+  },
+  {
     label: 'stories',
     command: process.execPath,
     args: [
@@ -579,6 +589,16 @@ const suites: Suite[] = [
       STORY_ENGAGEMENT_TEST_COMMENT_CAP: '3',
       STORY_ENGAGEMENT_SKIP_RATE_LIMIT: '1',
     },
+  },
+  {
+    label: 'bet payout reconcile',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'bets', 'betResolutionPayout.test.ts'),
+    ],
   },
   {
     label: 'mexicano (escalera) round generation',

@@ -1,5 +1,5 @@
 import { chatLocalDb } from './chatLocalDb';
-import { useChatSyncStore } from '@/store/chatSyncStore';
+import { bridgeBumpChatListDexie } from './chatLocalApplyStoreBridge';
 
 let registered = false;
 
@@ -8,15 +8,15 @@ export function initChatLocalDbLifecycle(): void {
   registered = true;
   chatLocalDb.on('versionchange', () => {
     chatLocalDb.close();
-    useChatSyncStore.getState().bumpChatListDexieBump();
+    bridgeBumpChatListDexie();
   });
   chatLocalDb.on('blocked', () => {
-    useChatSyncStore.getState().bumpChatListDexieBump();
+    bridgeBumpChatListDexie();
   });
   chatLocalDb.open().catch((e: unknown) => {
     const name = e && typeof e === 'object' && 'name' in e ? String((e as { name: string }).name) : '';
     if (name === 'QuotaExceededError') {
-      useChatSyncStore.getState().bumpChatListDexieBump();
+      bridgeBumpChatListDexie();
     }
   });
 }

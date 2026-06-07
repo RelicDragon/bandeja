@@ -16,6 +16,7 @@ import { ChatSyncStatsScheduler } from './services/chatSyncStatsScheduler.servic
 import { ReliabilityDecayScheduler } from './services/reliabilityDecayScheduler.service';
 import { AdCampaignScheduleScheduler } from './services/adCampaignScheduleScheduler.service';
 import { AdAnalyticsScheduler } from './services/adAnalyticsScheduler.service';
+import { BetPayoutReconcileScheduler } from './services/bets/betPayoutReconcileScheduler.service';
 import { reportCriticalError, maybeReportFromConsole } from './services/developerAlert.service';
 import { createServer } from 'http';
 import { resumeMatchTimerSchedulesOnStartup } from './services/results/matchTimer.service';
@@ -79,6 +80,9 @@ const startServer = async () => {
 
     const adAnalyticsScheduler = new AdAnalyticsScheduler();
     adAnalyticsScheduler.start();
+
+    const betPayoutReconcileScheduler = new BetPayoutReconcileScheduler();
+    betPayoutReconcileScheduler.start();
 
     // Create HTTP server
     const httpServer = createServer(app);

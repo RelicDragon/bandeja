@@ -1,7 +1,8 @@
 import path from 'path';
 import OpenAI from 'openai';
 import { parseBuffer } from 'music-metadata';
-import { ChatSyncEventType, Prisma } from '@prisma/client';
+import { ChatSyncEventType, MESSAGE_TRANSCRIPTION_NO_SPEECH, MESSAGE_TRANSCRIPTION_PENDING } from '@bandeja/chat-contract';
+import { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { config } from '../../config/env';
@@ -9,8 +10,6 @@ import { ApiError } from '../../utils/ApiError';
 import { logLlmUsage } from '../ai/llmUsageLog.service';
 import { LLM_REASON } from '../ai/llmReasons';
 import { S3Service } from '../s3.service';
-import { MESSAGE_TRANSCRIPTION_NO_SPEECH, MESSAGE_TRANSCRIPTION_PENDING } from './transcriptionPending';
-
 export const TRANSCRIPTION_MAX_DURATION_MS = 3 * 60 * 1000;
 
 const TRANSCRIPTION_POLL_MS = 250;

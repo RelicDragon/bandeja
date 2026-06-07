@@ -7,7 +7,7 @@
  */
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
-import { useChatSyncStore } from '@/store/chatSyncStore';
+import { bridgeGetLastMessageId, bridgeSetLastMessageId } from './chatLocalApplyStoreBridge';
 import { messageHeadDexieKey } from '@/utils/chatSyncScope';
 import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';
 
@@ -16,7 +16,7 @@ export async function hydrateLastMessageIdFromDexieIfMissing(
   contextId: string,
   gameChatType?: ChatType
 ): Promise<void> {
-  if (useChatSyncStore.getState().getLastMessageId(contextType, contextId, gameChatType)) return;
+  if (bridgeGetLastMessageId(contextType, contextId, gameChatType)) return;
   const key = messageHeadDexieKey(
     contextType,
     contextId,
@@ -24,7 +24,7 @@ export async function hydrateLastMessageIdFromDexieIfMissing(
   );
   const head = await chatLocalDb.messageContextHead.get(key);
   if (head?.latestMessageId) {
-    useChatSyncStore.getState().setLastMessageId(contextType, contextId, head.latestMessageId, gameChatType);
+    bridgeSetLastMessageId(contextType, contextId, head.latestMessageId, gameChatType);
   }
 }
 
@@ -107,12 +107,12 @@ export async function syncLastMessageIdsToStoreFromLocalHeadsForContext(
     for (const h of heads) {
       if (!h.latestMessageId) continue;
       const chatType = h.key.slice(prefix.length) as ChatType;
-      useChatSyncStore.getState().setLastMessageId('GAME', contextId, h.latestMessageId, chatType);
+      bridgeSetLastMessageId('GAME', contextId, h.latestMessageId, chatType);
     }
   } else {
     const head = await chatLocalDb.messageContextHead.get(`${contextType}:${contextId}`);
     if (head?.latestMessageId) {
-      useChatSyncStore.getState().setLastMessageId(contextType, contextId, head.latestMessageId);
+      bridgeSetLastMessageId(contextType, contextId, head.latestMessageId);
     }
   }
 }

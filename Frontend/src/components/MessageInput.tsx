@@ -5,14 +5,8 @@ import { Capacitor } from '@capacitor/core';
 import {
   chatApi,
   CreateMessageRequest,
-  ChatMessage,
-  ChatContextType,
-  GroupChannel,
-  OptimisticMessagePayload,
-  UserChat,
 } from '@/api/chat';
 import { ChevronDown, X } from 'lucide-react';
-import { ChatType, Game, Bug } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { isUserGroupChannelParticipant } from '@/utils/groupChannelParticipation';
@@ -22,7 +16,6 @@ import { JoinGroupChannelButton } from './JoinGroupChannelButton';
 import { PollCreationModal } from './chat/PollCreationModal';
 import {
   TranslationLanguageModal,
-  type TranslationModalAutoTranslateProps,
 } from './chat/TranslationLanguageModal';
 import { TranslateToButton, composerFabButtonClass } from './chat/TranslateToButton';
 import { UndoTranslateButton } from './chat/UndoTranslateButton';
@@ -46,6 +39,7 @@ import { uploadChatImageSlotWithRetry } from '@/components/chat/messageInputImag
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useThreadView } from '@/pages/GameChat/useThreadView';
 
 const scrollToBottomFabMotion = {
   initial: { opacity: 0, y: 40, scale: 0.72 },
@@ -70,85 +64,50 @@ const scrollToBottomFabMotion = {
 
 export type { SendQueuedParams };
 
-interface MessageInputProps {
-  gameId?: string;
-  bugId?: string;
-  userChatId?: string;
-  groupChannelId?: string;
-  game?: Game | null;
-  bug?: Bug | null;
-  groupChannel?: GroupChannel | null;
-  userChat?: UserChat | null;
-  onMessageSent?: () => void;
-  onOptimisticMessage?: (
-    payload: OptimisticMessagePayload,
-    pendingImageBlobs?: Blob[],
-    pendingVoiceBlob?: Blob,
-    pendingVideoBlob?: Blob,
-    pendingVideoPosterBlob?: Blob,
-    videoTranscodeMs?: number
-  ) => string;
-  onSendQueued?: (params: SendQueuedParams) => void;
-  onSendFailed?: (optimisticId: string) => void;
-  onMessageCreated?: (optimisticId: string, serverMessage: ChatMessage) => void;
-  disabled?: boolean;
-  replyTo?: ChatMessage | null;
-  onCancelReply?: () => void;
-  onScrollToMessage?: (messageId: string) => void;
-  chatType?: ChatType;
-  onGroupChannelUpdate?: () => void | Promise<void>;
-  contextType?: ChatContextType;
-  contextId?: string;
-  editingMessage?: ChatMessage | null;
-  onCancelEdit?: () => void;
-  onEditMessage?: (updated: ChatMessage) => void;
-  lastOwnMessage?: ChatMessage | null;
-  onStartEditMessage?: (message: ChatMessage) => void;
-  translateToLanguage?: string | null;
-  onTranslateToLanguageChange?: (translateToLanguage: string | null) => void | Promise<void>;
-  autoTranslate?: TranslationModalAutoTranslateProps | null;
-  chatNearBottom?: boolean;
-  onScrollToBottomSmooth?: () => void;
-}
+export const MessageInput: React.FC = () => {
+  const thread = useThreadView();
+  const {
+    id,
+    contextType,
+    currentChatType,
+    game,
+    bug,
+    groupChannel,
+    userChat,
+    handleMessageSent: onMessageSent,
+    handleAddOptimisticMessage: onOptimisticMessage,
+    handleSendQueued: onSendQueued,
+    handleSendFailed: onSendFailed,
+    handleReplaceOptimisticWithServerMessage: onMessageCreated,
+    replyTo,
+    handleCancelReply: onCancelReply,
+    handleScrollToMessage: onScrollToMessage,
+    handleGroupChannelUpdate: onGroupChannelUpdate,
+    editingMessage,
+    handleCancelEdit: onCancelEdit,
+    handleMessageUpdated: onEditMessage,
+    handleEditMessage: onStartEditMessage,
+    translateToLanguageForChat,
+    handleTranslateToLanguageChange: onTranslateToLanguageChange,
+    autoTranslateForModal: autoTranslate,
+    chatNearBottom,
+    scrollToBottomSmooth: onScrollToBottomSmooth,
+    derived: { lastOwnMessage },
+  } = thread;
 
-export const MessageInput: React.FC<MessageInputProps> = ({
-  gameId,
-  bugId,
-  userChatId,
-  groupChannelId,
-  game,
-  bug,
-  groupChannel,
-  userChat = null,
-  onMessageSent,
-  onOptimisticMessage,
-  onSendQueued,
-  onSendFailed,
-  onMessageCreated,
-  disabled = false,
-  replyTo,
-  onCancelReply,
-  onScrollToMessage,
-  chatType = 'PUBLIC',
-  onGroupChannelUpdate,
-  contextType: propContextType,
-  contextId: propContextId,
-  editingMessage = null,
-  onCancelEdit,
-  onEditMessage,
-  lastOwnMessage = null,
-  onStartEditMessage,
-  translateToLanguage: translateToLanguageProp = null,
-  onTranslateToLanguageChange,
-  autoTranslate = null,
-  chatNearBottom = true,
-  onScrollToBottomSmooth,
-}) => {
+  const gameId = contextType === 'GAME' ? id : undefined;
+  const bugId = contextType === 'BUG' ? id : undefined;
+  const userChatId = contextType === 'USER' ? id : undefined;
+  const groupChannelId = contextType === 'GROUP' ? id : undefined;
+  const chatType = currentChatType;
+  const propContextType = contextType;
+  const propContextId = id;
+  const disabled = false;
+  const translateToLanguage = translateToLanguageForChat ?? null;
+  const userChatResolved = userChat ?? null;
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const translateToLanguage = translateToLanguageProp ?? null;
 
-  const contextType: ChatContextType = gameId ? 'GAME' : bugId ? 'BUG' : groupChannelId ? 'GROUP' : 'USER';
   const finalContextId = gameId || bugId || userChatId || groupChannelId;
   const resolvedChatType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
 
@@ -659,7 +618,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             game={game}
             bug={bug}
             groupChannel={groupChannel}
-            userChat={userChat}
+            userChat={userChatResolved}
             currentUserId={user?.id}
           />
           <MessageInputComposerContextStrip

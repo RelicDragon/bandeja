@@ -1,10 +1,12 @@
 import prisma from '../../config/database';
-import { MessageState, ChatType, ChatContextType, ChatSyncEventType } from '@prisma/client';
+import { ChatSyncEventType } from '@bandeja/chat-contract';
+import { MessageState, ChatType, ChatContextType } from '@prisma/client';
 import { SystemMessageType, createSystemMessageContent } from '../../utils/systemMessages';
 import { computeContentSearchable } from '../../utils/messageSearchContent';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
 import { ChatSyncEventService } from './chatSyncEvent.service';
+import { getChatNotifier } from './chatNotifier';
 
 const SYSTEM_MESSAGE_INCLUDE = {
   sender: { select: USER_SELECT_FIELDS },
@@ -85,41 +87,26 @@ export class SystemMessageService {
       chatType,
       chatContextType
     );
-    const socketService = (global as {
-      socketService?: {
-        emitChatEvent: (
-          ct: ChatContextType,
-          cid: string,
-          ev: string,
-          data: unknown,
-          mid?: string,
-          seq?: number,
-          notifyUserIds?: string[]
-        ) => void;
-      };
-    }).socketService;
-    if (socketService) {
-      const syncSeq = (message as { syncSeq?: number }).syncSeq;
-      let notifyUserIds: string[] | undefined;
-      if (chatContextType === ChatContextType.USER) {
-        const peers = await prisma.userChat.findUnique({
-          where: { id: contextId },
-          select: { user1Id: true, user2Id: true },
-        });
-        if (peers) {
-          notifyUserIds = [peers.user1Id, peers.user2Id].filter((id): id is string => typeof id === 'string' && id.length > 0);
-        }
+    const syncSeq = (message as { syncSeq?: number }).syncSeq;
+    let notifyUserIds: string[] | undefined;
+    if (chatContextType === ChatContextType.USER) {
+      const peers = await prisma.userChat.findUnique({
+        where: { id: contextId },
+        select: { user1Id: true, user2Id: true },
+      });
+      if (peers) {
+        notifyUserIds = [peers.user1Id, peers.user2Id].filter((id): id is string => typeof id === 'string' && id.length > 0);
       }
-      socketService.emitChatEvent(
-        chatContextType,
-        contextId,
-        'message',
-        { message },
-        message.id,
-        syncSeq,
-        notifyUserIds
-      );
     }
+    getChatNotifier().emitChatEvent(
+      chatContextType,
+      contextId,
+      'message',
+      { message },
+      message.id,
+      syncSeq,
+      notifyUserIds
+    );
     return message;
   }
 }

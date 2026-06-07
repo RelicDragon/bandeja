@@ -1,15 +1,14 @@
 import type { ChatContextType, ChatMessage } from '@/api/chat';
 import type { ChatType } from '@/types';
 import { mergeChatMessagesAscending } from '@/utils/chatMessageSort';
-import { useChatSyncStore } from '@/store/chatSyncStore';
+import { bridgeTakeMissedMessages } from './chatLocalApplyStoreBridge';
 
 /** Merge missed buffers for all game tab heads (pre-paint flush). */
 export function takeAllGameTabMissedMessages(contextId: string): ChatMessage[] {
   const tabs: ChatType[] = ['PUBLIC', 'PRIVATE', 'ADMINS'];
-  const store = useChatSyncStore.getState();
   const collected: ChatMessage[] = [];
   for (const tab of tabs) {
-    collected.push(...store.getAndClearMissed('GAME', contextId, tab));
+    collected.push(...bridgeTakeMissedMessages('GAME', contextId, tab));
   }
   if (collected.length === 0) return [];
   return mergeChatMessagesAscending([], collected);
@@ -24,7 +23,7 @@ export function takeMissedMessagesForOpen(
   if (contextType === 'GAME') {
     return takeAllGameTabMissedMessages(contextId);
   }
-  return useChatSyncStore.getState().getAndClearMissed(contextType, contextId, gameChatType);
+  return bridgeTakeMissedMessages(contextType, contextId, gameChatType);
 }
 
 export function mergeMissedIntoWarmRef(

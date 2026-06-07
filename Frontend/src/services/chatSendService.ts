@@ -35,6 +35,7 @@ import {
 import { recordChatSendMetric } from '@/services/chat/chatSendMetrics';
 import { createMessageWithSocketAck } from '@/services/chat/chatSendMessageCreate';
 import { dispatchChatOutboxSuccess } from '@/services/chat/chatOutboxEvents';
+import { reconcileAbortedChatSendIfDelivered } from '@/services/chat/chatOutboxReconcile';
 import { useVideoUploadProgressStore } from '@/store/videoUploadProgressStore';
 function completeChatSendSuccess(
   tempId: string,
@@ -362,7 +363,10 @@ export function sendWithTimeout(
       });
       completeChatSendSuccess(tempId, contextType, contextId, created, callbacks);
     } catch (e) {
-      if (isAbortError(e) || !isActiveSendGeneration(tempId, generation)) return;
+      if (isAbortError(e) || !isActiveSendGeneration(tempId, generation)) {
+        await reconcileAbortedChatSendIfDelivered(tempId, contextType, contextId);
+        return;
+      }
       await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'send_error');
     }
   })();

@@ -25,8 +25,9 @@ export type FeLegacyPadelTemplateId =
   | 'PADEL_AMERICANO'
   | 'PADEL_TIMED';
 
-export type FeCreateTemplate = SharedCreateTemplate &
+export type FeCreateTemplate = Omit<SharedCreateTemplate, 'id'> &
   FeCreateTemplateExtras & {
+    id: CreateTemplateId;
     scoringPreset: ScoringPreset;
     gameType: GameType;
     matchGenerationType: MatchGenerationType;

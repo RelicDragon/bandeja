@@ -56,13 +56,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
   const genderTeams = (game.genderTeams || 'ANY') as GenderTeam;
   const hasFixedTeams = maxParticipants === 2 ? false : (game.hasFixedTeams || false);
   const playersPerMatch = (playersPerMatchOf(game) === 4 ? 4 : 2) as 2 | 4;
-  const sportFormatLimits = useClampGameFormatToSport(
-    game.sport,
-    gameFormat,
-    canEdit,
-    maxParticipants,
-    playersPerMatch,
-  );
+  const sportFormatLimits = useClampGameFormatToSport(game.sport, gameFormat, canEdit);
   const { sportConfig, allowedScoringModes, allowedScoringPresets } = sportFormatLimits;
 
   const templateParticipantContext = useMemo(

@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import type { ChatMessageWithStatus } from '@/api/chat';
 import {
   buildOpenSnapshot,
+  mergeOpenPaintWithLivePending,
   mergeOpenSnapshot,
   planOpenBootstrapPaints,
   pickOpenBaseMessages,
   reconcileOpenDelta,
   shouldPinOnOpen,
 } from '../chatOpenSnapshot';
+import { openThreadBootstrap } from '../chatOpenCoordinator';
 
 function msg(id: string, createdAt: string, extra?: Partial<ChatMessageWithStatus>): ChatMessageWithStatus {
   return {
@@ -110,6 +112,35 @@ describe('shouldPinOnOpen', () => {
 
   it('does not pin after reconcile prepend', () => {
     expect(shouldPinOnOpen({ atBottom: true }, { prependedCount: 3 })).toBe(false);
+  });
+});
+
+describe('mergeOpenPaintWithLivePending', () => {
+  it('keeps in-flight optimistics when open paint snapshot is stale', () => {
+    const snapshot = [msg('m1', '2026-01-03T10:00:00Z')];
+    const live = [msg('m1', '2026-01-03T10:00:00Z'), optimistic('opt-live', '2026-01-03T10:02:00Z')];
+    const merged = mergeOpenPaintWithLivePending(live, snapshot);
+    expect(merged.map((m) => m.id)).toEqual(['m1', 'opt-live']);
+    expect((merged[1] as ChatMessageWithStatus)._status).toBe('SENDING');
+  });
+});
+
+describe('openThreadBootstrap peekPrev', () => {
+  it('reads prev after async loads so sends during bootstrap stay in snapshot', async () => {
+    const dexieTail = [msg('m1', '2026-01-03T10:00:00Z')];
+    let prevRows: ChatMessageWithStatus[] = [];
+    const result = await openThreadBootstrap({
+      threadKey: 'GAME:g1:PUBLIC',
+      peekL1: () => [],
+      peekPrev: () => prevRows,
+      loadBootstrap: async () => {
+        prevRows = [optimistic('opt-mid', '2026-01-03T10:01:00Z')];
+        return { messages: dexieTail };
+      },
+    });
+    expect(result.kind).toBe('painted');
+    if (result.kind !== 'painted') return;
+    expect(result.plan.messages.map((m) => m.id)).toEqual(['m1', 'opt-mid']);
   });
 });
 

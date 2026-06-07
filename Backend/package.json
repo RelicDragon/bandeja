@@ -4,6 +4,8 @@
   "description": "Backend for Bandeja - Padel game scheduling app",
   "main": "dist/server.js",
   "scripts": {
+    "prebuild": "npm run build:contract",
+    "build:contract": "npm run build --prefix ../packages/chat-contract",
     "dev": "nodemon src/server.ts",
     "worker": "ts-node -r dotenv/config src/worker.ts",
     "dev:setup": "./dev-setup.sh",
@@ -53,6 +55,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@bandeja/chat-contract": "file:../packages/chat-contract",
     "@aws-sdk/client-s3": "^3.700.0",
     "@prisma/client": "^6.18.0",
     "@sindresorhus/transliterate": "^2.3.1",

@@ -9,6 +9,7 @@
     "won": "Ganado",
     "lost": "Perdido",
     "resolved": "Resuelto",
+    "needsReview": "Requiere revisión",
     "open": "Abierto",
     "team": "Equipo",
     "userOrTeam": "Usuario o Equipo",
@@ -61,7 +62,7 @@
     "coinsCount_one": "{{count}} moneda",
     "coinsCount_other": "{{count}} monedas",
     "stakePlaceholder": "En qué estás apostando...",
-    "rewardPlaceholder": "Qué recibirás...",
+    "rewardPlaceholder": "Qué debe poner el que acepta...",
     "noBets": "Aún no hay apuestas. ¡Sé el primero en crear una!",
     "condition": {
       "winGame": "Ganar el juego",

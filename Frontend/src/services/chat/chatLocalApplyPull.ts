@@ -5,12 +5,7 @@ import { dispatchChatSyncStale } from '@/utils/chatSyncStaleEvents';
 import { recordChatSyncStaleDispatch } from '@/services/chat/chatSyncMetrics';
 import { broadcastChatPullHint } from './chatLocalCoop';
 import { patchThreadIndexAfterMessageDeleted, patchThreadIndexFromMessage } from './chatThreadIndex';
-import {
-  bumpMessageContextHead,
-  refreshMessageContextHeadAfterDelete,
-  syncLastMessageIdsToStoreFromLocalHeadsForContext,
-} from './messageContextHead';
-import { enqueueChatLocalContextApply } from './chatLocalApplyQueue';
+import { bumpMessageContextHead, refreshMessageContextHeadAfterDelete } from './messageContextHead';
 import { purgeLocalDexieThread } from './chatLocalThreadPurge';
 import { scheduleChatMediaThumbPrefetchForMessage } from '@/services/chat/chatMediaThumbPrefetch';
 import { withChatSyncRetry } from '@/services/chat/chatHttpRetry';
@@ -20,7 +15,7 @@ import { applyChatSyncPatchesInSlice } from '@/services/chat/chatSyncApplyPatche
 import { rowFromMessage } from '@/services/chat/chatSyncRowUtils';
 import type { ChatSyncEventDTO } from '@/services/chat/chatSyncEventTypes';
 import { withChatLocalBulkApply } from './chatLocalApplyBulk';
-import { persistChatMessagesFromApi } from './chatLocalApplyWrite';
+import { persistChatMessagesFromApiDirect } from './chatLocalApplyWrite';
 import { getLocalCursorSeq, reconcileCursorWithServerHead } from './chatLocalApplyCursor';
 import {
   clearPendingSocketSeqReconcileTimer,
@@ -137,7 +132,7 @@ export async function pullEventsLoop(
           try {
             const m = await chatApi.getChatMessageById(fb.messageId);
             if (m.chatContextType !== contextType || m.contextId !== contextId) continue;
-            await persistChatMessagesFromApi([
+            await persistChatMessagesFromApiDirect([
               { ...m, syncSeq: fb.syncSeq, serverSyncSeq: fb.syncSeq },
             ]);
           } catch {
@@ -160,20 +155,24 @@ export async function pullEventsLoop(
   return { repairedStaleCursor, threadInvalidated };
 }
 
-export async function pullAndApplyChatSyncEvents(
+export async function pullAndApplyChatSyncEventsDirect(
   contextType: ChatContextType,
   contextId: string
 ): Promise<void> {
-  return enqueueChatLocalContextApply(contextType, contextId, async () => {
-    const { repairedStaleCursor, threadInvalidated } = await pullEventsLoop(contextType, contextId);
-    markChatPullCompleted(contextType, contextId);
-    await reconcileCursorWithServerHead(contextType, contextId);
-    await syncLastMessageIdsToStoreFromLocalHeadsForContext(contextType, contextId);
-    clearPendingSocketSeqReconcileTimer(contextType, contextId);
-    if (repairedStaleCursor || threadInvalidated) {
-      const { persistLatestTailPagesAfterStaleCursor } = await import('./chatTailRecover');
-      await persistLatestTailPagesAfterStaleCursor(contextType, contextId).catch(() => {});
-      await syncLastMessageIdsToStoreFromLocalHeadsForContext(contextType, contextId);
-    }
-  });
+  const { repairedStaleCursor, threadInvalidated } = await pullEventsLoop(contextType, contextId);
+  markChatPullCompleted(contextType, contextId);
+  await reconcileCursorWithServerHead(contextType, contextId);
+  clearPendingSocketSeqReconcileTimer(contextType, contextId);
+  if (repairedStaleCursor || threadInvalidated) {
+    const { persistLatestTailPagesAfterStaleCursor } = await import('./chatTailRecover');
+    await persistLatestTailPagesAfterStaleCursor(contextType, contextId).catch(() => {});
+  }
+}
+
+export async function pullAndApplyChatSyncEvents(
+  contextType: ChatContextType,
+  contextId: string
+): Promise<number> {
+  const { applyThreadEvent } = await import('./chatLocalApplyThreadEvent');
+  return applyThreadEvent({ kind: 'syncPull', contextType, contextId });
 }

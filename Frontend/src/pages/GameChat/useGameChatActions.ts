@@ -4,12 +4,19 @@ import { useTranslation } from 'react-i18next';
 import { chatApi } from '@/api/chat';
 import { gamesApi } from '@/api/games';
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
-import { loadLocalThreadBootstrap, persistChatMessagesFromApi } from '@/services/chat/chatLocalApply';
-import { reconcileChatThreadOpen } from '@/services/chat/chatOpenReconcile';
-import { useChatSyncStore } from '@/store/chatSyncStore';
-import { normalizeChatType } from '@/utils/chatType';
+import {
+  applyThreadEvent,
+  applyThreadL1Put,
+  loadLocalThreadBootstrap,
+  persistChatMessagesFromApi,
+} from '@/services/chat/chatLocalApply';
+import {
+  getThreadOpenPaintGeneration,
+  getThreadOpenScrollRow,
+  reconcileAfterPaint,
+} from '@/services/chat/threadOpen';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
-import { putChatThreadMemory } from '@/services/chat/chatThreadMemoryCache';
+import { normalizeChatType } from '@/utils/chatType';
 import { mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
 import { mergeChatTypeSwitchPaint, planChatTypeSwitch } from '@/services/chat/threadSession';
 import type { ChatContextType } from '@/api/chat';
@@ -237,13 +244,23 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
       };
 
       const reconcileAfterLocal = () => {
-        void reconcileChatThreadOpen({
+        const threadKey = chatSyncTailKey(
+          contextType,
+          requestId,
+          contextType === 'GAME' ? normalizedChatType : undefined
+        );
+        void reconcileAfterPaint({
+          threadKey,
+          paintGeneration: getThreadOpenPaintGeneration(threadKey),
           contextType,
           contextId: requestId,
           gameChatType: normalizedChatType,
           currentIdRef,
           messagesRef,
           setMessages,
+          scrollRow: getThreadOpenScrollRow(),
+        }).then((result) => {
+          if (currentIdRef.current === requestId && result.pinToBottom) scrollToBottom();
         });
       };
 
@@ -254,14 +271,13 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
           paintSwitch(local);
           const last = local[local.length - 1];
           if (last) {
-            useChatSyncStore
-              .getState()
-              .setLastMessageId(
-                contextType,
-                id,
-                last.id,
-                contextType === 'GAME' ? normalizedChatType : undefined
-              );
+            void applyThreadEvent({
+              kind: 'uiTailAdvance',
+              contextType,
+              contextId: id,
+              messageId: last.id,
+              gameChatType: contextType === 'GAME' ? normalizedChatType : undefined,
+            });
           }
           reconcileAfterLocal();
         } else {
@@ -276,23 +292,31 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
           setHasMoreMessages(response.length === 50);
           const tail = response[response.length - 1];
           if (tail) {
-            useChatSyncStore
-              .getState()
-              .setLastMessageId(
-                contextType,
-                id,
-                tail.id,
-                contextType === 'GAME' ? normalizedChatType : undefined
-              );
+            void applyThreadEvent({
+              kind: 'uiTailAdvance',
+              contextType,
+              contextId: id,
+              messageId: tail.id,
+              gameChatType: contextType === 'GAME' ? normalizedChatType : undefined,
+            });
           }
-          await reconcileChatThreadOpen({
+          const threadKey = chatSyncTailKey(
+            contextType,
+            id!,
+            contextType === 'GAME' ? normalizedChatType : undefined
+          );
+          const result = await reconcileAfterPaint({
+            threadKey,
+            paintGeneration: getThreadOpenPaintGeneration(threadKey),
             contextType,
             contextId: id!,
             gameChatType: normalizedChatType,
             currentIdRef,
             messagesRef,
             setMessages,
+            scrollRow: getThreadOpenScrollRow(),
           });
+          if (currentIdRef.current === requestId && result.pinToBottom) scrollToBottom();
         }
         if (user?.id) {
           await applyQueuedMessagesToState({
@@ -315,8 +339,14 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
         console.error('Failed to load messages:', error);
       } finally {
         if (id && currentIdRef.current === id) {
-          const memKey = chatSyncTailKey(contextType, id, contextType === 'GAME' ? normalizedChatType : undefined);
-          putChatThreadMemory(memKey, messagesRef.current, () => currentIdRef.current === id);
+          void applyThreadL1Put({
+            contextType,
+            contextId: id,
+            gameChatType: contextType === 'GAME' ? normalizedChatType : undefined,
+            readRows: () => messagesRef.current,
+            verify: () => currentIdRef.current === id,
+            immediate: true,
+          });
         }
         setIsSwitchingChatType(false);
       }

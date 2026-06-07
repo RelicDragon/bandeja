@@ -51,10 +51,55 @@ function getFixedTeamPlayerIds(entityId: string, gameResults: GameResultsData): 
   return fixed ? fixed.playerIds : null;
 }
 
-function resolveEntityToUserId(entityType: 'USER' | 'TEAM', entityId: string, gameResults: GameResultsData): string | null {
-  if (entityType === 'USER') return entityId;
-  const playerIds = getFixedTeamPlayerIds(entityId, gameResults);
-  return playerIds?.length ? playerIds[0] : null;
+type OutcomeRow = GameResultsData['outcomes'][0];
+
+function getFixedTeamPartnerOutcomes(entityId: string, gameResults: GameResultsData): OutcomeRow[] {
+  const fixedPlayerIds = getFixedTeamPlayerIds(entityId, gameResults);
+  if (!fixedPlayerIds?.length) return [];
+  return fixedPlayerIds
+    .map(id => gameResults.outcomes.find(o => o.userId === id))
+    .filter((o): o is OutcomeRow => o != null);
+}
+
+function resolveFixedTeamOutcome(
+  entityId: string,
+  gameResults: GameResultsData
+): { isWinner: boolean; position?: number; wins: number; ties: number; losses: number } | null {
+  const partnerOutcomes = getFixedTeamPartnerOutcomes(entityId, gameResults);
+  if (partnerOutcomes.length === 0) return null;
+
+  const wins = Math.max(...partnerOutcomes.map(o => o.wins));
+  const ties = Math.max(...partnerOutcomes.map(o => o.ties));
+  const losses = Math.max(...partnerOutcomes.map(o => o.losses));
+  const explicitPositions = partnerOutcomes
+    .map(o => o.position)
+    .filter((p): p is number => p != null && Number.isInteger(p));
+
+  const position = explicitPositions.length > 0 ? Math.min(...explicitPositions) : undefined;
+  const isWinner = position != null ? position === 1 : partnerOutcomes.some(o => o.isWinner === true);
+
+  return { isWinner, position, wins, ties, losses };
+}
+
+function sortFixedTeamsByOutcome(
+  fixedTeams: NonNullable<GameResultsData['fixedTeams']>,
+  gameResults: GameResultsData
+): Array<{ id: string; wins: number; ties: number; userId: string }> {
+  return fixedTeams
+    .map(ft => {
+      const partnerOutcomes = ft.playerIds
+        .map(id => gameResults.outcomes.find(o => o.userId === id))
+        .filter((o): o is OutcomeRow => o != null);
+      const wins = partnerOutcomes.length ? Math.max(...partnerOutcomes.map(o => o.wins)) : 0;
+      const ties = partnerOutcomes.length ? Math.max(...partnerOutcomes.map(o => o.ties)) : 0;
+      const userId = ft.playerIds[0] ?? ft.id;
+      return { id: ft.id, wins, ties, userId };
+    })
+    .sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      if (b.ties !== a.ties) return b.ties - a.ties;
+      return a.userId.localeCompare(b.userId);
+    });
 }
 
 export async function evaluateBetCondition(
@@ -121,15 +166,18 @@ function evaluatePredefinedCondition(
   gameResults: GameResultsData,
   metadata?: Record<string, any>
 ): BetEvaluationResult {
-  const userId = resolveEntityToUserId(entityType, entityId, gameResults);
-  if (entityType === 'TEAM' && !userId) {
+  if (entityType === 'TEAM' && !getFixedTeamPlayerIds(entityId, gameResults)?.length) {
     return { won: false, reason: 'Fixed pair not found' };
   }
   switch (condition) {
     case 'WIN_GAME':
-      return userId ? evaluateWinGame(userId, gameResults) : { won: false, reason: 'Entity not found' };
+      return entityType === 'TEAM'
+        ? evaluateWinGameTeam(entityId, gameResults)
+        : evaluateWinGame(entityId, gameResults);
     case 'LOSE_GAME':
-      return userId ? evaluateLoseGame(userId, gameResults) : { won: false, reason: 'Entity not found' };
+      return entityType === 'TEAM'
+        ? evaluateLoseGameTeam(entityId, gameResults)
+        : evaluateLoseGame(entityId, gameResults);
     case 'WIN_SET':
       return evaluateWinAtLeastOneSet(entityType, entityId, gameResults);
     case 'LOSE_SET':
@@ -162,6 +210,18 @@ function evaluateLoseGame(userId: string, gameResults: GameResultsData): BetEval
     return { won: false, reason: 'User did not participate' };
   }
   return { won: outcome.isWinner === false };
+}
+
+function evaluateWinGameTeam(entityId: string, gameResults: GameResultsData): BetEvaluationResult {
+  const teamOutcome = resolveFixedTeamOutcome(entityId, gameResults);
+  if (!teamOutcome) return { won: false, reason: 'Fixed pair not in outcomes' };
+  return { won: teamOutcome.isWinner };
+}
+
+function evaluateLoseGameTeam(entityId: string, gameResults: GameResultsData): BetEvaluationResult {
+  const teamOutcome = resolveFixedTeamOutcome(entityId, gameResults);
+  if (!teamOutcome) return { won: false, reason: 'Fixed pair not in outcomes' };
+  return { won: !teamOutcome.isWinner };
 }
 
 function findEntityMatchTeam(
@@ -259,21 +319,19 @@ function evaluateTakePlace(
     const actualPlace = idx + 1;
     return { won: actualPlace === place };
   }
-  const fixedPlayerIds = getFixedTeamPlayerIds(entityId, gameResults);
-  if (fixedPlayerIds?.length) {
-    const outcome = gameResults.outcomes.find(o => fixedPlayerIds.includes(o.userId));
-    if (!outcome) return { won: false, reason: 'Fixed pair not in outcomes' };
-    if (outcome.position != null && Number.isInteger(outcome.position)) {
-      return { won: outcome.position === place };
+  const teamOutcome = resolveFixedTeamOutcome(entityId, gameResults);
+  if (teamOutcome) {
+    if (teamOutcome.position != null && Number.isInteger(teamOutcome.position)) {
+      return { won: teamOutcome.position === place };
     }
-    const sorted = [...gameResults.outcomes].sort((a, b) => {
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      if (b.ties !== a.ties) return b.ties - a.ties;
-      return a.userId.localeCompare(b.userId);
-    });
-    const idx = sorted.findIndex(o => fixedPlayerIds.includes(o.userId));
-    const actualPlace = idx + 1;
-    return { won: actualPlace === place };
+    const fixedTeams = gameResults.fixedTeams;
+    if (fixedTeams?.length) {
+      const sortedTeams = sortFixedTeamsByOutcome(fixedTeams, gameResults);
+      const idx = sortedTeams.findIndex(t => t.id === entityId);
+      if (idx < 0) return { won: false, reason: 'Fixed pair not in outcomes' };
+      return { won: idx + 1 === place };
+    }
+    return { won: false, reason: 'Fixed pair not in outcomes' };
   }
   const teamWins: Record<string, number> = {};
   for (const round of gameResults.rounds) {

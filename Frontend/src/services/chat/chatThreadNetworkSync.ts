@@ -2,9 +2,9 @@ import type { ChatContextType, ChatMessage } from '@/api/chat';
 import { chatApi } from '@/api/chat';
 import type { ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
-import { useChatSyncStore } from '@/store/chatSyncStore';
+import { bridgeGetLastMessageId } from '@/services/chat/chatLocalApplyStoreBridge';
 import { hydrateLastMessageIdFromDexieIfMissing } from '@/services/chat/messageContextHead';
-import { persistChatMessagesFromApi } from '@/services/chat/chatLocalApply';
+import { applyThreadEvent } from '@/services/chat/chatLocalApplyThreadEvent';
 
 export async function pullMissedAndPersistToDexie(opts: {
   contextType: ChatContextType;
@@ -18,9 +18,11 @@ export async function pullMissedAndPersistToDexie(opts: {
     contextType === 'GAME' ? gameChatType : undefined
   );
   const normalized = contextType === 'GAME' ? normalizeChatType(gameChatType ?? 'PUBLIC') : undefined;
-  const lastId = useChatSyncStore
-    .getState()
-    .getLastMessageId(contextType, contextId, contextType === 'GAME' ? gameChatType : undefined);
+  const lastId = bridgeGetLastMessageId(
+    contextType,
+    contextId,
+    contextType === 'GAME' ? gameChatType : undefined
+  );
   const missed = await chatApi.getMissedMessages(
     contextType,
     contextId,
@@ -28,7 +30,7 @@ export async function pullMissedAndPersistToDexie(opts: {
     normalized
   );
   if (missed.length > 0) {
-    await persistChatMessagesFromApi(missed);
+    await applyThreadEvent({ kind: 'httpMessages', messages: missed });
   }
   return missed;
 }

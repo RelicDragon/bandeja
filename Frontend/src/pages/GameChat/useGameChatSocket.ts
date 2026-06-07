@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
+import { applyThreadEvent, applyThreadL1Put } from '@/services/chat/chatLocalApply';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { useSocketEventsStore, type ChatRoomEvent } from '@/store/socketEventsStore';
 import { useNavigationStore } from '@/store/navigationStore';
@@ -18,7 +19,7 @@ import {
 import { patchThreadIndexClearUnread } from '@/services/chat/chatThreadIndex';
 import { scrollChatToBottomIfNearBottom } from '@/utils/chatScrollHelpers';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
-import { scheduleChatThreadL1DebouncedPut } from '@/services/chat/chatThreadMemoryCache';
+import { useThreadSnapshotRevision } from './useThreadSnapshotRevision';
 import { BANDEJA_CHAT_SYNC_STALE, type ChatSyncStaleDetail } from '@/utils/chatSyncStaleEvents';
 import {
   BANDEJA_CHAT_READ_BATCH_APPLIED,
@@ -33,7 +34,11 @@ import {
 } from '@/services/chat/chatOpenSocketPending';
 import { scheduleAfterThreadPaint, scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
 import { logChatSyncStale } from '@/services/chat/chatOpenTrace';
-import { reconcileChatThreadOpen } from '@/services/chat/chatOpenReconcile';
+import {
+  canFlushSocketBacklog,
+  reconcileAfterPaint,
+  shouldDeferOpenReload,
+} from '@/services/chat/threadOpen';
 
 export interface UseGameChatSocketParams {
   id: string | undefined;
@@ -229,17 +234,26 @@ function processChatRoomBatch(batch: ChatRoomEvent[], ctx: RoomProcessorCtx): vo
       messagesRef.current = next;
       const lastId = next[next.length - 1]?.id;
       if (lastId) {
-        useChatSyncStore
-          .getState()
-          .setLastMessageId(contextType, id, lastId, contextType === 'GAME' ? effectiveChatType : undefined);
+        void applyThreadEvent({
+          kind: 'uiTailAdvance',
+          contextType,
+          contextId: id,
+          messageId: lastId,
+          gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
+        });
       }
       return next;
     });
     scrollChatToBottomIfNearBottom(chatContainerRef);
   }
 
-  const tk = chatSyncTailKey(contextType, id, contextType === 'GAME' ? effectiveChatType : undefined);
-  scheduleChatThreadL1DebouncedPut(tk, () => messagesRef.current, () => true);
+  void applyThreadL1Put({
+    contextType,
+    contextId: id,
+    gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
+    readRows: () => messagesRef.current,
+    verify: () => true,
+  });
 }
 
 export function useGameChatSocket({
@@ -260,6 +274,7 @@ export function useGameChatSocket({
   reloadMessagesFirstPage,
   onAfterSocketBatch,
 }: UseGameChatSocketParams) {
+  const snapshotRevision = useThreadSnapshotRevision(contextType, id);
   const roomKey = useMemo(
     () => (id ? `${contextType}:${id}` : ''),
     [contextType, id]
@@ -337,15 +352,24 @@ export function useGameChatSocket({
 
   useEffect(() => {
     if (!roomKey || !id) return;
+    const tailKey = chatSyncTailKey(
+      contextType,
+      id,
+      contextType === 'GAME' ? effectiveChatType : undefined
+    );
     const flush = () => {
       if (currentIdRef.current !== id) return;
+      if (!canFlushSocketBacklog(tailKey)) {
+        scheduleAfterThreadPaint(flush);
+        return;
+      }
       const batch = takeChatRoomPending(roomKey);
       if (batch.length === 0) return;
       processChatRoomBatch(batch, roomProcessorCtx);
       onAfterSocketBatch?.();
     };
     scheduleAfterThreadPaint(flush);
-  }, [roomKey, id, roomPushSeq, roomProcessorCtx, currentIdRef, onAfterSocketBatch]);
+  }, [roomKey, id, roomPushSeq, roomProcessorCtx, currentIdRef, onAfterSocketBatch, contextType, effectiveChatType]);
 
   useEffect(() => {
     syncEpochBaselineRef.current = null;
@@ -397,12 +421,22 @@ export function useGameChatSocket({
         const painted =
           currentIdRef.current === id &&
           messagesRef.current.length > 0 &&
-          useChatSyncStore.getState().lastThreadPaintAt != null;
+          snapshotRevision > 0;
         if (d.reason === 'threadInvalidated' || !painted) {
+          if (shouldDeferOpenReload()) {
+            window.setTimeout(applyStaleRefresh, 50);
+            return;
+          }
           void reloadMessagesFirstPage();
           return;
         }
-        void reconcileChatThreadOpen({
+        const threadKey = chatSyncTailKey(
+          contextType,
+          id,
+          contextType === 'GAME' ? effectiveChatType : undefined
+        );
+        void reconcileAfterPaint({
+          threadKey,
           contextType,
           contextId: id,
           gameChatType: effectiveChatType,
@@ -428,6 +462,7 @@ export function useGameChatSocket({
     contextType,
     effectiveChatType,
     reloadMessagesFirstPage,
+    snapshotRevision,
     currentIdRef,
     messagesRef,
     setMessages,

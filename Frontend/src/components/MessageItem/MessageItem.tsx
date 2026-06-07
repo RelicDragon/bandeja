@@ -12,7 +12,7 @@ import { FullscreenImageViewer } from '../FullscreenImageViewer';
 import { FullscreenVideoViewer } from '../FullscreenVideoViewer';
 import { ReportMessageModal } from '../ReportMessageModal';
 import { extractLanguageCode } from '@/utils/language';
-import { isTranslationPending } from '@/constants/messageTranslationPending';
+import { isMessageTranslationPending as isTranslationPending } from '@bandeja/chat-contract';
 import { translationEqualsSource } from '@/utils/translationOutputNormalize';
 import { useChatAutoTranslateSlots } from '@/contexts/ChatAutoTranslateContext';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';

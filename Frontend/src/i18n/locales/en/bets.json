@@ -9,6 +9,7 @@
     "won": "Won",
     "lost": "Lost",
     "resolved": "Resolved",
+    "needsReview": "Needs review",
     "open": "Open",
     "team": "Team",
     "userOrTeam": "User or Team",
@@ -61,7 +62,7 @@
     "coinsCount_one": "{{count}} coin",
     "coinsCount_other": "{{count}} coins",
     "stakePlaceholder": "What you are betting...",
-    "rewardPlaceholder": "What you will receive...",
+    "rewardPlaceholder": "What the acceptor will put up...",
     "noBets": "No challenges yet. Be the first to create one!",
     "condition": {
       "winGame": "Win the game",

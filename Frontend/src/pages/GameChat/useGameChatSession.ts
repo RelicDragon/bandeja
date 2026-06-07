@@ -1,10 +1,10 @@
 import { useCallback, useEffect } from 'react';
 import type { ChatMessage, UserChat } from '@/api/chat';
 import { logReloadMessagesFirstPage } from '@/services/chat/chatOpenTrace';
-import { useThreadSession, type UseThreadSessionParams } from './useThreadSession';
+import { useGameChatMessages, type UseGameChatMessagesParams } from './useGameChatMessages';
 import { useGameChatOptimistic } from './useGameChatOptimistic';
 
-export type UseGameChatSessionParams = UseThreadSessionParams & {
+export type UseGameChatSessionParams = UseGameChatMessagesParams & {
   user: { id: string } | null;
   setUserChat: React.Dispatch<React.SetStateAction<UserChat | null>>;
   onInboundMessage?: (message: ChatMessage) => void;
@@ -16,7 +16,7 @@ export function useGameChatSession({
   onInboundMessage,
   ...sessionParams
 }: UseGameChatSessionParams) {
-  const session = useThreadSession(sessionParams);
+  const session = useGameChatMessages(sessionParams);
   const { loadMessages } = session;
 
   const {

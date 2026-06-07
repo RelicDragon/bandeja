@@ -4,19 +4,22 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npm run build:contract",
+    "build:contract": "npm run build --prefix ../packages/chat-contract",
     "build": "tsc && vite build",
     "postbuild": "node scripts/force-sw-update.js",
     "preview": "vite preview",
     "test:live-scoring": "vitest run src/utils/liveScoring/core.test.ts src/utils/liveScoring/badmintonServe.test.ts src/utils/liveScoring/squashServe.test.ts src/utils/liveScoring/pickleballServe.test.ts src/liveScoring/registry.test.ts src/liveScoring/rallyScoreMeta.test.ts src/sport/sportRegistry.test.ts src/sport/badmintonFlow.verify.test.ts src/sport/createTemplates.parity.test.ts src/utils/profileSports.test.ts src/utils/findSportFilter.test.ts src/components/liveScoring/rally/pickleballCourt.test.ts src/components/liveScoring/rally/squashCourtLayout.test.ts",
     "test:game-invite": "vitest run src/utils/gameInviteParticipant.test.ts",
     "test:group-channel": "vitest run src/utils/groupChannelParticipation.test.ts",
-    "test:chat-open": "vitest run src/services/chat/__tests__/mergeOpenSnapshot.test.ts src/services/chat/__tests__/threadSession.test.ts src/services/chat/__tests__/gameChatOpenPerformance.test.ts",
+    "test:chat-open": "vitest run src/services/chat/__tests__/mergeOpenSnapshot.test.ts src/services/chat/__tests__/threadSession.test.ts src/services/chat/__tests__/gameChatOpenPerformance.test.ts src/services/chat/__tests__/threadOpen.test.ts src/services/chat/__tests__/threadOpenPlan.test.ts src/services/chat/__tests__/shouldPinOnOpen.test.ts src/services/chat/optimisticReconcile.test.ts src/services/chat/__tests__/chatLocalApplyThreadEvent.test.ts src/services/chat/__tests__/chatLocalApplySocketInbound.test.ts src/services/chat/__tests__/chatLocalApplyPull.test.ts src/services/chat/__tests__/chatLocalApplyWrite.test.ts",
     "test:chat-outbox": "vitest run src/services/chat/chatSendCoordinator.test.ts src/services/chat/chatOutboxEnqueue.test.ts src/services/chat/chatOutboxRetry.test.ts src/services/chat/messageSendState.test.ts src/services/chat/chatSendSocketAck.test.ts src/services/chat/chatSendMessageCreate.test.ts src/services/chat/chatHttpRetry.test.ts src/services/chat/chatVideoTranscode.test.ts src/services/chat/chatVideoTranscodeWorkerClient.test.ts src/services/chat/chatVideoUploadRetry.test.ts src/services/chatMessageQueueStorage.video.test.ts && cd ../Backend && npx ts-node scripts/tests/chat-video-message-type.ts",
     "test:stories": "vitest run src/components/stories/create/utils/storyTransform.test.ts src/components/stories/create/utils/storyCanvasExport.test.ts src/components/stories/create/utils/layoutCanvasText.test.ts src/components/stories/create/utils/storyCanvasHitTest.test.ts src/components/stories/create/utils/storyExportDimensions.test.ts src/components/stories/create/photo/utils/storyRenderParity.test.ts src/components/stories/create/video/useStoryVideoPublish.test.ts src/components/stories/create/photo/hooks/useStoryPhotoPublish.test.ts src/components/stories/slides/MediaStorySlide.test.tsx",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "increment-sw": "node scripts/increment-sw-version.js"
   },
   "dependencies": {
+    "@bandeja/chat-contract": "file:../packages/chat-contract",
     "@capacitor-community/app-icon": "^7.0.0",
     "@capacitor-community/apple-sign-in": "^7.1.0",
     "@capacitor-community/keep-awake": "^8.0.1",

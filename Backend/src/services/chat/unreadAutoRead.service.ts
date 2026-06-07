@@ -1,5 +1,6 @@
 import prisma from '../../config/database';
-import { ChatContextType, ChatSyncEventType } from '@prisma/client';
+import { ChatSyncEventType } from '@bandeja/chat-contract';
+import { ChatContextType } from '@prisma/client';
 import { subMonths } from 'date-fns';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 

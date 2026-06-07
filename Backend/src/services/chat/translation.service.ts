@@ -1,11 +1,11 @@
 import prisma from '../../config/database';
-import { ChatSyncEventType } from '@prisma/client';
+import { ChatSyncEventType, MESSAGE_TRANSLATION_PENDING } from '@bandeja/chat-contract';
 import { ApiError } from '../../utils/ApiError';
 import { ChatSyncEventService } from './chatSyncEvent.service';
+import { getChatNotifier } from './chatNotifier';
 import { getAiService } from '../ai/ai.service';
 import { LLM_REASON } from '../ai/llmReasons';
 import { sourceAppearsToBeTargetLanguage, translationMatchesTargetFranc } from './translationFrancCheck';
-import { MESSAGE_TRANSLATION_PENDING } from './translationPending';
 import { normalizeTranslationOutput, translationEqualsSource } from './translationOutputNormalize';
 
 export const TRANSLATION_LANGUAGE_NAMES: Record<string, string> = {
@@ -218,16 +218,13 @@ export class TranslationService {
       );
     });
 
-    const socketService = (global as any).socketService;
-    if (socketService?.emitMessageTranslation) {
-      socketService.emitMessageTranslation(
-        msgCtx.chatContextType,
-        msgCtx.contextId,
-        messageId,
-        { languageCode: normalizedLanguageCode, translation: '', removed: true },
-        syncSeq
-      );
-    }
+    getChatNotifier().emitMessageTranslation(
+      msgCtx.chatContextType,
+      msgCtx.contextId,
+      messageId,
+      { languageCode: normalizedLanguageCode, translation: '', removed: true },
+      syncSeq
+    );
   }
 
   static async persistTranslation(
@@ -265,9 +262,8 @@ export class TranslationService {
       where: { id: messageId },
       select: { chatContextType: true, contextId: true },
     });
-    const socketService = (global as any).socketService;
-    if (msgCtx && socketService?.emitMessageTranslation) {
-      socketService.emitMessageTranslation(
+    if (msgCtx) {
+      getChatNotifier().emitMessageTranslation(
         msgCtx.chatContextType,
         msgCtx.contextId,
         messageId,

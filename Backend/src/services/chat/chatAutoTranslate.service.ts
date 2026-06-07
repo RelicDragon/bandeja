@@ -1,6 +1,6 @@
+import { ChatSyncEventType } from '@bandeja/chat-contract';
 import {
   ChatContextType,
-  ChatSyncEventType,
   ChatType,
   ParticipantRole,
 } from '@prisma/client';

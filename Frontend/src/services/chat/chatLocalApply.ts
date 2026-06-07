@@ -10,11 +10,14 @@ export {
   reconcileCursorWithServerHead,
   getLocalCursorSeq,
   getLastAppliedSyncSeq,
+  bumpCursor,
 } from './chatLocalApplyCursor';
 export { pullAndApplyChatSyncEvents } from './chatLocalApplyPull';
 export {
   putLocalMessage,
+  putLocalMessageDirect,
   persistChatMessagesFromApi,
+  persistChatMessagesFromApiDirect,
   markLocalMessageDeleted,
   applyLocalMessageEditOptimistic,
   applyLocalReactionOptimisticReplace,
@@ -29,11 +32,19 @@ export {
 } from './chatLocalApplyPatchFields';
 export {
   onSocketSyncSeq,
-  persistSocketInboundMessage,
   persistSocketPatchThenSyncSeq,
   persistSocketTranscriptionAndSyncSeq,
   persistSocketPollVoteAndSyncSeq,
 } from './chatLocalApplySocketInbound';
+export {
+  applyThreadEvent,
+  applyThreadL1Put,
+  getThreadSnapshotRevision,
+  persistSocketInboundMessage,
+  subscribeThreadSnapshotRevision,
+  threadKeyForApply,
+  type ThreadApplyEvent,
+} from './chatLocalApplyThreadEvent';
 export {
   loadLocalMessagesForThread,
   loadLocalMessagesForThreadProgressive,
@@ -41,3 +52,10 @@ export {
   loadLocalThreadBootstrap,
   type LocalThreadBootstrapResult,
 } from './chatLocalApplyThreadLoad';
+export {
+  bridgeGetLastMessageId,
+  bridgeSetLastMessageId,
+  bridgeAddMissedMessages,
+  bridgeTakeMissedMessages,
+  bridgeBumpChatListDexie,
+} from './chatLocalApplyStoreBridge';

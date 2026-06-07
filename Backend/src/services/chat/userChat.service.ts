@@ -1,5 +1,6 @@
 import prisma from '../../config/database';
-import { ChatContextType, ChatSyncEventType } from '@prisma/client';
+import { ChatSyncEventType } from '@bandeja/chat-contract';
+import { ChatContextType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { projectUserByPrimarySport } from '../user/userSportProfile.service';

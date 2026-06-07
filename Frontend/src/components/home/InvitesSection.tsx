@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 import { Button, Card, PlayerAvatar, GameCard } from '@/components';
 import { Invite } from '@/types';
 import { Check, X } from 'lucide-react';
@@ -20,7 +21,12 @@ interface InvitesSectionProps {
 export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: InvitesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { bounceNotifications, setBounceNotifications } = useNavigationStore();
+  const { bounceNotifications, setBounceNotifications } = useNavigationStore(
+    useShallow((s) => ({
+      bounceNotifications: s.bounceNotifications,
+      setBounceNotifications: s.setBounceNotifications,
+    }))
+  );
   const user = useAuthStore((state) => state.user);
   const [hidingInvites, setHidingInvites] = useState<Set<string>>(new Set());
 

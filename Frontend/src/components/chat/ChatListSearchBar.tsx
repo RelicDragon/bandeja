@@ -57,10 +57,10 @@ export const ChatListSearchBar = ({
   const showUnreadFilter = shouldShowChatListUnreadFilter(unreadChatsCount);
 
   return (
-    <div className={`px-2 pb-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 ${isDesktop ? 'pt-4' : ''}`}>
+    <div className={`px-2 pb-4 border-b border-gray-200 dark:border-gray-700 ${isDesktop ? 'pt-4' : ''}`}>
       <motion.div layout className="flex items-center">
         {showUnreadFilter && (
-          <motion.div layout className="shrink-0 overflow-hidden mr-2">
+          <motion.div layout className="shrink-0 overflow-visible mr-2">
             <button
               type="button"
               onClick={onUnreadFilterToggle}
@@ -137,7 +137,7 @@ export const ChatListSearchBar = ({
             placeholder={placeholder}
             value={searchInput}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-9 pr-9 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            className="w-full pl-9 pr-9 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
           />
           {searchInput && (
             <button

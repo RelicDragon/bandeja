@@ -4,7 +4,7 @@ import { BasicUser, ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { messageQueueStorage, QueuedMessage } from '@/services/chatMessageQueueStorage';
 import { sendWithTimeout, isSending } from '@/services/chatSendService';
-import { compareChatMessagesAscending } from '@/utils/chatMessageSort';
+import { reconcileOptimisticMessages } from '@/services/chat/optimisticReconcile';
 import {
   loadOutboxImageBlobs,
   loadOutboxVideoBlob,
@@ -208,7 +208,15 @@ export async function applyQueuedMessagesToState(params: {
       const toAdd = optimisticList.filter(
         (msg) => !prev.some((m) => (m as ChatMessageWithStatus)._optimisticId === msg._optimisticId)
       );
-      const next = [...prev, ...toAdd].sort(compareChatMessagesAscending);
+      const combined = [...prev, ...toAdd];
+      const serverMessages = prev.filter(
+        (m) => !(m as ChatMessageWithStatus)._optimisticId
+      ) as ChatMessage[];
+      const { messages: next } = reconcileOptimisticMessages({
+        messages: combined,
+        incoming: serverMessages,
+        userId,
+      });
       messagesRef.current = next;
       return next;
     });

@@ -9,6 +9,7 @@
     "won": "Pobeda",
     "lost": "Poraz",
     "resolved": "Rešeno",
+    "needsReview": "Potrebna provera",
     "open": "Otvoreno",
     "team": "Tim",
     "userOrTeam": "Korisnik ili tim",
@@ -62,7 +63,7 @@
     "coinsCount_many": "{{count}} novčića",
     "coinsCount_other": "{{count}} novčića",
     "stakePlaceholder": "Na šta kladite...",
-    "rewardPlaceholder": "Šta ćete dobiti...",
+    "rewardPlaceholder": "Šta prihvatajući stavlja na kocku...",
     "noBets": "Još nema klađenja. Budite prvi koji će kreirati!",
     "condition": {
       "winGame": "Pobediti igru",

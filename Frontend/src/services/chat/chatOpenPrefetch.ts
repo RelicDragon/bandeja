@@ -1,10 +1,7 @@
 import type { ChatContextType, ChatMessageWithStatus } from '@/api/chat';
 import type { ChatType } from '@/types';
 import { loadLocalThreadBootstrap, pullAndApplyChatSyncEvents } from '@/services/chat/chatLocalApply';
-import {
-  hydrateLastMessageIdFromDexieIfMissing,
-  syncLastMessageIdsToStoreFromLocalHeadsForContext,
-} from '@/services/chat/messageContextHead';
+import { hydrateLastMessageIdFromDexieIfMissing } from '@/services/chat/messageContextHead';
 import { pullMissedAndPersistToDexie } from '@/services/chat/chatThreadNetworkSync';
 import { mergeMissedIntoWarmRef, takeMissedMessagesForOpen } from '@/services/chat/chatOpenMissedFlush';
 import { mergeOpenSnapshot } from '@/services/chat/chatOpenSnapshot';
@@ -31,7 +28,6 @@ export async function prefetchOpenThreadLocal(
   });
 
   await pullAndApplyChatSyncEvents(contextType, contextId);
-  await syncLastMessageIdsToStoreFromLocalHeadsForContext(contextType, contextId);
 
   const missedBuffer = takeMissedMessagesForOpen(
     contextType,

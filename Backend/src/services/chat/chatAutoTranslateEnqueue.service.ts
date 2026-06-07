@@ -1,6 +1,6 @@
 import { MessageType } from '@prisma/client';
 import prisma from '../../config/database';
-import { MESSAGE_TRANSCRIPTION_PENDING } from './transcriptionPending';
+import { MESSAGE_TRANSCRIPTION_PENDING } from '@bandeja/chat-contract';
 import { ChatAutoTranslateService } from './chatAutoTranslate.service';
 import { sourceAppearsToBeTargetLanguage } from './translationFrancCheck';
 import { TranslationQueueService } from './translationQueue.service';

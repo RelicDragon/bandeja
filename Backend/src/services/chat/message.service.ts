@@ -1,5 +1,10 @@
 import prisma from '../../config/database';
 import {
+  ChatSyncEventType,
+  MESSAGE_TRANSLATION_PENDING,
+  MESSAGE_TRANSCRIPTION_PENDING,
+} from '@bandeja/chat-contract';
+import {
   MessageState,
   ChatType,
   ChatContextType,
@@ -7,7 +12,6 @@ import {
   PollType,
   Prisma,
   MessageType,
-  ChatSyncEventType,
 } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
@@ -15,9 +19,7 @@ import notificationService from '../notification.service';
 import { UserChatService } from './userChat.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { TranslationService } from './translation.service';
-import { MESSAGE_TRANSLATION_PENDING } from './translationPending';
 import { translationEqualsSource } from './translationOutputNormalize';
-import { MESSAGE_TRANSCRIPTION_PENDING } from './transcriptionPending';
 import { ReadReceiptService } from './readReceipt.service';
 import { DraftService } from './draft.service';
 import { ChatMuteService } from './chatMute.service';
@@ -36,6 +38,7 @@ import {
   MAX_VIDEO_DURATION_MS as VIDEO_MESSAGE_MAX_MS,
   MIN_VIDEO_DURATION_MS,
 } from '../../constants/chatVideo';
+import { getChatNotifier } from './chatNotifier';
 
 const VOICE_MESSAGE_MAX_MS = 30 * 60 * 1000;
 
@@ -505,16 +508,12 @@ export class MessageService {
       contextId: markContextId,
     });
 
-    const socketService = (global as { socketService?: { emitUnreadCountUpdate: (...args: unknown[]) => Promise<void> } })
-      .socketService;
-    if (socketService) {
-      await socketService.emitUnreadCountUpdate(
-        socketContextType,
-        markContextId,
-        senderId,
-        0
-      );
-    }
+    await getChatNotifier().emitUnreadCountUpdate(
+      socketContextType,
+      markContextId,
+      senderId,
+      0
+    );
   }
 
   private static scheduleSenderContextReadAfterSend(
@@ -963,214 +962,203 @@ export class MessageService {
       return message;
     }
 
-    const socketService = (global as any).socketService;
-    if (socketService) {
-      // Get recipients for delivery tracking
-      const recipients: string[] = [];
-      let userDmNotifyIds: string[] | undefined;
+    const notifier = getChatNotifier();
 
-      if (data.chatContextType === 'GAME') {
-        const game = await prisma.game.findUnique({
-          where: { id: data.contextId },
-          include: {
-            participants: {
-              where: { userId: { not: data.senderId } }
-            }
-          }
-        });
-        if (game) {
-          recipients.push(...game.participants.map(p => p.userId));
-        }
-      } else if (data.chatContextType === 'USER') {
-        const userChat = await prisma.userChat.findUnique({
-          where: { id: data.contextId }
-        });
-        if (userChat) {
-          userDmNotifyIds = [userChat.user1Id, userChat.user2Id].filter(
-            (id): id is string => typeof id === 'string' && id.length > 0
-          );
-          const recipientId = userChat.user1Id === data.senderId
-            ? userChat.user2Id
-            : userChat.user1Id;
-          if (recipientId) recipients.push(recipientId);
-        }
-      } else if (data.chatContextType === 'BUG') {
-        const bug = await prisma.bug.findUnique({
-          where: { id: data.contextId },
-          include: {
-            participants: {
-              where: { userId: { not: data.senderId } }
-            }
-          }
-        });
-        if (bug) {
-          if (bug.senderId !== data.senderId) {
-            recipients.push(bug.senderId);
-          }
-          recipients.push(...bug.participants.map(p => p.userId));
+    const recipients: string[] = [];
+    let userDmNotifyIds: string[] | undefined;
 
-          const admins = await prisma.user.findMany({
-            where: { isAdmin: true },
-            select: { id: true }
-          });
-          admins.forEach(admin => {
-            if (admin.id !== data.senderId && !recipients.includes(admin.id)) {
-              recipients.push(admin.id);
-            }
-          });
-        }
-      } else if (data.chatContextType === 'GROUP') {
-        const groupChannel = await prisma.groupChannel.findUnique({
-          where: { id: data.contextId },
-          include: {
-            participants: {
-              where: { userId: { not: data.senderId } }
-            }
+    if (data.chatContextType === 'GAME') {
+      const game = await prisma.game.findUnique({
+        where: { id: data.contextId },
+        include: {
+          participants: {
+            where: { userId: { not: data.senderId } }
           }
-        });
-        if (groupChannel) {
-          recipients.push(...groupChannel.participants.map(p => p.userId));
         }
+      });
+      if (game) {
+        recipients.push(...game.participants.map(p => p.userId));
       }
-
-      // Record delivery attempt
-      if (recipients.length > 0) {
-        socketService.recordMessageDelivery(
-          message.id,
-          data.chatContextType,
-          data.contextId,
-          recipients
+    } else if (data.chatContextType === 'USER') {
+      const userChat = await prisma.userChat.findUnique({
+        where: { id: data.contextId }
+      });
+      if (userChat) {
+        userDmNotifyIds = [userChat.user1Id, userChat.user2Id].filter(
+          (id): id is string => typeof id === 'string' && id.length > 0
         );
+        const recipientId = userChat.user1Id === data.senderId
+          ? userChat.user2Id
+          : userChat.user1Id;
+        if (recipientId) recipients.push(recipientId);
       }
-
-      // Enrich message with all existing translations before emitting
-      const allTranslations = await prisma.messageTranslation.findMany({
-        where: { messageId: message.id },
-        select: {
-          languageCode: true,
-          translation: true
+    } else if (data.chatContextType === 'BUG') {
+      const bug = await prisma.bug.findUnique({
+        where: { id: data.contextId },
+        include: {
+          participants: {
+            where: { userId: { not: data.senderId } }
+          }
         }
       });
+      if (bug) {
+        if (bug.senderId !== data.senderId) {
+          recipients.push(bug.senderId);
+        }
+        recipients.push(...bug.participants.map(p => p.userId));
 
-      const trRow = await prisma.messageTranscription.findUnique({
-        where: { messageId: message.id },
-        select: { transcription: true, languageCode: true },
+        const admins = await prisma.user.findMany({
+          where: { isAdmin: true },
+          select: { id: true }
+        });
+        admins.forEach(admin => {
+          if (admin.id !== data.senderId && !recipients.includes(admin.id)) {
+            recipients.push(admin.id);
+          }
+        });
+      }
+    } else if (data.chatContextType === 'GROUP') {
+      const groupChannel = await prisma.groupChannel.findUnique({
+        where: { id: data.contextId },
+        include: {
+          participants: {
+            where: { userId: { not: data.senderId } }
+          }
+        }
       });
-      const audioTranscription =
-        trRow &&
-        trRow.transcription &&
-        trRow.transcription !== MESSAGE_TRANSCRIPTION_PENDING
-          ? { transcription: trRow.transcription, languageCode: trRow.languageCode }
-          : undefined;
+      if (groupChannel) {
+        recipients.push(...groupChannel.participants.map(p => p.userId));
+      }
+    }
 
-      const emitSourceText =
-        (message.content?.trim() || '') ||
-        (audioTranscription?.transcription?.trim() || '');
-      const translationsArray =
-        allTranslations.length > 0
-          ? allTranslations
-              .filter(
-                (t) =>
-                  t.translation === MESSAGE_TRANSLATION_PENDING ||
-                  !emitSourceText ||
-                  !translationEqualsSource(emitSourceText, t.translation)
-              )
-              .map((t) => ({
-                languageCode: t.languageCode,
-                translation: t.translation,
-              }))
-          : undefined;
-
-      // Get sender's language to include as primary translation if available
-      const sender = await prisma.user.findUnique({
-        where: { id: data.senderId },
-        select: { language: true }
-      });
-      const senderLanguageCode = sender ? TranslationService.extractLanguageCode(sender.language) : 'en';
-      const senderTranslation = translationsArray?.find(t => t.languageCode === senderLanguageCode);
-
-      const messageWithTranslations = {
-        ...message,
-        translation: senderTranslation || (translationsArray && translationsArray.length > 0 ? translationsArray[0] : undefined),
-        translations: translationsArray,
-        audioTranscription,
-      };
-
-      const syncSeq = (message as { syncSeq?: number }).syncSeq;
-
-      socketService.emitChatEvent(
+    if (recipients.length > 0) {
+      notifier.recordMessageDelivery(
+        message.id,
         data.chatContextType,
         data.contextId,
-        'message',
-        { message: messageWithTranslations },
-        message.id,
-        syncSeq,
-        userDmNotifyIds
+        recipients
       );
+    }
 
-      // Emit unread count updates immediately to all recipients (not just undelivered)
-      // This ensures badge updates even when users are not in the room
-      // Filter out muted users for GROUP channels
-      if (recipients.length > 0) {
-        const listPreview =
-          data.chatContextType === ChatContextType.USER ||
-          data.chatContextType === ChatContextType.GROUP ||
-          data.chatContextType === ChatContextType.GAME
-            ? lastMessageForUnreadListSocket(messageWithTranslations)
-            : undefined;
-        queueMicrotask(async () => {
-          try {
-            let emitRecipients = recipients;
-            if (data.chatContextType === 'GROUP') {
-              const muted = await ChatMuteService.getMutedUserIdsForContext(
-                'GROUP',
-                data.contextId,
-                recipients
-              );
-              emitRecipients = recipients.filter((id) => !muted.has(id));
-            }
-            const countsByUser = await ReadReceiptService.getUnreadCountsForContextForUsers(
+    const allTranslations = await prisma.messageTranslation.findMany({
+      where: { messageId: message.id },
+      select: {
+        languageCode: true,
+        translation: true
+      }
+    });
+
+    const trRow = await prisma.messageTranscription.findUnique({
+      where: { messageId: message.id },
+      select: { transcription: true, languageCode: true },
+    });
+    const audioTranscription =
+      trRow &&
+      trRow.transcription &&
+      trRow.transcription !== MESSAGE_TRANSCRIPTION_PENDING
+        ? { transcription: trRow.transcription, languageCode: trRow.languageCode }
+        : undefined;
+
+    const emitSourceText =
+      (message.content?.trim() || '') ||
+      (audioTranscription?.transcription?.trim() || '');
+    const translationsArray =
+      allTranslations.length > 0
+        ? allTranslations
+            .filter(
+              (t) =>
+                t.translation === MESSAGE_TRANSLATION_PENDING ||
+                !emitSourceText ||
+                !translationEqualsSource(emitSourceText, t.translation)
+            )
+            .map((t) => ({
+              languageCode: t.languageCode,
+              translation: t.translation,
+            }))
+        : undefined;
+
+    const sender = await prisma.user.findUnique({
+      where: { id: data.senderId },
+      select: { language: true }
+    });
+    const senderLanguageCode = sender ? TranslationService.extractLanguageCode(sender.language) : 'en';
+    const senderTranslation = translationsArray?.find(t => t.languageCode === senderLanguageCode);
+
+    const messageWithTranslations = {
+      ...message,
+      translation: senderTranslation || (translationsArray && translationsArray.length > 0 ? translationsArray[0] : undefined),
+      translations: translationsArray,
+      audioTranscription,
+    };
+
+    const syncSeq = (message as { syncSeq?: number }).syncSeq;
+
+    notifier.emitChatEvent(
+      data.chatContextType,
+      data.contextId,
+      'message',
+      { message: messageWithTranslations },
+      message.id,
+      syncSeq,
+      userDmNotifyIds
+    );
+
+    if (recipients.length > 0) {
+      const listPreview =
+        data.chatContextType === ChatContextType.USER ||
+        data.chatContextType === ChatContextType.GROUP ||
+        data.chatContextType === ChatContextType.GAME
+          ? lastMessageForUnreadListSocket(messageWithTranslations)
+          : undefined;
+      queueMicrotask(async () => {
+        try {
+          let emitRecipients = recipients;
+          if (data.chatContextType === 'GROUP') {
+            const muted = await ChatMuteService.getMutedUserIdsForContext(
+              'GROUP',
+              data.contextId,
+              recipients
+            );
+            emitRecipients = recipients.filter((id) => !muted.has(id));
+          }
+          const countsByUser = await ReadReceiptService.getUnreadCountsForContextForUsers(
+            data.chatContextType,
+            data.contextId,
+            emitRecipients
+          );
+          for (const userId of emitRecipients) {
+            const unreadCount = countsByUser.get(userId) ?? 0;
+            await notifier.emitUnreadCountUpdate(
               data.chatContextType,
               data.contextId,
-              emitRecipients
+              userId,
+              unreadCount,
+              listPreview ?? undefined
             );
-            for (const userId of emitRecipients) {
-              const unreadCount = countsByUser.get(userId) ?? 0;
-              await socketService.emitUnreadCountUpdate(
-                data.chatContextType,
-                data.contextId,
-                userId,
-                unreadCount,
-                listPreview ?? undefined
-              );
-            }
-          } catch (error) {
-            console.error('[MessageService] Failed to emit unread count updates after send:', error);
           }
-        });
-      }
+        } catch (error) {
+          console.error('[MessageService] Failed to emit unread count updates after send:', error);
+        }
+      });
+    }
 
-      // Check for undelivered recipients after a delay
-      if (recipients.length > 0) {
-        setTimeout(async () => {
-          const undelivered = socketService.getUndeliveredRecipients(message.id);
+    if (recipients.length > 0) {
+      setTimeout(async () => {
+        const undelivered = notifier.getUndeliveredRecipients(message.id);
 
-          for (const userId of undelivered) {
-            const isOnline = socketService.isUserOnline(userId);
-            const isInRoom = await socketService.isUserInChatRoom(
-              data.chatContextType,
-              data.contextId,
-              userId
-            );
+        for (const userId of undelivered) {
+          const isOnline = notifier.isUserOnline(userId);
+          const isInRoom = await notifier.isUserInChatRoom(
+            data.chatContextType,
+            data.contextId,
+            userId
+          );
 
-            // If user is online but not in room, they might have missed it
-            // Push notification should already be sent by notification service
-            if (isOnline && !isInRoom) {
-              console.log(`[MessageService] User ${userId} is online but not in room for message ${message.id}`);
-            }
+          if (isOnline && !isInRoom) {
+            console.log(`[MessageService] User ${userId} is online but not in room for message ${message.id}`);
           }
-        }, 2000); // Wait 2 seconds for socket delivery
-      }
+        }
+      }, 2000);
     }
 
     return message;
@@ -1672,18 +1660,15 @@ export class MessageService {
         }
       }
 
-      const socketService = (global as any).socketService;
-      if (socketService) {
-        socketService.emitChatEvent(
-          updated.chatContextType,
-          updated.contextId,
-          'message-updated',
-          { message: updated },
-          updated.id,
-          syncSeq,
-          notifyUserIds
-        );
-      }
+      getChatNotifier().emitChatEvent(
+        updated.chatContextType,
+        updated.contextId,
+        'message-updated',
+        { message: updated },
+        updated.id,
+        syncSeq,
+        notifyUserIds
+      );
     } catch (e) {
       console.error('[MessageService] tryPromoteToDeliveredWhenRecipientsAcked', e);
     }

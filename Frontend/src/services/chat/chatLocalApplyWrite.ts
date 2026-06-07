@@ -34,24 +34,28 @@ export async function putLocalMessageDirect(m: ChatMessage): Promise<void> {
   }
 }
 
-export async function putLocalMessage(m: ChatMessage): Promise<void> {
-  return enqueueChatLocalContextApply(m.chatContextType, m.contextId, () => putLocalMessageDirect(m));
+export async function persistChatMessagesFromApiDirect(messages: ChatMessage[]): Promise<void> {
+  if (messages.length === 0) return;
+  const rows: ChatLocalRow[] = messages.map((m) => rowFromMessage(m));
+  await putChatLocalRowsWithSearchTokens(rows);
+  for (const r of rows) {
+    void bumpMessageContextHead(r).catch(() => {});
+    const p = r.payload;
+    if (p.thumbnailUrls?.some((u) => u && !u.startsWith('blob:') && !u.startsWith('data:'))) {
+      scheduleChatMediaThumbPrefetchForMessage(p);
+    }
+  }
 }
 
-export async function persistChatMessagesFromApi(messages: ChatMessage[]): Promise<void> {
-  if (messages.length === 0) return;
-  const first = messages[0]!;
-  return enqueueChatLocalContextApply(first.chatContextType, first.contextId, async () => {
-    const rows: ChatLocalRow[] = messages.map((m) => rowFromMessage(m));
-    await putChatLocalRowsWithSearchTokens(rows);
-    for (const r of rows) {
-      void bumpMessageContextHead(r).catch(() => {});
-      const p = r.payload;
-      if (p.thumbnailUrls?.some((u) => u && !u.startsWith('blob:') && !u.startsWith('data:'))) {
-        scheduleChatMediaThumbPrefetchForMessage(p);
-      }
-    }
-  });
+export async function putLocalMessage(m: ChatMessage): Promise<number> {
+  const { applyThreadEvent } = await import('./chatLocalApplyThreadEvent');
+  return applyThreadEvent({ kind: 'sendSuccess', message: m });
+}
+
+export async function persistChatMessagesFromApi(messages: ChatMessage[]): Promise<number> {
+  if (messages.length === 0) return 0;
+  const { applyThreadEvent } = await import('./chatLocalApplyThreadEvent');
+  return applyThreadEvent({ kind: 'httpMessages', messages });
 }
 
 async function markLocalMessageDeletedDirect(messageId: string, deletedAtIso?: string): Promise<void> {
@@ -78,23 +82,31 @@ export async function markLocalMessageDeleted(messageId: string, deletedAtIso?: 
 export async function applyLocalMessageEditOptimistic(
   messageId: string,
   patch: { content: string; mentionIds: string[] }
-): Promise<void> {
+): Promise<number> {
   const peek = await chatLocalDb.messages.get(messageId);
-  if (!peek) return;
-  const editedAt = new Date().toISOString();
-  const nextPayload = { ...peek.payload, content: patch.content, mentionIds: patch.mentionIds, editedAt };
-  return enqueueChatLocalContextApply(peek.contextType, peek.contextId, () => putLocalMessageDirect(nextPayload));
+  if (!peek) return 0;
+  const { applyThreadEvent } = await import('./chatLocalApplyThreadEvent');
+  return applyThreadEvent({
+    kind: 'optimisticEdit',
+    contextType: peek.contextType,
+    contextId: peek.contextId,
+    messageId,
+    patch,
+  });
 }
 
 export async function applyLocalReactionOptimisticReplace(
   messageId: string,
   reactions: MessageReaction[]
-): Promise<void> {
+): Promise<number> {
   const row = await chatLocalDb.messages.get(messageId);
-  if (!row) return;
-  return enqueueChatLocalContextApply(row.contextType, row.contextId, async () => {
-    const fresh = await chatLocalDb.messages.get(messageId);
-    if (!fresh) return;
-    await putChatLocalRowsWithSearchTokens([rowFromMessage({ ...fresh.payload, reactions })]);
+  if (!row) return 0;
+  const { applyThreadEvent } = await import('./chatLocalApplyThreadEvent');
+  return applyThreadEvent({
+    kind: 'optimisticReaction',
+    contextType: row.contextType,
+    contextId: row.contextId,
+    messageId,
+    reactions,
   });
 }

@@ -126,3 +126,30 @@ export async function reconcileOutboxForContext(
     await reconcileUnsendableOutboxRow(row);
   }
 }
+
+/** When a send attempt was aborted locally but the server already accepted the message. */
+export async function reconcileAbortedChatSendIfDelivered(
+  tempId: string,
+  contextType: ChatContextType,
+  contextId: string
+): Promise<boolean> {
+  const row = await messageQueueStorage.getByTempId(tempId);
+  if (!row || row.contextType !== contextType || row.contextId !== contextId) return false;
+  if (row.status !== 'sending' && row.status !== 'queued') return false;
+
+  let serverMsg = await findLocalMessageByClientMutationId(row);
+  if (!serverMsg) {
+    serverMsg = await findRemoteMessageByClientMutationId(row);
+  }
+  if (!serverMsg) return false;
+
+  cancelSend(tempId);
+  await messageQueueStorage.remove(tempId, contextType, contextId);
+  dispatchChatOutboxSuccess({
+    tempId,
+    contextType,
+    contextId,
+    message: serverMsg,
+  });
+  return true;
+}

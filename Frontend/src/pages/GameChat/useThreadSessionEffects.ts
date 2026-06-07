@@ -5,7 +5,7 @@ import type { Game } from '@/types';
 import type { UserChat as UserChatType } from '@/api/chat';
 import { useGameChatInitialLoad, type UseGameChatInitialLoadParams } from './useGameChatInitialLoad';
 import { useGameChatSocket, type UseGameChatSocketParams } from './useGameChatSocket';
-import type { BootstrapOutboxContext } from './useGameChatMessages';
+import type { ThreadOpenOutboxContext } from '@/services/chat/threadOpen';
 
 export type UseThreadSessionEffectsParams = {
   id: string | undefined;
@@ -17,7 +17,7 @@ export type UseThreadSessionEffectsParams = {
   game: Game | null;
   groupChannelId?: string;
   loadContext: UseGameChatInitialLoadParams['loadContext'];
-  bootstrapThread: (gameChatType?: ChatType, outbox?: BootstrapOutboxContext) => Promise<boolean>;
+  bootstrapThread: (gameChatType?: ChatType, outbox?: ThreadOpenOutboxContext) => Promise<boolean>;
   userChat: UserChatType | null;
   handleMarkFailed: (tempId: string) => void;
   handleReplaceOptimistic: (tempId: string, message: ChatMessage) => void;

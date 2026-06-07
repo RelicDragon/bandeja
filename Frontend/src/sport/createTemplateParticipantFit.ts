@@ -8,9 +8,7 @@ import {
   isRotationGameType,
   type RotationFormatKey,
 } from '@/sport/rotationFormats';
-import type { Sport } from '@shared/sport';
-import { Sports } from '@shared/sport';
-import type { CreateTemplate, CreateTemplateId } from '@/sport/createFlow';
+import type { CreateTemplate, CreateTemplateId, FeLegacyPadelTemplateId } from '@/sport/createTemplateUiExtras';
 import { CREATE_TEMPLATES, getCreateFlowConfig } from '@/sport/createFlow';
 
 /** Rally / tennis sports where singles and doubles templates can coexist in the picker. */
@@ -109,7 +107,7 @@ export function pickDefaultTemplateId(
   const list = listTemplatesForParticipantSetup(sport, allowedScoringPresets, ctx);
   if (preferredId && list.some((t) => t.id === preferredId)) return preferredId;
   if (sport === Sports.PADEL) {
-    const padelDefault: CreateTemplateId =
+    const padelDefault: FeLegacyPadelTemplateId =
       ctx.maxParticipants <= 5 ? 'PADEL_BEST_OF_3' : 'PADEL_AMERICANO';
     if (list.some((t) => t.id === padelDefault)) return padelDefault;
   }

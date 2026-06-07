@@ -14,7 +14,7 @@ import { normalizeChatType } from '@/utils/chatType';
 import { enterContextAndMarkRead } from '@/services/chat/unreadCoordinator';
 import { buildGameChatMarkReadParams } from '@/services/chat/gameChatMarkReadParams';
 import { scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
-import type { BootstrapOutboxContext } from './useGameChatMessages';
+import type { ThreadOpenOutboxContext } from '@/services/chat/threadOpen';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
 
@@ -27,7 +27,7 @@ export interface UseGameChatInitialLoadParams {
   game: Game | null;
   groupChannelId?: string;
   loadContext: (options?: import('./useGameChatContext').LoadContextOptions) => Promise<unknown>;
-  bootstrapThread: (gameChatType?: ChatType, outbox?: BootstrapOutboxContext) => Promise<boolean>;
+  bootstrapThread: (gameChatType?: ChatType, outbox?: ThreadOpenOutboxContext) => Promise<boolean>;
   userChat: UserChatType | null;
   handleMarkFailed: (tempId: string) => void;
   handleReplaceOptimistic: (tempId: string, message: import('@/api/chat').ChatMessage) => void;
@@ -232,7 +232,7 @@ export function useGameChatInitialLoad(params: UseGameChatInitialLoadParams) {
         if (committedGameDefaultsKey) gameDefaultsAppliedKeyRef.current = committedGameDefaultsKey;
 
         const activeUser = userRef.current;
-        const outboxCtx: BootstrapOutboxContext | undefined = activeUser?.id
+        const outboxCtx: ThreadOpenOutboxContext | undefined = activeUser?.id
           ? { userId: activeUser.id, user: activeUser as import('@/types').BasicUser }
           : undefined;
         await bootstrapThreadRef.current(

@@ -1,5 +1,6 @@
 import prisma from '../../config/database';
-import { ChatContextType, ChatSyncEventType, ChatType, MessageState } from '@prisma/client';
+import { ChatSyncEventType } from '@bandeja/chat-contract';
+import { ChatContextType, ChatType, MessageState } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { computeContentSearchable } from '../../utils/messageSearchContent';
 import { updateLastMessagePreview } from './lastMessagePreview.service';

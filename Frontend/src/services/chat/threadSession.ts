@@ -3,7 +3,7 @@ import type { ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { peekChatFreshOpenNonce } from '@/services/chat/chatOpenEntry';
-import type { ThreadInitialScroll } from '@/services/chat/chatOpenCoordinator';
+import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
 import { mergeChatMessagesAscending } from '@/utils/chatMessageSort';
 
 export type ThreadSessionKey = string;

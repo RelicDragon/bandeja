@@ -4,7 +4,6 @@ import type { ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { chatLocalDb } from '@/services/chat/chatLocalDb';
 import { persistChatMessagesFromApi } from '@/services/chat/chatLocalApply';
-import { syncLastMessageIdsToStoreFromLocalHeadsForContext } from '@/services/chat/messageContextHead';
 
 const TAIL_LIMIT = 80;
 
@@ -54,5 +53,4 @@ export async function persistLatestTailPagesAfterStaleCursor(
   } else if (contextType === 'USER' || contextType === 'GROUP' || contextType === 'BUG') {
     await persistOneTailPage(contextType, contextId).catch(() => {});
   }
-  await syncLastMessageIdsToStoreFromLocalHeadsForContext(contextType, contextId);
 }

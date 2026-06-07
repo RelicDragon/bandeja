@@ -1,12 +1,11 @@
-import { chatLocalDb } from './chatLocalDb';
-import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
-import { sendWithTimeout, isSending } from '@/services/chatSendService';
-import { purgeExpiredFailedOutbox } from './chatOutboxExpiry';
-import { CHAT_OUTBOX_FAILED_EVENT } from './chatOutboxEvents';
-import { recordChatSendMetric } from './chatSendMetrics';
-import { outboxRowHasLocalMediaBlobs, reconcileUnsendableOutboxRow } from './chatOutboxReconcile';
+import {
+  flushOutboxIntent,
+  listPendingOutboxIntents,
+  type RetryChatOutboxOptions,
+} from './offlineIntent/outboxAdapter';
 
 export { CHAT_OUTBOX_FAILED_EVENT, CHAT_OUTBOX_SUCCESS_EVENT } from './chatOutboxEvents';
+export type { RetryChatOutboxOptions } from './offlineIntent/outboxAdapter';
 
 let scheduleTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -24,57 +23,10 @@ export function scheduleRetryStuckChatOutbox(): void {
   scheduleRetryFailedChatOutbox({ includeFailed: false });
 }
 
-export type RetryChatOutboxOptions = {
-  /** When false, only resume orphaned `sending` / `queued` rows (avoids tight loops on hard failures). */
-  includeFailed?: boolean;
-};
-
 export async function retryFailedChatOutbox(options?: RetryChatOutboxOptions): Promise<void> {
   const includeFailed = options?.includeFailed ?? true;
-  await purgeExpiredFailedOutbox();
-  const rows = await chatLocalDb.outbox.toArray();
-  const candidates = rows.filter((r) => {
-    if (isSending(r.tempId)) return false;
-    if (r.status === 'sending' || r.status === 'queued') return true;
-    return includeFailed && r.status === 'failed';
-  });
-
-  const resumable: typeof candidates = [];
-  for (const row of candidates) {
-    const outcome = await reconcileUnsendableOutboxRow(row);
-    if (outcome === 'needs_send') resumable.push(row);
-  }
-
-  if (resumable.length === 0) return;
-
-  recordChatSendMetric({ kind: 'chat_outbox_stuck_retry' });
-
-  for (const row of resumable) {
-    if (isSending(row.tempId)) continue;
-    if (!(await outboxRowHasLocalMediaBlobs(row))) {
-      await reconcileUnsendableOutboxRow(row);
-      continue;
-    }
-    await messageQueueStorage.updateStatus(row.tempId, row.contextType, row.contextId, 'queued');
-    sendWithTimeout(
-      {
-        tempId: row.tempId,
-        contextType: row.contextType,
-        contextId: row.contextId,
-        payload: row.payload,
-        mediaUrls: row.mediaUrls,
-        thumbnailUrls: row.thumbnailUrls,
-        clientMutationId: row.clientMutationId,
-      },
-      {
-        onFailed: (tempId) => {
-          window.dispatchEvent(
-            new CustomEvent(CHAT_OUTBOX_FAILED_EVENT, {
-              detail: { tempId, contextType: row.contextType, contextId: row.contextId },
-            })
-          );
-        },
-      }
-    );
+  const pending = await listPendingOutboxIntents({ includeFailedOutbox: includeFailed });
+  for (const intent of pending) {
+    await flushOutboxIntent(intent.id);
   }
 }

@@ -1,29 +1,19 @@
 import prisma from '../../config/database';
 import { Bet, TransactionType, Prisma } from '@prisma/client';
 import { evaluateBetCondition, BetEvaluationResult } from './betConditionEvaluator.service';
+import { shouldRouteCustomBetToNeedsReview } from './betResolutionRouting';
+import { distributePoolCoins } from './poolCoinDistribution';
 import { TransactionService } from '../transaction.service';
 import notificationService from '../notification.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
-
-interface ResolvedBetPostTx {
-  betId: string;
-  gameId: string;
-  winnerId: string;
-  loserId: string;
-  totalCoinsWon: number;
-  stakeCoins: number | null;
-  rewardCoins: number | null;
-  stakeType: string;
-  rewardType: string;
-}
-
-interface ResolvedPoolBetPostTx {
-  betId: string;
-  gameId: string;
-  winnerIds: string[];
-  poolTotalCoins: number;
-  sharePerWinner: number;
-}
+import {
+  executeResolvedBetPayout,
+  executeResolvedPoolBetPayout,
+  initialPoolPayoutsByUser,
+  retryBetPayout,
+  type ResolvedBetPostTx,
+  type ResolvedPoolBetPostTx,
+} from './betResolutionPayout.service';
 
 interface CancelledOpenBetPostTx {
   betId: string;
@@ -170,6 +160,19 @@ export async function resolveGameBets(gameId: string): Promise<void> {
         const result = await evaluateBetCondition(bet, gameResults);
         console.log(`[BET RESOLUTION] Bet ${bet.id} evaluation result: won=${result.won}, reason=${result.reason}`);
 
+        if (shouldRouteCustomBetToNeedsReview(bet)) {
+          await tx.bet.update({
+            where: { id: bet.id },
+            data: {
+              status: 'NEEDS_REVIEW',
+              resolutionReason: result.reason ?? 'Custom conditions require manual review'
+            }
+          });
+          console.log(`[BET RESOLUTION] Bet ${bet.id} marked as NEEDS_REVIEW (custom condition)`);
+          needsReviewBets.push(bet);
+          continue;
+        }
+
         if (bet.type === 'POOL') {
           const poolResolved = await resolvePoolBet(bet, result, tx);
           if (poolResolved) resolvedPoolBets.push(poolResolved);
@@ -212,14 +215,20 @@ export async function resolveGameBets(gameId: string): Promise<void> {
     );
   }
   for (const r of postTx.resolvedBets) {
-    runResolvedBetPostTx(r).catch(err =>
-      console.error(`[BET RESOLUTION] Failed post-tx for resolved bet ${r.betId}:`, err)
-    );
+    executeResolvedBetPayout(r).catch(err => {
+      console.error(`[BET RESOLUTION] Failed post-tx for resolved bet ${r.betId}:`, err);
+      retryBetPayout(r.betId).catch(retryErr =>
+        console.error(`[BET RESOLUTION] Immediate payout retry failed for bet ${r.betId}:`, retryErr)
+      );
+    });
   }
   for (const r of postTx.resolvedPoolBets ?? []) {
-    runResolvedPoolBetPostTx(r).catch(err =>
-      console.error(`[BET RESOLUTION] Failed post-tx for resolved pool bet ${r.betId}:`, err)
-    );
+    executeResolvedPoolBetPayout(r).catch(err => {
+      console.error(`[BET RESOLUTION] Failed post-tx for resolved pool bet ${r.betId}:`, err);
+      retryBetPayout(r.betId).catch(retryErr =>
+        console.error(`[BET RESOLUTION] Immediate payout retry failed for pool bet ${r.betId}:`, retryErr)
+      );
+    });
   }
 }
 
@@ -250,54 +259,6 @@ async function runCancelledOpenBetPostTx(c: CancelledOpenBetPostTx): Promise<voi
       await socketService.emit('bet:updated', { gameId: c.gameId, bet });
     }
   }
-}
-
-async function runResolvedBetPostTx(r: ResolvedBetPostTx): Promise<void> {
-  let existingMeta = (await prisma.bet.findUnique({ where: { id: r.betId }, select: { metadata: true } }))?.metadata as Record<string, unknown> | null;
-  let resolution: Record<string, unknown> = { ...(existingMeta?.resolution as object || {}), stakeTransferred: false, rewardTransferred: false };
-
-  if (r.stakeType === 'COINS' && r.stakeCoins && r.stakeCoins > 0) {
-    await TransactionService.createTransaction({
-      type: TransactionType.REFUND,
-      toUserId: r.winnerId,
-      transactionRows: [{
-        name: `Bet stake won for game ${r.gameId}`,
-        price: r.stakeCoins,
-        qty: 1,
-        total: r.stakeCoins
-      }]
-    });
-    resolution = { ...resolution, stakeTransferred: true };
-    existingMeta = { ...existingMeta, resolution };
-    await prisma.bet.update({
-      where: { id: r.betId },
-      data: { metadata: existingMeta as object }
-    });
-  }
-  if (r.rewardType === 'COINS' && r.rewardCoins && r.rewardCoins > 0) {
-    await TransactionService.createTransaction({
-      type: TransactionType.REFUND,
-      toUserId: r.winnerId,
-      transactionRows: [{
-        name: `Bet reward won for game ${r.gameId}`,
-        price: r.rewardCoins,
-        qty: 1,
-        total: r.rewardCoins
-      }]
-    });
-    const metaAfterStake = (await prisma.bet.findUnique({ where: { id: r.betId }, select: { metadata: true } }))?.metadata as Record<string, unknown> | null;
-    const resolutionAfterReward = { ...(metaAfterStake?.resolution as object || {}), rewardTransferred: true };
-    await prisma.bet.update({
-      where: { id: r.betId },
-      data: { metadata: { ...metaAfterStake, resolution: resolutionAfterReward } as object }
-    });
-  }
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    await socketService.emit('bet:resolved', { gameId: r.gameId, betId: r.betId, winnerId: r.winnerId, loserId: r.loserId });
-  }
-  await notificationService.sendBetResolvedNotification(r.betId, r.winnerId, true, r.totalCoinsWon);
-  await notificationService.sendBetResolvedNotification(r.betId, r.loserId, false);
 }
 
 async function cancelOpenBet(
@@ -421,7 +382,8 @@ async function resolvePoolBet(
   const poolTotalCoins = currentBet.poolTotalCoins ?? 0;
   const winningSide = evaluation.won ? 'WITH_CREATOR' : 'AGAINST_CREATOR';
   const winners = bet.participants.filter(p => p.side === winningSide).map(p => p.userId);
-  const sharePerWinner = winners.length > 0 ? Math.floor(poolTotalCoins / winners.length) : 0;
+  const { sharePerWinner, winnerShares } = distributePoolCoins(poolTotalCoins, winners);
+  const participantUserIds = bet.participants.map((p) => p.userId);
 
   const existingMetadata = (await tx.bet.findUnique({ where: { id: bet.id }, select: { metadata: true } }))?.metadata as Record<string, unknown> || {};
   await tx.bet.update({
@@ -439,7 +401,9 @@ async function resolvePoolBet(
           winningSide,
           winnerIds: winners,
           poolTotalCoins,
-          sharePerWinner
+          sharePerWinner,
+          winnerShares,
+          payoutsByUser: initialPoolPayoutsByUser(winners, participantUserIds),
         }
       }
     }
@@ -449,64 +413,69 @@ async function resolvePoolBet(
     gameId: currentBet.gameId,
     winnerIds: winners,
     poolTotalCoins,
-    sharePerWinner
+    sharePerWinner,
+    winnerShares
   };
 }
 
-async function runResolvedPoolBetPostTx(r: ResolvedPoolBetPostTx): Promise<void> {
-  const bet = await prisma.bet.findUnique({
-    where: { id: r.betId },
-    select: {
-      stakeCoins: true,
-      participants: { select: { userId: true } }
-    }
+export async function gameHasPendingBetResolution(gameId: string): Promise<boolean> {
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: { resultsStatus: true },
   });
+  if (!game || game.resultsStatus !== 'FINAL') {
+    return false;
+  }
+  const pendingCount = await prisma.bet.count({
+    where: {
+      gameId,
+      status: { in: ['OPEN', 'ACCEPTED'] },
+    },
+  });
+  return pendingCount > 0;
+}
 
-  if (r.winnerIds.length === 0 && bet && (bet.stakeCoins ?? 0) > 0) {
-    for (const p of bet.participants) {
-      await TransactionService.createTransaction({
-        type: TransactionType.REFUND,
-        toUserId: p.userId,
-        transactionRows: [{
-          name: `Pool bet refund (no winners) for game ${r.gameId}`,
-          price: bet.stakeCoins!,
-          qty: 1,
-          total: bet.stakeCoins!
-        }]
-      });
-      await notificationService.sendBetResolvedNotification(r.betId, p.userId, false);
-    }
-  } else {
-    for (const winnerId of r.winnerIds) {
-      if (r.sharePerWinner > 0) {
-        await TransactionService.createTransaction({
-          type: TransactionType.REFUND,
-          toUserId: winnerId,
-          transactionRows: [{
-            name: `Pool bet share won for game ${r.gameId}`,
-            price: r.sharePerWinner,
-            qty: 1,
-            total: r.sharePerWinner
-          }]
-        });
-      }
-      await notificationService.sendBetResolvedNotification(r.betId, winnerId, true, r.sharePerWinner);
-    }
-    const loserIds = bet?.participants.filter(p => !r.winnerIds.includes(p.userId)).map(p => p.userId) ?? [];
-    for (const loserId of loserIds) {
-      await notificationService.sendBetResolvedNotification(r.betId, loserId, false);
-    }
+export type BetResolutionOrchestrationDeps = {
+  gameHasPendingBetResolution: (gameId: string) => Promise<boolean>;
+  resolveGameBets: (gameId: string) => Promise<void>;
+};
+
+const defaultOrchestrationDeps: BetResolutionOrchestrationDeps = {
+  gameHasPendingBetResolution,
+  resolveGameBets,
+};
+
+let orchestrationDeps: BetResolutionOrchestrationDeps = defaultOrchestrationDeps;
+
+export function setBetResolutionOrchestrationDeps(
+  deps: Partial<BetResolutionOrchestrationDeps> | null,
+): void {
+  orchestrationDeps = deps ? { ...defaultOrchestrationDeps, ...deps } : defaultOrchestrationDeps;
+}
+
+export async function attemptBetResolutionAfterOutcomesRecalc(
+  gameId: string,
+  shouldResolveBetsOnFinalize: boolean,
+): Promise<void> {
+  const hasPending = await orchestrationDeps.gameHasPendingBetResolution(gameId);
+  if (!shouldResolveBetsOnFinalize && !hasPending) {
+    return;
   }
 
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    await socketService.emit('bet:resolved', {
-      gameId: r.gameId,
-      betId: r.betId,
-      winnerIds: r.winnerIds,
-      sharePerWinner: r.sharePerWinner
-    });
+  const reason = shouldResolveBetsOnFinalize
+    ? 'results finalizing'
+    : 'retry for unresolved bets on FINAL game';
+  console.log(`[BET RESOLUTION] Triggering bet resolution for game ${gameId} (${reason})`);
+  try {
+    await orchestrationDeps.resolveGameBets(gameId);
+    console.log(`[BET RESOLUTION] Bet resolution completed for game ${gameId}`);
+  } catch (error) {
+    console.error(`[BET RESOLUTION] Failed to resolve bets for game ${gameId}:`, error);
   }
+}
+
+export async function reconcilePendingGameBets(gameId: string): Promise<void> {
+  await attemptBetResolutionAfterOutcomesRecalc(gameId, false);
 }
 
 async function notifyBetNeedsReview(bet: Bet & { participants?: { userId: string }[] }): Promise<void> {

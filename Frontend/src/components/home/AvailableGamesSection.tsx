@@ -60,7 +60,12 @@ export const AvailableGamesSection = ({
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { setCurrentPage, setIsAnimating, findViewMode, setFindViewMode, requestFindGoToCurrent, setRequestFindGoToCurrent } = useNavigationStore();
+  const findViewMode = useNavigationStore((s) => s.findViewMode);
+  const requestFindGoToCurrent = useNavigationStore((s) => s.requestFindGoToCurrent);
+  const setCurrentPage = useNavigationStore((s) => s.setCurrentPage);
+  const setIsAnimating = useNavigationStore((s) => s.setIsAnimating);
+  const setFindViewMode = useNavigationStore((s) => s.setFindViewMode);
+  const setRequestFindGoToCurrent = useNavigationStore((s) => s.setRequestFindGoToCurrent);
   const findSelectedDay = useNavigationStore((s) => s.findSelectedDay);
   const findListWeekStartDay = useNavigationStore((s) => s.findListWeekStartDay);
   const setFindSelectedDay = useNavigationStore((s) => s.setFindSelectedDay);

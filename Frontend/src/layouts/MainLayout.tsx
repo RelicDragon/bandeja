@@ -1,5 +1,6 @@
 import { ReactNode, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useShallow } from 'zustand/react/shallow';
 import { Header } from './Header';
 import { useNavigationStore } from '@/store/navigationStore';
 import { useAuthStore } from '@/store/authStore';
@@ -15,7 +16,27 @@ const INIT_SHELL_DURATION_MS = 400;
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const { bottomTabsVisible, currentPage, chatsFilter, activeTab, findViewMode, initShellAnimationPlayed, setInitShellAnimationPlayed, gameDetailsOccludesSideChat } = useNavigationStore();
+  const {
+    bottomTabsVisible,
+    currentPage,
+    chatsFilter,
+    activeTab,
+    findViewMode,
+    initShellAnimationPlayed,
+    setInitShellAnimationPlayed,
+    gameDetailsOccludesSideChat,
+  } = useNavigationStore(
+    useShallow((s) => ({
+      bottomTabsVisible: s.bottomTabsVisible,
+      currentPage: s.currentPage,
+      chatsFilter: s.chatsFilter,
+      activeTab: s.activeTab,
+      findViewMode: s.findViewMode,
+      initShellAnimationPlayed: s.initShellAnimationPlayed,
+      setInitShellAnimationPlayed: s.setInitShellAnimationPlayed,
+      gameDetailsOccludesSideChat: s.gameDetailsOccludesSideChat,
+    }))
+  );
   const isDesktop = useDesktop();
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
   const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);

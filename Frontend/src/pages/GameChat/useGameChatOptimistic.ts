@@ -9,25 +9,29 @@ import type { ChatType } from '@/types';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
 import { sendWithTimeout, cancelSend, resend } from '@/services/chatSendService';
 import { normalizeChatType } from '@/utils/chatType';
-import { compareChatMessagesAscending } from '@/utils/chatMessageSort';
 import { parseSystemMessage } from '@/utils/systemMessages';
 import { usePlayersStore } from '@/store/playersStore';
-import { useChatSyncStore } from '@/store/chatSyncStore';
-import { putLocalMessage } from '@/services/chat/chatLocalApply';
+import { applyThreadEvent } from '@/services/chat/chatLocalApplyThreadEvent';
+import { reconcileOptimisticMessages } from '@/services/chat/optimisticReconcile';
 import {
   CHAT_OUTBOX_FAILED_EVENT,
   CHAT_OUTBOX_REMOVED_EVENT,
   CHAT_OUTBOX_SUCCESS_EVENT,
 } from '@/services/chat/chatOutboxEvents';
 import { revokeChatBlobUrls } from '@/utils/chatBlobUrls';
-import { persistOptimisticOutbox } from '@/services/chat/chatOutboxPersist';
+import { OfflineIntent } from '@/services/chat/offlineIntent';
 import { shouldApplyGameChatMessageDespiteTabMismatch } from './chatOptimisticMatch';
-import {
-  findPendingOptimisticIndex,
-  normalizeClientMutationId,
-  removePendingOptimisticAt,
-  replacePendingOptimisticWithServer,
-} from '@/utils/chatOptimisticDedupe';
+
+function revokeReconciledOptimisticBlobs(
+  prev: readonly ChatMessageWithStatus[],
+  replacedIds: readonly string[],
+  removedIds: readonly string[]
+): void {
+  for (const optId of [...replacedIds, ...removedIds]) {
+    const row = prev.find((m) => m._optimisticId === optId);
+    if (row) revokeChatBlobUrls(row);
+  }
+}
 
 export interface UseGameChatOptimisticParams {
   id: string | undefined;
@@ -104,24 +108,27 @@ export function useGameChatOptimistic({
         messagesRef.current = next;
         return next;
       });
-      void persistOptimisticOutbox({
-        tempId,
-        contextType,
-        contextId: id,
-        payload: persistPayload,
-        createdAt: optimistic.createdAt,
-        status: 'queued',
-        clientMutationId,
-        ...(pendingImageBlobs?.length ? { pendingImageBlobs } : {}),
-        ...(pendingVoiceBlob ? { pendingVoiceBlob } : {}),
-        ...(pendingVideoBlob
-          ? {
-              pendingVideoBlob,
-              pendingVideoPosterBlob,
-              videoDurationMs: payload.videoDurationMs,
-              videoTranscodeMs,
-            }
-          : {}),
+      void OfflineIntent.enqueue({
+        kind: 'send',
+        queued: {
+          tempId,
+          contextType,
+          contextId: id,
+          payload: persistPayload,
+          createdAt: optimistic.createdAt,
+          status: 'queued',
+          clientMutationId,
+          ...(pendingImageBlobs?.length ? { pendingImageBlobs } : {}),
+          ...(pendingVoiceBlob ? { pendingVoiceBlob } : {}),
+          ...(pendingVideoBlob
+            ? {
+                pendingVideoBlob,
+                pendingVideoPosterBlob,
+                videoDurationMs: payload.videoDurationMs,
+                videoTranscodeMs,
+              }
+            : {}),
+        },
       }).catch((err) => console.error('[messageQueue] add', err));
       requestAnimationFrame(() => {
         try {
@@ -150,40 +157,25 @@ export function useGameChatOptimistic({
 
   const handleReplaceOptimisticWithServerMessage = useCallback(
     (optimisticId: string, serverMessage: ChatMessage) => {
-      void putLocalMessage(serverMessage).catch(() => {});
+      void applyThreadEvent({ kind: 'sendSuccess', message: serverMessage }).catch(() => {});
       setMessages((prev) => {
-        let idx = prev.findIndex((m) => (m as ChatMessageWithStatus)._optimisticId === optimisticId);
-        if (idx < 0) {
-          const cid = normalizeClientMutationId(serverMessage.clientMutationId);
-          if (cid) idx = findPendingOptimisticIndex(prev, cid);
-        }
-        if (idx < 0) {
-          const cid = normalizeClientMutationId(serverMessage.clientMutationId);
-          if (cid && prev.some((m) => m.id === serverMessage.id)) {
-            const pendingIdx = findPendingOptimisticIndex(prev, cid);
-            if (pendingIdx >= 0) {
-              const prevRow = prev[pendingIdx] as ChatMessageWithStatus;
-              revokeChatBlobUrls(prevRow);
-              const { next } = removePendingOptimisticAt(prev, pendingIdx);
-              messagesRef.current = next;
-              return next;
-            }
-          }
-          return prev;
-        }
-        const prevRow = prev[idx] as ChatMessageWithStatus;
-        revokeChatBlobUrls(prevRow);
-        const { next } = replacePendingOptimisticWithServer(prev, idx, serverMessage);
-        next.sort(compareChatMessagesAscending);
-        messagesRef.current = next;
-        return next;
+        const result = reconcileOptimisticMessages({
+          messages: prev,
+          incoming: [serverMessage],
+          userId: user?.id,
+          optimisticIdHint: optimisticId,
+        });
+        if (result.actions[0] === 'noop') return prev;
+        revokeReconciledOptimisticBlobs(prev, result.replacedOptimisticIds, result.removedOptimisticIds);
+        messagesRef.current = result.messages;
+        return result.messages;
       });
       if (id) {
         messageQueueStorage.remove(optimisticId, contextType, id).catch((err) => console.error('[messageQueue] remove', err));
       }
       cancelSend(optimisticId);
     },
-    [contextType, id, setMessages, messagesRef]
+    [contextType, id, user?.id, setMessages, messagesRef]
   );
 
   const finishQueuedSendSuccess = useCallback(
@@ -275,7 +267,6 @@ export function useGameChatOptimistic({
     (message: ChatMessage): string | void => {
       const normalizedCurrentChatType = normalizeChatType(currentChatType);
       const normalizedMessageChatType = normalizeChatType(message.chatType);
-      const isOwnServerMessage = message.senderId === user?.id;
       const bypassGameTabFilter =
         contextType === 'GAME' &&
         shouldApplyGameChatMessageDespiteTabMismatch(
@@ -306,72 +297,25 @@ export function useGameChatOptimistic({
       let shortCircuitDuplicateId = false;
 
       setMessages((prev) => {
-        const serverCid = normalizeClientMutationId(message.clientMutationId);
+        const result = reconcileOptimisticMessages({
+          messages: prev,
+          incoming: [message],
+          userId: user?.id,
+        });
+        const action = result.actions[0] ?? 'noop';
 
-        if (prev.some((msg) => msg.id === message.id)) {
+        if (action === 'noop' && prev.some((msg) => msg.id === message.id)) {
           shortCircuitDuplicateId = true;
-          if (isOwnServerMessage && serverCid) {
-            const pendingIdx = findPendingOptimisticIndex(prev, serverCid);
-            if (pendingIdx >= 0) {
-              const prevRow = prev[pendingIdx] as ChatMessageWithStatus;
-              revokeChatBlobUrls(prevRow);
-              const { next, replacedOptimisticId } = removePendingOptimisticAt(prev, pendingIdx);
-              messagesRef.current = next;
-              effectPack = { replacedOptimisticId, lastMessageId: message.id };
-              return next;
-            }
-          }
           return prev;
         }
+        if (action === 'noop') return prev;
 
-        if (isOwnServerMessage && serverCid) {
-          const idx = findPendingOptimisticIndex(prev, serverCid);
-          if (idx >= 0) {
-            const prevRow = prev[idx] as ChatMessageWithStatus;
-            revokeChatBlobUrls(prevRow);
-            const { next, replacedOptimisticId } = replacePendingOptimisticWithServer(prev, idx, message);
-            next.sort(compareChatMessagesAscending);
-            messagesRef.current = next;
-            effectPack = { replacedOptimisticId, lastMessageId: message.id };
-            return next;
-          }
-        }
-
-        if (isOwnServerMessage) {
-          const msgReplyToId = message.replyToId ?? null;
-          const msgMentionIds = message.mentionIds?.slice().sort() ?? [];
-          const idx = prev.findIndex((m): m is ChatMessageWithStatus => {
-            const status = (m as ChatMessageWithStatus)._status;
-            if (status !== 'SENDING' && status !== 'FAILED') return false;
-            if (m.senderId !== message.senderId) return false;
-            const mt = (msg: ChatMessage) => msg.messageType ?? 'TEXT';
-            if (mt(m as ChatMessage) !== mt(message)) return false;
-            if (message.messageType === 'VOICE' || message.messageType === 'VIDEO') {
-              return (m.mediaUrls?.[0] ?? '') === (message.mediaUrls?.[0] ?? '');
-            }
-            if (m.content !== message.content) return false;
-            if (normalizeChatType(m.chatType) !== normalizedMessageChatType) return false;
-            const mReply = m.replyToId ?? null;
-            if (mReply !== msgReplyToId) return false;
-            const mIds = (m.mentionIds?.slice().sort() ?? []) as string[];
-            if (mIds.length !== msgMentionIds.length || mIds.some((mid, i) => mid !== msgMentionIds[i])) return false;
-            return true;
-          });
-          if (idx >= 0) {
-            const prevRow = prev[idx] as ChatMessageWithStatus;
-            revokeChatBlobUrls(prevRow);
-            const { next, replacedOptimisticId } = replacePendingOptimisticWithServer(prev, idx, message);
-            next.sort(compareChatMessagesAscending);
-            messagesRef.current = next;
-            effectPack = { replacedOptimisticId, lastMessageId: message.id };
-            return next;
-          }
-        }
-
-        const next = [...prev, message as ChatMessageWithStatus].sort(compareChatMessagesAscending);
-        messagesRef.current = next;
-        effectPack = { lastMessageId: message.id };
-        return next;
+        revokeReconciledOptimisticBlobs(prev, result.replacedOptimisticIds, result.removedOptimisticIds);
+        messagesRef.current = result.messages;
+        const replacedOptimisticId =
+          result.replacedOptimisticIds[0] ?? result.removedOptimisticIds[0];
+        effectPack = { replacedOptimisticId, lastMessageId: message.id };
+        return result.messages;
       });
 
       if (shortCircuitDuplicateId && id && message.senderId === user?.id) {
@@ -390,14 +334,13 @@ export function useGameChatOptimistic({
       }
 
       if (effectPack && id) {
-        useChatSyncStore
-          .getState()
-          .setLastMessageId(
-            contextType,
-            id,
-            effectPack.lastMessageId,
-            contextType === 'GAME' ? normalizedCurrentChatType : undefined
-          );
+        void applyThreadEvent({
+          kind: 'uiTailAdvance',
+          contextType,
+          contextId: id,
+          messageId: effectPack.lastMessageId,
+          gameChatType: contextType === 'GAME' ? normalizedCurrentChatType : undefined,
+        });
       }
       if (effectPack?.replacedOptimisticId && id) {
         messageQueueStorage

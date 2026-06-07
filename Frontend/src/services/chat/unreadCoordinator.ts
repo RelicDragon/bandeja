@@ -13,7 +13,7 @@ import {
   type SnapshotContextType,
 } from '@/services/chat/unreadSnapshot';
 import { shouldQueueChatMutation } from '@/services/chat/chatMutationNetwork';
-import { enqueueChatMutationMarkReadBatch } from '@/services/chat/chatMutationEnqueue';
+import { OfflineIntent } from '@/services/chat/offlineIntent';
 import { scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
 
 export type CoordinatorEnterParams = EnterContextParams & {
@@ -231,7 +231,8 @@ async function flushEnterContextMarkReadNetwork(
         : { target: 'context' as const };
 
   if (shouldQueueChatMutation()) {
-    void enqueueChatMutationMarkReadBatch({
+    void OfflineIntent.enqueue({
+      kind: 'mark_read_batch',
       contextType: resolved.snapshotType,
       contextId: resolved.contextId,
       payload: markPayload,

@@ -8,7 +8,7 @@ import type { ChatType } from '@/types';
 import type { MessageListHandle } from '@/components/MessageList';
 import { BANDEJA_CHAT_PINS_UPDATED } from '@/utils/chatPinsEvents';
 import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
-import { enqueueChatMutationPin, enqueueChatMutationUnpin } from '@/services/chat/chatMutationEnqueue';
+import { OfflineIntent } from '@/services/chat/offlineIntent';
 import { enqueueChatSyncPull, SYNC_PRIORITY_GAP } from '@/services/chat/chatSyncScheduler';
 import { scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
 
@@ -141,7 +141,8 @@ export function useGameChatPinned({
       if (!id) return;
       if (shouldQueueChatMutation()) {
         try {
-          await enqueueChatMutationPin({
+          await OfflineIntent.enqueue({
+            kind: 'pin',
             contextType,
             contextId: id,
             messageId: message.id,
@@ -158,7 +159,8 @@ export function useGameChatPinned({
       } catch (e) {
         if (isRetryableMutationError(e)) {
           try {
-            await enqueueChatMutationPin({
+            await OfflineIntent.enqueue({
+              kind: 'pin',
               contextType,
               contextId: id,
               messageId: message.id,
@@ -180,7 +182,8 @@ export function useGameChatPinned({
       if (!id) return;
       if (shouldQueueChatMutation()) {
         try {
-          await enqueueChatMutationUnpin({
+          await OfflineIntent.enqueue({
+            kind: 'unpin',
             contextType,
             contextId: id,
             messageId,
@@ -197,7 +200,8 @@ export function useGameChatPinned({
       } catch (e) {
         if (isRetryableMutationError(e)) {
           try {
-            await enqueueChatMutationUnpin({
+            await OfflineIntent.enqueue({
+              kind: 'unpin',
               contextType,
               contextId: id,
               messageId,

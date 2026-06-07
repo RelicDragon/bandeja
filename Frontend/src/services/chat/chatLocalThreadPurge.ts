@@ -1,5 +1,5 @@
 import type { ChatContextType } from '@/api/chat';
-import { useChatSyncStore } from '@/store/chatSyncStore';
+import { bridgeClearChatSyncTailState } from './chatLocalApplyStoreBridge';
 import { chatCursorKey, chatLocalDb } from './chatLocalDb';
 
 export async function purgeLocalDexieThread(contextType: ChatContextType, contextId: string): Promise<void> {
@@ -39,5 +39,5 @@ export async function purgeLocalDexieThread(contextType: ChatContextType, contex
     }
   );
 
-  useChatSyncStore.getState().clearChatSyncTailState(contextType, contextId);
+  bridgeClearChatSyncTailState(contextType, contextId);
 }

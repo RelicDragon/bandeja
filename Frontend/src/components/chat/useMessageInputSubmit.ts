@@ -12,7 +12,7 @@ import type { ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { draftStorage } from '@/services/draftStorage';
 import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
-import { enqueueChatMutationEdit } from '@/services/chat/chatMutationEnqueue';
+import { OfflineIntent } from '@/services/chat/offlineIntent';
 import { isValidImage } from '@/components/chat/messageInputDraftUtils';
 import {
   ChatImageBatchUploadError,
@@ -131,7 +131,8 @@ export function useMessageInputSubmit(params: Params) {
       p.setIsLoading(true);
       try {
         if (shouldQueueChatMutation() && p.propContextType && p.propContextId) {
-          await enqueueChatMutationEdit({
+          await OfflineIntent.enqueue({
+            kind: 'edit',
             contextType: p.propContextType,
             contextId: p.propContextId,
             messageId: p.editingMessage.id,
@@ -165,7 +166,8 @@ export function useMessageInputSubmit(params: Params) {
           toast.error(p.t('chat.editMessageDeleted', { defaultValue: 'Message was deleted' }));
         } else if (p.propContextType && p.propContextId && isRetryableMutationError(err)) {
           try {
-            await enqueueChatMutationEdit({
+            await OfflineIntent.enqueue({
+              kind: 'edit',
               contextType: p.propContextType,
               contextId: p.propContextId,
               messageId: p.editingMessage.id,

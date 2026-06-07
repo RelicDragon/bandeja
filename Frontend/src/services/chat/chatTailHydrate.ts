@@ -1,6 +1,6 @@
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
-import { useChatSyncStore } from '@/store/chatSyncStore';
+import { applyThreadEvent } from './chatLocalApplyThreadEvent';
 import { chatLocalDb } from './chatLocalDb';
 
 function parseHeadKey(key: string): { contextType: ChatContextType; contextId: string; gameChatType?: ChatType } | null {
@@ -23,10 +23,22 @@ function parseHeadKey(key: string): { contextType: ChatContextType; contextId: s
 
 export async function hydrateAllChatSyncTailsFromDexie(): Promise<void> {
   const rows = await chatLocalDb.messageContextHead.toArray();
-  const store = useChatSyncStore.getState();
+  const tails: Array<{
+    contextType: ChatContextType;
+    contextId: string;
+    messageId: string;
+    gameChatType?: ChatType;
+  }> = [];
   for (const row of rows) {
     const parsed = parseHeadKey(row.key);
     if (!parsed || !row.latestMessageId) continue;
-    store.setLastMessageId(parsed.contextType, parsed.contextId, row.latestMessageId, parsed.gameChatType);
+    tails.push({
+      contextType: parsed.contextType,
+      contextId: parsed.contextId,
+      messageId: row.latestMessageId,
+      gameChatType: parsed.gameChatType,
+    });
   }
+  if (tails.length === 0) return;
+  await applyThreadEvent({ kind: 'bulkHydrateTailsFromDexie', tails });
 }

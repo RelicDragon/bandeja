@@ -3,7 +3,7 @@ import prisma from '../../config/database';
 import { config } from '../../config/env';
 import { isRedisConfigured } from '../redis/redisClient';
 import { TranslationService } from './translation.service';
-import { MESSAGE_TRANSLATION_PENDING } from './translationPending';
+import { MESSAGE_TRANSLATION_PENDING } from '@bandeja/chat-contract';
 import { TranslationQueueRedis } from './translationQueueRedis.service';
 
 const PRIORITY_ORDER: Record<TranslationJobPriority, number> = {

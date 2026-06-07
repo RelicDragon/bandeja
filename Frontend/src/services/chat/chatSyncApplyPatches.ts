@@ -1,6 +1,6 @@
 import type { ChatContextType, ChatMessage, MessageReadReceipt } from '@/api/chat';
 import { translationEqualsSource } from '@/utils/translationOutputNormalize';
-import { isTranslationPending } from '@/constants/messageTranslationPending';
+import { isMessageTranslationPending as isTranslationPending } from '@bandeja/chat-contract';
 import { BANDEJA_CHAT_PINS_UPDATED } from '@/utils/chatPinsEvents';
 import { dispatchChatReadBatchApplied } from '@/utils/chatReadBatchEvents';
 import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';

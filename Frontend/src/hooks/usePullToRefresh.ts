@@ -38,6 +38,12 @@ export const usePullToRefresh = ({
     scrollContainerRefRef.current = scrollContainerRef;
   }, [scrollContainerRef]);
 
+  const applyPullDistance = (distance: number) => {
+    if (pullDistanceRef.current === distance) return;
+    pullDistanceRef.current = distance;
+    setPullDistance(distance);
+  };
+
   useEffect(() => {
     if (disabled) return;
 
@@ -98,8 +104,7 @@ export const usePullToRefresh = ({
       if (currentScrollTop > 0 || touchStartScrollTop.current > 0) {
         canPullRef.current = false;
         isDraggingRef.current = false;
-        pullDistanceRef.current = 0;
-        setPullDistance(0);
+        applyPullDistance(0);
         return;
       }
 
@@ -110,16 +115,14 @@ export const usePullToRefresh = ({
 
       if (diffX > Math.abs(diff) && diffX > 8) {
         isDraggingRef.current = false;
-        pullDistanceRef.current = 0;
-        setPullDistance(0);
+        applyPullDistance(0);
         return;
       }
 
       if (diff > 5) {
         const resistance = 0.5;
         const distance = Math.min(diff * resistance, threshold * 2);
-        pullDistanceRef.current = distance;
-        setPullDistance(distance);
+        applyPullDistance(distance);
 
         if (distance > 10 && e.cancelable) {
           e.preventDefault();
@@ -127,8 +130,7 @@ export const usePullToRefresh = ({
       } else if (diff < 0) {
         // Finger moving up — allow normal scroll, don't intercept.
         isDraggingRef.current = false;
-        pullDistanceRef.current = 0;
-        setPullDistance(0);
+        applyPullDistance(0);
       }
     };
 
@@ -143,26 +145,22 @@ export const usePullToRefresh = ({
       touchStartScrollTop.current = 0;
 
       if (!wasDragging || !couldPull || !startedAtTop) {
-        pullDistanceRef.current = 0;
-        setPullDistance(0);
+        applyPullDistance(0);
         return;
       }
 
       if (currentDistance >= threshold && !isRefreshingRef.current) {
         setIsRefreshing(true);
-        pullDistanceRef.current = 100;
-        setPullDistance(60);
+        applyPullDistance(60);
 
         try {
           await onRefreshRef.current();
         } finally {
           setIsRefreshing(false);
-          pullDistanceRef.current = 0;
-          setPullDistance(0);
+          applyPullDistance(0);
         }
       } else {
-        pullDistanceRef.current = 0;
-        setPullDistance(0);
+        applyPullDistance(0);
       }
     };
 

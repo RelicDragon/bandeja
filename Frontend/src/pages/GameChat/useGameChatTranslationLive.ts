@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import type { ChatContextType, ChatMessageWithStatus } from '@/api/chat';
 import type { ChatType } from '@/types';
 import { extractLanguageCode } from '@/utils/language';
-import { isTranslationPending } from '@/constants/messageTranslationPending';
+import { isMessageTranslationPending as isTranslationPending } from '@bandeja/chat-contract';
 import { chatAutoTranslateTypeKey } from '@/utils/chatAutoTranslateTypeKey';
 import {
   patchMessageTranslationInDexie,

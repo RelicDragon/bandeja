@@ -4,6 +4,7 @@
 import { useShallow } from 'zustand/react/shallow';
 import type { ChatItem } from '@/utils/chatListSort';
 import { contextKey } from '@/services/chat/unreadSnapshot';
+import { gameUnreadCountsMap } from '@/utils/unreadCountsFromStore';
 import { useAuthStore } from '@/store/authStore';
 import {
   isUnreadStoreWarm,
@@ -56,6 +57,12 @@ export function useContextUnread(
   );
   if (!contextId) return propFallback;
   return warm ? fromStore : propFallback;
+}
+
+export function useGameUnreadCountsForIds(gameIds: readonly string[]): Record<string, number> {
+  return useUnreadStore(
+    useShallow((s) => gameUnreadCountsMap([...gameIds], s.byContext))
+  );
 }
 
 export function useMyGamesSubtabUnreadBadges() {

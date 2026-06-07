@@ -1,3 +1,4 @@
+import { ChatSyncEventType } from '@bandeja/chat-contract';
 import type { ChatMessage, MessageReaction, MessageReadReceipt } from '@/api/chat';
 import type { ChatSyncEventDTO } from './chatSyncEventTypes';
 
@@ -22,7 +23,7 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
   for (const ev of events) {
     const p = ev.payload as Record<string, unknown>;
     switch (ev.eventType) {
-      case 'MESSAGE_CREATED': {
+      case ChatSyncEventType.MESSAGE_CREATED: {
         const message = p.message as ChatMessage | undefined;
         if (message?.id) {
           const rowSeq = message.serverSyncSeq ?? message.syncSeq ?? ev.seq;
@@ -30,7 +31,7 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
         }
         break;
       }
-      case 'MESSAGE_UPDATED': {
+      case ChatSyncEventType.MESSAGE_UPDATED: {
         const message = p.message as ChatMessage | undefined;
         if (message?.id) {
           const authoritativeSeq = message.serverSyncSeq ?? message.syncSeq ?? ev.seq;
@@ -44,30 +45,30 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
         }
         break;
       }
-      case 'MESSAGE_DELETED': {
+      case ChatSyncEventType.MESSAGE_DELETED: {
         const messageId = p.messageId as string | undefined;
         const deletedAt = (p.deletedAt as string) || new Date().toISOString();
         if (messageId) out.push({ op: 'deleteMessage', messageId, deletedAt });
         break;
       }
-      case 'REACTION_ADDED': {
+      case ChatSyncEventType.REACTION_ADDED: {
         const reaction = p.reaction as MessageReaction | undefined;
         if (reaction?.messageId) out.push({ op: 'reactionAdded', reaction });
         break;
       }
-      case 'REACTION_REMOVED': {
+      case ChatSyncEventType.REACTION_REMOVED: {
         const messageId = p.messageId as string | undefined;
         const uid = p.userId as string | undefined;
         if (messageId && uid) out.push({ op: 'reactionRemoved', messageId, userId: uid });
         break;
       }
-      case 'POLL_VOTED': {
+      case ChatSyncEventType.POLL_VOTED: {
         const messageId = p.messageId as string | undefined;
         const updatedPoll = p.updatedPoll as ChatMessage['poll'];
         if (messageId && updatedPoll) out.push({ op: 'pollVoted', messageId, poll: updatedPoll });
         break;
       }
-      case 'MESSAGE_TRANSCRIPTION_UPDATED': {
+      case ChatSyncEventType.MESSAGE_TRANSCRIPTION_UPDATED: {
         const messageId = p.messageId as string | undefined;
         const audioTranscription = p.audioTranscription as ChatMessage['audioTranscription'];
         if (messageId && audioTranscription) {
@@ -75,7 +76,7 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
         }
         break;
       }
-      case 'MESSAGES_READ_BATCH': {
+      case ChatSyncEventType.MESSAGES_READ_BATCH: {
         const userId = p.userId as string | undefined;
         const readAt = p.readAt as string | undefined;
         const messageIds = p.messageIds as string[] | undefined;
@@ -84,7 +85,7 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
         }
         break;
       }
-      case 'MESSAGE_READ_RECEIPT': {
+      case ChatSyncEventType.MESSAGE_READ_RECEIPT: {
         const readReceipt = p.readReceipt as { messageId?: string; userId?: string; readAt?: string } | undefined;
         if (readReceipt?.messageId && readReceipt.userId && readReceipt.readAt) {
           out.push({
@@ -98,7 +99,7 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
         }
         break;
       }
-      case 'MESSAGE_TRANSLATION_UPDATED': {
+      case ChatSyncEventType.MESSAGE_TRANSLATION_UPDATED: {
         const messageId = p.messageId as string | undefined;
         const languageCode = p.languageCode as string | undefined;
         if (!messageId || !languageCode) break;
@@ -112,19 +113,19 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
         }
         break;
       }
-      case 'MESSAGE_STATE_UPDATED': {
+      case ChatSyncEventType.MESSAGE_STATE_UPDATED: {
         const messageId = p.messageId as string | undefined;
         const state = p.state as ChatMessage['state'] | undefined;
         if (messageId && state) out.push({ op: 'stateUpdated', messageId, state, syncSeq: ev.seq });
         break;
       }
-      case 'MESSAGE_PINNED':
-      case 'MESSAGE_UNPINNED': {
+      case ChatSyncEventType.MESSAGE_PINNED:
+      case ChatSyncEventType.MESSAGE_UNPINNED: {
         const chatType = p.chatType as string | undefined;
         if (chatType) out.push({ op: 'pinsBroadcast', chatType });
         break;
       }
-      case 'THREAD_LOCAL_INVALIDATE':
+      case ChatSyncEventType.THREAD_LOCAL_INVALIDATE:
         break;
       default:
         out.push({ op: 'devUnhandled', eventType: ev.eventType, seq: ev.seq });
