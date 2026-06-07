@@ -10,6 +10,7 @@ import {
   projectUserForSportContext,
 } from '../../services/user/userSportProfile.service';
 import { BasicUser } from '../../types/user.types';
+import { GroupChannelService } from '../../services/chat/groupChannel.service';
 
 export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, sport: sportQuery } = req.query;
@@ -175,5 +176,23 @@ export const trackUserInteraction = asyncHandler(async (req: AuthRequest, res: R
     success: true,
     data: interaction,
   });
+});
+
+export const getCommonGroupChannels = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const otherUserId = req.params.userId;
+  if (!otherUserId) {
+    throw new ApiError(400, 'User ID is required');
+  }
+
+  const otherUser = await prisma.user.findUnique({
+    where: { id: otherUserId },
+    select: { id: true },
+  });
+  if (!otherUser) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  const groups = await GroupChannelService.getCommonGroupChannels(req.userId!, otherUserId);
+  res.json({ success: true, data: groups });
 });
 

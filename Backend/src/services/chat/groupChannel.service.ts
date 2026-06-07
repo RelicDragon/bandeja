@@ -491,6 +491,49 @@ export class GroupChannelService {
     return typedChannels.map((gc) => mapGroupChannelToResponse(gc, userId, mutedIds.has(gc.id)));
   }
 
+  static async getCommonGroupChannels(userId: string, otherUserId: string) {
+    if (userId === otherUserId) {
+      return [];
+    }
+
+    const groupChannels = await prisma.groupChannel.findMany({
+      where: {
+        isChannel: false,
+        bugId: null,
+        marketItemId: null,
+        AND: [
+          { participants: { some: { userId, hidden: false } } },
+          { participants: { some: { userId: otherUserId, hidden: false } } },
+        ],
+      },
+      include: {
+        lastMessageSender: { select: USER_SELECT_FIELDS },
+        participants: {
+          where: { userId },
+          include: {
+            user: { select: USER_SELECT_FIELDS },
+          },
+        },
+        pinnedByUsers: { where: { userId }, select: { pinnedAt: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    if (groupChannels.length === 0) {
+      return [];
+    }
+
+    const mutedIds = await ChatMuteService.getMutedContextIdSet(
+      userId,
+      ChatContextType.GROUP,
+      groupChannels.map((g) => g.id)
+    );
+
+    return groupChannels.map((gc) =>
+      mapGroupChannelToResponse(gc as GcWithParticipants, userId, mutedIds.has(gc.id))
+    );
+  }
+
   static async getPublicGroupChannels(userId?: string) {
     const groupChannels = await prisma.groupChannel.findMany({
       where: {

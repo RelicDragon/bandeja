@@ -4,6 +4,7 @@ import { X, ArrowLeft, Share2, Maximize2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { usersApi, UserStats } from '@/api/users';
+import type { GroupChannel } from '@/api/chat';
 import { favoritesApi } from '@/api/favorites';
 import { blockedUsersApi } from '@/api/blockedUsers';
 import { Loading } from './Loading';
@@ -26,7 +27,8 @@ import toast from 'react-hot-toast';
 import { removeOverlay } from '@/utils/urlSchema';
 import { sharePlayerProfile } from '@/utils/sharePlayerProfile';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
-import { PlayerCardProfileBody } from '@/components/player/PlayerCardProfileBody';
+import { PlayerCardProfileBody, type PlayerCardProfileTab } from '@/components/player/PlayerCardProfileBody';
+import { PlayerCardCommonGroups } from '@/components/player/PlayerCardCommonGroups';
 import { PlayerProfileSocialActions } from '@/components/player/PlayerProfileSocialActions';
 import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionBar';
 import { useSportLevelContext } from '@/contexts/useSportLevelContext';
@@ -54,7 +56,11 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [isBlocked, setIsBlocked] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareModalUrl, setShareModalUrl] = useState('');
+  const [profileTab, setProfileTab] = useState<PlayerCardProfileTab>('statistics');
+  const [commonGroups, setCommonGroups] = useState<GroupChannel[]>([]);
+  const [commonGroupsLoading, setCommonGroupsLoading] = useState(false);
   const isCurrentUser = playerId === user?.id;
+  const showProfileTabs = !!user && !!playerId && !isCurrentUser && !isBlocked;
   const contextLevelSport = useSportLevelContext();
   const navigatingToChatRef = useRef(false);
   const navigatingToFullProfileRef = useRef(false);
@@ -67,6 +73,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     setShowSendMoneyModal(false);
     setShowShareModal(false);
     setShareModalUrl('');
+    setProfileTab('statistics');
+    setCommonGroups([]);
 
     const fetchStats = async () => {
       try {
@@ -88,6 +96,30 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
 
     fetchStats();
   }, [playerId, isCurrentUser, user, contextLevelSport, t]);
+
+  useEffect(() => {
+    if (!showProfileTabs || !playerId) {
+      setCommonGroups([]);
+      return;
+    }
+
+    let cancelled = false;
+    const fetchCommonGroups = async () => {
+      try {
+        setCommonGroupsLoading(true);
+        const response = await usersApi.getCommonGroupChannels(playerId);
+        if (!cancelled) setCommonGroups(response.data);
+      } catch (error) {
+        console.error('Failed to fetch common groups:', error);
+        if (!cancelled) setCommonGroups([]);
+      } finally {
+        if (!cancelled) setCommonGroupsLoading(false);
+      }
+    };
+
+    void fetchCommonGroups();
+    return () => { cancelled = true; };
+  }, [showProfileTabs, playerId]);
 
   usePresenceSubscription('player-card', user && playerId && !isCurrentUser ? [playerId] : []);
 
@@ -197,6 +229,19 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
       setStartingChat(false);
     }
   };
+
+  const handleOpenGroupChat = useCallback((group: GroupChannel) => {
+    markReopenOnBack();
+    navigatingToChatRef.current = true;
+    navigate(`/group-chat/${group.id}`, {
+      state: { groupChannel: group, contextType: 'GROUP' },
+    });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        onClose();
+      });
+    });
+  }, [markReopenOnBack, navigate, onClose]);
 
   const handleShareProfile = useCallback(async () => {
     if (!playerId || !stats || isBlocked) return;
@@ -354,6 +399,17 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                         t={t}
                         isBlocked={isBlocked}
                         showTelegram={!!user}
+                        showProfileTabs={showProfileTabs}
+                        activeProfileTab={profileTab}
+                        onProfileTabChange={setProfileTab}
+                        groupsContent={(
+                          <PlayerCardCommonGroups
+                            groups={commonGroups}
+                            loading={commonGroupsLoading}
+                            t={t}
+                            onGroupClick={handleOpenGroupChat}
+                          />
+                        )}
                         prependBeforeLevelHistory={
                           !isCurrentUser ? (
                             <PlayerProfileSocialActions

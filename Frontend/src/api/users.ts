@@ -1,6 +1,7 @@
 import api from './axios';
 import { isAxiosError } from 'axios';
 import { MAX_BASIC_USERS_BY_IDS } from '@/services/users/basicUsersBatchLimits';
+import type { GroupChannel } from './chat';
 import {
   ApiResponse,
   User,
@@ -390,6 +391,11 @@ export const usersApi = {
     const response = await api.get<ApiResponse<ReactionEmojiUsageApiData>>('/users/me/reaction-emoji-usage', {
       params: params?.sinceVersion != null ? { sinceVersion: params.sinceVersion } : undefined,
     });
+    return response.data;
+  },
+
+  getCommonGroupChannels: async (userId: string) => {
+    const response = await api.get<ApiResponse<GroupChannel[]>>(`/users/${userId}/common-groups`);
     return response.data;
   },
 };

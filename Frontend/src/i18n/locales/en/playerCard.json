@@ -65,6 +65,9 @@
     "shareProfileMessage": "Check out {{name}} on Bandeja",
     "shareProfileFallbackName": "Player",
     "inviteAsTrainer": "Invite as trainer",
-    "openFullProfile": "Fullscreen"
+    "openFullProfile": "Fullscreen",
+    "statistics": "Statistics",
+    "groups": "Groups",
+    "noCommonGroups": "No shared groups"
   }
 }

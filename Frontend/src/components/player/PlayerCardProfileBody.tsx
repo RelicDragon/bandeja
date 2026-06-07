@@ -1,14 +1,18 @@
 import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Dumbbell } from 'lucide-react';
+import { Send, Dumbbell, BarChart3, Users } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { UserStats } from '@/api/users';
 import { LevelHistoryView } from '@/components/LevelHistoryView';
 import { GenderIndicator } from '@/components/GenderIndicator';
 import { TrainerRatingBadge } from '@/components/TrainerRatingBadge';
+import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePresenceStore } from '@/store/presenceStore';
 import { MarketItem } from '@/types';
+
+export type PlayerCardProfileTab = 'statistics' | 'groups';
 
 export interface PlayerCardProfileBodyProps {
   stats: UserStats;
@@ -17,6 +21,10 @@ export interface PlayerCardProfileBodyProps {
   showTelegram?: boolean;
   edgeToEdge?: boolean;
   prependBeforeLevelHistory?: ReactNode;
+  showProfileTabs?: boolean;
+  activeProfileTab?: PlayerCardProfileTab;
+  onProfileTabChange?: (tab: PlayerCardProfileTab) => void;
+  groupsContent?: ReactNode;
   onAvatarClick: () => void;
   onRatingClick?: () => void;
   onTelegramClick: () => void;
@@ -32,6 +40,10 @@ export const PlayerCardProfileBody = ({
   showTelegram = true,
   edgeToEdge = false,
   prependBeforeLevelHistory,
+  showProfileTabs = false,
+  activeProfileTab = 'statistics',
+  onProfileTabChange,
+  groupsContent,
   onAvatarClick,
   onRatingClick,
   onTelegramClick,
@@ -44,6 +56,14 @@ export const PlayerCardProfileBody = ({
   const isOnline = usePresenceStore((state) => state.isOnline(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const hasTelegram = showTelegram && !!(user.telegramId || (user.telegramUsername && user.telegramUsername.trim()));
+
+  const profileTabs = useMemo<SegmentedSwitchTab[]>(
+    () => [
+      { id: 'statistics', label: t('playerCard.statistics'), icon: BarChart3 },
+      { id: 'groups', label: t('playerCard.groups'), icon: Users },
+    ],
+    [t],
+  );
 
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const } } };
@@ -121,7 +141,20 @@ export const PlayerCardProfileBody = ({
         )}
       </motion.div>
 
-      {stats.user.bio && (
+      {showProfileTabs && onProfileTabChange && (
+        <motion.div variants={itemVariants} className="flex justify-center">
+          <SegmentedSwitch
+            tabs={profileTabs}
+            activeId={activeProfileTab}
+            onChange={(id) => onProfileTabChange(id as PlayerCardProfileTab)}
+            showOnlyActiveTabText
+            layoutId="player-card-profile-tabs"
+            className="w-full max-w-xs"
+          />
+        </motion.div>
+      )}
+
+      {(!showProfileTabs || activeProfileTab === 'statistics') && stats.user.bio && (
         <motion.div variants={itemVariants} className={edgeToEdge ? 'px-0' : 'px-6'}>
           <p className="text-sm text-gray-600 dark:text-gray-400 italic">
             {`"${stats.user.bio}"`}
@@ -129,6 +162,11 @@ export const PlayerCardProfileBody = ({
         </motion.div>
       )}
 
+      {showProfileTabs && activeProfileTab === 'groups' ? (
+        <motion.div variants={itemVariants}>
+          {groupsContent}
+        </motion.div>
+      ) : (
       <div className="flex flex-col gap-2">
         {prependBeforeLevelHistory && (
           <motion.div variants={itemVariants}>
@@ -140,6 +178,7 @@ export const PlayerCardProfileBody = ({
           <LevelHistoryView stats={stats} padding="p-0" tabDarkBgClass="dark:bg-gray-700/50" hideUserCard onOpenGame={onOpenGame} showItemsToSell onMarketItemClick={onMarketItemClick} onStatsRefresh={onStatsRefresh} />
         </motion.div>
       </div>
+      )}
     </motion.div>
   );
 };

@@ -65,6 +65,9 @@
     "inviteAsTrainer": "Invite as trainer",
     "shareProfile": "Share",
     "shareProfileMessage": "Check out {{name}} on Bandeja",
-    "shareProfileFallbackName": "Player"
+    "shareProfileFallbackName": "Player",
+    "statistics": "Статистика",
+    "groups": "Группы",
+    "noCommonGroups": "Нет общих групп"
   }
 }

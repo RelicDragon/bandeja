@@ -230,6 +230,8 @@ router.post('/welcome-screen/skip', authenticate, userController.skipWelcome);
 
 router.get('/compare/:otherUserId', authenticate, userController.getPlayerComparison);
 
+router.get('/:userId/common-groups', authenticate, userController.getCommonGroupChannels);
+
 router.get('/invitable-players', authenticate, userController.getInvitablePlayers);
 
 router.post(
