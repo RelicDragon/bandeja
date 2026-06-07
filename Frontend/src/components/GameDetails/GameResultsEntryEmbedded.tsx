@@ -63,6 +63,8 @@ import { useNavigationStore } from '@/store/navigationStore';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import {
   canAccessResultsTelegramActions,
+  getGameOwnerIsPremium,
+  getPhotoGenerationsMax,
   hasCachedResultsSummary,
   hasEnteredResultsForTelegram,
   hasGamePhotoForTelegram,
@@ -251,6 +253,11 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     if (currentGame.resultsSentToTelegram) return false;
     return true;
   }, [currentGame, hasResultsEntered, canUseResultsTelegram]);
+
+  const photoGenerationsMaxFallback = useMemo(
+    () => getPhotoGenerationsMax(getGameOwnerIsPremium(currentGame)),
+    [currentGame]
+  );
 
   const applyArtifactsPollPayload = useCallback(
     (
@@ -1165,6 +1172,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
           hasGamePhoto={hasPhotosForTelegramPost}
           isSending={isSendingToTelegram}
           isStartingGeneration={isStartingArtifactGeneration}
+          photoGenerationsMaxFallback={photoGenerationsMaxFallback}
           onSend={handleSendToTelegram}
           onGeneratePhoto={handleGenerateResultsPhoto}
           onGenerateSummary={handleGenerateResultsSummary}

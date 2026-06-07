@@ -1,19 +1,24 @@
 import assert from 'node:assert/strict';
 import { buildResultsArtifactsDto } from './gameResultsArtifact.dto';
+import { getMaxArtifactPhotoGenerations } from './gameResultsArtifact.photoLimit';
 
 function run() {
   const readyAt = new Date('2026-05-25T12:00:00.000Z');
+  const defaultMax = getMaxArtifactPhotoGenerations(false);
 
   assert.deepEqual(
-    buildResultsArtifactsDto({
-      resultsArtifactsVersion: 2,
-      resultsArtifactsReadyAt: readyAt,
-      resultsArtifactJob: {
-        status: 'running',
-        summaryStatus: 'done',
-        photoStatus: 'pending',
+    buildResultsArtifactsDto(
+      {
+        resultsArtifactsVersion: 2,
+        resultsArtifactsReadyAt: readyAt,
+        resultsArtifactJob: {
+          status: 'running',
+          summaryStatus: 'done',
+          photoStatus: 'pending',
+        },
       },
-    }),
+      defaultMax
+    ),
     {
       status: 'done',
       version: 2,
@@ -22,18 +27,21 @@ function run() {
       photoReady: false,
       photoInFlight: true,
       photoGenerationsUsed: 0,
-      photoGenerationsRemaining: 3,
-      photoGenerationsMax: 3,
+      photoGenerationsRemaining: defaultMax,
+      photoGenerationsMax: defaultMax,
       readyAt: readyAt.toISOString(),
     }
   );
 
   assert.deepEqual(
-    buildResultsArtifactsDto({
-      resultsArtifactsVersion: 0,
-      resultsArtifactsReadyAt: null,
-      resultsArtifactJob: null,
-    }),
+    buildResultsArtifactsDto(
+      {
+        resultsArtifactsVersion: 0,
+        resultsArtifactsReadyAt: null,
+        resultsArtifactJob: null,
+      },
+      defaultMax
+    ),
     {
       status: 'none',
       version: 0,
@@ -42,35 +50,57 @@ function run() {
       photoReady: false,
       photoInFlight: false,
       photoGenerationsUsed: 0,
-      photoGenerationsRemaining: 3,
-      photoGenerationsMax: 3,
+      photoGenerationsRemaining: defaultMax,
+      photoGenerationsMax: defaultMax,
       readyAt: null,
     }
   );
 
   assert.equal(
-    buildResultsArtifactsDto({
-      resultsArtifactsVersion: 1,
-      resultsArtifactsReadyAt: null,
-      resultsArtifactJob: {
-        status: 'pending',
-        summaryStatus: 'pending',
-        photoStatus: 'skipped',
+    buildResultsArtifactsDto(
+      {
+        resultsArtifactsVersion: 1,
+        resultsArtifactsReadyAt: null,
+        resultsArtifactJob: {
+          status: 'pending',
+          summaryStatus: 'pending',
+          photoStatus: 'skipped',
+        },
       },
-    }).status,
+      getMaxArtifactPhotoGenerations(true)
+    ).photoGenerationsMax,
+    5
+  );
+
+  assert.equal(
+    buildResultsArtifactsDto(
+      {
+        resultsArtifactsVersion: 1,
+        resultsArtifactsReadyAt: null,
+        resultsArtifactJob: {
+          status: 'pending',
+          summaryStatus: 'pending',
+          photoStatus: 'skipped',
+        },
+      },
+      defaultMax
+    ).status,
     'pending'
   );
 
   assert.equal(
-    buildResultsArtifactsDto({
-      resultsArtifactsVersion: 1,
-      resultsArtifactsReadyAt: null,
-      resultsArtifactJob: {
-        status: 'failed',
-        summaryStatus: 'failed',
-        photoStatus: 'skipped',
+    buildResultsArtifactsDto(
+      {
+        resultsArtifactsVersion: 1,
+        resultsArtifactsReadyAt: null,
+        resultsArtifactJob: {
+          status: 'failed',
+          summaryStatus: 'failed',
+          photoStatus: 'skipped',
+        },
       },
-    }).status,
+      defaultMax
+    ).status,
     'failed'
   );
 

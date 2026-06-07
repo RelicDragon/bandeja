@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { GameResultsArtifacts } from '@/types';
 import {
   canShowPhotoGenerationAction,
+  DEFAULT_PHOTO_GENERATIONS_MAX,
   isAnyArtifactGenerating,
   isPhotoReadyForTelegram,
   isSummaryReadyForTelegram,
@@ -14,6 +15,7 @@ type ResultsArtifactsTelegramBlockProps = {
   hasGamePhoto: boolean;
   isSending: boolean;
   isStartingGeneration: boolean;
+  photoGenerationsMaxFallback?: number;
   onSend: () => void;
   onGeneratePhoto: () => void;
   onGenerateSummary: () => void;
@@ -25,6 +27,7 @@ export function ResultsArtifactsTelegramBlock({
   hasGamePhoto,
   isSending,
   isStartingGeneration,
+  photoGenerationsMaxFallback,
   onSend,
   onGeneratePhoto,
   onGenerateSummary,
@@ -44,6 +47,10 @@ export function ResultsArtifactsTelegramBlock({
   const photoBtnLabel = photoReady
     ? t('gameResults.regeneratePhoto')
     : t('gameResults.generatePhoto');
+  const photoGenerationsUsed = artifacts?.photoGenerationsUsed ?? 0;
+  const photoGenerationsMax =
+    artifacts?.photoGenerationsMax ?? photoGenerationsMaxFallback ?? DEFAULT_PHOTO_GENERATIONS_MAX;
+  const photoGenerationsProgress = `${photoGenerationsUsed}/${photoGenerationsMax}`;
   const showGenerateRow = showPhotoBtn || showSummaryBtn;
 
   return (
@@ -74,7 +81,10 @@ export function ResultsArtifactsTelegramBlock({
               className={telegramSecondaryButtonClass(isBusy)}
             >
               <Wand2 size={16} className="shrink-0" aria-hidden />
-              <span>{photoBtnLabel}</span>
+              <span className="flex flex-col items-center gap-0 leading-tight">
+                <span>{photoBtnLabel}</span>
+                <span className="text-[10px] font-normal opacity-70">{photoGenerationsProgress}</span>
+              </span>
             </button>
           ) : null}
           {showSummaryBtn ? (

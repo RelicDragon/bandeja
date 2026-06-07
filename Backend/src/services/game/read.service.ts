@@ -7,6 +7,8 @@ import { InviteService } from '../invite.service';
 import { ReadReceiptService } from '../chat/readReceipt.service';
 import { attachReactionsToGames, fetchReactionsByGameIds } from './gameReaction.service';
 import { buildResultsArtifactsDto } from '../gameResultsArtifact/gameResultsArtifact.dto';
+import { getOwnerIsPremiumFromGame } from '../gameResultsArtifact/gameResultsArtifact.ownerPremium';
+import { getMaxArtifactPhotoGenerations } from '../gameResultsArtifact/gameResultsArtifact.photoLimit';
 import { GAME_INVITE_OUTCOME_INCLUDE } from '../../utils/gameInviteOutcomeInclude';
 import {
   projectUserForSportContext,
@@ -42,11 +44,14 @@ export function projectGamePhotoPayload(game: any): any {
           originalUrl: mainPhoto.originalUrl,
         }
       : null,
-    resultsArtifacts: buildResultsArtifactsDto({
-      resultsArtifactsVersion: game.resultsArtifactsVersion ?? 0,
-      resultsArtifactsReadyAt: game.resultsArtifactsReadyAt ?? null,
-      resultsArtifactJob: game.resultsArtifactJob ?? null,
-    }),
+    resultsArtifacts: buildResultsArtifactsDto(
+      {
+        resultsArtifactsVersion: game.resultsArtifactsVersion ?? 0,
+        resultsArtifactsReadyAt: game.resultsArtifactsReadyAt ?? null,
+        resultsArtifactJob: game.resultsArtifactJob ?? null,
+      },
+      getMaxArtifactPhotoGenerations(getOwnerIsPremiumFromGame(game))
+    ),
   };
 }
 

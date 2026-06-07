@@ -3,7 +3,6 @@ import {
   GameResultsArtifactStepStatus,
 } from '@prisma/client';
 import {
-  MAX_ARTIFACT_PHOTO_GENERATIONS,
   photoGenerationsRemaining,
 } from './gameResultsArtifact.photoLimit';
 
@@ -47,7 +46,8 @@ function resolveArtifactsStatus(input: {
   return 'pending';
 }
 
-export function buildResultsArtifactsDto(game: {
+export function buildResultsArtifactsDto(
+  game: {
   resultsArtifactsVersion: number;
   resultsArtifactsReadyAt: Date | null;
   resultsArtifactJob?: {
@@ -56,7 +56,9 @@ export function buildResultsArtifactsDto(game: {
     photoStatus: GameResultsArtifactStepStatus;
     photoGenerationsUsed?: number;
   } | null;
-}): ResultsArtifactsDto {
+},
+  photoGenerationsMax: number
+): ResultsArtifactsDto {
   const job = game.resultsArtifactJob ?? null;
   const used = job?.photoGenerationsUsed ?? 0;
   return {
@@ -70,8 +72,8 @@ export function buildResultsArtifactsDto(game: {
     photoReady: job ? stepReady(job.photoStatus) : false,
     photoInFlight: job ? stepInFlight(job.photoStatus) : false,
     photoGenerationsUsed: used,
-    photoGenerationsRemaining: photoGenerationsRemaining(used),
-    photoGenerationsMax: MAX_ARTIFACT_PHOTO_GENERATIONS,
+    photoGenerationsRemaining: photoGenerationsRemaining(used, photoGenerationsMax),
+    photoGenerationsMax,
     readyAt: game.resultsArtifactsReadyAt?.toISOString() ?? null,
   };
 }

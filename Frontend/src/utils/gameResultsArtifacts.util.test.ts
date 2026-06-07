@@ -3,6 +3,7 @@ import {
   canAccessResultsTelegramActions,
   canShowPhotoGenerationAction,
   gamePhotoFieldsChanged,
+  getPhotoGenerationsMax,
   hasEnteredResultsForTelegram,
   isAnyArtifactGenerating,
   isPhotoArtifactGenerating,
@@ -23,14 +24,17 @@ function artifacts(partial: Partial<GameResultsArtifacts>): GameResultsArtifacts
     photoReady: false,
     photoInFlight: false,
     photoGenerationsUsed: 0,
-    photoGenerationsRemaining: 3,
-    photoGenerationsMax: 3,
+    photoGenerationsRemaining: 2,
+    photoGenerationsMax: 2,
     readyAt: null,
     ...partial,
   };
 }
 
 function run() {
+  assert.equal(getPhotoGenerationsMax(false), 2);
+  assert.equal(getPhotoGenerationsMax(true), 5);
+
   assert.equal(isSummaryReadyForTelegram(undefined, true), true);
   assert.equal(
     isSummaryReadyForTelegram(artifacts({ status: 'running', summaryReady: false }), false),

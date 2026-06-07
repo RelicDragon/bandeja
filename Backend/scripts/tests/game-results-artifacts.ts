@@ -8,6 +8,7 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { EntityType, GamePhotoSource, GameStatus, ParticipantRole } from '@prisma/client';
 import { buildResultsArtifactsDto } from '../../src/services/gameResultsArtifact/gameResultsArtifact.dto';
+import { getMaxArtifactPhotoGenerations } from '../../src/services/gameResultsArtifact/gameResultsArtifact.photoLimit';
 import { isGameResultStoryEligible } from '../../src/services/gameResultsArtifact/gameResultsArtifactStory.eligibility';
 
 function assert(cond: boolean, msg: string) {
@@ -120,11 +121,14 @@ async function main() {
       },
     });
 
-    const dto = buildResultsArtifactsDto({
-      resultsArtifactsVersion: game!.resultsArtifactsVersion,
-      resultsArtifactsReadyAt: game!.resultsArtifactsReadyAt,
-      resultsArtifactJob: game!.resultsArtifactJob,
-    });
+    const dto = buildResultsArtifactsDto(
+      {
+        resultsArtifactsVersion: game!.resultsArtifactsVersion,
+        resultsArtifactsReadyAt: game!.resultsArtifactsReadyAt,
+        resultsArtifactJob: game!.resultsArtifactJob,
+      },
+      getMaxArtifactPhotoGenerations(false)
+    );
     assert(dto.status === 'done', 'DTO status done');
     assert(dto.readyAt != null, 'DTO readyAt set');
     assert(

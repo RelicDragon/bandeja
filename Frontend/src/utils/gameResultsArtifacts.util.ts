@@ -17,7 +17,19 @@ function normalizeArtifactsStatus(raw: unknown): GameResultsArtifactsStatus {
   return 'none';
 }
 
-const DEFAULT_PHOTO_GENERATIONS_MAX = 3;
+export const DEFAULT_PHOTO_GENERATIONS_MAX = 2;
+export const PREMIUM_PHOTO_GENERATIONS_MAX = 5;
+
+export function getPhotoGenerationsMax(isPremium: boolean): number {
+  return isPremium ? PREMIUM_PHOTO_GENERATIONS_MAX : DEFAULT_PHOTO_GENERATIONS_MAX;
+}
+
+export function getGameOwnerIsPremium(
+  game: { participants?: Array<{ role?: string; user?: { isPremium?: boolean } | null }> | null } | null | undefined
+): boolean {
+  const owner = game?.participants?.find((p) => p.role === 'OWNER');
+  return owner?.user?.isPremium === true;
+}
 
 export function normalizeGameResultsArtifacts(raw: unknown): GameResultsArtifacts | undefined {
   if (!raw || typeof raw !== 'object') return undefined;

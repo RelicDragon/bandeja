@@ -18,6 +18,7 @@ import { generateResultsImage } from '../services/telegram/results-image.service
 import telegramBotService from '../services/telegram/bot.service';
 import { getGameInclude, projectGameUsersForSportContext } from '../services/game/read.service';
 import { buildResultsArtifactsDto } from '../services/gameResultsArtifact/gameResultsArtifact.dto';
+import { resolvePhotoGenerationsMaxForGame } from '../services/gameResultsArtifact/gameResultsArtifact.ownerPremium';
 import { GameResultsArtifactQueueService } from '../services/gameResultsArtifact/gameResultsArtifactQueue.service';
 import { assertPhotoGenerationsAvailable } from '../services/gameResultsArtifact/gameResultsArtifact.photoLimit';
 import prisma from '../config/database';
@@ -93,10 +94,12 @@ async function respondAfterArtifactPrepare(gameId: string, res: Response) {
     throw new ApiError(404, 'Game not found');
   }
 
+  const photoGenerationsMax = await resolvePhotoGenerationsMaxForGame(gameId);
+
   res.json({
     success: true,
     data: {
-      resultsArtifacts: buildResultsArtifactsDto(updated),
+      resultsArtifacts: buildResultsArtifactsDto(updated, photoGenerationsMax),
       resultsSummaryText: updated.resultsSummaryText,
       photosCount: updated.photosCount,
       mainPhotoId: updated.mainPhotoId,
@@ -164,7 +167,8 @@ export const prepareResultsArtifactPhoto = asyncHandler(async (req: AuthRequest,
   }
 
   const generationsUsed = game.resultsArtifactJob?.photoGenerationsUsed ?? 0;
-  assertPhotoGenerationsAvailable(generationsUsed);
+  const photoGenerationsMax = await resolvePhotoGenerationsMaxForGame(id);
+  assertPhotoGenerationsAvailable(generationsUsed, photoGenerationsMax);
 
   if (isArtifactPhotoGenerating(game.resultsArtifactJob)) {
     throw new ApiError(409, 'Photo generation is already in progress');
@@ -198,10 +202,12 @@ export const getResultsArtifactsStatus = asyncHandler(async (req: AuthRequest, r
     throw new ApiError(404, 'Game not found');
   }
 
+  const photoGenerationsMax = await resolvePhotoGenerationsMaxForGame(id);
+
   res.json({
     success: true,
     data: {
-      artifacts: buildResultsArtifactsDto(game),
+      artifacts: buildResultsArtifactsDto(game, photoGenerationsMax),
       resultsSummaryText: game.resultsSummaryText,
     },
     serverTime: new Date().toISOString(),

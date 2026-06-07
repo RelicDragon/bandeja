@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import * as dotenv from 'dotenv';
 import { EntityType, GameStatus, ParticipantRole } from '@prisma/client';
 import { buildResultsArtifactsDto } from './gameResultsArtifact.dto';
+import { getMaxArtifactPhotoGenerations } from './gameResultsArtifact.photoLimit';
 import { isGameResultStoryEligible } from './gameResultsArtifactStory.eligibility';
 import { shouldSkipArtifactReenqueue } from './gameResultsArtifact.enqueuePolicy';
 
@@ -87,11 +88,14 @@ async function runDbIntegration() {
   });
 
   try {
-    const beforeDto = buildResultsArtifactsDto({
-      resultsArtifactsVersion: 0,
-      resultsArtifactsReadyAt: null,
-      resultsArtifactJob: null,
-    });
+    const beforeDto = buildResultsArtifactsDto(
+      {
+        resultsArtifactsVersion: 0,
+        resultsArtifactsReadyAt: null,
+        resultsArtifactJob: null,
+      },
+      getMaxArtifactPhotoGenerations(false)
+    );
     assert.equal(beforeDto.status, 'none');
     assert.equal(beforeDto.readyAt, null);
     assert.equal(
@@ -140,11 +144,14 @@ async function runDbIntegration() {
     assert.equal(after?.resultsArtifactJob?.summaryStatus, 'done');
     assert.equal(after?.resultsArtifactJob?.photoStatus, 'skipped');
 
-    const afterDto = buildResultsArtifactsDto({
-      resultsArtifactsVersion: after!.resultsArtifactsVersion,
-      resultsArtifactsReadyAt: after!.resultsArtifactsReadyAt,
-      resultsArtifactJob: after!.resultsArtifactJob,
-    });
+    const afterDto = buildResultsArtifactsDto(
+      {
+        resultsArtifactsVersion: after!.resultsArtifactsVersion,
+        resultsArtifactsReadyAt: after!.resultsArtifactsReadyAt,
+        resultsArtifactJob: after!.resultsArtifactJob,
+      },
+      getMaxArtifactPhotoGenerations(false)
+    );
     assert.equal(afterDto.status, 'done');
     assert.ok(afterDto.readyAt);
     assert.equal(afterDto.summaryReady, true);
