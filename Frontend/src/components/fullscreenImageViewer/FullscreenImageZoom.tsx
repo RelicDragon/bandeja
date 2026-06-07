@@ -75,33 +75,35 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
       setPanningDisabled(scale <= 1.01);
     }, []);
 
+    const resetToFitView = useCallback(() => {
+      zoomRef.current?.resetTransform(0);
+      syncState(1, 0, 0);
+    }, [syncState]);
+
     useImperativeHandle(
       ref,
       () => ({
-        resetTransform: () => zoomRef.current?.resetTransform(0),
+        resetTransform: resetToFitView,
         isZoomed: () => {
           const s = stateRef.current;
           return isImageViewZoomed(s.scale, s.positionX, s.positionY);
         },
       }),
-      [],
+      [resetToFitView],
     );
 
     useEffect(() => {
-      if (active) {
-        zoomRef.current?.resetTransform(0);
-        syncState(1, 0, 0);
-      }
-    }, [active, src, syncState]);
+      if (active) resetToFitView();
+    }, [active, src, resetToFitView]);
 
     if (!active) return null;
 
     return (
       <div
-        className="relative flex h-full w-full min-h-0 min-w-0 max-h-full max-w-full touch-none select-none items-center justify-center"
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={() => { tapStartRef.current = null; clearTapCloseTimer(); }}
+        className="relative h-full w-full min-h-0 min-w-0 touch-none select-none"
+        onPointerDownCapture={handlePointerDown}
+        onPointerUpCapture={handlePointerUp}
+        onPointerCancelCapture={() => { tapStartRef.current = null; clearTapCloseTimer(); }}
       >
         <TransformWrapper
           key={src}
@@ -117,17 +119,29 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
           panning={{ disabled: panningDisabled, velocityDisabled: true }}
           trackPadPanning={{ disabled: true }}
           velocityAnimation={{ disabled: true }}
-          doubleClick={{ mode: 'toggle', step: 1.75, animationTime: 0 }}
-          onInit={(ctx) => syncState(ctx.state.scale, ctx.state.positionX, ctx.state.positionY)}
+          doubleClick={{ mode: 'toggle', step: 1.75, animationTime: 250, animationType: 'easeOut' }}
+          onInit={(ctx) => {
+            syncState(ctx.state.scale, ctx.state.positionX, ctx.state.positionY);
+            requestAnimationFrame(() => resetToFitView());
+          }}
           onTransform={(ctx) =>
             syncState(ctx.state.scale, ctx.state.positionX, ctx.state.positionY)
           }
-          onPanningStart={() => { tapSuppressedRef.current = true; clearTapCloseTimer(); }}
+          onZoomStart={() => {
+            tapSuppressedRef.current = true;
+            clearTapCloseTimer();
+          }}
+          onPanningStart={() => {
+            if (stateRef.current.scale > 1.01) {
+              tapSuppressedRef.current = true;
+              clearTapCloseTimer();
+            }
+          }}
           onPinchStart={() => { tapSuppressedRef.current = true; clearTapCloseTimer(); }}
           onWheelStart={() => { tapSuppressedRef.current = true; clearTapCloseTimer(); }}
         >
           <TransformComponent
-            wrapperClass="!h-full !w-full !max-h-full !max-w-full"
+            wrapperClass="!h-full !w-full"
             contentClass="!flex !h-full !w-full !items-center !justify-center"
           >
             <img
@@ -135,9 +149,8 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
               alt=""
               draggable={false}
               className="max-h-full max-w-full object-contain"
-              style={{
-                maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 8rem)',
-                maxWidth: 'calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))',
+              onLoad={() => {
+                requestAnimationFrame(() => resetToFitView());
               }}
             />
           </TransformComponent>

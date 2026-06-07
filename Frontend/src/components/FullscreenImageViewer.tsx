@@ -238,10 +238,21 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     [],
   );
 
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onClose();
+  const handleViewerClick = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    if (zoomRef.current?.isZoomed()) return;
+    const img = containerRef.current?.querySelector('img');
+    if (!img) {
+      onClose();
+      return;
+    }
+    const { left, right, top, bottom } = img.getBoundingClientRect();
+    const insideImage =
+      e.clientX >= left &&
+      e.clientX <= right &&
+      e.clientY >= top &&
+      e.clientY <= bottom;
+    if (!insideImage) onClose();
   }, [onClose]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -309,35 +320,31 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           paddingLeft: 'env(safe-area-inset-left)',
         }}
       >
-        <div className="absolute inset-0 z-0" onClick={handleBackdropClick} aria-hidden />
-
         <div 
-          className="relative z-10 flex h-full w-full items-center justify-center pointer-events-none"
+          className="relative z-10 flex h-full w-full items-center justify-center pointer-events-auto"
+          onClick={handleViewerClick}
           style={{
             transform: swipeOffset > 0 ? `translateY(${swipeOffset}px)` : 'none',
             transition: swipeOffset === 0 ? 'transform 0.2s' : 'none',
           }}
         >
           {enableTransform ? (
-            <div className="pointer-events-auto flex h-full w-full min-h-0 min-w-0 max-h-full max-w-full items-center justify-center">
-              <FullscreenImageZoom ref={zoomRef} src={displayUrl} active={zoomActive} onTap={handleImageTapClose} />
-            </div>
-          ) : (
-            <div
-              className="pointer-events-auto flex h-full w-full min-h-0 min-w-0 max-h-full max-w-full items-center justify-center"
-            >
-              <img
+            <div className="relative z-10 h-full w-full min-h-0 min-w-0 pointer-events-auto">
+              <FullscreenImageZoom
+                ref={zoomRef}
                 src={displayUrl}
-                alt="Fullscreen view"
-                draggable={false}
-                className="max-h-full max-w-full object-contain cursor-pointer"
-                style={{
-                  maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 8rem)',
-                  maxWidth: 'calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))',
-                }}
-                onClick={handleImageTapClose}
+                active={zoomActive}
+                onTap={handleImageTapClose}
               />
             </div>
+          ) : (
+            <img
+              src={displayUrl}
+              alt="Fullscreen view"
+              draggable={false}
+              className="relative z-10 pointer-events-auto max-h-full max-w-full object-contain cursor-pointer"
+              onClick={handleImageTapClose}
+            />
           )}
 
           <div 
