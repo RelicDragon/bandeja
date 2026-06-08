@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { shouldRouteCustomBetToNeedsReview } from './betResolutionRouting';
+import { shouldRouteCustomBetToNeedsReview, shouldVoidBetDueToMissingTarget } from './betResolutionRouting';
 
 function makeBet(overrides: Record<string, unknown> = {}) {
   return {
@@ -62,6 +62,34 @@ async function run() {
       })),
       false,
       'PREDEFINED bets never route via custom path',
+    );
+  }
+
+  {
+    assert.equal(
+      shouldVoidBetDueToMissingTarget({ won: false, reason: 'User did not participate' }),
+      true,
+      'void when condition user absent from outcomes',
+    );
+    assert.equal(
+      shouldVoidBetDueToMissingTarget({ won: false, reason: 'Fixed pair not in outcomes' }),
+      true,
+      'void when fixed pair absent from outcomes',
+    );
+    assert.equal(
+      shouldVoidBetDueToMissingTarget({ won: false, reason: 'Entity not in outcomes' }),
+      true,
+      'void when entity absent from outcomes',
+    );
+    assert.equal(
+      shouldVoidBetDueToMissingTarget({ won: false, reason: 'Invalid condition' }),
+      false,
+      'do not void generic evaluation failures',
+    );
+    assert.equal(
+      shouldVoidBetDueToMissingTarget({ won: true }),
+      false,
+      'do not void winning evaluations',
     );
   }
 

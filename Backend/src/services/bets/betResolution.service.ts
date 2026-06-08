@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
 import { Bet, TransactionType, Prisma } from '@prisma/client';
 import { evaluateBetCondition, BetEvaluationResult } from './betConditionEvaluator.service';
-import { shouldRouteCustomBetToNeedsReview } from './betResolutionRouting';
+import { shouldRouteCustomBetToNeedsReview, shouldVoidBetDueToMissingTarget } from './betResolutionRouting';
 import { distributePoolCoins } from './poolCoinDistribution';
 import { TransactionService } from '../transaction.service';
 import notificationService from '../notification.service';
@@ -20,6 +20,20 @@ interface CancelledOpenBetPostTx {
   gameId: string;
   creatorId: string;
   stakeCoins: number;
+}
+
+interface VoidedBetPostTx {
+  betId: string;
+  gameId: string;
+  type: 'SOCIAL' | 'POOL';
+  creatorId: string;
+  acceptedBy: string | null;
+  stakeType: string;
+  stakeCoins: number | null;
+  rewardType: string | null;
+  rewardCoins: number | null;
+  participantUserIds: string[];
+  resolutionReason: string;
 }
 
 /**
@@ -128,6 +142,7 @@ export async function resolveGameBets(gameId: string): Promise<void> {
 
     const needsReviewBets: Bet[] = [];
     const cancelledOpenBets: CancelledOpenBetPostTx[] = [];
+    const voidedBets: VoidedBetPostTx[] = [];
     const resolvedBets: ResolvedBetPostTx[] = [];
     const resolvedPoolBets: ResolvedPoolBetPostTx[] = [];
 
@@ -173,6 +188,13 @@ export async function resolveGameBets(gameId: string): Promise<void> {
           continue;
         }
 
+        if (shouldVoidBetDueToMissingTarget(result)) {
+          const voided = await voidBetMissingTarget(bet, result, tx);
+          if (voided) voidedBets.push(voided);
+          console.log(`[BET RESOLUTION] Bet ${bet.id} voided (condition target absent)`);
+          continue;
+        }
+
         if (bet.type === 'POOL') {
           const poolResolved = await resolvePoolBet(bet, result, tx);
           if (poolResolved) resolvedPoolBets.push(poolResolved);
@@ -197,8 +219,8 @@ export async function resolveGameBets(gameId: string): Promise<void> {
       }
     }
 
-    console.log(`[BET RESOLUTION] Completed bet resolution for game ${gameId}: ${resolvedBets.length + resolvedPoolBets.length + cancelledOpenBets.length} processed, ${needsReviewBets.length} need review`);
-    return { needsReviewBets, cancelledOpenBets, resolvedBets, resolvedPoolBets };
+    console.log(`[BET RESOLUTION] Completed bet resolution for game ${gameId}: ${resolvedBets.length + resolvedPoolBets.length + cancelledOpenBets.length + voidedBets.length} processed, ${needsReviewBets.length} need review`);
+    return { needsReviewBets, cancelledOpenBets, voidedBets, resolvedBets, resolvedPoolBets };
   }, {
     isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     timeout: 30000
@@ -212,6 +234,11 @@ export async function resolveGameBets(gameId: string): Promise<void> {
   for (const c of postTx.cancelledOpenBets) {
     runCancelledOpenBetPostTx(c).catch(err =>
       console.error(`[BET RESOLUTION] Failed post-tx for cancelled open bet ${c.betId}:`, err)
+    );
+  }
+  for (const v of postTx.voidedBets ?? []) {
+    runVoidedBetPostTx(v).catch(err =>
+      console.error(`[BET RESOLUTION] Failed post-tx for voided bet ${v.betId}:`, err)
     );
   }
   for (const r of postTx.resolvedBets) {
@@ -257,6 +284,126 @@ async function runCancelledOpenBetPostTx(c: CancelledOpenBetPostTx): Promise<voi
     });
     if (bet) {
       await socketService.emit('bet:updated', { gameId: c.gameId, bet });
+    }
+  }
+}
+
+async function voidBetMissingTarget(
+  bet: Bet & { participants?: { userId: string }[] },
+  result: BetEvaluationResult,
+  tx: Prisma.TransactionClient
+): Promise<VoidedBetPostTx | null> {
+  const currentBet = await tx.bet.findUnique({
+    where: { id: bet.id },
+    select: {
+      id: true,
+      status: true,
+      type: true,
+      gameId: true,
+      creatorId: true,
+      acceptedBy: true,
+      stakeType: true,
+      stakeCoins: true,
+      rewardType: true,
+      rewardCoins: true,
+      participants: { select: { userId: true } },
+    },
+  });
+  if (!currentBet || currentBet.status === 'RESOLVED' || currentBet.status === 'CANCELLED') {
+    return null;
+  }
+
+  const resolutionReason = result.reason
+    ? `Bet voided: ${result.reason}`
+    : 'Bet voided: condition target did not participate in the game.';
+
+  await tx.bet.update({
+    where: { id: bet.id },
+    data: { status: 'CANCELLED', resolutionReason },
+  });
+
+  return {
+    betId: bet.id,
+    gameId: currentBet.gameId,
+    type: currentBet.type as 'SOCIAL' | 'POOL',
+    creatorId: currentBet.creatorId,
+    acceptedBy: currentBet.acceptedBy,
+    stakeType: currentBet.stakeType,
+    stakeCoins: currentBet.stakeCoins,
+    rewardType: currentBet.rewardType,
+    rewardCoins: currentBet.rewardCoins,
+    participantUserIds: currentBet.participants.map(p => p.userId),
+    resolutionReason,
+  };
+}
+
+async function runVoidedBetPostTx(v: VoidedBetPostTx): Promise<void> {
+  const stakeRefund =
+    v.stakeType === 'COINS' && v.stakeCoins && v.stakeCoins > 0 ? v.stakeCoins : 0;
+
+  if (v.type === 'POOL' && stakeRefund > 0) {
+    for (const userId of v.participantUserIds) {
+      await TransactionService.createTransaction({
+        type: TransactionType.REFUND,
+        toUserId: userId,
+        transactionRows: [{
+          name: `Bet voided (target absent) refund for game ${v.gameId}`,
+          price: stakeRefund,
+          qty: 1,
+          total: stakeRefund,
+        }],
+      });
+    }
+  } else if (stakeRefund > 0) {
+    await TransactionService.createTransaction({
+      type: TransactionType.REFUND,
+      toUserId: v.creatorId,
+      transactionRows: [{
+        name: `Bet voided (target absent) refund for game ${v.gameId}`,
+        price: stakeRefund,
+        qty: 1,
+        total: stakeRefund,
+      }],
+    });
+  }
+
+  if (
+    v.type !== 'POOL' &&
+    v.acceptedBy &&
+    v.rewardType === 'COINS' &&
+    v.rewardCoins &&
+    v.rewardCoins > 0
+  ) {
+    await TransactionService.createTransaction({
+      type: TransactionType.REFUND,
+      toUserId: v.acceptedBy,
+      transactionRows: [{
+        name: `Bet voided (target absent) refund for game ${v.gameId}`,
+        price: v.rewardCoins,
+        qty: 1,
+        total: v.rewardCoins,
+      }],
+    });
+  }
+
+  const notifyUserIds = new Set<string>([v.creatorId, ...v.participantUserIds]);
+  if (v.acceptedBy) notifyUserIds.add(v.acceptedBy);
+  for (const uid of notifyUserIds) {
+    await notificationService.sendBetCancelledNotification(v.betId, uid);
+  }
+
+  const socketService = (global as { socketService?: { emit: (event: string, data: unknown) => Promise<void> } }).socketService;
+  if (socketService) {
+    const bet = await prisma.bet.findUnique({
+      where: { id: v.betId },
+      include: {
+        creator: { select: USER_SELECT_FIELDS },
+        acceptedByUser: { select: USER_SELECT_FIELDS },
+        winner: { select: USER_SELECT_FIELDS },
+      },
+    });
+    if (bet) {
+      await socketService.emit('bet:updated', { gameId: v.gameId, bet });
     }
   }
 }

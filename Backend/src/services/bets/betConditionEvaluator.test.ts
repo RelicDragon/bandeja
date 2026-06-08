@@ -68,6 +68,62 @@ async function run() {
     assert.equal(r.won, false);
   }
 
+  const tiedSetMatch = {
+    teams: [
+      { id: 't1', teamNumber: 1, playerIds: ['u1'], score: 0 },
+      { id: 't2', teamNumber: 2, playerIds: ['u2'], score: 0 },
+    ],
+    sets: [{ teamAScore: 6, teamBScore: 6, role: MatchSetRole.OFFICIAL }],
+    winnerId: null,
+  };
+
+  // LOSE_SET: tied set is neither won nor lost
+  {
+    const r = await evaluateBetCondition(
+      makeBet({ type: 'PREDEFINED', predefined: 'LOSE_SET', entityType: 'USER', entityId: 'u1' }),
+      baseResults({ rounds: [{ matches: [tiedSetMatch] }] }),
+    );
+    assert.equal(r.won, true);
+  }
+
+  // WIN_ALL_SETS: tie is not a loss
+  {
+    const r = await evaluateBetCondition(
+      makeBet({ type: 'PREDEFINED', predefined: 'WIN_ALL_SETS', entityType: 'USER', entityId: 'u1' }),
+      baseResults({ rounds: [{ matches: [tiedSetMatch] }] }),
+    );
+    assert.equal(r.won, true);
+  }
+
+  // LOSE_ALL_SETS: tie is not a win
+  {
+    const r = await evaluateBetCondition(
+      makeBet({ type: 'PREDEFINED', predefined: 'LOSE_ALL_SETS', entityType: 'USER', entityId: 'u1' }),
+      baseResults({ rounds: [{ matches: [tiedSetMatch] }] }),
+    );
+    assert.equal(r.won, true);
+  }
+
+  // WIN_ALL_SETS fails when any official set is lost
+  {
+    const r = await evaluateBetCondition(
+      makeBet({ type: 'PREDEFINED', predefined: 'WIN_ALL_SETS', entityType: 'USER', entityId: 'u1' }),
+      baseResults({
+        rounds: [{
+          matches: [{
+            teams: tiedSetMatch.teams,
+            sets: [
+              { teamAScore: 6, teamBScore: 6, role: MatchSetRole.OFFICIAL },
+              { teamAScore: 4, teamBScore: 6, role: MatchSetRole.OFFICIAL },
+            ],
+            winnerId: null,
+          }],
+        }],
+      }),
+    );
+    assert.equal(r.won, false);
+  }
+
   // LOSE_SET with no sets played → won false (not "condition met")
   {
     const r = await evaluateBetCondition(

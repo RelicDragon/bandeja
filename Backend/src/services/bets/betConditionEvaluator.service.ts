@@ -46,6 +46,11 @@ function isOfficialBetSet(set: { role?: MatchSetRole }): boolean {
   return !set.role || set.role === MatchSetRole.OFFICIAL;
 }
 
+/** Tied official sets (equal teamAScore/teamBScore) count as neither won nor lost.
+ *  WIN_SET / LOSE_SET: tie satisfies neither condition.
+ *  WIN_ALL_SETS: tie is not a loss; LOSE_ALL_SETS: tie is not a win.
+ *  Supplemental sets (EXTRA_GAMES, EXTRA_BALLS) are excluded via isOfficialBetSet. */
+
 function getFixedTeamPlayerIds(entityId: string, gameResults: GameResultsData): string[] | null {
   const fixed = gameResults.fixedTeams?.find(ft => ft.id === entityId);
   return fixed ? fixed.playerIds : null;
