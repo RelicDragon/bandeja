@@ -22,7 +22,8 @@
       "gameNotFound": "Igra nije pronađena",
       "onlyParticipantsCanView": "Samo učesnici mogu pregledati pozive igre",
       "onlySenderCanCancel": "Samo pošiljalac može otkazati ovaj poziv",
-      "canOnlyCancelPending": "Može se otkazati samo poziv na čekanju"
+      "canOnlyCancelPending": "Može se otkazati samo poziv na čekanju",
+      "declineMessageTooLong": "Razlog odbijanja ne može biti duži od 10.000 znakova"
     },
     "userTeams": {
       "blocked": "Ne možete pozvati ovog igrača",

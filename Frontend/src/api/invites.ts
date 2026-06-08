@@ -51,8 +51,11 @@ export const invitesApi = {
     return response.data;
   },
 
-  decline: async (id: string) => {
-    const response = await api.post<ApiResponse<Invite>>(`/invites/${id}/decline`);
+  decline: async (id: string, options?: { message?: string }) => {
+    const response = await api.post<ApiResponse<Invite>>(
+      `/invites/${id}/decline`,
+      options?.message != null ? { message: options.message } : undefined,
+    );
     return response.data;
   },
 

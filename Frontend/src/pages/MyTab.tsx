@@ -32,6 +32,7 @@ import { PullToRefreshShell } from '@/components/PullToRefreshShell';
 import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { DeclineInviteModal } from '@/components/DeclineInviteModal';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { navigationService } from '@/services/navigationService';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
@@ -282,6 +283,9 @@ export const MyTab = () => {
   }, [pastGames, gameUnreadForSort]);
 
   const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
+  const [declineInviteId, setDeclineInviteId] = useState<string | null>(null);
+  const [isDecliningInvite, setIsDecliningInvite] = useState(false);
+  const [decliningInviteIds, setDecliningInviteIds] = useState<Set<string>>(new Set());
 
   const handleMarkAllAsRead = async () => {
     if (!user?.id || isMarkingAllAsRead || markAllBannerUnread === 0) return;
@@ -329,22 +333,47 @@ export const MyTab = () => {
     }
   };
 
-  const handleDeclineInvite = async (inviteId: string) => {
+  const handleDeclineInvite = (inviteId: string) => {
     const authUser = useAuthStore.getState().user;
     if (authUser && authUser.nameIsSet !== true) {
       runWithProfileName(() => void handleDeclineInvite(inviteId));
       return;
     }
+    setDeclineInviteId(inviteId);
+  };
+
+  const confirmDeclineInvite = async (message?: string) => {
+    if (!declineInviteId) return;
+    const inviteId = declineInviteId;
+    setDecliningInviteIds((prev) => new Set(prev).add(inviteId));
+    setDeclineInviteId(null);
+    setIsDecliningInvite(true);
     try {
+      await new Promise((resolve) => setTimeout(resolve, 50));
       const { invitesApi } = await import('@/api');
-      await invitesApi.decline(inviteId);
+      await invitesApi.decline(
+        inviteId,
+        message !== undefined ? { message } : undefined
+      );
       setInvites(invites.filter((inv) => inv.id !== inviteId));
       const { setPendingInvites } = useHeaderStore.getState();
       const currentCount = useHeaderStore.getState().pendingInvites;
       setPendingInvites(Math.max(0, currentCount - 1));
     } catch (error: any) {
+      setDecliningInviteIds((prev) => {
+        const next = new Set(prev);
+        next.delete(inviteId);
+        return next;
+      });
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setIsDecliningInvite(false);
+      setDecliningInviteIds((prev) => {
+        const next = new Set(prev);
+        next.delete(inviteId);
+        return next;
+      });
     }
   };
 
@@ -370,6 +399,7 @@ export const MyTab = () => {
             invites={invites}
             onAccept={handleAcceptInvite}
             onDecline={handleDeclineInvite}
+            decliningInviteIds={decliningInviteIds}
             onNoteSaved={() => fetchData(false, true)}
           />
         </div>
@@ -403,8 +433,18 @@ export const MyTab = () => {
       </div>
     </div>
   );
+  const declineInviteModal = (
+    <DeclineInviteModal
+      isOpen={declineInviteId !== null}
+      onClose={() => setDeclineInviteId(null)}
+      onDecline={confirmDeclineInvite}
+      isLoading={isDecliningInvite}
+    />
+  );
+
   if (isDesktop && activeTab === 'calendar') {
     return (
+      <>
       <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
         {hasUpcomingGames ? (
           <ResizableSplitter
@@ -429,10 +469,13 @@ export const MyTab = () => {
           calendarContentPanel
         )}
       </div>
+      {declineInviteModal}
+      </>
     );
   }
 
   return (
+    <>
     <PullToRefreshShell onRefresh={handleRefresh} disabled={loading || loadingPastGames}>
       {({ isRefreshing }) => (
         <>
@@ -451,6 +494,7 @@ export const MyTab = () => {
             invites={invites}
             onAccept={handleAcceptInvite}
             onDecline={handleDeclineInvite}
+            decliningInviteIds={decliningInviteIds}
             onNoteSaved={() => fetchData(false, true)}
           />
         </div>
@@ -538,5 +582,7 @@ export const MyTab = () => {
         </>
       )}
     </PullToRefreshShell>
+    {declineInviteModal}
+    </>
   );
 };

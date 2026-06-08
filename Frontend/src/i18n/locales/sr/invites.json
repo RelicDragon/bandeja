@@ -25,6 +25,13 @@
     "sectionTerminalInvites": "Invite responses",
     "inviteAgainHint": "You can send a new invite.",
     "inviteSent": "Poziv poslat",
-    "invitedYou": "vas je pozvao/la u"
+    "invitedYou": "vas je pozvao/la u",
+    "declineModal": {
+      "title": "Odbiti poziv?",
+      "description": "Možete opciono objasniti organizatoru zašto ne možete da učestvujete.",
+      "reasonLabel": "Razlog (opciono)",
+      "reasonPlaceholder": "npr. zauzetost, povreda…",
+      "confirm": "Odbij"
+    }
   }
 }

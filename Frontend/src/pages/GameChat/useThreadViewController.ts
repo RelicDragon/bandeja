@@ -44,6 +44,7 @@ export function useThreadViewController({
 
   const [currentChatType, setCurrentChatType] = useState<ChatType>(initialChatType ?? 'PUBLIC');
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const [showDeclineInviteModal, setShowDeclineInviteModal] = useState(false);
   const [isLeavingChat, setIsLeavingChat] = useState(false);
   const [isJoiningAsGuest, setIsJoiningAsGuest] = useState(false);
   const [isBlockedByUser, setIsBlockedByUser] = useState(false);
@@ -182,6 +183,8 @@ export function useThreadViewController({
     setIsLeavingChat,
     showLeaveConfirmation,
     setShowLeaveConfirmation,
+    showDeclineInviteModal,
+    setShowDeclineInviteModal,
     isJoiningAsGuest,
     setIsJoiningAsGuest,
     isMuted,
@@ -335,14 +338,19 @@ export function useThreadViewController({
     retryMutations: chrome.retryMutations,
     autoTranslateLanguageCodes: thread.autoTranslate.autoTranslateConfig?.languageCodes ?? [],
     handleToggleMute: chrome.handleToggleMute,
+    handleLeaveClick: chrome.handleLeaveClick,
     handleLeaveChat: chrome.handleLeaveChat,
+    handleDeclineInviteFromChat: chrome.handleDeclineInviteFromChat,
     handleJoinChannel: chrome.handleJoinChannel,
     handleChatTypeChange: chrome.handleChatTypeChange,
     leaveModalLabels: chrome.leaveModalLabels,
     isMuted: chrome.isMuted,
     isTogglingMute: chrome.isTogglingMute,
+    isLeavingChat,
     showLeaveConfirmation: chrome.showLeaveConfirmation,
     setShowLeaveConfirmation: chrome.setShowLeaveConfirmation,
+    showDeclineInviteModal: chrome.showDeclineInviteModal,
+    setShowDeclineInviteModal: chrome.setShowDeclineInviteModal,
     chatContainerRef,
     showLoadingHeader,
     navigate,

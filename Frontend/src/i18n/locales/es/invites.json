@@ -24,6 +24,13 @@
     "sectionTerminalInvites": "Respuestas a invitaciones",
     "inviteAgainHint": "Puedes enviar una nueva invitación.",
     "inviteSent": "Invitación enviada",
-    "invitedYou": "te invitó a"
+    "invitedYou": "te invitó a",
+    "declineModal": {
+      "title": "¿Rechazar invitación?",
+      "description": "Puedes explicar opcionalmente al organizador por qué no puedes unirte.",
+      "reasonLabel": "Motivo (opcional)",
+      "reasonPlaceholder": "p. ej. conflicto de horario, lesión…",
+      "confirm": "Rechazar"
+    }
   }
 }

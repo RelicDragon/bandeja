@@ -59,7 +59,7 @@ export async function generateResultsImage(game: Game, language: string = 'en-GB
     const page = await browser.newPage();
     const html = generateResultsHTML(game, language);
     
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: 'load' });
     
     await page.evaluate(() => {
       return new Promise<void>((resolve) => {

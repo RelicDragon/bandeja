@@ -16,9 +16,17 @@ interface InvitesSectionProps {
   onAccept: (inviteId: string) => void;
   onDecline: (inviteId: string) => void;
   onNoteSaved?: (gameId: string) => void;
+  /** Invite ids animating out after confirmed decline (not on initial decline tap). */
+  decliningInviteIds?: ReadonlySet<string>;
 }
 
-export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: InvitesSectionProps) => {
+export const InvitesSection = ({
+  invites,
+  onAccept,
+  onDecline,
+  onNoteSaved,
+  decliningInviteIds,
+}: InvitesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { bounceNotifications, setBounceNotifications } = useShellNavStore(
@@ -53,10 +61,11 @@ export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: In
   };
 
   const handleDecline = (inviteId: string) => {
-    setHidingInvites(prev => new Set(prev).add(inviteId));
-    // Delay the actual decline call to allow animation to start
-    setTimeout(() => onDecline(inviteId), 50);
+    onDecline(inviteId);
   };
+
+  const isHiding = (inviteId: string) =>
+    hidingInvites.has(inviteId) || (decliningInviteIds?.has(inviteId) ?? false);
 
   return (
     <div className="mb-6">
@@ -75,9 +84,9 @@ export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: In
           return (
             <SportLevelProvider key={invite.id} sport={inviteLevelSport}>
             <Card
-              className={`p-4 cursor-pointer hover:shadow-lg transition-all duration-300 ${bounceNotifications ? 'animate-[pulse_0.4s_ease-in-out_3] bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700' : ''} ${hidingInvites.has(invite.id) ? 'animate-[fadeOutUp_0.3s_ease-out_forwards] opacity-0 transform -translate-y-4' : 'opacity-100'}`}
+              className={`p-4 cursor-pointer hover:shadow-lg transition-all duration-300 ${bounceNotifications ? 'animate-[pulse_0.4s_ease-in-out_3] bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700' : ''} ${isHiding(invite.id) ? 'animate-[fadeOutUp_0.3s_ease-out_forwards] opacity-0 transform -translate-y-4' : 'opacity-100'}`}
               onClick={() => gameId && navigate(`/games/${gameId}`)}
-              onAnimationEnd={() => hidingInvites.has(invite.id) && handleHideAnimationEnd(invite.id)}
+              onAnimationEnd={() => isHiding(invite.id) && handleHideAnimationEnd(invite.id)}
             >
               <div className="flex flex-col gap-3">
                 <div className="flex items-start gap-3">

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import { defineRollupSwcMinifyOption, viteMinify } from 'rollup-plugin-swc3'
 import path from 'path'
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
@@ -45,7 +46,7 @@ const swcMinify = defineRollupSwcMinifyOption({
 })
 
 export default defineConfig(() => ({
-  plugins: [react(), viteMinify(swcMinify), ensureWellKnown()],
+  plugins: [react(), tailwindcss(), viteMinify(swcMinify), ensureWellKnown()],
   worker: {
     format: 'es',
   },

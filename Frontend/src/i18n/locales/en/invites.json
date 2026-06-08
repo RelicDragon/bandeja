@@ -24,6 +24,13 @@
     "sectionTerminalInvites": "Invite responses",
     "inviteAgainHint": "You can send a new invite.",
     "inviteSent": "Invite sent",
-    "invitedYou": "Invite to"
+    "invitedYou": "Invite to",
+    "declineModal": {
+      "title": "Decline invite?",
+      "description": "You can optionally tell the organizer why you can't join.",
+      "reasonLabel": "Reason (optional)",
+      "reasonPlaceholder": "e.g. scheduling conflict, injury…",
+      "confirm": "Decline"
+    }
   }
 }

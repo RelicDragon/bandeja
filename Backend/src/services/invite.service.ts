@@ -1,5 +1,6 @@
 import prisma from '../config/database';
-import { ChatType, EntityType, GameInviteOutcomeType, ParticipantRole } from '@prisma/client';
+import { ChatContextType, ChatType, EntityType, GameInviteOutcomeType, ParticipantRole } from '@prisma/client';
+import { MessageService } from './chat/message.service';
 import {
   deleteGameInviteOutcome,
   upsertGameInviteOutcome,
@@ -22,6 +23,26 @@ export interface InviteActionResult {
   success: boolean;
   message: string;
   invite?: any;
+}
+
+const DECLINE_MESSAGE_MAX_LENGTH = 10000;
+
+async function postDeclineReasonIfNeeded(
+  gameId: string,
+  inviteeUserId: string,
+  actingUserId: string,
+  declineMessage?: string
+): Promise<void> {
+  if (!declineMessage) return;
+  if (inviteeUserId !== actingUserId) return;
+  await MessageService.createMessageWithEvent({
+    chatContextType: ChatContextType.GAME,
+    contextId: gameId,
+    senderId: inviteeUserId,
+    content: declineMessage,
+    mediaUrls: [],
+    chatType: ChatType.PUBLIC,
+  });
 }
 
 type InviteOutcomeSocketPayload = {
@@ -404,8 +425,16 @@ export class InviteService {
   static async declineInvite(
     participantId: string,
     userId: string,
-    isAdmin: boolean = false
+    isAdmin: boolean = false,
+    declineMessage?: string
   ): Promise<InviteActionResult> {
+    const normalizedDeclineMessage = declineMessage?.trim() || undefined;
+    if (
+      normalizedDeclineMessage &&
+      normalizedDeclineMessage.length > DECLINE_MESSAGE_MAX_LENGTH
+    ) {
+      throw new ApiError(400, 'errors.invites.declineMessageTooLong');
+    }
     const participant = await prisma.gameParticipant.findUnique({
       where: { id: participantId },
       include: { user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES } },
@@ -414,6 +443,14 @@ export class InviteService {
       return { success: false, message: 'errors.invites.notFound' };
     }
     if (participant.role === ParticipantRole.OWNER) {
+      if (participant.gameId) {
+        await postDeclineReasonIfNeeded(
+          participant.gameId,
+          participant.userId,
+          userId,
+          normalizedDeclineMessage
+        );
+      }
       await prisma.gameParticipant.update({
         where: { id: participantId },
         data: {
@@ -470,6 +507,12 @@ export class InviteService {
     if (!participant.gameId) {
       return { success: false, message: 'errors.invites.notFound' };
     }
+    await postDeclineReasonIfNeeded(
+      participant.gameId,
+      participant.userId,
+      userId,
+      normalizedDeclineMessage
+    );
     const inviteOutcome = await recordInviteOutcomeAndRemoveParticipant(
       {
         id: participantId,

@@ -246,8 +246,27 @@ export const acceptInvite = asyncHandler(async (req: AuthRequest, res: Response)
 
 export const declineInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const { message } = req.body ?? {};
 
-  const result = await InviteService.declineInvite(id, req.userId!, req.user?.isAdmin || false);
+  if (message !== undefined && message !== null && typeof message !== 'string') {
+    throw new ApiError(400, 'errors.invalidInput');
+  }
+
+  let declineMessage: string | undefined;
+  if (typeof message === 'string') {
+    const trimmed = message.trim();
+    if (trimmed.length > 10000) {
+      throw new ApiError(400, 'errors.invites.declineMessageTooLong');
+    }
+    declineMessage = trimmed || undefined;
+  }
+
+  const result = await InviteService.declineInvite(
+    id,
+    req.userId!,
+    req.user?.isAdmin || false,
+    declineMessage
+  );
 
   if (!result.success) {
     const statusCode = result.message === 'errors.invites.notFound' ? 404 :

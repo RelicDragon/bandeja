@@ -45,6 +45,8 @@ export interface UseThreadViewChromeParams {
   setIsLeavingChat: (v: boolean) => void;
   showLeaveConfirmation: boolean;
   setShowLeaveConfirmation: (v: boolean) => void;
+  showDeclineInviteModal: boolean;
+  setShowDeclineInviteModal: (v: boolean) => void;
   isJoiningAsGuest: boolean;
   setIsJoiningAsGuest: (v: boolean) => void;
   isMuted: boolean;
@@ -87,6 +89,8 @@ export function useThreadViewChrome(params: UseThreadViewChromeParams) {
     setIsLeavingChat,
     showLeaveConfirmation,
     setShowLeaveConfirmation,
+    showDeclineInviteModal,
+    setShowDeclineInviteModal,
     isJoiningAsGuest,
     setIsJoiningAsGuest,
     isMuted,
@@ -127,8 +131,10 @@ export function useThreadViewChrome(params: UseThreadViewChromeParams) {
 
   const {
     leaveModalLabels,
+    handleLeaveClick,
     handleJoinAsGuest,
     handleLeaveChat,
+    handleDeclineInviteFromChat,
     handleToggleMute,
     handleJoinChannel,
     handleChatTypeChange,
@@ -159,6 +165,7 @@ export function useThreadViewChrome(params: UseThreadViewChromeParams) {
     isLeavingChat,
     setIsLeavingChat,
     setShowLeaveConfirmation,
+    setShowDeclineInviteModal,
     setIsJoiningAsGuest,
     setIsMuted,
     setIsTogglingMute,
@@ -214,8 +221,10 @@ export function useThreadViewChrome(params: UseThreadViewChromeParams) {
     failedMutationCount,
     retryMutations,
     leaveModalLabels,
+    handleLeaveClick,
     handleJoinAsGuest,
     handleLeaveChat,
+    handleDeclineInviteFromChat,
     handleToggleMute,
     handleJoinChannel,
     handleChatTypeChange,
@@ -226,6 +235,8 @@ export function useThreadViewChrome(params: UseThreadViewChromeParams) {
     isLeavingChat,
     showLeaveConfirmation,
     setShowLeaveConfirmation,
+    showDeclineInviteModal,
+    setShowDeclineInviteModal,
     isJoiningAsGuest,
     isMuted,
     isTogglingMute,

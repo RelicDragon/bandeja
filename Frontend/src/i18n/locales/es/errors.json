@@ -22,7 +22,8 @@
       "gameNotFound": "Juego no encontrado",
       "onlyParticipantsCanView": "Solo los participantes pueden ver las invitaciones del juego",
       "onlySenderCanCancel": "Solo el remitente puede cancelar esta invitación",
-      "canOnlyCancelPending": "Solo se pueden cancelar invitaciones pendientes"
+      "canOnlyCancelPending": "Solo se pueden cancelar invitaciones pendientes",
+      "declineMessageTooLong": "El motivo del rechazo no puede superar los 10.000 caracteres"
     },
     "userTeams": {
       "blocked": "No puedes invitar a este jugador",

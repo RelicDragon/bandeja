@@ -24,6 +24,13 @@
     "sectionTerminalInvites": "Invite responses",
     "inviteAgainHint": "You can send a new invite.",
     "inviteSent": "Pozvánka odeslána",
-    "invitedYou": "Pozvánka do"
+    "invitedYou": "Pozvánka do",
+    "declineModal": {
+      "title": "Odmítnout pozvánku?",
+      "description": "Můžete organizátorovi volitelně sdělit, proč se nemůžete zúčastnit.",
+      "reasonLabel": "Důvod (volitelné)",
+      "reasonPlaceholder": "např. časová kolize, zranění…",
+      "confirm": "Odmítnout"
+    }
   }
 }

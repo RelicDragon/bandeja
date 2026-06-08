@@ -29,6 +29,7 @@ import { GameCancelled } from '@/components/GameDetails/GameCancelled';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsList';
 import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
+import { DeclineInviteModal } from '@/components/DeclineInviteModal';
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
 import { GameFormatSection } from '@/components/GameDetails/GameFormatSection';
 import { LeagueSeasonPointsSection } from '@/components/GameDetails/LeagueSeasonPointsSection';
@@ -119,6 +120,8 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   const [game, setGame] = useState<Game | null>(null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
   const [gameInvites, setGameInvites] = useState<Invite[]>([]);
+  const [declineInviteId, setDeclineInviteId] = useState<string | null>(null);
+  const [isDecliningInvite, setIsDecliningInvite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showPlayerList, setShowPlayerList] = useState(false);
   const [playerListMode, setPlayerListMode] = useState<'players' | 'trainer'>('players');
@@ -612,18 +615,36 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     }
   };
 
-  const handleDeclineInvite = async (inviteId: string) => {
+  const handleDeclineInvite = (inviteId: string) => {
     const authUser = useAuthStore.getState().user;
     if (authUser && authUser.nameIsSet !== true) {
       runWithProfileName(() => void handleDeclineInvite(inviteId));
       return;
     }
+    setDeclineInviteId(inviteId);
+  };
+
+  const confirmDeclineInvite = async (message?: string) => {
+    if (!declineInviteId) return;
+    setIsDecliningInvite(true);
     try {
-      await invitesApi.decline(inviteId);
-      setMyInvites(myInvites.filter((inv) => inv.id !== inviteId));
+      await invitesApi.decline(
+        declineInviteId,
+        message !== undefined ? { message } : undefined
+      );
+      setMyInvites(myInvites.filter((inv) => inv.id !== declineInviteId));
+      if (id) {
+        const response = await gamesApi.getById(id);
+        setGame(response.data);
+        const gameInvitesResponse = await invitesApi.getGameInvites(id);
+        setGameInvites(gameInvitesResponse.data);
+      }
+      setDeclineInviteId(null);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setIsDecliningInvite(false);
     }
   };
 
@@ -1955,6 +1976,13 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
         round={roundAddedForModal}
         game={game}
         roundNumber={roundAddedModalRoundNumber}
+      />
+
+      <DeclineInviteModal
+        isOpen={declineInviteId !== null}
+        onClose={() => setDeclineInviteId(null)}
+        onDecline={confirmDeclineInvite}
+        isLoading={isDecliningInvite}
       />
       </div>
       </div>

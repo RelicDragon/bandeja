@@ -24,6 +24,13 @@
     "sectionTerminalInvites": "Invite responses",
     "inviteAgainHint": "You can send a new invite.",
     "inviteSent": "Приглашение отправлено",
-    "invitedYou": "Приглашение в"
+    "invitedYou": "Приглашение в",
+    "declineModal": {
+      "title": "Отклонить приглашение?",
+      "description": "Вы можете необязательно объяснить организатору, почему не можете прийти.",
+      "reasonLabel": "Причина (необязательно)",
+      "reasonPlaceholder": "например, занят, травма…",
+      "confirm": "Отклонить"
+    }
   }
 }

@@ -21,7 +21,14 @@ router.post(
 
 router.post('/:id/accept', authenticate, inviteController.acceptInvite);
 
-router.post('/:id/decline', authenticate, inviteController.declineInvite);
+router.post(
+  '/:id/decline',
+  authenticate,
+  validate([
+    body('message').optional({ nullable: true }).isString().isLength({ max: 10000 }),
+  ]),
+  inviteController.declineInvite
+);
 
 router.delete('/:id/cancel', authenticate, inviteController.cancelInvite);
 

@@ -4,6 +4,7 @@ import { chatApi } from '@/api/chat';
 import { MessageList } from '@/components/MessageList';
 import { ChatParticipantsModal } from '@/components/ChatParticipantsModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { DeclineInviteModal } from '@/components/DeclineInviteModal';
 import { useAuthStore } from '@/store/authStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
@@ -59,11 +60,15 @@ const GameChatLayout: React.FC = () => {
     panels,
     autoTranslateLanguageCodes,
     handleLeaveChat,
+    handleDeclineInviteFromChat,
     handleJoinChannel,
     handleChatTypeChange,
     leaveModalLabels,
+    isLeavingChat,
     showLeaveConfirmation,
     setShowLeaveConfirmation,
+    showDeclineInviteModal,
+    setShowDeclineInviteModal,
     chatContainerRef,
     showLoadingHeader,
     navigate,
@@ -318,6 +323,15 @@ const GameChatLayout: React.FC = () => {
           <PlayerCardBottomSheet
             playerId={panels.showPlayerCard && userChat && user?.id ? (userChat.user1Id === user.id ? userChat.user2Id : userChat.user1Id) ?? null : null}
             onClose={() => panels.setShowPlayerCard(false)}
+          />
+        )}
+
+        {contextType === 'GAME' && (
+          <DeclineInviteModal
+            isOpen={showDeclineInviteModal}
+            onClose={() => setShowDeclineInviteModal(false)}
+            onDecline={handleDeclineInviteFromChat}
+            isLoading={isLeavingChat}
           />
         )}
 

@@ -1,6 +1,6 @@
-import { createClient } from 'redis';
+import { createClient, type RedisClientType } from 'redis';
 
-type RedisClient = ReturnType<typeof createClient>;
+type RedisClient = RedisClientType;
 
 let client: RedisClient | null = null;
 let subscriber: RedisClient | null = null;

@@ -1,10 +1,10 @@
 import { createAdapter } from '@socket.io/redis-adapter';
-import { createClient } from 'redis';
+import { createClient, type RedisClientType } from 'redis';
 import { DefaultEventsMap, RemoteSocket, Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import { verifyToken } from '../utils/jwt';
 
-type RedisPubSubClient = ReturnType<typeof createClient>;
+type RedisPubSubClient = RedisClientType;
 import prisma from '../config/database';
 import { MessageService } from './chat/message.service';
 import { GameReadService } from './game/read.service';

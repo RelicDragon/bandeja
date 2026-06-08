@@ -28,7 +28,7 @@ export const GameChatHeaderSection: React.FC = () => {
     handleToggleMute,
     isMuted,
     isTogglingMute,
-    setShowLeaveConfirmation,
+    handleLeaveClick,
     showLoadingHeader,
     navigate,
   } = chrome;
@@ -79,7 +79,7 @@ export const GameChatHeaderSection: React.FC = () => {
             isMuted,
             isTogglingMute,
             onToggleMute: handleToggleMute,
-            onLeaveClick: () => setShowLeaveConfirmation(true),
+            onLeaveClick: handleLeaveClick,
             leaveTitle: derived.leaveTitle,
             game,
             onParticipantsClick: () => panels.setShowParticipantsModal(true),
@@ -94,7 +94,7 @@ export const GameChatHeaderSection: React.FC = () => {
       isMuted,
       isTogglingMute,
       handleToggleMute,
-      setShowLeaveConfirmation,
+      handleLeaveClick,
       game,
       panels,
     ]

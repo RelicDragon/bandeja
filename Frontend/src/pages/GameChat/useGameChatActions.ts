@@ -1,8 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { chatApi } from '@/api/chat';
 import { gamesApi } from '@/api/games';
+import { invitesApi } from '@/api/invites';
 import { applyQueuedMessagesToState } from '@/services/applyQueuedMessagesToState';
 import {
   applyThreadEvent,
@@ -40,7 +42,7 @@ export interface UseGameChatActionsParams {
   setGame: (game: Game | null | ((prev: Game | null) => Game | null)) => void;
   setGroupChannel: (ch: GroupChannel | null | ((prev: GroupChannel | null) => GroupChannel | null)) => void;
   groupChannel: GroupChannel | null;
-  userParticipant: { status?: string } | undefined;
+  userParticipant: { id?: string; status?: string } | undefined;
   currentChatType: ChatType;
   setCurrentChatType: (t: ChatType) => void;
   setPage: (n: number) => void;
@@ -57,6 +59,7 @@ export interface UseGameChatActionsParams {
   isLeavingChat: boolean;
   setIsLeavingChat: (v: boolean) => void;
   setShowLeaveConfirmation: (v: boolean) => void;
+  setShowDeclineInviteModal: (v: boolean) => void;
   setIsJoiningAsGuest: (v: boolean) => void;
   setIsMuted: (v: boolean) => void;
   setIsTogglingMute: (v: boolean) => void;
@@ -92,6 +95,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
     isLeavingChat,
     setIsLeavingChat,
     setShowLeaveConfirmation,
+    setShowDeclineInviteModal,
     setIsJoiningAsGuest,
     setIsMuted,
     setIsTogglingMute,
@@ -104,9 +108,6 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
     }
     if (userParticipant.status === 'GUEST') {
       return { title: t('chat.leave'), message: t('chat.leaveConfirmation'), confirmText: t('chat.leave') };
-    }
-    if (userParticipant && isPendingGameInvite(userParticipant)) {
-      return { title: t('chat.leaveDeclineInviteTitle'), message: t('chat.leaveDeclineInviteMessage'), confirmText: t('common.decline') };
     }
     if (userParticipant.status === 'IN_QUEUE') {
       return { title: t('chat.leaveCancelQueueTitle'), message: t('chat.leaveCancelQueueMessage'), confirmText: t('games.cancelJoinRequest', { defaultValue: 'Cancel' }) };
@@ -154,6 +155,49 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
     }
   }, [id, contextType, loadContext, setGame, setGroupChannel, setIsJoiningAsGuest]);
 
+  const handleLeaveClick = useCallback(() => {
+    if (contextType === 'GAME' && userParticipant && isPendingGameInvite(userParticipant)) {
+      setShowDeclineInviteModal(true);
+      return;
+    }
+    setShowLeaveConfirmation(true);
+  }, [contextType, userParticipant, setShowDeclineInviteModal, setShowLeaveConfirmation]);
+
+  const handleDeclineInviteFromChat = useCallback(
+    async (message?: string) => {
+      if (!id || isLeavingChat) return;
+      const authUser = useAuthStore.getState().user;
+      if (authUser && authUser.nameIsSet !== true) {
+        runWithProfileName(() => void handleDeclineInviteFromChat(message));
+        return;
+      }
+      const participantId = userParticipant?.id;
+      if (!participantId) return;
+      setIsLeavingChat(true);
+      try {
+        await invitesApi.decline(participantId, message != null ? { message } : undefined);
+        navigate(-1);
+      } catch (error: unknown) {
+        const errorMessage =
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          'errors.generic';
+        toast.error(t(errorMessage, { defaultValue: errorMessage }));
+      } finally {
+        setIsLeavingChat(false);
+        setShowDeclineInviteModal(false);
+      }
+    },
+    [
+      id,
+      isLeavingChat,
+      userParticipant?.id,
+      navigate,
+      setIsLeavingChat,
+      setShowDeclineInviteModal,
+      t,
+    ],
+  );
+
   const handleLeaveChat = useCallback(async () => {
     if (!id || isLeavingChat) return;
     const authUser = useAuthStore.getState().user;
@@ -164,6 +208,9 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
     setIsLeavingChat(true);
     try {
       if (contextType === 'GAME') {
+        if (userParticipant && isPendingGameInvite(userParticipant)) {
+          return;
+        }
         const isGuestOnly = userParticipant?.status === 'GUEST';
         if (isGuestOnly) {
           await gamesApi.leaveChat(id);
@@ -189,7 +236,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
       setIsLeavingChat(false);
       setShowLeaveConfirmation(false);
     }
-  }, [id, contextType, navigate, userParticipant?.status, groupChannel, setChatsFilter, isLeavingChat, setIsLeavingChat, setShowLeaveConfirmation]);
+  }, [id, contextType, navigate, userParticipant, groupChannel, setChatsFilter, isLeavingChat, setIsLeavingChat, setShowLeaveConfirmation]);
 
   const handleToggleMute = useCallback(async () => {
     if (!id) return;
@@ -373,8 +420,10 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
 
   return {
     leaveModalLabels,
+    handleLeaveClick,
     handleJoinAsGuest,
     handleLeaveChat,
+    handleDeclineInviteFromChat,
     handleToggleMute,
     handleJoinChannel,
     handleChatTypeChange,
