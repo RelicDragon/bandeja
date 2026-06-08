@@ -3,36 +3,28 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft, Share2, Maximize2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { usersApi, UserStats } from '@/api/users';
 import type { CommonChatItem } from '@/api/commonChats';
-import { favoritesApi } from '@/api/favorites';
-import { blockedUsersApi } from '@/api/blockedUsers';
+import { usersApi } from '@/api/users';
 import { Loading } from './Loading';
 import { ReviewsList } from './ReviewsList';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
 import { ConfirmationModal } from './ConfirmationModal';
 import { ShareModal } from './ShareModal';
 import { useAuthStore } from '@/store/authStore';
-import { useFavoritesStore } from '@/store/favoritesStore';
-import { usePlayersStore } from '@/store/playersStore';
-import { usePresenceStore } from '@/store/presenceStore';
-import { useNavigationStore } from '@/store/navigationStore';
-import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
+import { useShellNavStore } from '@/store/shellNavStore';
 import {
   Drawer,
   DrawerContent,
   DrawerClose,
 } from './ui/Drawer';
-import toast from 'react-hot-toast';
 import { removeOverlay } from '@/utils/urlSchema';
-import { sharePlayerProfile } from '@/utils/sharePlayerProfile';
+import { appendLevelSportQuery } from '@/utils/levelSportQuery';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { PlayerCardProfileBody, type PlayerCardProfileTab } from '@/components/player/PlayerCardProfileBody';
 import { PlayerCardCommonGroups } from '@/components/player/PlayerCardCommonGroups';
 import { PlayerProfileSocialActions } from '@/components/player/PlayerProfileSocialActions';
 import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionBar';
-import { useSportLevelContext } from '@/contexts/useSportLevelContext';
-import { appendLevelSportQuery } from '@/utils/levelSportQuery';
+import { usePlayerProfile } from '@/features/playerProfile';
 
 interface PlayerCardBottomSheetProps {
   playerId: string | null;
@@ -43,29 +35,86 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const updateUser = useAuthStore((state) => state.updateUser);
-  const { addFavorite, removeFavorite } = useFavoritesStore();
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [avatarViewerUrl, setAvatarViewerUrl] = useState<string | null>(null);
   const [showReviewsView, setShowReviewsView] = useState(false);
   const [showSendMoneyModal, setShowSendMoneyModal] = useState(false);
-  const [startingChat, setStartingChat] = useState(false);
   const [showBlockConfirmation, setShowBlockConfirmation] = useState(false);
-  const [blockingUser, setBlockingUser] = useState(false);
-  const [isBlocked, setIsBlocked] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareModalUrl, setShareModalUrl] = useState('');
   const [profileTab, setProfileTab] = useState<PlayerCardProfileTab>('statistics');
   const [commonChats, setCommonChats] = useState<CommonChatItem[]>([]);
   const [commonChatsLoading, setCommonChatsLoading] = useState(false);
-  const isCurrentUser = playerId === user?.id;
-  const canFetchCommonChats = !!user && !!playerId && !isCurrentUser && !isBlocked;
-  const showProfileTabs = canFetchCommonChats && !commonChatsLoading && commonChats.length > 0;
-  const contextLevelSport = useSportLevelContext();
   const navigatingToChatRef = useRef(false);
   const navigatingToFullProfileRef = useRef(false);
   const suppressDrawerDismissUntilRef = useRef(0);
+
+  const markReopenOnBack = useCallback(() => {
+    if (!playerId) return;
+    const sourceIdx = window.history.state?.idx ?? 0;
+    useShellNavStore.getState().setPendingPlayerCardReopen({ playerId, sourceIdx });
+  }, [playerId]);
+
+  const handleClose = useCallback(() => {
+    if (navigatingToFullProfileRef.current) {
+      navigatingToFullProfileRef.current = false;
+      onClose();
+      return;
+    }
+    if (navigatingToChatRef.current) {
+      navigatingToChatRef.current = false;
+      onClose();
+      return;
+    }
+    const currentPath = window.location.pathname;
+    const currentSearch = window.location.search;
+    const isChatPath = currentPath.includes('/user-chat/') || currentPath.includes('/group-chat/') || currentPath.includes('/channel-chat/') || /^\/bugs\/[^/]+$/.test(currentPath) || /^\/user-profile\/[^/]+$/.test(currentPath);
+    if (currentSearch.includes('player=') && !isChatPath) {
+      const cleanUrl = removeOverlay(currentPath, currentSearch, 'player');
+      navigate(cleanUrl, { replace: true });
+    }
+    onClose();
+  }, [onClose, navigate]);
+
+  const {
+    stats,
+    loading,
+    isCurrentUser,
+    isBlocked,
+    setStats,
+    startingChat,
+    blockingUser,
+    actions,
+  } = usePlayerProfile(playerId, {
+    presenceKey: 'player-card',
+    onBlocked: () => handleClose(),
+    onShareFallback: (url) => {
+      setShareModalUrl(url);
+      setShowShareModal(true);
+    },
+    onStartChat: (chat) => {
+      markReopenOnBack();
+      navigatingToChatRef.current = true;
+      navigate(`/user-chat/${chat.id}`, {
+        state: { chat, contextType: 'USER' },
+      });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => onClose());
+      });
+      return true;
+    },
+    onOpenFullProfile: (sport) => {
+      if (!playerId || playerId === user?.id) return true;
+      navigatingToFullProfileRef.current = true;
+      navigate(appendLevelSportQuery(`/user-profile/${playerId}`, sport));
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => onClose());
+      });
+      return true;
+    },
+  });
+
+  const canFetchCommonChats = !!user && !!playerId && !isCurrentUser && !isBlocked;
+  const showProfileTabs = canFetchCommonChats && !commonChatsLoading && commonChats.length > 0;
 
   useEffect(() => {
     if (!playerId) return;
@@ -76,27 +125,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     setShareModalUrl('');
     setProfileTab('statistics');
     setCommonChats([]);
-
-    const fetchStats = async () => {
-      try {
-        setLoading(true);
-        const statsResponse = await usersApi.getUserStats(playerId, contextLevelSport);
-        setStats(statsResponse.data);
-        if (user && !isCurrentUser) {
-          const blocked = await blockedUsersApi.checkIfUserBlocked(playerId);
-          setIsBlocked(blocked);
-        } else {
-          setIsBlocked(false);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, [playerId, isCurrentUser, user, contextLevelSport, t]);
+  }, [playerId]);
 
   useEffect(() => {
     if (!canFetchCommonChats || !playerId) {
@@ -130,42 +159,6 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     }
   }, [showProfileTabs, profileTab]);
 
-  usePresenceSubscription('player-card', user && playerId && !isCurrentUser ? [playerId] : []);
-
-  useEffect(() => {
-    if (!user || !playerId || isCurrentUser) return;
-    usersApi.getPresence([playerId]).then((data) => {
-      if (Object.keys(data).length > 0) usePresenceStore.getState().setPresenceInitial(data);
-    }).catch(() => {});
-  }, [playerId, isCurrentUser, user]);
-
-  const markReopenOnBack = useCallback(() => {
-    if (!playerId) return;
-    const sourceIdx = window.history.state?.idx ?? 0;
-    useNavigationStore.getState().setPendingPlayerCardReopen({ playerId, sourceIdx });
-  }, [playerId]);
-
-  const handleClose = useCallback(() => {
-    if (navigatingToFullProfileRef.current) {
-      navigatingToFullProfileRef.current = false;
-      onClose();
-      return;
-    }
-    if (navigatingToChatRef.current) {
-      navigatingToChatRef.current = false;
-      onClose();
-      return;
-    }
-    const currentPath = window.location.pathname;
-    const currentSearch = window.location.search;
-    const isChatPath = currentPath.includes('/user-chat/') || currentPath.includes('/group-chat/') || currentPath.includes('/channel-chat/') || /^\/bugs\/[^/]+$/.test(currentPath) || /^\/user-profile\/[^/]+$/.test(currentPath);
-    if (currentSearch.includes('player=') && !isChatPath) {
-      const cleanUrl = removeOverlay(currentPath, currentSearch, 'player');
-      navigate(cleanUrl, { replace: true });
-    }
-    onClose();
-  }, [onClose, navigate]);
-
   const handleAvatarViewerClose = useCallback(() => {
     suppressDrawerDismissUntilRef.current = Date.now() + 400;
     setAvatarViewerUrl(null);
@@ -180,64 +173,6 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     if (Date.now() < suppressDrawerDismissUntilRef.current) return;
     handleClose();
   }, [avatarViewerUrl, handleAvatarViewerClose, handleClose]);
-
-  const handleOpenFullProfile = useCallback(() => {
-    if (!playerId || isCurrentUser) return;
-    navigatingToFullProfileRef.current = true;
-    navigate(appendLevelSportQuery(`/user-profile/${playerId}`, contextLevelSport));
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        onClose();
-      });
-    });
-  }, [playerId, isCurrentUser, navigate, onClose, contextLevelSport]);
-
-  const handleToggleFavorite = async () => {
-    if (!playerId || !stats || isBlocked) return;
-    try {
-      if (stats.user.isFavorite) {
-        await favoritesApi.removeUserFromFavorites(playerId);
-        setStats({ ...stats, user: { ...stats.user, isFavorite: false }, followersCount: Math.max(0, stats.followersCount - 1) });
-        removeFavorite(playerId);
-        toast.success(t('favorites.userRemovedFromFavorites'));
-      } else {
-        await favoritesApi.addUserToFavorites(playerId);
-        setStats({ ...stats, user: { ...stats.user, isFavorite: true }, followersCount: stats.followersCount + 1 });
-        addFavorite(playerId);
-        toast.success(t('favorites.userAddedToFavorites'));
-      }
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    }
-  };
-
-  const handleStartChat = async () => {
-    if (!playerId || startingChat || isBlocked) return;
-    setStartingChat(true);
-    try {
-      const chat = await usePlayersStore.getState().getOrCreateAndAddUserChat(playerId);
-      if (!chat) {
-        toast.error(t('errors.generic', { defaultValue: 'Something went wrong' }));
-        return;
-      }
-      markReopenOnBack();
-      navigatingToChatRef.current = true;
-      navigate(`/user-chat/${chat.id}`, {
-        state: { chat, contextType: 'USER' },
-      });
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          onClose();
-        });
-      });
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    } finally {
-      setStartingChat(false);
-    }
-  };
 
   const handleOpenCommonChat = useCallback((chat: CommonChatItem) => {
     markReopenOnBack();
@@ -266,48 +201,6 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     });
   }, [markReopenOnBack, navigate, onClose]);
 
-  const handleShareProfile = useCallback(async () => {
-    if (!playerId || !stats || isBlocked) return;
-    await sharePlayerProfile({
-      playerId,
-      sport: contextLevelSport,
-      t,
-      onFallbackModal: (url) => {
-        setShareModalUrl(url);
-        setShowShareModal(true);
-      },
-    });
-  }, [playerId, stats, isBlocked, contextLevelSport, t]);
-
-  const handleBlockUser = async () => {
-    if (!playerId || blockingUser) return;
-    setBlockingUser(true);
-    try {
-      if (isBlocked) {
-        await blockedUsersApi.unblockUser(playerId);
-        setIsBlocked(false);
-        toast.success(t('playerCard.userUnblocked') || 'User unblocked');
-      } else {
-        await blockedUsersApi.blockUser(playerId);
-        setIsBlocked(true);
-        toast.success(t('playerCard.userBlocked') || 'User blocked');
-        handleClose();
-      }
-      try {
-        const profileResponse = await usersApi.getProfile();
-        updateUser(profileResponse.data);
-      } catch (error) {
-        console.error('Failed to refresh user profile after block/unblock:', error);
-      }
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    } finally {
-      setBlockingUser(false);
-      setShowBlockConfirmation(false);
-    }
-  };
-
   return (
     <>
       {!showSendMoneyModal && (
@@ -335,11 +228,11 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                   isBlocked={isBlocked}
                   blockingUser={blockingUser}
                   startingChat={startingChat}
-                  onToggleFavorite={handleToggleFavorite}
-                  onShare={() => void handleShareProfile()}
-                  onStartChat={handleStartChat}
-                  onBlockPrimary={isBlocked ? handleBlockUser : () => setShowBlockConfirmation(true)}
-                  onOpenFullProfile={!isCurrentUser ? handleOpenFullProfile : undefined}
+                  onToggleFavorite={() => void actions.toggleFavorite()}
+                  onShare={() => void actions.share()}
+                  onStartChat={() => void actions.startChat()}
+                  onBlockPrimary={isBlocked ? () => void actions.unblock() : () => setShowBlockConfirmation(true)}
+                  onOpenFullProfile={!isCurrentUser ? actions.openFullProfile : undefined}
                   t={t}
                   closeSlot={(
                     <DrawerClose asChild>
@@ -354,7 +247,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                   {!isBlocked && (
                     <button
                       type="button"
-                      onClick={() => void handleShareProfile()}
+                      onClick={() => void actions.share()}
                       className="px-4 py-2 rounded-xl text-white flex items-center justify-center shadow-md bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700"
                       title={t('playerCard.shareProfileTitle')}
                       aria-label={t('playerCard.shareProfileTitle')}
@@ -365,7 +258,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                   {!isCurrentUser && (
                     <button
                       type="button"
-                      onClick={handleOpenFullProfile}
+                      onClick={actions.openFullProfile}
                       className="px-4 py-2 rounded-xl text-white flex items-center gap-2 shadow-md bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700"
                       title={t('playerCard.openFullProfile')}
                     >
@@ -439,8 +332,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                               isFavorite={!!stats.user.isFavorite}
                               isBlocked={isBlocked}
                               startingChat={startingChat}
-                              onToggleFavorite={handleToggleFavorite}
-                              onStartChat={handleStartChat}
+                              onToggleFavorite={() => void actions.toggleFavorite()}
+                              onStartChat={() => void actions.startChat()}
                               t={t}
                             />
                           ) : undefined
@@ -501,7 +394,10 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
           confirmText={t('playerCard.block')}
           cancelText={t('common.cancel')}
           confirmVariant="danger"
-          onConfirm={handleBlockUser}
+          onConfirm={async () => {
+            await actions.block();
+            setShowBlockConfirmation(false);
+          }}
           onClose={() => setShowBlockConfirmation(false)}
         />
       )}

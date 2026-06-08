@@ -1,53 +1,31 @@
 import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { chatApi, type ChatMessage } from '@/api/chat';
-import toast from 'react-hot-toast';
-import { formatChatMessageForForwardClipboard } from '@/utils/chatForwardClipboard';
 import { ChatType } from '@/types';
 import { type MessageListHandle } from '@/components/MessageList';
 import { useAuthStore } from '@/store/authStore';
-import { useNavigationStore } from '@/store/navigationStore';
-import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { normalizeChatType } from '@/utils/chatType';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { cancelAllForContext } from '@/services/chatSendService';
 import type { LocationState, GameChatProps } from './types';
 import { getContextTypeFromRoute } from './types';
-import { useGameChatPinned } from './useGameChatPinned';
 import { useGameChatContext } from './useGameChatContext';
-import { useGameChatSession } from './useGameChatSession';
-import { useThreadSessionEffects } from './useThreadSessionEffects';
-import { useGameChatActions } from './useGameChatActions';
-import { useGameChatDisplay } from './useGameChatDisplay';
-import { useGameChatReactions } from './useGameChatReactions';
-import { useGameChatMutationRetry } from './useGameChatMutationRetry';
-import { useGameChatDerived } from './useGameChatDerived';
-import { useGameChatPanels } from './useGameChatPanels';
-import { useGameChatFooterVariant } from './useGameChatFooterVariant';
+import { useChatThreadController } from '@/services/chat/chatThreadController/useChatThreadController';
+import { useThreadViewChrome } from './useThreadViewChrome';
 import { recordChatThreadOpened } from '@/services/chat/chatThreadOpenStats';
-import { reconcileThreadIndexOutboxForContext } from '@/services/chat/chatThreadIndex';
-import type { ChatContextType } from '@/api/chat';
-import { useGameChatAutoTranslate } from './useGameChatAutoTranslate';
-import { useGameChatTranslationLive } from './useGameChatTranslationLive';
-import { useGameChatChannelActivity } from './useGameChatChannelActivity';
-import { markContextReadOnUserActivity } from '@/services/chat/unreadCoordinator';
-import { buildGameChatMarkReadParams } from '@/services/chat/gameChatMarkReadParams';
 import type { SendQueuedParams } from '@/components/chat/useMessageInputSubmit';
 import type { ThreadViewValue } from './ThreadViewContext';
-import type { TranslationModalAutoTranslateProps } from '@/components/chat/TranslationLanguageModal';
 
 export function useThreadViewController({
   isEmbedded = false,
   chatId: propChatId,
   chatType: propChatType,
 }: GameChatProps): ThreadViewValue {
-  const { t } = useTranslation();
   const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
-  const { setChatsFilter } = useNavigationStore();
+  const { setChatsFilter } = useShellNavStore();
 
   const id = propChatId ?? paramId;
   const locationState = location.state as LocationState | null;
@@ -62,6 +40,17 @@ export function useThreadViewController({
   const previousIdRef = useRef<string | undefined>(id);
   const currentIdRef = useRef<string | undefined>(id);
   currentIdRef.current = id;
+  const socketHandlersRef = useRef<import('@/services/chat/chatThreadController/useChatThreadController').ChatThreadSocketHandlers | null>(null);
+
+  const [currentChatType, setCurrentChatType] = useState<ChatType>(initialChatType ?? 'PUBLIC');
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const [isLeavingChat, setIsLeavingChat] = useState(false);
+  const [isJoiningAsGuest, setIsJoiningAsGuest] = useState(false);
+  const [isBlockedByUser, setIsBlockedByUser] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isTogglingMute, setIsTogglingMute] = useState(false);
+  const [translateToLanguageForChat, setTranslateToLanguageForChat] = useState<string | null>(null);
+  const [chatNearBottom, setChatNearBottom] = useState(true);
 
   const {
     game,
@@ -89,8 +78,6 @@ export function useThreadViewController({
     currentIdRef,
   });
 
-  const [currentChatType, setCurrentChatType] = useState<ChatType>(initialChatType ?? 'PUBLIC');
-
   useEffect(() => {
     if (contextType !== 'GAME' || !id) return;
     const q = searchParams.get('chatType');
@@ -110,15 +97,6 @@ export function useThreadViewController({
     setCurrentChatType('PUBLIC');
   }, [contextType, id, isEmbedded, navigate, searchParams, setSearchParams]);
 
-  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
-  const [isLeavingChat, setIsLeavingChat] = useState(false);
-  const [isJoiningAsGuest, setIsJoiningAsGuest] = useState(false);
-  const [isBlockedByUser, setIsBlockedByUser] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isTogglingMute, setIsTogglingMute] = useState(false);
-  const [translateToLanguageForChat, setTranslateToLanguageForChat] = useState<string | null>(null);
-  const [chatNearBottom, setChatNearBottom] = useState(true);
-
   const effectiveChatType = useMemo(
     () => (contextType === 'GAME' ? normalizeChatType(currentChatType) : 'PUBLIC') as ChatType,
     [contextType, currentChatType]
@@ -133,16 +111,6 @@ export function useThreadViewController({
     );
   }, [id, contextType, effectiveChatType]);
 
-  useEffect(() => {
-    const ct = contextType as ChatContextType;
-    const cid = id;
-    return () => {
-      if (!cid) return;
-      if (ct !== 'USER' && ct !== 'GROUP' && ct !== 'GAME' && ct !== 'BUG') return;
-      void reconcileThreadIndexOutboxForContext(ct, cid);
-    };
-  }, [id, contextType]);
-
   const threadScrollKey = useMemo(() => {
     if (!id) return null;
     return chatSyncTailKey(
@@ -152,51 +120,7 @@ export function useThreadViewController({
     );
   }, [id, contextType, effectiveChatType]);
 
-  const { channelActivity, channelActivityResolved, noteUserMessage } = useGameChatChannelActivity(
-    contextType === 'GAME' ? game : null,
-    user?.id
-  );
-
-  const {
-    messages,
-    setMessages,
-    messagesRef,
-    setPage,
-    hasMoreMessages,
-    setHasMoreMessages,
-    isLoadingMessages,
-    setIsLoadingMessages,
-    isInitialLoad,
-    setIsInitialLoad,
-    isThreadOpenSettling,
-    isLoadingMore,
-    isSwitchingChatType,
-    setIsSwitchingChatType,
-    loadingIdRef,
-    hasLoadedRef,
-    isLoadingRef,
-    initialScroll,
-    openPaintGeneration,
-    openPaintCommittedRef,
-    scrollToBottom,
-    loadMessages,
-    loadMoreMessages,
-    loadMessagesBeforeMessageId,
-    teardownForChatTypeSwitch,
-    commitChatTypeSwitchPaint,
-    pinAfterSocketMergeIfAllowed,
-    handleAddOptimisticMessage,
-    handleMarkFailed,
-    handleSendQueued,
-    handleResendQueued,
-    handleRemoveFromQueue,
-    handleSendFailed,
-    handleReplaceOptimisticWithServerMessage,
-    handleNewMessage,
-    handleNewMessageRef,
-    reloadMessagesFirstPage,
-    bootstrapThread,
-  } = useGameChatSession({
+  const thread = useChatThreadController({
     id,
     contextType,
     currentChatType,
@@ -208,278 +132,79 @@ export function useThreadViewController({
     openAnchorMessageId: locationState?.anchorMessageId,
     user,
     setUserChat,
-    onInboundMessage: contextType === 'GAME' ? noteUserMessage : undefined,
+    userChat,
+    isEmbedded,
+    initialChatType,
+    game,
+    groupChannel,
+    groupChannelId: groupChannel?.id,
+    loadContext,
+    setCurrentChatType,
+    setIsBlockedByUser,
+    setIsMuted,
+    setTranslateToLanguageForChat,
+    setIsLoadingContext,
+    isBlockedByUser,
+    isJoiningAsGuest,
+    socketHandlersRef,
+  });
+
+  const { setPage, setHasMoreMessages, setReplyTo, setEditingMessage } = thread;
+
+  const chrome = useThreadViewChrome({
+    id,
+    contextType,
+    currentChatType,
+    game,
+    bug,
+    userChat,
+    groupChannel,
+    groupChannelParticipantsCount,
+    user,
+    navigate,
+    setChatsFilter,
+    loadContext,
+    setGame,
+    setGroupChannel,
+    derived: thread.derived,
+    setMessages: thread.setMessages,
+    messagesRef: thread.messagesRef,
+    setPage: thread.setPage,
+    setHasMoreMessages: thread.setHasMoreMessages,
+    setIsSwitchingChatType: thread.setIsSwitchingChatType,
+    teardownForChatTypeSwitch: thread.teardownForChatTypeSwitch,
+    commitChatTypeSwitchPaint: thread.commitChatTypeSwitchPaint,
+    handleMarkFailed: thread.handleMarkFailed,
+    handleNewMessageRef: thread.handleNewMessageRef,
+    scrollToBottom: thread.scrollToBottom,
+    currentIdRef,
+    isLeavingChat,
+    setIsLeavingChat,
+    showLeaveConfirmation,
+    setShowLeaveConfirmation,
+    isJoiningAsGuest,
+    setIsJoiningAsGuest,
+    isMuted,
+    setIsMuted,
+    isTogglingMute,
+    setIsTogglingMute,
+    setCurrentChatType,
+    markRead: thread.markRead,
   });
 
   const scrollToBottomSmooth = useCallback(() => {
     messageListRef.current?.scrollToBottomSmooth();
   }, []);
 
-  const derived = useGameChatDerived({
-    game,
-    groupChannel,
-    user,
-    contextType,
-    currentChatType,
-    messages,
-    channelActivity: contextType === 'GAME' ? channelActivity : undefined,
-  });
-
-  useEffect(() => {
-    if (contextType !== 'GAME' || !channelActivityResolved) return;
-    if (!derived.availableChatTypes.includes(currentChatType)) {
-      setCurrentChatType('PUBLIC');
-    }
-  }, [contextType, channelActivityResolved, derived.availableChatTypes, currentChatType]);
-
-  useEffect(() => {
-    if (contextType !== 'GAME') return;
-    if (effectiveChatType === 'PRIVATE' || effectiveChatType === 'ADMINS') {
-      const hasUser = messages.some((m) => m.senderId != null);
-      if (hasUser) {
-        noteUserMessage({
-          senderId: user?.id ?? 'probe',
-          chatType: effectiveChatType,
-        } as ChatMessage);
-      }
-    }
-  }, [contextType, effectiveChatType, messages, noteUserMessage, user?.id]);
-
-  const autoTranslate = useGameChatAutoTranslate({
-    id,
-    contextType,
-    effectiveChatType,
-    userId: user?.id,
-    userIsAdmin: user?.isAdmin,
-    groupChannel,
-    game,
-    userChat,
-    bugSenderId: groupChannel?.bug?.senderId,
-  });
-
-  useGameChatTranslationLive({
-    id,
-    contextType,
-    effectiveChatType,
-    userLanguage: user?.language,
-    setMessages,
-    messagesRef,
-    onAutoTranslateConfigFromSocket: autoTranslate.setAutoTranslateFromSocket,
-  });
-
-  const panels = useGameChatPanels({
-    contextType,
-    userChat,
-    userId: user?.id,
-    isItemChat: derived.isItemChat,
-    navigate,
-  });
-
-  const {
-    replyTo,
-    editingMessage,
-    setReplyTo,
-    setEditingMessage,
-    handleAddReaction,
-    handleRemoveReaction,
-    handlePollUpdated,
-    handleDeleteMessage,
-    handleReplyMessage,
-    handleCancelReply,
-    handleEditMessage,
-    handleCancelEdit,
-    handleMessageUpdated,
-    handleMessageReaction,
-    handleReadReceipt,
-    handleMessageDeleted,
-    handleChatRequestRespond,
-  } = useGameChatReactions({ id, contextType, user, setMessages, messagesRef, setUserChat });
-
-  const handleForwardMessage = useCallback(
-    async (m: ChatMessage) => {
-      const text = formatChatMessageForForwardClipboard(m);
-      if (!text.trim()) return;
-      try {
-        if (typeof navigator.share === 'function') {
-          try {
-            await navigator.share({ text });
-            return;
-          } catch (shareErr: unknown) {
-            if ((shareErr as { name?: string })?.name === 'AbortError') return;
-          }
-        }
-        await navigator.clipboard.writeText(text);
-        toast.success(t('chat.forwardCopied', { defaultValue: 'Copied — paste in another chat' }));
-      } catch {
-        toast.error(t('chat.forwardFailed', { defaultValue: 'Could not forward' }));
-      }
-    },
-    [t]
-  );
-
-  const { failedMutationCount, retryMutations } = useGameChatMutationRetry(contextType, id);
-
-  const {
-    pinnedMessages,
-    pinnedMessagesOrdered,
-    pinnedBarTopIndex,
-    loadingScrollTargetId,
-    fetchPinnedMessages,
-    handleScrollToMessage,
-    handlePinnedBarClick,
-    handlePinMessage,
-    handleUnpinMessage,
-  } = useGameChatPinned({
-    id,
-    contextType,
-    effectiveChatType,
-    canAccessChat: !!derived.canAccessChat,
-    chatContainerRef,
-    messageListRef,
-    loadMessagesBeforeMessageId,
-    messagesRef,
-  });
-
-  const {
-    leaveModalLabels,
-    handleJoinAsGuest,
-    handleLeaveChat,
-    handleToggleMute,
-    handleJoinChannel,
-    handleChatTypeChange,
-  } = useGameChatActions({
-    currentIdRef,
-    id,
-    contextType,
-    loadContext,
-    navigate,
-    setChatsFilter,
-    setGame,
-    setGroupChannel,
-    groupChannel,
-    userParticipant: derived.userParticipant,
-    currentChatType,
-    setCurrentChatType,
-    setPage,
-    setHasMoreMessages,
-    setMessages,
-    messagesRef,
-    setIsSwitchingChatType,
-    teardownForChatTypeSwitch,
-    commitChatTypeSwitchPaint,
-    handleMarkFailed,
-    handleNewMessageRef,
-    scrollToBottom,
-    user,
-    isLeavingChat,
-    setIsLeavingChat,
-    setShowLeaveConfirmation,
-    setIsJoiningAsGuest,
-    setIsMuted,
-    setIsTogglingMute,
-    isMuted,
-  });
-
-  const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
-  const { title, titleContent, titleMetaRow, subtitle: baseSubtitle, icon } = useGameChatDisplay({
-    contextType,
-    game,
-    bug,
-    userChat,
-    groupChannel,
-    groupChannelParticipantsCount,
-    isBugChat: derived.isBugChat,
-    isItemChat: derived.isItemChat,
-    userId: user?.id,
-    displaySettings,
-    onOpenItemPage: panels.onOpenItemPage,
-    onOpenParticipantsPage: panels.onOpenParticipantsPage,
-  });
-
-  const autoTranslateForModal = useMemo((): TranslationModalAutoTranslateProps | null => {
-    if (!id) return null;
-    return {
-      languageCodes: autoTranslate.autoTranslateConfig?.languageCodes ?? [],
-      maxSlots: autoTranslate.autoTranslateConfig?.maxSlots ?? autoTranslate.effectiveMaxSlots,
-      canEdit: autoTranslate.canEditAutoTranslate,
-      onChange: autoTranslate.applyAutoTranslateLanguageCodes,
-    };
-  }, [
-    id,
-    autoTranslate.autoTranslateConfig?.languageCodes,
-    autoTranslate.autoTranslateConfig?.maxSlots,
-    autoTranslate.effectiveMaxSlots,
-    autoTranslate.canEditAutoTranslate,
-    autoTranslate.applyAutoTranslateLanguageCodes,
-  ]);
-
-  const handleMessageSent = useCallback(() => {
-    const params = buildGameChatMarkReadParams({
-      id,
-      contextType,
-      game,
-      userId: user?.id,
-      gameChatType: effectiveChatType,
-      groupChannelId: groupChannel?.id,
-    });
-    if (params) markContextReadOnUserActivity(params);
-  }, [id, contextType, game, user?.id, effectiveChatType, groupChannel?.id]);
+  const { handleTranslateToLanguageChange: applyTranslationPref } = chrome;
 
   const handleTranslateToLanguageChange = useCallback(
     async (value: string | null) => {
-      if (!id) return;
-      await chatApi.setChatTranslationPreference(contextType, id, value);
+      await applyTranslationPref(value);
       setTranslateToLanguageForChat(value);
     },
-    [id, contextType]
+    [applyTranslationPref]
   );
-
-  const handleGroupChannelUpdate = useMemo(
-    () => (contextType === 'GROUP' ? () => { void loadContext({ force: true }); } : undefined),
-    [contextType, loadContext]
-  );
-
-  useThreadSessionEffects({
-    id,
-    user,
-    contextType,
-    initialChatType,
-    currentChatType,
-    effectiveChatType,
-    game,
-    groupChannelId: groupChannel?.id,
-    loadContext,
-    bootstrapThread,
-    userChat,
-    handleMarkFailed,
-    handleReplaceOptimistic: handleReplaceOptimisticWithServerMessage,
-    handleNewMessageRef,
-    loadingIdRef,
-    hasLoadedRef,
-    isLoadingRef,
-    messagesRef,
-    openPaintCommittedRef,
-    freshOpenSignal: locationState?.forceReload ?? 0,
-    setMessages,
-    setCurrentChatType,
-    setIsBlockedByUser,
-    setIsMuted,
-    setTranslateToLanguageForChat,
-    setIsInitialLoad,
-    setIsLoadingMessages,
-    setIsLoadingContext,
-    currentIdRef,
-    userId: user?.id,
-    chatContainerRef,
-    handleNewMessage,
-    handleMessageReaction,
-    handleReadReceipt,
-    handleMessageDeleted,
-    fetchPinnedMessages,
-    handleMessageUpdated,
-    reloadMessagesFirstPage,
-    pinAfterSocketMergeIfAllowed,
-  });
 
   useLayoutEffect(() => {
     if (id === previousIdRef.current) return;
@@ -515,23 +240,6 @@ export function useThreadViewController({
     setEditingMessage,
   ]);
 
-  const footerVariant = useGameChatFooterVariant({
-    id,
-    contextType,
-    isBlockedByUser,
-    userChat,
-    userId: user?.id,
-    canAccessChat: !!derived.canAccessChat,
-    canWriteChat: !!derived.canWriteChat,
-    isChannelParticipantOnly: !!derived.isChannelParticipantOnly,
-    game,
-    groupChannel,
-    isInJoinQueue: !!derived.isInJoinQueue,
-    isChannelParticipant: !!derived.isChannelParticipant,
-    isChannel: !!derived.isChannel,
-    isJoiningAsGuest,
-  });
-
   const hasOpenContextStub = useMemo(
     () =>
       (contextType === 'USER' && userChat != null) ||
@@ -542,8 +250,8 @@ export function useThreadViewController({
 
   const showLoadingHeader = useMemo(() => {
     if (!isEmbedded || !isLoadingContext) return false;
-    return !hasOpenContextStub && messages.length === 0;
-  }, [isEmbedded, isLoadingContext, hasOpenContextStub, messages.length]);
+    return !hasOpenContextStub && thread.messages.length === 0;
+  }, [isEmbedded, isLoadingContext, hasOpenContextStub, thread.messages.length]);
 
   return {
     id,
@@ -560,81 +268,81 @@ export function useThreadViewController({
     setGroupChannelParticipantsCount,
     isLoadingContext,
     loadContext,
-    messages,
-    hasMoreMessages,
-    isLoadingMessages,
-    isInitialLoad,
-    isThreadOpenSettling,
-    isLoadingMore,
-    isSwitchingChatType,
-    loadMessages,
-    loadMoreMessages,
+    messages: thread.messages,
+    hasMoreMessages: thread.hasMoreMessages,
+    isLoadingMessages: thread.isLoadingMessages,
+    isInitialLoad: thread.isInitialLoad,
+    isThreadOpenSettling: thread.isThreadOpenSettling,
+    isLoadingMore: thread.isLoadingMore,
+    isSwitchingChatType: thread.isSwitchingChatType,
+    loadMessages: thread.loadMessages,
+    loadMoreMessages: thread.loadMoreMessages,
     messageListRef,
-    initialScroll,
-    openPaintGeneration,
+    initialScroll: thread.initialScroll,
+    openPaintGeneration: thread.openPaintGeneration,
     threadScrollKey,
-    handleAddOptimisticMessage,
-    handleSendQueued: handleSendQueued as (params: SendQueuedParams) => void,
-    handleSendFailed,
-    handleReplaceOptimisticWithServerMessage,
-    handleResendQueued,
-    handleRemoveFromQueue,
-    replyTo,
-    editingMessage,
-    handleCancelReply,
-    handleCancelEdit,
-    handleMessageUpdated,
-    handleEditMessage,
-    handleAddReaction,
-    handleRemoveReaction,
-    handleDeleteMessage,
-    handleReplyMessage,
-    handlePollUpdated,
-    handleForwardMessage,
-    handleChatRequestRespond,
+    handleAddOptimisticMessage: thread.handleAddOptimisticMessage,
+    handleSendQueued: thread.handleSendQueued as (params: SendQueuedParams) => void,
+    handleSendFailed: thread.handleSendFailed,
+    handleReplaceOptimisticWithServerMessage: thread.handleReplaceOptimisticWithServerMessage,
+    handleResendQueued: thread.handleResendQueued,
+    handleRemoveFromQueue: thread.handleRemoveFromQueue,
+    replyTo: thread.replyTo,
+    editingMessage: thread.editingMessage,
+    handleCancelReply: thread.handleCancelReply,
+    handleCancelEdit: thread.handleCancelEdit,
+    handleMessageUpdated: thread.handleMessageUpdated,
+    handleEditMessage: thread.handleEditMessage,
+    handleAddReaction: thread.handleAddReaction,
+    handleRemoveReaction: thread.handleRemoveReaction,
+    handleDeleteMessage: thread.handleDeleteMessage,
+    handleReplyMessage: thread.handleReplyMessage,
+    handlePollUpdated: thread.handlePollUpdated,
+    handleForwardMessage: chrome.handleForwardMessage,
+    handleChatRequestRespond: thread.handleChatRequestRespond,
     chatNearBottom,
     setChatNearBottom,
     scrollToBottomSmooth,
-    handleScrollToMessage,
-    pinnedMessages,
-    pinnedMessagesOrdered,
-    pinnedBarTopIndex,
-    loadingScrollTargetId,
-    handlePinnedBarClick,
-    handlePinMessage,
-    handleUnpinMessage,
-    derived,
-    footerVariant,
+    handleScrollToMessage: thread.handleScrollToMessage,
+    pinnedMessages: thread.pinnedMessages,
+    pinnedMessagesOrdered: thread.pinnedMessagesOrdered,
+    pinnedBarTopIndex: thread.pinnedBarTopIndex,
+    loadingScrollTargetId: thread.loadingScrollTargetId,
+    handlePinnedBarClick: thread.handlePinnedBarClick,
+    handlePinMessage: thread.handlePinMessage,
+    handleUnpinMessage: thread.handleUnpinMessage,
+    derived: thread.derived,
+    footerVariant: thread.footerVariant,
     isBlockedByUser,
-    isJoiningAsGuest,
+    isJoiningAsGuest: chrome.isJoiningAsGuest,
     translateToLanguageForChat,
-    autoTranslateForModal,
-    handleJoinAsGuest,
-    handleMessageSent,
+    autoTranslateForModal: thread.autoTranslateForModal,
+    handleJoinAsGuest: chrome.handleJoinAsGuest,
+    handleMessageSent: chrome.handleMessageSent,
     setUserChat,
     handleTranslateToLanguageChange,
-    handleGroupChannelUpdate,
-    lastOwnMessage: derived.lastOwnMessage,
-    hasMessages: messages.length > 0,
-    isChannel: derived.isChannel,
-    title,
-    titleContent,
-    titleMetaRow,
-    subtitle: baseSubtitle ?? null,
-    icon,
-    panels,
-    failedMutationCount,
-    retryMutations,
-    autoTranslateLanguageCodes: autoTranslate.autoTranslateConfig?.languageCodes ?? [],
-    handleToggleMute,
-    handleLeaveChat,
-    handleJoinChannel,
-    handleChatTypeChange,
-    leaveModalLabels,
-    isMuted,
-    isTogglingMute,
-    showLeaveConfirmation,
-    setShowLeaveConfirmation,
+    handleGroupChannelUpdate: chrome.handleGroupChannelUpdate,
+    lastOwnMessage: thread.derived.lastOwnMessage,
+    hasMessages: thread.messages.length > 0,
+    isChannel: thread.derived.isChannel,
+    title: chrome.title,
+    titleContent: chrome.titleContent,
+    titleMetaRow: chrome.titleMetaRow,
+    subtitle: chrome.subtitle,
+    icon: chrome.icon,
+    panels: chrome.panels,
+    failedMutationCount: chrome.failedMutationCount,
+    retryMutations: chrome.retryMutations,
+    autoTranslateLanguageCodes: thread.autoTranslate.autoTranslateConfig?.languageCodes ?? [],
+    handleToggleMute: chrome.handleToggleMute,
+    handleLeaveChat: chrome.handleLeaveChat,
+    handleJoinChannel: chrome.handleJoinChannel,
+    handleChatTypeChange: chrome.handleChatTypeChange,
+    leaveModalLabels: chrome.leaveModalLabels,
+    isMuted: chrome.isMuted,
+    isTogglingMute: chrome.isTogglingMute,
+    showLeaveConfirmation: chrome.showLeaveConfirmation,
+    setShowLeaveConfirmation: chrome.setShowLeaveConfirmation,
     chatContainerRef,
     showLoadingHeader,
     navigate,

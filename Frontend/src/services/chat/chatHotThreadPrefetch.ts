@@ -7,7 +7,7 @@ import { normalizeChatType } from '@/utils/chatType';
 import { pullMissedAndPersistToDexie } from './chatThreadNetworkSync';
 import { enqueueChatSyncPull, SYNC_PRIORITY_COOP } from './chatSyncScheduler';
 import { parsePositiveIntEnv } from './chatSyncEnv';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 
 const TOP_K = parsePositiveIntEnv(import.meta.env.VITE_CHAT_HOT_PREFETCH_TOP_K, 5);
 const GLOBAL_COOLDOWN_MS = parsePositiveIntEnv(import.meta.env.VITE_CHAT_HOT_PREFETCH_GLOBAL_COOLDOWN_MS, 120_000);
@@ -54,7 +54,7 @@ export async function runHotThreadPrefetchNow(): Promise<void> {
     .sort((a, b) => b.s - a.s)
     .slice(0, TOP_K);
 
-  const nav = useNavigationStore.getState();
+  const nav = useGameDetailsChromeStore.getState();
 
   for (const { r } of candidates) {
     const parsed = parseChatThreadCursorKey(r.key);

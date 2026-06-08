@@ -59,7 +59,7 @@ import { GameWorkoutSummaryCard } from './GameWorkoutSummaryCard';
 import { TelegramSummaryModal } from './TelegramSummaryModal';
 import { ConfirmationModal } from '@/components';
 import { Edit } from 'lucide-react';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import {
   canAccessResultsTelegramActions,
@@ -1067,7 +1067,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const isLandscape = useIsLandscape();
   const effectiveHorizontalLayout = !isLandscape;
 
-  const { setGameDetailsCanShowTableView } = useNavigationStore();
+  const { setGameDetailsCanShowTableView } = useGameDetailsChromeStore();
   const canShowTableView = canShowTournamentTableView(currentGame);
 
   useEffect(() => {

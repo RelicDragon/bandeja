@@ -6,7 +6,7 @@ import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, Locat
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { usePlayersStore } from '@/store/playersStore';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
 import { gameCourtsApi } from '@/api/gameCourts';
 import { mediaApi } from '@/api/media';
@@ -71,7 +71,7 @@ export const CreateGame = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const { setCurrentPage, setIsAnimating, setActiveTab, setMyGamesSubtabBeforeCreate, setMyGamesCalendarDateAfterCreate } = useNavigationStore();
+  const { setIsAnimating, setActiveTab, setMyGamesSubtabBeforeCreate, setMyGamesCalendarDateAfterCreate } = useShellNavStore();
 
   useBackButtonHandler(() => {
     handleBack(navigate);
@@ -672,8 +672,7 @@ export const CreateGame = ({
 
   const navigateAfterCreate = (gameStartTime: string) => {
     setIsAnimating(true);
-    setCurrentPage('my');
-    const fromList = useNavigationStore.getState().myGamesSubtabBeforeCreate;
+    const fromList = useShellNavStore.getState().myGamesSubtabBeforeCreate;
     setMyGamesSubtabBeforeCreate(null);
     if (fromList === 'list') {
       navigate('/?tab=list', { replace: true });

@@ -6,21 +6,19 @@ import { Card } from '@/components';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import type { BracketPlayoffGroupDto } from '@/api/leagues';
 import type { LeagueGroup } from '@/api/leagues';
-import { participantLabelFromSlots } from '@/utils/leagueBracketOutcome';
 import {
-  buildBracketPodiumDisplayRows,
   type BracketPodiumDisplayRow,
-} from '@/utils/bracketPodiumProgress.util';
-import { buildLeagueBracketShareUrl } from '@/utils/leagueBracketShare.util';
+  participantLabelFromSlots,
+  teamUsersFromParticipant,
+} from '@/features/leagueBracket';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
-import { teamUsersFromParticipant } from '@/utils/leagueBracketLayout';
 
 interface LeagueBracketPodiumCardProps {
-  leagueSeasonId: string;
   group: BracketPlayoffGroupDto;
+  rows: BracketPodiumDisplayRow[];
   groupMeta?: LeagueGroup;
   crossGroupBracket?: boolean;
-  bracketRoundId?: string;
+  fullscreenPath?: string | null;
   showViewLink?: boolean;
 }
 
@@ -135,16 +133,15 @@ function PodiumRow({
 }
 
 export function LeagueBracketPodiumCard({
-  leagueSeasonId,
   group,
+  rows,
   groupMeta,
   crossGroupBracket = false,
-  bracketRoundId,
+  fullscreenPath,
   showViewLink = true,
 }: LeagueBracketPodiumCardProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const rows = buildBracketPodiumDisplayRows(group);
   if (rows.length === 0) return null;
 
   const accent = getLeagueGroupColor(groupMeta?.color);
@@ -159,17 +156,10 @@ export function LeagueBracketPodiumCard({
               ? t('gameDetails.bracketPodiumSeasonTitle')
               : t('gameDetails.bracketPodiumTitle')}
           </h3>
-          {showViewLink ? (
+          {showViewLink && fullscreenPath ? (
             <button
               type="button"
-              onClick={() =>
-                navigate(
-                  buildLeagueBracketShareUrl(leagueSeasonId, {
-                    roundId: bracketRoundId,
-                    groupId: crossGroupBracket ? undefined : group.leagueGroupId,
-                  })
-                )
-              }
+              onClick={() => navigate(fullscreenPath)}
               className="text-xs font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-400"
             >
               {t('gameDetails.bracketViewFullBracket')}

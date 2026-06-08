@@ -9,7 +9,7 @@ import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { MainTabFooter } from '@/components';
 import { PullToRefreshShell } from '@/components/PullToRefreshShell';
 import { useAuthStore } from '@/store/authStore';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
@@ -54,8 +54,8 @@ export const FindTab = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isDesktop = useDesktop();
-  const findViewMode = useNavigationStore((s) => s.findViewMode);
-  const setFindHeaderActions = useNavigationStore((s) => s.setFindHeaderActions);
+  const findViewMode = useShellNavStore((s) => s.findViewMode);
+  const setFindHeaderActions = useShellNavStore((s) => s.setFindHeaderActions);
 
   const { i18n } = useI18nTranslation();
   const localeMap = { en: enGB, ru: ru, es: es, sr: sr, cs: cs };

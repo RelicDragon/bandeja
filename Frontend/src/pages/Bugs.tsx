@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { ChatsTab } from './ChatsTab';
 
 export const BugsContent = () => {
-  const setChatsFilter = useNavigationStore((s) => s.setChatsFilter);
+  const setChatsFilter = useShellNavStore((s) => s.setChatsFilter);
 
   useEffect(() => {
     setChatsFilter('bugs');

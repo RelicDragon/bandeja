@@ -26,7 +26,7 @@ import type { GroupChannel } from '@/api/chat';
 import type { ChatMessageWithStatus } from '@/api/chat';
 import type { RefObject } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 
@@ -333,7 +333,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
         }
         scrollToBottom();
         if (contextType === 'GAME' && id && switchPlan.nextThreadKey) {
-          useNavigationStore.getState().setViewingGameChat(id, normalizedChatType);
+          useGameDetailsChromeStore.getState().setViewingGameChat(id, normalizedChatType);
         }
       } catch (error) {
         console.error('Failed to load messages:', error);

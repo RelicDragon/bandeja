@@ -20,6 +20,21 @@ type UseStoriesPlaybackOptions = {
 
 const VIDEO_FALLBACK_TICK_MS = 250;
 
+export function resolveStoryVideoProgressFill({
+  segmentKey,
+  appliedSegmentKey,
+  videoProgress,
+}: {
+  segmentKey: string;
+  appliedSegmentKey: string | null;
+  videoProgress: number;
+}): number | null {
+  if (appliedSegmentKey !== segmentKey) {
+    return videoProgress === 0 ? 0 : null;
+  }
+  return Math.min(1, Math.max(0, videoProgress));
+}
+
 export function useStoriesPlayback({
   segment,
   isActive,
@@ -41,11 +56,14 @@ export function useStoriesPlayback({
   const videoFallbackRemainingRef = useRef(0);
   const onCompleteRef = useRef(onComplete);
   const onMarkViewedRef = useRef(onMarkViewed);
+  const segmentKeyRef = useRef<string | null>(null);
+  const appliedVideoSegmentKeyRef = useRef<string | null>(null);
 
   onCompleteRef.current = onComplete;
   onMarkViewedRef.current = onMarkViewed;
 
   const segmentKey = segment?.key ?? null;
+  segmentKeyRef.current = segmentKey;
   const durationMs = segment ? getStorySegmentDurationMs(segment) : 0;
   const isVideo =
     segment?.sourceType === 'USER_STORY_ITEM' && segment.media.type === 'VIDEO';
@@ -77,6 +95,7 @@ export function useStoriesPlayback({
     elapsedBeforePauseRef.current = 0;
     markedRef.current = false;
     videoFallbackRemainingRef.current = 0;
+    appliedVideoSegmentKeyRef.current = null;
     setReplayGeneration((g) => g + 1);
   }, [clearMarkTimer, stopRaf]);
 
@@ -97,10 +116,17 @@ export function useStoriesPlayback({
   }, [segmentKey, isActive, isVideo, clearMarkTimer, replayGeneration]);
 
   useEffect(() => {
-    if (!isActive || !isVideo) return;
+    if (!isActive || !isVideo || !segmentKey) return;
     if (effectivePaused) return;
-    setProgress(Math.min(1, Math.max(0, videoProgress)));
-  }, [isActive, isVideo, effectivePaused, videoProgress]);
+    const fill = resolveStoryVideoProgressFill({
+      segmentKey,
+      appliedSegmentKey: appliedVideoSegmentKeyRef.current,
+      videoProgress,
+    });
+    if (fill == null) return;
+    appliedVideoSegmentKeyRef.current = segmentKey;
+    setProgress(fill);
+  }, [segmentKey, isActive, isVideo, effectivePaused, videoProgress]);
 
   useEffect(() => {
     if (!isActive || !segmentKey || !isVideo || videoEnded) return;
@@ -136,10 +162,12 @@ export function useStoriesPlayback({
       return;
     }
 
+    const capturedSegmentKey = segmentKey;
     if (startedAtRef.current == null) {
       startedAtRef.current = performance.now();
     }
     const tick = (now: number) => {
+      if (segmentKeyRef.current !== capturedSegmentKey) return;
       const started = startedAtRef.current ?? now;
       const elapsed = elapsedBeforePauseRef.current + (now - started);
       const p = playbackDurationMs > 0 ? Math.min(1, elapsed / playbackDurationMs) : 1;

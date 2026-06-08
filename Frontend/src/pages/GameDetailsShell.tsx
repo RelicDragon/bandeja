@@ -51,7 +51,8 @@ import { resultsApi } from '@/api/results';
 import { trainingApi } from '@/api/training';
 import { faqApi } from '@/api/faq';
 import { useAuthStore } from '@/store/authStore';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { Game, Invite, Court, Club, GenderTeam } from '@/types';
 import { parseGameSport } from '@/utils/gameSport';
@@ -107,7 +108,13 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { setGameDetailsCanAccessChat, setBottomTabsVisible, gameDetailsTableViewOverride, setGameDetailsTableViewOverride, setGameDetailsTableAddRound } = useNavigationStore();
+  const { setBottomTabsVisible } = useShellNavStore();
+  const {
+    setGameDetailsCanAccessChat,
+    gameDetailsTableViewOverride,
+    setGameDetailsTableViewOverride,
+    setGameDetailsTableAddRound,
+  } = useGameDetailsChromeStore();
 
   const [game, setGame] = useState<Game | null>(null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);

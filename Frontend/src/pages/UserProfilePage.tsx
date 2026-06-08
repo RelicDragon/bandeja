@@ -1,11 +1,8 @@
-import { useEffect, useState, useCallback, useLayoutEffect } from 'react';
+import { useEffect, useState, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, Navigate, useSearchParams } from 'react-router-dom';
-import { usersApi, UserStats } from '@/api/users';
-import { favoritesApi } from '@/api/favorites';
-import { blockedUsersApi } from '@/api/blockedUsers';
 import { Loading } from '@/components/Loading';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { PlayerAvatarView } from '@/components/PlayerAvatarView';
@@ -14,49 +11,53 @@ import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { ShareModal } from '@/components/ShareModal';
 import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { useAuthStore } from '@/store/authStore';
-import { useFavoritesStore } from '@/store/favoritesStore';
-import { usePlayersStore } from '@/store/playersStore';
-import { usePresenceStore } from '@/store/presenceStore';
-import { useNavigationStore } from '@/store/navigationStore';
-import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBack } from '@/utils/backNavigation';
-import toast from 'react-hot-toast';
-import { sharePlayerProfile } from '@/utils/sharePlayerProfile';
 import { PlayerCardProfileBody } from '@/components/player/PlayerCardProfileBody';
 import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionBar';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
-import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 import { parseLevelSportQuery } from '@/utils/levelSportQuery';
+import { usePlayerProfile } from '@/features/playerProfile';
 
 export const UserProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const updateUser = useAuthStore((state) => state.updateUser);
-  const { addFavorite, removeFavorite } = useFavoritesStore();
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showAvatarView, setShowAvatarView] = useState(false);
   const [showReviewsView, setShowReviewsView] = useState(false);
-  const [startingChat, setStartingChat] = useState(false);
   const [showBlockConfirmation, setShowBlockConfirmation] = useState(false);
-  const [blockingUser, setBlockingUser] = useState(false);
-  const [isBlocked, setIsBlocked] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareModalUrl, setShareModalUrl] = useState('');
   const [avatarViewerUrl, setAvatarViewerUrl] = useState<string | null>(null);
-  const isCurrentUser = !!(user && userId && user.id === userId);
   const showTelegram = !!user;
   const [searchParams] = useSearchParams();
-  const contextLevelSport =
-    useSportLevelContext() ?? parseLevelSportQuery(searchParams.get('sport'));
+
+  const {
+    stats,
+    loading,
+    error,
+    isBlocked,
+    levelSport,
+    setStats,
+    startingChat,
+    blockingUser,
+    actions,
+  } = usePlayerProfile(userId, {
+    sportFromUrl: parseLevelSportQuery(searchParams.get('sport')),
+    presenceKey: 'user-profile-page',
+    onBlocked: () => handleBack(navigate),
+    onShareFallback: (url) => {
+      setShareModalUrl(url);
+      setShowShareModal(true);
+    },
+  });
 
   useBackButtonHandler();
 
   useEffect(() => {
-    const { setBottomTabsVisible } = useNavigationStore.getState();
+    const { setBottomTabsVisible } = useShellNavStore.getState();
     setBottomTabsVisible(false);
     return () => setBottomTabsVisible(true);
   }, []);
@@ -68,121 +69,9 @@ export const UserProfilePage = () => {
     setShowShareModal(false);
     setShareModalUrl('');
     setAvatarViewerUrl(null);
+  }, [userId]);
 
-    const fetchStats = async () => {
-      try {
-        setLoading(true);
-        const statsResponse = await usersApi.getUserStats(userId, contextLevelSport);
-        setStats(statsResponse.data);
-        if (user && user.id !== userId) {
-          const blocked = await blockedUsersApi.checkIfUserBlocked(userId);
-          setIsBlocked(blocked);
-        } else {
-          setIsBlocked(false);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user stats:', error);
-        setStats(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchStats();
-  }, [userId, user, contextLevelSport, isCurrentUser]);
-
-  usePresenceSubscription('user-profile-page', user && userId && !isCurrentUser ? [userId] : []);
-
-  useEffect(() => {
-    if (!user || !userId || isCurrentUser) return;
-    usersApi.getPresence([userId]).then((data) => {
-      if (Object.keys(data).length > 0) usePresenceStore.getState().setPresenceInitial(data);
-    }).catch(() => {});
-  }, [userId, isCurrentUser, user]);
-
-  const handleToggleFavorite = useCallback(async () => {
-    if (!userId || !stats || isBlocked) return;
-    try {
-      if (stats.user.isFavorite) {
-        await favoritesApi.removeUserFromFavorites(userId);
-        setStats({ ...stats, user: { ...stats.user, isFavorite: false }, followersCount: Math.max(0, stats.followersCount - 1) });
-        removeFavorite(userId);
-        toast.success(t('favorites.userRemovedFromFavorites'));
-      } else {
-        await favoritesApi.addUserToFavorites(userId);
-        setStats({ ...stats, user: { ...stats.user, isFavorite: true }, followersCount: stats.followersCount + 1 });
-        addFavorite(userId);
-        toast.success(t('favorites.userAddedToFavorites'));
-      }
-    } catch (error: unknown) {
-      const errorMessage = (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    }
-  }, [userId, stats, isBlocked, t, removeFavorite, addFavorite]);
-
-  const handleStartChat = useCallback(async () => {
-    if (!userId || startingChat || isBlocked) return;
-    setStartingChat(true);
-    try {
-      const chat = await usePlayersStore.getState().getOrCreateAndAddUserChat(userId);
-      if (!chat) {
-        toast.error(t('errors.generic', { defaultValue: 'Something went wrong' }));
-        return;
-      }
-      navigate(`/user-chat/${chat.id}`, {
-        state: { chat, contextType: 'USER' },
-      });
-    } catch (error: unknown) {
-      const errorMessage = (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    } finally {
-      setStartingChat(false);
-    }
-  }, [userId, startingChat, isBlocked, navigate, t]);
-
-  const handleShareProfile = useCallback(async () => {
-    if (!userId || !stats || isBlocked) return;
-    await sharePlayerProfile({
-      playerId: userId,
-      sport: contextLevelSport,
-      t,
-      onFallbackModal: (url) => {
-        setShareModalUrl(url);
-        setShowShareModal(true);
-      },
-    });
-  }, [userId, stats, isBlocked, contextLevelSport, t]);
-
-  const handleBlockUser = useCallback(async () => {
-    if (!userId || blockingUser) return;
-    setBlockingUser(true);
-    try {
-      if (isBlocked) {
-        await blockedUsersApi.unblockUser(userId);
-        setIsBlocked(false);
-        toast.success(t('playerCard.userUnblocked') || 'User unblocked');
-      } else {
-        await blockedUsersApi.blockUser(userId);
-        setIsBlocked(true);
-        toast.success(t('playerCard.userBlocked') || 'User blocked');
-        handleBack(navigate);
-      }
-      try {
-        const profileResponse = await usersApi.getProfile();
-        updateUser(profileResponse.data);
-      } catch (error) {
-        console.error('Failed to refresh user profile after block/unblock:', error);
-      }
-    } catch (error: unknown) {
-      const errorMessage = (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    } finally {
-      setBlockingUser(false);
-      setShowBlockConfirmation(false);
-    }
-  }, [userId, blockingUser, isBlocked, navigate, t, updateUser]);
-
-  const setUserProfileHeaderActions = useNavigationStore((s) => s.setUserProfileHeaderActions);
+  const setUserProfileHeaderActions = useShellNavStore((s) => s.setUserProfileHeaderActions);
   const actionBarVisible =
     !!(user && userId && user.id !== userId && stats && !showReviewsView && !(showAvatarView && stats.user.originalAvatar) && !avatarViewerUrl);
 
@@ -203,10 +92,10 @@ export const UserProfilePage = () => {
         isBlocked={isBlocked}
         blockingUser={blockingUser}
         startingChat={startingChat}
-        onToggleFavorite={handleToggleFavorite}
-        onShare={() => void handleShareProfile()}
-        onStartChat={handleStartChat}
-        onBlockPrimary={isBlocked ? handleBlockUser : () => setShowBlockConfirmation(true)}
+        onToggleFavorite={() => void actions.toggleFavorite()}
+        onShare={() => void actions.share()}
+        onStartChat={() => void actions.startChat()}
+        onBlockPrimary={isBlocked ? () => void actions.unblock() : () => setShowBlockConfirmation(true)}
         t={t}
       />
     );
@@ -220,10 +109,7 @@ export const UserProfilePage = () => {
     blockingUser,
     startingChat,
     t,
-    handleToggleFavorite,
-    handleStartChat,
-    handleShareProfile,
-    handleBlockUser,
+    actions,
     setUserProfileHeaderActions,
     avatarViewerUrl,
   ]);
@@ -257,7 +143,7 @@ export const UserProfilePage = () => {
   ) : null;
 
   return (
-    <SportLevelProvider sport={contextLevelSport}>
+    <SportLevelProvider sport={levelSport}>
     <div className={user ? 'w-full min-h-0' : 'max-w-2xl mx-auto min-h-0'}>
       {publicNav}
 
@@ -352,7 +238,7 @@ export const UserProfilePage = () => {
             )}
           </>
         ) : (
-          <motion.div key="empty" className="p-8 text-center text-gray-600 dark:text-gray-400">
+          <motion.div key={error ? 'error' : 'empty'} className="p-8 text-center text-gray-600 dark:text-gray-400">
             {t('errors.generic', { defaultValue: 'Something went wrong' })}
           </motion.div>
         )}
@@ -382,7 +268,10 @@ export const UserProfilePage = () => {
           confirmText={t('playerCard.block')}
           cancelText={t('common.cancel')}
           confirmVariant="danger"
-          onConfirm={handleBlockUser}
+          onConfirm={async () => {
+            await actions.block();
+            setShowBlockConfirmation(false);
+          }}
           onClose={() => setShowBlockConfirmation(false)}
         />
       )}

@@ -4,12 +4,8 @@ import { Card, SegmentedSwitch } from '@/components';
 import type { BracketPlayoffGroupDto } from '@/api/leagues';
 import type { Game } from '@/types';
 import { LeagueGameCard } from './LeagueGameCard';
-import { collectBracketScheduleGames } from '@/utils/bracketScheduleListSort.util';
-import { translateBracketRoundLabel } from '@/utils/bracketRoundDisplay.util';
-import { isPlayInPhaseComplete } from '@/utils/leagueBracketOutcome';
+import { buildBracketViewModel, type BracketListFilter } from '@/features/leagueBracket';
 import { useLeagueGameResultsMap } from '@/hooks/useLeagueGameResultsMap';
-
-export type BracketListFilter = 'ALL' | 'PLAY_IN' | 'KNOCKOUT';
 
 interface LeagueBracketListPanelProps {
   group: BracketPlayoffGroupDto | null;
@@ -47,13 +43,21 @@ export function LeagueBracketListPanel({
   onOpenGame,
   onEditGame,
 }: LeagueBracketListPanelProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [filter, setFilter] = useState<BracketListFilter>('ALL');
 
-  const showPhaseFilters = useMemo(
-    () => !!group && group.playInGameCount > 0 && !isPlayInPhaseComplete(group),
-    [group]
+  const vm = useMemo(
+    () =>
+      buildBracketViewModel({
+        group,
+        locale: i18n.language,
+        translate: t,
+        options: { showPodium: false, shareMode: false },
+      }),
+    [group, i18n.language, t]
   );
+
+  const showPhaseFilters = vm.showPlayInGate;
 
   useEffect(() => {
     if (showPhaseFilters) {
@@ -63,19 +67,17 @@ export function LeagueBracketListPanel({
     }
   }, [showPhaseFilters, group?.leagueGroupId]);
 
-  const games = useMemo(() => {
-    if (!group?.slots) return [];
-    return collectBracketScheduleGames(group.slots);
-  }, [group?.slots]);
-
-  const scheduleGames = useMemo(() => games.map((entry) => entry.game), [games]);
+  const scheduleGames = useMemo(
+    () => vm.scheduleListRows.map((entry) => entry.game),
+    [vm.scheduleListRows]
+  );
   const gameResultsMap = useLeagueGameResultsMap(scheduleGames);
 
   const filtered = useMemo(() => {
-    if (filter === 'PLAY_IN') return games.filter((g) => g.kind === 'PLAY_IN');
-    if (filter === 'KNOCKOUT') return games.filter((g) => g.kind === 'MAIN');
-    return games;
-  }, [games, filter]);
+    if (filter === 'PLAY_IN') return vm.scheduleListRows.filter((g) => g.kind === 'PLAY_IN');
+    if (filter === 'KNOCKOUT') return vm.scheduleListRows.filter((g) => g.kind === 'MAIN');
+    return vm.scheduleListRows;
+  }, [vm.scheduleListRows, filter]);
 
   if (loading) {
     return <BracketListLoadingSkeleton />;
@@ -153,7 +155,7 @@ export function LeagueBracketListPanel({
             ariaLabel={t('gameDetails.bracketListFilterTabs')}
           />
         </div>
-      ) : games.length > 0 ? (
+      ) : vm.scheduleListRows.length > 0 ? (
         <p className="text-center text-xs text-gray-500 dark:text-gray-400">{t('gameDetails.bracketListAll')}</p>
       ) : null}
       {filtered.length === 0 ? (
@@ -166,7 +168,7 @@ export function LeagueBracketListPanel({
         </p>
       ) : (
         <div className="space-y-3">
-          {filtered.map(({ game, kind, roundIndex, roundLabel }) => (
+          {filtered.map(({ game, roundBadge }) => (
             <LeagueGameCard
               key={game.id}
               game={game}
@@ -174,13 +176,7 @@ export function LeagueBracketListPanel({
               onEdit={onEditGame ? () => onEditGame(game) : undefined}
               showGroupTag={false}
               allRounds={gameResultsMap.get(game.id) ?? null}
-              bracketRoundBadge={
-                roundLabel
-                  ? translateBracketRoundLabel(roundLabel, t)
-                  : kind === 'PLAY_IN'
-                    ? t('gameDetails.bracketColumnPlayIn')
-                    : t('gameDetails.bracketColumnMainRound', { round: roundIndex + 1 })
-              }
+              bracketRoundBadge={roundBadge}
               seasonPlayoffBadge={crossGroupBracket}
             />
           ))}

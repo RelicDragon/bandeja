@@ -24,7 +24,7 @@ import {
 } from '@/utils/leagueBracketRound';
 import { BracketRoundPicker } from './BracketRoundPicker';
 import { enrichBracketGroups } from '@/utils/leagueBracketEnrich';
-import { getActiveBracketGroup, isCrossGroupBracket } from '@/utils/bracketView.util';
+import { getActiveBracketGroup, isCrossGroupBracket } from '@/features/leagueBracket';
 import { resolveBracketRoundTitleFromSlots } from '@/utils/bracketRoundDisplay.util';
 import type { BracketPlayoffGroupDto, BracketPlayoffResponse } from '@/api/leagues';
 import { Game } from '@/types';

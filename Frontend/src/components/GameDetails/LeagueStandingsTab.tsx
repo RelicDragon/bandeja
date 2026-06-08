@@ -26,7 +26,11 @@ import { enrichBracketGroups } from '@/utils/leagueBracketEnrich';
 import { bracketGroupHasPodium } from '@/utils/leagueBracketOutcome';
 import { LeagueBracketPodiumCard } from './LeagueBracketPodiumCard';
 import { LeagueBracketStandingsCtaCard } from './LeagueBracketStandingsCtaCard';
-import { getActiveBracketGroup, isCrossGroupBracket } from '@/utils/bracketView.util';
+import {
+  buildBracketViewModel,
+  getActiveBracketGroup,
+  isCrossGroupBracket,
+} from '@/features/leagueBracket';
 
 const ALL_GROUP_ID = 'ALL';
 
@@ -36,7 +40,7 @@ interface LeagueStandingsTabProps {
 }
 
 export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStandingsTabProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
   const [groups, setGroups] = useState<LeagueGroup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -201,6 +205,20 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
   }, [bracketPayload, crossGroupBracket, seasonBracketGroup, filteredGroups, bracketGroupsById]);
 
   const showBracketPodium = showBracketSection && anyBracketPodiumVisible;
+
+  const podiumVmForGroup = useCallback(
+    (group: BracketPlayoffGroupDto) =>
+      buildBracketViewModel({
+        group,
+        locale: i18n.language,
+        translate: t,
+        leagueSeasonId,
+        bracketRoundId: selectedBracketRoundId ?? undefined,
+        crossGroupBracket,
+        options: { showPodium: true, shareMode: true },
+      }),
+    [i18n.language, t, leagueSeasonId, selectedBracketRoundId, crossGroupBracket]
+  );
   const showBracketCta = showBracketSection && !anyBracketPodiumVisible;
 
   if (loading) {
@@ -400,28 +418,32 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
           layoutIdPrefix={`${leagueSeasonId}-standings`}
         />
       )}
-      {showBracketPodium && crossGroupBracket && seasonBracketGroup && (
+      {showBracketPodium && crossGroupBracket && seasonBracketGroup && (() => {
+        const vm = podiumVmForGroup(seasonBracketGroup);
+        return (
         <LeagueBracketPodiumCard
           key="podium-season"
-          leagueSeasonId={leagueSeasonId}
           group={seasonBracketGroup}
+          rows={vm.podiumRows}
           crossGroupBracket
-          bracketRoundId={selectedBracketRoundId ?? undefined}
+          fullscreenPath={vm.sharePaths?.fullscreenPath}
         />
-      )}
+        );
+      })()}
       {showBracketPodium &&
         !crossGroupBracket &&
         filteredGroups.map(({ id }) => {
           const bracketGroup = bracketGroupsById.get(id);
           if (!bracketGroup) return null;
           const groupMeta = groups.find((g) => g.id === id);
+          const vm = podiumVmForGroup(bracketGroup);
           return (
             <LeagueBracketPodiumCard
               key={`podium-${id}`}
-              leagueSeasonId={leagueSeasonId}
               group={bracketGroup}
+              rows={vm.podiumRows}
               groupMeta={groupMeta}
-              bracketRoundId={selectedBracketRoundId ?? undefined}
+              fullscreenPath={vm.sharePaths?.fullscreenPath}
             />
           );
         })}

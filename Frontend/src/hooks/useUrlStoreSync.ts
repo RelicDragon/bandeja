@@ -1,28 +1,29 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useNavigationStore } from '@/store/navigationStore';
-import { parseLocation, placeToPageType } from '@/utils/urlSchema';
+import { useShellNavStore } from '@/store/shellNavStore';
+import { parseLocation } from '@/utils/urlSchema';
+
+export type HomeSubTab = 'calendar' | 'list' | 'past-games';
+
+export function homeSubTabFromParams(tab: string | undefined): HomeSubTab {
+  if (tab === 'list' || tab === 'past-games') return tab;
+  return 'calendar';
+}
 
 /**
- * Syncs URL → navigationStore so existing consumers that read from the store
- * (activeTab, findViewMode, chatsFilter, marketplaceTab, currentPage)
+ * Syncs URL → shellNavStore so consumers that read tab/filter state from the store
  * continue to work while the URL is the single source of truth.
  */
 export function useUrlStoreSync() {
   const location = useLocation();
 
   useEffect(() => {
-    const state = useNavigationStore.getState();
+    const state = useShellNavStore.getState();
     const parsed = parseLocation(location.pathname, location.search);
-    const pageType = placeToPageType(parsed.place);
-
-    state.setCurrentPage(pageType);
 
     switch (parsed.place) {
       case 'home': {
-        const raw = (parsed.params.tab as string) || 'calendar';
-        const tab = ['calendar', 'list', 'past-games'].includes(raw) ? raw : 'calendar';
-        state.setActiveTab(tab as 'calendar' | 'list' | 'past-games');
+        state.setActiveTab(homeSubTabFromParams(parsed.params.tab as string | undefined));
         break;
       }
       case 'find': {

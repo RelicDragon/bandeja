@@ -16,7 +16,7 @@ import { clearChatLocalStores } from '@/services/chat/chatThreadIndex';
 import { clearChatThreadMemory } from '@/services/chat/chatThreadMemoryCache';
 import { clearChatSyncScheduler } from '@/services/chat/chatSyncScheduler';
 import { useChatSyncStore } from '@/store/chatSyncStore';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 import { registerAuthAccessTokenSink } from '@/store/authAccessSink';
 import { bumpApiAuthCredentialGeneration } from '@/api/apiAuthCredentialGeneration';
@@ -210,9 +210,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
           localStorage.removeItem('token');
           localStorage.removeItem('auth_backup');
           sessionStorage.removeItem('app_navigation_tracked');
-          useNavigationStore.getState().setMyGamesSelectedDay(null);
-          useNavigationStore.getState().setFindSelectedDay(null);
-          useNavigationStore.getState().setFindListWeekStartDay(null);
+          useShellNavStore.getState().setMyGamesSelectedDay(null);
+          useShellNavStore.getState().setFindSelectedDay(null);
+          useShellNavStore.getState().setFindListWeekStartDay(null);
           useReactionEmojiUsageStore.getState().reset();
           void import('@/store/unreadStore').then(({ useUnreadStore }) => {
             useUnreadStore.getState().reset();

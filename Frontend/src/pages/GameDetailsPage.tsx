@@ -5,7 +5,7 @@ import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { SplitViewLeftPanel, SplitViewRightPanel } from '@/components/SplitViewPanels';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { gamesApi } from '@/api';
 import { canShowTournamentTableView } from '@/utils/gameResults';
 import type { Game } from '@/types';
@@ -27,11 +27,11 @@ export const GameDetailsPage = () => {
   const { t } = useTranslation();
   const isDesktop = useDesktop();
   const isLandscape = useIsLandscape();
-  const gameDetailsTableViewOverride = useNavigationStore((s) => s.gameDetailsTableViewOverride);
-  const setGameDetailsTableViewOverride = useNavigationStore((s) => s.setGameDetailsTableViewOverride);
-  const setGameDetailsCanShowTableView = useNavigationStore((s) => s.setGameDetailsCanShowTableView);
-  const gameDetailsCanShowTableView = useNavigationStore((s) => s.gameDetailsCanShowTableView);
-  const setGameDetailsOccludesSideChat = useNavigationStore((s) => s.setGameDetailsOccludesSideChat);
+  const gameDetailsTableViewOverride = useGameDetailsChromeStore((s) => s.gameDetailsTableViewOverride);
+  const setGameDetailsTableViewOverride = useGameDetailsChromeStore((s) => s.setGameDetailsTableViewOverride);
+  const setGameDetailsCanShowTableView = useGameDetailsChromeStore((s) => s.setGameDetailsCanShowTableView);
+  const gameDetailsCanShowTableView = useGameDetailsChromeStore((s) => s.gameDetailsCanShowTableView);
+  const setGameDetailsOccludesSideChat = useGameDetailsChromeStore((s) => s.setGameDetailsOccludesSideChat);
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
   const effectiveLeagueFixtureTableView = useMemo(() => {
     const sp = new URLSearchParams(location.search);

@@ -4,11 +4,11 @@ import { Plus, User } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { CreateMenuModal } from '@/components/CreateMenuModal';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import type { EntityType, Sport } from '@/types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { handleBack } from '@/utils/backNavigation';
-import { parseLocation, placeToPageType } from '@/utils/urlSchema';
+import { isChatShellPlace, parseLocation } from '@/utils/urlSchema';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 
 export const HomeHeaderContent = () => {
@@ -16,12 +16,12 @@ export const HomeHeaderContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const { setCurrentPage, setIsAnimating, setChatsFilter, setMyGamesSubtabBeforeCreate } = useNavigationStore();
+  const { setIsAnimating, setChatsFilter, setMyGamesSubtabBeforeCreate } = useShellNavStore();
   const parsed = useMemo(
     () => parseLocation(location.pathname, location.search),
     [location.pathname, location.search]
   );
-  const currentPage = placeToPageType(parsed.place);
+  const isChatsShell = isChatShellPlace(parsed.place);
   const createGameInitialDate = useHeaderStore((s) => s.createGameInitialDate);
   const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
   const buttonContainerRef = useRef<HTMLDivElement>(null);
@@ -31,7 +31,7 @@ export const HomeHeaderContent = () => {
   const [activeChatType, setActiveChatType] = useState<'group' | 'channel' | null>(null);
 
   useEffect(() => {
-    if (pendingChatType && currentPage === 'chats') {
+    if (pendingChatType && isChatsShell) {
       if (pendingChatType === 'channel') {
         setChatsFilter('channels');
       } else {
@@ -43,7 +43,7 @@ export const HomeHeaderContent = () => {
         setShowChatForm(true);
       }, 100);
     }
-  }, [currentPage, pendingChatType, setChatsFilter]);
+  }, [isChatsShell, pendingChatType, setChatsFilter]);
 
   const handleSelectGameType = (entityType: EntityType, sport?: Sport) => {
     const authUser = useAuthStore.getState().user;
@@ -70,9 +70,8 @@ export const HomeHeaderContent = () => {
 
   const handleSelectChatType = (type: 'group' | 'channel') => {
     setShowCreateMenu(false);
-    if (currentPage !== 'chats') {
+    if (!isChatsShell) {
       setIsAnimating(true);
-      setCurrentPage('chats');
       navigate('/chats', { replace: true });
       setPendingChatType(type);
       setTimeout(() => {
@@ -97,9 +96,8 @@ export const HomeHeaderContent = () => {
     };
 
     setShowCreateMenu(false);
-    if (currentPage !== 'my') {
+    if (parsed.place !== 'home') {
       setIsAnimating(true);
-      setCurrentPage('my');
       navigate('/', { replace: true });
       setTimeout(() => {
         openStoryCreate();
@@ -116,7 +114,7 @@ export const HomeHeaderContent = () => {
   };
 
   const handleProfileClick = () => {
-    if (currentPage === 'profile') {
+    if (parsed.place === 'profile') {
       handleBack(navigate);
       return;
     }
@@ -128,7 +126,7 @@ export const HomeHeaderContent = () => {
       <button
         onClick={handleProfileClick}
         className={`shrink-0 w-8 h-8 rounded-full overflow-hidden ring-2 transition-all flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.7),0_0_35px_rgba(14,165,233,0.4)] dark:shadow-[0_0_20px_rgba(56,189,248,0.7),0_0_35px_rgba(56,189,248,0.4)] ${
-          currentPage === 'profile'
+          parsed.place === 'profile'
             ? 'ring-primary-500/50 dark:ring-primary-400/50'
             : 'ring-transparent hover:ring-primary-500/30 dark:hover:ring-primary-400/30'
         }`}

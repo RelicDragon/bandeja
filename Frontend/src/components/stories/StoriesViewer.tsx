@@ -60,11 +60,14 @@ export function StoriesViewer({
     }
   }, [open, initialBubbleIndex, initialSegmentIndex]);
 
-  useEffect(() => {
-    setVideoEnded(false);
-    setVideoProgress(0);
-    setVideoDurationMs(null);
-  }, [bubbleIndex, segmentIndex]);
+  const segmentNavKey = `${bubbleIndex}:${segmentIndex}`;
+  const prevSegmentNavKeyRef = useRef(segmentNavKey);
+  if (prevSegmentNavKeyRef.current !== segmentNavKey) {
+    prevSegmentNavKeyRef.current = segmentNavKey;
+    if (videoEnded) setVideoEnded(false);
+    if (videoProgress !== 0) setVideoProgress(0);
+    if (videoDurationMs !== null) setVideoDurationMs(null);
+  }
 
   useEffect(() => {
     if (open && !wasOpenRef.current) lightHaptic();

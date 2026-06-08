@@ -1,17 +1,13 @@
 import type { BracketPlayoffGroupDto } from '@/api/leagues';
+import type { BracketPodiumDisplayRow } from '@/features/leagueBracket/types';
 import { isThirdPlaceSlot } from '@/utils/bracketThirdPlace.util';
 import { buildBracketPodium } from '@/utils/leagueBracketOutcome';
 
-export type BracketPodiumRowStatus = 'resolved' | 'in_progress';
-
-export type BracketPodiumRowKind = 'champion' | 'finalist' | 'thirdPlace' | 'semifinalist';
-
-export type BracketPodiumDisplayRow = {
-  kind: BracketPodiumRowKind;
-  participantId: string | null;
-  status: BracketPodiumRowStatus;
-  semifinalistIndex?: number;
-};
+export type {
+  BracketPodiumDisplayRow,
+  BracketPodiumRowKind,
+  BracketPodiumRowStatus,
+} from '@/features/leagueBracket/types';
 
 export function groupHasThirdPlaceSlot(group: BracketPlayoffGroupDto): boolean {
   return group.slots.some(isThirdPlaceSlot);

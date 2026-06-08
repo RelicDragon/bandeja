@@ -1,12 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { PlayerAvatar } from '@/components';
-import type { BracketSlotDto } from '@/api/leagues';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
-import { participantDisplayName, teamUsersFromParticipant } from '@/utils/leagueBracketLayout';
-import { BRACKET_TREE_CARD_CLASS } from '@/utils/bracketTreeCard.util';
+import { BRACKET_TREE_CARD_CLASS, type BracketByeCardView } from '@/features/leagueBracket';
 
 interface LeagueBracketByeCardProps {
-  slot: BracketSlotDto;
+  cardView: BracketByeCardView;
   groupColor?: string | null;
   advanceRoundLabel?: string | null;
   onChampionPath?: boolean;
@@ -14,18 +12,16 @@ interface LeagueBracketByeCardProps {
 }
 
 export function LeagueBracketByeCard({
-  slot,
+  cardView,
   groupColor,
   advanceRoundLabel,
   onChampionPath,
   deEmphasize,
 }: LeagueBracketByeCardProps) {
   const { t } = useTranslation();
-  const users = teamUsersFromParticipant(slot.participant);
-  const name = participantDisplayName(slot.participant);
+  const { name, users, seed } = cardView;
   const color = getLeagueGroupColor(groupColor);
   const soft = getLeagueGroupSoftColor(groupColor);
-  const seed = slot.seedRank ?? slot.participant?.seedRank;
 
   return (
     <div

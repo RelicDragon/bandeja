@@ -3,14 +3,15 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Bell, ArrowLeft, User, BarChart3, GitCompare, Users, Star } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
-import { useNavigationStore } from '../store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useAuthStore } from '@/store/authStore';
 import { handleBack } from '@/utils/backNavigation';
-import { parseLocation, placeToPageType } from '@/utils/urlSchema';
+import { isChatShellPlace, isMarketplaceShellPlace, parseLocation } from '@/utils/urlSchema';
 import {
   HomeHeaderContent,
   GameDetailsHeaderContent,
@@ -35,19 +36,30 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const { pendingInvites, isNewInviteAnimating } = useHeaderStore();
-  const { gameDetailsCanAccessChat, setBounceNotifications, profileActiveTab, setProfileActiveTab, userProfileHeaderActions, findHeaderActions, gameDetailsOccludesSideChat } = useNavigationStore();
+  const { setBounceNotifications, profileActiveTab, setProfileActiveTab, userProfileHeaderActions, findHeaderActions } = useShellNavStore();
+  const { gameDetailsCanAccessChat, gameDetailsOccludesSideChat } = useGameDetailsChromeStore();
   const isDesktop = useDesktop();
 
   const parsed = useMemo(
     () => parseLocation(location.pathname, location.search),
     [location.pathname, location.search]
   );
-  const currentPage = placeToPageType(parsed.place);
+  const { place } = parsed;
+  const isHomeShell = place === 'home';
+  const isFindShell = place === 'find';
+  const isChatsShell = isChatShellPlace(place);
+  const isProfileShell = place === 'profile';
+  const isLeaderboardShell = place === 'leaderboard';
+  const isTeamsShell = place === 'userTeam';
+  const isMarketplaceShell = isMarketplaceShellPlace(place);
+  const isUserProfileShell = place === 'userProfile';
+  const isGameDetailsShell = place === 'game';
+  const isGameSubscriptionsShell = place === 'gameSubscriptions';
 
   const isGameDetailsPath = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
   const isLandscape = useIsLandscape();
   const isGameDetailsSplitView =
-    currentPage === 'gameDetails' &&
+    isGameDetailsShell &&
     (isDesktop || isLandscape) &&
     isGameDetailsPath &&
     !gameDetailsOccludesSideChat;
@@ -58,15 +70,15 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const isMarketplaceList = location.pathname === '/marketplace' || location.pathname === '/marketplace/my';
 
   const showHomeHeaderRight =
-    currentPage === 'my' ||
-    currentPage === 'find' ||
-    currentPage === 'chats' ||
-    currentPage === 'profile' ||
-    currentPage === 'leaderboard' ||
-    currentPage === 'teams' ||
-    (currentPage === 'marketplace' && isMarketplaceList);
+    isHomeShell ||
+    isFindShell ||
+    isChatsShell ||
+    isProfileShell ||
+    isLeaderboardShell ||
+    isTeamsShell ||
+    (isMarketplaceShell && isMarketplaceList);
   const hasRightHeaderSlot =
-    showHomeHeaderRight || currentPage === 'gameDetails' || currentPage === 'gameSubscriptions';
+    showHomeHeaderRight || isGameDetailsShell || isGameSubscriptionsShell;
 
   useBackButtonHandler();
 
@@ -94,26 +106,26 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
       >
         <div className="h-16 px-4 flex items-center gap-4" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
           <div className="flex-1 min-w-0 flex items-center gap-3">
-            {(currentPage === 'my' || currentPage === 'find' || currentPage === 'chats' || currentPage === 'profile' || currentPage === 'leaderboard' || (currentPage === 'marketplace' && isMarketplaceList)) ? null : (
+            {(isHomeShell || isFindShell || isChatsShell || isProfileShell || isLeaderboardShell || (isMarketplaceShell && isMarketplaceList)) ? null : (
               <button
                 onClick={handleBackClick}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-110 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current  focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current shrink-0"
               >
                 <ArrowLeft size={20} />
-                {!(currentPage === 'marketplace' && (location.pathname === '/marketplace/create' || location.pathname.match(/^\/marketplace\/[^/]+\/edit$/))) && currentPage !== 'userProfile' && t('common.back')}
+                {!(isMarketplaceShell && (location.pathname === '/marketplace/create' || location.pathname.match(/^\/marketplace\/[^/]+\/edit$/))) && !isUserProfileShell && t('common.back')}
               </button>
             )}
 
-            {currentPage === 'userProfile' && userProfileHeaderActions && (
+            {isUserProfileShell && userProfileHeaderActions && (
               <div className="min-w-0 flex-1 flex items-center min-h-0 pl-1">
                 <div className="w-full min-w-0 overflow-visible">{userProfileHeaderActions}</div>
               </div>
             )}
 
-            {currentPage === 'marketplace' && isMarketplaceList && (
+            {isMarketplaceShell && isMarketplaceList && (
               <MarketplaceTabController />
             )}
-            {currentPage === 'marketplace' && (location.pathname === '/marketplace/create' || location.pathname.match(/^\/marketplace\/[^/]+\/edit$/)) && (
+            {isMarketplaceShell && (location.pathname === '/marketplace/create' || location.pathname.match(/^\/marketplace\/[^/]+\/edit$/)) && (
               <MarketplaceCreateHeaderContent />
             )}
             
@@ -133,10 +145,10 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
               </button>
             )}
 
-            {currentPage === 'my' && <MyGamesTabController />}
-            {currentPage === 'find' && (findHeaderActions ?? <FindTabController />)}
-            {currentPage === 'chats' && <ChatsTabController />}
-            {currentPage === 'profile' && (
+            {isHomeShell && <MyGamesTabController />}
+            {isFindShell && (findHeaderActions ?? <FindTabController />)}
+            {isChatsShell && <ChatsTabController />}
+            {isProfileShell && (
               <SegmentedSwitch
                 tabs={[
                   { id: 'general', label: t('profile.general') || 'General', icon: User },
@@ -151,7 +163,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
                 layoutId="profile-subtabs"
               />
             )}
-            {currentPage === 'leaderboard' && <LeaderboardTabController />}
+            {isLeaderboardShell && <LeaderboardTabController />}
           </div>
 
           <div className={`flex-shrink-0 flex items-center justify-end gap-4 ${hasRightHeaderSlot ? 'min-w-28' : 'min-w-0'}`}>
@@ -159,17 +171,17 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
               <HomeHeaderContent />
             )}
 
-            {currentPage === 'gameDetails' && (
+            {isGameDetailsShell && (
               <GameDetailsHeaderContent canAccessChat={gameDetailsCanAccessChat && !isGameDetailsSplitView} />
             )}
 
-            {currentPage === 'gameSubscriptions' && (
+            {isGameSubscriptionsShell && (
               <GameSubscriptionsHeaderContent />
             )}
           </div>
         </div>
       </motion.header>
-      {currentPage !== 'profile' && currentPage !== 'userProfile' && <GameModeToggle />}
+      {!isProfileShell && !isUserProfileShell && <GameModeToggle />}
     </>
   );
 };

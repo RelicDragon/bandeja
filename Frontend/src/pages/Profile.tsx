@@ -16,7 +16,7 @@ import { ProfileTrainerReviews } from '@/components/ProfileTrainerReviews';
 import { BlockedUsersSection } from '@/components/BlockedUsersSection';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { usersApi, mediaApi, authApi, NotificationPreference } from '@/api';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
@@ -70,7 +70,7 @@ export const ProfileContent = () => {
   const navigate = useNavigate();
   const { user, updateUser, setAuth, logout } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
-  const { profileActiveTab, setProfileActiveTab } = useNavigationStore();
+  const { profileActiveTab, setProfileActiveTab } = useShellNavStore();
 
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');

@@ -64,13 +64,11 @@ import {
   getPhase4FlagForGroup,
   setPhase4FlagForGroup,
 } from '@/utils/playoffWizardPhase4ByGroup.util';
-import { buildPerGroupBracketCreateGroup } from '@/utils/playoffWizardCreatePayload.util';
 import {
-  customByeErrorI18nKey,
-  customPlayInErrorI18nKey,
-  getCustomByeValidation,
-  getCustomPlayInValidation,
-} from '@/utils/playoffWizardValidation.util';
+  bracketWizardErrorMessage,
+  buildCreatePayload,
+  validateBracketWizardGroupOptions,
+} from '@/features/leagueBracket';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { parseSport } from '@shared/sport';
 
@@ -465,23 +463,15 @@ export const PlayoffConfigurationModal = ({
     if (!isBracket) return true;
 
     if (isCrossGroupBracket) {
-      const byeCheck = getCustomByeValidation(
-        crossDerived.totalN,
-        crossCustomByeEnabled,
-        crossCustomByeRanks
-      );
-      if (!byeCheck.valid) {
-        toast.error(t(customByeErrorI18nKey(byeCheck.error), { defaultValue: 'Invalid custom bye selection' }));
-        return false;
-      }
-      const playInCheck = getCustomPlayInValidation(
-        crossDerived.totalN,
-        crossCustomPlayInEnabled,
-        crossPlayInPairs,
-        crossCustomByeEnabled ? crossCustomByeRanks : undefined
-      );
-      if (!playInCheck.valid) {
-        toast.error(t(customPlayInErrorI18nKey(playInCheck.error), { defaultValue: 'Invalid play-in pairings' }));
+      const crossCheck = validateBracketWizardGroupOptions({
+        entrantCount: crossDerived.totalN,
+        customByeEnabled: crossCustomByeEnabled,
+        customByeSeedRanks: crossCustomByeRanks,
+        customPlayInEnabled: crossCustomPlayInEnabled,
+        playInSeedPairs: crossPlayInPairs,
+      });
+      if (!crossCheck.valid) {
+        toast.error(bracketWizardErrorMessage(crossCheck.errors[0], t));
         return false;
       }
       return true;
@@ -490,30 +480,15 @@ export const PlayoffConfigurationModal = ({
     for (const g of groups) {
       if (!groupMeetsMin(g.id)) continue;
       const count = selectedIdsByGroup[g.id]?.size ?? 0;
-      const byeCheck = getCustomByeValidation(
-        count,
-        customByeEnabledByGroup[g.id] ?? false,
-        customByeRanksByGroup[g.id] ?? []
-      );
-      if (!byeCheck.valid) {
-        toast.error(
-          t(customByeErrorI18nKey(byeCheck.error), {
-            defaultValue: 'Invalid custom bye selection',
-          })
-        );
-        return false;
-      }
-      const customByeSeedRanks = customByeEnabledByGroup[g.id] ? customByeRanksByGroup[g.id] : undefined;
-      const playInCheck = getCustomPlayInValidation(
-        count,
-        customPlayInEnabledByGroup[g.id] ?? false,
-        playInPairsByGroup[g.id] ?? [],
-        customByeSeedRanks
-      );
-      if (!playInCheck.valid) {
-        toast.error(
-          t(customPlayInErrorI18nKey(playInCheck.error), { defaultValue: 'Invalid play-in pairings' })
-        );
+      const groupCheck = validateBracketWizardGroupOptions({
+        entrantCount: count,
+        customByeEnabled: customByeEnabledByGroup[g.id] ?? false,
+        customByeSeedRanks: customByeRanksByGroup[g.id] ?? [],
+        customPlayInEnabled: customPlayInEnabledByGroup[g.id] ?? false,
+        playInSeedPairs: playInPairsByGroup[g.id] ?? [],
+      });
+      if (!groupCheck.valid) {
+        toast.error(bracketWizardErrorMessage(groupCheck.errors[0], t));
         return false;
       }
     }
@@ -704,7 +679,7 @@ export const PlayoffConfigurationModal = ({
               playInPairsByGroup[g.id] ?? [],
               customByeSeedRanks
             );
-            return buildPerGroupBracketCreateGroup({
+            return buildCreatePayload({
               leagueGroupId: g.id,
               participantIds,
               customByeEnabled: customByeEnabledByGroup[g.id] ?? false,

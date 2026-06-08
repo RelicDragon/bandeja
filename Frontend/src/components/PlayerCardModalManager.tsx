@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { PlayerCardModalProvider } from '@/components/PlayerCardModalProvider';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
+import { useSportContextStore } from '@/store/sportContextStore';
 import { getOverlay } from '@/utils/urlSchema';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { parseLevelSportQuery } from '@/utils/levelSportQuery';
@@ -16,8 +17,8 @@ export const PlayerCardModalManager = ({ children }: PlayerCardModalManagerProps
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [cardLevelSport, setCardLevelSport] = useState<Sport | undefined>();
   const location = useLocation();
-  const pendingReopen = useNavigationStore((s) => s.pendingPlayerCardReopen);
-  const activeLevelSport = useNavigationStore((s) => s.activeLevelSport);
+  const pendingReopen = useShellNavStore((s) => s.pendingPlayerCardReopen);
+  const activeLevelSport = useSportContextStore((s) => s.activeLevelSport);
   const sportFromUrl = useMemo(
     () => parseLevelSportQuery(new URLSearchParams(location.search).get('sport')),
     [location.search],
@@ -37,18 +38,18 @@ export const PlayerCardModalManager = ({ children }: PlayerCardModalManagerProps
     if (typeof currentIdx !== 'number') return;
 
     if (currentIdx <= pendingReopen.sourceIdx) {
-      useNavigationStore.getState().setPendingPlayerCardReopen(null);
+      useShellNavStore.getState().setPendingPlayerCardReopen(null);
       setPlayerId(pendingReopen.playerId);
-      setCardLevelSport(useNavigationStore.getState().activeLevelSport);
+      setCardLevelSport(useSportContextStore.getState().activeLevelSport);
     } else if (currentIdx > pendingReopen.sourceIdx + 1) {
-      useNavigationStore.getState().setPendingPlayerCardReopen(null);
+      useShellNavStore.getState().setPendingPlayerCardReopen(null);
     }
   }, [location.pathname, location.search, pendingReopen]);
 
   const openPlayerCard = (id: string, levelSport?: Sport) => {
     setPlayerId(id);
     setCardLevelSport(
-      levelSport ?? useNavigationStore.getState().activeLevelSport,
+      levelSport ?? useSportContextStore.getState().activeLevelSport,
     );
   };
 

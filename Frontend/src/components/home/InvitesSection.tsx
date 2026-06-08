@@ -5,7 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { Button, Card, PlayerAvatar, GameCard } from '@/components';
 import { Invite } from '@/types';
 import { Check, X } from 'lucide-react';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { useAuthStore } from '@/store/authStore';
 import { SportQuestionnaireInviteNudge } from '@/components/sportQuestionnaire';
 import { parseGameSport } from '@/utils/gameSport';
@@ -21,7 +21,7 @@ interface InvitesSectionProps {
 export const InvitesSection = ({ invites, onAccept, onDecline, onNoteSaved }: InvitesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { bounceNotifications, setBounceNotifications } = useNavigationStore(
+  const { bounceNotifications, setBounceNotifications } = useShellNavStore(
     useShallow((s) => ({
       bounceNotifications: s.bounceNotifications,
       setBounceNotifications: s.setBounceNotifications,

@@ -1,9 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { BracketCustomByePicker } from './BracketCustomByePicker';
-import { byeCountForEntrants, supportsThirdPlaceMatch } from '@/utils/customByeSeedRanks.util';
-import { supportsConsolationBracket } from '@/utils/consolationBracket.util';
-import { supportsDoubleElimination } from '@/utils/doubleElimBracket.util';
+import { getPhase4CreateOptionsVisibility } from '@/features/leagueBracket';
 
 interface BracketPhase4CreateOptionsProps {
   entrantCount: number;
@@ -61,10 +59,10 @@ export function BracketPhase4CreateOptions({
   seedLabels,
 }: BracketPhase4CreateOptionsProps) {
   const { t } = useTranslation();
-  const byeCount = byeCountForEntrants(entrantCount);
-  const showThird = supportsThirdPlaceMatch(entrantCount);
-  const showConsolation = supportsConsolationBracket(entrantCount, customByeSeedRanks);
-  const showDoubleElim = supportsDoubleElimination(entrantCount, customByeSeedRanks);
+  const { showThird, showConsolation, showDoubleElim, byeCount } = getPhase4CreateOptionsVisibility(
+    entrantCount,
+    customByeSeedRanks
+  );
   if (!showThird && !showConsolation && !showDoubleElim && byeCount <= 0) return null;
 
   return (

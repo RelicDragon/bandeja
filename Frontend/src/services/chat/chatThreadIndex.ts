@@ -3,7 +3,7 @@ import type { ChatItem, ChatListOutbox } from '@/utils/chatListSort';
 import type { Game } from '@/types';
 import { calculateLastMessageDate } from '@/utils/chatListHelpers';
 import { useAuthStore } from '@/store/authStore';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { chatLocalDb, type ChatListFilterTab, type ChatThreadIndexRow } from './chatLocalDb';
 import { getLatestLocalMessageRowAcrossChatTypes } from './messageContextHead';
 import {
@@ -31,7 +31,7 @@ function shouldIncrementThreadUnread(message: ChatMessage): boolean {
   }
   const me = useAuthStore.getState().user?.id;
   if (!me || !message.senderId || message.senderId === me) return false;
-  const nav = useNavigationStore.getState();
+  const nav = useGameDetailsChromeStore.getState();
   if (message.chatContextType === 'USER' && nav.viewingUserChatId === message.contextId) return false;
   if (message.chatContextType === 'GROUP' && nav.viewingGroupChannelId === message.contextId) return false;
   if (message.chatContextType === 'GAME' && nav.viewingGameChatId === message.contextId) return false;

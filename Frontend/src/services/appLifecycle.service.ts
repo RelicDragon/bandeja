@@ -7,7 +7,7 @@ import pushNotificationService from '@/services/pushNotificationService';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { useAuthStore } from '@/store/authStore';
 import { warmChatSyncHeads, collectContextsForWarmEnriched } from '@/services/chat/chatSyncBatchWarm';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { enqueueChatSyncPull, SYNC_PRIORITY_VIEWING } from '@/services/chat/chatSyncScheduler';
 import { setChatSyncNativeAppActive } from '@/services/chat/chatSyncAppVisibility';
 import { recordChatSyncForegroundSyncMs } from '@/services/chat/chatSyncMetrics';
@@ -50,7 +50,7 @@ async function runForegroundSync(): Promise<void> {
   } catch {
     // proceed with sync even if socket not ready
   }
-  const nav = useNavigationStore.getState();
+  const nav = useGameDetailsChromeStore.getState();
   const viewing: ChatRoomRef[] = [];
   if (nav.viewingGameChatId) {
     viewing.push({

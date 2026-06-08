@@ -2,18 +2,20 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Home, Calendar, MessageCircle, Trophy, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { useBottomTabUnreadBadges } from '@/hooks/useUnreadBridge';
 import { useDesktop } from '@/hooks/useDesktop';
 import { memo, useMemo, useRef } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { parseLocation, placeToPageType, type PageType } from '@/utils/urlSchema';
+import { isChatShellPlace, isMarketplaceShellPlace, parseLocation } from '@/utils/urlSchema';
 import { hasEnabledSports } from '@/utils/profileSports';
 import { ClubAdminFab } from '@/components/clubAdmin/ClubAdminFab';
 
+type BottomTabId = 'my' | 'find' | 'chats' | 'marketplace' | 'leaderboard';
+
 interface BottomTabBarProps {
   containerPosition?: boolean;
-  tabOverride?: PageType;
+  tabOverride?: BottomTabId;
   previousPath?: string;
   animateEntry?: boolean;
 }
@@ -22,7 +24,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const { setRequestFindGoToCurrent } = useNavigationStore();
+  const { setRequestFindGoToCurrent } = useShellNavStore();
   const user = useAuthStore((s) => s.user);
   const showGameTabs = hasEnabledSports(user);
   const tabBadges = useBottomTabUnreadBadges();
@@ -33,11 +35,19 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
     () => parseLocation(location.pathname, location.search),
     [location.pathname, location.search]
   );
-  const currentPage = placeToPageType(parsed.place);
-  const effectivePage = tabOverride ?? currentPage;
+  const activeTabId: BottomTabId = (() => {
+    const { place } = parsed;
+    if (place === 'home') return 'my';
+    if (place === 'find') return 'find';
+    if (isChatShellPlace(place)) return 'chats';
+    if (isMarketplaceShellPlace(place)) return 'marketplace';
+    if (place === 'leaderboard') return 'leaderboard';
+    return 'my';
+  })();
+  const effectivePage = tabOverride ?? activeTabId;
   const findViewMode = (parsed.place === 'find' && parsed.params.view as string) || 'calendar';
   
-  const shouldAnimateToLeft = isDesktop && currentPage === 'chats';
+  const shouldAnimateToLeft = isDesktop && isChatShellPlace(parsed.place);
 
   const tabs = useMemo(() => {
     const all = [
@@ -82,7 +92,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
   }, [t, tabBadges.my, tabBadges.chats, tabBadges.market, showGameTabs]);
 
 
-  const handleTabClick = (tab: PageType, path: string) => {
+  const handleTabClick = (tab: BottomTabId, path: string) => {
     if (effectivePage === tab) {
       if (tabOverride && previousPath) {
         const [pathname, search] = previousPath.includes('?') ? [previousPath.split('?')[0], previousPath.split('?')[1] ?? ''] : [previousPath, ''];

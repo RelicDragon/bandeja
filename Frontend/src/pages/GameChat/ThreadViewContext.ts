@@ -6,7 +6,7 @@ import type { MessageListHandle } from '@/components/MessageList';
 import type { TranslationModalAutoTranslateProps } from '@/components/chat/TranslationLanguageModal';
 import type { OptimisticMessagePayload } from '@/api/chat';
 import type { SendQueuedParams } from '@/components/chat/useMessageInputSubmit';
-import type { useGameChatDerived } from './useGameChatDerived';
+import type { useThreadDerived } from '@/services/chat/chatThreadController/useThreadDerived';
 import type { useGameChatPanels } from './useGameChatPanels';
 import type { LoadContextOptions } from './useGameChatContext';
 import type { GameChatFooterVariant } from './GameChatFooter';
@@ -111,7 +111,7 @@ export interface ThreadChromeValue {
   pinnedBarTopIndex: number;
   loadingScrollTargetId: string | null;
   handlePinnedBarClick: (messageId: string) => void;
-  derived: ReturnType<typeof useGameChatDerived>;
+  derived: ReturnType<typeof useThreadDerived>;
   footerVariant: GameChatFooterVariant | null;
   isBlockedByUser: boolean;
   isJoiningAsGuest: boolean;

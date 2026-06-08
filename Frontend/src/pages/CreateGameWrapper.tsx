@@ -3,7 +3,7 @@ import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { CreateGame } from './CreateGame';
 import { EntityType, Game } from '@/types';
 import type { CreateFlowIntent, CreateTemplateId } from '@/sport/createFlow';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 
 export const CreateGameWrapper = () => {
@@ -19,7 +19,7 @@ export const CreateGameWrapper = () => {
   const initialGameData = state?.initialGameData;
   const initialCreateIntent = state?.createIntent;
   const initialTemplateId = state?.selectedTemplateId;
-  const { setBottomTabsVisible } = useNavigationStore();
+  const { setBottomTabsVisible } = useShellNavStore();
   
   useEffect(() => {
     setBottomTabsVisible(false);

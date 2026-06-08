@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { parse, startOfDay } from 'date-fns';
 import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 
 const DEFAULT_FILTERS: GameFilters = {
   userFilter: false,
@@ -27,9 +27,9 @@ const dayKeyToIso = (day: string) => startOfDay(parse(day, 'yyyy-MM-dd', new Dat
 export const useGameFilters = () => {
   const [filters, setFilters] = useState<GameFilters>(DEFAULT_FILTERS);
   const hasLoadedRef = useRef(false);
-  const findViewMode = useNavigationStore((s) => s.findViewMode);
-  const findListWeekStartDay = useNavigationStore((s) => s.findListWeekStartDay);
-  const findSelectedDay = useNavigationStore((s) => s.findSelectedDay);
+  const findViewMode = useShellNavStore((s) => s.findViewMode);
+  const findListWeekStartDay = useShellNavStore((s) => s.findListWeekStartDay);
+  const findSelectedDay = useShellNavStore((s) => s.findSelectedDay);
 
   useEffect(() => {
     getGameFilters().then((f) => {

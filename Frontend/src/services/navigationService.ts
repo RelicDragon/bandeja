@@ -1,6 +1,6 @@
 import { NavigateFunction } from 'react-router-dom';
 import { buildUrl, type PlaceParams } from '@/utils/urlSchema';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import type { ChatNavigateOptions } from '@/pages/GameChat/types';
 import { bumpChatFreshOpenNonce } from '@/services/chat/chatOpenEntry';
 
@@ -108,7 +108,7 @@ class NavigationService {
 
   navigateToCreateBug() {
     if (!this.ensureInitialized()) return;
-    useNavigationStore.getState().setOpenBugModal(true);
+    useGameDetailsChromeStore.getState().setOpenBugModal(true);
     this.navigate!(buildUrl('bugs'), { replace: true });
   }
 

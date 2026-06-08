@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Button } from '@/components';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useNavigateWithTracking } from '@/hooks/useNavigateWithTracking';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 
 interface GameDetailsHeaderContentProps {
   canAccessChat: boolean;
@@ -21,7 +21,7 @@ export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderCon
     setGameDetailsTableViewOverride,
     gameDetailsTableAddRoundCallback,
     gameDetailsTableIsEditing,
-  } = useNavigationStore();
+  } = useGameDetailsChromeStore();
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
 
   const handleChatClick = () => {

@@ -1,7 +1,7 @@
 /**
  * Chat open coordinator — contracts and pure helpers for game-chat-open-performance.
  *
- * **Placement (A0.3):** Pure async / pure functions here (no React). `useGameChatMessages` is the
+ * **Placement (A0.3):** Pure async / pure functions here (no React). `useThreadMessages` is the
  * hook wrapper: L1 layout seed, bootstrap, reconcile, traced `setMessages`.
  *
  * Bootstrap merge lives in `threadOpen/planThreadOpen`; this module re-exports contracts and

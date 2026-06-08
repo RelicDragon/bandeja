@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Card, GameCard, Button } from '@/components';
 import { Game } from '@/types';
 import { Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy, Users, RotateCcw, Grid3X3, Star } from 'lucide-react';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { format, parse, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
@@ -60,16 +60,15 @@ export const AvailableGamesSection = ({
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const findViewMode = useNavigationStore((s) => s.findViewMode);
-  const requestFindGoToCurrent = useNavigationStore((s) => s.requestFindGoToCurrent);
-  const setCurrentPage = useNavigationStore((s) => s.setCurrentPage);
-  const setIsAnimating = useNavigationStore((s) => s.setIsAnimating);
-  const setFindViewMode = useNavigationStore((s) => s.setFindViewMode);
-  const setRequestFindGoToCurrent = useNavigationStore((s) => s.setRequestFindGoToCurrent);
-  const findSelectedDay = useNavigationStore((s) => s.findSelectedDay);
-  const findListWeekStartDay = useNavigationStore((s) => s.findListWeekStartDay);
-  const setFindSelectedDay = useNavigationStore((s) => s.setFindSelectedDay);
-  const setFindListWeekStartDay = useNavigationStore((s) => s.setFindListWeekStartDay);
+  const findViewMode = useShellNavStore((s) => s.findViewMode);
+  const requestFindGoToCurrent = useShellNavStore((s) => s.requestFindGoToCurrent);
+  const setIsAnimating = useShellNavStore((s) => s.setIsAnimating);
+  const setFindViewMode = useShellNavStore((s) => s.setFindViewMode);
+  const setRequestFindGoToCurrent = useShellNavStore((s) => s.setRequestFindGoToCurrent);
+  const findSelectedDay = useShellNavStore((s) => s.findSelectedDay);
+  const findListWeekStartDay = useShellNavStore((s) => s.findListWeekStartDay);
+  const setFindSelectedDay = useShellNavStore((s) => s.setFindSelectedDay);
+  const setFindListWeekStartDay = useShellNavStore((s) => s.setFindListWeekStartDay);
   const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
   const selectedDate = useMemo(() => {
     if (findSelectedDay) {
@@ -264,7 +263,7 @@ export const AvailableGamesSection = ({
         if (filters.activeTab) {
           setFindViewMode(filters.activeTab);
         }
-        const nav = useNavigationStore.getState();
+        const nav = useShellNavStore.getState();
         if (filters.listViewStartDate && nav.findListWeekStartDay == null) {
           const restoredDate = new Date(filters.listViewStartDate);
           if (!isNaN(restoredDate.getTime())) {
@@ -574,7 +573,6 @@ export const AvailableGamesSection = ({
 
   const handleSubscriptionsClick = () => {
     setIsAnimating(true);
-    setCurrentPage('gameSubscriptions');
     navigate('/game-subscriptions', { replace: true });
     setTimeout(() => setIsAnimating(false), 300);
   };

@@ -43,19 +43,6 @@ export interface ParsedLocation {
   overlay?: Overlay;
 }
 
-export type PageType =
-  | 'my'
-  | 'find'
-  | 'chats'
-  | 'bugs'
-  | 'profile'
-  | 'leaderboard'
-  | 'gameDetails'
-  | 'gameSubscriptions'
-  | 'marketplace'
-  | 'teams'
-  | 'userProfile';
-
 interface PlaceDefinition {
   pattern: RegExp;
   place: Place;
@@ -195,36 +182,30 @@ export function getOverlay(search: string): Overlay | null {
   return null;
 }
 
-export function placeToPageType(place: Place): PageType {
-  switch (place) {
-    case 'home': return 'my';
-    case 'find': return 'find';
-    case 'chats':
-    case 'chatsMarketplace':
-    case 'bugs':
-    case 'userChat':
-    case 'groupChat':
-    case 'channelChat':
-      return 'chats';
-    case 'marketplace':
-    case 'marketplaceMy':
-    case 'createMarketItem':
-    case 'editMarketItem':
-    case 'marketplaceItem':
-      return 'marketplace';
-    case 'leaderboard': return 'leaderboard';
-    case 'profile': return 'profile';
-    case 'userTeam':
-      return 'teams';
-    case 'userProfile':
-      return 'userProfile';
-    case 'game':
-      return 'gameDetails';
-    case 'gameChat':
-      return 'chats';
-    case 'gameSubscriptions': return 'gameSubscriptions';
-    default: return 'my';
-  }
+const CHAT_SHELL_PLACES: Place[] = [
+  'chats',
+  'chatsMarketplace',
+  'bugs',
+  'userChat',
+  'groupChat',
+  'channelChat',
+  'gameChat',
+];
+
+const MARKETPLACE_SHELL_PLACES: Place[] = [
+  'marketplace',
+  'marketplaceMy',
+  'createMarketItem',
+  'editMarketItem',
+  'marketplaceItem',
+];
+
+export function isChatShellPlace(place: Place): boolean {
+  return CHAT_SHELL_PLACES.includes(place);
+}
+
+export function isMarketplaceShellPlace(place: Place): boolean {
+  return MARKETPLACE_SHELL_PLACES.includes(place);
 }
 
 const APP_PATH_RE =

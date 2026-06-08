@@ -20,7 +20,7 @@ import {
   resolveSelectedBracketRound,
   canRestartBracketPlayoff,
 } from '@/utils/leagueBracketRound';
-import { isCrossGroupBracket, resolveBracketGroupFromQuery } from '@/utils/bracketView.util';
+import { isCrossGroupBracket, resolveBracketGroupFromQuery } from '@/features/leagueBracket';
 
 export const LeagueBracketFullscreenPage = () => {
   const { id: leagueSeasonId = '' } = useParams<{ id: string }>();

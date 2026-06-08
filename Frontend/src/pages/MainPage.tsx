@@ -2,11 +2,11 @@ import { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { MainLayout } from '@/layouts/MainLayout';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
-import { parseLocation, placeToPageType } from '@/utils/urlSchema';
+import { isChatShellPlace, isMarketplaceShellPlace, parseLocation } from '@/utils/urlSchema';
 import { MyTab } from './MyTab';
 import { FindTab } from './FindTab';
 import { ChatsTab } from './ChatsTab';
@@ -36,7 +36,7 @@ export const MainPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const { bottomTabsVisible, initShellAnimationPlayed, activeTab, findViewMode } = useNavigationStore(
+  const { bottomTabsVisible, initShellAnimationPlayed, activeTab, findViewMode } = useShellNavStore(
     useShallow((s) => ({
       bottomTabsVisible: s.bottomTabsVisible,
       initShellAnimationPlayed: s.initShellAnimationPlayed,
@@ -53,56 +53,57 @@ export const MainPage = () => {
     [location.pathname, location.search]
   );
 
-  const currentPage = placeToPageType(parsed.place);
   const showGameTabs = hasEnabledSports(user);
 
   useEffect(() => {
     if (showGameTabs) return;
-    if (currentPage === 'my' || currentPage === 'find') {
+    if (parsed.place === 'home' || parsed.place === 'find') {
       navigate('/profile', { replace: true });
     }
-  }, [showGameTabs, currentPage, navigate]);
+  }, [showGameTabs, parsed.place, navigate]);
 
   const isCalendarSplitView = isDesktop && (
-    (currentPage === 'my' && activeTab === 'calendar') ||
-    (currentPage === 'find' && findViewMode === 'calendar')
+    (parsed.place === 'home' && activeTab === 'calendar') ||
+    (parsed.place === 'find' && findViewMode === 'calendar')
   );
 
   const scrollablePage =
-    currentPage === 'my' ||
-    currentPage === 'find' ||
-    currentPage === 'userProfile' ||
-    currentPage === 'leaderboard';
-  const isTeamsPage = currentPage === 'teams';
+    parsed.place === 'home' ||
+    parsed.place === 'find' ||
+    parsed.place === 'userProfile' ||
+    parsed.place === 'leaderboard';
+  const isTeamsPage = parsed.place === 'userTeam';
 
   const renderContent = useMemo(() => {
-    switch (currentPage) {
-      case 'my':
+    switch (parsed.place) {
+      case 'home':
         return <MyTab />;
       case 'find':
         return <FindTab />;
-      case 'chats':
-        return <ChatsTab />;
       case 'leaderboard':
         return <LeaderboardTab />;
       case 'profile':
         return <ProfileTab />;
-      case 'gameDetails':
+      case 'game':
         return <GameDetailsPage />;
       case 'gameSubscriptions':
         return <GameSubscriptionsContent />;
-      case 'marketplace':
-        return <MarketplaceContent />;
-      case 'teams':
+      case 'userTeam':
         return <UserTeamPage />;
       case 'userProfile':
         return <UserProfilePage />;
       default:
+        if (isChatShellPlace(parsed.place)) {
+          return <ChatsTab />;
+        }
+        if (isMarketplaceShellPlace(parsed.place)) {
+          return <MarketplaceContent />;
+        }
         return <MyTab />;
     }
-  }, [currentPage]);
+  }, [parsed.place]);
 
-  const isChatPage = currentPage === 'chats';
+  const isChatPage = isChatShellPlace(parsed.place);
   const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') ||
                                  location.pathname.includes('/group-chat/') ||
                                  location.pathname.includes('/channel-chat/') ||
@@ -128,9 +129,9 @@ export const MainPage = () => {
   }
 
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
-  const isGameDetailsSplitView = currentPage === 'gameDetails' && isGameDetailsPage && (isDesktop || isLandscape);
+  const isGameDetailsSplitView = parsed.place === 'game' && isGameDetailsPage && (isDesktop || isLandscape);
   const isGameDetailsMobileScroll =
-    currentPage === 'gameDetails' && isGameDetailsPage && !isGameDetailsSplitView;
+    parsed.place === 'game' && isGameDetailsPage && !isGameDetailsSplitView;
   if (isGameDetailsSplitView) {
     return (
       <MainLayout>

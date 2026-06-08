@@ -1,11 +1,13 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { Header } from './Header';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
+import { isChatShellPlace, parseLocation } from '@/utils/urlSchema';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -18,24 +20,25 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const user = useAuthStore((state) => state.user);
   const {
     bottomTabsVisible,
-    currentPage,
     chatsFilter,
     activeTab,
     findViewMode,
     initShellAnimationPlayed,
     setInitShellAnimationPlayed,
-    gameDetailsOccludesSideChat,
-  } = useNavigationStore(
+  } = useShellNavStore(
     useShallow((s) => ({
       bottomTabsVisible: s.bottomTabsVisible,
-      currentPage: s.currentPage,
       chatsFilter: s.chatsFilter,
       activeTab: s.activeTab,
       findViewMode: s.findViewMode,
       initShellAnimationPlayed: s.initShellAnimationPlayed,
       setInitShellAnimationPlayed: s.setInitShellAnimationPlayed,
-      gameDetailsOccludesSideChat: s.gameDetailsOccludesSideChat,
     }))
+  );
+  const gameDetailsOccludesSideChat = useGameDetailsChromeStore((s) => s.gameDetailsOccludesSideChat);
+  const parsed = useMemo(
+    () => parseLocation(location.pathname, location.search),
+    [location.pathname, location.search]
   );
   const isDesktop = useDesktop();
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
@@ -49,16 +52,16 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     return () => clearTimeout(t);
   }, [isHomeInit, setInitShellAnimationPlayed]);
 
-  const isDesktopChats = isDesktop && currentPage === 'chats';
+  const isDesktopChats = isDesktop && isChatShellPlace(parsed.place);
   const isGameDetailsPath = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
   const isLandscape = useIsLandscape();
   const isGameDetailsWidePath =
-    (isDesktop || isLandscape) && currentPage === 'gameDetails' && isGameDetailsPath;
+    (isDesktop || isLandscape) && parsed.place === 'game' && isGameDetailsPath;
   const isDesktopGameDetailsSplitView = isGameDetailsWidePath && !gameDetailsOccludesSideChat;
   const isGameDetailsTableFullBleed = isGameDetailsWidePath && gameDetailsOccludesSideChat;
   const isDesktopCalendarSplitView = isDesktop && (
-    (currentPage === 'my' && activeTab === 'calendar') ||
-    (currentPage === 'find' && findViewMode === 'calendar')
+    (parsed.place === 'home' && activeTab === 'calendar') ||
+    (parsed.place === 'find' && findViewMode === 'calendar')
   );
   const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') ||
                                  location.pathname.includes('/group-chat/') ||
@@ -108,4 +111,3 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     </div>
   );
 };
-

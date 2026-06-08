@@ -1,7 +1,7 @@
 import { chatApi, type ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import { getGameChatTypesForUnreadAndMarkRead } from '@/utils/gameChatTypesForUnread';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { useUnreadStore, type EnterContextParams } from '@/store/unreadStore';
 import {
   computeTotals,
@@ -114,7 +114,7 @@ function resolveGroupChannelIdForBug(bugId: string): string | null {
 function isViewingContextKey(key: ContextKey): boolean {
   const parsed = parseContextKey(key);
   if (!parsed) return false;
-  const nav = useNavigationStore.getState();
+  const nav = useGameDetailsChromeStore.getState();
   if (parsed.contextType === 'GAME') return nav.viewingGameChatId === parsed.contextId;
   if (parsed.contextType === 'USER') return nav.viewingUserChatId === parsed.contextId;
   if (parsed.contextType === 'GROUP') return nav.viewingGroupChannelId === parsed.contextId;
@@ -126,15 +126,15 @@ function setViewingBeforeMark(params: CoordinatorEnterParams, resolved: ReturnTy
   const raw = params.rawContextType ?? params.contextType;
   const { contextId } = resolved;
   if (raw === 'GROUP' || raw === 'BUG') {
-    useNavigationStore.getState().setViewingGroupChannelId(contextId);
+    useGameDetailsChromeStore.getState().setViewingGroupChannelId(contextId);
     return;
   }
   if (raw === 'USER') {
-    useNavigationStore.getState().setViewingUserChatId(contextId);
+    useGameDetailsChromeStore.getState().setViewingUserChatId(contextId);
     return;
   }
   if (raw === 'GAME') {
-    useNavigationStore.getState().setViewingGameChat(contextId, params.gameChatType ?? null);
+    useGameDetailsChromeStore.getState().setViewingGameChat(contextId, params.gameChatType ?? null);
   }
 }
 

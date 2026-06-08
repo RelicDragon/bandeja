@@ -5,7 +5,7 @@ import { MessageList } from '@/components/MessageList';
 import { ChatParticipantsModal } from '@/components/ChatParticipantsModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useAuthStore } from '@/store/authStore';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
 import { ChatContextPanel } from '@/components/chat/contextPanels';
 import { PinnedMessagesBar } from '@/components/chat/PinnedMessagesBar';
@@ -33,7 +33,7 @@ export const GameChat: React.FC<GameChatProps> = (props) => (
 const GameChatLayout: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const { setBottomTabsVisible } = useNavigationStore();
+  const { setBottomTabsVisible } = useShellNavStore();
   const chrome = useThreadChrome();
   const msgs = useThreadMessages();
   const scroll = useThreadScroll();

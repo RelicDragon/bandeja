@@ -8,19 +8,17 @@ import type { BracketPlayoffResponse, BracketSlotDto, LeagueGroup } from '@/api/
 import { leaguesApi } from '@/api/leagues';
 import { bracketEditErrorMessage } from '@/utils/bracketApiError.util';
 import { useIsAppOffline } from '@/utils/bracketOffline.util';
+import { translateBracketRoundLabel } from '@/utils/bracketRoundDisplay.util';
 import {
   bracketEditHasChanges,
   bracketEditIsFullyLocked,
   bracketEditPositionLabel,
-  buildBracketEditPositions,
-  buildBracketSlotPatch,
-  canSwapBracketPositions,
-  swapBracketPositions,
+  buildEditParticipantPool,
+  planBracketEdit,
+  resolveEditTreeLayout,
+  teamUsersFromParticipant,
   type BracketEditPosition,
-} from '@/utils/bracketSlotEdit.util';
-import { buildBracketEditTreeColumns } from '@/utils/bracketEditTreeLayout.util';
-import { teamUsersFromParticipant } from '@/utils/leagueBracketLayout';
-import { translateBracketRoundLabel } from '@/utils/bracketRoundDisplay.util';
+} from '@/features/leagueBracket';
 
 export interface BracketEditOverlayProps {
   open: boolean;
@@ -111,17 +109,9 @@ export function BracketEditOverlay({
 }: BracketEditOverlayProps) {
   const { t } = useTranslation();
   const offline = useIsAppOffline();
-  const baseline = useMemo(() => buildBracketEditPositions(slots), [slots]);
-  const pool = useMemo(() => {
-    const m = new Map<string, NonNullable<BracketSlotDto['participant']>>();
-    for (const s of slots) {
-      const p = s.participant;
-      if (!p?.id) continue;
-      m.set(p.id, p);
-      if (s.leagueParticipantId) m.set(s.leagueParticipantId, p);
-    }
-    return m;
-  }, [slots]);
+  const initPlan = useMemo(() => planBracketEdit({ mode: 'init', slots }), [slots]);
+  const baseline = initPlan.positions;
+  const pool = useMemo(() => buildEditParticipantPool(slots), [slots]);
 
   const [draft, setDraft] = useState<BracketEditPosition[]>(baseline);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -152,13 +142,22 @@ export function BracketEditOverlay({
         setSelectedKey(null);
         return;
       }
-      const other = draft.find((p) => p.key === selectedKey);
-      if (!other || !canSwapBracketPositions(other, pos)) {
+
+      const swapPlan = planBracketEdit({
+        mode: 'swap',
+        draft,
+        fromKey: selectedKey,
+        toKey: key,
+        pool,
+      });
+      if (swapPlan.validationErrors.includes('invalidSwap')) {
         setInlineError(t('gameDetails.bracketEditErrorInvalidSwap'));
         setSelectedKey(key);
         return;
       }
-      setDraft((prev) => swapBracketPositions(prev, pool, selectedKey, key));
+      if (swapPlan.nextDraft) {
+        setDraft(swapPlan.nextDraft);
+      }
       setSelectedKey(null);
       setInlineError(null);
     },
@@ -177,15 +176,15 @@ export function BracketEditOverlay({
       toast.error(t('gameDetails.bracketOfflineAction'));
       return;
     }
-    const patchSlots = buildBracketSlotPatch(baseline, draft);
-    if (patchSlots.length === 0) return;
+    const savePlan = planBracketEdit({ mode: 'save', baseline, draft });
+    if (savePlan.payload.length === 0) return;
 
     setSaving(true);
     setInlineError(null);
     try {
       const res = await leaguesApi.patchBracketSlots(leagueSeasonId, {
         roundId,
-        slots: patchSlots,
+        slots: savePlan.payload,
       });
       toast.success(t('gameDetails.bracketEditSaved'));
       onSaved?.(res.data);
@@ -199,12 +198,9 @@ export function BracketEditOverlay({
     }
   };
 
-  const treeColumns = useMemo(
-    () => buildBracketEditTreeColumns(draft),
-    [draft]
-  );
+  const treeColumns = useMemo(() => resolveEditTreeLayout(draft), [draft]);
 
-  const columnTitle = (column: ReturnType<typeof buildBracketEditTreeColumns>[number]) => {
+  const columnTitle = (column: ReturnType<typeof resolveEditTreeLayout>[number]) => {
     if (column.kind === 'play-in') return t('gameDetails.bracketColumnPlayIn');
     if (column.kind === 'byes') return t('gameDetails.bracketColumnByes');
     return translateBracketRoundLabel(
@@ -237,7 +233,7 @@ export function BracketEditOverlay({
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
               <p className="mb-2 text-xs text-center text-gray-500 dark:text-gray-400">
-                {t('gameDetails.bracketPreviewHint', { defaultValue: 'Play-in → byes → knockout' })}
+                {t('gameDetails.bracketPreviewHint', { defaultValue: 'Play-in ? byes ? knockout' })}
               </p>
               {treeColumns.length > 0 ? (
                 <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">

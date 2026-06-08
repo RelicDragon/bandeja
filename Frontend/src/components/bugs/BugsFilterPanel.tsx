@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import type { BugStatus, BugType } from '@/types';
 
 const BUG_STATUSES: BugStatus[] = ['CREATED', 'CONFIRMED', 'IN_PROGRESS', 'TEST', 'FINISHED', 'ARCHIVED'];
@@ -7,7 +7,7 @@ const BUG_TYPES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK
 
 export const BugsFilterPanel = () => {
   const { t } = useTranslation();
-  const { bugsFilter, setBugsFilter } = useNavigationStore();
+  const { bugsFilter, setBugsFilter } = useGameDetailsChromeStore();
 
   const selectStatus = (status: BugStatus) => {
     setBugsFilter((prev) => ({

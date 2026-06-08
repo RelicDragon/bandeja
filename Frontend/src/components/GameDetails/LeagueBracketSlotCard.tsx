@@ -7,24 +7,12 @@ import type { BracketOriginGroupDto, BracketPlayoffResponse, BracketSlotDto } fr
 import type { LeagueGroup } from '@/api/leagues';
 import { getLeagueGroupColor } from '@/utils/leagueGroupColors';
 import type { Game } from '@/types';
-import { isFullGame } from '@/utils/leagueBracketEnrich';
-import { bracketWalkoverErrorMessage } from '@/utils/bracketApiError.util';
-import { useIsAppOffline } from '@/utils/bracketOffline.util';
 import {
-  bracketMatchStatusBadgeClass,
-  bracketMatchStatusFromGame,
-  bracketMatchStatusI18nKey,
-  type BracketMatchStatus,
-} from '@/utils/leagueBracketMatchStatus';
-import { resolveBracketSideDisplayLabel } from '@/utils/bracketFeederSlotLabel.util';
-import {
-  resolveFeederParticipant,
-  resolveSlotSideParticipants,
-  slotsById,
-  teamUsersFromParticipant,
-} from '@/utils/leagueBracketLayout';
-import { BRACKET_TREE_CARD_CLASS } from '@/utils/bracketTreeCard.util';
-import { translateBracketRoundLabel } from '@/utils/bracketRoundDisplay.util';
+  BRACKET_TREE_CARD_CLASS,
+  bracketWalkoverErrorMessage,
+  useIsAppOffline,
+  type BracketSlotCardView,
+} from '@/features/leagueBracket';
 
 function resolveOriginGroup(
   participant: BracketSlotDto['participant'],
@@ -53,7 +41,7 @@ function OriginGroupBadge({ origin }: { origin: BracketOriginGroupDto }) {
 
 interface LeagueBracketSlotCardProps {
   slot: BracketSlotDto;
-  allSlots: BracketSlotDto[];
+  cardView: BracketSlotCardView;
   groups?: LeagueGroup[];
   showOriginGroupBadge?: boolean;
   onOpenGame?: (game: Game) => void;
@@ -67,13 +55,13 @@ interface LeagueBracketSlotCardProps {
   onBracketUpdated?: (data: BracketPlayoffResponse) => void;
 }
 
-function StatusBadge({ status }: { status: BracketMatchStatus }) {
+function StatusBadge({ badgeClass, i18nKey }: { badgeClass: string; i18nKey: string }) {
   const { t } = useTranslation();
   return (
     <span
-      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${bracketMatchStatusBadgeClass(status)}`}
+      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${badgeClass}`}
     >
-      {t(`gameDetails.${bracketMatchStatusI18nKey(status)}`)}
+      {t(`gameDetails.${i18nKey}`)}
     </span>
   );
 }
@@ -87,7 +75,7 @@ function SideRow({
   originGroup,
 }: {
   label: string;
-  users: ReturnType<typeof teamUsersFromParticipant>;
+  users: BracketSlotCardView['sideA']['users'];
   seed?: number | null;
   highlight?: boolean;
   loser?: boolean;
@@ -139,7 +127,7 @@ function SideRow({
 
 export function LeagueBracketSlotCard({
   slot,
-  allSlots,
+  cardView,
   groups = [],
   showOriginGroupBadge = false,
   onOpenGame,
@@ -159,38 +147,20 @@ export function LeagueBracketSlotCard({
     null
   );
   const [submitting, setSubmitting] = useState(false);
-  const lookup = slotsById(allSlots);
-  const game = slot.game ?? null;
-  const fullGame = game && isFullGame(game) ? game : null;
-  const status = bracketMatchStatusFromGame(game);
 
-  const sideA =
-    resolveFeederParticipant(slot.feederSlotAId, lookup) ??
-    (slot.slotKind === 'PLAY_IN' ? null : slot.participant);
-  const sideB = resolveFeederParticipant(slot.feederSlotBId, lookup);
+  const { sideA, sideB, roundLabel, fullGame, matchStatusBadgeClass, matchStatusI18nKey, walkoverEligible } =
+    cardView;
+  const { participantId: participantAId } = sideA;
+  const { participantId: participantBId } = sideB;
+  const bothSidesUnknown = sideA.users.length === 0 && sideB.users.length === 0;
+  const clickable = !!fullGame && onOpenGame;
 
-  const { participantAId, participantBId } = resolveSlotSideParticipants(slot, lookup);
   const canWalkover =
     canAwardWalkover &&
     !!leagueSeasonId &&
     !!onBracketUpdated &&
-    status !== 'FINAL' &&
-    status !== 'WALKOVER' &&
-    status !== 'FORFEIT' &&
-    slot.slotKind !== 'BYE' &&
-    !!participantAId &&
-    !!participantBId &&
-    participantAId !== participantBId;
-
-  const nameA =
-    resolveBracketSideDisplayLabel(sideA, slot.feederSlotAId, lookup) ?? t('gameDetails.bracketTbd');
-  const nameB =
-    resolveBracketSideDisplayLabel(sideB, slot.feederSlotBId, lookup) ?? t('gameDetails.bracketTbd');
-  const usersA = teamUsersFromParticipant(sideA);
-  const usersB = teamUsersFromParticipant(sideB);
-  const bothSidesUnknown = usersA.length === 0 && usersB.length === 0;
-
-  const clickable = !!fullGame && onOpenGame;
+    walkoverEligible &&
+    slot.slotKind !== 'BYE';
 
   const awardWalkover = async (leagueParticipantId: string) => {
     if (!leagueSeasonId || !onBracketUpdated) return;
@@ -229,45 +199,45 @@ export function LeagueBracketSlotCard({
         className={`w-full text-left ${clickable ? 'hover:opacity-95' : 'cursor-default'}`}
       >
         <div className="mb-1.5 flex items-center justify-between gap-1">
-          <StatusBadge status={status} />
-          {slot.roundLabel && !compact ? (
+          <StatusBadge badgeClass={matchStatusBadgeClass} i18nKey={matchStatusI18nKey} />
+          {roundLabel && !compact ? (
             <span className="truncate text-[10px] text-gray-500 dark:text-gray-400">
-              {translateBracketRoundLabel(slot.roundLabel, t)}
+              {roundLabel}
             </span>
           ) : null}
         </div>
         {bothSidesUnknown ? (
           <div className="flex min-w-0 items-center justify-center gap-2 py-1">
             <span className="min-w-0 truncate text-xs font-medium text-gray-800 dark:text-gray-100">
-              {nameA}
+              {sideA.label}
             </span>
             <span className="shrink-0 text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
               {t('gameDetails.fixtureVsShort')}
             </span>
             <span className="min-w-0 truncate text-xs font-medium text-gray-800 dark:text-gray-100">
-              {nameB}
+              {sideB.label}
             </span>
           </div>
         ) : (
           <>
             <SideRow
-              label={nameA}
-              users={usersA}
-              seed={sideA?.seedRank}
+              label={sideA.label}
+              users={sideA.users}
+              seed={sideA.seed}
               highlight={winnerSide === 'A'}
               loser={loserSide === 'A'}
-              originGroup={showOriginGroupBadge ? resolveOriginGroup(sideA, groups) : null}
+              originGroup={showOriginGroupBadge ? resolveOriginGroup(sideA.participant, groups) : null}
             />
             <p className="py-0.5 text-center text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
               {t('gameDetails.fixtureVsShort')}
             </p>
             <SideRow
-              label={nameB}
-              users={usersB}
-              seed={sideB?.seedRank}
+              label={sideB.label}
+              users={sideB.users}
+              seed={sideB.seed}
               highlight={winnerSide === 'B'}
               loser={loserSide === 'B'}
-              originGroup={showOriginGroupBadge ? resolveOriginGroup(sideB, groups) : null}
+              originGroup={showOriginGroupBadge ? resolveOriginGroup(sideB.participant, groups) : null}
             />
           </>
         )}
@@ -299,21 +269,21 @@ export function LeagueBracketSlotCard({
                 type="button"
                 disabled={submitting || !participantAId}
                 onClick={() =>
-                  participantAId && setPendingWalkover({ participantId: participantAId, name: nameA })
+                  participantAId && setPendingWalkover({ participantId: participantAId, name: sideA.label })
                 }
                 className="inline-flex min-h-[44px] w-full items-center justify-center rounded-md border border-gray-200 px-2 text-xs font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
               >
-                {nameA}
+                {sideA.label}
               </button>
               <button
                 type="button"
                 disabled={submitting || !participantBId}
                 onClick={() =>
-                  participantBId && setPendingWalkover({ participantId: participantBId, name: nameB })
+                  participantBId && setPendingWalkover({ participantId: participantBId, name: sideB.label })
                 }
                 className="inline-flex min-h-[44px] w-full items-center justify-center rounded-md border border-gray-200 px-2 text-xs font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
               >
-                {nameB}
+                {sideB.label}
               </button>
               <button
                 type="button"

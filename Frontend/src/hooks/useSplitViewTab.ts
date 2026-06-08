@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useNavigationStore } from '@/store/navigationStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 
 interface UseSplitViewTabOptions<T> {
   parseIdFromPath: (path: string) => T | null;
@@ -19,7 +19,7 @@ export const useSplitViewTab = <T extends string>({
 }: UseSplitViewTabOptions<T>) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setIsAnimating } = useNavigationStore();
+  const { setIsAnimating } = useShellNavStore();
   const [selectedId, setSelectedId] = useState<T | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);

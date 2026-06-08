@@ -5,23 +5,7 @@ import { Card } from '@/components';
 import type { BracketPlayoffGroupDto, BracketPlayoffResponse } from '@/api/leagues';
 import type { Game } from '@/types';
 import type { LeagueGroup } from '@/api/leagues';
-import {
-  buildBracketColumns,
-  buildConsolationBracketColumns,
-  buildGrandFinalColumns,
-  buildLosersBracketColumns,
-  hasConsolationSlots,
-  hasDoubleEliminationSlots,
-  resolveByeAdvanceRoundLabel,
-} from '@/utils/leagueBracketLayout';
-import { translateBracketRoundLabel } from '@/utils/bracketRoundDisplay.util';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
-import {
-  buildBracketSlotHighlights,
-  bracketHasPodium,
-  isPlayInPhaseComplete,
-} from '@/utils/leagueBracketOutcome';
-import { buildBracketEditPositions } from '@/utils/bracketSlotEdit.util';
 import { useIsAppOffline } from '@/utils/bracketOffline.util';
 import { LeagueBracketByeCard } from './LeagueBracketByeCard';
 import { LeagueBracketSlotCard } from './LeagueBracketSlotCard';
@@ -29,17 +13,16 @@ import { LeagueGameCard } from './LeagueGameCard';
 import { BracketEditOverlay } from './BracketEditOverlay';
 import { BracketShareToolbar } from './BracketShareToolbar';
 import { LeagueBracketPodiumCard } from './LeagueBracketPodiumCard';
-import { isFullGame } from '@/utils/leagueBracketEnrich';
 import { useLeagueGameResultsMap } from '@/hooks/useLeagueGameResultsMap';
-import {
-  BRACKET_TREE_CARD_CLASS,
-  BRACKET_TREE_COLUMN_CLASS,
-} from '@/utils/bracketTreeCard.util';
 import {
   BRACKET_EXPORT_COLUMN_ATTR,
   BRACKET_EXPORT_SCROLL_ATTR,
   BRACKET_EXPORT_SLOTS_ATTR,
-} from '@/utils/leagueBracketShare.util';
+  BRACKET_TREE_CARD_CLASS,
+  BRACKET_TREE_COLUMN_CLASS,
+  buildBracketViewModel,
+  type BracketTreeTab,
+} from '@/features/leagueBracket';
 
 function BracketTreeLoadingSkeleton() {
   return (
@@ -91,10 +74,10 @@ export function LeagueBracketView({
   restartingPlayoff = false,
   onRestartPlayoff,
 }: LeagueBracketViewProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const offline = useIsAppOffline();
   const [editOpen, setEditOpen] = useState(false);
-  const [treeTab, setTreeTab] = useState<'main' | 'consolation' | 'losers' | 'grand'>('main');
+  const [treeTab, setTreeTab] = useState<BracketTreeTab>('main');
   const bracketExportRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const columnRefs = useRef<Map<string, HTMLElement>>(new Map());
@@ -104,72 +87,32 @@ export function LeagueBracketView({
     [groups, group?.leagueGroupId]
   );
 
-  const bracketGames = useMemo(() => {
-    if (!group?.slots?.length) return [];
-    const seen = new Set<string>();
-    const list: Game[] = [];
-    for (const slot of group.slots) {
-      if (!slot.game || !isFullGame(slot.game) || seen.has(slot.game.id)) continue;
-      seen.add(slot.game.id);
-      list.push(slot.game);
-    }
-    return list;
-  }, [group?.slots]);
-
-  const gameResultsMap = useLeagueGameResultsMap(bracketGames);
-
-  const showConsolationTab = useMemo(
-    () => (group?.slots?.length ? hasConsolationSlots(group.slots) : false),
-    [group?.slots]
+  const vm = useMemo(
+    () =>
+      buildBracketViewModel({
+        group,
+        locale: i18n.language,
+        translate: t,
+        treeTab,
+        leagueSeasonId,
+        bracketRoundId,
+        crossGroupBracket,
+        canEditBracket,
+        options: { showPodium: true, shareMode: true },
+      }),
+    [
+      group,
+      i18n.language,
+      t,
+      treeTab,
+      leagueSeasonId,
+      bracketRoundId,
+      crossGroupBracket,
+      canEditBracket,
+    ]
   );
 
-  const showDoubleElimTabs = useMemo(
-    () => (group?.slots?.length ? hasDoubleEliminationSlots(group.slots) : false),
-    [group?.slots]
-  );
-
-  const columns = useMemo(() => {
-    if (!group?.slots?.length) return [];
-    if (treeTab === 'consolation' && showConsolationTab) {
-      return buildConsolationBracketColumns(group.slots, (roundIndex) =>
-        t('gameDetails.bracketColumnMainRound', { round: roundIndex + 1 })
-      );
-    }
-    if (treeTab === 'losers' && showDoubleElimTabs) {
-      return buildLosersBracketColumns(group.slots, (roundIndex) =>
-        t('gameDetails.bracketColumnMainRound', { round: roundIndex + 1 })
-      );
-    }
-    if (treeTab === 'grand' && showDoubleElimTabs) {
-      return buildGrandFinalColumns(group.slots, t('gameDetails.bracketTabGrandFinal'));
-    }
-    return buildBracketColumns(group.slots, {
-      playIn: t('gameDetails.bracketColumnPlayIn'),
-      byes: t('gameDetails.bracketColumnByes'),
-      thirdPlace: t('gameDetails.bracketColumnThirdPlace'),
-      mainFallback: (roundIndex) =>
-        t('gameDetails.bracketColumnMainRound', { round: roundIndex + 1 }),
-    });
-  }, [group?.slots, showConsolationTab, showDoubleElimTabs, treeTab, t]);
-
-  const playInComplete = useMemo(
-    () => !group || isPlayInPhaseComplete(group),
-    [group]
-  );
-
-  const showPlayInGate = !!group && group.playInGameCount > 0 && !playInComplete;
-
-  const slotHighlights = useMemo(
-    () => (group ? buildBracketSlotHighlights(group) : new Map()),
-    [group]
-  );
-
-  const showPodium = !!group && !!leagueSeasonId && bracketHasPodium(group);
-
-  const playInColumnId = useMemo(
-    () => columns.find((col) => col.kind === 'PLAY_IN')?.id ?? columns[0]?.id ?? '',
-    [columns]
-  );
+  const gameResultsMap = useLeagueGameResultsMap(vm.bracketGames);
 
   const scrollToColumn = useCallback((columnId: string) => {
     const section = columnRefs.current.get(columnId);
@@ -178,12 +121,6 @@ export function LeagueBracketView({
     const left = section.offsetLeft - container.offsetLeft;
     container.scrollTo({ left, behavior: 'smooth' });
   }, []);
-
-  const canOpenEdit =
-    canEditBracket &&
-    !!leagueSeasonId &&
-    !!group?.slots?.length &&
-    buildBracketEditPositions(group.slots).some((p) => !p.locked && p.participantId);
 
   if (loading) {
     return <BracketTreeLoadingSkeleton />;
@@ -215,7 +152,7 @@ export function LeagueBracketView({
     );
   }
 
-  if (columns.length === 0) {
+  if (vm.empty) {
     return (
       <Card className="space-y-2 py-8 text-center">
         <p className="text-sm text-gray-600 dark:text-gray-400">{t('gameDetails.bracketEmptyNoSlots')}</p>
@@ -234,7 +171,7 @@ export function LeagueBracketView({
                 groupId={crossGroupBracket ? null : group.leagueGroupId}
                 exportTargetRef={bracketExportRef}
                 canNotifySummary={canEditBracket}
-                canEditBracket={canOpenEdit}
+                canEditBracket={vm.canOpenEdit}
                 onEditBracket={() => {
                   if (offline) {
                     toast.error(t('gameDetails.bracketOfflineAction'));
@@ -249,7 +186,7 @@ export function LeagueBracketView({
           </div>
         </div>
       ) : null}
-      {showDoubleElimTabs && (
+      {vm.treeTabs.showDoubleElim && (
         <div className="flex justify-center">
           <SegmentedSwitch
             tabs={[
@@ -258,13 +195,13 @@ export function LeagueBracketView({
               { id: 'grand', label: t('gameDetails.bracketTabGrandFinal') },
             ]}
             activeId={treeTab === 'consolation' ? 'main' : treeTab}
-            onChange={(id) => setTreeTab(id as 'main' | 'losers' | 'grand')}
+            onChange={(id) => setTreeTab(id as BracketTreeTab)}
             showOnlyActiveTabText={false}
             layoutId="bracket-tree-tab-de"
           />
         </div>
       )}
-      {showConsolationTab && !showDoubleElimTabs && (
+      {vm.treeTabs.showConsolation && !vm.treeTabs.showDoubleElim && (
         <div className="flex justify-center">
           <SegmentedSwitch
             tabs={[
@@ -272,38 +209,38 @@ export function LeagueBracketView({
               { id: 'consolation', label: t('gameDetails.bracketTabConsolation') },
             ]}
             activeId={treeTab}
-            onChange={(id) => setTreeTab(id as 'main' | 'consolation')}
+            onChange={(id) => setTreeTab(id as BracketTreeTab)}
             showOnlyActiveTabText={false}
             layoutId="bracket-tree-tab"
           />
         </div>
       )}
-      {showPodium && leagueSeasonId && group && (
+      {vm.showPodium && group && (
         <LeagueBracketPodiumCard
-          leagueSeasonId={leagueSeasonId}
           group={group}
+          rows={vm.podiumRows}
           groupMeta={groupMeta}
           crossGroupBracket={crossGroupBracket}
-          bracketRoundId={bracketRoundId}
+          fullscreenPath={vm.sharePaths?.fullscreenPath}
           showViewLink={!compact}
         />
       )}
-      {showPlayInGate && treeTab === 'main' ? (
+      {vm.showPlayInGate && treeTab === 'main' ? (
         <div className="flex flex-col items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-center dark:border-amber-800/60 dark:bg-amber-950/40">
           <p className="text-xs text-amber-900 dark:text-amber-100">
             {t('gameDetails.bracketPlayInGateHint')}
           </p>
-          {playInColumnId ? (
+          {vm.playInColumnId ? (
             <button
               type="button"
-              onClick={() => scrollToColumn(playInColumnId)}
+              onClick={() => scrollToColumn(vm.playInColumnId)}
               className="text-xs font-semibold text-amber-800 underline-offset-2 hover:underline dark:text-amber-200"
             >
               {t('gameDetails.bracketJumpToPlayIn')}
             </button>
           ) : null}
         </div>
-      ) : columns.length >= 2 ? (
+      ) : vm.columns.length >= 2 ? (
         <p className="text-center text-xs text-gray-500 dark:text-gray-400">
           {t('gameDetails.bracketScrollHint')}
         </p>
@@ -321,10 +258,7 @@ export function LeagueBracketView({
           {...{ [BRACKET_EXPORT_SCROLL_ATTR]: '' }}
           className="-mx-1 flex min-h-0 flex-1 gap-3 overflow-x-auto overscroll-x-contain px-1 pb-2 snap-x snap-mandatory"
         >
-        {columns.map((col) => {
-          const fadeMainColumn =
-            treeTab === 'main' && showPlayInGate && (col.kind === 'MAIN' || col.kind === 'THIRD_PLACE');
-          return (
+        {vm.columns.map((col) => (
           <section
             key={col.id}
             ref={(node) => {
@@ -334,37 +268,32 @@ export function LeagueBracketView({
             data-column-id={col.id}
             {...{ [BRACKET_EXPORT_COLUMN_ATTR]: '' }}
             className={`flex ${BRACKET_TREE_COLUMN_CLASS} shrink-0 snap-start flex-col gap-2${
-              fadeMainColumn ? ' opacity-45 saturate-50 transition-opacity' : ''
+              col.fadeMainColumn ? ' opacity-45 saturate-50 transition-opacity' : ''
             }`}
           >
             <h3 className="sticky top-0 z-10 rounded-md bg-gray-50/95 px-2 py-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-700 backdrop-blur-sm dark:bg-gray-900/95 dark:text-gray-200">
-              {translateBracketRoundLabel(col.label, t)}
+              {col.label}
             </h3>
             <div className="flex flex-col gap-2" {...{ [BRACKET_EXPORT_SLOTS_ATTR]: '' }}>
               {col.slots.map((slot) => {
-                const highlight = slotHighlights.get(slot.id);
+                const highlight = vm.slotHighlights.get(slot.id);
                 if (slot.slotKind === 'BYE') {
-                  const advanceRoundLabel = translateBracketRoundLabel(
-                    resolveByeAdvanceRoundLabel(
-                      slot,
-                      group.slots,
-                      (roundIndex) => t('gameDetails.bracketColumnMainRound', { round: roundIndex + 1 })
-                    ),
-                    t
-                  );
+                  const byeView = vm.byeCardViews.get(slot.id);
+                  if (!byeView) return null;
                   return (
                     <LeagueBracketByeCard
                       key={slot.id}
-                      slot={slot}
+                      cardView={byeView}
                       groupColor={groupMeta?.color}
-                      advanceRoundLabel={advanceRoundLabel}
+                      advanceRoundLabel={vm.byeAdvanceLabels.get(slot.id) ?? ''}
                       onChampionPath={highlight?.onChampionPath}
                       deEmphasize={highlight?.deEmphasize}
                     />
                   );
                 }
-                if (slot.game && isFullGame(slot.game)) {
-                  const matchGame = slot.game;
+                const cardView = vm.slotCardViews.get(slot.id);
+                if (cardView?.fullGame) {
+                  const matchGame = cardView.fullGame;
                   const gameWrapClass = [
                     `bracket-tree-game-wrap bracket-tree-card ${BRACKET_TREE_CARD_CLASS} rounded-lg`,
                     highlight?.deEmphasize ? 'pointer-events-none opacity-45 saturate-50' : '',
@@ -382,17 +311,18 @@ export function LeagueBracketView({
                         onEdit={onEditGame ? () => onEditGame(matchGame) : undefined}
                         showGroupTag={false}
                         showLeagueGroupSideAccent={!crossGroupBracket}
-                        bracketRoundBadge={translateBracketRoundLabel(col.label, t)}
+                        bracketRoundBadge={col.label}
                         allRounds={gameResultsMap.get(matchGame.id) ?? null}
                       />
                     </div>
                   );
                 }
+                if (!cardView) return null;
                 return (
                   <LeagueBracketSlotCard
                     key={slot.id}
                     slot={slot}
-                    allSlots={group.slots}
+                    cardView={cardView}
                     groups={groups}
                     showOriginGroupBadge={crossGroupBracket}
                     onOpenGame={onOpenGame}
@@ -409,8 +339,7 @@ export function LeagueBracketView({
               })}
             </div>
           </section>
-          );
-        })}
+        ))}
         </div>
       </div>
 
