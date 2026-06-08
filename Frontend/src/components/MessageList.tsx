@@ -651,17 +651,20 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     return () => io.disconnect();
   }, [onLoadMore, hasMoreMessages, isInitialLoad, isSwitchingChatType, messages.length]);
 
-  if (
-    messages.length === 0 &&
-    isSwitchingChatType &&
-    (isLoadingMessages || isInitialLoad)
-  ) {
+  const isMessagesPending =
+    isLoadingMessages || isInitialLoad || (messages.length === 0 && threadLayoutSettling);
+
+  if (messages.length === 0 && isMessagesPending) {
     return (
-      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4 space-y-1 min-h-0" />
+      <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800">
+        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          {t('common.loading')}
+        </span>
+      </div>
     );
   }
 
-  if (messages.length === 0 && !isLoadingMessages && !isInitialLoad) {
+  if (messages.length === 0 && !isMessagesPending) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800">
         <div className="text-center">

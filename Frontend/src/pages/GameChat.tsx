@@ -110,14 +110,7 @@ const GameChatLayout: React.FC = () => {
   useBackButtonHandler(panels.handleBackButton);
 
   const pinnedBarSkipAnimationRef = useRef(true);
-  const persistComposerThroughLoadRef = useRef(false);
   const chromeSettling = isThreadOpenSettling || isInitialLoad;
-  useEffect(() => {
-    persistComposerThroughLoadRef.current = false;
-  }, [threadScrollKey]);
-  if (footerVariant?.type === 'contextLoading') {
-    persistComposerThroughLoadRef.current = true;
-  }
   useEffect(() => {
     pinnedBarSkipAnimationRef.current = true;
   }, [threadScrollKey]);
@@ -127,6 +120,12 @@ const GameChatLayout: React.FC = () => {
     }
   }, [pinnedMessagesOrdered.length, threadScrollKey]);
   const pinnedBarAnimate = !pinnedBarSkipAnimationRef.current && !chromeSettling;
+  const isThreadInitializing =
+    isInitialLoad || isLoadingMessages || isThreadOpenSettling || initialScroll === undefined;
+  const effectiveFooterVariant =
+    footerVariant?.type === 'input' && isThreadInitializing
+      ? ({ type: 'contextLoading' } as const)
+      : footerVariant;
   const pinnedBarIds = useMemo(() => pinnedMessages.map((m) => m.id), [pinnedMessages]);
   const showGameChatTabs =
     !showLoadingHeader &&
@@ -271,12 +270,12 @@ const GameChatLayout: React.FC = () => {
                   onResendQueued={handleResendQueued}
                   onRemoveFromQueue={handleRemoveFromQueue}
                   isLoading={isLoadingMore}
-                  isLoadingMessages={isLoadingMessages && !isEmbedded}
+                  isLoadingMessages={isLoadingMessages}
                   isSwitchingChatType={isSwitchingChatType}
                   onScrollToMessage={handleScrollToMessage}
                   hasMoreMessages={hasMoreMessages}
                   onLoadMore={loadMoreMessages}
-                  isInitialLoad={isInitialLoad && !isEmbedded}
+                  isInitialLoad={isInitialLoad}
                   isLoadingMore={isLoadingMore}
                   isChannel={derived.isChannel}
                   userChatUser1Id={contextType === 'USER' && userChat ? userChat.user1Id : undefined}
@@ -298,16 +297,13 @@ const GameChatLayout: React.FC = () => {
           </div>
         </main>
 
-        {((!isInitialLoad || isEmbedded || (isEmbedded && messages.length > 0)) ||
-          footerVariant?.type === 'contextLoading' ||
-          (persistComposerThroughLoadRef.current && footerVariant?.type === 'input')) &&
-          footerVariant != null &&
+        {effectiveFooterVariant != null &&
           !(contextType === 'GROUP' &&
             (panels.showParticipantsPage ||
               panels.showItemPage ||
               panels.isParticipantsPageAnimating ||
               panels.isItemPageAnimating)) && (
-          <GameChatFooter visible variant={footerVariant} />
+          <GameChatFooter visible variant={effectiveFooterVariant} />
         )}
 
         {contextType === 'GAME' && panels.showParticipantsModal && game && (
