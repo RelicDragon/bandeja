@@ -2,6 +2,7 @@ import prisma from '../../config/database';
 import { Bet, TransactionType } from '@prisma/client';
 import { TransactionService } from '../transaction.service';
 import notificationService from '../notification.service';
+import { emitBetResolvedPool, emitBetResolvedSocial } from '../socketEmitFacade';
 
 export interface ResolvedBetPostTx {
   betId: string;
@@ -215,9 +216,8 @@ export async function executeResolvedBetPayout(r: ResolvedBetPostTx): Promise<vo
     throw err;
   }
 
-  const socketService = (global as { socketService?: { emit: (event: string, data: unknown) => Promise<void> } }).socketService;
-  if (socketService && paidAny) {
-    await socketService.emit('bet:resolved', { gameId: r.gameId, betId: r.betId, winnerId: r.winnerId, loserId: r.loserId });
+  if (paidAny) {
+    await emitBetResolvedSocial(r.gameId, r.betId, r.winnerId, r.loserId);
   }
   if (paidAny) {
     await payoutDeps.sendBetResolvedNotification(r.betId, r.winnerId, true, r.totalCoinsWon);
@@ -300,15 +300,14 @@ export async function executeResolvedPoolBetPayout(r: ResolvedPoolBetPostTx): Pr
     }
   }
 
-  const socketService = (global as { socketService?: { emit: (event: string, data: unknown) => Promise<void> } }).socketService;
-  if (socketService && newlyPaidUserIds.length > 0) {
-    await socketService.emit('bet:resolved', {
-      gameId: r.gameId,
-      betId: r.betId,
-      winnerIds: r.winnerIds,
-      sharePerWinner: r.sharePerWinner,
-      winnerShares: r.winnerShares,
-    });
+  if (newlyPaidUserIds.length > 0) {
+    await emitBetResolvedPool(
+      r.gameId,
+      r.betId,
+      r.winnerIds,
+      r.sharePerWinner,
+      r.winnerShares
+    );
   }
 }
 

@@ -1,98 +1,8 @@
 import { LevelChangeEventType, Sport } from '@prisma/client';
 import prisma from '../../config/database';
-import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
+import { gameForLevelProjection, levelProjectionUserSelect } from '../game/gamePrismaIncludes';
 import { projectGameUsersForSportContext } from '../game/read.service';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
-
-const LEVEL_CHANGE_USER_SELECT = {
-  ...USER_SELECT_FIELDS,
-  sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
-} as const;
-
-const getGameInclude = () => ({
-  club: {
-    include: {
-      courts: true,
-      city: {
-        select: {
-          name: true,
-        },
-      },
-    },
-  },
-  court: {
-    include: {
-      club: true,
-    },
-  },
-  participants: {
-    include: {
-      user: {
-        select: LEVEL_CHANGE_USER_SELECT,
-      },
-    },
-  },
-  outcomes: {
-    include: {
-      user: {
-        select: LEVEL_CHANGE_USER_SELECT,
-      },
-    },
-    orderBy: { position: 'asc' },
-  },
-  rounds: {
-    include: {
-      matches: {
-        include: {
-          teams: {
-            include: {
-              players: {
-                include: {
-                  user: {
-                    select: LEVEL_CHANGE_USER_SELECT,
-                  },
-                },
-              },
-            },
-          },
-          sets: {
-            orderBy: { setNumber: 'asc' as const },
-          },
-        },
-        orderBy: { matchNumber: 'asc' as const },
-      },
-    },
-    orderBy: { roundNumber: 'asc' as const },
-  },
-  fixedTeams: {
-    include: {
-      players: {
-        include: {
-          user: {
-            select: LEVEL_CHANGE_USER_SELECT,
-          },
-        },
-      },
-    },
-    orderBy: { teamNumber: 'asc' },
-  },
-  gameCourts: {
-    include: {
-      court: {
-        include: {
-          club: {
-            select: {
-              id: true,
-              name: true,
-              address: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: { order: 'asc' },
-  },
-});
 
 function buildLevelChangeWhere(userId: string, sport?: Sport) {
   if (!sport) {
@@ -115,7 +25,7 @@ export async function queryUserHistory(userId: string, sport?: Sport) {
     orderBy: { createdAt: 'desc' },
     include: {
       game: {
-        include: getGameInclude() as any,
+        include: gameForLevelProjection,
       },
     },
   });
@@ -206,7 +116,7 @@ export async function queryGameHistory(gameId: string) {
     where: { gameId },
     include: {
       user: {
-        select: LEVEL_CHANGE_USER_SELECT,
+        select: levelProjectionUserSelect,
       },
     },
     orderBy: { createdAt: 'asc' },

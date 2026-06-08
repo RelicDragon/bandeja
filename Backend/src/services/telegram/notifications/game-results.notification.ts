@@ -1,100 +1,13 @@
 import { Api } from 'grammy';
 import { NotificationChannelType } from '@prisma/client';
-import prisma from '../../../config/database';
-import { getMatchScoresForDelta } from '../../results/setScoreDelta';
 import { NotificationPreferenceService, PreferenceKey } from '../../notificationPreference.service';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
-import { formatGameInfoForUser } from '../../shared/notification-base';
 import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport';
-import { isOfficialMatchSetRole } from '../../results/matchSetRole';
-import { getRules } from '../../results/liveScoringEngine/rulebook';
-import { getStandingsMatchOutcome } from '../../results/liveScoringEngine/matchWinnerLive';
-import { prismaMatchSetsToLiveSets } from '../../results/matchStandingsPrisma';
-
-interface PlayerStats {
-  wins: number;
-  ties: number;
-  losses: number;
-  scoresDelta: number;
-}
-
-function matchWinnerForTelegram(match: any, game: any): 'teamA' | 'teamB' | 'tie' | null {
-  const rules = getRules(game);
-  const o = getStandingsMatchOutcome(prismaMatchSetsToLiveSets(match.sets), rules);
-  if (o === 'A') return 'teamA';
-  if (o === 'B') return 'teamB';
-  if (o === 'tie') return 'tie';
-  return null;
-}
-
-function calculatePlayerStats(
-  playerId: string,
-  rounds: any[],
-  game: any
-): PlayerStats {
-  const stats: PlayerStats = {
-    wins: 0,
-    ties: 0,
-    losses: 0,
-    scoresDelta: 0,
-  };
-
-  for (const round of rounds) {
-    if (!round.matches || round.matches.length === 0) continue;
-
-    for (const match of round.matches) {
-      const validSets = match.sets.filter(
-        (set: any) =>
-          (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role)
-      );
-      if (validSets.length === 0) continue;
-
-      const teamA = match.teams.find((t: any) => t.teamNumber === 1);
-      const teamB = match.teams.find((t: any) => t.teamNumber === 2);
-      
-      if (!teamA || !teamB) continue;
-
-      const isInTeamA = teamA.players.some((p: any) => p.userId === playerId);
-      const isInTeamB = teamB.players.some((p: any) => p.userId === playerId);
-
-      if (!isInTeamA && !isInTeamB) continue;
-
-      const matchWinner = matchWinnerForTelegram(match, game);
-      if (matchWinner === null) continue;
-      const { teamAScore: totalScoreA, teamBScore: totalScoreB } = getMatchScoresForDelta(
-        validSets.map((set: any) => ({ teamAScore: set.teamAScore, teamBScore: set.teamBScore, isTieBreak: set.isTieBreak }))
-      );
-
-      if (isInTeamA) {
-        stats.scoresDelta += (totalScoreA - totalScoreB);
-
-        if (matchWinner === 'teamA') {
-          stats.wins++;
-        } else if (matchWinner === 'teamB') {
-          stats.losses++;
-        } else if (matchWinner === 'tie') {
-          stats.ties++;
-        }
-      } else if (isInTeamB) {
-        stats.scoresDelta += (totalScoreB - totalScoreA);
-
-        if (matchWinner === 'teamB') {
-          stats.wins++;
-        } else if (matchWinner === 'teamA') {
-          stats.losses++;
-        } else if (matchWinner === 'tie') {
-          stats.ties++;
-        }
-      }
-    }
-  }
-
-  return stats;
-}
+import { buildGameResultsContext } from '../../shared/notification-contexts/game-results.context';
 
 export async function sendGameFinishedNotification(
   api: Api,
@@ -103,144 +16,80 @@ export async function sendGameFinishedNotification(
   isEdited: boolean = false
 ) {
   console.log(`[GAME RESULTS NOTIFICATION] Starting notification for user ${userId}, game ${gameId}, isEdited: ${isEdited}`);
-  
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    include: {
-      court: {
-        include: {
-          club: true,
-        },
-      },
-      club: true,
-      participants: {
-        where: { status: 'PLAYING' },
-        include: {
-          user: {
-            select: {
-              id: true,
-              telegramId: true,
-              language: true,
-              firstName: true,
-              lastName: true,
-              currentCityId: true,
-              primarySport: true,
-            },
-          },
-        },
-      },
-      outcomes: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
-        },
-        orderBy: { position: 'asc' },
-      },
-      rounds: {
-        include: {
-          matches: {
-            include: {
-              teams: {
-                include: {
-                  players: true,
-                },
-              },
-              sets: {
-                orderBy: { setNumber: 'asc' },
-              },
-            },
-          },
-        },
-        orderBy: { roundNumber: 'asc' },
-      },
-    },
-  });
 
-  if (!game || !game.outcomes || game.outcomes.length === 0) {
-    console.log(`[GAME RESULTS NOTIFICATION] Game ${gameId} not found or has no outcomes`);
+  const ctx = await buildGameResultsContext(gameId, userId, isEdited);
+  if (!ctx) {
+    console.log(`[GAME RESULTS NOTIFICATION] Game ${gameId} not found or has no outcomes for user ${userId}`);
     return;
   }
 
-  const userOutcome = game.outcomes.find((o: any) => o.userId === userId);
-  if (!userOutcome) {
-    console.log(`[GAME RESULTS NOTIFICATION] No outcome found for user ${userId} in game ${gameId}`);
-    return;
-  }
-
-  const participant = game.participants.find((p: any) => p.userId === userId);
-  if (!participant) return;
-  const allowed = await NotificationPreferenceService.doesUserAllow(userId, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
-  if (!allowed || !participant.user.telegramId) {
+  const participant = ctx.game.participants.find((p) => p.userId === userId);
+  if (!participant?.user.telegramId) {
     console.log(`[GAME RESULTS NOTIFICATION] User ${userId} not eligible`);
     return;
   }
-  
+
+  const allowed = await NotificationPreferenceService.doesUserAllow(userId, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
+  if (!allowed) {
+    console.log(`[GAME RESULTS NOTIFICATION] User ${userId} not eligible`);
+    return;
+  }
+
   console.log(`[GAME RESULTS NOTIFICATION] User ${userId} is eligible, preparing message`);
   console.log(`[GAME RESULTS NOTIFICATION] Telegram ID: ${participant.user.telegramId}`);
 
   const lang = await getUserLanguageFromTelegramId(participant.user.telegramId, undefined);
-  const stats = calculatePlayerStats(userId, game.rounds, game);
-  const metadata = userOutcome.metadata as any || {};
-  const gameInfo = await formatGameInfoForUser(game, participant.user.currentCityId, lang);
-  
-  const gameName = game.name ? game.name : t(`games.gameTypes.${game.gameType}`, lang);
-  const clubName = game.court?.club?.name || game.club?.name;
-  
-  const titleKey = isEdited ? 'telegram.gameResultsChanged' : 'telegram.gameFinished';
-  let message = `🏁 *${escapeMarkdown(t(titleKey, lang))}*\n\n`;
-  message += `🎮 ${escapeMarkdown(gameName)}\n`;
-  
-  if (clubName) {
-    const placeLine = `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}`;
+  const { userOutcome, stats, metadata, gameInfo, game } = ctx;
+
+  let message = `🏁 *${escapeMarkdown(t(ctx.titleKey, lang))}*\n\n`;
+  message += `🎮 ${escapeMarkdown(ctx.gameName)}\n`;
+
+  if (ctx.clubName) {
+    const placeLine = `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(ctx.clubName)}`;
     message += `${appendTelegramGameScheduleExtras(placeLine, game, game.sport, lang, escapeMarkdown)}\n`;
   }
-  
+
   message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
-  
+
   if (game.entityType !== 'BAR') {
     message += `⏱️ ${escapeMarkdown(t('telegram.duration', lang))}: ${gameInfo.duration}\n`;
   }
-  
+
   message += `\n📊 *${escapeMarkdown(t('telegram.yourResults', lang))}*\n\n`;
-  
+
   if (userOutcome.position) {
     message += `🏆 ${escapeMarkdown(t('telegram.finalPlace', lang))}: ${userOutcome.position}\n`;
   }
-  
-  const levelChangeStr = userOutcome.levelChange > 0 
+
+  const levelChangeStr = userOutcome.levelChange > 0
     ? `+${userOutcome.levelChange.toFixed(2)}`
     : userOutcome.levelChange.toFixed(2);
   message += `📊 ${escapeMarkdown(t('games.level', lang))}: ${userOutcome.levelBefore.toFixed(2)} -> ${userOutcome.levelAfter.toFixed(2)} (${levelChangeStr})\n`;
-  
+
   if (userOutcome.reliabilityChange !== 0) {
-    const reliabilityChangeStr = userOutcome.reliabilityChange > 0 
+    const reliabilityChangeStr = userOutcome.reliabilityChange > 0
       ? `+${userOutcome.reliabilityChange.toFixed(2)}`
       : userOutcome.reliabilityChange.toFixed(2);
     message += `📈 ${escapeMarkdown(t('telegram.reliabilityChange', lang))}: ${reliabilityChangeStr}\n`;
   }
-  
+
   message += `📊 ${escapeMarkdown(t('telegram.record', lang))}: ${stats.wins}-${stats.ties}-${stats.losses}\n`;
-  
+
   if (stats.scoresDelta !== 0) {
-    const scoresDeltaStr = stats.scoresDelta > 0 
+    const scoresDeltaStr = stats.scoresDelta > 0
       ? `+${stats.scoresDelta}`
       : `${stats.scoresDelta}`;
     message += `🎯 ${escapeMarkdown(t('telegram.scoresDelta', lang))}: ${scoresDeltaStr}\n`;
   }
-  
+
   if (metadata.roundsWon !== undefined) {
     message += `🔄 ${escapeMarkdown(t('telegram.roundsWon', lang))}: ${metadata.roundsWon}\n`;
   }
-  
+
   if (metadata.matchesWon !== undefined) {
     message += `🎾 ${escapeMarkdown(t('telegram.matchesWon', lang))}: ${metadata.matchesWon}\n`;
   }
-  
+
   if (userOutcome.pointsEarned > 0) {
     message += `💰 ${escapeMarkdown(t('telegram.pointsEarned', lang))}: ${userOutcome.pointsEarned}\n`;
   }
@@ -248,8 +97,8 @@ export async function sendGameFinishedNotification(
   const buttons = [[
     {
       text: t('telegram.viewGame', lang),
-      url: `${config.frontendUrl}/games/${game.id}`
-    }
+      url: `${config.frontendUrl}/games/${ctx.gameId}`,
+    },
   ]];
 
   const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
@@ -264,4 +113,3 @@ export async function sendGameFinishedNotification(
     console.error(`[GAME RESULTS NOTIFICATION] Failed to send Telegram game results notification to user ${userId}:`, error);
   }
 }
-

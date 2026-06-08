@@ -1,14 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwt';
+import { extractBearerToken } from './authToken';
 
 export function recordPresenceActivity(req: Request, _res: Response, next: NextFunction): void {
-  let token: string | undefined;
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.substring(7);
-  } else if (req.query.token && typeof req.query.token === 'string') {
-    token = req.query.token;
-  }
+  const token = extractBearerToken(req);
   if (!token) {
     next();
     return;

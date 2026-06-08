@@ -8,9 +8,9 @@ import { RoundGenerator } from './generation/roundGenerator';
 import type { GenMatch } from './generation/types';
 import { prismaGameToGenGame, prismaRoundsToGenRounds } from './mapPrismaForGeneration';
 import {
-  gameIncludeForRoundGeneration,
+  gameForRoundGeneration,
   type GameForRoundGeneration,
-} from './roundGenerationGameInclude';
+} from '../game/gamePrismaIncludes';
 
 async function loadGameForRoundGeneration(
   tx: Prisma.TransactionClient,
@@ -18,7 +18,7 @@ async function loadGameForRoundGeneration(
 ): Promise<GameForRoundGeneration> {
   const g = await tx.game.findUnique({
     where: { id: gameId },
-    include: gameIncludeForRoundGeneration,
+    include: gameForRoundGeneration,
   });
   if (!g) {
     throw new ApiError(404, 'Game not found');

@@ -135,7 +135,7 @@ async function main() {
   const { calculateGameStandings } = await import('../src/services/results/generation/gameStandings');
   const { buildOpponentCounts } = await import('../src/services/results/generation/matchUtils');
   const { prismaGameToGenGame } = await import('../src/services/results/mapPrismaForGeneration');
-  const { gameIncludeForRoundGeneration } = await import('../src/services/results/roundGenerationGameInclude');
+  const { gameForRoundGeneration } = await import('../src/services/game/gamePrismaIncludes');
   const { generateRatingRound } = await import('../src/services/results/generation/rating');
   const { generateEscaleraRound } = await import('../src/services/results/generation/escalera');
   const { generateWinnersCourtRound } = await import('../src/services/results/generation/winnersCourt');
@@ -508,7 +508,7 @@ async function main() {
     ]);
     const forGen = await prisma.game.findUnique({
       where: { id: gPrismaGen.id },
-      include: gameIncludeForRoundGeneration,
+      include: gameForRoundGeneration,
     });
     if (!forGen) throw new Error('game for prismaGameToGenGame missing');
     const mapped = prismaGameToGenGame(forGen);

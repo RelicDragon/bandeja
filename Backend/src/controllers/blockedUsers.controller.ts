@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
+import { hasBlocked } from '../services/social-graph/socialGraph.block';
 import { USER_SELECT_FIELDS } from '../utils/constants';
 
 export const blockUser = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -124,19 +125,12 @@ export const getBlockedUsers = asyncHandler(async (req: AuthRequest, res: Respon
 export const checkIfUserBlocked = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { userId: blockedUserId } = req.params;
 
-  const block = await prisma.blockedUser.findUnique({
-    where: {
-      userId_blockedUserId: {
-        userId: req.userId!,
-        blockedUserId,
-      },
-    },
-  });
+  const blocked = await hasBlocked(req.userId!, blockedUserId);
 
   res.json({
     success: true,
     data: {
-      isBlocked: !!block,
+      isBlocked: blocked,
     },
   });
 });
@@ -144,19 +138,12 @@ export const checkIfUserBlocked = asyncHandler(async (req: AuthRequest, res: Res
 export const checkIfBlockedByUser = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { userId } = req.params;
 
-  const block = await prisma.blockedUser.findUnique({
-    where: {
-      userId_blockedUserId: {
-        userId,
-        blockedUserId: req.userId!,
-      },
-    },
-  });
+  const blockedBy = await hasBlocked(userId, req.userId!);
 
   res.json({
     success: true,
     data: {
-      isBlockedBy: !!block,
+      isBlockedBy: blockedBy,
     },
   });
 });

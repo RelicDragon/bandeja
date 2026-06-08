@@ -36,6 +36,7 @@ async function main() {
   run('bet condition evaluator', 'src/services/bets/betConditionEvaluator.test.ts');
   run('pool coin distribution', 'src/services/bets/poolCoinDistribution.test.ts');
   run('bet resolution payout', 'src/services/bets/betResolutionPayout.test.ts', true);
+  run('create bet validation', 'src/services/bets/bet.service.createBet.test.ts', true);
   run('accept bet guards', 'src/services/bets/bet.service.acceptBet.test.ts', true);
   run('cancel bet guards', 'src/services/bets/bet.service.cancel.test.ts', true);
   run('void bet on missing target', 'src/services/bets/betResolutionVoid.test.ts', true);

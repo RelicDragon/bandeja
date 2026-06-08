@@ -5,7 +5,7 @@ import prisma from '../../../config/database';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { getUserTimezoneFromCityId } from '../../user-timezone.service';
-import { getGameInclude } from '../../game/read.service';
+import { gameWithRoundsAndOutcomes } from '../../game/gamePrismaIncludes';
 import { formatNewGameText } from '../../shared/notification-base';
 
 export async function buildGamesMessage(
@@ -143,7 +143,7 @@ export const handleGamesCommand: Middleware<BotContext> = async (ctx) => {
         status: 'ANNOUNCED',
         isPublic: true,
       },
-      include: getGameInclude() as any,
+      include: gameWithRoundsAndOutcomes,
       orderBy: {
         startTime: 'asc',
       },

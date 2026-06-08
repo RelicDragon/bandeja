@@ -1045,7 +1045,7 @@ export const requestToChat = asyncHandler(async (req: AuthRequest, res: Response
 
   const message = await UserChatService.requestToChat(chatId, userId);
   if (!message) {
-    return res.status(400).json({ success: false, message: 'Chat is not empty' });
+    throw new ApiError(400, 'Chat is not empty');
   }
 
   res.json({

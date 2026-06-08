@@ -11,6 +11,10 @@ import {
 } from '@prisma/client';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { MessageService } from '../chat/message.service';
+import {
+  SOCIAL_GRAPH_INTERACT_CONTEXT,
+  assertCanInteract,
+} from '../social-graph/socialGraph.block';
 import { t } from '../../utils/translations';
 import notificationService from '../notification.service';
 
@@ -781,19 +785,7 @@ export class MarketItemService {
       throw new ApiError(400, 'Cannot create chat with yourself');
     }
 
-    // Check for blocked users
-    const isBlocked = await prisma.blockedUser.findFirst({
-      where: {
-        OR: [
-          { userId: item.sellerId, blockedUserId: buyerId },
-          { userId: buyerId, blockedUserId: item.sellerId },
-        ],
-      },
-    });
-
-    if (isBlocked) {
-      throw new ApiError(403, 'Cannot create chat with this user');
-    }
+    await assertCanInteract(item.sellerId, buyerId, SOCIAL_GRAPH_INTERACT_CONTEXT.MARKET_ITEM);
 
     // Check if chat already exists
     let chat = await prisma.groupChannel.findFirst({

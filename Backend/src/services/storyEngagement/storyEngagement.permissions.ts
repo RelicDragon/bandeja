@@ -15,6 +15,10 @@ import {
 } from '../story/bracketChampionStory.service';
 import { BracketAdvancementService } from '../league/bracketAdvancement.service';
 import { isStoryItemMediaInvalid } from '../story/story.validate.service';
+import {
+  SOCIAL_GRAPH_INTERACT_CONTEXT,
+  assertCanInteract,
+} from '../social-graph/socialGraph.block';
 import { STORY_ENGAGEMENT_ERROR } from './storyEngagement.constants';
 import type { CaptionContext } from './storyEngagement.caption';
 
@@ -38,24 +42,6 @@ function engagementForbidden(): never {
   throw new ApiError(403, 'Story engagement forbidden', true, {
     code: STORY_ENGAGEMENT_ERROR.FORBIDDEN,
   });
-}
-
-export async function usersAreBlocked(a: string, b: string): Promise<boolean> {
-  if (a === b) return false;
-  const block = await prisma.blockedUser.findFirst({
-    where: {
-      OR: [
-        { userId: a, blockedUserId: b },
-        { userId: b, blockedUserId: a },
-      ],
-    },
-    select: { id: true },
-  });
-  return !!block;
-}
-
-export async function assertNotBlocked(userA: string, userB: string): Promise<void> {
-  if (await usersAreBlocked(userA, userB)) engagementForbidden();
 }
 
 export async function viewerFollowsOwner(viewerId: string, ownerUserId: string): Promise<boolean> {
@@ -95,7 +81,7 @@ export async function resolveVisibleSegment(
   const { sourceType, sourceId, ownerUserId } = ref;
   if (!sourceType || !sourceId || !ownerUserId) segmentNotFound();
 
-  await assertNotBlocked(viewerId, ownerUserId);
+  await assertCanInteract(viewerId, ownerUserId, SOCIAL_GRAPH_INTERACT_CONTEXT.STORY_ENGAGEMENT);
   const follows = await viewerFollowsOwner(viewerId, ownerUserId);
   const now = new Date();
   const activitySince = new Date(now.getTime() - ACTIVITY_WINDOW_MS);

@@ -5,7 +5,7 @@ import { Sport } from '@prisma/client';
 import prisma from '../../src/config/database';
 import { validatePlayerCanJoinGame } from '../../src/utils/participantValidation';
 import { prismaGameToGenGame } from '../../src/services/results/mapPrismaForGeneration';
-import { gameIncludeForRoundGeneration } from '../../src/services/results/roundGenerationGameInclude';
+import { gameForRoundGeneration } from '../../src/services/game/gamePrismaIncludes';
 import { completeSportQuestionnaire, resetSportQuestionnaire } from '../../src/services/user/sportQuestionnaire.service';
 import { hashPassword } from '../../src/utils/hash';
 import { registrationSportUserFields } from '../../src/services/auth/registrationSport.service';
@@ -55,7 +55,7 @@ async function main() {
 
   const genGame = await prisma.game.findFirst({
     where: { sport: Sport.TENNIS, participants: { some: { status: 'PLAYING' } } },
-    include: gameIncludeForRoundGeneration,
+    include: gameForRoundGeneration,
   });
   if (genGame) {
     const mapped = prismaGameToGenGame(genGame);

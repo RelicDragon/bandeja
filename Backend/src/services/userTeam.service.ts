@@ -1,4 +1,8 @@
 import prisma from '../config/database';
+import {
+  SOCIAL_GRAPH_INTERACT_CONTEXT,
+  assertCanInteract,
+} from './social-graph/socialGraph.block';
 import { ApiError } from '../utils/ApiError';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import { generateRandomAdjectiveAnimalLabel } from './user/userDisplayName.service';
@@ -19,18 +23,6 @@ function mapTeamsForSport<
 >(teams: T[], sport?: Sport): T[] {
   if (!sport) return teams;
   return teams.map((t) => projectUserTeamForSportContext(t, sport));
-}
-
-async function assertNotBlocked(aId: string, bId: string) {
-  const block = await prisma.blockedUser.findFirst({
-    where: {
-      OR: [
-        { userId: aId, blockedUserId: bId },
-        { userId: bId, blockedUserId: aId },
-      ],
-    },
-  });
-  if (block) throw new ApiError(403, 'errors.userTeams.blocked');
 }
 
 function socketSvc() {
@@ -293,7 +285,7 @@ export class UserTeamService {
     const target = await prisma.user.findUnique({ where: { id: targetUserId }, select: { id: true, isActive: true } });
     if (!target || !target.isActive) throw new ApiError(404, 'errors.userTeams.userNotFound');
 
-    await assertNotBlocked(ownerId, targetUserId);
+    await assertCanInteract(ownerId, targetUserId, SOCIAL_GRAPH_INTERACT_CONTEXT.USER_TEAM);
 
     const acceptedOthers = team.members.filter((m) => !m.isOwner && m.status === UserTeamMemberStatus.ACCEPTED);
     if (acceptedOthers.length >= team.size - 1) {

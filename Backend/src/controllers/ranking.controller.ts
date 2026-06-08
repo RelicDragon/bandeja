@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { Sport } from '@prisma/client';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
+import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 import { getLevelName } from '../utils/playerLevels';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
@@ -120,11 +121,7 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
   const usePerSportLevel = type === 'level' && !isSocial;
 
   if (isGames && timePeriod !== '10' && timePeriod !== '30' && timePeriod !== 'all') {
-    res.status(400).json({
-      success: false,
-      message: 'Invalid time period. Must be 10, 30, or all',
-    });
-    return;
+    throw new ApiError(400, 'Invalid time period. Must be 10, 30, or all');
   }
 
   const user = await prisma.user.findUnique({
@@ -139,19 +136,11 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
   });
 
   if (!user) {
-    res.status(404).json({
-      success: false,
-      message: 'User not found',
-    });
-    return;
+    throw new ApiError(404, 'User not found');
   }
 
   if (isCity && !user.currentCityId) {
-    res.status(400).json({
-      success: false,
-      message: 'User does not have a city set',
-    });
-    return;
+    throw new ApiError(400, 'User does not have a city set');
   }
 
   const leaderboardSportMode = resolveLeaderboardSportMode(sportQuery, user.primarySport);
@@ -327,11 +316,7 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
 
     rankMap = calculateRanks(allUsers, false, true);
   } else {
-    res.status(400).json({
-      success: false,
-      message: 'Invalid leaderboard type',
-    });
-    return;
+    throw new ApiError(400, 'Invalid leaderboard type');
   }
 
   const ratingChangeSport = isSocial ? undefined : (rankingSport ?? gamesSport);

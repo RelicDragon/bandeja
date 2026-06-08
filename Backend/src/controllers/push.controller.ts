@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PushTokenService } from '../services/push/push-token.service';
 import { PushPlatform } from '@prisma/client';
 import { asyncHandler } from '../utils/asyncHandler';
+import { ApiError } from '../utils/ApiError';
 import pushNotificationService from '../services/push/push-notification.service';
 import { NotificationType } from '../types/notifications.types';
 
@@ -17,17 +18,11 @@ export const registerToken = asyncHandler(async (req: Request, res: Response) =>
   const { token, platform, deviceId, appVersion, appBuild: appBuildRaw } = req.body;
 
   if (!token || !platform) {
-    return res.status(400).json({
-      success: false,
-      message: 'Token and platform are required'
-    });
+    throw new ApiError(400, 'Token and platform are required');
   }
 
   if (!Object.values(PushPlatform).includes(platform)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid platform'
-    });
+    throw new ApiError(400, 'Invalid platform');
   }
 
   const appBuild = parseAppBuild(appBuildRaw);
@@ -76,10 +71,7 @@ export const renewToken = asyncHandler(async (req: Request, res: Response) => {
   const { oldToken, newToken, appVersion, appBuild: appBuildRaw } = req.body;
 
   if (!oldToken || !newToken) {
-    return res.status(400).json({
-      success: false,
-      message: 'Both oldToken and newToken are required'
-    });
+    throw new ApiError(400, 'Both oldToken and newToken are required');
   }
 
   const appBuild = parseAppBuild(appBuildRaw);
@@ -93,10 +85,7 @@ export const renewToken = asyncHandler(async (req: Request, res: Response) => {
   );
 
   if (!pushToken) {
-    return res.status(404).json({
-      success: false,
-      message: 'Token not found'
-    });
+    throw new ApiError(404, 'Token not found');
   }
 
   res.json({

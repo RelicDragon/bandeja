@@ -5,6 +5,7 @@ import { shouldRouteCustomBetToNeedsReview, shouldVoidBetDueToMissingTarget } fr
 import { distributePoolCoins } from './poolCoinDistribution';
 import { TransactionService } from '../transaction.service';
 import notificationService from '../notification.service';
+import { emitBetUpdated } from '../socketEmitFacade';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import {
   executeResolvedBetPayout,
@@ -274,19 +275,16 @@ async function runCancelledOpenBetPostTx(c: CancelledOpenBetPostTx): Promise<voi
       }]
     });
   }
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    const bet = await prisma.bet.findUnique({
-      where: { id: c.betId },
-      include: {
-        creator: { select: USER_SELECT_FIELDS },
-        acceptedByUser: { select: USER_SELECT_FIELDS },
-        winner: { select: USER_SELECT_FIELDS }
-      }
-    });
-    if (bet) {
-      await socketService.emit('bet:updated', { gameId: c.gameId, bet });
+  const bet = await prisma.bet.findUnique({
+    where: { id: c.betId },
+    include: {
+      creator: { select: USER_SELECT_FIELDS },
+      acceptedByUser: { select: USER_SELECT_FIELDS },
+      winner: { select: USER_SELECT_FIELDS }
     }
+  });
+  if (bet) {
+    await emitBetUpdated(c.gameId, bet);
   }
 }
 
@@ -394,19 +392,16 @@ async function runVoidedBetPostTx(v: VoidedBetPostTx): Promise<void> {
     await notificationService.sendBetCancelledNotification(v.betId, uid);
   }
 
-  const socketService = (global as { socketService?: { emit: (event: string, data: unknown) => Promise<void> } }).socketService;
-  if (socketService) {
-    const bet = await prisma.bet.findUnique({
-      where: { id: v.betId },
-      include: {
-        creator: { select: USER_SELECT_FIELDS },
-        acceptedByUser: { select: USER_SELECT_FIELDS },
-        winner: { select: USER_SELECT_FIELDS },
-      },
-    });
-    if (bet) {
-      await socketService.emit('bet:updated', { gameId: v.gameId, bet });
-    }
+  const bet = await prisma.bet.findUnique({
+    where: { id: v.betId },
+    include: {
+      creator: { select: USER_SELECT_FIELDS },
+      acceptedByUser: { select: USER_SELECT_FIELDS },
+      winner: { select: USER_SELECT_FIELDS },
+    },
+  });
+  if (bet) {
+    await emitBetUpdated(v.gameId, bet);
   }
 }
 

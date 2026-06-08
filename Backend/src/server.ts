@@ -3,6 +3,7 @@ import { config } from './config/env';
 import prisma from './config/database';
 import { initializeLogManager } from './controllers/logs.controller';
 import SocketService from './services/socket.service';
+import { initSocketEmitFacade } from './services/socketEmitFacade';
 import telegramBotService from './services/telegram/bot.service';
 import pushNotificationService from './services/push/push-notification.service';
 import { GameStatusScheduler } from './services/gameStatusScheduler.service';
@@ -94,6 +95,7 @@ const startServer = async () => {
     
     // Make socket service available globally
     (global as any).socketService = socketService;
+    initSocketEmitFacade(socketService);
 
     await resumeMatchTimerSchedulesOnStartup();
 

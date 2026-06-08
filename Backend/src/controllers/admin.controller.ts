@@ -23,6 +23,7 @@ import { resetSportQuestionnaire } from '../services/user/sportQuestionnaire.ser
 import { parseSportParam } from '../services/user/userSportProfile.service';
 import prisma from '../config/database';
 import { issuedRefreshJsonPayload } from '../utils/refreshWebCookie';
+import { ApiError } from '../utils/ApiError';
 
 // Auth endpoints
 export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
@@ -508,8 +509,7 @@ export const setReplicatePhotoModel = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const { modelId } = req.body as { modelId?: string };
     if (!modelId?.trim()) {
-      res.status(400).json({ success: false, message: 'modelId is required' });
-      return;
+      throw new ApiError(400, 'modelId is required');
     }
     try {
       const activeModelId = await ReplicatePhotoModelSettingService.setActiveModelId(
@@ -524,7 +524,7 @@ export const setReplicatePhotoModel = asyncHandler(
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      res.status(400).json({ success: false, message: msg });
+      throw new ApiError(400, msg);
     }
   }
 );
@@ -704,7 +704,7 @@ export const deleteUser = asyncHandler(async (req: AuthRequest, res: Response) =
 export const mergeUsers = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { survivorId, sourceId } = req.body as { survivorId?: string; sourceId?: string };
   if (!survivorId || !sourceId) {
-    return res.status(400).json({ success: false, message: 'survivorId and sourceId are required' });
+    throw new ApiError(400, 'survivorId and sourceId are required');
   }
   const result = await UserMergeService.mergeUsers(survivorId, sourceId);
   res.json({ success: true, data: result });
@@ -715,17 +715,11 @@ export const emitCoins = asyncHandler(async (req: AuthRequest, res: Response) =>
   const { amount, description } = req.body;
 
   if (!amount) {
-    return res.status(400).json({
-      success: false,
-      message: 'Amount is required',
-    });
+    throw new ApiError(400, 'Amount is required');
   }
 
   if (amount <= 0 || !Number.isInteger(amount)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Amount must be a positive integer',
-    });
+    throw new ApiError(400, 'Amount must be a positive integer');
   }
 
   const transaction = await TransactionService.createTransaction({
@@ -751,17 +745,11 @@ export const dropCoins = asyncHandler(async (req: AuthRequest, res: Response) =>
   const { cityId } = req.query;
 
   if (!amount) {
-    return res.status(400).json({
-      success: false,
-      message: 'Amount is required',
-    });
+    throw new ApiError(400, 'Amount is required');
   }
 
   if (amount <= 0 || !Number.isInteger(amount)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Amount must be a positive integer',
-    });
+    throw new ApiError(400, 'Amount must be a positive integer');
   }
 
   const results = await TransactionService.dropCoins(
@@ -795,10 +783,7 @@ export const updateMessageReportStatus = asyncHandler(async (req: AuthRequest, r
   const { status } = req.body;
 
   if (!status || !Object.values(MessageReportStatus).includes(status)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Valid status is required',
-    });
+    throw new ApiError(400, 'Valid status is required');
   }
 
   const report = await AdminMessageReportsService.updateReportStatus(reportId, status as MessageReportStatus);
@@ -822,7 +807,7 @@ export const updateStoryCommentReportStatus = asyncHandler(async (req: AuthReque
   const { status } = req.body;
 
   if (!status || !Object.values(MessageReportStatus).includes(status)) {
-    return res.status(400).json({ success: false, message: 'Valid status is required' });
+    throw new ApiError(400, 'Valid status is required');
   }
 
   const report = await AdminStoryCommentReportsService.updateReportStatus(
@@ -903,10 +888,7 @@ export const sendMassNotification = asyncHandler(async (req: AuthRequest, res: R
   const { cityId } = req.query;
 
   if (!title?.trim() || !text?.trim()) {
-    return res.status(400).json({
-      success: false,
-      message: 'Title and text are required',
-    });
+    throw new ApiError(400, 'Title and text are required');
   }
 
   const results = await AdminMassNotificationService.sendMassNotification(

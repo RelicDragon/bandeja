@@ -2,7 +2,7 @@ import * as cron from 'node-cron';
 import { Api } from 'grammy';
 import prisma from '../../config/database';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
-import { getGameInclude } from '../game/read.service';
+import { gameWithRoundsAndOutcomes } from '../game/gamePrismaIncludes';
 import { buildGamesMessage } from './commands/games.command';
 import { getUserLanguage } from './utils';
 import telegramBotService from './bot.service';
@@ -96,7 +96,7 @@ export class TelegramGamesScheduler {
         status: 'ANNOUNCED',
         isPublic: true,
       },
-      include: getGameInclude() as any,
+      include: gameWithRoundsAndOutcomes,
       orderBy: {
         startTime: 'asc',
       },

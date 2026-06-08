@@ -1,36 +1,10 @@
 import assert from 'node:assert/strict';
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
-import { EntityType, GameStatus, ParticipantRole } from '@prisma/client';
-import { ApiError } from '../../utils/ApiError';
 import type { BetCondition } from './betConditionEvaluator.service';
+import { createTestGame, ensureDbUrl, expectApiError } from '../../testHelpers';
 
 dotenv.config({ path: path.join(__dirname, '..', '..', '..', '.env') });
-
-function ensureDbUrl(): boolean {
-  let url = process.env.DB_URL;
-  if (!url) return false;
-  if (!/[?&]schema=/.test(url)) {
-    url += (url.includes('?') ? '&' : '?') + 'schema=padelpulse';
-    process.env.DB_URL = url;
-  }
-  return true;
-}
-
-async function expectApiError(
-  fn: () => Promise<unknown>,
-  statusCode: number,
-  message: string
-): Promise<void> {
-  try {
-    await fn();
-    assert.fail('expected ApiError');
-  } catch (err) {
-    if (!(err instanceof ApiError)) throw err;
-    assert.equal(err.statusCode, statusCode);
-    assert.equal(err.message, message);
-  }
-}
 
 async function run() {
   if (!ensureDbUrl()) {
@@ -55,8 +29,6 @@ async function run() {
   const [creator, acceptor, outsider] = users;
   const suffix = Date.now();
   const gameId = `qa-bet-accept-${suffix}`;
-  const start = new Date(Date.now() + 86_400_000);
-  const end = new Date(start.getTime() + 3_600_000);
   const stakeCoins = 1;
   const condition: BetCondition = {
     type: 'CUSTOM',
@@ -74,24 +46,10 @@ async function run() {
 
   const createdBetIds: string[] = [];
 
-  await prisma.game.create({
-    data: {
-      id: gameId,
-      entityType: EntityType.GAME,
-      gameType: 'CLASSIC',
-      cityId: city.id,
-      startTime: start,
-      endTime: end,
-      timeIsSet: true,
-      status: GameStatus.ANNOUNCED,
-      resultsStatus: 'NONE',
-      participants: {
-        create: [
-          { userId: creator.id, role: ParticipantRole.OWNER, status: 'PLAYING' },
-          { userId: acceptor.id, role: ParticipantRole.PARTICIPANT, status: 'PLAYING' },
-        ],
-      },
-    },
+  await createTestGame(prisma, {
+    gameId,
+    cityId: city.id,
+    participantIds: [creator.id, acceptor.id],
   });
 
   try {

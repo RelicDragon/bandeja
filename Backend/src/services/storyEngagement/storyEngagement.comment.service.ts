@@ -13,7 +13,11 @@ import {
 import { mapCommentToDto, parseCommentLikeFlags, type StoryCommentDto } from './storyEngagement.dto';
 import { emitStoryComment, emitStoryCommentDeleted } from './storyEngagement.events';
 import { notifyStoryComment, notifyStoryCommentReply } from './storyEngagement.notifications';
-import { assertCanEngage, usersAreBlocked } from './storyEngagement.permissions';
+import {
+  SOCIAL_GRAPH_INTERACT_CONTEXT,
+  assertCanInteract,
+} from '../social-graph/socialGraph.block';
+import { assertCanEngage } from './storyEngagement.permissions';
 import { assertCommentRateLimit } from './storyEngagement.rateLimit';
 
 const AUTHOR_SELECT = { ...USER_SELECT_FIELDS, isActive: true };
@@ -100,11 +104,11 @@ export class StoryEngagementCommentService {
           code: STORY_ENGAGEMENT_ERROR.COMMENT_INVALID_PARENT,
         });
       }
-      if (await usersAreBlocked(viewerId, parent.authorId)) {
-        throw new ApiError(403, 'Story engagement forbidden', true, {
-          code: STORY_ENGAGEMENT_ERROR.FORBIDDEN,
-        });
-      }
+      await assertCanInteract(
+        viewerId,
+        parent.authorId,
+        SOCIAL_GRAPH_INTERACT_CONTEXT.STORY_ENGAGEMENT,
+      );
       parentId = parent.id;
       parentAuthorId = parent.authorId;
     }

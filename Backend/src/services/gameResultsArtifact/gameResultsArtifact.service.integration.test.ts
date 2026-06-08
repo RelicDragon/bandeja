@@ -1,24 +1,15 @@
 import assert from 'node:assert/strict';
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
-import { EntityType, GameStatus, ParticipantRole } from '@prisma/client';
+import { GameStatus, ResultsStatus } from '@prisma/client';
 import { buildResultsArtifactsDto } from './gameResultsArtifact.dto';
 import { getMaxArtifactPhotoGenerations } from './gameResultsArtifact.photoLimit';
 import { isGameResultStoryEligible } from './gameResultsArtifactStory.eligibility';
 import { shouldSkipArtifactReenqueue } from './gameResultsArtifact.enqueuePolicy';
+import { createTestGame, ensureDbUrl } from '../../testHelpers';
 
 dotenv.config({ path: path.join(__dirname, '..', '..', '..', '.env') });
 process.env.RESULTS_ARTIFACTS_ENABLED = 'true';
-
-function ensureDbUrl(): boolean {
-  let url = process.env.DB_URL;
-  if (!url) return false;
-  if (!/[?&]schema=/.test(url)) {
-    url += (url.includes('?') ? '&' : '?') + 'schema=padelpulse';
-    process.env.DB_URL = url;
-  }
-  return true;
-}
 
 async function runDbIntegration() {
   const { default: prisma } = await import('../../config/database');
@@ -43,48 +34,23 @@ async function runDbIntegration() {
   const gameId = `qa-gra-${suffix}`;
   const sentGameId = `qa-gra-sent-${suffix}`;
 
-  const start = new Date(Date.now() + 86_400_000);
-  const end = new Date(start.getTime() + 3_600_000);
-
-  await prisma.game.create({
-    data: {
-      id: gameId,
-      entityType: EntityType.GAME,
-      gameType: 'CLASSIC',
-      cityId: city.id,
-      startTime: start,
-      endTime: end,
-      timeIsSet: true,
-      status: GameStatus.FINISHED,
-      resultsStatus: 'FINAL',
-      finishedDate: new Date(),
-      participants: {
-        create: [
-          { userId: user.id, role: ParticipantRole.OWNER, status: 'PLAYING' },
-        ],
-      },
-    },
+  const finishedDate = new Date();
+  await createTestGame(prisma, {
+    gameId,
+    cityId: city.id,
+    participantIds: [user.id],
+    status: GameStatus.FINISHED,
+    resultsStatus: ResultsStatus.FINAL,
+    finishedDate,
   });
-
-  await prisma.game.create({
-    data: {
-      id: sentGameId,
-      entityType: EntityType.GAME,
-      gameType: 'CLASSIC',
-      cityId: city.id,
-      startTime: start,
-      endTime: end,
-      timeIsSet: true,
-      status: GameStatus.FINISHED,
-      resultsStatus: 'FINAL',
-      resultsSentToTelegram: true,
-      finishedDate: new Date(),
-      participants: {
-        create: [
-          { userId: user.id, role: ParticipantRole.OWNER, status: 'PLAYING' },
-        ],
-      },
-    },
+  await createTestGame(prisma, {
+    gameId: sentGameId,
+    cityId: city.id,
+    participantIds: [user.id],
+    status: GameStatus.FINISHED,
+    resultsStatus: ResultsStatus.FINAL,
+    finishedDate,
+    resultsSentToTelegram: true,
   });
 
   try {

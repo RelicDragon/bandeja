@@ -6,10 +6,11 @@ import { PreferenceKey } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
-import { formatGameInfoForUser } from '../../shared/notification-base';
 import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport';
 import prisma from '../../../config/database';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
+import { formatGameInfoForUser } from '../../shared/notification-base';
+import { buildBetResolvedContext } from '../../shared/notification-contexts/bet-resolved.context';
 
 export async function sendBetResolvedNotification(
   api: Api,
@@ -18,84 +19,48 @@ export async function sendBetResolvedNotification(
   isWinner: boolean,
   totalCoinsWon?: number
 ) {
-  const bet = await prisma.bet.findUnique({
-    where: { id: betId },
-    include: {
-      game: {
-        include: {
-          court: {
-            include: {
-              club: true,
-            },
-          },
-          club: true,
-        },
-      },
-      creator: {
-        select: {
-          telegramId: true,
-          language: true,
-          currentCityId: true,
-          primarySport: true,
-        },
-      },
-      acceptedByUser: {
-        select: {
-          telegramId: true,
-          language: true,
-          currentCityId: true,
-          primarySport: true,
-        },
-      },
-    },
-  });
-
-  if (!bet || !bet.game) {
+  const ctx = await buildBetResolvedContext(betId, userId, isWinner, totalCoinsWon);
+  if (!ctx || !ctx.telegramId) {
     return;
   }
 
-  const user = userId === bet.creatorId ? bet.creator : bet.acceptedByUser;
-  if (!user) return;
   const allowed = await NotificationPreferenceService.doesUserAllow(userId, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
-  if (!allowed || !user.telegramId) return;
+  if (!allowed) return;
 
   try {
-    const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
-    const gameInfo = await formatGameInfoForUser(bet.game, user.currentCityId, lang);
-    const gameName = bet.game.name ? bet.game.name : t(`games.gameTypes.${bet.game.gameType}`, lang);
-    const clubName = bet.game.court?.club?.name || bet.game.club?.name;
+    const lang = await getUserLanguageFromTelegramId(ctx.telegramId, undefined);
 
-    const title = isWinner 
+    const title = ctx.isWinner
       ? t('telegram.betWon', lang) || '🎉 Challenge Won!'
       : t('telegram.betLost', lang) || '❌ Challenge Lost';
 
     let message = `${title}\n\n`;
-    message += `🎮 ${escapeMarkdown(gameName)}\n`;
-    
-    if (clubName) {
-      const placeLine = `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}`;
-      message += `${appendTelegramGameScheduleExtras(placeLine, bet.game, user.primarySport, lang, escapeMarkdown)}\n`;
-    }
-    
-    message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
+    message += `🎮 ${escapeMarkdown(ctx.gameName)}\n`;
 
-    if (isWinner && totalCoinsWon && totalCoinsWon > 0) {
-      message += `\n💰 ${escapeMarkdown(t('telegram.coinsWon', lang) || 'Coins won')}: ${totalCoinsWon}\n`;
+    if (ctx.clubName) {
+      const placeLine = `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(ctx.clubName)}`;
+      message += `${appendTelegramGameScheduleExtras(placeLine, ctx.game, ctx.primarySport, lang, escapeMarkdown)}\n`;
     }
 
-    if (bet.resolutionReason) {
-      message += `\n📝 ${escapeMarkdown(bet.resolutionReason)}`;
+    message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${ctx.gameInfo.shortDayOfWeek} ${ctx.gameInfo.shortDate} ${ctx.gameInfo.startTime}\n`;
+
+    if (ctx.isWinner && ctx.totalCoinsWon && ctx.totalCoinsWon > 0) {
+      message += `\n💰 ${escapeMarkdown(t('telegram.coinsWon', lang) || 'Coins won')}: ${ctx.totalCoinsWon}\n`;
+    }
+
+    if (ctx.resolutionReason) {
+      message += `\n📝 ${escapeMarkdown(ctx.resolutionReason)}`;
     }
 
     const buttons = [[
       {
         text: t('telegram.viewGame', lang),
-        url: `${config.frontendUrl}/games/${bet.gameId}`
-      }
+        url: `${config.frontendUrl}/games/${ctx.gameId}`,
+      },
     ]];
 
     const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
-    await api.sendMessage(user.telegramId, finalMessage, options);
+    await api.sendMessage(ctx.telegramId, finalMessage, options);
   } catch (error) {
     if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram bet resolved notification to user ${userId}:`, error);
@@ -157,20 +122,20 @@ export async function sendBetNeedsReviewNotification(
     const title = t('telegram.betNeedsReview', lang) || '⚠️ Challenge Needs Review';
     let message = `${title}\n\n`;
     message += `🎮 ${escapeMarkdown(gameName)}\n`;
-    
+
     if (clubName) {
       const placeLine = `📍 ${escapeMarkdown(t('telegram.place', lang))}: ${escapeMarkdown(clubName)}`;
       message += `${appendTelegramGameScheduleExtras(placeLine, bet.game, user.primarySport, lang, escapeMarkdown)}\n`;
     }
-    
+
     message += `🕐 ${escapeMarkdown(t('telegram.time', lang))}: ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}\n`;
     message += `\n${escapeMarkdown(t('telegram.betNeedsReviewDescription', lang) || 'Your challenge requires manual review due to a resolution error.')}`;
 
     const buttons = [[
       {
         text: t('telegram.viewGame', lang),
-        url: `${config.frontendUrl}/games/${bet.gameId}`
-      }
+        url: `${config.frontendUrl}/games/${bet.gameId}`,
+      },
     ]];
 
     const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);

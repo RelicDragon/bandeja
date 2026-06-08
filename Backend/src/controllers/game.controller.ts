@@ -16,7 +16,8 @@ import {
 } from '../services/gameResultsArtifact/gameResultsArtifact.jobStatus';
 import { generateResultsImage } from '../services/telegram/results-image.service';
 import telegramBotService from '../services/telegram/bot.service';
-import { getGameInclude, projectGameUsersForSportContext } from '../services/game/read.service';
+import { projectGameUsersForSportContext } from '../services/game/read.service';
+import { gameWithRoundsAndOutcomes } from '../services/game/gamePrismaIncludes';
 import { buildResultsArtifactsDto } from '../services/gameResultsArtifact/gameResultsArtifact.dto';
 import { resolvePhotoGenerationsMaxForGame } from '../services/gameResultsArtifact/gameResultsArtifact.ownerPremium';
 import { GameResultsArtifactQueueService } from '../services/gameResultsArtifact/gameResultsArtifactQueue.service';
@@ -520,11 +521,10 @@ export const getBookedCourts = asyncHandler(async (req: AuthRequest, res: Respon
 });
 
 const validateGameForTelegram = async (gameId: string, _userId: string) => {
-  const gameInclude = getGameInclude();
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
-      ...gameInclude,
+      ...gameWithRoundsAndOutcomes,
       city: {
         select: {
           id: true,

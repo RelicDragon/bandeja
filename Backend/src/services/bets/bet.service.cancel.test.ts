@@ -1,19 +1,15 @@
 import assert from 'node:assert/strict';
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
-import { EntityType, GameStatus, ParticipantRole, TransactionType } from '@prisma/client';
+import { TransactionType } from '@prisma/client';
+import {
+  createTestBet,
+  createTestGame,
+  createTestUser,
+  ensureDbUrl,
+} from '../../testHelpers';
 
 dotenv.config({ path: path.join(__dirname, '..', '..', '..', '.env') });
-
-function ensureDbUrl(): boolean {
-  let url = process.env.DB_URL;
-  if (!url) return false;
-  if (!/[?&]schema=/.test(url)) {
-    url += (url.includes('?') ? '&' : '?') + 'schema=padelpulse';
-    process.env.DB_URL = url;
-  }
-  return true;
-}
 
 const STAKE = 50;
 const condition = (userId: string) => ({
@@ -48,52 +44,6 @@ async function refundStats(
   return byUser;
 }
 
-async function createTestUser(
-  prisma: typeof import('../../config/database').default,
-  suffix: string,
-  wallet: number,
-) {
-  return prisma.user.create({
-    data: {
-      phone: `qa-bet-cancel-${suffix}`,
-      email: `qa-bet-cancel-${suffix}@test.local`,
-      firstName: 'QA',
-      lastName: 'BetCancel',
-      wallet,
-      isActive: true,
-    },
-    select: { id: true },
-  });
-}
-
-async function createTestGame(
-  prisma: typeof import('../../config/database').default,
-  gameId: string,
-  cityId: string,
-  participantIds: string[],
-) {
-  const start = new Date(Date.now() + 86_400_000);
-  await prisma.game.create({
-    data: {
-      id: gameId,
-      entityType: EntityType.GAME,
-      gameType: 'CLASSIC',
-      cityId,
-      startTime: start,
-      endTime: new Date(start.getTime() + 3_600_000),
-      timeIsSet: true,
-      status: GameStatus.ANNOUNCED,
-      participants: {
-        create: participantIds.map((userId, i) => ({
-          userId,
-          role: i === 0 ? ParticipantRole.OWNER : ParticipantRole.PARTICIPANT,
-          status: 'PLAYING',
-        })),
-      },
-    },
-  });
-}
-
 async function run() {
   if (!ensureDbUrl()) {
     console.log('SKIP bet.service.cancel.test.ts: DB_URL not set');
@@ -107,77 +57,62 @@ async function run() {
   if (!city) throw new Error('no City row');
 
   const suffix = `${Date.now()}`;
-  const creator = await createTestUser(prisma, `c-${suffix}`, 500);
-  const joiner = await createTestUser(prisma, `j-${suffix}`, 500);
-  const conditionUser = await createTestUser(prisma, `u-${suffix}`, 100);
+  const creator = await createTestUser(prisma, 'bet-cancel', `c-${suffix}`, 500);
+  const joiner = await createTestUser(prisma, 'bet-cancel', `j-${suffix}`, 500);
+  const conditionUser = await createTestUser(prisma, 'bet-cancel', `u-${suffix}`, 100);
   const gameId = `qa-bet-cancel-${suffix}`;
 
-  await createTestGame(prisma, gameId, city.id, [
-    creator.id,
-    joiner.id,
-    conditionUser.id,
-  ]);
+  await createTestGame(prisma, {
+    gameId,
+    cityId: city.id,
+    participantIds: [creator.id, joiner.id, conditionUser.id],
+  });
 
   const cond = condition(conditionUser.id);
 
   try {
-    // SOCIAL manual cancel: creator refunded once
     {
       const since = new Date();
-      const social = await BetService.createBet(
+      const social = await createTestBet({
         gameId,
-        creator.id,
-        cond,
-        'SOCIAL',
-        'COINS',
-        STAKE,
-        null,
-        'COINS',
-        STAKE,
-        null,
-      );
+        creatorId: creator.id,
+        condition: cond,
+        type: 'SOCIAL',
+        stakeCoins: STAKE,
+        rewardCoins: STAKE,
+      });
       await BetService.cancelBet(social.id, creator.id);
       const stats = await refundStats(prisma, [creator.id], since);
       assert.equal(stats.get(creator.id)?.count, 1);
       assert.equal(stats.get(creator.id)?.total, STAKE);
     }
 
-    // POOL creator-only manual cancel
     {
       const since = new Date();
-      const pool = await BetService.createBet(
+      const pool = await createTestBet({
         gameId,
-        creator.id,
-        cond,
-        'POOL',
-        'COINS',
-        STAKE,
-        null,
-        'COINS',
-        0,
-        null,
-      );
+        creatorId: creator.id,
+        condition: cond,
+        type: 'POOL',
+        stakeCoins: STAKE,
+        rewardCoins: 0,
+      });
       await BetService.cancelBet(pool.id, creator.id);
       const stats = await refundStats(prisma, [creator.id], since);
       assert.equal(stats.get(creator.id)?.count, 1);
       assert.equal(stats.get(creator.id)?.total, STAKE);
     }
 
-    // POOL creator + joiner manual cancel
     {
       const since = new Date();
-      const pool = await BetService.createBet(
+      const pool = await createTestBet({
         gameId,
-        creator.id,
-        cond,
-        'POOL',
-        'COINS',
-        STAKE,
-        null,
-        'COINS',
-        0,
-        null,
-      );
+        creatorId: creator.id,
+        condition: cond,
+        type: 'POOL',
+        stakeCoins: STAKE,
+        rewardCoins: 0,
+      });
       await BetService.acceptBet(pool.id, joiner.id, 'AGAINST_CREATOR');
       await BetService.cancelBet(pool.id, creator.id);
       const stats = await refundStats(prisma, [creator.id, joiner.id], since);
@@ -187,21 +122,16 @@ async function run() {
       assert.equal(stats.get(joiner.id)?.total, STAKE);
     }
 
-    // POOL creator-only auto-cancel
     {
       const since = new Date();
-      const pool = await BetService.createBet(
+      const pool = await createTestBet({
         gameId,
-        creator.id,
-        cond,
-        'POOL',
-        'COINS',
-        STAKE,
-        null,
-        'COINS',
-        0,
-        null,
-      );
+        creatorId: creator.id,
+        condition: cond,
+        type: 'POOL',
+        stakeCoins: STAKE,
+        rewardCoins: 0,
+      });
       await BetService.cancelBetsWithUserInCondition(gameId, conditionUser.id);
       const stats = await refundStats(prisma, [creator.id], since);
       assert.equal(stats.get(creator.id)?.count, 1);
@@ -210,21 +140,16 @@ async function run() {
       assert.equal(bet?.status, 'CANCELLED');
     }
 
-    // POOL creator + joiner auto-cancel
     {
       const since = new Date();
-      const pool = await BetService.createBet(
+      const pool = await createTestBet({
         gameId,
-        creator.id,
-        cond,
-        'POOL',
-        'COINS',
-        STAKE,
-        null,
-        'COINS',
-        0,
-        null,
-      );
+        creatorId: creator.id,
+        condition: cond,
+        type: 'POOL',
+        stakeCoins: STAKE,
+        rewardCoins: 0,
+      });
       await BetService.acceptBet(pool.id, joiner.id, 'WITH_CREATOR');
       await BetService.cancelBetsWithUserInCondition(gameId, conditionUser.id);
       const stats = await refundStats(prisma, [creator.id, joiner.id], since);

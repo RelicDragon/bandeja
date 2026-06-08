@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
+import { GameStatus, ResultsStatus } from '@prisma/client';
 import {
   buildPoolPayoutPayload,
   buildSocialPayoutPayload,
@@ -14,18 +15,9 @@ import {
   socialBetNeedsPayout,
 } from './betResolutionPayout.service';
 import { distributePoolCoins, totalDistributedShares } from './poolCoinDistribution';
+import { createTestGame, ensureDbUrl } from '../../testHelpers';
 
 dotenv.config({ path: path.join(__dirname, '..', '..', '..', '.env') });
-
-function ensureDbUrl(): boolean {
-  let url = process.env.DB_URL;
-  if (!url) return false;
-  if (!/[?&]schema=/.test(url)) {
-    url += (url.includes('?') ? '&' : '?') + 'schema=padelpulse';
-    process.env.DB_URL = url;
-  }
-  return true;
-}
 
 async function runPureTests() {
   assert.equal(
@@ -133,6 +125,23 @@ async function runPureTests() {
   console.log('ok: betResolutionPayout pure');
 }
 
+async function countUnresolvedPayoutBets(
+  prisma: Awaited<typeof import('../../config/database')>['default'],
+): Promise<number> {
+  const bets = await prisma.bet.findMany({
+    where: { status: 'RESOLVED' },
+    include: { participants: { select: { userId: true } } },
+  });
+  return bets.filter((bet) =>
+    bet.type === 'POOL'
+      ? poolBetNeedsPayout(
+          bet,
+          bet.participants.map((p) => p.userId),
+        )
+      : socialBetNeedsPayout(bet),
+  ).length;
+}
+
 async function runDbIntegration() {
   const { default: prisma } = await import('../../config/database');
   const users = await prisma.user.findMany({ where: { isAdmin: false }, take: 3, select: { id: true } });
@@ -149,22 +158,15 @@ async function runDbIntegration() {
   const acceptor = users[1];
   const poolWinner = users[2] ?? users[1];
 
-  const start = new Date(Date.now() + 86_400_000);
-  const end = new Date(start.getTime() + 3_600_000);
+  const unresolvedBefore = await countUnresolvedPayoutBets(prisma);
 
-  await prisma.game.create({
-    data: {
-      id: gameId,
-      entityType: 'GAME',
-      gameType: 'CLASSIC',
-      cityId: city.id,
-      startTime: start,
-      endTime: end,
-      timeIsSet: true,
-      status: 'FINISHED',
-      resultsStatus: 'FINAL',
-      finishedDate: new Date(),
-    },
+  await createTestGame(prisma, {
+    gameId,
+    cityId: city.id,
+    participantIds: [creator.id, acceptor.id, poolWinner.id],
+    status: GameStatus.FINISHED,
+    resultsStatus: ResultsStatus.FINAL,
+    finishedDate: new Date(),
   });
 
   await prisma.bet.create({
@@ -239,7 +241,7 @@ async function runDbIntegration() {
     assert.match(meta.resolution.lastPayoutError ?? '', /simulated stake transfer failure/);
 
     const reconcileAfterFailure = await reconcileUnresolvedBetPayouts();
-    assert.equal(reconcileAfterFailure.retried, 1);
+    assert.equal(reconcileAfterFailure.retried, unresolvedBefore + 1);
     assert.equal(reconcileAfterFailure.failed, 0);
     meta = (await prisma.bet.findUnique({ where: { id: socialBetId }, select: { metadata: true } }))!.metadata as {
       resolution: { stakeTransferred?: boolean; rewardTransferred?: boolean };

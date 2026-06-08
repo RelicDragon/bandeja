@@ -2,6 +2,7 @@ import prisma from '../../../config/database';
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { formatGameInfoForUser } from '../../shared/notification-base';
+import { buildBetResolvedContext } from '../../shared/notification-contexts/bet-resolved.context';
 
 export async function createBetResolvedPushNotification(
   betId: string,
@@ -9,74 +10,22 @@ export async function createBetResolvedPushNotification(
   isWinner: boolean,
   totalCoinsWon?: number
 ): Promise<NotificationPayload | null> {
-  const bet = await prisma.bet.findUnique({
-    where: { id: betId },
-    include: {
-      game: {
-        include: {
-          court: {
-            include: {
-              club: true,
-            },
-          },
-          club: true,
-        },
-      },
-      creator: {
-        select: {
-          language: true,
-          currentCityId: true,
-        },
-      },
-      acceptedByUser: {
-        select: {
-          language: true,
-          currentCityId: true,
-        },
-      },
-    },
-  });
-
-  if (!bet || !bet.game) {
+  const ctx = await buildBetResolvedContext(betId, userId, isWinner, totalCoinsWon);
+  if (!ctx) {
     return null;
   }
 
-  const user = userId === bet.creatorId ? bet.creator : bet.acceptedByUser;
-  if (!user) {
-    return null;
-  }
-
-  const lang = user.language || 'en';
-  const gameInfo = await formatGameInfoForUser(bet.game, user.currentCityId, lang);
-  const gameName = bet.game.name ? bet.game.name : t(`games.gameTypes.${bet.game.gameType}`, lang);
-
-  const title = isWinner 
-    ? t('telegram.betWon', lang) || 'Challenge Won!'
-    : t('telegram.betLost', lang) || 'Challenge Lost';
-
-  let body = `${gameName}`;
-  if (gameInfo.place) {
-    body += ` - ${gameInfo.place}`;
-  }
-  body += `\n${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}`;
-
-  if (isWinner && totalCoinsWon && totalCoinsWon > 0) {
-    body += `\n💰 ${t('telegram.coinsWon', lang) || 'Coins won'}: ${totalCoinsWon}`;
-  }
-
-  if (bet.resolutionReason) {
-    body += `\n${bet.resolutionReason}`;
-  }
+  const title = ctx.title || (ctx.isWinner ? 'Challenge Won!' : 'Challenge Lost');
 
   return {
     type: NotificationType.GAME_SYSTEM_MESSAGE,
     title,
-    body,
+    body: ctx.bodyLines.join('\n'),
     data: {
-      gameId: bet.gameId,
-      shortDayOfWeek: gameInfo.shortDayOfWeek
+      gameId: ctx.gameId,
+      shortDayOfWeek: ctx.shortDayOfWeek,
     },
-    sound: 'default'
+    sound: 'default',
   };
 }
 

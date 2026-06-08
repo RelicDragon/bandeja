@@ -9,19 +9,17 @@ import { attachReactionsToGames, fetchReactionsByGameIds } from './gameReaction.
 import { buildResultsArtifactsDto } from '../gameResultsArtifact/gameResultsArtifact.dto';
 import { getOwnerIsPremiumFromGame } from '../gameResultsArtifact/gameResultsArtifact.ownerPremium';
 import { getMaxArtifactPhotoGenerations } from '../gameResultsArtifact/gameResultsArtifact.photoLimit';
-import { GAME_INVITE_OUTCOME_INCLUDE } from '../../utils/gameInviteOutcomeInclude';
 import {
   projectUserForSportContext,
   resolvePublicGamesSportFilter,
 } from '../user/userSportProfile.service';
+import {
+  gameBaseInclude,
+  gameWithRoundsAndOutcomes,
+  MAIN_PHOTO_RELATION_SELECT,
+} from './gamePrismaIncludes';
 
-export const MAIN_PHOTO_RELATION_SELECT = {
-  select: {
-    id: true,
-    thumbnailUrl: true,
-    originalUrl: true,
-  },
-} as const;
+export { MAIN_PHOTO_RELATION_SELECT };
 
 export function projectGamePhotoPayload(game: any): any {
   const mainPhoto = game.mainPhoto;
@@ -164,86 +162,7 @@ const getLeagueSeasonInclude = () => ({
   },
 });
 
-export const getBaseGameInclude = () => ({
-  city: {
-    select: {
-      id: true,
-      name: true,
-      country: true,
-      telegramGroupId: true,
-      timezone: true,
-    },
-  },
-  club: {
-    include: {
-      courts: true,
-      city: {
-        select: {
-          name: true,
-        },
-      },
-    },
-  },
-  participants: {
-    include: {
-      user: {
-        select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
-      },
-      invitedByUser: {
-        select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
-      },
-    },
-  },
-  inviteOutcomes: {
-    include: GAME_INVITE_OUTCOME_INCLUDE,
-  },
-  fixedTeams: {
-    include: {
-      players: {
-        include: {
-          user: {
-            select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
-          },
-        },
-      },
-    },
-    orderBy: { teamNumber: 'asc' as const },
-  },
-  leagueSeason: {
-    include: getLeagueSeasonInclude(),
-  },
-  leagueGroup: {
-    select: {
-      id: true,
-      name: true,
-      color: true,
-    },
-  },
-  leagueRound: {
-    select: {
-      id: true,
-      orderIndex: true,
-      roundType: true,
-      playoffFormat: true,
-      bracketScope: true,
-    },
-  },
-  bracketSlot: {
-    select: {
-      slotKind: true,
-      roundIndex: true,
-    },
-  },
-  mainPhoto: MAIN_PHOTO_RELATION_SELECT,
-  resultsArtifactJob: {
-    select: {
-      status: true,
-      summaryStatus: true,
-      photoStatus: true,
-      photoGenerationsUsed: true,
-    },
-  },
-});
+const getBaseGameInclude = () => gameBaseInclude;
 
 const getGamesCourtInclude = () => ({
   court: {
@@ -261,14 +180,6 @@ const getGamesCourtInclude = () => ({
           },
         },
       },
-    },
-  },
-});
-
-const getGameIncludeCourtInclude = () => ({
-  court: {
-    include: {
-      club: true,
     },
   },
 });
@@ -358,73 +269,6 @@ const getAvailableGamesInclude = () => ({
   },
 });
 
-export const getGameInclude = () => ({
-  ...getBaseGameInclude(),
-  ...getGameIncludeCourtInclude(),
-  outcomes: {
-    include: {
-      user: {
-        select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
-      },
-    },
-    orderBy: { position: 'asc' as const },
-  },
-  rounds: {
-    include: {
-      matches: {
-        include: {
-          teams: {
-            include: {
-              players: {
-                include: {
-                  user: {
-                    select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
-                  },
-                },
-              },
-            },
-          },
-                sets: {
-                  orderBy: { setNumber: 'asc' as const },
-                },
-        },
-              orderBy: { matchNumber: 'asc' as const },
-      },
-    },
-    orderBy: { roundNumber: 'asc' as const },
-  },
-  gameCourts: {
-    include: {
-      court: {
-        include: {
-          club: {
-            select: {
-              id: true,
-              name: true,
-              address: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: { order: 'asc' as const },
-  },
-  parent: {
-    include: {
-      participants: {
-        include: {
-          user: {
-            select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
-          },
-        },
-      },
-      leagueSeason: {
-        include: getLeagueSeasonInclude(),
-      },
-    },
-  },
-});
-
 export function computeJoinQueuesFromParticipants(game: any): any[] {
   const inQueueParticipants = game.participants?.filter(
     (p: any) => p.status === 'IN_QUEUE'
@@ -465,7 +309,7 @@ export class GameReadService {
   static async getGameById(id: string, userId?: string, skipRestrictions: boolean = false) {
     const game = await prisma.game.findUnique({
       where: { id },
-      include: getGameInclude() as any,
+      include: gameWithRoundsAndOutcomes,
     });
 
     if (!game) {
@@ -663,7 +507,7 @@ export class GameReadService {
 
     const gamesRaw = await prisma.game.findMany({
       where,
-      include: getGameInclude() as any,
+      include: gameWithRoundsAndOutcomes,
       orderBy: { startTime: 'desc' },
     });
     const games = gamesRaw.map((g) => projectGamePhotoPayload(projectGameUsersForSportContext(g)));
@@ -741,7 +585,7 @@ export class GameReadService {
 
     const gamesRaw = await prisma.game.findMany({
       where,
-      include: getGameInclude() as any,
+      include: gameWithRoundsAndOutcomes,
       orderBy: { startTime: 'desc' },
       take: limit,
       skip: offset,

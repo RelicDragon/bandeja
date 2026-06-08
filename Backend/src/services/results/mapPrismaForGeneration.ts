@@ -1,6 +1,6 @@
 import { Sport } from '@prisma/client';
 import type { GenGame, GenMatch, GenRound } from './generation/types';
-import type { GameForRoundGeneration } from './roundGenerationGameInclude';
+import type { GameForRoundGeneration } from '../game/gamePrismaIncludes';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
 
 export function prismaGameToGenGame(game: GameForRoundGeneration): GenGame {

@@ -1,13 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { LegacyJwtVerifyRejectedError, verifyToken } from '../utils/jwt';
-import { config } from '../config/env';
 import { ApiError } from '../utils/ApiError';
-import prisma from '../config/database';
-import { USER_SELECT_FIELDS } from '../utils/constants';
 import { canModifyResults, hasParentGamePermission } from '../utils/parentGamePermissions';
 import { ParticipantRole } from '@prisma/client';
 import { getClientIp, updateUserIpLocation } from '../services/ipLocation.service';
+import prisma from '../config/database';
+import {
+  extractBearerToken,
+  extractBearerTokenFromHeader,
+  loadActiveUser,
+  mapJwtError,
+} from './authToken';
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -19,45 +21,12 @@ export interface AuthRequest extends Request {
 
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    let token: string | undefined;
-    
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7);
-    } else if (req.query.token && typeof req.query.token === 'string') {
-      token = req.query.token;
-    }
-
+    const token = extractBearerToken(req);
     if (!token) {
       throw new ApiError(401, 'No token provided', true, { code: 'auth.noToken' });
     }
 
-    const decoded = verifyToken(token);
-
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        ...USER_SELECT_FIELDS,
-        phone: true,
-        email: true,
-        telegramId: true,
-        googleId: true,
-        appleSub: true,
-        isActive: true,
-        isAdmin: true,
-        isTrainer: true,
-        currentCityId: true,
-        lastUserIP: true,
-      },
-    });
-
-    if (!user) {
-      throw new ApiError(401, 'User not found or inactive', true, { code: 'auth.userNotFound' });
-    }
-    if (!user.isActive) {
-      throw new ApiError(401, 'User not found or inactive', true, { code: 'auth.userInactive' });
-    }
-
+    const user = await loadActiveUser(token);
     req.userId = user.id;
     req.user = user;
 
@@ -67,45 +36,21 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     next();
   } catch (error) {
-    if (error instanceof ApiError) {
-      next(error);
-    } else if (error instanceof LegacyJwtVerifyRejectedError) {
-      const endedAt = config.legacyJwtIssuanceEndAt;
-      next(
-        new ApiError(401, 'auth.clientUpgradeRequired', true, {
-          code: 'auth.clientUpgradeRequired',
-          minClientVersion: config.minClientVersionForRefresh,
-          ...(endedAt && { legacyJwtIssuanceEndedAt: endedAt.toISOString() }),
-        })
-      );
-    } else if (error instanceof jwt.TokenExpiredError) {
-      next(new ApiError(401, 'auth.accessExpired', true, { code: 'auth.accessExpired' }));
-    } else if (error instanceof jwt.JsonWebTokenError) {
-      next(new ApiError(401, 'auth.invalidToken', true, { code: 'auth.invalidToken' }));
-    } else {
-      next(new ApiError(401, 'auth.invalidToken', true, { code: 'auth.invalidToken' }));
-    }
+    next(mapJwtError(error));
   }
 };
 
 export const optionalAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const authHeader = req.headers.authorization;
-
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      const decoded = verifyToken(token);
-
-      const user = await prisma.user.findUnique({
-        where: { id: decoded.userId },
-      });
-
-      if (user && user.isActive) {
-        req.userId = user.id;
-        req.user = user;
-      }
+    const token = extractBearerTokenFromHeader(req);
+    if (!token) {
+      next();
+      return;
     }
 
+    const user = await loadActiveUser(token, { select: 'full' });
+    req.userId = user.id;
+    req.user = user;
     next();
   } catch {
     next();
@@ -114,40 +59,12 @@ export const optionalAuth = async (req: AuthRequest, res: Response, next: NextFu
 
 export const requireAdmin = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    let token: string | undefined;
-    
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7);
-    } else if (req.query.token && typeof req.query.token === 'string') {
-      token = req.query.token;
-    }
-
+    const token = extractBearerToken(req);
     if (!token) {
       throw new ApiError(401, 'No token provided', true, { code: 'auth.noToken' });
     }
 
-    const decoded = verifyToken(token);
-
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        ...USER_SELECT_FIELDS,
-        phone: true,
-        email: true,
-        isActive: true,
-        isAdmin: true,
-        isTrainer: true,
-      },
-    });
-
-    if (!user) {
-      throw new ApiError(401, 'User not found or inactive', true, { code: 'auth.userNotFound' });
-    }
-    if (!user.isActive) {
-      throw new ApiError(401, 'User not found or inactive', true, { code: 'auth.userInactive' });
-    }
-
+    const user = await loadActiveUser(token);
     if (!user.isAdmin) {
       throw new ApiError(403, 'Admin access required');
     }
@@ -156,24 +73,7 @@ export const requireAdmin = async (req: AuthRequest, res: Response, next: NextFu
     req.user = user;
     next();
   } catch (error) {
-    if (error instanceof ApiError) {
-      next(error);
-    } else if (error instanceof LegacyJwtVerifyRejectedError) {
-      const endedAt = config.legacyJwtIssuanceEndAt;
-      next(
-        new ApiError(401, 'auth.clientUpgradeRequired', true, {
-          code: 'auth.clientUpgradeRequired',
-          minClientVersion: config.minClientVersionForRefresh,
-          ...(endedAt && { legacyJwtIssuanceEndedAt: endedAt.toISOString() }),
-        })
-      );
-    } else if (error instanceof jwt.TokenExpiredError) {
-      next(new ApiError(401, 'auth.accessExpired', true, { code: 'auth.accessExpired' }));
-    } else if (error instanceof jwt.JsonWebTokenError) {
-      next(new ApiError(401, 'auth.invalidToken', true, { code: 'auth.invalidToken' }));
-    } else {
-      next(new ApiError(401, 'auth.invalidToken', true, { code: 'auth.invalidToken' }));
-    }
+    next(mapJwtError(error));
   }
 };
 
@@ -303,4 +203,3 @@ export const requireClubAdmin = (paramKey = 'clubId') => {
     }
   };
 };
-

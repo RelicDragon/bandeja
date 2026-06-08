@@ -1,19 +1,15 @@
 import assert from 'node:assert/strict';
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
-import { EntityType, GameStatus, ParticipantRole, ResultsStatus, TransactionType } from '@prisma/client';
+import { GameStatus, ResultsStatus, TransactionType } from '@prisma/client';
+import {
+  createTestBet,
+  createTestGame,
+  createTestUser,
+  ensureDbUrl,
+} from '../../testHelpers';
 
 dotenv.config({ path: path.join(__dirname, '..', '..', '..', '.env') });
-
-function ensureDbUrl(): boolean {
-  let url = process.env.DB_URL;
-  if (!url) return false;
-  if (!/[?&]schema=/.test(url)) {
-    url += (url.includes('?') ? '&' : '?') + 'schema=padelpulse';
-    process.env.DB_URL = url;
-  }
-  return true;
-}
 
 const STAKE = 50;
 const REWARD = 10;
@@ -57,24 +53,6 @@ async function refundStats(
   return byUser;
 }
 
-async function createTestUser(
-  prisma: typeof import('../../config/database').default,
-  suffix: string,
-  wallet: number,
-) {
-  return prisma.user.create({
-    data: {
-      phone: `qa-bet-void-${suffix}`,
-      email: `qa-bet-void-${suffix}@test.local`,
-      firstName: 'QA',
-      lastName: 'BetVoid',
-      wallet,
-      isActive: true,
-    },
-    select: { id: true },
-  });
-}
-
 async function run() {
   if (!ensureDbUrl()) {
     console.log('SKIP betResolutionVoid.test.ts: DB_URL not set');
@@ -91,83 +69,57 @@ async function run() {
     return;
   }
 
-  const gameId = `qa-bet-void-${Date.now()}`;
-  const creator = await createTestUser(prisma, `${Date.now()}-c`, 500);
-  const acceptor = await createTestUser(prisma, `${Date.now()}-a`, 500);
-  const joiner = await createTestUser(prisma, `${Date.now()}-j`, 500);
-  const absentTarget = await createTestUser(prisma, `${Date.now()}-t`, 500);
-  const playingUser = await createTestUser(prisma, `${Date.now()}-p`, 500);
+  const ts = `${Date.now()}`;
+  const gameId = `qa-bet-void-${ts}`;
+  const creator = await createTestUser(prisma, 'bet-void', `${ts}-c`, 500);
+  const acceptor = await createTestUser(prisma, 'bet-void', `${ts}-a`, 500);
+  const joiner = await createTestUser(prisma, 'bet-void', `${ts}-j`, 500);
+  const absentTarget = await createTestUser(prisma, 'bet-void', `${ts}-t`, 500);
+  const playingUser = await createTestUser(prisma, 'bet-void', `${ts}-p`, 500);
 
-  const start = new Date(Date.now() + 86_400_000);
   const cond = winGameCondition(absentTarget.id);
   const setCond = winSetCondition(absentTarget.id);
   let socialBetId = '';
   let poolBetId = '';
 
   try {
-    await prisma.game.create({
-      data: {
-        id: gameId,
-        entityType: EntityType.GAME,
-        gameType: 'CLASSIC',
-        cityId: city.id,
-        startTime: start,
-        endTime: new Date(start.getTime() + 3_600_000),
-        timeIsSet: true,
-        status: GameStatus.ANNOUNCED,
-        resultsStatus: ResultsStatus.NONE,
-        participants: {
-          create: [creator.id, acceptor.id, joiner.id, playingUser.id, absentTarget.id].map((userId, i) => ({
-            userId,
-            role: i === 0 ? ParticipantRole.OWNER : ParticipantRole.PARTICIPANT,
-            status: 'PLAYING',
-          })),
-        },
-      },
+    await createTestGame(prisma, {
+      gameId,
+      cityId: city.id,
+      participantIds: [creator.id, acceptor.id, joiner.id, playingUser.id, absentTarget.id],
     });
 
-    const socialBet = await BetService.createBet(
+    const socialBet = await createTestBet({
       gameId,
-      creator.id,
-      cond,
-      'SOCIAL',
-      'COINS',
-      STAKE,
-      'Buy coffee',
-      'COINS',
-      REWARD,
-      null,
-    );
+      creatorId: creator.id,
+      condition: cond,
+      type: 'SOCIAL',
+      stakeCoins: STAKE,
+      rewardCoins: REWARD,
+      stakeText: 'Buy coffee',
+    });
     socialBetId = socialBet.id;
     await BetService.acceptBet(socialBet.id, acceptor.id);
 
-    const poolBet = await BetService.createBet(
+    const poolBet = await createTestBet({
       gameId,
-      creator.id,
-      cond,
-      'POOL',
-      'COINS',
-      STAKE,
-      null,
-      'COINS',
-      0,
-      null,
-    );
+      creatorId: creator.id,
+      condition: cond,
+      type: 'POOL',
+      stakeCoins: STAKE,
+      rewardCoins: 0,
+    });
     poolBetId = poolBet.id;
     await BetService.acceptBet(poolBet.id, joiner.id, 'AGAINST_CREATOR');
 
-    const setPool = await BetService.createBet(
+    const setPool = await createTestBet({
       gameId,
-      creator.id,
-      setCond,
-      'POOL',
-      'COINS',
-      STAKE,
-      null,
-      'COINS',
-      0,
-      null,
-    );
+      creatorId: creator.id,
+      condition: setCond,
+      type: 'POOL',
+      stakeCoins: STAKE,
+      rewardCoins: 0,
+    });
     await BetService.acceptBet(setPool.id, joiner.id, 'WITH_CREATOR');
 
     const since = new Date();

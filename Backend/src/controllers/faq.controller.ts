@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import { FaqService } from '../services/faq/faq.service';
+import { ApiError } from '../utils/ApiError';
 
 export const getGameFaqs = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
@@ -19,10 +20,7 @@ export const createFaq = asyncHandler(async (req: AuthRequest, res: Response) =>
   const userId = req.userId!;
 
   if (!gameId || !question || !answer) {
-    return res.status(400).json({
-      success: false,
-      message: 'Game ID, question, and answer are required',
-    });
+    throw new ApiError(400, 'Game ID, question, and answer are required');
   }
 
   const faq = await FaqService.createFaq(gameId, userId, { question, answer, order });
@@ -64,10 +62,7 @@ export const reorderFaqs = asyncHandler(async (req: AuthRequest, res: Response) 
   const userId = req.userId!;
 
   if (!Array.isArray(faqIds)) {
-    return res.status(400).json({
-      success: false,
-      message: 'faqIds must be an array',
-    });
+    throw new ApiError(400, 'faqIds must be an array');
   }
 
   const faqs = await FaqService.reorderFaqs(gameId, userId, faqIds);

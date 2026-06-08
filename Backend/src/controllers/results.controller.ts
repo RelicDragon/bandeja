@@ -357,11 +357,7 @@ export const getOutcomeExplanation = asyncHandler(async (req: AuthRequest, res: 
   const explanation = await outcomeExplanationService.getOutcomeExplanation(gameId, userId);
 
   if (!explanation) {
-    res.status(404).json({
-      success: false,
-      message: 'Outcome not found',
-    });
-    return;
+    throw new ApiError(404, 'Outcome not found');
   }
 
   res.json({

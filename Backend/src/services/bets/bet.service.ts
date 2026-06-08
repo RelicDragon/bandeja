@@ -5,6 +5,11 @@ import { BetCondition } from './betConditionEvaluator.service';
 import { TransactionService } from '../transaction.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import notificationService from '../notification.service';
+import {
+  emitBetCreated,
+  emitBetDeleted,
+  emitBetUpdated,
+} from '../socketEmitFacade';
 
 export class BetService {
   static async getGameBets(gameId: string) {
@@ -33,7 +38,7 @@ export class BetService {
   static async createBet(
     gameId: string,
     creatorId: string,
-    condition: BetCondition,
+    condition: BetCondition | null | undefined,
     type: BetType,
     stakeType: 'COINS' | 'TEXT',
     stakeCoins: number | null,
@@ -42,6 +47,27 @@ export class BetService {
     rewardCoins: number | null,
     rewardText: string | null
   ): Promise<Bet> {
+    if (!condition) {
+      throw new ApiError(400, 'Missing required fields');
+    }
+
+    if (stakeType === 'COINS' && (!stakeCoins || stakeCoins <= 0)) {
+      throw new ApiError(400, 'Stake coins must be greater than 0');
+    }
+
+    if (stakeType === 'TEXT' && !stakeText) {
+      throw new ApiError(400, 'Stake text is required');
+    }
+
+    if (type === 'SOCIAL') {
+      if (rewardType === 'COINS' && (!rewardCoins || rewardCoins <= 0)) {
+        throw new ApiError(400, 'Reward coins must be greater than 0');
+      }
+      if (rewardType === 'TEXT' && !rewardText) {
+        throw new ApiError(400, 'Reward text is required');
+      }
+    }
+
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       select: {
@@ -86,12 +112,6 @@ export class BetService {
     }
 
     const isPool = type === 'POOL';
-    if (isPool && stakeType === 'COINS' && (!stakeCoins || stakeCoins <= 0)) {
-      throw new ApiError(400, 'Pool stake coins must be greater than 0');
-    }
-    if (isPool && stakeType === 'TEXT' && !stakeText?.trim()) {
-      throw new ApiError(400, 'Pool stake text is required');
-    }
 
     let stakeCharged = false;
     if (stakeType === 'COINS' && stakeCoins && stakeCoins > 0) {
@@ -151,6 +171,7 @@ export class BetService {
             }
           });
         });
+        await emitBetCreated(gameId, bet!);
         return bet! as Bet;
       }
       const bet = await prisma.bet.create({
@@ -174,6 +195,7 @@ export class BetService {
           }
         }
       });
+      await emitBetCreated(gameId, bet);
       return bet as Bet;
     } catch (err) {
       if (stakeCharged && stakeType === 'COINS' && stakeCoins && stakeCoins > 0) {
@@ -300,6 +322,7 @@ export class BetService {
           participants: { include: { user: { select: USER_SELECT_FIELDS } } }
         }
       });
+      await emitBetUpdated(updated!.gameId, updated!);
       return updated! as Bet;
     }
 
@@ -332,7 +355,7 @@ export class BetService {
     }
 
     try {
-      return await prisma.bet.update({
+      const accepted = await prisma.bet.update({
         where: { id: betId },
         data: {
           status: 'ACCEPTED',
@@ -345,6 +368,8 @@ export class BetService {
           participants: { include: { user: { select: USER_SELECT_FIELDS } } }
         }
       }) as Bet;
+      await emitBetUpdated(accepted.gameId, accepted);
+      return accepted;
     } catch (err) {
       if (rewardCharged && bet.rewardType === 'COINS' && bet.rewardCoins && bet.rewardCoins > 0) {
         await TransactionService.createTransaction({
@@ -413,6 +438,8 @@ export class BetService {
         }]
       });
     }
+
+    await emitBetDeleted(bet.gameId, betId);
   }
 
   static async cancelBetsWithUserInCondition(gameId: string, userId: string): Promise<void> {
@@ -713,7 +740,7 @@ export class BetService {
     }
 
     try {
-      return await prisma.bet.update({
+      const updated = await prisma.bet.update({
         where: { id: betId },
         data: updateData,
         include: {
@@ -725,6 +752,8 @@ export class BetService {
           }
         }
       });
+      await emitBetUpdated(updated.gameId, updated);
+      return updated;
     } catch (err) {
       if (stakeCharged > 0) {
         await TransactionService.createTransaction({

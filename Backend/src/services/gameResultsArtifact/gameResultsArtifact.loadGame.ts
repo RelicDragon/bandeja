@@ -1,11 +1,11 @@
 import prisma from '../../config/database';
-import { getGameInclude } from '../game/read.service';
+import { gameWithRoundsAndOutcomes } from '../game/gamePrismaIncludes';
 
 export async function loadGameForResultsSummary(gameId: string) {
   return prisma.game.findUnique({
     where: { id: gameId },
     include: {
-      ...getGameInclude(),
+      ...gameWithRoundsAndOutcomes,
       city: {
         select: {
           id: true,
