@@ -168,8 +168,6 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
 
 export function useChatInboxReapplyDraftsOnGameExit(
   viewingGameChatId: string | null,
-  userId: string | undefined,
-  chatsFilter: ChatsFilterType,
   reapplyDraftsToList: () => void
 ) {
   const prevRef = useRef<string | null>(null);

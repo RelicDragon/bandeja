@@ -255,7 +255,7 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     prevContextTypeRef.current = contextType;
   }, [id, contextType]);
 
-  useEffect(() => () => controllerRef.current.close(), []);
+  useEffect(() => () => { controllerRef.current.close(); }, []);
 
   const markRead = useCallback(() => {
     controllerRef.current.markRead({

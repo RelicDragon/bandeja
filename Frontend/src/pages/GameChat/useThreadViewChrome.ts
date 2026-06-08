@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { chatApi, type ChatMessage, type ChatMessageWithStatus, type ChatContextType, type GroupChannel, type UserChat } from '@/api/chat';
 import { formatChatMessageForForwardClipboard } from '@/utils/chatForwardClipboard';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import type { ChatType, Game } from '@/types';
+import type { ChatType, Game, User } from '@/types';
 import type { RefObject } from 'react';
 import { useGameChatDisplay } from './useGameChatDisplay';
 import { useGameChatPanels } from './useGameChatPanels';
@@ -23,7 +23,7 @@ export interface UseThreadViewChromeParams {
   userChat: UserChat | null;
   groupChannel: GroupChannel | null;
   groupChannelParticipantsCount: number;
-  user: { id: string } | null;
+  user: User | null;
   navigate: NavigateFunction;
   setChatsFilter: (filter: 'users' | 'bugs' | 'channels' | 'market') => void;
   loadContext: (options?: LoadContextOptions) => Promise<unknown>;

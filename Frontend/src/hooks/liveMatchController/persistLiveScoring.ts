@@ -33,6 +33,9 @@ export async function persistLiveScoringPatch(
     });
     const env = res.data?.liveScoring;
     if (env) {
+      if (!rules) {
+        return { ok: false, conflict: false, message: 'Save failed', refresh: true };
+      }
       return {
         ok: true,
         state: parseLiveScoringState(env.state, rules, rawMatchSets),
@@ -52,6 +55,9 @@ export async function persistLiveScoringPatch(
     if (ax.response?.status === 409 && typeof rev409 === 'number') {
       const parsed = parseMatchLiveEnvelope(bodyEnv);
       if (parsed) {
+        if (!rules) {
+          return { ok: false, conflict: true, state: null, revision: rev409, refresh: true };
+        }
         return {
           ok: false,
           conflict: true,

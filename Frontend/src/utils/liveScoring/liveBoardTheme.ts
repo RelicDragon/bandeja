@@ -5,6 +5,6 @@ export function parseLiveBoardTheme(raw: string | null | undefined): LiveBoardTh
   return 'dark';
 }
 
-export function liveBoardThemeSearchParam(theme: LiveBoardTheme): string {
+export function liveBoardThemeSearchParam(theme: LiveBoardTheme): LiveBoardTheme {
   return theme === 'light' ? 'light' : 'dark';
 }

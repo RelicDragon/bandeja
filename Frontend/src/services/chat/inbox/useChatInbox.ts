@@ -211,7 +211,7 @@ export function useChatInbox(opts: UseChatInboxOptions) {
     })();
   }, [userId, chatsFilter, getMergedDrafts]);
 
-  useChatInboxReapplyDraftsOnGameExit(viewingGameChatId, userId, chatsFilter, reapplyDraftsToList);
+  useChatInboxReapplyDraftsOnGameExit(viewingGameChatId, reapplyDraftsToList);
   useChatInboxDraftReapplyEffect(loading, userId, chatsFilter, getMergedDrafts);
 
   useEffect(() => {
