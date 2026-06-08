@@ -18,9 +18,16 @@ function ensureDbUrl(): boolean {
 const STAKE = 50;
 const REWARD = 10;
 
-const condition = (userId: string) => ({
+const winGameCondition = (userId: string) => ({
   type: 'PREDEFINED' as const,
   predefined: 'WIN_GAME',
+  entityType: 'USER' as const,
+  entityId: userId,
+});
+
+const winSetCondition = (userId: string) => ({
+  type: 'PREDEFINED' as const,
+  predefined: 'WIN_SET',
   entityType: 'USER' as const,
   entityId: userId,
 });
@@ -92,7 +99,8 @@ async function run() {
   const playingUser = await createTestUser(prisma, `${Date.now()}-p`, 500);
 
   const start = new Date(Date.now() + 86_400_000);
-  const cond = condition(absentTarget.id);
+  const cond = winGameCondition(absentTarget.id);
+  const setCond = winSetCondition(absentTarget.id);
   let socialBetId = '';
   let poolBetId = '';
 
@@ -148,6 +156,20 @@ async function run() {
     poolBetId = poolBet.id;
     await BetService.acceptBet(poolBet.id, joiner.id, 'AGAINST_CREATOR');
 
+    const setPool = await BetService.createBet(
+      gameId,
+      creator.id,
+      setCond,
+      'POOL',
+      'COINS',
+      STAKE,
+      null,
+      'COINS',
+      0,
+      null,
+    );
+    await BetService.acceptBet(setPool.id, joiner.id, 'WITH_CREATOR');
+
     const since = new Date();
     await prisma.game.update({
       where: { id: gameId },
@@ -174,11 +196,7 @@ async function run() {
 
     await resolveGameBets(gameId);
 
-    let stats = await refundStats(prisma, [creator.id, acceptor.id, joiner.id], since);
-    for (let i = 0; i < 20 && (stats.get(creator.id)?.count ?? 0) < 2; i += 1) {
-      await new Promise(r => setTimeout(r, 100));
-      stats = await refundStats(prisma, [creator.id, acceptor.id, joiner.id], since);
-    }
+    const stats = await refundStats(prisma, [creator.id, acceptor.id, joiner.id], since);
 
     const socialRow = await prisma.bet.findUnique({ where: { id: socialBetId } });
     assert.equal(socialRow?.status, 'CANCELLED');
@@ -188,12 +206,16 @@ async function run() {
     assert.equal(poolRow?.status, 'CANCELLED');
     assert.match(poolRow?.resolutionReason ?? '', /voided/i);
 
-    assert.equal(stats.get(creator.id)?.count, 2);
-    assert.equal(stats.get(creator.id)?.total, STAKE * 2);
+    const setPoolRow = await prisma.bet.findUnique({ where: { id: setPool.id } });
+    assert.equal(setPoolRow?.status, 'CANCELLED');
+    assert.match(setPoolRow?.resolutionReason ?? '', /voided/i);
+
+    assert.equal(stats.get(creator.id)?.count, 3);
+    assert.equal(stats.get(creator.id)?.total, STAKE * 3);
     assert.equal(stats.get(acceptor.id)?.count, 1);
     assert.equal(stats.get(acceptor.id)?.total, REWARD);
-    assert.equal(stats.get(joiner.id)?.count, 1);
-    assert.equal(stats.get(joiner.id)?.total, STAKE);
+    assert.equal(stats.get(joiner.id)?.count, 2);
+    assert.equal(stats.get(joiner.id)?.total, STAKE * 2);
 
     console.log('ok: betResolutionVoid');
   } finally {

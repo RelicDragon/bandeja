@@ -75,9 +75,9 @@
       "loseLeague": "Проиграть эту игру в лиге",
       "winLeagueSeason": "Выиграть эту игру в лиге",
       "loseLeagueSeason": "Проиграть эту игру в лиге",
-      "winAtLeastOneSet": "Выиграть хотя бы один сет",
-      "loseAllSets": "Проиграть все сеты",
-      "winAllSets": "Выиграть все сеты",
+      "winAtLeastOneSet": "Выиграть хотя бы один сет (ничьи не считаются)",
+      "loseAllSets": "Проиграть все сеты (ничьи не считаются)",
+      "winAllSets": "Выиграть все сеты (ничьи не считаются)",
       "takePlace": "Занять место",
       "takePlaceN": "Занять {{n}} место",
       "winGame_female": "Выиграть игру",
@@ -88,9 +88,9 @@
       "loseLeague_female": "Проиграть эту игру в лиге",
       "winLeagueSeason_female": "Выиграть эту игру в лиге",
       "loseLeagueSeason_female": "Проиграть эту игру в лиге",
-      "winAtLeastOneSet_female": "Выиграть хотя бы один сет",
-      "loseAllSets_female": "Проиграть все сеты",
-      "winAllSets_female": "Выиграть все сеты",
+      "winAtLeastOneSet_female": "Выиграть хотя бы один сет (ничьи не считаются)",
+      "loseAllSets_female": "Проиграть все сеты (ничьи не считаются)",
+      "winAllSets_female": "Выиграть все сеты (ничьи не считаются)",
       "takePlaceN_female": "Занять {{n}} место"
     }
   }

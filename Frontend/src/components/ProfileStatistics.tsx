@@ -1,35 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { usersApi, UserStats } from '@/api/users';
+import { useQueryClient } from '@tanstack/react-query';
+import type { UserStats } from '@/api/users';
 import { Loading } from './Loading';
 import { LevelHistoryView } from './LevelHistoryView';
 import { ProfileWorkoutHealthSection } from './ProfileWorkoutHealthSection';
 import { useAuthStore } from '@/store/authStore';
 import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
+import { queryKeys } from '@/queries/queryKeys';
+import { useUserStatsQuery } from '@/queries/useUserStatsQuery';
 
 export const ProfileStatistics = () => {
+  const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const sport = useMemo(
+    () => (user ? resolveActivePrimarySport(user) ?? getUserPrimarySport(user) : undefined),
+    [user],
+  );
+  const { data: stats, isPending } = useUserStatsQuery(user?.id, sport);
+  const loading = isPending && !stats;
 
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const fetchStats = async () => {
-      try {
-        setLoading(true);
-        const sport = resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
-        const response = await usersApi.getUserStats(user.id, sport);
-        setStats(response.data);
-      } catch (error) {
-        console.error('Failed to fetch user stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, [user]);
+  const setStats = useCallback(
+    (nextStats: UserStats) => {
+      if (!user?.id) return;
+      queryClient.setQueryData(queryKeys.userStats(user.id, sport), nextStats);
+    },
+    [queryClient, user?.id, sport],
+  );
 
   if (loading) {
     return (
@@ -55,4 +52,3 @@ export const ProfileStatistics = () => {
     </motion.div>
   );
 };
-

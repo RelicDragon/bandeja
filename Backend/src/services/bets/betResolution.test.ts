@@ -82,6 +82,11 @@ async function run() {
       'void when entity absent from outcomes',
     );
     assert.equal(
+      shouldVoidBetDueToMissingTarget({ won: false, reason: 'Fixed pair not found' }),
+      true,
+      'void when fixed pair id invalid',
+    );
+    assert.equal(
       shouldVoidBetDueToMissingTarget({ won: false, reason: 'Invalid condition' }),
       false,
       'do not void generic evaluation failures',

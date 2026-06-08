@@ -73,9 +73,9 @@
       "loseLeague": "Perder este partido en la liga",
       "winLeagueSeason": "Ganar este partido en la liga",
       "loseLeagueSeason": "Perder este partido en la liga",
-      "winAtLeastOneSet": "Ganar al menos un set",
-      "loseAllSets": "Perder todos los sets",
-      "winAllSets": "Ganar todos los sets",
+      "winAtLeastOneSet": "Ganar al menos un set (empates no cuentan)",
+      "loseAllSets": "Perder todos los sets (empates no cuentan)",
+      "winAllSets": "Ganar todos los sets (empates no cuentan)",
       "takePlace": "Quedar en lugar",
       "takePlaceN": "Quedar en {{n}}º lugar",
       "winGame_female": "Ganar el juego",
@@ -86,9 +86,9 @@
       "loseLeague_female": "Perder este partido en la liga",
       "winLeagueSeason_female": "Ganar este partido en la liga",
       "loseLeagueSeason_female": "Perder este partido en la liga",
-      "winAtLeastOneSet_female": "Ganar al menos un set",
-      "loseAllSets_female": "Perder todos los sets",
-      "winAllSets_female": "Ganar todos los sets",
+      "winAtLeastOneSet_female": "Ganar al menos un set (empates no cuentan)",
+      "loseAllSets_female": "Perder todos los sets (empates no cuentan)",
+      "winAllSets_female": "Ganar todos los sets (empates no cuentan)",
       "takePlaceN_female": "Quedar en {{n}}º lugar"
     }
   }

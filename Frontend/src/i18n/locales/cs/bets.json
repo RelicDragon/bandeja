@@ -73,9 +73,9 @@
       "loseLeague": "Prohrát tento zápas v lize",
       "winLeagueSeason": "Vyhrát tento zápas v lize",
       "loseLeagueSeason": "Prohrát tento zápas v lize",
-      "winAtLeastOneSet": "Vyhrát alespoň jeden set",
-      "loseAllSets": "Prohrát všechny sety",
-      "winAllSets": "Vyhrát všechny sety",
+      "winAtLeastOneSet": "Vyhrát alespoň jeden set (remízy se nepočítají)",
+      "loseAllSets": "Prohrát všechny sety (remízy se nepočítají)",
+      "winAllSets": "Vyhrát všechny sety (remízy se nepočítají)",
       "takePlace": "Dosáhnout N. místa",
       "takePlaceN": "Dosáhnout {{n}}{{ordinal}} místa",
       "winGame_female": "Vyhrát zápas",
@@ -86,9 +86,9 @@
       "loseLeague_female": "Prohrát tento zápas v lize",
       "winLeagueSeason_female": "Vyhrát tento zápas v lize",
       "loseLeagueSeason_female": "Prohrát tento zápas v lize",
-      "winAtLeastOneSet_female": "Vyhrát alespoň jeden set",
-      "loseAllSets_female": "Prohrát všechny sety",
-      "winAllSets_female": "Vyhrát všechny sety",
+      "winAtLeastOneSet_female": "Vyhrát alespoň jeden set (remízy se nepočítají)",
+      "loseAllSets_female": "Prohrát všechny sety (remízy se nepočítají)",
+      "winAllSets_female": "Vyhrát všechny sety (remízy se nepočítají)",
       "takePlaceN_female": "Dosáhnout {{n}}{{ordinal}} místa"
     }
   }

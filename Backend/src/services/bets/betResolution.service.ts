@@ -237,9 +237,11 @@ export async function resolveGameBets(gameId: string): Promise<void> {
     );
   }
   for (const v of postTx.voidedBets ?? []) {
-    runVoidedBetPostTx(v).catch(err =>
-      console.error(`[BET RESOLUTION] Failed post-tx for voided bet ${v.betId}:`, err)
-    );
+    try {
+      await runVoidedBetPostTx(v);
+    } catch (err) {
+      console.error(`[BET RESOLUTION] Failed post-tx for voided bet ${v.betId}:`, err);
+    }
   }
   for (const r of postTx.resolvedBets) {
     executeResolvedBetPayout(r).catch(err => {

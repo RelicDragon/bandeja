@@ -46,9 +46,10 @@ function isOfficialBetSet(set: { role?: MatchSetRole }): boolean {
   return !set.role || set.role === MatchSetRole.OFFICIAL;
 }
 
-/** Tied official sets (equal teamAScore/teamBScore) count as neither won nor lost.
- *  WIN_SET / LOSE_SET: tie satisfies neither condition.
- *  WIN_ALL_SETS: tie is not a loss; LOSE_ALL_SETS: tie is not a win.
+/** Tied official sets (equal teamAScore/teamBScore) are excluded from countable sets.
+ *  WIN_SET: win at least one non-tie official set.
+ *  LOSE_SET / LOSE_ALL_SETS: lose every non-tie official set (≥1 required); ties alone do not satisfy.
+ *  WIN_ALL_SETS: win every non-tie official set (≥1 required).
  *  Supplemental sets (EXTRA_GAMES, EXTRA_BALLS) are excluded via isOfficialBetSet. */
 
 function getFixedTeamPlayerIds(entityId: string, gameResults: GameResultsData): string[] | null {
@@ -246,61 +247,97 @@ function findEntityMatchTeam(
   return team ? { teamNumber: team.teamNumber, playerIds: team.playerIds } : null;
 }
 
+function missingMatchParticipationReason(entityType: 'USER' | 'TEAM'): string {
+  return entityType === 'TEAM' ? 'Fixed pair not in outcomes' : 'User did not participate';
+}
+
+type SetOutcome = 'won' | 'lost' | 'tied' | 'skip';
+
+function classifyOfficialSetOutcome(teamNumber: number, set: { teamAScore: number; teamBScore: number; role?: MatchSetRole }): SetOutcome {
+  if (!isOfficialBetSet(set)) return 'skip';
+  if (set.teamAScore === set.teamBScore) return 'tied';
+  if (teamNumber === 1) {
+    return set.teamAScore > set.teamBScore ? 'won' : 'lost';
+  }
+  return set.teamBScore > set.teamAScore ? 'won' : 'lost';
+}
+
 function evaluateWinAtLeastOneSet(entityType: 'USER' | 'TEAM', entityId: string, gameResults: GameResultsData): BetEvaluationResult {
+  let playedInMatch = false;
   for (const round of gameResults.rounds) {
     for (const match of round.matches) {
       const entityTeam = findEntityMatchTeam(entityType, entityId, match, gameResults);
-      if (entityTeam) {
-        for (const set of match.sets) {
-          if (!isOfficialBetSet(set)) continue;
-          const wonSet = (entityTeam.teamNumber === 1 && set.teamAScore > set.teamBScore) ||
-            (entityTeam.teamNumber === 2 && set.teamBScore > set.teamAScore);
-          if (wonSet) return { won: true };
+      if (!entityTeam) continue;
+      playedInMatch = true;
+      for (const set of match.sets) {
+        if (classifyOfficialSetOutcome(entityTeam.teamNumber, set) === 'won') {
+          return { won: true };
         }
       }
     }
+  }
+  if (!playedInMatch) {
+    return { won: false, reason: missingMatchParticipationReason(entityType) };
   }
   return { won: false };
 }
 
 function evaluateLoseAllSets(entityType: 'USER' | 'TEAM', entityId: string, gameResults: GameResultsData): BetEvaluationResult {
-  let playedAnySet = false;
-  let wonAnySet = false;
+  let playedInMatch = false;
+  let hasCountableSet = false;
+  let wonAnyCountable = false;
+  let everyCountableIsLost = true;
+
   for (const round of gameResults.rounds) {
     for (const match of round.matches) {
       const entityTeam = findEntityMatchTeam(entityType, entityId, match, gameResults);
-      if (entityTeam) {
-        for (const set of match.sets) {
-          if (!isOfficialBetSet(set)) continue;
-          playedAnySet = true;
-          const wonSet = (entityTeam.teamNumber === 1 && set.teamAScore > set.teamBScore) ||
-            (entityTeam.teamNumber === 2 && set.teamBScore > set.teamAScore);
-          if (wonSet) wonAnySet = true;
+      if (!entityTeam) continue;
+      playedInMatch = true;
+      for (const set of match.sets) {
+        const outcome = classifyOfficialSetOutcome(entityTeam.teamNumber, set);
+        if (outcome === 'skip' || outcome === 'tied') continue;
+        hasCountableSet = true;
+        if (outcome === 'won') {
+          wonAnyCountable = true;
+          everyCountableIsLost = false;
         }
       }
     }
   }
-  return { won: playedAnySet && !wonAnySet };
+
+  if (!playedInMatch) {
+    return { won: false, reason: missingMatchParticipationReason(entityType) };
+  }
+  return { won: hasCountableSet && !wonAnyCountable && everyCountableIsLost };
 }
 
 function evaluateWinAllSets(entityType: 'USER' | 'TEAM', entityId: string, gameResults: GameResultsData): BetEvaluationResult {
-  let playedAnySet = false;
-  let lostAnySet = false;
+  let playedInMatch = false;
+  let hasCountableSet = false;
+  let lostAnyCountable = false;
+  let everyCountableIsWon = true;
+
   for (const round of gameResults.rounds) {
     for (const match of round.matches) {
       const entityTeam = findEntityMatchTeam(entityType, entityId, match, gameResults);
-      if (entityTeam) {
-        for (const set of match.sets) {
-          if (!isOfficialBetSet(set)) continue;
-          playedAnySet = true;
-          const lostSet = (entityTeam.teamNumber === 1 && set.teamAScore < set.teamBScore) ||
-            (entityTeam.teamNumber === 2 && set.teamBScore < set.teamAScore);
-          if (lostSet) lostAnySet = true;
+      if (!entityTeam) continue;
+      playedInMatch = true;
+      for (const set of match.sets) {
+        const outcome = classifyOfficialSetOutcome(entityTeam.teamNumber, set);
+        if (outcome === 'skip' || outcome === 'tied') continue;
+        hasCountableSet = true;
+        if (outcome === 'lost') {
+          lostAnyCountable = true;
+          everyCountableIsWon = false;
         }
       }
     }
   }
-  return { won: playedAnySet && !lostAnySet };
+
+  if (!playedInMatch) {
+    return { won: false, reason: missingMatchParticipationReason(entityType) };
+  }
+  return { won: hasCountableSet && !lostAnyCountable && everyCountableIsWon };
 }
 
 function evaluateTakePlace(

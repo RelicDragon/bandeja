@@ -4,6 +4,7 @@ import { BetCondition, BetEvaluationResult } from './betConditionEvaluator.servi
 const MISSING_TARGET_VOID_REASONS = new Set([
   'User did not participate',
   'Fixed pair not in outcomes',
+  'Fixed pair not found',
   'Entity not in outcomes',
 ]);
 

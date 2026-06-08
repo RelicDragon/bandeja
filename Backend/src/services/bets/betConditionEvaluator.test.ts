@@ -77,29 +77,48 @@ async function run() {
     winnerId: null,
   };
 
-  // LOSE_SET: tied set is neither won nor lost
+  // LOSE_SET / WIN_ALL / LOSE_ALL: tie-only match does not satisfy any set condition
+  for (const predefined of ['LOSE_SET', 'WIN_ALL_SETS', 'LOSE_ALL_SETS'] as const) {
+    const r = await evaluateBetCondition(
+      makeBet({ type: 'PREDEFINED', predefined, entityType: 'USER', entityId: 'u1' }),
+      baseResults({ rounds: [{ matches: [tiedSetMatch] }] }),
+    );
+    assert.equal(r.won, false, `${predefined} fails on tie-only match`);
+  }
+
+  // LOSE_SET wins when every countable set is lost
   {
     const r = await evaluateBetCondition(
       makeBet({ type: 'PREDEFINED', predefined: 'LOSE_SET', entityType: 'USER', entityId: 'u1' }),
-      baseResults({ rounds: [{ matches: [tiedSetMatch] }] }),
+      baseResults({
+        rounds: [{
+          matches: [{
+            teams: tiedSetMatch.teams,
+            sets: [{ teamAScore: 4, teamBScore: 6, role: MatchSetRole.OFFICIAL }],
+            winnerId: null,
+          }],
+        }],
+      }),
     );
     assert.equal(r.won, true);
   }
 
-  // WIN_ALL_SETS: tie is not a loss
+  // WIN_ALL_SETS succeeds when all countable sets are won (ties ignored)
   {
     const r = await evaluateBetCondition(
       makeBet({ type: 'PREDEFINED', predefined: 'WIN_ALL_SETS', entityType: 'USER', entityId: 'u1' }),
-      baseResults({ rounds: [{ matches: [tiedSetMatch] }] }),
-    );
-    assert.equal(r.won, true);
-  }
-
-  // LOSE_ALL_SETS: tie is not a win
-  {
-    const r = await evaluateBetCondition(
-      makeBet({ type: 'PREDEFINED', predefined: 'LOSE_ALL_SETS', entityType: 'USER', entityId: 'u1' }),
-      baseResults({ rounds: [{ matches: [tiedSetMatch] }] }),
+      baseResults({
+        rounds: [{
+          matches: [{
+            teams: tiedSetMatch.teams,
+            sets: [
+              { teamAScore: 6, teamBScore: 6, role: MatchSetRole.OFFICIAL },
+              { teamAScore: 6, teamBScore: 4, role: MatchSetRole.OFFICIAL },
+            ],
+            winnerId: null,
+          }],
+        }],
+      }),
     );
     assert.equal(r.won, true);
   }
@@ -124,11 +143,41 @@ async function run() {
     assert.equal(r.won, false);
   }
 
-  // LOSE_SET with no sets played → won false (not "condition met")
+  // Set conditions when target never played a match → void reason
   {
     const r = await evaluateBetCondition(
-      makeBet({ type: 'PREDEFINED', predefined: 'LOSE_SET', entityType: 'USER', entityId: 'u1' }),
-      baseResults({ rounds: [] }),
+      makeBet({ type: 'PREDEFINED', predefined: 'WIN_SET', entityType: 'USER', entityId: 'missing' }),
+      baseResults({
+        outcomes: [{ userId: 'u1', isWinner: true, wins: 1, losses: 0, ties: 0 }],
+        rounds: [{
+          matches: [{
+            teams: [
+              { id: 't1', teamNumber: 1, playerIds: ['u1'], score: 0 },
+              { id: 't2', teamNumber: 2, playerIds: ['u2'], score: 0 },
+            ],
+            sets: [{ teamAScore: 6, teamBScore: 4, role: MatchSetRole.OFFICIAL }],
+            winnerId: 't1',
+          }],
+        }],
+      }),
+    );
+    assert.equal(r.won, false);
+    assert.equal(r.reason, 'User did not participate');
+  }
+
+  // Supplemental sets do not count toward set conditions
+  {
+    const r = await evaluateBetCondition(
+      makeBet({ type: 'PREDEFINED', predefined: 'WIN_SET', entityType: 'USER', entityId: 'u1' }),
+      baseResults({
+        rounds: [{
+          matches: [{
+            teams: tiedSetMatch.teams,
+            sets: [{ teamAScore: 6, teamBScore: 4, role: MatchSetRole.EXTRA_GAMES }],
+            winnerId: null,
+          }],
+        }],
+      }),
     );
     assert.equal(r.won, false);
   }

@@ -53,6 +53,7 @@ import { extractLanguageCode } from './utils/displayPreferences';
 import { syncWatchPreferencesToNative } from './services/authBridge';
 import { Capacitor } from '@capacitor/core';
 import { GeoProvider } from './contexts/GeoProvider';
+import { QueryProvider } from '@/queries/QueryProvider';
 import { useAppVersionCheck } from './hooks/useAppVersionCheck';
 import { backButtonService } from './services/backButtonService';
 import { appLifecycleService } from './services/appLifecycle.service';
@@ -769,9 +770,11 @@ function AppContent() {
 function App() {
   return (
     <NavigationErrorBoundary fallbackPath="/">
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
+      <QueryProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </QueryProvider>
     </NavigationErrorBoundary>
   );
 }

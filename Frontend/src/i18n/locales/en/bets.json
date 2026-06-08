@@ -73,9 +73,9 @@
       "loseLeague": "Lose this game in league",
       "winLeagueSeason": "Win this game in league",
       "loseLeagueSeason": "Lose this game in league",
-      "winAtLeastOneSet": "Win at least one set",
-      "loseAllSets": "Lose all sets",
-      "winAllSets": "Win all sets",
+      "winAtLeastOneSet": "Win at least one set (ties excluded)",
+      "loseAllSets": "Lose all sets (ties excluded)",
+      "winAllSets": "Win all sets (ties excluded)",
       "takePlace": "Take Nth place",
       "takePlaceN": "Take {{n}}{{ordinal}} place",
       "winGame_female": "Win the game",
@@ -86,9 +86,9 @@
       "loseLeague_female": "Lose this game in league",
       "winLeagueSeason_female": "Win this game in league",
       "loseLeagueSeason_female": "Lose this game in league",
-      "winAtLeastOneSet_female": "Win at least one set",
-      "loseAllSets_female": "Lose all sets",
-      "winAllSets_female": "Win all sets",
+      "winAtLeastOneSet_female": "Win at least one set (ties excluded)",
+      "loseAllSets_female": "Lose all sets (ties excluded)",
+      "winAllSets_female": "Win all sets (ties excluded)",
       "takePlaceN_female": "Take {{n}}{{ordinal}} place"
     }
   }

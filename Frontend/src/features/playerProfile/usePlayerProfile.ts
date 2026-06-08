@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import type { UserStats } from '@/api/users';
 import { usersApi } from '@/api/users';
@@ -15,7 +16,8 @@ import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 import { resolveActivePrimarySport } from '@/utils/profileSports';
 import { sharePlayerProfile } from '@/utils/sharePlayerProfile';
 import { appendLevelSportQuery } from '@/utils/levelSportQuery';
-import { loadPlayerProfileData } from './loadPlayerProfileData';
+import { queryKeys } from '@/queries/queryKeys';
+import { useUserStatsQuery } from '@/queries/useUserStatsQuery';
 import { resolveLevelSport } from './resolveLevelSport';
 import type { PlayerProfileViewModel, UsePlayerProfileOptions } from './types';
 
@@ -25,6 +27,7 @@ export function usePlayerProfile(
 ): PlayerProfileViewModel {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const updateUser = useAuthStore((state) => state.updateUser);
   const { addFavorite, removeFavorite } = useFavoritesStore();
@@ -42,52 +45,61 @@ export function usePlayerProfile(
     [options.levelSport, options.sportFromUrl, contextLevelSport, viewerDefault],
   );
 
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [blockedCheckPending, setBlockedCheckPending] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
   const [blockingUser, setBlockingUser] = useState(false);
 
   const enabled = options.enabled ?? !!playerId;
   const isCurrentUser = !!(user && playerId && user.id === playerId);
+  const needsBlockedCheck = enabled && !!playerId && !!user?.id && user.id !== playerId;
   const presenceKey = options.presenceKey ?? 'player-profile';
 
+  const statsQueryEnabled = enabled && !!playerId;
+  const {
+    data: statsData,
+    isPending,
+    isError,
+  } = useUserStatsQuery(playerId ?? undefined, levelSport, { enabled: statsQueryEnabled });
+
+  const stats = statsQueryEnabled ? (statsData ?? null) : null;
+  const statsLoading = statsQueryEnabled && isPending && !statsData;
+  const loading = statsLoading || (needsBlockedCheck && blockedCheckPending);
+  const error = statsQueryEnabled && isError;
+
   useEffect(() => {
-    if (!enabled || !playerId) {
-      setStats(null);
-      setLoading(false);
-      setError(false);
+    if (!needsBlockedCheck) {
       setIsBlocked(false);
+      setBlockedCheckPending(false);
       return;
     }
 
     let cancelled = false;
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        setError(false);
-        const data = await loadPlayerProfileData(playerId, levelSport, user?.id);
+    setBlockedCheckPending(true);
+    blockedUsersApi
+      .checkIfUserBlocked(playerId!)
+      .then((blocked) => {
         if (!cancelled) {
-          setStats(data.stats);
-          setIsBlocked(data.isBlocked);
+          setIsBlocked(blocked);
+          setBlockedCheckPending(false);
         }
-      } catch (err) {
-        console.error('Failed to fetch player profile:', err);
-        if (!cancelled) {
-          setStats(null);
-          setError(true);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
+      })
+      .catch(() => {
+        if (!cancelled) setBlockedCheckPending(false);
+      });
 
-    void fetchProfile();
     return () => {
       cancelled = true;
     };
-  }, [enabled, playerId, levelSport, user?.id]);
+  }, [needsBlockedCheck, playerId]);
+
+  const setStats = useCallback(
+    (nextStats: UserStats) => {
+      if (!playerId) return;
+      queryClient.setQueryData(queryKeys.userStats(playerId, levelSport), nextStats);
+    },
+    [queryClient, playerId, levelSport],
+  );
 
   usePresenceSubscription(
     presenceKey,
@@ -128,7 +140,7 @@ export function usePlayerProfile(
         (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
-  }, [playerId, stats, isBlocked, t, removeFavorite, addFavorite]);
+  }, [playerId, stats, isBlocked, t, removeFavorite, addFavorite, setStats]);
 
   const startChat = useCallback(async () => {
     if (!playerId || startingChat || isBlocked) return;
