@@ -62,6 +62,7 @@ import {
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import rateLimit from 'express-rate-limit';
+import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 
 const router = Router();
 
@@ -73,7 +74,7 @@ const draftLimiter = rateLimit({
   message: 'Too many draft requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const createMessageLimiter = rateLimit({
@@ -82,7 +83,7 @@ const createMessageLimiter = rateLimit({
   message: { success: false, message: 'Too many messages, please slow down.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
   skipFailedRequests: true,
 });
 
@@ -92,7 +93,7 @@ const unreadObjectsLimiter = rateLimit({
   message: { success: false, message: 'Too many unread requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const searchMessagesLimiter = rateLimit({
@@ -101,7 +102,7 @@ const searchMessagesLimiter = rateLimit({
   message: { success: false, message: 'Too many search requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const chatSyncHeadLimiter = rateLimit({
@@ -110,7 +111,7 @@ const chatSyncHeadLimiter = rateLimit({
   message: { success: false, message: 'Too many sync requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const chatSyncEventsLimiter = rateLimit({
@@ -119,7 +120,7 @@ const chatSyncEventsLimiter = rateLimit({
   message: { success: false, message: 'Too many sync requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const chatSyncBatchHeadLimiter = rateLimit({
@@ -128,7 +129,7 @@ const chatSyncBatchHeadLimiter = rateLimit({
   message: { success: false, message: 'Too many sync batch requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const pinMessageLimiter = rateLimit({
@@ -137,7 +138,7 @@ const pinMessageLimiter = rateLimit({
   message: { success: false, message: 'Too many pin/unpin requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const translateDraftLimiter = rateLimit({
@@ -146,7 +147,7 @@ const translateDraftLimiter = rateLimit({
   message: { success: false, message: 'Too many translation requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const translateMessageLimiter = rateLimit({
@@ -155,7 +156,7 @@ const translateMessageLimiter = rateLimit({
   message: { success: false, message: 'Too many translation requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const transcribeMessageLimiter = rateLimit({
@@ -164,7 +165,7 @@ const transcribeMessageLimiter = rateLimit({
   message: { success: false, message: 'Too many transcription requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const chatReactionLimiter = rateLimit({
@@ -173,7 +174,7 @@ const chatReactionLimiter = rateLimit({
   message: { success: false, message: 'Too many reactions, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const mentionIdsElementValidator = (val: unknown) => {

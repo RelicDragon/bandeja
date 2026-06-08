@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useUserStatsQuery } from '@/queries/useUserStatsQuery';
 import { useNavigate } from 'react-router-dom';
 import { UserStats, usersApi, LevelHistoryItem } from '@/api/users';
 import {
@@ -45,7 +46,6 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
   const [levelChangeEvents, setLevelChangeEvents] = useState<LevelHistoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<'10' | '30' | 'all'>('10');
   const [gamesStatsTab, setGamesStatsTab] = useState<'30' | '90' | 'all'>('30');
-  const [gamesStatsForView, setGamesStatsForView] = useState(stats.gamesStats);
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
   const [activeChartIndex, setActiveChartIndex] = useState<number | null>(null);
   const [hoveredChartIndex, setHoveredChartIndex] = useState<number | null>(null);
@@ -53,6 +53,15 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
 
   const showSocialLevel = selection.kind === 'social';
   const historySport = selection.kind === 'competitive' ? selection.sport : primarySport;
+  const { data: sportScopedStats } = useUserStatsQuery(user.id, historySport, {
+    enabled: !showSocialLevel,
+  });
+  const gamesStatsForView = useMemo(() => {
+    if (showSocialLevel) {
+      return stats.gamesStatsAllSports ?? stats.gamesStats;
+    }
+    return sportScopedStats?.gamesStats ?? stats.gamesStats;
+  }, [showSocialLevel, sportScopedStats, stats.gamesStats, stats.gamesStatsAllSports]);
   useEffect(() => {
     if (selectorSports.length === 0) {
       setSelection({ kind: 'social' });
@@ -83,32 +92,14 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
   }, [user.id, historySport, showSocialLevel]);
 
   useEffect(() => {
-    if (showSocialLevel) {
-      setGamesStatsForView(stats.gamesStatsAllSports ?? stats.gamesStats);
-      return;
+    if (showSocialLevel || !sportScopedStats) return;
+    if (
+      sportScopedStats.sport !== stats.sport ||
+      sportScopedStats.user.level !== stats.user.level
+    ) {
+      onStatsRefresh?.(sportScopedStats);
     }
-    let cancelled = false;
-    const fetchGamesStats = async () => {
-      try {
-        const response = await usersApi.getUserStats(user.id, historySport);
-        if (!cancelled) {
-          setGamesStatsForView(response.data.gamesStats);
-          if (response.data.sport !== stats.sport || response.data.user.level !== stats.user.level) {
-            onStatsRefresh?.(response.data);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch sport-scoped game stats:', error);
-        if (!cancelled) {
-          setGamesStatsForView(stats.gamesStats);
-        }
-      }
-    };
-    fetchGamesStats();
-    return () => {
-      cancelled = true;
-    };
-  }, [user.id, historySport, showSocialLevel, stats.gamesStats, stats.gamesStatsAllSports, stats.sport, stats.user.level, onStatsRefresh]);
+  }, [showSocialLevel, sportScopedStats, stats.sport, stats.user.level, onStatsRefresh]);
 
   const handleRatingChangeClick = (item: { id: string; gameId?: string }) => {
     if (!item.gameId) return;

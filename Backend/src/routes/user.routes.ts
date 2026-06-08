@@ -6,6 +6,7 @@ import { validate } from '../middleware/validate';
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
 import * as userController from '../controllers/user.controller';
 import { MAX_BASIC_USERS_IDS_PER_REQUEST } from '../services/user/basicUsersForMessage.service';
+import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 
 const MAX_BASIC_BY_IDS = MAX_BASIC_USERS_IDS_PER_REQUEST;
 
@@ -15,7 +16,7 @@ const basicByIdsLimiter = rateLimit({
   message: { success: false, message: 'Too many requests. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const welcomeScreenLimiter = rateLimit({
@@ -24,7 +25,7 @@ const welcomeScreenLimiter = rateLimit({
   message: { success: false, message: 'Too many attempts. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const reactionEmojiUsageGetLimiter = rateLimit({
@@ -33,7 +34,7 @@ const reactionEmojiUsageGetLimiter = rateLimit({
   message: { success: false, message: 'Too many requests. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const router = Router();

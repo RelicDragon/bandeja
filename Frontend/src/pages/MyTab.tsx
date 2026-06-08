@@ -142,8 +142,8 @@ export const MyTab = () => {
     games,
     invites,
     setInvites,
-    fetchData,
-  } = useMyGames(user, (loadingState) => setLoading(loadingState), {
+    refetch: refetchMyGames,
+  } = useMyGames(user, setLoading, {
     showSkeletonsAnimated: skeletonAnimation.showSkeletonsAnimated,
     hideSkeletonsAnimated: skeletonAnimation.hideSkeletonsAnimated,
   });
@@ -230,13 +230,16 @@ export const MyTab = () => {
 
   const upcomingGamesForCalendar = useMemo(() => {
     if (activeTab !== 'calendar') return [];
-    const base = filteredMyGames
-      .filter((g) => g.entityType !== 'LEAGUE_SEASON')
-      .filter((g) => {
-        if (g.timeIsSet === false) return false;
-        if (g.status !== 'ANNOUNCED' && g.status !== 'STARTED') return false;
-        return true;
-      });
+    const base = calendarMergedGames.filter((g) => {
+      if (g.timeIsSet === false) return false;
+      const status = g.status;
+      return (
+        status === 'ANNOUNCED' ||
+        status === 'STARTED' ||
+        status === 'FINISHED' ||
+        status === 'ARCHIVED'
+      );
+    });
     if (!myGamesSelectedDate) {
       return base.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
     }
@@ -247,7 +250,7 @@ export const MyTab = () => {
         return gameStr !== selectedStr;
       })
       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-  }, [activeTab, myGamesSelectedDate, filteredMyGames]);
+  }, [activeTab, myGamesSelectedDate, calendarMergedGames]);
   const handleCalendarDateRangeChange = useCallback(
     async (start: Date, end: Date) => {
       const today = startOfDay(new Date());
@@ -293,7 +296,7 @@ export const MyTab = () => {
     setIsMarkingAllAsRead(true);
     try {
       await useUnreadStore.getState().markAllRead();
-      await fetchData(false, true);
+      await refetchMyGames();
       toast.success(t('chat.allMarkedAsRead', { defaultValue: 'All messages marked as read' }));
     } catch (error) {
       console.error('Failed to mark all messages as read:', error);
@@ -325,7 +328,7 @@ export const MyTab = () => {
       const currentCount = useHeaderStore.getState().pendingInvites;
       setPendingInvites(Math.max(0, currentCount - 1));
       Promise.resolve().then(() => {
-        fetchData(false, true);
+        refetchMyGames();
       });
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
@@ -380,11 +383,11 @@ export const MyTab = () => {
   const handleRefresh = useCallback(async () => {
     await clearCachesExceptUnsyncedResults();
     await Promise.all([
-      fetchData(false, true),
+      refetchMyGames(),
       loadPastGames?.(),
       useUserTeamsStore.getState().refreshAll(),
     ]);
-  }, [fetchData, loadPastGames]);
+  }, [refetchMyGames, loadPastGames]);
 
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
   const calendarContentPanel = (
@@ -400,7 +403,7 @@ export const MyTab = () => {
             onAccept={handleAcceptInvite}
             onDecline={handleDeclineInvite}
             decliningInviteIds={decliningInviteIds}
-            onNoteSaved={() => fetchData(false, true)}
+            onNoteSaved={() => refetchMyGames()}
           />
         </div>
         <UserTeamsHomeSection className="mb-3" />
@@ -412,7 +415,7 @@ export const MyTab = () => {
           showSkeleton={skeletonAnimation.showSkeleton}
           skeletonStates={skeletonAnimation.skeletonStates}
           gamesUnreadCounts={calendarMergedUnreadCounts}
-          onNoteSaved={() => fetchData(false, true)}
+          onNoteSaved={() => refetchMyGames()}
           upcomingGames={upcomingGamesForCalendar}
           onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
         />
@@ -495,7 +498,7 @@ export const MyTab = () => {
             onAccept={handleAcceptInvite}
             onDecline={handleDeclineInvite}
             decliningInviteIds={decliningInviteIds}
-            onNoteSaved={() => fetchData(false, true)}
+            onNoteSaved={() => refetchMyGames()}
           />
         </div>
 
@@ -526,7 +529,7 @@ export const MyTab = () => {
                 showSkeleton={skeletonAnimation.showSkeleton}
                 skeletonStates={skeletonAnimation.skeletonStates}
                 gamesUnreadCounts={calendarMergedUnreadCounts}
-                onNoteSaved={() => fetchData(false, true)}
+                onNoteSaved={() => refetchMyGames()}
                 upcomingGames={upcomingGamesForCalendar}
                 onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
               />
@@ -541,7 +544,7 @@ export const MyTab = () => {
               showSkeleton={skeletonAnimation.showSkeleton}
               skeletonStates={skeletonAnimation.skeletonStates}
               gamesUnreadCounts={mergedUnreadCounts}
-              onNoteSaved={() => fetchData(false, true)}
+              onNoteSaved={() => refetchMyGames()}
               onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
             />
           )}

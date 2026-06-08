@@ -1,122 +1,39 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { gamesApi } from '@/api';
-import { Game } from '@/types';
-import { useSocketEventsStore } from '@/store/socketEventsStore';
-import { format } from 'date-fns';
+import { useCallback } from 'react';
+import { useAvailableGamesQuery } from '@/queries/games/useAvailableGamesQuery';
 
 export const useAvailableGames = (
-  user: any,
+  user: {
+    id?: string;
+    isAdmin?: boolean;
+    currentCity?: { id?: string };
+    currentCityId?: string;
+  } | null | undefined,
   startDate?: Date,
   endDate?: Date,
   includeLeagues?: boolean,
   sport?: string,
   showPrivateGames?: boolean,
 ) => {
-  const [availableGames, setAvailableGames] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(false);
-  const hasDataRef = useRef(false);
-  const userCityId = user?.currentCity?.id || user?.currentCityId;
-  const lastSportRef = useRef<string | undefined>(undefined);
+  const { data, isPending, isFetching, refetch } = useAvailableGamesQuery({
+    userId: user?.id,
+    startDate,
+    endDate,
+    includeLeagues,
+    sport,
+    showPrivateGames,
+    isAdmin: user?.isAdmin,
+    cityId: user?.currentCity?.id || user?.currentCityId,
+  });
 
-  const isLoadingRef = useRef(false);
-  const lastFetchParamsRef = useRef<string | null>(null);
+  const availableGames = data ?? [];
+  const loading = isPending || (isFetching && availableGames.length === 0);
 
-  const sortGames = (games: Game[]) => {
-    return games.sort((a, b) => {
-      return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
-    });
-  };
+  const fetchData = useCallback(
+    async (_force = false) => {
+      await refetch();
+    },
+    [refetch],
+  );
 
-  const fetchData = useCallback(async (force = false) => {
-    if (!user?.id) return;
-
-    const privateFlag = user?.isAdmin && showPrivateGames ? '1' : '0';
-    const fetchParams = startDate && endDate 
-      ? `available-games-${user.id}-${userCityId ?? 'no-city'}-${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}-${includeLeagues}-${sport ?? 'primary'}-${privateFlag}`
-      : `available-games-${user.id}-${userCityId ?? 'no-city'}-${includeLeagues}-${sport ?? 'primary'}-${privateFlag}`;
-
-    if (!force && (isLoadingRef.current || lastFetchParamsRef.current === fetchParams)) {
-      return;
-    }
-
-    isLoadingRef.current = true;
-    lastFetchParamsRef.current = fetchParams;
-    const sportChanged = hasDataRef.current && lastSportRef.current !== sport;
-    lastSportRef.current = sport;
-    if (!hasDataRef.current || sportChanged) setLoading(true);
-    try {
-      const params: any = {
-        showArchived: true,
-        includeLeagues: !!includeLeagues,
-      };
-      if (startDate && endDate) {
-        params.startDate = format(startDate, 'yyyy-MM-dd');
-        params.endDate = format(endDate, 'yyyy-MM-dd');
-      }
-      if (sport) {
-        params.sport = sport;
-      }
-      if (user?.isAdmin && showPrivateGames) {
-        params.showPrivateGames = true;
-      }
-      const response = await gamesApi.getAvailableGames(params);
-      const allGames = response.data || [];
-
-      const sortedGames = sortGames(allGames);
-      hasDataRef.current = true;
-      setAvailableGames(sortedGames);
-    } catch (error) {
-      console.error('Failed to fetch available games:', error);
-    } finally {
-      isLoadingRef.current = false;
-      setLoading(false);
-    }
-  }, [user?.id, user?.isAdmin, userCityId, startDate, endDate, includeLeagues, sport, showPrivateGames]);
-
-  useEffect(() => {
-    if (user?.id) {
-      fetchData();
-    }
-  }, [user?.id, userCityId, startDate, endDate, fetchData]);
-
-  const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);
-
-  useEffect(() => {
-    if (!lastGameUpdate || (!lastGameUpdate.forceUpdate && lastGameUpdate.senderId === user?.id)) return;
-
-    const data = lastGameUpdate;
-    const updatedGame = data.game;
-
-    setAvailableGames(prevAvailableGames => {
-      const gameIndex = prevAvailableGames.findIndex(g => g.id === data.gameId);
-      const isPublic = updatedGame.isPublic;
-      const isParticipant = updatedGame.participants.some((p: any) => p.userId === user?.id);
-      const isArchived = updatedGame.status === 'ARCHIVED';
-      const shouldShow =
-        isPublic ||
-        (isParticipant && !isArchived) ||
-        (user?.isAdmin && showPrivateGames && !isArchived);
-
-      if (gameIndex === -1) {
-        if (shouldShow) {
-          return sortGames([...prevAvailableGames, updatedGame]);
-        }
-        return prevAvailableGames;
-      }
-
-      if (!shouldShow) {
-        return prevAvailableGames.filter(g => g.id !== data.gameId);
-      }
-
-      const updatedGames = [...prevAvailableGames];
-      updatedGames[gameIndex] = updatedGame;
-      return sortGames(updatedGames);
-    });
-  }, [lastGameUpdate, user?.id, user?.isAdmin, showPrivateGames]);
-
-  return {
-    availableGames,
-    loading,
-    fetchData,
-  };
+  return { availableGames, loading, fetchData, refetch: fetchData };
 };

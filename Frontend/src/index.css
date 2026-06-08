@@ -319,12 +319,6 @@ html.dark .calendar-unread-dot {
   animation: calendarUnreadDotDark 2s ease-in-out infinite;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 html {
   overflow-x: visible;
   height: 100%;

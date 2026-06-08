@@ -79,7 +79,7 @@ export const FindTab = () => {
   const {
     availableGames,
     loading: loadingAvailableGames,
-    fetchData: fetchAvailableGames,
+    refetch: refetchAvailableGames,
   } = useAvailableGames(
     user,
     dateRange.startDate,
@@ -112,7 +112,7 @@ export const FindTab = () => {
       } else {
         toast.success(t(message, { defaultValue: message }));
       }
-      fetchAvailableGames(true);
+      refetchAvailableGames();
       navigate(`/games/${gameId}`);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
@@ -122,8 +122,8 @@ export const FindTab = () => {
 
   const handleRefresh = useCallback(async () => {
     await clearCachesExceptUnsyncedResults();
-    await fetchAvailableGames(true);
-  }, [fetchAvailableGames]);
+    await refetchAvailableGames();
+  }, [refetchAvailableGames]);
 
   const splitView = isDesktop && findViewMode === 'calendar';
 
@@ -152,7 +152,7 @@ export const FindTab = () => {
         filters={filters}
         onFilterChange={(key, value) => updateFilter(key, value)}
         onFiltersChange={(updates) => updateFilters(updates)}
-        onNoteSaved={() => fetchAvailableGames(true)}
+        onNoteSaved={() => refetchAvailableGames()}
         splitView={true}
       />
       </>
@@ -174,7 +174,7 @@ export const FindTab = () => {
             filters={filters}
             onFilterChange={(key, value) => updateFilter(key, value)}
             onFiltersChange={(updates) => updateFilters(updates)}
-            onNoteSaved={() => fetchAvailableGames(true)}
+            onNoteSaved={() => refetchAvailableGames()}
           />
           <MainTabFooter isLoading={loadingAvailableGames || isRefreshing} />
         </>

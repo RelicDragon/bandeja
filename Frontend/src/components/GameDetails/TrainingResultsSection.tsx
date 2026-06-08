@@ -8,7 +8,8 @@ import { Game, User, GameOutcome, TrainerReview } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { EditLevelModal } from './EditLevelModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { usersApi } from '@/api/users';
+import { useQueryClient } from '@tanstack/react-query';
+import { userStatsQueryOptions } from '@/queries/useUserStatsQuery';
 import { trainingApi } from '@/api/training';
 import {
   getDisplayLevelForSport,
@@ -34,6 +35,7 @@ export const TrainingResultsSection = ({
   onReviewSubmitted,
 }: TrainingResultsSectionProps) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [loadingUser, setLoadingUser] = useState(false);
   const [fullUserProfile, setFullUserProfile] = useState<User | null>(null);
@@ -124,9 +126,11 @@ export const TrainingResultsSection = ({
     setEditingUserId(participantUserId);
     setLoadingUser(true);
     try {
-      const response = await usersApi.getUserStats(participantUserId, gameSport);
-      if (response.data?.user) {
-        setFullUserProfile(response.data.user);
+      const userStats = await queryClient.fetchQuery(
+        userStatsQueryOptions(participantUserId, gameSport),
+      );
+      if (userStats.user) {
+        setFullUserProfile(userStats.user);
       }
     } catch (error: any) {
       console.error('Failed to load user profile:', error);

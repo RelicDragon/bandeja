@@ -15,6 +15,7 @@ import {
 import { ParticipantRole } from '@prisma/client';
 import * as gameController from '../controllers/game.controller';
 import gamePhotoRoutes from './gamePhoto.routes';
+import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 
 const gameReactionLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -22,7 +23,7 @@ const gameReactionLimiter = rateLimit({
   message: { success: false, message: 'Too many reactions, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const router = Router();

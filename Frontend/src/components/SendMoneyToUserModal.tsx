@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Minus, Plus } from 'lucide-react';
 import { transactionsApi } from '@/api/transactions';
-import { usersApi } from '@/api/users';
+import { useUserStatsQuery } from '@/queries/useUserStatsQuery';
 import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
@@ -22,10 +22,9 @@ export const SendMoneyToUserModal = ({
 }: SendMoneyToUserModalProps) => {
   const { t } = useTranslation();
   const contextLevelSport = useSportLevelContext();
-  const [toUser, setToUser] = useState<any>(null);
   const [amount, setAmount] = useState(1);
   const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [walletLoading, setWalletLoading] = useState(true);
   const [transferring, setTransferring] = useState(false);
   const [wallet, setWallet] = useState<number>(0);
   const [showNumberPicker, setShowNumberPicker] = useState(false);
@@ -39,26 +38,46 @@ export const SendMoneyToUserModal = ({
     }, 300);
   };
 
+  const {
+    data: statsData,
+    isPending: statsPending,
+    isError: statsError,
+  } = useUserStatsQuery(toUserId, contextLevelSport);
+  const toUser = statsData?.user ?? null;
+  const loading = walletLoading || statsPending;
+
   useEffect(() => {
-    const fetchData = async () => {
+    if (statsError) {
+      toast.error(t('errors.generic'));
+    }
+  }, [statsError, t]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchWallet = async () => {
       try {
-        setLoading(true);
-        const [walletResponse, statsResponse] = await Promise.all([
-          transactionsApi.getWallet(),
-          usersApi.getUserStats(toUserId, contextLevelSport),
-        ]);
-        setWallet(walletResponse.data.wallet);
-        setToUser(statsResponse.data.user);
+        setWalletLoading(true);
+        const walletResponse = await transactionsApi.getWallet();
+        if (!cancelled) {
+          setWallet(walletResponse.data.wallet);
+        }
       } catch (error) {
-        console.error('Failed to fetch data:', error);
-        toast.error(t('errors.generic'));
+        console.error('Failed to fetch wallet:', error);
+        if (!cancelled) {
+          toast.error(t('errors.generic'));
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setWalletLoading(false);
+        }
       }
     };
 
-    fetchData();
-  }, [toUserId, t, contextLevelSport]);
+    fetchWallet();
+    return () => {
+      cancelled = true;
+    };
+  }, [toUserId, t]);
 
   const handleAmountSelect = (selectedAmount: number) => {
     const clampedAmount = Math.max(1, Math.min(selectedAmount, wallet));

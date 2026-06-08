@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format, startOfDay } from 'date-fns';
-import { AlertTriangle, Calendar, ChevronDown, MapPin, MessageCircle, Users, Plane } from 'lucide-react';
+import { AlertTriangle, Calendar, Check, ChevronDown, MapPin, MessageCircle, Users, Plane } from 'lucide-react';
 import { Card, GameCard } from '@/components';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
@@ -74,21 +74,33 @@ export const UpcomingGamesList = ({
     [games]
   );
 
-  const { staleGames, upcomingGames } = useMemo(() => {
+  const { staleGames, finishedGames, upcomingGames } = useMemo(() => {
     const stale: Game[] = [];
+    const finished: Game[] = [];
     const upcoming: Game[] = [];
     for (const g of gamesWithoutLeagueSeasonHub) {
-      if (isStalePastScheduledGame(g)) stale.push(g);
-      else upcoming.push(g);
+      if (isStalePastScheduledGame(g)) {
+        stale.push(g);
+      } else if (g.status === 'FINISHED' || g.status === 'ARCHIVED') {
+        finished.push(g);
+      } else {
+        upcoming.push(g);
+      }
     }
     stale.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-    return { staleGames: stale, upcomingGames: upcoming };
+    finished.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+    return { staleGames: stale, finishedGames: finished, upcomingGames: upcoming };
   }, [gamesWithoutLeagueSeasonHub]);
 
   const staleGrouped = useMemo(
     () => groupGamesByDate(staleGames, displaySettings, t),
     [staleGames, displaySettings, t]
   );
+  const finishedGrouped = useMemo(() => {
+    const groups = groupGamesByDate(finishedGames, displaySettings, t);
+    groups.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+    return groups;
+  }, [finishedGames, displaySettings, t]);
   const upcomingGrouped = useMemo(
     () => groupGamesByDate(upcomingGames, displaySettings, t),
     [upcomingGames, displaySettings, t]
@@ -101,7 +113,9 @@ export const UpcomingGamesList = ({
     [staleGames, gamesUnreadCounts],
   );
 
-  if (staleGrouped.length === 0 && upcomingGrouped.length === 0) return null;
+  if (staleGrouped.length === 0 && upcomingGrouped.length === 0 && finishedGrouped.length === 0) {
+    return null;
+  }
 
   const renderStaleGroup = (group: DateGroup) => (
     <div key={`stale-${group.dateStr}`}>
@@ -124,8 +138,8 @@ export const UpcomingGamesList = ({
     </div>
   );
 
-  const renderUpcomingGroup = (group: DateGroup) => (
-    <div key={`upcoming-${group.dateStr}`}>
+  const renderGameCardGroup = (group: DateGroup, keyPrefix: string) => (
+    <div key={`${keyPrefix}-${group.dateStr}`}>
       <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2 px-1">
         {group.label}
       </p>
@@ -166,7 +180,27 @@ export const UpcomingGamesList = ({
               {upcomingGames.length}
             </span>
           </div>
-          <div className="space-y-4">{upcomingGrouped.map((g) => renderUpcomingGroup(g))}</div>
+          <div className="space-y-4">{upcomingGrouped.map((g) => renderGameCardGroup(g, 'upcoming'))}</div>
+        </Card>
+      )}
+
+      {finishedGrouped.length > 0 && (
+        <Card className="py-4">
+          <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2 px-1">
+            <Check
+              size={18}
+              strokeWidth={2}
+              className="shrink-0 text-gray-500 dark:text-gray-400"
+              aria-hidden
+            />
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              {t('home.finishedToday', { defaultValue: 'Finished' })}
+            </p>
+            <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gray-900/5 px-1.5 text-[10px] font-semibold tabular-nums text-gray-600 dark:bg-white/10 dark:text-gray-300">
+              {finishedGames.length}
+            </span>
+          </div>
+          <div className="space-y-4">{finishedGrouped.map((g) => renderGameCardGroup(g, 'finished'))}</div>
         </Card>
       )}
 

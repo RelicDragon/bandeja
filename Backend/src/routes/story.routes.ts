@@ -10,6 +10,7 @@ import {
   COMMENT_RATE_LIMIT_PER_MIN,
   LIKE_TOGGLE_RATE_LIMIT_PER_MIN,
 } from '../services/storyEngagement/storyEngagement.constants';
+import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 
 const router = Router();
 
@@ -19,7 +20,7 @@ const likeToggleLimiter = rateLimit({
   message: { success: false, message: 'Too many like toggles', code: 'STORY_LIKE_RATE_LIMIT' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 const commentLimiter = rateLimit({
@@ -28,7 +29,7 @@ const commentLimiter = rateLimit({
   message: { success: false, message: 'Too many comments', code: 'STORY_COMMENT_RATE_LIMIT' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req as AuthRequest).userId ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
 router.use(authenticate);

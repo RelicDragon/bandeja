@@ -1,146 +1,86 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { gamesApi } from '@/api';
-import { Game, Invite } from '@/types';
-import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { useCallback, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import type { Invite } from '@/types';
 import {
-  applyInviteDeletedToGames,
-  userHasActiveGameMembership,
-} from '@/utils/gameInviteParticipant';
+  useMyGamesQuery,
+  type MyGamesData,
+} from '@/queries/games/useMyGamesQuery';
+import { queryKeys } from '@/queries/queryKeys';
+
+type SkeletonAnimation = {
+  showSkeletonsAnimated: () => void;
+  hideSkeletonsAnimated: () => void;
+};
 
 export const useMyGames = (
-  user: any,
+  user: { id?: string } | null | undefined,
   onLoading: (loading: boolean) => void,
-  skeletonAnimation?: { showSkeletonsAnimated: () => void; hideSkeletonsAnimated: () => void }
+  skeletonAnimation?: SkeletonAnimation,
 ) => {
-  const [games, setGames] = useState<Game[]>([]);
-  const [invites, setInvites] = useState<Invite[]>([]);
+  const userId = user?.id;
+  const queryClient = useQueryClient();
+  const { data, isPending, refetch } = useMyGamesQuery(userId);
+  const initialLoadDoneRef = useRef(false);
+  const onLoadingRef = useRef(onLoading);
+  onLoadingRef.current = onLoading;
+  const showSkeletonsRef = useRef(skeletonAnimation?.showSkeletonsAnimated);
+  showSkeletonsRef.current = skeletonAnimation?.showSkeletonsAnimated;
+  const hideSkeletonsRef = useRef(skeletonAnimation?.hideSkeletonsAnimated);
+  hideSkeletonsRef.current = skeletonAnimation?.hideSkeletonsAnimated;
 
-  const isLoadingRef = useRef(false);
-  const lastFetchParamsRef = useRef<string | null>(null);
+  const games = data?.games ?? [];
+  const invites = data?.invites ?? [];
 
-  const sortGames = (games: Game[]) => {
-    return games.sort((a, b) => {
-      return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
-    });
-  };
+  const setInvites = useCallback(
+    (newInvites: Invite[]) => {
+      if (!userId) return;
+      queryClient.setQueryData<MyGamesData>(
+        queryKeys.games.my(userId),
+        (old) => {
+          if (!old) return { games: [], invites: newInvites };
+          return { ...old, invites: newInvites };
+        },
+      );
+    },
+    [userId, queryClient],
+  );
 
-  const fetchData = useCallback(async (showLoader = true, force = false) => {
-    if (!user?.id) return;
-
-    const fetchParams = `my-games-${user.id}`;
-
-    if (!force && (isLoadingRef.current || lastFetchParamsRef.current === fetchParams)) {
+  useEffect(() => {
+    if (!userId) {
+      onLoadingRef.current(false);
       return;
     }
-
-    isLoadingRef.current = true;
-    lastFetchParamsRef.current = fetchParams;
-
-    try {
-      if (showLoader) {
-        skeletonAnimation?.showSkeletonsAnimated();
-        onLoading(true);
-      }
-
-      const response = await gamesApi.getMyGamesWithUnread();
-      const { games: myGames, invites: invitesData } = response.data;
-      const sortedMyGames = sortGames([...(myGames || [])]);
-
-      setGames(sortedMyGames);
-      setInvites(invitesData ?? []);
-    } catch (error) {
-      console.error('Failed to fetch my games:', error);
-    } finally {
-      isLoadingRef.current = false;
-      if (showLoader) {
-        skeletonAnimation?.hideSkeletonsAnimated();
-        onLoading(false);
-      }
+    if (isPending && !initialLoadDoneRef.current) {
+      showSkeletonsRef.current?.();
+      onLoadingRef.current(true);
+      return;
     }
-  }, [user?.id, skeletonAnimation, onLoading]);
-
-  useEffect(() => {
-    if (user?.id) {
-      fetchData();
+    if (!isPending) {
+      if (!initialLoadDoneRef.current) {
+        hideSkeletonsRef.current?.();
+        initialLoadDoneRef.current = true;
+      }
+      onLoadingRef.current(false);
     }
-  }, [user?.id, fetchData]);
+  }, [isPending, userId]);
 
-  const lastNewInvite = useSocketEventsStore((state) => state.lastNewInvite);
-  const lastInviteDeleted = useSocketEventsStore((state) => state.lastInviteDeleted);
-  const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);
-
-  useEffect(() => {
-    if (!lastNewInvite) return;
-    setInvites(prevInvites => {
-      const exists = prevInvites.some(existingInvite => existingInvite.id === lastNewInvite.id);
-      if (exists) return prevInvites;
-      return [lastNewInvite, ...prevInvites];
-    });
-  }, [lastNewInvite]);
-
-  useEffect(() => {
-    if (!lastInviteDeleted) return;
-    setInvites((prevInvites) => prevInvites.filter((invite) => invite.id !== lastInviteDeleted.inviteId));
-    const gid = lastInviteDeleted.gameId;
-    if (!gid) return;
-    setGames((prev) => applyInviteDeletedToGames(prev, lastInviteDeleted, user?.id));
-  }, [lastInviteDeleted, user?.id]);
-
-  useEffect(() => {
-    if (!lastGameUpdate || (!lastGameUpdate.forceUpdate && lastGameUpdate.senderId === user?.id)) return;
-
-    const data = lastGameUpdate;
-    const updatedGame = data.game;
-
-    setGames(prevGames => {
-      const gameIndex = prevGames.findIndex(g => g.id === data.gameId);
-      const isMember = userHasActiveGameMembership(updatedGame, user?.id);
-
-      if (gameIndex === -1) {
-        if (!isMember) return prevGames;
-
-        const isArchived = updatedGame.status === 'ARCHIVED';
-        if (!isArchived) {
-          const newGames = [...prevGames, updatedGame];
-          return sortGames(newGames);
-        }
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const gameDate = new Date(updatedGame.startTime);
-        gameDate.setHours(0, 0, 0, 0);
-        if (gameDate >= today) {
-          const newGames = [...prevGames, updatedGame];
-          return sortGames(newGames);
-        }
-        return prevGames;
+  const fetchData = useCallback(
+    async (_showLoader = true, _force = false) => {
+      if (!userId) return;
+      if (_force) {
+        await queryClient.invalidateQueries({ queryKey: queryKeys.games.my(userId) });
       }
-
-      if (!isMember) {
-        return prevGames.filter(g => g.id !== data.gameId);
-      }
-
-      const isArchived = updatedGame.status === 'ARCHIVED';
-      if (isArchived) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const gameDate = new Date(updatedGame.startTime);
-        gameDate.setHours(0, 0, 0, 0);
-        if (gameDate < today) {
-          return prevGames.filter(g => g.id !== data.gameId);
-        }
-      }
-
-      const updatedGames = [...prevGames];
-      updatedGames[gameIndex] = updatedGame;
-      return sortGames(updatedGames);
-    });
-  }, [lastGameUpdate, user?.id]);
+      await refetch();
+    },
+    [userId, queryClient, refetch],
+  );
 
   return {
     games,
     invites,
     fetchData,
     setInvites,
+    isLoading: isPending,
+    refetch: fetchData,
   };
 };
