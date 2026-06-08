@@ -96,7 +96,7 @@ export function createProductionChatInboxAdapter(
     },
 
     replaceThreadIndex(filter, items) {
-      void persistThreadIndexReplace(filter, items);
+      void persistThreadIndexReplace(filter, items, { pruneRemoved: true });
     },
 
     invalidateUserChatsCache() {

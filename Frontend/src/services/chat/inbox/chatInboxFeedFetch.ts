@@ -324,6 +324,7 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
       userId: useAuthStore.getState().user?.id,
       applyToVisible: true,
     });
+    useChatListFeedStore.getState().markNetworkSettled(filter);
   };
 
   const runFeedLoadMore = async (

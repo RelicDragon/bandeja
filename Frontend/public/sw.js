@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v829';
+const CACHE_VERSION = 'v830';
 const CACHE_NAME = `bandeja-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `bandeja-runtime-${CACHE_VERSION}`;
 

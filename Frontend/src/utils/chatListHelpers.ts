@@ -79,16 +79,14 @@ export function mergeChatListOutboxFromDexieSlice(prev: ChatItem[], dexSlice: Ch
 
 export function mergeChatListFromThreadIndexDexie(
   prev: ChatItem[],
-  dexSlice: ChatItem[],
-  listFilter: 'users' | 'bugs' | 'channels' | 'market',
-  userId?: string
+  dexSlice: ChatItem[]
 ): ChatItem[] {
   if (dexSlice.length === 0) return prev;
   const dexByKey = new Map<string, ChatItem>();
   for (const d of dexSlice) {
     if (d.type !== 'contact') dexByKey.set(getChatKey(d), d);
   }
-  const next = prev.map((p) => {
+  return prev.map((p) => {
     if (p.type === 'contact') return p;
     const d = dexByKey.get(getChatKey(p));
     if (!d || d.type === 'contact') return p;
@@ -112,7 +110,6 @@ export function mergeChatListFromThreadIndexDexie(
         : null;
     return { ...merged, lastMessageDate } as ChatItem;
   });
-  return deduplicateChats(sortChatItems(next, listFilter, userId));
 }
 
 export function threadIndexLiveMergeSig(chats: ChatItem[]): string {
@@ -200,7 +197,8 @@ export function applyDraftsToChatItems(
   chats: ChatItem[],
   allDrafts: ChatDraft[],
   listFilter: 'users' | 'bugs' | 'channels' | 'market',
-  userId?: string
+  userId?: string,
+  resort = true
 ): ChatItem[] {
   if (!allDrafts.length) return chats;
   const updated = chats.map((chat) => {
@@ -218,6 +216,7 @@ export function applyDraftsToChatItems(
     }
     return chat;
   });
+  if (!resort) return updated;
   if (listFilter === 'users') return sortChatItems(updated, 'users', userId);
   if (listFilter === 'bugs' || listFilter === 'channels' || listFilter === 'market') {
     return sortChatItems(updated, listFilter);

@@ -9,8 +9,8 @@ import { MessageMediaGrid } from './MessageMediaGrid';
 import { AudioMessageBubble } from '../audio/AudioMessageBubble';
 import { ChatVideoBubble } from './ChatVideoBubble';
 import { ParsedContentPart } from './types';
-import { AlertCircle, Pencil } from 'lucide-react';
-import { DoubleTickIcon } from '../DoubleTickIcon';
+import { Pencil } from 'lucide-react';
+import { MessageSendStatusIcon } from './MessageSendStatusIcon';
 import { TFunction } from 'i18next';
 
 interface MessageBubbleProps {
@@ -242,95 +242,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           )}
           {formatMessageTime(message.createdAt)}
           {isOwnMessage && (
-            <>
-              {isSending ? (
-                <span
-                  className="inline-flex items-center gap-0.5"
-                  title={
-                    isSendingSlow
-                      ? t('chat.sendingSlow', { defaultValue: 'Taking longer than usual…' })
-                      : t('chat.sending', { defaultValue: 'Sending…' })
-                  }
-                  style={mediaOnlyIconStyle}
-                >
-                  <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-1" />
-                  <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-2" />
-                  <span className="w-1.5 h-1.5 bg-current rounded-full opacity-70 wavy-dot-3" />
-                </span>
-              ) : isFailed ? (
-                <span className="relative inline-flex items-center" style={mediaOnlyIconStyle}>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowFailedMenu((v) => !v);
-                    }}
-                    className="p-0.5 rounded hover:bg-white/20"
-                    title={t('chat.failedToSend', { defaultValue: 'Failed to send' })}
-                  >
-                    <AlertCircle size={14} className="text-red-200" />
-                  </button>
-                  {showFailedMenu && optimisticId && (onResendQueued || onRemoveFromQueue) && (
-                    <div className="absolute right-0 bottom-full mb-1 flex flex-col gap-0.5 rounded-lg bg-gray-800 dark:bg-gray-700 py-1 shadow-lg z-50 min-w-[100px]">
-                      {onResendQueued && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowFailedMenu(false);
-                            onResendQueued(optimisticId);
-                          }}
-                          className="px-3 py-1.5 text-left text-sm text-white hover:bg-gray-700 dark:hover:bg-gray-600"
-                        >
-                          {t('chat.resend', { defaultValue: 'Resend' })}
-                        </button>
-                      )}
-                      {onRemoveFromQueue && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowFailedMenu(false);
-                            onRemoveFromQueue(optimisticId);
-                          }}
-                          className="px-3 py-1.5 text-left text-sm text-red-300 hover:bg-gray-700 dark:hover:bg-gray-600"
-                        >
-                          {t('chat.contextMenu.delete', { defaultValue: 'Delete' })}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </span>
-              ) : tickRead ? (
-                <span
-                  className="text-purple-200 inline-flex"
-                  title={
-                    (message.readReceipts?.length ?? 0) > 0
-                      ? `Read by ${message.readReceipts!.length} ${message.readReceipts!.length === 1 ? 'person' : 'people'}`
-                      : t('chat.tickRead', { defaultValue: 'Read' })
-                  }
-                  style={mediaOnlyIconStyle}
-                >
-                  <DoubleTickIcon size={14} variant="double" />
-                </span>
-              ) : tickDelivered ? (
-                <span
-                  className="text-blue-100/90 inline-flex"
-                  title={t('chat.tickDelivered', { defaultValue: 'Delivered' })}
-                  style={mediaOnlyIconStyle}
-                >
-                  <DoubleTickIcon size={14} variant="double" className="opacity-85" />
-                </span>
-              ) : (
-                <span
-                  className="text-blue-100 inline-flex"
-                  title={t('chat.tickSent', { defaultValue: 'Sent' })}
-                  style={mediaOnlyIconStyle}
-                >
-                  <DoubleTickIcon size={14} variant="single" />
-                </span>
-              )}
-            </>
+            <MessageSendStatusIcon
+              isSending={isSending}
+              isSendingSlow={isSendingSlow}
+              isFailed={isFailed}
+              tickRead={tickRead}
+              tickDelivered={tickDelivered}
+              message={message}
+              showFailedMenu={showFailedMenu}
+              setShowFailedMenu={setShowFailedMenu}
+              optimisticId={optimisticId}
+              onResendQueued={onResendQueued}
+              onRemoveFromQueue={onRemoveFromQueue}
+              iconStyle={mediaOnlyIconStyle}
+              t={t}
+            />
           )}
         </span>
       </div>

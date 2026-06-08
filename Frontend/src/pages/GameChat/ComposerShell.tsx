@@ -4,6 +4,7 @@ import { MessageCircle } from 'lucide-react';
 import { MessageInput } from '@/components/MessageInput';
 import { RequestToChat } from '@/components/chat/RequestToChat';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
+import { WavyDots } from '@/components/WavyDots';
 import { useThreadComposer } from './useThreadView';
 import type { GameChatFooterVariant } from './GameChatFooter';
 
@@ -64,10 +65,8 @@ export const ComposerShell: React.FC<ComposerShellProps> = ({ visible, variant }
           style={padStyle}
           aria-hidden
         >
-          <div className="flex items-center justify-center py-2">
-            <span className="text-xs font-medium tabular-nums tracking-wide bg-gradient-to-r from-gray-400 via-gray-600 to-gray-400 dark:from-gray-500 dark:via-gray-300 dark:to-gray-500 bg-[length:220%_100%] bg-clip-text text-transparent animate-loadingTextShimmer">
-              {t('common.loading')}
-            </span>
+          <div className="flex items-center justify-center py-2" role="status" aria-label={t('common.loading')}>
+            <WavyDots />
           </div>
         </div>
       )}

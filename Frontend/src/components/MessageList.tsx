@@ -44,6 +44,7 @@ import { getMessageRowKey } from '@/services/chat/messageRowKey';
 import { ChatDateSeparator } from '@/components/chat/ChatDateSeparator';
 import { getChatDateSeparatorLabel } from '@/utils/chatDateSeparator';
 import { isThreadMessagesPending } from '@/pages/GameChat/threadViewLoadingState';
+import { WavyDots } from '@/components/WavyDots';
 
 const OPEN_TAIL_EAGER_MEDIA = 60;
 const VIRTUAL_OVERSCAN_BASE = 10;
@@ -656,10 +657,12 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
 
   if (messages.length === 0 && isMessagesPending) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800">
-        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-          {t('common.loading')}
-        </span>
+      <div
+        className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800"
+        role="status"
+        aria-label={t('common.loading')}
+      >
+        <WavyDots />
       </div>
     );
   }

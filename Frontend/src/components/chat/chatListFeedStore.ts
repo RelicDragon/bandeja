@@ -22,6 +22,13 @@ const emptyPagination = (): Record<ChatsFilterType, FilterPagination> => ({
   market: { hasMore: false, page: 1, loadingMore: false },
 });
 
+const unsettledFilters = (): Record<ChatsFilterType, boolean> => ({
+  users: false,
+  bugs: false,
+  channels: false,
+  market: false,
+});
+
 const INITIAL = {
   userId: null as string | null,
   activeFilter: 'users' as ChatsFilterType,
@@ -32,6 +39,7 @@ const INITIAL = {
   lastFetchTime: 0,
   inFlightByFilter: {} as Partial<Record<ChatsFilterType, Promise<void>>>,
   drafts: null as ChatDraft[] | null,
+  networkSettledByFilter: unsettledFilters(),
 };
 
 export type ChatListFeedState = typeof INITIAL & {
@@ -65,6 +73,9 @@ export type ChatListFeedState = typeof INITIAL & {
     filter: ChatsFilterType,
     userId: string
   ) => void;
+  resetNetworkSettled: (filter: ChatsFilterType) => void;
+  markNetworkSettled: (filter: ChatsFilterType) => void;
+  isNetworkSettled: (filter: ChatsFilterType) => boolean;
   resetForTests: () => void;
 };
 
@@ -116,7 +127,10 @@ export const useChatListFeedStore = create<ChatListFeedState>((set, get) => ({
     set((s) => {
       const next = { ...s.filterCache };
       delete next[filter];
-      return { filterCache: next };
+      return {
+        filterCache: next,
+        networkSettledByFilter: { ...s.networkSettledByFilter, [filter]: false },
+      };
     });
   },
 
@@ -240,10 +254,25 @@ export const useChatListFeedStore = create<ChatListFeedState>((set, get) => ({
     });
   },
 
+  resetNetworkSettled: (filter) => {
+    set((s) => ({
+      networkSettledByFilter: { ...s.networkSettledByFilter, [filter]: false },
+    }));
+  },
+
+  markNetworkSettled: (filter) => {
+    set((s) => ({
+      networkSettledByFilter: { ...s.networkSettledByFilter, [filter]: true },
+    }));
+  },
+
+  isNetworkSettled: (filter) => get().networkSettledByFilter[filter] ?? false,
+
   resetForTests: () =>
     set({
       ...INITIAL,
       pagination: emptyPagination(),
+      networkSettledByFilter: unsettledFilters(),
     }),
 }));
 

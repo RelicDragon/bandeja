@@ -145,6 +145,7 @@ export function useChatInbox(opts: UseChatInboxOptions) {
     try {
       await clearCachesExceptUnsyncedResults();
       if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels' || chatsFilter === 'market') {
+        useChatListFeedStore.getState().invalidateFilterCache(chatsFilter);
         await fetchChatsForFilter(chatsFilter);
       }
     } finally {

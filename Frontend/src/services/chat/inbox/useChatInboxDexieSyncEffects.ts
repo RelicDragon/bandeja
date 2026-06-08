@@ -17,9 +17,10 @@ export function useChatInboxDexieSyncEffects(opts: {
   chatListDexieBump: number;
 }) {
   const { userId, chatsFilter, contactsMode, debouncedSearchQuery, chatListDexieBump } = opts;
+  const networkSettled = useChatListFeedStore((s) => s.networkSettledByFilter[chatsFilter]);
 
   useEffect(() => {
-    if (!userId || chatListDexieBump === 0) return;
+    if (!userId || !networkSettled || chatListDexieBump === 0) return;
     let cancelled = false;
     void chatInboxThreadIndex.load(chatsFilter).then((fromDex) => {
       if (cancelled || fromDex.length === 0) return;
@@ -30,10 +31,11 @@ export function useChatInboxDexieSyncEffects(opts: {
     return () => {
       cancelled = true;
     };
-  }, [chatListDexieBump, chatsFilter, userId]);
+  }, [chatListDexieBump, chatsFilter, userId, networkSettled]);
 
   const threadIndexLiveEnabled =
     !!userId &&
+    networkSettled &&
     !contactsMode &&
     debouncedSearchQuery.trim() === '' &&
     (chatsFilter === 'users' ||
@@ -60,12 +62,11 @@ export function useChatInboxDexieSyncEffects(opts: {
     if (sig === threadIndexLiveSigRef.current) return;
     threadIndexLiveSigRef.current = sig;
     const slice = dexThreadSlice;
-    const uid = userId;
     if (threadIndexLiveDebounceRef.current) clearTimeout(threadIndexLiveDebounceRef.current);
     threadIndexLiveDebounceRef.current = setTimeout(() => {
       threadIndexLiveDebounceRef.current = null;
       useChatListFeedStore.getState().patchRowsForFilter(chatsFilter, (prev) =>
-        mergeChatListFromThreadIndexDexie(prev, slice, chatsFilter, uid)
+        mergeChatListFromThreadIndexDexie(prev, slice)
       );
     }, CHAT_LIST_THREAD_INDEX_LIVE_MERGE_MS);
     return () => {

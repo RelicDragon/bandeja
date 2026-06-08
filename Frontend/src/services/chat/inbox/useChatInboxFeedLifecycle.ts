@@ -46,33 +46,74 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
     if (!userId) return;
     clearChatListModuleCacheWhenUserMismatch(userId);
     useChatListFeedStore.getState().setActiveFilter(chatsFilter);
+    useChatListFeedStore.getState().resetNetworkSettled(chatsFilter);
 
-    const applyCacheToState = (cached: FilterCache, chatsWithDrafts?: ChatItem[]) => {
+    const applyCacheToState = (
+      cached: FilterCache,
+      chatsWithDrafts?: ChatItem[],
+      markNetworkSettled = false
+    ) => {
       const chatsToApply = chatsWithDrafts ?? cached.chats;
       const entry: FilterCache = { ...cached, chats: chatsToApply };
       adapter.commitFilterCache(chatsFilter, entry, { userId, applyToVisible: true });
       if (chatsFilter === 'users') onMutedChatsReset();
       if (cached.cityUsers) onUsersCacheApplied(entry, chatsToApply);
+      if (markNetworkSettled) {
+        useChatListFeedStore.getState().markNetworkSettled(chatsFilter);
+      }
     };
 
-    const applyCacheWithDrafts = async (cached: FilterCache) => {
+    const applyCacheWithDrafts = async (cached: FilterCache, resortDrafts: boolean) => {
       await new Promise<void>((resolve) => {
         setTimeout(resolve, 0);
       });
       const allDrafts = await getMergedDrafts(true);
-      const withDrafts = applyDraftsToChatItems(deduplicateChats(cached.chats), allDrafts, chatsFilter, userId);
+      const withDrafts = applyDraftsToChatItems(
+        deduplicateChats(cached.chats),
+        allDrafts,
+        chatsFilter,
+        userId,
+        resortDrafts
+      );
       applyCacheToState(cached, withDrafts);
       useChatListFeedStore.getState().setLoading(false);
+    };
+
+    let cancelled = false;
+
+    const applyNetworkFetchToVisible = (currentFilter: ChatsFilterType) => {
+      const c = useChatListFeedStore.getState().getFilterCache(currentFilter);
+      if (!c || useChatListFeedStore.getState().userId !== userId) return;
+      if (useShellNavStore.getState().chatsFilter !== currentFilter) return;
+      applyCacheToState(c, c.chats, true);
+    };
+
+    const scheduleNetworkRefresh = (currentFilter: ChatsFilterType) => {
+      void (async () => {
+        try {
+          await runCoalescedFilterFetch(currentFilter);
+        } catch (err) {
+          console.error('Failed to fetch chats:', err);
+        }
+        if (cancelled) return;
+        applyNetworkFetchToVisible(currentFilter);
+      })();
     };
 
     const feedState = useChatListFeedStore.getState();
     const cached = feedState.getFilterCache(chatsFilter);
     if (cached && feedState.userId === userId) {
-      void applyCacheWithDrafts(cached);
-      return;
+      void applyCacheWithDrafts(cached, false);
+      if (useNetworkStore.getState().isOnline) {
+        scheduleNetworkRefresh(chatsFilter);
+      } else {
+        useChatListFeedStore.getState().markNetworkSettled(chatsFilter);
+      }
+      return () => {
+        cancelled = true;
+      };
     }
 
-    let cancelled = false;
     const run = async () => {
       try {
         let showedDisk = false;
@@ -86,7 +127,13 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
               setTimeout(resolve, 0);
             });
             const allDrafts = await getMergedDrafts(true);
-            const dexChats = applyDraftsToChatItems(deduplicateChats(fromDex), allDrafts, chatsFilter, userId);
+            const dexChats = applyDraftsToChatItems(
+              deduplicateChats(fromDex),
+              allDrafts,
+              chatsFilter,
+              userId,
+              false
+            );
             const dexOnly: FilterCache = { chats: dexChats };
             if (chatsFilter === 'users') {
               dexOnly.cityUsers = [];
@@ -107,31 +154,19 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
             if (chatsFilter === 'bugs') empty.bugsHasMore = false;
             if (chatsFilter === 'channels') empty.channelsHasMore = false;
             if (chatsFilter === 'market') empty.marketHasMore = false;
-            applyCacheToState(empty);
+            applyCacheToState(empty, undefined, true);
             useChatListFeedStore.getState().setLoading(false);
             return;
           }
         } catch {
           /* ignore */
         }
-        if (showedDisk && !useNetworkStore.getState().isOnline) return;
+        if (showedDisk && !useNetworkStore.getState().isOnline) {
+          useChatListFeedStore.getState().markNetworkSettled(chatsFilter);
+          return;
+        }
         if (showedDisk && useNetworkStore.getState().isOnline) {
-          const currentFilter = chatsFilter;
-          void (async () => {
-            try {
-              await runCoalescedFilterFetch(currentFilter);
-            } catch (err) {
-              console.error('Failed to fetch chats:', err);
-            }
-            if (cancelled) return;
-            const c = useChatListFeedStore.getState().getFilterCache(currentFilter);
-            if (c && useChatListFeedStore.getState().userId === userId) {
-              if (useShellNavStore.getState().chatsFilter !== currentFilter) return;
-              adapter.commitFilterCache(currentFilter, c, { userId, applyToVisible: true });
-              if (currentFilter === 'users') onMutedChatsReset();
-              if (c.cityUsers) onUsersCacheApplied(c, c.chats);
-            }
-          })();
+          scheduleNetworkRefresh(chatsFilter);
           return;
         }
         const inflight = useChatListFeedStore.getState().getInFlight(chatsFilter);
@@ -140,7 +175,7 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
           if (cancelled) return;
           const after = useChatListFeedStore.getState().getFilterCache(chatsFilter);
           if (after && useChatListFeedStore.getState().userId === userId) {
-            applyCacheToState(after);
+            applyCacheToState(after, undefined, true);
             useChatListFeedStore.getState().setLoading(false);
             return;
           }
@@ -152,7 +187,7 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
         await runCoalescedFilterFetch(currentFilter);
         if (cancelled) return;
         const c = useChatListFeedStore.getState().getFilterCache(chatsFilter);
-        if (c) applyCacheToState(c);
+        if (c) applyCacheToState(c, undefined, true);
       } catch (err) {
         if (!cancelled) console.error('Failed to fetch chats:', err);
       } finally {
@@ -184,8 +219,10 @@ export function useChatInboxDraftReapplyEffect(
   chatsFilter: ChatsFilterType,
   getMergedDrafts: (forceRefetch?: boolean) => Promise<import('@/api/chat').ChatDraft[]>
 ) {
+  const networkSettled = useChatListFeedStore((s) => s.networkSettledByFilter[chatsFilter]);
+
   useEffect(() => {
-    if (loading || !userId) return;
+    if (loading || !userId || !networkSettled) return;
     if (chatsFilter !== 'users' && chatsFilter !== 'bugs' && chatsFilter !== 'channels' && chatsFilter !== 'market') {
       return;
     }
@@ -202,5 +239,5 @@ export function useChatInboxDraftReapplyEffect(
     return () => {
       cancelled = true;
     };
-  }, [loading, userId, chatsFilter, getMergedDrafts]);
+  }, [loading, userId, chatsFilter, getMergedDrafts, networkSettled]);
 }
