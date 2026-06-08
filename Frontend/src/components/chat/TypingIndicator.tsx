@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useShallow } from 'zustand/react/shallow';
 import { usePlayersStore } from '@/store/playersStore';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { fetchBasicUsersBatched } from '@/services/users/fetchBasicUsersBatched';
@@ -41,11 +42,13 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
       }),
     [contextType, chatType, game, bug, groupChannel, userChat, currentUserId]
   );
-  const storeUsers = usePlayersStore((s) => {
-    const slice: Record<string, BasicUser | undefined> = {};
-    for (const id of typingUserIds) slice[id] = s.users[id];
-    return slice;
-  });
+  const storeUsers = usePlayersStore(
+    useShallow((s) => {
+      const slice: Record<string, BasicUser | undefined> = {};
+      for (const id of typingUserIds) slice[id] = s.users[id];
+      return slice;
+    })
+  );
 
   const resolvedUsers = useMemo(() => {
     return typingUserIds.map((id) =>
