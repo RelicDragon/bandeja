@@ -25,7 +25,25 @@ import type { FilterCache } from '@/utils/chatListHelpers';
 import { deriveChatInboxReadModel } from './deriveChatInboxReadModel';
 import { createChatInboxFetchOps } from './chatInboxFeedFetch';
 import { getProductionChatInboxAdapter, setProductionChatInboxAdapter } from './chatInboxProductionAdapter';
-import type { ChatInboxAdapter } from './types';
+import type { ChatInboxAdapter, ChatInboxFeedSnapshot } from './types';
+
+function feedSnapshotsEqual(a: ChatInboxFeedSnapshot, b: ChatInboxFeedSnapshot): boolean {
+  if (a.threads !== b.threads || a.loading !== b.loading || a.filterCache !== b.filterCache) {
+    return false;
+  }
+  const ap = a.pagination;
+  const bp = b.pagination;
+  return (
+    ap.bugsHasMore === bp.bugsHasMore &&
+    ap.bugsLoadingMore === bp.bugsLoadingMore &&
+    ap.usersHasMore === bp.usersHasMore &&
+    ap.usersLoadingMore === bp.usersLoadingMore &&
+    ap.channelsHasMore === bp.channelsHasMore &&
+    ap.channelsLoadingMore === bp.channelsLoadingMore &&
+    ap.marketHasMore === bp.marketHasMore &&
+    ap.marketLoadingMore === bp.marketLoadingMore
+  );
+}
 import {
   useChatInboxDraftReapplyEffect,
   useChatInboxFeedLifecycle,
@@ -142,10 +160,19 @@ export function useChatInbox(opts: UseChatInboxOptions) {
     setProductionChatInboxAdapter(adapter);
   }, [fetchChatsForFilter, loadMore, refresh]);
 
+  const feedSnapshotCacheRef = useRef<ChatInboxFeedSnapshot | null>(null);
+  const getFeedSnapshot = useCallback(() => {
+    const next = adapterRef.current.getFeedSnapshot();
+    const prev = feedSnapshotCacheRef.current;
+    if (prev && feedSnapshotsEqual(prev, next)) return prev;
+    feedSnapshotCacheRef.current = next;
+    return next;
+  }, []);
+
   const feedSnapshot = useSyncExternalStore(
     (cb) => adapterRef.current.subscribeFeed(cb),
-    () => adapterRef.current.getFeedSnapshot(),
-    () => adapterRef.current.getFeedSnapshot()
+    getFeedSnapshot,
+    getFeedSnapshot
   );
 
   const threads = feedSnapshot.threads;
