@@ -560,6 +560,7 @@ export function useThreadMessages({
           setIsLoadingMessages(false);
           setIsInitialLoad(false);
           endThreadOpenSettling();
+          setInitialScroll((prev) => prev ?? { atBottom: true });
         }
         return false;
       }

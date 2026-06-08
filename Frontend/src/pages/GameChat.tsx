@@ -23,6 +23,7 @@ import { useThreadChrome, useThreadMessages, useThreadScroll } from './GameChat/
 import { ChatAutoTranslateContext } from '@/contexts/ChatAutoTranslateContext';
 import { parseGameSport } from '@/utils/gameSport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
+import { isThreadComposerInitializing } from './GameChat/threadViewLoadingState';
 
 export const GameChat: React.FC<GameChatProps> = (props) => (
   <ThreadViewProvider {...props}>
@@ -120,8 +121,11 @@ const GameChatLayout: React.FC = () => {
     }
   }, [pinnedMessagesOrdered.length, threadScrollKey]);
   const pinnedBarAnimate = !pinnedBarSkipAnimationRef.current && !chromeSettling;
-  const isThreadInitializing =
-    isInitialLoad || isLoadingMessages || isThreadOpenSettling || initialScroll === undefined;
+  const isThreadInitializing = isThreadComposerInitializing(
+    isLoadingMessages,
+    isInitialLoad,
+    isThreadOpenSettling,
+  );
   const effectiveFooterVariant =
     footerVariant?.type === 'input' && isThreadInitializing
       ? ({ type: 'contextLoading' } as const)

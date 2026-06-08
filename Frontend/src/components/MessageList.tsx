@@ -43,6 +43,7 @@ import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
 import { getMessageRowKey } from '@/services/chat/messageRowKey';
 import { ChatDateSeparator } from '@/components/chat/ChatDateSeparator';
 import { getChatDateSeparatorLabel } from '@/utils/chatDateSeparator';
+import { isThreadMessagesPending } from '@/pages/GameChat/threadViewLoadingState';
 
 const OPEN_TAIL_EAGER_MEDIA = 60;
 const VIRTUAL_OVERSCAN_BASE = 10;
@@ -651,8 +652,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     return () => io.disconnect();
   }, [onLoadMore, hasMoreMessages, isInitialLoad, isSwitchingChatType, messages.length]);
 
-  const isMessagesPending =
-    isLoadingMessages || isInitialLoad || (messages.length === 0 && threadLayoutSettling);
+  const isMessagesPending = isThreadMessagesPending(isLoadingMessages, isInitialLoad);
 
   if (messages.length === 0 && isMessagesPending) {
     return (
