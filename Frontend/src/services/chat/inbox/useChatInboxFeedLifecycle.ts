@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import {
-  applyDraftsToChatItems,
   deduplicateChats,
   type FilterCache,
 } from '@/utils/chatListHelpers';
@@ -10,8 +9,12 @@ import { clearChatListModuleCacheWhenUserMismatch } from '@/components/chat/chat
 import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 import { shouldEnterChatListLoadingState } from '@/components/chat/chatListLoadingGate';
 import type { ChatItem } from '@/components/chat/chatListTypes';
-import { ensureCityGroupInUsersChatItems } from '@/utils/chatListCityGroup';
 import { mergeDexThreadIndexForUsersTab } from '@/utils/chatListDexMerge';
+import {
+  prepareChatsForVisibleApply,
+  prepareUsersTabDexFirstPaint,
+  shouldSkipRedundantNetworkVisibleApply,
+} from './chatInboxFeedPrepare';
 import type { ChatInboxAdapter } from './types';
 import { chatInboxThreadIndex } from './chatInboxProductionAdapter';
 import type { ChatInboxFetchOps } from './chatInboxFeedFetch';
@@ -65,29 +68,43 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
       }
     };
 
-    const applyCacheWithDrafts = async (cached: FilterCache, resortDrafts: boolean) => {
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, 0);
-      });
+    const applyCacheWithDrafts = async (
+      cached: FilterCache,
+      resortDrafts: boolean,
+      markNetworkSettled = false
+    ) => {
       const allDrafts = await getMergedDrafts(true);
-      const withDrafts = applyDraftsToChatItems(
-        deduplicateChats(cached.chats),
-        allDrafts,
+      const withDrafts = await prepareChatsForVisibleApply(
+        cached.chats,
         chatsFilter,
         userId,
+        allDrafts,
         resortDrafts
       );
-      applyCacheToState(cached, withDrafts);
+      applyCacheToState(cached, withDrafts, markNetworkSettled);
       useChatListFeedStore.getState().setLoading(false);
     };
 
     let cancelled = false;
 
-    const applyNetworkFetchToVisible = (currentFilter: ChatsFilterType) => {
+    const applyNetworkFetchToVisible = async (currentFilter: ChatsFilterType) => {
       const c = useChatListFeedStore.getState().getFilterCache(currentFilter);
       if (!c || useChatListFeedStore.getState().userId !== userId) return;
       if (useShellNavStore.getState().chatsFilter !== currentFilter) return;
-      applyCacheToState(c, c.chats, true);
+      const allDrafts = await getMergedDrafts(true);
+      const prepared = await prepareChatsForVisibleApply(
+        c.chats,
+        currentFilter,
+        userId,
+        allDrafts,
+        false
+      );
+      const visible = useChatListFeedStore.getState().rows;
+      if (shouldSkipRedundantNetworkVisibleApply(visible, prepared, currentFilter)) {
+        useChatListFeedStore.getState().markNetworkSettled(currentFilter);
+        return;
+      }
+      applyCacheToState(c, prepared, true);
     };
 
     const scheduleNetworkRefresh = (currentFilter: ChatsFilterType) => {
@@ -98,7 +115,7 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
           console.error('Failed to fetch chats:', err);
         }
         if (cancelled) return;
-        applyNetworkFetchToVisible(currentFilter);
+        await applyNetworkFetchToVisible(currentFilter);
       })();
     };
 
@@ -122,29 +139,17 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
         try {
           const fromUsersDex = await chatInboxThreadIndex.load(chatsFilter);
           const fromGamesDex = chatsFilter === 'users' ? await chatInboxThreadIndex.load('games') : [];
-          let fromDex =
+          const fromDex =
             chatsFilter === 'users'
               ? mergeDexThreadIndexForUsersTab(fromUsersDex, fromGamesDex, userId)
               : deduplicateChats([...fromUsersDex, ...fromGamesDex]);
           if (!cancelled && fromDex.length > 0) {
             showedDisk = true;
-            await new Promise<void>((resolve) => {
-              setTimeout(resolve, 0);
-            });
             const allDrafts = await getMergedDrafts(true);
-            if (chatsFilter === 'users' && userId) {
-              fromDex = await ensureCityGroupInUsersChatItems(fromDex, userId, {
-                allDrafts,
-                fetchIfMissing: useNetworkStore.getState().isOnline,
-              });
-            }
-            const dexChats = applyDraftsToChatItems(
-              fromDex,
-              allDrafts,
-              chatsFilter,
-              userId,
-              true
-            );
+            const dexChats =
+              chatsFilter === 'users'
+                ? await prepareUsersTabDexFirstPaint(fromUsersDex, fromGamesDex, userId, allDrafts)
+                : await prepareChatsForVisibleApply(fromDex, chatsFilter, userId, allDrafts, true);
             const dexOnly: FilterCache = { chats: dexChats };
             if (chatsFilter === 'users') {
               dexOnly.cityUsers = [];
@@ -186,8 +191,7 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
           if (cancelled) return;
           const after = useChatListFeedStore.getState().getFilterCache(chatsFilter);
           if (after && useChatListFeedStore.getState().userId === userId) {
-            applyCacheToState(after, undefined, true);
-            useChatListFeedStore.getState().setLoading(false);
+            await applyCacheWithDrafts(after, false, true);
             return;
           }
         }
@@ -198,7 +202,7 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
         await runCoalescedFilterFetch(currentFilter);
         if (cancelled) return;
         const c = useChatListFeedStore.getState().getFilterCache(chatsFilter);
-        if (c) applyCacheToState(c, undefined, true);
+        if (c) await applyCacheWithDrafts(c, false, true);
       } catch (err) {
         if (!cancelled) console.error('Failed to fetch chats:', err);
       } finally {

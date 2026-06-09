@@ -692,9 +692,11 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
 
   useEffect(() => {
     if (lastSyncCompletedAt == null) return;
-    if (chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels' || chatsFilter === 'market') {
-      void fetchChatsForFilter(chatsFilter as 'users' | 'bugs' | 'channels' | 'market');
+    if (chatsFilter !== 'users' && chatsFilter !== 'bugs' && chatsFilter !== 'channels' && chatsFilter !== 'market') {
+      return;
     }
+    if (useChatListFeedStore.getState().isNetworkSettled(chatsFilter)) return;
+    void fetchChatsForFilter(chatsFilter as 'users' | 'bugs' | 'channels' | 'market');
   }, [lastSyncCompletedAt, chatsFilter, fetchChatsForFilter]);
 
   useEffect(() => {

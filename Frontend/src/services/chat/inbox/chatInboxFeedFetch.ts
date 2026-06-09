@@ -15,6 +15,10 @@ import { useShellNavStore } from '@/store/shellNavStore';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { useAuthStore } from '@/store/authStore';
 import { ensureCityGroupInUsersChatItems } from '@/utils/chatListCityGroup';
+import {
+  prepareChatsForVisibleApply,
+  shouldSkipRedundantNetworkVisibleApply,
+} from './chatInboxFeedPrepare';
 import { resolveGameUnreadCounts, resolveGroupUnreadCounts, userChatUnreadCount } from '@/utils/unreadCountsFromStore';
 import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 import type { ChatItem } from '@/components/chat/chatListTypes';
@@ -83,8 +87,16 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
       return { activeChats: withCity, cityUsers: cityUsersArray, usersHasMore: pagination?.hasMore ?? false };
     } catch (err) {
       console.error('fetchUsersSearchData failed:', err);
-      sortChatItems(activeChats, 'users', user?.id);
-      return { activeChats, cityUsers: Array.isArray(cityUsersData) ? cityUsersData : [], usersHasMore: false };
+      const withCity = await ensureCityGroupInUsersChatItems(
+        deduplicateChats(sortChatItems(activeChats, 'users', user?.id)),
+        user.id,
+        { allDrafts }
+      );
+      return {
+        activeChats: withCity,
+        cityUsers: Array.isArray(cityUsersData) ? cityUsersData : [],
+        usersHasMore: false,
+      };
     }
   };
 
@@ -329,10 +341,20 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
     if (filter !== useShellNavStore.getState().chatsFilter) return;
     const cached = useChatListFeedStore.getState().getFilterCache(filter);
     if (!cached) return;
-    adapter.commitFilterCache(filter, cached, {
-      userId: useAuthStore.getState().user?.id,
-      applyToVisible: true,
-    });
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return;
+    const allDrafts = await getMergedDrafts(true);
+    const prepared = await prepareChatsForVisibleApply(cached.chats, filter, userId, allDrafts, false);
+    const visible = useChatListFeedStore.getState().rows;
+    if (shouldSkipRedundantNetworkVisibleApply(visible, prepared, filter)) {
+      useChatListFeedStore.getState().markNetworkSettled(filter);
+      return;
+    }
+    adapter.commitFilterCache(
+      filter,
+      { ...cached, chats: prepared },
+      { userId, applyToVisible: true }
+    );
     useChatListFeedStore.getState().markNetworkSettled(filter);
   };
 

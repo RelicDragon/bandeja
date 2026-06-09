@@ -233,7 +233,7 @@ export const groupsToChatItems = (
 ): ChatItem[] => {
   const items: ChatItem[] = [];
   groups.forEach((group) => {
-    if (!group.isChannel && (group.isParticipant || group.isOwner)) {
+    if (!group.isChannel && (group.isParticipant || group.isOwner || group.isCityGroup)) {
       const draft = matchDraftToChat(allDrafts, 'GROUP', group.id);
       const lastMessageDate =
         group.lastMessage || draft ? calculateLastMessageDate(group.lastMessage, draft, group.updatedAt) : null;
