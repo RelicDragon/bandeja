@@ -1978,14 +1978,15 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
         roundNumber={roundAddedModalRoundNumber}
       />
 
+      </div>
+      </div>
+
       <DeclineInviteModal
         isOpen={declineInviteId !== null}
         onClose={() => setDeclineInviteId(null)}
         onDecline={confirmDeclineInvite}
         isLoading={isDecliningInvite}
       />
-      </div>
-      </div>
     </>
     </SportLevelProvider>
   );
