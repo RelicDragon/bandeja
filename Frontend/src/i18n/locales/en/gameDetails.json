@@ -13,6 +13,7 @@
     "yourTime": "Your time: {{time}}",
     "settingsUpdated": "Settings updated successfully",
     "scrollMoreBelow": "More content below",
+    "scrollMoreAbove": "More content above",
     "photoPickFailed": "Failed to pick photos",
     "editTab": {
       "general": "General",

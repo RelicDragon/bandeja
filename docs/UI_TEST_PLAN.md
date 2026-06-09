@@ -403,6 +403,8 @@ Frontend/e2e/
 | GD-07 | Open game chat | Chat button | `/games/:id/chat` |
 | GD-73 | Scroll-more hint | Open long game details; scroll partway down | Bottom gradient + bouncing chevron; hides at page bottom |
 | GD-74 | Scroll-more hint tap | Tap chevron on long game details | Smooth scroll down ~one viewport; hint hides when at bottom |
+| GD-75 | Scroll-above hint | Scroll down on long game details | Top gradient + bouncing chevron up; hides at page top |
+| GD-76 | Scroll-above hint tap | Tap top chevron on long game details | Smooth scroll up ~one viewport; hint hides when at top |
 
 ### 9.2 Participation
 

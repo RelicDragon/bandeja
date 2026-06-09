@@ -1,44 +1,59 @@
 import { useCallback, useEffect, useLayoutEffect, useState, type RefObject } from 'react';
 
-const DEFAULT_BOTTOM_THRESHOLD = 32;
+const DEFAULT_EDGE_THRESHOLD = 32;
 
-type UseHasMoreContentBelowOptions = {
+type UseScrollOverflowEdgesOptions = {
   scrollRef?: RefObject<HTMLElement | null>;
   contentRef?: RefObject<HTMLElement | null>;
-  bottomThreshold?: number;
+  edgeThreshold?: number;
   enabled?: boolean;
 };
 
-function readScrollMetrics(scrollEl: HTMLElement | null, bottomThreshold: number) {
+export type ScrollOverflowEdges = {
+  hasMoreAbove: boolean;
+  hasMoreBelow: boolean;
+};
+
+function readScrollEdges(
+  scrollEl: HTMLElement | null,
+  edgeThreshold: number,
+): ScrollOverflowEdges {
   const scrollTop = scrollEl ? scrollEl.scrollTop : window.scrollY;
   const scrollHeight = scrollEl ? scrollEl.scrollHeight : document.documentElement.scrollHeight;
   const clientHeight = scrollEl ? scrollEl.clientHeight : window.innerHeight;
   const overflow = scrollHeight > clientHeight + 1;
   const distanceFromEnd = scrollHeight - scrollTop - clientHeight;
-  const atBottom = distanceFromEnd <= bottomThreshold;
-  return overflow && !atBottom;
+  const atTop = scrollTop <= edgeThreshold;
+  const atBottom = distanceFromEnd <= edgeThreshold;
+  return {
+    hasMoreAbove: overflow && !atTop,
+    hasMoreBelow: overflow && !atBottom,
+  };
 }
 
-export function useHasMoreContentBelow({
+export function useScrollOverflowEdges({
   scrollRef,
   contentRef,
-  bottomThreshold = DEFAULT_BOTTOM_THRESHOLD,
+  edgeThreshold = DEFAULT_EDGE_THRESHOLD,
   enabled = true,
-}: UseHasMoreContentBelowOptions): boolean {
-  const [hasMoreBelow, setHasMoreBelow] = useState(false);
+}: UseScrollOverflowEdgesOptions): ScrollOverflowEdges {
+  const [edges, setEdges] = useState<ScrollOverflowEdges>({
+    hasMoreAbove: false,
+    hasMoreBelow: false,
+  });
 
   const update = useCallback(() => {
     if (!enabled) {
-      setHasMoreBelow(false);
+      setEdges({ hasMoreAbove: false, hasMoreBelow: false });
       return;
     }
     const scrollEl = scrollRef?.current ?? null;
-    setHasMoreBelow(readScrollMetrics(scrollEl, bottomThreshold));
-  }, [scrollRef, bottomThreshold, enabled]);
+    setEdges(readScrollEdges(scrollEl, edgeThreshold));
+  }, [scrollRef, edgeThreshold, enabled]);
 
   useLayoutEffect(() => {
     if (!enabled) {
-      setHasMoreBelow(false);
+      setEdges({ hasMoreAbove: false, hasMoreBelow: false });
       return;
     }
     update();
@@ -81,5 +96,5 @@ export function useHasMoreContentBelow({
     };
   }, [scrollRef, contentRef, enabled, update]);
 
-  return hasMoreBelow;
+  return edges;
 }

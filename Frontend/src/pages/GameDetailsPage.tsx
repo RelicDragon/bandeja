@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useMemo } from 'react';
+import { useRef, useState, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { Card } from '@/components';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
@@ -14,7 +14,7 @@ import { LeagueDetailsContent } from './LeagueDetails';
 import { GameChat } from './GameChat';
 import { useTranslation } from 'react-i18next';
 import { AnimatedPresencePanel } from '@/components/motion/AnimatedPresencePanel';
-import { ScrollMoreBelowHint } from '@/components/GameDetails/ScrollMoreBelowHint';
+import { ScrollEdgeHints } from '@/components/GameDetails/ScrollEdgeHints';
 
 type EntityRouteState =
   | { status: 'loading' }
@@ -71,6 +71,11 @@ export const GameDetailsPage = () => {
     bootstrapMatchesRoute &&
     (useTableViewLayout || !!layoutCancelledInfo);
 
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+    scrollContainerRef.current?.scrollTo(0, 0);
+  }, [id]);
+
   useEffect(() => {
     setGameDetailsTableViewOverride(null);
     setGameDetailsCanShowTableView(false);
@@ -80,6 +85,12 @@ export const GameDetailsPage = () => {
     setSelectedGameChatId(null);
     setEntityRoute({ status: 'loading' });
   }, [id, setGameDetailsTableViewOverride, setGameDetailsCanShowTableView, setGameDetailsOccludesSideChat]);
+
+  useLayoutEffect(() => {
+    if (entityRoute.status !== 'ready' && entityRoute.status !== 'cancelled') return;
+    window.scrollTo(0, 0);
+    scrollContainerRef.current?.scrollTo(0, 0);
+  }, [id, entityRoute.status]);
 
   useEffect(() => {
     setGameDetailsOccludesSideChat(occludesSideChat);
@@ -179,7 +190,7 @@ export const GameDetailsPage = () => {
           <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3">
             {renderEntityDetails()}
           </div>
-          <ScrollMoreBelowHint scrollRef={scrollContainerRef} enabled={showScrollMoreHint} />
+          <ScrollEdgeHints scrollRef={scrollContainerRef} enabled={showScrollMoreHint} />
         </div>
       </SplitViewLeftPanel>
     );
@@ -194,7 +205,7 @@ export const GameDetailsPage = () => {
             >
               {renderEntityDetails()}
             </div>
-            <ScrollMoreBelowHint
+            <ScrollEdgeHints
               scrollRef={scrollContainerRef}
               enabled={showScrollMoreHint && !layoutCancelledInfo}
             />
@@ -229,7 +240,7 @@ export const GameDetailsPage = () => {
   return (
     <div ref={mobileContentRef} className="relative">
       {renderEntityDetails()}
-      <ScrollMoreBelowHint contentRef={mobileContentRef} enabled={showScrollMoreHint} />
+      <ScrollEdgeHints contentRef={mobileContentRef} enabled={showScrollMoreHint} />
     </div>
   );
 };
