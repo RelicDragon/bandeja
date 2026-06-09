@@ -34,11 +34,8 @@ function messageContentEqual(a: ChatMessage, b: ChatMessage): boolean {
 export interface MessageRowMemoProps {
   message: ChatMessage;
   replyCount: number;
-  activeContextMenuMessageId: string | null;
   isPinned: boolean;
   loadMediaEager: boolean;
-  suppressOpenReactionMotion: boolean;
-  skipStaggerOnOpen?: boolean;
   showReply: boolean;
   isChannel: boolean;
 }
@@ -46,13 +43,8 @@ export interface MessageRowMemoProps {
 export function messageRowPropsEqual(prev: MessageRowMemoProps, next: MessageRowMemoProps): boolean {
   if (!messageContentEqual(prev.message, next.message)) return false;
   if (prev.replyCount !== next.replyCount) return false;
-  const prevMenuActive = prev.activeContextMenuMessageId === prev.message.id;
-  const nextMenuActive = next.activeContextMenuMessageId === next.message.id;
-  if (prevMenuActive !== nextMenuActive) return false;
   if (prev.isPinned !== next.isPinned) return false;
   if (prev.loadMediaEager !== next.loadMediaEager) return false;
-  if (prev.suppressOpenReactionMotion !== next.suppressOpenReactionMotion) return false;
-  if (prev.skipStaggerOnOpen !== next.skipStaggerOnOpen) return false;
   if (prev.showReply !== next.showReply) return false;
   if (prev.isChannel !== next.isChannel) return false;
   return true;

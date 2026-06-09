@@ -9,7 +9,7 @@ import { useThreadChrome } from './useThreadView';
 export const GameChatHeaderSection: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const chrome = useThreadChrome();
   const {
     id,

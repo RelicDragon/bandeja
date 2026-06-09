@@ -21,12 +21,12 @@ export function useThreadViewController({
   isEmbedded = false,
   chatId: propChatId,
   chatType: propChatType,
-}: GameChatProps): ThreadViewValue {
+}: GameChatProps): Omit<ThreadViewValue, 'effectiveFooterVariant'> {
   const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuthStore();
-  const { setChatsFilter } = useShellNavStore();
+  const user = useAuthStore((s) => s.user);
+  const setChatsFilter = useShellNavStore((s) => s.setChatsFilter);
 
   const id = propChatId ?? paramId;
   const locationState = location.state as LocationState | null;

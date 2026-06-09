@@ -7,9 +7,9 @@ import {
   ThreadMessagesContext,
   ThreadMessagesDataContext,
   ThreadScrollContext,
-  ThreadViewContext,
 } from './ThreadViewContext';
 import { useThreadViewController } from './useThreadViewController';
+import { isThreadComposerInitializing } from './threadViewLoadingState';
 
 export function ThreadViewProvider({ children, ...props }: GameChatProps & { children: ReactNode }) {
   const ctrl = useThreadViewController(props);
@@ -189,6 +189,15 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
       handlePinnedBarClick: ctrl.handlePinnedBarClick,
       derived: ctrl.derived,
       footerVariant: ctrl.footerVariant,
+      effectiveFooterVariant:
+        ctrl.footerVariant?.type === 'input' &&
+        isThreadComposerInitializing(
+          ctrl.isLoadingMessages,
+          ctrl.isInitialLoad,
+          ctrl.isThreadOpenSettling,
+        )
+          ? ({ type: 'contextLoading' } as const)
+          : ctrl.footerVariant,
       isBlockedByUser: ctrl.isBlockedByUser,
       isJoiningAsGuest: ctrl.isJoiningAsGuest,
       title: ctrl.title,
@@ -243,6 +252,9 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
       ctrl.handlePinnedBarClick,
       ctrl.derived,
       ctrl.footerVariant,
+      ctrl.isLoadingMessages,
+      ctrl.isInitialLoad,
+      ctrl.isThreadOpenSettling,
       ctrl.isBlockedByUser,
       ctrl.isJoiningAsGuest,
       ctrl.title,
@@ -271,20 +283,8 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
       ctrl.chatContainerRef,
       ctrl.showLoadingHeader,
       ctrl.navigate,
-      ctrl.isThreadOpenSettling,
-      ctrl.isInitialLoad,
       ctrl.isSwitchingChatType,
     ]
-  );
-
-  const combined = useMemo(
-    (): import('./ThreadViewContext').ThreadViewValue => ({
-      ...messages,
-      ...scroll,
-      ...composer,
-      ...chrome,
-    }),
-    [messages, scroll, composer, chrome]
   );
 
   return (
@@ -293,9 +293,7 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
         <ThreadMessagesContext.Provider value={messages}>
           <ThreadScrollContext.Provider value={scroll}>
             <ThreadComposerContext.Provider value={composer}>
-              <ThreadChromeContext.Provider value={chrome}>
-                <ThreadViewContext.Provider value={combined}>{children}</ThreadViewContext.Provider>
-              </ThreadChromeContext.Provider>
+              <ThreadChromeContext.Provider value={chrome}>{children}</ThreadChromeContext.Provider>
             </ThreadComposerContext.Provider>
           </ThreadScrollContext.Provider>
         </ThreadMessagesContext.Provider>

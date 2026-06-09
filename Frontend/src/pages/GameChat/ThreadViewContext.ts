@@ -114,6 +114,7 @@ export interface ThreadChromeValue {
   handlePinnedBarClick: (messageId: string) => void;
   derived: ReturnType<typeof useThreadDerived>;
   footerVariant: GameChatFooterVariant | null;
+  effectiveFooterVariant: GameChatFooterVariant | null;
   isBlockedByUser: boolean;
   isJoiningAsGuest: boolean;
   title: string;
@@ -147,7 +148,7 @@ export interface ThreadChromeValue {
   isSwitchingChatType: boolean;
 }
 
-/** Combined value — prefer seam hooks for consumers. */
+/** Controller return shape — consumers should use seam hooks. */
 export interface ThreadViewValue
   extends ThreadMessagesValue,
     ThreadScrollValue,
@@ -160,6 +161,3 @@ export const ThreadMessagesContext = createContext<ThreadMessagesValue | null>(n
 export const ThreadScrollContext = createContext<ThreadScrollValue | null>(null);
 export const ThreadComposerContext = createContext<ThreadComposerValue | null>(null);
 export const ThreadChromeContext = createContext<ThreadChromeValue | null>(null);
-
-/** @deprecated Prefer seam hooks. Kept for gradual migration. */
-export const ThreadViewContext = createContext<ThreadViewValue | null>(null);

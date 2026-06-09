@@ -540,27 +540,28 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
       )}
     </>
   );
-}, (prev, next) =>
-  messageRowPropsEqual(
+}, (prev, next) => {
+  const menuEqual =
+    (prev.contextMenuState.isOpen && prev.contextMenuState.messageId === prev.message.id) ===
+    (next.contextMenuState.isOpen && next.contextMenuState.messageId === next.message.id);
+  if (!menuEqual) return false;
+  return messageRowPropsEqual(
     {
       message: prev.message,
       replyCount: prev.replyCount ?? 0,
-      activeContextMenuMessageId: prev.contextMenuState.isOpen ? prev.contextMenuState.messageId : null,
       isPinned: prev.isPinned ?? false,
       loadMediaEager: prev.loadMediaEager ?? false,
-      suppressOpenReactionMotion: prev.suppressOpenReactionMotion ?? false,
       showReply: prev.showReply ?? true,
       isChannel: prev.isChannel ?? false,
     },
     {
       message: next.message,
       replyCount: next.replyCount ?? 0,
-      activeContextMenuMessageId: next.contextMenuState.isOpen ? next.contextMenuState.messageId : null,
       isPinned: next.isPinned ?? false,
       loadMediaEager: next.loadMediaEager ?? false,
-      suppressOpenReactionMotion: next.suppressOpenReactionMotion ?? false,
       showReply: next.showReply ?? true,
       isChannel: next.isChannel ?? false,
     }
-  )
-);
+  );
+})
+;

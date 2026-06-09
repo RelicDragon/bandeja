@@ -8,12 +8,20 @@ import {
   useCallback,
   useState,
   useReducer,
+  memo,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ChatMessage, Poll } from '@/api/chat';
-import { AnimatedMessageItem } from './AnimatedMessageItem';
-import { useContextMenuManager } from '@/hooks/useContextMenuManager';
+import type { ChatMessage } from '@/api/chat';
+import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
+import { MessageListRow } from './MessageList/MessageListRow';
+import { messageListPropsEqual } from './MessageList/messageListPropsEqual';
+import {
+  handleMessageListContextMenuScrollStart,
+  resetMessageListContextMenu,
+} from './MessageList/messageListContextMenuStore';
+import { MessageListSettlingProvider } from './MessageList/MessageListSettlingProvider';
+import type { MessageListHandle, MessageListProps } from './MessageList/types';
 import {
   flushThreadScrollSave,
   scheduleThreadScrollSave,
@@ -39,10 +47,7 @@ import {
   pinMessageListContainerToBottomAfterLayout,
   scrollVirtualizerToIndex,
 } from '@/utils/messageListScroll';
-import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
 import { getMessageRowKey } from '@/services/chat/messageRowKey';
-import { ChatDateSeparator } from '@/components/chat/ChatDateSeparator';
-import { getChatDateSeparatorLabel } from '@/utils/chatDateSeparator';
 import { isThreadMessagesPending } from '@/pages/GameChat/threadViewLoadingState';
 import { WavyDots } from '@/components/WavyDots';
 
@@ -52,51 +57,9 @@ const VIRTUAL_OVERSCAN_FAST = 22;
 /** Skip redundant scrollToIndex(end) when already visually pinned (subpixel / end spacer). */
 const PIN_BOTTOM_SKIP_GAP_PX = 20;
 
-export type MessageListHandle = {
-  scrollToMessageById: (messageId: string) => void;
-  scrollToBottomAlign: () => void;
-  scrollToBottomSmooth: () => void;
-};
+export type { MessageListHandle, MessageListProps };
 
-interface MessageListProps {
-  messages: ChatMessage[];
-  onAddReaction: (messageId: string, emoji: string) => void;
-  onRemoveReaction: (messageId: string) => void;
-  onDeleteMessage: (messageId: string) => void;
-  onReplyMessage: (message: ChatMessage) => void;
-  onEditMessage?: (message: ChatMessage) => void;
-  onPollUpdated?: (messageId: string, updatedPoll: Poll) => void;
-  onResendQueued?: (tempId: string) => void;
-  onRemoveFromQueue?: (tempId: string) => void;
-  isLoading?: boolean;
-  isLoadingMessages?: boolean;
-  isSwitchingChatType?: boolean;
-  onScrollToMessage?: (messageId: string) => void;
-  hasMoreMessages?: boolean;
-  onLoadMore?: () => void;
-  isInitialLoad?: boolean;
-  isLoadingMore?: boolean;
-  isChannel?: boolean;
-  userChatUser1Id?: string;
-  userChatUser2Id?: string;
-  onChatRequestRespond?: (messageId: string, accepted: boolean) => void;
-  hasContextPanel?: boolean;
-  pinnedMessageIds?: string[];
-  onPin?: (message: ChatMessage) => void;
-  onUnpin?: (messageId: string) => void;
-  showReply?: boolean;
-  onForwardMessage?: (message: ChatMessage) => void;
-  threadScrollKey?: string | null;
-  /** Coordinator scroll decision; set with first open paint (undefined until committed). */
-  initialScroll?: ThreadInitialScroll;
-  /** Bumped on each atomic open paint so scroll restore re-runs for the new snapshot. */
-  openPaintGeneration?: number;
-  /** While true, parent signals loading/initial paint; list extends this until tail row heights are preloaded. */
-  threadLayoutSettling?: boolean;
-  onChatScrollNearBottomChange?: (nearBottom: boolean) => void;
-}
-
-export const MessageList = forwardRef<MessageListHandle, MessageListProps>(function MessageList(
+const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(function MessageList(
   {
     messages,
     onAddReaction,
@@ -147,8 +110,18 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   const isLoadingMoreRef = useRef(false);
   const justLoadedOlderMessagesRef = useRef(false);
   const loadMoreCooldownRef = useRef(0);
-  const { contextMenuState, openContextMenu, closeContextMenu, handleScrollStart } = useContextMenuManager();
-  const activeContextMenuMessageId = contextMenuState.isOpen ? contextMenuState.messageId : null;
+  const layoutSettlingRef = useRef(threadLayoutSettling);
+  layoutSettlingRef.current = threadLayoutSettling;
+  const isInitialLoadRef = useRef(isInitialLoad);
+  isInitialLoadRef.current = isInitialLoad;
+  const settlingRefs = useMemo(
+    () => ({ layoutSettlingRef, isInitialLoadRef }),
+    []
+  );
+
+  useEffect(() => {
+    resetMessageListContextMenu();
+  }, [threadScrollKey]);
 
   const replyCountMap = useMemo(() => buildReplyCountMap(messages), [messages]);
   const messagesRef = useRef(messages);
@@ -211,8 +184,6 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
       tail.filter((m) => (m.mediaUrls?.length ?? 0) > 0 && m.messageType !== 'VIDEO').map((m) => m.id)
     );
   }, [messages]);
-
-  const suppressOpenReactionMotion = threadLayoutSettling;
 
   const lastSeededTailKeyRef = useRef('');
 
@@ -619,7 +590,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     if (!container) return;
 
     const handleScroll = () => {
-      handleScrollStart();
+      handleMessageListContextMenuScrollStart();
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
@@ -627,7 +598,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     return () => {
       container.removeEventListener('scroll', handleScroll);
     };
-  }, [handleScrollStart]);
+  }, []);
 
   const loadMoreBlockedRef = useRef(false);
   loadMoreBlockedRef.current =
@@ -652,6 +623,47 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
     io.observe(target);
     return () => io.disconnect();
   }, [onLoadMore, hasMoreMessages, isInitialLoad, isSwitchingChatType, messages.length]);
+
+  const rowHandlers = useMemo(
+    () => ({
+      onAddReaction,
+      onRemoveReaction,
+      onDeleteMessage,
+      onReplyMessage,
+      onEditMessage,
+      onPollUpdated,
+      onResendQueued,
+      onRemoveFromQueue,
+      onScrollToMessage,
+      isChannel,
+      userChatUser1Id,
+      userChatUser2Id,
+      onChatRequestRespond,
+      onPin,
+      onUnpin,
+      showReply,
+      onForwardMessage,
+    }),
+    [
+      onAddReaction,
+      onRemoveReaction,
+      onDeleteMessage,
+      onReplyMessage,
+      onEditMessage,
+      onPollUpdated,
+      onResendQueued,
+      onRemoveFromQueue,
+      onScrollToMessage,
+      isChannel,
+      userChatUser1Id,
+      userChatUser2Id,
+      onChatRequestRespond,
+      onPin,
+      onUnpin,
+      showReply,
+      onForwardMessage,
+    ]
+  );
 
   const isMessagesPending = isThreadMessagesPending(isLoadingMessages, isInitialLoad);
 
@@ -695,6 +707,7 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
   const virtualItems = virtualizer.getVirtualItems();
 
   return (
+    <MessageListSettlingProvider value={settlingRefs}>
     <div
       ref={messagesContainerRef}
       className="relative flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto bg-gray-50 dark:bg-gray-800 p-4 min-h-0 overscroll-contain"
@@ -727,73 +740,27 @@ export const MessageList = forwardRef<MessageListHandle, MessageListProps>(funct
         }}
       >
         {virtualItems.map((row) => {
-          if (row.index === rowCount - 1) {
-            return (
-              <div
-                key={row.key}
-                data-index={row.index}
-                ref={virtualizer.measureElement}
-                className="left-0 top-0 w-full"
-                style={{
-                  position: 'absolute',
-                  transform: `translateY(${row.start}px)`,
-                }}
-                aria-hidden
-              >
-                <div className="h-32" />
-              </div>
-            );
-          }
-          const message = messages[row.index]!;
-          const dateSeparatorLabel = getChatDateSeparatorLabel(messages, row.index);
+          const message = row.index < messages.length ? messages[row.index] : undefined;
           return (
-            <div
+            <MessageListRow
               key={row.key}
-              data-index={row.index}
-              ref={virtualizer.measureElement}
-              id={`message-${message.id}`}
-              className="left-0 top-0 w-full"
-              style={{
-                position: 'absolute',
-                transform: `translateY(${row.start}px)`,
-              }}
-            >
-              {dateSeparatorLabel ? <ChatDateSeparator label={dateSeparatorLabel} /> : null}
-              <AnimatedMessageItem
-                message={message}
-                staggerKey={getMessageRowKey(message)}
-                skipStaggerOnOpen={threadLayoutSettling || isInitialLoad}
-                suppressOpenReactionMotion={suppressOpenReactionMotion}
-                loadMediaEager={eagerMediaMessageIds.has(message.id)}
-                onAddReaction={onAddReaction}
-                onRemoveReaction={onRemoveReaction}
-                onDeleteMessage={onDeleteMessage}
-                onReplyMessage={onReplyMessage}
-                onEditMessage={onEditMessage}
-                onPollUpdated={onPollUpdated}
-                onResendQueued={onResendQueued}
-                onRemoveFromQueue={onRemoveFromQueue}
-                activeContextMenuMessageId={activeContextMenuMessageId}
-                contextMenuState={contextMenuState}
-                onOpenContextMenu={openContextMenu}
-                onCloseContextMenu={closeContextMenu}
-                replyCount={replyCountMap.get(message.id) ?? 0}
-                onScrollToFirstReply={onScrollToFirstReply}
-                onScrollToMessage={onScrollToMessage}
-                isChannel={isChannel}
-                userChatUser1Id={userChatUser1Id}
-                userChatUser2Id={userChatUser2Id}
-                onChatRequestRespond={onChatRequestRespond}
-                isPinned={pinnedSet.has(message.id)}
-                onPin={onPin}
-                onUnpin={onUnpin}
-                showReply={showReply}
-                onForwardMessage={onForwardMessage}
-              />
-            </div>
+              row={row}
+              message={message}
+              messages={messages}
+              rowCount={rowCount}
+              measureElement={virtualizer.measureElement}
+              eagerMediaMessageIds={eagerMediaMessageIds}
+              replyCount={message ? (replyCountMap.get(message.id) ?? 0) : 0}
+              isPinned={message ? pinnedSet.has(message.id) : false}
+              onScrollToFirstReply={onScrollToFirstReply}
+              handlers={rowHandlers}
+            />
           );
         })}
       </div>
     </div>
+    </MessageListSettlingProvider>
   );
 });
+
+export const MessageList = memo(MessageListInner, messageListPropsEqual);

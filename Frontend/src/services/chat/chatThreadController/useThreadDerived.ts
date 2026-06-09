@@ -11,6 +11,20 @@ import type { Game } from '@/types';
 import type { GroupChannel } from '@/api/chat';
 import type { ChatMessageWithStatus } from '@/api/chat';
 
+function getLastOwnMessageIdentity(
+  messages: ChatMessageWithStatus[],
+  userId: string | undefined,
+): string | null {
+  if (!userId || messages.length === 0) return null;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m.senderId === userId) {
+      return `${m.id ?? ''}\0${m._optimisticId ?? ''}\0${i}`;
+    }
+  }
+  return null;
+}
+
 export interface UseThreadDerivedParams {
   game: Game | null;
   groupChannel: GroupChannel | null;
@@ -31,7 +45,10 @@ export function useThreadDerived({
   channelActivity,
 }: UseThreadDerivedParams) {
   const { t } = useTranslation();
-  const participation = getGameParticipationState(game?.participants ?? [], user?.id, game ?? undefined);
+  const participation = useMemo(
+    () => getGameParticipationState(game?.participants ?? [], user?.id, game ?? undefined),
+    [game, user?.id],
+  );
   const { userParticipant, isParticipant, isPlaying: isPlayingParticipant, isAdminOrOwner, hasPendingInvite, isGuest, isInJoinQueue } = participation;
 
   const isBugChat = contextType === 'GROUP' && !!groupChannel?.bug;
@@ -114,13 +131,16 @@ export function useThreadDerived({
     return false;
   }, [contextType, canWriteGameChat, canWriteGroupChat]);
 
+  const lastOwnMessageIdentity = getLastOwnMessageIdentity(messages, user?.id);
+
   const lastOwnMessage = useMemo(() => {
-    if (!user?.id || messages.length === 0) return null;
+    if (!lastOwnMessageIdentity || !user?.id) return null;
     for (let i = messages.length - 1; i >= 0; i--) {
       if (messages[i].senderId === user.id) return messages[i];
     }
     return null;
-  }, [user?.id, messages]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- identity key gates refresh; full messages would bust chrome on every patch
+  }, [user?.id, lastOwnMessageIdentity]);
 
   const canViewPublicChat = contextType === 'USER' || contextType === 'GROUP' || (contextType === 'GAME' && currentChatType === 'PUBLIC') || canAccessChat;
 
@@ -135,36 +155,70 @@ export function useThreadDerived({
     );
   }, [contextType, game, user?.id, channelActivity]);
 
-  return {
-    participation,
-    userParticipant,
-    isParticipant,
-    isPlayingParticipant,
-    isAdminOrOwner,
-    hasPendingInvite,
-    isGuest,
-    isInJoinQueue,
-    isBugChat,
-    isBugCreator,
-    isBugAdmin,
-    canEditBug,
-    isBugChatParticipant,
-    isChannelOwner,
-    isChannelAdminOrOwner,
-    isChannelParticipant,
-    isChannel,
-    isChannelParticipantOnly,
-    isItemChat,
-    showMute,
-    showLeave,
-    showHeaderActions,
-    leaveTitle,
-    canWriteGroupChat,
-    canWriteGameChat,
-    canWriteChat,
-    canAccessChat,
-    canViewPublicChat,
-    lastOwnMessage,
-    availableChatTypes,
-  };
+  return useMemo(
+    () => ({
+      participation,
+      userParticipant,
+      isParticipant,
+      isPlayingParticipant,
+      isAdminOrOwner,
+      hasPendingInvite,
+      isGuest,
+      isInJoinQueue,
+      isBugChat,
+      isBugCreator,
+      isBugAdmin,
+      canEditBug,
+      isBugChatParticipant,
+      isChannelOwner,
+      isChannelAdminOrOwner,
+      isChannelParticipant,
+      isChannel,
+      isChannelParticipantOnly,
+      isItemChat,
+      showMute,
+      showLeave,
+      showHeaderActions,
+      leaveTitle,
+      canWriteGroupChat,
+      canWriteGameChat,
+      canWriteChat,
+      canAccessChat,
+      canViewPublicChat,
+      lastOwnMessage,
+      availableChatTypes,
+    }),
+    [
+      participation,
+      userParticipant,
+      isParticipant,
+      isPlayingParticipant,
+      isAdminOrOwner,
+      hasPendingInvite,
+      isGuest,
+      isInJoinQueue,
+      isBugChat,
+      isBugCreator,
+      isBugAdmin,
+      canEditBug,
+      isBugChatParticipant,
+      isChannelOwner,
+      isChannelAdminOrOwner,
+      isChannelParticipant,
+      isChannel,
+      isChannelParticipantOnly,
+      isItemChat,
+      showMute,
+      showLeave,
+      showHeaderActions,
+      leaveTitle,
+      canWriteGroupChat,
+      canWriteGameChat,
+      canWriteChat,
+      canAccessChat,
+      canViewPublicChat,
+      lastOwnMessage,
+      availableChatTypes,
+    ],
+  );
 }

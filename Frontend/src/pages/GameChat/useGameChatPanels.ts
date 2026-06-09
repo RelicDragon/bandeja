@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
 import { handleBack } from '@/utils/backNavigation';
 import type { ChatContextType } from '@/api/chat';
@@ -110,26 +110,44 @@ export function useGameChatPanels({
     closeParticipantsPage,
   ]);
 
-  return {
-    showParticipantsPage,
-    setShowParticipantsPage,
-    showParticipantsModal,
-    setShowParticipantsModal,
-    isParticipantsPageAnimating,
-    setIsParticipantsPageAnimating,
-    showItemPage,
-    setShowItemPage,
-    isItemPageAnimating,
-    setIsItemPageAnimating,
-    showPlayerCard,
-    setShowPlayerCard,
-    onOpenItemPage,
-    onOpenParticipantsPage,
-    handleHeaderBack,
-    handlePanelBack,
-    handleTitleClick,
-    handleBackButton,
-    closeItemPage,
-    closeParticipantsPage,
-  };
+  return useMemo(
+    () => ({
+      showParticipantsPage,
+      setShowParticipantsPage,
+      showParticipantsModal,
+      setShowParticipantsModal,
+      isParticipantsPageAnimating,
+      setIsParticipantsPageAnimating,
+      showItemPage,
+      setShowItemPage,
+      isItemPageAnimating,
+      setIsItemPageAnimating,
+      showPlayerCard,
+      setShowPlayerCard,
+      onOpenItemPage,
+      onOpenParticipantsPage,
+      handleHeaderBack,
+      handlePanelBack,
+      handleTitleClick,
+      handleBackButton,
+      closeItemPage,
+      closeParticipantsPage,
+    }),
+    [
+      showParticipantsPage,
+      showParticipantsModal,
+      isParticipantsPageAnimating,
+      showItemPage,
+      isItemPageAnimating,
+      showPlayerCard,
+      onOpenItemPage,
+      onOpenParticipantsPage,
+      handleHeaderBack,
+      handlePanelBack,
+      handleTitleClick,
+      handleBackButton,
+      closeItemPage,
+      closeParticipantsPage,
+    ],
+  );
 }

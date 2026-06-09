@@ -87,7 +87,7 @@ export function useGameChatDisplay({
     return null;
   })();
 
-  const icon = (() => {
+  const icon = useMemo(() => {
     if (isBugChat) return <BugIcon size={16} className="text-red-500" />;
     if (
       contextType === 'GAME' &&
@@ -140,7 +140,18 @@ export function useGameChatDisplay({
       );
     }
     return null;
-  })();
+  }, [
+    isBugChat,
+    contextType,
+    game,
+    t,
+    userChat,
+    userId,
+    groupChannel,
+    isItemChat,
+    onOpenItemPage,
+    onOpenParticipantsPage,
+  ]);
 
   return { title, titleContent, titleMetaRow, subtitle, icon };
 }
