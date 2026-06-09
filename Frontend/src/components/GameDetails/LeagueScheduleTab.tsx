@@ -772,7 +772,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
         <Card className="border border-teal-200/80 bg-gradient-to-br from-teal-50/95 to-cyan-50/60 dark:border-teal-900/40 dark:from-teal-950/40 dark:to-cyan-950/25">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
-              <h3 className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
                 <LayoutGrid className="h-5 w-5 shrink-0 text-teal-600 dark:text-teal-400" />
                 <span>{t('gameDetails.fixtureCreateFullRr')}</span>
               </h3>

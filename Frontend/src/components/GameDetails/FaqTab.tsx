@@ -82,7 +82,7 @@ export const FaqTab = ({ gameId }: FaqTabProps) => {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white whitespace-pre-line">
+                <h3 className="section-title whitespace-pre-line">
                   {faq.question}
                 </h3>
                 {isExpanded && (

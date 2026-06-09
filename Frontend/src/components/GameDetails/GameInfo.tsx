@@ -319,20 +319,20 @@ export const GameInfo = ({
 
   const renderName = () => {
     const titleClass = isCollapsed 
-      ? 'text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-20'
-      : 'text-2xl font-bold text-gray-900 dark:text-white mb-2';
+      ? 'text-xs font-semibold text-gray-900 dark:text-white mb-2 pr-20'
+      : 'text-lg font-bold text-gray-900 dark:text-white mb-2';
     const leagueNameClass = isCollapsed
       ? 'text-blue-600 dark:text-blue-400'
-      : 'text-2xl font-bold text-blue-600 dark:text-blue-400 mb-2';
+      : 'text-lg font-bold text-blue-600 dark:text-blue-400 mb-2';
     const leagueSubtitleClass = isCollapsed
       ? 'text-purple-600 dark:text-purple-400'
-      : 'text-xl font-semibold text-purple-600 dark:text-purple-400 mb-2';
+      : 'text-base font-semibold text-purple-600 dark:text-purple-400 mb-2';
     const groupClass = isCollapsed
       ? 'px-2 py-0.5 text-xs font-medium rounded text-white'
-      : 'px-3 py-1 text-sm font-medium rounded text-white';
+      : 'px-2 py-0.5 text-xs font-medium rounded text-white';
     const groupContainerClass = isCollapsed
       ? 'mt-1 flex items-center gap-2 flex-wrap'
-      : 'text-lg font-medium mb-2 flex items-center gap-2 flex-wrap';
+      : 'text-sm font-medium mb-2 flex items-center gap-2 flex-wrap';
     const gameTypeClass = isCollapsed
       ? 'ml-2 text-xs text-gray-500 dark:text-gray-400'
       : '';
@@ -398,7 +398,7 @@ export const GameInfo = ({
     if (!showTags) return null;
 
     const tagPadding = isCollapsed ? 'px-2 py-1' : 'px-3 py-1';
-    const tagText = isCollapsed ? 'text-xs' : 'text-sm';
+    const tagText = 'text-xs';
     const iconSize = isCollapsed ? 12 : 14;
     const gapClass = isCollapsed ? 'gap-2' : 'gap-2';
     const mbClass = isCollapsed ? 'mb-1' : 'mb-2';
@@ -770,7 +770,7 @@ export const GameInfo = ({
         </div>
       )}
       {isCollapsed && (
-        <div className={`text-sm text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 -mb-1 ${game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : 'flex items-center gap-4'}`}>
+        <div className={`text-xs text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 -mb-1 ${game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : 'flex items-center gap-4'}`}>
           {renderCollapsedSummary()}
         </div>
       )}
@@ -801,7 +801,7 @@ export const GameInfo = ({
         {isDifferentCity && game.city?.name && (
           <div className="inline-flex items-center gap-1.5 mb-3 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
             <Plane size={14} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
-            <span className="text-sm font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{translateCity(game.city.id, game.city.name, game.city.country)}</span>
+            <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{translateCity(game.city.id, game.city.name, game.city.country)}</span>
           </div>
         )}
         <div className="flex items-start justify-between mb-4">
@@ -812,7 +812,7 @@ export const GameInfo = ({
         </div>
 
         <div className="space-y-3 mb-0">
-          <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+          <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
             <Calendar size={20} className="text-primary-600 dark:text-primary-400" />
             {game.timeIsSet === false ? (
               canEdit && canShowEdit && !isEditMode ? (
@@ -845,7 +845,7 @@ export const GameInfo = ({
             )}
           </div>
           {game.entityType !== 'LEAGUE_SEASON' && game.timeIsSet !== false && (
-            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+            <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
               <Clock size={20} className="text-primary-600 dark:text-primary-400" />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
@@ -866,15 +866,15 @@ export const GameInfo = ({
             </div>
           )}
           {(game.entityType === 'BAR' ? timeDisplay.hintText : timeRangeDisplay.hintText) && (
-            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 opacity-75">
+            <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300 opacity-75">
               <Plane size={20} className="text-primary-600 dark:text-primary-400 flex-shrink-0" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-xs text-gray-600 dark:text-gray-400">
                 {game.entityType === 'BAR' ? timeDisplay.hintText : timeRangeDisplay.hintText}
               </span>
             </div>
           )}
           {(game.court?.club || game.club) && (
-            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+            <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
               <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
@@ -903,12 +903,12 @@ export const GameInfo = ({
                   </button>
                 </div>
                 {game.court && !(game.entityType === 'BAR' && courts.length === 1) && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     {game.court.name}
                   </p>
                 )}
                 {!game.court && game.club && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     {t('createGame.notBookedYet')}
                   </p>
                 )}
@@ -941,20 +941,20 @@ export const GameInfo = ({
             </div>
           )}
           {!isOwner && owner && !(game.entityType === 'TRAINING' && game.trainerId === game.participants?.find(p => p.role === 'OWNER')?.userId) && (
-            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+            <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
               <Crown size={20} className="text-primary-600 dark:text-primary-400" />
               <PlayerAvatar
                 player={owner}
                 extrasmall={true}
                 showName={false}
               />
-              <span className="text-sm">
+              <span className="text-xs">
                 {[owner.firstName, owner.lastName].filter(name => name && name.trim()).join(' ')}
               </span>
             </div>
           )}
           {game.entityType === 'TRAINING' && (
-            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+            <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
               <Dumbbell size={20} className="text-primary-600 dark:text-primary-400 flex-shrink-0" />
               {(() => {
                 const trainer = game.trainerId ? game.participants?.find(p => p.userId === game.trainerId) : null;
@@ -967,7 +967,7 @@ export const GameInfo = ({
                         showName={false}
                       />
                       <div className="min-w-0 flex flex-col gap-0.5">
-                        <span className="text-sm block truncate">
+                        <span className="text-xs block truncate">
                           {[trainer.user.firstName, trainer.user.lastName].filter(name => name && name.trim()).join(' ')}
                         </span>
                         {trainer.user.verbalStatus && (
@@ -989,7 +989,7 @@ export const GameInfo = ({
                         showName={false}
                       />
                       <div className="min-w-0 flex-1">
-                        <span className="text-sm text-gray-700 dark:text-gray-300 block truncate">
+                        <span className="text-xs text-gray-700 dark:text-gray-300 block truncate">
                           {[pendingTrainerParticipant.user.firstName, pendingTrainerParticipant.user.lastName].filter(Boolean).join(' ')}
                         </span>
                         {pendingTrainerParticipant.user.verbalStatus && (
@@ -1004,7 +1004,7 @@ export const GameInfo = ({
                       {onCancelTrainerInvite && (
                         <button
                           onClick={onCancelTrainerInvite}
-                          className="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 whitespace-nowrap"
+                          className="text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 whitespace-nowrap"
                         >
                           {t('games.cancelTrainerInvite', { defaultValue: 'Cancel' })}
                         </button>
@@ -1017,13 +1017,13 @@ export const GameInfo = ({
                   <div className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
                     <UserPlus size={14} className="text-gray-400 dark:text-gray-500" />
                   </div>
-                  <span className="text-sm text-gray-500 dark:text-gray-400 italic flex-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 italic flex-1">
                     {t('games.trainerSlotEmpty', { defaultValue: 'No trainer' })}
                   </span>
                   {canInviteTrainer && onInviteTrainer && (
                     <button
                       onClick={onInviteTrainer}
-                      className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 whitespace-nowrap"
+                      className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 whitespace-nowrap"
                     >
                       {t('games.inviteTrainer', { defaultValue: 'Invite trainer' })}
                     </button>
@@ -1036,7 +1036,7 @@ export const GameInfo = ({
 
           {/* Game Price */}
           {((game.priceType && game.priceType !== 'NOT_KNOWN') || (canEdit && canShowEdit)) && (
-            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+            <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
               <Banknote size={20} className="text-primary-600 dark:text-primary-400" />
               <div className="flex-1">
                 {canEdit && canShowEdit ? (
@@ -1065,11 +1065,11 @@ export const GameInfo = ({
           
           {/* Game Description/Comments */}
           {game.description && game.description.trim() !== '' && (
-            <div className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+            <div className="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
               <MessageCircle size={20} className="text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
               <button
                 onClick={() => canEdit && canShowEdit && onOpenEditGameInfo?.('general')}
-                className={`text-sm text-gray-600 dark:text-gray-400 text-left whitespace-pre-line ${
+                className={`text-xs text-gray-600 dark:text-gray-400 text-left whitespace-pre-line ${
                   canEdit && canShowEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
                 }`}
               >

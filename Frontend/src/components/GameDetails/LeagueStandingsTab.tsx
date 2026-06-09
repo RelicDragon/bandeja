@@ -465,7 +465,7 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
                         className="w-2.5 h-2.5 rounded-full border"
                         style={{ backgroundColor: accent, borderColor: accent }}
                       />
-                      <h3 className="text-lg font-bold" style={{ color: accent }}>
+                      <h3 className="text-sm font-bold" style={{ color: accent }}>
                         {name}
                       </h3>
                     </div>
@@ -478,7 +478,7 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
           {selectedGroupId === ALL_GROUP_ID && ungroupedStandings && ungroupedStandings.length > 0 && (
             <Card key={NO_GROUP_KEY}>
               <div className="px-4 py-3 bg-gradient-to-r from-primary-50 to-primary-100/50 dark:from-primary-900/20 dark:to-primary-800/10 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
                   {t('gameDetails.noGroup') || 'No Group'}
                 </h3>
               </div>

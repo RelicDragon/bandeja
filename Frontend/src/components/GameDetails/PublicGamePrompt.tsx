@@ -22,7 +22,7 @@ export const PublicGamePrompt = ({ variant = 'game' }: PublicGamePromptProps) =>
       </div>
       <Card className="p-6 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border-primary-200 dark:border-primary-800">
         <div className="text-center space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="section-title">
             {isProfile
               ? t('playerProfile.publicPromptTitle', { defaultValue: 'Sign in to see more' })
               : t('games.joinToParticipate', { defaultValue: 'Join to participate!' })}

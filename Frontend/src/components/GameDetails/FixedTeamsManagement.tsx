@@ -373,7 +373,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
       <Card>
         <div className="flex items-center gap-2 mb-3">
           <Users size={18} className="text-gray-500 dark:text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('games.fixedTeams')}</h2>
+          <h2 className="section-title">{t('games.fixedTeams')}</h2>
         </div>
         {body}
       </Card>
@@ -402,7 +402,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
       <Card>
         <div className="flex items-center gap-2 mb-3">
           <Users size={18} className="text-gray-500 dark:text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('games.fixedTeams')}</h2>
+          <h2 className="section-title">{t('games.fixedTeams')}</h2>
         </div>
         {body}
       </Card>
@@ -477,7 +477,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
     <Card>
       <div className="flex items-center gap-2 mb-3">
         <Users size={18} className="text-gray-500 dark:text-gray-400" />
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('games.fixedTeams')}</h2>
+        <h2 className="section-title">{t('games.fixedTeams')}</h2>
       </div>
       {main}
     </Card>

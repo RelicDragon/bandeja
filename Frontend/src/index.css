@@ -3,7 +3,7 @@
 
 @layer components {
   .section-title {
-    @apply text-base font-semibold text-gray-900 dark:text-white;
+    @apply text-sm font-semibold text-gray-900 dark:text-white;
   }
   .verbal-status {
     @apply text-[9px] text-gray-500 dark:text-gray-400 truncate -mb-0.5;
