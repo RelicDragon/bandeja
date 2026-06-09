@@ -15,12 +15,14 @@ export const useContextMenuManager = () => {
   
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isScrollingRef = useRef(false);
+  const menuOpenRef = useRef(false);
 
   const openContextMenu = useCallback((messageId: string, position: { x: number; y: number }) => {
     if (isScrollingRef.current) {
       return;
     }
-    
+
+    menuOpenRef.current = true;
     setContextMenuState({
       isOpen: true,
       messageId,
@@ -29,16 +31,16 @@ export const useContextMenuManager = () => {
   }, []);
 
   const closeContextMenu = useCallback(() => {
-    setContextMenuState(prev => ({
-      ...prev,
-      isOpen: false,
-      messageId: null
-    }));
+    setContextMenuState((prev) => {
+      if (!prev.isOpen) return prev;
+      menuOpenRef.current = false;
+      return { ...prev, isOpen: false, messageId: null };
+    });
   }, []);
 
   const handleScrollStart = useCallback(() => {
     isScrollingRef.current = true;
-    closeContextMenu();
+    if (menuOpenRef.current) closeContextMenu();
     
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -29,7 +29,8 @@ const scrollToBottomFabMotion = {
 /** Subscribes only to scroll seam — parent composer stays isolated from near-bottom toggles. */
 export const MessageInputScrollFab: React.FC = () => {
   const { t } = useTranslation();
-  const { chatNearBottom, scrollToBottomSmooth } = useThreadScroll();
+  const { subscribeChatNearBottom, getChatNearBottom, scrollToBottomSmooth } = useThreadScroll();
+  const chatNearBottom = useSyncExternalStore(subscribeChatNearBottom, getChatNearBottom);
 
   return (
     <AnimatePresence>

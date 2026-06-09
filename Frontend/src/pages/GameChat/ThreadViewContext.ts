@@ -55,8 +55,9 @@ export interface ThreadMessagesDataValue {
 export interface ThreadMessagesValue extends ThreadMessageActionsValue, ThreadMessagesDataValue {}
 
 export interface ThreadScrollValue {
-  chatNearBottom: boolean;
   setChatNearBottom: (near: boolean) => void;
+  subscribeChatNearBottom: (listener: () => void) => () => void;
+  getChatNearBottom: () => boolean;
   scrollToBottomSmooth: () => void;
   handleScrollToMessage: (messageId: string) => void;
   messageListRef: RefObject<MessageListHandle | null>;

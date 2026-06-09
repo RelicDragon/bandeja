@@ -90,8 +90,9 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
 
   const scroll = useMemo(
     (): import('./ThreadViewContext').ThreadScrollValue => ({
-      chatNearBottom: ctrl.chatNearBottom,
       setChatNearBottom: ctrl.setChatNearBottom,
+      subscribeChatNearBottom: ctrl.subscribeChatNearBottom,
+      getChatNearBottom: ctrl.getChatNearBottom,
       scrollToBottomSmooth: ctrl.scrollToBottomSmooth,
       handleScrollToMessage: ctrl.handleScrollToMessage,
       messageListRef: ctrl.messageListRef,
@@ -100,8 +101,9 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
       threadScrollKey: ctrl.threadScrollKey,
     }),
     [
-      ctrl.chatNearBottom,
       ctrl.setChatNearBottom,
+      ctrl.subscribeChatNearBottom,
+      ctrl.getChatNearBottom,
       ctrl.scrollToBottomSmooth,
       ctrl.handleScrollToMessage,
       ctrl.messageListRef,

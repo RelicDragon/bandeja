@@ -15,6 +15,7 @@ import { useThreadViewChrome } from './useThreadViewChrome';
 import { recordChatThreadOpened } from '@/services/chat/chatThreadOpenStats';
 import type { SendQueuedParams } from '@/components/chat/useMessageInputSubmit';
 import type { ThreadViewValue } from './ThreadViewContext';
+import { createChatNearBottomStore } from './chatNearBottomStore';
 
 export function useThreadViewController({
   isEmbedded = false,
@@ -51,7 +52,15 @@ export function useThreadViewController({
   const [isMuted, setIsMuted] = useState(false);
   const [isTogglingMute, setIsTogglingMute] = useState(false);
   const [translateToLanguageForChat, setTranslateToLanguageForChat] = useState<string | null>(null);
-  const [chatNearBottom, setChatNearBottom] = useState(true);
+  const chatNearBottomStoreRef = useRef(createChatNearBottomStore());
+  const setChatNearBottom = useCallback((near: boolean) => {
+    chatNearBottomStoreRef.current.set(near);
+  }, []);
+  const subscribeChatNearBottom = useCallback(
+    (listener: () => void) => chatNearBottomStoreRef.current.subscribe(listener),
+    []
+  );
+  const getChatNearBottom = useCallback(() => chatNearBottomStoreRef.current.get(), []);
 
   const {
     game,
@@ -303,8 +312,9 @@ export function useThreadViewController({
     handlePollUpdated: thread.handlePollUpdated,
     handleForwardMessage: chrome.handleForwardMessage,
     handleChatRequestRespond: thread.handleChatRequestRespond,
-    chatNearBottom,
     setChatNearBottom,
+    subscribeChatNearBottom,
+    getChatNearBottom,
     scrollToBottomSmooth,
     handleScrollToMessage: thread.handleScrollToMessage,
     pinnedMessages: thread.pinnedMessages,
