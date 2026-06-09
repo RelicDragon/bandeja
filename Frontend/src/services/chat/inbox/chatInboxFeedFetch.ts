@@ -14,6 +14,7 @@ import { usePlayersStore } from '@/store/playersStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { useAuthStore } from '@/store/authStore';
+import { ensureCityGroupInUsersChatItems } from '@/utils/chatListCityGroup';
 import { resolveGameUnreadCounts, resolveGroupUnreadCounts, userChatUnreadCount } from '@/utils/unreadCountsFromStore';
 import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 import type { ChatItem } from '@/components/chat/chatListTypes';
@@ -73,9 +74,13 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
       const gameIds = games.map((g) => g.id);
       const gameUnreads = await resolveGameUnreadCounts(gameIds);
       activeChats.push(...gamesToChatItems(games, gameUnreads, allDrafts));
-      sortChatItems(activeChats, 'users', user?.id);
+      const withCity = await ensureCityGroupInUsersChatItems(
+        deduplicateChats(sortChatItems(activeChats, 'users', user?.id)),
+        user.id,
+        { allDrafts }
+      );
       const cityUsersArray = Array.isArray(cityUsersData) ? cityUsersData : [];
-      return { activeChats, cityUsers: cityUsersArray, usersHasMore: pagination?.hasMore ?? false };
+      return { activeChats: withCity, cityUsers: cityUsersArray, usersHasMore: pagination?.hasMore ?? false };
     } catch (err) {
       console.error('fetchUsersSearchData failed:', err);
       sortChatItems(activeChats, 'users', user?.id);
@@ -221,7 +226,11 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
       const usersGroupItems = groupsToChatItems(usersGroupList, groupUnreads, allDrafts, 'users', user?.id);
       activeChats.push(...usersGroupItems);
       activeChats.push(...gamesToChatItems(games, gameUnreads, allDrafts));
-      const usersChatItems = deduplicateChats(sortChatItems(activeChats, 'users', user?.id));
+      const usersChatItems = await ensureCityGroupInUsersChatItems(
+        deduplicateChats(sortChatItems(activeChats, 'users', user?.id)),
+        user.id,
+        { allDrafts }
+      );
       const cityUsersArray = Array.isArray(cityUsersData) ? cityUsersData : [];
       const cacheEntry: FilterCache = {
         chats: usersChatItems,

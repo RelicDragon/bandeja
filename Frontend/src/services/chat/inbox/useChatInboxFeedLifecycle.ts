@@ -10,6 +10,7 @@ import { clearChatListModuleCacheWhenUserMismatch } from '@/components/chat/chat
 import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 import { shouldEnterChatListLoadingState } from '@/components/chat/chatListLoadingGate';
 import type { ChatItem } from '@/components/chat/chatListTypes';
+import { ensureCityGroupInUsersChatItems } from '@/utils/chatListCityGroup';
 import { mergeDexThreadIndexForUsersTab } from '@/utils/chatListDexMerge';
 import type { ChatInboxAdapter } from './types';
 import { chatInboxThreadIndex } from './chatInboxProductionAdapter';
@@ -89,22 +90,15 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
       applyCacheToState(c, c.chats, true);
     };
 
-    const scheduleNetworkRefresh = (currentFilter: ChatsFilterType, dexFallback?: FilterCache) => {
+    const scheduleNetworkRefresh = (currentFilter: ChatsFilterType) => {
       void (async () => {
         try {
           await runCoalescedFilterFetch(currentFilter);
         } catch (err) {
           console.error('Failed to fetch chats:', err);
-          if (
-            dexFallback &&
-            !useChatListFeedStore.getState().getFilterCache(currentFilter)
-          ) {
-            applyCacheToState(dexFallback);
-          }
         }
         if (cancelled) return;
         applyNetworkFetchToVisible(currentFilter);
-        useChatListFeedStore.getState().setLoading(false);
       })();
     };
 
@@ -123,13 +117,12 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
     }
 
     const run = async () => {
-      let dexOnlyBuilt: FilterCache | undefined;
       try {
         let showedDisk = false;
         try {
           const fromUsersDex = await chatInboxThreadIndex.load(chatsFilter);
           const fromGamesDex = chatsFilter === 'users' ? await chatInboxThreadIndex.load('games') : [];
-          const fromDex =
+          let fromDex =
             chatsFilter === 'users'
               ? mergeDexThreadIndexForUsersTab(fromUsersDex, fromGamesDex, userId)
               : deduplicateChats([...fromUsersDex, ...fromGamesDex]);
@@ -139,6 +132,12 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
               setTimeout(resolve, 0);
             });
             const allDrafts = await getMergedDrafts(true);
+            if (chatsFilter === 'users' && userId) {
+              fromDex = await ensureCityGroupInUsersChatItems(fromDex, userId, {
+                allDrafts,
+                fetchIfMissing: useNetworkStore.getState().isOnline,
+              });
+            }
             const dexChats = applyDraftsToChatItems(
               fromDex,
               allDrafts,
@@ -154,11 +153,8 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
             if (chatsFilter === 'bugs') dexOnly.bugsHasMore = false;
             if (chatsFilter === 'channels') dexOnly.channelsHasMore = false;
             if (chatsFilter === 'market') dexOnly.marketHasMore = false;
-            dexOnlyBuilt = dexOnly;
-            if (!useNetworkStore.getState().isOnline) {
-              applyCacheToState(dexOnly);
-              useChatListFeedStore.getState().setLoading(false);
-            }
+            applyCacheToState(dexOnly);
+            useChatListFeedStore.getState().setLoading(false);
           } else if (!cancelled && fromDex.length === 0 && !useNetworkStore.getState().isOnline) {
             showedDisk = true;
             const empty: FilterCache = { chats: [] };
@@ -181,7 +177,7 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
           return;
         }
         if (showedDisk && useNetworkStore.getState().isOnline) {
-          scheduleNetworkRefresh(chatsFilter, dexOnlyBuilt);
+          scheduleNetworkRefresh(chatsFilter);
           return;
         }
         const inflight = useChatListFeedStore.getState().getInFlight(chatsFilter);
@@ -206,13 +202,7 @@ export function useChatInboxFeedLifecycle(opts: FeedLifecycleOpts) {
       } catch (err) {
         if (!cancelled) console.error('Failed to fetch chats:', err);
       } finally {
-        const waitingOnlineDexRefresh =
-          dexOnlyBuilt != null &&
-          useNetworkStore.getState().isOnline &&
-          !useChatListFeedStore.getState().isNetworkSettled(chatsFilter);
-        if (!cancelled && !waitingOnlineDexRefresh) {
-          useChatListFeedStore.getState().setLoading(false);
-        }
+        if (!cancelled) useChatListFeedStore.getState().setLoading(false);
       }
     };
     run();
