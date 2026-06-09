@@ -9,6 +9,8 @@ const sendGeneration = new Map<string, number>();
 const abortByTempId = new Map<string, AbortController>();
 const contextByTempId = new Map<string, string>();
 const deadlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
+/** Skip auto-resume after intentional context teardown (navigation away). */
+const suppressOutboxResume = new Set<string>();
 
 function contextKey(contextType: ChatContextType, contextId: string): string {
   return `${contextType}:${contextId}`;
@@ -107,9 +109,20 @@ export function isSending(tempId: string): boolean {
   return contextByTempId.has(tempId);
 }
 
+export function markOutboxResumeSuppressed(tempIds: readonly string[]): void {
+  for (const tempId of tempIds) suppressOutboxResume.add(tempId);
+}
+
+export function consumeOutboxResumeSuppressed(tempId: string): boolean {
+  if (!suppressOutboxResume.has(tempId)) return false;
+  suppressOutboxResume.delete(tempId);
+  return true;
+}
+
 export function invalidateChatSendsForContext(contextType: ChatContextType, contextId: string): string[] {
   const k = contextKey(contextType, contextId);
   const tempIds = [...contextByTempId.entries()].filter(([, ctx]) => ctx === k).map(([id]) => id);
+  markOutboxResumeSuppressed(tempIds);
   for (const tempId of tempIds) {
     invalidateChatSend(tempId);
   }
@@ -158,6 +171,7 @@ export function resetChatSendCoordinatorForTests(): void {
   sendGeneration.clear();
   abortByTempId.clear();
   contextByTempId.clear();
+  suppressOutboxResume.clear();
   for (const t of deadlineTimers.values()) clearTimeout(t);
   deadlineTimers.clear();
   void releaseChatSendWakeLock();

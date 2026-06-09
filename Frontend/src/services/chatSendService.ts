@@ -26,6 +26,7 @@ import {
   teardownChatSendAttempt,
   invalidateChatSend,
   invalidateChatSendsForContext,
+  markOutboxResumeSuppressed,
   isAbortError,
   isActiveSendGeneration,
   isSending,
@@ -383,7 +384,8 @@ export function sendWithTimeout(
       );
       const generationStale = !isActiveSendGeneration(tempId, generation);
       if (generationStale) {
-        await resumeOrFailSupersededChatSend(tempId, contextType, contextId, onFailed);
+        sealChatSendAttempt(tempId);
+        completeChatSendSuccess(tempId, contextType, contextId, created, callbacks);
         return;
       }
       sealChatSendAttempt(tempId);
@@ -418,9 +420,12 @@ export function cancelSend(tempId: string): void {
 
 export function cancelAllForContext(contextType: ChatContextType, contextId: string): void {
   invalidateChatSendsForContext(contextType, contextId);
-  void messageQueueStorage.requeueSendingForContext(contextType, contextId).catch((err) => {
-    console.error('[messageQueue] requeueSendingForContext', err);
-  });
+  void messageQueueStorage
+    .requeueSendingForContext(contextType, contextId)
+    .then((requeued) => markOutboxResumeSuppressed(requeued))
+    .catch((err) => {
+      console.error('[messageQueue] requeueSendingForContext', err);
+    });
 }
 
 export async function resend(

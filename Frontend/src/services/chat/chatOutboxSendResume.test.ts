@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { beginChatSend, isSending, resetChatSendCoordinatorForTests } from '@/services/chat/chatSendCoordinator';
+import {
+  beginChatSend,
+  isSending,
+  markOutboxResumeSuppressed,
+  resetChatSendCoordinatorForTests,
+} from '@/services/chat/chatSendCoordinator';
 
 const getByTempId = vi.fn();
 const updateStatus = vi.fn();
@@ -43,6 +48,25 @@ describe('resumeOrFailSupersededChatSend', () => {
     expect(updateStatus).toHaveBeenCalledWith('opt-1', 'USER', 'uc-1', 'queued');
     expect(driveSend).toHaveBeenCalledTimes(1);
     expect(onFailed).not.toHaveBeenCalled();
+  });
+
+  it('skips resume when context cancel suppressed auto-retry', async () => {
+    const { resumeOrFailSupersededChatSend } = await import('./chatOutboxSendResume');
+    const driveSend = vi.fn();
+
+    markOutboxResumeSuppressed(['opt-3']);
+    getByTempId.mockResolvedValue({
+      tempId: 'opt-3',
+      contextType: 'USER',
+      contextId: 'uc-2',
+      status: 'queued',
+      payload: { content: 'x', chatType: 'PUBLIC' },
+    });
+
+    await resumeOrFailSupersededChatSend('opt-3', 'USER', 'uc-2', vi.fn(), driveSend);
+
+    expect(driveSend).not.toHaveBeenCalled();
+    expect(updateStatus).not.toHaveBeenCalled();
   });
 
   it('skips resume when another attempt is already active', async () => {

@@ -1,6 +1,6 @@
 import type { ChatContextType, OptimisticMessagePayload } from '@/api/chat';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
-import { isSending } from '@/services/chat/chatSendCoordinator';
+import { consumeOutboxResumeSuppressed, isSending } from '@/services/chat/chatSendCoordinator';
 import { reconcileAbortedChatSendIfDelivered } from '@/services/chat/chatOutboxReconcile';
 
 export type DriveQueuedSendParams = {
@@ -27,6 +27,7 @@ export async function resumeOrFailSupersededChatSend(
   driveSend: DriveQueuedSend
 ): Promise<void> {
   if (await reconcileAbortedChatSendIfDelivered(tempId, contextType, contextId)) return;
+  if (consumeOutboxResumeSuppressed(tempId)) return;
 
   const row = await messageQueueStorage.getByTempId(tempId);
   if (!row || row.contextType !== contextType || row.contextId !== contextId) return;

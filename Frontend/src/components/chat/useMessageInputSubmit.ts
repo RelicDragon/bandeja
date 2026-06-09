@@ -239,6 +239,9 @@ export function useMessageInputSubmit(params: Params) {
       useOptimistic && !!p.onSendQueued && p.propContextType != null && p.propContextId != null;
     const submitContextType = p.propContextType;
     const submitContextId = p.propContextId;
+    const submitUploadContextId =
+      p.gameId || p.bugId || p.userChatId || p.groupChannelId || submitContextId;
+    const submitUploadContextType = p.contextType;
     if (useQueue) paramsRef.current.queueSendRef.current = true;
 
     if (useOptimistic) {
@@ -270,9 +273,13 @@ export function useMessageInputSubmit(params: Params) {
           let originalUrls: string[] = [];
           let thumbnailUrls: string[] = [];
           if (!queueDeferImages && filesSnapshot.length > 0) {
-            const targetId = p.gameId || p.bugId || p.userChatId || p.groupChannelId;
             try {
-              const up = await uploadChatImagesForMessage(filesSnapshot, targetId, p.contextType, p.t);
+              const up = await uploadChatImagesForMessage(
+                filesSnapshot,
+                submitUploadContextId,
+                submitUploadContextType,
+                p.t
+              );
               originalUrls = up.originalUrls;
               thumbnailUrls = up.thumbnailUrls;
             } catch (err) {
