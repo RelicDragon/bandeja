@@ -21,7 +21,7 @@ export function useMessageListScrollAnchor({
 }: UseMessageListScrollAnchorParams): void {
   const prevTotalSizeRef = useRef(0);
   const scrollIdleRef = useRef(true);
-  const scrollIdleTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const scrollIdleTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
