@@ -2,20 +2,33 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-UPD_SSH_HOST="${UPD_SSH_HOST:-relic@back.bandeja.com}"
+UPD_BE_HOST="${UPD_BE_HOST:-relic@back.bandeja.com}"
+UPD_FE_HOST="${UPD_FE_HOST:-relic@front.bandeja.com}"
 UPD_SSH_KEY="${UPD_SSH_KEY:-$HOME/.ssh/id_hetzner}"
 
 upd_ssh() {
+  local host="$1"
+  shift
   ssh \
     -o IdentitiesOnly=yes \
     -o IdentityFile="${UPD_SSH_KEY}" \
     -o ServerAliveInterval=60 \
     -o ServerAliveCountMax=3 \
-    "${UPD_SSH_HOST}" "$@"
+    "${host}" "$@"
 }
 
 upd_git_sync='cd ~/src && git fetch origin && git reset --hard origin/master'
 upd_use_node24='export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 24'
+
+deploy_be() {
+  echo "→ backend ${UPD_BE_HOST}"
+  upd_ssh "${UPD_BE_HOST}" "${upd_use_node24}; ${upd_git_sync}; ~/src/scripts/deploy-backend.sh"
+}
+
+deploy_fe() {
+  echo "→ frontend ${UPD_FE_HOST}"
+  upd_ssh "${UPD_FE_HOST}" "${upd_use_node24}; ${upd_git_sync}; ~/src/scripts/deploy-frontend.sh"
+}
 
 maybe_push() {
   local remote ahead
@@ -48,13 +61,7 @@ if [[ "$DO_PUSH" -eq 1 ]]; then
 fi
 
 case "$TARGET" in
-  all)
-    upd_ssh "${upd_use_node24}; ${upd_git_sync}; ~/src/scripts/deploy-backend.sh; ~/src/scripts/deploy-frontend.sh"
-    ;;
-  fe)
-    upd_ssh "${upd_use_node24}; ${upd_git_sync}; ~/src/scripts/deploy-frontend.sh"
-    ;;
-  be)
-    upd_ssh '~/update.sh'
-    ;;
+  all) deploy_be; deploy_fe ;;
+  fe) deploy_fe ;;
+  be) deploy_be ;;
 esac
