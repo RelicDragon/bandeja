@@ -19,7 +19,9 @@ export function chatListOrderSig(chats: ChatItem[]): string {
 }
 
 export function chatListVisibleApplySig(chats: ChatItem[]): string {
-  const unreadSig = chats.map((c) => `${getChatKey(c)}:u${c.unreadCount ?? 0}`).join('\0');
+  const unreadSig = chats
+    .map((c) => `${getChatKey(c)}:u${'unreadCount' in c ? (c.unreadCount ?? 0) : 0}`)
+    .join('\0');
   return `${threadIndexLiveMergeSig(chats)}\0${unreadSig}`;
 }
 
