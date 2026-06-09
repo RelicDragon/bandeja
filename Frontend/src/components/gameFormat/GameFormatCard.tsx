@@ -103,7 +103,7 @@ export const GameFormatCard = ({
         >
           <GameFormatRacketIcon size={15} className="row-start-1 shrink-0 text-primary-600 dark:text-primary-400 mt-0.5" />
           <div className="row-start-1 flex min-w-0 items-center gap-1.5">
-            <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+            <div className="section-title truncate">
               {isTraining
                 ? t('gameFormat.trainingTitle')
                 : tScoringModeField(t, format.scoringMode, 'title', sport)}

@@ -37,7 +37,7 @@ export const CreateGameHeader = ({ onBack, entityType }: CreateGameHeaderProps) 
         >
           <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
         </button>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <h1 className="page-title flex items-center gap-2">
           {entityType === 'BAR' ? t('createGame.createBar') : 
            entityType === 'TRAINING' ? t('createGame.createTraining') :
            entityType === 'TOURNAMENT' ? t('createGame.createTournament') :

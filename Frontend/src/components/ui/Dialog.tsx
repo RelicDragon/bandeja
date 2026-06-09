@@ -113,8 +113,7 @@ const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 );
 DialogFooter.displayName = 'DialogFooter';
 
-const DIALOG_TITLE_CLASS =
-  'text-lg font-semibold leading-none tracking-tight text-gray-900 dark:text-white';
+const DIALOG_TITLE_CLASS = 'overlay-title';
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>

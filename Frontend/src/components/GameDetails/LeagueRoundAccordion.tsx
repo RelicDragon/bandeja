@@ -134,7 +134,7 @@ export const LeagueRoundAccordion = ({
         className="w-full flex items-center justify-between px-4 py-3 gap-4"
       >
         <div className="flex items-center gap-3 text-left">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+          <p className="section-title">
             {t('gameDetails.round')} {round.orderIndex + 1}
           </p>
           {roundFormatLabelKey && (

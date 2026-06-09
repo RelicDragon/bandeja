@@ -6,8 +6,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useScrollOverflowEdges } from '@/hooks/useScrollOverflowEdges';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
-const SCROLL_STEP_VIEWPORT_RATIO = 0.75;
-
 type ScrollEdgeHintsProps = {
   scrollRef?: RefObject<HTMLElement | null>;
   contentRef?: RefObject<HTMLElement | null>;
@@ -55,7 +53,7 @@ function scrollToTop(
   window.scrollTo({ top: 0, behavior });
 }
 
-function scrollDownByViewport(
+function scrollToBottom(
   scrollRef: RefObject<HTMLElement | null> | undefined,
   reduceMotion: boolean,
 ) {
@@ -63,19 +61,11 @@ function scrollDownByViewport(
   const scrollEl = scrollRef?.current ?? null;
 
   if (scrollEl) {
-    const { scrollTop, scrollHeight, clientHeight } = scrollEl;
-    const remaining = scrollHeight - scrollTop - clientHeight;
-    const step = Math.min(remaining, clientHeight * SCROLL_STEP_VIEWPORT_RATIO);
-    if (step > 0) scrollEl.scrollBy({ top: step, behavior });
+    scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior });
     return;
   }
 
-  const scrollTop = window.scrollY;
-  const scrollHeight = document.documentElement.scrollHeight;
-  const clientHeight = window.innerHeight;
-  const remaining = scrollHeight - scrollTop - clientHeight;
-  const step = Math.min(remaining, clientHeight * SCROLL_STEP_VIEWPORT_RATIO);
-  if (step > 0) window.scrollBy({ top: step, behavior });
+  window.scrollTo({ top: document.documentElement.scrollHeight, behavior });
 }
 
 function useBottomHintAnchor(scrollRef?: RefObject<HTMLElement | null>) {
@@ -186,7 +176,7 @@ export const ScrollEdgeHints = ({
   const aboveLabel = t('gameDetails.scrollMoreAbove', { defaultValue: 'More content above' });
 
   const handleScrollDown = useCallback(() => {
-    scrollDownByViewport(scrollRef, reduceMotion);
+    scrollToBottom(scrollRef, reduceMotion);
   }, [scrollRef, reduceMotion]);
 
   const handleScrollUp = useCallback(() => {

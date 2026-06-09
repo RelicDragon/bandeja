@@ -608,7 +608,7 @@ export const EditLeagueGameTeamsModal = ({
           ) : selectingPlayerFor ? (
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                <h3 className="overlay-title">
                   {t('gameDetails.selectPlayer')}
                 </h3>
                 <button

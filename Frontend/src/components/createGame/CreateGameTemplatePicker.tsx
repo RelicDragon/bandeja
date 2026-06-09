@@ -65,9 +65,9 @@ export const CreateGameTemplatePicker = ({
       {!embedded ? (
         <div className="flex items-center gap-2">
           <img src={sportIcon} alt="" className="h-6 w-6 object-contain" draggable={false} />
-          <div className="text-sm font-semibold text-gray-900 dark:text-white">
+          <h2 className="section-title">
             {t('createGame.templates.title')}
-          </div>
+          </h2>
         </div>
       ) : null}
       <div className="space-y-2">

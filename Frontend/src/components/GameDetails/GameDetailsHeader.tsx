@@ -16,7 +16,7 @@ export const GameDetailsHeader = () => {
         >
           <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
         </button>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h1 className="page-title">
           {t('games.details')}
         </h1>
       </div>

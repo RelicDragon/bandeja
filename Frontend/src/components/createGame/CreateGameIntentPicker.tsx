@@ -113,9 +113,9 @@ export const CreateGameIntentPicker = ({
 
   return (
     <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+      <h2 className="section-title">
         {t('createGame.intent.title')}
-      </div>
+      </h2>
       {templates.length === 0 ? (
         <p className="m-0 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
           {t('createGame.intent.noTemplatesForSetup')}

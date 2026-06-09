@@ -160,7 +160,7 @@ export const LeagueSeasonSection = ({
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleCloseDatePicker} />
               <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 mx-4 max-w-md w-full border border-gray-200 dark:border-gray-800">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                <h3 className="overlay-title mb-4">
                   {t('createGame.selectDate')}
                 </h3>
                 <CalendarComponent

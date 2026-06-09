@@ -214,7 +214,7 @@ export const LeagueFixtureDetailSheet = ({
   const panelBody = (
     <>
       <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800">
-        <h2 id="league-fixture-detail-title" className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 id="league-fixture-detail-title" className="overlay-title">
           {t('gameDetails.fixtureDetailTitle')}
         </h2>
         <button
