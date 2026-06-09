@@ -6,7 +6,6 @@ import {
   forwardRef,
   useImperativeHandle,
   useCallback,
-  useState,
   useReducer,
   memo,
 } from 'react';
@@ -21,6 +20,7 @@ import {
   resetMessageListContextMenu,
 } from './MessageList/messageListContextMenuStore';
 import { MessageListSettlingProvider } from './MessageList/MessageListSettlingProvider';
+import { useMessageListScrollAnchor } from './MessageList/useMessageListScrollAnchor';
 import type { MessageListHandle, MessageListProps } from './MessageList/types';
 import {
   flushThreadScrollSave,
@@ -32,6 +32,7 @@ import {
   rowHeightCacheEstimate,
   rowHeightCacheHasDateSeparator,
   rowHeightCachePreloadTail,
+  rowHeightCacheMeasuredChanged,
   rowHeightCacheRecordMeasured,
   rowHeightCacheSeedTailHeuristics,
 } from '@/services/chat/rowHeightCache';
@@ -52,8 +53,8 @@ import { isThreadMessagesPending } from '@/pages/GameChat/threadViewLoadingState
 import { WavyDots } from '@/components/WavyDots';
 
 const OPEN_TAIL_EAGER_MEDIA = 60;
-const VIRTUAL_OVERSCAN_BASE = 10;
-const VIRTUAL_OVERSCAN_FAST = 22;
+/** Fixed overscan — velocity-based toggling remounted rows and shifted scroll height. */
+const VIRTUAL_OVERSCAN = 12;
 /** Skip redundant scrollToIndex(end) when already visually pinned (subpixel / end spacer). */
 const PIN_BOTTOM_SKIP_GAP_PX = 20;
 
@@ -133,8 +134,6 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
   }, [onScrollToMessage]);
 
   const rowCount = messages.length + 1;
-  const [virtualOverscan, setVirtualOverscan] = useState(VIRTUAL_OVERSCAN_BASE);
-  const scrollVelRef = useRef({ top: 0, t: 0 });
   const [, bumpHeightEstimates] = useReducer((n: number) => n + 1, 0);
 
   useEffect(() => {
@@ -149,7 +148,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
       if (index === rowCount - 1) return END_SPACER_PX;
       return rowHeightCacheEstimate({ message: messages[index], index, messages });
     },
-    overscan: virtualOverscan,
+    overscan: VIRTUAL_OVERSCAN,
     getItemKey: (index) =>
       index === rowCount - 1 ? '__end__' : (messages[index] ? getMessageRowKey(messages[index]) : `i-${index}`),
   });
@@ -188,7 +187,12 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
   const lastSeededTailKeyRef = useRef('');
 
   useLayoutEffect(() => {
-    if (threadScrollKey) lastSeededTailKeyRef.current = '';
+    if (!threadScrollKey) return;
+    lastSeededTailKeyRef.current = '';
+    const msgs = messagesMeasureRef.current;
+    if (msgs.length > 0 && rowHeightCacheSeedTailHeuristics(msgs, msgs.length)) {
+      bumpHeightEstimates();
+    }
   }, [threadScrollKey]);
 
   useLayoutEffect(() => {
@@ -226,20 +230,31 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
   useLayoutEffect(() => {
     const items = virtualizerRef.current.getVirtualItems();
     const msgs = messagesMeasureRef.current;
+    let materialChange = false;
     for (const vi of items) {
       if (vi.index === rowCount - 1) continue;
       const m = msgs[vi.index];
-      if (m?.id && vi.size > 2) {
-        rowHeightCacheRecordMeasured({
-          messageId: m.id,
-          rawHeightPx: vi.size,
-          hasDateSeparator: rowHeightCacheHasDateSeparator(msgs, vi.index),
-        });
+      if (!m?.id || vi.size <= 2) continue;
+      const hasDateSeparator = rowHeightCacheHasDateSeparator(msgs, vi.index);
+      if (rowHeightCacheMeasuredChanged(m.id, vi.size, hasDateSeparator)) {
+        materialChange = true;
       }
+      rowHeightCacheRecordMeasured({
+        messageId: m.id,
+        rawHeightPx: vi.size,
+        hasDateSeparator,
+      });
     }
+    if (materialChange) bumpHeightEstimates();
   }, [virtualMeasureKey, rowCount]);
 
-  const overscanRafRef = useRef<number | null>(null);
+  const virtualTotalSize = virtualizer.getTotalSize();
+  useMessageListScrollAnchor({
+    containerRef: messagesContainerRef,
+    totalSize: virtualTotalSize,
+    isLoadingMoreRef,
+  });
+
   const pinBottomRafRef = useRef<number | null>(null);
 
   const schedulePinToBottom = useCallback(() => {
@@ -385,30 +400,10 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
 
     const el = messagesContainerRef.current;
     if (!el) return;
-    const onScrollVel = () => {
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      const top = el.scrollTop;
-      const prev = scrollVelRef.current;
-      const dt = Math.max(now - prev.t, 1);
-      const pxPerMs = Math.abs(top - prev.top) / dt;
-      scrollVelRef.current = { top, t: now };
-      const wantFast = pxPerMs > 0.35;
-      if (overscanRafRef.current != null) cancelAnimationFrame(overscanRafRef.current);
-      overscanRafRef.current = requestAnimationFrame(() => {
-        overscanRafRef.current = null;
-        setVirtualOverscan((cur) => {
-          const next = wantFast ? VIRTUAL_OVERSCAN_FAST : VIRTUAL_OVERSCAN_BASE;
-          return cur === next ? cur : next;
-        });
-      });
-    };
     el.addEventListener('scroll', tick, { passive: true });
-    el.addEventListener('scroll', onScrollVel, { passive: true });
     tick();
     return () => {
       el.removeEventListener('scroll', tick);
-      el.removeEventListener('scroll', onScrollVel);
-      if (overscanRafRef.current != null) cancelAnimationFrame(overscanRafRef.current);
       flushThreadScrollSave(threadScrollKey);
     };
   }, [threadScrollKey, isSwitchingChatType, messages.length, layoutSettlingForBottomPin]);
