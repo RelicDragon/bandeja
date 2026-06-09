@@ -1,4 +1,4 @@
-import { test, expect, devices } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { e2eLogin } from '../../fixtures/api-client';
 import { createUserTeamViaApi, deleteUserTeamViaApi } from '../../fixtures/user-teams.fixture';
 import { UserTeamPage } from '../../pages/user-team.page';
@@ -22,8 +22,6 @@ test.describe('user teams @auth', () => {
 });
 
 test.describe('user teams mobile @auth', () => {
-  test.use({ ...devices['Pixel 5'] });
-
   test('UT-06 Full-height mobile layout', async ({ page }) => {
     const { token } = await e2eLogin();
     const { id: teamId } = await createUserTeamViaApi(token);

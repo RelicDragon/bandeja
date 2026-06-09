@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { OnboardingPage } from '../../pages/onboarding.page';
 import { ShellPage } from '../../pages/shell.page';
-import { ShellPage } from '../../pages/shell.page';
 import { seedAuthInBrowser } from '../../fixtures/storage.fixture';
 import {
   createCityPromptUser,

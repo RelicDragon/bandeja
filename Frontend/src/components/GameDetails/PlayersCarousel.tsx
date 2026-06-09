@@ -41,7 +41,7 @@ function ParticipantCarouselSlot({
   const isDragged = draggedPlayerId === participant.user.id;
   return (
     <div
-      className={`flex-shrink-0 w-16 relative transition-all duration-200 ${
+      className={`flex-shrink-0 w-16 relative pt-2 pb-2 transition-all duration-200 ${
         isDragged ? 'opacity-0' : draggable ? 'hover:scale-105' : ''
       }`}
     >
@@ -253,7 +253,7 @@ export const PlayersCarousel = ({
           onTouchEnd={autoHideNames ? handlePressEnd : undefined}
           onTouchCancel={autoHideNames ? handlePressEnd : undefined}
         >
-          <div className="flex gap-2 pt-1 pb-1">
+          <div className="flex gap-2">
             {participants.map((participant) => (
               <ParticipantCarouselSlot
                 key={participant.userId}
@@ -274,7 +274,7 @@ export const PlayersCarousel = ({
               />
             ))}
             {emptySlots > 0 && Array.from({ length: emptySlots }).map((_, i) => (
-              <div key={`empty-${i}`} className="flex-shrink-0 w-16">
+              <div key={`empty-${i}`} className="flex-shrink-0 w-16 pt-1.5 pb-3.5">
                 {canInvitePlayers ? (
                   <button
                     onClick={(e) => {

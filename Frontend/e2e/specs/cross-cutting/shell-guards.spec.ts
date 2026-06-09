@@ -1,4 +1,4 @@
-import { test, expect, devices } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { e2eLogin } from '../../fixtures/api-client';
 import { createGameViaApi, deleteGameViaApi } from '../../fixtures/games.fixture';
 import { CreateGamePage } from '../../pages/create-game.page';
@@ -15,8 +15,6 @@ test.describe('cross-cutting shell @auth', () => {
 });
 
 test.describe('cross-cutting shell mobile @auth', () => {
-  test.use({ ...devices['Pixel 5'] });
-
   test('X-32 Game details hides tabs on mobile', async ({ page }) => {
     const { token, user } = await e2eLogin();
     const { id: gameId } = await createGameViaApi(token, user.id, { participants: [user.id] });

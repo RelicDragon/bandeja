@@ -152,10 +152,6 @@ export async function inviteUserToGameViaApi(
   });
 }
 
-export async function declineInviteViaApi(token: string, inviteId: string): Promise<void> {
-  await e2eApi(token, `/invites/${inviteId}/decline`, { method: 'POST', body: '{}' });
-}
-
 export async function declineInviteViaApi(
   token: string,
   inviteId: string,

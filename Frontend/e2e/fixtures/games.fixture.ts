@@ -61,6 +61,7 @@ export type CreateGameOptions = {
   isPublic?: boolean;
   name?: string;
   playersPerMatch?: number;
+  affectsRating?: boolean;
 };
 
 export async function createGameViaApi(
@@ -94,7 +95,7 @@ export async function createGameViaApi(
       anyoneCanInvite: false,
       resultsByAnyone: false,
       hasBookedCourt: false,
-      affectsRating: true,
+      affectsRating: options.affectsRating ?? true,
       hasFixedTeams: false,
       participants: options.participants ?? [userId],
       name: options.name ?? `[E2E] game ${Date.now()}`,
@@ -117,6 +118,19 @@ export async function createGameViaApi(
     throw new Error('[e2e] create game response missing id');
   }
   return { id: game.id };
+}
+
+export async function createNoRatingGameViaApi(
+  token: string,
+  userId: string,
+  name?: string,
+): Promise<{ id: string }> {
+  return createGameViaApi(token, userId, {
+    participants: [userId],
+    allowDirectJoin: true,
+    affectsRating: false,
+    name: name ?? `[E2E] no-rating ${Date.now()}`,
+  });
 }
 
 /** Owner NON_PLAYING — user can join via UI CTA. */
@@ -293,6 +307,13 @@ export async function createGameWithOwnerPlaying(
     isPublic: true,
     name: name ?? `[E2E] owner game ${Date.now()}`,
   });
+}
+
+export async function getCityClubNames(token: string, user: E2eUser): Promise<string[]> {
+  const cityId = user.currentCity?.id ?? (await e2eGetProfile(token)).currentCity?.id;
+  if (!cityId) return [];
+  const clubs = await e2eApi<Club[]>(token, `/clubs/city/${cityId}`);
+  return clubs.map((c) => c.name).filter((name): name is string => Boolean(name));
 }
 
 export async function findPublicGameId(token: string): Promise<string | null> {
