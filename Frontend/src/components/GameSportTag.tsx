@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
 import { getSportConfig, type Sport } from '@/sport/sportRegistry';
 import { matchFormatSummaryPart } from '@/utils/gameFormat';
 
@@ -15,9 +16,7 @@ export function GameSportTag({ sport, className = '' }: GameSportTagProps) {
   const config = getSportConfig(sport);
   return (
     <span className={`${META_TAG_CLASS} ${className}`.trim()}>
-      <span className="leading-none" aria-hidden>
-        {config.icon}
-      </span>
+      <SportPublicIcon sport={sport} className="h-4 w-4 shrink-0 object-contain" />
       <span>{t(config.labelKey)}</span>
     </span>
   );

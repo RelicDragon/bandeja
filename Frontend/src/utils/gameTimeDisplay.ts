@@ -84,6 +84,20 @@ export function isScheduledDateTodayOrYesterday(date: Date | string, timezone: s
   return gameKey === todayKey || gameKey === yesterdayKey;
 }
 
+export function getDayOfMonthInTimezone(date: Date | string, timezone: string): number {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return parseInt(
+    new Intl.DateTimeFormat('en-US', { timeZone: timezone, day: 'numeric' }).format(d),
+    10
+  );
+}
+
+export function getGameDayOfMonth(game: Game | null | undefined): number | null {
+  if (game?.timeIsSet !== true) return null;
+  const tz = getClubTimezone(game) ?? getUserTimezone();
+  return getDayOfMonthInTimezone(game.startTime, tz);
+}
+
 export interface GameTimeDisplayResult {
   primaryText: string;
   hintText: string | null;

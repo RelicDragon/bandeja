@@ -3,12 +3,10 @@ import { Card } from '@/components';
 import { Game, GameParticipant } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { useAuthStore } from '@/store/authStore';
-import { GameSportTagRow } from '@/components/GameSportTag';
-import { playersPerMatchOf } from '@/utils/matchFormat';
-import { getViewerPrimarySport, shouldShowGameCardSportGlyph } from '@/utils/findSportFilter';
-import { parseGameSport } from '@/utils/gameSport';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
+import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz, getGameDayOfMonth } from '@/utils/gameTimeDisplay';
+import { CalendarDayIcon } from '@/components/CalendarDayIcon';
+import { TimePeriodClockIcon } from '@/components/TimePeriodClockIcon';
 import { GameStatusIcon } from '@/components';
 import { ShareModal } from '@/components/ShareModal';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
@@ -26,7 +24,6 @@ import { Share } from '@capacitor/share';
 import {
   Calendar,
   MapPin,
-  Clock,
   MessageCircle,
   Edit3,
   Star,
@@ -88,9 +85,6 @@ export const GameInfo = ({
   const { t } = useTranslation();
   const { translateCity } = useTranslatedGeo();
   const { user } = useAuthStore();
-  const viewerPrimarySport = getViewerPrimarySport(user);
-  const gameSport = parseGameSport(game.sport);
-  const showSportTag = shouldShowGameCardSportGlyph(game.sport, viewerPrimarySport, undefined);
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
   const clubTz = getClubTimezone(game);
   const showTags = game.entityType !== 'LEAGUE';
@@ -128,6 +122,14 @@ export const GameInfo = ({
     kind: 'longDate',
     t,
   });
+  const calendarDayOfMonth = getGameDayOfMonth(game);
+  const weekdayLabel = weekdayDisplay.primaryText.charAt(0).toUpperCase() + weekdayDisplay.primaryText.slice(1);
+  const renderCalendarIcon = (size: number, className?: string) =>
+    calendarDayOfMonth != null ? (
+      <CalendarDayIcon day={calendarDayOfMonth} size={size} className={className} />
+    ) : (
+      <Calendar size={size} className={className} />
+    );
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState({ url: '' });
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
@@ -498,7 +500,7 @@ export const GameInfo = ({
           <div className="flex flex-col gap-1 flex-1">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
-                <Calendar size={14} />
+                {renderCalendarIcon(14)}
                 {game.timeIsSet === false ? (
                   <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
                 ) : (
@@ -558,7 +560,7 @@ export const GameInfo = ({
           <div className="flex flex-col gap-1 flex-1">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
-                <Calendar size={14} />
+                {renderCalendarIcon(14)}
                 {game.timeIsSet === false ? (
                   <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
                 ) : (
@@ -615,7 +617,7 @@ export const GameInfo = ({
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
-              <Calendar size={14} />
+              {renderCalendarIcon(14)}
               {game.timeIsSet === false ? (
                 <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
               ) : (
@@ -753,12 +755,6 @@ export const GameInfo = ({
       )}
       {isCollapsed && (
         <div className="mb-3 relative z-10">
-          <GameSportTagRow
-            sport={gameSport}
-            showSport={showSportTag}
-            playersPerMatch={playersPerMatchOf(game)}
-            showMatchFormat={game.entityType !== 'TRAINING'}
-          />
           {isDifferentCity && game.city?.name && (
             <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
               <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
@@ -791,13 +787,6 @@ export const GameInfo = ({
             </div>
           </div>
         )}
-        <GameSportTagRow
-          sport={gameSport}
-          showSport={showSportTag}
-          playersPerMatch={playersPerMatchOf(game)}
-          showMatchFormat={game.entityType !== 'TRAINING'}
-          className="mb-3"
-        />
         {isDifferentCity && game.city?.name && (
           <div className="inline-flex items-center gap-1.5 mb-3 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
             <Plane size={14} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
@@ -812,10 +801,10 @@ export const GameInfo = ({
         </div>
 
         <div className="space-y-3 mb-0">
-          <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-            <Calendar size={20} className="text-primary-600 dark:text-primary-400" />
-            {game.timeIsSet === false ? (
-              canEdit && canShowEdit && !isEditMode ? (
+          {game.timeIsSet === false ? (
+            <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+              <Calendar size={20} className="text-primary-600 dark:text-primary-400" />
+              {canEdit && canShowEdit && !isEditMode ? (
                 <button
                   onClick={() => onOpenEditGameInfo?.('when')}
                   className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 italic"
@@ -824,44 +813,73 @@ export const GameInfo = ({
                 </button>
               ) : (
                 <span className="text-gray-500 dark:text-gray-400 italic">{t('gameDetails.datetimeNotSet')}</span>
-              )
-            ) : (
+              )}
+            </div>
+          ) : shouldShowTiming ? (
+            <div className="@container">
+              <div className="flex flex-col @[320px]:flex-row @[320px]:items-center gap-3 @[320px]:gap-0 w-fit max-w-full text-sm text-gray-700 dark:text-gray-300">
+                <div className="flex items-center gap-3 w-fit shrink-0">
+                  {renderCalendarIcon(20, 'text-primary-600 dark:text-primary-400 shrink-0')}
+                  <div className="whitespace-nowrap">
+                    {canEdit && canShowEdit && !isEditMode ? (
+                      <button
+                        onClick={() => onOpenEditGameInfo?.('when')}
+                        className="flex flex-col text-left font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
+                      >
+                        <span>{weekdayLabel}</span>
+                        <span>{longDateDisplay.primaryText}</span>
+                      </button>
+                    ) : (
+                      <div className="flex flex-col">
+                        <span>{weekdayLabel}</span>
+                        <span>{longDateDisplay.primaryText}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 w-fit shrink-0 @[320px]:border-l @[320px]:border-gray-200 @[320px]:dark:border-gray-600 @[320px]:pl-4 @[320px]:ml-1">
+                  <TimePeriodClockIcon
+                    startTime={game.startTime}
+                    endTime={game.entityType !== 'BAR' ? game.endTime : undefined}
+                    timezone={clubTz ?? undefined}
+                    size={20}
+                    className="text-primary-600 dark:text-primary-400 shrink-0"
+                  />
+                  <div>
+                    {canEdit && canShowEdit && !isEditMode ? (
+                      <button
+                        onClick={() => onOpenEditGameInfo?.('when')}
+                        className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer whitespace-nowrap"
+                      >
+                        {game.entityType === 'BAR' ? timeDisplay.primaryText : timeRangeDisplay.primaryText}
+                      </button>
+                    ) : (
+                      <span className="whitespace-nowrap">
+                        {game.entityType === 'BAR' ? timeDisplay.primaryText : timeRangeDisplay.primaryText}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+              {renderCalendarIcon(20, 'text-primary-600 dark:text-primary-400')}
               <div className="flex-1">
                 {canEdit && canShowEdit && !isEditMode ? (
                   <button
                     onClick={() => onOpenEditGameInfo?.('when')}
                     className="flex flex-col text-left font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                   >
-                    <span>{weekdayDisplay.primaryText.charAt(0).toUpperCase() + weekdayDisplay.primaryText.slice(1)}</span>
+                    <span>{weekdayLabel}</span>
                     <span>{longDateDisplay.primaryText}</span>
                   </button>
                 ) : (
                   <div className="flex flex-col">
-                    <span>{weekdayDisplay.primaryText.charAt(0).toUpperCase() + weekdayDisplay.primaryText.slice(1)}</span>
+                    <span>{weekdayLabel}</span>
                     <span>{longDateDisplay.primaryText}</span>
                   </div>
                 )}
-              </div>
-            )}
-          </div>
-          {game.entityType !== 'LEAGUE_SEASON' && game.timeIsSet !== false && (
-            <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-              <Clock size={20} className="text-primary-600 dark:text-primary-400" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  {canEdit && canShowEdit && !isEditMode ? (
-                    <button
-                      onClick={() => onOpenEditGameInfo?.('when')}
-                      className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
-                    >
-                      {game.entityType === 'BAR' ? timeDisplay.primaryText : timeRangeDisplay.primaryText}
-                    </button>
-                  ) : (
-                    <span>
-                      {game.entityType === 'BAR' ? timeDisplay.primaryText : timeRangeDisplay.primaryText}
-                    </span>
-                  )}
-                </div>
               </div>
             </div>
           )}
@@ -1017,16 +1035,27 @@ export const GameInfo = ({
                   <div className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
                     <UserPlus size={14} className="text-gray-400 dark:text-gray-500" />
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 italic flex-1">
-                    {t('games.trainerSlotEmpty', { defaultValue: 'No trainer' })}
-                  </span>
-                  {canInviteTrainer && onInviteTrainer && (
-                    <button
-                      onClick={onInviteTrainer}
-                      className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 whitespace-nowrap"
-                    >
-                      {t('games.inviteTrainer', { defaultValue: 'Invite trainer' })}
-                    </button>
+                  {canInviteTrainer && onInviteTrainer ? (
+                    <div className="min-w-0 flex flex-col gap-0.5 flex-1">
+                      <button
+                        type="button"
+                        onClick={onInviteTrainer}
+                        className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-left"
+                      >
+                        {t('games.trainerSlotEmpty', { defaultValue: 'No trainer' })}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onInviteTrainer}
+                        className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-left"
+                      >
+                        {t('games.inviteTrainer', { defaultValue: 'Invite trainer' })}
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-500 dark:text-gray-400 italic flex-1">
+                      {t('games.trainerSlotEmpty', { defaultValue: 'No trainer' })}
+                    </span>
                   )}
                 </div>
               );

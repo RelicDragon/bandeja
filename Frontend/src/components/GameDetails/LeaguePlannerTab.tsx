@@ -17,6 +17,7 @@ import { Calendar, ChevronLeft, ChevronRight, Loader2, User as UserIcon } from '
 import { Card, PlayerAvatar, SegmentedSwitch, Select, type SegmentedSwitchTab } from '@/components';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { LeaguePlannerDetailSheet } from './LeaguePlannerDetailSheet';
+import { plannerForSheet } from './leaguePlannerSheet';
 
 const LeaguePlannerGrid = lazy(() =>
   import('./LeaguePlannerGrid').then((m) => ({ default: m.LeaguePlannerGrid }))
@@ -393,6 +394,8 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   const plannerPending =
     scopeMode !== 'my' && (loading || (planner !== null && planner !== deferredPlanner));
 
+  const activePlannerForSheet = plannerForSheet(planner, deferredPlanner);
+
   const weekSelectorRow = user ? (
     <motion.div layout className="mx-auto flex w-full max-w-md flex-nowrap items-center justify-center gap-1.5">
       <motion.div
@@ -579,7 +582,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
         </div>
       )}
 
-      {sheet && planner && (
+      {sheet && activePlannerForSheet && (
         <LeaguePlannerDetailSheet
           isOpen
           onClose={() => setSheet(null)}
@@ -587,8 +590,8 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
           slotLabel={formatHour(sheet.slot.hour, user?.timeFormat)}
           freeCount={sheet.slot.freeCount}
           busyCount={sheet.slot.busyCount}
-          schedulableGameIds={planner.schedulableBySlot[plannerSlotKey(sheet.day, sheet.slot)] ?? []}
-          unscheduledGames={planner.unscheduledGames}
+          schedulableGameIds={activePlannerForSheet.schedulableBySlot[plannerSlotKey(sheet.day, sheet.slot)] ?? []}
+          unscheduledGames={activePlannerForSheet.unscheduledGames}
         />
       )}
     </div>

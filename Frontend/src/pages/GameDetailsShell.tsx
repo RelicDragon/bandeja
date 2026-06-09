@@ -57,6 +57,8 @@ import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsC
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { Game, Invite, Court, Club, GenderTeam } from '@/types';
 import { parseGameSport } from '@/utils/gameSport';
+import { playersPerMatchOf } from '@/utils/matchFormat';
+import { getViewerPrimarySport, shouldShowGameCardSportGlyph } from '@/utils/findSportFilter';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { Round } from '@/types/gameResults';
 import { shouldShowRoundAddedModal } from '@/utils/fivePlayerMatchCombinations';
@@ -111,6 +113,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const { setBottomTabsVisible } = useShellNavStore();
   const {
     setGameDetailsCanAccessChat,
+    setGameDetailsSportTag,
     gameDetailsTableViewOverride,
     setGameDetailsTableViewOverride,
     setGameDetailsTableAddRound,
@@ -210,11 +213,12 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   );
 
   useEffect(() => {
+    if (game?.entityType !== 'LEAGUE_SEASON') return;
     if (activeTab === 'planner' && !isLeagueSeasonParticipant) {
       setActiveTab('general');
       persistLeagueSeasonTabRef.current('general');
     }
-  }, [activeTab, isLeagueSeasonParticipant]);
+  }, [activeTab, game?.entityType, isLeagueSeasonParticipant]);
 
   const leagueSeasonTabs = useMemo<SegmentedSwitchTab[]>(() => {
     if (game?.entityType !== 'LEAGUE_SEASON') return [];
@@ -669,6 +673,21 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   useEffect(() => {
     setGameDetailsCanAccessChat(canAccessChat);
   }, [canAccessChat, setGameDetailsCanAccessChat]);
+
+  useEffect(() => {
+    if (!game) {
+      setGameDetailsSportTag(null);
+      return;
+    }
+    const viewerPrimarySport = getViewerPrimarySport(user);
+    setGameDetailsSportTag({
+      sport: parseGameSport(game.sport),
+      showSport: shouldShowGameCardSportGlyph(game.sport, viewerPrimarySport, undefined),
+      playersPerMatch: playersPerMatchOf(game),
+      showMatchFormat: game.entityType !== 'TRAINING',
+    });
+    return () => setGameDetailsSportTag(null);
+  }, [game, user, setGameDetailsSportTag]);
 
 
   const pendingTrainerParticipant = game?.entityType === 'TRAINING' && !game.trainerId

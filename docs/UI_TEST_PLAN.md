@@ -407,6 +407,9 @@ Frontend/e2e/
 | GD-74 | Scroll-more hint tap | Tap chevron on long game details | Smooth scroll to bottom; hint hides when at bottom |
 | GD-75 | Scroll-above hint | Scroll down on long game details | Top gradient + bouncing chevron up; hides at page top |
 | GD-76 | Scroll-above hint tap | Tap top chevron on long game details | Smooth scroll to top; hint hides when at top |
+| GD-78 | Date/time info row layout | Open game with `timeIsSet` on wide viewport; repeat on narrow | Wide: date and time on one row with vertical divider; narrow: stacked rows |
+| GD-79 | Time period clock icon | Open game with `timeIsSet` and start/end times (e.g. 18:00–20:00) | Clock icon shows golden period arc with primary-colored outline matching the displayed time range |
+| GD-80 | Sport tag placement | Open game details | Sport and match-format tags appear in main app header between Back and Chat |
 
 ### 9.2 Participation
 
@@ -498,6 +501,7 @@ Frontend/e2e/
 | GD-70 | BAR level changes display | Finished BAR game | Per-player level before/after on list |
 | GD-71 | Training review submit | Post-training review | Rating saved on trainer profile |
 | GD-72 | Training level/reliability edit | Trainer edits participant levels | `EditLevelModal` saves |
+| GD-73 | Empty trainer invite links | TRAINING, no trainer, owner/admin | "No trainer" row + "Invite trainer" row below; both open invite picker |
 
 ---
 

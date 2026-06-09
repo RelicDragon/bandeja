@@ -14,6 +14,7 @@ import { handleBack } from '@/utils/backNavigation';
 import { isChatShellPlace, isMarketplaceShellPlace, parseLocation } from '@/utils/urlSchema';
 import {
   HomeHeaderContent,
+  GameDetailsHeader,
   GameDetailsHeaderContent,
   GameModeToggle,
   MyGamesTabController,
@@ -115,6 +116,8 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
                 {!(isMarketplaceShell && (location.pathname === '/marketplace/create' || location.pathname.match(/^\/marketplace\/[^/]+\/edit$/))) && !isUserProfileShell && t('common.back')}
               </button>
             )}
+
+            {isGameDetailsShell && <GameDetailsHeader />}
 
             {isUserProfileShell && userProfileHeaderActions && (
               <div className="min-w-0 flex-1 flex items-center min-h-0 pl-1">

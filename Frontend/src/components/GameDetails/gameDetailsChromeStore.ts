@@ -1,5 +1,13 @@
 import { create } from 'zustand';
+import type { Sport } from '@/sport/sportRegistry';
 import type { BugStatus, BugType, ChatType } from '@/types';
+
+export interface GameDetailsSportTagState {
+  sport: Sport;
+  showSport: boolean;
+  playersPerMatch: number;
+  showMatchFormat: boolean;
+}
 
 export interface BugsFilterState {
   status: BugStatus | null;
@@ -8,6 +16,7 @@ export interface BugsFilterState {
 }
 
 interface GameDetailsChromeState {
+  gameDetailsSportTag: GameDetailsSportTagState | null;
   gameDetailsCanAccessChat: boolean;
   gameDetailsTableViewOverride: boolean | null;
   gameDetailsCanShowTableView: boolean;
@@ -23,6 +32,7 @@ interface GameDetailsChromeState {
   viewingGameChatId: string | null;
   viewingGameChatChatType: ChatType | null;
   setGameDetailsTableAddRound: (callback: (() => void) | null, isEditing: boolean) => void;
+  setGameDetailsSportTag: (sportTag: GameDetailsSportTagState | null) => void;
   setGameDetailsCanAccessChat: (canAccessChat: boolean) => void;
   setGameDetailsTableViewOverride: (override: boolean | null) => void;
   setGameDetailsCanShowTableView: (can: boolean) => void;
@@ -38,6 +48,7 @@ interface GameDetailsChromeState {
 }
 
 export const useGameDetailsChromeStore = create<GameDetailsChromeState>((set) => ({
+  gameDetailsSportTag: null,
   gameDetailsCanAccessChat: false,
   gameDetailsTableViewOverride: null,
   gameDetailsCanShowTableView: false,
@@ -54,6 +65,7 @@ export const useGameDetailsChromeStore = create<GameDetailsChromeState>((set) =>
   viewingGameChatChatType: null,
   setGameDetailsTableAddRound: (callback, isEditing) =>
     set({ gameDetailsTableAddRoundCallback: callback, gameDetailsTableIsEditing: isEditing }),
+  setGameDetailsSportTag: (sportTag) => set({ gameDetailsSportTag: sportTag }),
   setGameDetailsCanAccessChat: (canAccessChat) => set({ gameDetailsCanAccessChat: canAccessChat }),
   setGameDetailsTableViewOverride: (override) => set({ gameDetailsTableViewOverride: override }),
   setGameDetailsCanShowTableView: (can) => set({ gameDetailsCanShowTableView: can }),

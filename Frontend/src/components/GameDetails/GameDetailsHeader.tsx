@@ -1,25 +1,17 @@
-import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { handleBack } from '@/utils/backNavigation';
+import { GameSportTagRow } from '@/components/GameSportTag';
+import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 
 export const GameDetailsHeader = () => {
-  const navigate = useNavigate();
-  const { t } = useTranslation();
+  const sportTag = useGameDetailsChromeStore((s) => s.gameDetailsSportTag);
+  if (!sportTag) return null;
 
   return (
-    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
-      <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-        <button
-          onClick={() => handleBack(navigate)}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
-        </button>
-        <h1 className="page-title">
-          {t('games.details')}
-        </h1>
-      </div>
-    </div>
+    <GameSportTagRow
+      sport={sportTag.sport}
+      showSport={sportTag.showSport}
+      playersPerMatch={sportTag.playersPerMatch}
+      showMatchFormat={sportTag.showMatchFormat}
+      className="mb-0 min-w-0"
+    />
   );
 };
