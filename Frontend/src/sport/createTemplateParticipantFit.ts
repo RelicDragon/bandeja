@@ -107,9 +107,15 @@ export function pickDefaultTemplateId(
   const list = listTemplatesForParticipantSetup(sport, allowedScoringPresets, ctx);
   if (preferredId && list.some((t) => t.id === preferredId)) return preferredId;
   if (sport === Sports.PADEL) {
-    const padelDefault: FeLegacyPadelTemplateId =
-      ctx.maxParticipants <= 5 ? 'PADEL_BEST_OF_3' : 'PADEL_AMERICANO';
-    if (list.some((t) => t.id === padelDefault)) return padelDefault;
+    if (ctx.playersPerMatch === 2) {
+      const singlesDefault: CreateTemplateId =
+        ctx.maxParticipants <= 4 ? 'PADEL_SINGLES_BO3' : 'PADEL_SINGLES_AMERICANO_24';
+      if (list.some((t) => t.id === singlesDefault)) return singlesDefault;
+    } else {
+      const padelDefault: FeLegacyPadelTemplateId =
+        ctx.maxParticipants <= 5 ? 'PADEL_BEST_OF_3' : 'PADEL_AMERICANO';
+      if (list.some((t) => t.id === padelDefault)) return padelDefault;
+    }
   }
   return list[0]?.id ?? null;
 }

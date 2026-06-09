@@ -35,6 +35,9 @@ export type CreateTemplateId =
   | 'PADEL_MEXICANO_24'
   | 'PADEL_CHALLENGER_POOL'
   | 'PADEL_KOTC_11'
+  | 'PADEL_SINGLES_BO3'
+  | 'PADEL_SINGLES_SINGLE_SET'
+  | 'PADEL_SINGLES_AMERICANO_24'
   | 'PICKLEBALL_SOCIAL_21'
   | 'PICKLEBALL_MATCH_BO3_11'
   | 'PICKLEBALL_KOTC_11'
@@ -201,6 +204,45 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     affectsRating: false,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 12,
+    expectedDurationLabelKey: 'sportRegistry.duration.approx2h',
+  },
+  PADEL_SINGLES_BO3: {
+    id: 'PADEL_SINGLES_BO3',
+    sport: Sports.PADEL,
+    tier: 'match',
+    scoringPreset: 'CLASSIC_BEST_OF_3',
+    gameType: 'CLASSIC',
+    matchGenerationType: 'AUTOMATIC',
+    playersPerMatch: 2,
+    suggestedMaxParticipants: 4,
+    suggestedCourts: 1,
+    affectsRating: true,
+  },
+  PADEL_SINGLES_SINGLE_SET: {
+    id: 'PADEL_SINGLES_SINGLE_SET',
+    sport: Sports.PADEL,
+    tier: 'match',
+    scoringPreset: 'CLASSIC_SINGLE_SET',
+    gameType: 'CLASSIC',
+    matchGenerationType: 'AUTOMATIC',
+    playersPerMatch: 2,
+    suggestedMaxParticipants: 4,
+    suggestedCourts: 1,
+    affectsRating: true,
+  },
+  PADEL_SINGLES_AMERICANO_24: {
+    id: 'PADEL_SINGLES_AMERICANO_24',
+    sport: Sports.PADEL,
+    tier: 'social',
+    scoringPreset: 'POINTS_24',
+    gameType: 'AMERICANO',
+    matchGenerationType: 'RANDOM',
+    playersPerMatch: 2,
+    suggestedMaxParticipants: 8,
+    suggestedCourts: 2,
+    affectsRating: false,
+    matchTimerEnabled: true,
+    matchTimedCapMinutes: 15,
     expectedDurationLabelKey: 'sportRegistry.duration.approx2h',
   },
   PICKLEBALL_SOCIAL_21: {

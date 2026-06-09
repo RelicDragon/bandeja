@@ -257,6 +257,19 @@
         "title": "A tiempo",
         "description": "Un set con temporizador"
       },
+      "PADEL_SINGLES_BO3": {
+        "title": "Best-of-3",
+        "description": "Singles — partido estándar a tres sets",
+        "badge": "Oficial"
+      },
+      "PADEL_SINGLES_SINGLE_SET": {
+        "title": "Un set",
+        "description": "Singles — partido en un solo set"
+      },
+      "PADEL_SINGLES_AMERICANO_24": {
+        "title": "Americano singles (24 pts)",
+        "description": "Rotación 1v1 — jugar con todos a 24 puntos · rondas de 15 min"
+      },
       "PADEL_AMERICANO_24": {
         "title": "Americano (24)",
         "description": "Parejas al azar, a 24 puntos"

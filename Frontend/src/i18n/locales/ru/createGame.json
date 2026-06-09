@@ -260,6 +260,19 @@
         "title": "На время",
         "description": "Один сет с таймером"
       },
+      "PADEL_SINGLES_BO3": {
+        "title": "Best-of-3",
+        "description": "Одиночный матч — стандартный формат до трёх сетов",
+        "badge": "Официальный"
+      },
+      "PADEL_SINGLES_SINGLE_SET": {
+        "title": "Один сет",
+        "description": "Одиночный — один сет решает матч"
+      },
+      "PADEL_SINGLES_AMERICANO_24": {
+        "title": "Одиночное американо (24 очка)",
+        "description": "Ротация 1v1 — игра со всеми до 24 очков · раунды по 15 мин"
+      },
       "PADEL_AMERICANO_24": {
         "title": "Американо (24)",
         "description": "Случайные пары, до 24 очков"

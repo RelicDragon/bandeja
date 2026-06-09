@@ -348,6 +348,8 @@ Frontend/e2e/
 | C-10 | Template picker | Select template | Format + rating defaults applied |
 | C-11 | Game format wizard | Open/close wizard | Scoring preset saved |
 | C-12 | Rating vs social game | Toggle affects rating | Flag persisted on create |
+| C-40 | Non-default match format | Padel → singles (1v1) or tennis → doubles (2v2) in participants setup | Format card summary shows Singles/Doubles; expanded details show Teams format row with 1v1/2v2 hint |
+| C-41 | Padel singles templates | Create padel game → participants 1v1 → open format templates | Match tab: Best-of-3 (Official) + Single set; Social tab: Singles Americano (24 pts) when roster ≥4 |
 
 ### 8.3 Core fields
 
@@ -433,6 +435,7 @@ Frontend/e2e/
 | GD-23 | Edit level range | Level modal | Min/max saved |
 | GD-24 | Edit max participants | Max participants modal | Capacity updated |
 | GD-25 | Edit game format | Format wizard (pre-results) | Format updated |
+| GD-77 | Non-default match format display | Game with padel singles or tennis doubles | Format section summary + expanded details show non-default match format |
 | GD-26 | Edit blocked after results final | `@finished` | Edit disabled |
 | GD-27 | Archive/cancel game | Owner cancel flow | Status archived/cancelled |
 

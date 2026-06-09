@@ -1,12 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { UseGameFormatResult } from '@/hooks/useGameFormat';
-import { automaticGenerationCopyKey, tScoringModeField, tScoringPresetField } from '@/utils/gameFormat';
+import { automaticGenerationCopyKey, matchFormatDisplay, tScoringModeField, tScoringPresetField } from '@/utils/gameFormat';
 
 interface GameFormatDetailsProps {
   format: UseGameFormatResult;
   /** Max participants (or create-game capacity) — refines Automatic generation copy. */
   generationSlotCount?: number;
   hasFixedTeams?: boolean;
+  playersPerMatch?: number;
   sport?: string | null;
 }
 
@@ -39,8 +40,15 @@ const DetailRow = ({ label, value, note }: DetailRowProps) => (
 const genKey = (g: string) =>
   g.split('_').map((s) => s.charAt(0) + s.slice(1).toLowerCase()).join('');
 
-export const GameFormatDetails = ({ format, generationSlotCount, hasFixedTeams, sport }: GameFormatDetailsProps) => {
+export const GameFormatDetails = ({
+  format,
+  generationSlotCount,
+  hasFixedTeams,
+  playersPerMatch,
+  sport,
+}: GameFormatDetailsProps) => {
   const { t } = useTranslation();
+  const matchFormat = matchFormatDisplay(t, playersPerMatch, sport);
   const {
     scoringMode,
     scoringPreset,
@@ -86,6 +94,13 @@ export const GameFormatDetails = ({ format, generationSlotCount, hasFixedTeams, 
 
   return (
     <div className="mt-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 px-3 py-1 divide-y divide-gray-200/70 dark:divide-gray-700/70">
+      {matchFormat && (
+        <DetailRow
+          label={t('createGame.teamFormat')}
+          value={matchFormat.label}
+          note={matchFormat.hint}
+        />
+      )}
       <DetailRow
         label={t('gameFormat.steps.scoringMode')}
         value={tScoringModeField(t, scoringMode, 'title', sport)}

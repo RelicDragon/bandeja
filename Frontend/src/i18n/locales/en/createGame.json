@@ -269,6 +269,19 @@
         "title": "Timed",
         "description": "One set with a match timer"
       },
+      "PADEL_SINGLES_BO3": {
+        "title": "Best-of-3",
+        "description": "Singles match — standard three-set format",
+        "badge": "Official"
+      },
+      "PADEL_SINGLES_SINGLE_SET": {
+        "title": "Single set",
+        "description": "Singles — one set to decide the match"
+      },
+      "PADEL_SINGLES_AMERICANO_24": {
+        "title": "Singles Americano (24 pts)",
+        "description": "1v1 rotation — play everyone to 24 points · 15 min rounds"
+      },
       "PADEL_AMERICANO_10": {
         "title": "Americano · 10 min",
         "description": "Timed rounds (10 min), 24-ball games, random pairs"

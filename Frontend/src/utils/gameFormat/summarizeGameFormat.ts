@@ -25,16 +25,28 @@ function winnerOfGameSummaryPart(t: TFunction, w: WinnerOfGame | undefined): str
 const genKey = (g: MatchGenerationType) =>
   g.split('_').map((s) => s.charAt(0) + s.slice(1).toLowerCase()).join('');
 
+export function matchFormatDisplay(
+  t: TFunction,
+  playersPerMatch?: number,
+  sport?: string | null,
+): { label: string; hint: string } | null {
+  if (playersPerMatch !== 2 && playersPerMatch !== 4) return null;
+  if (sport == null) return null;
+  const sportConfig = getSportConfig(sport);
+  if (sportConfig.allowedPlayerCountsPerMatch.length <= 1) return null;
+  if (playersPerMatch === sportConfig.defaultPlayersPerMatch) return null;
+  return {
+    label: playersPerMatch === 2 ? t('sport.matchSingles') : t('sport.matchDoubles'),
+    hint: playersPerMatch === 2 ? t('sport.match1v1') : t('sport.match2v2'),
+  };
+}
+
 export function matchFormatSummaryPart(
   t: TFunction,
   playersPerMatch?: number,
   sport?: string | null,
 ): string | null {
-  if (playersPerMatch !== 2 && playersPerMatch !== 4) return null;
-  if (sport != null && playersPerMatch === getSportConfig(sport).defaultPlayersPerMatch) {
-    return null;
-  }
-  return playersPerMatch === 2 ? t('sport.matchSingles') : t('sport.matchDoubles');
+  return matchFormatDisplay(t, playersPerMatch, sport)?.label ?? null;
 }
 
 export const summarizeGameFormat = (

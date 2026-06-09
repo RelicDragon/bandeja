@@ -65,6 +65,9 @@ export const CREATE_FLOW_BY_SPORT: Record<Sport, SportCreateFlowConfig> = {
       'PADEL_SINGLE_SET',
       'PADEL_AMERICANO',
       'PADEL_TIMED',
+      'PADEL_SINGLES_BO3',
+      'PADEL_SINGLES_SINGLE_SET',
+      'PADEL_SINGLES_AMERICANO_24',
     ],
   },
   [Sports.TENNIS]: {

@@ -258,6 +258,19 @@
         "title": "Na čas",
         "description": "Jeden set s časovačem"
       },
+      "PADEL_SINGLES_BO3": {
+        "title": "Best-of-3",
+        "description": "Singles — standardní zápas na tři sety",
+        "badge": "Oficiální"
+      },
+      "PADEL_SINGLES_SINGLE_SET": {
+        "title": "Jeden set",
+        "description": "Singles — jeden set rozhodne zápas"
+      },
+      "PADEL_SINGLES_AMERICANO_24": {
+        "title": "Singles americano (24 bodů)",
+        "description": "1v1 rotace — zahraj si se všemi do 24 bodů · kola 15 min"
+      },
       "PADEL_AMERICANO_24": {
         "title": "Americano (24)",
         "description": "Náhodné páry, do 24 bodů"

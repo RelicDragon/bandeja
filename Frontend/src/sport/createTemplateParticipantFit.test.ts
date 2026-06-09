@@ -72,6 +72,22 @@ describe('createTemplateParticipantFit', () => {
       hasFixedTeams: false,
     });
     expect(list.some((t) => t.id === 'PADEL_AMERICANO')).toBe(false);
+    expect(list.some((t) => t.id === 'PADEL_SINGLES_AMERICANO_24')).toBe(true);
+  });
+
+  it('shows padel singles match templates for small 1v1 roster', () => {
+    const presets = [
+      'CLASSIC_BEST_OF_3',
+      'CLASSIC_SINGLE_SET',
+      'POINTS_24',
+      'CUSTOM',
+    ] as const;
+    const list = listTemplatesForParticipantSetup(Sports.PADEL, [...presets], {
+      maxParticipants: 2,
+      playersPerMatch: 2,
+      hasFixedTeams: false,
+    });
+    expect(list.map((t) => t.id)).toEqual(['PADEL_SINGLES_BO3', 'PADEL_SINGLES_SINGLE_SET']);
   });
 
   it('badminton Bo3 templates stay visible when doubles per match is selected', () => {

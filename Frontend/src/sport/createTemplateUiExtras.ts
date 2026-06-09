@@ -68,6 +68,23 @@ export const SHARED_TEMPLATE_UI_EXTRAS: Record<SharedCreateTemplateId, FeCreateT
     descriptionKey: 'createGame.templates.PADEL_KOTC_11.description',
     baselineRounds: 8,
   },
+  PADEL_SINGLES_BO3: {
+    labelKey: 'createGame.templates.PADEL_SINGLES_BO3.title',
+    descriptionKey: 'createGame.templates.PADEL_SINGLES_BO3.description',
+    badgeLabelKey: 'createGame.templates.PADEL_SINGLES_BO3.badge',
+    badgeVariant: 'official',
+    baselineRounds: 1,
+  },
+  PADEL_SINGLES_SINGLE_SET: {
+    labelKey: 'createGame.templates.PADEL_SINGLES_SINGLE_SET.title',
+    descriptionKey: 'createGame.templates.PADEL_SINGLES_SINGLE_SET.description',
+    baselineRounds: 1,
+  },
+  PADEL_SINGLES_AMERICANO_24: {
+    labelKey: 'createGame.templates.PADEL_SINGLES_AMERICANO_24.title',
+    descriptionKey: 'createGame.templates.PADEL_SINGLES_AMERICANO_24.description',
+    baselineRounds: 6,
+  },
   PICKLEBALL_SOCIAL_21: {
     labelKey: 'createGame.templates.PICKLEBALL_SOCIAL_21.title',
     descriptionKey: 'createGame.templates.PICKLEBALL_SOCIAL_21.description',

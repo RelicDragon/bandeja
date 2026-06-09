@@ -258,6 +258,19 @@
         "title": "Na vreme",
         "description": "Jedan set sa tajmerom"
       },
+      "PADEL_SINGLES_BO3": {
+        "title": "Best-of-3",
+        "description": "Singl — standardni meč u tri seta",
+        "badge": "Zvanično"
+      },
+      "PADEL_SINGLES_SINGLE_SET": {
+        "title": "Jedan set",
+        "description": "Singl — jedan set odlučuje meč"
+      },
+      "PADEL_SINGLES_AMERICANO_24": {
+        "title": "Singl amerikano (24 poena)",
+        "description": "1v1 rotacija — igraj protiv svih do 24 poena · runde od 15 min"
+      },
       "PADEL_AMERICANO_24": {
         "title": "Amerikano (24)",
         "description": "Nasumični parovi, do 24"

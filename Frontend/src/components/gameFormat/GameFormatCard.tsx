@@ -177,6 +177,7 @@ export const GameFormatCard = ({
                 format={format}
                 generationSlotCount={generationSlotCount}
                 hasFixedTeams={teams?.hasFixedTeams}
+                playersPerMatch={playersPerMatch}
                 sport={sport}
               />
             </div>
