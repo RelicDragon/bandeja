@@ -13,7 +13,7 @@ import {
 import { PROFILE_SELECT_FIELDS, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { config } from '../../config/env';
 import { getClientIp, updateUserIpLocation } from '../../services/ipLocation.service';
-import { NotificationChannelType } from '@prisma/client';
+import { NotificationChannelType, Prisma } from '@prisma/client';
 import { DEFAULT_PREFERENCES } from '../../services/notificationPreference.service';
 import telegramBotService from '../../services/telegram/bot.service';
 import { syncTelegramProfileFromUpdate } from '../../services/telegram/syncTelegramProfile.service';
@@ -57,7 +57,7 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
     if (weeklyAvailabilityOut != null && !weeklyDocHasConfiguredSlots(weeklyAvailabilityOut)) {
       await prisma.user.update({
         where: { id: req.userId },
-        data: { weeklyAvailability: null },
+        data: { weeklyAvailability: Prisma.DbNull },
       });
       weeklyAvailabilityOut = null;
     }
