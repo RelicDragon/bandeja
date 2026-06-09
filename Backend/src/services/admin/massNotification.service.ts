@@ -3,6 +3,7 @@ import pushNotificationService from '../push/push-notification.service';
 import telegramBotService from '../telegram/bot.service';
 import { escapeMarkdown } from '../telegram/utils';
 import { NotificationType } from '../../types/notifications.types';
+import { canDispatchBroadcast, canDispatchToUser } from '../../utils/notificationDispatchGuard';
 
 const BANDEJA_BANK_IDENTIFIER = 'BANDEJA_BANK';
 
@@ -10,6 +11,10 @@ export class AdminMassNotificationService {
   static async sendMassNotification(title: string, text: string, cityId?: string) {
     if (!title?.trim() || !text?.trim()) {
       throw new Error('Title and text are required');
+    }
+
+    if (!canDispatchBroadcast('admin-mass-notification')) {
+      throw new Error('Mass notifications are blocked in non-production (dev safeguard)');
     }
 
     const whereClause: any = {
@@ -53,6 +58,9 @@ export class AdminMassNotificationService {
     for (const user of users) {
       if (pushUserIds.has(user.id)) {
         try {
+          if (!(await canDispatchToUser(user.id, 'push', 'admin-mass-notification'))) {
+            continue;
+          }
           const count = await pushNotificationService.sendNotificationToUser(user.id, payload);
           results.pushSent += count;
         } catch {
@@ -62,6 +70,9 @@ export class AdminMassNotificationService {
 
       if (user.telegramId && bot) {
         try {
+          if (!(await canDispatchToUser(user.id, 'telegram', 'admin-mass-notification'))) {
+            continue;
+          }
           const escapedTitle = escapeMarkdown(title.trim());
           const escapedText = escapeMarkdown(text.trim());
           await bot.api.sendMessage(user.telegramId, `*${escapedTitle}*\n\n${escapedText}`, {

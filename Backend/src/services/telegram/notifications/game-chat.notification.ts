@@ -19,6 +19,7 @@ import { NotificationPreferenceService } from '../../notificationPreference.serv
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
+import { guardedTelegramSendMessage } from '../guardedTelegramSend';
 
 export async function sendGameChatNotification(
   api: Api,
@@ -105,7 +106,11 @@ export async function sendGameChatNotification(
         const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
         const trimmedMessage = trimTextForTelegram(finalMessage, false);
         
-        await api.sendMessage(user.telegramId, trimmedMessage, options);
+        await guardedTelegramSendMessage(
+          api,
+          { userId: user.id, telegramId: user.telegramId, kind: 'game-chat' },
+          () => api.sendMessage(user.telegramId, trimmedMessage, options),
+        );
       } catch (error) {
         if (!isBenignTelegramRecipientError(error)) {
           console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
@@ -187,7 +192,11 @@ export async function sendGameChatNotification(
         const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
         const trimmedMessage = trimTextForTelegram(finalMessage, false);
         
-        await api.sendMessage(user.telegramId, trimmedMessage, options);
+        await guardedTelegramSendMessage(
+          api,
+          { userId: user.id, telegramId: user.telegramId, kind: 'game-chat' },
+          () => api.sendMessage(user.telegramId, trimmedMessage, options),
+        );
       } catch (error) {
         if (!isBenignTelegramRecipientError(error)) {
           console.error(`Failed to send Telegram notification to parent game admin ${user.id}:`, error);

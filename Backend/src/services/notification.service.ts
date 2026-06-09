@@ -32,9 +32,17 @@ import {
   createUserTeamDeletedPushNotification,
 } from './push/notifications/team-push.notification';
 import { GameSubscriptionService } from './gameSubscription.service';
+import {
+  canDispatchBroadcast,
+  shouldSuppressAllOutboundNotifications,
+} from '../utils/notificationDispatchGuard';
 
 class NotificationService {
   async sendNotification(request: UnifiedNotificationRequest) {
+    if (shouldSuppressAllOutboundNotifications()) {
+      return { telegram: false, push: false };
+    }
+
     const { userId, type, payload, preferTelegram = false, preferPush = false } = request;
 
     const prefKey = NOTIFICATION_TYPE_TO_PREF[type];
@@ -472,6 +480,10 @@ class NotificationService {
   }
 
   async sendGameReminderNotification(gameId: string, recipients: any[], hoursBeforeStart: number) {
+    if (shouldSuppressAllOutboundNotifications() || !canDispatchBroadcast('game-reminder')) {
+      return;
+    }
+
     for (const recipient of recipients) {
       const payload = await createGameReminderPushNotification(gameId, recipient, hoursBeforeStart);
       
@@ -564,6 +576,10 @@ class NotificationService {
   }
 
   async sendNewGameNotification(game: any, cityId: string, creatorId: string) {
+    if (shouldSuppressAllOutboundNotifications() || !canDispatchBroadcast('new-game')) {
+      return;
+    }
+
     if (!game.isPublic || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') {
       return;
     }
@@ -659,6 +675,10 @@ class NotificationService {
     marketItem: { id: string; title: string; description: string | null; priceCents: number | null; currency: string; cityId: string; additionalCityIds: string[] },
     sellerUserId: string
   ) {
+    if (shouldSuppressAllOutboundNotifications() || !canDispatchBroadcast('new-market-item')) {
+      return;
+    }
+
     try {
       const city = await prisma.city.findUnique({
         where: { id: marketItem.cityId },

@@ -14,6 +14,7 @@ import { NotificationPreferenceService } from '../../notificationPreference.serv
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
+import { guardedTelegramSendMessage } from '../guardedTelegramSend';
 
 export async function sendInviteNotification(
   api: Api,
@@ -91,7 +92,11 @@ export async function sendInviteNotification(
   const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
 
   try {
-    await api.sendMessage(receiver.telegramId, finalMessage, options);
+    await guardedTelegramSendMessage(
+      api,
+      { userId: receiver.id, telegramId: receiver.telegramId, kind: 'invite' },
+      () => api.sendMessage(receiver.telegramId, finalMessage, options),
+    );
   } catch (error) {
     if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram invite notification to user ${receiver.id}:`, error);

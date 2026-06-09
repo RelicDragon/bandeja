@@ -55,6 +55,10 @@ Frontend/e2e/
     social/
     leagues/
     club-admin/
+    two-user/          # C2C / dual-browser specs (@two-user)
+  .auth/
+    user-a.json        # User A storageState
+    user-b.json        # User B storageState
   playwright.config.ts
 ```
 
@@ -942,9 +946,15 @@ Offline queues, deep links, OAuth merge, Holland auctions, broadcast/TV modes, d
 ```bash
 cd Frontend
 # guest smoke only (no credentials):
-npm run test:e2e -- --project=guest
+npm run test:e2e:guest
 
-# full smoke (default user in Frontend/e2e/test-user.ts):
+# authenticated single-user (User A):
+npm run test:e2e:auth
+
+# two-user / C2C (User A + User B):
+npm run test:e2e:two-user
+
+# full suite (all projects):
 npm run test:e2e
 
 # headed / UI runner:
@@ -952,7 +962,11 @@ npm run test:e2e:headed
 npm run test:e2e:ui
 ```
 
-Config: `Frontend/playwright.config.ts` — starts Backend + Frontend dev servers when not already running (`reuseExistingServer` locally). Auth bootstrap: `e2e/global-setup.ts` → `e2e/.auth/user.json`. Example env: `Frontend/e2e/.env.example`.
+Config: `Frontend/playwright.config.ts` — starts Backend + Frontend dev servers when not already running (`reuseExistingServer` locally). Auth bootstrap: `e2e/global-setup.ts` → `e2e/.auth/user-a.json`, `user-b.json` (legacy `user.json` = User A). Example env: `Frontend/e2e/.env.example`.
+
+**E2E users (local dev):** User A `+79672825552`, User B `+79672820000`, password `Metal4me` for both. Override with `E2E_PHONE` / `E2E_PHONE_B`.
+
+**Cross-refs to two-user automation:** `CH-12`/`CH-18` (sender) → receive side `T2-CH-01` in `docs/UI_TEST_PLAN_TWO_USER.md`; `X-06`/`X-07` → `T2-X-01`/`T2-X-02`; `LS-10` → `T2-LS-01`; `M-27` → `T2-M-02`; `GD-42` → `T2-GD-42` (P2).
 
 ### Flake mitigation
 - Wait for network idle after navigation, not fixed sleeps
@@ -990,7 +1004,21 @@ Config: `Frontend/playwright.config.ts` — starts Backend + Frontend dev server
 
 ---
 
-## 23. References
+## 23. Two-user interaction testing
+
+Full catalog: **`docs/UI_TEST_PLAN_TWO_USER.md`**.
+
+Playwright project `two-user` runs specs under `Frontend/e2e/specs/two-user/` tagged `@two-user`. Uses dual `storageState` files and `openDualSession()` (`e2e/fixtures/two-user.fixture.ts`). Prefer `expect.poll` for socket-driven assertions.
+
+| T2-P0 (automated) | Maps from main plan |
+|-------------------|---------------------|
+| T2-CH-01, T2-CH-02 | CH-12, CH-18, X-07 |
+| T2-GD-01, T2-GD-03 | GD-08, X-06 |
+| T2-X-01, T2-X-02 | X-07, X-06 |
+
+---
+
+## 24. References
 
 - Routes: `Frontend/src/App.tsx`
 - URL schema & overlays: `Frontend/src/utils/urlSchema.ts`

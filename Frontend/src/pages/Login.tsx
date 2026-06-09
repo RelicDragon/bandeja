@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { Input, Button } from '@/components';
@@ -309,7 +309,13 @@ export const Login = () => {
           </AnimatePresence>
         </div>
 
-        <p className="mt-6 text-center text-xs leading-relaxed text-slate-500 dark:text-slate-400 shrink-0">
+        <p className="mt-4 text-center text-sm text-slate-600 dark:text-slate-400 shrink-0">
+          {t('auth.noAccount')}{' '}
+          <Link to="/register" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+            {t('auth.register')}
+          </Link>
+        </p>
+        <p className="mt-4 text-center text-xs leading-relaxed text-slate-500 dark:text-slate-400 shrink-0">
           {t('auth.byContinuing') || 'By continuing, you agree to our'}{' '}
           <br />
           <a

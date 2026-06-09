@@ -4,6 +4,7 @@ import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
+import { guardedTelegramSendMessage } from '../guardedTelegramSend';
 
 export async function sendNewMarketItemNotification(
   api: Api,
@@ -40,7 +41,11 @@ export async function sendNewMarketItemNotification(
     const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
     const trimmedMessage = trimTextForTelegram(finalMessage, false);
 
-    await api.sendMessage(recipient.telegramId, trimmedMessage, options);
+    await guardedTelegramSendMessage(
+      api,
+      { userId: recipient.id, telegramId: recipient.telegramId, kind: 'new-market-item' },
+      () => api.sendMessage(recipient.telegramId, trimmedMessage, options),
+    );
   } catch (error) {
     if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram new market item notification to user ${recipient.id}:`, error);

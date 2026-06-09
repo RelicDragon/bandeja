@@ -24,6 +24,9 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "increment-sw": "node scripts/increment-sw-version.js",
     "test:e2e": "playwright test",
+    "test:e2e:guest": "playwright test --project=guest",
+    "test:e2e:auth": "playwright test --project=authenticated",
+    "test:e2e:two-user": "playwright test --project=two-user",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report"

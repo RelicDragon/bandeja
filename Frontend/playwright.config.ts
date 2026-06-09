@@ -1,10 +1,15 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
+import { assertBackendDatabaseSafe, guardE2eEnv } from './e2e/env-guard';
+import { E2E_TEST_HEADER } from './e2e/test-user';
 
 const frontendRoot = path.dirname(fileURLToPath(import.meta.url));
 const backendRoot = path.join(frontendRoot, '..', 'Backend');
 const authFile = path.join(frontendRoot, 'e2e', '.auth', 'user.json');
+
+const { baseURL: e2eBaseURL, apiURL: e2eApiURL } = guardE2eEnv();
+await assertBackendDatabaseSafe(e2eApiURL);
 
 export default defineConfig({
   testDir: path.join(frontendRoot, 'e2e', 'specs'),
@@ -17,28 +22,59 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   globalSetup: path.join(frontendRoot, 'e2e', 'global-setup.ts'),
   use: {
-    baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:3001',
+    baseURL: e2eBaseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    extraHTTPHeaders: {
+      [E2E_TEST_HEADER]: '1',
+    },
   },
   projects: [
     {
       name: 'guest',
-      testMatch: /guest\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'] },
+      testMatch: [/smoke\/guest\.spec\.ts$/, /shell\/.*\.spec\.ts$/, /cross-cutting\/.*\.spec\.ts$/],
+      grepInvert: /@auth/,
+      use: { ...devices['Pixel 5'] },
     },
     {
       name: 'login',
-      testMatch: /login\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'] },
+      testMatch: [/smoke\/login\.spec\.ts$/, /auth\/.*\.spec\.ts$/],
+      grepInvert: /@auth/,
+      use: { ...devices['Pixel 5'] },
     },
     {
       name: 'authenticated',
-      testMatch: /navigation\.spec\.ts/,
+      testMatch: [
+        /smoke\/navigation\.spec\.ts$/,
+        /shell\/.*\.spec\.ts$/,
+        /auth\/.*\.spec\.ts$/,
+        /home\/.*\.spec\.ts$/,
+        /find\/.*\.spec\.ts$/,
+        /chats\/.*\.spec\.ts$/,
+        /marketplace\/.*\.spec\.ts$/,
+        /profile\/.*\.spec\.ts$/,
+        /leaderboard\/.*\.spec\.ts$/,
+        /cross-cutting\/.*\.spec\.ts$/,
+        /games\/.*\.spec\.ts$/,
+      ],
+      grep: /@auth/,
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices['Pixel 5'],
         storageState: authFile,
       },
+    },
+    {
+      name: 'games-guest',
+      testMatch: [/games\/game-details\.spec\.ts$/],
+      grepInvert: /@auth/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'two-user',
+      testMatch: [/two-user\/.*\.spec\.ts$/],
+      grep: /@two-user/,
+      fullyParallel: false,
+      use: { ...devices['Pixel 5'] },
     },
   ],
   webServer: [

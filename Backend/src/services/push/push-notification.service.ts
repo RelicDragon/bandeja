@@ -4,6 +4,7 @@ import { PushTokenService } from './push-token.service';
 import { NotificationPayload, NotificationType } from '../../types/notifications.types';
 import { PushPlatform } from '@prisma/client';
 import fcmService from './fcm.service';
+import { canDispatchToUser } from '../../utils/notificationDispatchGuard';
 
 class PushNotificationService {
   private apnProvider: apn.Provider | null = null;
@@ -203,6 +204,10 @@ class PushNotificationService {
   }
 
   async sendNotificationToUser(userId: string, payload: NotificationPayload): Promise<number> {
+    if (!(await canDispatchToUser(userId, 'push', payload.type || 'push'))) {
+      return 0;
+    }
+
     console.log(`[PUSH] Sending notification to user ${userId}:`, { title: payload.title, type: payload.type });
     
     let iosCount = 0;

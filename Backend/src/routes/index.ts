@@ -37,11 +37,12 @@ import userTeamRoutes from './userTeam.routes';
 import clubAdminRoutes from './clubAdmin.routes';
 import storyRoutes from './story.routes';
 import adRoutes from './ad.routes';
+import { buildHealthPayload } from '../utils/healthInfo';
 
 const router = Router();
 
 router.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json(buildHealthPayload());
 });
 
 router.use('/app', appRoutes);

@@ -10,6 +10,7 @@ import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser } from '../../shared/notification-base';
 import { appendTelegramGameScheduleExtras, buildGameReminderTitle } from '../../shared/notificationSport';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
+import { guardedTelegramSendMessage } from '../guardedTelegramSend';
 
 export async function sendGameReminderNotification(
   api: Api,
@@ -95,7 +96,11 @@ export async function sendGameReminderNotification(
 
       const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
 
-      await api.sendMessage(user.telegramId, finalMessage, options);
+      await guardedTelegramSendMessage(
+        api,
+        { userId: user.id, telegramId: user.telegramId, kind: 'game-reminder' },
+        () => api.sendMessage(user.telegramId, finalMessage, options),
+      );
     } catch (error) {
       if (!isBenignTelegramRecipientError(error)) {
         console.error(`Failed to send Telegram reminder to user ${user.id}:`, error);

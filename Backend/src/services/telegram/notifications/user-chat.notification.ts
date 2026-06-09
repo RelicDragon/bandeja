@@ -9,6 +9,7 @@ import { NotificationPreferenceService } from '../../notificationPreference.serv
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
+import { guardedTelegramSendMessage } from '../guardedTelegramSend';
 
 export async function sendUserChatNotification(
   api: Api,
@@ -54,7 +55,11 @@ export async function sendUserChatNotification(
     const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
     const trimmedMessage = trimTextForTelegram(finalMessage, false);
     
-    await api.sendMessage(recipient.telegramId, trimmedMessage, options);
+    await guardedTelegramSendMessage(
+      api,
+      { userId: recipient.id, telegramId: recipient.telegramId, kind: 'user-chat' },
+      () => api.sendMessage(recipient.telegramId, trimmedMessage, options),
+    );
   } catch (error) {
     if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram notification to user ${recipient.id}:`, error);

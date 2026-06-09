@@ -18,6 +18,7 @@ import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { canParticipantSeeGameChatMessage } from '../../chat/gameChatVisibility';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
+import { guardedTelegramSendMessage } from '../guardedTelegramSend';
 
 function translateSystemMessage(message: any, lang: string): string {
   let messageData: any = null;
@@ -119,7 +120,11 @@ export async function sendGameSystemMessageNotification(
         const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
         const trimmedMessage = trimTextForTelegram(finalMessage, false);
         
-        await api.sendMessage(user.telegramId, trimmedMessage, options);
+        await guardedTelegramSendMessage(
+          api,
+          { userId: user.id, telegramId: user.telegramId, kind: 'game-system-message' },
+          () => api.sendMessage(user.telegramId, trimmedMessage, options),
+        );
       } catch (error) {
         if (!isBenignTelegramRecipientError(error)) {
           console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
