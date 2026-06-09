@@ -82,6 +82,8 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
     showHomeHeaderRight || isGameDetailsShell || isGameSubscriptionsShell;
 
   const headerRowRef = useRef<HTMLDivElement>(null);
+  const gameDetailsTagsRef = useRef<HTMLDivElement>(null);
+  const gameDetailsRightRef = useRef<HTMLDivElement>(null);
   const [compactGameDetailsBack, setCompactGameDetailsBack] = useState(false);
 
   useLayoutEffect(() => {
@@ -89,27 +91,37 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
       setCompactGameDetailsBack(false);
       return;
     }
-    const row = headerRowRef.current;
-    if (!row) return;
+    const tagsEl = gameDetailsTagsRef.current;
+    const rightEl = gameDetailsRightRef.current;
+    if (!tagsEl || !rightEl) return;
 
-    const backLabelSlack = 56;
+    const collapseAt = 48;
+    const expandAt = 64;
 
     const update = () => {
       if (!gameDetailsSportTag) {
         setCompactGameDetailsBack(false);
         return;
       }
-      const overflows = row.scrollWidth > row.clientWidth + 1;
+      const tagsRow = tagsEl.firstElementChild;
+      if (!tagsRow) return;
+      const tagsRect = tagsRow.getBoundingClientRect();
+      const rightRect = rightEl.getBoundingClientRect();
+      const overlaps = tagsRect.right > rightRect.left - 8;
+      const roomForBackLabel = rightRect.left - tagsRect.right;
+
       setCompactGameDetailsBack((prev) => {
-        if (overflows) return true;
-        if (prev && row.clientWidth - row.scrollWidth < backLabelSlack) return true;
-        return false;
+        if (overlaps) return true;
+        if (prev) return roomForBackLabel < expandAt;
+        return roomForBackLabel < collapseAt;
       });
     };
 
     update();
     const observer = new ResizeObserver(update);
-    observer.observe(row);
+    observer.observe(tagsEl);
+    observer.observe(rightEl);
+    if (headerRowRef.current) observer.observe(headerRowRef.current);
     return () => observer.disconnect();
   }, [
     isGameDetailsShell,
@@ -150,10 +162,10 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
       >
         <div
           ref={headerRowRef}
-          className="h-16 px-4 flex items-center gap-4"
+          className={`h-16 px-4 flex items-center ${isGameDetailsShell ? 'gap-2' : 'gap-4'}`}
           style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}
         >
-          <div className="flex-1 min-w-0 flex items-center gap-3">
+          <div className={`flex-1 min-w-0 flex items-center ${isGameDetailsShell ? 'gap-2' : 'gap-3'}`}>
             {(isHomeShell || isFindShell || isChatsShell || isProfileShell || isLeaderboardShell || (isMarketplaceShell && isMarketplaceList)) ? null : (
               <button
                 onClick={handleBackClick}
@@ -166,7 +178,11 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
               </button>
             )}
 
-            {isGameDetailsShell && <GameDetailsHeader />}
+            {isGameDetailsShell ? (
+              <div ref={gameDetailsTagsRef} className="min-w-0 flex-1">
+                <GameDetailsHeader />
+              </div>
+            ) : null}
 
             {isUserProfileShell && userProfileHeaderActions && (
               <div className="min-w-0 flex-1 flex items-center min-h-0 pl-1">
@@ -218,7 +234,10 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
             {isLeaderboardShell && <LeaderboardTabController />}
           </div>
 
-          <div className={`flex-shrink-0 flex items-center justify-end gap-4 ${hasRightHeaderSlot ? 'min-w-28' : 'min-w-0'}`}>
+          <div
+            ref={gameDetailsRightRef}
+            className={`flex-shrink-0 flex items-center justify-end gap-4 ${hasRightHeaderSlot ? 'min-w-28' : 'min-w-0'}`}
+          >
             {showHomeHeaderRight && (
               <HomeHeaderContent />
             )}
