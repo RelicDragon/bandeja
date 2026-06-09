@@ -25,7 +25,7 @@ import {
   validateWeeklyAvailability,
 } from '../../utils/validators/weeklyAvailability';
 import { validateAvailabilityBucketBoundaries } from '../../utils/validators/availabilityBucketBoundaries';
-import { ensureRollingDoc } from '../../utils/weeklyAvailabilityRolling';
+import { ensureRollingDoc, weeklyDocHasConfiguredSlots } from '../../utils/weeklyAvailabilityRolling';
 import { getUserTimezone } from '../../services/user-timezone.service';
 import { enrichProfileUser } from '../../services/user/userSportProfile.service';
 
@@ -53,6 +53,13 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
         data: { weeklyAvailability: rolled as object },
       });
       weeklyAvailabilityOut = rolled as typeof user.weeklyAvailability;
+    }
+    if (weeklyAvailabilityOut != null && !weeklyDocHasConfiguredSlots(weeklyAvailabilityOut)) {
+      await prisma.user.update({
+        where: { id: req.userId },
+        data: { weeklyAvailability: null },
+      });
+      weeklyAvailabilityOut = null;
     }
   }
 

@@ -1150,17 +1150,14 @@ body.capacitor-android.keyboard-visible footer {
   scroll-margin-bottom: 24px;
 }
 
-/* Centered Radix dialogs: shift into visible area above keyboard */
-body.capacitor-ios.keyboard-visible .dialog-content-animate,
-body.capacitor-android.keyboard-visible .dialog-content-animate,
-body.capacitor-ios.keyboard-visible .cap-keyboard-aware-dialog,
-body.capacitor-android.keyboard-visible .cap-keyboard-aware-dialog,
-body.capacitor-ios.keyboard-visible .modal-content,
-body.capacitor-android.keyboard-visible .modal-content {
-  top: max(
-    calc(env(safe-area-inset-top, 0px) + 4px),
-    calc(50% - var(--keyboard-height, 0px) / 2)
-  ) !important;
+/* Centered Radix dialogs: anchor below safe-area when keyboard has real inset.
+   keyboard-dialog-shift is set in capacitorSetup only when --keyboard-height >= 80px.
+   Do not tie this to keyboard-visible alone — that breaks vertical centering (top 50% + no translateY). */
+body.capacitor-ios.keyboard-dialog-shift .dialog-content-animate,
+body.capacitor-android.keyboard-dialog-shift .dialog-content-animate,
+body.capacitor-ios.keyboard-dialog-shift .cap-keyboard-aware-dialog,
+body.capacitor-android.keyboard-dialog-shift .cap-keyboard-aware-dialog {
+  top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
   transform: translateX(-50%) !important;
   max-height: min(
     calc(100vh - var(--keyboard-height, 0px) - 40px),

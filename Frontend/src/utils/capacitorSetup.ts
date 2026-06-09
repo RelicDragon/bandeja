@@ -11,6 +11,8 @@ let scrollFocusedInputTimer: ReturnType<typeof setTimeout> | null = null;
 
 const MAX_KEYBOARD_INSET_RATIO = 0.92;
 const SCROLL_FOCUSED_INPUT_MS = 120;
+/** Dialogs reposition only above this inset (avoids breaking centering when inset is 0). */
+const KEYBOARD_DIALOG_SHIFT_THRESHOLD_PX = 80;
 
 const isInsideChatComposerFooter = (el: HTMLElement | null) =>
   !!el?.closest('[data-cap-chat-composer], .chat-container footer');
@@ -22,12 +24,20 @@ const resetAppRootScrollIfChatInput = () => {
   window.scrollTo(0, 0);
 };
 
+const syncKeyboardDialogShiftClass = (effectiveInsetPx: number) => {
+  const shouldShift =
+    document.body.classList.contains('keyboard-visible') &&
+    effectiveInsetPx >= KEYBOARD_DIALOG_SHIFT_THRESHOLD_PX;
+  document.body.classList.toggle('keyboard-dialog-shift', shouldShift);
+};
+
 const resetKeyboardLayoutUi = () => {
   if (scrollFocusedInputTimer) {
     clearTimeout(scrollFocusedInputTimer);
     scrollFocusedInputTimer = null;
   }
   document.body.classList.remove('keyboard-visible');
+  document.body.classList.remove('keyboard-dialog-shift');
   lastPluginKeyboardInsetPx = 0;
   currentFocusedInput = null;
   syncKeyboardLayoutFromViewport();
@@ -55,6 +65,7 @@ export const syncKeyboardLayoutFromViewport = () => {
 
   document.documentElement.style.setProperty('--keyboard-height', `${effective}px`);
   applyVisualViewportCssVars();
+  syncKeyboardDialogShiftClass(effective);
 };
 
 const isEditableFocusTarget = (el: HTMLElement) => {

@@ -190,7 +190,7 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(fu
 
           {isUploading && (
             <div
-              className={`absolute inset-0 z-10 flex flex-col items-center justify-center bg-black bg-opacity-70 ${uploadOverlayRounded}`}
+              className={`absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/70 ${uploadOverlayRounded}`}
             >
               <div className="animate-spin rounded-full h-10 w-10 border-3 border-white border-t-transparent mb-2"></div>
               <span className="text-white text-sm font-medium">{t('common.uploading')}</span>
@@ -199,7 +199,7 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(fu
 
           {surfaceInteractive && !isUploading && !disabled && (
             <div
-              className={`group absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 transition-all duration-200 hover:bg-opacity-30 ${uploadOverlayRounded}`}
+              className={`group absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-200 hover:bg-black/30 ${uploadOverlayRounded}`}
             >
               <Upload size={24} className="text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
             </div>

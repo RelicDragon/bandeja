@@ -8,6 +8,7 @@ import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
 import { completeWelcomeScreen, resetWelcomeScreen, skipWelcomeScreen } from '../../services/welcomeScreen.service';
 import {
   clampSportLevel,
+  enrichProfileUser,
   loadProfileUser,
   upsertPadelSportProfileFromUser,
 } from '../../services/user/userSportProfile.service';
@@ -38,7 +39,7 @@ export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) =
 
   res.json({
     success: true,
-    data: user,
+    data: enrichProfileUser(user),
   });
 });
 

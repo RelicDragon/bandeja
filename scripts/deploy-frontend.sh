@@ -46,6 +46,12 @@ rsync -a "$CONTRACT/" "$WORKDIR/packages/chat-contract/"
 
 cd "$WORKDIR/Frontend"
 npm ci
+if [[ -f "$REPO_ROOT/Frontend/build-env.sh" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  . "$REPO_ROOT/Frontend/build-env.sh"
+  set +a
+fi
 npm run build
 
 mv "$WORKDIR/Frontend/dist" "$RELEASES/$RID"
