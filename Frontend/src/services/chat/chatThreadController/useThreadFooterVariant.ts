@@ -54,8 +54,8 @@ export function useThreadFooterVariant(params: UseThreadFooterVariantParams): Ga
       !(contextType === 'GAME' && game && (game.status === 'FINISHED' || game.status === 'ARCHIVED')) &&
       !(contextType === 'GROUP' && isChannelParticipant);
     if (showJoin) {
-      if (contextType === 'GROUP' && !groupChannel) return { type: 'contextLoading' };
-      if (contextType === 'GAME' && !game) return { type: 'contextLoading' };
+      if (contextType === 'GROUP' && !groupChannel) return null;
+      if (contextType === 'GAME' && !game) return null;
       return { type: 'join' };
     }
     return null;

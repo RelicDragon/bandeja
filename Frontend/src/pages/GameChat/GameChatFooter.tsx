@@ -2,8 +2,7 @@ export type GameChatFooterVariant =
   | { type: 'blocked' }
   | { type: 'request' }
   | { type: 'input' }
-  | { type: 'join' }
-  | { type: 'contextLoading' };
+  | { type: 'join' };
 
 export interface GameChatFooterProps {
   visible: boolean;

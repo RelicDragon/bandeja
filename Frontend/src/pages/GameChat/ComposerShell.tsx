@@ -4,7 +4,6 @@ import { MessageCircle } from 'lucide-react';
 import { MessageInput } from '@/components/MessageInput';
 import { RequestToChat } from '@/components/chat/RequestToChat';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
-import { WavyDots } from '@/components/WavyDots';
 import { useThreadComposer } from './useThreadView';
 import type { GameChatFooterVariant } from './GameChatFooter';
 
@@ -26,8 +25,7 @@ export const ComposerShell: React.FC<ComposerShellProps> = ({ visible, variant }
     paddingRight: 'max(1rem, env(safe-area-inset-right))' as const,
   };
 
-  const showInput = variant?.type === 'input' || variant?.type === 'contextLoading';
-  const inputDisabled = variant?.type === 'contextLoading';
+  const showInput = variant?.type === 'input';
 
   return (
     <footer
@@ -55,19 +53,7 @@ export const ComposerShell: React.FC<ComposerShellProps> = ({ visible, variant }
 
       {showInput && (
         <div className="relative overflow-visible">
-          <MessageInput disabled={inputDisabled} />
-        </div>
-      )}
-
-      {variant?.type === 'contextLoading' && (
-        <div
-          className="px-4 py-3 absolute inset-x-0 bottom-0 pointer-events-none bg-white/55 dark:bg-gray-900/55"
-          style={padStyle}
-          aria-hidden
-        >
-          <div className="flex items-center justify-center py-2" role="status" aria-label={t('common.loading')}>
-            <WavyDots />
-          </div>
+          <MessageInput />
         </div>
       )}
 

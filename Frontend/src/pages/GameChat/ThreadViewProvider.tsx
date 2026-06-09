@@ -196,7 +196,7 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
           ctrl.isInitialLoad,
           ctrl.isThreadOpenSettling,
         )
-          ? ({ type: 'contextLoading' } as const)
+          ? null
           : ctrl.footerVariant,
       isBlockedByUser: ctrl.isBlockedByUser,
       isJoiningAsGuest: ctrl.isJoiningAsGuest,
