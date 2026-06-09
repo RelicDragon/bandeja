@@ -42,35 +42,40 @@ const topHintMotion = {
   },
 };
 
-function scrollByViewport(
+function scrollToTop(
   scrollRef: RefObject<HTMLElement | null> | undefined,
-  direction: 'up' | 'down',
   reduceMotion: boolean,
 ) {
   const behavior = reduceMotion ? 'auto' : 'smooth';
   const scrollEl = scrollRef?.current ?? null;
-  const sign = direction === 'down' ? 1 : -1;
+  if (scrollEl) {
+    scrollEl.scrollTo({ top: 0, behavior });
+    return;
+  }
+  window.scrollTo({ top: 0, behavior });
+}
+
+function scrollDownByViewport(
+  scrollRef: RefObject<HTMLElement | null> | undefined,
+  reduceMotion: boolean,
+) {
+  const behavior = reduceMotion ? 'auto' : 'smooth';
+  const scrollEl = scrollRef?.current ?? null;
 
   if (scrollEl) {
     const { scrollTop, scrollHeight, clientHeight } = scrollEl;
-    const remaining =
-      direction === 'down'
-        ? scrollHeight - scrollTop - clientHeight
-        : scrollTop;
+    const remaining = scrollHeight - scrollTop - clientHeight;
     const step = Math.min(remaining, clientHeight * SCROLL_STEP_VIEWPORT_RATIO);
-    if (step > 0) scrollEl.scrollBy({ top: sign * step, behavior });
+    if (step > 0) scrollEl.scrollBy({ top: step, behavior });
     return;
   }
 
   const scrollTop = window.scrollY;
   const scrollHeight = document.documentElement.scrollHeight;
   const clientHeight = window.innerHeight;
-  const remaining =
-    direction === 'down'
-      ? scrollHeight - scrollTop - clientHeight
-      : scrollTop;
+  const remaining = scrollHeight - scrollTop - clientHeight;
   const step = Math.min(remaining, clientHeight * SCROLL_STEP_VIEWPORT_RATIO);
-  if (step > 0) window.scrollBy({ top: sign * step, behavior });
+  if (step > 0) window.scrollBy({ top: step, behavior });
 }
 
 function useBottomHintAnchor(scrollRef?: RefObject<HTMLElement | null>) {
@@ -181,11 +186,11 @@ export const ScrollEdgeHints = ({
   const aboveLabel = t('gameDetails.scrollMoreAbove', { defaultValue: 'More content above' });
 
   const handleScrollDown = useCallback(() => {
-    scrollByViewport(scrollRef, 'down', reduceMotion);
+    scrollDownByViewport(scrollRef, reduceMotion);
   }, [scrollRef, reduceMotion]);
 
   const handleScrollUp = useCallback(() => {
-    scrollByViewport(scrollRef, 'up', reduceMotion);
+    scrollToTop(scrollRef, reduceMotion);
   }, [scrollRef, reduceMotion]);
 
   if (typeof document === 'undefined' || !bottomAnchor || !topAnchor) return null;
