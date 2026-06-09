@@ -68,7 +68,7 @@ export const LiveTeamPanel = ({
           <div key={p?.id ?? `empty-${i}`} className="flex min-w-0 items-center gap-3">
             {tv ? (
               <>
-                <div className={servingRosterAvatarWrapClassName(rowIsServing(i))}>
+                <div className={servingRosterAvatarWrapClassName(rowIsServing(i), 'md')}>
                   <PlayerAvatar
                     player={p}
                     showName={false}
@@ -93,7 +93,7 @@ export const LiveTeamPanel = ({
               </>
             ) : (
               <>
-                <div className={servingRosterAvatarWrapClassName(rowIsServing(i))}>
+                <div className={servingRosterAvatarWrapClassName(rowIsServing(i), 'md')}>
                   <PlayerAvatar
                     player={p}
                     showName={false}

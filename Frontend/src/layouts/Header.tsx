@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useMemo } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Bell, ArrowLeft, User, BarChart3, GitCompare, Users, Star } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
@@ -38,7 +38,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const user = useAuthStore((state) => state.user);
   const { pendingInvites, isNewInviteAnimating } = useHeaderStore();
   const { setBounceNotifications, profileActiveTab, setProfileActiveTab, userProfileHeaderActions, findHeaderActions } = useShellNavStore();
-  const { gameDetailsCanAccessChat, gameDetailsOccludesSideChat } = useGameDetailsChromeStore();
+  const { gameDetailsCanAccessChat, gameDetailsOccludesSideChat, gameDetailsSportTag } = useGameDetailsChromeStore();
   const isDesktop = useDesktop();
 
   const parsed = useMemo(
@@ -81,6 +81,49 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const hasRightHeaderSlot =
     showHomeHeaderRight || isGameDetailsShell || isGameSubscriptionsShell;
 
+  const headerRowRef = useRef<HTMLDivElement>(null);
+  const [compactGameDetailsBack, setCompactGameDetailsBack] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!isGameDetailsShell) {
+      setCompactGameDetailsBack(false);
+      return;
+    }
+    const row = headerRowRef.current;
+    if (!row) return;
+
+    const backLabelSlack = 56;
+
+    const update = () => {
+      if (!gameDetailsSportTag) {
+        setCompactGameDetailsBack(false);
+        return;
+      }
+      const overflows = row.scrollWidth > row.clientWidth + 1;
+      setCompactGameDetailsBack((prev) => {
+        if (overflows) return true;
+        if (prev && row.clientWidth - row.scrollWidth < backLabelSlack) return true;
+        return false;
+      });
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [
+    isGameDetailsShell,
+    gameDetailsSportTag,
+    gameDetailsCanAccessChat,
+    isGameDetailsSplitView,
+    location.pathname,
+  ]);
+
+  const showBackLabel =
+    !(isMarketplaceShell && (location.pathname === '/marketplace/create' || location.pathname.match(/^\/marketplace\/[^/]+\/edit$/))) &&
+    !isUserProfileShell &&
+    !(isGameDetailsShell && compactGameDetailsBack);
+
   useBackButtonHandler();
 
   const handleBackClick = () => {
@@ -105,15 +148,21 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
         animate={{ y: 0 }}
         transition={animateEntry ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : { duration: 0 }}
       >
-        <div className="h-16 px-4 flex items-center gap-4" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
+        <div
+          ref={headerRowRef}
+          className="h-16 px-4 flex items-center gap-4"
+          style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}
+        >
           <div className="flex-1 min-w-0 flex items-center gap-3">
             {(isHomeShell || isFindShell || isChatsShell || isProfileShell || isLeaderboardShell || (isMarketplaceShell && isMarketplaceList)) ? null : (
               <button
                 onClick={handleBackClick}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-110 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current  focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current shrink-0"
+                className={`flex items-center rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-110 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current shrink-0 ${
+                  showBackLabel ? 'gap-2 px-3 py-1.5 text-sm' : 'p-2'
+                }`}
               >
                 <ArrowLeft size={20} />
-                {!(isMarketplaceShell && (location.pathname === '/marketplace/create' || location.pathname.match(/^\/marketplace\/[^/]+\/edit$/))) && !isUserProfileShell && t('common.back')}
+                {showBackLabel && t('common.back')}
               </button>
             )}
 

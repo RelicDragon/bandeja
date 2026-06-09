@@ -81,8 +81,8 @@ export class BetService {
       throw new ApiError(404, 'Game not found');
     }
 
-    if (game.resultsStatus === 'FINAL') {
-      throw new ApiError(400, 'Cannot create bets for finished games');
+    if (game.resultsStatus !== 'NONE') {
+      throw new ApiError(400, 'Cannot create bets after results entry has started');
     }
 
     const entityType = condition.entityType;
@@ -237,8 +237,8 @@ export class BetService {
       throw new ApiError(400, 'Bet is not open');
     }
 
-    if (bet.game.resultsStatus === 'FINAL') {
-      throw new ApiError(400, 'Cannot accept bets for finished games');
+    if (bet.game.resultsStatus !== 'NONE') {
+      throw new ApiError(400, 'Cannot accept bets after results entry has started');
     }
 
     const participant = await prisma.gameParticipant.findFirst({
@@ -392,7 +392,10 @@ export class BetService {
   static async cancelBet(betId: string, userId: string): Promise<void> {
     const bet = await prisma.bet.findUnique({
       where: { id: betId },
-      include: { participants: true }
+      include: {
+        participants: true,
+        game: { select: { resultsStatus: true } },
+      },
     });
 
     if (!bet) {
@@ -405,6 +408,10 @@ export class BetService {
 
     if (bet.status !== 'OPEN') {
       throw new ApiError(400, 'Only open bets can be cancelled');
+    }
+
+    if (bet.game.resultsStatus !== 'NONE') {
+      throw new ApiError(400, 'Cannot cancel bets after results entry has started');
     }
 
     await prisma.bet.update({
@@ -588,8 +595,8 @@ export class BetService {
       throw new ApiError(400, 'Only open bets can be updated');
     }
 
-    if (bet.game.resultsStatus === 'FINAL') {
-      throw new ApiError(400, 'Cannot update bets for finished games');
+    if (bet.game.resultsStatus !== 'NONE') {
+      throw new ApiError(400, 'Cannot update bets after results entry has started');
     }
 
     if (bet.type === 'POOL') {

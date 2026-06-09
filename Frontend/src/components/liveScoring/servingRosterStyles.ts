@@ -1,4 +1,4 @@
-import { SERVE_GOLDEN_HIGHLIGHT } from './serveCourtHighlight';
+import { serveAvatarHighlightWrap } from './serveCourtHighlight';
 
 /** Name emphasis when serve guide marks this roster row as server (ball shown alongside). */
 export function servingPlayerNameClassName(
@@ -26,6 +26,6 @@ export function servingPlayerNameClassName(
   }
 }
 
-export function servingRosterAvatarWrapClassName(isServing: boolean): string {
-  return isServing ? `shrink-0 rounded-full ${SERVE_GOLDEN_HIGHLIGHT}` : 'shrink-0';
+export function servingRosterAvatarWrapClassName(isServing: boolean, size: 'sm' | 'md' = 'sm'): string {
+  return serveAvatarHighlightWrap(isServing, size, 'ring');
 }

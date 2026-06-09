@@ -53,9 +53,9 @@ export function GameSportTagRow({
   if (!showSport && !matchFormatLabel) return null;
 
   return (
-    <div className={`flex flex-wrap items-center gap-2 ${className}`.trim()}>
-      {showSport && <GameSportTag sport={sport} />}
-      {matchFormatLabel && <GameMatchFormatTag label={matchFormatLabel} />}
+    <div className={`flex flex-nowrap items-center gap-2 ${className}`.trim()}>
+      {showSport && <GameSportTag sport={sport} className="shrink-0 whitespace-nowrap" />}
+      {matchFormatLabel && <GameMatchFormatTag label={matchFormatLabel} className="shrink-0 whitespace-nowrap" />}
     </div>
   );
 }

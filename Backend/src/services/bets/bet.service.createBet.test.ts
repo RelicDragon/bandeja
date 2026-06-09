@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
+import { ResultsStatus } from '@prisma/client';
 import type { BetCondition } from './betConditionEvaluator.service';
 import { createTestGame, ensureDbUrl, expectApiError } from '../../testHelpers';
 
@@ -132,6 +133,20 @@ async function run() {
       400,
       'Reward text is required'
     );
+
+    await prisma.game.update({
+      where: { id: gameId },
+      data: { resultsStatus: ResultsStatus.IN_PROGRESS },
+    });
+    await expectApiError(
+      () => createSocial(),
+      400,
+      'Cannot create bets after results entry has started'
+    );
+    await prisma.game.update({
+      where: { id: gameId },
+      data: { resultsStatus: ResultsStatus.NONE },
+    });
 
     const socialBet = await createSocial();
     assert.equal(socialBet.type, 'SOCIAL');

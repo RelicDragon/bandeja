@@ -273,8 +273,8 @@ export const LiveScoreShell = ({
   const showServeLine = Boolean(serveGuideSnapshot && !matchDecided);
   const scorePanelShellClass = showServeLine
     ? boardTheme === 'light'
-      ? 'overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm'
-      : 'overflow-hidden rounded-xl border border-zinc-700/90 bg-zinc-900 shadow-md'
+      ? 'rounded-xl border border-zinc-200 bg-white shadow-sm'
+      : 'rounded-xl border border-zinc-700/90 bg-zinc-900 shadow-md'
     : '';
 
   return (

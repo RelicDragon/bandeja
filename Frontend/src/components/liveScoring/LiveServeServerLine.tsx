@@ -2,7 +2,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { PlayerAvatar } from '@/components';
 import type { BasicUser } from '@/types';
 import type { ServeGuideSnapshot } from '@/utils/liveScoring';
-import { SERVE_GOLDEN_HIGHLIGHT } from './serveCourtHighlight';
+import { serveAvatarHighlightWrap } from './serveCourtHighlight';
 import { LiveServeSideArrow } from './LiveServeSideArrow';
 
 type LiveServeServerLineProps = {
@@ -52,7 +52,7 @@ export function LiveServeServerLine({ snapshot, teamAPlayers, teamBPlayers, atta
       aria-label={a11y}
       className={
         attached
-          ? 'flex w-full justify-center border-t border-zinc-200/80 bg-zinc-50 px-2 py-1 dark:border-zinc-700/80 dark:bg-zinc-900 sm:px-3'
+          ? 'flex w-full justify-center overflow-visible rounded-b-xl border-t border-zinc-200/80 bg-zinc-50 px-2 py-1.5 dark:border-zinc-700/80 dark:bg-zinc-900 sm:px-3'
           : 'mx-auto flex w-fit max-w-full justify-center'
       }
     >
@@ -63,7 +63,7 @@ export function LiveServeServerLine({ snapshot, teamAPlayers, teamBPlayers, atta
             : 'flex max-w-full items-center gap-1.5 rounded-lg border border-zinc-200/70 bg-zinc-50/90 px-2 py-1 dark:border-zinc-700/70 dark:bg-zinc-900/50'
         }
       >
-        <div className={`shrink-0 rounded-full ${SERVE_GOLDEN_HIGHLIGHT}`}>
+        <div className={serveAvatarHighlightWrap(true, 'xs', 'ring')}>
           <PlayerAvatar
             player={player}
             showName={false}

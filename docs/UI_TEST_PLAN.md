@@ -410,6 +410,7 @@ Frontend/e2e/
 | GD-78 | Date/time info row layout | Open game with `timeIsSet` on wide viewport; repeat on narrow | Wide: date and time on one row with vertical divider; narrow: stacked rows |
 | GD-79 | Time period clock icon | Open game with `timeIsSet` and start/end times (e.g. 18:00–20:00) | Clock icon shows golden period arc with primary-colored outline matching the displayed time range |
 | GD-80 | Sport tag placement | Open game details | Sport and match-format tags appear in main app header between Back and Chat |
+| GD-81 | Compact game details back | Narrow viewport; game with sport + format tags and Chat visible | Back shows arrow only (no label) so tags and Chat fit on one row |
 
 ### 9.2 Participation
 
@@ -466,6 +467,8 @@ Frontend/e2e/
 | GD-40 | Accept bet | Participant accepts | Status updated |
 | GD-41 | Resolve bet | Owner resolves | Wallet/rating side effects |
 | GD-42 | Real-time bet update | `@two browsers` socket | UI updates without reload |
+| GD-81 | Challenge actions locked after results start | Game with `resultsStatus` IN_PROGRESS or FINAL | Create / accept / edit / cancel challenge controls hidden; existing bets still visible |
+| GD-82 | Format section hidden after results start | Game with results entered (`IN_PROGRESS` or `FINAL`) | “What kind of game?” / format card not shown; format summary still visible in scores tab when editing |
 
 ### 9.6 League season specifics
 

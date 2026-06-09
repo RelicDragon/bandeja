@@ -19,7 +19,7 @@ export const BetSection = ({ game }: BetSectionProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const canEdit = game.resultsStatus !== 'FINAL';
+  const canEdit = game.resultsStatus === 'NONE';
 
   useEffect(() => {
     const loadBets = async () => {

@@ -57,7 +57,7 @@ const BroadcastTeamRoster = memo(function BroadcastTeamRoster({
     <div className={`flex min-w-0 flex-col items-stretch gap-1.5 text-left sm:gap-2 ${nameClass}`}>
       {roster.map((p, i) => (
         <span key={p?.id ?? `slot-${i}`} className="flex min-w-0 items-center gap-2">
-          <div className={servingRosterAvatarWrapClassName(rowIsServing(i))}>
+          <div className={servingRosterAvatarWrapClassName(rowIsServing(i), 'sm')}>
             <PlayerAvatar
               player={p}
               showName={false}
@@ -178,7 +178,13 @@ export function LiveBroadcastBoard({
 
   const isLight = boardTheme === 'light';
   const embedSolid = Boolean(interactive);
-  const panelShape = embedded ? '' : attachedFooter ? 'rounded-t-xl rounded-b-none border-b-0' : 'rounded-xl';
+  const panelShape = embedded
+    ? attachedFooter
+      ? 'overflow-hidden rounded-t-xl'
+      : ''
+    : attachedFooter
+      ? 'rounded-t-xl rounded-b-none border-b-0'
+      : 'rounded-xl';
   const panelBorder = embedded ? '' : 'border';
   const panelPad = attachedFooter ? 'px-3 pt-2.5 pb-0 sm:px-4 sm:pt-3 sm:pb-0' : 'px-3 py-2.5 sm:px-4 sm:py-3';
   const panel = isLight

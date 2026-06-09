@@ -40,9 +40,10 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
   const isPool = bet.type === 'POOL';
   const isCreator = bet.creatorId === user?.id;
   const myParticipant = isPool && bet.participants ? bet.participants.find(p => p.userId === user?.id) : null;
-  const canAccept = !isCreator && bet.status === 'OPEN' && game.resultsStatus !== 'FINAL' && !myParticipant;
-  const canCancel = isCreator && bet.status === 'OPEN' && game.resultsStatus !== 'FINAL';
-  const canEdit = isCreator && bet.status === 'OPEN' && game.resultsStatus !== 'FINAL' && !isPool;
+  const canModifyBets = game.resultsStatus === 'NONE';
+  const canAccept = !isCreator && bet.status === 'OPEN' && canModifyBets && !myParticipant;
+  const canCancel = isCreator && bet.status === 'OPEN' && canModifyBets;
+  const canEdit = isCreator && bet.status === 'OPEN' && canModifyBets && !isPool;
 
   const requiredCoins = isPool
     ? (bet.stakeType === 'COINS' ? (bet.stakeCoins ?? 0) : 0)

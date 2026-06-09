@@ -1485,6 +1485,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
           {user &&
             game.status !== 'ARCHIVED' &&
+            game.resultsStatus === 'NONE' &&
             game.entityType !== 'BAR' &&
             game.entityType !== 'TRAINING' && (
             <GameFormatSection
