@@ -62,7 +62,9 @@ export const MyGamesSection = ({
     );
   }
 
-  const displayGames = games.filter((game) => game.entityType !== 'LEAGUE_SEASON');
+  const displayGames = games.filter(
+    (game) => game.entityType !== 'LEAGUE_SEASON' && game.status !== 'ARCHIVED'
+  );
 
   if (displayGames.length === 0) {
     if (upcomingGames && upcomingGames.length > 0) {
@@ -107,8 +109,8 @@ export const MyGamesSection = ({
       if (a.timeIsSet !== false && b.timeIsSet === false) return -1;
       return 0;
     });
-  const finishedOrArchivedGames = displayGames
-    .filter((game) => game.status === 'FINISHED' || game.status === 'ARCHIVED')
+  const finishedGames = displayGames
+    .filter((game) => game.status === 'FINISHED')
     .sort((a, b) => {
       if (a.timeIsSet === false && b.timeIsSet !== false) return 1;
       if (a.timeIsSet !== false && b.timeIsSet === false) return -1;
@@ -135,7 +137,7 @@ export const MyGamesSection = ({
         <div className="space-y-4 pb-8">
           {announcedOrStartedGames.map((game) => renderGame(game))}
 
-          {announcedOrStartedGames.length > 0 && finishedOrArchivedGames.length > 0 && (
+          {announcedOrStartedGames.length > 0 && finishedGames.length > 0 && (
             <div>
               <Divider className="-mt-4" />
               <div className="flex justify-center -mt-9">
@@ -147,7 +149,7 @@ export const MyGamesSection = ({
             </div>
           )}
 
-          {finishedOrArchivedGames.map((game) => renderGame(game))}
+          {finishedGames.map((game) => renderGame(game))}
         </div>
       </div>
     </div>

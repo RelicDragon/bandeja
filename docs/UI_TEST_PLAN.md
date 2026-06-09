@@ -126,7 +126,7 @@ Frontend/e2e/
 | G-18 | i18n switch | Change language in profile | UI strings update |
 | G-19 | Dark/light theme | Toggle theme | Persisted appearance |
 | G-20 | Desktop split chat | `@desktop` open `/chats` + select thread | List + thread side by side |
-| G-21 | Home URL subtab sync | Open `/?tab=list`, `/?tab=past-games` | My tab switches subtab |
+| G-21 | Home URL subtab sync | Open `/?tab=past-games`; legacy `/?tab=list` | Past subtab; list URL redirects to calendar |
 | G-22 | Find URL view sync | Open `/find?view=list` | Find list view active |
 | G-23 | Chats filter URL sync | Open `/chats?filter=channels`, `/chats/marketplace`, `/bugs` | Correct inbox filter |
 | G-24 | Player overlay URL | Open any page with `?player=:userId` | Player card bottom sheet |
@@ -208,7 +208,7 @@ Frontend/e2e/
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| H-01 | List vs calendar toggle | Switch My subtab | Games render in selected view |
+| H-01 | Calendar view | Open My tab | Calendar + games render |
 | H-02 | Calendar date select | Pick date on calendar | Games for that day |
 | H-03 | Empty my games | User with no games | Empty state |
 | H-04 | Stories rail visible | Logged in home | Stories bubbles render |
@@ -238,6 +238,7 @@ Frontend/e2e/
 | H-18 | Unread badge on game | Game with chat unread | Badge on card |
 | H-19 | Create game entry | Header/FAB create | `/create-game` with entity picker |
 | H-20 | Create from calendar date | Select date → create | Pre-filled date |
+| H-36 | Finished section excludes archived | User with FINISHED and ARCHIVED games on list/calendar | Finished divider lists only FINISHED games; ARCHIVED only on past-games subtab |
 
 ### 6.4 Stories
 
@@ -257,11 +258,10 @@ Frontend/e2e/
 |----|------|-------|----------|
 | H-28 | Past games subtab | Header → Past | Past games list loads |
 | H-29 | Past games unread badge | Unread on past game | Badge on Past subtab |
-| H-30 | List subtab | Header → List | List view of my games |
 | H-31 | Calendar subtab default | Open home | Calendar view default |
 | H-32 | URL deep link past games | `/?tab=past-games` | Past subtab selected |
-| H-33 | Subtab survives refresh | On list subtab → reload | Still on list |
-| H-34 | Restore subtab after create | Create game from list view | Returns to list + selected date |
+| H-33 | Subtab survives refresh | On past-games subtab → reload | Still on past-games |
+| H-34 | Restore calendar after create | Create game from calendar | Returns to calendar + game date selected |
 | H-35 | Invite friend to app | `InviteFriendToBandejaButton` | Share sheet / copy invite link |
 
 ---

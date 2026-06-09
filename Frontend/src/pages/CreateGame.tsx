@@ -71,7 +71,7 @@ export const CreateGame = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const { setIsAnimating, setActiveTab, setMyGamesSubtabBeforeCreate, setMyGamesCalendarDateAfterCreate } = useShellNavStore();
+  const { setIsAnimating, setActiveTab, setMyGamesCalendarDateAfterCreate } = useShellNavStore();
 
   useBackButtonHandler(() => {
     handleBack(navigate);
@@ -672,16 +672,10 @@ export const CreateGame = ({
 
   const navigateAfterCreate = (gameStartTime: string) => {
     setIsAnimating(true);
-    const fromList = useShellNavStore.getState().myGamesSubtabBeforeCreate;
-    setMyGamesSubtabBeforeCreate(null);
-    if (fromList === 'list') {
-      navigate('/?tab=list', { replace: true });
-    } else {
-      const startDate = format(startOfDay(new Date(gameStartTime)), 'yyyy-MM-dd');
-      setMyGamesCalendarDateAfterCreate(startDate);
-      setActiveTab('calendar');
-      navigate('/', { replace: true });
-    }
+    const startDate = format(startOfDay(new Date(gameStartTime)), 'yyyy-MM-dd');
+    setMyGamesCalendarDateAfterCreate(startDate);
+    setActiveTab('calendar');
+    navigate('/', { replace: true });
     setTimeout(() => setIsAnimating(false), 300);
   };
 

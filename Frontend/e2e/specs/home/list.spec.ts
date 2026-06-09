@@ -7,8 +7,8 @@ import { addDays, format, startOfDay } from 'date-fns';
 
 test.use({ ...devices['Pixel 7'] });
 
-test.describe('home list & calendar @auth', () => {
-  test('H-01 list vs calendar toggle renders games', async ({ page }) => {
+test.describe('home calendar @auth', () => {
+  test('H-01 calendar shows games', async ({ page }) => {
     const { token, user } = await e2eLogin();
     const label = `[E2E] H-01 ${Date.now()}`;
     const { id: gameId } = await createGameViaApi(token, user.id, { participants: [user.id], name: label });
@@ -17,13 +17,7 @@ test.describe('home list & calendar @auth', () => {
       const home = new HomePage(page);
       await home.goto();
       await home.waitForMyGamesLoaded();
-
-      await home.switchSubtab('list');
-      await expect(home.subtab('list')).toHaveAttribute('aria-selected', 'true');
-      await home.expectGameCardVisible(label);
-
-      await home.switchSubtab('calendar');
-      await expect(home.calendar()).toBeVisible();
+      await expect(home.subtab('calendar')).toHaveAttribute('aria-selected', 'true');
       await home.expectGameCardVisible(label);
     } finally {
       await deleteGameViaApi(token, gameId);
@@ -57,7 +51,7 @@ test.describe('home list & calendar @auth', () => {
 
   test('H-03 empty my games', async ({ page }) => {
     const home = new HomePage(page);
-    await home.goto('tab=list');
+    await home.goto();
     await home.waitForMyGamesLoaded();
     const cards = home.gameCards();
     if ((await cards.count()) > 0) {
@@ -91,18 +85,17 @@ test.describe('home list & calendar @auth', () => {
 
   test('H-33 subtab survives refresh', async ({ page }) => {
     const home = new HomePage(page);
-    await home.goto();
-    await home.switchSubtab('list');
+    await home.goto('tab=past-games');
     await page.reload();
     await home.waitForShell();
-    await expect(page).toHaveURL(/\?tab=list/);
-    await expect(home.subtab('list')).toHaveAttribute('aria-selected', 'true');
+    await expect(page).toHaveURL(/\?tab=past-games/);
+    await expect(home.subtab('past-games')).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('H-34 restore subtab after create from list', async ({ page }) => {
+  test('H-34 restore calendar after create', async ({ page }) => {
     const { token } = await e2eLogin();
     const home = new HomePage(page);
-    await home.goto('tab=list');
+    await home.goto();
     await home.openCreateMenu();
     await home.selectCreateEntity(/^game$/i);
 
@@ -113,8 +106,8 @@ test.describe('home list & calendar @auth', () => {
     const gameId = await createGame.submitCreate('GAME');
 
     try {
-      await expect(page).toHaveURL(/\?tab=list/);
-      await expect(home.subtab('list')).toHaveAttribute('aria-selected', 'true');
+      await expect(page).toHaveURL(/\/?(\?|$)/);
+      await expect(home.subtab('calendar')).toHaveAttribute('aria-selected', 'true');
     } finally {
       if (gameId) await deleteGameViaApi(token, gameId);
     }

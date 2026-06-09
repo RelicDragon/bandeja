@@ -5,7 +5,7 @@ interface ShellNavState {
   bottomTabsVisible: boolean;
   initShellAnimationPlayed: boolean;
   isAnimating: boolean;
-  activeTab: 'calendar' | 'list' | 'past-games' | 'my-games' | 'search';
+  activeTab: 'calendar' | 'past-games' | 'my-games' | 'search';
   profileActiveTab: 'general' | 'statistics' | 'comparison' | 'followers' | 'reviews';
   chatsFilter: 'users' | 'bugs' | 'channels' | 'market';
   marketplaceTab: 'market' | 'my';
@@ -13,7 +13,6 @@ interface ShellNavState {
   requestFindGoToCurrent: 'calendar' | 'list' | null;
   bounceNotifications: boolean;
   pendingPlayerCardReopen: { playerId: string; sourceIdx: number } | null;
-  myGamesSubtabBeforeCreate: 'list' | null;
   myGamesCalendarDateAfterCreate: string | null;
   myGamesSelectedDay: string | null;
   findSelectedDay: string | null;
@@ -23,7 +22,7 @@ interface ShellNavState {
   setBottomTabsVisible: (visible: boolean) => void;
   setInitShellAnimationPlayed: (played: boolean) => void;
   setIsAnimating: (animating: boolean) => void;
-  setActiveTab: (tab: 'calendar' | 'list' | 'past-games' | 'my-games' | 'search') => void;
+  setActiveTab: (tab: 'calendar' | 'past-games' | 'my-games' | 'search') => void;
   setProfileActiveTab: (tab: 'general' | 'statistics' | 'comparison' | 'followers' | 'reviews') => void;
   setChatsFilter: (filter: 'users' | 'bugs' | 'channels' | 'market') => void;
   setMarketplaceTab: (tab: 'market' | 'my') => void;
@@ -31,7 +30,6 @@ interface ShellNavState {
   setRequestFindGoToCurrent: (mode: 'calendar' | 'list' | null) => void;
   setBounceNotifications: (bounce: boolean) => void;
   setPendingPlayerCardReopen: (data: { playerId: string; sourceIdx: number } | null) => void;
-  setMyGamesSubtabBeforeCreate: (tab: 'list' | null) => void;
   setMyGamesCalendarDateAfterCreate: (date: string | null) => void;
   setMyGamesSelectedDay: (day: string | null) => void;
   setFindSelectedDay: (day: string | null) => void;
@@ -52,7 +50,6 @@ export const useShellNavStore = create<ShellNavState>((set) => ({
   requestFindGoToCurrent: null,
   bounceNotifications: false,
   pendingPlayerCardReopen: null,
-  myGamesSubtabBeforeCreate: null,
   myGamesCalendarDateAfterCreate: null,
   myGamesSelectedDay: null,
   findSelectedDay: null,
@@ -70,7 +67,6 @@ export const useShellNavStore = create<ShellNavState>((set) => ({
   setRequestFindGoToCurrent: (mode) => set({ requestFindGoToCurrent: mode }),
   setBounceNotifications: (bounce) => set({ bounceNotifications: bounce }),
   setPendingPlayerCardReopen: (data) => set({ pendingPlayerCardReopen: data }),
-  setMyGamesSubtabBeforeCreate: (tab) => set({ myGamesSubtabBeforeCreate: tab }),
   setMyGamesCalendarDateAfterCreate: (date) => set({ myGamesCalendarDateAfterCreate: date }),
   setMyGamesSelectedDay: (day) => set({ myGamesSelectedDay: day }),
   setFindSelectedDay: (day) => set({ findSelectedDay: day }),

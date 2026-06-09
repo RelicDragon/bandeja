@@ -16,7 +16,7 @@ export const HomeHeaderContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const { setIsAnimating, setChatsFilter, setMyGamesSubtabBeforeCreate } = useShellNavStore();
+  const { setIsAnimating, setChatsFilter } = useShellNavStore();
   const parsed = useMemo(
     () => parseLocation(location.pathname, location.search),
     [location.pathname, location.search]
@@ -51,8 +51,6 @@ export const HomeHeaderContent = () => {
       runWithProfileName(() => handleSelectGameType(entityType, sport));
       return;
     }
-    const fromMyGamesList = parsed.place === 'home' && parsed.params?.tab === 'list';
-    setMyGamesSubtabBeforeCreate(fromMyGamesList ? 'list' : null);
     const initialGameData = {
       ...(createGameInitialDate ? { startTime: createGameInitialDate } : {}),
       ...(sport ? { sport } : {}),

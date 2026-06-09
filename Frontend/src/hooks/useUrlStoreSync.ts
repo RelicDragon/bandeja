@@ -3,10 +3,10 @@ import { useLocation } from 'react-router-dom';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { parseLocation } from '@/utils/urlSchema';
 
-export type HomeSubTab = 'calendar' | 'list' | 'past-games';
+export type HomeSubTab = 'calendar' | 'past-games';
 
 export function homeSubTabFromParams(tab: string | undefined): HomeSubTab {
-  if (tab === 'list' || tab === 'past-games') return tab;
+  if (tab === 'past-games') return tab;
   return 'calendar';
 }
 

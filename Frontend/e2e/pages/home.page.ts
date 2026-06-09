@@ -1,10 +1,9 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-export type HomeSubtab = 'calendar' | 'list' | 'past-games';
+export type HomeSubtab = 'calendar' | 'past-games';
 
 const SUBTAB_LABEL: Record<HomeSubtab, RegExp> = {
   calendar: /^calendar$/i,
-  list: /^list$/i,
   'past-games': /^past$/i,
 };
 

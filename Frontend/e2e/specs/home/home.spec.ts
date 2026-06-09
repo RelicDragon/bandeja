@@ -13,14 +13,6 @@ test.describe('home tab @auth', () => {
     await expect(home.subtab('calendar')).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('H-30 list subtab', async ({ page }) => {
-    const home = new HomePage(page);
-    await home.goto();
-    await home.switchSubtab('list');
-    await expect(page).toHaveURL(/\?tab=list/);
-    await expect(home.subtab('list')).toHaveAttribute('aria-selected', 'true');
-  });
-
   test('H-32 URL deep link past games', async ({ page }) => {
     const home = new HomePage(page);
     await home.goto('tab=past-games');
@@ -36,7 +28,7 @@ test.describe('home tab @auth', () => {
     await expect(page).toHaveURL(/\/create-game/, { timeout: 15_000 });
   });
 
-  test('H-17 open game from list', async ({ page }) => {
+  test('H-17 open game from calendar', async ({ page }) => {
     const { token, user } = await e2eLogin();
     const label = `[E2E] H-17 ${Date.now()}`;
     const { id: gameId } = await createGameViaApi(token, user.id, {
@@ -47,7 +39,6 @@ test.describe('home tab @auth', () => {
     try {
       const home = new HomePage(page);
       await home.goto();
-      await home.switchSubtab('list');
       const openedId = await home.openGameCardMatching(label);
       test.skip(!openedId, 'created game not visible in my games list');
       expect(openedId).toBe(gameId);

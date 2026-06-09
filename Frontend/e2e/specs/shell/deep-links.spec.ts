@@ -2,10 +2,10 @@ import { test, expect } from '@playwright/test';
 import { ShellPage } from '../../pages/shell.page';
 
 test.describe('shell deep links', () => {
-  test('G-21 home URL subtab list @auth', async ({ page }) => {
+  test('G-21 legacy home URL tab=list redirects to calendar @auth', async ({ page }) => {
     await page.goto('/?tab=list');
-    await expect(page).toHaveURL(/tab=list/);
-    await new ShellPage(page).expectHomeSubtab('list');
+    await expect(page).toHaveURL(/\/?(\?|$)/);
+    await new ShellPage(page).expectHomeSubtab('calendar');
   });
 
   test('G-21 home URL subtab past-games @auth', async ({ page }) => {

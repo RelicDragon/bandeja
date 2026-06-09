@@ -81,9 +81,9 @@ export const UpcomingGamesList = ({
     for (const g of gamesWithoutLeagueSeasonHub) {
       if (isStalePastScheduledGame(g)) {
         stale.push(g);
-      } else if (g.status === 'FINISHED' || g.status === 'ARCHIVED') {
+      } else if (g.status === 'FINISHED') {
         finished.push(g);
-      } else {
+      } else if (g.status !== 'ARCHIVED') {
         upcoming.push(g);
       }
     }

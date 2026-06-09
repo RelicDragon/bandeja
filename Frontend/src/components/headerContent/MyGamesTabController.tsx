@@ -1,4 +1,4 @@
-import { Calendar, List, History } from 'lucide-react';
+import { Calendar, History } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMyGamesSubtabUnreadBadges } from '@/hooks/useUnreadBridge';
@@ -25,7 +25,6 @@ export const MyGamesTabController = () => {
 
   const tabs: SegmentedSwitchTab[] = [
     { id: 'calendar', label: t('games.calendar'), icon: Calendar, badge: myGamesUnreadCount },
-    { id: 'list', label: t('games.list'), icon: List, badge: myGamesUnreadCount },
     { id: 'past-games', label: t('home.past'), icon: History, badge: pastGamesUnreadCount },
   ];
 

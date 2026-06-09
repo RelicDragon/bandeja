@@ -209,8 +209,8 @@ export const MyTab = () => {
   const myGamesForSelectedDate = useMemo(() => {
     if (!myGamesSelectedDate) return [];
     const selectedStr = format(startOfDay(myGamesSelectedDate), 'yyyy-MM-dd');
-    const source = activeTab === 'calendar' ? calendarMergedGames : filteredMyGames;
-    const counts = activeTab === 'calendar' ? calendarMergedUnreadCounts : mergedUnreadCounts;
+    const source = calendarMergedGames;
+    const counts = calendarMergedUnreadCounts;
     return sortMyGamesByStatusAndDateTime(
       source.filter((g) => {
         if (g.timeIsSet === false) return false;
@@ -219,26 +219,14 @@ export const MyTab = () => {
       }),
       counts
     );
-  }, [
-    activeTab,
-    myGamesSelectedDate,
-    calendarMergedGames,
-    filteredMyGames,
-    calendarMergedUnreadCounts,
-    mergedUnreadCounts,
-  ]);
+  }, [myGamesSelectedDate, calendarMergedGames, calendarMergedUnreadCounts]);
 
   const upcomingGamesForCalendar = useMemo(() => {
     if (activeTab !== 'calendar') return [];
     const base = calendarMergedGames.filter((g) => {
       if (g.timeIsSet === false) return false;
       const status = g.status;
-      return (
-        status === 'ANNOUNCED' ||
-        status === 'STARTED' ||
-        status === 'FINISHED' ||
-        status === 'ARCHIVED'
-      );
+      return status === 'ANNOUNCED' || status === 'STARTED' || status === 'FINISHED';
     });
     if (!myGamesSelectedDate) {
       return base.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
@@ -502,11 +490,11 @@ export const MyTab = () => {
           />
         </div>
 
-        {(activeTab === 'calendar' || activeTab === 'list') && <UserTeamsHomeSection className="mb-3" />}
-        {(activeTab === 'calendar' || activeTab === 'list') && (
+        {activeTab === 'calendar' && <UserTeamsHomeSection className="mb-3" />}
+        {activeTab === 'calendar' && (
           <YourLeaguesHomeSection
             games={games}
-            gamesUnreadCounts={activeTab === 'calendar' ? calendarMergedUnreadCounts : mergedUnreadCounts}
+            gamesUnreadCounts={calendarMergedUnreadCounts}
             className="mb-3"
           />
         )}
@@ -534,19 +522,6 @@ export const MyTab = () => {
                 onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
               />
             </>
-          )}
-
-          {activeTab === 'list' && (
-            <MyGamesSection
-              games={filteredMyGames}
-              user={user}
-              loading={loading}
-              showSkeleton={skeletonAnimation.showSkeleton}
-              skeletonStates={skeletonAnimation.skeletonStates}
-              gamesUnreadCounts={mergedUnreadCounts}
-              onNoteSaved={() => refetchMyGames()}
-              onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
-            />
           )}
 
           {activeTab === 'past-games' && (
