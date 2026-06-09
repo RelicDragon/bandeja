@@ -5,6 +5,7 @@ import { hydrateLastMessageIdFromDexieIfMissing } from '@/services/chat/messageC
 import { pullMissedAndPersistToDexie } from '@/services/chat/chatThreadNetworkSync';
 import { mergeMissedIntoWarmRef, takeMissedMessagesForOpen } from '@/services/chat/chatOpenMissedFlush';
 import { mergeOpenSnapshot } from '@/services/chat/chatOpenSnapshot';
+import { markOpenThreadNetworkPrefetched } from '@/services/chat/openThreadNetworkPrefetch';
 
 /**
  * Network + Dexie prefetch before first open paint (push / cold resume).
@@ -28,6 +29,7 @@ export async function prefetchOpenThreadLocal(
   });
 
   await pullAndApplyChatSyncEvents(contextType, contextId);
+  markOpenThreadNetworkPrefetched(contextType, contextId);
 
   const missedBuffer = takeMissedMessagesForOpen(
     contextType,

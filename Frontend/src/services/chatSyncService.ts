@@ -3,7 +3,11 @@ import { pullMissedAndPersistToDexie } from '@/services/chat/chatThreadNetworkSy
 import { applyThreadEvent } from '@/services/chat/chatLocalApplyThreadEvent';
 import { scheduleWarmFromUnreadApiPayload } from '@/services/chat/chatSyncBatchWarm';
 import { refreshChatOfflineBanner } from '@/services/chat/chatOfflineBanner';
-import { enqueueChatSyncPull, SYNC_PRIORITY_FOREGROUND } from '@/services/chat/chatSyncScheduler';
+import {
+  enqueueChatSyncPull,
+  SYNC_PRIORITY_FOREGROUND,
+  SYNC_PRIORITY_VIEWING,
+} from '@/services/chat/chatSyncScheduler';
 import { unreadApiEnvelopeData } from '@/services/chat/chatUnreadPayload';
 import { useChatSyncStore, ChatContextType } from '@/store/chatSyncStore';
 import type { ChatType } from '@/types';
@@ -79,7 +83,10 @@ export const chatSyncService = {
     }
   },
 
-  async syncAllContexts(rooms: ChatRoomRef[]): Promise<void> {
+  async syncAllContexts(
+    rooms: ChatRoomRef[],
+    options?: { viewingContextKeys?: Set<string> }
+  ): Promise<void> {
     if (rooms.length === 0) return;
     const generation = ++syncAllContextsGeneration;
     const { setSyncInProgress, setLastSyncCompletedAt } = useChatSyncStore.getState();
@@ -87,12 +94,15 @@ export const chatSyncService = {
     refreshChatOfflineBanner();
 
     try {
-      for (const r of rooms) {
-        enqueueChatSyncPull(r.contextType, r.contextId, SYNC_PRIORITY_FOREGROUND);
-      }
-
       const syncWave = Promise.all(
-        rooms.map((r) => this.syncContext(r.contextType, r.contextId, r.gameChatType))
+        rooms.map(async (r) => {
+          await this.syncContext(r.contextType, r.contextId, r.gameChatType);
+          const ctxKey = `${r.contextType}:${r.contextId}`;
+          const priority = options?.viewingContextKeys?.has(ctxKey)
+            ? SYNC_PRIORITY_VIEWING
+            : SYNC_PRIORITY_FOREGROUND;
+          enqueueChatSyncPull(r.contextType, r.contextId, priority);
+        })
       );
       const timeoutSignal = new Promise<'timeout'>((resolve) => {
         setTimeout(() => resolve('timeout'), SYNC_ALL_CONTEXTS_WAVE_MS);

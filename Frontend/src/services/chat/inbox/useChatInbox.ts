@@ -52,6 +52,7 @@ import {
 import { useChatInboxDexieSyncEffects } from './useChatInboxDexieSyncEffects';
 import { useChatInboxSocketEffects } from './useChatInboxSocketEffects';
 import { chatInboxThreadIndex } from './chatInboxProductionAdapter';
+import { shouldFetchMarketForUnknownGroupUnread } from './marketUnknownGroupUnread';
 
 export type UseChatInboxOptions = {
   chatsFilter: ChatsFilterType;
@@ -299,14 +300,21 @@ export function useChatInbox(opts: UseChatInboxOptions) {
     };
   }, [chatsFilter, bugsFilter, fetchOps, userId]);
 
+  const marketUnknownGroupFetchRef = useRef<string | null>(null);
   useEffect(() => {
     const data = lastChatUnreadCount as { contextType?: string; contextId?: string } | null;
-    if (!data || data.contextType !== 'GROUP') return;
-    const ids =
-      chatsFilter === 'market'
-        ? chatsRef.current.filter((c) => c.type === 'channel').map((c) => c.data.id)
-        : [];
-    if (ids.includes(data.contextId!)) return;
+    const ids = chatsRef.current.filter((c) => c.type === 'channel').map((c) => c.data.id);
+    if (
+      !shouldFetchMarketForUnknownGroupUnread(
+        chatsFilter,
+        data,
+        ids,
+        marketUnknownGroupFetchRef.current
+      )
+    ) {
+      return;
+    }
+    marketUnknownGroupFetchRef.current = data!.contextId!;
     let cancelled = false;
     fetchOps.fetchMarket(1).then(({ chats, hasMore }) => {
       if (cancelled) return;
@@ -315,13 +323,13 @@ export function useChatInbox(opts: UseChatInboxOptions) {
       adapterRef.current.commitFilterCache(
         'market',
         { chats: deduped, marketHasMore: hasMore },
-        { userId, applyToVisible: chatsFilter === 'market' }
+        { userId, applyToVisible: true }
       );
     }).catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [lastChatUnreadCount, chatsFilter, fetchOps, userId, threads]);
+  }, [lastChatUnreadCount, chatsFilter, fetchOps, userId]);
 
   const marketChannelIds = useMemo(
     () => (chatsFilter === 'market' ? threads.filter((c) => c.type === 'channel').map((c) => c.data.id) : []),

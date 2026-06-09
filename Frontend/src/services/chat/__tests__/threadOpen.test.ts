@@ -13,6 +13,9 @@ import {
   shouldDeferOpenReload,
 } from '../threadOpen';
 import { detectReconcileScrollDelta, shouldPinOnOpen } from '../chatOpenScrollPolicy';
+import { markOpenThreadNetworkPrefetched } from '../openThreadNetworkPrefetch';
+import { pullMissedAndPersistToDexie } from '../chatThreadNetworkSync';
+import { pullAndApplyChatSyncEvents } from '../chatLocalApply';
 
 vi.mock('@/services/chat/chatLocalApply', () => ({
   applyThreadEvent: vi.fn(async () => {}),
@@ -185,6 +188,25 @@ describe('reconcileAfterPaint', () => {
     });
     expect(result.committedRows).toBe(false);
     expect(setMessages).not.toHaveBeenCalled();
+  });
+
+  it('skips network pulls when open prefetch was just marked', async () => {
+    vi.mocked(pullMissedAndPersistToDexie).mockClear();
+    vi.mocked(pullAndApplyChatSyncEvents).mockClear();
+    markOpenThreadNetworkPrefetched('GAME', 'g1');
+    commitThreadOpenPaint(KEY, { atBottom: true });
+    await reconcileAfterPaint({
+      threadKey: KEY,
+      paintGeneration: getThreadOpenPaintGeneration(KEY),
+      contextType: 'GAME',
+      contextId: 'g1',
+      gameChatType: 'PUBLIC',
+      currentIdRef,
+      messagesRef,
+      setMessages,
+    });
+    expect(pullMissedAndPersistToDexie).not.toHaveBeenCalled();
+    expect(pullAndApplyChatSyncEvents).not.toHaveBeenCalled();
   });
 
   it('returns pinToBottom false for anchor scroll even when tail appends', async () => {

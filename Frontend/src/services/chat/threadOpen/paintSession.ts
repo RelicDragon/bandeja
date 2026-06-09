@@ -19,6 +19,7 @@ import {
 } from '@/services/chat/chatOpenScrollPolicy';
 import { decideReconcilePinApply } from '@/services/chat/threadScrollPolicy';
 import { commitChatOpenMessages, traceChatOpenLength } from '@/services/chat/chatOpenTrace';
+import { consumeOpenThreadNetworkPrefetch } from '@/services/chat/openThreadNetworkPrefetch';
 
 /** Socket backlog + open reload guard after first paint commit. */
 export const THREAD_OPEN_SOCKET_GUARD_MS = 300;
@@ -182,15 +183,19 @@ export async function reconcileAfterPaint(
       contextId,
       contextType === 'GAME' ? gameChatType : undefined
     );
-    const missedNetwork = await pullMissedAndPersistToDexie({
-      contextType,
-      contextId,
-      gameChatType: contextType === 'GAME' ? gameChatType : undefined,
-    });
-    if (currentIdRef.current !== contextId) return noop;
+    const skipNetworkPull = consumeOpenThreadNetworkPrefetch(contextType, contextId);
+    let missedNetwork: Awaited<ReturnType<typeof pullMissedAndPersistToDexie>> = [];
+    if (!skipNetworkPull) {
+      missedNetwork = await pullMissedAndPersistToDexie({
+        contextType,
+        contextId,
+        gameChatType: contextType === 'GAME' ? gameChatType : undefined,
+      });
+      if (currentIdRef.current !== contextId) return noop;
 
-    await pullAndApplyChatSyncEvents(contextType, contextId);
-    if (currentIdRef.current !== contextId) return noop;
+      await pullAndApplyChatSyncEvents(contextType, contextId);
+      if (currentIdRef.current !== contextId) return noop;
+    }
 
     const { messages: dexieTail } = await loadLocalThreadBootstrap(contextType, contextId, gameChatType);
     if (currentIdRef.current !== contextId) return noop;

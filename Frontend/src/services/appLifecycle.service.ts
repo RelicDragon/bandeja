@@ -8,7 +8,6 @@ import { useChatSyncStore } from '@/store/chatSyncStore';
 import { useAuthStore } from '@/store/authStore';
 import { warmChatSyncHeads, collectContextsForWarmEnriched } from '@/services/chat/chatSyncBatchWarm';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
-import { enqueueChatSyncPull, SYNC_PRIORITY_VIEWING } from '@/services/chat/chatSyncScheduler';
 import { setChatSyncNativeAppActive } from '@/services/chat/chatSyncAppVisibility';
 import { recordChatSyncForegroundSyncMs } from '@/services/chat/chatSyncMetrics';
 import { purgeExpiredFailedOutbox } from '@/services/chat/chatOutboxExpiry';
@@ -61,10 +60,6 @@ async function runForegroundSync(): Promise<void> {
   }
   if (nav.viewingUserChatId) viewing.push({ contextType: 'USER', contextId: nav.viewingUserChatId });
   if (nav.viewingGroupChannelId) viewing.push({ contextType: 'GROUP', contextId: nav.viewingGroupChannelId });
-  for (const v of viewing) {
-    enqueueChatSyncPull(v.contextType, v.contextId, SYNC_PRIORITY_VIEWING);
-  }
-
   const socketRooms = socketService.getActiveChatRooms();
   const roomKey = (r: ChatRoomRef) => `${r.contextType}:${r.contextId}:${r.gameChatType ?? ''}`;
   const mergedMap = new Map<string, ChatRoomRef>();
@@ -81,12 +76,13 @@ async function runForegroundSync(): Promise<void> {
     /* ignore */
   }
   const rooms = [...mergedMap.values()];
+  const viewingContextKeys = new Set(viewing.map((r) => `${r.contextType}:${r.contextId}`));
 
   if (useChatSyncStore.getState().syncInProgress) return;
 
   if (rooms.length > 0) {
     chatSyncService
-      .syncAllContexts(rooms)
+      .syncAllContexts(rooms, { viewingContextKeys })
       .then(recordSyncDuration)
       .catch((err) => {
         console.error('[appLifecycle] Foreground sync failed:', err);
