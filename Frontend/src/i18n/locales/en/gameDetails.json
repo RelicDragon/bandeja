@@ -12,6 +12,7 @@
     "clubNotSet": "Club is not set",
     "yourTime": "Your time: {{time}}",
     "settingsUpdated": "Settings updated successfully",
+    "scrollMoreBelow": "More content below",
     "photoPickFailed": "Failed to pick photos",
     "editTab": {
       "general": "General",

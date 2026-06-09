@@ -14,6 +14,7 @@ import { LeagueDetailsContent } from './LeagueDetails';
 import { GameChat } from './GameChat';
 import { useTranslation } from 'react-i18next';
 import { AnimatedPresencePanel } from '@/components/motion/AnimatedPresencePanel';
+import { ScrollMoreBelowHint } from '@/components/GameDetails/ScrollMoreBelowHint';
 
 type EntityRouteState =
   | { status: 'loading' }
@@ -56,7 +57,10 @@ export const GameDetailsPage = () => {
     effectiveTableView && (layoutTableAvailable === null || layoutTableAvailable || gameDetailsCanShowTableView);
   const useTableViewLayout = useTournamentTableLayout || layoutLeagueFixtureTable;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const mobileContentRef = useRef<HTMLDivElement>(null);
   const [selectedGameChatId, setSelectedGameChatId] = useState<string | null>(null);
+  const showScrollMoreHint =
+    entityRoute.status === 'ready' || entityRoute.status === 'cancelled';
 
   const bootstrapMatchesRoute =
     entityRoute.status !== 'ready' || entityRoute.initialGame.id === id;
@@ -130,7 +134,6 @@ export const GameDetailsPage = () => {
   };
 
   const detailsCommon = {
-    scrollContainerRef,
     selectedGameChatId,
     onChatGameSelect: handleChatGameSelect,
     layoutCancelledInfo,
@@ -172,8 +175,11 @@ export const GameDetailsPage = () => {
   if (canShowSplitLayout) {
     const leftPanel = (
       <SplitViewLeftPanel bottomTabsVisible={false}>
-        <div ref={scrollContainerRef} className="h-full overflow-y-auto overflow-x-hidden p-3">
-          {renderEntityDetails()}
+        <div className="relative flex h-full min-h-0 flex-col">
+          <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3">
+            {renderEntityDetails()}
+          </div>
+          <ScrollMoreBelowHint scrollRef={scrollContainerRef} enabled={showScrollMoreHint} />
         </div>
       </SplitViewLeftPanel>
     );
@@ -181,11 +187,17 @@ export const GameDetailsPage = () => {
     if (useTableViewLayout || layoutCancelledInfo) {
       return (
         <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
-          <div
-            ref={scrollContainerRef}
-            className={`h-full overflow-x-hidden ${layoutCancelledInfo ? 'overflow-hidden' : 'overflow-y-auto'}`}
-          >
-            {renderEntityDetails()}
+          <div className="relative flex h-full min-h-0 flex-col">
+            <div
+              ref={scrollContainerRef}
+              className={`min-h-0 flex-1 overflow-x-hidden ${layoutCancelledInfo ? 'overflow-hidden' : 'overflow-y-auto'}`}
+            >
+              {renderEntityDetails()}
+            </div>
+            <ScrollMoreBelowHint
+              scrollRef={scrollContainerRef}
+              enabled={showScrollMoreHint && !layoutCancelledInfo}
+            />
           </div>
         </div>
       );
@@ -214,5 +226,10 @@ export const GameDetailsPage = () => {
     );
   }
 
-  return renderEntityDetails();
+  return (
+    <div ref={mobileContentRef} className="relative">
+      {renderEntityDetails()}
+      <ScrollMoreBelowHint contentRef={mobileContentRef} enabled={showScrollMoreHint} />
+    </div>
+  );
 };

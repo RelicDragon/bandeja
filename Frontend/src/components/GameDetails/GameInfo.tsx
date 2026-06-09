@@ -62,7 +62,6 @@ interface GameInfoProps {
   onToggleFavorite: () => void;
   onEditCourt: () => void;
   onOpenEditGameInfo?: (initialTab?: EditGameInfoTabId) => void;
-  onScrollToSettings: () => void;
   collapsedByDefault?: boolean;
   onInviteTrainer?: () => void;
   canInviteTrainer?: boolean;
@@ -80,7 +79,6 @@ export const GameInfo = ({
   onToggleFavorite,
   onEditCourt,
   onOpenEditGameInfo,
-  onScrollToSettings,
   collapsedByDefault = false,
   onInviteTrainer,
   canInviteTrainer = false,
@@ -817,15 +815,9 @@ export const GameInfo = ({
           <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
             <Calendar size={20} className="text-primary-600 dark:text-primary-400" />
             {game.timeIsSet === false ? (
-              canEdit && canShowEdit ? (
+              canEdit && canShowEdit && !isEditMode ? (
                 <button
-                  onClick={() => {
-                    if (isEditMode) {
-                      onScrollToSettings();
-                    } else {
-                      onOpenEditGameInfo?.('when');
-                    }
-                  }}
+                  onClick={() => onOpenEditGameInfo?.('when')}
                   className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 italic"
                 >
                   {t('gameDetails.datetimeNotSet')}
@@ -835,15 +827,9 @@ export const GameInfo = ({
               )
             ) : (
               <div className="flex-1">
-                {canEdit && canShowEdit ? (
+                {canEdit && canShowEdit && !isEditMode ? (
                   <button
-                    onClick={() => {
-                      if (isEditMode) {
-                        onScrollToSettings();
-                      } else {
-                        onOpenEditGameInfo?.('when');
-                      }
-                    }}
+                    onClick={() => onOpenEditGameInfo?.('when')}
                     className="flex flex-col text-left font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                   >
                     <span>{weekdayDisplay.primaryText.charAt(0).toUpperCase() + weekdayDisplay.primaryText.slice(1)}</span>
@@ -863,15 +849,9 @@ export const GameInfo = ({
               <Clock size={20} className="text-primary-600 dark:text-primary-400" />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  {canEdit && canShowEdit ? (
+                  {canEdit && canShowEdit && !isEditMode ? (
                     <button
-                      onClick={() => {
-                        if (isEditMode) {
-                          onScrollToSettings();
-                        } else {
-                          onOpenEditGameInfo?.('when');
-                        }
-                      }}
+                      onClick={() => onOpenEditGameInfo?.('when')}
                       className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                     >
                       {game.entityType === 'BAR' ? timeDisplay.primaryText : timeRangeDisplay.primaryText}
@@ -898,15 +878,9 @@ export const GameInfo = ({
               <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  {canEdit && canShowEdit ? (
+                  {canEdit && canShowEdit && !isEditMode ? (
                     <button
-                      onClick={() => {
-                        if (isEditMode) {
-                          onScrollToSettings();
-                        } else {
-                          onOpenEditGameInfo?.('where');
-                        }
-                      }}
+                      onClick={() => onOpenEditGameInfo?.('where')}
                       className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                     >
                       {game.court?.club?.name || game.club?.name}

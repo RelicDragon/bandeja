@@ -401,6 +401,8 @@ Frontend/e2e/
 | GD-05 | FAQ tab | Game with FAQs | FAQ content |
 | GD-06 | Photos section | Upload/view photos | Gallery works |
 | GD-07 | Open game chat | Chat button | `/games/:id/chat` |
+| GD-73 | Scroll-more hint | Open long game details; scroll partway down | Bottom gradient + bouncing chevron; hides at page bottom |
+| GD-74 | Scroll-more hint tap | Tap chevron on long game details | Smooth scroll down ~one viewport; hint hides when at bottom |
 
 ### 9.2 Participation
 

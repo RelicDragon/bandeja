@@ -97,13 +97,12 @@ function leagueTabFromSearch(search: string): LeagueSeasonShellTab {
 export interface GameDetailsShellProps {
   variant: 'game' | 'league';
   initialGame?: Game | null;
-  scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
   selectedGameChatId?: string | null;
   onChatGameSelect?: (gameId: string) => void;
   layoutCancelledInfo?: { entityType: string; name: string | null; sport?: import('@/types').Sport; cancelledAt: string; cancelledByUser?: import('@/types').BasicUser | null } | null;
 }
 
-export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, selectedGameChatId, onChatGameSelect, layoutCancelledInfo }: GameDetailsShellProps) => {
+export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onChatGameSelect, layoutCancelledInfo }: GameDetailsShellProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -452,14 +451,6 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   }, [setBottomTabsVisible]);
 
   useEffect(() => {
-    if (scrollContainerRef?.current) {
-      scrollContainerRef.current.scrollTop = 0;
-    } else {
-      window.scrollTo(0, 0);
-    }
-  }, [id, scrollContainerRef]);
-
-  useEffect(() => {
     const fetchCourts = async () => {
       if (!game?.clubId) return;
       
@@ -805,9 +796,6 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
     if (!id || !user?.id || !game) return;
     
     setShowAnnouncedConfirm(false);
-    
-    // Scroll to top immediately
-    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     try {
       const startRes = await resultsApi.startResultsEntryWithGeneratedRound(id);
@@ -930,15 +918,6 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
   const handleCourtsChange = useCallback((newCourts: Court[]) => {
     setCourts(newCourts);
   }, []);
-
-  const handleScrollToSettings = () => {
-    const settingsElement = document.getElementById('game-settings');
-    if (settingsElement) {
-      const elementTop = settingsElement.getBoundingClientRect().top + window.pageYOffset;
-      const offset = 60;
-      window.scrollTo({ top: elementTop - offset, behavior: 'smooth' });
-    }
-  };
 
   const handleRefresh = useCallback(async () => {
     if (!id) return;
@@ -1427,7 +1406,6 @@ export const GameDetailsShell = ({ variant, initialGame, scrollContainerRef, sel
                 setEditGameInfoInitialTab(tab ?? 'general');
                 setIsEditGameInfoModalOpen(true);
               }}
-              onScrollToSettings={handleScrollToSettings}
               collapsedByDefault={game.resultsStatus !== 'NONE'}
               onInviteTrainer={() => {
                 setPlayerListMode('trainer');
