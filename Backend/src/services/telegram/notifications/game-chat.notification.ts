@@ -57,6 +57,7 @@ export async function sendGameChatNotification(
     if (participant.status === 'INVITED' || participant.status === 'INVITE_DECLINED' || participant.status === 'INVITE_CANCELLED') continue;
     const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
     if (!allowed || !user.telegramId) continue;
+    const telegramId = user.telegramId;
 
     if (hasMentions) {
       if (!mentionedUserIds?.has(user.id)) {
@@ -108,8 +109,8 @@ export async function sendGameChatNotification(
         
         await guardedTelegramSendMessage(
           api,
-          { userId: user.id, telegramId: user.telegramId, kind: 'game-chat' },
-          () => api.sendMessage(user.telegramId, trimmedMessage, options),
+          { userId: user.id, telegramId, kind: 'game-chat' },
+          () => api.sendMessage(telegramId, trimmedMessage, options),
         );
       } catch (error) {
         if (!isBenignTelegramRecipientError(error)) {
@@ -149,6 +150,7 @@ export async function sendGameChatNotification(
       if (parentParticipant.status === 'INVITED' || parentParticipant.status === 'INVITE_DECLINED' || parentParticipant.status === 'INVITE_CANCELLED') continue;
       const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
       if (!allowed || !user.telegramId) continue;
+      const telegramId = user.telegramId;
 
       if (currentGameUserIds.has(user.id)) {
         continue;
@@ -194,8 +196,8 @@ export async function sendGameChatNotification(
         
         await guardedTelegramSendMessage(
           api,
-          { userId: user.id, telegramId: user.telegramId, kind: 'game-chat' },
-          () => api.sendMessage(user.telegramId, trimmedMessage, options),
+          { userId: user.id, telegramId, kind: 'game-chat' },
+          () => api.sendMessage(telegramId, trimmedMessage, options),
         );
       } catch (error) {
         if (!isBenignTelegramRecipientError(error)) {

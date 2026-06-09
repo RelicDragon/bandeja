@@ -50,6 +50,7 @@ export async function sendTransactionNotification(
   if (!user) return;
   const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_WALLET_NOTIFICATIONS);
   if (!allowed || !user.telegramId) return;
+  const telegramId = user.telegramId;
 
   try {
     const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
@@ -123,8 +124,8 @@ export async function sendTransactionNotification(
     const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
     await guardedTelegramSendMessage(
       api,
-      { userId: user.id, telegramId: user.telegramId, kind: 'transaction' },
-      () => api.sendMessage(user.telegramId, finalMessage, options),
+      { userId: user.id, telegramId, kind: 'transaction' },
+      () => api.sendMessage(telegramId, finalMessage, options),
     );
   } catch (error) {
     if (isBenignTelegramRecipientError(error)) return;

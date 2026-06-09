@@ -35,6 +35,7 @@ export async function sendInviteNotification(
   });
 
   if (!receiver?.telegramId) return;
+  const telegramId = receiver.telegramId;
 
   if (!invite.game) {
     return;
@@ -94,8 +95,8 @@ export async function sendInviteNotification(
   try {
     await guardedTelegramSendMessage(
       api,
-      { userId: receiver.id, telegramId: receiver.telegramId, kind: 'invite' },
-      () => api.sendMessage(receiver.telegramId, finalMessage, options),
+      { userId: receiver.id, telegramId, kind: 'invite' },
+      () => api.sendMessage(telegramId, finalMessage, options),
     );
   } catch (error) {
     if (isBenignTelegramRecipientError(error)) return;

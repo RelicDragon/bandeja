@@ -55,6 +55,7 @@ export async function sendGameReminderNotification(
     const user = participant.user;
     const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_REMINDERS);
     if (!allowed || !user.telegramId) continue;
+    const telegramId = user.telegramId;
 
     try {
       const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
@@ -98,8 +99,8 @@ export async function sendGameReminderNotification(
 
       await guardedTelegramSendMessage(
         api,
-        { userId: user.id, telegramId: user.telegramId, kind: 'game-reminder' },
-        () => api.sendMessage(user.telegramId, finalMessage, options),
+        { userId: user.id, telegramId, kind: 'game-reminder' },
+        () => api.sendMessage(telegramId, finalMessage, options),
       );
     } catch (error) {
       if (!isBenignTelegramRecipientError(error)) {

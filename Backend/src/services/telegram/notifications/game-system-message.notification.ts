@@ -82,6 +82,7 @@ export async function sendGameSystemMessageNotification(
     const user = participant.user;
     const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
     if (!allowed || !user.telegramId) continue;
+    const telegramId = user.telegramId;
 
     const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
     if (isMuted) {
@@ -122,8 +123,8 @@ export async function sendGameSystemMessageNotification(
         
         await guardedTelegramSendMessage(
           api,
-          { userId: user.id, telegramId: user.telegramId, kind: 'game-system-message' },
-          () => api.sendMessage(user.telegramId, trimmedMessage, options),
+          { userId: user.id, telegramId, kind: 'game-system-message' },
+          () => api.sendMessage(telegramId, trimmedMessage, options),
         );
       } catch (error) {
         if (!isBenignTelegramRecipientError(error)) {
