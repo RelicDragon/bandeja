@@ -22,7 +22,11 @@
     "test:chat-outbox": "vitest run src/services/chat/chatSendCoordinator.test.ts src/services/chat/chatOutboxEnqueue.test.ts src/services/chat/chatOutboxRetry.test.ts src/services/chat/messageSendState.test.ts src/services/chat/chatSendSocketAck.test.ts src/services/chat/chatSendMessageCreate.test.ts src/services/chat/chatHttpRetry.test.ts src/services/chat/chatVideoTranscode.test.ts src/services/chat/chatVideoTranscodeWorkerClient.test.ts src/services/chat/chatVideoUploadRetry.test.ts src/services/chatMessageQueueStorage.video.test.ts && cd ../Backend && npx ts-node scripts/tests/chat-video-message-type.ts",
     "test:stories": "vitest run src/components/stories/create/utils/storyTransform.test.ts src/components/stories/create/utils/storyCanvasExport.test.ts src/components/stories/create/utils/layoutCanvasText.test.ts src/components/stories/create/utils/storyCanvasHitTest.test.ts src/components/stories/create/utils/storyExportDimensions.test.ts src/components/stories/create/photo/utils/storyRenderParity.test.ts src/components/stories/create/video/useStoryVideoPublish.test.ts src/components/stories/create/photo/hooks/useStoryPhotoPublish.test.ts src/components/stories/slides/MediaStorySlide.test.tsx",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
-    "increment-sw": "node scripts/increment-sw-version.js"
+    "increment-sw": "node scripts/increment-sw-version.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@bandeja/chat-contract": "file:../packages/chat-contract",
@@ -107,6 +111,7 @@
     "rimraf": "^6.1.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@swc/core": "^1.15.40",
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/react-query-devtools": "^5.101.0",

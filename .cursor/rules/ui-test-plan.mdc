@@ -1,0 +1,44 @@
+---
+description: Keep docs/UI_TEST_PLAN.md in sync when UI behavior or workflows change
+alwaysApply: true
+---
+
+# UI test plan maintenance
+
+Canonical catalog: `docs/UI_TEST_PLAN.md`.
+
+## When you MUST update it (end of the same task)
+
+Update the file before finishing if your changes affect anything a user can see or do:
+
+- New or removed route, tab, modal, drawer, gate, or primary CTA
+- New user workflow (create / edit / join / leave / chat / buy / bid / etc.)
+- Changed expected behavior, validation, permissions, or empty/error states
+- New filter, setting, overlay (`?player=`, `?item=`), or URL query sync
+- New entity type, sport flow, or cross-cutting concern (offline, push, ads)
+
+## When you may skip
+
+- Refactor with no user-visible behavior change
+- Backend-only change with no Frontend UX impact
+- Typo/copy-only tweaks that do not change flow or outcomes
+- User explicitly asked not to touch the test plan this task
+
+## How to add entries
+
+1. Place tests in the matching section (§4–§18); add a subsection only if the area is new.
+2. Use the existing table format: `ID | Test | Steps | Expected` (or `ID | Test | Expected` for cross-cutting).
+3. IDs: reuse section prefix (`G-`, `F-`, `GD-`, `CH-`, `PR-`, `X-`, etc.); next free number in that section.
+4. For new matrices or personas, extend §3 or §19 — do not duplicate P0 lists unless priority truly changed.
+5. Keep each row one testable outcome; split multi-step journeys into separate IDs.
+
+## Minimum bar per change type
+
+| Change | Add at least |
+|--------|----------------|
+| New screen/route | 1 happy-path + 1 access/empty or error case |
+| New modal/form | 1 submit success + 1 validation or cancel |
+| Changed behavior | Update or replace affected row(s); add regression row if old behavior could break |
+| New workflow | Happy path + one permission or edge case |
+
+Do not leave the test plan stale when the delivered feature has no row describing how to verify it in the UI.
