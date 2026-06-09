@@ -4,6 +4,9 @@ import { e2eApi, e2eGetProfile, type E2eUser } from './api-client';
 type Club = { id: string; name: string; isForPlaying?: boolean; isBar?: boolean };
 type Game = { id: string; participants?: Array<{ userId: string; status?: string }> };
 type AvailableGamesResponse = Game[] | { games?: Game[] };
+type LeagueCreateResponse = { id: string; seasons?: Array<{ id: string }> };
+type SpectatorTokenResponse = { token?: string; spectatorToken?: string };
+type InviteRow = { id: string; gameId?: string; receiverId?: string };
 
 function futureWindow(hoursFromNow = 26, durationHours = 2) {
   const start = new Date(Date.now() + hoursFromNow * 3_600_000);
@@ -126,6 +129,27 @@ export async function createJoinableGame(token: string, userId: string): Promise
   });
 }
 
+/** Requires owner approval — join adds user to queue. */
+export async function createQueueOnlyGame(token: string, userId: string, name?: string): Promise<{ id: string }> {
+  return createGameViaApi(token, userId, {
+    participants: [],
+    allowDirectJoin: false,
+    maxParticipants: 4,
+    isPublic: true,
+    name: name ?? `[E2E] queue game ${Date.now()}`,
+  });
+}
+
+export async function createPrivateGame(token: string, userId: string): Promise<{ id: string }> {
+  return createGameViaApi(token, userId, {
+    participants: [userId],
+    allowDirectJoin: false,
+    maxParticipants: 4,
+    isPublic: false,
+    name: `[E2E] private ${Date.now()}`,
+  });
+}
+
 export async function joinGameViaApi(token: string, gameId: string): Promise<void> {
   await e2eApi(token, `/games/${gameId}/join`, { method: 'POST', body: '{}' }).catch(async () => {
     await e2eApi(token, `/games/${gameId}/toggle-playing-status`, {
@@ -133,6 +157,32 @@ export async function joinGameViaApi(token: string, gameId: string): Promise<voi
       body: JSON.stringify({ status: 'PLAYING' }),
     });
   });
+}
+
+export async function joinQueueViaApi(token: string, gameId: string): Promise<void> {
+  await e2eApi(token, `/games/${gameId}/join`, { method: 'POST', body: '{}' });
+}
+
+export async function acceptJoinQueueViaApi(token: string, gameId: string, userId: string): Promise<void> {
+  await e2eApi(token, `/games/${gameId}/accept-join-queue`, {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function declineJoinQueueViaApi(token: string, gameId: string, userId: string): Promise<void> {
+  await e2eApi(token, `/games/${gameId}/decline-join-queue`, {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function cancelJoinQueueViaApi(token: string, gameId: string): Promise<void> {
+  await e2eApi(token, `/games/${gameId}/cancel-join-queue`, { method: 'POST', body: '{}' });
+}
+
+export async function joinAsGuestViaApi(token: string, gameId: string): Promise<void> {
+  await e2eApi(token, `/games/${gameId}/join-as-guest`, { method: 'POST', body: '{}' });
 }
 
 export async function leaveGameViaApi(token: string, gameId: string): Promise<void> {
@@ -149,31 +199,14 @@ export async function deleteGameViaApi(token: string, gameId: string): Promise<v
 
 export type LiveScoringFixture = { gameId: string; matchId: string };
 
-export async function createLiveScoringFixtureWithUserB(
-  token: string,
-  userAId: string,
-  userBId: string,
-): Promise<LiveScoringFixture> {
-  return buildLiveScoringFixture(token, userAId, userBId);
-}
+export type ResultsEntryFixture = LiveScoringFixture;
 
-export async function createLiveScoringFixture(token: string, userId: string): Promise<LiveScoringFixture> {
-  const otherUserId = (await findOtherUserId(token, userId)) ?? userId;
-  return buildLiveScoringFixture(token, userId, otherUserId);
-}
-
-async function buildLiveScoringFixture(
+async function ensureMatchWithTeams(
   token: string,
+  gameId: string,
   userId: string,
   otherUserId: string,
-): Promise<LiveScoringFixture> {
-
-  const { id: gameId } = await createGameViaApi(token, userId, {
-    maxParticipants: 2,
-    playersPerMatch: 2,
-    participants: [userId],
-  });
-
+): Promise<string> {
   await e2eApi(token, `/results/game/${gameId}/start-results-entry`, { method: 'POST', body: '{}' }).catch(() => undefined);
 
   type ResultsPayload = { rounds?: Array<{ matches?: Array<{ id: string }> }> };
@@ -202,7 +235,50 @@ async function buildLiveScoringFixture(
     }),
   });
 
-  return { gameId, matchId: matchId! };
+  return matchId!;
+}
+
+export async function createLiveScoringFixtureWithUserB(
+  token: string,
+  userAId: string,
+  userBId: string,
+): Promise<LiveScoringFixture> {
+  return buildLiveScoringFixture(token, userAId, userBId);
+}
+
+export async function createLiveScoringFixture(token: string, userId: string): Promise<LiveScoringFixture> {
+  const otherUserId = (await findOtherUserId(token, userId)) ?? userId;
+  return buildLiveScoringFixture(token, userId, otherUserId);
+}
+
+async function buildLiveScoringFixture(
+  token: string,
+  userId: string,
+  otherUserId: string,
+): Promise<LiveScoringFixture> {
+  const { id: gameId } = await createGameViaApi(token, userId, {
+    maxParticipants: 2,
+    playersPerMatch: 2,
+    participants: [userId],
+  });
+
+  const matchId = await ensureMatchWithTeams(token, gameId, userId, otherUserId);
+  return { gameId, matchId };
+}
+
+export async function createResultsEntryFixture(
+  token: string,
+  userId: string,
+  otherUserId?: string,
+): Promise<ResultsEntryFixture> {
+  const other = otherUserId ?? (await findOtherUserId(token, userId)) ?? userId;
+  const { id: gameId } = await createGameViaApi(token, userId, {
+    maxParticipants: 4,
+    playersPerMatch: 2,
+    participants: [userId],
+  });
+  const matchId = await ensureMatchWithTeams(token, gameId, userId, other);
+  return { gameId, matchId };
 }
 
 export async function createGameWithOwnerPlaying(
@@ -225,4 +301,79 @@ export async function findPublicGameId(token: string): Promise<string | null> {
     participants: [],
   });
   return id;
+}
+
+export async function createLeagueSeasonViaApi(
+  token: string,
+): Promise<{ leagueId: string; seasonId: string }> {
+  const user = await e2eGetProfile(token);
+  const cityId = user.currentCity?.id;
+  if (!cityId) {
+    throw new Error('[e2e] E2E user has no currentCity for league create');
+  }
+  const clubId = await resolveClubId(token, user);
+  const startDate = new Date(Date.now() + 7 * 86_400_000).toISOString();
+
+  const league = await e2eApi<LeagueCreateResponse>(token, '/leagues', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: `[E2E] league ${Date.now()}`,
+      cityId,
+      clubId,
+      season: {
+        name: `${new Date().getFullYear()}`,
+        sport: 'PADEL',
+        minLevel: 1,
+        maxLevel: 7,
+        maxParticipants: 8,
+        startDate,
+        gameSeason: {
+          fixedNumberOfSets: 1,
+          maxTotalPointsPerSet: 0,
+          maxPointsPerTeam: 0,
+          winnerOfGame: 'BY_MATCHES_WON',
+          winnerOfMatch: 'BY_SCORES',
+          matchGenerationType: 'HANDMADE',
+          pointsPerWin: 3,
+          pointsPerLoose: 1,
+          pointsPerTie: 2,
+          ballsInGames: false,
+          scoringMode: 'CLASSIC',
+          hasGoldenPoint: true,
+          gameType: 'CLASSIC',
+        },
+      },
+    }),
+  });
+
+  const seasonId = league.seasons?.[0]?.id;
+  if (!league.id || !seasonId) {
+    throw new Error('[e2e] league create response missing season id');
+  }
+  return { leagueId: league.id, seasonId };
+}
+
+export async function getLiveSpectatorTokenViaApi(
+  token: string,
+  gameId: string,
+  matchId: string,
+): Promise<string> {
+  const res = await e2eApi<SpectatorTokenResponse>(
+    token,
+    `/results/game/${gameId}/matches/${matchId}/live-spectator-token`,
+    { method: 'POST', body: '{}' },
+  );
+  const st = res.token ?? res.spectatorToken;
+  if (!st) {
+    throw new Error('[e2e] live spectator token missing in response');
+  }
+  return st;
+}
+
+export async function getPendingInviteIdForGame(
+  token: string,
+  gameId: string,
+): Promise<string | null> {
+  const invites = await e2eApi<InviteRow[]>(token, `/invites/game/${gameId}`);
+  return invites[0]?.id ?? null;
 }

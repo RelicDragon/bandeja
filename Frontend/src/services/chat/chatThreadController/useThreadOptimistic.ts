@@ -195,15 +195,24 @@ export function useThreadOptimistic({
       mediaUrls?: string[];
       thumbnailUrls?: string[];
     }) => {
-      if (params.contextId !== id) return;
       const { tempId } = params;
       void (async () => {
         const row = await messageQueueStorage.getByTempId(tempId);
+        const contextType = row?.contextType ?? params.contextType;
+        const contextId = row?.contextId ?? params.contextId;
+        const appliesToOpenThread = contextId === id;
         sendWithTimeout(
-          { ...params, clientMutationId: row?.clientMutationId },
           {
-            onFailed: handleMarkFailed,
-            onSuccess: (created) => finishQueuedSendSuccess(tempId, created),
+            ...params,
+            contextType,
+            contextId,
+            clientMutationId: row?.clientMutationId,
+          },
+          {
+            onFailed: appliesToOpenThread ? handleMarkFailed : () => {},
+            onSuccess: appliesToOpenThread
+              ? (created) => finishQueuedSendSuccess(tempId, created)
+              : undefined,
           }
         );
       })();

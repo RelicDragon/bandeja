@@ -237,6 +237,8 @@ export function useMessageInputSubmit(params: Params) {
 
     const useQueue =
       useOptimistic && !!p.onSendQueued && p.propContextType != null && p.propContextId != null;
+    const submitContextType = p.propContextType;
+    const submitContextId = p.propContextId;
     if (useQueue) paramsRef.current.queueSendRef.current = true;
 
     if (useOptimistic) {
@@ -286,8 +288,8 @@ export function useMessageInputSubmit(params: Params) {
           if (useQueue && optimisticId) {
             p.onSendQueued!({
               tempId: optimisticId,
-              contextType: p.propContextType!,
-              contextId: p.propContextId!,
+              contextType: submitContextType!,
+              contextId: submitContextId!,
               payload: queueDeferImages
                 ? payload
                 : { ...payload, mediaUrls: originalUrls, thumbnailUrls },

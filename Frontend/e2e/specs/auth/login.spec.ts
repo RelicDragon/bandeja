@@ -33,4 +33,15 @@ test.describe('auth login', () => {
     await login.goToRegister();
     await new RegisterPage(page).expectLoaded();
   });
+
+  test('A-09 EULA link', async ({ page, context }) => {
+    const login = new LoginPage(page);
+    await login.goto();
+    await login.openPhoneSignIn();
+    const popupPromise = context.waitForEvent('page');
+    await page.getByRole('link', { name: /terms of service|eula/i }).click();
+    const popup = await popupPromise;
+    await expect(popup).toHaveURL(/eula\.html/);
+    await popup.close();
+  });
 });

@@ -6,6 +6,16 @@ export const useAppVersionCheck = () => {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    const e2eOverride =
+      typeof window !== 'undefined'
+        ? (window as Window & { __E2E_VERSION_CHECK__?: VersionCheckResult }).__E2E_VERSION_CHECK__
+        : undefined;
+    if (e2eOverride) {
+      setVersionCheck(e2eOverride);
+      setIsChecking(false);
+      return;
+    }
+
     const checkVersion = async () => {
       try {
         const result = await AppVersionService.checkVersion();

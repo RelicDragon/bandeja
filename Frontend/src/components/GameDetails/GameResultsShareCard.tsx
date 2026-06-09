@@ -14,6 +14,8 @@ import { buildDuplicateGameInitialData } from '@/utils/buildDuplicateGameInitial
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { useAuthStore } from '@/store/authStore';
 
+const EMPTY_GAME_PHOTOS: import('@/api/gamePhotos').GamePhoto[] = [];
+
 type GameResultsShareCardProps = {
   game: Game;
 };
@@ -23,7 +25,7 @@ export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
-  const photos = useGamePhotosStore((s) => s.byGameId[game.id]?.photos ?? []);
+  const photos = useGamePhotosStore((s) => s.byGameId[game.id]?.photos) ?? EMPTY_GAME_PHOTOS;
   const mainPhoto =
     photos.find((p) => p.id === getGameMainPhotoId(game)) ?? photos[0];
   const photoUrl = mainPhoto ? gamePhotoOriginalUrl(mainPhoto) : null;

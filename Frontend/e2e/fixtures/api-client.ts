@@ -152,6 +152,25 @@ export async function inviteUserToGameViaApi(
   });
 }
 
+export async function declineInviteViaApi(token: string, inviteId: string): Promise<void> {
+  await e2eApi(token, `/invites/${inviteId}/decline`, { method: 'POST', body: '{}' });
+}
+
+export async function declineInviteViaApi(
+  token: string,
+  inviteId: string,
+  message?: string,
+): Promise<void> {
+  await e2eApi(token, `/invites/${inviteId}/decline`, {
+    method: 'POST',
+    body: JSON.stringify(message ? { message } : {}),
+  });
+}
+
+export async function getMyInvitesViaApi(token: string): Promise<Array<{ id: string; gameId?: string }>> {
+  return e2eApi(token, '/invites/my-invites');
+}
+
 export function displayName(user: E2eUser): string {
   return [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || user.id;
 }

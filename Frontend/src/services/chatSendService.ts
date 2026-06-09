@@ -35,7 +35,7 @@ import {
 import { recordChatSendMetric } from '@/services/chat/chatSendMetrics';
 import { createMessageWithSocketAck } from '@/services/chat/chatSendMessageCreate';
 import { dispatchChatOutboxSuccess } from '@/services/chat/chatOutboxEvents';
-import { reconcileAbortedChatSendIfDelivered } from '@/services/chat/chatOutboxReconcile';
+import { resumeOrFailSupersededChatSend as resumeSupersededOutboxSend } from '@/services/chat/chatOutboxSendResume';
 import { useVideoUploadProgressStore } from '@/store/videoUploadProgressStore';
 function completeChatSendSuccess(
   tempId: string,
@@ -99,6 +99,27 @@ async function failSendAttempt(
   sealChatSendAttempt(tempId);
 }
 
+async function resumeOrFailSupersededChatSend(
+  tempId: string,
+  contextType: ChatContextType,
+  contextId: string,
+  onFailed: (tempId: string) => void
+): Promise<void> {
+  await resumeSupersededOutboxSend(tempId, contextType, contextId, onFailed, sendWithTimeout);
+}
+
+async function finishIfSendGenerationStale(
+  tempId: string,
+  generation: number,
+  contextType: ChatContextType,
+  contextId: string,
+  onFailed: (tempId: string) => void
+): Promise<boolean> {
+  if (isActiveSendGeneration(tempId, generation)) return false;
+  await resumeOrFailSupersededChatSend(tempId, contextType, contextId, onFailed);
+  return true;
+}
+
 export interface SendQueuedParams {
   tempId: string;
   contextType: ChatContextType;
@@ -152,7 +173,7 @@ export function sendWithTimeout(
     try {
       const outboxReady = await waitForOutboxReady(tempId, OUTBOX_READY_WAIT_MS);
       throwIfAborted(signal);
-      if (!isActiveSendGeneration(tempId, generation)) return;
+      if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
       if (!outboxReady) {
         await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'outbox_missing');
         return;
@@ -163,7 +184,7 @@ export function sendWithTimeout(
       let videoUploadBytes: number | undefined;
       const row = await messageQueueStorage.getByTempId(tempId);
       throwIfAborted(signal);
-      if (!isActiveSendGeneration(tempId, generation)) return;
+      if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
 
       const hasMediaUpload = rowNeedsMediaUpload(row);
       const resolvedClientMutationId = clientMutationId ?? row?.clientMutationId;
@@ -178,7 +199,7 @@ export function sendWithTimeout(
         const vb = await loadOutboxVideoBlob(tempId);
         const poster = await loadOutboxVideoPosterBlob(tempId);
         throwIfAborted(signal);
-        if (!isActiveSendGeneration(tempId, generation)) return;
+        if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
         if (!vb) {
           logChatOutboxBlobMismatch('send', { tempId, contextType, contextId, kind: 'video' });
           await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'video_blob_missing');
@@ -212,7 +233,7 @@ export function sendWithTimeout(
           );
           useVideoUploadProgressStore.getState().clear(tempId);
           videoUploadBytes = videoFile.size;
-          if (!isActiveSendGeneration(tempId, generation)) return;
+          if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
           await messageQueueStorage.commitPendingVideoUploaded(
             tempId,
             uploaded.videoUrl,
@@ -223,14 +244,18 @@ export function sendWithTimeout(
           finalThumb = [uploaded.thumbnailUrl];
         } catch (e) {
           useVideoUploadProgressStore.getState().clear(tempId);
-          if (isAbortError(e) || !isActiveSendGeneration(tempId, generation)) return;
+          if (isAbortError(e)) {
+            await resumeOrFailSupersededChatSend(tempId, contextType, contextId, onFailed);
+            return;
+          }
+          if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
           await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'video_upload_failed');
           return;
         }
       } else if (row?.hasPendingVoiceBlob) {
         const vb = await loadOutboxVoiceBlob(tempId);
         throwIfAborted(signal);
-        if (!isActiveSendGeneration(tempId, generation)) return;
+        if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
         if (!vb) {
           logChatOutboxBlobMismatch('send', { tempId, contextType, contextId, kind: 'voice' });
           await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'voice_blob_missing');
@@ -241,12 +266,16 @@ export function sendWithTimeout(
           const uploaded = await runWithAbort(signal, () =>
             mediaApi.uploadChatAudio(vb, `voice.${ext}`, contextId, contextType, { signal })
           );
-          if (!isActiveSendGeneration(tempId, generation)) return;
+          if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
           await messageQueueStorage.commitPendingVoiceUploaded(tempId, uploaded.audioUrl);
           finalMedia = [uploaded.audioUrl];
           finalThumb = [];
         } catch (e) {
-          if (isAbortError(e) || !isActiveSendGeneration(tempId, generation)) return;
+          if (isAbortError(e)) {
+            await resumeOrFailSupersededChatSend(tempId, contextType, contextId, onFailed);
+            return;
+          }
+          if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
           await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'voice_upload_failed');
           return;
         }
@@ -255,7 +284,7 @@ export function sendWithTimeout(
         const imageBlobs =
           pendingImgCount > 0 ? await loadOutboxImageBlobs(tempId, pendingImgCount) : [];
         throwIfAborted(signal);
-        if (!isActiveSendGeneration(tempId, generation)) return;
+        if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
         if (pendingImgCount > 0 && imageBlobs.length !== pendingImgCount) {
           logChatOutboxBlobMismatch('send', {
             tempId,
@@ -283,12 +312,16 @@ export function sendWithTimeout(
                 )
               )
             );
-            if (!isActiveSendGeneration(tempId, generation)) return;
+            if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
             finalMedia = parts.map((p) => p.originalUrl);
             finalThumb = parts.map((p) => p.thumbnailUrl);
             await messageQueueStorage.commitPendingImagesUploaded(tempId, finalMedia, finalThumb);
           } catch (e) {
-            if (isAbortError(e) || !isActiveSendGeneration(tempId, generation)) return;
+            if (isAbortError(e)) {
+              await resumeOrFailSupersededChatSend(tempId, contextType, contextId, onFailed);
+              return;
+            }
+            if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
             await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'image_upload_failed');
             return;
           }
@@ -298,7 +331,7 @@ export function sendWithTimeout(
         }
       }
 
-      if (!isActiveSendGeneration(tempId, generation)) return;
+      if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
 
       clearDeadlineTimer(tempId);
       armPhaseDeadline(tempId, generation, SEND_API_PHASE_MS, () => {
@@ -319,7 +352,7 @@ export function sendWithTimeout(
 
       const latest = await messageQueueStorage.getByTempId(tempId);
       throwIfAborted(signal);
-      if (!isActiveSendGeneration(tempId, generation)) return;
+      if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
       const p = latest?.payload ?? payload;
 
       const request: CreateMessageRequest = {
@@ -349,7 +382,11 @@ export function sendWithTimeout(
         tempId
       );
       const generationStale = !isActiveSendGeneration(tempId, generation);
-      if (!generationStale) sealChatSendAttempt(tempId);
+      if (generationStale) {
+        await resumeOrFailSupersededChatSend(tempId, contextType, contextId, onFailed);
+        return;
+      }
+      sealChatSendAttempt(tempId);
       recordChatSendMetric({
         kind: 'chat_send_succeeded',
         tempId,
@@ -363,10 +400,11 @@ export function sendWithTimeout(
       });
       completeChatSendSuccess(tempId, contextType, contextId, created, callbacks);
     } catch (e) {
-      if (isAbortError(e) || !isActiveSendGeneration(tempId, generation)) {
-        await reconcileAbortedChatSendIfDelivered(tempId, contextType, contextId);
+      if (isAbortError(e)) {
+        await resumeOrFailSupersededChatSend(tempId, contextType, contextId, onFailed);
         return;
       }
+      if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
       await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'send_error');
     }
   })();

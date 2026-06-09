@@ -1,6 +1,8 @@
-import { type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 const GAME_FILTERS_KEY = 'padelpulse-game-filters';
+
+type EntityFilter = 'game' | 'training' | 'tournament' | 'leagues';
 
 type GameFilterSeed = {
   activeTab?: 'calendar' | 'list';
@@ -17,6 +19,7 @@ type GameFilterSeed = {
   filterLevelMax?: number;
   filterSport?: string;
   filterNoRating?: boolean;
+  filterTier?: 'social' | 'match';
   showPrivateGames?: boolean;
 };
 
@@ -50,6 +53,30 @@ async function writeGameFilters(page: Page, patch: GameFilterSeed) {
   );
 }
 
+async function readGameFilters(page: Page): Promise<Record<string, unknown>> {
+  return page.evaluate(async (storageKey) => {
+    return new Promise<Record<string, unknown>>((resolve, reject) => {
+      const open = indexedDB.open('keyval-store');
+      open.onerror = () => reject(open.error);
+      open.onsuccess = () => {
+        const db = open.result;
+        const tx = db.transaction('keyval', 'readonly');
+        const store = tx.objectStore('keyval');
+        const getReq = store.get(storageKey);
+        getReq.onsuccess = () => resolve((getReq.result as Record<string, unknown>) ?? {});
+        getReq.onerror = () => reject(getReq.error);
+      };
+    });
+  }, GAME_FILTERS_KEY);
+}
+
+const ENTITY_LABEL: Record<EntityFilter, RegExp> = {
+  game: /^games$/i,
+  training: /^training$/i,
+  tournament: /^tournament$/i,
+  leagues: /^leagues$/i,
+};
+
 export class FindPage {
   constructor(private readonly page: Page) {}
 
@@ -59,17 +86,24 @@ export class FindPage {
     await this.waitForShell();
   }
 
+  async gotoListView() {
+    await this.goto('view=list');
+  }
+
+  async gotoCalendarView() {
+    await this.goto('view=calendar');
+  }
+
   async waitForShell() {
     await this.page.getByRole('button', { name: /^chats$/i }).waitFor({ state: 'visible', timeout: 30_000 });
   }
 
   async waitForAvailableGamesLoaded() {
-    await this.page.waitForResponse(
-      (res) => res.url().includes('/games/available') && res.ok(),
-      { timeout: 30_000 },
-    ).catch(async () => {
-      await this.page.waitForLoadState('domcontentloaded');
-    });
+    await this.page
+      .waitForResponse((res) => res.url().includes('/games/available') && res.ok(), { timeout: 30_000 })
+      .catch(async () => {
+        await this.page.waitForLoadState('domcontentloaded');
+      });
   }
 
   calendar(): Locator {
@@ -94,14 +128,108 @@ export class FindPage {
     );
   }
 
+  entityFilter(name: EntityFilter): Locator {
+    return this.page.getByRole('button', { name: ENTITY_LABEL[name] });
+  }
+
+  filtersButton(): Locator {
+    return this.page.getByRole('button', { name: /^filters$/i });
+  }
+
+  filtersPanel(): Locator {
+    return this.page.getByText(/^available for me$/i);
+  }
+
+  resetFiltersButton(): Locator {
+    return this.page.getByRole('button', { name: /^reset filters$/i });
+  }
+
+  listDatePrev(): Locator {
+    return this.listWeekRangeLabel().locator('..').getByRole('button').first();
+  }
+
+  listDateNext(): Locator {
+    return this.listWeekRangeLabel().locator('..').getByRole('button').last();
+  }
+
+  monthPrevButton(): Locator {
+    return this.calendar().getByRole('button').first();
+  }
+
+  monthNextButton(): Locator {
+    return this.calendar().getByRole('button').last();
+  }
+
+  monthHeading(): Locator {
+    return this.calendar().locator('h3');
+  }
+
+  cityButton(): Locator {
+    return this.page.locator('header').getByRole('button').filter({ has: this.page.locator('svg') }).first();
+  }
+
+  trainersSection(): Locator {
+    return this.page.getByText(/trainers/i).first();
+  }
+
   async seedGameFilters(patch: GameFilterSeed) {
-    if (!this.page.url().includes('localhost')) {
-      await this.page.goto('/find');
-    } else if (!this.page.url().includes('/find')) {
+    if (!this.page.url().includes('/find')) {
       await this.page.goto('/find');
       await this.waitForShell();
     }
     await writeGameFilters(this.page, patch);
+  }
+
+  async readStoredFilters(): Promise<Record<string, unknown>> {
+    return readGameFilters(this.page);
+  }
+
+  async openFiltersPanel() {
+    await this.filtersButton().click();
+    await expect(this.filtersPanel()).toBeVisible({ timeout: 10_000 });
+  }
+
+  async closeFiltersPanel() {
+    await this.filtersButton().click();
+    await expect(this.filtersPanel()).toHaveCount(0, { timeout: 10_000 });
+  }
+
+  async toggleEntityFilter(name: EntityFilter) {
+    const chip = this.entityFilter(name);
+    await chip.click();
+    return chip;
+  }
+
+  async expectEntityFilterActive(name: EntityFilter, active: boolean) {
+    const chip = this.entityFilter(name);
+    if (active) {
+      await expect(chip).toHaveClass(/primary/);
+    } else {
+      await expect(chip).not.toHaveClass(/primary-100/);
+    }
+  }
+
+  async setUserFilter(enabled: boolean) {
+    const toggle = this.filtersPanel().locator('..').getByRole('switch').first();
+    const checked = await toggle.getAttribute('aria-checked');
+    if ((checked === 'true') !== enabled) {
+      await toggle.click();
+    }
+  }
+
+  async selectClubChip(clubName: string) {
+    await this.page.getByRole('button', { name: new RegExp(clubName, 'i') }).click();
+  }
+
+  async resetPanelFilters() {
+    const reset = this.resetFiltersButton();
+    if ((await reset.count()) > 0) {
+      await reset.first().click();
+    }
+  }
+
+  async goToTodayViaFindTab() {
+    await this.page.getByRole('button', { name: /^find$/i }).click();
   }
 
   async openGameCardMatching(text: RegExp | string): Promise<string | null> {
@@ -118,6 +246,20 @@ export class FindPage {
     await this.page.waitForURL(/\/games\/[^/]+$/, { timeout: 15_000 });
     const match = this.page.url().match(/\/games\/([^/?#]+)/);
     return match?.[1] ?? null;
+  }
+
+  async quickJoinOnCard(label: RegExp | string) {
+    const joinOnCard = this.gameCards()
+      .filter({ hasText: label })
+      .getByRole('button', { name: /^join the game$/i });
+    await joinOnCard.click();
+    await this.page.getByRole('dialog').filter({ hasText: /join game\?/i }).waitFor({ state: 'visible' });
+    const joinResponse = this.page.waitForResponse(
+      (res) => res.url().includes('/join') && res.request().method() === 'POST',
+      { timeout: 30_000 },
+    );
+    await this.page.getByRole('button', { name: /^confirm$/i }).click();
+    await joinResponse;
   }
 
   async seedImpossibleLevelFilters() {
@@ -138,5 +280,14 @@ export class FindPage {
       filterNoRating: false,
       showPrivateGames: false,
     });
+  }
+
+  async expectFiltersButtonActive(active: boolean) {
+    const btn = this.filtersButton();
+    if (active) {
+      await expect(btn).toHaveClass(/primary/);
+    } else {
+      await expect(btn).not.toHaveClass(/primary-100/);
+    }
   }
 }

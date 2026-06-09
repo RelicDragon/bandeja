@@ -6,6 +6,15 @@ import { navigateWithTracking } from '@/utils/navigation';
 import { useDeepLinkStore } from '@/store/deepLinkStore';
 import { shouldHandleTelegramLoginDeepLink } from '@/utils/telegramDeepLinkDedupe';
 import { appendLevelSportQuery, parseLevelSportQuery } from '@/utils/levelSportQuery';
+import { bumpChatFreshOpenNonce } from '@/services/chat/chatOpenEntry';
+
+function navigateFreshChat(
+  navigate: ReturnType<typeof useNavigate>,
+  path: string
+): void {
+  bumpChatFreshOpenNonce();
+  navigateWithTracking(navigate, path, { replace: true, state: { forceReload: Date.now() } });
+}
 
 const isTelegramAutoLoginPath = (pathname: string) =>
   pathname.startsWith('/login/') && pathname !== '/login/phone' && pathname !== '/login/telegram';
@@ -33,7 +42,7 @@ export const useDeepLink = () => {
           if (parts.length >= 2) {
             const gameId = parts[1];
             if (parts.length === 3 && parts[2] === 'chat') {
-              navigateWithTracking(navigate, `/games/${gameId}/chat`, { replace: true });
+              navigateFreshChat(navigate, `/games/${gameId}/chat`);
             } else {
               navigateWithTracking(navigate, `/games/${gameId}`, { replace: true });
             }
@@ -66,7 +75,7 @@ export const useDeepLink = () => {
         if (pathname.startsWith('/user-chat/')) {
           const id = pathname.split('/user-chat/')[1]?.split('/')[0];
           if (id) {
-            navigateWithTracking(navigate, `/user-chat/${id}`, { replace: true });
+            navigateFreshChat(navigate, `/user-chat/${id}`);
             return;
           }
         }
@@ -74,7 +83,7 @@ export const useDeepLink = () => {
         if (pathname.startsWith('/group-chat/')) {
           const id = pathname.split('/group-chat/')[1]?.split('/')[0];
           if (id) {
-            navigateWithTracking(navigate, `/group-chat/${id}`, { replace: true });
+            navigateFreshChat(navigate, `/group-chat/${id}`);
             return;
           }
         }
@@ -82,14 +91,14 @@ export const useDeepLink = () => {
         if (pathname.startsWith('/bugs/')) {
           const id = pathname.split('/bugs/')[1]?.split('/')[0];
           if (id) {
-            navigateWithTracking(navigate, `/bugs/${id}`, { replace: true });
+            navigateFreshChat(navigate, `/bugs/${id}`);
             return;
           }
         }
         if (pathname.startsWith('/channel-chat/')) {
           const id = pathname.split('/channel-chat/')[1]?.split('/')[0];
           if (id) {
-            navigateWithTracking(navigate, `/channel-chat/${id}`, { replace: true });
+            navigateFreshChat(navigate, `/channel-chat/${id}`);
             return;
           }
         }

@@ -9,7 +9,7 @@ import { LiveScoringPage } from '../../pages/live-scoring.page';
 test.describe('two-user live scoring @two-user @auth', () => {
   test.describe.configure({ mode: 'serial' });
 
-  test('T2-LS-01 score sync @dual-browser', async ({ browser }) => {
+  test('LS-10 socket sync @dual-browser', async ({ browser }) => {
     const { pageA, pageB, ids, sessions, cleanup } = await openDualSession(browser);
     let gameId = '';
     try {

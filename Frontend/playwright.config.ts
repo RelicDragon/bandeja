@@ -33,13 +33,17 @@ export default defineConfig({
     {
       name: 'guest',
       testMatch: [/smoke\/guest\.spec\.ts$/, /shell\/.*\.spec\.ts$/, /cross-cutting\/.*\.spec\.ts$/],
-      grepInvert: /@auth/,
+      grepInvert: /@auth|@desktop/,
       use: { ...devices['Pixel 5'] },
     },
     {
       name: 'login',
-      testMatch: [/smoke\/login\.spec\.ts$/, /auth\/.*\.spec\.ts$/],
-      grepInvert: /@auth/,
+      testMatch: [
+        /smoke\/login\.spec\.ts$/,
+        /auth\/.*\.spec\.ts$/,
+        /onboarding\/.*\.spec\.ts$/,
+      ],
+      grepInvert: /@auth|@desktop/,
       use: { ...devices['Pixel 5'] },
     },
     {
@@ -58,8 +62,19 @@ export default defineConfig({
         /games\/.*\.spec\.ts$/,
       ],
       grep: /@auth/,
+      grepInvert: /@desktop/,
       use: {
         ...devices['Pixel 5'],
+        storageState: authFile,
+      },
+    },
+    {
+      name: 'desktop',
+      testMatch: [/shell\/.*\.spec\.ts$/],
+      grep: /@desktop/,
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 800 },
         storageState: authFile,
       },
     },

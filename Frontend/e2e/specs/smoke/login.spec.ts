@@ -6,7 +6,7 @@ import { getE2eCredentials } from '../../test-user';
 const { phone, password } = getE2eCredentials();
 
 test.describe('phone login', () => {
-  test('logs in and lands on home', async ({ page }) => {
+  test('A-01 phone login happy path', async ({ page }) => {
     const login = new LoginPage(page);
     await login.goto();
     await login.loginWithPhone(phone, password);

@@ -6,9 +6,9 @@ import { useAuthStore } from '@/store/authStore';
 export function ClubAdminFab() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const clubs = useAuthStore((s) => s.user?.clubAdminClubs ?? []);
+  const clubs = useAuthStore((s) => s.user?.clubAdminClubs);
 
-  if (clubs.length === 0) return null;
+  if (!clubs?.length) return null;
 
   const handleClick = () => {
     if (clubs.length === 1) {

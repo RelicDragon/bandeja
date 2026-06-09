@@ -19,6 +19,8 @@ import { usePhotosSectionUpload } from './usePhotosSectionUpload';
 import { gamePhotoOriginalUrl, hasGamePhotoUrl } from '@/utils/gamePhotoUrl';
 import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 
+const EMPTY_GAME_PHOTOS: GamePhoto[] = [];
+
 interface PhotosSectionProps {
   game: Game;
   onGameUpdate?: (game: Game) => void;
@@ -31,7 +33,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   const lastGamePhotoDeleted = useSocketEventsStore((state) => state.lastGamePhotoDeleted);
   const lastGamePhotoMainChanged = useSocketEventsStore((state) => state.lastGamePhotoMainChanged);
 
-  const photos = useGamePhotosStore((s) => s.byGameId[game.id]?.photos ?? []);
+  const photos = useGamePhotosStore((s) => s.byGameId[game.id]?.photos) ?? EMPTY_GAME_PHOTOS;
   const isLoading = useGamePhotosStore((s) => s.byGameId[game.id]?.isLoading ?? false);
   const loaded = useGamePhotosStore((s) => s.byGameId[game.id]?.loaded ?? false);
   const loadGamePhotos = useGamePhotosStore((s) => s.loadGamePhotos);

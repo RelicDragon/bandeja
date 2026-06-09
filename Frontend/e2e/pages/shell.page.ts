@@ -108,6 +108,42 @@ export class ShellPage {
     };
     await expect(tablist.getByRole('tab', { selected: true })).toContainText(labels[filter]);
   }
+
+  async simulatePullToRefresh() {
+    await this.page.evaluate(async () => {
+      const startY = 120;
+      const endY = 220;
+      const target = document.body;
+      const touchInit = { bubbles: true, cancelable: true };
+      target.dispatchEvent(
+        new TouchEvent('touchstart', {
+          ...touchInit,
+          touches: [new Touch({ identifier: 1, target, clientX: 200, clientY: startY })],
+        }),
+      );
+      target.dispatchEvent(
+        new TouchEvent('touchmove', {
+          ...touchInit,
+          touches: [new Touch({ identifier: 1, target, clientX: 200, clientY: endY })],
+        }),
+      );
+      target.dispatchEvent(
+        new TouchEvent('touchend', {
+          ...touchInit,
+          changedTouches: [new Touch({ identifier: 1, target, clientX: 200, clientY: endY })],
+        }),
+      );
+    });
+  }
+
+  findTabButton() {
+    return this.page.getByRole('button', { name: TAB_LABELS.find });
+  }
+
+  tabBadge(tab: 'my' | 'chats' | 'marketplace') {
+    const label = TAB_LABELS[tab];
+    return this.page.getByRole('button', { name: label }).locator('span').filter({ hasText: /\d+/ });
+  }
 }
 
 async function expectUrlPath(page: Page, path: string) {

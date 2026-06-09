@@ -46,8 +46,28 @@ export class HomePage {
     return this.page.locator('.cursor-pointer.relative.pb-0.overflow-visible');
   }
 
+  storiesRail(): Locator {
+    return this.page.getByText(/your story/i).first();
+  }
+
+  storyBubbles(): Locator {
+    return this.page.locator('button').filter({ has: this.page.locator('.rounded-full') });
+  }
+
+  emptyMyGamesMessage(): Locator {
+    return this.page.getByText(/no games/i);
+  }
+
+  markAllReadButton(): Locator {
+    return this.page.getByRole('button', { name: /^mark all as read$/i });
+  }
+
+  invitesHeading(): Locator {
+    return this.page.getByRole('heading', { name: /^invites\b/i });
+  }
+
   async openCreateMenu() {
-    await this.createButton().click();
+    await this.page.getByRole('button', { name: /^create$/i }).last().click();
     await expect(this.createMenuDialog()).toBeVisible();
   }
 
@@ -58,9 +78,7 @@ export class HomePage {
   async waitForMyGamesLoaded() {
     const pattern = (res: { url: () => string; ok: () => boolean }) =>
       res.url().includes('/games/my-games-with-unread') && res.ok();
-    const seen = await this.page
-      .waitForResponse(pattern, { timeout: 5_000 })
-      .catch(() => null);
+    const seen = await this.page.waitForResponse(pattern, { timeout: 5_000 }).catch(() => null);
     if (!seen) {
       await this.page.reload();
       await this.waitForShell();
@@ -69,7 +87,7 @@ export class HomePage {
   }
 
   async expectInviteSectionVisible() {
-    await this.page.getByRole('heading', { name: /^invites\b/i }).waitFor({ state: 'visible', timeout: 20_000 });
+    await this.invitesHeading().waitFor({ state: 'visible', timeout: 20_000 });
   }
 
   async acceptFirstInvite() {
@@ -83,6 +101,22 @@ export class HomePage {
     await acceptResponse.catch(() => undefined);
   }
 
+  async declineFirstInvite(note?: string) {
+    await this.expectInviteSectionVisible();
+    await this.page.getByRole('button', { name: /^decline$/i }).first().click();
+    const dialog = this.page.getByRole('dialog').filter({ hasText: /decline invite/i });
+    await dialog.waitFor({ state: 'visible', timeout: 10_000 });
+    if (note) {
+      await dialog.locator('textarea').fill(note);
+    }
+    const declineResponse = this.page.waitForResponse(
+      (res) => res.url().includes('/invites/') && res.url().includes('/decline') && res.ok(),
+      { timeout: 30_000 },
+    );
+    await dialog.getByRole('button', { name: /^decline$/i }).click();
+    await declineResponse;
+  }
+
   async openGameCardMatching(text: RegExp | string): Promise<string | null> {
     await this.waitForMyGamesLoaded();
     const card = this.gameCards().filter({ hasText: text }).first();
@@ -91,5 +125,28 @@ export class HomePage {
     await this.page.waitForURL(/\/games\/[^/]+$/, { timeout: 15_000 });
     const match = this.page.url().match(/\/games\/([^/?#]+)/);
     return match?.[1] ?? null;
+  }
+
+  async selectCalendarDay(day: number) {
+    const cal = this.calendar();
+    await cal.waitFor({ state: 'visible', timeout: 15_000 });
+    await cal.getByRole('button', { name: new RegExp(`^${day}$`) }).click();
+  }
+
+  async expectGameCardVisible(label: RegExp | string) {
+    await expect(this.gameCards().filter({ hasText: label }).first()).toBeVisible({ timeout: 20_000 });
+  }
+
+  async openStoryViewerIfAvailable() {
+    const bubble = this.page.locator('button').filter({ hasText: /your story/i }).nth(1);
+    if ((await bubble.count()) === 0) return false;
+    await bubble.click();
+    await this.page.locator('[role="dialog"], [data-story-interactive]').first().waitFor({ state: 'visible', timeout: 10_000 });
+    return true;
+  }
+
+  async openStoryCreateSheet() {
+    await this.page.getByText(/your story/i).first().click();
+    await this.page.getByRole('dialog').filter({ hasText: /photo|video|story/i }).waitFor({ state: 'visible', timeout: 10_000 });
   }
 }

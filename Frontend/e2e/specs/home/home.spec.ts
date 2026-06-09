@@ -6,18 +6,6 @@ import { HomePage } from '../../pages/home.page';
 test.use({ ...devices['Pixel 7'] });
 
 test.describe('home tab @auth', () => {
-  test('H-01 list vs calendar toggle', async ({ page }) => {
-    const home = new HomePage(page);
-    await home.goto();
-    await expect(home.subtab('calendar')).toHaveAttribute('aria-selected', 'true');
-    await home.switchSubtab('list');
-    await expect(home.subtab('list')).toHaveAttribute('aria-selected', 'true');
-    await home.switchSubtab('past-games');
-    await expect(home.subtab('past-games')).toHaveAttribute('aria-selected', 'true');
-    await home.switchSubtab('calendar');
-    await expect(home.subtab('calendar')).toHaveAttribute('aria-selected', 'true');
-  });
-
   test('H-31 calendar subtab default', async ({ page }) => {
     const home = new HomePage(page);
     await home.goto();

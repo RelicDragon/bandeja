@@ -3,7 +3,7 @@ import { e2eLogin } from '../../fixtures/api-client';
 import { deleteGameViaApi } from '../../fixtures/games.fixture';
 import { CreateGamePage } from '../../pages/create-game.page';
 
-test.describe('create game @auth', () => {
+test.describe('create game entry @auth', () => {
   test('C-01 invalid create route redirects home', async ({ page }) => {
     const createGame = new CreateGamePage(page);
     await createGame.gotoInvalidRoute();
@@ -13,7 +13,32 @@ test.describe('create game @auth', () => {
   test('C-02 create GAME wizard loads', async ({ page }) => {
     const createGame = new CreateGamePage(page);
     await createGame.gotoWithEntityType('GAME');
-    await createGame.expectWizardLoaded();
+    await createGame.expectWizardLoaded('GAME');
+  });
+
+  test('C-03 create BAR fields', async ({ page }) => {
+    const createGame = new CreateGamePage(page);
+    await createGame.gotoWithEntityType('BAR');
+    await createGame.expectWizardLoaded('BAR');
+    await createGame.expectBarSpecificFields();
+  });
+
+  test('C-04 create TRAINING fields', async ({ page }) => {
+    const createGame = new CreateGamePage(page);
+    await createGame.gotoWithEntityType('TRAINING');
+    await createGame.expectWizardLoaded('TRAINING');
+    await createGame.expectTrainingSpecificFields();
+  });
+
+  test('C-05 create TOURNAMENT fields', async ({ page }) => {
+    const createGame = new CreateGamePage(page);
+    await createGame.gotoWithEntityType('TOURNAMENT');
+    await createGame.expectWizardLoaded('TOURNAMENT');
+    await createGame.expectTournamentSpecificFields();
+  });
+
+  test('C-06 duplicate game from details', async () => {
+    test.skip(true, 'requires navigate from game details duplicate action');
   });
 
   test('C-07 bottom tabs hidden on create page', async ({ page }) => {
@@ -36,7 +61,7 @@ test.describe('create game @auth', () => {
     await createGame.pickDefaultTemplateIfShown();
     await createGame.selectFirstClub();
     await createGame.selectFirstAvailableTimeSlot();
-    const gameId = await createGame.submitCreate();
+    const gameId = await createGame.submitCreate('GAME');
     expect(gameId).toBeTruthy();
     try {
       await expect(page).not.toHaveURL(/\/create-game/);
@@ -45,5 +70,12 @@ test.describe('create game @auth', () => {
         await deleteGameViaApi(token, gameId);
       }
     }
+  });
+
+  test('C-28 validation errors on incomplete submit', async ({ page }) => {
+    const createGame = new CreateGamePage(page);
+    await createGame.gotoWithEntityType('GAME');
+    await createGame.pickDefaultTemplateIfShown();
+    await createGame.submitExpectBlocked('GAME');
   });
 });
